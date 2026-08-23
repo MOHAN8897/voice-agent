@@ -1,0 +1,1084 @@
+# Build a Telugu Voice AI Agent — Phase 1
+
+## 1. Project Objective
+
+Build a production-quality voice AI agent from scratch with **Telugu as the primary language**.
+
+The agent must allow a user to speak naturally in Telugu, convert the speech into text using **Sarvam AI Speech-to-Text**, send the resulting text to **OpenAI's GPT API as the central reasoning/conversation brain**, receive a high-quality response, convert that response back into natural Telugu speech using **Sarvam AI Text-to-Speech**, and play the generated audio back to the user.
+
+The architecture must be designed from the beginning so that **Hindi and English can be added later without rewriting the core system**.
+
+The first implementation should focus heavily on Telugu quality.
+
+---
+
+# 2. Core Architecture
+
+Implement this pipeline:
+
+User microphone
+↓
+Audio capture
+↓
+Sarvam Speech-to-Text
+↓
+Transcript + detected/input language
+↓
+Conversation Manager
+↓
+User Custom Instructions
+↓
+System Agent Instructions
+↓
+OpenAI GPT API
+↓
+AI response
+↓
+Response Language Resolver
+↓
+Sarvam Text-to-Speech
+↓
+Audio playback
+↓
+User
+
+The central intelligence/reasoning layer MUST be OpenAI.
+
+Do not use Sarvam Chat Completion as the primary reasoning brain in this phase.
+
+Sarvam should primarily handle:
+
+1. Speech-to-Text
+2. Text-to-Speech
+
+OpenAI should handle:
+
+1. Understanding the user's request
+2. Conversation context
+3. Reasoning
+4. Following system instructions
+5. Following user-configured agent instructions
+6. Generating the final response
+7. Deciding how the response should be phrased
+
+---
+
+# 3. IMPORTANT — READ THE OFFICIAL DOCUMENTATION FIRST
+
+Before writing implementation code, inspect the latest official documentation.
+
+OpenAI:
+
+* Read the current OpenAI API documentation.
+* Use the current recommended API for text generation/conversation.
+* Do not rely on outdated OpenAI API examples.
+* Verify authentication, request format, model configuration, conversation/state handling, errors, rate limits and recommended SDK usage.
+* Use the current official OpenAI SDK where appropriate.
+
+Official OpenAI API documentation:
+
+https://platform.openai.com/docs/
+
+Sarvam:
+
+Read the current official Sarvam documentation for:
+
+* Speech-to-Text
+* Realtime Speech-to-Text if appropriate
+* Text-to-Speech
+* Realtime Text-to-Speech if appropriate
+* Authentication
+* Rate limits
+* Error handling
+* Audio formats
+* Telugu language support
+* Streaming behavior
+
+Official Sarvam documentation:
+
+https://docs.sarvam.ai/
+
+Do not guess API parameters.
+
+If the documentation has changed from older examples found online, follow the current official documentation.
+
+---
+
+# 4. API PROVIDER CONFIGURATION
+
+The user will manually provide API keys through an environment file.
+
+Never hardcode API keys.
+
+Create an `.env.example` file.
+
+Example structure:
+
+OPENAI_API_KEY=
+SARVAM_API_KEY=
+
+The actual `.env` file must be gitignored.
+
+Also create a clear configuration module that loads and validates environment variables.
+
+If a required API key is missing:
+
+* Fail gracefully.
+* Show a clear configuration error.
+* Do not expose secrets.
+* Never print the actual API key in logs.
+
+---
+
+# 5. TELUGU STT CONFIGURATION
+
+Use Sarvam's current recommended Speech-to-Text API/model according to the official documentation.
+
+For Telugu, use:
+
+language_code = "te-IN"
+
+Use the appropriate transcription mode for conversational Telugu.
+
+The system should preserve natural Telugu speech rather than unnecessarily translating Telugu into English.
+
+It must handle:
+
+* Pure Telugu
+* Telugu with English words
+* Telugu with numbers
+* Telugu with technical terms
+* Telugu spoken conversationally
+* Natural pauses
+* Informal Telugu
+* Common Telugu-English code mixing
+
+Examples:
+
+"నాకు రేపు హైదరాబాద్‌లో weather ఎలా ఉంటుందో చెప్పు"
+
+"ఈ stock price ఎంత ఉంది?"
+
+"నాకు ఒక email draft చేయి"
+
+"Google Maps open చేయాలి"
+
+Do NOT automatically translate these into English before sending them to the brain unless translation is explicitly required.
+
+Prefer preserving the original transcript and language context.
+
+Sarvam's current documentation identifies Saaras v3 as the recommended STT model and supports Telugu (`te-IN`) as well as code-mixed modes. Verify the exact current request parameters from the official documentation before implementation.
+
+---
+
+# 6. TELUGU TTS CONFIGURATION
+
+Use Sarvam's current recommended Text-to-Speech model according to the official documentation.
+
+For Telugu output:
+
+language_code = "te-IN"
+
+Use the appropriate Telugu-compatible voice/speaker.
+
+Do not assume a speaker name without checking the current Sarvam documentation.
+
+The TTS layer must support:
+
+* Natural Telugu pronunciation
+* Telugu-English code mixing
+* Numbers
+* Dates
+* Common technical terms
+* Natural conversational pacing
+* Short conversational responses
+
+Prefer streaming TTS if the current Sarvam API supports it reliably for this architecture.
+
+The goal is to minimize:
+
+User stops speaking
+↓
+STT processing delay
+↓
+GPT processing delay
+↓
+TTS generation delay
+↓
+Audio starts
+
+The perceived response should feel conversational rather than like a traditional request/response API.
+
+---
+
+# 7. OPENAI AS THE CENTRAL BRAIN
+
+OpenAI must be responsible for the actual intelligence.
+
+The brain should receive structured context similar to:
+
+{
+user_message: "...",
+detected_language: "te-IN",
+conversation_history: [...],
+system_instructions: "...",
+user_agent_instructions: "...",
+session_context: {...}
+}
+
+The exact API structure should follow the current official OpenAI API documentation.
+
+Do not build a fake local reasoning layer.
+
+Do not duplicate reasoning unnecessarily in the Sarvam layer.
+
+The OpenAI model should understand Telugu directly.
+
+Do not translate Telugu → English → GPT → Telugu unless technically required.
+
+Direct multilingual reasoning should be preferred.
+
+---
+
+# 8. LANGUAGE BEHAVIOR — TELUGU FIRST
+
+For Phase 1, Telugu is the primary conversational language.
+
+Default behavior:
+
+If the user speaks Telugu:
+
+→ answer in Telugu.
+
+If the user speaks Telugu + English:
+
+→ respond naturally using Telugu-English code mixing where appropriate.
+
+Example:
+
+User:
+
+"నా phone లో notifications రావడం లేదు, ఎలా fix చేయాలి?"
+
+Good response:
+
+"ముందుగా Settings లోకి వెళ్లి Notifications permission ON లో ఉందో check చేయండి."
+
+Do not force unnatural pure Telugu translations of technical terminology.
+
+The agent should sound like a natural Telugu-speaking assistant.
+
+Avoid overly formal literary Telugu unless the user explicitly requests it.
+
+Prefer conversational Telugu.
+
+---
+
+# 9. USER-CUSTOMIZABLE BRAIN INSTRUCTIONS
+
+This is a CORE FEATURE.
+
+Create a dedicated "Agent Instructions" / "Customize AI" flow.
+
+The user must be able to enter instructions describing how they want the AI brain to behave.
+
+Examples:
+
+"నాతో ఎప్పుడూ తెలుగులోనే మాట్లాడాలి."
+
+"Answer very briefly."
+
+"Explain everything like I'm a beginner."
+
+"Talk casually like a friend."
+
+"Always give step-by-step instructions."
+
+"Use Telugu but keep technical terms in English."
+
+"Don't give long answers unless I ask."
+
+"Act as my coding assistant."
+
+"Whenever I ask something about trading, explain it with examples."
+
+These instructions must be sent to the OpenAI brain as a dedicated instruction layer.
+
+---
+
+# 10. INSTRUCTION PRIORITY
+
+Implement a clear instruction hierarchy.
+
+Recommended priority:
+
+1. Platform/System safety and application rules
+2. Core Agent System Instructions
+3. User's Custom Agent Instructions
+4. Conversation context
+5. Current user request
+
+The user's custom prompt should strongly influence how the AI responds, but it must NOT be allowed to override higher-priority system or safety instructions.
+
+Do not simply concatenate arbitrary user instructions blindly.
+
+Create a dedicated instruction builder.
+
+For example:
+
+buildAgentInstructions({
+coreInstructions,
+userInstructions,
+language,
+responseStyle
+})
+
+This should produce a structured instruction context for the OpenAI model.
+
+---
+
+# 11. CUSTOM PROMPT UI
+
+Create a dedicated screen/settings section:
+
+"Customize Your AI"
+
+Include:
+
+* Agent instructions text area
+* Save button
+* Reset button
+* Preview/test option
+* Current active instructions indicator
+
+Example:
+
+---
+
+Customize Your AI
+
+How should I respond?
+
+[ Always answer in casual Telugu.
+Keep answers short.
+Explain technical topics
+with simple examples. ]
+
+```
+      [Save]
+
+      [Test Instructions]
+```
+
+---
+
+When saved, the instructions should become active for future conversations.
+
+---
+
+# 12. TEST CUSTOM INSTRUCTIONS BEFORE SAVING
+
+Provide an optional test flow.
+
+Example:
+
+User enters:
+
+"Always answer like a friendly Telugu teacher."
+
+Then:
+
+Test input:
+
+"Python అంటే ఏమిటి?"
+
+The system should send the custom instructions + test message to OpenAI and show the generated response.
+
+This allows the user to verify the behavior before making the instructions permanent.
+
+---
+
+# 13. DYNAMIC RESPONSE LANGUAGE
+
+Although Phase 1 is Telugu-first, architect the language resolver so future languages can be added.
+
+Create something similar to:
+
+LanguageContext:
+
+{
+inputLanguage: "te-IN",
+responseLanguage: "te-IN",
+confidence: ...,
+isCodeMixed: true
+}
+
+For now:
+
+Telugu → Telugu
+
+Telugu + English → natural Telugu-English
+
+Do not build Hindi and English-specific UI yet.
+
+However, do NOT hardcode the architecture specifically around Telugu.
+
+The language layer should be extensible.
+
+Future configuration should be possible:
+
+SUPPORTED_LANGUAGES = {
+te-IN: {...},
+hi-IN: {...},
+en-IN: {...}
+}
+
+---
+
+# 14. CONVERSATION MEMORY
+
+Implement session-based conversation memory.
+
+The agent should remember previous messages within the active conversation.
+
+Example:
+
+User:
+
+"నా పేరు Sai."
+
+Agent:
+
+"Nice to meet you Sai!"
+
+Later:
+
+"నా పేరు ఏమిటి?"
+
+Agent:
+
+"మీ పేరు Sai."
+
+Keep the conversation history in a structured format.
+
+Do not send unlimited history forever.
+
+Create a context management strategy.
+
+The implementation should be capable of:
+
+* trimming old messages
+* summarizing older context if required
+* preserving recent conversation
+* preventing unnecessary token consumption
+
+---
+
+# 15. VOICE CONVERSATION STATE MACHINE
+
+Implement explicit states.
+
+For example:
+
+IDLE
+↓
+LISTENING
+↓
+PROCESSING_STT
+↓
+THINKING
+↓
+GENERATING_TTS
+↓
+PLAYING
+↓
+IDLE
+
+Handle errors from every state.
+
+Example:
+
+Microphone error
+STT error
+OpenAI error
+TTS error
+Audio playback error
+Network timeout
+Rate limit
+Invalid API key
+
+The UI should clearly communicate the current state.
+
+Example:
+
+Listening...
+Understanding...
+Thinking...
+Speaking...
+
+Do not make the user guess whether the agent is working.
+
+---
+
+# 16. INTERRUPTION / BARge-IN ARCHITECTURE
+
+Design the architecture so that later we can support:
+
+Agent speaking
+↓
+User starts speaking
+↓
+Stop current TTS playback
+↓
+Capture new audio
+↓
+Process new request
+
+Do not necessarily implement perfect barge-in during the first milestone if it complicates the initial build.
+
+But create clean interfaces for it.
+
+For example:
+
+VoiceSessionController
+AudioCaptureManager
+AudioPlaybackManager
+STTService
+BrainService
+TTSService
+
+---
+
+# 17. PROJECT ARCHITECTURE
+
+Use a clean modular architecture.
+
+Suggested structure:
+
+src/
+config/
+env.*
+
+agent/
+AgentController.*
+AgentInstructions.*
+ConversationManager.*
+LanguageResolver.*
+
+audio/
+AudioCaptureManager.*
+AudioPlaybackManager.*
+
+services/
+SarvamSTTService.*
+OpenAIBrainService.*
+SarvamTTSService.*
+
+session/
+VoiceSession.*
+SessionState.*
+
+prompts/
+systemPrompt.*
+responseRules.*
+
+ui/
+VoiceAgentScreen.*
+CustomizeAgentScreen.*
+ConversationScreen.*
+
+utils/
+logger.*
+errors.*
+
+types/
+agent.*
+audio.*
+language.*
+
+Use the appropriate structure for the chosen framework/language.
+
+Do not create a giant single file.
+
+---
+
+# 18. MCP REQUIREMENT
+
+If MCP is used in this project, do NOT invent an MCP server simply because the project uses multiple APIs.
+
+First determine whether MCP is actually useful.
+
+If MCP is required for the selected architecture:
+
+1. Read the current MCP documentation.
+2. Use the current MCP protocol/schema.
+3. Configure the MCP server correctly.
+4. Separate tools from the core conversational brain.
+5. Keep API keys in environment variables.
+6. Never expose API keys to the client.
+7. Test MCP connectivity independently.
+
+Important:
+
+Sarvam STT and TTS do not automatically need to become MCP tools.
+
+The simplest correct architecture should be preferred.
+
+If direct server-side API calls are cleaner and safer, use direct services rather than adding unnecessary MCP complexity.
+
+---
+
+# 19. SECURITY
+
+All API calls involving secret API keys should happen server-side where appropriate.
+
+Never expose:
+
+OPENAI_API_KEY
+SARVAM_API_KEY
+
+inside client-side code.
+
+Never commit `.env`.
+
+Add:
+
+.env
+.env.local
+.env.*.local
+
+to `.gitignore` as appropriate.
+
+Create:
+
+.env.example
+
+with empty placeholders.
+
+---
+
+# 20. ERROR HANDLING
+
+Every external service must have:
+
+* timeout
+* retry policy where appropriate
+* exponential backoff where appropriate
+* rate-limit handling
+* clear error classification
+* safe logging
+* user-friendly error messages
+
+Do not retry every error indefinitely.
+
+For HTTP 429:
+
+"Service is temporarily busy. Please try again."
+
+For authentication errors:
+
+"AI service configuration is invalid."
+
+Do not display API keys or raw secrets.
+
+---
+
+# 21. LOGGING / DEBUG MODE
+
+Create structured development logs.
+
+Example:
+
+[VOICE] Recording started
+[STT] Audio submitted
+[STT] Transcript received
+[LANGUAGE] Telugu detected
+[BRAIN] Request started
+[BRAIN] Response received
+[TTS] Synthesis started
+[TTS] Audio received
+[AUDIO] Playback started
+
+Do not log:
+
+* API keys
+* sensitive user information
+* unnecessary raw audio
+* full private conversations in production
+
+Add a configurable DEBUG mode.
+
+---
+
+# 22. LATENCY OPTIMIZATION
+
+Voice interaction must feel fast.
+
+Optimize:
+
+1. Audio capture
+2. STT request
+3. GPT request
+4. TTS request
+5. Audio playback
+
+Prefer streaming APIs when they materially improve perceived latency and are stable according to the current official documentation.
+
+Do not prematurely optimize at the cost of reliability.
+
+First establish a correct end-to-end voice conversation.
+
+Then optimize latency.
+
+---
+
+# 23. FIRST MVP
+
+The first working milestone must be extremely simple:
+
+User presses microphone.
+
+User says:
+
+"హాయ్, నా పేరు సాయి. నాకు Python గురించి చెప్పు."
+
+System:
+
+1. Captures audio.
+2. Sends audio to Sarvam STT.
+3. Receives Telugu transcript.
+4. Sends transcript + system instructions + user custom instructions to OpenAI.
+5. Receives response.
+6. Sends response to Sarvam TTS.
+7. Plays Telugu audio.
+8. Displays transcript and AI response on screen.
+
+This complete flow must work before adding advanced features.
+
+---
+
+# 24. TEST CASES
+
+Create automated/manual tests for:
+
+### Test 1 — Pure Telugu
+
+Input:
+
+"హైదరాబాద్ గురించి నాకు చెప్పు."
+
+Expected:
+
+Telugu response.
+
+### Test 2 — Telugu-English
+
+Input:
+
+"నా laptop slow గా ఉంది, ఎలా fix చేయాలి?"
+
+Expected:
+
+Natural Telugu-English response.
+
+### Test 3 — English technical term
+
+Input:
+
+"API అంటే ఏమిటి?"
+
+Expected:
+
+Natural Telugu explanation while preserving technical terminology.
+
+### Test 4 — User instruction
+
+Custom instruction:
+
+"ఎప్పుడూ చిన్నగా సమాధానం ఇవ్వాలి."
+
+Input:
+
+"Python అంటే ఏమిటి?"
+
+Expected:
+
+Short response.
+
+### Test 5 — Style instruction
+
+Custom instruction:
+
+"నాతో friendly గా మాట్లాడాలి."
+
+Expected:
+
+Friendly conversational response.
+
+### Test 6 — Conflict
+
+Custom instruction:
+
+"ప్రతి ప్రశ్నకు 5000 పదాల్లో సమాధానం ఇవ్వాలి."
+
+Core application response limit:
+
+Short responses.
+
+Verify that system-level constraints remain higher priority.
+
+### Test 7 — Conversation memory
+
+User:
+
+"నా పేరు Sai."
+
+Then:
+
+"నా పేరు ఏమిటి?"
+
+Expected:
+
+Sai.
+
+### Test 8 — TTS
+
+Verify Telugu pronunciation and playback.
+
+### Test 9 — API failure
+
+Temporarily provide invalid API configuration.
+
+Expected:
+
+Friendly error without exposing secrets.
+
+### Test 10 — Network failure
+
+Disconnect network during request.
+
+Expected:
+
+Graceful recovery.
+
+---
+
+# 25. UI REQUIREMENTS
+
+Create a clean modern voice-agent UI.
+
+Primary screen should contain:
+
+* Agent name
+* Current conversation
+* Large microphone button
+* Listening state
+* Thinking state
+* Speaking state
+* Transcript
+* AI response
+* Customize AI button
+
+Visual style:
+
+* Dark premium interface
+* Black background
+* Ash cards
+* White text
+* Electric blue #0F03FC as primary accent
+* Minimal interface
+* Large touch targets
+* Smooth microphone animation
+* Clear state indicators
+
+Do not create an overly complicated dashboard.
+
+The primary action should be:
+
+TALK TO AI
+
+---
+
+# 26. DO NOT BUILD EVERYTHING AT ONCE
+
+Implement the project in phases.
+
+## PHASE 1 — Foundation
+
+* Project setup
+* Environment configuration
+* API clients
+* Basic UI
+* Configuration validation
+
+Do not continue until the foundation works.
+
+## PHASE 2 — Sarvam Telugu STT
+
+* Microphone/audio capture
+* Sarvam STT integration
+* Telugu transcription
+* Transcript display
+* Error handling
+* STT tests
+
+## PHASE 3 — OpenAI Brain
+
+* OpenAI integration
+* System instructions
+* Conversation history
+* Telugu reasoning
+* Response generation
+* Error handling
+
+## PHASE 4 — Sarvam Telugu TTS
+
+* TTS integration
+* Telugu voice
+* Audio decoding
+* Audio playback
+* Error handling
+
+## PHASE 5 — Complete Voice Loop
+
+Connect:
+
+STT → GPT → TTS
+
+Make the full voice conversation work reliably.
+
+## PHASE 6 — User Custom Brain Instructions
+
+Build:
+
+Customize AI
+↓
+User instructions
+↓
+Instruction builder
+↓
+OpenAI brain
+
+Include:
+
+* Save
+* Edit
+* Reset
+* Preview
+* Test
+
+## PHASE 7 — Conversation Memory
+
+Add:
+
+* conversation history
+* context management
+* context trimming
+* session persistence if appropriate
+
+## PHASE 8 — Voice UX
+
+Add:
+
+* listening animation
+* thinking animation
+* speaking animation
+* interruption architecture
+* better latency
+
+## PHASE 9 — Production Hardening
+
+* security
+* rate limits
+* retries
+* logging
+* monitoring
+* API failure handling
+* input validation
+* cost controls
+* privacy considerations
+
+---
+
+# 27. COST CONTROL
+
+Design the architecture so API usage is efficient.
+
+Do not repeatedly send unnecessary context.
+
+Do not send duplicate STT requests.
+
+Do not synthesize the same TTS response multiple times.
+
+Keep responses concise by default.
+
+Allow the user's custom instructions to define response length.
+
+Create configuration for:
+
+MAX_RESPONSE_LENGTH
+MAX_CONTEXT_MESSAGES
+REQUEST_TIMEOUT
+MAX_RETRIES
+
+Use sensible defaults.
+
+---
+
+# 28. IMPORTANT IMPLEMENTATION RULE
+
+Do not start writing large amounts of code immediately.
+
+First:
+
+1. Inspect the current official OpenAI documentation.
+2. Inspect the current official Sarvam documentation.
+3. Inspect the current SDK/API versions.
+4. Decide the architecture.
+5. Explain the proposed architecture briefly.
+6. Create the project structure.
+7. Implement Phase 1 only.
+8. Test Phase 1.
+9. Implement Phase 2.
+10. Test Phase 2.
+11. Continue phase by phase.
+
+After each phase:
+
+* Run tests.
+* Verify API connectivity.
+* Verify error handling.
+* Verify Telugu behavior.
+* Report exactly what was implemented.
+* Identify any issue before moving to the next phase.
+
+Do NOT silently skip failed tests.
+
+---
+
+# 29. DEFINITION OF SUCCESS
+
+The Phase 1 Telugu agent is successful when a user can:
+
+1. Open the application.
+2. Press the microphone.
+3. Speak naturally in Telugu.
+4. Sarvam correctly transcribes the speech.
+5. OpenAI understands the Telugu request.
+6. OpenAI follows the user's custom instructions.
+7. OpenAI generates an appropriate Telugu response.
+8. Sarvam converts that response into natural Telugu speech.
+9. The user hears the answer.
+10. The conversation continues naturally.
+11. The system remembers the conversation within the active session.
+12. Errors are handled gracefully.
+13. API keys remain secure.
+14. The architecture is ready for Hindi and English in later phases.
+
+The final architecture should be modular enough that adding Hindi and English later primarily requires adding language configuration, voices, language-resolution rules, and tests rather than rebuilding the voice-agent core.
+
+IMPORTANT FINAL RULE:
+
+Do not claim that an integration works until you have actually tested the real API flow.
+
+Use the official documentation as the source of truth whenever API parameters, model names, endpoints, SDK methods, authentication, streaming behavior, or limits are involved.

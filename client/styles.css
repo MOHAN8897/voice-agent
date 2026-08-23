@@ -1,0 +1,165 @@
+/* Telugu Voice Agent — Dark Premium Theme */
+:root {
+  --bg: #070708;
+  --card: #141416;
+  --card-2: #1c1c1f;
+  --ash: #232326;
+  --border: #2a2a2e;
+  --text: #ffffff;
+  --muted: #9a9aa0;
+  --accent: #0F03FC;
+  --accent-2: #3a2cff;
+  --success: #1ed760;
+  --danger: #ff3b30;
+  --radius: 18px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.header {
+  width: 100%;
+  max-width: 720px;
+  padding: 20px 20px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.brand { font-weight: 700; font-size: 18px; letter-spacing: -0.02em; }
+.brand span { color: var(--accent); }
+.badge {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--card);
+}
+.container {
+  width: 100%;
+  max-width: 720px;
+  padding: 8px 20px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.card Ash { background: var(--card-2); }
+.row { display: flex; gap: 12px; align-items: center; }
+.health {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.dot.ok { background: var(--success); box-shadow: 0 0 8px rgba(30,215,96,0.5); }
+.dot.bad { background: var(--danger); }
+.mic-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 12px;
+}
+.mic-btn {
+  width: 132px;
+  height: 132px;
+  border-radius: 50%;
+  border: none;
+  background: radial-gradient(120% 120% at 30% 20%, #2a1fff 0%, var(--accent) 55%, #0707a8 100%);
+  color: white;
+  font-size: 38px;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(15,3,252,0.45), inset 0 1px 0 rgba(255,255,255,0.25);
+  transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+  display: grid;
+  place-items: center;
+}
+.mic-btn:active { transform: scale(0.97); }
+.mic-btn:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+.mic-btn.recording {
+  animation: pulse 1.25s infinite;
+  background: radial-gradient(120% 120% at 30% 20%, #ff4d4d 0%, #d00000 60%, #6b0000 100%);
+}
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(255,59,48,0.55); }
+  70% { box-shadow: 0 0 0 18px rgba(255,59,48,0); }
+  100% { box-shadow: 0 0 0 0 rgba(255,59,48,0); }
+}
+.state {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  min-height: 20px;
+}
+.state.listening { color: var(--danger); }
+.state.thinking { color: var(--accent); }
+.state.speaking { color: var(--success); }
+.hint { font-size: 12px; color: var(--muted); text-align: center; line-height: 1.5; }
+.transcript, .response {
+  font-size: 15px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.label { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.divider { height: 1px; background: var(--border); margin: 4px 0; }
+.btn {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: var(--ash);
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn.primary { background: var(--accent); border-color: var(--accent); color: white; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btnRow { display: flex; gap: 10px; flex-wrap: wrap; }
+.textarea {
+  width: 100%;
+  min-height: 96px;
+  background: var(--ash);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 14px;
+  resize: vertical;
+}
+.kbd { font-family: ui-monospace, monospace; font-size: 12px; background: var(--ash); border: 1px solid var(--border); padding: 2px 6px; border-radius: 6px; color: var(--muted); }
+.sessionInfo { font-size: 11px; color: var(--muted); }
+.conversation {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 260px;
+  overflow: auto;
+}
+.bubble {
+  padding: 10px 12px;
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 85%;
+}
+.bubble.user { align-self: flex-end; background: var(--accent); color: white; border-bottom-right-radius: 6px; }
+.bubble.assistant { align-self: flex-start; background: var(--card-2); border: 1px solid var(--border); border-bottom-left-radius: 6px; }
+.footer { padding: 18px; text-align: center; font-size: 11px; color: var(--muted); }

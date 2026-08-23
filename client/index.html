@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="te">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Telugu Voice Agent — Phase 1-5</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="brand">Telugu <span>Agent</span></div>
+    <div class="btnRow">
+      <a href="/settings.html" class="badge" style="color:var(--text); text-decoration:none; cursor:pointer">⚙️ Fine-tune</a>
+      <div class="badge">Phase 5 — Realtime</div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Health -->
+    <div class="card">
+      <div class="health">
+        <span id="healthDot" class="dot"></span>
+        <span id="healthText">Checking configuration…</span>
+        <span style="margin-left:auto" class="sessionInfo" id="sessionInfo"></span>
+      </div>
+      <div id="healthError" class="hint" style="margin-top:8px; display:none; color:#ff8a80; text-align:left;"></div>
+    </div>
+
+    <!-- Mode toggle -->
+    <div class="card">
+      <div class="label">Voice Mode</div>
+      <div class="btnRow" style="align-items:center; flex-wrap:wrap">
+        <label class="hint" style="display:flex; align-items:center; gap:8px; cursor:pointer">
+          <input type="checkbox" id="voiceMode" checked style="accent-color:#0F03FC; width:18px; height:18px" />
+          <span><b>Full Voice Loop</b> — Mic → STT → Brain → TTS → Playback (via <code>/api/voice/turn</code>)</span>
+        </label>
+        <label class="hint" style="display:flex; align-items:center; gap:8px; cursor:pointer">
+          <input type="checkbox" id="realtimeMode" style="accent-color:#1ed760; width:18px; height:18px" />
+          <span><b>⚡ Live Session</b> — continuous full-duplex: agent keeps listening &amp; you can interrupt mid-sentence (<code>saaras:v3-realtime</code>)</span>
+          <span id="liveBadge" class="dot ok" style="display:none; width:10px; height:10px"></span>
+        </label>
+      </div>
+      <div class="hint" style="text-align:left; margin-top:6px">Live = press mic once → stays on until you press again. Echo-cancellation (AEC) is on; headphones recommended on speaker setups. Barge-in triggers on real speech (≥2 words) — noise won't cut the agent off. Console settings apply live.</div>
+    </div>
+
+    <!-- Live partials -->
+    <div class="card" id="partialsCard" style="display:none">
+      <div class="label">Live partial transcript — saaras:v3-realtime</div>
+      <div id="partials" class="transcript" style="color:var(--accent-2); min-height:22px">…start speaking…</div>
+    </div>
+
+    <!-- Mic + State -->
+    <div class="card mic-wrap">
+      <button id="micBtn" class="mic-btn" aria-label="Hold to talk" title="Click to start/stop recording">🎙️</button>
+      <div id="stateLabel" class="state">Ready — press mic and speak Telugu</div>
+      <div class="hint">
+        Telugu-first. Try: <span class="kbd">నాకు Python గురించి చెప్పు</span><br />
+        Code-mix: <span class="kbd">నా laptop slow గా ఉంది, ఎలా fix చేయాలి?</span>
+      </div>
+      <div class="btnRow">
+        <button id="clearBtn" class="btn">Clear conversation</button>
+        <button id="testBtn" class="btn">Test memory: Sai</button>
+        <button id="stopAudioBtn" class="btn" style="display:none">⏹️ Stop audio</button>
+      </div>
+    </div>
+
+    <!-- Transcript -->
+    <div class="card">
+      <div class="label">Transcript — Sarvam saaras:v3 (te-IN)</div>
+      <div id="transcript" class="transcript" style="color:var(--muted)">— no speech yet —</div>
+      <div class="divider"></div>
+      <div class="label">AI Response — OpenAI Responses API</div>
+      <div id="response" class="response" style="color:var(--muted)">— waiting —</div>
+      <div id="usage" class="hint" style="text-align:left; margin-top:8px;"></div>
+      <div id="metrics" class="hint" style="text-align:left; margin-top:4px; font-family:ui-monospace,monospace; font-size:11px; color:var(--muted)"></div>
+    </div>
+
+    <!-- Playback (fully automatic — no Play button) -->
+    <div class="card" id="playbackCard">
+      <div class="label">Playback — Sarvam bulbul:v3 (te-IN) <span style="color:var(--success); font-size:10px">AUTO</span> <span id="ttsInfo" class="hint" style="text-transform:none; letter-spacing:normal"></span></div>
+      <audio id="audioPlayer" preload="auto" style="width:100%; margin-top:8px; display:none"></audio>
+      <!-- One-time autoplay unlock overlay (browser policy requires a single tap) -->
+      <div id="unlockAudio" class="card" style="display:none; background:var(--accent); border:none; cursor:pointer; text-align:center; padding:14px">
+        <b>🔊 Tap once to enable speaker audio</b><br /><span class="hint" style="color:#dfe6ff">Browsers require this single confirmation — every reply after this plays automatically.</span>
+      </div>
+      <div id="noAudio" class="hint" style="text-align:left; margin-top:6px">Hands-free mode: replies play automatically through your speakers. Speak anytime to interrupt.</div>
+      <div class="btnRow" style="margin-top:10px">
+        <button id="replayBtn" class="btn" disabled>🔁 Replay last</button>
+        <button id="ttsOnlyBtn" class="btn">🔊 Speak current text</button>
+      </div>
+      <div id="ttsError" class="hint" style="color:#ff8a80; text-align:left; display:none; margin-top:6px"></div>
+    </div>
+
+    <!-- Hands-free continuity -->
+    <div class="card">
+      <div class="label">Conversation Continuity</div>
+      <label class="hint" style="display:flex; align-items:center; gap:8px; cursor:pointer; margin-top:4px">
+        <input type="checkbox" id="handsFree" checked style="accent-color:#0F03FC; width:18px; height:18px" />
+        <span><b>Auto-listen after each reply</b> — mic re-opens automatically when speech finishes, until you stop it</span>
+      </label>
+      <div id="emptyGuardMsg" class="hint" style="display:none; color:#ffb86b; text-align:left; margin-top:6px">Paused auto-listening after several silent takes — press mic to resume.</div>
+    </div>
+
+    <!-- Conversation history -->
+    <div class="card">
+      <div class="label">Conversation — session memory (MAX 12) <span id="historyCount" class="hint" style="text-transform:none; letter-spacing:normal"></span></div>
+      <div id="conversation" class="conversation"></div>
+    </div>
+
+    <!-- Customize AI — Dual-channel dynamic prompting -->
+    <div class="card">
+      <div class="label">Customize Your AI — Prompting <span id="activeBadge" class="badge" style="margin-left:8px; font-size:10px; display:none">Active</span> <span style="margin-left:6px; font-size:10px; color:var(--muted)">System &gt; Core &gt; Behaviour &gt; Business</span></div>
+
+      <label class="hint" style="display:block; margin-top:10px; font-weight:600">🧠 Behavioural Prompting — HOW the agent should respond · <span id="behavCount">0</span>/10000</label>
+      <div class="btnRow" style="align-items:center; gap:8px">
+        <select id="responseStyle" class="textarea" style="min-height:34px; padding:6px 8px; flex:1">
+          <option value="concise, conversational">Style: Concise, conversational (default)</option>
+          <option value="very brief, 1-2 sentences">Very brief — 1-2 sentences</option>
+          <option value="friendly, casual like a friend">Friendly, casual like a friend</option>
+          <option value="detailed, step-by-step">Detailed, step-by-step</option>
+          <option value="explain like I'm a beginner with examples">Explain like beginner with examples</option>
+          <option value="formal Telugu, no English">Formal Telugu (no English)</option>
+        </select>
+      </div>
+      <textarea id="customInstructions" class="textarea" placeholder="Example:&#10;నాతో ఎప్పుడూ తెలుగులోనే మాట్లాడాలి.&#10;Be warm and patient like a friend.&#10;Keep tech terms in English, never translate them."></textarea>
+
+      <label class="hint" style="display:block; margin-top:12px; font-weight:600">🏢 Business / Professional Prompting — WHAT the agent knows about your business <span class="hint" style="font-weight:normal">(company, products, pricing, policies, domain facts)</span> · <span id="bizCount">0</span>/10000</label>
+      <textarea id="businessInstructions" class="textarea" placeholder="Example:&#10;We are Sai Technologies, a Hyderabad-based SaaS company.&#10;Products: InventoryPro (₹999/mo), BillingSuite (₹1999/mo).&#10;Refund policy: 7-day full refund. Support hours 9am-9pm IST.&#10;Competitors: Zoho, Tally. Our edge: Telugu support + same-day onboarding."></textarea>
+
+      <div class="btnRow" style="margin-top:10px">
+        <button id="saveInstructions" class="btn primary">💾 Save prompts</button>
+        <button id="resetInstructions" class="btn">↺ Reset</button>
+        <button id="previewInstructions" class="btn">👁️ Test (without saving)</button>
+        <button id="viewPromptBtn" class="btn">🔍 View effective prompt</button>
+      </div>
+      <div id="saveStatus" class="hint" style="text-align:left; margin-top:6px; display:none"></div>
+      <div id="previewOutput" class="hint" style="text-align:left; margin-top:8px; display:none; background:var(--ash); border:1px solid var(--border); border-radius:10px; padding:10px"></div>
+      <div id="effectivePrompt" class="hint" style="text-align:left; margin-top:8px; display:none; background:var(--card-2); border:1px dashed var(--border); border-radius:10px; padding:10px; font-family:ui-monospace,monospace; font-size:11px; white-space:pre-wrap"></div>
+    </div>
+
+    <!-- Phase 5 Observability -->
+    <div class="card">
+      <div class="label">Phase 5 — Observability & Hardening</div>
+      <p class="hint" style="text-align:left">Rate limited: 60 req/min general, 20/min TTS • Metrics & barge-in.</p>
+      <div class="btnRow" style="margin-top:8px">
+        <button id="metricsBtn" class="btn">📊 Load /api/metrics</button>
+        <button id="interruptBtn" class="btn">⛔ Test barge-in (POST /api/session/interrupt)</button>
+      </div>
+      <pre id="metricsOut" class="hint" style="text-align:left; margin-top:8px; display:none; background:var(--ash); border:1px solid var(--border); border-radius:10px; padding:10px; font-size:11px; overflow:auto; max-height:200px"></pre>
+    </div>
+  </main>
+
+  <footer class="footer">Black • Ash • #0F03FC • Telugu-first • Mic → STT (saaras:v3 te-IN) → Brain (Responses API) → TTS (bulbul:v3 te-IN) → Playback</footer>
+
+  <script src="audio_playback_manager.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

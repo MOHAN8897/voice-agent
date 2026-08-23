@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fine-tune Console — Telugu Voice Agent</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="brand">Fine-tune <span>Console</span></div>
+    <div class="badge"><a href="/" style="color:var(--text); text-decoration:none">← Back to Agent</a></div>
+  </header>
+
+  <main class="container">
+    <div class="card">
+      <div class="health">
+        <span id="healthDot" class="dot"></span>
+        <span id="healthText">Loading catalog…</span>
+        <span style="margin-left:auto" class="sessionInfo" id="sessionInfo"></span>
+      </div>
+      <div class="hint" style="text-align:left; margin-top:8px; color:#ffb86b">
+        🔒 API keys stay server-side in <code>.env</code> — they can never be entered or read from this console (industry security standard). Everything below tunes how providers are called.
+      </div>
+    </div>
+
+    <!-- STT -->
+    <div class="card">
+      <div class="label">Speech-to-Text — Sarvam saaras</div>
+      <label class="hint" style="display:block; margin-top:6px">Model</label>
+      <select id="sttModel" class="textarea" style="min-height:36px"></select>
+      <label class="hint" style="display:block; margin-top:6px">Mode (output format)</label>
+      <select id="sttMode" class="textarea" style="min-height:36px"></select>
+      <label class="hint" style="display:block; margin-top:6px">Language</label>
+      <select id="sttLanguage" class="textarea" style="min-height:36px"></select>
+      <label class="hint" style="display:block; margin-top:6px">Realtime stream type (WebSocket partials)</label>
+      <select id="sttStreamType" class="textarea" style="min-height:36px"></select>
+      <label class="hint" style="display:block; margin-top:6px">VAD silence duration (<span id="sttSilenceVal">500</span> ms) — end-of-turn detection, biggest latency lever</label>
+      <input id="sttSilenceMs" type="range" min="100" max="2000" step="50" value="500" style="width:100%" />
+      <label class="hint" style="display:block; margin-top:6px">VAD threshold (<span id="sttThreshVal">0.30</span>)</label>
+      <input id="sttThreshold" type="range" min="0" max="1" step="0.05" value="0.3" style="width:100%" />
+    </div>
+
+    <!-- TTS -->
+    <div class="card">
+      <div class="label">Text-to-Speech — Sarvam bulbul</div>
+      <label class="hint" style="display:block; margin-top:6px">Model</label>
+      <select id="ttsModel" class="textarea" style="min-height:36px"></select>
+      <label class="hint" style="display:block; margin-top:6px">Speaker (must match model)</label>
+      <select id="ttsSpeaker" class="textarea" style="min-height:36px"></select>
+      <label class="hint" style="display:block; margin-top:6px">Pace / speed (<span id="ttsPaceVal">1.00</span>×) — v3 range 0.5–2.0</label>
+      <input id="ttsPace" type="range" min="0.5" max="2.0" step="0.05" value="1.0" style="width:100%" />
+      <label class="hint" style="display:block; margin-top:6px">Temperature (<span id="ttsTempVal">0.60</span>) — v3 only, expressiveness</label>
+      <input id="ttsTemperature" type="range" min="0.01" max="1.0" step="0.01" value="0.6" style="width:100%" />
+      <label class="hint" style="display:block; margin-top:6px">Audio codec</label>
+      <select id="ttsCodec" class="textarea" style="min-height:36px"></select>
+      <label class="hint" style="display:block; margin-top:6px">Sample rate</label>
+      <select id="ttsSampleRate" class="textarea" style="min-height:36px"></select>
+      <button id="testTtsBtn" class="btn" style="margin-top:10px">🔊 Test TTS with these settings</button>
+      <audio id="testAudio" controls style="width:100%; margin-top:8px; display:none"></audio>
+      <div id="ttsTestStatus" class="hint" style="margin-top:4px; display:none"></div>
+    </div>
+
+    <!-- OpenAI Brain -->
+    <div class="card">
+      <div class="label">OpenAI Brain — Responses API</div>
+      <label class="hint" style="display:block; margin-top:6px">Model (allowlist via OPENAI_ALLOWED_MODELS env)</label>
+      <select id="openaiModel" class="textarea" style="min-height:36px"></select>
+      <label class="hint" style="display:block; margin-top:6px">Temperature (<span id="oaiTempVal">0.7</span>) — creativity vs determinism</label>
+      <input id="openaiTemperature" type="range" min="0" max="2" step="0.1" value="0.7" style="width:100%" />
+      <label class="hint" style="display:block; margin-top:6px">Max output tokens (<span id="oaiTokVal">600</span>) — cost + length cap</label>
+      <input id="openaiMaxTokens" type="range" min="50" max="2000" step="50" value="600" style="width:100%" />
+    </div>
+
+    <!-- Dynamic prompting — dual channel -->
+    <div class="card">
+      <div class="label">Dynamic Prompting — dual channel <span style="margin-left:6px; font-size:10px; color:var(--muted)">System &gt; Core &gt; Behaviour &gt; Business &gt; History</span></div>
+
+      <label class="hint" style="display:block; margin-top:8px; font-weight:600">Response Style</label>
+      <select id="responseStyle" class="textarea" style="min-height:36px; padding:8px">
+        <option value="concise, conversational">Concise, conversational (default)</option>
+        <option value="very brief, 1-2 sentences">Very brief — 1-2 sentences</option>
+        <option value="friendly, casual like a friend">Friendly, casual like a friend</option>
+        <option value="detailed, step-by-step">Detailed, step-by-step</option>
+        <option value="explain like I'm a beginner with examples">Explain like beginner with examples</option>
+        <option value="formal Telugu, no English">Formal Telugu (no English)</option>
+      </select>
+
+      <label class="hint" style="display:block; margin-top:10px; font-weight:600">🧠 Behavioural — HOW to respond · <span id="behavCount">0</span>/10000</label>
+      <textarea id="behaviourInstructions" class="textarea" placeholder="నాతో ఎప్పుడూ తెలుగులోనే మాట్లాడాలి.&#10;Be warm like a friend; never lecture.&#10;Keep tech terms in English."></textarea>
+
+      <label class="hint" style="display:block; margin-top:10px; font-weight:600">🏢 Business / Professional — WHAT you know about my business · <span id="bizCount">0</span>/10000</label>
+      <textarea id="businessInstructions" class="textarea" placeholder="We are Sai Technologies (Hyderabad SaaS).&#10;Products: InventoryPro ₹999/mo, BillingSuite ₹1999/mo.&#10;Refunds: 7-day full refund. Support 9am–9pm IST.&#10;Never quote prices not listed here."></textarea>
+      <div class="hint" style="text-align:left; font-size:11px; margin-top:4px">Each section is sanitized + wrapped separately (<code>&lt;agent_behaviour_instructions&gt;</code> / <code>&lt;business_context_instructions&gt;</code>) so the brain knows the difference between personality and facts.</div>
+
+      <div class="btnRow" style="margin-top:10px">
+        <button id="saveAllBtn" class="btn primary">💾 Save all settings</button>
+        <button id="resetBtn" class="btn">↺ Reset to defaults</button>
+        <button id="viewPromptBtn" class="btn">🔍 View effective prompt</button>
+      </div>
+      <pre id="statusOut" class="hint" style="text-align:left; margin-top:10px; display:none; background:var(--ash); border:1px solid var(--border); border-radius:10px; padding:10px; font-size:11px; overflow:auto; max-height:260px; white-space:pre-wrap"></pre>
+    </div>
+
+    <footer class="footer">Catalog verified vs docs.sarvam.ai (Aug 2026) • Allowlisted models • Per-session TTL 24h</footer>
+  </main>
+
+  <script src="settings.js"></script>
+</body>
+</html>
