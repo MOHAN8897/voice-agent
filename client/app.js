@@ -36,6 +36,7 @@ const ttsError = $("ttsError");
 // Brain prompt editor (single document)
 const brainPromptEl = $("brainPrompt");
 const brainCharCount = $("brainCharCount");
+const brainWordCount = $("brainWordCount");
 const brainTokenEst = $("brainTokenEst");
 const brainTokenBudget = $("brainTokenBudget");
 const brainTokenFill = $("brainTokenFill");
@@ -491,38 +492,50 @@ checkHealth();
 
 const CACHE_MIN_TOKENS = 1024;
 const BUDGET_MIN_TOKENS = 1500;
-const BRAIN_PROMPT_MAX_CHARS = 20000;
+const BUDGET_MAX_TOKENS = 2500;
+const BRAIN_PROMPT_MAX_WORDS = 2500;
 
 function estimatePromptTokens(text) {
   const len = (text || "").length;
   return len ? Math.max(1, Math.ceil(len / 4)) : 0;
 }
 
+function countPromptWords(text) {
+  const t = (text || "").trim();
+  return t ? t.split(/\s+/).length : 0;
+}
+
 function getBrainBudgetTokens() {
   const el = $("brainPromptBudgetTokens");
-  const n = el ? Number(el.value) : 1500;
-  return Number.isFinite(n) ? n : 1500;
+  const n = el ? Number(el.value) : BUDGET_MAX_TOKENS;
+  if (!Number.isFinite(n)) return BUDGET_MAX_TOKENS;
+  return Math.max(BUDGET_MIN_TOKENS, Math.min(BUDGET_MAX_TOKENS, n));
 }
 
 function updatePromptMeter() {
   if (!brainPromptEl) return;
   const text = brainPromptEl.value || "";
   const est = estimatePromptTokens(text);
+  const words = countPromptWords(text);
   const budget = getBrainBudgetTokens();
   const pct = Math.min(100, (est / budget) * 100);
   const cachePct = Math.min(100, (CACHE_MIN_TOKENS / budget) * 100);
   if (brainCharCount) brainCharCount.textContent = String(text.length);
+  if (brainWordCount) brainWordCount.textContent = String(words);
   if (brainTokenEst) brainTokenEst.textContent = String(est);
   if (brainTokenBudget) brainTokenBudget.textContent = String(budget);
   if (brainTokenFill) {
     brainTokenFill.style.width = pct + "%";
-    brainTokenFill.classList.toggle("over", est > budget);
-    brainTokenFill.classList.toggle("warn", est <= budget && est < CACHE_MIN_TOKENS);
+    brainTokenFill.classList.toggle("over", est > budget || words > BRAIN_PROMPT_MAX_WORDS);
+    brainTokenFill.classList.toggle("warn", est <= budget && est < CACHE_MIN_TOKENS && words <= BRAIN_PROMPT_MAX_WORDS);
   }
   const cacheMin = $("brainTokenCacheMin");
   if (cacheMin) cacheMin.style.left = cachePct + "%";
   if (brainCacheStatus) {
-    if (est > budget) {
+    if (words > BRAIN_PROMPT_MAX_WORDS) {
+      brainCacheStatus.textContent = `Over ${BRAIN_PROMPT_MAX_WORDS} words`;
+      brainCacheStatus.className = "badge badge-warn";
+    } else if (est > budget) {
       brainCacheStatus.textContent = "Over budget";
       brainCacheStatus.className = "badge badge-warn";
     } else if (est < CACHE_MIN_TOKENS) {
@@ -563,6 +576,10 @@ async function loadInstructions() {
         localStorage.setItem("telugu_brain_prompt", j.brainPrompt);
       }
       if (j.customBrainPrompt || j.present) updateActiveBadge();
+      if (j.budgetTokens && budgetSlider) {
+        budgetSlider.value = String(Math.max(BUDGET_MIN_TOKENS, Math.min(BUDGET_MAX_TOKENS, j.budgetTokens)));
+        budgetSlider.dispatchEvent(new Event("input"));
+      }
     }
   } catch {}
   promptsDirty = false;

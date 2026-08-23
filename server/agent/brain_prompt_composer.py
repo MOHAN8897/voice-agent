@@ -7,18 +7,28 @@ from server.prompts.brain_prompt import DEFAULT_BRAIN_PROMPT_SECTIONS
 
 MAX_BEHAVIOUR_CHARS = 8_000
 MAX_BUSINESS_CHARS = 8_000
-MAX_BRAIN_PROMPT_CHARS = 20_000  # ~5,000 tokens at budget max
+MAX_BRAIN_PROMPT_WORDS = 2_500
+MAX_BRAIN_PROMPT_CHARS = 50_000  # safety cap; primary limit is word count
+BUDGET_MIN_TOKENS = 1_500
+BUDGET_MAX_TOKENS = 2_500
 
 
 class PromptBudgetExceeded(Exception):
-    def __init__(self, estimated: int, budget: int):
+    def __init__(self, estimated: int, budget: int, *, words: int | None = None, word_limit: int | None = None):
         self.estimated = estimated
         self.budget = budget
         self.over_by = estimated - budget
-        super().__init__(
-            f"Brain prompt is {estimated} tokens but budget is {budget}. "
-            "Shorten behaviour/business or increase brain prompt budget."
-        )
+        self.words = words
+        self.word_limit = word_limit
+        if word_limit is not None and words is not None and words > word_limit:
+            super().__init__(
+                f"Brain prompt is {words} words but the limit is {word_limit}. Shorten your brain prompt."
+            )
+        else:
+            super().__init__(
+                f"Brain prompt is {estimated} tokens but budget is {budget}. "
+                f"Shorten your brain prompt or increase the budget slider (max {BUDGET_MAX_TOKENS} tokens)."
+            )
 
 
 def estimate_tokens(text: str) -> int:
@@ -26,6 +36,12 @@ def estimate_tokens(text: str) -> int:
     if not text:
         return 0
     return max(1, len(text) // 4)
+
+
+def count_words(text: str) -> int:
+    if not text or not text.strip():
+        return 0
+    return len(text.split())
 
 
 def _strip_legacy_tags(text: str) -> str:
@@ -102,10 +118,14 @@ def compose_brain_prompt_sections(
 
 
 def validate_brain_prompt_budget(text: str, budget_tokens: int) -> int:
-    """Returns estimated tokens; raises PromptBudgetExceeded if over budget."""
+    """Returns estimated tokens; raises PromptBudgetExceeded if over limits."""
     est = estimate_tokens(text)
+    words = count_words(text)
+    if words > MAX_BRAIN_PROMPT_WORDS:
+        raise PromptBudgetExceeded(est, budget_tokens, words=words, word_limit=MAX_BRAIN_PROMPT_WORDS)
+    budget_tokens = max(BUDGET_MIN_TOKENS, min(BUDGET_MAX_TOKENS, int(budget_tokens)))
     if est > budget_tokens:
-        raise PromptBudgetExceeded(est, budget_tokens)
+        raise PromptBudgetExceeded(est, budget_tokens, words=words)
     return est
 
 

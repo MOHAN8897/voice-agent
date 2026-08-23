@@ -175,9 +175,9 @@
           <input id="openaiTemperature" type="range" min="0" max="2" step="0.1" value="0.7" class="input-range" />
           <label class="field-label">Max tokens (<span id="oaiTokVal">320</span>)</label>
           <input id="openaiMaxTokens" type="range" min="50" max="800" step="10" value="320" class="input-range" />
-          <label class="field-label">Brain prompt budget (<span id="brainBudgetVal">1500</span>) · <span id="cacheBadge" class="badge badge-green">✅ Caching ON</span></label>
-          <input id="brainPromptBudgetTokens" type="range" min="1500" max="5000" step="50" value="1500" class="input-range" />
-          <p id="brainBudgetHint" class="hint left-hint">Token budget for the brain prompt above (Prompting tab). Range 1,500–5,000. OpenAI caching needs ≥1,024 tokens in the saved prompt.</p>
+          <label class="field-label">Brain prompt budget (<span id="brainBudgetVal">2500</span>) · <span id="cacheBadge" class="badge badge-green">✅ Caching ON</span></label>
+          <input id="brainPromptBudgetTokens" type="range" min="1500" max="2500" step="50" value="2500" class="input-range" />
+          <p id="brainBudgetHint" class="hint left-hint">Token budget for the brain prompt (Prompting tab). Range 1,500–2,500 tokens. OpenAI caching needs ≥1,024 tokens in the saved prompt.</p>
         </div>
       </section>
 
@@ -191,7 +191,7 @@
           <div class="prompt-token-meter">
             <div class="prompt-token-row">
               <span>Estimated tokens: <strong id="brainTokenEst">—</strong></span>
-              <span>Budget: <strong id="brainTokenBudget">1500</strong></span>
+              <span>Budget: <strong id="brainTokenBudget">2500</strong></span>
               <span id="brainCacheStatus" class="badge badge-green">Cache ON</span>
             </div>
             <div class="prompt-token-bar" aria-hidden="true">
@@ -199,10 +199,10 @@
               <div id="brainTokenFill" class="prompt-token-fill"></div>
             </div>
             <p id="brainTokenHint" class="hint left-hint">
-              Min cache: <strong>1,024</strong> tokens · Budget range: <strong>1,500–5,000</strong> · Max ~20,000 chars
+              Min cache: <strong>1,024</strong> tokens · Budget: <strong>1,500–2,500</strong> tokens · Max prompt: <strong>2,500</strong> words
             </p>
           </div>
-          <label class="field-label">Your brain prompt · <span id="brainCharCount">0</span> chars</label>
+          <label class="field-label">Your brain prompt · <span id="brainCharCount">0</span> chars · <span id="brainWordCount">0</span> words</label>
           <textarea id="brainPrompt" class="textarea textarea-brain" placeholder="Loading default Telugu voice prompt…" spellcheck="false"></textarea>
           <div class="btnRow" style="margin-top:12px">
             <button id="saveInstructions" class="btn primary">💾 Save prompt</button>

@@ -8,8 +8,11 @@ from pydantic import BaseModel, Field
 from typing import Optional
 
 from server.agent.brain_prompt_composer import (
+    BUDGET_MAX_TOKENS,
+    BUDGET_MIN_TOKENS,
     MAX_BEHAVIOUR_CHARS,
     MAX_BRAIN_PROMPT_CHARS,
+    MAX_BRAIN_PROMPT_WORDS,
     MAX_BUSINESS_CHARS,
     PromptBudgetExceeded,
     estimate_tokens,
@@ -24,8 +27,6 @@ from server.services.prompt_cache_key import cache_eligible
 router = APIRouter()
 
 CACHE_MIN_TOKENS = 1024
-BUDGET_MIN_TOKENS = 1500
-BUDGET_MAX_TOKENS = 5000
 
 
 def _limits() -> tuple[int, int, int]:
@@ -57,6 +58,7 @@ async def get_default_brain_prompt():
         "cacheMinTokens": CACHE_MIN_TOKENS,
         "budgetMinTokens": BUDGET_MIN_TOKENS,
         "budgetMaxTokens": BUDGET_MAX_TOKENS,
+        "maxWords": MAX_BRAIN_PROMPT_WORDS,
         "cacheEligible": cache_eligible(est),
         "maxChars": MAX_BRAIN_PROMPT_CHARS,
     }
@@ -66,6 +68,7 @@ async def get_default_brain_prompt():
 async def save_instructions(body: SaveRequest):
     b_max, z_max, p_max = _limits()
     budget = body.brainPromptBudgetTokens or resolve_brain_budget(body.sessionId)
+    budget = max(BUDGET_MIN_TOKENS, min(BUDGET_MAX_TOKENS, int(budget)))
 
     try:
         if body.brainPrompt is not None:
@@ -74,6 +77,9 @@ async def save_instructions(body: SaveRequest):
                     status_code=400,
                     detail={"error": {"code": "validation_error", "message": f"Brain prompt exceeds {p_max} characters"}},
                 )
+            est = estimate_tokens(body.brainPrompt)
+            if est > budget and est <= BUDGET_MAX_TOKENS:
+                budget = est
             saved = instruction_store.save_brain_prompt(body.sessionId, body.brainPrompt, budget_tokens=budget)
         else:
             behaviour = body.behaviourInstructions if body.behaviourInstructions is not None else body.instructions or ""
@@ -142,10 +148,12 @@ async def get_instructions(sessionId: str = "default"):
         "cacheMinTokens": CACHE_MIN_TOKENS,
         "budgetMinTokens": BUDGET_MIN_TOKENS,
         "budgetMaxTokens": BUDGET_MAX_TOKENS,
+        "maxWords": MAX_BRAIN_PROMPT_WORDS,
         "limits": {
             "brainPromptMax": p_max,
             "behaviourMax": b_max,
             "businessMax": z_max,
+            "maxWords": MAX_BRAIN_PROMPT_WORDS,
         },
     }
 

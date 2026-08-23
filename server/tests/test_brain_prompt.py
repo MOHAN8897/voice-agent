@@ -7,6 +7,7 @@ from server.agent.brain_prompt_composer import (
     PromptBudgetExceeded,
     MAX_BEHAVIOUR_CHARS,
     MAX_BUSINESS_CHARS,
+    MAX_BRAIN_PROMPT_WORDS,
 )
 from server.agent.instruction_builder import build_brain_request_input
 
@@ -38,6 +39,15 @@ def test_compose_single_plain_text():
     assert "<agent_behaviour_instructions>" not in out
     assert "Language: te-IN" in out
     assert "friendly" in out
+
+
+def test_validate_word_limit_raises():
+    text = "word " * (MAX_BRAIN_PROMPT_WORDS + 1)
+    try:
+        validate_brain_prompt_budget(text, 2500)
+        assert False, "expected PromptBudgetExceeded"
+    except PromptBudgetExceeded as e:
+        assert e.words == MAX_BRAIN_PROMPT_WORDS + 1
 
 
 def test_validate_budget_raises():

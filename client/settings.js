@@ -230,7 +230,7 @@
         ttsBitrate: getVal("ttsBitrate") || "128k",
         openaiModel: getVal("openaiModel"), openaiTemperature: parseFloat(getVal("openaiTemperature") || "0.7"),
         openaiMaxTokens: getNum("openaiMaxTokens"),
-        brainPromptBudgetTokens: getNum("brainPromptBudgetTokens") || 1500,
+        brainPromptBudgetTokens: getNum("brainPromptBudgetTokens") || 2500,
         crmEnabled: getCheck("crmEnabled"), crmAutoSync: getCheck("crmAutoSync"),
         crmProvider: getVal("crmProvider"), crmWebhook: getVal("crmWebhook"),
         crmFields: getVal("crmFields"), crmNotes: getVal("crmNotes"),
@@ -245,7 +245,7 @@
         body: JSON.stringify({
           sessionId,
           brainPrompt: getVal("brainPrompt"),
-          brainPromptBudgetTokens: getNum("brainPromptBudgetTokens") || 1500,
+          brainPromptBudgetTokens: getNum("brainPromptBudgetTokens") || 2500,
         }),
       });
       const j2 = await r2.json();

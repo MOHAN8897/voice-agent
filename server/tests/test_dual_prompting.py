@@ -42,6 +42,7 @@ def test_default_brain_prompt_endpoint(monkeypatch):
     assert j["estimatedTokens"] >= 1024
     assert j["cacheMinTokens"] == 1024
     assert j["budgetMinTokens"] == 1500
+    assert j["budgetMaxTokens"] == 2500
     get_settings.cache_clear()
 
 
@@ -72,18 +73,20 @@ def test_save_and_get_both_channels(monkeypatch):
 def test_8k_caps_enforced(monkeypatch):
     c = _client(monkeypatch)
     sid = "dual-cap"
-    long_b = "b" * 12000
-    long_z = "z" * 12000
+    long_b = "b" * 12_000
+    long_z = "z" * 12_000
     r = c.post("/api/instructions", json={
         "sessionId": sid,
         "behaviourInstructions": long_b,
         "businessInstructions": long_z,
-        "brainPromptBudgetTokens": 5000,
+        "brainPromptBudgetTokens": 2500,
     })
-    assert r.status_code == 200
-    j = r.json()
-    assert j["behaviourLength"] == 8000
-    assert j["businessLength"] == 8000
+    # Legacy dual-channel compose at 8k caps exceeds the 2500-token brain budget.
+    assert r.status_code == 400
+    assert r.json()["detail"]["error"]["code"] == "prompt_budget_exceeded"
+    from server.agent.brain_prompt_composer import sanitize_behaviour, sanitize_business
+    assert len(sanitize_behaviour(long_b)) == 8000
+    assert len(sanitize_business(long_z)) == 8000
     c.delete("/api/instructions", params={"sessionId": sid})
     get_settings.cache_clear()
 

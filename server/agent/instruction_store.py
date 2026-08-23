@@ -45,7 +45,7 @@ class InstructionStore:
         style: str | None = None,
         *,
         language: str = "te-IN",
-        budget_tokens: int = 1500,
+        budget_tokens: int = 2500,
     ) -> dict:
         b = sanitize_behaviour(behaviour or "")
         z = sanitize_business(business or "")
@@ -88,7 +88,7 @@ class InstructionStore:
         session_id: str,
         brain_prompt: str,
         *,
-        budget_tokens: int = 1500,
+        budget_tokens: int = 2500,
     ) -> dict:
         """Save a single user-edited brain prompt document."""
         text = sanitize_brain_prompt(brain_prompt)
@@ -125,7 +125,7 @@ class InstructionStore:
         session_id: str,
         *,
         language: str = "te-IN",
-        budget_tokens: int = 1500,
+        budget_tokens: int = 2500,
     ) -> str:
         with self._lock:
             e = self._entry(session_id)

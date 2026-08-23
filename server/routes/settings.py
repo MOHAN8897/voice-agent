@@ -66,7 +66,7 @@ async def catalog():
             "defaultModel": DEFAULT_OPENAI_MODEL,
             "temperature": [0.0, 2.0],
             "maxTokens": [50, 800],
-            "brainPromptBudget": [1500, 5000],
+            "brainPromptBudget": [1500, 2500],
             "modelGroups": [
                 {"label": "GPT-5 family (voice-tuned)", "models": allowed_models},
             ],
@@ -74,7 +74,7 @@ async def catalog():
                 "openaiModel": "gpt-5.6-luna",
                 "openaiMaxTokens": 320,
                 "openaiTemperature": 0.7,
-                "brainPromptBudgetTokens": 1500,
+                "brainPromptBudgetTokens": 2500,
                 "responseStyle": DEFAULT_RESPONSE_STYLE,
                 "behaviourInstructions": DEFAULT_BEHAVIOUR_INSTRUCTIONS,
                 "businessInstructions": DEFAULT_BUSINESS_INSTRUCTIONS,

@@ -65,9 +65,9 @@ class Settings(BaseSettings):
     max_retries: int = Field(2, alias="MAX_RETRIES")
 
     # --- Brain prompt budget (single composed prompt) ---
-    brain_prompt_budget_tokens: int = Field(1500, alias="BRAIN_PROMPT_BUDGET_TOKENS")
+    brain_prompt_budget_tokens: int = Field(2500, alias="BRAIN_PROMPT_BUDGET_TOKENS")
     brain_prompt_budget_min: int = Field(1500, alias="BRAIN_PROMPT_BUDGET_MIN")
-    brain_prompt_budget_max: int = Field(5000, alias="BRAIN_PROMPT_BUDGET_MAX")
+    brain_prompt_budget_max: int = Field(2500, alias="BRAIN_PROMPT_BUDGET_MAX")
 
     # --- Prompt caching (GPT-5.6+) ---
     enable_prompt_caching: bool = Field(True, alias="ENABLE_PROMPT_CACHING")
