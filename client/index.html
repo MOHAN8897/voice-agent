@@ -177,28 +177,37 @@
           <input id="openaiMaxTokens" type="range" min="50" max="800" step="10" value="320" class="input-range" />
           <label class="field-label">Brain prompt budget (<span id="brainBudgetVal">1500</span>) · <span id="cacheBadge" class="badge badge-green">✅ Caching ON</span></label>
           <input id="brainPromptBudgetTokens" type="range" min="1500" max="5000" step="50" value="1500" class="input-range" />
-          <p id="brainBudgetHint" class="hint left-hint">Single composed brain prompt. Budget 1,500–5,000 tokens. OpenAI caching activates when the composed prompt is ≥1,024 tokens.</p>
+          <p id="brainBudgetHint" class="hint left-hint">Token budget for the brain prompt above (Prompting tab). Range 1,500–5,000. OpenAI caching needs ≥1,024 tokens in the saved prompt.</p>
         </div>
       </section>
 
       <!-- ========== PROMPTING ========== -->
       <section class="console-panel" id="panel-prompt">
         <div class="card">
-          <div class="label">Dynamic Prompting</div>
-          <label class="field-label">Response Style</label>
-          <select id="responseStyle" class="input-select">
-            <option value="very brief, 1-2 sentences, spoken Telugu">Very brief — spoken Telugu (voice default)</option>
-            <option value="concise, conversational">Concise, conversational</option>
-            <option value="friendly, casual like a friend">Friendly, casual</option>
-            <option value="formal Telugu, no English">Formal Telugu</option>
-          </select>
-          <label class="field-label">Behavioural · <span id="behavCount">0</span>/10000</label>
-          <textarea id="customInstructions" class="textarea" placeholder="How the agent should speak and behave…"></textarea>
-          <label class="field-label">Business context · <span id="bizCount">0</span>/10000</label>
-          <textarea id="businessInstructions" class="textarea" placeholder="Company info, products, pricing…"></textarea>
+          <div class="label">Brain Prompt</div>
+          <p class="hint left-hint" style="margin-bottom:12px">
+            One prompt document sent to the AI on every turn. Edit freely — safety, Telugu voice rules, and your business context all live here.
+          </p>
+          <div class="prompt-token-meter">
+            <div class="prompt-token-row">
+              <span>Estimated tokens: <strong id="brainTokenEst">—</strong></span>
+              <span>Budget: <strong id="brainTokenBudget">1500</strong></span>
+              <span id="brainCacheStatus" class="badge badge-green">Cache ON</span>
+            </div>
+            <div class="prompt-token-bar" aria-hidden="true">
+              <div id="brainTokenCacheMin" class="prompt-token-marker cache-min" title="Cache minimum (1,024)"></div>
+              <div id="brainTokenFill" class="prompt-token-fill"></div>
+            </div>
+            <p id="brainTokenHint" class="hint left-hint">
+              Min cache: <strong>1,024</strong> tokens · Budget range: <strong>1,500–5,000</strong> · Max ~20,000 chars
+            </p>
+          </div>
+          <label class="field-label">Your brain prompt · <span id="brainCharCount">0</span> chars</label>
+          <textarea id="brainPrompt" class="textarea textarea-brain" placeholder="Loading default Telugu voice prompt…" spellcheck="false"></textarea>
           <div class="btnRow" style="margin-top:12px">
-            <button id="saveInstructions" class="btn primary">💾 Save prompts</button>
-            <button id="resetInstructions" class="btn">↺ Reset</button>
+            <button id="saveInstructions" class="btn primary">💾 Save prompt</button>
+            <button id="loadDefaultPrompt" class="btn">↺ Load default</button>
+            <button id="resetInstructions" class="btn">Clear saved</button>
             <button id="previewInstructions" class="btn">👁️ Test</button>
           </div>
           <div id="saveStatus" class="hint left-hint" style="display:none"></div>

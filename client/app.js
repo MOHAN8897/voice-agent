@@ -33,9 +33,14 @@ const replayBtn = $("replayBtn");
 const ttsOnlyBtn = $("ttsOnlyBtn");
 const ttsError = $("ttsError");
 
-// Custom AI
-const customInstructions = $("customInstructions");
-const responseStyle = $("responseStyle");
+// Brain prompt editor (single document)
+const brainPromptEl = $("brainPrompt");
+const brainCharCount = $("brainCharCount");
+const brainTokenEst = $("brainTokenEst");
+const brainTokenBudget = $("brainTokenBudget");
+const brainTokenFill = $("brainTokenFill");
+const brainCacheStatus = $("brainCacheStatus");
+const loadDefaultPromptBtn = $("loadDefaultPrompt");
 const saveBtn = $("saveInstructions");
 const resetBtn = $("resetInstructions");
 const previewBtn = $("previewInstructions");
@@ -484,34 +489,162 @@ async function checkHealth() {
 }
 checkHealth();
 
-// -- Instructions: dual-channel (behaviour + business), load/save with 10k caps --
-const bizEl = $("businessInstructions");
-const behavCount = $("behavCount");
-const bizCount = $("bizCount");
+const CACHE_MIN_TOKENS = 1024;
+const BUDGET_MIN_TOKENS = 1500;
+const BRAIN_PROMPT_MAX_CHARS = 20000;
+
+function estimatePromptTokens(text) {
+  const len = (text || "").length;
+  return len ? Math.max(1, Math.ceil(len / 4)) : 0;
+}
+
+function getBrainBudgetTokens() {
+  const el = $("brainPromptBudgetTokens");
+  const n = el ? Number(el.value) : 1500;
+  return Number.isFinite(n) ? n : 1500;
+}
+
+function updatePromptMeter() {
+  if (!brainPromptEl) return;
+  const text = brainPromptEl.value || "";
+  const est = estimatePromptTokens(text);
+  const budget = getBrainBudgetTokens();
+  const pct = Math.min(100, (est / budget) * 100);
+  const cachePct = Math.min(100, (CACHE_MIN_TOKENS / budget) * 100);
+  if (brainCharCount) brainCharCount.textContent = String(text.length);
+  if (brainTokenEst) brainTokenEst.textContent = String(est);
+  if (brainTokenBudget) brainTokenBudget.textContent = String(budget);
+  if (brainTokenFill) {
+    brainTokenFill.style.width = pct + "%";
+    brainTokenFill.classList.toggle("over", est > budget);
+    brainTokenFill.classList.toggle("warn", est <= budget && est < CACHE_MIN_TOKENS);
+  }
+  const cacheMin = $("brainTokenCacheMin");
+  if (cacheMin) cacheMin.style.left = cachePct + "%";
+  if (brainCacheStatus) {
+    if (est > budget) {
+      brainCacheStatus.textContent = "Over budget";
+      brainCacheStatus.className = "badge badge-warn";
+    } else if (est < CACHE_MIN_TOKENS) {
+      brainCacheStatus.textContent = "Cache OFF (<1024)";
+      brainCacheStatus.className = "badge badge-warn";
+    } else {
+      brainCacheStatus.textContent = "Cache ON";
+      brainCacheStatus.className = "badge badge-green";
+    }
+  }
+  const cacheBadge = $("cacheBadge");
+  if (cacheBadge) {
+    cacheBadge.textContent = est >= CACHE_MIN_TOKENS ? "✅ Caching ON" : "⚠️ Caching OFF (<1024 tokens)";
+    cacheBadge.className = est >= CACHE_MIN_TOKENS ? "badge badge-green" : "badge badge-warn";
+  }
+}
+
+async function fetchDefaultBrainPrompt() {
+  const r = await fetch("/api/instructions/default");
+  if (!r.ok) throw new Error("Could not load default prompt");
+  return r.json();
+}
 
 async function loadInstructions() {
-  const localB = localStorage.getItem("telugu_behaviour") || localStorage.getItem("telugu_custom_instructions") || "";
-  const localZ = localStorage.getItem("telugu_business") || "";
-  const localStyle = localStorage.getItem("telugu_response_style") || "concise, conversational";
-  customInstructions.value = localB;
-  bizEl.value = localZ;
-  responseStyle.value = localStyle;
+  let defaultPrompt = "";
+  try {
+    const d = await fetchDefaultBrainPrompt();
+    defaultPrompt = d.brainPrompt || "";
+  } catch {}
+  const local = localStorage.getItem("telugu_brain_prompt") || "";
+  if (brainPromptEl) brainPromptEl.value = local || defaultPrompt;
   try {
     const r = await fetch("/api/instructions?sessionId=" + encodeURIComponent(sessionId));
     if (r.ok) {
       const j = await r.json();
-      if (j.behaviour) { customInstructions.value = j.behaviour; localStorage.setItem("telugu_behaviour", j.behaviour); }
-      if (j.business) { bizEl.value = j.business; localStorage.setItem("telugu_business", j.business); }
-      if (j.style) { responseStyle.value = j.style; localStorage.setItem("telugu_response_style", j.style); }
+      if (j.brainPrompt) {
+        brainPromptEl.value = j.brainPrompt;
+        localStorage.setItem("telugu_brain_prompt", j.brainPrompt);
+      }
+      if (j.customBrainPrompt || j.present) updateActiveBadge();
     }
   } catch {}
   promptsDirty = false;
+  updatePromptMeter();
   updateActiveBadge();
 }
+
 function updateActiveBadge() {
-  const has = (customInstructions.value || "").trim().length > 0 || (bizEl.value || "").trim().length > 0;
-  activeBadge.style.display = has ? "" : "none";
+  const has = brainPromptEl && (brainPromptEl.value || "").trim().length > 0;
+  if (activeBadge) activeBadge.style.display = has ? "" : "none";
 }
+
+if (brainPromptEl) {
+  brainPromptEl.addEventListener("input", () => {
+    localStorage.setItem("telugu_brain_prompt", brainPromptEl.value);
+    markPromptsDirty();
+    updatePromptMeter();
+  });
+}
+const budgetSlider = $("brainPromptBudgetTokens");
+if (budgetSlider) budgetSlider.addEventListener("input", updatePromptMeter);
+
+loadInstructions();
+
+if (loadDefaultPromptBtn) loadDefaultPromptBtn.addEventListener("click", async () => {
+  try {
+    const d = await fetchDefaultBrainPrompt();
+    if (brainPromptEl) brainPromptEl.value = d.brainPrompt || "";
+    markPromptsDirty();
+    updatePromptMeter();
+    saveStatus.style.display = "block";
+    saveStatus.textContent = "Default prompt loaded — click Save prompt to apply.";
+    setTimeout(() => saveStatus.style.display = "none", 3000);
+  } catch (e) {
+    saveStatus.style.display = "block";
+    saveStatus.textContent = "Failed to load default: " + e;
+  }
+});
+
+saveBtn.addEventListener("click", async () => {
+  saveStatus.style.display = "block";
+  saveStatus.textContent = "Saving…";
+  try {
+    const text = getBrainPromptSafe();
+    const r = await fetch("/api/instructions", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sessionId,
+        brainPrompt: text,
+        brainPromptBudgetTokens: getBrainBudgetTokens(),
+      }),
+    });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.detail ? JSON.stringify(j.detail) : r.statusText);
+    localStorage.setItem("telugu_brain_prompt", text);
+    saveStatus.textContent = `Saved ✓ ${j.estimatedTokens}/${j.budgetTokens} tokens · cache ${j.cacheEligible ? "ON" : "OFF"} · headroom ${j.headroom}`;
+    promptsDirty = false;
+    updatePromptMeter();
+    updateActiveBadge();
+    setTimeout(() => saveStatus.style.display = "none", 4000);
+  } catch (e) {
+    saveStatus.textContent = "Save failed: " + String(e.message || e);
+  }
+});
+
+resetBtn.addEventListener("click", async () => {
+  try {
+    const d = await fetchDefaultBrainPrompt();
+    if (brainPromptEl) brainPromptEl.value = d.brainPrompt || "";
+  } catch {}
+  localStorage.removeItem("telugu_brain_prompt");
+  updatePromptMeter();
+  updateActiveBadge();
+  saveStatus.style.display = "block";
+  saveStatus.textContent = "Clearing saved prompt…";
+  try {
+    await fetch("/api/instructions?sessionId=" + encodeURIComponent(sessionId), { method: "DELETE" });
+    promptsDirty = false;
+    saveStatus.textContent = "Cleared ✓ — showing factory default (not saved until you click Save)";
+  } catch { saveStatus.textContent = "Cleared locally ✓"; }
+  setTimeout(() => saveStatus.style.display = "none", 3000);
+});
 function updateHistoryCount() {
   const domTurns = conversationEl
     ? Math.floor(conversationEl.querySelectorAll(".chat-msg.user").length)
@@ -541,71 +674,6 @@ function restoreConversationFromStore() {
   }
   updateHistoryCount();
 }
-customInstructions.addEventListener("input", () => {
-  localStorage.setItem("telugu_behaviour", customInstructions.value);
-  behavCount.textContent = customInstructions.value.length;
-  markPromptsDirty();
-  updateActiveBadge();
-});
-bizEl.addEventListener("input", () => {
-  localStorage.setItem("telugu_business", bizEl.value);
-  bizCount.textContent = bizEl.value.length;
-  markPromptsDirty();
-  updateActiveBadge();
-});
-responseStyle.addEventListener("change", () => {
-  localStorage.setItem("telugu_response_style", responseStyle.value);
-  markPromptsDirty();
-});
-loadInstructions();
-
-saveBtn.addEventListener("click", async () => {
-  saveStatus.style.display = "block";
-  saveStatus.textContent = "Saving…";
-  try {
-    const r = await fetch("/api/instructions", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        sessionId,
-        behaviourInstructions: customInstructions.value,
-        businessInstructions: bizEl.value,
-        responseStyle: responseStyle.value,
-      }),
-    });
-    const j = await r.json();
-    if (!r.ok) throw new Error(j.detail ? JSON.stringify(j.detail) : r.statusText);
-    localStorage.setItem("telugu_behaviour", j.behaviour);
-    localStorage.setItem("telugu_business", j.business);
-    localStorage.setItem("telugu_response_style", j.responseStyle || responseStyle.value);
-    saveStatus.textContent = `Saved ✓ ${j.estimatedTokens}/${j.budgetTokens} tokens · cache ${j.cacheEligible ? "ON" : "OFF"} · behaviour ${j.behaviourLength}/10000 · business ${j.businessLength}/10000`;
-    promptsDirty = false;
-    const cacheBadge = document.getElementById("cacheBadge");
-    if (cacheBadge) {
-      cacheBadge.textContent = j.cacheEligible ? "✅ Caching ON" : "⚠️ Caching OFF (<1024 tokens)";
-      cacheBadge.className = j.cacheEligible ? "badge badge-green" : "badge badge-warn";
-    }
-    updateActiveBadge();
-    setTimeout(() => saveStatus.style.display = "none", 3500);
-  } catch (e) {
-    saveStatus.textContent = "Save failed: " + String(e.message || e);
-  }
-});
-resetBtn.addEventListener("click", async () => {
-  customInstructions.value = "";
-  bizEl.value = "";
-  responseStyle.value = "concise, conversational";
-  behavCount.textContent = "0"; bizCount.textContent = "0";
-  ["telugu_behaviour", "telugu_custom_instructions", "telugu_business", "telugu_response_style"].forEach(k => localStorage.removeItem(k));
-  updateActiveBadge();
-  saveStatus.style.display = "block";
-  saveStatus.textContent = "Clearing…";
-  try {
-    await fetch("/api/instructions?sessionId=" + encodeURIComponent(sessionId), { method: "DELETE" });
-    promptsDirty = false;
-    saveStatus.textContent = "Cleared ✓ — back to default Telugu-first";
-  } catch { saveStatus.textContent = "Cleared locally ✓"; }
-  setTimeout(() => saveStatus.style.display = "none", 2000);
-});
 // View effective prompt (transparency)
 if (viewPromptBtn) viewPromptBtn.addEventListener("click", async () => {
   effectivePrompt.style.display = "block";
@@ -910,43 +978,24 @@ function buildBrainBody(transcript, extras = {}) {
     language_code: extras.language_code || "te-IN",
     sessionId,
   };
-  if (promptsDirty) {
-    const ui = getInstructionsSafe();
-    const biz = getBizSafeRaw();
-    const style = responseStyle.value;
-    if (ui) body.userInstructions = ui;
-    if (biz) body.businessInstructions = biz;
-    if (style) body.responseStyle = style;
+  if (promptsDirty && brainPromptEl) {
+    const prompt = getBrainPromptSafe();
+    if (prompt) body.brainPrompt = prompt;
   }
   return body;
 }
 
-// Guards: hard caps (server rejects >10000 per channel) — trim + warn instead of silent 422
-const INSTR_MAX = 10000;
-
-function getInstructionsSafe() {   // BEHAVIOUR channel
-  const raw = customInstructions.value.trim();
-  if (raw.length > INSTR_MAX) {
+function getBrainPromptSafe() {
+  if (!brainPromptEl) return "";
+  const raw = brainPromptEl.value.trim();
+  if (raw.length > BRAIN_PROMPT_MAX_CHARS) {
     saveStatus.style.display = "block";
-    saveStatus.textContent = `⚠️ Behavioural prompt too long (${raw.length}/${INSTR_MAX}) — using first ${INSTR_MAX}.`;
+    saveStatus.textContent = `⚠️ Brain prompt too long (${raw.length}/${BRAIN_PROMPT_MAX_CHARS}) — using first ${BRAIN_PROMPT_MAX_CHARS}.`;
     setTimeout(() => saveStatus.style.display = "none", 4000);
-    return raw.slice(0, INSTR_MAX);
+    return raw.slice(0, BRAIN_PROMPT_MAX_CHARS);
   }
   return raw;
 }
-
-function getBusinessSafe() {       // BUSINESS channel
-  const raw = bizEl.value.trim();
-  if (raw.length > INSTR_MAX) {
-    saveStatus.style.display = "block";
-    saveStatus.textContent = `⚠️ Business prompt too long (${raw.length}/${INSTR_MAX}) — using first ${INSTR_MAX}.`;
-    setTimeout(() => saveStatus.style.display = "none", 4000);
-    return raw.slice(0, INSTR_MAX);
-  }
-  return raw;
-}
-
-function getBizSafeRaw() { return bizEl.value.trim(); }
 
 // ---------- STREAMING TURN (industry cascaded pipeline) ----------
 // Brain SSE deltas → forwarded into Sarvam TTS WS as they arrive (Sarvam buffers
@@ -1896,8 +1945,9 @@ async function sendVoiceTurn(blob) {
   fd.append("language_code", "te-IN");
   fd.append("mode", "transcribe");
   fd.append("sessionId", sessionId);
-  fd.append("userInstructions", getInstructionsSafe());
-  fd.append("businessInstructions", getBizSafeRaw());
+  if (promptsDirty && brainPromptEl) {
+    fd.append("brainPrompt", getBrainPromptSafe());
+  }
   // ttsSpeaker left empty → server picks via language resolver
   setState("Understanding… → Thinking…");
   const t0 = performance.now();
@@ -1968,7 +2018,7 @@ micBtn.addEventListener("click", () => {
   if (isRecording) stopRecording(); else startRecording();
 });
 document.addEventListener("keydown", (e) => {
-  if (e.code === "Space" && document.activeElement !== customInstructions) { e.preventDefault(); micBtn.click(); }
+  if (e.code === "Space" && document.activeElement !== brainPromptEl) { e.preventDefault(); micBtn.click(); }
   if (e.code === "Escape" && !audioPlayer.paused) stopAudio();
 });
 
@@ -2002,14 +2052,16 @@ async function sendBrainViaText(text, lang) {
   } catch (e) { responseEl.textContent = "Test error: " + String(e); }
 }
 
-// Preview custom instructions (ephemeral) — uses /api/brain/test (style included)
+// Preview brain prompt (ephemeral) — uses /api/brain with current editor text
 previewBtn.addEventListener("click", async () => {
-  const instr = getInstructionsSafe();
-  const style = responseStyle.value;
-  if (!instr && style === "concise, conversational") { previewOutput.style.display = "block"; previewOutput.textContent = "Enter instructions or pick a non-default style, then Test."; return; }
+  const prompt = getBrainPromptSafe();
+  if (!prompt) { previewOutput.style.display = "block"; previewOutput.textContent = "Enter a brain prompt, then Test."; return; }
   previewOutput.style.display = "block"; previewOutput.textContent = "Testing…";
   try {
-    const r = await fetch("/api/brain/test", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userInstructions: instr, businessInstructions: getBizSafeRaw(), testInput: "Python అంటే ఏమిటి?", responseStyle: style }) });
+    const r = await fetch("/api/brain", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ transcript: "Python అంటే ఏమిటి?", language_code: "te-IN", sessionId, brainPrompt: prompt }),
+    });
     const j = await r.json();
     if (!r.ok) previewOutput.textContent = "Error: " + JSON.stringify(j);
     else previewOutput.textContent = "→ " + j.text;

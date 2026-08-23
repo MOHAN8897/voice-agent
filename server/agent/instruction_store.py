@@ -11,9 +11,11 @@ from server.agent.brain_prompt_composer import (
     compose_brain_prompt,
     estimate_tokens,
     sanitize_behaviour,
+    sanitize_brain_prompt,
     sanitize_business,
     validate_brain_prompt_budget,
 )
+from server.prompts.brain_prompt import get_factory_brain_prompt
 from server.prompts.voice_defaults import (
     DEFAULT_BEHAVIOUR_INSTRUCTIONS,
     DEFAULT_BUSINESS_INSTRUCTIONS,
@@ -63,6 +65,7 @@ class InstructionStore:
                 "business": z,
                 "style": style_val,
                 "brainPrompt": brain_prompt,
+                "customBrainPrompt": False,
                 "estimatedTokens": estimated,
                 "budgetTokens": budget_tokens,
                 "updatedAt": time.time(),
@@ -74,6 +77,44 @@ class InstructionStore:
                 "business": z,
                 "style": style_val,
                 "brainPrompt": brain_prompt,
+                "customBrainPrompt": False,
+                "estimatedTokens": estimated,
+                "budgetTokens": budget_tokens,
+                "updatedAt": e["updatedAt"],
+            }
+
+    def save_brain_prompt(
+        self,
+        session_id: str,
+        brain_prompt: str,
+        *,
+        budget_tokens: int = 1500,
+    ) -> dict:
+        """Save a single user-edited brain prompt document."""
+        text = sanitize_brain_prompt(brain_prompt)
+        if not text:
+            text = get_factory_brain_prompt()
+        estimated = validate_brain_prompt_budget(text, budget_tokens)
+        with self._lock:
+            self._store[session_id] = {
+                "text": "",
+                "behaviour": "",
+                "business": "",
+                "style": DEFAULT_RESPONSE_STYLE,
+                "brainPrompt": text,
+                "customBrainPrompt": True,
+                "estimatedTokens": estimated,
+                "budgetTokens": budget_tokens,
+                "updatedAt": time.time(),
+            }
+            e = self._store[session_id]
+            return {
+                "text": "",
+                "behaviour": "",
+                "business": "",
+                "style": DEFAULT_RESPONSE_STYLE,
+                "brainPrompt": text,
+                "customBrainPrompt": True,
                 "estimatedTokens": estimated,
                 "budgetTokens": budget_tokens,
                 "updatedAt": e["updatedAt"],
@@ -129,18 +170,20 @@ class InstructionStore:
         with self._lock:
             e = self._entry(session_id)
             if not e:
-                brain = compose_brain_prompt(language="te-IN")
+                brain = get_factory_brain_prompt()
                 return {
                     "text": DEFAULT_BEHAVIOUR_INSTRUCTIONS,
                     "behaviour": DEFAULT_BEHAVIOUR_INSTRUCTIONS,
                     "business": DEFAULT_BUSINESS_INSTRUCTIONS,
                     "brainPrompt": brain,
+                    "customBrainPrompt": False,
                     "estimatedTokens": estimate_tokens(brain),
                     "updatedAt": None,
                     "present": False,
                     "style": DEFAULT_RESPONSE_STYLE,
                     "usingDefaults": True,
                 }
+            using_custom = bool(e.get("customBrainPrompt"))
             return {
                 "text": e["behaviour"] or DEFAULT_BEHAVIOUR_INSTRUCTIONS,
                 "behaviour": e["behaviour"] or DEFAULT_BEHAVIOUR_INSTRUCTIONS,
@@ -150,12 +193,13 @@ class InstructionStore:
                     business=e.get("business", ""),
                     style=e.get("style"),
                 ),
+                "customBrainPrompt": using_custom,
                 "estimatedTokens": e.get("estimatedTokens") or estimate_tokens(e.get("brainPrompt", "")),
                 "budgetTokens": e.get("budgetTokens"),
                 "updatedAt": e["updatedAt"],
-                "present": bool(e["behaviour"] or e["business"]),
+                "present": using_custom or bool(e["behaviour"] or e["business"]),
                 "style": e.get("style") or DEFAULT_RESPONSE_STYLE,
-                "usingDefaults": not bool(e["behaviour"] or e["business"]),
+                "usingDefaults": not using_custom and not bool(e["behaviour"] or e["business"]),
             }
 
     def stats(self) -> dict:

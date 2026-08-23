@@ -27,8 +27,9 @@ class BrainRequest(BaseModel):
     transcript: str = Field(..., min_length=1, max_length=5000, description="STT transcript")
     language_code: str = Field("te-IN")
     sessionId: str = Field("default", max_length=100)
-    userInstructions: str | None = Field(None, max_length=10000, description="BEHAVIOUR: how to respond")
-    businessInstructions: str | None = Field(None, max_length=10000, description="BUSINESS: client domain knowledge")
+    brainPrompt: str | None = Field(None, max_length=20000, description="Single brain prompt override")
+    userInstructions: str | None = Field(None, max_length=10000, description="Legacy: behaviour channel")
+    businessInstructions: str | None = Field(None, max_length=10000, description="Legacy: business channel")
     responseStyle: str | None = Field(None, max_length=100)
 
 
@@ -61,6 +62,7 @@ async def brain_route(body: BrainRequest):
             user_instructions=body.userInstructions,
             business_instructions=body.businessInstructions,
             response_style=body.responseStyle,
+            brain_prompt=body.brainPrompt,
             openai_model=rt.get("openaiModel"),
             temperature=rt.get("openaiTemperature"),
             max_output_tokens=rt.get("openaiMaxTokens"),
@@ -109,6 +111,7 @@ async def brain_stream_route(body: BrainRequest):
                 user_instructions=body.userInstructions,
                 business_instructions=body.businessInstructions,
                 response_style=body.responseStyle,
+                brain_prompt=body.brainPrompt,
                 openai_model=rt.get("openaiModel"),
                 temperature=rt.get("openaiTemperature"),
                 max_output_tokens=rt.get("openaiMaxTokens"),

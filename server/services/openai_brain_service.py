@@ -175,10 +175,13 @@ def _resolve_instruction_overrides(
     user_instructions: str | None,
     business_instructions: str | None,
     response_style: str | None,
-) -> tuple[bool, str, str | None, str | None]:
+    brain_prompt: str | None = None,
+) -> tuple[bool, str, str | None, str | None, str | None]:
     """Empty strings count as not provided. All absent → use stored brainPrompt."""
+    if _instruction_provided(brain_prompt):
+        return False, "", None, None, str(brain_prompt).strip()
     if not any(_instruction_provided(v) for v in (user_instructions, business_instructions, response_style)):
-        return True, "", None, None
+        return True, "", None, None, None
     try:
         ui = (
             str(user_instructions).strip()
@@ -199,7 +202,7 @@ def _resolve_instruction_overrides(
         ui = str(user_instructions or "").strip()
         bi = str(business_instructions or "").strip() or None
         rs = str(response_style or "").strip() or None
-    return False, ui, bi, rs
+    return False, ui, bi, rs, None
 
 
 def _resolve_brain_text(
@@ -237,21 +240,25 @@ def _prepare_brain_context(
     response_style: str | None,
     openai_model: str | None,
     use_stored_brain: bool,
+    brain_override: str | None = None,
 ) -> tuple[dict, list, str, int, int, str, bool, int, str, int, int, int]:
     settings = get_settings()
     use_model = openai_model or settings.openai_model
     language_context = resolve_language(language_code, transcript)
     budget = resolve_brain_budget(session_id)
 
-    brain_text = _resolve_brain_text(
-        session_id=session_id,
-        language=language_context["responseLanguage"],
-        user_instructions=user_instructions,
-        business_instructions=business_instructions,
-        response_style=response_style,
-        budget=budget,
-        use_stored_brain=use_stored_brain,
-    )
+    if brain_override:
+        brain_text = brain_override
+    else:
+        brain_text = _resolve_brain_text(
+            session_id=session_id,
+            language=language_context["responseLanguage"],
+            user_instructions=user_instructions,
+            business_instructions=business_instructions,
+            response_style=response_style,
+            budget=budget,
+            use_stored_brain=use_stored_brain,
+        )
     brain_est = estimate_tokens(brain_text)
 
     session_summary = ""
@@ -328,6 +335,7 @@ async def generate_response(
     user_instructions: str | None = None,
     business_instructions: str | None = None,
     response_style: str | None = None,
+    brain_prompt: str | None = None,
     openai_model: str | None = None,
     temperature: float | None = None,
     max_output_tokens: int | None = None,
@@ -337,11 +345,12 @@ async def generate_response(
     timeout_s = (timeout_ms or settings.request_timeout_ms) / 1000
     use_max_tokens = max_output_tokens or settings.max_response_length
 
-    use_stored_brain, user_instructions, business_instructions, response_style = _resolve_instruction_overrides(
+    use_stored_brain, user_instructions, business_instructions, response_style, brain_override = _resolve_instruction_overrides(
         session_id,
         user_instructions,
         business_instructions,
         response_style,
+        brain_prompt,
     )
 
     t0 = time.perf_counter()
@@ -369,6 +378,7 @@ async def generate_response(
         response_style=response_style,
         openai_model=openai_model,
         use_stored_brain=use_stored_brain,
+        brain_override=brain_override,
     )
     prep_ms = int((time.perf_counter() - t0) * 1000)
     prep_ms = max(prep_ms, 0)
@@ -557,6 +567,7 @@ async def generate_response_stream(
     user_instructions: str | None = None,
     business_instructions: str | None = None,
     response_style: str | None = None,
+    brain_prompt: str | None = None,
     openai_model: str | None = None,
     temperature: float | None = None,
     max_output_tokens: int | None = None,
@@ -565,11 +576,12 @@ async def generate_response_stream(
     settings = get_settings()
     use_max_tokens = max_output_tokens or settings.max_response_length
 
-    use_stored_brain, user_instructions, business_instructions, response_style = _resolve_instruction_overrides(
+    use_stored_brain, user_instructions, business_instructions, response_style, brain_override = _resolve_instruction_overrides(
         session_id,
         user_instructions,
         business_instructions,
         response_style,
+        brain_prompt,
     )
 
     t0 = time.perf_counter()
@@ -597,6 +609,7 @@ async def generate_response_stream(
         response_style=response_style,
         openai_model=openai_model,
         use_stored_brain=use_stored_brain,
+        brain_override=brain_override,
     )
     prep_ms = int((time.perf_counter() - t0) * 1000)
     prep_ms = max(prep_ms, 0)

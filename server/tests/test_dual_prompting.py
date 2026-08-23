@@ -13,6 +13,38 @@ def _client(monkeypatch):
     return TestClient(app_mod.app)
 
 
+def test_save_and_get_single_brain_prompt(monkeypatch):
+    from server.prompts.brain_prompt import get_factory_brain_prompt
+
+    c = _client(monkeypatch)
+    sid = "brain-single"
+    prompt = get_factory_brain_prompt() + "\n\n--- CUSTOM ---\nAlways mention InventoryPro."
+    r = c.post("/api/instructions", json={"sessionId": sid, "brainPrompt": prompt})
+    assert r.status_code == 200, r.text
+    j = r.json()
+    assert j["customBrainPrompt"] is True
+    assert j["estimatedTokens"] >= 1024
+    g = c.get("/api/instructions", params={"sessionId": sid}).json()
+    assert g["present"] is True
+    assert "InventoryPro" in g["brainPrompt"]
+    assert g["limits"]["brainPromptMax"] > 0
+    c.delete("/api/instructions", params={"sessionId": sid})
+    get_settings.cache_clear()
+
+
+def test_default_brain_prompt_endpoint(monkeypatch):
+    c = _client(monkeypatch)
+    r = c.get("/api/instructions/default")
+    assert r.status_code == 200
+    j = r.json()
+    assert "brainPrompt" in j
+    assert "--- TELUGU VOICE ---" in j["brainPrompt"]
+    assert j["estimatedTokens"] >= 1024
+    assert j["cacheMinTokens"] == 1024
+    assert j["budgetMinTokens"] == 1500
+    get_settings.cache_clear()
+
+
 def test_save_and_get_both_channels(monkeypatch):
     c = _client(monkeypatch)
     sid = "dual-1"

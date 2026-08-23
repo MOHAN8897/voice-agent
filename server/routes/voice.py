@@ -34,6 +34,7 @@ async def voice_turn(
     language_code: str = Form("te-IN"),
     mode: str = Form("transcribe"),
     sessionId: str = Form("default"),
+    brainPrompt: str = Form(""),
     userInstructions: str = Form(""),
     businessInstructions: str = Form(""),
     ttsSpeaker: str = Form(""),
@@ -53,6 +54,7 @@ async def voice_turn(
         stt_model_rt = rt.get("sttModel")
         stt_mode_eff = mode if mode != "transcribe" else rt.get("sttMode", "transcribe")
         # Dual-channel prompting: explicit form fields override; else use stored brain prompt
+        brain_instr = brainPrompt.strip() if brainPrompt and brainPrompt.strip() else None
         user_instr = userInstructions if userInstructions else None
         biz_instr = businessInstructions if businessInstructions else None
         result = await controller.run_turn(
@@ -63,6 +65,7 @@ async def voice_turn(
             stt_mode=stt_mode_eff,
             stt_model=stt_model_rt,
             session_id=sessionId,
+            brain_prompt=brain_instr,
             user_instructions=user_instr,
             business_instructions=biz_instr,
             tts_speaker=ttsSpeaker or rt.get("ttsSpeaker"),
@@ -114,6 +117,7 @@ async def voice_stt_brain_only(
     language_code: str = Form("te-IN"),
     mode: str = Form("transcribe"),
     sessionId: str = Form("default"),
+    brainPrompt: str = Form(""),
     userInstructions: str = Form(""),
     businessInstructions: str = Form(""),
 ):
@@ -123,6 +127,7 @@ async def voice_stt_brain_only(
     try:
         data = await file.read()
         validate_audio_size(data, constants.MAX_AUDIO_BYTES)
+        brain_instr = brainPrompt.strip() if brainPrompt and brainPrompt.strip() else None
         eff_user = userInstructions if userInstructions else None
         eff_business = businessInstructions if businessInstructions else None
         result = await controller.run_turn(
@@ -133,6 +138,7 @@ async def voice_stt_brain_only(
             stt_mode=mode if mode != "transcribe" else rt.get("sttMode", "transcribe"),
             stt_model=rt.get("sttModel"),
             session_id=sessionId,
+            brain_prompt=brain_instr,
             user_instructions=eff_user,
             business_instructions=eff_business,
             openai_model=rt.get("openaiModel"),

@@ -88,10 +88,11 @@ def test_partial_override_empty_user_with_business():
     from server.services import openai_brain_service as svc
 
     with patch.object(svc.instruction_store, "get_behaviour", return_value="STORED-BEHAVIOUR"):
-        use_stored, ui, bi, _ = svc._resolve_instruction_overrides("s1", "", "Biz facts", None)
+        use_stored, ui, bi, _, bp = svc._resolve_instruction_overrides("s1", "", "Biz facts", None)
     assert use_stored is False
     assert ui == "STORED-BEHAVIOUR"
     assert bi == "Biz facts"
+    assert bp is None
 
     from server.agent.brain_prompt_composer import compose_brain_prompt, estimate_tokens
 
@@ -106,11 +107,15 @@ def test_empty_instruction_fields_use_stored_brain(monkeypatch):
     with patch.object(svc.instruction_store, "get_brain_prompt", return_value=stored) as mock_get, patch(
         "server.services.openai_brain_service.compose_brain_prompt"
     ) as mock_compose, patch.object(svc.conversation_manager, "get_context_for_brain", return_value=[]):
-        use_stored, ui, bi, rs = svc._resolve_instruction_overrides("s1", "", "", "")
+        use_stored, ui, bi, rs, bp = svc._resolve_instruction_overrides("s1", "", "", "")
         assert use_stored is True
         assert ui == ""
-        use_stored2, _, _, _ = svc._resolve_instruction_overrides("s1", None, None, None)
+        assert bp is None
+        use_stored2, _, _, _, bp2 = svc._resolve_instruction_overrides("s1", None, None, None)
         assert use_stored2 is True
+        assert bp2 is None
+        _, _, _, _, bp3 = svc._resolve_instruction_overrides("s1", None, None, None, brain_prompt="CUSTOM-PROMPT")
+        assert bp3 == "CUSTOM-PROMPT"
         svc._prepare_brain_context(
             session_id="s1",
             transcript="hi",

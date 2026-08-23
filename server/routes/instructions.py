@@ -1,5 +1,5 @@
 """
-Instructions routes — dual-channel editing; composed into single brainPrompt on save.
+Instructions routes — single brain prompt editing; legacy behaviour/business still supported.
 """
 from __future__ import annotations
 
@@ -9,56 +9,86 @@ from typing import Optional
 
 from server.agent.brain_prompt_composer import (
     MAX_BEHAVIOUR_CHARS,
+    MAX_BRAIN_PROMPT_CHARS,
     MAX_BUSINESS_CHARS,
     PromptBudgetExceeded,
+    estimate_tokens,
 )
 from server.agent.instruction_store import instruction_store
 from server.agent.session_memory import session_memory
 from server.config.env import get_settings, ConfigError
+from server.prompts.brain_prompt import get_factory_brain_prompt
 from server.services.brain_budget import resolve_brain_budget
 from server.services.prompt_cache_key import cache_eligible
 
 router = APIRouter()
 
+CACHE_MIN_TOKENS = 1024
+BUDGET_MIN_TOKENS = 1500
+BUDGET_MAX_TOKENS = 5000
 
-def _limits() -> tuple[int, int]:
+
+def _limits() -> tuple[int, int, int]:
     try:
         _ = get_settings()
     except ConfigError:
         pass
-    return MAX_BEHAVIOUR_CHARS, MAX_BUSINESS_CHARS
+    return MAX_BEHAVIOUR_CHARS, MAX_BUSINESS_CHARS, MAX_BRAIN_PROMPT_CHARS
 
 
 class SaveRequest(BaseModel):
     sessionId: str = Field("default", max_length=100)
-    behaviourInstructions: str | None = Field(None, description="HOW the agent should respond")
-    businessInstructions: str | None = Field(None, description="Client business knowledge / domain grounding")
+    brainPrompt: str | None = Field(None, description="Single composed brain prompt (preferred)")
+    behaviourInstructions: str | None = Field(None, description="Legacy: HOW the agent should respond")
+    businessInstructions: str | None = Field(None, description="Legacy: business knowledge")
     instructions: str | None = Field(None, max_length=MAX_BEHAVIOUR_CHARS)
     responseStyle: str | None = Field(None, max_length=100)
     brainPromptBudgetTokens: int | None = Field(None, description="Optional budget override for validation")
 
 
+@router.get("/api/instructions/default")
+async def get_default_brain_prompt():
+    """Factory default brain prompt for the UI editor."""
+    prompt = get_factory_brain_prompt()
+    est = estimate_tokens(prompt)
+    return {
+        "brainPrompt": prompt,
+        "estimatedTokens": est,
+        "cacheMinTokens": CACHE_MIN_TOKENS,
+        "budgetMinTokens": BUDGET_MIN_TOKENS,
+        "budgetMaxTokens": BUDGET_MAX_TOKENS,
+        "cacheEligible": cache_eligible(est),
+        "maxChars": MAX_BRAIN_PROMPT_CHARS,
+    }
+
+
 @router.post("/api/instructions")
 async def save_instructions(body: SaveRequest):
-    b_max, z_max = _limits()
-
-    behaviour = body.behaviourInstructions if body.behaviourInstructions is not None else body.instructions or ""
-    if len(behaviour) > b_max:
-        behaviour = behaviour[:b_max]
-    business = body.businessInstructions or ""
-    if len(business) > z_max:
-        business = business[:z_max]
-
+    b_max, z_max, p_max = _limits()
     budget = body.brainPromptBudgetTokens or resolve_brain_budget(body.sessionId)
 
     try:
-        saved = instruction_store.save(
-            body.sessionId,
-            behaviour,
-            business,
-            body.responseStyle,
-            budget_tokens=budget,
-        )
+        if body.brainPrompt is not None:
+            if len(body.brainPrompt) > p_max:
+                raise HTTPException(
+                    status_code=400,
+                    detail={"error": {"code": "validation_error", "message": f"Brain prompt exceeds {p_max} characters"}},
+                )
+            saved = instruction_store.save_brain_prompt(body.sessionId, body.brainPrompt, budget_tokens=budget)
+        else:
+            behaviour = body.behaviourInstructions if body.behaviourInstructions is not None else body.instructions or ""
+            if len(behaviour) > b_max:
+                behaviour = behaviour[:b_max]
+            business = body.businessInstructions or ""
+            if len(business) > z_max:
+                business = business[:z_max]
+            saved = instruction_store.save(
+                body.sessionId,
+                behaviour,
+                business,
+                body.responseStyle,
+                budget_tokens=budget,
+            )
     except PromptBudgetExceeded as e:
         raise HTTPException(
             status_code=400,
@@ -76,16 +106,19 @@ async def save_instructions(body: SaveRequest):
     return {
         "ok": True,
         "sessionId": body.sessionId,
-        "behaviour": saved["behaviour"],
-        "business": saved["business"],
-        "responseStyle": saved["style"],
-        "brainPrompt": saved["brainPrompt"][:500] + ("..." if len(saved["brainPrompt"]) > 500 else ""),
+        "brainPrompt": saved["brainPrompt"][:800] + ("..." if len(saved["brainPrompt"]) > 800 else ""),
+        "brainPromptFull": saved["brainPrompt"],
         "estimatedTokens": saved["estimatedTokens"],
         "budgetTokens": saved["budgetTokens"],
         "headroom": saved["budgetTokens"] - saved["estimatedTokens"],
         "cacheEligible": cache_eligible(saved["estimatedTokens"]),
-        "behaviourLength": len(saved["behaviour"]),
-        "businessLength": len(saved["business"]),
+        "cacheMinTokens": CACHE_MIN_TOKENS,
+        "customBrainPrompt": saved.get("customBrainPrompt", False),
+        "behaviour": saved.get("behaviour", ""),
+        "business": saved.get("business", ""),
+        "responseStyle": saved.get("style"),
+        "behaviourLength": len(saved.get("behaviour") or ""),
+        "businessLength": len(saved.get("business") or ""),
         "updatedAt": saved["updatedAt"],
     }
 
@@ -93,16 +126,27 @@ async def save_instructions(body: SaveRequest):
 @router.get("/api/instructions")
 async def get_instructions(sessionId: str = "default"):
     meta = instruction_store.get_with_meta(sessionId)
-    limits = {"behaviourMax": _limits()[0], "businessMax": _limits()[1]}
+    b_max, z_max, p_max = _limits()
     budget = resolve_brain_budget(sessionId)
-    est = int(meta.get("estimatedTokens") or 0)
+    est = int(meta.get("estimatedTokens") or estimate_tokens(meta.get("brainPrompt") or ""))
+    if not meta.get("present"):
+        default = get_factory_brain_prompt()
+        meta["brainPrompt"] = default
+        est = estimate_tokens(default)
     return {
         "sessionId": sessionId,
         **meta,
         "budgetTokens": budget,
         "headroom": max(0, budget - est),
         "cacheEligible": cache_eligible(est),
-        "limits": limits,
+        "cacheMinTokens": CACHE_MIN_TOKENS,
+        "budgetMinTokens": BUDGET_MIN_TOKENS,
+        "budgetMaxTokens": BUDGET_MAX_TOKENS,
+        "limits": {
+            "brainPromptMax": p_max,
+            "behaviourMax": b_max,
+            "businessMax": z_max,
+        },
     }
 
 

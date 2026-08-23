@@ -60,18 +60,18 @@
       loadRuntime(runtimeValues);
 
       const instr = await (await fetch("/api/instructions?sessionId=" + encodeURIComponent(sessionId))).json();
-      const behavEl = safeGet("customInstructions");
-      const bizEl = safeGet("businessInstructions");
-      const styleEl = safeGet("responseStyle");
-      if (behavEl) {
-        behavEl.value = instr.behaviour || oaiDefaults.behaviourInstructions || "";
-        if (safeGet("behavCount")) safeGet("behavCount").textContent = behavEl.value.length;
+      const brainEl = safeGet("brainPrompt");
+      if (brainEl) {
+        if (instr.brainPrompt) {
+          brainEl.value = instr.brainPrompt;
+        } else {
+          try {
+            const d = await (await fetch("/api/instructions/default")).json();
+            brainEl.value = d.brainPrompt || "";
+          } catch {}
+        }
+        if (safeGet("brainCharCount")) safeGet("brainCharCount").textContent = brainEl.value.length;
       }
-      if (bizEl) {
-        bizEl.value = instr.business || oaiDefaults.businessInstructions || "";
-        if (safeGet("bizCount")) safeGet("bizCount").textContent = bizEl.value.length;
-      }
-      if (styleEl) styleEl.value = instr.style || oaiDefaults.responseStyle || styleEl.value;
 
       applyCatalogDefaults(oaiDefaults);
 
@@ -170,10 +170,10 @@
     bind("ttsMinBuffer", "ttsMinBufVal", (v) => v);
     bind("ttsMaxChunk", "ttsMaxChunkVal", (v) => v);
 
-    const behavEl = safeGet("customInstructions");
-    const bizEl = safeGet("businessInstructions");
-    if (behavEl && safeGet("behavCount")) behavEl.addEventListener("input", () => safeGet("behavCount").textContent = behavEl.value.length);
-    if (bizEl && safeGet("bizCount")) bizEl.addEventListener("input", () => safeGet("bizCount").textContent = bizEl.value.length);
+    const brainEl = safeGet("brainPrompt");
+    if (brainEl && safeGet("brainCharCount")) {
+      brainEl.addEventListener("input", () => { safeGet("brainCharCount").textContent = brainEl.value.length; });
+    }
 
     ["openaiModel", "ttsModel", "ttsSpeaker"].forEach((id) => {
       const el = safeGet(id);
@@ -244,9 +244,7 @@
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sessionId,
-          behaviourInstructions: getVal("customInstructions"),
-          businessInstructions: getVal("businessInstructions"),
-          responseStyle: getVal("responseStyle"),
+          brainPrompt: getVal("brainPrompt"),
           brainPromptBudgetTokens: getNum("brainPromptBudgetTokens") || 1500,
         }),
       });

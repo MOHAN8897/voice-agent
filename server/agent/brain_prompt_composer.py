@@ -7,6 +7,7 @@ from server.prompts.brain_prompt import DEFAULT_BRAIN_PROMPT_SECTIONS
 
 MAX_BEHAVIOUR_CHARS = 8_000
 MAX_BUSINESS_CHARS = 8_000
+MAX_BRAIN_PROMPT_CHARS = 20_000  # ~5,000 tokens at budget max
 
 
 class PromptBudgetExceeded(Exception):
@@ -51,6 +52,12 @@ def sanitize_business(text: str) -> str:
 
 def sanitize_user_instructions(text: str) -> str:
     return sanitize_behaviour(text)
+
+
+def sanitize_brain_prompt(text: str) -> str:
+    if not text:
+        return ""
+    return _strip_legacy_tags(text.strip()[:MAX_BRAIN_PROMPT_CHARS])
 
 
 def compose_brain_prompt(
