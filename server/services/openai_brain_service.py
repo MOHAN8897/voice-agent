@@ -5,6 +5,7 @@ Uses official `openai` SDK, Responses API (recommended). Falls back to Chat Comp
 from __future__ import annotations
 
 import asyncio
+import time
 
 from openai import APIConnectionError, APIStatusError, APITimeoutError, AsyncOpenAI, RateLimitError
 
@@ -13,8 +14,8 @@ from server.agent.instruction_builder import build_agent_instructions, build_inp
 from server.agent.language_resolver import resolve_language
 from server.config.env import get_settings
 from server.prompts.system_prompt import CORE_SYSTEM_PROMPT
-from server.utils.errors import AppError, ErrorCode
-from server.utils.logger import log_brain, log_error
+from server.services.openai_model_params import apply_generation_params
+from server.utils.logger import log_brain, log_error, log_perf
 import json
 
 
@@ -97,8 +98,21 @@ async def generate_response(
         "max_output_tokens": use_max_tokens,
         "store": False,
     }
-    use_temp = temperature if temperature is not None else settings.openai_temperature
-    create_kwargs["temperature"] = max(0.0, min(2.0, float(use_temp)))
+    apply_generation_params(
+        create_kwargs,
+        model=use_model,
+        temperature=temperature,
+        default_temperature=settings.openai_temperature,
+        voice_optimized=True,
+    )
+    log_brain(
+        "CONFIG",
+        model=use_model,
+        max_output_tokens=use_max_tokens,
+        temperature=create_kwargs.get("temperature"),
+        reasoning=create_kwargs.get("reasoning"),
+        history_len=len(history),
+    )
 
     while True:
         try:
@@ -280,8 +294,24 @@ async def generate_response_stream(
         "store": False,
         "stream": True,
     }
-    use_temp = temperature if temperature is not None else settings.openai_temperature
-    create_kwargs["temperature"] = max(0.0, min(2.0, float(use_temp)))
+    apply_generation_params(
+        create_kwargs,
+        model=use_model,
+        temperature=temperature,
+        default_temperature=settings.openai_temperature,
+        voice_optimized=True,
+    )
+    log_brain(
+        "CONFIG",
+        model=use_model,
+        max_output_tokens=max_output_tokens or settings.max_response_length,
+        temperature=create_kwargs.get("temperature"),
+        reasoning=create_kwargs.get("reasoning"),
+        history_len=len(history),
+    )
+    log_perf("BRAIN_STARTED", model=use_model, session=session_id)
+    t_stream = time.perf_counter()
+    first_delta_logged = False
     try:
         stream = await client.responses.create(**create_kwargs)
         async for event in stream:
@@ -290,6 +320,14 @@ async def generate_response_stream(
             if event_type == "response.output_text.delta":
                 delta = getattr(event, "delta", None) or (event.get("delta") if isinstance(event, dict) else "")
                 if delta:
+                    if not first_delta_logged:
+                        first_delta_logged = True
+                        log_perf(
+                            "BRAIN_FIRST_DELTA",
+                            ms=round((time.perf_counter() - t_stream) * 1000),
+                            model=use_model,
+                            session=session_id,
+                        )
                     full_text_parts.append(delta)
                     yield {"delta": delta, "language_context": language_context}
             elif event_type == "response.completed":
@@ -299,6 +337,13 @@ async def generate_response_stream(
                 raise AppError(ErrorCode.PROVIDER_ERROR, provider="openai", cause=Exception(err_msg))
         full_text = "".join(full_text_parts).strip() or "క్షమించండి, నాకు అర్థం కాలేదు."
         conversation_manager.add_turn(session_id, transcript, full_text)
+        log_perf(
+            "BRAIN_COMPLETED",
+            ms=round((time.perf_counter() - t_stream) * 1000),
+            chars=len(full_text),
+            model=use_model,
+            session=session_id,
+        )
         yield {"done": True, "text": full_text, "language_context": language_context}
         log_brain("Stream completed", chars=len(full_text))
     except AppError:

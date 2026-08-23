@@ -53,21 +53,27 @@
     try {
       catalog = await (await fetch("/api/settings/catalog")).json();
       const rt = await (await fetch("/api/settings/runtime?sessionId=" + encodeURIComponent(sessionId))).json();
-      defaults = rt.defaults || {};
+      const oaiDefaults = catalog.openai?.defaults || {};
+      defaults = { ...oaiDefaults, ...rt.defaults };
       runtimeValues = rt.values || {};
       render();
       loadRuntime(runtimeValues);
 
       const instr = await (await fetch("/api/instructions?sessionId=" + encodeURIComponent(sessionId))).json();
-      if (instr.behaviour && safeGet("customInstructions")) {
-        safeGet("customInstructions").value = instr.behaviour;
-        if (safeGet("behavCount")) safeGet("behavCount").textContent = instr.behaviour.length;
+      const behavEl = safeGet("customInstructions");
+      const bizEl = safeGet("businessInstructions");
+      const styleEl = safeGet("responseStyle");
+      if (behavEl) {
+        behavEl.value = instr.behaviour || oaiDefaults.behaviourInstructions || "";
+        if (safeGet("behavCount")) safeGet("behavCount").textContent = behavEl.value.length;
       }
-      if (instr.business && safeGet("businessInstructions")) {
-        safeGet("businessInstructions").value = instr.business;
-        if (safeGet("bizCount")) safeGet("bizCount").textContent = instr.business.length;
+      if (bizEl) {
+        bizEl.value = instr.business || oaiDefaults.businessInstructions || "";
+        if (safeGet("bizCount")) safeGet("bizCount").textContent = bizEl.value.length;
       }
-      if (instr.style && safeGet("responseStyle")) safeGet("responseStyle").value = instr.style;
+      if (styleEl) styleEl.value = instr.style || oaiDefaults.responseStyle || styleEl.value;
+
+      applyCatalogDefaults(oaiDefaults);
 
       const dot = safeGet("healthDot");
       const txt = safeGet("healthText");
@@ -76,15 +82,36 @@
       updateRuntimeSummary();
 
       const hint = safeGet("modelGroupHint");
+      const labels = catalog.openai.modelLabels || {};
       if (hint && catalog.openai.allowedModels) {
-        hint.innerHTML = "<b>Available models:</b><br>" + catalog.openai.allowedModels.map((m) =>
-          `<code style="color:var(--accent-2)">${m}</code>`
-        ).join(" · ");
+        hint.innerHTML = "<b>Voice models:</b><br>" + catalog.openai.allowedModels.map((m) =>
+          `<div style="margin:4px 0">${labels[m] || m}</div>`
+        ).join("");
       }
     } catch (e) {
       if (safeGet("healthDot")) safeGet("healthDot").className = "dot bad";
       if (safeGet("healthText")) safeGet("healthText").textContent = "Server not reachable";
       show("Init error: " + e);
+    }
+  }
+
+  function applyCatalogDefaults(oaiDefaults) {
+    if (!oaiDefaults) return;
+    const pairs = [
+      ["openaiMaxTokens", "openaiMaxTokens"],
+      ["openaiTemperature", "openaiTemperature"],
+      ["ttsMinBuffer", "ttsMinBuffer"],
+      ["ttsMaxChunk", "ttsMaxChunk"],
+      ["ttsPace", "ttsPace"],
+    ];
+    for (const [id, key] of pairs) {
+      if (runtimeValues[key] != null) continue;
+      const el = safeGet(id);
+      const val = oaiDefaults[key];
+      if (el && val != null) {
+        el.value = val;
+        el.dispatchEvent(new Event("input"));
+      }
     }
   }
 
@@ -98,13 +125,14 @@
     fillSelect(safeGet("ttsCodec"), catalog.tts.codecs, "mp3");
     fillSelect(safeGet("ttsSampleRate"), catalog.tts.sampleRates, 24000);
     fillSelect(safeGet("ttsBitrate"), catalog.tts.bitrates || ["64k", "128k"], "128k");
+    const labels = catalog.openai.modelLabels || {};
     fillSelect(
       safeGet("openaiModel"),
       catalog.openai.allowedModels.map((m) => ({
         value: m,
-        label: m + (m === catalog.openai.currentModel ? " ★ env default" : ""),
+        label: (labels[m] || m) + (m === catalog.openai.currentModel ? " ★ env" : ""),
       })),
-      runtimeValues.openaiModel || catalog.openai.currentModel
+      runtimeValues.openaiModel || catalog.openai.currentModel || catalog.openai.defaultModel
     );
 
     const bind = (id, out, fmt) => {
@@ -112,6 +140,25 @@
       const oel = safeGet(out);
       if (el && oel) el.addEventListener("input", () => { oel.textContent = fmt(el.value); updateRuntimeSummary(); });
     };
+    function modelSkipsTemperature(model) {
+      const m = (model || "").toLowerCase();
+      return m.startsWith("gpt-5") || m.startsWith("o1") || m.startsWith("o3") || m.startsWith("o4");
+    }
+    function updateOaiTempHint() {
+      const model = safeGet("openaiModel")?.value || "";
+      const tempEl = safeGet("openaiTemperature");
+      const hint = safeGet("modelGroupHint");
+      const skip = modelSkipsTemperature(model);
+      if (tempEl) {
+        tempEl.disabled = skip;
+        tempEl.style.opacity = skip ? "0.45" : "1";
+      }
+      if (hint) {
+        hint.textContent = skip
+          ? `${model} does not use temperature — the server omits it automatically.`
+          : "Temperature applies to this model.";
+      }
+    }
     bind("sttSilenceMs", "sttSilenceVal", (v) => v);
     bind("sttThreshold", "sttThreshVal", (v) => Number(v).toFixed(2));
     bind("ttsPace", "ttsPaceVal", (v) => Number(v).toFixed(2));
@@ -128,8 +175,9 @@
 
     ["openaiModel", "ttsModel", "ttsSpeaker"].forEach((id) => {
       const el = safeGet(id);
-      if (el) el.addEventListener("change", updateRuntimeSummary);
+      if (el) el.addEventListener("change", () => { updateRuntimeSummary(); updateOaiTempHint(); });
     });
+    updateOaiTempHint();
   }
 
   function fillSpeakers() {
@@ -175,7 +223,7 @@
         sttThreshold: parseFloat(getVal("sttThreshold") || "0.3"),
         ttsModel: getVal("ttsModel"), ttsSpeaker: getVal("ttsSpeaker"), ttsPace: getNum("ttsPace"),
         ttsTemperature: getNum("ttsTemperature"), ttsCodec: getVal("ttsCodec"), ttsSampleRate: getNum("ttsSampleRate"),
-        ttsMinBuffer: getNum("ttsMinBuffer") || 50, ttsMaxChunk: getNum("ttsMaxChunk") || 200,
+        ttsMinBuffer: getNum("ttsMinBuffer") || 30, ttsMaxChunk: getNum("ttsMaxChunk") || 80,
         ttsBitrate: getVal("ttsBitrate") || "128k",
         openaiModel: getVal("openaiModel"), openaiTemperature: parseFloat(getVal("openaiTemperature") || "0.7"),
         openaiMaxTokens: getNum("openaiMaxTokens"),

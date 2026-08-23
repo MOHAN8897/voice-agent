@@ -12,6 +12,11 @@ import time
 from typing import Dict, Optional
 
 from server.agent.instruction_builder import sanitize_behaviour, sanitize_business
+from server.prompts.voice_defaults import (
+    DEFAULT_BEHAVIOUR_INSTRUCTIONS,
+    DEFAULT_BUSINESS_INSTRUCTIONS,
+    DEFAULT_RESPONSE_STYLE,
+)
 
 _TTL_SECONDS = 60 * 60 * 24  # 24h
 
@@ -52,17 +57,23 @@ class InstructionStore:
     def get_behaviour(self, session_id: str) -> str:
         with self._lock:
             e = self._entry(session_id)
-            return e["behaviour"] if e else ""
+            if e and e["behaviour"]:
+                return e["behaviour"]
+            return DEFAULT_BEHAVIOUR_INSTRUCTIONS
 
     def get_business(self, session_id: str) -> str:
         with self._lock:
             e = self._entry(session_id)
-            return e["business"] if e else ""
+            if e and e["business"]:
+                return e["business"]
+            return DEFAULT_BUSINESS_INSTRUCTIONS
 
     def get_style(self, session_id: str) -> str | None:
         with self._lock:
             e = self._entry(session_id)
-            return e.get("style") if e else None
+            if e and e.get("style"):
+                return e["style"]
+            return DEFAULT_RESPONSE_STYLE
 
     # Back-compat: old callers asked for single "text"
     def get(self, session_id: str) -> str:
@@ -76,14 +87,23 @@ class InstructionStore:
         with self._lock:
             e = self._entry(session_id)
             if not e:
-                return {"text": "", "behaviour": "", "business": "", "updatedAt": None, "present": False, "style": None}
+                return {
+                    "text": DEFAULT_BEHAVIOUR_INSTRUCTIONS,
+                    "behaviour": DEFAULT_BEHAVIOUR_INSTRUCTIONS,
+                    "business": DEFAULT_BUSINESS_INSTRUCTIONS,
+                    "updatedAt": None,
+                    "present": False,
+                    "style": DEFAULT_RESPONSE_STYLE,
+                    "usingDefaults": True,
+                }
             return {
-                "text": e["behaviour"],
-                "behaviour": e["behaviour"],
-                "business": e["business"],
+                "text": e["behaviour"] or DEFAULT_BEHAVIOUR_INSTRUCTIONS,
+                "behaviour": e["behaviour"] or DEFAULT_BEHAVIOUR_INSTRUCTIONS,
+                "business": e["business"] or DEFAULT_BUSINESS_INSTRUCTIONS,
                 "updatedAt": e["updatedAt"],
                 "present": bool(e["behaviour"] or e["business"]),
-                "style": e.get("style"),
+                "style": e.get("style") or DEFAULT_RESPONSE_STYLE,
+                "usingDefaults": not bool(e["behaviour"] or e["business"]),
             }
 
     def stats(self) -> dict:

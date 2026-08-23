@@ -15,7 +15,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from server.config.constants import constants
 from server.services.sarvam_ws import connect_stt_realtime, connect_tts_ws
 from server.services.tts_config import TtsConfigError, merge_ws_tts_config
-from server.utils.logger import logger
+from server.utils.logger import log_error, log_ws
 
 router = APIRouter()
 
@@ -24,13 +24,9 @@ _UPSTREAM_STT_EVENTS = {"audio_input", "speech_start", "speech_end", "flush", "c
 
 @router.websocket("/ws/stt-realtime")
 async def ws_stt_realtime(ws: WebSocket):
-    """
-    Browser connects: /ws/stt-realtime?language_code=te-IN&stream_type=fast&mode=transcribe
-    Send: binary frames = raw linear16 PCM chunks (we base64+wrap), or text frames = JSON control.
-    Receive: JSON text frames passthrough of Sarvam events.
-    """
     await ws.accept()
     q = ws.query_params
+    session_id = q.get("sessionId", "default")
     upstream = None
     upstream_task = None
     ping_task = None
@@ -45,12 +41,11 @@ async def ws_stt_realtime(ws: WebSocket):
             threshold=float(q["threshold"]) if q.get("threshold") else None,
         )
         upstream = await upstream_cm.__aenter__()
-        logger.info("[WS] STT realtime upstream connected")
+        log_ws("STT upstream connected", session=session_id, language=q.get("language_code", "te-IN"))
 
         async def upstream_to_client():
             try:
                 async for raw in upstream:
-                    # Sarvam sends JSON text; pass through as-is
                     if isinstance(raw, bytes):
                         raw = raw.decode(errors="ignore")
                     await ws.send_text(raw)
@@ -93,9 +88,9 @@ async def ws_stt_realtime(ws: WebSocket):
         ping_task = asyncio.create_task(keepalive())
         await client_to_upstream()
     except WebSocketDisconnect:
-        pass
+        log_ws("STT client disconnected", session=session_id)
     except Exception as e:
-        logger.error(f"[WS] stt-realtime error: {str(e)[:300]}")
+        log_error("STT realtime proxy error", err=str(e)[:300], session=session_id)
         try:
             await ws.send_text(json.dumps({"event": "error", "code": "proxy_error", "message": str(e)[:200]}))
         except Exception:
@@ -114,9 +109,9 @@ async def ws_stt_realtime(ws: WebSocket):
 @router.websocket("/ws/tts")
 async def ws_tts(ws: WebSocket):
     """
-    Browser connects: /ws/tts?model=bulbul:v3
+    Browser connects: /ws/tts?model=bulbul:v3&sessionId=default
     Client must FIRST send {"type":"config","data":{...}} then {"type":"text",...}, {"type":"flush"}.
-    Server proxies to Sarvam and streams back audio/event/error JSON as-is.
+    Persistent across turns — client sends flush per turn, not close.
     """
     await ws.accept()
     model = ws.query_params.get("model", "bulbul:v3")
@@ -126,19 +121,29 @@ async def ws_tts(ws: WebSocket):
     upstream = None
     upstream_task = None
     configured = False
+    audio_chunks = 0
     try:
         upstream_cm = connect_tts_ws(model)
         upstream = await upstream_cm.__aenter__()
-        logger.info(f"[WS] TTS upstream connected model={model}")
+        log_ws("TTS upstream connected", model=model, session=session_id)
 
         async def upstream_to_client():
+            nonlocal audio_chunks
             try:
                 async for raw in upstream:
                     if isinstance(raw, bytes):
                         raw = raw.decode(errors="ignore")
+                    try:
+                        obj = json.loads(raw)
+                        if obj.get("type") == "audio" or (obj.get("data") and isinstance(obj.get("data"), dict) and obj["data"].get("audio")):
+                            audio_chunks += 1
+                            if audio_chunks == 1:
+                                log_ws("TTS first audio chunk", session=session_id, model=model)
+                    except Exception:
+                        pass
                     await ws.send_text(raw)
-            except Exception:
-                pass
+            except Exception as exc:
+                log_ws("TTS upstream read ended", session=session_id, reason=str(exc)[:120])
             finally:
                 try:
                     await ws.close()
@@ -150,6 +155,7 @@ async def ws_tts(ws: WebSocket):
             while True:
                 msg = await ws.receive()
                 if msg.get("type") == "websocket.disconnect":
+                    log_ws("TTS client disconnected", session=session_id, configured=configured, chunks=audio_chunks)
                     break
                 text = msg.get("text")
                 if not text:
@@ -164,7 +170,6 @@ async def ws_tts(ws: WebSocket):
                     try:
                         merged = merge_ws_tts_config(session_id, d)
                         merged["model"] = model
-                        # Sarvam WS expects these keys in config payload
                         out = {
                             "speaker": merged["speaker"],
                             "language_code": merged["language_code"],
@@ -177,19 +182,34 @@ async def ws_tts(ws: WebSocket):
                         if "temperature" in merged:
                             out["temperature"] = merged["temperature"]
                         await upstream.send(json.dumps({"type": "config", "data": out}))
+                        configured = True
+                        log_ws(
+                            "TTS configured",
+                            session=session_id,
+                            speaker=out["speaker"],
+                            codec=out["output_audio_codec"],
+                            temperature=out.get("temperature"),
+                            min_buffer=out["min_buffer_size"],
+                        )
                     except TtsConfigError as e:
                         await ws.send_text(json.dumps({"type": "error", "message": str(e), "code": "SPEAKER_INVALID"}))
                         continue
-                    configured = True
-                elif mtype in ("text", "flush", "ping"):
+                elif mtype == "text":
+                    piece = (obj.get("data") or {}).get("text") or ""
+                    if piece:
+                        log_ws("TTS text forward", session=session_id, chars=len(piece))
+                    await upstream.send(text)
+                elif mtype in ("flush", "ping"):
+                    if mtype == "flush":
+                        log_ws("TTS flush", session=session_id)
                     await upstream.send(text)
 
         upstream_task = asyncio.create_task(upstream_to_client())
         await client_to_upstream()
     except WebSocketDisconnect:
-        pass
+        log_ws("TTS WS disconnect", session=session_id)
     except Exception as e:
-        logger.error(f"[WS] tts error: {str(e)[:300]}")
+        log_error("TTS WS proxy error", err=str(e)[:300], session=session_id)
         try:
             await ws.send_text(json.dumps({"type": "error", "message": str(e)[:200]}))
         except Exception:

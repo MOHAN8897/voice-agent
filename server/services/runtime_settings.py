@@ -134,8 +134,8 @@ class RuntimeSettingsStore:
             return _clamp(float(val), 0.0, 2.0)
         if key == "openaiMaxTokens":
             v = int(val)
-            if not 50 <= v <= 4000:
-                raise SettingsValidationError("openaiMaxTokens range 50-4000")
+            if not 50 <= v <= 800:
+                raise SettingsValidationError("openaiMaxTokens range 50-800")
             return v
         if key == "crmEnabled":
             return bool(val) if isinstance(val, bool) else str(val).lower() in ("1", "true", "yes", "on")

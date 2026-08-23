@@ -1,69 +1,483 @@
-# Telugu Voice Agent — Phases 1–5
+I checked the current Sarvam documentation and OpenAI documentation against your logs. The biggest issue is your live voice path is not actually using streaming TTS even though your architecture has a TTS WebSocket.
 
-Telugu-first voice agent: `Mic → Sarvam STT → OpenAI Brain → Sarvam TTS → Playback`
-with **realtime WebSocket streaming**, **dynamic prompting**, and a **Fine-tune Console**.
+🔴 What your logs reveal
 
-## 🚀 How to Run
+Your actual flow is currently:
 
-```powershell
-# 1) One-time setup
-Copy-Item .env.example .env
-#    Edit .env and fill in:
-#      OPENAI_API_KEY=sk-...        (https://platform.openai.com/api-keys)
-#      SARVAM_API_KEY=...           (https://dashboard.sarvam.ai)
-#    Everything else has sensible defaults.
+User speaks
+   ↓
+STT WebSocket
+   ↓
+Brain streaming
+   ↓
+TTS WebSocket CONNECTS
+   ↓
+❌ TTS WebSocket closes
+   ↓
+Brain completes
+   ↓
+POST /api/tts
+   ↓
+WAIT ~2–3 seconds
+   ↓
+FULL AUDIO
 
-# 2) Install (Python 3.10+)
-pip install -e ".[dev]"
+Look at this:
 
-# 3) Start
-python -m uvicorn server.app:app --reload --port 8000
+22:41:16 [BRAIN] Stream started
+22:41:18 [WS] tts error: received 1000 (OK)
+22:41:19 [BRAIN] Stream completed
+22:41:19 [TTS] Synthesis started
+22:41:22 [TTS] Audio received
 
-# 4) Use it
-#    Main agent:   http://localhost:8000            (mic button, Space = talk, Esc = stop audio)
-#    Fine-tune:    http://localhost:8000/settings.html
+That's the smoking gun.
 
-# 5) Tests
-python -m pytest -v        # 37 tests
-```
+You're opening the streaming TTS WebSocket...
+22:41:12 WebSocket /ws/tts accepted
+22:41:12 TTS upstream connected
 
-## Modes (main page)
+...but then it closes:
 
-| Toggle | Path | Latency profile |
-|---|---|---|
-| **Full Voice Loop** (default) | `POST /api/voice/turn` — record → STT → Brain → TTS → autoplay | simplest, ~2-4s e2e |
-| **⚡ Realtime WS** | `WS /ws/stt-realtime` (`saaras:v3-realtime`, `stream_type=fast`) → live partials while you speak; on final: Brain → `WS /ws/tts` (`bulbul:v3`) streamed into MediaSource | lowest perceived latency, live partials |
-| Uncheck Voice Loop | STT → Brain text only | fastest text iteration |
+tts error: received 1000 (OK)
 
-## Fine-tune Console (/settings.html)
+and your application falls back to:
 
-Everything is **per-session** (24h TTL), validated against provider catalogs, keys stay in `.env`:
+POST /api/tts
 
-- **STT**: model (`saaras:v3`/`saaras:v4`/`saarika:v2.5`), mode (transcribe/codemix/…), language, realtime stream type, VAD silence ms + threshold sliders
-- **TTS**: model (`bulbul:v3`/`v2`), speaker (37 v3 voices), pace slider, temperature slider (v3 only), codec, sample rate + **Test TTS** button
-- **OpenAI**: model allowlist (`OPENAI_ALLOWED_MODELS` env), temperature, max output tokens — *keys are never enterable in the browser (security standard)*
-- **Dynamic prompting**: response style dropdown + custom instructions textarea (wrapped `<user_custom_instructions>` developer-role block that cannot override system safety), Save/Reset, **View effective prompt** (hierarchy transparency via `GET /api/prompt/effective`)
+So you're paying the latency penalty of creating the WebSocket, failing to use it, and then doing a full HTTP TTS synthesis.
 
-Saved settings automatically apply to `/api/brain`, `/api/tts`, and `/api/voice/*`.
+🔥 Issue #1 — Your TTS WebSocket is not actually being used
 
-## Verified Provider Contracts (docs.sarvam.ai + platform.openai.com, Aug 2026)
+This is the biggest problem.
 
-- STT REST `POST /speech-to-text` (`saaras:v3`, `te-IN`, ≤30 s) · Realtime WS `/speech-to-text-realtime/ws` (`audio_input` base64 PCM16 ⇄ `transcript.partial/final`, VAD events, close codes 1003/1008/1011/4000)
-- TTS REST `POST /text-to-speech` · HTTP stream `/text-to-speech/stream` · WS `/text-to-speech/ws?model=bulbul:v3&send_completion_event=true` (`config→text→flush`, audio chunks `{type:"audio",data:{audio:b64}}`, completion `data.event_type=="final"`; **no server-side cancel — barge-in closes the socket client-side**, per docs)
+Sarvam's current documentation explicitly recommends the WebSocket streaming TTS path for conversational agents because audio chunks arrive progressively instead of waiting for complete synthesis.
 
-## API Map
+Your logs show:
 
-```
-GET  /api/health | /api/meta | /api/metrics (+POST reset) | /api/config-check
-GET  /api/prompt/effective?sessionId=
-POST /api/stt (multipart)          POST /api/brain [/stream SSE] [/test]
-POST /api/tts [/stream]            POST /api/voice/turn | /api/voice/stt-brain
-GET/POST/DELETE /api/instructions  GET/POST/DELETE /api/settings/runtime  GET /api/settings/catalog
-POST /api/session/clear | /api/session/interrupt     GET /api/session/history
-WS   /ws/stt-realtime              WS   /ws/tts
-```
+WS /ws/tts
+      ↓
+connected
+      ↓
+1000 OK
+      ↓
+closed
+      ↓
+POST /api/tts
+      ↓
+wait
+      ↓
+full audio
 
-## Layout & Docs
+That's exactly what you don't want.
 
-- Plan: `IMPLEMENTATION_PLAN_V2.md` · Audit: `AUDIT_REPORT.md` · Reports: `PHASE_1_2_REPORT.md`, `PHASE_3_4_REPORT.md`
-- Server: `server/{config,services,agent,routes,session,utils,prompts}` · Client: `client/` (app.js, settings.js, pcm-worklet.js)
+Fix
+
+Your code should do:
+
+Brain delta
+    ↓
+Sentence ready
+    ↓
+WS /ws/tts
+    ↓
+send text
+    ↓
+Sarvam audio chunk #1
+    ↓
+Browser
+    ↓
+PLAY
+
+Not:
+
+Brain complete
+    ↓
+POST /api/tts
+    ↓
+wait for entire WAV/MP3
+    ↓
+play
+🔴 Issue #2 — Your TTS is starting AFTER Brain completes
+
+Your logs:
+
+22:41:16 Brain started
+22:41:19 Brain completed
+22:41:19 TTS synthesis started
+
+That's roughly 3 seconds before TTS even starts.
+
+This defeats the entire purpose of streaming.
+
+You want:
+
+22:41:16 Brain starts
+22:41:16.5 first delta
+22:41:17 sentence ready
+22:41:17 TTS starts
+22:41:17.3 first audio
+22:41:17.3 SPEAKER
+
+The Brain should not need to finish the entire answer before TTS begins.
+
+Sarvam specifically describes WebSocket TTS as suitable for conversational agents because audio can flow before the sentence finishes synthesizing.
+
+🔴 Issue #3 — You have TWO TTS architectures competing
+
+Your logs show:
+
+WebSocket TTS
+/ws/tts
+
+and:
+
+HTTP TTS
+POST /api/tts
+
+This is dangerous.
+
+You should have:
+
+LIVE VOICE MODE
+       ↓
+WS TTS
+
+and optionally:
+
+TEST / REPLAY
+       ↓
+HTTP TTS
+
+Currently it appears to be:
+
+LIVE
+ ↓
+WS
+ ↓
+fails/closes
+ ↓
+HTTP fallback
+
+That fallback is destroying your latency.
+
+My recommendation
+
+For live mode:
+
+Disable HTTP fallback entirely during normal operation.
+
+If WS fails, log an explicit error instead of silently switching to slow REST synthesis.
+
+That will make the problem visible and force you to fix the actual streaming path.
+
+🔴 Issue #4 — You're opening a new TTS WebSocket every turn
+
+Look at:
+
+22:41:12 WebSocket /ws/tts
+
+Then again:
+
+22:41:34 WebSocket /ws/tts
+
+Then again:
+
+22:41:44 WebSocket /ws/tts
+
+So every turn appears to establish a new connection.
+
+That's unnecessary overhead.
+
+Your architecture earlier said:
+
+"WS /ws/tts (warm per turn)"
+
+But your implementation appears to be creating a new connection for every turn.
+
+Better
+
+Maintain:
+
+Voice session
+      │
+      ├── STT WebSocket ───────────── persistent
+      │
+      └── TTS WebSocket ───────────── persistent
+
+Then:
+
+Turn 1 → text → same TTS WS
+Turn 2 → text → same TTS WS
+Turn 3 → text → same TTS WS
+
+Sarvam's WebSocket API supports streaming configuration and text chunks over the same connection.
+
+This can eliminate repeated WebSocket handshake latency.
+
+🔴 Issue #5 — Your TTS config has temperature=-
+
+This is suspicious:
+
+temperature=-
+
+Your runtime config is logging:
+
+model=bulbul:v3
+speaker=shubh
+pace=1.08
+temperature=-
+
+But your earlier UI had a temperature setting.
+
+So your runtime configuration appears to have no actual TTS temperature value.
+
+That's something I'd fix immediately.
+
+For Bulbul v3, Sarvam documents temperature as supported from 0.01–1.0, with 0.6 default.
+
+For your business voice agent I'd test:
+
+temperature = 0.4
+
+or:
+
+0.45
+
+Sarvam's own contact-center examples use Bulbul v3 with pace=1.1 and temperature=0.4, which is actually very close to your use case.
+
+🟠 Issue #6 — You're using pace=1.08
+
+This isn't a problem.
+
+Actually, it's reasonable.
+
+Sarvam's contact-center guidance uses:
+
+pace=1.1
+temperature=0.4
+
+for a brisk professional delivery.
+
+So I'd keep:
+
+pace = 1.05–1.10
+
+Your:
+
+1.08
+
+is perfectly reasonable.
+
+Don't waste time optimizing this before fixing streaming.
+
+🟠 Issue #7 — Your audio codec changes between paths
+
+Look:
+
+WebSocket:
+
+codec=linear16
+
+HTTP:
+
+codec=mp3
+
+This means your two paths aren't even producing the same audio format.
+
+Your WebSocket path:
+
+linear16 / 24kHz
+
+Your HTTP fallback:
+
+MP3 / 24kHz
+
+That's another reason your playback architecture can behave differently between automatic and manual playback.
+
+Sarvam's WebSocket API supports streaming audio chunks and Bulbul v3 uses 24 kHz by default.
+
+For browser voice agent
+
+I'd pick one format and use it consistently.
+
+If your current browser playback is already built around MediaSource + MPEG:
+
+MP3
+
+can be convenient.
+
+But if your WebSocket implementation is receiving linear16, then your browser needs a proper PCM playback pipeline — you cannot simply treat raw PCM as MP3.
+
+So don't change this blindly.
+
+Your coding agent should audit:
+
+Sarvam output
+ ↓
+codec
+ ↓
+base64 decode
+ ↓
+browser buffer
+ ↓
+AudioContext / MediaSource
+🔴 Issue #8 — The biggest architecture mistake: TTS starts too late
+
+You currently have:
+
+Brain starts
+       ↓
+Brain completes
+       ↓
+TTS starts
+
+You want:
+
+Brain starts
+       ↓
+first delta
+       ↓
+sentence accumulator
+       ↓
+sentence complete
+       ↓
+TTS immediately
+
+For example Brain generates:
+
+"అవునా సార్…"
+
+then:
+
+"అవునా సార్… 50 లక్షల వరకు చూస్తున్నారా?"
+
+As soon as the sentence is complete:
+
+→ TTS
+
+Don't wait for:
+
+"అవునా సార్… 50 లక్షల వరకు చూస్తున్నారా? మీకు plot కావాలా, flat కావాలా? మా దగ్గర..."
+🟠 Issue #9 — Your STT architecture is also not using the newest realtime path
+
+Your log:
+
+stt saaras:v3
+
+and:
+
+/ws/stt-realtime?language_code=te-IN&stream_type=fast&mode=transcribe
+
+Your current Sarvam documentation says the older saaras:v3 streaming endpoint is the generally available legacy WebSocket, while saaras:v3-realtime is the newer realtime streaming path intended for new voice-agent/live transcription work, with interim transcripts and finer VAD tuning.
+
+So I'd have your developer test:
+
+saaras:v3
+vs
+saaras:v3-realtime
+
+Don't blindly switch production yet.
+
+Measure:
+
+speech end
+→ transcript.final
+
+If realtime gives you lower endpointing latency and stable Telugu recognition, migrate.
+
+🟠 Issue #10 — Brain is taking ~1–3 seconds
+
+Your first example:
+
+22:41:16 Brain started
+22:41:19 Brain completed
+
+That's ~3 seconds.
+
+But we don't know the first delta latency, because your logs aren't recording it.
+
+That's a major observability gap.
+
+You need:
+
+BRAIN_STARTED
+BRAIN_FIRST_DELTA
+BRAIN_FIRST_SENTENCE
+BRAIN_COMPLETED
+
+For example:
+
+16.000 Brain started
+16.420 First delta
+16.850 Sentence ready
+18.900 Brain completed
+
+If first delta is 400ms but completion is 3s, that's fine because TTS can start at 850ms.
+
+If first delta itself is 2.5s, then Brain configuration is the bottleneck.
+
+🟢 GPT-5.6 Luna is actually a good choice here
+
+Your log:
+
+model=gpt-5.6-luna
+
+That's a sensible model for your workload.
+
+OpenAI currently positions GPT-5.6 Luna for cost-sensitive, high-volume workloads, while the flagship is aimed at more complex reasoning.
+
+For a real-time voice agent, don't use heavy reasoning for every turn.
+
+Routine:
+
+"50 lakhs budget."
+
+doesn't require deep reasoning.
+
+Use the lowest practical reasoning configuration.
+
+🔴 Issue #11 — Your current log doesn't show Brain reasoning configuration
+
+You log:
+
+model=gpt-5.6-luna
+historyLen=4
+
+but not:
+
+reasoning_effort
+temperature
+max_output_tokens
+
+You need to log:
+
+[BRAIN_CONFIG]
+model=gpt-5.6-luna
+reasoning_effort=none
+max_output_tokens=140
+
+That lets you prove what is actually being sent.
+
+🟠 Issue #12 — History is growing
+
+You have:
+
+historyLen=0
+historyLen=2
+historyLen=4
+
+This is okay for now.
+
+But eventually:
+
+historyLen=12
+
+etc. increases input processing.
+
+For voice conversations, don't send huge conversation histories.
+
+I'd use:
+
+6–10 recent turns
+
+plus a compact customer summary if needed.

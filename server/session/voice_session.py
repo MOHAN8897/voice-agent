@@ -15,7 +15,7 @@ from server.services.sarvam_tts_service import synthesize
 from server.services.tts_config import resolve_tts_config
 from server.session.session_state import SessionState
 from server.utils.errors import AppError
-from server.utils.logger import logger
+from server.utils.logger import log_perf, log_voice
 from server.utils.metrics import metrics
 
 
@@ -82,7 +82,7 @@ class VoiceSessionController:
                     on_state(state)
                 except Exception:
                     pass
-            logger.info(f"[VOICE] State → {state.value} session={session_id}")
+            log_voice("State change", state=state.value, session=session_id)
 
         try:
             emit(SessionState.PROCESSING_STT)
@@ -160,9 +160,16 @@ class VoiceSessionController:
                 emit(SessionState.IDLE)
 
             result.e2e_ms = int((time.perf_counter() - t0) * 1000)
-            logger.info(
-                f"[PERF] turn sttMs={result.stt_ms} brainMs={result.brain_ms} ttsMs={result.tts_ms} e2eMs={result.e2e_ms} "
-                f"transcriptChars={len(result.transcript)} responseChars={len(result.brain_text)} audioBytes={len(result.audio_bytes or b'')} session={session_id}"
+            log_perf(
+                "voice_turn",
+                sttMs=result.stt_ms,
+                brainMs=result.brain_ms,
+                ttsMs=result.tts_ms,
+                e2eMs=result.e2e_ms,
+                transcriptChars=len(result.transcript),
+                responseChars=len(result.brain_text),
+                audioBytes=len(result.audio_bytes or b""),
+                session=session_id,
             )
             # Record metrics (industry standard: p50/p95 tracking)
             try:

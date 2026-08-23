@@ -148,8 +148,8 @@
             <select id="ttsModel" class="input-select"></select>
             <label class="field-label">Speaker</label>
             <select id="ttsSpeaker" class="input-select"></select>
-            <label class="field-label">Pace (<span id="ttsPaceVal">1.00</span>×)</label>
-            <input id="ttsPace" type="range" min="0.5" max="2.0" step="0.05" value="1.0" class="input-range" />
+            <label class="field-label">Pace (<span id="ttsPaceVal">1.08</span>×)</label>
+            <input id="ttsPace" type="range" min="0.5" max="2.0" step="0.05" value="1.08" class="input-range" />
             <label class="field-label">Temperature (<span id="ttsTempVal">0.60</span>)</label>
             <input id="ttsTemperature" type="range" min="0.01" max="1.0" step="0.01" value="0.6" class="input-range" />
             <label class="field-label">Codec</label>
@@ -173,8 +173,8 @@
           <div id="modelGroupHint" class="model-hint"></div>
           <label class="field-label">Temperature (<span id="oaiTempVal">0.7</span>)</label>
           <input id="openaiTemperature" type="range" min="0" max="2" step="0.1" value="0.7" class="input-range" />
-          <label class="field-label">Max tokens (<span id="oaiTokVal">600</span>)</label>
-          <input id="openaiMaxTokens" type="range" min="50" max="2000" step="50" value="600" class="input-range" />
+          <label class="field-label">Max tokens (<span id="oaiTokVal">320</span>)</label>
+          <input id="openaiMaxTokens" type="range" min="50" max="800" step="10" value="320" class="input-range" />
         </div>
       </section>
 
@@ -184,11 +184,9 @@
           <div class="label">Dynamic Prompting</div>
           <label class="field-label">Response Style</label>
           <select id="responseStyle" class="input-select">
+            <option value="very brief, 1-2 sentences, spoken Telugu">Very brief — spoken Telugu (voice default)</option>
             <option value="concise, conversational">Concise, conversational</option>
-            <option value="very brief, 1-2 sentences">Very brief</option>
             <option value="friendly, casual like a friend">Friendly, casual</option>
-            <option value="detailed, step-by-step">Detailed, step-by-step</option>
-            <option value="explain like I'm a beginner with examples">Beginner-friendly</option>
             <option value="formal Telugu, no English">Formal Telugu</option>
           </select>
           <label class="field-label">Behavioural · <span id="behavCount">0</span>/10000</label>
@@ -235,10 +233,10 @@
       <section class="console-panel" id="panel-advanced">
         <div class="card">
           <div class="label">Latency tuning</div>
-          <label class="field-label">TTS min buffer (<span id="ttsMinBufVal">20</span>)</label>
-          <input id="ttsMinBuffer" type="range" min="10" max="200" step="5" value="20" class="input-range" />
-          <label class="field-label">TTS max chunk (<span id="ttsMaxChunkVal">200</span>)</label>
-          <input id="ttsMaxChunk" type="range" min="50" max="500" step="10" value="200" class="input-range" />
+          <label class="field-label">TTS min buffer (<span id="ttsMinBufVal">30</span>)</label>
+          <input id="ttsMinBuffer" type="range" min="30" max="200" step="5" value="30" class="input-range" />
+          <label class="field-label">TTS max chunk (<span id="ttsMaxChunkVal">80</span>)</label>
+          <input id="ttsMaxChunk" type="range" min="50" max="500" step="10" value="80" class="input-range" />
           <label class="field-label">Bitrate</label>
           <select id="ttsBitrate" class="input-select">
             <option value="64k">64k</option>

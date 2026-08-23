@@ -19,8 +19,10 @@ def test_catalog_shape(monkeypatch):
     assert "bulbul:v3" in [m["id"] for m in j["tts"]["models"]]
     assert "shubh" in j["tts"]["speakersV3"]
     assert "anushka" in j["tts"]["speakersV2"]
-    assert len(j["openai"]["allowedModels"]) > 0
-    assert "keys" in j["openai"]["note"].lower()
+    assert len(j["openai"]["allowedModels"]) == 4
+    assert set(j["openai"]["allowedModels"]) == {"gpt-5.5", "gpt-5.4", "gpt-5", "gpt-5.6-luna"}
+    assert j["openai"]["defaults"]["openaiModel"] == "gpt-5.6-luna"
+    assert "behaviourInstructions" in j["openai"]["defaults"]
     get_settings.cache_clear()
 
 def test_runtime_crud_and_validation(monkeypatch):
@@ -52,19 +54,21 @@ def test_openai_model_allowlist(monkeypatch):
     c = _client(monkeypatch)
     r = c.post("/api/settings/runtime", json={"sessionId": "ft-alw", "openaiModel": "gpt-not-real"})
     assert r.status_code == 400
-    r2 = c.post("/api/settings/runtime", json={"sessionId": "ft-alw", "openaiModel": "gpt-4o-mini"})
+    r2 = c.post("/api/settings/runtime", json={"sessionId": "ft-alw", "openaiModel": "gpt-5.6-luna"})
     assert r2.status_code == 200
+    r3 = c.post("/api/settings/runtime", json={"sessionId": "ft-alw", "openaiModel": "gpt-4o-mini"})
+    assert r3.status_code == 400
     get_settings.cache_clear()
 
 def test_brain_uses_runtime_overrides(monkeypatch):
     c = _client(monkeypatch)
     sid = "ft-brain"
-    c.post("/api/settings/runtime", json={"sessionId": sid, "openaiModel": "gpt-4o-mini", "openaiTemperature": 0.3, "openaiMaxTokens": 250})
+    c.post("/api/settings/runtime", json={"sessionId": sid, "openaiModel": "gpt-5.6-luna", "openaiTemperature": 0.3, "openaiMaxTokens": 250})
     with patch("server.routes.brain.generate_response", new=AsyncMock(return_value={"text": "ok", "language_context": {}, "usage": None, "request_id": "x"})) as mock:
         r = c.post("/api/brain", json={"transcript": "హలో", "language_code": "te-IN", "sessionId": sid})
         assert r.status_code == 200
         kw = mock.call_args.kwargs
-        assert kw["openai_model"] == "gpt-4o-mini"
+        assert kw["openai_model"] == "gpt-5.6-luna"
         assert kw["temperature"] == 0.3
         assert kw["max_output_tokens"] == 250
     get_settings.cache_clear()
@@ -83,5 +87,5 @@ def test_voice_turn_applies_runtime(monkeypatch):
         assert kw["tts_speaker"] == "neha"
         assert kw["stt_mode"] == "codemix"
         assert kw["openai_max_tokens"] == 300
-        assert kw["user_instructions"] == ""  # store empty ok
+        assert kw["user_instructions"]  # defaults applied when store empty
     get_settings.cache_clear()

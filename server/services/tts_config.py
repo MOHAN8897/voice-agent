@@ -11,7 +11,7 @@ from server.agent.language_resolver import get_speaker_for_language
 from server.config.constants import constants
 from server.config.env import get_settings
 from server.services.runtime_settings import runtime_settings
-from server.utils.logger import logger
+from server.utils.logger import log_tts
 
 
 class TtsConfigError(Exception):
@@ -67,7 +67,7 @@ def resolve_tts_config(
     try:
         _validate_speaker(resolved_model, resolved_speaker)
     except TtsConfigError:
-        logger.error(f"[VOICE][TTS] SPEAKER_INVALID speaker={resolved_speaker} model={resolved_model}")
+        log_tts("SPEAKER_INVALID", speaker=resolved_speaker, model=resolved_model)
         raise
 
     resolved_pace = pace if pace is not None else rt.get("ttsPace", settings.sarvam_tts_pace)
@@ -78,10 +78,12 @@ def resolve_tts_config(
         resolved_pace = max(0.3, min(3.0, resolved_pace))
 
     resolved_temp = temperature if temperature is not None else rt.get("ttsTemperature")
+    if resolved_temp is None:
+        resolved_temp = settings.sarvam_tts_temperature
     resolved_codec = codec or rt.get("ttsCodec") or "mp3"
     resolved_sample_rate = sample_rate or rt.get("ttsSampleRate") or 24000
-    resolved_min_buf = min_buffer_size if min_buffer_size is not None else rt.get("ttsMinBuffer", 20)
-    resolved_max_chunk = max_chunk_length if max_chunk_length is not None else rt.get("ttsMaxChunk", 200)
+    resolved_min_buf = min_buffer_size if min_buffer_size is not None else rt.get("ttsMinBuffer", 30)
+    resolved_max_chunk = max_chunk_length if max_chunk_length is not None else rt.get("ttsMaxChunk", 80)
     resolved_bitrate = output_audio_bitrate or rt.get("ttsBitrate") or "128k"
 
     cfg: dict[str, Any] = {
@@ -98,11 +100,15 @@ def resolve_tts_config(
     if resolved_temp is not None and resolved_model == "bulbul:v3":
         cfg["temperature"] = max(0.01, min(1.0, float(resolved_temp)))
 
-    logger.info(
-        "[VOICE][TTS_CONFIG] "
-        f"model={cfg['model']} speaker={cfg['speaker']} pace={cfg['pace']} "
-        f"temperature={cfg.get('temperature', '-')} codec={cfg['output_audio_codec']} "
-        f"sample_rate={cfg['sample_rate']} session={session_id}"
+    log_tts(
+        "CONFIG",
+        model=cfg["model"],
+        speaker=cfg["speaker"],
+        pace=cfg["pace"],
+        temperature=cfg.get("temperature"),
+        codec=cfg["output_audio_codec"],
+        sample_rate=cfg["sample_rate"],
+        session=session_id,
     )
     return cfg
 

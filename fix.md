@@ -1,985 +1,483 @@
-# CRITICAL VOICE AGENT DEBUGGING TASK
-# Fix TWO production issues in the Telugu voice-agent TTS pipeline
+I checked the current Sarvam documentation and OpenAI documentation against your logs. The biggest issue is your live voice path is not actually using streaming TTS even though your architecture has a TTS WebSocket.
 
-You are working on a real-time Telugu voice agent.
+🔴 What your logs reveal
 
-I have TWO separate but related bugs that must be investigated and fixed at code level.
-
-DO NOT simply modify the UI.
-
-DO NOT assume the problem is solved because the settings page displays the selected value.
-
-Trace the actual runtime path from configuration → backend → Sarvam → audio playback.
-
-============================================================
-ISSUE 1 — SELECTING A DIFFERENT TTS SPEAKER DOES NOT CHANGE
-THE ACTUAL VOICE
-============================================================
-
-The Fine-tune Console currently shows:
-
-TTS model:
-Bulbul v3
-
-Speaker:
-ritu
-
-Pace:
-1.00
-
-Temperature:
-0.50
-
-However, when I actually use the voice agent, I STILL hear the same male voice that I heard when the speaker was:
-
-shubh
-
-This means the UI says "ritu", but the actual TTS audio is still being generated with the old/default male speaker.
-
-This MUST be investigated end-to-end.
-
-IMPORTANT:
-
-Do NOT assume the UI value is the real runtime value.
-
-Trace the exact speaker value through the entire system.
-
-The expected flow is:
-
-Fine-tune Console
-      ↓
-runtime settings
-      ↓
-frontend configuration
-      ↓
-voice session
-      ↓
-TTS configuration
-      ↓
-/api/tts OR /ws/tts
-      ↓
-Sarvam Bulbul v3
-      ↓
-selected speaker
-      ↓
-audio
-      ↓
-speaker output
-
-============================================================
-ISSUE 1A — AUDIT EVERY POSSIBLE SPEAKER OVERRIDE
-============================================================
-
-Search the entire codebase for:
-
-"shubh"
-
-"ritu"
-
-"speaker"
-
-"voice"
-
-"bulbul"
-
-"Bulbul"
-
-"speaker_id"
-
-"speakerId"
-
-"tts_speaker"
-
-"ttsSpeaker"
-
-"voice_name"
-
-"voiceName"
-
-"model"
-
-Find EVERY place where a TTS speaker is:
-
-- declared
-- defaulted
-- saved
-- loaded
-- cached
-- transformed
-- passed to the backend
-- passed to Sarvam
-- used in REST TTS
-- used in TTS WebSocket
-- used in voice session initialization
-- used in replay
-- used in automatic playback
-
-I specifically want you to find hardcoded defaults such as:
-
-speaker = "shubh"
-
-or:
-
-speaker || "shubh"
-
-or:
-
-speaker ?? "shubh"
-
-or:
-
-const DEFAULT_SPEAKER = "shubh"
-
-or any equivalent fallback.
-
-Do NOT remove a fallback blindly.
-
-Determine whether that fallback is overriding the user's selected runtime speaker.
-
-============================================================
-ISSUE 1B — TRACE THE ACTUAL SARVAM REQUEST
-============================================================
-
-Inspect the actual request sent to Sarvam.
-
-For every TTS request, safely log:
-
-[VOICE][TTS_CONFIG]
-model=...
-speaker=...
-pace=...
-temperature=...
-codec=...
-sample_rate=...
-
-DO NOT log API keys or secrets.
-
-The most important diagnostic is:
-
-What speaker value is actually being sent to Sarvam?
-
-For example:
-
-Expected:
-
-[VOICE][TTS_CONFIG]
-model=bulbul:v3
-speaker=ritu
-
-But if the actual log says:
-
-[VOICE][TTS_CONFIG]
-model=bulbul:v3
-speaker=shubh
-
-then the bug is BEFORE the Sarvam API call.
-
-Fix the configuration propagation.
-
-If the request says:
-
-speaker=ritu
-
-but the audio still sounds like Shubh, then inspect:
-
-- Sarvam request schema
-- model/speaker compatibility
-- WebSocket initialization
-- speaker field naming
-- fallback handling
-- response metadata
-- whether the selected speaker is actually accepted by Sarvam
-
-Do not silently fall back to Shubh.
-
-If Ritu is invalid or unsupported, return an explicit error:
-
-[VOICE][TTS] SPEAKER_INVALID speaker=ritu
-
-instead of silently using Shubh.
-
-============================================================
-ISSUE 1C — REST TTS AND WEBSOCKET TTS MUST USE THE SAME
-RUNTIME CONFIGURATION
-============================================================
-
-The architecture supports:
-
-/api/tts
-
-and:
-
-/ws/tts
-
-Audit both.
-
-It is unacceptable for:
-
-REST TTS → ritu
-
-while:
-
-WebSocket TTS → shubh
-
-or vice versa.
-
-Both must use the same resolved runtime TTS configuration.
-
-Create one canonical configuration object:
-
-ttsConfig = {
-    model,
-    speaker,
-    pace,
-    temperature,
-    codec,
-    sampleRate
-}
-
-Resolve it once from the current runtime settings.
-
-Then pass the SAME resolved configuration into:
-
-- REST TTS
-- TTS WebSocket
-- voice turn
-- automatic TTS
-- replay TTS
-- test TTS
-
-Do not duplicate speaker defaults across services.
-
-============================================================
-ISSUE 1D — RUNTIME SETTINGS MUST ACTUALLY PROPAGATE
-============================================================
-
-When I change:
-
-shubh → ritu
-
-the following must happen:
-
-UI
- ↓
-save settings
- ↓
-backend/runtime settings
- ↓
-current/new voice session
- ↓
-TTS configuration
- ↓
-Sarvam
-
-Verify that the save operation actually succeeds.
-
-Verify that the backend returns:
-
-speaker=ritu
-
-after saving.
-
-Verify that a new voice turn uses ritu.
-
-If settings are cached, invalidate or refresh the relevant cache.
-
-If the current WebSocket session captures the old speaker configuration when it starts, determine whether the session must be recreated after settings change.
-
-Do not require a browser refresh unless absolutely necessary.
-
-If a refresh is necessary, document why.
-
-============================================================
-ISSUE 1E — TEST MULTIPLE SPEAKERS
-============================================================
-
-After fixing the bug, test at least:
-
-shubh
-ritu
-
-If additional valid Bulbul v3 Telugu speakers exist in the application's speaker list, test at least one more.
-
-The actual audio must change when the speaker changes.
-
-Do NOT mark the issue fixed just because the dropdown changes.
-
-Acceptance criterion:
-
-Selecting Ritu → actual audio sounds like Ritu.
-
-Selecting Shubh → actual audio sounds like Shubh.
-
-The runtime log must confirm the corresponding speaker value.
-
-============================================================
-ISSUE 2 — AUTOMATIC TTS DOES NOT SPEAK
-============================================================
-
-The second screenshot shows:
-
-PLAYBACK — SARVAM BULBUL:V3 (TE-IN) AUTO
-
-The UI says:
-
-"Hands-free mode: replies play automatically through your speakers."
-
-However, the actual behavior is:
+Your actual flow is currently:
 
 User speaks
+   ↓
+STT WebSocket
+   ↓
+Brain streaming
+   ↓
+TTS WebSocket CONNECTS
+   ↓
+❌ TTS WebSocket closes
+   ↓
+Brain completes
+   ↓
+POST /api/tts
+   ↓
+WAIT ~2–3 seconds
+   ↓
+FULL AUDIO
+
+Look at this:
+
+22:41:16 [BRAIN] Stream started
+22:41:18 [WS] tts error: received 1000 (OK)
+22:41:19 [BRAIN] Stream completed
+22:41:19 [TTS] Synthesis started
+22:41:22 [TTS] Audio received
+
+That's the smoking gun.
+
+You're opening the streaming TTS WebSocket...
+22:41:12 WebSocket /ws/tts accepted
+22:41:12 TTS upstream connected
+
+...but then it closes:
+
+tts error: received 1000 (OK)
+
+and your application falls back to:
+
+POST /api/tts
+
+So you're paying the latency penalty of creating the WebSocket, failing to use it, and then doing a full HTTP TTS synthesis.
+
+🔥 Issue #1 — Your TTS WebSocket is not actually being used
+
+This is the biggest problem.
+
+Sarvam's current documentation explicitly recommends the WebSocket streaming TTS path for conversational agents because audio chunks arrive progressively instead of waiting for complete synthesis.
+
+Your logs show:
+
+WS /ws/tts
+      ↓
+connected
+      ↓
+1000 OK
+      ↓
+closed
+      ↓
+POST /api/tts
+      ↓
+wait
+      ↓
+full audio
+
+That's exactly what you don't want.
+
+Fix
+
+Your code should do:
+
+Brain delta
     ↓
-STT correctly transcribes
+Sentence ready
     ↓
-Brain correctly generates text
+WS /ws/tts
     ↓
-AI response text appears on screen
+send text
     ↓
-NO AUDIO PLAYS
+Sarvam audio chunk #1
     ↓
-User must manually click:
-
-"Speak current text"
-
+Browser
     ↓
-Then the agent speaks successfully.
+PLAY
 
-This proves that at least one TTS/playback path is functioning.
-
-The problem is specifically the automatic:
-
-Brain → TTS → Speaker
-
-path.
-
-============================================================
-ISSUE 2A — TRACE THE COMPLETE AUTOMATIC PATH
-============================================================
-
-Trace this exact sequence:
-
-transcript.final
-    ↓
-runTurn()
-    ↓
-brain request
-    ↓
-brain stream
-    ↓
-output_text.delta
-    ↓
-SentenceAccumulator
-    ↓
-TTS text
-    ↓
-/ws/tts
-    ↓
-TTS audio chunks
-    ↓
-AudioPlaybackManager
-    ↓
-MediaSource / Audio element
-    ↓
-audio.play()
-    ↓
-speaker
-
-Identify EXACTLY where the automatic path stops.
-
-Do not simply add another click handler.
-
-The desired architecture is:
-
-USER SPEAKS
-    ↓
-STT FINAL
-    ↓
-BRAIN STREAM
-    ↓
-FIRST USABLE SENTENCE
-    ↓
-TTS IMMEDIATELY
-    ↓
-FIRST AUDIO CHUNK
-    ↓
-AUTOMATIC PLAYBACK
-    ↓
-SPEAKER
-
-No additional user interaction.
-
-============================================================
-ISSUE 2B — COMPARE "SPEAK CURRENT TEXT" WITH AUTOMATIC TTS
-============================================================
-
-This is extremely important.
-
-Find the exact code executed when the user clicks:
-
-"Speak current text"
-
-Then compare it with the automatic response path.
-
-Determine:
-
-Does the manual button:
-
-- create an Audio object?
-- call audio.play()?
-- unlock AudioContext?
-- initialize MediaSource?
-- create a TTS request?
-- use a different TTS endpoint?
-- use a different speaker configuration?
-- bypass AudioPlaybackManager?
-- use a different audio element?
-- use a different codec?
-- use a different state?
-- call a missing function that automatic playback never calls?
-
-If manual playback works, reuse the SAME working playback mechanism for automatic playback.
-
-Do NOT maintain two separate playback implementations.
-
-Required architecture:
-
-AudioPlaybackManager
-    ↓
-single canonical playAudio() path
-
-Automatic response
-    → AudioPlaybackManager
-
-Manual replay
-    → AudioPlaybackManager
-
-"Speak current text"
-    → AudioPlaybackManager
-
-The only difference should be WHAT text/audio is being played.
-
-============================================================
-ISSUE 2C — CHECK AUTOPLAY POLICY
-============================================================
-
-The user already clicks the microphone button to start the voice session.
-
-Use that initial user gesture to unlock audio playback.
-
-At microphone/session start:
-
-1. Initialize audio playback.
-2. Create/attach the persistent audio element.
-3. Unlock AudioContext if used.
-4. Prepare MediaSource if used.
-5. Mark audioUnlocked=true only after successful initialization.
-
-Do NOT wait until several seconds later when TTS audio arrives.
-
-Do NOT require the user to click "Speak current text" after every response.
-
-If browser autoplay is actually blocking playback, capture the exact error.
-
-For example:
-
-audio.play()
-
-must have proper Promise handling.
-
-Log:
-
-[VOICE][AUDIO] PLAY_REQUEST
-[VOICE][AUDIO] PLAY_SUCCESS
-[VOICE][AUDIO] PLAY_BLOCKED
-[VOICE][AUDIO] PLAY_ERROR
-
-If the error is:
-
-NotAllowedError
-
-determine whether the initial microphone gesture is being correctly used to unlock playback.
-
-Do not silently swallow the error.
-
-============================================================
-ISSUE 2D — PERSISTENT AUDIO PLAYER
-============================================================
-
-Use one persistent audio playback instance for the voice session.
-
-Do NOT create a completely new audio element for every Brain response.
-
-Expected:
-
-voice session starts
-    ↓
-persistent audio element
-    ↓
-TTS chunks arrive
-    ↓
-automatic playback
-
-The same playback manager must remain available throughout the session.
-
-============================================================
-ISSUE 2E — DO NOT WAIT FOR THE ENTIRE BRAIN RESPONSE
-============================================================
-
-The voice agent must be low latency.
-
-Do NOT do:
+Not:
 
 Brain complete
     ↓
-wait
+POST /api/tts
     ↓
-full response
-    ↓
-TTS
-    ↓
-audio
+wait for entire WAV/MP3
     ↓
 play
+🔴 Issue #2 — Your TTS is starting AFTER Brain completes
 
-Instead:
+Your logs:
 
-Brain delta
-Brain delta
-Brain delta
-    ↓
-first complete natural sentence
-    ↓
+22:41:16 Brain started
+22:41:19 Brain completed
+22:41:19 TTS synthesis started
+
+That's roughly 3 seconds before TTS even starts.
+
+This defeats the entire purpose of streaming.
+
+You want:
+
+22:41:16 Brain starts
+22:41:16.5 first delta
+22:41:17 sentence ready
+22:41:17 TTS starts
+22:41:17.3 first audio
+22:41:17.3 SPEAKER
+
+The Brain should not need to finish the entire answer before TTS begins.
+
+Sarvam specifically describes WebSocket TTS as suitable for conversational agents because audio can flow before the sentence finishes synthesizing.
+
+🔴 Issue #3 — You have TWO TTS architectures competing
+
+Your logs show:
+
+WebSocket TTS
+/ws/tts
+
+and:
+
+HTTP TTS
+POST /api/tts
+
+This is dangerous.
+
+You should have:
+
+LIVE VOICE MODE
+       ↓
+WS TTS
+
+and optionally:
+
+TEST / REPLAY
+       ↓
+HTTP TTS
+
+Currently it appears to be:
+
+LIVE
+ ↓
+WS
+ ↓
+fails/closes
+ ↓
+HTTP fallback
+
+That fallback is destroying your latency.
+
+My recommendation
+
+For live mode:
+
+Disable HTTP fallback entirely during normal operation.
+
+If WS fails, log an explicit error instead of silently switching to slow REST synthesis.
+
+That will make the problem visible and force you to fix the actual streaming path.
+
+🔴 Issue #4 — You're opening a new TTS WebSocket every turn
+
+Look at:
+
+22:41:12 WebSocket /ws/tts
+
+Then again:
+
+22:41:34 WebSocket /ws/tts
+
+Then again:
+
+22:41:44 WebSocket /ws/tts
+
+So every turn appears to establish a new connection.
+
+That's unnecessary overhead.
+
+Your architecture earlier said:
+
+"WS /ws/tts (warm per turn)"
+
+But your implementation appears to be creating a new connection for every turn.
+
+Better
+
+Maintain:
+
+Voice session
+      │
+      ├── STT WebSocket ───────────── persistent
+      │
+      └── TTS WebSocket ───────────── persistent
+
+Then:
+
+Turn 1 → text → same TTS WS
+Turn 2 → text → same TTS WS
+Turn 3 → text → same TTS WS
+
+Sarvam's WebSocket API supports streaming configuration and text chunks over the same connection.
+
+This can eliminate repeated WebSocket handshake latency.
+
+🔴 Issue #5 — Your TTS config has temperature=-
+
+This is suspicious:
+
+temperature=-
+
+Your runtime config is logging:
+
+model=bulbul:v3
+speaker=shubh
+pace=1.08
+temperature=-
+
+But your earlier UI had a temperature setting.
+
+So your runtime configuration appears to have no actual TTS temperature value.
+
+That's something I'd fix immediately.
+
+For Bulbul v3, Sarvam documents temperature as supported from 0.01–1.0, with 0.6 default.
+
+For your business voice agent I'd test:
+
+temperature = 0.4
+
+or:
+
+0.45
+
+Sarvam's own contact-center examples use Bulbul v3 with pace=1.1 and temperature=0.4, which is actually very close to your use case.
+
+🟠 Issue #6 — You're using pace=1.08
+
+This isn't a problem.
+
+Actually, it's reasonable.
+
+Sarvam's contact-center guidance uses:
+
+pace=1.1
+temperature=0.4
+
+for a brisk professional delivery.
+
+So I'd keep:
+
+pace = 1.05–1.10
+
+Your:
+
+1.08
+
+is perfectly reasonable.
+
+Don't waste time optimizing this before fixing streaming.
+
+🟠 Issue #7 — Your audio codec changes between paths
+
+Look:
+
+WebSocket:
+
+codec=linear16
+
+HTTP:
+
+codec=mp3
+
+This means your two paths aren't even producing the same audio format.
+
+Your WebSocket path:
+
+linear16 / 24kHz
+
+Your HTTP fallback:
+
+MP3 / 24kHz
+
+That's another reason your playback architecture can behave differently between automatic and manual playback.
+
+Sarvam's WebSocket API supports streaming audio chunks and Bulbul v3 uses 24 kHz by default.
+
+For browser voice agent
+
+I'd pick one format and use it consistently.
+
+If your current browser playback is already built around MediaSource + MPEG:
+
+MP3
+
+can be convenient.
+
+But if your WebSocket implementation is receiving linear16, then your browser needs a proper PCM playback pipeline — you cannot simply treat raw PCM as MP3.
+
+So don't change this blindly.
+
+Your coding agent should audit:
+
+Sarvam output
+ ↓
+codec
+ ↓
+base64 decode
+ ↓
+browser buffer
+ ↓
+AudioContext / MediaSource
+🔴 Issue #8 — The biggest architecture mistake: TTS starts too late
+
+You currently have:
+
+Brain starts
+       ↓
+Brain completes
+       ↓
+TTS starts
+
+You want:
+
+Brain starts
+       ↓
+first delta
+       ↓
+sentence accumulator
+       ↓
+sentence complete
+       ↓
 TTS immediately
-    ↓
-first audio chunk
-    ↓
-play immediately
 
-While the first sentence is being spoken, the Brain can continue generating the rest.
+For example Brain generates:
 
-============================================================
-ISSUE 2F — SENTENCE ACCUMULATOR
-============================================================
+"అవునా సార్…"
 
-Audit SentenceAccumulator.
+then:
 
-It should flush TTS text when a natural sentence boundary is reached.
+"అవునా సార్… 50 లక్షల వరకు చూస్తున్నారా?"
 
-Recognize:
+As soon as the sentence is complete:
 
-.
-?
-!
-।
+→ TTS
 
-and appropriate Telugu conversational boundaries.
+Don't wait for:
 
-Do not wait unnecessarily for the entire response.
+"అవునా సార్… 50 లక్షల వరకు చూస్తున్నారా? మీకు plot కావాలా, flat కావాలా? మా దగ్గర..."
+🟠 Issue #9 — Your STT architecture is also not using the newest realtime path
 
-For example:
+Your log:
 
-Brain produces:
+stt saaras:v3
 
-"అవునా సార్… 50 లక్షల వరకు చూస్తున్నారా? మీకు plot కావాలా, flat కావాలా?"
+and:
 
-As soon as the first natural sentence is ready, TTS should begin.
+/ws/stt-realtime?language_code=te-IN&stream_type=fast&mode=transcribe
 
-Do not wait for the entire response if streaming allows earlier playback.
+Your current Sarvam documentation says the older saaras:v3 streaming endpoint is the generally available legacy WebSocket, while saaras:v3-realtime is the newer realtime streaming path intended for new voice-agent/live transcription work, with interim transcripts and finer VAD tuning.
 
-============================================================
-ISSUE 2G — AUDIO CHUNK QUEUE
-============================================================
+So I'd have your developer test:
 
-If TTS is streaming MP3 chunks:
+saaras:v3
+vs
+saaras:v3-realtime
 
-TTS chunk
-    ↓
-AudioPlaybackManager
-    ↓
-MediaSource
-    ↓
-SourceBuffer
-
-Handle SourceBuffer backpressure correctly.
-
-If:
-
-sourceBuffer.updating === true
-
-queue the chunk.
-
-When:
-
-updateend
-
-append the next chunk.
-
-Do not drop chunks.
-
-Do not append simultaneously.
-
-Do not call endOfStream() before the TTS stream finishes.
-
-============================================================
-ISSUE 2H — AUTOMATIC PLAYBACK STATE
-============================================================
-
-Audit these states carefully:
-
-IDLE
-LISTENING
-PROCESSING_STT
-THINKING
-GENERATING_TTS
-SPEAKING
-INTERRUPTED
-ERROR
-
-The current bug may be caused by the UI reaching:
-
-THINKING → text displayed → IDLE
-
-without entering:
-
-GENERATING_TTS → SPEAKING
-
-Verify the actual state transitions.
-
-Add safe logs:
-
-[VOICE][STATE] IDLE -> LISTENING
-[VOICE][STATE] LISTENING -> THINKING
-[VOICE][STATE] THINKING -> GENERATING_TTS
-[VOICE][STATE] GENERATING_TTS -> SPEAKING
-[VOICE][STATE] SPEAKING -> LISTENING
-
-If TTS is generated but state remains THINKING/IDLE, fix that.
-
-============================================================
-ISSUE 2I — AUTO MODE MUST ACTUALLY BE ENABLED
-============================================================
-
-The UI currently displays:
-
-AUTO
-
-Verify that this is a real runtime boolean, not just a visual label.
-
-Trace:
-
-handsFree
-voiceLoop
-autoPlayback
-autoSpeak
-autoTts
-liveMode
-
-or whatever equivalent flags exist.
-
-Determine whether automatic playback is actually enabled in the runtime session.
-
-Do not trust the UI.
-
-Log:
-
-[VOICE][AUTO]
-enabled=true/false
-
-When Brain produces a response:
-
-if autoPlayback === true:
-
-automatically invoke the canonical TTS/playback path.
-
-Do NOT wait for:
-
-"Speak current text"
-
-button click.
-
-============================================================
-ISSUE 2J — BARGE-IN MUST CONTINUE TO WORK
-============================================================
-
-Do not fix automatic playback by breaking microphone listening.
-
-The final behavior must remain:
-
-User speaks
-    ↓
-Agent listens
-    ↓
-Agent responds automatically
-    ↓
-Agent speaks
-    ↓
-User interrupts
-    ↓
-Current audio stops quickly
-    ↓
-Current TTS/Brain generation is cancelled
-    ↓
-Agent listens to new speech
-    ↓
-New response automatically speaks
-
-No overlapping voices.
-
-No stale audio.
-
-============================================================
-OBSERVABILITY
-============================================================
-
-Add safe diagnostic logs around the entire critical path.
-
-Required logs:
-
-[VOICE][CONFIG]
-model=...
-speaker=...
-pace=...
-temperature=...
-
-[VOICE][STT]
-FINAL
-
-[VOICE][BRAIN]
-START
-
-[VOICE][BRAIN]
-FIRST_DELTA
-
-[VOICE][BRAIN]
-SENTENCE_READY
-
-[VOICE][TTS]
-START
-
-[VOICE][TTS]
-FIRST_AUDIO
-
-[VOICE][AUDIO]
-CHUNK_RECEIVED
-
-[VOICE][AUDIO]
-CHUNK_APPENDED
-
-[VOICE][AUDIO]
-PLAY_REQUEST
-
-[VOICE][AUDIO]
-PLAY_STARTED
-
-[VOICE][AUDIO]
-PLAY_BLOCKED
-
-[VOICE][AUDIO]
-PLAY_ERROR
-
-[VOICE][AUDIO]
-PLAY_ENDED
-
-[VOICE][STATE]
-state transitions
-
-Never log:
-
-- API keys
-- access tokens
-- secrets
-- private credentials
-
-============================================================
-PERFORMANCE MEASUREMENTS
-============================================================
+Don't blindly switch production yet.
 
 Measure:
 
-t0 = transcript.final
-t1 = first Brain delta
-t2 = first sentence ready
-t3 = TTS request start
-t4 = first TTS audio chunk
-t5 = audio.play() request
-t6 = actual audio playback start
+speech end
+→ transcript.final
 
-Log:
+If realtime gives you lower endpointing latency and stable Telugu recognition, migrate.
 
-[VOICE][PERF]
-brain_first_delta_ms=...
-sentence_ready_ms=...
-tts_first_audio_ms=...
-audio_play_start_ms=...
-total_time_to_first_audio_ms=...
+🟠 Issue #10 — Brain is taking ~1–3 seconds
 
-The goal is the lowest practical time-to-first-audio.
+Your first example:
 
-============================================================
-IMPORTANT — DO NOT MAKE SUPERFICIAL FIXES
-============================================================
+22:41:16 Brain started
+22:41:19 Brain completed
 
-Do NOT:
+That's ~3 seconds.
 
-- hardcode Ritu
-- hardcode Shubh
-- remove the speaker dropdown
-- fake the selected speaker in the UI
-- automatically click the "Speak current text" button programmatically
-- add an artificial button click
-- hide autoplay errors
-- simply call TTS again without finding the root cause
-- create duplicate audio players
-- wait for the complete Brain response
-- remove hands-free mode
-- disable barge-in
-- rewrite the entire voice architecture unnecessarily
+But we don't know the first delta latency, because your logs aren't recording it.
 
-The fix must be architectural and use the existing voice pipeline correctly.
+That's a major observability gap.
 
-============================================================
-ACCEPTANCE TEST 1 — SPEAKER SELECTION
-============================================================
+You need:
 
-Set:
+BRAIN_STARTED
+BRAIN_FIRST_DELTA
+BRAIN_FIRST_SENTENCE
+BRAIN_COMPLETED
 
-speaker = shubh
+For example:
 
-Speak the same Telugu sentence.
+16.000 Brain started
+16.420 First delta
+16.850 Sentence ready
+18.900 Brain completed
 
-Record actual voice.
+If first delta is 400ms but completion is 3s, that's fine because TTS can start at 850ms.
 
-Then set:
+If first delta itself is 2.5s, then Brain configuration is the bottleneck.
 
-speaker = ritu
+🟢 GPT-5.6 Luna is actually a good choice here
 
-Speak the EXACT same Telugu sentence.
+Your log:
 
-Record actual voice.
+model=gpt-5.6-luna
 
-Expected:
+That's a sensible model for your workload.
 
-The voices are genuinely different.
+OpenAI currently positions GPT-5.6 Luna for cost-sensitive, high-volume workloads, while the flagship is aimed at more complex reasoning.
 
-Runtime logs must show:
+For a real-time voice agent, don't use heavy reasoning for every turn.
 
-speaker=shubh
+Routine:
 
-and then:
+"50 lakhs budget."
 
-speaker=ritu
+doesn't require deep reasoning.
 
-respectively.
+Use the lowest practical reasoning configuration.
 
-The backend must not silently override either value.
+🔴 Issue #11 — Your current log doesn't show Brain reasoning configuration
 
-============================================================
-ACCEPTANCE TEST 2 — AUTOMATIC SPEECH
-============================================================
+You log:
 
-Click microphone ONCE.
+model=gpt-5.6-luna
+historyLen=4
 
-Say:
+but not:
 
-"నాకు 50 లక్షల budgetలో ఒక మంచి property కావాలి."
+reasoning_effort
+temperature
+max_output_tokens
 
-Expected:
+You need to log:
 
-STT
-→ Brain
-→ TTS
-→ SPEAKER
+[BRAIN_CONFIG]
+model=gpt-5.6-luna
+reasoning_effort=none
+max_output_tokens=140
 
-automatically.
+That lets you prove what is actually being sent.
 
-The user must NOT click:
+🟠 Issue #12 — History is growing
 
-"Speak current text"
+You have:
 
-The user must hear the response automatically.
+historyLen=0
+historyLen=2
+historyLen=4
 
-============================================================
-ACCEPTANCE TEST 3 — MULTIPLE TURNS
-============================================================
+This is okay for now.
 
-Perform at least 10 consecutive voice turns.
+But eventually:
 
-Expected:
+historyLen=12
 
-- every response automatically speaks
-- no manual button
-- no silent responses
-- no duplicate responses
-- no overlapping audio
-- no stale audio
-- no memory leak
-- selected speaker remains consistent
+etc. increases input processing.
 
-============================================================
-ACCEPTANCE TEST 4 — SPEAKER CHANGE
-============================================================
+For voice conversations, don't send huge conversation histories.
 
-Change:
+I'd use:
 
-shubh → ritu
+6–10 recent turns
 
-without changing anything else.
-
-Start a new voice turn.
-
-Expected:
-
-new voice is Ritu.
-
-Then change:
-
-ritu → shubh
-
-Start another new voice turn.
-
-Expected:
-
-new voice is Shubh.
-
-============================================================
-ACCEPTANCE TEST 5 — REPLAY
-============================================================
-
-After automatic playback works:
-
-Click "Replay last".
-
-Expected:
-
-The last response plays again.
-
-Replay must use the same canonical playback manager.
-
-============================================================
-FINAL REPORT
-============================================================
-
-After implementation, report:
-
-1. Root cause of the speaker-selection bug.
-2. Exact file(s) causing the speaker override.
-3. Actual speaker value sent to Sarvam before the fix.
-4. Why selecting Ritu in the UI did not change the actual voice.
-5. Root cause of automatic playback failure.
-6. Why "Speak current text" worked while automatic playback did not.
-7. Whether browser autoplay policy was involved.
-8. Whether audio.play() was failing.
-9. Whether MediaSource/SourceBuffer was involved.
-10. Whether autoPlayback/handsFree state was incorrectly handled.
-11. Files changed.
-12. Exact configuration path after the fix.
-13. First-audio latency before/after.
-14. Confirmation that Ritu and Shubh produce different voices.
-15. Confirmation that responses now speak automatically without clicking any button.
-16. Confirmation that barge-in still works.
-
-DO NOT declare the task complete until both issues are demonstrated working end-to-end.
-
-The real acceptance criteria are:
-
-1. Changing the speaker changes the ACTUAL generated voice.
-2. After the initial microphone interaction, every Brain response automatically reaches the user's speaker without clicking "Speak current text".
+plus a compact customer summary if needed.

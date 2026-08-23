@@ -11,6 +11,15 @@ from typing import Optional
 
 from server.config.constants import constants
 from server.config.env import get_settings
+from server.utils.log_config import get_log_flags
+from server.prompts.voice_defaults import (
+    DEFAULT_BEHAVIOUR_INSTRUCTIONS,
+    DEFAULT_BUSINESS_INSTRUCTIONS,
+    DEFAULT_OPENAI_MODEL,
+    DEFAULT_RESPONSE_STYLE,
+    OPENAI_MODEL_CATALOG,
+    OPENAI_MODEL_IDS,
+)
 from server.services.runtime_settings import runtime_settings, SettingsValidationError
 from server.services.tts_config import resolve_tts_config
 
@@ -22,10 +31,18 @@ async def catalog():
     """Everything the console needs to render selects/sliders."""
     try:
         s = get_settings()
-        allowed_models = s.allowed_openai_models
-        current_openai = s.openai_model
+        allowed_models = [m for m in s.allowed_openai_models if m in OPENAI_MODEL_IDS] or OPENAI_MODEL_IDS
+        current_openai = s.openai_model if s.openai_model in allowed_models else allowed_models[0]
+        log_flags = get_log_flags()
+        voice_cfg = {
+            "httpTtsFallback": s.voice_http_tts_fallback,
+            "persistentTtsWs": True,
+        }
     except Exception:
-        allowed_models, current_openai = [], "unknown"
+        allowed_models, current_openai = OPENAI_MODEL_IDS, OPENAI_MODEL_IDS[0]
+        log_flags = {"enabled": True, "client": True, "perf": True}
+        voice_cfg = {"httpTtsFallback": False, "persistentTtsWs": True}
+    model_labels = {m["id"]: m["label"] for m in OPENAI_MODEL_CATALOG}
     return {
         "stt": {
             "models": [{"id": k, "label": v["label"], "modes": v["modes"]} for k, v in constants.STT_MODELS.items()],
@@ -44,16 +61,30 @@ async def catalog():
         },
         "openai": {
             "allowedModels": allowed_models,
+            "modelLabels": model_labels,
             "currentModel": current_openai,
+            "defaultModel": DEFAULT_OPENAI_MODEL,
             "temperature": [0.0, 2.0],
-            "maxTokens": [50, 4000],
+            "maxTokens": [50, 800],
             "modelGroups": [
-                {"label": "GPT-4o family", "models": [m for m in allowed_models if m.startswith("gpt-4")]},
-                {"label": "GPT-5 family", "models": [m for m in allowed_models if m.startswith("gpt-5")]},
-                {"label": "Reasoning (o-series)", "models": [m for m in allowed_models if m.startswith("o")]},
+                {"label": "GPT-5 family (voice-tuned)", "models": allowed_models},
             ],
-            "note": "API keys stay server-side in .env — never enter them in the browser.",
+            "defaults": {
+                "openaiModel": "gpt-5.6-luna",
+                "openaiMaxTokens": 320,
+                "openaiTemperature": 0.7,
+                "responseStyle": DEFAULT_RESPONSE_STYLE,
+                "behaviourInstructions": DEFAULT_BEHAVIOUR_INSTRUCTIONS,
+                "businessInstructions": DEFAULT_BUSINESS_INSTRUCTIONS,
+                "ttsMinBuffer": 30,
+                "ttsMaxChunk": 80,
+                "ttsPace": 1.08,
+                "ttsTemperature": 0.4,
+            },
+            "note": "API keys stay server-side in .env. GPT-5.6 Luna = fastest for live voice; GPT-5.5 = highest quality.",
         },
+        "voice": voice_cfg,
+        "logging": log_flags,
     }
 
 

@@ -36,28 +36,39 @@ class Settings(BaseSettings):
     sarvam_api_key: str = Field(..., alias="SARVAM_API_KEY")
 
     # --- Models & voices (configurable, verified against docs at build time) ---
-    openai_model: str = Field("gpt-4o-mini", alias="OPENAI_MODEL")
+    openai_model: str = Field("gpt-5.6-luna", alias="OPENAI_MODEL")
     openai_temperature: float = Field(0.5, alias="OPENAI_TEMPERATURE")
     sarvam_stt_model: str = Field("saaras:v3", alias="SARVAM_STT_MODEL")
     sarvam_tts_model: str = Field("bulbul:v3", alias="SARVAM_TTS_MODEL")
     sarvam_tts_speaker_te: str = Field("shubh", alias="SARVAM_TTS_SPEAKER_TE")
-    sarvam_tts_pace: float = Field(1.0, alias="SARVAM_TTS_PACE")
+    sarvam_tts_pace: float = Field(1.08, alias="SARVAM_TTS_PACE")
+    sarvam_tts_temperature: float = Field(0.4, alias="SARVAM_TTS_TEMPERATURE")
 
-    # --- Cost / context controls ---
-    max_response_length: int = Field(600, alias="MAX_RESPONSE_LENGTH")
-    max_context_messages: int = Field(12, alias="MAX_CONTEXT_MESSAGES")
+    # --- Logging (toggle per category; LOG_ENABLED=false silences all) ---
+    log_enabled: bool = Field(True, alias="LOG_ENABLED")
+    log_level: Literal["debug", "info", "warning", "error", "off"] = Field("info", alias="LOG_LEVEL")
+    log_voice: bool = Field(True, alias="LOG_VOICE")
+    log_stt: bool = Field(True, alias="LOG_STT")
+    log_brain: bool = Field(True, alias="LOG_BRAIN")
+    log_tts: bool = Field(True, alias="LOG_TTS")
+    log_ws: bool = Field(True, alias="LOG_WS")
+    log_perf: bool = Field(True, alias="LOG_PERF")
+    log_client: bool = Field(True, alias="LOG_CLIENT")
+
+    # --- Voice pipeline ---
+    voice_http_tts_fallback: bool = Field(False, alias="VOICE_HTTP_TTS_FALLBACK")
+    max_response_length: int = Field(320, alias="MAX_RESPONSE_LENGTH")
+    max_context_messages: int = Field(8, alias="MAX_CONTEXT_MESSAGES")
     request_timeout_ms: int = Field(15000, alias="REQUEST_TIMEOUT_MS")
     max_retries: int = Field(2, alias="MAX_RETRIES")
 
     # --- Fine-tune allowlist (industry: restrict client-selectable models) ---
     allowed_openai_models_csv: str = Field(
-        "gpt-4o-mini,gpt-4o,gpt-4o-2024-11-20,gpt-4.1-mini,gpt-4.1,gpt-5-mini,gpt-5,gpt-5.2,"
-        "o3-mini,o4-mini,chatgpt-4o-latest",
+        "gpt-5.5,gpt-5.4,gpt-5,gpt-5.6-luna",
         alias="OPENAI_ALLOWED_MODELS",
     )
 
     # --- App ---
-    log_level: Literal["debug", "info", "warning", "error"] = Field("info", alias="LOG_LEVEL")
     debug: bool = Field(False, alias="DEBUG")
     port: int = Field(8000, alias="PORT")
     client_url: str = Field("http://localhost:8000", alias="CLIENT_URL")
@@ -74,6 +85,13 @@ class Settings(BaseSettings):
     def _pace_range(cls, v: float) -> float:
         if not 0.5 <= v <= 2.0:
             raise ValueError("SARVAM_TTS_PACE must be 0.5–2.0")
+        return v
+
+    @field_validator("sarvam_tts_temperature")
+    @classmethod
+    def _tts_temp_range(cls, v: float) -> float:
+        if not 0.01 <= v <= 1.0:
+            raise ValueError("SARVAM_TTS_TEMPERATURE must be 0.01–1.0")
         return v
 
     @field_validator("openai_temperature")
