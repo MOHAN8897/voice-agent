@@ -72,5 +72,5 @@ class ConversationManager:
         return str(uuid.uuid4())
 
 
-# Singleton for app
-conversation_manager = ConversationManager(max_messages=12)
+# Singleton — max_messages synced from env at app startup (see server/app.py lifespan)
+conversation_manager = ConversationManager(max_messages=8)

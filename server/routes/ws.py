@@ -2,7 +2,11 @@
 WebSocket routes — server/routes/ws.py
 /ws/stt-realtime : browser PCM16 → Sarvam saaras:v3-realtime (partials + VAD events back)
 /ws/tts          : browser JSON config/text → Sarvam bulbul WS → base64 audio chunks back
-Both are thin, validated proxies — keys never leave server.
+
+TTS design (fix.md Issue #1/#4):
+  • Browser WebSocket stays open for the whole live session.
+  • Sarvam upstream may close after each flush — proxy reconnects upstream silently.
+  • Browser is notified via {"type":"upstream_reset"} so it can re-send config.
 """
 from __future__ import annotations
 
@@ -109,103 +113,161 @@ async def ws_stt_realtime(ws: WebSocket):
 @router.websocket("/ws/tts")
 async def ws_tts(ws: WebSocket):
     """
-    Browser connects: /ws/tts?model=bulbul:v3&sessionId=default
-    Client must FIRST send {"type":"config","data":{...}} then {"type":"text",...}, {"type":"flush"}.
-    Persistent across turns — client sends flush per turn, not close.
+    Persistent browser proxy — upstream Sarvam WS reconnects per synthesis turn.
+    Client keeps one /ws/tts open; sends config+text+flush each turn.
     """
     await ws.accept()
     model = ws.query_params.get("model", "bulbul:v3")
     session_id = ws.query_params.get("sessionId", "default")
     if model not in constants.TTS_MODELS:
         model = "bulbul:v3"
-    upstream = None
-    upstream_task = None
-    configured = False
-    audio_chunks = 0
-    try:
-        upstream_cm = connect_tts_ws(model)
-        upstream = await upstream_cm.__aenter__()
-        log_ws("TTS upstream connected", model=model, session=session_id)
 
-        async def upstream_to_client():
-            nonlocal audio_chunks
+    upstream = None
+    upstream_cm = None
+    upstream_lock = asyncio.Lock()
+    client_open = True
+    reader_task = None
+    ping_task = None
+    audio_chunks = 0
+    configured = False
+
+    async def close_upstream():
+        nonlocal upstream, upstream_cm, configured
+        async with upstream_lock:
+            if upstream is not None:
+                try:
+                    await upstream.close()
+                except Exception:
+                    pass
+                upstream = None
+            upstream_cm = None
+            configured = False
+
+    async def notify_upstream_reset(reason: str) -> None:
+        if not client_open:
+            return
+        try:
+            await ws.send_text(json.dumps({"type": "upstream_reset", "reason": reason}))
+        except Exception:
+            pass
+
+    async def connect_upstream() -> None:
+        nonlocal upstream, upstream_cm, configured, audio_chunks
+        async with upstream_lock:
+            if upstream is not None:
+                return
+            upstream_cm = connect_tts_ws(model)
+            upstream = await upstream_cm.__aenter__()
+            configured = False
+            audio_chunks = 0
+            log_ws("TTS upstream connected", model=model, session=session_id)
+
+    async def upstream_reader():
+        nonlocal audio_chunks, configured, client_open
+        while client_open:
             try:
+                await connect_upstream()
+                assert upstream is not None
                 async for raw in upstream:
+                    if not client_open:
+                        break
                     if isinstance(raw, bytes):
                         raw = raw.decode(errors="ignore")
                     try:
                         obj = json.loads(raw)
-                        if obj.get("type") == "audio" or (obj.get("data") and isinstance(obj.get("data"), dict) and obj["data"].get("audio")):
+                        if obj.get("type") == "audio" or (
+                            obj.get("data")
+                            and isinstance(obj.get("data"), dict)
+                            and obj["data"].get("audio")
+                        ):
                             audio_chunks += 1
                             if audio_chunks == 1:
                                 log_ws("TTS first audio chunk", session=session_id, model=model)
                     except Exception:
                         pass
                     await ws.send_text(raw)
+                # Sarvam closed upstream after synthesis — reconnect on next client message
+                log_ws("TTS upstream turn ended — will reconnect", session=session_id, chunks=audio_chunks)
+                await close_upstream()
+                await notify_upstream_reset("turn_complete")
+            except asyncio.CancelledError:
+                break
             except Exception as exc:
-                log_ws("TTS upstream read ended", session=session_id, reason=str(exc)[:120])
-            finally:
-                try:
-                    await ws.close()
-                except Exception:
-                    pass
+                log_ws("TTS upstream read error", session=session_id, reason=str(exc)[:120])
+                await close_upstream()
+                await notify_upstream_reset("upstream_error")
+                await asyncio.sleep(0.15)
 
-        async def client_to_upstream():
-            nonlocal configured
-            while True:
-                msg = await ws.receive()
-                if msg.get("type") == "websocket.disconnect":
-                    log_ws("TTS client disconnected", session=session_id, configured=configured, chunks=audio_chunks)
-                    break
-                text = msg.get("text")
-                if not text:
-                    continue
-                try:
-                    obj = json.loads(text)
-                except Exception:
-                    continue
-                mtype = obj.get("type")
-                if mtype == "config":
-                    d = dict(obj.get("data") or {})
-                    try:
-                        merged = merge_ws_tts_config(session_id, d)
-                        merged["model"] = model
-                        out = {
-                            "speaker": merged["speaker"],
-                            "language_code": merged["language_code"],
-                            "pace": merged["pace"],
-                            "min_buffer_size": merged["min_buffer_size"],
-                            "max_chunk_length": merged["max_chunk_length"],
-                            "output_audio_codec": merged["output_audio_codec"],
-                            "output_audio_bitrate": merged["output_audio_bitrate"],
-                        }
-                        if "temperature" in merged:
-                            out["temperature"] = merged["temperature"]
-                        await upstream.send(json.dumps({"type": "config", "data": out}))
-                        configured = True
-                        log_ws(
-                            "TTS configured",
-                            session=session_id,
-                            speaker=out["speaker"],
-                            codec=out["output_audio_codec"],
-                            temperature=out.get("temperature"),
-                            min_buffer=out["min_buffer_size"],
-                        )
-                    except TtsConfigError as e:
-                        await ws.send_text(json.dumps({"type": "error", "message": str(e), "code": "SPEAKER_INVALID"}))
-                        continue
-                elif mtype == "text":
-                    piece = (obj.get("data") or {}).get("text") or ""
-                    if piece:
-                        log_ws("TTS text forward", session=session_id, chars=len(piece))
-                    await upstream.send(text)
-                elif mtype in ("flush", "ping"):
-                    if mtype == "flush":
-                        log_ws("TTS flush", session=session_id)
-                    await upstream.send(text)
+    async def forward_upstream(payload: str) -> None:
+        nonlocal configured
+        await connect_upstream()
+        assert upstream is not None
+        await upstream.send(payload)
 
-        upstream_task = asyncio.create_task(upstream_to_client())
-        await client_to_upstream()
+    async def tts_keepalive():
+        while client_open:
+            await asyncio.sleep(20)
+            try:
+                if upstream is not None:
+                    await upstream.send(json.dumps({"type": "ping"}))
+            except Exception:
+                pass
+
+    try:
+        reader_task = asyncio.create_task(upstream_reader())
+        ping_task = asyncio.create_task(tts_keepalive())
+
+        while True:
+            msg = await ws.receive()
+            if msg.get("type") == "websocket.disconnect":
+                log_ws("TTS client disconnected", session=session_id, configured=configured, chunks=audio_chunks)
+                break
+            text = msg.get("text")
+            if not text:
+                continue
+            try:
+                obj = json.loads(text)
+            except Exception:
+                continue
+            mtype = obj.get("type")
+            if mtype == "config":
+                d = dict(obj.get("data") or {})
+                try:
+                    merged = merge_ws_tts_config(session_id, d)
+                    out = {
+                        "speaker": merged["speaker"],
+                        "language_code": merged["language_code"],
+                        "pace": merged["pace"],
+                        "min_buffer_size": merged["min_buffer_size"],
+                        "max_chunk_length": merged["max_chunk_length"],
+                        "output_audio_codec": merged["output_audio_codec"],
+                        "output_audio_bitrate": merged["output_audio_bitrate"],
+                    }
+                    if "temperature" in merged:
+                        out["temperature"] = merged["temperature"]
+                    await forward_upstream(json.dumps({"type": "config", "data": out}))
+                    configured = True
+                    log_ws(
+                        "TTS configured",
+                        session=session_id,
+                        speaker=out["speaker"],
+                        codec=out["output_audio_codec"],
+                        temperature=out.get("temperature"),
+                        min_buffer=out["min_buffer_size"],
+                    )
+                except TtsConfigError as e:
+                    await ws.send_text(json.dumps({"type": "error", "message": str(e), "code": "SPEAKER_INVALID"}))
+            elif mtype == "text":
+                piece = (obj.get("data") or {}).get("text") or ""
+                if piece:
+                    log_ws("TTS text forward", session=session_id, chars=len(piece))
+                await forward_upstream(text)
+            elif mtype == "flush":
+                log_ws("TTS flush", session=session_id)
+                await forward_upstream(text)
+            elif mtype == "ping":
+                if upstream is not None:
+                    await forward_upstream(text)
     except WebSocketDisconnect:
         log_ws("TTS WS disconnect", session=session_id)
     except Exception as e:
@@ -215,10 +277,8 @@ async def ws_tts(ws: WebSocket):
         except Exception:
             pass
     finally:
-        if upstream_task:
-            upstream_task.cancel()
-        if upstream:
-            try:
-                await upstream.close()
-            except Exception:
-                pass
+        client_open = False
+        for t in (reader_task, ping_task):
+            if t:
+                t.cancel()
+        await close_upstream()

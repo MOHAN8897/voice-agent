@@ -16,6 +16,7 @@ from server.config.env import get_settings
 from server.prompts.system_prompt import CORE_SYSTEM_PROMPT
 from server.services.openai_model_params import apply_generation_params
 from server.utils.logger import log_brain, log_error, log_perf
+from server.utils.errors import AppError, ErrorCode
 import json
 
 

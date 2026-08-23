@@ -40,6 +40,8 @@ async def lifespan(app: FastAPI):
     try:
         settings = validate_env()
         set_level(settings.log_level)
+        from server.agent.conversation_manager import conversation_manager
+        conversation_manager.max_messages = settings.max_context_messages * 2  # user+assistant pairs
         logger.info(
             f"[VOICE] Server starting — version {constants.APP_VERSION}, "
             f"model {settings.openai_model}, stt {settings.sarvam_stt_model}"

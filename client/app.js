@@ -708,6 +708,8 @@ const live = {
   ttsSock: null,
   ttsStreamCodec: "linear16",
   ttsTurnEnded: false,
+  _flushAcked: false,
+  _ttsPingTimer: null,
   ttsSampleRate: 24000,
   pcmPlayer: null,
   mse: null,
@@ -757,10 +759,11 @@ async function startLiveSession() {
   partialsCard.style.display = "";
   partialsEl.textContent = "…connecting live session…";
   await refreshRuntimeSettings();
+  await refreshVoiceConfig();
   await unlockAudioPlayback();
   // Pre-warm TTS WebSocket + config (Sarvam: connect once, stream many turns)
   if (voiceMode.checked) {
-    ensureTtsStream().catch((e) => console.warn("[VOICE][TTS] pre-warm failed", e));
+    ensureTtsStream(true).catch((e) => clientLog("voice", "[VOICE][TTS] pre-warm failed", e));
   }
 
   // Pull Fine-tune console settings into connection params
@@ -909,18 +912,17 @@ function getBizSafeRaw() { return bizEl.value.trim(); }
 // the full brain response. Barge-in aborts SSE + closes TTS + kills audio.
 
 function ttsConfigFromConsole() {
-  // Legacy sync shim — prefer getResolvedTtsConfig() async; used only if cache warm.
   const v = runtimeSettings.values || {};
   const d = runtimeSettings.defaults || {};
   return {
     speaker: v.ttsSpeaker || d.ttsSpeaker || "shubh",
     language_code: v.sttLanguage || "te-IN",
-    pace: v.ttsPace ?? d.ttsPace ?? 1.0,
-    min_buffer_size: v.ttsMinBuffer ?? 50,
-    max_chunk_length: v.ttsMaxChunk ?? 200,
-    output_audio_codec: v.ttsCodec || "mp3",
+    pace: v.ttsPace ?? d.ttsPace ?? 1.08,
+    min_buffer_size: v.ttsMinBuffer ?? 30,
+    max_chunk_length: v.ttsMaxChunk ?? 80,
+    output_audio_codec: "linear16",
     output_audio_bitrate: v.ttsBitrate || "128k",
-    temperature: v.ttsTemperature,
+    temperature: v.ttsTemperature ?? d.ttsTemperature ?? 0.4,
     model: v.ttsModel || d.ttsModel || "bulbul:v3",
   };
 }
@@ -931,6 +933,7 @@ function cleanupTtsTurn() {
   resetTtsAcc();
   live.mseDone = false;
   live.ttsTurnEnded = false;
+  live._flushAcked = false;
   live._playAttempted = false;
   live._ttsAllB64 = [];
   if (currentWebAudioSource) {
@@ -941,11 +944,26 @@ function cleanupTtsTurn() {
 }
 
 function closeTtsSocket() {
+  stopTtsPing();
   if (live.ttsSock) {
     try { live.ttsSock.close(1000); } catch {}
     live.ttsSock = null;
   }
   _ttsStreamReady = false;
+  _ttsStreamInitPromise = null;
+}
+
+function startTtsPing() {
+  stopTtsPing();
+  live._ttsPingTimer = setInterval(() => {
+    if (live.ttsSock && live.ttsSock.readyState === WebSocket.OPEN) {
+      try { live.ttsSock.send(JSON.stringify({ type: "ping" })); } catch {}
+    }
+  }, 20000);
+}
+
+function stopTtsPing() {
+  if (live._ttsPingTimer) { clearInterval(live._ttsPingTimer); live._ttsPingTimer = null; }
 }
 
 async function runTurn(text, sttFinalMs) {
@@ -953,6 +971,7 @@ async function runTurn(text, sttFinalMs) {
   live.turnN++;
   cleanupTtsTurn();
   await refreshRuntimeSettings();
+  await refreshVoiceConfig();
   const autoEnabled = !!(voiceMode.checked || ($("handsFree") && $("handsFree").checked));
   console.log("[VOICE][AUTO] enabled=" + autoEnabled + " voiceLoop=" + voiceMode.checked + " handsFree=" + ($("handsFree") && $("handsFree").checked));
   addBubble("user", text);
@@ -982,7 +1001,7 @@ async function runTurn(text, sttFinalMs) {
 
   // Open TTS WebSocket in parallel with brain — speak first sentence while brain still streams
   const ttsOpenP = (voiceMode.checked && autoEnabled)
-    ? ensureTtsStream()
+    ? ensureTtsStream(true)
         .then(() => {
           usedStreamingTts = true;
           ttsReady = true;
@@ -992,7 +1011,7 @@ async function runTurn(text, sttFinalMs) {
           pendingTtsDeltas.length = 0;
         })
         .catch((e) => {
-          console.warn("[VOICE][TTS] stream open failed — REST fallback", e);
+          clientLog("voice", "[VOICE][TTS] stream open failed", e);
           usedStreamingTts = false;
           ttsReady = false;
           pendingTtsDeltas.length = 0;
@@ -1038,7 +1057,13 @@ async function runTurn(text, sttFinalMs) {
       responseEl.textContent = full; responseEl.style.color = "var(--text)";
       addBubble("assistant", full);
       setState("Speaking…");
-      await speakTextViaRest(full);
+      if (voiceConfig.httpTtsFallback) {
+        await speakTextViaRest(full);
+      } else {
+        clientLog("voice", "[VOICE][TTS] Brain SSE failed — HTTP fallback disabled");
+        responseEl.textContent = "Brain error: " + (sseFailed.message || sseFailed);
+        responseEl.style.color = "#ff8a80";
+      }
     } catch (e2) {
       responseEl.textContent = "Brain error: " + (e2.message || e2); responseEl.style.color = "#ff8a80";
       backToListening(); return;
@@ -1150,13 +1175,14 @@ function waitStreamingPlaybackDone(timeoutMs = 120000) {
     const timer = setTimeout(finish, timeoutMs);
     const poll = setInterval(() => {
       if (voiceAbort?.signal?.aborted) { clearInterval(poll); clearTimeout(timer); finish(); return; }
-      if (!live.ttsTurnEnded && !live.mseDone) return;
       if (live.ttsStreamCodec === "linear16") {
-        if (live.pcmPlayer && live.pcmPlayer.idle()) {
+        const pcmDone = live.pcmPlayer?.hadAudio() && live.pcmPlayer.idle();
+        if (pcmDone && (live.ttsTurnEnded || live._flushAcked)) {
           clearInterval(poll); clearTimeout(timer); live.agentSpeaking = false; finish();
         }
         return;
       }
+      if (!live.ttsTurnEnded && !live.mseDone) return;
       const sockDone = !live.ttsSock || live.ttsSock.readyState >= WebSocket.CLOSING;
       if (!live.mseDone || !sockDone) return;
       if (audioPlayer.ended) { clearInterval(poll); clearTimeout(timer); live.agentSpeaking = false; finish(); return; }
@@ -1213,6 +1239,9 @@ function doBargeIn(reason) {
   live._ttsAllB64 = []; lastAudioBase64 = null;
   stopPcmPlayback();
   resetTtsAcc();
+  live.mseDone = false;
+  live.ttsTurnEnded = false;
+  live._flushAcked = false;
   hooks_onAudioFirst = null;
   stopAudioBtn.style.display = "none";
   // 2) STOP GENERATION
@@ -1244,14 +1273,52 @@ let _perf = null;
 let _ttsStreamReady = false;
 let _ttsStreamInitPromise = null;
 
-/** Reuse one TTS WebSocket for the whole live session (Sarvam streaming best practice). */
-function ensureTtsStream() {
-  if (live.ttsSock && live.ttsSock.readyState === WebSocket.OPEN && _ttsStreamReady) {
+/** Reuse one TTS WebSocket for the whole live session; re-send config each turn. */
+function ensureTtsStream(reconfigure = false) {
+  const rs = live.ttsSock?.readyState;
+  if (rs === WebSocket.OPEN && _ttsStreamReady && !reconfigure) {
     return Promise.resolve(live.ttsSock);
+  }
+  if (rs === WebSocket.OPEN && (reconfigure || !_ttsStreamReady)) {
+    return sendTtsConfigOnSocket(live.ttsSock).then(() => {
+      _ttsStreamReady = true;
+      startTtsPing();
+      return live.ttsSock;
+    });
+  }
+  if (rs === WebSocket.CONNECTING && _ttsStreamInitPromise) {
+    return _ttsStreamInitPromise;
+  }
+  if (live.ttsSock && rs !== WebSocket.OPEN) {
+    try { live.ttsSock.close(); } catch {}
+    live.ttsSock = null;
+    _ttsStreamReady = false;
   }
   if (_ttsStreamInitPromise) return _ttsStreamInitPromise;
   _ttsStreamInitPromise = openTtsStream().finally(() => { _ttsStreamInitPromise = null; });
   return _ttsStreamInitPromise;
+}
+
+async function sendTtsConfigOnSocket(sock) {
+  const cfg = await getResolvedTtsConfig("te-IN");
+  ttsModelCache = cfg.model || "bulbul:v3";
+  const outCodec = "linear16";
+  live.ttsStreamCodec = outCodec;
+  live.ttsSampleRate = cfg.sample_rate || 24000;
+  const minBuf = Math.max(30, Math.min(200, cfg.min_buffer_size ?? 30));
+  const maxChunk = Math.max(50, Math.min(500, cfg.max_chunk_length ?? 80));
+  const cfgData = {
+    language_code: cfg.language_code || "te-IN",
+    pace: cfg.pace,
+    min_buffer_size: minBuf,
+    max_chunk_length: maxChunk,
+    output_audio_codec: outCodec,
+    output_audio_bitrate: cfg.output_audio_bitrate || "128k",
+    sample_rate: live.ttsSampleRate,
+  };
+  if (cfg.temperature != null && ttsModelCache === "bulbul:v3") cfgData.temperature = cfg.temperature;
+  clientLog("voice", "[VOICE][TTS] CONFIG", cfgData);
+  sock.send(JSON.stringify({ type: "config", data: cfgData }));
 }
 
 function markStreamingSpeechStarted() {
@@ -1402,32 +1469,30 @@ function openTtsStream() {
     }
 
     sock.onopen = () => {
-      const minBuf = Math.max(30, Math.min(200, cfg.min_buffer_size ?? 30));
-      const maxChunk = Math.max(50, Math.min(500, cfg.max_chunk_length ?? 80));
-      const cfgData = {
-        language_code: cfg.language_code || "te-IN",
-        pace: cfg.pace,
-        min_buffer_size: minBuf,
-        max_chunk_length: maxChunk,
-        output_audio_codec: outCodec,
-        output_audio_bitrate: cfg.output_audio_bitrate || "128k",
-        sample_rate: live.ttsSampleRate,
-      };
-      if (cfg.temperature != null && ttsModelCache === "bulbul:v3") cfgData.temperature = cfg.temperature;
-      console.log("[VOICE][TTS] START ws speaker=" + (cfg.speaker || "?") + " codec=" + outCodec + " minBuf=" + minBuf);
-      sock.send(JSON.stringify({ type: "config", data: cfgData }));
-      ok();
+      sendTtsConfigOnSocket(sock).then(() => {
+        startTtsPing();
+        ok();
+      }).catch(fail);
     };
     sock.onerror = () => fail(new Error("connection failed"));
-    sock.onclose = () => {
+    sock.onclose = (ev) => {
       _ttsStreamReady = false;
+      stopTtsPing();
       if (live.ttsSock === sock) live.ttsSock = null;
+      clientLog("voice", "[VOICE][TTS] WS closed", { code: ev.code, reason: ev.reason });
     };
 
     sock.onmessage = (ev) => {
       if (live.ttsSock !== sock) return;
       let m; try { m = JSON.parse(ev.data); } catch { return; }
       const type = m.type || m.event;
+
+      if (type === "upstream_reset") {
+        _ttsStreamReady = false;
+        clientLog("voice", "[VOICE][TTS] upstream_reset — reconfig on next turn", m.reason);
+        return;
+      }
+
       const b64 = m.data && (m.data.audio || (typeof m.data === "string" ? m.data : null));
 
       if (b64) {
@@ -1457,6 +1522,7 @@ function openTtsStream() {
       } else if ((m.data && m.data.event_type === "final") || type === "end_of_stream") {
         live.mseDone = true;
         live.ttsTurnEnded = true;
+        live._flushAcked = true;
         ttsInfo.textContent = `• WS ${ttsModelCache} • ${live._ttsAllB64.length} chunks • live`;
         if (live.ttsStreamCodec !== "linear16") {
           if (live._fallbackBytes.length) {
@@ -1517,7 +1583,7 @@ function sendTtsTextImmediate(text) {
       live.ttsSock.send(JSON.stringify({ type: "text", data: { text } }));
       if (_perf && !_perf.firstSentence) {
         _perf.firstSentence = performance.now();
-        console.log("[VOICE][TTS] TEXT_FORWARD", JSON.stringify(text.slice(0, 40)));
+        clientLog("perf", "[VOICE][TTS] FIRST_SENTENCE", text.slice(0, 40));
       }
     } catch {
       _ttsPendingSend.push(text);
@@ -1598,6 +1664,8 @@ function closeTtsStream() {
   }
   if (live.ttsSock && live.ttsSock.readyState === WebSocket.OPEN) {
     try { live.ttsSock.send(JSON.stringify({ type: "flush" })); } catch {}
+    live._flushAcked = false;
+    live.ttsTurnEnded = false;
   }
 }
 
