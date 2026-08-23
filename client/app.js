@@ -804,7 +804,7 @@ const live = {
   worklet: null,
   stream: null,
   busy: false,
-  pendingFinal: null,
+  pendingQueue: [],
   agentSpeaking: false,
   ttsSock: null,
   ttsStreamCodec: "linear16",
@@ -939,6 +939,31 @@ function onPcmChunk(e) {
   live.socket.send(e.data);
 }
 
+function enqueueFinal(text, sttFinalMs) {
+  live.pendingQueue.push({ text, sttFinalMs: sttFinalMs ?? null });
+  const n = live.pendingQueue.length;
+  partialsEl.textContent = n > 1
+    ? `✓ queued (${n}): ${text.slice(0, 48)}…`
+    : `✓ next: ${text.slice(0, 60)}`;
+}
+
+/** Run the next queued utterance after the current turn fully releases busy. */
+function drainPendingFinal() {
+  const next = live.pendingQueue.shift();
+  if (!next) return false;
+  partialsEl.textContent = "…processing…";
+  queueMicrotask(() => runTurn(next.text, next.sttFinalMs));
+  return true;
+}
+
+/** Single exit path — always clears busy and runs queued speech if any. */
+function endLiveTurn(opts = {}) {
+  live.busy = false;
+  if (!opts.keepSpeaking) live.agentSpeaking = false;
+  if (drainPendingFinal()) return;
+  if (!opts.skipBack) backToListening();
+}
+
 function routeLiveEvent(m) {
   switch (m.event) {
     case "session.begin":
@@ -956,11 +981,7 @@ function routeLiveEvent(m) {
         else if (live.sawVadStart && wordCount(t) >= 1 && performance.now() > live.bargeCooldownUntil) doBargeIn("vad+partial");
       } else if (live.busy && performance.now() - (live.thinkingSince || 0) > 350) {
         // User changed their mind while the brain is still thinking → cancel generation
-        if (wordCount(t) >= 2) {
-          if (voiceAbort) { try { voiceAbort.abort(); } catch {} }
-          setState("Interrupted — listening…");
-          partialsEl.textContent = "⚡ cancelled — keep talking…";
-        }
+        if (wordCount(t) >= 2) doBargeIn("think-cancel");
       }
       break;
     }
@@ -970,7 +991,7 @@ function routeLiveEvent(m) {
       const text = (m.text || "").trim();
       if (!text || wordCount(text) < 1) { partialsEl.textContent = "(empty)…listening…"; break; }
       transcriptEl.textContent = text; transcriptEl.style.color = "var(--text)";
-      if (live.busy) { live.pendingFinal = text; partialsEl.textContent = "✓ queued: " + text.slice(0, 60); }
+      if (live.busy) enqueueFinal(text, m.sttFinalMs);
       else runTurn(text, m.sttFinalMs);
       break;
     }
@@ -1079,6 +1100,10 @@ function stopTtsPing() {
 }
 
 async function runTurn(text, sttFinalMs) {
+  if (live.busy) {
+    enqueueFinal(text, sttFinalMs);
+    return;
+  }
   live.busy = true;
   live.turnN++;
   cleanupTtsTurn();
@@ -1145,17 +1170,18 @@ async function runTurn(text, sttFinalMs) {
 
   await Promise.all([pipeline, ttsOpenP]);
 
-  // Interrupted mid-think/mid-speech by user speech? Yield without fallback spam.
+  // Interrupted mid-think/mid-speech by user speech? Yield and run any queued utterance.
   if (voiceAbort.signal.aborted) {
-    live.busy = false;
-    backToListening();
+    endLiveTurn();
     return;
   }
 
   if (sseFailed) {
     cleanupTtsTurn();
-    // Fallback: one-shot JSON brain + single TTS (still keeps session live)
-    live.busy = false;
+    if (voiceAbort?.signal?.aborted) {
+      endLiveTurn();
+      return;
+    }
     try {
       const br = await fetch("/api/brain", {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -1176,7 +1202,8 @@ async function runTurn(text, sttFinalMs) {
       }
     } catch (e2) {
       responseEl.textContent = "Brain error: " + (e2.message || e2); responseEl.style.color = "#ff8a80";
-      backToListening(); return;
+      endLiveTurn();
+      return;
     }
   } else {
     if (!full.trim()) { full = "క్షమించండి, నాకు అర్థం కాలేదు."; responseEl.textContent = full; }
@@ -1188,9 +1215,7 @@ async function runTurn(text, sttFinalMs) {
         live.agentSpeaking = true;
         const gotAudio = await waitForStreamingAudio(10000);
         if (voiceAbort?.signal?.aborted) {
-          live.agentSpeaking = false;
-          live.busy = false;
-          backToListening();
+          endLiveTurn();
           return;
         }
         if (gotAudio) {
@@ -1224,9 +1249,7 @@ async function runTurn(text, sttFinalMs) {
 
   usageEl.textContent = `→ te-IN${/[A-Za-z]/.test(full) && /[\u0C00-\u0C7F]/.test(full) ? " • code-mixed" : ""} • ${full.length} chars`;
   saveConversationTurn(text, full);
-  live.busy = false;
-  if (live.pendingFinal) { const t = live.pendingFinal; live.pendingFinal = null; runTurn(t); return; }
-  backToListening();
+  endLiveTurn();
 }
 
 // SSE reader for POST /api/brain/stream — resolves with final text
@@ -1336,7 +1359,7 @@ function waitPlaybackDone(timeoutMs = 60000) {
     const t0 = performance.now();
     const iv = setInterval(() => {
       const ended = audioPlayer.ended || (audioPlayer.paused && audioPlayer.currentTime > 0);
-      if (ended || voiceAbort.signal.aborted || performance.now() - t0 > timeoutMs) {
+      if (ended || voiceAbort?.signal?.aborted || performance.now() - t0 > timeoutMs) {
         clearInterval(iv);
         live.agentSpeaking = false;
         resolve();
@@ -1391,7 +1414,9 @@ function doBargeIn(reason) {
   fetch("/api/session/interrupt", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sessionId }) }).catch(() => {});
   metricsEl.textContent += ` • ⚡barge-in#${live.turnN}(${reason})`;
   setState("Interrupted — listening…");
-  partialsEl.textContent = "⚡ interrupted — keep talking…";
+  partialsEl.textContent = live.pendingQueue.length
+    ? `⚡ interrupted — ${live.pendingQueue.length} in queue…`
+    : "⚡ interrupted — keep talking…";
 }
 
 // TTS over /ws/tts — STREAMING mode for the live pipeline.
@@ -1847,7 +1872,7 @@ function cleanupLiveMedia() {
 async function stopLiveSession() {
   live.active = false;
   live.busy = false;
-  live.pendingFinal = null;
+  live.pendingQueue = [];
   live.agentSpeaking = false;
   if (voiceAbort) { try { voiceAbort.abort(); } catch {} voiceAbort = null; }
   closeTtsStream();
