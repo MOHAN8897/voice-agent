@@ -14,6 +14,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from server.config.constants import constants
 from server.services.sarvam_ws import connect_stt_realtime, connect_tts_ws
+from server.services.tts_config import TtsConfigError, merge_ws_tts_config
 from server.utils.logger import logger
 
 router = APIRouter()
@@ -119,6 +120,7 @@ async def ws_tts(ws: WebSocket):
     """
     await ws.accept()
     model = ws.query_params.get("model", "bulbul:v3")
+    session_id = ws.query_params.get("sessionId", "default")
     if model not in constants.TTS_MODELS:
         model = "bulbul:v3"
     upstream = None
@@ -159,12 +161,25 @@ async def ws_tts(ws: WebSocket):
                 mtype = obj.get("type")
                 if mtype == "config":
                     d = dict(obj.get("data") or {})
-                    # enforce sane defaults per docs
-                    d.setdefault("min_buffer_size", 50)
-                    d.setdefault("max_chunk_length", 200)
-                    d.setdefault("output_audio_codec", "mp3")
-                    d.setdefault("output_audio_bitrate", "128k")
-                    await upstream.send(json.dumps({"type": "config", "data": d}))
+                    try:
+                        merged = merge_ws_tts_config(session_id, d)
+                        merged["model"] = model
+                        # Sarvam WS expects these keys in config payload
+                        out = {
+                            "speaker": merged["speaker"],
+                            "language_code": merged["language_code"],
+                            "pace": merged["pace"],
+                            "min_buffer_size": merged["min_buffer_size"],
+                            "max_chunk_length": merged["max_chunk_length"],
+                            "output_audio_codec": merged["output_audio_codec"],
+                            "output_audio_bitrate": merged["output_audio_bitrate"],
+                        }
+                        if "temperature" in merged:
+                            out["temperature"] = merged["temperature"]
+                        await upstream.send(json.dumps({"type": "config", "data": out}))
+                    except TtsConfigError as e:
+                        await ws.send_text(json.dumps({"type": "error", "message": str(e), "code": "SPEAKER_INVALID"}))
+                        continue
                     configured = True
                 elif mtype in ("text", "flush", "ping"):
                     await upstream.send(text)

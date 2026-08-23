@@ -12,6 +12,7 @@ from typing import Optional
 from server.config.constants import constants
 from server.config.env import get_settings
 from server.services.runtime_settings import runtime_settings, SettingsValidationError
+from server.services.tts_config import resolve_tts_config
 
 router = APIRouter()
 
@@ -46,6 +47,11 @@ async def catalog():
             "currentModel": current_openai,
             "temperature": [0.0, 2.0],
             "maxTokens": [50, 4000],
+            "modelGroups": [
+                {"label": "GPT-4o family", "models": [m for m in allowed_models if m.startswith("gpt-4")]},
+                {"label": "GPT-5 family", "models": [m for m in allowed_models if m.startswith("gpt-5")]},
+                {"label": "Reasoning (o-series)", "models": [m for m in allowed_models if m.startswith("o")]},
+            ],
             "note": "API keys stay server-side in .env — never enter them in the browser.",
         },
     }
@@ -73,23 +79,40 @@ class RuntimePatch(BaseModel):
     openaiModel: Optional[str] = None
     openaiTemperature: Optional[float] = None
     openaiMaxTokens: Optional[int] = None
+    crmEnabled: Optional[bool] = None
+    crmProvider: Optional[str] = None
+    crmWebhook: Optional[str] = None
+    crmFields: Optional[str] = None
+    crmNotes: Optional[str] = None
+    crmAutoSync: Optional[bool] = None
 
 
 @router.get("/api/settings/runtime")
 async def get_runtime(sessionId: str = Query("default")):
     values = runtime_settings.get(sessionId)
     try:
+        s = get_settings()
         defaults = {
-            "sttModel": get_settings().sarvam_stt_model,
-            "ttsModel": get_settings().sarvam_tts_model,
-            "ttsSpeaker": get_settings().sarvam_tts_speaker_te,
-            "ttsPace": get_settings().sarvam_tts_pace,
-            "openaiModel": get_settings().openai_model,
-            "openaiMaxTokens": get_settings().max_response_length,
+            "sttModel": s.sarvam_stt_model,
+            "ttsModel": s.sarvam_tts_model,
+            "ttsSpeaker": s.sarvam_tts_speaker_te,
+            "ttsPace": s.sarvam_tts_pace,
+            "openaiModel": s.openai_model,
+            "openaiMaxTokens": s.max_response_length,
         }
     except Exception:
         defaults = {}
     return {"sessionId": sessionId, "values": values, "defaults": defaults}
+
+
+@router.get("/api/settings/tts-config")
+async def get_tts_config(sessionId: str = Query("default"), language_code: str = Query("te-IN")):
+    """Resolved canonical TTS config for a session — same object used by REST + WS + voice turn."""
+    try:
+        cfg = resolve_tts_config(sessionId, language_code=language_code)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail={"error": {"code": "validation_error", "message": str(e)}}) from e
+    return {"sessionId": sessionId, "ttsConfig": cfg}
 
 
 @router.post("/api/settings/runtime")

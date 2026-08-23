@@ -214,6 +214,13 @@ if CLIENT_DIR.exists():
             return FileResponse(str(p), media_type="application/javascript")
         return JSONResponse(status_code=404, content={"error": "not found"})
 
+    @app.get("/audio_utils.js")
+    async def serve_audio_utils_js():
+        p = CLIENT_DIR / "audio_utils.js"
+        if p.exists():
+            return FileResponse(str(p), media_type="application/javascript")
+        return JSONResponse(status_code=404, content={"error": "not found"})
+
     @app.get("/audio_playback_manager.js")
     async def serve_playback_manager_js():
         p = CLIENT_DIR / "audio_playback_manager.js"
@@ -245,6 +252,20 @@ if CLIENT_DIR.exists():
     @app.get("/settings.js")
     async def serve_settings_js():
         p = CLIENT_DIR / "settings.js"
+        if p.exists():
+            return FileResponse(str(p), media_type="application/javascript")
+        return JSONResponse(status_code=404, content={"error": "not found"})
+
+    @app.get("/console_tabs.js")
+    async def serve_console_tabs_js():
+        p = CLIENT_DIR / "console_tabs.js"
+        if p.exists():
+            return FileResponse(str(p), media_type="application/javascript")
+        return JSONResponse(status_code=404, content={"error": "not found"})
+
+    @app.get("/conversation_store.js")
+    async def serve_conversation_store_js():
+        p = CLIENT_DIR / "conversation_store.js"
         if p.exists():
             return FileResponse(str(p), media_type="application/javascript")
         return JSONResponse(status_code=404, content={"error": "not found"})

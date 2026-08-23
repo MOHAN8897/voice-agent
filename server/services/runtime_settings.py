@@ -35,6 +35,8 @@ class RuntimeSettingsStore:
         "ttsCodec", "ttsBitrate", "ttsSampleRate", "ttsMinBuffer", "ttsMaxChunk",
         # OpenAI brain
         "openaiModel", "openaiTemperature", "openaiMaxTokens",
+        # CRM / integrations (future-ready)
+        "crmEnabled", "crmProvider", "crmWebhook", "crmFields", "crmNotes", "crmAutoSync",
     }
 
     def __init__(self):
@@ -135,6 +137,25 @@ class RuntimeSettingsStore:
             if not 50 <= v <= 4000:
                 raise SettingsValidationError("openaiMaxTokens range 50-4000")
             return v
+        if key == "crmEnabled":
+            return bool(val) if isinstance(val, bool) else str(val).lower() in ("1", "true", "yes", "on")
+        if key == "crmProvider":
+            allowed = {"", "hubspot", "zoho", "salesforce", "custom", "pipedrive", "freshsales"}
+            v = str(val).lower()
+            if v not in allowed:
+                raise SettingsValidationError(f"crmProvider must be one of {sorted(allowed - {''})} or empty")
+            return v
+        if key == "crmWebhook":
+            v = str(val).strip()
+            if v and not (v.startswith("http://") or v.startswith("https://")):
+                raise SettingsValidationError("crmWebhook must be http(s) URL")
+            return v
+        if key == "crmFields":
+            return str(val).strip()[:500]
+        if key == "crmNotes":
+            return str(val).strip()[:2000]
+        if key == "crmAutoSync":
+            return bool(val) if isinstance(val, bool) else str(val).lower() in ("1", "true", "yes", "on")
         raise SettingsValidationError(f"Unhandled key {key}")
 
     def _cross_validate(self, values: dict) -> None:

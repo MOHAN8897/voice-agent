@@ -20,9 +20,11 @@ router = APIRouter()
 class TTSRequest(BaseModel):
     text: str = Field(..., min_length=1, max_length=3500, description="Text to synthesize — Telugu + code-mix OK")
     language_code: str = Field("te-IN")
-    speaker: str | None = Field(None, description="Override speaker; else mapped from language_code")
+    sessionId: str = Field("default", max_length=100, description="Session for runtime TTS overrides")
+    speaker: str | None = Field(None, description="Override speaker; else resolved from runtime/env")
     pace: float | None = Field(None, ge=0.5, le=2.0)
     model: str | None = None
+    temperature: float | None = Field(None, ge=0.01, le=1.0)
 
 
 @router.post("/api/tts")
@@ -42,6 +44,8 @@ async def tts_rest(body: TTSRequest):
             speaker=body.speaker,
             pace=body.pace,
             model=body.model,
+            temperature=body.temperature,
+            session_id=body.sessionId,
         )
         return Response(content=result["audio_bytes"], media_type=result["content_type"], headers={"X-Request-Id": result["request_id"] or "", "X-Speaker": result["speaker"]})
     except AppError as e:
@@ -62,6 +66,8 @@ async def tts_stream(body: TTSRequest):
             pace=body.pace,
             model=body.model,
             output_audio_codec="mp3",
+            session_id=body.sessionId,
+            temperature=body.temperature,
         )
         return StreamingResponse(generator, media_type="audio/mpeg", headers={"Cache-Control": "no-cache"})
     except AppError as e:

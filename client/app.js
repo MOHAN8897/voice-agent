@@ -57,15 +57,257 @@ if (!sessionId) {
 }
 sessionInfo.textContent = "session " + sessionId.slice(0, 8);
 
+// Runtime settings cache (Fine-tune Console → backend → all TTS paths)
+let runtimeSettings = { values: {}, defaults: {} };
+
+async function refreshRuntimeSettings() {
+  try {
+    const r = await fetch("/api/settings/runtime?sessionId=" + encodeURIComponent(sessionId));
+    if (r.ok) runtimeSettings = await r.json();
+    _cachedTtsConfig = null;
+  } catch {}
+  return runtimeSettings;
+}
+
+/** Canonical TTS config — same resolver as REST / WS / voice turn on the server. */
+let _cachedTtsConfig = null;
+let _cachedTtsConfigTs = 0;
+
+async function getResolvedTtsConfig(lang = "te-IN", force = false) {
+  const now = Date.now();
+  if (!force && _cachedTtsConfig && now - _cachedTtsConfigTs < 120000) {
+    return _cachedTtsConfig;
+  }
+  try {
+    const r = await fetch(
+      "/api/settings/tts-config?sessionId=" + encodeURIComponent(sessionId) + "&language_code=" + encodeURIComponent(lang)
+    );
+    if (r.ok) {
+      const j = await r.json();
+      _cachedTtsConfig = j.ttsConfig;
+      _cachedTtsConfigTs = now;
+      console.log("[VOICE][CONFIG]", j.ttsConfig);
+      return j.ttsConfig;
+    }
+  } catch (e) {
+    console.warn("[VOICE][CONFIG] fetch failed", e);
+  }
+  const v = runtimeSettings.values || {};
+  const d = runtimeSettings.defaults || {};
+  return {
+    model: v.ttsModel || d.ttsModel || "bulbul:v3",
+    speaker: v.ttsSpeaker || d.ttsSpeaker || "shubh",
+    pace: v.ttsPace ?? d.ttsPace ?? 1.0,
+    language_code: lang,
+    min_buffer_size: v.ttsMinBuffer ?? 50,
+    max_chunk_length: v.ttsMaxChunk ?? 200,
+    output_audio_codec: v.ttsCodec || "mp3",
+    output_audio_bitrate: v.ttsBitrate || "128k",
+    temperature: v.ttsTemperature,
+  };
+}
+
+/** On-screen TTS/playback debug log (last 30 lines). */
+const audioDebugLog = $("audioDebugLog");
+function logPlayback(tag, detail) {
+  const ts = new Date().toLocaleTimeString();
+  const line = `[${ts}] ${tag}` + (detail ? " " + (typeof detail === "string" ? detail : JSON.stringify(detail)) : "");
+  console.log("[VOICE][PLAYBACK]", tag, detail || "");
+  for (const id of ["audioDebugLog", "audioDebugLogVisible"]) {
+    const el = $(id);
+    if (el) {
+      el.textContent = (el.textContent + line + "\n").split("\n").slice(-30).join("\n");
+      el.scrollTop = el.scrollHeight;
+    }
+  }
+}
+
+function saveConversationTurn(userText, assistantText) {
+  if (!window.ConversationStore) return;
+  window.ConversationStore.appendTurn({
+    user: userText || "",
+    assistant: assistantText || "",
+    audioBase64: lastAudioBase64,
+    mime: lastAudioMime,
+    speaker: ttsInfo?.textContent || null,
+  });
+  updateHistoryCount();
+}
+
+/** Tear down MSE streaming so AudioPlaybackManager can use the same element. */
+function teardownMse() {
+  live.mseQueue.length = 0;
+  live.sb = null;
+  live.mseDone = false;
+  if (live.mse) {
+    try {
+      if (live.mse.readyState === "open") live.mse.endOfStream();
+    } catch {}
+    live.mse = null;
+  }
+  if (currentObjectUrl) {
+    try { URL.revokeObjectURL(currentObjectUrl); } catch {}
+    currentObjectUrl = null;
+  }
+  try { audioPlayer.pause(); audioPlayer.removeAttribute("src"); audioPlayer.load(); } catch {}
+  logPlayback("MSE_TEARDOWN", {});
+}
+
+/** Unlock speaker output on first user gesture (mic click). */
+async function unlockAudioPlayback() {
+  playback.userGesture();
+  try {
+    audioPlayer.muted = true;
+    audioPlayer.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=";
+    await audioPlayer.play();
+    audioPlayer.pause();
+    audioPlayer.muted = false;
+    audioPlayer.removeAttribute("src");
+    logPlayback("UNLOCK_SUCCESS", {});
+  } catch (e) {
+    logPlayback("UNLOCK_BLOCKED", { name: e && e.name });
+  }
+}
+
+/** Play raw audio buffer — Web Audio first (auto-speak), HTML audio fallback (manual). */
+async function playArrayBuffer(buffer, mime = "audio/wav") {
+  if (!buffer || !buffer.byteLength) {
+    logPlayback("EMPTY_BUFFER", {});
+    return false;
+  }
+  teardownMse();
+  audioPlayer.style.display = "block";
+  noAudio.style.display = "none";
+  replayBtn.disabled = false;
+  if (window.AudioUtils) {
+    lastAudioBase64 = window.AudioUtils.arrayBufferToBase64(buffer);
+  }
+  lastAudioMime = mime;
+  logPlayback("PLAY_ARRAY_BUFFER", { bytes: buffer.byteLength, mime });
+  try {
+    await playViaWebAudio(buffer, mime);
+    return true;
+  } catch (webErr) {
+    logPlayback("WEBAUDIO_FAILED", { message: String(webErr.message || webErr) });
+    playback.userGesture();
+    return playback.enqueueBytes(buffer, mime);
+  }
+}
+
+/** Shared REST TTS + auto/manual playback. */
+async function speakTextViaRest(text, lang = "te-IN") {
+  const trimmed = (text || "").trim();
+  if (!trimmed) { logPlayback("TTS_SKIP_EMPTY", {}); return false; }
+  if (_speakInFlight) { logPlayback("TTS_SKIP_DUPLICATE", {}); return false; }
+  _speakInFlight = true;
+  setState("Speaking…");
+  ttsError.style.display = "none";
+  try {
+    await ensurePlaybackContext();
+    const cfg = await getResolvedTtsConfig(lang);
+    logPlayback("TTS_REQUEST", { speaker: cfg.speaker, model: cfg.model, chars: trimmed.length });
+    const r = await fetch("/api/tts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        text: trimmed.slice(0, 2500),
+        language_code: lang,
+        sessionId,
+        speaker: cfg.speaker,
+        pace: cfg.pace,
+        model: cfg.model,
+        temperature: cfg.temperature,
+      }),
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      const msg = (j.detail && j.detail.error && j.detail.error.message) || r.statusText;
+      logPlayback("TTS_HTTP_ERROR", { status: r.status, msg });
+      throw new Error(msg);
+    }
+    const buf = await r.arrayBuffer();
+    if (!buf.byteLength) {
+      logPlayback("TTS_EMPTY_RESPONSE", {});
+      throw new Error("TTS returned empty audio — check Sarvam API key and speaker settings");
+    }
+    const speaker = r.headers.get("x-speaker") || cfg.speaker;
+    const mime = r.headers.get("content-type") || "audio/wav";
+    ttsInfo.textContent = `• ${speaker} • ${buf.byteLength} bytes • AUTO`;
+    logPlayback("TTS_OK", { speaker, bytes: buf.byteLength, mime });
+    await playArrayBuffer(buf, mime);
+    return true;
+  } catch (e) {
+    ttsError.style.display = "block";
+    ttsError.textContent = "TTS error: " + String(e.message || e);
+    logPlayback("TTS_ERROR", { message: String(e.message || e) });
+    return false;
+  } finally {
+    _speakInFlight = false;
+  }
+}
+
+refreshRuntimeSettings();
+if (voiceMode) voiceMode.checked = true;
+if (realtimeMode) realtimeMode.checked = true;
+if ($("handsFree")) $("handsFree").checked = true;
+
 // Playback state
 let lastAudioBase64 = null;
 let lastAudioMime = "audio/wav";
 let lastBrainText = "";
 let currentObjectUrl = null;
 let consecutiveEmpty = 0;
+let playbackCtx = null;          // unlocked on mic click — survives async brain delay
+let _speakInFlight = false;      // prevent duplicate auto-speak
+let currentWebAudioSource = null; // for barge-in stop
+
+/** Shared AudioContext resumed on mic gesture — browsers allow playback through this after STT. */
+async function ensurePlaybackContext() {
+  const existing = (live.active && live.ctx) ? live.ctx : playbackCtx;
+  if (existing) {
+    if (existing.state === "suspended") await existing.resume();
+    playbackCtx = existing;
+    return existing;
+  }
+  playbackCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (playbackCtx.state === "suspended") await playbackCtx.resume();
+  return playbackCtx;
+}
+
+/** Play via Web Audio API (works after async brain delay when HTML audio.play() is blocked). */
+async function playViaWebAudio(buffer, mime = "audio/wav") {
+  const ctx = await ensurePlaybackContext();
+  const copy = buffer.slice(0);
+  const audioBuffer = await ctx.decodeAudioData(copy);
+  if (currentWebAudioSource) { try { currentWebAudioSource.stop(); } catch {} currentWebAudioSource = null; }
+  return new Promise((resolve, reject) => {
+    const source = ctx.createBufferSource();
+    currentWebAudioSource = source;
+    source.buffer = audioBuffer;
+    source.connect(ctx.destination);
+    live.agentSpeaking = true;
+    stopAudioBtn.style.display = "";
+    source.onended = () => {
+      currentWebAudioSource = null;
+      live.agentSpeaking = false;
+      logPlayback("WEBAUDIO_ENDED", { duration: audioBuffer.duration });
+      if (playback.onFinished) playback.onFinished({ via: "webaudio" });
+      resolve(true);
+    };
+    try {
+      source.start(0);
+      logPlayback("WEBAUDIO_STARTED", { duration: audioBuffer.duration, mime });
+      if (playback.onStarted) playback.onStarted({ via: "webaudio" });
+    } catch (e) {
+      live.agentSpeaking = false;
+      reject(e);
+    }
+  });
+}
 
 // ---- Hands-free AudioPlaybackManager (auto-play, queue, no overlap) ----
 const playback = new AudioPlaybackManager(audioPlayer);
+playback.onLog = (tag, extra) => logPlayback(tag, extra);
 
 playback.onStarted = () => {
   setState("Speaking…");
@@ -102,8 +344,9 @@ playback.onBlocked = () => {
   ttsError.style.display = "none";
 };
 
-$("unlockAudio").addEventListener("click", () => {
-  $("unlockAudio").style.display = "none";
+$("unlockAudio")?.addEventListener("click", () => {
+  const u = $("unlockAudio");
+  if (u) u.style.display = "none";
   playback.userGesture();   // replays manager queue
   // Also retry live MSE playback if it was blocked
   if (live.mse) {
@@ -117,14 +360,25 @@ $("unlockAudio").addEventListener("click", () => {
   }
 });
 
-// -- Helpers: audio play (auto via manager — no Play button anywhere) --
-function playBase64(base64, mime = "audio/wav") {
-  audioPlayer.style.display = "block";
-  noAudio.style.display = "none";
-  replayBtn.disabled = false;
-  return playback.enqueueBase64(base64, mime);
+// -- Helpers: audio play (auto via Web Audio + manager fallback) --
+async function playBase64(base64, mime = "audio/wav") {
+  let buffer;
+  try {
+    buffer = window.AudioUtils
+      ? window.AudioUtils.base64ToArrayBuffer(base64)
+      : (() => { const b = atob(base64); const u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u.buffer; })();
+  } catch (e) {
+    logPlayback("BASE64_DECODE_ERROR", { message: String(e.message || e) });
+    return false;
+  }
+  lastAudioBase64 = base64;
+  lastAudioMime = mime;
+  return playArrayBuffer(buffer, mime);
 }
 function stopAudio() {
+  live.agentSpeaking = false;
+  _speakInFlight = false;
+  if (currentWebAudioSource) { try { currentWebAudioSource.stop(); } catch {} currentWebAudioSource = null; }
   playback.stopAll();
   audioPlayer.style.display = "none";
   if (voiceAbort) { try { voiceAbort.abort(); } catch {} voiceAbort = null; }
@@ -133,32 +387,15 @@ function stopAudio() {
   setState(live.active ? "Interrupted — listening…" : "Stopped");
 }
 stopAudioBtn.addEventListener("click", stopAudio);
-replayBtn.addEventListener("click", () => {
-  if (lastAudioBase64) playBase64(lastAudioBase64, lastAudioMime);
+replayBtn.addEventListener("click", async () => {
+  if (lastAudioBase64) await playBase64(lastAudioBase64, lastAudioMime);
 });
 ttsOnlyBtn.addEventListener("click", async () => {
+  playback.userGesture();
+  await unlockAudioPlayback();
   const text = (responseEl.textContent || "").trim();
   if (!text || text.startsWith("—")) { ttsError.style.display = "block"; ttsError.textContent = "No response text to synthesize yet — ask something first."; return; }
-  ttsError.style.display = "none";
-  setState("Speaking… (TTS only)");
-  try {
-    const r = await fetch("/api/tts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: text.slice(0, 2500), language_code: "te-IN" }) });
-    if (!r.ok) {
-      const j = await r.json().catch(() => ({}));
-      throw new Error((j.detail && j.detail.error && j.detail.error.message) || r.statusText);
-    }
-    const buf = await r.arrayBuffer();
-    const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
-    lastAudioBase64 = b64;
-    lastAudioMime = r.headers.get("content-type") || "audio/wav";
-    playBase64(b64, lastAudioMime);
-    const speaker = r.headers.get("x-speaker") || "shubh";
-    ttsInfo.textContent = `• ${speaker} • ${buf.byteLength} bytes`;
-  } catch (e) {
-    ttsError.style.display = "block";
-    ttsError.textContent = "TTS error: " + String(e.message || e);
-    setState("Ready");
-  }
+  await speakTextViaRest(text);
 });
 
 // -- Health --
@@ -214,8 +451,33 @@ function updateActiveBadge() {
   activeBadge.style.display = has ? "" : "none";
 }
 function updateHistoryCount() {
-  const n = conversationEl.children.length;
-  historyCount.textContent = n ? `• ${n/2} turns` : "";
+  const domTurns = conversationEl
+    ? Math.floor(conversationEl.querySelectorAll(".chat-msg.user").length)
+    : 0;
+  const stored = window.ConversationStore ? window.ConversationStore.turnCount() : 0;
+  const turns = Math.max(domTurns, stored);
+  if (historyCount) historyCount.textContent = turns ? `${turns} turn${turns === 1 ? "" : "s"} saved` : "No turns yet";
+}
+
+function restoreConversationFromStore() {
+  if (!window.ConversationStore || !conversationEl) return;
+  const data = window.ConversationStore.load();
+  if (!data.turns.length) return;
+  conversationEl.innerHTML = "";
+  for (const t of data.turns) {
+    if (t.user) addBubble("user", t.user);
+    if (t.assistant) addBubble("assistant", t.assistant);
+  }
+  const last = data.turns[data.turns.length - 1];
+  if (last) {
+    if (last.user) { transcriptEl.textContent = last.user; transcriptEl.style.color = "var(--text)"; }
+    if (last.assistant) { responseEl.textContent = last.assistant; responseEl.style.color = "var(--text)"; }
+    if (last.audio && last.audio.base64) {
+      lastAudioBase64 = last.audio.base64;
+      lastAudioMime = last.audio.mime || "audio/wav";
+    }
+  }
+  updateHistoryCount();
 }
 customInstructions.addEventListener("input", () => {
   localStorage.setItem("telugu_behaviour", customInstructions.value);
@@ -300,37 +562,63 @@ if (interruptBtn) interruptBtn.addEventListener("click", async () => {
     stopAudio();
   } catch (e) { metricsOut.textContent = "Interrupt error: " + String(e); }
 });
+const metricsBtnVisible = $("metricsBtnVisible");
+const interruptBtnVisible = $("interruptBtnVisible");
+if (metricsBtnVisible) metricsBtnVisible.addEventListener("click", () => metricsBtn?.click());
+if (interruptBtnVisible) interruptBtnVisible.addEventListener("click", () => interruptBtn?.click());
+
+function setMicUi(active, title) {
+  if (!micBtn) return;
+  micBtn.classList.toggle("recording", !!active);
+  const t = title || (active ? "Stop voice session" : "Start voice session");
+  micBtn.title = t;
+  micBtn.setAttribute("aria-label", t);
+}
 
 // State
 function setState(s) {
-  stateLabel.textContent = s;
+  if (!stateLabel) return;
+  stateLabel.textContent = s.replace(/^Ready — /, "").replace(/^Listening… \(live.*\)/, "Listening");
   const low = s.toLowerCase();
-  let cls = "";
-  if (low.includes("listen")) cls = "listening";
-  else if (low.includes("understand") || low.includes("processing")) cls = "thinking";
-  else if (low.includes("think")) cls = "thinking";
-  else if (low.includes("speak") || low.includes("generating")) cls = "speaking";
-  stateLabel.className = "state " + cls;
+  let cls = "state-pill";
+  if (low.includes("listen")) cls += " is-listening";
+  else if (low.includes("understand") || low.includes("processing") || low.includes("think")) cls += " is-thinking";
+  else if (low.includes("speak") || low.includes("generating")) cls += " is-speaking";
+  else cls += " is-ready";
+  stateLabel.className = cls;
+  if (micBtn) {
+    const on = low.includes("listen") || low.includes("speak") || low.includes("think") || low.includes("understand");
+    micBtn.classList.toggle("recording", on && (live.active || isRecording));
+  }
 }
 
 // Conversation
 function addBubble(role, text) {
   const d = document.createElement("div");
-  d.className = "bubble " + role;
-  d.textContent = text;
+  d.className = "chat-msg " + role;
+  const meta = document.createElement("div");
+  meta.className = "chat-meta";
+  meta.textContent = role === "user" ? "You" : "Agent";
+  const body = document.createElement("div");
+  body.className = "chat-body";
+  body.textContent = text;
+  d.appendChild(meta);
+  d.appendChild(body);
   conversationEl.appendChild(d);
   conversationEl.scrollTop = conversationEl.scrollHeight;
   updateHistoryCount();
 }
 clearBtn.addEventListener("click", async () => {
   conversationEl.innerHTML = "";
-  transcriptEl.textContent = "— no speech yet —"; transcriptEl.style.color = "var(--muted)";
+  transcriptEl.textContent = "— waiting for speech —"; transcriptEl.style.color = "var(--muted)";
   responseEl.textContent = "— waiting —"; responseEl.style.color = "var(--muted)";
   usageEl.textContent = ""; metricsEl.textContent = "";
-  ttsInfo.textContent = ""; stopAudio();
+  if (ttsInfo) ttsInfo.textContent = ""; stopAudio();
   lastAudioBase64 = null; lastBrainText = "";
-  replayBtn.disabled = true; audioPlayer.style.display = "none"; noAudio.style.display = "";
+  if (replayBtn) replayBtn.disabled = true;
   setState("Ready — press mic and speak Telugu");
+  if (window.ConversationStore) window.ConversationStore.clear();
+  updateHistoryCount();
   try { await fetch("/api/session/clear", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sessionId }) }); } catch {}
 });
 
@@ -403,6 +691,9 @@ function extractErr(body, status) {
 async function startLiveSession() {
   partialsCard.style.display = "";
   partialsEl.textContent = "…connecting live session…";
+  await refreshRuntimeSettings();
+  await unlockAudioPlayback();
+  getResolvedTtsConfig("te-IN").catch(() => {});
 
   // Pull Fine-tune console settings into connection params
   const q = new URLSearchParams({ language_code: "te-IN", stream_type: "fast", mode: "transcribe" });
@@ -444,9 +735,7 @@ async function startLiveSession() {
   live.socket.onopen = () => {
     live.active = true;
     isRecording = true;
-    micBtn.classList.add("recording");
-    micBtn.textContent = "⏹️";
-    micBtn.title = "Stop live session";
+    setMicUi(true, "Stop live session");
     setState("Listening… (live — just speak)");
     partialsEl.textContent = "…ready — speak Telugu…";
     liveBadge.style.display = "";
@@ -552,31 +841,28 @@ function getBizSafeRaw() { return bizEl.value.trim(); }
 // the full brain response. Barge-in aborts SSE + closes TTS + kills audio.
 
 function ttsConfigFromConsole() {
-  const speakerSel = document.getElementById("ttsSpeaker");
-  const paceInp = document.getElementById("ttsPace");
-  const tempInp = document.getElementById("ttsTemperature");
-  const codecSel = document.getElementById("ttsCodec");
-  const minBuf = document.getElementById("ttsMinBuffer") || null;
-  const maxChunk = document.getElementById("ttsMaxChunk") || null;
-  const cfg = {
-    speaker: (speakerSel && speakerSel.value) || "shubh",
-    language_code: "te-IN",
-    pace: paceInp ? Number(paceInp.value) : 1.0,
-    min_buffer_size: minBuf ? Number(minBuf.value) : 50,   // lower = faster first audio
-    max_chunk_length: maxChunk ? Number(maxChunk.value) : 200,
-    output_audio_codec: "mp3",
-    output_audio_bitrate: "128k",
+  // Legacy sync shim — prefer getResolvedTtsConfig() async; used only if cache warm.
+  const v = runtimeSettings.values || {};
+  const d = runtimeSettings.defaults || {};
+  return {
+    speaker: v.ttsSpeaker || d.ttsSpeaker || "shubh",
+    language_code: v.sttLanguage || "te-IN",
+    pace: v.ttsPace ?? d.ttsPace ?? 1.0,
+    min_buffer_size: v.ttsMinBuffer ?? 50,
+    max_chunk_length: v.ttsMaxChunk ?? 200,
+    output_audio_codec: v.ttsCodec || "mp3",
+    output_audio_bitrate: v.ttsBitrate || "128k",
+    temperature: v.ttsTemperature,
+    model: v.ttsModel || d.ttsModel || "bulbul:v3",
   };
-  if (tempInp && cfg.temp !== false) {
-    const tv = Number(tempInp.value);
-    if (!Number.isNaN(tv)) cfg.temperature = tv;           // bulbul:v3 only (server enforces)
-  }
-  return cfg;
 }
 
 async function runTurn(text, sttFinalMs) {
   live.busy = true;
   live.turnN++;
+  await refreshRuntimeSettings();
+  const autoEnabled = !!(voiceMode.checked || ($("handsFree") && $("handsFree").checked));
+  console.log("[VOICE][AUTO] enabled=" + autoEnabled + " voiceLoop=" + voiceMode.checked + " handsFree=" + ($("handsFree") && $("handsFree").checked));
   addBubble("user", text);
   setState("Thinking…");
   const userInstructions = getInstructionsSafe();
@@ -597,36 +883,44 @@ async function runTurn(text, sttFinalMs) {
   console.log("[VOICE][TURN] START turn_id=turn_" + String(live.turnN).padStart(3, "0"));
 
   let full = "";
-  let sawAudio = false;
   let sseFailed = null;
+  let usedStreamingTts = false;
+  let ttsReady = false;
+  const pendingTtsDeltas = [];
 
-  // 1) Open TTS socket ONCE — stays warm across the whole answer
-  hooks_onAudioFirst = () => { sawAudio = true; setState("Speaking…"); };
-  try {
-    await openTtsStream();
-  } catch (e) {
-    ttsError.style.display = "block";
-    ttsError.textContent = "TTS WS unavailable (" + e.message + ") — will use REST fallback";
-  }
+  // Open TTS WebSocket in parallel with brain — speak first sentence while brain still streams
+  const ttsOpenP = (voiceMode.checked && autoEnabled)
+    ? openTtsStream()
+        .then(() => {
+          usedStreamingTts = true;
+          ttsReady = true;
+          for (const d of pendingTtsDeltas) pushTtsText(d);
+          pendingTtsDeltas.length = 0;
+        })
+        .catch((e) => {
+          console.warn("[VOICE][TTS] stream open failed — REST fallback", e);
+          usedStreamingTts = false;
+          ttsReady = false;
+          pendingTtsDeltas.length = 0;
+        })
+    : Promise.resolve();
 
-  // 2) Stream brain deltas → pipe each into TTS immediately
   const pipeline = readBrainSSE(text, userInstructions, style, {
     onDelta(delta, fullSoFar) {
       if (_perf && !_perf.brainFirstDelta) { _perf.brainFirstDelta = performance.now() - _perf.t0; console.log("[VOICE][BRAIN] FIRST_DELTA"); }
       full = fullSoFar;
-      responseEl.textContent = full;                       // live text on screen
+      responseEl.textContent = full;
       responseEl.style.color = "var(--text)";
-      pushTtsText(delta);                                  // Sarvam buffers + sentence-splits
-    },
-    onAudioFirst() {
-      sawAudio = true;
-      setState("Speaking…");
+      if (voiceMode.checked && autoEnabled) {
+        if (ttsReady) pushTtsText(delta);
+        else pendingTtsDeltas.push(delta);
+      }
     },
   })
     .then((finalText) => { full = finalText || full; })
     .catch((e) => { sseFailed = e; });
 
-  await pipeline;
+  await Promise.all([pipeline, ttsOpenP]);
 
   // Interrupted mid-think/mid-speech by user speech? Yield without fallback spam.
   if (voiceAbort.signal.aborted) {
@@ -635,10 +929,10 @@ async function runTurn(text, sttFinalMs) {
     return;
   }
 
-  // 3) Flush any buffered tail so nothing is cut
-  closeTtsStream();
-
   if (sseFailed) {
+    closeTtsStream();
+    if (live.ttsSock) { try { live.ttsSock.close(1000); } catch {} live.ttsSock = null; }
+    teardownMse();
     // Fallback: one-shot JSON brain + single TTS (still keeps session live)
     live.busy = false;
     try {
@@ -652,7 +946,7 @@ async function runTurn(text, sttFinalMs) {
       responseEl.textContent = full; responseEl.style.color = "var(--text)";
       addBubble("assistant", full);
       setState("Speaking…");
-      await playTtsOverWs(full);
+      await speakTextViaRest(full);
     } catch (e2) {
       responseEl.textContent = "Brain error: " + (e2.message || e2); responseEl.style.color = "#ff8a80";
       backToListening(); return;
@@ -660,11 +954,31 @@ async function runTurn(text, sttFinalMs) {
   } else {
     if (!full.trim()) { full = "క్షమించండి, నాకు అర్థం కాలేదు."; responseEl.textContent = full; }
     addBubble("assistant", full);
-    // 4) Wait until playback of streamed audio finishes (or user interrupts)
-    await waitPlaybackDone();
+    if (full.trim() && voiceMode.checked && autoEnabled) {
+      if (usedStreamingTts && live.ttsSock) {
+        logPlayback("AUTO_SPEAK_STREAMING", { chars: full.length });
+        closeTtsStream();
+        setState("Speaking…");
+        live.agentSpeaking = true;
+        await waitStreamingPlaybackDone();
+        live.agentSpeaking = false;
+      } else {
+        if (live.ttsSock) { try { live.ttsSock.close(1000); } catch {} live.ttsSock = null; }
+        teardownMse();
+        logPlayback("AUTO_SPEAK_REST_FALLBACK", { chars: full.length });
+        live.agentSpeaking = true;
+        await speakTextViaRest(full);
+        live.agentSpeaking = false;
+      }
+    } else {
+      closeTtsStream();
+      if (live.ttsSock) { try { live.ttsSock.close(1000); } catch {} live.ttsSock = null; }
+      teardownMse();
+    }
   }
 
-  usageEl.textContent = `→ te-IN${/[A-Za-z]/.test(full) && /[\u0C00-\u0C7F]/.test(full) ? " • code-mixed" : ""} • ${full.length} chars${sawAudio ? " • ⚡streamed" : ""}`;
+  usageEl.textContent = `→ te-IN${/[A-Za-z]/.test(full) && /[\u0C00-\u0C7F]/.test(full) ? " • code-mixed" : ""} • ${full.length} chars`;
+  saveConversationTurn(text, full);
   live.busy = false;
   if (live.pendingFinal) { const t = live.pendingFinal; live.pendingFinal = null; runTurn(t); return; }
   backToListening();
@@ -703,6 +1017,29 @@ async function readBrainSSE(transcript, userInstructions, style, hooks) {
     }
   }
   return finalText;
+}
+
+// Resolves when streamed TTS playback finishes (MSE + socket closed)
+function waitStreamingPlaybackDone(timeoutMs = 120000) {
+  return new Promise((resolve) => {
+    const finish = () => resolve();
+    const timer = setTimeout(finish, timeoutMs);
+    const wrap = () => { clearTimeout(timer); finish(); };
+    const poll = setInterval(() => {
+      if (voiceAbort?.signal?.aborted) { clearInterval(poll); wrap(); return; }
+      const sockDone = !live.ttsSock || live.ttsSock.readyState >= WebSocket.CLOSING;
+      if (!live.mseDone || !sockDone) return;
+      if (audioPlayer.ended) { clearInterval(poll); wrap(); return; }
+      if (!audioPlayer.paused && audioPlayer.currentTime > 0) {
+        audioPlayer.onended = () => { clearInterval(poll); wrap(); };
+        return;
+      }
+      if (live.mseQueue.length === 0 && !live.sb?.updating && audioPlayer.paused) {
+        clearInterval(poll);
+        wrap();
+      }
+    }, 80);
+  });
 }
 
 // Resolves when current streamed playback finishes; also used post-REST-fallback
@@ -790,12 +1127,14 @@ function alog(tag, extra) {
 }
 
 function openTtsStream() {
-  return new Promise((resolve, reject) => {
-    const sel = document.getElementById("ttsModel");
-    ttsModelCache = (sel && sel.value) || "bulbul:v3";
-    const outCodec = "mp3"; // MSE-friendly
-    const myTurn = live.turnN;                       // STEP 19: turn-id race guard
-    const sock = new WebSocket(wsUrl("/ws/tts?model=" + encodeURIComponent(ttsModelCache)));
+  return new Promise(async (resolve, reject) => {
+    const cfg = await getResolvedTtsConfig("te-IN");
+    ttsModelCache = cfg.model || "bulbul:v3";
+    const outCodec = cfg.output_audio_codec || "mp3";
+    const myTurn = live.turnN;
+    const sock = new WebSocket(
+      wsUrl("/ws/tts?model=" + encodeURIComponent(ttsModelCache) + "&sessionId=" + encodeURIComponent(sessionId))
+    );
     live.ttsSock = sock;
     live._ttsAllB64 = [];
     live.mseDone = false;
@@ -895,11 +1234,18 @@ function openTtsStream() {
     }
 
     sock.onopen = () => {
-      const cfgData = ttsConfigFromConsole();
-      cfgData.output_audio_codec = outCodec;
-      if (ttsModelCache !== "bulbul:v3") delete cfgData.temperature; // v2: no temperature
+      const cfgData = {
+        language_code: cfg.language_code || "te-IN",
+        pace: cfg.pace,
+        min_buffer_size: cfg.min_buffer_size,
+        max_chunk_length: cfg.max_chunk_length,
+        output_audio_codec: outCodec,
+        output_audio_bitrate: cfg.output_audio_bitrate || "128k",
+      };
+      if (cfg.temperature != null && ttsModelCache === "bulbul:v3") cfgData.temperature = cfg.temperature;
+      console.log("[VOICE][TTS] START ws speaker=" + (cfg.speaker || "?") + " model=" + ttsModelCache);
       sock.send(JSON.stringify({ type: "config", data: cfgData }));
-      ok(); // warm socket — brain deltas get pushed as they arrive
+      ok();
     };
     sock.onerror = () => fail(new Error("connection failed"));
     sock.onclose = () => { if (live.ttsSock === sock) live.ttsSock = null; };
@@ -962,7 +1308,9 @@ function openTtsStream() {
 // safety for punctuation-less streams, so first speech never waits unnecessarily.
 let _ttsAcc = "";
 const _SENT_END = /[.!?…।;:\n]\s*$|[…]\s*/u;
-const TTS_CHUNK_MAX = 70;
+const _SOFT_BOUNDARY = /[,،]\s*$/u;
+const TTS_CHUNK_MAX = 45;
+const TTS_SOFT_MIN = 22;
 
 function resetTtsAcc() { _ttsAcc = ""; }
 
@@ -976,6 +1324,8 @@ function pushTtsText(delta) {
     const m = _ttsAcc.match(/^[\s\S]*?[.!?…।;:\n](\s+|$)/u);
     if (m) { piece = m[0]; _ttsAcc = _ttsAcc.slice(m[0].length); }
     else { piece = _ttsAcc; _ttsAcc = ""; }
+  } else if (_ttsAcc.length >= TTS_SOFT_MIN && _SOFT_BOUNDARY.test(_ttsAcc)) {
+    piece = _ttsAcc; _ttsAcc = "";
   } else if (_ttsAcc.length >= TTS_CHUNK_MAX) {
     piece = _ttsAcc; _ttsAcc = "";
   }
@@ -990,14 +1340,21 @@ function pushTtsText(delta) {
 }
 
 async function speakViaHttpStream(text) {
-  // Fallback when TTS WS died mid-turn: synthesize this sentence via HTTP stream.
-  // If MSE session is active, append progressively; else accumulate then play blob.
   const parts = [];
   let appended = false;
   try {
+    const cfg = await getResolvedTtsConfig("te-IN");
     const r = await fetch("/api/tts/stream", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: text.slice(0, 3500), language_code: "te-IN" }),
+      body: JSON.stringify({
+        text: text.slice(0, 3500),
+        language_code: "te-IN",
+        sessionId,
+        speaker: cfg.speaker,
+        pace: cfg.pace,
+        model: cfg.model,
+        temperature: cfg.temperature,
+      }),
       signal: voiceAbort ? voiceAbort.signal : undefined,
     });
     if (!r.ok || !r.body) return;
@@ -1015,10 +1372,7 @@ async function speakViaHttpStream(text) {
       const total = parts.reduce((n, p) => n + p.length, 0);
       const all = new Uint8Array(total);
       let o = 0; for (const p of parts) { all.set(p, o); o += p.length; }
-      const b64 = btoa(String.fromCharCode(...all));
-      lastAudioBase64 = (lastAudioBase64 || "") + b64;
-      lastAudioMime = "audio/mpeg";
-      playBase64(lastAudioBase64, "audio/mpeg");
+      await playArrayBuffer(all.buffer, "audio/mpeg");
       await new Promise(res => { audioPlayer.onended = res; setTimeout(res, 30000); });
     }
   } catch {}
@@ -1085,17 +1439,16 @@ async function stopLiveSession() {
 
 function finishLiveUi(msg) {
   isRecording = false;
-  micBtn.classList.remove("recording");
-  micBtn.textContent = "🎙️";
-  micBtn.title = "Click to start/stop recording";
+  setMicUi(false);
   liveBadge.style.display = "none";
   setState(msg);
 }
 
 async function startRecording() {
-  // Barge-in / restart semantics
   if (!audioPlayer.paused) { stopAudio(); }
   if (voiceAbort) { try { voiceAbort.abort(); } catch {} voiceAbort = null; }
+  await unlockAudioPlayback();
+  await ensurePlaybackContext();
   if (realtimeMode.checked) {
     if (live.active) { await stopLiveSession(); return; }   // toggle OFF ends session
     await startLiveSession();
@@ -1113,8 +1466,7 @@ async function startRecording() {
     mediaRecorder.onstop = onRecordingStop;
     mediaRecorder.start(100);
     isRecording = true;
-    micBtn.classList.add("recording");
-    micBtn.textContent = "⏹️";
+    setMicUi(true, "Stop recording");
     setState("Listening…");
   } catch (e) {
     const name = e && e.name;
@@ -1135,8 +1487,7 @@ function stopRecording() {
   if (mediaRecorder && isRecording) {
     mediaRecorder.stop();
     isRecording = false;
-    micBtn.classList.remove("recording");
-    micBtn.textContent = "🎙️";
+    setMicUi(false);
     setState("Understanding…");
     if (streamRef) streamRef.getTracks().forEach((t) => t.stop());
   }
@@ -1205,6 +1556,11 @@ async function sendBrain(transcript, language_code) {
     usageEl.textContent = `→ ${lc.responseLanguage || "te-IN"}${lc.isCodeMixed ? " • code-mixed" : ""} • ${j.usage ? JSON.stringify(j.usage) : ""}`;
     metricsEl.textContent = j.metrics ? `PERF text-only` : "";
     addBubble("user", transcript); addBubble("assistant", text);
+    saveConversationTurn(transcript, text);
+    if (voiceMode.checked && text) {
+      console.log("[VOICE][AUTO] brain-only path → auto TTS");
+      await speakTextViaRest(text, language_code);
+    }
     setState("Ready — press mic to continue");
   } catch (e) {
     if (e.name === "AbortError") { setState("Interrupted — press mic again"); return; }
@@ -1267,13 +1623,20 @@ async function sendVoiceTurn(blob) {
     addBubble("user", transcript);
     if (brainText) addBubble("assistant", brainText);
     if (j.audio_base64) {
-      lastAudioBase64 = j.audio_base64;
       lastAudioMime = j.content_type || "audio/wav";
-      ttsInfo.textContent = `• ${lastAudioMime} • ${Math.round(j.audio_base64.length*0.75)} bytes • AUTO`;
-      await playBase64(j.audio_base64, lastAudioMime);   // auto-plays; onFinished reopens mic
+      ttsInfo.textContent = `• ${lastAudioMime} • ${Math.round(j.audio_base64.length * 0.75)} bytes • AUTO`;
+      logPlayback("VOICE_TURN_AUDIO", { bytes: j.audio_base64.length, mime: lastAudioMime });
+      await playBase64(j.audio_base64, lastAudioMime);
+    } else if (brainText) {
+      logPlayback("VOICE_TURN_NO_AUDIO", { ttsMs: m.ttsMs });
+      ttsError.style.display = "block";
+      ttsError.textContent = "Server returned no audio — trying REST TTS fallback…";
+      await speakTextViaRest(brainText);
     } else {
+      logPlayback("VOICE_TURN_NO_TEXT", {});
       setState("Ready — no audio returned (check TTS config)");
     }
+    saveConversationTurn(transcript, brainText);
   } catch (e) {
     if (e.name === "AbortError") { setState("Interrupted — press mic again"); return; }
     transcriptEl.textContent = "Network error during voice turn: " + String(e);
@@ -1314,18 +1677,10 @@ async function sendBrainViaText(text, lang) {
     responseEl.textContent = j.text; responseEl.style.color = "var(--text)";
     lastBrainText = j.text;
     addBubble("user", text); addBubble("assistant", j.text);
+    saveConversationTurn(text, j.text);
     usageEl.textContent = `→ ${j.language_context?.responseLanguage || "te-IN"}`;
     if (voiceMode.checked && j.text) {
-      // Also get TTS for this test
-      try {
-        const tr = await fetch("/api/tts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: j.text.slice(0, 2500), language_code: "te-IN" }) });
-        if (tr.ok) {
-          const buf = await tr.arrayBuffer();
-          const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
-          lastAudioBase64 = b64; lastAudioMime = tr.headers.get("content-type") || "audio/wav";
-          playBase64(b64, lastAudioMime);
-        } else setState("Ready — test done (TTS skipped)");
-      } catch {}
+      await speakTextViaRest(j.text, "te-IN");
     } else setState("Ready — test done");
   } catch (e) { responseEl.textContent = "Test error: " + String(e); }
 }
@@ -1343,3 +1698,23 @@ previewBtn.addEventListener("click", async () => {
     else previewOutput.textContent = "→ " + j.text;
   } catch (e) { previewOutput.textContent = "Network error: " + String(e); }
 });
+
+// Export conversation (TXT / JSON / WAV)
+function bindExport(id, fn) {
+  const btn = $(id);
+  if (!btn || !window.ConversationStore) return;
+  btn.addEventListener("click", () => {
+    const n = window.ConversationStore.turnCount();
+    if (!n) { alert("No conversation to export yet — start talking first."); return; }
+    const result = fn();
+    if (result === false || result === 0) alert("No audio available for this export yet.");
+  });
+}
+bindExport("exportTxtBtn", () => window.ConversationStore.exportTxt());
+bindExport("exportJsonBtn", () => window.ConversationStore.exportJson());
+bindExport("exportWavBtn", () => window.ConversationStore.exportLastWav());
+bindExport("exportAllWavBtn", () => window.ConversationStore.exportAllWav());
+
+restoreConversationFromStore();
+setState("Ready — press mic and speak Telugu");
+updateHistoryCount();

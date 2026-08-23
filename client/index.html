@@ -3,156 +3,279 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Telugu Voice Agent — Phase 1-5</title>
+  <title>Telugu Voice Agent</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
-<body>
-  <header class="header">
-    <div class="brand">Telugu <span>Agent</span></div>
-    <div class="btnRow">
-      <a href="/settings.html" class="badge" style="color:var(--text); text-decoration:none; cursor:pointer">⚙️ Fine-tune</a>
-      <div class="badge">Phase 5 — Realtime</div>
-    </div>
-  </header>
+<body class="console-body">
+  <div class="console-layout">
+    <aside class="console-sidebar">
+      <div class="sidebar-brand">Telugu <span>Agent</span></div>
 
-  <main class="container">
-    <!-- Health -->
-    <div class="card">
-      <div class="health">
-        <span id="healthDot" class="dot"></span>
-        <span id="healthText">Checking configuration…</span>
-        <span style="margin-left:auto" class="sessionInfo" id="sessionInfo"></span>
+      <div class="sidebar-section">
+        <div class="sidebar-heading">MENU</div>
+        <button type="button" class="sidebar-item console-tab active" data-panel="agent">🎙️ Voice Agent</button>
+        <button type="button" class="sidebar-item console-tab" data-panel="pipeline">🔊 Voice Pipeline</button>
+        <button type="button" class="sidebar-item console-tab" data-panel="brain">🧠 AI Brain</button>
+        <button type="button" class="sidebar-item console-tab" data-panel="prompt">✍️ Prompting</button>
+        <button type="button" class="sidebar-item console-tab" data-panel="crm">🔗 CRM &amp; Tools</button>
+        <button type="button" class="sidebar-item console-tab" data-panel="advanced">⚙️ Advanced</button>
       </div>
-      <div id="healthError" class="hint" style="margin-top:8px; display:none; color:#ff8a80; text-align:left;"></div>
-    </div>
 
-    <!-- Mode toggle -->
-    <div class="card">
-      <div class="label">Voice Mode</div>
-      <div class="btnRow" style="align-items:center; flex-wrap:wrap">
-        <label class="hint" style="display:flex; align-items:center; gap:8px; cursor:pointer">
-          <input type="checkbox" id="voiceMode" checked style="accent-color:#0F03FC; width:18px; height:18px" />
-          <span><b>Full Voice Loop</b> — Mic → STT → Brain → TTS → Playback (via <code>/api/voice/turn</code>)</span>
-        </label>
-        <label class="hint" style="display:flex; align-items:center; gap:8px; cursor:pointer">
-          <input type="checkbox" id="realtimeMode" style="accent-color:#1ed760; width:18px; height:18px" />
-          <span><b>⚡ Live Session</b> — continuous full-duplex: agent keeps listening &amp; you can interrupt mid-sentence (<code>saaras:v3-realtime</code>)</span>
-          <span id="liveBadge" class="dot ok" style="display:none; width:10px; height:10px"></span>
-        </label>
+      <div class="sidebar-footer">
+        <span class="sessionInfo" id="sessionInfo"></span>
       </div>
-      <div class="hint" style="text-align:left; margin-top:6px">Live = press mic once → stays on until you press again. Echo-cancellation (AEC) is on; headphones recommended on speaker setups. Barge-in triggers on real speech (≥2 words) — noise won't cut the agent off. Console settings apply live.</div>
-    </div>
+    </aside>
 
-    <!-- Live partials -->
-    <div class="card" id="partialsCard" style="display:none">
-      <div class="label">Live partial transcript — saaras:v3-realtime</div>
-      <div id="partials" class="transcript" style="color:var(--accent-2); min-height:22px">…start speaking…</div>
-    </div>
+    <div class="console-content">
+      <header class="console-topbar">
+        <h1 id="panelTitle">Voice Agent</h1>
+        <div class="health">
+          <span id="healthDot" class="dot"></span>
+          <span id="healthText">Checking…</span>
+        </div>
+      </header>
 
-    <!-- Mic + State -->
-    <div class="card mic-wrap">
-      <button id="micBtn" class="mic-btn" aria-label="Hold to talk" title="Click to start/stop recording">🎙️</button>
-      <div id="stateLabel" class="state">Ready — press mic and speak Telugu</div>
-      <div class="hint">
-        Telugu-first. Try: <span class="kbd">నాకు Python గురించి చెప్పు</span><br />
-        Code-mix: <span class="kbd">నా laptop slow గా ఉంది, ఎలా fix చేయాలి?</span>
+      <div id="healthError" class="hint console-health-error" style="display:none"></div>
+      <div id="runtimeSummary" class="runtime-summary" style="display:none">—</div>
+
+      <div id="consoleHintBar" class="console-hint-bar" style="display:none">
+        🔒 API keys stay in <code>.env</code>. Click <b>Save all settings</b> — changes apply on the next voice turn.
       </div>
-      <div class="btnRow">
-        <button id="clearBtn" class="btn">Clear conversation</button>
-        <button id="testBtn" class="btn">Test memory: Sai</button>
-        <button id="stopAudioBtn" class="btn" style="display:none">⏹️ Stop audio</button>
+
+      <!-- ========== VOICE AGENT ========== -->
+      <section class="console-panel active" id="panel-agent">
+        <!-- Defaults always on (hidden) -->
+        <input type="checkbox" id="voiceMode" checked hidden aria-hidden="true" />
+        <input type="checkbox" id="realtimeMode" checked hidden aria-hidden="true" />
+        <input type="checkbox" id="handsFree" checked hidden aria-hidden="true" />
+        <span id="liveBadge" class="dot ok live-dot" style="display:none" aria-hidden="true"></span>
+
+        <div class="agent-shell">
+          <div class="agent-hero card">
+            <div class="hero-top">
+              <div id="stateLabel" class="state-pill">Ready</div>
+              <span id="activeBadge" class="prompt-active-badge" style="display:none">Custom prompts</span>
+            </div>
+            <button id="micBtn" class="voice-orb" aria-label="Start voice session" title="Click to talk">
+              <span class="orb-ring"></span>
+              <span class="orb-icon">🎙️</span>
+            </button>
+            <p class="hero-sub">Telugu-first voice agent · Live session · Auto speak</p>
+            <div id="partialsCard" class="partials-strip" style="display:none">
+              <div id="partials" class="partial-live">Listening…</div>
+            </div>
+            <div id="unlockAudio" class="unlock-banner" style="display:none">
+              <b>🔊 Tap here to enable speaker audio</b>
+            </div>
+            <div class="hero-actions">
+              <button id="clearBtn" class="btn btn-ghost">Clear</button>
+              <button id="stopAudioBtn" class="btn btn-ghost" style="display:none">Stop audio</button>
+            </div>
+          </div>
+
+          <div class="agent-columns">
+            <div class="agent-live card">
+              <div class="live-block">
+                <div class="live-label">You said</div>
+                <div id="transcript" class="live-text muted-text">— waiting for speech —</div>
+              </div>
+              <div class="live-divider"></div>
+              <div class="live-block">
+                <div class="live-label">Agent response</div>
+                <div id="response" class="live-text muted-text">— waiting —</div>
+              </div>
+              <div id="usage" class="live-meta"></div>
+              <div id="metrics" class="live-meta mono"></div>
+            </div>
+
+            <div class="agent-history card">
+              <div class="history-head">
+                <div>
+                  <div class="label" style="margin:0">Conversation</div>
+                  <span id="historyCount" class="history-sub"></span>
+                </div>
+                <div class="btnRow history-export">
+                  <button type="button" id="exportTxtBtn" class="btn btn-sm">TXT</button>
+                  <button type="button" id="exportJsonBtn" class="btn btn-sm">JSON</button>
+                  <button type="button" id="exportWavBtn" class="btn btn-sm">WAV</button>
+                  <button type="button" id="exportAllWavBtn" class="btn btn-sm">All audio</button>
+                </div>
+              </div>
+              <div id="conversation" class="chat-thread"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Playback (hidden UI, required by app.js) -->
+        <div class="sr-only" id="playbackCard">
+          <audio id="audioPlayer" preload="auto"></audio>
+          <div id="noAudio"></div>
+          <span id="ttsInfo"></span>
+          <button id="replayBtn" disabled hidden></button>
+          <button id="ttsOnlyBtn" hidden></button>
+          <div id="ttsError" style="display:none"></div>
+          <pre id="audioDebugLog"></pre>
+          <details id="audioDebugWrap" style="display:none"></details>
+          <div id="emptyGuardMsg" style="display:none"></div>
+          <button id="testBtn" hidden></button>
+          <button id="metricsBtn" hidden></button>
+          <button id="interruptBtn" hidden></button>
+          <pre id="metricsOut" style="display:none"></pre>
+        </div>
+      </section>
+
+      <!-- ========== VOICE PIPELINE (fine-tune) ========== -->
+      <section class="console-panel" id="panel-pipeline">
+        <div class="panel-grid">
+          <div class="card">
+            <div class="label">Speech-to-Text — Sarvam saaras</div>
+            <label class="field-label">Model</label>
+            <select id="sttModel" class="input-select"></select>
+            <label class="field-label">Mode</label>
+            <select id="sttMode" class="input-select"></select>
+            <label class="field-label">Language</label>
+            <select id="sttLanguage" class="input-select"></select>
+            <label class="field-label">Realtime stream type</label>
+            <select id="sttStreamType" class="input-select"></select>
+            <label class="field-label">VAD silence (<span id="sttSilenceVal">500</span> ms)</label>
+            <input id="sttSilenceMs" type="range" min="100" max="2000" step="50" value="500" class="input-range" />
+            <label class="field-label">VAD threshold (<span id="sttThreshVal">0.30</span>)</label>
+            <input id="sttThreshold" type="range" min="0" max="1" step="0.05" value="0.3" class="input-range" />
+          </div>
+          <div class="card">
+            <div class="label">Text-to-Speech — Sarvam bulbul</div>
+            <label class="field-label">Model</label>
+            <select id="ttsModel" class="input-select"></select>
+            <label class="field-label">Speaker</label>
+            <select id="ttsSpeaker" class="input-select"></select>
+            <label class="field-label">Pace (<span id="ttsPaceVal">1.00</span>×)</label>
+            <input id="ttsPace" type="range" min="0.5" max="2.0" step="0.05" value="1.0" class="input-range" />
+            <label class="field-label">Temperature (<span id="ttsTempVal">0.60</span>)</label>
+            <input id="ttsTemperature" type="range" min="0.01" max="1.0" step="0.01" value="0.6" class="input-range" />
+            <label class="field-label">Codec</label>
+            <select id="ttsCodec" class="input-select"></select>
+            <label class="field-label">Sample rate</label>
+            <select id="ttsSampleRate" class="input-select"></select>
+            <button id="testTtsBtn" class="btn primary" style="margin-top:12px">🔊 Test TTS</button>
+            <audio id="testAudio" controls style="width:100%; margin-top:8px; display:none"></audio>
+            <div id="ttsTestStatus" class="hint left-hint" style="margin-top:6px; display:none"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== AI BRAIN ========== -->
+      <section class="console-panel" id="panel-brain">
+        <div class="card">
+          <div class="label">OpenAI Brain</div>
+          <p class="hint left-hint" style="margin-bottom:12px">Model applies to every brain and voice turn after Save.</p>
+          <label class="field-label">Model</label>
+          <select id="openaiModel" class="input-select"></select>
+          <div id="modelGroupHint" class="model-hint"></div>
+          <label class="field-label">Temperature (<span id="oaiTempVal">0.7</span>)</label>
+          <input id="openaiTemperature" type="range" min="0" max="2" step="0.1" value="0.7" class="input-range" />
+          <label class="field-label">Max tokens (<span id="oaiTokVal">600</span>)</label>
+          <input id="openaiMaxTokens" type="range" min="50" max="2000" step="50" value="600" class="input-range" />
+        </div>
+      </section>
+
+      <!-- ========== PROMPTING ========== -->
+      <section class="console-panel" id="panel-prompt">
+        <div class="card">
+          <div class="label">Dynamic Prompting</div>
+          <label class="field-label">Response Style</label>
+          <select id="responseStyle" class="input-select">
+            <option value="concise, conversational">Concise, conversational</option>
+            <option value="very brief, 1-2 sentences">Very brief</option>
+            <option value="friendly, casual like a friend">Friendly, casual</option>
+            <option value="detailed, step-by-step">Detailed, step-by-step</option>
+            <option value="explain like I'm a beginner with examples">Beginner-friendly</option>
+            <option value="formal Telugu, no English">Formal Telugu</option>
+          </select>
+          <label class="field-label">Behavioural · <span id="behavCount">0</span>/10000</label>
+          <textarea id="customInstructions" class="textarea" placeholder="How the agent should speak and behave…"></textarea>
+          <label class="field-label">Business context · <span id="bizCount">0</span>/10000</label>
+          <textarea id="businessInstructions" class="textarea" placeholder="Company info, products, pricing…"></textarea>
+          <div class="btnRow" style="margin-top:12px">
+            <button id="saveInstructions" class="btn primary">💾 Save prompts</button>
+            <button id="resetInstructions" class="btn">↺ Reset</button>
+            <button id="previewInstructions" class="btn">👁️ Test</button>
+          </div>
+          <div id="saveStatus" class="hint left-hint" style="display:none"></div>
+          <div id="previewOutput" class="status-out" style="display:none"></div>
+          <div id="effectivePrompt" class="status-out" style="display:none"></div>
+        </div>
+      </section>
+
+      <!-- ========== CRM ========== -->
+      <section class="console-panel" id="panel-crm">
+        <div class="card">
+          <div class="label">CRM &amp; Integrations</div>
+          <label class="field-label"><input type="checkbox" id="crmEnabled" class="chk" /> Enable CRM sync</label>
+          <label class="field-label"><input type="checkbox" id="crmAutoSync" class="chk" /> Auto-POST each turn to webhook</label>
+          <label class="field-label">Provider</label>
+          <select id="crmProvider" class="input-select">
+            <option value="">None</option>
+            <option value="hubspot">HubSpot</option>
+            <option value="zoho">Zoho CRM</option>
+            <option value="salesforce">Salesforce</option>
+            <option value="pipedrive">Pipedrive</option>
+            <option value="freshsales">Freshsales</option>
+            <option value="custom">Custom webhook</option>
+          </select>
+          <label class="field-label">Webhook URL</label>
+          <input id="crmWebhook" type="url" class="input-text" placeholder="https://hooks.example.com/voice-agent" />
+          <label class="field-label">Lead fields (comma-separated)</label>
+          <input id="crmFields" type="text" class="input-text" placeholder="name, phone, budget, property_type" />
+          <label class="field-label">Mapping notes</label>
+          <textarea id="crmNotes" class="textarea" style="min-height:80px"></textarea>
+        </div>
+      </section>
+
+      <!-- ========== ADVANCED ========== -->
+      <section class="console-panel" id="panel-advanced">
+        <div class="card">
+          <div class="label">Latency tuning</div>
+          <label class="field-label">TTS min buffer (<span id="ttsMinBufVal">20</span>)</label>
+          <input id="ttsMinBuffer" type="range" min="10" max="200" step="5" value="20" class="input-range" />
+          <label class="field-label">TTS max chunk (<span id="ttsMaxChunkVal">200</span>)</label>
+          <input id="ttsMaxChunk" type="range" min="50" max="500" step="10" value="200" class="input-range" />
+          <label class="field-label">Bitrate</label>
+          <select id="ttsBitrate" class="input-select">
+            <option value="64k">64k</option>
+            <option value="96k">96k</option>
+            <option value="128k" selected>128k</option>
+            <option value="192k">192k</option>
+          </select>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <div class="label">Diagnostics &amp; debug</div>
+          <div class="btnRow">
+            <button id="metricsBtnVisible" class="btn">📊 Metrics</button>
+            <button id="interruptBtnVisible" class="btn">⛔ Barge-in test</button>
+          </div>
+          <details style="margin-top:12px">
+            <summary class="hint left-hint" style="cursor:pointer">Audio / TTS debug log</summary>
+            <pre id="audioDebugLogVisible" class="debug-log"></pre>
+          </details>
+          <button id="viewPromptBtn" class="btn" style="margin-top:12px">View effective prompt</button>
+          <button id="testBrainBtn" class="btn">Test brain</button>
+          <pre id="diagOut" class="status-out" style="display:none"></pre>
+        </div>
+      </section>
+
+      <div id="consoleSavebar" class="console-savebar card" style="display:none">
+        <button id="saveAllBtn" class="btn primary">💾 Save all settings</button>
+        <button id="resetBtn" class="btn">↺ Reset defaults</button>
+        <pre id="statusOut" class="status-out" style="display:none"></pre>
       </div>
     </div>
+  </div>
 
-    <!-- Transcript -->
-    <div class="card">
-      <div class="label">Transcript — Sarvam saaras:v3 (te-IN)</div>
-      <div id="transcript" class="transcript" style="color:var(--muted)">— no speech yet —</div>
-      <div class="divider"></div>
-      <div class="label">AI Response — OpenAI Responses API</div>
-      <div id="response" class="response" style="color:var(--muted)">— waiting —</div>
-      <div id="usage" class="hint" style="text-align:left; margin-top:8px;"></div>
-      <div id="metrics" class="hint" style="text-align:left; margin-top:4px; font-family:ui-monospace,monospace; font-size:11px; color:var(--muted)"></div>
-    </div>
-
-    <!-- Playback (fully automatic — no Play button) -->
-    <div class="card" id="playbackCard">
-      <div class="label">Playback — Sarvam bulbul:v3 (te-IN) <span style="color:var(--success); font-size:10px">AUTO</span> <span id="ttsInfo" class="hint" style="text-transform:none; letter-spacing:normal"></span></div>
-      <audio id="audioPlayer" preload="auto" style="width:100%; margin-top:8px; display:none"></audio>
-      <!-- One-time autoplay unlock overlay (browser policy requires a single tap) -->
-      <div id="unlockAudio" class="card" style="display:none; background:var(--accent); border:none; cursor:pointer; text-align:center; padding:14px">
-        <b>🔊 Tap once to enable speaker audio</b><br /><span class="hint" style="color:#dfe6ff">Browsers require this single confirmation — every reply after this plays automatically.</span>
-      </div>
-      <div id="noAudio" class="hint" style="text-align:left; margin-top:6px">Hands-free mode: replies play automatically through your speakers. Speak anytime to interrupt.</div>
-      <div class="btnRow" style="margin-top:10px">
-        <button id="replayBtn" class="btn" disabled>🔁 Replay last</button>
-        <button id="ttsOnlyBtn" class="btn">🔊 Speak current text</button>
-      </div>
-      <div id="ttsError" class="hint" style="color:#ff8a80; text-align:left; display:none; margin-top:6px"></div>
-    </div>
-
-    <!-- Hands-free continuity -->
-    <div class="card">
-      <div class="label">Conversation Continuity</div>
-      <label class="hint" style="display:flex; align-items:center; gap:8px; cursor:pointer; margin-top:4px">
-        <input type="checkbox" id="handsFree" checked style="accent-color:#0F03FC; width:18px; height:18px" />
-        <span><b>Auto-listen after each reply</b> — mic re-opens automatically when speech finishes, until you stop it</span>
-      </label>
-      <div id="emptyGuardMsg" class="hint" style="display:none; color:#ffb86b; text-align:left; margin-top:6px">Paused auto-listening after several silent takes — press mic to resume.</div>
-    </div>
-
-    <!-- Conversation history -->
-    <div class="card">
-      <div class="label">Conversation — session memory (MAX 12) <span id="historyCount" class="hint" style="text-transform:none; letter-spacing:normal"></span></div>
-      <div id="conversation" class="conversation"></div>
-    </div>
-
-    <!-- Customize AI — Dual-channel dynamic prompting -->
-    <div class="card">
-      <div class="label">Customize Your AI — Prompting <span id="activeBadge" class="badge" style="margin-left:8px; font-size:10px; display:none">Active</span> <span style="margin-left:6px; font-size:10px; color:var(--muted)">System &gt; Core &gt; Behaviour &gt; Business</span></div>
-
-      <label class="hint" style="display:block; margin-top:10px; font-weight:600">🧠 Behavioural Prompting — HOW the agent should respond · <span id="behavCount">0</span>/10000</label>
-      <div class="btnRow" style="align-items:center; gap:8px">
-        <select id="responseStyle" class="textarea" style="min-height:34px; padding:6px 8px; flex:1">
-          <option value="concise, conversational">Style: Concise, conversational (default)</option>
-          <option value="very brief, 1-2 sentences">Very brief — 1-2 sentences</option>
-          <option value="friendly, casual like a friend">Friendly, casual like a friend</option>
-          <option value="detailed, step-by-step">Detailed, step-by-step</option>
-          <option value="explain like I'm a beginner with examples">Explain like beginner with examples</option>
-          <option value="formal Telugu, no English">Formal Telugu (no English)</option>
-        </select>
-      </div>
-      <textarea id="customInstructions" class="textarea" placeholder="Example:&#10;నాతో ఎప్పుడూ తెలుగులోనే మాట్లాడాలి.&#10;Be warm and patient like a friend.&#10;Keep tech terms in English, never translate them."></textarea>
-
-      <label class="hint" style="display:block; margin-top:12px; font-weight:600">🏢 Business / Professional Prompting — WHAT the agent knows about your business <span class="hint" style="font-weight:normal">(company, products, pricing, policies, domain facts)</span> · <span id="bizCount">0</span>/10000</label>
-      <textarea id="businessInstructions" class="textarea" placeholder="Example:&#10;We are Sai Technologies, a Hyderabad-based SaaS company.&#10;Products: InventoryPro (₹999/mo), BillingSuite (₹1999/mo).&#10;Refund policy: 7-day full refund. Support hours 9am-9pm IST.&#10;Competitors: Zoho, Tally. Our edge: Telugu support + same-day onboarding."></textarea>
-
-      <div class="btnRow" style="margin-top:10px">
-        <button id="saveInstructions" class="btn primary">💾 Save prompts</button>
-        <button id="resetInstructions" class="btn">↺ Reset</button>
-        <button id="previewInstructions" class="btn">👁️ Test (without saving)</button>
-        <button id="viewPromptBtn" class="btn">🔍 View effective prompt</button>
-      </div>
-      <div id="saveStatus" class="hint" style="text-align:left; margin-top:6px; display:none"></div>
-      <div id="previewOutput" class="hint" style="text-align:left; margin-top:8px; display:none; background:var(--ash); border:1px solid var(--border); border-radius:10px; padding:10px"></div>
-      <div id="effectivePrompt" class="hint" style="text-align:left; margin-top:8px; display:none; background:var(--card-2); border:1px dashed var(--border); border-radius:10px; padding:10px; font-family:ui-monospace,monospace; font-size:11px; white-space:pre-wrap"></div>
-    </div>
-
-    <!-- Phase 5 Observability -->
-    <div class="card">
-      <div class="label">Phase 5 — Observability & Hardening</div>
-      <p class="hint" style="text-align:left">Rate limited: 60 req/min general, 20/min TTS • Metrics & barge-in.</p>
-      <div class="btnRow" style="margin-top:8px">
-        <button id="metricsBtn" class="btn">📊 Load /api/metrics</button>
-        <button id="interruptBtn" class="btn">⛔ Test barge-in (POST /api/session/interrupt)</button>
-      </div>
-      <pre id="metricsOut" class="hint" style="text-align:left; margin-top:8px; display:none; background:var(--ash); border:1px solid var(--border); border-radius:10px; padding:10px; font-size:11px; overflow:auto; max-height:200px"></pre>
-    </div>
-  </main>
-
-  <footer class="footer">Black • Ash • #0F03FC • Telugu-first • Mic → STT (saaras:v3 te-IN) → Brain (Responses API) → TTS (bulbul:v3 te-IN) → Playback</footer>
-
+  <script src="audio_utils.js"></script>
   <script src="audio_playback_manager.js"></script>
+  <script src="conversation_store.js"></script>
+  <script src="console_tabs.js"></script>
   <script src="app.js"></script>
+  <script src="settings.js"></script>
 </body>
 </html>

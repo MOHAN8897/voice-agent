@@ -7,27 +7,18 @@ from __future__ import annotations
 
 import base64
 from collections.abc import AsyncIterator
+from typing import Optional
 
 import httpx
 
-from server.agent.language_resolver import get_speaker_for_language
 from server.config.constants import constants
 from server.config.env import get_settings
+from server.services.tts_config import TtsConfigError, resolve_tts_config
 from server.utils.errors import AppError, ErrorCode, classify_http_status
 from server.utils.logger import log_error, log_tts
 
 SARVAM_TTS_URL = "https://api.sarvam.ai/text-to-speech"
 SARVAM_TTS_STREAM_URL = "https://api.sarvam.ai/text-to-speech/stream"
-
-
-def _resolve_speaker(language_code: str, requested_speaker: str | None) -> str:
-    if requested_speaker:
-        return requested_speaker
-    # Use explicit Telugu speaker from env if te-IN
-    settings = get_settings()
-    if language_code == "te-IN":
-        return settings.sarvam_tts_speaker_te or get_speaker_for_language(language_code)
-    return get_speaker_for_language(language_code)
 
 
 async def synthesize(
@@ -37,6 +28,7 @@ async def synthesize(
     pace: Optional[float] = None,
     model: Optional[str] = None,
     temperature: Optional[float] = None,
+    session_id: str = "default",
     timeout_ms: Optional[int] = None,
 ) -> dict:
     """
@@ -54,13 +46,22 @@ async def synthesize(
             status_code=413,
         )
 
-    model = model or settings.sarvam_tts_model
-    speaker = _resolve_speaker(language_code, speaker)
-    pace = pace if pace is not None else settings.sarvam_tts_pace
-    # Per-model clamp (docs: v3 pace 0.5-2.0, v2 0.3-3.0)
-    pace = max(0.3, min(3.0, float(pace)))
-    if model == "bulbul:v3":
-        pace = max(0.5, min(2.0, float(pace)))
+    try:
+        cfg = resolve_tts_config(
+            session_id,
+            language_code=language_code,
+            speaker=speaker,
+            model=model,
+            pace=pace,
+            temperature=temperature,
+        )
+    except TtsConfigError as e:
+        raise AppError(ErrorCode.VALIDATION_ERROR, str(e), status_code=400) from e
+
+    model = cfg["model"]
+    speaker = cfg["speaker"]
+    pace = cfg["pace"]
+    language_code = cfg["language_code"]
     timeout_s = (timeout_ms or settings.request_timeout_ms) / 1000
 
     payload: dict = {
@@ -70,10 +71,10 @@ async def synthesize(
         "speaker": speaker,
         "pace": pace,
     }
-    if temperature is not None and model == "bulbul:v3":
-        payload["temperature"] = max(0.01, min(1.0, float(temperature)))
+    if "temperature" in cfg:
+        payload["temperature"] = cfg["temperature"]
 
-    log_tts("Synthesis started", chars=len(text), speaker=speaker, language_code=language_code, model=model, pace=pace)
+    log_tts("Synthesis started", chars=len(text), speaker=speaker, language_code=language_code, model=model, pace=pace, session=session_id)
 
     headers = {
         "api-subscription-key": settings.sarvam_api_key,
@@ -128,7 +129,7 @@ async def synthesize(
     except Exception as e:
         raise AppError(ErrorCode.PROVIDER_ERROR, provider="sarvam_tts", cause=e) from e
 
-    log_tts("Audio received", bytes=len(audio_bytes), request_id=body.get("request_id"))
+    log_tts("Audio received", bytes=len(audio_bytes), request_id=body.get("request_id"), speaker=speaker, session=session_id)
     return {
         "audio_bytes": audio_bytes,
         "content_type": "audio/wav",
@@ -145,6 +146,8 @@ async def synthesize_stream(
     pace: float | None = None,
     model: str | None = None,
     output_audio_codec: str = "mp3",
+    session_id: str = "default",
+    temperature: float | None = None,
     timeout_ms: int | None = None,
 ) -> AsyncIterator[bytes]:
     """
@@ -162,9 +165,24 @@ async def synthesize_stream(
             f"Text too long ({len(text)} chars). Max {constants.TTS_MAX_CHARS_STREAM} for stream.",
             status_code=413,
         )
-    model = model or settings.sarvam_tts_model
-    speaker = _resolve_speaker(language_code, speaker)
-    pace = pace if pace is not None else settings.sarvam_tts_pace
+    try:
+        cfg = resolve_tts_config(
+            session_id,
+            language_code=language_code,
+            speaker=speaker,
+            model=model,
+            pace=pace,
+            temperature=temperature,
+            codec=output_audio_codec,
+        )
+    except TtsConfigError as e:
+        raise AppError(ErrorCode.VALIDATION_ERROR, str(e), status_code=400) from e
+
+    model = cfg["model"]
+    speaker = cfg["speaker"]
+    pace = cfg["pace"]
+    language_code = cfg["language_code"]
+    output_audio_codec = cfg["output_audio_codec"]
     timeout_s = (timeout_ms or settings.request_timeout_ms) / 1000
 
     payload = {
@@ -175,6 +193,8 @@ async def synthesize_stream(
         "pace": pace,
         "output_audio_codec": output_audio_codec,
     }
+    if "temperature" in cfg:
+        payload["temperature"] = cfg["temperature"]
     headers = {"api-subscription-key": settings.sarvam_api_key, "Content-Type": "application/json"}
 
     log_tts("Stream synthesis started", chars=len(text), speaker=speaker, codec=output_audio_codec)

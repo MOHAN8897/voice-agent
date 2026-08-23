@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from server.services.openai_brain_service import generate_response
 from server.services.sarvam_stt_service import transcribe
 from server.services.sarvam_tts_service import synthesize
+from server.services.tts_config import resolve_tts_config
 from server.session.session_state import SessionState
 from server.utils.errors import AppError
 from server.utils.logger import logger
@@ -134,14 +135,22 @@ class VoiceSessionController:
             if synthesize_audio and result.brain_text:
                 emit(SessionState.GENERATING_TTS)
                 t_tts0 = time.perf_counter()
-                # Speaker selection via language resolver's responseLanguage
                 resolved_lang = (result.language_context or {}).get("responseLanguage", "te-IN")
-                tts_res = await synthesize(
-                    text=result.brain_text,
+                tts_cfg = resolve_tts_config(
+                    session_id,
                     language_code=resolved_lang,
                     speaker=tts_speaker,
                     model=tts_model,
                     temperature=tts_temperature,
+                )
+                tts_res = await synthesize(
+                    text=result.brain_text,
+                    language_code=resolved_lang,
+                    speaker=tts_cfg["speaker"],
+                    model=tts_cfg["model"],
+                    pace=tts_cfg["pace"],
+                    temperature=tts_cfg.get("temperature"),
+                    session_id=session_id,
                 )
                 result.tts_ms = int((time.perf_counter() - t_tts0) * 1000)
                 result.audio_bytes = tts_res["audio_bytes"]

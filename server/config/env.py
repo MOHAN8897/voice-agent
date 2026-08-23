@@ -51,7 +51,8 @@ class Settings(BaseSettings):
 
     # --- Fine-tune allowlist (industry: restrict client-selectable models) ---
     allowed_openai_models_csv: str = Field(
-        "gpt-4o-mini,gpt-4o,gpt-4.1-mini,gpt-4.1,gpt-5-mini,gpt-5",
+        "gpt-4o-mini,gpt-4o,gpt-4o-2024-11-20,gpt-4.1-mini,gpt-4.1,gpt-5-mini,gpt-5,gpt-5.2,"
+        "o3-mini,o4-mini,chatgpt-4o-latest",
         alias="OPENAI_ALLOWED_MODELS",
     )
 
