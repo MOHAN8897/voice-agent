@@ -82,11 +82,8 @@
       updateRuntimeSummary();
 
       const hint = safeGet("modelGroupHint");
-      const labels = catalog.openai.modelLabels || {};
       if (hint && catalog.openai.allowedModels) {
-        hint.innerHTML = "<b>Voice models:</b><br>" + catalog.openai.allowedModels.map((m) =>
-          `<div style="margin:4px 0">${labels[m] || m}</div>`
-        ).join("");
+        updateOaiTempHint();
       }
     } catch (e) {
       if (safeGet("healthDot")) safeGet("healthDot").className = "dot bad";
@@ -101,6 +98,7 @@
       ["openaiMaxTokens", "openaiMaxTokens"],
       ["brainPromptBudgetTokens", "brainPromptBudgetTokens"],
       ["openaiTemperature", "openaiTemperature"],
+      ["openaiReasoningEffort", "openaiReasoningEffort"],
       ["ttsMinBuffer", "ttsMinBuffer"],
       ["ttsMaxChunk", "ttsMaxChunk"],
       ["ttsPace", "ttsPace"],
@@ -113,6 +111,62 @@
         el.value = val;
         el.dispatchEvent(new Event("input"));
       }
+    }
+  }
+
+  function modelSkipsTemperature(model) {
+    const m = (model || "").toLowerCase();
+    return m.startsWith("gpt-5") || m.startsWith("o1") || m.startsWith("o3") || m.startsWith("o4");
+  }
+
+  function getModelPreset(model) {
+    return catalog?.openai?.modelPresets?.[model] || null;
+  }
+
+  function applyModelPreset(model, { silent = false } = {}) {
+    const preset = getModelPreset(model);
+    if (!preset) return false;
+    const setVal = (id, val) => {
+      const el = safeGet(id);
+      if (el && val != null) {
+        el.value = val;
+        el.dispatchEvent(new Event("input"));
+        el.dispatchEvent(new Event("change"));
+      }
+    };
+    setVal("openaiReasoningEffort", preset.openaiReasoningEffort);
+    setVal("openaiMaxTokens", preset.openaiMaxTokens);
+    setVal("brainPromptBudgetTokens", preset.brainPromptBudgetTokens);
+    updateOaiTempHint();
+    updateRuntimeSummary();
+    if (!silent && typeof window.updatePromptMeter === "function") window.updatePromptMeter();
+    const hint = safeGet("modelGroupHint");
+    if (hint) {
+      hint.innerHTML = `<b>${preset.name || model}</b> — ${preset.hint || ""}`;
+    }
+    return true;
+  }
+
+  function updateOaiTempHint() {
+    const model = safeGet("openaiModel")?.value || "";
+    const tempRow = safeGet("openaiTemperatureRow");
+    const reasoningRow = safeGet("openaiReasoningRow");
+    const tempEl = safeGet("openaiTemperature");
+    const hint = safeGet("modelGroupHint");
+    const skip = modelSkipsTemperature(model);
+    if (tempRow) tempRow.style.display = skip ? "none" : "";
+    if (reasoningRow) reasoningRow.style.display = skip ? "" : "none";
+    if (tempEl) {
+      tempEl.disabled = skip;
+      tempEl.style.opacity = skip ? "0.45" : "1";
+    }
+    if (hint && skip) {
+      const preset = getModelPreset(model);
+      hint.innerHTML = preset
+        ? `<b>${preset.name}</b> — ${preset.hint}`
+        : `${model} uses reasoning effort (not temperature). Pick a level below or click Apply recommended.`;
+    } else if (hint && !skip) {
+      hint.textContent = "Temperature applies to this model.";
     }
   }
 
@@ -141,25 +195,6 @@
       const oel = safeGet(out);
       if (el && oel) el.addEventListener("input", () => { oel.textContent = fmt(el.value); updateRuntimeSummary(); });
     };
-    function modelSkipsTemperature(model) {
-      const m = (model || "").toLowerCase();
-      return m.startsWith("gpt-5") || m.startsWith("o1") || m.startsWith("o3") || m.startsWith("o4");
-    }
-    function updateOaiTempHint() {
-      const model = safeGet("openaiModel")?.value || "";
-      const tempEl = safeGet("openaiTemperature");
-      const hint = safeGet("modelGroupHint");
-      const skip = modelSkipsTemperature(model);
-      if (tempEl) {
-        tempEl.disabled = skip;
-        tempEl.style.opacity = skip ? "0.45" : "1";
-      }
-      if (hint) {
-        hint.textContent = skip
-          ? `${model} does not use temperature — the server omits it automatically.`
-          : "Temperature applies to this model.";
-      }
-    }
     bind("sttSilenceMs", "sttSilenceVal", (v) => v);
     bind("sttThreshold", "sttThreshVal", (v) => Number(v).toFixed(2));
     bind("ttsPace", "ttsPaceVal", (v) => Number(v).toFixed(2));
@@ -177,8 +212,21 @@
 
     ["openaiModel", "ttsModel", "ttsSpeaker"].forEach((id) => {
       const el = safeGet(id);
-      if (el) el.addEventListener("change", () => { updateRuntimeSummary(); updateOaiTempHint(); });
+      if (el) el.addEventListener("change", () => {
+        updateRuntimeSummary();
+        if (id === "openaiModel") updateOaiTempHint();
+      });
     });
+    if (safeGet("applyModelPresetBtn")) {
+      safeGet("applyModelPresetBtn").addEventListener("click", () => {
+        const model = safeGet("openaiModel")?.value || "";
+        if (applyModelPreset(model)) {
+          show("Applied recommended settings for " + model);
+        } else {
+          show("No preset found for " + model);
+        }
+      });
+    }
     updateOaiTempHint();
   }
 
@@ -200,7 +248,8 @@
       ttsModel: "ttsModel", ttsSpeaker: "ttsSpeaker", ttsPace: "ttsPace", ttsTemperature: "ttsTemperature",
       ttsCodec: "ttsCodec", ttsSampleRate: "ttsSampleRate", ttsMinBuffer: "ttsMinBuffer", ttsMaxChunk: "ttsMaxChunk",
       ttsBitrate: "ttsBitrate",
-      openaiModel: "openaiModel", openaiTemperature: "openaiTemperature", openaiMaxTokens: "openaiMaxTokens",
+      openaiModel: "openaiModel", openaiTemperature: "openaiTemperature", openaiReasoningEffort: "openaiReasoningEffort",
+      openaiMaxTokens: "openaiMaxTokens",
       brainPromptBudgetTokens: "brainPromptBudgetTokens",
       crmProvider: "crmProvider", crmWebhook: "crmWebhook", crmFields: "crmFields", crmNotes: "crmNotes",
     };
@@ -229,6 +278,7 @@
         ttsMinBuffer: getNum("ttsMinBuffer") || 30, ttsMaxChunk: getNum("ttsMaxChunk") || 80,
         ttsBitrate: getVal("ttsBitrate") || "128k",
         openaiModel: getVal("openaiModel"), openaiTemperature: parseFloat(getVal("openaiTemperature") || "0.7"),
+        openaiReasoningEffort: getVal("openaiReasoningEffort") || undefined,
         openaiMaxTokens: getNum("openaiMaxTokens"),
         brainPromptBudgetTokens: getNum("brainPromptBudgetTokens") || 2500,
         crmEnabled: getCheck("crmEnabled"), crmAutoSync: getCheck("crmAutoSync"),

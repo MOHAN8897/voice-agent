@@ -34,7 +34,7 @@ class RuntimeSettingsStore:
         "ttsModel", "ttsSpeaker", "ttsPace", "ttsTemperature",
         "ttsCodec", "ttsBitrate", "ttsSampleRate", "ttsMinBuffer", "ttsMaxChunk",
         # OpenAI brain
-        "openaiModel", "openaiTemperature", "openaiMaxTokens", "brainPromptBudgetTokens",
+        "openaiModel", "openaiTemperature", "openaiReasoningEffort", "openaiMaxTokens", "brainPromptBudgetTokens",
         # CRM / integrations (future-ready)
         "crmEnabled", "crmProvider", "crmWebhook", "crmFields", "crmNotes", "crmAutoSync",
     }
@@ -132,6 +132,12 @@ class RuntimeSettingsStore:
             return val
         if key == "openaiTemperature":
             return _clamp(float(val), 0.0, 2.0)
+        if key == "openaiReasoningEffort":
+            from server.prompts.voice_defaults import OPENAI_REASONING_EFFORTS
+            v = str(val).strip().lower()
+            if v not in OPENAI_REASONING_EFFORTS:
+                raise SettingsValidationError(f"openaiReasoningEffort must be one of {OPENAI_REASONING_EFFORTS}")
+            return v
         if key == "openaiMaxTokens":
             v = int(val)
             if not 50 <= v <= 800:

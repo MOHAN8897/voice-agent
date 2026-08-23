@@ -73,6 +73,7 @@ async def voice_turn(
             tts_temperature=rt.get("ttsTemperature"),
             openai_model=rt.get("openaiModel"),
             openai_temperature=rt.get("openaiTemperature"),
+            openai_reasoning_effort=rt.get("openaiReasoningEffort"),
             openai_max_tokens=rt.get("openaiMaxTokens"),
             synthesize_audio=True,
         )
@@ -143,6 +144,7 @@ async def voice_stt_brain_only(
             business_instructions=eff_business,
             openai_model=rt.get("openaiModel"),
             openai_temperature=rt.get("openaiTemperature"),
+            openai_reasoning_effort=rt.get("openaiReasoningEffort"),
             openai_max_tokens=rt.get("openaiMaxTokens"),
             synthesize_audio=False,
         )

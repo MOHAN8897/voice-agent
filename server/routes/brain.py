@@ -65,6 +65,7 @@ async def brain_route(body: BrainRequest):
             brain_prompt=body.brainPrompt,
             openai_model=rt.get("openaiModel"),
             temperature=rt.get("openaiTemperature"),
+            reasoning_effort=rt.get("openaiReasoningEffort"),
             max_output_tokens=rt.get("openaiMaxTokens"),
         )
         return result
@@ -114,6 +115,7 @@ async def brain_stream_route(body: BrainRequest):
                 brain_prompt=body.brainPrompt,
                 openai_model=rt.get("openaiModel"),
                 temperature=rt.get("openaiTemperature"),
+                reasoning_effort=rt.get("openaiReasoningEffort"),
                 max_output_tokens=rt.get("openaiMaxTokens"),
             ):
                 yield f"data: {json.dumps(chunk, ensure_ascii=False)}\n\n"

@@ -34,6 +34,7 @@ def apply_generation_params(
     temperature: float | None,
     default_temperature: float,
     voice_optimized: bool = True,
+    reasoning_effort: str | None = None,
 ) -> dict:
     """Mutates create_kwargs in place; omits temperature when unsupported."""
     if supports_temperature(model):
@@ -43,7 +44,7 @@ def apply_generation_params(
         del create_kwargs["temperature"]
 
     if voice_optimized:
-        effort = voice_reasoning_effort(model)
+        effort = (reasoning_effort or "").strip().lower() or voice_reasoning_effort(model)
         if effort:
             create_kwargs["reasoning"] = {"effort": effort}
     return create_kwargs

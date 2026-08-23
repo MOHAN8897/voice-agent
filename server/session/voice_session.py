@@ -70,6 +70,7 @@ class VoiceSessionController:
         tts_temperature: float | None = None,
         openai_model: str | None = None,
         openai_temperature: float | None = None,
+        openai_reasoning_effort: str | None = None,
         openai_max_tokens: int | None = None,
         synthesize_audio: bool = True,
         on_state: Optional[Callable[[SessionState], None]] = None,
@@ -123,6 +124,7 @@ class VoiceSessionController:
                 business_instructions=business_instructions,
                 openai_model=openai_model,
                 temperature=openai_temperature,
+                reasoning_effort=openai_reasoning_effort,
                 max_output_tokens=openai_max_tokens,
             )
             result.brain_ms = int((time.perf_counter() - t_brain0) * 1000)

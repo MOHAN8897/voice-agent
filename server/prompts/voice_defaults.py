@@ -30,3 +30,38 @@ OPENAI_MODEL_CATALOG: list[dict[str, str]] = [
 OPENAI_MODEL_IDS: list[str] = [m["id"] for m in OPENAI_MODEL_CATALOG]
 
 DEFAULT_OPENAI_MODEL = "gpt-5.6-luna"  # lowest latency for live voice; user can switch to gpt-5.5 for max quality
+
+# Per-model recommended brain settings (OpenAI voice-agent guidance, Feb 2026).
+# GPT-5 family uses reasoning.effort instead of temperature on the Responses API.
+OPENAI_REASONING_EFFORTS = ("none", "low", "medium", "high")
+
+OPENAI_MODEL_PRESETS: dict[str, dict] = {
+    "gpt-5.6-luna": {
+        "name": "Voice Fast",
+        "openaiReasoningEffort": "none",
+        "openaiMaxTokens": 280,
+        "brainPromptBudgetTokens": 2500,
+        "hint": "Best for live Telugu voice — lowest latency. OpenAI recommends reasoning effort 'none' for voice.",
+    },
+    "gpt-5.5": {
+        "name": "Quality",
+        "openaiReasoningEffort": "low",
+        "openaiMaxTokens": 360,
+        "brainPromptBudgetTokens": 2500,
+        "hint": "Highest answer quality with modest latency. Reasoning 'low' balances speed and depth.",
+    },
+    "gpt-5.4": {
+        "name": "Balanced",
+        "openaiReasoningEffort": "low",
+        "openaiMaxTokens": 320,
+        "brainPromptBudgetTokens": 2500,
+        "hint": "Professional workhorse — good for longer explanations when latency is less critical.",
+    },
+    "gpt-5": {
+        "name": "Legacy",
+        "openaiReasoningEffort": "low",
+        "openaiMaxTokens": 300,
+        "brainPromptBudgetTokens": 2500,
+        "hint": "Earlier GPT-5 flagship. Use gpt-5.6-luna for voice or gpt-5.5 for max quality.",
+    },
+}

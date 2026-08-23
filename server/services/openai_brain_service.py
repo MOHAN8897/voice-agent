@@ -338,6 +338,7 @@ async def generate_response(
     brain_prompt: str | None = None,
     openai_model: str | None = None,
     temperature: float | None = None,
+    reasoning_effort: str | None = None,
     max_output_tokens: int | None = None,
     timeout_ms: int | None = None,
 ) -> dict:
@@ -420,6 +421,7 @@ async def generate_response(
         temperature=temperature,
         default_temperature=settings.openai_temperature,
         voice_optimized=True,
+        reasoning_effort=reasoning_effort,
     )
     log_brain(
         "CONFIG",
@@ -570,6 +572,7 @@ async def generate_response_stream(
     brain_prompt: str | None = None,
     openai_model: str | None = None,
     temperature: float | None = None,
+    reasoning_effort: str | None = None,
     max_output_tokens: int | None = None,
     timeout_ms: int | None = None,
 ):
@@ -649,6 +652,7 @@ async def generate_response_stream(
         temperature=temperature,
         default_temperature=settings.openai_temperature,
         voice_optimized=True,
+        reasoning_effort=reasoning_effort,
     )
     log_brain(
         "CONFIG",

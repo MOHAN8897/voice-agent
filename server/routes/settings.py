@@ -19,6 +19,8 @@ from server.prompts.voice_defaults import (
     DEFAULT_RESPONSE_STYLE,
     OPENAI_MODEL_CATALOG,
     OPENAI_MODEL_IDS,
+    OPENAI_MODEL_PRESETS,
+    OPENAI_REASONING_EFFORTS,
 )
 from server.services.runtime_settings import runtime_settings, SettingsValidationError
 from server.services.tts_config import resolve_tts_config
@@ -65,6 +67,8 @@ async def catalog():
             "currentModel": current_openai,
             "defaultModel": DEFAULT_OPENAI_MODEL,
             "temperature": [0.0, 2.0],
+            "reasoningEfforts": list(OPENAI_REASONING_EFFORTS),
+            "modelPresets": OPENAI_MODEL_PRESETS,
             "maxTokens": [50, 800],
             "brainPromptBudget": [1500, 2500],
             "modelGroups": [
@@ -72,9 +76,10 @@ async def catalog():
             ],
             "defaults": {
                 "openaiModel": "gpt-5.6-luna",
-                "openaiMaxTokens": 320,
+                "openaiMaxTokens": OPENAI_MODEL_PRESETS["gpt-5.6-luna"]["openaiMaxTokens"],
                 "openaiTemperature": 0.7,
-                "brainPromptBudgetTokens": 2500,
+                "openaiReasoningEffort": OPENAI_MODEL_PRESETS["gpt-5.6-luna"]["openaiReasoningEffort"],
+                "brainPromptBudgetTokens": OPENAI_MODEL_PRESETS["gpt-5.6-luna"]["brainPromptBudgetTokens"],
                 "responseStyle": DEFAULT_RESPONSE_STYLE,
                 "behaviourInstructions": DEFAULT_BEHAVIOUR_INSTRUCTIONS,
                 "businessInstructions": DEFAULT_BUSINESS_INSTRUCTIONS,
@@ -111,6 +116,7 @@ class RuntimePatch(BaseModel):
     ttsMaxChunk: Optional[int] = None
     openaiModel: Optional[str] = None
     openaiTemperature: Optional[float] = None
+    openaiReasoningEffort: Optional[str] = None
     openaiMaxTokens: Optional[int] = None
     brainPromptBudgetTokens: Optional[int] = None
     crmEnabled: Optional[bool] = None

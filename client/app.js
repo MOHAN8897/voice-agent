@@ -494,6 +494,7 @@ const CACHE_MIN_TOKENS = 1024;
 const BUDGET_MIN_TOKENS = 1500;
 const BUDGET_MAX_TOKENS = 2500;
 const BRAIN_PROMPT_MAX_WORDS = 2500;
+const BRAIN_PROMPT_MAX_CHARS = 50000;
 
 function estimatePromptTokens(text) {
   const len = (text || "").length;
@@ -552,6 +553,8 @@ function updatePromptMeter() {
     cacheBadge.className = est >= CACHE_MIN_TOKENS ? "badge badge-green" : "badge badge-warn";
   }
 }
+
+window.updatePromptMeter = updatePromptMeter;
 
 async function fetchDefaultBrainPrompt() {
   const r = await fetch("/api/instructions/default");

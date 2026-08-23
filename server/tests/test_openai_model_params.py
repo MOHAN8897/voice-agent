@@ -28,6 +28,19 @@ def test_apply_generation_params_luna():
     assert kw["reasoning"] == {"effort": "none"}
 
 
+def test_apply_generation_params_reasoning_override():
+    kw: dict = {"model": "gpt-5.6-luna", "input": []}
+    apply_generation_params(
+        kw,
+        model="gpt-5.6-luna",
+        temperature=0.3,
+        default_temperature=0.5,
+        voice_optimized=True,
+        reasoning_effort="low",
+    )
+    assert kw["reasoning"] == {"effort": "low"}
+
+
 def test_voice_reasoning_effort():
     assert voice_reasoning_effort("gpt-5.6-luna") == "none"
     assert voice_reasoning_effort("gpt-5.5") == "low"
