@@ -48,6 +48,7 @@ def connect_stt_realtime(
     silence_duration_ms: int | None = None,
     threshold: float | None = None,
     min_speech_duration_ms: int | None = None,
+    high_vad_sensitivity: bool = True,
 ):
     settings = get_settings()
     params = {
@@ -65,6 +66,8 @@ def connect_stt_realtime(
         params["threshold"] = str(threshold)
     if min_speech_duration_ms is not None:
         params["min_speech_duration_ms"] = str(min_speech_duration_ms)
+    if high_vad_sensitivity:
+        params["high_vad_sensitivity"] = "true"
     qs = "&".join(f"{k}={v}" for k, v in params.items())
     url = f"{constants.SARVAM_STT_REALTIME_WS}?{qs}"
     headers = {"api-subscription-key": settings.sarvam_api_key}

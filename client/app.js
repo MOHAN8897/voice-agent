@@ -805,6 +805,10 @@ const live = {
   stream: null,
   busy: false,
   pendingQueue: [],
+  turnGeneration: 0,
+  bargeActive: false,
+  ttsGenerationCancelled: false,
+  _ttsOwnerGen: -1,
   agentSpeaking: false,
   ttsSock: null,
   ttsStreamCodec: "linear16",
@@ -819,13 +823,16 @@ const live = {
   sb: null,
   mseQueue: [],
   bargeCooldownUntil: 0,
+  brainStreaming: false,
+  awaitingUserAfterBarge: false,
+  lastBargeInAt: 0,
+  bargeHandledTurn: 0,
   turnN: 0,
   sawVadStart: false,
   // Echo-gate tuning (RMS of Int16 ≈ amplitude/32768)
   rmsGate: true,
   RMS_SPEAKING: 0.012,
-  RMS_COOLDOWN: 0.03,
-  COOLDOWN_MS: 1200,
+  COOLDOWN_MS: 400,
 };
 
 function wsUrl(path) {
@@ -927,14 +934,51 @@ async function startLiveSession() {
   };
 }
 
+function getBargeConfig() {
+  const v = runtimeSettings.values || {};
+  const d = runtimeSettings.defaults || {};
+  return {
+    minWords: v.bargeMinWords ?? d.bargeMinWords ?? 3,
+    requireVad: v.bargeRequireVad ?? d.bargeRequireVad ?? true,
+  };
+}
+
+function isTurnStale(gen) {
+  return gen !== live.turnGeneration;
+}
+
+function handleSttFinal(text, sttFinalMs) {
+  if (!text || wordCount(text) < 1) {
+    partialsEl.textContent = "(empty)…listening…";
+    return;
+  }
+  transcriptEl.textContent = text;
+  transcriptEl.style.color = "var(--text)";
+  // After barge-in: never queue behind the interrupted turn — start fresh immediately.
+  if (live.bargeActive || live.awaitingUserAfterBarge) {
+    live.bargeActive = false;
+    live.awaitingUserAfterBarge = false;
+    live.pendingQueue.length = 0;
+    live.busy = false;
+    live.brainStreaming = false;
+    live.ttsGenerationCancelled = false;
+    runTurn(text, sttFinalMs);
+    return;
+  }
+  if (live.busy) {
+    enqueueFinal(text, sttFinalMs);
+    return;
+  }
+  runTurn(text, sttFinalMs);
+}
+
 function onPcmChunk(e) {
   if (!live.active || !live.socket || live.socket.readyState !== WebSocket.OPEN) return;
   if (!(e.data instanceof ArrayBuffer)) return;
-  const now = performance.now();
-  // Two-tier RMS gate (only gates ECHO; real user voice passes both tiers)
-  if (live.agentSpeaking || now < live.bargeCooldownUntil) {
-    const thr = now < live.bargeCooldownUntil ? live.RMS_COOLDOWN : live.RMS_SPEAKING;
-    if (live.rmsGate && rms16(new Int16Array(e.data)) < thr) return;
+  // While agent speaks: suppress low-energy frames (likely TTS echo in mic).
+  // After user barges in: pass ALL frames so STT hears them immediately.
+  if (!live.awaitingUserAfterBarge && live.agentSpeaking) {
+    if (live.rmsGate && rms16(new Int16Array(e.data)) < live.RMS_SPEAKING) return;
   }
   live.socket.send(e.data);
 }
@@ -959,6 +1003,7 @@ function drainPendingFinal() {
 /** Single exit path — always clears busy and runs queued speech if any. */
 function endLiveTurn(opts = {}) {
   live.busy = false;
+  live.brainStreaming = false;
   if (!opts.keepSpeaking) live.agentSpeaking = false;
   if (drainPendingFinal()) return;
   if (!opts.skipBack) backToListening();
@@ -971,28 +1016,42 @@ function routeLiveEvent(m) {
       break;
     case "vad.speech_start":
       live.sawVadStart = true;
+      // Industry pattern: stop agent audio on speech onset, don't wait for STT partials.
+      if (live.agentSpeaking || live.brainStreaming) {
+        doBargeIn("vad-start");
+      }
       break;
     case "transcript.partial": {
       const t = m.text || "";
+      const w = wordCount(t);
+      const now = performance.now();
       partialsEl.textContent = t || partialsEl.textContent;
-      if (live.agentSpeaking) {
-        // Model-level barge-in guard: ≥2 words beats echo/noise artifacts
-        if (wordCount(t) >= 2) doBargeIn("partial≥2w");
-        else if (live.sawVadStart && wordCount(t) >= 1 && performance.now() > live.bargeCooldownUntil) doBargeIn("vad+partial");
-      } else if (live.busy && performance.now() - (live.thinkingSince || 0) > 350) {
-        // User changed their mind while the brain is still thinking → cancel generation
-        if (wordCount(t) >= 2) doBargeIn("think-cancel");
+      const G = window.LiveGuards;
+      const bargeCfg = getBargeConfig();
+      if (G?.shouldBargeWhileSpeaking({
+        agentSpeaking: live.agentSpeaking,
+        words: w,
+        sawVadStart: live.sawVadStart,
+        bargeCooldownUntil: live.bargeCooldownUntil,
+        minWords: bargeCfg.minWords,
+        requireVad: bargeCfg.requireVad,
+      }, now)) {
+        doBargeIn("vad+partial");
+      } else if (G?.shouldThinkCancel({
+        busy: live.busy,
+        brainStreaming: live.brainStreaming,
+        agentSpeaking: live.agentSpeaking,
+        elapsedMs: now - (live.thinkingSince || 0),
+        words: w,
+      })) {
+        doBargeIn("think-cancel");
       }
       break;
     }
     case "transcript.final": {
       live.sawVadStart = false;
       console.log("[VOICE][STT] FINAL");
-      const text = (m.text || "").trim();
-      if (!text || wordCount(text) < 1) { partialsEl.textContent = "(empty)…listening…"; break; }
-      transcriptEl.textContent = text; transcriptEl.style.color = "var(--text)";
-      if (live.busy) enqueueFinal(text, m.sttFinalMs);
-      else runTurn(text, m.sttFinalMs);
+      handleSttFinal((m.text || "").trim(), m.sttFinalMs);
       break;
     }
     case "error":
@@ -1100,12 +1159,17 @@ function stopTtsPing() {
 }
 
 async function runTurn(text, sttFinalMs) {
-  if (live.busy) {
+  if (live.busy && !live.bargeActive) {
     enqueueFinal(text, sttFinalMs);
     return;
   }
+  live.bargeActive = false;
   live.busy = true;
   live.turnN++;
+  const gen = ++live.turnGeneration;
+  live.awaitingUserAfterBarge = false;
+  live.ttsGenerationCancelled = false;
+  live._ttsOwnerGen = -1;
   cleanupTtsTurn();
   await refreshRuntimeSettings();
   await refreshVoiceConfig();
@@ -1115,7 +1179,9 @@ async function runTurn(text, sttFinalMs) {
   setState("Thinking…");
   voiceAbort = new AbortController();
   live.thinkingSince = performance.now();
+  live.brainStreaming = true;
   live.agentSpeaking = false;
+  live._bargeMetricLogged = false;
   live.mseDone = false;
   live._playAttempted = false;
   live._playLoggedPlaying = false;
@@ -1138,8 +1204,10 @@ async function runTurn(text, sttFinalMs) {
   const ttsOpenP = (voiceMode.checked && autoEnabled)
     ? ensureTtsStream(true)
         .then(() => {
+          if (isTurnStale(gen)) return;
           usedStreamingTts = true;
           ttsReady = true;
+          live._ttsOwnerGen = gen;
           flushTtsPendingSend();
           flushTtsAccToSocket();
           for (const d of pendingTtsDeltas) pushTtsText(d);
@@ -1155,6 +1223,7 @@ async function runTurn(text, sttFinalMs) {
 
   const pipeline = readBrainSSE(text, {
     onDelta(delta, fullSoFar) {
+      if (isTurnStale(gen) || live.ttsGenerationCancelled) return;
       if (_perf && !_perf.brainFirstDelta) { _perf.brainFirstDelta = performance.now() - _perf.t0; console.log("[VOICE][BRAIN] FIRST_DELTA"); }
       full = fullSoFar;
       responseEl.textContent = full;
@@ -1169,8 +1238,10 @@ async function runTurn(text, sttFinalMs) {
     .catch((e) => { sseFailed = e; });
 
   await Promise.all([pipeline, ttsOpenP]);
+  live.brainStreaming = false;
+  if (isTurnStale(gen)) return;
 
-  // Interrupted mid-think/mid-speech by user speech? Yield and run any queued utterance.
+  // Interrupted mid-think/mid-speech by user speech? Yield — new turn owns the session.
   if (voiceAbort.signal.aborted) {
     endLiveTurn();
     return;
@@ -1210,10 +1281,13 @@ async function runTurn(text, sttFinalMs) {
     addBubble("assistant", full);
     if (full.trim() && voiceMode.checked && autoEnabled) {
       if (usedStreamingTts) {
+        if (isTurnStale(gen)) return;
+        live._ttsOwnerGen = gen;
         closeTtsStream();
         setState("Speaking…");
         live.agentSpeaking = true;
         const gotAudio = await waitForStreamingAudio(10000);
+        if (isTurnStale(gen)) return;
         if (voiceAbort?.signal?.aborted) {
           endLiveTurn();
           return;
@@ -1221,6 +1295,7 @@ async function runTurn(text, sttFinalMs) {
         if (gotAudio) {
           logPlayback("AUTO_SPEAK_STREAMING", { chars: full.length });
           await waitStreamingPlaybackDone();
+          if (isTurnStale(gen)) return;
         } else if (voiceConfig.httpTtsFallback) {
           cleanupTtsTurn();
           logPlayback("AUTO_SPEAK_REST_FALLBACK", { chars: full.length, reason: "no_ws_audio" });
@@ -1248,6 +1323,7 @@ async function runTurn(text, sttFinalMs) {
   }
 
   usageEl.textContent = `→ te-IN${/[A-Za-z]/.test(full) && /[\u0C00-\u0C7F]/.test(full) ? " • code-mixed" : ""} • ${full.length} chars`;
+  if (isTurnStale(gen)) return;
   saveConversationTurn(text, full);
   endLiveTurn();
 }
@@ -1384,13 +1460,29 @@ function backToListening() {
 function doBargeIn(reason) {
   if (!live.agentSpeaking && !live.busy) return;
   const now = performance.now();
-  console.log("[VOICE][AUDIO] PLAY_INTERRUPTED", reason, "turn_" + live.turnN);
-  // 1) STOP PLAYBACK instantly (<150ms target)
+  const G = window.LiveGuards;
+  if (G?.shouldDebounceBargeIn({
+    bargeHandledTurn: live.bargeHandledTurn,
+    turnN: live.turnN,
+    lastBargeInAt: live.lastBargeInAt,
+  }, now)) return;
+  live.lastBargeInAt = now;
+  live.bargeHandledTurn = live.turnN;
+  console.log("[VOICE][BARGE-IN]", reason, "turn_" + live.turnN);
+
+  // 1) Invalidate in-flight turn + TTS — nothing from the old response may continue.
+  live.turnGeneration++;
+  live.ttsGenerationCancelled = true;
+  live.bargeActive = true;
+  live.pendingQueue.length = 0;
+  live._ttsOwnerGen = -1;
+
+  // 2) STOP PLAYBACK instantly (<150ms target)
+  playback.stopAll();
   audioPlayer.pause();
   audioPlayer.removeAttribute("src");
   try { audioPlayer.load(); } catch {}
   if (outUrlRef()) { try { URL.revokeObjectURL(outUrlRef()); } catch {} setOutUrl(null); }
-  // STEP 18: clear EVERYTHING stale so no old audio leaks into next turn
   live.mseQueue.length = 0; live.sb = null; live.mse = null; live.mseDone = false;
   live._ttsAllB64 = []; lastAudioBase64 = null;
   stopPcmPlayback();
@@ -1402,21 +1494,26 @@ function doBargeIn(reason) {
   live._pcmIdleSince = 0;
   hooks_onAudioFirst = null;
   stopAudioBtn.style.display = "none";
-  // 2) STOP GENERATION
+
+  // 3) CANCEL GENERATION (brain SSE + TTS upstream)
   if (voiceAbort) { try { voiceAbort.abort(); } catch {} }
-  if (live.ttsSock && live.ttsSock.readyState === WebSocket.OPEN) {
-    try { live.ttsSock.send(JSON.stringify({ type: "flush" })); } catch {}
-  }
-  // Keep persistent TTS WebSocket open — do NOT close on barge-in (fix.md Issue #4)
-  // 3) STATE: keep heard-so-far; cooldown so residual echo doesn't re-trigger
+  closeTtsStream();
+  _ttsStreamReady = false;
+
+  // 4) STATE → LISTENING (never queue the interrupt behind the old turn)
   live.agentSpeaking = false;
+  live.busy = false;
+  live.brainStreaming = false;
+  live.awaitingUserAfterBarge = true;
   live.bargeCooldownUntil = now + live.COOLDOWN_MS;
   fetch("/api/session/interrupt", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sessionId }) }).catch(() => {});
-  metricsEl.textContent += ` • ⚡barge-in#${live.turnN}(${reason})`;
-  setState("Interrupted — listening…");
-  partialsEl.textContent = live.pendingQueue.length
-    ? `⚡ interrupted — ${live.pendingQueue.length} in queue…`
-    : "⚡ interrupted — keep talking…";
+  if (!live._bargeMetricLogged || live._bargeMetricTurn !== live.turnN) {
+    live._bargeMetricLogged = true;
+    live._bargeMetricTurn = live.turnN;
+    metricsEl.textContent += ` • ⚡barge-in#${live.turnN}(${reason})`;
+  }
+  setState("Listening… (interrupted)");
+  partialsEl.textContent = "⚡ interrupted — speak now…";
 }
 
 // TTS over /ws/tts — STREAMING mode for the live pipeline.
@@ -1660,7 +1757,7 @@ function openTtsStream() {
 
       const b64 = m.data && (m.data.audio || (typeof m.data === "string" ? m.data : null));
 
-      const ttsTurnActive = live.busy || live.agentSpeaking || live._flushSent;
+      const ttsTurnActive = live._ttsOwnerGen >= 0 && live._ttsOwnerGen === live.turnGeneration;
       if (!ttsTurnActive && (b64 || type === "end_of_stream" || (m.data && m.data.event_type === "final"))) {
         clientLog("voice", "[VOICE][TTS] ignore stale event", type);
         return;
@@ -1748,7 +1845,7 @@ function flushTtsAccToSocket() {
 }
 
 function sendTtsTextImmediate(text) {
-  if (!text) return;
+  if (!text || live.ttsGenerationCancelled) return;
   if (live.ttsSock && live.ttsSock.readyState === WebSocket.OPEN) {
     try {
       live.ttsSock.send(JSON.stringify({ type: "text", data: { text } }));
@@ -1770,7 +1867,7 @@ function sendTtsTextImmediate(text) {
 const _SENT_END_RE = /[।.!?…\n]/;
 
 function pushTtsText(delta) {
-  if (!delta) return;
+  if (!delta || live.ttsGenerationCancelled) return;
   _ttsAcc += delta;
   let cut = -1;
   for (let i = 0; i < _ttsAcc.length; i++) {

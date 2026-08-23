@@ -80,6 +80,9 @@ async def catalog():
                 "openaiTemperature": 0.7,
                 "openaiReasoningEffort": OPENAI_MODEL_PRESETS["gpt-5.6-luna"]["openaiReasoningEffort"],
                 "brainPromptBudgetTokens": OPENAI_MODEL_PRESETS["gpt-5.6-luna"]["brainPromptBudgetTokens"],
+                "bargeMinWords": 3,
+                "bargeRequireVad": True,
+                "sttSilenceMs": 500,
                 "responseStyle": DEFAULT_RESPONSE_STYLE,
                 "behaviourInstructions": DEFAULT_BEHAVIOUR_INSTRUCTIONS,
                 "businessInstructions": DEFAULT_BUSINESS_INSTRUCTIONS,
@@ -105,6 +108,8 @@ class RuntimePatch(BaseModel):
     sttStreamType: Optional[str] = None
     sttSilenceMs: Optional[int] = None
     sttThreshold: Optional[float] = None
+    bargeMinWords: Optional[int] = None
+    bargeRequireVad: Optional[bool] = None
     ttsModel: Optional[str] = None
     ttsSpeaker: Optional[str] = None
     ttsPace: Optional[float] = None

@@ -197,6 +197,7 @@
     };
     bind("sttSilenceMs", "sttSilenceVal", (v) => v);
     bind("sttThreshold", "sttThreshVal", (v) => Number(v).toFixed(2));
+    bind("bargeMinWords", "bargeMinWordsVal", (v) => v);
     bind("ttsPace", "ttsPaceVal", (v) => Number(v).toFixed(2));
     bind("ttsTemperature", "ttsTempVal", (v) => Number(v).toFixed(2));
     bind("openaiTemperature", "oaiTempVal", (v) => Number(v).toFixed(1));
@@ -245,6 +246,7 @@
     const map = {
       sttModel: "sttModel", sttMode: "sttMode", sttLanguage: "sttLanguage", sttStreamType: "sttStreamType",
       sttSilenceMs: "sttSilenceMs", sttThreshold: "sttThreshold",
+      bargeMinWords: "bargeMinWords",
       ttsModel: "ttsModel", ttsSpeaker: "ttsSpeaker", ttsPace: "ttsPace", ttsTemperature: "ttsTemperature",
       ttsCodec: "ttsCodec", ttsSampleRate: "ttsSampleRate", ttsMinBuffer: "ttsMinBuffer", ttsMaxChunk: "ttsMaxChunk",
       ttsBitrate: "ttsBitrate",
@@ -261,6 +263,7 @@
     }
     if (safeGet("crmEnabled")) safeGet("crmEnabled").checked = !!values.crmEnabled;
     if (safeGet("crmAutoSync")) safeGet("crmAutoSync").checked = !!values.crmAutoSync;
+    if (safeGet("bargeRequireVad")) safeGet("bargeRequireVad").checked = values.bargeRequireVad !== false;
   }
 
   async function saveAll() {
@@ -273,6 +276,8 @@
         sttModel: getVal("sttModel"), sttMode: getVal("sttMode"), sttLanguage: getVal("sttLanguage"),
         sttStreamType: getVal("sttStreamType"), sttSilenceMs: getNum("sttSilenceMs"),
         sttThreshold: parseFloat(getVal("sttThreshold") || "0.3"),
+        bargeMinWords: getNum("bargeMinWords") || 3,
+        bargeRequireVad: getCheck("bargeRequireVad"),
         ttsModel: getVal("ttsModel"), ttsSpeaker: getVal("ttsSpeaker"), ttsPace: getNum("ttsPace"),
         ttsTemperature: getNum("ttsTemperature"), ttsCodec: getVal("ttsCodec"), ttsSampleRate: getNum("ttsSampleRate"),
         ttsMinBuffer: getNum("ttsMinBuffer") || 30, ttsMaxChunk: getNum("ttsMaxChunk") || 80,

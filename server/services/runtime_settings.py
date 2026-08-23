@@ -29,7 +29,7 @@ class RuntimeSettingsStore:
     ALLOWED_KEYS = {
         # STT
         "sttModel", "sttMode", "sttLanguage", "sttStreamType",
-        "sttSilenceMs", "sttThreshold",
+        "sttSilenceMs", "sttThreshold", "bargeMinWords", "bargeRequireVad",
         # TTS
         "ttsModel", "ttsSpeaker", "ttsPace", "ttsTemperature",
         "ttsCodec", "ttsBitrate", "ttsSampleRate", "ttsMinBuffer", "ttsMaxChunk",
@@ -94,6 +94,18 @@ class RuntimeSettingsStore:
             return v
         if key == "sttThreshold":
             return _clamp(float(val), 0.0, 1.0)
+        if key == "bargeMinWords":
+            try:
+                v = int(val)
+            except Exception:
+                raise SettingsValidationError("bargeMinWords must be int")
+            if not 2 <= v <= 4:
+                raise SettingsValidationError("bargeMinWords range 2-4")
+            return v
+        if key == "bargeRequireVad":
+            if isinstance(val, bool):
+                return val
+            return str(val).lower() in ("1", "true", "yes", "on")
         if key == "ttsModel":
             if val not in constants.TTS_MODELS:
                 raise SettingsValidationError(f"ttsModel must be one of {list(constants.TTS_MODELS)}")
