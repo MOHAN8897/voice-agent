@@ -31,13 +31,13 @@ def test_save_and_get_both_channels(monkeypatch):
     assert "InventoryPro" in g["business"]
     assert g["style"] == "friendly, casual like a friend"
     # limits exposed
-    assert g["limits"]["behaviourMax"] == 10000
-    assert g["limits"]["businessMax"] == 10000
+    assert g["limits"]["behaviourMax"] == 8000
+    assert g["limits"]["businessMax"] == 8000
     c.delete("/api/instructions", params={"sessionId": sid})
     get_settings.cache_clear()
 
 
-def test_10k_caps_enforced(monkeypatch):
+def test_8k_caps_enforced(monkeypatch):
     c = _client(monkeypatch)
     sid = "dual-cap"
     long_b = "b" * 12000
@@ -46,11 +46,12 @@ def test_10k_caps_enforced(monkeypatch):
         "sessionId": sid,
         "behaviourInstructions": long_b,
         "businessInstructions": long_z,
+        "brainPromptBudgetTokens": 5000,
     })
     assert r.status_code == 200
     j = r.json()
-    assert j["behaviourLength"] == 10000
-    assert j["businessLength"] == 10000
+    assert j["behaviourLength"] == 8000
+    assert j["businessLength"] == 8000
     c.delete("/api/instructions", params={"sessionId": sid})
     get_settings.cache_clear()
 
@@ -79,8 +80,8 @@ def test_brain_receives_both_channels(monkeypatch):
         r = c.post("/api/brain", json={"transcript": "హలో", "sessionId": sid})
         assert r.status_code == 200
         kw = mock.call_args.kwargs
-        assert kw["user_instructions"] == "BEHAVE-MARKER"
-        assert kw["business_instructions"] == "BUSINESS-MARKER"
+        assert kw["user_instructions"] is None
+        assert kw["business_instructions"] is None
     c.delete("/api/instructions", params={"sessionId": sid})
     get_settings.cache_clear()
 
@@ -101,7 +102,7 @@ def test_brain_request_accepts_business_field(monkeypatch):
     get_settings.cache_clear()
 
 
-def test_effective_prompt_shows_both_wrappers(monkeypatch):
+def test_effective_prompt_shows_composed_brain(monkeypatch):
     c = _client(monkeypatch)
     sid = "dual-prompt"
     c.post("/api/instructions", json={
@@ -111,9 +112,11 @@ def test_effective_prompt_shows_both_wrappers(monkeypatch):
     })
     r = c.get("/api/prompt/effective", params={"sessionId": sid, "transcript": "test"})
     j = r.json()
-    assert "<agent_behaviour_instructions>" in j["developer_instructions_preview"]
-    assert "<business_context_instructions>" in j["developer_instructions_preview"]
+    assert "--- BEHAVIOUR ---" in j["brainPrompt"]
+    assert "--- BUSINESS ---" in j["brainPrompt"]
+    assert "Be brief and kind." in j["brainPrompt"]
     assert j["channels"]["behaviour_present"] is True
     assert j["channels"]["business_present"] is True
+    assert j["cacheEligible"] == (j["estimatedTokens"] >= get_settings().prompt_cache_min_tokens)
     c.delete("/api/instructions", params={"sessionId": sid})
     get_settings.cache_clear()

@@ -1,18 +1,23 @@
 """
 Metrics & Prompt transparency — server/routes/metrics.py
-GET /api/metrics → p50/p95 per stage (industry standard)
-GET /api/prompt/effective?sessionId=&transcript= → shows built developer instructions (no secrets)
 """
 from __future__ import annotations
 
 from fastapi import APIRouter, Query
 
+from server.agent.brain_prompt_composer import (
+    compose_brain_prompt_sections,
+    estimate_tokens,
+    section_token_estimates,
+)
 from server.agent.conversation_manager import conversation_manager
-from server.agent.instruction_builder import build_agent_instructions
 from server.agent.instruction_store import instruction_store
+from server.agent.session_memory import session_memory
 from server.config.constants import constants
 from server.config.env import get_settings
-from server.prompts.system_prompt import CORE_SYSTEM_PROMPT
+from server.services.brain_budget import resolve_brain_budget
+from server.services.prompt_cache_key import cache_eligible
+from server.services.prompt_cache_tracker import prompt_cache_tracker
 from server.utils.metrics import metrics
 
 router = APIRouter()
@@ -23,6 +28,7 @@ async def get_metrics():
     snap = metrics.snapshot()
     snap["sessions"] = conversation_manager.stats()
     snap["instruction_sessions"] = instruction_store.stats()
+    snap["prompt_cache"] = prompt_cache_tracker.snapshot()
     snap["version"] = constants.APP_VERSION
     try:
         snap["model"] = get_settings().openai_model
@@ -34,6 +40,7 @@ async def get_metrics():
 @router.post("/api/metrics/reset")
 async def reset_metrics():
     metrics.reset()
+    prompt_cache_tracker.reset()
     return {"ok": True, "reset": True}
 
 
@@ -43,37 +50,58 @@ async def effective_prompt(
     transcript: str = Query("Python అంటే ఏమిటి?", max_length=5000),
     language_code: str = Query("te-IN"),
 ):
-    """
-    Returns the effective prompt hierarchy for transparency (no secrets).
-    Shows System core + wrapped BEHAVIOUR + wrapped BUSINESS + style.
-    """
     behaviour = instruction_store.get_behaviour(sessionId)
     business = instruction_store.get_business(sessionId)
     style = instruction_store.get_style(sessionId)
-    developer_instructions = build_agent_instructions(
-        core_instructions=CORE_SYSTEM_PROMPT,
-        behaviour_instructions=behaviour,
-        business_instructions=business,
+    budget = resolve_brain_budget(sessionId)
+
+    brain_prompt = instruction_store.get_brain_prompt(
+        sessionId,
         language=language_code,
-        response_style=style,
+        budget_tokens=budget,
+    )
+    estimated = estimate_tokens(brain_prompt)
+    section_tokens = section_token_estimates(
+        compose_brain_prompt_sections(
+            behaviour=behaviour,
+            business=business,
+            language=language_code,
+            style=style,
+        )
     )
 
-    def _clip(t: str, n: int = 700) -> str:
-        return t[:n] + ("..." if len(t) > n else "")
+    settings = get_settings()
+    history = conversation_manager.get_context_for_brain(
+        sessionId,
+        max_turns=settings.brain_context_turns,
+    )
+    summary = session_memory.get_summary(sessionId) if settings.enable_session_summary else ""
+    history_est = estimate_tokens(" ".join(str(m.get("content", "")) for m in history))
+    transcript_est = estimate_tokens(transcript)
+    summary_est = estimate_tokens(summary) if summary else 0
 
     return {
-        "hierarchy": {
-            "1_system_safety": "System instructions are server-enforced (never overridden by user).",
-            "2_core": CORE_SYSTEM_PROMPT[:600] + "...",
-            "3a_behaviour_wrapped": f"<agent_behaviour_instructions>{_clip(behaviour)}</agent_behaviour_instructions>" if behaviour else "(none)",
-            "3b_business_wrapped": f"<business_context_instructions>{_clip(business)}</business_context_instructions>" if business else "(none)",
-            "5_conversation_history_len": len(conversation_manager.get_history(sessionId)),
-            "6_current_transcript": transcript[:300],
-        },
-        "developer_instructions_preview": developer_instructions[:3400],
-        "full_developer_instructions_length": len(developer_instructions),
         "sessionId": sessionId,
         "language_code": language_code,
+        "brainPrompt": brain_prompt,
+        "estimatedTokens": estimated,
+        "budgetTokens": budget,
+        "headroom": max(0, budget - estimated),
+        "cacheEligible": cache_eligible(estimated),
+        "sections": section_tokens,
+        "conversation_history_len": len(conversation_manager.get_history(sessionId)),
+        "brain_context_turns": settings.brain_context_turns,
+        "brain_context_messages": len(history),
+        "session_summary_enabled": settings.enable_session_summary,
+        "session_summary": summary or None,
+        "token_estimates": {
+            "brain": estimated,
+            "history": history_est,
+            "summary": summary_est,
+            "transcript": transcript_est,
+            "total_input_est": estimated + history_est + summary_est + transcript_est,
+        },
+        "current_transcript": transcript[:300],
         "channels": {
             "behaviour_present": bool(behaviour),
             "behaviour_chars": len(behaviour),

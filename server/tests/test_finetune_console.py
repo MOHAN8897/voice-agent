@@ -87,5 +87,5 @@ def test_voice_turn_applies_runtime(monkeypatch):
         assert kw["tts_speaker"] == "neha"
         assert kw["stt_mode"] == "codemix"
         assert kw["openai_max_tokens"] == 300
-        assert kw["user_instructions"]  # defaults applied when store empty
+        assert kw["user_instructions"] is None
     get_settings.cache_clear()

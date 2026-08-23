@@ -34,7 +34,7 @@ class RuntimeSettingsStore:
         "ttsModel", "ttsSpeaker", "ttsPace", "ttsTemperature",
         "ttsCodec", "ttsBitrate", "ttsSampleRate", "ttsMinBuffer", "ttsMaxChunk",
         # OpenAI brain
-        "openaiModel", "openaiTemperature", "openaiMaxTokens",
+        "openaiModel", "openaiTemperature", "openaiMaxTokens", "brainPromptBudgetTokens",
         # CRM / integrations (future-ready)
         "crmEnabled", "crmProvider", "crmWebhook", "crmFields", "crmNotes", "crmAutoSync",
     }
@@ -136,6 +136,15 @@ class RuntimeSettingsStore:
             v = int(val)
             if not 50 <= v <= 800:
                 raise SettingsValidationError("openaiMaxTokens range 50-800")
+            return v
+        if key == "brainPromptBudgetTokens":
+            from server.config.env import get_settings
+            s = get_settings()
+            v = int(val)
+            lo = int(s.brain_prompt_budget_min)
+            hi = int(s.brain_prompt_budget_max)
+            if not lo <= v <= hi:
+                raise SettingsValidationError(f"brainPromptBudgetTokens range {lo}-{hi}")
             return v
         if key == "crmEnabled":
             return bool(val) if isinstance(val, bool) else str(val).lower() in ("1", "true", "yes", "on")

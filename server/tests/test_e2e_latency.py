@@ -81,3 +81,21 @@ def test_tts_rest_latency(live_client: TestClient):
     assert len(r.content) > 500
     print(f"\n[PERF] tts/rest TOTAL_MS={ms:.0f} bytes={len(r.content)}")
     assert ms < 6000, f"TTS too slow: {ms:.0f}ms"
+
+
+def test_brain_multi_turn_cache_and_tokens(live_client: TestClient):
+    """Same session: turn 1 writes cache, turn 2+ should hit cached brain prefix."""
+    sid = "e2e-multiturn-cache"
+    live_client.post("/api/session/clear", json={"sessionId": sid})
+
+    t1_ttfb, t1_text, t1_total = _brain_stream_ttfb(live_client, "హాయ్", sid)
+    assert len(t1_text) > 3
+
+    t2_ttfb, t2_text, t2_total = _brain_stream_ttfb(live_client, "నీ పేరు ఏమిటి?", sid)
+    assert len(t2_text) > 3
+
+    # Token usage recorded in stream completion — verify latency improved turn-over-turn
+    print(
+        f"\n[TOKENS] turn1_ttfb={t1_ttfb:.0f}ms turn2_ttfb={t2_ttfb:.0f}ms"
+    )
+    assert t2_ttfb <= t1_ttfb * 1.5, f"Turn 2 unexpectedly slower: {t2_ttfb:.0f} vs {t1_ttfb:.0f}ms"

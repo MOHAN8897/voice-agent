@@ -99,6 +99,7 @@
     if (!oaiDefaults) return;
     const pairs = [
       ["openaiMaxTokens", "openaiMaxTokens"],
+      ["brainPromptBudgetTokens", "brainPromptBudgetTokens"],
       ["openaiTemperature", "openaiTemperature"],
       ["ttsMinBuffer", "ttsMinBuffer"],
       ["ttsMaxChunk", "ttsMaxChunk"],
@@ -165,6 +166,7 @@
     bind("ttsTemperature", "ttsTempVal", (v) => Number(v).toFixed(2));
     bind("openaiTemperature", "oaiTempVal", (v) => Number(v).toFixed(1));
     bind("openaiMaxTokens", "oaiTokVal", (v) => v);
+    bind("brainPromptBudgetTokens", "brainBudgetVal", (v) => v);
     bind("ttsMinBuffer", "ttsMinBufVal", (v) => v);
     bind("ttsMaxChunk", "ttsMaxChunkVal", (v) => v);
 
@@ -199,6 +201,7 @@
       ttsCodec: "ttsCodec", ttsSampleRate: "ttsSampleRate", ttsMinBuffer: "ttsMinBuffer", ttsMaxChunk: "ttsMaxChunk",
       ttsBitrate: "ttsBitrate",
       openaiModel: "openaiModel", openaiTemperature: "openaiTemperature", openaiMaxTokens: "openaiMaxTokens",
+      brainPromptBudgetTokens: "brainPromptBudgetTokens",
       crmProvider: "crmProvider", crmWebhook: "crmWebhook", crmFields: "crmFields", crmNotes: "crmNotes",
     };
     for (const [key, id] of Object.entries(map)) {
@@ -227,6 +230,7 @@
         ttsBitrate: getVal("ttsBitrate") || "128k",
         openaiModel: getVal("openaiModel"), openaiTemperature: parseFloat(getVal("openaiTemperature") || "0.7"),
         openaiMaxTokens: getNum("openaiMaxTokens"),
+        brainPromptBudgetTokens: getNum("brainPromptBudgetTokens") || 1500,
         crmEnabled: getCheck("crmEnabled"), crmAutoSync: getCheck("crmAutoSync"),
         crmProvider: getVal("crmProvider"), crmWebhook: getVal("crmWebhook"),
         crmFields: getVal("crmFields"), crmNotes: getVal("crmNotes"),
@@ -243,6 +247,7 @@
           behaviourInstructions: getVal("customInstructions"),
           businessInstructions: getVal("businessInstructions"),
           responseStyle: getVal("responseStyle"),
+          brainPromptBudgetTokens: getNum("brainPromptBudgetTokens") || 1500,
         }),
       });
       const j2 = await r2.json();
@@ -252,7 +257,12 @@
       const cfgR = await fetch("/api/settings/tts-config?sessionId=" + encodeURIComponent(sessionId));
       const cfgJ = cfgR.ok ? await cfgR.json() : {};
 
-      show(`✅ Saved!\nBrain model: ${patch.openaiModel}\nTTS speaker: ${cfgJ.ttsConfig?.speaker || patch.ttsSpeaker}\n\n` + JSON.stringify(j1.values, null, 2));
+      show(`✅ Saved!\nTokens: ${j2.estimatedTokens}/${j2.budgetTokens} · cache ${j2.cacheEligible ? "ON" : "OFF"}\nBrain model: ${patch.openaiModel}\nTTS speaker: ${cfgJ.ttsConfig?.speaker || patch.ttsSpeaker}\n\n` + JSON.stringify(j1.values, null, 2));
+      const cacheBadge = safeGet("cacheBadge");
+      if (cacheBadge && j2.cacheEligible != null) {
+        cacheBadge.textContent = j2.cacheEligible ? "✅ Caching ON" : "⚠️ Caching OFF (<1024 tokens)";
+        cacheBadge.className = j2.cacheEligible ? "badge badge-green" : "badge badge-warn";
+      }
     } catch (e) {
       show("❌ Save failed: " + (e.message || e));
     }

@@ -58,9 +58,27 @@ class Settings(BaseSettings):
     # --- Voice pipeline ---
     voice_http_tts_fallback: bool = Field(False, alias="VOICE_HTTP_TTS_FALLBACK")
     max_response_length: int = Field(320, alias="MAX_RESPONSE_LENGTH")
-    max_context_messages: int = Field(8, alias="MAX_CONTEXT_MESSAGES")
+    max_context_messages: int = Field(4, alias="MAX_CONTEXT_MESSAGES")
+    max_history_assistant_chars: int = Field(120, alias="MAX_HISTORY_ASSISTANT_CHARS")
+    max_history_user_chars: int = Field(300, alias="MAX_HISTORY_USER_CHARS")
     request_timeout_ms: int = Field(15000, alias="REQUEST_TIMEOUT_MS")
     max_retries: int = Field(2, alias="MAX_RETRIES")
+
+    # --- Brain prompt budget (single composed prompt) ---
+    brain_prompt_budget_tokens: int = Field(1500, alias="BRAIN_PROMPT_BUDGET_TOKENS")
+    brain_prompt_budget_min: int = Field(1500, alias="BRAIN_PROMPT_BUDGET_MIN")
+    brain_prompt_budget_max: int = Field(5000, alias="BRAIN_PROMPT_BUDGET_MAX")
+
+    # --- Prompt caching (GPT-5.6+) ---
+    enable_prompt_caching: bool = Field(True, alias="ENABLE_PROMPT_CACHING")
+    prompt_cache_ttl: str = Field("30m", alias="PROMPT_CACHE_TTL")
+    prompt_cache_key_prefix: str = Field("telugu-voice:v5", alias="PROMPT_CACHE_KEY_PREFIX")
+    prompt_cache_min_tokens: int = Field(1024, alias="PROMPT_CACHE_MIN_TOKENS")
+
+    # --- Session memory (Phase 3) ---
+    enable_session_summary: bool = Field(False, alias="ENABLE_SESSION_SUMMARY")
+    summary_every_n_turns: int = Field(4, alias="SUMMARY_EVERY_N_TURNS")
+    brain_context_turns: int = Field(2, alias="BRAIN_CONTEXT_TURNS")
 
     # --- Fine-tune allowlist (industry: restrict client-selectable models) ---
     allowed_openai_models_csv: str = Field(

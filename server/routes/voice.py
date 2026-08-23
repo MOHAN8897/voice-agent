@@ -11,7 +11,6 @@ import base64
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 
-from server.agent.instruction_store import instruction_store
 from server.config.constants import constants
 from server.services.runtime_settings import runtime_settings
 from server.session.voice_session import VoiceSessionController
@@ -53,9 +52,9 @@ async def voice_turn(
         # Prefer explicit param → runtime override (Fine-tune console) → env default
         stt_model_rt = rt.get("sttModel")
         stt_mode_eff = mode if mode != "transcribe" else rt.get("sttMode", "transcribe")
-        # Dual-channel prompting: request wins; else stored behaviour/business
-        eff_behaviour = userInstructions if userInstructions else instruction_store.get_behaviour(sessionId)
-        eff_business = instruction_store.get_business(sessionId)
+        # Dual-channel prompting: explicit form fields override; else use stored brain prompt
+        user_instr = userInstructions if userInstructions else None
+        biz_instr = businessInstructions if businessInstructions else None
         result = await controller.run_turn(
             audio_bytes=data,
             filename=file.filename or "audio.wav",
@@ -64,8 +63,8 @@ async def voice_turn(
             stt_mode=stt_mode_eff,
             stt_model=stt_model_rt,
             session_id=sessionId,
-            user_instructions=eff_behaviour,
-            business_instructions=eff_business,
+            user_instructions=user_instr,
+            business_instructions=biz_instr,
             tts_speaker=ttsSpeaker or rt.get("ttsSpeaker"),
             tts_model=rt.get("ttsModel"),
             tts_temperature=rt.get("ttsTemperature"),
@@ -124,8 +123,8 @@ async def voice_stt_brain_only(
     try:
         data = await file.read()
         validate_audio_size(data, constants.MAX_AUDIO_BYTES)
-        eff_behaviour2 = userInstructions if userInstructions else instruction_store.get_behaviour(sessionId)
-        eff_business2 = instruction_store.get_business(sessionId)
+        eff_user = userInstructions if userInstructions else None
+        eff_business = businessInstructions if businessInstructions else None
         result = await controller.run_turn(
             audio_bytes=data,
             filename=file.filename or "audio.wav",
@@ -134,8 +133,8 @@ async def voice_stt_brain_only(
             stt_mode=mode if mode != "transcribe" else rt.get("sttMode", "transcribe"),
             stt_model=rt.get("sttModel"),
             session_id=sessionId,
-            user_instructions=eff_behaviour2,
-            business_instructions=eff_business2,
+            user_instructions=eff_user,
+            business_instructions=eff_business,
             openai_model=rt.get("openaiModel"),
             openai_temperature=rt.get("openaiTemperature"),
             openai_max_tokens=rt.get("openaiMaxTokens"),

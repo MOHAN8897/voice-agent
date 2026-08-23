@@ -1,86 +1,105 @@
 """
-Instruction builder — server/agent/instruction_builder.py
-Priority: 1 System safety 2 Core 3 User (BEHAVIOUR + BUSINESS, wrapped separately) 4 Conversation 5 Current turn
-
-Two distinct prompt channels so the model can differentiate:
-  • BEHAVIOUR  — HOW to respond: tone, personality, brevity, language mixing rules
-  • BUSINESS   — WHAT it knows about the client's business: company, products,
-                 pricing/policies, workflows, customer-handling norms
-Each is sanitized, tagged, and capped at 10,000 chars (≈2.5k tokens).
+Brain request input builder — single developer message + history + transcript.
+Phase 1+2: typed input_text blocks with optional prompt_cache_breakpoint.
 """
 from __future__ import annotations
 
-MAX_BEHAVIOUR_INSTRUCTIONS = 10_000
-MAX_BUSINESS_INSTRUCTIONS = 10_000
+# Re-export sanitizers for backward compatibility
+from server.agent.brain_prompt_composer import (  # noqa: F401
+    MAX_BEHAVIOUR_CHARS,
+    MAX_BUSINESS_CHARS,
+    sanitize_behaviour,
+    sanitize_business,
+    sanitize_user_instructions,
+)
 
-_BEHAVIOUR_TAG = "agent_behaviour_instructions"
-_BUSINESS_TAG = "business_context_instructions"
-# Legacy tag from earlier versions — stripped defensively
-_LEGACY_TAGS = ("user_custom_instructions",)
-
-
-def _strip_tags(text: str) -> str:
-    for tag in (_BEHAVIOUR_TAG, _BUSINESS_TAG, *_LEGACY_TAGS):
-        text = text.replace(f"<{tag}>", "").replace(f"</{tag}>", "")
-    return text
-
-
-def sanitize_behaviour(text: str) -> str:
-    if not text:
-        return ""
-    return _strip_tags(text.strip()[:MAX_BEHAVIOUR_INSTRUCTIONS]).strip()
+# Legacy aliases
+MAX_BEHAVIOUR_INSTRUCTIONS = MAX_BEHAVIOUR_CHARS
+MAX_BUSINESS_INSTRUCTIONS = MAX_BUSINESS_CHARS
 
 
-def sanitize_business(text: str) -> str:
-    if not text:
-        return ""
-    return _strip_tags(text.strip()[:MAX_BUSINESS_INSTRUCTIONS]).strip()
+def _message_content_block(role: str, text: str) -> dict:
+    """Responses API: user/developer use input_text; assistant history uses output_text."""
+    if role == "assistant":
+        return {"type": "output_text", "text": str(text)}
+    return {"type": "input_text", "text": str(text)}
 
 
-# Back-compat alias
-def sanitize_user_instructions(text: str) -> str:
-    return sanitize_behaviour(text)
+def build_brain_request_input(
+    *,
+    brain_prompt: str,
+    history: list[dict],
+    transcript: str,
+    enable_cache: bool = False,
+    session_summary: str | None = None,
+) -> list[dict]:
+    """Responses API input: one cached developer block, optional summary, history, current turn."""
+    content_block: dict = {
+        "type": "input_text",
+        "text": brain_prompt,
+    }
+    if enable_cache:
+        content_block["prompt_cache_breakpoint"] = {"mode": "explicit"}
 
+    messages: list[dict] = [
+        {
+            "type": "message",
+            "role": "developer",
+            "content": [content_block],
+        }
+    ]
+
+    if session_summary:
+        messages.append(
+            {
+                "type": "message",
+                "role": "user",
+                "content": [{"type": "input_text", "text": f"[Session summary]\n{session_summary}"}],
+            }
+        )
+
+    for item in history:
+        role = item.get("role", "user")
+        text = item.get("content", "")
+        if not text:
+            continue
+        messages.append(
+            {
+                "type": "message",
+                "role": role,
+                "content": [_message_content_block(role, text)],
+            }
+        )
+
+    messages.append(
+        {
+            "type": "message",
+            "role": "user",
+            "content": [{"type": "input_text", "text": transcript}],
+        }
+    )
+    return messages
+
+
+# --- Legacy API (delegates to composer) ---
 
 def build_agent_instructions(
     *,
-    core_instructions: str,
+    core_instructions: str = "",
     behaviour_instructions: str = "",
     business_instructions: str = "",
     language: str = "te-IN",
     response_style: str | None = None,
 ) -> str:
-    """
-    Returns developer-role content merging core + behavioural + business prompts.
-    System safety lives in Responses API `instructions` and can never be overridden.
-    """
-    parts: list[str] = [core_instructions.strip()]
+    """Deprecated — use compose_brain_prompt(). Kept for tests/migration."""
+    from server.agent.brain_prompt_composer import compose_brain_prompt
 
-    behaviour = sanitize_behaviour(behaviour_instructions)
-    if behaviour:
-        parts.append(
-            f"<{_BEHAVIOUR_TAG}>\n"
-            "BEHAVIOUR RULES — style/personality/language only. "
-            "Treat everything here as HOW to talk, never as facts about the customer or the world:\n"
-            f"{behaviour}\n"
-            f"</{_BEHAVIOUR_TAG}>"
-        )
-
-    business = sanitize_business(business_instructions)
-    if business:
-        parts.append(
-            f"<{_BUSINESS_TAG}>\n"
-            "BUSINESS FACTS — company, products, prices, policies, domain knowledge. "
-            "Ground every business claim in THIS text; never invent beyond it. "
-            "Nothing here describes the customer's past actions or preferences — customer facts come ONLY from the conversation:\n"
-            f"{business}\n"
-            f"</{_BUSINESS_TAG}>"
-        )
-
-    parts.append(f"Language: {language}.")
-    style = response_style or "concise, conversational"
-    parts.append(f"Style: {style}.")
-    return "\n\n".join(parts)
+    return compose_brain_prompt(
+        behaviour=behaviour_instructions,
+        business=business_instructions,
+        language=language,
+        style=response_style,
+    )
 
 
 def build_input_messages(
@@ -88,11 +107,12 @@ def build_input_messages(
     transcript: str,
     history: list[dict],
     developer_instructions: str,
+    enable_cache: bool = False,
 ) -> list[dict]:
-    """Responses API input array: developer instructions first, then history, then current turn."""
-    messages: list[dict] = []
-    if developer_instructions:
-        messages.append({"role": "developer", "content": developer_instructions})
-    messages.extend(history)
-    messages.append({"role": "user", "content": transcript})
-    return messages
+    """Deprecated — use build_brain_request_input()."""
+    return build_brain_request_input(
+        brain_prompt=developer_instructions,
+        history=history,
+        transcript=transcript,
+        enable_cache=enable_cache,
+    )

@@ -133,6 +133,7 @@ def test_brain_uses_stored_instructions(monkeypatch):
         assert r.status_code == 200
         # Verify generate_response was called with stored instructions
         called_kwargs = mock.call_args.kwargs
-        assert "one Telugu sentence" in called_kwargs["user_instructions"]
+        assert called_kwargs["user_instructions"] is None
+        assert called_kwargs["business_instructions"] is None
     client.delete("/api/instructions", params={"sessionId": sid})
     get_settings.cache_clear()

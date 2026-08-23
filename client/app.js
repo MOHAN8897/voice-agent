@@ -505,6 +505,7 @@ async function loadInstructions() {
       if (j.style) { responseStyle.value = j.style; localStorage.setItem("telugu_response_style", j.style); }
     }
   } catch {}
+  promptsDirty = false;
   updateActiveBadge();
 }
 function updateActiveBadge() {
@@ -543,15 +544,18 @@ function restoreConversationFromStore() {
 customInstructions.addEventListener("input", () => {
   localStorage.setItem("telugu_behaviour", customInstructions.value);
   behavCount.textContent = customInstructions.value.length;
+  markPromptsDirty();
   updateActiveBadge();
 });
 bizEl.addEventListener("input", () => {
   localStorage.setItem("telugu_business", bizEl.value);
   bizCount.textContent = bizEl.value.length;
+  markPromptsDirty();
   updateActiveBadge();
 });
 responseStyle.addEventListener("change", () => {
   localStorage.setItem("telugu_response_style", responseStyle.value);
+  markPromptsDirty();
 });
 loadInstructions();
 
@@ -573,7 +577,13 @@ saveBtn.addEventListener("click", async () => {
     localStorage.setItem("telugu_behaviour", j.behaviour);
     localStorage.setItem("telugu_business", j.business);
     localStorage.setItem("telugu_response_style", j.responseStyle || responseStyle.value);
-    saveStatus.textContent = `Saved ✓ behaviour ${j.behaviourLength}/10000 • business ${j.businessLength}/10000 • style: ${j.responseStyle}`;
+    saveStatus.textContent = `Saved ✓ ${j.estimatedTokens}/${j.budgetTokens} tokens · cache ${j.cacheEligible ? "ON" : "OFF"} · behaviour ${j.behaviourLength}/10000 · business ${j.businessLength}/10000`;
+    promptsDirty = false;
+    const cacheBadge = document.getElementById("cacheBadge");
+    if (cacheBadge) {
+      cacheBadge.textContent = j.cacheEligible ? "✅ Caching ON" : "⚠️ Caching OFF (<1024 tokens)";
+      cacheBadge.className = j.cacheEligible ? "badge badge-green" : "badge badge-warn";
+    }
     updateActiveBadge();
     setTimeout(() => saveStatus.style.display = "none", 3500);
   } catch (e) {
@@ -591,6 +601,7 @@ resetBtn.addEventListener("click", async () => {
   saveStatus.textContent = "Clearing…";
   try {
     await fetch("/api/instructions?sessionId=" + encodeURIComponent(sessionId), { method: "DELETE" });
+    promptsDirty = false;
     saveStatus.textContent = "Cleared ✓ — back to default Telugu-first";
   } catch { saveStatus.textContent = "Cleared locally ✓"; }
   setTimeout(() => saveStatus.style.display = "none", 2000);
@@ -602,7 +613,13 @@ if (viewPromptBtn) viewPromptBtn.addEventListener("click", async () => {
   try {
     const r = await fetch("/api/prompt/effective?sessionId=" + encodeURIComponent(sessionId) + "&transcript=" + encodeURIComponent("Python అంటే ఏమిటి?"));
     const j = await r.json();
-    effectivePrompt.textContent = `Hierarchy:\n${JSON.stringify(j.hierarchy, null, 2)}\n\nDeveloper instructions preview (${j.full_developer_instructions_length} chars):\n${j.developer_instructions_preview}`;
+    effectivePrompt.textContent = [
+      `Tokens: ${j.estimatedTokens} / ${j.budgetTokens} (headroom ${j.headroom})`,
+      `Cache: ${j.cacheEligible ? "ON" : "OFF"}`,
+      `Sections: ${JSON.stringify(j.sections || {}, null, 2)}`,
+      "",
+      j.brainPrompt || "",
+    ].join("\n");
   } catch (e) { effectivePrompt.textContent = "Error: " + String(e); }
 });
 // Metrics + interrupt
@@ -878,6 +895,32 @@ function routeLiveEvent(m) {
   }
 }
 
+// Track unsaved prompt edits — brain calls omit overrides when saved (uses stored brainPrompt + cache).
+let promptsDirty = false;
+
+function markPromptsDirty() {
+  promptsDirty = true;
+  updateActiveBadge();
+}
+
+/** Build brain API body — only sends instruction overrides when user has unsaved edits. */
+function buildBrainBody(transcript, extras = {}) {
+  const body = {
+    transcript,
+    language_code: extras.language_code || "te-IN",
+    sessionId,
+  };
+  if (promptsDirty) {
+    const ui = getInstructionsSafe();
+    const biz = getBizSafeRaw();
+    const style = responseStyle.value;
+    if (ui) body.userInstructions = ui;
+    if (biz) body.businessInstructions = biz;
+    if (style) body.responseStyle = style;
+  }
+  return body;
+}
+
 // Guards: hard caps (server rejects >10000 per channel) — trim + warn instead of silent 422
 const INSTR_MAX = 10000;
 
@@ -976,8 +1019,6 @@ async function runTurn(text, sttFinalMs) {
   console.log("[VOICE][AUTO] enabled=" + autoEnabled + " voiceLoop=" + voiceMode.checked + " handsFree=" + ($("handsFree") && $("handsFree").checked));
   addBubble("user", text);
   setState("Thinking…");
-  const userInstructions = getInstructionsSafe();
-  const style = responseStyle.value;
   voiceAbort = new AbortController();
   live.thinkingSince = performance.now();
   live.agentSpeaking = false;
@@ -1018,7 +1059,7 @@ async function runTurn(text, sttFinalMs) {
         })
     : Promise.resolve();
 
-  const pipeline = readBrainSSE(text, userInstructions, style, {
+  const pipeline = readBrainSSE(text, {
     onDelta(delta, fullSoFar) {
       if (_perf && !_perf.brainFirstDelta) { _perf.brainFirstDelta = performance.now() - _perf.t0; console.log("[VOICE][BRAIN] FIRST_DELTA"); }
       full = fullSoFar;
@@ -1049,7 +1090,7 @@ async function runTurn(text, sttFinalMs) {
     try {
       const br = await fetch("/api/brain", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ transcript: text, language_code: "te-IN", sessionId, userInstructions: userInstructions || undefined, businessInstructions: getBizSafeRaw() || undefined, responseStyle: style }),
+        body: JSON.stringify(buildBrainBody(text)),
       });
       const bj = await br.json().catch(() => ({}));
       if (!br.ok) throw new Error(extractErr(bj, br.status));
@@ -1114,11 +1155,11 @@ async function runTurn(text, sttFinalMs) {
 }
 
 // SSE reader for POST /api/brain/stream — resolves with final text
-async function readBrainSSE(transcript, userInstructions, style, hooks) {
+async function readBrainSSE(transcript, hooks) {
   const resp = await fetch("/api/brain/stream", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ transcript, language_code: "te-IN", sessionId, userInstructions: userInstructions || undefined, businessInstructions: getBizSafeRaw() || undefined, responseStyle: style }),
+    body: JSON.stringify(buildBrainBody(transcript)),
     signal: voiceAbort.signal,
   });
   if (!resp.ok || !resp.body) {
@@ -1813,15 +1854,12 @@ async function sendSTT(blob) {
   }
 }
 async function sendBrain(transcript, language_code) {
-  const userInstructions = getInstructionsSafe();
-  const style = responseStyle.value;
-  // Abort any prior
   if (voiceAbort) try { voiceAbort.abort(); } catch {}
   voiceAbort = new AbortController();
   try {
     const r = await fetch("/api/brain", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ transcript, language_code, sessionId, userInstructions: userInstructions || undefined, responseStyle: style }),
+      body: JSON.stringify(buildBrainBody(transcript, { language_code })),
       signal: voiceAbort.signal,
     });
     const j = await r.json();
@@ -1948,10 +1986,8 @@ testBtn.addEventListener("click", async () => {
   }
 });
 async function sendBrainViaText(text, lang) {
-  const userInstructions = getInstructionsSafe();
-  const style = responseStyle.value;
   try {
-    const r = await fetch("/api/brain", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ transcript: text, language_code: lang, sessionId, userInstructions: userInstructions || undefined, businessInstructions: getBizSafeRaw() || undefined, responseStyle: style }) });
+    const r = await fetch("/api/brain", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(buildBrainBody(text, { language_code: lang })) });
     const j = await r.json();
     if (!r.ok) throw new Error(JSON.stringify(j));
     transcriptEl.textContent = text; transcriptEl.style.color = "var(--text)";

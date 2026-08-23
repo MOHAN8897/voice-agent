@@ -15,6 +15,7 @@ from server.config.constants import constants
 from server.config.env import get_settings
 from server.services.tts_config import TtsConfigError, resolve_tts_config
 from server.utils.errors import AppError, ErrorCode, classify_http_status
+from server.utils.http_clients import get_sarvam_client
 from server.utils.logger import log_error, log_tts
 
 SARVAM_TTS_URL = "https://api.sarvam.ai/text-to-speech"
@@ -88,8 +89,8 @@ async def synthesize(
     max_retries = settings.max_retries
     while True:
         try:
-            async with httpx.AsyncClient(timeout=timeout_s) as client:
-                resp = await client.post(SARVAM_TTS_URL, headers=headers, json=payload)
+            client = get_sarvam_client()
+            resp = await client.post(SARVAM_TTS_URL, headers=headers, json=payload, timeout=timeout_s)
             break
         except httpx.TimeoutException as e:
             if retries < max_retries:
@@ -200,18 +201,17 @@ async def synthesize_stream(
     log_tts("Stream synthesis started", chars=len(text), speaker=speaker, codec=output_audio_codec)
 
     # Use httpx streaming response
-    async with httpx.AsyncClient(timeout=timeout_s) as client:
-        try:
-            async with client.stream("POST", SARVAM_TTS_STREAM_URL, headers=headers, json=payload) as resp:
-                if resp.status_code != 200:
-                    # Need to read error body (JSON)
-                    body = await resp.aread()
-                    log_error("TTS stream failed", status=resp.status_code, body=body[:600].decode(errors="ignore"))
-                    raise classify_http_status(resp.status_code, "sarvam_tts")
-                async for chunk in resp.aiter_bytes(chunk_size=8192):
-                    if chunk:
-                        yield chunk
-        except httpx.TimeoutException as e:
-            raise AppError(ErrorCode.TIMEOUT, provider="sarvam_tts", retryable=True, cause=e) from e
-        except httpx.NetworkError as e:
-            raise AppError(ErrorCode.NETWORK_ERROR, provider="sarvam_tts", retryable=True, cause=e) from e
+    client = get_sarvam_client()
+    try:
+        async with client.stream("POST", SARVAM_TTS_STREAM_URL, headers=headers, json=payload, timeout=timeout_s) as resp:
+            if resp.status_code != 200:
+                body = await resp.aread()
+                log_error("TTS stream failed", status=resp.status_code, body=body[:600].decode(errors="ignore"))
+                raise classify_http_status(resp.status_code, "sarvam_tts")
+            async for chunk in resp.aiter_bytes(chunk_size=8192):
+                if chunk:
+                    yield chunk
+    except httpx.TimeoutException as e:
+        raise AppError(ErrorCode.TIMEOUT, provider="sarvam_tts", retryable=True, cause=e) from e
+    except httpx.NetworkError as e:
+        raise AppError(ErrorCode.NETWORK_ERROR, provider="sarvam_tts", retryable=True, cause=e) from e

@@ -1,9 +1,5 @@
 """
-Instruction store — server/agent/instruction_store.py
-Per-session dual-channel prompting persistence (MVP: in-memory with TTL):
-  • behaviour — HOW the agent should respond (tone/style/personality)
-  • business  — client's business knowledge (products, policies, domain facts)
-Thread-safe, 24h TTL, sanitized on save.
+Instruction store — per-session behaviour/business + composed brainPrompt.
 """
 from __future__ import annotations
 
@@ -11,14 +7,20 @@ import threading
 import time
 from typing import Dict, Optional
 
-from server.agent.instruction_builder import sanitize_behaviour, sanitize_business
+from server.agent.brain_prompt_composer import (
+    compose_brain_prompt,
+    estimate_tokens,
+    sanitize_behaviour,
+    sanitize_business,
+    validate_brain_prompt_budget,
+)
 from server.prompts.voice_defaults import (
     DEFAULT_BEHAVIOUR_INSTRUCTIONS,
     DEFAULT_BUSINESS_INSTRUCTIONS,
     DEFAULT_RESPONSE_STYLE,
 )
 
-_TTL_SECONDS = 60 * 60 * 24  # 24h
+_TTL_SECONDS = 60 * 60 * 24
 
 
 class InstructionStore:
@@ -39,20 +41,61 @@ class InstructionStore:
         behaviour: str = "",
         business: str = "",
         style: str | None = None,
+        *,
+        language: str = "te-IN",
+        budget_tokens: int = 1500,
     ) -> dict:
         b = sanitize_behaviour(behaviour or "")
         z = sanitize_business(business or "")
         with self._lock:
             prev = self._store.get(session_id, {})
+            style_val = (style or prev.get("style") or DEFAULT_RESPONSE_STYLE)[:100]
+            brain_prompt = compose_brain_prompt(
+                behaviour=b or DEFAULT_BEHAVIOUR_INSTRUCTIONS,
+                business=z or DEFAULT_BUSINESS_INSTRUCTIONS,
+                language=language,
+                style=style_val,
+            )
+            estimated = validate_brain_prompt_budget(brain_prompt, budget_tokens)
             self._store[session_id] = {
-                "text": b,          # back-compat alias of behaviour
+                "text": b,
                 "behaviour": b,
                 "business": z,
-                "style": (style or prev.get("style") or "concise, conversational")[:100],
+                "style": style_val,
+                "brainPrompt": brain_prompt,
+                "estimatedTokens": estimated,
+                "budgetTokens": budget_tokens,
                 "updatedAt": time.time(),
             }
             e = self._store[session_id]
-            return {"text": b, "behaviour": b, "business": z, "style": e["style"], "updatedAt": e["updatedAt"]}
+            return {
+                "text": b,
+                "behaviour": b,
+                "business": z,
+                "style": style_val,
+                "brainPrompt": brain_prompt,
+                "estimatedTokens": estimated,
+                "budgetTokens": budget_tokens,
+                "updatedAt": e["updatedAt"],
+            }
+
+    def get_brain_prompt(
+        self,
+        session_id: str,
+        *,
+        language: str = "te-IN",
+        budget_tokens: int = 1500,
+    ) -> str:
+        with self._lock:
+            e = self._entry(session_id)
+            if e and e.get("brainPrompt"):
+                return e["brainPrompt"]
+        return compose_brain_prompt(
+            behaviour=self.get_behaviour(session_id),
+            business=self.get_business(session_id),
+            language=language,
+            style=self.get_style(session_id),
+        )
 
     def get_behaviour(self, session_id: str) -> str:
         with self._lock:
@@ -75,7 +118,6 @@ class InstructionStore:
                 return e["style"]
             return DEFAULT_RESPONSE_STYLE
 
-    # Back-compat: old callers asked for single "text"
     def get(self, session_id: str) -> str:
         return self.get_behaviour(session_id)
 
@@ -87,10 +129,13 @@ class InstructionStore:
         with self._lock:
             e = self._entry(session_id)
             if not e:
+                brain = compose_brain_prompt(language="te-IN")
                 return {
                     "text": DEFAULT_BEHAVIOUR_INSTRUCTIONS,
                     "behaviour": DEFAULT_BEHAVIOUR_INSTRUCTIONS,
                     "business": DEFAULT_BUSINESS_INSTRUCTIONS,
+                    "brainPrompt": brain,
+                    "estimatedTokens": estimate_tokens(brain),
                     "updatedAt": None,
                     "present": False,
                     "style": DEFAULT_RESPONSE_STYLE,
@@ -100,6 +145,13 @@ class InstructionStore:
                 "text": e["behaviour"] or DEFAULT_BEHAVIOUR_INSTRUCTIONS,
                 "behaviour": e["behaviour"] or DEFAULT_BEHAVIOUR_INSTRUCTIONS,
                 "business": e["business"] or DEFAULT_BUSINESS_INSTRUCTIONS,
+                "brainPrompt": e.get("brainPrompt") or compose_brain_prompt(
+                    behaviour=e.get("behaviour", ""),
+                    business=e.get("business", ""),
+                    style=e.get("style"),
+                ),
+                "estimatedTokens": e.get("estimatedTokens") or estimate_tokens(e.get("brainPrompt", "")),
+                "budgetTokens": e.get("budgetTokens"),
                 "updatedAt": e["updatedAt"],
                 "present": bool(e["behaviour"] or e["business"]),
                 "style": e.get("style") or DEFAULT_RESPONSE_STYLE,

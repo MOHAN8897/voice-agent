@@ -8,6 +8,7 @@ from __future__ import annotations
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from typing import Optional
 
 from server.services.openai_brain_service import generate_response
 from server.services.sarvam_stt_service import transcribe
@@ -61,7 +62,7 @@ class VoiceSessionController:
         stt_mode: str = "transcribe",
         stt_model: str | None = None,
         session_id: str = "default",
-        user_instructions: str = "",
+        user_instructions: str | None = None,
         business_instructions: str | None = None,
         tts_speaker: Optional[str] = None,
         tts_model: str | None = None,

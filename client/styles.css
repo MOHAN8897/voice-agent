@@ -43,6 +43,8 @@ body {
   border-radius: 999px;
   background: var(--card);
 }
+.badge-green { color: var(--success); border-color: rgba(30,215,96,0.35); }
+.badge-warn { color: #f5a623; border-color: rgba(245,166,35,0.35); }
 .container {
   width: 100%;
   max-width: 720px;

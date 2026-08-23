@@ -9,6 +9,7 @@ import httpx
 
 from server.config.env import get_settings
 from server.utils.errors import AppError, ErrorCode, classify_http_status
+from server.utils.http_clients import get_sarvam_client
 from server.utils.logger import log_error, log_stt
 
 SARVAM_STT_URL = "https://api.sarvam.ai/speech-to-text"
@@ -45,8 +46,8 @@ async def transcribe(
     headers = {"api-subscription-key": api_key}
 
     try:
-        async with httpx.AsyncClient(timeout=timeout_s) as client:
-            resp = await client.post(SARVAM_STT_URL, headers=headers, files=files, data=data)
+        client = get_sarvam_client()
+        resp = await client.post(SARVAM_STT_URL, headers=headers, files=files, data=data, timeout=timeout_s)
     except httpx.TimeoutException as e:
         raise AppError(ErrorCode.TIMEOUT, provider="sarvam_stt", retryable=True, cause=e) from e
     except httpx.NetworkError as e:

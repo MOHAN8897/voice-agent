@@ -41,15 +41,28 @@ async def lifespan(app: FastAPI):
         settings = validate_env()
         set_level(settings.log_level)
         from server.agent.conversation_manager import conversation_manager
-        conversation_manager.max_messages = settings.max_context_messages * 2  # user+assistant pairs
+        conversation_manager.max_messages = settings.max_context_messages * 2
+        conversation_manager.max_assistant_chars = settings.max_history_assistant_chars
+        conversation_manager.max_user_chars = settings.max_history_user_chars
         logger.info(
             f"[VOICE] Server starting — version {constants.APP_VERSION}, "
             f"model {settings.openai_model}, stt {settings.sarvam_stt_model}"
         )
+        try:
+            from server.utils.http_clients import warm_openai_client
+            warm_result = await warm_openai_client()
+            logger.info(f"[VOICE] OpenAI connection warm-up: {warm_result}")
+        except Exception as e:
+            logger.warning(f"[VOICE] OpenAI warm-up skipped: {e}")
     except ConfigError as e:
         logger.warning(f"[VOICE] Config invalid at startup: {e}. /api/health will report. Set .env and restart.")
     yield
-    # Shutdown hook (Phase 5: close WS pools)
+    # Shutdown: close pooled HTTP clients
+    try:
+        from server.utils.http_clients import close_http_clients
+        await close_http_clients()
+    except Exception:
+        pass
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 CLIENT_DIR = PROJECT_ROOT / "client"

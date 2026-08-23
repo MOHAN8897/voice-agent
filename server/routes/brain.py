@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field
 from typing import Optional
 
 from server.agent.conversation_manager import conversation_manager
-from server.agent.instruction_store import instruction_store
+from server.agent.session_memory import session_memory
 from server.services.openai_brain_service import generate_response, generate_response_stream
 from server.services.runtime_settings import runtime_settings
 from server.utils.errors import AppError
@@ -39,21 +39,11 @@ class BrainTestRequest(BaseModel):
     responseStyle: Optional[str] = Field(None, max_length=100)
 
 
-async def _effective_prompting(session_id: str, user_instructions: str | None,
-                               business_instructions: str | None, style: str | None):
-    """Request value wins; else stored per-session values."""
-    if user_instructions is None:
-        user_instructions = instruction_store.get_behaviour(session_id)
-    if business_instructions is None:
-        business_instructions = instruction_store.get_business(session_id)
-    if style is None:
-        style = instruction_store.get_style(session_id)
-    rt = {}
+async def _runtime_settings(session_id: str) -> dict:
     try:
-        rt = runtime_settings.get(session_id)
+        return runtime_settings.get(session_id)
     except Exception:
-        rt = {}
-    return user_instructions or "", business_instructions or "", style, rt
+        return {}
 
 
 @router.post("/api/brain")
@@ -62,16 +52,15 @@ async def brain_route(body: BrainRequest):
     if not transcript:
         raise HTTPException(status_code=400, detail={"error": {"code": "validation_error", "message": "transcript is required"}})
 
-    eff_user, eff_business, eff_style, rt = await _effective_prompting(
-        body.sessionId, body.userInstructions, body.businessInstructions, body.responseStyle)
+    rt = await _runtime_settings(body.sessionId)
     try:
         result = await generate_response(
             transcript=transcript,
             language_code=body.language_code,
             session_id=body.sessionId,
-            user_instructions=eff_user,
-            business_instructions=eff_business,
-            response_style=eff_style,
+            user_instructions=body.userInstructions,
+            business_instructions=body.businessInstructions,
+            response_style=body.responseStyle,
             openai_model=rt.get("openaiModel"),
             temperature=rt.get("openaiTemperature"),
             max_output_tokens=rt.get("openaiMaxTokens"),
@@ -109,8 +98,7 @@ async def brain_stream_route(body: BrainRequest):
     if not transcript:
         raise HTTPException(status_code=400, detail={"error": {"code": "validation_error", "message": "transcript is required"}})
 
-    eff_user, eff_business, eff_style, rt = await _effective_prompting(
-        body.sessionId, body.userInstructions, body.businessInstructions, body.responseStyle)
+    rt = await _runtime_settings(body.sessionId)
 
     async def sse_gen():
         try:
@@ -118,9 +106,9 @@ async def brain_stream_route(body: BrainRequest):
                 transcript=transcript,
                 language_code=body.language_code,
                 session_id=body.sessionId,
-                user_instructions=eff_user,
-                business_instructions=eff_business,
-                response_style=eff_style,
+                user_instructions=body.userInstructions,
+                business_instructions=body.businessInstructions,
+                response_style=body.responseStyle,
                 openai_model=rt.get("openaiModel"),
                 temperature=rt.get("openaiTemperature"),
                 max_output_tokens=rt.get("openaiMaxTokens"),
@@ -137,4 +125,5 @@ async def brain_stream_route(body: BrainRequest):
 async def clear_session(body: dict):
     session_id = body.get("sessionId", "default")
     conversation_manager.clear(session_id)
+    session_memory.clear(session_id)
     return {"ok": True, "sessionId": session_id}

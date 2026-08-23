@@ -66,6 +66,7 @@ async def catalog():
             "defaultModel": DEFAULT_OPENAI_MODEL,
             "temperature": [0.0, 2.0],
             "maxTokens": [50, 800],
+            "brainPromptBudget": [1500, 5000],
             "modelGroups": [
                 {"label": "GPT-5 family (voice-tuned)", "models": allowed_models},
             ],
@@ -73,6 +74,7 @@ async def catalog():
                 "openaiModel": "gpt-5.6-luna",
                 "openaiMaxTokens": 320,
                 "openaiTemperature": 0.7,
+                "brainPromptBudgetTokens": 1500,
                 "responseStyle": DEFAULT_RESPONSE_STYLE,
                 "behaviourInstructions": DEFAULT_BEHAVIOUR_INSTRUCTIONS,
                 "businessInstructions": DEFAULT_BUSINESS_INSTRUCTIONS,
@@ -110,6 +112,7 @@ class RuntimePatch(BaseModel):
     openaiModel: Optional[str] = None
     openaiTemperature: Optional[float] = None
     openaiMaxTokens: Optional[int] = None
+    brainPromptBudgetTokens: Optional[int] = None
     crmEnabled: Optional[bool] = None
     crmProvider: Optional[str] = None
     crmWebhook: Optional[str] = None
@@ -130,6 +133,7 @@ async def get_runtime(sessionId: str = Query("default")):
             "ttsPace": s.sarvam_tts_pace,
             "openaiModel": s.openai_model,
             "openaiMaxTokens": s.max_response_length,
+            "brainPromptBudgetTokens": s.brain_prompt_budget_tokens,
         }
     except Exception:
         defaults = {}
