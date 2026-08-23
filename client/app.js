@@ -327,15 +327,11 @@ let playbackCtx = null;          // unlocked on mic click — survives async bra
 let _speakInFlight = false;      // prevent duplicate auto-speak
 let currentWebAudioSource = null; // for barge-in stop
 
-/** Shared AudioContext resumed on mic gesture — browsers allow playback through this after STT. */
+/** Dedicated playback context for TTS — never reuse the 16 kHz mic capture context. */
 async function ensurePlaybackContext() {
-  const existing = (live.active && live.ctx) ? live.ctx : playbackCtx;
-  if (existing) {
-    if (existing.state === "suspended") await existing.resume();
-    playbackCtx = existing;
-    return existing;
+  if (!playbackCtx || playbackCtx.state === "closed") {
+    playbackCtx = new (window.AudioContext || window.webkitAudioContext)();
   }
-  playbackCtx = new (window.AudioContext || window.webkitAudioContext)();
   if (playbackCtx.state === "suspended") await playbackCtx.resume();
   return playbackCtx;
 }
@@ -814,6 +810,8 @@ const live = {
   ttsStreamCodec: "linear16",
   ttsTurnEnded: false,
   _flushAcked: false,
+  _flushSent: false,
+  _pcmIdleSince: 0,
   _ttsPingTimer: null,
   ttsSampleRate: 24000,
   pcmPlayer: null,
@@ -1046,6 +1044,8 @@ function cleanupTtsTurn() {
   live.mseDone = false;
   live.ttsTurnEnded = false;
   live._flushAcked = false;
+  live._flushSent = false;
+  live._pcmIdleSince = 0;
   live._playAttempted = false;
   live._ttsAllB64 = [];
   if (currentWebAudioSource) {
@@ -1187,6 +1187,12 @@ async function runTurn(text, sttFinalMs) {
         setState("Speaking…");
         live.agentSpeaking = true;
         const gotAudio = await waitForStreamingAudio(10000);
+        if (voiceAbort?.signal?.aborted) {
+          live.agentSpeaking = false;
+          live.busy = false;
+          backToListening();
+          return;
+        }
         if (gotAudio) {
           logPlayback("AUTO_SPEAK_STREAMING", { chars: full.length });
           await waitStreamingPlaybackDone();
@@ -1261,12 +1267,18 @@ async function readBrainSSE(transcript, hooks) {
 // Resolves when streamed TTS delivers first audio chunk (after flush)
 function waitForStreamingAudio(timeoutMs = 10000) {
   return new Promise((resolve) => {
+    if (voiceAbort?.signal?.aborted) { resolve(false); return; }
     if (live.pcmPlayer?.hadAudio() || live._ttsAllB64?.length > 0 || live.mseQueue.length > 0) {
       resolve(true);
       return;
     }
     const t0 = performance.now();
     const iv = setInterval(() => {
+      if (voiceAbort?.signal?.aborted) {
+        clearInterval(iv);
+        resolve(false);
+        return;
+      }
       if (live.pcmPlayer?.hadAudio() || live._ttsAllB64?.length > 0 || live.mseQueue.length > 0) {
         clearInterval(iv);
         resolve(true);
@@ -1286,10 +1298,21 @@ function waitStreamingPlaybackDone(timeoutMs = 120000) {
     const poll = setInterval(() => {
       if (voiceAbort?.signal?.aborted) { clearInterval(poll); clearTimeout(timer); finish(); return; }
       if (live.ttsStreamCodec === "linear16") {
-        const pcmDone = live.pcmPlayer?.hadAudio() && live.pcmPlayer.idle();
+        const hadAudio = live.pcmPlayer?.hadAudio();
+        const pcmIdle = live.pcmPlayer?.idle();
+        const pcmDone = hadAudio && pcmIdle;
         if (pcmDone && (live.ttsTurnEnded || live._flushAcked)) {
           clearInterval(poll); clearTimeout(timer); live.agentSpeaking = false; finish();
+          return;
         }
+        if (live._flushSent && pcmDone && !live.ttsTurnEnded && !live._flushAcked) {
+          if (!live._pcmIdleSince) live._pcmIdleSince = performance.now();
+          else if (performance.now() - live._pcmIdleSince > 400) {
+            clearInterval(poll); clearTimeout(timer); live.agentSpeaking = false; finish();
+          }
+          return;
+        }
+        if (pcmDone) live._pcmIdleSince = 0;
         return;
       }
       if (!live.ttsTurnEnded && !live.mseDone) return;
@@ -1352,6 +1375,8 @@ function doBargeIn(reason) {
   live.mseDone = false;
   live.ttsTurnEnded = false;
   live._flushAcked = false;
+  live._flushSent = false;
+  live._pcmIdleSince = 0;
   hooks_onAudioFirst = null;
   stopAudioBtn.style.display = "none";
   // 2) STOP GENERATION
@@ -1600,10 +1625,21 @@ function openTtsStream() {
       if (type === "upstream_reset") {
         _ttsStreamReady = false;
         clientLog("voice", "[VOICE][TTS] upstream_reset — reconfig on next turn", m.reason);
+        if (live.ttsSock?.readyState === WebSocket.OPEN) {
+          sendTtsConfigOnSocket(live.ttsSock)
+            .then(() => { _ttsStreamReady = true; })
+            .catch(() => {});
+        }
         return;
       }
 
       const b64 = m.data && (m.data.audio || (typeof m.data === "string" ? m.data : null));
+
+      const ttsTurnActive = live.busy || live.agentSpeaking || live._flushSent;
+      if (!ttsTurnActive && (b64 || type === "end_of_stream" || (m.data && m.data.event_type === "final"))) {
+        clientLog("voice", "[VOICE][TTS] ignore stale event", type);
+        return;
+      }
 
       if (b64) {
         if (_perf && !_perf.t6_firstAudio) { _perf.t6_firstAudio = performance.now(); console.log("[VOICE][TTS] FIRST_AUDIO"); }
@@ -1767,15 +1803,14 @@ async function speakViaHttpStream(text) {
 
 function closeTtsStream() {
   flushTtsPendingSend();
-  // Send any remaining buffered text, then flush the TTS socket
   const tail = _ttsAcc.trim(); _ttsAcc = "";
   if (tail && live.ttsSock && live.ttsSock.readyState === WebSocket.OPEN) {
     try { live.ttsSock.send(JSON.stringify({ type: "text", data: { text: tail } })); } catch {}
   }
   if (live.ttsSock && live.ttsSock.readyState === WebSocket.OPEN) {
     try { live.ttsSock.send(JSON.stringify({ type: "flush" })); } catch {}
-    live._flushAcked = false;
-    live.ttsTurnEnded = false;
+    live._flushSent = true;
+    live._pcmIdleSince = 0;
   }
 }
 

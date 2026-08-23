@@ -130,6 +130,7 @@ async def ws_tts(ws: WebSocket):
     ping_task = None
     audio_chunks = 0
     configured = False
+    last_upstream_config: dict | None = None
 
     async def close_upstream():
         nonlocal upstream, upstream_cm, configured
@@ -202,6 +203,10 @@ async def ws_tts(ws: WebSocket):
         nonlocal configured
         await connect_upstream()
         assert upstream is not None
+        if not configured and last_upstream_config is not None:
+            await upstream.send(json.dumps({"type": "config", "data": last_upstream_config}))
+            configured = True
+            log_ws("TTS auto-reconfig before forward", session=session_id)
         await upstream.send(payload)
 
     async def tts_keepalive():
@@ -245,7 +250,10 @@ async def ws_tts(ws: WebSocket):
                     }
                     if "temperature" in merged:
                         out["temperature"] = merged["temperature"]
-                    await forward_upstream(json.dumps({"type": "config", "data": out}))
+                    last_upstream_config = out
+                    await connect_upstream()
+                    assert upstream is not None
+                    await upstream.send(json.dumps({"type": "config", "data": out}))
                     configured = True
                     log_ws(
                         "TTS configured",
