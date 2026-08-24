@@ -121,13 +121,13 @@ async function getResolvedTtsConfig(lang = "te-IN", force = false) {
   return {
     model: v.ttsModel || d.ttsModel || "bulbul:v3",
     speaker: v.ttsSpeaker || d.ttsSpeaker || "shubh",
-    pace: v.ttsPace ?? d.ttsPace ?? 1.08,
+    pace: v.ttsPace ?? d.ttsPace ?? 1.0,
     language_code: lang,
     min_buffer_size: v.ttsMinBuffer ?? 30,
     max_chunk_length: v.ttsMaxChunk ?? 80,
     output_audio_codec: v.ttsCodec || "mp3",
     output_audio_bitrate: v.ttsBitrate || "128k",
-    temperature: v.ttsTemperature ?? d.ttsTemperature ?? 0.4,
+    temperature: v.ttsTemperature ?? d.ttsTemperature ?? 0.80,
   };
 }
 
@@ -314,6 +314,8 @@ async function speakTextViaRest(text, lang = "te-IN") {
 
 refreshRuntimeSettings();
 refreshVoiceConfig();
+/** Exposed for settings.js — live WS uses STT params from session start. */
+window.isVoiceLiveActive = () => !!live.active;
 if (realtimeMode) realtimeMode.checked = true;
 if ($("handsFree")) $("handsFree").checked = true;
 
@@ -832,7 +834,7 @@ const live = {
   // Echo-gate tuning (RMS of Int16 ≈ amplitude/32768)
   rmsGate: true,
   RMS_SPEAKING: 0.012,
-  COOLDOWN_MS: 400,
+  COOLDOWN_MS: 250,
 };
 
 function wsUrl(path) {
@@ -865,6 +867,107 @@ function extractErr(body, status) {
   return "request failed (HTTP " + status + ")";
 }
 
+let _sttReconnecting = false;
+
+function buildSttQueryParams() {
+  const q = new URLSearchParams({ language_code: "te-IN", stream_type: "fast", mode: "transcribe" });
+  const rtVals = runtimeSettings.values || {};
+  if (rtVals.sttLanguage) q.set("language_code", rtVals.sttLanguage);
+  if (rtVals.sttStreamType) q.set("stream_type", rtVals.sttStreamType);
+  if (rtVals.sttMode) q.set("mode", rtVals.sttMode);
+  if (rtVals.sttSilenceMs) q.set("silence_duration_ms", String(rtVals.sttSilenceMs));
+  if (rtVals.sttThreshold != null) q.set("threshold", String(rtVals.sttThreshold));
+  return q;
+}
+
+function attachSttSocketHandlers(sock, { isInitial = false, onReady = null } = {}) {
+  sock.binaryType = "arraybuffer";
+  sock.onopen = () => {
+    if (isInitial) {
+      live.active = true;
+      isRecording = true;
+      setMicUi(true, "Stop live session");
+      liveBadge.style.display = "";
+    }
+    setState("Listening… (live — just speak)");
+    if (!live.busy) {
+      partialsEl.textContent = isInitial ? "…ready — speak Telugu…" : "…reconnected — speak Telugu…";
+    }
+    if (onReady) onReady();
+  };
+  sock.onmessage = (ev) => {
+    let m; try { m = JSON.parse(ev.data); } catch { return; }
+    routeLiveEvent(m);
+  };
+  sock.onerror = () => {
+    if (live.active && !_sttReconnecting) partialsEl.textContent = "WS error";
+  };
+  sock.onclose = () => {
+    if (_sttReconnecting) return;
+    if (!live.active) return;
+    cleanupLiveMedia();
+    finishLiveUi("Live session dropped — press mic to restart");
+  };
+}
+
+async function reconnectLiveStt() {
+  if (!live.active || !live.stream) return false;
+  _sttReconnecting = true;
+  try {
+    const old = live.socket;
+    if (old) {
+      old.onclose = null;
+      old.onerror = null;
+      if (old.readyState === WebSocket.OPEN || old.readyState === WebSocket.CONNECTING) {
+        try { if (old.readyState === WebSocket.OPEN) old.send(JSON.stringify({ event: "end" })); } catch {}
+        try { old.close(1000); } catch {}
+      }
+    }
+    const q = buildSttQueryParams();
+    const sock = new WebSocket(wsUrl("/ws/stt-realtime") + "?" + q.toString());
+    live.socket = sock;
+    await new Promise((resolve, reject) => {
+      const t = setTimeout(() => reject(new Error("STT reconnect timeout")), 8000);
+      attachSttSocketHandlers(sock, {
+        isInitial: false,
+        onReady: () => { clearTimeout(t); resolve(); },
+      });
+      sock.onerror = () => {
+        clearTimeout(t);
+        reject(new Error("STT reconnect failed"));
+      };
+    });
+    live.sawVadStart = false;
+    clientLog("voice", "[VOICE][STT] hot-reconnect OK", q.toString());
+    return true;
+  } catch (e) {
+    clientLog("voice", "[VOICE][STT] hot-reconnect failed", e);
+    partialsEl.textContent = "STT reconnect failed — stop and restart mic";
+    return false;
+  } finally {
+    _sttReconnecting = false;
+  }
+}
+
+/** Hot-reload pipeline settings during an active live session (no mic restart). */
+async function reconnectLivePipeline() {
+  if (!live.active) return { stt: false, tts: false };
+  await refreshRuntimeSettings();
+  const sttOk = await reconnectLiveStt();
+  closeTtsStream();
+  _ttsStreamReady = false;
+  let ttsOk = false;
+  if (voiceMode.checked) {
+    try {
+      await ensureTtsStream(true);
+      ttsOk = true;
+    } catch (e) {
+      clientLog("voice", "[VOICE][TTS] hot-reconnect failed", e);
+    }
+  }
+  return { stt: sttOk, tts: ttsOk };
+}
+
 async function startLiveSession() {
   partialsCard.style.display = "";
   partialsEl.textContent = "…connecting live session…";
@@ -875,17 +978,6 @@ async function startLiveSession() {
   if (voiceMode.checked) {
     ensureTtsStream(true).catch((e) => clientLog("voice", "[VOICE][TTS] pre-warm failed", e));
   }
-
-  // Pull Fine-tune console settings into connection params
-  const q = new URLSearchParams({ language_code: "te-IN", stream_type: "fast", mode: "transcribe" });
-  try {
-    const rt = await (await fetch("/api/settings/runtime?sessionId=" + encodeURIComponent(sessionId))).json();
-    if (rt.values.sttLanguage) q.set("language_code", rt.values.sttLanguage);
-    if (rt.values.sttStreamType) q.set("stream_type", rt.values.sttStreamType);
-    if (rt.values.sttMode) q.set("mode", rt.values.sttMode);
-    if (rt.values.sttSilenceMs) q.set("silence_duration_ms", String(rt.values.sttSilenceMs));
-    if (rt.values.sttThreshold != null) q.set("threshold", String(rt.values.sttThreshold));
-  } catch {}
 
   // Mic with platform-native AEC (cancels our own MSE <audio> playback), NS + AGC
   try {
@@ -910,28 +1002,9 @@ async function startLiveSession() {
     return;
   }
 
-  // Persistent socket — stays open across turns
+  const q = buildSttQueryParams();
   live.socket = new WebSocket(wsUrl("/ws/stt-realtime") + "?" + q.toString());
-  live.socket.binaryType = "arraybuffer";
-  live.socket.onopen = () => {
-    live.active = true;
-    isRecording = true;
-    setMicUi(true, "Stop live session");
-    setState("Listening… (live — just speak)");
-    partialsEl.textContent = "…ready — speak Telugu…";
-    liveBadge.style.display = "";
-  };
-  live.socket.onmessage = (ev) => {
-    let m; try { m = JSON.parse(ev.data); } catch { return; }
-    routeLiveEvent(m);
-  };
-  live.socket.onerror = () => { if (live.active) partialsEl.textContent = "WS error"; };
-  live.socket.onclose = () => {
-    if (!live.active) return;      // we closed it ourselves
-    // Unexpected drop → auto-stop with clear message (reconnect UX later)
-    cleanupLiveMedia();
-    finishLiveUi("Live session dropped — press mic to restart");
-  };
+  attachSttSocketHandlers(live.socket, { isInitial: true });
 }
 
 function getBargeConfig() {
@@ -1009,7 +1082,26 @@ function endLiveTurn(opts = {}) {
   if (!opts.skipBack) backToListening();
 }
 
+function ensureLiveGuards() {
+  if (window.LiveGuards) return window.LiveGuards;
+  // Fallback if live-guards.js failed to load (server must serve /live-guards.js)
+  window.LiveGuards = {
+    SPEAK_BARGE_MIN_WORDS: 3,
+    shouldDebounceBargeIn: (s, now) => s.bargeHandledTurn === s.turnN && now - (s.lastBargeInAt || 0) < 800,
+    shouldThinkCancel: (s) => s.busy && s.brainStreaming && !s.agentSpeaking && s.elapsedMs > 350 && s.words >= 2,
+    shouldBargeWhileSpeaking: (s, now) => {
+      if (!s.agentSpeaking) return false;
+      const min = s.minWords ?? 3;
+      if (s.words < min) return false;
+      if (s.requireVad !== false && !s.sawVadStart) return false;
+      return now > (s.bargeCooldownUntil || 0);
+    },
+  };
+  return window.LiveGuards;
+}
+
 function routeLiveEvent(m) {
+  ensureLiveGuards();
   switch (m.event) {
     case "session.begin":
       partialsEl.textContent = "…live — speak anytime…";
@@ -1107,12 +1199,12 @@ function ttsConfigFromConsole() {
   return {
     speaker: v.ttsSpeaker || d.ttsSpeaker || "shubh",
     language_code: v.sttLanguage || "te-IN",
-    pace: v.ttsPace ?? d.ttsPace ?? 1.08,
+    pace: v.ttsPace ?? d.ttsPace ?? 1.0,
     min_buffer_size: v.ttsMinBuffer ?? 30,
     max_chunk_length: v.ttsMaxChunk ?? 80,
     output_audio_codec: "linear16",
     output_audio_bitrate: v.ttsBitrate || "128k",
-    temperature: v.ttsTemperature ?? d.ttsTemperature ?? 0.4,
+    temperature: v.ttsTemperature ?? d.ttsTemperature ?? 0.80,
     model: v.ttsModel || d.ttsModel || "bulbul:v3",
   };
 }
@@ -2264,3 +2356,13 @@ bindExport("exportAllWavBtn", () => window.ConversationStore.exportAllWav());
 restoreConversationFromStore();
 setState("Ready — press mic and speak Telugu");
 updateHistoryCount();
+ensureLiveGuards();
+
+window.addEventListener("runtime-settings-saved", async (ev) => {
+  runtimeSettings.values = ev.detail || {};
+  _cachedTtsConfig = null;
+  if (live.active) {
+    const r = await reconnectLivePipeline();
+    clientLog("voice", "[VOICE][PIPELINE] hot-reload after save", r);
+  }
+});

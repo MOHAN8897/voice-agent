@@ -221,66 +221,19 @@ if CLIENT_DIR.exists():
     except Exception:
         pass
 
-    # Also serve assets at root for relative paths
-    @app.get("/app.js")
-    async def serve_app_js():
-        p = CLIENT_DIR / "app.js"
-        if p.exists():
-            return FileResponse(str(p), media_type="application/javascript")
-        return JSONResponse(status_code=404, content={"error": "not found"})
+    # Also serve assets at root for relative paths (catch-all prevents future 404s)
+    _CLIENT_MEDIA = {
+        ".js": "application/javascript",
+        ".css": "text/css",
+        ".html": "text/html",
+    }
 
-    @app.get("/audio_utils.js")
-    async def serve_audio_utils_js():
-        p = CLIENT_DIR / "audio_utils.js"
-        if p.exists():
-            return FileResponse(str(p), media_type="application/javascript")
-        return JSONResponse(status_code=404, content={"error": "not found"})
-
-    @app.get("/audio_playback_manager.js")
-    async def serve_playback_manager_js():
-        p = CLIENT_DIR / "audio_playback_manager.js"
-        if p.exists():
-            return FileResponse(str(p), media_type="application/javascript")
-        return JSONResponse(status_code=404, content={"error": "not found"})
-
-    @app.get("/styles.css")
-    async def serve_css():
-        p = CLIENT_DIR / "styles.css"
-        if p.exists():
-            return FileResponse(str(p), media_type="text/css")
-        return JSONResponse(status_code=404, content={"error": "not found"})
-
-    @app.get("/pcm-worklet.js")
-    async def serve_worklet():
-        p = CLIENT_DIR / "pcm-worklet.js"
-        if p.exists():
-            return FileResponse(str(p), media_type="application/javascript")
-        return JSONResponse(status_code=404, content={"error": "not found"})
-
-    @app.get("/settings.html")
-    async def serve_settings():
-        p = CLIENT_DIR / "settings.html"
-        if p.exists():
-            return FileResponse(str(p))
-        return JSONResponse(status_code=404, content={"error": "not found"})
-
-    @app.get("/settings.js")
-    async def serve_settings_js():
-        p = CLIENT_DIR / "settings.js"
-        if p.exists():
-            return FileResponse(str(p), media_type="application/javascript")
-        return JSONResponse(status_code=404, content={"error": "not found"})
-
-    @app.get("/console_tabs.js")
-    async def serve_console_tabs_js():
-        p = CLIENT_DIR / "console_tabs.js"
-        if p.exists():
-            return FileResponse(str(p), media_type="application/javascript")
-        return JSONResponse(status_code=404, content={"error": "not found"})
-
-    @app.get("/conversation_store.js")
-    async def serve_conversation_store_js():
-        p = CLIENT_DIR / "conversation_store.js"
-        if p.exists():
-            return FileResponse(str(p), media_type="application/javascript")
-        return JSONResponse(status_code=404, content={"error": "not found"})
+    @app.get("/{asset_name}")
+    async def serve_client_asset(asset_name: str):
+        if ".." in asset_name or "/" in asset_name or "\\" in asset_name:
+            return JSONResponse(status_code=404, content={"error": "not found"})
+        p = CLIENT_DIR / asset_name
+        media = _CLIENT_MEDIA.get(p.suffix.lower())
+        if not media or not p.is_file():
+            return JSONResponse(status_code=404, content={"error": "not found"})
+        return FileResponse(str(p), media_type=media)

@@ -35,6 +35,81 @@ DEFAULT_OPENAI_MODEL = "gpt-5.6-luna"  # lowest latency for live voice; user can
 # GPT-5 family uses reasoning.effort instead of temperature on the Responses API.
 OPENAI_REASONING_EFFORTS = ("none", "low", "medium", "high")
 
+# Curated voice-pipeline bundles — STT/VAD/barge-in/TTS tuned together.
+# Users pick a profile; individual sliders are intentionally not exposed in the UI.
+DEFAULT_VOICE_PRESET_ID = "natural"
+
+VOICE_PIPELINE_PRESETS: dict[str, dict] = {
+    "natural": {
+        "name": "Natural (recommended)",
+        "hint": "Pace 1.0×, temperature 0.80 — balanced Telugu voice with reliable barge-in.",
+        "values": {
+            "ttsPace": 1.0,
+            "ttsTemperature": 0.80,
+            "sttSilenceMs": 500,
+            "sttThreshold": 0.30,
+            "sttStreamType": "fast",
+            "bargeMinWords": 3,
+            "bargeRequireVad": True,
+            "ttsMinBuffer": 30,
+            "ttsMaxChunk": 80,
+        },
+    },
+    "fast": {
+        "name": "Fast response",
+        "hint": "Slightly quicker speech and tighter endpointing for short back-and-forth.",
+        "values": {
+            "ttsPace": 1.1,
+            "ttsTemperature": 0.60,
+            "sttSilenceMs": 400,
+            "sttThreshold": 0.30,
+            "sttStreamType": "fast",
+            "bargeMinWords": 3,
+            "bargeRequireVad": True,
+            "ttsMinBuffer": 30,
+            "ttsMaxChunk": 80,
+        },
+    },
+    "calm": {
+        "name": "Calm & clear",
+        "hint": "Slower pace, lower TTS variation — good for explanations.",
+        "values": {
+            "ttsPace": 0.95,
+            "ttsTemperature": 0.50,
+            "sttSilenceMs": 600,
+            "sttThreshold": 0.28,
+            "sttStreamType": "fast",
+            "bargeMinWords": 3,
+            "bargeRequireVad": True,
+            "ttsMinBuffer": 30,
+            "ttsMaxChunk": 80,
+        },
+    },
+    "expressive": {
+        "name": "Expressive",
+        "hint": "More vocal variety at pace 1.0× — still safe barge-in defaults.",
+        "values": {
+            "ttsPace": 1.0,
+            "ttsTemperature": 0.90,
+            "sttSilenceMs": 500,
+            "sttThreshold": 0.30,
+            "sttStreamType": "fast",
+            "bargeMinWords": 3,
+            "bargeRequireVad": True,
+            "ttsMinBuffer": 30,
+            "ttsMaxChunk": 80,
+        },
+    },
+}
+
+VOICE_PIPELINE_PRESET_IDS: list[str] = list(VOICE_PIPELINE_PRESETS.keys())
+
+
+def voice_preset_values(preset_id: str | None) -> dict:
+    pid = preset_id if preset_id in VOICE_PIPELINE_PRESETS else DEFAULT_VOICE_PRESET_ID
+    return dict(VOICE_PIPELINE_PRESETS[pid]["values"])
+
+
 OPENAI_MODEL_PRESETS: dict[str, dict] = {
     "gpt-5.6-luna": {
         "name": "Voice Fast",

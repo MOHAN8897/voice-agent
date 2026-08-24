@@ -17,10 +17,13 @@ from server.prompts.voice_defaults import (
     DEFAULT_BUSINESS_INSTRUCTIONS,
     DEFAULT_OPENAI_MODEL,
     DEFAULT_RESPONSE_STYLE,
+    DEFAULT_VOICE_PRESET_ID,
     OPENAI_MODEL_CATALOG,
     OPENAI_MODEL_IDS,
     OPENAI_MODEL_PRESETS,
     OPENAI_REASONING_EFFORTS,
+    VOICE_PIPELINE_PRESETS,
+    voice_preset_values,
 )
 from server.services.runtime_settings import runtime_settings, SettingsValidationError
 from server.services.tts_config import resolve_tts_config
@@ -60,6 +63,8 @@ async def catalog():
             "codecs": constants.TTS_CODECS,
             "bitrates": constants.TTS_BITRATES,
             "sampleRates": constants.TTS_SAMPLE_RATES,
+            "voicePresets": VOICE_PIPELINE_PRESETS,
+            "defaultVoicePresetId": DEFAULT_VOICE_PRESET_ID,
         },
         "openai": {
             "allowedModels": allowed_models,
@@ -83,13 +88,14 @@ async def catalog():
                 "bargeMinWords": 3,
                 "bargeRequireVad": True,
                 "sttSilenceMs": 500,
+                "voicePresetId": DEFAULT_VOICE_PRESET_ID,
+                "ttsPace": voice_preset_values(DEFAULT_VOICE_PRESET_ID)["ttsPace"],
+                "ttsTemperature": voice_preset_values(DEFAULT_VOICE_PRESET_ID)["ttsTemperature"],
                 "responseStyle": DEFAULT_RESPONSE_STYLE,
                 "behaviourInstructions": DEFAULT_BEHAVIOUR_INSTRUCTIONS,
                 "businessInstructions": DEFAULT_BUSINESS_INSTRUCTIONS,
                 "ttsMinBuffer": 30,
                 "ttsMaxChunk": 80,
-                "ttsPace": 1.08,
-                "ttsTemperature": 0.4,
             },
             "note": "API keys stay server-side in .env. GPT-5.6 Luna = fastest for live voice; GPT-5.5 = highest quality.",
         },
@@ -110,6 +116,7 @@ class RuntimePatch(BaseModel):
     sttThreshold: Optional[float] = None
     bargeMinWords: Optional[int] = None
     bargeRequireVad: Optional[bool] = None
+    voicePresetId: Optional[str] = None
     ttsModel: Optional[str] = None
     ttsSpeaker: Optional[str] = None
     ttsPace: Optional[float] = None
@@ -142,6 +149,8 @@ async def get_runtime(sessionId: str = Query("default")):
             "ttsModel": s.sarvam_tts_model,
             "ttsSpeaker": s.sarvam_tts_speaker_te,
             "ttsPace": s.sarvam_tts_pace,
+            "ttsTemperature": s.sarvam_tts_temperature,
+            "voicePresetId": DEFAULT_VOICE_PRESET_ID,
             "openaiModel": s.openai_model,
             "openaiMaxTokens": s.max_response_length,
             "brainPromptBudgetTokens": s.brain_prompt_budget_tokens,
@@ -163,7 +172,7 @@ async def get_tts_config(sessionId: str = Query("default"), language_code: str =
 
 @router.post("/api/settings/runtime")
 async def post_runtime(body: RuntimePatch):
-    patch = {k: v for k, v in body.model_dump().items() if k != "sessionId"}
+    patch = {k: v for k, v in body.model_dump().items() if k != "sessionId" and v is not None}
     if not patch:
         raise HTTPException(status_code=400, detail={"error": {"code": "validation_error", "message": "No settings provided"}})
     try:

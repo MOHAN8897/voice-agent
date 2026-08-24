@@ -124,48 +124,50 @@
         </div>
       </section>
 
-      <!-- ========== VOICE PIPELINE (fine-tune) ========== -->
+      <!-- ========== VOICE PIPELINE (curated presets) ========== -->
       <section class="console-panel" id="panel-pipeline">
         <div class="panel-grid">
           <div class="card">
-            <div class="label">Speech-to-Text — Sarvam saaras</div>
-            <label class="field-label">Model</label>
-            <select id="sttModel" class="input-select"></select>
-            <label class="field-label">Mode</label>
-            <select id="sttMode" class="input-select"></select>
-            <label class="field-label">Language</label>
-            <select id="sttLanguage" class="input-select"></select>
-            <label class="field-label">Realtime stream type</label>
-            <select id="sttStreamType" class="input-select"></select>
-            <label class="field-label">VAD silence (<span id="sttSilenceVal">500</span> ms)</label>
-            <input id="sttSilenceMs" type="range" min="100" max="2000" step="50" value="500" class="input-range" />
-            <label class="field-label">VAD threshold (<span id="sttThreshVal">0.30</span>)</label>
-            <input id="sttThreshold" type="range" min="0" max="1" step="0.05" value="0.3" class="input-range" />
-            <label class="field-label">Barge-in min words (<span id="bargeMinWordsVal">3</span>)</label>
-            <input id="bargeMinWords" type="range" min="2" max="4" step="1" value="3" class="input-range" />
-            <label class="field-label" style="display:flex;align-items:center;gap:8px;margin-top:8px">
-              <input id="bargeRequireVad" type="checkbox" checked />
-              Require VAD before barge-in (reduces false cuts from echo)
-            </label>
-            <p class="hint left-hint">Sarvam: use VAD silence 400–600 ms for responsive endpointing after you interrupt.</p>
+            <div class="label">Voice profile</div>
+            <p class="hint left-hint" style="margin-bottom:12px">
+              Pick a tested profile — pace, temperature, STT endpointing, and barge-in are tuned together.
+              Changing sliders individually can break interrupts and queue behavior.
+            </p>
+            <label class="field-label">Profile</label>
+            <select id="voicePresetId" class="input-select"></select>
+            <p id="voicePresetHint" class="hint left-hint" style="margin-top:8px"></p>
+            <label class="field-label" style="margin-top:16px">Speaker</label>
+            <select id="ttsSpeaker" class="input-select"></select>
+            <label class="field-label" style="margin-top:16px">TTS model</label>
+            <select id="ttsModel" class="input-select"></select>
+            <button id="testTtsBtn" class="btn primary" style="margin-top:12px">🔊 Test TTS</button>
+            <audio id="testAudio" controls style="width:100%; margin-top:8px; display:none"></audio>
+            <div id="ttsTestStatus" class="hint left-hint" style="margin-top:6px; display:none"></div>
           </div>
           <div class="card">
-            <div class="label">Text-to-Speech — Sarvam bulbul</div>
-            <label class="field-label">Model</label>
-            <select id="ttsModel" class="input-select"></select>
-            <label class="field-label">Speaker</label>
-            <select id="ttsSpeaker" class="input-select"></select>
-            <label class="field-label">Pace (<span id="ttsPaceVal">1.08</span>×)</label>
-            <input id="ttsPace" type="range" min="0.5" max="2.0" step="0.05" value="1.08" class="input-range" />
-            <label class="field-label">Temperature (<span id="ttsTempVal">0.60</span>)</label>
-            <input id="ttsTemperature" type="range" min="0.01" max="1.0" step="0.01" value="0.6" class="input-range" />
+            <div class="label">Locked with profile (do not change manually)</div>
+            <p class="hint left-hint">These values come from the selected profile and keep barge-in stable.</p>
+            <ul class="hint left-hint" id="voicePresetSummary" style="margin-top:8px;line-height:1.6"></ul>
+            <!-- Hidden fields — synced from preset for save/runtime API -->
+            <input type="hidden" id="sttSilenceMs" value="500" />
+            <input type="hidden" id="sttThreshold" value="0.3" />
+            <input type="hidden" id="bargeMinWords" value="3" />
+            <input type="hidden" id="bargeRequireVad" value="true" />
+            <input type="hidden" id="ttsPace" value="1.0" />
+            <input type="hidden" id="ttsTemperature" value="0.80" />
+            <input type="hidden" id="sttStreamType" value="fast" />
+            <input type="hidden" id="ttsMinBuffer" value="30" />
+            <input type="hidden" id="ttsMaxChunk" value="80" />
+            <label class="field-label" style="margin-top:16px">Language</label>
+            <select id="sttLanguage" class="input-select"></select>
+            <label class="field-label">STT model</label>
+            <select id="sttModel" class="input-select"></select>
+            <label class="field-label">STT mode</label>
+            <select id="sttMode" class="input-select"></select>
             <label class="field-label">Codec</label>
             <select id="ttsCodec" class="input-select"></select>
             <label class="field-label">Sample rate</label>
             <select id="ttsSampleRate" class="input-select"></select>
-            <button id="testTtsBtn" class="btn primary" style="margin-top:12px">🔊 Test TTS</button>
-            <audio id="testAudio" controls style="width:100%; margin-top:8px; display:none"></audio>
-            <div id="ttsTestStatus" class="hint left-hint" style="margin-top:6px; display:none"></div>
           </div>
         </div>
       </section>
@@ -181,11 +183,7 @@
           <div class="btnRow" style="margin:8px 0">
             <button id="applyModelPresetBtn" type="button" class="btn">⚡ Apply recommended settings</button>
           </div>
-          <div id="openaiTemperatureRow">
-            <label class="field-label">Temperature (<span id="oaiTempVal">0.7</span>)</label>
-            <input id="openaiTemperature" type="range" min="0" max="2" step="0.1" value="0.7" class="input-range" />
-          </div>
-          <div id="openaiReasoningRow" style="display:none">
+          <div id="openaiReasoningRow">
             <label class="field-label">Reasoning effort</label>
             <select id="openaiReasoningEffort" class="input-select">
               <option value="none">none — fastest (voice)</option>
@@ -193,13 +191,13 @@
               <option value="medium">medium — deeper answers</option>
               <option value="high">high — max quality (slower)</option>
             </select>
-            <p class="hint left-hint">GPT-5 models use reasoning effort instead of temperature (OpenAI voice guidance).</p>
+            <p class="hint left-hint">GPT-5 models use reasoning effort (not temperature). Values come from the model preset.</p>
           </div>
-          <label class="field-label">Max tokens (<span id="oaiTokVal">320</span>)</label>
-          <input id="openaiMaxTokens" type="range" min="50" max="800" step="10" value="320" class="input-range" />
-          <label class="field-label">Brain prompt budget (<span id="brainBudgetVal">2500</span>) · <span id="cacheBadge" class="badge badge-green">✅ Caching ON</span></label>
-          <input id="brainPromptBudgetTokens" type="range" min="1500" max="2500" step="50" value="2500" class="input-range" />
-          <p id="brainBudgetHint" class="hint left-hint">Token budget for the brain prompt (Prompting tab). Range 1,500–2,500 tokens. OpenAI caching needs ≥1,024 tokens in the saved prompt.</p>
+          <ul class="hint left-hint" id="brainPresetSummary" style="margin-top:8px;line-height:1.6"></ul>
+          <input type="hidden" id="openaiTemperature" value="0.7" />
+          <input type="hidden" id="openaiMaxTokens" value="280" />
+          <input type="hidden" id="brainPromptBudgetTokens" value="2500" />
+          <p id="brainBudgetHint" class="hint left-hint">Max tokens and prompt budget come from the model preset above. <span id="cacheBadge" class="badge badge-green">✅ Caching ON</span></p>
         </div>
       </section>
 
@@ -266,11 +264,8 @@
       <!-- ========== ADVANCED ========== -->
       <section class="console-panel" id="panel-advanced">
         <div class="card">
-          <div class="label">Latency tuning</div>
-          <label class="field-label">TTS min buffer (<span id="ttsMinBufVal">30</span>)</label>
-          <input id="ttsMinBuffer" type="range" min="30" max="200" step="5" value="30" class="input-range" />
-          <label class="field-label">TTS max chunk (<span id="ttsMaxChunkVal">80</span>)</label>
-          <input id="ttsMaxChunk" type="range" min="50" max="500" step="10" value="80" class="input-range" />
+          <div class="label">Audio quality</div>
+          <p class="hint left-hint">TTS buffer/chunk sizes are locked to your voice profile. Only bitrate is adjustable here.</p>
           <label class="field-label">Bitrate</label>
           <select id="ttsBitrate" class="input-select">
             <option value="64k">64k</option>

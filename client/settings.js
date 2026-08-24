@@ -83,7 +83,7 @@
 
       const hint = safeGet("modelGroupHint");
       if (hint && catalog.openai.allowedModels) {
-        updateOaiTempHint();
+        updateBrainModelUi();
       }
     } catch (e) {
       if (safeGet("healthDot")) safeGet("healthDot").className = "dot bad";
@@ -97,11 +97,8 @@
     const pairs = [
       ["openaiMaxTokens", "openaiMaxTokens"],
       ["brainPromptBudgetTokens", "brainPromptBudgetTokens"],
-      ["openaiTemperature", "openaiTemperature"],
       ["openaiReasoningEffort", "openaiReasoningEffort"],
-      ["ttsMinBuffer", "ttsMinBuffer"],
-      ["ttsMaxChunk", "ttsMaxChunk"],
-      ["ttsPace", "ttsPace"],
+      ["voicePresetId", "voicePresetId"],
     ];
     for (const [id, key] of pairs) {
       if (runtimeValues[key] != null) continue;
@@ -114,9 +111,64 @@
     }
   }
 
-  function modelSkipsTemperature(model) {
-    const m = (model || "").toLowerCase();
-    return m.startsWith("gpt-5") || m.startsWith("o1") || m.startsWith("o3") || m.startsWith("o4");
+  function getVoicePresets() {
+    return catalog?.tts?.voicePresets || {};
+  }
+
+  function applyVoicePresetToForm(presetId, { silent = false } = {}) {
+    const presets = getVoicePresets();
+    const pid = presets[presetId] ? presetId : (catalog?.tts?.defaultVoicePresetId || "natural");
+    const preset = presets[pid];
+    if (!preset) return false;
+    const setVal = (id, val) => {
+      const el = safeGet(id);
+      if (el && val != null) el.value = val;
+    };
+    const v = preset.values || {};
+    setVal("voicePresetId", pid);
+    setVal("ttsPace", v.ttsPace);
+    setVal("ttsTemperature", v.ttsTemperature);
+    setVal("sttSilenceMs", v.sttSilenceMs);
+    setVal("sttThreshold", v.sttThreshold);
+    setVal("sttStreamType", v.sttStreamType);
+    setVal("bargeMinWords", v.bargeMinWords);
+    setVal("bargeRequireVad", v.bargeRequireVad ? "true" : "false");
+    setVal("ttsMinBuffer", v.ttsMinBuffer);
+    setVal("ttsMaxChunk", v.ttsMaxChunk);
+    const hint = safeGet("voicePresetHint");
+    if (hint) hint.textContent = preset.hint || "";
+    const summary = safeGet("voicePresetSummary");
+    if (summary) {
+      summary.innerHTML = [
+        `Pace: <b>${v.ttsPace}×</b>`,
+        `Temperature: <b>${v.ttsTemperature}</b>`,
+        `VAD silence: <b>${v.sttSilenceMs} ms</b>`,
+        `Barge-in: <b>${v.bargeMinWords} words + VAD</b>`,
+      ].map((x) => `<li>${x}</li>`).join("");
+    }
+    updateRuntimeSummary();
+    if (!silent) show(`Applied voice profile: ${preset.name || pid}`);
+    return true;
+  }
+
+  let _voicePresetBound = false;
+
+  function renderVoicePresets() {
+    const presets = getVoicePresets();
+    const ids = Object.keys(presets);
+    const def = catalog?.tts?.defaultVoicePresetId || "natural";
+    const selected = runtimeValues.voicePresetId || defaults.voicePresetId || def;
+    fillSelect(
+      safeGet("voicePresetId"),
+      ids.map((id) => ({ value: id, label: presets[id].name || id })),
+      selected
+    );
+    applyVoicePresetToForm(selected, { silent: true });
+    const sel = safeGet("voicePresetId");
+    if (sel && !_voicePresetBound) {
+      sel.addEventListener("change", () => applyVoicePresetToForm(sel.value));
+      _voicePresetBound = true;
+    }
   }
 
   function getModelPreset(model) {
@@ -137,7 +189,16 @@
     setVal("openaiReasoningEffort", preset.openaiReasoningEffort);
     setVal("openaiMaxTokens", preset.openaiMaxTokens);
     setVal("brainPromptBudgetTokens", preset.brainPromptBudgetTokens);
-    updateOaiTempHint();
+    if (preset.openaiTemperature != null) setVal("openaiTemperature", preset.openaiTemperature);
+    const summary = safeGet("brainPresetSummary");
+    if (summary) {
+      summary.innerHTML = [
+        `Max tokens: <b>${preset.openaiMaxTokens}</b>`,
+        `Prompt budget: <b>${preset.brainPromptBudgetTokens}</b>`,
+        `Reasoning: <b>${preset.openaiReasoningEffort || "—"}</b>`,
+      ].map((x) => `<li>${x}</li>`).join("");
+    }
+    updateBrainModelUi();
     updateRuntimeSummary();
     if (!silent && typeof window.updatePromptMeter === "function") window.updatePromptMeter();
     const hint = safeGet("modelGroupHint");
@@ -147,26 +208,14 @@
     return true;
   }
 
-  function updateOaiTempHint() {
+  function updateBrainModelUi() {
     const model = safeGet("openaiModel")?.value || "";
-    const tempRow = safeGet("openaiTemperatureRow");
-    const reasoningRow = safeGet("openaiReasoningRow");
-    const tempEl = safeGet("openaiTemperature");
     const hint = safeGet("modelGroupHint");
-    const skip = modelSkipsTemperature(model);
-    if (tempRow) tempRow.style.display = skip ? "none" : "";
-    if (reasoningRow) reasoningRow.style.display = skip ? "" : "none";
-    if (tempEl) {
-      tempEl.disabled = skip;
-      tempEl.style.opacity = skip ? "0.45" : "1";
-    }
-    if (hint && skip) {
-      const preset = getModelPreset(model);
+    const preset = getModelPreset(model);
+    if (hint) {
       hint.innerHTML = preset
         ? `<b>${preset.name}</b> — ${preset.hint}`
-        : `${model} uses reasoning effort (not temperature). Pick a level below or click Apply recommended.`;
-    } else if (hint && !skip) {
-      hint.textContent = "Temperature applies to this model.";
+        : `${model} — pick a model and use Apply recommended settings.`;
     }
   }
 
@@ -174,8 +223,8 @@
     fillSelect(safeGet("sttModel"), catalog.stt.models.map((m) => ({ value: m.id, label: m.label })), defaults.sttModel);
     fillSelect(safeGet("sttMode"), catalog.stt.modes, "transcribe");
     fillSelect(safeGet("sttLanguage"), catalog.stt.languages, "te-IN");
-    fillSelect(safeGet("sttStreamType"), catalog.stt.streamTypes.map((s) => ({ value: s, label: s })), "fast");
     fillSelect(safeGet("ttsModel"), catalog.tts.models.map((m) => ({ value: m.id, label: m.label })), defaults.ttsModel);
+    renderVoicePresets();
     fillSpeakers();
     fillSelect(safeGet("ttsCodec"), catalog.tts.codecs, "mp3");
     fillSelect(safeGet("ttsSampleRate"), catalog.tts.sampleRates, 24000);
@@ -195,16 +244,6 @@
       const oel = safeGet(out);
       if (el && oel) el.addEventListener("input", () => { oel.textContent = fmt(el.value); updateRuntimeSummary(); });
     };
-    bind("sttSilenceMs", "sttSilenceVal", (v) => v);
-    bind("sttThreshold", "sttThreshVal", (v) => Number(v).toFixed(2));
-    bind("bargeMinWords", "bargeMinWordsVal", (v) => v);
-    bind("ttsPace", "ttsPaceVal", (v) => Number(v).toFixed(2));
-    bind("ttsTemperature", "ttsTempVal", (v) => Number(v).toFixed(2));
-    bind("openaiTemperature", "oaiTempVal", (v) => Number(v).toFixed(1));
-    bind("openaiMaxTokens", "oaiTokVal", (v) => v);
-    bind("brainPromptBudgetTokens", "brainBudgetVal", (v) => v);
-    bind("ttsMinBuffer", "ttsMinBufVal", (v) => v);
-    bind("ttsMaxChunk", "ttsMaxChunkVal", (v) => v);
 
     const brainEl = safeGet("brainPrompt");
     if (brainEl && safeGet("brainCharCount")) {
@@ -215,7 +254,10 @@
       const el = safeGet(id);
       if (el) el.addEventListener("change", () => {
         updateRuntimeSummary();
-        if (id === "openaiModel") updateOaiTempHint();
+        if (id === "openaiModel") {
+          updateBrainModelUi();
+          applyModelPreset(el.value, { silent: true });
+        }
       });
     });
     if (safeGet("applyModelPresetBtn")) {
@@ -228,7 +270,7 @@
         }
       });
     }
-    updateOaiTempHint();
+    updateBrainModelUi();
   }
 
   function fillSpeakers() {
@@ -244,6 +286,7 @@
   function loadRuntime(values) {
     runtimeValues = values || {};
     const map = {
+      voicePresetId: "voicePresetId",
       sttModel: "sttModel", sttMode: "sttMode", sttLanguage: "sttLanguage", sttStreamType: "sttStreamType",
       sttSilenceMs: "sttSilenceMs", sttThreshold: "sttThreshold",
       bargeMinWords: "bargeMinWords",
@@ -263,24 +306,28 @@
     }
     if (safeGet("crmEnabled")) safeGet("crmEnabled").checked = !!values.crmEnabled;
     if (safeGet("crmAutoSync")) safeGet("crmAutoSync").checked = !!values.crmAutoSync;
-    if (safeGet("bargeRequireVad")) safeGet("bargeRequireVad").checked = values.bargeRequireVad !== false;
+    if (values.voicePresetId) applyVoicePresetToForm(values.voicePresetId, { silent: true });
+    else if (values.ttsPace != null || values.ttsTemperature != null) {
+      const summary = safeGet("voicePresetSummary");
+      if (summary) summary.innerHTML = "<li><b>Legacy custom values detected</b> — applying <b>Natural</b> profile. Click Save to persist.</li>";
+      applyVoicePresetToForm("natural", { silent: true });
+    }
+    const model = values.openaiModel || safeGet("openaiModel")?.value;
+    if (model) applyModelPreset(model, { silent: true });
   }
 
   async function saveAll() {
     try {
+      const liveActive = typeof window.isVoiceLiveActive === "function" && window.isVoiceLiveActive();
       const getVal = (id) => safeGet(id)?.value ?? "";
       const getNum = (id) => Number(safeGet(id)?.value || 0);
       const getCheck = (id) => !!(safeGet(id)?.checked);
       const patch = {
         sessionId,
+        voicePresetId: getVal("voicePresetId") || "natural",
         sttModel: getVal("sttModel"), sttMode: getVal("sttMode"), sttLanguage: getVal("sttLanguage"),
-        sttStreamType: getVal("sttStreamType"), sttSilenceMs: getNum("sttSilenceMs"),
-        sttThreshold: parseFloat(getVal("sttThreshold") || "0.3"),
-        bargeMinWords: getNum("bargeMinWords") || 3,
-        bargeRequireVad: getCheck("bargeRequireVad"),
-        ttsModel: getVal("ttsModel"), ttsSpeaker: getVal("ttsSpeaker"), ttsPace: getNum("ttsPace"),
-        ttsTemperature: getNum("ttsTemperature"), ttsCodec: getVal("ttsCodec"), ttsSampleRate: getNum("ttsSampleRate"),
-        ttsMinBuffer: getNum("ttsMinBuffer") || 30, ttsMaxChunk: getNum("ttsMaxChunk") || 80,
+        ttsModel: getVal("ttsModel"), ttsSpeaker: getVal("ttsSpeaker"),
+        ttsCodec: getVal("ttsCodec"), ttsSampleRate: getNum("ttsSampleRate"),
         ttsBitrate: getVal("ttsBitrate") || "128k",
         openaiModel: getVal("openaiModel"), openaiTemperature: parseFloat(getVal("openaiTemperature") || "0.7"),
         openaiReasoningEffort: getVal("openaiReasoningEffort") || undefined,
@@ -294,6 +341,7 @@
       const j1 = await r1.json();
       if (!r1.ok) throw new Error(j1.detail?.error?.message || JSON.stringify(j1));
       runtimeValues = j1.values || {};
+      window.dispatchEvent(new CustomEvent("runtime-settings-saved", { detail: runtimeValues }));
 
       const r2 = await fetch("/api/instructions", {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -310,7 +358,7 @@
       const cfgR = await fetch("/api/settings/tts-config?sessionId=" + encodeURIComponent(sessionId));
       const cfgJ = cfgR.ok ? await cfgR.json() : {};
 
-      show(`✅ Saved!\nTokens: ${j2.estimatedTokens}/${j2.budgetTokens} · cache ${j2.cacheEligible ? "ON" : "OFF"}\nBrain model: ${patch.openaiModel}\nTTS speaker: ${cfgJ.ttsConfig?.speaker || patch.ttsSpeaker}\n\n` + JSON.stringify(j1.values, null, 2));
+      show(`✅ Saved!${liveActive ? "\n🔄 Live session: STT + TTS reconnected with new settings." : ""}\nTokens: ${j2.estimatedTokens}/${j2.budgetTokens} · cache ${j2.cacheEligible ? "ON" : "OFF"}\nBrain model: ${patch.openaiModel}\nTTS speaker: ${cfgJ.ttsConfig?.speaker || patch.ttsSpeaker}\n\n` + JSON.stringify(j1.values, null, 2));
       const cacheBadge = safeGet("cacheBadge");
       if (cacheBadge && j2.cacheEligible != null) {
         cacheBadge.textContent = j2.cacheEligible ? "✅ Caching ON" : "⚠️ Caching OFF (<1024 tokens)";

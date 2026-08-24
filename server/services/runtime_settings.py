@@ -11,6 +11,11 @@ import time
 from typing import Dict, Optional
 
 from server.config.constants import constants
+from server.prompts.voice_defaults import (
+    DEFAULT_VOICE_PRESET_ID,
+    VOICE_PIPELINE_PRESET_IDS,
+    voice_preset_values,
+)
 
 _TTL_SECONDS = 24 * 60 * 60
 
@@ -23,10 +28,19 @@ def _clamp(v: float, lo: float, hi: float) -> float:
     return max(lo, min(hi, v))
 
 
+# Keys bundled into voicePresetId — cannot be changed individually (industry: tune as one unit).
+VOICE_PRESET_BUNDLED_KEYS = frozenset({
+    "ttsPace", "ttsTemperature", "sttSilenceMs", "sttThreshold", "sttStreamType",
+    "bargeMinWords", "bargeRequireVad", "ttsMinBuffer", "ttsMaxChunk",
+})
+
+
 class RuntimeSettingsStore:
     """sessionId -> overrides dict. Only non-None keys override env defaults."""
 
     ALLOWED_KEYS = {
+        # Voice pipeline preset (bundles STT/VAD/barge/TTS tuning)
+        "voicePresetId",
         # STT
         "sttModel", "sttMode", "sttLanguage", "sttStreamType",
         "sttSilenceMs", "sttThreshold", "bargeMinWords", "bargeRequireVad",
@@ -54,19 +68,37 @@ class RuntimeSettingsStore:
             self._evict_locked()
             entry = self._store.setdefault(session_id, {"values": {}, "updatedAt": time.time()})
             values: dict = entry["values"]
-            for key, val in patch.items():
-                if key not in self.ALLOWED_KEYS:
-                    raise SettingsValidationError(f"Unknown setting: {key}")
-                if val is None:
-                    values.pop(key, None)
-                    continue
-                values[key] = self._validate(key, val)
-                # Cross-field validation
-                self._cross_validate(values)
+            snapshot = dict(values)
+            loose = VOICE_PRESET_BUNDLED_KEYS & patch.keys()
+            if loose and "voicePresetId" not in patch:
+                raise SettingsValidationError(
+                    f"Change voicePresetId instead of individual pipeline settings: {sorted(loose)}"
+                )
+            if patch.get("voicePresetId") is not None:
+                pid = self._validate("voicePresetId", patch["voicePresetId"])
+                bundled = voice_preset_values(pid)
+                patch = {k: v for k, v in patch.items() if k not in VOICE_PRESET_BUNDLED_KEYS}
+                patch = {**patch, "voicePresetId": pid, **bundled}
+            try:
+                for key, val in patch.items():
+                    if key not in self.ALLOWED_KEYS:
+                        raise SettingsValidationError(f"Unknown setting: {key}")
+                    if val is None:
+                        values.pop(key, None)
+                        continue
+                    values[key] = self._validate(key, val)
+                    self._cross_validate(values)
+            except Exception:
+                entry["values"] = snapshot
+                raise
             entry["updatedAt"] = time.time()
             return dict(values)
 
     def _validate(self, key: str, val):
+        if key == "voicePresetId":
+            if val not in VOICE_PIPELINE_PRESET_IDS:
+                raise SettingsValidationError(f"voicePresetId must be one of {VOICE_PIPELINE_PRESET_IDS}")
+            return val
         if key == "sttModel":
             if val not in constants.STT_MODELS:
                 raise SettingsValidationError(f"sttModel must be one of {list(constants.STT_MODELS)}")

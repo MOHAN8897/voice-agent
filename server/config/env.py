@@ -41,8 +41,8 @@ class Settings(BaseSettings):
     sarvam_stt_model: str = Field("saaras:v3", alias="SARVAM_STT_MODEL")
     sarvam_tts_model: str = Field("bulbul:v3", alias="SARVAM_TTS_MODEL")
     sarvam_tts_speaker_te: str = Field("shubh", alias="SARVAM_TTS_SPEAKER_TE")
-    sarvam_tts_pace: float = Field(1.08, alias="SARVAM_TTS_PACE")
-    sarvam_tts_temperature: float = Field(0.4, alias="SARVAM_TTS_TEMPERATURE")
+    sarvam_tts_pace: float = Field(1.0, alias="SARVAM_TTS_PACE")
+    sarvam_tts_temperature: float = Field(0.80, alias="SARVAM_TTS_TEMPERATURE")
 
     # --- Logging (toggle per category; LOG_ENABLED=false silences all) ---
     log_enabled: bool = Field(True, alias="LOG_ENABLED")

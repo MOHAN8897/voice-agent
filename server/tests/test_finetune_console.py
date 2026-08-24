@@ -28,19 +28,26 @@ def test_catalog_shape(monkeypatch):
 def test_runtime_crud_and_validation(monkeypatch):
     c = _client(monkeypatch)
     sid = "ft-test-1"
-    # Valid patch
-    r = c.post("/api/settings/runtime", json={"sessionId": sid, "ttsSpeaker": "priya", "ttsPace": 1.2, "ttsTemperature": 0.8, "openaiTemperature": 1.1, "sttStreamType": "fast", "sttSilenceMs": 350})
+    # Valid patch — voice profile bundles pipeline tuning
+    r = c.post("/api/settings/runtime", json={
+        "sessionId": sid, "ttsSpeaker": "priya", "voicePresetId": "fast",
+        "openaiTemperature": 1.1, "sttStreamType": "fast",
+    })
     assert r.status_code == 200, r.text
     v = r.json()["values"]
-    assert v.get("ttsSpeaker") == "priya" and v.get("sttSilenceMs") == 350, f"got values={r.text}"
+    assert v.get("ttsSpeaker") == "priya" and v.get("sttSilenceMs") == 400, f"got values={r.text}"
+    assert v.get("ttsPace") == 1.1 and v.get("ttsTemperature") == 0.60
+    # Loose bundled keys without voicePresetId are rejected
+    r_loose = c.post("/api/settings/runtime", json={"sessionId": sid, "ttsPace": 1.2})
+    assert r_loose.status_code == 400
     # Unknown speaker
     r2 = c.post("/api/settings/runtime", json={"sessionId": sid, "ttsSpeaker": "not_a_voice"})
     assert r2.status_code == 400
     # Speaker/model mismatch (v3 vs v2 speaker)
     r3 = c.post("/api/settings/runtime", json={"sessionId": sid, "ttsModel": "bulbul:v2"})
     assert r3.status_code == 400 or True  # cross-validation may clear; just no crash
-    # Out of range pace clamps
-    r4 = c.post("/api/settings/runtime", json={"sessionId": sid, "ttsModel": "bulbul:v3", "ttsPace": 9})
+    # Out of range pace clamps (via preset)
+    r4 = c.post("/api/settings/runtime", json={"sessionId": sid, "ttsModel": "bulbul:v3", "ttsSpeaker": "shubh", "voicePresetId": "expressive"})
     assert r4.status_code == 200 and r4.json()["values"]["ttsPace"] <= 2.0
     # Unknown key → rejected (422 by pydantic extra=forbid, or 400 by store)
     r5 = c.post("/api/settings/runtime", json={"sessionId": sid, "bogusKey": 1})
@@ -48,6 +55,30 @@ def test_runtime_crud_and_validation(monkeypatch):
     # Delete
     assert c.delete("/api/settings/runtime", params={"sessionId": sid}).status_code == 200
     assert c.get("/api/settings/runtime", params={"sessionId": sid}).json()["values"] == {}
+    get_settings.cache_clear()
+
+def test_voice_preset_expands_bundle(monkeypatch):
+    c = _client(monkeypatch)
+    sid = "ft-preset"
+    r = c.post("/api/settings/runtime", json={"sessionId": sid, "voicePresetId": "natural"})
+    assert r.status_code == 200, r.text
+    v = r.json()["values"]
+    assert v.get("voicePresetId") == "natural"
+    assert v.get("ttsPace") == 1.0
+    assert v.get("ttsTemperature") == 0.80
+    assert v.get("sttSilenceMs") == 500
+    assert v.get("bargeMinWords") == 3
+    r2 = c.post("/api/settings/runtime", json={"sessionId": sid, "voicePresetId": "bogus"})
+    assert r2.status_code == 400
+    get_settings.cache_clear()
+
+def test_catalog_includes_voice_presets(monkeypatch):
+    c = _client(monkeypatch)
+    j = c.get("/api/settings/catalog").json()
+    assert "natural" in j["tts"]["voicePresets"]
+    assert j["openai"]["defaults"].get("voicePresetId") == "natural"
+    assert j["openai"]["defaults"].get("ttsPace") == 1.0
+    assert j["openai"]["defaults"].get("ttsTemperature") == 0.80
     get_settings.cache_clear()
 
 def test_openai_model_allowlist(monkeypatch):
