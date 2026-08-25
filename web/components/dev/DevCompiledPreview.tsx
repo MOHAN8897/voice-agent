@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ensureArray } from "@/lib/ensure-array";
 import { DevCard } from "@/components/dev/DevCard";
 import { portalFetch, refreshPortalSession } from "@/lib/auth-client";
 
@@ -16,7 +17,7 @@ export function DevCompiledPreview() {
       fetch("/api/agents", { credentials: "include" })
         .then((r) => r.json())
         .then((j) => {
-          const list = j.agents || [];
+          const list = ensureArray<{ agent_id: string; name: string }>(j.agents);
           setAgents(list);
           if (list[0]) setAgentId(list[0].agent_id);
         })
@@ -30,7 +31,7 @@ export function DevCompiledPreview() {
         if (!r.ok) return;
         const j = await r.json();
         setPreview(j.preview || "");
-        setLayers(j.layers || []);
+        setLayers(ensureArray(j.layers));
         setMeta({
           compiled_version: j.compiled_version,
           checksum: j.checksum,

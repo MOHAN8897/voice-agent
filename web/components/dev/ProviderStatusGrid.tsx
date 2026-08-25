@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ensureArray } from "@/lib/ensure-array";
 import { Button } from "@/components/ui/Button";
 import { DevCard } from "@/components/dev/DevCard";
 import { portalFetch, refreshPortalSession } from "@/lib/auth-client";
@@ -26,7 +27,7 @@ export function ProviderStatusGrid() {
     const r = await portalFetch("dev", "/api/dev/providers/status");
     if (r.ok) {
       const j = await r.json();
-      setRows(j.providers || []);
+      setRows(ensureArray(j.providers));
       setChains(j.fallback_chains || { stt: [], llm: [], tts: [] });
     }
     setLoading(false);

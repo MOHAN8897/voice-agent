@@ -28,13 +28,22 @@ _TOGGLE_FIELDS = frozenset(
         "enable_gemini",
         "enable_cartesia",
         "enable_plivo",
-        "voice_agent_config_mode",
-        "voice_agent_tier",
-        "app_environment",
+        "enable_benchmarks",
     }
 )
 
-ALLOWED_PATCH_KEYS = _SECRET_FIELDS | _TOGGLE_FIELDS
+_STRING_FIELDS = frozenset(
+    {
+        "voice_agent_config_mode",
+        "voice_agent_tier",
+        "app_environment",
+        "plivo_webhook_base_url",
+        "plivo_public_base_url",
+        "plivo_number",
+    }
+)
+
+ALLOWED_PATCH_KEYS = _SECRET_FIELDS | _TOGGLE_FIELDS | _STRING_FIELDS
 
 
 def _mask_secret(value: str) -> str:
@@ -92,28 +101,64 @@ class DevSecretsStore:
         return text or None
 
     def update(self, patch: dict[str, Any]) -> dict[str, Any]:
+        applied: list[str] = []
+        rejected: list[dict[str, str]] = []
         clean: dict[str, Any] = {}
+
         for key, value in patch.items():
             if key not in ALLOWED_PATCH_KEYS:
+                rejected.append({"field": key, "reason": "not_allowed"})
                 continue
             if key in _SECRET_FIELDS:
                 if value is None or (isinstance(value, str) and not value.strip()):
+                    rejected.append({"field": key, "reason": "empty_secret"})
                     continue
                 clean[key] = str(value).strip()
             elif key in _TOGGLE_FIELDS:
-                clean[key] = value
+                clean[key] = bool(value)
+            elif key in _STRING_FIELDS:
+                if value is None:
+                    rejected.append({"field": key, "reason": "null_value"})
+                    continue
+                text = str(value).strip()
+                if not text:
+                    rejected.append({"field": key, "reason": "empty_string"})
+                    continue
+                clean[key] = text
 
         with self._lock:
             self._overlay.update(clean)
             path = self._path()
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(json.dumps(self._overlay, indent=2), encoding="utf-8")
+            applied = list(clean.keys())
 
         from server.providers import init_provider_registry
 
         get_settings.cache_clear()
         init_provider_registry()
-        return self.snapshot()
+        snapshot = self.snapshot()
+        snapshot["applied_keys"] = applied
+        snapshot["rejected"] = rejected
+        return snapshot
+
+    def remove_overlay_key(self, field: str) -> dict[str, Any]:
+        if field not in ALLOWED_PATCH_KEYS:
+            return {"ok": False, "error": "not_allowed", "environment": self.snapshot()}
+        with self._lock:
+            removed = field in self._overlay
+            if removed:
+                del self._overlay[field]
+                path = self._path()
+                path.write_text(json.dumps(self._overlay, indent=2), encoding="utf-8")
+
+        from server.providers import init_provider_registry
+
+        get_settings.cache_clear()
+        init_provider_registry()
+        snap = self.snapshot()
+        snap["removed"] = field if removed else None
+        return snap
 
     def snapshot(self) -> dict[str, Any]:
         settings = get_settings()
@@ -123,12 +168,14 @@ class DevSecretsStore:
                 self._platform_row("APP_ENVIRONMENT", "app_environment", settings, overlay),
                 self._platform_row("VOICE_AGENT_CONFIG_MODE", "voice_agent_config_mode", settings, overlay),
                 self._platform_row("VOICE_AGENT_TIER", "voice_agent_tier", settings, overlay),
+                self._toggle_row("ENABLE_BENCHMARKS", "enable_benchmarks", settings, overlay),
                 {
                     "env_name": "USE_PROVIDER_REGISTRY",
                     "field": "use_provider_registry",
                     "value": settings.use_provider_registry,
                     "source": "env",
                     "type": "toggle",
+                    "editable": False,
                 },
             ],
             "provider_keys": [
@@ -149,15 +196,44 @@ class DevSecretsStore:
                 self._toggle_row("ENABLE_PLIVO", "enable_plivo", settings, overlay),
                 self._secret_row("PLIVO_AUTH_ID", "plivo_auth_id", settings, overlay),
                 self._secret_row("PLIVO_AUTH_TOKEN", "plivo_auth_token", settings, overlay),
+                self._string_row("PLIVO_NUMBER", "plivo_number", settings, overlay),
+                self._string_row("PLIVO_WEBHOOK_BASE_URL", "plivo_webhook_base_url", settings, overlay),
+                self._string_row("PLIVO_PUBLIC_BASE_URL", "plivo_public_base_url", settings, overlay),
             ],
         }
-        return {"groups": groups, "overlay_keys": list(overlay.keys())}
+        return {
+            "groups": groups,
+            "overlay_keys": list(overlay.keys()),
+            "allowed_patch_keys": sorted(ALLOWED_PATCH_KEYS),
+        }
 
     @staticmethod
     def _platform_row(env_name: str, field: str, settings: Any, overlay: dict[str, Any]) -> dict[str, Any]:
         source = "overlay" if field in overlay else "env"
         val = overlay.get(field) if field in overlay else getattr(settings, field)
-        return {"env_name": env_name, "field": field, "value": val, "source": source, "type": "string"}
+        return {
+            "env_name": env_name,
+            "field": field,
+            "value": val,
+            "source": source,
+            "type": "string",
+            "editable": True,
+        }
+
+    @staticmethod
+    def _string_row(env_name: str, field: str, settings: Any, overlay: dict[str, Any]) -> dict[str, Any]:
+        source = "overlay" if field in overlay else "env"
+        val = overlay.get(field) if field in overlay else getattr(settings, field, None)
+        text = str(val or "").strip()
+        return {
+            "env_name": env_name,
+            "field": field,
+            "value": text,
+            "configured": bool(text),
+            "source": source,
+            "type": "string",
+            "editable": True,
+        }
 
     @staticmethod
     def _secret_row(env_name: str, field: str, settings: Any, overlay: dict[str, Any]) -> dict[str, Any]:
@@ -171,13 +247,21 @@ class DevSecretsStore:
             "masked": _mask_secret(effective) if effective else "",
             "source": source,
             "type": "secret",
+            "editable": True,
         }
 
     @staticmethod
     def _toggle_row(env_name: str, field: str, settings: Any, overlay: dict[str, Any]) -> dict[str, Any]:
         source = "overlay" if field in overlay else "env"
         val = overlay.get(field) if field in overlay else getattr(settings, field)
-        return {"env_name": env_name, "field": field, "value": bool(val), "source": source, "type": "toggle"}
+        return {
+            "env_name": env_name,
+            "field": field,
+            "value": bool(val),
+            "source": source,
+            "type": "toggle",
+            "editable": True,
+        }
 
 
 dev_secrets_store = DevSecretsStore()

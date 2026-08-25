@@ -15,10 +15,22 @@ function wordCount(t: string): number {
 
 export function LiveVoiceSession({
   agentId,
+  tier,
+  variant = "default",
   onTrace,
+  onCallStart,
+  onCallEnd,
+  onStatusChange,
+  onMicLevel,
 }: {
   agentId?: string;
+  tier?: string;
+  variant?: "default" | "dev";
   onTrace?: (event: SessionTraceEvent) => void;
+  onCallStart?: (callId: string) => void;
+  onCallEnd?: (callId: string) => void;
+  onStatusChange?: (status: string) => void;
+  onMicLevel?: (level: number) => void;
 }) {
   const [status, setStatus] = useState("idle");
   const [listening, setListening] = useState(false);
@@ -30,6 +42,10 @@ export function LiveVoiceSession({
   const socketRef = useRef<WebSocket | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const ctxRef = useRef<AudioContext | null>(null);
+  const workletRef = useRef<AudioWorkletNode | null>(null);
+  const listeningRef = useRef(false);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const levelTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const bargeRef = useRef<BargeState>({
     bargeHandledTurn: 0,
     lastBargeInAt: 0,
@@ -50,6 +66,41 @@ export function LiveVoiceSession({
     [onTrace]
   );
 
+  const setSessionStatus = useCallback(
+    (next: string) => {
+      setStatus(next);
+      onStatusChange?.(next);
+    },
+    [onStatusChange]
+  );
+
+  const stopMicMeter = useCallback(() => {
+    if (levelTimerRef.current) {
+      clearInterval(levelTimerRef.current);
+      levelTimerRef.current = null;
+    }
+    analyserRef.current = null;
+    onMicLevel?.(0);
+  }, [onMicLevel]);
+
+  const startMicMeter = useCallback(
+    (ctx: AudioContext, src: MediaStreamAudioSourceNode) => {
+      if (!onMicLevel) return;
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 256;
+      src.connect(analyser);
+      analyserRef.current = analyser;
+      const buf = new Uint8Array(analyser.frequencyBinCount);
+      levelTimerRef.current = setInterval(() => {
+        analyser.getByteFrequencyData(buf);
+        let sum = 0;
+        for (let i = 0; i < buf.length; i += 1) sum += buf[i];
+        onMicLevel(Math.min(1, sum / (buf.length * 255) * 2.5));
+      }, 60);
+    },
+    [onMicLevel]
+  );
+
   useEffect(() => {
     if (audioRef.current && !playbackRef.current) {
       playbackRef.current = new AudioPlaybackManager(audioRef.current);
@@ -64,31 +115,35 @@ export function LiveVoiceSession({
     const r = await fetch("/api/call/start", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ agentId, channel: "browser", direction: "inbound" }),
+      body: JSON.stringify({ agentId, tier, channel: "browser", direction: "inbound" }),
     });
     const j = await r.json();
     if (!r.ok) throw new Error(j.detail?.error?.message || "Call start failed");
     callIdRef.current = j.call_id;
     trace("call", `started ${j.call_id}`);
+    onCallStart?.(j.call_id);
     return j.call_id as string;
-  }, [agentId, trace]);
+  }, [agentId, tier, trace, onCallStart]);
 
   const endCall = useCallback(async () => {
     if (!callIdRef.current) return;
+    const id = callIdRef.current;
     await fetch("/api/call/end", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ callId: callIdRef.current, reason: "user_stop" }),
+      body: JSON.stringify({ callId: id, reason: "user_stop" }),
     });
+    trace("call", `ended ${id}`);
+    onCallEnd?.(id);
     callIdRef.current = null;
-  }, []);
+  }, [trace, onCallEnd]);
 
   const runBrainTurn = useCallback(
     async (text: string) => {
       const qs = callIdRef.current ? `?callId=${encodeURIComponent(callIdRef.current)}` : "";
       bargeRef.current.brainStreaming = true;
       bargeRef.current.busy = true;
-      setStatus("thinking");
+      setSessionStatus("thinking");
       trace("brain", "stream start");
       addBubble("user", text);
       const r = await fetch(`/api/brain/stream${qs}`, {
@@ -115,7 +170,7 @@ export function LiveVoiceSession({
       trace("brain", `stream done ${out.length} chars`);
       if (out) {
         addBubble("assistant", out);
-        setStatus("speaking");
+        setSessionStatus("speaking");
         bargeRef.current.agentSpeaking = true;
         try {
           trace("tts", "request");
@@ -135,22 +190,59 @@ export function LiveVoiceSession({
         }
         bargeRef.current.agentSpeaking = false;
       }
-      setStatus(listening ? "listening" : "idle");
+      setSessionStatus(listening ? "listening" : "idle");
     },
-    [addBubble, listening, trace]
+    [addBubble, listening, trace, setSessionStatus]
   );
 
   const cleanupLive = useCallback(() => {
-    socketRef.current?.close();
+    listeningRef.current = false;
+    const sock = socketRef.current;
     socketRef.current = null;
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    streamRef.current = null;
-    ctxRef.current?.close().catch(() => {});
+    if (sock && sock.readyState === WebSocket.OPEN) {
+      try {
+        sock.close();
+      } catch {
+        /* ignore */
+      }
+    }
+    if (workletRef.current) {
+      try {
+        workletRef.current.disconnect();
+      } catch {
+        /* ignore */
+      }
+      workletRef.current = null;
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => {
+        try {
+          t.stop();
+        } catch {
+          /* ignore */
+        }
+      });
+      streamRef.current = null;
+    }
+    const ctx = ctxRef.current;
     ctxRef.current = null;
+    if (ctx && ctx.state !== "closed") {
+      ctx.close().catch(() => {});
+    }
     playbackRef.current?.stop();
+    stopMicMeter();
     setListening(false);
     setPartial("");
-    setStatus("idle");
+    setSessionStatus("idle");
+  }, [setSessionStatus, stopMicMeter]);
+
+  useEffect(() => {
+    const cleanup = cleanupLive;
+    return () => {
+      cleanup();
+    };
+    // Unmount only — do not tie to cleanupLive identity
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const stopListening = useCallback(async () => {
@@ -165,7 +257,7 @@ export function LiveVoiceSession({
 
   const startListening = useCallback(async () => {
     playbackRef.current?.userGesture();
-    setStatus("connecting");
+    setSessionStatus("connecting");
     try {
       await startCall();
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -176,7 +268,9 @@ export function LiveVoiceSession({
       ctxRef.current = ctx;
       await ctx.audioWorklet.addModule("/pcm-worklet.js");
       const src = ctx.createMediaStreamSource(stream);
+      startMicMeter(ctx, src);
       const worklet = new AudioWorkletNode(ctx, "pcm-processor");
+      workletRef.current = worklet;
       worklet.port.onmessage = (ev) => {
         const sock = socketRef.current;
         if (!sock || sock.readyState !== WebSocket.OPEN) return;
@@ -201,8 +295,9 @@ export function LiveVoiceSession({
       socketRef.current = sock;
       sock.binaryType = "arraybuffer";
       sock.onopen = () => {
+        listeningRef.current = true;
         setListening(true);
-        setStatus("listening");
+        setSessionStatus("listening");
         trace("stt", "websocket open");
       };
       sock.onmessage = (ev) => {
@@ -229,25 +324,35 @@ export function LiveVoiceSession({
         }
       };
       sock.onclose = () => {
-        if (listening) stopListening();
+        if (listeningRef.current) stopListening();
       };
     } catch (e) {
-      setStatus(e instanceof Error ? e.message : "Mic error");
+      const msg =
+        e instanceof DOMException && e.name === "AbortError"
+          ? "Microphone setup was interrupted"
+          : e instanceof Error
+            ? e.message
+            : "Mic error";
+      setSessionStatus(msg);
       cleanupLive();
       await endCall();
     }
-  }, [cleanupLive, endCall, partial, runBrainTurn, startCall, stopListening, listening, trace]);
+  }, [cleanupLive, endCall, partial, runBrainTurn, startCall, stopListening, listening, trace, setSessionStatus, startMicMeter]);
+
+  const isDev = variant === "dev";
 
   return (
     <div>
-      <div className="flex items-center justify-between">
-        <h2 className="font-medium text-text">Live voice session</h2>
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-surface-border px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-text-muted">
-          {status === "listening" && <span className="h-1.5 w-1.5 rounded-full bg-agent-online animate-pulse-dot" />}
-          {status}
-        </span>
-      </div>
-      <div className="mt-4 flex flex-wrap gap-2">
+      {!isDev && (
+        <div className="flex items-center justify-between">
+          <h2 className="font-medium text-text">Live voice session</h2>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-surface-border px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-text-muted">
+            {status === "listening" && <span className="h-1.5 w-1.5 rounded-full bg-agent-online animate-pulse-dot" />}
+            {status}
+          </span>
+        </div>
+      )}
+      <div className={`flex flex-wrap gap-2 ${isDev ? "" : "mt-4"}`}>
         {!listening ? (
           <button
             type="button"
@@ -300,10 +405,12 @@ export function LiveVoiceSession({
         )}
       </section>
 
-      <audio ref={audioRef} className="mt-4 w-full" controls aria-label="Agent audio playback" />
-      <p className="mt-2 text-xs text-text-muted">
-        WS STT · pcm-worklet · live-guards barge-in · SSE brain stream
-      </p>
+      <audio ref={audioRef} className={`w-full ${isDev ? "mt-3" : "mt-4"}`} controls aria-label="Agent audio playback" />
+      {!isDev && (
+        <p className="mt-2 text-xs text-text-muted">
+          WS STT · pcm-worklet · live-guards barge-in · SSE brain stream
+        </p>
+      )}
     </div>
   );
 }

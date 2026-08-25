@@ -7,7 +7,14 @@ export class AudioPlaybackManager {
   constructor(audioEl: HTMLAudioElement) {
     this.el = audioEl;
     this.el.addEventListener("ended", () => this._onClipDone());
-    this.el.addEventListener("error", () => this._onClipDone(new Error("audio error")));
+    this.el.addEventListener("error", () => {
+      const mediaError = this.el.error;
+      if (mediaError?.code === MediaError.MEDIA_ERR_ABORTED) {
+        this._onClipDone();
+        return;
+      }
+      this._onClipDone(new Error("audio error"));
+    });
   }
 
   userGesture() {
@@ -39,10 +46,23 @@ export class AudioPlaybackManager {
   }
 
   stop() {
+    for (const item of this.queue) {
+      if (item.url.startsWith("blob:")) {
+        URL.revokeObjectURL(item.url);
+      }
+      item.resolve();
+    }
     this.queue = [];
     this.playing = false;
-    this.el.pause();
-    this.el.removeAttribute("src");
+    try {
+      this.el.pause();
+    } catch {
+      /* ignore */
+    }
+    // Avoid removeAttribute("src") — triggers AbortError while media is loading
+    if (this.el.src) {
+      this.el.src = "";
+    }
   }
 
   private _onClipDone(err?: Error) {

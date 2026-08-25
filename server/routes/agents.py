@@ -42,6 +42,8 @@ async def get_agent(agent_id: str):
         return {"agent": await agent_service.get_agent(agent_id)}
     except KeyError:
         raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Agent not found"}})
+    except ValueError:
+        raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Agent not found"}})
 
 
 @router.patch("/api/agents/{agent_id}")

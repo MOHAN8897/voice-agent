@@ -76,13 +76,20 @@ async def plivo_stream_status(request: Request):
 
 @router.get("/api/plivo/status")
 async def plivo_status():
+    from server.services.dev_secrets_store import dev_secrets_store
+
     settings = get_settings()
-    configured = bool(settings.plivo_auth_id and settings.plivo_auth_token)
+    auth_id = dev_secrets_store.effective_secret("plivo_auth_id") or settings.plivo_auth_id
+    auth_token = dev_secrets_store.effective_secret("plivo_auth_token") or settings.plivo_auth_token
+    configured = bool(auth_id and auth_token)
+    enabled = bool(dev_secrets_store.effective("enable_plivo", settings.enable_plivo))
+    webhook = dev_secrets_store.effective("plivo_webhook_base_url", settings.plivo_webhook_base_url)
+    number = dev_secrets_store.effective("plivo_number", settings.plivo_number)
     return {
-        "enabled": settings.enable_plivo,
+        "enabled": enabled,
         "configured": configured,
-        "webhook_base": settings.plivo_webhook_base_url or None,
-        "number": settings.plivo_number or None,
+        "webhook_base": webhook or None,
+        "number": number or None,
     }
 
 

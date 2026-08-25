@@ -24,33 +24,34 @@ export function DevPortalProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    refreshPortalSession("dev").then(async (ok) => {
-      if (!ok) {
-        try {
-          const r = await fetch("/api/auth/dev-me", { credentials: "include", cache: "no-store" });
-          if (!r.ok) {
-            setError("Dev session required. Sign in at /dev/login");
+    let cancelled = false;
+    (async () => {
+      try {
+        const ok = await refreshPortalSession("dev");
+        const r = await fetch("/api/auth/dev-me", { credentials: "include", cache: "no-store" });
+        if (!r.ok) {
+          if (!cancelled) {
+            setError(ok ? "Session check failed" : "Dev session required. Sign in at /dev/login");
             setReady(true);
-            return;
           }
-        } catch {
-          setError("Cannot reach API. Start the backend on port 8000.");
-          setReady(true);
           return;
         }
-      }
-      try {
-        const r = await fetch("/api/auth/dev-me", { credentials: "include", cache: "no-store" });
-        if (r.ok) {
-          const j = await r.json();
+        const j = await r.json();
+        if (!cancelled) {
           setAuthenticated(Boolean(j.authenticated));
           setSubject(j.subject || null);
+          setReady(true);
         }
       } catch {
-        setError("Session check failed");
+        if (!cancelled) {
+          setError("Cannot reach API. Start the backend on port 8000.");
+          setReady(true);
+        }
       }
-      setReady(true);
-    });
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (

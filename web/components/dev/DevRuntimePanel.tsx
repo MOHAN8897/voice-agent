@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { ensureArray } from "@/lib/ensure-array";
 import { Button } from "@/components/ui/Button";
 import { DevCard } from "@/components/dev/DevCard";
 import { portalFetch, refreshPortalSession } from "@/lib/auth-client";
@@ -116,7 +117,7 @@ export function DevRuntimePanel() {
                 value={String(values.voicePresetId ?? defaults.voicePresetId ?? "")}
                 onChange={(e) => setValues((v) => ({ ...v, voicePresetId: e.target.value }))}
               >
-                {(catalog?.tts?.voicePresets || []).map((p) => (
+                {ensureArray<{ id: string; label: string }>(catalog?.tts?.voicePresets).map((p) => (
                   <option key={p.id} value={p.id}>{p.label}</option>
                 ))}
               </select>

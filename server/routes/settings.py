@@ -80,7 +80,10 @@ async def catalog():
             "codecs": constants.TTS_CODECS,
             "bitrates": constants.TTS_BITRATES,
             "sampleRates": constants.TTS_SAMPLE_RATES,
-            "voicePresets": VOICE_PIPELINE_PRESETS,
+            "voicePresets": [
+                {"id": pid, "label": preset.get("name", pid), "hint": preset.get("hint", "")}
+                for pid, preset in VOICE_PIPELINE_PRESETS.items()
+            ],
             "defaultVoicePresetId": DEFAULT_VOICE_PRESET_ID,
         },
         "openai": {

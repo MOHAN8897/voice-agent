@@ -63,12 +63,29 @@ class AgentService:
     async def get_agent(self, agent_id: str) -> dict[str, Any]:
         factory = get_session_factory()
         if factory is None:
-            if agent_id not in _MEM_AGENTS:
-                raise KeyError(agent_id)
-            return _MEM_AGENTS[agent_id]
+            if agent_id in _MEM_AGENTS:
+                return _MEM_AGENTS[agent_id]
+            for agent in _MEM_AGENTS.values():
+                if agent.get("name") == agent_id:
+                    return agent
+            if agent_id == "default":
+                return await self.ensure_default_agent()
+            raise KeyError(agent_id)
+
+        try:
+            agent_uuid = uuid.UUID(agent_id)
+        except ValueError:
+            async with factory() as session:
+                result = await session.execute(select(Agent).where(Agent.name == agent_id))
+                row = result.scalar_one_or_none()
+                if not row:
+                    if agent_id == "default":
+                        return await self.ensure_default_agent()
+                    raise KeyError(agent_id)
+                return self._row_to_dict(row)
 
         async with factory() as session:
-            result = await session.execute(select(Agent).where(Agent.agent_id == uuid.UUID(agent_id)))
+            result = await session.execute(select(Agent).where(Agent.agent_id == agent_uuid))
             row = result.scalar_one_or_none()
             if not row:
                 raise KeyError(agent_id)

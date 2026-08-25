@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ensureArray } from "@/lib/ensure-array";
 
 type TranscriptLine = { role?: string; text?: string };
 
@@ -25,7 +26,7 @@ export function CallDetailView({ callId }: { callId: string }) {
       if (metaR.ok) setMeta(await metaR.json());
       if (txR.ok) {
         const tx = await txR.json();
-        setLines(tx.lines || []);
+        setLines(ensureArray<TranscriptLine>(tx.lines));
       }
       if (memR.ok) {
         const mem = await memR.json();

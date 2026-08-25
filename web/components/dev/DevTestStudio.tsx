@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ensureArray } from "@/lib/ensure-array";
 import { LiveVoiceSession, type SessionTraceEvent } from "@/components/live/LiveVoiceSession";
 import { DevCard } from "@/components/dev/DevCard";
 import { SessionTracePanel } from "@/components/dev/SessionTracePanel";
@@ -17,7 +18,7 @@ export function DevTestStudio() {
       fetch("/api/agents", { credentials: "include" })
         .then((r) => r.json())
         .then((j) => {
-          const list = j.agents || [];
+          const list = ensureArray<{ agent_id: string; name: string }>(j.agents);
           setAgents(list);
           if (list[0]) setAgentId(list[0].agent_id);
         })
@@ -58,6 +59,7 @@ export function DevTestStudio() {
       <DevCard title="Live session" delayMs={80}>
         <LiveVoiceSession
           agentId={agentId}
+          tier={tier}
           onTrace={(e) => setEvents((prev) => [...prev, e])}
         />
       </DevCard>

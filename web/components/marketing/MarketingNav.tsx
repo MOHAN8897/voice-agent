@@ -34,7 +34,13 @@ export function MarketingNav() {
           ))}
         </nav>
 
-        <div className="hidden md:block">
+        <div className="hidden items-center gap-4 md:flex">
+          <Link
+            href="/app/login"
+            className="text-sm font-medium text-text-muted transition-colors hover:text-text"
+          >
+            Sign in
+          </Link>
           <Link href="/app" className="btn-primary px-5 py-2 text-sm">
             Open Console
           </Link>
@@ -65,6 +71,9 @@ export function MarketingNav() {
                 {link.label}
               </Link>
             ))}
+            <Link href="/app/login" className="text-sm text-text-muted" onClick={() => setOpen(false)}>
+              Sign in
+            </Link>
             <Link href="/app" className="btn-primary text-center" onClick={() => setOpen(false)}>
               Open Console
             </Link>
