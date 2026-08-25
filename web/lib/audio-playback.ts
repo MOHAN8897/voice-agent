@@ -1,0 +1,66 @@
+export class AudioPlaybackManager {
+  private el: HTMLAudioElement;
+  private queue: Array<{ url: string; resolve: () => void; reject: (e: Error) => void }> = [];
+  private playing = false;
+  unlocked = false;
+
+  constructor(audioEl: HTMLAudioElement) {
+    this.el = audioEl;
+    this.el.addEventListener("ended", () => this._onClipDone());
+    this.el.addEventListener("error", () => this._onClipDone(new Error("audio error")));
+  }
+
+  userGesture() {
+    this.unlocked = true;
+    if (!this.playing && this.queue.length) this._playNext();
+  }
+
+  enqueueBase64(b64: string, mime = "audio/wav"): Promise<void> {
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const url = URL.createObjectURL(new Blob([bytes], { type: mime }));
+    return this.enqueueUrl(url, true);
+  }
+
+  enqueueUrl(url: string, revoke = false): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.queue.push({ url, resolve, reject });
+      if (!this.playing) this._playNext();
+      if (revoke) {
+        const item = this.queue[this.queue.length - 1];
+        const orig = item.resolve;
+        item.resolve = () => {
+          URL.revokeObjectURL(url);
+          orig();
+        };
+      }
+    });
+  }
+
+  stop() {
+    this.queue = [];
+    this.playing = false;
+    this.el.pause();
+    this.el.removeAttribute("src");
+  }
+
+  private _onClipDone(err?: Error) {
+    const item = this.queue.shift();
+    if (item) {
+      if (err) item.reject(err);
+      else item.resolve();
+    }
+    this.playing = false;
+    if (this.queue.length) this._playNext();
+  }
+
+  private _playNext() {
+    if (!this.queue.length) return;
+    if (!this.unlocked) return;
+    const item = this.queue[0];
+    this.playing = true;
+    this.el.src = item.url;
+    this.el.play().catch((e) => this._onClipDone(e instanceof Error ? e : new Error(String(e))));
+  }
+}

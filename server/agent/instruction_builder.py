@@ -32,8 +32,10 @@ def build_brain_request_input(
     transcript: str,
     enable_cache: bool = False,
     session_summary: str | None = None,
+    rolling_summary: str | None = None,
+    memory_projection: str | None = None,
 ) -> list[dict]:
-    """Responses API input: one cached developer block, optional summary, history, current turn."""
+    """Responses API input: one cached developer block, optional memory C, summary, history, current turn."""
     content_block: dict = {
         "type": "input_text",
         "text": brain_prompt,
@@ -49,12 +51,31 @@ def build_brain_request_input(
         }
     ]
 
-    if session_summary:
+    if memory_projection:
         messages.append(
             {
                 "type": "message",
                 "role": "user",
-                "content": [{"type": "input_text", "text": f"[Session summary]\n{session_summary}"}],
+                "content": [{"type": "input_text", "text": f"[Memory projection]\n{memory_projection}"}],
+            }
+        )
+
+    rolling = (rolling_summary or "").strip() or None
+    summary = (session_summary or "").strip() or None
+    if rolling:
+        messages.append(
+            {
+                "type": "message",
+                "role": "user",
+                "content": [{"type": "input_text", "text": f"[Rolling summary]\n{rolling}"}],
+            }
+        )
+    elif summary:
+        messages.append(
+            {
+                "type": "message",
+                "role": "user",
+                "content": [{"type": "input_text", "text": f"[Session summary]\n{summary}"}],
             }
         )
 
@@ -79,6 +100,33 @@ def build_brain_request_input(
         }
     )
     return messages
+
+
+def build_live_input(
+    *,
+    compiled_brain_text: str,
+    history: list[dict],
+    transcript: str,
+    enable_cache: bool = False,
+    session_summary: str | None = None,
+    rolling_summary: str | None = None,
+    memory_projection: str | None = None,
+) -> list[dict]:
+    """
+    Sole live LLM input builder.
+    input[0] developer: compiled_brain_text [L2 cached]
+    input[1] user: memory projection C [dynamic]
+    input[2] user: rolling summary [optional — singularity vs C]
+    """
+    return build_brain_request_input(
+        brain_prompt=compiled_brain_text,
+        history=history,
+        transcript=transcript,
+        enable_cache=enable_cache,
+        session_summary=session_summary,
+        rolling_summary=rolling_summary,
+        memory_projection=memory_projection,
+    )
 
 
 # --- Legacy API (delegates to composer) ---

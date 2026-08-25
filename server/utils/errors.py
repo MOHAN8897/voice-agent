@@ -16,6 +16,9 @@ class ErrorCode(str, Enum):
     TIMEOUT = "timeout"
     STT_EMPTY = "stt_empty"
     PROVIDER_ERROR = "provider_error"
+    PROVIDER_DISABLED = "provider_disabled"
+    NOT_FOUND = "not_found"
+    CONFLICT = "conflict"
 
 
 # User-safe messages (never leak secrets)
@@ -28,6 +31,9 @@ USER_MESSAGES: dict[ErrorCode, str] = {
     ErrorCode.TIMEOUT: "Request timed out. Please try again.",
     ErrorCode.STT_EMPTY: "Didn't catch that. Please try again.",
     ErrorCode.PROVIDER_ERROR: "AI service is temporarily unavailable. Please try again.",
+    ErrorCode.PROVIDER_DISABLED: "The selected AI provider is not enabled.",
+    ErrorCode.NOT_FOUND: "Resource not found.",
+    ErrorCode.CONFLICT: "Request conflicts with the current call state.",
 }
 
 

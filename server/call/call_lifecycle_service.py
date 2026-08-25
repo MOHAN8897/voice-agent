@@ -1,0 +1,412 @@
+"""Call start/end/finalize — sole lifecycle owner."""
+from __future__ import annotations
+
+import asyncio
+import uuid
+from datetime import datetime, timezone
+from typing import Any
+
+from server.brain.agent_service import agent_service
+from server.call import call_context
+from server.call.audio_archive import audio_archive
+from server.call.call_context import CallContext
+from server.call.call_ledger import call_ledger
+from server.call.call_store import call_store
+from server.call.paths import relative_storage_path
+from server.call.post_call_pipeline import enqueue as enqueue_post_call
+from server.config.env import get_settings
+from server.providers.base import ResolvedStack, StackSelection
+from server.providers.resolver import resolve_stack
+from server.providers.session_stack import resolve_stack_for_session
+from server.utils.errors import AppError, ErrorCode
+from server.utils.logger import logger
+
+END_REASONS = {
+    "user_stop",
+    "timeout",
+    "error",
+    "transfer",
+    "browser_unload",
+    "pstn_hangup",
+    "superseded",
+    "stale_recovery",
+    "ws_disconnect",
+}
+
+_idle_tasks: dict[str, asyncio.Task] = {}
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def status_url(call_id: str) -> str:
+    return f"/api/call/{call_id}/finalization"
+
+
+class CallLifecycleService:
+    async def start(
+        self,
+        *,
+        agent_id: str | None = None,
+        session_id: str | None = None,
+        channel: str = "browser",
+        direction: str = "inbound",
+        campaign_id: str | None = None,
+        environment: str | None = None,
+        tier: str | None = None,
+        stack_override: dict[str, Any] | None = None,
+        caller_id: str | None = None,
+        language: str = "te-IN",
+    ) -> dict[str, Any]:
+        settings = get_settings()
+        session_id = session_id or "default"
+        channel = channel if channel in ("browser", "pstn") else "browser"
+        direction = direction if direction in ("inbound", "outbound") else "inbound"
+
+        agent = await self._resolve_agent(agent_id)
+        env = environment or agent.get("environment") or settings.app_environment
+        effective_tier = tier or agent.get("default_tier") or settings.voice_agent_tier
+
+        previous = call_context.get_active_for_session(session_id)
+        if previous:
+            if settings.call_auto_end_on_start:
+                await self.end(previous.call_id, reason="superseded")
+            else:
+                raise AppError(
+                    ErrorCode.CONFLICT,
+                    message="An active call already exists for this session",
+                    status_code=409,
+                )
+
+        stack = self._resolve_locked_stack(
+            session_id=session_id,
+            tier=effective_tier,  # type: ignore[arg-type]
+            environment=env,
+            stack_override=stack_override,
+            language=language or (agent.get("languages") or ["te-IN"])[0],
+        )
+        compiled_version, compiled_text = await self._lock_compiled_brain(agent["agent_id"])
+
+        call_id = str(uuid.uuid4())
+        started = _utcnow()
+        storage_path = relative_storage_path(call_id)
+        meta = {
+            "call_id": call_id,
+            "tenant_id": agent["tenant_id"],
+            "agent_id": agent["agent_id"],
+            "session_id": session_id,
+            "channel": channel,
+            "direction": direction,
+            "campaign_id": campaign_id,
+            "caller_id": caller_id,
+            "tier": stack.tier,
+            "combination_id": stack.combination_id,
+            "compiled_brain_version": compiled_version,
+            "started_at": started.isoformat(),
+            "environment": env,
+            "resolved_stack": stack.to_safe_dict(),
+        }
+        await call_ledger.init(call_id, meta)
+        audio_archive.init(call_id)
+        from server.call.memory_manager import memory_manager
+
+        memory_manager.init(call_id)
+
+        record = {
+            "call_id": call_id,
+            "tenant_id": agent["tenant_id"],
+            "agent_id": agent["agent_id"],
+            "session_id": session_id,
+            "channel": channel,
+            "direction": direction,
+            "campaign_id": campaign_id,
+            "environment": env,
+            "tier": stack.tier or effective_tier,
+            "combination_id": stack.combination_id,
+            "compiled_brain_version": compiled_version,
+            "started_at": started,
+            "finalization_status": "pending",
+            "storage_path": storage_path,
+            "last_heartbeat_at": started,
+        }
+        await call_store.insert(record)
+
+        ctx = CallContext(
+            call_id=call_id,
+            tenant_id=agent["tenant_id"],
+            agent_id=agent["agent_id"],
+            session_id=session_id,
+            channel=channel,
+            direction=direction,
+            environment=env,
+            tier=stack.tier or effective_tier,
+            resolved_stack=stack,
+            compiled_brain_version=compiled_version,
+            compiled_brain_text=compiled_text,
+            started_at=started,
+            storage_path=storage_path,
+        )
+        call_context.put(ctx)
+        logger.info(f"[CALL] started {call_id} agent={agent['agent_id']} combo={stack.combination_id}")
+
+        return {
+            "call_id": call_id,
+            "locked_versions": {
+                "combination_id": stack.combination_id,
+                "compiled_brain_version": compiled_version,
+                "channel": channel,
+            },
+            "resolved_stack": stack.to_safe_dict(),
+            "ws_urls": {
+                "stt": f"/ws/stt-realtime?call_id={call_id}&sessionId={session_id}",
+                "tts": f"/ws/tts?call_id={call_id}&sessionId={session_id}",
+            },
+            "started_at": started.isoformat(),
+        }
+
+    async def end(self, call_id: str, *, reason: str = "user_stop") -> dict[str, Any]:
+        if reason not in END_REASONS:
+            reason = "user_stop"
+        ctx = call_context.get(call_id)
+        stored = await call_store.get(call_id)
+        if ctx is None and stored is None:
+            raise AppError(ErrorCode.NOT_FOUND, message="Call not found", status_code=404)
+
+        if ctx and ctx.status in ("finalizing", "complete", "failed"):
+            return self._accepted_payload(call_id, ctx.status)
+        if stored and stored.get("ended_at") and stored.get("finalization_status") in (
+            "complete",
+            "failed",
+            "processing",
+        ):
+            return self._accepted_payload(call_id, stored.get("finalization_status") or "processing")
+
+        if ctx:
+            ctx.status = "finalizing"
+            ctx.end_reason = reason
+            call_context.drop_session_pointer(ctx.session_id, call_id)
+        self._cancel_idle(call_id)
+
+        await call_ledger.seal(call_id)
+        if ctx:
+            ctx.components["ledger"] = "complete"
+            meta = call_ledger.read_meta(call_id)
+            meta["ended_at"] = _utcnow().isoformat()
+            meta["end_reason"] = reason
+            call_ledger.write_meta(call_id, meta)
+
+        ended = _utcnow()
+        started = ctx.started_at if ctx else None
+        duration = None
+        if started:
+            duration = max(0, int((ended - started).total_seconds()))
+        elif stored and stored.get("started_at"):
+            raw = stored["started_at"]
+            st = datetime.fromisoformat(raw.replace("Z", "+00:00")) if isinstance(raw, str) else raw
+            duration = max(0, int((ended - st).total_seconds()))
+
+        await call_store.update(
+            call_id,
+            {
+                "ended_at": ended,
+                "duration_sec": duration,
+                "finalization_status": "processing",
+                "end_reason": reason,
+            },
+        )
+        asyncio.create_task(self._finalize_async(call_id))
+        logger.info(f"[CALL] end {call_id} reason={reason}")
+        return self._accepted_payload(call_id, "processing")
+
+    async def _finalize_async(self, call_id: str) -> None:
+        ctx = call_context.get(call_id)
+        try:
+            audio_status = await audio_archive.flush(call_id)
+            if ctx:
+                ctx.components["audio"] = "complete" if audio_status.get("mix") == "complete" else "failed"
+        except Exception as e:
+            logger.warning(f"[CALL] audio flush failed {call_id}: {str(e)[:200]}")
+            if ctx:
+                ctx.components["audio"] = "failed"
+        await enqueue_post_call(call_id)
+
+    def _accepted_payload(self, call_id: str, status: str) -> dict[str, Any]:
+        return {
+            "call_id": call_id,
+            "status": status,
+            "status_url": status_url(call_id),
+        }
+
+    async def get_call(self, call_id: str) -> dict[str, Any]:
+        stored = await call_store.get(call_id)
+        ctx = call_context.get(call_id)
+        if not stored and not ctx:
+            raise AppError(ErrorCode.NOT_FOUND, message="Call not found", status_code=404)
+        body = stored or ctx.to_public_dict()  # type: ignore[union-attr]
+        fin = await self.finalization(call_id)
+        body["finalization"] = fin
+        if ctx:
+            body["resolved_stack"] = ctx.resolved_stack.to_safe_dict()
+            body["status"] = ctx.status
+        return body
+
+    async def finalization(self, call_id: str) -> dict[str, Any]:
+        ctx = call_context.get(call_id)
+        stored = await call_store.get(call_id)
+        if not ctx and not stored:
+            raise AppError(ErrorCode.NOT_FOUND, message="Call not found", status_code=404)
+        components = dict(ctx.components) if ctx else self._infer_components(stored)
+        status = (ctx.status if ctx else None) or (stored or {}).get("finalization_status") or "pending"
+        if status == "finalizing":
+            status = "processing"
+        return {
+            "call_id": call_id,
+            "status": status,
+            "ledger": components.get("ledger", "pending"),
+            "audio": components.get("audio", "pending"),
+            "outcome": components.get("outcome", "pending"),
+            "components": components,
+            "ended_at": (stored or {}).get("ended_at"),
+            "retry_available": components.get("outcome") == "failed",
+        }
+
+    def _infer_components(self, stored: dict[str, Any] | None) -> dict[str, str]:
+        from server.call.post_call_pipeline import read_outcome
+
+        ended = bool(stored and stored.get("ended_at"))
+        ledger = "complete" if ended else "pending"
+        audio = "complete" if ended else "pending"
+        call_id = (stored or {}).get("call_id")
+        outcome_file = read_outcome(call_id) if call_id else None
+        row_status = (stored or {}).get("finalization_status")
+        if outcome_file is not None:
+            if outcome_file.get("generation_ok") is False:
+                outcome = "failed"
+            else:
+                outcome = "complete"
+        elif row_status == "processing":
+            outcome = "processing"
+        elif row_status == "complete":
+            outcome = "skipped"
+        else:
+            outcome = "pending"
+        return {"ledger": ledger, "audio": audio, "outcome": outcome}
+
+    def note_ws_open(self, call_id: str) -> None:
+        ctx = call_context.get(call_id)
+        if not ctx:
+            return
+        ctx.ws_clients += 1
+        ctx.heartbeat()
+        self._cancel_idle(call_id)
+
+    def note_ws_close(self, call_id: str) -> None:
+        ctx = call_context.get(call_id)
+        if not ctx:
+            return
+        ctx.ws_clients = max(0, ctx.ws_clients - 1)
+        ctx.heartbeat()
+        if ctx.ws_clients == 0 and ctx.status == "active":
+            self._schedule_idle_end(call_id)
+
+    def heartbeat(self, call_id: str) -> None:
+        ctx = call_context.get(call_id)
+        if ctx:
+            ctx.heartbeat()
+
+    def _schedule_idle_end(self, call_id: str) -> None:
+        self._cancel_idle(call_id)
+        timeout = get_settings().call_idle_timeout_sec
+
+        async def _fire() -> None:
+            await asyncio.sleep(timeout)
+            ctx = call_context.get(call_id)
+            if ctx and ctx.status == "active" and ctx.ws_clients == 0:
+                await self.end(call_id, reason="ws_disconnect")
+
+        try:
+            _idle_tasks[call_id] = asyncio.create_task(_fire())
+        except RuntimeError:
+            pass
+
+    def _cancel_idle(self, call_id: str) -> None:
+        task = _idle_tasks.pop(call_id, None)
+        if task:
+            task.cancel()
+
+    async def recover_stale_calls(self) -> int:
+        """On process start RAM is empty, so every open call is dead and must finalize."""
+        stale = await call_store.list_open()
+        count = 0
+        for rec in stale:
+            try:
+                await self.end(rec["call_id"], reason="stale_recovery")
+                count += 1
+            except Exception as e:
+                logger.warning(f"[CALL] stale recovery failed {rec.get('call_id')}: {str(e)[:160]}")
+                await call_store.update(
+                    rec["call_id"],
+                    {"finalization_status": "failed", "end_reason": "stale_recovery"},
+                )
+        if count:
+            logger.info(f"[CALL] recovered {count} stale calls")
+        return count
+
+    async def _resolve_agent(self, agent_id: str | None) -> dict[str, Any]:
+        if agent_id:
+            try:
+                return await agent_service.get_agent(agent_id)
+            except KeyError:
+                raise AppError(ErrorCode.NOT_FOUND, message="Agent not found", status_code=404) from None
+        return await agent_service.ensure_default_agent()
+
+    def _resolve_locked_stack(
+        self,
+        *,
+        session_id: str,
+        tier: str,
+        environment: str,
+        stack_override: dict[str, Any] | None,
+        language: str,
+    ) -> ResolvedStack:
+        settings = get_settings()
+        if settings.voice_agent_config_mode == "frontend":
+            base = resolve_stack_for_session(session_id, language=language)
+            return resolve_stack(
+                mode="frontend",
+                tier=tier or base.tier,  # type: ignore[arg-type]
+                user_selection=StackSelection(
+                    stt=base.stt,
+                    llm=base.llm,
+                    tts=base.tts,
+                    language=base.language,
+                    voice_preset=base.voice_preset,
+                ),
+                language=language,
+                environment=environment,
+                stack_override=stack_override,
+            )
+        return resolve_stack(
+            mode="env",
+            tier=tier,  # type: ignore[arg-type]
+            language=language,
+            environment=environment,
+            stack_override=stack_override,
+        )
+
+    async def _lock_compiled_brain(self, agent_id: str) -> tuple[str | None, str | None]:
+        settings = get_settings()
+        if not settings.use_versioned_brains:
+            return None, None
+        from server.brain.compiled_brain_service import compiled_brain_service
+
+        try:
+            snap = await compiled_brain_service.get_active_for_agent(agent_id)
+            return snap.get("compiled_version"), snap.get("compiled_text")
+        except Exception as e:
+            logger.warning(f"[CALL] compiled brain lock skipped: {str(e)[:160]}")
+            return None, None
+
+
+call_lifecycle_service = CallLifecycleService()

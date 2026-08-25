@@ -1,0 +1,19 @@
+{
+  "captured_at": "2026-08-25",
+  "phase": "phase0_baseline",
+  "source": "benchmark_results.json",
+  "metrics": {
+    "brain_ttft_p50_ms": 1521,
+    "brain_ttft_p95_ms": 1926,
+    "cache_hit_rate_after_turn_2": 0.909,
+    "stt_final_latency_p50_ms": null,
+    "stt_final_latency_p95_ms": null,
+    "tts_first_chunk_p50_ms": null,
+    "e2e_time_to_first_audio_s": {
+      "min": 0.9,
+      "max": 1.6,
+      "budget_note": "ARCHITECTURE.md target"
+    },
+    "barge_in_tests": "test_live_barge_policy.py \u2014 100% pass required"
+  }
+}

@@ -53,7 +53,7 @@ def test_response_style_persistence(monkeypatch):
     r2 = c.get("/api/instructions", params={"sessionId": sid})
     assert r2.json()["style"] == "detailed, step-by-step"
     # Brain should pick up stored style without explicit param
-    with patch("server.routes.brain.generate_response", new=AsyncMock(return_value={"text": "ok", "language_context": {}, "usage": None, "request_id": "x"})) as mock:
+    with patch("server.routes.brain.live_turn_orchestrator.handle_user_turn", new=AsyncMock(return_value={"text": "ok", "language_context": {}, "usage": None, "request_id": "x"})) as mock:
         c.post("/api/brain", json={"transcript": "hi", "language_code": "te-IN", "sessionId": sid})
         assert mock.call_args.kwargs["response_style"] is None
     c.delete("/api/instructions", params={"sessionId": sid})
@@ -76,7 +76,7 @@ def test_brain_stream_sse_mocked(monkeypatch):
         yield {"delta": " ప్రపంచం", "language_context": {}}
         yield {"done": True, "text": "హలో ప్రపంచం", "language_context": {}}
 
-    with patch("server.routes.brain.generate_response_stream", side_effect=fake_stream):
+    with patch("server.routes.brain.live_turn_orchestrator.handle_user_turn_stream", side_effect=fake_stream):
         # TestClient will collect SSE response
         r = c.post("/api/brain/stream", json={"transcript": "hello", "language_code": "te-IN", "sessionId": "s"})
         assert r.status_code == 200

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "services": {
+    "web": {
+      "rootDirectory": "web",
+      "buildCommand": "npm ci && npm run build",
+      "startCommand": "npm run start",
+      "healthcheckPath": "/",
+      "healthcheckTimeout": 120
+    },
+    "api": {
+      "rootDirectory": ".",
+      "buildCommand": "pip install -e .",
+      "startCommand": "uvicorn server.app:app --host 0.0.0.0 --port 8000",
+      "healthcheckPath": "/api/health",
+      "healthcheckTimeout": 120
+    },
+    "worker": {
+      "rootDirectory": ".",
+      "buildCommand": "pip install -e .",
+      "startCommand": "python -m worker.main"
+    }
+  }
+}

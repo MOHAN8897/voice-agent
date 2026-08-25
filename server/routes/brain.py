@@ -15,7 +15,8 @@ from typing import Optional
 
 from server.agent.conversation_manager import conversation_manager
 from server.agent.session_memory import session_memory
-from server.services.openai_brain_service import generate_response, generate_response_stream
+from server.call.live_turn_orchestrator import live_turn_orchestrator
+from server.services.openai_brain_service import generate_response
 from server.services.runtime_settings import runtime_settings
 from server.utils.errors import AppError
 from server.utils.logger import log_error
@@ -31,6 +32,8 @@ class BrainRequest(BaseModel):
     userInstructions: str | None = Field(None, max_length=10000, description="Legacy: behaviour channel")
     businessInstructions: str | None = Field(None, max_length=10000, description="Legacy: business channel")
     responseStyle: str | None = Field(None, max_length=100)
+    callId: str | None = Field(None, max_length=64)
+    sttLatencyMs: int | None = Field(None, ge=0, le=120000)
 
 
 class BrainTestRequest(BaseModel):
@@ -55,10 +58,11 @@ async def brain_route(body: BrainRequest):
 
     rt = await _runtime_settings(body.sessionId)
     try:
-        result = await generate_response(
+        result = await live_turn_orchestrator.handle_user_turn(
             transcript=transcript,
             language_code=body.language_code,
             session_id=body.sessionId,
+            call_id=body.callId,
             user_instructions=body.userInstructions,
             business_instructions=body.businessInstructions,
             response_style=body.responseStyle,
@@ -67,6 +71,7 @@ async def brain_route(body: BrainRequest):
             temperature=rt.get("openaiTemperature"),
             reasoning_effort=rt.get("openaiReasoningEffort"),
             max_output_tokens=rt.get("openaiMaxTokens"),
+            stt_latency_ms=body.sttLatencyMs,
         )
         return result
     except AppError as e:
@@ -105,10 +110,11 @@ async def brain_stream_route(body: BrainRequest):
 
     async def sse_gen():
         try:
-            async for chunk in generate_response_stream(
+            async for chunk in live_turn_orchestrator.handle_user_turn_stream(
                 transcript=transcript,
                 language_code=body.language_code,
                 session_id=body.sessionId,
+                call_id=body.callId,
                 user_instructions=body.userInstructions,
                 business_instructions=body.businessInstructions,
                 response_style=body.responseStyle,
@@ -117,6 +123,7 @@ async def brain_stream_route(body: BrainRequest):
                 temperature=rt.get("openaiTemperature"),
                 reasoning_effort=rt.get("openaiReasoningEffort"),
                 max_output_tokens=rt.get("openaiMaxTokens"),
+                stt_latency_ms=body.sttLatencyMs,
             ):
                 yield f"data: {json.dumps(chunk, ensure_ascii=False)}\n\n"
             yield "data: [DONE]\n\n"
@@ -131,4 +138,13 @@ async def clear_session(body: dict):
     session_id = body.get("sessionId", "default")
     conversation_manager.clear(session_id)
     session_memory.clear(session_id)
+    from server.call.call_context import get_active_for_session
+    from server.call.call_lifecycle_service import call_lifecycle_service
+
+    ctx = get_active_for_session(session_id)
+    if ctx:
+        try:
+            await call_lifecycle_service.end(ctx.call_id, reason="user_stop")
+        except Exception:
+            pass
     return {"ok": True, "sessionId": session_id}

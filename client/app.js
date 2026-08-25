@@ -63,6 +63,57 @@ if (!sessionId) {
 }
 sessionInfo.textContent = "session " + sessionId.slice(0, 8);
 
+let currentCallId = null;
+
+async function startServerCall() {
+  try {
+    const r = await fetch("/api/call/start", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId, channel: "browser", direction: "inbound" }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      setState("Could not start call: " + extractErr(j, r.status));
+      return false;
+    }
+    currentCallId = j.call_id;
+    if (sessionInfo && currentCallId) sessionInfo.textContent = "call " + currentCallId.slice(0, 8);
+    if (window.ConversationStore && window.ConversationStore.setCallId) {
+      window.ConversationStore.setCallId(currentCallId);
+    }
+    return true;
+  } catch (e) {
+    setState("Could not start call");
+    return false;
+  }
+}
+
+async function endServerCall(reason) {
+  if (!currentCallId) return;
+  const id = currentCallId;
+  currentCallId = null;
+  try {
+    await fetch("/api/call/end", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ callId: id, reason: reason || "user_stop" }),
+    });
+  } catch {}
+  if (sessionInfo) sessionInfo.textContent = "session " + sessionId.slice(0, 8);
+  if (window.CallsView && window.CallsView.refresh) window.CallsView.refresh();
+}
+
+window.addEventListener("pagehide", () => {
+  if (!currentCallId) return;
+  try {
+    navigator.sendBeacon(
+      "/api/call/end",
+      new Blob([JSON.stringify({ callId: currentCallId, reason: "browser_unload" })], { type: "application/json" })
+    );
+  } catch {}
+});
+
 // Runtime settings cache (Fine-tune Console → backend → all TTS paths)
 let runtimeSettings = { values: {}, defaults: {} };
 let voiceConfig = { httpTtsFallback: false, persistentTtsWs: true };
@@ -877,6 +928,8 @@ function buildSttQueryParams() {
   if (rtVals.sttMode) q.set("mode", rtVals.sttMode);
   if (rtVals.sttSilenceMs) q.set("silence_duration_ms", String(rtVals.sttSilenceMs));
   if (rtVals.sttThreshold != null) q.set("threshold", String(rtVals.sttThreshold));
+  if (sessionId) q.set("sessionId", sessionId);
+  if (currentCallId) q.set("call_id", currentCallId);
   return q;
 }
 
@@ -906,6 +959,7 @@ function attachSttSocketHandlers(sock, { isInitial = false, onReady = null } = {
     if (_sttReconnecting) return;
     if (!live.active) return;
     cleanupLiveMedia();
+    endServerCall("ws_disconnect");
     finishLiveUi("Live session dropped — press mic to restart");
   };
 }
@@ -974,10 +1028,7 @@ async function startLiveSession() {
   await refreshRuntimeSettings();
   await refreshVoiceConfig();
   await unlockAudioPlayback();
-  // Pre-warm TTS WebSocket + config (Sarvam: connect once, stream many turns)
-  if (voiceMode.checked) {
-    ensureTtsStream(true).catch((e) => clientLog("voice", "[VOICE][TTS] pre-warm failed", e));
-  }
+  // Call is created after mic permission — see startLiveSession
 
   // Mic with platform-native AEC (cancels our own MSE <audio> playback), NS + AGC
   try {
@@ -1000,6 +1051,16 @@ async function startLiveSession() {
     setState("Audio init failed: " + e.message);
     stopLiveSession();
     return;
+  }
+
+  const started = await startServerCall();
+  if (!started) {
+    cleanupLiveMedia();
+    finishLiveUi("Could not start call — press mic to retry");
+    return;
+  }
+  if (voiceMode.checked) {
+    ensureTtsStream(true).catch((e) => clientLog("voice", "[VOICE][TTS] pre-warm failed", e));
   }
 
   const q = buildSttQueryParams();
@@ -1168,6 +1229,9 @@ function buildBrainBody(transcript, extras = {}) {
     language_code: extras.language_code || "te-IN",
     sessionId,
   };
+  if (currentCallId) body.callId = currentCallId;
+  const sttMs = extras.sttLatencyMs ?? extras.sttFinalMs;
+  if (sttMs != null && Number.isFinite(Number(sttMs))) body.sttLatencyMs = Math.round(Number(sttMs));
   if (promptsDirty && brainPromptEl) {
     const prompt = getBrainPromptSafe();
     if (prompt) body.brainPrompt = prompt;
@@ -1348,7 +1412,7 @@ async function runTurn(text, sttFinalMs) {
     try {
       const br = await fetch("/api/brain", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(buildBrainBody(text)),
+        body: JSON.stringify(buildBrainBody(text, { sttLatencyMs: sttFinalMs })),
       });
       const bj = await br.json().catch(() => ({}));
       if (!br.ok) throw new Error(extractErr(bj, br.status));
@@ -1425,7 +1489,7 @@ async function readBrainSSE(transcript, hooks) {
   const resp = await fetch("/api/brain/stream", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(buildBrainBody(transcript)),
+    body: JSON.stringify(buildBrainBody(transcript, { sttLatencyMs: _perf && _perf.sttFinalMs })),
     signal: voiceAbort.signal,
   });
   if (!resp.ok || !resp.body) {
@@ -1704,7 +1768,7 @@ function openTtsStream() {
     live.ttsStreamCodec = outCodec;
     live.ttsSampleRate = cfg.sample_rate || 24000;
     const sock = new WebSocket(
-      wsUrl("/ws/tts?model=" + encodeURIComponent(ttsModelCache) + "&sessionId=" + encodeURIComponent(sessionId))
+      wsUrl("/ws/tts?model=" + encodeURIComponent(ttsModelCache) + "&sessionId=" + encodeURIComponent(sessionId) + (currentCallId ? "&call_id=" + encodeURIComponent(currentCallId) : ""))
     );
     live.ttsSock = sock;
     live._ttsAllB64 = [];
@@ -2074,6 +2138,7 @@ async function stopLiveSession() {
   live.socket = null;
   cleanupLiveMedia();
   audioPlayer.pause();
+  await endServerCall("user_stop");
   finishLiveUi("Ready — press mic to start a new session");
 }
 

@@ -5,6 +5,7 @@ Serves API + static client. Fail-fast config validation.
 from __future__ import annotations
 
 import traceback
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -25,7 +26,21 @@ from server.routes.brain import router as brain_router
 from server.routes.tts import router as tts_router
 from server.routes.voice import router as voice_router
 from server.routes.instructions import router as instructions_router
+from server.routes.providers import router as providers_router
+from server.routes.agents import router as agents_router
+from server.routes.platform_brain import router as platform_brain_router
+from server.routes.agents_business_brain import router as agents_business_brain_router
+from server.routes.benchmarks import router as benchmarks_router
 from server.routes.ws import router as ws_router
+from server.routes.calls import router as calls_router
+from server.routes.auth import router as auth_router
+from server.routes.dev_stack import router as dev_stack_router
+from server.routes.dev_environment import router as dev_environment_router
+from server.routes.dev_audit import router as dev_audit_router
+from server.routes.dev_compiled import router as dev_compiled_router
+from server.routes.plivo import router as plivo_router
+from server.routes.plivo_ws import router as plivo_ws_router
+from server.routes.campaigns import router as campaigns_router
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from server.utils.errors import AppError
@@ -48,6 +63,47 @@ async def lifespan(app: FastAPI):
             f"[VOICE] Server starting — version {constants.APP_VERSION}, "
             f"model {settings.openai_model}, stt {settings.sarvam_stt_model}"
         )
+        from server.providers import init_provider_registry
+
+        init_provider_registry(settings)
+        logger.info("[VOICE] Provider registry initialized")
+        try:
+            from server.db import init_db
+            from server.db.seed import ensure_default_tenant
+
+            if await init_db():
+                await ensure_default_tenant()
+                try:
+                    from server.db.tier_store import load_tier_cache
+
+                    n = await load_tier_cache()
+                    if n:
+                        logger.info(f"[VOICE] Tier cache loaded ({n} rows)")
+                except Exception as e:
+                    logger.warning(f"[VOICE] Tier cache load skipped: {e}")
+                logger.info("[VOICE] PostgreSQL connected")
+            else:
+                logger.info("[VOICE] PostgreSQL not configured (DATABASE_URL unset)")
+        except Exception as e:
+            logger.warning(f"[VOICE] PostgreSQL init skipped: {e}")
+        try:
+            from server.config.env import get_settings as _gs
+
+            if _gs().use_versioned_brains:
+                from server.brain.compiled_brain_service import warmup_versioned_brains
+
+                await warmup_versioned_brains()
+                logger.info("[VOICE] Versioned brains warmed")
+        except Exception as e:
+            logger.warning(f"[VOICE] Versioned brain warmup skipped: {e}")
+        try:
+            from server.call.call_lifecycle_service import call_lifecycle_service
+
+            recovered = await call_lifecycle_service.recover_stale_calls()
+            if recovered:
+                logger.info(f"[VOICE] Recovered {recovered} stale calls")
+        except Exception as e:
+            logger.warning(f"[VOICE] Call recovery skipped: {e}")
         try:
             from server.utils.http_clients import warm_openai_client
             warm_result = await warm_openai_client()
@@ -58,6 +114,12 @@ async def lifespan(app: FastAPI):
         logger.warning(f"[VOICE] Config invalid at startup: {e}. /api/health will report. Set .env and restart.")
     yield
     # Shutdown: close pooled HTTP clients
+    try:
+        from server.db import close_db
+
+        await close_db()
+    except Exception:
+        pass
     try:
         from server.utils.http_clients import close_http_clients
         await close_http_clients()
@@ -95,6 +157,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         path = request.url.path
         # Only limit mutating API calls
         if request.method in ("POST", "PUT") and path.startswith("/api/"):
+            # Call start/end must not 429 — beacon + auto-end are lifecycle, not abuse.
+            if path.startswith("/api/call/"):
+                return await call_next(request)
             client_ip = request.client.host if request.client else "unknown"
             # TTS/Voice stricter
             if any(path.startswith(p) for p in self._LIMITED_PATHS_TTS):
@@ -179,6 +244,20 @@ app.include_router(instructions_router)
 app.include_router(metrics_router)
 app.include_router(session_router)
 app.include_router(settings_router)
+app.include_router(providers_router)
+app.include_router(agents_router)
+app.include_router(platform_brain_router)
+app.include_router(agents_business_brain_router)
+app.include_router(benchmarks_router)
+app.include_router(calls_router)
+app.include_router(auth_router)
+app.include_router(dev_stack_router)
+app.include_router(dev_environment_router)
+app.include_router(dev_audit_router)
+app.include_router(dev_compiled_router)
+app.include_router(plivo_router)
+app.include_router(plivo_ws_router)
+app.include_router(campaigns_router)
 app.include_router(ws_router)
 
 
@@ -186,7 +265,7 @@ app.include_router(ws_router)
 async def meta():
     return {
         "version": constants.APP_VERSION,
-        "phases": ["Phase 1: Foundation", "Phase 2: STT + Brain", "Phase 3: TTS + Voice Loop", "Phase 4: Custom Brain + Memory", "Phase 5: Realtime + Hardening"],
+        "phases": ["Phase 1: Foundation", "Phase 2: Brains", "Phase 3: Call lifecycle", "Phase 4: Memory", "Phase 5: Production"],
         "stt": {"url": "https://api.sarvam.ai/speech-to-text", "model": "saaras:v3", "language": "te-IN"},
         "brain": {
             "api": "OpenAI Responses API (/v1/responses)",
@@ -205,8 +284,15 @@ async def meta():
     }
 
 
-# Serve client static (if exists) — must be after API routes
-if CLIENT_DIR.exists():
+def _should_serve_client() -> bool:
+    try:
+        return get_settings().serve_client_static
+    except Exception:
+        return os.getenv("SERVE_CLIENT_STATIC", "true").lower() in ("true", "1", "yes")
+
+
+# Serve client static (if exists) — gated when Next.js web service is primary
+if CLIENT_DIR.exists() and _should_serve_client():
     # Serve index.html at /
     @app.get("/")
     async def serve_index():

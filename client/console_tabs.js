@@ -7,6 +7,7 @@
     pipeline: "Voice Pipeline",
     brain: "AI Brain",
     prompt: "Prompting",
+    calls: "Calls",
     crm: "CRM & Tools",
     advanced: "Advanced",
   };
@@ -35,6 +36,7 @@
     if (history.replaceState) {
       history.replaceState(null, "", panelId === "agent" ? "/" : "/?tab=" + panelId);
     }
+    if (panelId === "calls" && window.CallsView) window.CallsView.refresh();
   }
 
   document.querySelectorAll(".console-tab").forEach((btn) => {

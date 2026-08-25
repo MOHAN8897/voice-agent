@@ -11,6 +11,7 @@ from typing import Optional
 
 from server.config.constants import constants
 from server.config.env import get_settings
+from server.providers import resolve_stack_for_session
 from server.utils.log_config import get_log_flags
 from server.prompts.voice_defaults import (
     DEFAULT_BEHAVIOUR_INSTRUCTIONS,
@@ -43,12 +44,28 @@ async def catalog():
             "httpTtsFallback": s.voice_http_tts_fallback,
             "persistentTtsWs": True,
         }
+        config_mode = s.voice_agent_config_mode
+        active_tier = s.voice_agent_tier
+        use_registry = s.use_provider_registry
     except Exception:
         allowed_models, current_openai = OPENAI_MODEL_IDS, OPENAI_MODEL_IDS[0]
         log_flags = {"enabled": True, "client": True, "perf": True}
         voice_cfg = {"httpTtsFallback": False, "persistentTtsWs": True}
+        config_mode, active_tier, use_registry = "frontend", "medium", False
     model_labels = {m["id"]: m["label"] for m in OPENAI_MODEL_CATALOG}
+    try:
+        from server.routes.providers import _catalog_handler
+
+        provider_catalog = _catalog_handler()
+    except Exception:
+        provider_catalog = None
     return {
+        "providers": provider_catalog,
+        "config": {
+            "mode": config_mode,
+            "activeTier": active_tier,
+            "useProviderRegistry": use_registry,
+        },
         "stt": {
             "models": [{"id": k, "label": v["label"], "modes": v["modes"]} for k, v in constants.STT_MODELS.items()],
             "modes": constants.STT_MODES,
@@ -102,6 +119,19 @@ async def catalog():
         "voice": voice_cfg,
         "logging": log_flags,
     }
+
+
+@router.get("/api/settings/stack/preview")
+async def stack_preview(sessionId: str = Query("default")):
+    """Resolved L1 stack for a session — uses resolver (Phase 1 settings integration)."""
+    try:
+        resolved = resolve_stack_for_session(sessionId)
+        return {"sessionId": sessionId, "stack": resolved.to_safe_dict()}
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": {"code": "validation_error", "message": str(e)[:300]}},
+        ) from e
 
 
 class RuntimePatch(BaseModel):

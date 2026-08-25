@@ -1,0 +1,15 @@
+---
+description: Design system rules — read DESIGN.md before generating UI
+globs: ["web/**/*.tsx", "web/**/*.css", "client/**/*.css", "client/**/*.html"]
+alwaysApply: false
+---
+
+Before generating or editing any visual component, read `DESIGN.md` at the project root.
+
+Rules:
+- Use ONLY colors, typography, spacing, and radius tokens defined in DESIGN.md
+- Follow component patterns from the Components section
+- Respect Do's and Don'ts — no neon gradients or generic AI slop
+- Marketing pages: Opero-inspired enterprise clarity + restrained agentic telemetry
+- Console pages: calm dark operational density per `.better-react-web-ui.md`
+- When in doubt, reference DESIGN.md — do not invent new visual values

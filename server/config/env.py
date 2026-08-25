@@ -75,10 +75,21 @@ class Settings(BaseSettings):
     prompt_cache_key_prefix: str = Field("telugu-voice:v5", alias="PROMPT_CACHE_KEY_PREFIX")
     prompt_cache_min_tokens: int = Field(1024, alias="PROMPT_CACHE_MIN_TOKENS")
 
-    # --- Session memory (Phase 3) ---
+    # --- Session memory (legacy Phase 3; superseded by working memory) ---
     enable_session_summary: bool = Field(False, alias="ENABLE_SESSION_SUMMARY")
     summary_every_n_turns: int = Field(4, alias="SUMMARY_EVERY_N_TURNS")
     brain_context_turns: int = Field(2, alias="BRAIN_CONTEXT_TURNS")
+
+    # --- Phase 4: Working memory (A/B/C) + post-call ---
+    enable_working_memory: bool = Field(True, alias="ENABLE_WORKING_MEMORY")
+    working_memory_max_chars: int = Field(2000, alias="WORKING_MEMORY_MAX_CHARS")
+    memory_projection_max_tokens: int = Field(150, alias="MEMORY_PROJECTION_MAX_TOKENS")
+    rolling_summary_max_tokens: int = Field(150, alias="ROLLING_SUMMARY_MAX_TOKENS")
+    rolling_summary_interval_turns: int = Field(5, alias="ROLLING_SUMMARY_INTERVAL_TURNS")
+    memory_extraction_fallback: bool = Field(False, alias="ENABLE_MEMORY_EXTRACTION_FALLBACK")
+    memory_extraction_max_output_tokens: int = Field(400, alias="MEMORY_EXTRACTION_MAX_OUTPUT_TOKENS")
+    post_call_llm_model: str = Field("gpt-5.6-luna", alias="POST_CALL_LLM_MODEL")
+    post_call_max_retries: int = Field(3, alias="POST_CALL_MAX_RETRIES")
 
     # --- Fine-tune allowlist (industry: restrict client-selectable models) ---
     allowed_openai_models_csv: str = Field(
@@ -90,6 +101,82 @@ class Settings(BaseSettings):
     debug: bool = Field(False, alias="DEBUG")
     port: int = Field(8000, alias="PORT")
     client_url: str = Field("http://localhost:8000", alias="CLIENT_URL")
+
+    # --- Phase 1: Provider platform ---
+    voice_agent_config_mode: Literal["env", "frontend"] = Field("frontend", alias="VOICE_AGENT_CONFIG_MODE")
+    voice_agent_tier: Literal["low", "medium", "premium"] = Field("medium", alias="VOICE_AGENT_TIER")
+    app_environment: Literal["development", "staging", "production"] = Field("development", alias="APP_ENVIRONMENT")
+
+    enable_sarvam: bool = Field(True, alias="ENABLE_SARVAM")
+    enable_openai: bool = Field(True, alias="ENABLE_OPENAI")
+    enable_deepseek: bool = Field(False, alias="ENABLE_DEEPSEEK")
+    enable_gemini: bool = Field(False, alias="ENABLE_GEMINI")
+    enable_cartesia: bool = Field(False, alias="ENABLE_CARTESIA")
+
+    use_provider_registry: bool = Field(True, alias="USE_PROVIDER_REGISTRY")
+    use_versioned_brains: bool = Field(False, alias="USE_VERSIONED_BRAINS")
+    allow_publish_during_calls: bool = Field(False, alias="ALLOW_PUBLISH_DURING_CALLS")
+    enable_benchmarks: bool = Field(False, alias="ENABLE_BENCHMARKS")
+    fx_rate_inr: float = Field(95.64, alias="FX_RATE_INR")
+
+    database_url: str | None = Field(None, alias="DATABASE_URL")
+
+    # --- Phase 3: Call lifecycle ---
+    call_auto_end_on_start: bool = Field(True, alias="CALL_AUTO_END_ON_START")
+    call_retention_days: int = Field(90, alias="CALL_RETENTION_DAYS")
+    data_dir: str = Field("data", alias="DATA_DIR")
+    enable_call_archive: bool = Field(True, alias="ENABLE_CALL_ARCHIVE")
+    call_idle_timeout_sec: int = Field(30, alias="CALL_IDLE_TIMEOUT_SEC")
+    call_stale_heartbeat_sec: int = Field(120, alias="CALL_STALE_HEARTBEAT_SEC")
+
+    # --- Phase 5: Production platform ---
+    session_secret: str = Field("dev-session-secret-change-in-production", alias="SESSION_SECRET")
+    dev_portal_username: str | None = Field(None, alias="DEV_PORTAL_USERNAME")
+    dev_portal_password: str | None = Field(None, alias="DEV_PORTAL_PASSWORD")
+    app_console_username: str | None = Field(None, alias="APP_CONSOLE_USERNAME")
+    app_console_password: str | None = Field(None, alias="APP_CONSOLE_PASSWORD")
+    default_tenant_id: str = Field("00000000-0000-4000-8000-000000000001", alias="DEFAULT_TENANT_ID")
+    serve_client_static: bool = Field(True, alias="SERVE_CLIENT_STATIC")
+    redis_url: str | None = Field(None, alias="REDIS_URL")
+
+    enable_plivo: bool = Field(False, alias="ENABLE_PLIVO")
+    plivo_auth_id: str | None = Field(None, alias="PLIVO_AUTH_ID")
+    plivo_auth_token: str | None = Field(None, alias="PLIVO_AUTH_TOKEN")
+    plivo_app_id: str | None = Field(None, alias="PLIVO_APP_ID")
+    plivo_number: str | None = Field(None, alias="PLIVO_NUMBER")
+    plivo_webhook_base_url: str | None = Field(None, alias="PLIVO_WEBHOOK_BASE_URL")
+    plivo_public_base_url: str | None = Field(None, alias="PLIVO_PUBLIC_BASE_URL")
+    campaign_max_concurrency: int = Field(5, alias="CAMPAIGN_MAX_CONCURRENCY")
+    campaign_default_retry_attempts: int = Field(3, alias="CAMPAIGN_DEFAULT_RETRY_ATTEMPTS")
+    recording_consent_required: bool = Field(False, alias="RECORDING_CONSENT_REQUIRED")
+    deepseek_api_key: str | None = Field(None, alias="DEEPSEEK_API_KEY")
+    deepseek_model: str = Field("deepseek-chat", alias="DEEPSEEK_MODEL")
+    gemini_api_key: str | None = Field(None, alias="GEMINI_API_KEY")
+    cartesia_api_key: str | None = Field(None, alias="CARTESIA_API_KEY")
+
+    # LOW tier bundle
+    voice_low_stt_provider: str = Field("sarvam", alias="VOICE_LOW_STT_PROVIDER")
+    voice_low_stt_model: str = Field("saaras:v3", alias="VOICE_LOW_STT_MODEL")
+    voice_low_llm_provider: str = Field("openai", alias="VOICE_LOW_LLM_PROVIDER")
+    voice_low_llm_model: str = Field("gpt-5.6-luna", alias="VOICE_LOW_LLM_MODEL")
+    voice_low_tts_provider: str = Field("sarvam", alias="VOICE_LOW_TTS_PROVIDER")
+    voice_low_tts_model: str = Field("bulbul:v3", alias="VOICE_LOW_TTS_MODEL")
+
+    # MEDIUM tier bundle
+    voice_medium_stt_provider: str = Field("sarvam", alias="VOICE_MEDIUM_STT_PROVIDER")
+    voice_medium_stt_model: str = Field("saaras:v3-realtime", alias="VOICE_MEDIUM_STT_MODEL")
+    voice_medium_llm_provider: str = Field("openai", alias="VOICE_MEDIUM_LLM_PROVIDER")
+    voice_medium_llm_model: str = Field("gpt-5.6-luna", alias="VOICE_MEDIUM_LLM_MODEL")
+    voice_medium_tts_provider: str = Field("sarvam", alias="VOICE_MEDIUM_TTS_PROVIDER")
+    voice_medium_tts_model: str = Field("bulbul:v3", alias="VOICE_MEDIUM_TTS_MODEL")
+
+    # PREMIUM tier bundle
+    voice_premium_stt_provider: str = Field("sarvam", alias="VOICE_PREMIUM_STT_PROVIDER")
+    voice_premium_stt_model: str = Field("saaras:v3-realtime", alias="VOICE_PREMIUM_STT_MODEL")
+    voice_premium_llm_provider: str = Field("openai", alias="VOICE_PREMIUM_LLM_PROVIDER")
+    voice_premium_llm_model: str = Field("gpt-5.6-luna", alias="VOICE_PREMIUM_LLM_MODEL")
+    voice_premium_tts_provider: str = Field("sarvam", alias="VOICE_PREMIUM_TTS_PROVIDER")
+    voice_premium_tts_model: str = Field("bulbul:v3", alias="VOICE_PREMIUM_TTS_MODEL")
 
     @field_validator("openai_api_key", "sarvam_api_key")
     @classmethod
@@ -122,6 +209,21 @@ class Settings(BaseSettings):
     @property
     def allowed_openai_models(self) -> list[str]:
         return [m.strip() for m in self.allowed_openai_models_csv.split(",") if m.strip()]
+
+    @property
+    def working_memory_enabled(self) -> bool:
+        """ENABLE_WORKING_MEMORY is canonical; legacy ENABLE_SESSION_SUMMARY maps only when unset."""
+        raw = os.getenv("ENABLE_WORKING_MEMORY")
+        if raw is not None:
+            return self.enable_working_memory
+        if os.getenv("ENABLE_SESSION_SUMMARY", "").strip().lower() in ("true", "1", "yes"):
+            return True
+        return self.enable_working_memory
+
+    @property
+    def data_path(self) -> Path:
+        p = Path(self.data_dir)
+        return p if p.is_absolute() else PROJECT_ROOT / p
 
 
 def _safe_error_details(e: Exception) -> str:
@@ -168,6 +270,7 @@ def config_presence() -> dict[str, bool]:
     return {
         "OPENAI_API_KEY": bool(os.getenv("OPENAI_API_KEY")),
         "SARVAM_API_KEY": bool(os.getenv("SARVAM_API_KEY")),
+        "DATABASE_URL": bool(os.getenv("DATABASE_URL")),
         "OPENAI_MODEL": bool(os.getenv("OPENAI_MODEL") or True),
         "SARVAM_STT_MODEL": bool(os.getenv("SARVAM_STT_MODEL") or True),
     }

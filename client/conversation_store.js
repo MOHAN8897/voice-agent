@@ -111,5 +111,19 @@
     exportAllWav,
     exportLastWav,
     turnCount: () => load().turns.length,
+    setCallId(callId) {
+      const data = load();
+      data.callId = callId || null;
+      save(data);
+    },
+    async refreshFromServer() {
+      try {
+        const r = await fetch("/api/calls?limit=20");
+        if (!r.ok) return null;
+        return await r.json();
+      } catch {
+        return null;
+      }
+    },
   };
 })();

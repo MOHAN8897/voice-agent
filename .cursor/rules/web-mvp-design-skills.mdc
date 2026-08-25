@@ -1,0 +1,35 @@
+---
+description: Use installed frontend/UI design skills when building websites, MVPs, or any web interface
+globs: "**/*.{tsx,jsx,ts,js,css,html,vue,svelte,astro}"
+alwaysApply: false
+---
+
+# Web MVP Design Skills (Required)
+
+When creating or redesigning **any website, landing page, dashboard, app UI, or frontend MVP**, read and follow the installed Agent Skills before writing UI code.
+
+## Always do first
+
+1. Read `web-mvp-design` skill (`~/.agents/skills/web-mvp-design/SKILL.md`) for the orchestration workflow
+2. For new projects, run `setup` + `frontend-design` before implementation
+3. Pick skills by task — do not skip the design stack for speed
+
+## Skill map
+
+| Task | Skills to read |
+|------|----------------|
+| Visual design & typography | `frontend-design`, `ui-design` |
+| UI directions / less generic output | `add-ui`, `polish` |
+| shadcn/ui components | `shadcn` |
+| Design tokens & themes | `tailwind-design-system`, `design-system-patterns` |
+| React architecture & performance | `vercel-react-best-practices`, `vercel-composition-patterns` |
+| Animations & micro-interactions | `motion-foundations`, `motion-patterns`, `ui-animation`, `animate`, `interaction-design`, `css-motion-systems` |
+| Accessibility & UX audit | `web-design-guidelines`, `ui-design` |
+
+## MVP quality bar
+
+- Distinctive visual identity (avoid generic AI aesthetics)
+- Strong hierarchy, spacing, and typography
+- shadcn/ui + Tailwind with semantic design tokens
+- Purposeful motion with `prefers-reduced-motion` support
+- Responsive, dark-mode capable, WCAG AA accessible

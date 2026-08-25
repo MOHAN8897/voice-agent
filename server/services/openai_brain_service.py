@@ -8,7 +8,7 @@ import time
 from openai import APIConnectionError, APIStatusError, APITimeoutError, RateLimitError
 
 from server.agent.conversation_manager import conversation_manager
-from server.agent.instruction_builder import build_brain_request_input
+from server.agent.instruction_builder import build_brain_request_input, build_live_input
 from server.agent.instruction_store import instruction_store
 from server.agent.language_resolver import resolve_language
 from server.agent.session_memory import session_memory
@@ -20,7 +20,7 @@ from server.services.memory_summarizer import (
     summary_token_estimate,
 )
 from server.services.openai_model_params import apply_generation_params
-from server.services.prompt_cache_key import caching_enabled, compute_cache_key
+from server.services.prompt_cache_key import caching_enabled, compute_cache_key, compute_cache_key_versioned
 from server.services.prompt_cache_tracker import prompt_cache_tracker
 from server.agent.brain_prompt_composer import compose_brain_prompt, estimate_tokens
 from server.utils.errors import AppError, ErrorCode
@@ -214,20 +214,77 @@ def _resolve_brain_text(
     response_style: str | None,
     budget: int,
     use_stored_brain: bool,
-) -> str:
-    """Use stored brainPrompt when no per-request overrides; else recompose."""
+    call_id: str | None = None,
+) -> tuple[str, str | None]:
+    """Returns (brain_text, compiled_brain_version or None)."""
+    if call_id:
+        from server.call.call_context import get as get_call_ctx
+
+        ctx = get_call_ctx(call_id)
+        if ctx and ctx.compiled_brain_text:
+            return ctx.compiled_brain_text, ctx.compiled_brain_version
+
+    settings = get_settings()
+    if settings.use_versioned_brains:
+        from server.brain.compiled_brain_service import get_cached_compiled_brain
+
+        snap = get_cached_compiled_brain()
+        if snap:
+            return snap["compiled_text"], snap["compiled_version"]
     if use_stored_brain:
-        return instruction_store.get_brain_prompt(
-            session_id,
-            language=language,
-            budget_tokens=budget,
+        return (
+            instruction_store.get_brain_prompt(
+                session_id,
+                language=language,
+                budget_tokens=budget,
+            ),
+            None,
         )
-    return compose_brain_prompt(
-        behaviour=user_instructions or instruction_store.get_behaviour(session_id),
-        business=business_instructions if business_instructions is not None else instruction_store.get_business(session_id),
-        language=language,
-        style=response_style or instruction_store.get_style(session_id),
+    return (
+        compose_brain_prompt(
+            behaviour=user_instructions or instruction_store.get_behaviour(session_id),
+            business=business_instructions if business_instructions is not None else instruction_store.get_business(session_id),
+            language=language,
+            style=response_style or instruction_store.get_style(session_id),
+        ),
+        None,
     )
+
+
+def _resolve_memory_blocks(
+    *,
+    session_id: str,
+    call_id: str | None,
+    memory_projection: str | None,
+    rolling_summary: str | None,
+) -> tuple[str | None, str | None, str]:
+    """Return (projection C, rolling summary for input[2], legacy session_summary).
+
+    None means the orchestrator did not supply a block (may look up B).
+    Empty string means the orchestrator resolved it and it is empty (do not look up B).
+    """
+    settings = get_settings()
+    projection_provided = memory_projection is not None
+    rolling_provided = rolling_summary is not None
+    projection = (memory_projection or "").strip() or None
+    rolling = (rolling_summary or "").strip() or None
+    legacy = ""
+
+    if call_id and settings.working_memory_enabled:
+        if not projection_provided or not rolling_provided:
+            from server.call.memory_manager import memory_manager
+            from server.call.memory_projection import build as build_projection
+
+            snap = memory_manager.get_snapshot(call_id)
+            if not rolling_provided:
+                rolling = (snap.get("summary") or "").strip() or None
+            if not projection_provided:
+                projection = build_projection(snap, include_summary=not rolling) or None
+        return projection, rolling, ""
+
+    if settings.enable_session_summary:
+        legacy = session_memory.get_summary(session_id)
+    return projection, rolling, legacy
 
 
 def _prepare_brain_context(
@@ -241,7 +298,10 @@ def _prepare_brain_context(
     openai_model: str | None,
     use_stored_brain: bool,
     brain_override: str | None = None,
-) -> tuple[dict, list, str, int, int, str, bool, int, str, int, int, int]:
+    call_id: str | None = None,
+    memory_projection: str | None = None,
+    rolling_summary: str | None = None,
+) -> tuple[dict, list, str, int, int, str, bool, int, str, int, int, int, str | None]:
     settings = get_settings()
     use_model = openai_model or settings.openai_model
     language_context = resolve_language(language_code, transcript)
@@ -249,8 +309,9 @@ def _prepare_brain_context(
 
     if brain_override:
         brain_text = brain_override
+        compiled_version = None
     else:
-        brain_text = _resolve_brain_text(
+        brain_text, compiled_version = _resolve_brain_text(
             session_id=session_id,
             language=language_context["responseLanguage"],
             user_instructions=user_instructions,
@@ -258,12 +319,17 @@ def _prepare_brain_context(
             response_style=response_style,
             budget=budget,
             use_stored_brain=use_stored_brain,
+            call_id=call_id,
         )
     brain_est = estimate_tokens(brain_text)
 
-    session_summary = ""
-    if settings.enable_session_summary:
-        session_summary = session_memory.get_summary(session_id)
+    projection, rolling, legacy_summary = _resolve_memory_blocks(
+        session_id=session_id,
+        call_id=call_id,
+        memory_projection=memory_projection,
+        rolling_summary=rolling_summary,
+    )
+    session_summary = rolling or legacy_summary
 
     history = conversation_manager.get_context_for_brain(
         session_id,
@@ -274,13 +340,18 @@ def _prepare_brain_context(
     transcript_est = estimate_tokens(transcript)
 
     enable_cache = caching_enabled(use_model, brain_est)
-    input_messages = build_brain_request_input(
-        brain_prompt=brain_text,
+    builder_kwargs = dict(
         history=history,
         transcript=transcript,
         enable_cache=enable_cache,
-        session_summary=session_summary or None,
+        session_summary=legacy_summary or None,
+        rolling_summary=rolling,
+        memory_projection=projection,
     )
+    if settings.use_versioned_brains and compiled_version:
+        input_messages = build_live_input(compiled_brain_text=brain_text, **builder_kwargs)
+    else:
+        input_messages = build_brain_request_input(brain_prompt=brain_text, **builder_kwargs)
     return (
         language_context,
         input_messages,
@@ -294,6 +365,7 @@ def _prepare_brain_context(
         history_est,
         summary_est,
         transcript_est,
+        compiled_version,
     )
 
 
@@ -303,19 +375,25 @@ def _apply_cache_kwargs(
     brain_text: str,
     budget: int,
     enable_cache: bool,
+    compiled_version: str | None = None,
 ) -> None:
     if not enable_cache:
         return
     settings = get_settings()
-    create_kwargs["prompt_cache_key"] = compute_cache_key(brain_text, budget)
+    if compiled_version:
+        create_kwargs["prompt_cache_key"] = compute_cache_key_versioned(compiled_version, budget)
+    else:
+        create_kwargs["prompt_cache_key"] = compute_cache_key(brain_text, budget)
     create_kwargs["prompt_cache_options"] = {
         "mode": "explicit",
         "ttl": settings.prompt_cache_ttl,
     }
 
 
-def _after_turn_memory(session_id: str) -> None:
+def _after_turn_memory(session_id: str, *, call_id: str | None = None) -> None:
     settings = get_settings()
+    if call_id and settings.working_memory_enabled:
+        return
     if not settings.enable_session_summary:
         return
     turn_count = session_memory.record_turn(session_id)
@@ -325,6 +403,21 @@ def _after_turn_memory(session_id: str) -> None:
     summary = compact_history_summary(full_history)
     if summary:
         session_memory.set_summary(session_id, summary)
+
+
+def _structured_live_turn_enabled(*, call_id: str | None, explicit: bool | None) -> bool:
+    if explicit is not None:
+        return explicit
+    return bool(call_id) and get_settings().working_memory_enabled
+
+
+def _spoken_and_memory(raw_text: str) -> tuple[str, dict, bool]:
+    from server.call.live_turn_schema import SpokenResponseExtractor
+
+    extractor = SpokenResponseExtractor()
+    extractor.feed(raw_text)
+    spoken = (extractor.spoken_text or raw_text).strip()
+    return spoken, extractor.parse_memory_update(), extractor.structured_parse_failed()
 
 
 async def generate_response(
@@ -341,6 +434,11 @@ async def generate_response(
     reasoning_effort: str | None = None,
     max_output_tokens: int | None = None,
     timeout_ms: int | None = None,
+    call_id: str | None = None,
+    memory_projection: str | None = None,
+    rolling_summary: str | None = None,
+    structured_live_turn: bool | None = None,
+    input_messages: list | None = None,
 ) -> dict:
     settings = get_settings()
     timeout_s = (timeout_ms or settings.request_timeout_ms) / 1000
@@ -359,7 +457,7 @@ async def generate_response(
 
     (
         language_context,
-        input_messages,
+        built_input,
         use_model,
         brain_est,
         budget,
@@ -370,6 +468,7 @@ async def generate_response(
         history_est,
         summary_est,
         transcript_est,
+        compiled_version,
     ) = _prepare_brain_context(
         session_id=session_id,
         transcript=transcript,
@@ -380,10 +479,19 @@ async def generate_response(
         openai_model=openai_model,
         use_stored_brain=use_stored_brain,
         brain_override=brain_override,
+        call_id=call_id,
+        memory_projection=memory_projection,
+        rolling_summary=rolling_summary,
     )
+    if not input_messages:
+        input_messages = built_input
     prep_ms = int((time.perf_counter() - t0) * 1000)
     prep_ms = max(prep_ms, 0)
-    cache_key = compute_cache_key(brain_text, budget) if enable_cache else None
+    cache_key = (
+        compute_cache_key_versioned(compiled_version, budget)
+        if enable_cache and compiled_version
+        else compute_cache_key(brain_text, budget) if enable_cache else None
+    )
 
     log_brain(
         "Request started",
@@ -409,11 +517,17 @@ async def generate_response(
         "max_output_tokens": use_max_tokens,
         "store": False,
     }
+    use_structured = _structured_live_turn_enabled(call_id=call_id, explicit=structured_live_turn)
+    if use_structured:
+        from server.call.live_turn_schema import TEXT_FORMAT_LIVE_TURN
+
+        create_kwargs["text"] = TEXT_FORMAT_LIVE_TURN
     _apply_cache_kwargs(
         create_kwargs,
         brain_text=brain_text,
         budget=budget,
         enable_cache=enable_cache,
+        compiled_version=compiled_version,
     )
     apply_generation_params(
         create_kwargs,
@@ -467,8 +581,15 @@ async def generate_response(
             if not text:
                 text = "క్షమించండి, నాకు అర్థం కాలేదు. మళ్లీ ప్రయత్నించండి."
 
+            memory_update = {"operations": []}
+            memory_parse_failed = False
+            if use_structured:
+                text, memory_update, memory_parse_failed = _spoken_and_memory(text)
+                if not text:
+                    text = "క్షమించండి, నాకు అర్థం కాలేదు. మళ్లీ ప్రయత్నించండి."
+
             conversation_manager.add_turn(session_id, transcript, text)
-            _after_turn_memory(session_id)
+            _after_turn_memory(session_id, call_id=call_id)
 
             usage_norm = normalize_usage(getattr(response, "usage", None))
             request_id = getattr(response, "id", None)
@@ -495,6 +616,8 @@ async def generate_response(
                 "language_context": language_context,
                 "usage": usage_norm,
                 "request_id": request_id,
+                "memory_update": memory_update,
+                "memory_parse_failed": memory_parse_failed,
             }
 
         except asyncio.TimeoutError as e:
@@ -575,6 +698,12 @@ async def generate_response_stream(
     reasoning_effort: str | None = None,
     max_output_tokens: int | None = None,
     timeout_ms: int | None = None,
+    call_id: str | None = None,
+    memory_projection: str | None = None,
+    rolling_summary: str | None = None,
+    structured_live_turn: bool | None = None,
+    live_turn_schema: dict | None = None,
+    input_messages: list | None = None,
 ):
     settings = get_settings()
     use_max_tokens = max_output_tokens or settings.max_response_length
@@ -592,7 +721,7 @@ async def generate_response_stream(
 
     (
         language_context,
-        input_messages,
+        built_input,
         use_model,
         brain_est,
         budget,
@@ -603,6 +732,7 @@ async def generate_response_stream(
         history_est,
         summary_est,
         transcript_est,
+        compiled_version,
     ) = _prepare_brain_context(
         session_id=session_id,
         transcript=transcript,
@@ -613,10 +743,19 @@ async def generate_response_stream(
         openai_model=openai_model,
         use_stored_brain=use_stored_brain,
         brain_override=brain_override,
+        call_id=call_id,
+        memory_projection=memory_projection,
+        rolling_summary=rolling_summary,
     )
+    if not input_messages:
+        input_messages = built_input
     prep_ms = int((time.perf_counter() - t0) * 1000)
     prep_ms = max(prep_ms, 0)
-    cache_key = compute_cache_key(brain_text, budget) if enable_cache else None
+    cache_key = (
+        compute_cache_key_versioned(compiled_version, budget)
+        if enable_cache and compiled_version
+        else compute_cache_key(brain_text, budget) if enable_cache else None
+    )
 
     log_brain(
         "Stream started",
@@ -640,11 +779,24 @@ async def generate_response_stream(
         "store": False,
         "stream": True,
     }
+    use_structured = _structured_live_turn_enabled(call_id=call_id, explicit=structured_live_turn) or live_turn_schema is not None
+    if use_structured:
+        from server.call.live_turn_schema import TEXT_FORMAT_LIVE_TURN, SpokenResponseExtractor
+
+        create_kwargs["text"] = (
+            {"format": {"type": "json_schema", "name": "live_turn", "strict": True, "schema": live_turn_schema}}
+            if live_turn_schema
+            else TEXT_FORMAT_LIVE_TURN
+        )
+        extractor = SpokenResponseExtractor()
+    else:
+        extractor = None
     _apply_cache_kwargs(
         create_kwargs,
         brain_text=brain_text,
         budget=budget,
         enable_cache=enable_cache,
+        compiled_version=compiled_version,
     )
     apply_generation_params(
         create_kwargs,
@@ -664,6 +816,7 @@ async def generate_response_stream(
         brainEst=brain_est,
         budget=budget,
         cache_key=cache_key,
+        structured=use_structured,
     )
     log_perf("BRAIN_STARTED", model=use_model, session=session_id, turn=turn, prep_ms=prep_ms)
     t_stream = time.perf_counter()
@@ -678,7 +831,8 @@ async def generate_response_stream(
             if event_type == "response.output_text.delta":
                 delta = getattr(event, "delta", None) or (event.get("delta") if isinstance(event, dict) else "")
                 if delta:
-                    if not first_delta_logged:
+                    spoken_delta = extractor.feed(delta) if extractor is not None else delta
+                    if spoken_delta and not first_delta_logged:
                         first_delta_logged = True
                         ttft_ms = round((time.perf_counter() - t_stream) * 1000)
                         log_perf(
@@ -691,7 +845,8 @@ async def generate_response_stream(
                             is_first_turn=turn <= 1,
                         )
                     full_text_parts.append(delta)
-                    yield {"delta": delta, "language_context": language_context}
+                    if spoken_delta:
+                        yield {"delta": spoken_delta, "language_context": language_context}
             elif event_type == "response.completed":
                 resp = getattr(event, "response", None)
                 if resp is not None:
@@ -702,9 +857,17 @@ async def generate_response_stream(
                 err_msg = getattr(event, "error", None) or str(event)
                 raise AppError(ErrorCode.PROVIDER_ERROR, provider="openai", cause=Exception(err_msg))
 
-        full_text = "".join(full_text_parts).strip() or "క్షమించండి, నాకు అర్థం కాలేదు."
+        raw_text = "".join(full_text_parts).strip()
+        memory_update = {"operations": []}
+        memory_parse_failed = False
+        if extractor is not None:
+            full_text = extractor.spoken_text.strip() or "క్షమించండి, నాకు అర్థం కాలేదు."
+            memory_update = extractor.parse_memory_update()
+            memory_parse_failed = extractor.structured_parse_failed()
+        else:
+            full_text = raw_text or "క్షమించండి, నాకు అర్థం కాలేదు."
         conversation_manager.add_turn(session_id, transcript, full_text)
-        _after_turn_memory(session_id)
+        _after_turn_memory(session_id, call_id=call_id)
         total_ms = round((time.perf_counter() - t_stream) * 1000)
         _log_token_usage(
             stream_usage,
@@ -736,7 +899,14 @@ async def generate_response_stream(
             cached_tokens=stream_usage.get("cached_tokens"),
             cache_write_tokens=stream_usage.get("cache_write_tokens"),
         )
-        yield {"done": True, "text": full_text, "language_context": language_context, "usage": stream_usage}
+        yield {
+            "done": True,
+            "text": full_text,
+            "language_context": language_context,
+            "usage": stream_usage,
+            "memory_update": memory_update,
+            "memory_parse_failed": memory_parse_failed,
+        }
         log_brain("Stream completed", chars=len(full_text), usage=stream_usage)
     except AppError:
         raise

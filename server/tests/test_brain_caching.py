@@ -21,7 +21,11 @@ def test_caching_enabled_gpt56():
     assert caching_enabled("gpt-5.5", 1500) is False
 
 
-def test_brain_request_cache_block():
+def test_versioned_cache_key_in_brain_caching():
+    from server.services.prompt_cache_key import compute_cache_key_versioned
+
+    k = compute_cache_key_versioned("cb_vtest", 1500)
+    assert k.startswith("telugu-voice:v5:cb-")
     msgs = build_brain_request_input(
         brain_prompt="brain",
         history=[],

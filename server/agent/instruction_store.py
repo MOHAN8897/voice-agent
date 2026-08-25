@@ -127,6 +127,17 @@ class InstructionStore:
         language: str = "te-IN",
         budget_tokens: int = 2500,
     ) -> str:
+        try:
+            from server.config.env import get_settings
+
+            if get_settings().use_versioned_brains:
+                from server.brain.compiled_brain_service import get_cached_compiled_brain
+
+                snap = get_cached_compiled_brain()
+                if snap:
+                    return snap["compiled_text"]
+        except Exception:
+            pass
         with self._lock:
             e = self._entry(session_id)
             if e and e.get("brainPrompt"):

@@ -1,483 +1,861 @@
-I checked the current Sarvam documentation and OpenAI documentation against your logs. The biggest issue is your live voice path is not actually using streaming TTS even though your architecture has a TTS WebSocket.
-
-🔴 What your logs reveal
-
-Your actual flow is currently:
-
-User speaks
-   ↓
-STT WebSocket
-   ↓
-Brain streaming
-   ↓
-TTS WebSocket CONNECTS
-   ↓
-❌ TTS WebSocket closes
-   ↓
-Brain completes
-   ↓
-POST /api/tts
-   ↓
-WAIT ~2–3 seconds
-   ↓
-FULL AUDIO
+# Voice Agent — Configurable Model Tiers & Plugin Testing Framework
 
-Look at this:
+Analyze the **existing voice-agent codebase and current implementation first**. Do not rewrite or replace working functionality unnecessarily. Preserve the existing architecture, APIs, WebSocket behavior, audio pipeline, logging, session handling, and frontend functionality unless a change is required for this feature.
 
-22:41:16 [BRAIN] Stream started
-22:41:18 [WS] tts error: received 1000 (OK)
-22:41:19 [BRAIN] Stream completed
-22:41:19 [TTS] Synthesis started
-22:41:22 [TTS] Audio received
+The goal is to convert the current voice agent into a **flexible model-combination testing framework** where STT, LLM, and TTS providers/models can be independently configured and tested.
 
-That's the smoking gun.
+---
 
-You're opening the streaming TTS WebSocket...
-22:41:12 WebSocket /ws/tts accepted
-22:41:12 TTS upstream connected
+## 1. Core Objective
 
-...but then it closes:
+The voice-agent pipeline should support interchangeable:
 
-tts error: received 1000 (OK)
+**STT → LLM → TTS**
 
-and your application falls back to:
+providers/models.
 
-POST /api/tts
+The system must allow us to test different combinations of:
 
-So you're paying the latency penalty of creating the WebSocket, failing to use it, and then doing a full HTTP TTS synthesis.
+### STT
 
-🔥 Issue #1 — Your TTS WebSocket is not actually being used
+* Sarvam STT
+* Cartesia Ink
+* Any existing STT integrations already present in the codebase
 
-This is the biggest problem.
+### LLM
 
-Sarvam's current documentation explicitly recommends the WebSocket streaming TTS path for conversational agents because audio chunks arrive progressively instead of waiting for complete synthesis.
+* Existing LLM models currently supported by the project
+* DeepSeek V4
+* OpenAI models currently supported
+* Gemini models currently supported
+* Any other already-integrated models
 
-Your logs show:
+### TTS
 
-WS /ws/tts
-      ↓
-connected
-      ↓
-1000 OK
-      ↓
-closed
-      ↓
-POST /api/tts
-      ↓
-wait
-      ↓
-full audio
+* Sarvam Bulbul
+* Cartesia Sonic
+* Any existing TTS integrations already present in the codebase
 
-That's exactly what you don't want.
+Do not assume model names or APIs blindly. Inspect the existing implementation and provider documentation/configuration before modifying integrations.
 
-Fix
+---
 
-Your code should do:
+# 2. Create Three Voice-Agent Quality Tiers
 
-Brain delta
-    ↓
-Sentence ready
-    ↓
-WS /ws/tts
-    ↓
-send text
-    ↓
-Sarvam audio chunk #1
-    ↓
-Browser
-    ↓
-PLAY
+Create exactly three configurable voice-agent modes:
 
-Not:
+### LOW
 
-Brain complete
-    ↓
-POST /api/tts
-    ↓
-wait for entire WAV/MP3
-    ↓
-play
-🔴 Issue #2 — Your TTS is starting AFTER Brain completes
+Designed for:
 
-Your logs:
+* Lowest possible cost
+* High-volume calling
+* Acceptable conversational quality
+* Fast response time
 
-22:41:16 Brain started
-22:41:19 Brain completed
-22:41:19 TTS synthesis started
+### MEDIUM
 
-That's roughly 3 seconds before TTS even starts.
+Designed for:
 
-This defeats the entire purpose of streaming.
+* Good balance between cost, latency and quality
+* Production-quality conversations
+* Better reasoning and natural responses than LOW
 
-You want:
+### PREMIUM
 
-22:41:16 Brain starts
-22:41:16.5 first delta
-22:41:17 sentence ready
-22:41:17 TTS starts
-22:41:17.3 first audio
-22:41:17.3 SPEAKER
+Designed for:
 
-The Brain should not need to finish the entire answer before TTS begins.
+* Highest conversational quality
+* Best Telugu/Indian-language experience
+* Best STT accuracy
+* Best TTS naturalness
+* Best LLM intelligence
+* Cost is secondary
 
-Sarvam specifically describes WebSocket TTS as suitable for conversational agents because audio can flow before the sentence finishes synthesizing.
+Each tier must contain:
 
-🔴 Issue #3 — You have TWO TTS architectures competing
-
-Your logs show:
-
-WebSocket TTS
-/ws/tts
-
-and:
-
-HTTP TTS
-POST /api/tts
-
-This is dangerous.
-
-You should have:
-
-LIVE VOICE MODE
-       ↓
-WS TTS
-
-and optionally:
-
-TEST / REPLAY
-       ↓
-HTTP TTS
-
-Currently it appears to be:
-
-LIVE
- ↓
-WS
- ↓
-fails/closes
- ↓
-HTTP fallback
-
-That fallback is destroying your latency.
-
-My recommendation
-
-For live mode:
-
-Disable HTTP fallback entirely during normal operation.
-
-If WS fails, log an explicit error instead of silently switching to slow REST synthesis.
-
-That will make the problem visible and force you to fix the actual streaming path.
-
-🔴 Issue #4 — You're opening a new TTS WebSocket every turn
-
-Look at:
-
-22:41:12 WebSocket /ws/tts
-
-Then again:
-
-22:41:34 WebSocket /ws/tts
-
-Then again:
-
-22:41:44 WebSocket /ws/tts
-
-So every turn appears to establish a new connection.
-
-That's unnecessary overhead.
-
-Your architecture earlier said:
-
-"WS /ws/tts (warm per turn)"
-
-But your implementation appears to be creating a new connection for every turn.
-
-Better
-
-Maintain:
-
-Voice session
-      │
-      ├── STT WebSocket ───────────── persistent
-      │
-      └── TTS WebSocket ───────────── persistent
-
-Then:
-
-Turn 1 → text → same TTS WS
-Turn 2 → text → same TTS WS
-Turn 3 → text → same TTS WS
-
-Sarvam's WebSocket API supports streaming configuration and text chunks over the same connection.
-
-This can eliminate repeated WebSocket handshake latency.
-
-🔴 Issue #5 — Your TTS config has temperature=-
-
-This is suspicious:
-
-temperature=-
-
-Your runtime config is logging:
-
-model=bulbul:v3
-speaker=shubh
-pace=1.08
-temperature=-
-
-But your earlier UI had a temperature setting.
-
-So your runtime configuration appears to have no actual TTS temperature value.
-
-That's something I'd fix immediately.
-
-For Bulbul v3, Sarvam documents temperature as supported from 0.01–1.0, with 0.6 default.
-
-For your business voice agent I'd test:
-
-temperature = 0.4
-
-or:
-
-0.45
-
-Sarvam's own contact-center examples use Bulbul v3 with pace=1.1 and temperature=0.4, which is actually very close to your use case.
-
-🟠 Issue #6 — You're using pace=1.08
-
-This isn't a problem.
-
-Actually, it's reasonable.
-
-Sarvam's contact-center guidance uses:
-
-pace=1.1
-temperature=0.4
-
-for a brisk professional delivery.
-
-So I'd keep:
-
-pace = 1.05–1.10
-
-Your:
-
-1.08
-
-is perfectly reasonable.
-
-Don't waste time optimizing this before fixing streaming.
-
-🟠 Issue #7 — Your audio codec changes between paths
-
-Look:
-
-WebSocket:
-
-codec=linear16
-
-HTTP:
-
-codec=mp3
-
-This means your two paths aren't even producing the same audio format.
-
-Your WebSocket path:
-
-linear16 / 24kHz
-
-Your HTTP fallback:
-
-MP3 / 24kHz
-
-That's another reason your playback architecture can behave differently between automatic and manual playback.
-
-Sarvam's WebSocket API supports streaming audio chunks and Bulbul v3 uses 24 kHz by default.
-
-For browser voice agent
-
-I'd pick one format and use it consistently.
-
-If your current browser playback is already built around MediaSource + MPEG:
-
-MP3
-
-can be convenient.
-
-But if your WebSocket implementation is receiving linear16, then your browser needs a proper PCM playback pipeline — you cannot simply treat raw PCM as MP3.
-
-So don't change this blindly.
-
-Your coding agent should audit:
-
-Sarvam output
- ↓
-codec
- ↓
-base64 decode
- ↓
-browser buffer
- ↓
-AudioContext / MediaSource
-🔴 Issue #8 — The biggest architecture mistake: TTS starts too late
-
-You currently have:
-
-Brain starts
-       ↓
-Brain completes
-       ↓
-TTS starts
-
-You want:
-
-Brain starts
-       ↓
-first delta
-       ↓
-sentence accumulator
-       ↓
-sentence complete
-       ↓
-TTS immediately
-
-For example Brain generates:
-
-"అవునా సార్…"
-
-then:
-
-"అవునా సార్… 50 లక్షల వరకు చూస్తున్నారా?"
-
-As soon as the sentence is complete:
-
-→ TTS
-
-Don't wait for:
-
-"అవునా సార్… 50 లక్షల వరకు చూస్తున్నారా? మీకు plot కావాలా, flat కావాలా? మా దగ్గర..."
-🟠 Issue #9 — Your STT architecture is also not using the newest realtime path
-
-Your log:
-
-stt saaras:v3
-
-and:
-
-/ws/stt-realtime?language_code=te-IN&stream_type=fast&mode=transcribe
-
-Your current Sarvam documentation says the older saaras:v3 streaming endpoint is the generally available legacy WebSocket, while saaras:v3-realtime is the newer realtime streaming path intended for new voice-agent/live transcription work, with interim transcripts and finer VAD tuning.
-
-So I'd have your developer test:
-
-saaras:v3
-vs
-saaras:v3-realtime
-
-Don't blindly switch production yet.
-
-Measure:
-
-speech end
-→ transcript.final
-
-If realtime gives you lower endpointing latency and stable Telugu recognition, migrate.
-
-🟠 Issue #10 — Brain is taking ~1–3 seconds
-
-Your first example:
-
-22:41:16 Brain started
-22:41:19 Brain completed
-
-That's ~3 seconds.
-
-But we don't know the first delta latency, because your logs aren't recording it.
-
-That's a major observability gap.
-
-You need:
-
-BRAIN_STARTED
-BRAIN_FIRST_DELTA
-BRAIN_FIRST_SENTENCE
-BRAIN_COMPLETED
+```text
+STT provider + STT model
+LLM provider + LLM model
+TTS provider + TTS model
+```
 
 For example:
 
-16.000 Brain started
-16.420 First delta
-16.850 Sentence ready
-18.900 Brain completed
+```env
+VOICE_LOW_STT_PROVIDER=...
+VOICE_LOW_STT_MODEL=...
 
-If first delta is 400ms but completion is 3s, that's fine because TTS can start at 850ms.
+VOICE_LOW_LLM_PROVIDER=...
+VOICE_LOW_LLM_MODEL=...
 
-If first delta itself is 2.5s, then Brain configuration is the bottleneck.
+VOICE_LOW_TTS_PROVIDER=...
+VOICE_LOW_TTS_MODEL=...
+```
 
-🟢 GPT-5.6 Luna is actually a good choice here
+Repeat the same structure for:
 
-Your log:
+```env
+VOICE_MEDIUM_*
+VOICE_PREMIUM_*
+```
 
-model=gpt-5.6-luna
+Do not hard-code these combinations in frontend or backend source code.
 
-That's a sensible model for your workload.
+---
 
-OpenAI currently positions GPT-5.6 Luna for cost-sensitive, high-volume workloads, while the flagship is aimed at more complex reasoning.
+# 3. DeepSeek V4 Integration
 
-For a real-time voice agent, don't use heavy reasoning for every turn.
+Add DeepSeek V4 as an available LLM provider/model option.
 
-Routine:
+Use the provider's current API structure and preserve streaming if supported.
 
-"50 lakhs budget."
+The configuration must be environment-driven:
 
-doesn't require deep reasoning.
+```env
+DEEPSEEK_API_KEY=...
+DEEPSEEK_BASE_URL=...
+```
 
-Use the lowest practical reasoning configuration.
+and the selected DeepSeek model should be configurable:
 
-🔴 Issue #11 — Your current log doesn't show Brain reasoning configuration
+```env
+DEEPSEEK_MODEL=...
+```
 
-You log:
+Do not hard-code a DeepSeek model name throughout the application.
 
-model=gpt-5.6-luna
-historyLen=4
+The model registry should make DeepSeek available alongside the existing LLM providers.
 
-but not:
+---
 
-reasoning_effort
-temperature
-max_output_tokens
+# 4. Model Registry
 
-You need to log:
+Create a central model/provider registry instead of scattering provider names throughout the code.
 
-[BRAIN_CONFIG]
-model=gpt-5.6-luna
-reasoning_effort=none
-max_output_tokens=140
+The registry should expose metadata such as:
 
-That lets you prove what is actually being sent.
+```text
+provider
+model
+type
+display_name
+enabled
+supports_streaming
+supports_realtime
+language_support
+pricing_metadata
+```
 
-🟠 Issue #12 — History is growing
+Example conceptual structure:
 
-You have:
+```text
+STT
+ ├── Sarvam
+ │    └── Saaras
+ └── Cartesia
+      └── Ink
 
-historyLen=0
-historyLen=2
-historyLen=4
+LLM
+ ├── OpenAI
+ ├── Gemini
+ └── DeepSeek
+      └── V4
 
-This is okay for now.
+TTS
+ ├── Sarvam
+ │    └── Bulbul
+ └── Cartesia
+      └── Sonic
+```
 
-But eventually:
+The registry must be extensible so additional providers/models can be added later without redesigning the frontend.
 
-historyLen=12
+---
 
-etc. increases input processing.
+# 5. Environment-Controlled Mode
 
-For voice conversations, don't send huge conversation histories.
+Create a master environment switch:
 
-I'd use:
+```env
+VOICE_AGENT_CONFIG_MODE=env
+```
 
-6–10 recent turns
+Supported values:
 
-plus a compact customer summary if needed.
+```text
+env
+frontend
+```
+
+### When:
+
+```env
+VOICE_AGENT_CONFIG_MODE=env
+```
+
+The frontend must NOT expose individual STT/LLM/TTS configuration controls.
+
+Instead, the frontend should show only:
+
+```text
+LOW
+MEDIUM
+PREMIUM
+```
+
+The actual provider/model combination for each tier is determined entirely by the `.env` configuration.
+
+For example:
+
+```env
+VOICE_LOW_STT_PROVIDER=cartesia
+VOICE_LOW_STT_MODEL=ink
+
+VOICE_LOW_LLM_PROVIDER=deepseek
+VOICE_LOW_LLM_MODEL=deepseek-v4-flash
+
+VOICE_LOW_TTS_PROVIDER=cartesia
+VOICE_LOW_TTS_MODEL=sonic-3.5
+```
+
+The frontend should simply show:
+
+```text
+LOW
+₹ Estimated Cost: ...
+STT: Configured
+LLM: Configured
+TTS: Configured
+```
+
+Do not expose configuration controls in this mode.
+
+---
+
+# 6. Frontend-Controlled Configuration Mode
+
+When:
+
+```env
+VOICE_AGENT_CONFIG_MODE=frontend
+```
+
+the frontend should expose a model-testing/configuration interface.
+
+Allow the developer to independently select:
+
+### STT
+
+```text
+Provider
+Model
+```
+
+### LLM
+
+```text
+Provider
+Model
+```
+
+### TTS
+
+```text
+Provider
+Model
+```
+
+The user should be able to construct combinations such as:
+
+```text
+Sarvam STT
++
+DeepSeek V4
++
+Cartesia Sonic
+```
+
+or:
+
+```text
+Cartesia Ink
++
+GPT
++
+Sarvam Bulbul
+```
+
+or:
+
+```text
+Sarvam STT
++
+Gemini
++
+Sarvam Bulbul
+```
+
+without changing the backend code.
+
+---
+
+# 7. Plugin Visibility
+
+The frontend must NEVER display providers/models that are disabled or unavailable.
+
+Create environment-level plugin switches such as:
+
+```env
+ENABLE_SARVAM_STT=true
+ENABLE_CARTESIA_STT=true
+
+ENABLE_OPENAI_LLM=true
+ENABLE_GEMINI_LLM=true
+ENABLE_DEEPSEEK_LLM=true
+
+ENABLE_SARVAM_TTS=true
+ENABLE_CARTESIA_TTS=true
+```
+
+If a plugin is:
+
+```env
+ENABLE_DEEPSEEK_LLM=false
+```
+
+then DeepSeek must disappear from the frontend completely.
+
+Do not merely disable the button visually. The backend must also reject requests attempting to use a disabled provider/model.
+
+---
+
+# 8. API Keys
+
+All provider API keys must remain server-side.
+
+Never expose:
+
+```text
+OPENAI_API_KEY
+GEMINI_API_KEY
+DEEPSEEK_API_KEY
+SARVAM_API_KEY
+CARTESIA_API_KEY
+```
+
+to the browser.
+
+The frontend should receive only safe configuration metadata.
+
+Example:
+
+```json
+{
+  "provider": "deepseek",
+  "model": "v4-flash",
+  "enabled": true,
+  "supportsStreaming": true
+}
+```
+
+Never return API keys.
+
+---
+
+# 9. Testing All Combinations
+
+Build the architecture so I can test combinations systematically.
+
+For example:
+
+### Test A
+
+```text
+Sarvam STT
++
+DeepSeek V4
++
+Sarvam TTS
+```
+
+### Test B
+
+```text
+Sarvam STT
++
+DeepSeek V4
++
+Cartesia Sonic
+```
+
+### Test C
+
+```text
+Cartesia Ink
++
+DeepSeek V4
++
+Cartesia Sonic
+```
+
+### Test D
+
+```text
+Sarvam STT
++
+Gemini
++
+Sarvam TTS
+```
+
+### Test E
+
+```text
+Cartesia Ink
++
+OpenAI
++
+Cartesia Sonic
+```
+
+The system should make it easy to switch combinations without modifying application code.
+
+---
+
+# 10. Testing Metrics
+
+For every test combination, collect useful metrics.
+
+At minimum:
+
+### STT
+
+```text
+STT latency
+first transcript latency
+transcription duration
+final transcript latency
+errors
+```
+
+### LLM
+
+```text
+time to first token
+total generation latency
+input tokens
+output tokens
+model used
+errors
+```
+
+### TTS
+
+```text
+time to first audio
+total generation latency
+characters generated
+audio duration
+errors
+```
+
+### End-to-end
+
+Calculate:
+
+```text
+User stops speaking
+        ↓
+STT final
+        ↓
+LLM first token
+        ↓
+TTS first audio
+        ↓
+User hears response
+```
+
+Record:
+
+```text
+End-to-end first-audio latency
+Total response latency
+```
+
+This is extremely important because the goal is to determine which combination actually performs best for a real-time voice call.
+
+---
+
+# 11. Combination Score
+
+Create a testing/benchmark result structure that can compare combinations based on:
+
+```text
+Cost
+STT accuracy
+LLM response quality
+TTS naturalness
+Time to first audio
+Total latency
+Error rate
+Telugu quality
+Conversation quality
+```
+
+Do NOT automatically declare a winner using arbitrary hard-coded weights.
+
+Make the scoring weights configurable through environment variables or a configuration file.
+
+For example:
+
+```env
+VOICE_SCORE_LATENCY_WEIGHT=...
+VOICE_SCORE_COST_WEIGHT=...
+VOICE_SCORE_QUALITY_WEIGHT=...
+VOICE_SCORE_ACCURACY_WEIGHT=...
+```
+
+---
+
+# 12. Configuration Priority
+
+Implement configuration precedence clearly:
+
+```text
+ENV configuration
+        ↓
+Backend configuration resolver
+        ↓
+Frontend-safe configuration
+        ↓
+Voice-agent session
+```
+
+When `VOICE_AGENT_CONFIG_MODE=env`:
+
+```text
+ENV → selected tier → session
+```
+
+When `VOICE_AGENT_CONFIG_MODE=frontend`:
+
+```text
+ENV-enabled plugins
+        ↓
+Frontend selection
+        ↓
+Backend validation
+        ↓
+Session
+```
+
+The frontend must never be able to select a provider that the ENV has disabled.
+
+---
+
+# 13. Session-Level Configuration
+
+Every voice-agent session should resolve its complete configuration at session start.
+
+Example:
+
+```json
+{
+  "mode": "premium",
+  "stt": {
+    "provider": "sarvam",
+    "model": "saaras"
+  },
+  "llm": {
+    "provider": "deepseek",
+    "model": "v4"
+  },
+  "tts": {
+    "provider": "cartesia",
+    "model": "sonic"
+  }
+}
+```
+
+Log this configuration safely at session startup.
+
+Do not log API keys.
+
+---
+
+# 14. Frontend UX
+
+Create a clean developer/testing interface.
+
+When ENV mode is enabled:
+
+```text
+VOICE AGENT
+
+[ LOW ]
+[ MEDIUM ]
+[ PREMIUM ]
+```
+
+Selecting a tier should show:
+
+```text
+Current Configuration
+
+STT
+Sarvam Saaras
+
+LLM
+DeepSeek V4
+
+TTS
+Cartesia Sonic
+
+[Start Test]
+```
+
+When frontend configuration mode is enabled:
+
+```text
+VOICE AGENT CONFIGURATION
+
+STT
+[ Provider ▼ ]
+[ Model ▼ ]
+
+LLM
+[ Provider ▼ ]
+[ Model ▼ ]
+
+TTS
+[ Provider ▼ ]
+[ Model ▼ ]
+
+[ Test Configuration ]
+```
+
+Only enabled providers/models should appear.
+
+---
+
+# 15. Do Not Break Existing Functionality
+
+Before modifying anything:
+
+1. Inspect the complete current voice-agent architecture.
+2. Identify the existing STT integration.
+3. Identify the existing TTS integration.
+4. Identify the existing LLM integration.
+5. Identify WebSocket/realtime streaming implementation.
+6. Identify current environment variables.
+7. Identify frontend configuration UI.
+8. Identify current session lifecycle.
+9. Identify logging/metrics.
+10. Identify existing provider abstraction/interfaces.
+
+Reuse existing abstractions wherever possible.
+
+Do not duplicate existing provider logic.
+
+Do not replace working WebSocket streaming implementations unnecessarily.
+
+---
+
+# 16. Backward Compatibility
+
+Existing ENV variables and existing voice-agent functionality should continue working.
+
+If the new configuration system is not configured, the application should fall back to the existing configuration rather than breaking.
+
+Document every newly introduced ENV variable.
+
+Create/update:
+
+```text
+.env.example
+```
+
+with clear descriptions.
+
+---
+
+# 17. Final Developer Configuration Example
+
+The final system should support a configuration similar to:
+
+```env
+# ==========================================
+# VOICE AGENT
+# ==========================================
+
+VOICE_AGENT_CONFIG_MODE=env
+
+# ==========================================
+# ENABLED PLUGINS
+# ==========================================
+
+ENABLE_SARVAM_STT=true
+ENABLE_CARTESIA_STT=true
+
+ENABLE_OPENAI_LLM=true
+ENABLE_GEMINI_LLM=true
+ENABLE_DEEPSEEK_LLM=true
+
+ENABLE_SARVAM_TTS=true
+ENABLE_CARTESIA_TTS=true
+
+# ==========================================
+# LOW
+# ==========================================
+
+VOICE_LOW_STT_PROVIDER=cartesia
+VOICE_LOW_STT_MODEL=ink
+
+VOICE_LOW_LLM_PROVIDER=deepseek
+VOICE_LOW_LLM_MODEL=<configured-v4-model>
+
+VOICE_LOW_TTS_PROVIDER=sarvam
+VOICE_LOW_TTS_MODEL=<configured-bulbul-model>
+
+# ==========================================
+# MEDIUM
+# ==========================================
+
+VOICE_MEDIUM_STT_PROVIDER=sarvam
+VOICE_MEDIUM_STT_MODEL=<configured-saaras-model>
+
+VOICE_MEDIUM_LLM_PROVIDER=gemini
+VOICE_MEDIUM_LLM_MODEL=<configured-gemini-model>
+
+VOICE_MEDIUM_TTS_PROVIDER=cartesia
+VOICE_MEDIUM_TTS_MODEL=<configured-sonic-model>
+
+# ==========================================
+# PREMIUM
+# ==========================================
+
+VOICE_PREMIUM_STT_PROVIDER=sarvam
+VOICE_PREMIUM_STT_MODEL=<configured-saaras-model>
+
+VOICE_PREMIUM_LLM_PROVIDER=openai
+VOICE_PREMIUM_LLM_MODEL=<configured-openai-model>
+
+VOICE_PREMIUM_TTS_PROVIDER=cartesia
+VOICE_PREMIUM_TTS_MODEL=<configured-sonic-model>
+```
+
+Do not blindly use these example combinations as the final recommended combinations. The purpose of the implementation is to make them configurable so they can be benchmarked.
+
+---
+
+# 18. Deliverables
+
+After implementation, provide:
+
+### A. Architecture summary
+
+Explain:
+
+```text
+Frontend
+↓
+Configuration resolver
+↓
+STT
+↓
+LLM
+↓
+TTS
+↓
+Audio
+```
+
+### B. All new ENV variables
+
+Provide a complete table.
+
+### C. Supported plugins
+
+Show:
+
+```text
+STT
+LLM
+TTS
+```
+
+and which are enabled.
+
+### D. Three tier configurations
+
+Show the currently configured:
+
+```text
+LOW
+MEDIUM
+PREMIUM
+```
+
+combinations.
+
+### E. Testing matrix
+
+Provide a matrix of all currently enabled STT × LLM × TTS combinations that can be tested.
+
+### F. Changes made
+
+List every backend/frontend/configuration change.
+
+### G. Validation
+
+Run the existing tests and add tests for:
+
+* provider selection
+* ENV configuration
+* frontend configuration
+* disabled providers
+* invalid provider/model
+* DeepSeek integration
+* session configuration resolution
+* streaming
+* API-key security
+* fallback behavior
+
+Do not claim a test passed unless it was actually executed.
+
+---
+
+## Important Implementation Principle
+
+**The voice agent must become provider-agnostic.**
+
+The core pipeline should not care whether the current session uses:
+
+```text
+Sarvam
+Cartesia
+OpenAI
+Gemini
+DeepSeek
+```
+
+It should only interact with standardized interfaces:
+
+```text
+STT interface
+LLM interface
+TTS interface
+```
+
+Provider-specific implementation must live behind those interfaces.
+
+This will allow us to continuously test and fine-tune different:
+
+**STT + LLM + TTS**
+
+combinations without rewriting the voice-agent core.
+
+
+cartesia documentation : https://docs.cartesia.ai/get-started/overview
+

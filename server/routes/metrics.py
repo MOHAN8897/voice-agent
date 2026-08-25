@@ -23,6 +23,37 @@ from server.utils.metrics import metrics
 router = APIRouter()
 
 
+@router.get("/api/metrics/calls/{call_id}")
+async def call_metrics(call_id: str):
+    from server.call.call_ledger import call_ledger
+    from server.call.call_store import call_store
+    from server.call.memory_manager import memory_manager
+
+    stored = await call_store.get(call_id)
+    if stored is None and not call_ledger.meta_path(call_id).exists():
+        from fastapi import HTTPException
+
+        raise HTTPException(
+            status_code=404,
+            detail={"error": {"code": "not_found", "message": "Call not found"}},
+        )
+    trace = call_ledger.read_trace(call_id)
+    turns = trace.get("turns") or []
+    memory_ops = sum(int(t.get("memory_ops_applied") or 0) for t in turns)
+    return {
+        "call_id": call_id,
+        "trace": trace,
+        "aggregates": {
+            "turns": len(turns),
+            "memory_ops_applied": memory_ops,
+            "stt_final_ms": [t.get("stt_final_ms") for t in turns],
+            "llm_ttft_ms": [t.get("llm_ttft_ms") for t in turns],
+        },
+        "memory": memory_manager.get_snapshot(call_id),
+        "call": stored,
+    }
+
+
 @router.get("/api/metrics")
 async def get_metrics():
     snap = metrics.snapshot()

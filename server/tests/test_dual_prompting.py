@@ -111,7 +111,7 @@ def test_brain_receives_both_channels(monkeypatch):
         "businessInstructions": "BUSINESS-MARKER",
     })
     mock_resp = {"text": "ok", "language_context": {"responseLanguage": "te-IN"}, "usage": None, "request_id": "x"}
-    with patch("server.routes.brain.generate_response", new=AsyncMock(return_value=mock_resp)) as mock:
+    with patch("server.routes.brain.live_turn_orchestrator.handle_user_turn", new=AsyncMock(return_value=mock_resp)) as mock:
         r = c.post("/api/brain", json={"transcript": "హలో", "sessionId": sid})
         assert r.status_code == 200
         kw = mock.call_args.kwargs
@@ -124,7 +124,7 @@ def test_brain_receives_both_channels(monkeypatch):
 def test_brain_request_accepts_business_field(monkeypatch):
     """Direct request-level business instructions flow through."""
     c = _client(monkeypatch)
-    with patch("server.routes.brain.generate_response", new=AsyncMock(return_value={"text": "ok", "language_context": {}, "usage": None, "request_id": "x"})) as mock:
+    with patch("server.routes.brain.live_turn_orchestrator.handle_user_turn", new=AsyncMock(return_value={"text": "ok", "language_context": {}, "usage": None, "request_id": "x"})) as mock:
         r = c.post("/api/brain", json={
             "transcript": "ధర ఎంత?",
             "sessionId": "dual-direct",

@@ -29,7 +29,7 @@ def test_stt_route_mocked(monkeypatch):
 def test_brain_route_mocked(monkeypatch):
     client = _client_with_dummy_env(monkeypatch)
     mock_brain = {"text": "హాయ్ సాయి! Python ఒక ప్రోగ్రామింగ్ భాష.", "language_context": {"inputLanguage": "te-IN", "responseLanguage": "te-IN", "isCodeMixed": False}, "usage": {"total_tokens": 20}, "request_id": "resp-123"}
-    with patch("server.routes.brain.generate_response", new=AsyncMock(return_value=mock_brain)):
+    with patch("server.routes.brain.live_turn_orchestrator.handle_user_turn", new=AsyncMock(return_value=mock_brain)):
         r = client.post("/api/brain", json={"transcript": "నాకు Python గురించి చెప్పు", "language_code": "te-IN", "sessionId": "test-mock-sid"})
         assert r.status_code == 200, r.text
         j = r.json()
@@ -45,7 +45,7 @@ def test_brain_memory_via_mock(monkeypatch):
     conversation_manager.clear("mem-sid")
     mock1 = {"text": "మీ పేరు Sai.", "language_context": {"inputLanguage": "te-IN", "responseLanguage": "te-IN", "isCodeMixed": False}, "usage": None, "request_id": "1"}
     mock2 = {"text": "మీ పేరు Sai.", "language_context": {"inputLanguage": "te-IN", "responseLanguage": "te-IN", "isCodeMixed": False}, "usage": None, "request_id": "2"}
-    with patch("server.routes.brain.generate_response", side_effect=[mock1, mock2]) as mock_gen:
+    with patch("server.routes.brain.live_turn_orchestrator.handle_user_turn", side_effect=[mock1, mock2]) as mock_gen:
         r1 = client.post("/api/brain", json={"transcript": "నా పేరు Sai.", "language_code": "te-IN", "sessionId": "mem-sid"})
         assert r1.status_code == 200
         r2 = client.post("/api/brain", json={"transcript": "నా పేరు ఏమిటి?", "language_code": "te-IN", "sessionId": "mem-sid"})

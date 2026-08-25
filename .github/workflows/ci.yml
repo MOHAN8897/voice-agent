@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]"
+      - run: pytest server/tests -q --tb=short
+        env:
+          OPENAI_API_KEY: sk-test-ci
+          SARVAM_API_KEY: sarvam-test-ci
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]"
+        working-directory: .
+      - run: npm ci && npm run build
+        working-directory: web
+      - run: npx playwright install chromium
+        working-directory: web
+      - run: npx playwright test
+        working-directory: web
+        env:
+          OPENAI_API_KEY: sk-test-ci
+          SARVAM_API_KEY: sarvam-test-ci

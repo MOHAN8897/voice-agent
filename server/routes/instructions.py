@@ -109,6 +109,17 @@ async def save_instructions(body: SaveRequest):
             },
         ) from e
 
+    try:
+        if get_settings().use_versioned_brains:
+            from server.brain.instruction_bridge import sync_legacy_instructions_to_business_brain
+
+            await sync_legacy_instructions_to_business_brain(
+                behaviour=saved.get("behaviour", ""),
+                business=saved.get("business", ""),
+            )
+    except Exception:
+        pass
+
     return {
         "ok": True,
         "sessionId": body.sessionId,

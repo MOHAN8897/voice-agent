@@ -1,0 +1,15 @@
+---
+description: Follow DESIGN.md tokens for all UI generation
+globs: "**/*.{tsx,jsx,ts,js,css,html}"
+alwaysApply: false
+---
+
+# DESIGN.md visual rules
+
+Read `DESIGN.md` at the repo root before generating or restyling any UI.
+
+- Use only the documented color, type, radius, and spacing tokens.
+- Accent is teal `#3dd6c6`; secondary telemetry is `#4db5ff`. Never purple AI gradients.
+- Display type: Instrument Serif. Body: DM Sans. Mono: JetBrains Mono. Telugu: Noto Sans Telugu.
+- One primary CTA per viewport. Hierarchy through spacing and weight before color.
+- Marketing may use a cinematic scroll layer; consoles stay denser and operational.

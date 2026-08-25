@@ -95,7 +95,7 @@ def test_brain_uses_runtime_overrides(monkeypatch):
     c = _client(monkeypatch)
     sid = "ft-brain"
     c.post("/api/settings/runtime", json={"sessionId": sid, "openaiModel": "gpt-5.6-luna", "openaiTemperature": 0.3, "openaiMaxTokens": 250})
-    with patch("server.routes.brain.generate_response", new=AsyncMock(return_value={"text": "ok", "language_context": {}, "usage": None, "request_id": "x"})) as mock:
+    with patch("server.routes.brain.live_turn_orchestrator.handle_user_turn", new=AsyncMock(return_value={"text": "ok", "language_context": {}, "usage": None, "request_id": "x"})) as mock:
         r = c.post("/api/brain", json={"transcript": "హలో", "language_code": "te-IN", "sessionId": sid})
         assert r.status_code == 200
         kw = mock.call_args.kwargs

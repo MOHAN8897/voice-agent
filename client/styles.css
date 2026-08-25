@@ -527,6 +527,45 @@ body {
 }
 .console-panel { display: none; }
 .console-panel.active { display: block; }
+.calls-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.calls-row {
+  text-align: left;
+  appearance: none;
+  border: 1px solid var(--border);
+  background: var(--ash);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.calls-row:hover { border-color: var(--accent); }
+.call-detail { margin-top: 16px; }
+.call-tabs { display: flex; gap: 6px; margin: 12px 0 10px; }
+.call-tab {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: var(--ash);
+  color: var(--muted);
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.call-tab.active {
+  color: var(--text);
+  border-color: var(--accent);
+  background: rgba(255, 184, 107, 0.12);
+}
+.call-disposition {
+  display: inline-block;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
 .panel-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));

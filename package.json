@@ -1,0 +1,11 @@
+{
+  "name": "voice-agent",
+  "private": true,
+  "description": "Telugu voice agent monorepo — run scripts from repo root only",
+  "scripts": {
+    "dev:down": "powershell -ExecutionPolicy Bypass -File scripts/dev_down.ps1",
+    "dev:up": "powershell -ExecutionPolicy Bypass -File scripts/dev_up.ps1 -KillStale",
+    "dev:api": "python -m uvicorn server.app:app --host 127.0.0.1 --port 8000 --reload",
+    "dev:web": "npm run dev --prefix web -- -p 3000"
+  }
+}

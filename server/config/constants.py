@@ -22,6 +22,7 @@ class Constants:
     # STT models — saaras:v3 recommended; saaras:v4 latest (Global English); saarika legacy
     STT_MODELS: dict[str, dict] = {
         "saaras:v3": {"label": "Saaras v3 (recommended)", "modes": ["transcribe", "translate", "verbatim", "translit", "codemix"]},
+        "saaras:v3-realtime": {"label": "Saaras v3 Realtime (WS)", "modes": ["transcribe", "translate", "verbatim", "translit", "codemix"], "realtime": True},
         "saaras:v4": {"label": "Saaras v4 (latest, Global English)", "modes": ["transcribe", "translate", "verbatim", "translit", "codemix"]},
         "saarika:v2.5": {"label": "Saarika v2.5 (legacy)", "modes": ["transcribe"]},
     }
@@ -52,8 +53,11 @@ class Constants:
         "en-IN": {"sttCode": "en-IN", "ttsCode": "en-IN", "speaker": "shubh", "name": "English"},
     }
 
+    # Tiers (L1 stack bundles — assignments configured via env / Dev Portal)
+    TIER_NAMES = ("low", "medium", "premium")
+
     # App
-    APP_VERSION = "0.2.0-phase5"
+    APP_VERSION = "0.4.0-phase3"
 
     # Sarvam endpoints
     SARVAM_STT_REALTIME_WS = "wss://api.sarvam.ai/speech-to-text-realtime/ws"

@@ -45,6 +45,22 @@ def test_build_brain_request_input_includes_summary():
     assert "[Session summary]" in msgs[1]["content"][0]["text"]
 
 
+def test_build_live_input_rolling_summary_not_duplicated_in_projection():
+    from server.agent.instruction_builder import build_live_input
+
+    msgs = build_live_input(
+        compiled_brain_text="brain",
+        history=[],
+        transcript="hi",
+        memory_projection="[Facts]\nname: Ravi",
+        rolling_summary="Caller is Ravi",
+    )
+    texts = [m["content"][0]["text"] for m in msgs]
+    assert any(t.startswith("[Memory projection]") for t in texts)
+    assert any(t.startswith("[Rolling summary]") for t in texts)
+    assert sum(1 for t in texts if "Caller is Ravi" in t) == 1
+
+
 def test_caching_requires_min_tokens():
     assert caching_enabled("gpt-5.6-luna", 1024) is True
     assert caching_enabled("gpt-5.6-luna", 1023) is False

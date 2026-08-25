@@ -38,6 +38,17 @@ def _connect(url: str, headers: dict[str, str], **kw: Any):
         return websockets.connect(url, extra_headers=headers, max_size=None, **kw)
 
 
+def _resolve_realtime_stt_model(model: str | None = None) -> str:
+    """Map REST catalog model to realtime WS model (SARVAM_STT_MODEL env)."""
+    settings = get_settings()
+    raw = (model or settings.sarvam_stt_model).strip()
+    if raw.endswith("-realtime"):
+        return raw
+    if raw == "saaras:v3":
+        return "saaras:v3-realtime"
+    return raw
+
+
 def connect_stt_realtime(
     *,
     language_code: str = "te-IN",
@@ -49,11 +60,12 @@ def connect_stt_realtime(
     threshold: float | None = None,
     min_speech_duration_ms: int | None = None,
     high_vad_sensitivity: bool = True,
+    model: str | None = None,
 ):
     settings = get_settings()
     params = {
         "language_code": language_code,
-        "model": "saaras:v3-realtime",
+        "model": _resolve_realtime_stt_model(model),
         "stream_type": stream_type,
         "mode": mode,
         "endpointing": endpointing,

@@ -1,0 +1,89 @@
+[
+  {
+    "id": "qualified_gachibowli",
+    "expected_disposition": "qualified",
+    "memory": {
+      "facts": {"name": "Ravi", "city": "Hyderabad", "budget": "50L", "unit": "2BHK"},
+      "preferences": {"area": "Gachibowli"},
+      "important_context": "Looking to buy, timeline this quarter.",
+      "summary": "Ravi wants a 2BHK in Gachibowli with 50L budget."
+    },
+    "transcript": [
+      {"role": "user", "text": "నా పేరు రవి, గచ్చిబౌలిలో 2BHK కావాలి"},
+      {"role": "assistant", "text": "బడ్జెట్ ఎంత ఉంది రవి గారు?"},
+      {"role": "user", "text": "50 lakhs"},
+      {"role": "assistant", "text": "సరే, site visit పెట్టుకుందాం"},
+      {"role": "user", "text": "అవును, నాకు interested"}
+    ]
+  },
+  {
+    "id": "callback_required",
+    "expected_disposition": "callback_required",
+    "memory": {
+      "facts": {"name": "Sita"},
+      "preferences": {},
+      "important_context": "Asked to call tomorrow morning.",
+      "summary": "Sita requested a callback tomorrow."
+    },
+    "transcript": [
+      {"role": "user", "text": "ఇప్పుడు time లేదు, రేపు morning call చేయండి"},
+      {"role": "assistant", "text": "సరే, రేపు పిలుస్తాను"}
+    ]
+  },
+  {
+    "id": "not_interested",
+    "expected_disposition": "not_interested",
+    "memory": {
+      "facts": {},
+      "preferences": {},
+      "important_context": "Caller declined any follow-up.",
+      "summary": "Caller is not interested."
+    },
+    "transcript": [
+      {"role": "user", "text": "వద్దు, interested లేదు"},
+      {"role": "assistant", "text": "సరే, ఇబ్బంది పెట్టను"}
+    ]
+  },
+  {
+    "id": "wrong_number",
+    "expected_disposition": "wrong_number",
+    "memory": {
+      "facts": {},
+      "preferences": {},
+      "important_context": "Wrong party.",
+      "summary": "Wrong number."
+    },
+    "transcript": [
+      {"role": "user", "text": "ఈ నెంబరు నాది కాదు, తప్పు call"},
+      {"role": "assistant", "text": "క్షమించండి"}
+    ]
+  },
+  {
+    "id": "no_outcome_short",
+    "expected_disposition": "no_outcome",
+    "memory": {
+      "facts": {},
+      "preferences": {},
+      "important_context": "",
+      "summary": ""
+    },
+    "transcript": [
+      {"role": "user", "text": "హలో"}
+    ]
+  },
+  {
+    "id": "site_visit_planned",
+    "expected_disposition": "site_visit_planned",
+    "memory": {
+      "facts": {"name": "Arjun", "visit_time": "Saturday 11am"},
+      "preferences": {"location": "Kondapur"},
+      "important_context": "Site visit booked Saturday 11am.",
+      "summary": "Arjun scheduled a Kondapur site visit Saturday 11am."
+    },
+    "transcript": [
+      {"role": "user", "text": "Saturday 11 ki site visit పెట్టండి Kondapur"},
+      {"role": "assistant", "text": "పెట్టాను, Saturday 11కి రండి"},
+      {"role": "user", "text": "OK confirmed"}
+    ]
+  }
+]

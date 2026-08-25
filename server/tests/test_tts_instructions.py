@@ -128,7 +128,7 @@ def test_brain_uses_stored_instructions(monkeypatch):
     sid = "test-brain-store"
     client.post("/api/instructions", json={"sessionId": sid, "instructions": "Always answer in one Telugu sentence."})
     # Mock generate_response to capture effective instructions
-    with patch("server.routes.brain.generate_response", new=AsyncMock(return_value={"text": "ok", "language_context": {"responseLanguage": "te-IN"}, "usage": None, "request_id": "x"})) as mock:
+    with patch("server.routes.brain.live_turn_orchestrator.handle_user_turn", new=AsyncMock(return_value={"text": "ok", "language_context": {"responseLanguage": "te-IN"}, "usage": None, "request_id": "x"})) as mock:
         r = client.post("/api/brain", json={"transcript": "హలో", "language_code": "te-IN", "sessionId": sid})
         assert r.status_code == 200
         # Verify generate_response was called with stored instructions

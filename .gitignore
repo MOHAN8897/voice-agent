@@ -24,9 +24,17 @@ client/dist/
 client/node_modules/
 dist/
 
+# Call archives (local file store)
+data/calls/
+
 # OS / IDE
 .DS_Store
 Thumbs.db
 .vscode/
 .idea/
 *.log
+
+# Cinematic-scroll skill ships large demo GLB/WASM assets
+.cursor/skills/cinematic-scroll/templates/
+.cursor/skills/cinematic-scroll/examples/
+.cursor/skills/cinematic-scroll/tools/

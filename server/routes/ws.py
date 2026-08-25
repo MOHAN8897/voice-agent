@@ -17,6 +17,9 @@ import json
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from server.config.constants import constants
+from server.config.env import get_settings
+from server.providers import get_provider_registry, resolve_stack_for_session
+from server.providers.base import STTConfig, TTSConfig
 from server.services.sarvam_ws import connect_stt_realtime, connect_tts_ws
 from server.services.tts_config import TtsConfigError, merge_ws_tts_config
 from server.utils.logger import log_error, log_ws
@@ -26,16 +29,74 @@ router = APIRouter()
 _UPSTREAM_STT_EVENTS = {"audio_input", "speech_start", "speech_end", "flush", "config.update", "end", "ping"}
 
 
+def _stack_for_ws(call_id: str | None, session_id: str, language: str = "te-IN"):
+    if call_id:
+        from server.call.call_context import get as get_call_ctx
+
+        ctx = get_call_ctx(call_id)
+        if ctx:
+            return ctx.resolved_stack
+    return resolve_stack_for_session(session_id, language=language)
+
+
+def _connect_stt_upstream(session_id: str = "default", call_id: str | None = None, **kwargs):
+    """Resolve STT upstream via locked call stack or provider registry."""
+    settings = get_settings()
+    if settings.use_provider_registry:
+        stack = _stack_for_ws(call_id, session_id, language=kwargs.get("language_code", "te-IN"))
+        registry = get_provider_registry()
+        stt = registry.get_stt(stack.stt.provider)
+        config = STTConfig(
+            provider=stack.stt.provider,
+            model=kwargs.get("model") or stack.stt.model,
+            language=kwargs.get("language_code", stack.language),
+            mode="realtime",
+            stream_type=kwargs.get("stream_type", stack.stt.config.get("stream_type", "fast")),
+            sample_rate=kwargs.get("sample_rate", 16000),
+            vad_config={
+                "silence_duration_ms": kwargs.get("silence_duration_ms"),
+                "threshold": kwargs.get("threshold"),
+            },
+        )
+        return stt.connect_realtime(config)
+    return connect_stt_realtime(**kwargs)
+
+
+def _connect_tts_upstream(model: str, session_id: str = "default", call_id: str | None = None):
+    settings = get_settings()
+    if settings.use_provider_registry:
+        stack = _stack_for_ws(call_id, session_id)
+        registry = get_provider_registry()
+        tts = registry.get_tts(stack.tts.provider)
+        config = TTSConfig(
+            provider=stack.tts.provider,
+            model=model or stack.tts.model,
+            language=stack.language,
+            speaker=stack.tts.config.get("speaker", settings.sarvam_tts_speaker_te),
+        )
+        return tts.connect_stream(config)
+    return connect_tts_ws(model=model)
+
+
 @router.websocket("/ws/stt-realtime")
 async def ws_stt_realtime(ws: WebSocket):
     await ws.accept()
     q = ws.query_params
     session_id = q.get("sessionId", "default")
+    call_id = q.get("call_id") or q.get("callId")
     upstream = None
     upstream_task = None
     ping_task = None
     try:
-        upstream_cm = connect_stt_realtime(
+        if not call_id and get_settings().enable_call_archive:
+            log_ws("STT connected without call_id — audio will not be archived")
+        if call_id:
+            from server.call.call_lifecycle_service import call_lifecycle_service
+
+            call_lifecycle_service.note_ws_open(call_id)
+        upstream_cm = _connect_stt_upstream(
+            session_id=session_id,
+            call_id=call_id,
             language_code=q.get("language_code", "te-IN"),
             stream_type=q.get("stream_type", "fast"),
             mode=q.get("mode", "transcribe"),
@@ -69,6 +130,10 @@ async def ws_stt_realtime(ws: WebSocket):
                 data = msg.get("bytes")
                 text = msg.get("text")
                 if data:
+                    if call_id:
+                        from server.call.audio_archive import audio_archive
+
+                        asyncio.create_task(audio_archive.append_user_pcm(call_id, data))
                     b64 = base64.b64encode(data).decode()
                     await upstream.send(json.dumps({"event": "audio_input", "audio": b64}))
                 elif text:
@@ -100,6 +165,13 @@ async def ws_stt_realtime(ws: WebSocket):
         except Exception:
             pass
     finally:
+        if call_id:
+            try:
+                from server.call.call_lifecycle_service import call_lifecycle_service
+
+                call_lifecycle_service.note_ws_close(call_id)
+            except Exception:
+                pass
         for t in (upstream_task, ping_task):
             if t:
                 t.cancel()
@@ -119,8 +191,14 @@ async def ws_tts(ws: WebSocket):
     await ws.accept()
     model = ws.query_params.get("model", "bulbul:v3")
     session_id = ws.query_params.get("sessionId", "default")
+    call_id = ws.query_params.get("call_id") or ws.query_params.get("callId")
     if model not in constants.TTS_MODELS:
         model = "bulbul:v3"
+
+    if call_id:
+        from server.call.call_lifecycle_service import call_lifecycle_service
+
+        call_lifecycle_service.note_ws_open(call_id)
 
     upstream = None
     upstream_cm = None
@@ -157,7 +235,7 @@ async def ws_tts(ws: WebSocket):
         async with upstream_lock:
             if upstream is not None:
                 return
-            upstream_cm = connect_tts_ws(model)
+            upstream_cm = _connect_tts_upstream(model, session_id=session_id, call_id=call_id)
             upstream = await upstream_cm.__aenter__()
             configured = False
             audio_chunks = 0
@@ -184,6 +262,16 @@ async def ws_tts(ws: WebSocket):
                             audio_chunks += 1
                             if audio_chunks == 1:
                                 log_ws("TTS first audio chunk", session=session_id, model=model)
+                            if call_id:
+                                audio_b64 = obj.get("data", {}).get("audio") if isinstance(obj.get("data"), dict) else None
+                                if not audio_b64:
+                                    audio_b64 = obj.get("audio")
+                                if audio_b64:
+                                    from server.call.audio_archive import audio_archive
+
+                                    asyncio.create_task(
+                                        audio_archive.append_agent_audio(call_id, base64.b64decode(audio_b64))
+                                    )
                     except Exception:
                         pass
                     await ws.send_text(raw)
@@ -286,6 +374,13 @@ async def ws_tts(ws: WebSocket):
             pass
     finally:
         client_open = False
+        if call_id:
+            try:
+                from server.call.call_lifecycle_service import call_lifecycle_service
+
+                call_lifecycle_service.note_ws_close(call_id)
+            except Exception:
+                pass
         for t in (reader_task, ping_task):
             if t:
                 t.cancel()

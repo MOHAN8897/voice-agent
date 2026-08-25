@@ -15,6 +15,14 @@ def compute_cache_key(brain_prompt: str, budget_tokens: int) -> str:
     return f"{prefix}:cfg-{digest}"
 
 
+def compute_cache_key_versioned(compiled_brain_version: str, budget_tokens: int) -> str:
+    """Version-based cache key — stable across sessions when brain version unchanged."""
+    settings = get_settings()
+    prefix = settings.prompt_cache_key_prefix
+    digest = hashlib.sha256(f"{compiled_brain_version}|{budget_tokens}".encode("utf-8")).hexdigest()[:12]
+    return f"{prefix}:cb-{digest}"
+
+
 def cache_eligible(brain_tokens: int) -> bool:
     settings = get_settings()
     return brain_tokens >= int(settings.prompt_cache_min_tokens)

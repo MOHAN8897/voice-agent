@@ -17,6 +17,7 @@
         <button type="button" class="sidebar-item console-tab" data-panel="pipeline">🔊 Voice Pipeline</button>
         <button type="button" class="sidebar-item console-tab" data-panel="brain">🧠 AI Brain</button>
         <button type="button" class="sidebar-item console-tab" data-panel="prompt">✍️ Prompting</button>
+        <button type="button" class="sidebar-item console-tab" data-panel="calls">📞 Calls</button>
         <button type="button" class="sidebar-item console-tab" data-panel="crm">🔗 CRM &amp; Tools</button>
         <button type="button" class="sidebar-item console-tab" data-panel="advanced">⚙️ Advanced</button>
       </div>
@@ -236,6 +237,21 @@
         </div>
       </section>
 
+      <!-- ========== CALLS ========== -->
+      <section class="console-panel" id="panel-calls">
+        <div class="card">
+          <div class="history-head">
+            <div>
+              <div class="label" style="margin:0">Server calls</div>
+              <span class="history-sub">Authoritative list — browser storage is cache only</span>
+            </div>
+            <button type="button" id="callsRefreshBtn" class="btn btn-sm">Refresh</button>
+          </div>
+          <div id="callsList" class="calls-list"></div>
+          <div id="callDetail" class="call-detail" style="display:none"></div>
+        </div>
+      </section>
+
       <!-- ========== CRM ========== -->
       <section class="console-panel" id="panel-crm">
         <div class="card">
@@ -301,6 +317,7 @@
   <script src="audio_utils.js"></script>
   <script src="audio_playback_manager.js"></script>
   <script src="conversation_store.js"></script>
+  <script src="calls_view.js"></script>
   <script src="console_tabs.js"></script>
   <script src="live-guards.js"></script>
   <script src="app.js"></script>
