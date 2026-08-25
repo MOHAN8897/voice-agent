@@ -33,6 +33,18 @@ END_REASONS = {
     "ws_disconnect",
 }
 
+END_REASON_ALIASES = {
+    "user_hangup": "user_stop",
+    "idle_timeout": "timeout",
+    "hangup": "user_stop",
+    "normal_clearing": "pstn_hangup",
+}
+
+
+def _normalize_end_reason(reason: str) -> str:
+    mapped = END_REASON_ALIASES.get(reason, reason)
+    return mapped if mapped in END_REASONS else "user_stop"
+
 _idle_tasks: dict[str, asyncio.Task] = {}
 
 
@@ -112,6 +124,13 @@ class CallLifecycleService:
         from server.call.memory_manager import memory_manager
 
         memory_manager.init(call_id)
+        if caller_id:
+            memory_manager.apply_proposals(
+                call_id,
+                [{"op": "set_fact", "key": "phone", "value": str(caller_id)[:200]}],
+                turn_seq=0,
+                source="telephony",
+            )
 
         record = {
             "call_id": call_id,
@@ -152,6 +171,8 @@ class CallLifecycleService:
 
         return {
             "call_id": call_id,
+            "session_id": session_id,
+            "compiled_brain_version": compiled_version,
             "locked_versions": {
                 "combination_id": stack.combination_id,
                 "compiled_brain_version": compiled_version,
@@ -166,8 +187,7 @@ class CallLifecycleService:
         }
 
     async def end(self, call_id: str, *, reason: str = "user_stop") -> dict[str, Any]:
-        if reason not in END_REASONS:
-            reason = "user_stop"
+        reason = _normalize_end_reason(reason)
         ctx = call_context.get(call_id)
         stored = await call_store.get(call_id)
         if ctx is None and stored is None:
@@ -187,6 +207,10 @@ class CallLifecycleService:
             ctx.end_reason = reason
             call_context.drop_session_pointer(ctx.session_id, call_id)
         self._cancel_idle(call_id)
+
+        from server.call.turn_coordinator import drain
+
+        await drain(call_id)
 
         await call_ledger.seal(call_id)
         if ctx:
@@ -221,6 +245,16 @@ class CallLifecycleService:
 
     async def _finalize_async(self, call_id: str) -> None:
         ctx = call_context.get(call_id)
+        try:
+            from server.call.memory_manager import memory_manager
+            from server.call.paths import call_dir
+
+            snap_path = memory_manager.snapshot_path(call_id)
+            wm_path = call_dir(call_id) / "working_memory.json"
+            if snap_path.exists():
+                wm_path.write_text(snap_path.read_text(encoding="utf-8"), encoding="utf-8")
+        except Exception as e:
+            logger.warning(f"[CALL] working_memory export failed {call_id}: {str(e)[:160]}")
         try:
             audio_status = await audio_archive.flush(call_id)
             if ctx:
@@ -323,7 +357,7 @@ class CallLifecycleService:
             await asyncio.sleep(timeout)
             ctx = call_context.get(call_id)
             if ctx and ctx.status == "active" and ctx.ws_clients == 0:
-                await self.end(call_id, reason="ws_disconnect")
+                await self.end(call_id, reason="timeout")
 
         try:
             _idle_tasks[call_id] = asyncio.create_task(_fire())

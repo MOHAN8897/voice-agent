@@ -39,6 +39,15 @@ class CallEndBody(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
 
+class MemoryCorrectionBody(BaseModel):
+    operations: list[dict] = Field(..., min_length=1)
+    reason: str = Field(..., min_length=3, max_length=200)
+    actor: str = Field("operator", min_length=1, max_length=100)
+    turn_seq: int = Field(0, ge=0)
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
 def _raise(e: AppError) -> None:
     raise HTTPException(status_code=e.status_code, detail=e.to_dict()) from e
 
@@ -216,6 +225,26 @@ async def get_memory_projection(call_id: str, turn: int | None = Query(None)):
         "projection": build_projection(snap, include_summary=not rolling),
         "memory": snap,
     }
+
+
+@router.post("/api/call/{call_id}/memory/correction")
+async def post_memory_correction(call_id: str, body: MemoryCorrectionBody):
+    from server.call.memory_manager import memory_manager
+
+    stored = await call_store.get(call_id)
+    if stored is None and not call_ledger.meta_path(call_id).exists():
+        raise HTTPException(
+            status_code=404,
+            detail={"error": {"code": "not_found", "message": "Call not found"}},
+        )
+    result = memory_manager.manual_correction(
+        call_id,
+        body.operations,
+        actor=body.actor,
+        reason=body.reason,
+        turn_seq=body.turn_seq,
+    )
+    return {"ok": True, "call_id": call_id, "event": result["event"], "memory": result["snapshot"]}
 
 
 @router.get("/api/call/{call_id}/outcome")

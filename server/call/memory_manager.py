@@ -121,8 +121,9 @@ class MemoryManager:
             "projection": projection,
         }
         path = self.projections_path(call_id)
-        with path.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(line, ensure_ascii=False) + "\n")
+        with self._lock:
+            with path.open("a", encoding="utf-8") as fh:
+                fh.write(json.dumps(line, ensure_ascii=False) + "\n")
 
     def projection_at_turn(self, call_id: str, turn_seq: int) -> str | None:
         path = self.projections_path(call_id)

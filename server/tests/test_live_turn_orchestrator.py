@@ -1,4 +1,4 @@
-"""Phase 3 orchestrator stub — ledger must not block first stream byte."""
+"""Phase 3 orchestrator — user ledger before stream; assistant ledger after stream."""
 from __future__ import annotations
 
 import asyncio
@@ -22,17 +22,20 @@ async def test_first_delta_not_blocked_by_ledger(monkeypatch, tmp_path):
     call_ledger.reset_for_tests()
     await call_ledger.init("hot-path", {"call_id": "hot-path"})
 
-    async def slow_append(*_a, **_k):
-        await asyncio.sleep(0.25)
+    async def fast_user(*_a, **_k):
         return {"seq": 1, "role": "user", "text": "x"}
+
+    async def slow_assistant(*_a, **_k):
+        await asyncio.sleep(0.25)
+        return {"seq": 2, "role": "assistant", "text": "hi"}
 
     async def fake_stream(**_k):
         yield {"delta": "hi"}
         yield {"done": True, "text": "hi"}
 
     with (
-        patch("server.call.live_turn_orchestrator.call_ledger.append_user_turn", slow_append),
-        patch("server.call.live_turn_orchestrator.call_ledger.append_assistant_turn", slow_append),
+        patch("server.call.live_turn_orchestrator.call_ledger.append_user_turn", fast_user),
+        patch("server.call.live_turn_orchestrator.call_ledger.append_assistant_turn", slow_assistant),
         patch("server.call.live_turn_orchestrator.generate_response_stream", fake_stream),
     ):
         t0 = time.perf_counter()
@@ -46,7 +49,7 @@ async def test_first_delta_not_blocked_by_ledger(monkeypatch, tmp_path):
                 first_ms = (time.perf_counter() - t0) * 1000
                 break
         assert first_ms is not None
-        assert first_ms < 100, f"first delta waited {first_ms:.0f}ms on ledger"
+        assert first_ms < 100, f"first delta waited {first_ms:.0f}ms on assistant ledger"
 
     call_ledger.reset_for_tests()
     get_settings.cache_clear()

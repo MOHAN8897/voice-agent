@@ -5,3 +5,5 @@ out
 .env*.local
 e2e/.auth/user.json
 test-results
+playwright-report
+*.tsbuildinfo

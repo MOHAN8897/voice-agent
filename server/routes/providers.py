@@ -29,8 +29,11 @@ async def providers_catalog():
 
 @router.get("/api/providers/status")
 async def providers_status():
+    from server.services.dev_fallback_store import dev_fallback_store
+
     catalog = _catalog_handler()
     return {
+        "fallback_chains": dev_fallback_store.get_chains(),
         "providers": [
             {
                 "id": p.get("id"),

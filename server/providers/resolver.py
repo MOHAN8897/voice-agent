@@ -56,6 +56,7 @@ class StackResolver:
         if stack_override:
             stack = self._apply_override(stack, stack_override)
 
+        stack = self._apply_stage_fallbacks(stack)
         self._validate_stack(stack, language)
         combination_id = self._combination_id(stack)
         return ResolvedStack(
@@ -123,6 +124,42 @@ class StackResolver:
             language=stack.language,
             voice_preset=stack.voice_preset,
         )
+
+    def _apply_stage_fallbacks(self, stack: StackSelection) -> StackSelection:
+        from server.services.dev_fallback_store import dev_fallback_store
+
+        chains = dev_fallback_store.get_chains()
+        return StackSelection(
+            stt=self._fallback_stage("stt", stack.stt, chains.get("stt") or []),
+            llm=self._fallback_stage("llm", stack.llm, chains.get("llm") or []),
+            tts=self._fallback_stage("tts", stack.tts, chains.get("tts") or []),
+            language=stack.language,
+            voice_preset=stack.voice_preset,
+        )
+
+    def _fallback_stage(self, stage: str, sel: StageSelection, chain: list[str]) -> StageSelection:
+        order = [sel.provider] + [p for p in chain if p != sel.provider]
+        for pid in order:
+            if not self._registry.is_provider_enabled(pid, stage):
+                continue
+            model = sel.model
+            if pid != sel.provider:
+                model = self._default_model(pid, stage) or model
+            if self._registry.is_model_allowed(pid, stage, model):
+                config = sel.config if pid == sel.provider else {}
+                return StageSelection(pid, model, config)
+            if stage == "stt" and model == "saaras:v3" and self._registry.is_model_allowed(pid, stage, "saaras:v3-realtime"):
+                return StageSelection(pid, "saaras:v3-realtime", sel.config if pid == sel.provider else {})
+        return sel
+
+    def _default_model(self, provider_id: str, stage: str) -> str | None:
+        for p in self._registry.get_catalog().get("providers") or []:
+            if p.get("id") != provider_id:
+                continue
+            models = (p.get("models") or {}).get(stage) or []
+            if models:
+                return str(models[0].get("id") or "")
+        return None
 
     def _validate_stack(self, stack: StackSelection, language: str) -> None:
         for stage, sel in (("stt", stack.stt), ("llm", stack.llm), ("tts", stack.tts)):

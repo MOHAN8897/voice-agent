@@ -154,16 +154,21 @@ async def _generate_outcome(
 
     last_error: str | None = None
     retries = max(1, settings.post_call_max_retries)
+    resolved = meta.get("resolved_stack") or {}
+    llm_block = resolved.get("llm") or {}
+    provider_id = llm_block.get("provider") or "openai"
+    locked_model = llm_block.get("model") or model
     for attempt in range(retries):
         try:
             from server.providers import get_provider_registry
             from server.providers.base import LLMConfig
 
-            adapter = get_provider_registry().get_llm("openai")
+            registry = get_provider_registry()
+            adapter = registry.get_llm(provider_id)
             payload = await adapter.structured_completion(
                 messages,
                 OUTCOME_JSON_SCHEMA,
-                LLMConfig(provider="openai", model=model),
+                LLMConfig(provider=provider_id, model=locked_model),
                 schema_name="call_outcome",
                 max_output_tokens=800,
             )

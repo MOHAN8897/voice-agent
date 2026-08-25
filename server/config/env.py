@@ -126,7 +126,7 @@ class Settings(BaseSettings):
     call_retention_days: int = Field(90, alias="CALL_RETENTION_DAYS")
     data_dir: str = Field("data", alias="DATA_DIR")
     enable_call_archive: bool = Field(True, alias="ENABLE_CALL_ARCHIVE")
-    call_idle_timeout_sec: int = Field(30, alias="CALL_IDLE_TIMEOUT_SEC")
+    call_idle_timeout_sec: int = Field(300, alias="CALL_IDLE_TIMEOUT_SEC")
     call_stale_heartbeat_sec: int = Field(120, alias="CALL_STALE_HEARTBEAT_SEC")
 
     # --- Phase 5: Production platform ---
@@ -150,6 +150,7 @@ class Settings(BaseSettings):
     campaign_default_retry_attempts: int = Field(3, alias="CAMPAIGN_DEFAULT_RETRY_ATTEMPTS")
     recording_consent_required: bool = Field(False, alias="RECORDING_CONSENT_REQUIRED")
     deepseek_api_key: str | None = Field(None, alias="DEEPSEEK_API_KEY")
+    deepseek_base_url: str = Field("https://api.deepseek.com", alias="DEEPSEEK_BASE_URL")
     deepseek_model: str = Field("deepseek-chat", alias="DEEPSEEK_MODEL")
     gemini_api_key: str | None = Field(None, alias="GEMINI_API_KEY")
     cartesia_api_key: str | None = Field(None, alias="CARTESIA_API_KEY")

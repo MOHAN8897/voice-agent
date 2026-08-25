@@ -24,8 +24,20 @@ client/dist/
 client/node_modules/
 dist/
 
-# Call archives (local file store)
-data/calls/
+# Call archives & local dev overlays (API keys, fallback chains)
+data/
+
+# Benchmark / probe artifacts (local run output — do not commit)
+benchmark_results.json
+cost_probe_results.json
+verify_post_fix_results.json
+
+# TypeScript incremental build info
+*.tsbuildinfo
+
+# Playwright / E2E outputs
+playwright-report/
+test-results/
 
 # OS / IDE
 .DS_Store

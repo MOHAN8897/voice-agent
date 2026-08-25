@@ -25,7 +25,7 @@ class DeepSeekLLMAdapter:
         settings = get_settings()
         return AsyncOpenAI(
             api_key=dev_secrets_store.effective_secret("deepseek_api_key") or settings.deepseek_api_key or "",
-            base_url="https://api.deepseek.com",
+            base_url=settings.deepseek_base_url,
         )
 
     async def stream_live_turn(

@@ -1,6 +1,8 @@
 """Tests for L1 stack resolver — Phase 1."""
 from __future__ import annotations
 
+from unittest.mock import patch
+
 import pytest
 
 from server.config.env import Settings
@@ -46,12 +48,21 @@ def test_disabled_provider_rejected(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
     monkeypatch.setenv("SARVAM_API_KEY", "sarvam-test")
     monkeypatch.setenv("ENABLE_OPENAI", "false")
+    monkeypatch.setenv("ENABLE_DEEPSEEK", "false")
+    from server.config.env import get_settings
+
+    get_settings.cache_clear()
     settings = Settings(_env_file=None)  # type: ignore[call-arg]
     registry = ProviderRegistry(settings)
     resolver = StackResolver(settings, registry)
-    with pytest.raises(AppError) as exc:
-        resolver.resolve(mode="env", tier="medium")
+    with patch(
+        "server.services.dev_fallback_store.dev_fallback_store.get_chains",
+        return_value={"stt": ["sarvam"], "llm": ["openai"], "tts": ["sarvam"]},
+    ):
+        with pytest.raises(AppError) as exc:
+            resolver.resolve(mode="env", tier="medium")
     assert exc.value.code == ErrorCode.PROVIDER_DISABLED
+    get_settings.cache_clear()
 
 
 def test_stack_override_rejected_in_production(resolver):

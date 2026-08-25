@@ -146,10 +146,14 @@ class CallLedger:
             return {"call_id": call_id, "turns": []}
         return json.loads(path.read_text(encoding="utf-8"))
 
-    def append_trace_turn(self, call_id: str, turn: dict[str, Any]) -> None:
-        trace = self.read_trace(call_id)
-        trace.setdefault("turns", []).append(turn)
-        self.trace_path(call_id).write_text(json.dumps(trace, ensure_ascii=False, indent=2), encoding="utf-8")
+    async def append_trace_turn(self, call_id: str, turn: dict[str, Any]) -> None:
+        async with _lock(call_id):
+            trace = self.read_trace(call_id)
+            trace.setdefault("turns", []).append(turn)
+            self.trace_path(call_id).write_text(
+                json.dumps(trace, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
 
     def reset_for_tests(self) -> None:
         _locks.clear()

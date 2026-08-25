@@ -10,6 +10,8 @@ from server.call import call_context, memory_projection as memory_projection_mod
 from server.call.call_ledger import call_ledger
 from server.call.live_turn_schema import LIVE_TURN_JSON_SCHEMA
 from server.call.memory_manager import memory_manager
+from server.call.rolling_summary import maybe_refresh_rolling_summary
+from server.call.turn_coordinator import drain, lock_for
 from server.config.env import get_settings
 from server.services.openai_brain_service import generate_response, generate_response_stream
 from server.utils.logger import log_perf, logger
@@ -35,16 +37,14 @@ _LLM_KEYS = {
 
 
 class LiveTurnOrchestrator:
-    def _memory_blocks(self, call_id: str | None) -> tuple[str | None, str | None, int]:
+    async def _memory_blocks(self, call_id: str | None) -> tuple[str | None, str | None]:
         settings = get_settings()
         if not call_id or not settings.working_memory_enabled:
-            return None, None, 0
+            return None, None
         snap = memory_manager.get_snapshot(call_id)
         rolling = (snap.get("summary") or "").strip() or None
         projection = memory_projection_mod.build(snap, include_summary=not rolling) or ""
-        events = memory_manager.list_events(call_id)
-        next_turn = (events[-1]["turn_seq"] + 1) if events else 1
-        return projection, rolling or "", next_turn
+        return projection, rolling or ""
 
     def _maybe_build_live_input(
         self,
@@ -56,7 +56,6 @@ class LiveTurnOrchestrator:
         projection: str | None,
         rolling: str | None,
     ) -> list[dict] | None:
-        """Architecture: orchestrator calls instruction_builder when L2 brain is locked."""
         if ctx is None or not ctx.compiled_brain_text:
             return None
         from server.agent.brain_prompt_composer import estimate_tokens
@@ -103,68 +102,76 @@ class LiveTurnOrchestrator:
             ctx.heartbeat()
             openai_model = openai_model or ctx.resolved_stack.llm.model
 
-        if call_id and settings.enable_call_archive:
-            asyncio.create_task(self._safe_append_user(call_id, transcript, stt_latency_ms))
+        turn_lock = lock_for(call_id) if call_id else None
+        if turn_lock:
+            await turn_lock.acquire()
 
-        projection, rolling, turn_seq = self._memory_blocks(call_id)
-        structured = bool(call_id) and settings.working_memory_enabled
-        input_messages = self._maybe_build_live_input(
-            ctx=ctx,
-            transcript=transcript,
-            session_id=session_id,
-            openai_model=openai_model,
-            projection=projection,
-            rolling=rolling,
-        )
+        user_seq = 0
+        try:
+            if call_id and settings.enable_call_archive:
+                user_line = await self._safe_append_user(call_id, transcript, stt_latency_ms)
+                user_seq = int(user_line.get("seq") or 0)
 
-        t0 = time.perf_counter()
-        brain_latency_ms: int | None = None
-        assistant_text = ""
-        memory_update: dict[str, Any] = {"operations": []}
-        memory_parse_failed = False
-        async for chunk in self._stream_llm(
-            transcript=transcript,
-            language_code=language_code,
-            session_id=session_id,
-            call_id=call_id,
-            user_instructions=user_instructions,
-            business_instructions=business_instructions,
-            response_style=response_style,
-            brain_prompt=brain_prompt,
-            openai_model=openai_model,
-            temperature=temperature,
-            reasoning_effort=reasoning_effort,
-            max_output_tokens=max_output_tokens,
-            memory_projection=projection,
-            rolling_summary=rolling,
-            structured_live_turn=structured,
-            input_messages=input_messages,
-            ctx=ctx,
-        ):
-            if chunk.get("delta") and brain_latency_ms is None:
-                brain_latency_ms = int((time.perf_counter() - t0) * 1000)
-            if chunk.get("done"):
-                assistant_text = chunk.get("text") or ""
-                memory_update = chunk.get("memory_update") or {"operations": []}
-                memory_parse_failed = bool(chunk.get("memory_parse_failed"))
-            yield chunk
+            projection, rolling = await self._memory_blocks(call_id)
+            structured = bool(call_id) and settings.working_memory_enabled
+            input_messages = self._maybe_build_live_input(
+                ctx=ctx,
+                transcript=transcript,
+                session_id=session_id,
+                openai_model=openai_model,
+                projection=projection,
+                rolling=rolling,
+            )
 
-        if call_id and settings.enable_call_archive:
-            asyncio.create_task(
-                self._after_assistant(
+            t0 = time.perf_counter()
+            brain_latency_ms: int | None = None
+            assistant_text = ""
+            memory_update: dict[str, Any] = {"operations": []}
+            memory_parse_failed = False
+            async for chunk in self._stream_llm(
+                transcript=transcript,
+                language_code=language_code,
+                session_id=session_id,
+                call_id=call_id,
+                user_instructions=user_instructions,
+                business_instructions=business_instructions,
+                response_style=response_style,
+                brain_prompt=brain_prompt,
+                openai_model=openai_model,
+                temperature=temperature,
+                reasoning_effort=reasoning_effort,
+                max_output_tokens=max_output_tokens,
+                memory_projection=projection,
+                rolling_summary=rolling,
+                structured_live_turn=structured,
+                input_messages=input_messages,
+                ctx=ctx,
+            ):
+                if chunk.get("delta") and brain_latency_ms is None:
+                    brain_latency_ms = int((time.perf_counter() - t0) * 1000)
+                if chunk.get("done"):
+                    assistant_text = chunk.get("text") or ""
+                    memory_update = chunk.get("memory_update") or {"operations": []}
+                    memory_parse_failed = bool(chunk.get("memory_parse_failed"))
+                yield chunk
+
+            if call_id and settings.enable_call_archive:
+                await self._after_assistant(
                     call_id,
                     assistant_text,
                     brain_latency_ms,
                     stt_latency_ms,
                     memory_update=memory_update,
-                    turn_seq=turn_seq,
+                    turn_seq=user_seq,
                     user_text=transcript,
                     merge_started_at=time.perf_counter(),
                     projection=projection,
                     rolling=rolling,
                     memory_parse_failed=memory_parse_failed,
                 )
-            )
+        finally:
+            if turn_lock and turn_lock.locked():
+                turn_lock.release()
 
     async def handle_user_turn(self, **kwargs: Any) -> dict[str, Any]:
         settings = get_settings()
@@ -176,74 +183,120 @@ class LiveTurnOrchestrator:
         if ctx:
             ctx.heartbeat()
             kwargs["openai_model"] = kwargs.get("openai_model") or ctx.resolved_stack.llm.model
-        if call_id and settings.enable_call_archive:
-            asyncio.create_task(self._safe_append_user(call_id, transcript, stt_latency_ms))
-        projection, rolling, turn_seq = self._memory_blocks(call_id)
-        kwargs["memory_projection"] = projection
-        kwargs["rolling_summary"] = rolling
-        kwargs["structured_live_turn"] = bool(call_id) and settings.working_memory_enabled
-        kwargs["input_messages"] = self._maybe_build_live_input(
-            ctx=ctx,
-            transcript=transcript,
-            session_id=session_id,
-            openai_model=kwargs.get("openai_model"),
-            projection=projection,
-            rolling=rolling,
-        )
-        t0 = time.perf_counter()
-        llm_kwargs = {k: v for k, v in kwargs.items() if k in _LLM_KEYS}
-        result = await generate_response(**llm_kwargs)
-        brain_latency_ms = int((time.perf_counter() - t0) * 1000)
-        if call_id and settings.enable_call_archive:
-            asyncio.create_task(
-                self._after_assistant(
+
+        turn_lock = lock_for(call_id) if call_id else None
+        if turn_lock:
+            await turn_lock.acquire()
+
+        try:
+            user_seq = 0
+            if call_id and settings.enable_call_archive:
+                user_line = await self._safe_append_user(call_id, transcript, stt_latency_ms)
+                user_seq = int(user_line.get("seq") or 0)
+
+            projection, rolling = await self._memory_blocks(call_id)
+            kwargs["memory_projection"] = projection
+            kwargs["rolling_summary"] = rolling
+            kwargs["structured_live_turn"] = bool(call_id) and settings.working_memory_enabled
+            kwargs["input_messages"] = self._maybe_build_live_input(
+                ctx=ctx,
+                transcript=transcript,
+                session_id=session_id,
+                openai_model=kwargs.get("openai_model"),
+                projection=projection,
+                rolling=rolling,
+            )
+            t0 = time.perf_counter()
+            llm_kwargs = {k: v for k, v in kwargs.items() if k in _LLM_KEYS}
+            result = await generate_response(**llm_kwargs)
+            brain_latency_ms = int((time.perf_counter() - t0) * 1000)
+            if call_id and settings.enable_call_archive:
+                await self._after_assistant(
                     call_id,
                     result.get("text") or "",
                     brain_latency_ms,
                     stt_latency_ms,
                     memory_update=result.get("memory_update") or {"operations": []},
-                    turn_seq=turn_seq,
+                    turn_seq=user_seq,
                     user_text=transcript,
                     merge_started_at=time.perf_counter(),
                     projection=projection,
                     rolling=rolling,
                     memory_parse_failed=bool(result.get("memory_parse_failed")),
                 )
-            )
-        return result
+            return result
+        finally:
+            if turn_lock and turn_lock.locked():
+                turn_lock.release()
 
     async def _stream_llm(self, *, ctx, **kwargs: Any) -> AsyncIterator[dict[str, Any]]:
         settings = get_settings()
         adapter = None
+        registry = None
+        provider_id = ctx.resolved_stack.llm.provider if ctx else None
         if settings.use_provider_registry and ctx is not None:
             try:
                 from server.providers import get_provider_registry
 
-                adapter = get_provider_registry().get_llm(ctx.resolved_stack.llm.provider)
+                registry = get_provider_registry()
+                adapter = registry.get_llm(provider_id)
             except Exception:
                 adapter = None
         stream_kwargs = {k: v for k, v in kwargs.items() if k != "ctx"}
         input_messages = stream_kwargs.pop("input_messages", None)
-        if adapter is not None:
-            schema = LIVE_TURN_JSON_SCHEMA if stream_kwargs.get("structured_live_turn") else None
-            stream_fn = adapter.stream_structured_turn if schema else adapter.stream_live_turn
+        schema = LIVE_TURN_JSON_SCHEMA if stream_kwargs.get("structured_live_turn") else None
+
+        async def _run_with(adapter_inst) -> AsyncIterator[dict[str, Any]]:
+            stream_fn = adapter_inst.stream_structured_turn if schema else adapter_inst.stream_live_turn
             async for chunk in stream_fn(
                 input_messages=input_messages,
                 schema=schema,
                 **stream_kwargs,
             ):
                 yield chunk
-            return
+
+        if adapter is not None:
+            try:
+                async for chunk in _run_with(adapter):
+                    yield chunk
+                return
+            except Exception as e:
+                logger.warning(f"[LLM] primary provider failed {provider_id}: {str(e)[:160]}")
+                fallback = self._fallback_llm_adapter(ctx, registry, provider_id)
+                if fallback is None:
+                    raise
+                async for chunk in _run_with(fallback):
+                    yield chunk
+                return
+
         if input_messages is not None:
             stream_kwargs["input_messages"] = input_messages
         async for chunk in generate_response_stream(**stream_kwargs):
             yield chunk
 
-    async def _safe_append_user(self, call_id: str, transcript: str, stt_latency_ms: int | None) -> None:
+    def _fallback_llm_adapter(self, ctx, registry, failed_provider: str | None):
+        if ctx is None:
+            return None
+        from server.services.dev_fallback_store import dev_fallback_store
+
+        chain = dev_fallback_store.get_chains().get("llm") or []
+        for pid in chain:
+            if pid == failed_provider:
+                continue
+            try:
+                return registry.get_llm(pid)
+            except Exception:
+                continue
+        return None
+
+    async def _safe_append_user(
+        self, call_id: str, transcript: str, stt_latency_ms: int | None
+    ) -> dict[str, Any]:
         try:
-            await call_ledger.append_user_turn(call_id, transcript, stt_latency_ms=stt_latency_ms)
-        except RuntimeError:
-            pass
+            return await call_ledger.append_user_turn(call_id, transcript, stt_latency_ms=stt_latency_ms)
+        except RuntimeError as e:
+            logger.warning(f"[LEDGER] user append dropped call={call_id}: {str(e)[:120]}")
+            return {"seq": 0}
 
     async def _after_assistant(
         self,
@@ -266,14 +319,15 @@ class LiveTurnOrchestrator:
                 text,
                 brain_latency_ms=brain_latency_ms,
             )
-        except RuntimeError:
+        except RuntimeError as e:
+            logger.warning(f"[LEDGER] assistant append dropped call={call_id}: {str(e)[:120]}")
             return
         ops = (memory_update or {}).get("operations") or []
         applied = 0
         merge_ms: int | None = None
         settings = get_settings()
+        seq = turn_seq or int(line.get("seq") or 0)
         if settings.working_memory_enabled:
-            seq = turn_seq or line["seq"]
             try:
                 if projection is not None:
                     memory_manager.record_projection(
@@ -301,6 +355,7 @@ class LiveTurnOrchestrator:
                     )
                     if fallback:
                         applied = len(fallback["event"].get("operations") or [])
+                await maybe_refresh_rolling_summary(call_id, seq)
             except Exception as e:
                 logger.warning(f"[MEMORY] merge failed call={call_id}: {str(e)[:160]}")
             if merge_started_at is not None:
@@ -315,7 +370,7 @@ class LiveTurnOrchestrator:
             "memory_merge_ms": merge_ms,
             "errors": [],
         }
-        call_ledger.append_trace_turn(call_id, turn)
+        await call_ledger.append_trace_turn(call_id, turn)
         ctx = call_context.get(call_id)
         if ctx:
             ctx.turns.append(turn)
