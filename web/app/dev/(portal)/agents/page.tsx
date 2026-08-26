@@ -1,15 +1,16 @@
 import { DevAgentsGrid } from "@/components/dev/DevAgentsGrid";
+import { ConsolePage } from "@/components/console/ConsolePage";
 import { PageHeader } from "@/components/console/PageHeader";
 
 export default function DevAgentsPage() {
   return (
-    <div>
+    <ConsolePage>
       <PageHeader
-        eyebrow="Fleet"
+        eyebrow="Equipment rack"
         title="Agents"
-        description="Mirror of business agent workspace — open any tab to edit brains, voice tiers, channels, and versions."
+        description="Mirror of business agent workspace — open any module to edit brains, voice tiers, channels, and versions."
       />
       <DevAgentsGrid />
-    </div>
+    </ConsolePage>
   );
 }

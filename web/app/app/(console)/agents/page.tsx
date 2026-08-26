@@ -1,29 +1,29 @@
 import { apiGet } from "@/lib/api";
 import Link from "next/link";
-import { PageHeader } from "@/components/console/PageHeader";
+import { AgentsRack, type AgentRackItem } from "@/components/agents/AgentRackCard";
+import { ConsolePage } from "@/components/console/ConsolePage";
 import { EmptyState } from "@/components/console/EmptyState";
-import { StatusBadge } from "@/components/console/StatusBadge";
+import { PageHeader } from "@/components/console/PageHeader";
+import { SkeuoButton } from "@/components/ui/skeuo";
 
 export default async function AgentsPage() {
-  let agents: Array<{ agent_id: string; name: string; status: string; default_tier?: string }> = [];
+  let agents: AgentRackItem[] = [];
   try {
-    const data = await apiGet<{ agents?: Array<{ agent_id: string; name: string; status: string; default_tier?: string }> }>(
-      "/api/agents"
-    );
+    const data = await apiGet<{ agents?: AgentRackItem[] }>("/api/agents");
     agents = data.agents || [];
   } catch {
     agents = [];
   }
 
   return (
-    <div>
+    <ConsolePage>
       <PageHeader
-        eyebrow="Workspace"
+        eyebrow="Equipment rack"
         title="Agents"
-        description="Each agent has a Business Brain, voice tier, channels, and a version you can promote."
+        description="Each module is a deployable voice agent — brain, tier, channels, and promoted version."
         actions={
-          <Link href="/app/test-studio" className="rounded-xl border border-surface-border px-4 py-2.5 text-sm text-text">
-            Test Studio
+          <Link href="/app/test-studio">
+            <SkeuoButton variant="metal" size="sm">Test Studio</SkeuoButton>
           </Link>
         }
       />
@@ -36,32 +36,8 @@ export default async function AgentsPage() {
           />
         </div>
       ) : (
-        <ul className="mt-8 grid gap-4 md:grid-cols-2">
-          {agents.map((a) => (
-            <li key={a.agent_id} className="rounded-2xl border border-surface-border-subtle bg-surface-card p-5">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="font-medium text-text">{a.name}</p>
-                  <p className="mt-1 font-mono text-xs text-text-subtle">{a.agent_id}</p>
-                </div>
-                <StatusBadge tone={a.status === "active" ? "success" : "muted"}>{a.status}</StatusBadge>
-              </div>
-              <p className="mt-4 text-xs text-text-muted">Tier {a.default_tier || "medium"}</p>
-              <div className="mt-5 flex gap-3">
-                <Link href={`/app/agents/${a.agent_id}/summary`} className="text-sm font-medium text-accent hover:underline">
-                  Workspace
-                </Link>
-                <Link href={`/app/agents/${a.agent_id}/test`} className="text-sm text-text-muted hover:text-text">
-                  Test
-                </Link>
-                <Link href={`/app/agents/${a.agent_id}/brain`} className="text-sm text-text-muted hover:text-text">
-                  Brain
-                </Link>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <AgentsRack agents={agents} portal="app" />
       )}
-    </div>
+    </ConsolePage>
   );
 }

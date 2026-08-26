@@ -3,7 +3,7 @@ Metrics & Prompt transparency — server/routes/metrics.py
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Request
 
 from server.agent.brain_prompt_composer import (
     compose_brain_prompt_sections,
@@ -18,6 +18,8 @@ from server.config.env import get_settings
 from server.services.brain_budget import resolve_brain_budget
 from server.services.prompt_cache_key import cache_eligible
 from server.services.prompt_cache_tracker import prompt_cache_tracker
+from server.auth.tenant_context import tenant_id_from_request
+from server.call.call_store import call_store
 from server.utils.metrics import metrics
 
 router = APIRouter()
@@ -66,6 +68,55 @@ async def get_metrics():
     except Exception:
         snap["model"] = "unknown"
     return snap
+
+
+@router.get("/api/analytics/fleet")
+async def fleet_analytics(request: Request, limit: int = Query(500, ge=1, le=500)):
+    """Aggregate call-archive metrics for fleet analytics (tenant-scoped)."""
+    tenant_id = tenant_id_from_request(request)
+    items, total = await call_store.list_calls(tenant_id=tenant_id, limit=limit)
+    dispositions: dict[str, int] = {}
+    channels: dict[str, int] = {}
+    tiers: dict[str, int] = {}
+    combinations: dict[str, int] = {}
+    finalization_complete = 0
+    finalization_failed = 0
+    durations: list[int] = []
+
+    for row in items:
+        d = str(row.get("disposition") or "pending")
+        dispositions[d] = dispositions.get(d, 0) + 1
+        ch = str(row.get("channel") or "unknown")
+        channels[ch] = channels.get(ch, 0) + 1
+        tier = str(row.get("tier") or "unknown")
+        tiers[tier] = tiers.get(tier, 0) + 1
+        combo = str(row.get("combination_id") or "unknown")
+        combinations[combo] = combinations.get(combo, 0) + 1
+        fs = str(row.get("finalization_status") or "")
+        if fs == "complete":
+            finalization_complete += 1
+        elif fs == "failed":
+            finalization_failed += 1
+        dur = row.get("duration_sec")
+        if isinstance(dur, int) and dur >= 0:
+            durations.append(dur)
+
+    avg_duration = round(sum(durations) / len(durations), 1) if durations else None
+    return {
+        "total_calls": total,
+        "sample_size": len(items),
+        "dispositions": dispositions,
+        "channels": channels,
+        "tiers": tiers,
+        "combinations": combinations,
+        "finalization": {
+            "complete": finalization_complete,
+            "failed": finalization_failed,
+            "other": max(0, len(items) - finalization_complete - finalization_failed),
+        },
+        "duration_sec_avg": avg_duration,
+        "completion_rate": round(finalization_complete / len(items), 3) if items else None,
+    }
 
 
 @router.post("/api/metrics/reset")

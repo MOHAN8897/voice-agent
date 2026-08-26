@@ -1,21 +1,60 @@
-import { Panel } from "@/components/console/Panel";
+import { AgentVoiceModelsPanel } from "@/components/voice/AgentVoiceModelsPanel";
+import { ConsolePage } from "@/components/console/ConsolePage";
+import { apiGet } from "@/lib/api";
 
-export default function AgentVoicePage() {
+type TierRow = {
+  tier: string;
+  combination_id?: string;
+  preview?: {
+    stt?: { provider?: string; model?: string };
+    llm?: { provider?: string; model?: string };
+    tts?: { provider?: string; model?: string };
+    language?: string;
+    combination_id?: string;
+  };
+  error?: string;
+};
+
+export default async function AgentVoicePage({ params }: { params: { id: string } }) {
+  let defaultTier = "medium";
+  let tiers: TierRow[] = [];
+  let providers: Array<{ id: string; healthy?: boolean; configured?: boolean }> = [];
+  let configMode = "env";
+
+  try {
+    const agent = await apiGet<{ agent?: { default_tier?: string } }>(`/api/agents/${params.id}`);
+    defaultTier = agent.agent?.default_tier || "medium";
+  } catch {
+    /* keep default */
+  }
+
+  try {
+    const tierData = await apiGet<{ tiers?: TierRow[]; config_mode?: string }>("/api/tiers");
+    tiers = tierData.tiers || [];
+    configMode = tierData.config_mode || "env";
+  } catch {
+    tiers = [];
+  }
+
+  try {
+    const statusData = await apiGet<{ providers?: Array<{ id: string; healthy?: boolean; configured?: boolean }> }>(
+      "/api/providers/status"
+    );
+    providers = statusData.providers || [];
+  } catch {
+    providers = [];
+  }
+
   return (
-    <div className="grid gap-4 lg:grid-cols-3">
-      {["LOW", "MEDIUM", "PREMIUM"].map((tier) => (
-        <Panel key={tier} title={`${tier} tier`}>
-          <p className="text-sm text-text-muted">
-            STT, LLM, and TTS are resolved on the server for this tier. Business users cannot override the provider
-            matrix from the console.
-          </p>
-        </Panel>
-      ))}
-      <div className="lg:col-span-3">
-        <p className="text-sm text-text-muted">
-          Voice tier assignment is managed by your platform administrator. Contact support if you need a tier change.
-        </p>
-      </div>
-    </div>
+    <ConsolePage>
+      <AgentVoiceModelsPanel
+        agentId={params.id}
+        initialTier={defaultTier}
+        tiers={tiers}
+        providers={providers}
+        configMode={configMode}
+        portal="app"
+      />
+    </ConsolePage>
   );
 }

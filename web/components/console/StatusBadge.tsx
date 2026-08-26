@@ -1,29 +1,23 @@
-const TONES: Record<string, string> = {
-  success: "bg-accent-dim text-success",
-  warning: "bg-warning/10 text-warning",
-  info: "bg-surface-raised text-accent-secondary",
-  muted: "bg-surface-raised text-text-muted",
-  accent: "bg-accent-dim text-accent",
-};
+import { SkeuoBadge, dispositionTone } from "@/components/ui/skeuo/SkeuoBadge";
 
 export function StatusBadge({
   children,
   tone = "muted",
 }: {
   children: React.ReactNode;
-  tone?: keyof typeof TONES;
+  tone?: "success" | "warning" | "info" | "muted" | "accent" | "live" | "error";
 }) {
-  return (
-    <span className={`inline-flex rounded-full px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-wider ${TONES[tone]}`}>
-      {children}
-    </span>
-  );
+  const map: Record<string, "success" | "warning" | "info" | "muted" | "accent" | "live" | "error"> = {
+    success: "success",
+    warning: "warning",
+    warn: "warning",
+    info: "info",
+    muted: "muted",
+    accent: "accent",
+    live: "live",
+    error: "error",
+  };
+  return <SkeuoBadge tone={map[tone] || "muted"}>{children}</SkeuoBadge>;
 }
 
-export function dispositionTone(value?: string): keyof typeof TONES {
-  const v = (value || "").toLowerCase();
-  if (["can_convert", "qualified", "booked", "completed"].some((k) => v.includes(k))) return "success";
-  if (["failed", "no_answer", "busy", "error"].some((k) => v.includes(k))) return "warning";
-  if (!v) return "muted";
-  return "info";
-}
+export { dispositionTone };

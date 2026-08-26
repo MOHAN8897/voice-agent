@@ -1,17 +1,24 @@
-import { CallDetailView } from "@/components/calls/CallDetailView";
 import Link from "next/link";
+import { CallInvestigationConsole } from "@/components/calls/CallInvestigationConsole";
+import { ConsolePage } from "@/components/console/ConsolePage";
+import { PageHeader } from "@/components/console/PageHeader";
+import { SkeuoButton } from "@/components/ui/skeuo/SkeuoButton";
 
 export default function CallDetailPage({ params }: { params: { id: string } }) {
   return (
-    <div>
-      <Link href="/app/calls" className="text-sm text-text-muted hover:text-accent">
-        ← Calls
-      </Link>
-      <h1 className="mt-2 text-3xl font-semibold tracking-tight text-text">Call detail</h1>
-      <p className="mt-1 font-mono text-xs text-text-subtle">{params.id}</p>
-      <div className="mt-6">
-        <CallDetailView callId={params.id} />
+    <ConsolePage className="space-y-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <PageHeader
+          eyebrow="Call investigation"
+          title="Investigation workspace"
+          description="Outcome, audio, transcript timeline, pipeline trace, memory state, and metadata — unified per-call debugging."
+        />
+        <Link href="/app/calls">
+          <SkeuoButton variant="ghost" size="sm">← Back to archive</SkeuoButton>
+        </Link>
       </div>
-    </div>
+
+      <CallInvestigationConsole callId={params.id} />
+    </ConsolePage>
   );
 }

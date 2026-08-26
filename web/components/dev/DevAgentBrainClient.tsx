@@ -1,19 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BusinessBrainEditor, orderBrainSections } from "@/components/agents/BusinessBrainEditor";
+import { BusinessBrainEditor } from "@/components/agents/BusinessBrainEditor";
 import { BRAIN_SECTION_LABELS, BRAIN_SECTION_ORDER } from "@/lib/constants";
+import { orderBrainSections, type BrainSection } from "@/lib/brain-utils";
 
-type Section = {
-  section_id: string;
-  type: string;
-  title: string;
-  raw_text: string;
-  order: number;
-  enabled: boolean;
-};
-
-function fallbackSections(): Section[] {
+function fallbackSections(): BrainSection[] {
   return BRAIN_SECTION_ORDER.map((type, i) => ({
     section_id: type,
     type,
@@ -25,7 +17,10 @@ function fallbackSections(): Section[] {
 }
 
 export function DevAgentBrainClient({ agentId }: { agentId: string }) {
-  const [sections, setSections] = useState<Section[]>(fallbackSections());
+  const [sections, setSections] = useState<BrainSection[]>(fallbackSections());
+  const [published, setPublished] = useState<Record<string, unknown> | null>(null);
+  const [versionsCount, setVersionsCount] = useState(0);
+  const [checksum, setChecksum] = useState("");
 
   useEffect(() => {
     fetch(`/api/agents/${agentId}/business-brain`, { credentials: "include" })
@@ -33,8 +28,19 @@ export function DevAgentBrainClient({ agentId }: { agentId: string }) {
       .then((data) => {
         const loaded = data?.draft?.sections || [];
         if (loaded.length) setSections(orderBrainSections(loaded));
+        setPublished(data?.published ?? null);
+        setVersionsCount(data?.versions_count ?? 0);
+        setChecksum(data?.draft?.raw_checksum || "");
       });
   }, [agentId]);
 
-  return <BusinessBrainEditor agentId={agentId} initialSections={sections} />;
+  return (
+    <BusinessBrainEditor
+      agentId={agentId}
+      initialSections={sections}
+      published={published as { version_id?: string; optimized_prompt?: string; optimizer_report?: { optimizer_model?: string } } | null}
+      versionsCount={versionsCount}
+      initialChecksum={checksum}
+    />
+  );
 }

@@ -1,7 +1,9 @@
 import { apiGet } from "@/lib/api";
+import { ConsolePage } from "@/components/console/ConsolePage";
+import { EmptyState } from "@/components/console/EmptyState";
 import { PageHeader } from "@/components/console/PageHeader";
 import { StatusBadge } from "@/components/console/StatusBadge";
-import { EmptyState } from "@/components/console/EmptyState";
+import { SkeuoTable, SkeuoTableBody, SkeuoTableHead, SkeuoTableRow, SkeuoTd, SkeuoTh } from "@/components/ui/skeuo";
 
 type ProviderRow = {
   id: string;
@@ -22,11 +24,11 @@ export default async function ProvidersPage() {
   }
 
   return (
-    <div>
+    <ConsolePage>
       <PageHeader
-        eyebrow="Catalog"
+        eyebrow="Hardware rack"
         title="Providers"
-        description={`Read-only provider catalog and language gates. Resolution mode: ${configMode}.`}
+        description={`STT, LLM, and TTS modules. Resolution mode: ${configMode}.`}
       />
 
       {providers.length === 0 ? (
@@ -34,29 +36,27 @@ export default async function ProvidersPage() {
           <EmptyState title="Catalog unavailable" body="Start the API to load STT, LLM, and TTS providers." />
         </div>
       ) : (
-        <div className="mt-8 overflow-x-auto rounded-2xl border border-surface-border-subtle">
-          <table className="w-full min-w-[560px] text-left text-sm">
-            <thead className="bg-surface-elevated text-text-subtle">
-              <tr>
-                <th className="px-4 py-3 font-medium">Provider</th>
-                <th className="px-4 py-3 font-medium">Capabilities</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-surface-border-subtle bg-surface-card">
-              {providers.map((p) => (
-                <tr key={p.id}>
-                  <td className="px-4 py-3 font-medium text-text">{p.label || p.id}</td>
-                  <td className="px-4 py-3 text-text-muted">{(p.capabilities || []).join(", ") || "—"}</td>
-                  <td className="px-4 py-3">
-                    <StatusBadge tone={p.status === "enabled" ? "success" : "muted"}>{p.status || "listed"}</StatusBadge>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <SkeuoTable className="mt-8">
+          <SkeuoTableHead>
+            <tr>
+              <SkeuoTh>Provider</SkeuoTh>
+              <SkeuoTh>Capabilities</SkeuoTh>
+              <SkeuoTh>Status</SkeuoTh>
+            </tr>
+          </SkeuoTableHead>
+          <SkeuoTableBody>
+            {providers.map((p) => (
+              <SkeuoTableRow key={p.id}>
+                <SkeuoTd className="font-medium text-text">{p.label || p.id}</SkeuoTd>
+                <SkeuoTd className="text-text-muted">{(p.capabilities || []).join(", ") || "—"}</SkeuoTd>
+                <SkeuoTd>
+                  <StatusBadge tone={p.status === "enabled" ? "success" : "muted"}>{p.status || "listed"}</StatusBadge>
+                </SkeuoTd>
+              </SkeuoTableRow>
+            ))}
+          </SkeuoTableBody>
+        </SkeuoTable>
       )}
-    </div>
+    </ConsolePage>
   );
 }

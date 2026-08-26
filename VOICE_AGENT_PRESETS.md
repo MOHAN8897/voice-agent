@@ -1,317 +1,2004 @@
-# Voice Agent: Barge-in, Presets, and Safe Tuning
+# MASTER UI REDESIGN PROMPT
 
-This document explains **why** changing TTS pace/temperature broke barge-in in your logs, **what** the root causes were, and **how** to run the agent safely without breaking token caching or the live voice pipeline.
+## Modern Premium Skeuomorphic Voice-Agent Control Plane
 
----
+You are the lead product designer, UX architect, and senior frontend engineer responsible for transforming the existing Voice Agent Platform UI into a **premium modern skeuomorphic interface**.
 
-## 1. What your logs showed (`fix.md`)
+This is NOT a request to make the interface look like an old 2010-era glossy website.
 
-### Critical: `live-guards.js` returned 404
+The target is:
 
-```
-GET /live-guards.js HTTP/1.1" 404 Not Found
-```
+**Modern SaaS usability + premium industrial hardware aesthetics + tactile skeuomorphism + dark developer-console precision.**
 
-**Impact:** The barge-in guard module never loaded. Rules that prevent:
-- false interrupts from TTS echo
-- queued speech after a real interrupt
-- think-cancel storms during playback
+The final product should feel like a sophisticated piece of professional audio/AI equipment translated into software.
 
-…were **not running** in the browser.
+Think:
 
-**Fix applied:** `server/app.py` serves all `client/*.{js,css,html}` at root via a catch-all route (no more per-file 404s). After deploy, hard-refresh (`Ctrl+Shift+R`) and confirm the network tab shows **200** for `live-guards.js`.
+* premium studio hardware
+* high-end synthesizer
+* professional audio console
+* aerospace/industrial control interface
+* modern Apple-era skeuomorphism
+* physical knobs, switches and illuminated indicators
+* machined metal
+* glass
+* rubber
+* subtle brushed surfaces
+* tactile buttons
+* realistic depth
+* precise technical typography
 
-**Client fallback:** `app.js` includes a minimal inline guard if the file still fails to load.
-
----
-
-### Secondary: free-form sliders changed coupled settings
-
-You changed **TTS pace** and **temperature** independently. Those values do not affect barge-in directly, but they change:
-
-| Setting | Side effect on live voice |
-|--------|---------------------------|
-| Faster pace (e.g. 1.1×) | Longer playback window → more time for STT to hear echo |
-| Higher temperature (e.g. 0.8+) | More varied prosody → harder echo cancellation |
-| Custom VAD silence | Endpointing too short → partials fire before you finish speaking |
-| Custom barge thresholds | Too sensitive → agent stops; too weak → queue stuck |
-
-Industry practice (Sarvam STT docs, voice-agent guides): **STT VAD, barge-in, and TTS pacing are tuned as one bundle**, not independent sliders.
+But combine those physical metaphors with a modern SaaS application architecture.
 
 ---
 
-### Symptom: input shows as "queued"
+# 1. READ THE EXISTING PRODUCT DOCUMENTATION FIRST
 
-Correct live flow after interrupt:
+Before changing UI code, inspect the repository and read the existing product documentation.
 
-```
-USER SPEAKS (barge-in)
-  → stop audio + cancel brain/TTS
-  → busy = false
-  → STT final
-  → runTurn() immediately
-```
+Important sources include:
 
-Broken flow (what you saw):
+* `01-master-prd.md`
+* `02-requirements-reconciliation.md`
+* `05-ux-console-and-dashboards.md`
+* `08-implementation-roadmap.md`
+* `11-ui-information-architecture.md`
+* `16-mvp-implementation-skills.md`
+* `17-product-decisions.md`
+* `19-frontend-backend-nextjs-railway.md`
+* `00-current-state-audit.md`
+* `fix.md`
+* `memory implemenation.md`
 
-```
-USER SPEAKS while busy
-  → transcript.final → enqueueFinal()
-  → old turn still holds busy
-  → UI shows "queued"
-  → agent stops, never responds
-```
+Do not invent product behavior that contradicts these documents.
 
-This was fixed in `client/app.js` (`handleSttFinal`, `doBargeIn`, `turnGeneration`). Partial/think-cancel guards need `live-guards.js` (or the inline fallback in `app.js`). **VAD-start barge-in works even without the external file.**
+The normative target UI is the Next.js App Router application in `web/`. The old `client/` SPA is historical reference only and must not become the target architecture.
 
----
+The product workflow is:
 
-## 2. Root causes (summary)
+Configure Agent
+→ Configure Business Brain
+→ Choose Voice Tier
+→ Test Agent
+→ Compare Models
+→ Inspect Calls
+→ Analyze Performance
+→ Promote Configuration.
 
-| # | Issue | Severity |
-|---|--------|----------|
-| 1 | `live-guards.js` not served → no barge-in guards | **Critical** |
-| 2 | User tuned pace/temp/VAD separately → unstable interrupt timing | **High** |
-| 3 | `busy` flag + queue used for interrupts instead of immediate `runTurn` | **High** (fixed in code) |
-| 4 | Stale TTS chunks after interrupt | **Medium** (fixed via `_ttsOwnerGen`) |
-
-**TTS pace/temperature did not break the brain or token cache.** Brain logs still show `CACHE_HIT` and `cache_key: telugu-voice:v5:cfg-...`. Prompt caching is unchanged.
+Preserve this workflow.
 
 ---
 
-## 3. New design: curated voice profiles (not free sliders)
+# 2. DESIGN OBJECTIVE
 
-Instead of exposing pace, temperature, VAD silence, and barge sliders, the **Voice Pipeline** tab now uses **four tested profiles**. Each profile sets all coupled values together.
+Transform the UI into:
 
-### Default profile: **Natural** (recommended)
+## "TACTILE AI CONTROL ROOM"
 
-| Parameter | Value |
-|-----------|-------|
-| TTS pace | **1.0×** |
-| TTS temperature | **0.80** |
-| VAD silence | 500 ms |
-| VAD threshold | 0.30 |
-| Barge-in min words | 3 |
-| Require VAD before barge | Yes |
-| STT stream | fast |
+The user should feel like they are operating a sophisticated physical machine.
 
-### All four profiles
+However:
 
-| Profile | Pace | Temp | VAD silence | Use case |
-|---------|------|------|-------------|----------|
-| **natural** (default) | 1.0 | 0.80 | 500 ms | Everyday Telugu voice — balanced |
-| **fast** | 1.1 | 0.60 | 400 ms | Short back-and-forth |
-| **calm** | 0.95 | 0.50 | 600 ms | Explanations, slower delivery |
-| **expressive** | 1.0 | 0.90 | 500 ms | More vocal variety, still safe barge-in |
+DO NOT make it feel like:
 
-**Speaker** (shubh, ritu, etc.) remains user-selectable — it does not affect barge-in logic.
+* a retro game
+* a 1990s website
+* a skeuomorphic calendar app
+* an old Apple dashboard
+* a glossy Web 2.0 website
+* a toy
+* a casino interface
+* a cyberpunk neon dashboard
 
-**Source of truth:** `server/prompts/voice_defaults.py` → `VOICE_PIPELINE_PRESETS`
+Instead:
 
----
+**quiet luxury + engineering precision + physical tactility.**
 
-## 4. What users should change (and what not to)
+The UI must communicate:
 
-### Safe to change
+* reliability
+* intelligence
+* precision
+* technical sophistication
+* control
+* transparency
+* professional voice infrastructure
 
-- **Voice profile** (Natural / Fast / Calm / Expressive)
-- **TTS speaker**
-- **Brain model** (use "Apply recommended settings" on AI Brain tab)
-- **Brain prompt** (Prompting tab — affects cache key only when content changes)
-
-### Do not change manually (locked in profile)
-
-- TTS pace, temperature
-- STT VAD silence, threshold
-- Barge-in min words, VAD requirement
-- TTS min buffer / max chunk
-
-**Enforced server-side:** POST `/api/settings/runtime` rejects individual pipeline keys unless `voicePresetId` is included. The UI only sends `voicePresetId` — the server expands the full bundle.
-
-### AI Brain (model presets)
-
-- Pick a model → recommended max tokens, prompt budget, and reasoning effort apply automatically
-- Sliders for max tokens / prompt budget are removed — values come from `OPENAI_MODEL_PRESETS`
-
-### Does not affect barge-in
-
-- Brain prompt text (after save)
-- OpenAI model / reasoning effort
-- Token budget (1500–2500)
-- CRM settings
+The existing product character is calm, precise, operational, Telugu-first and developer-capable. Preserve that character.
 
 ---
 
-## 5. Operational checklist
+# 3. CORE VISUAL DIRECTION
 
-After any settings change:
+Use a dark industrial material system.
 
-1. Click **Save all settings**
-2. **Hard refresh** the page (`Ctrl+Shift+R`)
-3. Confirm `live-guards.js` → **200** in browser DevTools → Network
-4. Start a **new** live session (mic button)
-5. Test interrupt: speak over the agent → should see `⚡ interrupted — speak now…`, **not** `queued`
+Primary environment:
 
-After changing voice profile:
+* deep graphite
+* charcoal
+* gunmetal
+* near-black
+* smoked glass
+* dark anodized aluminum
 
-- Settings auto-reconnect STT + TTS if a live session is running (no mic restart needed)
+Secondary materials:
 
----
+* brushed aluminum
+* black rubber
+* dark glass
+* subtle metal plates
+* machined edges
 
-## 6. Token caching — unchanged
+Accent colors should be restrained.
 
-These changes **do not** modify:
+Use accents primarily for:
 
-- `cache_key` / `telugu-voice:v5:cfg-...`
-- Brain prompt budget (1500–2500 tokens)
-- `ENABLE_PROMPT_CACHING` in `.env`
-- Composed prompt structure
+* active state
+* recording
+* live state
+* success
+* warning
+* error
+* primary action
 
-Saving a voice profile only updates runtime TTS/STT fields. Brain cache remains tied to the **saved brain prompt** and config hash.
+Do NOT make the entire application colorful.
 
----
-
-## 7. Environment defaults (`.env`)
-
-```env
-SARVAM_TTS_PACE=1.0
-SARVAM_TTS_TEMPERATURE=0.80
-```
-
-Session overrides come from the selected **voice profile** after Save.
-
----
-
-## 8. For developers
-
-| File | Role |
-|------|------|
-| `client/live-guards.js` | Barge-in policy (must be served at `/live-guards.js`) |
-| `client/app.js` | Live state machine, `handleSttFinal`, `doBargeIn` |
-| `server/prompts/voice_defaults.py` | Profile definitions |
-| `server/services/runtime_settings.py` | Expands `voicePresetId` → full patch |
-| `server/app.py` | Catch-all static route for `client/*.{js,css,html}` |
-
-**Tests:** `server/tests/test_live_barge_policy.py`, `server/tests/test_finetune_console.py`
-
-**Note:** This project uses **vanilla JavaScript** (client) and **Python** (server). There is no TypeScript layer — type safety is enforced via Pydantic (`RuntimePatch`) and unit tests.
+The application should remain predominantly dark and neutral.
 
 ---
 
-## 11. Architecture audit (reaudit)
+# 4. SKEUOMORPHIC MATERIAL SYSTEM
 
-**Verdict: Good architecture for a cascaded STT → Brain SSE → TTS WS pipeline.** Preset bundling is the right industry pattern. A few gaps remain — none block production if you follow the operational checklist.
+Create a reusable material system.
 
-### What is correct
+Every major surface must have a defined material.
 
-| Area | Status | Notes |
-|------|--------|-------|
-| Barge-in cancel path | ✅ | `doBargeIn` stops playback → aborts brain → closes TTS WS → clears queue → `busy=false` |
-| Stale turn invalidation | ✅ | `turnGeneration` + `_ttsOwnerGen` drop late SSE/TTS chunks |
-| Post-barge STT final | ✅ | `handleSttFinal` calls `runTurn()` immediately when `bargeActive` or `awaitingUserAfterBarge` |
-| Preset single source | ✅ | `voice_defaults.py` → catalog API → `runtime_settings` expansion |
-| Server enforcement | ✅ | Bundled keys rejected unless `voicePresetId` is in the patch |
-| Token cache isolation | ✅ | Voice presets do not touch brain prompt / `cache_key` |
-| Thread safety (server) | ✅ | `RuntimeSettingsStore` uses `RLock` + rollback snapshot on validation failure |
-| Industry alignment | ✅ | Client-first flush, VAD+min-words gate, cooldown, bundled tuning ([FutureAGI](https://futureagi.com/blog/voice-ai-barge-in-turn-taking-2026/), [SyncSoft](https://www.syncsoft.ai/en/blog/voice-agent-barge-in-vad-tuning-2026)) |
+## MATERIAL: CHASSIS
 
-### Issues found (by severity)
+Used for:
 
-| # | Issue | Severity | Status |
-|---|--------|----------|--------|
-| 1 | `live-guards.js` 404 broke partial/think-cancel guards | Critical | **Fixed** — catch-all static route + inline fallback |
-| 2 | Free sliders destabilized coupled pipeline | High | **Fixed** — 4 voice profiles + server rejection of loose keys |
-| 3 | `busy` + queue on interrupt | High | **Fixed** — `handleSttFinal` / `doBargeIn` |
-| 4 | Duplicate DOM ids (`ttsMinBuffer` / `ttsMaxChunk`) | High | **Fixed** — Advanced sliders removed |
-| 5 | Pydantic `model_dump()` sent `null` for all fields → bypassed bundled-key guard | High | **Fixed** — filter `v is not None` in `post_runtime` |
-| 6 | Partial validation left corrupt runtime state | Medium | **Fixed** — snapshot rollback in `runtime_settings.update` |
-| 7 | STT WebSocket params frozen at session start | Medium | **Fixed** — hot reconnect on save while live |
-| 8 | Triple guard maintenance (`live-guards.js`, `app.js` fallback, Python tests) | Medium | **Open** — keep in sync manually; tests mirror JS |
-| 9 | `openaiTemperature` slider exposed | Low | **Fixed** — hidden; model presets only |
-| 10 | No TypeScript | N/A | Vanilla JS — not a bug; Pydantic covers API |
+* application background
+* major navigation areas
+* large structural surfaces
 
-### Race conditions reviewed
+Appearance:
 
-| Scenario | Risk | Mitigation in code |
-|----------|------|-------------------|
-| Barge during `runTurn` | Stale brain/TTS continues | `turnGeneration++` in `doBargeIn`; `isTurnStale(gen)` in SSE/TTS handlers |
-| Two `transcript.final` while busy | Double turn | `runTurn` checks `busy && !bargeActive` → queue; barge path clears queue first |
-| Settings save during live session | Stale VAD on STT WS | **Fixed** — `reconnectLivePipeline()` on `runtime-settings-saved` |
-| `drainPendingFinal` loop | Infinite loop | `queueMicrotask` drains one item; only grows via explicit `enqueueFinal` |
-| Concurrent runtime POSTs | Corrupt settings | Server `RLock` serializes updates per process |
-| TTS chunk after interrupt | Ghost audio | `_ttsOwnerGen !== turnGeneration` → ignore stale events |
+* dark graphite
+* extremely subtle texture
+* very low contrast
+* barely visible material grain
 
-**No infinite loops found** in the live state machine.
-
-### Import / module issues reviewed
-
-| Check | Result |
-|-------|--------|
-| `runtime_settings.py` missing `constants` import | **Fixed** (was causing 500 on save) |
-| Circular imports (`voice_defaults` ↔ `runtime_settings`) | ✅ None — one-way import |
-| `ensureLiveGuards` before definition | ✅ Function hoisted; also called at end of `app.js` |
-| Client script load order | ✅ `live-guards.js` before `app.js` in `index.html` |
-
-### Architectural boundaries (do not mix)
-
-```
-┌─────────────────────────────────────────────────────────┐
-│  Voice Pipeline presets (voicePresetId)                 │
-│  → STT VAD, barge thresholds, TTS pace/temp/buffer      │
-│  → Affects: live mic, TTS WS, barge-in guards           │
-│  → Does NOT affect: brain cache_key, prompt composition │
-├─────────────────────────────────────────────────────────┤
-│  AI Brain presets (openaiModel + OPENAI_MODEL_PRESETS)  │
-│  → reasoning effort, max tokens, prompt budget          │
-│  → Affects: brain latency, cache eligibility            │
-│  → Does NOT affect: barge-in timing                     │
-├─────────────────────────────────────────────────────────┤
-│  Brain prompt (Prompting tab)                           │
-│  → cache_key changes only when saved content changes    │
-└─────────────────────────────────────────────────────────┘
-```
-
-### Gaps vs industry best practice (addressed)
-
-1. **Hot STT reconnect** — saving settings during a live session now reconnects `/ws/stt-realtime` and TTS WS without stopping the mic.
-2. **Barge cooldown 250 ms** — matches industry post-flush guidance ([SyncSoft](https://www.syncsoft.ai/en/blog/voice-agent-barge-in-vad-tuning-2026)).
-3. **Brain temperature** — removed from UI; GPT-5 family uses reasoning effort from model presets only.
-
-### Remaining future improvements (not blockers)
-
-1. **Dual-pass VAD** — Sarvam VAD + client min-words + RMS echo gate (no local WebRTC GMM pass).
-2. **History truncation** — cancel generation but do not truncate assistant text to played-audio-ms (acceptable for short Telugu replies).
-
-### Is this architecture good?
-
-**Yes, for your stack** (Sarvam STT/TTS + OpenAI Responses + browser client):
-
-- Presets prevent the exact failure mode from `fix.md` (user tuning pace/temp in isolation).
-- Barge-in follows the client-first cancel pattern recommended for cascaded pipelines.
-- Token caching stays on the brain path, untouched by voice tuning.
-- Server-side validation is fail-closed (reject loose keys, rollback on partial failure).
-
-**Not recommended:** re-exposing individual pace/VAD/barge sliders in the UI or bypassing `voicePresetId` in API clients.
+It should feel like anodized metal.
 
 ---
 
-## 9. References
+## MATERIAL: MACHINED PANEL
 
-- Sarvam STT: use `high_vad_sensitivity` and tune VAD as a unit ([best practices](https://docs.sarvam.ai/api/api-guides-tutorials/speech-to-text/best-practices))
-- Voice agents: barge-in requires cancel brain + TTS + playback together; never queue the interrupt behind the old turn
-- OpenAI voice: GPT-5 family uses **reasoning effort**, not temperature — use AI Brain presets, not TTS sliders
+Used for:
+
+* major cards
+* configuration panels
+* settings sections
+* agent workspace panels
+
+Appearance:
+
+* slightly lighter than chassis
+* subtle inset border
+* fine highlight along upper edge
+* controlled shadow underneath
+* subtle inner shadow
+
+Avoid giant shadows.
 
 ---
 
-## 10. Quick recovery if voice breaks again
+## MATERIAL: GLASS
 
-1. Voice Pipeline → select **Natural** → Save
-2. Hard refresh
-3. Check `live-guards.js` is not 404
-4. Advanced → Reset defaults if needed
-5. Do **not** tune pace/temperature sliders (removed from UI by design)
+Used sparingly for:
 
-If problems persist, capture logs showing:
-- `[VOICE][BARGE-IN]` in browser console
-- `POST /api/session/interrupt`
-- Whether UI says `queued` vs `speak now`
+* floating status panels
+* live monitoring overlays
+* temporary inspectors
+* audio visualization panels
+
+Appearance:
+
+* translucent dark surface
+* subtle border
+* very small blur
+* restrained highlight
+
+Do not turn the entire UI into glassmorphism.
+
+---
+
+## MATERIAL: RUBBER
+
+Used for:
+
+* toggle tracks
+* knobs
+* physical control surfaces
+* microphone controls
+* transport controls
+
+Appearance:
+
+* matte
+* slightly soft
+* subtle depth
+* no excessive shine
+
+---
+
+## MATERIAL: METAL CONTROL
+
+Used for:
+
+* knobs
+* rotary selectors
+* hardware-like buttons
+* tier selectors
+* transport controls
+
+Appearance:
+
+* machined metal
+* circular highlights
+* subtle edge bevel
+* realistic pressed state
+
+---
+
+# 5. LIGHTING SYSTEM
+
+This is extremely important.
+
+Skeuomorphism should come from **consistent lighting**, not random shadows.
+
+Define one global light source:
+
+Top-left / upper-left.
+
+Therefore:
+
+Top-left edges:
+slightly brighter.
+
+Bottom-right edges:
+slightly darker.
+
+Pressed elements:
+inner shadow.
+
+Raised elements:
+outer shadow + subtle highlight.
+
+Every component must obey the same lighting direction.
+
+Do not randomly reverse shadows.
+
+---
+
+# 6. DEPTH HIERARCHY
+
+Use only a few depth levels.
+
+LEVEL 0
+Flat background.
+
+LEVEL 1
+Raised panel.
+
+LEVEL 2
+Interactive control.
+
+LEVEL 3
+Primary control / active hardware.
+
+LEVEL 4
+Floating overlay.
+
+Do not give every element maximum depth.
+
+The user must immediately understand what is:
+
+* background
+* panel
+* control
+* active control
+* floating overlay
+
+---
+
+# 7. THE GOLDEN RULE OF SKEUOMORPHISM
+
+Do NOT make everything look physical.
+
+Use physical metaphors where they improve understanding.
+
+Examples:
+
+Voice control:
+physical audio console.
+
+Tier selection:
+rotary/physical selector.
+
+Live call:
+professional recording hardware.
+
+Latency:
+instrument-style measurement.
+
+Provider health:
+hardware status LEDs.
+
+Brain:
+technical control panel.
+
+Memory:
+structured data module.
+
+Calls:
+professional monitoring/recording archive.
+
+Benchmarks:
+test laboratory.
+
+Analytics:
+instrumentation panel.
+
+This creates semantic skeuomorphism instead of decorative skeuomorphism.
+
+---
+
+# 8. APPLICATION SHELL
+
+Create a premium application shell.
+
+Desktop:
+
+LEFT:
+compact vertical navigation.
+
+CENTER:
+main workspace.
+
+RIGHT:
+contextual inspector when needed.
+
+TOP:
+environment / agent / status / account controls.
+
+The navigation should feel like a physical control panel integrated into the chassis.
+
+Primary navigation:
+
+1. Overview
+2. Agents
+3. Test Studio
+4. Calls
+5. Analytics
+6. Benchmarks
+7. Providers
+8. Integrations
+9. Settings
+
+This navigation is normative in the product IA.
+
+---
+
+# 9. SIDEBAR DESIGN
+
+Do not use a generic SaaS sidebar.
+
+Create a tactile instrument-panel sidebar.
+
+Each navigation item should have:
+
+* icon
+* label
+* active indicator
+* subtle inset/raised state
+* optional status indicator
+
+Active item:
+
+* appears physically engaged
+* slightly brighter surface
+* subtle inner highlight
+* tiny accent indicator
+* subtle illumination
+
+Inactive:
+
+* matte
+* low contrast
+* quiet
+
+Do not use huge glowing pills.
+
+---
+
+# 10. TOP BAR
+
+Create a compact technical header.
+
+Left:
+
+Agent identity.
+
+Example:
+
+VOICE AGENT
+Residential Sales Agent
+
+Middle:
+
+Environment selector:
+
+DEV / STAGING / PRODUCTION
+
+Right:
+
+* connection state
+* tier
+* notifications
+* user menu
+
+Environment must be visually obvious because development, staging and production have different mutability rules.
+
+Production should feel locked.
+
+Development should feel editable.
+
+Staging should feel controlled.
+
+---
+
+# 11. OVERVIEW PAGE
+
+Create an instrumentation-style command center.
+
+Top:
+
+"System Overview"
+
+Supporting information:
+
+Agent health
+Environment
+Active version
+Last deployment
+
+Then create physical instrument modules.
+
+## MODULE 1 — ACTIVE AGENTS
+
+Show:
+
+Active agents
+Healthy agents
+Agents needing attention
+
+Use physical status LEDs.
+
+---
+
+## MODULE 2 — LIVE CALLS
+
+Show:
+
+Calls today
+Active calls
+Completed
+Failed
+
+---
+
+## MODULE 3 — LATENCY
+
+Show:
+
+P50
+P95
+First audible byte
+
+Use a beautiful instrumentation graph.
+
+Do not use generic dashboard cards.
+
+Make it feel like a precision measurement instrument.
+
+---
+
+## MODULE 4 — COST
+
+Show:
+
+Today
+This month
+Estimated cost per minute
+
+---
+
+## MODULE 5 — SYSTEM HEALTH
+
+STT
+LLM
+TTS
+Database
+Worker
+
+Each should have a physical status lamp.
+
+The Overview information is derived from the normative sitemap.
+
+---
+
+# 12. AGENTS PAGE
+
+This should feel like a physical equipment rack.
+
+Each agent is represented as a premium hardware module.
+
+Agent card:
+
+Agent name
+Status
+Language
+Tier
+Environment
+Version
+Last call
+Health
+
+Primary action:
+
+OPEN AGENT
+
+Secondary:
+
+TEST
+
+The agent workspace must expose:
+
+Summary
+Business Brain
+Platform Brain where permitted
+Voice & Models
+Memory Schema
+Tools & Actions
+Channels
+Versions & Deployment.
+
+---
+
+# 13. AGENT WORKSPACE
+
+This is one of the most important screens.
+
+Create a professional "console within the console."
+
+Header:
+
+Agent name
+
+Status:
+
+DRAFT
+READY
+ACTIVE
+DEPLOYING
+FAILED
+
+Show:
+
+Environment
+Version
+Tier
+Language
+Channel readiness
+
+Then create a setup progress strip:
+
+Brain
+Voice
+Memory
+Tools
+Channels
+Test
+Deploy
+
+Each stage should have a physical status indicator.
+
+The user should always understand:
+
+"What is configured?"
+
+"What is missing?"
+
+"What will happen if I deploy?"
+
+---
+
+# 14. BUSINESS BRAIN
+
+This must feel like a sophisticated programmable instrument.
+
+Do NOT create a generic textarea page.
+
+Use structured physical modules.
+
+Sections:
+
+1. Identity & Purpose
+2. Business Facts
+3. Actions & Limits
+4. Qualification Flow
+5. Callback / Appointment Flow
+6. Scope & Redirects
+7. Guardrails
+8. FAQ
+
+These eight sections are explicitly defined by the product requirements.
+
+Each section should be collapsible.
+
+Each section:
+
+Header
+Status
+Completion indicator
+Edit control
+Preview control
+
+When opened:
+
+structured fields
+rich text
+rules
+examples
+validation
+
+---
+
+# 15. RAW VS OPTIMIZED BRAIN
+
+This distinction must be visually obvious.
+
+Create:
+
+USER SOURCE
+
+and
+
+OPTIMIZED BRAIN
+
+Do not allow the customer to accidentally confuse them.
+
+The raw business prompt remains the source of truth, while optimized output is internal, reviewable and versioned.
+
+Use different material treatments.
+
+Raw:
+
+paper-like / editable technical panel.
+
+Optimized:
+
+machined dark panel / read-only compiled module.
+
+Compiled:
+
+"LOCKED VERSION"
+
+with version number.
+
+---
+
+# 16. VOICE & MODELS
+
+Make this feel like an audio hardware rack.
+
+Three major modules:
+
+STT
+LLM
+TTS
+
+Each should have a physical selector.
+
+Example:
+
+┌ STT ┐
+Sarvam
+saaras:v3
+TELUGU
+● HEALTHY
+
+┌ LLM ┐
+OpenAI
+configured model
+STREAMING
+● HEALTHY
+
+┌ TTS ┐
+Sarvam
+bulbul:v3
+TELUGU
+● HEALTHY
+
+Do not hard-code models into UI.
+
+Use the backend registry.
+
+---
+
+# 17. LOW / MEDIUM / PREMIUM
+
+This should be one of the signature UI elements.
+
+Do NOT use ordinary radio buttons.
+
+Create a physical tier selector.
+
+Three positions:
+
+LOW
+MEDIUM
+PREMIUM
+
+Possible visual metaphor:
+
+machined rotary dial / industrial selector.
+
+When selecting:
+
+LOW:
+
+Cost:
+lowest
+
+Latency:
+fast
+
+Quality:
+acceptable
+
+MEDIUM:
+
+balanced
+
+PREMIUM:
+
+highest quality
+
+The product requires exactly three customer-facing tiers.
+
+---
+
+# 18. TEST STUDIO
+
+This should look like a professional voice laboratory.
+
+Main layout:
+
+LEFT:
+configuration rack
+
+CENTER:
+live conversation
+
+RIGHT:
+diagnostics
+
+Bottom:
+latency waterfall
+
+The Test Studio must support:
+
+Browser live test
+PSTN/Plivo test
+conversation event stream
+live transcript
+memory projection inspector
+latency waterfall
+errors/provider events.
+
+---
+
+# 19. LIVE VOICE CONTROL
+
+Create a large physical microphone/voice control.
+
+Possible structure:
+
+Large circular control.
+
+Idle:
+
+READY
+
+Connecting:
+
+CONNECTING
+
+Listening:
+
+LISTENING
+
+Thinking:
+
+THINKING
+
+Speaking:
+
+SPEAKING
+
+Ended:
+
+ENDED
+
+The state sequence already exists in the UX specification.
+
+The control should visually behave like professional recording hardware.
+
+---
+
+# 20. TRANSCRIPT
+
+Transcript should feel like a live monitoring console.
+
+USER:
+
+Telugu transcript
+
+timestamp
+
+STT latency
+
+AGENT:
+
+streaming response
+
+TTS playing indicator
+
+Interrupted turns:
+
+subtle strikethrough
+
+"INTERRUPTED"
+
+Barge-in:
+
+small visual response indicator.
+
+Do not make transcript bubbles look like a generic ChatGPT clone.
+
+---
+
+# 21. LATENCY WATERFALL
+
+Create a beautiful technical visualization.
+
+Each turn:
+
+STT
+───────
+LLM
+────────────
+TTS
+──────
+
+Show:
+
+STT final latency
+LLM TTFT
+TTS first audio
+E2E latency
+
+The product explicitly requires measuring the pipeline rather than just the model.
+
+Use a professional oscilloscope/instrument feel.
+
+---
+
+# 22. CALLS PAGE
+
+Calls are the primary unit of review.
+
+Do NOT design Calls as a generic CRUD table.
+
+Create:
+
+FILTER BAR
+
+CALL LIST
+
+DETAIL INSPECTOR
+
+Call row:
+
+time
+customer
+channel
+duration
+tier
+disposition
+summary
+
+Clicking a call opens the full investigation workspace.
+
+The product requirements explicitly define Calls as the unit of review and require durable call records.
+
+---
+
+# 23. CALL DETAIL
+
+Create a professional call investigation console.
+
+Header:
+
+CALL ID
+MEDIUM
+4m 32s
+QUALIFIED
+
+Main sections:
+
+Outcome
+Audio
+Transcript
+Timeline
+Memory
+Trace
+Metadata
+
+Timeline should correlate:
+
+USER AUDIO
+STT
+LLM
+TTS
+MEMORY
+ERRORS
+
+The product requires unified per-call debugging across these systems.
+
+---
+
+# 24. MEMORY UI
+
+Memory should look like structured machine state.
+
+Do NOT make it a chat bubble.
+
+Show:
+
+FACTS
+
+PREFERENCES
+
+IMPORTANT CONTEXT
+
+SUMMARY
+
+Use a live state visualization.
+
+Example:
+
+CUSTOMER
+├── name
+├── location
+├── budget
+└── requirements
+
+Make changes visibly animate into the state.
+
+But keep animation subtle.
+
+---
+
+# 25. ANALYTICS
+
+Analytics should look like professional instrumentation.
+
+Pages:
+
+Volume
+Quality
+Latency
+Reliability
+Cost
+Memory
+Provider performance
+Combination performance
+
+Separate aggregate analytics from raw call inspection.
+
+This separation is explicitly required.
+
+Charts should be:
+
+clean
+technical
+high information density
+minimal decoration
+
+Do not use generic colorful SaaS charts.
+
+---
+
+# 26. BENCHMARKS
+
+Create a "voice laboratory" experience.
+
+Workflow:
+
+Create Benchmark
+
+↓
+
+Select Environment
+
+↓
+
+Select Language
+
+↓
+
+Select Scenarios
+
+↓
+
+Select compatible combinations
+
+↓
+
+Estimate Runs / Cost
+
+↓
+
+Run
+
+↓
+
+Compare
+
+↓
+
+Review
+
+↓
+
+Promote
+
+This workflow is specified in the benchmark UX requirements.
+
+Results should compare:
+
+Latency
+STT accuracy
+LLM quality
+TTS quality
+Reliability
+Cost
+
+Show winners **per metric**.
+
+Never show one mysterious "best model" without explaining why.
+
+---
+
+# 27. PROVIDERS
+
+Provider registry should look like a server rack.
+
+Sections:
+
+STT
+LLM
+TTS
+
+Each provider:
+
+Provider name
+Model
+Stage
+Enabled
+Configured
+Health
+Streaming
+Realtime
+Languages
+Capabilities
+Pricing
+Last health check
+
+The provider registry requirements explicitly call for these safe metadata fields and forbid displaying secrets.
+
+---
+
+# 28. PROVIDER STATUS LIGHTS
+
+Use small physical indicators.
+
+GREEN:
+healthy
+
+AMBER:
+degraded
+
+RED:
+failed
+
+GREY:
+not configured
+
+Do not communicate status using color alone.
+
+Add:
+
+Healthy
+Degraded
+Unavailable
+Not configured
+
+for accessibility.
+
+---
+
+# 29. INTEGRATIONS
+
+Create hardware-module style integration cards.
+
+Plivo
+Telephony
+CRM/Webhooks
+Tool connectors
+Knowledge sources
+
+Show:
+
+CONNECTED
+
+NOT CONFIGURED
+
+ERROR
+
+TEST
+
+Never expose credentials.
+
+---
+
+# 30. SETTINGS
+
+Settings should feel like an engineering control cabinet.
+
+Groups:
+
+Organization
+Members & roles
+Retention & privacy
+Environments
+Scoring weights
+Audit log
+Developer diagnostics
+
+Do not overwhelm the user.
+
+Use progressive disclosure.
+
+---
+
+# 31. BUTTON DESIGN
+
+Buttons must feel tactile.
+
+PRIMARY:
+
+Raised physical button.
+
+Hover:
+
+slightly brighter.
+
+Pressed:
+
+moves down slightly.
+
+Focus:
+
+visible technical focus ring.
+
+Disabled:
+
+physically recessed / unavailable.
+
+Do not make buttons huge glossy pills.
+
+Avoid excessive border radius.
+
+Use moderate radii.
+
+---
+
+# 32. INPUT DESIGN
+
+Inputs should look inset into the hardware.
+
+Use:
+
+inner shadow
+subtle bevel
+dark surface
+clear text
+
+Focus:
+
+thin accent illumination.
+
+Error:
+
+clear label + subtle red indicator.
+
+---
+
+# 33. TOGGLE DESIGN
+
+Create physical switches.
+
+OFF:
+
+recessed.
+
+ON:
+
+raised with tiny indicator.
+
+The toggle must visually communicate its state without relying solely on color.
+
+---
+
+# 34. SLIDERS
+
+For audio controls:
+
+Use physical fader metaphors.
+
+Examples:
+
+Temperature
+Voice speed
+Barge sensitivity
+Volume
+
+Use vertical faders where appropriate.
+
+Do not turn every setting into a slider.
+
+---
+
+# 35. KNOBS
+
+Use knobs only where rotary controls make semantic sense.
+
+Good examples:
+
+Voice temperature
+Voice speed
+Sensitivity
+Threshold
+
+Do NOT use knobs for:
+
+text
+model selection
+navigation
+ordinary settings
+
+Each knob must have:
+
+label
+current value
+keyboard equivalent
+accessible input
+
+---
+
+# 36. ICONS
+
+Use simple technical icons.
+
+Avoid:
+
+emoji
+overly decorative 3D icons
+random icon styles
+
+Icons should look like industrial instrumentation symbols.
+
+Maintain consistent stroke weight.
+
+---
+
+# 37. TYPOGRAPHY
+
+Typography should be modern.
+
+Primary:
+
+clean sans-serif.
+
+Technical numbers:
+
+monospace or technical numeral font.
+
+Use Telugu-capable typography.
+
+Telugu text needs appropriate line height and a tested Telugu-capable font stack.
+
+Do not use overly futuristic fonts.
+
+Do not sacrifice readability.
+
+---
+
+# 38. SPACING
+
+Use a disciplined spacing system.
+
+Do not fill every pixel.
+
+Create:
+
+small
+medium
+large
+section
+
+spacing tokens.
+
+Skeuomorphism needs breathing room.
+
+---
+
+# 39. BORDER RADIUS
+
+Avoid excessive rounded cards.
+
+Use:
+
+small radius for hardware panels.
+
+medium radius for major surfaces.
+
+larger radius only for:
+
+dialogs
+floating surfaces
+special controls
+
+The UI should feel machined rather than inflated.
+
+---
+
+# 40. MICRO-INTERACTIONS
+
+Use motion only to communicate physical behavior.
+
+Examples:
+
+Button press:
+1–2px physical depression.
+
+Switch:
+mechanical movement.
+
+Knob:
+rotation.
+
+Panel:
+subtle elevation.
+
+Live call:
+soft status pulse.
+
+Audio:
+subtle waveform movement.
+
+Memory:
+state update transition.
+
+Deployment:
+progressive mechanical indicator.
+
+Do NOT use:
+
+constant floating animations
+large spring animations
+excessive page transitions
+neon glows
+attention-grabbing motion
+
+Respect reduced-motion preferences.
+
+---
+
+# 41. EMPTY STATES
+
+Every empty state should feel intentional.
+
+Example:
+
+NO CALLS YET
+
+small explanation
+
+START VOICE TEST
+
+Do not show blank cards.
+
+The UX requirements explicitly require loading, empty, partial, validation, permission, provider-unavailable, retry, archived and unsaved states.
+
+---
+
+# 42. ERROR STATES
+
+Errors must look like diagnostic instruments.
+
+Example:
+
+TTS CONNECTION FAILED
+
+Status:
+UNAVAILABLE
+
+Cause:
+Provider connection timeout
+
+Action:
+
+RETRY
+
+VIEW TRACE
+
+Do not simply show:
+
+"Something went wrong."
+
+---
+
+# 43. PRODUCTION STATE
+
+Production must feel materially different.
+
+Use:
+
+LOCKED
+
+ACTIVE VERSION
+
+v1.4.2
+
+DEPLOYED
+
+The UI must communicate that production is immutable and changes require promotion.
+
+---
+
+# 44. DEVELOPMENT STATE
+
+Development:
+
+EDITABLE
+
+DRAFT
+
+TEST
+
+BENCHMARK
+
+STAGING:
+
+APPROVED CONFIGURATIONS
+
+REGRESSION TEST
+
+PRODUCTION:
+
+ACTIVE
+
+LOCKED
+
+PROMOTE NEW VERSION
+
+---
+
+# 45. ENV MODE VS FRONTEND MODE
+
+Respect the product configuration modes.
+
+ENV mode:
+
+show only:
+
+LOW
+MEDIUM
+PREMIUM
+
+and resolved stack.
+
+Hide provider/model editing.
+
+FRONTEND mode:
+
+show enabled compatible provider/model selectors.
+
+Backend remains authoritative.
+
+The UI must not expose controls that are unavailable in the active mode.
+
+---
+
+# 46. RESPONSIVE DESIGN
+
+This is mandatory.
+
+Desktop:
+
+persistent navigation
+multi-panel debugging
+
+Tablet:
+
+collapsible navigation
+stacked inspector
+
+Mobile:
+
+voice testing
+call list
+call summary
+critical actions
+
+Do NOT squeeze complex benchmark tables onto mobile.
+
+Use metric-by-metric comparison.
+
+These responsive rules are explicitly required.
+
+---
+
+# 47. ACCESSIBILITY
+
+Target WCAG 2.2 AA.
+
+Requirements:
+
+keyboard navigation
+visible focus
+aria labels
+aria-live for transcript updates
+no color-only status
+accessible audio controls
+accessible accordions
+accessible dialogs
+accessible tables
+accessible sliders
+accessible knobs
+
+Do not sacrifice accessibility for skeuomorphism.
+
+---
+
+# 48. PERFORMANCE
+
+Do not create a visually impressive but slow application.
+
+Avoid:
+
+huge background images
+unnecessary WebGL
+heavy animation libraries
+massive SVG assets
+continuous expensive shadows
+unbounded animation
+
+Use CSS where possible.
+
+Keep the interface performant on ordinary laptops and mobile devices.
+
+The project is Next.js App Router + TypeScript + Tailwind and should remain within that architecture.
+
+---
+
+# 49. COMPONENT ARCHITECTURE
+
+Create reusable components rather than page-specific CSS.
+
+Suggested system:
+
+/components/ui/
+
+skeuo-panel
+skeuo-button
+skeuo-switch
+skeuo-slider
+skeuo-knob
+skeuo-meter
+skeuo-status-light
+skeuo-badge
+skeuo-card
+skeuo-input
+skeuo-select
+skeuo-tabs
+skeuo-dialog
+skeuo-progress
+skeuo-fader
+skeuo-display
+
+/components/voice/
+
+voice-console
+voice-state
+live-transcript
+audio-meter
+latency-waterfall
+
+/components/agent/
+
+agent-header
+agent-health
+brain-section
+version-status
+deployment-panel
+
+/components/providers/
+
+provider-rack
+provider-module
+model-selector
+health-indicator
+
+/components/calls/
+
+call-list
+call-detail
+call-timeline
+call-outcome
+call-audio
+
+/components/analytics/
+
+metric-panel
+latency-chart
+quality-chart
+cost-chart
+
+---
+
+# 50. DESIGN TOKENS
+
+Create a centralized design-token system.
+
+Example conceptual tokens:
+
+--surface-chassis
+--surface-panel
+--surface-panel-raised
+--surface-panel-inset
+--surface-glass
+
+--border-subtle
+--border-highlight
+--border-inset
+
+--shadow-raised
+--shadow-inset
+--shadow-floating
+
+--text-primary
+--text-secondary
+--text-muted
+
+--accent-primary
+--status-success
+--status-warning
+--status-error
+--status-info
+
+--radius-sm
+--radius-md
+--radius-lg
+
+--depth-1
+--depth-2
+--depth-3
+--depth-4
+
+Do NOT scatter arbitrary shadow/color values throughout the application.
+
+---
+
+# 51. DO NOT USE THESE VISUAL PATTERNS
+
+Absolutely avoid:
+
+❌ giant shadows
+❌ excessive gradients
+❌ neon cyberpunk
+❌ excessive glassmorphism
+❌ huge rounded pills
+❌ cartoon icons
+❌ emoji as UI
+❌ excessive glow
+❌ rainbow dashboards
+❌ fake 3D everywhere
+❌ bevel on every element
+❌ every element looking clickable
+❌ retro 90s styling
+❌ excessive skeuomorphic decoration
+❌ poor contrast
+❌ cramped layouts
+
+---
+
+# 52. WHAT "GOOD" LOOKS LIKE
+
+The final interface should make someone think:
+
+"This looks like professional voice infrastructure."
+
+Not:
+
+"This looks like a website with some shadows."
+
+The tactile effects should be subtle enough that the application still feels modern.
+
+The physical metaphors should help users understand the function of each control.
+
+---
+
+# 53. IMPLEMENTATION PROCESS
+
+Do NOT immediately rewrite everything.
+
+First:
+
+1. Inspect existing `web/`.
+2. Inspect current components.
+3. Inspect current styles.
+4. Inspect current routes.
+5. Identify reusable components.
+6. Identify existing functionality that must remain unchanged.
+7. Map existing screens to the new IA.
+8. Build the design token system.
+9. Build the base skeuomorphic components.
+10. Migrate screens progressively.
+
+Preserve working functionality.
+
+The current live voice path is valuable and must not be unnecessarily replaced. The project specifically requires preserving existing realtime behavior and architecture where possible.
+
+---
+
+# 54. IMPLEMENTATION ORDER
+
+Implement in this order:
+
+PHASE 1
+
+Design tokens
++
+application shell
++
+navigation
++
+responsive framework
+
+PHASE 2
+
+Skeuomorphic component library.
+
+PHASE 3
+
+Overview.
+
+PHASE 4
+
+Agents.
+
+PHASE 5
+
+Agent workspace.
+
+PHASE 6
+
+Business Brain.
+
+PHASE 7
+
+Voice & Models.
+
+PHASE 8
+
+Test Studio.
+
+PHASE 9
+
+Calls.
+
+PHASE 10
+
+Analytics.
+
+PHASE 11
+
+Benchmarks.
+
+PHASE 12
+
+Providers.
+
+PHASE 13
+
+Integrations.
+
+PHASE 14
+
+Settings.
+
+PHASE 15
+
+Responsive/mobile polish.
+
+PHASE 16
+
+Accessibility audit.
+
+PHASE 17
+
+Visual QA.
+
+---
+
+# 55. VISUAL QA LOOP
+
+After implementation, do NOT assume the UI is finished.
+
+For every major page:
+
+1. Run the application.
+2. Inspect at desktop width.
+3. Inspect at tablet width.
+4. Inspect at mobile width.
+5. Check visual hierarchy.
+6. Check contrast.
+7. Check shadows.
+8. Check material consistency.
+9. Check button press states.
+10. Check keyboard navigation.
+11. Check loading state.
+12. Check empty state.
+13. Check error state.
+14. Check production state.
+15. Check reduced motion.
+16. Fix inconsistencies.
+
+Then perform a final "skeuomorphism restraint pass":
+
+Remove any decorative effect that does not communicate hierarchy, state or function.
+
+---
+
+# 56. CRITICAL PRODUCT RULE
+
+The UI is NOT the source of truth.
+
+Backend permissions, provider compatibility, environment rules, versioning and security remain authoritative.
+
+Never expose:
+
+API keys
+provider secrets
+protected Platform Brain content
+unauthorized tenant information
+
+The UI must mirror backend permissions, never replace them.
+
+---
+
+# 57. FINAL QUALITY BAR
+
+Do not stop when the interface technically works.
+
+Continue polishing until:
+
+* every screen belongs to the same visual system
+* every control has consistent depth
+* every material has consistent lighting
+* every state is understandable
+* every page has clear hierarchy
+* mobile is genuinely usable
+* Telugu text looks natural
+* live voice feels like a professional instrument
+* Calls feel like a professional recording archive
+* Benchmarks feel like a laboratory
+* Providers feel like a hardware rack
+* Business Brain feels like a programmable control system
+* Analytics feel like instrumentation
+* Production feels locked and trustworthy
+
+The final product should look like a **premium professional voice-agent operating system**, not a generic SaaS dashboard.
+
+---
+
+# 58. IMPORTANT — DO NOT FAKE FUNCTIONALITY
+
+If backend functionality does not yet exist:
+
+DO NOT invent fake APIs.
+
+DO NOT silently fabricate data.
+
+DO NOT make buttons appear functional when they are not.
+
+Use clearly labeled mock/demo states only where necessary for visual development, and keep them easy to replace with real data.
+
+Preserve existing APIs and behavior until the corresponding migration is implemented.
+
+---
+
+# 59. FINAL COMMAND
+
+Now inspect the repository and implement this redesign.
+
+First create the design foundation.
+
+Then implement the application shell.
+
+Then migrate the pages progressively.
+
+Do not rewrite working backend functionality merely to achieve the visual redesign.
+
+Do not modify product requirements.
+
+Do not remove required screens.
+
+Do not simplify away important technical controls.
+
+Do not turn this into a generic dashboard.
+
+Build the **Modern Premium Skeuomorphic Voice Agent Control Plane**.
+
+The final result must be production-quality, responsive, accessible, tactile, restrained, technically credible, and visually distinctive.
+
+
+agent instructions : ODE
+ ↓
+RUN WEBSITE
+ ↓
+BROWSER
+ ↓
+SCREENSHOT
+ ↓
+VISUAL ANALYSIS
+ ↓
+UX ANALYSIS
+ ↓
+ANIMATION ANALYSIS
+ ↓
+DESIGN SYSTEM ANALYSIS
+ ↓
+IMPLEMENT IMPROVEMENTS
+ ↓
+SCREENSHOT AGAIN
+ ↓
+COMPARE
+ ↓
+REPEAT

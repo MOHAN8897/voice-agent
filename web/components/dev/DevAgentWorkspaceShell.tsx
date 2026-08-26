@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AgentWorkspaceNav } from "@/components/agents/AgentWorkspaceNav";
+import { SetupProgressStrip, SkeuoWorkspaceNav } from "@/components/agents/SkeuoWorkspaceNav";
+import { ConsolePage } from "@/components/console/ConsolePage";
 import { StatusBadge } from "@/components/console/StatusBadge";
+import { SkeuoBadge } from "@/components/ui/skeuo/SkeuoBadge";
 
 export function DevAgentWorkspaceShell({
   agentId,
@@ -11,30 +13,52 @@ export function DevAgentWorkspaceShell({
   agentId: string;
   children: React.ReactNode;
 }) {
-  const [agentName, setAgentName] = useState(agentId);
-  const [status, setStatus] = useState("");
+  const [agent, setAgent] = useState<{
+    name?: string;
+    status?: string;
+    default_tier?: string;
+    languages?: string[];
+    environment?: string;
+    active_compiled_brain_version?: string | null;
+  }>({});
 
   useEffect(() => {
     fetch(`/api/agents/${agentId}`, { credentials: "include" })
       .then((r) => r.json())
-      .then((j) => {
-        setAgentName(j.agent?.name || agentId);
-        setStatus(j.agent?.status || "");
-      });
+      .then((j) => setAgent(j.agent || {}));
   }, [agentId]);
 
+  const agentName = agent.name || agentId;
+  const status = agent.status || "";
+  const env = agent.environment || "development";
+  const tier = agent.default_tier || "medium";
+  const langs = (agent.languages || ["te-IN"]).join(", ");
+  const version = agent.active_compiled_brain_version || "—";
+
   return (
-    <div>
-      <p className="label-caps text-text-subtle">Agent studio (dev)</p>
-      <div className="mt-1 flex flex-wrap items-center gap-3">
-        <h1 className="text-3xl font-semibold tracking-tight text-text">{agentName}</h1>
-        {status && <StatusBadge tone={status === "active" ? "success" : "muted"}>{status}</StatusBadge>}
+    <ConsolePage>
+      <div className="skeuo-panel rounded-skeuo-lg border border-surface-border-subtle p-5 md:p-6">
+        <p className="label-caps text-text-subtle">Agent studio (dev)</p>
+        <div className="mt-2 flex flex-wrap items-center gap-3">
+          <h1 className="text-2xl font-semibold tracking-tight text-text md:text-3xl">{agentName}</h1>
+          {status && (
+            <StatusBadge tone={status === "active" ? "success" : "muted"}>{status.toUpperCase()}</StatusBadge>
+          )}
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <SkeuoBadge tone="muted">Env {env}</SkeuoBadge>
+          <SkeuoBadge tone="accent">Tier {tier}</SkeuoBadge>
+          <SkeuoBadge tone="info">{langs}</SkeuoBadge>
+          <SkeuoBadge tone="muted">v{version}</SkeuoBadge>
+        </div>
+        <p className="mt-2 font-mono text-[10px] text-text-subtle">{agentId}</p>
+        <SetupProgressStrip agentId={agentId} portal="dev" />
       </div>
-      <p className="mt-1 font-mono text-xs text-text-subtle">{agentId}</p>
+
       <div className="mt-6">
-        <AgentWorkspaceNav agentId={agentId} portal="dev" />
+        <SkeuoWorkspaceNav agentId={agentId} portal="dev" />
       </div>
       {children}
-    </div>
+    </ConsolePage>
   );
 }

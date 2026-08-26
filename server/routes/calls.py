@@ -123,7 +123,25 @@ async def list_calls(
         limit=limit,
         offset=offset,
     )
-    return {"calls": items, "total": total, "limit": limit, "offset": offset}
+    enriched = [_enrich_call_list_item(item) for item in items]
+    return {"calls": enriched, "total": total, "limit": limit, "offset": offset}
+
+
+def _enrich_call_list_item(item: dict) -> dict:
+    """Attach outcome summary and customer label for list review rows."""
+    from server.call.post_call_pipeline import read_outcome
+
+    out = dict(item)
+    outcome = read_outcome(str(item.get("call_id") or ""))
+    if outcome:
+        summary = (outcome.get("summary_en") or outcome.get("summary_te") or "").strip()
+        if summary:
+            out["summary"] = summary[:240]
+        fields = outcome.get("extracted_fields") or {}
+        customer = (fields.get("name") or fields.get("phone") or "").strip()
+        if customer:
+            out["customer"] = customer
+    return out
 
 
 @router.get("/api/call/{call_id}/transcript")

@@ -1,37 +1,48 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { SkeuoButton } from "@/components/ui/skeuo/SkeuoButton";
 import { AudioPlaybackManager } from "@/lib/audio-playback";
 import { shouldBargeWhileSpeaking, type BargeState } from "@/lib/live-guards";
 import { wsUrl } from "@/lib/api";
 
-type Bubble = { role: "user" | "assistant"; text: string };
+export type Bubble = { role: "user" | "assistant"; text: string; interrupted?: boolean; ts?: number };
 
 export type SessionTraceEvent = { at: number; kind: string; detail: string };
+
+export type LiveVoiceSessionHandle = {
+  startListening: () => void;
+  stopListening: () => void;
+  endCall: () => void;
+};
 
 function wordCount(t: string): number {
   return (t.trim().match(/\S+/g) || []).length;
 }
 
-export function LiveVoiceSession({
+export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
+  agentId?: string;
+  tier?: string;
+  languageCode?: string;
+  variant?: "default" | "dev" | "lab";
+  onTrace?: (event: SessionTraceEvent) => void;
+  onCallStart?: (callId: string) => void;
+  onCallEnd?: (callId: string) => void;
+  onStatusChange?: (status: string) => void;
+  onMicLevel?: (level: number) => void;
+  onTranscriptChange?: (bubbles: Bubble[], partial: string) => void;
+}>(function LiveVoiceSession({
   agentId,
   tier,
+  languageCode = "te-IN",
   variant = "default",
   onTrace,
   onCallStart,
   onCallEnd,
   onStatusChange,
   onMicLevel,
-}: {
-  agentId?: string;
-  tier?: string;
-  variant?: "default" | "dev";
-  onTrace?: (event: SessionTraceEvent) => void;
-  onCallStart?: (callId: string) => void;
-  onCallEnd?: (callId: string) => void;
-  onStatusChange?: (status: string) => void;
-  onMicLevel?: (level: number) => void;
-}) {
+  onTranscriptChange,
+}, ref) {
   const [status, setStatus] = useState("idle");
   const [listening, setListening] = useState(false);
   const [partial, setPartial] = useState("");
@@ -108,8 +119,23 @@ export function LiveVoiceSession({
   }, []);
 
   const addBubble = useCallback((role: Bubble["role"], text: string) => {
-    setBubbles((prev) => [...prev, { role, text }]);
+    setBubbles((prev) => [...prev, { role, text, ts: Date.now() }]);
   }, []);
+
+  const markLastAssistantInterrupted = useCallback(() => {
+    setBubbles((prev) => {
+      const idx = prev.map((b, i) => (b.role === "assistant" ? i : -1)).filter((i) => i >= 0).pop();
+      if (idx == null) return prev;
+      return prev.map((b, i) => (i === idx ? { ...b, interrupted: true } : b));
+    });
+  }, []);
+
+  const onTranscriptChangeRef = useRef(onTranscriptChange);
+  onTranscriptChangeRef.current = onTranscriptChange;
+
+  useEffect(() => {
+    onTranscriptChangeRef.current?.(bubbles, partial);
+  }, [bubbles, partial]);
 
   const startCall = useCallback(async () => {
     const r = await fetch("/api/call/start", {
@@ -136,6 +162,7 @@ export function LiveVoiceSession({
     trace("call", `ended ${id}`);
     onCallEnd?.(id);
     callIdRef.current = null;
+    setSessionStatus("ended");
   }, [trace, onCallEnd]);
 
   const runBrainTurn = useCallback(
@@ -149,7 +176,7 @@ export function LiveVoiceSession({
       const r = await fetch(`/api/brain/stream${qs}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ transcript: text, language_code: "te-IN" }),
+        body: JSON.stringify({ transcript: text, language_code: languageCode }),
       });
       let out = "";
       const raw = await r.text();
@@ -177,7 +204,7 @@ export function LiveVoiceSession({
           const ttsR = await fetch("/api/tts", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text: out, language_code: "te-IN" }),
+            body: JSON.stringify({ text: out, language_code: languageCode }),
           });
           const ttsJ = await ttsR.json();
           if (ttsJ.audio_base64 && playbackRef.current) {
@@ -192,7 +219,7 @@ export function LiveVoiceSession({
       }
       setSessionStatus(listening ? "listening" : "idle");
     },
-    [addBubble, listening, trace, setSessionStatus]
+    [addBubble, listening, trace, setSessionStatus, languageCode]
   );
 
   const cleanupLive = useCallback(() => {
@@ -281,12 +308,14 @@ export function LiveVoiceSession({
         if (shouldBargeWhileSpeaking(st, Date.now()) && playbackRef.current) {
           playbackRef.current.stop();
           st.agentSpeaking = false;
+          markLastAssistantInterrupted();
+          trace("vad", "barge-in");
         }
       };
       src.connect(worklet);
 
       const q = new URLSearchParams({
-        language_code: "te-IN",
+        language_code: languageCode,
         stream_type: "fast",
         mode: "transcribe",
       });
@@ -337,13 +366,20 @@ export function LiveVoiceSession({
       cleanupLive();
       await endCall();
     }
-  }, [cleanupLive, endCall, partial, runBrainTurn, startCall, stopListening, listening, trace, setSessionStatus, startMicMeter]);
+  }, [cleanupLive, endCall, partial, runBrainTurn, startCall, stopListening, listening, trace, setSessionStatus, startMicMeter, languageCode, markLastAssistantInterrupted]);
 
+  useImperativeHandle(ref, () => ({
+    startListening,
+    stopListening,
+    endCall,
+  }));
+
+  const isLab = variant === "lab";
   const isDev = variant === "dev";
 
   return (
     <div>
-      {!isDev && (
+      {!isDev && !isLab && (
         <div className="flex items-center justify-between">
           <h2 className="font-medium text-text">Live voice session</h2>
           <span className="inline-flex items-center gap-1.5 rounded-full border border-surface-border px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-text-muted">
@@ -352,29 +388,20 @@ export function LiveVoiceSession({
           </span>
         </div>
       )}
-      <div className={`flex flex-wrap gap-2 ${isDev ? "" : "mt-4"}`}>
-        {!listening ? (
-          <button
-            type="button"
-            onClick={startListening}
-            className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white"
-          >
-            Start listening
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={stopListening}
-            className="rounded-xl border border-red-500/50 px-4 py-2 text-sm text-red-300"
-          >
-            Stop listening
-          </button>
-        )}
-        <button type="button" onClick={endCall} className="rounded-xl border border-surface-border px-4 py-2 text-sm text-text">
-          End call
-        </button>
-      </div>
+      {!isLab && (
+        <div className={`flex flex-wrap gap-2 ${isDev ? "" : "mt-4"}`}>
+          {!listening ? (
+            <SkeuoButton variant="primary" onClick={startListening}>Start listening</SkeuoButton>
+          ) : (
+            <SkeuoButton variant="secondary" onClick={stopListening} className="border-status-error/40 text-status-error">
+              Stop listening
+            </SkeuoButton>
+          )}
+          <SkeuoButton variant="ghost" onClick={endCall}>End call</SkeuoButton>
+        </div>
+      )}
 
+      {!isLab && (
       <section
         className="mt-4 max-h-64 overflow-y-auto rounded-xl border border-surface-border-subtle bg-surface p-3"
         aria-label="Live transcript"
@@ -404,13 +431,14 @@ export function LiveVoiceSession({
           </div>
         )}
       </section>
+      )}
 
-      <audio ref={audioRef} className={`w-full ${isDev ? "mt-3" : "mt-4"}`} controls aria-label="Agent audio playback" />
-      {!isDev && (
+      <audio ref={audioRef} className={`w-full ${isLab ? "mt-2" : isDev ? "mt-3" : "mt-4"}`} controls aria-label="Agent audio playback" />
+      {!isDev && !isLab && (
         <p className="mt-2 text-xs text-text-muted">
           WS STT · pcm-worklet · live-guards barge-in · SSE brain stream
         </p>
       )}
     </div>
   );
-}
+});

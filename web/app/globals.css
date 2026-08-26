@@ -2,24 +2,67 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Skeuomorphic design tokens (VOICE_AGENT_PRESETS §50) ── */
 :root {
-  --bg: #09090b;
-  --bg-elevated: #0c0c0f;
-  --surface: #111113;
-  --surface-raised: #18181b;
-  --surface-card: #111113;
-  --border: #27272a;
-  --border-subtle: #1c1c1f;
-  --text: #f4f4f5;
-  --text-muted: #a1a1aa;
-  --text-subtle: #71717a;
-  --accent: #e11d48;
-  --accent-secondary: #a1a1aa;
+  /* Legacy aliases — kept for gradual migration */
+  --bg: var(--surface-chassis);
+  --bg-elevated: var(--surface-panel);
+  --surface: var(--surface-chassis);
+  --surface-raised: var(--surface-panel-raised);
+  --surface-card: var(--surface-panel);
+  --border: var(--border-subtle);
+  --border-subtle: #1a1f28;
+  --text: var(--text-primary);
+  --text-muted: var(--text-secondary);
+  --text-subtle: var(--text-muted);
+  --accent: var(--status-live);
   --accent-dim: #1a0a10;
-  --accent-glow: #e11d4828;
-  --success: #22c55e;
-  --warning: #f59e0b;
+  --accent-glow: rgba(225, 29, 72, 0.18);
+  --success: var(--status-success);
+  --warning: var(--status-warning);
   --ease-reveal: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Materials */
+  --surface-chassis: #08090c;
+  --surface-panel: #111318;
+  --surface-panel-raised: #171b22;
+  --surface-panel-inset: #0c0e12;
+  --surface-glass: rgba(12, 14, 18, 0.78);
+
+  /* Borders — simulated top-left lighting */
+  --border-highlight: rgba(255, 255, 255, 0.055);
+  --border-inset: rgba(0, 0, 0, 0.5);
+
+  /* Shadows — light source: upper-left */
+  --shadow-raised:
+    inset 0 1px 0 var(--border-highlight),
+    0 1px 2px rgba(0, 0, 0, 0.35),
+    0 6px 16px -6px rgba(0, 0, 0, 0.55);
+  --shadow-inset:
+    inset 0 2px 4px rgba(0, 0, 0, 0.55),
+    inset 0 -1px 0 var(--border-highlight);
+  --shadow-floating:
+    inset 0 1px 0 var(--border-highlight),
+    0 16px 40px -12px rgba(0, 0, 0, 0.65);
+
+  /* Typography */
+  --text-primary: #f0f2f5;
+  --text-secondary: #9aa3b2;
+  --text-muted: #6b7280;
+
+  /* Accents — restrained; live/recording only uses status-live */
+  --accent-primary: #8fa6c4;
+  --accent-primary-dim: rgba(143, 166, 196, 0.12);
+  --status-success: #4ade80;
+  --status-warning: #fbbf24;
+  --status-error: #f87171;
+  --status-info: #60a5fa;
+  --status-live: #e11d48;
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
 }
 
 @layer base {
@@ -28,8 +71,11 @@
   }
 
   body {
-    background: var(--bg);
-    color: var(--text);
+    background-color: var(--surface-chassis);
+    background-image:
+      radial-gradient(ellipse 120% 80% at 10% -20%, rgba(143, 166, 196, 0.04), transparent 50%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.012) 0%, transparent 35%);
+    color: var(--text-primary);
     font-feature-settings: "kern" 1, "liga" 1;
   }
 
@@ -38,8 +84,8 @@
   }
 
   ::selection {
-    background: rgba(225, 29, 72, 0.35);
-    color: var(--text);
+    background: rgba(143, 166, 196, 0.28);
+    color: var(--text-primary);
   }
 
   h1,
@@ -49,21 +95,205 @@
   }
 }
 
+@layer components {
+  /* Material surfaces */
+  .skeuo-panel {
+    background: var(--surface-panel);
+    box-shadow: var(--shadow-raised);
+  }
+
+  .skeuo-inset {
+    background: var(--surface-panel-inset);
+    box-shadow: var(--shadow-inset);
+  }
+
+  .skeuo-glass {
+    background: var(--surface-glass);
+    backdrop-filter: blur(8px);
+    box-shadow: var(--shadow-floating);
+  }
+
+  /* Navigation */
+  .skeuo-nav-active {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, transparent 100%);
+    box-shadow: var(--shadow-inset);
+  }
+
+  .skeuo-nav-idle:hover {
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  /* Buttons */
+  .skeuo-btn-primary {
+    background: linear-gradient(180deg, #9eb4cc 0%, #7a94b0 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.2),
+      0 2px 6px rgba(0, 0, 0, 0.4);
+  }
+
+  .skeuo-btn-primary:hover:not(:disabled) {
+    filter: brightness(1.06);
+  }
+
+  .skeuo-btn-primary:active:not(:disabled),
+  .skeuo-pressed.skeuo-btn-primary {
+    box-shadow: var(--shadow-inset);
+    filter: brightness(0.95);
+  }
+
+  .skeuo-btn-secondary {
+    background: var(--surface-panel-raised);
+    border: 1px solid var(--border-subtle);
+    box-shadow: var(--shadow-raised);
+  }
+
+  .skeuo-btn-secondary:hover:not(:disabled) {
+    border-color: rgba(143, 166, 196, 0.25);
+  }
+
+  .skeuo-btn-secondary:active:not(:disabled),
+  .skeuo-pressed.skeuo-btn-secondary {
+    box-shadow: var(--shadow-inset);
+  }
+
+  .skeuo-btn-metal {
+    background: linear-gradient(145deg, #1e232d 0%, #141820 100%);
+    border: 1px solid var(--border-subtle);
+    box-shadow: var(--shadow-raised);
+  }
+
+  /* Status LEDs */
+  .skeuo-led {
+    width: 7px;
+    height: 7px;
+    border-radius: 9999px;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
+  }
+
+  .skeuo-led-ok {
+    background: var(--status-success);
+    box-shadow: 0 0 6px rgba(74, 222, 128, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+  }
+
+  .skeuo-led-warn {
+    background: var(--status-warning);
+    box-shadow: 0 0 6px rgba(251, 191, 36, 0.4);
+  }
+
+  .skeuo-led-error {
+    background: var(--status-error);
+    box-shadow: 0 0 6px rgba(248, 113, 113, 0.4);
+  }
+
+  .skeuo-led-info {
+    background: var(--status-info);
+    box-shadow: 0 0 6px rgba(96, 165, 250, 0.4);
+  }
+
+  .skeuo-led-live {
+    background: var(--status-live);
+    box-shadow: 0 0 8px rgba(225, 29, 72, 0.55);
+  }
+
+  .skeuo-led-idle {
+    background: #3f4654;
+  }
+
+  /* Environment pills */
+  .skeuo-env-dev {
+    color: var(--status-info);
+    border-color: rgba(96, 165, 250, 0.35);
+    background: rgba(96, 165, 250, 0.08);
+  }
+
+  .skeuo-env-staging {
+    color: var(--status-warning);
+    border-color: rgba(251, 191, 36, 0.35);
+    background: rgba(251, 191, 36, 0.08);
+  }
+
+  .skeuo-env-prod {
+    color: var(--text-secondary);
+    border-color: var(--border-subtle);
+    background: var(--surface-panel-inset);
+    box-shadow: var(--shadow-inset);
+  }
+
+  .skeuo-rack-module {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .skeuo-rack-module:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-floating);
+  }
+
+  .console-page-enter {
+    animation: page-enter 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .wave-bar {
+    transform-origin: bottom;
+    animation: wave 1.4s ease-in-out infinite;
+  }
+
+  /* Business brain materials — VOICE_AGENT_PRESETS §14–15 */
+  .skeuo-brain-raw {
+    background: linear-gradient(165deg, #1c2028 0%, #141820 55%, #101318 100%);
+    border-color: rgba(143, 166, 196, 0.12);
+  }
+
+  .skeuo-brain-optimized {
+    background: linear-gradient(180deg, #0e1116 0%, #0a0c10 100%);
+    box-shadow: var(--shadow-inset);
+  }
+
+  .skeuo-brain-locked {
+    box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.15);
+  }
+
+  .brain-section-enter {
+    animation: brain-section-enter 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+
+@keyframes brain-section-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
 
-  .grid-bg {
-    background-image:
-      linear-gradient(to right, rgba(39, 39, 42, 0.5) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(39, 39, 42, 0.5) 1px, transparent 1px);
-    background-size: 64px 64px;
-    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 20%, transparent 70%);
+  .rounded-skeuo-sm {
+    border-radius: var(--radius-sm);
   }
 
-  .glow-accent {
-    box-shadow: 0 0 60px -12px rgba(225, 29, 72, 0.45);
+  .rounded-skeuo-md {
+    border-radius: var(--radius-md);
+  }
+
+  .rounded-skeuo-lg {
+    border-radius: var(--radius-lg);
   }
 
   .label-caps {
@@ -84,31 +314,65 @@
     transform: translateY(0);
   }
 
+  /* Legacy card utilities — map to skeuo */
   .card-surface {
-    @apply rounded-2xl border border-surface-border-subtle bg-surface-card shadow-card transition-all duration-300;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-subtle);
+    background: var(--surface-panel);
+    box-shadow: var(--shadow-raised);
+    transition: all 0.2s ease;
   }
 
   .card-surface:hover {
-    @apply border-accent/25 shadow-card-hover;
+    border-color: rgba(143, 166, 196, 0.2);
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center rounded-xl bg-accent px-6 py-3 text-sm font-semibold text-white shadow-glow transition-all hover:bg-accent-hover hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: white;
+    background: linear-gradient(180deg, #9eb4cc 0%, #7a94b0 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 2px 6px rgba(0, 0, 0, 0.4);
+  }
+
+  .btn-primary:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(143, 166, 196, 0.4);
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center rounded-xl border border-surface-border bg-surface-card/80 px-6 py-3 text-sm font-medium text-text backdrop-blur-sm transition-colors hover:border-accent/40 hover:bg-surface-raised;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    background: var(--surface-panel-raised);
+    border: 1px solid var(--border-subtle);
+    box-shadow: var(--shadow-raised);
   }
 
   .dev-card-enter {
     animation: fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
-}
 
-@layer components {
-  .wave-bar {
-    transform-origin: bottom;
-    animation: wave 1.4s ease-in-out infinite;
+  .grid-bg {
+    background-image:
+      linear-gradient(to right, rgba(39, 39, 42, 0.35) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(39, 39, 42, 0.35) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 20%, transparent 70%);
+  }
+
+  .glow-accent {
+    box-shadow: 0 0 40px -12px rgba(143, 166, 196, 0.35);
   }
 }
 

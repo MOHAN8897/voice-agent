@@ -1,5 +1,5 @@
-import { DevAgentTestStudio } from "@/components/dev/DevAgentTestStudio";
+import { AgentTestStudio } from "@/components/test-studio/AgentTestStudio";
 
 export default function DevAgentTestPage({ params }: { params: { id: string } }) {
-  return <DevAgentTestStudio agentId={params.id} />;
+  return <AgentTestStudio agentId={params.id} portal="dev" />;
 }

@@ -33,10 +33,10 @@ export default async function AgentSummaryPage({ params }: { params: { id: strin
             ].map(([label, href], i) => (
               <li key={href} className="flex justify-between">
                 <span className="text-text-muted">
-                  <span className="mr-2 font-mono text-accent/70">0{i + 1}</span>
+                  <span className="mr-2 font-mono text-accent-primary/80">0{i + 1}</span>
                   {label}
                 </span>
-                <Link href={href} className="text-accent hover:underline">
+                <Link href={href} className="text-accent-primary hover:underline">
                   Open
                 </Link>
               </li>
