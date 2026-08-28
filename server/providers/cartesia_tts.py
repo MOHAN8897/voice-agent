@@ -20,6 +20,11 @@ class CartesiaTTSAdapter:
     def _api_key(self) -> str:
         return dev_secrets_store.effective_secret("cartesia_api_key") or ""
 
+    def connect_stream(self, config: TTSConfig):
+        from server.services.cartesia_tts_ws import connect_cartesia_tts_ws
+
+        return connect_cartesia_tts_ws(model=config.model)
+
     async def synthesize_rest(self, text: str, config: TTSConfig) -> bytes:
         settings = get_settings()
         key = self._api_key()

@@ -2,15 +2,13 @@
 
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { SkeuoButton } from "@/components/ui/skeuo/SkeuoButton";
-import { AudioPlaybackManager } from "@/lib/audio-playback";
-import {
-  parseSseDataLines,
-  shouldStartEarlyTts,
-  ttsTailText,
-  wordCount,
-} from "@/lib/early-tts";
+import { parseSseDataLines, wordCount } from "@/lib/early-tts";
+import { StreamingAudioPlayback } from "@/lib/voice/streaming-audio-playback";
+import { StreamingTtsClient } from "@/lib/voice/streaming-tts-client";
+import { TurnTtsPipeline } from "@/lib/voice/turn-tts-pipeline";
+import { isLikelyEcho, POST_SPEAK_COOLDOWN_MS } from "@/lib/echo-guard";
 import { shouldBargeWhileSpeaking, type BargeState } from "@/lib/live-guards";
-import { wsUrl } from "@/lib/api";
+import { apiOrigin, wsUrl } from "@/lib/api";
 
 export type Bubble = { role: "user" | "assistant"; text: string; interrupted?: boolean; ts?: number };
 
@@ -94,7 +92,9 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
   const [bubbles, setBubbles] = useState<Bubble[]>([]);
   const callIdRef = useRef<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
-  const playbackRef = useRef<AudioPlaybackManager | null>(null);
+  const playbackRef = useRef<StreamingAudioPlayback | null>(null);
+  const ttsClientRef = useRef<StreamingTtsClient | null>(null);
+  const activePipelineRef = useRef<TurnTtsPipeline | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const ctxRef = useRef<AudioContext | null>(null);
@@ -120,6 +120,12 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
     bargeCooldownUntil: 0,
     turnN: 0,
   });
+  const brainAbortRef = useRef<AbortController | null>(null);
+  const pendingFinalsRef = useRef<string[]>([]);
+  const awaitingBargeRef = useRef(false);
+  const speakCooldownUntilRef = useRef(0);
+  const lastAssistantTextRef = useRef("");
+  const turnGenRef = useRef(0);
 
   const trace = useCallback(
     (kind: string, detail: string) => {
@@ -164,9 +170,24 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
   );
 
   useEffect(() => {
-    if (audioRef.current && !playbackRef.current) {
-      playbackRef.current = new AudioPlaybackManager(audioRef.current);
+    if (!playbackRef.current) {
+      playbackRef.current = new StreamingAudioPlayback();
     }
+    if (!ttsClientRef.current) {
+      ttsClientRef.current = new StreamingTtsClient({
+        sessionId: sessionId || "default",
+        callId: callIdRef.current,
+        languageCode,
+        trace: (kind, detail) => trace(kind, detail),
+      });
+    }
+    playbackRef.current.setTrace((kind, detail) => trace(kind, detail));
+    return () => {
+      activePipelineRef.current?.cancel();
+      ttsClientRef.current?.close();
+      playbackRef.current?.close();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const addBubble = useCallback((role: Bubble["role"], text: string) => {
@@ -230,49 +251,110 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
     setSessionStatus("ended");
   }, [trace, onCallEnd]);
 
+  const runBrainTurnRef = useRef<(text: string) => void>(() => {});
+
+  const doBargeIn = useCallback(
+    (reason: string) => {
+      const st = bargeRef.current;
+      const now = Date.now();
+      if (!st.agentSpeaking && !st.busy && !st.brainStreaming) return;
+      if (st.bargeHandledTurn === st.turnN && now - st.lastBargeInAt < 800) return;
+
+      st.lastBargeInAt = now;
+      st.bargeHandledTurn = st.turnN;
+      st.agentSpeaking = false;
+      st.brainStreaming = false;
+      st.busy = false;
+      st.bargeCooldownUntil = now + 250;
+      awaitingBargeRef.current = true;
+      pendingFinalsRef.current = [];
+      turnGenRef.current += 1;
+
+      brainAbortRef.current?.abort();
+      brainAbortRef.current = null;
+      playbackRef.current?.stop();
+      markLastAssistantInterrupted();
+      trace("vad", `barge-in ${reason}`);
+
+      fetch(`${apiOrigin()}/api/session/interrupt`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ sessionId: sessionId || "default" }),
+      }).catch(() => {});
+      setSessionStatus(listeningRef.current ? "listening" : "idle");
+    },
+    [markLastAssistantInterrupted, sessionId, setSessionStatus, trace]
+  );
+
   const runBrainTurn = useCallback(
     async (text: string) => {
       const qs = callIdRef.current ? `?callId=${encodeURIComponent(callIdRef.current)}` : "";
+      const turnGen = ++turnGenRef.current;
+      brainAbortRef.current?.abort();
+      const abort = new AbortController();
+      brainAbortRef.current = abort;
+
+      bargeRef.current.turnN += 1;
       bargeRef.current.brainStreaming = true;
       bargeRef.current.busy = true;
+      bargeRef.current.sawVadStart = false;
+      awaitingBargeRef.current = false;
       setSessionStatus("thinking");
       trace("brain", "stream start");
       addBubble("user", text);
 
-      const playTtsChunk = async (chunk: string) => {
-        const trimmed = chunk.trim();
-        if (!trimmed || !playbackRef.current) return;
-        playbackRef.current.userGesture();
-        const ttsR = await fetch("/api/tts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            text: trimmed,
-            language_code: languageCode,
-            sessionId: sessionId || "default",
-            callId: callIdRef.current,
-          }),
+      const turnId = `turn-${bargeRef.current.turnN}`;
+      if (!playbackRef.current) {
+        playbackRef.current = new StreamingAudioPlayback();
+      }
+      if (!ttsClientRef.current) {
+        ttsClientRef.current = new StreamingTtsClient({
+          sessionId: sessionId || "default",
+          callId: callIdRef.current,
+          languageCode,
+          trace: (kind, detail) => trace(kind, detail),
         });
-        if (!ttsR.ok) {
-          const errText = await ttsR.text();
-          trace("tts", `failed ${ttsR.status} ${errText.slice(0, 80)}`);
-          return;
+      }
+      ttsClientRef.current.syncCallId(callIdRef.current);
+      const playback = playbackRef.current;
+      const ttsClient = ttsClientRef.current;
+
+      const pipeline = new TurnTtsPipeline({
+        turnId,
+        turnGen,
+        isTurnActive: () => turnGen === turnGenRef.current,
+        sessionId: sessionId || "default",
+        callId: callIdRef.current,
+        languageCode,
+        playback,
+        ttsClient,
+        trace: (kind, detail) => trace(kind, detail),
+        onSpeakingStart: () => {
+          if (turnGen !== turnGenRef.current) return;
+          setSessionStatus("speaking");
+          bargeRef.current.agentSpeaking = true;
+        },
+        onSpeakingEnd: () => {
+          if (turnGen !== turnGenRef.current) return;
+          bargeRef.current.agentSpeaking = false;
+        },
+      });
+      activePipelineRef.current = pipeline;
+
+      try {
+        await pipeline.start();
+      } catch (e) {
+        if (!abort.signal.aborted && turnGen === turnGenRef.current) {
+          trace("tts:error", e instanceof Error ? e.message : "TTS start failed");
         }
-        const ctype = ttsR.headers.get("content-type") || "audio/wav";
-        const buf = await ttsR.arrayBuffer();
-        if (buf.byteLength > 0) {
-          const blob = new Blob([buf], { type: ctype });
-          const url = URL.createObjectURL(blob);
-          await playbackRef.current.enqueueUrl(url, true);
-          trace("tts", `playback queued ${buf.byteLength}b ${ctype}`);
-        }
-      };
+      }
 
       const r = await fetch(`/api/brain/stream${qs}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
+        signal: abort.signal,
         body: JSON.stringify({
           transcript: text,
           language_code: languageCode,
@@ -285,6 +367,7 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
       if (!r.ok || !r.body) {
         const errBody = await r.text().catch(() => "");
         trace("brain", `failed ${r.status} ${errBody.slice(0, 120)}`);
+        pipeline.cancel();
         addBubble("assistant", "Sorry — the agent could not respond. Check the diagnostics panel.");
         bargeRef.current.brainStreaming = false;
         bargeRef.current.busy = false;
@@ -295,24 +378,10 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
       let assistantStarted = false;
       let streamUsage: TurnCompleteEvent["usage"];
       let memoryUpdate: TurnCompleteEvent["memoryUpdate"];
-      let ttsSentEnd = 0;
-      let ttsPipeline: Promise<void> = Promise.resolve();
-      let speakingMarked = false;
-
-      const queueTts = (chunk: string, label: string) => {
-        const trimmed = chunk.trim();
-        if (!trimmed) return;
-        if (!speakingMarked) {
-          speakingMarked = true;
-          setSessionStatus("speaking");
-          bargeRef.current.agentSpeaking = true;
-        }
-        trace("tts", `${label} (${wordCount(trimmed)}w): ${trimmed.slice(0, 48)}`);
-        ttsPipeline = ttsPipeline.then(() => playTtsChunk(trimmed));
-      };
 
       try {
         for await (const payload of parseSseDataLines(r.body)) {
+          if (turnGen !== turnGenRef.current) break;
           let ev: Record<string, unknown>;
           try {
             ev = JSON.parse(payload) as Record<string, unknown>;
@@ -332,10 +401,7 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
                 return prev.map((b, i) => (i === idx ? { ...b, text: chunk } : b));
               });
             }
-            if (shouldStartEarlyTts(out, ttsSentEnd)) {
-              ttsSentEnd = out.length;
-              queueTts(out, "early");
-            }
+            pipeline.onLlmDelta(String(ev.delta));
           }
           if (ev.done && ev.text) {
             out = String(ev.text);
@@ -346,14 +412,25 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
           }
         }
       } catch (e) {
+        if (abort.signal.aborted || turnGen !== turnGenRef.current) {
+          pipeline.cancel();
+          trace("brain", "stream aborted");
+          return;
+        }
         trace("brain", `stream read error ${e instanceof Error ? e.message : "unknown"}`);
       }
 
+      if (turnGen !== turnGenRef.current) {
+        pipeline.cancel();
+        trace("brain", "stale turn discarded");
+        return;
+      }
+
       bargeRef.current.brainStreaming = false;
-      bargeRef.current.busy = false;
       trace("brain", `stream done ${out.length} chars`);
 
       if (out) {
+        lastAssistantTextRef.current = out;
         turnCounterRef.current += 1;
         const cached = Number(streamUsage?.cached_tokens || 0);
         trace(
@@ -378,25 +455,77 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
           });
         }
 
-        const tail = ttsTailText(out, ttsSentEnd);
-        if (tail) {
-          queueTts(tail, "tail");
-        } else if (ttsSentEnd === 0) {
-          queueTts(out, "full");
-        }
-
         try {
-          await ttsPipeline;
+          if (turnGen === turnGenRef.current) {
+            await pipeline.finishLlm();
+          }
         } catch (e) {
-          trace("tts", `error ${e instanceof Error ? e.message : "unknown"}`);
+          if (!abort.signal.aborted && turnGen === turnGenRef.current) {
+            trace("tts:error", e instanceof Error ? e.message : "unknown");
+          }
         }
-        bargeRef.current.agentSpeaking = false;
+        if (turnGen === turnGenRef.current) {
+          speakCooldownUntilRef.current = Date.now() + POST_SPEAK_COOLDOWN_MS;
+        }
       } else if (!assistantStarted) {
         addBubble("assistant", "Sorry — I did not get a response from the brain.");
       }
-      setSessionStatus(listeningRef.current ? "listening" : "idle");
+
+      if (turnGen === turnGenRef.current) {
+        activePipelineRef.current = null;
+        bargeRef.current.busy = false;
+        while (pendingFinalsRef.current.length) {
+          const next = pendingFinalsRef.current.shift()!;
+          if (isLikelyEcho(next, lastAssistantTextRef.current)) {
+            trace("stt", "dropped queued echo");
+            continue;
+          }
+          runBrainTurnRef.current(next);
+          return;
+        }
+        setSessionStatus(listeningRef.current ? "listening" : "idle");
+      }
     },
     [addBubble, trace, setSessionStatus, languageCode, sessionId]
+  );
+
+  runBrainTurnRef.current = runBrainTurn;
+
+  const handleSttFinal = useCallback(
+    (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed || wordCount(trimmed) < 1) return;
+      const st = bargeRef.current;
+      const now = Date.now();
+
+      if (awaitingBargeRef.current) {
+        awaitingBargeRef.current = false;
+        pendingFinalsRef.current = [];
+        st.busy = false;
+        st.brainStreaming = false;
+        runBrainTurnRef.current(trimmed);
+        return;
+      }
+
+      if (st.agentSpeaking) {
+        trace("stt", "ignored final during agent speech");
+        return;
+      }
+
+      if (now < speakCooldownUntilRef.current && isLikelyEcho(trimmed, lastAssistantTextRef.current)) {
+        trace("stt", "ignored echo during cooldown");
+        return;
+      }
+
+      if (st.busy || st.brainStreaming) {
+        pendingFinalsRef.current.push(trimmed);
+        trace("stt", `queued final (${pendingFinalsRef.current.length})`);
+        return;
+      }
+
+      runBrainTurnRef.current(trimmed);
+    },
+    [trace]
   );
 
   const teardownMic = useCallback(() => {
@@ -518,13 +647,16 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
       if (event === "speech_start" || event === "vad.speech_start") {
         bargeRef.current.sawVadStart = true;
         trace("vad", "speech start");
+        if (bargeRef.current.agentSpeaking || bargeRef.current.brainStreaming) {
+          doBargeIn("vad-start");
+        }
         return;
       }
       if (event === "final" || event === "transcript.final" || event === "transcript") {
         if (!text) return;
         setPartial("");
         trace("stt", `final ${text.slice(0, 80)}`);
-        void runBrainTurn(text);
+        handleSttFinal(text);
         return;
       }
       if (event === "error" || fatal) {
@@ -542,7 +674,7 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
         }
       }, 500);
     };
-  }, [languageCode, sessionId, runBrainTurn, setSessionStatus, trace]);
+  }, [languageCode, sessionId, handleSttFinal, doBargeIn, setSessionStatus, trace]);
 
   const startListening = useCallback(async () => {
     if (listeningRef.current || startingRef.current) return;
@@ -555,7 +687,13 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
         await startCall();
       }
       const stream = await navigator.mediaDevices.getUserMedia({
-        audio: { sampleRate: 16000, channelCount: 1, echoCancellation: true, noiseSuppression: true },
+        audio: {
+          sampleRate: 16000,
+          channelCount: 1,
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
       });
       streamRef.current = stream;
       const ctx = new AudioContext({ sampleRate: 16000 });
@@ -572,11 +710,8 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
         sock.send(buf);
         const st = bargeRef.current;
         st.words = wordCount(partialRef.current);
-        if (shouldBargeWhileSpeaking(st, Date.now()) && playbackRef.current) {
-          playbackRef.current.stop();
-          st.agentSpeaking = false;
-          markLastAssistantInterrupted();
-          trace("vad", "barge-in");
+        if (shouldBargeWhileSpeaking(st, Date.now())) {
+          doBargeIn("vad+partial");
         }
       };
       src.connect(worklet);
@@ -599,7 +734,7 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
     } finally {
       startingRef.current = false;
     }
-  }, [attachSttSocket, teardownMic, endCall, markLastAssistantInterrupted, startCall, startMicMeter, trace, setSessionStatus]);
+  }, [attachSttSocket, teardownMic, endCall, doBargeIn, startCall, startMicMeter, trace, setSessionStatus]);
 
   useImperativeHandle(ref, () => ({
     startListening,
@@ -679,7 +814,7 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
       />
       {!isDev && !isLab && (
         <p className="mt-2 text-xs text-text-muted">
-          WS STT · pcm-worklet · live-guards barge-in · SSE brain stream
+          WS STT · WS TTS stream · pcm-worklet · live-guards barge-in · SSE brain
         </p>
       )}
     </div>

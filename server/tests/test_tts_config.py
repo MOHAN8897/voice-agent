@@ -31,3 +31,17 @@ def test_runtime_speaker_overrides_env():
 def test_invalid_speaker_raises():
     with pytest.raises(TtsConfigError):
         resolve_tts_config("cfg-test", speaker="not_a_voice", model="bulbul:v3")
+
+
+def test_cartesia_voice_uuid_not_validated_as_sarvam_speaker():
+    runtime_settings.update(
+        "cfg-test",
+        {
+            "ttsSpeaker": "4418bb06-8329-49a1-bb11-53bb64ca0547",
+            "ttsModel": "sonic-3.5",
+        },
+    )
+    cfg = resolve_tts_config("cfg-test", language_code="te-IN")
+    assert cfg["provider"] == "cartesia"
+    assert cfg["model"] == "sonic-3.5"
+    assert cfg["speaker"] == "4418bb06-8329-49a1-bb11-53bb64ca0547"

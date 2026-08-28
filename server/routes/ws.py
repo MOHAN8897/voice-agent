@@ -62,17 +62,48 @@ def _connect_stt_upstream(session_id: str = "default", call_id: str | None = Non
     return connect_stt_realtime(**kwargs)
 
 
+def _is_cartesia_model(model: str) -> bool:
+    return model in constants.CARTESIA_TTS_MODELS or str(model).startswith("sonic")
+
+
+def _resolve_ws_tts_model(model: str, session_id: str, call_id: str | None) -> str:
+    stack = _stack_for_ws(call_id, session_id)
+    if stack:
+        if stack.tts.provider == "cartesia" or _is_cartesia_model(stack.tts.model):
+            return stack.tts.model
+        if model in constants.TTS_MODELS:
+            return model
+        return stack.tts.model
+    if model in constants.TTS_MODELS or _is_cartesia_model(model):
+        return model
+    return "bulbul:v3"
+
+
 def _connect_tts_upstream(model: str, session_id: str = "default", call_id: str | None = None):
     settings = get_settings()
     if settings.use_provider_registry:
         stack = _stack_for_ws(call_id, session_id)
         registry = get_provider_registry()
         tts = registry.get_tts(stack.tts.provider)
+        if stack.tts.provider == "cartesia" or _is_cartesia_model(stack.tts.model):
+            effective_model = stack.tts.model if _is_cartesia_model(stack.tts.model) else (
+                model if _is_cartesia_model(model) else (settings.cartesia_tts_model or "sonic-3.5")
+            )
+        else:
+            effective_model = model if model in constants.TTS_MODELS else stack.tts.model
         config = TTSConfig(
             provider=stack.tts.provider,
-            model=model or stack.tts.model,
+            model=effective_model,
             language=stack.language,
             speaker=stack.tts.config.get("speaker", settings.sarvam_tts_speaker_te),
+        )
+        log_ws(
+            "TTS upstream opening",
+            provider=stack.tts.provider,
+            model=effective_model,
+            speaker=config.speaker,
+            session=session_id,
+            call_id=call_id,
         )
         return tts.connect_stream(config)
     return connect_tts_ws(model=model)
@@ -203,7 +234,8 @@ async def ws_tts(ws: WebSocket):
     model = ws.query_params.get("model", "bulbul:v3")
     session_id = ws.query_params.get("sessionId", "default")
     call_id = ws.query_params.get("call_id") or ws.query_params.get("callId")
-    if model not in constants.TTS_MODELS:
+    model = _resolve_ws_tts_model(model, session_id, call_id)
+    if model not in constants.TTS_MODELS and not str(model).startswith("sonic") and model not in constants.CARTESIA_TTS_MODELS:
         model = "bulbul:v3"
 
     if call_id:
@@ -265,7 +297,7 @@ async def ws_tts(ws: WebSocket):
                         raw = raw.decode(errors="ignore")
                     try:
                         obj = json.loads(raw)
-                        if obj.get("type") == "audio" or (
+                        if obj.get("type") == "audio" or obj.get("type") == "chunk" or (
                             obj.get("data")
                             and isinstance(obj.get("data"), dict)
                             and obj["data"].get("audio")
@@ -337,7 +369,7 @@ async def ws_tts(ws: WebSocket):
             if mtype == "config":
                 d = dict(obj.get("data") or {})
                 try:
-                    merged = merge_ws_tts_config(session_id, d)
+                    merged = merge_ws_tts_config(session_id, d, call_id=call_id, ws_model=model)
                     out = {
                         "speaker": merged["speaker"],
                         "language_code": merged["language_code"],
@@ -346,6 +378,7 @@ async def ws_tts(ws: WebSocket):
                         "max_chunk_length": merged["max_chunk_length"],
                         "output_audio_codec": merged["output_audio_codec"],
                         "output_audio_bitrate": merged["output_audio_bitrate"],
+                        "model": merged["model"],
                     }
                     if "temperature" in merged:
                         out["temperature"] = merged["temperature"]
@@ -357,6 +390,8 @@ async def ws_tts(ws: WebSocket):
                     log_ws(
                         "TTS configured",
                         session=session_id,
+                        provider=merged.get("provider"),
+                        model=out["model"],
                         speaker=out["speaker"],
                         codec=out["output_audio_codec"],
                         temperature=out.get("temperature"),

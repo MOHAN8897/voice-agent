@@ -79,6 +79,7 @@ class Constants:
         "sonic-3.5-2026-05-04": {"label": "Sonic 3.5 snapshot (2026-05-04)"},
     }
     CARTESIA_STT_WS = "wss://api.cartesia.ai/stt/websocket"
+    CARTESIA_TTS_WS = "wss://api.cartesia.ai/tts/websocket"
     CARTESIA_API_VERSION = "2026-08-14"
     # Fallback when CARTESIA_TTS_VOICE_ID unset (Cartesia "Skylar")
     CARTESIA_DEFAULT_VOICE_ID = "db6b0ed5-d5d3-463d-ae85-518a07d3c2b4"

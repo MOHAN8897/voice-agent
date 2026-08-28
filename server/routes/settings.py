@@ -206,10 +206,14 @@ async def get_runtime(sessionId: str = Query("default")):
 
 
 @router.get("/api/settings/tts-config")
-async def get_tts_config(sessionId: str = Query("default"), language_code: str = Query("te-IN")):
+async def get_tts_config(
+    sessionId: str = Query("default"),
+    language_code: str = Query("te-IN"),
+    callId: str | None = Query(None),
+):
     """Resolved canonical TTS config for a session — same object used by REST + WS + voice turn."""
     try:
-        cfg = resolve_tts_config(sessionId, language_code=language_code)
+        cfg = resolve_tts_config(sessionId, language_code=language_code, call_id=callId)
     except Exception as e:
         raise HTTPException(status_code=400, detail={"error": {"code": "validation_error", "message": str(e)}}) from e
     return {"sessionId": sessionId, "ttsConfig": cfg}
