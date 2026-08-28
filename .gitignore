@@ -2,7 +2,11 @@
 .env
 .env.local
 .tunnel-url
+.tunnel-share-urls.json
 .tunnel-cloudflared.log
+.tunnel-ngrok.log
+.tunnel-ngrok.err.log
+.ngrok-share.yml
 cloudflared/config.yml
 .env.*.local
 !.env.example

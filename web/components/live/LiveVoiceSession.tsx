@@ -10,6 +10,13 @@ import { isLikelyEcho, POST_SPEAK_COOLDOWN_MS } from "@/lib/echo-guard";
 import { shouldBargeWhileSpeaking, type BargeState } from "@/lib/live-guards";
 import { apiOrigin, wsUrl } from "@/lib/api";
 
+function isAbortError(e: unknown): boolean {
+  return (
+    (e instanceof DOMException && e.name === "AbortError") ||
+    (e instanceof Error && e.name === "AbortError")
+  );
+}
+
 export type Bubble = { role: "user" | "assistant"; text: string; interrupted?: boolean; ts?: number };
 
 export type SessionTraceEvent = { at: number; kind: string; detail: string };
@@ -272,6 +279,8 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
 
       brainAbortRef.current?.abort();
       brainAbortRef.current = null;
+      activePipelineRef.current?.cancel();
+      activePipelineRef.current = null;
       playbackRef.current?.stop();
       markLastAssistantInterrupted();
       trace("vad", `barge-in ${reason}`);
@@ -350,18 +359,34 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
         }
       }
 
-      const r = await fetch(`/api/brain/stream${qs}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        signal: abort.signal,
-        body: JSON.stringify({
-          transcript: text,
-          language_code: languageCode,
-          sessionId: sessionId || "default",
-          callId: callIdRef.current,
-        }),
-      });
+      let r: Response;
+      try {
+        r = await fetch(`/api/brain/stream${qs}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          signal: abort.signal,
+          body: JSON.stringify({
+            transcript: text,
+            language_code: languageCode,
+            sessionId: sessionId || "default",
+            callId: callIdRef.current,
+          }),
+        });
+      } catch (e) {
+        if (abort.signal.aborted || turnGen !== turnGenRef.current || isAbortError(e)) {
+          pipeline.cancel();
+          trace("brain", "stream aborted");
+          return;
+        }
+        pipeline.cancel();
+        trace("brain", `fetch error ${e instanceof Error ? e.message : "unknown"}`);
+        bargeRef.current.brainStreaming = false;
+        bargeRef.current.busy = false;
+        activePipelineRef.current = null;
+        setSessionStatus(listeningRef.current ? "listening" : "idle");
+        return;
+      }
 
       let out = "";
       if (!r.ok || !r.body) {
@@ -412,7 +437,7 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
           }
         }
       } catch (e) {
-        if (abort.signal.aborted || turnGen !== turnGenRef.current) {
+        if (abort.signal.aborted || turnGen !== turnGenRef.current || isAbortError(e)) {
           pipeline.cancel();
           trace("brain", "stream aborted");
           return;
@@ -489,7 +514,12 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
     [addBubble, trace, setSessionStatus, languageCode, sessionId]
   );
 
-  runBrainTurnRef.current = runBrainTurn;
+  runBrainTurnRef.current = (text: string) => {
+    void runBrainTurn(text).catch((e) => {
+      if (isAbortError(e)) return;
+      trace("brain", `turn error ${e instanceof Error ? e.message : "unknown"}`);
+    });
+  };
 
   const handleSttFinal = useCallback(
     (text: string) => {

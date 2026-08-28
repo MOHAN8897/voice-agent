@@ -13,6 +13,9 @@
     "dev:local": "powershell -ExecutionPolicy Bypass -File scripts/dev_local_full.ps1",
     "dev:tunnel": "powershell -ExecutionPolicy Bypass -File scripts/tunnel_cloudflared.ps1",
     "dev:cf-setup": "powershell -ExecutionPolicy Bypass -File scripts/setup_cloudflare_tunnel.ps1",
-    "dev:cf-tunnel": "powershell -ExecutionPolicy Bypass -File scripts/run_cloudflare_tunnel.ps1"
+    "dev:cf-tunnel": "powershell -ExecutionPolicy Bypass -File scripts/run_cloudflare_tunnel.ps1",
+    "share": "powershell -ExecutionPolicy Bypass -File scripts/share_with_friend.ps1",
+    "share:ngrok": "powershell -ExecutionPolicy Bypass -File scripts/share_with_friend.ps1 -Tunnel ngrok",
+    "share:cf": "powershell -ExecutionPolicy Bypass -File scripts/share_with_friend.ps1 -Tunnel cloudflared"
   }
 }
