@@ -128,6 +128,7 @@ class LiveTurnOrchestrator:
             assistant_text = ""
             memory_update: dict[str, Any] = {"operations": []}
             memory_parse_failed = False
+            stream_usage: dict[str, Any] = {}
             async for chunk in self._stream_llm(
                 transcript=transcript,
                 language_code=language_code,
@@ -153,6 +154,7 @@ class LiveTurnOrchestrator:
                     assistant_text = chunk.get("text") or ""
                     memory_update = chunk.get("memory_update") or {"operations": []}
                     memory_parse_failed = bool(chunk.get("memory_parse_failed"))
+                    stream_usage = chunk.get("usage") or {}
                 yield chunk
 
             if call_id and settings.enable_call_archive:
@@ -168,6 +170,7 @@ class LiveTurnOrchestrator:
                     projection=projection,
                     rolling=rolling,
                     memory_parse_failed=memory_parse_failed,
+                    usage=stream_usage,
                 )
         finally:
             if turn_lock and turn_lock.locked():
@@ -312,6 +315,7 @@ class LiveTurnOrchestrator:
         projection: str | None = None,
         rolling: str | None = None,
         memory_parse_failed: bool = False,
+        usage: dict[str, Any] | None = None,
     ) -> None:
         try:
             line = await call_ledger.append_assistant_turn(
@@ -369,6 +373,11 @@ class LiveTurnOrchestrator:
             "memory_ops_applied": applied,
             "memory_merge_ms": merge_ms,
             "errors": [],
+            "input_tokens": int((usage or {}).get("input_tokens") or 0),
+            "output_tokens": int((usage or {}).get("output_tokens") or 0),
+            "cached_tokens": int((usage or {}).get("cached_tokens") or 0),
+            "cache_write_tokens": int((usage or {}).get("cache_write_tokens") or 0),
+            "memory_ops_proposed": len(ops),
         }
         await call_ledger.append_trace_turn(call_id, turn)
         ctx = call_context.get(call_id)

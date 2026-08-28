@@ -54,6 +54,16 @@ def _resample_int16_mono(pcm: bytes, src_rate: int, dst_rate: int) -> bytes:
     return bytes(out)
 
 
+def _strip_wav_pcm(data: bytes, default_rate: int) -> tuple[bytes, int]:
+    if len(data) >= 12 and data[:4] == b"RIFF" and data[8:12] == b"WAVE":
+        try:
+            with wave.open(io.BytesIO(data), "rb") as wf:
+                return wf.readframes(wf.getnframes()), wf.getframerate()
+        except Exception:
+            return data, default_rate
+    return data, default_rate
+
+
 class AudioArchive:
     def user_pcm_path(self, call_id: str) -> Path:
         return call_dir(call_id) / "user.pcm"
@@ -109,8 +119,11 @@ class AudioArchive:
             if agent and _is_mpeg(agent):
                 self.agent_mp3_path(call_id).write_bytes(agent)
             else:
-                self.agent_pcm_path(call_id).write_bytes(agent)
-                agent_pcm = agent
+                pcm, pcm_rate = _strip_wav_pcm(agent, agent_rate)
+                self.agent_pcm_path(call_id).write_bytes(pcm)
+                agent_pcm = pcm
+                if pcm_rate != agent_rate:
+                    agent_rate = pcm_rate
             self._write_mix_wav(self.mix_path(call_id), user, agent_pcm, agent_rate)
             status = {
                 "user": "complete" if user else "empty",
@@ -128,7 +141,7 @@ class AudioArchive:
         right = _resample_int16_mono(agent_pcm, agent_rate, SAMPLE_RATE) if agent_pcm else b""
         user_frames = len(user_pcm) // 2
         agent_frames = len(right) // 2
-        frame_count = max(user_frames, agent_frames)
+        frame_count = max(user_frames, agent_frames, 1)
         stereo = bytearray(frame_count * 4)
         for i in range(frame_count):
             if i < user_frames:

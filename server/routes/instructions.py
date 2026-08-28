@@ -45,6 +45,7 @@ class SaveRequest(BaseModel):
     instructions: str | None = Field(None, max_length=MAX_BEHAVIOUR_CHARS)
     responseStyle: str | None = Field(None, max_length=100)
     brainPromptBudgetTokens: int | None = Field(None, description="Optional budget override for validation")
+    language_code: str | None = Field("te-IN", max_length=16)
 
 
 @router.get("/api/instructions/default")
@@ -88,12 +89,29 @@ async def save_instructions(body: SaveRequest):
             business = body.businessInstructions or ""
             if len(business) > z_max:
                 business = business[:z_max]
-            saved = instruction_store.save(
+            from server.brain.session_brain_compiler import compile_session_brain
+
+            prev_meta = instruction_store.get_with_meta(body.sessionId)
+            prev_compiled = prev_meta.get("brainPrompt") if prev_meta.get("compiledVersion") else None
+            compiled, opt, raw_est, compiled_est = await compile_session_brain(
+                behaviour=behaviour,
+                business=business,
+                language=body.language_code or "te-IN",
+                style=body.responseStyle,
+                budget_tokens=budget,
+                previous_compiled=prev_compiled,
+            )
+            saved = instruction_store.save_compiled(
                 body.sessionId,
                 behaviour,
                 business,
                 body.responseStyle,
+                compiled_brain=compiled,
+                optimizer_report=opt.to_dict(),
+                source_checksum=opt.source_checksum,
+                language=body.language_code or "te-IN",
                 budget_tokens=budget,
+                raw_token_estimate=raw_est,
             )
     except PromptBudgetExceeded as e:
         raise HTTPException(
@@ -125,6 +143,7 @@ async def save_instructions(body: SaveRequest):
         "sessionId": body.sessionId,
         "brainPrompt": saved["brainPrompt"][:800] + ("..." if len(saved["brainPrompt"]) > 800 else ""),
         "brainPromptFull": saved["brainPrompt"],
+        "compiledBrainPrompt": saved["brainPrompt"],
         "estimatedTokens": saved["estimatedTokens"],
         "budgetTokens": saved["budgetTokens"],
         "headroom": saved["budgetTokens"] - saved["estimatedTokens"],
@@ -137,11 +156,15 @@ async def save_instructions(body: SaveRequest):
         "behaviourLength": len(saved.get("behaviour") or ""),
         "businessLength": len(saved.get("business") or ""),
         "updatedAt": saved["updatedAt"],
+        "compiledVersion": saved.get("compiledVersion", 0),
+        "optimizerReport": saved.get("optimizerReport"),
+        "rawTokenEstimate": saved.get("rawTokenEstimate", 0),
+        "tokensSaved": max(0, int(saved.get("rawTokenEstimate") or 0) - int(saved.get("estimatedTokens") or 0)),
     }
 
 
 @router.get("/api/instructions")
-async def get_instructions(sessionId: str = "default"):
+async def get_instructions(sessionId: str = "default", includeCompiled: bool = Query(False)):
     meta = instruction_store.get_with_meta(sessionId)
     b_max, z_max, p_max = _limits()
     budget = resolve_brain_budget(sessionId)
@@ -150,7 +173,7 @@ async def get_instructions(sessionId: str = "default"):
         default = get_factory_brain_prompt()
         meta["brainPrompt"] = default
         est = estimate_tokens(default)
-    return {
+    payload = {
         "sessionId": sessionId,
         **meta,
         "budgetTokens": budget,
@@ -167,6 +190,9 @@ async def get_instructions(sessionId: str = "default"):
             "maxWords": MAX_BRAIN_PROMPT_WORDS,
         },
     }
+    if not includeCompiled:
+        payload.pop("brainPrompt", None)
+    return payload
 
 
 @router.delete("/api/instructions")

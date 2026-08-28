@@ -18,8 +18,9 @@ router = APIRouter()
 
 
 def _catalog_handler() -> dict[str, Any]:
-    registry = get_provider_registry()
-    return registry.get_catalog()
+    from server.providers.catalog_refresh import get_fresh_catalog
+
+    return get_fresh_catalog()
 
 
 @router.get("/api/providers/catalog")

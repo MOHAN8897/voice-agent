@@ -28,7 +28,16 @@ export function DevCompiledPreview() {
     if (!agentId) return;
     portalFetch("dev", `/api/dev/compiled-preview?agent_id=${encodeURIComponent(agentId)}&redacted=true`)
       .then(async (r) => {
-        if (!r.ok) return;
+        if (!r.ok) {
+          setPreview(
+            r.status === 404
+              ? "No compiled brain for this agent yet. Publish a brain version from the agent workspace."
+              : `Could not load preview (HTTP ${r.status}).`
+          );
+          setLayers([]);
+          setMeta({});
+          return;
+        }
         const j = await r.json();
         setPreview(j.preview || "");
         setLayers(ensureArray(j.layers));
@@ -37,6 +46,10 @@ export function DevCompiledPreview() {
           checksum: j.checksum,
           token_estimate: j.token_estimate,
         });
+      })
+      .catch(() => {
+        setPreview("Could not load compiled preview. Check API on port 8000.");
+        setLayers([]);
       });
   }, [agentId]);
 

@@ -6,6 +6,7 @@ import {
   type Bubble,
   type LiveVoiceSessionHandle,
   type SessionTraceEvent,
+  type TurnCompleteEvent,
 } from "@/components/live/LiveVoiceSession";
 import { SkeuoPanel } from "@/components/ui/skeuo/SkeuoPanel";
 import { SkeuoButton } from "@/components/ui/skeuo/SkeuoButton";
@@ -16,18 +17,24 @@ export function TestStudioLivePanel({
   agentId,
   tier,
   languageCode,
+  stackOverride,
+  sessionId,
   onTrace,
   onCallStart,
   onCallEnd,
   onStatusChange,
+  onTurnComplete,
 }: {
   agentId: string;
   tier: string;
   languageCode: string;
+  stackOverride?: Record<string, unknown>;
+  sessionId?: string;
   onTrace: (e: SessionTraceEvent) => void;
   onCallStart: (callId: string) => void;
   onCallEnd: (callId: string) => void;
   onStatusChange: (status: string) => void;
+  onTurnComplete?: (event: TurnCompleteEvent) => void;
 }) {
   const sessionRef = useRef<LiveVoiceSessionHandle>(null);
   const [status, setStatus] = useState("idle");
@@ -36,6 +43,7 @@ export function TestStudioLivePanel({
   const [partial, setPartial] = useState("");
 
   const listening = status === "listening" || status === "connecting";
+  const callActive = status !== "idle" && status !== "ended";
   const orbActive = listening || status === "speaking" || status === "thinking";
 
   function handleStatus(next: string) {
@@ -58,36 +66,50 @@ export function TestStudioLivePanel({
   return (
     <SkeuoPanel
       title="Live conversation"
-      description="Mic → STT → brain stream → TTS · monitoring console"
+      description="Mic → STT → brain stream → TTS · chat transcript below"
       padding="md"
       className="console-page-enter"
     >
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,200px)_minmax(0,1fr)]">
-        <div className="flex flex-col items-center gap-3">
-          <VoiceControlOrb
-            status={status}
-            level={micLevel}
-            active={orbActive}
-            listening={listening}
-            onStart={() => sessionRef.current?.startListening()}
-            onStop={() => sessionRef.current?.stopListening()}
-          />
-          <div className="flex flex-wrap justify-center gap-2">
-            <SkeuoButton variant="ghost" size="sm" onClick={() => sessionRef.current?.endCall()}>
-              End call
-            </SkeuoButton>
-          </div>
+      <div className="mb-5 flex flex-col items-center gap-3 border-b border-surface-border-subtle pb-5 lg:flex-row lg:items-start lg:justify-between">
+        <VoiceControlOrb
+          status={status}
+          level={micLevel}
+          active={orbActive}
+          listening={listening}
+          callActive={callActive}
+          onStart={() => sessionRef.current?.startListening()}
+          onStop={() => sessionRef.current?.pauseListening()}
+        />
+        <div className="flex flex-col items-center gap-2 lg:items-end">
+          <SkeuoButton variant="ghost" size="sm" onClick={() => sessionRef.current?.endCall()}>
+            End call
+          </SkeuoButton>
+          <p className="max-w-xs text-center text-[11px] text-text-muted lg:text-right">
+            {listening
+              ? "Listening — your words appear in the chat below"
+              : callActive
+                ? "Mic off — flip the switch to speak again"
+                : "Turn on the mic to start a voice session"}
+          </p>
         </div>
-
-        <LiveTranscriptConsole lines={lines} partial={partial} speaking={status === "speaking"} />
       </div>
 
-      <div className="mt-4 border-t border-surface-border-subtle pt-4">
+      <LiveTranscriptConsole
+        lines={lines}
+        partial={partial}
+        speaking={status === "speaking"}
+        thinking={status === "thinking"}
+        className="max-h-[min(42vh,22rem)]"
+      />
+
+      <div className="sr-only">
         <LiveVoiceSession
           ref={sessionRef}
           agentId={agentId}
           tier={tier}
           languageCode={languageCode}
+          stackOverride={stackOverride}
+          sessionId={sessionId}
           variant="lab"
           onTrace={onTrace}
           onCallStart={onCallStart}
@@ -95,6 +117,7 @@ export function TestStudioLivePanel({
           onStatusChange={handleStatus}
           onMicLevel={setMicLevel}
           onTranscriptChange={handleTranscript}
+          onTurnComplete={onTurnComplete}
         />
       </div>
     </SkeuoPanel>

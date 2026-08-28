@@ -1,14 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { ensureArray } from "@/lib/ensure-array";
 import { AgentTestStudio } from "@/components/test-studio/AgentTestStudio";
 import { SkeuoPanel } from "@/components/ui/skeuo/SkeuoPanel";
 import { refreshPortalSession } from "@/lib/auth-client";
 
 export function DevTestStudio() {
+  const searchParams = useSearchParams();
+  const agentFromQuery = searchParams.get("agent") || "";
   const [agents, setAgents] = useState<{ agent_id: string; name: string }[]>([]);
-  const [agentId, setAgentId] = useState("");
+  const [agentId, setAgentId] = useState(agentFromQuery);
+
+  useEffect(() => {
+    if (agentFromQuery) setAgentId(agentFromQuery);
+  }, [agentFromQuery]);
 
   useEffect(() => {
     refreshPortalSession("dev").then(() =>
@@ -17,14 +24,22 @@ export function DevTestStudio() {
         .then((j) => {
           const list = ensureArray<{ agent_id: string; name: string }>(j.agents);
           setAgents(list);
-          if (list[0]) setAgentId(list[0].agent_id);
+          if (agentFromQuery && list.some((a) => a.agent_id === agentFromQuery)) {
+            setAgentId(agentFromQuery);
+          } else if (list[0]) {
+            setAgentId((current) => current || list[0].agent_id);
+          }
         })
     );
-  }, []);
+  }, [agentFromQuery]);
 
   return (
     <div className="space-y-6">
-      <SkeuoPanel title="Agent selector" description="Pick agent for global Test Studio" padding="md">
+      <SkeuoPanel
+        title="Agent under test"
+        description="Agents tab is for editing brain, voice, and tools. Test Studio is the live voice lab — pick an agent and stack here."
+        padding="md"
+      >
         <label className="block text-sm">
           <span className="text-text-muted">Agent</span>
           <select
@@ -32,9 +47,15 @@ export function DevTestStudio() {
             value={agentId}
             onChange={(e) => setAgentId(e.target.value)}
           >
-            {agents.map((a) => (
-              <option key={a.agent_id} value={a.agent_id}>{a.name}</option>
-            ))}
+          {agents.length === 0 ? (
+            <option value="">No agents — create one in Agents</option>
+          ) : (
+            agents.map((a) => (
+              <option key={a.agent_id} value={a.agent_id}>
+                {a.name}
+              </option>
+            ))
+          )}
           </select>
         </label>
       </SkeuoPanel>

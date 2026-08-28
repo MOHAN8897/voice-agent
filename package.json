@@ -3,9 +3,16 @@
   "private": true,
   "description": "Telugu voice agent monorepo — run scripts from repo root only",
   "scripts": {
+    "dev": "powershell -ExecutionPolicy Bypass -File scripts/dev_up.ps1 -KillStale -Wait",
+    "dev:open": "powershell -ExecutionPolicy Bypass -File scripts/dev_up.ps1 -KillStale -Wait -Open",
+    "start": "npm run dev",
     "dev:down": "powershell -ExecutionPolicy Bypass -File scripts/dev_down.ps1",
-    "dev:up": "powershell -ExecutionPolicy Bypass -File scripts/dev_up.ps1 -KillStale",
+    "dev:up": "powershell -ExecutionPolicy Bypass -File scripts/dev_up.ps1 -KillStale -Wait",
     "dev:api": "python -m uvicorn server.app:app --host 127.0.0.1 --port 8000 --reload",
-    "dev:web": "npm run dev --prefix web -- -p 3000"
+    "dev:web": "npm run dev --prefix web -- -p 3000",
+    "dev:local": "powershell -ExecutionPolicy Bypass -File scripts/dev_local_full.ps1",
+    "dev:tunnel": "powershell -ExecutionPolicy Bypass -File scripts/tunnel_cloudflared.ps1",
+    "dev:cf-setup": "powershell -ExecutionPolicy Bypass -File scripts/setup_cloudflare_tunnel.ps1",
+    "dev:cf-tunnel": "powershell -ExecutionPolicy Bypass -File scripts/run_cloudflare_tunnel.ps1"
   }
 }

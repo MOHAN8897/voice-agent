@@ -69,7 +69,9 @@ class ValidateSelectionBody(BaseModel):
 @router.get("/api/dev/stack/catalog")
 async def dev_stack_catalog(session: SessionData = Depends(require_dev_session)):
     require_permission(session, "dev.stack.read")
-    return get_provider_registry().get_catalog()
+    from server.providers.catalog_refresh import get_fresh_catalog
+
+    return get_fresh_catalog()
 
 
 @router.get("/api/dev/stack/tiers")

@@ -69,10 +69,10 @@ test.describe("Dev Test Studio UI", () => {
     const errors: string[] = [];
     page.on("pageerror", (e) => errors.push(e.message));
 
-    await page.goto(`/dev/agents/${agentId}/test`, { waitUntil: "domcontentloaded", timeout: 120000 });
-    await expect(page.getByText("Test configuration")).toBeVisible({ timeout: 30000 });
-    await expect(page.getByText("Browser live test")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Start listening" })).toBeVisible();
+    await page.goto(`/dev/test-studio?agent=${agentId}`, { waitUntil: "domcontentloaded", timeout: 120000 });
+    await expect(page.getByRole("heading", { name: "Test Studio" })).toBeVisible({ timeout: 30000 });
+    await expect(page.getByText("Live conversation")).toBeVisible();
+    await expect(page.getByLabel(/Turn microphone on/i)).toBeVisible();
 
     const mapErrors = errors.filter((e) => e.includes(".map is not a function"));
     expect(mapErrors).toEqual([]);
@@ -81,6 +81,29 @@ test.describe("Dev Test Studio UI", () => {
   test("global dev test studio page loads", async ({ page }) => {
     await page.goto("/dev/test-studio", { waitUntil: "domcontentloaded", timeout: 120000 });
     await expect(page.getByRole("heading", { name: "Test Studio" })).toBeVisible({ timeout: 30000 });
-    await expect(page.getByRole("button", { name: "Start listening" })).toBeVisible();
+    await expect(page.getByLabel(/Turn microphone on/i)).toBeVisible();
+    await expect(page.getByRole("button", { name: /CONFIG/i })).toBeVisible();
+  });
+
+  test("STT websocket targets API host (not Next :3000)", async ({ page, context }) => {
+    await context.grantPermissions(["microphone"]);
+    await page.addInitScript(() => {
+      navigator.mediaDevices.getUserMedia = async () => {
+        const ctx = new AudioContext();
+        return ctx.createMediaStreamDestination().stream;
+      };
+    });
+    const wsUrls: string[] = [];
+    page.on("websocket", (ws) => wsUrls.push(ws.url()));
+
+    await page.goto("/dev/test-studio", { waitUntil: "domcontentloaded", timeout: 120000 });
+    await page.getByRole("button", { name: /Turn microphone on/i }).click();
+
+    await expect
+      .poll(() => wsUrls.find((u) => u.includes("/ws/stt-realtime")), { timeout: 20000 })
+      .toBeTruthy();
+    const sttUrl = wsUrls.find((u) => u.includes("/ws/stt-realtime"))!;
+    expect(sttUrl).toContain("/ws/stt-realtime");
+    expect(sttUrl).not.toMatch(/:3000\/ws\//);
   });
 });

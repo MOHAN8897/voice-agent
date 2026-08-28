@@ -3,6 +3,12 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { SkeuoButton } from "@/components/ui/skeuo/SkeuoButton";
 import { AudioPlaybackManager } from "@/lib/audio-playback";
+import {
+  parseSseDataLines,
+  shouldStartEarlyTts,
+  ttsTailText,
+  wordCount,
+} from "@/lib/early-tts";
 import { shouldBargeWhileSpeaking, type BargeState } from "@/lib/live-guards";
 import { wsUrl } from "@/lib/api";
 
@@ -10,20 +16,55 @@ export type Bubble = { role: "user" | "assistant"; text: string; interrupted?: b
 
 export type SessionTraceEvent = { at: number; kind: string; detail: string };
 
+export type TurnCompleteEvent = {
+  turn: number;
+  userText: string;
+  assistantText: string;
+  at: number;
+  usage?: {
+    input_tokens?: number;
+    output_tokens?: number;
+    cached_tokens?: number;
+    cache_write_tokens?: number;
+  };
+  memoryUpdate?: { operations?: unknown[] };
+};
+
 export type LiveVoiceSessionHandle = {
   startListening: () => void;
+  pauseListening: () => void;
   stopListening: () => void;
   endCall: () => void;
 };
 
-function wordCount(t: string): number {
-  return (t.trim().match(/\S+/g) || []).length;
+function parseSttPayload(raw: string): {
+  event: string;
+  text: string;
+  fatal: boolean;
+  message: string;
+} {
+  try {
+    const m = JSON.parse(raw) as Record<string, unknown>;
+    const data = m.data as Record<string, unknown> | undefined;
+    const event = String(m.event || m.type || "");
+    const text = String(m.text ?? data?.text ?? m.transcript ?? "").trim();
+    return {
+      event,
+      text,
+      fatal: Boolean(m.is_fatal),
+      message: String(m.message || m.code || ""),
+    };
+  } catch {
+    return { event: "", text: "", fatal: false, message: "" };
+  }
 }
 
 export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
   agentId?: string;
   tier?: string;
   languageCode?: string;
+  stackOverride?: Record<string, unknown>;
+  sessionId?: string;
   variant?: "default" | "dev" | "lab";
   onTrace?: (event: SessionTraceEvent) => void;
   onCallStart?: (callId: string) => void;
@@ -31,10 +72,13 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
   onStatusChange?: (status: string) => void;
   onMicLevel?: (level: number) => void;
   onTranscriptChange?: (bubbles: Bubble[], partial: string) => void;
+  onTurnComplete?: (event: TurnCompleteEvent) => void;
 }>(function LiveVoiceSession({
   agentId,
   tier,
   languageCode = "te-IN",
+  stackOverride,
+  sessionId,
   variant = "default",
   onTrace,
   onCallStart,
@@ -42,6 +86,7 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
   onStatusChange,
   onMicLevel,
   onTranscriptChange,
+  onTurnComplete,
 }, ref) {
   const [status, setStatus] = useState("idle");
   const [listening, setListening] = useState(false);
@@ -55,6 +100,12 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
   const ctxRef = useRef<AudioContext | null>(null);
   const workletRef = useRef<AudioWorkletNode | null>(null);
   const listeningRef = useRef(false);
+  const startingRef = useRef(false);
+  const intentionalStopRef = useRef(false);
+  const partialRef = useRef("");
+  const turnCounterRef = useRef(0);
+  const onTurnCompleteRef = useRef(onTurnComplete);
+  onTurnCompleteRef.current = onTurnComplete;
   const analyserRef = useRef<AnalyserNode | null>(null);
   const levelTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const bargeRef = useRef<BargeState>({
@@ -134,6 +185,10 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
   onTranscriptChangeRef.current = onTranscriptChange;
 
   useEffect(() => {
+    partialRef.current = partial;
+  }, [partial]);
+
+  useEffect(() => {
     onTranscriptChangeRef.current?.(bubbles, partial);
   }, [bubbles, partial]);
 
@@ -141,7 +196,16 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
     const r = await fetch("/api/call/start", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ agentId, tier, channel: "browser", direction: "inbound" }),
+      credentials: "include",
+      body: JSON.stringify({
+        agentId,
+        tier,
+        channel: "browser",
+        direction: "inbound",
+        language: languageCode,
+        sessionId,
+        stackOverride,
+      }),
     });
     const j = await r.json();
     if (!r.ok) throw new Error(j.detail?.error?.message || "Call start failed");
@@ -149,7 +213,7 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
     trace("call", `started ${j.call_id}`);
     onCallStart?.(j.call_id);
     return j.call_id as string;
-  }, [agentId, tier, trace, onCallStart]);
+  }, [agentId, tier, languageCode, sessionId, stackOverride, trace, onCallStart]);
 
   const endCall = useCallback(async () => {
     if (!callIdRef.current) return;
@@ -157,6 +221,7 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
     await fetch("/api/call/end", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ callId: id, reason: "user_stop" }),
     });
     trace("call", `ended ${id}`);
@@ -173,56 +238,168 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
       setSessionStatus("thinking");
       trace("brain", "stream start");
       addBubble("user", text);
+
+      const playTtsChunk = async (chunk: string) => {
+        const trimmed = chunk.trim();
+        if (!trimmed || !playbackRef.current) return;
+        playbackRef.current.userGesture();
+        const ttsR = await fetch("/api/tts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            text: trimmed,
+            language_code: languageCode,
+            sessionId: sessionId || "default",
+            callId: callIdRef.current,
+          }),
+        });
+        if (!ttsR.ok) {
+          const errText = await ttsR.text();
+          trace("tts", `failed ${ttsR.status} ${errText.slice(0, 80)}`);
+          return;
+        }
+        const ctype = ttsR.headers.get("content-type") || "audio/wav";
+        const buf = await ttsR.arrayBuffer();
+        if (buf.byteLength > 0) {
+          const blob = new Blob([buf], { type: ctype });
+          const url = URL.createObjectURL(blob);
+          await playbackRef.current.enqueueUrl(url, true);
+          trace("tts", `playback queued ${buf.byteLength}b ${ctype}`);
+        }
+      };
+
       const r = await fetch(`/api/brain/stream${qs}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ transcript: text, language_code: languageCode }),
+        credentials: "include",
+        body: JSON.stringify({
+          transcript: text,
+          language_code: languageCode,
+          sessionId: sessionId || "default",
+          callId: callIdRef.current,
+        }),
       });
+
       let out = "";
-      const raw = await r.text();
-      for (const line of raw.split("\n")) {
-        if (!line.startsWith("data: ")) continue;
-        const payload = line.slice(6);
-        if (payload === "[DONE]") break;
-        try {
-          const ev = JSON.parse(payload);
-          if (ev.delta) out += ev.delta;
-          if (ev.text) out = ev.text;
-        } catch {
-          /* skip */
-        }
+      if (!r.ok || !r.body) {
+        const errBody = await r.text().catch(() => "");
+        trace("brain", `failed ${r.status} ${errBody.slice(0, 120)}`);
+        addBubble("assistant", "Sorry — the agent could not respond. Check the diagnostics panel.");
+        bargeRef.current.brainStreaming = false;
+        bargeRef.current.busy = false;
+        setSessionStatus(listeningRef.current ? "listening" : "idle");
+        return;
       }
+
+      let assistantStarted = false;
+      let streamUsage: TurnCompleteEvent["usage"];
+      let memoryUpdate: TurnCompleteEvent["memoryUpdate"];
+      let ttsSentEnd = 0;
+      let ttsPipeline: Promise<void> = Promise.resolve();
+      let speakingMarked = false;
+
+      const queueTts = (chunk: string, label: string) => {
+        const trimmed = chunk.trim();
+        if (!trimmed) return;
+        if (!speakingMarked) {
+          speakingMarked = true;
+          setSessionStatus("speaking");
+          bargeRef.current.agentSpeaking = true;
+        }
+        trace("tts", `${label} (${wordCount(trimmed)}w): ${trimmed.slice(0, 48)}`);
+        ttsPipeline = ttsPipeline.then(() => playTtsChunk(trimmed));
+      };
+
+      try {
+        for await (const payload of parseSseDataLines(r.body)) {
+          let ev: Record<string, unknown>;
+          try {
+            ev = JSON.parse(payload) as Record<string, unknown>;
+          } catch {
+            continue;
+          }
+          if (ev.delta) {
+            out += String(ev.delta);
+            if (!assistantStarted) {
+              assistantStarted = true;
+              setBubbles((prev) => [...prev, { role: "assistant", text: out, ts: Date.now() }]);
+            } else {
+              const chunk = out;
+              setBubbles((prev) => {
+                const idx = prev.map((b, i) => (b.role === "assistant" ? i : -1)).filter((i) => i >= 0).pop();
+                if (idx == null) return prev;
+                return prev.map((b, i) => (i === idx ? { ...b, text: chunk } : b));
+              });
+            }
+            if (shouldStartEarlyTts(out, ttsSentEnd)) {
+              ttsSentEnd = out.length;
+              queueTts(out, "early");
+            }
+          }
+          if (ev.done && ev.text) {
+            out = String(ev.text);
+            streamUsage = ev.usage as TurnCompleteEvent["usage"];
+            memoryUpdate = ev.memory_update as TurnCompleteEvent["memoryUpdate"];
+          } else if (ev.text && !ev.delta) {
+            out = String(ev.text);
+          }
+        }
+      } catch (e) {
+        trace("brain", `stream read error ${e instanceof Error ? e.message : "unknown"}`);
+      }
+
       bargeRef.current.brainStreaming = false;
       bargeRef.current.busy = false;
       trace("brain", `stream done ${out.length} chars`);
+
       if (out) {
-        addBubble("assistant", out);
-        setSessionStatus("speaking");
-        bargeRef.current.agentSpeaking = true;
-        try {
-          trace("tts", "request");
-          const ttsR = await fetch("/api/tts", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text: out, language_code: languageCode }),
+        turnCounterRef.current += 1;
+        const cached = Number(streamUsage?.cached_tokens || 0);
+        trace(
+          "tokens",
+          `in=${streamUsage?.input_tokens ?? 0} out=${streamUsage?.output_tokens ?? 0} cached=${cached}`
+        );
+        onTurnCompleteRef.current?.({
+          turn: turnCounterRef.current,
+          userText: text,
+          assistantText: out,
+          at: Date.now(),
+          usage: streamUsage,
+          memoryUpdate,
+        });
+        if (!assistantStarted) {
+          addBubble("assistant", out);
+        } else {
+          setBubbles((prev) => {
+            const idx = prev.map((b, i) => (b.role === "assistant" ? i : -1)).filter((i) => i >= 0).pop();
+            if (idx == null) return [...prev, { role: "assistant", text: out, ts: Date.now() }];
+            return prev.map((b, i) => (i === idx ? { ...b, text: out } : b));
           });
-          const ttsJ = await ttsR.json();
-          if (ttsJ.audio_base64 && playbackRef.current) {
-            playbackRef.current.userGesture();
-            await playbackRef.current.enqueueBase64(ttsJ.audio_base64, ttsJ.content_type || "audio/wav");
-            trace("tts", "playback queued");
-          }
-        } catch {
-          /* TTS optional */
+        }
+
+        const tail = ttsTailText(out, ttsSentEnd);
+        if (tail) {
+          queueTts(tail, "tail");
+        } else if (ttsSentEnd === 0) {
+          queueTts(out, "full");
+        }
+
+        try {
+          await ttsPipeline;
+        } catch (e) {
+          trace("tts", `error ${e instanceof Error ? e.message : "unknown"}`);
         }
         bargeRef.current.agentSpeaking = false;
+      } else if (!assistantStarted) {
+        addBubble("assistant", "Sorry — I did not get a response from the brain.");
       }
-      setSessionStatus(listening ? "listening" : "idle");
+      setSessionStatus(listeningRef.current ? "listening" : "idle");
     },
-    [addBubble, listening, trace, setSessionStatus, languageCode]
+    [addBubble, trace, setSessionStatus, languageCode, sessionId]
   );
 
-  const cleanupLive = useCallback(() => {
+  const teardownMic = useCallback(() => {
     listeningRef.current = false;
     const sock = socketRef.current;
     socketRef.current = null;
@@ -260,8 +437,12 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
     stopMicMeter();
     setListening(false);
     setPartial("");
+  }, [stopMicMeter]);
+
+  const cleanupLive = useCallback(() => {
+    teardownMic();
     setSessionStatus("idle");
-  }, [setSessionStatus, stopMicMeter]);
+  }, [setSessionStatus, teardownMic]);
 
   useEffect(() => {
     const cleanup = cleanupLive;
@@ -272,21 +453,107 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const stopListening = useCallback(async () => {
+  const pauseListening = useCallback(() => {
+    intentionalStopRef.current = true;
     try {
       socketRef.current?.send(JSON.stringify({ event: "end" }));
     } catch {
       /* ignore */
     }
-    cleanupLive();
+    teardownMic();
+    setSessionStatus(callIdRef.current ? "paused" : "idle");
+  }, [setSessionStatus, teardownMic]);
+
+  const stopListening = useCallback(async () => {
+    intentionalStopRef.current = true;
+    pauseListening();
     await endCall();
-  }, [cleanupLive, endCall]);
+    setSessionStatus("ended");
+  }, [pauseListening, endCall, setSessionStatus]);
+
+  const attachSttSocket = useCallback(() => {
+    const q = new URLSearchParams({
+      language_code: languageCode,
+      stream_type: "fast",
+      mode: "transcribe",
+    });
+    if (callIdRef.current) q.set("call_id", callIdRef.current);
+    if (sessionId) q.set("sessionId", sessionId);
+
+    const prev = socketRef.current;
+    if (prev) {
+      prev.onclose = null;
+      try {
+        if (prev.readyState === WebSocket.OPEN) prev.close(1000);
+      } catch {
+        /* ignore */
+      }
+    }
+
+    const sock = new WebSocket(`${wsUrl("/ws/stt-realtime")}?${q}`);
+    socketRef.current = sock;
+    sock.binaryType = "arraybuffer";
+    sock.onopen = () => {
+      listeningRef.current = true;
+      setListening(true);
+      setSessionStatus("listening");
+      trace("stt", `websocket open call=${callIdRef.current || "none"}`);
+    };
+    sock.onmessage = (ev) => {
+      const { event, text, fatal, message } = parseSttPayload(String(ev.data));
+      if (!event && !text) return;
+
+      if (event === "session.begin") {
+        setPartial("…speak now — live transcript appears here…");
+        trace("stt", "session begin");
+        return;
+      }
+      if (event === "partial" || event === "transcript.partial") {
+        if (text) {
+          setPartial(text);
+          trace("stt", `partial ${text.slice(0, 48)}`);
+        }
+        return;
+      }
+      if (event === "speech_start" || event === "vad.speech_start") {
+        bargeRef.current.sawVadStart = true;
+        trace("vad", "speech start");
+        return;
+      }
+      if (event === "final" || event === "transcript.final" || event === "transcript") {
+        if (!text) return;
+        setPartial("");
+        trace("stt", `final ${text.slice(0, 80)}`);
+        void runBrainTurn(text);
+        return;
+      }
+      if (event === "error" || fatal) {
+        trace("stt", `error ${message || event}`);
+        if (fatal) setSessionStatus(`STT error: ${message || "fatal"}`);
+      }
+    };
+    sock.onclose = () => {
+      trace("stt", "websocket closed");
+      if (intentionalStopRef.current || !listeningRef.current) return;
+      trace("stt", "reconnecting…");
+      window.setTimeout(() => {
+        if (listeningRef.current && !intentionalStopRef.current && streamRef.current) {
+          attachSttSocket();
+        }
+      }, 500);
+    };
+  }, [languageCode, sessionId, runBrainTurn, setSessionStatus, trace]);
 
   const startListening = useCallback(async () => {
+    if (listeningRef.current || startingRef.current) return;
+    startingRef.current = true;
+    intentionalStopRef.current = false;
     playbackRef.current?.userGesture();
     setSessionStatus("connecting");
     try {
-      await startCall();
+      if (!callIdRef.current) {
+        await startCall();
+      }
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: { sampleRate: 16000, channelCount: 1, echoCancellation: true, noiseSuppression: true },
       });
@@ -301,10 +568,10 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
       worklet.port.onmessage = (ev) => {
         const sock = socketRef.current;
         if (!sock || sock.readyState !== WebSocket.OPEN) return;
-        const int16 = ev.data as Int16Array;
-        sock.send(int16.buffer);
+        const buf = ev.data instanceof ArrayBuffer ? ev.data : (ev.data as Int16Array).buffer;
+        sock.send(buf);
         const st = bargeRef.current;
-        st.words = wordCount(partial);
+        st.words = wordCount(partialRef.current);
         if (shouldBargeWhileSpeaking(st, Date.now()) && playbackRef.current) {
           playbackRef.current.stop();
           st.agentSpeaking = false;
@@ -313,48 +580,7 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
         }
       };
       src.connect(worklet);
-
-      const q = new URLSearchParams({
-        language_code: languageCode,
-        stream_type: "fast",
-        mode: "transcribe",
-      });
-      if (callIdRef.current) q.set("call_id", callIdRef.current);
-      const sock = new WebSocket(`${wsUrl("/ws/stt-realtime")}?${q}`);
-      socketRef.current = sock;
-      sock.binaryType = "arraybuffer";
-      sock.onopen = () => {
-        listeningRef.current = true;
-        setListening(true);
-        setSessionStatus("listening");
-        trace("stt", "websocket open");
-      };
-      sock.onmessage = (ev) => {
-        let m: { type?: string; text?: string; transcript?: string };
-        try {
-          m = JSON.parse(ev.data as string);
-        } catch {
-          return;
-        }
-        const text = (m.text || m.transcript || "").trim();
-        if (!text) return;
-        if (m.type === "partial" || m.type === "speech_start") {
-          setPartial(text);
-          if (m.type === "speech_start") {
-            bargeRef.current.sawVadStart = true;
-            trace("vad", "speech start");
-          }
-          return;
-        }
-        if (m.type === "final" || m.type === "transcript") {
-          setPartial("");
-          trace("stt", `final ${text.slice(0, 40)}`);
-          runBrainTurn(text);
-        }
-      };
-      sock.onclose = () => {
-        if (listeningRef.current) stopListening();
-      };
+      attachSttSocket();
     } catch (e) {
       const msg =
         e instanceof DOMException && e.name === "AbortError"
@@ -363,15 +589,27 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
             ? e.message
             : "Mic error";
       setSessionStatus(msg);
-      cleanupLive();
-      await endCall();
+      trace("stt", `mic setup failed: ${msg}`);
+      teardownMic();
+      if (!callIdRef.current) {
+        await endCall();
+      } else {
+        setSessionStatus("paused");
+      }
+    } finally {
+      startingRef.current = false;
     }
-  }, [cleanupLive, endCall, partial, runBrainTurn, startCall, stopListening, listening, trace, setSessionStatus, startMicMeter, languageCode, markLastAssistantInterrupted]);
+  }, [attachSttSocket, teardownMic, endCall, markLastAssistantInterrupted, startCall, startMicMeter, trace, setSessionStatus]);
 
   useImperativeHandle(ref, () => ({
     startListening,
+    pauseListening,
     stopListening,
-    endCall,
+    endCall: async () => {
+      pauseListening();
+      await endCall();
+      setSessionStatus("ended");
+    },
   }));
 
   const isLab = variant === "lab";
@@ -433,7 +671,12 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
       </section>
       )}
 
-      <audio ref={audioRef} className={`w-full ${isLab ? "mt-2" : isDev ? "mt-3" : "mt-4"}`} controls aria-label="Agent audio playback" />
+      <audio
+        ref={audioRef}
+        className={isLab ? "sr-only" : `w-full ${isDev ? "mt-3" : "mt-4"}`}
+        controls={!isLab}
+        aria-label="Agent audio playback"
+      />
       {!isDev && !isLab && (
         <p className="mt-2 text-xs text-text-muted">
           WS STT · pcm-worklet · live-guards barge-in · SSE brain stream

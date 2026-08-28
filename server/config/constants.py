@@ -59,6 +59,30 @@ class Constants:
     # App
     APP_VERSION = "0.4.0-phase3"
 
+    # Cartesia catalogs (docs.cartesia.ai — Aug 2026)
+    CARTESIA_STT_MODELS: dict[str, dict] = {
+        "ink-2": {
+            "label": "Ink 2 (English, streaming)",
+            "languages": ["en", "en-IN"],
+            "modes": ["transcribe"],
+            "realtime": True,
+        },
+        "ink-whisper": {
+            "label": "Ink Whisper (multilingual incl. Telugu)",
+            "languages": ["en", "te", "hi", "multilingual"],
+            "modes": ["transcribe"],
+            "realtime": True,
+        },
+    }
+    CARTESIA_TTS_MODELS: dict[str, dict] = {
+        "sonic-3.5": {"label": "Sonic 3.5 (42 languages incl. Telugu)"},
+        "sonic-3.5-2026-05-04": {"label": "Sonic 3.5 snapshot (2026-05-04)"},
+    }
+    CARTESIA_STT_WS = "wss://api.cartesia.ai/stt/websocket"
+    CARTESIA_API_VERSION = "2026-08-14"
+    # Fallback when CARTESIA_TTS_VOICE_ID unset (Cartesia "Skylar")
+    CARTESIA_DEFAULT_VOICE_ID = "db6b0ed5-d5d3-463d-ae85-518a07d3c2b4"
+
     # Sarvam endpoints
     SARVAM_STT_REALTIME_WS = "wss://api.sarvam.ai/speech-to-text-realtime/ws"
     SARVAM_TTS_WS = "wss://api.sarvam.ai/text-to-speech/ws"

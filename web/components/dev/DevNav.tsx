@@ -21,7 +21,7 @@ const DEV_NAV = [
   { href: "/dev/platform-brain", label: "Platform Brain", icon: "settings" },
   { href: "/dev/compiled", label: "Compiled preview", icon: "chart" },
   { href: "/dev/providers", label: "Providers", icon: "rack" },
-  { href: "/dev/agents", label: "Agent studio", icon: "agents" },
+  { href: "/dev/agents", label: "Agents", icon: "agents" },
   { href: "/dev/test-studio", label: "Test Studio", icon: "mic" },
   { href: "/dev/benchmarks", label: "Benchmarks", icon: "benchmark" },
   { href: "/dev/promotion", label: "Promotion", icon: "chart" },

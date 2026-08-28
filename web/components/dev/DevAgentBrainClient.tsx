@@ -41,6 +41,7 @@ export function DevAgentBrainClient({ agentId }: { agentId: string }) {
       published={published as { version_id?: string; optimized_prompt?: string; optimizer_report?: { optimizer_model?: string } } | null}
       versionsCount={versionsCount}
       initialChecksum={checksum}
+      showCompiledPreview
     />
   );
 }

@@ -24,7 +24,7 @@ def test_save_and_get_single_brain_prompt(monkeypatch):
     j = r.json()
     assert j["customBrainPrompt"] is True
     assert j["estimatedTokens"] >= 1024
-    g = c.get("/api/instructions", params={"sessionId": sid}).json()
+    g = c.get("/api/instructions", params={"sessionId": sid, "includeCompiled": True}).json()
     assert g["present"] is True
     assert "InventoryPro" in g["brainPrompt"]
     assert g["limits"]["brainPromptMax"] > 0
@@ -140,18 +140,22 @@ def test_brain_request_accepts_business_field(monkeypatch):
 def test_effective_prompt_shows_composed_brain(monkeypatch):
     c = _client(monkeypatch)
     sid = "dual-prompt"
-    c.post("/api/instructions", json={
+    r = c.post("/api/instructions", json={
         "sessionId": sid,
         "behaviourInstructions": "Be brief and kind.",
         "businessInstructions": "Domain facts here.",
     })
-    r = c.get("/api/prompt/effective", params={"sessionId": sid, "transcript": "test"})
-    j = r.json()
-    assert "--- BEHAVIOUR ---" in j["brainPrompt"]
-    assert "--- BUSINESS ---" in j["brainPrompt"]
-    assert "Be brief and kind." in j["brainPrompt"]
+    assert r.status_code == 200, r.text
+    save = r.json()
+    assert save.get("compiledVersion", 0) >= 1
+    assert save.get("optimizerReport")
+    eff = c.get("/api/prompt/effective", params={"sessionId": sid, "transcript": "test"})
+    j = eff.json()
+    assert "Be brief and kind." in j["brainPrompt"] or "brief" in j["brainPrompt"].lower()
+    assert "Domain facts here." in j["brainPrompt"] or "Domain facts" in j["brainPrompt"]
     assert j["channels"]["behaviour_present"] is True
     assert j["channels"]["business_present"] is True
+    assert j.get("compiledVersion", 0) >= 1
     assert j["cacheEligible"] == (j["estimatedTokens"] >= get_settings().prompt_cache_min_tokens)
     c.delete("/api/instructions", params={"sessionId": sid})
     get_settings.cache_clear()

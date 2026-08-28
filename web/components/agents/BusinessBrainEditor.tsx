@@ -23,12 +23,14 @@ export function BusinessBrainEditor({
   published,
   versionsCount = 0,
   initialChecksum,
+  showCompiledPreview = false,
 }: {
   agentId: string;
   initialSections: BrainSection[];
   published?: PublishedRecord | null;
   versionsCount?: number;
   initialChecksum?: string;
+  showCompiledPreview?: boolean;
 }) {
   const [sections, setSections] = useState<BrainSection[]>(initialSections);
   const [status, setStatus] = useState("");
@@ -160,10 +162,11 @@ export function BusinessBrainEditor({
 
       <BrainDualPanel
         sections={sections}
-        optimizedText={optimizedPreview}
+        optimizedText={showCompiledPreview ? optimizedPreview : null}
         publishedVersion={publishedVersion}
         rawChecksum={rawChecksum}
-        optimizerModel={optimizerModel}
+        optimizerModel={showCompiledPreview ? optimizerModel : undefined}
+        showCompiledPreview={showCompiledPreview}
       />
 
       <div className="space-y-3">

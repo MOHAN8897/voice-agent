@@ -20,7 +20,7 @@ from server.config.constants import constants
 from server.config.env import get_settings
 from server.providers import get_provider_registry, resolve_stack_for_session
 from server.providers.base import STTConfig, TTSConfig
-from server.services.sarvam_ws import connect_stt_realtime, connect_tts_ws
+from server.services.runtime_settings import runtime_settings
 from server.services.tts_config import TtsConfigError, merge_ws_tts_config
 from server.utils.logger import log_error, log_ws
 
@@ -94,6 +94,9 @@ async def ws_stt_realtime(ws: WebSocket):
             from server.call.call_lifecycle_service import call_lifecycle_service
 
             call_lifecycle_service.note_ws_open(call_id)
+        rt = runtime_settings.get(session_id)
+        silence_ms = int(q["silence_duration_ms"]) if q.get("silence_duration_ms") else rt.get("sttSilenceMs")
+        threshold_val = float(q["threshold"]) if q.get("threshold") else rt.get("sttThreshold")
         upstream_cm = _connect_stt_upstream(
             session_id=session_id,
             call_id=call_id,
@@ -102,8 +105,8 @@ async def ws_stt_realtime(ws: WebSocket):
             mode=q.get("mode", "transcribe"),
             endpointing=q.get("endpointing", "vad"),
             sample_rate=int(q.get("sample_rate", 16000)),
-            silence_duration_ms=int(q["silence_duration_ms"]) if q.get("silence_duration_ms") else None,
-            threshold=float(q["threshold"]) if q.get("threshold") else None,
+            silence_duration_ms=int(silence_ms) if silence_ms is not None else None,
+            threshold=float(threshold_val) if threshold_val is not None else None,
         )
         upstream = await upstream_cm.__aenter__()
         log_ws("STT upstream connected", session=session_id, language=q.get("language_code", "te-IN"))
@@ -113,6 +116,14 @@ async def ws_stt_realtime(ws: WebSocket):
                 async for raw in upstream:
                     if isinstance(raw, bytes):
                         raw = raw.decode(errors="ignore")
+                    try:
+                        msg = json.loads(raw)
+                        ev = msg.get("event") or msg.get("type") or ""
+                        if ev in ("transcript.partial", "transcript.final", "error"):
+                            txt = (msg.get("text") or (msg.get("data") or {}).get("text") or "")[:80]
+                            log_ws("STT relay", event=ev, text=txt, session=session_id, call_id=call_id)
+                    except Exception:
+                        pass
                     await ws.send_text(raw)
             except Exception:
                 pass

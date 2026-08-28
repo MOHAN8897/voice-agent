@@ -46,23 +46,30 @@ export class AudioPlaybackManager {
   }
 
   stop() {
-    for (const item of this.queue) {
+    const pending = [...this.queue];
+    this.queue = [];
+    this.playing = false;
+    for (const item of pending) {
       if (item.url.startsWith("blob:")) {
         URL.revokeObjectURL(item.url);
       }
       item.resolve();
     }
-    this.queue = [];
-    this.playing = false;
     try {
       this.el.pause();
     } catch {
       /* ignore */
     }
-    // Avoid removeAttribute("src") — triggers AbortError while media is loading
-    if (this.el.src) {
-      this.el.src = "";
-    }
+    const el = this.el;
+    requestAnimationFrame(() => {
+      if (this.playing || this.queue.length) return;
+      el.removeAttribute("src");
+      try {
+        el.load();
+      } catch {
+        /* ignore */
+      }
+    });
   }
 
   private _onClipDone(err?: Error) {
@@ -81,6 +88,12 @@ export class AudioPlaybackManager {
     const item = this.queue[0];
     this.playing = true;
     this.el.src = item.url;
-    this.el.play().catch((e) => this._onClipDone(e instanceof Error ? e : new Error(String(e))));
+    this.el.play().catch((e) => {
+      if (e instanceof DOMException && (e.name === "AbortError" || e.message.includes("aborted"))) {
+        this._onClipDone();
+        return;
+      }
+      this._onClipDone(e instanceof Error ? e : new Error(String(e)));
+    });
   }
 }

@@ -34,7 +34,8 @@ export function CallDetailInspectorTabs({ callId }: { callId: string }) {
         const out = await outR.json();
         setOutcome((out.outcome as OutcomePayload) || null);
       }
-      setAudioUrl(`/api/call/${callId}/audio/mix`);
+      const mixR = await fetch(`/api/call/${callId}/audio/mix`, { method: "HEAD", credentials: "include" });
+      if (mixR.ok) setAudioUrl(`/api/call/${callId}/audio/mix`);
     })();
     return () => {
       cancelled = true;

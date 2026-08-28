@@ -2,6 +2,7 @@
 
 import { assembleRawPreview } from "@/lib/brain-utils";
 import type { BrainSection } from "@/lib/brain-utils";
+import { cn } from "@/lib/cn";
 import { SkeuoBadge } from "@/components/ui/skeuo/SkeuoBadge";
 import { SkeuoPanel } from "@/components/ui/skeuo/SkeuoPanel";
 
@@ -11,20 +12,22 @@ export function BrainDualPanel({
   publishedVersion,
   rawChecksum,
   optimizerModel,
+  showCompiledPreview = false,
 }: {
   sections: BrainSection[];
   optimizedText: string | null;
   publishedVersion: string | null;
   rawChecksum?: string;
   optimizerModel?: string;
+  showCompiledPreview?: boolean;
 }) {
   const rawPreview = assembleRawPreview(sections);
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
+    <div className={cn("grid gap-4", showCompiledPreview ? "lg:grid-cols-2" : "")}>
       <SkeuoPanel
-        title="User source"
-        description="Raw sections — editable source of truth"
+        title="Your instructions"
+        description="Exactly what you entered — source of truth"
         material="panel"
         padding="md"
         className="skeuo-brain-raw"
@@ -37,9 +40,10 @@ export function BrainDualPanel({
         )}
       </SkeuoPanel>
 
+      {showCompiledPreview && (
       <SkeuoPanel
-        title="Optimized brain"
-        description="Compiled internal prompt — review only"
+        title="Compiled cache prompt"
+        description="Internal LLM-compressed prompt — dev review only"
         material="inset"
         padding="md"
         className="skeuo-brain-optimized"
@@ -69,6 +73,7 @@ export function BrainDualPanel({
           </p>
         )}
       </SkeuoPanel>
+      )}
     </div>
   );
 }

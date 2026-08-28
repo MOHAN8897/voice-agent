@@ -1,0 +1,10 @@
+# ngrok — optional stable subdomain (paid) or free random URL
+# 1. Add NGROK_AUTHTOKEN to .env (from https://dashboard.ngrok.com/get-started/your-authtoken)
+# 2. Run: powershell -File scripts/tunnel_ngrok.ps1
+#
+# version: "2"
+# authtoken: YOUR_TOKEN
+# tunnels:
+#   voice-api:
+#     addr: 8000
+#     proto: http

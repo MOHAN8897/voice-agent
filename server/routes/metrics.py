@@ -142,7 +142,9 @@ async def effective_prompt(
         language=language_code,
         budget_tokens=budget,
     )
+    meta = instruction_store.get_with_meta(sessionId)
     estimated = estimate_tokens(brain_prompt)
+    raw_est = int(meta.get("rawTokenEstimate") or 0)
     section_tokens = section_token_estimates(
         compose_brain_prompt_sections(
             behaviour=behaviour,
@@ -166,10 +168,15 @@ async def effective_prompt(
         "sessionId": sessionId,
         "language_code": language_code,
         "brainPrompt": brain_prompt,
+        "compiledBrainPrompt": brain_prompt,
         "estimatedTokens": estimated,
         "budgetTokens": budget,
         "headroom": max(0, budget - estimated),
         "cacheEligible": cache_eligible(estimated),
+        "compiledVersion": meta.get("compiledVersion", 0),
+        "optimizerReport": meta.get("optimizerReport"),
+        "rawTokenEstimate": raw_est,
+        "tokensSaved": max(0, raw_est - estimated) if raw_est else 0,
         "sections": section_tokens,
         "conversation_history_len": len(conversation_manager.get_history(sessionId)),
         "brain_context_turns": settings.brain_context_turns,
@@ -187,8 +194,10 @@ async def effective_prompt(
         "channels": {
             "behaviour_present": bool(behaviour),
             "behaviour_chars": len(behaviour),
+            "behaviour": behaviour,
             "business_present": bool(business),
             "business_chars": len(business),
+            "business": business,
             "style": style,
         },
     }

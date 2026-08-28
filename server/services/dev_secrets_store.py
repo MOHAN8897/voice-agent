@@ -73,6 +73,28 @@ class DevSecretsStore:
             self._overlay = raw if isinstance(raw, dict) else {}
         except (json.JSONDecodeError, OSError):
             self._overlay = {}
+        self._sync_provider_toggles_from_keys()
+
+    def _sync_provider_toggles_from_keys(self) -> None:
+        """Auto-enable provider toggles when a dev overlay API key is present."""
+        pairs = [
+            ("cartesia_api_key", "enable_cartesia"),
+            ("deepseek_api_key", "enable_deepseek"),
+            ("gemini_api_key", "enable_gemini"),
+        ]
+        changed = False
+        for secret_key, toggle_key in pairs:
+            secret = self._overlay.get(secret_key)
+            if secret and str(secret).strip() and not self._overlay.get(toggle_key):
+                self._overlay[toggle_key] = True
+                changed = True
+        if changed:
+            try:
+                path = self._path()
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(json.dumps(self._overlay, indent=2), encoding="utf-8")
+            except OSError:
+                pass
 
     def reload(self) -> None:
         with self._lock:
@@ -114,6 +136,12 @@ class DevSecretsStore:
                     rejected.append({"field": key, "reason": "empty_secret"})
                     continue
                 clean[key] = str(value).strip()
+                if key == "cartesia_api_key" and "enable_cartesia" not in patch:
+                    clean["enable_cartesia"] = True
+                elif key == "deepseek_api_key" and "enable_deepseek" not in patch:
+                    clean["enable_deepseek"] = True
+                elif key == "gemini_api_key" and "enable_gemini" not in patch:
+                    clean["enable_gemini"] = True
             elif key in _TOGGLE_FIELDS:
                 clean[key] = bool(value)
             elif key in _STRING_FIELDS:

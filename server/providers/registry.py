@@ -85,12 +85,14 @@ class ProviderRegistry:
                 )
             )
 
-        if enable_cartesia:
-            if cartesia_key:
+        if enable_cartesia or cartesia_key:
+            if enable_cartesia and cartesia_key:
+                from server.providers.cartesia_stt import CartesiaSTTAdapter
                 from server.providers.cartesia_tts import CartesiaTTSAdapter
 
+                self._stt["cartesia"] = CartesiaSTTAdapter()
                 self._tts["cartesia"] = CartesiaTTSAdapter()
-            providers.append(self._cartesia_provider_entry(s, bool(cartesia_key)))
+            providers.append(self._cartesia_provider_entry(s, bool(cartesia_key), enable_cartesia))
 
         config_mode = dev_secrets_store.effective("voice_agent_config_mode", s.voice_agent_config_mode)
         active_tier = dev_secrets_store.effective("voice_agent_tier", s.voice_agent_tier)
@@ -182,23 +184,35 @@ class ProviderRegistry:
             "capabilities": {"streaming": True, "structured_output": True, "prompt_caching": True},
         }
 
-    def _cartesia_provider_entry(self, s: Settings, adapter_ok: bool) -> dict[str, Any]:
+    def _cartesia_provider_entry(self, s: Settings, adapter_ok: bool, enabled: bool) -> dict[str, Any]:
+        stt_models = [
+            {
+                "id": m,
+                "label": meta["label"],
+                "realtime": bool(meta.get("realtime")),
+                "modes": meta.get("modes", []),
+                "pricing_key": f"cartesia:{m}",
+            }
+            for m, meta in constants.CARTESIA_STT_MODELS.items()
+        ]
         return {
             "id": "cartesia",
             "label": "Cartesia",
-            "stages": ["tts"],
-            "enabled": True,
+            "stages": ["stt", "tts"],
+            "enabled": enabled,
             "configured": adapter_ok,
-            "healthy": adapter_ok,
-            "adapter_available": adapter_ok,
-            "languages": ["en"],
+            "healthy": enabled and adapter_ok,
+            "adapter_available": enabled and adapter_ok,
+            "languages": ["en", "te", "hi", "multilingual"],
             "models": {
+                "stt": stt_models,
                 "tts": [
-                    {"id": "sonic-english", "label": "Sonic English", "pricing_key": "cartesia:sonic-english"},
-                    {"id": "sonic-multilingual", "label": "Sonic Multilingual", "pricing_key": "cartesia:sonic-multilingual"},
+                    {"id": m, "label": meta["label"], "pricing_key": f"cartesia:{m}"}
+                    for m, meta in constants.CARTESIA_TTS_MODELS.items()
                 ],
             },
-            "capabilities": {"streaming": False, "experimental": True},
+            "capabilities": {"streaming": True, "realtime_stt": True, "experimental": True},
+            "notes": "Cartesia provides STT and TTS only — no LLM. Enable in Environment after saving API key.",
         }
 
     @staticmethod

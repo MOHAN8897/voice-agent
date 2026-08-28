@@ -21,6 +21,7 @@ from server.prompts.voice_defaults import (
     DEFAULT_BUSINESS_INSTRUCTIONS,
     DEFAULT_RESPONSE_STYLE,
 )
+from server.services.session_persist import session_persist
 
 _TTL_SECONDS = 60 * 60 * 24
 
@@ -29,6 +30,18 @@ class InstructionStore:
     def __init__(self):
         self._store: Dict[str, dict] = {}
         self._lock = threading.RLock()
+        self._hydrate_from_disk()
+
+    def _hydrate_from_disk(self) -> None:
+        with self._lock:
+            for sid, entry in session_persist.all_instructions().items():
+                if entry.get("updatedAt"):
+                    self._store[sid] = dict(entry)
+
+    def _persist(self, session_id: str) -> None:
+        entry = self._store.get(session_id)
+        if entry:
+            session_persist.set_instructions(session_id, entry)
 
     def _entry(self, session_id: str) -> Optional[dict]:
         entry = self._store.get(session_id)
@@ -47,6 +60,7 @@ class InstructionStore:
         language: str = "te-IN",
         budget_tokens: int = 2500,
     ) -> dict:
+        """Legacy synchronous compose — prefer save_compiled from routes after optimizer."""
         b = sanitize_behaviour(behaviour or "")
         z = sanitize_business(business or "")
         with self._lock:
@@ -69,19 +83,71 @@ class InstructionStore:
                 "estimatedTokens": estimated,
                 "budgetTokens": budget_tokens,
                 "updatedAt": time.time(),
+                "compiledVersion": int(prev.get("compiledVersion", 0)),
+                "optimizerReport": prev.get("optimizerReport"),
+                "sourceChecksum": prev.get("sourceChecksum"),
+                "rawTokenEstimate": prev.get("rawTokenEstimate"),
             }
-            e = self._store[session_id]
-            return {
+            self._persist(session_id)
+            return self._pack_entry(self._store[session_id])
+
+    def save_compiled(
+        self,
+        session_id: str,
+        behaviour: str,
+        business: str,
+        style: str | None,
+        *,
+        compiled_brain: str,
+        optimizer_report: dict,
+        source_checksum: str,
+        language: str = "te-IN",
+        budget_tokens: int = 2500,
+        raw_token_estimate: int = 0,
+    ) -> dict:
+        """Save raw channels + LLM/deterministic compiled brain for cache breakpoint."""
+        b = sanitize_behaviour(behaviour or "")
+        z = sanitize_business(business or "")
+        with self._lock:
+            prev = self._store.get(session_id, {})
+            style_val = (style or prev.get("style") or DEFAULT_RESPONSE_STYLE)[:100]
+            estimated = validate_brain_prompt_budget(compiled_brain, budget_tokens)
+            version = int(prev.get("compiledVersion", 0)) + 1
+            self._store[session_id] = {
                 "text": b,
                 "behaviour": b,
                 "business": z,
                 "style": style_val,
-                "brainPrompt": brain_prompt,
+                "brainPrompt": compiled_brain,
                 "customBrainPrompt": False,
                 "estimatedTokens": estimated,
                 "budgetTokens": budget_tokens,
-                "updatedAt": e["updatedAt"],
+                "updatedAt": time.time(),
+                "compiledVersion": version,
+                "optimizerReport": optimizer_report,
+                "sourceChecksum": source_checksum,
+                "rawTokenEstimate": raw_token_estimate,
+                "language": language,
             }
+            self._persist(session_id)
+            return self._pack_entry(self._store[session_id])
+
+    def _pack_entry(self, e: dict) -> dict:
+        return {
+            "text": e.get("behaviour", ""),
+            "behaviour": e.get("behaviour", ""),
+            "business": e.get("business", ""),
+            "style": e.get("style", DEFAULT_RESPONSE_STYLE),
+            "brainPrompt": e.get("brainPrompt", ""),
+            "customBrainPrompt": e.get("customBrainPrompt", False),
+            "estimatedTokens": e.get("estimatedTokens", 0),
+            "budgetTokens": e.get("budgetTokens", 2500),
+            "updatedAt": e.get("updatedAt"),
+            "compiledVersion": e.get("compiledVersion", 0),
+            "optimizerReport": e.get("optimizerReport"),
+            "sourceChecksum": e.get("sourceChecksum"),
+            "rawTokenEstimate": e.get("rawTokenEstimate", 0),
+        }
 
     def save_brain_prompt(
         self,
@@ -108,17 +174,8 @@ class InstructionStore:
                 "updatedAt": time.time(),
             }
             e = self._store[session_id]
-            return {
-                "text": "",
-                "behaviour": "",
-                "business": "",
-                "style": DEFAULT_RESPONSE_STYLE,
-                "brainPrompt": text,
-                "customBrainPrompt": True,
-                "estimatedTokens": estimated,
-                "budgetTokens": budget_tokens,
-                "updatedAt": e["updatedAt"],
-            }
+            self._persist(session_id)
+            return self._pack_entry(e)
 
     def get_brain_prompt(
         self,
@@ -176,6 +233,7 @@ class InstructionStore:
     def clear(self, session_id: str) -> None:
         with self._lock:
             self._store.pop(session_id, None)
+        session_persist.delete_instructions(session_id)
 
     def get_with_meta(self, session_id: str) -> dict:
         with self._lock:
@@ -211,6 +269,10 @@ class InstructionStore:
                 "present": using_custom or bool(e["behaviour"] or e["business"]),
                 "style": e.get("style") or DEFAULT_RESPONSE_STYLE,
                 "usingDefaults": not using_custom and not bool(e["behaviour"] or e["business"]),
+                "compiledVersion": e.get("compiledVersion", 0),
+                "optimizerReport": e.get("optimizerReport"),
+                "sourceChecksum": e.get("sourceChecksum"),
+                "rawTokenEstimate": e.get("rawTokenEstimate", 0),
             }
 
     def stats(self) -> dict:

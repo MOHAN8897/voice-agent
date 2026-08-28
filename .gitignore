@@ -1,6 +1,9 @@
 # Environment & secrets — never commit
 .env
 .env.local
+.tunnel-url
+.tunnel-cloudflared.log
+cloudflared/config.yml
 .env.*.local
 !.env.example
 

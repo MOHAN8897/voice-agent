@@ -20,7 +20,7 @@ export function InstrumentSidebar({
   return (
     <aside
       className={cn(
-        "hidden w-[15.5rem] shrink-0 flex-col border-r border-surface-border-subtle skeuo-panel md:flex",
+        "sticky top-0 hidden h-screen w-[15.5rem] shrink-0 flex-col border-r border-surface-border-subtle skeuo-panel md:flex",
         className
       )}
     >

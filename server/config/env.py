@@ -154,6 +154,10 @@ class Settings(BaseSettings):
     deepseek_model: str = Field("deepseek-chat", alias="DEEPSEEK_MODEL")
     gemini_api_key: str | None = Field(None, alias="GEMINI_API_KEY")
     cartesia_api_key: str | None = Field(None, alias="CARTESIA_API_KEY")
+    cartesia_stt_model: str = Field("ink-whisper", alias="CARTESIA_STT_MODEL")
+    cartesia_tts_model: str = Field("sonic-3.5", alias="CARTESIA_TTS_MODEL")
+    cartesia_tts_voice_id: str | None = Field(None, alias="CARTESIA_TTS_VOICE_ID")
+    cartesia_api_version: str = Field("2026-08-14", alias="CARTESIA_API_VERSION")
 
     # LOW tier bundle
     voice_low_stt_provider: str = Field("sarvam", alias="VOICE_LOW_STT_PROVIDER")

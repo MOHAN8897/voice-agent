@@ -28,6 +28,11 @@ from server.prompts.voice_defaults import (
 )
 from server.services.runtime_settings import runtime_settings, SettingsValidationError
 from server.services.tts_config import resolve_tts_config
+from server.services.cartesia_voices import (
+    fetch_cartesia_voices,
+    voices_for_catalog,
+    voices_grouped_for_ui,
+)
 
 router = APIRouter()
 
@@ -35,6 +40,7 @@ router = APIRouter()
 @router.get("/api/settings/catalog")
 async def catalog():
     """Everything the console needs to render selects/sliders."""
+    await fetch_cartesia_voices()
     try:
         s = get_settings()
         allowed_models = [m for m in s.allowed_openai_models if m in OPENAI_MODEL_IDS] or OPENAI_MODEL_IDS
@@ -85,6 +91,12 @@ async def catalog():
                 for pid, preset in VOICE_PIPELINE_PRESETS.items()
             ],
             "defaultVoicePresetId": DEFAULT_VOICE_PRESET_ID,
+            "cartesiaVoices": voices_for_catalog(),
+            "cartesiaVoiceGroups": voices_grouped_for_ui(),
+            "cartesiaModels": [
+                {"id": k, "label": v["label"]} for k, v in constants.CARTESIA_TTS_MODELS.items()
+            ],
+            "defaultCartesiaVoiceId": constants.CARTESIA_DEFAULT_VOICE_ID,
         },
         "openai": {
             "allowedModels": allowed_models,

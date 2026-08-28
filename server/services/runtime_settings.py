@@ -16,6 +16,7 @@ from server.prompts.voice_defaults import (
     VOICE_PIPELINE_PRESET_IDS,
     voice_preset_values,
 )
+from server.services.session_persist import session_persist
 
 _TTL_SECONDS = 24 * 60 * 60
 
@@ -56,6 +57,22 @@ class RuntimeSettingsStore:
     def __init__(self):
         self._store: Dict[str, dict] = {}
         self._lock = threading.RLock()
+        self._hydrate_from_disk()
+
+    def _hydrate_from_disk(self) -> None:
+        with self._lock:
+            for sid, entry in session_persist.all_runtime().items():
+                values = entry.get("values")
+                if isinstance(values, dict):
+                    self._store[sid] = {
+                        "values": dict(values),
+                        "updatedAt": float(entry.get("updatedAt") or 0) or time.time(),
+                    }
+
+    def _persist(self, session_id: str) -> None:
+        entry = self._store.get(session_id)
+        if entry:
+            session_persist.set_runtime(session_id, entry)
 
     def _evict_locked(self) -> None:
         now = time.time()
@@ -92,6 +109,7 @@ class RuntimeSettingsStore:
                 entry["values"] = snapshot
                 raise
             entry["updatedAt"] = time.time()
+            self._persist(session_id)
             return dict(values)
 
     def _validate(self, key: str, val):
@@ -139,14 +157,20 @@ class RuntimeSettingsStore:
                 return val
             return str(val).lower() in ("1", "true", "yes", "on")
         if key == "ttsModel":
-            if val not in constants.TTS_MODELS:
-                raise SettingsValidationError(f"ttsModel must be one of {list(constants.TTS_MODELS)}")
+            allowed = list(constants.TTS_MODELS) + list(constants.CARTESIA_TTS_MODELS)
+            if val not in allowed:
+                raise SettingsValidationError(f"ttsModel must be one of {allowed}")
             return val
         if key == "ttsSpeaker":
-            v = str(val).lower()  # docs: case-sensitive lowercase
-            if v not in constants.TTS_SPEAKERS_V3 and v not in constants.TTS_SPEAKERS_V2:
-                raise SettingsValidationError("Unknown speaker")
-            return v
+            v = str(val).strip()
+            from server.services.cartesia_voices import is_cartesia_voice_id
+
+            if is_cartesia_voice_id(v):
+                return v
+            v_lower = v.lower()
+            if v_lower in constants.TTS_SPEAKERS_V3 or v_lower in constants.TTS_SPEAKERS_V2:
+                return v_lower
+            raise SettingsValidationError("Unknown speaker — use Sarvam speaker id or Cartesia voice UUID")
         if key == "ttsPace":
             return _clamp(float(val), 0.3, 3.0)  # per-model clamped at use
         if key == "ttsTemperature":
@@ -221,9 +245,15 @@ class RuntimeSettingsStore:
         model = values.get("ttsModel")
         spk = values.get("ttsSpeaker")
         if model and spk:
-            ok = spk in constants.TTS_SPEAKERS_V3 if model == "bulbul:v3" else spk in constants.TTS_SPEAKERS_V2
-            if not ok:
+            sarvam_ok = spk in constants.TTS_SPEAKERS_V3 if model == "bulbul:v3" else spk in constants.TTS_SPEAKERS_V2
+            cartesia_ok = model in constants.CARTESIA_TTS_MODELS
+            if model in constants.TTS_MODELS and not sarvam_ok:
                 raise SettingsValidationError(f"Speaker '{spk}' incompatible with {model}")
+            if cartesia_ok:
+                from server.services.cartesia_voices import is_cartesia_voice_id
+
+                if not is_cartesia_voice_id(spk):
+                    raise SettingsValidationError(f"Cartesia voice id required for {model}")
         pace = values.get("ttsPace")
         if model == "bulbul:v3" and pace is not None:
             values["ttsPace"] = _clamp(pace, 0.5, 2.0)
@@ -237,6 +267,7 @@ class RuntimeSettingsStore:
     def clear(self, session_id: str) -> None:
         with self._lock:
             self._store.pop(session_id, None)
+        session_persist.delete_runtime(session_id)
 
 
 runtime_settings = RuntimeSettingsStore()

@@ -38,7 +38,7 @@ export function DevAgentWorkspaceShell({
   return (
     <ConsolePage>
       <div className="skeuo-panel rounded-skeuo-lg border border-surface-border-subtle p-5 md:p-6">
-        <p className="label-caps text-text-subtle">Agent studio (dev)</p>
+        <p className="label-caps text-text-subtle">Agent workspace</p>
         <div className="mt-2 flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-semibold tracking-tight text-text md:text-3xl">{agentName}</h1>
           {status && (
@@ -55,7 +55,7 @@ export function DevAgentWorkspaceShell({
         <SetupProgressStrip agentId={agentId} portal="dev" />
       </div>
 
-      <div className="mt-6">
+      <div className="sticky top-0 z-30 mt-6 border-b border-surface-border-subtle bg-surface/95 py-2 backdrop-blur supports-[backdrop-filter]:bg-surface/90">
         <SkeuoWorkspaceNav agentId={agentId} portal="dev" />
       </div>
       {children}

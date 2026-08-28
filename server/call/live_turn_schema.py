@@ -20,7 +20,7 @@ LIVE_TURN_JSON_SCHEMA: dict[str, Any] = {
                     "items": {
                         "type": "object",
                         "additionalProperties": False,
-                        "required": ["op"],
+                        "required": ["op", "key", "value"],
                         "properties": {
                             "op": {
                                 "type": "string",

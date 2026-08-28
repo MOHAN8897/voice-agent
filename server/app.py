@@ -42,6 +42,7 @@ from server.routes.dev_plivo import router as dev_plivo_router
 from server.routes.plivo import router as plivo_router
 from server.routes.plivo_ws import router as plivo_ws_router
 from server.routes.campaigns import router as campaigns_router
+from server.routes.test_studio import router as test_studio_router
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from server.utils.errors import AppError
@@ -65,7 +66,9 @@ async def lifespan(app: FastAPI):
             f"model {settings.openai_model}, stt {settings.sarvam_stt_model}"
         )
         from server.providers import init_provider_registry
+        from server.services.dev_secrets_store import dev_secrets_store
 
+        dev_secrets_store.reload()
         init_provider_registry(settings)
         logger.info("[VOICE] Provider registry initialized")
         try:
@@ -111,6 +114,13 @@ async def lifespan(app: FastAPI):
             logger.info(f"[VOICE] OpenAI connection warm-up: {warm_result}")
         except Exception as e:
             logger.warning(f"[VOICE] OpenAI warm-up skipped: {e}")
+        try:
+            from server.services.cartesia_voices import warm_cartesia_voices
+
+            await warm_cartesia_voices()
+            logger.info("[VOICE] Cartesia voice catalog warmed")
+        except Exception as e:
+            logger.warning(f"[VOICE] Cartesia voice warm skipped: {e}")
     except ConfigError as e:
         logger.warning(f"[VOICE] Config invalid at startup: {e}. /api/health will report. Set .env and restart.")
     yield
@@ -260,6 +270,7 @@ app.include_router(dev_plivo_router)
 app.include_router(plivo_router)
 app.include_router(plivo_ws_router)
 app.include_router(campaigns_router)
+app.include_router(test_studio_router)
 app.include_router(ws_router)
 
 

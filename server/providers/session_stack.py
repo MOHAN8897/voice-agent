@@ -3,6 +3,7 @@ Session-scoped stack resolution — interim until Phase 3 call/start.
 """
 from __future__ import annotations
 
+from server.config.constants import constants
 from server.config.env import get_settings
 from server.providers import resolve_stack
 from server.providers.base import ResolvedStack, StackSelection, StageSelection
@@ -27,6 +28,14 @@ def resolve_stack_for_session(session_id: str, *, language: str = "te-IN") -> Re
         )
 
     tier = settings.voice_agent_tier
+    tts_provider = getattr(settings, f"voice_{tier}_tts_provider")
+    tts_model = runtime.get("ttsModel") or getattr(settings, f"voice_{tier}_tts_model")
+    speaker = runtime.get("ttsSpeaker")
+    if not speaker:
+        if tts_provider == "cartesia" or str(tts_model or "").startswith("sonic"):
+            speaker = settings.cartesia_tts_voice_id or constants.CARTESIA_DEFAULT_VOICE_ID
+        else:
+            speaker = settings.sarvam_tts_speaker_te
     selection = StackSelection(
         stt=StageSelection(
             getattr(settings, f"voice_{tier}_stt_provider"),
@@ -43,8 +52,8 @@ def resolve_stack_for_session(session_id: str, *, language: str = "te-IN") -> Re
         ),
         tts=StageSelection(
             getattr(settings, f"voice_{tier}_tts_provider"),
-            runtime.get("ttsModel") or getattr(settings, f"voice_{tier}_tts_model"),
-            {"speaker": runtime.get("ttsSpeaker") or settings.sarvam_tts_speaker_te},
+            tts_model,
+            {"speaker": speaker},
         ),
         language=lang,
         voice_preset=runtime.get("voicePresetId"),

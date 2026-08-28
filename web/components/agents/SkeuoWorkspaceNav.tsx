@@ -12,7 +12,7 @@ const SETUP_STAGES = [
   { slug: "memory-schema", label: "Memory" },
   { slug: "tools", label: "Tools" },
   { slug: "channels", label: "Channels" },
-  { slug: "test", label: "Test" },
+  { slug: "test", label: "Test", externalTestStudio: true },
   { slug: "versions", label: "Deploy" },
 ] as const;
 
@@ -29,8 +29,14 @@ export function SetupProgressStrip({
   return (
     <div className="mt-4 flex flex-wrap gap-1 rounded-skeuo-md border border-surface-border-subtle skeuo-inset p-1">
       {SETUP_STAGES.map((stage) => {
-        const href = `${base}/${stage.slug}`;
-        const active = pathname === href || pathname.startsWith(`${href}/`);
+        const href =
+          "externalTestStudio" in stage && stage.externalTestStudio && portal === "dev"
+            ? `/dev/test-studio?agent=${agentId}`
+            : `${base}/${stage.slug}`;
+        const active =
+          "externalTestStudio" in stage && stage.externalTestStudio && portal === "dev"
+            ? pathname.startsWith("/dev/test-studio")
+            : pathname === href || pathname.startsWith(`${href}/`);
         return (
           <Link
             key={stage.slug}
@@ -81,9 +87,13 @@ export function SkeuoWorkspaceNav({
             </Link>
           );
         })}
-        <Link href={`${base}/test`} className="ml-auto">
+        <Link href={`${portal === "dev" ? `/dev/test-studio?agent=${agentId}` : `${base}/test`}`} className="ml-auto">
           <SkeuoButton
-            variant={pathname.endsWith("/test") ? "primary" : "metal"}
+            variant={
+              (portal === "dev" ? pathname.startsWith("/dev/test-studio") : pathname.endsWith("/test"))
+                ? "primary"
+                : "metal"
+            }
             size="sm"
           >
             Test Studio

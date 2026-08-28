@@ -1,5 +1,5 @@
-import { AgentTestStudio } from "@/components/test-studio/AgentTestStudio";
+import { redirect } from "next/navigation";
 
 export default function DevAgentTestPage({ params }: { params: { id: string } }) {
-  return <AgentTestStudio agentId={params.id} portal="dev" />;
+  redirect(`/dev/test-studio?agent=${params.id}`);
 }
