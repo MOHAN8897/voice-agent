@@ -100,7 +100,9 @@ class Settings(BaseSettings):
     # --- App ---
     debug: bool = Field(False, alias="DEBUG")
     port: int = Field(8000, alias="PORT")
-    client_url: str = Field("http://localhost:8000", alias="CLIENT_URL")
+    client_url: str = Field("http://localhost:3000", alias="CLIENT_URL")
+    public_tunnel_url: str | None = Field(None, alias="PUBLIC_TUNNEL_URL")
+    public_app_url: str | None = Field(None, alias="PUBLIC_APP_URL")
 
     # --- Phase 1: Provider platform ---
     voice_agent_config_mode: Literal["env", "frontend"] = Field("frontend", alias="VOICE_AGENT_CONFIG_MODE")
@@ -139,13 +141,13 @@ class Settings(BaseSettings):
     serve_client_static: bool = Field(True, alias="SERVE_CLIENT_STATIC")
     redis_url: str | None = Field(None, alias="REDIS_URL")
 
-    enable_plivo: bool = Field(False, alias="ENABLE_PLIVO")
-    plivo_auth_id: str | None = Field(None, alias="PLIVO_AUTH_ID")
-    plivo_auth_token: str | None = Field(None, alias="PLIVO_AUTH_TOKEN")
-    plivo_app_id: str | None = Field(None, alias="PLIVO_APP_ID")
-    plivo_number: str | None = Field(None, alias="PLIVO_NUMBER")
-    plivo_webhook_base_url: str | None = Field(None, alias="PLIVO_WEBHOOK_BASE_URL")
-    plivo_public_base_url: str | None = Field(None, alias="PLIVO_PUBLIC_BASE_URL")
+    enable_exotel: bool = Field(False, alias="ENABLE_EXOTEL")
+    exotel_api_key: str | None = Field(None, alias="EXOTEL_API_KEY")
+    exotel_api_token: str | None = Field(None, alias="EXOTEL_API_TOKEN")
+    exotel_account_sid: str | None = Field(None, alias="EXOTEL_ACCOUNT_SID")
+    exotel_subdomain: str = Field("api.exotel.com", alias="EXOTEL_SUBDOMAIN")
+    exotel_exophone: str | None = Field(None, alias="EXOTEL_EXOPHONE")
+    exotel_webhook_base_url: str | None = Field(None, alias="EXOTEL_WEBHOOK_BASE_URL")
     campaign_max_concurrency: int = Field(5, alias="CAMPAIGN_MAX_CONCURRENCY")
     campaign_default_retry_attempts: int = Field(3, alias="CAMPAIGN_DEFAULT_RETRY_ATTEMPTS")
     recording_consent_required: bool = Field(False, alias="RECORDING_CONSENT_REQUIRED")

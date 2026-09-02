@@ -190,3 +190,4 @@ if ($Open -and $webOk) {
 if (-not $apiOk -or -not $webOk) {
     exit 1
 }
+exit 0

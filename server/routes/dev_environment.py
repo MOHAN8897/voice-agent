@@ -23,21 +23,22 @@ class EnvironmentPatch(BaseModel):
     deepseek_api_key: str | None = None
     cartesia_api_key: str | None = None
     gemini_api_key: str | None = None
-    plivo_auth_id: str | None = None
-    plivo_auth_token: str | None = None
+    exotel_api_key: str | None = None
+    exotel_api_token: str | None = None
     enable_sarvam: bool | None = None
     enable_openai: bool | None = None
     enable_deepseek: bool | None = None
     enable_cartesia: bool | None = None
     enable_gemini: bool | None = None
-    enable_plivo: bool | None = None
+    enable_exotel: bool | None = None
     enable_benchmarks: bool | None = None
     voice_agent_config_mode: str | None = None
     voice_agent_tier: str | None = None
     app_environment: str | None = None
-    plivo_webhook_base_url: str | None = None
-    plivo_public_base_url: str | None = None
-    plivo_number: str | None = None
+    exotel_account_sid: str | None = None
+    exotel_subdomain: str | None = None
+    exotel_exophone: str | None = None
+    exotel_webhook_base_url: str | None = None
 
 
 def _patch_dict(body: EnvironmentPatch) -> dict[str, Any]:

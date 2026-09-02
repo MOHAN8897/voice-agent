@@ -14,7 +14,7 @@ import {
 } from "@/lib/test-studio-stack";
 import { cn } from "@/lib/cn";
 
-type ChannelTab = "browser" | "pstn";
+type ChannelTab = "agent" | "pstn";
 type RackTab = "channel" | "stack" | "voice" | "advanced";
 
 const RACK_TABS: { id: RackTab; label: string }[] = [
@@ -161,10 +161,11 @@ export function TestStudioConfigRack({
         {rackTab === "channel" && (
           <>
             <div className="flex flex-wrap gap-2">
-              {(["browser", ...(showPstn ? ["pstn"] : [])] as ChannelTab[]).map((c) => (
+              {(["agent", ...(showPstn ? ["pstn"] : [])] as ChannelTab[]).map((c) => (
                 <button
                   key={c}
                   type="button"
+                  data-testid={`config-channel-${c}`}
                   onClick={() => onChannelChange(c)}
                   disabled={locked}
                   className={cn(
@@ -173,10 +174,14 @@ export function TestStudioConfigRack({
                     locked && "opacity-50"
                   )}
                 >
-                  {c === "browser" ? "Browser mic" : "PSTN · Plivo"}
+                  {c === "agent" ? "Agent only · mic" : "Full PSTN · Exotel"}
                 </button>
               ))}
             </div>
+            <p className="text-xs text-text-muted">
+              Agent only tests STT, brain, TTS, and memory without Exotel. Full PSTN adds telephony handshake and
+              outbound dial.
+            </p>
             <label className="block text-sm">
               <span className="text-text-muted">Language</span>
               <select

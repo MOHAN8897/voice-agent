@@ -41,5 +41,5 @@ Write-Host "API:        http://127.0.0.1:8000/api/health"
 if (Test-Path (Join-Path $RepoRoot ".tunnel-url")) {
     $u = Get-Content (Join-Path $RepoRoot ".tunnel-url") -Raw
     Write-Host "Public API: $u"
-    Write-Host "Answer URL: $u/api/plivo/answer"
+    Write-Host "Exotel passthru: $u/api/exotel/passthru"
 }

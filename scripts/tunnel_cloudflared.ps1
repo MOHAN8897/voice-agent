@@ -1,6 +1,6 @@
 # Quick Cloudflare Tunnel → local API (port 8000). No account required.
 # Usage: powershell -ExecutionPolicy Bypass -File scripts/tunnel_cloudflared.ps1
-# Writes public URL to .tunnel-url and updates PLIVO_* in .env
+# Writes public URL to .tunnel-url and updates EXOTEL_WEBHOOK_BASE_URL in .env
 
 param(
     [int]$Port = 8000,
@@ -45,14 +45,13 @@ Set-Content -Path $UrlFile -Value $publicUrl -NoNewline
 Write-Host "Public API URL: $publicUrl"
 Write-Host "Saved to .tunnel-url"
 
-# Patch .env PLIVO / webhook vars
+# Patch .env Exotel webhook vars
 if (Test-Path $EnvFile) {
     $lines = Get-Content $EnvFile
     $map = @{
-        "PUBLIC_TUNNEL_URL"      = $publicUrl
-        "PLIVO_WEBHOOK_BASE_URL" = $publicUrl
-        "PLIVO_PUBLIC_BASE_URL"  = $publicUrl
-        "CLIENT_URL"             = "http://localhost:3000"
+        "PUBLIC_TUNNEL_URL"         = $publicUrl
+        "EXOTEL_WEBHOOK_BASE_URL"   = $publicUrl
+        "CLIENT_URL"                = "http://localhost:3000"
     }
     foreach ($key in $map.Keys) {
         $val = $map[$key]
@@ -67,10 +66,11 @@ if (Test-Path $EnvFile) {
         if (-not $found) { $lines += "$key=$val" }
     }
     Set-Content -Path $EnvFile -Value $lines
-    Write-Host "Updated .env webhook vars (PUBLIC_TUNNEL_URL, PLIVO_*)."
+    Write-Host "Updated .env webhook vars (PUBLIC_TUNNEL_URL, EXOTEL_WEBHOOK_BASE_URL)."
 }
 
 Write-Host ""
-Write-Host "Vobiz/Plivo Answer URL: $publicUrl/api/plivo/answer"
+Write-Host "Exotel passthru URL: $publicUrl/api/exotel/passthru"
+Write-Host "Exotel status callback: $publicUrl/api/exotel/status-callback"
 Write-Host "Restart API after .env change if it was already running."
 Write-Host "Tunnel PID: $($proc.Id)  (log: .tunnel-cloudflared.log)"

@@ -1,4 +1,4 @@
-"""Dev/test mapping of Plivo numbers to agents for inbound routing tests."""
+"""Dev/test mapping of phone numbers to agents for inbound routing tests."""
 from __future__ import annotations
 
 import json

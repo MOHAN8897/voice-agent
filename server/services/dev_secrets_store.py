@@ -15,8 +15,8 @@ _SECRET_FIELDS = frozenset(
         "deepseek_api_key",
         "cartesia_api_key",
         "gemini_api_key",
-        "plivo_auth_id",
-        "plivo_auth_token",
+        "exotel_api_key",
+        "exotel_api_token",
     }
 )
 
@@ -27,7 +27,7 @@ _TOGGLE_FIELDS = frozenset(
         "enable_deepseek",
         "enable_gemini",
         "enable_cartesia",
-        "enable_plivo",
+        "enable_exotel",
         "enable_benchmarks",
     }
 )
@@ -37,9 +37,10 @@ _STRING_FIELDS = frozenset(
         "voice_agent_config_mode",
         "voice_agent_tier",
         "app_environment",
-        "plivo_webhook_base_url",
-        "plivo_public_base_url",
-        "plivo_number",
+        "exotel_account_sid",
+        "exotel_subdomain",
+        "exotel_exophone",
+        "exotel_webhook_base_url",
     }
 )
 
@@ -221,12 +222,13 @@ class DevSecretsStore:
                 self._toggle_row("ENABLE_GEMINI", "enable_gemini", settings, overlay),
             ],
             "telephony": [
-                self._toggle_row("ENABLE_PLIVO", "enable_plivo", settings, overlay),
-                self._secret_row("PLIVO_AUTH_ID", "plivo_auth_id", settings, overlay),
-                self._secret_row("PLIVO_AUTH_TOKEN", "plivo_auth_token", settings, overlay),
-                self._string_row("PLIVO_NUMBER", "plivo_number", settings, overlay),
-                self._string_row("PLIVO_WEBHOOK_BASE_URL", "plivo_webhook_base_url", settings, overlay),
-                self._string_row("PLIVO_PUBLIC_BASE_URL", "plivo_public_base_url", settings, overlay),
+                self._toggle_row("ENABLE_EXOTEL", "enable_exotel", settings, overlay),
+                self._secret_row("EXOTEL_API_KEY", "exotel_api_key", settings, overlay),
+                self._secret_row("EXOTEL_API_TOKEN", "exotel_api_token", settings, overlay),
+                self._string_row("EXOTEL_ACCOUNT_SID", "exotel_account_sid", settings, overlay),
+                self._string_row("EXOTEL_SUBDOMAIN", "exotel_subdomain", settings, overlay),
+                self._string_row("EXOTEL_EXOPHONE", "exotel_exophone", settings, overlay),
+                self._string_row("EXOTEL_WEBHOOK_BASE_URL", "exotel_webhook_base_url", settings, overlay),
             ],
         }
         return {

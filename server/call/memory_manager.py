@@ -76,12 +76,29 @@ class MemoryManager:
         self._write_snapshot(call_id, snap)
         if self.projections_path(call_id).exists():
             self.projections_path(call_id).write_text("", encoding="utf-8")
+        try:
+            from server.call.redis_memory_cache import set_snapshot as redis_set_snapshot
+
+            redis_set_snapshot(call_id, snap)
+        except Exception:
+            pass
         return _copy_snapshot(snap)
 
     def get_snapshot(self, call_id: str) -> dict[str, Any]:
         with self._lock:
             if call_id in self._state:
                 return _copy_snapshot(self._state[call_id])
+        try:
+            from server.call.redis_memory_cache import get_snapshot as redis_get_snapshot
+
+            cached = redis_get_snapshot(call_id)
+            if cached:
+                with self._lock:
+                    self._state.setdefault(call_id, _copy_snapshot(cached))
+                    self._events.setdefault(call_id, self._read_events_file(call_id))
+                return _copy_snapshot(cached)
+        except Exception:
+            pass
         path = self.snapshot_path(call_id)
         if path.exists():
             try:
@@ -189,6 +206,12 @@ class MemoryManager:
 
         self._append_event(call_id, event)
         self._write_snapshot(call_id, snap)
+        try:
+            from server.call.redis_memory_cache import set_snapshot as redis_set_snapshot
+
+            redis_set_snapshot(call_id, snap)
+        except Exception:
+            pass
         if errors:
             logger.info(f"[MEMORY] rejected ops call={call_id} turn={turn_seq} errors={errors[:4]}")
         return {"snapshot": _copy_snapshot(snap), "event": event}

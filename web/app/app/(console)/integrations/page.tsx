@@ -5,10 +5,10 @@ import { Panel } from "@/components/console/Panel";
 import { StatusBadge } from "@/components/console/StatusBadge";
 
 export default async function IntegrationsPage() {
-  let plivo: Record<string, unknown> = {};
+  let exotel: Record<string, unknown> = {};
   let numbers: Array<{ e164: string; status: string }> = [];
   try {
-    plivo = await apiGet("/api/plivo/status");
+    exotel = await apiGet("/api/exotel/status");
     const pn = await apiGet<{ numbers?: Array<{ e164: string; status: string }> }>("/api/phone-numbers");
     numbers = pn.numbers || [];
   } catch {
@@ -20,21 +20,31 @@ export default async function IntegrationsPage() {
       <PageHeader
         eyebrow="Connect"
         title="Integrations"
-        description="Plivo telephony, numbers, and future CRM/webhook connectors."
+        description="Exotel telephony, numbers, and future CRM/webhook connectors."
       />
       <div className="mt-8 grid gap-4 lg:grid-cols-2">
-        <Panel title="Plivo telephony">
+        <Panel title="Exotel telephony">
           <dl className="space-y-3 text-sm">
             <div className="flex justify-between items-center skeuo-inset rounded-skeuo-sm px-3 py-2">
               <dt className="text-text-muted">Enabled</dt>
               <dd>
-                <StatusBadge tone={plivo.enabled ? "success" : "muted"}>{String(plivo.enabled ?? false)}</StatusBadge>
+                <StatusBadge tone={exotel.enabled ? "success" : "muted"}>{String(exotel.enabled ?? false)}</StatusBadge>
               </dd>
             </div>
             <div className="flex justify-between items-center skeuo-inset rounded-skeuo-sm px-3 py-2">
               <dt className="text-text-muted">Configured</dt>
               <dd>
-                <StatusBadge tone={plivo.configured ? "success" : "warning"}>{String(plivo.configured ?? false)}</StatusBadge>
+                <StatusBadge tone={exotel.configured ? "success" : "warning"}>
+                  {String(exotel.configured ?? false)}
+                </StatusBadge>
+              </dd>
+            </div>
+            <div className="flex justify-between items-center skeuo-inset rounded-skeuo-sm px-3 py-2">
+              <dt className="text-text-muted">Handshake</dt>
+              <dd>
+                <StatusBadge tone={exotel.handshake_ok ? "success" : "warning"}>
+                  {String(exotel.handshake_ok ?? false)}
+                </StatusBadge>
               </dd>
             </div>
           </dl>

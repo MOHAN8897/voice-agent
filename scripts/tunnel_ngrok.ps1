@@ -19,10 +19,9 @@ function Set-TunnelEnv {
     if (-not (Test-Path $EnvFile)) { return }
     $lines = Get-Content $EnvFile
     $map = @{
-        "PUBLIC_TUNNEL_URL"      = $PublicUrl
-        "PLIVO_WEBHOOK_BASE_URL" = $PublicUrl
-        "PLIVO_PUBLIC_BASE_URL"  = $PublicUrl
-        "CLIENT_URL"             = "http://localhost:3000"
+        "PUBLIC_TUNNEL_URL"         = $PublicUrl
+        "EXOTEL_WEBHOOK_BASE_URL"   = $PublicUrl
+        "CLIENT_URL"                = "http://localhost:3000"
     }
     foreach ($key in $map.Keys) {
         $val = $map[$key]
@@ -78,5 +77,5 @@ if (-not $publicUrl) {
 
 Set-TunnelEnv -PublicUrl $publicUrl
 Write-Host "Public API URL: $publicUrl"
-Write-Host "Vobiz/Plivo Answer URL: $publicUrl/api/plivo/answer"
+Write-Host "Exotel passthru: $publicUrl/api/exotel/passthru"
 Write-Host "ngrok dashboard: http://127.0.0.1:4040"

@@ -1,8 +1,6 @@
 """Dev environment overlay API tests."""
 from __future__ import annotations
 
-import json
-
 import pytest
 from httpx import ASGITransport, AsyncClient
 
@@ -25,21 +23,21 @@ async def test_dev_environment_patch_toggle():
 
         r = await client.patch(
             "/api/dev/environment",
-            json={"enable_plivo": True, "plivo_webhook_base_url": "https://example.ngrok.app"},
+            json={"enable_exotel": True, "exotel_webhook_base_url": "https://example.ngrok.app"},
             headers=headers,
         )
         assert r.status_code == 200
         body = r.json()
         assert body["ok"] is True
-        assert "enable_plivo" in body["applied_keys"]
-        assert "plivo_webhook_base_url" in body["applied_keys"]
+        assert "enable_exotel" in body["applied_keys"]
+        assert "exotel_webhook_base_url" in body["applied_keys"]
 
         snap = dev_secrets_store.snapshot()
         telephony = snap["groups"]["telephony"]
-        webhook = next(x for x in telephony if x["field"] == "plivo_webhook_base_url")
+        webhook = next(x for x in telephony if x["field"] == "exotel_webhook_base_url")
         assert webhook["value"] == "https://example.ngrok.app"
         assert webhook["source"] == "overlay"
 
-        delete_r = await client.delete("/api/dev/environment/plivo_webhook_base_url", headers=headers)
+        delete_r = await client.delete("/api/dev/environment/exotel_webhook_base_url", headers=headers)
         assert delete_r.status_code == 200
-        assert delete_r.json()["removed"] == "plivo_webhook_base_url"
+        assert delete_r.json()["removed"] == "exotel_webhook_base_url"

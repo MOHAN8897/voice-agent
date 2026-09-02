@@ -462,7 +462,7 @@ export function EnvironmentPanel() {
         </div>
       </DevCard>
 
-      <DevCard title="Telephony URLs & numbers" description="Plivo webhook base and CLI number" delayMs={160}>
+      <DevCard title="Telephony URLs & numbers" description="Exotel webhook base and ExoPhone" delayMs={160}>
         <div className="grid gap-4 lg:grid-cols-3">
           {telephonyStrings.map((row) => (
             <StringConfigRow

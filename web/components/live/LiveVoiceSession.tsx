@@ -26,11 +26,21 @@ export type TurnCompleteEvent = {
   userText: string;
   assistantText: string;
   at: number;
+  /** Mic on (speech start) until turn complete */
+  micDurationMs?: number;
   usage?: {
     input_tokens?: number;
     output_tokens?: number;
     cached_tokens?: number;
     cache_write_tokens?: number;
+    /** STT: transcript character count (billing proxy) */
+    stt_chars?: number;
+    /** STT: estimated audio seconds from mic duration */
+    stt_audio_sec?: number;
+    /** TTS: synthesized character count */
+    tts_chars?: number;
+    /** TTS: PCM audio bytes received */
+    tts_audio_bytes?: number;
   };
   memoryUpdate?: { operations?: unknown[] };
 };
@@ -133,6 +143,7 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
   const speakCooldownUntilRef = useRef(0);
   const lastAssistantTextRef = useRef("");
   const turnGenRef = useRef(0);
+  const lastSpeechStartAtRef = useRef<number | null>(null);
 
   const trace = useCallback(
     (kind: string, detail: string) => {
@@ -457,17 +468,29 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
       if (out) {
         lastAssistantTextRef.current = out;
         turnCounterRef.current += 1;
+        const ttsMetrics = pipeline.getMetrics();
+        const micStart = lastSpeechStartAtRef.current;
+        const micDurationMs = micStart ? Math.max(0, Date.now() - micStart) : undefined;
+        lastSpeechStartAtRef.current = null;
         const cached = Number(streamUsage?.cached_tokens || 0);
+        const mergedUsage = {
+          ...streamUsage,
+          stt_chars: text.length,
+          stt_audio_sec: micDurationMs ? Math.round((micDurationMs / 1000) * 10) / 10 : undefined,
+          tts_chars: ttsMetrics.ttsChars || out.length,
+          tts_audio_bytes: ttsMetrics.ttsAudioBytes,
+        };
         trace(
           "tokens",
-          `in=${streamUsage?.input_tokens ?? 0} out=${streamUsage?.output_tokens ?? 0} cached=${cached}`
+          `stt=${mergedUsage.stt_chars}c llm in=${mergedUsage.input_tokens ?? 0} out=${mergedUsage.output_tokens ?? 0} tts=${mergedUsage.tts_chars}c`
         );
         onTurnCompleteRef.current?.({
           turn: turnCounterRef.current,
           userText: text,
           assistantText: out,
           at: Date.now(),
-          usage: streamUsage,
+          micDurationMs,
+          usage: mergedUsage,
           memoryUpdate,
         });
         if (!assistantStarted) {
@@ -676,6 +699,7 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
       }
       if (event === "speech_start" || event === "vad.speech_start") {
         bargeRef.current.sawVadStart = true;
+        lastSpeechStartAtRef.current = Date.now();
         trace("vad", "speech start");
         if (bargeRef.current.agentSpeaking || bargeRef.current.brainStreaming) {
           doBargeIn("vad-start");

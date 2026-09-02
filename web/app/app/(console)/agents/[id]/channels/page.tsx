@@ -6,7 +6,7 @@ export default function AgentChannelsPage() {
       <Panel title="Browser">
         <p className="text-sm text-text-muted">Test Studio microphone with barge-in. Same call lifecycle as PSTN.</p>
       </Panel>
-      <Panel title="PSTN · Plivo">
+      <Panel title="PSTN · Exotel">
         <p className="text-sm text-text-muted">Inbound and outbound share ledger, memory, and post-call intelligence. Numbers live under Integrations.</p>
       </Panel>
     </div>

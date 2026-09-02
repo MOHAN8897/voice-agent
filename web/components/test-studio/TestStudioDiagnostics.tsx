@@ -12,7 +12,7 @@ export function TestStudioDiagnostics({
   events,
 }: {
   callId: string | null;
-  channel: "browser" | "pstn";
+  channel: "agent" | "pstn";
   callEnded: boolean;
   events: SessionTraceEvent[];
 }) {

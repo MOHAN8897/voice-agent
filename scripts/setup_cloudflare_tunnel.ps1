@@ -104,8 +104,7 @@ if (Test-Path $EnvFile) {
     $lines = Get-Content $EnvFile
     $map = @{
         "PUBLIC_TUNNEL_URL"      = $publicApi
-        "PLIVO_WEBHOOK_BASE_URL" = $publicApi
-        "PLIVO_PUBLIC_BASE_URL"  = $publicApi
+        "EXOTEL_WEBHOOK_BASE_URL" = $publicApi
         "CLIENT_URL"             = "https://$AppHost"
     }
     foreach ($key in $map.Keys) {
@@ -121,7 +120,7 @@ if (Test-Path $EnvFile) {
         if (-not $found) { $lines += "$key=$val" }
     }
     Set-Content -Path $EnvFile -Value $lines
-    Write-Host "Updated .env (PUBLIC_TUNNEL_URL, PLIVO_*, CLIENT_URL)."
+    Write-Host "Updated .env (PUBLIC_TUNNEL_URL, EXOTEL_WEBHOOK_BASE_URL, CLIENT_URL)."
 }
 
 # web/.env.local for stable public API when testing from browser
@@ -137,7 +136,8 @@ Write-Host ""
 Write-Host "=== Cloudflare tunnel ready ==="
 Write-Host "Stable API:  https://$ApiHost"
 Write-Host "Stable App:  https://$AppHost"
-Write-Host "Answer URL:  https://$ApiHost/api/plivo/answer"
+Write-Host "Exotel passthru:  https://$ApiHost/api/exotel/passthru"
+Write-Host "Exotel callback: https://$ApiHost/api/exotel/status-callback"
 Write-Host ""
 Write-Host "Start stack:  npm run dev:up -KillStale"
 Write-Host "Start tunnel: npm run dev:cf-tunnel"

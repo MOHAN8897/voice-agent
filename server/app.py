@@ -38,9 +38,9 @@ from server.routes.dev_stack import router as dev_stack_router
 from server.routes.dev_environment import router as dev_environment_router
 from server.routes.dev_audit import router as dev_audit_router
 from server.routes.dev_compiled import router as dev_compiled_router
-from server.routes.dev_plivo import router as dev_plivo_router
-from server.routes.plivo import router as plivo_router
-from server.routes.plivo_ws import router as plivo_ws_router
+from server.routes.dev_exotel import router as dev_exotel_router
+from server.routes.exotel import router as exotel_router
+from server.routes.exotel_ws import router as exotel_ws_router
 from server.routes.campaigns import router as campaigns_router
 from server.routes.test_studio import router as test_studio_router
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -266,9 +266,9 @@ app.include_router(dev_stack_router)
 app.include_router(dev_environment_router)
 app.include_router(dev_audit_router)
 app.include_router(dev_compiled_router)
-app.include_router(dev_plivo_router)
-app.include_router(plivo_router)
-app.include_router(plivo_ws_router)
+app.include_router(dev_exotel_router)
+app.include_router(exotel_router)
+app.include_router(exotel_ws_router)
 app.include_router(campaigns_router)
 app.include_router(test_studio_router)
 app.include_router(ws_router)

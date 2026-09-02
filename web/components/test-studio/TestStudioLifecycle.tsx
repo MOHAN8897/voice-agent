@@ -26,7 +26,7 @@ export function TestStudioLifecycle({
   ended,
 }: {
   callId: string | null;
-  channel: "browser" | "pstn";
+  channel: "agent" | "pstn";
   ended: boolean;
 }) {
   const [fin, setFin] = useState<Finalization | null>(null);

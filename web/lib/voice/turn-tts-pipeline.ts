@@ -30,6 +30,7 @@ export class TurnTtsPipeline {
   private playbackDone: Promise<void> = Promise.resolve();
   private audioSeq = 0;
   private textQueue: Promise<void> = Promise.resolve();
+  private ttsAudioBytes = 0;
 
   constructor(opts: TurnTtsPipelineOptions) {
     this.opts = opts;
@@ -59,6 +60,7 @@ export class TurnTtsPipeline {
       isActive: () => this.isActive(),
       onAudio: (pcm) => {
         if (!this.isActive()) return;
+        this.ttsAudioBytes += pcm.byteLength;
         const seq = this.audioSeq++;
         this.markSpeaking();
         this.opts.playback.enqueuePcm(this.opts.turnId, seq, pcm);
@@ -140,6 +142,10 @@ export class TurnTtsPipeline {
 
   getFullText(): string {
     return this.chunker.getFullText();
+  }
+
+  getMetrics(): { ttsChars: number; ttsAudioBytes: number } {
+    return { ttsChars: this.chunker.getFullText().length, ttsAudioBytes: this.ttsAudioBytes };
   }
 }
 

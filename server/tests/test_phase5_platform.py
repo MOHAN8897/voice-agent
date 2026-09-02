@@ -1,15 +1,13 @@
-"""Phase 5 tests — auth, transcode, plivo, campaigns."""
+"""Phase 5 tests — auth, transcode, exotel, campaigns."""
 from __future__ import annotations
 
 import base64
-import json
 
 import pytest
 from fastapi.testclient import TestClient
 
 from server.config.env import get_settings
 from server.services.audio_transcode import mulaw_to_pcm16, pcm16_to_mulaw
-from server.services.plivo_stream import PlivoStreamSession, parse_plivo_event
 
 
 def _client(monkeypatch):
@@ -31,16 +29,6 @@ def test_audio_transcode_roundtrip():
     assert len(back) > 0
 
 
-def test_plivo_stream_session_media():
-    session = PlivoStreamSession(stream_id="s1")
-    mulaw = pcm16_to_mulaw(b"\x00\x01" * 80, 16000)
-    payload = base64.b64encode(mulaw).decode()
-    event = parse_plivo_event(json.dumps({"event": "media", "media": {"payload": payload}}))
-    pcm = session.ingest_media(event)
-    assert pcm is not None
-    assert len(pcm) > 0
-
-
 def test_dev_login_and_stack(monkeypatch):
     c = _client(monkeypatch)
     r = c.post("/api/dev/login", json={"username": "dev", "password": "devpass"})
@@ -53,7 +41,7 @@ def test_dev_login_and_stack(monkeypatch):
     get_settings.cache_clear()
 
 
-def test_plivo_answer_xml(monkeypatch):
+def test_exotel_passthru(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
     monkeypatch.setenv("SARVAM_API_KEY", "sarvam-test")
     monkeypatch.setenv("APP_ENVIRONMENT", "development")
@@ -61,20 +49,21 @@ def test_plivo_answer_xml(monkeypatch):
     import server.app as app_mod
 
     c = TestClient(app_mod.app)
-    r = c.get("/api/plivo/answer?CallUUID=test-uuid")
+    r = c.post("/api/exotel/passthru?CallSid=test-sid&From=%2B911234567890")
     assert r.status_code == 200
-    assert "<Stream" in r.text
     get_settings.cache_clear()
 
 
-def test_plivo_status(monkeypatch):
+def test_exotel_status(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
     monkeypatch.setenv("SARVAM_API_KEY", "sarvam-test")
     get_settings.cache_clear()
     import server.app as app_mod
 
     c = TestClient(app_mod.app)
-    r = c.get("/api/plivo/status")
+    r = c.get("/api/exotel/status")
     assert r.status_code == 200
-    assert "enabled" in r.json()
+    body = r.json()
+    assert "enabled" in body
+    assert "handshake_ok" in body
     get_settings.cache_clear()

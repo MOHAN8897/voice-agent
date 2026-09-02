@@ -1,16 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { SessionTraceEvent, TurnCompleteEvent } from "@/components/live/LiveVoiceSession";
 import { CallDetailView } from "@/components/calls/CallDetailView";
-import { PstnTestPanel } from "@/components/dev/test-studio/PstnTestPanel";
+import { ExotelTestPanel } from "@/components/dev/test-studio/ExotelTestPanel";
 import { SkeuoPanel } from "@/components/ui/skeuo/SkeuoPanel";
 import { refreshPortalSession } from "@/lib/auth-client";
 import { TestStudioConfigRack } from "@/components/test-studio/TestStudioConfigRack";
 import { TestStudioLivePanel } from "@/components/test-studio/TestStudioLivePanel";
 import { TestStudioDiagnostics } from "@/components/test-studio/TestStudioDiagnostics";
 import { TestStudioFineTuneWorkbench } from "@/components/test-studio/TestStudioFineTuneWorkbench";
-import { TestStudioTurnMetrics, type TurnMetricRow } from "@/components/test-studio/TestStudioTurnMetrics";
+import { TestStudioTurnMetrics, emptySessionTotals, type TurnMetricRow } from "@/components/test-studio/TestStudioTurnMetrics";
+import { TestStudioModePicker, type TestStudioMode } from "@/components/test-studio/TestStudioModePicker";
 import { TestStudioMemoryPanel } from "@/components/test-studio/TestStudioMemoryPanel";
 import { useStackCatalog } from "@/components/test-studio/useStackCatalog";
 import { useTestStudioPrefs } from "@/components/test-studio/useTestStudioPrefs";
@@ -23,7 +24,7 @@ import {
 } from "@/lib/test-studio-stack";
 import { cn } from "@/lib/cn";
 
-type ChannelTab = "browser" | "pstn";
+type ChannelTab = TestStudioMode;
 type FineTuneTab = "prompts" | "llm" | "voice";
 type StudioTab = "live" | "config" | "tune" | "debug";
 
@@ -42,7 +43,7 @@ export function AgentTestStudio({
   portal?: "app" | "dev";
 }) {
   const [studioTab, setStudioTab] = useState<StudioTab>("live");
-  const [channel, setChannel] = useState<ChannelTab>("browser");
+  const [channel, setChannel] = useState<ChannelTab>("agent");
   const [stackMode, setStackMode] = useState<StackMode>(portal === "dev" ? "custom" : "tier");
   const [tier, setTier] = useState("medium");
   const [stack, setStack] = useState<StackForm>(defaultStackForm());
@@ -59,6 +60,13 @@ export function AgentTestStudio({
   const [locked, setLocked] = useState(false);
   const [turnRows, setTurnRows] = useState<TurnMetricRow[]>([]);
   const [prefsReady, setPrefsReady] = useState(false);
+  const prefsHydratedRef = useRef(false);
+  const channelTouchedRef = useRef(false);
+
+  const setChannelMode = useCallback((next: ChannelTab) => {
+    channelTouchedRef.current = true;
+    setChannel(next);
+  }, []);
 
   const sarvamSpeakersV3 = (catalog?.tts as { speakersV3?: string[] } | undefined)?.speakersV3 || [];
   const sarvamSpeakersV2 = (catalog?.tts as { speakersV2?: string[] } | undefined)?.speakersV2 || [];
@@ -77,10 +85,15 @@ export function AgentTestStudio({
   );
 
   useTestStudioPrefs(uiPrefs, (loaded) => {
+    if (prefsHydratedRef.current) return;
+    prefsHydratedRef.current = true;
     if (loaded.studioTab) setStudioTab(loaded.studioTab as StudioTab);
     if (loaded.stackMode) setStackMode(loaded.stackMode);
     if (loaded.tier) setTier(loaded.tier);
-    if (loaded.channel) setChannel(loaded.channel);
+    if (loaded.channel && !channelTouchedRef.current) {
+      const ch = loaded.channel === "browser" ? "agent" : loaded.channel;
+      if (ch === "agent" || ch === "pstn") setChannel(ch);
+    }
     if (loaded.language) setLanguage(loaded.language);
     if (loaded.fineTuneTab) setFineTuneTab(loaded.fineTuneTab as FineTuneTab);
     if (loaded.stack && typeof loaded.stack === "object") {
@@ -151,11 +164,16 @@ export function AgentTestStudio({
     () =>
       turnRows.reduce(
         (acc, r) => ({
-          input: acc.input + (r.inputTokens ?? 0),
-          output: acc.output + (r.outputTokens ?? 0),
-          cached: acc.cached + (r.cachedTokens ?? 0),
+          sttChars: acc.sttChars + (r.sttChars ?? 0),
+          sttAudioSec: acc.sttAudioSec + (r.sttAudioSec ?? 0),
+          llmInput: acc.llmInput + (r.inputTokens ?? 0),
+          llmOutput: acc.llmOutput + (r.outputTokens ?? 0),
+          llmCached: acc.llmCached + (r.cachedTokens ?? 0),
+          ttsChars: acc.ttsChars + (r.ttsChars ?? 0),
+          ttsAudioBytes: acc.ttsAudioBytes + (r.ttsAudioBytes ?? 0),
+          turns: acc.turns + 1,
         }),
-        { input: 0, output: 0, cached: 0 }
+        emptySessionTotals()
       ),
     [turnRows]
   );
@@ -174,10 +192,15 @@ export function AgentTestStudio({
         userText: ev.userText,
         assistantText: ev.assistantText,
         at: ev.at,
+        micDurationMs: ev.micDurationMs,
         inputTokens: input,
         outputTokens: Number(ev.usage?.output_tokens || 0),
         cachedTokens: cached,
         cacheWriteTokens: Number(ev.usage?.cache_write_tokens || 0),
+        sttChars: Number(ev.usage?.stt_chars ?? ev.userText.length),
+        sttAudioSec: Number(ev.usage?.stt_audio_sec ?? 0),
+        ttsChars: Number(ev.usage?.tts_chars ?? ev.assistantText.length),
+        ttsAudioBytes: Number(ev.usage?.tts_audio_bytes ?? 0),
         memoryOps: Array.isArray(ev.memoryUpdate?.operations) ? ev.memoryUpdate.operations.length : 0,
         cacheHit: cached > 0 && input > 0 && cached >= input * 0.5,
       },
@@ -243,29 +266,39 @@ export function AgentTestStudio({
       </div>
 
       {studioTab === "live" && (
-        <div className="grid gap-5 xl:grid-cols-12">
-          <div className="xl:col-span-8 min-w-0">
-            {channel === "browser" ? (
-              <TestStudioLivePanel
-                agentId={agentId}
-                tier={tier}
-                languageCode={language}
-                stackOverride={stackOverride}
-                sessionId={TEST_STUDIO_SESSION_ID}
-                onTrace={onTrace}
-                onCallStart={onCallStart}
-                onCallEnd={onCallEnd}
-                onStatusChange={setSessionStatus}
-                onTurnComplete={onTurnComplete}
-              />
-            ) : (
-              <SkeuoPanel title="PSTN · Plivo" description="Register numbers and place test calls" padding="md">
-                <PstnTestPanel agentId={agentId} tier={tier} />
-              </SkeuoPanel>
-            )}
-          </div>
-          <div className="xl:col-span-4 space-y-5">
-            <TestStudioTurnMetrics rows={turnRows} sessionTotal={sessionTotals} />
+        <div className="space-y-5">
+          {showPstn && (
+            <TestStudioModePicker
+              mode={channel}
+              onModeChange={setChannelMode}
+              locked={stackLocked}
+              showPstn={showPstn}
+            />
+          )}
+          <div className="grid gap-5 xl:grid-cols-12">
+            <div className="xl:col-span-8 min-w-0">
+              {channel === "agent" ? (
+                <TestStudioLivePanel
+                  agentId={agentId}
+                  tier={tier}
+                  languageCode={language}
+                  stackOverride={stackOverride}
+                  sessionId={TEST_STUDIO_SESSION_ID}
+                  onTrace={onTrace}
+                  onCallStart={onCallStart}
+                  onCallEnd={onCallEnd}
+                  onStatusChange={setSessionStatus}
+                  onTurnComplete={onTurnComplete}
+                />
+              ) : (
+                <SkeuoPanel title="PSTN · Exotel" description="Full telephony flow — handshake, outbound, call status" padding="md">
+                  <ExotelTestPanel agentId={agentId} tier={tier} />
+                </SkeuoPanel>
+              )}
+            </div>
+            <div className="xl:col-span-4 space-y-5">
+              <TestStudioTurnMetrics rows={turnRows} sessionTotal={sessionTotals} mode={channel} />
+            </div>
           </div>
         </div>
       )}
@@ -274,7 +307,7 @@ export function AgentTestStudio({
         <div className="grid gap-5 lg:grid-cols-2">
           <TestStudioConfigRack
             channel={channel}
-            onChannelChange={setChannel}
+            onChannelChange={setChannelMode}
             showPstn={showPstn}
             showCustomStack
             stackMode={stackMode}
@@ -298,7 +331,7 @@ export function AgentTestStudio({
             sarvamSpeakersV2={sarvamSpeakersV2}
             runtimeTtsSpeaker={runtimeTtsSpeaker}
           />
-          <TestStudioTurnMetrics rows={turnRows} sessionTotal={sessionTotals} />
+          <TestStudioTurnMetrics rows={turnRows} sessionTotal={sessionTotals} mode={channel} />
         </div>
       )}
 

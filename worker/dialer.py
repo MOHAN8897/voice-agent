@@ -55,7 +55,7 @@ def process_job(job: dict[str, Any]) -> None:
     campaign_id = job.get("campaign_id")
     run_id = job.get("run_id")
     logger.info("processing campaign job campaign_id=%s run_id=%s", campaign_id, run_id)
-    # Plivo outbound dial would be initiated here via plivo_outbound module
+    # Exotel outbound dial would be initiated here via ExotelClient.connect_two_numbers
 
 
 def run_loop() -> None:

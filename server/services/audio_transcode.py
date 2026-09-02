@@ -1,4 +1,4 @@
-"""μ-law 8kHz ↔ PCM 16kHz transcoding for Plivo PSTN — Phase 5."""
+"""μ-law 8kHz ↔ PCM 16kHz and linear PCM resampling for PSTN — Phase 5."""
 from __future__ import annotations
 
 import audioop
@@ -51,3 +51,34 @@ def encode_mulaw_base64(mulaw: bytes) -> str:
     import base64
 
     return base64.b64encode(mulaw).decode("ascii")
+
+
+def pcm_resample(pcm16: bytes, from_rate: int, to_rate: int) -> bytes:
+    """PCM 16-bit mono resample."""
+    if from_rate == to_rate or not pcm16:
+        return pcm16
+    out, _ = audioop.ratecv(pcm16, 2, 1, from_rate, to_rate, None)
+    return out
+
+
+def pcm8k_to_pcm16k(pcm8k: bytes) -> bytes:
+    return pcm_resample(pcm8k, 8000, 16000)
+
+
+def pcm16k_to_pcm8k(pcm16k: bytes) -> bytes:
+    return pcm_resample(pcm16k, 16000, 8000)
+
+
+def chunk_pcm_for_exotel(pcm8k: bytes, frame_bytes: int = 3200) -> list[bytes]:
+    """Split PCM 8k into Exotel-safe chunks (multiples of 320 bytes)."""
+    frame_bytes = max(320, (frame_bytes // 320) * 320)
+    chunks: list[bytes] = []
+    for i in range(0, len(pcm8k), frame_bytes):
+        chunk = pcm8k[i : i + frame_bytes]
+        if len(chunk) < 320:
+            continue
+        rem = len(chunk) % 320
+        if rem:
+            chunk += b"\x00" * (320 - rem)
+        chunks.append(chunk)
+    return chunks
