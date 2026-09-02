@@ -50,6 +50,12 @@ def _is_cartesia_model(model: str) -> bool:
     return model in constants.CARTESIA_TTS_MODELS or str(model).startswith("sonic")
 
 
+def _cartesia_available() -> bool:
+    """True only when Cartesia is enabled in env and has an API key."""
+    settings = get_settings()
+    return bool(settings.enable_cartesia and (settings.cartesia_api_key or "").strip())
+
+
 def _is_cartesia_stack(
     stack,
     rt: dict[str, Any],
@@ -58,6 +64,9 @@ def _is_cartesia_stack(
     model: str | None,
 ) -> bool:
     from server.services.cartesia_voices import is_cartesia_voice_id
+
+    if not _cartesia_available():
+        return False
 
     if stack and stack.tts.provider == "cartesia":
         return True
@@ -70,6 +79,8 @@ def _is_cartesia_stack(
     if is_cartesia_voice_id(rt_speaker):
         return True
     if speaker and is_cartesia_voice_id(str(speaker)):
+        return True
+    if model and _is_cartesia_model(str(model)):
         return True
     return False
 
@@ -201,7 +212,21 @@ def resolve_tts_config(
     if resolved_model not in constants.TTS_MODELS:
         resolved_model = settings.sarvam_tts_model
 
+    from server.services.cartesia_voices import is_cartesia_voice_id
+
     resolved_speaker = speaker or rt.get("ttsSpeaker")
+    if resolved_speaker and is_cartesia_voice_id(str(resolved_speaker)):
+        log_tts(
+            "CARTESIA_SPEAKER_IGNORED",
+            speaker=str(resolved_speaker)[:8],
+            reason="cartesia unavailable or stack is sarvam",
+            session=session_id,
+        )
+        resolved_speaker = None
+    if not resolved_speaker:
+        stack_speaker = stack.tts.config.get("speaker") if stack and stack.tts.config else None
+        if stack_speaker and not is_cartesia_voice_id(str(stack_speaker)):
+            resolved_speaker = stack_speaker
     if not resolved_speaker:
         if language_code == "te-IN":
             resolved_speaker = settings.sarvam_tts_speaker_te
@@ -269,7 +294,7 @@ def merge_ws_tts_config(
 ) -> dict[str, Any]:
     """Merge browser WS config payload with server-resolved runtime settings."""
     data = dict(client_data or {})
-    return resolve_tts_config(
+    cfg = resolve_tts_config(
         session_id,
         language_code=data.get("language_code") or language_code,
         speaker=data.get("speaker"),
@@ -283,3 +308,6 @@ def merge_ws_tts_config(
         max_chunk_length=data.get("max_chunk_length"),
         output_audio_bitrate=data.get("output_audio_bitrate"),
     )
+    # Browser PCM player cannot decode mp3/aac — streaming WS is always linear16.
+    cfg["output_audio_codec"] = "linear16"
+    return cfg

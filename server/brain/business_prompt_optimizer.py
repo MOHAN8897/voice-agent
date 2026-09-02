@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
-from server.agent.brain_prompt_composer import estimate_tokens
+from server.agent.brain_prompt_composer import estimate_tokens, fit_text_to_tokens
 from server.config.env import get_settings
 
 OPTIMIZER_VERSION = "v2"
@@ -91,7 +91,7 @@ def _dedupe_lines(text: str) -> tuple[str, list[str]]:
     return "\n".join(deduped), removed
 
 
-def _deterministic_compress_dual(behaviour: str, business: str) -> tuple[str, list[str]]:
+def _deterministic_compress_dual(behaviour: str, business: str, *, max_tokens: int = 700) -> tuple[str, list[str]]:
     b_text, b_removed = _dedupe_lines(behaviour)
     z_text, z_removed = _dedupe_lines(business)
     parts = [
@@ -100,7 +100,9 @@ def _deterministic_compress_dual(behaviour: str, business: str) -> tuple[str, li
         "--- BUSINESS CONTEXT ---",
         z_text,
     ]
-    return "\n".join(parts), b_removed + z_removed
+    merged = "\n".join(parts)
+    fitted = fit_text_to_tokens(merged, max_tokens)
+    return fitted, b_removed + z_removed
 
 
 async def _llm_compress_prompt(raw_prompt: str, *, budget_tokens: int) -> dict[str, Any] | None:
@@ -108,35 +110,43 @@ async def _llm_compress_prompt(raw_prompt: str, *, budget_tokens: int) -> dict[s
     if not settings.enable_openai:
         return None
     try:
+        import asyncio
+
         from server.providers.base import LLMConfig
         from server.providers.openai_llm import OpenAILLMAdapter
 
         adapter = OpenAILLMAdapter()
-        target_words = max(120, int(budget_tokens * 0.55))
+        # User-editable slice only — static safety/voice stays outside this compress.
+        target_words = max(80, min(400, int(budget_tokens * 0.22)))
         system = (
             "You compress voice-agent instructions for a Telugu phone assistant. "
             "Merge duplicate rules, remove repetition, and keep ALL facts, prices, names, "
             "policies, phone numbers, URLs, workflows, and guardrails exactly. "
             "Do not invent policy, pricing, or capabilities. "
+            "Do not repeat Telugu-voice or safety rules that already exist in the platform prefix. "
             "Use concise section headers. Plain text only."
         )
         user = (
             f"Compress the following raw instructions to roughly {target_words} words or fewer "
             f"while preserving meaning:\n\n{raw_prompt}"
         )
-        payload = await adapter.structured_completion(
-            input_messages=[
-                {"role": "developer", "content": [{"type": "input_text", "text": system}]},
-                {"role": "user", "content": [{"type": "input_text", "text": user}]},
-            ],
-            schema=OPTIMIZER_SCHEMA,
-            config=LLMConfig(
-                provider="openai",
-                model=settings.post_call_llm_model or settings.openai_model,
-            ),
-            schema_name="prompt_optimizer",
-            max_output_tokens=min(1800, budget_tokens),
-        )
+
+        async def _run():
+            return await adapter.structured_completion(
+                input_messages=[
+                    {"role": "developer", "content": [{"type": "input_text", "text": system}]},
+                    {"role": "user", "content": [{"type": "input_text", "text": user}]},
+                ],
+                schema=OPTIMIZER_SCHEMA,
+                config=LLMConfig(
+                    provider="openai",
+                    model=settings.post_call_llm_model or settings.openai_model,
+                ),
+                schema_name="prompt_optimizer",
+                max_output_tokens=min(900, budget_tokens),
+            )
+
+        payload = await asyncio.wait_for(_run(), timeout=12)
         if payload.get("optimized_prompt"):
             return payload
     except Exception:
@@ -166,7 +176,9 @@ async def optimize_session_dual_prompt(
         deduped = list(llm_payload.get("deduplicated_items") or [])[:12]
         conflicts = list(llm_payload.get("conflicts") or [])
     else:
-        optimized, deduped = _deterministic_compress_dual(behaviour, business)
+        optimized, deduped = _deterministic_compress_dual(
+            behaviour, business, max_tokens=max(220, int(budget_tokens * 0.35))
+        )
         model = "deterministic_v1"
         facts = _extract_bullets(raw_assembled)[:6]
         rules = [ln for ln in facts if any(k in ln.lower() for k in ("never", "only", "must", "do not"))]

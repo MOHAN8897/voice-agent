@@ -1,0 +1,190 @@
+/**
+ * Voice-turn cost estimates from official provider docs (2026-09-02).
+ *
+ * Sarvam STT  — ₹30 / hour of audio (realtime + streaming). Telugu chars are not billed.
+ * Sarvam TTS  — ₹3.00 / 1,000 Unicode characters (Telugu code points count).
+ * OpenAI Luna — $0.20/M uncached input, $0.02/M cached input, $0.25/M cache write, $1.20/M output.
+ * Cartesia    — ~$50 / 1M characters (Pro-plan effective, 1 credit/char).
+ *
+ * Cache billing: cached reads and cache writes are mutually exclusive with uncached input.
+ * Writes are billed at 1.25× instead of the uncached rate, not in addition to it.
+ */
+
+export const DEFAULT_FX_INR = 95.64;
+
+export const PRICING = {
+  updatedAt: "2026-09-02",
+  sarvamSttInrPerHour: 30,
+  sarvamTtsInrPer1kChars: 3,
+  openaiUsdPerM: {
+    input: 0.2,
+    cachedInput: 0.02,
+    cacheWrite: 0.25,
+    output: 1.2,
+  },
+  cartesiaTtsUsdPerMChars: 50,
+} as const;
+
+export type CacheEvent = "cache_hit" | "cache_write" | "partial_hit" | "cache_miss";
+
+export type PricingMeta = {
+  fx_rate_inr?: number;
+  "sarvam:saaras:v3"?: { inr_per_hour?: number; usd_per_unit?: number };
+  "sarvam:bulbul:v3"?: { inr_per_1k_chars?: number; usd_per_unit?: number };
+  "openai:gpt-5.6-luna"?: {
+    usd_input_per_m?: number;
+    usd_cached_input_per_m?: number;
+    usd_cache_write_per_m?: number;
+    usd_output_per_m?: number;
+  };
+  "cartesia:sonic-3.5"?: { usd_per_unit?: number };
+};
+
+export function classifyCacheEvent(input: number, cached: number, written: number): CacheEvent {
+  const c = Math.max(0, cached || 0);
+  const w = Math.max(0, written || 0);
+  if (c > 0 && w > 0) return "partial_hit";
+  if (c > 0) return "cache_hit";
+  if (w > 0) return "cache_write";
+  return "cache_miss";
+}
+
+export function splitLlmTokens(input: number, cached: number, written: number) {
+  const inp = Math.max(0, Math.floor(input || 0));
+  const cachedBilled = Math.min(inp, Math.max(0, Math.floor(cached || 0)));
+  const writtenBilled = Math.min(Math.max(0, Math.floor(written || 0)), Math.max(0, inp - cachedBilled));
+  const uncached = Math.max(0, inp - cachedBilled - writtenBilled);
+  return { input: inp, cached: cachedBilled, written: writtenBilled, uncached };
+}
+
+function fxOf(meta?: PricingMeta | null): number {
+  const fx = Number(meta?.fx_rate_inr);
+  return fx > 0 ? fx : DEFAULT_FX_INR;
+}
+
+export function costSttUsd(audioSec: number, meta?: PricingMeta | null): number {
+  const hours = Math.max(0, audioSec || 0) / 3600;
+  const inrHour = Number(meta?.["sarvam:saaras:v3"]?.inr_per_hour) || PRICING.sarvamSttInrPerHour;
+  return (hours * inrHour) / fxOf(meta);
+}
+
+export function costTtsUsd(chars: number, provider: string, meta?: PricingMeta | null): number {
+  const n = Math.max(0, chars || 0);
+  const cartesia = provider.startsWith("cartesia") || provider.startsWith("sonic");
+  if (cartesia) {
+    const perM = Number(meta?.["cartesia:sonic-3.5"]?.usd_per_unit) || PRICING.cartesiaTtsUsdPerMChars;
+    return (n * perM) / 1_000_000;
+  }
+  const inr1k = Number(meta?.["sarvam:bulbul:v3"]?.inr_per_1k_chars) || PRICING.sarvamTtsInrPer1kChars;
+  return ((n / 1000) * inr1k) / fxOf(meta);
+}
+
+export function costLlmUsd(opts: {
+  inputTokens: number;
+  outputTokens: number;
+  cachedTokens?: number;
+  cacheWriteTokens?: number;
+  meta?: PricingMeta | null;
+}) {
+  const parts = splitLlmTokens(opts.inputTokens, opts.cachedTokens || 0, opts.cacheWriteTokens || 0);
+  const rates = opts.meta?.["openai:gpt-5.6-luna"];
+  const inputRate = Number(rates?.usd_input_per_m) || PRICING.openaiUsdPerM.input;
+  const cachedRate = Number(rates?.usd_cached_input_per_m) || PRICING.openaiUsdPerM.cachedInput;
+  const writeRate = Number(rates?.usd_cache_write_per_m) || PRICING.openaiUsdPerM.cacheWrite;
+  const outputRate = Number(rates?.usd_output_per_m) || PRICING.openaiUsdPerM.output;
+  const uncachedUsd = (parts.uncached * inputRate) / 1_000_000;
+  const cachedUsd = (parts.cached * cachedRate) / 1_000_000;
+  const writeUsd = (parts.written * writeRate) / 1_000_000;
+  const outputUsd = (Math.max(0, opts.outputTokens || 0) * outputRate) / 1_000_000;
+  return {
+    uncachedUsd,
+    cachedUsd,
+    cacheWriteUsd: writeUsd,
+    outputUsd,
+    totalUsd: uncachedUsd + cachedUsd + writeUsd + outputUsd,
+    parts,
+  };
+}
+
+export type TurnCost = {
+  sttUsd: number;
+  ttsUsd: number;
+  llmUsd: number;
+  totalUsd: number;
+  sttInr: number;
+  ttsInr: number;
+  llmInr: number;
+  totalInr: number;
+  cacheEvent: CacheEvent;
+  fx: number;
+};
+
+export function estimateTurnCost(opts: {
+  sttAudioSec: number;
+  ttsChars: number;
+  ttsProvider: string;
+  inputTokens: number;
+  outputTokens: number;
+  cachedTokens: number;
+  cacheWriteTokens: number;
+  meta?: PricingMeta | null;
+}): TurnCost {
+  const fx = fxOf(opts.meta);
+  const sttUsd = costSttUsd(opts.sttAudioSec, opts.meta);
+  const ttsUsd = costTtsUsd(opts.ttsChars, opts.ttsProvider, opts.meta);
+  const llm = costLlmUsd({
+    inputTokens: opts.inputTokens,
+    outputTokens: opts.outputTokens,
+    cachedTokens: opts.cachedTokens,
+    cacheWriteTokens: opts.cacheWriteTokens,
+    meta: opts.meta,
+  });
+  const totalUsd = sttUsd + ttsUsd + llm.totalUsd;
+  return {
+    sttUsd,
+    ttsUsd,
+    llmUsd: llm.totalUsd,
+    totalUsd,
+    sttInr: sttUsd * fx,
+    ttsInr: ttsUsd * fx,
+    llmInr: llm.totalUsd * fx,
+    totalInr: totalUsd * fx,
+    cacheEvent: classifyCacheEvent(opts.inputTokens, opts.cachedTokens, opts.cacheWriteTokens),
+    fx,
+  };
+}
+
+export function perMinute(totalUsd: number, durationSec: number, fx: number) {
+  const minutes = Math.max(durationSec, 0) / 60;
+  if (minutes <= 0) return { usd: 0, inr: 0 };
+  return { usd: totalUsd / minutes, inr: (totalUsd * fx) / minutes };
+}
+
+export function formatUsd(n: number): string {
+  if (!Number.isFinite(n)) return "$0";
+  if (n === 0) return "$0";
+  if (n < 0.0001) return `$${n.toExponential(1)}`;
+  if (n < 0.01) return `$${n.toFixed(4)}`;
+  return `$${n.toFixed(3)}`;
+}
+
+export function formatInr(n: number): string {
+  if (!Number.isFinite(n)) return "₹0";
+  if (n === 0) return "₹0";
+  if (n < 0.01) return `₹${n.toFixed(4)}`;
+  if (n < 1) return `₹${n.toFixed(3)}`;
+  return `₹${n.toFixed(2)}`;
+}
+
+export function cacheEventLabel(event: CacheEvent): string {
+  switch (event) {
+    case "cache_hit":
+      return "cache hit";
+    case "cache_write":
+      return "cache write (miss)";
+    case "partial_hit":
+      return "partial hit + write";
+    default:
+      return "cache miss";
+  }
+}

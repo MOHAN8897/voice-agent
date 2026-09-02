@@ -75,7 +75,9 @@ if (Test-Path $EnvFile) {
 
 $webLines = @(
     "# Auto-synced by scripts/env_sync.ps1",
+    "# Browser on localhost uses NEXT_PUBLIC_API_URL_LOCAL for /ws/* (see web/lib/api.ts)",
     "NEXT_PUBLIC_API_URL=$ApiUrl",
+    "NEXT_PUBLIC_API_URL_LOCAL=http://127.0.0.1:8000",
     "API_INTERNAL_URL=http://127.0.0.1:8000"
 )
 Set-Content -Path $WebEnvFile -Value ($webLines -join "`n")

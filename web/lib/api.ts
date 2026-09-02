@@ -6,8 +6,12 @@ export function apiOrigin(): string {
       process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
     );
   }
+  // Local Next dev: WS must hit FastAPI on :8000, not the public tunnel URL in NEXT_PUBLIC_API_URL.
+  const host = window.location.hostname;
+  if (host === "localhost" || host === "127.0.0.1") {
+    return strip(process.env.NEXT_PUBLIC_API_URL_LOCAL || "http://127.0.0.1:8000");
+  }
   if (process.env.NEXT_PUBLIC_API_URL) return strip(process.env.NEXT_PUBLIC_API_URL);
-  // Next dev only proxies /api/*; /ws/* must hit the FastAPI host directly.
   if (window.location.port === "3000") return "http://localhost:8000";
   return window.location.origin;
 }

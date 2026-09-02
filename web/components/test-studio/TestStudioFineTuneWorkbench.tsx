@@ -37,8 +37,45 @@ function Field({
   );
 }
 
+const AGENT_BRIEF_PLACEHOLDER =
+  "Create a Telugu telecaller for Acme Realty.\nAgent name: Swetha.\nTalk naturally — friendly, not scripted IVR.\nQualify budget, location, and plot vs flat.\nBook site visits. Never invent prices.";
+
 const inputCls =
   "w-full rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-inset px-3 py-2 text-sm disabled:opacity-50";
+
+function countWords(text: string): number {
+  const t = text.trim();
+  if (!t) return 0;
+  return t.split(/\s+/).length;
+}
+
+function SectionMeter({
+  words,
+  maxWords,
+  recommended,
+  chars,
+  maxChars,
+}: {
+  words: number;
+  maxWords: number;
+  recommended: number;
+  chars: number;
+  maxChars: number;
+}) {
+  const over = words > maxWords || chars > maxChars;
+  const warn = !over && words > recommended;
+  return (
+    <p
+      className={cn(
+        "mt-1 font-mono text-[10px]",
+        over ? "text-status-error" : warn ? "text-status-warning" : "text-text-subtle"
+      )}
+    >
+      {words}/{maxWords} words · {chars}/{maxChars} chars
+      {over ? " — too long to save" : warn ? ` · keep under ~${recommended} words for cache + memory` : ""}
+    </p>
+  );
+}
 
 export function TestStudioFineTuneWorkbench({
   agentId,
@@ -137,7 +174,7 @@ export function TestStudioFineTuneWorkbench({
                   disabled={locked}
                   onClick={ft.importFromAgentDraft}
                 >
-                  Import agent draft → business
+                  Import agent draft → brief
                 </SkeuoButton>
                 <SkeuoButton
                   type="button"
@@ -156,34 +193,48 @@ export function TestStudioFineTuneWorkbench({
                 </Link>
               </div>
 
-              <div className="grid gap-5 lg:grid-cols-2">
-                <Field
-                  label="Behaviour instructions (dev / platform)"
-                  hint="Your platform rules — saved as entered. Merged into compiled cache prompt on Save."
-                >
-                  <textarea
-                    disabled={locked}
-                    className={cn(inputCls, "min-h-[140px] resize-y font-mono text-xs")}
-                    value={ft.instructions.behaviourInstructions}
-                    onChange={(e) =>
-                      ft.setInstructions((p) => ({ ...p, behaviourInstructions: e.target.value }))
-                    }
-                  />
-                </Field>
-                <Field
-                  label="Business instructions (customer)"
-                  hint="What the business client provides — saved raw. Never replaced by the optimizer in the UI."
-                >
-                  <textarea
-                    disabled={locked}
-                    className={cn(inputCls, "min-h-[140px] resize-y font-mono text-xs")}
-                    value={ft.instructions.businessInstructions}
-                    onChange={(e) =>
-                      ft.setInstructions((p) => ({ ...p, businessInstructions: e.target.value }))
-                    }
-                  />
-                </Field>
+              <div className="rounded-skeuo-sm border border-surface-border-subtle skeuo-inset p-3 text-xs text-text-muted">
+                Describe your agent in plain language — company, agent name, tone, and goals. GPT expands it into a
+                full calling script that becomes the cached brain for every call until you create a new one. Live memory,
+                history, and transcript still attach after the cache breakpoint (~{ft.limits.memoryHeadroomTokens} tokens).
               </div>
+
+              <Field
+                label="Agent brief"
+                hint="Short instruction — e.g. telecaller for company X, agent name Swetha, natural Telugu tone"
+              >
+                <textarea
+                  disabled={locked || ft.saving}
+                  maxLength={ft.limits.agentBriefMax}
+                  placeholder={AGENT_BRIEF_PLACEHOLDER}
+                  className={cn(inputCls, "min-h-[140px] resize-y text-sm")}
+                  value={ft.instructions.agentBrief}
+                  onChange={(e) =>
+                    ft.setInstructions((p) => ({ ...p, agentBrief: e.target.value }))
+                  }
+                />
+                <SectionMeter
+                  words={countWords(ft.instructions.agentBrief)}
+                  maxWords={ft.limits.agentBriefMaxWords}
+                  recommended={ft.limits.recommendedAgentBriefWords}
+                  chars={ft.instructions.agentBrief.length}
+                  maxChars={ft.limits.agentBriefMax}
+                />
+              </Field>
+
+              <Field
+                label="Generated calling script"
+                hint="Created by GPT from your brief — this is the agent brain for calls until you regenerate"
+              >
+                <textarea
+                  readOnly
+                  className={cn(inputCls, "min-h-[200px] resize-y font-mono text-[11px] opacity-90")}
+                  value={
+                    ft.instructions.agentScript ||
+                    "Create agent script to generate the calling script from your brief…"
+                  }
+                />
+              </Field>
 
               <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
                 <Field label="Response style" hint="Optional style tag (e.g. concise, empathetic)">
@@ -198,39 +249,28 @@ export function TestStudioFineTuneWorkbench({
                 </Field>
                 <div className="rounded-skeuo-sm border border-surface-border-subtle skeuo-inset p-3 text-xs text-text-muted">
                   <p>
-                    Compiled cache tokens:{" "}
+                    Brain cache tokens:{" "}
                     <span className="font-mono text-text">{ft.instructions.estimatedTokens}</span> /{" "}
                     {ft.instructions.budgetTokens}
+                    {ft.instructions.cacheEligible ? (
+                      <span className="ml-2 text-status-success">cache ON</span>
+                    ) : (
+                      <span className="ml-2 text-status-warning">cache OFF</span>
+                    )}
                   </p>
-                  {ft.optimizerMeta.rawTokenEstimate ? (
-                    <p className="mt-1">
-                      Raw ~{ft.optimizerMeta.rawTokenEstimate} → compiled {ft.instructions.estimatedTokens}
-                      {ft.optimizerMeta.tokensSaved ? ` (saved ~${ft.optimizerMeta.tokensSaved})` : ""}
-                    </p>
-                  ) : null}
+                  <p className="mt-1 text-[11px] text-text-subtle">
+                    Headroom {ft.instructions.headroom} tokens · live memory uses ~{ft.limits.memoryHeadroomTokens} tokens after the breakpoint
+                  </p>
                   {ft.optimizerMeta.compiledVersion ? (
                     <p className="mt-1 font-mono text-[10px]">
-                      v{ft.optimizerMeta.compiledVersion}
+                      Script v{ft.optimizerMeta.compiledVersion}
                       {ft.optimizerMeta.optimizerModel ? ` · ${ft.optimizerMeta.optimizerModel}` : ""}
                     </p>
                   ) : (
-                    <p className="mt-1">Save prompts to run one-time compiler</p>
+                    <p className="mt-1">Create agent script to activate the cached brain</p>
                   )}
                 </div>
               </div>
-
-              {portal === "dev" && (
-                <Field
-                  label="Compiled cache prompt (dev only)"
-                  hint="LLM-compressed merge sent to the API cache breakpoint — not shown to business clients"
-                >
-                  <textarea
-                    readOnly
-                    className={cn(inputCls, "min-h-[160px] resize-y font-mono text-[11px] opacity-90")}
-                    value={ft.effectivePreview || "Save prompts to generate compiled preview…"}
-                  />
-                </Field>
-              )}
             </div>
           )}
 
@@ -478,24 +518,21 @@ export function TestStudioFineTuneWorkbench({
       )}
 
       <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-surface-border-subtle pt-4">
-        <SkeuoButton type="button" variant="primary" disabled={locked || ft.loading} onClick={ft.saveAll}>
-          Save all for test session
+        <SkeuoButton type="button" variant="primary" disabled={locked || ft.loading || ft.saving} onClick={ft.saveAll}>
+          {ft.saving ? "Creating script…" : "Save all for test session"}
         </SkeuoButton>
         <SkeuoButton
           type="button"
           variant="secondary"
-          disabled={locked || ft.loading}
-          onClick={async () => {
-            await ft.saveInstructions();
-            await ft.refreshEffectivePreview();
-          }}
+          disabled={locked || ft.loading || ft.saving}
+          onClick={ft.saveInstructions}
         >
-          Save prompts only
+          {ft.saving ? "Creating script…" : "Create agent script"}
         </SkeuoButton>
         <SkeuoButton
           type="button"
           variant="secondary"
-          disabled={locked || ft.loading}
+          disabled={locked || ft.loading || ft.saving}
           onClick={ft.saveRuntime}
         >
           Save runtime only
@@ -503,12 +540,21 @@ export function TestStudioFineTuneWorkbench({
         <SkeuoButton
           type="button"
           variant="ghost"
-          disabled={locked || ft.loading}
+          disabled={locked || ft.loading || ft.saving}
           onClick={ft.clearSession}
         >
           Clear session overrides
         </SkeuoButton>
-        {ft.status && <span className="text-xs text-text-muted">{ft.status}</span>}
+        {ft.status && (
+          <span
+            className={cn(
+              "text-xs",
+              /fail|too long|exceed/i.test(ft.status) ? "text-status-error" : "text-text-muted"
+            )}
+          >
+            {ft.status}
+          </span>
+        )}
       </div>
     </SkeuoPanel>
   );

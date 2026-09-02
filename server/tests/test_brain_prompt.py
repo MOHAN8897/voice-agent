@@ -19,8 +19,8 @@ def test_sanitize_strips_wrapper():
 
 
 def test_caps():
-    assert MAX_BEHAVIOUR_CHARS == 8_000
-    assert len(sanitize_behaviour("b" * 12_000)) == 8_000
+    assert MAX_BEHAVIOUR_CHARS == 2_000
+    assert len(sanitize_behaviour("b" * 12_000)) == 2_000
 
 
 def test_compose_single_plain_text():

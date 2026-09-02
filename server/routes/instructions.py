@@ -10,11 +10,21 @@ from typing import Optional
 from server.agent.brain_prompt_composer import (
     BUDGET_MAX_TOKENS,
     BUDGET_MIN_TOKENS,
+    CACHE_MIN_TOKENS,
+    MAX_AGENT_BRIEF_CHARS,
+    MAX_AGENT_BRIEF_WORDS,
     MAX_BEHAVIOUR_CHARS,
+    MAX_BEHAVIOUR_WORDS,
     MAX_BRAIN_PROMPT_CHARS,
     MAX_BRAIN_PROMPT_WORDS,
     MAX_BUSINESS_CHARS,
+    MAX_BUSINESS_WORDS,
+    MEMORY_HEADROOM_TOKENS,
+    RECOMMENDED_AGENT_BRIEF_WORDS,
+    RECOMMENDED_BEHAVIOUR_WORDS,
+    RECOMMENDED_BUSINESS_WORDS,
     PromptBudgetExceeded,
+    PromptSectionTooLong,
     estimate_tokens,
 )
 from server.agent.instruction_store import instruction_store
@@ -25,8 +35,6 @@ from server.services.brain_budget import resolve_brain_budget
 from server.services.prompt_cache_key import cache_eligible
 
 router = APIRouter()
-
-CACHE_MIN_TOKENS = 1024
 
 
 def _limits() -> tuple[int, int, int]:
@@ -39,7 +47,8 @@ def _limits() -> tuple[int, int, int]:
 
 class SaveRequest(BaseModel):
     sessionId: str = Field("default", max_length=100)
-    brainPrompt: str | None = Field(None, description="Single composed brain prompt (preferred)")
+    brainPrompt: str | None = Field(None, description="Single composed brain prompt (advanced)")
+    agentBrief: str | None = Field(None, description="Short natural-language agent brief — expanded into calling script")
     behaviourInstructions: str | None = Field(None, description="Legacy: HOW the agent should respond")
     businessInstructions: str | None = Field(None, description="Legacy: business knowledge")
     instructions: str | None = Field(None, max_length=MAX_BEHAVIOUR_CHARS)
@@ -82,13 +91,33 @@ async def save_instructions(body: SaveRequest):
             if est > budget and est <= BUDGET_MAX_TOKENS:
                 budget = est
             saved = instruction_store.save_brain_prompt(body.sessionId, body.brainPrompt, budget_tokens=budget)
+        elif body.agentBrief is not None:
+            from server.brain.agent_script_compiler import compile_agent_from_brief
+
+            prev_meta = instruction_store.get_with_meta(body.sessionId)
+            prev_compiled = prev_meta.get("brainPrompt") if prev_meta.get("compiledVersion") else None
+            compiled, script_result, raw_est, _compiled_est = await compile_agent_from_brief(
+                brief=body.agentBrief,
+                language=body.language_code or "te-IN",
+                style=body.responseStyle,
+                budget_tokens=budget,
+                previous_compiled=prev_compiled,
+            )
+            saved = instruction_store.save_agent_script(
+                body.sessionId,
+                body.agentBrief,
+                script_result.agent_script,
+                body.responseStyle,
+                compiled_brain=compiled,
+                optimizer_report=script_result.to_dict(),
+                source_checksum=script_result.source_checksum,
+                language=body.language_code or "te-IN",
+                budget_tokens=budget,
+                raw_token_estimate=raw_est,
+            )
         else:
             behaviour = body.behaviourInstructions if body.behaviourInstructions is not None else body.instructions or ""
-            if len(behaviour) > b_max:
-                behaviour = behaviour[:b_max]
             business = body.businessInstructions or ""
-            if len(business) > z_max:
-                business = business[:z_max]
             from server.brain.session_brain_compiler import compile_session_brain
 
             prev_meta = instruction_store.get_with_meta(body.sessionId)
@@ -113,6 +142,21 @@ async def save_instructions(body: SaveRequest):
                 budget_tokens=budget,
                 raw_token_estimate=raw_est,
             )
+    except PromptSectionTooLong as e:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": {
+                    "code": "prompt_section_too_long",
+                    "message": str(e),
+                    "section": e.section,
+                    "words": e.words,
+                    "wordLimit": e.word_limit,
+                    "chars": e.chars,
+                    "charLimit": e.char_limit,
+                }
+            },
+        ) from e
     except PromptBudgetExceeded as e:
         raise HTTPException(
             status_code=400,
@@ -152,6 +196,8 @@ async def save_instructions(body: SaveRequest):
         "customBrainPrompt": saved.get("customBrainPrompt", False),
         "behaviour": saved.get("behaviour", ""),
         "business": saved.get("business", ""),
+        "agentBrief": saved.get("agentBrief", ""),
+        "agentScript": saved.get("agentScript", ""),
         "responseStyle": saved.get("style"),
         "behaviourLength": len(saved.get("behaviour") or ""),
         "businessLength": len(saved.get("business") or ""),
@@ -183,11 +229,24 @@ async def get_instructions(sessionId: str = "default", includeCompiled: bool = Q
         "budgetMinTokens": BUDGET_MIN_TOKENS,
         "budgetMaxTokens": BUDGET_MAX_TOKENS,
         "maxWords": MAX_BRAIN_PROMPT_WORDS,
+        "recommendedBehaviourWords": RECOMMENDED_BEHAVIOUR_WORDS,
+        "recommendedBusinessWords": RECOMMENDED_BUSINESS_WORDS,
+        "recommendedAgentBriefWords": RECOMMENDED_AGENT_BRIEF_WORDS,
+        "memoryHeadroomTokens": MEMORY_HEADROOM_TOKENS,
         "limits": {
             "brainPromptMax": p_max,
             "behaviourMax": b_max,
             "businessMax": z_max,
+            "agentBriefMax": MAX_AGENT_BRIEF_CHARS,
+            "behaviourMaxWords": MAX_BEHAVIOUR_WORDS,
+            "businessMaxWords": MAX_BUSINESS_WORDS,
+            "agentBriefMaxWords": MAX_AGENT_BRIEF_WORDS,
+            "recommendedBehaviourWords": RECOMMENDED_BEHAVIOUR_WORDS,
+            "recommendedBusinessWords": RECOMMENDED_BUSINESS_WORDS,
+            "recommendedAgentBriefWords": RECOMMENDED_AGENT_BRIEF_WORDS,
             "maxWords": MAX_BRAIN_PROMPT_WORDS,
+            "cacheMinTokens": CACHE_MIN_TOKENS,
+            "memoryHeadroomTokens": MEMORY_HEADROOM_TOKENS,
         },
     }
     if not includeCompiled:

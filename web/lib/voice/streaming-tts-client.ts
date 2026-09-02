@@ -1,5 +1,5 @@
 import { wsUrl } from "@/lib/api";
-import { buildWsTtsConfig, fetchTtsConfig } from "@/lib/voice/tts-config";
+import { buildWsTtsConfig, fetchTtsConfig, invalidateTtsConfigCache } from "@/lib/voice/tts-config";
 import { VOICE_PIPELINE_LIMITS, type TtsConfig, type VoiceTraceFn } from "@/lib/voice/types";
 
 export type StreamingTtsClientOptions = {
@@ -63,6 +63,7 @@ export class StreamingTtsClient {
   }
 
   private async openSocket(): Promise<void> {
+    invalidateTtsConfigCache();
     const cfg = await fetchTtsConfig(this.opts.sessionId, this.opts.languageCode, this.callId);
     this.cfg = cfg;
     this.model = cfg.model || "bulbul:v3";

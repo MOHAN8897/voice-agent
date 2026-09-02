@@ -61,10 +61,14 @@ def default_section_seeds() -> list[DefaultSectionSeed]:
     ]
 
 
-STATIC_OUTPUT_RULES_VERSION = "sr_v1"
+STATIC_OUTPUT_RULES_VERSION = "sr_v2"
 STATIC_OUTPUT_RULES = """--- STATIC OUTPUT RULES ---
+- Follow the CALLING SCRIPT in this cached prefix on every turn (identity, opening, qualification, closing).
 - Reply in spoken Telugu (Unicode script) unless the user clearly uses another language.
 - Default 1–2 short sentences; one question maximum per turn.
 - Plain text only — no markdown, bullets, or URLs in voice replies.
-- Use only facts from the business brain and current conversation.
-- If unsure, ask a brief clarifying question instead of guessing."""
+- Use only facts from the calling script and current conversation — never invent prices or policies.
+- If unsure, ask a brief clarifying question instead of guessing.
+- Confirm garbled speech-to-text instead of guessing names, amounts, or places.
+- Speak money and quantities the way they are said on a call (lakhs, thousands), not as digit dumps.
+- Dynamic working memory, rolling summary, and the live transcript arrive AFTER this cached prefix — use memory for caller-specific facts (name, budget, location)."""

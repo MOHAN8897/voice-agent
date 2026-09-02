@@ -30,7 +30,16 @@ def resolve_stack_for_session(session_id: str, *, language: str = "te-IN") -> Re
     tier = settings.voice_agent_tier
     tts_provider = getattr(settings, f"voice_{tier}_tts_provider")
     tts_model = runtime.get("ttsModel") or getattr(settings, f"voice_{tier}_tts_model")
+    from server.services.cartesia_voices import is_cartesia_voice_id
+
+    cartesia_on = bool(settings.enable_cartesia and (settings.cartesia_api_key or "").strip())
+    if not cartesia_on and (tts_provider == "cartesia" or str(tts_model or "").startswith("sonic")):
+        tts_provider = "sarvam"
+        tts_model = getattr(settings, f"voice_{tier}_tts_model") or "bulbul:v3"
+
     speaker = runtime.get("ttsSpeaker")
+    if speaker and is_cartesia_voice_id(str(speaker)) and tts_provider != "cartesia":
+        speaker = None
     if not speaker:
         if tts_provider == "cartesia" or str(tts_model or "").startswith("sonic"):
             speaker = settings.cartesia_tts_voice_id or constants.CARTESIA_DEFAULT_VOICE_ID

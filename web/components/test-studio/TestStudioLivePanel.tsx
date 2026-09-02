@@ -42,9 +42,13 @@ export function TestStudioLivePanel({
   const [lines, setLines] = useState<TranscriptLine[]>([]);
   const [partial, setPartial] = useState("");
 
-  const listening = status === "listening" || status === "connecting";
-  const callActive = status !== "idle" && status !== "ended";
-  const orbActive = listening || status === "speaking" || status === "thinking";
+  const listening =
+    status === "listening" ||
+    status === "connecting" ||
+    status === "thinking" ||
+    status === "speaking";
+  const callActive = status !== "idle" && status !== "ended" && status !== "paused";
+  const orbActive = listening;
 
   function handleStatus(next: string) {
     setStatus(next);

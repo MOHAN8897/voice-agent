@@ -10,7 +10,13 @@ from server.agent.brain_prompt_composer import (
     sanitize_behaviour,
     sanitize_business,
     validate_brain_prompt_budget,
+    validate_user_section,
+    fit_text_to_tokens,
     estimate_tokens,
+    MAX_BEHAVIOUR_CHARS,
+    MAX_BEHAVIOUR_WORDS,
+    MAX_BUSINESS_CHARS,
+    MAX_BUSINESS_WORDS,
 )
 from server.brain.business_prompt_optimizer import OptimizerResult, optimize_session_dual_prompt
 from server.brain.sections import STATIC_OUTPUT_RULES
@@ -73,8 +79,22 @@ async def compile_session_brain(
     Compile behaviour + business into one concise cached brain prompt.
     Returns (compiled_text, optimizer_report, raw_token_est, compiled_token_est).
     """
-    b = sanitize_behaviour(behaviour or "")
-    z = sanitize_business(business or "")
+    raw_b = (behaviour or "").strip()
+    raw_z = (business or "").strip()
+    validate_user_section(
+        "Behaviour instructions",
+        raw_b,
+        word_limit=MAX_BEHAVIOUR_WORDS,
+        char_limit=MAX_BEHAVIOUR_CHARS,
+    )
+    validate_user_section(
+        "Business instructions",
+        raw_z,
+        word_limit=MAX_BUSINESS_WORDS,
+        char_limit=MAX_BUSINESS_CHARS,
+    )
+    b = sanitize_behaviour(raw_b)
+    z = sanitize_business(raw_z)
     style_val = (style or DEFAULT_RESPONSE_STYLE)[:100]
     raw_prompt = assemble_raw_dual_prompt(
         behaviour=b,
@@ -106,6 +126,40 @@ async def compile_session_brain(
         f"{STATIC_OUTPUT_RULES}\n\n"
         f"Language: {language}. Style: {style_val}."
     )
+    static_shell = (
+        f"{SECTION_SAFETY}\n\n{SECTION_TELUGU_VOICE}\n\n\n\n{STATIC_OUTPUT_RULES}\n\n"
+        f"Language: {language}. Style: {style_val}."
+    )
+    user_budget = max(180, int(budget_tokens) - estimate_tokens(static_shell) - 40)
+    fitted = fit_text_to_tokens(opt.optimized_business_prompt.strip(), user_budget)
+    if fitted != opt.optimized_business_prompt.strip():
+        opt.optimized_business_prompt = fitted
+        compiled = (
+            f"{SECTION_SAFETY}\n\n"
+            f"{SECTION_TELUGU_VOICE}\n\n"
+            f"{fitted}\n\n"
+            f"{STATIC_OUTPUT_RULES}\n\n"
+            f"Language: {language}. Style: {style_val}."
+        )
     validate_brain_prompt_budget(compiled, budget_tokens)
     compiled_tokens = estimate_tokens(compiled)
+    if compiled_tokens < 1024:
+        # OpenAI explicit cache requires ≥1024 tokens in the breakpoint prefix.
+        from server.prompts.voice_defaults import DEFAULT_BEHAVIOUR_INSTRUCTIONS as _db
+        from server.prompts.voice_defaults import DEFAULT_BUSINESS_INSTRUCTIONS as _dz
+
+        filler = (
+            f"{opt.optimized_business_prompt.strip()}\n\n"
+            f"--- PLATFORM DEFAULTS (cache floor) ---\n{_db.strip()}\n{_dz.strip()}"
+        )
+        filler = fit_text_to_tokens(filler, user_budget)
+        compiled = (
+            f"{SECTION_SAFETY}\n\n"
+            f"{SECTION_TELUGU_VOICE}\n\n"
+            f"{filler}\n\n"
+            f"{STATIC_OUTPUT_RULES}\n\n"
+            f"Language: {language}. Style: {style_val}."
+        )
+        validate_brain_prompt_budget(compiled, budget_tokens)
+        compiled_tokens = estimate_tokens(compiled)
     return compiled, opt, raw_tokens, compiled_tokens

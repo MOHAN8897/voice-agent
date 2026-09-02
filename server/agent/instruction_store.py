@@ -10,6 +10,7 @@ from typing import Dict, Optional
 from server.agent.brain_prompt_composer import (
     compose_brain_prompt,
     estimate_tokens,
+    sanitize_agent_brief,
     sanitize_behaviour,
     sanitize_brain_prompt,
     sanitize_business,
@@ -91,6 +92,49 @@ class InstructionStore:
             self._persist(session_id)
             return self._pack_entry(self._store[session_id])
 
+    def save_agent_script(
+        self,
+        session_id: str,
+        agent_brief: str,
+        agent_script: str,
+        style: str | None,
+        *,
+        compiled_brain: str,
+        optimizer_report: dict,
+        source_checksum: str,
+        language: str = "te-IN",
+        budget_tokens: int = 2500,
+        raw_token_estimate: int = 0,
+    ) -> dict:
+        """Save short agent brief + GPT-expanded calling script as cached brain."""
+        brief = sanitize_agent_brief(agent_brief or "")
+        script = (agent_script or "").strip()
+        with self._lock:
+            prev = self._store.get(session_id, {})
+            style_val = (style or prev.get("style") or DEFAULT_RESPONSE_STYLE)[:100]
+            estimated = validate_brain_prompt_budget(compiled_brain, budget_tokens)
+            version = int(prev.get("compiledVersion", 0)) + 1
+            self._store[session_id] = {
+                "text": "",
+                "behaviour": "",
+                "business": "",
+                "agentBrief": brief,
+                "agentScript": script,
+                "style": style_val,
+                "brainPrompt": compiled_brain,
+                "customBrainPrompt": False,
+                "estimatedTokens": estimated,
+                "budgetTokens": budget_tokens,
+                "updatedAt": time.time(),
+                "compiledVersion": version,
+                "optimizerReport": optimizer_report,
+                "sourceChecksum": source_checksum,
+                "rawTokenEstimate": raw_token_estimate,
+                "language": language,
+            }
+            self._persist(session_id)
+            return self._pack_entry(self._store[session_id])
+
     def save_compiled(
         self,
         session_id: str,
@@ -132,11 +176,22 @@ class InstructionStore:
             self._persist(session_id)
             return self._pack_entry(self._store[session_id])
 
+    def _legacy_brief(self, e: dict) -> str:
+        if e.get("agentBrief"):
+            return e["agentBrief"]
+        b = (e.get("behaviour") or "").strip()
+        z = (e.get("business") or "").strip()
+        if b and z:
+            return f"{b}\n\n{z}"
+        return b or z
+
     def _pack_entry(self, e: dict) -> dict:
         return {
             "text": e.get("behaviour", ""),
             "behaviour": e.get("behaviour", ""),
             "business": e.get("business", ""),
+            "agentBrief": e.get("agentBrief", ""),
+            "agentScript": e.get("agentScript", ""),
             "style": e.get("style", DEFAULT_RESPONSE_STYLE),
             "brainPrompt": e.get("brainPrompt", ""),
             "customBrainPrompt": e.get("customBrainPrompt", False),
@@ -184,6 +239,10 @@ class InstructionStore:
         language: str = "te-IN",
         budget_tokens: int = 2500,
     ) -> str:
+        with self._lock:
+            e = self._entry(session_id)
+            if e and e.get("brainPrompt"):
+                return e["brainPrompt"]
         try:
             from server.config.env import get_settings
 
@@ -195,10 +254,6 @@ class InstructionStore:
                     return snap["compiled_text"]
         except Exception:
             pass
-        with self._lock:
-            e = self._entry(session_id)
-            if e and e.get("brainPrompt"):
-                return e["brainPrompt"]
         return compose_brain_prompt(
             behaviour=self.get_behaviour(session_id),
             business=self.get_business(session_id),
@@ -244,6 +299,8 @@ class InstructionStore:
                     "text": DEFAULT_BEHAVIOUR_INSTRUCTIONS,
                     "behaviour": DEFAULT_BEHAVIOUR_INSTRUCTIONS,
                     "business": DEFAULT_BUSINESS_INSTRUCTIONS,
+                    "agentBrief": "",
+                    "agentScript": "",
                     "brainPrompt": brain,
                     "customBrainPrompt": False,
                     "estimatedTokens": estimate_tokens(brain),
@@ -253,10 +310,14 @@ class InstructionStore:
                     "usingDefaults": True,
                 }
             using_custom = bool(e.get("customBrainPrompt"))
+            has_agent_brief = bool(e.get("agentBrief"))
+            has_legacy = bool(e.get("behaviour") or e.get("business"))
             return {
                 "text": e["behaviour"] or DEFAULT_BEHAVIOUR_INSTRUCTIONS,
                 "behaviour": e["behaviour"] or DEFAULT_BEHAVIOUR_INSTRUCTIONS,
                 "business": e["business"] or DEFAULT_BUSINESS_INSTRUCTIONS,
+                "agentBrief": self._legacy_brief(e) if not has_agent_brief else e.get("agentBrief", ""),
+                "agentScript": e.get("agentScript", ""),
                 "brainPrompt": e.get("brainPrompt") or compose_brain_prompt(
                     behaviour=e.get("behaviour", ""),
                     business=e.get("business", ""),
@@ -266,9 +327,9 @@ class InstructionStore:
                 "estimatedTokens": e.get("estimatedTokens") or estimate_tokens(e.get("brainPrompt", "")),
                 "budgetTokens": e.get("budgetTokens"),
                 "updatedAt": e["updatedAt"],
-                "present": using_custom or bool(e["behaviour"] or e["business"]),
+                "present": using_custom or has_agent_brief or has_legacy,
                 "style": e.get("style") or DEFAULT_RESPONSE_STYLE,
-                "usingDefaults": not using_custom and not bool(e["behaviour"] or e["business"]),
+                "usingDefaults": not using_custom and not has_agent_brief and not has_legacy,
                 "compiledVersion": e.get("compiledVersion", 0),
                 "optimizerReport": e.get("optimizerReport"),
                 "sourceChecksum": e.get("sourceChecksum"),

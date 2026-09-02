@@ -13,10 +13,10 @@ def test_sanitize_strips_wrapper():
     assert "hello" in sanitize_behaviour(s)
 
 
-def test_caps_are_8k():
-    assert MAX_BEHAVIOUR_INSTRUCTIONS == 8_000
-    assert MAX_BUSINESS_INSTRUCTIONS == 8_000
-    assert len(sanitize_behaviour("b" * 12_000)) == 8_000
+def test_caps_match_cache_budget():
+    assert MAX_BEHAVIOUR_INSTRUCTIONS == 2_000
+    assert MAX_BUSINESS_INSTRUCTIONS == 2_400
+    assert len(sanitize_behaviour("b" * 12_000)) == 2_000
 
 
 def test_build_composes_plain_sections():

@@ -37,6 +37,8 @@ const RUNTIME_SAVE_KEYS = new Set([
 ]);
 
 export type InstructionsState = {
+  agentBrief: string;
+  agentScript: string;
   behaviourInstructions: string;
   businessInstructions: string;
   responseStyle: string;
@@ -45,7 +47,59 @@ export type InstructionsState = {
   budgetTokens: number;
   headroom: number;
   customBrainPrompt: boolean;
+  cacheEligible?: boolean;
 };
+
+export type PromptLimits = {
+  agentBriefMax: number;
+  agentBriefMaxWords: number;
+  recommendedAgentBriefWords: number;
+  behaviourMax: number;
+  businessMax: number;
+  behaviourMaxWords: number;
+  businessMaxWords: number;
+  recommendedBehaviourWords: number;
+  recommendedBusinessWords: number;
+  cacheMinTokens: number;
+  memoryHeadroomTokens: number;
+};
+
+const DEFAULT_LIMITS: PromptLimits = {
+  agentBriefMax: 1200,
+  agentBriefMaxWords: 180,
+  recommendedAgentBriefWords: 80,
+  behaviourMax: 2000,
+  businessMax: 2400,
+  behaviourMaxWords: 280,
+  businessMaxWords: 320,
+  recommendedBehaviourWords: 180,
+  recommendedBusinessWords: 220,
+  cacheMinTokens: 1024,
+  memoryHeadroomTokens: 300,
+};
+
+function countWords(text: string): number {
+  const t = text.trim();
+  if (!t) return 0;
+  return t.split(/\s+/).length;
+}
+
+function apiErrorMessage(payload: unknown, fallback: string): string {
+  if (!payload || typeof payload !== "object") return fallback;
+  const j = payload as Record<string, unknown>;
+  const detail = j.detail;
+  if (typeof detail === "string") return detail;
+  if (detail && typeof detail === "object") {
+    const d = detail as Record<string, unknown>;
+    const err = d.error;
+    if (err && typeof err === "object" && typeof (err as { message?: string }).message === "string") {
+      return (err as { message: string }).message;
+    }
+    if (typeof d.message === "string") return d.message;
+  }
+  if (typeof j.message === "string") return j.message;
+  return fallback;
+}
 
 export type RuntimeState = Record<string, unknown>;
 
@@ -70,6 +124,8 @@ export function useTestStudioFineTune(agentId: string, language: string) {
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [runtime, setRuntime] = useState<RuntimeState>({});
   const [instructions, setInstructions] = useState<InstructionsState>({
+    agentBrief: "",
+    agentScript: "",
     behaviourInstructions: "",
     businessInstructions: "",
     responseStyle: "",
@@ -79,7 +135,6 @@ export function useTestStudioFineTune(agentId: string, language: string) {
     headroom: 2000,
     customBrainPrompt: false,
   });
-  const [effectivePreview, setEffectivePreview] = useState("");
   const [optimizerMeta, setOptimizerMeta] = useState<{
     compiledVersion?: number;
     optimizerModel?: string;
@@ -94,6 +149,8 @@ export function useTestStudioFineTune(agentId: string, language: string) {
   }>({});
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [limits, setLimits] = useState<PromptLimits>(DEFAULT_LIMITS);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -117,6 +174,8 @@ export function useTestStudioFineTune(agentId: string, language: string) {
       if (insR.ok) {
         const j = await insR.json();
         setInstructions({
+          agentBrief: j.agentBrief || "",
+          agentScript: j.agentScript || "",
           behaviourInstructions: j.behaviour || "",
           businessInstructions: j.business || "",
           responseStyle: j.responseStyle || j.style || "",
@@ -125,6 +184,29 @@ export function useTestStudioFineTune(agentId: string, language: string) {
           budgetTokens: Number(j.budgetTokens || 2000),
           headroom: Number(j.headroom || 0),
           customBrainPrompt: Boolean(j.customBrainPrompt),
+          cacheEligible: Boolean(j.cacheEligible),
+        });
+        const lim = j.limits || {};
+        setLimits({
+          agentBriefMax: Number(lim.agentBriefMax || DEFAULT_LIMITS.agentBriefMax),
+          agentBriefMaxWords: Number(lim.agentBriefMaxWords || DEFAULT_LIMITS.agentBriefMaxWords),
+          recommendedAgentBriefWords: Number(
+            lim.recommendedAgentBriefWords || DEFAULT_LIMITS.recommendedAgentBriefWords
+          ),
+          behaviourMax: Number(lim.behaviourMax || DEFAULT_LIMITS.behaviourMax),
+          businessMax: Number(lim.businessMax || DEFAULT_LIMITS.businessMax),
+          behaviourMaxWords: Number(lim.behaviourMaxWords || DEFAULT_LIMITS.behaviourMaxWords),
+          businessMaxWords: Number(lim.businessMaxWords || DEFAULT_LIMITS.businessMaxWords),
+          recommendedBehaviourWords: Number(
+            lim.recommendedBehaviourWords || DEFAULT_LIMITS.recommendedBehaviourWords
+          ),
+          recommendedBusinessWords: Number(
+            lim.recommendedBusinessWords || DEFAULT_LIMITS.recommendedBusinessWords
+          ),
+          cacheMinTokens: Number(j.cacheMinTokens || lim.cacheMinTokens || DEFAULT_LIMITS.cacheMinTokens),
+          memoryHeadroomTokens: Number(
+            lim.memoryHeadroomTokens || DEFAULT_LIMITS.memoryHeadroomTokens
+          ),
         });
         setOptimizerMeta({
           compiledVersion: j.compiledVersion,
@@ -153,21 +235,6 @@ export function useTestStudioFineTune(agentId: string, language: string) {
           publishedVersion: j.published?.version_id || m.publishedVersion,
         }));
       }
-
-      const effR = await fetch(
-        `/api/prompt/effective?sessionId=${encodeURIComponent(sessionId)}&language_code=${encodeURIComponent(language)}&transcript=${encodeURIComponent("Hello")}`,
-        { credentials: "include" }
-      );
-      if (effR.ok) {
-        const j = await effR.json();
-        setEffectivePreview(j.compiledBrainPrompt || j.brainPrompt || "");
-        setOptimizerMeta({
-          compiledVersion: j.compiledVersion,
-          optimizerModel: j.optimizerReport?.optimizer_model,
-          tokensSaved: j.tokensSaved,
-          rawTokenEstimate: j.rawTokenEstimate,
-        });
-      }
     } catch {
       setStatus("Failed to load fine-tune settings");
     } finally {
@@ -180,7 +247,19 @@ export function useTestStudioFineTune(agentId: string, language: string) {
   }, [load]);
 
   const saveInstructions = useCallback(async () => {
-    setStatus("Saving prompts… (may take a few seconds while compiling)");
+    const briefWords = countWords(instructions.agentBrief);
+    if (briefWords > limits.agentBriefMaxWords || instructions.agentBrief.length > limits.agentBriefMax) {
+      setStatus(
+        `Agent brief is ${briefWords} words / ${instructions.agentBrief.length} chars (max ${limits.agentBriefMaxWords} words / ${limits.agentBriefMax} chars). Shorten it before saving.`
+      );
+      return false;
+    }
+    if (!instructions.agentBrief.trim()) {
+      setStatus("Write a short agent brief first — e.g. company name, agent name, and what the telecaller should do.");
+      return false;
+    }
+    setSaving(true);
+    setStatus("Creating agent script… GPT expanding your brief (up to ~25s)");
     try {
       const r = await fetch("/api/instructions", {
         method: "POST",
@@ -188,52 +267,50 @@ export function useTestStudioFineTune(agentId: string, language: string) {
         credentials: "include",
         body: JSON.stringify({
           sessionId,
-          behaviourInstructions: instructions.behaviourInstructions,
-          businessInstructions: instructions.businessInstructions,
+          agentBrief: instructions.agentBrief,
           responseStyle: instructions.responseStyle || undefined,
           brainPromptBudgetTokens: runtime.brainPromptBudgetTokens,
           language_code: language,
         }),
       });
+      const j = await r.json().catch(() => ({}));
       if (!r.ok) {
-        let msg = "Prompt save failed";
-        try {
-          const j = await r.json();
-          msg = j.detail?.error?.message || j.detail?.message || msg;
-        } catch {
-          msg = `${msg} (${r.status})`;
-        }
-        setStatus(msg);
+        setStatus(apiErrorMessage(j, `Agent script creation failed (${r.status})`));
         return false;
       }
-      const j = await r.json();
       setInstructions((prev) => ({
         ...prev,
-        behaviourInstructions: j.behaviour ?? prev.behaviourInstructions,
-        businessInstructions: j.business ?? prev.businessInstructions,
+        agentBrief: j.agentBrief ?? prev.agentBrief,
+        agentScript: j.agentScript ?? prev.agentScript,
         responseStyle: j.responseStyle ?? prev.responseStyle,
+        brainPrompt: j.compiledBrainPrompt || j.brainPromptFull || prev.brainPrompt,
         estimatedTokens: j.estimatedTokens,
         budgetTokens: j.budgetTokens,
         headroom: j.headroom,
+        cacheEligible: Boolean(j.cacheEligible),
       }));
-      setEffectivePreview(j.compiledBrainPrompt || j.brainPromptFull || j.brainPrompt || "");
       setOptimizerMeta({
         compiledVersion: j.compiledVersion,
         optimizerModel: j.optimizerReport?.optimizer_model,
         tokensSaved: j.tokensSaved ?? j.optimizerReport?.tokens_saved,
         rawTokenEstimate: j.rawTokenEstimate,
       });
+      const cacheNote = j.cacheEligible
+        ? `cache ON (≥${j.cacheMinTokens || 1024} tokens)`
+        : `cache OFF — compiled ${j.estimatedTokens} tokens, need ≥${j.cacheMinTokens || 1024}`;
       setStatus(
         j.compiledVersion
-          ? `Prompts compiled (v${j.compiledVersion}) — saved for test session`
-          : "Prompts saved for test session"
+          ? `Agent script v${j.compiledVersion} created and saved · ${j.estimatedTokens} tokens · ${cacheNote}`
+          : `Agent script saved · ${cacheNote}`
       );
       return true;
     } catch {
-      setStatus("Prompt save failed — network error");
+      setStatus("Agent script creation failed — network error");
       return false;
+    } finally {
+      setSaving(false);
     }
-  }, [instructions, runtime.brainPromptBudgetTokens, sessionId, language]);
+  }, [instructions, limits, runtime.brainPromptBudgetTokens, sessionId, language]);
 
   const saveRuntime = useCallback(async () => {
     setStatus("Saving runtime…");
@@ -299,10 +376,12 @@ export function useTestStudioFineTune(agentId: string, language: string) {
     setInstructions((prev) => ({
       ...prev,
       brainPrompt: j.brainPrompt || "",
+      agentBrief: "",
+      agentScript: "",
       behaviourInstructions: "",
       businessInstructions: "",
     }));
-    setStatus("Loaded factory default — click Save prompts to apply");
+    setStatus("Loaded factory default — click Create agent script to apply");
   }, []);
 
   const importFromAgentDraft = useCallback(() => {
@@ -314,33 +393,10 @@ export function useTestStudioFineTune(agentId: string, language: string) {
     const business = assembleRawPreview(sections);
     setInstructions((prev) => ({
       ...prev,
-      businessInstructions: business,
+      agentBrief: business,
     }));
-    setStatus("Imported agent draft into business instructions — Save prompts to apply");
+    setStatus("Imported agent draft into agent brief — Create agent script to apply");
   }, [agentMeta.draftSections]);
-
-  const refreshEffectivePreview = useCallback(async () => {
-    const r = await fetch(
-      `/api/prompt/effective?sessionId=${encodeURIComponent(sessionId)}&language_code=${encodeURIComponent(language)}`,
-      { credentials: "include" }
-    );
-    if (r.ok) {
-      const j = await r.json();
-      setEffectivePreview(j.compiledBrainPrompt || j.brainPrompt || "");
-      setOptimizerMeta({
-        compiledVersion: j.compiledVersion,
-        optimizerModel: j.optimizerReport?.optimizer_model,
-        tokensSaved: j.tokensSaved,
-        rawTokenEstimate: j.rawTokenEstimate,
-      });
-      setInstructions((prev) => ({
-        ...prev,
-        estimatedTokens: j.estimatedTokens,
-        budgetTokens: j.budgetTokens,
-        headroom: j.headroom,
-      }));
-    }
-  }, [language, sessionId]);
 
   return {
     sessionId,
@@ -349,11 +405,12 @@ export function useTestStudioFineTune(agentId: string, language: string) {
     setRuntime,
     instructions,
     setInstructions,
-    effectivePreview,
     optimizerMeta,
     agentMeta,
     status,
     loading,
+    saving,
+    limits,
     load,
     saveInstructions,
     saveRuntime,
@@ -361,6 +418,5 @@ export function useTestStudioFineTune(agentId: string, language: string) {
     clearSession,
     loadFactoryDefault,
     importFromAgentDraft,
-    refreshEffectivePreview,
   };
 }

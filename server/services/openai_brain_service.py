@@ -225,6 +225,17 @@ def _resolve_brain_text(
             return ctx.compiled_brain_text, ctx.compiled_brain_version
 
     settings = get_settings()
+    if use_stored_brain:
+        meta = instruction_store.get_with_meta(session_id)
+        if meta.get("present") or meta.get("compiledVersion"):
+            return (
+                instruction_store.get_brain_prompt(
+                    session_id,
+                    language=language,
+                    budget_tokens=budget,
+                ),
+                None,
+            )
     if settings.use_versioned_brains:
         from server.brain.compiled_brain_service import get_cached_compiled_brain
 

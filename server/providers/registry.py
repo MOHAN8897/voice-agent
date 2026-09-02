@@ -13,15 +13,11 @@ from server.providers.base import LLMAdapter, STTAdapter, TTSAdapter
 from server.providers.openai_llm import OpenAILLMAdapter
 from server.providers.sarvam_stt import SarvamSTTAdapter
 from server.providers.sarvam_tts import SarvamTTSAdapter
+from server.services.usage_pricing import build_pricing_metadata
 
 _REGISTRY: "ProviderRegistry | None" = None
 
-_PRICING_METADATA: dict[str, dict[str, Any]] = {
-    "sarvam:saaras:v3": {"unit": "minute", "usd_per_unit": 0.006, "updated_at": "2026-08-01"},
-    "sarvam:saaras:v3-realtime": {"unit": "minute", "usd_per_unit": 0.008, "updated_at": "2026-08-01"},
-    "sarvam:bulbul:v3": {"unit": "1k_chars", "usd_per_unit": 0.015, "updated_at": "2026-08-01"},
-    "openai:gpt-5.6-luna": {"unit": "1k_tokens", "usd_per_unit": 0.002, "updated_at": "2026-08-01"},
-}
+_PRICING_METADATA: dict[str, Any] = build_pricing_metadata(95.64)
 
 
 class ProviderRegistry:
@@ -104,7 +100,7 @@ class ProviderRegistry:
             "active_tier": active_tier,
             "tiers": list(constants.TIER_NAMES),
             "providers": providers,
-            "pricing_metadata": _PRICING_METADATA,
+            "pricing_metadata": build_pricing_metadata(s.fx_rate_inr),
         }
 
     def _sarvam_provider_entry(self, s: Settings) -> dict[str, Any]:

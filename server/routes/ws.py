@@ -67,46 +67,59 @@ def _is_cartesia_model(model: str) -> bool:
 
 
 def _resolve_ws_tts_model(model: str, session_id: str, call_id: str | None) -> str:
-    stack = _stack_for_ws(call_id, session_id)
-    if stack:
-        if stack.tts.provider == "cartesia" or _is_cartesia_model(stack.tts.model):
+    try:
+        resolved = merge_ws_tts_config(session_id, {}, call_id=call_id, ws_model=model)
+        return str(resolved.get("model") or "bulbul:v3")
+    except Exception:
+        stack = _stack_for_ws(call_id, session_id)
+        if stack:
+            if stack.tts.provider == "cartesia" or _is_cartesia_model(stack.tts.model):
+                return stack.tts.model
+            if model in constants.TTS_MODELS:
+                return model
             return stack.tts.model
-        if model in constants.TTS_MODELS:
+        if model in constants.TTS_MODELS or _is_cartesia_model(model):
             return model
-        return stack.tts.model
-    if model in constants.TTS_MODELS or _is_cartesia_model(model):
-        return model
-    return "bulbul:v3"
+        return "bulbul:v3"
 
 
 def _connect_tts_upstream(model: str, session_id: str = "default", call_id: str | None = None):
+    """Open the TTS provider that resolve_tts_config selected — never mix Cartesia config onto Sarvam WS."""
+    from server.services.tts_config import resolve_tts_config
+
+    resolved = resolve_tts_config(session_id, model=model, call_id=call_id)
+    provider = str(resolved.get("provider") or "sarvam")
+    effective_model = str(resolved.get("model") or "bulbul:v3")
+    speaker = str(resolved.get("speaker") or "shubh")
+    language = str(resolved.get("language_code") or "te-IN")
     settings = get_settings()
     if settings.use_provider_registry:
-        stack = _stack_for_ws(call_id, session_id)
         registry = get_provider_registry()
-        tts = registry.get_tts(stack.tts.provider)
-        if stack.tts.provider == "cartesia" or _is_cartesia_model(stack.tts.model):
-            effective_model = stack.tts.model if _is_cartesia_model(stack.tts.model) else (
-                model if _is_cartesia_model(model) else (settings.cartesia_tts_model or "sonic-3.5")
-            )
-        else:
-            effective_model = model if model in constants.TTS_MODELS else stack.tts.model
+        if not registry.is_provider_enabled(provider, "tts"):
+            provider = "sarvam"
+            if effective_model not in constants.TTS_MODELS:
+                effective_model = "bulbul:v3"
+            from server.services.cartesia_voices import is_cartesia_voice_id
+
+            if is_cartesia_voice_id(speaker):
+                speaker = settings.sarvam_tts_speaker_te
+        tts = registry.get_tts(provider)
         config = TTSConfig(
-            provider=stack.tts.provider,
+            provider=provider,
             model=effective_model,
-            language=stack.language,
-            speaker=stack.tts.config.get("speaker", settings.sarvam_tts_speaker_te),
+            language=language,
+            speaker=speaker,
         )
         log_ws(
             "TTS upstream opening",
-            provider=stack.tts.provider,
+            provider=provider,
             model=effective_model,
-            speaker=config.speaker,
+            speaker=speaker,
             session=session_id,
             call_id=call_id,
         )
         return tts.connect_stream(config)
-    return connect_tts_ws(model=model)
+    return connect_tts_ws(model=effective_model if effective_model in constants.TTS_MODELS else "bulbul:v3")
 
 
 @router.websocket("/ws/stt-realtime")
@@ -142,6 +155,8 @@ async def ws_stt_realtime(ws: WebSocket):
         upstream = await upstream_cm.__aenter__()
         log_ws("STT upstream connected", session=session_id, language=q.get("language_code", "te-IN"))
 
+        audio_stats = {"frames": 0, "peak": 0}
+
         async def upstream_to_client():
             try:
                 async for raw in upstream:
@@ -150,14 +165,22 @@ async def ws_stt_realtime(ws: WebSocket):
                     try:
                         msg = json.loads(raw)
                         ev = msg.get("event") or msg.get("type") or ""
-                        if ev in ("transcript.partial", "transcript.final", "error"):
-                            txt = (msg.get("text") or (msg.get("data") or {}).get("text") or "")[:80]
+                        data_obj = msg.get("data") if isinstance(msg.get("data"), dict) else {}
+                        txt = (msg.get("text") or data_obj.get("text") or "")[:80]
+                        if ev in (
+                            "session.begin",
+                            "transcript.partial",
+                            "transcript.final",
+                            "error",
+                            "vad.speech_start",
+                            "vad.speech_end",
+                        ):
                             log_ws("STT relay", event=ev, text=txt, session=session_id, call_id=call_id)
                     except Exception:
                         pass
                     await ws.send_text(raw)
-            except Exception:
-                pass
+            except Exception as exc:
+                log_error("STT upstream read failed", err=str(exc)[:300], session=session_id)
             finally:
                 try:
                     await ws.close()
@@ -172,6 +195,22 @@ async def ws_stt_realtime(ws: WebSocket):
                 data = msg.get("bytes")
                 text = msg.get("text")
                 if data:
+                    audio_stats["frames"] += 1
+                    probe = data[: min(len(data), 4096)]
+                    for i in range(0, len(probe) - 1, 2):
+                        sample = int.from_bytes(probe[i : i + 2], "little", signed=True)
+                        amp = abs(sample)
+                        if amp > audio_stats["peak"]:
+                            audio_stats["peak"] = amp
+                    if audio_stats["frames"] == 1 or audio_stats["frames"] % 40 == 0:
+                        log_ws(
+                            "STT audio in",
+                            frames=audio_stats["frames"],
+                            bytes=len(data),
+                            peak=audio_stats["peak"],
+                            session=session_id,
+                            call_id=call_id,
+                        )
                     if call_id:
                         from server.call.audio_archive import audio_archive
 

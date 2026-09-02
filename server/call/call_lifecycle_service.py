@@ -98,7 +98,10 @@ class CallLifecycleService:
             stack_override=stack_override,
             language=language or (agent.get("languages") or ["te-IN"])[0],
         )
-        compiled_version, compiled_text = await self._lock_compiled_brain(agent["agent_id"])
+        compiled_version, compiled_text = await self._lock_compiled_brain(
+            agent["agent_id"],
+            session_id=session_id,
+        )
 
         call_id = str(uuid.uuid4())
         started = _utcnow()
@@ -429,7 +432,24 @@ class CallLifecycleService:
             stack_override=stack_override,
         )
 
-    async def _lock_compiled_brain(self, agent_id: str) -> tuple[str | None, str | None]:
+    async def _lock_compiled_brain(
+        self,
+        agent_id: str,
+        *,
+        session_id: str | None = None,
+    ) -> tuple[str | None, str | None]:
+        """Lock brain for call duration. Session fine-tune overrides take priority."""
+        if session_id:
+            from server.agent.instruction_store import instruction_store
+            from server.services.brain_budget import resolve_brain_budget
+
+            meta = instruction_store.get_with_meta(session_id)
+            brain = (meta.get("brainPrompt") or "").strip()
+            if meta.get("present") and brain:
+                version = meta.get("compiledVersion") or 0
+                label = f"session-v{version}" if version else "session"
+                return label, brain
+
         settings = get_settings()
         if not settings.use_versioned_brains:
             return None, None

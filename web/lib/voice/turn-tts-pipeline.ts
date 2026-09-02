@@ -1,4 +1,5 @@
 import { StreamingTextChunker } from "@/lib/voice/text-chunker";
+import { billingCharCount } from "@/lib/billing-chars";
 import { StreamingTtsClient } from "@/lib/voice/streaming-tts-client";
 import { StreamingAudioPlayback } from "@/lib/voice/streaming-audio-playback";
 import { fetchTtsConfig } from "@/lib/voice/tts-config";
@@ -145,7 +146,7 @@ export class TurnTtsPipeline {
   }
 
   getMetrics(): { ttsChars: number; ttsAudioBytes: number } {
-    return { ttsChars: this.chunker.getFullText().length, ttsAudioBytes: this.ttsAudioBytes };
+    return { ttsChars: billingCharCount(this.chunker.getFullText()), ttsAudioBytes: this.ttsAudioBytes };
   }
 }
 

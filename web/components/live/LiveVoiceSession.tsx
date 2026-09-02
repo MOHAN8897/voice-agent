@@ -9,6 +9,7 @@ import { TurnTtsPipeline } from "@/lib/voice/turn-tts-pipeline";
 import { isLikelyEcho, POST_SPEAK_COOLDOWN_MS } from "@/lib/echo-guard";
 import { shouldBargeWhileSpeaking, type BargeState } from "@/lib/live-guards";
 import { apiOrigin, wsUrl } from "@/lib/api";
+import { billingCharCount } from "@/lib/billing-chars";
 
 function isAbortError(e: unknown): boolean {
   return (
@@ -35,7 +36,7 @@ export type TurnCompleteEvent = {
     cache_write_tokens?: number;
     /** STT: transcript character count (billing proxy) */
     stt_chars?: number;
-    /** STT: estimated audio seconds from mic duration */
+    /** STT: billed audio seconds (speech start → final, or provider audio_duration_s) */
     stt_audio_sec?: number;
     /** TTS: synthesized character count */
     tts_chars?: number;
@@ -52,22 +53,38 @@ export type LiveVoiceSessionHandle = {
   endCall: () => void;
 };
 
+function nestedSttText(data: unknown): string {
+  if (typeof data === "string") return data;
+  if (data && typeof data === "object") {
+    const d = data as Record<string, unknown>;
+    if (typeof d.text === "string") return d.text;
+    if (typeof d.transcript === "string") return d.transcript;
+  }
+  return "";
+}
+
 function parseSttPayload(raw: string): {
   event: string;
   text: string;
   fatal: boolean;
   message: string;
+  audioDurationSec?: number;
 } {
   try {
     const m = JSON.parse(raw) as Record<string, unknown>;
-    const data = m.data as Record<string, unknown> | undefined;
     const event = String(m.event || m.type || "");
-    const text = String(m.text ?? data?.text ?? m.transcript ?? "").trim();
+    const rootText = typeof m.text === "string" ? m.text : "";
+    const transcript = typeof m.transcript === "string" ? m.transcript : "";
+    const text = (rootText || nestedSttText(m.data) || transcript).trim();
+    const nested = m.data && typeof m.data === "object" ? (m.data as Record<string, unknown>) : {};
+    const durationRaw = m.audio_duration_s ?? m.audio_duration ?? nested.audio_duration_s ?? nested.audio_duration;
+    const audioDurationSec = typeof durationRaw === "number" ? durationRaw : Number(durationRaw);
     return {
       event,
       text,
       fatal: Boolean(m.is_fatal),
       message: String(m.message || m.code || ""),
+      audioDurationSec: Number.isFinite(audioDurationSec) && audioDurationSec > 0 ? audioDurationSec : undefined,
     };
   } catch {
     return { event: "", text: "", fatal: false, message: "" };
@@ -144,6 +161,7 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
   const lastAssistantTextRef = useRef("");
   const turnGenRef = useRef(0);
   const lastSpeechStartAtRef = useRef<number | null>(null);
+  const lastSttAudioSecRef = useRef<number>(0);
 
   const trace = useCallback(
     (kind: string, detail: string) => {
@@ -472,12 +490,18 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
         const micStart = lastSpeechStartAtRef.current;
         const micDurationMs = micStart ? Math.max(0, Date.now() - micStart) : undefined;
         lastSpeechStartAtRef.current = null;
-        const cached = Number(streamUsage?.cached_tokens || 0);
+        const sttAudioSec =
+          lastSttAudioSecRef.current > 0
+            ? lastSttAudioSecRef.current
+            : micDurationMs
+              ? Math.round((micDurationMs / 1000) * 10) / 10
+              : 0;
+        lastSttAudioSecRef.current = 0;
         const mergedUsage = {
           ...streamUsage,
           stt_chars: text.length,
-          stt_audio_sec: micDurationMs ? Math.round((micDurationMs / 1000) * 10) / 10 : undefined,
-          tts_chars: ttsMetrics.ttsChars || out.length,
+          stt_audio_sec: sttAudioSec,
+          tts_chars: ttsMetrics.ttsChars || billingCharCount(out),
           tts_audio_bytes: ttsMetrics.ttsAudioBytes,
         };
         trace(
@@ -658,6 +682,7 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
       language_code: languageCode,
       stream_type: "fast",
       mode: "transcribe",
+      sample_rate: "16000",
     });
     if (callIdRef.current) q.set("call_id", callIdRef.current);
     if (sessionId) q.set("sessionId", sessionId);
@@ -682,7 +707,7 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
       trace("stt", `websocket open call=${callIdRef.current || "none"}`);
     };
     sock.onmessage = (ev) => {
-      const { event, text, fatal, message } = parseSttPayload(String(ev.data));
+      const { event, text, fatal, message, audioDurationSec } = parseSttPayload(String(ev.data));
       if (!event && !text) return;
 
       if (event === "session.begin") {
@@ -708,9 +733,17 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
       }
       if (event === "final" || event === "transcript.final" || event === "transcript") {
         if (!text) return;
+        const started = lastSpeechStartAtRef.current;
+        lastSttAudioSecRef.current =
+          audioDurationSec ??
+          (started ? Math.round(((Date.now() - started) / 1000) * 10) / 10 : lastSttAudioSecRef.current);
         setPartial("");
         trace("stt", `final ${text.slice(0, 80)}`);
         handleSttFinal(text);
+        return;
+      }
+      if (event === "session.end" && audioDurationSec) {
+        lastSttAudioSecRef.current = audioDurationSec;
         return;
       }
       if (event === "error" || fatal) {
@@ -730,6 +763,31 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
     };
   }, [languageCode, sessionId, handleSttFinal, doBargeIn, setSessionStatus, trace]);
 
+  const waitSttSocketOpen = useCallback((timeoutMs = 15000): Promise<void> => {
+    const sock = socketRef.current;
+    if (!sock) return Promise.reject(new Error("STT socket missing"));
+    if (sock.readyState === WebSocket.OPEN) return Promise.resolve();
+    return new Promise((resolve, reject) => {
+      const timer = window.setTimeout(() => reject(new Error("STT connection timeout")), timeoutMs);
+      sock.addEventListener(
+        "open",
+        () => {
+          clearTimeout(timer);
+          resolve();
+        },
+        { once: true }
+      );
+      sock.addEventListener(
+        "error",
+        () => {
+          clearTimeout(timer);
+          reject(new Error("STT websocket error"));
+        },
+        { once: true }
+      );
+    });
+  }, []);
+
   const startListening = useCallback(async () => {
     if (listeningRef.current || startingRef.current) return;
     startingRef.current = true;
@@ -742,7 +800,6 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
       }
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          sampleRate: 16000,
           channelCount: 1,
           echoCancellation: true,
           noiseSuppression: true,
@@ -750,17 +807,55 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
         },
       });
       streamRef.current = stream;
-      const ctx = new AudioContext({ sampleRate: 16000 });
+      const ctx = new AudioContext();
       ctxRef.current = ctx;
-      await ctx.audioWorklet.addModule("/pcm-worklet.js");
+      if (ctx.state === "suspended") {
+        await ctx.resume();
+      }
+      trace("stt", `audio context ${ctx.sampleRate}Hz → stt 16000Hz state=${ctx.state}`);
+
+      attachSttSocket();
+      await waitSttSocketOpen();
+
+      await ctx.audioWorklet.addModule("/pcm-worklet.js?v=16k-mix-2");
       const src = ctx.createMediaStreamSource(stream);
       startMicMeter(ctx, src);
-      const worklet = new AudioWorkletNode(ctx, "pcm-processor");
+      const worklet = new AudioWorkletNode(ctx, "pcm-processor", {
+        numberOfInputs: 1,
+        numberOfOutputs: 1,
+        channelCount: 1,
+        channelCountMode: "explicit",
+        channelInterpretation: "speakers",
+      });
       workletRef.current = worklet;
+      let pcmChunks = 0;
+      let pcmPeak = 0;
+      let silenceWarned = false;
       worklet.port.onmessage = (ev) => {
         const sock = socketRef.current;
         if (!sock || sock.readyState !== WebSocket.OPEN) return;
-        const buf = ev.data instanceof ArrayBuffer ? ev.data : (ev.data as Int16Array).buffer;
+        const buf: ArrayBuffer =
+          ev.data instanceof ArrayBuffer
+            ? ev.data
+            : ev.data instanceof Int16Array
+              ? ev.data.buffer.slice(ev.data.byteOffset, ev.data.byteOffset + ev.data.byteLength)
+              : new ArrayBuffer(0);
+        if (!buf.byteLength) return;
+        const samples = new Int16Array(buf);
+        for (let i = 0; i < samples.length; i += 1) {
+          const a = samples[i] < 0 ? -samples[i] : samples[i];
+          if (a > pcmPeak) pcmPeak = a;
+        }
+        pcmChunks += 1;
+        if (pcmChunks === 16 && !silenceWarned) {
+          if (pcmPeak < 64) {
+            silenceWarned = true;
+            trace("stt", "mic audio is silent — check browser mic permission and input device");
+            setPartial("Mic is silent — allow microphone access and pick the correct input");
+          } else {
+            trace("stt", `mic audio ok peak=${pcmPeak}`);
+          }
+        }
         sock.send(buf);
         const st = bargeRef.current;
         st.words = wordCount(partialRef.current);
@@ -769,7 +864,12 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
         }
       };
       src.connect(worklet);
-      attachSttSocket();
+      // Keep the worklet running without routing mic → speakers (that loop makes AEC mute the input).
+      worklet.connect(ctx.createMediaStreamDestination());
+      const keepAlive = ctx.createConstantSource();
+      keepAlive.offset.value = 0;
+      keepAlive.connect(ctx.destination);
+      keepAlive.start();
     } catch (e) {
       const msg =
         e instanceof DOMException && e.name === "AbortError"
@@ -788,7 +888,7 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
     } finally {
       startingRef.current = false;
     }
-  }, [attachSttSocket, teardownMic, endCall, doBargeIn, startCall, startMicMeter, trace, setSessionStatus]);
+  }, [attachSttSocket, waitSttSocketOpen, teardownMic, endCall, doBargeIn, startCall, startMicMeter, trace, setSessionStatus]);
 
   useImperativeHandle(ref, () => ({
     startListening,

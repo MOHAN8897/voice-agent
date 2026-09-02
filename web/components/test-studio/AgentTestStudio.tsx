@@ -22,6 +22,9 @@ import {
   type StackForm,
   type StackMode,
 } from "@/lib/test-studio-stack";
+import { classifyCacheEvent, type PricingMeta } from "@/lib/usage-cost";
+import { billingCharCount } from "@/lib/billing-chars";
+import { isCartesiaVoiceId } from "@/lib/voice/tts-config";
 import { cn } from "@/lib/cn";
 
 type ChannelTab = TestStudioMode;
@@ -60,6 +63,8 @@ export function AgentTestStudio({
   const [locked, setLocked] = useState(false);
   const [turnRows, setTurnRows] = useState<TurnMetricRow[]>([]);
   const [prefsReady, setPrefsReady] = useState(false);
+  const [sessionStartedAt, setSessionStartedAt] = useState<number | null>(null);
+  const [sessionEndedAt, setSessionEndedAt] = useState<number | null>(null);
   const prefsHydratedRef = useRef(false);
   const channelTouchedRef = useRef(false);
 
@@ -118,17 +123,23 @@ export function AgentTestStudio({
         const speaker = String(j?.values?.ttsSpeaker || "");
         if (speaker) {
           setRuntimeTtsSpeaker(speaker);
-          setStack((prev) => ({ ...prev, ttsVoiceId: prev.ttsVoiceId || speaker }));
+          if (!isCartesiaVoiceId(speaker)) {
+            setStack((prev) => ({ ...prev, ttsVoiceId: prev.ttsVoiceId || speaker }));
+          }
         }
       })
       .catch(() => {});
   }, []);
 
   const refreshMemory = useCallback(async (id: string) => {
-    const r = await fetch(`/api/call/${id}/memory/projection`, { credentials: "include" });
-    if (!r.ok) return;
-    const j = await r.json();
-    setMemoryJson(JSON.stringify(j?.projection || j, null, 2));
+    try {
+      const r = await fetch(`/api/call/${id}/memory/projection`, { credentials: "include" });
+      if (!r.ok) return;
+      const j = await r.json();
+      setMemoryJson(JSON.stringify(j?.projection || j, null, 2));
+    } catch {
+      /* API blip must not crash the live mic session */
+    }
   }, []);
 
   useEffect(() => {
@@ -140,16 +151,21 @@ export function AgentTestStudio({
         if (j.agent?.default_tier && stackMode === "tier") setTier(j.agent.default_tier);
         const lang = j.agent?.languages?.[0];
         if (lang && !uiPrefs.language) setLanguage(lang);
-      });
+      })
+      .catch(() => {});
   }, [agentId, portal, prefsReady, stackMode, uiPrefs.language]);
 
   useEffect(() => {
     if (stackMode === "tier") {
       const next = stackForTier(tier);
-      setStack((prev) => ({
-        ...next,
-        ttsVoiceId: prev.ttsVoiceId || runtimeTtsSpeaker || next.ttsVoiceId,
-      }));
+      setStack((prev) => {
+        const inherited = prev.ttsVoiceId || runtimeTtsSpeaker || next.ttsVoiceId;
+        const ttsVoiceId =
+          next.ttsProvider !== "cartesia" && isCartesiaVoiceId(inherited)
+            ? next.ttsVoiceId || ""
+            : inherited;
+        return { ...next, ttsVoiceId };
+      });
       if (next.language) setLanguage(next.language);
     }
   }, [stackMode, tier, stackForTier, runtimeTtsSpeaker]);
@@ -160,6 +176,28 @@ export function AgentTestStudio({
     return () => clearInterval(t);
   }, [callId, callEnded, refreshMemory]);
 
+  const pricingMeta = useMemo<PricingMeta | null>(() => {
+    if (!catalog) return null;
+    const top = catalog as {
+      pricing_metadata?: PricingMeta;
+      fx_rate_inr?: number;
+      providers?: { pricing_metadata?: PricingMeta; fx_rate_inr?: number } | unknown[];
+    };
+    if (top.pricing_metadata) {
+      return { ...top.pricing_metadata, fx_rate_inr: top.fx_rate_inr ?? top.pricing_metadata.fx_rate_inr };
+    }
+    const nested = top.providers;
+    if (nested && !Array.isArray(nested) && nested.pricing_metadata) {
+      return { ...nested.pricing_metadata, fx_rate_inr: nested.fx_rate_inr ?? nested.pricing_metadata.fx_rate_inr };
+    }
+    return null;
+  }, [catalog]);
+
+  const sessionDurationMs = useMemo(() => {
+    if (!sessionStartedAt) return 0;
+    return (sessionEndedAt ?? Date.now()) - sessionStartedAt;
+  }, [sessionStartedAt, sessionEndedAt, turnRows, sessionStatus]);
+
   const sessionTotals = useMemo(
     () =>
       turnRows.reduce(
@@ -169,6 +207,7 @@ export function AgentTestStudio({
           llmInput: acc.llmInput + (r.inputTokens ?? 0),
           llmOutput: acc.llmOutput + (r.outputTokens ?? 0),
           llmCached: acc.llmCached + (r.cachedTokens ?? 0),
+          llmCacheWrite: acc.llmCacheWrite + (r.cacheWriteTokens ?? 0),
           ttsChars: acc.ttsChars + (r.ttsChars ?? 0),
           ttsAudioBytes: acc.ttsAudioBytes + (r.ttsAudioBytes ?? 0),
           turns: acc.turns + 1,
@@ -199,10 +238,11 @@ export function AgentTestStudio({
         cacheWriteTokens: Number(ev.usage?.cache_write_tokens || 0),
         sttChars: Number(ev.usage?.stt_chars ?? ev.userText.length),
         sttAudioSec: Number(ev.usage?.stt_audio_sec ?? 0),
-        ttsChars: Number(ev.usage?.tts_chars ?? ev.assistantText.length),
+        ttsChars: Number(ev.usage?.tts_chars ?? billingCharCount(ev.assistantText)),
         ttsAudioBytes: Number(ev.usage?.tts_audio_bytes ?? 0),
         memoryOps: Array.isArray(ev.memoryUpdate?.operations) ? ev.memoryUpdate.operations.length : 0,
-        cacheHit: cached > 0 && input > 0 && cached >= input * 0.5,
+        cacheEvent: classifyCacheEvent(input, cached, Number(ev.usage?.cache_write_tokens || 0)),
+        cacheHit: cached > 0,
       },
     ]);
   }
@@ -213,6 +253,8 @@ export function AgentTestStudio({
     setLocked(true);
     setEvents([]);
     setTurnRows([]);
+    setSessionStartedAt(Date.now());
+    setSessionEndedAt(null);
     refreshMemory(id);
   }
 
@@ -220,6 +262,7 @@ export function AgentTestStudio({
     setCallEnded(true);
     setLocked(false);
     setSessionStatus("ended");
+    setSessionEndedAt(Date.now());
     refreshMemory(id);
   }
 
@@ -228,6 +271,9 @@ export function AgentTestStudio({
   const stackOverride = useMemo(() => {
     if (stackMode === "custom") return buildStackOverride(stack);
     if (stack.ttsVoiceId) {
+      if (isCartesiaVoiceId(stack.ttsVoiceId) && stack.ttsProvider !== "cartesia") {
+        return undefined;
+      }
       return {
         tts: {
           config: { speaker: stack.ttsVoiceId },
@@ -265,8 +311,7 @@ export function AgentTestStudio({
         </div>
       </div>
 
-      {studioTab === "live" && (
-        <div className="space-y-5">
+      <div className={studioTab === "live" ? "space-y-5" : "hidden"}>
           {showPstn && (
             <TestStudioModePicker
               mode={channel}
@@ -297,11 +342,17 @@ export function AgentTestStudio({
               )}
             </div>
             <div className="xl:col-span-4 space-y-5">
-              <TestStudioTurnMetrics rows={turnRows} sessionTotal={sessionTotals} mode={channel} />
+              <TestStudioTurnMetrics
+                rows={turnRows}
+                sessionTotal={sessionTotals}
+                mode={channel}
+                ttsProvider={stack.ttsProvider}
+                pricing={pricingMeta}
+                sessionDurationMs={sessionDurationMs}
+              />
             </div>
           </div>
         </div>
-      )}
 
       {studioTab === "config" && (
         <div className="grid gap-5 lg:grid-cols-2">
@@ -331,11 +382,18 @@ export function AgentTestStudio({
             sarvamSpeakersV2={sarvamSpeakersV2}
             runtimeTtsSpeaker={runtimeTtsSpeaker}
           />
-          <TestStudioTurnMetrics rows={turnRows} sessionTotal={sessionTotals} mode={channel} />
+          <TestStudioTurnMetrics
+            rows={turnRows}
+            sessionTotal={sessionTotals}
+            mode={channel}
+            ttsProvider={stack.ttsProvider}
+            pricing={pricingMeta}
+            sessionDurationMs={sessionDurationMs}
+          />
         </div>
       )}
 
-      {studioTab === "tune" && (
+      <div className={studioTab === "tune" ? "" : "hidden"}>
         <TestStudioFineTuneWorkbench
           agentId={agentId}
           portal={portal}
@@ -349,7 +407,7 @@ export function AgentTestStudio({
           sarvamSpeakersV3={sarvamSpeakersV3}
           sarvamSpeakersV2={sarvamSpeakersV2}
         />
-      )}
+      </div>
 
       {studioTab === "debug" && (
         <div className="grid gap-5 lg:grid-cols-2">
