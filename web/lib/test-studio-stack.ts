@@ -70,4 +70,9 @@ export function buildStackOverride(form: StackForm): Record<string, unknown> {
   };
 }
 
+/** PSTN outbound custom stack — same shape as buildStackOverride. */
+export function buildPstnStackOverride(form: StackForm): Record<string, unknown> {
+  return buildStackOverride(form);
+}
+
 export const TEST_STUDIO_SESSION_ID = "test-studio";

@@ -652,8 +652,17 @@ class TelnyxPstnBridge:
             except Exception:
                 pass
         if self.call_control_id:
+            bidirectional_ok = self._media_frames_in > 0 and self._media_frames_out > 0
             active_telnyx_bridges.pop(self.call_control_id, None)
             from server.services.telnyx_client import telnyx_call_registry
+
+            health_score: int | None = None
+            failures: list[str] = []
+            flow_snap = pstn_media_flow.snapshot(self.call_control_id or self.ws_id)
+            if flow_snap:
+                health = flow_snap.get("health") or {}
+                health_score = int(health.get("score") or 0) or None
+                failures = list(health.get("failures") or flow_snap.get("failures") or [])
 
             telnyx_call_registry.upsert(
                 self.call_control_id,
@@ -662,9 +671,26 @@ class TelnyxPstnBridge:
                     "last_event": reason,
                     "media_frames_in": self._media_frames_in,
                     "media_frames_out": self._media_frames_out,
-                    "bidirectional_ok": self._media_frames_in > 0 and self._media_frames_out > 0,
+                    "bidirectional_ok": bidirectional_ok,
+                    "health_score": health_score,
                 },
             )
+            if self.call_id:
+                from server.call.call_context import get as get_ctx
+                from server.services.production_canary import record_canary_call
+
+                ctx = get_ctx(self.call_id)
+                record_canary_call(
+                    call_id=self.call_id,
+                    external_id=self.call_control_id,
+                    bidirectional_ok=bidirectional_ok,
+                    media_in=self._media_frames_in,
+                    media_out=self._media_frames_out,
+                    health_score=health_score,
+                    failures=failures,
+                    compiled_brain_version=ctx.compiled_brain_version if ctx else None,
+                    combination_id=ctx.resolved_stack.combination_id if ctx and ctx.resolved_stack else None,
+                )
             log_pstn_summary(
                 provider="telnyx",
                 external_id=self.call_control_id,

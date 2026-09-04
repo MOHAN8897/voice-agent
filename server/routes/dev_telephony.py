@@ -36,6 +36,31 @@ class OutboundTestBody(BaseModel):
     model_config = {"populate_by_name": True}
 
 
+class PstnStackValidateBody(BaseModel):
+    tier: str | None = None
+    language: str | None = None
+    stack_override: dict[str, Any] | None = Field(None, alias="stackOverride")
+
+    model_config = {"populate_by_name": True}
+
+
+def _outbound_pstn_context(body: OutboundTestBody) -> tuple[str, str, dict[str, Any] | None, list[str]]:
+    """Validate/sanitize custom PSTN stack before dial. Tier-only → no override."""
+    from server.services.pstn_stack import PstnStackValidationError, prepare_pstn_dial_stack
+
+    tier = (body.tier or "medium").strip()
+    language = (body.language or "te-IN").strip()
+    if not body.stack_override:
+        return tier, language, None, []
+    try:
+        normalized, adjustments = prepare_pstn_dial_stack(
+            body.stack_override, language=language, tier=tier
+        )
+    except PstnStackValidationError as e:
+        raise e
+    return tier, language, normalized, adjustments
+
+
 @router.get("/api/dev/telephony/status")
 async def dev_telephony_status(session: SessionData = Depends(require_dev_session)):
     require_permission(session, "dev.stack.read")
@@ -80,6 +105,12 @@ async def dev_telephony_outbound(
     session: SessionData = Depends(require_dev_session),
 ):
     require_permission(session, "dev.stack.write")
+    from server.services.pstn_stack import PstnStackValidationError
+
+    try:
+        _outbound_pstn_context(body)
+    except PstnStackValidationError as e:
+        return {"ok": False, "error": str(e), "validation_errors": e.details}
     provider = active_telephony_provider()
     if provider == "exotel":
         return await _outbound_exotel(body)
@@ -88,6 +119,34 @@ async def dev_telephony_outbound(
     if provider == "plivo":
         return await _outbound_plivo(body, session)
     return {"ok": False, "error": "unknown provider"}
+
+
+@router.post("/api/dev/telephony/pstn-stack/validate")
+async def dev_pstn_stack_validate(
+    body: PstnStackValidateBody,
+    session: SessionData = Depends(require_dev_session),
+):
+    """Preview PSTN stack normalization for dev panel (no dial)."""
+    require_permission(session, "dev.stack.read")
+    from server.services.pstn_stack import PstnStackValidationError, prepare_pstn_dial_stack
+
+    tier = (body.tier or "medium").strip()
+    language = (body.language or "te-IN").strip()
+    if not body.stack_override:
+        return {"ok": True, "stackOverride": None, "adjustments": [], "tier": tier, "language": language}
+    try:
+        normalized, adjustments = prepare_pstn_dial_stack(
+            body.stack_override, language=language, tier=tier
+        )
+        return {
+            "ok": True,
+            "stackOverride": normalized,
+            "adjustments": adjustments,
+            "tier": tier,
+            "language": language,
+        }
+    except PstnStackValidationError as e:
+        return {"ok": False, "error": str(e), "validation_errors": e.details}
 
 
 async def _outbound_exotel(body: OutboundTestBody) -> dict[str, Any]:
@@ -115,11 +174,12 @@ async def _outbound_exotel(body: OutboundTestBody) -> dict[str, Any]:
         return {"ok": False, "error": "Set EXOTEL_EXOPHONE or fromE164"}
     if not to_number:
         return {"ok": False, "error": "Destination number required"}
+    tier, language, stack_override, stack_adjustments = _outbound_pstn_context(body)
     phone_assignments_store.assign(caller_id, body.agent_id)
-    custom_field = f"agent:{body.agent_id};tier:{body.tier or 'medium'}"
+    custom_field = f"agent:{body.agent_id};tier:{tier or 'medium'}"
     try:
         client = ExotelClient()
-        stream_url = build_stream_ws_url(agent_id=body.agent_id, tier=body.tier)
+        stream_url = build_stream_ws_url(agent_id=body.agent_id, tier=tier)
         if not stream_url:
             return {"ok": False, "error": "Cannot build WSS stream URL"}
         result = await client.connect_voice_ai(
@@ -139,21 +199,24 @@ async def _outbound_exotel(body: OutboundTestBody) -> dict[str, Any]:
                     "to": to_number,
                     "direction": "outbound-api",
                     "agent_id": body.agent_id,
-                    "tier": body.tier,
-                    "language": body.language,
+                    "tier": tier,
+                    "language": language,
                     "source_session_id": body.source_session_id,
-                    "stack_override": body.stack_override,
+                    "stack_override": stack_override,
                     "stream_url": stream_url,
                     "last_event": "outbound-initiated",
                 },
             )
-        return {
+        payload: dict[str, Any] = {
             "ok": True,
             "provider": "exotel",
             "call_sid": call_sid,
             "status": result.get("status"),
             "stream_url": stream_url,
         }
+        if stack_adjustments:
+            payload["stack_adjustments"] = stack_adjustments
+        return payload
     except ExotelConfigError as e:
         return {"ok": False, "error": str(e)}
     except ExotelApiError as e:
@@ -172,18 +235,30 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
         telnyx_stream_tokens,
     )
 
+    tier, language, stack_override, stack_adjustments = _outbound_pstn_context(body)
+    # Browser Test Studio session is not used for PSTN TTS/runtime lookup.
+    source_session_id = body.source_session_id
+    if source_session_id == "test-studio":
+        source_session_id = None
+
     try:
         await agent_service.get_agent(body.agent_id)
     except Exception:
         return {"ok": False, "error": f"Agent not found: {body.agent_id}"}
 
+    from server.services.production_canary import assert_canary_outbound_allowed
+
+    canary_block = assert_canary_outbound_allowed(body.to_e164)
+    if canary_block:
+        return {"ok": False, "error": canary_block, "canary_blocked": True}
+
     client = TelnyxClient()
     token = telnyx_stream_tokens.create(
         agent_id=body.agent_id,
-        tier=body.tier,
-        source_session_id=body.source_session_id,
-        language=body.language,
-        stack_override=body.stack_override,
+        tier=tier,
+        source_session_id=source_session_id,
+        language=language,
+        stack_override=stack_override,
         direction="outbound",
     )
     stream_url = client.build_stream_ws_url(token=token)
@@ -194,9 +269,9 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
             stream_url=stream_url,
             client_state={
                 "agent_id": body.agent_id,
-                "tier": body.tier,
-                "source_session_id": body.source_session_id,
-                "language": body.language,
+                "tier": tier,
+                "source_session_id": source_session_id,
+                "language": language,
                 "direction": "outbound",
             },
         )
@@ -206,14 +281,14 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
             call_control_id,
             {
                 "agent_id": body.agent_id,
-                "tier": body.tier,
+                "tier": tier,
                 "to": body.to_e164,
                 "from": body.from_e164,
                 "direction": "outbound",
                 "status": "initiated",
-                "language": body.language,
-                "source_session_id": body.source_session_id,
-                "stack_override": body.stack_override,
+                "language": language,
+                "source_session_id": source_session_id,
+                "stack_override": stack_override,
                 "stream_url": stream_url,
                 "stream_started": True,
             },
@@ -232,7 +307,15 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
             target_legs="self",
             wire_mode="rtp",
         )
-        return {"ok": True, "provider": "telnyx", "call_control_id": call_control_id, "stream_url": stream_url}
+        payload: dict[str, Any] = {
+            "ok": True,
+            "provider": "telnyx",
+            "call_control_id": call_control_id,
+            "stream_url": stream_url,
+        }
+        if stack_adjustments:
+            payload["stack_adjustments"] = stack_adjustments
+        return payload
     except TelnyxApiError as e:
         detail = (e.body or str(e))[:400]
         return {"ok": False, "error": detail, "status": e.status, "telnyx_error": detail}
@@ -295,6 +378,30 @@ async def dev_telephony_test_codec(session: SessionData = Depends(require_dev_se
         },
         "frame_duration_ms": 20,
     }
+
+
+@router.post("/api/dev/telephony/hangup")
+async def dev_telephony_hangup(
+    call_control_id: str,
+    session: SessionData = Depends(require_dev_session),
+):
+    """End an active Telnyx PSTN call (TEST 8 sequential cleanup)."""
+    require_permission(session, "dev.stack.write")
+    from server.services.telnyx_client import TelnyxApiError, TelnyxClient, telnyx_call_registry
+
+    if not call_control_id.strip():
+        return {"ok": False, "error": "call_control_id required"}
+    client = TelnyxClient()
+    try:
+        await client.hangup(call_control_id.strip())
+        telnyx_call_registry.upsert(
+            call_control_id.strip(),
+            {"status": "hangup", "last_event": "dev_hangup"},
+        )
+        return {"ok": True, "call_control_id": call_control_id.strip()}
+    except TelnyxApiError as e:
+        detail = (e.body or str(e))[:400]
+        return {"ok": False, "error": detail, "status": e.status, "telnyx_error": detail}
 
 
 @router.post("/api/dev/telephony/media-flow/test-audio")
@@ -429,6 +536,96 @@ async def dev_telnyx_checklist(session: SessionData = Depends(require_dev_sessio
         return {"ok": False, "error": str(e), "status": e.status}
 
 
+@router.get("/api/dev/telephony/production-canary/checklist")
+async def dev_production_canary_checklist(session: SessionData = Depends(require_dev_session)):
+    """TEST 9.1 — deploy checklist for production canary."""
+    require_permission(session, "dev.stack.read")
+    from server.config.urls import public_api_base
+    from server.services.production_canary import build_deploy_checklist
+    from server.services.telnyx_client import TelnyxApiError, TelnyxClient
+    from server.services.telnyx_provisioning import telnyx_setup_status
+
+    telnyx_checklist: dict | None = None
+    try:
+        telnyx_checklist = await telnyx_setup_status(TelnyxClient())
+    except TelnyxApiError:
+        telnyx_checklist = None
+    deploy = build_deploy_checklist(telnyx_checklist=telnyx_checklist)
+    return {
+        "ok": True,
+        "public_api_base": public_api_base(),
+        "deploy": deploy,
+        "telnyx_checklist": telnyx_checklist,
+    }
+
+
+@router.get("/api/dev/telephony/production-canary/status")
+async def dev_production_canary_status(
+    hours: int = 48,
+    session: SessionData = Depends(require_dev_session),
+):
+    """TEST 9.2–9.4 — canary window metrics and gate scoring."""
+    require_permission(session, "dev.stack.read")
+    from server.services.production_canary import score_canary_window
+    from server.services.telnyx_client import telnyx_call_registry
+
+    registry = telnyx_call_registry.list_recent(50)
+    window = score_canary_window(registry_rows=registry, hours=max(1, min(hours, 168)))
+    return {"ok": True, "canary": window}
+
+
+@router.post("/api/dev/telephony/production-canary/seed-archives")
+async def dev_production_canary_seed_archives(
+    hours: int = 48,
+    limit: int = 30,
+    session: SessionData = Depends(require_dev_session),
+):
+    """Backfill canary log from recent PSTN call archives on this server."""
+    require_permission(session, "dev.stack.write")
+    from server.services.production_canary import seed_canary_from_archives
+
+    seeded = seed_canary_from_archives(limit=max(1, min(limit, 100)), hours=max(1, min(hours, 168)))
+    return {"ok": True, "seeded": seeded}
+
+
+@router.get("/api/dev/telephony/production-launch/checklist")
+async def dev_production_launch_checklist(session: SessionData = Depends(require_dev_session)):
+    """TEST 10 — launch checklist (Telnyx, agent, observability, support, regression)."""
+    require_permission(session, "dev.stack.read")
+    from server.services.production_canary import score_canary_window
+    from server.services.production_launch import build_launch_checklist
+    from server.services.telnyx_client import TelnyxApiError, TelnyxClient, telnyx_call_registry
+    from server.services.telnyx_provisioning import telnyx_setup_status
+
+    telnyx_checklist: dict | None = None
+    try:
+        telnyx_checklist = await telnyx_setup_status(TelnyxClient())
+    except TelnyxApiError:
+        telnyx_checklist = None
+    registry = telnyx_call_registry.list_recent(50)
+    canary = score_canary_window(registry_rows=registry, hours=168)
+    launch = build_launch_checklist(
+        telnyx_checklist=telnyx_checklist,
+        canary_overall=bool(canary.get("overall")),
+    )
+    return {"ok": True, "launch": launch, "canary_overall": canary.get("overall")}
+
+
+@router.get("/api/dev/telephony/production-launch/slos")
+async def dev_production_launch_slos(
+    hours: int = 168,
+    session: SessionData = Depends(require_dev_session),
+):
+    """TEST 10 — production SLO metrics and pass/fail gates."""
+    require_permission(session, "dev.stack.read")
+    from server.services.production_launch import compute_production_slos
+    from server.services.telnyx_client import telnyx_call_registry
+
+    registry = telnyx_call_registry.list_recent(100)
+    slos = compute_production_slos(registry_rows=registry, hours=max(24, min(hours, 720)))
+    return {"ok": True, "production": slos}
+
+
 class VerifyNumberBody(BaseModel):
     phone_number: str = Field(..., alias="phoneNumber")
     method: str = "sms"
@@ -515,8 +712,9 @@ async def _outbound_plivo(body: OutboundTestBody, session: SessionData) -> dict[
     from server.config.urls import public_api_base
     from server.services.plivo_client import PlivoApiError, PlivoClient, plivo_call_registry, plivo_stream_tokens
 
+    tier, language, stack_override, stack_adjustments = _outbound_pstn_context(body)
     client = PlivoClient()
-    token = plivo_stream_tokens.create(agent_id=body.agent_id, tier=body.tier)
+    token = plivo_stream_tokens.create(agent_id=body.agent_id, tier=tier)
     base = public_api_base().rstrip("/")
     answer_url = f"{base}/api/plivo/answer?token={token}"
     try:
@@ -530,15 +728,23 @@ async def _outbound_plivo(body: OutboundTestBody, session: SessionData) -> dict[
             request_uuid,
             {
                 "agent_id": body.agent_id,
-                "tier": body.tier,
+                "tier": tier,
                 "to": body.to_e164,
                 "direction": "outbound",
                 "status": "initiated",
-                "language": body.language,
+                "language": language,
                 "source_session_id": body.source_session_id,
-                "stack_override": body.stack_override,
+                "stack_override": stack_override,
             },
         )
-        return {"ok": True, "provider": "plivo", "call_uuid": request_uuid, "answer_url": answer_url}
+        payload: dict[str, Any] = {
+            "ok": True,
+            "provider": "plivo",
+            "call_uuid": request_uuid,
+            "answer_url": answer_url,
+        }
+        if stack_adjustments:
+            payload["stack_adjustments"] = stack_adjustments
+        return payload
     except PlivoApiError as e:
         return {"ok": False, "error": str(e), "status": e.status}

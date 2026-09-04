@@ -7,6 +7,7 @@ import { DevCard } from "@/components/dev/DevCard";
 import { ensureArray } from "@/lib/ensure-array";
 import { portalFetch, refreshPortalSession } from "@/lib/auth-client";
 import { LiveMediaFlowDebugger } from "./LiveMediaFlowDebugger";
+import type { StackMode } from "@/lib/test-studio-stack";
 
 type ProviderStatus = {
   id: string;
@@ -86,16 +87,16 @@ export function PstnTestPanel({
   agentId,
   tier,
   language,
+  stackMode = "tier",
   stackOverride,
-  sourceSessionId,
   onInternalCallStart,
   onInternalCallEnd,
 }: {
   agentId: string;
   tier: string;
   language?: string;
+  stackMode?: StackMode;
   stackOverride?: Record<string, unknown>;
-  sourceSessionId?: string;
   onInternalCallStart?: (callId: string) => void;
   onInternalCallEnd?: (callId: string) => void;
 }) {
@@ -104,9 +105,10 @@ export function PstnTestPanel({
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [stackPreview, setStackPreview] = useState<string>("");
   const [fromE164, setFromE164] = useState("");
   const [toE164, setToE164] = useState("+918897908470");
-  const [providerDraft, setProviderDraft] = useState("exotel");
+  const [providerDraft, setProviderDraft] = useState("telnyx");
   const [verifyCode, setVerifyCode] = useState("");
   const trackedCallRef = useRef<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -198,6 +200,39 @@ export function PstnTestPanel({
     await load();
   }
 
+  useEffect(() => {
+    if (stackMode !== "custom" || !stackOverride) {
+      setStackPreview("");
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      await refreshPortalSession("dev");
+      const r = await portalFetch("dev", "/api/dev/telephony/pstn-stack/validate", {
+        method: "POST",
+        body: JSON.stringify({
+          tier: tier || "medium",
+          language: language || "te-IN",
+          stackOverride,
+        }),
+      });
+      if (cancelled) return;
+      const j = await r.json();
+      if (j.ok) {
+        const adj = Array.isArray(j.adjustments) && j.adjustments.length
+          ? ` · auto-fix: ${j.adjustments.join("; ")}`
+          : "";
+        setStackPreview(`Stack OK for PSTN${adj}`);
+      } else {
+        const errs = j.validation_errors?.length ? j.validation_errors.join("; ") : j.error;
+        setStackPreview(`Stack error: ${errs || "invalid"}`);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [stackMode, stackOverride, tier, language]);
+
   async function outboundDial() {
     if (!toE164.trim()) {
       setMessage("Enter destination number");
@@ -206,24 +241,32 @@ export function PstnTestPanel({
     setBusy(true);
     trackedCallRef.current = null;
     setMessage(`Placing ${providerLabel(active)} outbound call…`);
+    const dialBody: Record<string, unknown> = {
+      toE164: toE164.trim(),
+      fromE164: fromE164.trim() || undefined,
+      agentId,
+      tier: tier || "medium",
+      language: language || "te-IN",
+    };
+    if (stackMode === "custom" && stackOverride) {
+      dialBody.stackOverride = stackOverride;
+    }
     const r = await portalFetch("dev", "/api/dev/telephony/outbound", {
       method: "POST",
-      body: JSON.stringify({
-        toE164: toE164.trim(),
-        fromE164: fromE164.trim() || undefined,
-        agentId,
-        tier,
-        language,
-        sourceSessionId,
-        stackOverride,
-      }),
+      body: JSON.stringify(dialBody),
     });
     const j = await r.json();
     const apiOk = r.ok && (j.ok === undefined || j.ok === true);
+    const adj =
+      Array.isArray(j.stack_adjustments) && j.stack_adjustments.length
+        ? ` · ${j.stack_adjustments.join("; ")}`
+        : "";
+    const errDetail =
+      j.validation_errors?.length ? j.validation_errors.join("; ") : j.error?.message || j.error || j.body;
     setMessage(
       apiOk
-        ? `Call initiated · ${j.call_sid || j.call_control_id || j.call_uuid || "queued"}`
-        : j.error?.message || j.error || j.body || "Outbound failed"
+        ? `Call initiated · ${j.call_sid || j.call_control_id || j.call_uuid || "queued"}${adj}`
+        : errDetail || "Outbound failed"
     );
     setBusy(false);
     await load();
@@ -285,9 +328,17 @@ export function PstnTestPanel({
   const telnyxChecklist = active === "telnyx" ? activeSt?.checklist : undefined;
   const indiaBlocked = Boolean(activeSt?.upgrade_required_for_india && !telnyxChecklist?.international_india);
   const destVerified = telnyxChecklist?.verified_numbers?.includes(toE164.trim());
+  const telnyxReady = Boolean(status?.providers?.find((p) => p.id === "telnyx")?.ready);
+  const useValidatedPath = active === "telnyx";
 
   return (
     <div className="space-y-6">
+      {telnyxReady && !useValidatedPath && (
+        <p className="rounded-xl border border-accent/30 bg-accent/5 px-4 py-3 text-sm text-text-muted">
+          Validation tests 1–10 use <strong className="text-text">Telnyx L16 @ 16 kHz</strong>. Switch to Telnyx
+          for the same audio architecture as automated tests.
+        </p>
+      )}
       <DevCard title="SIP trunk provider" description="Only the active provider is used for PSTN tests">
         <div className="flex flex-wrap gap-2">
           {PROVIDERS.map((p) => (
@@ -454,10 +505,19 @@ export function PstnTestPanel({
           </div>
         )}
         <p className="mt-3 text-xs text-text-muted">
-          Uses tier <span className="font-mono">{tier}</span>, agent{" "}
-          <span className="font-mono">{agentId.slice(0, 8)}…</span>, and the same voice from Config/Live.
-          Bidirectional = inbound media (STT) + outbound audio (TTS) both flowed.
+          Tier <span className="font-mono">{tier || "medium"}</span> · language{" "}
+          <span className="font-mono">{language || "te-IN"}</span> · stack{" "}
+          <span className="font-mono">{stackMode === "custom" ? "custom" : "tier preset"}</span> · agent{" "}
+          <span className="font-mono">{agentId.slice(0, 8)}…</span>. Telnyx uses L16 @ 16 kHz (same wire as
+          validation tests).
         </p>
+        {stackPreview && (
+          <p
+            className={`mt-2 text-xs ${stackPreview.startsWith("Stack error") ? "text-danger" : "text-text-muted"}`}
+          >
+            {stackPreview}
+          </p>
+        )}
       </DevCard>
 
       {active === "telnyx" ? (

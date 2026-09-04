@@ -22,6 +22,16 @@ def drain_complete_sentences(buffer: str, *, min_chars: int = 12) -> tuple[list[
     return complete, remainder
 
 
+def resolve_stream_tts_tail(pending: str, full_text: str, *, spoke_from_stream: bool) -> str | None:
+    """Return remaining PSTN TTS text after streaming deltas; avoid replaying full_text."""
+    tail = pending.strip()
+    if tail:
+        return tail
+    if spoke_from_stream:
+        return None
+    return (full_text or "").strip() or None
+
+
 def extract_opening_greeting(compiled_brain: str | None, language: str = "te-IN") -> str | None:
     """Best-effort opening line from compiled brain OPENING section."""
     if not compiled_brain:

@@ -163,6 +163,11 @@ class Settings(BaseSettings):
     campaign_max_concurrency: int = Field(5, alias="CAMPAIGN_MAX_CONCURRENCY")
     campaign_default_retry_attempts: int = Field(3, alias="CAMPAIGN_DEFAULT_RETRY_ATTEMPTS")
     recording_consent_required: bool = Field(False, alias="RECORDING_CONSENT_REQUIRED")
+
+    # --- Production canary (TEST 9) ---
+    canary_enabled: bool = Field(False, alias="CANARY_ENABLED")
+    canary_max_calls_per_day: int = Field(20, alias="CANARY_MAX_CALLS_PER_DAY")
+    canary_allowed_destinations_csv: str = Field("", alias="CANARY_ALLOWED_DESTINATIONS")
     deepseek_api_key: str | None = Field(None, alias="DEEPSEEK_API_KEY")
     deepseek_base_url: str = Field("https://api.deepseek.com", alias="DEEPSEEK_BASE_URL")
     deepseek_model: str = Field("deepseek-chat", alias="DEEPSEEK_MODEL")

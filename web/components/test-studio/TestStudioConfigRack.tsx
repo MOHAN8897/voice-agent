@@ -12,6 +12,11 @@ import {
   type StackForm,
   type StackMode,
 } from "@/lib/test-studio-stack";
+import {
+  applyPstnStackDefaults,
+  defaultPstnSttModel,
+  sttModelsForPstn,
+} from "@/lib/pstn-stack";
 import { cn } from "@/lib/cn";
 
 type ChannelTab = "agent" | "pstn";
@@ -31,6 +36,7 @@ function StageSelect({
   providers,
   stage,
   disabled,
+  modelOptions,
   onProviderChange,
   onModelChange,
 }: {
@@ -40,11 +46,12 @@ function StageSelect({
   providers: ProviderEntry[];
   stage: "stt" | "llm" | "tts";
   disabled?: boolean;
+  modelOptions?: { id: string; label?: string }[];
   onProviderChange: (provider: string, model: string) => void;
   onModelChange: (model: string) => void;
 }) {
   const options = providers.filter((p) => (p.models?.[stage]?.length ?? 0) > 0);
-  const modelOptions = modelsFor(providers, provider, stage);
+  const modelOpts = modelOptions ?? modelsFor(providers, provider, stage);
 
   return (
     <div className="space-y-2 rounded-skeuo-sm border border-surface-border-subtle skeuo-inset p-3">
@@ -72,7 +79,7 @@ function StageSelect({
         value={model}
         onChange={(e) => onModelChange(e.target.value)}
       >
-        {modelOptions.map((m) => (
+        {modelOpts.map((m) => (
           <option key={m.id} value={m.id}>
             {m.label || m.id}
           </option>
@@ -131,9 +138,14 @@ export function TestStudioConfigRack({
   const [rackTab, setRackTab] = useState<RackTab>("channel");
   const effectiveTtsProvider = stack.ttsProvider || "sarvam";
   const voiceValue = stack.ttsVoiceId || runtimeTtsSpeaker || "";
+  const pstnSttModels =
+    channel === "pstn"
+      ? sttModelsForPstn(providers, stack.sttProvider, language)
+      : undefined;
 
   function patchStack(patch: Partial<StackForm>) {
-    onStackChange({ ...stack, ...patch });
+    const next = { ...stack, ...patch };
+    onStackChange(channel === "pstn" ? applyPstnStackDefaults(next, language) : next);
   }
 
   return (
@@ -179,9 +191,16 @@ export function TestStudioConfigRack({
               ))}
             </div>
             <p className="text-xs text-text-muted">
-              Agent only tests STT, brain, TTS, and memory without Exotel. Full PSTN adds telephony handshake and
-              outbound dial.
+              Agent only tests STT, brain, TTS, and memory without telephony. Full PSTN adds handshake and
+              outbound dial (L16 @ 16 kHz on Telnyx).
             </p>
+            {channel === "pstn" && (
+              <p className="rounded-skeuo-sm border border-accent/25 bg-accent/5 px-3 py-2 text-[11px] text-text-muted">
+                PSTN requires realtime STT (<span className="font-mono">saaras:v3-realtime</span> or Cartesia{" "}
+                <span className="font-mono">ink-whisper</span>). TTS voice must match provider (Sarvam name vs
+                Cartesia UUID).
+              </p>
+            )}
             <label className="block text-sm">
               <span className="text-text-muted">Language</span>
               <select
@@ -239,6 +258,13 @@ export function TestStudioConfigRack({
                   ))}
                 </select>
                 <p className="mt-1.5 text-[11px] text-text-subtle">{TIER_META[tierKey].description}</p>
+                {channel === "pstn" && (
+                  <p className="mt-2 text-[11px] text-text-subtle">
+                    Tier preset uses env-resolved stack (same as{" "}
+                    <span className="font-mono">run_test5_outbound_phone.py</span>). Switch to Custom stack to
+                    override STT/TTS for PSTN dial.
+                  </p>
+                )}
               </label>
             ) : catalogLoading ? (
               <p className="text-xs text-text-muted">Loading providers…</p>
@@ -253,7 +279,14 @@ export function TestStudioConfigRack({
                   provider={stack.sttProvider}
                   model={stack.sttModel}
                   disabled={locked}
-                  onProviderChange={(sttProvider, sttModel) => patchStack({ sttProvider, sttModel })}
+                  modelOptions={pstnSttModels}
+                  onProviderChange={(sttProvider, sttModel) => {
+                    const first =
+                      channel === "pstn"
+                        ? defaultPstnSttModel(sttProvider, language)
+                        : modelsFor(providers, sttProvider, "stt")[0]?.id || sttModel;
+                    patchStack({ sttProvider, sttModel: first });
+                  }}
                   onModelChange={(sttModel) => patchStack({ sttModel })}
                 />
                 <StageSelect
@@ -283,6 +316,12 @@ export function TestStudioConfigRack({
                   }}
                   onModelChange={(ttsModel) => patchStack({ ttsModel })}
                 />
+                {channel === "pstn" && stackMode === "custom" && (
+                  <p className="text-[11px] text-text-subtle">
+                    Custom PSTN stack is validated before dial. Invalid combos return an error instead of a silent
+                    call.
+                  </p>
+                )}
                 {!catalogLoading && (
                   <div className="skeuo-inset rounded-skeuo-sm p-2.5">
                     <p className="font-mono text-[10px] uppercase tracking-wider text-text-subtle">Resolved preview</p>

@@ -6,5 +6,6 @@ External systems and cross-cutting integration patterns.
 |----------|----------|
 | [provider-platform.md](./provider-platform.md) | STT/LLM/TTS registry, tiers, adapters |
 | [two-way-voice-stream.md](./two-way-voice-stream.md) | Sarvam / Cartesia / Telnyx / browser formats, frame sizes, low-latency PSTN |
+| [telnyx-validation-pipeline.md](./telnyx-validation-pipeline.md) | TEST 0–10 step-by-step Telnyx + agent validation ladder |
 | [plivo-and-campaigns.md](./plivo-and-campaigns.md) | PSTN streaming, outbound dialer |
 | [nextjs-frontend-split.md](./nextjs-frontend-split.md) | Frontend/backend boundary, live voice port |

@@ -314,6 +314,11 @@ class TelnyxClient:
         )
         return data.get("data") or data
 
+    async def hangup(self, call_control_id: str) -> dict[str, Any]:
+        """End an active Telnyx call (dev stress tests / cleanup)."""
+        data = await self._request("POST", f"/calls/{call_control_id}/actions/hangup", json={})
+        return data.get("data") or data
+
 
 class TelnyxCallRegistry:
     """In-memory Telnyx call events for dev Test Studio."""

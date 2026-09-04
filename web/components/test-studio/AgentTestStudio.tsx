@@ -22,6 +22,7 @@ import {
   type StackForm,
   type StackMode,
 } from "@/lib/test-studio-stack";
+import { applyPstnStackDefaults } from "@/lib/pstn-stack";
 import { classifyCacheEvent, type PricingMeta } from "@/lib/usage-cost";
 import { billingCharCount } from "@/lib/billing-chars";
 import { isCartesiaVoiceId } from "@/lib/voice/tts-config";
@@ -48,7 +49,7 @@ export function AgentTestStudio({
 }) {
   const [studioTab, setStudioTab] = useState<StudioTab>("live");
   const [channel, setChannel] = useState<ChannelTab>("agent");
-  const [stackMode, setStackMode] = useState<StackMode>(portal === "dev" ? "custom" : "tier");
+  const [stackMode, setStackMode] = useState<StackMode>("tier");
   const [tier, setTier] = useState("medium");
   const [stack, setStack] = useState<StackForm>(defaultStackForm());
   const [language, setLanguage] = useState("te-IN");
@@ -185,11 +186,17 @@ export function AgentTestStudio({
           next.ttsProvider !== "cartesia" && isCartesiaVoiceId(inherited)
             ? next.ttsVoiceId || ""
             : inherited;
-        return { ...next, ttsVoiceId };
+        const merged = { ...next, ttsVoiceId };
+        return channel === "pstn" ? applyPstnStackDefaults(merged, language) : merged;
       });
       if (next.language) setLanguage(next.language);
     }
-  }, [stackMode, tier, stackForTier, runtimeTtsSpeaker]);
+  }, [stackMode, tier, stackForTier, runtimeTtsSpeaker, channel, language]);
+
+  useEffect(() => {
+    if (channel !== "pstn") return;
+    setStack((prev) => applyPstnStackDefaults(prev, language));
+  }, [channel, language]);
 
   useEffect(() => {
     if (!callId || callEnded) return;
@@ -308,6 +315,16 @@ export function AgentTestStudio({
     return undefined;
   }, [stackMode, stack, runtimeTtsSpeaker]);
 
+  const pstnStackOverride = useMemo(() => {
+    if (stackMode !== "custom") return undefined;
+    const voiceId = stack.ttsVoiceId || runtimeTtsSpeaker;
+    const form = applyPstnStackDefaults(
+      voiceId ? { ...stack, ttsVoiceId: voiceId } : stack,
+      language
+    );
+    return buildStackOverride(form);
+  }, [stackMode, stack, runtimeTtsSpeaker, language]);
+
   return (
     <div className="space-y-5">
       <div className="sticky top-0 z-40 -mx-1 rounded-skeuo-lg border border-surface-border-subtle bg-surface/95 px-2 py-3 backdrop-blur supports-[backdrop-filter]:bg-surface/90">
@@ -362,13 +379,17 @@ export function AgentTestStudio({
                   onTurnComplete={onTurnComplete}
                 />
               ) : (
-                <SkeuoPanel title="PSTN · Telephony" description="Exotel, Telnyx, or Plivo — full outbound E2E test" padding="md">
+                <SkeuoPanel
+                  title="PSTN · Telephony"
+                  description="Telnyx L16 @ 16 kHz — same path as validation tests 1–10"
+                  padding="md"
+                >
                   <PstnTestPanel
                     agentId={agentId}
                     tier={tier}
                     language={language}
-                    stackOverride={stackOverride}
-                    sourceSessionId={TEST_STUDIO_SESSION_ID}
+                    stackMode={stackMode}
+                    stackOverride={pstnStackOverride}
                     onInternalCallStart={onCallStart}
                     onInternalCallEnd={onCallEnd}
                   />

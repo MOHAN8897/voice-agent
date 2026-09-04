@@ -13,15 +13,19 @@ from typing import Any
 from server.services.audio_transcode import chunk_mulaw_frames, chunk_pcm16_frames
 from server.services.pstn_debug import log_pstn
 from server.services.pstn_media_flow import pstn_media_flow
-from server.services.pstn_text_chunker import drain_complete_sentences, extract_opening_greeting
+from server.services.pstn_text_chunker import (
+    drain_complete_sentences,
+    extract_opening_greeting,
+    resolve_stream_tts_tail,
+)
 from server.utils.logger import log_error, log_stt, log_tts
 
 logger = logging.getLogger(__name__)
 
 OnAgentWire = Callable[[bytes], Awaitable[None]]
 
-# TEMP: disabled while validating RTP/PCMU outbound audio (no Telnyx clear during tests).
-ENABLE_PSTN_BARGE_IN = False
+# Enabled after TEST 5–6 passed (Telnyx clear + local TTS stop on caller interrupt).
+ENABLE_PSTN_BARGE_IN = True
 
 # PSTN telephony: 8 kHz (Exotel/Plivo μ-law) or 16 kHz (Telnyx L16).
 PSTN_SAMPLE_RATE = 8000
@@ -45,10 +49,13 @@ def pstn_frame_bytes(wire_mode: str, sample_rate: int) -> int:
 
 def pstn_call_options(local: dict[str, Any]) -> dict[str, Any]:
     """Extract PSTN lifecycle + TTS options saved at outbound dial time."""
+    source = str(local.get("source_session_id") or "").strip()
+    # Browser Test Studio session is not used for PSTN TTS/runtime lookup.
+    tts_session_id = source if source and source != "test-studio" else None
     return {
         "stack_override": local.get("stack_override"),
         "language": local.get("language"),
-        "tts_session_id": local.get("source_session_id"),
+        "tts_session_id": tts_session_id,
     }
 
 
@@ -256,6 +263,7 @@ class PstnVoiceLoop:
             from server.call.live_turn_orchestrator import live_turn_orchestrator
 
             pending = ""
+            spoke_from_stream = False
             async for chunk in live_turn_orchestrator.handle_user_turn_stream(
                 transcript=text,
                 session_id=self.session_id,
@@ -274,8 +282,13 @@ class PstnVoiceLoop:
                     sentences, pending = drain_complete_sentences(pending)
                     for sent in sentences:
                         await self.speak(sent)
+                        spoke_from_stream = True
                 elif chunk.get("done"):
-                    tail = pending.strip() or (chunk.get("text") or "").strip()
+                    tail = resolve_stream_tts_tail(
+                        pending,
+                        chunk.get("text") or "",
+                        spoke_from_stream=spoke_from_stream,
+                    )
                     if tail:
                         await self.speak(tail)
                     pending = ""
@@ -518,6 +531,7 @@ class PstnVoiceLoop:
                             ),
                             status="healthy",
                         )
+                        first_chunk = False
                     while len(audio_buf) >= frame_bytes:
                         chunk = bytes(audio_buf[:frame_bytes])
                         del audio_buf[:frame_bytes]

@@ -324,7 +324,7 @@ The browser worklet and the Telnyx bridge are **different sockets**. They share 
 | `cartesia_tts_ws` | `pcm_s16le` at that sample rate |
 | `PstnVoiceLoop` sample_rate 16000, `tts_output_codec=linear16` | `wire_mode=rtp_l16` |
 | PCMU/PCMA inbound | Decode/upsample to PCM16 16 kHz, then STT (degraded) |
-| `ENABLE_PSTN_BARGE_IN` | **Currently `False`**. Target architecture uses Telnyx `clear` + local TTS stop. Turn it on only after outbound audio is proven |
+| `ENABLE_PSTN_BARGE_IN` | **`True`** after TEST 7. Telnyx `clear` + local TTS stop on caller interrupt |
 
 ---
 

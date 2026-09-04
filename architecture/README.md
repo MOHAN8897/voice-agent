@@ -60,6 +60,7 @@ This folder is the **engineering architecture pack** for the voice agent platfor
 |------|----------|
 | [provider-platform.md](./integrations/provider-platform.md) | Registry, resolver, tiers, adapter contracts |
 | [two-way-voice-stream.md](./integrations/two-way-voice-stream.md) | Sarvam / Cartesia / Telnyx / browser audio formats and two-way PSTN |
+| [telnyx-validation-pipeline.md](./integrations/telnyx-validation-pipeline.md) | TEST 0–10 Telnyx + agent validation phases (run in order) |
 | [plivo-and-campaigns.md](./integrations/plivo-and-campaigns.md) | PSTN streaming, outbound dialer, campaigns |
 | [nextjs-frontend-split.md](./integrations/nextjs-frontend-split.md) | Frontend/backend responsibilities, live voice port |
 
