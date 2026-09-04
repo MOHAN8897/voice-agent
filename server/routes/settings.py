@@ -73,7 +73,13 @@ async def catalog():
             "useProviderRegistry": use_registry,
         },
         "stt": {
-            "models": [{"id": k, "label": v["label"], "modes": v["modes"]} for k, v in constants.STT_MODELS.items()],
+            "models": (
+                [{"id": k, "label": v["label"], "modes": v["modes"]} for k, v in constants.STT_MODELS.items()]
+                + [
+                    {"id": k, "label": v["label"], "modes": v.get("modes", ["transcribe"])}
+                    for k, v in constants.CARTESIA_STT_MODELS.items()
+                ]
+            ),
             "modes": constants.STT_MODES,
             "streamTypes": constants.STT_STREAM_TYPES,
             "languages": list(constants.SUPPORTED_LANGUAGES.keys()) + ["unknown"],

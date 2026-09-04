@@ -304,7 +304,10 @@ export function EnvironmentPanel() {
     setSaving(true);
     setStatus("Saving to server overlay…");
     setSaveResult(null);
-    const patch: Record<string, unknown> = { ...toggles, ...strings };
+    const patch: Record<string, unknown> = { ...toggles };
+    Object.entries(strings).forEach(([k, v]) => {
+      if (typeof v === "string" && v.trim()) patch[k] = v.trim();
+    });
     Object.entries(draft).forEach(([k, v]) => {
       if (v.trim()) patch[k] = v.trim();
     });

@@ -36,8 +36,14 @@ def test_catalog_includes_sarvam_and_openai(base_settings):
 def test_disabled_provider_filtered(base_settings, monkeypatch):
     monkeypatch.setenv("ENABLE_OPENAI", "false")
     from server.config.env import get_settings
+    from server.services.dev_secrets_store import dev_secrets_store
 
     get_settings.cache_clear()
+    monkeypatch.setattr(
+        dev_secrets_store,
+        "effective",
+        lambda field, default=None: getattr(get_settings(), field, default),
+    )
     settings = Settings(_env_file=None)  # type: ignore[call-arg]
     registry = ProviderRegistry(settings)
     ids = {p["id"] for p in registry.get_catalog()["providers"]}

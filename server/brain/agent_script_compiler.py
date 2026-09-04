@@ -7,6 +7,7 @@ into a structured telecaller script that becomes the cached brain for the sessio
 from __future__ import annotations
 
 import hashlib
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
@@ -31,7 +32,7 @@ from server.prompts.agent_voice_rules import (
 from server.prompts.brain_prompt import SECTION_SAFETY, SECTION_TELUGU_VOICE
 from server.prompts.voice_defaults import DEFAULT_RESPONSE_STYLE
 
-COMPILER_VERSION = "agent_script_v2"
+COMPILER_VERSION = "agent_script_v3"
 
 AGENT_SCRIPT_SCHEMA: dict[str, Any] = {
     "type": "object",
@@ -93,14 +94,194 @@ def brief_checksum(*, brief: str, language: str, style: str | None) -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
-def _deterministic_script(brief: str) -> str:
-    """Fallback when OpenAI is unavailable — still produces a usable script skeleton."""
+_PLACEHOLDER_RE = re.compile(r"\[(?:agent name|company(?: name)?)\]", re.I)
+_WORKISH_FIRST = frozenset({
+    "a", "an", "the", "people", "customers", "users", "callers", "someone",
+    "car", "cars", "cab", "cabs", "taxi", "booking", "bookings", "help",
+    "support", "insurance", "loan", "loans", "sales", "orders", "delivery",
+    "plant", "plants", "this", "that",
+})
+_COMPANY_HINT = re.compile(
+    r"(shop|mart|realty|plants|pvt|ltd|limited|inc|corp|hospital|clinic|"
+    r"hotel|bank|school|college|nursery|store|studio|farms|farm)",
+    re.I,
+)
+_SECTION_NAMES = (
+    "AGENT IDENTITY",
+    "OPENING",
+    "WORK SCOPE",
+    "VOICE STYLE",
+    "CONVERSATION FLOW",
+    "OBJECTION HANDLING",
+    "GUARDRAILS",
+    "CLOSING",
+)
+_SECTION_SPLIT = "|".join(re.escape(name) for name in _SECTION_NAMES)
+
+
+def _clean_identity_value(value: str) -> str:
+    text = _PLACEHOLDER_RE.sub("", value or "").strip(" .,:;-")
+    text = re.sub(r"\s+", " ", text)
+    if not text or text.lower() in {"none", "n/a", "na", "unknown"}:
+        return ""
+    return text[:60]
+
+
+def extract_agent_name_from_brief(brief: str) -> str:
+    patterns = (
+        r"agent\s*name\s*(?:is|:)?\s*([A-Za-z][A-Za-z]{1,24})",
+        r"named\s+([A-Za-z][A-Za-z]{1,24})",
+        r"\bnenu\s+([A-Za-z][A-Za-z]{1,24})",
+    )
+    for pat in patterns:
+        match = re.search(pat, brief or "", re.I)
+        if match:
+            name = _clean_identity_value(match.group(1))
+            if name:
+                return name.split()[0]
+    return ""
+
+
+def extract_company_from_brief(brief: str) -> str:
+    text = brief or ""
+    match = re.search(r"company(?:\s*name)?\s*(?:is|:)\s*([^\n.]{2,50})", text, re.I)
+    if match:
+        return _clean_identity_value(match.group(1))
+    match = re.search(r"(?:calling from|from)\s+([A-Z][A-Za-z0-9 &.]{1,40})", text)
+    if match:
+        candidate = _clean_identity_value(match.group(1))
+        if candidate and candidate.split()[0].lower() not in _WORKISH_FIRST:
+            return candidate
+    match = re.search(r"(?:telecaller|agent|caller)\s+for\s+(.+?)(?:\.|,|;|$)", text, re.I)
+    if match:
+        candidate = re.split(r"\bagent\s+name\b", match.group(1), flags=re.I)[0]
+        candidate = _clean_identity_value(candidate)
+        if not candidate:
+            return ""
+        first = candidate.split()[0]
+        if first.lower() in _WORKISH_FIRST:
+            return ""
+        if first[:1].isupper() or _COMPANY_HINT.search(candidate):
+            return candidate
+    return ""
+
+
+def infer_agent_name(brief: str) -> str:
+    named = extract_agent_name_from_brief(brief)
+    if named:
+        return named
+    lower = (brief or "").lower()
+    if any(word in lower for word in ("car", "cab", "taxi", "booking", "driver")):
+        return "Ravi"
+    if any(word in lower for word in ("support", "complaint", "help desk", "ticket")):
+        return "Anu"
+    return "Priya"
+
+
+def work_scope_from_brief(brief: str, company: str) -> str:
+    text = " ".join((brief or "").split())
+    text = re.sub(r"agent\s*name\s*(?:is|:)?\s*[A-Za-z][A-Za-z .]{0,30}", "", text, flags=re.I)
+    text = re.sub(r"company(?:\s*name)?\s*(?:is|:)?\s*[^\n.]{2,50}", "", text, flags=re.I)
+    if company:
+        text = re.sub(re.escape(company), "", text, flags=re.I)
+    text = re.sub(r"\s+", " ", text).strip(" .,:;-")
+    if not text:
+        text = " ".join((brief or "").split())
+    if len(text) > 240:
+        text = text[:237].rsplit(" ", 1)[0] + "..."
+    return text
+
+
+def build_opening_line(*, agent_name: str, company_name: str, work_scope: str) -> str:
+    if company_name:
+        return (
+            f"Namaste! Nenu {agent_name}, {company_name} nundi matladutunnanu. "
+            "Meeku ela help cheyagalanu?"
+        )
+    work = work_scope.strip()
+    if len(work) > 70:
+        work = work[:67].rsplit(" ", 1)[0]
+    if not work:
+        work = "ee call lo mention chesina pani"
     return (
-        "--- AGENT IDENTITY ---\n"
-        f"Follow this brief on every call:\n{brief.strip()}\n\n"
-        "--- OPENING ---\n"
-        "Namaste! Nenu [agent name], [company name] nundi matladutunnanu. Meeku ela help cheyagalanu?\n"
-        "Greet the customer, say the business name, and introduce yourself by name on every call.\n\n"
+        f"Namaste! Nenu {agent_name}. {work} ki related ga meeku help chestunnanu. "
+        "Ela help cheyagalanu?"
+    )
+
+
+def resolve_script_identity(
+    brief: str,
+    *,
+    llm_name: str = "",
+    llm_company: str = "",
+) -> tuple[str, str, str, str]:
+    """Return (agent_name, company_name, work_scope, opening_line). Never invent a company."""
+    brief_name = extract_agent_name_from_brief(brief)
+    brief_company = extract_company_from_brief(brief)
+    name = _clean_identity_value(brief_name or llm_name) or infer_agent_name(brief)
+    if brief_company:
+        company = brief_company
+    else:
+        guessed = _clean_identity_value(llm_company)
+        company = guessed if guessed and guessed.lower() in (brief or "").lower() else ""
+    work = work_scope_from_brief(brief, company)
+    opening = build_opening_line(agent_name=name, company_name=company, work_scope=work)
+    return name, company, work, opening
+
+
+def _strip_script_section(script: str, title: str) -> str:
+    header = re.escape(title)
+    pattern = re.compile(
+        rf"(?:^|\n)(?:---\s*)?{header}(?:\s*---)?[ \t]*\n"
+        rf"(.*?)(?=(?:\n(?:---\s*)?(?:{_SECTION_SPLIT})(?:\s*---)?[ \t]*\n)|\Z)",
+        re.S | re.I,
+    )
+    return pattern.sub("\n", script, count=1).strip()
+
+
+def ensure_script_identity_and_scope(
+    script: str,
+    *,
+    agent_name: str,
+    company_name: str,
+    work_scope: str,
+    opening_line: str,
+) -> str:
+    body = _PLACEHOLDER_RE.sub("", script or "").strip()
+    for title in ("AGENT IDENTITY", "OPENING", "WORK SCOPE"):
+        body = _strip_script_section(body, title)
+    identity = (
+        f"You are {agent_name}"
+        + (f", calling from {company_name}" if company_name else f". You handle: {work_scope}")
+        + ".\nSpeak natural Tanglish. Introduce yourself on every call — never skip the opening."
+    )
+    opening = (
+        f"{opening_line}\n"
+        "Say this introduction (or a close natural variation) as the first turn when the call connects."
+    )
+    scope = (
+        f"You only do this work on the call:\n{work_scope}\n"
+        "Stay inside this scope. If the caller asks about something else, politely say it is "
+        "outside this call's work and return to the duties above."
+    )
+    return (
+        f"--- AGENT IDENTITY ---\n{identity}\n\n"
+        f"--- OPENING ---\n{opening}\n\n"
+        f"--- WORK SCOPE ---\n{scope}\n\n"
+        f"{body}".strip()
+    )
+
+
+def _deterministic_script(
+    brief: str,
+    *,
+    agent_name: str,
+    company_name: str,
+    work_scope: str,
+    opening_line: str,
+) -> str:
+    """Fallback when OpenAI is unavailable — still produces a usable script skeleton."""
+    skeleton = (
         "--- VOICE STYLE ---\n"
         f"{AGENT_VOICE_BEHAVIOR_RULES}\n\n"
         "--- CONVERSATION FLOW ---\n"
@@ -114,7 +295,15 @@ def _deterministic_script(brief: str) -> str:
         "Politely end the call when the user says goodbye.\n\n"
         "--- CLOSING ---\n"
         "Summarize next step (site visit, callback, order confirm) in one sentence.\n"
-        "Thank them and close naturally."
+        "Thank them and close naturally.\n\n"
+        f"Follow this brief on every call:\n{brief.strip()}"
+    )
+    return ensure_script_identity_and_scope(
+        skeleton,
+        agent_name=agent_name,
+        company_name=company_name,
+        work_scope=work_scope,
+        opening_line=opening_line,
     )
 
 
@@ -139,12 +328,12 @@ async def _llm_generate_script(
             "You write complete voice-agent calling scripts for Telugu phone assistants in India. "
             "Given a short user brief, output a single plain-text script the agent follows on every call. "
             "Include clear section headers:\n"
-            "AGENT IDENTITY, OPENING, VOICE STYLE, CONVERSATION FLOW, OBJECTION HANDLING, GUARDRAILS, CLOSING.\n"
+            "AGENT IDENTITY, OPENING, WORK SCOPE, VOICE STYLE, CONVERSATION FLOW, OBJECTION HANDLING, GUARDRAILS, CLOSING.\n"
             "Rules:\n"
             f"- TOP PRIORITY — {AGENT_TANGLISH_LANGUAGE_RULE}\n"
             "- All example dialogue lines in the script must demonstrate natural Tanglish, not literary Telugu.\n"
             "- You MUST include every section through CLOSING — never stop mid-section.\n"
-            "- Extract agent name, company, and role from the brief when provided.\n"
+            "- Extract agent name and company from the brief when provided. If no agent name is given, invent a suitable Telugu telecaller first name. If no company is given, do NOT invent a brand — describe the work from the brief instead.\n"
             f"- {AGENT_OPENING_REQUIREMENTS}\n"
             "- Telecaller / sales flows: qualify budget, location, timeline; offer one clear next step.\n"
             "- Plain text only — no markdown, no bullet symbols, no numbered lists.\n"
@@ -210,8 +399,9 @@ async def _llm_generate_script_plain(
         model = settings.post_call_llm_model or settings.openai_model
         system = (
             "Write a complete Telugu telecaller calling script as plain text with section headers: "
-            "AGENT IDENTITY, OPENING, VOICE STYLE, CONVERSATION FLOW, OBJECTION HANDLING, GUARDRAILS, CLOSING. "
-            "Extract agent name and company from the brief. No markdown bullets. "
+            "AGENT IDENTITY, OPENING, WORK SCOPE, VOICE STYLE, CONVERSATION FLOW, OBJECTION HANDLING, GUARDRAILS, CLOSING. "
+            "Extract agent name and company from the brief when present. If no name is given, invent a suitable first name. "
+            "If no company is given, do not invent a brand — describe the work from the brief. No markdown bullets. "
             f"{AGENT_OPENING_REQUIREMENTS} "
             "All numbers in example dialogue must be in English (digits or English words), never Telugu numerals. "
             f"TOP PRIORITY: {AGENT_TANGLISH_LANGUAGE_RULE} "
@@ -316,17 +506,41 @@ async def compile_agent_from_brief(
     if llm_payload:
         script = str(llm_payload.get("agent_script", "")).strip()
         model = get_settings().post_call_llm_model or get_settings().openai_model
-        agent_name = str(llm_payload.get("agent_name") or "").strip()
-        company_name = str(llm_payload.get("company_name") or "").strip()
+        llm_name = str(llm_payload.get("agent_name") or "").strip()
+        llm_company = str(llm_payload.get("company_name") or "").strip()
         role_summary = str(llm_payload.get("role_summary") or "").strip()
         key_facts = list(llm_payload.get("key_facts") or [])[:8]
     else:
-        script = _deterministic_script(cleaned)
+        script = ""
         model = "deterministic_v1"
-        agent_name = ""
-        company_name = ""
+        llm_name = ""
+        llm_company = ""
         role_summary = ""
         key_facts = []
+
+    agent_name, company_name, work_scope, opening_line = resolve_script_identity(
+        cleaned,
+        llm_name=llm_name,
+        llm_company=llm_company,
+    )
+    if not role_summary:
+        role_summary = work_scope
+    if not script:
+        script = _deterministic_script(
+            cleaned,
+            agent_name=agent_name,
+            company_name=company_name,
+            work_scope=work_scope,
+            opening_line=opening_line,
+        )
+    else:
+        script = ensure_script_identity_and_scope(
+            script,
+            agent_name=agent_name,
+            company_name=company_name,
+            work_scope=work_scope,
+            opening_line=opening_line,
+        )
 
     script, compiled = _ensure_cache_floor(
         script=script,

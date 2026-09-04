@@ -114,5 +114,31 @@ def test_agent_brief_deterministic_fallback(monkeypatch):
     j = r.json()
     assert j.get("compiledVersion", 0) >= 1
     assert "Sai Tech" in j.get("agentScript", "") or "Sai Tech" in j.get("brainPromptFull", "")
+    script = j.get("agentScript", "")
+    assert "Ravi" in script
+    assert "[agent name]" not in script.lower()
+    assert "WORK SCOPE" in script
+    c.delete("/api/instructions", params={"sessionId": sid})
+    get_settings.cache_clear()
+
+
+def test_agent_brief_unnamed_no_company_uses_work_scope(monkeypatch):
+    c = _client(monkeypatch)
+    sid = "agent-brief-work-scope"
+    brief = "Help callers book a car. Qualify pickup city, drop location, and time. Never invent fares."
+    with patch(
+        "server.brain.agent_script_compiler._llm_generate_script",
+        new=AsyncMock(return_value=None),
+    ):
+        r = c.post("/api/instructions", json={"sessionId": sid, "agentBrief": brief})
+    assert r.status_code == 200, r.text
+    script = r.json().get("agentScript", "")
+    assert "WORK SCOPE" in script
+    assert "Ravi" in script
+    assert "Namaste!" in script
+    assert "nundi matladutunnanu" not in script
+    assert "[agent name]" not in script.lower()
+    assert "[company" not in script.lower()
+    assert "book a car" in script.lower() or "car" in script.lower()
     c.delete("/api/instructions", params={"sessionId": sid})
     get_settings.cache_clear()

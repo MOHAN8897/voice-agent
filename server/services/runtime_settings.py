@@ -118,8 +118,9 @@ class RuntimeSettingsStore:
                 raise SettingsValidationError(f"voicePresetId must be one of {VOICE_PIPELINE_PRESET_IDS}")
             return val
         if key == "sttModel":
-            if val not in constants.STT_MODELS:
-                raise SettingsValidationError(f"sttModel must be one of {list(constants.STT_MODELS)}")
+            allowed = list(constants.STT_MODELS) + list(constants.CARTESIA_STT_MODELS)
+            if val not in allowed:
+                raise SettingsValidationError(f"sttModel must be one of {allowed}")
             return val
         if key == "sttMode":
             model = None  # resolved at use-time; mode must be in global list

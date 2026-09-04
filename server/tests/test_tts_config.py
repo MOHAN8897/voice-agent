@@ -55,7 +55,15 @@ def test_cartesia_voice_uuid_not_validated_as_sarvam_speaker(monkeypatch):
 def test_cartesia_uuid_falls_back_to_sarvam_when_cartesia_disabled(monkeypatch):
     monkeypatch.setenv("ENABLE_CARTESIA", "false")
     monkeypatch.setenv("CARTESIA_API_KEY", "")
+    from server.services.dev_secrets_store import dev_secrets_store
+
     get_settings.cache_clear()
+    monkeypatch.setattr(
+        dev_secrets_store,
+        "effective",
+        lambda field, default=None: getattr(get_settings(), field, default),
+    )
+    monkeypatch.setattr(dev_secrets_store, "effective_secret", lambda field: None)
     init_provider_registry()
     runtime_settings.update(
         "cfg-test",

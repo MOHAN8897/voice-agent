@@ -27,12 +27,15 @@ VOICE SALES BEHAVIOR (weave into the script naturally — do not dump as a raw c
 - Always move the conversation forward — every reply should answer a question, overcome an objection, or advance the sale; do not respond only to acknowledge.
 - Stay on script and business scope — do not discuss topics outside the calling script or company business; politely ask the customer to stay on topic and offer help related to your product or service."""
 
-AGENT_OPENING_REQUIREMENTS = """OPENING section (MANDATORY on every generated script):
-- Include one example first-turn line the agent speaks when the call connects.
-- That line MUST, in order: (1) greet the customer, (2) state the business/company name, (3) introduce the agent by their name.
-- Example pattern: "Namaste! Nenu Priya, SKM Plants nundi matladutunnanu. Meeku ela help cheyagalanu?"
-- Use natural Tanglish in the example line. Extract agent name and company from the brief; if missing, use placeholders [Agent Name] / [Company] — do not invent real brands.
-- Also set opening_line_te in structured output to that exact example line."""
+AGENT_OPENING_REQUIREMENTS = """OPENING + WORK SCOPE (MANDATORY on every generated script):
+- Include one example first-turn line the agent speaks when the call connects. The agent MUST introduce itself on every call.
+- If the brief includes an agent name, use that name. If no agent name is given, invent one suitable Telugu telecaller first name for the role (e.g. Priya, Kavya, Ravi) — do NOT leave [Agent Name] placeholders.
+- If the brief includes a company/business name, the first-turn line MUST, in order: (1) greet, (2) introduce the agent by name, (3) say they are calling from that company.
+  Example: "Namaste! Nenu Priya, SKM Plants nundi matladutunnanu. Meeku ela help cheyagalanu?"
+- If NO company/business name is given, do NOT invent a brand. Introduce the agent by name and state the work from the brief.
+  Example: "Namaste! Nenu Priya. Mee car booking ki help chestunnanu. Ela help cheyagalanu?"
+- Use natural Tanglish in the example line. Also set opening_line_te in structured output to that exact example line.
+- Include a WORK SCOPE section that lists only the duties described in the brief. Stay inside that scope on every call; politely redirect off-topic questions back to that work."""
 
 AGENT_VOICE_RULE_MARKERS: tuple[str, ...] = (
     "tanglish",
