@@ -14,7 +14,8 @@ param(
     [switch]$Wait,
     [switch]$Open,
     [switch]$ApiOnly,
-    [switch]$WebOnly
+    [switch]$WebOnly,
+    [switch]$ProductionWeb
 )
 
 $ErrorActionPreference = "Stop"
@@ -155,10 +156,28 @@ if (-not $ApiOnly) {
         & $npm install
         Pop-Location
     }
-    Write-Host "Starting Next.js on $WebUrl"
-    Start-DevWindow -Title "Voice Agent Web" -WorkingDir $WebRoot `
-        -Command "& '$npm' run dev -- -p 3000" `
-        -LogFile (Join-Path $LogDir "web.log")
+    if ($ProductionWeb) {
+        $buildId = Join-Path $WebRoot ".next\BUILD_ID"
+        if (-not (Test-Path $buildId)) {
+            Write-Host "Building Next.js production bundle (required for public tunnel)..."
+            Push-Location $WebRoot
+            & $npm run build
+            if ($LASTEXITCODE -ne 0) {
+                Pop-Location
+                Write-Error "Next.js production build failed"
+            }
+            Pop-Location
+        }
+        Write-Host "Starting Next.js production server on $WebUrl"
+        Start-DevWindow -Title "Voice Agent Web" -WorkingDir $WebRoot `
+            -Command "& '$npm' run start -- -p 3000" `
+            -LogFile (Join-Path $LogDir "web.log")
+    } else {
+        Write-Host "Starting Next.js on $WebUrl"
+        Start-DevWindow -Title "Voice Agent Web" -WorkingDir $WebRoot `
+            -Command "& '$npm' run dev -- -p 3000" `
+            -LogFile (Join-Path $LogDir "web.log")
+    }
 }
 
 $apiOk = $false

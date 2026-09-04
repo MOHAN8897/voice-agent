@@ -110,8 +110,17 @@ export function TestStudioFineTuneWorkbench({
   const modelLabels = ft.catalog?.openai?.modelLabels || {};
   const allowedModels = ensureArray<string>(ft.catalog?.openai?.allowedModels);
   const reasoningEfforts = ensureArray<string>(ft.catalog?.openai?.reasoningEfforts);
+  const ttsCatalog = ft.catalog?.tts as
+    | {
+        defaultCartesiaVoiceId?: string;
+        cartesiaModels?: { id: string; label: string }[];
+        voicePresets?: { id: string; label: string }[];
+        speakersV3?: string[];
+        speakersV2?: string[];
+      }
+    | undefined;
   const defaultCartesiaVoice =
-    String(ft.catalog?.tts?.defaultCartesiaVoiceId || "db6b0ed5-d5d3-463d-ae85-518a07d3c2b4");
+    String(ttsCatalog?.defaultCartesiaVoiceId || "db6b0ed5-d5d3-463d-ae85-518a07d3c2b4");
   const useCartesia = stackTtsProvider === "cartesia" || String(ft.runtime.ttsModel || "").startsWith("sonic");
 
   const brainHref =
@@ -339,7 +348,7 @@ export function TestStudioFineTuneWorkbench({
                 <input
                   type="number"
                   min={1500}
-                  max={2500}
+                  max={5000}
                   disabled={locked}
                   className={inputCls}
                   value={Number(
@@ -384,7 +393,7 @@ export function TestStudioFineTuneWorkbench({
                       value={String(ft.runtime.ttsModel || "sonic-3.5")}
                       onChange={(e) => ft.setRuntime((r) => ({ ...r, ttsModel: e.target.value }))}
                     >
-                      {ensureArray<{ id: string; label: string }>(ft.catalog?.tts?.cartesiaModels).map(
+                      {ensureArray<{ id: string; label: string }>(ttsCatalog?.cartesiaModels).map(
                         (m) => (
                           <option key={m.id} value={m.id}>
                             {m.label || m.id}
@@ -403,7 +412,7 @@ export function TestStudioFineTuneWorkbench({
                       value={String(ft.runtime.voicePresetId ?? defaults.voicePresetId ?? "")}
                       onChange={(e) => ft.setRuntime((r) => ({ ...r, voicePresetId: e.target.value }))}
                     >
-                      {ensureArray<{ id: string; label: string }>(ft.catalog?.tts?.voicePresets).map(
+                      {ensureArray<{ id: string; label: string }>(ttsCatalog?.voicePresets).map(
                         (p) => (
                           <option key={p.id} value={p.id}>
                             {p.label}
@@ -417,8 +426,8 @@ export function TestStudioFineTuneWorkbench({
                       disabled={false}
                       value={String(ft.runtime.ttsSpeaker || runtimeTtsSpeaker || defaults.ttsSpeaker || "shubh")}
                       model={String(ft.runtime.ttsModel || "bulbul:v3")}
-                      speakersV3={sarvamSpeakersV3.length ? sarvamSpeakersV3 : ensureArray<string>(ft.catalog?.tts?.speakersV3)}
-                      speakersV2={sarvamSpeakersV2.length ? sarvamSpeakersV2 : ensureArray<string>(ft.catalog?.tts?.speakersV2)}
+                      speakersV3={sarvamSpeakersV3.length ? sarvamSpeakersV3 : ensureArray<string>(ttsCatalog?.speakersV3)}
+                      speakersV2={sarvamSpeakersV2.length ? sarvamSpeakersV2 : ensureArray<string>(ttsCatalog?.speakersV2)}
                       onChange={(ttsSpeaker) => {
                         ft.setRuntime((r) => ({ ...r, ttsSpeaker }));
                         onRuntimeSpeakerChange?.(ttsSpeaker);

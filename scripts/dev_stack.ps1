@@ -102,10 +102,11 @@ if (Test-NamedTunnelConfig) {
 }
 
 # --- Step 3: start API + web ---
+$productionWeb = $Mode -in @("share", "telephony")
 if ($Open) {
-    & (Join-Path $PSScriptRoot "dev_up.ps1") -Wait -Open
+    & (Join-Path $PSScriptRoot "dev_up.ps1") -Wait -Open -ProductionWeb:$productionWeb
 } else {
-    & (Join-Path $PSScriptRoot "dev_up.ps1") -Wait
+    & (Join-Path $PSScriptRoot "dev_up.ps1") -Wait -ProductionWeb:$productionWeb
 }
 
 # --- Step 4: tunnel ---
@@ -160,6 +161,11 @@ if ($tunnelStarted -and $publicApi) {
 if ($tunnelStarted -and $publicApp -and $publicApp -notmatch "localhost") {
     Write-Host ""
     Write-Host "  Public website    $publicApp"
+    if ($productionWeb) {
+        Write-Host "  Dev portal (public) $publicApp/dev/login"
+    } else {
+        Write-Host "  Dev portal (public) use localhost:3000/dev/login (dev bundles too large for tunnel)"
+    }
     Write-Host "  Share with friend $publicApp/dev/test-studio"
 }
 if ($Mode -eq "share" -and $publicApp) {

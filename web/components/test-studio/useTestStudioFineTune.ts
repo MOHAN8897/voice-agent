@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import { ensureArray } from "@/lib/ensure-array";
 import { assembleRawPreview, type BrainSection } from "@/lib/brain-utils";
 import { TEST_STUDIO_SESSION_ID } from "@/lib/test-studio-stack";
+import { invalidateTtsConfigCache } from "@/lib/voice/tts-config";
+import { notifyTestStudioVoiceSaved } from "@/lib/voice/voice-runtime-events";
 
 /** Keys that must be changed via voicePresetId, not individually. */
 const VOICE_BUNDLED_KEYS = new Set([
@@ -345,6 +347,10 @@ export function useTestStudioFineTune(agentId: string, language: string) {
       return false;
     }
     setStatus("Runtime saved for test session");
+    if (typeof patch.ttsSpeaker === "string" && patch.ttsSpeaker) {
+      invalidateTtsConfigCache();
+      notifyTestStudioVoiceSaved(patch.ttsSpeaker);
+    }
     return true;
   }, [runtime, sessionId]);
 

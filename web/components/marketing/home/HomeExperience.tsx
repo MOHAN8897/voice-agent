@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { AgentPreview } from "./AgentPreview";
 import { Reveal } from "./Reveal";
@@ -94,8 +93,12 @@ export function HomeExperience() {
                 disposition — one operational console for your team.
               </p>
               <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
-                <Link href="/app" className="btn-primary">Open Console</Link>
-                <Link href="/pricing" className="btn-secondary">View pricing</Link>
+                <a href="#how-it-works" className="btn-primary">
+                  See how it works
+                </a>
+                <a href="#faq" className="btn-secondary">
+                  Read FAQ
+                </a>
               </div>
               <p className="mt-5 font-mono text-[11px] uppercase tracking-wider text-text-subtle">
                 Browser test in minutes · PSTN ready · Memory on every call
@@ -199,15 +202,10 @@ export function HomeExperience() {
               ))}
             </div>
           </Reveal>
-          <div className="mt-8">
-            <Link href="/app" className="text-sm font-semibold text-accent hover:underline">
-              Open Business Console →
-            </Link>
-          </div>
         </div>
       </section>
 
-      <section className="border-b border-surface-border-subtle py-24" aria-labelledby="faq-title">
+      <section id="faq" className="border-b border-surface-border-subtle py-24" aria-labelledby="faq-title">
         <div className="mx-auto max-w-content px-6">
           <Reveal>
             <p className="label-caps text-accent">FAQ</p>
@@ -244,11 +242,12 @@ export function HomeExperience() {
                 Ready to configure your first agent?
               </h2>
               <p className="mx-auto mt-4 max-w-lg text-text-muted">
-                Sign in, edit your Business Brain, and run a live Test Studio session.
+                Configure how your agent speaks, test live, and review every call with memory and disposition.
               </p>
               <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-                <Link href="/app/agents" className="btn-primary">Go to Agents</Link>
-                <Link href="/app/login" className="btn-secondary">Sign in</Link>
+                <a href="#how-it-works" className="btn-primary">
+                  Explore the platform
+                </a>
               </div>
             </div>
           </div>

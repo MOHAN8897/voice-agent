@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { SessionTraceEvent, TurnCompleteEvent } from "@/components/live/LiveVoiceSession";
 import { CallDetailView } from "@/components/calls/CallDetailView";
-import { ExotelTestPanel } from "@/components/dev/test-studio/ExotelTestPanel";
+import { PstnTestPanel } from "@/components/dev/test-studio/PstnTestPanel";
 import { SkeuoPanel } from "@/components/ui/skeuo/SkeuoPanel";
 import { refreshPortalSession } from "@/lib/auth-client";
 import { TestStudioConfigRack } from "@/components/test-studio/TestStudioConfigRack";
@@ -25,6 +25,7 @@ import {
 import { classifyCacheEvent, type PricingMeta } from "@/lib/usage-cost";
 import { billingCharCount } from "@/lib/billing-chars";
 import { isCartesiaVoiceId } from "@/lib/voice/tts-config";
+import { onTestStudioVoiceSaved } from "@/lib/voice/voice-runtime-events";
 import { cn } from "@/lib/cn";
 
 type ChannelTab = TestStudioMode;
@@ -53,6 +54,13 @@ export function AgentTestStudio({
   const [language, setLanguage] = useState("te-IN");
   const [fineTuneTab, setFineTuneTab] = useState<FineTuneTab>("prompts");
   const [runtimeTtsSpeaker, setRuntimeTtsSpeaker] = useState("");
+  const [voiceRuntime, setVoiceRuntime] = useState<{
+    sttSilenceMs?: number;
+    sttThreshold?: number;
+    sttStreamType?: string;
+    bargeMinWords?: number;
+    bargeRequireVad?: boolean;
+  }>({});
   const { providers, sttModes, sttStreamTypes, loading: catalogLoading, stackForTier, catalog } =
     useStackCatalog(portal);
   const [events, setEvents] = useState<SessionTraceEvent[]>([]);
@@ -120,15 +128,28 @@ export function AgentTestStudio({
     })
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => {
-        const speaker = String(j?.values?.ttsSpeaker || "");
+        const values = j?.values || {};
+        const speaker = String(values.ttsSpeaker || "");
         if (speaker) {
           setRuntimeTtsSpeaker(speaker);
-          if (!isCartesiaVoiceId(speaker)) {
-            setStack((prev) => ({ ...prev, ttsVoiceId: prev.ttsVoiceId || speaker }));
-          }
+          setStack((prev) => ({ ...prev, ttsVoiceId: speaker }));
         }
+        setVoiceRuntime({
+          sttSilenceMs: values.sttSilenceMs != null ? Number(values.sttSilenceMs) : undefined,
+          sttThreshold: values.sttThreshold != null ? Number(values.sttThreshold) : undefined,
+          sttStreamType: values.sttStreamType ? String(values.sttStreamType) : undefined,
+          bargeMinWords: values.bargeMinWords != null ? Number(values.bargeMinWords) : undefined,
+          bargeRequireVad: values.bargeRequireVad != null ? Boolean(values.bargeRequireVad) : undefined,
+        });
       })
       .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    return onTestStudioVoiceSaved((speaker) => {
+      setRuntimeTtsSpeaker(speaker);
+      setStack((prev) => ({ ...prev, ttsVoiceId: speaker }));
+    });
   }, []);
 
   const refreshMemory = useCallback(async (id: string) => {
@@ -236,7 +257,7 @@ export function AgentTestStudio({
         outputTokens: Number(ev.usage?.output_tokens || 0),
         cachedTokens: cached,
         cacheWriteTokens: Number(ev.usage?.cache_write_tokens || 0),
-        sttChars: Number(ev.usage?.stt_chars ?? ev.userText.length),
+        sttChars: Number(ev.usage?.stt_chars ?? billingCharCount(ev.userText)),
         sttAudioSec: Number(ev.usage?.stt_audio_sec ?? 0),
         ttsChars: Number(ev.usage?.tts_chars ?? billingCharCount(ev.assistantText)),
         ttsAudioBytes: Number(ev.usage?.tts_audio_bytes ?? 0),
@@ -269,19 +290,23 @@ export function AgentTestStudio({
   const showPstn = portal === "dev";
   const stackLocked = locked && (sessionStatus === "listening" || sessionStatus === "connecting");
   const stackOverride = useMemo(() => {
-    if (stackMode === "custom") return buildStackOverride(stack);
-    if (stack.ttsVoiceId) {
-      if (isCartesiaVoiceId(stack.ttsVoiceId) && stack.ttsProvider !== "cartesia") {
+    const voiceId = stack.ttsVoiceId || runtimeTtsSpeaker;
+    if (stackMode === "custom") {
+      const form = voiceId ? { ...stack, ttsVoiceId: voiceId } : stack;
+      return buildStackOverride(form);
+    }
+    if (voiceId) {
+      if (isCartesiaVoiceId(voiceId) && stack.ttsProvider !== "cartesia") {
         return undefined;
       }
       return {
         tts: {
-          config: { speaker: stack.ttsVoiceId },
+          config: { speaker: voiceId },
         },
       };
     }
     return undefined;
-  }, [stackMode, stack]);
+  }, [stackMode, stack, runtimeTtsSpeaker]);
 
   return (
     <div className="space-y-5">
@@ -329,6 +354,7 @@ export function AgentTestStudio({
                   languageCode={language}
                   stackOverride={stackOverride}
                   sessionId={TEST_STUDIO_SESSION_ID}
+                  voiceConfig={voiceRuntime}
                   onTrace={onTrace}
                   onCallStart={onCallStart}
                   onCallEnd={onCallEnd}
@@ -336,8 +362,16 @@ export function AgentTestStudio({
                   onTurnComplete={onTurnComplete}
                 />
               ) : (
-                <SkeuoPanel title="PSTN · Exotel" description="Full telephony flow — handshake, outbound, call status" padding="md">
-                  <ExotelTestPanel agentId={agentId} tier={tier} />
+                <SkeuoPanel title="PSTN · Telephony" description="Exotel, Telnyx, or Plivo — full outbound E2E test" padding="md">
+                  <PstnTestPanel
+                    agentId={agentId}
+                    tier={tier}
+                    language={language}
+                    stackOverride={stackOverride}
+                    sourceSessionId={TEST_STUDIO_SESSION_ID}
+                    onInternalCallStart={onCallStart}
+                    onInternalCallEnd={onCallEnd}
+                  />
                 </SkeuoPanel>
               )}
             </div>
@@ -347,6 +381,10 @@ export function AgentTestStudio({
                 sessionTotal={sessionTotals}
                 mode={channel}
                 ttsProvider={stack.ttsProvider}
+                ttsModel={stack.ttsModel}
+                sttProvider={stack.sttProvider}
+                sttModel={stack.sttModel}
+                llmModel={stack.llmModel}
                 pricing={pricingMeta}
                 sessionDurationMs={sessionDurationMs}
               />
@@ -387,6 +425,10 @@ export function AgentTestStudio({
             sessionTotal={sessionTotals}
             mode={channel}
             ttsProvider={stack.ttsProvider}
+            ttsModel={stack.ttsModel}
+            sttProvider={stack.sttProvider}
+            sttModel={stack.sttModel}
+            llmModel={stack.llmModel}
             pricing={pricingMeta}
             sessionDurationMs={sessionDurationMs}
           />

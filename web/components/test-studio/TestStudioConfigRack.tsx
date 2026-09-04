@@ -273,9 +273,14 @@ export function TestStudioConfigRack({
                   provider={stack.ttsProvider}
                   model={stack.ttsModel}
                   disabled={locked}
-                  onProviderChange={(ttsProvider, ttsModel) =>
-                    patchStack({ ttsProvider, ttsModel, ttsVoiceId: stack.ttsVoiceId })
-                  }
+                  onProviderChange={(ttsProvider, ttsModel) => {
+                    const providerChanged = ttsProvider !== stack.ttsProvider;
+                    patchStack({
+                      ttsProvider,
+                      ttsModel,
+                      ttsVoiceId: providerChanged ? "" : stack.ttsVoiceId,
+                    });
+                  }}
                   onModelChange={(ttsModel) => patchStack({ ttsModel })}
                 />
                 {!catalogLoading && (

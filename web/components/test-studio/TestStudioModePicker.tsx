@@ -9,12 +9,12 @@ const MODES: { id: TestStudioMode; label: string; hint: string }[] = [
   {
     id: "agent",
     label: "Agent only",
-    hint: "Browser mic · STT → brain → TTS · no Exotel",
+    hint: "Browser mic · STT → brain → TTS · no PSTN",
   },
   {
     id: "pstn",
     label: "Full PSTN flow",
-    hint: "Exotel handshake · outbound · telephony stream",
+    hint: "Telnyx / Exotel / Plivo · outbound · media stream",
   },
 ];
 

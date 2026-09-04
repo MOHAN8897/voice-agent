@@ -1,0 +1,509 @@
+"use client";
+
+import Link from "next/link";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/Button";
+import { DevCard } from "@/components/dev/DevCard";
+import { ensureArray } from "@/lib/ensure-array";
+import { portalFetch, refreshPortalSession } from "@/lib/auth-client";
+import { LiveMediaFlowDebugger } from "./LiveMediaFlowDebugger";
+
+type ProviderStatus = {
+  id: string;
+  label?: string;
+  enabled?: boolean;
+  configured?: boolean;
+  handshake_ok?: boolean;
+  handshake_error?: string | null;
+  ready?: boolean;
+  ready_for_india?: boolean;
+  upgrade_required_for_india?: boolean;
+  phone_number?: string | null;
+  connection_id?: string | null;
+  webhook_url?: string | null;
+  stream_ws?: string | null;
+  answer_url?: string | null;
+  passthru_url?: string | null;
+  status_callback_url?: string | null;
+  exophone?: string | null;
+  balance?: string | null;
+  checklist?: TelnyxChecklist;
+};
+
+type TelnyxChecklist = {
+  call_control_app?: boolean;
+  webhook_configured?: boolean;
+  outbound_profile_on_app?: boolean;
+  call_recording_on_profile?: boolean;
+  international_india?: boolean;
+  phone_number_active?: boolean;
+  ready_for_us_ca?: boolean;
+  ready_for_india?: boolean;
+  upgrade_required_for_india?: boolean;
+  verified_numbers?: string[];
+  balance_usd?: number;
+  whitelisted_destinations?: string[];
+  errors?: string[];
+};
+
+type TelephonyStatus = {
+  active_provider?: string;
+  active_ready?: boolean;
+  providers?: ProviderStatus[];
+};
+
+type CallRow = {
+  call_sid?: string;
+  call_control_id?: string;
+  call_uuid?: string;
+  status?: string;
+  from?: string;
+  to?: string;
+  direction?: string;
+  last_event?: string;
+  internal_call_id?: string;
+  updated_at?: number;
+  media_frames_in?: number;
+  media_frames_out?: number;
+  bidirectional_ok?: boolean;
+};
+
+const PROVIDERS = [
+  { id: "exotel", label: "Exotel" },
+  { id: "telnyx", label: "Telnyx" },
+  { id: "plivo", label: "Plivo" },
+] as const;
+
+function providerLabel(id: string) {
+  return PROVIDERS.find((p) => p.id === id)?.label ?? id;
+}
+
+function callKey(c: CallRow) {
+  return c.call_sid || c.call_control_id || c.call_uuid || String(c.updated_at || "");
+}
+
+export function PstnTestPanel({
+  agentId,
+  tier,
+  language,
+  stackOverride,
+  sourceSessionId,
+  onInternalCallStart,
+  onInternalCallEnd,
+}: {
+  agentId: string;
+  tier: string;
+  language?: string;
+  stackOverride?: Record<string, unknown>;
+  sourceSessionId?: string;
+  onInternalCallStart?: (callId: string) => void;
+  onInternalCallEnd?: (callId: string) => void;
+}) {
+  const [status, setStatus] = useState<TelephonyStatus | null>(null);
+  const [calls, setCalls] = useState<CallRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const [fromE164, setFromE164] = useState("");
+  const [toE164, setToE164] = useState("+918897908470");
+  const [providerDraft, setProviderDraft] = useState("exotel");
+  const [verifyCode, setVerifyCode] = useState("");
+  const trackedCallRef = useRef<string | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const active = status?.active_provider || providerDraft;
+  const activeSt = status?.providers?.find((p) => p.id === active);
+
+  const load = useCallback(async () => {
+    await refreshPortalSession("dev");
+    const [stR, callsR] = await Promise.all([
+      portalFetch("dev", "/api/dev/telephony/status"),
+      portalFetch("dev", "/api/dev/telephony/calls"),
+    ]);
+    if (stR.ok) {
+      const j = await stR.json();
+      setStatus(j);
+      if (j.active_provider) setProviderDraft(j.active_provider);
+      const phone = j.providers?.find((p: ProviderStatus) => p.id === j.active_provider)?.phone_number;
+      if (phone && !fromE164) setFromE164(phone);
+    }
+    if (callsR.ok) {
+      const j = await callsR.json();
+      setCalls(ensureArray<CallRow>(j.calls));
+    }
+    setLoading(false);
+  }, [fromE164]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  useEffect(() => {
+    if (pollRef.current) clearInterval(pollRef.current);
+    pollRef.current = setInterval(async () => {
+      const r = await portalFetch("dev", "/api/dev/telephony/calls");
+      if (!r.ok) return;
+      const j = await r.json();
+      const rows = ensureArray<CallRow>(j.calls);
+      setCalls(rows);
+      for (const c of rows) {
+        const internal = c.internal_call_id;
+        if (!internal) continue;
+        if (!trackedCallRef.current && onInternalCallStart) {
+          trackedCallRef.current = internal;
+          onInternalCallStart(internal);
+        }
+        const st = (c.status || "").toLowerCase();
+        if (
+          trackedCallRef.current === internal &&
+          st &&
+          ["completed", "failed", "busy", "no-answer", "canceled", "hangup"].includes(st) &&
+          onInternalCallEnd
+        ) {
+          onInternalCallEnd(internal);
+          trackedCallRef.current = null;
+        }
+      }
+    }, 3000);
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, [onInternalCallStart, onInternalCallEnd]);
+
+  async function setProvider(next: string) {
+    setProviderDraft(next);
+    setBusy(true);
+    setMessage(`Switching provider to ${providerLabel(next)}…`);
+    const r = await portalFetch("dev", "/api/dev/telephony/provider", {
+      method: "PATCH",
+      body: JSON.stringify({ provider: next }),
+    });
+    setMessage(r.ok ? `Active provider: ${providerLabel(next)}` : "Failed to switch provider");
+    setBusy(false);
+    await load();
+  }
+
+  async function runHandshake() {
+    setBusy(true);
+    setMessage(`Running ${providerLabel(active)} handshake…`);
+    const r = await portalFetch("dev", "/api/dev/telephony/handshake", { method: "POST" });
+    const j = await r.json();
+    if (r.ok && (j.ok || j.handshake?.ok)) {
+      const balance = j.balance ?? j.handshake?.balance;
+      setMessage(`Handshake OK${balance ? ` · balance ${balance}` : ""}`);
+    } else {
+      setMessage(`Handshake failed: ${j.error?.message || j.error || j.handshake_error || "unknown"}`);
+    }
+    setBusy(false);
+    await load();
+  }
+
+  async function outboundDial() {
+    if (!toE164.trim()) {
+      setMessage("Enter destination number");
+      return;
+    }
+    setBusy(true);
+    trackedCallRef.current = null;
+    setMessage(`Placing ${providerLabel(active)} outbound call…`);
+    const r = await portalFetch("dev", "/api/dev/telephony/outbound", {
+      method: "POST",
+      body: JSON.stringify({
+        toE164: toE164.trim(),
+        fromE164: fromE164.trim() || undefined,
+        agentId,
+        tier,
+        language,
+        sourceSessionId,
+        stackOverride,
+      }),
+    });
+    const j = await r.json();
+    const apiOk = r.ok && (j.ok === undefined || j.ok === true);
+    setMessage(
+      apiOk
+        ? `Call initiated · ${j.call_sid || j.call_control_id || j.call_uuid || "queued"}`
+        : j.error?.message || j.error || j.body || "Outbound failed"
+    );
+    setBusy(false);
+    await load();
+  }
+
+  async function runTelnyxSetup() {
+    setBusy(true);
+    setMessage("Applying standard Telnyx settings (webhook, OVP, recording)…");
+    const r = await portalFetch("dev", "/api/dev/telephony/telnyx/setup", { method: "POST" });
+    const j = await r.json();
+    setMessage(r.ok ? "Telnyx standard setup applied" : j.error || "Setup failed");
+    setBusy(false);
+    await load();
+  }
+
+  async function requestVerifyNumber() {
+    setBusy(true);
+    setMessage(`Sending verification to ${toE164}…`);
+    const r = await portalFetch("dev", "/api/dev/telephony/telnyx/verify-number", {
+      method: "POST",
+      body: JSON.stringify({ phoneNumber: toE164.trim(), method: "sms" }),
+    });
+    const j = await r.json();
+    setMessage(r.ok ? "Verification SMS sent — enter code below" : j.error || j.body || "Verify failed");
+    setBusy(false);
+  }
+
+  async function confirmVerifyNumber() {
+    if (!verifyCode.trim()) return;
+    setBusy(true);
+    const r = await portalFetch("dev", "/api/dev/telephony/telnyx/verify-number/confirm", {
+      method: "POST",
+      body: JSON.stringify({ phoneNumber: toE164.trim(), code: verifyCode.trim() }),
+    });
+    const j = await r.json();
+    setMessage(r.ok ? "Number verified — retry outbound call" : j.error || j.body || "Confirm failed");
+    setBusy(false);
+    if (r.ok) await load();
+  }
+
+  async function searchTelnyxNumbers() {
+    setBusy(true);
+    setMessage("Searching Telnyx IN numbers…");
+    const r = await portalFetch("dev", "/api/dev/telephony/telnyx/numbers/search", { method: "POST" });
+    const j = await r.json();
+    if (r.ok && j.numbers?.length) {
+      const first = j.numbers[0]?.phone_number || j.numbers[0]?.e164;
+      setMessage(`Found ${j.numbers.length} numbers · first ${first || "—"}`);
+    } else {
+      setMessage("No numbers found or search failed");
+    }
+    setBusy(false);
+  }
+
+  if (loading) return <p className="text-sm text-text-muted">Loading telephony status…</p>;
+
+  const notReady = !activeSt?.ready;
+
+  const telnyxChecklist = active === "telnyx" ? activeSt?.checklist : undefined;
+  const indiaBlocked = Boolean(activeSt?.upgrade_required_for_india && !telnyxChecklist?.international_india);
+  const destVerified = telnyxChecklist?.verified_numbers?.includes(toE164.trim());
+
+  return (
+    <div className="space-y-6">
+      <DevCard title="SIP trunk provider" description="Only the active provider is used for PSTN tests">
+        <div className="flex flex-wrap gap-2">
+          {PROVIDERS.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => setProvider(p.id)}
+              className={`rounded-xl border px-4 py-2 text-sm font-medium transition-colors ${
+                active === p.id
+                  ? "border-accent bg-accent/10 text-accent"
+                  : "border-surface-border text-text-muted hover:bg-surface-raised"
+              }`}
+            >
+              {p.label}
+              {status?.active_provider === p.id && (
+                <span className="ml-2 text-xs text-success">(active)</span>
+              )}
+            </button>
+          ))}
+        </div>
+        <p className="mt-3 text-xs text-text-muted">
+          Configure keys in{" "}
+          <Link href="/dev/environment" className="text-accent hover:underline">Environment</Link>
+          . Public tunnel required for media WebSocket (
+          <span className="font-mono">{activeSt?.stream_ws || activeSt?.status_callback_url || "—"}</span>).
+        </p>
+      </DevCard>
+
+      {active === "telnyx" && telnyxChecklist && (
+        <DevCard title="Telnyx Mission Control checklist" description="Standard settings applied to every new number">
+          <ul className="space-y-1 text-sm text-text-muted">
+            <li>{telnyxChecklist.call_control_app ? "✓" : "○"} Call Control app active</li>
+            <li>{telnyxChecklist.webhook_configured ? "✓" : "○"} Webhook URL configured</li>
+            <li>{telnyxChecklist.outbound_profile_on_app ? "✓" : "○"} Outbound voice profile linked</li>
+            <li>{telnyxChecklist.call_recording_on_profile ? "✓" : "○"} Call recording on profile (dual WAV)</li>
+            <li>{telnyxChecklist.phone_number_active ? "✓" : "○"} From number active</li>
+            <li>{telnyxChecklist.international_india ? "✓" : "○"} India in whitelist</li>
+          </ul>
+          {indiaBlocked && (
+            <p className="mt-3 rounded-lg bg-warning/10 px-3 py-2 text-xs text-warning">
+              India outbound requires Telnyx account upgrade (Level 2+) or verify destination number on trial.
+              <a href="https://telnyx.com/upgrade" className="ml-1 text-accent hover:underline" target="_blank" rel="noreferrer">
+                Upgrade account
+              </a>
+            </p>
+          )}
+          {telnyxChecklist.verified_numbers?.length ? (
+            <p className="mt-2 text-xs text-text-muted">
+              Verified: {telnyxChecklist.verified_numbers.join(", ")}
+            </p>
+          ) : null}
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button type="button" variant="secondary" onClick={runTelnyxSetup} disabled={busy}>
+              Apply standard setup
+            </Button>
+          </div>
+        </DevCard>
+      )}
+
+      {notReady ? (
+        <DevCard title={`PSTN · ${providerLabel(active)}`} description="Provider not ready">
+          <div className="rounded-xl border border-dashed border-warning/40 bg-warning/5 p-5">
+            <p className="font-medium text-warning">{providerLabel(active)} not ready</p>
+            {activeSt?.handshake_error && (
+              <p className="mt-3 rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">{activeSt.handshake_error}</p>
+            )}
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Button type="button" onClick={runHandshake} disabled={busy}>
+                Test handshake
+              </Button>
+              <Link href="/dev/environment" className="inline-flex items-center text-sm font-medium text-accent hover:underline">
+                Open Environment →
+              </Link>
+            </div>
+          </div>
+        </DevCard>
+      ) : (
+        <DevCard title={`${providerLabel(active)} handshake`} description="Credentials verified">
+          <dl className="grid gap-3 text-sm sm:grid-cols-2">
+            <div>
+              <dt className="text-text-muted">Phone number</dt>
+              <dd className="mt-1 font-mono text-text">{activeSt?.phone_number || activeSt?.exophone || "—"}</dd>
+            </div>
+            {activeSt?.balance && (
+              <div>
+                <dt className="text-text-muted">Balance</dt>
+                <dd className="mt-1 font-mono text-text">{activeSt.balance}</dd>
+              </div>
+            )}
+            {activeSt?.connection_id && (
+              <div>
+                <dt className="text-text-muted">Connection ID</dt>
+                <dd className="mt-1 font-mono text-xs">{activeSt.connection_id}</dd>
+              </div>
+            )}
+            {activeSt?.stream_ws && (
+              <div className="sm:col-span-2">
+                <dt className="text-text-muted">Media WebSocket</dt>
+                <dd className="mt-1 font-mono text-xs break-all">{activeSt.stream_ws}</dd>
+              </div>
+            )}
+          </dl>
+          <Button type="button" variant="secondary" className="mt-4" onClick={runHandshake} disabled={busy}>
+            Re-test handshake
+          </Button>
+        </DevCard>
+      )}
+
+      <DevCard title="Outbound test call" description="Full E2E — PSTN dials customer, agent stack streams audio">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block text-sm">
+            <span className="text-text-muted">From (caller ID)</span>
+            <input
+              type="text"
+              value={fromE164}
+              onChange={(e) => setFromE164(e.target.value)}
+              placeholder="+91XXXXXXXXXX"
+              className="mt-2 w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2 text-sm font-mono"
+            />
+          </label>
+          <label className="block text-sm">
+            <span className="text-text-muted">To (customer)</span>
+            <input
+              type="text"
+              value={toE164}
+              onChange={(e) => setToE164(e.target.value)}
+              placeholder="+918897908470"
+              className="mt-2 w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2 text-sm font-mono"
+            />
+          </label>
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button type="button" onClick={outboundDial} disabled={busy || notReady}>
+            {busy ? "Dialing…" : "Place outbound call"}
+          </Button>
+          {active === "telnyx" && (
+            <>
+              <Button type="button" variant="secondary" onClick={searchTelnyxNumbers} disabled={busy}>
+                Search IN numbers
+              </Button>
+              {indiaBlocked && !destVerified && (
+                <Button type="button" variant="secondary" onClick={requestVerifyNumber} disabled={busy}>
+                  Verify destination (SMS)
+                </Button>
+              )}
+            </>
+          )}
+        </div>
+        {active === "telnyx" && indiaBlocked && !destVerified && (
+          <div className="mt-3 flex flex-wrap items-end gap-2">
+            <label className="block text-sm">
+              <span className="text-text-muted">SMS verification code</span>
+              <input
+                type="text"
+                value={verifyCode}
+                onChange={(e) => setVerifyCode(e.target.value)}
+                placeholder="6-digit code"
+                className="mt-2 w-40 rounded-xl border border-surface-border bg-surface-raised px-3 py-2 text-sm font-mono"
+              />
+            </label>
+            <Button type="button" variant="secondary" onClick={confirmVerifyNumber} disabled={busy}>
+              Confirm verify
+            </Button>
+          </div>
+        )}
+        <p className="mt-3 text-xs text-text-muted">
+          Uses tier <span className="font-mono">{tier}</span>, agent{" "}
+          <span className="font-mono">{agentId.slice(0, 8)}…</span>, and the same voice from Config/Live.
+          Bidirectional = inbound media (STT) + outbound audio (TTS) both flowed.
+        </p>
+      </DevCard>
+
+      {active === "telnyx" ? (
+        <LiveMediaFlowDebugger callId={trackedCallRef.current} />
+      ) : null}
+
+      <DevCard title="Recent PSTN calls" description="Local registry — internal call ID links to recording & transcript">
+        <div className="overflow-x-auto rounded-xl border border-surface-border-subtle">
+          <table className="w-full text-left text-sm">
+            <thead className="border-b border-surface-border-subtle bg-surface-raised text-xs text-text-muted">
+              <tr>
+                <th className="px-3 py-2">Provider ID</th>
+                <th className="px-3 py-2">Status</th>
+                <th className="px-3 py-2">Stream</th>
+                <th className="px-3 py-2">Internal call</th>
+                <th className="px-3 py-2">Route</th>
+              </tr>
+            </thead>
+            <tbody>
+              {calls.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-3 py-4 text-text-muted">No calls yet.</td>
+                </tr>
+              ) : (
+                calls.map((c) => (
+                  <tr key={callKey(c)} className="border-b border-surface-border-subtle/50">
+                    <td className="px-3 py-2 font-mono text-xs">{callKey(c).slice(0, 24)}…</td>
+                    <td className="px-3 py-2">{c.status || "—"}</td>
+                    <td className="px-3 py-2 text-xs">
+                      {c.bidirectional_ok
+                        ? `✓ in ${c.media_frames_in ?? 0} / out ${c.media_frames_out ?? 0}`
+                        : c.internal_call_id
+                          ? `in ${c.media_frames_in ?? 0} / out ${c.media_frames_out ?? 0}`
+                          : "—"}
+                    </td>
+                    <td className="px-3 py-2 font-mono text-xs">{c.internal_call_id?.slice(0, 12) || "—"}</td>
+                    <td className="px-3 py-2 font-mono text-xs">{c.from || "—"} → {c.to || "—"}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </DevCard>
+
+      {message && <p className="text-sm text-text-muted">{message}</p>}
+    </div>
+  );
+}

@@ -54,7 +54,7 @@ export class TurnTtsPipeline {
 
     this.opts.playback.attachTurn(this.opts.turnId, () => this.isActive(), () => this.cancel());
 
-    await this.opts.ttsClient.ensureConnected();
+    await this.opts.ttsClient.refreshConfigForTurn();
 
     this.opts.ttsClient.beginTurn({
       turnId: this.opts.turnId,

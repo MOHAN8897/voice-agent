@@ -39,8 +39,12 @@ from server.routes.dev_environment import router as dev_environment_router
 from server.routes.dev_audit import router as dev_audit_router
 from server.routes.dev_compiled import router as dev_compiled_router
 from server.routes.dev_exotel import router as dev_exotel_router
+from server.routes.dev_telephony import router as dev_telephony_router
 from server.routes.exotel import router as exotel_router
 from server.routes.exotel_ws import router as exotel_ws_router
+from server.routes.telnyx import router as telnyx_router
+from server.routes.telnyx_ws import router as telnyx_ws_router
+from server.routes.plivo import router as plivo_router
 from server.routes.campaigns import router as campaigns_router
 from server.routes.test_studio import router as test_studio_router
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -55,6 +59,9 @@ from server.utils.rate_limiter import rate_limiter, tts_limiter
 async def lifespan(app: FastAPI):
     # Startup: validate env (fail-safe — keep server up so /api/health explains)
     try:
+        from server.config.env import get_settings
+
+        get_settings.cache_clear()
         settings = validate_env()
         set_level(settings.log_level)
         from server.agent.conversation_manager import conversation_manager
@@ -267,8 +274,12 @@ app.include_router(dev_environment_router)
 app.include_router(dev_audit_router)
 app.include_router(dev_compiled_router)
 app.include_router(dev_exotel_router)
+app.include_router(dev_telephony_router)
 app.include_router(exotel_router)
 app.include_router(exotel_ws_router)
+app.include_router(telnyx_router)
+app.include_router(telnyx_ws_router)
+app.include_router(plivo_router)
 app.include_router(campaigns_router)
 app.include_router(test_studio_router)
 app.include_router(ws_router)

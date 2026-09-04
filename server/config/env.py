@@ -54,6 +54,7 @@ class Settings(BaseSettings):
     log_ws: bool = Field(True, alias="LOG_WS")
     log_perf: bool = Field(True, alias="LOG_PERF")
     log_client: bool = Field(True, alias="LOG_CLIENT")
+    log_pstn: bool = Field(True, alias="LOG_PSTN")
 
     # --- Voice pipeline ---
     voice_http_tts_fallback: bool = Field(False, alias="VOICE_HTTP_TTS_FALLBACK")
@@ -65,9 +66,9 @@ class Settings(BaseSettings):
     max_retries: int = Field(2, alias="MAX_RETRIES")
 
     # --- Brain prompt budget (single composed prompt) ---
-    brain_prompt_budget_tokens: int = Field(2500, alias="BRAIN_PROMPT_BUDGET_TOKENS")
+    brain_prompt_budget_tokens: int = Field(3500, alias="BRAIN_PROMPT_BUDGET_TOKENS")
     brain_prompt_budget_min: int = Field(1500, alias="BRAIN_PROMPT_BUDGET_MIN")
-    brain_prompt_budget_max: int = Field(2500, alias="BRAIN_PROMPT_BUDGET_MAX")
+    brain_prompt_budget_max: int = Field(5000, alias="BRAIN_PROMPT_BUDGET_MAX")
 
     # --- Prompt caching (GPT-5.6+) ---
     enable_prompt_caching: bool = Field(True, alias="ENABLE_PROMPT_CACHING")
@@ -148,6 +149,17 @@ class Settings(BaseSettings):
     exotel_subdomain: str = Field("api.exotel.com", alias="EXOTEL_SUBDOMAIN")
     exotel_exophone: str | None = Field(None, alias="EXOTEL_EXOPHONE")
     exotel_webhook_base_url: str | None = Field(None, alias="EXOTEL_WEBHOOK_BASE_URL")
+
+    telephony_provider: str = Field("exotel", alias="TELEPHONY_PROVIDER")
+    enable_telnyx: bool = Field(False, alias="ENABLE_TELNYX")
+    telnyx_api_key: str | None = Field(None, alias="TELNYX_API_KEY")
+    telnyx_connection_id: str | None = Field(None, alias="TELNYX_CONNECTION_ID")
+    telnyx_phone_number: str | None = Field(None, alias="TELNYX_PHONE_NUMBER")
+    telnyx_outbound_voice_profile_id: str | None = Field(None, alias="TELNYX_OUTBOUND_VOICE_PROFILE_ID")
+    enable_plivo: bool = Field(False, alias="ENABLE_PLIVO")
+    plivo_auth_id: str | None = Field(None, alias="PLIVO_AUTH_ID")
+    plivo_auth_token: str | None = Field(None, alias="PLIVO_AUTH_TOKEN")
+    plivo_phone_number: str | None = Field(None, alias="PLIVO_PHONE_NUMBER")
     campaign_max_concurrency: int = Field(5, alias="CAMPAIGN_MAX_CONCURRENCY")
     campaign_default_retry_attempts: int = Field(3, alias="CAMPAIGN_DEFAULT_RETRY_ATTEMPTS")
     recording_consent_required: bool = Field(False, alias="RECORDING_CONSENT_REQUIRED")

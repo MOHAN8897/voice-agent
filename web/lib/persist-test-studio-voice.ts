@@ -1,5 +1,7 @@
 /** Persist Test Studio voice selection to runtime (applied on next TTS call). */
 import { TEST_STUDIO_SESSION_ID } from "@/lib/test-studio-stack";
+import { invalidateTtsConfigCache } from "@/lib/voice/tts-config";
+import { notifyTestStudioVoiceSaved } from "@/lib/voice/voice-runtime-events";
 
 export async function persistTestStudioVoice(opts: {
   ttsSpeaker: string;
@@ -20,6 +22,8 @@ export async function persistTestStudioVoice(opts: {
       const msg = j?.detail?.error?.message || `Save failed (${r.status})`;
       return { ok: false, error: msg };
     }
+    invalidateTtsConfigCache();
+    notifyTestStudioVoiceSaved(opts.ttsSpeaker);
     return { ok: true };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Network error" };

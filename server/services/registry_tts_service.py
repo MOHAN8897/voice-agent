@@ -36,8 +36,8 @@ def _resolve_cartesia_voice(
     stack_speaker = stack.tts.config.get("speaker") if stack.tts.config else None
     return (
         speaker
-        or stack_speaker
         or runtime.get("ttsSpeaker")
+        or stack_speaker
         or settings.cartesia_tts_voice_id
         or constants.CARTESIA_DEFAULT_VOICE_ID
     )

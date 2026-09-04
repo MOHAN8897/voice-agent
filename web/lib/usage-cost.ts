@@ -1,28 +1,28 @@
 /**
- * Voice-turn cost estimates from official provider docs (2026-09-02).
+ * Voice-turn cost estimates from official provider docs (2026-09-03).
  *
  * Sarvam STT  — ₹30 / hour of audio (realtime + streaming). Telugu chars are not billed.
  * Sarvam TTS  — ₹3.00 / 1,000 Unicode characters (Telugu code points count).
  * OpenAI Luna — $0.20/M uncached input, $0.02/M cached input, $0.25/M cache write, $1.20/M output.
- * Cartesia    — ~$50 / 1M characters (Pro-plan effective, 1 credit/char).
- *
- * Cache billing: cached reads and cache writes are mutually exclusive with uncached input.
- * Writes are billed at 1.25× instead of the uncached rate, not in addition to it.
+ * OpenAI 5.5  — $5.00/M in, $0.50/M cached, $6.25/M write, $30/M out.
+ * Cartesia TTS — Pro plan ~$50 / 1M characters (1 credit/char).
+ * Cartesia STT — ink-whisper 1 credit/sec; ink-2 3 credits/sec (Pro $5/100K credits).
  */
 
 export const DEFAULT_FX_INR = 95.64;
 
 export const PRICING = {
-  updatedAt: "2026-09-02",
+  updatedAt: "2026-09-03",
   sarvamSttInrPerHour: 30,
   sarvamTtsInrPer1kChars: 3,
-  openaiUsdPerM: {
-    input: 0.2,
-    cachedInput: 0.02,
-    cacheWrite: 0.25,
-    output: 1.2,
-  },
+  cartesiaProUsdPerCredit: 5 / 100_000,
   cartesiaTtsUsdPerMChars: 50,
+  openaiUsdPerM: {
+    "gpt-5.6-luna": { input: 0.2, cachedInput: 0.02, cacheWrite: 0.25, output: 1.2 },
+    "gpt-5.5": { input: 5.0, cachedInput: 0.5, cacheWrite: 6.25, output: 30.0 },
+    "gpt-5.4": { input: 2.5, cachedInput: 0.25, cacheWrite: 3.125, output: 15.0 },
+    "gpt-5": { input: 5.0, cachedInput: 0.5, cacheWrite: 6.25, output: 30.0 },
+  },
 } as const;
 
 export type CacheEvent = "cache_hit" | "cache_write" | "partial_hit" | "cache_miss";
@@ -31,14 +31,56 @@ export type PricingMeta = {
   fx_rate_inr?: number;
   "sarvam:saaras:v3"?: { inr_per_hour?: number; usd_per_unit?: number };
   "sarvam:bulbul:v3"?: { inr_per_1k_chars?: number; usd_per_unit?: number };
-  "openai:gpt-5.6-luna"?: {
-    usd_input_per_m?: number;
-    usd_cached_input_per_m?: number;
-    usd_cache_write_per_m?: number;
-    usd_output_per_m?: number;
-  };
+  "openai:gpt-5.6-luna"?: LlmRateMeta;
+  "openai:gpt-5.5"?: LlmRateMeta;
+  "openai:gpt-5.4"?: LlmRateMeta;
   "cartesia:sonic-3.5"?: { usd_per_unit?: number };
+  "cartesia:ink-whisper"?: { credits_per_sec?: number; usd_per_hour?: number };
+  "cartesia:ink-2"?: { credits_per_sec?: number; usd_per_hour?: number };
 };
+
+type LlmRateMeta = {
+  usd_input_per_m?: number;
+  usd_cached_input_per_m?: number;
+  usd_cache_write_per_m?: number;
+  usd_output_per_m?: number;
+};
+
+export function resolveTtsProvider(provider: string, model = ""): "sarvam" | "cartesia" {
+  const p = (provider || "sarvam").toLowerCase();
+  const m = (model || "").toLowerCase();
+  if (p === "cartesia" || m.startsWith("sonic")) return "cartesia";
+  return "sarvam";
+}
+
+export function resolveSttProvider(provider: string, model = ""): "sarvam" | "cartesia" {
+  const p = (provider || "sarvam").toLowerCase();
+  const m = (model || "").toLowerCase();
+  if (p === "cartesia" || m.startsWith("ink")) return "cartesia";
+  return "sarvam";
+}
+
+export function openaiRatesForModel(model: string | undefined, meta?: PricingMeta | null) {
+  const m = (model || "gpt-5.6-luna").toLowerCase();
+  const key = `openai:${m}` as keyof PricingMeta;
+  const fromMeta = meta?.[key] as LlmRateMeta | undefined;
+  const fallback =
+    PRICING.openaiUsdPerM[m as keyof typeof PRICING.openaiUsdPerM] ||
+    Object.entries(PRICING.openaiUsdPerM).find(([k]) => m.startsWith(k))?.[1] ||
+    PRICING.openaiUsdPerM["gpt-5.6-luna"];
+  return {
+    input: Number(fromMeta?.usd_input_per_m) || fallback.input,
+    cachedInput: Number(fromMeta?.usd_cached_input_per_m) || fallback.cachedInput,
+    cacheWrite: Number(fromMeta?.usd_cache_write_per_m) || fallback.cacheWrite,
+    output: Number(fromMeta?.usd_output_per_m) || fallback.output,
+  };
+}
+
+function cartesiaSttCreditsPerSec(model = "", realtime = true): number {
+  const m = (model || "ink-whisper").toLowerCase();
+  if (m.includes("ink-2")) return realtime ? 3 : 1.5;
+  return realtime ? 1 : 0.5;
+}
 
 export function classifyCacheEvent(input: number, cached: number, written: number): CacheEvent {
   const c = Math.max(0, cached || 0);
@@ -62,16 +104,29 @@ function fxOf(meta?: PricingMeta | null): number {
   return fx > 0 ? fx : DEFAULT_FX_INR;
 }
 
-export function costSttUsd(audioSec: number, meta?: PricingMeta | null): number {
-  const hours = Math.max(0, audioSec || 0) / 3600;
+export function costSttUsd(
+  audioSec: number,
+  meta?: PricingMeta | null,
+  opts?: { sttProvider?: string; sttModel?: string }
+): number {
+  const sec = Math.max(0, audioSec || 0);
+  if (resolveSttProvider(opts?.sttProvider || "sarvam", opts?.sttModel || "") === "cartesia") {
+    const credits = cartesiaSttCreditsPerSec(opts?.sttModel || "ink-whisper") * sec;
+    return credits * PRICING.cartesiaProUsdPerCredit;
+  }
+  const hours = sec / 3600;
   const inrHour = Number(meta?.["sarvam:saaras:v3"]?.inr_per_hour) || PRICING.sarvamSttInrPerHour;
   return (hours * inrHour) / fxOf(meta);
 }
 
-export function costTtsUsd(chars: number, provider: string, meta?: PricingMeta | null): number {
+export function costTtsUsd(
+  chars: number,
+  provider: string,
+  model: string,
+  meta?: PricingMeta | null
+): number {
   const n = Math.max(0, chars || 0);
-  const cartesia = provider.startsWith("cartesia") || provider.startsWith("sonic");
-  if (cartesia) {
+  if (resolveTtsProvider(provider, model) === "cartesia") {
     const perM = Number(meta?.["cartesia:sonic-3.5"]?.usd_per_unit) || PRICING.cartesiaTtsUsdPerMChars;
     return (n * perM) / 1_000_000;
   }
@@ -84,18 +139,15 @@ export function costLlmUsd(opts: {
   outputTokens: number;
   cachedTokens?: number;
   cacheWriteTokens?: number;
+  llmModel?: string;
   meta?: PricingMeta | null;
 }) {
   const parts = splitLlmTokens(opts.inputTokens, opts.cachedTokens || 0, opts.cacheWriteTokens || 0);
-  const rates = opts.meta?.["openai:gpt-5.6-luna"];
-  const inputRate = Number(rates?.usd_input_per_m) || PRICING.openaiUsdPerM.input;
-  const cachedRate = Number(rates?.usd_cached_input_per_m) || PRICING.openaiUsdPerM.cachedInput;
-  const writeRate = Number(rates?.usd_cache_write_per_m) || PRICING.openaiUsdPerM.cacheWrite;
-  const outputRate = Number(rates?.usd_output_per_m) || PRICING.openaiUsdPerM.output;
-  const uncachedUsd = (parts.uncached * inputRate) / 1_000_000;
-  const cachedUsd = (parts.cached * cachedRate) / 1_000_000;
-  const writeUsd = (parts.written * writeRate) / 1_000_000;
-  const outputUsd = (Math.max(0, opts.outputTokens || 0) * outputRate) / 1_000_000;
+  const rates = openaiRatesForModel(opts.llmModel, opts.meta);
+  const uncachedUsd = (parts.uncached * rates.input) / 1_000_000;
+  const cachedUsd = (parts.cached * rates.cachedInput) / 1_000_000;
+  const writeUsd = (parts.written * rates.cacheWrite) / 1_000_000;
+  const outputUsd = (Math.max(0, opts.outputTokens || 0) * rates.output) / 1_000_000;
   return {
     uncachedUsd,
     cachedUsd,
@@ -123,6 +175,10 @@ export function estimateTurnCost(opts: {
   sttAudioSec: number;
   ttsChars: number;
   ttsProvider: string;
+  ttsModel?: string;
+  sttProvider?: string;
+  sttModel?: string;
+  llmModel?: string;
   inputTokens: number;
   outputTokens: number;
   cachedTokens: number;
@@ -130,13 +186,22 @@ export function estimateTurnCost(opts: {
   meta?: PricingMeta | null;
 }): TurnCost {
   const fx = fxOf(opts.meta);
-  const sttUsd = costSttUsd(opts.sttAudioSec, opts.meta);
-  const ttsUsd = costTtsUsd(opts.ttsChars, opts.ttsProvider, opts.meta);
+  const sttUsd = costSttUsd(opts.sttAudioSec, opts.meta, {
+    sttProvider: opts.sttProvider,
+    sttModel: opts.sttModel,
+  });
+  const ttsUsd = costTtsUsd(
+    opts.ttsChars,
+    opts.ttsProvider,
+    opts.ttsModel || "",
+    opts.meta
+  );
   const llm = costLlmUsd({
     inputTokens: opts.inputTokens,
     outputTokens: opts.outputTokens,
     cachedTokens: opts.cachedTokens,
     cacheWriteTokens: opts.cacheWriteTokens,
+    llmModel: opts.llmModel,
     meta: opts.meta,
   });
   const totalUsd = sttUsd + ttsUsd + llm.totalUsd;

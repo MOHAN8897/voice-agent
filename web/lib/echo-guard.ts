@@ -1,5 +1,5 @@
 /** Cooldown after agent speech before accepting STT finals (ms). */
-export const POST_SPEAK_COOLDOWN_MS = 450;
+export const POST_SPEAK_COOLDOWN_MS = 1200;
 
 function normalize(text: string): string {
   return text

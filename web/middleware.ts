@@ -13,6 +13,7 @@ async function requireSession(
     const res = await fetch(`${API_URL}${endpoint}`, {
       headers: { cookie: request.headers.get("cookie") || "" },
       cache: "no-store",
+      signal: AbortSignal.timeout(10_000),
     });
     if (res.status === 401) {
       const login = new URL(loginPath, request.url);

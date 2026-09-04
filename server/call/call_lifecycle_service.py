@@ -19,7 +19,7 @@ from server.providers.base import ResolvedStack, StackSelection
 from server.providers.resolver import resolve_stack
 from server.providers.session_stack import resolve_stack_for_session
 from server.utils.errors import AppError, ErrorCode
-from server.utils.logger import logger
+from server.utils.logger import log_pstn, logger
 
 END_REASONS = {
     "user_stop",
@@ -171,6 +171,15 @@ class CallLifecycleService:
         )
         call_context.put(ctx)
         logger.info(f"[CALL] started {call_id} agent={agent['agent_id']} combo={stack.combination_id}")
+        if channel == "pstn":
+            log_pstn(
+                "lifecycle.started",
+                timer_key=call_id,
+                call_id=call_id,
+                agent_id=agent["agent_id"],
+                combo=stack.combination_id,
+                direction=direction,
+            )
 
         return {
             "call_id": call_id,
@@ -441,26 +450,36 @@ class CallLifecycleService:
         """Lock brain for call duration. Session fine-tune overrides take priority."""
         if session_id:
             from server.agent.instruction_store import instruction_store
-            from server.services.brain_budget import resolve_brain_budget
 
             meta = instruction_store.get_with_meta(session_id)
             brain = (meta.get("brainPrompt") or "").strip()
-            if meta.get("present") and brain:
-                version = meta.get("compiledVersion") or 0
+            version = meta.get("compiledVersion") or 0
+            if brain and (meta.get("present") or version or meta.get("agentBrief") or meta.get("agentScript")):
                 label = f"session-v{version}" if version else "session"
                 return label, brain
 
-        settings = get_settings()
-        if not settings.use_versioned_brains:
-            return None, None
         from server.brain.compiled_brain_service import compiled_brain_service
 
         try:
             snap = await compiled_brain_service.get_active_for_agent(agent_id)
-            return snap.get("compiled_version"), snap.get("compiled_text")
+            text = (snap.get("compiled_text") or "").strip()
+            if text:
+                return snap.get("compiled_version"), text
         except Exception as e:
             logger.warning(f"[CALL] compiled brain lock skipped: {str(e)[:160]}")
+
+        settings = get_settings()
+        if settings.use_versioned_brains:
             return None, None
+
+        if session_id:
+            from server.agent.instruction_store import instruction_store
+
+            brain = instruction_store.get_brain_prompt(session_id)
+            if brain and brain.strip():
+                return "session-default", brain.strip()
+
+        return None, None
 
 
 call_lifecycle_service = CallLifecycleService()

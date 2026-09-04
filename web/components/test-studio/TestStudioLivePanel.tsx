@@ -7,6 +7,7 @@ import {
   type LiveVoiceSessionHandle,
   type SessionTraceEvent,
   type TurnCompleteEvent,
+  type VoiceRuntimeConfig,
 } from "@/components/live/LiveVoiceSession";
 import { SkeuoPanel } from "@/components/ui/skeuo/SkeuoPanel";
 import { SkeuoButton } from "@/components/ui/skeuo/SkeuoButton";
@@ -19,6 +20,7 @@ export function TestStudioLivePanel({
   languageCode,
   stackOverride,
   sessionId,
+  voiceConfig,
   onTrace,
   onCallStart,
   onCallEnd,
@@ -30,6 +32,7 @@ export function TestStudioLivePanel({
   languageCode: string;
   stackOverride?: Record<string, unknown>;
   sessionId?: string;
+  voiceConfig?: VoiceRuntimeConfig;
   onTrace: (e: SessionTraceEvent) => void;
   onCallStart: (callId: string) => void;
   onCallEnd: (callId: string) => void;
@@ -89,7 +92,9 @@ export function TestStudioLivePanel({
             End call
           </SkeuoButton>
           <p className="max-w-xs text-center text-[11px] text-text-muted lg:text-right">
-            {listening
+            {status.includes("Save agent brief")
+              ? "Create and save your agent script in Fine-tune → Prompts before starting the mic"
+              : listening
               ? "Listening — your words appear in the chat below"
               : callActive
                 ? "Mic off — flip the switch to speak again"
@@ -114,6 +119,7 @@ export function TestStudioLivePanel({
           languageCode={languageCode}
           stackOverride={stackOverride}
           sessionId={sessionId}
+          voiceConfig={voiceConfig}
           variant="lab"
           onTrace={onTrace}
           onCallStart={onCallStart}

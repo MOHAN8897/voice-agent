@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:landing": "node scripts/build-landing.mjs",
     "start": "next start",
     "lint": "next lint",
     "test:e2e": "playwright test"

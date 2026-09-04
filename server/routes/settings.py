@@ -107,7 +107,7 @@ async def catalog():
             "reasoningEfforts": list(OPENAI_REASONING_EFFORTS),
             "modelPresets": OPENAI_MODEL_PRESETS,
             "maxTokens": [50, 800],
-            "brainPromptBudget": [1500, 2500],
+            "brainPromptBudget": [1500, 5000],
             "modelGroups": [
                 {"label": "GPT-5 family (voice-tuned)", "models": allowed_models},
             ],

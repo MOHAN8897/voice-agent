@@ -9,7 +9,9 @@ from typing import Any
 
 from fastapi import WebSocket
 
-from server.services.audio_transcode import chunk_pcm_for_exotel, pcm16k_to_pcm8k, pcm8k_to_pcm16k
+from server.services.audio_transcode import chunk_pcm_for_exotel
+from server.services.pstn_debug import log_pstn, log_pstn_summary
+from server.services.pstn_voice_core import PstnVoiceLoop, pstn_call_options
 
 logger = logging.getLogger(__name__)
 
@@ -38,13 +40,10 @@ class ExotelPstnBridge:
         self.session_id: str = "pstn"
         self.caller_id: str | None = None
         self.direction: str = "outbound"
-        self._stt_cm = None
-        self._stt = None
-        self._stt_task: asyncio.Task | None = None
-        self._ping_task: asyncio.Task | None = None
-        self._agent_speaking = False
-        self._turn_busy = False
+        self._voice: PstnVoiceLoop | None = None
         self._closed = False
+        self._media_frames_in = 0
+        self._media_frames_out = 0
 
     async def run(self, *, agent_id: str | None, tier: str | None, token_meta: dict[str, Any] | None) -> None:
         self.agent_id = agent_id or (token_meta or {}).get("agent_id")
@@ -62,7 +61,7 @@ class ExotelPstnBridge:
                     await self._on_media(ev)
                 elif name == "mark":
                     if (ev.get("mark") or {}).get("name") == "turn-end":
-                        self._agent_speaking = False
+                        pass
                 elif name == "stop":
                     break
         finally:
@@ -79,11 +78,14 @@ class ExotelPstnBridge:
 
         from server.services.exotel_call_registry import exotel_call_registry
 
+        local: dict[str, Any] = {}
         if self.exotel_call_sid:
             local = exotel_call_registry.get(self.exotel_call_sid) or {}
             self.agent_id = self.agent_id or local.get("agent_id")
             self.tier = self.tier or local.get("tier")
             self.direction = str(local.get("direction") or "outbound-api")
+        pstn_opts = pstn_call_options(local)
+        log_pstn("stream.start", call_sid=self.exotel_call_sid, agent_id=self.agent_id)
 
         if self.agent_id:
             from server.call.call_lifecycle_service import call_lifecycle_service
@@ -95,6 +97,8 @@ class ExotelPstnBridge:
                 direction="outbound" if "outbound" in self.direction else "inbound",
                 tier=self.tier,
                 caller_id=self.caller_id,
+                stack_override=pstn_opts.get("stack_override"),
+                language=str(pstn_opts.get("language") or "te-IN"),
             )
             self.call_id = started["call_id"]
             self.session_id = started["session_id"]
@@ -105,196 +109,87 @@ class ExotelPstnBridge:
                 )
             logger.info("[EXOTEL] stream started call_id=%s exotel=%s", self.call_id, self.exotel_call_sid)
 
-        await self._open_stt()
-
-    async def _open_stt(self) -> None:
-        from server.routes.ws import _connect_stt_upstream
-
-        self._stt_cm = _connect_stt_upstream(
+        self._voice = PstnVoiceLoop(
             session_id=self.session_id,
             call_id=self.call_id,
-            language_code="te-IN",
-            sample_rate=16000,
+            on_agent_wire=self._send_agent_wire,
+            sample_rate=8000,
+            tts_session_id=pstn_opts.get("tts_session_id"),
+            tts_output_codec="mulaw",
         )
-        self._stt = await self._stt_cm.__aenter__()
-        self._stt_task = asyncio.create_task(self._stt_reader())
-        self._ping_task = asyncio.create_task(self._stt_ping())
+        self._voice.set_barge_handler(self._barge_in)
+        asyncio.create_task(self._start_voice_loop())
 
-    async def _stt_ping(self) -> None:
-        while not self._closed and self._stt:
-            await asyncio.sleep(20)
-            try:
-                await self._stt.send(json.dumps({"event": "ping"}))
-            except Exception:
-                return
-
-    async def _stt_reader(self) -> None:
-        assert self._stt is not None
+    async def _start_voice_loop(self) -> None:
+        if not self._voice:
+            return
         try:
-            async for raw in self._stt:
-                if isinstance(raw, bytes):
-                    raw = raw.decode(errors="ignore")
-                msg = json.loads(raw)
-                ev = msg.get("event") or msg.get("type") or ""
-                if ev == "transcript.partial":
-                    text = (msg.get("text") or (msg.get("data") or {}).get("text") or "").strip()
-                    if text and self._agent_speaking and len(text.split()) >= 2:
-                        await self._barge_in()
-                elif ev == "transcript.final":
-                    text = (msg.get("text") or (msg.get("data") or {}).get("text") or "").strip()
-                    if text and not self._turn_busy:
-                        asyncio.create_task(self._run_turn(text))
-        except asyncio.CancelledError:
-            pass
-        except Exception as e:
-            logger.warning("[EXOTEL] stt reader: %s", str(e)[:200])
+            await self._voice.start_call(play_greeting=bool(self.call_id))
+        except Exception as exc:
+            logger.exception("[EXOTEL] voice loop failed sid=%s: %s", self.exotel_call_sid, exc)
 
     async def _on_media(self, ev: dict[str, Any]) -> None:
-        if not self._stt:
+        if not self._voice:
             return
         payload = (ev.get("media") or {}).get("payload")
         if not payload:
             return
         pcm8k = base64.b64decode(payload)
-        pcm16k = pcm8k_to_pcm16k(pcm8k)
-        if self.call_id:
-            from server.call.audio_archive import audio_archive
+        self._media_frames_in += 1
+        if self._media_frames_in == 1:
+            log_pstn("media.in.first", call_sid=self.exotel_call_sid, call_id=self.call_id, bytes=len(pcm8k))
+        await self._voice.feed_user_pcm16(pcm8k)
 
-            asyncio.create_task(audio_archive.append_user_pcm(self.call_id, pcm16k))
-        b64 = base64.b64encode(pcm16k).decode()
-        await self._stt.send(json.dumps({"event": "audio_input", "audio": b64}))
+    async def _send_agent_wire(self, wire: bytes) -> None:
+        if not self.stream_sid or not wire:
+            return
+        from server.services.audio_transcode import mulaw_to_pcm16, pcm16_to_mulaw
+
+        if len(wire) == 160:
+            pcm8k = mulaw_to_pcm16(wire, target_rate=8000)
+        else:
+            pcm8k = wire
+        chunks = list(chunk_pcm_for_exotel(pcm8k))
+        first_out = self._media_frames_out == 0
+        for chunk in chunks:
+            await self.ws.send_text(
+                json.dumps(
+                    {
+                        "event": "media",
+                        "stream_sid": self.stream_sid,
+                        "media": {"payload": base64.b64encode(chunk).decode()},
+                    }
+                )
+            )
+        self._media_frames_out += len(chunks)
+        if first_out:
+            log_pstn(
+                "media.out.first",
+                call_sid=self.exotel_call_sid,
+                call_id=self.call_id,
+                frames=len(chunks),
+            )
+        await self.ws.send_text(
+            json.dumps(
+                {
+                    "event": "mark",
+                    "stream_sid": self.stream_sid,
+                    "mark": {"name": "turn-end"},
+                }
+            )
+        )
 
     async def _barge_in(self) -> None:
         if not self.stream_sid:
             return
         await self.ws.send_text(json.dumps({"event": "clear", "stream_sid": self.stream_sid}))
-        self._agent_speaking = False
-
-    async def _run_turn(self, text: str) -> None:
-        if self._turn_busy or not self.call_id:
-            return
-        self._turn_busy = True
-        try:
-            from server.call.live_turn_orchestrator import LiveTurnOrchestrator
-
-            orch = LiveTurnOrchestrator()
-            assistant = ""
-            async for chunk in orch.handle_user_turn_stream(
-                transcript=text,
-                session_id=self.session_id,
-                call_id=self.call_id,
-            ):
-                if chunk.get("delta"):
-                    assistant += chunk.get("delta") or ""
-                elif chunk.get("done"):
-                    assistant = chunk.get("text") or assistant
-            if assistant.strip():
-                await self._speak(assistant.strip())
-        except Exception as e:
-            logger.warning("[EXOTEL] turn error: %s", str(e)[:300])
-        finally:
-            self._turn_busy = False
-
-    async def _speak(self, text: str) -> None:
-        if not self.stream_sid or not text:
-            return
-        from server.config.env import get_settings
-        from server.routes.ws import _connect_tts_upstream, _resolve_ws_tts_model
-
-        model = _resolve_ws_tts_model("bulbul:v3", self.session_id, self.call_id)
-        tts_cm = _connect_tts_upstream(model, session_id=self.session_id, call_id=self.call_id)
-        tts = await tts_cm.__aenter__()
-        try:
-            ctx = None
-            if self.call_id:
-                from server.call.call_context import get as get_ctx
-
-                ctx = get_ctx(self.call_id)
-            stack = ctx.resolved_stack if ctx else None
-            speaker = stack.tts.config.get("speaker") if stack else None
-            lang = stack.language if stack else "te-IN"
-            await tts.send(
-                json.dumps(
-                    {
-                        "type": "config",
-                        "data": {
-                            "speaker": speaker or get_settings().sarvam_tts_speaker_te,
-                            "language_code": lang,
-                            "pace": 1.0,
-                            "output_audio_codec": "linear16",
-                            "sample_rate": 16000,
-                        },
-                    }
-                )
-            )
-            await tts.send(json.dumps({"type": "text", "data": {"text": text}}))
-            await tts.send(json.dumps({"type": "flush"}))
-
-            pcm_buf = bytearray()
-            async for raw in tts:
-                if isinstance(raw, bytes):
-                    raw = raw.decode(errors="ignore")
-                obj = json.loads(raw)
-                audio_b64 = None
-                if isinstance(obj.get("data"), dict):
-                    audio_b64 = obj["data"].get("audio")
-                audio_b64 = audio_b64 or obj.get("audio")
-                if audio_b64:
-                    pcm_buf.extend(base64.b64decode(audio_b64))
-
-            if pcm_buf:
-                pcm8k = pcm16k_to_pcm8k(bytes(pcm_buf))
-                self._agent_speaking = True
-                for chunk in chunk_pcm_for_exotel(pcm8k):
-                    if self.call_id:
-                        from server.call.audio_archive import audio_archive
-
-                        asyncio.create_task(audio_archive.append_agent_audio(self.call_id, pcm8k_to_pcm16k(chunk)))
-                    await self.ws.send_text(
-                        json.dumps(
-                            {
-                                "event": "media",
-                                "stream_sid": self.stream_sid,
-                                "media": {"payload": base64.b64encode(chunk).decode()},
-                            }
-                        )
-                    )
-                await self.ws.send_text(
-                    json.dumps(
-                        {
-                            "event": "mark",
-                            "stream_sid": self.stream_sid,
-                            "mark": {"name": "turn-end"},
-                        }
-                    )
-                )
-        finally:
-            try:
-                await tts.close()
-            except Exception:
-                pass
-            try:
-                await tts_cm.__aexit__(None, None, None)
-            except Exception:
-                pass
 
     async def _cleanup(self, reason: str) -> None:
         if self._closed:
             return
         self._closed = True
-        for task in (self._stt_task, self._ping_task):
-            if task:
-                task.cancel()
-        if self._stt:
-            try:
-                await self._stt.close()
-            except Exception:
-                pass
-        if self._stt_cm:
-            try:
-                await self._stt_cm.__aexit__(None, None, None)
-            except Exception:
-                pass
+        if self._voice:
+            await self._voice.close()
         if self.call_id:
             from server.call.call_lifecycle_service import call_lifecycle_service
 
@@ -307,5 +202,19 @@ class ExotelPstnBridge:
 
             exotel_call_registry.upsert(
                 self.exotel_call_sid,
-                {"status": "completed", "last_event": reason},
+                {
+                    "status": "completed",
+                    "last_event": reason,
+                    "media_frames_in": self._media_frames_in,
+                    "media_frames_out": self._media_frames_out,
+                    "bidirectional_ok": self._media_frames_in > 0 and self._media_frames_out > 0,
+                },
+            )
+            log_pstn_summary(
+                provider="exotel",
+                external_id=self.exotel_call_sid,
+                call_id=self.call_id,
+                media_in=self._media_frames_in,
+                media_out=self._media_frames_out,
+                reason=reason,
             )

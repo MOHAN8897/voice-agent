@@ -4,6 +4,7 @@ from server.services.usage_pricing import (
     cost_stt_usd,
     cost_tts_usd,
     estimate_turn_cost,
+    resolve_tts_provider,
     split_llm_tokens,
 )
 
@@ -14,10 +15,32 @@ def test_sarvam_stt_is_thirty_rupees_per_hour():
     assert abs(usd * fx - 30.0) < 1e-9
 
 
+def test_cartesia_stt_ink_whisper_pro_plan():
+    # Pro: $5 / 100K credits, 1 credit/sec → 3600 sec = $0.18/hr
+    usd = cost_stt_usd(
+        audio_sec=3600,
+        fx_rate_inr=95.64,
+        stt_provider="cartesia",
+        stt_model="ink-whisper",
+    )
+    assert abs(usd - 0.18) < 1e-9
+
+
 def test_sarvam_tts_three_rupees_per_1k_chars():
     fx = 95.64
     usd = cost_tts_usd(chars=1000, provider="sarvam", fx_rate_inr=fx)
     assert abs(usd * fx - 3.0) < 1e-9
+
+
+def test_cartesia_tts_fifty_usd_per_million_chars():
+    usd = cost_tts_usd(chars=1_000_000, provider="cartesia", model="sonic-3.5", fx_rate_inr=95.64)
+    assert abs(usd - 50.0) < 1e-9
+
+
+def test_sonic_model_on_sarvam_provider_uses_cartesia_tts_rate():
+    assert resolve_tts_provider(provider="sarvam", model="sonic-3.5") == "cartesia"
+    usd = cost_tts_usd(chars=1_000_000, provider="sarvam", model="sonic-3.5", fx_rate_inr=95.64)
+    assert abs(usd - 50.0) < 1e-9
 
 
 def test_cache_hit_uses_cached_rate_not_full_input():
@@ -26,6 +49,12 @@ def test_cache_hit_uses_cached_rate_not_full_input():
     assert hit["cached_usd"] > 0
     assert hit["total_usd"] < miss["total_usd"]
     assert classify_cache_event(input_tokens=2000, cached_tokens=1800, cache_write_tokens=0) == "cache_hit"
+
+
+def test_gpt_55_costs_more_than_luna():
+    luna = cost_llm_usd(input_tokens=2000, output_tokens=40, llm_model="gpt-5.6-luna")
+    g55 = cost_llm_usd(input_tokens=2000, output_tokens=40, llm_model="gpt-5.5")
+    assert g55["total_usd"] > luna["total_usd"]
 
 
 def test_cache_write_not_double_counted_with_uncached():
@@ -43,6 +72,10 @@ def test_turn_cost_includes_inr_and_usd():
         stt_audio_sec=8,
         tts_chars=40,
         tts_provider="sarvam",
+        tts_model="bulbul:v3",
+        stt_provider="sarvam",
+        stt_model="saaras:v3-realtime",
+        llm_model="gpt-5.6-luna",
         input_tokens=1900,
         output_tokens=35,
         cached_tokens=1700,
@@ -52,3 +85,4 @@ def test_turn_cost_includes_inr_and_usd():
     assert row["total_usd"] > 0
     assert abs(row["total_inr"] - row["total_usd"] * 95.64) < 1e-9
     assert row["cache_event"] == "cache_hit"
+    assert row["resolved_tts_provider"] == "sarvam"

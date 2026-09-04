@@ -1,7 +1,11 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { refreshPortalSession } from "@/lib/auth-client";
+import {
+  fetchPortalSession,
+  portalSessionErrorMessage,
+  storeCsrfToken,
+} from "@/lib/auth-client";
 
 type DevPortalContextValue = {
   ready: boolean;
@@ -27,12 +31,14 @@ export function DevPortalProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     (async () => {
       try {
-        const ok = await refreshPortalSession("dev");
-        const r = await fetch("/api/auth/dev-me", { credentials: "include", cache: "no-store" });
+        const r = await fetchPortalSession("dev");
         if (!r.ok) {
           if (!cancelled) {
-            setError(ok ? "Session check failed" : "Dev session required. Sign in at /dev/login");
-            setReady(true);
+            setError(
+              r.status === 401
+                ? "Dev session required. Sign in at /dev/login"
+                : "Session check failed"
+            );
           }
           return;
         }
@@ -40,11 +46,16 @@ export function DevPortalProvider({ children }: { children: ReactNode }) {
         if (!cancelled) {
           setAuthenticated(Boolean(j.authenticated));
           setSubject(j.subject || null);
-          setReady(true);
+          if (j.csrf_token) {
+            storeCsrfToken("dev", j.csrf_token);
+          }
         }
-      } catch {
+      } catch (err) {
         if (!cancelled) {
-          setError("Cannot reach API. Start the backend on port 8000.");
+          setError(portalSessionErrorMessage("dev", err));
+        }
+      } finally {
+        if (!cancelled) {
           setReady(true);
         }
       }
@@ -62,8 +73,15 @@ export function DevPortalProvider({ children }: { children: ReactNode }) {
         </div>
       )}
       {ready ? children : (
-        <div className="flex min-h-[40vh] items-center justify-center p-8">
+        <div className="flex min-h-[40vh] flex-col items-center justify-center gap-2 p-8 text-center">
           <p className="text-sm text-text-muted">Loading developer portal…</p>
+          <p className="max-w-md text-xs text-text-muted">
+            If this stays here, open{" "}
+            <a href="http://localhost:3000/dev/login" className="text-accent underline">
+              localhost:3000/dev/login
+            </a>{" "}
+            or restart with <code className="text-text">npm run share</code>.
+          </p>
         </div>
       )}
     </DevPortalContext.Provider>

@@ -1,5 +1,6 @@
 import { wsUrl } from "@/lib/api";
 import { buildWsTtsConfig, fetchTtsConfig, invalidateTtsConfigCache } from "@/lib/voice/tts-config";
+import { onTestStudioVoiceSaved } from "@/lib/voice/voice-runtime-events";
 import { VOICE_PIPELINE_LIMITS, type TtsConfig, type VoiceTraceFn } from "@/lib/voice/types";
 
 export type StreamingTtsClientOptions = {
@@ -35,10 +36,14 @@ export class StreamingTtsClient {
   private textChunksSent = 0;
   private callId: string | null;
   private readonly opts: Omit<StreamingTtsClientOptions, "callId"> & { callId?: string | null };
+  private readonly voiceUnsub: () => void;
 
   constructor(opts: StreamingTtsClientOptions) {
     this.opts = opts;
     this.callId = opts.callId;
+    this.voiceUnsub = onTestStudioVoiceSaved(() => {
+      this.close();
+    });
   }
 
   /** Reconnect WS when call id is assigned after session start. */
@@ -60,6 +65,20 @@ export class StreamingTtsClient {
       this.connectPromise = null;
     });
     return this.connectPromise;
+  }
+
+  /** Re-fetch runtime TTS config and push it upstream before each spoken turn. */
+  async refreshConfigForTurn(): Promise<void> {
+    invalidateTtsConfigCache();
+    const cfg = await fetchTtsConfig(this.opts.sessionId, this.opts.languageCode, this.callId);
+    this.cfg = cfg;
+    this.model = cfg.model || "bulbul:v3";
+    if (this.sock?.readyState === WebSocket.OPEN) {
+      await this.sendConfig(this.sock, cfg);
+      this.ready = true;
+      return;
+    }
+    await this.ensureConnected();
   }
 
   private async openSocket(): Promise<void> {
@@ -310,6 +329,11 @@ export class StreamingTtsClient {
       this.sock = null;
     }
     this.ready = false;
+  }
+
+  dispose(): void {
+    this.voiceUnsub();
+    this.close();
   }
 
   private clearFlushTimer() {

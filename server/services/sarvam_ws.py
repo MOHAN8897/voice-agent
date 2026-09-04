@@ -15,7 +15,7 @@ STT realtime: wss://api.sarvam.ai/speech-to-text-realtime/ws
 
 TTS WS: wss://api.sarvam.ai/text-to-speech/ws?model=bulbul:v3&send_completion_event=true
   client→srv: {"type":"config","data":{speaker,language_code,pace,min_buffer_size,max_chunk_length,
-               output_audio_codec,output_audio_bitrate,temperature(v3),sample_rate?}}
+               output_audio_codec,speech_sample_rate,temperature(v3)}}
               {"type":"text","data":{"text":"..."}} (≤2500, <500 rec) | {"type":"flush"} | {"type":"ping"}
   srv→client: audio chunks (base64 in data.audio) | event notification | error
   NOTE: no server-side cancel — barge-in is client-side.

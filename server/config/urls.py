@@ -11,13 +11,16 @@ def _strip(url: str) -> str:
 
 def public_api_base() -> str:
     """
-    Public API base used for Exotel webhooks, WSS stream URLs, and external callbacks.
-    Priority: EXOTEL_WEBHOOK_BASE_URL → PUBLIC_TUNNEL_URL → local API.
+    Public API base used for Telnyx/Plivo WSS, Exotel webhooks, and external callbacks.
+    Priority: PUBLIC_TUNNEL_URL (named tunnel) → EXOTEL_WEBHOOK_BASE_URL → local API.
+
+    PUBLIC_TUNNEL_URL wins so a stale dev_secrets exotel_webhook_base_url from an old
+    quick tunnel cannot break Telnyx media streaming.
     """
     settings = get_settings()
     for key, fallback in (
-        ("exotel_webhook_base_url", settings.exotel_webhook_base_url),
         ("public_tunnel_url", settings.public_tunnel_url),
+        ("exotel_webhook_base_url", settings.exotel_webhook_base_url),
     ):
         val = dev_secrets_store.effective(key, fallback)
         if val:

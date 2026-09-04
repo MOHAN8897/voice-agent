@@ -21,6 +21,7 @@ def get_log_flags() -> dict[str, bool]:
         "ws": master and bool(s.log_ws),
         "perf": master and bool(s.log_perf),
         "client": master and bool(s.log_client),
+        "pstn": master and bool(s.log_pstn),
     }
 
 

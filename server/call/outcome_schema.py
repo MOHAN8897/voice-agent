@@ -28,6 +28,7 @@ OUTCOME_JSON_SCHEMA: dict[str, Any] = {
         "next_action",
         "extracted_fields",
         "objections",
+        "notes",
     ],
     "properties": {
         "disposition": {"type": "string", "enum": sorted(DISPOSITIONS)},

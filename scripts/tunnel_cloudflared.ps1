@@ -69,6 +69,19 @@ if (Test-Path $EnvFile) {
     Write-Host "Updated .env webhook vars (PUBLIC_TUNNEL_URL, EXOTEL_WEBHOOK_BASE_URL)."
 }
 
+# Keep dev overlay in sync — it overrides .env for public_api_base()
+$DevSecrets = Join-Path $RepoRoot "data\dev_secrets.json"
+if (Test-Path $DevSecrets) {
+    try {
+        $secrets = Get-Content $DevSecrets -Raw | ConvertFrom-Json
+        $secrets.exotel_webhook_base_url = $publicUrl
+        $secrets | ConvertTo-Json -Depth 10 | Set-Content -Path $DevSecrets
+        Write-Host "Updated data/dev_secrets.json exotel_webhook_base_url."
+    } catch {
+        Write-Warning "Could not update dev_secrets.json: $_"
+    }
+}
+
 Write-Host ""
 Write-Host "Exotel passthru URL: $publicUrl/api/exotel/passthru"
 Write-Host "Exotel status callback: $publicUrl/api/exotel/status-callback"

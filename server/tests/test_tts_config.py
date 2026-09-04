@@ -2,7 +2,7 @@
 from server.config.env import get_settings
 from server.providers.registry import init_provider_registry
 from server.services.runtime_settings import runtime_settings
-from server.services.tts_config import TtsConfigError, resolve_tts_config
+from server.services.tts_config import TtsConfigError, merge_ws_tts_config, resolve_tts_config
 import pytest
 
 
@@ -68,3 +68,14 @@ def test_cartesia_uuid_falls_back_to_sarvam_when_cartesia_disabled(monkeypatch):
     assert cfg["provider"] == "sarvam"
     assert cfg["model"] == "bulbul:v3"
     assert cfg["speaker"] == "shubh"
+
+
+def test_merge_ws_ignores_stale_client_speaker():
+    runtime_settings.update("cfg-test", {"ttsSpeaker": "priya"})
+    cfg = merge_ws_tts_config(
+        "cfg-test",
+        {"speaker": "shubh", "language_code": "te-IN"},
+        language_code="te-IN",
+        ws_model="bulbul:v3",
+    )
+    assert cfg["speaker"] == "priya"

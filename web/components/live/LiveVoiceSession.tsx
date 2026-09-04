@@ -6,8 +6,15 @@ import { parseSseDataLines, wordCount } from "@/lib/early-tts";
 import { StreamingAudioPlayback } from "@/lib/voice/streaming-audio-playback";
 import { StreamingTtsClient } from "@/lib/voice/streaming-tts-client";
 import { TurnTtsPipeline } from "@/lib/voice/turn-tts-pipeline";
-import { isLikelyEcho, POST_SPEAK_COOLDOWN_MS } from "@/lib/echo-guard";
+import { isLikelyEcho } from "@/lib/echo-guard";
 import { shouldBargeWhileSpeaking, type BargeState } from "@/lib/live-guards";
+import {
+  BARGE_MIN_AFTER_SPEAK_MS,
+  pcmRms16,
+  PLAYBACK_TAIL_MS,
+  shouldAllowBargeIn,
+  shouldSendMicToStt,
+} from "@/lib/voice/mic-gate";
 import { apiOrigin, wsUrl } from "@/lib/api";
 import { billingCharCount } from "@/lib/billing-chars";
 
@@ -91,12 +98,21 @@ function parseSttPayload(raw: string): {
   }
 }
 
+export type VoiceRuntimeConfig = {
+  sttSilenceMs?: number;
+  sttThreshold?: number;
+  sttStreamType?: string;
+  bargeMinWords?: number;
+  bargeRequireVad?: boolean;
+};
+
 export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
   agentId?: string;
   tier?: string;
   languageCode?: string;
   stackOverride?: Record<string, unknown>;
   sessionId?: string;
+  voiceConfig?: VoiceRuntimeConfig;
   variant?: "default" | "dev" | "lab";
   onTrace?: (event: SessionTraceEvent) => void;
   onCallStart?: (callId: string) => void;
@@ -111,6 +127,7 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
   languageCode = "te-IN",
   stackOverride,
   sessionId,
+  voiceConfig,
   variant = "default",
   onTrace,
   onCallStart,
@@ -162,6 +179,9 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
   const turnGenRef = useRef(0);
   const lastSpeechStartAtRef = useRef<number | null>(null);
   const lastSttAudioSecRef = useRef<number>(0);
+  const speakStartedAtRef = useRef(0);
+  const voiceConfigRef = useRef(voiceConfig);
+  voiceConfigRef.current = voiceConfig;
 
   const trace = useCallback(
     (kind: string, detail: string) => {
@@ -220,7 +240,7 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
     playbackRef.current.setTrace((kind, detail) => trace(kind, detail));
     return () => {
       activePipelineRef.current?.cancel();
-      ttsClientRef.current?.close();
+      ttsClientRef.current?.dispose();
       playbackRef.current?.close();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -370,12 +390,17 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
         trace: (kind, detail) => trace(kind, detail),
         onSpeakingStart: () => {
           if (turnGen !== turnGenRef.current) return;
+          const now = Date.now();
           setSessionStatus("speaking");
           bargeRef.current.agentSpeaking = true;
+          speakStartedAtRef.current = now;
+          bargeRef.current.bargeCooldownUntil = now + BARGE_MIN_AFTER_SPEAK_MS;
         },
         onSpeakingEnd: () => {
           if (turnGen !== turnGenRef.current) return;
           bargeRef.current.agentSpeaking = false;
+          speakStartedAtRef.current = 0;
+          speakCooldownUntilRef.current = Date.now() + PLAYBACK_TAIL_MS;
         },
       });
       activePipelineRef.current = pipeline;
@@ -499,7 +524,7 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
         lastSttAudioSecRef.current = 0;
         const mergedUsage = {
           ...streamUsage,
-          stt_chars: text.length,
+          stt_chars: billingCharCount(text),
           stt_audio_sec: sttAudioSec,
           tts_chars: ttsMetrics.ttsChars || billingCharCount(out),
           tts_audio_bytes: ttsMetrics.ttsAudioBytes,
@@ -537,7 +562,7 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
           }
         }
         if (turnGen === turnGenRef.current) {
-          speakCooldownUntilRef.current = Date.now() + POST_SPEAK_COOLDOWN_MS;
+          speakCooldownUntilRef.current = Date.now() + PLAYBACK_TAIL_MS;
         }
       } else if (!assistantStarted) {
         addBubble("assistant", "Sorry — I did not get a response from the brain.");
@@ -634,21 +659,26 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
       });
       streamRef.current = null;
     }
-    const ctx = ctxRef.current;
-    ctxRef.current = null;
-    if (ctx && ctx.state !== "closed") {
-      ctx.close().catch(() => {});
-    }
-    playbackRef.current?.stop();
     stopMicMeter();
     setListening(false);
     setPartial("");
   }, [stopMicMeter]);
 
+  const releaseAudioContext = useCallback(() => {
+    playbackRef.current?.setSharedContext(null);
+    const ctx = ctxRef.current;
+    ctxRef.current = null;
+    if (ctx && ctx.state !== "closed") {
+      ctx.close().catch(() => {});
+    }
+  }, []);
+
   const cleanupLive = useCallback(() => {
     teardownMic();
+    playbackRef.current?.stop();
+    releaseAudioContext();
     setSessionStatus("idle");
-  }, [setSessionStatus, teardownMic]);
+  }, [setSessionStatus, teardownMic, releaseAudioContext]);
 
   useEffect(() => {
     const cleanup = cleanupLive;
@@ -673,17 +703,22 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
   const stopListening = useCallback(async () => {
     intentionalStopRef.current = true;
     pauseListening();
+    playbackRef.current?.stop();
+    releaseAudioContext();
     await endCall();
     setSessionStatus("ended");
-  }, [pauseListening, endCall, setSessionStatus]);
+  }, [pauseListening, endCall, setSessionStatus, releaseAudioContext]);
 
   const attachSttSocket = useCallback(() => {
+    const cfg = voiceConfigRef.current || {};
     const q = new URLSearchParams({
       language_code: languageCode,
-      stream_type: "fast",
+      stream_type: cfg.sttStreamType || "fast",
       mode: "transcribe",
       sample_rate: "16000",
     });
+    if (cfg.sttSilenceMs) q.set("silence_duration_ms", String(cfg.sttSilenceMs));
+    if (cfg.sttThreshold != null) q.set("threshold", String(cfg.sttThreshold));
     if (callIdRef.current) q.set("call_id", callIdRef.current);
     if (sessionId) q.set("sessionId", sessionId);
 
@@ -717,8 +752,41 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
       }
       if (event === "partial" || event === "transcript.partial") {
         if (text) {
-          setPartial(text);
+          const st = bargeRef.current;
+          const now = Date.now();
+          if (st.agentSpeaking && !awaitingBargeRef.current) {
+            if (isLikelyEcho(text, lastAssistantTextRef.current)) {
+              trace("stt", "ignored partial echo");
+              return;
+            }
+          }
+          if (!st.agentSpeaking) {
+            setPartial(text);
+          }
           trace("stt", `partial ${text.slice(0, 48)}`);
+          st.words = wordCount(text);
+          if (
+            shouldAllowBargeIn(
+              {
+                agentSpeaking: st.agentSpeaking,
+                brainStreaming: st.brainStreaming,
+                awaitingUserAfterBarge: awaitingBargeRef.current,
+                speakCooldownUntil: speakCooldownUntilRef.current,
+                speakStartedAt: speakStartedAtRef.current,
+              },
+              now
+            ) &&
+            shouldBargeWhileSpeaking(
+              {
+                ...st,
+                minWords: cfg.bargeMinWords,
+                requireVad: cfg.bargeRequireVad,
+              },
+              now
+            )
+          ) {
+            doBargeIn("vad+partial");
+          }
         }
         return;
       }
@@ -726,7 +794,21 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
         bargeRef.current.sawVadStart = true;
         lastSpeechStartAtRef.current = Date.now();
         trace("vad", "speech start");
-        if (bargeRef.current.agentSpeaking || bargeRef.current.brainStreaming) {
+        const st = bargeRef.current;
+        const now = Date.now();
+        if (
+          shouldAllowBargeIn(
+            {
+              agentSpeaking: st.agentSpeaking,
+              brainStreaming: st.brainStreaming,
+              awaitingUserAfterBarge: awaitingBargeRef.current,
+              speakCooldownUntil: speakCooldownUntilRef.current,
+              speakStartedAt: speakStartedAtRef.current,
+            },
+            now
+          ) &&
+          (st.agentSpeaking || st.brainStreaming)
+        ) {
           doBargeIn("vad-start");
         }
         return;
@@ -795,6 +877,24 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
     playbackRef.current?.userGesture();
     setSessionStatus("connecting");
     try {
+      const sid = sessionId || "default";
+      try {
+        const instrRes = await fetch(`/api/instructions?sessionId=${encodeURIComponent(sid)}`, {
+          credentials: "include",
+        });
+        if (instrRes.ok) {
+          const instr = (await instrRes.json()) as Record<string, unknown>;
+          const script = String(instr.agentScript || instr.brainPrompt || "").trim();
+          if (!script) {
+            setSessionStatus("Save agent brief first (Fine-tune tab)");
+            trace("call", "blocked — no agent script saved");
+            return;
+          }
+        }
+      } catch {
+        /* proceed if instructions check fails */
+      }
+
       if (!callIdRef.current) {
         await startCall();
       }
@@ -807,8 +907,12 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
         },
       });
       streamRef.current = stream;
-      const ctx = new AudioContext();
-      ctxRef.current = ctx;
+      let ctx = ctxRef.current;
+      if (!ctx || ctx.state === "closed") {
+        ctx = new AudioContext({ latencyHint: "interactive" });
+        ctxRef.current = ctx;
+      }
+      playbackRef.current?.setSharedContext(ctx);
       if (ctx.state === "suspended") {
         await ctx.resume();
       }
@@ -834,14 +938,15 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
       worklet.port.onmessage = (ev) => {
         const sock = socketRef.current;
         if (!sock || sock.readyState !== WebSocket.OPEN) return;
-        const buf: ArrayBuffer =
-          ev.data instanceof ArrayBuffer
-            ? ev.data
-            : ev.data instanceof Int16Array
-              ? ev.data.buffer.slice(ev.data.byteOffset, ev.data.byteOffset + ev.data.byteLength)
-              : new ArrayBuffer(0);
-        if (!buf.byteLength) return;
-        const samples = new Int16Array(buf);
+        let samples: Int16Array;
+        if (ev.data instanceof ArrayBuffer) {
+          samples = new Int16Array(ev.data);
+        } else if (ev.data instanceof Int16Array) {
+          samples = ev.data;
+        } else {
+          return;
+        }
+        if (!samples.length) return;
         for (let i = 0; i < samples.length; i += 1) {
           const a = samples[i] < 0 ? -samples[i] : samples[i];
           if (a > pcmPeak) pcmPeak = a;
@@ -856,20 +961,29 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
             trace("stt", `mic audio ok peak=${pcmPeak}`);
           }
         }
-        sock.send(buf);
+
         const st = bargeRef.current;
-        st.words = wordCount(partialRef.current);
-        if (shouldBargeWhileSpeaking(st, Date.now())) {
-          doBargeIn("vad+partial");
+        const now = Date.now();
+        const rms = pcmRms16(samples);
+        const gate = {
+          agentSpeaking: st.agentSpeaking,
+          brainStreaming: st.brainStreaming,
+          awaitingUserAfterBarge: awaitingBargeRef.current,
+          speakCooldownUntil: speakCooldownUntilRef.current,
+          speakStartedAt: speakStartedAtRef.current,
+        };
+        if (!shouldSendMicToStt(gate, now, rms)) {
+          return;
         }
+
+        sock.send(samples.buffer.slice(samples.byteOffset, samples.byteOffset + samples.byteLength));
+        st.words = wordCount(partialRef.current);
       };
       src.connect(worklet);
-      // Keep the worklet running without routing mic → speakers (that loop makes AEC mute the input).
-      worklet.connect(ctx.createMediaStreamDestination());
-      const keepAlive = ctx.createConstantSource();
-      keepAlive.offset.value = 0;
-      keepAlive.connect(ctx.destination);
-      keepAlive.start();
+      const silentGain = ctx.createGain();
+      silentGain.gain.value = 0;
+      worklet.connect(silentGain);
+      silentGain.connect(ctx.destination);
     } catch (e) {
       const msg =
         e instanceof DOMException && e.name === "AbortError"
@@ -888,7 +1002,7 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
     } finally {
       startingRef.current = false;
     }
-  }, [attachSttSocket, waitSttSocketOpen, teardownMic, endCall, doBargeIn, startCall, startMicMeter, trace, setSessionStatus]);
+  }, [attachSttSocket, waitSttSocketOpen, teardownMic, endCall, startCall, startMicMeter, trace, setSessionStatus, sessionId]);
 
   useImperativeHandle(ref, () => ({
     startListening,
@@ -896,6 +1010,8 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
     stopListening,
     endCall: async () => {
       pauseListening();
+      playbackRef.current?.stop();
+      releaseAudioContext();
       await endCall();
       setSessionStatus("ended");
     },

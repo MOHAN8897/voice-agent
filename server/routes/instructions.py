@@ -96,13 +96,14 @@ async def save_instructions(body: SaveRequest):
 
             prev_meta = instruction_store.get_with_meta(body.sessionId)
             prev_compiled = prev_meta.get("brainPrompt") if prev_meta.get("compiledVersion") else None
-            compiled, script_result, raw_est, _compiled_est = await compile_agent_from_brief(
+            compiled, script_result, raw_est, _compiled_est, effective_budget = await compile_agent_from_brief(
                 brief=body.agentBrief,
                 language=body.language_code or "te-IN",
                 style=body.responseStyle,
                 budget_tokens=budget,
                 previous_compiled=prev_compiled,
             )
+            budget = effective_budget
             saved = instruction_store.save_agent_script(
                 body.sessionId,
                 body.agentBrief,

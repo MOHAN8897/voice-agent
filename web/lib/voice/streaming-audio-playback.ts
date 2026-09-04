@@ -14,6 +14,7 @@ type OrderedAudio = {
 export class StreamingAudioPlayback {
   unlocked = false;
   private ctx: AudioContext | null = null;
+  private sharedCtx: AudioContext | null = null;
   private player: PcmStreamPlayer | null = null;
   private sampleRate = 24000;
   private cancelTurn: (() => void) | null = null;
@@ -27,6 +28,13 @@ export class StreamingAudioPlayback {
 
   setTrace(fn: VoiceTraceFn) {
     this.trace = fn;
+  }
+
+  /** Route TTS through the mic capture context so browser AEC can cancel speaker playback. */
+  setSharedContext(ctx: AudioContext | null) {
+    if (this.sharedCtx === ctx) return;
+    this.sharedCtx = ctx;
+    this.player = null;
   }
 
   setSampleRate(rate: number) {
@@ -49,17 +57,22 @@ export class StreamingAudioPlayback {
   }
 
   async ensureContext(): Promise<AudioContext> {
-    if (!this.ctx) {
-      this.ctx = new AudioContext({ sampleRate: this.sampleRate });
+    const target = this.sharedCtx || this.ctx;
+    if (!target || target.state === "closed") {
+      if (this.sharedCtx) {
+        throw new Error("Shared audio context is closed");
+      }
+      this.ctx = new AudioContext({ sampleRate: this.sampleRate, latencyHint: "interactive" });
     }
-    if (this.ctx.state === "suspended") {
+    const ctx = this.sharedCtx || this.ctx!;
+    if (ctx.state === "suspended") {
       try {
-        await this.ctx.resume();
+        await ctx.resume();
       } catch {
         /* gesture may be required */
       }
     }
-    return this.ctx;
+    return ctx;
   }
 
   enqueuePcm(turnId: string, sequenceNumber: number, pcm: ArrayBuffer) {
@@ -122,10 +135,11 @@ export class StreamingAudioPlayback {
 
   close() {
     this.stop();
-    if (this.ctx && this.ctx.state !== "closed") {
+    if (!this.sharedCtx && this.ctx && this.ctx.state !== "closed") {
       void this.ctx.close();
     }
     this.ctx = null;
+    this.sharedCtx = null;
     this.player = null;
   }
 }

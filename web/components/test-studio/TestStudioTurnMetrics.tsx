@@ -100,6 +100,10 @@ export function TestStudioTurnMetrics({
   sessionTotal,
   mode = "agent",
   ttsProvider = "sarvam",
+  ttsModel = "",
+  sttProvider = "sarvam",
+  sttModel = "",
+  llmModel = "gpt-5.6-luna",
   pricing,
   sessionDurationMs = 0,
 }: {
@@ -107,6 +111,10 @@ export function TestStudioTurnMetrics({
   sessionTotal: SessionUsageTotals;
   mode?: "agent" | "pstn";
   ttsProvider?: string;
+  ttsModel?: string;
+  sttProvider?: string;
+  sttModel?: string;
+  llmModel?: string;
   pricing?: PricingMeta | null;
   sessionDurationMs?: number;
 }) {
@@ -114,6 +122,10 @@ export function TestStudioTurnMetrics({
     sttAudioSec: sessionTotal.sttAudioSec,
     ttsChars: sessionTotal.ttsChars,
     ttsProvider,
+    ttsModel,
+    sttProvider,
+    sttModel,
+    llmModel,
     inputTokens: sessionTotal.llmInput,
     outputTokens: sessionTotal.llmOutput,
     cachedTokens: sessionTotal.llmCached,
@@ -132,7 +144,7 @@ export function TestStudioTurnMetrics({
         title="Usage per turn"
         description={
           mode === "agent"
-            ? "STT billed on audio seconds · TTS on Telugu characters · LLM on tokens (cache hit vs write)"
+            ? "STT chars (user transcript) · TTS chars (LLM reply → speech) · LLM tokens (cache hit vs write)"
             : "Agent usage appears in Agent only mode · PSTN calls tracked in Exotel panel"
         }
         padding="md"
@@ -159,20 +171,33 @@ export function TestStudioTurnMetrics({
               sub={`${sessionTotal.sttAudioSec.toFixed(1)}s · ₹30/hr`}
             />
             <StatCell
+              label="STT chars"
+              value={String(sessionTotal.sttChars)}
+              sub="user transcript processed"
+            />
+            <StatCell
+              label="TTS chars"
+              value={String(sessionTotal.ttsChars)}
+              sub="LLM reply → speech"
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <StatCell
               label="LLM"
               value={formatInr(sessionCost.llmInr)}
               sub={`${cachePct}% cached · ${formatUsd(sessionCost.llmUsd)}`}
             />
+            <StatCell label="Turns" value={String(sessionTotal.turns)} />
+            <StatCell label="LLM out" value={String(sessionTotal.llmOutput)} sub={`in ${sessionTotal.llmInput} · ${sessionTotal.llmCached} hit`} />
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <StatCell label="LLM in" value={String(sessionTotal.llmInput)} sub={`${sessionTotal.llmCached} cached · ${sessionTotal.llmCacheWrite} write`} />
             <StatCell
               label="TTS"
               value={formatInr(sessionCost.ttsInr)}
-              sub={`${sessionTotal.ttsChars} chars`}
+              sub={`${formatUsd(sessionCost.ttsUsd)} · ₹3/1k chars`}
             />
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            <StatCell label="Turns" value={String(sessionTotal.turns)} />
-            <StatCell label="LLM in / cached" value={`${sessionTotal.llmInput}`} sub={`${sessionTotal.llmCached} hit · ${sessionTotal.llmCacheWrite} write`} />
-            <StatCell label="LLM out" value={String(sessionTotal.llmOutput)} />
+            <StatCell label="TTS audio" value={formatBytes(sessionTotal.ttsAudioBytes)} />
           </div>
           {sessionTotal.sttAudioSec > 0 && Math.abs(perMinStt.inr - perMinWall.inr) > 0.01 ? (
             <p className="font-mono text-[9px] text-text-subtle">
@@ -180,7 +205,8 @@ export function TestStudioTurnMetrics({
             </p>
           ) : null}
           <p className="font-mono text-[9px] text-text-subtle">
-            FX ₹{sessionCost.fx.toFixed(2)}/$ · Sarvam STT ₹30/hour · TTS ₹3/1k chars · Luna $0.20/$0.02/$0.25/$1.20 per 1M
+            FX ₹{sessionCost.fx.toFixed(2)}/$ · STT {sttProvider}/{sttModel || "default"} · TTS {ttsProvider}/
+            {ttsModel || "default"} · LLM {llmModel}
           </p>
         </div>
 
@@ -192,11 +218,20 @@ export function TestStudioTurnMetrics({
           </p>
         ) : (
           <div className="max-h-72 overflow-y-auto space-y-2" data-testid="usage-turn-list">
+            <div className="grid grid-cols-3 gap-1 px-1 font-mono text-[9px] uppercase tracking-wide text-text-subtle">
+              <span>STT chars</span>
+              <span>LLM in</span>
+              <span>TTS chars</span>
+            </div>
             {rows.map((r) => {
               const cost = estimateTurnCost({
                 sttAudioSec: r.sttAudioSec ?? 0,
                 ttsChars: r.ttsChars ?? 0,
                 ttsProvider,
+                ttsModel,
+                sttProvider,
+                sttModel,
+                llmModel,
                 inputTokens: r.inputTokens ?? 0,
                 outputTokens: r.outputTokens ?? 0,
                 cachedTokens: r.cachedTokens ?? 0,
@@ -231,14 +266,14 @@ export function TestStudioTurnMetrics({
                   </div>
                   <div className="mt-2 grid grid-cols-3 gap-1 font-mono text-[9px] text-text-muted">
                     <div>
-                      <span className="text-text-subtle">STT</span>
+                      <span className="text-text-subtle">STT chars</span>
                       <br />
-                      {formatInr(cost.sttInr)}
+                      <span className="text-sm font-semibold text-text">{r.sttChars ?? 0}</span>
                       <br />
-                      {(r.sttChars ?? 0)}c · {(r.sttAudioSec ?? 0).toFixed(1)}s
+                      {formatInr(cost.sttInr)} · {(r.sttAudioSec ?? 0).toFixed(1)}s
                     </div>
                     <div>
-                      <span className="text-text-subtle">LLM</span>
+                      <span className="text-text-subtle">LLM in</span>
                       <br />
                       {formatInr(cost.llmInr)}
                       <br />
@@ -246,11 +281,11 @@ export function TestStudioTurnMetrics({
                       {r.outputTokens ?? 0}
                     </div>
                     <div>
-                      <span className="text-text-subtle">TTS</span>
+                      <span className="text-text-subtle">TTS chars</span>
                       <br />
-                      {formatInr(cost.ttsInr)}
+                      <span className="text-sm font-semibold text-text">{r.ttsChars ?? 0}</span>
                       <br />
-                      {r.ttsChars ?? 0}c · {formatBytes(r.ttsAudioBytes ?? 0)}
+                      {formatInr(cost.ttsInr)} · {formatBytes(r.ttsAudioBytes ?? 0)}
                     </div>
                   </div>
                   {turnSec > 0 ? (

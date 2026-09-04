@@ -83,4 +83,16 @@ $webLines = @(
 Set-Content -Path $WebEnvFile -Value ($webLines -join "`n")
 Write-Host "Synced web/.env.local -> $ApiUrl"
 
+$secretsPath = Join-Path $RepoRoot "data\dev_secrets.json"
+if (Test-Path $secretsPath) {
+    try {
+        $secrets = Get-Content $secretsPath -Raw | ConvertFrom-Json
+        $secrets.exotel_webhook_base_url = $ApiUrl
+        $secrets | ConvertTo-Json -Depth 20 | Set-Content -Path $secretsPath -Encoding utf8
+        Write-Host "Synced data/dev_secrets.json exotel_webhook_base_url -> $ApiUrl"
+    } catch {
+        Write-Warning "env_sync: could not update dev_secrets.json: $_"
+    }
+}
+
 return @{ ApiUrl = $ApiUrl; AppUrl = $AppUrl }

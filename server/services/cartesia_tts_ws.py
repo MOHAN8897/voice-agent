@@ -78,7 +78,7 @@ def connect_cartesia_tts_ws(model: str | None = None, **_: Any):
         async def _send_generation(self, transcript: str, *, continue_: bool) -> None:
             cfg = self._cfg or {}
             voice_id = cfg.get("speaker") or settings.cartesia_tts_voice_id or constants.CARTESIA_DEFAULT_VOICE_ID
-            sample_rate = int(cfg.get("sample_rate") or 24000)
+            sample_rate = int(cfg.get("speech_sample_rate") or cfg.get("sample_rate") or 16000)
             lang = _cartesia_language(str(cfg.get("language_code") or "te-IN"))
             req = {
                 "model_id": self._model,

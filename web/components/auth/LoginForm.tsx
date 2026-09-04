@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { FieldError, Label } from "@/components/ui/Label";
 import { Input } from "@/components/ui/Input";
-import { portalFetch, refreshPortalSession, storeCsrfToken, type PortalKind } from "@/lib/auth-client";
+import { portalFetch, refreshPortalSession, storeCsrfToken, portalSessionErrorMessage, type PortalKind } from "@/lib/auth-client";
 
 type LoginFormProps = {
   title: string;
@@ -28,13 +28,20 @@ export function LoginForm({ title, subtitle, endpoint, redirectTo, portalKind }:
 
   useEffect(() => {
     let cancelled = false;
-    refreshPortalSession(portalKind).then((ok) => {
-      if (!cancelled && ok) {
-        router.replace(next.startsWith("/") ? next : redirectTo);
-      } else if (!cancelled) {
-        setCheckingSession(false);
-      }
-    });
+    refreshPortalSession(portalKind)
+      .then((ok) => {
+        if (!cancelled && ok) {
+          router.replace(next.startsWith("/") ? next : redirectTo);
+        } else if (!cancelled) {
+          setCheckingSession(false);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(portalSessionErrorMessage(portalKind, err));
+          setCheckingSession(false);
+        }
+      });
     return () => {
       cancelled = true;
     };
@@ -68,7 +75,18 @@ export function LoginForm({ title, subtitle, endpoint, redirectTo, portalKind }:
   }
 
   if (checkingSession) {
-    return <p className="text-sm text-text-muted">Checking session…</p>;
+    return (
+      <div className="space-y-2">
+        <p className="text-sm text-text-muted">Checking session…</p>
+        <p className="max-w-sm text-xs text-text-muted">
+          On the public tunnel link? Use{" "}
+          <a href="http://localhost:3000/dev/login" className="text-accent underline">
+            localhost:3000/dev/login
+          </a>{" "}
+          if this does not finish in a few seconds.
+        </p>
+      </div>
+    );
   }
 
   return (
