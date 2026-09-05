@@ -93,6 +93,7 @@ class ExotelPstnBridge:
             started = await call_lifecycle_service.start(
                 agent_id=self.agent_id,
                 session_id=f"pstn-{self.exotel_call_sid or self.stream_sid}",
+                config_session_id=pstn_opts.get("config_session_id"),
                 channel="pstn",
                 direction="outbound" if "outbound" in self.direction else "inbound",
                 tier=self.tier,
@@ -115,6 +116,7 @@ class ExotelPstnBridge:
             on_agent_wire=self._send_agent_wire,
             sample_rate=8000,
             tts_session_id=pstn_opts.get("tts_session_id"),
+            config_session_id=pstn_opts.get("config_session_id"),
             tts_output_codec="mulaw",
         )
         self._voice.set_barge_handler(self._barge_in)

@@ -134,8 +134,12 @@ def _build_studio_catalog(all_voices: list[dict[str, Any]]) -> tuple[list[dict[s
     for key in groups:
         groups[key] = sorted(groups[key], key=sort_key)
 
-    # Cap general English so dropdown stays usable
-    groups["english"] = groups["english"][:24]
+    # Cap general English so the dropdown stays usable, but never drop fallbacks.
+    # Skylar is the default UUID; an A–Z cap otherwise hides her and blanks the <select>.
+    fallback_ids = {v["id"] for v in _FALLBACK_VOICES}
+    pinned_en = [v for v in groups["english"] if v["id"] in fallback_ids]
+    rest_en = [v for v in groups["english"] if v["id"] not in fallback_ids]
+    groups["english"] = pinned_en + rest_en[: max(0, 24 - len(pinned_en))]
 
     studio: list[dict[str, Any]] = []
     for region in ("telugu", "hindi", "indian_english", "english"):
@@ -229,7 +233,7 @@ async def fetch_cartesia_voices(*, force: bool = False) -> list[dict[str, Any]]:
         }
         return studio
 
-    studio, groups = _build_studio_catalog(collected)
+    studio, groups = _build_studio_catalog(list(_FALLBACK_VOICES) + collected)
     _cache = {
         "all_voices": collected,
         "studio_voices": studio,
@@ -242,20 +246,50 @@ async def fetch_cartesia_voices(*, force: bool = False) -> list[dict[str, Any]]:
 
 def voices_for_catalog() -> list[dict[str, Any]]:
     """Indian-focused voices for settings catalog (sync snapshot)."""
-    return list(_cache.get("studio_voices") or _FALLBACK_VOICES)
+    grouped = voices_grouped_for_ui()
+    studio: list[dict[str, Any]] = []
+    for key in ("telugu", "hindi", "indian_english", "english"):
+        studio.extend(grouped.get(key) or [])
+    return studio or list(_FALLBACK_VOICES)
 
 
 def voices_grouped_for_ui() -> dict[str, Any]:
     groups = _cache.get("groups") or {}
+    telugu = list(groups.get("telugu") or [])
+    hindi = list(groups.get("hindi") or [])
+    indian_english = list(groups.get("indian_english") or [])
+    english = list(groups.get("english") or [])
+    _, fallback_groups = _build_studio_catalog(list(_FALLBACK_VOICES))
+    fallback_ids = {v["id"] for v in _FALLBACK_VOICES}
+
+    def _pin(key: str, current: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        have = {v["id"] for v in current}
+        pinned = [v for v in fallback_groups[key] if v["id"] not in have]
+        merged = pinned + current
+        if key != "english":
+            return merged
+        pin = [v for v in merged if v["id"] in fallback_ids]
+        rest = [v for v in merged if v["id"] not in fallback_ids]
+        return pin + rest[: max(0, 24 - len(pin))]
+
+    telugu = _pin("telugu", telugu)
+    hindi = _pin("hindi", hindi)
+    indian_english = _pin("indian_english", indian_english)
+    english = _pin("english", english)
+    if not (telugu or hindi or indian_english or english):
+        telugu = fallback_groups["telugu"]
+        hindi = fallback_groups["hindi"]
+        indian_english = fallback_groups["indian_english"]
+        english = fallback_groups["english"]
     return {
-        "telugu": groups.get("telugu", []),
-        "hindi": groups.get("hindi", []),
-        "indian_english": groups.get("indian_english", []),
-        "english": groups.get("english", []),
+        "telugu": telugu,
+        "hindi": hindi,
+        "indian_english": indian_english,
+        "english": english,
         "labels": _REGION_LABELS,
         "source": _cache.get("source", "static"),
         "total_pulled": len(_cache.get("all_voices") or []),
-        "studio_count": len(_cache.get("studio_voices") or []),
+        "studio_count": len(_cache.get("studio_voices") or telugu + hindi + indian_english + english),
     }
 
 

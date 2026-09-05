@@ -8,7 +8,7 @@
     "start": "npm run dev",
     "dev:down": "powershell -ExecutionPolicy Bypass -File scripts/dev_down.ps1",
     "dev:up": "powershell -ExecutionPolicy Bypass -File scripts/dev_up.ps1 -KillStale -Wait",
-    "dev:api": "python -m uvicorn server.app:app --host 127.0.0.1 --port 8000 --reload",
+    "dev:api": "python -m uvicorn server.app:app --host 127.0.0.1 --port 8000 --reload --reload-dir server",
     "dev:web": "npm run dev --prefix web -- -p 3000",
     "dev:local": "powershell -ExecutionPolicy Bypass -File scripts/dev_stack.ps1 -KillStale -Mode local",
     "dev:full": "powershell -ExecutionPolicy Bypass -File scripts/dev_stack.ps1 -KillStale -Mode telephony",

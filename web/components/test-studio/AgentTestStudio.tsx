@@ -18,6 +18,7 @@ import { useTestStudioPrefs } from "@/components/test-studio/useTestStudioPrefs"
 import {
   buildStackOverride,
   defaultStackForm,
+  stackFormEqual,
   TEST_STUDIO_SESSION_ID,
   type StackForm,
   type StackMode,
@@ -25,7 +26,7 @@ import {
 import { applyPstnStackDefaults } from "@/lib/pstn-stack";
 import { classifyCacheEvent, type PricingMeta } from "@/lib/usage-cost";
 import { billingCharCount } from "@/lib/billing-chars";
-import { isCartesiaVoiceId } from "@/lib/voice/tts-config";
+import { DEFAULT_CARTESIA_VOICE_ID, ensureTtsVoice, voiceMatchesTtsProvider } from "@/lib/voice/tts-config";
 import { onTestStudioVoiceSaved } from "@/lib/voice/voice-runtime-events";
 import { cn } from "@/lib/cn";
 
@@ -98,7 +99,7 @@ export function AgentTestStudio({
     [studioTab, stackMode, tier, channel, language, stack, fineTuneTab]
   );
 
-  useTestStudioPrefs(uiPrefs, (loaded) => {
+  const onPrefsLoaded = useCallback((loaded: import("@/components/test-studio/useTestStudioPrefs").TestStudioUiPrefs) => {
     if (prefsHydratedRef.current) return;
     prefsHydratedRef.current = true;
     if (loaded.studioTab) setStudioTab(loaded.studioTab as StudioTab);
@@ -114,7 +115,9 @@ export function AgentTestStudio({
       setStack((prev) => ({ ...prev, ...(loaded.stack as Partial<StackForm>) }));
     }
     setPrefsReady(true);
-  });
+  }, []);
+
+  useTestStudioPrefs(uiPrefs, onPrefsLoaded);
 
   useEffect(() => {
     if (!prefsReady) {
@@ -182,12 +185,12 @@ export function AgentTestStudio({
       const next = stackForTier(tier);
       setStack((prev) => {
         const inherited = prev.ttsVoiceId || runtimeTtsSpeaker || next.ttsVoiceId;
-        const ttsVoiceId =
-          next.ttsProvider !== "cartesia" && isCartesiaVoiceId(inherited)
-            ? next.ttsVoiceId || ""
-            : inherited;
+        const ttsVoiceId = voiceMatchesTtsProvider(next.ttsProvider, inherited)
+          ? inherited
+          : ensureTtsVoice(next.ttsProvider, inherited, next.ttsModel);
         const merged = { ...next, ttsVoiceId };
-        return channel === "pstn" ? applyPstnStackDefaults(merged, language) : merged;
+        const result = channel === "pstn" ? applyPstnStackDefaults(merged, language) : merged;
+        return stackFormEqual(result, prev) ? prev : result;
       });
       if (next.language) setLanguage(next.language);
     }
@@ -195,8 +198,26 @@ export function AgentTestStudio({
 
   useEffect(() => {
     if (channel !== "pstn") return;
-    setStack((prev) => applyPstnStackDefaults(prev, language));
+    setStack((prev) => {
+      const next = applyPstnStackDefaults(prev, language);
+      if (
+        next.sttModel === prev.sttModel &&
+        next.ttsVoiceId === prev.ttsVoiceId &&
+        next.language === prev.language
+      ) {
+        return prev;
+      }
+      return next;
+    });
   }, [channel, language]);
+
+  useEffect(() => {
+    setStack((prev) => {
+      const voice = ensureTtsVoice(prev.ttsProvider, prev.ttsVoiceId || runtimeTtsSpeaker, prev.ttsModel);
+      if (voice === prev.ttsVoiceId) return prev;
+      return { ...prev, ttsVoiceId: voice };
+    });
+  }, [stack.ttsProvider, stack.ttsModel, runtimeTtsSpeaker]);
 
   useEffect(() => {
     if (!callId || callEnded) return;
@@ -275,7 +296,7 @@ export function AgentTestStudio({
     ]);
   }
 
-  function onCallStart(id: string) {
+  const onCallStart = useCallback((id: string) => {
     setCallId(id);
     setCallEnded(false);
     setLocked(true);
@@ -284,46 +305,42 @@ export function AgentTestStudio({
     setSessionStartedAt(Date.now());
     setSessionEndedAt(null);
     refreshMemory(id);
-  }
+  }, [refreshMemory]);
 
-  function onCallEnd(id: string) {
+  const onCallEnd = useCallback((id: string) => {
     setCallEnded(true);
     setLocked(false);
     setSessionStatus("ended");
     setSessionEndedAt(Date.now());
     refreshMemory(id);
-  }
+  }, [refreshMemory]);
 
   const showPstn = portal === "dev";
   const stackLocked = locked && (sessionStatus === "listening" || sessionStatus === "connecting");
   const stackOverride = useMemo(() => {
-    const voiceId = stack.ttsVoiceId || runtimeTtsSpeaker;
+    const voiceId = ensureTtsVoice(
+      stack.ttsProvider,
+      stack.ttsVoiceId || runtimeTtsSpeaker,
+      stack.ttsModel
+    );
     if (stackMode === "custom") {
-      const form = voiceId ? { ...stack, ttsVoiceId: voiceId } : stack;
-      return buildStackOverride(form);
+      return buildStackOverride({ ...stack, ttsVoiceId: voiceId });
     }
-    if (voiceId) {
-      if (isCartesiaVoiceId(voiceId) && stack.ttsProvider !== "cartesia") {
-        return undefined;
-      }
-      return {
-        tts: {
-          config: { speaker: voiceId },
-        },
-      };
-    }
-    return undefined;
+    return {
+      tts: {
+        config: { speaker: voiceId },
+      },
+    };
   }, [stackMode, stack, runtimeTtsSpeaker]);
 
   const pstnStackOverride = useMemo(() => {
-    if (stackMode !== "custom") return undefined;
     const voiceId = stack.ttsVoiceId || runtimeTtsSpeaker;
     const form = applyPstnStackDefaults(
       voiceId ? { ...stack, ttsVoiceId: voiceId } : stack,
       language
     );
     return buildStackOverride(form);
-  }, [stackMode, stack, runtimeTtsSpeaker, language]);
+  }, [stack, runtimeTtsSpeaker, language]);
 
   return (
     <div className="space-y-5">
@@ -389,6 +406,8 @@ export function AgentTestStudio({
                     tier={tier}
                     language={language}
                     stackMode={stackMode}
+                    stack={stack}
+                    runtimeTtsSpeaker={runtimeTtsSpeaker}
                     stackOverride={pstnStackOverride}
                     onInternalCallStart={onCallStart}
                     onInternalCallEnd={onCallEnd}
@@ -440,6 +459,7 @@ export function AgentTestStudio({
             sarvamSpeakersV3={sarvamSpeakersV3}
             sarvamSpeakersV2={sarvamSpeakersV2}
             runtimeTtsSpeaker={runtimeTtsSpeaker}
+            defaultCartesiaVoiceId={DEFAULT_CARTESIA_VOICE_ID}
           />
           <TestStudioTurnMetrics
             rows={turnRows}

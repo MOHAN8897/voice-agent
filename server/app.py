@@ -178,6 +178,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             # Call start/end must not 429 — beacon + auto-end are lifecycle, not abuse.
             if path.startswith("/api/call/"):
                 return await call_next(request)
+            # Dev Test Studio UI polls — exempt from general limiter (prevents PSTN panel 429 storms).
+            if path.startswith("/api/dev/telephony/pstn-stack/") or path.startswith("/api/test-studio/prefs"):
+                return await call_next(request)
             client_ip = request.client.host if request.client else "unknown"
             # TTS/Voice stricter
             if any(path.startswith(p) for p in self._LIMITED_PATHS_TTS):

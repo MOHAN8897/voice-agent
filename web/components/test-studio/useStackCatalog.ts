@@ -64,9 +64,9 @@ export function useStackCatalog(portal: "app" | "dev") {
     load();
   }, [load]);
 
-  function stackForTier(tier: string): StackForm {
+  const stackForTier = useCallback((tier: string): StackForm => {
     return defaultStackForm(tierStacks[tier]);
-  }
+  }, [tierStacks]);
 
   return { providers, tierStacks, sttModes, sttStreamTypes, catalog, loading, error, reload: load, stackForTier };
 }

@@ -38,6 +38,15 @@ MAX_AUDIO_QUEUE_FRAMES = 15  # 300 ms at 20 ms/frame; producer backpressures her
 active_telnyx_bridges: dict[str, "TelnyxPstnBridge"] = {}
 
 
+def _pstn_direction(raw: Any, *, default: str = "outbound") -> str:
+    value = str(raw or "").strip().lower()
+    if value in ("outbound", "outgoing", "outbound-api"):
+        return "outbound"
+    if value in ("inbound", "incoming"):
+        return "inbound"
+    return default
+
+
 @dataclass(frozen=True)
 class OutboundFrame:
     payload: bytes
@@ -73,14 +82,17 @@ class TelnyxPstnBridge:
         self._out_task: asyncio.Task | None = None
         self._logged_first_out = False
         self._client_meta: dict[str, Any] = {}
+        self._token_meta: dict[str, Any] = {}
+        self._start_handled = False
         self._invalid_generations: set[str] = set()
         self._bidirectional_mode = "rtp"
         self._mp3_sending = False
         self._last_mp3_sent_at = 0.0
 
     async def run(self, *, agent_id: str | None, tier: str | None, token_meta: dict[str, Any] | None) -> None:
-        self.agent_id = agent_id or (token_meta or {}).get("agent_id")
-        self.tier = tier or (token_meta or {}).get("tier")
+        self._token_meta = dict(token_meta or {})
+        self.agent_id = agent_id or self._token_meta.get("agent_id")
+        self.tier = tier or self._token_meta.get("tier")
         try:
             while not self._closed:
                 try:
@@ -100,6 +112,8 @@ class TelnyxPstnBridge:
                     log_ws("Telnyx stream connected", control=self.call_control_id)
                     continue
                 if event == "start":
+                    if self._start_handled:
+                        continue
                     await self._on_start(ev)
                 elif event == "media":
                     await self._on_media(ev)
@@ -124,13 +138,15 @@ class TelnyxPstnBridge:
 
     async def _decode_client_state(self, start: dict[str, Any]) -> None:
         raw = start.get("client_state")
-        if not raw or self.agent_id:
+        if not raw:
             return
         try:
             meta = json.loads(base64.b64decode(str(raw)).decode())
-            self.agent_id = meta.get("agent_id") or self.agent_id
-            self.tier = meta.get("tier") or self.tier
-            self._client_meta = meta
+            if not isinstance(meta, dict):
+                return
+            self._client_meta = {**self._client_meta, **meta}
+            self.agent_id = self.agent_id or meta.get("agent_id")
+            self.tier = self.tier or meta.get("tier")
         except Exception:
             pass
 
@@ -167,8 +183,9 @@ class TelnyxPstnBridge:
 
         from server.services.telnyx_client import telnyx_call_registry
 
+        self._start_handled = True
         local = telnyx_call_registry.get(self.call_control_id or "") or {}
-        merged_local = {**local, **self._client_meta}
+        merged_local = {**self._token_meta, **local, **self._client_meta}
         self.agent_id = self.agent_id or merged_local.get("agent_id")
         self.tier = self.tier or merged_local.get("tier")
         pstn_opts = pstn_call_options(merged_local)
@@ -182,6 +199,7 @@ class TelnyxPstnBridge:
             codec=self._wire_codec,
             channels=channels,
             ws_id=self.ws_id,
+            config_session=pstn_opts.get("config_session_id"),
         )
 
         try:
@@ -191,8 +209,9 @@ class TelnyxPstnBridge:
                 started = await call_lifecycle_service.start(
                     agent_id=self.agent_id,
                     session_id=f"pstn-telnyx-{self.call_control_id}",
+                    config_session_id=pstn_opts.get("config_session_id"),
                     channel="pstn",
-                    direction=str(merged_local.get("direction") or "outbound"),
+                    direction=_pstn_direction(merged_local.get("direction"), default="outbound"),
                     tier=self.tier,
                     caller_id=self.caller_id,
                     stack_override=pstn_opts.get("stack_override"),
@@ -223,6 +242,7 @@ class TelnyxPstnBridge:
                 on_agent_wire=self._send_agent_wire,
                 sample_rate=_WIRE_SAMPLE_RATE,
                 tts_session_id=pstn_opts.get("tts_session_id"),
+                config_session_id=pstn_opts.get("config_session_id"),
                 tts_output_codec="mp3" if self._bidirectional_mode == "mp3" else "linear16",
                 is_agent_audio_active=lambda: not self._out_queue.empty(),
             )

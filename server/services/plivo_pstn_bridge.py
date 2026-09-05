@@ -75,6 +75,7 @@ class PlivoPstnBridge:
             started = await call_lifecycle_service.start(
                 agent_id=self.agent_id,
                 session_id=f"pstn-plivo-{self.plivo_call_uuid}",
+                config_session_id=pstn_opts.get("config_session_id"),
                 channel="pstn",
                 direction=str(local.get("direction") or "outbound"),
                 tier=self.tier,
@@ -102,6 +103,7 @@ class PlivoPstnBridge:
             on_agent_wire=self._send_agent_wire,
             sample_rate=8000,
             tts_session_id=pstn_opts.get("tts_session_id"),
+            config_session_id=pstn_opts.get("config_session_id"),
             tts_output_codec="mulaw",
         )
         self._voice.set_barge_handler(self._barge_in)

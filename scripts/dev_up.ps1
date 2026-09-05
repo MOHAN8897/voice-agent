@@ -19,6 +19,8 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "dev_common.ps1")
+
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 $WebRoot = Join-Path $RepoRoot "web"
 $LogDir = Join-Path $RepoRoot "data\dev-logs"
@@ -33,46 +35,6 @@ $DevLoginUrl = "$WebUrl/dev/login"
 $TestStudioUrl = "$WebUrl/dev/test-studio"
 $AppLoginUrl = "$WebUrl/app/login"
 $MarketingUrl = "$WebUrl/"
-
-function Stop-Port {
-    param([int]$Port)
-    $conns = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue
-    foreach ($c in $conns) {
-        $procId = $c.OwningProcess
-        if ($procId -and $procId -ne 0) {
-            Write-Host "Stopping PID $procId on port $Port"
-            Stop-Process -Id $procId -Force -ErrorAction SilentlyContinue
-        }
-    }
-}
-
-function Test-HttpOk {
-    param([string]$Url, [int]$TimeoutSec = 3)
-    try {
-        $r = Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec $TimeoutSec
-        return $r.StatusCode -ge 200 -and $r.StatusCode -lt 500
-    } catch {
-        return $false
-    }
-}
-
-function Wait-ForService {
-    param(
-        [string]$Label,
-        [string]$Url,
-        [int]$MaxAttempts = 90
-    )
-    Write-Host "Waiting for $Label..."
-    for ($i = 0; $i -lt $MaxAttempts; $i++) {
-        if (Test-HttpOk $Url) {
-            Write-Host "$Label is ready."
-            return $true
-        }
-        Start-Sleep -Seconds 1
-    }
-    Write-Warning "$Label did not respond at $Url."
-    return $false
-}
 
 function Write-DevBanner {
     param(
@@ -112,22 +74,6 @@ function Write-DevBanner {
     Write-Host ""
 }
 
-function Start-DevWindow {
-    param(
-        [string]$Title,
-        [string]$WorkingDir,
-        [string]$Command,
-        [string]$LogFile
-    )
-    $inner = @"
-Set-Location '$WorkingDir'
-`$Host.UI.RawUI.WindowTitle = '$Title'
-`$log = '$LogFile'
-& { $Command } *>&1 | Tee-Object -FilePath `$log
-"@
-    Start-Process powershell -ArgumentList @("-NoExit", "-Command", $inner) | Out-Null
-}
-
 $python = (Get-Command python -ErrorAction Stop).Source
 $npm = (Get-Command npm.cmd -ErrorAction SilentlyContinue).Source
 if (-not $npm) {
@@ -136,67 +82,75 @@ if (-not $npm) {
 
 if ($KillStale) {
     Write-Host "Clearing ports 8000 and 3000-3003..."
-    & (Join-Path $PSScriptRoot "dev_down.ps1")
-}
-
-if (-not $WebOnly) {
-    Write-Host "Starting API on $ApiUrl"
-    Start-DevWindow -Title "Voice Agent API" -WorkingDir $RepoRoot `
-        -Command "& '$python' -m uvicorn server.app:app --host 127.0.0.1 --port 8000 --reload" `
-        -LogFile (Join-Path $LogDir "api.log")
-}
-
-if (-not $ApiOnly) {
-    if (-not (Test-Path $WebRoot)) {
-        Write-Error "Web folder not found: $WebRoot"
-    }
-    if (-not (Test-Path (Join-Path $WebRoot "node_modules"))) {
-        Write-Host "Installing web dependencies (first run)..."
-        Push-Location $WebRoot
-        & $npm install
-        Pop-Location
-    }
-    if ($ProductionWeb) {
-        $buildId = Join-Path $WebRoot ".next\BUILD_ID"
-        if (-not (Test-Path $buildId)) {
-            Write-Host "Building Next.js production bundle (required for public tunnel)..."
-            Push-Location $WebRoot
-            & $npm run build
-            if ($LASTEXITCODE -ne 0) {
-                Pop-Location
-                Write-Error "Next.js production build failed"
-            }
-            Pop-Location
-        }
-        Write-Host "Starting Next.js production server on $WebUrl"
-        Start-DevWindow -Title "Voice Agent Web" -WorkingDir $WebRoot `
-            -Command "& '$npm' run start -- -p 3000" `
-            -LogFile (Join-Path $LogDir "web.log")
-    } else {
-        Write-Host "Starting Next.js on $WebUrl"
-        Start-DevWindow -Title "Voice Agent Web" -WorkingDir $WebRoot `
-            -Command "& '$npm' run dev -- -p 3000" `
-            -LogFile (Join-Path $LogDir "web.log")
+    $downOk = Stop-VoiceAgentDevStack
+    if (-not $downOk) {
+        Write-Error "Could not free dev ports. Close leftover Voice Agent windows and retry."
     }
 }
 
 $apiOk = $false
 $webOk = $false
 
-if ($Wait -or $Open) {
-    if (-not $WebOnly) {
-        $apiOk = Wait-ForService -Label "API" -Url "$ApiUrl/api/health"
-    } else {
-        $apiOk = $true
-    }
-    if (-not $ApiOnly) {
-        $webOk = Wait-ForService -Label "Website" -Url $DevLoginUrl
-    } else {
-        $webOk = $true
+if (-not $WebOnly) {
+    Write-Host "Starting API on $ApiUrl"
+    Start-DevWindow -Title "Voice Agent API" -WorkingDir $RepoRoot `
+        -Command (Get-UvicornDevCommand -PythonPath $python) `
+        -LogFile (Join-Path $LogDir "api.log")
+    $apiOk = Wait-ForService -Label "API" -Url "$ApiUrl/api/health"
+    if (-not $apiOk) {
+        Write-Warning "API did not become healthy. Check $LogDir\api.log"
+        if (-not $ApiOnly) {
+            Write-Warning "Not starting the website until the API is up (avoids Next.js ECONNRESET)."
+        }
     }
 } else {
-    $apiOk = -not $WebOnly
-    $webOk = -not $ApiOnly
+    $apiOk = $true
+}
+
+if (-not $ApiOnly) {
+    if (-not (Test-Path $WebRoot)) {
+        Write-Error "Web folder not found: $WebRoot"
+    }
+    if ($apiOk -or $WebOnly) {
+        if (-not (Test-Path (Join-Path $WebRoot "node_modules"))) {
+            Write-Host "Installing web dependencies (first run)..."
+            Push-Location $WebRoot
+            & $npm install
+            Pop-Location
+        }
+        if ($ProductionWeb) {
+            $buildId = Join-Path $WebRoot ".next\BUILD_ID"
+            if (-not (Test-Path $buildId)) {
+                Write-Host "Building Next.js production bundle (required for public tunnel)..."
+                Push-Location $WebRoot
+                & $npm run build
+                if ($LASTEXITCODE -ne 0) {
+                    Pop-Location
+                    Write-Error "Next.js production build failed"
+                }
+                Pop-Location
+            }
+            Write-Host "Starting Next.js production server on $WebUrl"
+            Start-DevWindow -Title "Voice Agent Web" -WorkingDir $WebRoot `
+                -Command "& '$npm' run start -- -p 3000" `
+                -LogFile (Join-Path $LogDir "web.log")
+        } else {
+            Write-Host "Starting Next.js on $WebUrl"
+            Start-DevWindow -Title "Voice Agent Web" -WorkingDir $WebRoot `
+                -Command "& '$npm' run dev -- -p 3000" `
+                -LogFile (Join-Path $LogDir "web.log")
+        }
+        $webOk = Wait-ForService -Label "Website" -Url $DevLoginUrl
+        if ($webOk) {
+            $proxyOk = Wait-ForService -Label "Website API proxy" -Url "$WebUrl/api/health" -MaxAttempts 30
+            if (-not $proxyOk) {
+                Write-Warning "Website is up but /api/health proxy failed. API may still be starting."
+                $webOk = $false
+            }
+        }
+    }
+} else {
+    $webOk = $true
 }
 
 Write-DevBanner -ApiOk $apiOk -WebOk $webOk

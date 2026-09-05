@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 import { persistTestStudioVoice } from "@/lib/persist-test-studio-voice";
+import { DEFAULT_SARVAM_SPEAKER, isCartesiaVoiceId } from "@/lib/voice/tts-config";
 
 const FEMALE = new Set([
   "ritu", "priya", "neha", "pooja", "simran", "kavya", "ishita", "shreya", "roopa", "tanya",
@@ -46,11 +47,31 @@ export function SarvamVoiceSelect({
 }) {
   const [saving, setSaving] = useState(false);
   const [saveHint, setSaveHint] = useState<string | null>(null);
+  const autoAppliedRef = useRef("");
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
   const list = model === "bulbul:v3" ? speakersV3 : speakersV2;
-  const groups = groupSpeakers(list.length ? list : ["shubh", "priya", "kavya", "aditya"]);
-  const resolved = value || list[0] || "shubh";
+  const options = (list.length ? list : ["shubh", "priya", "kavya", "aditya"]).map((s) => s.toLowerCase());
+  const known = new Set(options);
+  const groups = groupSpeakers(options);
+  const fallback = known.has(DEFAULT_SARVAM_SPEAKER) ? DEFAULT_SARVAM_SPEAKER : options[0] || DEFAULT_SARVAM_SPEAKER;
+  const normalized = (value || "").trim().toLowerCase();
+  const resolved =
+    normalized && known.has(normalized) && !isCartesiaVoiceId(normalized) ? normalized : fallback;
+
+  useEffect(() => {
+    if (normalized && known.has(normalized) && !isCartesiaVoiceId(normalized)) return;
+    if (autoAppliedRef.current === fallback) return;
+    autoAppliedRef.current = fallback;
+    onChangeRef.current(fallback);
+    void persistTestStudioVoice({ ttsSpeaker: fallback, ttsModel: model }).then((result) => {
+      setSaveHint(result.ok ? "Default Sarvam voice applied" : result.error || "Save failed");
+    });
+  }, [normalized, fallback, model]);
 
   async function pick(speaker: string) {
+    autoAppliedRef.current = speaker;
     onChange(speaker);
     setSaving(true);
     setSaveHint(null);
@@ -99,7 +120,7 @@ export function SarvamVoiceSelect({
         )}
       </select>
       <p className="text-[10px] text-text-subtle">
-        Sarvam Bulbul · {list.length || 0} voices
+        Sarvam Bulbul · {options.length || 0} voices
         {saving ? " · saving…" : saveHint ? ` · ${saveHint}` : ""}
       </p>
     </div>

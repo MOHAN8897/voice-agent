@@ -1,12 +1,18 @@
 """PSTN provider handshake + status helpers."""
 from __future__ import annotations
 
+import asyncio
+import time
 from typing import Any
 
 from server.config.env import get_settings
 from server.config.urls import public_api_base
 from server.services.dev_secrets_store import dev_secrets_store
 from server.services.telephony import TelephonyProviderId, VALID_PROVIDERS
+
+_TELNYX_CHECKLIST_CACHE: dict[str, Any] | None = None
+_TELNYX_CHECKLIST_CACHE_AT: float = 0.0
+_TELNYX_CHECKLIST_TTL_SEC = 90.0
 
 
 def webhook_base_url() -> str:
@@ -36,7 +42,21 @@ async def provider_status(provider: TelephonyProviderId) -> dict[str, Any]:
 
 
 async def all_provider_status() -> list[dict[str, Any]]:
-    return [await provider_status(p) for p in VALID_PROVIDERS]
+    return list(await asyncio.gather(*(provider_status(p) for p in VALID_PROVIDERS)))
+
+
+async def cached_telnyx_setup_status(client) -> dict[str, Any]:
+    """Telnyx checklist hits several APIs — cache briefly for dev UI polls."""
+    global _TELNYX_CHECKLIST_CACHE, _TELNYX_CHECKLIST_CACHE_AT
+    from server.services.telnyx_provisioning import telnyx_setup_status
+
+    now = time.time()
+    if _TELNYX_CHECKLIST_CACHE and now - _TELNYX_CHECKLIST_CACHE_AT < _TELNYX_CHECKLIST_TTL_SEC:
+        return dict(_TELNYX_CHECKLIST_CACHE)
+    checklist = await telnyx_setup_status(client)
+    _TELNYX_CHECKLIST_CACHE = dict(checklist)
+    _TELNYX_CHECKLIST_CACHE_AT = now
+    return dict(checklist)
 
 
 async def _exotel_status() -> dict[str, Any]:
@@ -74,7 +94,6 @@ async def _exotel_status() -> dict[str, Any]:
 
 async def _telnyx_status() -> dict[str, Any]:
     from server.services.telnyx_client import TelnyxClient, telnyx_enabled
-    from server.services.telnyx_provisioning import telnyx_setup_status
 
     settings = get_settings()
     enabled = telnyx_enabled()
@@ -89,7 +108,7 @@ async def _telnyx_status() -> dict[str, Any]:
         hs = await client.handshake()
         handshake_ok = bool(hs.get("ok"))
         phone = hs.get("phone_number") or settings.telnyx_phone_number
-        checklist = await telnyx_setup_status(client)
+        checklist = await cached_telnyx_setup_status(client)
     except Exception as e:
         handshake_error = str(e)[:300]
     base = webhook_base_url()

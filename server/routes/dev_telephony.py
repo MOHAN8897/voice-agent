@@ -1,6 +1,9 @@
 """Unified dev telephony routes — provider selection + handshake."""
 from __future__ import annotations
 
+import hashlib
+import json
+import time
 from typing import Any
 
 from fastapi import APIRouter, Depends
@@ -32,6 +35,7 @@ class OutboundTestBody(BaseModel):
     language: str | None = None
     source_session_id: str | None = Field(None, alias="sourceSessionId")
     stack_override: dict[str, Any] | None = Field(None, alias="stackOverride")
+    inherit_test_studio_config: bool = Field(False, alias="inheritTestStudioConfig")
 
     model_config = {"populate_by_name": True}
 
@@ -42,6 +46,17 @@ class PstnStackValidateBody(BaseModel):
     stack_override: dict[str, Any] | None = Field(None, alias="stackOverride")
 
     model_config = {"populate_by_name": True}
+
+
+def _resolve_outbound_source_session(body: OutboundTestBody) -> tuple[str | None, bool]:
+    """Dev panel inherits Test Studio config; validation scripts omit source and stay tier-only."""
+    inherit = bool(body.inherit_test_studio_config)
+    source = (body.source_session_id or "").strip() or None
+    if inherit:
+        return source or "test-studio", True
+    if source == "test-studio":
+        return source, True
+    return source, False
 
 
 def _outbound_pstn_context(body: OutboundTestBody) -> tuple[str, str, dict[str, Any] | None, list[str]]:
@@ -59,6 +74,41 @@ def _outbound_pstn_context(body: OutboundTestBody) -> tuple[str, str, dict[str, 
     except PstnStackValidationError as e:
         raise e
     return tier, language, normalized, adjustments
+
+
+_ACTIVE_TELNYX_STATUSES = {
+    "initiated",
+    "ringing",
+    "answered",
+    "streaming",
+    "bridged",
+    "active",
+}
+
+
+async def _hangup_active_telnyx_to(client: Any, to_e164: str) -> None:
+    """Drop overlapping test calls to the same number so one click cannot ring twice."""
+    from server.services.telnyx_client import TelnyxApiError, telnyx_call_registry
+
+    dest = (to_e164 or "").strip()
+    if not dest:
+        return
+    for row in telnyx_call_registry.list_recent(20):
+        if str(row.get("to") or "").strip() != dest:
+            continue
+        status = str(row.get("status") or "").lower().replace("call.", "")
+        if status in ("hangup", "completed", "failed", "busy", "no-answer", "canceled"):
+            continue
+        if status and status not in _ACTIVE_TELNYX_STATUSES and "stream" not in status:
+            continue
+        control = str(row.get("call_control_id") or "")
+        if not control:
+            continue
+        try:
+            await client.hangup(control)
+            telnyx_call_registry.upsert(control, {"status": "canceled", "last_event": "replaced-by-new-dial"})
+        except TelnyxApiError:
+            pass
 
 
 @router.get("/api/dev/telephony/status")
@@ -121,6 +171,10 @@ async def dev_telephony_outbound(
     return {"ok": False, "error": "unknown provider"}
 
 
+_PSTN_VALIDATE_CACHE: dict[str, tuple[float, dict[str, Any]]] = {}
+_PSTN_VALIDATE_TTL_SEC = 30.0
+
+
 @router.post("/api/dev/telephony/pstn-stack/validate")
 async def dev_pstn_stack_validate(
     body: PstnStackValidateBody,
@@ -132,21 +186,40 @@ async def dev_pstn_stack_validate(
 
     tier = (body.tier or "medium").strip()
     language = (body.language or "te-IN").strip()
+    cache_payload = {
+        "tier": tier,
+        "language": language,
+        "stack_override": body.stack_override,
+    }
+    cache_key = hashlib.sha256(
+        json.dumps(cache_payload, sort_keys=True, default=str).encode("utf-8")
+    ).hexdigest()
+    now = time.time()
+    cached = _PSTN_VALIDATE_CACHE.get(cache_key)
+    if cached and now - cached[0] < _PSTN_VALIDATE_TTL_SEC:
+        return cached[1]
+
     if not body.stack_override:
-        return {"ok": True, "stackOverride": None, "adjustments": [], "tier": tier, "language": language}
+        result = {"ok": True, "stackOverride": None, "adjustments": [], "tier": tier, "language": language}
+        _PSTN_VALIDATE_CACHE[cache_key] = (now, result)
+        return result
     try:
         normalized, adjustments = prepare_pstn_dial_stack(
             body.stack_override, language=language, tier=tier
         )
-        return {
+        result = {
             "ok": True,
             "stackOverride": normalized,
             "adjustments": adjustments,
             "tier": tier,
             "language": language,
         }
+        _PSTN_VALIDATE_CACHE[cache_key] = (now, result)
+        return result
     except PstnStackValidationError as e:
-        return {"ok": False, "error": str(e), "validation_errors": e.details}
+        result = {"ok": False, "error": str(e), "validation_errors": e.details}
+        _PSTN_VALIDATE_CACHE[cache_key] = (now, result)
+        return result
 
 
 async def _outbound_exotel(body: OutboundTestBody) -> dict[str, Any]:
@@ -175,6 +248,7 @@ async def _outbound_exotel(body: OutboundTestBody) -> dict[str, Any]:
     if not to_number:
         return {"ok": False, "error": "Destination number required"}
     tier, language, stack_override, stack_adjustments = _outbound_pstn_context(body)
+    source_session_id, inherit_config = _resolve_outbound_source_session(body)
     phone_assignments_store.assign(caller_id, body.agent_id)
     custom_field = f"agent:{body.agent_id};tier:{tier or 'medium'}"
     try:
@@ -201,7 +275,8 @@ async def _outbound_exotel(body: OutboundTestBody) -> dict[str, Any]:
                     "agent_id": body.agent_id,
                     "tier": tier,
                     "language": language,
-                    "source_session_id": body.source_session_id,
+                    "source_session_id": source_session_id,
+                    "inherit_test_studio_config": inherit_config,
                     "stack_override": stack_override,
                     "stream_url": stream_url,
                     "last_event": "outbound-initiated",
@@ -236,10 +311,7 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
     )
 
     tier, language, stack_override, stack_adjustments = _outbound_pstn_context(body)
-    # Browser Test Studio session is not used for PSTN TTS/runtime lookup.
-    source_session_id = body.source_session_id
-    if source_session_id == "test-studio":
-        source_session_id = None
+    source_session_id, inherit_config = _resolve_outbound_source_session(body)
 
     try:
         await agent_service.get_agent(body.agent_id)
@@ -257,11 +329,13 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
         agent_id=body.agent_id,
         tier=tier,
         source_session_id=source_session_id,
+        inherit_test_studio_config=inherit_config,
         language=language,
         stack_override=stack_override,
         direction="outbound",
     )
     stream_url = client.build_stream_ws_url(token=token)
+    await _hangup_active_telnyx_to(client, body.to_e164)
     try:
         result = await client.create_outbound_call(
             to_e164=body.to_e164,
@@ -271,6 +345,7 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
                 "agent_id": body.agent_id,
                 "tier": tier,
                 "source_session_id": source_session_id,
+                "inherit_test_studio_config": inherit_config,
                 "language": language,
                 "direction": "outbound",
             },
@@ -288,6 +363,7 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
                 "status": "initiated",
                 "language": language,
                 "source_session_id": source_session_id,
+                "inherit_test_studio_config": inherit_config,
                 "stack_override": stack_override,
                 "stream_url": stream_url,
                 "stream_started": True,
@@ -713,6 +789,7 @@ async def _outbound_plivo(body: OutboundTestBody, session: SessionData) -> dict[
     from server.services.plivo_client import PlivoApiError, PlivoClient, plivo_call_registry, plivo_stream_tokens
 
     tier, language, stack_override, stack_adjustments = _outbound_pstn_context(body)
+    source_session_id, inherit_config = _resolve_outbound_source_session(body)
     client = PlivoClient()
     token = plivo_stream_tokens.create(agent_id=body.agent_id, tier=tier)
     base = public_api_base().rstrip("/")
@@ -733,7 +810,8 @@ async def _outbound_plivo(body: OutboundTestBody, session: SessionData) -> dict[
                 "direction": "outbound",
                 "status": "initiated",
                 "language": language,
-                "source_session_id": body.source_session_id,
+                "source_session_id": source_session_id,
+                "inherit_test_studio_config": inherit_config,
                 "stack_override": stack_override,
             },
         )

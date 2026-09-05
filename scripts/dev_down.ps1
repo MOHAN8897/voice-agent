@@ -1,24 +1,22 @@
-# Stop local dev servers (API 8000, Next 3000-3003) and Cloudflare tunnels
-$ports = 8000, 3000, 3001, 3002, 3003
+# Stop local dev servers (API 8000, Next 3000-3003) and Cloudflare/ngrok tunnels.
+# Kills process trees (uvicorn reloader + worker, npm/node, wrapper PowerShell windows)
+# and waits until the ports are actually free.
 
-foreach ($round in 1..3) {
-    foreach ($port in $ports) {
-        $conns = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue
-        foreach ($c in $conns) {
-            $owning = $c.OwningProcess
-            if ($owning -and $owning -ne 0) {
-                Write-Host "Stopping PID $owning on port $port"
-                Stop-Process -Id $owning -Force -ErrorAction SilentlyContinue
-            }
-        }
-    }
-    Start-Sleep -Milliseconds 700
+$ErrorActionPreference = "Continue"
+. (Join-Path $PSScriptRoot "dev_common.ps1")
+
+Write-Host "dev:down starting..."
+$ok = Stop-VoiceAgentDevStack
+
+$runnerDir = Join-Path $env:TEMP "voice-agent-dev-runners"
+if (Test-Path $runnerDir) {
+    Remove-Item -LiteralPath $runnerDir -Recurse -Force -ErrorAction SilentlyContinue
+}
+$jobDir = Join-Path $env:TEMP "voice-agent-dev-jobs"
+if (Test-Path $jobDir) {
+    Remove-Item -LiteralPath $jobDir -Recurse -Force -ErrorAction SilentlyContinue
 }
 
-Get-CimInstance Win32_Process -Filter "Name='cloudflared.exe'" -ErrorAction SilentlyContinue |
-    ForEach-Object {
-        Write-Host "Stopping cloudflared PID $($_.ProcessId)"
-        Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
-    }
-
+if (-not $ok) { exit 1 }
 Write-Host "Done."
+exit 0

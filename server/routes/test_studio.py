@@ -4,11 +4,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
-from server.services.cartesia_voices import (
-    fetch_cartesia_voices,
-    voices_for_catalog,
-    voices_grouped_for_ui,
-)
+from server.services.cartesia_voices import fetch_cartesia_voices
 from server.services.session_persist import session_persist
 
 router = APIRouter()
@@ -45,11 +41,15 @@ async def save_test_studio_prefs(body: TestStudioUiPrefs):
 @router.get("/api/settings/cartesia-voices")
 async def list_cartesia_voices(refresh: bool = False):
     await fetch_cartesia_voices(force=refresh)
-    groups = voices_grouped_for_ui()
-    voices = voices_for_catalog()
+    from server.config.constants import constants
+    from server.services import cartesia_voices as cv
+
+    groups = cv.voices_grouped_for_ui()
+    voices = cv.voices_for_catalog()
     return {
         "voices": voices,
         "groups": groups,
         "count": len(voices),
         "source": groups.get("source", "static"),
+        "defaultVoiceId": constants.CARTESIA_DEFAULT_VOICE_ID,
     }

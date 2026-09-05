@@ -106,4 +106,20 @@ test.describe("Dev Test Studio UI", () => {
     expect(sttUrl).toContain("/ws/stt-realtime");
     expect(sttUrl).not.toMatch(/:3000\/ws\//);
   });
+
+  test("telephony status loads for PSTN mode", async ({ page }) => {
+    await ensureDevLogin(page);
+    const agentId = await defaultAgentId(page.request);
+    await page.goto(`/dev/test-studio?agent=${agentId}`, { waitUntil: "domcontentloaded", timeout: 120000 });
+    await expect(page.getByRole("heading", { name: "Test Studio" })).toBeVisible({ timeout: 30000 });
+    await page.getByTestId("test-mode-pstn").click();
+    const statusResp = page.waitForResponse(
+      (r) => r.url().includes("/api/dev/telephony/status") && r.status() === 200,
+      { timeout: 30000 }
+    );
+    await expect(page.getByText(/Loading telephony status/i)).toBeVisible({ timeout: 5000 }).catch(() => {});
+    await statusResp;
+    await expect(page.getByRole("heading", { name: /^PSTN · / })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole("heading", { name: "Outbound test call" })).toBeVisible({ timeout: 15000 });
+  });
 });

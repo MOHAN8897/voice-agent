@@ -376,6 +376,7 @@ export function TestStudioFineTuneWorkbench({
                     <CartesiaVoiceSelect
                       disabled={false}
                       value={String(ft.runtime.ttsSpeaker || runtimeTtsSpeaker || defaultCartesiaVoice)}
+                      defaultVoiceId={defaultCartesiaVoice}
                       onChange={(ttsSpeaker) => {
                         ft.setRuntime((r) => ({
                           ...r,

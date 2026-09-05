@@ -135,10 +135,7 @@ def _resolve_cartesia_tts_config(
     from server.services.cartesia_voices import is_cartesia_voice_id
 
     if not is_cartesia_voice_id(str(resolved_speaker)):
-        raise TtsConfigError(
-            f"Cartesia voice id required for {resolved_model}",
-            speaker=str(resolved_speaker),
-        )
+        resolved_speaker = settings.cartesia_tts_voice_id or constants.CARTESIA_DEFAULT_VOICE_ID
 
     resolved_pace = float(pace if pace is not None else rt.get("ttsPace", settings.sarvam_tts_pace))
     resolved_sample_rate = int(sample_rate or rt.get("ttsSampleRate") or 24000)

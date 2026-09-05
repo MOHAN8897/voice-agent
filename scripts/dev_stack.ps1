@@ -20,6 +20,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "dev_common.ps1")
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 $CfConfig = Join-Path $RepoRoot "cloudflared\config.yml"
 $LogDir = Join-Path $RepoRoot "data\dev-logs"
@@ -50,50 +51,11 @@ function Should-StartTunnel {
     return $false
 }
 
-function Start-DevWindow {
-    param([string]$Title, [string]$WorkingDir, [string]$Command, [string]$LogFile)
-    $inner = @"
-Set-Location '$WorkingDir'
-`$Host.UI.RawUI.WindowTitle = '$Title'
-`$log = '$LogFile'
-& { $Command } *>&1 | Tee-Object -FilePath `$log
-"@
-    Start-Process powershell -ArgumentList @("-NoExit", "-Command", $inner) | Out-Null
-}
-
-function Test-HttpOk {
-    param([string]$Url, [int]$TimeoutSec = 5)
-    try {
-        $r = Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec $TimeoutSec
-        return $r.StatusCode -ge 200 -and $r.StatusCode -lt 500
-    } catch { return $false }
-}
-
-function Wait-ForService {
-    param([string]$Label, [string]$Url, [int]$MaxAttempts = 90)
-    Write-Host "Waiting for $Label ($Url)..."
-    for ($i = 0; $i -lt $MaxAttempts; $i++) {
-        if (Test-HttpOk $Url) {
-            Write-Host "$Label is ready."
-            return $true
-        }
-        Start-Sleep -Seconds 1
-    }
-    Write-Warning "$Label did not respond at $Url"
-    return $false
-}
-
-function Stop-Cloudflared {
-    Get-CimInstance Win32_Process -Filter "Name='cloudflared.exe'" -ErrorAction SilentlyContinue |
-        ForEach-Object {
-            Write-Host "Stopping cloudflared PID $($_.ProcessId)"
-            Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
-        }
-}
-
 # --- Step 1: clean slate ---
-    Write-Host "Stopping stale servers and tunnels..."
-    & (Join-Path $PSScriptRoot "dev_down.ps1")
+Write-Host "Stopping stale servers and tunnels..."
+if (-not (Stop-VoiceAgentDevStack)) {
+    Write-Error "Could not free dev ports. Close leftover Voice Agent windows and retry."
+}
 
 # --- Step 2: sync env URLs from named tunnel config ---
 $synced = $null

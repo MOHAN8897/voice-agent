@@ -37,6 +37,15 @@ def extract_opening_greeting(compiled_brain: str | None, language: str = "te-IN"
     if not compiled_brain:
         return _default_greeting(language)
     text = compiled_brain
+    quoted = re.search(
+        r'opening_line(?:_te)?\s*:\s*"([^"]+)"',
+        text,
+        flags=re.IGNORECASE,
+    )
+    if quoted:
+        line = quoted.group(1).strip()
+        if len(line) >= 8:
+            return line[:200]
     for header in ("--- OPENING ---", "OPENING", "## OPENING"):
         idx = text.upper().find(header.upper())
         if idx >= 0:
@@ -44,6 +53,8 @@ def extract_opening_greeting(compiled_brain: str | None, language: str = "te-IN"
             for line in chunk.splitlines():
                 line = line.strip().strip("-").strip()
                 if not line or line.upper().startswith(("VOICE", "CONVERSATION", "GUARD")):
+                    continue
+                if line.lower().startswith("opening_line"):
                     continue
                 if len(line) >= 8 and not line.endswith(":"):
                     return line[:200]

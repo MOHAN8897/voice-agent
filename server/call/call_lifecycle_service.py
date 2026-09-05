@@ -68,6 +68,7 @@ class CallLifecycleService:
         environment: str | None = None,
         tier: str | None = None,
         stack_override: dict[str, Any] | None = None,
+        config_session_id: str | None = None,
         caller_id: str | None = None,
         language: str = "te-IN",
     ) -> dict[str, Any]:
@@ -75,6 +76,7 @@ class CallLifecycleService:
         session_id = session_id or "default"
         channel = channel if channel in ("browser", "pstn") else "browser"
         direction = direction if direction in ("inbound", "outbound") else "inbound"
+        lookup_session = (config_session_id or session_id).strip() or session_id
 
         agent = await self._resolve_agent(agent_id)
         env = environment or agent.get("environment") or settings.app_environment
@@ -92,7 +94,7 @@ class CallLifecycleService:
                 )
 
         stack = self._resolve_locked_stack(
-            session_id=session_id,
+            session_id=lookup_session,
             tier=effective_tier,  # type: ignore[arg-type]
             environment=env,
             stack_override=stack_override,
@@ -100,8 +102,13 @@ class CallLifecycleService:
         )
         compiled_version, compiled_text = await self._lock_compiled_brain(
             agent["agent_id"],
-            session_id=session_id,
+            session_id=lookup_session,
         )
+        if config_session_id and lookup_session != session_id and not compiled_text:
+            logger.warning(
+                "[CALL] config session %s has no saved script; using agent published brain",
+                lookup_session,
+            )
 
         call_id = str(uuid.uuid4())
         started = _utcnow()
@@ -179,6 +186,8 @@ class CallLifecycleService:
                 agent_id=agent["agent_id"],
                 combo=stack.combination_id,
                 direction=direction,
+                config_session=lookup_session if lookup_session != session_id else None,
+                brain=compiled_version,
             )
 
         return {

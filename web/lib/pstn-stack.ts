@@ -1,4 +1,4 @@
-import { isCartesiaVoiceId } from "@/lib/voice/tts-config";
+import { ensureTtsVoice } from "@/lib/voice/tts-config";
 import { modelsFor, type ProviderEntry, type StackForm } from "@/lib/test-studio-stack";
 
 /** STT models valid for live PSTN (16 kHz wire). */
@@ -44,13 +44,7 @@ export function applyPstnStackDefaults(form: StackForm, language: string): Stack
       (sttModel === "ink-2" && language.startsWith("en")) || sttModel === "ink-whisper";
     if (!ok) sttModel = defaultPstnSttModel("cartesia", language);
   }
-  if (ttsProvider === "cartesia" || ttsModel.startsWith("sonic")) {
-    if (ttsVoiceId && !isCartesiaVoiceId(ttsVoiceId)) {
-      ttsVoiceId = "";
-    }
-  } else if (ttsProvider === "sarvam" && ttsVoiceId && isCartesiaVoiceId(ttsVoiceId)) {
-    ttsVoiceId = "";
-  }
+  ttsVoiceId = ensureTtsVoice(ttsProvider, ttsVoiceId, ttsModel);
   return { ...form, sttModel, ttsVoiceId, language };
 }
 

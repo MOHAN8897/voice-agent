@@ -107,7 +107,13 @@ async def telnyx_webhook(request: Request):
     if payload.get("to"):
         patch["to"] = payload.get("to")
     if payload.get("direction"):
-        patch["direction"] = payload.get("direction")
+        existing = telnyx_call_registry.get(str(call_control_id)) or {}
+        if not existing.get("direction") or existing.get("direction") in ("incoming", "outgoing"):
+            raw_dir = str(payload.get("direction") or "").lower()
+            if raw_dir in ("outbound", "outgoing"):
+                patch["direction"] = "outbound"
+            elif raw_dir in ("inbound", "incoming") and not existing.get("inherit_test_studio_config"):
+                patch["direction"] = "inbound"
     if payload.get("recording_urls"):
         patch["recording_urls"] = payload.get("recording_urls")
     for key in ("hangup_cause", "hangup_source", "sip_hangup_cause", "sip_response_code", "call_duration"):

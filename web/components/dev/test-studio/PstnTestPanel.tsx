@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { DevCard } from "@/components/dev/DevCard";
 import { ensureArray } from "@/lib/ensure-array";
 import { portalFetch, refreshPortalSession } from "@/lib/auth-client";
 import { LiveMediaFlowDebugger } from "./LiveMediaFlowDebugger";
-import type { StackMode } from "@/lib/test-studio-stack";
+import type { StackForm, StackMode } from "@/lib/test-studio-stack";
+import { TEST_STUDIO_SESSION_ID } from "@/lib/test-studio-stack";
+import { DEFAULT_CARTESIA_VOICE_ID, ensureTtsVoice } from "@/lib/voice/tts-config";
 
 type ProviderStatus = {
   id: string;
@@ -83,11 +85,21 @@ function callKey(c: CallRow) {
   return c.call_sid || c.call_control_id || c.call_uuid || String(c.updated_at || "");
 }
 
+function voiceLabel(provider: string, voiceId: string): string {
+  const id = (voiceId || "").trim();
+  if (!id) return provider === "cartesia" ? "Skylar (default)" : "shubh (default)";
+  if (id === DEFAULT_CARTESIA_VOICE_ID) return "Skylar (default)";
+  if (id.length > 20) return `${id.slice(0, 8)}…`;
+  return id;
+}
+
 export function PstnTestPanel({
   agentId,
   tier,
   language,
   stackMode = "tier",
+  stack,
+  runtimeTtsSpeaker = "",
   stackOverride,
   onInternalCallStart,
   onInternalCallEnd,
@@ -96,6 +108,8 @@ export function PstnTestPanel({
   tier: string;
   language?: string;
   stackMode?: StackMode;
+  stack?: StackForm;
+  runtimeTtsSpeaker?: string;
   stackOverride?: Record<string, unknown>;
   onInternalCallStart?: (callId: string) => void;
   onInternalCallEnd?: (callId: string) => void;
@@ -103,6 +117,7 @@ export function PstnTestPanel({
   const [status, setStatus] = useState<TelephonyStatus | null>(null);
   const [calls, setCalls] = useState<CallRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [stackPreview, setStackPreview] = useState<string>("");
@@ -112,29 +127,47 @@ export function PstnTestPanel({
   const [verifyCode, setVerifyCode] = useState("");
   const trackedCallRef = useRef<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const dialingRef = useRef(false);
+  const fromInitRef = useRef(false);
 
   const active = status?.active_provider || providerDraft;
   const activeSt = status?.providers?.find((p) => p.id === active);
 
   const load = useCallback(async () => {
-    await refreshPortalSession("dev");
-    const [stR, callsR] = await Promise.all([
-      portalFetch("dev", "/api/dev/telephony/status"),
-      portalFetch("dev", "/api/dev/telephony/calls"),
-    ]);
-    if (stR.ok) {
+    setLoadError("");
+    try {
+      await refreshPortalSession("dev");
+      const [stR, callsR] = await Promise.all([
+        portalFetch("dev", "/api/dev/telephony/status"),
+        portalFetch("dev", "/api/dev/telephony/calls"),
+      ]);
+      if (!stR.ok) {
+        const errBody = await stR.text().catch(() => "");
+        setLoadError(
+          stR.status === 401
+            ? "Dev session required — sign in at /dev/login"
+            : `Telephony status failed (${stR.status})${errBody ? `: ${errBody.slice(0, 120)}` : ""}`
+        );
+        return;
+      }
       const j = await stR.json();
       setStatus(j);
       if (j.active_provider) setProviderDraft(j.active_provider);
       const phone = j.providers?.find((p: ProviderStatus) => p.id === j.active_provider)?.phone_number;
-      if (phone && !fromE164) setFromE164(phone);
+      if (phone && !fromInitRef.current) {
+        fromInitRef.current = true;
+        setFromE164(phone);
+      }
+      if (callsR.ok) {
+        const callsJ = await callsR.json();
+        setCalls(ensureArray<CallRow>(callsJ.calls));
+      }
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : "Could not load telephony status");
+    } finally {
+      setLoading(false);
     }
-    if (callsR.ok) {
-      const j = await callsR.json();
-      setCalls(ensureArray<CallRow>(j.calls));
-    }
-    setLoading(false);
-  }, [fromE164]);
+  }, []);
 
   useEffect(() => {
     load();
@@ -200,76 +233,122 @@ export function PstnTestPanel({
     await load();
   }
 
+  const stackOverrideKey = useMemo(
+    () => (stackOverride ? JSON.stringify(stackOverride) : ""),
+    [stackOverride]
+  );
+  const lastValidatedKeyRef = useRef("");
+  const validateInFlightRef = useRef(false);
+
   useEffect(() => {
-    if (stackMode !== "custom" || !stackOverride) {
-      setStackPreview("");
+    if (!stackOverrideKey) {
+      setStackPreview(stackMode === "tier" ? "Using Test Studio tier + fine-tune from session" : "");
       return;
     }
+    const validateKey = `${stackMode}|${stackOverrideKey}|${tier}|${language}`;
+    if (lastValidatedKeyRef.current === validateKey) return;
+
     let cancelled = false;
-    (async () => {
-      await refreshPortalSession("dev");
-      const r = await portalFetch("dev", "/api/dev/telephony/pstn-stack/validate", {
-        method: "POST",
-        body: JSON.stringify({
-          tier: tier || "medium",
-          language: language || "te-IN",
-          stackOverride,
-        }),
-      });
-      if (cancelled) return;
-      const j = await r.json();
-      if (j.ok) {
-        const adj = Array.isArray(j.adjustments) && j.adjustments.length
-          ? ` · auto-fix: ${j.adjustments.join("; ")}`
-          : "";
-        setStackPreview(`Stack OK for PSTN${adj}`);
-      } else {
-        const errs = j.validation_errors?.length ? j.validation_errors.join("; ") : j.error;
-        setStackPreview(`Stack error: ${errs || "invalid"}`);
-      }
-    })();
+    const timer = setTimeout(() => {
+      (async () => {
+        if (validateInFlightRef.current) return;
+        validateInFlightRef.current = true;
+        try {
+          await refreshPortalSession("dev");
+          const parsed = JSON.parse(stackOverrideKey) as Record<string, unknown>;
+          const r = await portalFetch("dev", "/api/dev/telephony/pstn-stack/validate", {
+            method: "POST",
+            body: JSON.stringify({
+              tier: tier || "medium",
+              language: language || "te-IN",
+              stackOverride: parsed,
+            }),
+          });
+          if (cancelled) return;
+          if (r.status === 429) {
+            setStackPreview("Rate limited — stack checks paused briefly");
+            return;
+          }
+          const raw = await r.text();
+          let j: { ok?: boolean; adjustments?: string[]; validation_errors?: string[]; error?: string } = {};
+          try {
+            j = raw ? JSON.parse(raw) : {};
+          } catch {
+            if (!cancelled) setStackPreview("Stack check unavailable (API reconnecting)");
+            return;
+          }
+          if (j.ok) {
+            lastValidatedKeyRef.current = validateKey;
+            const adj = Array.isArray(j.adjustments) && j.adjustments.length
+              ? ` · auto-fix: ${j.adjustments.join("; ")}`
+              : "";
+            setStackPreview(`Stack OK for PSTN${adj}`);
+          } else {
+            const errs = j.validation_errors?.length ? j.validation_errors.join("; ") : j.error;
+            setStackPreview(`Stack error: ${errs || "invalid"}`);
+          }
+        } catch {
+          if (!cancelled) setStackPreview("Stack check unavailable (API reconnecting)");
+        } finally {
+          validateInFlightRef.current = false;
+        }
+      })();
+    }, 350);
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
-  }, [stackMode, stackOverride, tier, language]);
+  }, [stackMode, stackOverrideKey, tier, language]);
 
   async function outboundDial() {
     if (!toE164.trim()) {
       setMessage("Enter destination number");
       return;
     }
+    if (dialingRef.current || busy) {
+      return;
+    }
+    dialingRef.current = true;
     setBusy(true);
     trackedCallRef.current = null;
     setMessage(`Placing ${providerLabel(active)} outbound call…`);
-    const dialBody: Record<string, unknown> = {
-      toE164: toE164.trim(),
-      fromE164: fromE164.trim() || undefined,
-      agentId,
-      tier: tier || "medium",
-      language: language || "te-IN",
-    };
-    if (stackMode === "custom" && stackOverride) {
-      dialBody.stackOverride = stackOverride;
+    try {
+      const dialBody: Record<string, unknown> = {
+        toE164: toE164.trim(),
+        fromE164: fromE164.trim() || undefined,
+        agentId,
+        tier: tier || "medium",
+        language: language || "te-IN",
+        inheritTestStudioConfig: true,
+        sourceSessionId: TEST_STUDIO_SESSION_ID,
+      };
+      if (stackOverride) {
+        dialBody.stackOverride = stackOverride;
+      }
+      const r = await portalFetch("dev", "/api/dev/telephony/outbound", {
+        method: "POST",
+        body: JSON.stringify(dialBody),
+      });
+      const j = await r.json();
+      const apiOk = r.ok && (j.ok === undefined || j.ok === true);
+      const adj =
+        Array.isArray(j.stack_adjustments) && j.stack_adjustments.length
+          ? ` · ${j.stack_adjustments.join("; ")}`
+          : "";
+      const errDetail =
+        j.validation_errors?.length ? j.validation_errors.join("; ") : j.error?.message || j.error || j.body;
+      setMessage(
+        apiOk
+          ? `Call initiated · ${j.call_sid || j.call_control_id || j.call_uuid || "queued"}${adj}`
+          : errDetail || "Outbound failed"
+      );
+      await load();
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Outbound failed");
+    } finally {
+      dialingRef.current = false;
+      setBusy(false);
     }
-    const r = await portalFetch("dev", "/api/dev/telephony/outbound", {
-      method: "POST",
-      body: JSON.stringify(dialBody),
-    });
-    const j = await r.json();
-    const apiOk = r.ok && (j.ok === undefined || j.ok === true);
-    const adj =
-      Array.isArray(j.stack_adjustments) && j.stack_adjustments.length
-        ? ` · ${j.stack_adjustments.join("; ")}`
-        : "";
-    const errDetail =
-      j.validation_errors?.length ? j.validation_errors.join("; ") : j.error?.message || j.error || j.body;
-    setMessage(
-      apiOk
-        ? `Call initiated · ${j.call_sid || j.call_control_id || j.call_uuid || "queued"}${adj}`
-        : errDetail || "Outbound failed"
-    );
-    setBusy(false);
-    await load();
   }
 
   async function runTelnyxSetup() {
@@ -321,7 +400,27 @@ export function PstnTestPanel({
     setBusy(false);
   }
 
-  if (loading) return <p className="text-sm text-text-muted">Loading telephony status…</p>;
+  if (loading) {
+    return (
+      <p className="text-sm text-text-muted">
+        Loading telephony status…
+        <span className="mt-1 block text-xs text-text-subtle">
+          Checking Exotel, Telnyx, and Plivo handshakes (usually under 10s).
+        </span>
+      </p>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="rounded-xl border border-danger/30 bg-danger/5 px-4 py-3 text-sm">
+        <p className="font-medium text-danger">{loadError}</p>
+        <Button type="button" variant="secondary" className="mt-3" onClick={() => { setLoading(true); load(); }}>
+          Retry status check
+        </Button>
+      </div>
+    );
+  }
 
   const notReady = !activeSt?.ready;
 
@@ -330,6 +429,11 @@ export function PstnTestPanel({
   const destVerified = telnyxChecklist?.verified_numbers?.includes(toE164.trim());
   const telnyxReady = Boolean(status?.providers?.find((p) => p.id === "telnyx")?.ready);
   const useValidatedPath = active === "telnyx";
+  const ttsVoice = stack
+    ? ensureTtsVoice(stack.ttsProvider, stack.ttsVoiceId || runtimeTtsSpeaker, stack.ttsModel)
+    : runtimeTtsSpeaker;
+  const ttsProvider = stack?.ttsProvider || "—";
+  const ttsModel = stack?.ttsModel || "—";
 
   return (
     <div className="space-y-6">
@@ -447,6 +551,55 @@ export function PstnTestPanel({
         </DevCard>
       )}
 
+      <DevCard
+        title="Agent voice & stack"
+        description="Same Test Studio script, stack, voice, and fine-tune as Agent only (browser)"
+      >
+        <dl className="grid gap-3 text-sm sm:grid-cols-2">
+          <div>
+            <dt className="text-text-muted">Stack</dt>
+            <dd className="mt-1 font-mono text-xs text-text">
+              {stackMode === "custom" ? "custom" : `tier · ${tier || "medium"}`}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-text-muted">Language</dt>
+            <dd className="mt-1 font-mono text-xs text-text">{language || "te-IN"}</dd>
+          </div>
+          <div>
+            <dt className="text-text-muted">STT</dt>
+            <dd className="mt-1 font-mono text-xs text-text">
+              {stack ? `${stack.sttProvider} / ${stack.sttModel}` : "tier default"}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-text-muted">LLM</dt>
+            <dd className="mt-1 font-mono text-xs text-text">
+              {stack ? `${stack.llmProvider} / ${stack.llmModel}` : "tier default"}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-text-muted">TTS</dt>
+            <dd className="mt-1 font-mono text-xs text-text">
+              {ttsProvider} / {ttsModel}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-text-muted">Agent voice</dt>
+            <dd className="mt-1 font-mono text-xs text-text">{voiceLabel(ttsProvider, ttsVoice)}</dd>
+          </div>
+        </dl>
+        <p
+          className={`mt-3 text-[11px] ${
+            stackPreview.startsWith("Stack error") ? "text-danger" : "text-text-subtle"
+          }`}
+        >
+          Script + VAD + LLM fine-tune from session{" "}
+          <span className="font-mono">{TEST_STUDIO_SESSION_ID}</span>
+          {stackPreview ? ` · ${stackPreview}` : ""}
+        </p>
+      </DevCard>
+
       <DevCard title="Outbound test call" description="Full E2E — PSTN dials customer, agent stack streams audio">
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block text-sm">
@@ -505,19 +658,8 @@ export function PstnTestPanel({
           </div>
         )}
         <p className="mt-3 text-xs text-text-muted">
-          Tier <span className="font-mono">{tier || "medium"}</span> · language{" "}
-          <span className="font-mono">{language || "te-IN"}</span> · stack{" "}
-          <span className="font-mono">{stackMode === "custom" ? "custom" : "tier preset"}</span> · agent{" "}
-          <span className="font-mono">{agentId.slice(0, 8)}…</span>. Telnyx uses L16 @ 16 kHz (same wire as
-          validation tests).
+          Place outbound uses this stack, voice, and Test Studio fine-tune — same as the browser agent.
         </p>
-        {stackPreview && (
-          <p
-            className={`mt-2 text-xs ${stackPreview.startsWith("Stack error") ? "text-danger" : "text-text-muted"}`}
-          >
-            {stackPreview}
-          </p>
-        )}
       </DevCard>
 
       {active === "telnyx" ? (

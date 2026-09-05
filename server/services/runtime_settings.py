@@ -254,7 +254,7 @@ class RuntimeSettingsStore:
                 from server.services.cartesia_voices import is_cartesia_voice_id
 
                 if not is_cartesia_voice_id(spk):
-                    raise SettingsValidationError(f"Cartesia voice id required for {model}")
+                    values["ttsSpeaker"] = constants.CARTESIA_DEFAULT_VOICE_ID
         pace = values.get("ttsPace")
         if model == "bulbul:v3" and pace is not None:
             values["ttsPace"] = _clamp(pace, 0.5, 2.0)

@@ -48,14 +48,36 @@ def pstn_frame_bytes(wire_mode: str, sample_rate: int) -> int:
 
 
 def pstn_call_options(local: dict[str, Any]) -> dict[str, Any]:
-    """Extract PSTN lifecycle + TTS options saved at outbound dial time."""
+    """Extract PSTN lifecycle + TTS options saved at outbound dial time.
+
+    Any explicit source_session_id (including test-studio) is used for brain/stack/TTS.
+    Validation scripts omit source_session_id and stay tier-only.
+    """
     source = str(local.get("source_session_id") or "").strip()
-    # Browser Test Studio session is not used for PSTN TTS/runtime lookup.
-    tts_session_id = source if source and source != "test-studio" else None
+    inherit = bool(local.get("inherit_test_studio_config"))
+    config_session_id: str | None = None
+    if inherit:
+        config_session_id = source or "test-studio"
+    elif source:
+        config_session_id = source
     return {
         "stack_override": local.get("stack_override"),
         "language": local.get("language"),
-        "tts_session_id": tts_session_id,
+        "tts_session_id": config_session_id,
+        "config_session_id": config_session_id,
+    }
+
+
+def pstn_turn_runtime(config_session_id: str | None, session_id: str) -> dict[str, Any]:
+    """LLM fine-tune from Test Studio / source session — same keys the browser /api/brain path uses."""
+    from server.services.runtime_settings import runtime_settings
+
+    rt = runtime_settings.get(config_session_id or session_id)
+    return {
+        "openai_model": rt.get("openaiModel"),
+        "temperature": rt.get("openaiTemperature"),
+        "reasoning_effort": rt.get("openaiReasoningEffort"),
+        "max_output_tokens": rt.get("openaiMaxTokens"),
     }
 
 
@@ -68,11 +90,13 @@ class PstnVoiceLoop:
         on_agent_wire: OnAgentWire,
         sample_rate: int = PSTN_SAMPLE_RATE,
         tts_session_id: str | None = None,
+        config_session_id: str | None = None,
         tts_output_codec: str = "mulaw",
         is_agent_audio_active: Callable[[], bool] | None = None,
     ) -> None:
         self.session_id = session_id
         self.call_id = call_id
+        self.config_session_id = config_session_id
         self.tts_session_id = tts_session_id or session_id
         self.on_agent_wire = on_agent_wire
         self.sample_rate = sample_rate
@@ -148,13 +172,21 @@ class PstnVoiceLoop:
 
     async def open_stt(self) -> None:
         from server.routes.ws import _connect_stt_upstream
+        from server.services.runtime_settings import runtime_settings
 
         lang = self._resolve_language()
+        rt = runtime_settings.get(self.config_session_id or self.session_id)
+        silence_ms = rt.get("sttSilenceMs")
+        threshold_val = rt.get("sttThreshold")
         self._stt_cm = _connect_stt_upstream(
-            session_id=self.session_id,
+            session_id=self.config_session_id or self.session_id,
             call_id=self.call_id,
             language_code=lang,
             sample_rate=self.sample_rate,
+            stream_type=str(rt.get("sttStreamType") or "fast"),
+            mode=str(rt.get("sttMode") or "transcribe"),
+            silence_duration_ms=int(silence_ms) if silence_ms is not None else None,
+            threshold=float(threshold_val) if threshold_val is not None else None,
         )
         self._stt = await self._stt_cm.__aenter__()
         self._stt_task = asyncio.create_task(self._stt_reader())
@@ -264,10 +296,15 @@ class PstnVoiceLoop:
 
             pending = ""
             spoke_from_stream = False
+            llm_rt = pstn_turn_runtime(self.config_session_id, self.session_id)
             async for chunk in live_turn_orchestrator.handle_user_turn_stream(
                 transcript=text,
                 session_id=self.session_id,
                 call_id=self.call_id,
+                openai_model=llm_rt.get("openai_model"),
+                temperature=llm_rt.get("temperature"),
+                reasoning_effort=llm_rt.get("reasoning_effort"),
+                max_output_tokens=llm_rt.get("max_output_tokens"),
             ):
                 if chunk.get("delta"):
                     if not pending:

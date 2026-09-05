@@ -1,3 +1,5 @@
+import { defaultTtsVoice, ensureTtsVoice, ttsProviderFromStack } from "@/lib/voice/tts-config";
+
 export type StackForm = {
   sttProvider: string;
   sttModel: string;
@@ -29,6 +31,8 @@ export type TierResolved = {
 };
 
 export function defaultStackForm(row?: TierResolved): StackForm {
+  const ttsProvider = row?.tts?.provider || "sarvam";
+  const ttsModel = row?.tts?.model || "bulbul:v3";
   return {
     sttProvider: row?.stt?.provider || "sarvam",
     sttModel: row?.stt?.model || "saaras:v3",
@@ -36,9 +40,9 @@ export function defaultStackForm(row?: TierResolved): StackForm {
     sttStreamType: "fast",
     llmProvider: row?.llm?.provider || "openai",
     llmModel: row?.llm?.model || "gpt-5.6-luna",
-    ttsProvider: row?.tts?.provider || "sarvam",
-    ttsModel: row?.tts?.model || "bulbul:v3",
-    ttsVoiceId: "",
+    ttsProvider,
+    ttsModel,
+    ttsVoiceId: defaultTtsVoice(ttsProviderFromStack(ttsProvider, ttsModel)),
     language: row?.language || "te-IN",
   };
 }
@@ -49,12 +53,8 @@ export function modelsFor(providers: ProviderEntry[], providerId: string, stage:
 }
 
 export function buildStackOverride(form: StackForm): Record<string, unknown> {
-  const ttsConfig: Record<string, unknown> = {};
-  if (form.ttsProvider === "cartesia" && form.ttsVoiceId) {
-    ttsConfig.speaker = form.ttsVoiceId;
-  } else if (form.ttsProvider === "sarvam" && form.ttsVoiceId) {
-    ttsConfig.speaker = form.ttsVoiceId;
-  }
+  const speaker = ensureTtsVoice(form.ttsProvider, form.ttsVoiceId, form.ttsModel);
+  const ttsConfig: Record<string, unknown> = { speaker };
   return {
     stt: {
       provider: form.sttProvider,
@@ -73,6 +73,21 @@ export function buildStackOverride(form: StackForm): Record<string, unknown> {
 /** PSTN outbound custom stack — same shape as buildStackOverride. */
 export function buildPstnStackOverride(form: StackForm): Record<string, unknown> {
   return buildStackOverride(form);
+}
+
+export function stackFormEqual(a: StackForm, b: StackForm): boolean {
+  return (
+    a.sttProvider === b.sttProvider &&
+    a.sttModel === b.sttModel &&
+    a.sttMode === b.sttMode &&
+    a.sttStreamType === b.sttStreamType &&
+    a.llmProvider === b.llmProvider &&
+    a.llmModel === b.llmModel &&
+    a.ttsProvider === b.ttsProvider &&
+    a.ttsModel === b.ttsModel &&
+    a.ttsVoiceId === b.ttsVoiceId &&
+    a.language === b.language
+  );
 }
 
 export const TEST_STUDIO_SESSION_ID = "test-studio";

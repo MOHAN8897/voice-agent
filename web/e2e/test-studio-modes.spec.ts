@@ -33,7 +33,7 @@ async function openTestStudio(
   if (channel === "agent") {
     await expect(page.getByLabel(/Turn microphone on/i)).toBeVisible({ timeout: 15000 });
   } else {
-    await expect(page.getByRole("heading", { name: "PSTN · Exotel" })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole("heading", { name: /^PSTN · / })).toBeVisible({ timeout: 20000 });
   }
 }
 
@@ -48,11 +48,11 @@ test.describe("Test Studio modes", () => {
     await expect(page.getByTestId("usage-empty-hint")).toContainText(/mic on/i);
   });
 
-  test("switches to Full PSTN and shows Exotel panel", async ({ page }) => {
+  test("switches to Full PSTN and shows telephony panel", async ({ page }) => {
     await openTestStudio(page, { channel: "agent" });
     await page.getByTestId("test-mode-pstn").click();
-    await expect(page.getByRole("heading", { name: "PSTN · Exotel" })).toBeVisible({ timeout: 15000 });
-    await expect(page.getByRole("heading", { name: "Outbound test call" })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole("heading", { name: /^PSTN · / })).toBeVisible({ timeout: 20000 });
+    await expect(page.getByRole("heading", { name: "Outbound test call" })).toBeVisible({ timeout: 20000 });
     await expect(page.getByLabel(/Turn microphone on/i)).not.toBeVisible();
     await expect(page.getByTestId("usage-empty-hint")).toContainText(/Agent only mode/i);
   });

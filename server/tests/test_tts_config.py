@@ -78,7 +78,41 @@ def test_cartesia_uuid_falls_back_to_sarvam_when_cartesia_disabled(monkeypatch):
     assert cfg["speaker"] == "shubh"
 
 
-def test_merge_ws_ignores_stale_client_speaker():
+def test_cartesia_sarvam_speaker_coerced_to_default(monkeypatch):
+    from server.config.constants import constants
+
+    monkeypatch.setenv("ENABLE_CARTESIA", "true")
+    monkeypatch.setenv("CARTESIA_API_KEY", "sk-cartesia-test")
+    get_settings.cache_clear()
+    init_provider_registry()
+    cfg = resolve_tts_config(
+        "cfg-test",
+        language_code="te-IN",
+        speaker="priya",
+        model="sonic-3.5",
+    )
+    assert cfg["provider"] == "cartesia"
+    assert cfg["speaker"] == constants.CARTESIA_DEFAULT_VOICE_ID
+
+
+def test_cartesia_default_voice_survives_english_cap():
+    from server.config.constants import constants
+    from server.services.cartesia_voices import _FALLBACK_VOICES, _build_studio_catalog
+
+    extras = [
+        {
+            "id": f"00000000-0000-4000-8000-{i:012d}",
+            "name": f"Aaa{i}",
+            "gender": "feminine",
+            "languages": ["en"],
+            "region": "english",
+        }
+        for i in range(40)
+    ]
+    _studio, groups = _build_studio_catalog(list(_FALLBACK_VOICES) + extras)
+    ids = {v["id"] for v in groups["english"]}
+    assert constants.CARTESIA_DEFAULT_VOICE_ID in ids
+    assert len(groups["english"]) <= 24
     runtime_settings.update("cfg-test", {"ttsSpeaker": "priya"})
     cfg = merge_ws_tts_config(
         "cfg-test",

@@ -18,6 +18,7 @@ import {
   sttModelsForPstn,
 } from "@/lib/pstn-stack";
 import { cn } from "@/lib/cn";
+import { defaultTtsVoice, ensureTtsVoice, ttsProviderFromStack } from "@/lib/voice/tts-config";
 
 type ChannelTab = "agent" | "pstn";
 type RackTab = "channel" | "stack" | "voice" | "advanced";
@@ -111,6 +112,7 @@ export function TestStudioConfigRack({
   sarvamSpeakersV3 = [],
   sarvamSpeakersV2 = [],
   runtimeTtsSpeaker = "",
+  defaultCartesiaVoiceId,
 }: {
   channel: ChannelTab;
   onChannelChange: (c: ChannelTab) => void;
@@ -133,11 +135,16 @@ export function TestStudioConfigRack({
   sarvamSpeakersV3?: string[];
   sarvamSpeakersV2?: string[];
   runtimeTtsSpeaker?: string;
+  defaultCartesiaVoiceId?: string;
 }) {
   const tierKey = (tier.toLowerCase() as TierName) in TIER_META ? (tier.toLowerCase() as TierName) : "medium";
   const [rackTab, setRackTab] = useState<RackTab>("channel");
   const effectiveTtsProvider = stack.ttsProvider || "sarvam";
-  const voiceValue = stack.ttsVoiceId || runtimeTtsSpeaker || "";
+  const voiceValue = ensureTtsVoice(
+    effectiveTtsProvider,
+    stack.ttsVoiceId || runtimeTtsSpeaker,
+    stack.ttsModel
+  );
   const pstnSttModels =
     channel === "pstn"
       ? sttModelsForPstn(providers, stack.sttProvider, language)
@@ -145,7 +152,9 @@ export function TestStudioConfigRack({
 
   function patchStack(patch: Partial<StackForm>) {
     const next = { ...stack, ...patch };
-    onStackChange(channel === "pstn" ? applyPstnStackDefaults(next, language) : next);
+    const ttsVoiceId = ensureTtsVoice(next.ttsProvider, next.ttsVoiceId, next.ttsModel);
+    const withVoice = ttsVoiceId === next.ttsVoiceId ? next : { ...next, ttsVoiceId };
+    onStackChange(channel === "pstn" ? applyPstnStackDefaults(withVoice, language) : withVoice);
   }
 
   return (
@@ -186,7 +195,7 @@ export function TestStudioConfigRack({
                     locked && "opacity-50"
                   )}
                 >
-                  {c === "agent" ? "Agent only · mic" : "Full PSTN · Exotel"}
+                  {c === "agent" ? "Agent only · mic" : "Full PSTN · phone"}
                 </button>
               ))}
             </div>
@@ -307,11 +316,10 @@ export function TestStudioConfigRack({
                   model={stack.ttsModel}
                   disabled={locked}
                   onProviderChange={(ttsProvider, ttsModel) => {
-                    const providerChanged = ttsProvider !== stack.ttsProvider;
                     patchStack({
                       ttsProvider,
                       ttsModel,
-                      ttsVoiceId: providerChanged ? "" : stack.ttsVoiceId,
+                      ttsVoiceId: defaultTtsVoice(ttsProviderFromStack(ttsProvider, ttsModel)),
                     });
                   }}
                   onModelChange={(ttsModel) => patchStack({ ttsModel })}
@@ -346,9 +354,11 @@ export function TestStudioConfigRack({
                 <span className="text-text-muted">Cartesia voice</span>
                 <div className="mt-2">
                   <CartesiaVoiceSelect
+                    key="cartesia-voice"
                     disabled={false}
                     value={voiceValue}
                     ttsModel={stack.ttsModel || "sonic-3.5"}
+                    defaultVoiceId={defaultCartesiaVoiceId}
                     onChange={(ttsVoiceId) => patchStack({ ttsVoiceId })}
                   />
                 </div>
@@ -358,6 +368,7 @@ export function TestStudioConfigRack({
                 <span className="text-text-muted">Sarvam voice</span>
                 <div className="mt-2">
                   <SarvamVoiceSelect
+                    key="sarvam-voice"
                     disabled={false}
                     value={voiceValue}
                     model={stack.ttsModel || "bulbul:v3"}
