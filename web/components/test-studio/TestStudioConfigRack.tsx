@@ -17,6 +17,7 @@ import {
   defaultPstnSttModel,
   sttModelsForPstn,
 } from "@/lib/pstn-stack";
+import { CompileLanguagePicker } from "@/components/test-studio/CompileLanguagePicker";
 import { cn } from "@/lib/cn";
 import { defaultTtsVoice, ensureTtsVoice, ttsProviderFromStack } from "@/lib/voice/tts-config";
 
@@ -210,19 +211,13 @@ export function TestStudioConfigRack({
                 Cartesia UUID).
               </p>
             )}
-            <label className="block text-sm">
-              <span className="text-text-muted">Language</span>
-              <select
-                disabled={locked}
-                className="mt-2 w-full rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-inset px-3 py-2 text-sm disabled:opacity-50"
-                value={language}
-                onChange={(e) => onLanguageChange(e.target.value)}
-              >
-                <option value="te-IN">te-IN — Telugu</option>
-                <option value="en-IN">en-IN — English</option>
-                <option value="hi-IN">hi-IN — Hindi</option>
-              </select>
-            </label>
+            <CompileLanguagePicker
+              id="config-call-language"
+              value={language}
+              disabled={locked}
+              onChange={onLanguageChange}
+              hint="Used for live calls and for Fine-tune script + hangup language."
+            />
           </>
         )}
 

@@ -10,7 +10,6 @@ import uuid
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-from server.services.audio_transcode import chunk_mulaw_frames, chunk_pcm16_frames
 from server.services.pstn_debug import log_pstn
 from server.services.pstn_media_flow import pstn_media_flow
 from server.services.pstn_text_chunker import (
@@ -24,8 +23,14 @@ logger = logging.getLogger(__name__)
 
 OnAgentWire = Callable[[bytes], Awaitable[None]]
 
-# Enabled after TEST 5–6 passed (Telnyx clear + local TTS stop on caller interrupt).
-ENABLE_PSTN_BARGE_IN = True
+# Disabled until live PSTN echo+hold is proven. The commit path below already
+# matches browser rules (3 words, echo, 700 ms, 200 ms hold) so flipping this
+# later does not re-introduce the 2-word energy barge.
+ENABLE_PSTN_BARGE_IN = False
+PSTN_BARGE_MIN_WORDS = 3
+PSTN_BARGE_HOLD_S = 0.2
+PSTN_BARGE_MIN_AFTER_SPEAK_S = 0.7
+PSTN_BARGE_DEBOUNCE_S = 0.8
 
 # PSTN telephony: 8 kHz (Exotel/Plivo μ-law) or 16 kHz (Telnyx L16).
 PSTN_SAMPLE_RATE = 8000
@@ -117,11 +122,60 @@ class PstnVoiceLoop:
         self.current_turn_id: str | None = None
         self.current_generation_id: str | None = None
         self._active_speak_task: asyncio.Task | None = None
+        self._active_tts_session = None
+        self._pending_transcript: str | None = None
         self.current_output_codec = "L16" if sample_rate >= TELNYX_PCM_SAMPLE_RATE else "PCMU"
         self._last_barge_at = 0.0
+        self._on_remote_hangup: Callable[[], Awaitable[None]] | None = None
+        self._last_tts_text = ""
+        self._tts_started_at = 0.0
+        self._partial_started_at = 0.0
 
     def set_barge_handler(self, fn: Callable[[], Awaitable[None]]) -> None:
         self._on_barge = fn
+
+    def set_hangup_handler(self, fn: Callable[[], Awaitable[None]]) -> None:
+        self._on_remote_hangup = fn
+
+    def _should_commit_barge(self, text: str) -> bool:
+        if not ENABLE_PSTN_BARGE_IN:
+            return False
+        now = time.monotonic()
+        speaking = self._agent_speaking or (
+            self.is_agent_audio_active is not None and self.is_agent_audio_active()
+        )
+        if not speaking:
+            self._partial_started_at = 0.0
+            return False
+        if now - self._last_barge_at < PSTN_BARGE_DEBOUNCE_S:
+            return False
+        if self._tts_started_at and now - self._tts_started_at < PSTN_BARGE_MIN_AFTER_SPEAK_S:
+            return False
+        words = len((text or "").split())
+        if words < PSTN_BARGE_MIN_WORDS:
+            self._partial_started_at = 0.0
+            return False
+        if self._partial_started_at <= 0:
+            self._partial_started_at = now
+            return False
+        if now - self._partial_started_at < PSTN_BARGE_HOLD_S:
+            return False
+        from server.services.echo_guard import is_likely_echo
+
+        if is_likely_echo(text, self._last_tts_text):
+            return False
+        return True
+
+    async def _send_tts_text(self, session: Any, text: str) -> None:
+        from server.services.spoken_numbers import expand_spoken_numbers
+
+        expanded = expand_spoken_numbers(text or "")
+        if not expanded.strip():
+            return
+        if self._tts_started_at <= 0:
+            self._tts_started_at = time.monotonic()
+        self._last_tts_text = (self._last_tts_text + " " + expanded).strip()[-800:]
+        await session.send_text(expanded)
 
     def _resolve_language(self) -> str:
         if not self.call_id:
@@ -173,19 +227,26 @@ class PstnVoiceLoop:
     async def open_stt(self) -> None:
         from server.routes.ws import _connect_stt_upstream
         from server.services.runtime_settings import runtime_settings
+        from server.services.voice_stt_runtime import (
+            effective_stt_mode,
+            effective_stt_silence_ms,
+            effective_stt_stream_type,
+        )
 
         lang = self._resolve_language()
         rt = runtime_settings.get(self.config_session_id or self.session_id)
-        silence_ms = rt.get("sttSilenceMs")
+        stream_type = effective_stt_stream_type(str(rt.get("sttStreamType") or "fast"))
+        mode = effective_stt_mode(str(rt.get("sttMode") or "transcribe"))
+        silence_ms = effective_stt_silence_ms(rt)
         threshold_val = rt.get("sttThreshold")
         self._stt_cm = _connect_stt_upstream(
             session_id=self.config_session_id or self.session_id,
             call_id=self.call_id,
             language_code=lang,
             sample_rate=self.sample_rate,
-            stream_type=str(rt.get("sttStreamType") or "fast"),
-            mode=str(rt.get("sttMode") or "transcribe"),
-            silence_duration_ms=int(silence_ms) if silence_ms is not None else None,
+            stream_type=stream_type,
+            mode=mode,
+            silence_duration_ms=silence_ms,
             threshold=float(threshold_val) if threshold_val is not None else None,
         )
         self._stt = await self._stt_cm.__aenter__()
@@ -214,22 +275,30 @@ class PstnVoiceLoop:
                     log_error("PSTN STT error", call_id=self.call_id, detail=str(msg)[:300])
                 elif ev == "transcript.partial":
                     text = (msg.get("text") or (msg.get("data") or {}).get("text") or "").strip()
-                    if ENABLE_PSTN_BARGE_IN:
+                    if text and self.call_id:
+                        from server.call.call_context import get as get_ctx
+
+                        ctx = get_ctx(self.call_id)
+                        if ctx:
+                            ctx.last_stt_partial_at = time.monotonic()
+                    if self._should_commit_barge(text):
                         now = time.monotonic()
-                        if (
-                            text
-                            and (
-                                self._agent_speaking
-                                or (self.is_agent_audio_active and self.is_agent_audio_active())
-                            )
-                            and len(text.split()) >= 2
-                            and self._on_barge
-                            and now - self._last_barge_at >= 0.75
-                        ):
-                            self._last_barge_at = now
-                            log_pstn("barge_in", call_id=self.call_id)
+                        self._last_barge_at = now
+                        self._partial_started_at = 0.0
+                        log_pstn("barge_in", call_id=self.call_id)
+                        from server.agent.conversation_manager import conversation_manager
+
+                        conversation_manager.note_barge(self.session_id, self._last_tts_text)
+                        if self.call_id:
+                            from server.call.call_context import get as get_ctx
+
+                            ctx = get_ctx(self.call_id)
+                            if ctx:
+                                ctx.barge_in_flight = True
+                                ctx.agent_hangup_armed = False
+                        if self._on_barge:
                             await self._on_barge()
-                            await self.interrupt_tts()
+                        await self.interrupt_tts()
                 elif ev == "transcript.final":
                     text = (msg.get("text") or (msg.get("data") or {}).get("text") or "").strip()
                     if text:
@@ -245,7 +314,9 @@ class PstnVoiceLoop:
                                 status="healthy",
                                 detail=text[:120],
                             )
-                    if text and not self._turn_busy:
+                    if text and self._turn_busy:
+                        self._pending_transcript = text
+                    elif text and not self._turn_busy:
                         asyncio.create_task(self._run_turn(text))
         except asyncio.CancelledError:
             pass
@@ -293,42 +364,79 @@ class PstnVoiceLoop:
         )
         try:
             from server.call.live_turn_orchestrator import live_turn_orchestrator
+            from server.services.pstn_turn_tts import PstnTurnTtsSession
 
             pending = ""
             spoke_from_stream = False
+            accepted_end_call = False
             llm_rt = pstn_turn_runtime(self.config_session_id, self.session_id)
-            async for chunk in live_turn_orchestrator.handle_user_turn_stream(
-                transcript=text,
-                session_id=self.session_id,
-                call_id=self.call_id,
-                openai_model=llm_rt.get("openai_model"),
-                temperature=llm_rt.get("temperature"),
-                reasoning_effort=llm_rt.get("reasoning_effort"),
-                max_output_tokens=llm_rt.get("max_output_tokens"),
-            ):
-                if chunk.get("delta"):
-                    if not pending:
-                        pstn_media_flow.emit(
-                            self.call_id,
-                            "llm_first_token",
-                            "outbound",
-                            turn_id=self.current_turn_id,
-                            status="healthy",
+            self.current_generation_id = uuid.uuid4().hex[:12]
+            self._last_tts_text = ""
+            self._tts_started_at = 0.0
+            tts_session = PstnTurnTtsSession(self)
+            self._active_tts_session = tts_session
+            async with self._speak_lock:
+                self._active_speak_task = asyncio.current_task()
+                await tts_session.open()
+            try:
+                async for chunk in live_turn_orchestrator.handle_user_turn_stream(
+                    transcript=text,
+                    language_code=self._resolve_language(),
+                    session_id=self.session_id,
+                    call_id=self.call_id,
+                    openai_model=llm_rt.get("openai_model"),
+                    temperature=llm_rt.get("temperature"),
+                    reasoning_effort=llm_rt.get("reasoning_effort"),
+                    max_output_tokens=llm_rt.get("max_output_tokens"),
+                ):
+                    if chunk.get("delta"):
+                        if not pending:
+                            pstn_media_flow.emit(
+                                self.call_id,
+                                "llm_first_token",
+                                "outbound",
+                                turn_id=self.current_turn_id,
+                                status="healthy",
+                            )
+                        pending += chunk.get("delta") or ""
+                        sentences, pending = drain_complete_sentences(
+                            pending,
+                            allow_first_fast=not spoke_from_stream,
                         )
-                    pending += chunk.get("delta") or ""
-                    sentences, pending = drain_complete_sentences(pending)
-                    for sent in sentences:
-                        await self.speak(sent)
-                        spoke_from_stream = True
-                elif chunk.get("done"):
-                    tail = resolve_stream_tts_tail(
-                        pending,
-                        chunk.get("text") or "",
-                        spoke_from_stream=spoke_from_stream,
-                    )
-                    if tail:
-                        await self.speak(tail)
-                    pending = ""
+                        for sent in sentences:
+                            await self._send_tts_text(tts_session, sent)
+                            spoke_from_stream = True
+                    elif chunk.get("done"):
+                        tail = resolve_stream_tts_tail(
+                            pending,
+                            chunk.get("text") or "",
+                            spoke_from_stream=spoke_from_stream,
+                        )
+                        if tail:
+                            await self._send_tts_text(tts_session, tail)
+                        pending = ""
+                        end_call = chunk.get("end_call") or {}
+                        accepted_end_call = bool(
+                            isinstance(end_call, dict) and end_call.get("should_end")
+                        )
+                if spoke_from_stream or tts_session.has_sent_text:
+                    await tts_session.finish()
+                if accepted_end_call and self.call_id:
+                    from server.call.call_lifecycle_service import call_lifecycle_service
+
+                    await call_lifecycle_service.end(self.call_id, reason="agent_hangup")
+                    self._pending_transcript = None
+                    if self._on_remote_hangup:
+                        try:
+                            await self._on_remote_hangup()
+                        except Exception as exc:
+                            log_pstn("hangup.provider.failed", call_id=self.call_id, error=str(exc)[:200])
+                    return
+            finally:
+                await tts_session.close()
+                self._active_tts_session = None
+                self._active_speak_task = None
+                self.current_generation_id = None
         except Exception as e:
             logger.warning("[PSTN] turn error: %s", str(e)[:300])
             log_pstn("turn.error", call_id=self.call_id, error=str(e)[:200])
@@ -336,6 +444,10 @@ class PstnVoiceLoop:
             self._turn_busy = False
             log_pstn("turn.done", timer_key=self.call_id, call_id=self.call_id, turn_id=self.current_turn_id)
             self.current_turn_id = None
+            pending = self._pending_transcript
+            self._pending_transcript = None
+            if pending:
+                asyncio.create_task(self._run_turn(pending))
 
     async def _emit_agent_wire(self, wire: bytes) -> None:
         if not wire:
@@ -350,24 +462,6 @@ class PstnVoiceLoop:
         await self.on_agent_wire(wire)
         self._agent_speaking = False
 
-    async def _tts_ping(self, tts) -> None:
-        while not self._closed:
-            await asyncio.sleep(20)
-            try:
-                await tts.send(json.dumps({"type": "ping"}))
-            except Exception:
-                return
-
-    def _tts_is_completion(self, msg_type: str, data: Any) -> bool:
-        if msg_type in ("end_of_stream", "done", "complete", "completion"):
-            return True
-        if msg_type != "event":
-            return False
-        if not isinstance(data, dict):
-            return False
-        event_type = str(data.get("event_type") or data.get("type") or "")
-        return event_type in ("final", "completion", "end", "done")
-
     async def speak(
         self,
         text: str,
@@ -377,254 +471,38 @@ class PstnVoiceLoop:
     ) -> None:
         if not text or self._closed:
             return
+        from server.services.pstn_turn_tts import PstnTurnTtsSession
+
         async with self._speak_lock:
             self._active_speak_task = asyncio.current_task()
             self.current_generation_id = uuid.uuid4().hex[:12]
-            from server.routes.ws import _connect_tts_upstream
-            from server.services.tts_config import merge_pstn_tts_config
-
-            use_mp3 = self.tts_output_codec == "mp3"
-            wire_mode = pstn_wire_mode(self.tts_output_codec, self.sample_rate)
-            use_mulaw_wire = wire_mode == "rtp_mulaw"
-            use_l16_wire = wire_mode == "rtp_l16"
-            frame_bytes = pstn_frame_bytes(wire_mode, self.sample_rate)
-            tts_audio_bytes = 0
-            tts_ws_msgs = 0
+            session = PstnTurnTtsSession(self)
+            self._active_tts_session = session
             try:
-                lang = language_code or self._resolve_language()
-                client_data: dict[str, Any] = {"language_code": lang}
-                if speaker:
-                    client_data["speaker"] = speaker
-                merged = merge_pstn_tts_config(
-                    self.tts_session_id,
-                    client_data,
-                    call_id=self.call_id,
-                    ws_model=None,
-                    wire_mode=wire_mode,
-                )
-                model = str(merged.get("model") or "bulbul:v3")
-                tts_cm = _connect_tts_upstream(model, session_id=self.tts_session_id, call_id=self.call_id)
-                tts = await tts_cm.__aenter__()
-                ping_task = asyncio.create_task(self._tts_ping(tts))
-                if merged.get("provider") == "cartesia":
-                    use_mulaw_wire = False
-                    use_l16_wire = True
-                    use_mp3 = False
-                    frame_bytes = pstn_frame_bytes("rtp_l16", self.sample_rate)
-                if use_mp3:
-                    self.current_output_codec = "MP3"
-                elif use_l16_wire:
-                    self.current_output_codec = "L16"
-                elif use_mulaw_wire:
-                    self.current_output_codec = "PCMU"
-                else:
-                    self.current_output_codec = "L16"
-                log_tts(
-                    "PSTN speak config",
-                    call_id=self.call_id,
-                    speaker=merged.get("speaker"),
-                    pace=merged.get("pace"),
-                    model=model,
-                    codec=merged.get("output_audio_codec"),
-                    speech_sample_rate=merged.get("speech_sample_rate"),
-                )
-                log_pstn(
-                    "tts.speak.start",
-                    call_id=self.call_id,
-                    turn_id=self.current_turn_id,
-                    generation_id=self.current_generation_id,
-                    chars=len(text),
-                    speaker=merged.get("speaker"),
-                    pace=merged.get("pace"),
-                    codec=merged.get("output_audio_codec"),
-                    speech_sample_rate=merged.get("speech_sample_rate"),
-                    provider=merged.get("provider"),
-                    text=text[:120].encode("ascii", "replace").decode("ascii"),
-                )
-                if self.call_id:
-                    pstn_media_flow.emit(
-                        self.call_id,
-                        "tts_started",
-                        "outbound",
-                        turn_id=self.current_turn_id,
-                        generation_id=self.current_generation_id,
-                        codec=self.current_output_codec,
-                        sample_rate=self.sample_rate,
-                        channels=1,
-                        status="processing",
-                        detail=text[:200],
-                    )
-                await tts.send(
-                    json.dumps(
-                        {
-                            "type": "config",
-                            "data": {
-                                k: v
-                                for k, v in merged.items()
-                                if k
-                                not in {
-                                    "provider",
-                                    "model",
-                                }
-                            },
-                        }
-                    )
-                )
-                await tts.send(json.dumps({"type": "text", "data": {"text": text}}))
-                await tts.send(json.dumps({"type": "flush"}))
-
-                audio_buf = bytearray()
-                first_chunk = True
-                tts_rate = self.sample_rate
-                async for raw in tts:
-                    if self._closed:
-                        break
-                    if isinstance(raw, bytes):
-                        raw = raw.decode(errors="ignore")
-                    obj = json.loads(raw)
-                    msg_type = obj.get("type") or obj.get("event") or ""
-                    tts_ws_msgs += 1
-                    if msg_type == "error":
-                        log_error("PSTN TTS error", call_id=self.call_id, detail=str(obj)[:300])
-                        log_pstn("tts.error", call_id=self.call_id, detail=str(obj)[:200])
-                        break
-                    data = obj.get("data")
-                    if self._tts_is_completion(msg_type, data):
-                        log_pstn("tts.complete", call_id=self.call_id, msg_type=msg_type)
-                        break
-                    audio_b64 = None
-                    if isinstance(data, dict):
-                        audio_b64 = data.get("audio")
-                        rate_val = data.get("speech_sample_rate") or data.get("sample_rate")
-                        if rate_val:
-                            try:
-                                tts_rate = int(rate_val)
-                            except (TypeError, ValueError):
-                                pass
-                    audio_b64 = audio_b64 or obj.get("audio")
-                    if msg_type == "chunk" and isinstance(data, str):
-                        audio_b64 = data
-                    if not audio_b64:
-                        if tts_ws_msgs <= 3:
-                            log_pstn(
-                                "tts.ws.msg",
-                                call_id=self.call_id,
-                                msg_type=msg_type,
-                                keys=list(obj.keys())[:8],
-                            )
-                        continue
-                    audio = base64.b64decode(audio_b64)
-                    tts_audio_bytes += len(audio)
-                    if use_mulaw_wire:
-                        from server.services.audio_transcode import pcm16_to_mulaw_8k
-
-                        audio = pcm16_to_mulaw_8k(audio, source_rate=tts_rate)
-                        tts_rate = 8000
-                    if use_mp3:
-                        if first_chunk and self.call_id:
-                            pstn_media_flow.emit(
-                                self.call_id,
-                                "tts_audio",
-                                "outbound",
-                                turn_id=self.current_turn_id,
-                                generation_id=self.current_generation_id,
-                                codec="MP3",
-                                sample_rate=tts_rate,
-                                channels=1,
-                                bytes=len(audio),
-                                status="healthy",
-                            )
-                            log_pstn(
-                                "tts.first_audio",
-                                timer_key=self.call_id,
-                                call_id=self.call_id,
-                                bytes=len(audio),
-                                codec="mp3",
-                                tts_rate=tts_rate,
-                            )
-                            first_chunk = False
-                        await self._emit_agent_wire(audio)
-                        continue
-                    if not use_mulaw_wire and not use_mp3 and tts_rate != self.sample_rate:
-                        from server.services.audio_transcode import pcm_resample
-
-                        audio = pcm_resample(audio, tts_rate, self.sample_rate)
-                    audio_buf.extend(audio)
-                    if first_chunk and self.call_id:
-                        pstn_media_flow.emit(
-                            self.call_id,
-                            "tts_audio",
-                            "outbound",
-                            turn_id=self.current_turn_id,
-                            generation_id=self.current_generation_id,
-                            codec=self.current_output_codec,
-                            sample_rate=self.sample_rate,
-                            channels=1,
-                            bytes=len(audio),
-                            duration_ms=(
-                                len(audio) * 1000 / self.sample_rate
-                                if use_mulaw_wire
-                                else len(audio) * 1000 / (self.sample_rate * 2)
-                            ),
-                            status="healthy",
-                        )
-                        first_chunk = False
-                    while len(audio_buf) >= frame_bytes:
-                        chunk = bytes(audio_buf[:frame_bytes])
-                        del audio_buf[:frame_bytes]
-                        if first_chunk:
-                            log_pstn(
-                                "tts.first_audio",
-                                timer_key=self.call_id,
-                                call_id=self.call_id,
-                                bytes=len(chunk),
-                                codec="mulaw" if use_mulaw_wire else "pcm16",
-                                tts_rate=tts_rate,
-                            )
-                            log_tts("PSTN first audio", call_id=self.call_id, bytes=len(chunk))
-                            first_chunk = False
-                        await self._emit_agent_wire(chunk)
-                if audio_buf:
-                    tail = bytes(audio_buf)
-                    if use_mulaw_wire:
-                        for frame in chunk_mulaw_frames(tail, sample_rate=8000):
-                            await self._emit_agent_wire(frame)
-                    else:
-                        for frame in chunk_pcm16_frames(tail, sample_rate=self.sample_rate):
-                            await self._emit_agent_wire(frame)
+                await session.open(speaker=speaker, language_code=language_code)
+                self._last_tts_text = ""
+                self._tts_started_at = 0.0
+                await self._send_tts_text(session, text)
+                await session.finish()
             finally:
-                ping_task.cancel()
-                try:
-                    await tts.close()
-                except Exception:
-                    pass
-                try:
-                    await tts_cm.__aexit__(None, None, None)
-                except Exception:
-                    pass
-                log_pstn(
-                    "tts.speak.done",
-                    call_id=self.call_id,
-                    turn_id=self.current_turn_id,
-                    generation_id=self.current_generation_id,
-                    chars=len(text),
-                    tts_audio_bytes=tts_audio_bytes,
-                    wire_frames=self._wire_frames_out,
-                    tts_ws_msgs=tts_ws_msgs,
-                )
+                await session.close()
+                self._active_tts_session = None
                 self._active_speak_task = None
                 self.current_generation_id = None
-                self.current_output_codec = "L16" if self.sample_rate >= TELNYX_PCM_SAMPLE_RATE else "PCMU"
 
     async def interrupt_tts(self) -> None:
-        task = self._active_speak_task
-        if task and task is not asyncio.current_task() and not task.done():
+        session = self._active_tts_session
+        if session is not None:
             log_pstn(
                 "tts.interrupt",
                 call_id=self.call_id,
                 turn_id=self.current_turn_id,
                 generation_id=self.current_generation_id,
             )
+            await session.interrupt()
+            self._active_tts_session = None
+        task = self._active_speak_task
+        if task and task is not asyncio.current_task() and not task.done():
             task.cancel()
 
     async def close(self) -> None:

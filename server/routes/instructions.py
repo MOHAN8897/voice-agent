@@ -55,6 +55,8 @@ class SaveRequest(BaseModel):
     responseStyle: str | None = Field(None, max_length=100)
     brainPromptBudgetTokens: int | None = Field(None, description="Optional budget override for validation")
     language_code: str | None = Field("te-IN", max_length=16)
+    callEndPolicy: dict | None = None
+    reassembleOnly: bool = False
 
 
 @router.get("/api/instructions/default")
@@ -80,8 +82,45 @@ async def save_instructions(body: SaveRequest):
     budget = body.brainPromptBudgetTokens or resolve_brain_budget(body.sessionId)
     budget = max(BUDGET_MIN_TOKENS, min(BUDGET_MAX_TOKENS, int(budget)))
 
+    from server.call.call_end_policy import default_call_end_policy, normalize_call_end_policy
+    from server.prompts.agent_voice_rules import normalize_compile_language
+
+    lang = normalize_compile_language(body.language_code)
+    policy = normalize_call_end_policy(body.callEndPolicy, language=lang)
+
     try:
-        if body.brainPrompt is not None:
+        if body.reassembleOnly:
+            from server.brain.agent_script_compiler import reassemble_brain_from_script
+
+            prev_meta = instruction_store.get_with_meta(body.sessionId)
+            lang = normalize_compile_language(body.language_code or prev_meta.get("language"))
+            policy = normalize_call_end_policy(
+                body.callEndPolicy if body.callEndPolicy is not None else prev_meta.get("callEndPolicy"),
+                language=lang,
+            )
+            policy = policy or default_call_end_policy(lang)
+            script = (prev_meta.get("agentScript") or "").strip()
+            compiled = None
+            est = int(prev_meta.get("estimatedTokens") or 0)
+            if script:
+                _script, compiled = reassemble_brain_from_script(
+                    script=script,
+                    language=lang,
+                    style=body.responseStyle or prev_meta.get("style"),
+                    call_end_policy=policy,
+                )
+                est = estimate_tokens(compiled)
+                if est > budget and est <= BUDGET_MAX_TOKENS:
+                    budget = est
+            saved = instruction_store.patch_call_end_policy(
+                body.sessionId,
+                policy,
+                language=lang,
+                compiled_brain=compiled,
+                estimated_tokens=est or None,
+                budget_tokens=budget,
+            )
+        elif body.brainPrompt is not None:
             if len(body.brainPrompt) > p_max:
                 raise HTTPException(
                     status_code=400,
@@ -96,25 +135,29 @@ async def save_instructions(body: SaveRequest):
 
             prev_meta = instruction_store.get_with_meta(body.sessionId)
             prev_compiled = prev_meta.get("brainPrompt") if prev_meta.get("compiledVersion") else None
+            if body.callEndPolicy is None:
+                policy = normalize_call_end_policy(prev_meta.get("callEndPolicy"), language=lang)
             compiled, script_result, raw_est, _compiled_est, effective_budget = await compile_agent_from_brief(
                 brief=body.agentBrief,
-                language=body.language_code or "te-IN",
+                language=lang,
                 style=body.responseStyle,
                 budget_tokens=budget,
                 previous_compiled=prev_compiled,
+                call_end_policy=policy,
             )
             budget = effective_budget
             saved = instruction_store.save_agent_script(
                 body.sessionId,
                 body.agentBrief,
                 script_result.agent_script,
-                body.responseStyle,
+                script_result.response_style or body.responseStyle,
                 compiled_brain=compiled,
                 optimizer_report=script_result.to_dict(),
                 source_checksum=script_result.source_checksum,
-                language=body.language_code or "te-IN",
+                language=lang,
                 budget_tokens=budget,
                 raw_token_estimate=raw_est,
+                call_end_policy=policy,
             )
         else:
             behaviour = body.behaviourInstructions if body.behaviourInstructions is not None else body.instructions or ""
@@ -126,10 +169,11 @@ async def save_instructions(body: SaveRequest):
             compiled, opt, raw_est, compiled_est = await compile_session_brain(
                 behaviour=behaviour,
                 business=business,
-                language=body.language_code or "te-IN",
+                language=lang,
                 style=body.responseStyle,
                 budget_tokens=budget,
                 previous_compiled=prev_compiled,
+                call_end_policy=policy,
             )
             saved = instruction_store.save_compiled(
                 body.sessionId,
@@ -139,9 +183,10 @@ async def save_instructions(body: SaveRequest):
                 compiled_brain=compiled,
                 optimizer_report=opt.to_dict(),
                 source_checksum=opt.source_checksum,
-                language=body.language_code or "te-IN",
+                language=lang,
                 budget_tokens=budget,
                 raw_token_estimate=raw_est,
+                call_end_policy=policy,
             )
     except PromptSectionTooLong as e:
         raise HTTPException(
@@ -207,11 +252,15 @@ async def save_instructions(body: SaveRequest):
         "optimizerReport": saved.get("optimizerReport"),
         "rawTokenEstimate": saved.get("rawTokenEstimate", 0),
         "tokensSaved": max(0, int(saved.get("rawTokenEstimate") or 0) - int(saved.get("estimatedTokens") or 0)),
+        "callEndPolicy": saved.get("callEndPolicy"),
+        "language": saved.get("language"),
     }
 
 
 @router.get("/api/instructions")
 async def get_instructions(sessionId: str = "default", includeCompiled: bool = Query(False)):
+    from server.call.call_end_policy import normalize_call_end_policy
+
     meta = instruction_store.get_with_meta(sessionId)
     b_max, z_max, p_max = _limits()
     budget = resolve_brain_budget(sessionId)
@@ -223,6 +272,10 @@ async def get_instructions(sessionId: str = "default", includeCompiled: bool = Q
     payload = {
         "sessionId": sessionId,
         **meta,
+        "callEndPolicy": normalize_call_end_policy(
+            meta.get("callEndPolicy"),
+            language=meta.get("language") or "te-IN",
+        ),
         "budgetTokens": budget,
         "headroom": max(0, budget - est),
         "cacheEligible": cache_eligible(est),

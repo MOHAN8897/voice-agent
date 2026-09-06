@@ -21,7 +21,7 @@ def test_agent_brief_creates_script_and_brain(monkeypatch):
     sid = "agent-brief-1"
     brief = (
         "Create a Telugu telecaller for Acme Realty. "
-        "Agent name Swetha. Talk naturally. Qualify budget and location."
+        "Agent name Swetha. Talk naturally. Answer first; don't interrogate."
     )
     mock_script = {
         "agent_script": (
@@ -88,6 +88,8 @@ def test_agent_script_not_truncated_for_cache_or_budget():
     assert len(script) >= len(long_body)
     assert estimate_tokens(compiled) >= CACHE_MIN_TOKENS
     assert estimate_tokens(compiled) <= BUDGET_MAX_TOKENS
+    assert "--- SPOKEN LANGUAGE (te-IN) ---" in compiled
+    assert "60–80" not in script
 
 
 def test_agent_brief_too_long_rejected(monkeypatch):
@@ -97,6 +99,35 @@ def test_agent_brief_too_long_rejected(monkeypatch):
     r = c.post("/api/instructions", json={"sessionId": sid, "agentBrief": long_brief})
     assert r.status_code == 400
     assert r.json()["detail"]["error"]["code"] == "prompt_section_too_long"
+    c.delete("/api/instructions", params={"sessionId": sid})
+    get_settings.cache_clear()
+
+
+def test_english_brief_compiles_english_script_and_pack(monkeypatch):
+    c = _client(monkeypatch)
+    sid = "agent-brief-en"
+    brief = "Telecaller for Acme Realty. Agent name Priya. Book site visits."
+    with patch(
+        "server.brain.agent_script_compiler._llm_generate_script",
+        new=AsyncMock(return_value=None),
+    ):
+        r = c.post(
+            "/api/instructions",
+            json={"sessionId": sid, "agentBrief": brief, "language_code": "en-IN"},
+        )
+    assert r.status_code == 200, r.text
+    j = r.json()
+    script = j.get("agentScript", "")
+    brain = j.get("brainPromptFull", "")
+    assert "Priya" in script
+    assert "calling from Acme Realty" in script
+    assert "matladutunnanu" not in script
+    assert "60–80" not in script
+    assert "--- SPOKEN LANGUAGE (en-IN) ---" in brain
+    assert "--- SPOKEN LANGUAGE (te-IN) ---" not in brain
+    assert "Indian English" in brain
+    assert "--- CALL END POLICY ---" in brain
+    assert "Thank you for your time. Goodbye." in brain
     c.delete("/api/instructions", params={"sessionId": sid})
     get_settings.cache_clear()
 
@@ -134,11 +165,70 @@ def test_agent_brief_unnamed_no_company_uses_work_scope(monkeypatch):
     assert r.status_code == 200, r.text
     script = r.json().get("agentScript", "")
     assert "WORK SCOPE" in script
-    assert "Ravi" in script
+    assert "Priya" in script
     assert "Namaste!" in script
     assert "nundi matladutunnanu" not in script
     assert "[agent name]" not in script.lower()
     assert "[company" not in script.lower()
     assert "book a car" in script.lower() or "car" in script.lower()
+    c.delete("/api/instructions", params={"sessionId": sid})
+    get_settings.cache_clear()
+
+
+def test_call_end_policy_is_written_into_brain(monkeypatch):
+    c = _client(monkeypatch)
+    sid = "agent-brief-call-end"
+    brief = "Telecaller for Acme Realty. Agent name Priya. Book site visits."
+    with patch(
+        "server.brain.agent_script_compiler._llm_generate_script",
+        new=AsyncMock(return_value=None),
+    ):
+        r = c.post(
+            "/api/instructions",
+            json={
+                "sessionId": sid,
+                "agentBrief": brief,
+                "language_code": "en-IN",
+                "callEndPolicy": {
+                    "allowedReasons": ["goodbye", "firm_refusal"],
+                    "farewell": "Thanks for your time. Take care.",
+                },
+            },
+        )
+    assert r.status_code == 200, r.text
+    brain = r.json().get("brainPromptFull", "")
+    assert "Thanks for your time. Take care." in brain
+    assert "goodbye, firm_refusal" in brain
+    g = c.get("/api/instructions", params={"sessionId": sid}).json()
+    assert "brainPrompt" not in g
+    assert g["callEndPolicy"]["farewell"] == "Thanks for your time. Take care."
+    c.delete("/api/instructions", params={"sessionId": sid})
+    get_settings.cache_clear()
+
+
+def test_missing_hangup_uses_default_farewell(monkeypatch):
+    """No Call-end card / no custom farewell → default hangup is stored and compiled."""
+    c = _client(monkeypatch)
+    sid = "agent-brief-default-hangup"
+    c.delete("/api/instructions", params={"sessionId": sid})
+    empty = c.get("/api/instructions", params={"sessionId": sid}).json()
+    assert empty["callEndPolicy"]["farewell"] == "Sare, time ichinanduku thanks. Good day."
+    assert empty["callEndPolicy"]["allowedReasons"]
+    brief = "Telecaller for Acme Realty. Agent name Priya. Book site visits."
+    with patch(
+        "server.brain.agent_script_compiler._llm_generate_script",
+        new=AsyncMock(return_value=None),
+    ):
+        r = c.post(
+            "/api/instructions",
+            json={"sessionId": sid, "agentBrief": brief, "language_code": "en-IN"},
+        )
+    assert r.status_code == 200, r.text
+    j = r.json()
+    assert j["callEndPolicy"]["farewell"] == "Thank you for your time. Goodbye."
+    assert "--- CALL END POLICY ---" in j["brainPromptFull"]
+    assert "Thank you for your time. Goodbye." in j["brainPromptFull"]
+    g = c.get("/api/instructions", params={"sessionId": sid}).json()
+    assert g["callEndPolicy"]["farewell"] == "Thank you for your time. Goodbye."
     c.delete("/api/instructions", params={"sessionId": sid})
     get_settings.cache_clear()

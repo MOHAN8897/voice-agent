@@ -1,6 +1,7 @@
 """OpenAI LLM adapter — wraps openai_brain_service + structured completions."""
 from __future__ import annotations
 
+import inspect
 import json
 from collections.abc import AsyncIterator
 from typing import Any
@@ -26,9 +27,13 @@ class OpenAILLMAdapter:
         """Wrap existing openai_brain_service streaming — same live path, registry-indirection."""
         from server.services.openai_brain_service import generate_response_stream
 
-        drop = {"ctx"}
-        stream_kwargs = {k: v for k, v in kwargs.items() if k not in drop}
-        if input_messages:
+        allowed = set(inspect.signature(generate_response_stream).parameters)
+        stream_kwargs = {k: v for k, v in kwargs.items() if k in allowed}
+        if not stream_kwargs.get("openai_model"):
+            mapped = kwargs.get("openai_model") or kwargs.get("model")
+            if mapped and "openai_model" in allowed:
+                stream_kwargs["openai_model"] = mapped
+        if input_messages is not None:
             stream_kwargs["input_messages"] = input_messages
         if schema is not None:
             stream_kwargs["live_turn_schema"] = schema

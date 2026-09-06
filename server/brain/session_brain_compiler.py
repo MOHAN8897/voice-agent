@@ -7,6 +7,7 @@ from __future__ import annotations
 import hashlib
 
 from server.agent.brain_prompt_composer import (
+    BUDGET_MAX_TOKENS,
     sanitize_behaviour,
     sanitize_business,
     validate_brain_prompt_budget,
@@ -20,11 +21,17 @@ from server.agent.brain_prompt_composer import (
 )
 from server.brain.business_prompt_optimizer import OptimizerResult, optimize_session_dual_prompt
 from server.brain.sections import STATIC_OUTPUT_RULES
-from server.prompts.brain_prompt import SECTION_SAFETY, SECTION_TELUGU_VOICE
+from server.prompts.agent_voice_rules import (
+    call_end_policy_section,
+    language_runtime_footer,
+    spoken_pack_for,
+)
+from server.prompts.brain_prompt import SECTION_SAFETY
 from server.prompts.voice_defaults import (
+    CACHE_FLOOR_PAD,
     DEFAULT_BEHAVIOUR_INSTRUCTIONS,
     DEFAULT_BUSINESS_INSTRUCTIONS,
-    DEFAULT_RESPONSE_STYLE,
+    style_for_language,
 )
 
 
@@ -40,10 +47,28 @@ def dual_source_checksum(
             behaviour.strip(),
             business.strip(),
             language.strip(),
-            (style or DEFAULT_RESPONSE_STYLE).strip(),
+            style_for_language(style, language).strip(),
         ]
     )
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _assemble_session_brain(
+    *,
+    language: str,
+    style_val: str,
+    body: str,
+    call_end_policy: dict | None = None,
+) -> str:
+    """Every session-brain variant keeps the default hangup section."""
+    return (
+        f"{SECTION_SAFETY}\n\n"
+        f"{spoken_pack_for(language)}\n\n"
+        f"{body.strip()}\n\n"
+        f"{call_end_policy_section(language, call_end_policy)}\n\n"
+        f"{STATIC_OUTPUT_RULES}\n\n"
+        f"{language_runtime_footer(language, style_val)}"
+    )
 
 
 def assemble_raw_dual_prompt(
@@ -52,17 +77,19 @@ def assemble_raw_dual_prompt(
     business: str,
     language: str = "te-IN",
     style: str | None = None,
+    call_end_policy: dict | None = None,
 ) -> str:
     """Deterministic raw assembly — never sent to cache; preserved for audit."""
     b = sanitize_behaviour(behaviour) or DEFAULT_BEHAVIOUR_INSTRUCTIONS
     z = sanitize_business(business) or DEFAULT_BUSINESS_INSTRUCTIONS
-    style_line = style or DEFAULT_RESPONSE_STYLE
+    style_line = style_for_language(style, language)
     return (
         f"--- PLATFORM SAFETY ---\n{SECTION_SAFETY}\n\n"
-        f"--- PLATFORM VOICE ---\n{SECTION_TELUGU_VOICE}\n\n"
+        f"--- PLATFORM VOICE ---\n{spoken_pack_for(language)}\n\n"
         f"--- BEHAVIOUR (dev/platform) ---\n{b}\n\n"
         f"--- BUSINESS (customer) ---\n{z}\n\n"
-        f"Language: {language}. Style: {style_line}."
+        f"{call_end_policy_section(language, call_end_policy)}\n\n"
+        f"{language_runtime_footer(language, style_line)}"
     )
 
 
@@ -74,6 +101,7 @@ async def compile_session_brain(
     style: str | None = None,
     budget_tokens: int = 2500,
     previous_compiled: str | None = None,
+    call_end_policy: dict | None = None,
 ) -> tuple[str, OptimizerResult, int, int]:
     """
     Compile behaviour + business into one concise cached brain prompt.
@@ -95,12 +123,13 @@ async def compile_session_brain(
     )
     b = sanitize_behaviour(raw_b)
     z = sanitize_business(raw_z)
-    style_val = (style or DEFAULT_RESPONSE_STYLE)[:100]
+    style_val = style_for_language(style, language)
     raw_prompt = assemble_raw_dual_prompt(
         behaviour=b,
         business=z,
         language=language,
         style=style_val,
+        call_end_policy=call_end_policy,
     )
     checksum = dual_source_checksum(
         behaviour=b,
@@ -119,47 +148,50 @@ async def compile_session_brain(
         previous_optimized=previous_compiled,
     )
 
-    compiled = (
-        f"{SECTION_SAFETY}\n\n"
-        f"{SECTION_TELUGU_VOICE}\n\n"
-        f"{opt.optimized_business_prompt.strip()}\n\n"
-        f"{STATIC_OUTPUT_RULES}\n\n"
-        f"Language: {language}. Style: {style_val}."
+    compiled = _assemble_session_brain(
+        language=language,
+        style_val=style_val,
+        body=opt.optimized_business_prompt,
+        call_end_policy=call_end_policy,
     )
-    static_shell = (
-        f"{SECTION_SAFETY}\n\n{SECTION_TELUGU_VOICE}\n\n\n\n{STATIC_OUTPUT_RULES}\n\n"
-        f"Language: {language}. Style: {style_val}."
+    static_shell = _assemble_session_brain(
+        language=language,
+        style_val=style_val,
+        body="",
+        call_end_policy=call_end_policy,
     )
-    user_budget = max(180, int(budget_tokens) - estimate_tokens(static_shell) - 40)
+    # Static safety/voice policy is mandatory and can exceed an old saved
+    # slider value. Preserve a small user-instruction allowance instead of
+    # failing compilation solely because the platform shell grew.
+    effective_budget = min(
+        BUDGET_MAX_TOKENS,
+        max(int(budget_tokens), estimate_tokens(static_shell) + 180),
+    )
+    user_budget = max(180, effective_budget - estimate_tokens(static_shell) - 40)
     fitted = fit_text_to_tokens(opt.optimized_business_prompt.strip(), user_budget)
     if fitted != opt.optimized_business_prompt.strip():
         opt.optimized_business_prompt = fitted
-        compiled = (
-            f"{SECTION_SAFETY}\n\n"
-            f"{SECTION_TELUGU_VOICE}\n\n"
-            f"{fitted}\n\n"
-            f"{STATIC_OUTPUT_RULES}\n\n"
-            f"Language: {language}. Style: {style_val}."
+        compiled = _assemble_session_brain(
+            language=language,
+            style_val=style_val,
+            body=fitted,
+            call_end_policy=call_end_policy,
         )
-    validate_brain_prompt_budget(compiled, budget_tokens)
+    validate_brain_prompt_budget(compiled, effective_budget)
     compiled_tokens = estimate_tokens(compiled)
     if compiled_tokens < 1024:
         # OpenAI explicit cache requires ≥1024 tokens in the breakpoint prefix.
-        from server.prompts.voice_defaults import DEFAULT_BEHAVIOUR_INSTRUCTIONS as _db
-        from server.prompts.voice_defaults import DEFAULT_BUSINESS_INSTRUCTIONS as _dz
-
         filler = (
             f"{opt.optimized_business_prompt.strip()}\n\n"
-            f"--- PLATFORM DEFAULTS (cache floor) ---\n{_db.strip()}\n{_dz.strip()}"
+            f"{CACHE_FLOOR_PAD.strip()}\n{CACHE_FLOOR_PAD.strip()}"
         )
         filler = fit_text_to_tokens(filler, user_budget)
-        compiled = (
-            f"{SECTION_SAFETY}\n\n"
-            f"{SECTION_TELUGU_VOICE}\n\n"
-            f"{filler}\n\n"
-            f"{STATIC_OUTPUT_RULES}\n\n"
-            f"Language: {language}. Style: {style_val}."
+        compiled = _assemble_session_brain(
+            language=language,
+            style_val=style_val,
+            body=filler,
+            call_end_policy=call_end_policy,
         )
-        validate_brain_prompt_budget(compiled, budget_tokens)
+        validate_brain_prompt_budget(compiled, effective_budget)
         compiled_tokens = estimate_tokens(compiled)
     return compiled, opt, raw_tokens, compiled_tokens

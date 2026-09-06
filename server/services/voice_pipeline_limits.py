@@ -1,0 +1,6 @@
+"""Text chunking limits shared with web VOICE_PIPELINE_LIMITS (types.ts)."""
+
+MIN_CHUNK_CHARS = 14
+FIRST_CHUNK_MIN_CHARS = 28
+CLAUSE_FLUSH_AT = 40
+FORCE_FLUSH_AT = 72

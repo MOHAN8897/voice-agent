@@ -3,6 +3,7 @@ import { billingCharCount } from "@/lib/billing-chars";
 import { StreamingTtsClient } from "@/lib/voice/streaming-tts-client";
 import { StreamingAudioPlayback } from "@/lib/voice/streaming-audio-playback";
 import { fetchTtsConfig } from "@/lib/voice/tts-config";
+import { expandSpokenNumbers } from "@/lib/voice/spoken-numbers";
 import { VOICE_PIPELINE_LIMITS, type VoiceTraceFn } from "@/lib/voice/types";
 
 export type TurnTtsPipelineOptions = {
@@ -87,7 +88,7 @@ export class TurnTtsPipeline {
       this.trace("llm:first_token", "");
     }
 
-    const chunks = this.chunker.append(delta);
+    const chunks = this.chunker.append(expandSpokenNumbers(delta));
     for (const chunk of chunks) {
       this.enqueueTextChunk(chunk.text, chunk.sequenceNumber);
     }

@@ -31,6 +31,10 @@ class CallContext:
     last_heartbeat: datetime = field(default_factory=_utcnow)
     ws_clients: int = 0
     end_reason: str | None = None
+    agent_hangup_armed: bool = False
+    barge_in_flight: bool = False
+    last_stt_partial_at: float = 0.0
+    call_end_policy: dict[str, Any] | None = None
     components: dict[str, str] = field(
         default_factory=lambda: {"ledger": "pending", "audio": "pending", "outcome": "pending"}
     )

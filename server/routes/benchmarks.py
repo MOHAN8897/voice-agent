@@ -18,13 +18,13 @@ from server.benchmark.session_store import (
     start_session,
     METRIC_KEYS,
 )
-from server.config.env import get_settings
+from server.services.dev_runtime import benchmarks_enabled
 
 router = APIRouter()
 
 
 def _require_benchmarks() -> None:
-    if not get_settings().enable_benchmarks:
+    if not benchmarks_enabled():
         raise HTTPException(
             status_code=403,
             detail={
@@ -53,12 +53,12 @@ class BenchmarkSessionCreate(BaseModel):
 
 @router.get("/api/benchmarks/status")
 async def benchmarks_status():
-    settings = get_settings()
+    enabled = benchmarks_enabled()
     return {
-        "enabled": settings.enable_benchmarks,
+        "enabled": enabled,
         "message": (
             "Benchmark sessions available."
-            if settings.enable_benchmarks
+            if enabled
             else "Set ENABLE_BENCHMARKS=true in Dev Environment to create and run sessions."
         ),
     }

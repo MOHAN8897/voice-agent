@@ -7,7 +7,13 @@ import { SkeuoPanel } from "@/components/ui/skeuo/SkeuoPanel";
 import { SkeuoButton } from "@/components/ui/skeuo/SkeuoButton";
 import { SkeuoBadge } from "@/components/ui/skeuo/SkeuoBadge";
 import { cn } from "@/lib/cn";
-import { useTestStudioFineTune } from "@/components/test-studio/useTestStudioFineTune";
+import {
+  useTestStudioFineTune,
+  CALL_END_REASONS,
+  DEFAULT_CALL_END_FAREWELL,
+  defaultCallEndPolicy,
+} from "@/components/test-studio/useTestStudioFineTune";
+import { CompileLanguagePicker, compileLanguageLabel } from "@/components/test-studio/CompileLanguagePicker";
 import { CartesiaVoiceSelect } from "@/components/test-studio/CartesiaVoiceSelect";
 import { SarvamVoiceSelect } from "@/components/test-studio/SarvamVoiceSelect";
 
@@ -37,8 +43,14 @@ function Field({
   );
 }
 
-const AGENT_BRIEF_PLACEHOLDER =
-  "Create a Telugu telecaller for Acme Realty.\nAgent name: Swetha.\nTalk naturally — friendly, not scripted IVR.\nQualify budget, location, and plot vs flat.\nBook site visits. Never invent prices.";
+const AGENT_BRIEF_PLACEHOLDER: Record<string, string> = {
+  "te-IN":
+    "Create a Telugu telecaller for Acme Realty.\nAgent name: Swetha.\nShe represents the business like a real teammate — listen, answer first, don't interrogate.\nKnown inventory: 1,000 sq ft from fifty lakhs. If they want a different size, follow them. Never invent prices.",
+  "en-IN":
+    "Create an English agent for Acme Support.\nAgent name: Priya.\nTalk like a person who works there — listen, answer first, don't interrogate.\nHandle billing tickets. Book callbacks. Never invent policies. Do not sell.",
+  "hi-IN":
+    "Create a Hindi telecaller for Acme Realty.\nAgent name: Priya.\nHinglish, like a real teammate — listen, answer first, don't interrogate.\nKnown inventory: 1,000 sq ft from fifty lakhs. If they want a different size, follow them. Never invent prices.",
+};
 
 const inputCls =
   "w-full rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-inset px-3 py-2 text-sm disabled:opacity-50";
@@ -81,6 +93,7 @@ export function TestStudioFineTuneWorkbench({
   agentId,
   portal,
   language,
+  onLanguageChange,
   locked,
   activeTab,
   onTabChange,
@@ -93,6 +106,7 @@ export function TestStudioFineTuneWorkbench({
   agentId: string;
   portal: "app" | "dev";
   language: string;
+  onLanguageChange: (language: string) => void;
   locked: boolean;
   activeTab?: Tab;
   onTabChange?: (tab: Tab) => void;
@@ -105,7 +119,23 @@ export function TestStudioFineTuneWorkbench({
   const [internalTab, setInternalTab] = useState<Tab>("prompts");
   const tab = activeTab ?? internalTab;
   const setTab = onTabChange ?? setInternalTab;
-  const ft = useTestStudioFineTune(agentId, language);
+  const ft = useTestStudioFineTune(agentId, language, portal);
+  const langLabel = compileLanguageLabel(language);
+  const savedLang = ft.optimizerMeta.savedLanguage;
+  const scriptLangMismatch = Boolean(savedLang && savedLang !== language && ft.instructions.agentScript);
+  const callEnd = ft.instructions.callEndPolicy ?? defaultCallEndPolicy(language);
+
+  const onPickLanguage = (next: string) => {
+    const nextFarewell = defaultCallEndPolicy(next).farewell;
+    ft.setInstructions((p) => {
+      const current = p.callEndPolicy?.farewell || "";
+      const isDefault = !current.trim() || Object.values(DEFAULT_CALL_END_FAREWELL).includes(current);
+      const base = p.callEndPolicy ?? defaultCallEndPolicy(next);
+      if (!isDefault || current === nextFarewell) return { ...p, callEndPolicy: base };
+      return { ...p, callEndPolicy: { ...base, farewell: nextFarewell } };
+    });
+    onLanguageChange(next);
+  };
   const defaults = ft.catalog?.openai?.defaults || {};
   const modelLabels = ft.catalog?.openai?.modelLabels || {};
   const allowedModels = ensureArray<string>(ft.catalog?.openai?.allowedModels);
@@ -167,6 +197,16 @@ export function TestStudioFineTuneWorkbench({
             )}
           </div>
         </div>
+        <div className="mt-3">
+          <CompileLanguagePicker
+            compact
+            id="fine-tune-toolbar-language"
+            value={language}
+            disabled={locked || ft.saving}
+            onChange={onPickLanguage}
+            hint={`Calling script and hangup are ${langLabel}. Default hangup is used until you save a custom farewell.`}
+          />
+        </div>
       </div>
 
       {ft.loading ? (
@@ -194,28 +234,45 @@ export function TestStudioFineTuneWorkbench({
                 >
                   Load factory default
                 </SkeuoButton>
+                {portal === "dev" && (
                 <Link
                   href={brainHref}
                   className="inline-flex items-center rounded-skeuo-sm border border-surface-border-subtle px-3 py-1.5 text-xs text-text-muted hover:bg-surface-raised"
                 >
                   Open full brain editor →
                 </Link>
+                )}
               </div>
 
               <div className="rounded-skeuo-sm border border-surface-border-subtle skeuo-inset p-3 text-xs text-text-muted">
-                Describe your agent in plain language — company, agent name, tone, and goals. GPT expands it into a
-                full calling script that becomes the cached brain for every call until you create a new one. Live memory,
-                history, and transcript still attach after the cache breakpoint (~{ft.limits.memoryHeadroomTokens} tokens).
+                Describe your agent in plain language — company, agent name, role, and goals. GPT expands it into a
+                conversational policy (not a question tree) that answers first, follows the latest customer ask, and
+                matches the role (sales vs support vs recruitment). Live memory still attaches after the cache
+                breakpoint (~{ft.limits.memoryHeadroomTokens} tokens).
               </div>
+
+              <CompileLanguagePicker
+                id="fine-tune-script-language"
+                value={language}
+                disabled={locked || ft.saving}
+                onChange={onPickLanguage}
+                hint={`The calling script and spoken rules are written in ${langLabel}. Switch here, then create the agent script.`}
+              />
+              {scriptLangMismatch ? (
+                <p className="rounded-skeuo-sm border border-status-warning/30 bg-status-warning/10 px-3 py-2 text-[11px] text-text-muted">
+                  Saved script is {compileLanguageLabel(savedLang || "")}. Create agent script again to rewrite it in{" "}
+                  {langLabel}.
+                </p>
+              ) : null}
 
               <Field
                 label="Agent brief"
-                hint="Short instruction — e.g. telecaller for company X, agent name Swetha, natural Telugu tone"
+                hint={`Business facts in any language — the live script will still be ${langLabel}.`}
               >
                 <textarea
                   disabled={locked || ft.saving}
                   maxLength={ft.limits.agentBriefMax}
-                  placeholder={AGENT_BRIEF_PLACEHOLDER}
+                  placeholder={AGENT_BRIEF_PLACEHOLDER[language] || AGENT_BRIEF_PLACEHOLDER["te-IN"]}
                   className={cn(inputCls, "min-h-[140px] resize-y text-sm")}
                   value={ft.instructions.agentBrief}
                   onChange={(e) =>
@@ -233,7 +290,7 @@ export function TestStudioFineTuneWorkbench({
 
               <Field
                 label="Generated calling script"
-                hint="Created by GPT from your brief — this is the agent brain for calls until you regenerate"
+                hint={`Created by GPT in ${langLabel} — this is the agent brain until you regenerate`}
               >
                 <textarea
                   readOnly
@@ -244,6 +301,84 @@ export function TestStudioFineTuneWorkbench({
                   }
                 />
               </Field>
+
+              <div className="rounded-skeuo-sm border border-surface-border-subtle p-4">
+                <p className="text-sm text-text-muted">Call end</p>
+                <p className="mt-0.5 text-[11px] text-text-subtle">
+                  Optional. If you skip this, the default hangup line for {langLabel} is compiled into the brain
+                  and used on web and phone. The model may propose hanging up; the server still validates goodbye /
+                  refusal / goal / abuse. Farewell is spoken fully, then the call ends.
+                </p>
+                <div className="mt-3">
+                  <CompileLanguagePicker
+                    id="fine-tune-hangup-language"
+                    value={language}
+                    disabled={locked || ft.saving}
+                    onChange={onPickLanguage}
+                    hint={`Hangup evidence and the farewell line follow ${langLabel}.`}
+                  />
+                </div>
+                <div className="mt-3 grid gap-2">
+                  {CALL_END_REASONS.map((reason) => {
+                    const on = callEnd.allowedReasons.includes(reason.id);
+                    return (
+                      <label key={reason.id} className="flex items-start gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          disabled={locked || ft.saving}
+                          className="mt-1"
+                          checked={on}
+                          onChange={() => {
+                            ft.setInstructions((p) => {
+                              const cur = (p.callEndPolicy ?? defaultCallEndPolicy(language)).allowedReasons;
+                              const next = on ? cur.filter((id) => id !== reason.id) : [...cur, reason.id];
+                              return {
+                                ...p,
+                                callEndPolicy: {
+                                  ...(p.callEndPolicy ?? defaultCallEndPolicy(language)),
+                                  allowedReasons: next.length ? next : cur,
+                                },
+                              };
+                            });
+                          }}
+                        />
+                        <span>{reason.label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+                <Field
+                  label="Farewell"
+                  hint={`One ${langLabel} sentence, spoken before hangup. Leave the default if you do not have a custom hangup script.`}
+                >
+                  <textarea
+                    disabled={locked || ft.saving}
+                    maxLength={240}
+                    className={cn(inputCls, "min-h-[72px] resize-y text-sm")}
+                    value={callEnd.farewell}
+                    onChange={(e) =>
+                      ft.setInstructions((p) => ({
+                        ...p,
+                        callEndPolicy: {
+                          ...(p.callEndPolicy ?? defaultCallEndPolicy(language)),
+                          farewell: e.target.value,
+                        },
+                      }))
+                    }
+                  />
+                </Field>
+                <div className="mt-3">
+                  <SkeuoButton
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    disabled={locked || ft.saving}
+                    onClick={ft.saveCallEndPolicy}
+                  >
+                    Save call end
+                  </SkeuoButton>
+                </div>
+              </div>
 
               <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
                 <Field label="Response style" hint="Optional style tag (e.g. concise, empathetic)">
@@ -274,6 +409,8 @@ export function TestStudioFineTuneWorkbench({
                     <p className="mt-1 font-mono text-[10px]">
                       Script v{ft.optimizerMeta.compiledVersion}
                       {ft.optimizerMeta.optimizerModel ? ` · ${ft.optimizerMeta.optimizerModel}` : ""}
+                      {ft.optimizerMeta.agentName ? ` · ${ft.optimizerMeta.agentName}` : ""}
+                      {ft.optimizerMeta.detectedRole ? ` · ${ft.optimizerMeta.detectedRole}` : ""}
                     </p>
                   ) : (
                     <p className="mt-1">Create agent script to activate the cached brain</p>

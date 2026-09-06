@@ -114,7 +114,7 @@ class DevSecretsStore:
         changed = False
         for secret_key, toggle_key in pairs:
             secret = self._overlay.get(secret_key)
-            if secret and str(secret).strip() and not self._overlay.get(toggle_key):
+            if secret and str(secret).strip() and toggle_key not in self._overlay:
                 self._overlay[toggle_key] = True
                 changed = True
         if changed:
@@ -137,12 +137,13 @@ class DevSecretsStore:
         settings = get_settings()
         with self._lock:
             self._maybe_reload()
-            if field in self._overlay and self._overlay[field] is not None:
+            if field in self._overlay:
                 val = self._overlay[field]
-                if field in _SECRET_FIELDS and val == "":
-                    pass
-                else:
-                    return val
+                if val is None:
+                    return getattr(settings, field, default)
+                if field in (_SECRET_FIELDS | _STRING_FIELDS) and val == "":
+                    return ""
+                return val
         return getattr(settings, field, default)
 
     def effective_secret(self, field: str) -> str | None:
@@ -162,8 +163,11 @@ class DevSecretsStore:
                 rejected.append({"field": key, "reason": "not_allowed"})
                 continue
             if key in _SECRET_FIELDS:
-                if value is None or (isinstance(value, str) and not value.strip()):
-                    rejected.append({"field": key, "reason": "empty_secret"})
+                if value is None:
+                    rejected.append({"field": key, "reason": "null_secret"})
+                    continue
+                if isinstance(value, str) and not value.strip():
+                    clean[key] = ""
                     continue
                 clean[key] = str(value).strip()
                 if key == "cartesia_api_key" and "enable_cartesia" not in patch:
@@ -184,11 +188,10 @@ class DevSecretsStore:
                 if value is None:
                     rejected.append({"field": key, "reason": "null_value"})
                     continue
-                text = str(value).strip()
-                if not text:
-                    rejected.append({"field": key, "reason": "empty_string"})
+                if isinstance(value, str) and not value.strip():
+                    clean[key] = ""
                     continue
-                clean[key] = text
+                clean[key] = str(value).strip()
 
         with self._lock:
             self._overlay.update(clean)
@@ -197,10 +200,9 @@ class DevSecretsStore:
             path.write_text(json.dumps(self._overlay, indent=2), encoding="utf-8")
             applied = list(clean.keys())
 
-        from server.providers import init_provider_registry
+        from server.services.dev_runtime import notify_dev_overlay_changed
 
-        get_settings.cache_clear()
-        init_provider_registry()
+        notify_dev_overlay_changed()
         snapshot = self.snapshot()
         snapshot["applied_keys"] = applied
         snapshot["rejected"] = rejected
@@ -216,10 +218,9 @@ class DevSecretsStore:
                 path = self._path()
                 path.write_text(json.dumps(self._overlay, indent=2), encoding="utf-8")
 
-        from server.providers import init_provider_registry
+        from server.services.dev_runtime import notify_dev_overlay_changed
 
-        get_settings.cache_clear()
-        init_provider_registry()
+        notify_dev_overlay_changed()
         snap = self.snapshot()
         snap["removed"] = field if removed else None
         return snap
@@ -297,9 +298,13 @@ class DevSecretsStore:
 
     @staticmethod
     def _string_row(env_name: str, field: str, settings: Any, overlay: dict[str, Any]) -> dict[str, Any]:
-        source = "overlay" if field in overlay else "env"
-        val = overlay.get(field) if field in overlay else getattr(settings, field, None)
-        text = str(val or "").strip()
+        if field in overlay:
+            source = "overlay"
+            raw = overlay[field]
+            text = "" if raw == "" else str(raw or "").strip()
+        else:
+            source = "env"
+            text = str(getattr(settings, field, None) or "").strip()
         return {
             "env_name": env_name,
             "field": field,
@@ -308,13 +313,21 @@ class DevSecretsStore:
             "source": source,
             "type": "string",
             "editable": True,
+            "cleared": field in overlay and overlay.get(field) == "",
         }
 
     @staticmethod
     def _secret_row(env_name: str, field: str, settings: Any, overlay: dict[str, Any]) -> dict[str, Any]:
-        source = "overlay" if field in overlay else "env"
-        effective = overlay.get(field) if field in overlay else getattr(settings, field, None)
-        effective = str(effective or "").strip()
+        if field in overlay:
+            source = "overlay"
+            raw = overlay[field]
+            if raw == "":
+                effective = ""
+            else:
+                effective = str(raw or "").strip()
+        else:
+            source = "env"
+            effective = str(getattr(settings, field, None) or "").strip()
         return {
             "env_name": env_name,
             "field": field,
@@ -323,6 +336,7 @@ class DevSecretsStore:
             "source": source,
             "type": "secret",
             "editable": True,
+            "cleared": field in overlay and overlay.get(field) == "",
         }
 
     @staticmethod

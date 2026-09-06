@@ -100,6 +100,9 @@ class PlivoClient:
         }
         return await self._request("POST", "/Call/", json=payload)
 
+    async def hangup(self, call_uuid: str) -> dict[str, Any]:
+        return await self._request("POST", f"/Call/{call_uuid}/", json={"status": "completed"})
+
 
 class PlivoCallRegistry:
     def __init__(self) -> None:

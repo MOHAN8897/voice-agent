@@ -168,12 +168,14 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
     elapsedMs: 0,
     words: 0,
     sawVadStart: false,
+    vadStartedAt: 0,
     bargeCooldownUntil: 0,
     turnN: 0,
   });
   const brainAbortRef = useRef<AbortController | null>(null);
   const pendingFinalsRef = useRef<string[]>([]);
   const awaitingBargeRef = useRef(false);
+  const pendingAgentHangupRef = useRef(false);
   const speakCooldownUntilRef = useRef(0);
   const lastAssistantTextRef = useRef("");
   const turnGenRef = useRef(0);
@@ -292,16 +294,17 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
     return j.call_id as string;
   }, [agentId, tier, languageCode, sessionId, stackOverride, trace, onCallStart]);
 
-  const endCall = useCallback(async () => {
+  const endCall = useCallback(async (reason = "user_stop") => {
     if (!callIdRef.current) return;
     const id = callIdRef.current;
+    pendingAgentHangupRef.current = false;
     await fetch("/api/call/end", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ callId: id, reason: "user_stop" }),
+      body: JSON.stringify({ callId: id, reason }),
     });
-    trace("call", `ended ${id}`);
+    trace("call", `ended ${id} ${reason}`);
     onCallEnd?.(id);
     callIdRef.current = null;
     setSessionStatus("ended");
@@ -323,11 +326,13 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
       st.busy = false;
       st.bargeCooldownUntil = now + 250;
       awaitingBargeRef.current = true;
+      pendingAgentHangupRef.current = false;
       pendingFinalsRef.current = [];
       turnGenRef.current += 1;
 
       brainAbortRef.current?.abort();
       brainAbortRef.current = null;
+      const heardText = activePipelineRef.current?.getFullText() || lastAssistantTextRef.current;
       activePipelineRef.current?.cancel();
       activePipelineRef.current = null;
       playbackRef.current?.stop();
@@ -338,7 +343,11 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ sessionId: sessionId || "default" }),
+        body: JSON.stringify({
+          sessionId: sessionId || "default",
+          callId: callIdRef.current,
+          heardText,
+        }),
       }).catch(() => {});
       setSessionStatus(listeningRef.current ? "listening" : "idle");
     },
@@ -357,7 +366,9 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
       bargeRef.current.brainStreaming = true;
       bargeRef.current.busy = true;
       bargeRef.current.sawVadStart = false;
+      bargeRef.current.vadStartedAt = 0;
       awaitingBargeRef.current = false;
+      pendingAgentHangupRef.current = false;
       setSessionStatus("thinking");
       trace("brain", "stream start");
       addBubble("user", text);
@@ -482,10 +493,12 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
             }
             pipeline.onLlmDelta(String(ev.delta));
           }
-          if (ev.done && ev.text) {
-            out = String(ev.text);
+          if (ev.done) {
+            if (ev.text) out = String(ev.text);
             streamUsage = ev.usage as TurnCompleteEvent["usage"];
             memoryUpdate = ev.memory_update as TurnCompleteEvent["memoryUpdate"];
+            const endCallEv = ev.end_call as { should_end?: boolean } | undefined;
+            pendingAgentHangupRef.current = Boolean(endCallEv?.should_end);
           } else if (ev.text && !ev.delta) {
             out = String(ev.text);
           }
@@ -561,6 +574,15 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
             trace("tts:error", e instanceof Error ? e.message : "unknown");
           }
         }
+        if (
+          turnGen === turnGenRef.current &&
+          pendingAgentHangupRef.current &&
+          !awaitingBargeRef.current
+        ) {
+          pendingAgentHangupRef.current = false;
+          await endCall("agent_hangup");
+          return;
+        }
         if (turnGen === turnGenRef.current) {
           speakCooldownUntilRef.current = Date.now() + PLAYBACK_TAIL_MS;
         }
@@ -583,7 +605,7 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
         setSessionStatus(listeningRef.current ? "listening" : "idle");
       }
     },
-    [addBubble, trace, setSessionStatus, languageCode, sessionId]
+    [addBubble, trace, setSessionStatus, languageCode, sessionId, endCall]
   );
 
   runBrainTurnRef.current = (text: string) => {
@@ -792,25 +814,9 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
       }
       if (event === "speech_start" || event === "vad.speech_start") {
         bargeRef.current.sawVadStart = true;
+        bargeRef.current.vadStartedAt = Date.now();
         lastSpeechStartAtRef.current = Date.now();
         trace("vad", "speech start");
-        const st = bargeRef.current;
-        const now = Date.now();
-        if (
-          shouldAllowBargeIn(
-            {
-              agentSpeaking: st.agentSpeaking,
-              brainStreaming: st.brainStreaming,
-              awaitingUserAfterBarge: awaitingBargeRef.current,
-              speakCooldownUntil: speakCooldownUntilRef.current,
-              speakStartedAt: speakStartedAtRef.current,
-            },
-            now
-          ) &&
-          (st.agentSpeaking || st.brainStreaming)
-        ) {
-          doBargeIn("vad-start");
-        }
         return;
       }
       if (event === "final" || event === "transcript.final" || event === "transcript") {
@@ -1040,7 +1046,7 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
               Stop listening
             </SkeuoButton>
           )}
-          <SkeuoButton variant="ghost" onClick={endCall}>End call</SkeuoButton>
+          <SkeuoButton variant="ghost" onClick={() => { void endCall(); }}>End call</SkeuoButton>
         </div>
       )}
 

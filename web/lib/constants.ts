@@ -25,7 +25,7 @@ export const BRAIN_SECTION_LABELS: Record<string, string> = {
   identity_purpose: "Identity & Purpose",
   facts: "Facts",
   actions_limits: "Actions & Limits",
-  flow_qualification: "Flow: qualify buyer",
+  flow_qualification: "Flow: listen, then one needed fact",
   flow_callback: "Flow: arrange callback",
   scope_redirects: "Scope & Redirects",
   guardrails: "Guardrails",

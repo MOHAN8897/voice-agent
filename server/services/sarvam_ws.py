@@ -28,6 +28,7 @@ import websockets  # provided by uvicorn[standard]
 
 from server.config.constants import constants
 from server.config.env import get_settings
+from server.services.dev_secrets_store import dev_secrets_store
 
 
 def _connect(url: str, headers: dict[str, str], **kw: Any):
@@ -82,12 +83,14 @@ def connect_stt_realtime(
         params["high_vad_sensitivity"] = "true"
     qs = "&".join(f"{k}={v}" for k, v in params.items())
     url = f"{constants.SARVAM_STT_REALTIME_WS}?{qs}"
-    headers = {"api-subscription-key": settings.sarvam_api_key}
+    sarvam_key = dev_secrets_store.effective_secret("sarvam_api_key") or settings.sarvam_api_key or ""
+    headers = {"api-subscription-key": sarvam_key}
     return _connect(url, headers, ping_interval=20, ping_timeout=20)
 
 
 def connect_tts_ws(model: str = "bulbul:v3"):
     settings = get_settings()
     url = f"{constants.SARVAM_TTS_WS}?model={model}&send_completion_event=true"
-    headers = {"api-subscription-key": settings.sarvam_api_key}
+    sarvam_key = dev_secrets_store.effective_secret("sarvam_api_key") or settings.sarvam_api_key or ""
+    headers = {"api-subscription-key": sarvam_key}
     return _connect(url, headers, ping_interval=None)  # we send app-level pings per protocol

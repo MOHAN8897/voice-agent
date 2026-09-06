@@ -106,8 +106,9 @@ def _deterministic_compress_dual(behaviour: str, business: str, *, max_tokens: i
 
 
 async def _llm_compress_prompt(raw_prompt: str, *, budget_tokens: int) -> dict[str, Any] | None:
-    settings = get_settings()
-    if not settings.enable_openai:
+    from server.services.dev_runtime import openai_enabled
+
+    if not openai_enabled():
         return None
     try:
         import asyncio

@@ -172,6 +172,7 @@ class Settings(BaseSettings):
     deepseek_base_url: str = Field("https://api.deepseek.com", alias="DEEPSEEK_BASE_URL")
     deepseek_model: str = Field("deepseek-chat", alias="DEEPSEEK_MODEL")
     gemini_api_key: str | None = Field(None, alias="GEMINI_API_KEY")
+    gemini_model: str = Field("gemini-3.5-flash-lite", alias="GEMINI_MODEL")
     cartesia_api_key: str | None = Field(None, alias="CARTESIA_API_KEY")
     cartesia_stt_model: str = Field("ink-whisper", alias="CARTESIA_STT_MODEL")
     cartesia_tts_model: str = Field("sonic-3.5", alias="CARTESIA_TTS_MODEL")

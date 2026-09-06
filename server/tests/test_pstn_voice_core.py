@@ -7,8 +7,8 @@ from server.services.pstn_text_chunker import (
 
 
 def test_drain_complete_sentences():
-    sents, rem = drain_complete_sentences("Hello there. How are you")
-    assert sents == ["Hello there."]
+    sents, rem = drain_complete_sentences("Hello there friend. How are you")
+    assert sents == ["Hello there friend."]
     assert rem == "How are you"
 
 
@@ -16,6 +16,21 @@ def test_drain_long_clause_without_punctuation():
     sents, rem = drain_complete_sentences("a" * 80)
     assert len(sents) == 1
     assert rem == ""
+
+
+def test_drain_comma_clause_at_40_chars():
+    text = "This is a longer clause without period, and more text here"
+    sents, rem = drain_complete_sentences(text)
+    assert sents == ["This is a longer clause without period,"]
+    assert rem == "and more text here"
+
+
+def test_drain_first_chunk_word_boundary():
+    text = "Sure I can help you with that property today"
+    sents, rem = drain_complete_sentences(text, allow_first_fast=True)
+    assert len(sents) == 1
+    assert len(sents[0]) >= 28
+    assert rem
 
 
 def test_extract_opening_greeting_from_brain():

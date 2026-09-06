@@ -74,15 +74,49 @@ class ConversationManager:
     def add_turn(self, session_id: str, user_text: str, assistant_text: str) -> None:
         sess = self._ensure(session_id)
         with self._lock:
+            spoken = assistant_text
+            if sess.get("bargePending"):
+                heard = str(sess.get("bargeHeard") or "").strip()
+                spoken = (heard or spoken).strip()
+                if spoken and "[interrupted]" not in spoken:
+                    spoken = f"{spoken} [interrupted]"
+                sess["bargePending"] = False
+                sess["bargeHeard"] = ""
             sess["messages"].append(
                 {"role": "user", "content": self._truncate_content("user", user_text)}
             )
             sess["messages"].append(
-                {"role": "assistant", "content": self._truncate_content("assistant", assistant_text)}
+                {"role": "assistant", "content": self._truncate_content("assistant", spoken)}
             )
             sess["turnCount"] = int(sess.get("turnCount", 0)) + 1
             sess["updatedAt"] = time.time()
             self._trim(sess)
+
+    def replace_last_assistant(self, session_id: str, assistant_text: str) -> None:
+        """Reconcile stored history when a streaming policy guard shortened speech."""
+        sess = self._ensure(session_id)
+        with self._lock:
+            messages = sess["messages"]
+            if messages and messages[-1].get("role") == "assistant":
+                messages[-1]["content"] = self._truncate_content("assistant", assistant_text)
+                sess["updatedAt"] = time.time()
+
+    def note_barge(self, session_id: str, heard_text: str = "") -> None:
+        """Reconcile history to audio the caller actually heard."""
+        sess = self._ensure(session_id)
+        heard = (heard_text or "").strip()
+        with self._lock:
+            sess["bargeHeard"] = heard
+            sess["bargePending"] = True
+            msgs = sess["messages"]
+            if msgs and msgs[-1].get("role") == "assistant":
+                base = heard or str(msgs[-1].get("content") or "")
+                if "[interrupted]" not in base:
+                    base = f"{base} [interrupted]"
+                msgs[-1]["content"] = self._truncate_content("assistant", base)
+                sess["bargePending"] = False
+                sess["bargeHeard"] = ""
+            sess["updatedAt"] = time.time()
 
     def add_user_only(self, session_id: str, user_text: str) -> None:
         sess = self._ensure(session_id)

@@ -2,12 +2,14 @@
 from __future__ import annotations
 
 import asyncio
+import re
 import time
 from collections.abc import AsyncIterator
 from typing import Any
 
 from server.call import call_context, memory_projection as memory_projection_mod
 from server.call.call_ledger import call_ledger
+from server.call.end_call_validate import validate_end_call
 from server.call.live_turn_schema import LIVE_TURN_JSON_SCHEMA
 from server.call.memory_manager import memory_manager
 from server.call.rolling_summary import maybe_refresh_rolling_summary
@@ -35,8 +37,107 @@ _LLM_KEYS = {
     "input_messages",
 }
 
+_ONE_SENTENCE_REACTIVE = re.compile(
+    r"\b(frustrated|frustrating|annoying|explained this (?:twice|already)|"
+    r"you(?:'re| are) repeating|stop repeating|recorded message|"
+    r"make up|invent (?:a |the )?|hidden prompt|instructions you were given|"
+    r"what(?:'s| is) the weather|weather outside)\b",
+    re.I,
+)
+_SENTENCE_END = re.compile(r"[.!?।](?=\s|$)")
+_DIRECT_FACT_ONLY = re.compile(
+    r"^\s*(?:(?:quickly|just|త్వరగా)[, ]*)?"
+    r"(?:what(?:'s| is) the (?:price|cost)|how much does it cost|"
+    r"(?:price|fees?)\s*(?:ఎంత|enti)?|fees?\s+ఎంత|"
+    r"what time do you close|is parking included|parking\s*(?:ఉందా|unda))"
+    r"[?.!\s]*$",
+    re.I,
+)
+_SEND_REQUEST = re.compile(
+    r"(?:\b(?:email|whatsapp)\b.{0,40}\b(?:send|pamp|పంప|చేయండి|chey)\w*|"
+    r"\b(?:send|pamp|పంప|చేయండి|chey)\w*.{0,40}\b(?:email|whatsapp)\b)",
+    re.I,
+)
+
+
+def _should_cap_response(user_text: str) -> bool:
+    text = user_text or ""
+    return bool(
+        _ONE_SENTENCE_REACTIVE.search(text)
+        or _DIRECT_FACT_ONLY.fullmatch(text)
+        or _SEND_REQUEST.search(text)
+    )
+
+
+def cap_reactive_response(user_text: str, assistant_text: str) -> str:
+    """Keep frustration/repetition recovery to its first spoken sentence."""
+    text = (assistant_text or "").strip()
+    if not text or not _should_cap_response(user_text):
+        return text
+    match = _SENTENCE_END.search(text)
+    return text[: match.end()].strip() if match else text
+
+
+def correction_memory_operation(user_text: str) -> dict[str, str] | None:
+    """Persist explicit caller corrections under one latest-wins canonical key."""
+    text = " ".join((user_text or "").split()).strip()
+    if not text:
+        return None
+    correction = bool(
+        re.search(
+            r"\b(?:no,?\s+i said|actually\b|move (?:it|that) to|change (?:it|that) to|"
+            r"correction\b|i meant\b|not .{1,40},?\s*(?:it(?:'s| is)|my|the))\b|"
+            r"(?:లేదు|కాదు).{0,40}(?:పేరు|అన్నాను|చెప్పాను)",
+            text,
+            re.I,
+        )
+    )
+    if not correction:
+        return None
+    return {"op": "set_fact", "key": "latest_caller_correction", "value": text[:200]}
+
 
 class LiveTurnOrchestrator:
+    def _gate_end_call(
+        self,
+        raw: Any,
+        *,
+        transcript: str,
+        language_code: str,
+        call_id: str | None,
+        spoken_text: str = "",
+    ) -> dict[str, Any]:
+        ctx = call_context.get(call_id) if call_id else None
+        completed = 0
+        snapshot = None
+        if call_id:
+            from server.agent.conversation_manager import conversation_manager
+            from server.call.memory_manager import memory_manager
+
+            completed = conversation_manager.get_completed_turns(ctx.session_id if ctx else "")
+            try:
+                snapshot = memory_manager.get_snapshot(call_id)
+            except Exception:
+                snapshot = None
+        decision = validate_end_call(
+            raw,
+            user_text=transcript,
+            language=language_code,
+            call_status=ctx.status if ctx else "active",
+            already_armed=bool(ctx and ctx.agent_hangup_armed),
+            barge_in_flight=bool(ctx and ctx.barge_in_flight),
+            last_stt_partial_at=ctx.last_stt_partial_at if ctx else None,
+            completed_turns=completed,
+            memory_snapshot=snapshot,
+            call_end_policy=ctx.call_end_policy if ctx else None,
+        )
+        if not decision.accepted:
+            return {"should_end": False, "reason": "none", "farewell": ""}
+        if ctx:
+            ctx.agent_hangup_armed = True
+        farewell = decision.farewell or spoken_text
+        return {"should_end": True, "reason": decision.reason, "farewell": farewell}
+
     async def _memory_blocks(self, call_id: str | None) -> tuple[str | None, str | None]:
         settings = get_settings()
         if not call_id or not settings.working_memory_enabled:
@@ -100,6 +201,7 @@ class LiveTurnOrchestrator:
         ctx = call_context.get(call_id) if call_id else None
         if ctx:
             ctx.heartbeat()
+            ctx.barge_in_flight = False
             openai_model = openai_model or ctx.resolved_stack.llm.model
 
         turn_lock = lock_for(call_id) if call_id else None
@@ -107,10 +209,12 @@ class LiveTurnOrchestrator:
             await turn_lock.acquire()
 
         user_seq = 0
+        ledger_task: asyncio.Task | None = None
         try:
             if call_id and settings.enable_call_archive:
-                user_line = await self._safe_append_user(call_id, transcript, stt_latency_ms)
-                user_seq = int(user_line.get("seq") or 0)
+                ledger_task = asyncio.create_task(
+                    self._safe_append_user(call_id, transcript, stt_latency_ms)
+                )
 
             projection, rolling = await self._memory_blocks(call_id)
             structured = bool(call_id) and settings.working_memory_enabled
@@ -126,6 +230,10 @@ class LiveTurnOrchestrator:
             t0 = time.perf_counter()
             brain_latency_ms: int | None = None
             assistant_text = ""
+            raw_assistant_text = ""
+            reactive_raw = ""
+            reactive_emitted = ""
+            cap_reactive = _should_cap_response(transcript)
             memory_update: dict[str, Any] = {"operations": []}
             memory_parse_failed = False
             stream_usage: dict[str, Any] = {}
@@ -151,11 +259,43 @@ class LiveTurnOrchestrator:
                 if chunk.get("delta") and brain_latency_ms is None:
                     brain_latency_ms = int((time.perf_counter() - t0) * 1000)
                 if chunk.get("done"):
-                    assistant_text = chunk.get("text") or ""
+                    raw_assistant_text = chunk.get("text") or ""
+                    assistant_text = cap_reactive_response(transcript, raw_assistant_text)
                     memory_update = chunk.get("memory_update") or {"operations": []}
                     memory_parse_failed = bool(chunk.get("memory_parse_failed"))
                     stream_usage = chunk.get("usage") or {}
-                yield chunk
+                    gated = dict(chunk)
+                    gated["end_call"] = self._gate_end_call(
+                        chunk.get("end_call"),
+                        transcript=transcript,
+                        language_code=language_code,
+                        call_id=call_id,
+                        spoken_text=assistant_text,
+                    )
+                    gated["text"] = assistant_text
+                    yield gated
+                    continue
+                delta = str(chunk.get("delta") or "")
+                if not cap_reactive or not delta:
+                    yield chunk
+                    continue
+                reactive_raw += delta
+                visible = cap_reactive_response(transcript, reactive_raw)
+                new_delta = visible[len(reactive_emitted) :]
+                reactive_emitted = visible
+                if new_delta:
+                    guarded = dict(chunk)
+                    guarded["delta"] = new_delta
+                    yield guarded
+
+            if ledger_task is not None:
+                user_line = await ledger_task
+                user_seq = int(user_line.get("seq") or 0)
+
+            if raw_assistant_text and assistant_text != raw_assistant_text:
+                from server.agent.conversation_manager import conversation_manager
+
+                conversation_manager.replace_last_assistant(session_id, assistant_text)
 
             if call_id and settings.enable_call_archive:
                 await self._after_assistant(
@@ -185,6 +325,7 @@ class LiveTurnOrchestrator:
         ctx = call_context.get(call_id) if call_id else None
         if ctx:
             ctx.heartbeat()
+            ctx.barge_in_flight = False
             kwargs["openai_model"] = kwargs.get("openai_model") or ctx.resolved_stack.llm.model
 
         turn_lock = lock_for(call_id) if call_id else None
@@ -193,9 +334,11 @@ class LiveTurnOrchestrator:
 
         try:
             user_seq = 0
+            ledger_task: asyncio.Task | None = None
             if call_id and settings.enable_call_archive:
-                user_line = await self._safe_append_user(call_id, transcript, stt_latency_ms)
-                user_seq = int(user_line.get("seq") or 0)
+                ledger_task = asyncio.create_task(
+                    self._safe_append_user(call_id, transcript, stt_latency_ms)
+                )
 
             projection, rolling = await self._memory_blocks(call_id)
             kwargs["memory_projection"] = projection
@@ -212,7 +355,23 @@ class LiveTurnOrchestrator:
             t0 = time.perf_counter()
             llm_kwargs = {k: v for k, v in kwargs.items() if k in _LLM_KEYS}
             result = await generate_response(**llm_kwargs)
+            raw_text = result.get("text") or ""
+            result["text"] = cap_reactive_response(transcript, raw_text)
+            if result["text"] != raw_text:
+                from server.agent.conversation_manager import conversation_manager
+
+                conversation_manager.replace_last_assistant(session_id, result["text"])
+            result["end_call"] = self._gate_end_call(
+                result.get("end_call"),
+                transcript=transcript,
+                language_code=str(kwargs.get("language_code") or "te-IN"),
+                call_id=call_id,
+                spoken_text=result.get("text") or "",
+            )
             brain_latency_ms = int((time.perf_counter() - t0) * 1000)
+            if ledger_task is not None:
+                user_line = await ledger_task
+                user_seq = int(user_line.get("seq") or 0)
             if call_id and settings.enable_call_archive:
                 await self._after_assistant(
                     call_id,
@@ -246,13 +405,20 @@ class LiveTurnOrchestrator:
             except Exception:
                 adapter = None
         stream_kwargs = {k: v for k, v in kwargs.items() if k != "ctx"}
+        if ctx and ctx.resolved_stack:
+            llm_sel = ctx.resolved_stack.llm
+            stream_kwargs.setdefault("model", llm_sel.model)
+            stream_kwargs.setdefault("openai_model", llm_sel.model)
         input_messages = stream_kwargs.pop("input_messages", None)
         schema = LIVE_TURN_JSON_SCHEMA if stream_kwargs.get("structured_live_turn") else None
 
         async def _run_with(adapter_inst) -> AsyncIterator[dict[str, Any]]:
+            self._align_stream_model(stream_kwargs, adapter_inst, registry)
+            model = str(stream_kwargs.get("model") or stream_kwargs.get("openai_model") or "")
+            msgs = self._messages_for_model(input_messages, model)
             stream_fn = adapter_inst.stream_structured_turn if schema else adapter_inst.stream_live_turn
             async for chunk in stream_fn(
-                input_messages=input_messages,
+                input_messages=msgs,
                 schema=schema,
                 **stream_kwargs,
             ):
@@ -273,12 +439,64 @@ class LiveTurnOrchestrator:
                 return
 
         if input_messages is not None:
-            stream_kwargs["input_messages"] = input_messages
-        async for chunk in generate_response_stream(**stream_kwargs):
+            model = str(stream_kwargs.get("openai_model") or stream_kwargs.get("model") or "")
+            stream_kwargs["input_messages"] = self._messages_for_model(input_messages, model)
+        direct_kwargs = {k: v for k, v in stream_kwargs.items() if k != "model"}
+        async for chunk in generate_response_stream(**direct_kwargs):
             yield chunk
 
+    def _messages_for_model(self, messages: list[dict] | None, model: str) -> list[dict] | None:
+        from server.services.prompt_cache_key import supports_explicit_prompt_cache
+
+        if not messages or supports_explicit_prompt_cache(model):
+            return messages
+        return _strip_prompt_cache_breakpoints(messages)
+
+    def _align_stream_model(self, stream_kwargs: dict[str, Any], adapter_inst, registry) -> None:
+        """Never send a Gemini model id to OpenAI (or the reverse) after a provider swap."""
+        pid = getattr(adapter_inst, "provider_id", None)
+        if not pid:
+            return
+        current = str(stream_kwargs.get("model") or stream_kwargs.get("openai_model") or "")
+        allowed = False
+        if registry is not None:
+            try:
+                allowed = registry.is_model_allowed(pid, "llm", current)
+            except Exception:
+                allowed = False
+        if allowed:
+            return
+        model = self._provider_default_llm_model(registry, pid)
+        if not model:
+            return
+        stream_kwargs["model"] = model
+        stream_kwargs["openai_model"] = model
+
+    def _provider_default_llm_model(self, registry, provider_id: str) -> str | None:
+        settings = get_settings()
+        if provider_id == "openai":
+            preferred = (settings.openai_model or "").strip()
+            if preferred and (registry is None or registry.is_model_allowed("openai", "llm", preferred)):
+                return preferred
+        if registry is not None:
+            for p in registry.get_catalog().get("providers") or []:
+                if p.get("id") != provider_id:
+                    continue
+                models = (p.get("models") or {}).get("llm") or []
+                marked = next((m for m in models if m.get("default")), None)
+                row = marked or (models[0] if models else None)
+                if row and row.get("id"):
+                    return str(row["id"])
+        if provider_id == "openai":
+            return settings.openai_model
+        if provider_id == "gemini":
+            return getattr(settings, "gemini_model", None) or "gemini-3.5-flash-lite"
+        if provider_id == "deepseek":
+            return settings.deepseek_model
+        return None
+
     def _fallback_llm_adapter(self, ctx, registry, failed_provider: str | None):
-        if ctx is None:
+        if ctx is None or registry is None:
             return None
         from server.services.dev_fallback_store import dev_fallback_store
 
@@ -326,7 +544,10 @@ class LiveTurnOrchestrator:
         except RuntimeError as e:
             logger.warning(f"[LEDGER] assistant append dropped call={call_id}: {str(e)[:120]}")
             return
-        ops = (memory_update or {}).get("operations") or []
+        ops = list((memory_update or {}).get("operations") or [])
+        correction_op = correction_memory_operation(user_text)
+        if correction_op:
+            ops.append(correction_op)
         applied = 0
         merge_ms: int | None = None
         settings = get_settings()
@@ -388,3 +609,19 @@ class LiveTurnOrchestrator:
 
 
 live_turn_orchestrator = LiveTurnOrchestrator()
+
+
+def _strip_prompt_cache_breakpoints(messages: list[dict]) -> list[dict]:
+    cleaned: list[dict] = []
+    for msg in messages:
+        cloned = dict(msg)
+        content = cloned.get("content")
+        if isinstance(content, list):
+            cloned["content"] = [
+                {k: v for k, v in block.items() if k != "prompt_cache_breakpoint"}
+                if isinstance(block, dict)
+                else block
+                for block in content
+            ]
+        cleaned.append(cloned)
+    return cleaned

@@ -1,23 +1,101 @@
 """
-Default prompting for Telugu voice agent — applied when session has no saved prompts.
-Tuned for spoken Telugu, low latency (short replies), and natural phone-call register.
+Default prompting when a session has no saved prompts.
+Language-specific spoken style is selected by default_style_for().
 """
 
-DEFAULT_RESPONSE_STYLE = "very brief, 1-2 sentences, spoken Telugu"
+DEFAULT_RESPONSE_STYLES: dict[str, str] = {
+    "te-IN": "very brief, 1-2 sentences, spoken Telugu",
+    "en-IN": "warm, brief, 1-2 sentences, spoken Indian English like a person on a phone",
+    "hi-IN": "very brief, 1-2 sentences, spoken Hinglish",
+}
 
-DEFAULT_BEHAVIOUR_INSTRUCTIONS = """VOICE CALL MODE — Telugu-first assistant
-- Reply in natural SPOKEN Telugu (మాట్లాడే టోన్). Mix English words the user uses (plot, flat, budget, loan, Python).
-- STRICT: 1–2 short sentences only. Max 25 words unless the user explicitly asks for detail.
-- One idea per turn. One question maximum — only when you truly need clarification.
-- Start with a tiny backchannel when natural: "అవునా…", "సరే…", "ఓ కదా…"
+# Back-compat: factory sessions with no language still Telugu.
+DEFAULT_RESPONSE_STYLE = DEFAULT_RESPONSE_STYLES["te-IN"]
+
+_STYLE_ALIASES = {
+    "te": "te-IN",
+    "te-in": "te-IN",
+    "en": "en-IN",
+    "en-in": "en-IN",
+    "en-us": "en-IN",
+    "en-gb": "en-IN",
+    "english": "en-IN",
+    "hi": "hi-IN",
+    "hi-in": "hi-IN",
+    "hindi": "hi-IN",
+}
+
+
+def canonical_language(language: str | None) -> str:
+    raw = (language or "te-IN").strip()
+    if raw in DEFAULT_RESPONSE_STYLES:
+        return raw
+    mapped = _STYLE_ALIASES.get(raw.lower())
+    if mapped:
+        return mapped
+    if raw.lower().startswith("en"):
+        return "en-IN"
+    if raw.lower().startswith("hi"):
+        return "hi-IN"
+    return "te-IN"
+
+
+def default_style_for(language: str | None) -> str:
+    return DEFAULT_RESPONSE_STYLES[canonical_language(language)]
+
+
+_LANG_STYLE_MARKERS = {
+    "te-IN": ("spoken telugu", "tanglish"),
+    "en-IN": ("spoken indian english",),
+    "hi-IN": ("spoken hinglish",),
+}
+
+
+def style_for_language(style: str | None, language: str | None) -> str:
+    """Use an explicit style only when it matches the compile language.
+
+    Fine-tune can resend a previously stored 'spoken Telugu' tag after the
+    user switches the picker to English. That must not leak into the brain.
+    """
+    wanted = default_style_for(language)
+    raw = (style or "").strip()
+    if not raw:
+        return wanted
+    lowered = raw.lower()
+    target = canonical_language(language)
+    for code, markers in _LANG_STYLE_MARKERS.items():
+        if code != target and any(m in lowered for m in markers):
+            return wanted
+    return raw[:100]
+
+
+DEFAULT_BEHAVIOUR_INSTRUCTIONS = """VOICE CALL MODE — spoken assistant
+- Reply in the call language with everyday words the caller uses. Sound like a helpful colleague, not a policy page.
+- 1–2 short sentences. Ask a question only when you still need a fact — never a qualification checklist.
 - Never use bullet lists, markdown, or numbered steps in voice replies.
-- Never say you are an AI unless asked. Sound like a helpful Telugu-speaking human on a call.
-- If transcript is unclear, ask them to repeat once — do not guess."""
+- Never say you are an AI unless asked. Never say goodbye unless you are actually hanging up.
+- If they object, are busy, want WhatsApp, or say don't call — honor that. Do not keep selling.
+- Do not claim you sent a message, opened a ticket, made a booking, changed a contact preference, or handed work to a team unless it really happened.
+- Keep implementation details private. Never mention tools, connections, system access, capability, or "on this call"; state the honest business outcome.
+- If transcript is unclear, ask them to repeat once — do not guess.
+- Hesitation (hmm, umm, let me think) is not a cue to pitch or ask another question.
+- Sarcasm is not a buying signal. Missing facts: I'll check and get back to you.
+- If corrected, own it briefly and use the corrected fact. Harmless small talk gets one natural beat; do not leave the business role."""
 
-DEFAULT_BUSINESS_INSTRUCTIONS = """You are a helpful Telugu voice assistant for general conversation, learning, and everyday questions.
-- Prefer practical, accurate answers grounded in what the user said.
-- For property/business topics: ask one clarifying question before long explanations.
-- Keep domain facts conservative — if unsure, say so briefly in Telugu."""
+DEFAULT_BUSINESS_INSTRUCTIONS = """You are a helpful voice assistant for this business.
+- Prefer practical, accurate answers grounded in the brief and what the user said.
+- Keep domain facts conservative — if unsure, say so briefly in the call language.
+- Never invent prices, policies, salaries, capabilities, completed actions, or prior conversations."""
+
+CACHE_FLOOR_PAD = """--- PLATFORM CACHE FLOOR ---
+You are a live-call representative of this business. Stay inside the brief.
+Answer the last customer utterance first. A question must earn its place.
+Never invent prices, policies, salaries, availability, or prior conversations.
+Honor busy, later, and send-details in one short line. Stay on the line.
+Do not hang up on maybe, frustration, objections, or silence.
+Firm no or don't-call: one farewell and end_call.should_end true.
+Hesitation is not a request to pitch. This call has no history from earlier calls.
+"""
 
 # OpenAI model catalog shown in Fine-tune Console (slug → UI label)
 OPENAI_MODEL_CATALOG: list[dict[str, str]] = [

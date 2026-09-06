@@ -206,3 +206,17 @@ def test_outcome_retry_enqueues_and_returns_202(monkeypatch, tmp_path):
     enq.assert_awaited()
     get_settings.cache_clear()
 
+
+def test_call_start_clears_session_conversation_history(monkeypatch, tmp_path):
+    from server.agent.conversation_manager import conversation_manager
+    from server.agent.session_memory import session_memory
+
+    c = _client(monkeypatch, tmp_path)
+    conversation_manager.add_turn("leak-sess", "Don't call me again.", "Okay, goodbye.")
+    session_memory.set_summary("leak-sess", "Caller asked not to be called.")
+    assert conversation_manager.get_history("leak-sess")
+    c.post("/api/call/start", json={"sessionId": "leak-sess", "channel": "browser"})
+    assert conversation_manager.get_history("leak-sess") == []
+    assert session_memory.get_summary("leak-sess") == ""
+    get_settings.cache_clear()
+

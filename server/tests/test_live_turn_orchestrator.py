@@ -8,8 +8,71 @@ from unittest.mock import patch
 import pytest
 
 from server.call.call_ledger import call_ledger
-from server.call.live_turn_orchestrator import live_turn_orchestrator
+from server.call.live_turn_orchestrator import (
+    cap_reactive_response,
+    correction_memory_operation,
+    live_turn_orchestrator,
+)
 from server.config.env import get_settings
+
+
+def test_reactive_response_keeps_only_human_recovery_sentence():
+    assert cap_reactive_response(
+        "You're repeating yourself like a recorded message.",
+        "Fair point — I was repeating myself. The library closes at eight PM.",
+    ) == "Fair point — I was repeating myself."
+    assert cap_reactive_response(
+        "What time do you close?",
+        "We close at eight PM. We're open daily.",
+    ) == "We close at eight PM."
+    assert cap_reactive_response(
+        "Fees ఎంత?",
+        "Monthly fee eight thousand rupees. Inka emaina kavala?",
+    ) == "Monthly fee eight thousand rupees."
+    assert cap_reactive_response(
+        "Please send it on WhatsApp.",
+        "I can't send it directly. The fee is eight thousand rupees.",
+    ) == "I can't send it directly."
+
+
+def test_explicit_correction_uses_one_latest_wins_memory_key():
+    first = correction_memory_operation("Actually Wednesday, not Tuesday.")
+    latest = correction_memory_operation("Move that to Thursday at four.")
+    assert first == {
+        "op": "set_fact",
+        "key": "latest_caller_correction",
+        "value": "Actually Wednesday, not Tuesday.",
+    }
+    assert latest and latest["key"] == first["key"]
+    assert latest["value"] == "Move that to Thursday at four."
+    assert correction_memory_operation("I'm not interested right now.") is None
+
+
+@pytest.mark.asyncio
+async def test_stream_suppresses_recap_after_frustration(monkeypatch):
+    monkeypatch.setenv("ENABLE_CALL_ARCHIVE", "false")
+    get_settings.cache_clear()
+
+    async def fake_stream(**_kwargs):
+        yield {"delta": "You're right — I'm sorry."}
+        yield {"delta": " The failed payment was nine hundred rupees."}
+        yield {
+            "done": True,
+            "text": "You're right — I'm sorry. The failed payment was nine hundred rupees.",
+            "end_call": {"should_end": False, "reason": "none", "farewell": ""},
+        }
+
+    chunks = []
+    with patch("server.call.live_turn_orchestrator.generate_response_stream", fake_stream):
+        async for chunk in live_turn_orchestrator.handle_user_turn_stream(
+            transcript="I've explained this twice and I'm frustrated.",
+            session_id="reactive-cap",
+        ):
+            chunks.append(chunk)
+
+    assert "".join(str(chunk.get("delta") or "") for chunk in chunks) == "You're right — I'm sorry."
+    assert next(chunk for chunk in chunks if chunk.get("done"))["text"] == "You're right — I'm sorry."
+    get_settings.cache_clear()
 
 
 @pytest.mark.asyncio
@@ -258,3 +321,113 @@ def test_maybe_build_live_input_uses_locked_compiled_brain():
         projection=None,
         rolling=None,
     ) is None
+
+
+@pytest.mark.asyncio
+async def test_direct_stream_path_drops_model_kwarg(monkeypatch):
+    captured: dict = {}
+
+    async def fake_stream(**kwargs):
+        captured.update(kwargs)
+        yield {"done": True, "text": "ok"}
+
+    monkeypatch.setattr(
+        "server.call.live_turn_orchestrator.generate_response_stream", fake_stream
+    )
+    async for _ in live_turn_orchestrator._stream_llm(
+        ctx=None,
+        transcript="hi",
+        model="gpt-5.6-luna",
+        openai_model="gpt-5.6-luna",
+    ):
+        pass
+    assert "model" not in captured
+    assert captured["openai_model"] == "gpt-5.6-luna"
+
+
+def test_align_stream_model_rewrites_gemini_id_for_openai():
+    class FakeAdapter:
+        provider_id = "openai"
+
+    class FakeReg:
+        def is_model_allowed(self, pid, stage, model):
+            return pid == "openai" and str(model).startswith("gpt-")
+
+        def get_catalog(self):
+            return {
+                "providers": [
+                    {
+                        "id": "openai",
+                        "models": {"llm": [{"id": "gpt-5.6-luna", "default": True}]},
+                    }
+                ]
+            }
+
+    kw = {"model": "gemini-3.5-flash-lite", "openai_model": "gemini-3.5-flash-lite"}
+    live_turn_orchestrator._align_stream_model(kw, FakeAdapter(), FakeReg())
+    assert kw["model"] == "gpt-5.6-luna"
+    assert kw["openai_model"] == "gpt-5.6-luna"
+
+
+def test_messages_for_model_strips_breakpoint_on_gpt55():
+    msgs = [
+        {
+            "role": "developer",
+            "content": [
+                {"type": "input_text", "text": "BRAIN", "prompt_cache_breakpoint": {"mode": "explicit"}}
+            ],
+        }
+    ]
+    kept = live_turn_orchestrator._messages_for_model(msgs, "gpt-5.6-luna")
+    assert kept is msgs
+    assert "prompt_cache_breakpoint" in kept[0]["content"][0]
+    stripped = live_turn_orchestrator._messages_for_model(msgs, "gpt-5.5")
+    assert "prompt_cache_breakpoint" not in stripped[0]["content"][0]
+    assert stripped[0]["content"][0]["text"] == "BRAIN"
+    assert "prompt_cache_breakpoint" in msgs[0]["content"][0]
+
+
+def test_maybe_build_live_input_enables_cache_prefix_for_gemini():
+    from datetime import datetime, timezone
+
+    from server.call.call_context import CallContext
+    from server.providers.base import ResolvedStack, StageSelection
+
+    brain = ("You are a Telugu voice agent. " * 200).strip()
+    ctx = CallContext(
+        call_id="gem-cache",
+        tenant_id="t",
+        agent_id="a",
+        session_id="s",
+        channel="browser",
+        direction="inbound",
+        environment="development",
+        tier="medium",
+        resolved_stack=ResolvedStack(
+            combination_id="c",
+            tier="medium",
+            mode="frontend",
+            stt=StageSelection("sarvam", "saaras:v3-realtime", {}),
+            llm=StageSelection("gemini", "gemini-3.5-flash-lite", {}),
+            tts=StageSelection("sarvam", "bulbul:v3", {}),
+            language="te-IN",
+        ),
+        compiled_brain_version="cb_v1",
+        compiled_brain_text=brain,
+        started_at=datetime.now(timezone.utc),
+        storage_path="data/calls/gem-cache/",
+    )
+    msgs = live_turn_orchestrator._maybe_build_live_input(
+        ctx=ctx,
+        transcript="hi",
+        session_id="s",
+        openai_model="gemini-3.5-flash-lite",
+        projection="name: Ravi",
+        rolling="Caller is Ravi",
+    )
+    assert msgs is not None
+    assert msgs[0]["content"][0]["text"] == brain
+    assert "prompt_cache_breakpoint" in msgs[0]["content"][0]
+    joined = str(msgs[1:])
+    assert "name: Ravi" in joined
+    assert brain not in joined

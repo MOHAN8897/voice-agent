@@ -38,7 +38,7 @@ def test_default_brain_prompt_endpoint(monkeypatch):
     assert r.status_code == 200
     j = r.json()
     assert "brainPrompt" in j
-    assert "--- TELUGU VOICE ---" in j["brainPrompt"]
+    assert "--- SPOKEN LANGUAGE (te-IN) ---" in j["brainPrompt"]
     assert j["estimatedTokens"] >= 1024
     assert j["cacheMinTokens"] == 1024
     assert j["budgetMinTokens"] == 1500
@@ -158,5 +158,6 @@ def test_effective_prompt_shows_composed_brain(monkeypatch):
     assert j["channels"]["business_present"] is True
     assert j.get("compiledVersion", 0) >= 1
     assert j["cacheEligible"] == (j["estimatedTokens"] >= get_settings().prompt_cache_min_tokens)
+    assert "--- CALL END POLICY ---" in save.get("brainPromptFull", j["brainPrompt"])
     c.delete("/api/instructions", params={"sessionId": sid})
     get_settings.cache_clear()

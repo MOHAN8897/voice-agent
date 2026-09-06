@@ -22,17 +22,28 @@ from server.agent.brain_prompt_composer import (
     MAX_AGENT_BRIEF_CHARS,
     MAX_AGENT_BRIEF_WORDS,
 )
+from server.prompts.conversation_policy import (
+    LIVE_CALL_GUIDE_BODY,
+    checklist_flow_detected,
+    flow_section,
+    infer_agent_role,
+    role_section,
+)
 from server.brain.sections import STATIC_OUTPUT_RULES
 from server.config.env import get_settings
 from server.prompts.agent_voice_rules import (
-    AGENT_OPENING_REQUIREMENTS,
-    AGENT_TANGLISH_LANGUAGE_RULE,
-    AGENT_VOICE_BEHAVIOR_RULES,
+    IDENTITY_SPEAK,
+    call_end_policy_section,
+    language_runtime_footer,
+    normalize_compile_language,
+    opening_line_for,
+    script_writer_system,
+    spoken_pack_for,
 )
-from server.prompts.brain_prompt import SECTION_SAFETY, SECTION_TELUGU_VOICE
-from server.prompts.voice_defaults import DEFAULT_RESPONSE_STYLE
+from server.prompts.brain_prompt import SECTION_SAFETY
+from server.prompts.voice_defaults import style_for_language
 
-COMPILER_VERSION = "agent_script_v3"
+COMPILER_VERSION = "agent_script_v13"
 
 AGENT_SCRIPT_SCHEMA: dict[str, Any] = {
     "type": "object",
@@ -43,13 +54,42 @@ AGENT_SCRIPT_SCHEMA: dict[str, Any] = {
         },
         "agent_name": {"type": "string"},
         "company_name": {"type": "string"},
+        "role": {
+            "type": "string",
+            "description": "Primary role from the brief objective, not incidental nouns",
+            "enum": [
+                "sales",
+                "support",
+                "recruitment",
+                "appointment",
+                "education",
+                "information",
+                "lead_qualification",
+                "follow_up",
+                "other",
+            ],
+        },
         "role_summary": {"type": "string"},
         "key_facts": {"type": "array", "items": {"type": "string"}},
+        "unknown_topics": {"type": "array", "items": {"type": "string"}},
         "opening_line_te": {"type": "string"},
-        "qualification_questions": {"type": "array", "items": {"type": "string"}},
+        "may_sell": {"type": "boolean"},
         "guardrails": {"type": "array", "items": {"type": "string"}},
     },
-    "required": ["agent_script"],
+    # OpenAI strict JSON Schema requires every declared property to be required.
+    # Values may be empty, but omitted optional keys make the whole request fail.
+    "required": [
+        "agent_script",
+        "agent_name",
+        "company_name",
+        "role",
+        "role_summary",
+        "key_facts",
+        "unknown_topics",
+        "opening_line_te",
+        "may_sell",
+        "guardrails",
+    ],
     "additionalProperties": False,
 }
 
@@ -61,6 +101,8 @@ class AgentScriptResult:
     company_name: str = ""
     role_summary: str = ""
     key_facts: list[str] = field(default_factory=list)
+    detected_role: str = "other"
+    response_style: str = ""
     source_checksum: str = ""
     optimizer_model: str = "deterministic_v1"
     optimizer_version: str = COMPILER_VERSION
@@ -76,6 +118,8 @@ class AgentScriptResult:
             "company_name": self.company_name,
             "role_summary": self.role_summary,
             "preserved_facts": self.key_facts[:8],
+            "detected_role": self.detected_role,
+            "response_style": self.response_style,
             "preserved_rules": [],
             "deduplicated_items": [],
             "conflicts": [],
@@ -89,8 +133,14 @@ class AgentScriptResult:
         }
 
 
-def brief_checksum(*, brief: str, language: str, style: str | None) -> str:
-    payload = "\n---\n".join([brief.strip(), language.strip(), (style or DEFAULT_RESPONSE_STYLE).strip()])
+def brief_checksum(*, brief: str, language: str, style: str | None, call_end_policy: dict[str, Any] | None = None) -> str:
+    policy_key = ""
+    if call_end_policy:
+        reasons = ",".join(str(r) for r in (call_end_policy.get("allowedReasons") or []))
+        policy_key = f"{reasons}|{str(call_end_policy.get('farewell') or '')[:240]}"
+    payload = "\n---\n".join(
+        [brief.strip(), language.strip(), style_for_language(style, language).strip(), policy_key]
+    )
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
@@ -106,10 +156,13 @@ _COMPANY_HINT = re.compile(
     r"hotel|bank|school|college|nursery|store|studio|farms|farm)",
     re.I,
 )
+_LIVE_CALL_GUIDE_TITLE = "LIVE CALL GUIDE"
 _SECTION_NAMES = (
     "AGENT IDENTITY",
     "OPENING",
     "WORK SCOPE",
+    "ROLE & OBJECTIVE",
+    "LIVE CALL GUIDE",
     "VOICE STYLE",
     "CONVERSATION FLOW",
     "OBJECTION HANDLING",
@@ -128,17 +181,19 @@ def _clean_identity_value(value: str) -> str:
 
 
 def extract_agent_name_from_brief(brief: str) -> str:
+    name_value = r"([^\n.,;]{2,50}?)(?=\s+(?:for|where)\b|[.,;]|$)"
     patterns = (
-        r"agent\s*name\s*(?:is|:)?\s*([A-Za-z][A-Za-z]{1,24})",
-        r"named\s+([A-Za-z][A-Za-z]{1,24})",
-        r"\bnenu\s+([A-Za-z][A-Za-z]{1,24})",
+        rf"agent\s+named\s+{name_value}",
+        rf"agent\s*name\s*(?:(?:is)\b\s*|:\s*)?{name_value}",
+        rf"named\s+{name_value}",
+        rf"\bnenu\s+{name_value}",
     )
     for pat in patterns:
         match = re.search(pat, brief or "", re.I)
         if match:
             name = _clean_identity_value(match.group(1))
             if name:
-                return name.split()[0]
+                return name
     return ""
 
 
@@ -170,18 +225,54 @@ def infer_agent_name(brief: str) -> str:
     named = extract_agent_name_from_brief(brief)
     if named:
         return named
-    lower = (brief or "").lower()
-    if any(word in lower for word in ("car", "cab", "taxi", "booking", "driver")):
-        return "Ravi"
-    if any(word in lower for word in ("support", "complaint", "help desk", "ticket")):
-        return "Anu"
     return "Priya"
 
 
 def work_scope_from_brief(brief: str, company: str) -> str:
     text = " ".join((brief or "").split())
-    text = re.sub(r"agent\s*name\s*(?:is|:)?\s*[A-Za-z][A-Za-z .]{0,30}", "", text, flags=re.I)
+    text = re.sub(r"^ok\s+", "", text, flags=re.I)
+    text = re.sub(
+        r"create\s+an?\s+(?:\w+\s+){0,3}agent\s+(?:named\s+)?[A-Za-z][A-Za-z]{1,24}\s*(?:for\s+)?",
+        "",
+        text,
+        flags=re.I,
+    )
+    text = re.sub(r"create\s+an?\s+agent\s+(?:named\s+)?[A-Za-z][A-Za-z]{1,24}\s*", "", text, flags=re.I)
+    text = re.sub(
+        r"agent\s+named\s+[^\n.,;]{2,50}?(?=\s+(?:for|where)\b|[.,;]|$)[.,;]?\s*",
+        "",
+        text,
+        flags=re.I,
+    )
+    text = re.sub(
+        r"agent\s*name\s*(?:(?:is)\b\s*|:\s*)?[^\n.,;]{2,50}?"
+        r"(?=\s+(?:for|where)\b|[.,;]|$)[.,;]?\s*",
+        "",
+        text,
+        flags=re.I,
+    )
+    text = re.sub(r"where\s+(?:he|she|they)\s+is\s+(?:an?\s+)?", "", text, flags=re.I)
     text = re.sub(r"company(?:\s*name)?\s*(?:is|:)?\s*[^\n.]{2,50}", "", text, flags=re.I)
+    text = re.sub(r"never invent[^.]*\.?", "", text, flags=re.I)
+    text = re.sub(r"do not sell[^.]*\.?", "", text, flags=re.I)
+    text = re.sub(r"don'?t sell[^.]*\.?", "", text, flags=re.I)
+    text = re.sub(r"must not sell[^.]*\.?", "", text, flags=re.I)
+    text = re.sub(r"do not upsell[^.]*\.?", "", text, flags=re.I)
+    text = re.sub(r"don'?t upsell[^.]*\.?", "", text, flags=re.I)
+    text = re.sub(r"do not restart[^.]*\.?", "", text, flags=re.I)
+    text = re.sub(r"don'?t restart[^.]*\.?", "", text, flags=re.I)
+    text = re.sub(r"salary is not in this brief[^.]*\.?", "", text, flags=re.I)
+    text = re.sub(r"never invent availability[^.]*\.?", "", text, flags=re.I)
+    text = re.sub(r"never invent (?:discounts?|completed actions?)[^.]*\.?", "", text, flags=re.I)
+    text = re.sub(
+        r"no (?:email|calendar|messaging|ticketing|refund|booking|scheduling|payment|"
+        r"crm|account-change|hiring-system|contact-list|enrollment)(?:[^.]*)"
+        r"(?:tools?|systems?|access|capabilit(?:y|ies)|connected)[^.]*\.?",
+        "",
+        text,
+        flags=re.I,
+    )
+    text = re.sub(r"\bsales pitch\b", "", text, flags=re.I)
     if company:
         text = re.sub(re.escape(company), "", text, flags=re.I)
     text = re.sub(r"\s+", " ", text).strip(" .,:;-")
@@ -192,20 +283,18 @@ def work_scope_from_brief(brief: str, company: str) -> str:
     return text
 
 
-def build_opening_line(*, agent_name: str, company_name: str, work_scope: str) -> str:
-    if company_name:
-        return (
-            f"Namaste! Nenu {agent_name}, {company_name} nundi matladutunnanu. "
-            "Meeku ela help cheyagalanu?"
-        )
-    work = work_scope.strip()
-    if len(work) > 70:
-        work = work[:67].rsplit(" ", 1)[0]
-    if not work:
-        work = "ee call lo mention chesina pani"
-    return (
-        f"Namaste! Nenu {agent_name}. {work} ki related ga meeku help chestunnanu. "
-        "Ela help cheyagalanu?"
+def build_opening_line(
+    *,
+    agent_name: str,
+    company_name: str,
+    work_scope: str,
+    language: str = "te-IN",
+) -> str:
+    return opening_line_for(
+        language,
+        agent_name=agent_name,
+        company_name=company_name,
+        work_scope=work_scope,
     )
 
 
@@ -214,6 +303,7 @@ def resolve_script_identity(
     *,
     llm_name: str = "",
     llm_company: str = "",
+    language: str = "te-IN",
 ) -> tuple[str, str, str, str]:
     """Return (agent_name, company_name, work_scope, opening_line). Never invent a company."""
     brief_name = extract_agent_name_from_brief(brief)
@@ -225,7 +315,12 @@ def resolve_script_identity(
         guessed = _clean_identity_value(llm_company)
         company = guessed if guessed and guessed.lower() in (brief or "").lower() else ""
     work = work_scope_from_brief(brief, company)
-    opening = build_opening_line(agent_name=name, company_name=company, work_scope=work)
+    opening = build_opening_line(
+        agent_name=name,
+        company_name=company,
+        work_scope=work,
+        language=language,
+    )
     return name, company, work, opening
 
 
@@ -239,6 +334,21 @@ def _strip_script_section(script: str, title: str) -> str:
     return pattern.sub("\n", script, count=1).strip()
 
 
+def _sanitize_conversation_flow(script: str, role: str = "other") -> str:
+    header = "CONVERSATION FLOW"
+    pattern = re.compile(
+        rf"(?:^|\n)(?:---\s*)?{re.escape(header)}(?:\s*---)?[ \t]*\n"
+        rf"(.*?)(?=(?:\n(?:---\s*)?(?:{_SECTION_SPLIT})(?:\s*---)?[ \t]*\n)|\Z)",
+        re.S | re.I,
+    )
+    match = pattern.search(script or "")
+    if not match:
+        return script
+    if not checklist_flow_detected(match.group(1) or ""):
+        return script
+    return pattern.sub("\n" + flow_section(role), script, count=1).strip()
+
+
 def ensure_script_identity_and_scope(
     script: str,
     *,
@@ -246,28 +356,35 @@ def ensure_script_identity_and_scope(
     company_name: str,
     work_scope: str,
     opening_line: str,
+    language: str = "te-IN",
+    role: str = "other",
 ) -> str:
     body = _PLACEHOLDER_RE.sub("", script or "").strip()
-    for title in ("AGENT IDENTITY", "OPENING", "WORK SCOPE"):
+    for title in ("AGENT IDENTITY", "OPENING", "WORK SCOPE", "ROLE & OBJECTIVE", "LIVE CALL GUIDE"):
         body = _strip_script_section(body, title)
-    identity = (
-        f"You are {agent_name}"
-        + (f", calling from {company_name}" if company_name else f". You handle: {work_scope}")
-        + ".\nSpeak natural Tanglish. Introduce yourself on every call — never skip the opening."
+    body = _sanitize_conversation_flow(body, role)
+    lang = normalize_compile_language(language)
+    handle = (
+        f", calling from {company_name}."
+        if company_name
+        else f". You handle: {work_scope.rstrip(' .')}."
     )
+    identity = f"You are {agent_name}{handle} {IDENTITY_SPEAK[lang]}"
     opening = (
         f"{opening_line}\n"
         "Say this introduction (or a close natural variation) as the first turn when the call connects."
     )
     scope = (
         f"You only do this work on the call:\n{work_scope}\n"
-        "Stay inside this scope. If the caller asks about something else, politely say it is "
-        "outside this call's work and return to the duties above."
+        "Stay inside this scope. If the caller asks about something else, give one brief human boundary. "
+        "Do not repeat the scope, catalog facts, price, hours, or issue summary unless the caller asks."
     )
     return (
         f"--- AGENT IDENTITY ---\n{identity}\n\n"
         f"--- OPENING ---\n{opening}\n\n"
         f"--- WORK SCOPE ---\n{scope}\n\n"
+        f"{role_section(role)}\n\n"
+        f"--- LIVE CALL GUIDE ---\n{LIVE_CALL_GUIDE_BODY}\n\n"
         f"{body}".strip()
     )
 
@@ -279,24 +396,27 @@ def _deterministic_script(
     company_name: str,
     work_scope: str,
     opening_line: str,
+    language: str = "te-IN",
+    role: str = "other",
 ) -> str:
     """Fallback when OpenAI is unavailable — still produces a usable script skeleton."""
     skeleton = (
         "--- VOICE STYLE ---\n"
-        f"{AGENT_VOICE_BEHAVIOR_RULES}\n\n"
-        "--- CONVERSATION FLOW ---\n"
-        "Listen first. Keep every reply to 60–80 characters unless the caller asks for more detail.\n"
-        "Ask one clarifying question at a time (budget, location, timeline, product type).\n"
-        "Be persuasive until a firm no; then stop pushing. Mirror the customer's language mix.\n"
-        "Remember facts they already gave — never ask for quantity, color, delivery, or budget twice.\n\n"
+        "Sound like a real person who works for this business. "
+        "Keep replies to 1-2 spoken sentences. A question must earn its place.\n\n"
+        f"{flow_section(role)}\n"
+        "--- OBJECTION HANDLING ---\n"
+        "Price, timing, already decided, already know that, will think about it: "
+        "acknowledge the actual concern in one sentence. Do not resume a generic pitch.\n\n"
         "--- GUARDRAILS ---\n"
-        "Never invent prices, availability, policies, or prior conversations.\n"
-        "If unsure, say you will confirm and offer a callback.\n"
-        "Politely end the call when the user says goodbye.\n\n"
+        "Never invent prices, availability, policies, salaries, or prior conversations.\n"
+        "Never claim a message, ticket, booking, or other action happened unless an available tool performed it.\n"
+        "If unsure, say you will confirm and offer a real next step.\n"
+        "Politely end the call when the user says goodbye or don't-call.\n\n"
         "--- CLOSING ---\n"
-        "Summarize next step (site visit, callback, order confirm) in one sentence.\n"
-        "Thank them and close naturally.\n\n"
-        f"Follow this brief on every call:\n{brief.strip()}"
+        "One next step that fits this role, in one sentence. Thank them and close naturally.\n"
+        "Firm no: short farewell and hang up.\n\n"
+        f"Source facts and duties:\n{work_scope}"
     )
     return ensure_script_identity_and_scope(
         skeleton,
@@ -304,6 +424,8 @@ def _deterministic_script(
         company_name=company_name,
         work_scope=work_scope,
         opening_line=opening_line,
+        language=language,
+        role=role,
     )
 
 
@@ -313,8 +435,9 @@ async def _llm_generate_script(
     language: str,
     budget_tokens: int,
 ) -> dict[str, Any] | None:
-    settings = get_settings()
-    if not settings.enable_openai:
+    from server.services.dev_runtime import openai_enabled
+
+    if not openai_enabled():
         return None
     try:
         import asyncio
@@ -323,33 +446,12 @@ async def _llm_generate_script(
         from server.providers.openai_llm import OpenAILLMAdapter
 
         adapter = OpenAILLMAdapter()
-        target_words = max(400, min(2000, int(budget_tokens * 0.4)))
-        system = (
-            "You write complete voice-agent calling scripts for Telugu phone assistants in India. "
-            "Given a short user brief, output a single plain-text script the agent follows on every call. "
-            "Include clear section headers:\n"
-            "AGENT IDENTITY, OPENING, WORK SCOPE, VOICE STYLE, CONVERSATION FLOW, OBJECTION HANDLING, GUARDRAILS, CLOSING.\n"
-            "Rules:\n"
-            f"- TOP PRIORITY — {AGENT_TANGLISH_LANGUAGE_RULE}\n"
-            "- All example dialogue lines in the script must demonstrate natural Tanglish, not literary Telugu.\n"
-            "- You MUST include every section through CLOSING — never stop mid-section.\n"
-            "- Extract agent name and company from the brief when provided. If no agent name is given, invent a suitable Telugu telecaller first name. If no company is given, do NOT invent a brand — describe the work from the brief instead.\n"
-            f"- {AGENT_OPENING_REQUIREMENTS}\n"
-            "- Telecaller / sales flows: qualify budget, location, timeline; offer one clear next step.\n"
-            "- Plain text only — no markdown, no bullet symbols, no numbered lists.\n"
-            "- NEVER invent prices, discounts, inventory, policies, or capabilities not in the brief.\n"
-            "- Keep responses short for live voice (1-2 sentences per turn).\n"
-            "- Every live reply should target 60–80 characters unless the caller explicitly asks for more detail.\n"
-            "- All numbers (prices, quantities, phone numbers, dates, times) must be spoken in English only — use English digits or English number words, never Telugu number words or Telugu numerals.\n"
-            f"- Target roughly {target_words} words for agent_script.\n\n"
-            "MANDATORY — weave these voice-sales behaviors into VOICE STYLE and CONVERSATION FLOW "
-            "(natural prose, not a raw checklist dump):\n"
-            f"{AGENT_VOICE_BEHAVIOR_RULES}"
-        )
+        settings = get_settings()
+        system = script_writer_system(language=language, budget_tokens=budget_tokens)
         user = (
             f"Language: {language}\n\n"
             f"User brief:\n{brief}\n\n"
-            "Write the complete calling script now."
+            "Infer the role from the brief. Write a conversational policy, not a question tree."
         )
 
         async def _run():
@@ -364,7 +466,7 @@ async def _llm_generate_script(
                     model=settings.post_call_llm_model or settings.openai_model,
                 ),
                 schema_name="agent_calling_script",
-                max_output_tokens=min(4000, budget_tokens),
+                max_output_tokens=min(1800, budget_tokens),
             )
 
         payload = await asyncio.wait_for(_run(), timeout=25)
@@ -387,8 +489,9 @@ async def _llm_generate_script_plain(
     budget_tokens: int,
 ) -> dict[str, Any] | None:
     """Plain-text completion fallback when JSON schema path fails."""
-    settings = get_settings()
-    if not settings.enable_openai:
+    from server.services.dev_runtime import openai_enabled
+
+    if not openai_enabled():
         return None
     try:
         import asyncio
@@ -396,18 +499,9 @@ async def _llm_generate_script_plain(
         from server.utils.http_clients import get_openai_client
 
         client = get_openai_client()
+        settings = get_settings()
         model = settings.post_call_llm_model or settings.openai_model
-        system = (
-            "Write a complete Telugu telecaller calling script as plain text with section headers: "
-            "AGENT IDENTITY, OPENING, WORK SCOPE, VOICE STYLE, CONVERSATION FLOW, OBJECTION HANDLING, GUARDRAILS, CLOSING. "
-            "Extract agent name and company from the brief when present. If no name is given, invent a suitable first name. "
-            "If no company is given, do not invent a brand — describe the work from the brief. No markdown bullets. "
-            f"{AGENT_OPENING_REQUIREMENTS} "
-            "All numbers in example dialogue must be in English (digits or English words), never Telugu numerals. "
-            f"TOP PRIORITY: {AGENT_TANGLISH_LANGUAGE_RULE} "
-            "Weave these voice behaviors subtly into VOICE STYLE and CONVERSATION FLOW:\n"
-            f"{AGENT_VOICE_BEHAVIOR_RULES}"
-        )
+        system = script_writer_system(language=language, budget_tokens=budget_tokens)
         user = f"Language: {language}\n\nBrief:\n{brief}\n\nScript:"
         response = await asyncio.wait_for(
             client.responses.create(
@@ -416,7 +510,7 @@ async def _llm_generate_script_plain(
                     {"role": "developer", "content": [{"type": "input_text", "text": system}]},
                     {"role": "user", "content": [{"type": "input_text", "text": user}]},
                 ],
-                max_output_tokens=min(4000, budget_tokens),
+            max_output_tokens=min(1800, budget_tokens),
                 store=False,
             ),
             timeout=25,
@@ -429,31 +523,27 @@ async def _llm_generate_script_plain(
         return None
 
 
-def _assemble_brain(*, script: str, language: str, style: str | None) -> str:
-    style_val = (style or DEFAULT_RESPONSE_STYLE)[:100]
-    return (
+def _assemble_brain(
+    *,
+    script: str,
+    language: str,
+    style: str | None,
+    extra_pad: str = "",
+    call_end_policy: dict[str, Any] | None = None,
+) -> str:
+    lang = normalize_compile_language(language)
+    style_val = style_for_language(style, lang)
+    body = (
         f"{SECTION_SAFETY}\n\n"
-        f"{SECTION_TELUGU_VOICE}\n\n"
-        f"{script.strip()}\n\n"
+        f"{spoken_pack_for(lang)}\n\n"
+        f"--- CALLING SCRIPT ---\n{script.strip()}\n\n"
+        f"{call_end_policy_section(lang, call_end_policy)}\n\n"
         f"{STATIC_OUTPUT_RULES}\n\n"
-        f"Language: {language}. Style: {style_val}."
+        f"{language_runtime_footer(lang, style_val)}"
     )
-
-
-_SCRIPT_CACHE_PAD = (
-    "\n\n--- CALLING SCRIPT REINFORCEMENT ---\n"
-    "Live call rules: stay in character using the agent name and company from the script; "
-    "keep every reply to 60–80 characters unless the caller explicitly asks for more detail; "
-    "speak natural Tanglish (Telugu + everyday English) — never literary or pandit-style Telugu; "
-    "be persuasive until a firm no, then stop; avoid filler openers like అవును/సరే at the start of every turn; "
-    "ask one useful question per turn to move the sale forward; "
-    "never re-ask facts the caller already gave (budget, quantity, delivery, color); "
-    "speak every number, price, quantity, phone number, and time in English only (English digits or words, never Telugu numerals); "
-    "use natural Telugu with conversational English (price, order, delivery, confirm); "
-    "adapt tone to the caller; every reply must answer, handle an objection, or advance the sale; "
-    "stay on script and business scope — politely redirect off-topic questions back to the product or service; "
-    "never invent prices, discounts, or inventory.\n"
-)
+    if extra_pad:
+        return f"{body}\n\n{extra_pad.strip()}"
+    return body
 
 
 def _ensure_cache_floor(
@@ -461,21 +551,51 @@ def _ensure_cache_floor(
     script: str,
     language: str,
     style: str | None,
+    call_end_policy: dict[str, Any] | None = None,
 ) -> tuple[str, str]:
-    """Pad script only if below OpenAI cache minimum (1024 tokens). Never truncate."""
-    style_val = (style or DEFAULT_RESPONSE_STYLE)[:100]
+    """Pad brain pack/static rules if below OpenAI cache minimum. Never pad agentScript."""
+    lang = normalize_compile_language(language)
+    style_val = style_for_language(style, lang)
     body = script.strip()
-    compiled = _assemble_brain(script=body, language=language, style=style_val)
+    compiled = _assemble_brain(
+        script=body,
+        language=lang,
+        style=style_val,
+        call_end_policy=call_end_policy,
+    )
     if estimate_tokens(compiled) >= CACHE_MIN_TOKENS:
         return body, compiled
 
-    padded = body
+    pad_block = f"{STATIC_OUTPUT_RULES}\n\n{spoken_pack_for(lang)}"
+    extra = ""
     for _ in range(8):
-        padded = f"{padded}{_SCRIPT_CACHE_PAD}"
-        compiled = _assemble_brain(script=padded, language=language, style=style_val)
+        extra = f"{extra}\n\n{pad_block}".strip()
+        compiled = _assemble_brain(
+            script=body,
+            language=lang,
+            style=style_val,
+            extra_pad=extra,
+            call_end_policy=call_end_policy,
+        )
         if estimate_tokens(compiled) >= CACHE_MIN_TOKENS:
-            return padded, compiled
-    return padded, compiled
+            return body, compiled
+    return body, compiled
+
+
+def reassemble_brain_from_script(
+    *,
+    script: str,
+    language: str = "te-IN",
+    style: str | None = None,
+    call_end_policy: dict[str, Any] | None = None,
+) -> tuple[str, str]:
+    """Rebuild cached brain from an existing script (no GPT). Used when call-end policy changes."""
+    return _ensure_cache_floor(
+        script=script,
+        language=language,
+        style=style,
+        call_end_policy=call_end_policy,
+    )
 
 
 async def compile_agent_from_brief(
@@ -485,6 +605,7 @@ async def compile_agent_from_brief(
     style: str | None = None,
     budget_tokens: int = 3500,
     previous_compiled: str | None = None,
+    call_end_policy: dict[str, Any] | None = None,
 ) -> tuple[str, AgentScriptResult, int, int, int]:
     """
     Expand a short agent brief into a full cached brain prompt.
@@ -498,11 +619,20 @@ async def compile_agent_from_brief(
         char_limit=MAX_AGENT_BRIEF_CHARS,
     )
     cleaned = sanitize_agent_brief(raw)
-    style_val = (style or DEFAULT_RESPONSE_STYLE)[:100]
-    checksum = brief_checksum(brief=cleaned, language=language, style=style_val)
+    lang = normalize_compile_language(language)
+    style_val = style_for_language(style, lang)
+    from server.call.call_end_policy import normalize_call_end_policy
+
+    call_end_policy = normalize_call_end_policy(call_end_policy, language=lang)
+    checksum = brief_checksum(
+        brief=cleaned,
+        language=lang,
+        style=style_val,
+        call_end_policy=call_end_policy,
+    )
     raw_tokens = estimate_tokens(cleaned)
 
-    llm_payload = await _llm_generate_script(cleaned, language=language, budget_tokens=budget_tokens)
+    llm_payload = await _llm_generate_script(cleaned, language=lang, budget_tokens=budget_tokens)
     if llm_payload:
         script = str(llm_payload.get("agent_script", "")).strip()
         model = get_settings().post_call_llm_model or get_settings().openai_model
@@ -510,6 +640,7 @@ async def compile_agent_from_brief(
         llm_company = str(llm_payload.get("company_name") or "").strip()
         role_summary = str(llm_payload.get("role_summary") or "").strip()
         key_facts = list(llm_payload.get("key_facts") or [])[:8]
+        llm_role = str(llm_payload.get("role") or "").strip()
     else:
         script = ""
         model = "deterministic_v1"
@@ -517,14 +648,17 @@ async def compile_agent_from_brief(
         llm_company = ""
         role_summary = ""
         key_facts = []
+        llm_role = ""
 
     agent_name, company_name, work_scope, opening_line = resolve_script_identity(
         cleaned,
         llm_name=llm_name,
         llm_company=llm_company,
+        language=lang,
     )
     if not role_summary:
         role_summary = work_scope
+    role = infer_agent_role(cleaned, llm_role=llm_role)
     if not script:
         script = _deterministic_script(
             cleaned,
@@ -532,6 +666,8 @@ async def compile_agent_from_brief(
             company_name=company_name,
             work_scope=work_scope,
             opening_line=opening_line,
+            language=lang,
+            role=role,
         )
     else:
         script = ensure_script_identity_and_scope(
@@ -540,14 +676,38 @@ async def compile_agent_from_brief(
             company_name=company_name,
             work_scope=work_scope,
             opening_line=opening_line,
+            language=lang,
+            role=role,
         )
 
     script, compiled = _ensure_cache_floor(
         script=script,
-        language=language,
+        language=lang,
         style=style_val,
+        call_end_policy=call_end_policy,
     )
     compiled_tokens = estimate_tokens(compiled)
+    if compiled_tokens > BUDGET_MAX_TOKENS:
+        # Generated scripts can exceed their requested target. Agent creation
+        # must remain deterministic instead of returning 400 and leaving the
+        # caller on a stale previously-published brain.
+        script = _deterministic_script(
+            cleaned,
+            agent_name=agent_name,
+            company_name=company_name,
+            work_scope=work_scope,
+            opening_line=opening_line,
+            language=lang,
+            role=role,
+        )
+        script, compiled = _ensure_cache_floor(
+            script=script,
+            language=lang,
+            style=style_val,
+            call_end_policy=call_end_policy,
+        )
+        compiled_tokens = estimate_tokens(compiled)
+        model = "deterministic_budget_fallback_v1"
     effective_budget = min(BUDGET_MAX_TOKENS, max(int(budget_tokens), compiled_tokens))
     validate_brain_prompt_budget(compiled, effective_budget)
 
@@ -557,6 +717,8 @@ async def compile_agent_from_brief(
         company_name=company_name,
         role_summary=role_summary,
         key_facts=key_facts,
+        detected_role=role,
+        response_style=style_val,
         source_checksum=checksum,
         optimizer_model=model,
         raw_token_estimate=raw_tokens,

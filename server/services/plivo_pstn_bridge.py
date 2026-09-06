@@ -107,6 +107,7 @@ class PlivoPstnBridge:
             tts_output_codec="mulaw",
         )
         self._voice.set_barge_handler(self._barge_in)
+        self._voice.set_hangup_handler(self._provider_hangup)
         asyncio.create_task(self._start_voice_loop())
 
     async def _start_voice_loop(self) -> None:
@@ -157,6 +158,17 @@ class PlivoPstnBridge:
                 call_id=self.call_id,
                 frames=len(frames),
             )
+
+    async def _provider_hangup(self) -> None:
+        if not self.plivo_call_uuid:
+            return
+        from server.services.plivo_client import PlivoClient
+
+        try:
+            await PlivoClient().hangup(self.plivo_call_uuid)
+            log_pstn("hangup.provider", call_uuid=self.plivo_call_uuid, call_id=self.call_id)
+        except Exception as exc:
+            log_pstn("hangup.provider.failed", call_uuid=self.plivo_call_uuid, error=str(exc)[:200])
 
     async def _barge_in(self) -> None:
         await self.ws.send_text(json.dumps({"event": "clearAudio"}))

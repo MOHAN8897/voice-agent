@@ -42,6 +42,18 @@ def test_extractor_truncated_json_is_parse_failure():
     assert extractor.structured_parse_failed() is True
 
 
+def test_extractor_end_call_parses_after_spoken():
+    extractor = SpokenResponseExtractor()
+    extractor.feed(
+        '{"spoken_response": "Bye", "memory_update": {"operations": []}, '
+        '"end_call": {"should_end": true, "reason": "goodbye", "farewell": "Goodbye."}}'
+    )
+    assert extractor.spoken_text == "Bye"
+    end = extractor.parse_end_call()
+    assert end["should_end"] is True
+    assert end["reason"] == "goodbye"
+
+
 def test_extractor_unescape():
     extractor = SpokenResponseExtractor()
     extractor.feed('{"spoken_response": "line\\nnext", "memory_update": {"operations": []}}')

@@ -96,7 +96,8 @@ export class StreamingTextChunker {
   }
 
   private findBoundary(unsent: string, streamDone: boolean): number {
-    const { minChunkChars, maxChunkChars } = VOICE_PIPELINE_LIMITS;
+    const { minChunkChars, maxChunkChars, firstChunkMinChars, clauseFlushAt, forceFlushAt } =
+      VOICE_PIPELINE_LIMITS;
 
     if (streamDone) return unsent.length;
 
@@ -107,15 +108,26 @@ export class StreamingTextChunker {
     }
 
     for (let i = 0; i < unsent.length; i++) {
-      if (CLAUSE_END.test(unsent[i]) && i + 1 >= minChunkChars) {
+      if (CLAUSE_END.test(unsent[i]) && i + 1 >= minChunkChars && unsent.length >= clauseFlushAt) {
         return i + 1;
       }
     }
 
     for (let i = 0; i < unsent.length; i++) {
-      if (unsent[i] === "," && i + 1 >= minChunkChars && unsent.length >= 40) {
+      if (unsent[i] === "," && i + 1 >= minChunkChars && unsent.length >= clauseFlushAt) {
         return i + 1;
       }
+    }
+
+    if (this.sentEnd === 0 && unsent.length >= firstChunkMinChars) {
+      const boundary = lastWordBoundary(unsent, unsent.length);
+      if (boundary >= minChunkChars) {
+        return boundary;
+      }
+    }
+
+    if (unsent.length >= forceFlushAt) {
+      return lastWordBoundary(unsent, maxChunkChars);
     }
 
     if (unsent.length >= maxChunkChars) {

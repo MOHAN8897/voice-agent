@@ -29,6 +29,33 @@ router = APIRouter()
 _UPSTREAM_STT_EVENTS = {"audio_input", "speech_start", "speech_end", "flush", "config.update", "end", "ping"}
 
 
+def _upstream_tts_config_payload(merged: dict) -> dict:
+    """Browser TTS upstream config — preserve sample rate so playback matches generation."""
+    out: dict = {
+        "speaker": merged["speaker"],
+        "language_code": merged["language_code"],
+        "pace": merged["pace"],
+        "min_buffer_size": merged["min_buffer_size"],
+        "max_chunk_length": merged["max_chunk_length"],
+        "output_audio_codec": merged["output_audio_codec"],
+        "output_audio_bitrate": merged["output_audio_bitrate"],
+        "model": merged["model"],
+    }
+    if "temperature" in merged:
+        out["temperature"] = merged["temperature"]
+    rate = merged.get("sample_rate")
+    if rate is not None:
+        rate_str = str(int(rate))
+        provider = str(merged.get("provider") or "sarvam")
+        if provider == "cartesia":
+            out["sample_rate"] = int(rate)
+            out["speech_sample_rate"] = rate_str
+        elif provider == "sarvam":
+            # Sarvam WS expects speech_sample_rate (not sample_rate).
+            out["speech_sample_rate"] = rate_str
+    return out
+
+
 def _stack_for_ws(call_id: str | None, session_id: str, language: str = "te-IN"):
     if call_id:
         from server.call.call_context import get as get_call_ctx
@@ -139,17 +166,24 @@ async def ws_stt_realtime(ws: WebSocket):
 
             call_lifecycle_service.note_ws_open(call_id)
         rt = runtime_settings.get(session_id)
-        silence_ms = int(q["silence_duration_ms"]) if q.get("silence_duration_ms") else rt.get("sttSilenceMs")
+        from server.services.voice_stt_runtime import (
+            effective_stt_mode,
+            effective_stt_silence_ms,
+            effective_stt_stream_type,
+        )
+
+        explicit_silence = int(q["silence_duration_ms"]) if q.get("silence_duration_ms") else None
+        silence_ms = effective_stt_silence_ms(rt, explicit=explicit_silence)
         threshold_val = float(q["threshold"]) if q.get("threshold") else rt.get("sttThreshold")
         upstream_cm = _connect_stt_upstream(
             session_id=session_id,
             call_id=call_id,
             language_code=q.get("language_code", "te-IN"),
-            stream_type=q.get("stream_type", "fast"),
-            mode=q.get("mode", "transcribe"),
+            stream_type=effective_stt_stream_type(q.get("stream_type") or rt.get("sttStreamType")),
+            mode=effective_stt_mode(q.get("mode") or rt.get("sttMode")),
             endpointing=q.get("endpointing", "vad"),
             sample_rate=int(q.get("sample_rate", 16000)),
-            silence_duration_ms=int(silence_ms) if silence_ms is not None else None,
+            silence_duration_ms=silence_ms,
             threshold=float(threshold_val) if threshold_val is not None else None,
         )
         upstream = await upstream_cm.__aenter__()
@@ -409,18 +443,7 @@ async def ws_tts(ws: WebSocket):
                 d = dict(obj.get("data") or {})
                 try:
                     merged = merge_ws_tts_config(session_id, d, call_id=call_id, ws_model=model)
-                    out = {
-                        "speaker": merged["speaker"],
-                        "language_code": merged["language_code"],
-                        "pace": merged["pace"],
-                        "min_buffer_size": merged["min_buffer_size"],
-                        "max_chunk_length": merged["max_chunk_length"],
-                        "output_audio_codec": merged["output_audio_codec"],
-                        "output_audio_bitrate": merged["output_audio_bitrate"],
-                        "model": merged["model"],
-                    }
-                    if "temperature" in merged:
-                        out["temperature"] = merged["temperature"]
+                    out = _upstream_tts_config_payload(merged)
                     last_upstream_config = out
                     await connect_upstream()
                     assert upstream is not None

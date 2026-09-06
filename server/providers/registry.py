@@ -10,6 +10,7 @@ from typing import Any
 from server.config.constants import constants
 from server.config.env import Settings, get_settings
 from server.providers.base import LLMAdapter, STTAdapter, TTSAdapter
+from server.providers.llm_catalog import llm_models_for_provider
 from server.providers.openai_llm import OpenAILLMAdapter
 from server.providers.sarvam_stt import SarvamSTTAdapter
 from server.providers.sarvam_tts import SarvamTTSAdapter
@@ -51,12 +52,14 @@ class ProviderRegistry:
             self._stt["sarvam"] = SarvamSTTAdapter()
             self._tts["sarvam"] = SarvamTTSAdapter()
             entry = self._sarvam_provider_entry(s)
+            entry["enabled"] = enable_sarvam
             entry["configured"] = bool(sarvam_key)
             providers.append(entry)
 
         if enable_openai:
             self._llm["openai"] = OpenAILLMAdapter()
             entry = self._openai_provider_entry(s)
+            entry["enabled"] = enable_openai
             entry["configured"] = bool(openai_key)
             providers.append(entry)
 
@@ -66,20 +69,21 @@ class ProviderRegistry:
 
                 self._llm["deepseek"] = DeepSeekLLMAdapter()
             entry = self._deepseek_provider_entry(s)
+            entry["enabled"] = enable_deepseek
             entry["configured"] = bool(deepseek_key)
             entry["adapter_available"] = bool(deepseek_key)
             providers.append(entry)
 
         if enable_gemini:
-            providers.append(
-                self._stub_provider_entry(
-                    "gemini",
-                    ["llm"],
-                    enabled=enable_gemini,
-                    configured=bool(gemini_key),
-                    adapter_available=False,
-                )
-            )
+            adapter_ok = bool(gemini_key)
+            if adapter_ok:
+                from server.providers.gemini_llm import GeminiLLMAdapter
+
+                self._llm["gemini"] = GeminiLLMAdapter()
+            entry = self._gemini_provider_entry(s, adapter_ok)
+            entry["enabled"] = enable_gemini
+            entry["configured"] = adapter_ok
+            providers.append(entry)
 
         if enable_cartesia or cartesia_key:
             if enable_cartesia and cartesia_key:
@@ -133,6 +137,7 @@ class ProviderRegistry:
         }
 
     def _deepseek_provider_entry(self, s: Settings) -> dict[str, Any]:
+        models = llm_models_for_provider("deepseek", s)
         return {
             "id": "deepseek",
             "label": "DeepSeek",
@@ -142,21 +147,37 @@ class ProviderRegistry:
             "healthy": bool(s.deepseek_api_key),
             "adapter_available": bool(s.deepseek_api_key),
             "languages": ["multilingual"],
-            "models": {
-                "llm": [
-                    {
-                        "id": s.deepseek_model,
-                        "label": s.deepseek_model,
-                        "structured_output": True,
-                        "prompt_caching": False,
-                    }
-                ],
-            },
+            "models": {"llm": models},
             "capabilities": {"streaming": True, "structured_output": True},
+            "notes": "OpenAI-compatible API — https://api-docs.deepseek.com",
+        }
+
+    def _gemini_provider_entry(self, s: Settings, adapter_ok: bool) -> dict[str, Any]:
+        models = llm_models_for_provider("gemini", s)
+        return {
+            "id": "gemini",
+            "label": "Google Gemini",
+            "stages": ["llm"],
+            "enabled": s.enable_gemini,
+            "configured": adapter_ok,
+            "healthy": adapter_ok,
+            "adapter_available": adapter_ok,
+            "languages": ["multilingual"],
+            "models": {"llm": models},
+            "capabilities": {
+                "streaming": True,
+                "structured_output": True,
+                "prompt_caching": True,
+            },
+            "notes": (
+                "Live turns use the same structured JSON, working-memory ops, and "
+                "compiled-brain prefix as OpenAI. Gemini 2.5+/3.x implicit-cache the "
+                "system instruction when it stays stable across turns."
+            ),
         }
 
     def _openai_provider_entry(self, s: Settings) -> dict[str, Any]:
-        allowed = list(s.allowed_openai_models)
+        models = llm_models_for_provider("openai", s)
         return {
             "id": "openai",
             "label": "OpenAI",
@@ -165,18 +186,7 @@ class ProviderRegistry:
             "configured": bool(s.openai_api_key),
             "healthy": True,
             "languages": ["multilingual"],
-            "models": {
-                "llm": [
-                    {
-                        "id": m,
-                        "label": m,
-                        "structured_output": True,
-                        "prompt_caching": m.startswith("gpt-5.6"),
-                        "pricing_key": f"openai:{m}",
-                    }
-                    for m in allowed
-                ],
-            },
+            "models": {"llm": models},
             "capabilities": {"streaming": True, "structured_output": True, "prompt_caching": True},
         }
 

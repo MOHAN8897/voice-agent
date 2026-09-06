@@ -120,6 +120,7 @@ class ExotelPstnBridge:
             tts_output_codec="mulaw",
         )
         self._voice.set_barge_handler(self._barge_in)
+        self._voice.set_hangup_handler(self._provider_hangup)
         asyncio.create_task(self._start_voice_loop())
 
     async def _start_voice_loop(self) -> None:
@@ -180,6 +181,17 @@ class ExotelPstnBridge:
                 }
             )
         )
+
+    async def _provider_hangup(self) -> None:
+        if not self.exotel_call_sid:
+            return
+        from server.services.exotel_client import ExotelClient
+
+        try:
+            await ExotelClient().hangup(self.exotel_call_sid)
+            log_pstn("hangup.provider", call_sid=self.exotel_call_sid, call_id=self.call_id)
+        except Exception as exc:
+            log_pstn("hangup.provider.failed", call_sid=self.exotel_call_sid, error=str(exc)[:200])
 
     async def _barge_in(self) -> None:
         if not self.stream_sid:

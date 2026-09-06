@@ -119,9 +119,7 @@ async def dev_environment_reload(session: SessionData = Depends(require_dev_sess
     """Reload overlay file and re-init provider registry without changing values."""
     require_permission(session, "dev.stack.write")
     dev_secrets_store.reload()
-    from server.config.env import get_settings
-    from server.providers import init_provider_registry
+    from server.services.dev_runtime import notify_dev_overlay_changed
 
-    get_settings.cache_clear()
-    init_provider_registry()
+    notify_dev_overlay_changed()
     return {"ok": True, "environment": dev_secrets_store.snapshot()}

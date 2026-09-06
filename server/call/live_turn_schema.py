@@ -6,7 +6,7 @@ from typing import Any
 LIVE_TURN_JSON_SCHEMA: dict[str, Any] = {
     "type": "object",
     "additionalProperties": False,
-    "required": ["spoken_response", "memory_update"],
+    "required": ["spoken_response", "memory_update", "end_call"],
     "properties": {
         "spoken_response": {"type": "string", "maxLength": 4000},
         "memory_update": {
@@ -36,6 +36,26 @@ LIVE_TURN_JSON_SCHEMA: dict[str, Any] = {
                         },
                     },
                 }
+            },
+        },
+        "end_call": {
+            "type": "object",
+            "additionalProperties": False,
+            "required": ["should_end", "reason", "farewell"],
+            "properties": {
+                "should_end": {"type": "boolean"},
+                "reason": {
+                    "type": "string",
+                    "enum": [
+                        "none",
+                        "goodbye",
+                        "firm_refusal",
+                        "goal_complete",
+                        "abuse",
+                        "out_of_scope",
+                    ],
+                },
+                "farewell": {"type": "string", "maxLength": 240},
             },
         },
     },
@@ -146,6 +166,19 @@ class SpokenResponseExtractor:
         if not isinstance(ops, list):
             return {"operations": []}
         return {"operations": ops}
+
+    def parse_end_call(self) -> dict[str, Any]:
+        payload = self._parsed_object()
+        if not payload:
+            return {"should_end": False, "reason": "none", "farewell": ""}
+        raw = payload.get("end_call")
+        if not isinstance(raw, dict):
+            return {"should_end": False, "reason": "none", "farewell": ""}
+        return {
+            "should_end": bool(raw.get("should_end")),
+            "reason": str(raw.get("reason") or "none"),
+            "farewell": str(raw.get("farewell") or "")[:240],
+        }
 
     def structured_parse_failed(self) -> bool:
         """True when structured JSON was required but missing or invalid (SLO/parse fallback)."""

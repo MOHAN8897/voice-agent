@@ -15,6 +15,7 @@ from server.call.call_store import call_store
 from server.call.paths import relative_storage_path
 from server.call.post_call_pipeline import enqueue as enqueue_post_call
 from server.config.env import get_settings
+from server.services.dev_runtime import effective_app_environment, effective_config_mode, effective_voice_tier
 from server.providers.base import ResolvedStack, StackSelection
 from server.providers.resolver import resolve_stack
 from server.providers.session_stack import resolve_stack_for_session
@@ -28,6 +29,7 @@ END_REASONS = {
     "transfer",
     "browser_unload",
     "pstn_hangup",
+    "agent_hangup",
     "superseded",
     "stale_recovery",
     "ws_disconnect",
@@ -79,8 +81,8 @@ class CallLifecycleService:
         lookup_session = (config_session_id or session_id).strip() or session_id
 
         agent = await self._resolve_agent(agent_id)
-        env = environment or agent.get("environment") or settings.app_environment
-        effective_tier = tier or agent.get("default_tier") or settings.voice_agent_tier
+        env = environment or agent.get("environment") or effective_app_environment()
+        effective_tier = tier or agent.get("default_tier") or effective_voice_tier()
 
         previous = call_context.get_active_for_session(session_id)
         if previous:
@@ -134,6 +136,15 @@ class CallLifecycleService:
         from server.call.memory_manager import memory_manager
 
         memory_manager.init(call_id)
+        from server.agent.conversation_manager import conversation_manager
+        from server.agent.session_memory import session_memory
+
+        # New call = new dialogue. Compiled brain stays on the config session.
+        conversation_manager.clear(session_id)
+        session_memory.clear(session_id)
+        if lookup_session != session_id:
+            conversation_manager.clear(lookup_session)
+            session_memory.clear(lookup_session)
         if caller_id:
             memory_manager.apply_proposals(
                 call_id,
@@ -175,6 +186,7 @@ class CallLifecycleService:
             compiled_brain_text=compiled_text,
             started_at=started,
             storage_path=storage_path,
+            call_end_policy=self._load_call_end_policy(lookup_session, language),
         )
         call_context.put(ctx)
         logger.info(f"[CALL] started {call_id} agent={agent['agent_id']} combo={stack.combination_id}")
@@ -425,8 +437,7 @@ class CallLifecycleService:
         stack_override: dict[str, Any] | None,
         language: str,
     ) -> ResolvedStack:
-        settings = get_settings()
-        if settings.voice_agent_config_mode == "frontend":
+        if effective_config_mode() == "frontend":
             base = resolve_stack_for_session(session_id, language=language)
             return resolve_stack(
                 mode="frontend",
@@ -449,6 +460,19 @@ class CallLifecycleService:
             environment=environment,
             stack_override=stack_override,
         )
+
+    def _load_call_end_policy(self, session_id: str | None, language: str | None) -> dict | None:
+        if not session_id:
+            return None
+        from server.agent.instruction_store import instruction_store
+        from server.call.call_end_policy import default_call_end_policy, normalize_call_end_policy
+
+        lang = language
+        if not session_id:
+            return default_call_end_policy(lang)
+        raw = instruction_store.get_call_end_policy(session_id)
+        lang = language or instruction_store.get_language(session_id)
+        return normalize_call_end_policy(raw, language=lang)
 
     async def _lock_compiled_brain(
         self,

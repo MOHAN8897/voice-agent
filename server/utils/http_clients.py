@@ -12,11 +12,19 @@ _openai_client: AsyncOpenAI | None = None
 _sarvam_client: httpx.AsyncClient | None = None
 
 
+def reset_http_clients() -> None:
+    """Drop cached clients so overlay key changes take effect immediately."""
+    global _openai_client
+    _openai_client = None
+
+
 def get_openai_client() -> AsyncOpenAI:
     global _openai_client
     if _openai_client is None:
-        settings = get_settings()
-        _openai_client = AsyncOpenAI(api_key=settings.openai_api_key)
+        from server.services.dev_secrets_store import dev_secrets_store
+
+        key = dev_secrets_store.effective_secret("openai_api_key") or ""
+        _openai_client = AsyncOpenAI(api_key=key)
     return _openai_client
 
 
@@ -46,7 +54,9 @@ async def warm_openai_client() -> dict:
     Does not affect prompt cache — no brain request is sent.
     """
     settings = get_settings()
-    if not settings.openai_api_key:
+    from server.services.dev_secrets_store import dev_secrets_store
+
+    if not dev_secrets_store.effective_secret("openai_api_key"):
         return {"warmed": False, "reason": "no_api_key"}
     client = get_openai_client()
     t0 = __import__("time").perf_counter()

@@ -157,8 +157,10 @@ class StackResolver:
             if p.get("id") != provider_id:
                 continue
             models = (p.get("models") or {}).get(stage) or []
-            if models:
-                return str(models[0].get("id") or "")
+            marked = next((m for m in models if m.get("default")), None)
+            row = marked or (models[0] if models else None)
+            if row and row.get("id"):
+                return str(row["id"])
         return None
 
     def _validate_stack(self, stack: StackSelection, language: str) -> None:

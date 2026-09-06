@@ -133,6 +133,11 @@ export function PstnTestPanel({
   const active = status?.active_provider || providerDraft;
   const activeSt = status?.providers?.find((p) => p.id === active);
 
+  const enabledProviders = useMemo(() => {
+    if (!status?.providers?.length) return [];
+    return PROVIDERS.filter((p) => status.providers?.find((s) => s.id === p.id)?.enabled);
+  }, [status]);
+
   const load = useCallback(async () => {
     setLoadError("");
     try {
@@ -443,9 +448,15 @@ export function PstnTestPanel({
           for the same audio architecture as automated tests.
         </p>
       )}
-      <DevCard title="SIP trunk provider" description="Only the active provider is used for PSTN tests">
+      <DevCard title="SIP trunk provider" description="Only enabled providers from Environment are shown">
+        {enabledProviders.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-warning/40 bg-warning/5 px-4 py-3 text-sm text-warning">
+            No PSTN providers enabled. Turn on Exotel, Telnyx, or Plivo in{" "}
+            <Link href="/dev/environment" className="text-accent hover:underline">Environment</Link> and save keys.
+          </p>
+        ) : (
         <div className="flex flex-wrap gap-2">
-          {PROVIDERS.map((p) => (
+          {enabledProviders.map((p) => (
             <button
               key={p.id}
               type="button"
@@ -460,9 +471,18 @@ export function PstnTestPanel({
               {status?.active_provider === p.id && (
                 <span className="ml-2 text-xs text-success">(active)</span>
               )}
+              {status?.providers?.find((s) => s.id === p.id)?.ready === false && (
+                <span className="ml-2 text-xs text-warning">(not ready)</span>
+              )}
             </button>
           ))}
         </div>
+        )}
+        {activeSt && !activeSt.enabled && (
+          <p className="mt-3 rounded-lg bg-warning/10 px-3 py-2 text-xs text-warning">
+            Active provider {providerLabel(active)} is disabled in Environment. Enable it or switch provider.
+          </p>
+        )}
         <p className="mt-3 text-xs text-text-muted">
           Configure keys in{" "}
           <Link href="/dev/environment" className="text-accent hover:underline">Environment</Link>

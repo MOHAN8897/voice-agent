@@ -11,7 +11,12 @@ from pydantic import BaseModel, Field
 
 from server.auth.dependencies import require_dev_session, require_permission
 from server.auth.session import SessionData
-from server.services.telephony import active_telephony_provider, telephony_summary_async
+from server.services.telephony import (
+    active_telephony_provider,
+    provider_enabled,
+    telephony_guard_error,
+    telephony_summary_async,
+)
 
 router = APIRouter()
 
@@ -125,6 +130,14 @@ async def dev_set_telephony_provider(
     require_permission(session, "dev.stack.write")
     from server.services.dev_secrets_store import dev_secrets_store
 
+    if not provider_enabled(body.provider):  # type: ignore[arg-type]
+        return {
+            "ok": False,
+            "error": {
+                "code": "provider_disabled",
+                "message": f"{body.provider.title()} is disabled in Environment. Enable it under Telephony toggles.",
+            },
+        }
     snap = dev_secrets_store.update({"telephony_provider": body.provider})
     return {"ok": True, "active_provider": body.provider, "applied_keys": snap.get("applied_keys")}
 
@@ -133,6 +146,9 @@ async def dev_set_telephony_provider(
 async def dev_telephony_handshake(session: SessionData = Depends(require_dev_session)):
     require_permission(session, "dev.stack.read")
     provider = active_telephony_provider()
+    guard = telephony_guard_error(provider)
+    if guard:
+        return {"ok": False, "error": guard, "provider": provider}
     if provider == "exotel":
         from server.services.exotel_client import ExotelClient, cached_handshake
 
@@ -162,6 +178,9 @@ async def dev_telephony_outbound(
     except PstnStackValidationError as e:
         return {"ok": False, "error": str(e), "validation_errors": e.details}
     provider = active_telephony_provider()
+    guard = telephony_guard_error(provider)
+    if guard:
+        return {"ok": False, "error": guard, "provider": provider}
     if provider == "exotel":
         return await _outbound_exotel(body)
     if provider == "telnyx":
@@ -235,13 +254,16 @@ async def _outbound_exotel(body: OutboundTestBody) -> dict[str, Any]:
     )
     from server.services.phone_assignments_store import phone_assignments_store
 
+    from server.services.dev_secrets_store import dev_secrets_store
+
     if not exotel_enabled():
-        return {"ok": False, "error": "ENABLE_EXOTEL is false"}
+        return {"ok": False, "error": "Exotel is disabled in Environment"}
     urls = public_webhook_urls()
     if not urls.get("status_callback_url"):
         return {"ok": False, "error": "Set EXOTEL_WEBHOOK_BASE_URL (public tunnel URL)"}
     settings = get_settings()
-    caller_id = (body.from_e164 or settings.exotel_exophone or "").strip()
+    exophone = dev_secrets_store.effective("exotel_exophone", settings.exotel_exophone) or ""
+    caller_id = (body.from_e164 or exophone or "").strip()
     to_number = body.to_e164.strip()
     if not caller_id:
         return {"ok": False, "error": "Set EXOTEL_EXOPHONE or fromE164"}

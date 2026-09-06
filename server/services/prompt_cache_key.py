@@ -1,5 +1,5 @@
 """
-Prompt cache key — content hash for GPT-5.6 explicit caching.
+Prompt cache key — content hash for GPT-5.6 explicit caching and Gemini implicit prefix cache.
 """
 from __future__ import annotations
 
@@ -32,6 +32,15 @@ def caching_enabled(model: str, brain_tokens: int = 0) -> bool:
     settings = get_settings()
     if not settings.enable_prompt_caching:
         return False
-    if not str(model).startswith("gpt-5.6"):
+    if not supports_explicit_prompt_cache(model) and not _gemini_implicit_cache(model):
         return False
     return brain_tokens >= int(settings.prompt_cache_min_tokens)
+
+
+def supports_explicit_prompt_cache(model: str) -> bool:
+    """OpenAI Responses API prompt_cache_breakpoint — GPT-5.6 only."""
+    return str(model).strip().lower().startswith("gpt-5.6")
+
+
+def _gemini_implicit_cache(model: str) -> bool:
+    return str(model).strip().lower().startswith("gemini-")

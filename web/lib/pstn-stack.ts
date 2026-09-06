@@ -45,7 +45,14 @@ export function applyPstnStackDefaults(form: StackForm, language: string): Stack
     if (!ok) sttModel = defaultPstnSttModel("cartesia", language);
   }
   ttsVoiceId = ensureTtsVoice(ttsProvider, ttsVoiceId, ttsModel);
-  return { ...form, sttModel, ttsVoiceId, language };
+  return {
+    ...form,
+    sttModel,
+    sttMode: "transcribe",
+    sttStreamType: "fast",
+    ttsVoiceId,
+    language,
+  };
 }
 
 export type PstnStackValidation = {

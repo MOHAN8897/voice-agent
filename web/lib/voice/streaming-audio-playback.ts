@@ -38,7 +38,9 @@ export class StreamingAudioPlayback {
   }
 
   setSampleRate(rate: number) {
+    if (this.sampleRate === rate) return;
     this.sampleRate = rate;
+    this.player = null;
   }
 
   attachTurn(turnId: string, isActive: () => boolean, onCancel: () => void) {

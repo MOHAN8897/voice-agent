@@ -31,7 +31,7 @@ def test_compose_single_plain_text():
         style="friendly",
     )
     assert "--- SAFETY ---" in out
-    assert "--- TELUGU VOICE ---" in out
+    assert "--- SPOKEN LANGUAGE (te-IN) ---" in out
     assert "--- BEHAVIOUR ---" in out
     assert "Answer briefly" in out
     assert "--- BUSINESS ---" in out
@@ -39,6 +39,8 @@ def test_compose_single_plain_text():
     assert "<agent_behaviour_instructions>" not in out
     assert "Language: te-IN" in out
     assert "friendly" in out
+    assert "--- CALL END POLICY ---" in out
+    assert "Sare, time ichinanduku thanks. Good day." in out
 
 
 def test_validate_word_limit_raises():

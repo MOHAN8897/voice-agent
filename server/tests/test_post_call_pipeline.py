@@ -156,3 +156,17 @@ async def test_outcome_failure_does_not_fail_overall_call(monkeypatch, tmp_path)
     clear_all()
     get_settings.cache_clear()
 
+
+def test_outcome_schema_is_openai_strict_compatible():
+    from server.call.outcome_schema import OUTCOME_JSON_SCHEMA, normalize_extracted_fields
+
+    fields = OUTCOME_JSON_SCHEMA["properties"]["extracted_fields"]
+    assert fields["type"] == "array"
+    item = fields["items"]
+    assert item["additionalProperties"] is False
+    assert set(item["required"]) == {"key", "value"}
+    assert OUTCOME_JSON_SCHEMA["additionalProperties"] is False
+    assert normalize_extracted_fields([{"key": "name", "value": "Arun"}]) == {"name": "Arun"}
+    assert normalize_extracted_fields({"budget": "50L"}) == {"budget": "50L"}
+    assert normalize_extracted_fields(None) == {}
+

@@ -17,14 +17,29 @@ from server.agent.brain_prompt_composer import (
     validate_brain_prompt_budget,
 )
 from server.prompts.brain_prompt import get_factory_brain_prompt
+from server.call.call_end_policy import normalize_call_end_policy
+from server.prompts.agent_voice_rules import call_end_policy_section
 from server.prompts.voice_defaults import (
     DEFAULT_BEHAVIOUR_INSTRUCTIONS,
     DEFAULT_BUSINESS_INSTRUCTIONS,
     DEFAULT_RESPONSE_STYLE,
+    default_style_for,
+    style_for_language,
 )
 from server.services.session_persist import session_persist
 
 _TTL_SECONDS = 60 * 60 * 24
+
+
+def _resolve_policy(raw, language: str | None) -> dict:
+    return normalize_call_end_policy(raw, language=language)
+
+
+def _ensure_hangup_section(brain: str, *, language: str, policy: dict | None) -> str:
+    text = (brain or "").strip()
+    if "--- CALL END POLICY ---" in text:
+        return text
+    return f"{text}\n\n{call_end_policy_section(language, policy)}".strip()
 
 
 class InstructionStore:
@@ -66,7 +81,7 @@ class InstructionStore:
         z = sanitize_business(business or "")
         with self._lock:
             prev = self._store.get(session_id, {})
-            style_val = (style or prev.get("style") or DEFAULT_RESPONSE_STYLE)[:100]
+            style_val = style_for_language(style or prev.get("style"), language)
             brain_prompt = compose_brain_prompt(
                 behaviour=b or DEFAULT_BEHAVIOUR_INSTRUCTIONS,
                 business=z or DEFAULT_BUSINESS_INSTRUCTIONS,
@@ -88,6 +103,8 @@ class InstructionStore:
                 "optimizerReport": prev.get("optimizerReport"),
                 "sourceChecksum": prev.get("sourceChecksum"),
                 "rawTokenEstimate": prev.get("rawTokenEstimate"),
+                "callEndPolicy": _resolve_policy(prev.get("callEndPolicy"), language),
+                "language": prev.get("language") or language,
             }
             self._persist(session_id)
             return self._pack_entry(self._store[session_id])
@@ -105,15 +122,20 @@ class InstructionStore:
         language: str = "te-IN",
         budget_tokens: int = 2500,
         raw_token_estimate: int = 0,
+        call_end_policy: dict | None = None,
     ) -> dict:
         """Save short agent brief + GPT-expanded calling script as cached brain."""
         brief = sanitize_agent_brief(agent_brief or "")
         script = (agent_script or "").strip()
         with self._lock:
             prev = self._store.get(session_id, {})
-            style_val = (style or prev.get("style") or DEFAULT_RESPONSE_STYLE)[:100]
+            style_val = style_for_language(style or prev.get("style"), language)
             estimated = validate_brain_prompt_budget(compiled_brain, budget_tokens)
             version = int(prev.get("compiledVersion", 0)) + 1
+            policy = _resolve_policy(
+                call_end_policy if call_end_policy is not None else prev.get("callEndPolicy"),
+                language,
+            )
             self._store[session_id] = {
                 "text": "",
                 "behaviour": "",
@@ -131,6 +153,7 @@ class InstructionStore:
                 "sourceChecksum": source_checksum,
                 "rawTokenEstimate": raw_token_estimate,
                 "language": language,
+                "callEndPolicy": policy,
             }
             self._persist(session_id)
             return self._pack_entry(self._store[session_id])
@@ -148,13 +171,14 @@ class InstructionStore:
         language: str = "te-IN",
         budget_tokens: int = 2500,
         raw_token_estimate: int = 0,
+        call_end_policy: dict | None = None,
     ) -> dict:
         """Save raw channels + LLM/deterministic compiled brain for cache breakpoint."""
         b = sanitize_behaviour(behaviour or "")
         z = sanitize_business(business or "")
         with self._lock:
             prev = self._store.get(session_id, {})
-            style_val = (style or prev.get("style") or DEFAULT_RESPONSE_STYLE)[:100]
+            style_val = style_for_language(style or prev.get("style"), language)
             estimated = validate_brain_prompt_budget(compiled_brain, budget_tokens)
             version = int(prev.get("compiledVersion", 0)) + 1
             self._store[session_id] = {
@@ -172,6 +196,10 @@ class InstructionStore:
                 "sourceChecksum": source_checksum,
                 "rawTokenEstimate": raw_token_estimate,
                 "language": language,
+                "callEndPolicy": _resolve_policy(
+                    call_end_policy if call_end_policy is not None else prev.get("callEndPolicy"),
+                    language,
+                ),
             }
             self._persist(session_id)
             return self._pack_entry(self._store[session_id])
@@ -202,7 +230,59 @@ class InstructionStore:
             "optimizerReport": e.get("optimizerReport"),
             "sourceChecksum": e.get("sourceChecksum"),
             "rawTokenEstimate": e.get("rawTokenEstimate", 0),
+            "language": e.get("language") or "te-IN",
+            "callEndPolicy": _resolve_policy(e.get("callEndPolicy"), e.get("language") or "te-IN"),
         }
+
+    def patch_call_end_policy(
+        self,
+        session_id: str,
+        policy: dict,
+        *,
+        language: str | None = None,
+        compiled_brain: str | None = None,
+        estimated_tokens: int | None = None,
+        budget_tokens: int | None = None,
+    ) -> dict:
+        """Persist call-end policy; optionally swap the compiled brain after a reassemble."""
+        with self._lock:
+            prev = self._store.get(session_id) or {
+                "behaviour": "",
+                "business": "",
+                "text": "",
+                "style": DEFAULT_RESPONSE_STYLE,
+                "brainPrompt": "",
+                "updatedAt": time.time(),
+            }
+            prev["callEndPolicy"] = _resolve_policy(policy, language or prev.get("language"))
+            if language:
+                prev["language"] = language
+            if compiled_brain:
+                prev["brainPrompt"] = compiled_brain
+                prev["customBrainPrompt"] = False
+            if estimated_tokens is not None:
+                prev["estimatedTokens"] = estimated_tokens
+            if budget_tokens is not None:
+                prev["budgetTokens"] = budget_tokens
+            prev["updatedAt"] = time.time()
+            self._store[session_id] = prev
+            self._persist(session_id)
+            return self._pack_entry(prev)
+
+    def get_call_end_policy(self, session_id: str) -> dict | None:
+        with self._lock:
+            e = self._entry(session_id)
+            if not e:
+                return None
+            policy = e.get("callEndPolicy")
+            return _resolve_policy(policy, e.get("language") or "te-IN")
+
+    def get_language(self, session_id: str) -> str:
+        with self._lock:
+            e = self._entry(session_id)
+            if e and e.get("language"):
+                return str(e["language"])
+            return "te-IN"
 
     def save_brain_prompt(
         self,
@@ -215,18 +295,26 @@ class InstructionStore:
         text = sanitize_brain_prompt(brain_prompt)
         if not text:
             text = get_factory_brain_prompt()
-        estimated = validate_brain_prompt_budget(text, budget_tokens)
         with self._lock:
+            prev = self._store.get(session_id, {})
+            language = prev.get("language") or "te-IN"
+            policy = _resolve_policy(prev.get("callEndPolicy"), language)
+            text = _ensure_hangup_section(text, language=language, policy=policy)
+            estimated = validate_brain_prompt_budget(text, budget_tokens)
             self._store[session_id] = {
                 "text": "",
                 "behaviour": "",
                 "business": "",
-                "style": DEFAULT_RESPONSE_STYLE,
+                "style": prev.get("style") or DEFAULT_RESPONSE_STYLE,
                 "brainPrompt": text,
                 "customBrainPrompt": True,
                 "estimatedTokens": estimated,
                 "budgetTokens": budget_tokens,
                 "updatedAt": time.time(),
+                "language": language,
+                "callEndPolicy": policy,
+                "agentBrief": prev.get("agentBrief", ""),
+                "agentScript": prev.get("agentScript", ""),
             }
             e = self._store[session_id]
             self._persist(session_id)
@@ -279,8 +367,8 @@ class InstructionStore:
         with self._lock:
             e = self._entry(session_id)
             if e and e.get("style"):
-                return e["style"]
-            return DEFAULT_RESPONSE_STYLE
+                return style_for_language(e["style"], e.get("language"))
+            return default_style_for(e.get("language") if e else None)
 
     def get(self, session_id: str) -> str:
         return self.get_behaviour(session_id)
@@ -308,6 +396,8 @@ class InstructionStore:
                     "present": False,
                     "style": DEFAULT_RESPONSE_STYLE,
                     "usingDefaults": True,
+                    "callEndPolicy": _resolve_policy(None, "te-IN"),
+                    "language": "te-IN",
                 }
             using_custom = bool(e.get("customBrainPrompt"))
             has_agent_brief = bool(e.get("agentBrief"))
@@ -321,6 +411,7 @@ class InstructionStore:
                 "brainPrompt": e.get("brainPrompt") or compose_brain_prompt(
                     behaviour=e.get("behaviour", ""),
                     business=e.get("business", ""),
+                    language=e.get("language") or "te-IN",
                     style=e.get("style"),
                 ),
                 "customBrainPrompt": using_custom,
@@ -328,12 +419,14 @@ class InstructionStore:
                 "budgetTokens": e.get("budgetTokens"),
                 "updatedAt": e["updatedAt"],
                 "present": using_custom or has_agent_brief or has_legacy,
-                "style": e.get("style") or DEFAULT_RESPONSE_STYLE,
+                "style": style_for_language(e.get("style"), e.get("language")),
                 "usingDefaults": not using_custom and not has_agent_brief and not has_legacy,
                 "compiledVersion": e.get("compiledVersion", 0),
                 "optimizerReport": e.get("optimizerReport"),
                 "sourceChecksum": e.get("sourceChecksum"),
                 "rawTokenEstimate": e.get("rawTokenEstimate", 0),
+                "callEndPolicy": _resolve_policy(e.get("callEndPolicy"), e.get("language") or "te-IN"),
+                "language": e.get("language") or "te-IN",
             }
 
     def stats(self) -> dict:

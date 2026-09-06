@@ -24,3 +24,25 @@ async def test_lock_session_brain_over_versioned(monkeypatch):
     assert "Priya" in (text or "")
     instruction_store.clear(sid)
     get_settings.cache_clear()
+
+
+async def test_fitted_session_brain_keeps_default_hangup():
+    from unittest.mock import AsyncMock, patch
+
+    from server.brain.business_prompt_optimizer import OptimizerResult
+    from server.brain.session_brain_compiler import compile_session_brain
+
+    long_body = "Qualify budget and location for every plot inquiry. " * 220
+    opt = OptimizerResult(optimized_business_prompt=long_body)
+    with patch(
+        "server.brain.session_brain_compiler.optimize_session_dual_prompt",
+        new=AsyncMock(return_value=opt),
+    ):
+        compiled, *_ = await compile_session_brain(
+            behaviour="Be brief.",
+            business="We sell plots in Hyderabad.",
+            language="en-IN",
+            budget_tokens=1800,
+        )
+    assert "--- CALL END POLICY ---" in compiled
+    assert "Thank you for your time. Goodbye." in compiled

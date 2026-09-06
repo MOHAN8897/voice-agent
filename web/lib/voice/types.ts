@@ -32,6 +32,9 @@ export const VOICE_PIPELINE_LIMITS = {
   maxAudioChunksBuffered: 256,
   smallResponseMaxChars: 140,
   minChunkChars: 14,
+  firstChunkMinChars: 28,
+  clauseFlushAt: 40,
+  forceFlushAt: 72,
   maxChunkChars: 220,
   flushTimeoutMs: 45_000,
 } as const;

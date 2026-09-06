@@ -82,6 +82,19 @@ def normalize_pstn_stack_override(
     tts_speaker = str(_deep_get(out, "tts", "config", "speaker") or "").strip()
 
     # --- STT ---
+    stt_block = out.get("stt")
+    if isinstance(stt_block, dict):
+        stt_inner = stt_block.get("config")
+        if not isinstance(stt_inner, dict):
+            stt_inner = {}
+            stt_block["config"] = stt_inner
+        if stt_inner.get("stream_type") not in constants.STT_STREAM_TYPES:
+            stt_inner["stream_type"] = "fast"
+            adjustments.append("stt.config.stream_type set to fast for PSTN")
+        if stt_inner.get("mode") not in (None, "transcribe"):
+            stt_inner["mode"] = "transcribe"
+            adjustments.append("stt.config.mode set to transcribe for PSTN")
+
     if stt_provider == "sarvam" or (not stt_provider and stt_model in constants.STT_MODELS):
         if not stt_provider:
             _set_nested(out, "stt", "provider", "sarvam")

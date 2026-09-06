@@ -84,6 +84,85 @@ class Constants:
     # Fallback when CARTESIA_TTS_VOICE_ID unset (Cartesia "Skylar")
     CARTESIA_DEFAULT_VOICE_ID = "db6b0ed5-d5d3-463d-ae85-518a07d3c2b4"
 
+    # LLM catalogs (verified from provider docs — Aug 2026)
+    # OpenAI voice models: see server/prompts/voice_defaults.OPENAI_MODEL_CATALOG
+    DEEPSEEK_LLM_MODELS: dict[str, dict] = {
+        "deepseek-chat": {
+            "label": "DeepSeek Chat (V3) — fast dialogue",
+            "structured_output": True,
+            "prompt_caching": False,
+        },
+        "deepseek-reasoner": {
+            "label": "DeepSeek Reasoner — chain-of-thought",
+            "structured_output": True,
+            "prompt_caching": False,
+        },
+    }
+    GEMINI_LLM_MODELS: dict[str, dict] = {
+        # Latest 3.x — preferred for new stacks (see ai.google.dev/gemini-api/docs/deprecations)
+        "gemini-3.8-flash": {
+            "label": "Gemini 3.8 Flash — latest (Sep 2026); use thinking LOW for voice",
+            "structured_output": True,
+            "prompt_caching": True,
+            "tier": "flagship",
+        },
+        "gemini-3.7-flash": {
+            "label": "Gemini 3.7 Flash — strong Telugu/agentic ($0.75 in / $3.75 out per 1M)",
+            "structured_output": True,
+            "prompt_caching": True,
+            "tier": "flagship",
+        },
+        "gemini-3.6-flash": {
+            "label": "Gemini 3.6 Flash — successor to 2.5 Flash (strong reasoning)",
+            "structured_output": True,
+            "prompt_caching": True,
+            "tier": "balanced",
+        },
+        "gemini-3.5-flash": {
+            "label": "Gemini 3.5 Flash — balanced latency & quality",
+            "structured_output": True,
+            "prompt_caching": True,
+            "tier": "balanced",
+        },
+        "gemini-3.5-flash-lite": {
+            "label": "Gemini 3.5 Flash-Lite — lowest cost & fastest (~350 tok/s, $0.30/$2.50 per 1M)",
+            "structured_output": True,
+            "prompt_caching": True,
+            "tier": "fast",
+        },
+        "gemini-3.1-flash-lite": {
+            "label": "Gemini 3.1 Flash-Lite — ultra-low cost flash",
+            "structured_output": True,
+            "prompt_caching": True,
+            "tier": "fast",
+        },
+        "gemini-3.1-pro-preview": {
+            "label": "Gemini 3.1 Pro (preview) — highest quality",
+            "structured_output": True,
+            "prompt_caching": True,
+            "tier": "quality",
+        },
+        # Legacy 2.5 — retiring Oct 2026; keep for existing env tiers
+        "gemini-2.5-flash": {
+            "label": "Gemini 2.5 Flash (legacy — migrate to 3.5/3.6+)",
+            "structured_output": True,
+            "prompt_caching": True,
+            "tier": "legacy",
+        },
+        "gemini-2.5-flash-lite": {
+            "label": "Gemini 2.5 Flash-Lite (legacy — use 3.5 Flash-Lite)",
+            "structured_output": True,
+            "prompt_caching": True,
+            "tier": "legacy",
+        },
+        "gemini-2.5-pro": {
+            "label": "Gemini 2.5 Pro (legacy — migrate to 3.1 Pro)",
+            "structured_output": True,
+            "prompt_caching": True,
+            "tier": "legacy",
+        },
+    }
+
     # Sarvam endpoints
     SARVAM_STT_REALTIME_WS = "wss://api.sarvam.ai/speech-to-text-realtime/ws"
     SARVAM_TTS_WS = "wss://api.sarvam.ai/text-to-speech/ws"

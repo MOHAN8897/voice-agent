@@ -23,7 +23,6 @@ from server.services.audio_transcode import (
 from server.services.pstn_debug import log_pstn, log_pstn_summary, mark
 from server.services.pstn_media_flow import CallMediaConfig, new_ws_id, pstn_media_flow
 from server.services.pstn_voice_core import (
-    ENABLE_PSTN_BARGE_IN,
     PstnVoiceLoop,
     pstn_call_options,
 )
@@ -34,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 # Telnyx L16 wire @ 16 kHz — matches Sarvam linear16 and avoids G.711 transcoding.
 _WIRE_SAMPLE_RATE = TELNYX_RTP_SAMPLE_RATE
-MAX_AUDIO_QUEUE_FRAMES = 15  # 300 ms at 20 ms/frame; producer backpressures here.
+MAX_AUDIO_QUEUE_FRAMES = 20  # 400 ms at 20 ms/frame; producer backpressures here.
 active_telnyx_bridges: dict[str, "TelnyxPstnBridge"] = {}
 
 
@@ -246,8 +245,8 @@ class TelnyxPstnBridge:
                 tts_output_codec="mp3" if self._bidirectional_mode == "mp3" else "linear16",
                 is_agent_audio_active=lambda: not self._out_queue.empty(),
             )
-            if ENABLE_PSTN_BARGE_IN:
-                self._voice.set_barge_handler(self._barge_in)
+            self._voice.set_barge_handler(self._barge_in)
+            self._voice.set_hangup_handler(self._provider_hangup)
             asyncio.create_task(self._start_voice_loop())
         except Exception as exc:
             logger.exception("[TELNYX] stream start failed control=%s: %s", self.call_control_id, exc)
@@ -579,6 +578,17 @@ class TelnyxPstnBridge:
                 queue_size=queue_size,
                 status=queue_status,
             )
+
+    async def _provider_hangup(self) -> None:
+        if not self.call_control_id:
+            return
+        from server.services.telnyx_client import TelnyxClient
+
+        try:
+            await TelnyxClient().hangup(self.call_control_id)
+            log_pstn("hangup.provider", control=self.call_control_id, call_id=self.call_id)
+        except Exception as exc:
+            log_pstn("hangup.provider.failed", control=self.call_control_id, error=str(exc)[:200])
 
     async def _barge_in(self) -> None:
         generation_id = self._voice.current_generation_id if self._voice else None

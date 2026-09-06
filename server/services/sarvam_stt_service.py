@@ -8,6 +8,7 @@ from __future__ import annotations
 import httpx
 
 from server.config.env import get_settings
+from server.services.dev_secrets_store import dev_secrets_store
 from server.utils.errors import AppError, ErrorCode, classify_http_status
 from server.utils.http_clients import get_sarvam_client
 from server.utils.logger import log_error, log_stt
@@ -29,7 +30,7 @@ async def transcribe(
     Raises AppError on failure (classified).
     """
     settings = get_settings()
-    api_key = settings.sarvam_api_key
+    api_key = dev_secrets_store.effective_secret("sarvam_api_key") or settings.sarvam_api_key or ""
     model = model or settings.sarvam_stt_model
     timeout_s = (timeout_ms or settings.request_timeout_ms) / 1000
 

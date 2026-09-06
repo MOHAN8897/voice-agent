@@ -38,6 +38,47 @@ const RUNTIME_SAVE_KEYS = new Set([
   ...VOICE_BUNDLED_KEYS,
 ]);
 
+export type CallEndPolicyState = {
+  allowedReasons: string[];
+  farewell: string;
+};
+
+export const CALL_END_REASONS: { id: string; label: string }[] = [
+  { id: "goodbye", label: "Goodbye / hang up / don't call" },
+  { id: "firm_refusal", label: "Firm refusal after you stopped pushing" },
+  { id: "goal_complete", label: "Goal complete, nothing else" },
+  { id: "abuse", label: "Abuse" },
+  { id: "out_of_scope", label: "Still off-scope after one redirect" },
+];
+
+export const DEFAULT_CALL_END_FAREWELL: Record<string, string> = {
+  "te-IN": "Sare, time ichinanduku thanks. Good day.",
+  "en-IN": "Thank you for your time. Goodbye.",
+  "hi-IN": "Time dene ke liye dhanyavaad. Alvida.",
+};
+
+export function defaultCallEndPolicy(language: string): CallEndPolicyState {
+  return {
+    allowedReasons: CALL_END_REASONS.map((r) => r.id),
+    farewell: DEFAULT_CALL_END_FAREWELL[language] || DEFAULT_CALL_END_FAREWELL["en-IN"],
+  };
+}
+
+export function normalizeCallEndPolicyState(raw: unknown, language: string): CallEndPolicyState {
+  const fallback = defaultCallEndPolicy(language);
+  if (!raw || typeof raw !== "object") return fallback;
+  const o = raw as Record<string, unknown>;
+  const reasons = Array.isArray(o.allowedReasons)
+    ? (o.allowedReasons as unknown[]).map((id) => String(id)).filter(Boolean)
+    : fallback.allowedReasons;
+  const farewell = String(o.farewell || "").trim();
+  const isStock = !farewell || Object.values(DEFAULT_CALL_END_FAREWELL).includes(farewell);
+  return {
+    allowedReasons: reasons.length ? reasons : fallback.allowedReasons,
+    farewell: isStock ? fallback.farewell : farewell,
+  };
+}
+
 export type InstructionsState = {
   agentBrief: string;
   agentScript: string;
@@ -50,6 +91,7 @@ export type InstructionsState = {
   headroom: number;
   customBrainPrompt: boolean;
   cacheEligible?: boolean;
+  callEndPolicy: CallEndPolicyState;
 };
 
 export type PromptLimits = {
@@ -80,7 +122,15 @@ const DEFAULT_LIMITS: PromptLimits = {
   memoryHeadroomTokens: 300,
 };
 
-function countWords(text: string): number {
+function spokenStyleMatchesLanguage(style: string, language: string): boolean {
+  const s = (style || "").toLowerCase();
+  if (!s) return true;
+  const lang = (language || "").toLowerCase();
+  if (lang.startsWith("en") && (s.includes("spoken telugu") || s.includes("tanglish"))) return false;
+  if (lang.startsWith("hi") && s.includes("spoken telugu")) return false;
+  if (lang.startsWith("te") && s.includes("spoken indian english") && !s.includes("telugu")) return false;
+  return true;
+}
   const t = text.trim();
   if (!t) return 0;
   return t.split(/\s+/).length;
@@ -121,7 +171,7 @@ type Catalog = {
   };
 };
 
-export function useTestStudioFineTune(agentId: string, language: string) {
+export function useTestStudioFineTune(agentId: string, language: string, portal: "app" | "dev" = "app") {
   const sessionId = TEST_STUDIO_SESSION_ID;
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [runtime, setRuntime] = useState<RuntimeState>({});
@@ -136,12 +186,17 @@ export function useTestStudioFineTune(agentId: string, language: string) {
     budgetTokens: 2000,
     headroom: 2000,
     customBrainPrompt: false,
+    callEndPolicy: defaultCallEndPolicy(language),
   });
   const [optimizerMeta, setOptimizerMeta] = useState<{
     compiledVersion?: number;
     optimizerModel?: string;
     tokensSaved?: number;
     rawTokenEstimate?: number;
+    savedLanguage?: string;
+    agentName?: string;
+    detectedRole?: string;
+    responseStyle?: string;
   }>({});
   const [agentMeta, setAgentMeta] = useState<{
     name?: string;
@@ -161,7 +216,7 @@ export function useTestStudioFineTune(agentId: string, language: string) {
       const [catR, runR, insR, agentR, brainR] = await Promise.all([
         fetch("/api/settings/catalog", { credentials: "include" }),
         fetch(`/api/settings/runtime?sessionId=${encodeURIComponent(sessionId)}`, { credentials: "include" }),
-        fetch(`/api/instructions?sessionId=${encodeURIComponent(sessionId)}&includeCompiled=true`, { credentials: "include" }),
+        fetch(`/api/instructions?sessionId=${encodeURIComponent(sessionId)}${portal === "dev" ? "&includeCompiled=true" : ""}`, { credentials: "include" }),
         fetch(`/api/agents/${agentId}`, { credentials: "include" }),
         fetch(`/api/agents/${agentId}/business-brain`, { credentials: "include" }),
       ]);
@@ -180,13 +235,16 @@ export function useTestStudioFineTune(agentId: string, language: string) {
           agentScript: j.agentScript || "",
           behaviourInstructions: j.behaviour || "",
           businessInstructions: j.business || "",
-          responseStyle: j.responseStyle || j.style || "",
+          responseStyle: spokenStyleMatchesLanguage(j.responseStyle || j.style || "", language)
+            ? j.responseStyle || j.style || ""
+            : "",
           brainPrompt: j.brainPrompt || "",
           estimatedTokens: Number(j.estimatedTokens || 0),
           budgetTokens: Number(j.budgetTokens || 2000),
           headroom: Number(j.headroom || 0),
           customBrainPrompt: Boolean(j.customBrainPrompt),
           cacheEligible: Boolean(j.cacheEligible),
+          callEndPolicy: normalizeCallEndPolicyState(j.callEndPolicy, language),
         });
         const lim = j.limits || {};
         setLimits({
@@ -215,6 +273,10 @@ export function useTestStudioFineTune(agentId: string, language: string) {
           optimizerModel: j.optimizerReport?.optimizer_model,
           tokensSaved: j.optimizerReport?.tokens_saved,
           rawTokenEstimate: j.rawTokenEstimate,
+          savedLanguage: j.language,
+          agentName: j.optimizerReport?.agent_name,
+          detectedRole: j.optimizerReport?.detected_role,
+          responseStyle: j.style,
         });
       }
 
@@ -242,11 +304,22 @@ export function useTestStudioFineTune(agentId: string, language: string) {
     } finally {
       setLoading(false);
     }
-  }, [agentId, language, sessionId]);
+  }, [agentId, language, sessionId, portal]);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    setInstructions((p) => {
+      const current = p.callEndPolicy?.farewell || "";
+      const isDefault = Object.values(DEFAULT_CALL_END_FAREWELL).includes(current) || !current.trim();
+      if (!isDefault) return p;
+      const next = defaultCallEndPolicy(language);
+      if (current === next.farewell && p.callEndPolicy?.allowedReasons?.length) return p;
+      return { ...p, callEndPolicy: { ...(p.callEndPolicy || next), farewell: next.farewell } };
+    });
+  }, [language]);
 
   const saveInstructions = useCallback(async () => {
     const briefWords = countWords(instructions.agentBrief);
@@ -257,7 +330,7 @@ export function useTestStudioFineTune(agentId: string, language: string) {
       return false;
     }
     if (!instructions.agentBrief.trim()) {
-      setStatus("Write a short agent brief first — e.g. company name, agent name, and what the telecaller should do.");
+      setStatus("Write a short agent brief first — company, agent name, and what they should do on the call.");
       return false;
     }
     setSaving(true);
@@ -270,9 +343,12 @@ export function useTestStudioFineTune(agentId: string, language: string) {
         body: JSON.stringify({
           sessionId,
           agentBrief: instructions.agentBrief,
-          responseStyle: instructions.responseStyle || undefined,
+          responseStyle: spokenStyleMatchesLanguage(instructions.responseStyle, language)
+            ? instructions.responseStyle || undefined
+            : undefined,
           brainPromptBudgetTokens: runtime.brainPromptBudgetTokens,
           language_code: language,
+          callEndPolicy: normalizeCallEndPolicyState(instructions.callEndPolicy, language),
         }),
       });
       const j = await r.json().catch(() => ({}));
@@ -290,12 +366,17 @@ export function useTestStudioFineTune(agentId: string, language: string) {
         budgetTokens: j.budgetTokens,
         headroom: j.headroom,
         cacheEligible: Boolean(j.cacheEligible),
+        callEndPolicy: normalizeCallEndPolicyState(j.callEndPolicy, language),
       }));
       setOptimizerMeta({
         compiledVersion: j.compiledVersion,
         optimizerModel: j.optimizerReport?.optimizer_model,
         tokensSaved: j.tokensSaved ?? j.optimizerReport?.tokens_saved,
         rawTokenEstimate: j.rawTokenEstimate,
+        savedLanguage: j.language || language,
+        agentName: j.optimizerReport?.agent_name,
+        detectedRole: j.optimizerReport?.detected_role,
+        responseStyle: j.responseStyle || j.style,
       });
       const cacheNote = j.cacheEligible
         ? `cache ON (≥${j.cacheMinTokens || 1024} tokens)`
@@ -313,6 +394,45 @@ export function useTestStudioFineTune(agentId: string, language: string) {
       setSaving(false);
     }
   }, [instructions, limits, runtime.brainPromptBudgetTokens, sessionId, language]);
+
+  const saveCallEndPolicy = useCallback(async () => {
+    setSaving(true);
+    setStatus("Saving call end policy…");
+    try {
+      const r = await fetch("/api/instructions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          sessionId,
+          language_code: language,
+          callEndPolicy: normalizeCallEndPolicyState(instructions.callEndPolicy, language),
+          reassembleOnly: true,
+        }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        setStatus(apiErrorMessage(j, `Call-end save failed (${r.status})`));
+        return false;
+      }
+      setInstructions((prev) => ({
+        ...prev,
+        estimatedTokens: Number(j.estimatedTokens || prev.estimatedTokens),
+        budgetTokens: Number(j.budgetTokens || prev.budgetTokens),
+        headroom: Number(j.headroom || prev.headroom),
+        cacheEligible: Boolean(j.cacheEligible),
+        callEndPolicy: normalizeCallEndPolicyState(j.callEndPolicy, language),
+      }));
+      setOptimizerMeta((prev) => ({ ...prev, savedLanguage: j.language || language }));
+      setStatus("Call-end policy saved into the compiled brain");
+      return true;
+    } catch {
+      setStatus("Call-end save failed — network error");
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  }, [instructions.callEndPolicy, language, sessionId]);
 
   const saveRuntime = useCallback(async () => {
     setStatus("Saving runtime…");
@@ -386,9 +506,10 @@ export function useTestStudioFineTune(agentId: string, language: string) {
       agentScript: "",
       behaviourInstructions: "",
       businessInstructions: "",
+      callEndPolicy: defaultCallEndPolicy(language),
     }));
     setStatus("Loaded factory default — click Create agent script to apply");
-  }, []);
+  }, [language]);
 
   const importFromAgentDraft = useCallback(() => {
     const sections = agentMeta.draftSections;
@@ -419,6 +540,7 @@ export function useTestStudioFineTune(agentId: string, language: string) {
     limits,
     load,
     saveInstructions,
+    saveCallEndPolicy,
     saveRuntime,
     saveAll,
     clearSession,

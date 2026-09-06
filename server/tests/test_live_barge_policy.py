@@ -4,6 +4,7 @@ BARGE_DEBOUNCE_MS = 800
 THINK_CANCEL_MIN_MS = 350
 THINK_CANCEL_MIN_WORDS = 2
 SPEAK_BARGE_MIN_WORDS = 3
+BARGE_HOLD_MS = 200
 
 
 def should_debounce_barge_in(state: dict, now: float) -> bool:
@@ -31,6 +32,10 @@ def should_barge_while_speaking(state: dict, now: float) -> bool:
     if state.get("words", 0) < min_words:
         return False
     if require_vad and not state.get("sawVadStart"):
+        return False
+    hold_ms = state.get("holdMs", BARGE_HOLD_MS)
+    vad_started_at = state.get("vadStartedAt") or 0
+    if vad_started_at and now - vad_started_at < hold_ms:
         return False
     return now > state.get("bargeCooldownUntil", 0)
 
@@ -98,6 +103,30 @@ class TestSpeakingBarge:
         assert not should_barge_while_speaking(
             {"agentSpeaking": True, "words": 3, "sawVadStart": True, "bargeCooldownUntil": 500},
             now=100,
+        )
+
+    def test_blocks_until_hold_elapses(self):
+        assert not should_barge_while_speaking(
+            {
+                "agentSpeaking": True,
+                "words": 3,
+                "sawVadStart": True,
+                "vadStartedAt": 90,
+                "bargeCooldownUntil": 0,
+            },
+            now=100,
+        )
+
+    def test_allows_after_hold(self):
+        assert should_barge_while_speaking(
+            {
+                "agentSpeaking": True,
+                "words": 3,
+                "sawVadStart": True,
+                "vadStartedAt": 1,
+                "bargeCooldownUntil": 0,
+            },
+            now=250,
         )
 
     def test_respects_custom_min_words(self):

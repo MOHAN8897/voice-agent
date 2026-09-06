@@ -24,6 +24,8 @@ from server.db.tier_store import (
 from server.providers import get_provider_registry, resolve_stack
 from server.providers.base import StackSelection, StageSelection
 from server.services.dev_fallback_store import dev_fallback_store
+from server.services.dev_runtime import effective_app_environment, effective_config_mode
+from server.services.telephony import telephony_summary_async
 from server.utils.errors import AppError
 
 router = APIRouter()
@@ -71,29 +73,39 @@ async def dev_stack_catalog(session: SessionData = Depends(require_dev_session))
     require_permission(session, "dev.stack.read")
     from server.providers.catalog_refresh import get_fresh_catalog
 
-    return get_fresh_catalog()
+    catalog = get_fresh_catalog()
+    telephony = await telephony_summary_async()
+    catalog["telephony"] = {
+        "active_provider": telephony.get("active_provider"),
+        "active_enabled": telephony.get("active_enabled"),
+        "active_ready": telephony.get("active_ready"),
+        "providers": telephony.get("providers") or [],
+        "enabled_providers": telephony.get("enabled_providers") or [],
+    }
+    return catalog
 
 
 @router.get("/api/dev/stack/tiers")
 async def dev_stack_tiers(session: SessionData = Depends(require_dev_session)):
     require_permission(session, "dev.stack.read")
     settings = get_settings()
+    app_env = effective_app_environment()
     tiers: list[dict[str, Any]] = []
     for tier in constants.TIER_NAMES:
         try:
-            resolved = resolve_stack(mode="env", tier=tier, environment=settings.app_environment)
-            db_combo = await get_tier_combination_id(settings.app_environment, tier)
+            resolved = resolve_stack(mode="env", tier=tier, environment=app_env)
+            db_combo = await get_tier_combination_id(app_env, tier)
             tiers.append(
                 {
                     "tier": tier,
                     "combination_id": db_combo or resolved.combination_id,
                     "resolved": resolved.to_safe_dict(),
-                    "environment": settings.app_environment,
+                    "environment": app_env,
                 }
             )
         except AppError as e:
             tiers.append({"tier": tier, "error": e.user_message})
-    return {"environment": settings.app_environment, "config_mode": settings.voice_agent_config_mode, "tiers": tiers}
+    return {"environment": app_env, "config_mode": effective_config_mode(), "tiers": tiers}
 
 
 @router.put("/api/dev/stack/tiers/{tier}")
@@ -102,6 +114,7 @@ async def dev_stack_tier_update(tier: str, body: TierStackBody, session: Session
     if tier not in constants.TIER_NAMES:
         return {"ok": False, "error": {"code": "validation_error", "message": f"Unknown tier: {tier}"}}
     settings = get_settings()
+    app_env = effective_app_environment()
     stack = StackSelection(
         stt=StageSelection(body.stt_provider, body.stt_model, {}),
         llm=StageSelection(body.llm_provider, body.llm_model, {}),
@@ -112,11 +125,11 @@ async def dev_stack_tier_update(tier: str, body: TierStackBody, session: Session
         mode="frontend",
         user_selection=stack,
         tier=tier,
-        environment=settings.app_environment,
+        environment=app_env,
     )
     if get_session_factory():
         await upsert_tier_assignment(
-            settings.app_environment,
+            app_env,
             tier,
             resolved.combination_id,
             resolved.to_safe_dict(),
@@ -129,6 +142,7 @@ async def dev_stack_tier_update(tier: str, body: TierStackBody, session: Session
 async def dev_stack_test(body: TestStackBody, session: SessionData = Depends(require_dev_session)):
     require_permission(session, "dev.stack.read")
     settings = get_settings()
+    app_env = effective_app_environment()
     tier = body.tier if body.tier in constants.TIER_NAMES else "medium"
     if body.stack:
         stack = StackSelection(
@@ -137,9 +151,9 @@ async def dev_stack_test(body: TestStackBody, session: SessionData = Depends(req
             tts=StageSelection(body.stack.tts_provider, body.stack.tts_model, {}),
             language=body.stack.language,
         )
-        resolved = resolve_stack(mode="frontend", user_selection=stack, tier=tier, environment=settings.app_environment)
+        resolved = resolve_stack(mode="frontend", user_selection=stack, tier=tier, environment=app_env)
     else:
-        resolved = resolve_stack(mode="env", tier=tier, environment=settings.app_environment)
+        resolved = resolve_stack(mode="env", tier=tier, environment=app_env)
     return {"ok": True, "resolved": resolved.to_safe_dict()}
 
 
@@ -179,6 +193,7 @@ async def dev_validate_selection(
 ):
     require_permission(session, "dev.stack.read")
     settings = get_settings()
+    app_env = effective_app_environment()
     registry = get_provider_registry()
 
     def _stage(name: str, data: dict[str, Any], default_provider: str) -> StageSelection:
@@ -199,7 +214,7 @@ async def dev_validate_selection(
             mode="frontend",
             user_selection=stack,
             language=body.language,
-            environment=settings.app_environment,
+            environment=app_env,
         )
         return {"ok": True, "resolved": resolved.to_safe_dict()}
     except AppError as e:
@@ -250,7 +265,7 @@ async def dev_promote(body: PromoteBody, session: SessionData = Depends(require_
     if target not in ("staging", "production"):
         return {"ok": False, "error": {"code": "validation_error", "message": "target must be staging or production"}}
     settings = get_settings()
-    source = settings.app_environment
+    source = effective_app_environment()
     count = await promote_tier_assignments(source, target, actor=session.subject)
     promotion_id = str(uuid.uuid4())
     factory = get_session_factory()
@@ -279,7 +294,8 @@ async def dev_promote(body: PromoteBody, session: SessionData = Depends(require_
 async def promotion_rollback(promotion_id: str, session: SessionData = Depends(require_dev_session)):
     require_permission(session, "dev.promote")
     settings = get_settings()
-    count = await sync_tier_assignments_from_env(environment=settings.app_environment)
+    app_env = effective_app_environment()
+    count = await sync_tier_assignments_from_env(environment=app_env)
     await load_tier_cache()
     factory = get_session_factory()
     if factory:

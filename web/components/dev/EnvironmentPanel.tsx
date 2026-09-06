@@ -15,6 +15,7 @@ type EnvRow = {
   masked?: string;
   source?: string;
   editable?: boolean;
+  cleared?: boolean;
 };
 
 type EnvGroup = Record<string, EnvRow[]>;
@@ -64,13 +65,16 @@ function SecretRow({
   draft,
   onDraft,
   onRevert,
+  onClear,
 }: {
   row: EnvRow;
   draft: string;
   onDraft: (v: string) => void;
   onRevert: () => void;
+  onClear: () => void;
 }) {
   const configured = Boolean(row.configured);
+  const cleared = Boolean(row.cleared);
   return (
     <div
       className={`rounded-xl border p-4 transition-colors ${
@@ -94,7 +98,7 @@ function SecretRow({
           </div>
         ) : (
           <div className="rounded-lg border border-dashed border-surface-border px-3 py-2.5 text-sm text-text-subtle">
-            Empty — no value in .env or overlay
+            {cleared ? "Cleared in overlay — .env value hidden" : "Empty — no value in .env or overlay"}
           </div>
         )}
         <input
@@ -105,8 +109,20 @@ function SecretRow({
           onChange={(e) => onDraft(e.target.value)}
         />
         {row.source === "overlay" && (
-          <button type="button" onClick={onRevert} className="mt-2 text-xs text-text-muted hover:text-accent">
-            Revert to .env
+          <div className="mt-2 flex flex-wrap gap-3">
+            <button type="button" onClick={onRevert} className="text-xs text-text-muted hover:text-accent">
+              Revert to .env
+            </button>
+            {configured && (
+              <button type="button" onClick={onClear} className="text-xs text-text-muted hover:text-warning">
+                Clear key
+              </button>
+            )}
+          </div>
+        )}
+        {row.source === "env" && configured && (
+          <button type="button" onClick={onClear} className="mt-2 text-xs text-text-muted hover:text-warning">
+            Clear key (hide .env value)
           </button>
         )}
       </div>
@@ -246,6 +262,26 @@ export function EnvironmentPanel() {
   useEffect(() => {
     load();
   }, [load]);
+
+  async function clearSecret(field: string) {
+    setStatus(`Clearing ${field}…`);
+    const r = await portalFetch("dev", "/api/dev/environment", {
+      method: "PATCH",
+      body: JSON.stringify({ [field]: "" }),
+    });
+    if (r.ok) {
+      setStatus(`Cleared ${field} in overlay`);
+      setDraft((d) => {
+        const next = { ...d };
+        delete next[field];
+        return next;
+      });
+      await load();
+    } else {
+      const j = await r.json().catch(() => ({}));
+      setStatus(j.detail?.error?.message || `Could not clear ${field}`);
+    }
+  }
 
   async function revertField(field: string) {
     setStatus(`Reverting ${field}…`);
@@ -460,6 +496,7 @@ export function EnvironmentPanel() {
               draft={draft[row.field] || ""}
               onDraft={(v) => setDraft((d) => ({ ...d, [row.field]: v }))}
               onRevert={() => revertField(row.field)}
+              onClear={() => clearSecret(row.field)}
             />
           ))}
         </div>

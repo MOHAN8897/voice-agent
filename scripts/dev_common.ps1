@@ -336,17 +336,22 @@ function Start-DevWindow {
 if (Get-Variable -Name PSNativeCommandUseErrorActionPreference -ErrorAction SilentlyContinue) {
     `$PSNativeCommandUseErrorActionPreference = `$false
 }
+`$env:PYTHONUNBUFFERED = '1'
+`$env:PYTHONIOENCODING = 'utf-8'
 Set-Location -LiteralPath '$($WorkingDir.Replace("'", "''"))'
 try { `$Host.UI.RawUI.WindowTitle = '$($Title.Replace("'", "''"))' } catch { }
 `$log = '$($LogFile.Replace("'", "''"))'
 `$utf8 = New-Object System.Text.UTF8Encoding `$false
 [System.IO.File]::WriteAllText(`$log, "==== $Title start $(Get-Date -Format o) ====`n", `$utf8)
+Write-Host "Logging to `$log"
+Write-Host "==== $Title ====`n"
 & {
 $Command
 } 2>&1 | ForEach-Object {
     if (`$_ -is [System.Management.Automation.ErrorRecord]) { `$_.ToString() } else { "`$_" }
 } | ForEach-Object {
     [System.IO.File]::AppendAllText(`$log, "`$_`n", `$utf8)
+    [Console]::Out.WriteLine(`$_)
 }
 "@
     Write-Utf8NoBom -Path $runnerFile -Value $runner

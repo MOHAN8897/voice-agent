@@ -5,12 +5,20 @@ import { Button } from "@/components/ui/Button";
 import { DevCard } from "@/components/dev/DevCard";
 import { portalFetch, refreshPortalSession } from "@/lib/auth-client";
 
-type ModelOption = { id: string; label?: string };
+type ModelOption = {
+  id: string;
+  label?: string;
+  structured_output?: boolean;
+  prompt_caching?: boolean;
+  default?: boolean;
+};
 type ProviderEntry = {
   id: string;
   label?: string;
   enabled?: boolean;
   configured?: boolean;
+  adapter_available?: boolean;
+  notes?: string;
   models?: { stt?: ModelOption[]; llm?: ModelOption[]; tts?: ModelOption[] };
 };
 
@@ -51,6 +59,10 @@ export function StackTierWorkbench() {
   const [tiers, setTiers] = useState<TierRow[]>([]);
   const [providers, setProviders] = useState<ProviderEntry[]>([]);
   const [configMode, setConfigMode] = useState("frontend");
+  const [environment, setEnvironment] = useState("development");
+  const [telephonyProviders, setTelephonyProviders] = useState<
+    Array<{ id: string; label?: string; enabled?: boolean; configured?: boolean; ready?: boolean }>
+  >([]);
   const [selected, setSelected] = useState("medium");
   const [form, setForm] = useState<StackForm>(defaultForm());
   const [status, setStatus] = useState("");
@@ -67,6 +79,7 @@ export function StackTierWorkbench() {
     const j = await tierRes.json();
     setTiers(j.tiers || []);
     setConfigMode(j.config_mode || "frontend");
+    setEnvironment(j.environment || "development");
     const row = (j.tiers || []).find((t: TierRow) => t.tier === selected);
     if (row?.resolved) setForm(defaultForm(row.resolved));
   }, [selected]);
@@ -81,8 +94,17 @@ export function StackTierWorkbench() {
       return;
     }
     const cat = await catalogRes.json();
-    const list = cat.providers?.providers ?? cat.providers ?? [];
-    setProviders(Array.isArray(list) ? list : []);
+    const list = Array.isArray(cat.providers)
+      ? cat.providers
+      : Array.isArray(cat.providers?.providers)
+        ? cat.providers.providers
+        : [];
+    setProviders(Array.isArray(list) ? list.filter((p) => p.enabled !== false) : []);
+    setTelephonyProviders(
+      Array.isArray(cat.telephony?.providers)
+        ? cat.telephony.providers.filter((p: { enabled?: boolean }) => p.enabled)
+        : []
+    );
   }, []);
 
   useEffect(() => {
@@ -113,6 +135,27 @@ export function StackTierWorkbench() {
     const p = providers.find((x) => x.id === providerId);
     return p?.models?.[stage] || [];
   }
+
+  function providerFootnote(p: ProviderEntry) {
+    if (p.adapter_available === false) return " (adapter pending)";
+    if (!p.configured) return " (no key)";
+    return "";
+  }
+
+  function modelHint(m: ModelOption) {
+    const tags: string[] = [];
+    if (m.prompt_caching) tags.push("prompt cache");
+    if (m.structured_output) tags.push("structured");
+    if (m.default) tags.push("env default");
+    return tags.length ? ` — ${tags.join(", ")}` : "";
+  }
+
+  useEffect(() => {
+    const llmModels = providers.find((x) => x.id === form.llmProvider)?.models?.llm || [];
+    if (llmModels.length && !llmModels.some((m) => m.id === form.llmModel)) {
+      setForm((f) => ({ ...f, llmModel: llmModels[0].id }));
+    }
+  }, [form.llmProvider, providers, form.llmModel]);
 
   async function saveTier() {
     setStatus("Saving tier assignment…");
@@ -161,9 +204,16 @@ export function StackTierWorkbench() {
 
       <DevCard delayMs={0}>
         <p className="text-sm text-text-muted">
-          Resolution mode: <span className="font-mono text-accent">{configMode}</span> · Assign stacks per tier before
-          promotion. Enable providers and keys in Environment first.
+          Resolution mode: <span className="font-mono text-accent">{configMode}</span> · Environment:{" "}
+          <span className="font-mono text-accent">{environment}</span> · Assign stacks per tier before promotion.
+          Enable providers and keys in Environment first — only enabled voice providers appear below.
         </p>
+        {telephonyProviders.length > 0 && (
+          <p className="mt-3 text-xs text-text-muted">
+            PSTN trunks enabled:{" "}
+            {telephonyProviders.map((p) => `${p.label || p.id}${p.ready ? "" : " (not ready)"}`).join(" · ")}
+          </p>
+        )}
       </DevCard>
 
       <div className="flex flex-wrap gap-2">
@@ -203,7 +253,7 @@ export function StackTierWorkbench() {
             >
               {sttProviders.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.label || p.id}{!p.configured ? " (no key)" : ""}
+                  {p.label || p.id}{providerFootnote(p)}
                 </option>
               ))}
             </select>
@@ -219,8 +269,12 @@ export function StackTierWorkbench() {
           </div>
         </DevCard>
 
-        <DevCard title="LLM" delayMs={80}>
+        <DevCard title="LLM" description="Language model — models from provider catalog when enabled in Environment" delayMs={80}>
           <div className="space-y-3">
+            {llmProviders.length === 0 ? (
+              <p className="text-sm text-warning">No LLM providers enabled. Turn on OpenAI or DeepSeek in Environment.</p>
+            ) : (
+              <>
             <select
               className="w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2.5 text-sm"
               value={form.llmProvider}
@@ -234,7 +288,7 @@ export function StackTierWorkbench() {
             >
               {llmProviders.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.label || p.id}{!p.configured ? " (no key)" : ""}
+                  {p.label || p.id}{providerFootnote(p)}
                 </option>
               ))}
             </select>
@@ -244,9 +298,16 @@ export function StackTierWorkbench() {
               onChange={(e) => setForm((f) => ({ ...f, llmModel: e.target.value }))}
             >
               {modelsFor(form.llmProvider, "llm").map((m) => (
-                <option key={m.id} value={m.id}>{m.label || m.id}</option>
+                <option key={m.id} value={m.id}>
+                  {m.label || m.id}{modelHint(m)}
+                </option>
               ))}
             </select>
+            {providers.find((p) => p.id === form.llmProvider)?.notes && (
+              <p className="text-xs text-text-muted">{providers.find((p) => p.id === form.llmProvider)?.notes}</p>
+            )}
+              </>
+            )}
           </div>
         </DevCard>
 
@@ -265,7 +326,7 @@ export function StackTierWorkbench() {
             >
               {ttsProviders.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.label || p.id}{!p.configured ? " (no key)" : ""}
+                  {p.label || p.id}{providerFootnote(p)}
                 </option>
               ))}
             </select>

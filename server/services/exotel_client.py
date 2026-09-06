@@ -231,6 +231,13 @@ class ExotelClient:
         payload = await self._request("GET", f"/Calls/{call_sid}.json")
         return payload.get("Call") or payload
 
+    async def hangup(self, call_sid: str) -> dict[str, Any]:
+        return await self._request(
+            "POST",
+            f"/Calls/{call_sid}.json",
+            data={"Status": "completed"},
+        )
+
 
 def public_webhook_urls() -> dict[str, str | None]:
     base = webhook_base_url()

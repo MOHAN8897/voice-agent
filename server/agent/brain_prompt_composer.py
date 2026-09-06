@@ -4,6 +4,7 @@ Brain prompt composer — merges factory sections + user overrides into ONE plai
 from __future__ import annotations
 
 from server.prompts.brain_prompt import DEFAULT_BRAIN_PROMPT_SECTIONS
+from server.prompts.voice_defaults import style_for_language
 
 # User-editable sections stay small so the composed brain stays cache-eligible
 # (≥1024 tokens) without crowding dynamic memory after the cache breakpoint.
@@ -145,18 +146,33 @@ def compose_brain_prompt(
     style: str | None = None,
 ) -> str:
     """Merge sections into ONE string. No runtime trimming."""
+    from server.brain.sections import STATIC_OUTPUT_RULES
+    from server.prompts.agent_voice_rules import (
+        call_end_policy_section,
+        language_runtime_footer,
+        spoken_pack_for,
+    )
+
     behaviour = sanitize_behaviour(behaviour) or DEFAULT_BRAIN_PROMPT_SECTIONS["behaviour"]
     business = sanitize_business(business) or DEFAULT_BRAIN_PROMPT_SECTIONS["business"]
-    style_line = style or "very brief, 1-2 sentences, spoken Telugu"
+    style_line = style_for_language(style, language)
 
     parts = [
         DEFAULT_BRAIN_PROMPT_SECTIONS["safety"],
-        DEFAULT_BRAIN_PROMPT_SECTIONS["telugu"],
+        spoken_pack_for(language),
         f"--- BEHAVIOUR ---\n{behaviour}",
         f"--- BUSINESS ---\n{business}",
-        f"Language: {language}. Style: {style_line}.",
+        call_end_policy_section(language),
+        STATIC_OUTPUT_RULES,
+        language_runtime_footer(language, style_line),
     ]
-    return "\n\n".join(parts)
+    text = "\n\n".join(parts)
+    pad = f"\n\n{STATIC_OUTPUT_RULES}"
+    extra = 0
+    while estimate_tokens(text) < CACHE_MIN_TOKENS and extra < 6:
+        text += pad
+        extra += 1
+    return text
 
 
 def compose_brain_prompt_sections(
@@ -166,15 +182,19 @@ def compose_brain_prompt_sections(
     language: str = "te-IN",
     style: str | None = None,
 ) -> dict[str, str]:
+    from server.prompts.agent_voice_rules import language_runtime_footer, spoken_pack_for
+
     behaviour = sanitize_behaviour(behaviour) or DEFAULT_BRAIN_PROMPT_SECTIONS["behaviour"]
     business = sanitize_business(business) or DEFAULT_BRAIN_PROMPT_SECTIONS["business"]
-    style_line = style or "very brief, 1-2 sentences, spoken Telugu"
+    style_line = style_for_language(style, language)
+    pack = spoken_pack_for(language)
     return {
         "safety": DEFAULT_BRAIN_PROMPT_SECTIONS["safety"],
-        "telugu": DEFAULT_BRAIN_PROMPT_SECTIONS["telugu"],
+        "telugu": pack,
+        "spoken": pack,
         "behaviour": behaviour,
         "business": business,
-        "footer": f"Language: {language}. Style: {style_line}.",
+        "footer": language_runtime_footer(language, style_line),
     }
 
 

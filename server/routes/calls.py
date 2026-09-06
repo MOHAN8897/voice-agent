@@ -137,7 +137,9 @@ def _enrich_call_list_item(item: dict) -> dict:
         summary = (outcome.get("summary_en") or outcome.get("summary_te") or "").strip()
         if summary:
             out["summary"] = summary[:240]
-        fields = outcome.get("extracted_fields") or {}
+        from server.call.outcome_schema import normalize_extracted_fields
+
+        fields = normalize_extracted_fields(outcome.get("extracted_fields"))
         customer = (fields.get("name") or fields.get("phone") or "").strip()
         if customer:
             out["customer"] = customer

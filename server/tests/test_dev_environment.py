@@ -74,6 +74,28 @@ async def test_dev_environment_patch_cartesia_with_telnyx_fields():
         assert "enable_telnyx" in applied
 
 
+def test_clear_secret_via_empty_patch():
+    dev_secrets_store.update({"openai_api_key": "sk-test-overlay-key"})
+    assert dev_secrets_store.effective_secret("openai_api_key") == "sk-test-overlay-key"
+    dev_secrets_store.update({"openai_api_key": ""})
+    assert dev_secrets_store.effective_secret("openai_api_key") is None
+    snap = dev_secrets_store.snapshot()
+    row = next(x for x in snap["groups"]["provider_keys"] if x["field"] == "openai_api_key")
+    assert row["configured"] is False
+    assert row.get("cleared") is True
+    dev_secrets_store.remove_overlay_key("openai_api_key")
+
+
+def test_benchmarks_respect_overlay_toggle():
+    from server.services.dev_runtime import benchmarks_enabled
+
+    dev_secrets_store.update({"enable_benchmarks": True})
+    assert benchmarks_enabled() is True
+    dev_secrets_store.update({"enable_benchmarks": False})
+    assert benchmarks_enabled() is False
+    dev_secrets_store.remove_overlay_key("enable_benchmarks")
+
+
 def test_environment_patch_schema_covers_allowed_keys():
     assert set(EnvironmentPatch.model_fields) == ALLOWED_PATCH_KEYS
 

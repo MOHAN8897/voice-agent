@@ -17,6 +17,18 @@ DISPOSITIONS = frozenset(
     }
 )
 
+# OpenAI strict JSON schema forbids free-form objects (`additionalProperties: {type: string}`).
+# Use an array of {key, value}, then normalize back to a dict for disk/API.
+_EXTRACTED_FIELD_ITEM: dict[str, Any] = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["key", "value"],
+    "properties": {
+        "key": {"type": "string"},
+        "value": {"type": "string"},
+    },
+}
+
 OUTCOME_JSON_SCHEMA: dict[str, Any] = {
     "type": "object",
     "additionalProperties": False,
@@ -36,7 +48,7 @@ OUTCOME_JSON_SCHEMA: dict[str, Any] = {
         "summary_te": {"type": "string"},
         "summary_en": {"type": "string"},
         "next_action": {"type": ["string", "null"]},
-        "extracted_fields": {"type": "object", "additionalProperties": {"type": "string"}},
+        "extracted_fields": {"type": "array", "items": _EXTRACTED_FIELD_ITEM},
         "objections": {"type": "array", "items": {"type": "string"}},
         "notes": {"type": ["string", "null"]},
     },
@@ -47,6 +59,24 @@ def validate_disposition(value: str | None) -> str:
     if value in DISPOSITIONS:
         return value  # type: ignore[return-value]
     return "no_outcome"
+
+
+def normalize_extracted_fields(raw: Any) -> dict[str, str]:
+    """LLM schema is [{key, value}, ...]; disk/API keep a string map."""
+    if isinstance(raw, dict):
+        return {str(k): "" if v is None else str(v) for k, v in raw.items()}
+    if not isinstance(raw, list):
+        return {}
+    out: dict[str, str] = {}
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        key = item.get("key")
+        if key is None:
+            continue
+        value = item.get("value")
+        out[str(key)] = "" if value is None else str(value)
+    return out
 
 
 def empty_outcome(*, model: str, reason: str = "unavailable") -> dict[str, Any]:

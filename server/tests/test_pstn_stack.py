@@ -46,6 +46,21 @@ def test_cartesia_stt_ink2_telugu_upgraded():
     assert out["stt"]["model"] == "ink-whisper"
 
 
+def test_pstn_stt_stream_type_normalized():
+    raw = {
+        "stt": {
+            "provider": "sarvam",
+            "model": "saaras:v3-realtime",
+            "config": {"stream_type": "accurate", "mode": "translate"},
+        },
+        "tts": {"provider": "sarvam", "model": "bulbul:v3", "config": {"speaker": "shubh"}},
+    }
+    out, adj = normalize_pstn_stack_override(raw, language="te-IN")
+    assert out["stt"]["config"]["stream_type"] == "fast"
+    assert out["stt"]["config"]["mode"] == "transcribe"
+    assert any("fast" in a for a in adj)
+
+
 def test_invalid_sarvam_speaker_raises():
     raw = {
         "tts": {"provider": "sarvam", "model": "bulbul:v3", "config": {"speaker": "not_a_real_voice"}},

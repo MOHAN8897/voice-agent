@@ -14,6 +14,7 @@ from server.call.outcome_schema import (
     DISPOSITIONS,
     OUTCOME_JSON_SCHEMA,
     empty_outcome,
+    normalize_extracted_fields,
     validate_disposition,
 )
 from server.call.paths import call_dir
@@ -126,6 +127,8 @@ async def _generate_outcome(
             "role": "developer",
             "content": (
                 "You analyze completed voice calls. Output structured JSON only. "
+                "extracted_fields must be an array of {key, value} strings "
+                "(name, budget, slot, etc). Use [] if nothing was captured. "
                 "Disposition rubric: new_lead (first contact/info captured), interested "
                 "(positive, not yet qualified), qualified (meets criteria), site_visit_planned "
                 "(concrete appointment), callback_required (explicit follow-up), not_interested "
@@ -174,7 +177,7 @@ async def _generate_outcome(
             )
             if not isinstance(payload, dict):
                 raise ValueError("outcome payload is not an object")
-            payload.setdefault("extracted_fields", {})
+            payload["extracted_fields"] = normalize_extracted_fields(payload.get("extracted_fields"))
             payload.setdefault("objections", [])
             payload.setdefault("next_action", None)
             payload.setdefault("summary_te", "")

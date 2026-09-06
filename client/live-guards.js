@@ -7,6 +7,7 @@
   const THINK_CANCEL_MIN_MS = 350;
   const THINK_CANCEL_MIN_WORDS = 2;
   const SPEAK_BARGE_MIN_WORDS = 3;
+  const BARGE_HOLD_MS = 200;
 
   function shouldDebounceBargeIn(state, now) {
     return (
@@ -31,6 +32,9 @@
     const requireVad = state.requireVad !== false;
     if (state.words < minWords) return false;
     if (requireVad && !state.sawVadStart) return false;
+    const holdMs = state.holdMs ?? BARGE_HOLD_MS;
+    const vadStartedAt = state.vadStartedAt || 0;
+    if (vadStartedAt > 0 && now - vadStartedAt < holdMs) return false;
     return now > (state.bargeCooldownUntil || 0);
   }
 
@@ -39,6 +43,7 @@
     THINK_CANCEL_MIN_MS,
     THINK_CANCEL_MIN_WORDS,
     SPEAK_BARGE_MIN_WORDS,
+    BARGE_HOLD_MS,
     shouldDebounceBargeIn,
     shouldThinkCancel,
     shouldBargeWhileSpeaking,

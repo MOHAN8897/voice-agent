@@ -58,16 +58,18 @@ def resolve_stack_for_session(session_id: str, *, language: str = "te-IN") -> Re
     settings = get_settings()
     runtime = runtime_settings.get(session_id)
     lang = runtime.get("sttLanguage") or language
+    config_mode = dev_secrets_store.effective("voice_agent_config_mode", settings.voice_agent_config_mode)
+    tier = dev_secrets_store.effective("voice_agent_tier", settings.voice_agent_tier)
+    app_env = dev_secrets_store.effective("app_environment", settings.app_environment)
 
-    if settings.voice_agent_config_mode == "env":
+    if config_mode == "env":
         return resolve_stack(
             mode="env",
-            tier=settings.voice_agent_tier,
+            tier=tier,
             language=lang,
-            environment=settings.app_environment,
+            environment=app_env,
         )
 
-    tier = settings.voice_agent_tier
     cartesia_on = _cartesia_available(settings)
     default_stt_provider = getattr(settings, f"voice_{tier}_stt_provider")
     default_stt_model = getattr(settings, f"voice_{tier}_stt_model")
@@ -122,5 +124,5 @@ def resolve_stack_for_session(session_id: str, *, language: str = "te-IN") -> Re
         mode="frontend",
         user_selection=selection,
         language=lang,
-        environment=settings.app_environment,
+        environment=app_env,
     )

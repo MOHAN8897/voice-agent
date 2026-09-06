@@ -9,6 +9,7 @@ import { refreshPortalSession } from "@/lib/auth-client";
 import { TestStudioConfigRack } from "@/components/test-studio/TestStudioConfigRack";
 import { TestStudioLivePanel } from "@/components/test-studio/TestStudioLivePanel";
 import { TestStudioDiagnostics } from "@/components/test-studio/TestStudioDiagnostics";
+import { CompileLanguagePicker } from "@/components/test-studio/CompileLanguagePicker";
 import { TestStudioFineTuneWorkbench } from "@/components/test-studio/TestStudioFineTuneWorkbench";
 import { TestStudioTurnMetrics, emptySessionTotals, type TurnMetricRow } from "@/components/test-studio/TestStudioTurnMetrics";
 import { TestStudioModePicker, type TestStudioMode } from "@/components/test-studio/TestStudioModePicker";
@@ -368,6 +369,16 @@ export function AgentTestStudio({
             </button>
           ))}
         </div>
+        <div className="mt-3">
+          <CompileLanguagePicker
+            compact
+            id="studio-call-language"
+            value={language}
+            disabled={stackLocked}
+            onChange={setLanguage}
+            hint="Script, spoken rules, and hangup follow this language on web and phone."
+          />
+        </div>
       </div>
 
       <div className={studioTab === "live" ? "space-y-5" : "hidden"}>
@@ -481,6 +492,7 @@ export function AgentTestStudio({
           agentId={agentId}
           portal={portal}
           language={language}
+          onLanguageChange={setLanguage}
           locked={stackLocked}
           activeTab={fineTuneTab}
           onTabChange={setFineTuneTab}

@@ -1,13 +1,12 @@
 """
-Session control — server/routes/session_control.py
-POST /api/session/interrupt → barge-in: client signals it stopped playback, server clears transient state
-Also handles history clear (moved from brain.py for cohesion)
+Session control — barge-in: stop playback, reconcile history to what the caller heard.
 """
 from __future__ import annotations
 
 from fastapi import APIRouter
 
 from server.agent.conversation_manager import conversation_manager
+from server.call import call_context
 from server.utils.metrics import metrics
 
 router = APIRouter()
@@ -16,18 +15,25 @@ router = APIRouter()
 @router.post("/api/session/interrupt")
 async def interrupt_session(body: dict):
     """
-    Barge-in signal from client: user started speaking while agent was speaking.
-    Body: {sessionId}
-    For Phase 5 MVP, this is a no-op server-side except logging + metric; real barge-in is client-side:
-      - client stops HTMLAudioElement immediately (<150ms target)
-      - aborts any in-flight fetch via AbortController
-      - optionally clears pending TTS queue
-    Server records interrupt for metrics.
+    Barge-in from browser (or PSTN loop): caller committed an interrupt.
+    Body: {sessionId, callId?, heardText?}
     """
-    session_id = body.get("sessionId", "default")
-    # Could also clear some transient state if we held streaming buffers
+    session_id = str(body.get("sessionId") or "default")
+    call_id = str(body.get("callId") or "").strip() or None
+    heard = str(body.get("heardText") or "")
+    conversation_manager.note_barge(session_id, heard)
+    if call_id:
+        ctx = call_context.get(call_id)
+        if ctx:
+            ctx.barge_in_flight = True
+            ctx.agent_hangup_armed = False
+    else:
+        ctx = call_context.get_active_for_session(session_id)
+        if ctx:
+            ctx.barge_in_flight = True
+            ctx.agent_hangup_armed = False
     metrics.record_error("session", "barge_in")
-    return {"ok": True, "sessionId": session_id, "state": "INTERRUPTED", "message": "Barge-in acknowledged — client should have flushed audio and aborted brain/TTS fetch."}
+    return {"ok": True, "sessionId": session_id, "state": "INTERRUPTED"}
 
 
 @router.get("/api/session/history")
