@@ -7,7 +7,12 @@ import json
 import logging
 from typing import TYPE_CHECKING, Any
 
-from server.services.audio_transcode import chunk_mulaw_frames, chunk_pcm16_frames
+from server.services.audio_transcode import (
+    StreamingPcmResampler,
+    chunk_mulaw_frames,
+    chunk_pcm16_frames,
+    pcm16_to_mulaw,
+)
 from server.services.pstn_debug import log_pstn
 from server.services.pstn_voice_core import pstn_frame_bytes, pstn_wire_mode
 from server.utils.logger import log_error, log_tts
@@ -16,6 +21,21 @@ if TYPE_CHECKING:
     from server.services.pstn_voice_core import PstnVoiceLoop
 
 logger = logging.getLogger(__name__)
+
+
+def _tts_config_sample_rate(merged: dict[str, Any], *, fallback: int) -> int:
+    """Prefer explicit TTS output rate from config over the PSTN wire rate."""
+    for key in ("speech_sample_rate", "sample_rate"):
+        raw = merged.get(key)
+        if raw is None or raw == "":
+            continue
+        try:
+            rate = int(raw)
+        except (TypeError, ValueError):
+            continue
+        if rate > 0:
+            return rate
+    return int(fallback)
 
 
 class PstnTurnTtsSession:
@@ -39,14 +59,39 @@ class PstnTurnTtsSession:
         self._frame_bytes = 0
         self._audio_buf = bytearray()
         self._tts_rate = voice.sample_rate
+        self._pcm_resampler: StreamingPcmResampler | None = None
         self._first_chunk = True
         self._tts_audio_bytes = 0
         self._tts_ws_msgs = 0
         self._chars_sent = 0
+        self._interrupted = False
+        self._had_error = False
+        self._bound_generation: str | None = None
 
     @property
     def has_sent_text(self) -> bool:
         return self._chars_sent > 0
+
+    @property
+    def had_error(self) -> bool:
+        return self._had_error
+
+    @property
+    def audio_emitted(self) -> bool:
+        return self._tts_audio_bytes > 0
+
+    def _stale_generation(self) -> bool:
+        voice = self._voice
+        bound = getattr(self, "_bound_generation", None)
+        if self._interrupted:
+            return True
+        if voice.emission_blocked():
+            return True
+        if bound and voice._interrupted_generation and bound == voice._interrupted_generation:
+            return True
+        if bound and voice.current_generation_id and bound != voice.current_generation_id:
+            return True
+        return False
 
     async def open(
         self,
@@ -60,12 +105,12 @@ class PstnTurnTtsSession:
         from server.services.tts_config import merge_pstn_tts_config
 
         voice = self._voice
+        self._bound_generation = voice.current_generation_id
         wire_mode = pstn_wire_mode(voice.tts_output_codec, voice.sample_rate)
         self._use_mp3 = voice.tts_output_codec == "mp3"
         self._use_mulaw_wire = wire_mode == "rtp_mulaw"
         self._use_l16_wire = wire_mode == "rtp_l16"
         self._frame_bytes = pstn_frame_bytes(wire_mode, voice.sample_rate)
-        self._tts_rate = voice.sample_rate
 
         lang = language_code or voice._resolve_language()
         client_data: dict[str, Any] = {"language_code": lang}
@@ -78,16 +123,38 @@ class PstnTurnTtsSession:
             ws_model=None,
             wire_mode=wire_mode,
         )
+        # Trust TTS config rate — never assume wire rate (Cartesia μ-law path is 16k→8k).
+        self._tts_rate = _tts_config_sample_rate(self._merged, fallback=voice.sample_rate)
+        self._pcm_resampler = None
         self._model = str(self._merged.get("model") or "bulbul:v3")
         self._tts_cm = _connect_tts_upstream(self._model, session_id=voice.tts_session_id, call_id=voice.call_id)
-        self._tts = await self._tts_cm.__aenter__()
+        try:
+            self._tts = await asyncio.wait_for(self._tts_cm.__aenter__(), timeout=8.0)
+        except asyncio.TimeoutError as exc:
+            log_pstn("tts.connect.timeout", call_id=voice.call_id, timeout_s=8.0)
+            try:
+                await self._tts_cm.__aexit__(None, None, None)
+            except Exception:
+                pass
+            raise TimeoutError("TTS upstream connect timed out after 8s") from exc
         self._ping_task = asyncio.create_task(self._tts_ping())
 
         if self._merged.get("provider") == "cartesia":
-            self._use_mulaw_wire = False
-            self._use_l16_wire = True
-            self._use_mp3 = False
-            self._frame_bytes = pstn_frame_bytes("rtp_l16", voice.sample_rate)
+            # Cartesia returns PCM16; on 8 kHz μ-law bridges still convert to mulaw wire.
+            if voice.sample_rate <= 8000 and str(voice.tts_output_codec or "").lower() in {
+                "mulaw",
+                "ulaw",
+                "pcmu",
+            }:
+                self._use_mulaw_wire = True
+                self._use_l16_wire = False
+                self._use_mp3 = False
+                self._frame_bytes = pstn_frame_bytes("rtp_mulaw", 8000)
+            else:
+                self._use_mulaw_wire = False
+                self._use_l16_wire = True
+                self._use_mp3 = False
+                self._frame_bytes = pstn_frame_bytes("rtp_l16", voice.sample_rate)
         if self._use_mp3:
             voice.current_output_codec = "MP3"
         elif self._use_l16_wire:
@@ -122,11 +189,13 @@ class PstnTurnTtsSession:
         self._opened = True
 
     async def send_text(self, text: str) -> None:
-        if not text or self._closed or not self._tts:
+        if not text or self._closed or self._interrupted or not self._tts:
             return
         if not self._opened:
             await self.open()
         voice = self._voice
+        if self._stale_generation():
+            return
         if self._chars_sent == 0:
             log_pstn(
                 "tts.speak.start",
@@ -165,9 +234,13 @@ class PstnTurnTtsSession:
         self._flushed = True
         await self._tts.send(json.dumps({"type": "flush"}))
         try:
-            await asyncio.wait_for(self._done.wait(), timeout=120.0)
+            await asyncio.wait_for(self._done.wait(), timeout=12.0)
         except asyncio.TimeoutError:
             log_pstn("tts.finish.timeout", call_id=self._voice.call_id)
+            # Treat silent hang as an error so the turn can speak a fallback (6.5).
+            if self._tts_audio_bytes <= 0:
+                self._had_error = True
+            self._done.set()
 
     async def close(self) -> None:
         if self._closed:
@@ -206,6 +279,8 @@ class PstnTurnTtsSession:
         voice.current_output_codec = "L16" if voice.sample_rate >= 16000 else "PCMU"
 
     async def interrupt(self) -> None:
+        self._interrupted = True
+        self._audio_buf.clear()
         if self._reader_task and not self._reader_task.done():
             self._reader_task.cancel()
         await self.close()
@@ -233,7 +308,7 @@ class PstnTurnTtsSession:
         try:
             assert self._tts is not None
             async for raw in self._tts:
-                if self._closed or voice._closed:
+                if self._closed or self._interrupted or voice._closed or self._stale_generation():
                     break
                 if isinstance(raw, bytes):
                     raw = raw.decode(errors="ignore")
@@ -243,6 +318,7 @@ class PstnTurnTtsSession:
                 if msg_type == "error":
                     log_error("PSTN TTS error", call_id=voice.call_id, detail=str(obj)[:300])
                     log_pstn("tts.error", call_id=voice.call_id, detail=str(obj)[:200])
+                    self._had_error = True
                     break
                 data = obj.get("data")
                 if self._tts_is_completion(msg_type, data):
@@ -254,7 +330,10 @@ class PstnTurnTtsSession:
                     rate_val = data.get("speech_sample_rate") or data.get("sample_rate")
                     if rate_val:
                         try:
-                            self._tts_rate = int(rate_val)
+                            new_rate = int(rate_val)
+                            if new_rate > 0 and new_rate != self._tts_rate:
+                                self._tts_rate = new_rate
+                                self._pcm_resampler = None
                         except (TypeError, ValueError):
                             pass
                 audio_b64 = audio_b64 or obj.get("audio")
@@ -269,29 +348,50 @@ class PstnTurnTtsSession:
                             keys=list(obj.keys())[:8],
                         )
                     continue
+                if self._stale_generation():
+                    break
                 audio = base64.b64decode(audio_b64)
                 self._tts_audio_bytes += len(audio)
                 await self._emit_audio_chunk(audio)
         except asyncio.CancelledError:
             pass
         except Exception as exc:
+            self._had_error = True
             log_pstn("tts.reader.failed", call_id=voice.call_id, error=str(exc)[:200])
             logger.warning("[PSTN] turn TTS reader: %s", str(exc)[:200])
         finally:
-            await self._flush_audio_tail()
+            # Interrupt invariant: never flush tail after barge/cancel / stale generation.
+            if not self._stale_generation():
+                await self._flush_audio_tail()
+            else:
+                self._audio_buf.clear()
             self._done.set()
+
+    def _ensure_resampler(self, from_rate: int, to_rate: int) -> StreamingPcmResampler:
+        if (
+            self._pcm_resampler is None
+            or self._pcm_resampler.from_rate != from_rate
+            or self._pcm_resampler.to_rate != to_rate
+        ):
+            self._pcm_resampler = StreamingPcmResampler(from_rate, to_rate)
+        return self._pcm_resampler
 
     async def _emit_audio_chunk(self, audio: bytes) -> None:
         voice = self._voice
+        if self._stale_generation():
+            return
         use_mulaw_wire = self._use_mulaw_wire
         use_mp3 = self._use_mp3
         tts_rate = self._tts_rate
         first_chunk = self._first_chunk
 
         if use_mulaw_wire:
-            from server.services.audio_transcode import pcm16_to_mulaw_8k
-
-            audio = pcm16_to_mulaw_8k(audio, source_rate=tts_rate)
+            # Stateful 16k→8k (or whatever TTS rate → 8k) then μ-law — avoids chipmunk + clicks.
+            resampler = self._ensure_resampler(tts_rate, 8000)
+            pcm8k = resampler.feed(audio)
+            if not pcm8k:
+                return
+            audio = pcm16_to_mulaw(pcm8k, sample_rate=8000)
             tts_rate = 8000
         if use_mp3:
             if first_chunk and voice.call_id:
@@ -318,12 +418,15 @@ class PstnTurnTtsSession:
                     tts_rate=tts_rate,
                 )
                 self._first_chunk = False
+            if self._stale_generation():
+                return
             await voice._emit_agent_wire(audio)
             return
         if not use_mulaw_wire and not use_mp3 and tts_rate != voice.sample_rate:
-            from server.services.audio_transcode import pcm_resample
-
-            audio = pcm_resample(audio, tts_rate, voice.sample_rate)
+            resampler = self._ensure_resampler(tts_rate, voice.sample_rate)
+            audio = resampler.feed(audio)
+            if not audio:
+                return
         self._audio_buf.extend(audio)
         if first_chunk and voice.call_id:
             from server.services.pstn_media_flow import pstn_media_flow
@@ -343,6 +446,9 @@ class PstnTurnTtsSession:
             )
             self._first_chunk = False
         while len(self._audio_buf) >= self._frame_bytes:
+            if self._stale_generation():
+                self._audio_buf.clear()
+                return
             chunk = bytes(self._audio_buf[: self._frame_bytes])
             del self._audio_buf[: self._frame_bytes]
             if self._first_chunk:
@@ -353,20 +459,37 @@ class PstnTurnTtsSession:
                     bytes=len(chunk),
                     codec="mulaw" if use_mulaw_wire else "pcm16",
                     tts_rate=tts_rate,
+                    source_tts_rate=self._tts_rate,
                 )
                 log_tts("PSTN first audio", call_id=voice.call_id, bytes=len(chunk))
                 self._first_chunk = False
             await voice._emit_agent_wire(chunk)
 
     async def _flush_audio_tail(self) -> None:
-        if not self._audio_buf:
+        if self._stale_generation():
+            self._audio_buf.clear()
+            self._pcm_resampler = None
             return
         voice = self._voice
+        # Drain residual resampler bytes before framing the tail.
+        if self._pcm_resampler is not None and not self._use_mp3:
+            leftover = self._pcm_resampler.flush()
+            if leftover:
+                if self._use_mulaw_wire:
+                    leftover = pcm16_to_mulaw(leftover, sample_rate=8000)
+                self._audio_buf.extend(leftover)
+            self._pcm_resampler = None
+        if not self._audio_buf:
+            return
         tail = bytes(self._audio_buf)
         self._audio_buf.clear()
         if self._use_mulaw_wire:
             for frame in chunk_mulaw_frames(tail, sample_rate=8000):
+                if self._stale_generation():
+                    return
                 await voice._emit_agent_wire(frame)
         else:
             for frame in chunk_pcm16_frames(tail, sample_rate=voice.sample_rate):
+                if self._stale_generation():
+                    return
                 await voice._emit_agent_wire(frame)

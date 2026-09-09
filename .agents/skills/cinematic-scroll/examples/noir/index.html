@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>VANTASCOPE — HOLLOW STAR · cinematic-scroll example</title>
+<meta name="description" content="A clean cinematic sci-fi studio — bold editorial type, open negative space, a single crimson signal across four chapters. A flagship example for the cinematic-scroll Agent Skill." />
+
+<!-- Open Graph -->
+<meta property="og:title" content="VANTASCOPE — HOLLOW STAR" />
+<meta property="og:description" content="Clean sci-fi editorial — bold type, open space, a single crimson signal. Built with the cinematic-scroll Agent Skill." />
+<meta property="og:type" content="website" />
+<meta name="theme-color" content="#F5F4F0" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Oswald (condensed display) + Archivo (UI) + JetBrains Mono (labels) -->
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;500;600;700&family=Archivo:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- GSAP + ScrollTrigger (now 100% free) — powers the dedicated "Approach" showcase:
+     a DOLLY-ZOOM (Vertigo) + a SCRUBBED SIGNAL DRAW. Deferred + feature-detected:
+     if the CDN fails, the hand-rolled rAF cinematic engine below still runs. -->
+<script defer src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js" integrity="sha384-HOvlOYPIs/zjoIkWUGXkVmXsjr8GuZLV+Q+rcPwmJOVZVpvTSXQChiN4t9Euv9Vc" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js" integrity="sha384-P8VzCVnT9NBUkMrpcIZrJbA7EBjJvh/fJS6PmP+4nLIM284DtsImIv8D0fFjIkeh" crossorigin="anonymous"></script>
+
+<style>
+  /* ───────────────────────────────────────────────────────────────
+     cinematic-scroll · VANTASCOPE — "SIGNAL CLEAR" redesign
+     Visual system: Clean Editorial Sci-Fi — warm-white canvas,
+     massive Oswald headlines in near-black, crimson as the ONE
+     signal accent. Open negative space, architectural geometry,
+     no grain. Fresh 2026 studio aesthetic, not noir 2017.
+     ─────────────────────────────────────────────────────────────── */
+
+  :root {
+    --bg:       #F5F4F0;
+    --surface:  #FFFFFF;
+    --fg:       #0A0B0F;
+    --fg-dim:   #606370;
+    --signal:   #E23A4E;
+    --signal-2: #FF566A;
+    --blue:     #1044F2;
+    --line:     rgba(10,11,15,.10);
+    --line-2:   rgba(10,11,15,.18);
+
+    --display: 'Oswald', Impact, 'Arial Narrow Bold', sans-serif;
+    --ui:      'Archivo', system-ui, sans-serif;
+    --mono:    'JetBrains Mono', ui-monospace, Menlo, monospace;
+
+    --bg-fg: var(--fg);
+    --fg-muted: var(--fg-dim);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg); color:var(--fg);
+    font-family:var(--ui); font-weight:400;
+    -webkit-font-smoothing:antialiased; overflow-x:hidden;
+    transition:background .9s cubic-bezier(.22,1,.36,1);
+  }
+  a{color:inherit}
+  ::selection{ background:var(--signal); color:#fff; }
+
+  /* ── fixed atmosphere: very subtle tinted gradients (light mode) ── */
+  .atmos{
+    position:fixed; inset:0; z-index:-2; pointer-events:none;
+    background:
+      radial-gradient(80% 55% at 88% 0%,  rgba(16,68,242,.07) 0%, transparent 60%),
+      radial-gradient(60% 50% at 10% 100%, rgba(226,58,78,.05)  0%, transparent 55%),
+      linear-gradient(160deg, #EEEEF5 0%, var(--bg) 40%, #F5F3EE 100%);
+    transition:background .9s cubic-bezier(.22,1,.36,1);
+  }
+  /* no grain — clean canvas */
+
+  /* top scroll-progress bar */
+  .scrollbar{
+    position:fixed; top:0; left:0; height:2px; width:0%; z-index:60;
+    background:linear-gradient(90deg, var(--signal), var(--signal-2));
+    box-shadow:0 0 10px rgba(226,58,78,.35);
+  }
+
+  /* ── fixed masthead ───────────────────────────────────────────── */
+  .masthead{
+    position:fixed; inset:0 0 auto 0; z-index:50;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:max(20px,env(safe-area-inset-top)) clamp(18px,4vw,56px) 20px;
+    background:rgba(245,244,240,.82);
+    -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .masthead .mark{ display:flex; align-items:baseline; gap:14px; pointer-events:auto; }
+  .masthead .mark b{ font-family:var(--display); font-weight:700; font-size:18px; letter-spacing:.26em; color:var(--fg); }
+  .masthead .mark span{ font-family:var(--mono); font-size:9px; letter-spacing:.3em; text-transform:uppercase; color:var(--signal); }
+  .masthead nav{ display:flex; gap:clamp(14px,2.4vw,34px); font-family:var(--mono); font-size:10px; letter-spacing:.22em; text-transform:uppercase; }
+  .masthead nav a{ color:var(--fg-dim); text-decoration:none; transition:color .3s; }
+  .masthead nav a:hover{ color:var(--fg); }
+  @media (max-width:680px){ .masthead nav{ display:none; } }
+
+  /* ── progress + index rail ────────────────────────────────────── */
+  .rail{
+    position:fixed; right:clamp(12px,2vw,28px); top:50%; transform:translateY(-50%);
+    z-index:40; display:flex; flex-direction:column; gap:14px;
+    font-family:var(--mono); font-size:10px; color:var(--fg-dim);
+  }
+  .rail .r{ display:flex; align-items:center; gap:10px; justify-content:flex-end; opacity:.35; transition:opacity .35s, color .35s; }
+  .rail .r .num{ letter-spacing:.12em; }
+  .rail .r .ln{ width:20px; height:1px; background:currentColor; transition:width .35s, background .35s; }
+  .rail .r.on{ opacity:1; color:var(--fg); }
+  .rail .r.on .ln{ width:46px; height:2px; background:var(--signal); }
+  @media (max-width:680px){ .rail{ display:none; } }
+
+  /* ── chapter section ──────────────────────────────────────────── */
+  section{ position:relative; min-height:230vh; }
+  .stage{
+    position:sticky; top:0; height:100vh; overflow:hidden;
+    display:grid; grid-template-columns:1fr; align-content:center;
+    padding:0 clamp(18px,5vw,80px);
+    perspective:1500px; perspective-origin:62% 48%;
+  }
+  .figwrap,.copytext,.cuewrap{ transform-style:preserve-3d; }
+  .figwrap .frame{ transform-style:preserve-3d; }
+
+  /* oversized Roman-numeral watermark — deepest ghost layer */
+  .roman{
+    position:absolute; z-index:1; font-family:var(--display); font-weight:700;
+    font-size:clamp(14rem,52vw,46rem); line-height:.7; letter-spacing:-.02em;
+    color:var(--fg); opacity:.038; white-space:nowrap; pointer-events:none;
+    top:50%; left:46%; transform:translate(-50%,-50%); will-change:transform;
+    -webkit-user-select:none; user-select:none;
+  }
+
+  /* figure frame — clean, architectural */
+  .figwrap{
+    position:absolute; z-index:3; right:clamp(18px,5vw,80px); top:50%;
+    width:clamp(280px,40vw,580px); aspect-ratio:4/5; transform:translateY(-50%);
+    will-change:transform,opacity;
+  }
+  .frame{ position:relative; width:100%; height:100%; }
+  .pic{
+    position:absolute; inset:0; background-size:cover; background-position:center 35%;
+    background-color:var(--surface);
+    box-shadow:0 32px 72px rgba(10,11,15,.11), 0 0 0 1px rgba(10,11,15,.08);
+    transition:transform .25s ease-out;
+  }
+  /* clean light-mode placeholder: geometric grid + signal rim */
+  .pic.placeholder{
+    background-image:
+      /* signal rim — right edge glow */
+      linear-gradient(to left, rgba(226,58,78,.16) 0%, transparent 28%),
+      /* fine architectural grid */
+      repeating-linear-gradient(0deg,  rgba(10,11,15,.04) 0 1px, transparent 1px 64px),
+      repeating-linear-gradient(90deg, rgba(10,11,15,.04) 0 1px, transparent 1px 64px),
+      /* clean ambient gradient */
+      linear-gradient(170deg, #E8EBF3 0%, #EDE9E2 55%, #F5F4F0 100%);
+  }
+  /* corner brackets: clean, near-black at low opacity */
+  .frame .br{ position:absolute; width:26px; height:26px; border:1.5px solid var(--fg); opacity:.15; }
+  .frame .br.tl{ top:-1px; left:-1px; border-right:0; border-bottom:0; }
+  .frame .br.tr{ top:-1px; right:-1px; border-left:0; border-bottom:0; }
+  .frame .br.bl{ bottom:-1px; left:-1px; border-right:0; border-top:0; }
+  .frame .br.brc{ bottom:-1px; right:-1px; border-left:0; border-top:0; }
+  /* crimson signal rim */
+  .frame .rim{
+    position:absolute; top:8%; right:-1px; width:2px; height:84%;
+    background:linear-gradient(180deg, rgba(226,58,78,0), var(--signal) 40%, var(--signal-2) 55%, rgba(226,58,78,0));
+    box-shadow:0 0 14px rgba(226,58,78,.45); pointer-events:none;
+  }
+  .figcap{
+    position:absolute; left:0; bottom:-26px; display:flex; justify-content:space-between; width:100%;
+    font-family:var(--mono); font-size:10px; letter-spacing:.18em; color:var(--fg-dim);
+  }
+  .figcap .n{ color:var(--signal); }
+
+  /* copy / title — bold film-poster type on light canvas */
+  .copytext{ position:relative; z-index:6; max-width:min(92vw,1180px); will-change:transform,opacity; }
+  .eyebrow{
+    font-family:var(--mono); font-size:clamp(10px,1vw,12px); letter-spacing:.36em;
+    text-transform:uppercase; color:var(--signal); margin-bottom:clamp(16px,2.4vw,28px);
+    display:flex; align-items:center; gap:12px;
+  }
+  .eyebrow::before{ content:""; width:34px; height:1px; background:var(--signal); display:inline-block; }
+
+  h2.title{
+    font-family:var(--display); font-weight:700; line-height:.88;
+    letter-spacing:.005em; text-transform:uppercase; color:var(--fg);
+    font-size:clamp(3rem,12vw,11rem);
+  }
+  h2.title .ln{ display:block; overflow:hidden; }
+  h2.title .ln .t{ display:inline-block; will-change:transform; }
+  h2.title .accent{ color:var(--signal); }
+
+  .lede{
+    margin-top:clamp(22px,2.8vw,36px); max-width:48ch;
+    font-size:clamp(1rem,1.5vw,1.28rem); line-height:1.62;
+    color:var(--fg-dim); font-weight:400;
+  }
+  .lede .reveal{ display:inline; }
+  .meta{
+    margin-top:clamp(18px,2.4vw,30px); font-family:var(--mono); font-size:10px;
+    letter-spacing:.2em; text-transform:uppercase; color:var(--fg-dim);
+  }
+
+  /* CTA — clean outlined pill on light canvas */
+  .cta{
+    margin-top:clamp(26px,3vw,40px); display:inline-flex; align-items:center; gap:12px;
+    padding:13px 28px;
+    border:1.5px solid var(--signal); color:var(--signal);
+    background:transparent; border-radius:3px;
+    font-family:var(--mono); font-size:11px; letter-spacing:.2em; text-transform:uppercase;
+    text-decoration:none;
+    transition:background .28s cubic-bezier(.22,1,.36,1), color .28s cubic-bezier(.22,1,.36,1), transform .28s cubic-bezier(.22,1,.36,1);
+  }
+  .cta:hover{ background:var(--signal); color:#fff; transform:translateY(-2px); }
+
+  /* scroll-cue badge (hero only) */
+  .cuewrap{
+    position:absolute; z-index:7; left:50%; bottom:clamp(26px,5vh,52px); transform:translateX(-50%);
+    display:flex; flex-direction:column; align-items:center; gap:9px; will-change:transform,opacity;
+  }
+  .cue{
+    font-family:var(--mono); font-size:9px; letter-spacing:.3em; text-transform:uppercase; color:var(--fg-dim);
+    border:1px solid var(--line-2); border-radius:999px; padding:8px 16px;
+    display:flex; align-items:center; gap:9px;
+    background:rgba(245,244,240,.80); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
+  }
+  .cue .dot{ width:6px; height:6px; border-radius:50%; background:var(--signal); box-shadow:0 0 9px var(--signal); animation:pulse 1.9s ease-in-out infinite; }
+  .cuewrap .bar{ width:1px; height:34px; background:linear-gradient(var(--signal), transparent); transform-origin:top; animation:cuebar 2.2s ease-in-out infinite; }
+  @keyframes pulse{ 0%,100%{opacity:1} 50%{opacity:.3} }
+  @keyframes cuebar{ 0%,100%{transform:scaleY(1)} 50%{transform:scaleY(.4)} }
+
+  /* ── footer / colophon ────────────────────────────────────────── */
+  footer{ position:relative; z-index:2; padding:16vh clamp(18px,5vw,80px) 14vh; }
+  footer .vine{ width:120px; height:1.5px; margin-bottom:30px; background:linear-gradient(90deg, var(--signal), transparent); }
+  footer .big{
+    font-family:var(--display); font-weight:600; text-transform:uppercase;
+    font-size:clamp(2rem,8vw,5.6rem); line-height:.92; letter-spacing:.01em; color:var(--fg);
+  }
+  footer .big a{ color:var(--signal); text-decoration:none; }
+  footer .meta{
+    margin-top:28px; font-family:var(--mono); font-size:11px; letter-spacing:.16em;
+    color:var(--fg-dim); text-transform:uppercase; max-width:62ch; line-height:1.8;
+  }
+  footer .meta a{ color:var(--signal); text-decoration:none; border-bottom:1px solid rgba(226,58,78,.3); }
+
+  /* ── mobile ─────────────────────────────────────────────────────── */
+  @media (max-width:680px){
+    section{ min-height:auto; padding:8vh 0; }
+    .stage{ position:static; height:auto; display:block; padding:0 22px; perspective:none; }
+    .roman{ position:static; opacity:.032; font-size:32vw; line-height:.8; margin:0 0 -6vh -2vw; display:block; }
+    .figwrap{ position:static; width:100%; transform:none; margin:24px 0 34px; aspect-ratio:16/11; opacity:1; }
+    .copytext{ transform:none; opacity:1; }
+    h2.title{ font-size:15vw; }
+    h2.title .ln .t{ transform:none; clip-path:none; opacity:1; }
+    .cuewrap{ position:static; transform:none; margin:30px auto 0; opacity:1; }
+    .reveal{ opacity:1; transform:none; }
+    html.m-on .figwrap, html.m-on .roman{ will-change:transform; }
+  }
+
+  /* ── reduced motion ──────────────────────────────────────────── */
+  @media (prefers-reduced-motion:reduce){
+    html{ scroll-behavior:auto; }
+    .cue .dot,.cuewrap .bar{ animation:none; }
+    section{ min-height:auto; padding:11vh 0; }
+    .stage{ position:static; height:auto; display:block; perspective:none; }
+    .roman{ position:static; transform:none!important; opacity:.032; font-size:clamp(8rem,26vw,18rem); line-height:.8; display:block; margin-bottom:-4vh; }
+    .figwrap{ position:static; width:min(560px,92vw); transform:none!important; margin:30px 0 44px; opacity:1!important; }
+    .copytext{ transform:none!important; opacity:1!important; }
+    h2.title .ln .t{ transform:none!important; clip-path:none!important; opacity:1!important; }
+    .cuewrap{ position:static; transform:none!important; margin-top:30px; opacity:1!important; }
+    .reveal{ opacity:1!important; transform:none!important; }
+  }
+
+  /* ── GSAP SHOWCASE — "THE APPROACH" ────────────────────────────
+     A dedicated viewport demonstrating two techniques: a DOLLY-ZOOM
+     (Vertigo) on the backdrop and a SCRUBBED SIGNAL DRAW (stroke-dashoffset).
+     Clean geometric aesthetic — light canvas, the signal waveform in crimson. */
+  section.showcase{ min-height:0; }
+  .show-stage{ position:relative; height:100vh; overflow:hidden; display:grid; place-items:center; }
+  .show-stage .dolly{
+    position:absolute; inset:-12%; z-index:0; transform-origin:60% 46%; will-change:transform;
+    background:
+      radial-gradient(60% 70% at 50% 40%, rgba(16,68,242,.07) 0%, transparent 60%),
+      radial-gradient(40% 50% at 50% 60%, rgba(226,58,78,.05) 0%, transparent 50%),
+      repeating-linear-gradient(0deg,  rgba(10,11,15,.03) 0 1px, transparent 1px 80px),
+      repeating-linear-gradient(90deg, rgba(10,11,15,.03) 0 1px, transparent 1px 80px),
+      linear-gradient(160deg, #EDEEF5 0%, var(--bg) 50%, #F5F3EE 100%);
+  }
+  .show-stage .waveform{ position:relative; z-index:2; width:min(80vw,1120px); height:140px; overflow:visible; }
+  .show-stage .waveform path{
+    fill:none; stroke:var(--signal); stroke-width:2.5; stroke-linecap:round;
+    filter:drop-shadow(0 0 5px rgba(226,58,78,.3));
+  }
+  .show-cap{
+    position:absolute; z-index:3; bottom:14vh; left:0; right:0; text-align:center;
+    font-family:var(--mono); color:var(--fg-dim);
+  }
+  .show-cap b{
+    display:block; font-family:var(--display); font-weight:700; letter-spacing:.28em;
+    color:var(--fg); font-size:clamp(1.4rem,4vw,2.4rem); margin-bottom:10px;
+  }
+  .show-cap span{ font-size:11px; letter-spacing:.22em; text-transform:uppercase; }
+  @media (max-width:680px){
+    .show-stage{ height:auto; padding:16vh 22px; }
+    .show-stage .dolly{ inset:0; }
+    .show-cap{ position:static; margin-top:30px; }
+  }
+</style>
+</head>
+<body>
+  <!-- Persistent "back to repo" affordance -->
+  <style>
+    .repo-home-pill{position:fixed;left:max(14px,env(safe-area-inset-left));
+      bottom:max(14px,env(safe-area-inset-bottom));z-index:9999;display:inline-flex;
+      align-items:center;gap:8px;padding:9px 14px 9px 12px;border-radius:999px;
+      font:600 12px/1 ui-monospace,"SF Mono",Menlo,Consolas,monospace;letter-spacing:.04em;
+      color:var(--fg);background:rgba(245,244,240,.86);border:1px solid rgba(10,11,15,.18);
+      -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);text-decoration:none;
+      box-shadow:0 4px 18px rgba(10,11,15,.10);transition:transform .25s cubic-bezier(.22,1,.36,1),background .25s}
+    .repo-home-pill:hover{transform:translateY(-2px);background:rgba(245,244,240,.96)}
+    .repo-home-pill .arw{font-size:14px;line-height:1;transition:transform .25s cubic-bezier(.22,1,.36,1)}
+    .repo-home-pill:hover .arw{transform:translateX(-3px)}
+    @media (prefers-reduced-motion:reduce){.repo-home-pill,.repo-home-pill .arw{transition:none}
+      .repo-home-pill:hover{transform:none}.repo-home-pill:hover .arw{transform:none}}
+  </style>
+  <a class="repo-home-pill" href="https://github.com/MustBeSimo/cinematic-scroll-skill"
+     target="_blank" rel="noopener"
+     aria-label="Back to the cinematic-scroll repository on GitHub">
+    <span class="arw" aria-hidden="true">&larr;</span> cinematic-scroll
+  </a>
+
+<div class="atmos" id="atmos" aria-hidden="true"></div>
+<div class="scrollbar" id="scrollbar" aria-hidden="true"></div>
+
+<header class="masthead">
+  <div class="mark">
+    <b>VANTASCOPE</b>
+    <span>Signal · Studio</span>
+  </div>
+  <nav aria-label="Primary">
+    <a href="#signal">Signal</a>
+    <a href="#descent">Descent</a>
+    <a href="#witness">Witness</a>
+    <a href="#access">Access</a>
+  </nav>
+</header>
+
+<nav class="rail" id="rail" aria-label="Chapters"></nav>
+
+<main id="reel"></main>
+
+<footer id="access">
+  <div class="vine"></div>
+  <div class="big">A signal was sent.<br>Something <a href="mailto:transmission@example.com">answered →</a></div>
+  <div class="meta">
+    By Simone Leonelli · built with the <a href="https://github.com/MustBeSimo/cinematic-scroll-skill">cinematic-scroll</a> Agent Skill ·
+    VANTASCOPE is a fictional studio — no real titles, people, or brands ·
+    one of many possible aesthetics this skill can direct.
+  </div>
+</footer>
+
+<script>
+/* ───────────────────────────────────────────────────────────────
+   Manifest — single source of truth for the VANTASCOPE demo.
+   Each chapter: id, roman, eyebrow, fig/figLabel, title lines,
+   lede, morph (background that the atmos transitions to on enter),
+   cue (hero scroll-badge), cta (final chapter only), prompt.
+   ─────────────────────────────────────────────────────────────── */
+const CHAPTERS = [
+  {
+    id:'0-signal', roman:'I', eyebrow:'VANTASCOPE · TRANSMISSION MMXXVI',
+    fig:'PLATE I', figLabel:'STANDING FIGURE, OPEN FIELD',
+    title:[['HOLLOW',0],['STAR',1]],
+    lede:'Forty years after the last carrier went dark, a single coherent pulse climbs out of the noise floor. It is not a beacon. It is a name — and it is calling one of us back.',
+    morph:'radial-gradient(80% 55% at 88% 0%, rgba(16,68,242,.07) 0%, transparent 60%), radial-gradient(60% 50% at 10% 100%, rgba(226,58,78,.05) 0%, transparent 55%), linear-gradient(160deg, #EEEEF5 0%, #F5F4F0 40%, #F5F3EE 100%)',
+    cue:true,
+    prompt:'Cinematic sci-fi editorial still: a lone figure in a long coat seen from behind, standing on a vast white-marble floor, geometric light shafts from above, open architectural space, one thin crimson line of light along one right edge, ultra clean, no grain, no text, no logos, 4:5'
+  },
+  {
+    id:'1-descent', roman:'II', eyebrow:'CHAPTER II · THE DESCENT',
+    fig:'PLATE II', figLabel:'CORRIDOR, CLEAN THRESHOLD',
+    title:[['INTO THE',0],['QUIET DARK',1]],
+    lede:'The derelict has no power, no heat, no record of ever having launched. Yet the corridors are warm where a body has just passed. We go down because the pulse is below us — and because turning back was never an option that survived the briefing.',
+    morph:'radial-gradient(70% 60% at 20% 90%, rgba(226,58,78,.06) 0%, transparent 55%), radial-gradient(90% 50% at 80% 10%, rgba(16,68,242,.05) 0%, transparent 60%), linear-gradient(180deg, #F5F4F0 0%, #F0EFF5 50%, #F5F4F0 100%)',
+    prompt:'Cinematic sci-fi editorial still: a long brutalist corridor, concrete walls, geometric shafts of white overhead light, a single thin crimson line along the right wall, a silhouetted figure small at the far end, ultra minimal, sharp architectural, no grain, no text, no logos, 4:5'
+  },
+  {
+    id:'2-witness', roman:'III', eyebrow:'CHAPTER III · THE WITNESS',
+    fig:'PLATE III', figLabel:'FACE, HALF-LIT',
+    title:[['IT REMEMBERS',0],['YOUR NAME',1]],
+    lede:'Whatever answered the signal was not built and was not born. It wears the architecture like a held breath, and when it finally turns toward the light it is wearing a face you buried four decades ago — patient, unhurried, almost kind.',
+    morph:'radial-gradient(100% 80% at 50% 0%, rgba(16,68,242,.05) 0%, transparent 55%), linear-gradient(180deg, #F5F4F0 0%, #EEF0F5 60%, #F5F4F0 100%)',
+    prompt:'Cinematic sci-fi editorial still: extreme close portrait, face half-lit by clean white light, one side in cool neutral shadow, a thin crimson signal-line along the jaw, ultra clean, architectural background, sharp contrast, no grain, no text, no logos, 4:5'
+  },
+  {
+    id:'3-access', roman:'IV', eyebrow:'CHAPTER IV · THE OFFER',
+    fig:'PLATE IV', figLabel:'OPEN THRESHOLD, BACKLIT',
+    title:[['STAY OR',0],['ANSWER IT',1]],
+    lede:'The airlock is open. On one side, the long cold ride home and a report no one will believe. On the other, the thing wearing your past, holding the door, asking only that you walk through it of your own accord. VANTASCOPE invites you to decide on the descent.',
+    morph:'radial-gradient(80% 60% at 75% 5%, rgba(16,68,242,.08) 0%, transparent 55%), radial-gradient(60% 50% at 25% 95%, rgba(226,58,78,.06) 0%, transparent 50%), linear-gradient(160deg, #EEEEF5 0%, #F5F4F0 40%, #F5F3EE 100%)',
+    cta:'Request early access',
+    prompt:'Cinematic sci-fi editorial still: a clean white threshold doorway, blinding white light pouring through, a silhouetted figure in the threshold, minimal architectural surround, one thin crimson line along the right edge, open negative space, no grain, no text, no logos, 4:5'
+  },
+];
+
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+const smooth=(e0,e1,x)=>{ if(x<=e0)return 0; if(x>=e1)return 1; const t=(x-e0)/(e1-e0); return t*t*(3-2*t); };
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const isTouch = matchMedia('(hover: none) and (pointer: coarse)').matches;
+const isMobile = () => innerWidth <= 680;
+
+const reel = document.getElementById('reel');
+const rail = document.getElementById('rail');
+const atmos = document.getElementById('atmos');
+const bar = document.getElementById('scrollbar');
+
+/* preflight: which real images exist? → fall back to CSS placeholder */
+function probe(src){ return new Promise(res=>{ const i=new Image(); i.onload=()=>res(true); i.onerror=()=>res(false); i.src=src; }); }
+
+(async () => {
+  for (const ch of CHAPTERS){
+    const sec = document.createElement('section');
+    sec.id = ch.id.replace(/^\d+-/,'');
+    sec.dataset.morph = ch.morph;
+
+    const titleHTML = ch.title.map(([txt,acc]) =>
+      `<span class="ln"><span class="t${acc?' accent':''}">${txt}</span></span>`
+    ).join('');
+
+    const imgPath = `assets/${ch.id}.jpg`;
+    const hasImg = await probe(imgPath);
+    const picStyle = hasImg ? `background-image:url('${imgPath}')` : '';
+    const picClass = hasImg ? 'pic' : 'pic placeholder';
+
+    sec.innerHTML = `
+      <div class="stage">
+        <div class="roman" data-depth="0.22" aria-hidden="true">${ch.roman}</div>
+        <div class="figwrap" data-depth="0.75">
+          <div class="frame">
+            <span class="br tl"></span><span class="br tr"></span><span class="br bl"></span><span class="br brc"></span>
+            <div class="${picClass}" style="${picStyle}" role="img" aria-label="${ch.figLabel}"></div>
+            <span class="rim"></span>
+            <div class="figcap"><span class="n">${ch.fig}</span><span>${ch.figLabel}</span></div>
+          </div>
+        </div>
+        <div class="copytext" data-depth="1.0">
+          <div class="eyebrow reveal">${ch.eyebrow}</div>
+          <h2 class="title">${titleHTML}</h2>
+          <p class="lede"><span class="reveal">${ch.lede}</span></p>
+          ${ch.cta
+            ? `<a class="cta reveal" href="mailto:transmission@example.com?subject=VANTASCOPE%20access">${ch.cta} →</a>`
+            : `<p class="meta reveal">${ch.fig} · ${ch.figLabel}</p>`}
+        </div>
+        ${ch.cue ? `<div class="cuewrap" data-depth="1.4">
+          <div class="cue"><span class="dot"></span>Begin the descent</div>
+          <span class="bar"></span>
+        </div>` : ''}
+      </div>`;
+    reel.appendChild(sec);
+
+    const r = document.createElement('div');
+    r.className='r'; r.dataset.id = sec.id;
+    r.innerHTML = `<span class="num">${ch.roman}</span><span class="ln"></span>`;
+    rail.appendChild(r);
+  }
+
+  /* GSAP SHOWCASE — "THE APPROACH" */
+  const show = document.createElement('section');
+  show.className = 'showcase'; show.id = 'approach';
+  show.dataset.morph = 'radial-gradient(120% 100% at 50% 0%, rgba(16,68,242,.06), transparent 60%), linear-gradient(180deg, #F5F4F0 0%, #EEEEF5 60%, #F5F4F0 100%)';
+  show.innerHTML = `
+    <div class="show-stage">
+      <div class="dolly" aria-hidden="true"></div>
+      <svg class="waveform" viewBox="0 0 1120 140" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+        <path d="M0,70 L150,70 L180,70 L196,30 L212,110 L228,52 L244,88 L260,70 L440,70 L470,70 L486,18 L502,122 L518,44 L534,96 L550,70 L760,70 L790,70 L806,40 L822,100 L838,70 L1120,70"/>
+      </svg>
+      <div class="show-cap">
+        <b>THE APPROACH</b>
+        <span>A single coherent pulse climbs out of the noise floor</span>
+      </div>
+    </div>`;
+  reel.insertBefore(show, reel.children[1] || null);
+  const sr = document.createElement('div');
+  sr.className = 'r'; sr.dataset.id = 'approach';
+  sr.innerHTML = `<span class="num">&#8767;</span><span class="ln"></span>`;
+  rail.insertBefore(sr, rail.children[1] || null);
+
+  const sections = [...document.querySelectorAll('section')];
+  const rails = [...rail.querySelectorAll('.r')];
+
+  rails.forEach(r => r.addEventListener('click', () => {
+    document.getElementById(r.dataset.id)?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' });
+  }));
+
+  function applyActive(sec){
+    const idx = sections.indexOf(sec);
+    atmos.style.background = sec.dataset.morph;
+    rails.forEach((r,i)=> r.classList.toggle('on', i===idx));
+  }
+  const spy = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{ if (e.isIntersecting) applyActive(e.target); });
+  },{ rootMargin:'-50% 0px -50% 0px', threshold:0 });
+  sections.forEach(s=>spy.observe(s));
+  applyActive(sections[0]);
+
+  let pTick=false;
+  function progress(){
+    const max = document.documentElement.scrollHeight - innerHeight;
+    bar.style.transform = `scaleX(${max>0 ? clamp(scrollY/max,0,1):0})`;
+    pTick=false;
+  }
+  bar.style.width='100%'; bar.style.transformOrigin='left center'; bar.style.transform='scaleX(0)';
+
+  if (reduce){
+    addEventListener('scroll',()=>{ if(!pTick){pTick=true;requestAnimationFrame(progress);} },{passive:true});
+    progress();
+    return;
+  }
+
+  if (isMobile()){
+    document.documentElement.classList.add('m-on');
+    const EASE='cubic-bezier(.16,1,.3,1)', DUR=800;
+    const io=new IntersectionObserver((es)=>{ es.forEach(e=>{ if(e.isIntersecting){
+      e.target.style.opacity='1'; e.target.style.transform='none'; io.unobserve(e.target);
+    } }); },{ rootMargin:'0px 0px -12% 0px', threshold:0 });
+    const reveal=(el,delay)=>{
+      el.style.transition=`opacity ${DUR}ms ${EASE} ${delay}ms, transform ${DUR}ms ${EASE} ${delay}ms`;
+      el.style.opacity='0'; el.style.transform='translate3d(0,28px,0)'; io.observe(el);
+    };
+    sections.forEach(sec=>{ let i=0;
+      sec.querySelectorAll('h2 .ln .t').forEach(t=> reveal(t,(i++)*80));
+      sec.querySelectorAll('.copytext .reveal').forEach(el=> reveal(el,(i++)*80));
+    });
+    const movers=[];
+    document.querySelectorAll('section').forEach(sec=>{
+      const fig=sec.querySelector('.figwrap'); if(fig) movers.push({el:fig, axis:'y', amp:46});
+      const rom=sec.querySelector('.roman');   if(rom) movers.push({el:rom, axis:'x', amp:60});
+    });
+    let centers=[]; const measure=()=>{ centers=movers.map(m=>{ const r=m.el.getBoundingClientRect(); return r.top+scrollY+r.height/2; }); };
+    measure(); addEventListener('resize', measure, {passive:true});
+    const cur=movers.map(()=>0); let raf=0, until=0;
+    const loop=()=>{ const vh=innerHeight, mid=scrollY+vh/2; let moving=false;
+      movers.forEach((m,i)=>{ const target=clamp(-(mid-centers[i])/vh*m.amp, -m.amp, m.amp);
+        cur[i]+=(target-cur[i])*0.12;
+        m.el.style.transform = m.axis==='y'
+          ? `translate3d(0, ${cur[i].toFixed(2)}px, 0)`
+          : `translate3d(${cur[i].toFixed(2)}px, 0, 0)`;
+        if(Math.abs(target-cur[i])>0.2) moving=true; });
+      raf = (performance.now()<until || moving) ? requestAnimationFrame(loop) : 0; };
+    addEventListener('scroll',()=>{ until=performance.now()+700; if(!raf) raf=requestAnimationFrame(loop);
+      if(!pTick){pTick=true;requestAnimationFrame(progress);} },{passive:true});
+    loop(); progress();
+    return;
+  }
+
+  /* desktop parallax — COMPOSITOR-ONLY cinematic engine */
+  let mx=0,my=0;
+  if(!isTouch && !reduce){
+    addEventListener('pointermove',e=>{ mx=(e.clientX/innerWidth-0.5); my=(e.clientY/innerHeight-0.5); },{passive:true});
+  }
+
+  let tops=[], heights=[];
+  function measure(){ const y=scrollY; tops=sections.map(s=>s.getBoundingClientRect().top+y); heights=sections.map(s=>s.offsetHeight); }
+  measure();
+  let rTO=0; addEventListener('resize',()=>{ clearTimeout(rTO); rTO=setTimeout(measure,150); },{passive:true});
+
+  let ticking=false;
+  function parallax(){
+    const vh=innerHeight;
+    sections.forEach((sec,i)=>{
+      const top=tops[i]-scrollY;
+      if(top>vh*1.2 || top+heights[i]<-vh*0.2) return;
+      const total=heights[i]+vh;
+      const T=clamp((vh-top)/total,0,1);
+      const enter=smooth(0.06,0.32,T);
+      const exit=1-smooth(0.66,0.90,T);
+      const live=enter*exit;
+      const drift=0.46-T;
+      const onStage = T>0.04 && T<0.96;
+
+      const fig=sec.querySelector('.figwrap');
+      if(fig){ const d=+fig.dataset.depth;
+        const z = -120*(1-enter) + drift*110*d;
+        const y = drift*300*d;
+        const sc = 0.92 + 0.08*enter;
+        const ry = drift*8 + (onStage ? mx*2.4 : 0);
+        const rx = -drift*10 + (onStage ? -my*4 : 0);
+        fig.style.transform =
+          `translateY(calc(-50% + ${y.toFixed(1)}px)) translateZ(${z.toFixed(1)}px) `+
+          `rotateX(${clamp(rx,-4,4).toFixed(2)}deg) rotateY(${clamp(ry,-2,2).toFixed(2)}deg) scale(${sc.toFixed(3)})`;
+        fig.style.opacity=(0.08+0.92*live).toFixed(3);
+      }
+
+      const roman=sec.querySelector('.roman');
+      if(roman){ const d=+roman.dataset.depth;
+        roman.style.transform=
+          `translate(calc(-50% + ${(drift*480*d).toFixed(0)}px),-50%) translateZ(-420px) scale(${(1.05-0.05*enter).toFixed(3)})`;
+      }
+
+      const copy=sec.querySelector('.copytext');
+      if(copy){
+        copy.style.transform=`translateY(${(drift*84).toFixed(1)}px) rotateX(${(drift*5).toFixed(2)}deg)`;
+        copy.style.opacity=(0.06+0.94*live).toFixed(3);
+        const lines=copy.querySelectorAll('h2 .ln .t'); const n=lines.length;
+        lines.forEach((t,k)=>{
+          const t0=0.06+(k/n)*0.20; const wp=smooth(t0,t0+0.18,T);
+          t.style.transform=`translate3d(0, ${((1-wp)*100).toFixed(1)}%, 0)`;
+          t.style.opacity=(0.15+0.85*wp).toFixed(3);
+        });
+        const rev=copy.querySelectorAll('.reveal');
+        rev.forEach((el,k)=>{ el.style.opacity=(smooth(0.16+k*0.03,0.40+k*0.03,T)*exit).toFixed(3); });
+      }
+
+      const cue=sec.querySelector('.cuewrap');
+      if(cue){ const d=+cue.dataset.depth;
+        cue.style.transform=`translate(-50%, ${(drift*120*d).toFixed(1)}px) translateZ(60px)`;
+        cue.style.opacity=(1-smooth(0.10,0.34,T)).toFixed(3);
+      }
+    });
+    if(!pTick){ progress(); }
+    ticking=false;
+  }
+  function onScroll(){ if(!ticking){ ticking=true; requestAnimationFrame(parallax); } }
+  addEventListener('scroll',onScroll,{passive:true});
+  addEventListener('resize',()=>{ticking=true;requestAnimationFrame(parallax);},{passive:true});
+  if(!isTouch && !reduce) addEventListener('pointermove',onScroll,{passive:true});
+  parallax();
+
+  /* second-order micro-tilt on the still (pointer, non-touch) */
+  if(!isTouch && !reduce){
+    document.querySelectorAll('.frame').forEach(frame=>{
+      const pic=frame.querySelector('.pic');
+      frame.addEventListener('pointermove',ev=>{
+        const r=frame.getBoundingClientRect();
+        const px=(ev.clientX-r.left)/r.width-0.5, py=(ev.clientY-r.top)/r.height-0.5;
+        pic.style.transform=`translateZ(30px) rotateY(${(px*6).toFixed(2)}deg) rotateX(${(-py*4).toFixed(2)}deg)`;
+      });
+      frame.addEventListener('pointerleave',()=>{ pic.style.transform='translateZ(0) rotateY(0) rotateX(0)'; });
+    });
+  }
+
+  /* GSAP SHOWCASE WIRING — dolly-zoom + scrubbed signal draw */
+  (function wireShowcase(tries){
+    if(!window.gsap || !window.ScrollTrigger){
+      if(tries>0) requestAnimationFrame(()=>wireShowcase(tries-1));
+      return;
+    }
+    gsap.registerPlugin(ScrollTrigger);
+    ScrollTrigger.defaults({ scrub:0.5, fastScrollEnd:true, invalidateOnRefresh:true });
+    const mm = gsap.matchMedia();
+    mm.add('(min-width:769px) and (prefers-reduced-motion:no-preference)', () => {
+      const stage = document.querySelector('#approach .show-stage');
+      if(!stage) return;
+      const dolly = stage.querySelector('.dolly');
+      const path  = stage.querySelector('.waveform path');
+      const cap   = stage.querySelector('.show-cap');
+      const len   = path.getTotalLength();
+      gsap.set(path, { strokeDasharray:len, strokeDashoffset:len, willChange:'stroke-dashoffset' });
+      const tl = gsap.timeline({ scrollTrigger:{
+        trigger:'#approach', start:'top top', end:'+=130%', pin:stage, anticipatePin:1 } });
+      tl.fromTo(dolly, { scale:1 },         { scale:1.26, ease:'none' }, 0)
+        .to(path,      { strokeDashoffset:0, ease:'none' }, 0)
+        .fromTo(cap,   { opacity:0, y:22 }, { opacity:1, y:0, ease:'power2.out', duration:0.4 }, 0.08);
+      return () => gsap.set([dolly, path, cap], { clearProps:'all' });
+    });
+  })(120);
+})();
+</script>
+</body>
+</html>

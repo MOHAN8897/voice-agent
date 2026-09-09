@@ -81,39 +81,29 @@ def _outbound_pstn_context(body: OutboundTestBody) -> tuple[str, str, dict[str, 
     return tier, language, normalized, adjustments
 
 
-_ACTIVE_TELNYX_STATUSES = {
-    "initiated",
-    "ringing",
-    "answered",
-    "streaming",
-    "bridged",
-    "active",
-}
+def _outbound_prewarm_meta(
+    body: OutboundTestBody,
+    *,
+    tier: str,
+    language: str,
+    source_session_id: str | None,
+    inherit_config: bool,
+    stack_override: dict[str, Any] | None,
+) -> dict[str, Any]:
+    return {
+        "agent_id": body.agent_id,
+        "tier": tier,
+        "language": language,
+        "source_session_id": source_session_id,
+        "inherit_test_studio_config": inherit_config,
+        "stack_override": stack_override,
+    }
 
 
 async def _hangup_active_telnyx_to(client: Any, to_e164: str) -> None:
-    """Drop overlapping test calls to the same number so one click cannot ring twice."""
-    from server.services.telnyx_client import TelnyxApiError, telnyx_call_registry
+    from server.services.outbound_dial_guard import hangup_active_telnyx_to
 
-    dest = (to_e164 or "").strip()
-    if not dest:
-        return
-    for row in telnyx_call_registry.list_recent(20):
-        if str(row.get("to") or "").strip() != dest:
-            continue
-        status = str(row.get("status") or "").lower().replace("call.", "")
-        if status in ("hangup", "completed", "failed", "busy", "no-answer", "canceled"):
-            continue
-        if status and status not in _ACTIVE_TELNYX_STATUSES and "stream" not in status:
-            continue
-        control = str(row.get("call_control_id") or "")
-        if not control:
-            continue
-        try:
-            await client.hangup(control)
-            telnyx_call_registry.upsert(control, {"status": "canceled", "last_event": "replaced-by-new-dial"})
-        except TelnyxApiError:
-            pass
+    await hangup_active_telnyx_to(client, to_e164)
 
 
 @router.get("/api/dev/telephony/status")
@@ -181,13 +171,33 @@ async def dev_telephony_outbound(
     guard = telephony_guard_error(provider)
     if guard:
         return {"ok": False, "error": guard, "provider": provider}
-    if provider == "exotel":
-        return await _outbound_exotel(body)
-    if provider == "telnyx":
-        return await _outbound_telnyx(body, session)
-    if provider == "plivo":
-        return await _outbound_plivo(body, session)
-    return {"ok": False, "error": "unknown provider"}
+    to_number = body.to_e164.strip()
+    if not to_number:
+        return {"ok": False, "error": "Destination number required"}
+    from server.services.outbound_dial_guard import acquire_outbound_slot, release_outbound_slot
+
+    if not await acquire_outbound_slot(provider, to_number):
+        return {
+            "ok": False,
+            "error": "An outbound call to this number is already in progress. Wait for it to finish or hang up first.",
+            "code": "dial_in_progress",
+            "provider": provider,
+        }
+    try:
+        if provider == "exotel":
+            result = await _outbound_exotel(body)
+        elif provider == "telnyx":
+            result = await _outbound_telnyx(body, session)
+        elif provider == "plivo":
+            result = await _outbound_plivo(body, session)
+        else:
+            result = {"ok": False, "error": "unknown provider"}
+        if not result.get("ok"):
+            release_outbound_slot(provider, to_number)
+        return result
+    except Exception:
+        release_outbound_slot(provider, to_number)
+        raise
 
 
 _PSTN_VALIDATE_CACHE: dict[str, tuple[float, dict[str, Any]]] = {}
@@ -267,10 +277,11 @@ async def _outbound_exotel(body: OutboundTestBody) -> dict[str, Any]:
     to_number = body.to_e164.strip()
     if not caller_id:
         return {"ok": False, "error": "Set EXOTEL_EXOPHONE or fromE164"}
-    if not to_number:
-        return {"ok": False, "error": "Destination number required"}
     tier, language, stack_override, stack_adjustments = _outbound_pstn_context(body)
     source_session_id, inherit_config = _resolve_outbound_source_session(body)
+    from server.services.outbound_dial_guard import hangup_active_exotel_to
+
+    await hangup_active_exotel_to(to_number)
     phone_assignments_store.assign(caller_id, body.agent_id)
     custom_field = f"agent:{body.agent_id};tier:{tier or 'medium'}"
     try:
@@ -313,6 +324,21 @@ async def _outbound_exotel(body: OutboundTestBody) -> dict[str, Any]:
         }
         if stack_adjustments:
             payload["stack_adjustments"] = stack_adjustments
+        if call_sid:
+            from server.services.pstn_prewarm import schedule_prewarm
+
+            schedule_prewarm(
+                "exotel",
+                str(call_sid),
+                _outbound_prewarm_meta(
+                    body,
+                    tier=tier or "medium",
+                    language=language,
+                    source_session_id=source_session_id,
+                    inherit_config=inherit_config,
+                    stack_override=stack_override,
+                ),
+            )
         return payload
     except ExotelConfigError as e:
         return {"ok": False, "error": str(e)}
@@ -357,6 +383,8 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
         direction="outbound",
     )
     stream_url = client.build_stream_ws_url(token=token)
+    if not stream_url.startswith("wss://"):
+        return {"ok": False, "error": "Configure a public HTTPS API/tunnel URL before placing a PSTN call."}
     await _hangup_active_telnyx_to(client, body.to_e164)
     try:
         result = await client.create_outbound_call(
@@ -388,9 +416,23 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
                 "inherit_test_studio_config": inherit_config,
                 "stack_override": stack_override,
                 "stream_url": stream_url,
+                "stream_configured": True,
                 "stream_started": True,
+                "stream_connected": False,
+                "stream_state": "pending_answer",
             },
         )
+        if call_control_id:
+            # Merge — do not replace. Replacing wiped source_session_id / stack_override /
+            # language / inherit flags and could desync agent config from the media leg.
+            existing = telnyx_stream_tokens.peek(token) or {}
+            merged_meta = {
+                **existing,
+                "agent_id": body.agent_id,
+                "tier": tier,
+                "call_control_id": call_control_id,
+            }
+            telnyx_stream_tokens.put(token, **merged_meta)
         log_pstn(
             "dial.initiated",
             timer_key=call_control_id,
@@ -399,7 +441,7 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
             from_e164=body.from_e164,
             agent_id=body.agent_id,
             provider="telnyx",
-            stream_url=stream_url,
+            stream_url=stream_url.split("?", 1)[0],
             wire_codec=TELNYX_RTP_CODEC,
             wire_rate=TELNYX_RTP_SAMPLE_RATE,
             target_legs="self",
@@ -413,6 +455,21 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
         }
         if stack_adjustments:
             payload["stack_adjustments"] = stack_adjustments
+        if call_control_id:
+            from server.services.pstn_prewarm import schedule_prewarm
+
+            schedule_prewarm(
+                "telnyx",
+                call_control_id,
+                _outbound_prewarm_meta(
+                    body,
+                    tier=tier or "medium",
+                    language=language,
+                    source_session_id=source_session_id,
+                    inherit_config=inherit_config,
+                    stack_override=stack_override,
+                ),
+            )
         return payload
     except TelnyxApiError as e:
         detail = (e.body or str(e))[:400]
@@ -450,7 +507,40 @@ async def dev_telephony_media_flow(
     require_permission(session, "dev.stack.read")
     from server.services.pstn_media_flow import pstn_media_flow
 
-    return {"ok": True, "flow": pstn_media_flow.snapshot(call_id)}
+    flow = pstn_media_flow.snapshot(call_id)
+    if flow:
+        from server.services.telnyx_pstn_bridge import active_telnyx_bridges
+        from server.services.telnyx_client import telnyx_call_registry
+        from server.realtime.manager import realtime_text_manager
+
+        external_id = str(flow.get("external_id") or "")
+        bridge = active_telnyx_bridges.get(external_id)
+        row = telnyx_call_registry.get(external_id) or {}
+        voice = bridge._voice if bridge else None
+        realtime = realtime_text_manager.get(str(flow.get("call_id") or ""))
+        flow["diagnostics"] = {
+            "direction": row.get("direction"),
+            "agent_id": bridge.agent_id if bridge else row.get("agent_id"),
+            "phase": voice._phase if voice else ("ended" if not flow.get("active") else "connecting"),
+            "turn_id": voice.current_turn_id if voice else None,
+            "generation_id": voice.current_generation_id if voice else None,
+            "stt": "streaming" if voice and voice._stt else "disconnected",
+            "realtime": "ready" if realtime and realtime.is_ready else "disconnected",
+            "model": realtime.model if realtime else None,
+        }
+    return {"ok": True, "flow": flow}
+
+
+@router.post("/api/dev/telephony/media-flow/purge")
+async def dev_telephony_purge(call_id: str, session: SessionData = Depends(require_dev_session)):
+    require_permission(session, "dev.stack.write")
+    from server.services.telnyx_pstn_bridge import active_telnyx_bridges
+
+    bridge = next((b for b in active_telnyx_bridges.values() if call_id in (b.call_id, b.call_control_id)), None)
+    if bridge is None or bridge._voice is None:
+        return {"ok": False, "error": "No active media session for this call"}
+    await bridge._voice._commit_barge("")
+    return {"ok": True, "detail": "Playback purged and generation cancelled"}
 
 
 @router.post("/api/dev/telephony/media-flow/test-codec")
@@ -813,6 +903,9 @@ async def _outbound_plivo(body: OutboundTestBody, session: SessionData) -> dict[
     tier, language, stack_override, stack_adjustments = _outbound_pstn_context(body)
     source_session_id, inherit_config = _resolve_outbound_source_session(body)
     client = PlivoClient()
+    from server.services.outbound_dial_guard import hangup_active_plivo_to
+
+    await hangup_active_plivo_to(body.to_e164)
     token = plivo_stream_tokens.create(agent_id=body.agent_id, tier=tier)
     base = public_api_base().rstrip("/")
     answer_url = f"{base}/api/plivo/answer?token={token}"
@@ -823,6 +916,7 @@ async def _outbound_plivo(body: OutboundTestBody, session: SessionData) -> dict[
             answer_url=answer_url,
         )
         request_uuid = str(result.get("request_uuid") or result.get("message") or "")
+        plivo_stream_tokens.put(token, agent_id=body.agent_id, tier=tier, request_uuid=request_uuid)
         plivo_call_registry.upsert(
             request_uuid,
             {
@@ -845,6 +939,21 @@ async def _outbound_plivo(body: OutboundTestBody, session: SessionData) -> dict[
         }
         if stack_adjustments:
             payload["stack_adjustments"] = stack_adjustments
+        if request_uuid:
+            from server.services.pstn_prewarm import schedule_prewarm
+
+            schedule_prewarm(
+                "plivo",
+                request_uuid,
+                _outbound_prewarm_meta(
+                    body,
+                    tier=tier or "medium",
+                    language=language,
+                    source_session_id=source_session_id,
+                    inherit_config=inherit_config,
+                    stack_override=stack_override,
+                ),
+            )
         return payload
     except PlivoApiError as e:
         return {"ok": False, "error": str(e), "status": e.status}

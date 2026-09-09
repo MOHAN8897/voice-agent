@@ -25,6 +25,8 @@ def test_dial_uses_rtp_bidirectional_and_both_legs():
     assert '"stream_bidirectional_codec": TELNYX_RTP_CODEC' in src
     assert "TELNYX_RTP_SAMPLE_RATE" in src
     assert '"send_silence_when_idle": True' in src
+    assert "if stream_url:" in src
+    assert 'stream_url: str | None = None' in src
 
 
 def test_pcm16_to_mulaw_frame_size():

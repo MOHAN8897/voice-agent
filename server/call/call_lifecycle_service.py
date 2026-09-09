@@ -2,7 +2,10 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import json
 import uuid
+from dataclasses import replace
 from datetime import datetime, timezone
 from typing import Any
 
@@ -15,10 +18,13 @@ from server.call.call_store import call_store
 from server.call.paths import relative_storage_path
 from server.call.post_call_pipeline import enqueue as enqueue_post_call
 from server.config.env import get_settings
-from server.services.dev_runtime import effective_app_environment, effective_config_mode, effective_voice_tier
-from server.providers.base import ResolvedStack, StackSelection
+from server.providers.base import ResolvedStack, StackSelection, StageSelection
 from server.providers.resolver import resolve_stack
 from server.providers.session_stack import resolve_stack_for_session
+from server.realtime.manager import realtime_text_manager
+from server.realtime.models import coerce_live_llm_selection, pipeline_mode
+from server.realtime.text_session import build_session_instructions
+from server.services.dev_runtime import effective_app_environment, effective_config_mode, effective_voice_tier
 from server.utils.errors import AppError, ErrorCode
 from server.utils.logger import log_pstn, logger
 
@@ -73,6 +79,7 @@ class CallLifecycleService:
         config_session_id: str | None = None,
         caller_id: str | None = None,
         language: str = "te-IN",
+        realtime_prewarm_key: str | None = None,
     ) -> dict[str, Any]:
         settings = get_settings()
         session_id = session_id or "default"
@@ -95,13 +102,17 @@ class CallLifecycleService:
                     status_code=409,
                 )
 
-        stack = self._resolve_locked_stack(
-            session_id=lookup_session,
-            tier=effective_tier,  # type: ignore[arg-type]
-            environment=env,
+        stack = self._coerce_pipeline_stack(
+            self._resolve_locked_stack(
+                session_id=lookup_session,
+                tier=effective_tier,  # type: ignore[arg-type]
+                environment=env,
+                stack_override=stack_override,
+                language=language or (agent.get("languages") or ["te-IN"])[0],
+            ),
             stack_override=stack_override,
-            language=language or (agent.get("languages") or ["te-IN"])[0],
         )
+        pipeline = pipeline_mode(settings=settings, stack_override=stack_override)
         compiled_version, compiled_text = await self._lock_compiled_brain(
             agent["agent_id"],
             session_id=lookup_session,
@@ -142,9 +153,8 @@ class CallLifecycleService:
         # New call = new dialogue. Compiled brain stays on the config session.
         conversation_manager.clear(session_id)
         session_memory.clear(session_id)
-        if lookup_session != session_id:
-            conversation_manager.clear(lookup_session)
-            session_memory.clear(lookup_session)
+        # lookup_session owns shared Test Studio configuration, not this call's
+        # conversation. Clearing it here could erase another active browser call.
         if caller_id:
             memory_manager.apply_proposals(
                 call_id,
@@ -187,9 +197,50 @@ class CallLifecycleService:
             started_at=started,
             storage_path=storage_path,
             call_end_policy=self._load_call_end_policy(lookup_session, language),
+            pipeline=pipeline,
         )
         call_context.put(ctx)
-        logger.info(f"[CALL] started {call_id} agent={agent['agent_id']} combo={stack.combination_id}")
+        realtime_status: dict[str, Any] = {"status": "n/a"}
+        if pipeline == "realtime_text":
+            try:
+                from server.realtime.manager import realtime_text_manager
+
+                adopted = (
+                    realtime_text_manager.adopt_session(realtime_prewarm_key, call_id)
+                    if realtime_prewarm_key
+                    else None
+                )
+                boot_ready = channel == "browser"
+                if adopted is None:
+                    await realtime_text_manager.create(
+                        call_id,
+                        compiled_brain=compiled_text,
+                        model=stack.llm.model,
+                        language=language or "te-IN",
+                        caller_id=caller_id,
+                        instructions=build_session_instructions(
+                            compiled_text,
+                            caller_id=caller_id,
+                            language=language or "te-IN",
+                        ),
+                        wait_ready=boot_ready,
+                    )
+                    realtime_status = {"status": "ready" if boot_ready else "booting"}
+                else:
+                    log_pstn(
+                        "prewarm.realtime.adopted",
+                        call_id=call_id,
+                        from_key=realtime_prewarm_key,
+                    )
+                    session = realtime_text_manager.get(call_id)
+                    realtime_status = {
+                        "status": "ready" if session and session.is_ready else "booting",
+                    }
+            except Exception as e:
+                err = str(e)[:200]
+                logger.warning("[CALL] realtime session failed %s: %s", call_id, err)
+                realtime_status = {"status": "failed", "error": err}
+        logger.info(f"[CALL] started {call_id} agent={agent['agent_id']} combo={stack.combination_id} pipeline={pipeline}")
         if channel == "pstn":
             log_pstn(
                 "lifecycle.started",
@@ -212,6 +263,8 @@ class CallLifecycleService:
                 "channel": channel,
             },
             "resolved_stack": stack.to_safe_dict(),
+            "pipeline": pipeline,
+            "realtime": realtime_status,
             "ws_urls": {
                 "stt": f"/ws/stt-realtime?call_id={call_id}&sessionId={session_id}",
                 "tts": f"/ws/tts?call_id={call_id}&sessionId={session_id}",
@@ -244,6 +297,7 @@ class CallLifecycleService:
         from server.call.turn_coordinator import drain
 
         await drain(call_id)
+        await realtime_text_manager.destroy(call_id)
 
         await call_ledger.seal(call_id)
         if ctx:
@@ -460,6 +514,28 @@ class CallLifecycleService:
             environment=environment,
             stack_override=stack_override,
         )
+
+    def _coerce_pipeline_stack(
+        self,
+        stack: ResolvedStack,
+        *,
+        stack_override: dict[str, Any] | None = None,
+    ) -> ResolvedStack:
+        provider, model = coerce_live_llm_selection(
+            stack.llm.provider,
+            stack.llm.model,
+            stack_override=stack_override,
+        )
+        if provider == stack.llm.provider and model == stack.llm.model:
+            return stack
+        llm = StageSelection(provider, model, dict(stack.llm.config))
+        payload = {
+            "stt": {"provider": stack.stt.provider, "model": stack.stt.model},
+            "llm": {"provider": llm.provider, "model": llm.model},
+            "tts": {"provider": stack.tts.provider, "model": stack.tts.model},
+        }
+        combination_id = hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]
+        return replace(stack, llm=llm, combination_id=combination_id)
 
     def _load_call_end_policy(self, session_id: str | None, language: str | None) -> dict | None:
         if not session_id:

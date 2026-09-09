@@ -7,6 +7,13 @@ from dataclasses import dataclass
 from typing import Any
 
 from server.call.call_end_policy import HANGUP_REASONS as POLICY_REASONS, allowed_reasons_for
+from server.call.hangup_judge import (
+    agent_spoke_closing,
+    caller_wants_to_continue,
+    default_farewell_for,
+    memory_has_lead_handoff,
+    user_short_close_ack,
+)
 from server.prompts.agent_voice_rules import normalize_compile_language
 from server.utils.logger import logger
 
@@ -27,9 +34,10 @@ _GOODBYE = re.compile(
 # Do not match లేదు inside నచ్చలేదు / కాలేదు, or bare వద్దు in "ఇంకేమీ వద్దు".
 _REFUSAL = re.compile(
     r"\b(not interested|no thanks|don't want|do not want|nahi chahiye|"
-    r"mat karo|no interest)\b|"
+    r"mat karo|no interest|not for me|no need|remove me|"
+    r"don'?t (?:want|need) (?:this|it|any)|stop (?:this|the) call)\b|"
     r"\b(vaddu|ledu)\b.{0,48}interest|interest.{0,24}\b(vaddu|ledu)\b|"
-    r"interest\s*లేదు|"
+    r"interest\s*లేదు|interested\s*nahi|"
     r"(?:వద్దు.{0,48}(?:interest|call)|(?:interest|call).{0,24}వద్దు)",
     re.I | re.S,
 )
@@ -38,7 +46,8 @@ _ABUSE = re.compile(
     re.I,
 )
 _GOAL_DONE = re.compile(
-    r"\b(booked|scheduled|ticket[_ ]?id|order[_ ]?id|confirmed slot|visit booked)\b",
+    r"\b(booked|scheduled|ticket[_ ]?id|order[_ ]?id|confirmed slot|visit booked|"
+    r"lead[_ ]?captured|callback[_ ]?scheduled)\b",
     re.I,
 )
 _STAY_ON_LINE = re.compile(
@@ -49,14 +58,20 @@ _STAY_ON_LINE = re.compile(
     re.I,
 )
 _CALLER_DONE = re.compile(
-    r"^\s*(?:thanks|thank you)[,.]?\s+that'?s (?:all|it)\s*[.!]?\s*$|"
-    r"^\s*that'?s (?:all|it)(?:[,.]?\s*(?:thanks|thank you))?\s*[.!]?\s*$",
+    r"^\s*(?:thanks|thank you)[,.]?\s+that'?s (?:all|it)(?:\s+for now)?\b.*"
+    r"(?:\bbye\b|\bgoodbye\b)?\s*[.!]?\s*$|"
+    r"^\s*that'?s (?:all|it)(?:\s+for now)?(?:[,.]?\s*(?:thanks|thank you))?"
+    r"(?:[,.]?\s*(?:bye|goodbye))?\s*[.!]?\s*$",
     re.I,
 )
 _GOAL_COMPLETE_USER = re.compile(
     r"\b(that answers (?:it|my question)|that(?:'s| is) (?:sorted|resolved)|"
     r"i (?:have|got) (?:the|my) answer|i know .{1,40} now|"
-    r"that is all i needed|that(?:'s| is) what i needed)\b",
+    r"that is all i needed|that(?:'s| is) what i needed|"
+    r"(?:yes|yeah|ok|okay|sure|fine|please).{0,40}"
+    r"(?:call me(?: back)?|team (?:will |can )?call|callback|reach out)|"
+    r"(?:call me(?: back)?|callback).{0,20}(?:please|yes|ok|okay)|"
+    r"(?:yes|yeah|ok|okay).{0,24}(?:team (?:will |can )?contact|have (?:them|the team) call))\b",
     re.I,
 )
 _OPT_OUT = re.compile(
@@ -117,23 +132,55 @@ def _evidence_ok(
     language: str,
     completed_turns: int = 0,
     memory_snapshot: dict[str, Any] | None = None,
+    spoken_text: str = "",
 ) -> bool:
     text = user_text or ""
+    spoken = spoken_text or ""
     if reason == "goodbye":
         return bool(_GOODBYE.search(text) or _CALLER_DONE.search(text))
     if reason == "firm_refusal":
-        # Need a prior turn so we already stopped pushing (not first-pitch hangup).
-        return bool(_REFUSAL.search(text)) and completed_turns >= 1
+        return bool(_REFUSAL.search(text))
     if reason == "abuse":
         return bool(_ABUSE.search(text))
     if reason == "goal_complete":
         if looks_like_question(text):
             return False
-        return bool(_GOAL_COMPLETE_USER.search(text)) or memory_has_goal_complete(memory_snapshot)
+        if _GOAL_COMPLETE_USER.search(text) or memory_has_goal_complete(memory_snapshot):
+            return True
+        # Objective closed: agent spoke handoff/farewell with lead details or a short ack.
+        if agent_spoke_closing(spoken) and (
+            memory_has_lead_handoff(memory_snapshot)
+            or (user_short_close_ack(text) and completed_turns >= 1)
+        ):
+            return True
+        return False
     if reason == "out_of_scope":
-        # Agent must have had one chance to redirect.
         return bool(text.strip()) and not looks_like_question(text) and completed_turns >= 1
     return False
+
+
+def caller_requested_hangup(user_text: str) -> bool:
+    """True when the caller explicitly asked to stop / said goodbye."""
+    return _user_wants_hangup(user_text)
+
+
+def caller_firm_refusal(user_text: str) -> bool:
+    """True when the caller clearly refuses — hang up (not soft maybe / not looking)."""
+    text = user_text or ""
+    if not text.strip() or looks_like_question(text):
+        return False
+    if _STAY_ON_LINE.search(text):
+        return False
+    return bool(_REFUSAL.search(text))
+
+
+def caller_confirmed_goal_complete(user_text: str) -> bool:
+    text = user_text or ""
+    if not text.strip() or looks_like_question(text):
+        return False
+    if _STAY_ON_LINE.search(text):
+        return False
+    return bool(_GOAL_COMPLETE_USER.search(text) or _CALLER_DONE.search(text))
 
 
 def _user_wants_hangup(user_text: str) -> bool:
@@ -143,6 +190,11 @@ def _user_wants_hangup(user_text: str) -> bool:
     if looks_like_question(text):
         return False
     return bool(_GOODBYE.search(text))
+
+
+def _force_end(reason: str, farewell: str, spoken: str, language: str) -> dict[str, Any]:
+    text = (farewell or spoken or "").strip() or default_farewell_for(language)
+    return {"should_end": True, "reason": reason, "farewell": text[:240]}
 
 
 def validate_end_call(
@@ -159,25 +211,47 @@ def validate_end_call(
     completed_turns: int = 0,
     memory_snapshot: dict[str, Any] | None = None,
     call_end_policy: dict[str, Any] | None = None,
+    spoken_text: str = "",
 ) -> EndCallDecision:
     parsed = parse_end_call_payload(raw)
     user = user_text or ""
+    spoken = spoken_text or ""
+    lang = normalize_compile_language(language)
+
     # Don't-call / goodbye always wins over a wrong model reason (e.g. goal_complete).
     if _user_wants_hangup(user):
-        parsed = {
-            "should_end": True,
-            "reason": "goodbye",
-            "farewell": parsed.get("farewell") or "",
-        }
+        parsed = _force_end("goodbye", parsed.get("farewell") or "", spoken, lang)
+    elif caller_firm_refusal(user):
+        parsed = _force_end("firm_refusal", parsed.get("farewell") or "", spoken, lang)
     elif parsed["should_end"] and _STAY_ON_LINE.search(user):
         logger.info("[END_CALL] rejected code=stay_on_line reason=%s", parsed.get("reason"))
         return EndCallDecision(False, False, "none", parsed.get("farewell") or "", "stay_on_line")
+    elif (
+        parsed["should_end"]
+        and caller_wants_to_continue(user)
+        and parsed.get("reason") in {"firm_refusal", "goal_complete"}
+        and not caller_firm_refusal(user)
+        and not caller_confirmed_goal_complete(user)
+    ):
+        logger.info("[END_CALL] rejected code=caller_engaged reason=%s", parsed.get("reason"))
+        return EndCallDecision(False, False, "none", "", "caller_engaged")
+    elif not parsed["should_end"]:
+        # Repair missed end_call tool when the turn already closed the conversation.
+        if caller_confirmed_goal_complete(user) and (
+            agent_spoke_closing(spoken) or parsed.get("farewell")
+        ):
+            parsed = _force_end("goal_complete", parsed.get("farewell") or "", spoken, lang)
+        elif agent_spoke_closing(spoken) and (
+            memory_has_lead_handoff(memory_snapshot)
+            or (user_short_close_ack(user) and completed_turns >= 1)
+        ):
+            parsed = _force_end("goal_complete", parsed.get("farewell") or "", spoken, lang)
+
     if not parsed["should_end"]:
         return EndCallDecision(False, False, "none", "", None)
 
     reason = parsed["reason"]
-    farewell = parsed["farewell"]
-    lang = normalize_compile_language(language)
+    farewell = parsed["farewell"] or spoken or default_farewell_for(lang)
 
     def _reject(code: str) -> EndCallDecision:
         logger.info("[END_CALL] rejected code=%s reason=%s lang=%s", code, reason, lang)
@@ -208,6 +282,7 @@ def validate_end_call(
         language=lang,
         completed_turns=completed_turns,
         memory_snapshot=memory_snapshot,
+        spoken_text=spoken,
     ):
         return _reject("no_evidence")
     if len(farewell) > 240:

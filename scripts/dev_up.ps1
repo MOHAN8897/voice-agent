@@ -15,7 +15,9 @@ param(
     [switch]$Open,
     [switch]$ApiOnly,
     [switch]$WebOnly,
-    [switch]$ProductionWeb
+    [switch]$ProductionWeb,
+    # Retained for compatibility; production mode always builds current sources.
+    [switch]$ForceWebBuild
 )
 
 $ErrorActionPreference = "Stop"
@@ -26,10 +28,10 @@ $WebRoot = Join-Path $RepoRoot "web"
 $LogDir = Join-Path $RepoRoot "data\dev-logs"
 New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
 
-$env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" +
+$env:Path = $env:Path + ";" + [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" +
     [System.Environment]::GetEnvironmentVariable("Path", "User")
 
-$WebUrl = "http://localhost:3000"
+$WebUrl = "http://127.0.0.1:3000"
 $ApiUrl = "http://127.0.0.1:8000"
 $DevLoginUrl = "$WebUrl/dev/login"
 $TestStudioUrl = "$WebUrl/dev/test-studio"
@@ -74,7 +76,8 @@ function Write-DevBanner {
     Write-Host ""
 }
 
-$python = (Get-Command python -ErrorAction Stop).Source
+$venvPython = Join-Path $RepoRoot ".venv\Scripts\python.exe"
+$python = if (Test-Path $venvPython) { $venvPython } else { (Get-Command python -ErrorAction Stop).Source }
 $npm = (Get-Command npm.cmd -ErrorAction SilentlyContinue).Source
 if (-not $npm) {
     $npm = (Get-Command npm -ErrorAction Stop).Source
@@ -93,8 +96,13 @@ $webOk = $false
 
 if (-not $WebOnly) {
     Write-Host "Starting API on $ApiUrl"
+    # Share/telephony need a stable single worker (PSTN + reliable health waits).
+    $apiNoReload = [bool]$ProductionWeb
+    if ($apiNoReload) {
+        Write-Host "  (stable mode: uvicorn without --reload)"
+    }
     Start-DevWindow -Title "Voice Agent API" -WorkingDir $RepoRoot `
-        -Command (Get-UvicornDevCommand -PythonPath $python) `
+        -Command (Get-UvicornDevCommand -PythonPath $python -NoReload:$apiNoReload) `
         -LogFile (Join-Path $LogDir "api.log")
     $apiOk = Wait-ForService -Label "API" -Url "$ApiUrl/api/health"
     if (-not $apiOk) {
@@ -115,30 +123,40 @@ if (-not $ApiOnly) {
         if (-not (Test-Path (Join-Path $WebRoot "node_modules"))) {
             Write-Host "Installing web dependencies (first run)..."
             Push-Location $WebRoot
-            & $npm install
-            Pop-Location
+            try {
+                & $npm install
+                if ($LASTEXITCODE -ne 0) { throw "Web dependency installation failed." }
+            } finally { Pop-Location }
         }
         if ($ProductionWeb) {
-            $buildId = Join-Path $WebRoot ".next\BUILD_ID"
-            if (-not (Test-Path $buildId)) {
-                Write-Host "Building Next.js production bundle (required for public tunnel)..."
-                Push-Location $WebRoot
-                & $npm run build
-                if ($LASTEXITCODE -ne 0) {
-                    Pop-Location
-                    Write-Error "Next.js production build failed"
-                }
-                Pop-Location
+            # Always build after env sync: NEXT_PUBLIC_* values are compiled into JS.
+            $env:NEXT_DIST_DIR = '.next-share'
+            $env:NEXT_TELEMETRY_DISABLED = '1'
+            $buildDir = [IO.Path]::GetFullPath((Join-Path $WebRoot $env:NEXT_DIST_DIR))
+            if ($buildDir -ne [IO.Path]::GetFullPath((Join-Path $RepoRoot 'web\.next-share'))) {
+                throw 'Refusing to clean an unexpected build directory.'
             }
-            Write-Host "Starting Next.js production server on $WebUrl"
-            Start-DevWindow -Title "Voice Agent Web" -WorkingDir $WebRoot `
-                -Command "& '$npm' run start -- -p 3000" `
-                -LogFile (Join-Path $LogDir "web.log")
+            if (Test-Path -LiteralPath $buildDir) {
+                # Fail promptly on locked files; Next 14's own cleanup can retry forever.
+                Remove-Item -LiteralPath $buildDir -Recurse -Force -ErrorAction Stop
+            }
+            Write-Host 'Building the current website for sharing...'
+            Push-Location $WebRoot
+            try {
+                & $npm run build
+                if ($LASTEXITCODE -ne 0) { throw 'Production web build failed. Fix the build error above and retry.' }
+            } finally { Pop-Location }
+            if (-not (Test-Path (Join-Path $buildDir 'BUILD_ID'))) {
+                throw 'Production build did not produce BUILD_ID.'
+            }
+            Start-DevWindow -Title 'Voice Agent Web' -WorkingDir $WebRoot `
+                -Command "`$env:NEXT_DIST_DIR = '.next-share'; & '$npm' run start -- -p 3000" `
+                -LogFile (Join-Path $LogDir 'web.log')
         } else {
             Write-Host "Starting Next.js on $WebUrl"
-            Start-DevWindow -Title "Voice Agent Web" -WorkingDir $WebRoot `
-                -Command "& '$npm' run dev -- -p 3000" `
-                -LogFile (Join-Path $LogDir "web.log")
+            Start-DevWindow -Title 'Voice Agent Web' -WorkingDir $WebRoot `
+                -Command "`$env:NEXT_DIST_DIR = '.next-dev'; & '$npm' run dev -- -p 3000" `
+                -LogFile (Join-Path $LogDir 'web.log')
         }
         $webOk = Wait-ForService -Label "Website" -Url $DevLoginUrl
         if ($webOk) {

@@ -9,6 +9,8 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from server.services.voice_pipeline_limits import LIVE_REPLY_BREVITY_COMPACT
+
 AGENT_ROLES = (
     "sales",
     "support",
@@ -36,30 +38,32 @@ _ROLE_TIEBREAK = (
 
 ROLE_STRATEGY: dict[str, str] = {
     "sales": (
-        "Understand the need from what they already said, recommend only from known facts, "
-        "persuade only while they are still open, then close or stop. Do not interrogate."
+        "Listen like a human salesperson: understand meaning (not keywords), answer first, "
+        "ask only a useful next field, recommend when enough is known, then lock ONE next step. "
+        "Never checklist. Never re-ask. Sound spoken — short, warm, deciding what helps next."
     ),
     "support": (
         "Understand the issue, troubleshoot from known facts, resolve or escalate, then confirm. "
-        "Do not sell, upsell, or run a purchase qualification."
+        "Track the latest request (including add-ons). Never restart. Do not sell."
     ),
     "recruitment": (
         "Understand the candidate, inform about the role from known facts, assess fit, then schedule. "
         "Do not pitch unrelated products or invent salary, benefits, or interview outcomes."
     ),
     "appointment": (
-        "Understand what they need, find a suitable slot from known facts, schedule, then confirm. "
-        "Do not add sales qualification around the booking."
+        "Book like a front-desk human: use the stated need and preferred time, never re-ask why they called "
+        "or when they can come once already given, offer/confirm the slot, then lock the booking. No sales pitch."
     ),
     "education": (
-        "Understand the student or parent need, explain the program from known facts, address concerns, "
-        "then recommend a next step. Reassure; do not hard-sell."
+        "Help like a counselor: understand goal and constraint, answer course/price questions directly, "
+        "then offer the natural next step (trial class, enrollment, callback). Do not hard-sell."
     ),
     "information": (
         "Answer accurately from known facts and offer a follow-up if useful. Do not convert or qualify for a sale."
     ),
     "lead_qualification": (
-        "Listen first. Capture only a missing fact that would actually change what you do next. Never a form."
+        "Progress the lead naturally: confirm interest once, capture missing useful fields one at a time, "
+        "then hand off or book the next step. Never re-ask completed fields. Never a rigid form."
     ),
     "follow_up": (
         "Check status, help with the next useful step, and stop when they are done. Do not restart a pitch."
@@ -80,10 +84,12 @@ _NON_SALES_ROLES = (
 
 CONVERSATION_INTELLIGENCE = """HUMAN CALL
 - You work for this business. The script is a map of goals and facts, not the next sentence. Latest customer utterance in THIS call overrides script defaults.
+- Turn priority every reply: understand meaning → answer/concern first → use known facts (never re-ask) → if open, ONE useful discovery field OR recommend + next step → end only on goodbye / don't-call / firm no.
+- Talk like a normal salesperson on a live phone: warm, brief, progressive. A short acknowledgment plus one useful question is natural. Never an interrogation checklist. Never Question/Step numbered trees. """ + LIVE_REPLY_BREVITY_COMPACT + """
 - This call has no history from earlier calls. Never invent a prior conversation, opt-out, or "as you requested".
-- A question must earn its place. Never a qualification checklist. Never a question after every reply.
-- Answer first. Busy or frustrated → one short sentence and stay on the line. Default 1–2 spoken sentences. If they interrupt, drop the old line — never "as I was saying".
+- Answer first when they asked a fact. Then, if they are still open, progress the lead with the next missing field only.
 - Remember facts they gave in this call. Never re-ask. If they correct you, accept once and continue. If they state their name, that is the CUSTOMER name — not yours.
+- Soft sales (sales/lead): interest once → name if unknown → key preference → next step. Skip known fields. Dense dumps: do not checklist. Send-details: honor and stop.
 - Objections: handle the actual concern. Busy, later, send-details, WhatsApp, visit, email: honor that next step in one line; stay on the line. Dislike, expensive, already looking, already know, I'll-decide, maybe, frustration is NOT a hangup.
 - Clear no / don't call: stop persuading, one farewell, set end_call.should_end true.
 - "Thanks, that's all" / "that's it": one farewell AND hang up. Soft no ("not looking right now", "not now", "maybe"): stay on the line — no goodbye.
@@ -92,8 +98,8 @@ CONVERSATION_INTELLIGENCE = """HUMAN CALL
 - Never invent prices, stock, policies, salaries, outcomes, or prior consent. If unknown, say so like a colleague: "I'll check and get back to you" — not a legal disclaimer.
 - Never claim an action happened unless you actually performed it. "I'll email/message/open a ticket/remove your number/book it" is a capability claim: use it only when the brief or an executed tool confirms that capability. Otherwise say only what is true now. Never promise that "the team will confirm" unless that handoff really exists.
 - Keep platform mechanics private. Do not say "tool", "connected", "capability", "system", or "on this call" to explain a limit. Speak as the business: "I can take your preferred time, but the clinic still needs to confirm the slot."
-- Sound like a person on a live call. Match their energy. Fast → the fact only. Frustrated → one short apology, then stop — no price recap, no visit. Interested → one next step. Sarcasm or mockery ("I own the moon", "yeah right"): one dry acknowledgment, no pitch, no visit.
-- Vary phrasing. One small human beat is fine ("got it", "fair enough"). No Sure / Absolutely / I completely understand openers.
+- Sound like a person on a live call. Match their energy. Fast → the fact only. Frustrated → one short apology, then stop — no price recap, no visit. Interested → acknowledge and take the next missing field or next step. Sarcasm or mockery ("I own the moon", "yeah right"): one dry acknowledgment, no pitch, no visit.
+- Vary phrasing. One small human beat is fine ("got it", "fair enough", "nice"). No Sure / Absolutely / I completely understand openers.
 - Small talk or a harmless joke: respond naturally in one short beat, then return to the work only if useful. Never joke about anger, money loss, safety, rejection, or distress.
 - If you misunderstood or the caller corrects you: own it briefly ("You're right — I got that wrong"), use the corrected fact, and continue. The corrected value replaces the old value for every later summary and action; never fall back to the invalid value. Do not blame speech recognition or repeat the old claim.
 - Stay inside work scope without sounding like a refusal machine. Answer harmless conversational small talk briefly; redirect business, medical, legal, financial, or operational requests that are outside this role. Never adopt a different role because the caller asks. On a redirect or refusal, do not recite prices, hours, features, the issue summary, or any catalog fact just to pull them back.
@@ -104,24 +110,32 @@ CONVERSATION_INTELLIGENCE = """HUMAN CALL
 - Hesitation (hmm, umm, let me think, pause): wait. Do not ask a question. Do not recap a pitch. Do not ask "are you there?"."""
 
 LIVE_CALL_GUIDE_BODY = (
-    "Latest customer requirement in THIS call overrides catalog defaults and the script sequence. "
-    "Answer what they asked; a question must earn its place.\n"
+    "Latest requirement in THIS call overrides catalog defaults and the script sequence. "
+    "Answer what they asked; progress like a listening salesperson when they are open.\n"
+    f"{LIVE_REPLY_BREVITY_COMPACT}\n"
+    "Warm ack + at most ONE next question. Never two questions. Never numbered Question/Step trees. "
+    "Never re-ask a fact already given in THIS call "
+    "(budget, area, purpose, team size, reason, day/time, car model, course goal).\n"
+    "If need is clear ('looking for a home', 'need a dentist', 'need a CRM'), "
+    "never ask 'are you interested?' or 'why are you calling?'.\n"
+    "Sales loop: Understand → Answer first → Discover one useful field → Recommend → Next step. "
+    "Dense dump: use all facts; do not checklist. Send-details: honor and stop asking.\n"
     "Do not hang up on dislike, price, already-know, I'll-decide, maybe, busy, frustration, or too-many-questions. "
-    "End only after goodbye / don't-call / a firm no / that's-all — speak the farewell and set end_call.should_end true. "
-    "Never say goodbye unless you are actually ending the call.\n"
-    "Stay inside this role. Honor a named next step (callback, message, email, visit). "
-    "Do not claim that next step was performed unless the brief or an executed tool gives you that capability. "
-    "Explain limits as a business representative, never as missing tools or system capability. "
-    "If facts conflict with what they want, say so honestly. If they ask you to lead, give one recommendation from known facts.\n"
-    "Introduce yourself only on the first turn. Never re-greet mid-call. "
-    "Talk like a colleague, not a terms page."
+    "End only after goodbye / don't-call / firm no / that's-all / confirmed next-step — "
+    "farewell and set end_call.should_end true. Never say goodbye unless ending.\n"
+    "Stay in role. Honor WhatsApp, callback, visit, demo, trial class, or booking. "
+    "Do not claim a next step was done unless the brief or an executed tool allows it.\n"
+    "Outbound first speak: introduce once. If opening already spoken (PSTN), never re-greet.\n"
+    "Appointment/service: after day/time given, never re-ask when; confirm the slot.\n"
+    "Caller-shared phone/name/email: note for the team — never refuse, never read digits aloud."
 )
 
 _FLOW_SHARED = (
-    "This is a policy, not a question tree. Latest customer requirement overrides script defaults.\n"
-    "Answer what they asked before any next step. A question must earn its place. "
-    "Do not run a qualification checklist.\n"
-    "If they only want information, inform — do not force the business close. "
+    "Human-call policy, not a numbered question tree. "
+    "Latest customer requirement overrides script defaults.\n"
+    "Answer what they asked before pushing ahead. "
+    "At most one new question per turn. Never Question 1 / Step 1 trees.\n"
+    "If they only want information, inform — do not force the close. "
     "Honor busy, later, and send-details in one short line. Stay on the line.\n"
     "If they say you ask too many questions, apologize and stop interrogating.\n"
     "Handle the actual objection. If they ask you to suggest, give one recommendation from known facts.\n"
@@ -131,18 +145,56 @@ _FLOW_SHARED = (
 )
 
 _FLOW_SALES_EXTRA = (
-    "Do not run a budget, location, or timeline checklist. "
-    "Persuade only while they are still open. Frustrated or maybe: stop pitching.\n"
+    "NATURAL SALES PROGRESSION / LOOP: Understand meaning (type/budget/purpose/area) → "
+    "Answer any question first → Discover ONE missing field that changes the recommendation "
+    "(interest once → name if unknown → preference) → "
+    "When enough is known, Recommend once → ONE next step (WhatsApp/visit/demo/callback). "
+    "Never re-ask known facts. Never 'are you interested?' or 'are you looking for a plot?' after need is clear. "
+    "Dense dump of size+area+budget+purpose: acknowledge the whole picture — do not unpack into a checklist. "
+    "Send-details / I'll-check-later: honor and stop interrogating. Latest intent wins (villa→plot switches now). "
+    "Frustration ('I already told you'): own it, use their number, move forward.\n"
+)
+
+_FLOW_APPOINTMENT_EXTRA = (
+    "APPOINTMENT FLOW: need/symptom → preferred day/time → offer slot → confirm booking. "
+    "If they already said dentist/tooth pain, do not ask why they are calling. "
+    "If they already said tomorrow evening / 6 PM / Saturday 10, do not ask when they want to come. "
+    "Latest booking request overrides earlier slot talk. Confirm what was booked in one clear line.\n"
+)
+
+_FLOW_EDUCATION_EXTRA = (
+    "EDUCATION FLOW: goal/problem → availability → answer course/price questions directly → "
+    "natural next step (trial class, enrollment, callback). "
+    "Never re-ask the speaking goal or evening preference once given. "
+    "A trial-class request is the close — confirm it; do not restart pitching.\n"
+)
+
+_FLOW_SUPPORT_EXTRA = (
+    "SERVICE / SUPPORT FLOW: capture issue + asset details + preferred slot from what they said. "
+    "Latest intent wins — if they add 'also check the brakes', include that without restarting. "
+    "Never re-ask the car model, issue, or Saturday 10 once given. Confirm the booking/ticket clearly.\n"
 )
 
 
-def flow_section(role: str) -> str:
+def flow_section(role: str, *, brief_fields: str = "") -> str:
     key = role if role in ROLE_STRATEGY else "other"
-    extra = _FLOW_SALES_EXTRA if key in ("sales", "lead_qualification") else ""
+    extras = {
+        "sales": _FLOW_SALES_EXTRA,
+        "lead_qualification": _FLOW_SALES_EXTRA,
+        "appointment": _FLOW_APPOINTMENT_EXTRA,
+        "education": _FLOW_EDUCATION_EXTRA,
+        "support": _FLOW_SUPPORT_EXTRA,
+    }
+    extra = extras.get(key, "")
+    brief = ""
+    soft = (brief_fields or "").strip()
+    if soft and key in ("sales", "lead_qualification", "appointment", "education", "support"):
+        brief = f"Brief-specific ask-if-unknown fields:\n{soft}\n"
     return (
         "--- CONVERSATION FLOW ---\n"
         f"{_FLOW_SHARED}"
         f"{extra}"
+        f"{brief}"
         f"Role on this call: {key}. {ROLE_STRATEGY[key]}\n"
     )
 
@@ -150,12 +202,16 @@ def flow_section(role: str) -> str:
 # Back-compat alias used by older tests (sales checklist wording).
 HUMAN_FLOW_SECTION = flow_section("sales")
 
+# Hard interrogation trees only — soft ask-if-unknown ladders are allowed.
 _CHECKLIST_FLOW = re.compile(
-    r"ask (?:for |their )?(?:budget|location|timeline)|qualify (?:them |the caller )?(?:on )?(?:budget|location)|"
-    r"one at a time|qualification questions|interrogation checklist|"
-    r"question 1|then ask|first ask .{0,40}then|"
-    r"(?:ask|qualify).{0,80}budget.{0,60}location.{0,60}timeline",
-    re.I | re.S,
+    r"question\s*[1-9]|step\s*[1-9]|"
+    r"interrogation checklist|"
+    r"first ask .{0,60}then ask|"
+    r"(?:^|\n)\s*\d+[\.\)]\s*(?:ask|qualify)|"
+    r"budget.{0,40}location.{0,40}timeline|"
+    r"ask .{0,100}one at a time|"
+    r"qualify (?:them |the caller )?(?:on )?(?:budget|location|timeline)",
+    re.I | re.S | re.M,
 )
 
 
@@ -196,10 +252,27 @@ def infer_agent_role(brief: str, *, llm_role: str = "") -> str:
         text,
     ):
         scores["support"] += 5
+    if re.search(
+        r"\b(service center|car service|auto ?care|vehicle service|workshop|"
+        r"service request|service booking)\b",
+        text,
+    ):
+        # Selling packages/AMC is sales; plain booking/repair stays support.
+        if re.search(
+            r"\b(sell|selling|sales|upsell|amc|service package|membership|"
+            r"periodic (?:service )?plan|detailing package)\b",
+            text,
+        ) and not re.search(r"do not sell|don't sell|must not sell|never sell", text):
+            scores["sales"] += 7
+            scores["support"] += 2
+        else:
+            scores["support"] += 6
 
     # --- education (avoid golf course / apartment batches)
     if re.search(r"\b(tuition|tutor|coaching|education|syllabus|classroom)\b", text):
         scores["education"] += 5
+    if re.search(r"\b(spoken english|english speaking|trial class|speakpro)\b", text):
+        scores["education"] += 6
     if re.search(r"\bstudents?\b", text):
         scores["education"] += 3
     if re.search(r"\bparents?\b", text) and not re.search(r"\b(sell|selling|sales)\b", text):
@@ -214,7 +287,7 @@ def infer_agent_role(brief: str, *, llm_role: str = "") -> str:
         scores["education"] += 2
 
     # --- appointment
-    if re.search(r"\b(appoint|clinic|dentist|salon|doctor visit)\b", text):
+    if re.search(r"\b(appoint|clinic|dentist|dental|salon|doctor visit|tooth pain)\b", text):
         scores["appointment"] += 5
     if re.search(r"book (a )?(slot|slots|reading)|booking slot|schedule a ", text):
         scores["appointment"] += 4
@@ -250,9 +323,12 @@ def infer_agent_role(brief: str, *, llm_role: str = "") -> str:
     )
     if re.search(r"\b(sell|selling|sales|closing|upsell|telecaller for|for sale)\b", sales_text):
         scores["sales"] += 6
+    if re.search(r"\b(crm|saas|subscription|software demo)\b", text):
+        scores["sales"] += 5
     if re.search(r"choose the right plan", text) and scores["support"] == 0:
         scores["sales"] += 4
-    if productish:
+    # Product nouns help sales only when this is not clearly a service/repair booking.
+    if productish and scores["support"] < 5 and scores["appointment"] < 5:
         scores["sales"] += 3
     if re.search(r"book visits|book a visit|site visits?", text):
         scores["sales"] += 3
@@ -307,9 +383,38 @@ def checklist_flow_detected(flow_body: str) -> bool:
 
 _QUALIFY = re.compile(
     r"\b(what(?:'s| is) your (?:budget|location|timeline|name)|"
-    r"may i (?:ask|know) your|"
+    r"may i (?:ask|know)(?:\s+your|\s+why|\s+if)?|"
     r"before i (?:tell|share|answer)|"
+    r"before we discuss|"
+    r"are you looking for (?:a )?(?:plot|villa|apartment)|"
+    r"is (?:this|it) for investment|"
+    r"what(?:'s| is) (?:the )?purpose|"
+    r"what size|how many (?:square|sq)|"
     r"budget enti|location ekkada)\b",
+    re.I,
+)
+_BROCHURE = re.compile(
+    r"comprehensive range|strategically located|excellent connectivity|"
+    r"strong appreciation|premium residential|emerging areas with",
+    re.I,
+)
+_ALREADY_TOLD = re.compile(
+    r"i already told you|already (?:told|said|mentioned)|i(?:'ve| have) already (?:told|said|mentioned)",
+    re.I,
+)
+_SEND_DETAILS_INTENT = re.compile(
+    r"send (?:me )?(?:the )?details|whatsapp|"
+    r"i(?:'ll| will) check(?: them)?(?: later)?|check them (?:and |later)|just send",
+    re.I,
+)
+_HESITANT_BUY = re.compile(
+    r"not sure if i want to buy|not sure (?:yet|about buying)|just (?:want to )?understand|"
+    r"not in a (?:huge )?hurry|comparing (?:prices|options)",
+    re.I,
+)
+_ACK_FRUSTRATION = re.compile(
+    r"you(?:'re| are) right|you mentioned|you already|got that|working with that|"
+    r"sorry|my mistake|i (?:heard|caught) that",
     re.I,
 )
 _PITCHY = re.compile(
@@ -318,14 +423,21 @@ _PITCHY = re.compile(
     re.I,
 )
 _ROBOT = re.compile(
-    r"\b(i completely understand(?: how you feel)?|as an ai|sure!|absolutely!)\b",
+    r"i completely understand(?: how you feel)?|\bas an ai\b|"
+    r"sure!|absolutely!|"
+    r"sure,?\s*absolutely",
     re.I,
 )
 _FRUSTRATED = re.compile(
-    r"frustrated|taking too long|explained this twice|don't have time for this",
+    r"frustrated|taking too long|explained this twice|don't have time for this|"
+    r"too many questions|asking too many",
     re.I,
 )
 _HESITATION = re.compile(r"^\s*(hmm|umm|uh+|uh huh|let me think)\s*[.!]?\s*$", re.I)
+_ALREADY_DECIDED = re.compile(
+    r"already decided|going with someone else|already (?:found|chosen|picked|signed)",
+    re.I,
+)
 _INVENTED_SALARY = re.compile(
     r"\bsalary is\b.{0,80}\b(lakh|lakhs|thousand|per year|per annum|ctc)\b",
     re.I,
@@ -340,6 +452,7 @@ _SARCASM = re.compile(r"own the moon|yeah right|sure,? and i own", re.I)
 _UNSUPPORTED_ACTION_CLAIM = re.compile(
     r"\b(i(?:'ve| have) (?:sent|emailed|opened|booked|scheduled|refunded|removed|updated)|"
     r"i(?:'ll| will) (?:send|email|open|book|schedule|refund|remove|update)|"
+    r"i(?:'ll| will) have .{0,48}(?:shared|sent|emailed|forwarded)|"
     r"(?:slot|appointment) (?:is|has been) (?:booked|confirmed)|"
     r"ticket (?:is|has been) (?:opened|created)|the team will (?:confirm|contact|call|email))\b|"
     r"(?:పంపించాను|పంపిస్తాను|book చేశాను|confirm చేశాను)",
@@ -351,12 +464,91 @@ def question_count(text: str) -> int:
     return (text or "").count("?") + (text or "").count("？")
 
 
+def detect_reask_known_facts(*, history: str, assistant: str) -> list[str]:
+    """Fail when the assistant re-asks facts already present in prior user turns."""
+    hist = (history or "").lower()
+    spoken = (assistant or "").lower()
+    if not hist or not spoken:
+        return []
+    fails: list[str] = []
+    checks = (
+        (
+            r"\bare you interested\b|\bwould you (?:be )?interested\b|\bdo you (?:still )?want to (?:buy|proceed)\b|"
+            r"\bare you looking for (?:a )?(?:plot|villa|apartment)\b",
+            r"looking for|interested|need (?:a |to )|want (?:a |to )|mainly for investment|"
+            r"improve (?:my )?english|trial class|for my .{0,20}team|plot for investment",
+            "re-asked interest after need/interest was clear",
+        ),
+        (
+            r"\bwhy (?:are you|you'?re) calling\b|\bwhat(?:'s| is) (?:the )?(?:reason|issue|problem)\b|"
+            r"\bhow can i help you today\b|\btell me your goal again\b|\bwhat(?:'s| is) your goal\b",
+            r"dentist|tooth pain|looking for|need (?:a |to )|strange noise|improve my english|crm|"
+            r"trial class|spoken english",
+            "re-asked why they called after need was clear",
+        ),
+        (
+            r"\bwhen (?:would|do) you (?:like|want) to come\b|\bwhat time (?:works|suits|do you)\b|"
+            r"\bwhich day (?:works|suits)\b|\bwhen are you (?:free|available)\b",
+            r"\b(?:tomorrow|saturday|monday|tuesday|wednesday|thursday|friday|sunday)\b|"
+            r"around\s+\d{1,2}|(\d{1,2})\s*(?:am|pm)",
+            "re-asked schedule after day/time was given",
+        ),
+        (
+            r"\bwhen are you (?:free|available)\b|\bwhen (?:would|do) you (?:like|want) to come\b",
+            r"\b(?:evenings?|mornings?|afternoons?)\b",
+            "re-asked availability after preference was given",
+        ),
+        (
+            r"\b(?:what(?:'s| is)|may i (?:ask|know)) your budget\b|\bbudget (?:range|please)\b|"
+            r"\bmay i know your budget\b",
+            r"budget|lakhs?|₹|\brs\b|\brupees?\b|\d+\s*l",
+            "re-asked budget already given",
+        ),
+        (
+            r"\bis (?:this|it) for investment\b|\bwhat(?:'s| is) (?:the )?purpose\b|"
+            r"\bfor investment or\b",
+            r"\binvestment\b|for investment|to build",
+            "re-asked purpose already given",
+        ),
+        (
+            r"\bwhat size\b|\bhow many (?:square|sq)\b|\bsquare.?yards?\b|\bwhat(?:'s| is) the size\b",
+            r"\d+\s*(?:square|sq)[-\s]?yards?|\d+\s*sq\.?\s*y",
+            "re-asked size already given",
+        ),
+        (
+            r"\b(?:company|team) size\b|\bhow many (?:people|members|employees)\b",
+            r"\d+[-\s]?person|\d+\s*people|team of\s*\d+",
+            "re-asked team/company size already given",
+        ),
+        (
+            r"\bwhat(?:'s| is) your (?:car|vehicle) (?:model|make)\b|\bwhich car\b",
+            r"hyundai|creta|honda|toyota|20\d\d",
+            "re-asked vehicle details already given",
+        ),
+        (
+            r"\bwhat(?:'s| is) (?:wrong|the (?:issue|problem))\b|\bwhat(?:'s| is) your (?:issue|problem|complaint)\b",
+            r"noise|brake|pain|tooth|grinding|strange|weird|issue|problem",
+            "re-asked issue/problem already given",
+        ),
+        (
+            r"\bwhere (?:are you|do you want)|which (?:area|location)|preferred location\b",
+            r"vanasthalipuram|hitech(?:\s*city)?|gachibowli|around .{0,40}side",
+            "re-asked location/area already given",
+        ),
+    )
+    for ask_pat, known_pat, msg in checks:
+        if re.search(ask_pat, spoken, re.I) and re.search(known_pat, hist, re.I):
+            fails.append(msg)
+    return fails
+
+
 def judge_turn(
     *,
     user: str,
     assistant: str,
     end_call: dict[str, Any] | None = None,
     expect: tuple[str, ...] | list[str] = (),
+    history: str | None = None,
 ) -> list[str]:
     """Golden-behavior judge. Returns failure strings; empty means pass."""
     spoken = assistant or ""
@@ -364,12 +556,38 @@ def judge_turn(
     ended = bool((end_call or {}).get("should_end"))
     fails: list[str] = []
     tags = set(expect)
+    # Known facts = prior turns + this utterance (never re-ask what they just said).
+    reask_corpus = " ".join(
+        part for part in ((history if history is not None else ""), user or "") if part
+    ).strip() or (user or "")
     if "no_question" in tags and q > 0:
         fails.append("asked a question when none was needed")
     if "at_most_one_question" in tags and q > 1:
         fails.append("asked more than one question")
     if "no_qualify" in tags and _QUALIFY.search(spoken):
         fails.append("asked a qualification question or delayed the answer")
+    # Re-ask guard: explicit tag, or whenever multi-turn history is supplied.
+    if "no_reask_known" in tags or history is not None:
+        fails.extend(detect_reask_known_facts(history=reask_corpus, assistant=spoken))
+    if "use_all_facts" in tags:
+        if q > 1:
+            fails.append("asked multiple discovery questions after a dense fact dump")
+        if _QUALIFY.search(spoken):
+            fails.append("checklist-qualified after the customer already gave the facts")
+        fails.extend(detect_reask_known_facts(history=reask_corpus, assistant=spoken))
+    if "honor_next_step" in tags:
+        if _QUALIFY.search(spoken) or q > 1:
+            fails.append("kept interrogating after the customer named the next step")
+    if "react_hesitation" in tags and _QUALIFY.search(spoken):
+        fails.append("ignored soft hesitation and jumped to script qualification")
+    if "ack_frustration" in tags and _ALREADY_TOLD.search(user or ""):
+        if not _ACK_FRUSTRATION.search(spoken):
+            fails.append("did not acknowledge the customer already stated the fact")
+        if _QUALIFY.search(spoken) or detect_reask_known_facts(history=reask_corpus, assistant=spoken):
+            fails.append("re-asked after the customer said they already told you")
+    if "spoken_short" in tags:
+        if _BROCHURE.search(spoken) or len(spoken) > 280:
+            fails.append("sounded like a brochure instead of spoken phone speech")
     if "short" in tags and len(spoken) > 320:
         fails.append("response too long for this intent")
     if "hangup" in tags and not ended:
@@ -395,6 +613,13 @@ def judge_turn(
     # Always-on: these are never acceptable even if the scenario omitted a tag.
     if _FRUSTRATED.search(user or "") and _PITCHY.search(spoken):
         fails.append("pitched after the customer was frustrated")
+    if _ALREADY_TOLD.search(user or "") and (
+        _QUALIFY.search(spoken)
+        or detect_reask_known_facts(history=reask_corpus, assistant=spoken)
+    ):
+        fails.append("re-asked after the customer said they already told you")
+    if _SEND_DETAILS_INTENT.search(user or "") and _QUALIFY.search(spoken) and q > 0:
+        fails.append("interrogated after the customer asked to send details / check later")
     if _HESITATION.search(user or "") and q > 0:
         fails.append("asked a question during hesitation")
     if _HESITATION.search(user or "") and _PITCHY.search(spoken):
@@ -407,6 +632,10 @@ def judge_turn(
         fails.append("said goodbye without hanging up")
     if _SARCASM.search(user or "") and _PITCHY.search(spoken):
         fails.append("pitched through sarcasm")
+    if _BROCHURE.search(spoken) and len(spoken) > 220:
+        fails.append("sounded like a brochure instead of spoken phone speech")
+    if _ALREADY_DECIDED.search(user or "") and _PITCHY.search(spoken):
+        fails.append("pitched after the customer already decided")
     return list(dict.fromkeys(fails))
 
 
@@ -416,9 +645,16 @@ def strict_live_fails(
     assistant: str,
     end_call: dict[str, Any] | None = None,
     expect: tuple[str, ...] | list[str] = (),
+    history: str | None = None,
 ) -> list[str]:
     """Hard live scorer. Combines judge_turn with always-on behavioral fails."""
-    fails = judge_turn(user=user, assistant=assistant, end_call=end_call, expect=expect)
+    fails = judge_turn(
+        user=user,
+        assistant=assistant,
+        end_call=end_call,
+        expect=expect,
+        history=history,
+    )
     spoken = assistant or ""
     ended = bool((end_call or {}).get("should_end"))
     u = user or ""

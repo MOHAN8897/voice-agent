@@ -75,7 +75,8 @@ def test_build_brain_request_input_structure():
     assert block["text"] == "static brain"
     assert block["prompt_cache_breakpoint"] == {"mode": "explicit"}
     assert msgs[-1]["role"] == "user"
-    assert msgs[-1]["content"][0]["text"] == "current"
+    assert msgs[-1]["content"][0]["text"].endswith("current")
+    assert "Answer first" in msgs[-1]["content"][0]["text"]
     assert msgs[1]["role"] == "user"
     assert msgs[1]["content"][0]["type"] == "input_text"
     assert msgs[2]["role"] == "assistant"

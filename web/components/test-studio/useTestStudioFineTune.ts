@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { ensureArray } from "@/lib/ensure-array";
 import { assembleRawPreview, type BrainSection } from "@/lib/brain-utils";
-import { TEST_STUDIO_SESSION_ID } from "@/lib/test-studio-stack";
+import { testStudioSessionId } from "@/lib/test-studio-stack";
+import { persistAgentCallLanguage } from "@/lib/bootstrap-test-studio-agent";
 import { invalidateTtsConfigCache } from "@/lib/voice/tts-config";
 import { notifyTestStudioVoiceSaved } from "@/lib/voice/voice-runtime-events";
 
@@ -131,6 +132,8 @@ function spokenStyleMatchesLanguage(style: string, language: string): boolean {
   if (lang.startsWith("te") && s.includes("spoken indian english") && !s.includes("telugu")) return false;
   return true;
 }
+
+function countWords(text: string): number {
   const t = text.trim();
   if (!t) return 0;
   return t.split(/\s+/).length;
@@ -172,7 +175,7 @@ type Catalog = {
 };
 
 export function useTestStudioFineTune(agentId: string, language: string, portal: "app" | "dev" = "app") {
-  const sessionId = TEST_STUDIO_SESSION_ID;
+  const sessionId = testStudioSessionId(agentId);
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [runtime, setRuntime] = useState<RuntimeState>({});
   const [instructions, setInstructions] = useState<InstructionsState>({
@@ -304,7 +307,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
     } finally {
       setLoading(false);
     }
-  }, [agentId, language, sessionId, portal]);
+  }, [agentId, sessionId, portal]);
 
   useEffect(() => {
     load();
@@ -334,8 +337,13 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
       return false;
     }
     setSaving(true);
-    setStatus("Creating agent script… GPT expanding your brief (up to ~25s)");
+    setStatus("Creating agent script… GPT expanding your brief (up to ~45s)");
     try {
+      const requestedBudget = Math.max(
+        Number(runtime.brainPromptBudgetTokens || 0),
+        Number(instructions.budgetTokens || 0),
+        6000
+      );
       const r = await fetch("/api/instructions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -346,7 +354,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
           responseStyle: spokenStyleMatchesLanguage(instructions.responseStyle, language)
             ? instructions.responseStyle || undefined
             : undefined,
-          brainPromptBudgetTokens: runtime.brainPromptBudgetTokens,
+          brainPromptBudgetTokens: requestedBudget,
           language_code: language,
           callEndPolicy: normalizeCallEndPolicyState(instructions.callEndPolicy, language),
         }),
@@ -356,6 +364,11 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
         setStatus(apiErrorMessage(j, `Agent script creation failed (${r.status})`));
         return false;
       }
+      const effectiveBudget = Math.max(requestedBudget, Number(j.budgetTokens || 0));
+      setRuntime((prev) => ({
+        ...prev,
+        brainPromptBudgetTokens: effectiveBudget,
+      }));
       setInstructions((prev) => ({
         ...prev,
         agentBrief: j.agentBrief ?? prev.agentBrief,
@@ -363,7 +376,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
         responseStyle: j.responseStyle ?? prev.responseStyle,
         brainPrompt: j.compiledBrainPrompt || j.brainPromptFull || prev.brainPrompt,
         estimatedTokens: j.estimatedTokens,
-        budgetTokens: j.budgetTokens,
+        budgetTokens: j.budgetTokens ?? effectiveBudget,
         headroom: j.headroom,
         cacheEligible: Boolean(j.cacheEligible),
         callEndPolicy: normalizeCallEndPolicyState(j.callEndPolicy, language),
@@ -386,6 +399,17 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
           ? `Agent script v${j.compiledVersion} created and saved · ${j.estimatedTokens} tokens · ${cacheNote}`
           : `Agent script saved · ${cacheNote}`
       );
+      // Keep live-turn budget aligned with the compiled brain size.
+      void fetch("/api/settings/runtime", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          sessionId,
+          brainPromptBudgetTokens: effectiveBudget,
+        }),
+      }).catch(() => undefined);
+      void persistAgentCallLanguage({ agentId, sessionId, language });
       return true;
     } catch {
       setStatus("Agent script creation failed — network error");
@@ -393,7 +417,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
     } finally {
       setSaving(false);
     }
-  }, [instructions, limits, runtime.brainPromptBudgetTokens, sessionId, language]);
+  }, [instructions, limits, runtime.brainPromptBudgetTokens, sessionId, language, agentId]);
 
   const saveCallEndPolicy = useCallback(async () => {
     setSaving(true);
@@ -425,6 +449,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
       }));
       setOptimizerMeta((prev) => ({ ...prev, savedLanguage: j.language || language }));
       setStatus("Call-end policy saved into the compiled brain");
+      void persistAgentCallLanguage({ agentId, sessionId, language });
       return true;
     } catch {
       setStatus("Call-end save failed — network error");
@@ -432,7 +457,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
     } finally {
       setSaving(false);
     }
-  }, [instructions.callEndPolicy, language, sessionId]);
+  }, [instructions.callEndPolicy, language, sessionId, agentId]);
 
   const saveRuntime = useCallback(async () => {
     setStatus("Saving runtime…");

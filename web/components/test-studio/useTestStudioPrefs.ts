@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
-import { TEST_STUDIO_SESSION_ID } from "@/lib/test-studio-stack";
 
 export type TestStudioUiPrefs = {
   studioTab?: "live" | "config" | "tune" | "debug";
@@ -17,39 +16,64 @@ function prefsKey(prefs: TestStudioUiPrefs): string {
   return JSON.stringify(prefs);
 }
 
-let globalPrefsLoaded = false;
-let globalPrefsData: TestStudioUiPrefs | null = null;
-let globalPrefsPromise: Promise<TestStudioUiPrefs | null> | null = null;
+type PrefsCacheEntry = {
+  loaded: boolean;
+  patched: boolean;
+  data: TestStudioUiPrefs | null;
+  promise: Promise<TestStudioUiPrefs | null> | null;
+};
 
-function fetchPrefsOnce(): Promise<TestStudioUiPrefs | null> {
-  if (globalPrefsLoaded) {
-    return Promise.resolve(globalPrefsData);
+const prefsCache = new Map<string, PrefsCacheEntry>();
+
+function cacheEntry(sessionId: string): PrefsCacheEntry {
+  let entry = prefsCache.get(sessionId);
+  if (!entry) {
+    entry = { loaded: false, patched: false, data: null, promise: null };
+    prefsCache.set(sessionId, entry);
   }
-  if (!globalPrefsPromise) {
-    globalPrefsPromise = fetch(
-      `/api/test-studio/prefs?sessionId=${encodeURIComponent(TEST_STUDIO_SESSION_ID)}`,
+  return entry;
+}
+
+export function patchPrefsCache(sessionId: string, patch: TestStudioUiPrefs) {
+  const entry = cacheEntry(sessionId);
+  entry.loaded = true;
+  entry.patched = true;
+  entry.data = { ...(entry.data || {}), ...patch };
+}
+
+function fetchPrefsForSession(sessionId: string): Promise<TestStudioUiPrefs | null> {
+  const entry = cacheEntry(sessionId);
+  if (entry.loaded) {
+    return Promise.resolve(entry.data);
+  }
+  if (!entry.promise) {
+    entry.promise = fetch(
+      `/api/test-studio/prefs?sessionId=${encodeURIComponent(sessionId)}`,
       { credentials: "include" }
     )
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => {
-        globalPrefsLoaded = true;
-        if (j?.prefs && Object.keys(j.prefs).length > 0) {
-          globalPrefsData = j.prefs as TestStudioUiPrefs;
-          return globalPrefsData;
+        const incoming =
+          j?.prefs && Object.keys(j.prefs).length > 0 ? (j.prefs as TestStudioUiPrefs) : null;
+        if (entry.patched && entry.data) {
+          entry.data = { ...(incoming || {}), ...entry.data };
+        } else {
+          entry.data = incoming;
         }
-        globalPrefsData = null;
-        return null;
+        entry.loaded = true;
+        return entry.data;
       })
       .catch(() => {
-        globalPrefsLoaded = true;
-        globalPrefsData = null;
+        entry.loaded = true;
+        entry.data = null;
         return null;
       });
   }
-  return globalPrefsPromise;
+  return entry.promise;
 }
 
 export function useTestStudioPrefs(
+  sessionId: string,
   prefs: TestStudioUiPrefs,
   onLoaded?: (loaded: TestStudioUiPrefs) => void
 ) {
@@ -60,34 +84,37 @@ export function useTestStudioPrefs(
   onLoadedRef.current = onLoaded;
 
   useEffect(() => {
+    loadedRef.current = false;
+    lastSavedRef.current = "";
     let cancelled = false;
-    fetchPrefsOnce().then((loaded) => {
+    fetchPrefsForSession(sessionId).then((loaded) => {
       if (cancelled || loadedRef.current) return;
-      if (loaded) {
-        onLoadedRef.current?.(loaded);
-      }
+      onLoadedRef.current?.(loaded || {});
       loadedRef.current = true;
     });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [sessionId]);
 
-  const persist = useCallback((next: TestStudioUiPrefs) => {
-    if (!loadedRef.current) return;
-    const key = prefsKey(next);
-    if (key === lastSavedRef.current) return;
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => {
-      lastSavedRef.current = key;
-      fetch("/api/test-studio/prefs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ sessionId: TEST_STUDIO_SESSION_ID, ...next }),
-      }).catch(() => {});
-    }, 1200);
-  }, []);
+  const persist = useCallback(
+    (next: TestStudioUiPrefs) => {
+      if (!loadedRef.current) return;
+      const key = prefsKey(next);
+      if (key === lastSavedRef.current) return;
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      saveTimer.current = setTimeout(() => {
+        lastSavedRef.current = key;
+        fetch("/api/test-studio/prefs", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ sessionId, ...next }),
+        }).catch(() => {});
+      }, 1200);
+    },
+    [sessionId]
+  );
 
   useEffect(() => {
     persist(prefs);

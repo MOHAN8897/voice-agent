@@ -80,6 +80,12 @@ $webLines = @(
     "NEXT_PUBLIC_API_URL_LOCAL=http://127.0.0.1:8000",
     "API_INTERNAL_URL=http://127.0.0.1:8000"
 )
+if (Test-Path $WebEnvFile) {
+    $webLines += @(Get-Content $WebEnvFile | Where-Object {
+        $_ -notmatch '^(NEXT_PUBLIC_API_URL|NEXT_PUBLIC_API_URL_LOCAL|API_INTERNAL_URL)=' -and
+        $_ -notmatch '^# (Auto-synced by scripts/env_sync|Browser on localhost uses NEXT_PUBLIC_API_URL_LOCAL)'
+    })
+}
 Set-Content -Path $WebEnvFile -Value ($webLines -join "`n")
 Write-Host "Synced web/.env.local -> $ApiUrl"
 
@@ -87,7 +93,12 @@ $secretsPath = Join-Path $RepoRoot "data\dev_secrets.json"
 if (Test-Path $secretsPath) {
     try {
         $secrets = Get-Content $secretsPath -Raw | ConvertFrom-Json
-        $secrets.exotel_webhook_base_url = $ApiUrl
+        # PS 5.1 PSCustomObject cannot set missing properties — add then assign.
+        if ($null -eq ($secrets.PSObject.Properties["exotel_webhook_base_url"])) {
+            $secrets | Add-Member -NotePropertyName "exotel_webhook_base_url" -NotePropertyValue $ApiUrl
+        } else {
+            $secrets.exotel_webhook_base_url = $ApiUrl
+        }
         $secrets | ConvertTo-Json -Depth 20 | Set-Content -Path $secretsPath -Encoding utf8
         Write-Host "Synced data/dev_secrets.json exotel_webhook_base_url -> $ApiUrl"
     } catch {

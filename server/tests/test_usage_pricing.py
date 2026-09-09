@@ -57,7 +57,11 @@ def test_gpt_55_costs_more_than_luna():
     assert g55["total_usd"] > luna["total_usd"]
 
 
-def test_cache_write_not_double_counted_with_uncached():
+def test_cache_write_not_double_counted_with_uncached(monkeypatch):
+    # Test accounting independently of the current default model's price.
+    monkeypatch.setattr("server.services.usage_pricing.openai_rates_for_model", lambda model: {
+        "input": 0.20, "cached_input": 0.05, "cache_write": 0.25, "output": 1.0,
+    })
     parts = split_llm_tokens(input_tokens=2000, cached_tokens=0, cache_write_tokens=1800)
     assert parts["written"] == 1800
     assert parts["uncached"] == 200

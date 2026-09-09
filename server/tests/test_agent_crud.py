@@ -30,6 +30,25 @@ def test_list_agents_has_default(monkeypatch):
     get_settings.cache_clear()
 
 
+def test_create_agent_respects_language(monkeypatch):
+    monkeypatch.setenv("DEV_PORTAL_USERNAME", "dev")
+    monkeypatch.setenv("DEV_PORTAL_PASSWORD", "devpass")
+    c = _client(monkeypatch)
+    created = c.post("/api/agents", json={"name": "Priya", "languages": ["en-IN"]})
+    assert created.status_code == 200
+    agent = created.json()["agent"]
+    assert agent["languages"] == ["en-IN"]
+    patched = c.patch(f"/api/agents/{agent['agent_id']}", json={"languages": ["hi-IN"]})
+    assert patched.status_code == 200
+    assert patched.json()["agent"]["languages"] == ["hi-IN"]
+    deleted = c.delete(f"/api/agents/{agent['agent_id']}")
+    assert deleted.status_code == 200
+    listed = c.get("/api/agents")
+    ids = [a["agent_id"] for a in listed.json()["agents"]]
+    assert agent["agent_id"] not in ids
+    get_settings.cache_clear()
+
+
 def test_create_and_patch_agent(monkeypatch):
     monkeypatch.setenv("DEV_PORTAL_USERNAME", "dev")
     monkeypatch.setenv("DEV_PORTAL_PASSWORD", "devpass")

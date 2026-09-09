@@ -22,7 +22,7 @@ export function ShellTopBar({
   profileLabel = "Account",
 }: {
   productLabel: string;
-  entityLabel?: string;
+  entityLabel?: React.ReactNode;
   environment?: Env;
   connectionStatus?: "ok" | "warn" | "error";
   tier?: string;

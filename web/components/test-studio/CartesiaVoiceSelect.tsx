@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 import { persistTestStudioVoice } from "@/lib/persist-test-studio-voice";
+import { useTestStudioSessionOptional } from "@/components/test-studio/TestStudioSessionContext";
 import { DEFAULT_CARTESIA_VOICE_ID, isCartesiaVoiceId } from "@/lib/voice/tts-config";
 
 export type CartesiaVoice = {
@@ -121,6 +122,7 @@ export function CartesiaVoiceSelect({
   const [flat, setFlat] = useState<CartesiaVoice[]>(() =>
     initialVoices?.length ? initialVoices : FALLBACK_VOICES
   );
+  const studioSession = useTestStudioSessionOptional();
   const [loading, setLoading] = useState(!initialVoices?.length);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -176,7 +178,7 @@ export function CartesiaVoiceSelect({
     autoAppliedRef.current = fallback;
     onChangeRef.current(fallback);
     if (!autoSave) return;
-    void persistTestStudioVoice({ ttsSpeaker: fallback, ttsModel }).then((result) => {
+    void persistTestStudioVoice({ ttsSpeaker: fallback, ttsModel, sessionId: studioSession?.sessionId }).then((result) => {
       setSaveHint(result.ok ? "Default Cartesia voice applied" : result.error || "Save failed");
     });
   }, [loading, displayFlat.length, value, fallback, autoSave, ttsModel]);
@@ -186,7 +188,7 @@ export function CartesiaVoiceSelect({
     onChange(voiceId);
     if (!autoSave) return;
     setSaveHint(null);
-    const result = await persistTestStudioVoice({ ttsSpeaker: voiceId, ttsModel });
+    const result = await persistTestStudioVoice({ ttsSpeaker: voiceId, ttsModel, sessionId: studioSession?.sessionId });
     setSaveHint(result.ok ? "Voice saved — applies on next spoken turn" : result.error || "Save failed");
   }
 

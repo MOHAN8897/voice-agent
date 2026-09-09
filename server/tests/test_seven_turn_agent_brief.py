@@ -38,22 +38,18 @@ MOCK_SCRIPT = {
         "AGENT IDENTITY\n"
         "You are Kavya, telecaller for PenMart stationery. Speak natural Telugu with conversational English.\n\n"
         "OPENING\n"
-        "Namaste! Nenu Kavya, PenMart nundi matladutunnanu. Corporate gifting ki pens kavala?\n\n"
+        "Namaste! Nenu Kavya, PenMart nundi matladutunnanu. Meeru ela sahayam kavali?\n\n"
         "VOICE STYLE\n"
         "Speak natural Tanglish — Telugu + everyday English, not pandit-style literary Telugu. "
-        "Be persuasive until a firm refusal, then stop. Keep every live reply to 60–80 characters unless the caller asks for more detail. "
+        "Be persuasive until a firm refusal, then stop. Keep live replies short and meaningful. "
         "Avoid filler words at the start of every turn — no repeated అవును or సరే. "
         "Speak like a real human; vary wording. Never ask again for quantity, color, delivery, or budget once given. "
         "Understand intent before responding. Ask only one useful question at a time. "
         "Use natural Telugu with English words like pickup, delivery, price, order, confirm. "
         "Adapt to the customer's tone. Always move the conversation forward — answer, handle objection, or advance the sale.\n\n"
         "CONVERSATION FLOW\n"
-        "Step 1: Confirm product need (pens, gift sets). "
-        "Step 2: Ask quantity if unknown. "
-        "Step 3: Ask budget if unknown. "
-        "Step 4: Ask pickup or delivery and location. "
-        "Step 5: Confirm color preference if relevant. "
-        "Step 6: Summarize order and ask to confirm.\n\n"
+        "Answer their need first. Use quantity, budget, and delivery only if still unknown and it changes the recommendation. "
+        "When enough is known, summarize once and offer order confirmation. Never a Step or Question tree.\n\n"
         "OBJECTION HANDLING\n"
         "If price concern: offer to check best pack within budget without inventing numbers.\n\n"
         "GUARDRAILS\n"
@@ -70,6 +66,7 @@ def _client(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "sk-seven-turn")
     monkeypatch.setenv("SARVAM_API_KEY", "sv-seven-turn")
     monkeypatch.setenv("ENABLE_WORKING_MEMORY", "true")
+    monkeypatch.setenv("VOICE_PIPELINE_MODE", "classic")
     get_settings.cache_clear()
     return TestClient(app_mod.app)
 

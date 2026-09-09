@@ -16,7 +16,7 @@ function lastWordBoundary(text: string, maxIndex: number): number {
 
 /**
  * Streaming text chunker — prefers full sentences/clauses over arbitrary fragments.
- * Small responses are emitted as a single unit on flush.
+ * First sentence flushes immediately; tiny complete replies still emit as one chunk on flush.
  */
 export class StreamingTextChunker {
   private fullText = "";
@@ -49,10 +49,6 @@ export class StreamingTextChunker {
   private extract(streamDone: boolean): TtsTextChunk[] {
     const chunks: TtsTextChunk[] = [];
     const { smallResponseMaxChars, minChunkChars, maxChunkChars } = VOICE_PIPELINE_LIMITS;
-
-    if (!streamDone && this.sentEnd === 0 && this.fullText.trim().length <= smallResponseMaxChars) {
-      return chunks;
-    }
 
     if (streamDone && this.sentEnd === 0 && this.fullText.trim().length <= smallResponseMaxChars) {
       const text = this.fullText.trim();
@@ -102,7 +98,10 @@ export class StreamingTextChunker {
     if (streamDone) return unsent.length;
 
     for (let i = 0; i < unsent.length; i++) {
+      // Keep decimals like 80.5 intact — only treat "." as sentence end when not before a digit.
       if (STRONG_END.test(unsent[i]) && i + 1 >= minChunkChars) {
+        const next = unsent[i + 1];
+        if (unsent[i] === "." && next && /\d/.test(next)) continue;
         return i + 1;
       }
     }

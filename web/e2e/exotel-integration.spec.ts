@@ -96,7 +96,7 @@ test.describe("Exotel Dev API", () => {
 test.describe("Exotel Test Studio UI", () => {
   test("PSTN panel shows handshake, balance, and outbound form", async ({ page }) => {
     const agentId = await defaultAgentId(page.request);
-    await page.goto(`/dev/test-studio?agent=${agentId}`, { waitUntil: "domcontentloaded", timeout: 120000 });
+    await page.goto(`/dev/test-studio/${agentId}`, { waitUntil: "domcontentloaded", timeout: 120000 });
     await ensureDevPortalReady(page);
     await expect(page.getByTestId("test-studio-mode-picker")).toBeVisible({ timeout: 30000 });
     await page.waitForResponse(

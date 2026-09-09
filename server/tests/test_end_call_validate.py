@@ -43,13 +43,27 @@ def test_accepts_telugu_refusal():
 
 
 def test_rejects_firm_refusal_on_first_turn():
+    # Clear "not interested" may end immediately — do not require a prior pitch turn.
     d = validate_end_call(
         {"should_end": True, "reason": "firm_refusal", "farewell": "Bye"},
         user_text="not interested",
         language="en-IN",
         completed_turns=0,
     )
-    assert d.reject_code == "no_evidence"
+    assert d.accepted is True
+    assert d.reason == "firm_refusal"
+
+
+def test_infers_firm_refusal_when_model_forgets_end_call():
+    d = validate_end_call(
+        {"should_end": False, "reason": "none", "farewell": ""},
+        user_text="I'm not interested",
+        language="en-IN",
+        completed_turns=1,
+        spoken_text="Thank you for your time. Goodbye.",
+    )
+    assert d.accepted is True
+    assert d.reason == "firm_refusal"
 
 
 def test_goal_complete_needs_memory():
@@ -70,6 +84,16 @@ def test_goal_complete_needs_memory():
     assert ok.accepted is True
 
 
+def test_callback_confirm_can_complete_goal():
+    d = validate_end_call(
+        {"should_end": True, "reason": "goal_complete", "farewell": "Our team will contact you. Goodbye."},
+        user_text="Yes, please have the team call me back",
+        language="en-IN",
+        completed_turns=2,
+    )
+    assert d.accepted is True
+    assert d.reason == "goal_complete"
+
 def test_keep_calling_infers_hangup():
     d = validate_end_call(
         {"should_end": False, "reason": "none", "farewell": ""},
@@ -78,6 +102,19 @@ def test_keep_calling_infers_hangup():
         completed_turns=4,
     )
     assert d.accepted is True
+    assert d.reason == "goodbye"
+
+
+def test_thanks_thats_all_for_now_bye_infers_hangup():
+    d = validate_end_call(
+        {"should_end": False, "reason": "none", "farewell": ""},
+        user_text="Thanks, that's all for now. Bye.",
+        language="en-IN",
+        completed_turns=10,
+        spoken_text="Thank you for your time. Goodbye.",
+    )
+    assert d.accepted is True
+    assert d.should_end is True
     assert d.reason == "goodbye"
 
 

@@ -4,7 +4,10 @@ OpenAI Brain service — single brain prompt, prompt caching, token logging.
 from __future__ import annotations
 
 import asyncio
+import json
 import time
+from typing import Any
+
 from openai import APIConnectionError, APIStatusError, APITimeoutError, RateLimitError
 
 from server.agent.brain_prompt_composer import compose_brain_prompt, estimate_tokens
@@ -29,7 +32,6 @@ from server.utils.http_clients import get_openai_client
 from server.utils.logger import log_brain, log_error, log_perf
 from server.utils.metrics import metrics
 from server.utils.token_usage import normalize_usage
-import json
 
 
 def _get_client():
@@ -334,6 +336,10 @@ def _prepare_brain_context(
             call_id=call_id,
         )
     brain_est = estimate_tokens(brain_text)
+    # Live budget must cover the actual locked brain (script + static pack), not a stale 3.5k slider.
+    from server.agent.brain_prompt_composer import BUDGET_MAX_TOKENS, BUDGET_MIN_TOKENS
+
+    budget = max(BUDGET_MIN_TOKENS, min(BUDGET_MAX_TOKENS, max(int(budget), int(brain_est))))
 
     projection, rolling, legacy_summary = _resolve_memory_blocks(
         session_id=session_id,
@@ -423,6 +429,9 @@ def _light_stream_brain_metadata(
             compiled_version = None
 
     brain_est = estimate_tokens(brain_text) if brain_text else 0
+    from server.agent.brain_prompt_composer import BUDGET_MAX_TOKENS, BUDGET_MIN_TOKENS
+
+    budget = max(BUDGET_MIN_TOKENS, min(BUDGET_MAX_TOKENS, max(int(budget), int(brain_est or 0))))
     enable_cache = caching_enabled(use_model, brain_est) if brain_est else False
     history_len = max(0, len(input_messages) - 2)
 
@@ -534,6 +543,44 @@ def _spoken_and_memory(raw_text: str) -> tuple[str, dict, bool, dict]:
     extractor.feed(raw_text)
     spoken = (extractor.spoken_text or raw_text).strip()
     return spoken, extractor.parse_memory_update(), extractor.structured_parse_failed(), extractor.parse_end_call()
+
+
+def _gate_end_call_for_brain(
+    raw: Any,
+    *,
+    transcript: str,
+    language_code: str,
+    session_id: str,
+    spoken_text: str,
+    call_id: str | None = None,
+) -> dict[str, Any]:
+    """Apply server hangup repair so goodbye / that's-all never leave end_call false."""
+    from server.call.end_call_validate import validate_end_call
+
+    snapshot = None
+    if call_id:
+        try:
+            from server.call.memory_manager import memory_manager
+
+            snapshot = memory_manager.get_snapshot(call_id)
+        except Exception:
+            snapshot = None
+    decision = validate_end_call(
+        raw,
+        user_text=transcript,
+        language=language_code,
+        call_status="active",
+        completed_turns=conversation_manager.get_completed_turns(session_id),
+        memory_snapshot=snapshot,
+        spoken_text=spoken_text or "",
+    )
+    if not decision.accepted:
+        return {"should_end": False, "reason": "none", "farewell": ""}
+    return {
+        "should_end": True,
+        "reason": decision.reason,
+        "farewell": (decision.farewell or spoken_text or "")[:240],
+    }
 
 
 async def generate_response(
@@ -705,6 +752,14 @@ async def generate_response(
                 text, memory_update, memory_parse_failed, end_call = _spoken_and_memory(text)
                 if not text:
                     text = unclear_fallback_for(language_code)
+            end_call = _gate_end_call_for_brain(
+                end_call,
+                transcript=transcript,
+                language_code=language_code,
+                session_id=session_id,
+                spoken_text=text,
+                call_id=call_id,
+            )
 
             conversation_manager.add_turn(session_id, transcript, text)
             _after_turn_memory(session_id, call_id=call_id)
@@ -988,6 +1043,14 @@ async def generate_response_stream(
             end_call = extractor.parse_end_call()
         else:
             full_text = raw_text or unclear_fallback_for(language_code)
+        end_call = _gate_end_call_for_brain(
+            end_call,
+            transcript=transcript,
+            language_code=language_code,
+            session_id=session_id,
+            spoken_text=full_text,
+            call_id=call_id,
+        )
         conversation_manager.add_turn(session_id, transcript, full_text)
         _after_turn_memory(session_id, call_id=call_id)
         total_ms = round((time.perf_counter() - t_stream) * 1000)

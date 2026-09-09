@@ -36,13 +36,13 @@ class Settings(BaseSettings):
     sarvam_api_key: str = Field(..., alias="SARVAM_API_KEY")
 
     # --- Models & voices (configurable, verified against docs at build time) ---
-    openai_model: str = Field("gpt-5.6-luna", alias="OPENAI_MODEL")
-    openai_temperature: float = Field(0.5, alias="OPENAI_TEMPERATURE")
+    openai_model: str = Field("gpt-realtime-2.1-mini", alias="OPENAI_MODEL")
+    openai_temperature: float = Field(0.625, alias="OPENAI_TEMPERATURE")
     sarvam_stt_model: str = Field("saaras:v3", alias="SARVAM_STT_MODEL")
     sarvam_tts_model: str = Field("bulbul:v3", alias="SARVAM_TTS_MODEL")
     sarvam_tts_speaker_te: str = Field("shubh", alias="SARVAM_TTS_SPEAKER_TE")
     sarvam_tts_pace: float = Field(1.0, alias="SARVAM_TTS_PACE")
-    sarvam_tts_temperature: float = Field(0.80, alias="SARVAM_TTS_TEMPERATURE")
+    sarvam_tts_temperature: float = Field(0.70, alias="SARVAM_TTS_TEMPERATURE")
 
     # --- Logging (toggle per category; LOG_ENABLED=false silences all) ---
     log_enabled: bool = Field(True, alias="LOG_ENABLED")
@@ -66,9 +66,9 @@ class Settings(BaseSettings):
     max_retries: int = Field(2, alias="MAX_RETRIES")
 
     # --- Brain prompt budget (single composed prompt) ---
-    brain_prompt_budget_tokens: int = Field(3500, alias="BRAIN_PROMPT_BUDGET_TOKENS")
+    brain_prompt_budget_tokens: int = Field(6000, alias="BRAIN_PROMPT_BUDGET_TOKENS")
     brain_prompt_budget_min: int = Field(1500, alias="BRAIN_PROMPT_BUDGET_MIN")
-    brain_prompt_budget_max: int = Field(5000, alias="BRAIN_PROMPT_BUDGET_MAX")
+    brain_prompt_budget_max: int = Field(10000, alias="BRAIN_PROMPT_BUDGET_MAX")
 
     # --- Prompt caching (GPT-5.6+) ---
     enable_prompt_caching: bool = Field(True, alias="ENABLE_PROMPT_CACHING")
@@ -94,7 +94,7 @@ class Settings(BaseSettings):
 
     # --- Fine-tune allowlist (industry: restrict client-selectable models) ---
     allowed_openai_models_csv: str = Field(
-        "gpt-5.5,gpt-5.4,gpt-5,gpt-5.6-luna",
+        "gpt-realtime-2.1-mini,gpt-realtime-2.1,gpt-realtime-2,gpt-5.5,gpt-5.4,gpt-5,gpt-5.6-luna",
         alias="OPENAI_ALLOWED_MODELS",
     )
 
@@ -115,6 +115,10 @@ class Settings(BaseSettings):
     enable_deepseek: bool = Field(False, alias="ENABLE_DEEPSEEK")
     enable_gemini: bool = Field(False, alias="ENABLE_GEMINI")
     enable_cartesia: bool = Field(False, alias="ENABLE_CARTESIA")
+
+    voice_pipeline_mode: Literal["classic", "realtime_text"] = Field(
+        "realtime_text", alias="VOICE_PIPELINE_MODE"
+    )
 
     use_provider_registry: bool = Field(True, alias="USE_PROVIDER_REGISTRY")
     use_versioned_brains: bool = Field(False, alias="USE_VERSIONED_BRAINS")
@@ -153,9 +157,12 @@ class Settings(BaseSettings):
     telephony_provider: str = Field("exotel", alias="TELEPHONY_PROVIDER")
     enable_telnyx: bool = Field(False, alias="ENABLE_TELNYX")
     telnyx_api_key: str | None = Field(None, alias="TELNYX_API_KEY")
+    telnyx_public_key: str | None = Field(None, alias="TELNYX_PUBLIC_KEY")
     telnyx_connection_id: str | None = Field(None, alias="TELNYX_CONNECTION_ID")
     telnyx_phone_number: str | None = Field(None, alias="TELNYX_PHONE_NUMBER")
     telnyx_outbound_voice_profile_id: str | None = Field(None, alias="TELNYX_OUTBOUND_VOICE_PROFILE_ID")
+    telnyx_webhook_tolerance_sec: int = Field(300, alias="TELNYX_WEBHOOK_TOLERANCE_SEC")
+    telnyx_max_concurrent_calls: int = Field(50, alias="TELNYX_MAX_CONCURRENT_CALLS")
     enable_plivo: bool = Field(False, alias="ENABLE_PLIVO")
     plivo_auth_id: str | None = Field(None, alias="PLIVO_AUTH_ID")
     plivo_auth_token: str | None = Field(None, alias="PLIVO_AUTH_TOKEN")
@@ -178,12 +185,16 @@ class Settings(BaseSettings):
     cartesia_tts_model: str = Field("sonic-3.5", alias="CARTESIA_TTS_MODEL")
     cartesia_tts_voice_id: str | None = Field(None, alias="CARTESIA_TTS_VOICE_ID")
     cartesia_api_version: str = Field("2026-08-14", alias="CARTESIA_API_VERSION")
+    # Director-style delivery (not an LLM text prompt) — sonic-3 / sonic-3.5 generation_config.
+    cartesia_tts_emotion: str = Field("calm", alias="CARTESIA_TTS_EMOTION")
+    cartesia_tts_speed: float = Field(1.0, alias="CARTESIA_TTS_SPEED")
+    cartesia_tts_volume: float = Field(1.0, alias="CARTESIA_TTS_VOLUME")
 
     # LOW tier bundle
     voice_low_stt_provider: str = Field("sarvam", alias="VOICE_LOW_STT_PROVIDER")
     voice_low_stt_model: str = Field("saaras:v3", alias="VOICE_LOW_STT_MODEL")
     voice_low_llm_provider: str = Field("openai", alias="VOICE_LOW_LLM_PROVIDER")
-    voice_low_llm_model: str = Field("gpt-5.6-luna", alias="VOICE_LOW_LLM_MODEL")
+    voice_low_llm_model: str = Field("gpt-realtime-2.1-mini", alias="VOICE_LOW_LLM_MODEL")
     voice_low_tts_provider: str = Field("sarvam", alias="VOICE_LOW_TTS_PROVIDER")
     voice_low_tts_model: str = Field("bulbul:v3", alias="VOICE_LOW_TTS_MODEL")
 
@@ -191,7 +202,7 @@ class Settings(BaseSettings):
     voice_medium_stt_provider: str = Field("sarvam", alias="VOICE_MEDIUM_STT_PROVIDER")
     voice_medium_stt_model: str = Field("saaras:v3-realtime", alias="VOICE_MEDIUM_STT_MODEL")
     voice_medium_llm_provider: str = Field("openai", alias="VOICE_MEDIUM_LLM_PROVIDER")
-    voice_medium_llm_model: str = Field("gpt-5.6-luna", alias="VOICE_MEDIUM_LLM_MODEL")
+    voice_medium_llm_model: str = Field("gpt-realtime-2.1-mini", alias="VOICE_MEDIUM_LLM_MODEL")
     voice_medium_tts_provider: str = Field("sarvam", alias="VOICE_MEDIUM_TTS_PROVIDER")
     voice_medium_tts_model: str = Field("bulbul:v3", alias="VOICE_MEDIUM_TTS_MODEL")
 
@@ -199,7 +210,7 @@ class Settings(BaseSettings):
     voice_premium_stt_provider: str = Field("sarvam", alias="VOICE_PREMIUM_STT_PROVIDER")
     voice_premium_stt_model: str = Field("saaras:v3-realtime", alias="VOICE_PREMIUM_STT_MODEL")
     voice_premium_llm_provider: str = Field("openai", alias="VOICE_PREMIUM_LLM_PROVIDER")
-    voice_premium_llm_model: str = Field("gpt-5.6-luna", alias="VOICE_PREMIUM_LLM_MODEL")
+    voice_premium_llm_model: str = Field("gpt-realtime-2.1-mini", alias="VOICE_PREMIUM_LLM_MODEL")
     voice_premium_tts_provider: str = Field("sarvam", alias="VOICE_PREMIUM_TTS_PROVIDER")
     voice_premium_tts_model: str = Field("bulbul:v3", alias="VOICE_PREMIUM_TTS_MODEL")
 
@@ -215,6 +226,20 @@ class Settings(BaseSettings):
     def _pace_range(cls, v: float) -> float:
         if not 0.5 <= v <= 2.0:
             raise ValueError("SARVAM_TTS_PACE must be 0.5–2.0")
+        return v
+
+    @field_validator("cartesia_tts_speed")
+    @classmethod
+    def _cartesia_speed_range(cls, v: float) -> float:
+        if not 0.6 <= v <= 1.5:
+            raise ValueError("CARTESIA_TTS_SPEED must be 0.6–1.5")
+        return v
+
+    @field_validator("cartesia_tts_volume")
+    @classmethod
+    def _cartesia_volume_range(cls, v: float) -> float:
+        if not 0.5 <= v <= 2.0:
+            raise ValueError("CARTESIA_TTS_VOLUME must be 0.5–2.0")
         return v
 
     @field_validator("sarvam_tts_temperature")
@@ -233,7 +258,13 @@ class Settings(BaseSettings):
 
     @property
     def allowed_openai_models(self) -> list[str]:
-        return [m.strip() for m in self.allowed_openai_models_csv.split(",") if m.strip()]
+        models = [m.strip() for m in self.allowed_openai_models_csv.split(",") if m.strip()]
+        from server.realtime.models import DEFAULT_HTTP_LLM_MODEL, DEFAULT_REALTIME_MODEL
+
+        for extra in (DEFAULT_REALTIME_MODEL, self.post_call_llm_model or DEFAULT_HTTP_LLM_MODEL):
+            if extra and extra not in models:
+                models.append(extra)
+        return models
 
     @property
     def working_memory_enabled(self) -> bool:

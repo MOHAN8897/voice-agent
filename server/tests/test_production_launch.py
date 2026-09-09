@@ -36,6 +36,7 @@ def test_compute_production_slos_pass(monkeypatch, tmp_path):
 
     class S:
         data_path = tmp_path
+        app_environment = "production"
 
     monkeypatch.setattr(pl, "get_settings", lambda: S())
     import server.services.production_canary as pc

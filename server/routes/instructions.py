@@ -137,14 +137,30 @@ async def save_instructions(body: SaveRequest):
             prev_compiled = prev_meta.get("brainPrompt") if prev_meta.get("compiledVersion") else None
             if body.callEndPolicy is None:
                 policy = normalize_call_end_policy(prev_meta.get("callEndPolicy"), language=lang)
-            compiled, script_result, raw_est, _compiled_est, effective_budget = await compile_agent_from_brief(
-                brief=body.agentBrief,
-                language=lang,
-                style=body.responseStyle,
-                budget_tokens=budget,
-                previous_compiled=prev_compiled,
-                call_end_policy=policy,
-            )
+            try:
+                compiled, script_result, raw_est, _compiled_est, effective_budget = await compile_agent_from_brief(
+                    brief=body.agentBrief,
+                    language=lang,
+                    style=body.responseStyle,
+                    budget_tokens=budget,
+                    previous_compiled=prev_compiled,
+                    call_end_policy=policy,
+                )
+            except (PromptSectionTooLong, PromptBudgetExceeded):
+                raise
+            except Exception as exc:
+                from server.utils.logger import logger
+
+                logger.error(f"[AGENT_SCRIPT] compile failed, deterministic fallback: {type(exc).__name__}: {str(exc)[:240]}")
+                compiled, script_result, raw_est, _compiled_est, effective_budget = await compile_agent_from_brief(
+                    brief=body.agentBrief,
+                    language=lang,
+                    style=body.responseStyle,
+                    budget_tokens=budget,
+                    previous_compiled=prev_compiled,
+                    call_end_policy=policy,
+                    use_llm=False,
+                )
             budget = effective_budget
             saved = instruction_store.save_agent_script(
                 body.sessionId,

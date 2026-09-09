@@ -1,9 +1,11 @@
 """Telnyx Voice API v2 — https://developers.telnyx.com"""
 from __future__ import annotations
 
+import asyncio
 import logging
 import uuid
 from typing import Any
+from urllib.parse import urlparse
 
 import httpx
 
@@ -62,13 +64,29 @@ class TelnyxClient:
 
     async def _request(self, method: str, path: str, **kwargs: Any) -> dict[str, Any]:
         url = f"{TELNYX_API}{path}"
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            r = await client.request(method, url, headers=self._headers(), **kwargs)
-        if r.status_code >= 400:
-            raise TelnyxApiError(f"Telnyx API {r.status_code}", status=r.status_code, body=r.text[:800])
-        if not r.content:
-            return {}
-        return r.json()
+        timeout = kwargs.pop("timeout", None)
+        if timeout is None:
+            timeout = httpx.Timeout(connect=15.0, read=25.0, write=15.0, pool=15.0)
+        max_attempts = 2
+        for attempt in range(max_attempts):
+            try:
+                async with httpx.AsyncClient(timeout=timeout) as client:
+                    r = await client.request(method, url, headers=self._headers(), **kwargs)
+                if r.status_code >= 400:
+                    raise TelnyxApiError(f"Telnyx API {r.status_code}", status=r.status_code, body=r.text[:800])
+                if not r.content:
+                    return {}
+                return r.json()
+            except httpx.TimeoutException as exc:
+                if attempt < max_attempts - 1:
+                    await asyncio.sleep(0.3)
+                    continue
+                raise TelnyxApiError(f"Telnyx API timeout ({exc.__class__.__name__})", status=None, body=str(exc)[:400]) from exc
+            except httpx.HTTPError as exc:
+                if attempt < max_attempts - 1:
+                    await asyncio.sleep(0.3)
+                    continue
+                raise TelnyxApiError(f"Telnyx API transport ({exc.__class__.__name__})", status=None, body=str(exc)[:400]) from exc
 
     async def handshake(self) -> dict[str, Any]:
         """List account phone numbers — validates API key."""
@@ -223,7 +241,7 @@ class TelnyxClient:
         *,
         to_e164: str,
         from_e164: str | None = None,
-        stream_url: str,
+        stream_url: str | None = None,
         client_state: dict[str, Any] | None = None,
         target_legs: str = "self",
         bidirectional_mode: str = "rtp",
@@ -237,20 +255,30 @@ class TelnyxClient:
             "connection_id": self.cfg["connection_id"],
             "to": to_e164,
             "from": from_num,
-            "stream_url": stream_url,
-            "stream_track": "both_tracks",
-            "stream_codec": TELNYX_RTP_CODEC,
-            "stream_bidirectional_mode": bidirectional_mode,
-            "stream_bidirectional_target_legs": target_legs,
-            "send_silence_when_idle": True,
+            # Default Telnyx answer wait is 30s; give the callee more ring time.
+            "timeout_secs": 60,
         }
-        if bidirectional_mode == "rtp":
+        # Prefer starting media on answer via streaming_start. Dial-time stream_url makes
+        # Telnyx open WSS during ring; through Cloudflare that often ends as connection_failed
+        # before the callee answers.
+        if stream_url:
             payload.update(
                 {
-                    "stream_bidirectional_codec": TELNYX_RTP_CODEC,
-                    "stream_bidirectional_sampling_rate": TELNYX_RTP_SAMPLE_RATE,
+                    "stream_url": stream_url,
+                    "stream_track": "both_tracks",
+                    "stream_codec": TELNYX_RTP_CODEC,
+                    "stream_bidirectional_mode": bidirectional_mode,
+                    "stream_bidirectional_target_legs": target_legs,
+                    "send_silence_when_idle": True,
                 }
             )
+            if bidirectional_mode == "rtp":
+                payload.update(
+                    {
+                        "stream_bidirectional_codec": TELNYX_RTP_CODEC,
+                        "stream_bidirectional_sampling_rate": TELNYX_RTP_SAMPLE_RATE,
+                    }
+                )
         if client_state:
             import base64
             import json
@@ -261,8 +289,23 @@ class TelnyxClient:
 
     def build_stream_ws_url(self, *, token: str) -> str:
         base = public_api_base().rstrip("/")
-        ws = base.replace("https://", "wss://").replace("http://", "ws://")
+        parsed = urlparse(base)
+        if parsed.scheme not in ("http", "https"):
+            raise TelnyxConfigError(
+                f"public_api_base has unsupported scheme '{parsed.scheme}' — expected http or https"
+            )
+        ws_scheme = "wss" if parsed.scheme == "https" else "ws"
+        ws = f"{ws_scheme}://{parsed.netloc}{parsed.path}"
         return f"{ws}/ws/telnyx-stream?token={token}"
+
+    async def answer(self, call_control_id: str) -> dict[str, Any]:
+        """Answer once; call.answered starts media through the shared streaming path."""
+        command_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"telnyx:answer:{call_control_id}"))
+        data = await self._request(
+            "POST", f"/calls/{call_control_id}/actions/answer",
+            json={"command_id": command_id},
+        )
+        return data.get("data") or data
 
     async def start_streaming(
         self,
@@ -321,42 +364,218 @@ class TelnyxClient:
 
 
 class TelnyxCallRegistry:
-    """In-memory Telnyx call events for dev Test Studio."""
+    """Telnyx call event registry — process memory + optional Redis for multi-worker (1.4)."""
+
+    _REDIS_PREFIX = "voice:telnyx:call:"
+    _REDIS_TTL_SEC = 7200
 
     def __init__(self) -> None:
         self._calls: dict[str, dict[str, Any]] = {}
+        self._lock = asyncio.Lock()
+
+    def _redis(self):
+        try:
+            from server.call.redis_memory_cache import _redis
+
+            return _redis()
+        except Exception:
+            return None
 
     def upsert(self, call_control_id: str, patch: dict[str, Any]) -> None:
         import time
 
-        row = self._calls.get(call_control_id) or {"call_control_id": call_control_id}
+        # Synchronous upsert is fine for single-threaded asyncio; the lock
+        # is used by atomic_upsert for read-modify-write patterns.
+        row = dict(self._calls.get(call_control_id) or {"call_control_id": call_control_id})
         row.update(patch)
         row["updated_at"] = int(time.time())
         self._calls[call_control_id] = row
+        client = self._redis()
+        if client is not None:
+            try:
+                import json
+
+                if callable(getattr(client, "eval", None)):
+                    # Merge only the patch in Redis. Publishing a stale local snapshot
+                    # otherwise erases another worker's agent/answer/hangup fields.
+                    script = """
+                    local raw = redis.call('GET', KEYS[1])
+                    local row = raw and cjson.decode(raw) or {}
+                    local patch = cjson.decode(ARGV[1])
+                    for k,v in pairs(patch) do row[k] = v end
+                    local merged = cjson.encode(row)
+                    redis.call('SET', KEYS[1], merged, 'EX', ARGV[2])
+                    return merged
+                    """
+                    merged = client.eval(script, 1, f"{self._REDIS_PREFIX}{call_control_id}",
+                                         json.dumps({**patch, "call_control_id": call_control_id, "updated_at": row["updated_at"]}),
+                                         self._REDIS_TTL_SEC)
+                    self._calls[call_control_id] = json.loads(merged)
+                else:
+                    client.setex(f"{self._REDIS_PREFIX}{call_control_id}", self._REDIS_TTL_SEC, json.dumps(row))
+            except Exception:
+                pass
+
+    async def atomic_check_and_set(self, call_control_id: str, key: str, value: Any = True) -> bool:
+        """Atomically check if key is falsy, then set it. Returns True if set, False if already set.
+
+        When Redis is configured, uses SET NX for a true cross-worker claim so two
+        processes cannot both handle the same call.answered (1.2 + 1.4).
+        """
+        import json
+        import time
+
+        claim_key = f"{self._REDIS_PREFIX}claim:{call_control_id}:{key}"
+        async with self._lock:
+            client = self._redis()
+            if client is not None:
+                try:
+                    claimed = client.set(claim_key, "1", nx=True, ex=self._REDIS_TTL_SEC)
+                    if not claimed:
+                        return False
+                except Exception:
+                    # Fall back to process-local claim if Redis blips.
+                    client = None
+
+            row = dict(self.get(call_control_id) or {"call_control_id": call_control_id})
+            if row.get(key):
+                return False
+            row[key] = value
+            row["updated_at"] = int(time.time())
+            self.upsert(call_control_id, {key: value})
+            return True
 
     def get(self, call_control_id: str) -> dict[str, Any] | None:
-        return self._calls.get(call_control_id)
+        row = self._calls.get(call_control_id)
+        client = self._redis()
+        if client is None:
+            return row
+        try:
+            import json
+
+            raw = client.get(f"{self._REDIS_PREFIX}{call_control_id}")
+            if raw:
+                data = json.loads(raw)
+                if isinstance(data, dict):
+                    self._calls[call_control_id] = data
+                    return data
+        except Exception:
+            pass
+        return row
 
     def list_recent(self, limit: int = 20) -> list[dict[str, Any]]:
+        self._prune_stale()
         rows = sorted(self._calls.values(), key=lambda r: r.get("updated_at") or 0, reverse=True)
         return rows[:limit]
+
+    def _prune_stale(self, *, max_age_s: int = 3600) -> None:
+        """Drop completed/orphaned rows so a long-lived process does not leak memory."""
+        import time
+
+        now = int(time.time())
+        stale = [
+            cid
+            for cid, row in self._calls.items()
+            if (now - int(row.get("updated_at") or 0)) > max_age_s
+            and str(row.get("status") or "") in {"completed", "stream-error", "hangup", "failed"}
+        ]
+        for cid in stale:
+            self._calls.pop(cid, None)
+            client = self._redis()
+            if client is not None:
+                try:
+                    client.delete(f"{self._REDIS_PREFIX}{cid}")
+                except Exception:
+                    pass
+
 
 
 telnyx_call_registry = TelnyxCallRegistry()
 
 
 class TelnyxStreamTokens:
+    """Stream WS token metadata.
+
+    Process-local by default. When Redis is configured, mirrors tokens so a
+    webhook worker and a different WebSocket worker can both resolve agent/tier.
+    Process-local-only is single-worker safe — multi-worker requires REDIS_URL.
+    """
+
+    _REDIS_PREFIX = "voice:telnyx:stream_token:"
+    _REDIS_TTL_SEC = 7200
+
     def __init__(self) -> None:
         self._tokens: dict[str, dict[str, Any]] = {}
 
+    def _redis(self):
+        try:
+            from server.call.redis_memory_cache import _redis
+
+            return _redis()
+        except Exception:
+            return None
+
     def put(self, token: str, **meta: Any) -> None:
+        import time
+
+        meta["_expires_at"] = time.time() + self._REDIS_TTL_SEC
         self._tokens[token] = meta
+        client = self._redis()
+        if client is not None:
+            try:
+                import json
+
+                client.setex(
+                    f"{self._REDIS_PREFIX}{token}",
+                    self._REDIS_TTL_SEC,
+                    json.dumps(meta),
+                )
+            except Exception:
+                pass
 
     def consume(self, token: str) -> dict[str, Any] | None:
-        return self._tokens.pop(token, None)
+        meta = self._tokens.pop(token, None)
+        client = self._redis()
+        if client is not None:
+            try:
+                import json
+
+                key = f"{self._REDIS_PREFIX}{token}"
+                if meta is None:
+                    raw = client.get(key)
+                    if raw:
+                        data = json.loads(raw)
+                        if isinstance(data, dict):
+                            meta = data
+                client.delete(key)
+            except Exception:
+                pass
+        return meta
 
     def peek(self, token: str) -> dict[str, Any] | None:
-        return self._tokens.get(token)
+        import time
+
+        meta = self._tokens.get(token)
+        if meta is not None and float(meta.get("_expires_at") or 0) <= time.time():
+            self._tokens.pop(token, None)
+            meta = None
+        if meta is not None:
+            return meta
+        client = self._redis()
+        if client is None:
+            return None
+        try:
+            import json
+
+            raw = client.get(f"{self._REDIS_PREFIX}{token}")
+            if raw:
+                data = json.loads(raw)
+                if isinstance(data, dict):
+                    self._tokens[token] = data
+                    return data
+        except Exception:
+            pass
+        return None
 
     def create(self, **meta: Any) -> str:
         tok = uuid.uuid4().hex

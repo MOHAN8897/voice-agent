@@ -42,6 +42,7 @@ class ExotelPstnBridge:
         self.direction: str = "outbound"
         self._voice: PstnVoiceLoop | None = None
         self._closed = False
+        self._start_handled = False
         self._media_frames_in = 0
         self._media_frames_out = 0
 
@@ -56,12 +57,19 @@ class ExotelPstnBridge:
                 if name == "connected":
                     continue
                 if name == "start":
-                    await self._on_start(ev)
+                    if self._start_handled:
+                        continue
+                    self._start_handled = True
+                    try:
+                        await self._on_start(ev)
+                    except Exception:
+                        self._start_handled = False
+                        raise
                 elif name == "media":
                     await self._on_media(ev)
                 elif name == "mark":
-                    if (ev.get("mark") or {}).get("name") == "turn-end":
-                        pass
+                    # Playback ack from Exotel (turn-end after TTS completes).
+                    pass
                 elif name == "stop":
                     break
         finally:
@@ -88,6 +96,12 @@ class ExotelPstnBridge:
         log_pstn("stream.start", call_sid=self.exotel_call_sid, agent_id=self.agent_id)
 
         if self.agent_id:
+            prewarm = None
+            if self.exotel_call_sid:
+                from server.services.pstn_prewarm import take_prewarm_for_answer
+
+                prewarm = await take_prewarm_for_answer("exotel", self.exotel_call_sid)
+            self._prewarm_bundle = prewarm
             from server.call.call_lifecycle_service import call_lifecycle_service
 
             started = await call_lifecycle_service.start(
@@ -100,6 +114,7 @@ class ExotelPstnBridge:
                 caller_id=self.caller_id,
                 stack_override=pstn_opts.get("stack_override"),
                 language=str(pstn_opts.get("language") or "te-IN"),
+                realtime_prewarm_key=prewarm.realtime_key if prewarm else None,
             )
             self.call_id = started["call_id"]
             self.session_id = started["session_id"]
@@ -110,6 +125,9 @@ class ExotelPstnBridge:
                 )
             logger.info("[EXOTEL] stream started call_id=%s exotel=%s", self.call_id, self.exotel_call_sid)
 
+        from server.services.pstn_playback import EstimatedPlaybackTracker
+
+        self._playback = EstimatedPlaybackTracker(frame_ms=20.0)
         self._voice = PstnVoiceLoop(
             session_id=self.session_id,
             call_id=self.call_id,
@@ -118,16 +136,24 @@ class ExotelPstnBridge:
             tts_session_id=pstn_opts.get("tts_session_id"),
             config_session_id=pstn_opts.get("config_session_id"),
             tts_output_codec="mulaw",
+            is_agent_audio_active=self._playback.is_active,
+            playback=self._playback,
         )
         self._voice.set_barge_handler(self._barge_in)
         self._voice.set_hangup_handler(self._provider_hangup)
+        self._voice.set_turn_audio_done_handler(self._mark_turn_end)
         asyncio.create_task(self._start_voice_loop())
 
     async def _start_voice_loop(self) -> None:
         if not self._voice:
             return
         try:
-            await self._voice.start_call(play_greeting=bool(self.call_id))
+            prewarm = getattr(self, "_prewarm_bundle", None)
+            await self._voice.start_call(
+                play_greeting=bool(self.call_id),
+                greeting_wire_frames=prewarm.greeting_wire_frames if prewarm else None,
+                greeting_text=prewarm.greeting_text if prewarm else None,
+            )
         except Exception as exc:
             logger.exception("[EXOTEL] voice loop failed sid=%s: %s", self.exotel_call_sid, exc)
 
@@ -152,9 +178,15 @@ class ExotelPstnBridge:
             pcm8k = mulaw_to_pcm16(wire, target_rate=8000)
         else:
             pcm8k = wire
+        generation_id = self._voice.current_generation_id if self._voice else None
+        playback = getattr(self, "_playback", None)
+        if playback is not None and not playback.is_generation_valid(generation_id):
+            return
         chunks = list(chunk_pcm_for_exotel(pcm8k))
         first_out = self._media_frames_out == 0
-        for chunk in chunks:
+        for i, chunk in enumerate(chunks):
+            if playback is not None and not playback.is_generation_valid(generation_id):
+                return
             await self.ws.send_text(
                 json.dumps(
                     {
@@ -164,6 +196,9 @@ class ExotelPstnBridge:
                     }
                 )
             )
+            # Pace ~realtime: 3200 B PCM @ 8 kHz ≈ 200 ms; smaller chunks use proportion.
+            if i + 1 < len(chunks):
+                await asyncio.sleep(max(0.02, len(chunk) / (8000 * 2)))
         self._media_frames_out += len(chunks)
         if first_out:
             log_pstn(
@@ -172,15 +207,23 @@ class ExotelPstnBridge:
                 call_id=self.call_id,
                 frames=len(chunks),
             )
-        await self.ws.send_text(
-            json.dumps(
-                {
-                    "event": "mark",
-                    "stream_sid": self.stream_sid,
-                    "mark": {"name": "turn-end"},
-                }
+
+    async def _mark_turn_end(self) -> None:
+        """One Exotel mark per TTS turn end (not per wire frame)."""
+        if not self.stream_sid or self._closed:
+            return
+        try:
+            await self.ws.send_text(
+                json.dumps(
+                    {
+                        "event": "mark",
+                        "stream_sid": self.stream_sid,
+                        "mark": {"name": "turn-end"},
+                    }
+                )
             )
-        )
+        except Exception as exc:
+            log_pstn("mark.failed", call_sid=self.exotel_call_sid, error=str(exc)[:120])
 
     async def _provider_hangup(self) -> None:
         if not self.exotel_call_sid:
@@ -194,6 +237,19 @@ class ExotelPstnBridge:
             log_pstn("hangup.provider.failed", call_sid=self.exotel_call_sid, error=str(exc)[:200])
 
     async def _barge_in(self) -> None:
+        generation_id = self._voice.current_generation_id if self._voice else None
+        playback = getattr(self, "_playback", None)
+        if playback is not None:
+            playback.invalidate_generation(generation_id)
+            drained = playback.clear()
+            log_pstn(
+                "PROVIDER_CLEAR",
+                call_sid=self.exotel_call_sid,
+                call_id=self.call_id,
+                frames=drained,
+                generation_id=generation_id,
+                queue_ms=playback.queued_ms(),
+            )
         if not self.stream_sid:
             return
         await self.ws.send_text(json.dumps({"event": "clear", "stream_sid": self.stream_sid}))

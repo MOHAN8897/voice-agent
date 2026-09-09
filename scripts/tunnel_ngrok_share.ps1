@@ -109,7 +109,7 @@ tunnels:
     $logFile = Join-Path $RepoRoot "data\dev-logs\ngrok.log"
     New-Item -ItemType Directory -Force -Path (Split-Path $logFile) | Out-Null
     Start-Process -FilePath $NgrokExe `
-        -ArgumentList @("start", "voice-web", "--config", $NgrokConfig, "--log=stdout") `
+        -ArgumentList @("start", "voice-web", "--config", ('"' + $NgrokConfig + '"'), "--log=stdout") `
         -WindowStyle Hidden `
         -RedirectStandardOutput $logFile `
         -RedirectStandardError (Join-Path $RepoRoot "data\dev-logs\ngrok.err.log") | Out-Null

@@ -258,6 +258,18 @@ async def dev_outbound_test(body: OutboundTestBody, session: SessionData = Depen
     if not to_number:
         return {"ok": False, "error": {"code": "numbers_missing", "message": "Destination (To) number required"}}
 
+    from server.services.outbound_dial_guard import acquire_outbound_slot, hangup_active_exotel_to, release_outbound_slot
+
+    if not await acquire_outbound_slot("exotel", to_number):
+        return {
+            "ok": False,
+            "error": {
+                "code": "dial_in_progress",
+                "message": "An outbound call to this number is already in progress.",
+            },
+        }
+    await hangup_active_exotel_to(to_number)
+
     phone_assignments_store.assign(caller_id, body.agent_id)
     custom_field = f"agent:{body.agent_id};tier:{body.tier or 'medium'}"
 
@@ -267,6 +279,7 @@ async def dev_outbound_test(body: OutboundTestBody, session: SessionData = Depen
         if mode == "bridge":
             from_number = (body.from_e164 or "").strip()
             if not from_number:
+                release_outbound_slot("exotel", to_number)
                 return {
                     "ok": False,
                     "error": {"code": "from_missing", "message": "Bridge mode requires From (agent handset) number"},
@@ -281,6 +294,7 @@ async def dev_outbound_test(body: OutboundTestBody, session: SessionData = Depen
         else:
             stream_url = build_stream_ws_url(agent_id=body.agent_id, tier=body.tier)
             if not stream_url:
+                release_outbound_slot("exotel", to_number)
                 return {
                     "ok": False,
                     "error": {"code": "stream_url_missing", "message": "Cannot build WSS stream URL — check webhook base"},
@@ -320,8 +334,10 @@ async def dev_outbound_test(body: OutboundTestBody, session: SessionData = Depen
             "stream_url": stream_url if mode != "bridge" else None,
         }
     except ExotelConfigError as e:
+        release_outbound_slot("exotel", to_number)
         return {"ok": False, "error": {"code": "not_configured", "message": str(e)}}
     except ExotelApiError as e:
+        release_outbound_slot("exotel", to_number)
         return {
             "ok": False,
             "error": {

@@ -8,6 +8,7 @@ from server.services.voice_stt_runtime import (
 
 
 def test_effective_stt_silence_default():
+    assert DEFAULT_STT_SILENCE_MS == 400
     assert effective_stt_silence_ms({}) == DEFAULT_STT_SILENCE_MS
     assert effective_stt_silence_ms({}, explicit=350) == 350
     assert effective_stt_silence_ms({"sttSilenceMs": 500}) == 500

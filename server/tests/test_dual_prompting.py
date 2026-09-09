@@ -42,7 +42,7 @@ def test_default_brain_prompt_endpoint(monkeypatch):
     assert j["estimatedTokens"] >= 1024
     assert j["cacheMinTokens"] == 1024
     assert j["budgetMinTokens"] == 1500
-    assert j["budgetMaxTokens"] == 5000
+    assert j["budgetMaxTokens"] == 10000
     get_settings.cache_clear()
 
 

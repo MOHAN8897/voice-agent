@@ -28,19 +28,29 @@ class PlivoPstnBridge:
         self.caller_id: str | None = None
         self._voice: PstnVoiceLoop | None = None
         self._closed = False
+        self._start_handled = False
+        self._token_meta: dict[str, Any] = {}
         self._media_frames_in = 0
         self._media_frames_out = 0
 
     async def run(self, *, agent_id: str | None, tier: str | None, token_meta: dict[str, Any] | None) -> None:
-        self.agent_id = agent_id or (token_meta or {}).get("agent_id")
-        self.tier = tier or (token_meta or {}).get("tier")
+        self._token_meta = dict(token_meta or {})
+        self.agent_id = agent_id or self._token_meta.get("agent_id")
+        self.tier = tier or self._token_meta.get("tier")
         try:
             while not self._closed:
                 raw = await self.ws.receive_text()
                 ev = json.loads(raw)
                 event = ev.get("event") or ev.get("name") or ""
                 if event == "start":
-                    await self._on_start(ev)
+                    if self._start_handled:
+                        continue
+                    self._start_handled = True
+                    try:
+                        await self._on_start(ev)
+                    except Exception:
+                        self._start_handled = False
+                        raise
                 elif event == "media":
                     await self._on_media(ev)
                 elif event == "stop" or event == "clearedAudio":
@@ -58,18 +68,27 @@ class PlivoPstnBridge:
         from server.services.plivo_client import plivo_call_registry
 
         local = plivo_call_registry.get(self.plivo_call_uuid or "") or {}
-        # Outbound may register under request_uuid before callId is known.
         if not local.get("agent_id"):
-            for row in plivo_call_registry.list_recent(30):
-                if row.get("to") and row.get("agent_id") and not row.get("internal_call_id"):
-                    local = row
-                    break
+            request_uuid = str(self._token_meta.get("request_uuid") or "")
+            if request_uuid:
+                local = plivo_call_registry.get(request_uuid) or local
         self.agent_id = self.agent_id or local.get("agent_id")
         self.tier = self.tier or local.get("tier")
         pstn_opts = pstn_call_options(local)
         log_pstn("stream.start", call_uuid=self.plivo_call_uuid, agent_id=self.agent_id)
 
         if self.agent_id:
+            prewarm = None
+            request_uuid = str(self._token_meta.get("request_uuid") or "")
+            if self.plivo_call_uuid or request_uuid:
+                from server.services.pstn_prewarm import take_prewarm_for_answer
+
+                prewarm = await take_prewarm_for_answer(
+                    "plivo",
+                    self.plivo_call_uuid or "",
+                    fallback_external_id=request_uuid or None,
+                )
+            self._prewarm_bundle = prewarm
             from server.call.call_lifecycle_service import call_lifecycle_service
 
             started = await call_lifecycle_service.start(
@@ -82,21 +101,25 @@ class PlivoPstnBridge:
                 caller_id=self.caller_id,
                 stack_override=pstn_opts.get("stack_override"),
                 language=str(pstn_opts.get("language") or "te-IN"),
+                realtime_prewarm_key=prewarm.realtime_key if prewarm else None,
             )
             self.call_id = started["call_id"]
             self.session_id = started["session_id"]
-            if self.plivo_call_uuid:
-                plivo_call_registry.upsert(
-                    self.plivo_call_uuid,
-                    {
-                        "agent_id": self.agent_id,
-                        "tier": self.tier,
-                        "internal_call_id": self.call_id,
-                        "status": "streaming",
-                        "last_event": "stream-start",
-                    },
-                )
+        if self.plivo_call_uuid:
+            patch = {
+                "agent_id": self.agent_id,
+                "tier": self.tier,
+                "internal_call_id": self.call_id,
+                "status": "streaming",
+                "last_event": "stream-start",
+            }
+            if request_uuid := str(self._token_meta.get("request_uuid") or ""):
+                patch["request_uuid"] = request_uuid
+            plivo_call_registry.upsert(self.plivo_call_uuid, patch)
 
+        from server.services.pstn_playback import EstimatedPlaybackTracker
+
+        self._playback = EstimatedPlaybackTracker(frame_ms=20.0)
         self._voice = PstnVoiceLoop(
             session_id=self.session_id,
             call_id=self.call_id,
@@ -105,6 +128,8 @@ class PlivoPstnBridge:
             tts_session_id=pstn_opts.get("tts_session_id"),
             config_session_id=pstn_opts.get("config_session_id"),
             tts_output_codec="mulaw",
+            is_agent_audio_active=self._playback.is_active,
+            playback=self._playback,
         )
         self._voice.set_barge_handler(self._barge_in)
         self._voice.set_hangup_handler(self._provider_hangup)
@@ -114,7 +139,12 @@ class PlivoPstnBridge:
         if not self._voice:
             return
         try:
-            await self._voice.start_call(play_greeting=bool(self.call_id))
+            prewarm = getattr(self, "_prewarm_bundle", None)
+            await self._voice.start_call(
+                play_greeting=bool(self.call_id),
+                greeting_wire_frames=prewarm.greeting_wire_frames if prewarm else None,
+                greeting_text=prewarm.greeting_text if prewarm else None,
+            )
         except Exception as exc:
             logger.exception("[PLIVO] voice loop failed uuid=%s: %s", self.plivo_call_uuid, exc)
 
@@ -133,12 +163,18 @@ class PlivoPstnBridge:
         await self._voice.feed_user_pcm16(pcm8k)
 
     async def _send_agent_wire(self, wire: bytes) -> None:
+        generation_id = self._voice.current_generation_id if self._voice else None
+        playback = getattr(self, "_playback", None)
+        if playback is not None and not playback.is_generation_valid(generation_id):
+            return
         if len(wire) == 160:
             frames = [wire]
         else:
             frames = list(pcm16_chunk_to_mulaw_frames(wire, sample_rate=8000, frame_ms=20))
         first_out = self._media_frames_out == 0
-        for frame in frames:
+        for i, frame in enumerate(frames):
+            if playback is not None and not playback.is_generation_valid(generation_id):
+                return
             await self.ws.send_text(
                 json.dumps(
                     {
@@ -150,6 +186,8 @@ class PlivoPstnBridge:
                     }
                 )
             )
+            if i + 1 < len(frames):
+                await asyncio.sleep(0.02)
         self._media_frames_out += len(frames)
         if first_out:
             log_pstn(
@@ -171,6 +209,19 @@ class PlivoPstnBridge:
             log_pstn("hangup.provider.failed", call_uuid=self.plivo_call_uuid, error=str(exc)[:200])
 
     async def _barge_in(self) -> None:
+        generation_id = self._voice.current_generation_id if self._voice else None
+        playback = getattr(self, "_playback", None)
+        if playback is not None:
+            playback.invalidate_generation(generation_id)
+            drained = playback.clear()
+            log_pstn(
+                "PROVIDER_CLEAR",
+                call_uuid=self.plivo_call_uuid,
+                call_id=self.call_id,
+                frames=drained,
+                generation_id=generation_id,
+                queue_ms=playback.queued_ms(),
+            )
         await self.ws.send_text(json.dumps({"event": "clearAudio"}))
 
     async def _cleanup(self, reason: str) -> None:

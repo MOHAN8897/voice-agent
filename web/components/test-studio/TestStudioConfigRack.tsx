@@ -17,7 +17,6 @@ import {
   defaultPstnSttModel,
   sttModelsForPstn,
 } from "@/lib/pstn-stack";
-import { CompileLanguagePicker } from "@/components/test-studio/CompileLanguagePicker";
 import { cn } from "@/lib/cn";
 import { defaultTtsVoice, ensureTtsVoice, ttsProviderFromStack } from "@/lib/voice/tts-config";
 
@@ -107,7 +106,6 @@ export function TestStudioConfigRack({
   sttStreamTypes,
   catalogLoading,
   language,
-  onLanguageChange,
   sessionStatus,
   locked,
   sarvamSpeakersV3 = [],
@@ -130,7 +128,6 @@ export function TestStudioConfigRack({
   sttStreamTypes: string[];
   catalogLoading?: boolean;
   language: string;
-  onLanguageChange: (l: string) => void;
   sessionStatus: string;
   locked: boolean;
   sarvamSpeakersV3?: string[];
@@ -211,13 +208,6 @@ export function TestStudioConfigRack({
                 Cartesia UUID).
               </p>
             )}
-            <CompileLanguagePicker
-              id="config-call-language"
-              value={language}
-              disabled={locked}
-              onChange={onLanguageChange}
-              hint="Used for live calls and for Fine-tune script + hangup language."
-            />
           </>
         )}
 

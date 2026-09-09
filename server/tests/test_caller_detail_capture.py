@@ -1,0 +1,33 @@
+"""Deterministic caller detail capture for working memory."""
+from server.call.caller_detail_capture import (
+    caller_detail_memory_operations,
+    extract_caller_email,
+    extract_caller_name,
+    extract_caller_phone,
+)
+
+
+def test_extracts_indian_mobile_with_cue():
+    assert extract_caller_phone("my phone number is 8897908470") == "8897908470"
+    assert extract_caller_phone("please record +91 88979 08470") == "8897908470"
+
+
+def test_extracts_indian_mobile_bare():
+    assert extract_caller_phone("8897908470") == "8897908470"
+
+
+def test_ignores_non_mobile_without_cue():
+    assert extract_caller_phone("the price is 5000000000") is None
+
+
+def test_extracts_email_and_name():
+    assert extract_caller_email("email me at arun.test@example.com please") == "arun.test@example.com"
+    assert extract_caller_name("Hi, my name is Arun") == "Arun"
+
+
+def test_memory_ops_include_phone_and_context():
+    ops = caller_detail_memory_operations("Can you record my phone number 8897908470")
+    keys = {op.get("key") for op in ops if op.get("op") == "set_fact"}
+    assert "callback_phone" in keys
+    assert "phone" in keys
+    assert any(op.get("op") == "append_context" for op in ops)

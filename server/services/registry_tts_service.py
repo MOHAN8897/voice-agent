@@ -56,7 +56,11 @@ async def synthesize_via_registry(
 ) -> dict[str, Any]:
     """Returns {audio_bytes, content_type, speaker, language_code, request_id, provider}."""
     settings = get_settings()
-    text = text.strip()
+    from server.services.spoken_numbers import prepare_spoken_reply
+
+    stack = _stack_for_tts(call_id=call_id, session_id=session_id, language_code=language_code)
+    provider_id = stack.tts.provider
+    text = prepare_spoken_reply((text or "").strip(), provider=provider_id)
     if not text:
         raise AppError(ErrorCode.VALIDATION_ERROR, "Text is required for TTS", status_code=400)
 
@@ -71,8 +75,6 @@ async def synthesize_via_registry(
             session_id=session_id,
         )
 
-    stack = _stack_for_tts(call_id=call_id, session_id=session_id, language_code=language_code)
-    provider_id = stack.tts.provider
     registry = get_provider_registry()
 
     if provider_id == "sarvam" or not registry.is_provider_enabled(provider_id, "tts"):
@@ -109,6 +111,18 @@ async def synthesize_via_registry(
 
     if provider_id == "cartesia":
         voice_id = _resolve_cartesia_voice(session_id=session_id, stack=stack, speaker=speaker)
+        try:
+            cartesia_cfg = resolve_tts_config(
+                session_id,
+                language_code=language_code,
+                speaker=voice_id,
+                model=model or stack.tts.model,
+                pace=pace,
+                temperature=temperature,
+                call_id=call_id,
+            )
+        except TtsConfigError:
+            cartesia_cfg = {}
         config = TTSConfig(
             provider=provider_id,
             model=model or stack.tts.model,
@@ -116,6 +130,9 @@ async def synthesize_via_registry(
             speaker=voice_id,
             pace=pace,
             temperature=temperature,
+            emotion=cartesia_cfg.get("emotion"),
+            speed=cartesia_cfg.get("speed"),
+            volume=cartesia_cfg.get("volume"),
         )
     else:
         try:

@@ -16,6 +16,8 @@ dependencies = [
     "sqlalchemy[asyncio]>=2.0",
     "asyncpg>=0.30",
     "alembic>=1.14",
+    "cryptography>=42",
+    "audioop-lts>=0.2.1; python_version >= '3.13'",
 ]
 
 [project.optional-dependencies]
@@ -30,6 +32,9 @@ dev = [
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["server/tests"]
+markers = [
+    "live_realtime: live OpenAI Realtime websocket probes (LIVE_TEST=1)",
+]
 
 [tool.ruff]
 line-length = 100

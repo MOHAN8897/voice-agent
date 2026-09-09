@@ -69,7 +69,10 @@ def test_alembic_revision_chain():
 
 
 @pytest.mark.asyncio
-@pytest.mark.skipif(not os.getenv("DATABASE_URL"), reason="DATABASE_URL not set")
+@pytest.mark.skipif(
+    os.getenv("LIVE_DB", "").strip().lower() not in ("1", "true", "yes") or not os.getenv("DATABASE_URL"),
+    reason="Requires LIVE_DB=1 and DATABASE_URL",
+)
 async def test_db_health_when_configured():
     from server.config.env import get_settings
 

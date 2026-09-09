@@ -10,6 +10,13 @@ export type StreamingTtsClientOptions = {
   trace?: VoiceTraceFn;
 };
 
+export class TtsPipelineError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "TtsPipelineError";
+  }
+}
+
 type TurnHandlers = {
   turnId: string;
   isActive: () => boolean;
@@ -27,6 +34,7 @@ export class StreamingTtsClient {
   private sock: WebSocket | null = null;
   private ready = false;
   private connectPromise: Promise<void> | null = null;
+  private readyPromise: Promise<void> | null = null;
   private model = "bulbul:v3";
   private cfg: TtsConfig | null = null;
   private pingTimer: ReturnType<typeof setInterval> | null = null;
@@ -57,6 +65,11 @@ export class StreamingTtsClient {
     this.opts.trace?.(kind, detail);
   }
 
+  /** Preconnect at call start so first turn avoids WS handshake latency. */
+  async preconnect(): Promise<void> {
+    await this.refreshConfigForTurn();
+  }
+
   async ensureConnected(): Promise<void> {
     if (this.sock?.readyState === WebSocket.OPEN && this.ready) return;
     if (this.connectPromise) return this.connectPromise;
@@ -65,6 +78,28 @@ export class StreamingTtsClient {
       this.connectPromise = null;
     });
     return this.connectPromise;
+  }
+
+  async waitReady(timeoutMs = 8000): Promise<void> {
+    if (this.ready && this.sock?.readyState === WebSocket.OPEN) return;
+    if (this.readyPromise) return this.readyPromise;
+    this.readyPromise = new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        this.readyPromise = null;
+        reject(new TtsPipelineError("TTS not ready (timeout)"));
+      }, timeoutMs);
+      const tick = () => {
+        if (this.ready && this.sock?.readyState === WebSocket.OPEN) {
+          clearTimeout(timer);
+          this.readyPromise = null;
+          resolve();
+          return;
+        }
+        setTimeout(tick, 25);
+      };
+      tick();
+    });
+    return this.readyPromise;
   }
 
   /** Re-fetch runtime TTS config and push it upstream before each spoken turn. */
@@ -79,6 +114,7 @@ export class StreamingTtsClient {
       return;
     }
     await this.ensureConnected();
+    await this.waitReady();
   }
 
   private async openSocket(): Promise<void> {
@@ -133,7 +169,7 @@ export class StreamingTtsClient {
           })
           .catch(fail);
       };
-      sock.onerror = () => fail(new Error("TTS WebSocket connection failed"));
+      sock.onerror = () => fail(new TtsPipelineError("TTS WebSocket connection failed"));
       sock.onclose = () => {
         this.ready = false;
         this.stopPing();
@@ -146,7 +182,7 @@ export class StreamingTtsClient {
   private sendConfig(sock: WebSocket, cfg: TtsConfig): Promise<void> {
     return new Promise((resolve, reject) => {
       if (sock.readyState !== WebSocket.OPEN) {
-        reject(new Error("TTS socket not open"));
+        reject(new TtsPipelineError("TTS socket not open"));
         return;
       }
       try {
@@ -192,9 +228,16 @@ export class StreamingTtsClient {
       this.ready = false;
       this.trace("tts:upstream_reset", String(m.reason || ""));
       if (this.sock?.readyState === WebSocket.OPEN && this.cfg) {
-        void this.sendConfig(this.sock, this.cfg).then(() => {
-          this.ready = true;
-        });
+        void this.sendConfig(this.sock, this.cfg)
+          .then(() => {
+            this.ready = true;
+          })
+          .catch((e) => {
+            const turn = this.activeTurn;
+            if (turn?.isActive()) {
+              turn.onError(e instanceof Error ? e : new Error(String(e)));
+            }
+          });
       }
       return;
     }
@@ -248,18 +291,25 @@ export class StreamingTtsClient {
     this.textChunksSent = 0;
   }
 
-  sendText(text: string, sequenceNumber: number): void {
+  async sendText(text: string, sequenceNumber: number): Promise<void> {
     const turn = this.activeTurn;
     if (!turn || !turn.isActive() || !text.trim()) return;
+
+    await this.waitReady();
+
     const sock = this.sock;
     if (!sock || sock.readyState !== WebSocket.OPEN) {
+      const err = new TtsPipelineError(`TTS send blocked (ready=${sock?.readyState ?? "null"})`);
       this.trace("tts:send_blocked", `turn=${turn.turnId} ready=${sock?.readyState ?? "null"}`);
-      return;
+      turn.onError(err);
+      throw err;
     }
 
     if (this.textChunksSent >= VOICE_PIPELINE_LIMITS.maxTextChunksQueued) {
+      const err = new TtsPipelineError("TTS text queue full (backpressure)");
       this.trace("tts:backpressure", `turn=${turn.turnId} text queue full`);
-      return;
+      turn.onError(err);
+      throw err;
     }
 
     try {
@@ -267,7 +317,9 @@ export class StreamingTtsClient {
       this.textChunksSent += 1;
       this.trace("tts:send", `turn=${turn.turnId} seq=${sequenceNumber} chars=${text.length}`);
     } catch (e) {
-      turn.onError(e instanceof Error ? e : new Error(String(e)));
+      const err = e instanceof Error ? e : new Error(String(e));
+      turn.onError(err);
+      throw err;
     }
   }
 
@@ -277,13 +329,13 @@ export class StreamingTtsClient {
 
     const sock = this.sock;
     if (!sock || sock.readyState !== WebSocket.OPEN) {
+      const err = new TtsPipelineError(`TTS flush blocked (ready=${sock?.readyState ?? "null"})`);
       this.trace("tts:flush_blocked", `turn=${turn.turnId} ready=${sock?.readyState ?? "null"}`);
-      turn.onComplete();
-      this.activeTurn = null;
-      return Promise.resolve();
+      turn.onError(err);
+      return Promise.reject(err);
     }
 
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const prevComplete = turn.onComplete;
       turn.onComplete = () => {
         prevComplete();
@@ -294,8 +346,10 @@ export class StreamingTtsClient {
       try {
         sock.send(JSON.stringify({ type: "flush" }));
         this.trace("tts:flush", `turn=${turn.turnId}`);
-      } catch {
-        turn.onComplete();
+      } catch (e) {
+        const err = e instanceof Error ? e : new Error(String(e));
+        turn.onError(err);
+        reject(err);
         return;
       }
 
@@ -304,13 +358,21 @@ export class StreamingTtsClient {
         if (this.activeTurn === turn) {
           this.activeTurn = null;
         }
-        resolve();
+        reject(new TtsPipelineError("TTS flush timeout"));
       }, VOICE_PIPELINE_LIMITS.flushTimeoutMs);
     });
   }
 
   cancelTurn(): void {
     this.clearFlushTimer();
+    const sock = this.sock;
+    if (sock?.readyState === WebSocket.OPEN) {
+      try {
+        sock.send(JSON.stringify({ type: "cancel" }));
+      } catch {
+        /* ignore */
+      }
+    }
     this.activeTurn = null;
     this.audioSeq = 0;
     this.textChunksSent = 0;

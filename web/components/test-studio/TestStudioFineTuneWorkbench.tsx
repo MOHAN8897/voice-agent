@@ -13,7 +13,7 @@ import {
   DEFAULT_CALL_END_FAREWELL,
   defaultCallEndPolicy,
 } from "@/components/test-studio/useTestStudioFineTune";
-import { CompileLanguagePicker, compileLanguageLabel } from "@/components/test-studio/CompileLanguagePicker";
+import { compileLanguageLabel } from "@/components/test-studio/CompileLanguagePicker";
 import { CartesiaVoiceSelect } from "@/components/test-studio/CartesiaVoiceSelect";
 import { SarvamVoiceSelect } from "@/components/test-studio/SarvamVoiceSelect";
 
@@ -93,7 +93,6 @@ export function TestStudioFineTuneWorkbench({
   agentId,
   portal,
   language,
-  onLanguageChange,
   locked,
   activeTab,
   onTabChange,
@@ -106,7 +105,6 @@ export function TestStudioFineTuneWorkbench({
   agentId: string;
   portal: "app" | "dev";
   language: string;
-  onLanguageChange: (language: string) => void;
   locked: boolean;
   activeTab?: Tab;
   onTabChange?: (tab: Tab) => void;
@@ -124,18 +122,6 @@ export function TestStudioFineTuneWorkbench({
   const savedLang = ft.optimizerMeta.savedLanguage;
   const scriptLangMismatch = Boolean(savedLang && savedLang !== language && ft.instructions.agentScript);
   const callEnd = ft.instructions.callEndPolicy ?? defaultCallEndPolicy(language);
-
-  const onPickLanguage = (next: string) => {
-    const nextFarewell = defaultCallEndPolicy(next).farewell;
-    ft.setInstructions((p) => {
-      const current = p.callEndPolicy?.farewell || "";
-      const isDefault = !current.trim() || Object.values(DEFAULT_CALL_END_FAREWELL).includes(current);
-      const base = p.callEndPolicy ?? defaultCallEndPolicy(next);
-      if (!isDefault || current === nextFarewell) return { ...p, callEndPolicy: base };
-      return { ...p, callEndPolicy: { ...base, farewell: nextFarewell } };
-    });
-    onLanguageChange(next);
-  };
   const defaults = ft.catalog?.openai?.defaults || {};
   const modelLabels = ft.catalog?.openai?.modelLabels || {};
   const allowedModels = ensureArray<string>(ft.catalog?.openai?.allowedModels);
@@ -159,7 +145,7 @@ export function TestStudioFineTuneWorkbench({
   return (
     <SkeuoPanel
       title="Fine-tune workbench"
-      description="Saved to disk — survives server restart (session: test-studio)"
+      description="Saved to disk per agent — survives server restart"
       padding="md"
       className="console-page-enter"
     >
@@ -196,16 +182,6 @@ export function TestStudioFineTuneWorkbench({
               </SkeuoBadge>
             )}
           </div>
-        </div>
-        <div className="mt-3">
-          <CompileLanguagePicker
-            compact
-            id="fine-tune-toolbar-language"
-            value={language}
-            disabled={locked || ft.saving}
-            onChange={onPickLanguage}
-            hint={`Calling script and hangup are ${langLabel}. Default hangup is used until you save a custom farewell.`}
-          />
         </div>
       </div>
 
@@ -251,19 +227,12 @@ export function TestStudioFineTuneWorkbench({
                 breakpoint (~{ft.limits.memoryHeadroomTokens} tokens).
               </div>
 
-              <CompileLanguagePicker
-                id="fine-tune-script-language"
-                value={language}
-                disabled={locked || ft.saving}
-                onChange={onPickLanguage}
-                hint={`The calling script and spoken rules are written in ${langLabel}. Switch here, then create the agent script.`}
-              />
-              {scriptLangMismatch ? (
-                <p className="rounded-skeuo-sm border border-status-warning/30 bg-status-warning/10 px-3 py-2 text-[11px] text-text-muted">
-                  Saved script is {compileLanguageLabel(savedLang || "")}. Create agent script again to rewrite it in{" "}
-                  {langLabel}.
-                </p>
-              ) : null}
+              <p className="text-xs text-text-muted">
+                Script compiles in <span className="font-medium text-text">{langLabel}</span>
+                {scriptLangMismatch
+                  ? ` — saved script is still ${compileLanguageLabel(savedLang || "")}; create agent script again.`
+                  : "."}
+              </p>
 
               <Field
                 label="Agent brief"
@@ -290,7 +259,7 @@ export function TestStudioFineTuneWorkbench({
 
               <Field
                 label="Generated calling script"
-                hint={`Created by GPT in ${langLabel} — this is the agent brain until you regenerate`}
+                hint={`Full sectional calling script (identity, flow, objections, closing) — same quality as the compiled agent brain. Regenerates from your brief.`}
               >
                 <textarea
                   readOnly
@@ -309,15 +278,9 @@ export function TestStudioFineTuneWorkbench({
                   and used on web and phone. The model may propose hanging up; the server still validates goodbye /
                   refusal / goal / abuse. Farewell is spoken fully, then the call ends.
                 </p>
-                <div className="mt-3">
-                  <CompileLanguagePicker
-                    id="fine-tune-hangup-language"
-                    value={language}
-                    disabled={locked || ft.saving}
-                    onChange={onPickLanguage}
-                    hint={`Hangup evidence and the farewell line follow ${langLabel}.`}
-                  />
-                </div>
+                <p className="text-[11px] text-text-subtle">
+                  Farewell line uses {langLabel}.
+                </p>
                 <div className="mt-3 grid gap-2">
                   {CALL_END_REASONS.map((reason) => {
                     const on = callEnd.allowedReasons.includes(reason.id);
@@ -485,7 +448,7 @@ export function TestStudioFineTuneWorkbench({
                 <input
                   type="number"
                   min={1500}
-                  max={5000}
+                  max={10000}
                   disabled={locked}
                   className={inputCls}
                   value={Number(

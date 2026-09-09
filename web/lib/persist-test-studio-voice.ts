@@ -6,16 +6,18 @@ import { notifyTestStudioVoiceSaved } from "@/lib/voice/voice-runtime-events";
 export async function persistTestStudioVoice(opts: {
   ttsSpeaker: string;
   ttsModel?: string;
+  sessionId?: string;
 }): Promise<{ ok: boolean; error?: string }> {
   const patch: Record<string, string> = { ttsSpeaker: opts.ttsSpeaker };
   if (opts.ttsModel) patch.ttsModel = opts.ttsModel;
+  const sessionId = opts.sessionId || TEST_STUDIO_SESSION_ID;
 
   try {
     const r = await fetch("/api/settings/runtime", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ sessionId: TEST_STUDIO_SESSION_ID, ...patch }),
+      body: JSON.stringify({ sessionId, ...patch }),
     });
     if (!r.ok) {
       const j = await r.json().catch(() => ({}));

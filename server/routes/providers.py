@@ -98,7 +98,7 @@ async def validate_selection(provider_id: str, body: ValidateSelectionBody):
 
     stack = StackSelection(
         stt=_stage("stt", body.stt, provider_id if provider_id in ("sarvam", "cartesia") else "sarvam"),
-        llm=_stage("llm", body.llm, provider_id if provider_id in ("openai", "deepseek", "gemini") else "openai"),
+        llm=_stage("llm", body.llm, provider_id if provider_id in ("openai", "deepseek") else "openai"),
         tts=_stage("tts", body.tts, provider_id if provider_id in ("sarvam", "cartesia") else "sarvam"),
         language=body.language,
     )

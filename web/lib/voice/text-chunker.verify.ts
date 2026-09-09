@@ -39,7 +39,15 @@ function testOrdering() {
   assert(chunks.every((ch, i) => ch.sequenceNumber === i), "sequence order");
 }
 
+function testFirstSentenceBeforeDone() {
+  const c = new StreamingTextChunker("t4");
+  const mid = c.append("Hi Sai, thanks for calling HustleLabs. ");
+  assert(mid.length >= 1, "first sentence should flush before the 140-char hold");
+  assert(mid[0].text.includes("HustleLabs"), "first spoken sentence present");
+}
+
 testShortResponse();
 testLongResponse();
 testOrdering();
+testFirstSentenceBeforeDone();
 console.log("text-chunker.verify: ok");

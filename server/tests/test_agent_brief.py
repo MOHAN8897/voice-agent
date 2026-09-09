@@ -132,6 +132,48 @@ def test_english_brief_compiles_english_script_and_pack(monkeypatch):
     get_settings.cache_clear()
 
 
+def test_agent_brief_truncated_llm_json_returns_200(monkeypatch):
+    """Luna JSON truncation must not 500 Test Studio — fall back to a deterministic script."""
+    c = _client(monkeypatch)
+    sid = "agent-brief-trunc-json"
+    brief = "Telecaller for Sai Tech. Agent name Ravi. Qualify budget and close a site visit."
+    with patch(
+        "server.providers.openai_llm.OpenAILLMAdapter.structured_completion",
+        new=AsyncMock(
+            side_effect=ValueError(
+                "structured_completion JSON parse failed: Unterminated string starting at: line 1 column 17 (char 16)"
+            )
+        ),
+    ):
+        r = c.post("/api/instructions", json={"sessionId": sid, "agentBrief": brief})
+    assert r.status_code == 200, r.text
+    j = r.json()
+    assert j.get("compiledVersion", 0) >= 1
+    script = j.get("agentScript", "")
+    assert "Ravi" in script
+    assert "Sai Tech" in script or "Sai Tech" in (j.get("brainPromptFull") or "")
+    c.delete("/api/instructions", params={"sessionId": sid})
+    get_settings.cache_clear()
+
+
+def test_agent_brief_truncated_json_payload_uses_deterministic(monkeypatch):
+    """Salvaged empty agent_script must not be treated as a successful LLM script."""
+    c = _client(monkeypatch)
+    sid = "agent-brief-empty-salvage"
+    brief = "Telecaller for Sai Tech. Agent name Ravi."
+    with patch(
+        "server.providers.openai_llm.OpenAILLMAdapter.structured_completion",
+        new=AsyncMock(return_value={"agent_script": "", "agent_name": "Ravi", "company_name": "Sai Tech"}),
+    ):
+        r = c.post("/api/instructions", json={"sessionId": sid, "agentBrief": brief})
+    assert r.status_code == 200, r.text
+    script = r.json().get("agentScript", "")
+    assert "WORK SCOPE" in script
+    assert "Ravi" in script
+    c.delete("/api/instructions", params={"sessionId": sid})
+    get_settings.cache_clear()
+
+
 def test_agent_brief_deterministic_fallback(monkeypatch):
     c = _client(monkeypatch)
     sid = "agent-brief-fallback"

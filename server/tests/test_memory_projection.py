@@ -15,7 +15,7 @@ def test_projection_priority_and_slots():
         include_summary=False,
         max_tokens=150,
     )
-    assert "[Facts]" in text
+    assert "[Facts — do not re-ask]" in text
     assert "Ravi" in text
     assert "[Preferences]" in text
     assert "[Summary]" not in text
@@ -51,7 +51,7 @@ def test_projection_truncates_to_budget():
     from server.agent.brain_prompt_composer import estimate_tokens
 
     assert estimate_tokens(text) <= 55
-    assert "[Facts]" in text
+    assert "[Facts" in text
 
 
 def test_empty_snapshot_renders_empty():

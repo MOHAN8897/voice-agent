@@ -1,4 +1,4 @@
-/** Conservative leftover-digit expander. Mirror of server/services/spoken_numbers.py. */
+/** Conservative leftover-digit expander + phone strip. Mirror of server/services/spoken_numbers.py. */
 
 const ONES = [
   "zero",
@@ -66,10 +66,6 @@ function decimalWords(raw: string): string {
   return cardinalWords(Number.parseInt(cleaned || "0", 10) || 0);
 }
 
-function digitWords(digits: string): string {
-  return [...digits].filter((ch) => /\d/.test(ch)).map((ch) => ONES[Number(ch)]).join(" ");
-}
-
 function yearWords(year: number): string {
   if (year >= 2000 && year <= 2099) {
     const rest = year - 2000;
@@ -99,23 +95,43 @@ function clockWords(hour: number, minute: number, ampm: string): string {
   return `${cardinalWords(hour12)} ${cardinalWords(minute)} ${label}`;
 }
 
+export function stripSpokenPhoneNumbers(text: string): string {
+  if (!text) return text;
+  let out = text.replace(
+    /\b(?:call|phone|mobile|whatsapp|reach)(?:\s+us)?\s+at\s+[\d\s\-+().]{8,}/gi,
+    ""
+  );
+  out = out.replace(/(?<!\d)(?:\+91[-\s]?)?\d{10}(?!\d)/g, "");
+  out = out.replace(/(?:\+?\d{1,3}[\s.-]?)?(?:\(?\d{2,4}\)?[\s.-]?)?\d{5,12}\b/g, "");
+  return out.replace(/\s{2,}/g, " ").replace(/\s+([,.!?])/g, "$1").trim();
+}
+
 export function expandSpokenNumbers(text: string): string {
   if (!text || !/\d/.test(text)) return text;
-  let out = text.replace(/(?<!\d)(?:\+91[-\s]?)?(\d{10})(?!\d)/g, (_, d: string) => digitWords(d));
+  let out = text.replace(/\$\s*(\d[\d,]*(?:\.\d+)?)/g, (_m, n: string) => `dollars ${decimalWords(n)}`);
+  out = out.replace(/(?:₹|rs\.?|inr)\s*(\d[\d,]*(?:\.\d+)?)/gi, (_m, n: string) => `rupees ${decimalWords(n)}`);
+  out = out.replace(
+    /(?<!\d)(\d[\d,]*(?:\.\d+)?)\s*(lakh|lakhs|crore|crores)\b/gi,
+    (_m, n: string, unit: string) => {
+      const u = unit.toLowerCase().startsWith("lakh") ? "lakh" : "crore";
+      return `${decimalWords(n)} ${u}`;
+    }
+  );
   out = out.replace(
     /(otp|pin|cvv|passcode|code)\b[^0-9]{0,16}(\d{4,6})(?!\d)/gi,
-    (_m, label: string, digits: string) => `${label} ${digitWords(digits)}`
+    (_m, label: string, digits: string) => `${label} ${[...digits].map((d) => ONES[Number(d)]).join(" ")}`
   );
-  out = out.replace(/(?:₹|rs\.?|inr)\s*(\d[\d,]*(?:\.\d+)?)/gi, (_m, n: string) => decimalWords(n));
   out = out.replace(
-    /(?<!\d)(\d[\d,]*(?:\.\d+)?)\s*(paisa|rupees?|lakh|lakhs|crore|crores|rs)\b/gi,
+    /(?<!\d)(\d[\d,]*(?:\.\d+)?)\s*(paisa|rupees?|rs)\b/gi,
     (_m, n: string, unit: string) => `${decimalWords(n)} ${unit}`
   );
   out = out.replace(/\b(\d{1,2}):(\d{2})\s*(am|pm)?\b/gi, (_m, h: string, min: string, ap?: string) =>
     clockWords(Number(h), Number(min), ap || "")
   );
   out = out.replace(/\b((?:19|20)\d{2})\b/g, (_m, y: string) => yearWords(Number(y)));
-  out = out.replace(/(?<!\d)(\d{7,9})(?!\d)/g, (_m, d: string) => digitWords(d));
+  out = out.replace(/(?<!\d)(\d{7,9})(?!\d)/g, (_m, d: string) =>
+    [...d].map((ch) => ONES[Number(ch)]).join(" ")
+  );
   out = out.replace(/(?<!\d)(\d{3,6})(?!\d)/g, (m, digits: string, offset: number, full: string) => {
     const prefix = full.slice(Math.max(0, offset - 24), offset);
     if (/\b(plot|flat|unit|block|floor|phase)\s*$/i.test(prefix)) return digits;
@@ -124,3 +140,52 @@ export function expandSpokenNumbers(text: string): string {
   });
   return out;
 }
+
+const ABBREV_DOTS: Array<[RegExp, string]> = [
+  [/\bRs\./gi, "rupees"],
+  [/\bNo\./gi, "number"],
+  [/\bDr\./gi, "Doctor"],
+  [/\bMr\./gi, "Mister"],
+  [/\bMrs\./gi, "Missus"],
+  [/\bMs\./gi, "Miss"],
+  [/\bLtd\./gi, "Limited"],
+  [/\bInc\./gi, "Incorporated"],
+  [/\bvs\./gi, "versus"],
+  [/\be\.g\./gi, "for example"],
+  [/\betc\./gi, "etcetera"],
+];
+
+const TERMINAL_PUNCT = new Set([".", "?", "!", "।", "！", "？"]);
+
+/**
+ * Prep text for Cartesia Sonic + Sarvam Bulbul.
+ * Keep sentence punctuation (. ? ! ,) — both engines use it for pacing.
+ * Only neutralize TTS-hostile dots: ellipses, abbreviations, bare decimals,
+ * and letter.letter initialism separators.
+ */
+export function sanitizeTtsPunctuation(text: string): string {
+  if (!text) return text;
+  let out = text.replace(/\.{2,}/g, ",");
+  for (const [pat, repl] of ABBREV_DOTS) out = out.replace(pat, repl);
+  out = out.replace(/(?<!\d)(\d[\d,]*)\.(\d{1,4})(?!\d)/g, (_m, whole: string, frac: string) =>
+    decimalWords(`${whole}.${frac}`)
+  );
+  // A.B → A B (not sentence periods)
+  out = out.replace(/(?<=\b[A-Za-z])\.(?=[A-Za-z]\b)/g, " ");
+  out = out.replace(/\s{2,}/g, " ").replace(/\s+([,.!?।])/g, "$1").replace(/^[, ]+|[, ]+$/g, "").trim();
+  return ensureTerminalPunctuation(out);
+}
+
+export function ensureTerminalPunctuation(text: string): string {
+  const cleaned = (text || "").trim();
+  if (!cleaned) return cleaned;
+  if (TERMINAL_PUNCT.has(cleaned[cleaned.length - 1]!)) return cleaned;
+  return `${cleaned}.`;
+}
+
+export function prepareSpokenReply(text: string): string {
+  return sanitizeTtsPunctuation(expandSpokenNumbers(stripSpokenPhoneNumbers(text || "")));
+}
+
+/** @deprecated use prepareSpokenReply */
+export { prepareSpokenReply as expandSpokenNumbersForTts };

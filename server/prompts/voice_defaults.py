@@ -99,15 +99,18 @@ Hesitation is not a request to pitch. This call has no history from earlier call
 
 # OpenAI model catalog shown in Fine-tune Console (slug → UI label)
 OPENAI_MODEL_CATALOG: list[dict[str, str]] = [
+    {"id": "gpt-realtime-2.1-mini", "label": "GPT Realtime 2.1 Mini — Live voice (text) ⭐", "tier": "realtime"},
+    {"id": "gpt-realtime-2.1", "label": "GPT Realtime 2.1 — Live voice (text)", "tier": "realtime"},
+    {"id": "gpt-realtime-2", "label": "GPT Realtime 2 — Live voice (text)", "tier": "realtime"},
     {"id": "gpt-5.5", "label": "GPT-5.5 — Frontier intelligence ⭐⭐⭐⭐⭐", "tier": "flagship"},
     {"id": "gpt-5.4", "label": "GPT-5.4 — Professional workhorse ⭐⭐⭐⭐⭐", "tier": "balanced"},
     {"id": "gpt-5", "label": "GPT-5 — Earlier flagship ⭐⭐⭐⭐", "tier": "legacy"},
-    {"id": "gpt-5.6-luna", "label": "GPT-5.6 Luna — Fast & low-cost (voice) 🥉", "tier": "fast"},
+    {"id": "gpt-5.6-luna", "label": "GPT-5.6 Luna — HTTP compile & post-call 🥉", "tier": "fast"},
 ]
 
 OPENAI_MODEL_IDS: list[str] = [m["id"] for m in OPENAI_MODEL_CATALOG]
 
-DEFAULT_OPENAI_MODEL = "gpt-5.6-luna"  # lowest latency for live voice; user can switch to gpt-5.5 for max quality
+DEFAULT_OPENAI_MODEL = "gpt-realtime-2.1-mini"
 
 # Per-model recommended brain settings (OpenAI voice-agent guidance, Feb 2026).
 # GPT-5 family uses reasoning.effort instead of temperature on the Responses API.
@@ -127,7 +130,7 @@ VOICE_PIPELINE_PRESETS: dict[str, dict] = {
             "sttSilenceMs": 500,
             "sttThreshold": 0.30,
             "sttStreamType": "fast",
-            "bargeMinWords": 3,
+            "bargeMinWords": 4,
             "bargeRequireVad": True,
             "ttsMinBuffer": 30,
             "ttsMaxChunk": 80,
@@ -163,6 +166,36 @@ VOICE_PIPELINE_PRESETS: dict[str, dict] = {
             "ttsMaxChunk": 80,
         },
     },
+    "speakerphone": {
+        "name": "Mobile speakerphone",
+        "hint": "Phone on loudspeaker — long echo tail, strict barge-in, slower endpointing.",
+        "values": {
+            "ttsPace": 1.0,
+            "ttsTemperature": 0.75,
+            "sttSilenceMs": 650,
+            "sttThreshold": 0.34,
+            "sttStreamType": "fast",
+            "bargeMinWords": 5,
+            "bargeRequireVad": False,
+            "ttsMinBuffer": 30,
+            "ttsMaxChunk": 80,
+        },
+    },
+    "mobile_handset": {
+        "name": "Mobile handset (direct mic)",
+        "hint": "Hold phone to ear — balanced VAD and barge-in; default for mobile browser.",
+        "values": {
+            "ttsPace": 1.0,
+            "ttsTemperature": 0.80,
+            "sttSilenceMs": 550,
+            "sttThreshold": 0.31,
+            "sttStreamType": "fast",
+            "bargeMinWords": 4,
+            "bargeRequireVad": True,
+            "ttsMinBuffer": 30,
+            "ttsMaxChunk": 80,
+        },
+    },
     "expressive": {
         "name": "Expressive",
         "hint": "More vocal variety at pace 1.0× — still safe barge-in defaults.",
@@ -189,32 +222,53 @@ def voice_preset_values(preset_id: str | None) -> dict:
 
 
 OPENAI_MODEL_PRESETS: dict[str, dict] = {
+    "gpt-realtime-2.1-mini": {
+        "name": "Realtime Voice",
+        "openaiReasoningEffort": "none",
+        "openaiMaxTokens": 96,
+            "brainPromptBudgetTokens": 6000,
+        "hint": "Default live path — persistent OpenAI Realtime text session. STT/TTS stay independently selected.",
+    },
+    "gpt-realtime-2.1": {
+        "name": "Realtime Quality",
+        "openaiReasoningEffort": "none",
+        "openaiMaxTokens": 96,
+            "brainPromptBudgetTokens": 6000,
+        "hint": "Full Realtime 2.1 text session. Use mini unless you need the larger live model.",
+    },
+    "gpt-realtime-2": {
+        "name": "Realtime 2",
+        "openaiReasoningEffort": "none",
+        "openaiMaxTokens": 96,
+            "brainPromptBudgetTokens": 6000,
+        "hint": "Previous Realtime generation. Prefer gpt-realtime-2.1-mini for live voice.",
+    },
     "gpt-5.6-luna": {
         "name": "Voice Fast",
         "openaiReasoningEffort": "none",
-        "openaiMaxTokens": 280,
-        "brainPromptBudgetTokens": 2500,
+        "openaiMaxTokens": 96,
+            "brainPromptBudgetTokens": 6000,
         "hint": "Best for live Telugu voice — lowest latency. OpenAI recommends reasoning effort 'none' for voice.",
     },
     "gpt-5.5": {
         "name": "Quality",
         "openaiReasoningEffort": "low",
         "openaiMaxTokens": 360,
-        "brainPromptBudgetTokens": 2500,
+            "brainPromptBudgetTokens": 6000,
         "hint": "Highest answer quality with modest latency. Reasoning 'low' balances speed and depth.",
     },
     "gpt-5.4": {
         "name": "Balanced",
         "openaiReasoningEffort": "low",
         "openaiMaxTokens": 320,
-        "brainPromptBudgetTokens": 2500,
+            "brainPromptBudgetTokens": 6000,
         "hint": "Professional workhorse — good for longer explanations when latency is less critical.",
     },
     "gpt-5": {
         "name": "Legacy",
         "openaiReasoningEffort": "low",
         "openaiMaxTokens": 300,
-        "brainPromptBudgetTokens": 2500,
+            "brainPromptBudgetTokens": 6000,
         "hint": "Earlier GPT-5 flagship. Use gpt-5.6-luna for voice or gpt-5.5 for max quality.",
     },
 }

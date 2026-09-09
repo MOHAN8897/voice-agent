@@ -28,6 +28,24 @@ CARTESIA_PRO_USD_PER_CREDIT = 5.0 / 100_000.0
 CARTESIA_TTS_USD_PER_M_CHARS = CARTESIA_PRO_USD_PER_CREDIT * 1_000_000.0  # $50/M
 
 OPENAI_USD_PER_M: dict[str, dict[str, float]] = {
+    "gpt-realtime-2.1-mini": {
+        "input": 0.60,
+        "cached_input": 0.06,
+        "cache_write": 0.60,
+        "output": 2.40,
+    },
+    "gpt-realtime-2.1": {
+        "input": 4.00,
+        "cached_input": 0.40,
+        "cache_write": 4.00,
+        "output": 24.00,
+    },
+    "gpt-realtime-2": {
+        "input": 4.00,
+        "cached_input": 0.40,
+        "cache_write": 4.00,
+        "output": 24.00,
+    },
     "gpt-5.6-luna": {
         "input": 0.20,
         "cached_input": 0.02,
@@ -74,7 +92,7 @@ def resolve_stt_provider(*, provider: str, model: str = "") -> str:
 
 
 def openai_rates_for_model(model: str | None) -> dict[str, float]:
-    m = (model or "gpt-5.6-luna").lower().strip()
+    m = (model or "gpt-realtime-2.1-mini").lower().strip()
     if m in OPENAI_USD_PER_M:
         return OPENAI_USD_PER_M[m]
     for key in sorted(OPENAI_USD_PER_M, key=len, reverse=True):
@@ -136,6 +154,33 @@ def build_pricing_metadata(fx_rate_inr: float) -> dict[str, Any]:
             "usd_per_unit": tts_usd_per_1k,
             "inr_per_1k_chars": SARVAM_TTS_INR_PER_1K_CHARS,
             "billing": "characters",
+            "updated_at": PRICING_UPDATED_AT,
+        },
+        "openai:gpt-realtime-2.1-mini": {
+            "unit": "1m_tokens",
+            "usd_input_per_m": OPENAI_USD_PER_M["gpt-realtime-2.1-mini"]["input"],
+            "usd_cached_input_per_m": OPENAI_USD_PER_M["gpt-realtime-2.1-mini"]["cached_input"],
+            "usd_cache_write_per_m": OPENAI_USD_PER_M["gpt-realtime-2.1-mini"]["cache_write"],
+            "usd_output_per_m": OPENAI_USD_PER_M["gpt-realtime-2.1-mini"]["output"],
+            "billing": "tokens_with_cache",
+            "updated_at": PRICING_UPDATED_AT,
+        },
+        "openai:gpt-realtime-2.1": {
+            "unit": "1m_tokens",
+            "usd_input_per_m": OPENAI_USD_PER_M["gpt-realtime-2.1"]["input"],
+            "usd_cached_input_per_m": OPENAI_USD_PER_M["gpt-realtime-2.1"]["cached_input"],
+            "usd_cache_write_per_m": OPENAI_USD_PER_M["gpt-realtime-2.1"]["cache_write"],
+            "usd_output_per_m": OPENAI_USD_PER_M["gpt-realtime-2.1"]["output"],
+            "billing": "tokens_with_cache",
+            "updated_at": PRICING_UPDATED_AT,
+        },
+        "openai:gpt-realtime-2": {
+            "unit": "1m_tokens",
+            "usd_input_per_m": OPENAI_USD_PER_M["gpt-realtime-2"]["input"],
+            "usd_cached_input_per_m": OPENAI_USD_PER_M["gpt-realtime-2"]["cached_input"],
+            "usd_cache_write_per_m": OPENAI_USD_PER_M["gpt-realtime-2"]["cache_write"],
+            "usd_output_per_m": OPENAI_USD_PER_M["gpt-realtime-2"]["output"],
+            "billing": "tokens_with_cache",
             "updated_at": PRICING_UPDATED_AT,
         },
         "openai:gpt-5.6-luna": {
@@ -336,5 +381,5 @@ def estimate_turn_cost(
         "fx_rate_inr": fx,
         "resolved_tts_provider": resolve_tts_provider(provider=tts_provider, model=tts_model),
         "resolved_stt_provider": resolve_stt_provider(provider=stt_provider, model=stt_model),
-        "llm_model": llm_model or "gpt-5.6-luna",
+        "llm_model": llm_model or "gpt-realtime-2.1-mini",
     }

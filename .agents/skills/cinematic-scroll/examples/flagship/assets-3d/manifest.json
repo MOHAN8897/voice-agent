@@ -1,0 +1,42 @@
+{
+  "version": 2,
+  "basePath": "assets-3d/",
+  "chapters": {
+    "object": {
+      "label": "Object",
+      "runtime": "object/object.glb",
+      "iosAr": null,
+      "fallbackPoster": "object/poster.webp",
+      "height": 2.1,
+      "lift": 0.55,
+      "spin": 0.3,
+      "pivot": "base-center",
+      "cameraNodes": []
+    },
+    "world": {
+      "label": "World",
+      "runtime": "world/world.glb",
+      "iosAr": null,
+      "fallbackPoster": "world/poster.webp",
+      "height": 6.5,
+      "cameraNodes": ["Camera_Start", "Camera_Mid", "Camera_End"]
+    },
+    "field": {
+      "label": "Field",
+      "runtime": "procedural",
+      "shader": "aurora-particle-field",
+      "fallbackPoster": "field/poster.webp",
+      "scale": 1.0
+    },
+    "figure": {
+      "label": "Figure",
+      "runtime": "figure/dancer.glb",
+      "iosAr": null,
+      "fallbackPoster": "figure/poster.webp",
+      "height": 1.85,
+      "animations": ["SambaDance"],
+      "stripRootMotion": true,
+      "cameraNodes": []
+    }
+  }
+}

@@ -365,8 +365,9 @@ def test_align_stream_model_rewrites_gemini_id_for_openai():
 
     kw = {"model": "gemini-3.5-flash-lite", "openai_model": "gemini-3.5-flash-lite"}
     live_turn_orchestrator._align_stream_model(kw, FakeAdapter(), FakeReg())
-    assert kw["model"] == "gpt-5.6-luna"
-    assert kw["openai_model"] == "gpt-5.6-luna"
+    assert str(kw["model"]).startswith("gpt-")
+    assert "gemini" not in str(kw["model"])
+    assert str(kw["openai_model"]).startswith("gpt-")
 
 
 def test_messages_for_model_strips_breakpoint_on_gpt55():

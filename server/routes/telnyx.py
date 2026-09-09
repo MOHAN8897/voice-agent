@@ -1,23 +1,66 @@
 """Telnyx webhook + status."""
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import Any
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
 
+from server.config.env import get_settings
 from server.services.pstn_debug import log_pstn, mark
 from server.services.telnyx_client import TelnyxApiError, TelnyxClient, telnyx_call_registry, telnyx_stream_tokens
+from server.services.telnyx_webhook_verify import TelnyxSignatureError, parse_verified_webhook_json
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
+# Bounded stream start/retry — never infinite.
+_STREAM_MAX_ATTEMPTS = 3
+_STREAM_MAX_FAILURE_RETRIES = 3
+_stream_op_locks: dict[str, asyncio.Lock] = {}
 
 VOICE_CHECK_PHRASE = (
     "Telnyx voice check. This is a test message only. "
     "If you can hear this clearly, Telnyx audio to your phone is working. "
     "Signal test one. Signal test two. Signal test three."
 )
+
+
+def _stream_lock(call_control_id: str) -> asyncio.Lock:
+    lock = _stream_op_locks.get(call_control_id)
+    if lock is None:
+        lock = asyncio.Lock()
+        _stream_op_locks[call_control_id] = lock
+    return lock
+
+
+def _stream_snapshot(row: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "stream_configured": bool(row.get("stream_configured") or row.get("stream_url")),
+        "stream_start_requested": bool(row.get("stream_start_requested")),
+        "stream_connected": bool(row.get("stream_connected")),
+        "stream_failed": bool(row.get("stream_failed")),
+        "stream_state": row.get("stream_state") or "unknown",
+        "retry_count": int(row.get("stream_retry_count") or 0),
+    }
+
+
+def _call_ended(row: dict[str, Any]) -> bool:
+    """True when the Telnyx leg is already hung up / failed — do not restart media."""
+    if row.get("ended"):
+        return True
+    if row.get("hangup_cause") is not None:
+        return True
+    status = str(row.get("status") or "").lower()
+    return status in {"hangup", "failed", "call.hangup", "call.failed"}
+
+
+def _format_telnyx_err(exc: TelnyxApiError) -> str:
+    detail = (exc.body or "").strip().replace("\n", " ")
+    if detail:
+        return f"{exc} {detail[:240]}"
+    return str(exc)
 
 
 async def _run_voice_check(call_control_id: str) -> None:
@@ -56,42 +99,305 @@ async def _run_voice_check(call_control_id: str) -> None:
         logger.warning("[TELNYX] voice_check speak failed %s: %s", call_control_id, str(exc)[:200])
 
 
-async def _ensure_telnyx_streaming(call_control_id: str) -> None:
-    """Start bidirectional stream when call is answered (only if dial-time stream is missing)."""
+async def _ensure_telnyx_streaming(
+    call_control_id: str,
+    *,
+    reason: str = "answered",
+) -> None:
+    """Ensure bidirectional media is actually started — never treat stream_url alone as active.
+
+    States (registry):
+      stream_configured      — stream_url known (dial-time or built)
+      stream_start_requested — start_streaming issued / in flight
+      stream_connected       — Telnyx streaming.started or WS media start
+      stream_failed          — last start/stream failed
+      stream_retrying        — recovery in progress
+    """
     if not call_control_id:
         return
-    row = telnyx_call_registry.get(call_control_id) or {}
-    if row.get("stream_started") or row.get("stream_url"):
-        return
 
-    client = TelnyxClient()
-    stream_url = str(row.get("stream_url") or "")
-    if not stream_url:
-        token = telnyx_stream_tokens.create(agent_id=row.get("agent_id"), tier=row.get("tier"))
-        stream_url = client.build_stream_ws_url(token=token)
+    async with _stream_lock(call_control_id):
+        row = telnyx_call_registry.get(call_control_id) or {}
+        before = _stream_snapshot(row)
+        if row.get("skip_stream") or row.get("voice_check"):
+            return
+        if _call_ended(row):
+            log_pstn(
+                "PSTN_STREAM",
+                call_id=call_control_id,
+                control=call_control_id,
+                event="ensure_skip_ended",
+                reason=reason,
+                hangup_cause=row.get("hangup_cause"),
+                status=row.get("status"),
+                **before,
+            )
+            return
 
+        # Already have a live media stream — do not restart.
+        if row.get("stream_connected"):
+            log_pstn(
+                "PSTN_STREAM",
+                call_id=call_control_id,
+                control=call_control_id,
+                event="ensure_skip_connected",
+                reason=reason,
+                **before,
+            )
+            return
+
+        retry_count = int(row.get("stream_retry_count") or 0)
+        if reason in ("streaming_failed", "retry") and retry_count >= _STREAM_MAX_FAILURE_RETRIES:
+            telnyx_call_registry.upsert(
+                call_control_id,
+                {
+                    "stream_failed": True,
+                    "stream_connected": False,
+                    "stream_state": "terminal_failed",
+                    "status": "stream-error",
+                    "last_event": "streaming_terminal_failed",
+                },
+            )
+            after = _stream_snapshot(telnyx_call_registry.get(call_control_id) or {})
+            log_pstn(
+                "PSTN_STREAM",
+                call_id=call_control_id,
+                control=call_control_id,
+                event="terminal_failed",
+                reason=reason,
+                before=before,
+                after=after,
+                retry_count=retry_count,
+            )
+            logger.error(
+                "[PSTN_STREAM] terminal failure control=%s retries=%s — call has no usable media",
+                call_control_id,
+                retry_count,
+            )
+            return
+
+        client = TelnyxClient()
+        stream_url = str(row.get("stream_url") or "").strip()
+        if not stream_url:
+            token = telnyx_stream_tokens.create(
+                agent_id=row.get("agent_id"),
+                tier=row.get("tier"),
+                call_control_id=call_control_id,
+                direction=row.get("direction") or "inbound",
+                source_session_id=row.get("source_session_id"),
+                inherit_test_studio_config=row.get("inherit_test_studio_config", False),
+                stack_override=row.get("stack_override"),
+                language=row.get("language"),
+            )
+            stream_url = client.build_stream_ws_url(token=token)
+        if not stream_url.startswith("wss://"):
+            telnyx_call_registry.upsert(call_control_id, {"stream_failed": True, "stream_error": "Public WSS URL required"})
+            raise ValueError("Telnyx requires a public HTTPS API/tunnel URL")
+
+        telnyx_call_registry.upsert(
+            call_control_id,
+            {
+                "stream_url": stream_url,
+                "stream_configured": True,
+                "stream_start_requested": True,
+                "stream_connected": False,
+                "stream_failed": False,
+                "stream_state": "retrying" if reason in ("streaming_failed", "retry") else "start_requested",
+                "stream_retry_reason": reason,
+            },
+        )
+        log_pstn(
+            "PSTN_STREAM",
+            call_id=call_control_id,
+            control=call_control_id,
+            event="start_requested",
+            reason=reason,
+            before=before,
+            stream_url=stream_url.split("?", 1)[0],
+            retry_count=retry_count,
+        )
+
+        last_err = ""
+        for attempt in range(_STREAM_MAX_ATTEMPTS):
+            live = telnyx_call_registry.get(call_control_id) or {}
+            if _call_ended(live):
+                log_pstn(
+                    "PSTN_STREAM",
+                    call_id=call_control_id,
+                    control=call_control_id,
+                    event="ensure_abort_ended",
+                    reason=reason,
+                    attempt=attempt + 1,
+                    hangup_cause=live.get("hangup_cause"),
+                )
+                return
+            try:
+                await client.start_streaming(call_control_id, stream_url=stream_url)
+                telnyx_call_registry.upsert(
+                    call_control_id,
+                    {
+                        "stream_start_requested": True,
+                        "stream_api_ok": True,
+                        "stream_url": stream_url,
+                        # NOT connected until streaming.started / WS start
+                        "stream_connected": False,
+                        "stream_failed": False,
+                        "stream_state": "api_ok_awaiting_connect",
+                        "last_event": "streaming_start",
+                    },
+                )
+                after = _stream_snapshot(telnyx_call_registry.get(call_control_id) or {})
+                log_pstn(
+                    "PSTN_STREAM",
+                    call_id=call_control_id,
+                    control=call_control_id,
+                    event="stream_start_requested",
+                    reason=reason,
+                    attempt=attempt + 1,
+                    before=before,
+                    after=after,
+                    retry_count=retry_count,
+                )
+                return
+            except TelnyxApiError as exc:
+                last_err = _format_telnyx_err(exc)[:280]
+                # 422 after hangup / dead leg — further retries are noise.
+                if exc.status == 422 or _call_ended(telnyx_call_registry.get(call_control_id) or {}):
+                    logger.warning(
+                        "[PSTN_STREAM] start aborted control=%s attempt=%s reason=%s: %s",
+                        call_control_id,
+                        attempt + 1,
+                        reason,
+                        last_err,
+                    )
+                    log_pstn(
+                        "PSTN_RETRY",
+                        call_id=call_control_id,
+                        control=call_control_id,
+                        event="stream_start_aborted",
+                        attempt=attempt + 1,
+                        reason=reason,
+                        error=last_err,
+                        status=exc.status,
+                    )
+                    break
+                logger.warning(
+                    "[PSTN_STREAM] start failed control=%s attempt=%s reason=%s: %s",
+                    call_control_id,
+                    attempt + 1,
+                    reason,
+                    last_err,
+                )
+                log_pstn(
+                    "PSTN_RETRY",
+                    call_id=call_control_id,
+                    control=call_control_id,
+                    event="stream_start_attempt_failed",
+                    attempt=attempt + 1,
+                    reason=reason,
+                    error=last_err,
+                )
+                await asyncio.sleep(0.35 * (2**attempt))
+            except Exception as exc:
+                # Transport / unexpected errors must not kill the answered webhook without retry.
+                last_err = f"{exc.__class__.__name__}: {exc}"[:280]
+                logger.warning(
+                    "[PSTN_STREAM] start exception control=%s attempt=%s reason=%s: %s",
+                    call_control_id,
+                    attempt + 1,
+                    reason,
+                    last_err,
+                )
+                log_pstn(
+                    "PSTN_RETRY",
+                    call_id=call_control_id,
+                    control=call_control_id,
+                    event="stream_start_attempt_failed",
+                    attempt=attempt + 1,
+                    reason=reason,
+                    error=last_err,
+                )
+                if _call_ended(telnyx_call_registry.get(call_control_id) or {}):
+                    break
+                await asyncio.sleep(0.35 * (2**attempt))
+
+        current = telnyx_call_registry.get(call_control_id) or {}
+        if current.get("stream_connected") or _call_ended(current):
+            return
+
+        new_retry = retry_count + 1
+        telnyx_call_registry.upsert(
+            call_control_id,
+            {
+                "stream_error": last_err,
+                "stream_failed": True,
+                "stream_connected": False,
+                "stream_api_ok": False,
+                "stream_state": "failed",
+                "stream_retry_count": new_retry,
+                "status": "stream-error",
+                "last_event": "streaming_start_failed",
+            },
+        )
+        after = _stream_snapshot(telnyx_call_registry.get(call_control_id) or {})
+        log_pstn(
+            "PSTN_STREAM",
+            call_id=call_control_id,
+            control=call_control_id,
+            event="stream_failed",
+            reason=reason,
+            before=before,
+            after=after,
+            retry_count=new_retry,
+            error=last_err,
+        )
+
+
+async def _answer_inbound(call_control_id: str) -> None:
+    """Keep the webhook ACK fast; retries share a carrier idempotency command ID."""
     try:
-        await client.start_streaming(call_control_id, stream_url=stream_url)
-        telnyx_call_registry.upsert(
-            call_control_id,
-            {"stream_started": True, "stream_url": stream_url, "last_event": "streaming_start"},
-        )
-        log_pstn("stream.ensure", timer_key=call_control_id, control=call_control_id, stream_url=stream_url)
-    except TelnyxApiError as exc:
-        logger.warning("[TELNYX] streaming_start failed %s: %s", call_control_id, str(exc)[:200])
-        telnyx_call_registry.upsert(
-            call_control_id,
-            {"stream_error": str(exc)[:200], "last_event": "streaming_start_failed"},
-        )
+        client = TelnyxClient()
+        for attempt in range(3):
+            row = telnyx_call_registry.get(call_control_id) or {}
+            if _call_ended(row) or row.get("answered_handled"):
+                return
+            try:
+                await client.answer(call_control_id)
+                telnyx_call_registry.upsert(call_control_id, {"answer_api_ok": True, "answer_error": None})
+                log_pstn("answer.accepted", control=call_control_id)
+                return
+            except TelnyxApiError as exc:
+                retryable = exc.status is None or exc.status == 429 or exc.status >= 500
+                if not retryable or attempt == 2:
+                    raise
+                await asyncio.sleep(0.25 * (2 ** attempt))
+    except Exception as exc:
+        telnyx_call_registry.upsert(call_control_id, {"answer_error": str(exc)[:200], "answer_failed": True})
+        log_pstn("answer.failed", control=call_control_id, error=str(exc)[:200])
+        logger.exception("[TELNYX] inbound answer failed control=%s", call_control_id)
 
 
 @router.post("/api/telnyx/webhook")
 @router.get("/api/telnyx/webhook")
 async def telnyx_webhook(request: Request):
+    settings = get_settings()
+    if request.method == "GET":
+        return {"ok": True}
+
+    raw = await request.body()
     try:
-        body: dict[str, Any] = await request.json()
-    except Exception:
-        body = dict(request.query_params)
+        require_key = str(settings.app_environment or "").lower() in {"production", "staging"}
+        body = parse_verified_webhook_json(
+            payload=raw,
+            headers=request.headers,
+            public_key=settings.telnyx_public_key,
+            require_key=require_key,
+        )
+    except TelnyxSignatureError as exc:
+        logger.warning("[TELNYX] webhook rejected: %s", str(exc)[:200])
+        raise HTTPException(status_code=403, detail="invalid telnyx signature") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="invalid webhook json") from exc
 
     data = body.get("data") or body
     payload = data.get("payload") or data
@@ -137,27 +443,136 @@ async def telnyx_webhook(request: Request):
     if event_type == "call.initiated":
         mark(str(call_control_id))
         log_pstn("webhook.initiated", timer_key=str(call_control_id), control=call_control_id)
+        row = telnyx_call_registry.get(str(call_control_id)) or {}
+        if call_control_id and row.get("direction") == "inbound" and not _call_ended(row):
+            claimed = await telnyx_call_registry.atomic_check_and_set(str(call_control_id), "answer_requested")
+            if claimed:
+                asyncio.create_task(_answer_inbound(str(call_control_id)), name=f"telnyx-answer-{str(call_control_id)[:24]}")
     elif event_type == "call.answered":
+        # answered_handled only dedupes answer side-effects; streaming recovery stays
+        # available via streaming.failed even after this claim.
+        claimed = await telnyx_call_registry.atomic_check_and_set(
+            str(call_control_id), "answered_handled", True
+        )
+        if not claimed:
+            logger.info("[TELNYX] duplicate call.answered ignored %s", call_control_id)
+            return {"ok": True}
         log_pstn("webhook.answered", timer_key=str(call_control_id), control=call_control_id)
         row = telnyx_call_registry.get(str(call_control_id)) or {}
         if row.get("voice_check"):
             await _run_voice_check(str(call_control_id))
         else:
-            await _ensure_telnyx_streaming(str(call_control_id))
+            # Always verify/start media — dial-time stream_url is NOT proof of active stream.
+            # Run off the webhook await path so Telnyx transport blips can retry without
+            # stalling the answered ACK (and without holding the event loop on one request).
+            cid = str(call_control_id)
+
+            async def _bg_ensure() -> None:
+                try:
+                    await _ensure_telnyx_streaming(cid, reason="answered")
+                except Exception:
+                    logger.exception("[PSTN_STREAM] background ensure crashed control=%s", cid)
+
+            asyncio.create_task(_bg_ensure(), name=f"telnyx-ensure-{cid[:24]}")
     elif event_type in ("streaming.started", "call.streaming.started"):
-        telnyx_call_registry.upsert(str(call_control_id), {"stream_started": True})
-        log_pstn("webhook.streaming_started", timer_key=str(call_control_id), control=call_control_id)
-    elif event_type in ("streaming.failed", "call.streaming.failed"):
-        log_pstn(
-            "webhook.streaming_failed",
-            timer_key=str(call_control_id),
-            control=call_control_id,
-            reason=payload.get("failure_reason") or payload.get("reason"),
+        before = _stream_snapshot(telnyx_call_registry.get(str(call_control_id)) or {})
+        telnyx_call_registry.upsert(
+            str(call_control_id),
+            {
+                "stream_connected": True,
+                "stream_started": True,  # legacy alias
+                "stream_failed": False,
+                "stream_state": "connected",
+                "status": "streaming",
+            },
         )
-        logger.warning("[TELNYX] streaming failed %s %s", call_control_id, payload)
+        after = _stream_snapshot(telnyx_call_registry.get(str(call_control_id)) or {})
+        log_pstn(
+            "PSTN_STREAM",
+            call_id=call_control_id,
+            control=call_control_id,
+            event="stream_connected",
+            before=before,
+            after=after,
+        )
+        log_pstn("webhook.streaming_started", timer_key=str(call_control_id), control=call_control_id)
+    elif event_type in ("streaming.failed", "call.streaming.failed", "streaming.stopped"):
+        fail_reason = payload.get("failure_reason") or payload.get("reason") or event_type
+        before_row = telnyx_call_registry.get(str(call_control_id)) or {}
+        before = _stream_snapshot(before_row)
+        reason_l = str(fail_reason).lower()
+        is_stopped = str(event_type).endswith("stopped")
+        hard_fail = (
+            str(event_type).endswith("failed")
+            or "fail" in reason_l
+            or "error" in reason_l
+            or reason_l in {"connection_failed", "streaming.failed"}
+        )
+        # Ring-time / hangup cleanup: do not restart. After answer, hard failures retry.
+        if _call_ended(before_row) or not before_row.get("answered_handled"):
+            normal_stop = True
+        elif hard_fail:
+            normal_stop = False
+        else:
+            # Clean streaming.stopped on a live answered call usually means natural end.
+            normal_stop = True
+        telnyx_call_registry.upsert(
+            str(call_control_id),
+            {
+                "stream_connected": False,
+                "stream_started": False,
+                "stream_failed": not normal_stop,
+                "stream_state": "stopped" if normal_stop else "failed",
+                "stream_error": str(fail_reason)[:300],
+                "status": (
+                    before_row.get("status")
+                    if _call_ended(before_row)
+                    else ("stream-stopped" if normal_stop else "stream-error")
+                ),
+            },
+        )
+        log_pstn(
+            "PSTN_STREAM",
+            call_id=call_control_id,
+            control=call_control_id,
+            event="stream_stopped" if normal_stop else "stream_failed",
+            reason=fail_reason,
+            before=before,
+            after=_stream_snapshot(telnyx_call_registry.get(str(call_control_id)) or {}),
+            normal_stop=normal_stop,
+            hard_fail=hard_fail,
+        )
+        if normal_stop:
+            logger.info(
+                "[TELNYX] streaming %s (no retry) %s reason=%s",
+                "stopped" if is_stopped else "ignored",
+                call_control_id,
+                fail_reason,
+            )
+        else:
+            logger.warning("[TELNYX] streaming failed %s %s", call_control_id, payload)
+            row_now = telnyx_call_registry.get(str(call_control_id)) or {}
+            if call_control_id and not row_now.get("skip_stream") and not _call_ended(row_now):
+                await _ensure_telnyx_streaming(str(call_control_id), reason="streaming_failed")
     elif event_type == "call.recording.saved":
         logger.info("[TELNYX] recording saved %s", payload.get("recording_urls"))
     elif event_type in ("call.hangup", "call.failed"):
+        from server.services.pstn_prewarm import cancel_prewarm
+
+        if call_control_id:
+            hangup_cause = payload.get("hangup_cause") or payload.get("sip_hangup_cause")
+            telnyx_call_registry.upsert(
+                str(call_control_id),
+                {
+                    "ended": True,
+                    "stream_connected": False,
+                    "stream_state": "ended",
+                    "hangup_cause": hangup_cause,
+                    "status": "hangup" if event_type == "call.hangup" else "failed",
+                },
+            )
+            await cancel_prewarm("telnyx", str(call_control_id))
+            _stream_op_locks.pop(str(call_control_id), None)
         log_pstn(
             f"webhook.{event_type.split('.', 1)[-1]}",
             timer_key=str(call_control_id),

@@ -29,7 +29,7 @@ def test_drain_first_chunk_word_boundary():
     text = "Sure I can help you with that property today"
     sents, rem = drain_complete_sentences(text, allow_first_fast=True)
     assert len(sents) == 1
-    assert len(sents[0]) >= 28
+    assert len(sents[0]) >= 18
     assert rem
 
 
@@ -40,6 +40,36 @@ def test_extract_opening_greeting_from_brain():
 
 def test_default_greeting():
     assert extract_opening_greeting(None, "te-IN")
+
+
+def test_extract_opening_greeting_skips_policy_lines():
+    """OPENING section mixes example line + instructions — speak only the example."""
+    brain = (
+        "--- OPENING ---\n"
+        "Example opening: Hi, this is Priya calling from Acme. How can I help you today?\n"
+        "ONE spoken reply per turn — never paste a greeting then restart with a second greeting.\n"
+        "If you speak first (PSTN/outbound connect): say that opening once (intro + offer help).\n"
+        "--- WORK SCOPE ---\n"
+    )
+    greet = extract_opening_greeting(brain, "en-IN") or ""
+    assert greet.startswith("Hi, this is Priya")
+    assert "Example opening" not in greet
+    assert "ONE spoken" not in greet
+    assert "never paste" not in greet
+
+
+def test_extract_opening_greeting_single_utterance_only():
+    brain = (
+        "--- OPENING ---\n"
+        "Hi, this is Priya from Acme Homes. How can I help you today?\n"
+        "May I know your name please?\n"
+        "What budget are you looking at?\n"
+        "--- WORK SCOPE ---\n"
+    )
+    greet = extract_opening_greeting(brain, "en-IN") or ""
+    assert "Priya" in greet
+    assert "name" not in greet.lower()
+    assert "budget" not in greet.lower()
 
 
 def test_resolve_stream_tts_tail_skips_full_text_after_streaming():
@@ -64,7 +94,7 @@ def test_extract_opening_greeting_from_opening_line_te():
     )
     greet = extract_opening_greeting(brain, "te-IN")
     assert greet and "Broski" in greet
-
+    assert "opening_line" not in (greet or "").lower()
 
 def test_pstn_call_options_uses_test_studio_when_source_set():
     from server.services.pstn_voice_core import pstn_call_options

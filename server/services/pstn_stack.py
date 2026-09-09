@@ -172,6 +172,19 @@ def normalize_pstn_stack_override(
                 if isinstance(cfg, dict):
                     cfg["speaker"] = speaker
 
+    return _finalize_pstn_live_override(out, adjustments)
+
+
+def _finalize_pstn_live_override(out: dict[str, Any], adjustments: list[str]) -> tuple[dict[str, Any], list[str]]:
+    """PSTN live turns always use OpenAI Realtime + session fine-tune — never dial-time LLM overrides."""
+    if out.get("llm"):
+        out.pop("llm", None)
+        adjustments.append(
+            "llm override removed for PSTN (live uses OpenAI Realtime + test-studio fine-tune)"
+        )
+    if str(out.get("pipeline") or "").strip().lower() != "realtime_text":
+        out["pipeline"] = "realtime_text"
+        adjustments.append("pipeline set to realtime_text for PSTN live path")
     return out, adjustments
 
 

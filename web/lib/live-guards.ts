@@ -26,13 +26,13 @@ export function shouldDebounceBargeIn(state: BargeState, now: number): boolean {
   return state.bargeHandledTurn === state.turnN && now - state.lastBargeInAt < BARGE_DEBOUNCE_MS;
 }
 
-export function shouldThinkCancel(state: BargeState): boolean {
+export function shouldThinkCancel(state: BargeState, minWords = THINK_CANCEL_MIN_WORDS): boolean {
   return (
     state.busy &&
     state.brainStreaming &&
     !state.agentSpeaking &&
     state.elapsedMs > THINK_CANCEL_MIN_MS &&
-    state.words >= THINK_CANCEL_MIN_WORDS
+    state.words >= minWords
   );
 }
 

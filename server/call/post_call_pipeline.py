@@ -19,6 +19,8 @@ from server.call.outcome_schema import (
 )
 from server.call.paths import call_dir
 from server.config.env import get_settings
+from server.realtime.language_guard import filter_unrelated_scripts
+from server.realtime.models import http_openai_model, is_realtime_llm_model
 from server.utils.logger import logger
 
 _QUEUE: asyncio.Queue[str] = asyncio.Queue()
@@ -31,6 +33,10 @@ def _utcnow() -> str:
 
 def outcome_path(call_id: str):
     return call_dir(call_id) / "outcome.json"
+
+
+def call_summary_path(call_id: str):
+    return call_dir(call_id) / "call_summary.json"
 
 
 def attempts_path(call_id: str):
@@ -82,7 +88,7 @@ async def process_now(call_id: str) -> dict[str, Any]:
 
 async def run_outcome(call_id: str, *, force: bool = False) -> dict[str, Any]:
     settings = get_settings()
-    model = settings.post_call_llm_model
+    model = http_openai_model(settings)
     await _mark_outcome(call_id, "processing")
     transcript = call_ledger.read_lines(call_id)
     snapshot = memory_manager.get_snapshot(call_id)
@@ -104,7 +110,10 @@ async def run_outcome(call_id: str, *, force: bool = False) -> dict[str, Any]:
     if payload.get("disposition") not in DISPOSITIONS:
         payload["disposition"] = disposition
         payload["notes"] = (payload.get("notes") or "") + " (disposition coerced to no_outcome)"
+    payload["summary_te"] = filter_unrelated_scripts(str(payload.get("summary_te") or ""), "te-IN")
+    payload["summary_en"] = filter_unrelated_scripts(str(payload.get("summary_en") or ""), "en-IN")
     outcome_path(call_id).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    _write_call_summary(call_id, payload)
     status = "complete" if error is None else "failed"
     await call_store.update(call_id, {"disposition": payload["disposition"]})
     await _mark_outcome(call_id, status)
@@ -157,10 +166,12 @@ async def _generate_outcome(
 
     last_error: str | None = None
     retries = max(1, settings.post_call_max_retries)
-    resolved = meta.get("resolved_stack") or {}
-    llm_block = resolved.get("llm") or {}
-    provider_id = llm_block.get("provider") or "openai"
-    locked_model = llm_block.get("model") or model
+    provider_id = "openai"
+    locked_model = http_openai_model(settings)
+    if is_realtime_llm_model(model):
+        locked_model = http_openai_model(settings)
+    elif model and not is_realtime_llm_model(model):
+        locked_model = model
     for attempt in range(retries):
         try:
             from server.providers import get_provider_registry
@@ -190,6 +201,23 @@ async def _generate_outcome(
             await asyncio.sleep(0.2 * (2**attempt))
     failed = empty_outcome(model=model, reason=last_error or "outcome generation failed")
     return failed, last_error
+
+
+def _write_call_summary(call_id: str, outcome: dict[str, Any]) -> None:
+    summary = {
+        "call_id": call_id,
+        "disposition": validate_disposition(outcome.get("disposition")),
+        "disposition_confidence": outcome.get("disposition_confidence"),
+        "summary_te": outcome.get("summary_te") or "",
+        "summary_en": outcome.get("summary_en") or "",
+        "next_action": outcome.get("next_action"),
+        "extracted_fields": outcome.get("extracted_fields") or {},
+        "objections": outcome.get("objections") or [],
+        "model": outcome.get("model"),
+        "generated_at": outcome.get("generated_at"),
+        "generation_ok": outcome.get("generation_ok"),
+    }
+    call_summary_path(call_id).write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def _append_attempt(call_id: str, attempt: dict[str, Any]) -> None:

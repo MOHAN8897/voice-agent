@@ -10,7 +10,7 @@ from server.config.env import get_settings
 
 _DEFAULT_CHAINS: dict[str, list[str]] = {
     "stt": ["sarvam"],
-    "llm": ["openai", "gemini", "deepseek"],
+    "llm": ["openai", "deepseek"],
     "tts": ["sarvam", "cartesia"],
 }
 

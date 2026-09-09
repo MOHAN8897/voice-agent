@@ -35,6 +35,7 @@ class CallContext:
     barge_in_flight: bool = False
     last_stt_partial_at: float = 0.0
     call_end_policy: dict[str, Any] | None = None
+    pipeline: str = "realtime_text"
     components: dict[str, str] = field(
         default_factory=lambda: {"ledger": "pending", "audio": "pending", "outcome": "pending"}
     )
@@ -59,6 +60,7 @@ class CallContext:
             "status": self.status,
             "storage_path": self.storage_path,
             "resolved_stack": self.resolved_stack.to_safe_dict(),
+            "pipeline": self.pipeline,
         }
 
 

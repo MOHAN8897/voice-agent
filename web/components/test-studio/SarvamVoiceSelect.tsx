@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 import { persistTestStudioVoice } from "@/lib/persist-test-studio-voice";
+import { useTestStudioSessionOptional } from "@/components/test-studio/TestStudioSessionContext";
 import { DEFAULT_SARVAM_SPEAKER, isCartesiaVoiceId } from "@/lib/voice/tts-config";
 
 const FEMALE = new Set([
@@ -50,6 +51,7 @@ export function SarvamVoiceSelect({
   const autoAppliedRef = useRef("");
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
+  const studioSession = useTestStudioSessionOptional();
 
   const list = model === "bulbul:v3" ? speakersV3 : speakersV2;
   const options = (list.length ? list : ["shubh", "priya", "kavya", "aditya"]).map((s) => s.toLowerCase());
@@ -65,7 +67,7 @@ export function SarvamVoiceSelect({
     if (autoAppliedRef.current === fallback) return;
     autoAppliedRef.current = fallback;
     onChangeRef.current(fallback);
-    void persistTestStudioVoice({ ttsSpeaker: fallback, ttsModel: model }).then((result) => {
+    void persistTestStudioVoice({ ttsSpeaker: fallback, ttsModel: model, sessionId: studioSession?.sessionId }).then((result) => {
       setSaveHint(result.ok ? "Default Sarvam voice applied" : result.error || "Save failed");
     });
   }, [normalized, fallback, model]);
@@ -75,7 +77,7 @@ export function SarvamVoiceSelect({
     onChange(speaker);
     setSaving(true);
     setSaveHint(null);
-    const result = await persistTestStudioVoice({ ttsSpeaker: speaker, ttsModel: model });
+    const result = await persistTestStudioVoice({ ttsSpeaker: speaker, ttsModel: model, sessionId: studioSession?.sessionId });
     setSaving(false);
     setSaveHint(result.ok ? "Voice saved — applies on next spoken turn" : result.error || "Save failed");
   }

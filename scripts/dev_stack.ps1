@@ -52,6 +52,11 @@ function Should-StartTunnel {
 }
 
 # --- Step 1: clean slate ---
+# A quick share tunnel must expose the website (including its API/WS proxy).
+if ($Mode -eq "share" -and -not (Test-NamedTunnelConfig)) {
+    & (Join-Path $PSScriptRoot "share_with_friend.ps1") -Tunnel cloudflared
+    exit $LASTEXITCODE
+}
 Write-Host "Stopping stale servers and tunnels..."
 if (-not (Stop-VoiceAgentDevStack)) {
     Write-Error "Could not free dev ports. Close leftover Voice Agent windows and retry."
@@ -70,6 +75,16 @@ if ($Open) {
 } else {
     & (Join-Path $PSScriptRoot "dev_up.ps1") -Wait -ProductionWeb:$productionWeb
 }
+if ($LASTEXITCODE -ne 0) {
+    throw "Local stack failed to start. See data/dev-logs/api.log and web.log."
+}
+
+# Share/telephony cannot usefully continue without a live local API.
+if ($Mode -in @("share", "telephony")) {
+    if (-not (Test-HttpOk "http://127.0.0.1:8000/api/health" 3)) {
+        Write-Error "Local API is not healthy after start. Check data\dev-logs\api.log - refusing to start tunnel."
+    }
+}
 
 # --- Step 4: tunnel ---
 $tunnelStarted = $false
@@ -83,17 +98,27 @@ if (Should-StartTunnel) {
         if (-not $cf) {
             Write-Warning "cloudflared not installed - PSTN webhooks will not work. winget install Cloudflare.cloudflared"
         } else {
-            $tunnelCmd = "& '$cf' tunnel --config '$CfConfig' run voice-agent-dev"
+            $tunnelCmd = "& '$cf' tunnel --config '$CfConfig' run"
             Start-DevWindow -Title "Cloudflare Tunnel" -WorkingDir $RepoRoot `
                 -Command $tunnelCmd `
                 -LogFile (Join-Path $LogDir "cloudflared-named.log")
-            $tunnelStarted = $true
             if ($publicApi) {
-                Wait-ForService -Label "Public API" -Url "$publicApi/api/health" -MaxAttempts 45 | Out-Null
+                if (-not (Wait-ForService -Label "Public API" -Url "$publicApi/api/health" -MaxAttempts 45)) {
+                    throw "Public API tunnel is not healthy. See data/dev-logs/cloudflared-named.log."
+                }
             }
             if ($publicApp) {
-                Wait-ForService -Label "Public App" -Url "$publicApp/dev/login" -MaxAttempts 45 | Out-Null
+                if (-not (Wait-ForService -Label "Public App" -Url "$publicApp/dev/login" -MaxAttempts 45)) {
+                    throw "Public website tunnel is not healthy. See data/dev-logs/cloudflared-named.log."
+                }
+                if (-not (Wait-ForService -Label "Public App API proxy" -Url "$publicApp/api/health" -MaxAttempts 45)) {
+                    throw "Public website API proxy is not healthy."
+                }
             }
+            if ($Mode -eq "share" -and (-not $publicApi -or -not $publicApp)) {
+                throw "Named tunnel config must include API (8000) and website (3000) ingress hosts."
+            }
+            $tunnelStarted = $true
         }
     } else {
         Write-Host "No named tunnel config - starting quick API tunnel for Exotel..."
@@ -130,7 +155,7 @@ if ($tunnelStarted -and $publicApp -and $publicApp -notmatch "localhost") {
     }
     Write-Host "  Share with friend $publicApp/dev/test-studio"
 }
-if ($Mode -eq "share" -and $publicApp) {
+if ($Mode -eq "share" -and $tunnelStarted -and $publicApp) {
     Write-Host ""
     Write-Host "  >>> COPY THIS LINK: $publicApp/dev/test-studio"
 }

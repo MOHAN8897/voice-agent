@@ -18,6 +18,9 @@ export const PRICING = {
   cartesiaProUsdPerCredit: 5 / 100_000,
   cartesiaTtsUsdPerMChars: 50,
   openaiUsdPerM: {
+    "gpt-realtime-2.1-mini": { input: 0.6, cachedInput: 0.06, cacheWrite: 0.6, output: 2.4 },
+    "gpt-realtime-2.1": { input: 4.0, cachedInput: 0.4, cacheWrite: 4.0, output: 24.0 },
+    "gpt-realtime-2": { input: 4.0, cachedInput: 0.4, cacheWrite: 4.0, output: 24.0 },
     "gpt-5.6-luna": { input: 0.2, cachedInput: 0.02, cacheWrite: 0.25, output: 1.2 },
     "gpt-5.5": { input: 5.0, cachedInput: 0.5, cacheWrite: 6.25, output: 30.0 },
     "gpt-5.4": { input: 2.5, cachedInput: 0.25, cacheWrite: 3.125, output: 15.0 },
@@ -61,7 +64,7 @@ export function resolveSttProvider(provider: string, model = ""): "sarvam" | "ca
 }
 
 export function openaiRatesForModel(model: string | undefined, meta?: PricingMeta | null) {
-  const m = (model || "gpt-5.6-luna").toLowerCase();
+  const m = (model || "gpt-realtime-2.1-mini").toLowerCase();
   const key = `openai:${m}` as keyof PricingMeta;
   const fromMeta = meta?.[key] as LlmRateMeta | undefined;
   const fallback =

@@ -469,6 +469,11 @@ async def ws_tts(ws: WebSocket):
             elif mtype == "flush":
                 log_ws("TTS flush", session=session_id)
                 await forward_upstream(text)
+            elif mtype == "cancel":
+                log_ws("TTS cancel", session=session_id)
+                await close_upstream()
+                configured = False
+                await notify_upstream_reset("client_cancel")
             elif mtype == "ping":
                 if upstream is not None:
                     await forward_upstream(text)

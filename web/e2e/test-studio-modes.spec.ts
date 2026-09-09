@@ -27,7 +27,7 @@ async function openTestStudio(
 ) {
   const channel = opts?.channel ?? "agent";
   const agentId = await defaultAgentId(page.request);
-  await page.goto(`/dev/test-studio?agent=${agentId}`, { waitUntil: "domcontentloaded", timeout: 120000 });
+  await page.goto(`/dev/test-studio/${agentId}`, { waitUntil: "domcontentloaded", timeout: 120000 });
   await waitForTestStudioReady(page);
   await page.getByTestId(`test-mode-${channel}`).click();
   if (channel === "agent") {

@@ -21,7 +21,22 @@ def test_sarvam_stt_upgraded_to_realtime():
     out, adj = normalize_pstn_stack_override(raw, language="te-IN")
     assert out is not None
     assert out["stt"]["model"] == "saaras:v3-realtime"
-    assert "realtime" in " ".join(adj)
+    assert "llm" not in out
+    assert out.get("pipeline") == "realtime_text"
+    assert any("realtime" in a for a in adj)
+
+
+def test_gemini_llm_override_stripped_for_pstn():
+    raw = {
+        "stt": {"provider": "sarvam", "model": "saaras:v3-realtime"},
+        "tts": {"provider": "sarvam", "model": "bulbul:v3", "config": {"speaker": "shubh"}},
+        "llm": {"provider": "gemini", "model": "gemini-2.5-flash"},
+    }
+    out, adj = normalize_pstn_stack_override(raw, language="en-IN")
+    assert out is not None
+    assert "llm" not in out
+    assert out.get("pipeline") == "realtime_text"
+    assert any("llm override removed" in a for a in adj)
 
 
 def test_cartesia_tts_sarvam_speaker_replaced():

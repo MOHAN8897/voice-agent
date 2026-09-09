@@ -22,7 +22,7 @@ def test_tts_rest_mocked(monkeypatch):
     mock_res = {"audio_bytes": fake_wav, "content_type": "audio/wav", "request_id": "tts-123", "speaker": "shubh", "language_code": "te-IN"}
     # Patch synthesize to avoid real Sarvam call; it returns decoded bytes already, route wraps it
     # But our route calls synthesize() which does base64 decode internally — we mock synthesize to return fake_wav directly
-    with patch("server.routes.tts.synthesize", new=AsyncMock(return_value=mock_res)):
+    with patch("server.routes.tts.synthesize_via_registry", new=AsyncMock(return_value=mock_res)):
         r = client.post("/api/tts", json={"text": "హాయ్ సాయి", "language_code": "te-IN"})
         assert r.status_code == 200, r.text
         assert r.headers["content-type"] == "audio/wav"

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { DevCard } from "@/components/dev/DevCard";
 import { ensureArray } from "@/lib/ensure-array";
@@ -91,6 +91,7 @@ export function ExotelTestPanel({ agentId, tier }: { agentId: string; tier: stri
   const [outboundMode, setOutboundMode] = useState<"voice_ai" | "bridge">("voice_ai");
   const [selectedCall, setSelectedCall] = useState<string | null>(null);
   const [callDetail, setCallDetail] = useState<Record<string, unknown> | null>(null);
+  const dialingRef = useRef(false);
 
   const load = useCallback(async () => {
     await refreshPortalSession("dev");
@@ -174,6 +175,10 @@ export function ExotelTestPanel({ agentId, tier }: { agentId: string; tier: stri
       setMessage("Bridge mode requires agent handset (From) number");
       return;
     }
+    if (dialingRef.current || busy) {
+      return;
+    }
+    dialingRef.current = true;
     setBusy(true);
     setMessage(
       outboundMode === "voice_ai"
@@ -198,6 +203,7 @@ export function ExotelTestPanel({ agentId, tier }: { agentId: string; tier: stri
         : j.error?.message || "Outbound failed"
     );
     setBusy(false);
+    dialingRef.current = false;
     if (r.ok) await load();
   }
 

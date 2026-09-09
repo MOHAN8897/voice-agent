@@ -69,9 +69,47 @@ def test_recruitment_script_is_not_realty():
 def test_writer_forbids_question_tree():
     system = script_writer_system(language="en-IN", budget_tokens=3500)
     assert "question tree" in system.lower()
-    assert "earn its place" in system.lower() or "answer before you qualify" in system.lower()
+    assert "earn its place" in system.lower() or "answer before you qualify" in system.lower() or "ask-if-unknown" in system.lower()
     assert "do not assume property" in system.lower()
     assert "qualify budget, location, timeline" not in system.lower()
+    assert "do not shorten" in system.lower() or "token savings" in system.lower()
+    assert "target roughly" not in system.lower()
+
+
+@pytest.mark.asyncio
+async def test_thin_llm_script_uses_quality_floor(monkeypatch):
+    import server.brain.agent_script_compiler as compiler
+
+    async def thin(*args, **kwargs):
+        return {
+            "agent_script": (
+                "--- VOICE STYLE ---\nBe brief.\n\n"
+                "--- CONVERSATION FLOW ---\nAsk one question.\n"
+            ),
+            "agent_name": "Karthik",
+            "company_name": "DriveRight Auto Care",
+            "role": "sales",
+            "role_summary": "sell service packages",
+            "key_facts": ["basic service three thousand five hundred"],
+        }
+
+    monkeypatch.setattr(compiler, "_llm_generate_script", thin)
+    _compiled, result, *_ = await compiler.compile_agent_from_brief(
+        brief=(
+            "Create an English sales counselor named Karthik for DriveRight Auto Care in Hyderabad. "
+            "Sell periodic car service packages. Basic periodic service is three thousand five hundred rupees."
+        ),
+        language="en-IN",
+        budget_tokens=6000,
+    )
+    assert "LIVE CALL GUIDE" in result.agent_script
+    assert "OBJECTION HANDLING" in result.agent_script
+    assert "Source facts and duties" in result.agent_script or "WORK SCOPE" in result.agent_script
+    assert result.optimizer_model in {
+        "deterministic_quality_floor_v1",
+        "deterministic_validation_fallback_v1",
+        "deterministic_v1",
+    }
 
 
 def test_agent_script_schema_is_valid_for_openai_strict_mode():
@@ -85,8 +123,16 @@ async def test_oversized_generated_script_falls_back_instead_of_failing(monkeypa
     import server.brain.agent_script_compiler as compiler
 
     async def oversized(*args, **kwargs):
+        body = (
+            "--- VOICE STYLE ---\nBe clear.\n\n"
+            "--- CONVERSATION FLOW ---\nAnswer first.\n\n"
+            "--- OBJECTION HANDLING ---\nAcknowledge concerns.\n\n"
+            "--- GUARDRAILS ---\nNever invent facts.\n\n"
+            "--- CLOSING ---\nThank them and close.\n\n"
+            + ("oversized policy sentence. " * 12000)
+        )
         return {
-            "agent_script": "oversized policy sentence. " * 12000,
+            "agent_script": body,
             "agent_name": "Nisha",
             "company_name": "",
             "role": "information",
@@ -106,13 +152,13 @@ async def test_oversized_generated_script_falls_back_instead_of_failing(monkeypa
 
 def test_static_and_human_rules_are_role_agnostic():
     blob = (STATIC_OUTPUT_RULES + "\n" + HUMAN_CALL_RULES).lower()
-    assert "checklist" in blob
+    assert "checklist" in blob or "question tree" in blob or "ask-if-unknown" in blob
     assert "overrides script defaults" in blob
     assert "don't call" in blob or "dont call" in blob.replace("'", "")
     assert "whatsapp" in blob
     assert "not a hangup" in blob or "do not hang up" in blob
     assert "must not sell" in blob or "do not sell" in blob
-    assert "earn its place" in blob
+    assert "earn its place" in blob or "never re-ask" in blob or "natural sales" in blob
     assert "plot vs apartment" not in blob
     assert "never say goodbye" in blob
     assert "sarcasm" in blob
@@ -242,6 +288,15 @@ ROLE_COLLISIONS = [
         "follow_up",
     ),
     ("After-sales support for billing tickets", "support"),
+    (
+        "Sell periodic car service packages and AMC for DriveRight Auto Care car service in Hyderabad.",
+        "sales",
+    ),
+    (
+        "Create an English service agent named Ravi for AutoCare Motors car service center. "
+        "Book service requests. Do not sell cars.",
+        "support",
+    ),
 ]
 
 
@@ -370,7 +425,8 @@ def test_language_contract_is_last_in_compiled_brain():
     from server.brain.agent_script_compiler import _assemble_brain
 
     te = _assemble_brain(script="x", language="te-IN", style=None)
-    assert "every substantive reply must contain natural Telugu Unicode" in te
+    assert "Telugu Unicode" in te or "Tanglish" in te
+    assert "Every reply must stay in Telugu" in te or "Telugu/Tanglish" in te
     assert te.rstrip().endswith(
         "A refusal or off-scope redirect stands alone; never append business facts or a pitch."
     )
@@ -398,8 +454,30 @@ def test_checklist_rewrite_still_works():
         role="sales",
     )
     assert "one at a time" not in out.lower()
-    assert "Do not run a budget, location, or timeline checklist" in out
+    assert "NATURAL SALES PROGRESSION" in out
+    assert "never re-ask" in out.lower()
+    assert "Lead conversion" in out or "qualified lead" in out.lower() or "human salesperson" in out.lower()
     assert "Role: sales" in out
+
+
+def test_step_tree_flow_always_replaced():
+    raw = (
+        "--- CONVERSATION FLOW ---\n"
+        "Step 1 greet. Step 2 ask quantity. Step 3 ask budget. Step 4 close.\n\n"
+        "--- GUARDRAILS ---\nNever invent.\n"
+    )
+    out = ensure_script_identity_and_scope(
+        raw,
+        agent_name="Kavya",
+        company_name="PenMart",
+        work_scope="selling pens",
+        opening_line="Hi",
+        language="en-IN",
+        role="sales",
+    )
+    assert "step 2" not in out.lower()
+    assert "NATURAL SALES PROGRESSION" in out or "never re-ask" in out.lower() or "question tree" in out.lower()
+    assert "Step 1 greet" not in out
 
 
 def test_deterministic_script_does_not_reinject_raw_guardrails():

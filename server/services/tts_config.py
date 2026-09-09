@@ -137,14 +137,31 @@ def _resolve_cartesia_tts_config(
     if not is_cartesia_voice_id(str(resolved_speaker)):
         resolved_speaker = settings.cartesia_tts_voice_id or constants.CARTESIA_DEFAULT_VOICE_ID
 
-    resolved_pace = float(pace if pace is not None else rt.get("ttsPace", settings.sarvam_tts_pace))
-    resolved_sample_rate = int(sample_rate or rt.get("ttsSampleRate") or 24000)
+    from server.services.tts_voice_direction import cartesia_generation_config
+
+    resolved_sample_rate = int(sample_rate) if sample_rate is not None else int(rt.get("ttsSampleRate") or 24000)
+    emotion = rt.get("ttsEmotion") or settings.cartesia_tts_emotion
+    # Prefer Cartesia speed; fall back to explicit pace arg / runtime only when set.
+    speed_raw = rt.get("ttsSpeed")
+    if speed_raw is None and pace is not None:
+        speed_raw = pace
+    elif speed_raw is None and rt.get("ttsPace") is not None:
+        speed_raw = rt.get("ttsPace")
+    gen = cartesia_generation_config(
+        emotion=str(emotion) if emotion else None,
+        speed=float(speed_raw) if speed_raw is not None else None,
+        volume=float(rt["ttsVolume"]) if rt.get("ttsVolume") is not None else None,
+    )
 
     cfg: dict[str, Any] = {
         "provider": "cartesia",
         "model": resolved_model,
         "speaker": str(resolved_speaker),
-        "pace": max(0.5, min(2.0, resolved_pace)),
+        "pace": gen["speed"],
+        "speed": gen["speed"],
+        "volume": gen["volume"],
+        "emotion": gen["emotion"],
+        "generation_config": gen,
         "language_code": language_code if language_code in constants.SUPPORTED_LANGUAGES else "te-IN",
         "output_audio_codec": "linear16",
         "output_audio_bitrate": "128k",
@@ -157,6 +174,8 @@ def _resolve_cartesia_tts_config(
         provider="cartesia",
         model=cfg["model"],
         speaker=cfg["speaker"],
+        emotion=cfg["emotion"],
+        speed=cfg["speed"],
         sample_rate=cfg["sample_rate"],
         session=session_id,
     )
@@ -433,15 +452,19 @@ def merge_pstn_tts_config(
     )
     if cfg.get("provider") == "cartesia":
         cfg["output_audio_codec"] = "linear16"
+        # Cartesia telephony path: generate 16 kHz PCM, then μ-law encode locally @ 8 kHz.
         cfg["speech_sample_rate"] = "16000"
+        cfg["sample_rate"] = 16000
     else:
         # Request linear16 @ 8 kHz — we μ-law encode locally for Telnyx PCMU RTP.
         # Sarvam mulaw chunks are unreliable; local G.711 encode is deterministic.
         cfg["output_audio_codec"] = "linear16"
         cfg["speech_sample_rate"] = "8000"
+        cfg.pop("sample_rate", None)
     # Sarvam WS expects speech_sample_rate (not sample_rate).
     cfg.pop("output_audio_bitrate", None)
-    cfg.pop("sample_rate", None)
+    if cfg.get("provider") != "cartesia":
+        cfg.pop("sample_rate", None)
     log_tts(
         "CONFIG PSTN",
         provider=cfg.get("provider"),

@@ -61,7 +61,12 @@ export function CompileLanguagePicker({
               aria-checked={on}
               data-testid={`compile-language-${lang.id}`}
               disabled={disabled}
-              onClick={() => onChange(lang.id)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (disabled) return;
+                onChange(lang.id);
+              }}
               className={cn(
                 "flex-1 rounded-skeuo-sm text-left transition-colors disabled:opacity-50",
                 compact ? "min-w-[5.5rem] px-2.5 py-1.5" : "min-w-[7.5rem] px-3 py-2",

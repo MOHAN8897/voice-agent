@@ -7,6 +7,7 @@ import time
 from collections.abc import AsyncIterator
 from typing import Any
 
+from server.call.caller_detail_capture import caller_detail_memory_operations
 from server.call import call_context, memory_projection as memory_projection_mod
 from server.call.call_ledger import call_ledger
 from server.call.end_call_validate import validate_end_call
@@ -16,6 +17,7 @@ from server.call.rolling_summary import maybe_refresh_rolling_summary
 from server.call.turn_coordinator import drain, lock_for
 from server.config.env import get_settings
 from server.services.openai_brain_service import generate_response, generate_response_stream
+from server.services.voice_pipeline_limits import LiveReplyStreamCap, clamp_live_spoken_reply
 from server.utils.logger import log_perf, logger
 
 _LLM_KEYS = {
@@ -78,6 +80,22 @@ def cap_reactive_response(user_text: str, assistant_text: str) -> str:
     return text[: match.end()].strip() if match else text
 
 
+def finalize_live_spoken_text(user_text: str, assistant_text: str) -> str:
+    """Apply reactive one-sentence cap, collapse repeats, soft length safety, spoken prep."""
+    from server.services.spoken_numbers import prepare_spoken_reply
+    from server.services.voice_pipeline_limits import (
+        collapse_repeated_spoken_reply,
+        is_incomplete_spoken_crumb,
+    )
+
+    collapsed = collapse_repeated_spoken_reply(cap_reactive_response(user_text, assistant_text))
+    capped = clamp_live_spoken_reply(collapsed)
+    prepared = prepare_spoken_reply(capped)
+    if is_incomplete_spoken_crumb(prepared) or is_incomplete_spoken_crumb(capped):
+        return ""
+    return prepared
+
+
 def correction_memory_operation(user_text: str) -> dict[str, str] | None:
     """Persist explicit caller corrections under one latest-wins canonical key."""
     text = " ".join((user_text or "").split()).strip()
@@ -130,6 +148,7 @@ class LiveTurnOrchestrator:
             completed_turns=completed,
             memory_snapshot=snapshot,
             call_end_policy=ctx.call_end_policy if ctx else None,
+            spoken_text=spoken_text,
         )
         if not decision.accepted:
             return {"should_end": False, "reason": "none", "farewell": ""}
@@ -216,16 +235,23 @@ class LiveTurnOrchestrator:
                     self._safe_append_user(call_id, transcript, stt_latency_ms)
                 )
 
-            projection, rolling = await self._memory_blocks(call_id)
-            structured = bool(call_id) and settings.working_memory_enabled
-            input_messages = self._maybe_build_live_input(
-                ctx=ctx,
-                transcript=transcript,
-                session_id=session_id,
-                openai_model=openai_model,
-                projection=projection,
-                rolling=rolling,
-            )
+            from server.realtime.manager import realtime_text_manager
+
+            realtime = bool(call_id and realtime_text_manager.get(call_id))
+            projection, rolling = await self._memory_blocks(call_id) if call_id else (None, None)
+            if realtime:
+                structured = False
+                input_messages = None
+            else:
+                structured = bool(call_id) and settings.working_memory_enabled
+                input_messages = self._maybe_build_live_input(
+                    ctx=ctx,
+                    transcript=transcript,
+                    session_id=session_id,
+                    openai_model=openai_model,
+                    projection=projection,
+                    rolling=rolling,
+                )
 
             t0 = time.perf_counter()
             brain_latency_ms: int | None = None
@@ -234,9 +260,11 @@ class LiveTurnOrchestrator:
             reactive_raw = ""
             reactive_emitted = ""
             cap_reactive = _should_cap_response(transcript)
+            stream_cap = LiveReplyStreamCap()
             memory_update: dict[str, Any] = {"operations": []}
             memory_parse_failed = False
             stream_usage: dict[str, Any] = {}
+            turn_cancelled_empty = False
             async for chunk in self._stream_llm(
                 transcript=transcript,
                 language_code=language_code,
@@ -260,10 +288,14 @@ class LiveTurnOrchestrator:
                     brain_latency_ms = int((time.perf_counter() - t0) * 1000)
                 if chunk.get("done"):
                     raw_assistant_text = chunk.get("text") or ""
-                    assistant_text = cap_reactive_response(transcript, raw_assistant_text)
+                    assistant_text = finalize_live_spoken_text(transcript, raw_assistant_text)
                     memory_update = chunk.get("memory_update") or {"operations": []}
                     memory_parse_failed = bool(chunk.get("memory_parse_failed"))
+                    if realtime and assistant_text.strip() and not (memory_update.get("operations")):
+                        memory_parse_failed = True
                     stream_usage = chunk.get("usage") or {}
+                    if chunk.get("cancelled") and not assistant_text.strip():
+                        turn_cancelled_empty = True
                     gated = dict(chunk)
                     gated["end_call"] = self._gate_end_call(
                         chunk.get("end_call"),
@@ -272,45 +304,66 @@ class LiveTurnOrchestrator:
                         call_id=call_id,
                         spoken_text=assistant_text,
                     )
+                    if gated["end_call"].get("should_end") and not assistant_text.strip():
+                        assistant_text = str(gated["end_call"].get("farewell") or "").strip()
                     gated["text"] = assistant_text
                     yield gated
                     continue
                 delta = str(chunk.get("delta") or "")
-                if not cap_reactive or not delta:
+                if not delta:
                     yield chunk
                     continue
-                reactive_raw += delta
-                visible = cap_reactive_response(transcript, reactive_raw)
-                new_delta = visible[len(reactive_emitted) :]
-                reactive_emitted = visible
-                if new_delta:
+                if cap_reactive:
+                    reactive_raw += delta
+                    visible = cap_reactive_response(transcript, reactive_raw)
+                    new_delta = visible[len(reactive_emitted) :]
+                    reactive_emitted = visible
+                    emit = stream_cap.feed(new_delta)
+                else:
+                    emit = stream_cap.feed(delta)
+                if emit:
                     guarded = dict(chunk)
-                    guarded["delta"] = new_delta
+                    guarded["delta"] = emit
                     yield guarded
 
             if ledger_task is not None:
                 user_line = await ledger_task
                 user_seq = int(user_line.get("seq") or 0)
 
-            if raw_assistant_text and assistant_text != raw_assistant_text:
+            if turn_cancelled_empty:
+                # Barge cancelled mid-generation with nothing spoken — keep user utterance,
+                # skip empty assistant archive (was showing silence / blank replies).
+                if transcript.strip():
+                    from server.agent.conversation_manager import conversation_manager
+
+                    conversation_manager.add_user_only(session_id, transcript)
+            elif assistant_text.strip():
                 from server.agent.conversation_manager import conversation_manager
 
-                conversation_manager.replace_last_assistant(session_id, assistant_text)
+                conversation_manager.add_turn(session_id, transcript, assistant_text)
+            elif transcript.strip():
+                from server.agent.conversation_manager import conversation_manager
 
-            if call_id and settings.enable_call_archive:
-                await self._after_assistant(
-                    call_id,
-                    assistant_text,
-                    brain_latency_ms,
-                    stt_latency_ms,
-                    memory_update=memory_update,
-                    turn_seq=user_seq,
-                    user_text=transcript,
-                    merge_started_at=time.perf_counter(),
-                    projection=projection,
-                    rolling=rolling,
-                    memory_parse_failed=memory_parse_failed,
-                    usage=stream_usage,
+                conversation_manager.add_user_only(session_id, transcript)
+
+            if call_id and settings.enable_call_archive and not turn_cancelled_empty:
+                # Voice path is free; archive/memory merge must not block next turn TTFA.
+                asyncio.create_task(
+                    self._after_assistant(
+                        call_id,
+                        assistant_text,
+                        brain_latency_ms,
+                        stt_latency_ms,
+                        memory_update=memory_update,
+                        turn_seq=user_seq,
+                        user_text=transcript,
+                        merge_started_at=time.perf_counter(),
+                        projection=projection,
+                        rolling=rolling,
+                        memory_parse_failed=memory_parse_failed,
+                        usage=stream_usage,
+                        skip_live_memory=False,
+                    )
                 )
         finally:
             if turn_lock and turn_lock.locked():
@@ -340,27 +393,54 @@ class LiveTurnOrchestrator:
                     self._safe_append_user(call_id, transcript, stt_latency_ms)
                 )
 
-            projection, rolling = await self._memory_blocks(call_id)
-            kwargs["memory_projection"] = projection
-            kwargs["rolling_summary"] = rolling
-            kwargs["structured_live_turn"] = bool(call_id) and settings.working_memory_enabled
-            kwargs["input_messages"] = self._maybe_build_live_input(
-                ctx=ctx,
-                transcript=transcript,
-                session_id=session_id,
-                openai_model=kwargs.get("openai_model"),
-                projection=projection,
-                rolling=rolling,
-            )
+            from server.realtime.manager import realtime_text_manager
+
+            realtime = bool(call_id and realtime_text_manager.get(call_id))
+            projection, rolling = await self._memory_blocks(call_id) if call_id else (None, None)
+            if realtime:
+                kwargs["memory_projection"] = projection
+                kwargs["rolling_summary"] = rolling
+                kwargs["structured_live_turn"] = False
+                kwargs["input_messages"] = None
+            else:
+                kwargs["memory_projection"] = projection
+                kwargs["rolling_summary"] = rolling
+                kwargs["structured_live_turn"] = bool(call_id) and settings.working_memory_enabled
+                kwargs["input_messages"] = self._maybe_build_live_input(
+                    ctx=ctx,
+                    transcript=transcript,
+                    session_id=session_id,
+                    openai_model=kwargs.get("openai_model"),
+                    projection=projection,
+                    rolling=rolling,
+                )
             t0 = time.perf_counter()
-            llm_kwargs = {k: v for k, v in kwargs.items() if k in _LLM_KEYS}
-            result = await generate_response(**llm_kwargs)
+            if realtime:
+                result = {"text": "", "end_call": {}, "memory_update": {"operations": []}, "usage": {}}
+                async for chunk in realtime_text_manager.get(call_id).run_turn(  # type: ignore[union-attr]
+                    transcript,
+                    language=str(kwargs.get("language_code") or "te-IN"),
+                ):
+                    if chunk.get("done"):
+                        result = chunk
+            else:
+                llm_kwargs = {k: v for k, v in kwargs.items() if k in _LLM_KEYS}
+                from server.realtime.models import http_openai_model, is_realtime_llm_model
+
+                model = str(llm_kwargs.get("openai_model") or "")
+                if is_realtime_llm_model(model):
+                    llm_kwargs["openai_model"] = http_openai_model(settings)
+                result = await generate_response(**llm_kwargs)
             raw_text = result.get("text") or ""
-            result["text"] = cap_reactive_response(transcript, raw_text)
-            if result["text"] != raw_text:
+            result["text"] = finalize_live_spoken_text(transcript, raw_text)
+            if result["text"].strip():
                 from server.agent.conversation_manager import conversation_manager
 
-                conversation_manager.replace_last_assistant(session_id, result["text"])
+                conversation_manager.add_turn(session_id, transcript, result["text"])
+            elif transcript.strip():
+                from server.agent.conversation_manager import conversation_manager
+
+                conversation_manager.add_user_only(session_id, transcript)
             result["end_call"] = self._gate_end_call(
                 result.get("end_call"),
                 transcript=transcript,
@@ -368,6 +448,8 @@ class LiveTurnOrchestrator:
                 call_id=call_id,
                 spoken_text=result.get("text") or "",
             )
+            if result["end_call"].get("should_end") and not (result.get("text") or "").strip():
+                result["text"] = str(result["end_call"].get("farewell") or "").strip()
             brain_latency_ms = int((time.perf_counter() - t0) * 1000)
             if ledger_task is not None:
                 user_line = await ledger_task
@@ -385,6 +467,7 @@ class LiveTurnOrchestrator:
                     projection=projection,
                     rolling=rolling,
                     memory_parse_failed=bool(result.get("memory_parse_failed")),
+                    skip_live_memory=False,
                 )
             return result
         finally:
@@ -393,6 +476,19 @@ class LiveTurnOrchestrator:
 
     async def _stream_llm(self, *, ctx, **kwargs: Any) -> AsyncIterator[dict[str, Any]]:
         settings = get_settings()
+        from server.realtime.manager import realtime_text_manager
+        from server.realtime.models import http_openai_model, is_realtime_llm_model
+
+        call_id = kwargs.get("call_id")
+        session = realtime_text_manager.get(call_id) if call_id else None
+        if session is not None:
+            async for chunk in session.run_turn(
+                str(kwargs.get("transcript") or ""),
+                language=str(kwargs.get("language_code") or "te-IN"),
+            ):
+                yield chunk
+            return
+
         adapter = None
         registry = None
         provider_id = ctx.resolved_stack.llm.provider if ctx else None
@@ -409,12 +505,21 @@ class LiveTurnOrchestrator:
             llm_sel = ctx.resolved_stack.llm
             stream_kwargs.setdefault("model", llm_sel.model)
             stream_kwargs.setdefault("openai_model", llm_sel.model)
+        http_model = str(stream_kwargs.get("openai_model") or stream_kwargs.get("model") or "")
+        if is_realtime_llm_model(http_model):
+            fallback_model = http_openai_model(settings)
+            stream_kwargs["openai_model"] = fallback_model
+            stream_kwargs["model"] = fallback_model
         input_messages = stream_kwargs.pop("input_messages", None)
         schema = LIVE_TURN_JSON_SCHEMA if stream_kwargs.get("structured_live_turn") else None
 
         async def _run_with(adapter_inst) -> AsyncIterator[dict[str, Any]]:
             self._align_stream_model(stream_kwargs, adapter_inst, registry)
             model = str(stream_kwargs.get("model") or stream_kwargs.get("openai_model") or "")
+            if is_realtime_llm_model(model):
+                model = http_openai_model(settings)
+                stream_kwargs["model"] = model
+                stream_kwargs["openai_model"] = model
             msgs = self._messages_for_model(input_messages, model)
             stream_fn = adapter_inst.stream_structured_turn if schema else adapter_inst.stream_live_turn
             async for chunk in stream_fn(
@@ -441,6 +546,11 @@ class LiveTurnOrchestrator:
         if input_messages is not None:
             model = str(stream_kwargs.get("openai_model") or stream_kwargs.get("model") or "")
             stream_kwargs["input_messages"] = self._messages_for_model(input_messages, model)
+        http_model = str(stream_kwargs.get("openai_model") or stream_kwargs.get("model") or "")
+        if is_realtime_llm_model(http_model):
+            fallback = http_openai_model(settings)
+            stream_kwargs["openai_model"] = fallback
+            stream_kwargs["model"] = fallback
         direct_kwargs = {k: v for k, v in stream_kwargs.items() if k != "model"}
         async for chunk in generate_response_stream(**direct_kwargs):
             yield chunk
@@ -489,8 +599,6 @@ class LiveTurnOrchestrator:
                     return str(row["id"])
         if provider_id == "openai":
             return settings.openai_model
-        if provider_id == "gemini":
-            return getattr(settings, "gemini_model", None) or "gemini-3.5-flash-lite"
         if provider_id == "deepseek":
             return settings.deepseek_model
         return None
@@ -534,6 +642,7 @@ class LiveTurnOrchestrator:
         rolling: str | None = None,
         memory_parse_failed: bool = False,
         usage: dict[str, Any] | None = None,
+        skip_live_memory: bool = False,
     ) -> None:
         try:
             line = await call_ledger.append_assistant_turn(
@@ -546,13 +655,16 @@ class LiveTurnOrchestrator:
             return
         ops = list((memory_update or {}).get("operations") or [])
         correction_op = correction_memory_operation(user_text)
-        if correction_op:
+        if correction_op and not skip_live_memory:
             ops.append(correction_op)
+        if not skip_live_memory:
+            for detail_op in caller_detail_memory_operations(user_text):
+                ops.append(detail_op)
         applied = 0
         merge_ms: int | None = None
         settings = get_settings()
         seq = turn_seq or int(line.get("seq") or 0)
-        if settings.working_memory_enabled:
+        if settings.working_memory_enabled and not skip_live_memory:
             try:
                 if projection is not None:
                     memory_manager.record_projection(

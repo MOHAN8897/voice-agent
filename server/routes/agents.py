@@ -14,6 +14,7 @@ router = APIRouter()
 class CreateAgentBody(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     tenantId: Optional[str] = None
+    languages: Optional[list[str]] = None
 
 
 class PatchAgentBody(BaseModel):
@@ -32,7 +33,11 @@ async def list_agents():
 
 @router.post("/api/agents")
 async def create_agent(body: CreateAgentBody):
-    agent = await agent_service.create_agent(name=body.name, tenant_id=body.tenantId)
+    agent = await agent_service.create_agent(
+        name=body.name,
+        tenant_id=body.tenantId,
+        languages=body.languages,
+    )
     return {"ok": True, "agent": agent}
 
 
@@ -64,3 +69,13 @@ async def patch_agent(agent_id: str, body: PatchAgentBody):
     except KeyError:
         raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Agent not found"}})
     return {"ok": True, "agent": agent}
+
+
+@router.delete("/api/agents/{agent_id}")
+async def delete_agent(agent_id: str):
+    try:
+        return await agent_service.delete_agent(agent_id)
+    except KeyError:
+        raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Agent not found"}})
+    except ValueError:
+        raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Agent not found"}})

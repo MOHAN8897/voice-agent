@@ -37,14 +37,12 @@ class ProviderRegistry:
         enable_sarvam = bool(dev_secrets_store.effective("enable_sarvam", s.enable_sarvam))
         enable_openai = bool(dev_secrets_store.effective("enable_openai", s.enable_openai))
         enable_deepseek = bool(dev_secrets_store.effective("enable_deepseek", s.enable_deepseek))
-        enable_gemini = bool(dev_secrets_store.effective("enable_gemini", s.enable_gemini))
         enable_cartesia = bool(dev_secrets_store.effective("enable_cartesia", s.enable_cartesia))
 
         sarvam_key = dev_secrets_store.effective_secret("sarvam_api_key") or s.sarvam_api_key
         openai_key = dev_secrets_store.effective_secret("openai_api_key") or s.openai_api_key
         deepseek_key = dev_secrets_store.effective_secret("deepseek_api_key") or s.deepseek_api_key
         cartesia_key = dev_secrets_store.effective_secret("cartesia_api_key") or s.cartesia_api_key
-        gemini_key = dev_secrets_store.effective_secret("gemini_api_key") or s.gemini_api_key
 
         providers: list[dict[str, Any]] = []
 
@@ -72,17 +70,6 @@ class ProviderRegistry:
             entry["enabled"] = enable_deepseek
             entry["configured"] = bool(deepseek_key)
             entry["adapter_available"] = bool(deepseek_key)
-            providers.append(entry)
-
-        if enable_gemini:
-            adapter_ok = bool(gemini_key)
-            if adapter_ok:
-                from server.providers.gemini_llm import GeminiLLMAdapter
-
-                self._llm["gemini"] = GeminiLLMAdapter()
-            entry = self._gemini_provider_entry(s, adapter_ok)
-            entry["enabled"] = enable_gemini
-            entry["configured"] = adapter_ok
             providers.append(entry)
 
         if enable_cartesia or cartesia_key:
@@ -152,30 +139,6 @@ class ProviderRegistry:
             "notes": "OpenAI-compatible API — https://api-docs.deepseek.com",
         }
 
-    def _gemini_provider_entry(self, s: Settings, adapter_ok: bool) -> dict[str, Any]:
-        models = llm_models_for_provider("gemini", s)
-        return {
-            "id": "gemini",
-            "label": "Google Gemini",
-            "stages": ["llm"],
-            "enabled": s.enable_gemini,
-            "configured": adapter_ok,
-            "healthy": adapter_ok,
-            "adapter_available": adapter_ok,
-            "languages": ["multilingual"],
-            "models": {"llm": models},
-            "capabilities": {
-                "streaming": True,
-                "structured_output": True,
-                "prompt_caching": True,
-            },
-            "notes": (
-                "Live turns use the same structured JSON, working-memory ops, and "
-                "compiled-brain prefix as OpenAI. Gemini 2.5+/3.x implicit-cache the "
-                "system instruction when it stays stable across turns."
-            ),
-        }
-
     def _openai_provider_entry(self, s: Settings) -> dict[str, Any]:
         models = llm_models_for_provider("openai", s)
         return {
@@ -187,7 +150,13 @@ class ProviderRegistry:
             "healthy": True,
             "languages": ["multilingual"],
             "models": {"llm": models},
-            "capabilities": {"streaming": True, "structured_output": True, "prompt_caching": True},
+            "capabilities": {
+                "streaming": True,
+                "structured_output": True,
+                "prompt_caching": True,
+                "realtime_text": True,
+            },
+            "notes": "Live calls use OpenAI Realtime text-only. Compile and post-call use HTTP models such as gpt-5.6-luna.",
         }
 
     def _cartesia_provider_entry(self, s: Settings, adapter_ok: bool, enabled: bool) -> dict[str, Any]:

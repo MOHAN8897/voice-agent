@@ -40,6 +40,7 @@ def test_call_start_and_end_idempotent_202(monkeypatch, tmp_path):
     call_id = started.json()["call_id"]
     assert started.json()["locked_versions"]["combination_id"]
     assert "ws_urls" in started.json()
+    assert started.json().get("pipeline") == "realtime_text"
 
     ended = c.post("/api/call/end", json={"callId": call_id, "reason": "user_stop"})
     assert ended.status_code == 202

@@ -6,6 +6,7 @@ import { LogoutButton } from "@/components/auth/LogoutButton";
 import { DevNav } from "@/components/dev/DevNav";
 import { InstrumentSidebar, MobileShellHeader } from "@/components/shell/InstrumentSidebar";
 import { ShellTopBar } from "@/components/shell/ShellTopBar";
+import { DevShellEntityLabel } from "@/components/dev/DevShellEntityLabel";
 
 export function DevShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -31,7 +32,7 @@ export function DevShell({ children }: { children: React.ReactNode }) {
 
         <ShellTopBar
           productLabel="Voice Agent"
-          entityLabel="Platform Control"
+          entityLabel={<DevShellEntityLabel />}
           environment="development"
           connectionStatus="ok"
           tier="admin"

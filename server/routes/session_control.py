@@ -22,6 +22,7 @@ async def interrupt_session(body: dict):
     call_id = str(body.get("callId") or "").strip() or None
     heard = str(body.get("heardText") or "")
     conversation_manager.note_barge(session_id, heard)
+    resolved_call = call_id
     if call_id:
         ctx = call_context.get(call_id)
         if ctx:
@@ -30,8 +31,13 @@ async def interrupt_session(body: dict):
     else:
         ctx = call_context.get_active_for_session(session_id)
         if ctx:
+            resolved_call = ctx.call_id
             ctx.barge_in_flight = True
             ctx.agent_hangup_armed = False
+    if resolved_call:
+        from server.realtime.manager import realtime_text_manager
+
+        await realtime_text_manager.cancel(resolved_call)
     metrics.record_error("session", "barge_in")
     return {"ok": True, "sessionId": session_id, "state": "INTERRUPTED"}
 

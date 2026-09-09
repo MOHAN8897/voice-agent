@@ -1,27 +1,21 @@
-import { apiGet } from "@/lib/api";
-import { redirect } from "next/navigation";
+import { Suspense } from "react";
+import { TestStudioHome } from "@/components/test-studio/TestStudioHome";
+import { TestStudioLegacyAgentRedirect } from "@/components/test-studio/TestStudioLegacyAgentRedirect";
+import { ConsolePage } from "@/components/console/ConsolePage";
 import { PageHeader } from "@/components/console/PageHeader";
-import { EmptyState } from "@/components/console/EmptyState";
 
-export default async function TestStudioRedirectPage() {
-  let agentId: string | null = null;
-  try {
-    const data = await apiGet<{ agents?: Array<{ agent_id: string }> }>("/api/agents");
-    agentId = data.agents?.[0]?.agent_id ?? null;
-  } catch {
-    agentId = null;
-  }
-
-  if (agentId) {
-    redirect(`/app/agents/${agentId}/test`);
-  }
-
+export default function TestStudioPage() {
   return (
-    <div>
-      <PageHeader title="Test Studio" description="Live browser mic against a locked agent version." />
-      <div className="mt-8">
-        <EmptyState title="Create an agent first" body="Test Studio needs an agent with a Business Brain before a live session can start." actionHref="/app/agents" actionLabel="Go to Agents" />
-      </div>
-    </div>
+    <ConsolePage>
+      <Suspense fallback={null}>
+        <TestStudioLegacyAgentRedirect portal="app" />
+      </Suspense>
+      <PageHeader
+        eyebrow="Voice lab"
+        title="Test Studio"
+        description="Agent sidebar on the left — each agent has its own isolated lab."
+      />
+      <TestStudioHome portal="app" />
+    </ConsolePage>
   );
 }

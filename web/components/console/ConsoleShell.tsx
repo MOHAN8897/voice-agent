@@ -6,6 +6,7 @@ import { LogoutButton } from "@/components/auth/LogoutButton";
 import { ConsoleNav } from "@/components/console/ConsoleNav";
 import { InstrumentSidebar, MobileShellHeader } from "@/components/shell/InstrumentSidebar";
 import { ShellTopBar } from "@/components/shell/ShellTopBar";
+import { ConsoleShellEntityLabel } from "@/components/console/ConsoleShellEntityLabel";
 
 export function ConsoleShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -36,7 +37,7 @@ export function ConsoleShell({ children }: { children: React.ReactNode }) {
 
         <ShellTopBar
           productLabel="Voice Agent"
-          entityLabel="Business Console"
+          entityLabel={<ConsoleShellEntityLabel />}
           environment="development"
           connectionStatus="ok"
           profileHref="/app/profile"

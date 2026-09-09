@@ -30,6 +30,8 @@ class CartesiaTTSAdapter:
         key = self._api_key()
         if not key:
             raise RuntimeError("Cartesia API key not configured")
+        from server.services.tts_voice_direction import cartesia_generation_config
+
         payload = {
             "model_id": config.model or settings.cartesia_tts_model or "sonic-3.5",
             "transcript": text,
@@ -39,6 +41,11 @@ class CartesiaTTSAdapter:
                 "encoding": "pcm_s16le",
                 "sample_rate": 16000,
             },
+            "generation_config": cartesia_generation_config(
+                emotion=config.emotion,
+                speed=config.speed,
+                volume=config.volume,
+            ),
         }
         async with httpx.AsyncClient(timeout=30.0) as client:
             r = await client.post(

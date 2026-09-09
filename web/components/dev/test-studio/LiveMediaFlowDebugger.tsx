@@ -30,6 +30,7 @@ type FlowEvent = Stage & {
 };
 
 type MediaFlow = {
+  diagnostics?: { direction?: string; agent_id?: string; phase?: string; turn_id?: string; generation_id?: string; stt?: string; realtime?: string; model?: string };
   call_id?: string | null;
   external_id?: string | null;
   ws_id?: string | null;
@@ -136,13 +137,20 @@ export function LiveMediaFlowDebugger({ callId }: { callId?: string | null }) {
   const [flow, setFlow] = useState<MediaFlow | null>(null);
   const [filter, setFilter] = useState("All");
   const [message, setMessage] = useState("");
+  const [loadError, setLoadError] = useState("");
+  const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
     const query = callId ? `?call_id=${encodeURIComponent(callId)}` : "";
-    const response = await portalFetch("dev", `/api/dev/telephony/media-flow${query}`);
-    if (!response.ok) return;
-    const body = await response.json();
-    setFlow(body.flow || null);
+    try {
+      const response = await portalFetch("dev", `/api/dev/telephony/media-flow${query}`);
+      if (!response.ok) throw new Error(`Diagnostics unavailable (${response.status})`);
+      const body = await response.json();
+      setFlow(body.flow || null);
+      setLoadError("");
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "Diagnostics connection lost");
+    }
   }, [callId]);
 
   useEffect(() => {
@@ -152,7 +160,7 @@ export function LiveMediaFlowDebugger({ callId }: { callId?: string | null }) {
   }, [load]);
 
   const events = useMemo(() => {
-    const all = [...(flow?.events || [])].reverse();
+    const all = [...(flow?.events || [])];
     if (filter === "All") return all;
     if (filter === "Errors") return all.filter((event) => event.status === "failed");
     const stages = STAGE_FILTER[filter] || [];
@@ -168,20 +176,29 @@ export function LiveMediaFlowDebugger({ callId }: { callId?: string | null }) {
     };
   }, [flow?.events]);
 
-  async function diagnostic(path: "test-codec" | "test-audio" | "test-telnyx-speak") {
+  async function diagnostic(path: "test-codec" | "test-audio" | "test-telnyx-speak" | "purge") {
+    if (busy) return;
+    setBusy(true);
     const labels = {
       "test-codec": "Testing codec paths…",
       "test-audio": "Sending known agent phrase…",
       "test-telnyx-speak": "Playing Telnyx native speak…",
+      "purge": "Stopping playback…",
     };
     setMessage(labels[path]);
-    const suffix = path === "test-audio" && (flow?.external_id || callId)
+    const suffix = path !== "test-codec" && (flow?.external_id || callId)
       ? `?call_id=${encodeURIComponent(flow?.external_id || callId || "")}`
       : "";
-    const response = await portalFetch("dev", `/api/dev/telephony/media-flow/${path}${suffix}`, { method: "POST" });
-    const body = await response.json();
-    setMessage(body.ok ? (body.detail || "Diagnostic passed") : (body.error || "Diagnostic failed"));
-    await load();
+    try {
+      const response = await portalFetch("dev", `/api/dev/telephony/media-flow/${path}${suffix}`, { method: "POST" });
+      const body = await response.json();
+      setMessage(response.ok && body.ok ? (body.detail || "Diagnostic passed") : (body.error || body.detail || "Diagnostic failed"));
+      await load();
+    } catch {
+      setMessage("Diagnostic request failed. Check the API connection and retry.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   const stages = flow?.stages || {};
@@ -197,6 +214,7 @@ export function LiveMediaFlowDebugger({ callId }: { callId?: string | null }) {
 
   return (
     <DevCard title="Live call media flow" description="Actual negotiated bytes and runtime stages — not a handset audibility claim">
+      {loadError ? <p role="alert" className="mb-3 text-sm text-danger">{loadError}. Displayed data may be stale.</p> : null}
       {!flow ? (
         <div className="rounded-xl border border-dashed border-surface-border p-6 text-sm text-text-muted">
           No media stream observed yet. Place and answer a Telnyx call.
@@ -209,8 +227,16 @@ export function LiveMediaFlowDebugger({ callId }: { callId?: string | null }) {
             </span>
             <span className="font-mono text-text-muted">call {flow.call_id?.slice(0, 12) || "pending"}</span>
             <span className="font-mono text-text-subtle">ws {flow.ws_id}</span>
+            <span className="text-text">{flow.diagnostics?.direction || "unknown direction"} · {flow.diagnostics?.phase || "connecting"}</span>
             <span className="ml-auto font-semibold text-text">Health {flow.health?.score ?? 0}%</span>
           </div>
+
+          <dl className="grid grid-cols-[repeat(auto-fit,minmax(130px,1fr))] gap-3 text-xs">
+            <div><dt className="text-text-subtle">Agent</dt><dd className="break-all text-text">{flow.diagnostics?.agent_id || "pending"}</dd></div>
+            <div><dt className="text-text-subtle">STT stream</dt><dd className="text-text">{flow.diagnostics?.stt || "unknown"}</dd></div>
+            <div><dt className="text-text-subtle">Realtime</dt><dd className="text-text">{flow.diagnostics?.realtime || "unknown"} · {flow.diagnostics?.model || "—"}</dd></div>
+            <div><dt className="text-text-subtle">Turn / generation</dt><dd className="break-all text-text">{flow.diagnostics?.turn_id || "—"} / {flow.diagnostics?.generation_id || "—"}</dd></div>
+          </dl>
 
           {mismatch ? (
             <div className="rounded-xl border border-danger/50 bg-danger/10 px-4 py-3 text-sm text-danger">
@@ -224,7 +250,7 @@ export function LiveMediaFlowDebugger({ callId }: { callId?: string | null }) {
 
           <section aria-label="Text pipeline" className="rounded-xl border border-surface-border-subtle bg-surface-raised/40 p-4">
             <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-text-subtle">Text pipeline · what the agent processes</p>
-            <div className="grid gap-3 md:grid-cols-3">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-accent">STT heard (caller → text)</p>
                 <p className="mt-2 min-h-12 rounded-lg border border-surface-border bg-surface px-3 py-2 text-sm text-text">
@@ -255,7 +281,7 @@ export function LiveMediaFlowDebugger({ callId }: { callId?: string | null }) {
               <span className="self-center text-accent">→</span>
               <Node label="PCM normalizer" stage={stages.stt_audio} />
               <span className="self-center text-accent">→</span>
-              <Node label="Sarvam STT" stage={stages.stt_final || stages.stt_audio} />
+              <Node label="Streaming STT" stage={stages.stt_stream || stages.stt_final || stages.stt_audio} />
             </div>
           </section>
 
@@ -293,10 +319,11 @@ export function LiveMediaFlowDebugger({ callId }: { callId?: string | null }) {
           </dl>
 
           <div className="flex flex-wrap gap-2">
-            <Button type="button" variant="secondary" onClick={() => diagnostic("test-audio")}>Test agent audio</Button>
-            <Button type="button" variant="secondary" onClick={() => diagnostic("test-telnyx-speak")}>Test Telnyx speak</Button>
-            <Button type="button" variant="secondary" onClick={() => diagnostic("test-codec")}>Test codec</Button>
-            {message ? <span className="self-center text-xs text-text-muted">{message}</span> : null}
+            <Button type="button" variant="secondary" disabled={busy || !flow.active} onClick={() => diagnostic("test-audio")}>Test agent audio</Button>
+            <Button type="button" variant="secondary" disabled={busy || !flow.active} onClick={() => diagnostic("test-telnyx-speak")}>Test Telnyx speak</Button>
+            <Button type="button" variant="secondary" disabled={busy} onClick={() => diagnostic("test-codec")}>Test codec</Button>
+            <Button type="button" variant="secondary" disabled={busy || !flow.active} onClick={() => diagnostic("purge")}>Purge playback</Button>
+            {message ? <span role="status" className="self-center text-xs text-text-muted">{message}</span> : null}
           </div>
 
           <div>
@@ -306,6 +333,7 @@ export function LiveMediaFlowDebugger({ callId }: { callId?: string | null }) {
                   key={item}
                   type="button"
                   onClick={() => setFilter(item)}
+                  aria-pressed={filter === item}
                   className={`rounded-lg px-2 py-1 text-[10px] font-medium ${filter === item ? "bg-accent/15 text-accent" : "text-text-subtle hover:bg-surface-raised"}`}
                 >
                   {item}
@@ -313,11 +341,11 @@ export function LiveMediaFlowDebugger({ callId }: { callId?: string | null }) {
               ))}
             </div>
             <div className="max-h-72 space-y-1 overflow-y-auto rounded-xl bg-surface-raised p-2 font-mono text-[10px]">
-              {events.slice(0, 100).map((event) => (
-                <div key={event.seq} className={`grid grid-cols-[72px_110px_1fr] gap-2 rounded px-2 py-1.5 ${event.status === "failed" ? "bg-danger/10 text-danger" : "text-text-muted"}`}>
-                  <span>{new Date(event.timestamp * 1000).toLocaleTimeString()}</span>
-                  <span className="text-text">{event.stage}</span>
-                  <span className="truncate">
+              {events.slice(-100).map((event) => (
+                <div key={event.seq} className={`grid grid-cols-[72px_minmax(0,1fr)] gap-2 rounded px-2 py-1.5 ${event.status === "failed" ? "bg-danger/10 text-danger" : "text-text-muted"}`}>
+                  <span title={new Date(event.timestamp * 1000).toISOString()}>+{Math.round((event.timestamp - (flow.started_at || event.timestamp)) * 1000)} ms</span>
+                  <span className="break-words text-text">{event.stage}</span>
+                  <span className="col-span-2 break-words">
                     {event.detail ? (
                       <span className="text-text">{event.detail} · </span>
                     ) : null}

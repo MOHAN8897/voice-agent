@@ -172,6 +172,9 @@ async def exotel_status_callback(request: Request):
 
         st = str(status or "").lower()
         if st in ("completed", "failed", "busy", "no-answer", "canceled"):
+            from server.services.pstn_prewarm import cancel_prewarm
+
+            await cancel_prewarm("exotel", call_sid)
             local = exotel_call_registry.get(call_sid) or {}
             internal_id = local.get("internal_call_id")
             if internal_id:

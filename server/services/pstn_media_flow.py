@@ -226,14 +226,32 @@ class PstnMediaFlowStore:
 
     @staticmethod
     def _latencies(events: list[dict[str, Any]]) -> dict[str, int | None]:
+        # Scope response metrics to the latest turn. Greeting audio and earlier
+        # turns must not produce misleading zero/negative first-audio timings.
+        starts = [i for i, event in enumerate(events) if event.get("stage") == "llm_started"]
+        turn_start = starts[-1] if starts else len(events)
         first: dict[str, float] = {}
-        for event in events:
+        for event in events[turn_start:]:
             first.setdefault(str(event.get("stage")), float(event.get("timestamp") or 0))
+
+        # STT capture occurs before llm_started; use the most recent final and
+        # nearest preceding audio evidence, never a greeting's TTS events.
+        before = events[:turn_start]
+        for i in range(len(before) - 1, -1, -1):
+            if before[i].get("stage") == "stt_final":
+                first["stt_final"] = float(before[i].get("timestamp") or 0)
+                for audio in reversed(before[:i]):
+                    if audio.get("stage") == "stt_audio":
+                        first["stt_audio"] = float(audio.get("timestamp") or 0)
+                        break
+                break
 
         def delta(start: str, end: str) -> int | None:
             if start not in first or end not in first:
                 return None
-            return max(0, round((first[end] - first[start]) * 1000))
+            if first[end] < first[start]:
+                return None
+            return round((first[end] - first[start]) * 1000)
 
         return {
             "stt_final_ms": delta("stt_audio", "stt_final"),

@@ -11,6 +11,7 @@ from typing import Any
 
 from server.agent.brain_prompt_composer import estimate_tokens, fit_text_to_tokens
 from server.config.env import get_settings
+from server.realtime.models import http_openai_model
 
 OPTIMIZER_VERSION = "v2"
 OPTIMIZER_SCHEMA: dict[str, Any] = {
@@ -122,7 +123,8 @@ async def _llm_compress_prompt(raw_prompt: str, *, budget_tokens: int) -> dict[s
         system = (
             "You compress voice-agent instructions for a Telugu phone assistant. "
             "Merge duplicate rules, remove repetition, and keep ALL facts, prices, names, "
-            "policies, phone numbers, URLs, workflows, and guardrails exactly. "
+            "policies, URLs, workflows, and guardrails exactly. "
+            "Phone numbers may appear in the brief for reference only — add a rule that the agent must never read phone numbers aloud on a live call. "
             "Do not invent policy, pricing, or capabilities. "
             "Do not repeat Telugu-voice or safety rules that already exist in the platform prefix. "
             "Use concise section headers. Plain text only."
@@ -141,7 +143,7 @@ async def _llm_compress_prompt(raw_prompt: str, *, budget_tokens: int) -> dict[s
                 schema=OPTIMIZER_SCHEMA,
                 config=LLMConfig(
                     provider="openai",
-                    model=settings.post_call_llm_model or settings.openai_model,
+                    model=http_openai_model(settings),
                 ),
                 schema_name="prompt_optimizer",
                 max_output_tokens=min(900, budget_tokens),
@@ -171,7 +173,7 @@ async def optimize_session_dual_prompt(
 
     if llm_payload:
         optimized = str(llm_payload.get("optimized_prompt", "")).strip()
-        model = settings.post_call_llm_model or settings.openai_model
+        model = http_openai_model(settings)
         facts = list(llm_payload.get("preserved_facts") or [])[:12]
         rules = list(llm_payload.get("preserved_rules") or [])[:12]
         deduped = list(llm_payload.get("deduplicated_items") or [])[:12]
@@ -227,7 +229,7 @@ async def optimize_business_prompt(
 
     if llm_payload:
         optimized = str(llm_payload.get("optimized_prompt", "")).strip()
-        model = settings.post_call_llm_model or settings.openai_model
+        model = http_openai_model(settings)
         facts = list(llm_payload.get("preserved_facts") or [])[:12]
         rules = list(llm_payload.get("preserved_rules") or [])[:12]
         deduped = list(llm_payload.get("deduplicated_items") or [])[:12]

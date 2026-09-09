@@ -9,17 +9,12 @@ param(
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot "dev_common.ps1")
 $RepoRoot = Split-Path -Parent $PSScriptRoot
-$WebRoot = Join-Path $RepoRoot "web"
 $WebEnvFile = Join-Path $RepoRoot "web\.env.local"
 $LogDir = Join-Path $RepoRoot "data\dev-logs"
 New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
 
-$env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" +
+$env:Path = $env:Path + ";" + [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" +
     [System.Environment]::GetEnvironmentVariable("Path", "User")
-
-$python = (Get-Command python -ErrorAction Stop).Source
-$npm = (Get-Command npm.cmd -ErrorAction SilentlyContinue).Source
-if (-not $npm) { $npm = (Get-Command npm -ErrorAction Stop).Source }
 
 function Set-WebEnvSameOriginShare {
     $header = "# Auto-updated by share_with_friend.ps1 (single ngrok tunnel)"
@@ -43,34 +38,9 @@ if (-not (Stop-VoiceAgentDevStack)) {
 Write-Host "Step 2/5: Configuring website for public sharing..."
 Set-WebEnvSameOriginShare
 
-Write-Host "Step 3/5: Starting API..."
-Start-DevWindow -Title "Voice Agent API" -WorkingDir $RepoRoot `
-    -Command (Get-UvicornDevCommand -PythonPath $python) `
-    -LogFile (Join-Path $LogDir "api.log")
-
-if (-not (Wait-ForService -Label "API" -Url "http://127.0.0.1:8000/api/health")) {
-    Write-Error "API failed to start. Check data\dev-logs\api.log"
-}
-
-if (-not (Test-Path (Join-Path $WebRoot "node_modules"))) {
-    Write-Host "Installing web dependencies (first run)..."
-    Push-Location $WebRoot
-    & $npm install
-    Pop-Location
-}
-
-Write-Host "Step 4/5: Starting website..."
-Start-DevWindow -Title "Voice Agent Web" -WorkingDir $WebRoot `
-    -Command "& '$npm' run dev -- -p 3000" `
-    -LogFile (Join-Path $LogDir "web.log")
-
-if (-not (Wait-ForService -Label "Website" -Url "http://localhost:3000/dev/login")) {
-    Write-Error "Website failed to start. Check data\dev-logs\web.log"
-}
-if (-not (Wait-ForService -Label "Website API proxy" -Url "http://localhost:3000/api/health" -MaxAttempts 30)) {
-    Write-Error "Website is up but /api/health proxy failed. Check data\dev-logs\api.log"
-}
-
+Write-Host 'Starting API and production website...'
+& (Join-Path $PSScriptRoot 'dev_up.ps1') -Wait -ProductionWeb
+if ($LASTEXITCODE -ne 0) { throw 'Local stack failed to start. See data/dev-logs.' }
 Write-Host "Step 5/5: Starting public tunnel..."
 $shareLink = $null
 $tunnelScript = Join-Path $PSScriptRoot "tunnel_ngrok_share.ps1"
@@ -93,6 +63,13 @@ if ($Tunnel -eq "cloudflared") {
 if (-not $shareLink) {
     Write-Error "Could not start a public tunnel."
 }
+$publicOrigin = ([uri]$shareLink).GetLeftPart([System.UriPartial]::Authority)
+if (-not (Wait-ForService -Label 'Public website' -Url "$publicOrigin/dev/login" -MaxAttempts 45)) {
+    throw 'The public website is not reachable.'
+}
+if (-not (Wait-ForService -Label 'Public API proxy' -Url "$publicOrigin/api/health" -MaxAttempts 45)) {
+    throw 'The public API proxy is not reachable.'
+}
 
 Write-Host ""
 Write-Host "============================================================"
@@ -107,3 +84,4 @@ Write-Host ""
 Write-Host "  Keep this PC on. Stop with: npm run dev:down"
 Write-Host "============================================================"
 Write-Host ""
+exit 0

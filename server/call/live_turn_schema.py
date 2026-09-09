@@ -3,12 +3,14 @@ from __future__ import annotations
 
 from typing import Any
 
+from server.services.voice_pipeline_limits import LIVE_REPLY_MAX_CHARS
+
 LIVE_TURN_JSON_SCHEMA: dict[str, Any] = {
     "type": "object",
     "additionalProperties": False,
     "required": ["spoken_response", "memory_update", "end_call"],
     "properties": {
-        "spoken_response": {"type": "string", "maxLength": 4000},
+        "spoken_response": {"type": "string", "maxLength": LIVE_REPLY_MAX_CHARS},
         "memory_update": {
             "type": "object",
             "additionalProperties": False,
@@ -55,7 +57,7 @@ LIVE_TURN_JSON_SCHEMA: dict[str, Any] = {
                         "out_of_scope",
                     ],
                 },
-                "farewell": {"type": "string", "maxLength": 240},
+                "farewell": {"type": "string", "maxLength": LIVE_REPLY_MAX_CHARS},
             },
         },
     },

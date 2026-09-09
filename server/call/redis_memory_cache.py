@@ -2,29 +2,36 @@
 from __future__ import annotations
 
 import json
+import time
 from typing import Any
 
 from server.config.env import get_settings
 from server.utils.logger import logger
 
 _CLIENT = None
+_RETRY_AFTER = 0.0
 _PREFIX = "voice:call:memory:"
 _TTL_SEC = 7200
 
 
 def _redis():
-    global _CLIENT
+    global _CLIENT, _RETRY_AFTER
     settings = get_settings()
     url = settings.redis_url
     if not url:
+        return None
+    if time.monotonic() < _RETRY_AFTER:
         return None
     if _CLIENT is None:
         try:
             import redis
 
-            _CLIENT = redis.from_url(url, decode_responses=True)
+            _CLIENT = redis.from_url(url, decode_responses=True,
+                                     socket_connect_timeout=0.25, socket_timeout=0.25)
             _CLIENT.ping()
         except Exception as e:
+            _CLIENT = None
+            _RETRY_AFTER = time.monotonic() + 10.0
             logger.warning(f"[REDIS] memory cache unavailable: {e}")
             return None
     return _CLIENT

@@ -38,7 +38,12 @@ async def synthesize(
     temperature: bulbul:v3 only (0.01-1.0). Raises AppError on failure.
     """
     settings = get_settings()
-    text = text.strip()
+    text = (text or "").strip()
+    if not text:
+        raise AppError(ErrorCode.VALIDATION_ERROR, "Text is required for TTS", status_code=400)
+    from server.services.spoken_numbers import prepare_spoken_reply
+
+    text = prepare_spoken_reply(text, provider="sarvam")
     if not text:
         raise AppError(ErrorCode.VALIDATION_ERROR, "Text is required for TTS", status_code=400)
     if len(text) > constants.TTS_MAX_CHARS_REST:

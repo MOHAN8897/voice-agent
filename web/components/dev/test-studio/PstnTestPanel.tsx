@@ -8,7 +8,7 @@ import { ensureArray } from "@/lib/ensure-array";
 import { portalFetch, refreshPortalSession } from "@/lib/auth-client";
 import { LiveMediaFlowDebugger } from "./LiveMediaFlowDebugger";
 import type { StackForm, StackMode } from "@/lib/test-studio-stack";
-import { TEST_STUDIO_SESSION_ID } from "@/lib/test-studio-stack";
+import { effectivePstnLiveLlm, TEST_STUDIO_SESSION_ID } from "@/lib/test-studio-stack";
 import { DEFAULT_CARTESIA_VOICE_ID, ensureTtsVoice } from "@/lib/voice/tts-config";
 
 type ProviderStatus = {
@@ -95,21 +95,25 @@ function voiceLabel(provider: string, voiceId: string): string {
 
 export function PstnTestPanel({
   agentId,
+  sourceSessionId = TEST_STUDIO_SESSION_ID,
   tier,
   language,
   stackMode = "tier",
   stack,
   runtimeTtsSpeaker = "",
+  runtimeOpenAiModel = "",
   stackOverride,
   onInternalCallStart,
   onInternalCallEnd,
 }: {
   agentId: string;
+  sourceSessionId?: string;
   tier: string;
   language?: string;
   stackMode?: StackMode;
   stack?: StackForm;
   runtimeTtsSpeaker?: string;
+  runtimeOpenAiModel?: string;
   stackOverride?: Record<string, unknown>;
   onInternalCallStart?: (callId: string) => void;
   onInternalCallEnd?: (callId: string) => void;
@@ -122,7 +126,7 @@ export function PstnTestPanel({
   const [message, setMessage] = useState("");
   const [stackPreview, setStackPreview] = useState<string>("");
   const [fromE164, setFromE164] = useState("");
-  const [toE164, setToE164] = useState("+918897908470");
+  const [toE164, setToE164] = useState("");
   const [providerDraft, setProviderDraft] = useState("telnyx");
   const [verifyCode, setVerifyCode] = useState("");
   const trackedCallRef = useRef<string | null>(null);
@@ -238,6 +242,7 @@ export function PstnTestPanel({
     await load();
   }
 
+  const liveLlm = useMemo(() => effectivePstnLiveLlm(runtimeOpenAiModel), [runtimeOpenAiModel]);
   const stackOverrideKey = useMemo(
     () => (stackOverride ? JSON.stringify(stackOverride) : ""),
     [stackOverride]
@@ -325,7 +330,7 @@ export function PstnTestPanel({
         tier: tier || "medium",
         language: language || "te-IN",
         inheritTestStudioConfig: true,
-        sourceSessionId: TEST_STUDIO_SESSION_ID,
+        sourceSessionId,
       };
       if (stackOverride) {
         dialBody.stackOverride = stackOverride;
@@ -593,11 +598,19 @@ export function PstnTestPanel({
             </dd>
           </div>
           <div>
-            <dt className="text-text-muted">LLM</dt>
+            <dt className="text-text-muted">LLM (live)</dt>
             <dd className="mt-1 font-mono text-xs text-text">
-              {stack ? `${stack.llmProvider} / ${stack.llmModel}` : "tier default"}
+              {liveLlm.provider} / {liveLlm.model}
             </dd>
           </div>
+          {stackMode === "custom" && stack?.llmProvider && stack.llmProvider !== liveLlm.provider ? (
+            <div className="sm:col-span-2">
+              <p className="text-[11px] text-text-subtle">
+                Custom stack lists {stack.llmProvider}/{stack.llmModel}; PSTN live turns always use OpenAI
+                Realtime. Script compile and post-call use the HTTP model from fine-tune.
+              </p>
+            </div>
+          ) : null}
           <div>
             <dt className="text-text-muted">TTS</dt>
             <dd className="mt-1 font-mono text-xs text-text">
@@ -615,7 +628,7 @@ export function PstnTestPanel({
           }`}
         >
           Script + VAD + LLM fine-tune from session{" "}
-          <span className="font-mono">{TEST_STUDIO_SESSION_ID}</span>
+          <span className="font-mono">{sourceSessionId}</span>
           {stackPreview ? ` · ${stackPreview}` : ""}
         </p>
       </DevCard>
@@ -638,7 +651,7 @@ export function PstnTestPanel({
               type="text"
               value={toE164}
               onChange={(e) => setToE164(e.target.value)}
-              placeholder="+918897908470"
+              placeholder="+91XXXXXXXXXX"
               className="mt-2 w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2 text-sm font-mono"
             />
           </label>

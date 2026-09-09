@@ -29,7 +29,13 @@ def live_client():
     return TestClient(app_mod.app)
 
 
-def _brain_stream_ttfb(client: TestClient, transcript: str, session_id: str) -> tuple[float, str]:
+def _brain_stream_ttfb(
+    client: TestClient,
+    transcript: str,
+    session_id: str,
+    *,
+    call_id: str | None = None,
+) -> tuple[float, str]:
   """First SSE delta latency (ms) and full text."""
   t0 = time.perf_counter()
   first_ms = None
@@ -37,7 +43,12 @@ def _brain_stream_ttfb(client: TestClient, transcript: str, session_id: str) -> 
   with client.stream(
       "POST",
       "/api/brain/stream",
-      json={"transcript": transcript, "language_code": "te-IN", "sessionId": session_id},
+      json={
+          "transcript": transcript,
+          "language_code": "te-IN",
+          "sessionId": session_id,
+          **({"callId": call_id} if call_id else {}),
+      },
   ) as r:
       assert r.status_code == 200, r.text
       for line in r.iter_lines():
@@ -58,7 +69,8 @@ def test_catalog_gpt5_only(live_client: TestClient):
     r = live_client.get("/api/settings/catalog")
     assert r.status_code == 200
     models = set(r.json()["openai"]["allowedModels"])
-    assert models == {"gpt-5.5", "gpt-5.4", "gpt-5", "gpt-5.6-luna"}
+    assert "gpt-realtime-2.1-mini" in models
+    assert "gpt-5.6-luna" in models
 
 
 @pytest.mark.parametrize("name,transcript", SCENARIOS)

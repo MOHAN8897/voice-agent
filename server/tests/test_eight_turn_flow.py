@@ -39,12 +39,12 @@ MOCK_SCRIPT = {
         "You are Priya, telecaller for GreenHomes Realty. Speak natural Telugu.\n\n"
         "OPENING\n"
         "Namaste! Nenu Priya, GreenHomes Realty nundi matladutunnanu. "
-        "Meeku site visit book cheyala?\n\n"
+        "Meeru ela sahayam kavali?\n\n"
         "CONVERSATION FLOW\n"
-        "Ask budget first, then location, then flat vs villa. "
-        "Offer site visit when qualified.\n\n"
+        "Answer first. Ask at most one missing useful fact if it changes the recommendation. "
+        "When enough is known, recommend one fit and offer a site visit. Never a Step tree.\n\n"
         "GUARDRAILS\n"
-        "Never invent prices. If budget unknown, ask politely.\n\n"
+        "Never invent prices. If budget unknown, ask politely only when needed.\n\n"
         "CLOSING\n"
         "Confirm next step and thank caller."
     ),
@@ -57,6 +57,7 @@ def _client(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "sk-eight-turn")
     monkeypatch.setenv("SARVAM_API_KEY", "sv-eight-turn")
     monkeypatch.setenv("ENABLE_WORKING_MEMORY", "true")
+    monkeypatch.setenv("VOICE_PIPELINE_MODE", "classic")
     get_settings.cache_clear()
     return TestClient(app_mod.app)
 
@@ -188,7 +189,9 @@ async def test_eight_turn_script_cache_and_memory(client, monkeypatch):
     assert mem.status_code == 200
     snap = mem.json().get("memory") or {}
     facts = snap.get("facts") or {}
-    assert facts.get("caller_name") == "Ramu"
+    # Deterministic caller-detail capture preserves the name as actually said,
+    # overriding the mock model's Latin transliteration.
+    assert facts.get("caller_name") == "రాము"
     assert "budget" in facts
     assert facts.get("location") == "Hyderabad"
 

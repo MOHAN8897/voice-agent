@@ -15,12 +15,13 @@ import { TestStudioTurnMetrics, emptySessionTotals, type TurnMetricRow } from "@
 import { TestStudioModePicker, type TestStudioMode } from "@/components/test-studio/TestStudioModePicker";
 import { TestStudioMemoryPanel } from "@/components/test-studio/TestStudioMemoryPanel";
 import { useStackCatalog } from "@/components/test-studio/useStackCatalog";
-import { useTestStudioPrefs } from "@/components/test-studio/useTestStudioPrefs";
+import { useTestStudioPrefs, patchPrefsCache } from "@/components/test-studio/useTestStudioPrefs";
 import {
+  buildPstnStackOverride,
   buildStackOverride,
   defaultStackForm,
   stackFormEqual,
-  TEST_STUDIO_SESSION_ID,
+  testStudioSessionId,
   type StackForm,
   type StackMode,
 } from "@/lib/test-studio-stack";
@@ -30,6 +31,10 @@ import { billingCharCount } from "@/lib/billing-chars";
 import { DEFAULT_CARTESIA_VOICE_ID, ensureTtsVoice, voiceMatchesTtsProvider } from "@/lib/voice/tts-config";
 import { onTestStudioVoiceSaved } from "@/lib/voice/voice-runtime-events";
 import { cn } from "@/lib/cn";
+import Link from "next/link";
+import { TestStudioSessionProvider } from "@/components/test-studio/TestStudioSessionContext";
+import { normalizeLanguageCode, primaryAgentLanguage } from "@/lib/agent-language";
+import { persistAgentCallLanguage } from "@/lib/bootstrap-test-studio-agent";
 
 type ChannelTab = TestStudioMode;
 type FineTuneTab = "prompts" | "llm" | "voice";
@@ -49,6 +54,9 @@ export function AgentTestStudio({
   agentId: string;
   portal?: "app" | "dev";
 }) {
+  const sessionId = useMemo(() => testStudioSessionId(agentId), [agentId]);
+  const studioHomeHref = portal === "dev" ? "/dev/test-studio" : "/app/test-studio";
+  const [agentName, setAgentName] = useState("");
   const [studioTab, setStudioTab] = useState<StudioTab>("live");
   const [channel, setChannel] = useState<ChannelTab>("agent");
   const [stackMode, setStackMode] = useState<StackMode>("tier");
@@ -57,12 +65,15 @@ export function AgentTestStudio({
   const [language, setLanguage] = useState("te-IN");
   const [fineTuneTab, setFineTuneTab] = useState<FineTuneTab>("prompts");
   const [runtimeTtsSpeaker, setRuntimeTtsSpeaker] = useState("");
+  const [runtimeOpenAiModel, setRuntimeOpenAiModel] = useState("");
   const [voiceRuntime, setVoiceRuntime] = useState<{
     sttSilenceMs?: number;
     sttThreshold?: number;
     sttStreamType?: string;
     bargeMinWords?: number;
     bargeRequireVad?: boolean;
+    voicePresetId?: string;
+    mobileAudioMode?: "handset" | "speakerphone";
   }>({});
   const { providers, sttModes, sttStreamTypes, loading: catalogLoading, stackForTier, catalog } =
     useStackCatalog(portal);
@@ -77,12 +88,33 @@ export function AgentTestStudio({
   const [sessionStartedAt, setSessionStartedAt] = useState<number | null>(null);
   const [sessionEndedAt, setSessionEndedAt] = useState<number | null>(null);
   const prefsHydratedRef = useRef(false);
+  const prefsHadLanguageRef = useRef(false);
+  const languageUserOverrideRef = useRef(false);
+  const languageRef = useRef(language);
+  languageRef.current = language;
+  const scopedAgentRef = useRef<string | null>(null);
   const channelTouchedRef = useRef(false);
 
   const setChannelMode = useCallback((next: ChannelTab) => {
     channelTouchedRef.current = true;
     setChannel(next);
   }, []);
+
+  const setAgentLanguage = useCallback(
+    (next: string) => {
+      const lang = normalizeLanguageCode(next);
+      languageUserOverrideRef.current = true;
+      prefsHadLanguageRef.current = true;
+      // Always apply — even if code matches, force UI/stack sync after stale prefs races.
+      setLanguage(lang);
+      setStack((prev) => {
+        const base = { ...prev, language: lang };
+        return channel === "pstn" ? applyPstnStackDefaults(base, lang) : base;
+      });
+      void persistAgentCallLanguage({ agentId, sessionId, language: lang });
+    },
+    [agentId, sessionId, channel]
+  );
 
   const sarvamSpeakersV3 = (catalog?.tts as { speakersV3?: string[] } | undefined)?.speakersV3 || [];
   const sarvamSpeakersV2 = (catalog?.tts as { speakersV2?: string[] } | undefined)?.speakersV2 || [];
@@ -110,25 +142,42 @@ export function AgentTestStudio({
       const ch = loaded.channel === "browser" ? "agent" : loaded.channel;
       if (ch === "agent" || ch === "pstn") setChannel(ch);
     }
-    if (loaded.language) setLanguage(loaded.language);
+    // Prefs may be stale vs the agent record — never treat prefs language as final.
+    // Agent hydrate (below) is source of truth unless the user already clicked.
+    if (loaded.language) {
+      prefsHadLanguageRef.current = true;
+      if (!languageUserOverrideRef.current) {
+        setLanguage(normalizeLanguageCode(loaded.language));
+      }
+    }
     if (loaded.fineTuneTab) setFineTuneTab(loaded.fineTuneTab as FineTuneTab);
     if (loaded.stack && typeof loaded.stack === "object") {
-      setStack((prev) => ({ ...prev, ...(loaded.stack as Partial<StackForm>) }));
+      setStack((prev) => {
+        const next = { ...prev, ...(loaded.stack as Partial<StackForm>) };
+        if (languageUserOverrideRef.current) next.language = languageRef.current;
+        return next;
+      });
     }
     setPrefsReady(true);
   }, []);
 
-  useTestStudioPrefs(uiPrefs, onPrefsLoaded);
+  useTestStudioPrefs(sessionId, uiPrefs, onPrefsLoaded);
 
   useEffect(() => {
-    if (!prefsReady) {
-      const t = setTimeout(() => setPrefsReady(true), 800);
-      return () => clearTimeout(t);
+    if (scopedAgentRef.current === agentId) return;
+    const switching = scopedAgentRef.current !== null;
+    scopedAgentRef.current = agentId;
+    prefsHydratedRef.current = false;
+    if (switching) {
+      languageUserOverrideRef.current = false;
+      prefsHadLanguageRef.current = false;
+      channelTouchedRef.current = false;
     }
-  }, [prefsReady]);
+    setPrefsReady(false);
+  }, [agentId, sessionId]);
 
   useEffect(() => {
-    fetch(`/api/settings/runtime?sessionId=${encodeURIComponent(TEST_STUDIO_SESSION_ID)}`, {
+    fetch(`/api/settings/runtime?sessionId=${encodeURIComponent(sessionId)}`, {
       credentials: "include",
     })
       .then((r) => (r.ok ? r.json() : null))
@@ -139,16 +188,19 @@ export function AgentTestStudio({
           setRuntimeTtsSpeaker(speaker);
           setStack((prev) => ({ ...prev, ttsVoiceId: speaker }));
         }
+        const openaiModel = String(values.openaiModel || "");
+        if (openaiModel) setRuntimeOpenAiModel(openaiModel);
         setVoiceRuntime({
           sttSilenceMs: values.sttSilenceMs != null ? Number(values.sttSilenceMs) : undefined,
           sttThreshold: values.sttThreshold != null ? Number(values.sttThreshold) : undefined,
           sttStreamType: values.sttStreamType ? String(values.sttStreamType) : undefined,
           bargeMinWords: values.bargeMinWords != null ? Number(values.bargeMinWords) : undefined,
           bargeRequireVad: values.bargeRequireVad != null ? Boolean(values.bargeRequireVad) : undefined,
+          voicePresetId: values.voicePresetId ? String(values.voicePresetId) : undefined,
         });
       })
       .catch(() => {});
-  }, []);
+  }, [sessionId]);
 
   useEffect(() => {
     return onTestStudioVoiceSaved((speaker) => {
@@ -169,17 +221,34 @@ export function AgentTestStudio({
   }, []);
 
   useEffect(() => {
+    if (!prefsReady || languageUserOverrideRef.current) return;
+    let cancelled = false;
+    void (async () => {
+      const agentR = await fetch(`/api/agents/${agentId}`, { credentials: "include" });
+      if (cancelled || languageUserOverrideRef.current) return;
+      const agent = agentR.ok ? (await agentR.json()).agent : null;
+      const lang = primaryAgentLanguage(agent);
+      setLanguage(lang);
+      setStack((prev) => ({ ...prev, language: lang }));
+      // Keep prefs cache aligned with the agent so reload does not flash the wrong language.
+      if (lang) patchPrefsCache(sessionId, { language: lang });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [prefsReady, sessionId, agentId]);
+
+  useEffect(() => {
     if (portal === "dev") refreshPortalSession("dev");
     fetch(`/api/agents/${agentId}`, { credentials: "include" })
       .then((r) => r.json())
       .then((j) => {
+        if (j.agent?.name) setAgentName(String(j.agent.name));
         if (!prefsReady) return;
         if (j.agent?.default_tier && stackMode === "tier") setTier(j.agent.default_tier);
-        const lang = j.agent?.languages?.[0];
-        if (lang && !uiPrefs.language) setLanguage(lang);
       })
       .catch(() => {});
-  }, [agentId, portal, prefsReady, stackMode, uiPrefs.language]);
+  }, [agentId, portal, prefsReady, stackMode]);
 
   useEffect(() => {
     if (stackMode === "tier") {
@@ -189,11 +258,10 @@ export function AgentTestStudio({
         const ttsVoiceId = voiceMatchesTtsProvider(next.ttsProvider, inherited)
           ? inherited
           : ensureTtsVoice(next.ttsProvider, inherited, next.ttsModel);
-        const merged = { ...next, ttsVoiceId };
+        const merged = { ...next, ttsVoiceId, language };
         const result = channel === "pstn" ? applyPstnStackDefaults(merged, language) : merged;
         return stackFormEqual(result, prev) ? prev : result;
       });
-      if (next.language) setLanguage(next.language);
     }
   }, [stackMode, tier, stackForTier, runtimeTtsSpeaker, channel, language]);
 
@@ -317,7 +385,8 @@ export function AgentTestStudio({
   }, [refreshMemory]);
 
   const showPstn = portal === "dev";
-  const stackLocked = locked && (sessionStatus === "listening" || sessionStatus === "connecting");
+  const stackLocked =
+    locked && Boolean(callId) && !callEnded && (sessionStatus === "listening" || sessionStatus === "connecting");
   const stackOverride = useMemo(() => {
     const voiceId = ensureTtsVoice(
       stack.ttsProvider,
@@ -340,11 +409,31 @@ export function AgentTestStudio({
       voiceId ? { ...stack, ttsVoiceId: voiceId } : stack,
       language
     );
-    return buildStackOverride(form);
-  }, [stack, runtimeTtsSpeaker, language]);
+    return buildPstnStackOverride(form, stackMode);
+  }, [stackMode, stack, runtimeTtsSpeaker, language]);
 
   return (
+    <TestStudioSessionProvider agentId={agentId} sessionId={sessionId}>
     <div className="space-y-5">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <Link href={studioHomeHref} className="text-xs font-medium text-text-muted hover:text-text">
+            ← All Test Studio agents
+          </Link>
+          <h2 className="mt-1 text-xl font-semibold tracking-tight text-text">
+            {agentName || "Agent"} <span className="text-text-subtle font-normal">· Test Studio</span>
+          </h2>
+          <p className="mt-0.5 font-mono text-[10px] text-text-subtle truncate max-w-xl">{sessionId}</p>
+        </div>
+        <CompileLanguagePicker
+          compact
+          id="studio-call-language"
+          value={language}
+          disabled={false}
+          onChange={setAgentLanguage}
+          hint="Only place to change this agent's language — Live, Config, Fine-tune, web, and phone all follow it."
+        />
+      </div>
       <div className="sticky top-0 z-40 -mx-1 rounded-skeuo-lg border border-surface-border-subtle bg-surface/95 px-2 py-3 backdrop-blur supports-[backdrop-filter]:bg-surface/90">
         <div className="flex flex-wrap gap-1 rounded-skeuo-sm border border-surface-border-subtle skeuo-inset p-1">
           {STUDIO_TABS.map((t) => (
@@ -369,16 +458,6 @@ export function AgentTestStudio({
             </button>
           ))}
         </div>
-        <div className="mt-3">
-          <CompileLanguagePicker
-            compact
-            id="studio-call-language"
-            value={language}
-            disabled={stackLocked}
-            onChange={setLanguage}
-            hint="Script, spoken rules, and hangup follow this language on web and phone."
-          />
-        </div>
       </div>
 
       <div className={studioTab === "live" ? "space-y-5" : "hidden"}>
@@ -398,7 +477,7 @@ export function AgentTestStudio({
                   tier={tier}
                   languageCode={language}
                   stackOverride={stackOverride}
-                  sessionId={TEST_STUDIO_SESSION_ID}
+                  sessionId={sessionId}
                   voiceConfig={voiceRuntime}
                   onTrace={onTrace}
                   onCallStart={onCallStart}
@@ -414,11 +493,13 @@ export function AgentTestStudio({
                 >
                   <PstnTestPanel
                     agentId={agentId}
+                    sourceSessionId={sessionId}
                     tier={tier}
                     language={language}
                     stackMode={stackMode}
                     stack={stack}
                     runtimeTtsSpeaker={runtimeTtsSpeaker}
+                    runtimeOpenAiModel={runtimeOpenAiModel}
                     stackOverride={pstnStackOverride}
                     onInternalCallStart={onCallStart}
                     onInternalCallEnd={onCallEnd}
@@ -464,7 +545,6 @@ export function AgentTestStudio({
             sttStreamTypes={sttStreamTypes}
             catalogLoading={catalogLoading}
             language={language}
-            onLanguageChange={setLanguage}
             sessionStatus={sessionStatus}
             locked={stackLocked}
             sarvamSpeakersV3={sarvamSpeakersV3}
@@ -492,7 +572,6 @@ export function AgentTestStudio({
           agentId={agentId}
           portal={portal}
           language={language}
-          onLanguageChange={setLanguage}
           locked={stackLocked}
           activeTab={fineTuneTab}
           onTabChange={setFineTuneTab}
@@ -518,5 +597,6 @@ export function AgentTestStudio({
         </div>
       )}
     </div>
+    </TestStudioSessionProvider>
   );
 }

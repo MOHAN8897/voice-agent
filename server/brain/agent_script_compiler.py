@@ -24,13 +24,13 @@ from server.agent.brain_prompt_composer import (
 )
 from server.prompts.conversation_policy import (
     LIVE_CALL_GUIDE_BODY,
-    checklist_flow_detected,
     flow_section,
     infer_agent_role,
     role_section,
 )
 from server.brain.sections import STATIC_OUTPUT_RULES
 from server.config.env import get_settings
+from server.realtime.models import http_openai_model
 from server.prompts.agent_voice_rules import (
     IDENTITY_SPEAK,
     call_end_policy_section,
@@ -43,7 +43,7 @@ from server.prompts.agent_voice_rules import (
 from server.prompts.brain_prompt import SECTION_SAFETY
 from server.prompts.voice_defaults import style_for_language
 
-COMPILER_VERSION = "agent_script_v13"
+COMPILER_VERSION = "agent_script_v15"
 
 AGENT_SCRIPT_SCHEMA: dict[str, Any] = {
     "type": "object",
@@ -145,6 +145,33 @@ def brief_checksum(*, brief: str, language: str, style: str | None, call_end_pol
 
 
 _PLACEHOLDER_RE = re.compile(r"\[(?:agent name|company(?: name)?)\]", re.I)
+_PLACEHOLDER_BAD = re.compile(
+    r"\[(?:agent name|company(?: name)?|name|todo|tbd|insert|placeholder)[^\]]*\]"
+    r"|\{\{[^{}]+\}\}"
+    r"|_{3,}"
+    r"|\*{3,}"
+    r"|\bTODO\b|\bTBD\b|\bXXX\b",
+    re.I,
+)
+_STEP_TREE_LINE = re.compile(
+    r"(?:^|\n)\s*(?:step|question)\s*[1-9]\s*[:.)]",
+    re.I,
+)
+# Stricter than checklist_flow_detected — avoid false hits on "one useful question at a time".
+_LEFTOVER_TREE = re.compile(
+    r"(?:^|\n)\s*(?:step|question)\s*[1-9]\s*[:.)]"
+    r"|first ask .{0,40}then (?:ask|qualify)"
+    r"|collect all of the following"
+    r"|interrogation checklist"
+    r"|(?:ask|qualify).{0,80}budget.{0,60}location.{0,60}timeline",
+    re.I | re.S,
+)
+_MONEY_AMOUNT = re.compile(
+    r"(?:₹|rs\.?\s*|inr\s*|rupees?\s*)[\d,]+(?:\s*(?:lakh|lakhs|crore|crores))?"
+    r"|[\d,]+\s*(?:lakh|lakhs|crore|crores)\b",
+    re.I,
+)
+_BAD_IDENTITY = frozenset({"", "agent", "unknown", "none", "n/a", "na", "[agent name]"})
 _WORKISH_FIRST = frozenset({
     "a", "an", "the", "people", "customers", "users", "callers", "someone",
     "car", "cars", "cab", "cabs", "taxi", "booking", "bookings", "help",
@@ -152,8 +179,9 @@ _WORKISH_FIRST = frozenset({
     "plant", "plants", "this", "that",
 })
 _COMPANY_HINT = re.compile(
-    r"(shop|mart|realty|plants|pvt|ltd|limited|inc|corp|hospital|clinic|"
-    r"hotel|bank|school|college|nursery|store|studio|farms|farm)",
+    r"(shop|mart|realty|estates?|plants|pvt|ltd|limited|inc|corp|hospital|clinic|"
+    r"dental|hotel|bank|school|college|academy|nursery|store|studio|farms|farm|"
+    r"motors?|crm|saas|software)",
     re.I,
 )
 _LIVE_CALL_GUIDE_TITLE = "LIVE CALL GUIDE"
@@ -168,8 +196,19 @@ _SECTION_NAMES = (
     "OBJECTION HANDLING",
     "GUARDRAILS",
     "CLOSING",
+    # Non-canonical writer sprawl — stripped on bind so they cannot survive.
+    "DISCOVERY RULES",
+    "RECOMMENDATION RULES",
+    "DISCOVERY",
+    "RECOMMENDATION",
 )
 _SECTION_SPLIT = "|".join(re.escape(name) for name in _SECTION_NAMES)
+_SPRAWL_HEADERS = (
+    "DISCOVERY RULES",
+    "RECOMMENDATION RULES",
+    "DISCOVERY",
+    "RECOMMENDATION",
+)
 
 
 def _clean_identity_value(value: str) -> str:
@@ -181,7 +220,12 @@ def _clean_identity_value(value: str) -> str:
 
 
 def extract_agent_name_from_brief(brief: str) -> str:
-    name_value = r"([^\n.,;]{2,50}?)(?=\s+(?:for|where)\b|[.,;]|$)"
+    """Extract agent name; stop before from/for/where. Supports multi-word + Unicode."""
+    # Allow letters from any script (Telugu etc.), not ASCII-only.
+    name_value = (
+        r"([^\n.,;]+?)"
+        r"(?=\s+(?:from|for|where)\b|[.,;]|$)"
+    )
     patterns = (
         rf"agent\s+named\s+{name_value}",
         rf"agent\s*name\s*(?:(?:is)\b\s*|:\s*)?{name_value}",
@@ -192,8 +236,12 @@ def extract_agent_name_from_brief(brief: str) -> str:
         match = re.search(pat, brief or "", re.I)
         if match:
             name = _clean_identity_value(match.group(1))
-            if name:
-                return name
+            if not name:
+                continue
+            # Guard against swallowing a whole clause as a "name".
+            if len(name.split()) > 4 or len(name) > 40:
+                continue
+            return name
     return ""
 
 
@@ -202,22 +250,71 @@ def extract_company_from_brief(brief: str) -> str:
     match = re.search(r"company(?:\s*name)?\s*(?:is|:)\s*([^\n.]{2,50})", text, re.I)
     if match:
         return _clean_identity_value(match.group(1))
-    match = re.search(r"(?:calling from|from)\s+([A-Z][A-Za-z0-9 &.]{1,40})", text)
-    if match:
-        candidate = _clean_identity_value(match.group(1))
-        if candidate and candidate.split()[0].lower() not in _WORKISH_FIRST:
-            return candidate
-    match = re.search(r"(?:telecaller|agent|caller)\s+for\s+(.+?)(?:\.|,|;|$)", text, re.I)
-    if match:
-        candidate = re.split(r"\bagent\s+name\b", match.group(1), flags=re.I)[0]
+
+    def _accept_company(candidate: str) -> str:
         candidate = _clean_identity_value(candidate)
         if not candidate:
             return ""
-        first = candidate.split()[0]
-        if first.lower() in _WORKISH_FIRST:
+        # Reject pickup/location debris mistaken for a brand.
+        if re.search(
+            r"\b(hitec|gachibowli|ameerpet|kukatpally|pickup|drop[- ]?off|near|area)\b",
+            candidate,
+            re.I,
+        ):
             return ""
-        if first[:1].isupper() or _COMPANY_HINT.search(candidate):
+        first = candidate.split()[0]
+        if (
+            first.lower() not in _WORKISH_FIRST
+            and not first[:1].isdigit()
+            and (first[:1].isupper() or _COMPANY_HINT.search(candidate))
+        ):
             return candidate
+        return ""
+
+    # Prefer "named X for Company" — more specific than a bare "from".
+    match = re.search(
+        r"(?:agent\s+)?named\s+[^\n.,;]{1,40}?\s+for\s+([^\n.,;]{2,60}?)(?=\s*[.,;]|$)",
+        text,
+        re.I,
+    )
+    if match:
+        candidate = match.group(1)
+        candidate = re.split(
+            r"\b(?:car service|service center|service centre|that |who |which |where )\b",
+            candidate,
+            maxsplit=1,
+            flags=re.I,
+        )[0].strip(" .,:;-")
+        # "Horizon Learning Institute in Hyderabad" → company without city clause
+        candidate = re.split(
+            r"\s+in\s+(?:Hyderabad|Bengaluru|Bangalore|Chennai|Mumbai|Delhi|Pune)\b",
+            candidate,
+            maxsplit=1,
+            flags=re.I,
+        )[0].strip(" .,:;-")
+        accepted = _accept_company(candidate)
+        if accepted:
+            return accepted
+
+    # "Agent name Priya from Acme Realty." / "calling from Acme Realty"
+    # Do NOT match bare "pickup from …" / "workshop from …".
+    match = re.search(
+        r"(?:(?:agent\s*(?:name|named)\s*(?:(?:is)\b\s*|:\s*)?[^\n.,;]+?\s+)|(?:calling\s+))"
+        r"from\s+([^\n.,;]{2,50}?)(?=\s*[.,;]|$)",
+        text,
+        re.I,
+    )
+    if match:
+        accepted = _accept_company(match.group(1))
+        if accepted:
+            return accepted
+
+    match = re.search(r"(?:telecaller|agent|caller)\s+for\s+(.+?)(?:\.|,|;|$)", text, re.I)
+    if match:
+        candidate = re.split(r"\bagent\s+name\b", match.group(1), flags=re.I)[0]
+        accepted = _accept_company(candidate)
+        if accepted:
+            return accepted
     return ""
 
 
@@ -275,11 +372,27 @@ def work_scope_from_brief(brief: str, company: str) -> str:
     text = re.sub(r"\bsales pitch\b", "", text, flags=re.I)
     if company:
         text = re.sub(re.escape(company), "", text, flags=re.I)
+    # After stripping company, clean leftover "for in Hyderabad" / "for ." debris.
+    text = re.sub(r"\bfor\s+(?=in\b)", "", text, flags=re.I)
+    text = re.sub(r"\bfor\s+(?=[.,;]|$)", "", text, flags=re.I)
     text = re.sub(r"\s+", " ", text).strip(" .,:;-")
     if not text:
         text = " ".join((brief or "").split())
-    if len(text) > 240:
-        text = text[:237].rsplit(" ", 1)[0] + "..."
+    # Keep operational facts (fees/batches) — a 240-char chop was dropping prices mid-sentence.
+    max_scope = 360
+    if len(text) > max_scope:
+        cut = text[: max_scope - 3].rsplit(" ", 1)[0]
+        # If truncation removed a money amount present in the full scope, append a compact fee line.
+        money_full = _MONEY_AMOUNT.findall(text)
+        money_cut = _MONEY_AMOUNT.findall(cut)
+        if money_full and len(money_cut) < len(money_full):
+            missing = [m for m in money_full if m not in money_cut][:3]
+            fee_tail = " Fees: " + "; ".join(missing) + "."
+            room = max_scope - len(cut) - len(fee_tail)
+            if room < 0:
+                cut = cut[: max(40, max_scope - len(fee_tail) - 3)].rsplit(" ", 1)[0]
+            cut = cut.rstrip(" .,:;-") + fee_tail
+        text = cut.rstrip(" .,:;-") + ("..." if not cut.endswith(".") else "")
     return text
 
 
@@ -335,6 +448,13 @@ def _strip_script_section(script: str, title: str) -> str:
 
 
 def _sanitize_conversation_flow(script: str, role: str = "other") -> str:
+    """Keep soft ask-if-unknown ladders; replace only hard Question/Step trees.
+
+    Platform FLOW always provides natural progression policy. Writer soft fields
+    are preserved when they are not numbered trees.
+    """
+    from server.prompts.conversation_policy import checklist_flow_detected
+
     header = "CONVERSATION FLOW"
     pattern = re.compile(
         rf"(?:^|\n)(?:---\s*)?{re.escape(header)}(?:\s*---)?[ \t]*\n"
@@ -342,11 +462,85 @@ def _sanitize_conversation_flow(script: str, role: str = "other") -> str:
         re.S | re.I,
     )
     match = pattern.search(script or "")
-    if not match:
-        return script
-    if not checklist_flow_detected(match.group(1) or ""):
-        return script
-    return pattern.sub("\n" + flow_section(role), script, count=1).strip()
+    writer_body = (match.group(1) if match else "").strip()
+    soft_fields = ""
+    keep_soft = role in {
+        "sales",
+        "lead_qualification",
+        "appointment",
+        "education",
+        "support",
+    }
+    if writer_body and keep_soft and not checklist_flow_detected(writer_body):
+        soft = re.sub(
+            r"(?im)^(this is a (?:policy|human-call policy).*$|natural sales progression.*$|"
+            r"appointment flow:.*$|education flow:.*$|service / support flow:.*$|"
+            r"role on this call:.*$|lead conversion:.*$)",
+            "",
+            writer_body,
+        ).strip()
+        if soft and len(soft) > 40:
+            soft_fields = soft[:1200]
+    platform = flow_section(role, brief_fields=soft_fields)
+    if match:
+        return pattern.sub("\n" + platform, script, count=1).strip()
+    body = (script or "").strip()
+    if not body:
+        return platform
+    return f"{body}\n\n{platform}"
+
+
+def _money_digit_keys(text: str) -> set[str]:
+    keys: set[str] = set()
+    for match in _MONEY_AMOUNT.finditer(text or ""):
+        digits = re.sub(r"[^\d]", "", match.group(0))
+        if digits:
+            keys.add(digits.lstrip("0") or "0")
+    return keys
+
+
+def validate_agent_script(
+    script: str,
+    *,
+    brief: str,
+    agent_name: str,
+) -> list[str]:
+    """
+    Post-sanitize checks before save. FLOW is always platform-replaced; this catches
+    leftover Step/Q trees in other sections, placeholders, empty identity, invented prices.
+    """
+    reasons: list[str] = []
+    name = (agent_name or "").strip().lower()
+    if name in _BAD_IDENTITY:
+        reasons.append("empty or placeholder agent identity")
+
+    body = script or ""
+    if _PLACEHOLDER_BAD.search(body):
+        reasons.append("placeholder tokens remain in script")
+
+    non_flow = _strip_script_section(body, "CONVERSATION FLOW")
+    if _STEP_TREE_LINE.search(non_flow) or _LEFTOVER_TREE.search(non_flow):
+        reasons.append("Step/Question tree remains outside platform FLOW")
+    if re.search(
+        r"(?:^|\n)\s*(?:---\s*)?(?:DISCOVERY(?:\s+RULES)?|RECOMMENDATION(?:\s+RULES)?)\b",
+        non_flow,
+        re.I,
+    ):
+        reasons.append("non-canonical DISCOVERY/RECOMMENDATION section remains")
+
+    brief_keys = _money_digit_keys(brief)
+    for match in _MONEY_AMOUNT.finditer(body):
+        span = match.group(0)
+        # Guardrail language ("Never invent prices") has no digit amounts.
+        digits = re.sub(r"[^\d]", "", span)
+        if not digits:
+            continue
+        key = digits.lstrip("0") or "0"
+        if key not in brief_keys:
+            reasons.append(f"price/amount not in brief: {span[:48]}")
+            break
+
+    return reasons
 
 
 def ensure_script_identity_and_scope(
@@ -360,7 +554,14 @@ def ensure_script_identity_and_scope(
     role: str = "other",
 ) -> str:
     body = _PLACEHOLDER_RE.sub("", script or "").strip()
-    for title in ("AGENT IDENTITY", "OPENING", "WORK SCOPE", "ROLE & OBJECTIVE", "LIVE CALL GUIDE"):
+    for title in (
+        "AGENT IDENTITY",
+        "OPENING",
+        "WORK SCOPE",
+        "ROLE & OBJECTIVE",
+        "LIVE CALL GUIDE",
+        *_SPRAWL_HEADERS,
+    ):
         body = _strip_script_section(body, title)
     body = _sanitize_conversation_flow(body, role)
     lang = normalize_compile_language(language)
@@ -371,8 +572,13 @@ def ensure_script_identity_and_scope(
     )
     identity = f"You are {agent_name}{handle} {IDENTITY_SPEAK[lang]}"
     opening = (
-        f"{opening_line}\n"
-        "Say this introduction (or a close natural variation) as the first turn when the call connects."
+        f"Example opening: {opening_line}\n"
+        "ONE spoken reply per turn — never paste a greeting then restart with a second greeting.\n"
+        "First speak: opening once only (intro + offer help — no name/qualify in the same breath).\n"
+        "If opening already spoken (PSTN): never re-greet. Answer briefly; if open, take next missing "
+        "lead field (interest once → name → WORK SCOPE preference → next step). At most one question.\n"
+        "If they already said interested: never re-ask interest — acknowledge and progress.\n"
+        "If the caller spoke first: one short identifying answer — do not dump then revise the canned opening."
     )
     scope = (
         f"You only do this work on the call:\n{work_scope}\n"
@@ -434,6 +640,7 @@ async def _llm_generate_script(
     *,
     language: str,
     budget_tokens: int,
+    repair_hint: str = "",
 ) -> dict[str, Any] | None:
     from server.services.dev_runtime import openai_enabled
 
@@ -448,11 +655,23 @@ async def _llm_generate_script(
         adapter = OpenAILLMAdapter()
         settings = get_settings()
         system = script_writer_system(language=language, budget_tokens=budget_tokens)
+        repair = (repair_hint or "").strip()
+        repair_block = (
+            f"\n\nPrevious draft failed validation — fix these and rewrite the full script:\n{repair}\n"
+            "No Step/Question trees. No placeholders. No prices/amounts unless they appear in the brief.\n"
+            if repair
+            else ""
+        )
         user = (
             f"Language: {language}\n\n"
             f"User brief:\n{brief}\n\n"
-            "Infer the role from the brief. Write a conversational policy, not a question tree."
+            "Infer the role from the brief. Write a FULL conversational policy with every section "
+            "through CLOSING. Do not compress for token savings. Include every fee and location fact "
+            "from the brief in WORK SCOPE."
+            f"{repair_block}"
         )
+        # Room for a full sectional script (no 400–800 word compression).
+        script_tokens = max(4500, min(8000, int(budget_tokens) + 2000))
 
         async def _run():
             return await adapter.structured_completion(
@@ -463,23 +682,26 @@ async def _llm_generate_script(
                 schema=AGENT_SCRIPT_SCHEMA,
                 config=LLMConfig(
                     provider="openai",
-                    model=settings.post_call_llm_model or settings.openai_model,
+                    model=http_openai_model(settings),
                 ),
                 schema_name="agent_calling_script",
-                max_output_tokens=min(1800, budget_tokens),
+                max_output_tokens=script_tokens,
             )
 
-        payload = await asyncio.wait_for(_run(), timeout=25)
-        if payload.get("agent_script"):
+        payload = await asyncio.wait_for(_run(), timeout=45)
+        script = str(payload.get("agent_script") or "").strip()
+        if len(script) >= 80:
             return payload
+        from server.utils.logger import logger
+
+        logger.warning("[AGENT_SCRIPT] structured LLM returned empty/tiny script; trying plain fallback")
     except Exception as exc:
         from server.utils.logger import logger
 
-        logger.warning(f"[AGENT_SCRIPT] structured LLM failed: {str(exc)[:200]}")
-        fallback = await _llm_generate_script_plain(brief, language=language, budget_tokens=budget_tokens)
-        if fallback:
-            return fallback
-    return None
+        logger.warning(f"[AGENT_SCRIPT] structured LLM failed: {type(exc).__name__}: {str(exc)[:240]}")
+
+    # Plain-text fallback when JSON schema truncates or fails — still better than a thin stub.
+    return await _llm_generate_script_plain(brief, language=language, budget_tokens=budget_tokens)
 
 
 async def _llm_generate_script_plain(
@@ -500,9 +722,14 @@ async def _llm_generate_script_plain(
 
         client = get_openai_client()
         settings = get_settings()
-        model = settings.post_call_llm_model or settings.openai_model
+        model = http_openai_model(settings)
         system = script_writer_system(language=language, budget_tokens=budget_tokens)
-        user = f"Language: {language}\n\nBrief:\n{brief}\n\nScript:"
+        user = (
+            f"Language: {language}\n\nBrief:\n{brief}\n\n"
+            "Write the complete calling script with all section headers through CLOSING. "
+            "Do not compress for token savings.\n\nScript:"
+        )
+        out_tokens = max(4500, min(8000, int(budget_tokens) + 2000))
         response = await asyncio.wait_for(
             client.responses.create(
                 model=model,
@@ -510,17 +737,36 @@ async def _llm_generate_script_plain(
                     {"role": "developer", "content": [{"type": "input_text", "text": system}]},
                     {"role": "user", "content": [{"type": "input_text", "text": user}]},
                 ],
-            max_output_tokens=min(1800, budget_tokens),
+                max_output_tokens=out_tokens,
                 store=False,
             ),
-            timeout=25,
+            timeout=45,
         )
         script = str(getattr(response, "output_text", None) or "").strip()
         if len(script) < 80:
             return None
         return {"agent_script": script}
-    except Exception:
+    except Exception as exc:
+        from server.utils.logger import logger
+
+        logger.warning(f"[AGENT_SCRIPT] plain LLM failed: {type(exc).__name__}: {str(exc)[:200]}")
         return None
+
+
+def _script_has_full_sections(script: str) -> bool:
+    """Thin LLM drafts must not replace the rich sectional calling script used in audits."""
+    upper = (script or "").upper()
+    required = (
+        "VOICE STYLE",
+        "CONVERSATION FLOW",
+        "OBJECTION HANDLING",
+        "GUARDRAILS",
+        "CLOSING",
+    )
+    if not all(title in upper for title in required):
+        return False
+    # Rough floor: a complete bound script is well above a 400–800 word compressed stub.
+    return estimate_tokens(script) >= 900
 
 
 def _assemble_brain(
@@ -606,6 +852,7 @@ async def compile_agent_from_brief(
     budget_tokens: int = 3500,
     previous_compiled: str | None = None,
     call_end_policy: dict[str, Any] | None = None,
+    use_llm: bool = True,
 ) -> tuple[str, AgentScriptResult, int, int, int]:
     """
     Expand a short agent brief into a full cached brain prompt.
@@ -632,10 +879,14 @@ async def compile_agent_from_brief(
     )
     raw_tokens = estimate_tokens(cleaned)
 
-    llm_payload = await _llm_generate_script(cleaned, language=lang, budget_tokens=budget_tokens)
+    llm_payload = (
+        await _llm_generate_script(cleaned, language=lang, budget_tokens=budget_tokens)
+        if use_llm
+        else None
+    )
     if llm_payload:
         script = str(llm_payload.get("agent_script", "")).strip()
-        model = get_settings().post_call_llm_model or get_settings().openai_model
+        model = http_openai_model(get_settings())
         llm_name = str(llm_payload.get("agent_name") or "").strip()
         llm_company = str(llm_payload.get("company_name") or "").strip()
         role_summary = str(llm_payload.get("role_summary") or "").strip()
@@ -659,6 +910,18 @@ async def compile_agent_from_brief(
     if not role_summary:
         role_summary = work_scope
     role = infer_agent_role(cleaned, llm_role=llm_role)
+
+    def _bind_script(raw: str) -> str:
+        return ensure_script_identity_and_scope(
+            raw,
+            agent_name=agent_name,
+            company_name=company_name,
+            work_scope=work_scope,
+            opening_line=opening_line,
+            language=lang,
+            role=role,
+        )
+
     if not script:
         script = _deterministic_script(
             cleaned,
@@ -670,8 +933,69 @@ async def compile_agent_from_brief(
             role=role,
         )
     else:
-        script = ensure_script_identity_and_scope(
-            script,
+        script = _bind_script(script)
+        # Reject compressed / incomplete LLM drafts — keep the rich sectional script
+        # (same quality as audit "Generated / bound script").
+        if not _script_has_full_sections(script):
+            from server.utils.logger import logger
+
+            logger.warning(
+                "[AGENT_SCRIPT] LLM draft incomplete/thin; using full sectional deterministic script"
+            )
+            script = _deterministic_script(
+                cleaned,
+                agent_name=agent_name,
+                company_name=company_name,
+                work_scope=work_scope,
+                opening_line=opening_line,
+                language=lang,
+                role=role,
+            )
+            model = "deterministic_quality_floor_v1"
+
+    validation_issues = validate_agent_script(
+        script, brief=cleaned, agent_name=agent_name
+    )
+    if validation_issues and use_llm and llm_payload:
+        from server.utils.logger import logger
+
+        logger.warning(
+            f"[AGENT_SCRIPT] validation failed, one regenerate: {'; '.join(validation_issues)[:240]}"
+        )
+        repair_payload = await _llm_generate_script(
+            cleaned,
+            language=lang,
+            budget_tokens=budget_tokens,
+            repair_hint="; ".join(validation_issues),
+        )
+        if repair_payload:
+            repaired = str(repair_payload.get("agent_script", "")).strip()
+            if repaired:
+                script = _bind_script(repaired)
+                validation_issues = validate_agent_script(
+                    script, brief=cleaned, agent_name=agent_name
+                )
+                if not validation_issues:
+                    llm_payload = repair_payload
+                    llm_name = str(repair_payload.get("agent_name") or llm_name).strip()
+                    llm_company = str(repair_payload.get("company_name") or llm_company).strip()
+                    role_summary = (
+                        str(repair_payload.get("role_summary") or "").strip() or role_summary
+                    )
+                    key_facts = list(repair_payload.get("key_facts") or key_facts)[:8]
+                    model = http_openai_model(get_settings())
+        if not _script_has_full_sections(script):
+            validation_issues = list(validation_issues) + ["incomplete_script_sections"]
+
+    if validation_issues:
+        from server.utils.logger import logger
+
+        logger.warning(
+            f"[AGENT_SCRIPT] validation fallback to deterministic: "
+            f"{'; '.join(validation_issues)[:240]}"
+        )
+        script = _deterministic_script(
+            cleaned,
             agent_name=agent_name,
             company_name=company_name,
             work_scope=work_scope,
@@ -679,6 +1003,7 @@ async def compile_agent_from_brief(
             language=lang,
             role=role,
         )
+        model = "deterministic_validation_fallback_v1"
 
     script, compiled = _ensure_cache_floor(
         script=script,

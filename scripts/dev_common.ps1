@@ -13,7 +13,15 @@ $script:NeverKillNames = @(
 )
 
 function Get-UvicornDevCommand {
-    param([Parameter(Mandatory = $true)][string]$PythonPath)
+    param(
+        [Parameter(Mandatory = $true)][string]$PythonPath,
+        # Share/telephony: no reload — reloader accepts TCP before the app is ready,
+        # which makes health probes hang and breaks PSTN mid-call on file saves.
+        [switch]$NoReload
+    )
+    if ($NoReload) {
+        return "& '$PythonPath' -m uvicorn server.app:app --host 127.0.0.1 --port 8000"
+    }
     # Reload only server/ so writes under data/, web/.next, and logs do not
     # bounce uvicorn and reset in-flight Next.js proxy connections (ECONNRESET).
     return "& '$PythonPath' -m uvicorn server.app:app --host 127.0.0.1 --port 8000 --reload --reload-dir server"
@@ -21,9 +29,25 @@ function Get-UvicornDevCommand {
 
 function Test-HttpOk {
     param([string]$Url, [int]$TimeoutSec = 2)
+    # Prefer curl.exe: Windows Invoke-WebRequest often does not honor TimeoutSec when
+    # TCP connects (uvicorn reloader) but the worker has not finished startup yet.
+    $curl = Get-Command curl.exe -ErrorAction SilentlyContinue
+    if ($curl) {
+        try {
+            $code = & curl.exe -s -S -o NUL -m $TimeoutSec -w "%{http_code}" $Url 2>$null
+            if ($LASTEXITCODE -ne 0) { return $false }
+            $n = 0
+            if ([int]::TryParse([string]$code, [ref]$n)) {
+                return ($n -ge 200 -and $n -lt 400)
+            }
+            return $false
+        } catch {
+            return $false
+        }
+    }
     try {
         $r = Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec $TimeoutSec
-        return $r.StatusCode -ge 200 -and $r.StatusCode -lt 500
+        return $r.StatusCode -ge 200 -and $r.StatusCode -lt 400
     } catch {
         return $false
     }
@@ -95,7 +119,7 @@ function Get-ListeningPids {
             }
         }
     }
-    if ($ids.Count -eq 0) {
+    if ($LASTEXITCODE -ne 0) {
         try {
             $conns = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction Stop
             foreach ($c in @($conns)) {
@@ -125,7 +149,8 @@ function Get-BusyDevPorts {
 }
 
 function Get-Win32Processes {
-    return @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue)
+    # Without process visibility we cannot safely claim shutdown succeeded.
+    return @(Get-CimInstance Win32_Process -ErrorAction Stop)
 }
 
 function Get-ProcessNameById {
@@ -217,16 +242,21 @@ function Stop-ProcessTreeForce {
     foreach ($k in $kids) {
         Stop-ProcessTreeForce -ProcessId ([int]$k.ProcessId) -Protected $Protected
     }
-    & taskkill.exe /PID $ProcessId /T /F 2>$null | Out-Null
-    Stop-Process -Id $ProcessId -Force -ErrorAction SilentlyContinue
+    try {
+        & cmd.exe /c "taskkill /PID $ProcessId /T /F >nul 2>&1"
+    } catch { }
+    try {
+        Stop-Process -Id $ProcessId -Force -ErrorAction SilentlyContinue
+    } catch { }
 }
 
 function Test-DevCommandLine {
     param([string]$CommandLine)
     if ([string]::IsNullOrWhiteSpace($CommandLine)) { return $false }
     if ($CommandLine -match '(?i)uvicorn\s+server\.app') { return $true }
-    if ($CommandLine -match '(?i)cloudflared(\.exe)?\s+tunnel') { return $true }
-    if ($CommandLine -match '(?i)\bngrok(\.exe)?\s+http') { return $true }
+    $repoPath = [regex]::Escape((Split-Path -Parent $PSScriptRoot))
+    if ($CommandLine -match '(?i)(cloudflared|ngrok)' -and
+        ($CommandLine -match $repoPath -or $CommandLine -match '(?i)https?://(localhost|127\.0\.0\.1):(8000|3000)\b')) { return $true }
     if ($CommandLine -match '(?i)dev_window\.ps1') { return $true }
     if ($CommandLine -match '(?i)voice-agent-dev-(runners|jobs)') { return $true }
     if ($CommandLine -match '(?i)Voice Agent (API|Web|Tunnel)') { return $true }
@@ -260,10 +290,6 @@ function Stop-VoiceAgentDevStack {
         foreach ($p in $procs) {
             $id = [int]$p.ProcessId
             $name = ([string]$p.Name).ToLowerInvariant()
-            if ($name -eq "cloudflared.exe" -or $name -eq "ngrok.exe") {
-                [void]$seeds.Add($id)
-                continue
-            }
             if (Test-DevCommandLine -CommandLine ([string]$p.CommandLine)) {
                 [void]$seeds.Add($id)
             }
@@ -310,6 +336,15 @@ function Stop-VoiceAgentDevStack {
         return $false
     }
 
+    $remaining = @(Get-Win32Processes | Where-Object {
+        -not $protected.Contains([int]$_.ProcessId) -and
+        (Test-DevCommandLine -CommandLine ([string]$_.CommandLine))
+    })
+    if ($remaining.Count -gt 0) {
+        Write-Warning "Dev processes are still running: $($remaining.ProcessId -join ', ')."
+        return $false
+    }
+
     Write-Host "All dev ports are free (8000, 3000-3003)."
     return $true
 }
@@ -338,6 +373,7 @@ if (Get-Variable -Name PSNativeCommandUseErrorActionPreference -ErrorAction Sile
 }
 `$env:PYTHONUNBUFFERED = '1'
 `$env:PYTHONIOENCODING = 'utf-8'
+`$env:NEXT_TELEMETRY_DISABLED = '1'
 Set-Location -LiteralPath '$($WorkingDir.Replace("'", "''"))'
 try { `$Host.UI.RawUI.WindowTitle = '$($Title.Replace("'", "''"))' } catch { }
 `$log = '$($LogFile.Replace("'", "''"))'
@@ -356,11 +392,10 @@ $Command
 "@
     Write-Utf8NoBom -Path $runnerFile -Value $runner
 
-    Start-Process -FilePath "powershell.exe" -ArgumentList @(
-        "-NoExit",
+    Start-Process -FilePath "powershell.exe" -WindowStyle Hidden -ArgumentList @(
         "-NoProfile",
         "-ExecutionPolicy", "Bypass",
-        "-File", $runnerFile
+        "-File", ('"' + $runnerFile + '"')
     ) | Out-Null
-    Write-Host "Opened '$Title' window."
+    Write-Host "Started '$Title' in background. Log: $LogFile"
 }

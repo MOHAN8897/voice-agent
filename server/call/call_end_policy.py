@@ -48,6 +48,8 @@ def allowed_reasons_for(policy: dict[str, Any] | None) -> frozenset[str]:
 
 
 def format_call_end_section(language: str | None, policy: dict[str, Any] | None = None) -> str:
+    from server.call.hangup_judge import HANGUP_JUDGMENT_RULES
+
     lang = normalize_compile_language(language)
     normalized = normalize_call_end_policy(policy, language=lang)
     reasons = ", ".join(normalized["allowedReasons"])
@@ -55,6 +57,7 @@ def format_call_end_section(language: str | None, policy: dict[str, Any] | None 
     return (
         "--- CALL END POLICY ---\n"
         f"{CALL_END_DEFAULTS[lang]}\n"
+        f"{HANGUP_JUDGMENT_RULES}\n"
         f"Allowed hangup reasons for this agent: {reasons}. "
         "Never speak a farewell unless end_call.should_end is true. "
         f"Farewell example: `{farewell}` Speak it fully, then hang up."

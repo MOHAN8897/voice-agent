@@ -3,6 +3,7 @@ import { ConsolePage } from "@/components/console/ConsolePage";
 import { StatusBadge } from "@/components/console/StatusBadge";
 import { SkeuoBadge } from "@/components/ui/skeuo/SkeuoBadge";
 import { apiGet } from "@/lib/api";
+import { formatAgentLanguage } from "@/lib/agent-language";
 
 export default async function AgentLayout({
   children,
@@ -30,7 +31,7 @@ export default async function AgentLayout({
   const status = agent.status || "";
   const env = agent.environment || "development";
   const tier = agent.default_tier || "medium";
-  const langs = (agent.languages || ["te-IN"]).join(", ");
+  const langLabel = formatAgentLanguage(agent);
   const version = agent.active_compiled_brain_version || "—";
 
   return (
@@ -48,7 +49,7 @@ export default async function AgentLayout({
         <div className="mt-3 flex flex-wrap gap-2">
           <SkeuoBadge tone="muted">Env {env}</SkeuoBadge>
           <SkeuoBadge tone="accent">Tier {tier}</SkeuoBadge>
-          <SkeuoBadge tone="info">{langs}</SkeuoBadge>
+          <SkeuoBadge tone="info">{langLabel}</SkeuoBadge>
           <SkeuoBadge tone="muted">v{version}</SkeuoBadge>
         </div>
         <p className="mt-2 font-mono text-[10px] text-text-subtle">{params.id}</p>

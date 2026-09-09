@@ -69,7 +69,7 @@ test.describe("Dev Test Studio UI", () => {
     const errors: string[] = [];
     page.on("pageerror", (e) => errors.push(e.message));
 
-    await page.goto(`/dev/test-studio?agent=${agentId}`, { waitUntil: "domcontentloaded", timeout: 120000 });
+    await page.goto(`/dev/test-studio/${agentId}`, { waitUntil: "domcontentloaded", timeout: 120000 });
     await expect(page.getByRole("heading", { name: "Test Studio" })).toBeVisible({ timeout: 30000 });
     await expect(page.getByText("Live conversation")).toBeVisible();
     await expect(page.getByLabel(/Turn microphone on/i)).toBeVisible();
@@ -85,15 +85,32 @@ test.describe("Dev Test Studio UI", () => {
     await expect(page.getByRole("button", { name: /Live/i }).first()).toBeVisible();
   });
 
-  test("language picker is visible on Live without opening Fine-tune", async ({ page }) => {
-    await page.goto("/dev/test-studio", { waitUntil: "domcontentloaded", timeout: 120000 });
+  test("language picker is once on the agent lab and clicking changes language", async ({ page }) => {
+    const agentId = await defaultAgentId(page.request);
+    await page.goto(`/dev/test-studio/${agentId}`, { waitUntil: "domcontentloaded", timeout: 120000 });
     await expect(page.getByRole("heading", { name: "Test Studio" })).toBeVisible({ timeout: 30000 });
-    await expect(page.getByTestId("studio-call-language")).toBeVisible();
-    await expect(page.getByTestId("studio-call-language").getByTestId("compile-language-te-IN")).toBeVisible();
-    await expect(page.getByTestId("studio-call-language").getByTestId("compile-language-en-IN")).toBeVisible();
-    await expect(page.getByTestId("studio-call-language").getByTestId("compile-language-hi-IN")).toBeVisible();
-    await page.getByTestId("studio-call-language").getByTestId("compile-language-en-IN").click();
-    await expect(page.getByTestId("studio-call-language").getByTestId("compile-language-en-IN")).toHaveAttribute("aria-checked", "true");
+
+    const picker = page.getByTestId("studio-call-language");
+    await expect(picker).toBeVisible();
+    await expect(page.getByTestId("studio-call-language")).toHaveCount(1);
+
+    await picker.getByTestId("compile-language-en-IN").click();
+    await expect(picker.getByTestId("compile-language-en-IN")).toHaveAttribute("aria-checked", "true");
+    await page.waitForTimeout(1200);
+    await expect(picker.getByTestId("compile-language-en-IN")).toHaveAttribute("aria-checked", "true");
+
+    await page.getByRole("button", { name: /Config/i }).first().click();
+    await expect(page.getByTestId("studio-call-language")).toHaveCount(1);
+    await expect(page.getByText("Call language is set at the top")).toHaveCount(0);
+    await expect(picker.getByTestId("compile-language-en-IN")).toHaveAttribute("aria-checked", "true");
+
+    await page.getByRole("button", { name: /Fine-tune/i }).click();
+    await expect(page.getByTestId("studio-call-language")).toHaveCount(1);
+    await expect(page.getByText("Call language for this agent is")).toHaveCount(0);
+    await expect(picker.getByTestId("compile-language-en-IN")).toHaveAttribute("aria-checked", "true");
+
+    await picker.getByTestId("compile-language-hi-IN").click();
+    await expect(picker.getByTestId("compile-language-hi-IN")).toHaveAttribute("aria-checked", "true");
   });
 
   test("STT websocket targets API host (not Next :3000)", async ({ page, context }) => {
@@ -121,7 +138,7 @@ test.describe("Dev Test Studio UI", () => {
   test("telephony status loads for PSTN mode", async ({ page }) => {
     await ensureDevLogin(page);
     const agentId = await defaultAgentId(page.request);
-    await page.goto(`/dev/test-studio?agent=${agentId}`, { waitUntil: "domcontentloaded", timeout: 120000 });
+    await page.goto(`/dev/test-studio/${agentId}`, { waitUntil: "domcontentloaded", timeout: 120000 });
     await expect(page.getByRole("heading", { name: "Test Studio" })).toBeVisible({ timeout: 30000 });
     await page.getByTestId("test-mode-pstn").click();
     const statusResp = page.waitForResponse(

@@ -29,6 +29,7 @@ def test_openai_llm_catalog_uses_labels():
     models = llm_models_for_provider("openai", settings)
     ids = {m["id"] for m in models}
     assert "gpt-5.6-luna" in ids
+    assert "gpt-realtime-2.1-mini" in ids
     luna = next(m for m in models if m["id"] == "gpt-5.6-luna")
     assert "Luna" in luna["label"]
 
@@ -41,16 +42,9 @@ def test_deepseek_llm_catalog_lists_documented_models():
     assert "deepseek-reasoner" in ids
 
 
-def test_gemini_llm_catalog_lists_latest_models():
+def test_gemini_llm_catalog_is_removed():
     settings = Settings(_env_file=None)  # type: ignore[call-arg]
-    models = llm_models_for_provider("gemini", settings)
-    ids = {m["id"] for m in models}
-    assert "gemini-3.8-flash" in ids
-    assert "gemini-3.7-flash" in ids
-    assert "gemini-3.5-flash-lite" in ids
-    assert "gemini-3.5-flash" in ids
-    lite = next(m for m in models if m["id"] == "gemini-3.5-flash-lite")
-    assert lite.get("default") is True
+    assert llm_models_for_provider("gemini", settings) == []
 
 
 def test_registry_exposes_llm_models_when_enabled(llm_settings):
@@ -68,17 +62,11 @@ def test_registry_exposes_llm_models_when_enabled(llm_settings):
     catalog = ProviderRegistry(settings).get_catalog()
     openai = next(p for p in catalog["providers"] if p["id"] == "openai")
     deepseek = next(p for p in catalog["providers"] if p["id"] == "deepseek")
-    gemini = next(p for p in catalog["providers"] if p["id"] == "gemini")
+    assert all(p["id"] != "gemini" for p in catalog["providers"])
     assert len(openai["models"]["llm"]) >= 3
     assert len(deepseek["models"]["llm"]) >= 2
-    assert len(gemini["models"]["llm"]) >= 5
-    gemini_ids = {m["id"] for m in gemini["models"]["llm"]}
-    assert "gemini-3.8-flash" in gemini_ids
-    assert "gemini-3.7-flash" in gemini_ids
-    assert "gemini-3.5-flash-lite" in gemini_ids
-    assert gemini["adapter_available"] is True
-    assert gemini["healthy"] is True
-    assert ProviderRegistry(settings).get_llm("gemini").provider_id == "gemini"
+    with pytest.raises(KeyError):
+        ProviderRegistry(settings).get_llm("gemini")
     dev_secrets_store.remove_overlay_key("enable_openai")
     dev_secrets_store.remove_overlay_key("enable_deepseek")
     dev_secrets_store.remove_overlay_key("enable_gemini")
