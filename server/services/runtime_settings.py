@@ -87,13 +87,16 @@ class RuntimeSettingsStore:
             values: dict = entry["values"]
             snapshot = dict(values)
             loose = VOICE_PRESET_BUNDLED_KEYS & patch.keys()
-            if loose and "voicePresetId" not in patch:
+            studio = session_id.startswith("test-studio:")
+            if loose and "voicePresetId" not in patch and not studio:
                 raise SettingsValidationError(
                     f"Change voicePresetId instead of individual pipeline settings: {sorted(loose)}"
                 )
             if patch.get("voicePresetId") is not None:
                 pid = self._validate("voicePresetId", patch["voicePresetId"])
                 bundled = voice_preset_values(pid)
+                if studio:
+                    bundled.update({k: v for k, v in patch.items() if k in VOICE_PRESET_BUNDLED_KEYS})
                 patch = {k: v for k, v in patch.items() if k not in VOICE_PRESET_BUNDLED_KEYS}
                 patch = {**patch, "voicePresetId": pid, **bundled}
             try:
@@ -104,7 +107,7 @@ class RuntimeSettingsStore:
                         values.pop(key, None)
                         continue
                     values[key] = self._validate(key, val)
-                    self._cross_validate(values)
+                self._cross_validate(values)
             except Exception:
                 entry["values"] = snapshot
                 raise
@@ -150,8 +153,8 @@ class RuntimeSettingsStore:
                 v = int(val)
             except Exception:
                 raise SettingsValidationError("bargeMinWords must be int")
-            if not 2 <= v <= 4:
-                raise SettingsValidationError("bargeMinWords range 2-4")
+            if not 1 <= v <= 10:
+                raise SettingsValidationError("bargeMinWords range 1-10")
             return v
         if key == "bargeRequireVad":
             if isinstance(val, bool):

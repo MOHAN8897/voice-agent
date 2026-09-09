@@ -104,12 +104,16 @@ export function useTestStudioPrefs(
       if (key === lastSavedRef.current) return;
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => {
-        lastSavedRef.current = key;
         fetch("/api/test-studio/prefs", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({ sessionId, ...next }),
+        }).then((response) => {
+          if (response.ok) {
+            lastSavedRef.current = key;
+            patchPrefsCache(sessionId, next);
+          }
         }).catch(() => {});
       }, 1200);
     },
@@ -118,6 +122,9 @@ export function useTestStudioPrefs(
 
   useEffect(() => {
     persist(prefs);
+    return () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+    };
   }, [prefs, persist]);
 
   return { markLoaded: () => { loadedRef.current = true; } };

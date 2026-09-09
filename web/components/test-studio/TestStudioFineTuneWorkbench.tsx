@@ -173,9 +173,11 @@ export function TestStudioFineTuneWorkbench({
             <SkeuoBadge tone="muted" className="font-mono text-[10px]">
               session: {ft.sessionId}
             </SkeuoBadge>
-            <SkeuoBadge tone="success" className="text-[10px]">
-              persisted
-            </SkeuoBadge>
+            <SkeuoButton type="button" variant="primary" size="sm"
+              disabled={locked || ft.loading || ft.saving}
+              onClick={tab === "prompts" ? ft.saveInstructions : ft.saveRuntime}>
+              {ft.saving ? "Saving…" : `Save ${tab === "prompts" ? "prompts" : tab === "llm" ? "LLM" : "voice / VAD"}`}
+            </SkeuoButton>
             {locked && (
               <SkeuoBadge tone="warning" className="text-[10px]">
                 call in progress
@@ -183,6 +185,7 @@ export function TestStudioFineTuneWorkbench({
             )}
           </div>
         </div>
+        <p role="status" className="mt-2 text-xs text-text-muted">{ft.status}</p>
       </div>
 
       {ft.loading ? (

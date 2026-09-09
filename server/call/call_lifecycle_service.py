@@ -86,6 +86,11 @@ class CallLifecycleService:
         channel = channel if channel in ("browser", "pstn") else "browser"
         direction = direction if direction in ("inbound", "outbound") else "inbound"
         lookup_session = (config_session_id or session_id).strip() or session_id
+        from server.services.test_studio_config import merge_stack, saved_call_config
+
+        saved = saved_call_config(lookup_session)
+        stack_override = merge_stack(saved.get("stack_override"), stack_override)
+        tier = tier or saved.get("tier")
 
         agent = await self._resolve_agent(agent_id)
         env = environment or agent.get("environment") or effective_app_environment()

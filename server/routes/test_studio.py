@@ -18,6 +18,9 @@ class TestStudioUiPrefs(BaseModel):
     language: str | None = None
     stack: dict | None = None
     fineTuneTab: str | None = None
+    studioTab: str | None = None
+    saveConfig: bool = False
+    stackOverride: dict | None = None
 
 
 @router.get("/api/test-studio/prefs")
@@ -30,12 +33,33 @@ async def save_test_studio_prefs(body: TestStudioUiPrefs):
     patch = {
         k: v
         for k, v in body.model_dump().items()
-        if k != "sessionId" and v is not None
+        if k not in {"sessionId", "saveConfig", "stackOverride"} and v is not None
     }
     existing = session_persist.get_ui(body.sessionId)
     existing.update(patch)
+    runtime_patch = {}
+    if body.saveConfig:
+        from server.services.runtime_settings import runtime_settings, SettingsValidationError
+        from fastapi import HTTPException
+
+        form = body.stack or {}
+        runtime_patch = {key: form[field] for field, key in (
+            ("ttsVoiceId", "ttsSpeaker"), ("ttsModel", "ttsModel"),
+            ("sttModel", "sttModel"), ("sttMode", "sttMode"),
+            ("sttStreamType", "sttStreamType"),
+        ) if form.get(field)}
+        try:
+            if runtime_patch:
+                runtime_settings.update(body.sessionId, runtime_patch)
+        except SettingsValidationError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        existing["callConfig"] = {
+            "tier": body.tier,
+            "language": body.language,
+            "stack_override": body.stackOverride,
+        }
     session_persist.set_ui(body.sessionId, existing)
-    return {"ok": True, "sessionId": body.sessionId, "prefs": existing}
+    return {"ok": True, "sessionId": body.sessionId, "prefs": existing, "runtimePatch": runtime_patch}
 
 
 @router.get("/api/settings/cartesia-voices")

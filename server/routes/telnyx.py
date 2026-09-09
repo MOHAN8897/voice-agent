@@ -19,6 +19,35 @@ router = APIRouter()
 _STREAM_MAX_ATTEMPTS = 3
 _STREAM_MAX_FAILURE_RETRIES = 3
 _stream_op_locks: dict[str, asyncio.Lock] = {}
+_stream_watchdogs: dict[str, asyncio.Task] = {}
+_STREAM_CONNECT_TIMEOUT_S = 3.0
+
+
+def _watch_stream_connect(call_control_id: str) -> None:
+    previous = _stream_watchdogs.get(call_control_id)
+    if previous and not previous.done():
+        return
+
+    async def watch() -> None:
+        try:
+            for _ in range(_STREAM_MAX_FAILURE_RETRIES):
+                await asyncio.sleep(_STREAM_CONNECT_TIMEOUT_S)
+                row = telnyx_call_registry.get(call_control_id) or {}
+                if _call_ended(row) or row.get("stream_connected"):
+                    return
+                telnyx_call_registry.upsert(call_control_id, {
+                    "stream_retry_count": int(row.get("stream_retry_count") or 0) + 1,
+                    "stream_start_requested": False,
+                })
+                await _ensure_telnyx_streaming(call_control_id, reason="retry")
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logger.exception("[PSTN_STREAM] connect watchdog failed control=%s", call_control_id)
+        finally:
+            _stream_watchdogs.pop(call_control_id, None)
+
+    _stream_watchdogs[call_control_id] = asyncio.create_task(watch())
 
 VOICE_CHECK_PHRASE = (
     "Telnyx voice check. This is a test message only. "
@@ -174,6 +203,10 @@ async def _ensure_telnyx_streaming(
                 call_control_id,
                 retry_count,
             )
+            try:
+                await TelnyxClient().hangup(call_control_id)
+            except Exception as exc:
+                log_pstn("stream.terminal_hangup_failed", control=call_control_id, error=str(exc)[:160])
             return
 
         client = TelnyxClient()
@@ -200,7 +233,6 @@ async def _ensure_telnyx_streaming(
                 "stream_url": stream_url,
                 "stream_configured": True,
                 "stream_start_requested": True,
-                "stream_connected": False,
                 "stream_failed": False,
                 "stream_state": "retrying" if reason in ("streaming_failed", "retry") else "start_requested",
                 "stream_retry_reason": reason,
@@ -231,8 +263,14 @@ async def _ensure_telnyx_streaming(
                     hangup_cause=live.get("hangup_cause"),
                 )
                 return
+            if live.get("stream_connected"):
+                return
             try:
                 await client.start_streaming(call_control_id, stream_url=stream_url)
+                # A WS start or hangup can arrive while the HTTP request is pending.
+                live = telnyx_call_registry.get(call_control_id) or {}
+                if _call_ended(live) or live.get("stream_connected"):
+                    return
                 telnyx_call_registry.upsert(
                     call_control_id,
                     {
@@ -240,7 +278,6 @@ async def _ensure_telnyx_streaming(
                         "stream_api_ok": True,
                         "stream_url": stream_url,
                         # NOT connected until streaming.started / WS start
-                        "stream_connected": False,
                         "stream_failed": False,
                         "stream_state": "api_ok_awaiting_connect",
                         "last_event": "streaming_start",
@@ -258,6 +295,7 @@ async def _ensure_telnyx_streaming(
                     after=after,
                     retry_count=retry_count,
                 )
+                _watch_stream_connect(call_control_id)
                 return
             except TelnyxApiError as exc:
                 last_err = _format_telnyx_err(exc)[:280]
@@ -433,6 +471,13 @@ async def telnyx_webhook(request: Request):
             import json
 
             meta = json.loads(base64.b64decode(str(payload["client_state"])).decode())
+            if isinstance(meta, dict):
+                existing = telnyx_call_registry.get(str(call_control_id)) or {}
+                recovered = {k: meta[k] for k in (
+                    "agent_id", "tier", "source_session_id", "inherit_test_studio_config",
+                    "stack_override", "language", "direction",
+                ) if meta.get(k) is not None and existing.get(k) is None}
+                telnyx_call_registry.upsert(str(call_control_id), recovered)
             if meta.get("voice_check"):
                 telnyx_call_registry.upsert(
                     str(call_control_id),
@@ -470,19 +515,23 @@ async def telnyx_webhook(request: Request):
             async def _bg_ensure() -> None:
                 try:
                     await _ensure_telnyx_streaming(cid, reason="answered")
+                    _watch_stream_connect(cid)
                 except Exception:
                     logger.exception("[PSTN_STREAM] background ensure crashed control=%s", cid)
 
             asyncio.create_task(_bg_ensure(), name=f"telnyx-ensure-{cid[:24]}")
     elif event_type in ("streaming.started", "call.streaming.started"):
-        before = _stream_snapshot(telnyx_call_registry.get(str(call_control_id)) or {})
+        live = telnyx_call_registry.get(str(call_control_id)) or {}
+        if _call_ended(live):
+            return {"ok": True}
+        before = _stream_snapshot(live)
         telnyx_call_registry.upsert(
             str(call_control_id),
             {
-                "stream_connected": True,
+                "stream_provider_started": True,
                 "stream_started": True,  # legacy alias
                 "stream_failed": False,
-                "stream_state": "connected",
+                "stream_state": "connected" if live.get("stream_connected") else "provider_started_awaiting_ws",
                 "status": "streaming",
             },
         )
@@ -572,6 +621,9 @@ async def telnyx_webhook(request: Request):
                 },
             )
             await cancel_prewarm("telnyx", str(call_control_id))
+            watchdog = _stream_watchdogs.pop(str(call_control_id), None)
+            if watchdog:
+                watchdog.cancel()
             _stream_op_locks.pop(str(call_control_id), None)
         log_pstn(
             f"webhook.{event_type.split('.', 1)[-1]}",

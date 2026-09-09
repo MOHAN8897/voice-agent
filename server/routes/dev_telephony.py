@@ -58,7 +58,7 @@ def _resolve_outbound_source_session(body: OutboundTestBody) -> tuple[str | None
     inherit = bool(body.inherit_test_studio_config)
     source = (body.source_session_id or "").strip() or None
     if inherit:
-        return source or "test-studio", True
+        return source or f"test-studio:{body.agent_id}", True
     if source == "test-studio":
         return source, True
     return source, False
@@ -68,13 +68,18 @@ def _outbound_pstn_context(body: OutboundTestBody) -> tuple[str, str, dict[str, 
     """Validate/sanitize custom PSTN stack before dial. Tier-only → no override."""
     from server.services.pstn_stack import PstnStackValidationError, prepare_pstn_dial_stack
 
-    tier = (body.tier or "medium").strip()
-    language = (body.language or "te-IN").strip()
-    if not body.stack_override:
+    from server.services.test_studio_config import merge_stack, saved_call_config
+
+    source, _ = _resolve_outbound_source_session(body)
+    saved = saved_call_config(source)
+    tier = (body.tier or saved.get("tier") or "medium").strip()
+    language = (body.language or saved.get("language") or "te-IN").strip()
+    override = merge_stack(saved.get("stack_override"), body.stack_override)
+    if not override:
         return tier, language, None, []
     try:
         normalized, adjustments = prepare_pstn_dial_stack(
-            body.stack_override, language=language, tier=tier
+            override, language=language, tier=tier
         )
     except PstnStackValidationError as e:
         raise e
@@ -397,11 +402,13 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
                 "source_session_id": source_session_id,
                 "inherit_test_studio_config": inherit_config,
                 "language": language,
+                "stack_override": stack_override,
                 "direction": "outbound",
             },
         )
         call_control_id = str(result.get("call_control_id") or result.get("id") or "")
         mark(call_control_id)
+        existing_call = telnyx_call_registry.get(call_control_id) or {}
         telnyx_call_registry.upsert(
             call_control_id,
             {
@@ -410,7 +417,7 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
                 "to": body.to_e164,
                 "from": body.from_e164,
                 "direction": "outbound",
-                "status": "initiated",
+                "status": existing_call.get("status") or "initiated",
                 "language": language,
                 "source_session_id": source_session_id,
                 "inherit_test_studio_config": inherit_config,
@@ -418,8 +425,7 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
                 "stream_url": stream_url,
                 "stream_configured": True,
                 "stream_started": True,
-                "stream_connected": False,
-                "stream_state": "pending_answer",
+                "stream_state": existing_call.get("stream_state") or "pending_answer",
             },
         )
         if call_control_id:

@@ -66,6 +66,7 @@ async def test_inbound_bridge_resolves_agent_and_creates_call(monkeypatch):
         assert bridge._voice.call_id == "internal"
         assert start.call_args.kwargs["direction"] == "inbound"
         assert start.call_args.kwargs["channel"] == "pstn"
+        assert start.call_args.kwargs["config_session_id"] == "test-studio:default-agent"
     finally:
         mod.active_telnyx_bridges.pop("inbound-test", None)
         for task in (bridge._out_task, bridge._voice_loop_task):

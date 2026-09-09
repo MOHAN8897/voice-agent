@@ -10,3 +10,12 @@ approval_mode = "approve"
 
 [mcp_servers.graft.tools.graft_check_freshness]
 approval_mode = "approve"
+
+[mcp_servers.graft.tools.graft_repo_map]
+approval_mode = "approve"
+
+[mcp_servers.graft.tools.graft_file_api]
+approval_mode = "approve"
+
+[mcp_servers.graft.tools.graft_trace_calls]
+approval_mode = "approve"

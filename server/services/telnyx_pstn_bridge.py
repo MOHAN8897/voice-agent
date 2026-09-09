@@ -86,9 +86,13 @@ class TelnyxPstnBridge:
         self._client_meta: dict[str, Any] = {}
         self._token_meta: dict[str, Any] = {}
         self._start_handled = False
+        self._owns_call = False
         self._invalid_generations: set[str] = set()
         self._bidirectional_mode = "rtp"
         self._mp3_sending = False
+        self._out_sending = False
+        self._source_audio_buf = bytearray()
+        self._source_audio_generation: str | None = None
         self._last_mp3_sent_at = 0.0
         self._outbound_l16_to_8k: StreamingPcmResampler | None = None
         self._inbound_l16_resampler: StreamingPcmResampler | None = None
@@ -297,6 +301,14 @@ class TelnyxPstnBridge:
                 )
                 raise RuntimeError(f"telnyx concurrent call limit reached ({max_calls})")
             active_telnyx_bridges[self.call_control_id or self.ws_id] = self
+            self._owns_call = True
+        from server.services.telnyx_client import telnyx_call_registry
+
+        # Receipt of WS start is media proof even while lifecycle/provider setup runs.
+        # Otherwise a slow cold start triggers the connect watchdog on a healthy socket.
+        telnyx_call_registry.upsert(self.call_control_id, {
+            "stream_connected": True, "stream_failed": False, "stream_state": "connected",
+        })
         pstn_media_flow.start(
             external_id=self.call_control_id or self.ws_id,
             ws_id=self.ws_id,
@@ -316,7 +328,7 @@ class TelnyxPstnBridge:
         from server.services.telnyx_client import telnyx_call_registry
 
         local = telnyx_call_registry.get(self.call_control_id or "") or {}
-        merged_local = {**self._token_meta, **local, **self._client_meta}
+        merged_local = {**self._client_meta, **self._token_meta, **local}
         self.agent_id = self.agent_id or merged_local.get("agent_id")
         if not self.agent_id:
             from server.brain.agent_service import agent_service
@@ -325,7 +337,11 @@ class TelnyxPstnBridge:
         if not self.agent_id:
             raise RuntimeError("No PSTN agent could be resolved")
         self.tier = self.tier or merged_local.get("tier")
+        merged_local["agent_id"] = self.agent_id
+        if _pstn_direction(merged_local.get("direction"), default="inbound") == "inbound":
+            merged_local["inherit_test_studio_config"] = True
         pstn_opts = pstn_call_options(merged_local)
+        self.tier = pstn_opts.get("tier") or self.tier
         log_pstn(
             "stream.start",
             timer_key=self.call_control_id,
@@ -344,7 +360,10 @@ class TelnyxPstnBridge:
             if self.agent_id and self.call_control_id:
                 from server.services.pstn_prewarm import take_prewarm_for_answer
 
-                prewarm = await take_prewarm_for_answer("telnyx", self.call_control_id)
+                try:
+                    prewarm = await take_prewarm_for_answer("telnyx", self.call_control_id)
+                except Exception as exc:
+                    log_pstn("prewarm.adopt_failed", control=self.call_control_id, error=str(exc)[:160])
             self._prewarm_bundle = prewarm
             if self.agent_id:
                 from server.call.call_lifecycle_service import call_lifecycle_service
@@ -396,7 +415,7 @@ class TelnyxPstnBridge:
                 queue_size=lambda: self._out_queue.qsize(),
                 drain=_drain_queue,
                 frame_ms=20.0,
-                sending=lambda: self._mp3_sending,
+                sending=lambda: self._mp3_sending or self._out_sending,
             )
             self._voice = PstnVoiceLoop(
                 session_id=self.session_id,
@@ -419,6 +438,7 @@ class TelnyxPstnBridge:
                     self.call_control_id,
                     {"status": "stream-error", "last_event": "stream-error", "error": str(exc)[:200]},
                 )
+                await self._provider_hangup()
             raise
 
     async def _start_voice_loop(self) -> None:
@@ -539,11 +559,15 @@ class TelnyxPstnBridge:
         next_send_at: float | None = None
         try:
             while not self._closed:
+                self._out_sending = False
                 try:
-                    frame = await asyncio.wait_for(self._out_queue.get(), timeout=0.25)
+                    frame = await asyncio.wait_for(self._out_queue.get(), timeout=0.04)
                 except asyncio.TimeoutError:
                     next_send_at = None
+                    if self._voice is not None and hasattr(self._voice, "on_playback_drained"):
+                        self._voice.on_playback_drained()
                     continue
+                self._out_sending = True
                 chunk = frame.payload
                 playback = getattr(self, "_playback", None)
                 if frame.generation_id and frame.generation_id in self._invalid_generations:
@@ -588,11 +612,13 @@ class TelnyxPstnBridge:
                     continue
                 now = time.monotonic()
                 if next_send_at is None:
-                    next_send_at = now
+                    # Two frames of startup headroom absorb upstream chunk jitter.
+                    next_send_at = now + 0.04
                 delay = next_send_at - now
-                if delay > 0.0005:
-                    await asyncio.sleep(delay)
-                elif delay < -0.1:
+                if delay > 0:
+                    while time.monotonic() < next_send_at:
+                        await asyncio.sleep(max(0.001, next_send_at - time.monotonic()))
+                elif delay < -frame_period:
                     next_send_at = time.monotonic()
                 encoded = base64.b64encode(chunk).decode("ascii")
                 message = json.dumps({"event": "media", "media": {"payload": encoded}})
@@ -664,6 +690,10 @@ class TelnyxPstnBridge:
             )
             log_pstn("media.out.failed", call_id=self.call_id, error=str(exc)[:200])
             logger.exception("[TELNYX] outbound worker failed: %s", str(exc)[:200])
+            self._closed = True
+            await self.ws.close(code=1011)
+        finally:
+            self._out_sending = False
 
     async def _send_agent_mp3(self, mp3: bytes) -> None:
         """Telnyx mp3 bidirectional mode — one base64 MP3 blob per message (1 msg/sec limit)."""
@@ -738,10 +768,21 @@ class TelnyxPstnBridge:
             return
         source_codec = self._voice.current_output_codec if self._voice else "PCMU"
         target_codec = self._negotiated_media.codec
+        generation_id = self._voice.current_generation_id if self._voice else None
+        turn_id = self._voice.current_turn_id if self._voice else None
+        if generation_id != self._source_audio_generation:
+            self._source_audio_buf.clear()
+            self._source_audio_generation = generation_id
+        # Chunk boundaries are arbitrary. Pad only at TTS finish, never each callback.
+        self._source_audio_buf.extend(wire)
+        source_frame_bytes = 640 if source_codec == "L16" else 160
+        complete = len(self._source_audio_buf) // source_frame_bytes * source_frame_bytes
+        wire = bytes(self._source_audio_buf[:complete])
+        del self._source_audio_buf[:complete]
         if source_codec == "PCMU":
             source_chunks = chunk_mulaw_frames(wire, sample_rate=8000)
         elif source_codec == "L16":
-            source_chunks = _chunk_l16_rtp(wire, self._negotiated_media.sample_rate)
+            source_chunks = _chunk_l16_rtp(wire, _WIRE_SAMPLE_RATE)
         else:
             raise ValueError(f"unsupported TTS output codec {source_codec}")
 
@@ -799,7 +840,6 @@ class TelnyxPstnBridge:
                 outbound_codec=outbound_codec,
             )
         for chunk in chunks:
-            generation_id = self._voice.current_generation_id if self._voice else None
             playback = getattr(self, "_playback", None)
             if playback is not None and not playback.is_generation_valid(generation_id):
                 pstn_media_flow.increment(self.call_control_id or self.ws_id, "dropped_frames", 1)
@@ -810,7 +850,7 @@ class TelnyxPstnBridge:
             frame = OutboundFrame(
                 payload=chunk,
                 codec=outbound_codec,
-                turn_id=self._voice.current_turn_id if self._voice else None,
+                turn_id=turn_id,
                 generation_id=generation_id,
             )
             try:
@@ -877,10 +917,10 @@ class TelnyxPstnBridge:
         """Wait until the outbound RTP queue drains so farewell audio can play."""
         deadline = time.monotonic() + max(0.2, float(timeout_s))
         while time.monotonic() < deadline:
-            if self._out_queue.empty() and not self._mp3_sending:
+            if self._out_queue.empty() and not self._mp3_sending and not self._out_sending:
                 # One extra frame period so the last queued frame can leave the worker.
                 await asyncio.sleep(0.04)
-                if self._out_queue.empty():
+                if self._out_queue.empty() and not self._out_sending:
                     return True
             await asyncio.sleep(0.02)
         log_pstn(
@@ -904,8 +944,15 @@ class TelnyxPstnBridge:
             log_pstn("hangup.provider.failed", control=self.call_control_id, error=str(exc)[:200])
 
     async def _barge_in(self) -> None:
-        generation_id = self._voice.current_generation_id if self._voice else None
+        generation_id = (getattr(self._voice, "_barge_generation", None)
+                         or self._voice.current_generation_id) if self._voice else None
         playback = getattr(self, "_playback", None)
+        generation_id = generation_id or (playback.current_generation() if playback else None)
+        self._source_audio_buf.clear()
+        self._outbound_pcm8k_buf.clear()
+        self._outbound_l16_buf.clear()
+        self._outbound_l16_to_8k = None
+        self._outbound_8k_to_l16 = None
         if playback is not None:
             playback.invalidate_generation(generation_id)
             interrupted = playback.clear()
@@ -1048,7 +1095,7 @@ class TelnyxPstnBridge:
                 active_telnyx_bridges.pop(self.call_control_id, None)
             if active_telnyx_bridges.get(self.ws_id) is self:
                 active_telnyx_bridges.pop(self.ws_id, None)
-            if self.call_control_id:
+            if self.call_control_id and self._owns_call:
                 bidirectional_ok = self._media_frames_in > 0 and self._media_frames_out > 0
                 from server.services.telnyx_client import telnyx_call_registry
 
@@ -1064,6 +1111,9 @@ class TelnyxPstnBridge:
                     self.call_control_id,
                     {
                         "status": "completed",
+                        "stream_connected": False,
+                        "stream_state": "ended",
+                        "ended": True,
                         "last_event": reason,
                         "media_frames_in": self._media_frames_in,
                         "media_frames_out": self._media_frames_out,

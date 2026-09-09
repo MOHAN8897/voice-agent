@@ -122,7 +122,7 @@ class TelnyxQueuePlayback:
         return self._queue_size() > 0 or bool(self._sending())
 
     def queued_ms(self) -> float:
-        return float(self._queue_size() * self._frame_ms)
+        return float((self._queue_size() + int(bool(self._sending()))) * self._frame_ms)
 
     def clear(self) -> int:
         return int(self._drain())
@@ -130,8 +130,6 @@ class TelnyxQueuePlayback:
     def invalidate_generation(self, generation_id: str | None) -> None:
         if generation_id:
             self._invalid.add(generation_id)
-            if len(self._invalid) > 16:
-                self._invalid = set(list(self._invalid)[-12:])
 
     def is_generation_valid(self, generation_id: str | None) -> bool:
         if not generation_id:

@@ -254,6 +254,8 @@ class PstnMediaFlowStore:
             return round((first[end] - first[start]) * 1000)
 
         return {
+            "stt_final_to_llm_ms": delta("stt_final", "llm_started"),
+            "stt_final_to_first_audio_ms": delta("stt_final", "outbound_sent"),
             "stt_final_ms": delta("stt_audio", "stt_final"),
             "llm_first_token_ms": delta("llm_started", "llm_first_token"),
             "tts_first_audio_ms": delta("llm_first_token", "tts_audio"),

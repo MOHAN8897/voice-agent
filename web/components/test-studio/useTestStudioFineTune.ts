@@ -210,6 +210,16 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  useEffect(() => {
+    const syncConfig = (event: Event) => {
+      const detail = (event as CustomEvent).detail;
+      if (detail?.sessionId === sessionId && detail.patch) {
+        setRuntime((previous) => ({ ...previous, ...detail.patch }));
+      }
+    };
+    window.addEventListener("test-studio-runtime-saved", syncConfig);
+    return () => window.removeEventListener("test-studio-runtime-saved", syncConfig);
+  }, [sessionId]);
   const [limits, setLimits] = useState<PromptLimits>(DEFAULT_LIMITS);
 
   const load = useCallback(async () => {
@@ -460,15 +470,13 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
   }, [instructions.callEndPolicy, language, sessionId, agentId]);
 
   const saveRuntime = useCallback(async () => {
+    setSaving(true);
     setStatus("Saving runtime…");
+    try {
     const patch: Record<string, unknown> = { sessionId };
     for (const [key, val] of Object.entries(runtime)) {
       if (!RUNTIME_SAVE_KEYS.has(key) || val == null || val === "") continue;
       patch[key] = val;
-    }
-    const bundled = Object.keys(patch).some((k) => VOICE_BUNDLED_KEYS.has(k));
-    if (bundled && patch.voicePresetId == null) {
-      for (const k of VOICE_BUNDLED_KEYS) delete patch[k];
     }
     if (Object.keys(patch).length <= 1) {
       setStatus("No runtime overrides to save");
@@ -491,17 +499,24 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
       setStatus(msg);
       return false;
     }
-    setStatus("Runtime saved for test session");
+    setStatus("Runtime saved for this agent's browser and phone calls");
+    window.dispatchEvent(new CustomEvent("test-studio-runtime-saved", { detail: { sessionId } }));
     if (typeof patch.ttsSpeaker === "string" && patch.ttsSpeaker) {
       invalidateTtsConfigCache();
       notifyTestStudioVoiceSaved(patch.ttsSpeaker);
     }
     return true;
+    } catch {
+      setStatus("Runtime save failed — network error. Try again.");
+      return false;
+    } finally {
+      setSaving(false);
+    }
   }, [runtime, sessionId]);
 
   const saveAll = useCallback(async () => {
-    await saveRuntime();
-    await saveInstructions();
+    if (!await saveRuntime()) return false;
+    return await saveInstructions();
   }, [saveInstructions, saveRuntime]);
 
   const clearSession = useCallback(async () => {

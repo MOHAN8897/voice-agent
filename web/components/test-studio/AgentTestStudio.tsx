@@ -5,6 +5,7 @@ import type { SessionTraceEvent, TurnCompleteEvent } from "@/components/live/Liv
 import { CallDetailView } from "@/components/calls/CallDetailView";
 import { PstnTestPanel } from "@/components/dev/test-studio/PstnTestPanel";
 import { SkeuoPanel } from "@/components/ui/skeuo/SkeuoPanel";
+import { SkeuoButton } from "@/components/ui/skeuo/SkeuoButton";
 import { refreshPortalSession } from "@/lib/auth-client";
 import { TestStudioConfigRack } from "@/components/test-studio/TestStudioConfigRack";
 import { TestStudioLivePanel } from "@/components/test-studio/TestStudioLivePanel";
@@ -85,10 +86,14 @@ export function AgentTestStudio({
   const [locked, setLocked] = useState(false);
   const [turnRows, setTurnRows] = useState<TurnMetricRow[]>([]);
   const [prefsReady, setPrefsReady] = useState(false);
+  const [configSaving, setConfigSaving] = useState(false);
+  const [configStatus, setConfigStatus] = useState("");
+  const [runtimeRevision, setRuntimeRevision] = useState(0);
   const [sessionStartedAt, setSessionStartedAt] = useState<number | null>(null);
   const [sessionEndedAt, setSessionEndedAt] = useState<number | null>(null);
   const prefsHydratedRef = useRef(false);
   const prefsHadLanguageRef = useRef(false);
+  const prefsHadTierRef = useRef(false);
   const languageUserOverrideRef = useRef(false);
   const languageRef = useRef(language);
   languageRef.current = language;
@@ -137,7 +142,10 @@ export function AgentTestStudio({
     prefsHydratedRef.current = true;
     if (loaded.studioTab) setStudioTab(loaded.studioTab as StudioTab);
     if (loaded.stackMode) setStackMode(loaded.stackMode);
-    if (loaded.tier) setTier(loaded.tier);
+    if (loaded.tier) {
+      prefsHadTierRef.current = true;
+      setTier(loaded.tier);
+    }
     if (loaded.channel && !channelTouchedRef.current) {
       const ch = loaded.channel === "browser" ? "agent" : loaded.channel;
       if (ch === "agent" || ch === "pstn") setChannel(ch);
@@ -163,6 +171,31 @@ export function AgentTestStudio({
 
   useTestStudioPrefs(sessionId, uiPrefs, onPrefsLoaded);
 
+  async function saveConfig() {
+    setConfigSaving(true);
+    setConfigStatus("");
+    try {
+      const response = await fetch("/api/test-studio/prefs", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId, ...uiPrefs, saveConfig: true,
+          stackOverride: { ...buildStackOverride(stack), pipeline: "realtime_text" } }),
+      });
+      if (!response.ok) throw new Error(`Save failed (${response.status})`);
+      const saved = await response.json();
+      window.dispatchEvent(new CustomEvent("test-studio-runtime-saved", {
+        detail: { sessionId, patch: saved.runtimePatch },
+      }));
+      patchPrefsCache(sessionId, uiPrefs);
+      setConfigStatus("Config saved for this agent. New browser and phone calls use these settings.");
+    } catch (error) {
+      setConfigStatus(error instanceof Error ? error.message : "Save failed. Try again.");
+    } finally {
+      setConfigSaving(false);
+    }
+  }
+
   useEffect(() => {
     if (scopedAgentRef.current === agentId) return;
     const switching = scopedAgentRef.current !== null;
@@ -171,6 +204,7 @@ export function AgentTestStudio({
     if (switching) {
       languageUserOverrideRef.current = false;
       prefsHadLanguageRef.current = false;
+      prefsHadTierRef.current = false;
       channelTouchedRef.current = false;
     }
     setPrefsReady(false);
@@ -200,6 +234,14 @@ export function AgentTestStudio({
         });
       })
       .catch(() => {});
+  }, [sessionId, runtimeRevision]);
+
+  useEffect(() => {
+    const refresh = (event: Event) => {
+      if ((event as CustomEvent).detail?.sessionId === sessionId) setRuntimeRevision((value) => value + 1);
+    };
+    window.addEventListener("test-studio-runtime-saved", refresh);
+    return () => window.removeEventListener("test-studio-runtime-saved", refresh);
   }, [sessionId]);
 
   useEffect(() => {
@@ -245,7 +287,7 @@ export function AgentTestStudio({
       .then((j) => {
         if (j.agent?.name) setAgentName(String(j.agent.name));
         if (!prefsReady) return;
-        if (j.agent?.default_tier && stackMode === "tier") setTier(j.agent.default_tier);
+        if (j.agent?.default_tier && stackMode === "tier" && !prefsHadTierRef.current) setTier(j.agent.default_tier);
       })
       .catch(() => {});
   }, [agentId, portal, prefsReady, stackMode]);
@@ -526,6 +568,12 @@ export function AgentTestStudio({
 
       {studioTab === "config" && (
         <div className="grid gap-5 lg:grid-cols-2">
+          <div className="flex flex-wrap items-center gap-3 lg:col-span-2">
+            <SkeuoButton type="button" variant="primary" disabled={stackLocked || !prefsReady || catalogLoading || configSaving} onClick={saveConfig}>
+              {configSaving ? "Saving…" : "Save Config"}
+            </SkeuoButton>
+            <span role="status" className="text-xs text-text-muted">{configStatus}</span>
+          </div>
           <TestStudioConfigRack
             channel={channel}
             onChannelChange={setChannelMode}

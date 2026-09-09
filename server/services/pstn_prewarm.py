@@ -14,7 +14,7 @@ from server.services.pstn_voice_core import pstn_call_options
 logger = logging.getLogger(__name__)
 
 PREWARM_TTL_SEC = 90.0
-PREWARM_ADOPT_WAIT_SEC = 3.0
+PREWARM_ADOPT_WAIT_SEC = 0.15
 
 _PROVIDER_WIRE: dict[str, dict[str, Any]] = {
     "telnyx": {"sample_rate": 16000, "tts_output_codec": "linear16"},
@@ -165,7 +165,7 @@ class PstnPrewarmRegistry:
         if bundle is None and task and not task.done():
             try:
                 await asyncio.wait_for(asyncio.shield(task), timeout=wait_sec)
-            except (asyncio.TimeoutError, asyncio.CancelledError):
+            except asyncio.TimeoutError:
                 pass
         async with self._lock:
             entry = self._entries.pop(key, None)
@@ -181,6 +181,12 @@ class PstnPrewarmRegistry:
             return entry.bundle
         if entry.error:
             log_pstn("prewarm.adopt_miss", control=external_id, provider=provider, error=entry.error)
+        if not entry.task.done():
+            entry.task.cancel()
+            try:
+                await entry.task
+            except (asyncio.CancelledError, Exception):
+                pass
         return None
 
     async def cancel(self, provider: str, external_id: str) -> None:
@@ -267,7 +273,7 @@ async def _build_prewarm_bundle(
     from server.services.dev_runtime import effective_app_environment
 
     pstn_opts = pstn_call_options(dial_meta)
-    config_session = str(pstn_opts.get("config_session_id") or "test-studio")
+    config_session = str(pstn_opts.get("config_session_id") or rt_key)
     language = str(pstn_opts.get("language") or dial_meta.get("language") or "te-IN")
     agent_id = str(dial_meta.get("agent_id") or "")
     agent = await call_lifecycle_service._resolve_agent(agent_id or None)
