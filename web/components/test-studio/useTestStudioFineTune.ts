@@ -347,7 +347,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
       return false;
     }
     setSaving(true);
-    setStatus("Creating agent script… GPT expanding your brief (up to ~45s)");
+    setStatus("Creating agent script… GPT expanding your brief (usually 30–60s)");
     try {
       const requestedBudget = Math.max(
         Number(runtime.brainPromptBudgetTokens || 0),
