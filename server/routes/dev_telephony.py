@@ -32,6 +32,14 @@ class VoiceCheckBody(BaseModel):
     model_config = {"populate_by_name": True}
 
 
+class LiveSpeakTestBody(BaseModel):
+    text: str = Field(..., min_length=8, max_length=2000)
+    call_id: str | None = Field(None, alias="callId")
+    language_code: str = Field("en-IN", alias="languageCode")
+
+    model_config = {"populate_by_name": True}
+
+
 class OutboundTestBody(BaseModel):
     to_e164: str = Field(..., alias="toE164")
     from_e164: str | None = Field(None, alias="fromE164")
@@ -524,6 +532,27 @@ async def dev_telephony_media_flow(
         row = telnyx_call_registry.get(external_id) or {}
         voice = bridge._voice if bridge else None
         realtime = realtime_text_manager.get(str(flow.get("call_id") or ""))
+        tts_provider = None
+        tts_speaker = None
+        tts_model = None
+        session = getattr(voice, "_active_tts_session", None) if voice else None
+        merged = getattr(session, "_merged", None) if session else None
+        if isinstance(merged, dict) and merged:
+            tts_provider = merged.get("provider")
+            tts_speaker = merged.get("speaker")
+            tts_model = merged.get("model")
+        elif voice and getattr(voice, "call_id", None):
+            try:
+                from server.call.call_context import get as get_ctx
+
+                ctx = get_ctx(voice.call_id)
+                stack = getattr(ctx, "resolved_stack", None) if ctx else None
+                if stack and getattr(stack, "tts", None):
+                    tts_provider = stack.tts.provider
+                    tts_model = stack.tts.model
+                    tts_speaker = (stack.tts.config or {}).get("speaker")
+            except Exception:
+                pass
         flow["diagnostics"] = {
             "direction": row.get("direction"),
             "agent_id": bridge.agent_id if bridge else row.get("agent_id"),
@@ -533,6 +562,9 @@ async def dev_telephony_media_flow(
             "stt": "streaming" if voice and voice._stt else "disconnected",
             "realtime": "ready" if realtime and realtime.is_ready else "disconnected",
             "model": realtime.model if realtime else None,
+            "tts_provider": tts_provider,
+            "tts_model": tts_model,
+            "tts_speaker": tts_speaker,
         }
     return {"ok": True, "flow": flow}
 
@@ -620,6 +652,33 @@ async def dev_telephony_test_audio(
             "Playing: “Signal test one. Signal test two. Signal test three.” "
             "then Telugu “నమస్కారం, ఇది ఏజెంట్ ఆడియో పరీక్ష.”"
         ),
+    }
+
+
+@router.post("/api/dev/telephony/media-flow/test-live-speak")
+async def dev_telephony_test_live_speak(
+    body: LiveSpeakTestBody,
+    session: SessionData = Depends(require_dev_session),
+):
+    """Queue live TTS on an active call (not prewarm). For PSTN audio isolation tests."""
+    require_permission(session, "dev.stack.write")
+    from server.services.telnyx_pstn_bridge import active_telnyx_bridges
+
+    bridge = active_telnyx_bridges.get(body.call_id or "")
+    if not bridge and active_telnyx_bridges:
+        bridge = next(reversed(active_telnyx_bridges.values()))
+    if not bridge:
+        return {"ok": False, "error": "No active Telnyx media stream"}
+    import asyncio
+
+    text = body.text.strip()
+    asyncio.create_task(bridge.speak_test_text(text, language_code=body.language_code))
+    return {
+        "ok": True,
+        "mode": "live_tts",
+        "language": body.language_code,
+        "chars": len(text),
+        "preview": text[:120] + ("..." if len(text) > 120 else ""),
     }
 
 

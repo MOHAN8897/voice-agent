@@ -4,18 +4,12 @@ from __future__ import annotations
 import re
 
 from server.services.voice_pipeline_limits import (
-    CLAUSE_FLUSH_AT,
     FORCE_FLUSH_AT,
     MIN_CHUNK_CHARS,
 )
 
 # End sentence on Latin/Telugu punctuation (not decimal points like 80.5), or newline.
 _SENTENCE_END = re.compile(r"(?<=[.!?।])(?!\d)\s*|\n+")
-_CLAUSE_END = re.compile(r"(?<=[;:])\s*")
-
-
-def _word_count(text: str) -> int:
-    return len((text or "").strip().split())
 
 
 def _last_word_boundary(text: str, max_index: int) -> int:
@@ -71,29 +65,14 @@ def drain_complete_sentences(
                 break
             continue
 
-        clause_parts = _CLAUSE_END.split(remainder, maxsplit=1)
-        if (
-            clause_parts
-            and len(clause_parts) > 1
-            and len(clause_parts[0].strip()) >= min_chars
-            and len(stripped) >= CLAUSE_FLUSH_AT
-        ):
-            complete.append(clause_parts[0].strip())
-            remainder = clause_parts[1]
-            continue
-
-        if "," in remainder and len(stripped) >= CLAUSE_FLUSH_AT:
-            idx = remainder.rfind(",")
-            if idx >= min_chars - 1:
-                piece = remainder[: idx + 1].strip()
-                if piece and len(piece) >= min_chars and _word_count(piece) >= 2:
-                    complete.append(piece)
-                    remainder = remainder[idx + 1 :].lstrip()
-                    continue
-
         break
 
     return complete, remainder
+
+
+def join_speakable_chunks(chunks: list[str]) -> str:
+    """One TTS utterance from sentences drained in the same token batch."""
+    return " ".join(piece.strip() for piece in chunks if piece and piece.strip())
 
 
 def resolve_stream_tts_tail(pending: str, full_text: str, *, spoke_from_stream: bool) -> str | None:

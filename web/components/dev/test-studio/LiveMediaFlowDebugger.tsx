@@ -30,7 +30,19 @@ type FlowEvent = Stage & {
 };
 
 type MediaFlow = {
-  diagnostics?: { direction?: string; agent_id?: string; phase?: string; turn_id?: string; generation_id?: string; stt?: string; realtime?: string; model?: string };
+  diagnostics?: {
+    direction?: string;
+    agent_id?: string;
+    phase?: string;
+    turn_id?: string;
+    generation_id?: string;
+    stt?: string;
+    realtime?: string;
+    model?: string;
+    tts_provider?: string;
+    tts_model?: string;
+    tts_speaker?: string;
+  };
   call_id?: string | null;
   external_id?: string | null;
   ws_id?: string | null;
@@ -54,11 +66,24 @@ type MediaFlow = {
     inbound_bytes_per_sec?: number;
     outbound_packets_per_sec?: number;
     outbound_bytes_per_sec?: number;
+    normal_speech_dropped_frames?: number;
+    barge_in_discarded_frames?: number;
+    hangup_discarded_frames?: number;
+    queue_high_watermark_events?: number;
+    producer_backpressure_wait_count?: number;
+    producer_backpressure_wait_ms?: number;
+    playout_underrun_count?: number;
+    playout_concealment_frames?: number;
+    queue_depth_p50?: number;
+    queue_depth_p95?: number;
+    queue_depth_p99?: number;
+    text_queued_count?: number;
   };
   latencies?: {
     stt_final_ms?: number | null;
     llm_first_token_ms?: number | null;
     tts_first_audio_ms?: number | null;
+    tts_generation_lag_ms?: number | null;
     telnyx_first_outbound_ms?: number | null;
   };
   events?: FlowEvent[];
@@ -77,7 +102,7 @@ const STAGE_FILTER: Record<string, string[]> = {
   LLM: ["llm_started", "llm_first_token"],
   TTS: ["tts_started", "tts_audio"],
   Conversion: ["converter"],
-  Queue: ["outbound_queued", "queue_cleared"],
+  Queue: ["outbound_queued", "queue_cleared", "tts_text_queued"],
   Outbound: ["outbound_sent"],
 };
 
@@ -117,6 +142,13 @@ function Node({ label, stage }: { label: string; stage?: Stage }) {
       <p className="mt-1 text-[10px] text-text-subtle">Last event {age(stage?.last_event_at)}</p>
     </div>
   );
+}
+
+function queueStage(stage: Stage | undefined, size: number): Stage | undefined {
+  if (!stage && size <= 0) return stage;
+  const status =
+    size >= 20 ? "failed" : size >= 16 ? "delayed" : size >= 10 ? "processing" : stage?.status || "healthy";
+  return { ...(stage || {}), status };
 }
 
 function Level({ label, value }: { label: string; value?: number | null }) {
@@ -235,6 +267,7 @@ export function LiveMediaFlowDebugger({ callId }: { callId?: string | null }) {
             <div><dt className="text-text-subtle">Agent</dt><dd className="break-all text-text">{flow.diagnostics?.agent_id || "pending"}</dd></div>
             <div><dt className="text-text-subtle">STT stream</dt><dd className="text-text">{flow.diagnostics?.stt || "unknown"}</dd></div>
             <div><dt className="text-text-subtle">Realtime</dt><dd className="text-text">{flow.diagnostics?.realtime || "unknown"} · {flow.diagnostics?.model || "—"}</dd></div>
+            <div><dt className="text-text-subtle">TTS provider</dt><dd className="break-all text-text">{flow.diagnostics?.tts_provider || "—"} {flow.diagnostics?.tts_model ? `· ${flow.diagnostics.tts_model}` : ""} {flow.diagnostics?.tts_speaker ? `· ${flow.diagnostics.tts_speaker}` : ""}</dd></div>
             <div><dt className="text-text-subtle">Turn / generation</dt><dd className="break-all text-text">{flow.diagnostics?.turn_id || "—"} / {flow.diagnostics?.generation_id || "—"}</dd></div>
           </dl>
 
@@ -294,7 +327,7 @@ export function LiveMediaFlowDebugger({ callId }: { callId?: string | null }) {
               <span className="self-center text-warning">→</span>
               <Node label="Converter" stage={stages.converter} />
               <span className="self-center text-warning">→</span>
-              <Node label={`Queue · ${metrics.queue_size || 0}`} stage={stages.outbound_queued} />
+              <Node label={`Queue · ${metrics.queue_size || 0}`} stage={queueStage(stages.outbound_queued, metrics.queue_size || 0)} />
               <span className="self-center text-warning">→</span>
               <Node label="Telnyx outbound" stage={stages.outbound_sent} />
               <span className="self-center text-warning">→</span>
@@ -311,7 +344,15 @@ export function LiveMediaFlowDebugger({ callId }: { callId?: string | null }) {
             <div><dt className="text-text-subtle">Inbound frames</dt><dd className="mt-1 font-mono text-text">{metrics.inbound_frames || 0}</dd></div>
             <div><dt className="text-text-subtle">Outbound sent</dt><dd className="mt-1 font-mono text-text">{metrics.outbound_sent_frames || 0}</dd></div>
             <div><dt className="text-text-subtle">Queue delay</dt><dd className="mt-1 font-mono text-text">{metrics.queue_duration_ms || 0} ms</dd></div>
+            <div><dt className="text-text-subtle">Queue p95 / p99</dt><dd className="mt-1 font-mono text-text">{metrics.queue_depth_p95 || 0} / {metrics.queue_depth_p99 || 0}</dd></div>
             <div><dt className="text-text-subtle">Interrupted</dt><dd className="mt-1 font-mono text-text">{metrics.interrupted_frames || 0}</dd></div>
+            <div><dt className="text-text-subtle">Speech drops</dt><dd className="mt-1 font-mono text-text">{metrics.normal_speech_dropped_frames || 0}</dd></div>
+            <div><dt className="text-text-subtle">TTS text chunks</dt><dd className="mt-1 font-mono text-text">{metrics.text_queued_count || 0}</dd></div>
+            <div><dt className="text-text-subtle">TTS generation lag</dt><dd className="mt-1 font-mono text-text">{flow.latencies?.tts_generation_lag_ms ?? "—"} ms</dd></div>
+            <div><dt className="text-text-subtle">Barge discards</dt><dd className="mt-1 font-mono text-text">{metrics.barge_in_discarded_frames || 0}</dd></div>
+            <div><dt className="text-text-subtle">Backpressure waits</dt><dd className="mt-1 font-mono text-text">{metrics.producer_backpressure_wait_count || 0} · {metrics.producer_backpressure_wait_ms || 0} ms</dd></div>
+            <div><dt className="text-text-subtle">Underruns</dt><dd className="mt-1 font-mono text-text">{metrics.playout_underrun_count || 0}</dd></div>
+            <div><dt className="text-text-subtle">PLC silence</dt><dd className="mt-1 font-mono text-text">{metrics.playout_concealment_frames || 0}</dd></div>
             <div><dt className="text-text-subtle">Inbound rate</dt><dd className="mt-1 font-mono text-text">{metrics.inbound_packets_per_sec || 0} pkt/s</dd></div>
             <div><dt className="text-text-subtle">Outbound rate</dt><dd className="mt-1 font-mono text-text">{metrics.outbound_packets_per_sec || 0} pkt/s</dd></div>
             <div><dt className="text-text-subtle">LLM first token</dt><dd className="mt-1 font-mono text-text">{flow.latencies?.llm_first_token_ms ?? "—"} ms</dd></div>

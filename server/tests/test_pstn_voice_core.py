@@ -1,7 +1,12 @@
 """Tests for PSTN text chunking and greeting extraction."""
+import pytest
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
+
 from server.services.pstn_text_chunker import (
     drain_complete_sentences,
     extract_opening_greeting,
+    join_speakable_chunks,
     resolve_stream_tts_tail,
 )
 
@@ -12,17 +17,24 @@ def test_drain_complete_sentences():
     assert rem == "How are you"
 
 
-def test_drain_long_clause_without_punctuation():
-    sents, rem = drain_complete_sentences("a" * 80)
-    assert len(sents) == 1
+def test_join_speakable_chunks_makes_one_utterance():
+    sents, rem = drain_complete_sentences("Hello there friend. How are you today?")
     assert rem == ""
+    assert join_speakable_chunks(sents) == "Hello there friend. How are you today?"
 
 
-def test_drain_comma_clause_at_40_chars():
+def test_drain_holds_unpunctuated_text_until_sentence_or_cap():
+    text = "a" * 80
+    sents, rem = drain_complete_sentences(text)
+    assert sents == []
+    assert rem == text
+
+
+def test_drain_does_not_split_on_comma_clauses():
     text = "This is a longer clause without period, and more text here"
     sents, rem = drain_complete_sentences(text)
-    assert sents == ["This is a longer clause without period,"]
-    assert rem == "and more text here"
+    assert sents == []
+    assert rem == text
 
 
 def test_first_chunk_waits_for_a_prosody_boundary():
@@ -55,6 +67,13 @@ def test_realtime_delta_boundaries_are_not_tts_boundaries():
 
     assert spoken == ["We currently offer periodic car service plans."]
     assert pending == ""
+
+
+def test_drain_force_flush_only_at_reply_ceiling():
+    text = "word " * 60  # unpunctuated, above FORCE_FLUSH_AT (280)
+    sents, rem = drain_complete_sentences(text)
+    assert sents
+    assert all(len(s) >= 14 for s in sents)
 
 
 def test_extract_opening_greeting_from_brain():
@@ -119,6 +138,17 @@ def test_extract_opening_greeting_from_opening_line_te():
     greet = extract_opening_greeting(brain, "te-IN")
     assert greet and "Broski" in greet
     assert "opening_line" not in (greet or "").lower()
+
+@pytest.mark.asyncio
+async def test_tts_text_pacing_aborts_when_generation_is_cancelled():
+    from server.services.pstn_voice_core import PstnVoiceLoop
+
+    session = AsyncMock()
+    voice = PstnVoiceLoop(session_id="pace", call_id=None, on_agent_wire=AsyncMock())
+    voice.playback = SimpleNamespace(wait_for_capacity=AsyncMock(return_value=False))
+    await voice._send_tts_text(session, "Hello there friend.")
+    session.send_text.assert_not_awaited()
+
 
 def test_pstn_call_options_uses_test_studio_when_source_set():
     from server.services.pstn_voice_core import pstn_call_options

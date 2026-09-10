@@ -166,7 +166,12 @@ class PstnTurnTtsSession:
 
         self._tts_cm = (
             connect_tts_ws(model=self._model) if using_fallback else
-            _connect_tts_upstream(self._model, session_id=voice.tts_session_id, call_id=voice.call_id)
+            _connect_tts_upstream(
+                self._model,
+                session_id=voice.tts_session_id,
+                call_id=voice.call_id,
+                resolved=self._merged,
+            )
         )
         try:
             self._tts = await asyncio.wait_for(self._tts_cm.__aenter__(), timeout=8.0)

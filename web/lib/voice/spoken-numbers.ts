@@ -163,7 +163,7 @@ const TERMINAL_PUNCT = new Set([".", "?", "!", "।", "！", "？"]);
  * Only neutralize TTS-hostile dots: ellipses, abbreviations, bare decimals,
  * and letter.letter initialism separators.
  */
-export function sanitizeTtsPunctuation(text: string): string {
+export function sanitizeTtsPunctuation(text: string, ensureTerminal = true): string {
   if (!text) return text;
   let out = text.replace(/\.{2,}/g, ",");
   for (const [pat, repl] of ABBREV_DOTS) out = out.replace(pat, repl);
@@ -173,7 +173,7 @@ export function sanitizeTtsPunctuation(text: string): string {
   // A.B → A B (not sentence periods)
   out = out.replace(/(?<=\b[A-Za-z])\.(?=[A-Za-z]\b)/g, " ");
   out = out.replace(/\s{2,}/g, " ").replace(/\s+([,.!?।])/g, "$1").replace(/^[, ]+|[, ]+$/g, "").trim();
-  return ensureTerminalPunctuation(out);
+  return ensureTerminal ? ensureTerminalPunctuation(out) : out;
 }
 
 export function ensureTerminalPunctuation(text: string): string {
@@ -183,8 +183,11 @@ export function ensureTerminalPunctuation(text: string): string {
   return `${cleaned}.`;
 }
 
-export function prepareSpokenReply(text: string): string {
-  return sanitizeTtsPunctuation(expandSpokenNumbers(stripSpokenPhoneNumbers(text || "")));
+export function prepareSpokenReply(text: string, options?: { ensureTerminal?: boolean }): string {
+  return sanitizeTtsPunctuation(
+    expandSpokenNumbers(stripSpokenPhoneNumbers(text || "")),
+    options?.ensureTerminal !== false
+  );
 }
 
 /** @deprecated use prepareSpokenReply */

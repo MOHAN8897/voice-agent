@@ -16,6 +16,7 @@ from server.services.pstn_media_flow import pstn_media_flow
 from server.services.pstn_text_chunker import (
     drain_complete_sentences,
     extract_opening_greeting,
+    join_speakable_chunks,
     resolve_stream_tts_tail,
 )
 from server.utils.logger import log_error, log_stt, log_tts
@@ -708,6 +709,15 @@ class PstnVoiceLoop:
         )
         if not expanded.strip():
             return
+        wait = getattr(self.playback, "wait_for_capacity", None)
+        if callable(wait):
+            # Pace TTS requests to real-time playout. Pausing the local WS reader
+            # does not stop the provider; don't ask it for the next phrase until
+            # the outbound queue has room.
+            if not await wait(self.current_generation_id):
+                return
+        if self.emission_blocked():
+            return
         self._set_tts_active(True)
         # Generated/queued only — heard state updates when audio actually emits.
         self._tts_generated_text = (self._tts_generated_text + " " + expanded).strip()[-800:]
@@ -720,6 +730,17 @@ class PstnVoiceLoop:
             chars=len(expanded),
             heard_chars=len(self._tts_heard_text),
         )
+        if self.call_id:
+            pstn_media_flow.increment(self.call_id, "text_queued_count", 1)
+            pstn_media_flow.emit(
+                self.call_id,
+                "tts_text_queued",
+                "outbound",
+                turn_id=self.current_turn_id,
+                generation_id=self.current_generation_id,
+                status="processing",
+                detail=expanded[:200],
+            )
         await session.send_text(expanded)
 
     def _resolve_language(self) -> str:
@@ -1468,11 +1489,12 @@ class PstnVoiceLoop:
                             if sentences:
                                 await tts_open
                                 self._set_tts_active(True)
-                                for sent in sentences:
+                                combined = join_speakable_chunks(sentences)
+                                if combined:
                                     if self.emission_blocked():
                                         turn_cancelled = True
                                         break
-                                    await self._send_tts_text(tts_session, sent)
+                                    await self._send_tts_text(tts_session, combined)
                                     spoke_from_stream = True
                         elif chunk.get("done"):
                             if chunk.get("cancelled"):

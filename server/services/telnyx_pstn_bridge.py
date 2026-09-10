@@ -35,7 +35,20 @@ logger = logging.getLogger(__name__)
 
 # Telnyx L16 wire @ 16 kHz — matches Sarvam linear16 and avoids G.711 transcoding.
 _WIRE_SAMPLE_RATE = TELNYX_RTP_SAMPLE_RATE
-MAX_AUDIO_QUEUE_FRAMES = 50  # ~1 s at 20 ms/frame — absorb bursts without long barge lag.
+# Bounded playout buffer. Producer waits at HIGH, resumes below LOW — never drop speech.
+# Industry VoIP jitter target: 40–200 ms (2–10 frames @ 20 ms). See WebRTC/NetEQ guidance.
+MAX_AUDIO_QUEUE_FRAMES = 24
+QUEUE_HIGH_WATERMARK = 16
+QUEUE_LOW_WATERMARK = 6
+QUEUE_FRAME_MS = 20
+# Adaptive playout: prime before first send, hold min depth during TTS bursts, PLC on gaps.
+PLAYOUT_PRIME_FRAMES = 10
+PLAYOUT_MIN_SEND_FRAMES = 5
+PLAYOUT_PRIME_WAIT_MAX_S = 0.60
+PLAYOUT_UNDERRUN_GRACE_S = 0.20
+PLAYOUT_BURST_GAP_GRACE_S = 0.16
+PLAYOUT_MIN_DEPTH_HOLD_S = 0.10
+PLAYOUT_IDLE_POLL_S = 0.04
 active_telnyx_bridges: dict[str, "TelnyxPstnBridge"] = {}
 _admission_lock = asyncio.Lock()
 
@@ -81,6 +94,17 @@ class TelnyxPstnBridge:
         self._negotiated_media = self._configured_media
         self._ws_send_lock = asyncio.Lock()
         self._out_queue: asyncio.Queue[OutboundFrame] = asyncio.Queue(maxsize=MAX_AUDIO_QUEUE_FRAMES)
+        self._queue_space: asyncio.Condition | None = None
+        self._queue_metrics: dict[str, int] = {
+            "queue_high_watermark_events": 0,
+            "producer_backpressure_wait_ms": 0,
+            "producer_backpressure_wait_count": 0,
+            "playout_underrun_count": 0,
+            "playout_concealment_frames": 0,
+            "normal_speech_dropped_frames": 0,
+            "barge_in_discarded_frames": 0,
+            "hangup_discarded_frames": 0,
+        }
         self._out_task: asyncio.Task | None = None
         self._logged_first_out = False
         self._client_meta: dict[str, Any] = {}
@@ -102,6 +126,8 @@ class TelnyxPstnBridge:
         self._invalid_generation_order: list[str] = []
         self._voice_loop_task: asyncio.Task | None = None
         self._playback = None
+        self._playout_primed = False
+        self._last_out_frame_at = 0.0
         self._cleanup_done = False
         self._cleaned_voice_loop = False
         self._cleaned_out_task = False
@@ -416,6 +442,7 @@ class TelnyxPstnBridge:
                 drain=_drain_queue,
                 frame_ms=20.0,
                 sending=lambda: self._mp3_sending or self._out_sending,
+                wait_for_capacity=self._wait_for_playout_capacity,
             )
             self._voice = PstnVoiceLoop(
                 session_id=self.session_id,
@@ -559,6 +586,188 @@ class TelnyxPstnBridge:
             queue_size=self._out_queue.qsize(),
         )
 
+    def _playout_gate(self) -> asyncio.Condition:
+        if self._queue_space is None:
+            self._queue_space = asyncio.Condition()
+        return self._queue_space
+
+    def _flow_id(self) -> str:
+        return self.call_control_id or self.ws_id
+
+    def _generation_cancelled(self, generation_id: str | None, playback: Any | None = None) -> bool:
+        if self._closed:
+            return True
+        if generation_id and generation_id in self._invalid_generations:
+            return True
+        tracker = playback if playback is not None else getattr(self, "_playback", None)
+        if tracker is not None and not tracker.is_generation_valid(generation_id):
+            return True
+        return False
+
+    def _note_queue_metric(self, key: str, amount: int) -> None:
+        self._queue_metrics[key] = int(self._queue_metrics.get(key) or 0) + amount
+        pstn_media_flow.increment(self._flow_id(), key, amount)
+
+    def _note_stale_discard(self, n: int = 1) -> None:
+        """Obsolete audio after barge/hangup — never counted as normal-speech loss."""
+        if n <= 0:
+            return
+        self._note_queue_metric("barge_in_discarded_frames", n)
+
+    def _discard_queued_frames(self) -> int:
+        discarded = 0
+        while True:
+            try:
+                self._out_queue.get_nowait()
+                discarded += 1
+            except asyncio.QueueEmpty:
+                break
+        return discarded
+
+    async def _signal_queue_space(self, *, force: bool = False) -> None:
+        if not force and self._out_queue.qsize() >= QUEUE_LOW_WATERMARK:
+            return
+        gate = self._playout_gate()
+        async with gate:
+            gate.notify_all()
+
+    async def _wait_for_playout_capacity(self, generation_id: str | None) -> bool:
+        """Block the TTS producer until the RTP queue is below the low watermark.
+
+        Local WS read-pause is not provider-side flow control. We still wait rather
+        than drop speech. Returns False if barge-in or hangup cancelled the wait.
+        """
+        playback = getattr(self, "_playback", None)
+        if self._generation_cancelled(generation_id, playback):
+            return False
+        if self._out_queue.qsize() < QUEUE_HIGH_WATERMARK:
+            return True
+        gate = self._playout_gate()
+        wait_started = time.monotonic()
+        self._note_queue_metric("queue_high_watermark_events", 1)
+        log_pstn(
+            "outbound.queue.backpressure",
+            control=self.call_control_id,
+            call_id=self.call_id,
+            queue=self._out_queue.qsize(),
+            high=QUEUE_HIGH_WATERMARK,
+            low=QUEUE_LOW_WATERMARK,
+        )
+        async with gate:
+            while self._out_queue.qsize() >= QUEUE_LOW_WATERMARK:
+                playback = getattr(self, "_playback", None)
+                if self._generation_cancelled(generation_id, playback):
+                    return False
+                try:
+                    await asyncio.wait_for(gate.wait(), timeout=0.2)
+                except asyncio.TimeoutError:
+                    continue
+        waited_ms = int((time.monotonic() - wait_started) * 1000)
+        self._note_queue_metric("producer_backpressure_wait_ms", waited_ms)
+        self._note_queue_metric("producer_backpressure_wait_count", 1)
+        playback = getattr(self, "_playback", None)
+        return not self._generation_cancelled(generation_id, playback)
+
+    def _tts_still_generating(self) -> bool:
+        voice = self._voice
+        if voice is None:
+            return False
+        if getattr(voice, "_tts_active", False):
+            return True
+        session = getattr(voice, "_active_tts_session", None)
+        return session is not None and not getattr(session, "_closed", True)
+
+    def _expect_more_playout_audio(self, *, in_playout: bool) -> bool:
+        """True during mid-utterance gaps between TTS WebSocket bursts."""
+        if not in_playout:
+            return False
+        if self._tts_still_generating():
+            return True
+        if self._out_queue.qsize() > 0:
+            return True
+        voice = self._voice
+        if voice is not None:
+            playing = getattr(voice, "_agent_audio_playing", None)
+            if callable(playing):
+                try:
+                    if playing():
+                        return True
+                except Exception:
+                    pass
+        if self._last_out_frame_at > 0:
+            since_last = time.monotonic() - self._last_out_frame_at
+            if since_last < PLAYOUT_BURST_GAP_GRACE_S:
+                return True
+        return False
+
+    async def _await_playout_prime(self) -> bool:
+        """Hold the pacer until a live TTS burst has refilled the jitter buffer."""
+        if self._playout_primed or self._closed:
+            return not self._closed
+        deadline = time.monotonic() + PLAYOUT_PRIME_WAIT_MAX_S
+        while not self._closed and time.monotonic() < deadline:
+            depth = self._out_queue.qsize()
+            if depth >= PLAYOUT_PRIME_FRAMES:
+                self._playout_primed = True
+                return True
+            if depth > 0 and not self._tts_still_generating():
+                self._playout_primed = True
+                return True
+            await asyncio.sleep(0.01)
+        if self._out_queue.qsize() > 0:
+            self._playout_primed = True
+            return True
+        return not self._closed
+
+    def _concealment_frame(self) -> OutboundFrame:
+        """Packet-loss concealment: keep 20 ms wire cadence during TTS inter-chunk gaps."""
+        codec = self._negotiated_media.codec
+        nbytes = self._negotiated_media.frame_bytes
+        if codec == "PCMU":
+            payload = b"\xff" * nbytes
+        elif codec == "PCMA":
+            payload = b"\xd5" * nbytes
+        else:
+            payload = b"\x00" * nbytes
+        playback = getattr(self, "_playback", None)
+        generation_id = playback.current_generation() if playback else None
+        turn_id = self._voice.current_turn_id if self._voice else None
+        return OutboundFrame(
+            payload=payload,
+            codec=codec,
+            turn_id=turn_id,
+            generation_id=generation_id,
+        )
+
+    async def _hold_for_min_playout_depth(self, *, in_playout: bool) -> None:
+        """Keep a minimum jitter buffer during live TTS so the pacer does not drain to zero."""
+        if not in_playout or not self._tts_still_generating():
+            return
+        if self._out_queue.qsize() >= PLAYOUT_MIN_SEND_FRAMES:
+            return
+        deadline = time.monotonic() + PLAYOUT_MIN_DEPTH_HOLD_S
+        while (
+            not self._closed
+            and self._out_queue.qsize() < PLAYOUT_MIN_SEND_FRAMES
+            and time.monotonic() < deadline
+        ):
+            await asyncio.sleep(0.005)
+
+    async def _dequeue_outbound_frame(self, *, in_playout: bool) -> OutboundFrame | None:
+        """Dequeue with extra grace while upstream TTS is still synthesizing."""
+        deadline = time.monotonic() + (PLAYOUT_UNDERRUN_GRACE_S if in_playout else PLAYOUT_IDLE_POLL_S)
+        while not self._closed:
+            try:
+                return self._out_queue.get_nowait()
+            except asyncio.QueueEmpty:
+                pass
+            if self._expect_more_playout_audio(in_playout=in_playout):
+                deadline = max(deadline, time.monotonic() + 0.04)
+            if time.monotonic() >= deadline:
+                return None
+            await asyncio.sleep(0.01)
+        return None
+
     async def _out_worker(self) -> None:
         """Send one RTP frame every 20ms with monotonic clock correction (no drift)."""
         frame_period = 0.02
@@ -566,20 +775,38 @@ class TelnyxPstnBridge:
         try:
             while not self._closed:
                 self._out_sending = False
-                try:
-                    frame = await asyncio.wait_for(self._out_queue.get(), timeout=0.04)
-                except asyncio.TimeoutError:
-                    next_send_at = None
-                    if self._voice is not None and hasattr(self._voice, "on_playback_drained"):
-                        self._voice.on_playback_drained()
-                    continue
+                if not self._playout_primed and next_send_at is None:
+                    if not await self._await_playout_prime():
+                        break
+                in_playout = next_send_at is not None
+                if in_playout:
+                    await self._hold_for_min_playout_depth(in_playout=True)
+                frame = await self._dequeue_outbound_frame(in_playout=in_playout)
+                if frame is None:
+                    if in_playout and self._expect_more_playout_audio(in_playout=True):
+                        frame = self._concealment_frame()
+                        self._note_queue_metric("playout_concealment_frames", 1)
+                    elif in_playout:
+                        self._note_queue_metric("playout_underrun_count", 1)
+                        next_send_at = None
+                        self._playout_primed = False
+                        if self._voice is not None and hasattr(self._voice, "on_playback_drained"):
+                            self._voice.on_playback_drained()
+                        await self._signal_queue_space(force=True)
+                        continue
+                    else:
+                        next_send_at = None
+                        self._playout_primed = False
+                        if self._voice is not None and hasattr(self._voice, "on_playback_drained"):
+                            self._voice.on_playback_drained()
+                        await self._signal_queue_space(force=True)
+                        continue
+                await self._signal_queue_space()
                 self._out_sending = True
                 chunk = frame.payload
                 playback = getattr(self, "_playback", None)
                 if frame.generation_id and frame.generation_id in self._invalid_generations:
-                    pstn_media_flow.increment(
-                        self.call_control_id or self.ws_id, "dropped_frames", 1
-                    )
+                    self._note_stale_discard()
                     log_pstn(
                         "DROP_STALE_GEN",
                         control=self.call_control_id,
@@ -588,9 +815,7 @@ class TelnyxPstnBridge:
                     )
                     continue
                 if playback is not None and not playback.is_generation_valid(frame.generation_id):
-                    pstn_media_flow.increment(
-                        self.call_control_id or self.ws_id, "dropped_frames", 1
-                    )
+                    self._note_stale_discard()
                     log_pstn(
                         "DROP_STALE_GEN",
                         control=self.call_control_id,
@@ -618,8 +843,8 @@ class TelnyxPstnBridge:
                     continue
                 now = time.monotonic()
                 if next_send_at is None:
-                    # Two frames of startup headroom absorb upstream chunk jitter.
-                    next_send_at = now + 0.04
+                    # Startup headroom after jitter-buffer prime absorbs first-frame jitter.
+                    next_send_at = now + 0.06
                 delay = next_send_at - now
                 if delay > 0:
                     while time.monotonic() < next_send_at:
@@ -635,11 +860,12 @@ class TelnyxPstnBridge:
                         frame.generation_id in self._invalid_generations
                         or (playback is not None and not playback.is_generation_valid(frame.generation_id))
                     ):
-                        pstn_media_flow.increment(self.call_control_id or self.ws_id, "dropped_frames", 1)
+                        self._note_stale_discard()
                         continue
                     await self.ws.send_text(message)
                     if self._voice is not None and hasattr(self._voice, "_promote_queued_tts_to_heard"):
                         self._voice._promote_queued_tts_to_heard()
+                self._last_out_frame_at = time.monotonic()
                 next_send_at = (next_send_at or time.monotonic()) + frame_period
                 self._media_frames_out += 1
                 pstn_media_flow.emit(
@@ -707,7 +933,7 @@ class TelnyxPstnBridge:
             return
         generation_id = self._voice.current_generation_id if self._voice else None
         if generation_id and generation_id in self._invalid_generations:
-            pstn_media_flow.increment(self.call_control_id or self.ws_id, "dropped_frames", 1)
+            self._note_stale_discard()
             return
         elapsed = time.monotonic() - self._last_mp3_sent_at
         if elapsed < 1.0:
@@ -847,11 +1073,12 @@ class TelnyxPstnBridge:
             )
         for chunk in chunks:
             playback = getattr(self, "_playback", None)
-            if playback is not None and not playback.is_generation_valid(generation_id):
-                pstn_media_flow.increment(self.call_control_id or self.ws_id, "dropped_frames", 1)
+            if self._generation_cancelled(generation_id, playback):
                 return
-            if generation_id and generation_id in self._invalid_generations:
-                pstn_media_flow.increment(self.call_control_id or self.ws_id, "dropped_frames", 1)
+            if not await self._wait_for_playout_capacity(generation_id):
+                return
+            playback = getattr(self, "_playback", None)
+            if self._generation_cancelled(generation_id, playback):
                 return
             frame = OutboundFrame(
                 payload=chunk,
@@ -859,34 +1086,23 @@ class TelnyxPstnBridge:
                 turn_id=turn_id,
                 generation_id=generation_id,
             )
-            try:
-                deadline = time.monotonic() + 2.0
-                while True:
-                    if self._closed or generation_id in self._invalid_generations or (
-                        playback is not None and not playback.is_generation_valid(generation_id)
-                    ):
+            while True:
+                playback = getattr(self, "_playback", None)
+                if self._generation_cancelled(generation_id, playback):
+                    return
+                try:
+                    self._out_queue.put_nowait(frame)
+                    break
+                except asyncio.QueueFull:
+                    # Watermark should keep us off maxsize. Wait — never drop normal speech.
+                    if not await self._wait_for_playout_capacity(generation_id):
                         return
-                    try:
-                        # Validation + enqueue are synchronous: no blocked put can
-                        # wake after a drain and resurrect invalidated audio.
-                        self._out_queue.put_nowait(frame)
-                        break
-                    except asyncio.QueueFull:
-                        if time.monotonic() >= deadline:
-                            raise asyncio.TimeoutError()
-                        await asyncio.sleep(0.005)
-            except asyncio.TimeoutError:
-                pstn_media_flow.increment(self.call_control_id or self.ws_id, "dropped_frames", 1)
-                log_pstn("outbound.queue.timeout", control=self.call_control_id, call_id=self.call_id)
-                return
-            if playback is not None and not playback.is_generation_valid(generation_id):
-                pstn_media_flow.increment(self.call_control_id or self.ws_id, "dropped_frames", 1)
-                return
-            if generation_id and generation_id in self._invalid_generations:
-                pstn_media_flow.increment(self.call_control_id or self.ws_id, "dropped_frames", 1)
+            playback = getattr(self, "_playback", None)
+            if self._generation_cancelled(generation_id, playback):
+                # Frame is already queued; the worker/barge path discards it as obsolete.
                 return
             queue_size = self._out_queue.qsize()
-            queue_status = "delayed" if queue_size >= 10 else "healthy"
+            queue_status = "delayed" if queue_size >= QUEUE_HIGH_WATERMARK else "healthy"
             pstn_media_flow.emit(
                 self.call_control_id or self.ws_id,
                 "converter",
@@ -954,6 +1170,7 @@ class TelnyxPstnBridge:
                          or self._voice.current_generation_id) if self._voice else None
         playback = getattr(self, "_playback", None)
         generation_id = generation_id or (playback.current_generation() if playback else None)
+        self._playout_primed = False
         self._source_audio_buf.clear()
         self._outbound_pcm8k_buf.clear()
         self._outbound_l16_buf.clear()
@@ -982,9 +1199,11 @@ class TelnyxPstnBridge:
                 old = self._invalid_generation_order.pop(0)
                 self._invalid_generations.discard(old)
         if interrupted:
+            self._note_queue_metric("barge_in_discarded_frames", interrupted)
             pstn_media_flow.increment(
                 self.call_control_id or self.ws_id, "interrupted_frames", interrupted
             )
+        await self._signal_queue_space(force=True)
         pstn_media_flow.emit(
             self.call_control_id or self.ws_id,
             "queue_cleared",
@@ -1040,22 +1259,26 @@ class TelnyxPstnBridge:
         log_pstn("cartesia_bilingual.done", call_id=self.call_id)
 
     async def test_agent_audio(self) -> None:
+        await self.speak_test_text(
+            "Signal test one. Signal test two. Signal test three. "
+            "నమస్కారం, ఇది ఏజెంట్ ఆడియో పరీక్ష."
+        )
+
+    async def speak_test_text(self, text: str, *, language_code: str = "en-IN") -> None:
         for _ in range(50):
             if self._voice:
                 break
             await asyncio.sleep(0.1)
         if not self._voice:
             raise RuntimeError("voice loop is not ready")
-        await self._voice.speak(
-            "Signal test one. Signal test two. Signal test three. "
-            "నమస్కారం, ఇది ఏజెంట్ ఆడియో పరీక్ష."
-        )
+        await self._voice.speak(text, language_code=language_code)
 
     async def _cleanup(self, reason: str) -> None:
         """Idempotent staged cleanup — safe to call twice after a mid-await cancel (12.3)."""
         if self._cleanup_done:
             return
         self._closed = True
+        await self._signal_queue_space(force=True)
         if not self._cleaned_voice_loop:
             if (self._voice_loop_task and not self._voice_loop_task.done()
                     and self._voice_loop_task is not asyncio.current_task()):
@@ -1065,6 +1288,10 @@ class TelnyxPstnBridge:
                 except (asyncio.CancelledError, Exception):
                     pass
             self._cleaned_voice_loop = True
+        leftover = self._discard_queued_frames()
+        if leftover:
+            self._note_queue_metric("hangup_discarded_frames", leftover)
+        await self._signal_queue_space(force=True)
         if not self._cleaned_out_task:
             if self._out_task and not self._out_task.done():
                 self._out_task.cancel()

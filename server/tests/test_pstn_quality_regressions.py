@@ -191,6 +191,8 @@ def test_latency_includes_coalesce_and_telnyx_buffering():
     metrics = PstnMediaFlowStore._latencies([{"stage": stage, "timestamp": t} for stage, t in stages])
     assert metrics["stt_final_to_llm_ms"] == 150
     assert metrics["stt_final_to_first_audio_ms"] == 690
+    assert metrics["tts_generation_lag_ms"] == 300
+    assert metrics["tts_first_audio_ms"] == 300
 
 
 @pytest.mark.asyncio

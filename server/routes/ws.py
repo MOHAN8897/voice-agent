@@ -110,19 +110,29 @@ def _resolve_ws_tts_model(model: str, session_id: str, call_id: str | None) -> s
         return "bulbul:v3"
 
 
-def _connect_tts_upstream(model: str, session_id: str = "default", call_id: str | None = None):
-    """Open the TTS provider that resolve_tts_config selected — never mix Cartesia config onto Sarvam WS."""
+def _connect_tts_upstream(
+    model: str,
+    session_id: str = "default",
+    call_id: str | None = None,
+    *,
+    resolved: dict | None = None,
+):
+    """Open TTS from a frozen media profile when provided — never re-resolve a locked PSTN stack."""
+    from server.services.sarvam_ws import connect_tts_ws
     from server.services.tts_config import resolve_tts_config
 
-    resolved = resolve_tts_config(session_id, model=model, call_id=call_id)
-    provider = str(resolved.get("provider") or "sarvam")
-    effective_model = str(resolved.get("model") or "bulbul:v3")
-    speaker = str(resolved.get("speaker") or "shubh")
-    language = str(resolved.get("language_code") or "te-IN")
+    locked = resolved is not None
+    cfg = resolved if locked else resolve_tts_config(session_id, model=model, call_id=call_id)
+    provider = str(cfg.get("provider") or "sarvam")
+    effective_model = str(cfg.get("model") or model or "bulbul:v3")
+    speaker = str(cfg.get("speaker") or "shubh")
+    language = str(cfg.get("language_code") or "te-IN")
     settings = get_settings()
     if settings.use_provider_registry:
         registry = get_provider_registry()
-        if not registry.is_provider_enabled(provider, "tts"):
+        # Locked call profiles stay on the provider that merge_pstn_tts_config chose.
+        # Runtime/env fallbacks apply only when this helper is resolving from scratch.
+        if not locked and not registry.is_provider_enabled(provider, "tts"):
             provider = "sarvam"
             if effective_model not in constants.TTS_MODELS:
                 effective_model = "bulbul:v3"
@@ -144,6 +154,7 @@ def _connect_tts_upstream(model: str, session_id: str = "default", call_id: str 
             speaker=speaker,
             session=session_id,
             call_id=call_id,
+            locked=locked,
         )
         return tts.connect_stream(config)
     return connect_tts_ws(model=effective_model if effective_model in constants.TTS_MODELS else "bulbul:v3")

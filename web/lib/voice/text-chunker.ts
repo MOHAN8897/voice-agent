@@ -2,7 +2,6 @@ import { VOICE_PIPELINE_LIMITS } from "@/lib/voice/types";
 import type { TtsTextChunk } from "@/lib/voice/types";
 
 const STRONG_END = /[.!?।…\n]/;
-const CLAUSE_END = /[;:]/;
 
 function wordCount(text: string): number {
   return (text.trim().match(/\S+/g) || []).length;
@@ -15,7 +14,7 @@ function lastWordBoundary(text: string, maxIndex: number): number {
 }
 
 /**
- * Streaming text chunker — prefers full sentences/clauses over arbitrary fragments.
+ * Streaming text chunker — sentence boundaries only (. ? ! ।).
  * First sentence flushes immediately; tiny complete replies still emit as one chunk on flush.
  */
 export class StreamingTextChunker {
@@ -92,7 +91,7 @@ export class StreamingTextChunker {
   }
 
   private findBoundary(unsent: string, streamDone: boolean): number {
-    const { minChunkChars, maxChunkChars, firstChunkMinChars, clauseFlushAt, forceFlushAt } =
+    const { minChunkChars, maxChunkChars, forceFlushAt } =
       VOICE_PIPELINE_LIMITS;
 
     if (streamDone) return unsent.length;
@@ -103,25 +102,6 @@ export class StreamingTextChunker {
         const next = unsent[i + 1];
         if (unsent[i] === "." && next && /\d/.test(next)) continue;
         return i + 1;
-      }
-    }
-
-    for (let i = 0; i < unsent.length; i++) {
-      if (CLAUSE_END.test(unsent[i]) && i + 1 >= minChunkChars && unsent.length >= clauseFlushAt) {
-        return i + 1;
-      }
-    }
-
-    for (let i = 0; i < unsent.length; i++) {
-      if (unsent[i] === "," && i + 1 >= minChunkChars && unsent.length >= clauseFlushAt) {
-        return i + 1;
-      }
-    }
-
-    if (this.sentEnd === 0 && unsent.length >= firstChunkMinChars) {
-      const boundary = lastWordBoundary(unsent, unsent.length);
-      if (boundary >= minChunkChars) {
-        return boundary;
       }
     }
 

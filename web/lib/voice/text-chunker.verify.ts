@@ -46,8 +46,15 @@ function testFirstSentenceBeforeDone() {
   assert(mid[0].text.includes("HustleLabs"), "first spoken sentence present");
 }
 
+function testCommaDoesNotFlushMidThought() {
+  const c = new StreamingTextChunker("t5");
+  const mid = c.append("This is a longer clause without period, and more text here");
+  assert(mid.length === 0, "commas are not TTS boundaries");
+}
+
 testShortResponse();
 testLongResponse();
 testOrdering();
 testFirstSentenceBeforeDone();
+testCommaDoesNotFlushMidThought();
 console.log("text-chunker.verify: ok");

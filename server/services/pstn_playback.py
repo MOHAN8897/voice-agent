@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable
-from typing import Protocol
+from typing import Any, Protocol
 
 
 class PlaybackController(Protocol):
@@ -110,11 +110,13 @@ class TelnyxQueuePlayback:
         drain: Callable[[], int],
         frame_ms: float = 20.0,
         sending: Callable[[], bool] | None = None,
+        wait_for_capacity: Callable[..., Any] | None = None,
     ) -> None:
         self._queue_size = queue_size
         self._drain = drain
         self._frame_ms = frame_ms
         self._sending = sending or (lambda: False)
+        self.wait_for_capacity = wait_for_capacity
         self._current_generation: str | None = None
         self._invalid: set[str] = set()
 

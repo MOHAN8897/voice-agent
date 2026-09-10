@@ -33,8 +33,8 @@ export const VOICE_PIPELINE_LIMITS = {
   smallResponseMaxChars: 200,
   minChunkChars: 14,
   firstChunkMinChars: 18,
-  clauseFlushAt: 40,
-  forceFlushAt: 72,
-  maxChunkChars: 200,
+  clauseFlushAt: 10_000,
+  forceFlushAt: 280,
+  maxChunkChars: 280,
   flushTimeoutMs: 45_000,
 } as const;

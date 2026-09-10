@@ -94,13 +94,13 @@ export class TurnTtsPipeline {
     // Keep raw deltas so sentence "." reaches the chunker. Sanitize only when sending.
     const chunks = this.chunker.append(delta);
     for (const chunk of chunks) {
-      this.enqueueTextChunk(chunk.text, chunk.sequenceNumber);
+      this.enqueueTextChunk(chunk.text, chunk.sequenceNumber, false);
     }
   }
 
-  private enqueueTextChunk(text: string, sequenceNumber: number) {
+  private enqueueTextChunk(text: string, sequenceNumber: number, ensureTerminal = false) {
     if (!this.isActive()) return;
-    const spoken = prepareSpokenReply(text);
+    const spoken = prepareSpokenReply(text, { ensureTerminal });
     if (!spoken.trim()) return;
     this.trace("text:chunk_ready", `seq=${sequenceNumber} chars=${spoken.length}`);
     this.textQueue = this.textQueue
@@ -122,7 +122,7 @@ export class TurnTtsPipeline {
 
     const finalChunks = this.chunker.flush();
     for (const chunk of finalChunks) {
-      this.enqueueTextChunk(chunk.text, chunk.sequenceNumber);
+      this.enqueueTextChunk(chunk.text, chunk.sequenceNumber, true);
     }
 
     await this.textQueue;

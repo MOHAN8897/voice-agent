@@ -9,6 +9,8 @@ from typing import Any
 
 
 SUPPORTED_TELNYX_CODECS = frozenset({"PCMU", "PCMA", "L16"})
+# 15 frames @ 20 ms — p99 queue target. Backpressure holds depth near 12 frames.
+AUDIO_BACKLOG_MS = 300
 
 
 @dataclass(frozen=True)
@@ -105,6 +107,18 @@ class PstnMediaFlowStore:
                 "queue_duration_ms": 0,
                 "dropped_frames": 0,
                 "interrupted_frames": 0,
+                "normal_speech_dropped_frames": 0,
+                "barge_in_discarded_frames": 0,
+                "hangup_discarded_frames": 0,
+                "queue_high_watermark_events": 0,
+                "producer_backpressure_wait_count": 0,
+                "producer_backpressure_wait_ms": 0,
+                "playout_underrun_count": 0,
+                "playout_concealment_frames": 0,
+                "queue_depth_p50": 0,
+                "queue_depth_p95": 0,
+                "queue_depth_p99": 0,
+                "text_queued_count": 0,
             },
             "events": deque(maxlen=500),
             "failures": [],
@@ -183,6 +197,18 @@ class PstnMediaFlowStore:
         negotiated = row.get("negotiated")
         if negotiated:
             metrics["queue_duration_ms"] = event.queue_size * int(negotiated.get("frame_ms") or 20)
+        samples: deque[int] = row.setdefault("queue_depth_samples", deque(maxlen=400))
+        samples.append(int(event.queue_size or 0))
+        ordered = sorted(samples)
+        n = len(ordered)
+        if n:
+            def _pct(p: int) -> int:
+                idx = min(n - 1, max(0, int(round((p / 100) * (n - 1)))))
+                return ordered[idx]
+            metrics["queue_depth"] = int(event.queue_size or 0)
+            metrics["queue_depth_p50"] = _pct(50)
+            metrics["queue_depth_p95"] = _pct(95)
+            metrics["queue_depth_p99"] = _pct(99)
         if event.status == "failed" and event.detail and event.detail not in row["failures"]:
             row["failures"].append(event.detail)
 
@@ -259,6 +285,7 @@ class PstnMediaFlowStore:
             "stt_final_ms": delta("stt_audio", "stt_final"),
             "llm_first_token_ms": delta("llm_started", "llm_first_token"),
             "tts_first_audio_ms": delta("llm_first_token", "tts_audio"),
+            "tts_generation_lag_ms": delta("llm_first_token", "tts_audio"),
             "telnyx_first_outbound_ms": delta("tts_audio", "outbound_sent"),
         }
 
@@ -271,12 +298,12 @@ class PstnMediaFlowStore:
             "llm": "llm_started" in stages,
             "tts": "tts_audio" in stages,
             "conversion": "converter" in stages and stages["converter"].get("status") != "failed",
-            "queue": (row.get("metrics") or {}).get("queue_duration_ms", 0) < 1000,
+            "queue": (row.get("metrics") or {}).get("queue_duration_ms", 0) < AUDIO_BACKLOG_MS,
             "telnyx_outbound": "outbound_sent" in stages,
         }
         derived_failures = list(row.get("failures") or [])
         metrics = row.get("metrics") or {}
-        if metrics.get("queue_duration_ms", 0) >= 1000:
+        if metrics.get("queue_duration_ms", 0) >= AUDIO_BACKLOG_MS:
             derived_failures.append("AUDIO_BACKLOG")
         if "tts_audio" in stages and "outbound_sent" not in stages:
             derived_failures.append("OUTBOUND_TRANSMISSION_FAILURE")

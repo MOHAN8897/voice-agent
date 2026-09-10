@@ -6,8 +6,10 @@ import re
 
 MIN_CHUNK_CHARS = 14
 FIRST_CHUNK_MIN_CHARS = 18
-CLAUSE_FLUSH_AT = 40
-FORCE_FLUSH_AT = 72
+# Disabled: comma/semicolon splits caused mid-thought TTS pauses on PSTN and web.
+CLAUSE_FLUSH_AT = 10_000
+# Last-resort cap for unpunctuated runs; matches LIVE_REPLY_MAX_CHARS below.
+FORCE_FLUSH_AT = 280
 
 # Prompt tiers (TTS billed per char). Hard safety never unnecessarily approaches the ceiling.
 LIVE_REPLY_SIMPLE_MAX = 55
