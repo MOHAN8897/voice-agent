@@ -16,7 +16,10 @@ LIVE_REPLY_OBJECTION_MAX = 85
 LIVE_REPLY_COMPLEX_MAX = 145
 LIVE_REPLY_MIN_CHARS = 15
 LIVE_REPLY_AIM_CHARS = 95
-LIVE_REPLY_MAX_CHARS = 200
+LIVE_REPLY_SOFT_MAX_CHARS = 200
+# The model targets the soft limit. The larger runtime/schema ceiling gives it
+# enough room to finish the current sentence instead of producing "pickup is."
+LIVE_REPLY_MAX_CHARS = 280
 # Realtime models burn tokens on punctuation/formatting; 96 was cutting mid-word ("lak.").
 # Char clamp still enforces the ceiling at a sentence boundary. 240 leaves room for Telugu.
 LIVE_MAX_OUTPUT_TOKENS = 240
@@ -70,7 +73,8 @@ LIVE_REPLY_BREVITY_RULE = (
     f"- Normal fact or answer: 30–{LIVE_REPLY_NORMAL_MAX} characters.\n"
     f"- Objection: 30–{LIVE_REPLY_OBJECTION_MAX} characters.\n"
     f"- Complex (ack + option + next step, or ack + one lead question): 70–{LIVE_REPLY_COMPLEX_MAX} characters.\n"
-    f"- Hard ceiling: never exceed {LIVE_REPLY_MAX_CHARS} characters.\n"
+    f"- Finish naturally within {LIVE_REPLY_SOFT_MAX_CHARS} characters when possible. "
+    f"Hard safety ceiling: {LIVE_REPLY_MAX_CHARS} characters; never cut a sentence merely to hit the soft target.\n"
     "Sound human: one or two short phone beats. "
     "A warm acknowledgment plus ONE next question is good sales talk — never two questions. "
     "Answer then progress — do not pad with catalog or disclaimer. "
@@ -86,7 +90,8 @@ LIVE_REPLY_BREVITY_COMPACT = (
     f"normal 30–{LIVE_REPLY_NORMAL_MAX}; "
     f"objection 30–{LIVE_REPLY_OBJECTION_MAX}; "
     f"complex 70–{LIVE_REPLY_COMPLEX_MAX}; "
-    f"ceiling {LIVE_REPLY_MAX_CHARS}. Human phone speech — warm ack + at most one question."
+    f"soft target {LIVE_REPLY_SOFT_MAX_CHARS}, hard ceiling {LIVE_REPLY_MAX_CHARS}. "
+    "Finish the sentence. Human phone speech — warm ack + at most one question."
 )
 
 

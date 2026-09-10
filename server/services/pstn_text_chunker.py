@@ -5,7 +5,6 @@ import re
 
 from server.services.voice_pipeline_limits import (
     CLAUSE_FLUSH_AT,
-    FIRST_CHUNK_MIN_CHARS,
     FORCE_FLUSH_AT,
     MIN_CHUNK_CHARS,
 )
@@ -37,7 +36,10 @@ def drain_complete_sentences(
 
     complete: list[str] = []
     remainder = buffer
-    first_chunk = allow_first_fast
+    # Kept for API compatibility. A first chunk now follows the same prosody-safe
+    # boundaries as every other chunk: punctuation, a substantial clause, or the
+    # force-flush guard. Arbitrary token arrival boundaries are not speech boundaries.
+    _ = allow_first_fast
 
     while remainder.strip():
         parts = _SENTENCE_END.split(remainder, maxsplit=1)
@@ -45,7 +47,6 @@ def drain_complete_sentences(
             piece = parts[0].strip()
             if piece and len(piece) >= min_chars:
                 complete.append(piece)
-                first_chunk = False
             remainder = parts[1]
             continue
 
@@ -78,7 +79,6 @@ def drain_complete_sentences(
             and len(stripped) >= CLAUSE_FLUSH_AT
         ):
             complete.append(clause_parts[0].strip())
-            first_chunk = False
             remainder = clause_parts[1]
             continue
 
@@ -88,18 +88,7 @@ def drain_complete_sentences(
                 piece = remainder[: idx + 1].strip()
                 if piece and len(piece) >= min_chars and _word_count(piece) >= 2:
                     complete.append(piece)
-                    first_chunk = False
                     remainder = remainder[idx + 1 :].lstrip()
-                    continue
-
-        if first_chunk and len(stripped) >= FIRST_CHUNK_MIN_CHARS:
-            boundary = _last_word_boundary(stripped, len(stripped))
-            if boundary >= min_chars:
-                piece = stripped[:boundary].strip()
-                if piece and len(piece) >= min_chars and _word_count(piece) >= 2:
-                    complete.append(piece)
-                    first_chunk = False
-                    remainder = stripped[boundary:].lstrip()
                     continue
 
         break

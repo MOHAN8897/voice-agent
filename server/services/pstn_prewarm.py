@@ -319,6 +319,7 @@ async def _build_prewarm_bundle(
             sample_rate=sample_rate,
             tts_output_codec=tts_codec,
             language=language,
+            resolved_stack=stack,
         )
 
     return PstnPrewarmBundle(
@@ -342,6 +343,7 @@ async def _synthesize_greeting_frames(
     sample_rate: int,
     tts_output_codec: str,
     language: str,
+    resolved_stack: Any | None = None,
 ) -> list[bytes]:
     from server.services.pstn_turn_tts import PstnTurnTtsSession
     from server.services.spoken_numbers import prepare_spoken_reply
@@ -358,9 +360,11 @@ async def _synthesize_greeting_frames(
     )
     session = PstnTurnTtsSession(stub)
     try:
-        await session.open(language_code=language)
+        await session.open(language_code=language, resolved_stack=resolved_stack)
         await session.send_text(text)
         await session.finish()
+        if session.had_error or not stub.frames:
+            raise RuntimeError("PSTN greeting prewarm produced no usable audio")
     finally:
         await session.close()
     return list(stub.frames)

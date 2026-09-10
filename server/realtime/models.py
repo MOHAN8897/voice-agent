@@ -35,8 +35,11 @@ END_CALL_TOOL: dict[str, Any] = {
         "spoken farewell. Use firm_refusal when the caller is not interested; goodbye when "
         "they say bye/don't-call/that's-all; goal_complete when the script objective is done "
         "(details collected + next step set, e.g. team will contact them). "
-        "Do NOT call while the caller is interested and still gathering info, or for maybe/"
-        "later/busy/soft not-now/frustration/a question."
+        "Use goodbye for 'can you cut the call please'; use goal_complete for an explicit "
+        "'call me later/again/tomorrow' request after acknowledging it. These polite questions "
+        "end the current call. Put the complete short closing line in farewell; the server "
+        "speaks it before disconnecting even if you produce only this tool call. "
+        "Do NOT call for information questions, uncertainty, or busy without an end/callback request."
     ),
     "parameters": {
         "type": "object",

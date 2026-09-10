@@ -70,6 +70,13 @@ def test_prepare_spoken_reply_adds_terminal_punct_if_missing():
     assert out.endswith(".")
 
 
+def test_streaming_chunk_does_not_gain_artificial_full_stop():
+    from server.services.spoken_numbers import prepare_spoken_reply
+
+    out = prepare_spoken_reply("Hi, thanks for", ensure_terminal=False)
+    assert out == "Hi, thanks for"
+
+
 def test_opening_line_offers_help():
     from server.prompts.agent_voice_rules import opening_line_for
 

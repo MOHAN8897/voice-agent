@@ -25,12 +25,36 @@ def test_drain_comma_clause_at_40_chars():
     assert rem == "and more text here"
 
 
-def test_drain_first_chunk_word_boundary():
+def test_first_chunk_waits_for_a_prosody_boundary():
     text = "Sure I can help you with that property today"
     sents, rem = drain_complete_sentences(text, allow_first_fast=True)
-    assert len(sents) == 1
-    assert len(sents[0]) >= 18
-    assert rem
+    assert sents == []
+    assert rem == text
+
+
+def test_first_fast_chunk_waits_for_complete_phrase():
+    sents, rem = drain_complete_sentences("Hello, good to", allow_first_fast=True)
+    assert sents == []
+    assert rem == "Hello, good to"
+
+    sents, rem = drain_complete_sentences(
+        "Hello, good to speak with you today",
+        allow_first_fast=True,
+    )
+    assert sents == []
+    assert rem == "Hello, good to speak with you today"
+
+
+def test_realtime_delta_boundaries_are_not_tts_boundaries():
+    pending = ""
+    spoken = []
+    for delta in ("We currently offer", " periodic car", " service plans."):
+        pending += delta
+        ready, pending = drain_complete_sentences(pending, allow_first_fast=True)
+        spoken.extend(ready)
+
+    assert spoken == ["We currently offer periodic car service plans."]
+    assert pending == ""
 
 
 def test_extract_opening_greeting_from_brain():

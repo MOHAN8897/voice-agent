@@ -79,6 +79,39 @@ _OPT_OUT = re.compile(
     re.I,
 )
 
+# Polite requests are grammatically questions, but explicitly end this call.
+_END_REQUEST = re.compile(
+    r"\b(?:hang\s*up|(?:cut|end|disconnect|stop)\s+(?:the |this |our )?call)\b|"
+    r"\bcall\s+(?:cut|band|end)\s*(?:karo|kar do|chey|cheyyi|cheyandi)?\b|"
+    r"కాల్\s*(?:కట్|ఆపండి|ముగించండి)|कॉल\s*(?:काट|बंद)", re.I,
+)
+_NEGATED_END = re.compile(r"\b(?:don'?t|do not|never)\s+(?:hang\s*up|end|cut|disconnect)\b", re.I)
+_CALLBACK_REQUEST = re.compile(
+    r"\b(?:call|phone|ring)\s+me\s+(?:(?:back|again)\b(?:\s+(?:later|tomorrow))?|"
+    r"later\b|tomorrow\b|after\b|next\b|at\s+\d)|"
+    r"\b(?:call|phone|ring)\s+me\s+(?:on\s+)?(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b|"
+    r"\b(?:repu|tarvata|malli)\s+(?:naaku\s+)?call\b|"
+    r"(?:రేపు|తర్వాత|మళ్ళీ|మళ్లీ).{0,16}(?:కాల్|call)|"
+    r"(?:कल|बाद में).{0,16}(?:कॉल|फोन)", re.I,
+)
+_NEGATED_CALLBACK = re.compile(
+    r"\b(?:don'?t|do not|never|cannot|can'?t)\s+(?:you\s+)?(?:call|phone|ring)\s+me|"
+    r"\b(?:can|could|should|will)\s+i\s+call\b|"
+    r"\b(?:if|whether)\s+you\s+(?:can\s+)?call\s+me|"
+    r"\b(?:before|first).{0,20}(?:tell|explain|answer)|\b(?:tell|explain|answer).{0,30}\bfirst\b", re.I,
+)
+
+
+def caller_requested_callback(user_text: str) -> bool:
+    """A direct request to move this conversation to a later call, not a question about callbacks."""
+    text = user_text or ""
+    return bool(_CALLBACK_REQUEST.search(text) and not _NEGATED_CALLBACK.search(text))
+
+
+def caller_explicit_end_request(user_text: str) -> bool:
+    text = user_text or ""
+    return bool(_END_REQUEST.search(text) and not _NEGATED_END.search(text))
+
 
 @dataclass(frozen=True)
 class EndCallDecision:
@@ -137,12 +170,14 @@ def _evidence_ok(
     text = user_text or ""
     spoken = spoken_text or ""
     if reason == "goodbye":
-        return bool(_GOODBYE.search(text) or _CALLER_DONE.search(text))
+        return bool(_GOODBYE.search(text) or _CALLER_DONE.search(text) or caller_explicit_end_request(text))
     if reason == "firm_refusal":
         return bool(_REFUSAL.search(text))
     if reason == "abuse":
         return bool(_ABUSE.search(text))
     if reason == "goal_complete":
+        if caller_requested_callback(text):
+            return True
         if looks_like_question(text):
             return False
         if _GOAL_COMPLETE_USER.search(text) or memory_has_goal_complete(memory_snapshot):
@@ -185,6 +220,10 @@ def caller_confirmed_goal_complete(user_text: str) -> bool:
 
 def _user_wants_hangup(user_text: str) -> bool:
     text = user_text or ""
+    if caller_explicit_end_request(text):
+        return True
+    if _NEGATED_END.search(text):
+        return False
     if _OPT_OUT.search(text) or _CALLER_DONE.search(text):
         return True
     if looks_like_question(text):
@@ -223,6 +262,8 @@ def validate_end_call(
         parsed = _force_end("goodbye", parsed.get("farewell") or "", spoken, lang)
     elif caller_firm_refusal(user):
         parsed = _force_end("firm_refusal", parsed.get("farewell") or "", spoken, lang)
+    elif caller_requested_callback(user):
+        parsed = _force_end("goal_complete", parsed.get("farewell") or "", spoken, lang)
     elif parsed["should_end"] and _STAY_ON_LINE.search(user):
         logger.info("[END_CALL] rejected code=stay_on_line reason=%s", parsed.get("reason"))
         return EndCallDecision(False, False, "none", parsed.get("farewell") or "", "stay_on_line")
@@ -274,7 +315,8 @@ def validate_end_call(
     if not user.strip():
         return _reject("empty_user_turn")
     if looks_like_question(user) and reason != "abuse":
-        if not (_OPT_OUT.search(user) or _CALLER_DONE.search(user)):
+        if not (_OPT_OUT.search(user) or _CALLER_DONE.search(user)
+                or caller_explicit_end_request(user) or caller_requested_callback(user)):
             return _reject("user_asked_question")
     if not _evidence_ok(
         reason,

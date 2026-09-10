@@ -196,7 +196,7 @@ def expand_spoken_numbers(text: str) -> str:
     return _CARDINAL_RUN.sub(_cardinal_run, out)
 
 
-def sanitize_tts_punctuation(text: str) -> str:
+def sanitize_tts_punctuation(text: str, *, ensure_terminal: bool = True) -> str:
     """
     Prep text for Cartesia Sonic + Sarvam Bulbul.
 
@@ -214,7 +214,7 @@ def sanitize_tts_punctuation(text: str) -> str:
     out = re.sub(r"\s{2,}", " ", out)
     out = re.sub(r"\s+([,.!?।])", r"\1", out)
     out = out.strip(" ,")
-    return ensure_terminal_punctuation(out)
+    return ensure_terminal_punctuation(out) if ensure_terminal else out
 
 
 def ensure_terminal_punctuation(text: str) -> str:
@@ -230,7 +230,12 @@ def ensure_terminal_punctuation(text: str) -> str:
     return cleaned + "."
 
 
-def prepare_spoken_reply(text: str, *, provider: str | None = None) -> str:
+def prepare_spoken_reply(
+    text: str,
+    *,
+    provider: str | None = None,
+    ensure_terminal: bool = True,
+) -> str:
     """
     Final pass before TTS: strip phones, expand Indian amounts, keep grammar punctuation.
 
@@ -239,4 +244,4 @@ def prepare_spoken_reply(text: str, *, provider: str | None = None) -> str:
     _ = provider  # reserved — shared path is correct for both engines today
     cleaned = strip_spoken_phone_numbers(text or "")
     expanded = expand_spoken_numbers(cleaned)
-    return sanitize_tts_punctuation(expanded)
+    return sanitize_tts_punctuation(expanded, ensure_terminal=ensure_terminal)

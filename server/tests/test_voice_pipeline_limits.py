@@ -2,6 +2,7 @@
 from server.call.live_turn_orchestrator import finalize_live_spoken_text
 from server.services.voice_pipeline_limits import (
     LIVE_REPLY_MAX_CHARS,
+    LIVE_REPLY_SOFT_MAX_CHARS,
     LiveReplyStreamCap,
     clamp_live_spoken_reply,
     collapse_repeated_spoken_reply,
@@ -78,6 +79,20 @@ def test_stream_cap_soft_safety():
     assert len(first) == LIVE_REPLY_MAX_CHARS - 30
     assert len(cap.emitted) <= LIVE_REPLY_MAX_CHARS
     assert len(second) <= 30
+
+
+def test_soft_target_leaves_room_to_finish_sentence():
+    reply = (
+        "We currently offer periodic car service plans and AMC options for hatchbacks and sedans, "
+        "including Basic and Comprehensive Service. The workshop is in Kukatpally, and pickup is "
+        "available within the surrounding area."
+    )
+    assert LIVE_REPLY_SOFT_MAX_CHARS < len(reply) < LIVE_REPLY_MAX_CHARS
+
+    cap = LiveReplyStreamCap()
+    emitted = cap.feed(reply[:190]) + cap.feed(reply[190:])
+    assert emitted == reply
+    assert cap.finalize(emitted) == reply
 
 
 def test_stream_cap_does_not_suppress_normal_mid_reply():

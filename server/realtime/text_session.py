@@ -5,7 +5,7 @@ import asyncio
 from collections.abc import AsyncIterator
 from typing import Any, Literal
 
-from server.call.end_call_validate import caller_firm_refusal, caller_requested_hangup
+from server.call.end_call_validate import caller_firm_refusal, caller_requested_hangup, caller_requested_callback
 from server.call.hangup_judge import agent_spoke_closing
 from server.realtime.end_call_tool import parse_end_call_tool
 from server.realtime.language_guard import filter_unrelated_scripts
@@ -118,8 +118,24 @@ class RealtimeTextSession:
                 return
             if self._ready and _adapter_is_open(self._adapter) and not self._needs_history_restore:
                 return
+            if self._ready and _adapter_is_open(self._adapter) and self._needs_history_restore:
+                reconcile = getattr(self._adapter, "reconcile_spoken", None)
+                if callable(reconcile):
+                    heard = self._history[-1][1] if self._history and self._history[-1][0] == "assistant" else ""
+                    try:
+                        await reconcile(heard)
+                        self._needs_history_restore = False
+                        self._state = "idle"
+                        logger.info("[REALTIME] reconciled interrupted text in-session call=%s", self.call_id)
+                        return
+                    except Exception as e:
+                        logger.warning(
+                            "[REALTIME] in-session reconcile failed call=%s: %s",
+                            self.call_id,
+                            str(e)[:160],
+                        )
             if self._ready:
-                logger.warning("[REALTIME] socket died; reconnecting call=%s", self.call_id)
+                logger.warning("[REALTIME] rebuilding session history call=%s", self.call_id)
                 try:
                     await self._adapter.close()
                 except Exception:
@@ -219,6 +235,16 @@ class RealtimeTextSession:
                         elif kind == "response_done":
                             usage = event.get("usage") or {}
                             failed = bool(event.get("failed"))
+                            for item in event.get("output") or []:
+                                if item.get("type") == "function_call" and item.get("name") == "end_call":
+                                    parsed = parse_end_call_tool(item.get("arguments"))
+                                    if parsed is not None:
+                                        end_call = parsed
+                                elif not spoken and item.get("type") == "message":
+                                    spoken = filter_unrelated_scripts("".join(
+                                        str(part.get("text") or "") for part in item.get("content") or []
+                                        if part.get("type") in {"text", "output_text"}
+                                    ), lang)
                             assert_zero_audio_tokens(usage, call_id=self.call_id)
                         elif kind == "cancelled":
                             cancelled = True
@@ -256,6 +282,13 @@ class RealtimeTextSession:
                         "should_end": True,
                         "reason": "firm_refusal",
                         "farewell": str(end_call.get("farewell") or spoken or default_farewell),
+                    }
+                elif caller_requested_callback(transcript) and not end_call.get("should_end"):
+                    from server.call.hangup_judge import default_farewell_for
+
+                    end_call = {
+                        "should_end": True, "reason": "goal_complete",
+                        "farewell": spoken or default_farewell_for(lang),
                     }
                 elif (
                     not end_call.get("should_end")

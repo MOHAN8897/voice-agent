@@ -458,6 +458,12 @@ class TelnyxPstnBridge:
             if self._client_meta.get("test_mode") == "cartesia_bilingual":
                 await self._run_cartesia_bilingual_test()
         except Exception as exc:
+            from server.services.telnyx_client import telnyx_call_registry
+
+            if self.call_control_id:
+                telnyx_call_registry.upsert(self.call_control_id, {
+                    "error": str(exc)[:200], "failure_reason": "voice_start_failed",
+                })
             log_pstn(
                 "lifecycle.failed",
                 timer_key=self.call_control_id,

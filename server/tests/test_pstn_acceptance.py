@@ -14,6 +14,296 @@ from server.services.pstn_voice_core import PstnVoiceLoop, PHASE_SPEAKING, PHASE
 from server.services.telnyx_client import TelnyxClient, TelnyxCallRegistry
 
 
+@pytest.fixture
+def failing_cartesia(monkeypatch):
+    """Reproduce the production handshake failure while exercising real TTS framing."""
+    import base64
+    from unittest.mock import Mock
+    from server.services import tts_config, sarvam_ws
+    from server.services.dev_fallback_store import dev_fallback_store
+    from server.services.dev_secrets_store import dev_secrets_store
+
+    monkeypatch.setattr(dev_fallback_store, "get_chains", lambda: {"tts": ["sarvam", "cartesia"]})
+    monkeypatch.setattr(dev_secrets_store, "effective", lambda name, default=None: True)
+    monkeypatch.setattr(dev_secrets_store, "effective_secret", lambda name: "test-key")
+    monkeypatch.setattr(tts_config, "merge_pstn_tts_config", lambda *a, **k: {
+        "provider": "cartesia", "model": "sonic-3.5", "speaker": "cartesia-voice",
+        "output_audio_codec": "linear16", "speech_sample_rate": "16000",
+    })
+
+    class AudioSocket:
+        def __init__(self):
+            self.messages = asyncio.Queue()
+            self.sent = []
+            self.closed = False
+
+        async def send(self, raw):
+            obj = json.loads(raw)
+            self.sent.append(obj)
+            if obj["type"] == "flush":
+                await self.messages.put(json.dumps({"type": "audio", "data": {
+                    "audio": base64.b64encode(b"\x10\x00" * 640).decode(),
+                }}))
+                await self.messages.put(json.dumps({"type": "done"}))
+
+        def __aiter__(self):
+            return self
+
+        async def __anext__(self):
+            return await self.messages.get()
+
+        async def close(self):
+            self.closed = True
+
+    failed = SimpleNamespace(
+        __aenter__=AsyncMock(side_effect=RuntimeError("server rejected WebSocket connection: HTTP 402")),
+        __aexit__=AsyncMock(),
+    )
+    primary = Mock(return_value=failed)
+    sockets = []
+    def connect(**kwargs):
+        assert kwargs["model"].startswith("bulbul:")
+        sock = AudioSocket()
+        sockets.append(sock)
+        return SimpleNamespace(__aenter__=AsyncMock(return_value=sock), __aexit__=AsyncMock())
+
+    monkeypatch.setattr("server.routes.ws._connect_tts_upstream", primary)
+    monkeypatch.setattr(sarvam_ws, "connect_tts_ws", connect)
+    return primary, failed, sockets
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("rate,codec,frame_size", [(16000, "linear16", 640), (8000, "mulaw", 160)])
+async def test_cartesia_402_greeting_recovers_and_next_turn_uses_fallback(failing_cartesia, monkeypatch, rate, codec, frame_size):
+    from server.services.telnyx_pstn_bridge import TelnyxPstnBridge
+
+    primary, failed, sockets = failing_cartesia
+    output = AsyncMock()
+    voice = PstnVoiceLoop(session_id="fallback", call_id="fallback", on_agent_wire=output,
+                          sample_rate=rate, tts_output_codec=codec)
+    monkeypatch.setattr(voice, "open_stt", AsyncMock())
+    monkeypatch.setattr(voice, "_note_opening_spoken", AsyncMock())
+    bridge = TelnyxPstnBridge(SimpleNamespace(close=AsyncMock()))
+    bridge.call_id = "fallback"
+    bridge._voice = voice
+    bridge._prewarm_bundle = SimpleNamespace(greeting_wire_frames=[], greeting_text="Hello, how can I help?")
+    bridge._provider_hangup = AsyncMock()
+    bridge._cleanup = AsyncMock()
+
+    await bridge._start_voice_loop()
+    assert output.await_count > 0
+    assert all(len(call.args[0]) == frame_size for call in output.await_args_list)
+    bridge._provider_hangup.assert_not_awaited()
+    bridge._cleanup.assert_not_awaited()
+    assert voice._tts_fallback_provider == "sarvam"
+    await voice.speak("How may I help you today?")
+    primary.assert_called_once()
+    failed.__aexit__.assert_awaited_once()
+    assert len(sockets) == 2
+    for sock in sockets:
+        config = sock.sent[0]["data"]
+        assert config["output_audio_codec"] == "linear16"
+        assert config["speech_sample_rate"] == str(rate)
+        assert config["speaker"] != "cartesia-voice"
+        assert sock.closed
+
+
+@pytest.mark.asyncio
+async def test_pstn_does_not_use_unconfigured_fallback(failing_cartesia, monkeypatch):
+    from server.services.dev_fallback_store import dev_fallback_store
+    from server.services.pstn_prewarm import _synthesize_greeting_frames
+
+    monkeypatch.setattr(dev_fallback_store, "get_chains", lambda: {"tts": []})
+    with pytest.raises(RuntimeError, match="HTTP 402"):
+        await _synthesize_greeting_frames(greeting="Hello", session_id="fallback", pseudo_call_id="prewarm",
+                                          sample_rate=16000, tts_output_codec="linear16", language="te-IN")
+    assert not failing_cartesia[2]
+
+
+@pytest.mark.asyncio
+async def test_prewarm_greeting_recovers_from_cartesia_402(failing_cartesia):
+    from server.services.pstn_prewarm import _synthesize_greeting_frames
+
+    frames = await _synthesize_greeting_frames(greeting="Hello", session_id="fallback", pseudo_call_id="prewarm",
+                                               sample_rate=16000, tts_output_codec="linear16", language="te-IN")
+    assert frames and all(len(frame) == 640 for frame in frames)
+
+
+def test_fallback_config_ignores_locked_cartesia_stack(monkeypatch):
+    from server.services import tts_config
+    from unittest.mock import Mock
+
+    stack = Mock(side_effect=AssertionError("must not resolve the failed locked stack"))
+    monkeypatch.setattr(tts_config, "_stack_for_session", stack)
+    monkeypatch.setattr(tts_config.runtime_settings, "get", lambda sid: {"ttsModel": "sonic-3.5", "ttsSpeaker": "cartesia-voice"})
+    cfg = tts_config.resolve_tts_config("locked", provider_override="sarvam", language_code="te-IN")
+    assert cfg["provider"] == "sarvam"
+    assert cfg["model"].startswith("bulbul:")
+    assert cfg["speaker"] != "cartesia-voice"
+
+
+@pytest.mark.parametrize("enabled,key", [(False, "test-key"), (True, "")])
+def test_fallback_requires_enabled_provider_and_credentials(monkeypatch, enabled, key):
+    from server.config.env import get_settings
+    from server.services.dev_fallback_store import dev_fallback_store
+    from server.services.dev_secrets_store import dev_secrets_store
+    from server.services.pstn_turn_tts import _sarvam_fallback_config
+
+    monkeypatch.setattr(dev_fallback_store, "get_chains", lambda: {"tts": ["sarvam"]})
+    monkeypatch.setattr(dev_secrets_store, "effective", lambda *a: enabled)
+    monkeypatch.setattr(dev_secrets_store, "effective_secret", lambda *a: key)
+    monkeypatch.setattr(get_settings(), "sarvam_api_key", "")
+    assert _sarvam_fallback_config("te-IN", "rtp_l16") is None
+
+
+@pytest.mark.asyncio
+async def test_disabled_greeting_does_not_play_prewarm_audio(monkeypatch):
+    voice = PstnVoiceLoop(session_id="skip", call_id="skip", on_agent_wire=AsyncMock())
+    monkeypatch.setattr(voice, "open_stt", AsyncMock())
+    monkeypatch.setattr(voice, "_play_buffered_greeting", AsyncMock())
+    await voice.start_call(play_greeting=False, greeting_text="Hello", greeting_wire_frames=[b"\x00" * 640])
+    voice._play_buffered_greeting.assert_not_awaited()
+    assert voice._wire_frames_out == 0
+
+
+@pytest.mark.asyncio
+async def test_prewarm_rejects_empty_audio(monkeypatch):
+    from server.services.pstn_prewarm import _synthesize_greeting_frames
+
+    fake = SimpleNamespace(open=AsyncMock(), send_text=AsyncMock(), finish=AsyncMock(),
+                           close=AsyncMock(), had_error=False)
+    monkeypatch.setattr("server.services.pstn_turn_tts.PstnTurnTtsSession", lambda voice: fake)
+    with pytest.raises(RuntimeError, match="no usable audio"):
+        await _synthesize_greeting_frames(greeting="Hello", session_id="silent", pseudo_call_id="prewarm",
+                                          sample_rate=16000, tts_output_codec="linear16", language="te-IN")
+    fake.close.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_prewarm_greeting_uses_the_same_locked_stack_as_call_turns(monkeypatch):
+    from server.services.pstn_prewarm import _synthesize_greeting_frames
+
+    locked_stack = SimpleNamespace(tts=SimpleNamespace(provider="sarvam", model="bulbul:v3"))
+    fake = SimpleNamespace(
+        open=AsyncMock(),
+        send_text=AsyncMock(),
+        finish=AsyncMock(),
+        close=AsyncMock(),
+        had_error=False,
+    )
+
+    def factory(voice):
+        voice.frames.append(b"\x00" * 640)
+        return fake
+
+    monkeypatch.setattr("server.services.pstn_turn_tts.PstnTurnTtsSession", factory)
+    frames = await _synthesize_greeting_frames(
+        greeting="Hello",
+        session_id="locked-greeting",
+        pseudo_call_id="prewarm",
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        language="en-IN",
+        resolved_stack=locked_stack,
+    )
+
+    assert frames
+    fake.open.assert_awaited_once_with(language_code="en-IN", resolved_stack=locked_stack)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("buffered", [False, True])
+async def test_intro_waits_for_last_rtp_send_before_releasing_caller(monkeypatch, buffered):
+    from server.services.pstn_playback import TelnyxQueuePlayback
+    from server.services.telnyx_pstn_bridge import TelnyxPstnBridge
+
+    last_frame_in_flight = asyncio.Event()
+    release_last_frame = asyncio.Event()
+    sent = []
+
+    async def send(raw):
+        if len(sent) == 1:
+            last_frame_in_flight.set()
+            await release_last_frame.wait()
+        sent.append(json.loads(raw))
+
+    bridge = TelnyxPstnBridge(SimpleNamespace(send_text=send, close=AsyncMock()))
+    playback = TelnyxQueuePlayback(queue_size=bridge._out_queue.qsize, drain=lambda: 0,
+                                   sending=lambda: bridge._out_sending)
+    voice = PstnVoiceLoop(session_id="intro-drain", call_id=None,
+                          on_agent_wire=bridge._send_agent_wire, sample_rate=16000,
+                          tts_output_codec="linear16", playback=playback)
+    bridge._voice = voice
+    bridge._playback = playback
+    frames = [b"\x10\x00" * 320, b"\x20\x00" * 320]
+
+    async def cold_greeting(text):
+        voice.current_generation_id = "cold-greeting"
+        playback.set_current_generation(voice.current_generation_id)
+        for frame in frames:
+            await voice._emit_agent_wire(frame)
+
+    monkeypatch.setattr(voice, "speak", cold_greeting)
+    monkeypatch.setattr(voice, "open_stt", AsyncMock())
+    note = AsyncMock()
+    monkeypatch.setattr(voice, "_note_opening_spoken", note)
+    from unittest.mock import Mock
+    launch = Mock()
+    monkeypatch.setattr(voice, "_launch_turn", launch)
+    worker = asyncio.create_task(bridge._out_worker())
+    startup = asyncio.create_task(voice.start_call(greeting_text="Hello, how may I help?",
+                                                   greeting_wire_frames=frames if buffered else None))
+    try:
+        await asyncio.wait_for(last_frame_in_flight.wait(), timeout=1)
+        assert bridge._out_queue.empty()  # Empty queue is not proof of completed playback.
+        voice._queue_user_transcript("I would like the price details", intro=True)
+        await asyncio.sleep(0.05)
+        assert voice._intro_phase
+        assert not startup.done()
+        launch.assert_not_called()
+        note.assert_not_awaited()
+        release_last_frame.set()
+        await asyncio.wait_for(startup, timeout=1)
+        assert len(sent) == 2
+        assert bridge._media_frames_out == 2
+        assert not voice._intro_phase
+        launch.assert_called_once_with("I would like the price details")
+        note.assert_awaited_once()
+    finally:
+        startup.cancel()
+        worker.cancel()
+        await asyncio.gather(startup, worker, return_exceptions=True)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("finish", ["hangup", "barge"])
+async def test_intro_playback_wait_does_not_reopen_ended_or_interrupted_call(monkeypatch, finish):
+    from server.services.pstn_voice_core import PHASE_ENDED, PHASE_INTERRUPTING
+    from unittest.mock import Mock
+
+    voice = PstnVoiceLoop(session_id="intro-stop", call_id=None, on_agent_wire=AsyncMock(),
+                          is_agent_audio_active=lambda: True)
+    monkeypatch.setattr(voice, "open_stt", AsyncMock())
+    monkeypatch.setattr(voice, "speak", AsyncMock())
+    launch = Mock()
+    monkeypatch.setattr(voice, "_launch_turn", launch)
+    startup = asyncio.create_task(voice.start_call(greeting_text="Hello"))
+    try:
+        await asyncio.sleep(0.03)
+        assert voice._intro_phase
+        voice._intro_queue.append("caller speech")
+        phase = PHASE_ENDED if finish == "hangup" else PHASE_INTERRUPTING
+        if finish == "hangup":
+            voice._closed = True
+        voice._set_phase(phase)
+        await asyncio.wait_for(startup, timeout=0.5)
+        assert voice._phase == phase
+        launch.assert_not_called()
+    finally:
+        startup.cancel()
+        await asyncio.gather(startup, return_exceptions=True)
+
+
 @pytest.mark.asyncio
 async def test_answer_contract_and_stable_command_id():
     client = TelnyxClient(cfg={"api_key": "test"})

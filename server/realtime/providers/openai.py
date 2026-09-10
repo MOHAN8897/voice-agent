@@ -47,6 +47,10 @@ class OpenAIRealtimeTextAdapter:
         self._pump_task: asyncio.Task | None = None
         self._closed = False
         self._active_response_id: str | None = None
+        self._current_output_item_ids: list[str] = []
+        self._response_idle = asyncio.Event()
+        self._response_idle.set()
+        self._response_lock = asyncio.Lock()
         self._accepting = False
         self._max_output_tokens = LIVE_MAX_OUTPUT_TOKENS
         self.model = DEFAULT_REALTIME_MODEL
@@ -72,6 +76,10 @@ class OpenAIRealtimeTextAdapter:
         self._closed = False
         self._accepting = False
         self._active_response_id = None
+        self._current_output_item_ids = []
+        self._response_idle = asyncio.Event()
+        self._response_idle.set()
+        self._response_lock = asyncio.Lock()
         self._ready = asyncio.Event()
         self._configuration_error = None
         self._configured = False
@@ -140,29 +148,73 @@ class OpenAIRealtimeTextAdapter:
             }
         )
 
+    async def reconcile_spoken(self, text: str) -> None:
+        """Replace the latest generated text items with what reached the handset."""
+        if self._conn is None or not self.is_open():
+            raise RuntimeError("realtime connection is not open")
+        async with self._response_lock:
+            # Conversation mutations must happen only after OpenAI acknowledges the
+            # interrupted response. Local task cancellation alone does not make the
+            # server-side response idle.
+            if not self._response_idle.is_set():
+                await self._cancel_response_locked()
+            item_ids = list(dict.fromkeys(self._current_output_item_ids))
+            for item_id in item_ids:
+                await self._conn.send(
+                    {"type": "conversation.item.delete", "item_id": item_id}
+                )
+            if text.strip():
+                await self.send_assistant_text(text.strip())
+            self._current_output_item_ids = []
+            self._active_response_id = None
+
     async def start_response(self) -> None:
         if self._conn is None:
             raise RuntimeError("realtime connection is not open")
-        self._accepting = True
-        await self._conn.send(
-            {
-                "type": "response.create",
-                "response": {
-                    "output_modalities": ["text"],
-                    "max_output_tokens": self._max_output_tokens,
-                },
-            }
-        )
+        async with self._response_lock:
+            if not self._response_idle.is_set():
+                await self._cancel_response_locked()
+            self._accepting = True
+            self._active_response_id = None
+            self._current_output_item_ids = []
+            self._response_idle.clear()
+            try:
+                await self._conn.send(
+                    {
+                        "type": "response.create",
+                        "response": {
+                            "output_modalities": ["text"],
+                            "max_output_tokens": self._max_output_tokens,
+                        },
+                    }
+                )
+            except Exception:
+                self._accepting = False
+                self._response_idle.set()
+                raise
 
     async def cancel_response(self) -> None:
+        async with self._response_lock:
+            await self._cancel_response_locked()
+
+    async def _cancel_response_locked(self) -> None:
+        had_active_response = not self._response_idle.is_set()
         self._accepting = False
-        self._active_response_id = None
         if self._conn is None:
+            self._active_response_id = None
+            self._response_idle.set()
+            return
+        if not had_active_response:
+            self._active_response_id = None
             return
         try:
             await self._conn.send({"type": "response.cancel"})
+            await asyncio.wait_for(self._response_idle.wait(), timeout=1.5)
         except Exception as e:
             logger.warning("[REALTIME] cancel failed: %s", str(e)[:160])
+            raise
+        finally:
+            self._active_response_id = None
 
     def discard_queued(self) -> None:
         self._accepting = False
@@ -191,6 +243,7 @@ class OpenAIRealtimeTextAdapter:
         self._closed = True
         self._accepting = False
         self._active_response_id = None
+        self._response_idle.set()
         if self._pump_task and not self._pump_task.done():
             self._pump_task.cancel()
         if self._conn is not None:
@@ -259,9 +312,18 @@ class OpenAIRealtimeTextAdapter:
         kind = _event_type(event)
         if kind == "response.created":
             if self._accepting:
+                self._current_output_item_ids = []
                 rid = _response_id(event)
                 if rid:
                     self._active_response_id = rid
+            return None
+        if kind == "response.output_item.added":
+            if not self._belongs_to_active_response(event):
+                return None
+            item = _event_field(event, "item")
+            item_id = str(_event_field(item, "id") or "")
+            if item_id and item_id not in self._current_output_item_ids:
+                self._current_output_item_ids.append(item_id)
             return None
         if kind == "response.output_text.delta":
             if not self._belongs_to_active_response(event):
@@ -280,16 +342,22 @@ class OpenAIRealtimeTextAdapter:
                 "arguments": _event_field(event, "arguments") or "",
             }
         if kind == "response.done":
+            response = _event_field(event, "response")
+            for item in (_event_field(response, "output") or []):
+                item_id = str(_event_field(item, "id") or "")
+                if item_id and item_id not in self._current_output_item_ids:
+                    self._current_output_item_ids.append(item_id)
             # After cancel, _accepting is False and response_id was cleared — a late
             # response.done still carries usage but text deltas were dropped. Treating
             # that as a normal empty reply archived silence after short affirmations.
             if not self._accepting:
                 self._active_response_id = None
+                self._response_idle.set()
                 return {"type": "cancelled"}
             if self._active_response_id and not self._belongs_to_active_response(event):
                 return None
             self._accepting = False
-            response = _event_field(event, "response")
+            self._response_idle.set()
             status = str(_event_field(response, "status") or "")
             usage = extract_realtime_usage(response)
             failed = status == "failed"
@@ -302,12 +370,33 @@ class OpenAIRealtimeTextAdapter:
                 "status": status,
                 "usage": usage,
                 "failed": failed,
+                # Final output is authoritative when a tool-name/arguments event
+                # was missing or a response contained only a function call.
+                "output": [
+                    {
+                        "type": _event_field(item, "type"),
+                        "name": _event_field(item, "name"),
+                        "arguments": _event_field(item, "arguments"),
+                        "content": [
+                            {"type": _event_field(part, "type"), "text": _event_field(part, "text")}
+                            for part in (_event_field(item, "content") or [])
+                        ],
+                    }
+                    for item in (_event_field(response, "output") or [])
+                ],
             }
         if kind in ("error", "response.failed"):
             err = _event_field(event, "error") or {}
             message = err if isinstance(err, str) else str(_event_field(err, "message") or err or kind)
+            if kind == "response.failed" or "no active response" in message.lower():
+                self._accepting = False
+                self._active_response_id = None
+                self._response_idle.set()
             return {"type": "error", "message": message[:240]}
         if kind == "response.cancelled":
+            self._accepting = False
+            self._active_response_id = None
+            self._response_idle.set()
             return {"type": "cancelled"}
         return None
 

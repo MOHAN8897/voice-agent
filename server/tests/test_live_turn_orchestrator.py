@@ -119,6 +119,45 @@ async def test_first_delta_not_blocked_by_ledger(monkeypatch, tmp_path):
 
 
 @pytest.mark.asyncio
+async def test_realtime_first_delta_skips_memory_projection_io(monkeypatch):
+    from server.realtime.manager import realtime_text_manager
+
+    monkeypatch.setenv("ENABLE_CALL_ARCHIVE", "false")
+    get_settings.cache_clear()
+
+    class FakeRealtimeSession:
+        async def run_turn(self, _transcript, *, language):
+            yield {"delta": "Hello"}
+            yield {
+                "done": True,
+                "text": "Hello.",
+                "end_call": {"should_end": False, "reason": "none", "farewell": ""},
+                "memory_update": {"operations": []},
+            }
+
+    async def unexpected_memory_io(_call_id):
+        raise AssertionError("Realtime response waited for memory projection I/O")
+
+    realtime_text_manager._sessions["realtime-hot"] = FakeRealtimeSession()
+    monkeypatch.setattr(live_turn_orchestrator, "_memory_blocks", unexpected_memory_io)
+    try:
+        chunks = [
+            chunk
+            async for chunk in live_turn_orchestrator.handle_user_turn_stream(
+                transcript="hello",
+                session_id="s",
+                call_id="realtime-hot",
+                language_code="en-IN",
+            )
+        ]
+        assert any(chunk.get("delta") for chunk in chunks)
+        assert chunks[-1]["done"]
+    finally:
+        realtime_text_manager.reset_for_tests()
+        get_settings.cache_clear()
+
+
+@pytest.mark.asyncio
 async def test_sealed_ledger_does_not_raise_from_orchestrator(monkeypatch, tmp_path):
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
     monkeypatch.setenv("SARVAM_API_KEY", "sarvam-test")

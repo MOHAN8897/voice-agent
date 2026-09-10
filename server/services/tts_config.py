@@ -122,9 +122,10 @@ def _resolve_cartesia_tts_config(
     pace: float | None,
     sample_rate: int | None,
     stack,
+    allow_runtime: bool = True,
 ) -> dict[str, Any]:
     settings = get_settings()
-    rt = runtime_settings.get(session_id)
+    rt = runtime_settings.get(session_id) if allow_runtime else {}
     resolved_model = model or (stack.tts.model if stack else None) or rt.get("ttsModel") or settings.cartesia_tts_model
     if not _is_cartesia_model(str(resolved_model)):
         resolved_model = settings.cartesia_tts_model or "sonic-3.5"
@@ -196,16 +197,38 @@ def resolve_tts_config(
     max_chunk_length: int | None = None,
     output_audio_bitrate: str | None = None,
     call_id: str | None = None,
+    provider_override: str | None = None,
+    resolved_stack: Any | None = None,
 ) -> dict[str, Any]:
     """
     Resolve the effective TTS configuration for a session.
-    Priority: explicit call arg → runtime override → env default → language map.
+    Active calls use their immutable resolved stack. Outside a call, priority is
+    explicit argument → runtime override → provider stack → environment default.
     """
     settings = get_settings()
     rt = runtime_settings.get(session_id)
-    stack = _stack_for_session(session_id, call_id, language_code)
+    stack = (
+        resolved_stack or _stack_for_session(session_id, call_id, language_code)
+        if provider_override is None
+        else None
+    )
+    stack_is_locked = bool(stack is not None and (call_id or resolved_stack is not None))
+    if stack_is_locked:
+        # Session controls can change while a call is active (and can retain stale
+        # values from a previous stack). Never let those values change the provider,
+        # model, or voice recorded in this call's resolved-stack metadata.
+        rt = {}
+        model = None
+        speaker = None
+    if provider_override is not None:
+        if provider_override != "sarvam":
+            raise TtsConfigError(f"Unsupported TTS fallback provider: {provider_override}")
+        # A fallback must not inherit the failed provider's model or voice ID.
+        rt = {}
+        model = settings.sarvam_tts_model
+        speaker = None
 
-    if _is_cartesia_stack(stack, rt, speaker=speaker, model=model):
+    if provider_override is None and _is_cartesia_stack(stack, rt, speaker=speaker, model=model):
         resolved_model = _effective_tts_model(
             stack=stack,
             rt=rt,
@@ -220,6 +243,7 @@ def resolve_tts_config(
             pace=pace,
             sample_rate=sample_rate,
             stack=stack,
+            allow_runtime=not stack_is_locked,
         )
 
     resolved_model = _effective_tts_model(
@@ -341,6 +365,7 @@ def merge_pstn_tts_config(
     call_id: str | None = None,
     ws_model: str | None = None,
     wire_mode: str = "rtp_l16",
+    resolved_stack: Any | None = None,
 ) -> dict[str, Any]:
     """Telephony TTS — L16 RTP @ 16 kHz (Telnyx) or μ-law RTP @ 8 kHz (Exotel/Plivo)."""
     data = dict(client_data or {})
@@ -351,6 +376,7 @@ def merge_pstn_tts_config(
             speaker=None,
             model=ws_model,
             call_id=call_id,
+            resolved_stack=resolved_stack,
             pace=data.get("pace"),
             temperature=data.get("temperature"),
             codec="mp3",
@@ -377,7 +403,22 @@ def merge_pstn_tts_config(
         speaker = data.get("speaker")
         from server.services.cartesia_voices import is_cartesia_voice_id
 
-        if speaker and is_cartesia_voice_id(str(speaker)) and _cartesia_available():
+        locked_stack = resolved_stack or (
+            _stack_for_session(session_id, call_id, language_code) if call_id else None
+        )
+        locked_cartesia = bool(
+            locked_stack
+            and (
+                locked_stack.tts.provider == "cartesia"
+                or _is_cartesia_model(str(locked_stack.tts.model or ""))
+            )
+        )
+        if (
+            speaker
+            and is_cartesia_voice_id(str(speaker))
+            and _cartesia_available()
+            and (not locked_stack or locked_cartesia)
+        ):
             cfg = _resolve_cartesia_tts_config(
                 session_id,
                 language_code=data.get("language_code") or language_code,
@@ -385,7 +426,8 @@ def merge_pstn_tts_config(
                 model=ws_model or "sonic-3.5",
                 pace=data.get("pace"),
                 sample_rate=16000,
-                stack=_stack_for_session(session_id, call_id, language_code),
+                stack=locked_stack,
+                allow_runtime=not bool(locked_stack),
             )
             cfg["output_audio_codec"] = "linear16"
             cfg["speech_sample_rate"] = "16000"
@@ -409,6 +451,7 @@ def merge_pstn_tts_config(
             speaker=data.get("speaker"),
             model=ws_model,
             call_id=call_id,
+            resolved_stack=resolved_stack,
             pace=data.get("pace"),
             temperature=data.get("temperature"),
             codec="linear16",
@@ -442,6 +485,7 @@ def merge_pstn_tts_config(
         speaker=None,
         model=ws_model,
         call_id=call_id,
+        resolved_stack=resolved_stack,
         pace=data.get("pace"),
         temperature=data.get("temperature"),
         codec="mulaw",

@@ -1,4 +1,6 @@
 """Tests for canonical TTS config resolver."""
+from types import SimpleNamespace
+
 from server.config.env import get_settings
 from server.providers.registry import init_provider_registry
 from server.services.runtime_settings import runtime_settings
@@ -73,6 +75,65 @@ def test_cartesia_uuid_falls_back_to_sarvam_when_cartesia_disabled(monkeypatch):
         },
     )
     cfg = resolve_tts_config("cfg-test", language_code="te-IN")
+    assert cfg["provider"] == "sarvam"
+    assert cfg["model"] == "bulbul:v3"
+    assert cfg["speaker"] == "shubh"
+
+
+def test_active_call_stack_ignores_stale_runtime_provider(monkeypatch):
+    import server.services.tts_config as tts_config
+
+    monkeypatch.setenv("ENABLE_CARTESIA", "true")
+    monkeypatch.setenv("CARTESIA_API_KEY", "sk-cartesia-test")
+    get_settings.cache_clear()
+    runtime_settings.update(
+        "cfg-test",
+        {
+            "ttsModel": "sonic-3.5",
+            "ttsSpeaker": "4418bb06-8329-49a1-bb11-53bb64ca0547",
+        },
+    )
+    locked = SimpleNamespace(
+        tts=SimpleNamespace(
+            provider="sarvam",
+            model="bulbul:v3",
+            config={"speaker": "shubh"},
+        )
+    )
+    monkeypatch.setattr(tts_config, "_stack_for_session", lambda *_args: locked)
+
+    cfg = resolve_tts_config("cfg-test", call_id="active-call", language_code="en-IN")
+
+    assert cfg["provider"] == "sarvam"
+    assert cfg["model"] == "bulbul:v3"
+    assert cfg["speaker"] == "shubh"
+
+
+def test_explicit_prewarm_stack_ignores_stale_runtime_provider(monkeypatch):
+    monkeypatch.setenv("ENABLE_CARTESIA", "true")
+    monkeypatch.setenv("CARTESIA_API_KEY", "sk-cartesia-test")
+    get_settings.cache_clear()
+    runtime_settings.update(
+        "cfg-test",
+        {
+            "ttsModel": "sonic-3.5",
+            "ttsSpeaker": "4418bb06-8329-49a1-bb11-53bb64ca0547",
+        },
+    )
+    locked = SimpleNamespace(
+        tts=SimpleNamespace(
+            provider="sarvam",
+            model="bulbul:v3",
+            config={"speaker": "shubh"},
+        )
+    )
+
+    cfg = resolve_tts_config(
+        "cfg-test",
+        resolved_stack=locked,
+        language_code="en-IN",
+    )
+
     assert cfg["provider"] == "sarvam"
     assert cfg["model"] == "bulbul:v3"
     assert cfg["speaker"] == "shubh"

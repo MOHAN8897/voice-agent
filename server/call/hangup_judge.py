@@ -79,19 +79,34 @@ def default_farewell_for(language: str | None) -> str:
     return CALL_END_FAREWELLS[normalize_compile_language(language)]
 
 
+def callback_farewell_for(language: str | None) -> str:
+    from server.prompts.agent_voice_rules import normalize_compile_language
+
+    return {
+        "en-IN": "Your callback request is noted. Thank you for your time. Goodbye.",
+        "te-IN": "మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నోట్ చేసుకున్నాను. ధన్యవాదాలు.",
+        "hi-IN": "दोबारा कॉल करने का आपका अनुरोध नोट कर लिया है। धन्यवाद।",
+    }[normalize_compile_language(language)]
+
+
 HANGUP_JUDGMENT_RULES = """HANGUP JUDGMENT (you decide — then call end_call)
 Judge every turn. Speak one short farewell AND call the end_call tool in the SAME turn when closing.
 
 HANG UP now (farewell + end_call.should_end true):
 1) firm_refusal — caller clearly not interested / no thanks / don't want / don't call.
-2) goodbye — caller says bye / hang up / that's all / stop calling.
+2) goodbye — caller says bye / hang up / cut the call / that's all / stop calling.
+   Polite forms such as 'Can you cut the call, please?' are end requests, not information questions.
 3) goal_complete — script objective is done: needed details collected (name/phone/interest),
    next step set (team will contact / callback / visit booked), and caller affirmed or needs nothing else.
    Example close: "Noted — our team will contact you. Goodbye." + end_call reason=goal_complete.
+4) goal_complete — caller explicitly asks 'call me later', 'call me again tomorrow', or a callback.
+   Briefly acknowledge the requested day/time, then close this call. Do not ask more qualification
+   questions or insist on an exact time. Say the request is noted; never claim it is scheduled or
+   guaranteed unless an actual scheduling tool succeeded. Do not explain internal system capabilities.
 
 KEEP TALKING (never end_call, never say goodbye):
 - Caller is interested or asks more (price, options, tell me more).
-- Soft maybe / not now / busy / later / I'll decide / not looking right now.
+- Soft maybe / not now / busy / I'll decide / not looking right now, without a request to end or call back.
 - Objection (price/location) that you can still handle.
 - You still need one useful fact to finish the objective.
 

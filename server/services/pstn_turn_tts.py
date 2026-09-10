@@ -38,6 +38,31 @@ def _tts_config_sample_rate(merged: dict[str, Any], *, fallback: int) -> int:
     return int(fallback)
 
 
+def _sarvam_fallback_config(language: str, wire_mode: str) -> dict[str, Any] | None:
+    """Use only the configured, enabled fallback; never mutate a session's stack."""
+    from server.config.env import get_settings
+    from server.services.dev_fallback_store import dev_fallback_store
+    from server.services.dev_secrets_store import dev_secrets_store
+    from server.services.tts_config import resolve_tts_config
+
+    settings = get_settings()
+    if "sarvam" not in dev_fallback_store.get_chains().get("tts", []):
+        return None
+    if not dev_secrets_store.effective("enable_sarvam", settings.enable_sarvam):
+        return None
+    if not (dev_secrets_store.effective_secret("sarvam_api_key") or settings.sarvam_api_key):
+        return None
+    rate = 24000 if wire_mode == "mp3" else (8000 if wire_mode == "rtp_mulaw" else 16000)
+    cfg = resolve_tts_config(
+        language_code=language, provider_override="sarvam",
+        codec="mp3" if wire_mode == "mp3" else "linear16", sample_rate=rate,
+    )
+    cfg["speech_sample_rate"] = str(cfg.pop("sample_rate"))
+    if wire_mode != "mp3":
+        cfg.pop("output_audio_bitrate", None)
+    return cfg
+
+
 class PstnTurnTtsSession:
     """One upstream TTS socket per PSTN reply; mirrors browser StreamingTtsClient."""
 
@@ -98,6 +123,7 @@ class PstnTurnTtsSession:
         *,
         speaker: str | None = None,
         language_code: str | None = None,
+        resolved_stack: Any | None = None,
     ) -> None:
         if self._opened or self._closed:
             return
@@ -122,21 +148,50 @@ class PstnTurnTtsSession:
             call_id=voice.call_id,
             ws_model=None,
             wire_mode=wire_mode,
+            resolved_stack=resolved_stack,
         )
+        using_fallback = False
+        if self._merged.get("provider") == "cartesia" and getattr(voice, "_tts_fallback_provider", None) == "sarvam":
+            fallback = _sarvam_fallback_config(lang, wire_mode)
+            if fallback:
+                self._merged = fallback
+                using_fallback = True
         # Trust TTS config rate — never assume wire rate (Cartesia μ-law path is 16k→8k).
         self._tts_rate = _tts_config_sample_rate(self._merged, fallback=voice.sample_rate)
         self._pcm_resampler = None
         self._model = str(self._merged.get("model") or "bulbul:v3")
-        self._tts_cm = _connect_tts_upstream(self._model, session_id=voice.tts_session_id, call_id=voice.call_id)
+        # Resolve the fallback connector directly: the normal connector re-resolves
+        # the locked call stack and would select the failing Cartesia service again.
+        from server.services.sarvam_ws import connect_tts_ws
+
+        self._tts_cm = (
+            connect_tts_ws(model=self._model) if using_fallback else
+            _connect_tts_upstream(self._model, session_id=voice.tts_session_id, call_id=voice.call_id)
+        )
         try:
             self._tts = await asyncio.wait_for(self._tts_cm.__aenter__(), timeout=8.0)
-        except asyncio.TimeoutError as exc:
-            log_pstn("tts.connect.timeout", call_id=voice.call_id, timeout_s=8.0)
+        except Exception as exc:
             try:
                 await self._tts_cm.__aexit__(None, None, None)
             except Exception:
                 pass
-            raise TimeoutError("TTS upstream connect timed out after 8s") from exc
+            self._tts_cm = None
+            fallback = _sarvam_fallback_config(lang, wire_mode) if self._merged.get("provider") == "cartesia" else None
+            if fallback is None:
+                if isinstance(exc, asyncio.TimeoutError):
+                    log_pstn("tts.connect.timeout", call_id=voice.call_id, timeout_s=8.0)
+                    raise TimeoutError("TTS upstream connect timed out after 8s") from exc
+                raise
+            log_pstn(
+                "tts.fallback", call_id=voice.call_id, failed_provider="cartesia",
+                provider="sarvam", error=str(exc)[:200],
+            )
+            self._merged = fallback
+            self._model = str(fallback["model"])
+            self._tts_rate = _tts_config_sample_rate(fallback, fallback=voice.sample_rate)
+            self._tts_cm = connect_tts_ws(model=self._model)
+            self._tts = await asyncio.wait_for(self._tts_cm.__aenter__(), timeout=8.0)
+            voice._tts_fallback_provider = "sarvam"
         self._ping_task = asyncio.create_task(self._tts_ping())
 
         if self._merged.get("provider") == "cartesia":

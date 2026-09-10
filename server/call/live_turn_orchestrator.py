@@ -161,7 +161,18 @@ class LiveTurnOrchestrator:
         settings = get_settings()
         if not call_id or not settings.working_memory_enabled:
             return None, None
-        snap = memory_manager.get_snapshot(call_id)
+        try:
+            # A cold Redis lookup can consume hundreds of milliseconds. Memory is
+            # useful context, but it must not make a live caller wait in silence.
+            snap = await asyncio.wait_for(
+                asyncio.to_thread(memory_manager.get_snapshot, call_id),
+                timeout=0.075,
+            )
+        except asyncio.TimeoutError:
+            logger.warning("[MEMORY] projection load exceeded live-turn budget call=%s", call_id)
+            # Empty strings mean "resolved but unavailable", preventing the model
+            # service from repeating the same blocking lookup.
+            return "", ""
         rolling = (snap.get("summary") or "").strip() or None
         projection = memory_projection_mod.build(snap, include_summary=not rolling) or ""
         return projection, rolling or ""
@@ -238,11 +249,15 @@ class LiveTurnOrchestrator:
             from server.realtime.manager import realtime_text_manager
 
             realtime = bool(call_id and realtime_text_manager.get(call_id))
-            projection, rolling = await self._memory_blocks(call_id) if call_id else (None, None)
             if realtime:
+                # The persistent Realtime session already owns the live conversation
+                # context. Disk/DB memory projections are post-turn work and must not
+                # delay first token / first PSTN audio.
+                projection, rolling = None, None
                 structured = False
                 input_messages = None
             else:
+                projection, rolling = await self._memory_blocks(call_id) if call_id else (None, None)
                 structured = bool(call_id) and settings.working_memory_enabled
                 input_messages = self._maybe_build_live_input(
                     ctx=ctx,
@@ -396,13 +411,16 @@ class LiveTurnOrchestrator:
             from server.realtime.manager import realtime_text_manager
 
             realtime = bool(call_id and realtime_text_manager.get(call_id))
-            projection, rolling = await self._memory_blocks(call_id) if call_id else (None, None)
             if realtime:
+                # Realtime has already been seeded and keeps bounded turn history.
+                # Avoid synchronous memory I/O on the caller-to-response hot path.
+                projection, rolling = None, None
                 kwargs["memory_projection"] = projection
                 kwargs["rolling_summary"] = rolling
                 kwargs["structured_live_turn"] = False
                 kwargs["input_messages"] = None
             else:
+                projection, rolling = await self._memory_blocks(call_id) if call_id else (None, None)
                 kwargs["memory_projection"] = projection
                 kwargs["rolling_summary"] = rolling
                 kwargs["structured_live_turn"] = bool(call_id) and settings.working_memory_enabled
@@ -476,6 +494,33 @@ class LiveTurnOrchestrator:
 
     async def _stream_llm(self, *, ctx, **kwargs: Any) -> AsyncIterator[dict[str, Any]]:
         settings = get_settings()
+        from server.call.end_call_validate import (
+            caller_requested_callback, caller_requested_hangup, caller_firm_refusal,
+        )
+        from server.call.hangup_judge import callback_farewell_for, default_farewell_for
+
+        transcript = str(kwargs.get("transcript") or "")
+        language = str(kwargs.get("language_code") or "te-IN")
+        # Clear end intent needs no network round trip or generative sales reply.
+        # The normal gate below still owns policy, active-call, and barge checks.
+        if caller_requested_hangup(transcript) or caller_firm_refusal(transcript) or caller_requested_callback(transcript):
+            decision = validate_end_call(
+                None, user_text=transcript, language=language,
+                call_status=ctx.status if ctx else "active",
+                already_armed=bool(ctx and ctx.agent_hangup_armed),
+                barge_in_flight=bool(ctx and ctx.barge_in_flight),
+                last_stt_partial_at=ctx.last_stt_partial_at if ctx else None,
+                call_end_policy=ctx.call_end_policy if ctx else None,
+            )
+            if decision.accepted:
+                farewell = (callback_farewell_for(language)
+                            if caller_requested_callback(transcript) and decision.reason == "goal_complete"
+                            else default_farewell_for(language))
+                yield {"delta": farewell}
+                yield {"done": True, "text": farewell,
+                       "end_call": {"should_end": True, "reason": decision.reason, "farewell": farewell},
+                       "usage": {}, "memory_update": {"operations": []}, "memory_parse_failed": False}
+                return
         from server.realtime.manager import realtime_text_manager
         from server.realtime.models import http_openai_model, is_realtime_llm_model
 

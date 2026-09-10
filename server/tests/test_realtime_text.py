@@ -263,6 +263,128 @@ def test_stale_realtime_deltas_are_dropped():
     assert adapter._normalize(live) is None
 
 
+@pytest.mark.asyncio
+async def test_realtime_reconcile_deletes_generated_item_without_reconnect():
+    sent = []
+
+    class Conn:
+        async def send(self, payload):
+            sent.append(payload)
+
+    adapter = OpenAIRealtimeTextAdapter(api_key="sk-test")
+    adapter._conn = Conn()
+    adapter._closed = False
+    adapter._pump_task = asyncio.create_task(asyncio.Event().wait())
+    adapter._current_output_item_ids = ["item_generated"]
+    try:
+        await adapter.reconcile_spoken("What reached the handset.")
+    finally:
+        adapter._pump_task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await adapter._pump_task
+
+    assert sent[0] == {
+        "type": "conversation.item.delete",
+        "item_id": "item_generated",
+    }
+    assert sent[1]["item"]["content"][0]["text"] == "What reached the handset."
+
+
+@pytest.mark.asyncio
+async def test_interrupted_history_reconciles_on_open_socket():
+    class ReconcileAdapter(FakeRealtimeAdapter):
+        def __init__(self):
+            super().__init__()
+            self.reconciled = []
+
+        async def reconcile_spoken(self, text):
+            self.reconciled.append(text)
+
+    adapter = ReconcileAdapter()
+    mgr = RealtimeTextManager()
+    session = await mgr.create("reconcile-live", compiled_brain="You are a test agent.", adapter=adapter)
+    session.reconcile_spoken("Only this part was heard.")
+    await session.start()
+    assert adapter.reconciled == ["Only this part was heard."]
+    assert adapter.is_open()
+    await mgr.destroy("reconcile-live")
+
+
+@pytest.mark.asyncio
+async def test_openai_adapter_cancels_server_response_before_creating_next():
+    sent = []
+    adapter = OpenAIRealtimeTextAdapter(api_key="sk-test")
+
+    class Conn:
+        async def send(self, payload):
+            sent.append(payload)
+            if payload["type"] == "response.cancel":
+                adapter._normalize(
+                    {
+                        "type": "response.done",
+                        "response": {
+                            "id": "old-response",
+                            "status": "cancelled",
+                            "output": [],
+                        },
+                    }
+                )
+
+    adapter._conn = Conn()
+    adapter._closed = False
+    adapter._pump_task = asyncio.create_task(asyncio.Event().wait())
+    adapter._accepting = True
+    adapter._active_response_id = "old-response"
+    adapter._response_idle.clear()
+    try:
+        await adapter.start_response()
+    finally:
+        adapter._pump_task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await adapter._pump_task
+
+    assert [item["type"] for item in sent] == ["response.cancel", "response.create"]
+    assert not adapter._response_idle.is_set()
+
+
+@pytest.mark.asyncio
+async def test_openai_adapter_coalesces_concurrent_cancel_requests():
+    sent = []
+    adapter = OpenAIRealtimeTextAdapter(api_key="sk-test")
+
+    class Conn:
+        async def send(self, payload):
+            sent.append(payload)
+            if payload["type"] == "response.cancel":
+                await asyncio.sleep(0.01)
+                adapter._normalize(
+                    {
+                        "type": "response.done",
+                        "response": {
+                            "id": "old-response",
+                            "status": "cancelled",
+                            "output": [],
+                        },
+                    }
+                )
+
+    adapter._conn = Conn()
+    adapter._closed = False
+    adapter._pump_task = asyncio.create_task(asyncio.Event().wait())
+    adapter._accepting = True
+    adapter._active_response_id = "old-response"
+    adapter._response_idle.clear()
+    try:
+        await asyncio.gather(adapter.cancel_response(), adapter.cancel_response())
+    finally:
+        adapter._pump_task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await adapter._pump_task
+
+    assert [item["type"] for item in sent] == ["response.cancel"]
+    assert adapter._response_idle.is_set()
+
+
 def test_session_ready_is_not_a_queued_event():
     adapter = OpenAIRealtimeTextAdapter(api_key="sk-test")
     assert adapter._normalize({"type": "session.created"}) is None

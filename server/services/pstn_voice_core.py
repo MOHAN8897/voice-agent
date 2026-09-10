@@ -671,6 +671,19 @@ class PstnVoiceLoop:
         else:
             self._launch_turn(queued)
 
+    async def _wait_for_intro_playback(self, frames: int) -> None:
+        """Keep startup speech queued until the greeting leaves the playback path.
+
+        TTS completion only means synthesis/enqueue finished. In particular, the
+        final RTP frame can be in flight even when the local queue is empty.
+        A deliberate barge-in changes phase and retains its own handoff logic.
+        """
+        deadline = time.monotonic() + max(10.0, frames * 0.02 + 5.0)
+        while not self._closed and self._intro_phase and self._agent_audio_playing():
+            if time.monotonic() >= deadline:
+                raise TimeoutError("PSTN greeting playback did not drain")
+            await asyncio.sleep(0.02)
+
     async def _send_tts_text(self, session: Any, text: str) -> None:
         from server.services.spoken_numbers import prepare_spoken_reply
 
@@ -685,7 +698,14 @@ class PstnVoiceLoop:
                 provider = str(getattr(ctx.resolved_stack.tts, "provider", "") or "") or None
         except Exception:
             provider = None
-        expanded = prepare_spoken_reply(text or "", provider=provider)
+        # Intermediate streaming chunks share one upstream TTS context. Preserve
+        # their original punctuation so the provider does not reset prosody at an
+        # artificial full stop between token batches.
+        expanded = prepare_spoken_reply(
+            text or "",
+            provider=provider,
+            ensure_terminal=False,
+        )
         if not expanded.strip():
             return
         self._set_tts_active(True)
@@ -737,7 +757,7 @@ class PstnVoiceLoop:
 
             audio_archive.set_agent_sample_rate(self.call_id, self.sample_rate)
 
-        greeting = greeting_text
+        greeting = greeting_text if play_greeting else None
         if greeting is None and play_greeting and self.call_id:
             from server.call.call_context import get as get_ctx
 
@@ -777,12 +797,11 @@ class PstnVoiceLoop:
                 if self._wire_frames_out == before_frames and not self._closed:
                     # Retry a cold greeting once; another failure reaches bridge cleanup.
                     await self.speak(greeting)
-                    await self._note_opening_spoken(self._tts_heard_text or greeting)
-            else:
+            await self._wait_for_intro_playback(self._wire_frames_out - before_frames)
+            if not self._closed and self._intro_phase and self._wire_frames_out > before_frames:
+                await self._note_opening_spoken(self._tts_heard_text or greeting)
                 log_pstn("greeting.done", timer_key=self.call_id, call_id=self.call_id)
-                if not greeting_wire_frames and self._wire_frames_out > before_frames:
-                    await self._note_opening_spoken(self._tts_heard_text or greeting)
-            # Intro finished (or failed) — enable barge-in and flush any queued caller speech.
+            # Release queued startup speech only after playback, not after synthesis.
             self._end_intro_phase()
         elif not play_greeting or not self.call_id:
             log_pstn("greeting.skip", call_id=self.call_id, reason="disabled" if not play_greeting else "no_call")
@@ -808,8 +827,6 @@ class PstnVoiceLoop:
                 await self._emit_agent_wire(wire)
         finally:
             self._set_tts_active(False)
-        if self._tts_heard_text:
-            await self._note_opening_spoken(self._tts_heard_text)
 
     async def _note_opening_spoken(self, greeting: str) -> None:
         if not self.call_id or not greeting:
@@ -1474,6 +1491,10 @@ class PstnVoiceLoop:
                             accepted_end_call = bool(
                                 isinstance(end_call, dict) and end_call.get("should_end")
                             )
+                            # Flush as soon as model text is complete; resuming the
+                            # iterator may await ledger writes before it terminates.
+                            if tts_session.has_sent_text and not turn_cancelled and not self.emission_blocked():
+                                await tts_session.finish()
                     if (spoke_from_stream or tts_session.has_sent_text) and not turn_cancelled and not self.emission_blocked():
                         await tts_open
                         await tts_session.finish()
@@ -1496,17 +1517,19 @@ class PstnVoiceLoop:
                         generation_id=self.current_generation_id,
                         cancelled=turn_cancelled,
                     )
-                    if accepted_end_call and self.call_id:
+                    if accepted_end_call and self.call_id and not turn_cancelled and not self.emission_blocked():
                         from server.call.call_lifecycle_service import call_lifecycle_service
 
-                        await call_lifecycle_service.end(self.call_id, reason="agent_hangup")
+                        # Synthesis complete != playback complete. Keep the voice
+                        # generation valid until the carrier has drained the farewell.
                         self._pending_transcript = None
-                        await self._set_phase_async(PHASE_ENDED)
                         if self._on_remote_hangup:
                             try:
                                 await self._on_remote_hangup()
                             except Exception as exc:
                                 log_pstn("hangup.provider.failed", call_id=self.call_id, error=str(exc)[:200])
+                        await self._set_phase_async(PHASE_ENDED)
+                        await call_lifecycle_service.end(self.call_id, reason="agent_hangup")
                         return
                 finally:
                     self._set_tts_active(False)
