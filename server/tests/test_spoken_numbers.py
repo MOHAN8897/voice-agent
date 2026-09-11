@@ -86,6 +86,21 @@ def test_opening_line_offers_help():
     assert "may i know your name" not in line.lower()
 
 
+def test_opening_line_includes_call_purpose_with_company():
+    from server.prompts.agent_voice_rules import opening_line_for
+
+    line = opening_line_for(
+        "en-IN",
+        agent_name="Priya",
+        company_name="Acme Realty",
+        work_scope="our new plots near Hyderabad",
+    )
+    assert "Priya" in line
+    assert "Acme Realty" in line
+    assert "plots" in line.lower()
+    assert "help" in line.lower()
+
+
 def test_default_greeting_offers_help():
     from server.services.pstn_text_chunker import extract_opening_greeting
 

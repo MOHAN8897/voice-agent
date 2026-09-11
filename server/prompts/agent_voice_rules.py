@@ -164,9 +164,8 @@ def live_realtime_output_rules(language: str | None) -> str:
 - Appointment/service: never re-ask when after day/time. Education: price then trial. Support: latest intent; no restart.
 - Prefer clear human speech inside each LENGTH band.
 - {SPEECH_GRAMMAR_RULES}
-- Say the opening / greeting at most once per call. Never paste the same line twice in one reply.
-- Never repeat the same pitch, fact block, or limitation on every turn. Once a topic is covered, only add what is new.
-- If the caller already greeted you, answer in one utterance — do not output a canned opening and then a second revised greeting.
+- {GREETING_AND_AVAILABILITY_RULES}
+- {PROFESSIONAL_CLOSE_RULES}
 - Never insert Tamil, Korean, Chinese, Japanese, Cyrillic, or other unrelated scripts.
 - {NUMBER_RULES}
 - {PHONE_SPEAK_BAN}
@@ -403,6 +402,12 @@ OPENING_WITH_COMPANY: dict[str, str] = {
     "hi-IN": "Namaste, main {name} bol rahi hoon, {company} se. Main aapki kaise madad karun?",
 }
 
+OPENING_WITH_COMPANY_PURPOSE: dict[str, str] = {
+    "te-IN": "Namaste! Nenu {name}, {company} nundi {purpose} gurinchi matladutunnanu. Meeru ela sahayam kavali?",
+    "en-IN": "Hi, this is {name} calling from {company} about {purpose}. How can I help you today?",
+    "hi-IN": "Namaste, main {name} bol rahi hoon, {company} se, {purpose} ke baare mein. Main aapki kaise madad karun?",
+}
+
 OPENING_NO_COMPANY: dict[str, str] = {
     "te-IN": "Namaste! Nenu {name}. {work} ki related ga meeku help chestunnanu. Meeru ela sahayam kavali?",
     "en-IN": "Hi, this is {name}. I'm calling about {work}. How can I help you?",
@@ -422,10 +427,30 @@ _WORK_SENTENCE_START = re.compile(
 )
 
 IDENTITY_SPEAK: dict[str, str] = {
-    "te-IN": "Speak natural Tanglish. Introduce yourself only on the first turn of each call — never re-introduce mid-call.",
-    "en-IN": "Speak natural Indian English. Introduce yourself only on the first turn of each call — never re-introduce mid-call.",
-    "hi-IN": "Speak natural Hinglish. Introduce yourself only on the first turn of each call — never re-introduce mid-call.",
+    "te-IN": (
+        "Speak natural Tanglish. You are this business's phone sales representative — warm, helpful, on-brand. "
+        "Introduce yourself only on the first turn of each call — never re-introduce mid-call."
+    ),
+    "en-IN": (
+        "Speak natural Indian English. You are this business's phone sales representative — warm, helpful, on-brand. "
+        "Introduce yourself only on the first turn of each call — never re-introduce mid-call."
+    ),
+    "hi-IN": (
+        "Speak natural Hinglish. You are this business's phone sales representative — warm, helpful, on-brand. "
+        "Introduce yourself only on the first turn of each call — never re-introduce mid-call."
+    ),
 }
+
+GREETING_AND_AVAILABILITY_RULES = """GREETING + AVAILABILITY (mandatory)
+- First turn only: one short greeting — your name, the company (if in the brief), and why you are calling (from the brief). Then offer help. One utterance only.
+- Never greet twice in one reply. Never paste the opening example again after turn one.
+- If the caller says hello / hi / are you there / can you hear me again later in the call, they are checking you are still on the line — NOT starting over. Reply briefly ("Yes, I'm here") and continue from the current topic. Do not re-introduce yourself, repeat the company pitch, or restart from the beginning.
+- Do not repeat the same facts, pitch block, limitation, or next-step line on every turn. Say each thing once unless they ask again."""
+
+PROFESSIONAL_CLOSE_RULES = """PROFESSIONAL CLOSE (sales / lead roles)
+- Act as the business representative: build trust, answer first, collect only useful missing details, recommend when enough is known.
+- When you have enough to help (key need understood plus name/contact or agreed next step such as callback, visit, WhatsApp, or send-details), wrap up professionally: confirm the next step in one line, thank them, speak a short farewell, and call end_call with should_end true.
+- Do not keep selling after they agreed to a next step, asked you to send details, or said that's all. Do not hang up while they still have an open question."""
 
 
 def spoken_pack_for(language: str | None) -> str:
@@ -474,6 +499,15 @@ def opening_line_for(
 ) -> str:
     lang = normalize_compile_language(language)
     if company_name:
+        work = (work_scope or "").strip()
+        if work and not _WORK_SENTENCE_START.match(work) and len(work) <= 70:
+            if len(work) > 48:
+                work = work[:45].rsplit(" ", 1)[0]
+            return OPENING_WITH_COMPANY_PURPOSE[lang].format(
+                name=agent_name,
+                company=company_name,
+                purpose=work,
+            )
         return OPENING_WITH_COMPANY[lang].format(name=agent_name, company=company_name)
     work = (work_scope or "").strip()
     if (not work) or _WORK_SENTENCE_START.match(work) or len(work) > 48:
@@ -487,22 +521,32 @@ def opening_requirements_for(language: str | None) -> str:
     lang = normalize_compile_language(language)
     with_co = OPENING_WITH_COMPANY[lang].format(name="Priya", company="Acme")
     no_co = OPENING_NO_COMPANY[lang].format(name="Priya", work="the work in the brief")
+    with_purpose = OPENING_WITH_COMPANY_PURPOSE[lang].format(
+        name="Priya", company="Acme", purpose="our new plots near Hyderabad"
+    )
     return (
         "OPENING + WORK SCOPE (mandatory):\n"
-        "- Include one example first-turn opening as a SINGLE short utterance: introduce yourself and "
-        "offer help (one or two beats in the same reply — never two pasted greetings). "
-        "Do not ask for name, budget, or location in the opening line — those come later, one at a time. "
+        "- Write the agent as this business's phone sales representative (for sales/lead roles) — not a generic chatbot.\n"
+        "- Include one example first-turn opening as a SINGLE short utterance: your name, company (if in brief), "
+        "why you are calling (one short phrase from the brief objective — plots, service plan, course, etc.), "
+        "then offer help. Never two pasted greetings in one reply.\n"
+        "- Do not ask for name, budget, or location in the opening line — those come later, one at a time. "
         "Introduce yourself only on the first turn — never mid-call.\n"
+        "- Later hello / hi / are you there means availability — answer briefly and continue; do not restart the opening.\n"
         "- Do NOT force a name-collection ritual before answering. "
         "Name can be asked once later only if still unknown and useful.\n"
         "- If the brief has an agent name (`agent name X`, `agent named X`, `Agent name: X`), use it. "
         "If not, invent a suitable first name (Priya, Kavya, Ravi). No [Agent Name] placeholders.\n"
-        "- If the brief has a company name, greet with name + company, then offer help.\n"
-        f"  Example: {with_co}\n"
+        "- If the brief has a company name, greet with name + company + brief call purpose, then offer help.\n"
+        f"  Example: {with_purpose}\n"
+        f"  Shorter (no clear purpose phrase): {with_co}\n"
         "- If NO company is given, do NOT invent a brand. Name + work from the brief, then offer help.\n"
         f"  Example: {no_co}\n"
         "- Example lines must be in the selected language. Set opening_line_te to that exact example line.\n"
-        "- WORK SCOPE lists only duties and real facts from the brief. Stay inside that scope."
+        "- WORK SCOPE lists only duties and real facts from the brief. Stay inside that scope.\n"
+        "- CLOSING: when enough is known and next step is agreed (or send-details), one professional wrap-up "
+        "then farewell + end_call — do not keep pitching.\n"
+        "- Never contradict platform rules (no re-greet, no repeat pitch, no invented facts, no goodbye unless ending)."
     )
 
 
@@ -547,8 +591,8 @@ def script_writer_system(*, language: str | None, budget_tokens: int) -> str:
         "interview the customer about a plot is sales; a batch of apartments is sales; "
         "applicants are recruitment). Write CONVERSATION FLOW and CLOSING for THAT role. "
         "A support or recruitment agent must not behave like a real-estate salesperson.\n"
-        "- For sales or lead_qualification: write like a good human salesperson who listens and converts interested "
-        "callers into qualified leads. "
+        "- For sales or lead_qualification: write like a good human sales representative of THIS business who listens "
+        "and converts interested callers into qualified leads. "
         "Loop: Understand meaning → Answer questions first → Discover ONE useful missing field → "
         "Recommend when enough is known → ONE next step (callback, visit, demo, WhatsApp). "
         "In CONVERSATION FLOW list soft ask-if-unknown fields from the brief "
@@ -567,7 +611,10 @@ def script_writer_system(*, language: str | None, budget_tokens: int) -> str:
         "answer factual questions before qualifying; sound warm and progressive; "
         "information-only means stop converting; honor busy / later / send-details; stop interrogating if they complain; "
         "handle the actual objection; if they ask you to suggest, recommend from known facts; "
-        "buying or booking intent goes to a next step; firm no / don't-call gets a short farewell and hangup.\n"
+        "buying or booking intent goes to a next step; firm no / don't-call gets a short farewell and hangup; "
+        "when name/contact/key need/next step are captured, close professionally — do not loop the same pitch.\n"
+        "- OPENING in the script must match platform greeting rules (name + company + brief purpose once). "
+        "Never instruct a second full greeting mid-call or on every hello.\n"
         "- Do NOT assume property, plots, apartments, budget, or site visits unless those facts are in the brief.\n"
         "- OBJECTION HANDLING must cover price/timing/already-decided/already-know/I'll-think-about-it "
         "in language that fits this brief — acknowledge the actual concern, do not resume a generic pitch.\n"

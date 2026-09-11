@@ -35,7 +35,7 @@ def test_canonical_brevity_rule_has_all_tiers():
 
 
 def test_static_rules_embed_full_length_guardrail():
-    assert STATIC_OUTPUT_RULES_VERSION == "sr_v25"
+    assert STATIC_OUTPUT_RULES_VERSION == "sr_v26"
     assert LIVE_REPLY_BREVITY_RULE in STATIC_OUTPUT_RULES
     _assert_tiers(STATIC_OUTPUT_RULES)
 
