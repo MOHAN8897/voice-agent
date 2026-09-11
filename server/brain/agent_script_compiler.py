@@ -1,8 +1,11 @@
 """
-Agent script compiler — turn a short natural-language brief into a full calling script.
+Agent script compiler — turn a short natural-language brief into a cached brain.
 
-Sarvam-style agent creation: user describes the agent in plain language; GPT expands it
-into a structured telecaller script that becomes the cached brain for the session.
+Default path (v16): extract agent name + company from the brief and emit a minimal
+BUSINESS KNOWLEDGE script only. Platform voice, safety, hangup, and output rules are
+assembled separately in ``_assemble_brain``.
+
+Legacy path (``use_llm=True``): full sectional LLM script generation (disabled by default).
 """
 from __future__ import annotations
 
@@ -43,7 +46,7 @@ from server.prompts.agent_voice_rules import (
 from server.prompts.brain_prompt import SECTION_SAFETY
 from server.prompts.voice_defaults import style_for_language
 
-COMPILER_VERSION = "agent_script_v15"
+COMPILER_VERSION = "agent_script_v16"
 
 AGENT_SCRIPT_SCHEMA: dict[str, Any] = {
     "type": "object",
@@ -595,7 +598,29 @@ def ensure_script_identity_and_scope(
     )
 
 
-def _deterministic_script(
+def _simple_business_script(
+    brief: str,
+    *,
+    agent_name: str,
+    company_name: str,
+    work_scope: str,
+    opening_line: str,
+    language: str = "te-IN",
+) -> str:
+    """Minimal script: identity + business facts from the brief. No conversational policy trees."""
+    if company_name:
+        identity = f"You are {agent_name}, representing {company_name}."
+    else:
+        identity = f"You are {agent_name}."
+    business = (work_scope or brief or "").strip() or brief.strip()
+    return (
+        f"--- AGENT IDENTITY ---\n{identity}\n\n"
+        f"--- BUSINESS KNOWLEDGE ---\n{business}\n\n"
+        f"--- OPENING HINT ---\nExample opening: {opening_line}"
+    )
+
+
+def _legacy_deterministic_script(
     brief: str,
     *,
     agent_name: str,
@@ -605,7 +630,7 @@ def _deterministic_script(
     language: str = "te-IN",
     role: str = "other",
 ) -> str:
-    """Fallback when OpenAI is unavailable — still produces a usable script skeleton."""
+    """Legacy fallback — full sectional script when OpenAI is unavailable."""
     skeleton = (
         "--- VOICE STYLE ---\n"
         "Sound like a real person who works for this business. "
@@ -635,6 +660,9 @@ def _deterministic_script(
     )
 
 
+_deterministic_script = _legacy_deterministic_script
+
+
 async def _llm_generate_script(
     brief: str,
     *,
@@ -642,6 +670,7 @@ async def _llm_generate_script(
     budget_tokens: int,
     repair_hint: str = "",
 ) -> dict[str, Any] | None:
+    """Legacy — full sectional script via structured LLM. Disabled unless ``use_llm=True``."""
     from server.services.dev_runtime import openai_enabled
 
     if not openai_enabled():
@@ -852,10 +881,12 @@ async def compile_agent_from_brief(
     budget_tokens: int = 3500,
     previous_compiled: str | None = None,
     call_end_policy: dict[str, Any] | None = None,
-    use_llm: bool = True,
+    use_llm: bool = False,
 ) -> tuple[str, AgentScriptResult, int, int, int]:
     """
-    Expand a short agent brief into a full cached brain prompt.
+    Turn a short agent brief into a cached brain prompt.
+    Default: minimal business-knowledge script + platform rules in ``_assemble_brain``.
+    Set ``use_llm=True`` for legacy full sectional script generation.
     Returns (compiled_brain, result, raw_token_est, compiled_token_est, effective_budget_tokens).
     """
     raw = (brief or "").strip()
@@ -878,33 +909,16 @@ async def compile_agent_from_brief(
         call_end_policy=call_end_policy,
     )
     raw_tokens = estimate_tokens(cleaned)
-
-    llm_payload = (
-        await _llm_generate_script(cleaned, language=lang, budget_tokens=budget_tokens)
-        if use_llm
-        else None
-    )
-    if llm_payload:
-        script = str(llm_payload.get("agent_script", "")).strip()
-        model = http_openai_model(get_settings())
-        llm_name = str(llm_payload.get("agent_name") or "").strip()
-        llm_company = str(llm_payload.get("company_name") or "").strip()
-        role_summary = str(llm_payload.get("role_summary") or "").strip()
-        key_facts = list(llm_payload.get("key_facts") or [])[:8]
-        llm_role = str(llm_payload.get("role") or "").strip()
-    else:
-        script = ""
-        model = "deterministic_v1"
-        llm_name = ""
-        llm_company = ""
-        role_summary = ""
-        key_facts = []
-        llm_role = ""
+    llm_payload: dict[str, Any] | None = None
+    llm_name = ""
+    llm_company = ""
+    role_summary = ""
+    key_facts: list[str] = []
+    llm_role = ""
+    model = "simple_business_v1"
 
     agent_name, company_name, work_scope, opening_line = resolve_script_identity(
         cleaned,
-        llm_name=llm_name,
-        llm_company=llm_company,
         language=lang,
     )
     if not role_summary:
@@ -922,27 +936,30 @@ async def compile_agent_from_brief(
             role=role,
         )
 
-    if not script:
-        script = _deterministic_script(
-            cleaned,
-            agent_name=agent_name,
-            company_name=company_name,
-            work_scope=work_scope,
-            opening_line=opening_line,
-            language=lang,
-            role=role,
+    if use_llm:
+        llm_payload = await _llm_generate_script(
+            cleaned, language=lang, budget_tokens=budget_tokens
         )
-    else:
-        script = _bind_script(script)
-        # Reject compressed / incomplete LLM drafts — keep the rich sectional script
-        # (same quality as audit "Generated / bound script").
-        if not _script_has_full_sections(script):
-            from server.utils.logger import logger
-
-            logger.warning(
-                "[AGENT_SCRIPT] LLM draft incomplete/thin; using full sectional deterministic script"
+        if llm_payload:
+            script = str(llm_payload.get("agent_script") or "").strip()
+            model = http_openai_model(get_settings())
+            llm_name = str(llm_payload.get("agent_name") or "").strip()
+            llm_company = str(llm_payload.get("company_name") or "").strip()
+            role_summary = str(llm_payload.get("role_summary") or "").strip() or role_summary
+            key_facts = list(llm_payload.get("key_facts") or [])[:8]
+            llm_role = str(llm_payload.get("role") or "").strip()
+            role = infer_agent_role(cleaned, llm_role=llm_role)
+            agent_name, company_name, work_scope, opening_line = resolve_script_identity(
+                cleaned,
+                llm_name=llm_name,
+                llm_company=llm_company,
+                language=lang,
             )
-            script = _deterministic_script(
+        else:
+            script = ""
+
+        if not script:
+            script = _legacy_deterministic_script(
                 cleaned,
                 agent_name=agent_name,
                 company_name=company_name,
@@ -951,11 +968,40 @@ async def compile_agent_from_brief(
                 language=lang,
                 role=role,
             )
-            model = "deterministic_quality_floor_v1"
+            model = "legacy_deterministic_v1"
+        else:
+            script = _bind_script(script)
+            if not _script_has_full_sections(script):
+                from server.utils.logger import logger
 
-    validation_issues = validate_agent_script(
-        script, brief=cleaned, agent_name=agent_name
-    )
+                logger.warning(
+                    "[AGENT_SCRIPT] legacy LLM draft incomplete; using legacy deterministic script"
+                )
+                script = _legacy_deterministic_script(
+                    cleaned,
+                    agent_name=agent_name,
+                    company_name=company_name,
+                    work_scope=work_scope,
+                    opening_line=opening_line,
+                    language=lang,
+                    role=role,
+                )
+                model = "legacy_deterministic_quality_floor_v1"
+
+        validation_issues = validate_agent_script(
+            script, brief=cleaned, agent_name=agent_name
+        )
+    else:
+        script = _simple_business_script(
+            cleaned,
+            agent_name=agent_name,
+            company_name=company_name,
+            work_scope=work_scope,
+            opening_line=opening_line,
+            language=lang,
+        )
+        validation_issues = []
+
     if validation_issues and use_llm and llm_payload:
         from server.utils.logger import logger
 
@@ -987,14 +1033,14 @@ async def compile_agent_from_brief(
         if not _script_has_full_sections(script):
             validation_issues = list(validation_issues) + ["incomplete_script_sections"]
 
-    if validation_issues:
+    if validation_issues and use_llm:
         from server.utils.logger import logger
 
         logger.warning(
-            f"[AGENT_SCRIPT] validation fallback to deterministic: "
+            f"[AGENT_SCRIPT] legacy validation fallback: "
             f"{'; '.join(validation_issues)[:240]}"
         )
-        script = _deterministic_script(
+        script = _legacy_deterministic_script(
             cleaned,
             agent_name=agent_name,
             company_name=company_name,
@@ -1003,7 +1049,7 @@ async def compile_agent_from_brief(
             language=lang,
             role=role,
         )
-        model = "deterministic_validation_fallback_v1"
+        model = "legacy_deterministic_validation_fallback_v1"
 
     script, compiled = _ensure_cache_floor(
         script=script,
@@ -1016,14 +1062,13 @@ async def compile_agent_from_brief(
         # Generated scripts can exceed their requested target. Agent creation
         # must remain deterministic instead of returning 400 and leaving the
         # caller on a stale previously-published brain.
-        script = _deterministic_script(
+        script = _simple_business_script(
             cleaned,
             agent_name=agent_name,
             company_name=company_name,
             work_scope=work_scope,
             opening_line=opening_line,
             language=lang,
-            role=role,
         )
         script, compiled = _ensure_cache_floor(
             script=script,
@@ -1032,7 +1077,7 @@ async def compile_agent_from_brief(
             call_end_policy=call_end_policy,
         )
         compiled_tokens = estimate_tokens(compiled)
-        model = "deterministic_budget_fallback_v1"
+        model = "simple_business_budget_fallback_v1"
     effective_budget = min(BUDGET_MAX_TOKENS, max(int(budget_tokens), compiled_tokens))
     validate_brain_prompt_budget(compiled, effective_budget)
 

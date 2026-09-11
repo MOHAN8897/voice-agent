@@ -242,7 +242,7 @@ async def take_prewarm_for_answer(
                     active=active,
                 )
                 await _destroy_realtime(bundle.realtime_key)
-                return None
+                bundle.realtime_key = None
         except Exception as exc:
             logger.warning("[PSTN] prewarm brain check failed: %s", str(exc)[:160])
     return bundle

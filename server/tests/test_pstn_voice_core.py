@@ -129,6 +129,29 @@ def test_resolve_stream_tts_tail_uses_full_text_when_no_stream_chunks():
     assert resolve_stream_tts_tail("", full, spoke_from_stream=False) == "Only done chunk."
 
 
+def test_extract_opening_greeting_from_opening_hint_section():
+    brain = (
+        "--- AGENT IDENTITY ---\nYou are Priya.\n\n"
+        "--- BUSINESS KNOWLEDGE ---\nSell plots.\n\n"
+        "--- OPENING HINT ---\n"
+        "Example opening: Hi, this is Priya. How can I help you?\n"
+        "Speak natural Tanglish. Introduce yourself only on the first turn.\n"
+    )
+    greet = extract_opening_greeting(brain, "en-IN") or ""
+    assert greet == "Hi, this is Priya. How can I help you?"
+    assert "Example" not in greet
+    assert "Speak natural" not in greet
+
+
+def test_extract_opening_greeting_strips_example_first_line_label():
+    brain = (
+        "--- OPENING HINT ---\n"
+        "Example first line: Hi, this is Priya. How can I help you?\n"
+    )
+    greet = extract_opening_greeting(brain, "en-IN") or ""
+    assert greet == "Hi, this is Priya. How can I help you?"
+
+
 def test_extract_opening_greeting_from_opening_line_te():
     brain = (
         "AGENT IDENTITY\nPriya\nOPENING\n"

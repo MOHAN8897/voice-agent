@@ -37,18 +37,19 @@ logger = logging.getLogger(__name__)
 _WIRE_SAMPLE_RATE = TELNYX_RTP_SAMPLE_RATE
 # Bounded playout buffer. Producer waits at HIGH, resumes below LOW — never drop speech.
 # Industry VoIP jitter target: 40–200 ms (2–10 frames @ 20 ms). See WebRTC/NetEQ guidance.
-MAX_AUDIO_QUEUE_FRAMES = 24
-QUEUE_HIGH_WATERMARK = 16
-QUEUE_LOW_WATERMARK = 6
+MAX_AUDIO_QUEUE_FRAMES = 28
+QUEUE_HIGH_WATERMARK = 18
+QUEUE_LOW_WATERMARK = 8
 QUEUE_FRAME_MS = 20
 # Adaptive playout: prime before first send, hold min depth during TTS bursts, PLC on gaps.
-PLAYOUT_PRIME_FRAMES = 10
-PLAYOUT_MIN_SEND_FRAMES = 5
-PLAYOUT_PRIME_WAIT_MAX_S = 0.60
-PLAYOUT_UNDERRUN_GRACE_S = 0.20
-PLAYOUT_BURST_GAP_GRACE_S = 0.16
-PLAYOUT_MIN_DEPTH_HOLD_S = 0.10
+PLAYOUT_PRIME_FRAMES = 12
+PLAYOUT_MIN_SEND_FRAMES = 6
+PLAYOUT_PRIME_WAIT_MAX_S = 0.75
+PLAYOUT_UNDERRUN_GRACE_S = 0.30
+PLAYOUT_BURST_GAP_GRACE_S = 0.28
+PLAYOUT_MIN_DEPTH_HOLD_S = 0.20
 PLAYOUT_IDLE_POLL_S = 0.04
+PLAYOUT_START_HEADROOM_S = 0.08
 active_telnyx_bridges: dict[str, "TelnyxPstnBridge"] = {}
 _admission_lock = asyncio.Lock()
 
@@ -128,6 +129,7 @@ class TelnyxPstnBridge:
         self._playback = None
         self._playout_primed = False
         self._last_out_frame_at = 0.0
+        self._last_outgoing_payload: bytes | None = None
         self._cleanup_done = False
         self._cleaned_voice_loop = False
         self._cleaned_out_task = False
@@ -723,7 +725,10 @@ class TelnyxPstnBridge:
         """Packet-loss concealment: keep 20 ms wire cadence during TTS inter-chunk gaps."""
         codec = self._negotiated_media.codec
         nbytes = self._negotiated_media.frame_bytes
-        if codec == "PCMU":
+        last = self._last_outgoing_payload
+        if last is not None and len(last) == nbytes:
+            payload = last
+        elif codec == "PCMU":
             payload = b"\xff" * nbytes
         elif codec == "PCMA":
             payload = b"\xd5" * nbytes
@@ -844,7 +849,7 @@ class TelnyxPstnBridge:
                 now = time.monotonic()
                 if next_send_at is None:
                     # Startup headroom after jitter-buffer prime absorbs first-frame jitter.
-                    next_send_at = now + 0.06
+                    next_send_at = now + PLAYOUT_START_HEADROOM_S
                 delay = next_send_at - now
                 if delay > 0:
                     while time.monotonic() < next_send_at:
@@ -865,6 +870,7 @@ class TelnyxPstnBridge:
                     await self.ws.send_text(message)
                     if self._voice is not None and hasattr(self._voice, "_promote_queued_tts_to_heard"):
                         self._voice._promote_queued_tts_to_heard()
+                self._last_outgoing_payload = chunk
                 self._last_out_frame_at = time.monotonic()
                 next_send_at = (next_send_at or time.monotonic()) + frame_period
                 self._media_frames_out += 1
@@ -1171,6 +1177,7 @@ class TelnyxPstnBridge:
         playback = getattr(self, "_playback", None)
         generation_id = generation_id or (playback.current_generation() if playback else None)
         self._playout_primed = False
+        self._last_outgoing_payload = None
         self._source_audio_buf.clear()
         self._outbound_pcm8k_buf.clear()
         self._outbound_l16_buf.clear()

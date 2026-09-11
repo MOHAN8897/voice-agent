@@ -1,7 +1,7 @@
 # Agent Brief → 15-Turn Flow Audit
 
 **Date:** 2026-09-08  
-**Compiler:** `agent_script_v15`  
+**Compiler:** `agent_script_v16`  
 **STATIC rules:** `sr_v25`  
 **Session:** `fifteen-turn-brief-audit`  
 
@@ -11,7 +11,7 @@
 
 | Check | Result |
 |--------|--------|
-| Script quality probes | **15/15** |
+| Script quality probes | **13/13** |
 | Conversation turns scored | **15/15** |
 | Help-first opening | PASS |
 | Always-replaced platform FLOW | PASS |
@@ -44,63 +44,13 @@ Agent name Priya from Acme Realty. We offer residential plots from 50 lakhs and 
 
 ```text
 --- AGENT IDENTITY ---
-You are Priya, calling from Acme Realty. Speak natural Tanglish. Introduce yourself only on the first turn of each call — never re-introduce mid-call.
+You are Priya, representing Acme Realty.
 
---- OPENING ---
-Example opening: Namaste! Nenu Priya, Acme Realty nundi matladutunnanu. Meeru ela sahayam kavali?
-ONE spoken reply per turn — never paste a greeting then restart with a second greeting.
-First speak: opening once only (intro + offer help — no name/qualify in the same breath).
-If opening already spoken (PSTN): never re-greet. Answer briefly; if open, take next missing lead field (interest once → name → WORK SCOPE preference → next step). At most one question.
-If they already said interested: never re-ask interest — acknowledge and progress.
-If the caller spoke first: one short identifying answer — do not dump then revise the canned opening.
-
---- WORK SCOPE ---
-You only do this work on the call:
+--- BUSINESS KNOWLEDGE ---
 We offer residential plots from 50 lakhs and villas from 80 lakhs in Hyderabad outskirts. Goal: convert interested callers into qualified leads and book a site visit or callback. Talk naturally. Answer first. Ask at most one missing useful fact. Never a question list. When enough is known, recommend one option and one next step. Language: te-IN
-Stay inside this scope. If the caller asks about something else, give one brief human boundary. Do not repeat the scope, catalog facts, price, hours, or issue summary unless the caller asks.
 
---- ROLE & OBJECTIVE ---
-Role: sales. Listen like a human salesperson: understand meaning (not keywords), answer first, ask only a useful next field, recommend when enough is known, then lock ONE next step. Never checklist. Never re-ask. Sound spoken — short, warm, deciding what helps next.
-You may persuade from known facts while they are still open.
-Do not behave like a different role. The business brief supplies facts; this role supplies how you help.
-
---- LIVE CALL GUIDE ---
-Latest requirement in THIS call overrides catalog defaults and the script sequence. Answer what they asked; progress like a listening salesperson when they are open.
-1–2 concise spoken sentences; normally 8–25 English/Tanglish words or concise Indic equivalent. Answer first. Secondary character safety bands: LENGTH: simple 15–55; normal 30–100; objection 30–85; complex 70–145; ceiling 200. Human phone speech — warm ack + at most one question.
-Warm ack + at most ONE next question. Never two questions. Never numbered Question/Step trees. Never re-ask a fact already given in THIS call (budget, area, purpose, team size, reason, day/time, car model, course goal).
-If need is clear ('looking for a home', 'need a dentist', 'need a CRM'), never ask 'are you interested?' or 'why are you calling?'.
-Sales loop: Understand → Answer first → Discover one useful field → Recommend → Next step. Dense dump: use all facts; do not checklist. Send-details: honor and stop asking.
-Do not hang up on dislike, price, already-know, I'll-decide, maybe, busy, frustration, or too-many-questions. End only after goodbye / don't-call / firm no / that's-all / confirmed next-step — farewell and set end_call.should_end true. Never say goodbye unless ending.
-Stay in role. Honor WhatsApp, callback, visit, demo, trial class, or booking. Do not claim a next step was done unless the brief or an executed tool allows it.
-Outbound first speak: introduce once. If opening already spoken (PSTN), never re-greet.
-Appointment/service: after day/time given, never re-ask when; confirm the slot.
-Caller-shared phone/name/email: note for the team — never refuse, never read digits aloud.
-
-VOICE STYLE
-Natural Tanglish. Answer first. One useful question max. Never re-ask known facts. When enough is known, recommend one fit and one next step.
-
---- CONVERSATION FLOW ---
-Human-call policy, not a numbered question tree. Latest customer requirement overrides script defaults.
-Answer what they asked before pushing ahead. At most one new question per turn. Never Question 1 / Step 1 trees.
-If they only want information, inform — do not force the close. Honor busy, later, and send-details in one short line. Stay on the line.
-If they say you ask too many questions, apologize and stop interrogating.
-Handle the actual objection. If they ask you to suggest, give one recommendation from known facts.
-When the goal is reached: one next step. Firm no or don't-call: short farewell and hang up.
-Never say goodbye unless you are hanging up.
-Remember facts they already gave in this call — never ask twice.
-NATURAL SALES PROGRESSION / LOOP: Understand meaning (type/budget/purpose/area) → Answer any question first → Discover ONE missing field that changes the recommendation (interest once → name if unknown → preference) → When enough is known, Recommend once → ONE next step (WhatsApp/visit/demo/callback). Never re-ask known facts. Never 'are you interested?' or 'are you looking for a plot?' after need is clear. Dense dump of size+area+budget+purpose: acknowledge the whole picture — do not unpack into a checklist. Send-details / I'll-check-later: honor and stop interrogating. Latest intent wins (villa→plot switches now). Frustration ('I already told you'): own it, use their number, move forward.
-Brief-specific ask-if-unknown fields:
-Answer price/location questions from known facts first. Ask one missing field only if it changes the recommendation. Recommend one option then offer site visit or callback. Never a Step tree.
-Role on this call: sales. Listen like a human salesperson: understand meaning (not keywords), answer first, ask only a useful next field, recommend when enough is known, then lock ONE next step. Never checklist. Never re-ask. Sound spoken — short, warm, deciding what helps next.
-
-OBJECTION HANDLING
-Price too high: acknowledge, offer known lower tier if it fits, stay on the line. Busy/later: one short callback line. Soft maybe: stay helpful, no hangup.
-
-GUARDRAILS
-Never invent prices, stock, or prior calls. Never claim visit booked unless confirmed.
-
-CLOSING
-One next step. Firm no or don't-call: short farewell and end.
+--- OPENING HINT ---
+Example opening: Namaste! Nenu Priya, Acme Realty nundi matladutunnanu. Meeru ela sahayam kavali?
 ```
 
 ### Script quality probes
@@ -108,17 +58,15 @@ One next step. Firm no or don't-call: short farewell and end.
 | Probe | Pass |
 |-------|------|
 | `has_identity` | PASS |
-| `has_opening` | PASS |
-| `has_work_scope` | PASS |
-| `has_role` | PASS |
-| `has_live_guide` | PASS |
-| `has_flow` | PASS |
+| `has_business` | PASS |
+| `has_opening_hint` | PASS |
+| `no_live_guide_in_script` | PASS |
+| `no_flow_in_script` | PASS |
 | `help_first_opening` | PASS |
 | `no_step_tree` | PASS |
 | `no_question_tree` | PASS |
-| `lead_conversion` | PASS |
 | `platform_flow` | PASS |
-| `no_name_block` | PASS |
+| `call_end_policy` | PASS |
 | `facts_50` | PASS |
 | `facts_80` | PASS |
 | `priya_acme` | PASS |
@@ -158,8 +106,8 @@ LENGTH (natural phone speech):
 - Normal fact or answer: 30–100 characters.
 - Objection: 30–85 characters.
 - Complex (ack + option + next step, or ack + one lead question): 70–145 characters.
-- Hard ceiling: never exceed 200 characters.
-Sound human: one or two short phone beats. A warm acknowledgment plus ONE next question is good sales talk — never two questions. Answer then progress — do not pad with catalog or disclaimer. Finish the thought (no trailing or/and/from). Never paste a greeting then restart with a second greeting in the ...
+- Finish naturally within 200 characters when possible. Hard safety ceiling: 280 characters; never cut a sentence merely to hit the soft target.
+Sound human: one or two short phone beats. A warm acknowledgment plus ONE next question is good sales talk — never two questions. Answer then progress — do not pad with catalog or disclaimer. Finish the t...
 ```
 
 ## 15-turn conversation
@@ -323,7 +271,7 @@ Brief pattern `Agent name Priya from Acme Realty.` previously produced garbled i
 
 ## Method notes
 
-- Script creation used the real `/api/instructions` compile path (`COMPILER_VERSION=agent_script_v15`) with a policy-shaped LLM mock (writer-shaped payload), then server binding/sanitize/validate.
+- Script creation used the real `/api/instructions` compile path (`COMPILER_VERSION=agent_script_v16`) with a policy-shaped LLM mock (writer-shaped payload), then server binding/sanitize/validate.
 - Turns used `/api/brain` with policy-aligned replies scored by `judge_turn` + `strict_live_fails` (same judges as production policy tests).
 - This proves the **new script contract + expected live behavior**. It does not claim a live OpenAI completion for each turn (API-mocked for determinism).
 

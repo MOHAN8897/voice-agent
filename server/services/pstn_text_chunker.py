@@ -92,8 +92,12 @@ _OPENING_POLICY_HINT = re.compile(
     re.IGNORECASE,
 )
 _EXAMPLE_OPENING = re.compile(
-    r"^(?:example\s+opening|opening(?:_line(?:_te)?)?)\s*:\s*[\"']?(.+?)[\"']?\s*$",
+    r"^(?:example\s+(?:opening|first\s+line)|opening(?:_line(?:_te)?)?)\s*:\s*[\"']?(.+?)[\"']?\s*$",
     re.IGNORECASE,
+)
+_OPENING_SECTION = re.compile(
+    r"(?:^|\n)---\s*OPENING(?:\s+HINT)?\s*---\s*\n(.*?)(?=\n---\s|\Z)",
+    re.IGNORECASE | re.DOTALL,
 )
 
 
@@ -104,7 +108,17 @@ def _spoken_opening_candidate(line: str) -> str | None:
         return None
     upper = raw.upper()
     if upper.startswith(
-        ("VOICE", "CONVERSATION", "GUARD", "SAY THIS", "WORK SCOPE", "--- ", "LIVE CALL")
+        (
+            "VOICE",
+            "CONVERSATION",
+            "GUARD",
+            "SAY THIS",
+            "WORK SCOPE",
+            "--- ",
+            "LIVE CALL",
+            "SPEAK NATURAL",
+            "INTRODUCE YOURSELF",
+        )
     ):
         return None
     m = _EXAMPLE_OPENING.match(raw)
@@ -138,7 +152,13 @@ def extract_opening_greeting(compiled_brain: str | None, language: str = "te-IN"
         line = _spoken_opening_candidate(quoted.group(1))
         if line:
             return line
-    for header in ("--- OPENING ---", "OPENING", "## OPENING"):
+    section = _OPENING_SECTION.search(text)
+    if section:
+        for line in section.group(1).splitlines():
+            candidate = _spoken_opening_candidate(line)
+            if candidate:
+                return candidate
+    for header in ("--- OPENING ---", "## OPENING"):
         idx = text.upper().find(header.upper())
         if idx >= 0:
             chunk = text[idx + len(header) : idx + len(header) + 600]

@@ -192,7 +192,13 @@ class RealtimeTextSession:
             self._history.append(("assistant", heard.strip()))
         self._needs_history_restore = True
 
-    async def run_turn(self, transcript: str, *, language: str | None = None) -> AsyncIterator[dict[str, Any]]:
+    async def run_turn(
+        self,
+        transcript: str,
+        *,
+        language: str | None = None,
+        turn_hint: str | None = None,
+    ) -> AsyncIterator[dict[str, Any]]:
         lang = language or self.language
         async with self._turn_lock:
             if not self._ready or not _adapter_is_open(self._adapter) or self._needs_history_restore:
@@ -213,7 +219,11 @@ class RealtimeTextSession:
                 cancelled = False
                 try:
                     if attempt == 0:
-                        await self._adapter.send_user_text(transcript)
+                        user_msg = transcript
+                        hint = (turn_hint or "").strip()
+                        if hint:
+                            user_msg = f"{hint}\n\nCaller said:\n{transcript}"
+                        await self._adapter.send_user_text(user_msg)
                     await self._adapter.start_response()
                     async for event in self._collect_until_done():
                         kind = event.get("type")

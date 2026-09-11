@@ -297,7 +297,7 @@ async def test_compile_falls_back_when_llm_invents_price():
         )
     # This incomplete draft is rejected by the sectional quality gate before
     # factual validation. The invented-price assertion below remains required.
-    assert result.optimizer_model == "deterministic_quality_floor_v1"
+    assert result.optimizer_model == "legacy_deterministic_quality_floor_v1"
     assert "95" not in result.agent_script
     assert "LIVE CALL GUIDE" in result.agent_script
     assert "STATIC OUTPUT RULES" in compiled or "Turn priority" in compiled

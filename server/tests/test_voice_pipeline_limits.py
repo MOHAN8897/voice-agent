@@ -6,6 +6,7 @@ from server.services.voice_pipeline_limits import (
     LiveReplyStreamCap,
     clamp_live_spoken_reply,
     collapse_repeated_spoken_reply,
+    spoken_delta_after_collapse,
 )
 
 
@@ -124,3 +125,21 @@ def test_incomplete_spoken_crumbs():
 def test_finalize_drops_incomplete_crumb():
     assert finalize_live_spoken_text("Tell me more", "We.") == ""
     assert finalize_live_spoken_text("Tell me more", "fifty lak.") == ""
+
+
+def test_spoken_delta_after_collapse_skips_restart_prefix():
+    first = "Hi, this is Priya calling from Acme Realty. How can I help you today?"
+    restart = (
+        "Hi, this is Priya calling from Acme Realty. I'm doing well, thanks. "
+        "How can I help you today?"
+    )
+    delta, accum = spoken_delta_after_collapse(first, restart)
+    assert "doing well" in delta.lower()
+    assert accum.count("Priya") == 1
+
+
+def test_spoken_delta_after_collapse_exact_duplicate():
+    line = "We close at eight PM on weekdays."
+    delta, accum = spoken_delta_after_collapse(line, line)
+    assert delta == ""
+    assert accum == line

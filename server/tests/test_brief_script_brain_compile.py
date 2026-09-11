@@ -29,19 +29,13 @@ async def test_brief_compiles_script_and_brain(key: str, spec: dict):
     assert CACHE_MIN_TOKENS <= comp_t <= BUDGET_MAX_TOKENS, f"{key}: tokens {comp_t}"
     assert result.agent_name.strip(), f"{key}: empty agent name"
     assert LIVE_TURN_DISCIPLINE.strip() not in compiled
-    for needle in ("AGENT IDENTITY", "LIVE CALL GUIDE", "CONVERSATION FLOW", "ROLE & OBJECTIVE", "STATIC OUTPUT"):
+    for needle in ("AGENT IDENTITY", "BUSINESS KNOWLEDGE", "STATIC OUTPUT", "CALL END"):
         assert needle in compiled, f"{key}: missing {needle}"
     assert STATIC_OUTPUT_RULES_VERSION.startswith("sr_v")
     script = result.agent_script or ""
-    assert estimate_tokens(script) > 200
-    if role in ("sales", "lead_qualification"):
-        assert "NATURAL SALES" in compiled
-    if role == "appointment":
-        assert "APPOINTMENT FLOW" in compiled
-    if role == "education":
-        assert "EDUCATION FLOW" in compiled
-    if role == "support":
-        assert "SERVICE / SUPPORT FLOW" in compiled
+    assert "BUSINESS KNOWLEDGE" in script
+    assert "LIVE CALL GUIDE" not in script
+    assert "CONVERSATION FLOW" not in script
 
 
 def test_named_for_company_extraction_on_eval_briefs():

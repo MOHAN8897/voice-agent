@@ -97,6 +97,29 @@ LIVE_REPLY_BREVITY_COMPACT = (
 )
 
 
+def spoken_delta_after_collapse(prev: str, new_piece: str) -> tuple[str, str]:
+    """Return (delta_to_speak, collapsed_accum) after de-duplicating model restarts."""
+    piece = (new_piece or "").strip()
+    if not piece:
+        return "", (prev or "").strip()
+    proposed = f"{prev} {piece}".strip() if prev else piece
+    collapsed = collapse_repeated_spoken_reply(proposed)
+    if not collapsed:
+        return "", prev
+    prior = (prev or "").strip()
+    if not prior:
+        return collapsed, collapsed
+    if collapsed.startswith(prior):
+        delta = collapsed[len(prior) :].strip()
+        return delta, collapsed
+    if prior in collapsed:
+        idx = collapsed.find(prior)
+        delta = collapsed[idx + len(prior) :].strip()
+        if delta:
+            return delta, collapsed
+    return piece, collapsed
+
+
 def collapse_repeated_spoken_reply(text: str) -> str:
     """
     Drop model 'restart' doubles: canned opening then a second take.
@@ -252,13 +275,23 @@ class LiveReplyStreamCap:
         if not piece or self.exhausted:
             return ""
         combined = self._emitted + piece
-        # Only stop streaming on a greeting restart — not every collapse change mid-reply.
-        if len(self._emitted) >= 24 and _GREETING_START.search(self._emitted):
+        if len(combined) >= 40 and self._emitted:
             collapsed = collapse_repeated_spoken_reply(combined)
             if collapsed != combined:
+                if collapsed.startswith(self._emitted):
+                    out = collapsed[len(self._emitted) :]
+                elif self._emitted and self._emitted in collapsed:
+                    idx = collapsed.find(self._emitted)
+                    out = collapsed[idx + len(self._emitted) :].lstrip()
+                else:
+                    # Hard restart — stop streaming; finalize() returns the collapsed reply.
+                    self._emitted = clamp_live_spoken_reply(collapsed, max_chars=self.max_chars)
+                    self._suppress = True
+                    return ""
                 self._emitted = clamp_live_spoken_reply(collapsed, max_chars=self.max_chars)
-                self._suppress = True
-                return ""
+                if len(self._emitted) >= self.max_chars:
+                    self._suppress = True
+                return out
         if len(combined) <= self.max_chars:
             self._emitted = combined
             return piece

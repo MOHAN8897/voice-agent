@@ -177,6 +177,49 @@ class LiveTurnOrchestrator:
         projection = memory_projection_mod.build(snap, include_summary=not rolling) or ""
         return projection, rolling or ""
 
+    def _maybe_anti_repeat_hint(self, session_id: str) -> str | None:
+        from server.agent.conversation_manager import conversation_manager
+
+        if conversation_manager.get_completed_turns(session_id) < 1:
+            return None
+        last_assistant = ""
+        for msg in reversed(conversation_manager.get_history(session_id)):
+            if msg.get("role") == "assistant":
+                last_assistant = str(msg.get("content") or "").strip()
+                break
+        if len(last_assistant) < 24:
+            return None
+        return (
+            f"[Internal — you already said: \"{last_assistant[:180]}\". "
+            "Do NOT repeat the same facts, pitch, or wording about this topic. "
+            "Answer only what is new, or move to one useful next step.]"
+        )
+
+    def _maybe_slow_down_hint(
+        self,
+        transcript: str,
+        *,
+        language_code: str,
+        call_id: str | None,
+        ctx,
+    ) -> str | None:
+        from server.prompts.agent_voice_rules import slow_down_fallback_for
+        from server.services.user_turn_hints import (
+            build_slow_down_turn_hint,
+            should_nudge_slow_down,
+        )
+
+        if not should_nudge_slow_down(transcript):
+            return None
+        if ctx is not None and ctx.slow_down_nudged:
+            return None
+        if ctx is not None:
+            ctx.slow_down_nudged = True
+        return build_slow_down_turn_hint(
+            language_code,
+            slow_down_line=slow_down_fallback_for(language_code),
+        )
+
     def _maybe_build_live_input(
         self,
         *,
@@ -249,6 +292,23 @@ class LiveTurnOrchestrator:
             from server.realtime.manager import realtime_text_manager
 
             realtime = bool(call_id and realtime_text_manager.get(call_id))
+            turn_hints = [
+                h
+                for h in (
+                    self._maybe_anti_repeat_hint(session_id),
+                    self._maybe_slow_down_hint(
+                        transcript,
+                        language_code=language_code,
+                        call_id=call_id,
+                        ctx=ctx,
+                    ),
+                )
+                if h
+            ]
+            if turn_hints:
+                merged = "\n\n".join(turn_hints)
+                existing = (user_instructions or "").strip()
+                user_instructions = f"{merged}\n\n{existing}".strip() if existing else merged
             if realtime:
                 # The persistent Realtime session already owns the live conversation
                 # context. Disk/DB memory projections are post-turn work and must not
@@ -530,6 +590,7 @@ class LiveTurnOrchestrator:
             async for chunk in session.run_turn(
                 str(kwargs.get("transcript") or ""),
                 language=str(kwargs.get("language_code") or "te-IN"),
+                turn_hint=kwargs.get("user_instructions"),
             ):
                 yield chunk
             return

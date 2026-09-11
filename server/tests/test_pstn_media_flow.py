@@ -100,7 +100,7 @@ async def test_bounded_queue_backpressure_and_barge_in_clears_frames():
         current_output_codec="PCMU",
     )
     assert bridge._out_queue.maxsize == MAX_AUDIO_QUEUE_FRAMES
-    assert MAX_AUDIO_QUEUE_FRAMES <= 24
+    assert MAX_AUDIO_QUEUE_FRAMES <= 28
     for _ in range(QUEUE_HIGH_WATERMARK):
         await bridge._send_agent_wire(b"\xff" * 160)
     assert bridge._out_queue.qsize() == QUEUE_HIGH_WATERMARK

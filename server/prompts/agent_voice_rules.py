@@ -111,6 +111,12 @@ UNCLEAR_FALLBACK: dict[str, str] = {
     "hi-IN": "Sorry, clear nahi suna.",
 }
 
+SLOW_DOWN_FALLBACK: dict[str, str] = {
+    "te-IN": "Konchem slowly cheppandi, clear ga vinadaaniki.",
+    "en-IN": "Could you say that a bit more slowly?",
+    "hi-IN": "Kripya thoda dheere boliye, main clearly sun paun.",
+}
+
 LANGUAGE_MISMATCH_FALLBACK: dict[str, str] = {
     "te-IN": "Sorry, nenu Telugu lo matladutunnanu — dayachesi Telugu lo cheppandi.",
     "en-IN": "Sorry, I can only assist in English. Could you repeat that in English?",
@@ -140,12 +146,14 @@ def live_realtime_output_rules(language: str | None) -> str:
     lang = normalize_compile_language(language)
     mismatch = LANGUAGE_MISMATCH_FALLBACK[lang]
     unclear = UNCLEAR_FALLBACK[lang]
+    slow_down = SLOW_DOWN_FALLBACK[lang]
     phone_ask = PHONE_ASK_FALLBACK[lang]
     return f"""OUTPUT LANGUAGE RULES (mandatory — overrides caller language)
 - {LANGUAGE_LOCK[lang]}
 - Do NOT switch languages between sentences. Code-switching one English business word inside Telugu/Hindi is fine; whole sentences in another language are forbidden.
 - If the caller speaks a language you cannot follow: say once: "{mismatch}" — then wait. Do not answer in their language.
 - Garbled audio (not language change): "{unclear}" then continue.
+- Caller speaks at length very quickly in one breath and you cannot follow: "{slow_down}" once, then continue naturally. Never lecture or say they talk too much.
 - If the caller asks for OUR contact, office, or WhatsApp number: "{phone_ask}" — do not read any digits aloud.
 - If the caller GIVES their phone, name, or email: say it is noted for the team — never refuse to take it, never read digits back.
 - {HANGUP_JUDGMENT_RULES}
@@ -157,6 +165,7 @@ def live_realtime_output_rules(language: str | None) -> str:
 - Prefer clear human speech inside each LENGTH band.
 - {SPEECH_GRAMMAR_RULES}
 - Say the opening / greeting at most once per call. Never paste the same line twice in one reply.
+- Never repeat the same pitch, fact block, or limitation on every turn. Once a topic is covered, only add what is new.
 - If the caller already greeted you, answer in one utterance — do not output a canned opening and then a second revised greeting.
 - Never insert Tamil, Korean, Chinese, Japanese, Cyrillic, or other unrelated scripts.
 - {NUMBER_RULES}
@@ -444,6 +453,10 @@ def unclear_fallback_for(language: str | None) -> str:
     return UNCLEAR_FALLBACK[normalize_compile_language(language)]
 
 
+def slow_down_fallback_for(language: str | None) -> str:
+    return SLOW_DOWN_FALLBACK[normalize_compile_language(language)]
+
+
 def language_mismatch_fallback_for(language: str | None) -> str:
     return LANGUAGE_MISMATCH_FALLBACK[normalize_compile_language(language)]
 
@@ -494,6 +507,7 @@ def opening_requirements_for(language: str | None) -> str:
 
 
 def script_writer_system(*, language: str | None, budget_tokens: int) -> str:
+    """Legacy — full sectional script writer. Used only when ``compile_agent_from_brief(use_llm=True)``."""
     lang = normalize_compile_language(language)
     # budget_tokens is retained for callers; do NOT compress the calling script for token savings.
     _ = budget_tokens

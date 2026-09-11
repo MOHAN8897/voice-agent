@@ -124,6 +124,50 @@ async def test_take_prewarm_for_answer_fallback_id():
 
 
 @pytest.mark.asyncio
+async def test_stale_brain_keeps_buffered_greeting():
+    bundle = PstnPrewarmBundle(
+        provider="telnyx",
+        external_id="ctrl-stale",
+        realtime_key=prewarm_realtime_key("telnyx", "ctrl-stale"),
+        greeting_text="Hi, this is Priya.",
+        greeting_wire_frames=[b"\x00" * 640],
+        compiled_brain_version="session-v1",
+        agent_id="agent-1",
+    )
+    registry = PstnPrewarmRegistry()
+    task = asyncio.create_task(asyncio.sleep(60))
+    registry._entries["telnyx:ctrl-stale"] = type(
+        "E",
+        (),
+        {
+            "provider": "telnyx",
+            "external_id": "ctrl-stale",
+            "task": task,
+            "created_at": 0.0,
+            "bundle": bundle,
+            "error": None,
+        },
+    )()
+    destroy = AsyncMock()
+    with (
+        patch.object(pstn_prewarm_registry, "take", registry.take),
+        patch("server.services.pstn_prewarm._destroy_realtime", destroy),
+        patch(
+            "server.call.call_lifecycle_service.call_lifecycle_service._resolve_agent",
+            AsyncMock(return_value={"active_compiled_brain_version": "cb_new"}),
+        ),
+    ):
+        taken = await take_prewarm_for_answer("telnyx", "ctrl-stale")
+    assert taken is bundle
+    assert taken.greeting_wire_frames
+    assert taken.realtime_key is None
+    destroy.assert_awaited_once()
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+
+
+@pytest.mark.asyncio
 async def test_start_call_uses_buffered_greeting_not_speak():
     from server.services.pstn_voice_core import PstnVoiceLoop
 

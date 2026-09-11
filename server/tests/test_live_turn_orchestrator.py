@@ -126,7 +126,7 @@ async def test_realtime_first_delta_skips_memory_projection_io(monkeypatch):
     get_settings.cache_clear()
 
     class FakeRealtimeSession:
-        async def run_turn(self, _transcript, *, language):
+        async def run_turn(self, _transcript, *, language, turn_hint=None):
             yield {"delta": "Hello"}
             yield {
                 "done": True,

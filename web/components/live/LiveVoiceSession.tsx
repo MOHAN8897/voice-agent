@@ -4,6 +4,7 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useSta
 import { SkeuoButton } from "@/components/ui/skeuo/SkeuoButton";
 import { parseSseDataLines, wordCount } from "@/lib/early-tts";
 import { StreamingAudioPlayback } from "@/lib/voice/streaming-audio-playback";
+import { BackchannelController, type BackchannelLang } from "@/lib/voice/backchannel-controller";
 import { StreamingTtsClient } from "@/lib/voice/streaming-tts-client";
 import { TurnTtsPipeline } from "@/lib/voice/turn-tts-pipeline";
 import { isLikelyEcho, isLikelyEchoPartial } from "@/lib/echo-guard";
@@ -160,6 +161,7 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
   const startingRef = useRef(false);
   const intentionalStopRef = useRef(false);
   const partialRef = useRef("");
+  const backchannelRef = useRef(new BackchannelController());
   const turnCounterRef = useRef(0);
   const onTurnCompleteRef = useRef(onTurnComplete);
   onTurnCompleteRef.current = onTurnComplete;
@@ -1026,6 +1028,11 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
             setPartial(text);
           }
           trace("stt", `partial ${text.slice(0, 48)}`);
+          backchannelRef.current.onPartial(text, {
+            agentSpeaking: st.agentSpeaking,
+            brainStreaming: st.brainStreaming,
+            listening: listeningRef.current,
+          }, languageCode as BackchannelLang);
           st.words = wordCount(text);
           st.elapsedMs = thinkingSinceRef.current > 0 ? now - thinkingSinceRef.current : 0;
           const gate = gateConfigRef.current;
@@ -1086,6 +1093,7 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
           audioDurationSec ??
           (started ? Math.round(((Date.now() - started) / 1000) * 10) / 10 : lastSttAudioSecRef.current);
         setPartial("");
+        backchannelRef.current.onFinal();
         trace("stt", `final ${text.slice(0, 80)}`);
         handleSttFinal(text, { fromSpeechQueue: false });
         return;

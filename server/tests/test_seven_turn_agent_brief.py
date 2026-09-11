@@ -87,14 +87,10 @@ async def test_seven_turn_agent_brief_script_rules_and_conversation(client, caps
     sid = SESSION
     client.delete("/api/instructions", params={"sessionId": sid})
 
-    with patch(
-        "server.brain.agent_script_compiler._llm_generate_script",
-        new=AsyncMock(return_value=MOCK_SCRIPT),
-    ):
-        save = client.post(
-            "/api/instructions",
-            json={"sessionId": sid, "agentBrief": BRIEF, "language_code": "te-IN"},
-        )
+    save = client.post(
+        "/api/instructions",
+        json={"sessionId": sid, "agentBrief": BRIEF, "language_code": "te-IN"},
+    )
     assert save.status_code == 200, save.text
     save_j = save.json()
     agent_script = save_j.get("agentScript") or ""
@@ -102,7 +98,8 @@ async def test_seven_turn_agent_brief_script_rules_and_conversation(client, caps
 
     assert save_j.get("compiledVersion", 0) >= 1
     assert "Kavya" in agent_script
-    assert _script_has_voice_rules(agent_script), f"voice rules missing from script: {agent_script[:400]}"
+    assert "BUSINESS KNOWLEDGE" in agent_script
+    assert "LIVE CALL GUIDE" not in agent_script
 
     eff = client.get("/api/prompt/effective", params={"sessionId": sid, "transcript": "test"}).json()
     brain_used = eff.get("brainPrompt") or brain_full

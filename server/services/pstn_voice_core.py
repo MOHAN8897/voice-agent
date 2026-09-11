@@ -203,6 +203,10 @@ class PstnVoiceLoop:
         self._tts_heard_text = ""
         self._last_tts_text = ""  # alias of heard — kept for existing callers
         self._heard_sentences: list[str] = []
+        self._turn_tts_accum = ""
+        self._backchannel_playing = False
+        self._backchannel_task: asyncio.Task | None = None
+        self._backchannel_lock = asyncio.Lock()
         self._tts_started_at = 0.0
         self._partial_started_at = 0.0
         self._think_partial_started_at = 0.0
@@ -223,6 +227,9 @@ class PstnVoiceLoop:
 
         self._barge_runtime = runtime_settings.get(config_session_id or session_id)
         self._last_vad_voice_at = 0.0
+        from server.services.pstn_backchannel import PstnBackchannelController
+
+        self._backchannel = PstnBackchannelController(self)
 
     def emission_blocked(self) -> bool:
         """Strict invariant: no valid generation ⇒ no outbound agent audio."""
@@ -275,6 +282,7 @@ class PstnVoiceLoop:
         self._tts_heard_text = ""
         self._last_tts_text = ""
         self._heard_sentences = []
+        self._turn_tts_accum = ""
 
     def _set_phase(self, phase: str) -> None:
         # ENDED is terminal — never reopen the FSM after hangup (8.3).
@@ -299,6 +307,8 @@ class PstnVoiceLoop:
         return 0.0
 
     def _agent_audio_playing(self) -> bool:
+        if self._backchannel_playing:
+            return False
         if self._tts_active:
             return True
         if self.playback is not None and hasattr(self.playback, "is_active"):
@@ -685,8 +695,58 @@ class PstnVoiceLoop:
                 raise TimeoutError("PSTN greeting playback did not drain")
             await asyncio.sleep(0.02)
 
+    def _cancel_backchannel(self) -> None:
+        task = self._backchannel_task
+        gen = self.current_generation_id
+        if task and not task.done():
+            task.cancel()
+        if self.playback is not None and hasattr(self.playback, "invalidate_generation"):
+            try:
+                if gen and str(gen).startswith("bc-"):
+                    self.playback.invalidate_generation(gen)
+            except Exception:
+                pass
+        self._backchannel_playing = False
+
+    async def _play_backchannel(self, phrase: str) -> None:
+        """Short listening sound — no LLM turn, no phase change, no history."""
+        if not phrase or self._closed or self._turn_busy:
+            return
+        from server.services.pstn_turn_tts import PstnTurnTtsSession
+        from server.services.spoken_numbers import prepare_spoken_reply
+
+        async with self._backchannel_lock:
+            if self._backchannel_task and not self._backchannel_task.done():
+                return
+            self._backchannel_task = asyncio.current_task()
+            bc_gen = f"bc-{uuid.uuid4().hex[:12]}"
+            saved_gen = self.current_generation_id
+            self._backchannel_playing = True
+            self.current_generation_id = bc_gen
+            if self.playback is not None and hasattr(self.playback, "set_current_generation"):
+                self.playback.set_current_generation(bc_gen)
+            session = PstnTurnTtsSession(self)
+            try:
+                text = prepare_spoken_reply(phrase, ensure_terminal=True)
+                await session.open()
+                await session.send_text(text)
+                if not self.emission_blocked():
+                    await session.finish()
+            except asyncio.CancelledError:
+                raise
+            except Exception as exc:
+                log_pstn("backchannel.failed", call_id=self.call_id, error=str(exc)[:160])
+            finally:
+                self._backchannel_playing = False
+                self.current_generation_id = saved_gen
+                if self.playback is not None and hasattr(self.playback, "set_current_generation"):
+                    self.playback.set_current_generation(saved_gen)
+                await session.close()
+                self._backchannel_task = None
+
     async def _send_tts_text(self, session: Any, text: str) -> None:
         from server.services.spoken_numbers import prepare_spoken_reply
+        from server.services.voice_pipeline_limits import spoken_delta_after_collapse
 
         if self.emission_blocked():
             return
@@ -707,6 +767,7 @@ class PstnVoiceLoop:
             provider=provider,
             ensure_terminal=False,
         )
+        expanded, self._turn_tts_accum = spoken_delta_after_collapse(self._turn_tts_accum, expanded)
         if not expanded.strip():
             return
         wait = getattr(self.playback, "wait_for_capacity", None)
@@ -1057,6 +1118,7 @@ class PstnVoiceLoop:
                     text = (msg.get("text") or (msg.get("data") or {}).get("text") or "").strip()
                     if text:
                         self._last_user_partial_at = time.monotonic()
+                        self._backchannel.note_partial(text)
                         if self._awaiting_barge_final:
                             self._last_barge_partial = text
                     if text and self.call_id:
@@ -1088,6 +1150,8 @@ class PstnVoiceLoop:
                         await self._think_cancel(text)
                 elif ev == "transcript.final":
                     text = (msg.get("text") or (msg.get("data") or {}).get("text") or "").strip()
+                    self._backchannel.note_final()
+                    self._cancel_backchannel()
                     if text:
                         self._last_user_partial_at = 0.0
                         safe = text[:120].encode("ascii", "replace").decode("ascii")
@@ -1374,6 +1438,8 @@ class PstnVoiceLoop:
 
     def _launch_turn(self, text: str) -> None:
         self._cancel_listen_coalesce()
+        self._backchannel.reset()
+        self._cancel_backchannel()
         if self._turn_busy or self._phase == PHASE_ENDED:
             if text:
                 self._queue_user_transcript(text)

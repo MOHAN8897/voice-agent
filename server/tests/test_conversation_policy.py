@@ -101,14 +101,15 @@ async def test_thin_llm_script_uses_quality_floor(monkeypatch):
         ),
         language="en-IN",
         budget_tokens=6000,
+        use_llm=True,
     )
     assert "LIVE CALL GUIDE" in result.agent_script
     assert "OBJECTION HANDLING" in result.agent_script
     assert "Source facts and duties" in result.agent_script or "WORK SCOPE" in result.agent_script
     assert result.optimizer_model in {
-        "deterministic_quality_floor_v1",
-        "deterministic_validation_fallback_v1",
-        "deterministic_v1",
+        "legacy_deterministic_quality_floor_v1",
+        "legacy_deterministic_validation_fallback_v1",
+        "legacy_deterministic_v1",
     }
 
 
@@ -144,9 +145,10 @@ async def test_oversized_generated_script_falls_back_instead_of_failing(monkeypa
     compiled, result, *_ = await compiler.compile_agent_from_brief(
         brief="Answer City Library opening-hours questions. Agent name Nisha.",
         language="en-IN",
+        use_llm=True,
     )
-    assert result.optimizer_model == "deterministic_budget_fallback_v1"
-    assert "Source facts and duties" in result.agent_script
+    assert result.optimizer_model == "simple_business_budget_fallback_v1"
+    assert "BUSINESS KNOWLEDGE" in result.agent_script
     assert compiler.estimate_tokens(compiled) <= compiler.BUDGET_MAX_TOKENS
 
 

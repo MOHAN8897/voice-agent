@@ -120,17 +120,15 @@ def _script_quality(script: str, brain: str = "") -> dict[str, bool]:
     policy = (script + "\n" + brain).lower()
     return {
         "has_identity": "AGENT IDENTITY" in script,
-        "has_opening": "OPENING" in script,
-        "has_work_scope": "WORK SCOPE" in script,
-        "has_role": "ROLE & OBJECTIVE" in script,
-        "has_live_guide": "LIVE CALL GUIDE" in script,
-        "has_flow": "CONVERSATION FLOW" in script,
+        "has_business": "BUSINESS KNOWLEDGE" in script,
+        "has_opening_hint": "OPENING HINT" in script,
+        "no_live_guide_in_script": "LIVE CALL GUIDE" not in script,
+        "no_flow_in_script": "CONVERSATION FLOW" not in script,
         "help_first_opening": "ela sahayam" in lower or "how can i help" in lower or "offer help" in lower,
         "no_step_tree": not bool(re.search(r"(?:^|\n)\s*step\s*[1-9]\s*[:.)]", script, re.I)),
         "no_question_tree": not bool(re.search(r"(?:^|\n)\s*question\s*[1-9]\s*[:.)]", script, re.I)),
-        "lead_conversion": "lead conversion" in lower or "qualified lead" in lower,
         "platform_flow": "script is a guide" in policy and "never numbered question/step trees" in policy,
-        "no_name_block": "never block useful help on collecting a name" in policy,
+        "call_end_policy": "call end" in policy,
         "facts_50": "50" in script,
         "facts_80": "80" in script,
         "priya_acme": "Priya" in script and "Acme" in script,
@@ -147,14 +145,10 @@ async def test_fifteen_turn_agent_brief_flow_and_write_audit(client):
     sid = SESSION
     client.delete("/api/instructions", params={"sessionId": sid})
 
-    with patch(
-        "server.brain.agent_script_compiler._llm_generate_script",
-        new=AsyncMock(return_value=MOCK_SCRIPT),
-    ):
-        save = client.post(
-            "/api/instructions",
-            json={"sessionId": sid, "agentBrief": BRIEF, "language_code": "te-IN"},
-        )
+    save = client.post(
+        "/api/instructions",
+        json={"sessionId": sid, "agentBrief": BRIEF, "language_code": "te-IN"},
+    )
     assert save.status_code == 200, save.text
     save_j = save.json()
     agent_script = save_j.get("agentScript") or ""
@@ -165,7 +159,7 @@ async def test_fifteen_turn_agent_brief_flow_and_write_audit(client):
     assert validate_agent_script(agent_script, brief=BRIEF, agent_name="Priya") == []
     assert PHONE_CALL_POLICY_PTR in spoken_pack_for("te-IN")
     assert "Turn priority every reply:" not in spoken_pack_for("te-IN")
-    assert COMPILER_VERSION == "agent_script_v15"
+    assert COMPILER_VERSION == "agent_script_v16"
     assert STATIC_OUTPUT_RULES_VERSION == "sr_v25"
 
     eff = client.get("/api/prompt/effective", params={"sessionId": sid, "transcript": "test"}).json()
