@@ -163,6 +163,32 @@ def test_extract_opening_greeting_from_opening_line_te():
     assert "opening_line" not in (greet or "").lower()
 
 @pytest.mark.asyncio
+async def test_flush_stale_outbound_playback_invalidates_prior_generation():
+    from server.services.pstn_voice_core import PstnVoiceLoop
+
+    invalidated: list[str | None] = []
+    playback = SimpleNamespace(
+        current_generation=lambda: "old-gen",
+        is_active=lambda: True,
+        invalidate_generation=lambda gen: invalidated.append(gen),
+        clear=lambda: 7,
+        is_generation_valid=lambda gen: gen not in invalidated,
+        queued_ms=lambda: 140.0,
+    )
+    voice = PstnVoiceLoop(
+        session_id="flush",
+        call_id="call-1",
+        on_agent_wire=AsyncMock(),
+    )
+    voice.playback = playback
+    voice._on_barge = AsyncMock()
+    await voice._flush_stale_outbound_playback(reason="turn_start")
+    assert invalidated == ["old-gen"]
+    voice._on_barge.assert_awaited_once()
+    assert not playback.is_generation_valid("old-gen")
+
+
+@pytest.mark.asyncio
 async def test_tts_text_pacing_aborts_when_generation_is_cancelled():
     from server.services.pstn_voice_core import PstnVoiceLoop
 

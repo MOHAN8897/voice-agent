@@ -23,6 +23,7 @@ class FakeTtsSession:
         self.closed = False
         self.turn_ended = False
         self.interrupted = False
+        self.had_error = False
         self._chars_sent = 0
         self._closed = False
         self._awaiting_audio = False
@@ -42,6 +43,11 @@ class FakeTtsSession:
     async def prepare_for_turn(self) -> None:
         if not self._opened:
             await self.open()
+
+    async def synthesize_to_frames(self, text: str) -> list[bytes]:
+        await self.send_text(text)
+        await self.finish()
+        return [b"\x00" * 320]
 
     async def send_text(self, text: str) -> None:
         if self.first_send is None:

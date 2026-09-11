@@ -1,7 +1,6 @@
 """Telnyx media stream bridge — L16 RTP over WebSocket ↔ STT/Brain/TTS."""
 from __future__ import annotations
 
-import array
 import asyncio
 import base64
 import json
@@ -37,26 +36,13 @@ logger = logging.getLogger(__name__)
 
 # Telnyx L16 wire @ 16 kHz — matches Sarvam linear16 and avoids G.711 transcoding.
 _WIRE_SAMPLE_RATE = TELNYX_RTP_SAMPLE_RATE
-# Bounded playout buffer. Producer waits at HIGH, resumes below LOW — never drop speech.
-# Industry VoIP jitter target: 40–200 ms (2–10 frames @ 20 ms). See WebRTC/NetEQ guidance.
-MAX_AUDIO_QUEUE_FRAMES = 36
-QUEUE_HIGH_WATERMARK = 24
-QUEUE_LOW_WATERMARK = 12
+# TEST 5/6 playout: bounded queue + single 20 ms pacer in _out_worker (no PLC / no prime).
+MAX_AUDIO_QUEUE_FRAMES = 15
+QUEUE_HIGH_WATERMARK = 12
+QUEUE_LOW_WATERMARK = 6
 QUEUE_FRAME_MS = 20
-# Adaptive playout: prime before first send, hold min depth during TTS bursts, PLC on gaps.
-PLAYOUT_PRIME_FRAMES = 15
-PLAYOUT_MIN_SEND_FRAMES = 6
-PLAYOUT_PRIME_WAIT_MAX_S = 0.75
-PLAYOUT_UNDERRUN_GRACE_S = 0.40
-PLAYOUT_BURST_GAP_GRACE_S = 0.50
-PLAYOUT_MIN_DEPTH_HOLD_S = 0.20
-PLAYOUT_IDLE_POLL_S = 0.04
-PLAYOUT_START_HEADROOM_S = 0.08
-PLAYOUT_SOFT_UNDERRUN_GRACE_S = 0.50
-PLAYOUT_CONCEALMENT_MAX_FRAMES = 12
-PLAYOUT_PRODUCER_TARGET_DEPTH = 12
-PLAYOUT_PRODUCER_PACE_S = 0.02
-PLAYOUT_PLC_ATTENUATION = 0.85
+# Kept for metrics API compatibility; live PSTN path does not use concealment.
+PLAYOUT_CONCEALMENT_MAX_FRAMES = 0
 active_telnyx_bridges: dict[str, "TelnyxPstnBridge"] = {}
 _admission_lock = asyncio.Lock()
 
@@ -749,208 +735,22 @@ class TelnyxPstnBridge:
                     pass
         return True
 
-    def _should_use_concealment(self, *, in_playout: bool) -> bool:
-        """Keep 20 ms cadence without resetting the playout clock."""
-        if not in_playout:
-            return False
-        if self._tts_awaiting_audio() or self._tts_still_generating():
-            return True
-        if self._out_queue.qsize() > 0:
-            return True
-        if self._expect_more_playout_audio(in_playout=True):
-            return True
-        if self._concealment_streak < PLAYOUT_CONCEALMENT_MAX_FRAMES and self._last_out_frame_at > 0:
-            since_last = time.monotonic() - self._last_out_frame_at
-            if since_last < PLAYOUT_SOFT_UNDERRUN_GRACE_S:
-                return True
-        # Post-cap: hold clock with attenuated PLC until true end-of-speech.
-        if not self._playout_end_of_speech():
-            return True
-        return False
-
-    def _expect_more_playout_audio(self, *, in_playout: bool) -> bool:
-        """True during mid-utterance gaps between TTS WebSocket bursts."""
-        if not in_playout:
-            return False
-        if self._tts_awaiting_audio() or self._tts_still_generating():
-            return True
-        if self._out_queue.qsize() > 0:
-            return True
-        voice = self._voice
-        if voice is not None:
-            playing = getattr(voice, "_agent_audio_playing", None)
-            if callable(playing):
-                try:
-                    if playing():
-                        return True
-                except Exception:
-                    pass
-        if self._last_out_frame_at > 0:
-            since_last = time.monotonic() - self._last_out_frame_at
-            if since_last < PLAYOUT_BURST_GAP_GRACE_S:
-                return True
-        return False
-
-    async def _await_playout_prime(self) -> bool:
-        """Hold the pacer until a live TTS burst has refilled the jitter buffer."""
-        if self._playout_primed or self._closed:
-            return not self._closed
-        deadline = time.monotonic() + PLAYOUT_PRIME_WAIT_MAX_S
-        while not self._closed and time.monotonic() < deadline:
-            depth = self._out_queue.qsize()
-            if depth >= PLAYOUT_PRIME_FRAMES:
-                self._playout_primed = True
-                return True
-            if depth > 0 and not self._tts_still_generating():
-                self._playout_primed = True
-                return True
-            await asyncio.sleep(0.01)
-        if self._out_queue.qsize() > 0:
-            self._playout_primed = True
-            return True
-        return not self._closed
-
-    @staticmethod
-    def _attenuate_pcm16(payload: bytes, factor: float) -> bytes:
-        samples = array.array("h")
-        samples.frombytes(payload)
-        attenuated = array.array("h", (max(-32768, min(32767, int(s * factor))) for s in samples))
-        return attenuated.tobytes()
-
-    def _concealment_frame(self) -> OutboundFrame:
-        """Packet-loss concealment: keep 20 ms wire cadence during TTS inter-chunk gaps."""
-        codec = self._negotiated_media.codec
-        nbytes = self._negotiated_media.frame_bytes
-        last = self._last_outgoing_payload
-        factor = PLAYOUT_PLC_ATTENUATION ** min(self._concealment_streak, PLAYOUT_CONCEALMENT_MAX_FRAMES)
-        if last is not None and len(last) == nbytes:
-            if codec == "L16" and factor < 0.999:
-                payload = self._attenuate_pcm16(last, factor)
-            elif codec == "PCMU" and factor < 0.999:
-                pcm = mulaw_to_pcm16(last, 8000)
-                payload = pcm16_to_mulaw(self._attenuate_pcm16(pcm, factor), sample_rate=8000)
-            elif codec == "PCMA" and factor < 0.999:
-                pcm = alaw_to_pcm16(last, 8000)
-                payload = pcm16_to_alaw(self._attenuate_pcm16(pcm, factor), sample_rate=8000)
-            else:
-                payload = last
-        elif codec == "PCMU":
-            payload = b"\xff" * nbytes
-        elif codec == "PCMA":
-            payload = b"\xd5" * nbytes
-        else:
-            payload = b"\x00" * nbytes
-        playback = getattr(self, "_playback", None)
-        generation_id = playback.current_generation() if playback else None
-        turn_id = self._voice.current_turn_id if self._voice else None
-        return OutboundFrame(
-            payload=payload,
-            codec=codec,
-            turn_id=turn_id,
-            generation_id=generation_id,
-        )
-
-    async def _pace_outbound_enqueue(self) -> None:
-        """Smooth TTS bursts into steady playout depth (Pipecat/Twilio pacing pattern)."""
-        if not self._out_task or self._out_task.done():
-            return
-        while (
-            not self._closed
-            and self._out_queue.qsize() > PLAYOUT_PRODUCER_TARGET_DEPTH
-        ):
-            await asyncio.sleep(PLAYOUT_PRODUCER_PACE_S)
-
-    async def _hold_for_min_playout_depth(self, *, in_playout: bool) -> None:
-        """Keep a minimum jitter buffer during live TTS so the pacer does not drain to zero."""
-        if not in_playout or not (self._tts_still_generating() or self._tts_awaiting_audio()):
-            return
-        if self._out_queue.qsize() >= PLAYOUT_MIN_SEND_FRAMES:
-            return
-        deadline = time.monotonic() + PLAYOUT_MIN_DEPTH_HOLD_S
-        while (
-            not self._closed
-            and self._out_queue.qsize() < PLAYOUT_MIN_SEND_FRAMES
-            and time.monotonic() < deadline
-        ):
-            await asyncio.sleep(0.005)
-
-    async def _dequeue_outbound_frame(self, *, in_playout: bool) -> OutboundFrame | None:
-        """Dequeue with extra grace while upstream TTS is still synthesizing."""
-        deadline = time.monotonic() + (PLAYOUT_UNDERRUN_GRACE_S if in_playout else PLAYOUT_IDLE_POLL_S)
-        while not self._closed:
-            try:
-                return self._out_queue.get_nowait()
-            except asyncio.QueueEmpty:
-                pass
-            if self._expect_more_playout_audio(in_playout=in_playout):
-                deadline = max(deadline, time.monotonic() + 0.04)
-            if time.monotonic() >= deadline:
-                return None
-            await asyncio.sleep(0.01)
-        return None
-
     async def _out_worker(self) -> None:
-        """Send one RTP frame every 20ms with monotonic clock correction (no drift)."""
-        frame_period = 0.02
-        next_send_at: float | None = None
+        """Send one RTP frame every 20 ms — TEST 5/6 validation path (single pacer, no PLC)."""
         try:
             while not self._closed:
                 self._out_sending = False
-                if not self._playout_primed and next_send_at is None:
-                    if not await self._await_playout_prime():
-                        break
-                in_playout = next_send_at is not None
-                if in_playout:
-                    await self._hold_for_min_playout_depth(in_playout=True)
-                frame = await self._dequeue_outbound_frame(in_playout=in_playout)
-                if frame is None:
-                    if in_playout and self._should_use_concealment(in_playout=True):
-                        frame = self._concealment_frame()
-                        post_cap = self._concealment_streak >= PLAYOUT_CONCEALMENT_MAX_FRAMES
-                        if self._concealment_streak < PLAYOUT_CONCEALMENT_MAX_FRAMES:
-                            self._concealment_streak += 1
-                        elif post_cap:
-                            self._note_queue_metric("playout_hold_clock_frames", 1)
-                        self._note_queue_metric("playout_concealment_frames", 1)
-                    elif in_playout:
-                        self._note_queue_metric("playout_underrun_count", 1)
-                        self._concealment_streak = 0
-                        next_send_at = None
-                        self._playout_primed = False
-                        if self._voice is not None and hasattr(self._voice, "on_playback_drained"):
-                            self._voice.on_playback_drained()
-                        await self._signal_queue_space(force=True)
-                        continue
-                    else:
-                        self._concealment_streak = 0
-                        next_send_at = None
-                        self._playout_primed = False
-                        if self._voice is not None and hasattr(self._voice, "on_playback_drained"):
-                            self._voice.on_playback_drained()
-                        await self._signal_queue_space(force=True)
-                        continue
-                self._concealment_streak = 0
-                await self._signal_queue_space()
-                self._out_sending = True
-                chunk = frame.payload
+                try:
+                    frame = await asyncio.wait_for(self._out_queue.get(), timeout=0.25)
+                except asyncio.TimeoutError:
+                    continue
                 playback = getattr(self, "_playback", None)
+                chunk = frame.payload
                 if frame.generation_id and frame.generation_id in self._invalid_generations:
                     self._note_stale_discard()
-                    log_pstn(
-                        "DROP_STALE_GEN",
-                        control=self.call_control_id,
-                        old=frame.generation_id,
-                        current=self._voice.current_generation_id if self._voice else None,
-                    )
                     continue
                 if playback is not None and not playback.is_generation_valid(frame.generation_id):
                     self._note_stale_discard()
-                    log_pstn(
-                        "DROP_STALE_GEN",
-                        control=self.call_control_id,
-                        old=frame.generation_id,
-                        current=playback.current_generation(),
-                    )
                     continue
                 if frame.codec != self._negotiated_media.codec:
                     log_pstn(
@@ -970,21 +770,10 @@ class TelnyxPstnBridge:
                         expected=self._negotiated_media.frame_bytes,
                     )
                     continue
-                now = time.monotonic()
-                if next_send_at is None:
-                    # Startup headroom after jitter-buffer prime absorbs first-frame jitter.
-                    next_send_at = now + PLAYOUT_START_HEADROOM_S
-                delay = next_send_at - now
-                if delay > 0:
-                    while time.monotonic() < next_send_at:
-                        await asyncio.sleep(max(0.001, next_send_at - time.monotonic()))
-                elif delay < -frame_period:
-                    next_send_at = time.monotonic()
+                self._out_sending = True
                 encoded = base64.b64encode(chunk).decode("ascii")
                 message = json.dumps({"event": "media", "media": {"payload": encoded}})
                 async with self._ws_send_lock:
-                    # A barge can invalidate this frame during pacing or lock acquisition.
-                    # Recheck at the actual wire boundary, after every preceding await.
                     if self._closed or (
                         frame.generation_id in self._invalid_generations
                         or (playback is not None and not playback.is_generation_valid(frame.generation_id))
@@ -996,8 +785,8 @@ class TelnyxPstnBridge:
                         self._voice._promote_queued_tts_to_heard()
                 self._last_outgoing_payload = chunk
                 self._last_out_frame_at = time.monotonic()
-                next_send_at = (next_send_at or time.monotonic()) + frame_period
                 self._media_frames_out += 1
+                await self._signal_queue_space()
                 pstn_media_flow.emit(
                     self.call_control_id or self.ws_id,
                     "outbound_sent",
@@ -1039,6 +828,7 @@ class TelnyxPstnBridge:
                         frames_out=self._media_frames_out,
                         queue_qsize=self._out_queue.qsize(),
                     )
+                await asyncio.sleep(0.02)
         except asyncio.CancelledError:
             pass
         except Exception as exc:
@@ -1134,17 +924,25 @@ class TelnyxPstnBridge:
         turn_id = self._voice.current_turn_id if self._voice else None
         if generation_id != self._source_audio_generation:
             self._source_audio_buf.clear()
+            self._outbound_pcm8k_buf.clear()
+            self._outbound_l16_buf.clear()
+            self._outbound_l16_to_8k = None
+            self._outbound_8k_to_l16 = None
             self._source_audio_generation = generation_id
-        # Chunk boundaries are arbitrary. Pad only at TTS finish, never each callback.
-        self._source_audio_buf.extend(wire)
         source_frame_bytes = 640 if source_codec == "L16" else 160
-        complete = len(self._source_audio_buf) // source_frame_bytes * source_frame_bytes
-        wire = bytes(self._source_audio_buf[:complete])
-        del self._source_audio_buf[:complete]
+        if len(wire) == source_frame_bytes and not self._source_audio_buf:
+            framed_wire = wire
+        else:
+            self._source_audio_buf.extend(wire)
+            complete = len(self._source_audio_buf) // source_frame_bytes * source_frame_bytes
+            framed_wire = bytes(self._source_audio_buf[:complete])
+            del self._source_audio_buf[:complete]
+        if not framed_wire:
+            return
         if source_codec == "PCMU":
-            source_chunks = chunk_mulaw_frames(wire, sample_rate=8000)
+            source_chunks = chunk_mulaw_frames(framed_wire, sample_rate=8000)
         elif source_codec == "L16":
-            source_chunks = _chunk_l16_rtp(wire, _WIRE_SAMPLE_RATE)
+            source_chunks = _chunk_l16_rtp(framed_wire, _WIRE_SAMPLE_RATE)
         else:
             raise ValueError(f"unsupported TTS output codec {source_codec}")
 
@@ -1205,11 +1003,6 @@ class TelnyxPstnBridge:
             playback = getattr(self, "_playback", None)
             if self._generation_cancelled(generation_id, playback):
                 return
-            if not await self._wait_for_playout_capacity(generation_id):
-                return
-            playback = getattr(self, "_playback", None)
-            if self._generation_cancelled(generation_id, playback):
-                return
             frame = OutboundFrame(
                 payload=chunk,
                 codec=outbound_codec,
@@ -1220,15 +1013,19 @@ class TelnyxPstnBridge:
                 playback = getattr(self, "_playback", None)
                 if self._generation_cancelled(generation_id, playback):
                     return
+                if self._closed:
+                    return
                 try:
                     self._out_queue.put_nowait(frame)
                     self._track_queue_depth()
-                    await self._pace_outbound_enqueue()
                     break
                 except asyncio.QueueFull:
-                    # Watermark should keep us off maxsize. Wait — never drop normal speech.
-                    if not await self._wait_for_playout_capacity(generation_id):
+                    if self._generation_cancelled(generation_id, playback):
                         return
+                    if self._closed:
+                        return
+                    self._note_queue_metric("producer_backpressure_wait_count", 1)
+                    await asyncio.sleep(0.01)
             playback = getattr(self, "_playback", None)
             if self._generation_cancelled(generation_id, playback):
                 # Frame is already queued; the worker/barge path discards it as obsolete.

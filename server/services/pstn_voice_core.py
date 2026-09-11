@@ -217,6 +217,7 @@ class PstnVoiceLoop:
         self._coalesce_transcript: str | None = None
         self._last_user_partial_at = 0.0
         self._current_turn_transcript: str = ""
+        self._think_cancel_relaunch: str | None = None
         self._voice_turn_generation: str | None = None
         from server.services.pstn_archive_writer import PstnArchiveWriter
 
@@ -549,6 +550,31 @@ class PstnVoiceLoop:
             return False
         return (now - self._think_partial_started_at) >= PSTN_THINK_CANCEL_HOLD_S
 
+    def _should_think_continue_final(self, text: str) -> bool:
+        """STT final while THINKING: merge continuation into the in-flight turn."""
+        from server.services.transcript_gate import effective_word_count, is_substantive_transcript
+
+        if self._phase != PHASE_THINKING or not self._turn_busy or self._agent_audio_playing():
+            return False
+        cleaned = (text or "").strip()
+        if not cleaned:
+            return False
+        if _THINK_CANCEL_ACK_ONLY.match(cleaned):
+            return False
+        short_ok = bool(_SHORT_INTERRUPT.match(cleaned))
+        words = effective_word_count(cleaned)
+        if words < PSTN_THINK_CANCEL_MIN_WORDS and not short_ok:
+            return False
+        if not short_ok and not is_substantive_transcript(cleaned, after_barge=True):
+            return False
+        prior = (self._current_turn_transcript or "").strip().lower()
+        current = cleaned.lower()
+        if prior and current == prior:
+            return False
+        if prior and current in prior:
+            return False
+        return True
+
     def _merge_pending_transcript(self, *parts: str) -> str:
         """Merge STT fragments without dropping corrections (5.4).
 
@@ -578,7 +604,23 @@ class PstnVoiceLoop:
             merged = f"{merged} {cleaned}".strip()
         return merged[-PSTN_PENDING_TRANSCRIPT_MAX:]
 
-    async def _think_cancel(self, heard: str | None = None) -> None:
+    async def _prepare_realtime_think_cancel(self, merged: str) -> None:
+        if not self.call_id:
+            return
+        try:
+            from server.realtime.manager import realtime_text_manager
+
+            session = realtime_text_manager.get(self.call_id)
+            if session is not None and merged:
+                await session.prepare_think_cancel_retry(merged)
+            elif session is not None:
+                await session.cancel_response()
+            else:
+                await realtime_text_manager.cancel(self.call_id)
+        except Exception as exc:
+            log_pstn("THINK_CANCEL.llm_failed", call_id=self.call_id, error=str(exc)[:120])
+
+    async def _think_cancel(self, heard: str | None = None, *, immediate: bool = False) -> None:
         self._think_partial_started_at = 0.0
         cleaned = (heard or "").strip()
         # Keep the in-flight user utterance + continuation so recovery is not "Yeah yeah" alone.
@@ -601,17 +643,16 @@ class PstnVoiceLoop:
             turn_id=self.current_turn_id,
             generation_id=self.current_generation_id,
             fsm=self._phase,
+            immediate=immediate,
         )
-        if self.call_id:
-            async def _bg_cancel(cid: str) -> None:
-                try:
-                    from server.realtime.manager import realtime_text_manager
-
-                    await realtime_text_manager.cancel(cid)
-                except Exception as exc:
-                    log_pstn("THINK_CANCEL.llm_failed", call_id=cid, error=str(exc)[:120])
-
-            asyncio.create_task(_bg_cancel(self.call_id))
+        if self.call_id and merged:
+            if immediate:
+                await self._prepare_realtime_think_cancel(merged)
+            else:
+                asyncio.create_task(self._prepare_realtime_think_cancel(merged))
+        elif self.call_id:
+            asyncio.create_task(self._prepare_realtime_think_cancel(""))
+        self._think_cancel_relaunch = "immediate" if immediate else "coalesce"
         task = self._active_speak_task
         if task and task is not asyncio.current_task() and not task.done():
             task.cancel()
@@ -745,43 +786,32 @@ class PstnVoiceLoop:
                 await session.close()
                 self._backchannel_task = None
 
-    async def _send_tts_text(self, session: Any, text: str) -> None:
-        from server.services.spoken_numbers import prepare_spoken_reply
-        from server.services.voice_pipeline_limits import spoken_delta_after_collapse
-
-        if self.emission_blocked():
-            return
-        provider = None
+    def _tts_provider_name(self) -> str | None:
         try:
             from server.call.call_context import get as get_ctx
 
             ctx = get_ctx(self.call_id) if self.call_id else None
             if ctx and ctx.resolved_stack and getattr(ctx.resolved_stack, "tts", None):
-                provider = str(getattr(ctx.resolved_stack.tts, "provider", "") or "") or None
+                return str(getattr(ctx.resolved_stack.tts, "provider", "") or "") or None
         except Exception:
-            provider = None
-        # Intermediate streaming chunks share one upstream TTS context. Preserve
-        # their original punctuation so the provider does not reset prosody at an
-        # artificial full stop between token batches.
+            pass
+        return None
+
+    def _prepare_tts_chunk_text(self, text: str, *, ensure_terminal: bool = False) -> str:
+        from server.services.spoken_numbers import prepare_spoken_reply
+        from server.services.voice_pipeline_limits import spoken_delta_after_collapse
+
         expanded = prepare_spoken_reply(
             text or "",
-            provider=provider,
-            ensure_terminal=False,
+            provider=self._tts_provider_name(),
+            ensure_terminal=ensure_terminal,
         )
         expanded, self._turn_tts_accum = spoken_delta_after_collapse(self._turn_tts_accum, expanded)
-        if not expanded.strip():
+        return expanded.strip()
+
+    def _queue_tts_text_for_turn(self, expanded: str) -> None:
+        if not expanded:
             return
-        wait = getattr(self.playback, "wait_for_capacity", None)
-        if callable(wait):
-            # Pace TTS requests to real-time playout. Pausing the local WS reader
-            # does not stop the provider; don't ask it for the next phrase until
-            # the outbound queue has room.
-            if not await wait(self.current_generation_id):
-                return
-        if self.emission_blocked():
-            return
-        self._set_tts_active(True)
-        # Generated/queued only — heard state updates when audio actually emits.
         self._tts_generated_text = (self._tts_generated_text + " " + expanded).strip()[-800:]
         self._tts_queued_text = (self._tts_queued_text + " " + expanded).strip()[-800:]
         log_pstn(
@@ -803,6 +833,17 @@ class PstnVoiceLoop:
                 status="processing",
                 detail=expanded[:200],
             )
+
+    async def _send_tts_text(self, session: Any, text: str) -> None:
+        if self.emission_blocked():
+            return
+        expanded = self._prepare_tts_chunk_text(text, ensure_terminal=False)
+        if not expanded:
+            return
+        if self.emission_blocked():
+            return
+        self._set_tts_active(True)
+        self._queue_tts_text_for_turn(expanded)
         await session.send_text(expanded)
 
     def _get_call_tts_session(self) -> Any:
@@ -965,7 +1006,6 @@ class PstnVoiceLoop:
                 if self._closed or self.emission_blocked():
                     break
                 await self._emit_agent_wire(wire)
-                await asyncio.sleep(0.02)
         finally:
             self._set_tts_active(False)
 
@@ -1261,6 +1301,13 @@ class PstnVoiceLoop:
                             self._pending_transcript = None
                             if pending:
                                 self._launch_turn(pending)
+                    elif (
+                        self._phase == PHASE_THINKING
+                        and self._turn_busy
+                        and not self._agent_audio_playing()
+                        and self._should_think_continue_final(text)
+                    ):
+                        await self._think_cancel(text, immediate=True)
                     elif self._turn_busy or self._phase in (PHASE_THINKING, PHASE_SPEAKING, PHASE_INTERRUPTING):
                         self._queue_user_transcript(text)
                     elif self._agent_audio_playing():
@@ -1495,6 +1542,46 @@ class PstnVoiceLoop:
         elif self._stt_frames_in in (50, 200, 500):
             log_pstn("stt.audio.progress", call_id=self.call_id, frames_in=self._stt_frames_in)
 
+    async def _flush_stale_outbound_playback(self, *, reason: str) -> None:
+        """Drop prior-turn PSTN playout before starting a new spoken reply."""
+        playback = self.playback
+        old_gen = None
+        if playback is not None and hasattr(playback, "current_generation"):
+            old_gen = playback.current_generation()
+        old_gen = old_gen or self.current_generation_id
+        active = False
+        if playback is not None and hasattr(playback, "is_active"):
+            try:
+                active = bool(playback.is_active())
+            except Exception:
+                active = False
+        if not old_gen and not active:
+            return
+        if old_gen:
+            self._interrupted_generation = old_gen
+            if hasattr(playback, "invalidate_generation"):
+                playback.invalidate_generation(old_gen)
+        drained = 0
+        if playback is not None and hasattr(playback, "clear"):
+            try:
+                drained = int(playback.clear() or 0)
+            except Exception:
+                pass
+        if drained or active:
+            if self._on_barge:
+                try:
+                    await asyncio.wait_for(self._on_barge(), timeout=1.0)
+                except Exception as exc:
+                    log_pstn("playback.remote_clear.failed", call_id=self.call_id, error=str(exc)[:160])
+            log_pstn(
+                "playback.flush",
+                call_id=self.call_id,
+                reason=reason,
+                generation_id=old_gen,
+                frames=drained,
+                queue_ms=round(self._provider_queued_ms(), 1),
+            )
+
     def _launch_turn(self, text: str) -> None:
         self._cancel_listen_coalesce()
         self._backchannel.reset()
@@ -1540,6 +1627,9 @@ class PstnVoiceLoop:
         ) or (text or "").strip()
         text = self._current_turn_transcript
         self._pending_transcript = None
+        # Synthesis may finish before the carrier drains; flush stale playout so the
+        # new reply cannot overlap the tail of the previous answer.
+        await self._flush_stale_outbound_playback(reason="turn_start")
         self.current_turn_id = uuid.uuid4().hex[:12]
         self.current_generation_id = uuid.uuid4().hex[:12]
         self._interrupted_generation = None
@@ -1566,6 +1656,7 @@ class PstnVoiceLoop:
                 if control_task and not control_task.done():
                     await asyncio.shield(control_task)
             from server.call.live_turn_orchestrator import live_turn_orchestrator
+
             pending = ""
             spoke_from_stream = False
             accepted_end_call = False
@@ -1638,8 +1729,6 @@ class PstnVoiceLoop:
                             accepted_end_call = bool(
                                 isinstance(end_call, dict) and end_call.get("should_end")
                             )
-                            # Flush as soon as model text is complete; resuming the
-                            # iterator may await ledger writes before it terminates.
                             if tts_session.has_sent_text and not turn_cancelled and not self.emission_blocked():
                                 await tts_session.finish()
                     if (spoke_from_stream or tts_session.has_sent_text) and not turn_cancelled and not self.emission_blocked():
@@ -1652,7 +1741,6 @@ class PstnVoiceLoop:
                                 and not getattr(tts_session, "audio_emitted", True)
                             )
                         ):
-                            # Retry only after leaving _speak_lock; speak acquires it.
                             needs_tts_fallback = True
                     # Keep ownership through TTS cleanup. Releasing busy here lets
                     # a new turn start while this turn's finally clears its generation.
@@ -1727,8 +1815,12 @@ class PstnVoiceLoop:
                 # Barge still waiting on final — restore pending for the barge-final launcher.
                 if self._awaiting_barge_final or self._phase == PHASE_INTERRUPTING:
                     self._pending_transcript = pending
+                elif cancelled and self._think_cancel_relaunch == "immediate":
+                    self._think_cancel_relaunch = None
+                    self._launch_turn(pending)
                 elif cancelled:
-                    # Don't thrash: wait for a stable pause before re-asking the LLM.
+                    # Partial think-cancel: wait for a stable pause before re-asking the LLM.
+                    self._think_cancel_relaunch = None
                     self._arm_listen_coalesce(pending)
                 else:
                     self._launch_turn(pending)
@@ -1768,6 +1860,7 @@ class PstnVoiceLoop:
             return
         async with self._speak_lock:
             self._active_speak_task = asyncio.current_task()
+            await self._flush_stale_outbound_playback(reason="speak")
             self.current_generation_id = uuid.uuid4().hex[:12]
             self._interrupted_generation = None
             if self.playback is not None and hasattr(self.playback, "set_current_generation"):

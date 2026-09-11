@@ -209,6 +209,19 @@ async def test_listen_coalesce_delays_then_launches(monkeypatch):
     assert loop._coalesce_transcript is None
 
 
+def test_think_continue_final_during_thinking_phase():
+    loop = PstnVoiceLoop(session_id="s", call_id=None, on_agent_wire=lambda _: None)
+    from server.services.pstn_voice_core import PHASE_THINKING
+
+    loop._phase = PHASE_THINKING
+    loop._turn_busy = True
+    loop._tts_active = False
+    loop._current_turn_transcript = "What is the price"
+    assert loop._should_think_continue_final("and is parking included") is True
+    assert loop._should_think_continue_final("What is the price") is False
+    assert loop._should_think_continue_final("ok") is False
+
+
 @pytest.mark.asyncio
 async def test_think_cancel_merges_inflight_transcript():
     loop = PstnVoiceLoop(session_id="s", call_id=None, on_agent_wire=lambda _: None)

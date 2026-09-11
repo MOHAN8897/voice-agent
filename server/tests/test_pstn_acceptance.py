@@ -286,6 +286,7 @@ async def test_intro_playback_wait_does_not_reopen_ended_or_interrupted_call(mon
     voice = PstnVoiceLoop(session_id="intro-stop", call_id=None, on_agent_wire=AsyncMock(),
                           is_agent_audio_active=lambda: True)
     monkeypatch.setattr(voice, "open_stt", AsyncMock())
+    monkeypatch.setattr(voice, "_warm_tts_connection", AsyncMock())
     monkeypatch.setattr(voice, "speak", AsyncMock())
     launch = Mock()
     monkeypatch.setattr(voice, "_launch_turn", launch)
@@ -504,6 +505,11 @@ async def test_tts_failure_retry_does_not_reenter_speak_lock(monkeypatch):
     class BrokenTts(FakeTtsSession):
         had_error = True
         audio_emitted = False
+
+        async def synthesize_to_frames(self, text: str) -> list[bytes]:
+            await self.send_text(text)
+            await self.finish()
+            return []
     async def reply(**kwargs):
         yield {"done": True, "text": "I can help you find a plot."}
     monkeypatch.setattr(live_turn_orchestrator, "handle_user_turn_stream", reply)

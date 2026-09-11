@@ -93,6 +93,8 @@ class PstnTurnTtsSession:
         self._had_error = False
         self._bound_generation: str | None = None
         self._awaiting_audio = False
+        self._collecting_frames = False
+        self._collected_frames: list[bytes] = []
 
     @property
     def has_sent_text(self) -> bool:
@@ -293,6 +295,10 @@ class PstnTurnTtsSession:
         """Reset per-turn state while keeping the upstream WebSocket warm."""
         if self._closed or not self._opened:
             await self.open()
+        await self._prepare_for_chunk()
+
+    async def _prepare_for_chunk(self) -> None:
+        """Reset per-chunk synthesis state; keep the upstream WebSocket warm."""
         if self._reader_task and not self._reader_task.done():
             self._reader_task.cancel()
             try:
@@ -309,8 +315,29 @@ class PstnTurnTtsSession:
         self._interrupted = False
         self._had_error = False
         self._awaiting_audio = False
+        self._collecting_frames = False
+        self._collected_frames = []
+        self._pcm_resampler = None
         self._bound_generation = self._voice.current_generation_id
         self._reader_task = asyncio.create_task(self._reader_loop())
+
+    async def synthesize_to_frames(self, text: str) -> list[bytes]:
+        """One send_text + flush; collect wire frames without live Telnyx playout."""
+        if not text or self._closed or self._stale_generation():
+            return []
+        if not self._opened:
+            await self.open()
+        await self._prepare_for_chunk()
+        self._collecting_frames = True
+        self._collected_frames = []
+        try:
+            await self.send_text(text)
+            await self.finish()
+            if self._stale_generation() or self._had_error:
+                return []
+            return list(self._collected_frames)
+        finally:
+            self._collecting_frames = False
 
     async def finish(self) -> None:
         if self._closed or self._flushed or not self._tts:
@@ -472,6 +499,12 @@ class PstnTurnTtsSession:
             self._pcm_resampler = StreamingPcmResampler(from_rate, to_rate)
         return self._pcm_resampler
 
+    async def _emit_wire_frame(self, frame: bytes) -> None:
+        if self._collecting_frames:
+            self._collected_frames.append(frame)
+            return
+        await self._voice._emit_agent_wire(frame)
+
     async def _emit_audio_chunk(self, audio: bytes) -> None:
         voice = self._voice
         if self._stale_generation():
@@ -516,7 +549,7 @@ class PstnTurnTtsSession:
                 self._first_chunk = False
             if self._stale_generation():
                 return
-            await voice._emit_agent_wire(audio)
+            await self._emit_wire_frame(audio)
             return
         if not use_mulaw_wire and not use_mp3 and tts_rate != voice.sample_rate:
             resampler = self._ensure_resampler(tts_rate, voice.sample_rate)
@@ -559,7 +592,7 @@ class PstnTurnTtsSession:
                 )
                 log_tts("PSTN first audio", call_id=voice.call_id, bytes=len(chunk))
                 self._first_chunk = False
-            await voice._emit_agent_wire(chunk)
+            await self._emit_wire_frame(chunk)
 
     async def _flush_audio_tail(self) -> None:
         if self._stale_generation():
@@ -583,9 +616,9 @@ class PstnTurnTtsSession:
             for frame in chunk_mulaw_frames(tail, sample_rate=8000):
                 if self._stale_generation():
                     return
-                await voice._emit_agent_wire(frame)
+                await self._emit_wire_frame(frame)
         else:
             for frame in chunk_pcm16_frames(tail, sample_rate=voice.sample_rate):
                 if self._stale_generation():
                     return
-                await voice._emit_agent_wire(frame)
+                await self._emit_wire_frame(frame)

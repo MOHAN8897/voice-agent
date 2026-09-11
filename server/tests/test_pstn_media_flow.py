@@ -23,8 +23,6 @@ from server.services.pstn_media_flow import CallMediaConfig, PstnMediaFlowStore
 from server.services.telnyx_pstn_bridge import (
     MAX_AUDIO_QUEUE_FRAMES,
     OutboundFrame,
-    PLAYOUT_CONCEALMENT_MAX_FRAMES,
-    PLAYOUT_PRIME_FRAMES,
     QUEUE_HIGH_WATERMARK,
     QUEUE_LOW_WATERMARK,
     TelnyxPstnBridge,
@@ -103,9 +101,9 @@ async def test_bounded_queue_backpressure_and_barge_in_clears_frames():
     )
     assert bridge._out_queue.maxsize == MAX_AUDIO_QUEUE_FRAMES
     assert MAX_AUDIO_QUEUE_FRAMES <= 40
-    for _ in range(QUEUE_HIGH_WATERMARK):
+    for _ in range(MAX_AUDIO_QUEUE_FRAMES):
         await bridge._send_agent_wire(b"\xff" * 160)
-    assert bridge._out_queue.qsize() == QUEUE_HIGH_WATERMARK
+    assert bridge._out_queue.qsize() == MAX_AUDIO_QUEUE_FRAMES
     blocked = asyncio.create_task(bridge._send_agent_wire(b"\xff" * 160))
     await asyncio.sleep(0.05)
     assert not blocked.done()
@@ -114,7 +112,7 @@ async def test_bounded_queue_backpressure_and_barge_in_clears_frames():
     await blocked
     assert bridge._out_queue.qsize() == 0
     assert json.loads(ws.messages[-1]) == {"event": "clear"}
-    assert bridge._queue_metrics["barge_in_discarded_frames"] >= QUEUE_HIGH_WATERMARK
+    assert bridge._queue_metrics["barge_in_discarded_frames"] >= MAX_AUDIO_QUEUE_FRAMES
     assert bridge._queue_metrics["normal_speech_dropped_frames"] == 0
 
 
@@ -127,12 +125,12 @@ async def test_queue_backpressure_resumes_without_dropping_speech():
         current_generation_id="generation-1",
         current_output_codec="PCMU",
     )
-    for _ in range(QUEUE_HIGH_WATERMARK):
+    for _ in range(MAX_AUDIO_QUEUE_FRAMES):
         await bridge._send_agent_wire(b"\xff" * 160)
     blocked = asyncio.create_task(bridge._send_agent_wire(b"\xff" * 160))
     await asyncio.sleep(0.05)
     assert not blocked.done()
-    drain_n = QUEUE_HIGH_WATERMARK - QUEUE_LOW_WATERMARK + 1
+    drain_n = MAX_AUDIO_QUEUE_FRAMES - QUEUE_LOW_WATERMARK + 1
     for _ in range(drain_n):
         bridge._out_queue.get_nowait()
     await bridge._signal_queue_space()
@@ -152,7 +150,7 @@ async def test_hangup_unblocks_backpressure_wait_and_clears_queue():
         current_output_codec="PCMU",
         close=AsyncMock(),
     )
-    for _ in range(QUEUE_HIGH_WATERMARK):
+    for _ in range(MAX_AUDIO_QUEUE_FRAMES):
         await bridge._send_agent_wire(b"\xff" * 160)
     blocked = asyncio.create_task(bridge._send_agent_wire(b"\xff" * 160))
     await asyncio.sleep(0.05)
@@ -165,27 +163,14 @@ async def test_hangup_unblocks_backpressure_wait_and_clears_queue():
 
 
 @pytest.mark.asyncio
-async def test_playout_prime_waits_for_jitter_buffer_before_first_send():
+async def test_out_worker_sends_first_frame_without_prime_delay():
     ws = FakeWebSocket()
     bridge = TelnyxPstnBridge(ws)  # type: ignore[arg-type]
-    bridge._voice = SimpleNamespace(
-        current_turn_id="turn-1",
-        current_generation_id="generation-1",
-        current_output_codec="PCMU",
-        _tts_active=True,
-        _active_tts_session=SimpleNamespace(_closed=False),
-    )
     bridge._negotiated_media = CallMediaConfig(codec="PCMU")
-    for _ in range(PLAYOUT_PRIME_FRAMES - 1):
-        bridge._out_queue.put_nowait(
-            OutboundFrame(b"\xff" * 160, "PCMU", "turn-1", "generation-1")
-        )
-    worker = asyncio.create_task(bridge._out_worker())
-    await asyncio.sleep(0.08)
-    assert ws.messages == []
     bridge._out_queue.put_nowait(
         OutboundFrame(b"\xff" * 160, "PCMU", "turn-1", "generation-1")
     )
+    worker = asyncio.create_task(bridge._out_worker())
     for _ in range(40):
         if ws.messages:
             break
@@ -239,21 +224,13 @@ def test_turn_playout_metrics_report_per_turn_delta():
 
 
 @pytest.mark.asyncio
-async def test_concealment_holds_clock_past_cap_while_tts_active():
+async def test_out_worker_does_not_emit_without_queued_frames():
     ws = FakeWebSocket()
     bridge = TelnyxPstnBridge(ws)  # type: ignore[arg-type]
-    bridge.call_control_id = "hold-clock"
-    bridge._negotiated_media = CallMediaConfig(codec="L16", sample_rate=16000)
-    bridge._voice = SimpleNamespace(
-        current_turn_id="turn-1",
-        current_generation_id="generation-1",
-        current_output_codec="L16",
-        _tts_active=True,
-        _active_tts_session=SimpleNamespace(_closed=False, _awaiting_audio=True),
-    )
-    bridge._last_outgoing_payload = b"\x00\x10" * 320
-    bridge._last_out_frame_at = time.monotonic()
-    bridge._concealment_streak = PLAYOUT_CONCEALMENT_MAX_FRAMES
-    bridge._playout_primed = True
-    assert bridge._should_use_concealment(in_playout=True) is True
-    assert bridge._playout_end_of_speech() is False
+    bridge._negotiated_media = CallMediaConfig(codec="PCMU")
+    worker = asyncio.create_task(bridge._out_worker())
+    await asyncio.sleep(0.06)
+    bridge._closed = True
+    worker.cancel()
+    await worker
+    assert ws.messages == []

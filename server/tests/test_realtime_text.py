@@ -452,6 +452,19 @@ async def test_reconnects_after_adapter_close():
 
 
 @pytest.mark.asyncio
+async def test_prepare_think_cancel_retry_collapses_user_turn():
+    adapter = FakeRealtimeAdapter()
+    mgr = RealtimeTextManager(adapter_factory=lambda: adapter)
+    session = await mgr.create("think-merge", compiled_brain="You are a test agent.", adapter=adapter)
+    session._history.append(("user", "What is the price"))
+    await session.prepare_think_cancel_retry("What is the price and is parking included")
+    assert session._history == [("user", "What is the price and is parking included")]
+    assert session._skip_next_user_send is True
+    assert session._ready is False
+    await mgr.destroy("think-merge")
+
+
+@pytest.mark.asyncio
 async def test_note_spoken_records_assistant_item():
     adapter = FakeRealtimeAdapter()
     mgr = RealtimeTextManager()

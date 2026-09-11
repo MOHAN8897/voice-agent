@@ -73,6 +73,7 @@ class RealtimeTextSession:
         self._boot_task: asyncio.Task | None = None
         self._history: list[tuple[str, str]] = []
         self._needs_history_restore = False
+        self._skip_next_user_send = False
         self._collector_idle = asyncio.Event()
         self._collector_idle.set()
 
@@ -162,9 +163,10 @@ class RealtimeTextSession:
             for role, text in self._history:
                 sender = self._adapter.send_user_text if role == "user" else self._adapter.send_assistant_text
                 await sender(text)
-            self._needs_history_restore = False
-            self._ready = True
-            self._state = "idle"
+        self._needs_history_restore = False
+        self._ready = True
+        self._state = "idle"
+        self._skip_next_user_send = False
 
     async def note_spoken(self, text: str) -> None:
         """Record an already-played line (PSTN greeting) so the model does not repeat it."""
@@ -192,6 +194,32 @@ class RealtimeTextSession:
             self._history.append(("assistant", heard.strip()))
         self._needs_history_restore = True
 
+    async def prepare_think_cancel_retry(self, merged: str) -> None:
+        """Drop partial assistant output and collapse the in-flight user turn before retry."""
+        merged = (merged or "").strip()
+        if not merged:
+            return
+        if self._history and self._history[-1][0] == "assistant":
+            self._history.pop()
+        if self._history and self._history[-1][0] == "user":
+            self._history[-1] = ("user", merged)
+        else:
+            self._history.append(("user", merged))
+        self._needs_history_restore = True
+        self._skip_next_user_send = True
+        try:
+            await self.cancel_response()
+        except Exception:
+            pass
+        if _adapter_is_open(self._adapter):
+            try:
+                await self._adapter.close()
+            except Exception:
+                pass
+        self._ready = False
+        if self._state != "closed":
+            self._state = "idle"
+
     async def run_turn(
         self,
         transcript: str,
@@ -203,7 +231,9 @@ class RealtimeTextSession:
         async with self._turn_lock:
             if not self._ready or not _adapter_is_open(self._adapter) or self._needs_history_restore:
                 await self.start()
-            self._history.append(("user", transcript))
+            transcript = (transcript or "").strip()
+            if not (self._history and self._history[-1] == ("user", transcript)):
+                self._history.append(("user", transcript))
             # Keep the opening plus a bounded recent conversation on reconnect.
             if len(self._history) > 81:
                 self._history = self._history[:1] + self._history[-80:]
@@ -223,7 +253,10 @@ class RealtimeTextSession:
                         hint = (turn_hint or "").strip()
                         if hint:
                             user_msg = f"{hint}\n\nCaller said:\n{transcript}"
-                        await self._adapter.send_user_text(user_msg)
+                        if not getattr(self, "_skip_next_user_send", False):
+                            await self._adapter.send_user_text(user_msg)
+                        else:
+                            self._skip_next_user_send = False
                     await self._adapter.start_response()
                     async for event in self._collect_until_done():
                         kind = event.get("type")
