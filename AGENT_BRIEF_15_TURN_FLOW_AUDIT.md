@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-08  
 **Compiler:** `agent_script_v16`  
-**STATIC rules:** `sr_v25`  
+**STATIC rules:** `sr_v26`  
 **Session:** `fifteen-turn-brief-audit`  
 
 ## Verdict
