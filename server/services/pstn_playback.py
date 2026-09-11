@@ -111,12 +111,18 @@ class TelnyxQueuePlayback:
         frame_ms: float = 20.0,
         sending: Callable[[], bool] | None = None,
         wait_for_capacity: Callable[..., Any] | None = None,
+        metrics_snapshot: Callable[[], dict[str, int]] | None = None,
+        begin_turn_metrics: Callable[[], None] | None = None,
+        end_turn_metrics: Callable[[], dict[str, int]] | None = None,
     ) -> None:
         self._queue_size = queue_size
         self._drain = drain
         self._frame_ms = frame_ms
         self._sending = sending or (lambda: False)
         self.wait_for_capacity = wait_for_capacity
+        self.metrics_snapshot = metrics_snapshot
+        self.begin_turn_metrics = begin_turn_metrics
+        self.end_turn_metrics = end_turn_metrics
         self._current_generation: str | None = None
         self._invalid: set[str] = set()
 

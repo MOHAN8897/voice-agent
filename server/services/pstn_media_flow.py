@@ -115,6 +115,7 @@ class PstnMediaFlowStore:
                 "producer_backpressure_wait_ms": 0,
                 "playout_underrun_count": 0,
                 "playout_concealment_frames": 0,
+                "playout_hold_clock_frames": 0,
                 "queue_depth_p50": 0,
                 "queue_depth_p95": 0,
                 "queue_depth_p99": 0,

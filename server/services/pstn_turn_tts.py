@@ -1,4 +1,4 @@
-"""Persistent PSTN TTS session — one WebSocket per turn, many text messages, one flush."""
+"""Persistent PSTN TTS session — one warm WebSocket per call, many turns, one flush each."""
 from __future__ import annotations
 
 import asyncio
@@ -92,6 +92,7 @@ class PstnTurnTtsSession:
         self._interrupted = False
         self._had_error = False
         self._bound_generation: str | None = None
+        self._awaiting_audio = False
 
     @property
     def has_sent_text(self) -> bool:
@@ -288,10 +289,34 @@ class PstnTurnTtsSession:
         await self._tts.send(json.dumps({"type": "text", "data": {"text": text}}))
         self._chars_sent += len(text)
 
+    async def prepare_for_turn(self) -> None:
+        """Reset per-turn state while keeping the upstream WebSocket warm."""
+        if self._closed or not self._opened:
+            await self.open()
+        if self._reader_task and not self._reader_task.done():
+            self._reader_task.cancel()
+            try:
+                await self._reader_task
+            except asyncio.CancelledError:
+                pass
+        self._flushed = False
+        self._done.clear()
+        self._chars_sent = 0
+        self._tts_audio_bytes = 0
+        self._tts_ws_msgs = 0
+        self._first_chunk = True
+        self._audio_buf.clear()
+        self._interrupted = False
+        self._had_error = False
+        self._awaiting_audio = False
+        self._bound_generation = self._voice.current_generation_id
+        self._reader_task = asyncio.create_task(self._reader_loop())
+
     async def finish(self) -> None:
         if self._closed or self._flushed or not self._tts:
             return
         self._flushed = True
+        self._awaiting_audio = True
         await self._tts.send(json.dumps({"type": "flush"}))
         try:
             await asyncio.wait_for(self._done.wait(), timeout=12.0)
@@ -301,6 +326,24 @@ class PstnTurnTtsSession:
             if self._tts_audio_bytes <= 0:
                 self._had_error = True
             self._done.set()
+        finally:
+            self._awaiting_audio = False
+
+    async def end_turn(self) -> None:
+        """Finish a turn without tearing down the upstream socket."""
+        voice = self._voice
+        self._awaiting_audio = False
+        log_pstn(
+            "tts.speak.done",
+            call_id=voice.call_id,
+            turn_id=voice.current_turn_id,
+            generation_id=voice.current_generation_id,
+            chars=self._chars_sent,
+            tts_audio_bytes=self._tts_audio_bytes,
+            wire_frames=voice._wire_frames_out,
+            tts_ws_msgs=self._tts_ws_msgs,
+        )
+        voice.current_output_codec = "L16" if voice.sample_rate >= 16000 else "PCMU"
 
     async def close(self) -> None:
         if self._closed:
@@ -325,18 +368,7 @@ class PstnTurnTtsSession:
                 await self._tts_cm.__aexit__(None, None, None)
             except Exception:
                 pass
-        voice = self._voice
-        log_pstn(
-            "tts.speak.done",
-            call_id=voice.call_id,
-            turn_id=voice.current_turn_id,
-            generation_id=voice.current_generation_id,
-            chars=self._chars_sent,
-            tts_audio_bytes=self._tts_audio_bytes,
-            wire_frames=voice._wire_frames_out,
-            tts_ws_msgs=self._tts_ws_msgs,
-        )
-        voice.current_output_codec = "L16" if voice.sample_rate >= 16000 else "PCMU"
+        await self.end_turn()
 
     async def interrupt(self) -> None:
         self._interrupted = True
@@ -365,9 +397,11 @@ class PstnTurnTtsSession:
 
     async def _reader_loop(self) -> None:
         voice = self._voice
+        self._awaiting_audio = True
         try:
             assert self._tts is not None
             async for raw in self._tts:
+                self._awaiting_audio = False
                 if self._closed or self._interrupted or voice._closed or self._stale_generation():
                     break
                 if isinstance(raw, bytes):
@@ -413,6 +447,7 @@ class PstnTurnTtsSession:
                 audio = base64.b64decode(audio_b64)
                 self._tts_audio_bytes += len(audio)
                 await self._emit_audio_chunk(audio)
+                self._awaiting_audio = True
         except asyncio.CancelledError:
             pass
         except Exception as exc:
@@ -420,6 +455,7 @@ class PstnTurnTtsSession:
             log_pstn("tts.reader.failed", call_id=voice.call_id, error=str(exc)[:200])
             logger.warning("[PSTN] turn TTS reader: %s", str(exc)[:200])
         finally:
+            self._awaiting_audio = False
             # Interrupt invariant: never flush tail after barge/cancel / stale generation.
             if not self._stale_generation():
                 await self._flush_audio_tail()

@@ -5,6 +5,7 @@ import asyncio
 import base64
 import json
 import math
+import time
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
@@ -22,6 +23,7 @@ from server.services.pstn_media_flow import CallMediaConfig, PstnMediaFlowStore
 from server.services.telnyx_pstn_bridge import (
     MAX_AUDIO_QUEUE_FRAMES,
     OutboundFrame,
+    PLAYOUT_CONCEALMENT_MAX_FRAMES,
     PLAYOUT_PRIME_FRAMES,
     QUEUE_HIGH_WATERMARK,
     QUEUE_LOW_WATERMARK,
@@ -100,7 +102,7 @@ async def test_bounded_queue_backpressure_and_barge_in_clears_frames():
         current_output_codec="PCMU",
     )
     assert bridge._out_queue.maxsize == MAX_AUDIO_QUEUE_FRAMES
-    assert MAX_AUDIO_QUEUE_FRAMES <= 28
+    assert MAX_AUDIO_QUEUE_FRAMES <= 40
     for _ in range(QUEUE_HIGH_WATERMARK):
         await bridge._send_agent_wire(b"\xff" * 160)
     assert bridge._out_queue.qsize() == QUEUE_HIGH_WATERMARK
@@ -214,3 +216,44 @@ async def test_outbound_message_matches_negotiated_pcma():
     payload = base64.b64decode(body["media"]["payload"])
     assert len(payload) == 160
     assert payload != b"\xff" * 160  # explicit μ-law → A-law conversion happened
+
+
+def test_turn_playout_metrics_report_per_turn_delta():
+    bridge = TelnyxPstnBridge(SimpleNamespace(close=AsyncMock()))  # type: ignore[arg-type]
+    bridge._note_queue_metric("playout_underrun_count", 2)
+    bridge._note_queue_metric("playout_concealment_frames", 5)
+    bridge.begin_turn_playout_metrics()
+    bridge._note_queue_metric("playout_underrun_count", 1)
+    bridge._note_queue_metric("playout_concealment_frames", 3)
+    bridge._note_queue_metric("playout_hold_clock_frames", 2)
+    for _ in range(10):
+        bridge._out_queue.put_nowait(
+            OutboundFrame(b"\xff" * 160, "PCMU", "turn-1", "generation-1")
+        )
+        bridge._track_queue_depth()
+    delta = bridge.end_turn_playout_metrics()
+    assert delta["playout_underrun_count"] == 1
+    assert delta["playout_concealment_frames"] == 3
+    assert delta["playout_hold_clock_frames"] == 2
+    assert delta["queue_peak"] == 10
+
+
+@pytest.mark.asyncio
+async def test_concealment_holds_clock_past_cap_while_tts_active():
+    ws = FakeWebSocket()
+    bridge = TelnyxPstnBridge(ws)  # type: ignore[arg-type]
+    bridge.call_control_id = "hold-clock"
+    bridge._negotiated_media = CallMediaConfig(codec="L16", sample_rate=16000)
+    bridge._voice = SimpleNamespace(
+        current_turn_id="turn-1",
+        current_generation_id="generation-1",
+        current_output_codec="L16",
+        _tts_active=True,
+        _active_tts_session=SimpleNamespace(_closed=False, _awaiting_audio=True),
+    )
+    bridge._last_outgoing_payload = b"\x00\x10" * 320
+    bridge._last_out_frame_at = time.monotonic()
+    bridge._concealment_streak = PLAYOUT_CONCEALMENT_MAX_FRAMES
+    bridge._playout_primed = True
+    assert bridge._should_use_concealment(in_playout=True) is True
+    assert bridge._playout_end_of_speech() is False

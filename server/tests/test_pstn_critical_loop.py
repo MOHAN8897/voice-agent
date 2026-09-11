@@ -21,8 +21,12 @@ class FakeTtsSession:
         self.first_send: float | None = None
         self.finished = False
         self.closed = False
+        self.turn_ended = False
         self.interrupted = False
         self._chars_sent = 0
+        self._closed = False
+        self._awaiting_audio = False
+        self._opened = False
 
     @property
     def has_sent_text(self) -> bool:
@@ -33,6 +37,11 @@ class FakeTtsSession:
         if self.open_delay:
             await asyncio.sleep(self.open_delay)
         self.open_done = time.perf_counter()
+        self._opened = True
+
+    async def prepare_for_turn(self) -> None:
+        if not self._opened:
+            await self.open()
 
     async def send_text(self, text: str) -> None:
         if self.first_send is None:
@@ -43,8 +52,13 @@ class FakeTtsSession:
     async def finish(self) -> None:
         self.finished = True
 
+    async def end_turn(self) -> None:
+        self.turn_ended = True
+
     async def close(self) -> None:
+        self._closed = True
         self.closed = True
+        await self.end_turn()
 
     async def interrupt(self) -> None:
         self.interrupted = True
@@ -74,6 +88,7 @@ async def test_start_call_overlaps_stt_and_greeting(monkeypatch):
     loop = PstnVoiceLoop(session_id="s", call_id="c-overlap", on_agent_wire=AsyncMock())
     monkeypatch.setattr(PstnVoiceLoop, "open_stt", slow_stt)
     monkeypatch.setattr(PstnVoiceLoop, "speak", slow_speak)
+    monkeypatch.setattr(PstnVoiceLoop, "_warm_tts_connection", AsyncMock())
     monkeypatch.setattr(PstnVoiceLoop, "_note_opening_spoken", note)
     monkeypatch.setattr(
         "server.services.pstn_voice_core.extract_opening_greeting",
@@ -124,7 +139,7 @@ async def test_run_turn_overlaps_tts_open_with_llm(monkeypatch):
     assert fake is not None
     assert fake.texts
     assert fake.finished
-    assert fake.closed
+    assert fake.turn_ended
     assert first_ms < 160, f"TTS open still serial with LLM: first audio {first_ms:.0f}ms"
 
 

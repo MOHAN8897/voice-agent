@@ -97,9 +97,11 @@ async def test_cartesia_402_greeting_recovers_and_next_turn_uses_fallback(failin
     bridge._cleanup.assert_not_awaited()
     assert voice._tts_fallback_provider == "sarvam"
     await voice.speak("How may I help you today?")
+    await voice.close()
     primary.assert_called_once()
     failed.__aexit__.assert_awaited_once()
-    assert len(sockets) == 2
+    # Greeting + follow-up speak reuse one warm Sarvam socket per call.
+    assert len(sockets) == 1
     for sock in sockets:
         config = sock.sent[0]["data"]
         assert config["output_audio_codec"] == "linear16"

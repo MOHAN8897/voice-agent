@@ -189,6 +189,7 @@ class PstnVoiceLoop:
         self._barge_generation: str | None = None
         self._active_speak_task: asyncio.Task | None = None
         self._active_tts_session = None
+        self._call_tts_session = None
         self._pending_transcript: str | None = None
         self.current_output_codec = "L16" if sample_rate >= TELNYX_PCM_SAMPLE_RATE else "PCMU"
         self._last_barge_at = 0.0
@@ -804,6 +805,60 @@ class PstnVoiceLoop:
             )
         await session.send_text(expanded)
 
+    def _get_call_tts_session(self) -> Any:
+        from server.services.pstn_turn_tts import PstnTurnTtsSession
+
+        if self._call_tts_session is None or self._call_tts_session._closed:
+            self._call_tts_session = PstnTurnTtsSession(self)
+        return self._call_tts_session
+
+    async def _acquire_tts_session(self) -> Any:
+        session = self._get_call_tts_session()
+        await session.prepare_for_turn()
+        return session
+
+    def _begin_turn_playout_metrics(self) -> None:
+        begin = getattr(self.playback, "begin_turn_metrics", None) if self.playback else None
+        if callable(begin):
+            begin()
+
+    async def _release_tts_turn(self, session: Any) -> None:
+        await session.end_turn()
+        self._log_playout_turn_metrics()
+
+    def _log_playout_turn_metrics(self) -> None:
+        end_turn = getattr(self.playback, "end_turn_metrics", None) if self.playback else None
+        if callable(end_turn):
+            metrics = end_turn()
+        else:
+            snapshot = getattr(self.playback, "metrics_snapshot", None) if self.playback else None
+            if not callable(snapshot):
+                return
+            metrics = snapshot()
+        log_pstn(
+            "playout.turn_metrics",
+            call_id=self.call_id,
+            turn_id=self.current_turn_id,
+            generation_id=self.current_generation_id,
+            underruns=metrics.get("playout_underrun_count", 0),
+            concealment_frames=metrics.get("playout_concealment_frames", 0),
+            hold_clock_frames=metrics.get("playout_hold_clock_frames", 0),
+            backpressure_waits=metrics.get("producer_backpressure_wait_count", 0),
+            backpressure_wait_ms=metrics.get("producer_backpressure_wait_ms", 0),
+            queue_peak=metrics.get("queue_peak", 0),
+        )
+
+    async def _warm_tts_connection(self) -> None:
+        """Open the call-level TTS socket during call start (overlaps with greeting/STT)."""
+        try:
+            session = self._get_call_tts_session()
+            if getattr(session, "_opened", False) and not getattr(session, "_closed", True):
+                return
+            await session.open(language_code=self._resolve_language())
+            log_pstn("tts.warm.ready", call_id=self.call_id)
+        except Exception as exc:
+            log_pstn("tts.warm.failed", call_id=self.call_id, error=str(exc)[:160])
+
     def _resolve_language(self) -> str:
         if not self.call_id:
             return "te-IN"
@@ -849,7 +904,10 @@ class PstnVoiceLoop:
                 self._resolve_language(),
             )
 
-        jobs: list[asyncio.Task] = [asyncio.create_task(self.open_stt())]
+        jobs: list[asyncio.Task] = [
+            asyncio.create_task(self.open_stt()),
+            asyncio.create_task(self._warm_tts_connection()),
+        ]
         if greeting:
             self._set_phase(PHASE_INTRO)
             self._intro_queue.clear()
@@ -907,6 +965,7 @@ class PstnVoiceLoop:
                 if self._closed or self.emission_blocked():
                     break
                 await self._emit_agent_wire(wire)
+                await asyncio.sleep(0.02)
         finally:
             self._set_tts_active(False)
 
@@ -1488,6 +1547,7 @@ class PstnVoiceLoop:
             self.playback.set_current_generation(self.current_generation_id)
         safe = text[:120].encode("ascii", "replace").decode("ascii")
         log_pstn("TURN_START", call_id=self.call_id, turn_id=self.current_turn_id, generation_id=self.current_generation_id, text=safe)
+        self._begin_turn_playout_metrics()
         pstn_media_flow.emit(
             self.call_id,
             "llm_started",
@@ -1506,8 +1566,6 @@ class PstnVoiceLoop:
                 if control_task and not control_task.done():
                     await asyncio.shield(control_task)
             from server.call.live_turn_orchestrator import live_turn_orchestrator
-            from server.services.pstn_turn_tts import PstnTurnTtsSession
-
             pending = ""
             spoke_from_stream = False
             accepted_end_call = False
@@ -1515,12 +1573,12 @@ class PstnVoiceLoop:
             llm_rt = pstn_turn_runtime(self.config_session_id, self.session_id)
             self._clear_tts_text_layers()
             self._tts_started_at = 0.0
-            tts_session = PstnTurnTtsSession(self)
+            tts_session = self._get_call_tts_session()
             self._active_tts_session = tts_session
             turn_cancelled = False
             async with self._speak_lock:
                 self._active_speak_task = asyncio.current_task()
-                tts_open = asyncio.create_task(tts_session.open())
+                tts_prepare = asyncio.create_task(tts_session.prepare_for_turn())
                 try:
                     async for chunk in live_turn_orchestrator.handle_user_turn_stream(
                         transcript=text,
@@ -1548,20 +1606,21 @@ class PstnVoiceLoop:
                                     status="healthy",
                                 )
                             pending += chunk.get("delta") or ""
-                            sentences, pending = drain_complete_sentences(
-                                pending,
-                                allow_first_fast=not spoke_from_stream,
-                            )
-                            if sentences:
-                                await tts_open
-                                self._set_tts_active(True)
-                                combined = join_speakable_chunks(sentences)
-                                if combined:
-                                    if self.emission_blocked():
-                                        turn_cancelled = True
-                                        break
-                                    await self._send_tts_text(tts_session, combined)
-                                    spoke_from_stream = True
+                            if not spoke_from_stream:
+                                sentences, pending = drain_complete_sentences(
+                                    pending,
+                                    allow_first_fast=not spoke_from_stream,
+                                )
+                                if sentences:
+                                    await tts_prepare
+                                    self._set_tts_active(True)
+                                    combined = join_speakable_chunks(sentences)
+                                    if combined:
+                                        if self.emission_blocked():
+                                            turn_cancelled = True
+                                            break
+                                        await self._send_tts_text(tts_session, combined)
+                                        spoke_from_stream = True
                         elif chunk.get("done"):
                             if chunk.get("cancelled"):
                                 turn_cancelled = True
@@ -1571,7 +1630,7 @@ class PstnVoiceLoop:
                                 spoke_from_stream=spoke_from_stream,
                             )
                             if tail and not turn_cancelled and not self.emission_blocked():
-                                await tts_open
+                                await tts_prepare
                                 self._set_tts_active(True)
                                 await self._send_tts_text(tts_session, tail)
                             pending = ""
@@ -1584,7 +1643,7 @@ class PstnVoiceLoop:
                             if tts_session.has_sent_text and not turn_cancelled and not self.emission_blocked():
                                 await tts_session.finish()
                     if (spoke_from_stream or tts_session.has_sent_text) and not turn_cancelled and not self.emission_blocked():
-                        await tts_open
+                        await tts_prepare
                         await tts_session.finish()
                         if (
                             getattr(tts_session, "had_error", False)
@@ -1621,13 +1680,13 @@ class PstnVoiceLoop:
                         return
                 finally:
                     self._set_tts_active(False)
-                    if not tts_open.done():
-                        tts_open.cancel()
+                    if not tts_prepare.done():
+                        tts_prepare.cancel()
                         try:
-                            await tts_open
+                            await tts_prepare
                         except (asyncio.CancelledError, Exception):
                             pass
-                    await tts_session.close()
+                    await self._release_tts_turn(tts_session)
                     self._active_tts_session = None
                     self._active_speak_task = None
             if needs_tts_fallback and not turn_cancelled and not self.emission_blocked():
@@ -1707,19 +1766,19 @@ class PstnVoiceLoop:
     ) -> None:
         if not text or self._closed:
             return
-        from server.services.pstn_turn_tts import PstnTurnTtsSession
-
         async with self._speak_lock:
             self._active_speak_task = asyncio.current_task()
             self.current_generation_id = uuid.uuid4().hex[:12]
             self._interrupted_generation = None
             if self.playback is not None and hasattr(self.playback, "set_current_generation"):
                 self.playback.set_current_generation(self.current_generation_id)
-            session = PstnTurnTtsSession(self)
+            self._begin_turn_playout_metrics()
+            session = await self._acquire_tts_session()
+            if speaker or language_code:
+                await session.open(speaker=speaker, language_code=language_code)
             self._active_tts_session = session
             self._set_tts_active(True)
             try:
-                await session.open(speaker=speaker, language_code=language_code)
                 self._clear_tts_text_layers()
                 self._tts_started_at = 0.0
                 await self._send_tts_text(session, text)
@@ -1729,7 +1788,7 @@ class PstnVoiceLoop:
                         raise RuntimeError("TTS produced no usable audio or reported an upstream failure")
             finally:
                 self._set_tts_active(False)
-                await session.close()
+                await self._release_tts_turn(session)
                 self._active_tts_session = None
                 self._active_speak_task = None
                 self.current_generation_id = None
@@ -1818,3 +1877,9 @@ class PstnVoiceLoop:
                 await self._stt_cm.__aexit__(None, None, None)
             except Exception:
                 pass
+        if self._call_tts_session is not None:
+            try:
+                await self._call_tts_session.close()
+            except Exception:
+                pass
+            self._call_tts_session = None

@@ -112,6 +112,7 @@ def connect_cartesia_tts_ws(model: str | None = None, **_: Any):
                 "language": lang,
                 "context_id": self._context_id,
                 "continue": continue_,
+                "max_buffer_delay_ms": 0,
                 "generation_config": gen,
             }
             await self._ws.send(json.dumps(req))
