@@ -75,7 +75,7 @@ export function TestStudioLivePanel({
       title="Live conversation"
       description="Mic → STT → brain stream → TTS · chat transcript below"
       padding="md"
-      className="console-page-enter"
+      className="console-page-enter w-full min-w-0"
     >
       <div className="mb-5 flex flex-col items-center gap-3 border-b border-surface-border-subtle pb-5 lg:flex-row lg:items-start lg:justify-between">
         <VoiceControlOrb

@@ -514,6 +514,7 @@ async def test_agent_hangup_drains_archive_before_lifecycle_end(monkeypatch, tmp
         events=[
             {"type": "response_created"},
             {"type": "audio_delta", "pcm": pcm24},
+            {"type": "user_transcript", "text": "Goodbye.", "final": True},
             {
                 "type": "function_call",
                 "name": "end_call",
@@ -752,3 +753,170 @@ async def asyncio_wait_pump() -> None:
     import asyncio
 
     await asyncio.sleep(0.05)
+
+
+@pytest.mark.asyncio
+async def test_callback_hangup_is_deferred_until_missing_name_is_collected(monkeypatch, tmp_path):
+    from server.call.call_ledger import call_ledger
+    from server.call.memory_manager import memory_manager
+    from server.config.env import get_settings
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+
+    monkeypatch.setenv("DATA_DIR", str(tmp_path))
+    get_settings.cache_clear()
+    call_ledger.reset_for_tests()
+    memory_manager.reset_for_tests()
+    call_id = "c-callback-details"
+    await call_ledger.init(
+        call_id,
+        {"call_id": call_id, "pipeline": "realtime_voice", "caller_id": "+13526146416"},
+    )
+    memory_manager.init(call_id)
+
+    async def on_wire(_wire: bytes) -> None:
+        return None
+
+    adapter = FakeRealtimeVoiceAdapter()
+    remote_hangup = AsyncMock()
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id=call_id,
+        on_agent_wire=on_wire,
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        adapter=adapter,
+        stack_override={"pipeline": "realtime_voice", "language": "en-IN"},
+    )
+    loop._adapter = adapter
+    loop._on_remote_hangup = remote_hangup
+
+    await loop._handle_event(
+        {"type": "user_transcript", "text": "I am busy, please call me tomorrow.", "final": True}
+    )
+    await loop._handle_event({"type": "response_created"})
+    await loop._handle_event(
+        {
+            "type": "function_call",
+            "name": "end_call",
+            "call_id": "fn-callback",
+            "arguments": (
+                '{"should_end": true, "reason": "goal_complete", '
+                '"farewell": "Our team will call you tomorrow. Thank you. Goodbye."}'
+            ),
+        }
+    )
+    await loop._handle_event({"type": "response_done"})
+
+    assert loop._pending_end_call is None
+    assert loop._callback_collecting_field == "name"
+    assert any("May I have your name" in item for item in adapter.started_responses)
+    remote_hangup.assert_not_awaited()
+
+    await loop._handle_event({"type": "user_transcript", "text": "Subhash.", "final": True})
+    await loop._handle_event({"type": "response_created"})
+    await loop._handle_event(
+        {
+            "type": "function_call",
+            "name": "end_call",
+            "call_id": "fn-callback-confirmed",
+            "arguments": (
+                '{"should_end": true, "reason": "goal_complete", '
+                '"farewell": "Thank you. Goodbye."}'
+            ),
+        }
+    )
+    assert loop._pending_end_call is not None
+    assert "Our team will call you tomorrow" in loop._pending_end_call["farewell"]
+    facts = memory_manager.get_snapshot(call_id)["facts"]
+    assert facts["name"] == "Subhash"
+    assert facts["phone"] == "+13526146416"
+    assert facts["callback_time"].lower() == "tomorrow"
+
+    call_ledger.reset_for_tests()
+    memory_manager.reset_for_tests()
+    get_settings.cache_clear()
+
+
+@pytest.mark.asyncio
+async def test_tool_only_farewell_finishes_before_provider_hangup():
+    import struct
+
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+
+    async def on_wire(_wire: bytes) -> None:
+        return None
+
+    adapter = FakeRealtimeVoiceAdapter()
+    remote_hangup = AsyncMock()
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id=None,
+        on_agent_wire=on_wire,
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        adapter=adapter,
+        stack_override={"pipeline": "realtime_voice", "language": "en-IN"},
+    )
+    loop._adapter = adapter
+    loop._on_remote_hangup = remote_hangup
+    await loop._handle_event({"type": "user_transcript", "text": "Goodbye.", "final": True})
+    await loop._handle_event({"type": "response_created"})
+    await loop._handle_event(
+        {
+            "type": "function_call",
+            "name": "end_call",
+            "call_id": "fn-goodbye",
+            "arguments": '{"should_end": true, "reason": "goodbye", "farewell": "Thank you. Goodbye."}',
+        }
+    )
+    await loop._handle_event({"type": "response_done"})
+    remote_hangup.assert_not_awaited()
+    assert any("Speak this farewell exactly" in item for item in adapter.started_responses)
+
+    await loop._handle_event({"type": "response_created"})
+    pcm24 = struct.pack("<" + "h" * 960, *([500] * 960))
+    await loop._handle_event({"type": "audio_delta", "pcm": pcm24})
+    await loop._handle_event({"type": "response_done"})
+    remote_hangup.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_realtime_voice_persists_caller_details_from_normal_turn(monkeypatch, tmp_path):
+    from server.call.call_ledger import call_ledger
+    from server.call.memory_manager import memory_manager
+    from server.config.env import get_settings
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+
+    monkeypatch.setenv("DATA_DIR", str(tmp_path))
+    get_settings.cache_clear()
+    call_ledger.reset_for_tests()
+    memory_manager.reset_for_tests()
+    call_id = "c-realtime-caller-detail"
+    await call_ledger.init(call_id, {"call_id": call_id})
+    memory_manager.init(call_id)
+
+    async def on_wire(_wire: bytes) -> None:
+        return None
+
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id=call_id,
+        on_agent_wire=on_wire,
+        adapter=FakeRealtimeVoiceAdapter(),
+        stack_override={"pipeline": "realtime_voice", "language": "en-IN"},
+    )
+    await loop._handle_event(
+        {
+            "type": "user_transcript",
+            "text": "My name is Subhash and my phone number is 9876543210.",
+            "final": True,
+        }
+    )
+    facts = memory_manager.get_snapshot(call_id)["facts"]
+    assert facts["caller_name"] == "Subhash"
+    assert facts["callback_phone"] == "9876543210"
+    assert facts["phone"] == "9876543210"
+
+    call_ledger.reset_for_tests()
+    memory_manager.reset_for_tests()
+    get_settings.cache_clear()

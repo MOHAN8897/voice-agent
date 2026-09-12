@@ -7,6 +7,7 @@ import { SkeuoPanel } from "@/components/ui/skeuo/SkeuoPanel";
 import { SkeuoButton } from "@/components/ui/skeuo/SkeuoButton";
 import { SkeuoBadge } from "@/components/ui/skeuo/SkeuoBadge";
 import { cn } from "@/lib/cn";
+import { StudioTabRail } from "@/components/test-studio/StudioTabRail";
 import {
   useTestStudioFineTune,
   CALL_END_REASONS,
@@ -203,27 +204,16 @@ export function TestStudioFineTuneWorkbench({
       padding="md"
       className="console-page-enter"
     >
-      <div className="sticky top-0 z-30 -mx-4 mb-4 border-b border-surface-border-subtle bg-surface/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-surface/80">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap gap-1 rounded-skeuo-sm border border-surface-border-subtle skeuo-inset p-1">
-            {TABS.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                disabled={locked}
-                onClick={() => setTab(t.id)}
-                className={cn(
-                  "rounded-skeuo-sm px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50",
-                  tab === t.id
-                    ? "bg-accent text-accent-fg shadow-skeuo-sm"
-                    : "text-text-muted hover:bg-surface-raised"
-                )}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
+      <div className="mb-4 space-y-3">
+        <StudioTabRail
+          tone="child"
+          ariaLabel="Fine-tune section"
+          items={TABS.map((t) => ({ id: t.id, label: t.label }))}
+          value={tab}
+          onChange={setTab}
+          locked={locked}
+        />
+        <div className="flex flex-wrap items-center gap-2">
             <SkeuoBadge tone="muted" className="font-mono text-[10px]">
               session: {ft.sessionId}
             </SkeuoBadge>
@@ -237,9 +227,8 @@ export function TestStudioFineTuneWorkbench({
                 call in progress
               </SkeuoBadge>
             )}
-          </div>
         </div>
-        <p role="status" className="mt-2 text-xs text-text-muted">{ft.status}</p>
+        <p role="status" className="text-xs text-text-muted">{ft.status}</p>
       </div>
 
       {ft.loading ? (

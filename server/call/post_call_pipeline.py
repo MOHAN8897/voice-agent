@@ -13,7 +13,9 @@ from server.call.memory_manager import memory_manager
 from server.call.outcome_schema import (
     DISPOSITIONS,
     OUTCOME_JSON_SCHEMA,
+    derive_status_tags,
     empty_outcome,
+    merge_outcome_facts,
     normalize_extracted_fields,
     validate_disposition,
 )
@@ -23,8 +25,9 @@ from server.realtime.language_guard import filter_unrelated_scripts
 from server.realtime.models import http_openai_model, is_realtime_llm_model
 from server.utils.logger import logger
 
-_QUEUE: asyncio.Queue[str] = asyncio.Queue()
+_QUEUE: asyncio.Queue[tuple[str, bool]] = asyncio.Queue()
 _WORKER: asyncio.Task | None = None
+_CALL_LOCKS: dict[str, asyncio.Lock] = {}
 
 
 def _utcnow() -> str:
@@ -54,8 +57,8 @@ def read_outcome(call_id: str) -> dict[str, Any] | None:
     return data if isinstance(data, dict) else None
 
 
-async def enqueue(call_id: str) -> None:
-    await _QUEUE.put(call_id)
+async def enqueue(call_id: str, *, force: bool = False) -> None:
+    await _QUEUE.put((call_id, force))
     _ensure_worker()
 
 
@@ -71,9 +74,9 @@ def _ensure_worker() -> None:
 
 async def _drain() -> None:
     while True:
-        call_id = await _QUEUE.get()
+        call_id, force = await _QUEUE.get()
         try:
-            await run_outcome(call_id)
+            await run_outcome(call_id, force=force)
         except Exception as e:
             logger.warning(f"[CALL] post-call failed call={call_id} err={str(e)[:200]}")
             await _mark_outcome(call_id, "failed")
@@ -87,6 +90,20 @@ async def process_now(call_id: str) -> dict[str, Any]:
 
 
 async def run_outcome(call_id: str, *, force: bool = False) -> dict[str, Any]:
+    lock = _CALL_LOCKS.setdefault(call_id, asyncio.Lock())
+    async with lock:
+        existing = read_outcome(call_id)
+        if (
+            existing
+            and existing.get("generation_ok")
+            and existing.get("prompt_version") == "outcome_v2"
+            and not force
+        ):
+            return existing
+        return await _run_outcome_locked(call_id)
+
+
+async def _run_outcome_locked(call_id: str) -> dict[str, Any]:
     settings = get_settings()
     model = http_openai_model(settings)
     await _mark_outcome(call_id, "processing")
@@ -103,7 +120,7 @@ async def run_outcome(call_id: str, *, force: bool = False) -> dict[str, Any]:
     }
     _append_attempt(call_id, attempt)
     payload["model"] = model
-    payload["prompt_version"] = "outcome_v1"
+    payload["prompt_version"] = "outcome_v2"
     payload["generated_at"] = _utcnow()
     payload["generation_ok"] = error is None
     disposition = validate_disposition(payload.get("disposition"))
@@ -112,6 +129,19 @@ async def run_outcome(call_id: str, *, force: bool = False) -> dict[str, Any]:
         payload["notes"] = (payload.get("notes") or "") + " (disposition coerced to no_outcome)"
     payload["summary_te"] = filter_unrelated_scripts(str(payload.get("summary_te") or ""), "te-IN")
     payload["summary_en"] = filter_unrelated_scripts(str(payload.get("summary_en") or ""), "en-IN")
+    facts = merge_outcome_facts(
+        payload.get("extracted_fields"),
+        snapshot,
+        caller_id=str(meta.get("caller_id") or "") or None,
+    )
+    payload["extracted_fields"] = facts
+    payload["facts"] = facts
+    payload["status_tags"] = derive_status_tags(
+        payload.get("disposition"),
+        facts,
+        next_action=payload.get("next_action"),
+        objections=payload.get("objections"),
+    )
     outcome_path(call_id).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     _write_call_summary(call_id, payload)
     status = "complete" if error is None else "failed"
@@ -129,13 +159,19 @@ async def _generate_outcome(
 ) -> tuple[dict[str, Any], str | None]:
     settings = get_settings()
     if not transcript:
-        return empty_outcome(model=model, reason="empty transcript"), None
+        empty = empty_outcome(model=model, reason="empty transcript")
+        empty["summary_en"] = "No transcript was captured for this call."
+        empty["next_action"] = "Review the call recording and telephony logs."
+        return empty, "empty transcript"
 
     messages = [
         {
             "role": "developer",
             "content": (
                 "You analyze completed voice calls. Output structured JSON only. "
+                "Summaries must cover the entire call chronologically: caller intent, facts shared, "
+                "agent response, objections, agreed next step, and how the call ended. "
+                "Never claim an action was completed unless the transcript confirms it. "
                 "extracted_fields must be an array of {key, value} strings "
                 "(name, budget, slot, etc). Use [] if nothing was captured. "
                 "Disposition rubric: new_lead (first contact/info captured), interested "
@@ -200,6 +236,16 @@ async def _generate_outcome(
             logger.warning(f"[CALL] outcome attempt {attempt + 1} failed: {last_error}")
             await asyncio.sleep(0.2 * (2**attempt))
     failed = empty_outcome(model=model, reason=last_error or "outcome generation failed")
+    turns = [
+        f"{str(row.get('role') or 'unknown').title()}: {str(row.get('text') or '').strip()}"
+        for row in transcript
+        if str(row.get("text") or "").strip()
+    ]
+    failed["summary_en"] = (
+        "Automatic summary generation failed. Transcript review: " + " ".join(turns)
+    )[:2000]
+    failed["next_action"] = "Review the transcript and captured facts."
+    failed["extracted_fields"] = normalize_extracted_fields(snapshot.get("facts"))
     return failed, last_error
 
 
@@ -212,6 +258,8 @@ def _write_call_summary(call_id: str, outcome: dict[str, Any]) -> None:
         "summary_en": outcome.get("summary_en") or "",
         "next_action": outcome.get("next_action"),
         "extracted_fields": outcome.get("extracted_fields") or {},
+        "facts": outcome.get("facts") or {},
+        "status_tags": outcome.get("status_tags") or [],
         "objections": outcome.get("objections") or [],
         "model": outcome.get("model"),
         "generated_at": outcome.get("generated_at"),

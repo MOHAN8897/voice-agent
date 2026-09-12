@@ -9,7 +9,12 @@ import pytest
 
 from server.call.call_ledger import call_ledger
 from server.call.memory_manager import memory_manager
-from server.call.outcome_schema import DISPOSITIONS, validate_disposition
+from server.call.outcome_schema import (
+    DISPOSITIONS,
+    derive_status_tags,
+    merge_outcome_facts,
+    validate_disposition,
+)
 from server.call.post_call_pipeline import process_now, read_outcome
 from server.config.env import get_settings
 
@@ -20,6 +25,32 @@ def test_unknown_disposition_coerced():
     assert validate_disposition("qualified") == "qualified"
     assert validate_disposition("not-a-real-status") == "no_outcome"
     assert "no_outcome" in DISPOSITIONS
+
+
+def test_owner_facts_and_status_tags_are_deterministic():
+    facts = merge_outcome_facts(
+        {"budget": "15 lakh"},
+        {"facts": {"name": "Subhash"}},
+        caller_id="+13526146416",
+    )
+    assert facts == {
+        "budget": "15 lakh",
+        "name": "Subhash",
+        "phone": "+13526146416",
+    }
+    tags = derive_status_tags(
+        "callback_required",
+        facts,
+        next_action="Call back tomorrow",
+        objections=[],
+    )
+    assert tags == [
+        "action:required",
+        "contact:name_known",
+        "contact:phone_known",
+        "followup:callback",
+        "outcome:callback_required",
+    ]
 
 
 @pytest.mark.asyncio
@@ -69,6 +100,9 @@ async def test_golden_transcripts_to_disposition(monkeypatch, tmp_path):
         assert disk is not None
         assert disk["disposition"] == case["expected_disposition"]
         assert disk.get("generation_ok") is True
+        assert f"outcome:{case['expected_disposition']}" in disk["status_tags"]
+        for key, value in (case["memory"].get("facts") or {}).items():
+            assert disk["facts"][key] == value
 
     call_ledger.reset_for_tests()
     memory_manager.reset_for_tests()

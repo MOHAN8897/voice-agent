@@ -102,6 +102,8 @@ function voiceLabel(provider: string, voiceId: string): string {
   return id;
 }
 
+export type PstnPanelSection = "setup" | "stack" | "live" | "none" | "all";
+
 export function PstnTestPanel({
   agentId,
   sourceSessionId = TEST_STUDIO_SESSION_ID,
@@ -112,9 +114,16 @@ export function PstnTestPanel({
   runtimeTtsSpeaker = "",
   runtimeOpenAiModel = "",
   stackOverride,
+  initialToE164 = "",
+  requestDialTo = null,
+  hideHistory = false,
+  section = "all",
+  onDialPlaced,
+  onActiveCallChange,
   onInternalCallStart,
   onInternalCallEnd,
   onReviewCall,
+  onToChange,
 }: {
   agentId: string;
   sourceSessionId?: string;
@@ -125,9 +134,16 @@ export function PstnTestPanel({
   runtimeTtsSpeaker?: string;
   runtimeOpenAiModel?: string;
   stackOverride?: Record<string, unknown>;
+  initialToE164?: string;
+  requestDialTo?: { phone: string; nonce: number } | null;
+  hideHistory?: boolean;
+  section?: PstnPanelSection;
+  onDialPlaced?: () => void;
+  onActiveCallChange?: (call: CallRow | null) => void;
   onInternalCallStart?: (callId: string) => void;
   onInternalCallEnd?: (callId: string) => void;
   onReviewCall?: (callId: string) => void;
+  onToChange?: (phone: string) => void;
 }) {
   const [status, setStatus] = useState<TelephonyStatus | null>(null);
   const [calls, setCalls] = useState<CallRow[]>([]);
@@ -147,6 +163,7 @@ export function PstnTestPanel({
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const dialingRef = useRef(false);
   const fromInitRef = useRef(false);
+  const activeExternalRef = useRef<string | null>(null);
 
   const active = status?.active_provider || providerDraft;
   const activeSt = status?.providers?.find((p) => p.id === active);
@@ -197,6 +214,21 @@ export function PstnTestPanel({
   }, [load]);
 
   useEffect(() => {
+    if (initialToE164.trim()) {
+      setToE164(initialToE164.trim());
+    }
+  }, [initialToE164]);
+
+  const lastDialNonceRef = useRef(0);
+  useEffect(() => {
+    if (!requestDialTo?.phone) return;
+    if (lastDialNonceRef.current === requestDialTo.nonce) return;
+    lastDialNonceRef.current = requestDialTo.nonce;
+    void outboundDial(requestDialTo.phone);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- nonce is the trigger; outboundDial closes over latest stack
+  }, [requestDialTo?.nonce]);
+
+  useEffect(() => {
     if (pollRef.current) clearInterval(pollRef.current);
     pollRef.current = setInterval(async () => {
       const r = await portalFetch("dev", "/api/dev/telephony/calls");
@@ -204,6 +236,18 @@ export function PstnTestPanel({
       const j = await r.json();
       const rows = ensureArray<CallRow>(j.calls);
       setCalls(rows);
+      const activeExternal = activeExternalRef.current;
+      const activeRow =
+        (activeExternal
+          ? rows.find(
+              (c) =>
+                callKey(c) === activeExternal ||
+                c.call_sid === activeExternal ||
+                c.call_control_id === activeExternal ||
+                c.call_uuid === activeExternal
+            )
+          : null) ?? null;
+      onActiveCallChange?.(activeRow);
       for (const c of rows) {
         const internal = c.internal_call_id;
         if (!internal) continue;
@@ -231,7 +275,7 @@ export function PstnTestPanel({
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
-  }, [onInternalCallStart, onInternalCallEnd]);
+  }, [onInternalCallStart, onInternalCallEnd, onActiveCallChange]);
 
   async function setProvider(next: string) {
     setProviderDraft(next);
@@ -338,22 +382,26 @@ export function PstnTestPanel({
     };
   }, [stackMode, stackOverrideKey, tier, language]);
 
-  async function outboundDial() {
-    if (!toE164.trim()) {
+  async function outboundDial(dest?: string) {
+    const to = (dest ?? toE164).trim();
+    if (!to) {
       setMessage("Enter destination number");
       return;
     }
+    setToE164(to);
+    onToChange?.(to);
     if (dialingRef.current || busy) {
       return;
     }
     dialingRef.current = true;
     setBusy(true);
     trackedCallRef.current = null;
+    activeExternalRef.current = null;
     setTrackedCallId(null);
     setMessage(`Placing ${providerLabel(active)} outbound call…`);
     try {
       const dialBody: Record<string, unknown> = {
-        toE164: toE164.trim(),
+        toE164: to,
         fromE164: fromE164.trim() || undefined,
         agentId,
         tier: tier || "medium",
@@ -376,11 +424,16 @@ export function PstnTestPanel({
           : "";
       const errDetail =
         j.validation_errors?.length ? j.validation_errors.join("; ") : j.error?.message || j.error || j.body;
+      const externalId = j.call_sid || j.call_control_id || j.call_uuid || "";
       setMessage(
         apiOk
-          ? `Call initiated · ${j.call_sid || j.call_control_id || j.call_uuid || "queued"}${adj}`
+          ? `Call initiated · ${externalId || "queued"}${adj}`
           : errDetail || "Outbound failed"
       );
+      if (apiOk) {
+        if (externalId) activeExternalRef.current = String(externalId);
+        onDialPlaced?.();
+      }
       await load();
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Outbound failed");
@@ -473,15 +526,19 @@ export function PstnTestPanel({
     : runtimeTtsSpeaker;
   const ttsProvider = stack?.ttsProvider || "—";
   const ttsModel = stack?.ttsModel || "—";
+  const showSetup = section === "all" || section === "setup";
+  const showStack = section === "all" || section === "stack";
+  const showLive = section === "all" || section === "live";
 
   return (
-    <div className="space-y-6">
-      {telnyxReady && !useValidatedPath && (
+    <div className="w-full min-w-0 space-y-6">
+      {showSetup && telnyxReady && !useValidatedPath && (
         <p className="rounded-xl border border-accent/30 bg-accent/5 px-4 py-3 text-sm text-text-muted">
           Validation tests 1–10 use <strong className="text-text">Telnyx L16 @ 16 kHz</strong>. Switch to Telnyx
           for the same audio architecture as automated tests.
         </p>
       )}
+      {showSetup ? (
       <DevCard title="SIP trunk provider" description="Only enabled providers from Environment are shown">
         {enabledProviders.length === 0 ? (
           <p className="rounded-xl border border-dashed border-warning/40 bg-warning/5 px-4 py-3 text-sm text-warning">
@@ -524,8 +581,9 @@ export function PstnTestPanel({
           <span className="font-mono">{activeSt?.stream_ws || activeSt?.status_callback_url || "—"}</span>).
         </p>
       </DevCard>
+      ) : null}
 
-      {active === "telnyx" && telnyxChecklist && (
+      {showSetup && active === "telnyx" && telnyxChecklist && (
         <DevCard title="Telnyx Mission Control checklist" description="Standard settings applied to every new number">
           <ul className="space-y-1 text-sm text-text-muted">
             <li>{telnyxChecklist.call_control_app ? "✓" : "○"} Call Control app active</li>
@@ -556,7 +614,7 @@ export function PstnTestPanel({
         </DevCard>
       )}
 
-      {notReady ? (
+      {showSetup && notReady ? (
         <DevCard title={`PSTN · ${providerLabel(active)}`} description="Provider not ready">
           <div className="rounded-xl border border-dashed border-warning/40 bg-warning/5 p-5">
             <p className="font-medium text-warning">{providerLabel(active)} not ready</p>
@@ -573,7 +631,7 @@ export function PstnTestPanel({
             </div>
           </div>
         </DevCard>
-      ) : (
+      ) : showSetup ? (
         <DevCard title={`${providerLabel(active)} handshake`} description="Credentials verified">
           <dl className="grid gap-3 text-sm sm:grid-cols-2">
             <div>
@@ -603,8 +661,9 @@ export function PstnTestPanel({
             Re-test handshake
           </Button>
         </DevCard>
-      )}
+      ) : null}
 
+      {showStack ? (
         <DevCard
         title="Agent voice & stack"
         description={
@@ -698,7 +757,9 @@ export function PstnTestPanel({
           {stackPreview ? ` · ${stackPreview}` : ""}
         </p>
       </DevCard>
+      ) : null}
 
+      {showLive ? (
       <DevCard title="Outbound test call" description="Full E2E — PSTN dials customer, agent stack streams audio">
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block text-sm">
@@ -716,14 +777,17 @@ export function PstnTestPanel({
             <input
               type="text"
               value={toE164}
-              onChange={(e) => setToE164(e.target.value)}
+              onChange={(e) => {
+                setToE164(e.target.value);
+                onToChange?.(e.target.value);
+              }}
               placeholder="+91XXXXXXXXXX"
               className="mt-2 w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2 text-sm font-mono"
             />
           </label>
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
-          <Button type="button" onClick={outboundDial} disabled={busy || notReady}>
+          <Button type="button" onClick={() => void outboundDial()} disabled={busy || notReady}>
             {busy ? "Dialing…" : "Place outbound call"}
           </Button>
           {active === "telnyx" && (
@@ -760,19 +824,22 @@ export function PstnTestPanel({
           Place outbound uses this stack, voice, and Test Studio fine-tune — same as the browser agent.
         </p>
       </DevCard>
+      ) : null}
 
-      {active === "telnyx" ? (
+      {showLive && active === "telnyx" ? (
         <LiveMediaFlowDebugger callId={trackedCallId} />
       ) : null}
 
-      {listenCallId ? (
+      {showLive && listenCallId ? (
         <CallAudioPanel
           callId={listenCallId}
+          preferClearAudio
           title="Listen to recording"
-          description="Mix, caller, and agent WAV — play after hangup"
+          description="Clear mix is normalized for dev review — use Download clear WAV for offline playback"
         />
       ) : null}
 
+      {!hideHistory && section === "all" ? (
       <DevCard title="Recent PSTN calls" description="After hangup: Play recording here, or Review for transcript and cost">
         <div className="overflow-x-auto rounded-xl border border-surface-border-subtle">
           <table className="w-full text-left text-sm">
@@ -851,8 +918,11 @@ export function PstnTestPanel({
           </table>
         </div>
       </DevCard>
+      ) : null}
 
-      {message && <p className="text-sm text-text-muted">{message}</p>}
+      {message && section !== "none" ? (
+        <p className="text-sm text-text-muted">{message}</p>
+      ) : null}
     </div>
   );
 }

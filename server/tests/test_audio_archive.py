@@ -94,3 +94,24 @@ async def test_sixteen_khz_agent_pcm_mix_is_not_stretched(archive):
     with wave.open(str(archive.mix_path(call_id)), "rb") as wf:
         assert wf.getframerate() == 16000
         assert wf.getnframes() == 1600
+
+
+@pytest.mark.asyncio
+async def test_clear_audio_is_louder_than_raw(archive):
+    call_id = "audio-clear"
+    archive.init(call_id)
+    archive.set_agent_sample_rate(call_id, 16000)
+    quiet = struct.pack("<" + "h" * 8, *([200] * 8))
+    await archive.append_user_pcm(call_id, quiet)
+    await archive.append_agent_audio(call_id, quiet)
+    await archive.flush(call_id)
+    assert archive.mix_clear_path(call_id).exists()
+    assert archive.user_clear_path(call_id).exists()
+
+    def peak(path) -> int:
+        with wave.open(str(path), "rb") as wf:
+            data = wf.readframes(wf.getnframes())
+        samples = struct.unpack(f"<{len(data) // 2}h", data)
+        return max(abs(s) for s in samples)
+
+    assert peak(archive.mix_clear_path(call_id)) > peak(archive.mix_path(call_id))

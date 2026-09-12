@@ -113,8 +113,10 @@ test.describe("Exotel Test Studio UI", () => {
     const st = await statusRes.json();
     expect(st.handshake_ok, st.handshake_error || JSON.stringify(st)).toBe(true);
 
-    await expect(page.getByRole("heading", { name: "PSTN · Exotel" })).toBeVisible({ timeout: 30000 });
     await expect(page.getByRole("heading", { name: "Outbound test call" })).toBeVisible({ timeout: 30000 });
+    await page.getByTestId("studio-child-setup").click();
+    await expect(page.getByRole("heading", { name: "PSTN · Exotel" })).toBeVisible({ timeout: 30000 });
+    await page.getByTestId("studio-child-live").click();
     await expect(page.getByText("To (customer)")).toBeVisible();
     await expect(page.getByText("CallerId (ExoPhone)")).toBeVisible();
     await expect(page.getByRole("button", { name: /Place Voice AI call|Place bridge call/i })).toBeVisible();

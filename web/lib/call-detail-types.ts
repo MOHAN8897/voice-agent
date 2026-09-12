@@ -110,8 +110,13 @@ export type OutcomePayload = {
   summary_en?: string;
   next_action?: string | null;
   extracted_fields?: Record<string, string>;
+  facts?: Record<string, string>;
+  status_tags?: string[];
   objections?: string[];
   notes?: string | null;
+  generation_ok?: boolean;
+  generated_at?: string;
+  model?: string;
 };
 
 export type CallDetailData = {

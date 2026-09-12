@@ -64,13 +64,40 @@ def _strip_wav_pcm(data: bytes, default_rate: int) -> tuple[bytes, int]:
     return data, default_rate
 
 
-def _write_pcm16_wav(dest: Path, pcm: bytes, sample_rate: int) -> None:
+def _peak_normalize_pcm16(
+    pcm: bytes,
+    *,
+    target_peak: int = 28000,
+    max_gain: float = 4.0,
+) -> bytes:
+    """Boost quiet PSTN captures toward a comfortable listening level without clipping loud calls."""
+    if not pcm or len(pcm) < 2:
+        return pcm
+    frame_count = len(pcm) // 2
+    peak = 0
+    for i in range(frame_count):
+        sample = int.from_bytes(pcm[i * 2 : i * 2 + 2], "little", signed=True)
+        peak = max(peak, abs(sample))
+    if peak == 0 or peak >= target_peak:
+        return pcm
+    gain = min(max_gain, target_peak / peak)
+    out = bytearray(len(pcm))
+    for i in range(frame_count):
+        sample = int.from_bytes(pcm[i * 2 : i * 2 + 2], "little", signed=True)
+        boosted = int(sample * gain)
+        boosted = max(-32768, min(32767, boosted))
+        out[i * 2 : i * 2 + 2] = boosted.to_bytes(2, "little", signed=True)
+    return bytes(out)
+
+
+def _write_pcm16_wav(dest: Path, pcm: bytes, sample_rate: int, *, normalize: bool = False) -> None:
+    body = _peak_normalize_pcm16(pcm) if normalize and pcm else (pcm or b"")
     buf = io.BytesIO()
     with wave.open(buf, "wb") as wf:
         wf.setnchannels(1)
         wf.setsampwidth(2)
         wf.setframerate(int(sample_rate) if sample_rate > 0 else SAMPLE_RATE)
-        wf.writeframes(pcm or b"")
+        wf.writeframes(body)
     dest.write_bytes(buf.getvalue())
 
 
@@ -93,11 +120,20 @@ class AudioArchive:
     def mix_path(self, call_id: str) -> Path:
         return call_dir(call_id) / "mix.wav"
 
+    def mix_clear_path(self, call_id: str) -> Path:
+        return call_dir(call_id) / "mix_clear.wav"
+
     def user_wav_path(self, call_id: str) -> Path:
         return call_dir(call_id) / "user.wav"
 
+    def user_clear_path(self, call_id: str) -> Path:
+        return call_dir(call_id) / "user_clear.wav"
+
     def agent_wav_path(self, call_id: str) -> Path:
         return call_dir(call_id) / "agent.wav"
+
+    def agent_clear_path(self, call_id: str) -> Path:
+        return call_dir(call_id) / "agent_clear.wav"
 
     def init(self, call_id: str) -> None:
         _user_buffers[call_id] = bytearray()
@@ -146,6 +182,7 @@ class AudioArchive:
             self.user_pcm_path(call_id).write_bytes(user)
             if user:
                 _write_pcm16_wav(self.user_wav_path(call_id), user, SAMPLE_RATE)
+                _write_pcm16_wav(self.user_clear_path(call_id), user, SAMPLE_RATE, normalize=True)
             agent_pcm = b""
             if agent and _is_mpeg(agent):
                 self.agent_mp3_path(call_id).write_bytes(agent)
@@ -157,7 +194,15 @@ class AudioArchive:
                     agent_rate = pcm_rate
                 if agent_pcm:
                     _write_pcm16_wav(self.agent_wav_path(call_id), agent_pcm, agent_rate)
+                    _write_pcm16_wav(self.agent_clear_path(call_id), agent_pcm, agent_rate, normalize=True)
             self._write_mix_wav(self.mix_path(call_id), user, agent_pcm, agent_rate)
+            self._write_mix_wav(
+                self.mix_clear_path(call_id),
+                user,
+                agent_pcm,
+                agent_rate,
+                normalize=True,
+            )
             status = {
                 "user": "complete" if user else "empty",
                 "agent": "complete" if agent else "empty",
@@ -169,20 +214,31 @@ class AudioArchive:
             return status
 
     @staticmethod
-    def _write_mix_wav(dest: Path, user_pcm: bytes, agent_pcm: bytes, agent_rate: int) -> None:
+    def _write_mix_wav(
+        dest: Path,
+        user_pcm: bytes,
+        agent_pcm: bytes,
+        agent_rate: int,
+        *,
+        normalize: bool = False,
+    ) -> None:
         """Stereo WAV at 16 kHz: L=user, R=agent (resampled) or silence."""
-        right = _resample_int16_mono(agent_pcm, agent_rate, SAMPLE_RATE) if agent_pcm else b""
-        user_frames = len(user_pcm) // 2
-        agent_frames = len(right) // 2
+        left_pcm = user_pcm
+        right_pcm = _resample_int16_mono(agent_pcm, agent_rate, SAMPLE_RATE) if agent_pcm else b""
+        if normalize:
+            left_pcm = _peak_normalize_pcm16(left_pcm)
+            right_pcm = _peak_normalize_pcm16(right_pcm)
+        user_frames = len(left_pcm) // 2
+        agent_frames = len(right_pcm) // 2
         frame_count = max(user_frames, agent_frames, 1)
         stereo = bytearray(frame_count * 4)
         for i in range(frame_count):
             if i < user_frames:
-                stereo[i * 4] = user_pcm[i * 2]
-                stereo[i * 4 + 1] = user_pcm[i * 2 + 1]
+                stereo[i * 4] = left_pcm[i * 2]
+                stereo[i * 4 + 1] = left_pcm[i * 2 + 1]
             if i < agent_frames:
-                stereo[i * 4 + 2] = right[i * 2]
-                stereo[i * 4 + 3] = right[i * 2 + 1]
+                stereo[i * 4 + 2] = right_pcm[i * 2]
+                stereo[i * 4 + 3] = right_pcm[i * 2 + 1]
         buf = io.BytesIO()
         with wave.open(buf, "wb") as wf:
             wf.setnchannels(2)
@@ -201,12 +257,33 @@ class AudioArchive:
             if self._nonempty(wav):
                 return wav
             path = self.user_pcm_path(call_id)
+        elif kind == "user_clear":
+            path = self.user_clear_path(call_id)
+            if self._nonempty(path):
+                return path
+            wav = self.user_wav_path(call_id)
+            if self._nonempty(wav):
+                return wav
+            path = self.user_pcm_path(call_id)
         elif kind == "agent":
             wav = self.agent_wav_path(call_id)
             if self._nonempty(wav):
                 return wav
             path = self.agent_path(call_id)
+        elif kind == "agent_clear":
+            path = self.agent_clear_path(call_id)
+            if self._nonempty(path):
+                return path
+            wav = self.agent_wav_path(call_id)
+            if self._nonempty(wav):
+                return wav
+            path = self.agent_path(call_id)
         elif kind == "mix":
+            path = self.mix_path(call_id)
+        elif kind == "mix_clear":
+            path = self.mix_clear_path(call_id)
+            if self._nonempty(path):
+                return path
             path = self.mix_path(call_id)
         else:
             return None

@@ -178,7 +178,11 @@ async def get_trace(call_id: str):
 
 
 @router.api_route("/api/call/{call_id}/audio/{kind}", methods=["GET", "HEAD"])
-async def get_audio(call_id: str, kind: Literal["mix", "user", "agent"]):
+async def get_audio(
+    call_id: str,
+    kind: Literal["mix", "user", "agent", "mix_clear", "user_clear", "agent_clear"],
+    download: bool = Query(False, alias="download"),
+):
     path = audio_archive.file_for(call_id, kind)
     if path is None:
         raise HTTPException(
@@ -190,11 +194,14 @@ async def get_audio(call_id: str, kind: Literal["mix", "user", "agent"]):
         ".wav": "audio/wav",
         ".mp3": "audio/mpeg",
     }.get(suffix, "application/octet-stream")
+    headers: dict[str, str] = {"Accept-Ranges": "bytes", "Cache-Control": "no-store"}
+    if download or kind.endswith("_clear"):
+        headers["Content-Disposition"] = f'attachment; filename="{call_id}-{kind}{suffix}"'
     return FileResponse(
         path,
         media_type=media,
         filename=path.name,
-        headers={"Accept-Ranges": "bytes", "Cache-Control": "no-store"},
+        headers=headers,
     )
 
 
@@ -315,7 +322,7 @@ async def retry_outcome(call_id: str):
     ctx = get_ctx(call_id)
     if ctx:
         ctx.components["outcome"] = "processing"
-    await enqueue(call_id)
+    await enqueue(call_id, force=True)
     return JSONResponse(
         status_code=202,
         content={

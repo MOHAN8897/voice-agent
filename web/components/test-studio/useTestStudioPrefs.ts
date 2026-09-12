@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef } from "react";
 
 export type TestStudioUiPrefs = {
-  studioTab?: "live" | "config" | "tune" | "debug";
+  studioTab?: "live" | "setup" | "stack" | "contacts" | "history" | "config" | "tune" | "debug"; // contacts snaps to live
   stackMode?: "tier" | "custom";
   tier?: string;
   channel?: "agent" | "pstn" | "pstn_realtime" | "browser";

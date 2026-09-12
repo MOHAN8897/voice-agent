@@ -20,6 +20,28 @@ from server.services.telephony import (
 
 router = APIRouter()
 
+_hydrated = False
+
+
+async def _ensure_dev_telephony_hydrated() -> None:
+    global _hydrated
+    if _hydrated:
+        return
+    _hydrated = True
+    from server.services.dev_telephony_db import load_snapshot_from_db
+    from server.services.dev_telephony_store import dev_telephony_store
+
+    snap = await load_snapshot_from_db()
+    if snap:
+        dev_telephony_store.merge_snapshot(snap)
+
+
+async def _mirror_dev_telephony() -> None:
+    from server.services.dev_telephony_db import mirror_store_snapshot
+    from server.services.dev_telephony_store import dev_telephony_store
+
+    await mirror_store_snapshot(dev_telephony_store.export_snapshot())
+
 
 def _enrich_telephony_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Attach ledger cost, pipeline, duration, and recording flag for the dev panel."""
@@ -43,6 +65,43 @@ def _enrich_telephony_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
             item["has_recording"] = audio_archive.file_for(cid, "mix") is not None
         enriched.append(item)
     return enriched
+
+
+def _record_dev_dial(
+    *,
+    provider: str,
+    external_id: str,
+    body: "OutboundTestBody",
+    tier: str,
+    language: str,
+    stack_override: dict[str, Any] | None,
+    source_session_id: str | None,
+) -> dict[str, Any]:
+    from server.services.dev_telephony_store import dev_telephony_store
+
+    return dev_telephony_store.record_dial(
+        provider=provider,
+        external_id=external_id,
+        agent_id=body.agent_id,
+        source_session_id=source_session_id,
+        from_e164=body.from_e164,
+        to_e164=body.to_e164,
+        stack_override=stack_override,
+        language=language,
+        tier=tier,
+    )
+
+
+class ContactBody(BaseModel):
+    name: str = Field(..., min_length=1, max_length=120)
+    phone: str = Field(..., min_length=5, max_length=32)
+    notes: str = Field("", max_length=500)
+
+
+class ContactPatchBody(BaseModel):
+    name: str | None = Field(None, min_length=1, max_length=120)
+    phone: str | None = Field(None, min_length=5, max_length=32)
+    notes: str | None = Field(None, max_length=500)
 
 
 class SetProviderBody(BaseModel):
@@ -376,6 +435,16 @@ async def _outbound_exotel(body: OutboundTestBody) -> dict[str, Any]:
                     stack_override=stack_override,
                 ),
             )
+            payload["history"] = _record_dev_dial(
+                provider="exotel",
+                external_id=str(call_sid),
+                body=body,
+                tier=tier,
+                language=language,
+                stack_override=stack_override,
+                source_session_id=source_session_id,
+            )
+            await _mirror_dev_telephony()
         return payload
     except ExotelConfigError as e:
         return {"ok": False, "error": str(e)}
@@ -508,6 +577,16 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
                     stack_override=stack_override,
                 ),
             )
+            payload["history"] = _record_dev_dial(
+                provider="telnyx",
+                external_id=call_control_id,
+                body=body,
+                tier=tier,
+                language=language,
+                stack_override=stack_override,
+                source_session_id=source_session_id,
+            )
+            await _mirror_dev_telephony()
         return payload
     except TelnyxApiError as e:
         detail = (e.body or str(e))[:400]
@@ -517,23 +596,146 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
 @router.get("/api/dev/telephony/calls")
 async def dev_telephony_calls(session: SessionData = Depends(require_dev_session)):
     require_permission(session, "dev.stack.read")
+    from server.services.dev_telephony_store import dev_telephony_store
+
     provider = active_telephony_provider()
     if provider == "exotel":
         from server.services.exotel_call_registry import exotel_call_registry
 
         rows = exotel_call_registry.list_recent(30)
-        return {"ok": True, "provider": provider, "calls": _enrich_telephony_rows(rows)}
-    if provider == "telnyx":
+    elif provider == "telnyx":
         from server.services.telnyx_client import telnyx_call_registry
 
         rows = telnyx_call_registry.list_recent(30)
-        return {"ok": True, "provider": provider, "calls": _enrich_telephony_rows(rows)}
-    if provider == "plivo":
+    elif provider == "plivo":
         from server.services.plivo_client import plivo_call_registry
 
         rows = plivo_call_registry.list_recent(30)
-        return {"ok": True, "provider": provider, "calls": _enrich_telephony_rows(rows)}
-    return {"ok": True, "provider": provider, "calls": []}
+    else:
+        rows = []
+    for row in rows:
+        dev_telephony_store.sync_registry_row(row, provider=provider)
+    await _mirror_dev_telephony()
+    return {"ok": True, "provider": provider, "calls": _enrich_telephony_rows(rows)}
+
+
+@router.get("/api/dev/telephony/history")
+async def dev_telephony_history(
+    agent_id: str | None = None,
+    limit: int = 5,
+    offset: int = 0,
+    session: SessionData = Depends(require_dev_session),
+):
+    require_permission(session, "dev.stack.read")
+    await _ensure_dev_telephony_hydrated()
+    from server.services.dev_telephony_store import dev_telephony_store
+
+    items, total = dev_telephony_store.list_history(
+        agent_id=agent_id,
+        limit=max(1, min(limit, 50)),
+        offset=max(0, offset),
+    )
+    return {"ok": True, "history": items, "total": total, "limit": limit, "offset": offset}
+
+
+@router.get("/api/dev/telephony/history/{history_id}")
+async def dev_telephony_history_detail(
+    history_id: str,
+    session: SessionData = Depends(require_dev_session),
+):
+    require_permission(session, "dev.stack.read")
+    await _ensure_dev_telephony_hydrated()
+    from server.services.dev_telephony_store import dev_telephony_store
+
+    row = dev_telephony_store.get_history(history_id)
+    if row is None:
+        return {"ok": False, "error": "not_found"}
+    from server.call.audio_archive import audio_archive
+    from server.call.call_ledger import call_ledger
+    from server.call.post_call_pipeline import read_outcome
+
+    cid = str(row.get("internal_call_id") or "")
+    detail = dict(row)
+    if cid:
+        lines = call_ledger.read_lines(cid)
+        detail["ledger_meta"] = call_ledger.read_meta(cid)
+        detail["review"] = call_ledger.review_fields(cid)
+        detail["outcome"] = read_outcome(cid)
+        detail["has_recording"] = audio_archive.file_for(cid, "mix") is not None
+        detail["transcript"] = lines
+        detail["transcript_lines"] = len(lines)
+    return {"ok": True, "history": detail}
+
+
+@router.get("/api/dev/telephony/contacts")
+async def dev_telephony_contacts(session: SessionData = Depends(require_dev_session)):
+    require_permission(session, "dev.stack.read")
+    await _ensure_dev_telephony_hydrated()
+    from server.services.dev_telephony_store import dev_telephony_store
+
+    return {"ok": True, "contacts": dev_telephony_store.list_contacts()}
+
+
+@router.post("/api/dev/telephony/contacts")
+async def dev_telephony_contacts_create(
+    body: ContactBody,
+    session: SessionData = Depends(require_dev_session),
+):
+    require_permission(session, "dev.stack.write")
+    from server.services.dev_telephony_store import dev_telephony_store
+
+    try:
+        contact = dev_telephony_store.upsert_contact(
+            name=body.name,
+            phone=body.phone,
+            notes=body.notes,
+        )
+    except ValueError as e:
+        return {"ok": False, "error": str(e)}
+    await _mirror_dev_telephony()
+    return {"ok": True, "contact": contact}
+
+
+@router.patch("/api/dev/telephony/contacts/{contact_id}")
+async def dev_telephony_contacts_patch(
+    contact_id: str,
+    body: ContactPatchBody,
+    session: SessionData = Depends(require_dev_session),
+):
+    require_permission(session, "dev.stack.write")
+    from server.services.dev_telephony_store import dev_telephony_store
+
+    existing = next(
+        (c for c in dev_telephony_store.list_contacts() if c.get("contact_id") == contact_id),
+        None,
+    )
+    if not existing:
+        return {"ok": False, "error": "not_found"}
+    try:
+        contact = dev_telephony_store.upsert_contact(
+            contact_id=contact_id,
+            name=body.name or str(existing.get("name") or ""),
+            phone=body.phone or str(existing.get("phone") or ""),
+            notes=body.notes if body.notes is not None else str(existing.get("notes") or ""),
+        )
+    except (ValueError, KeyError) as e:
+        return {"ok": False, "error": str(e)}
+    await _mirror_dev_telephony()
+    return {"ok": True, "contact": contact}
+
+
+@router.delete("/api/dev/telephony/contacts/{contact_id}")
+async def dev_telephony_contacts_delete(
+    contact_id: str,
+    session: SessionData = Depends(require_dev_session),
+):
+    require_permission(session, "dev.stack.write")
+    from server.services.dev_telephony_store import dev_telephony_store
+
+    if not dev_telephony_store.delete_contact(contact_id):
+        return {"ok": False, "error": "not_found"}
+    await _mirror_dev_telephony()
+    return {"ok": True}
 
 
 @router.get("/api/dev/telephony/media-flow")
@@ -1060,6 +1262,16 @@ async def _outbound_plivo(body: OutboundTestBody, session: SessionData) -> dict[
                     stack_override=stack_override,
                 ),
             )
+            payload["history"] = _record_dev_dial(
+                provider="plivo",
+                external_id=request_uuid,
+                body=body,
+                tier=tier,
+                language=language,
+                stack_override=stack_override,
+                source_session_id=source_session_id,
+            )
+            await _mirror_dev_telephony()
         return payload
     except PlivoApiError as e:
         return {"ok": False, "error": str(e), "status": e.status}

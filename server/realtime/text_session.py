@@ -99,7 +99,11 @@ def build_audio_session_instructions(
             "- Turn discipline: default to ONE short sentence, maximum 20 spoken words, then stop. "
             "Only when essential, use two short sentences with 30 words total maximum.\n"
             "- Ask at most one question and stop immediately after it. Never keep explaining or pitching after a question.\n"
-            "- Collect missing lead details one at a time; when captured or they decline, confirm next step and close professionally."
+            "- Collect missing lead details one at a time; when captured or they decline, confirm next step and close professionally.\n"
+            "- Callback close: do NOT call end_call until callback phone, caller name, and requested day/time are known. "
+            "The connected outbound number already counts as the callback phone. Ask only one missing detail per turn.\n"
+            "- Once callback details are ready, say the complete confirmation, thank them, say goodbye, and call end_call "
+            "in that same turn. Never return a silent tool-only close."
         )
         line = (opening_greeting or "").strip()
         if line:

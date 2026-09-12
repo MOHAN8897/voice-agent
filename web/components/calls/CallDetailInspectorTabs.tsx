@@ -5,6 +5,7 @@ import { ensureArray } from "@/lib/ensure-array";
 import { cn } from "@/lib/cn";
 import type { MemorySnapshot, OutcomePayload, TranscriptLine } from "@/lib/call-detail-types";
 import { CallAudioPanel } from "@/components/calls/detail/CallAudioPanel";
+import { CallOutcomePanel } from "@/components/calls/detail/CallOutcomePanel";
 
 /** Compact tabs for the Calls list detail inspector (split view). */
 export function CallDetailInspectorTabs({ callId }: { callId: string }) {
@@ -98,9 +99,7 @@ export function CallDetailInspectorTabs({ callId }: { callId: string }) {
       {tab === "outcome" && (
         <div className="mt-4">
           {outcome ? (
-            <pre className="max-h-64 overflow-auto rounded-skeuo-sm skeuo-inset p-3 font-mono text-xs text-text-muted">
-              {JSON.stringify(outcome, null, 2)}
-            </pre>
+            <CallOutcomePanel outcome={outcome} />
           ) : (
             <p className="text-sm text-text-muted">Outcome pending or not generated yet.</p>
           )}

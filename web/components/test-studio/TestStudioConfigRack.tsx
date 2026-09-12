@@ -18,6 +18,7 @@ import {
   sttModelsForPstn,
 } from "@/lib/pstn-stack";
 import { cn } from "@/lib/cn";
+import { StudioTabRail } from "@/components/test-studio/StudioTabRail";
 import { defaultTtsVoice, ensureTtsVoice, ttsProviderFromStack } from "@/lib/voice/tts-config";
 import type { TestStudioMode } from "@/components/test-studio/TestStudioModePicker";
 import {
@@ -171,23 +172,15 @@ export function TestStudioConfigRack({
 
   return (
     <SkeuoPanel title="Configuration" description="Channel · stack · voice · STT" padding="md">
-      <div className="sticky top-0 z-20 -mx-1 mb-4 border-b border-surface-border-subtle bg-surface-panel/95 px-1 pb-3 backdrop-blur">
-        <div className="flex flex-wrap gap-1 rounded-skeuo-sm border border-surface-border-subtle skeuo-inset p-1">
-          {rackTabs.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              disabled={locked}
-              onClick={() => setRackTab(t.id)}
-              className={cn(
-                "flex-1 min-w-[4.5rem] rounded-skeuo-sm px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-colors disabled:opacity-50",
-                rackTab === t.id ? "skeuo-btn-primary text-white" : "text-text-muted hover:text-text"
-              )}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+      <div className="mb-4">
+        <StudioTabRail
+          tone="child"
+          ariaLabel="Configuration section"
+          items={rackTabs}
+          value={rackTab}
+          onChange={setRackTab}
+          locked={locked}
+        />
       </div>
 
       <div className="space-y-4">

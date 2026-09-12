@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { SessionTraceEvent, TurnCompleteEvent } from "@/components/live/LiveVoiceSession";
 import { CallDetailView } from "@/components/calls/CallDetailView";
-import { PstnTestPanel } from "@/components/dev/test-studio/PstnTestPanel";
+import { PstnFlowWorkspace } from "@/components/dev/test-studio/PstnFlowWorkspace";
 import { SkeuoPanel } from "@/components/ui/skeuo/SkeuoPanel";
 import { SkeuoButton } from "@/components/ui/skeuo/SkeuoButton";
 import { refreshPortalSession } from "@/lib/auth-client";
@@ -15,6 +15,8 @@ import { TestStudioFineTuneWorkbench } from "@/components/test-studio/TestStudio
 import { TestStudioTurnMetrics, emptySessionTotals, type StampedSessionUsage, type TurnMetricRow } from "@/components/test-studio/TestStudioTurnMetrics";
 import { TestStudioModePicker, type TestStudioMode } from "@/components/test-studio/TestStudioModePicker";
 import { TestStudioMemoryPanel } from "@/components/test-studio/TestStudioMemoryPanel";
+import { StudioTabRail } from "@/components/test-studio/StudioTabRail";
+import { TestStudioAgentSwitcher } from "@/components/test-studio/TestStudioAgentSwitcher";
 import { useStackCatalog } from "@/components/test-studio/useStackCatalog";
 import { useTestStudioPrefs, patchPrefsCache } from "@/components/test-studio/useTestStudioPrefs";
 import {
@@ -30,26 +32,38 @@ import {
 } from "@/lib/test-studio-stack";
 import { applyPstnStackDefaults } from "@/lib/pstn-stack";
 import { isRealtimePstnMode } from "@/lib/realtime-voice";
+import { mapPstnTraceToTurnRows } from "@/lib/pstn-trace-metrics";
 import { classifyCacheEvent, type PricingMeta } from "@/lib/usage-cost";
 import { billingCharCount } from "@/lib/billing-chars";
 import { DEFAULT_CARTESIA_VOICE_ID, ensureTtsVoice, voiceMatchesTtsProvider } from "@/lib/voice/tts-config";
 import { onTestStudioVoiceSaved } from "@/lib/voice/voice-runtime-events";
-import { cn } from "@/lib/cn";
+import { persistAgentCallLanguage } from "@/lib/bootstrap-test-studio-agent";
 import Link from "next/link";
 import { TestStudioSessionProvider } from "@/components/test-studio/TestStudioSessionContext";
 import { normalizeLanguageCode, primaryAgentLanguage } from "@/lib/agent-language";
-import { persistAgentCallLanguage } from "@/lib/bootstrap-test-studio-agent";
 
 type ChannelTab = TestStudioMode;
 type FineTuneTab = "prompts" | "llm" | "voice";
-type StudioTab = "live" | "config" | "tune" | "debug";
+type StudioTab = "live" | "setup" | "stack" | "history" | "config" | "tune" | "debug";
 
-const STUDIO_TABS: { id: StudioTab; label: string; hint: string }[] = [
+const AGENT_CHILD_TABS: { id: StudioTab; label: string; hint: string }[] = [
   { id: "live", label: "Live", hint: "Mic · transcript · conversation" },
   { id: "config", label: "Config", hint: "Stack · voice · tokens" },
   { id: "tune", label: "Fine-tune", hint: "Prompts · LLM · VAD" },
   { id: "debug", label: "Debug", hint: "Events · memory · review" },
 ];
+
+const PSTN_CHILD_TABS: { id: StudioTab; label: string; hint: string }[] = [
+  { id: "live", label: "Live call", hint: "Dial · contacts · recording" },
+  { id: "setup", label: "Provider", hint: "SIP · handshake · Telnyx" },
+  { id: "stack", label: "Stack", hint: "STT · LLM · TTS path" },
+  { id: "history", label: "History", hint: "Cost · download · review" },
+  { id: "config", label: "Config", hint: "Stack · voice · tokens" },
+  { id: "tune", label: "Fine-tune", hint: "Prompts · LLM · VAD" },
+  { id: "debug", label: "Debug", hint: "Events · memory · review" },
+];
+
+const AGENT_ONLY_TABS = new Set<StudioTab>(["live", "config", "tune", "debug"]);
 
 export function AgentTestStudio({
   agentId,
@@ -108,7 +122,17 @@ export function AgentTestStudio({
   const setChannelMode = useCallback((next: ChannelTab) => {
     channelTouchedRef.current = true;
     setChannel(next);
+    setStudioTab((prev) => (next === "agent" && !AGENT_ONLY_TABS.has(prev) ? "live" : prev));
   }, []);
+
+  useEffect(() => {
+    if (channel === "agent" && !AGENT_ONLY_TABS.has(studioTab)) {
+      setStudioTab("live");
+    }
+    if ((studioTab as string) === "contacts") {
+      setStudioTab("live");
+    }
+  }, [channel, studioTab]);
 
   const setAgentLanguage = useCallback(
     (next: string) => {
@@ -145,7 +169,10 @@ export function AgentTestStudio({
   const onPrefsLoaded = useCallback((loaded: import("@/components/test-studio/useTestStudioPrefs").TestStudioUiPrefs) => {
     if (prefsHydratedRef.current) return;
     prefsHydratedRef.current = true;
-    if (loaded.studioTab) setStudioTab(loaded.studioTab as StudioTab);
+    if (loaded.studioTab) {
+      const tab = loaded.studioTab === "contacts" ? "live" : loaded.studioTab;
+      setStudioTab(tab as StudioTab);
+    }
     if (loaded.stackMode) setStackMode(loaded.stackMode);
     if (loaded.tier) {
       prefsHadTierRef.current = true;
@@ -484,8 +511,8 @@ export function AgentTestStudio({
     ]);
   }
 
-  const onCallStart = useCallback((id: string) => {
-    setCallId(id);
+  const onPstnDialPlaced = useCallback(() => {
+    setCallId(null);
     setCallEnded(false);
     setLocked(true);
     setEvents([]);
@@ -493,8 +520,28 @@ export function AgentTestStudio({
     setStampedUsage(null);
     setSessionStartedAt(Date.now());
     setSessionEndedAt(null);
+    setSessionStatus("connecting");
+  }, []);
+
+  const onCallStart = useCallback((id: string) => {
+    setCallId(id);
+    setCallEnded(false);
+    setLocked(true);
+    setSessionStatus("listening");
     refreshMemory(id);
   }, [refreshMemory]);
+
+  const onAgentCallStart = useCallback(
+    (id: string) => {
+      setEvents([]);
+      setTurnRows([]);
+      setStampedUsage(null);
+      setSessionStartedAt(Date.now());
+      setSessionEndedAt(null);
+      onCallStart(id);
+    },
+    [onCallStart]
+  );
 
   const onCallEnd = useCallback((id: string) => {
     setCallEnded(true);
@@ -524,34 +571,23 @@ export function AgentTestStudio({
   }, [channel, runtimeOpenAiModel]);
 
   useEffect(() => {
-    if (!isRealtimePstnMode(channel) || !callId) return;
+    if (channel === "agent" || !callId) return;
     let cancelled = false;
+    const e2e = isRealtimePstnMode(channel);
     const pull = async () => {
       try {
-        const response = await fetch(`/api/call/${encodeURIComponent(callId)}/trace`, {
-          credentials: "include",
-        });
-        if (!response.ok || cancelled) return;
-        const body = await response.json();
+        const [traceRes, transcriptRes] = await Promise.all([
+          fetch(`/api/call/${encodeURIComponent(callId)}/trace`, { credentials: "include" }),
+          fetch(`/api/call/${encodeURIComponent(callId)}/transcript`, { credentials: "include" }),
+        ]);
+        if (!traceRes.ok || cancelled) return;
+        const body = await traceRes.json();
         const turns = Array.isArray(body.turns) ? body.turns : [];
-        setTurnRows(
-          turns.map((turn: Record<string, unknown>, index: number) => ({
-            turn: Number(turn.turn ?? index + 1),
-            userText: String(turn.user_text || ""),
-            assistantText: String(turn.assistant_text || ""),
-            at: Date.now(),
-            inputTokens: Number(turn.input_tokens || 0),
-            outputTokens: Number(turn.output_tokens || 0),
-            cachedTokens: Number(turn.cached_tokens || 0),
-            cacheWriteTokens: Number(turn.cache_write_tokens || 0),
-            inputAudioTokens: Number(turn.input_audio_tokens || 0),
-            outputAudioTokens: Number(turn.output_audio_tokens || 0),
-            sttChars: 0,
-            sttAudioSec: 0,
-            ttsChars: 0,
-            ttsAudioBytes: 0,
-          }))
-        );
+        const lines =
+          transcriptRes.ok && !cancelled
+            ? ((await transcriptRes.json()).lines as Record<string, unknown>[]) || []
+            : [];
+        setTurnRows(mapPstnTraceToTurnRows(turns, lines, e2e));
       } catch {
         /* live meter is best-effort */
       }
@@ -620,9 +656,9 @@ export function AgentTestStudio({
 
   return (
     <TestStudioSessionProvider agentId={agentId} sessionId={sessionId}>
-    <div className="space-y-5">
+    <div className="flex min-h-[calc(100vh-7.5rem)] w-full min-w-0 flex-col gap-4">
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
+        <div className="min-w-0">
           <Link href={studioHomeHref} className="text-xs font-medium text-text-muted hover:text-text">
             ← All Test Studio agents
           </Link>
@@ -631,53 +667,44 @@ export function AgentTestStudio({
           </h2>
           <p className="mt-0.5 font-mono text-[10px] text-text-subtle truncate max-w-xl">{sessionId}</p>
         </div>
-        <CompileLanguagePicker
-          compact
-          id="studio-call-language"
-          value={language}
-          disabled={false}
-          onChange={setAgentLanguage}
-          hint="Only place to change this agent's language — Live, Config, Fine-tune, web, and phone all follow it."
-        />
-      </div>
-      <div className="sticky top-0 z-40 -mx-1 rounded-skeuo-lg border border-surface-border-subtle bg-surface/95 px-2 py-3 backdrop-blur supports-[backdrop-filter]:bg-surface/90">
-        <div className="flex flex-wrap gap-1 rounded-skeuo-sm border border-surface-border-subtle skeuo-inset p-1">
-          {STUDIO_TABS.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setStudioTab(t.id)}
-              className={cn(
-                "flex-1 min-w-[5.5rem] rounded-skeuo-sm px-3 py-2 text-left transition-colors",
-                studioTab === t.id ? "skeuo-btn-primary text-white" : "text-text-muted hover:bg-surface-raised"
-              )}
-            >
-              <span className="block text-xs font-semibold uppercase tracking-wide">{t.label}</span>
-              <span
-                className={cn(
-                  "mt-0.5 block text-[10px] leading-tight",
-                  studioTab === t.id ? "text-white/80" : "text-text-subtle"
-                )}
-              >
-                {t.hint}
-              </span>
-            </button>
-          ))}
+        <div className="flex min-w-0 flex-wrap items-end gap-3">
+          <TestStudioAgentSwitcher agentId={agentId} portal={portal} />
+          <CompileLanguagePicker
+            compact
+            id="studio-call-language"
+            value={language}
+            disabled={false}
+            onChange={setAgentLanguage}
+            hint="Only place to change this agent's language — Live, Config, Fine-tune, web, and phone all follow it."
+          />
         </div>
       </div>
 
-      <div className={studioTab === "live" ? "space-y-5" : "hidden"}>
-          {showPstn && (
-            <TestStudioModePicker
-              mode={channel}
-              onModeChange={setChannelMode}
-              locked={stackLocked}
-              showPstn={showPstn}
-            />
-          )}
-          <div className="grid gap-5 xl:grid-cols-12">
-            <div className="xl:col-span-8 min-w-0">
-              {channel === "agent" ? (
+      {showPstn ? (
+        <TestStudioModePicker
+          mode={channel}
+          onModeChange={setChannelMode}
+          locked={stackLocked}
+          showPstn={showPstn}
+        />
+      ) : null}
+
+      <StudioTabRail
+        tone="child"
+        ariaLabel="Studio section"
+        testId="studio-child-tabs"
+        items={(channel === "agent" ? AGENT_CHILD_TABS : PSTN_CHILD_TABS).map((t) => ({
+          ...t,
+          testId: `studio-child-${t.id}`,
+        }))}
+        value={studioTab}
+        onChange={setStudioTab}
+        locked={stackLocked && (studioTab === "live" || studioTab === "setup")}
+      />
+
+      <div className="flex min-h-0 min-w-0 w-full flex-1 flex-col">
+      <div className={studioTab === "live" && channel === "agent" ? "grid w-full min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,22rem)]" : "hidden"}>
+            <div className="min-w-0 w-full">
                 <TestStudioLivePanel
                   agentId={agentId}
                   tier={tier}
@@ -686,39 +713,13 @@ export function AgentTestStudio({
                   sessionId={sessionId}
                   voiceConfig={voiceRuntime}
                   onTrace={onTrace}
-                  onCallStart={onCallStart}
+                  onCallStart={onAgentCallStart}
                   onCallEnd={onCallEnd}
                   onStatusChange={setSessionStatus}
                   onTurnComplete={onTurnComplete}
                 />
-              ) : (
-                <SkeuoPanel
-                  title={isRealtimePstnMode(channel) ? "Realtime PSTN · Telnyx + OpenAI audio" : "PSTN · Telephony"}
-                  description={
-                    isRealtimePstnMode(channel)
-                      ? "Telnyx L16 @ 16 kHz → OpenAI Realtime PCM16 @ 24 kHz in/out · same compiled brain"
-                      : "Telnyx L16 @ 16 kHz — same path as validation tests 1–10"
-                  }
-                  padding="md"
-                >
-                  <PstnTestPanel
-                    agentId={agentId}
-                    sourceSessionId={sessionId}
-                    tier={tier}
-                    language={language}
-                    stackMode={stackMode}
-                    stack={stack}
-                    runtimeTtsSpeaker={runtimeTtsSpeaker}
-                    runtimeOpenAiModel={runtimeOpenAiModel}
-                    stackOverride={pstnStackOverride}
-                    onInternalCallStart={onCallStart}
-                    onInternalCallEnd={onCallEnd}
-                    onReviewCall={onReviewCall}
-                  />
-                </SkeuoPanel>
-              )}
             </div>
-            <div className="xl:col-span-4 space-y-5">
+            <div className="min-w-0 w-full">
               <TestStudioTurnMetrics
                 rows={turnRows}
                 sessionTotal={sessionTotals}
@@ -733,8 +734,63 @@ export function AgentTestStudio({
                 stampedUsage={stampedUsage}
               />
             </div>
+      </div>
+
+      {showPstn && channel !== "agent" ? (
+        <div
+          className={
+            ["live", "setup", "stack", "history"].includes(studioTab)
+              ? studioTab === "live"
+                ? "grid w-full min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,22rem)]"
+                : "w-full min-w-0"
+              : "hidden"
+          }
+        >
+          <div className="min-w-0 w-full">
+            <PstnFlowWorkspace
+              channel={channel}
+              section={
+                studioTab === "setup" || studioTab === "stack" || studioTab === "history"
+                  ? studioTab
+                  : "live"
+              }
+              agentId={agentId}
+              sourceSessionId={sessionId}
+              tier={tier}
+              language={language}
+              stackMode={stackMode}
+              stack={stack}
+              runtimeTtsSpeaker={runtimeTtsSpeaker}
+              runtimeOpenAiModel={runtimeOpenAiModel}
+              stackOverride={pstnStackOverride}
+              onDialPlaced={onPstnDialPlaced}
+              onInternalCallStart={onCallStart}
+              onInternalCallEnd={onCallEnd}
+              onReviewCall={onReviewCall}
+              sessionClockMs={sessionDurationMs}
+            />
           </div>
-          {channel !== "agent" && callId && callEnded && (
+          {studioTab === "live" ? (
+          <div className="min-w-0 w-full">
+            <TestStudioTurnMetrics
+              rows={turnRows}
+              sessionTotal={sessionTotals}
+              mode={channel}
+              ttsProvider={stack.ttsProvider}
+              ttsModel={stack.ttsModel}
+              sttProvider={stack.sttProvider}
+              sttModel={stack.sttModel}
+              llmModel={liveLlmSlug}
+              pricing={pricingMeta}
+              sessionDurationMs={sessionDurationMs}
+              stampedUsage={stampedUsage}
+            />
+          </div>
+          ) : null}
+        </div>
+      ) : null}
+
+          {channel !== "agent" && callId && callEnded && studioTab === "live" && (
             <SkeuoPanel
               title="Call recording & history"
               description="Play mix / caller / agent, then transcript, metadata, and session cost"
@@ -743,10 +799,9 @@ export function AgentTestStudio({
               <CallDetailView callId={callId} />
             </SkeuoPanel>
           )}
-        </div>
 
       {studioTab === "config" && (
-        <div className="grid gap-5 lg:grid-cols-2">
+        <div className="grid w-full min-w-0 gap-5 lg:grid-cols-2">
           <div className="flex flex-wrap items-center gap-3 lg:col-span-2">
             <SkeuoButton type="button" variant="primary" disabled={stackLocked || !prefsReady || catalogLoading || configSaving} onClick={saveConfig}>
               {configSaving ? "Saving…" : "Save Config"}
@@ -795,7 +850,7 @@ export function AgentTestStudio({
         </div>
       )}
 
-      <div className={studioTab === "tune" ? "" : "hidden"}>
+      <div className={studioTab === "tune" ? "min-w-0 w-full" : "hidden"}>
         <TestStudioFineTuneWorkbench
           agentId={agentId}
           portal={portal}
@@ -829,7 +884,7 @@ export function AgentTestStudio({
       </div>
 
       {studioTab === "debug" && (
-        <div className="grid gap-5 lg:grid-cols-2">
+        <div className="grid w-full min-w-0 gap-5 lg:grid-cols-2">
           <TestStudioDiagnostics callId={callId} channel={channel} callEnded={callEnded} events={events} />
           <TestStudioMemoryPanel callId={callId} projectionJson={memoryJson} />
           {callId && callEnded && (
@@ -841,6 +896,7 @@ export function AgentTestStudio({
           )}
         </div>
       )}
+      </div>
     </div>
     </TestStudioSessionProvider>
   );
