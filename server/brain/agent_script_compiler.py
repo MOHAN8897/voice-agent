@@ -46,7 +46,7 @@ from server.prompts.agent_voice_rules import (
 from server.prompts.brain_prompt import SECTION_SAFETY
 from server.prompts.voice_defaults import style_for_language
 
-COMPILER_VERSION = "agent_script_v16"
+COMPILER_VERSION = "agent_script_v17"
 
 AGENT_SCRIPT_SCHEMA: dict[str, Any] = {
     "type": "object",
@@ -112,6 +112,7 @@ class AgentScriptResult:
     optimized_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     raw_token_estimate: int = 0
     optimized_token_estimate: int = 0
+    platform_call_rules: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -133,6 +134,7 @@ class AgentScriptResult:
             "raw_token_estimate": self.raw_token_estimate,
             "optimized_token_estimate": self.optimized_token_estimate,
             "tokens_saved": 0,
+            "platform_call_rules": self.platform_call_rules,
         }
 
 
@@ -182,9 +184,9 @@ _WORKISH_FIRST = frozenset({
     "plant", "plants", "this", "that",
 })
 _COMPANY_HINT = re.compile(
-    r"(shop|mart|realty|estates?|plants|pvt|ltd|limited|inc|corp|hospital|clinic|"
+    r"(shop|mart|realty|estates?|agencies?|plants|pvt|ltd|limited|inc|corp|hospital|clinic|"
     r"dental|hotel|bank|school|college|academy|nursery|store|studio|farms|farm|"
-    r"motors?|crm|saas|software)",
+    r"motors?|crm|saas|software|ventures?)",
     re.I,
 )
 _LIVE_CALL_GUIDE_TITLE = "LIVE CALL GUIDE"
@@ -222,30 +224,51 @@ def _clean_identity_value(value: str) -> str:
     return text[:60]
 
 
+def _titlecase_name(name: str) -> str:
+    parts = [p for p in (name or "").strip().split() if p]
+    if not parts:
+        return ""
+    return " ".join(p[:1].upper() + p[1:].lower() if len(p) > 1 else p.upper() for p in parts)
+
+
+def _looks_like_agent_name(name: str) -> bool:
+    cleaned = _clean_identity_value(name)
+    if not cleaned:
+        return False
+    if len(cleaned.split()) > 4 or len(cleaned) > 40:
+        return False
+    if re.match(
+        r"^(?:create|help|convince|sell|work|related|real\s*estate|plots?|users?)\b",
+        cleaned,
+        re.I,
+    ):
+        return False
+    return True
+
+
 def extract_agent_name_from_brief(brief: str) -> str:
-    """Extract agent name; stop before from/for/where. Supports multi-word + Unicode."""
-    # Allow letters from any script (Telugu etc.), not ASCII-only.
-    name_value = (
-        r"([^\n.,;]+?)"
-        r"(?=\s+(?:from|for|where)\b|[.,;]|$)"
+    """Extract agent name; prefer explicit agent-named patterns over bare 'name is'."""
+    text = brief or ""
+    name_value = r"([^\n.,;]+?)(?=\s+(?:from|for|where|who|that|working)\b|[.,;]|$)"
+    patterns: tuple[tuple[int, str], ...] = (
+        (100, rf"create\s+(?:an?\s+)?(?:\w+\s+){0,4}agent\s+na?m?e?d\s+{name_value}"),
+        (90, rf"agent\s+na?m?e?d\s+{name_value}"),
+        (85, rf"agent\s*name\s*(?:(?:is)\b\s*|:\s*)?{name_value}"),
+        (70, rf"\bnenu\s+{name_value}"),
+        (50, rf"(?<!\w)named\s+{name_value}"),
+        (20, rf"name\s+is\s+{name_value}"),
     )
-    patterns = (
-        rf"agent\s+named\s+{name_value}",
-        rf"agent\s*name\s*(?:(?:is)\b\s*|:\s*)?{name_value}",
-        rf"named\s+{name_value}",
-        rf"\bnenu\s+{name_value}",
-    )
-    for pat in patterns:
-        match = re.search(pat, brief or "", re.I)
-        if match:
+    hits: list[tuple[int, int, str]] = []
+    for priority, pat in patterns:
+        for match in re.finditer(pat, text, re.I):
             name = _clean_identity_value(match.group(1))
-            if not name:
+            if not _looks_like_agent_name(name):
                 continue
-            # Guard against swallowing a whole clause as a "name".
-            if len(name.split()) > 4 or len(name) > 40:
-                continue
-            return name
-    return ""
+            hits.append((priority, match.start(), name))
+    if not hits:
+        return ""
+    hits.sort(key=lambda item: (-item[0], item[1]))
+    return _titlecase_name(hits[0][2])
 
 
 def extract_company_from_brief(brief: str) -> str:
@@ -266,13 +289,25 @@ def extract_company_from_brief(brief: str) -> str:
         ):
             return ""
         first = candidate.split()[0]
-        if (
-            first.lower() not in _WORKISH_FIRST
-            and not first[:1].isdigit()
-            and (first[:1].isupper() or _COMPANY_HINT.search(candidate))
-        ):
+        if first.lower() in _WORKISH_FIRST or first[:1].isdigit():
+            return ""
+        if _COMPANY_HINT.search(candidate) or len(candidate.split()) >= 2:
+            if candidate == candidate.lower():
+                return " ".join(part.capitalize() for part in candidate.split())
+            return candidate
+        if first[:1].isupper():
             return candidate
         return ""
+
+    match = re.search(
+        r"realt?ed\s+to\s+([^\n.,;]{2,60}?)(?=\s+working|\s+who|\s+create|\s+in\s|\s+for\s+|,\s*create|[.,;]|$)",
+        text,
+        re.I,
+    )
+    if match:
+        accepted = _accept_company(match.group(1))
+        if accepted:
+            return accepted
 
     # Prefer "named X for Company" — more specific than a bare "from".
     match = re.search(
@@ -331,15 +366,28 @@ def infer_agent_name(brief: str) -> str:
 def work_scope_from_brief(brief: str, company: str) -> str:
     text = " ".join((brief or "").split())
     text = re.sub(r"^ok\s+", "", text, flags=re.I)
+    text = re.sub(r"name\s+is\s+[^\n.,;]{1,40}(?=[,\s]|$)", "", text, flags=re.I)
     text = re.sub(
-        r"create\s+an?\s+(?:\w+\s+){0,3}agent\s+(?:named\s+)?[A-Za-z][A-Za-z]{1,24}\s*(?:for\s+)?",
+        r"realt?ed\s+to\s+[^\n.,;]{2,60}(?=\s+working|\s+who|\s+create|,|\.)",
         "",
         text,
         flags=re.I,
     )
-    text = re.sub(r"create\s+an?\s+agent\s+(?:named\s+)?[A-Za-z][A-Za-z]{1,24}\s*", "", text, flags=re.I)
     text = re.sub(
-        r"agent\s+named\s+[^\n.,;]{2,50}?(?=\s+(?:for|where)\b|[.,;]|$)[.,;]?\s*",
+        r"create\s+(?:an?\s+)?(?:\w+\s+){0,4}agent\s+na?m?e?d\s+[^\n.,;]{1,40}?(?=\s+who|\s+that|[.,;]|$)[.,;]?\s*",
+        "",
+        text,
+        flags=re.I,
+    )
+    text = re.sub(
+        r"create\s+an?\s+(?:\w+\s+){0,3}agent\s+(?:na?me?d\s+)?[A-Za-z][A-Za-z]{1,24}\s*(?:for\s+)?",
+        "",
+        text,
+        flags=re.I,
+    )
+    text = re.sub(r"create\s+an?\s+agent\s+(?:na?me?d\s+)?[A-Za-z][A-Za-z]{1,24}\s*", "", text, flags=re.I)
+    text = re.sub(
+        r"agent\s+na?m?e?d\s+[^\n.,;]{2,50}?(?=\s+(?:for|where|who)\b|[.,;]|$)[.,;]?\s*",
         "",
         text,
         flags=re.I,
@@ -424,7 +472,7 @@ def resolve_script_identity(
     """Return (agent_name, company_name, work_scope, opening_line). Never invent a company."""
     brief_name = extract_agent_name_from_brief(brief)
     brief_company = extract_company_from_brief(brief)
-    name = _clean_identity_value(brief_name or llm_name) or infer_agent_name(brief)
+    name = _titlecase_name(_clean_identity_value(brief_name or llm_name)) or infer_agent_name(brief)
     if brief_company:
         company = brief_company
     else:
@@ -624,36 +672,102 @@ def _sanitize_business_facts(brief: str, *, agent_name: str, company_name: str) 
     return scope or "Use the business objective from the agent brief."
 
 
-def _structured_business_script(
+def _format_business_offer(
+    brief: str,
+    *,
+    agent_name: str,
+    company_name: str,
+    work_scope: str,
+) -> str:
+    """Clean, customer-facing offer text — no agent-creation boilerplate."""
+    scope = _sanitize_business_facts(brief, agent_name=agent_name, company_name=company_name)
+    scope = re.sub(
+        r"who\s+should\s+convince\s+(?:the\s+)?users?\s+to\s+",
+        "Help callers ",
+        scope,
+        flags=re.I,
+    )
+    scope = re.sub(r"\s+", " ", scope).strip(" .,:;-")
+    if company_name and scope.lower().startswith(company_name.lower()):
+        scope = scope[len(company_name) :].strip(" .,:;-")
+    if not scope.strip():
+        scope = (work_scope or brief or "").strip()
+    scope = re.sub(r"\s+", " ", scope).strip(" .,:;-")
+    if not scope:
+        return "Use the business objective from the agent brief."
+    if scope[0].islower():
+        scope = scope[0].upper() + scope[1:]
+    if not scope.endswith("."):
+        scope += "."
+    return scope[:480]
+
+
+def _role_on_call_section(role: str) -> str:
+    if role in ("sales", "lead_qualification"):
+        return (
+            "--- YOUR ROLE ON THIS CALL ---\n"
+            "Outbound sales for this offer. Answer questions first using COMPANY & OFFER only.\n"
+            "When they have time: one discovery question at a time (location, timeline, budget if in the brief).\n"
+            "Guide interested callers toward a site visit, callback, or WhatsApp details — never pressure.\n"
+            "If busy or not interested: offer callback or close politely."
+        )
+    if role == "appointment":
+        return (
+            "--- YOUR ROLE ON THIS CALL ---\n"
+            "Book appointments using COMPANY & OFFER facts. Confirm date, time, and contact once interest is clear."
+        )
+    if role == "support":
+        return (
+            "--- YOUR ROLE ON THIS CALL ---\n"
+            "Resolve the caller's issue using COMPANY & OFFER facts. Do not sell unless the brief requires it."
+        )
+    return (
+        "--- YOUR ROLE ON THIS CALL ---\n"
+        "Represent this business on the call. Answer from COMPANY & OFFER, then one useful next step."
+    )
+
+
+def _user_visible_script(
     brief: str,
     *,
     agent_name: str,
     company_name: str,
     work_scope: str,
     opening_line: str,
+    role: str = "other",
     language: str = "te-IN",
 ) -> str:
-    """Industry-standard structured script: identity, offer, opening, workflow, guardrails."""
+    """Business script shown in Test Studio — identity, offer, opening, role. No platform rules."""
     _ = language
-    business = _sanitize_business_facts(brief, agent_name=agent_name, company_name=company_name)
-    if not business.strip():
-        business = (work_scope or brief or "").strip()
+    business = _format_business_offer(
+        brief,
+        agent_name=agent_name,
+        company_name=company_name,
+        work_scope=work_scope,
+    )
     if company_name:
         identity = (
             f"You are {agent_name}, representing {company_name}. "
-            f"You are the only speaker on this call — always speak as {agent_name}."
+            f"Always speak as {agent_name} — the only speaker on this call."
         )
     else:
         identity = (
             f"You are {agent_name}. "
-            f"You are the only speaker on this call — always speak as {agent_name}."
+            f"Always speak as {agent_name} — the only speaker on this call."
         )
     return (
         f"--- AGENT IDENTITY ---\n{identity}\n\n"
         f"--- COMPANY & OFFER ---\n{business}\n\n"
         f"--- CANONICAL OPENING ---\n"
-        f"Say this once on your first turn after the callee speaks:\n{opening_line}\n"
-        f"Never use inbound help-desk phrasing on the first turn.\n\n"
+        f"After the callee speaks, say once:\n{opening_line}\n\n"
+        f"{_role_on_call_section(role)}"
+    )
+
+
+def _platform_call_rules(*, agent_name: str, role: str = "other") -> str:
+    """Platform call discipline — compiled into brain only, not shown as the user script."""
+    _ = role
+    return (
         f"--- OUTBOUND WORKFLOW ---\n"
         f"1. Wait for the callee to speak first (hello, yes, who is this).\n"
         f"2. One intro using CANONICAL OPENING — then listen.\n"
@@ -669,6 +783,28 @@ def _structured_business_script(
     )
 
 
+def _structured_business_script(
+    brief: str,
+    *,
+    agent_name: str,
+    company_name: str,
+    work_scope: str,
+    opening_line: str,
+    language: str = "te-IN",
+    role: str = "other",
+) -> str:
+    """User-visible business script (legacy name — prefer _user_visible_script)."""
+    return _user_visible_script(
+        brief,
+        agent_name=agent_name,
+        company_name=company_name,
+        work_scope=work_scope,
+        opening_line=opening_line,
+        role=role,
+        language=language,
+    )
+
+
 def _simple_business_script(
     brief: str,
     *,
@@ -677,14 +813,16 @@ def _simple_business_script(
     work_scope: str,
     opening_line: str,
     language: str = "te-IN",
+    role: str = "other",
 ) -> str:
-    """Minimal script: identity + business facts from the brief. Prefer _structured_business_script."""
-    return _structured_business_script(
+    """Minimal user-visible script from the brief."""
+    return _user_visible_script(
         brief,
         agent_name=agent_name,
         company_name=company_name,
         work_scope=work_scope,
         opening_line=opening_line,
+        role=role,
         language=language,
     )
 
@@ -874,13 +1012,18 @@ def _assemble_brain(
     style: str | None,
     extra_pad: str = "",
     call_end_policy: dict[str, Any] | None = None,
+    platform_call_rules: str = "",
 ) -> str:
     lang = normalize_compile_language(language)
     style_val = style_for_language(style, lang)
+    calling = f"--- CALLING SCRIPT ---\n{script.strip()}\n\n"
+    platform = (platform_call_rules or "").strip()
+    if platform:
+        calling += f"--- PLATFORM CALL RULES ---\n{platform.strip()}\n\n"
     body = (
         f"{SECTION_SAFETY}\n\n"
         f"{spoken_pack_for(lang)}\n\n"
-        f"--- CALLING SCRIPT ---\n{script.strip()}\n\n"
+        f"{calling}"
         f"{call_end_policy_section(lang, call_end_policy)}\n\n"
         f"{STATIC_OUTPUT_RULES}\n\n"
         f"{language_runtime_footer(lang, style_val)}"
@@ -890,12 +1033,91 @@ def _assemble_brain(
     return body
 
 
+def build_compiler_sections(
+    *,
+    user_script: str,
+    platform_call_rules: str,
+    compiled_brain: str,
+    language: str,
+    style: str | None = None,
+    call_end_policy: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Break the cached realtime brain into editable sections for the dev panel."""
+    lang = normalize_compile_language(language)
+    style_val = style_for_language(style, lang)
+    sections = [
+        {
+            "id": "user_script",
+            "title": "Calling script (user-facing)",
+            "description": "Business identity, offer, opening, and role — shown after Create agent script.",
+            "editable": True,
+            "cached": True,
+            "text": (user_script or "").strip(),
+        },
+        {
+            "id": "platform_call_rules",
+            "title": "Platform call rules (system)",
+            "description": "Outbound workflow, objections, guardrails — compiled into brain, not shown as user script.",
+            "editable": True,
+            "cached": True,
+            "text": (platform_call_rules or "").strip(),
+        },
+        {
+            "id": "safety",
+            "title": "Safety",
+            "description": "Platform safety contract.",
+            "editable": False,
+            "cached": True,
+            "text": SECTION_SAFETY.strip(),
+        },
+        {
+            "id": "spoken_language",
+            "title": f"Spoken language ({lang})",
+            "description": "Pronunciation, fillers, phone policy for this language.",
+            "editable": False,
+            "cached": True,
+            "text": spoken_pack_for(lang).strip(),
+        },
+        {
+            "id": "call_end_policy",
+            "title": "Call end policy",
+            "description": "Hangup reasons and farewell line.",
+            "editable": False,
+            "cached": True,
+            "text": call_end_policy_section(lang, call_end_policy).strip(),
+        },
+        {
+            "id": "static_output",
+            "title": "Static output rules",
+            "description": "Turn discipline, length, barge-in, hangup gates.",
+            "editable": False,
+            "cached": True,
+            "text": STATIC_OUTPUT_RULES.strip(),
+        },
+        {
+            "id": "language_runtime",
+            "title": "Language runtime footer",
+            "description": "Language lock and style footer.",
+            "editable": False,
+            "cached": True,
+            "text": language_runtime_footer(lang, style_val).strip(),
+        },
+    ]
+    return {
+        "sections": sections,
+        "fullCompiled": (compiled_brain or "").strip(),
+        "tokenEstimate": estimate_tokens(compiled_brain or ""),
+        "compilerVersion": COMPILER_VERSION,
+    }
+
+
 def _ensure_cache_floor(
     *,
     script: str,
     language: str,
     style: str | None,
     call_end_policy: dict[str, Any] | None = None,
+    platform_call_rules: str = "",
 ) -> tuple[str, str]:
     """Pad brain pack/static rules if below OpenAI cache minimum. Never pad agentScript."""
     lang = normalize_compile_language(language)
@@ -906,6 +1128,7 @@ def _ensure_cache_floor(
         language=lang,
         style=style_val,
         call_end_policy=call_end_policy,
+        platform_call_rules=platform_call_rules,
     )
     if estimate_tokens(compiled) >= CACHE_MIN_TOKENS:
         return body, compiled
@@ -920,6 +1143,7 @@ def _ensure_cache_floor(
             style=style_val,
             extra_pad=extra,
             call_end_policy=call_end_policy,
+            platform_call_rules=platform_call_rules,
         )
         if estimate_tokens(compiled) >= CACHE_MIN_TOKENS:
             return body, compiled
@@ -932,13 +1156,21 @@ def reassemble_brain_from_script(
     language: str = "te-IN",
     style: str | None = None,
     call_end_policy: dict[str, Any] | None = None,
+    platform_call_rules: str | None = None,
+    agent_name: str = "",
+    role: str = "other",
 ) -> tuple[str, str]:
-    """Rebuild cached brain from an existing script (no GPT). Used when call-end policy changes."""
+    """Rebuild cached brain from an existing user script (no GPT)."""
+    platform = (platform_call_rules or "").strip() or _platform_call_rules(
+        agent_name=agent_name or "Priya",
+        role=role,
+    )
     return _ensure_cache_floor(
         script=script,
         language=language,
         style=style,
         call_end_policy=call_end_policy,
+        platform_call_rules=platform,
     )
 
 
@@ -1068,8 +1300,11 @@ async def compile_agent_from_brief(
             work_scope=work_scope,
             opening_line=opening_line,
             language=lang,
+            role=role,
         )
         validation_issues = []
+
+    platform_rules = _platform_call_rules(agent_name=agent_name, role=role)
 
     if validation_issues and use_llm and llm_payload:
         from server.utils.logger import logger
@@ -1119,12 +1354,14 @@ async def compile_agent_from_brief(
             role=role,
         )
         model = "legacy_deterministic_validation_fallback_v1"
+        platform_rules = _platform_call_rules(agent_name=agent_name, role=role)
 
     script, compiled = _ensure_cache_floor(
         script=script,
         language=lang,
         style=style_val,
         call_end_policy=call_end_policy,
+        platform_call_rules=platform_rules,
     )
     compiled_tokens = estimate_tokens(compiled)
     if compiled_tokens > BUDGET_MAX_TOKENS:
@@ -1138,12 +1375,15 @@ async def compile_agent_from_brief(
             work_scope=work_scope,
             opening_line=opening_line,
             language=lang,
+            role=role,
         )
+        platform_rules = _platform_call_rules(agent_name=agent_name, role=role)
         script, compiled = _ensure_cache_floor(
             script=script,
             language=lang,
             style=style_val,
             call_end_policy=call_end_policy,
+            platform_call_rules=platform_rules,
         )
         compiled_tokens = estimate_tokens(compiled)
         model = "simple_business_budget_fallback_v1"
@@ -1162,6 +1402,7 @@ async def compile_agent_from_brief(
         optimizer_model=model,
         raw_token_estimate=raw_tokens,
         optimized_token_estimate=estimate_tokens(script),
+        platform_call_rules=platform_rules,
     )
 
     if previous_compiled and previous_compiled.strip() == compiled.strip():

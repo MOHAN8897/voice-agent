@@ -14,6 +14,7 @@ import {
   defaultCallEndPolicy,
 } from "@/components/test-studio/useTestStudioFineTune";
 import { compileLanguageLabel } from "@/components/test-studio/CompileLanguagePicker";
+import { CompilerSectionsPanel } from "@/components/test-studio/CompilerSectionsPanel";
 import { CartesiaVoiceSelect } from "@/components/test-studio/CartesiaVoiceSelect";
 import { SarvamVoiceSelect } from "@/components/test-studio/SarvamVoiceSelect";
 import {
@@ -315,7 +316,7 @@ export function TestStudioFineTuneWorkbench({
 
               <Field
                 label="Generated calling script"
-                hint={`Full sectional calling script (identity, flow, objections, closing) — same quality as the compiled agent brain. Regenerates from your brief.`}
+                hint="Business script only — identity, offer, opening, and role. Platform rules are in Compiler sections below."
               >
                 <textarea
                   readOnly
@@ -326,6 +327,10 @@ export function TestStudioFineTuneWorkbench({
                   }
                 />
               </Field>
+
+              {portal === "dev" ? (
+                <CompilerSectionsPanel data={ft.compilerSections} className="mt-2" />
+              ) : null}
 
               <div className="rounded-skeuo-sm border border-surface-border-subtle p-4">
                 <p className="text-sm text-text-muted">Call end</p>

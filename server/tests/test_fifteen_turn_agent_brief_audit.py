@@ -164,7 +164,7 @@ async def test_fifteen_turn_agent_brief_flow_and_write_audit(client):
     assert validate_agent_script(agent_script, brief=BRIEF, agent_name="Priya") == []
     assert PHONE_CALL_POLICY_PTR in spoken_pack_for("te-IN")
     assert "Turn priority every reply:" not in spoken_pack_for("te-IN")
-    assert COMPILER_VERSION == "agent_script_v16"
+    assert COMPILER_VERSION == "agent_script_v17"
     assert STATIC_OUTPUT_RULES_VERSION == "sr_v26"
 
     eff = client.get("/api/prompt/effective", params={"sessionId": sid, "transcript": "test"}).json()

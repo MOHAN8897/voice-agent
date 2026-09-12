@@ -1,7 +1,7 @@
 # Agent Brief → 15-Turn Flow Audit
 
 **Date:** 2026-09-08  
-**Compiler:** `agent_script_v16`  
+**Compiler:** `agent_script_v17`  
 **STATIC rules:** `sr_v26`  
 **Session:** `fifteen-turn-brief-audit`  
 
@@ -44,30 +44,20 @@ Agent name Priya from Acme Realty. We offer residential plots from 50 lakhs and 
 
 ```text
 --- AGENT IDENTITY ---
-You are Priya, representing Acme Realty. You are the only speaker on this call — always speak as Priya.
+You are Priya, representing Acme Realty. Always speak as Priya — the only speaker on this call.
 
 --- COMPANY & OFFER ---
-We offer residential plots from 50 lakhs and villas from 80 lakhs in Hyderabad outskirts. Goal: convert interested callers into qualified leads and book a site visit or callback. Talk naturally. Answer first. Ask at most one missing useful fact. Never a question list. When enough is known, recommend one option and one next step. Language: te-IN
+We offer residential plots from 50 lakhs and villas from 80 lakhs in Hyderabad outskirts. Goal: convert interested callers into qualified leads and book a site visit or callback. Talk naturally. Answer first. Ask at most one missing useful fact. Never a question list. When enough is known, recommend one option and one next step. Language: te-IN.
 
 --- CANONICAL OPENING ---
-Say this once on your first turn after the callee speaks:
+After the callee speaks, say once:
 Hi, nenu Priya, Acme Realty nundi matladutunnanu. Konchem time unda?
-Never use inbound help-desk phrasing on the first turn.
 
---- OUTBOUND WORKFLOW ---
-1. Wait for the callee to speak first (hello, yes, who is this).
-2. One intro using CANONICAL OPENING — then listen.
-3. If they have time: one discovery question from COMPANY & OFFER.
-4. If busy: offer callback. If not interested: thank them and close.
-
---- OBJECTION HANDLING ---
-Acknowledge the concern in one sentence; do not restart the full pitch.
-
---- GUARDRAILS ---
-Never invent prices, availability, or policies.
-Never greet twice in one call.
-Never claim to be anyone except Priya.
-Never use help-desk language on the first turn.
+--- YOUR ROLE ON THIS CALL ---
+Outbound sales for this offer. Answer questions first using COMPANY & OFFER only.
+When they have time: one discovery question at a time (location, timeline, budget if in the brief).
+Guide interested callers toward a site visit, callback, or WhatsApp details — never pressure.
+If busy or not interested: offer callback or close politely.
 ```
 
 ### Script quality probes
@@ -288,7 +278,7 @@ Brief pattern `Agent name Priya from Acme Realty.` previously produced garbled i
 
 ## Method notes
 
-- Script creation used the real `/api/instructions` compile path (`COMPILER_VERSION=agent_script_v16`) with a policy-shaped LLM mock (writer-shaped payload), then server binding/sanitize/validate.
+- Script creation used the real `/api/instructions` compile path (`COMPILER_VERSION=agent_script_v17`) with a policy-shaped LLM mock (writer-shaped payload), then server binding/sanitize/validate.
 - Turns used `/api/brain` with policy-aligned replies scored by `judge_turn` + `strict_live_fails` (same judges as production policy tests).
 - This proves the **new script contract + expected live behavior**. It does not claim a live OpenAI completion for each turn (API-mocked for determinism).
 

@@ -87,6 +87,7 @@ async def save_instructions(body: SaveRequest):
 
     lang = normalize_compile_language(body.language_code)
     policy = normalize_call_end_policy(body.callEndPolicy, language=lang)
+    compiler_sections = None
 
     try:
         if body.reassembleOnly:
@@ -103,11 +104,15 @@ async def save_instructions(body: SaveRequest):
             compiled = None
             est = int(prev_meta.get("estimatedTokens") or 0)
             if script:
+                opt = prev_meta.get("optimizerReport") if isinstance(prev_meta.get("optimizerReport"), dict) else {}
                 _script, compiled = reassemble_brain_from_script(
                     script=script,
                     language=lang,
                     style=body.responseStyle or prev_meta.get("style"),
                     call_end_policy=policy,
+                    platform_call_rules=str(opt.get("platform_call_rules") or ""),
+                    agent_name=str(opt.get("agent_name") or ""),
+                    role=str(opt.get("detected_role") or "other"),
                 )
                 est = estimate_tokens(compiled)
                 if est > budget and est <= BUDGET_MAX_TOKENS:
@@ -162,6 +167,16 @@ async def save_instructions(body: SaveRequest):
                     use_llm=False,
                 )
             budget = effective_budget
+            from server.brain.agent_script_compiler import build_compiler_sections
+
+            compiler_sections = build_compiler_sections(
+                user_script=script_result.agent_script,
+                platform_call_rules=script_result.platform_call_rules,
+                compiled_brain=compiled,
+                language=lang,
+                style=body.responseStyle,
+                call_end_policy=policy,
+            )
             saved = instruction_store.save_agent_script(
                 body.sessionId,
                 body.agentBrief,
@@ -244,7 +259,7 @@ async def save_instructions(body: SaveRequest):
     except Exception:
         pass
 
-    return {
+    payload = {
         "ok": True,
         "sessionId": body.sessionId,
         "brainPrompt": saved["brainPrompt"][:800] + ("..." if len(saved["brainPrompt"]) > 800 else ""),
@@ -271,10 +286,17 @@ async def save_instructions(body: SaveRequest):
         "callEndPolicy": saved.get("callEndPolicy"),
         "language": saved.get("language"),
     }
+    if compiler_sections is not None:
+        payload["compilerSections"] = compiler_sections
+    return payload
 
 
 @router.get("/api/instructions")
-async def get_instructions(sessionId: str = "default", includeCompiled: bool = Query(False)):
+async def get_instructions(
+    sessionId: str = "default",
+    includeCompiled: bool = Query(False),
+    includeCompilerSections: bool = Query(False),
+):
     from server.call.call_end_policy import normalize_call_end_policy
 
     meta = instruction_store.get_with_meta(sessionId)
@@ -321,6 +343,19 @@ async def get_instructions(sessionId: str = "default", includeCompiled: bool = Q
     }
     if not includeCompiled:
         payload.pop("brainPrompt", None)
+    if includeCompilerSections and meta.get("present"):
+        from server.brain.agent_script_compiler import build_compiler_sections
+
+        opt = meta.get("optimizerReport") if isinstance(meta.get("optimizerReport"), dict) else {}
+        brain = meta.get("brainPrompt") or ""
+        payload["compilerSections"] = build_compiler_sections(
+            user_script=str(meta.get("agentScript") or ""),
+            platform_call_rules=str(opt.get("platform_call_rules") or ""),
+            compiled_brain=brain,
+            language=meta.get("language") or "te-IN",
+            style=meta.get("style"),
+            call_end_policy=payload.get("callEndPolicy"),
+        )
     return payload
 
 

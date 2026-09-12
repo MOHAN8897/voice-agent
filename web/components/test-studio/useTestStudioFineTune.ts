@@ -80,6 +80,20 @@ export function normalizeCallEndPolicyState(raw: unknown, language: string): Cal
   };
 }
 
+export type CompilerSectionsPayload = {
+  sections: {
+    id: string;
+    title: string;
+    description: string;
+    editable: boolean;
+    cached: boolean;
+    text: string;
+  }[];
+  fullCompiled: string;
+  tokenEstimate: number;
+  compilerVersion?: string;
+};
+
 export type InstructionsState = {
   agentBrief: string;
   agentScript: string;
@@ -210,6 +224,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [compilerSections, setCompilerSections] = useState<CompilerSectionsPayload | null>(null);
   useEffect(() => {
     const syncConfig = (event: Event) => {
       const detail = (event as CustomEvent).detail;
@@ -229,7 +244,12 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
       const [catR, runR, insR, agentR, brainR] = await Promise.all([
         fetch("/api/settings/catalog", { credentials: "include" }),
         fetch(`/api/settings/runtime?sessionId=${encodeURIComponent(sessionId)}`, { credentials: "include" }),
-        fetch(`/api/instructions?sessionId=${encodeURIComponent(sessionId)}${portal === "dev" ? "&includeCompiled=true" : ""}`, { credentials: "include" }),
+        fetch(
+          `/api/instructions?sessionId=${encodeURIComponent(sessionId)}${
+            portal === "dev" ? "&includeCompiled=true&includeCompilerSections=true" : ""
+          }`,
+          { credentials: "include" }
+        ),
         fetch(`/api/agents/${agentId}`, { credentials: "include" }),
         fetch(`/api/agents/${agentId}/business-brain`, { credentials: "include" }),
       ]);
@@ -291,6 +311,9 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
           detectedRole: j.optimizerReport?.detected_role,
           responseStyle: j.style,
         });
+        if (j.compilerSections) {
+          setCompilerSections(j.compilerSections as CompilerSectionsPayload);
+        }
       }
 
       if (agentR.ok) {
@@ -401,6 +424,9 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
         detectedRole: j.optimizerReport?.detected_role,
         responseStyle: j.responseStyle || j.style,
       });
+      if (j.compilerSections) {
+        setCompilerSections(j.compilerSections as CompilerSectionsPayload);
+      }
       const cacheNote = j.cacheEligible
         ? `cache ON (≥${j.cacheMinTokens || 1024} tokens)`
         : `cache OFF — compiled ${j.estimatedTokens} tokens, need ≥${j.cacheMinTokens || 1024}`;
@@ -586,5 +612,6 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
     clearSession,
     loadFactoryDefault,
     importFromAgentDraft,
+    compilerSections,
   };
 }

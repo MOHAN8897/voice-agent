@@ -34,7 +34,10 @@ async def test_brief_compiles_script_and_brain(key: str, spec: dict):
     assert STATIC_OUTPUT_RULES_VERSION.startswith("sr_v")
     script = result.agent_script or ""
     assert "COMPANY & OFFER" in script
-    assert "OUTBOUND WORKFLOW" in script
+    assert "YOUR ROLE ON THIS CALL" in script
+    assert "OUTBOUND WORKFLOW" not in script
+    assert "GUARDRAILS" not in script
+    assert "PLATFORM CALL RULES" in compiled or "OUTBOUND WORKFLOW" in compiled
     assert "LIVE CALL GUIDE" not in script
     assert "CONVERSATION FLOW" not in script
 
@@ -53,6 +56,7 @@ def test_structured_script_strips_other_speaker_name():
         work_scope="plots near outer ring road Hyderabad",
         opening_line="Hi, this is Priya calling from Bindusara Agencies. Do you have a moment?",
         language="en-IN",
+        role="sales",
     )
     low = script.lower()
     assert "you are priya" in low
@@ -60,7 +64,8 @@ def test_structured_script_strips_other_speaker_name():
     assert "do you have a moment" in low
     assert "how can i help" not in low
     assert "COMPANY & OFFER" in script
-    assert "OUTBOUND WORKFLOW" in script
+    assert "YOUR ROLE ON THIS CALL" in script
+    assert "OUTBOUND WORKFLOW" not in script
 
     expected = {
         "sales": "Acme Realty",
@@ -74,3 +79,37 @@ def test_structured_script_strips_other_speaker_name():
     for key, company in expected.items():
         got = extract_company_from_brief(briefs[key]["brief"])
         assert got == company, f"{key}: got {got!r} expected {company!r}"
+
+
+def test_bindusara_tis_brief_prefers_agent_named_over_name_is():
+    from server.brain.agent_script_compiler import resolve_script_identity
+
+    brief = (
+        "name is mohan, realted to bindusara agencies working in real estate "
+        "create a agent naed tis who should convince the users to buy plots in our venture "
+        "near outer ring road in hyderabad"
+    )
+    name, company, work, opening = resolve_script_identity(brief, language="en-IN")
+    assert name == "Tis"
+    assert company == "Bindusara Agencies"
+    assert "outer ring road" in work.lower() or "hyderabad" in work.lower()
+    assert "tis" in opening.lower()
+    assert "mohan" not in opening.lower()
+
+
+@pytest.mark.asyncio
+async def test_bindusara_tis_brief_compiled_script():
+    from server.brain.agent_script_compiler import compile_agent_from_brief
+
+    brief = (
+        "name is mohan, realted to bindusara agencies working in real estate "
+        "create a agent naed tis who should convince the users to buy plots in our venture "
+        "near outer ring road in hyderabad"
+    )
+    _compiled, result, *_ = await compile_agent_from_brief(brief=brief, language="en-IN", use_llm=False)
+    script = result.agent_script or ""
+    assert "Tis" in script
+    assert "Bindusara Agencies" in script
+    assert "OUTBOUND WORKFLOW" not in script
+    assert "mohan" not in script.lower()
+    assert result.agent_name == "Tis"
