@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import logging
 import time
 from dataclasses import dataclass, field
@@ -14,7 +15,7 @@ from server.services.pstn_voice_core import pstn_call_options
 logger = logging.getLogger(__name__)
 
 PREWARM_TTL_SEC = 90.0
-PREWARM_ADOPT_WAIT_SEC = 0.15
+PREWARM_ADOPT_WAIT_SEC = 3.0
 
 _PROVIDER_WIRE: dict[str, dict[str, Any]] = {
     "telnyx": {"sample_rate": 16000, "tts_output_codec": "linear16"},
@@ -46,8 +47,11 @@ class PstnPrewarmBundle:
     realtime_key: str
     greeting_text: str | None
     greeting_wire_frames: list[bytes] = field(default_factory=list)
+    greeting_source: str | None = None
     compiled_brain_text: str | None = None
     compiled_brain_version: str | None = None
+    compiled_brain_checksum: str | None = None
+    config_session_id: str | None = None
     language: str = "te-IN"
     agent_id: str | None = None
 
@@ -238,20 +242,30 @@ async def take_prewarm_for_answer(
         bundle = await pstn_prewarm_registry.take(provider, fallback_external_id)
     if bundle is None:
         return None
-    # Drop stale prewarm if the agent brain was republished while the phone was ringing (9.1).
-    if bundle.agent_id and bundle.compiled_brain_version:
+    # Compare against the same effective brain source used during prewarm. A
+    # Test Studio session version (session-vN) is not comparable to the
+    # agent's published version (cb_vN); comparing their labels destroyed
+    # valid warm sockets at answer.
+    if bundle.agent_id and bundle.compiled_brain_checksum:
         try:
             from server.call.call_lifecycle_service import call_lifecycle_service
 
-            agent = await call_lifecycle_service._resolve_agent(bundle.agent_id)
-            active = agent.get("active_compiled_brain_version") if isinstance(agent, dict) else None
-            if active and str(active) != str(bundle.compiled_brain_version):
+            current_version, current_text = await call_lifecycle_service._lock_compiled_brain(
+                bundle.agent_id,
+                session_id=bundle.config_session_id,
+            )
+            current_checksum = (
+                hashlib.sha256(current_text.encode("utf-8")).hexdigest()
+                if current_text
+                else None
+            )
+            if current_checksum and current_checksum != bundle.compiled_brain_checksum:
                 log_pstn(
                     "prewarm.stale_brain",
                     control=external_id,
                     provider=provider,
                     prewarm=bundle.compiled_brain_version,
-                    active=active,
+                    active=current_version,
                 )
                 await _destroy_realtime(bundle.realtime_key)
                 bundle.realtime_key = None
@@ -357,7 +371,53 @@ async def _build_prewarm_bundle(
         )
 
     frames: list[bytes] = []
-    if greeting and mode != "realtime_voice":
+    greeting_source: str | None = None
+    if greeting and mode == "realtime_voice":
+        adapter = realtime_voice_manager.get(rt_key)
+        if adapter is not None:
+            from server.services.pstn_realtime_greeting_prewarm import synthesize_realtime_greeting_frames
+
+            try:
+                frames, greeting_transcript = await synthesize_realtime_greeting_frames(
+                    adapter,
+                    greeting_text=greeting,
+                    sample_rate=sample_rate,
+                    tts_output_codec=tts_codec,
+                    control_id=external_id,
+                )
+                if frames:
+                    auto_response = getattr(adapter, "set_auto_response", None)
+                    if not callable(auto_response):
+                        log_pstn(
+                            "prewarm.greeting.realtime.failed",
+                            control=external_id,
+                            provider=provider,
+                            error="adapter_missing_auto_response_control",
+                        )
+                        frames = []
+                    else:
+                        # VAD remains active so speech_started/stopped still
+                        # arrive; only automatic response.create is disabled.
+                        await auto_response(False)
+                if frames:
+                    greeting = greeting_transcript or greeting
+                    greeting_source = "realtime_voice"
+                    log_pstn(
+                        "prewarm.greeting.realtime",
+                        control=external_id,
+                        provider=provider,
+                        frames=len(frames),
+                        chars=len(greeting or ""),
+                    )
+            except Exception as exc:
+                log_pstn(
+                    "prewarm.greeting.realtime.failed",
+                    control=external_id,
+                    provider=provider,
+                    error=str(exc)[:200],
+                )
+                frames = []
+    elif greeting and mode != "realtime_voice":
         frames = await _synthesize_greeting_frames(
             greeting=greeting,
             session_id=config_session,
@@ -367,6 +427,8 @@ async def _build_prewarm_bundle(
             language=language,
             resolved_stack=stack,
         )
+        if frames:
+            greeting_source = "tts"
 
     return PstnPrewarmBundle(
         provider=provider,
@@ -374,8 +436,15 @@ async def _build_prewarm_bundle(
         realtime_key=rt_key,
         greeting_text=greeting,
         greeting_wire_frames=frames,
+        greeting_source=greeting_source,
         compiled_brain_text=compiled,
         compiled_brain_version=str(_version) if _version else None,
+        compiled_brain_checksum=(
+            hashlib.sha256(compiled.encode("utf-8")).hexdigest()
+            if compiled
+            else None
+        ),
+        config_session_id=config_session,
         language=language,
         agent_id=agent_id or None,
     )

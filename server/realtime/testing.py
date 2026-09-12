@@ -91,6 +91,25 @@ class FakeRealtimeVoiceAdapter:
         self.last_session: dict[str, Any] | None = None
         self.max_output_tokens: int | None = None
         self.cleared_input = 0
+        self.deleted_item_ids: list[str] = []
+        self.auto_response_states: list[bool] = []
+        self._poll_events: list[dict[str, Any]] = []
+        self._poll_index = 0
+
+    def set_poll_events(self, events: list[dict[str, Any]]) -> None:
+        self._poll_events = list(events)
+        self._poll_index = 0
+
+    async def poll_event(self, timeout: float = 0.5) -> dict[str, Any] | None:
+        _ = timeout
+        if self._poll_index >= len(self._poll_events):
+            return None
+        event = self._poll_events[self._poll_index]
+        self._poll_index += 1
+        return event
+
+    async def delete_synthetic_response_items(self) -> None:
+        self.deleted_item_ids.append("synthetic")
 
     async def connect(self, *, model: str, instructions: str, voice: str | None = None, turn_detection: str | None = None, **_kwargs: Any) -> None:
         self.connected = True
@@ -104,6 +123,9 @@ class FakeRealtimeVoiceAdapter:
 
     async def update_instructions(self, instructions: str) -> None:
         self.instructions = instructions
+
+    async def set_auto_response(self, enabled: bool) -> None:
+        self.auto_response_states.append(bool(enabled))
 
     def is_open(self) -> bool:
         return self.connected and not self.closed
@@ -127,7 +149,7 @@ class FakeRealtimeVoiceAdapter:
         self.started_responses.append(f"fn:{call_id}:{output}")
 
     async def clear_output_audio(self) -> None:
-        self.cancelled += 1
+        return None
 
     async def clear_input_audio(self) -> None:
         self.cleared_input += 1

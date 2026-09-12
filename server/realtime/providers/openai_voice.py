@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import copy
 import json
 from collections.abc import AsyncIterator
 from typing import Any
@@ -123,6 +124,7 @@ class OpenAIRealtimeVoiceAdapter:
         self._response_idle.set()
         self._response_lock = asyncio.Lock()
         self._accepting = False
+        self._current_output_item_ids: list[str] = []
         self.model = DEFAULT_REALTIME_MODEL
         self.voice = DEFAULT_REALTIME_VOICE
         self.turn_detection = DEFAULT_REALTIME_TURN_DETECTION
@@ -154,6 +156,7 @@ class OpenAIRealtimeVoiceAdapter:
         self._closed = False
         self._accepting = False
         self._active_response_id = None
+        self._current_output_item_ids = []
         self._response_idle = asyncio.Event()
         self._response_idle.set()
         self._response_lock = asyncio.Lock()
@@ -183,12 +186,31 @@ class OpenAIRealtimeVoiceAdapter:
     async def update_instructions(self, instructions: str) -> None:
         if self._conn is None or self._closed:
             return
-        session = build_realtime_voice_session(
-            model=self.model,
-            instructions=instructions,
-            voice=self.voice,
-            turn_detection=self.turn_detection,
-        )
+        # Preserve VAD eagerness, silence duration, noise reduction, speed,
+        # token cap, and the deferred-greeting auto-response state.
+        session = copy.deepcopy(self.last_session) if self.last_session else {}
+        if not session:
+            session = build_realtime_voice_session(
+                model=self.model,
+                instructions=instructions,
+                voice=self.voice,
+                turn_detection=self.turn_detection,
+            )
+        else:
+            session["instructions"] = instructions
+        self.last_session = session
+        await self._conn.send({"type": "session.update", "session": session})
+
+    async def set_auto_response(self, enabled: bool) -> None:
+        """Keep VAD events on while toggling automatic response creation."""
+        if self._conn is None or self._closed or not self.last_session:
+            return
+        session = copy.deepcopy(self.last_session)
+        try:
+            detection = session["audio"]["input"]["turn_detection"]
+            detection["create_response"] = bool(enabled)
+        except (KeyError, TypeError):
+            return
         self.last_session = session
         await self._conn.send({"type": "session.update", "session": session})
 
@@ -225,6 +247,7 @@ class OpenAIRealtimeVoiceAdapter:
                 await self._cancel_response_locked()
             self._accepting = True
             self._active_response_id = None
+            self._current_output_item_ids = []
             self._response_idle.clear()
             payload: dict[str, Any] = {
                 "type": "response.create",
@@ -244,13 +267,8 @@ class OpenAIRealtimeVoiceAdapter:
             await self._cancel_response_locked()
 
     async def clear_output_audio(self) -> None:
-        """Drop unplayed model audio on the OpenAI side (GA barge / WebSocket)."""
-        if self._conn is None:
-            return
-        try:
-            await self._conn.send({"type": "output_audio_buffer.clear"})
-        except Exception as e:
-            logger.warning("[REALTIME_VOICE] output_audio_buffer.clear failed: %s", str(e)[:160])
+        """Compatibility no-op: this Realtime endpoint rejects output_audio_buffer.clear."""
+        return
 
     async def clear_input_audio(self) -> None:
         """Drop inbound PCM already sitting in OpenAI's buffer (handset echo)."""
@@ -309,6 +327,30 @@ class OpenAIRealtimeVoiceAdapter:
                 },
             }
         )
+
+    async def delete_synthetic_response_items(self) -> None:
+        """Remove assistant items from a synthetic prewarm response (keep history listen-first)."""
+        if self._conn is None:
+            self._current_output_item_ids = []
+            return
+        async with self._response_lock:
+            for item_id in list(dict.fromkeys(self._current_output_item_ids)):
+                try:
+                    await self._conn.send({"type": "conversation.item.delete", "item_id": item_id})
+                except Exception as e:
+                    logger.warning("[REALTIME_VOICE] item delete failed: %s", str(e)[:160])
+            self._current_output_item_ids = []
+
+    async def poll_event(self, timeout: float = 0.5) -> dict[str, Any] | None:
+        """Read one normalized event (prewarm greeting capture). None = timeout."""
+        try:
+            item = await asyncio.wait_for(self._events.get(), timeout=timeout)
+        except asyncio.TimeoutError:
+            return None
+        if item is None:
+            self._events.put_nowait(None)
+            return {"type": "_stream_end"}
+        return item
 
     def discard_queued(self) -> None:
         dumped = 0
@@ -397,9 +439,16 @@ class OpenAIRealtimeVoiceAdapter:
             if rid:
                 self._active_response_id = rid
             self._accepting = True
+            self._current_output_item_ids = []
             if self._response_idle.is_set():
                 self._response_idle.clear()
             return {"type": "response_created", "response_id": rid}
+        if kind == "response.output_item.added":
+            item = _event_field(event, "item") or {}
+            item_id = str(_event_field(item, "id") or "")
+            if item_id and item_id not in self._current_output_item_ids:
+                self._current_output_item_ids.append(item_id)
+            return None
         if kind in (
             "input_audio_buffer.speech_started",
             "input_audio.speech_started",

@@ -1,6 +1,9 @@
 """Realtime audio PSTN path — factory, stack, session payload, costing (no live WS)."""
 from __future__ import annotations
 
+import asyncio
+from unittest.mock import AsyncMock
+
 import pytest
 
 from server.realtime.models import (
@@ -132,6 +135,8 @@ def test_outbound_audio_instructions_wait_for_callee():
     assert "help-desk" in audio.lower()
     assert "Inbound caller connected" not in audio
     assert "Do you have a moment?" in audio
+    assert "maximum 20 spoken words" in audio
+    assert "Ask at most one question" in audio
 
 
 def test_audio_token_cost_uses_mini_audio_rates():
@@ -291,10 +296,13 @@ async def test_realtime_loop_holds_echo_pcm_during_agent_speech():
     quiet = b"\x00\x00" * 320
     await loop.feed_user_pcm16(quiet)
     assert adapter.appended == []
-    loud = struct.pack("<" + "h" * 320, *([8000] * 320))
+    subthreshold = struct.pack("<" + "h" * 320, *([400] * 320))
+    await loop.feed_user_pcm16(subthreshold)
+    assert adapter.appended == []
+    loud = struct.pack("<" + "h" * 320, *([600] * 320))
     for _ in range(REALTIME_AEC_LOUD_OPEN_FRAMES):
         await loop.feed_user_pcm16(loud)
-    assert adapter.appended, "loud barge should reach OpenAI after hysteresis"
+    assert adapter.appended, "normal phone speech should reach OpenAI after two frames"
     await loop.close()
 
 
@@ -570,6 +578,44 @@ def test_voice_adapter_drops_stale_audio_but_not_on_speech_started():
 
 
 @pytest.mark.asyncio
+async def test_voice_adapter_auto_response_toggle_preserves_full_session():
+    from server.realtime.providers.openai_voice import OpenAIRealtimeVoiceAdapter
+
+    class Conn:
+        def __init__(self):
+            self.sent = []
+
+        async def send(self, event):
+            self.sent.append(event)
+
+    adapter = OpenAIRealtimeVoiceAdapter()
+    adapter._conn = Conn()
+    adapter._closed = False
+    adapter.last_session = build_realtime_voice_session(
+        model="gpt-realtime-2.1-mini",
+        instructions="original",
+        voice="marin",
+        turn_detection="server_vad",
+        silence_ms=325,
+        speed=1.1,
+        max_output_tokens=321,
+    )
+    before_output = dict(adapter.last_session["audio"]["output"])
+    before_max_tokens = adapter.last_session["max_output_tokens"]
+    await adapter.set_auto_response(False)
+    assert adapter.last_session["audio"]["input"]["turn_detection"]["create_response"] is False
+    assert adapter.last_session["audio"]["output"] == before_output
+    assert adapter.last_session["max_output_tokens"] == before_max_tokens
+    await adapter.update_instructions("updated")
+    assert adapter.last_session["instructions"] == "updated"
+    assert adapter.last_session["audio"]["input"]["turn_detection"]["create_response"] is False
+
+    sent_before_clear = len(adapter._conn.sent)
+    await adapter.clear_output_audio()
+    assert len(adapter._conn.sent) == sent_before_clear
+
+
+@pytest.mark.asyncio
 async def test_start_call_outbound_natural_vad_no_forced_greeting():
     """Outbound: VAD on at lift — no start_response until callee speaks."""
     wires: list[bytes] = []
@@ -599,8 +645,106 @@ async def test_start_call_outbound_natural_vad_no_forced_greeting():
     assert adapter.started_responses == []
     assert wires == []
     assert loop._phase == PHASE_LISTENING
+    assert loop._deferred_greeting_armed is True
+    assert len(loop._deferred_greeting_frames or []) == 1
+    assert adapter.auto_response_states == [False]
     assert "FIRST TURN / IDENTITY (outbound" in adapter.instructions
     assert "Do NOT speak until the callee" in adapter.instructions
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_deferred_greeting_plays_on_speech_stopped():
+    wires: list[bytes] = []
+
+    async def on_wire(wire: bytes) -> None:
+        wires.append(wire)
+
+    adapter = FakeRealtimeVoiceAdapter()
+    adapter.connected = True
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+    from server.services.pstn_voice_core import PHASE_LISTENING
+
+    frames = [b"\x01" * 640, b"\x02" * 640]
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id="c-deferred",
+        on_agent_wire=on_wire,
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        adapter=adapter,
+        stack_override={"pipeline": "realtime_voice", "direction": "outbound"},
+    )
+    await loop.start_call(
+        play_greeting=True,
+        greeting_wire_frames=frames,
+        greeting_text="Hi, this is Tis. Do you have a moment?",
+    )
+    assert wires == []
+    assert adapter.auto_response_states == [False]
+    await loop._handle_event({"type": "speech_stopped"})
+    await asyncio.wait_for(loop._deferred_greeting_task, timeout=1.0)
+    assert wires == frames
+    assert adapter.noted_assistant == ["Hi, this is Tis. Do you have a moment?"]
+    assert adapter.auto_response_states == [False, True]
+    assert loop._intro_noted is True
+    assert loop._phase == PHASE_LISTENING
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_deferred_greeting_cancels_vad_response():
+    adapter = FakeRealtimeVoiceAdapter()
+    adapter.connected = True
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id="c-cancel-vad",
+        on_agent_wire=AsyncMock(),
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        adapter=adapter,
+        stack_override={"pipeline": "realtime_voice", "direction": "outbound"},
+    )
+    await loop.start_call(
+        play_greeting=True,
+        greeting_wire_frames=[b"\x00" * 640],
+        greeting_text="Hello there.",
+    )
+    await loop._handle_event({"type": "response_created", "response_id": "r1"})
+    assert adapter.cancelled >= 1
+    await asyncio.sleep(0.05)
+    if loop._deferred_greeting_task and not loop._deferred_greeting_task.done():
+        await asyncio.wait_for(loop._deferred_greeting_task, timeout=1.0)
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_no_deferred_greeting_when_frames_missing():
+    wires: list[bytes] = []
+
+    async def on_wire(wire: bytes) -> None:
+        wires.append(wire)
+
+    adapter = FakeRealtimeVoiceAdapter()
+    adapter.connected = True
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id="c-no-frames",
+        on_agent_wire=on_wire,
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        adapter=adapter,
+        stack_override={"pipeline": "realtime_voice", "direction": "outbound"},
+    )
+    await loop.start_call(play_greeting=True, greeting_text="Hello.")
+    assert loop._deferred_greeting_armed is False
+    await loop._handle_event({"type": "speech_stopped"})
+    await asyncio.sleep(0.05)
+    assert wires == []
     await loop.close()
 
 

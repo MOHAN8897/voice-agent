@@ -96,7 +96,9 @@ def build_audio_session_instructions(
             "- You placed this call. VAD is on — wait for the callee to speak, then reply once with your scripted opening.\n"
             "- Do not speak first while the line is silent.\n"
             "- After your first intro, continue the sales conversation naturally.\n"
-            "- Turn discipline: decisive and short — answer, one useful beat, stop. Do not talk continuously.\n"
+            "- Turn discipline: default to ONE short sentence, maximum 20 spoken words, then stop. "
+            "Only when essential, use two short sentences with 30 words total maximum.\n"
+            "- Ask at most one question and stop immediately after it. Never keep explaining or pitching after a question.\n"
             "- Collect missing lead details one at a time; when captured or they decline, confirm next step and close professionally."
         )
         line = (opening_greeting or "").strip()

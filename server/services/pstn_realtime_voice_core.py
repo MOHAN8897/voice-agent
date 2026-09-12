@@ -30,10 +30,11 @@ from server.services.pstn_voice_core import (
     TELNYX_PCM_SAMPLE_RATE,
 )
 
-# Realtime VAD treats handset echo as the caller. Hold inbound until the
-# energy is clearly a barge — higher than composed STT's 320 RMS gate.
-REALTIME_AEC_ENERGY_MIN = 900
-REALTIME_AEC_LOUD_OPEN_FRAMES = 4
+# Telnyx already separates inbound/outbound tracks; this gate only filters
+# residual handset acoustic echo. Keep it above the composed 320 RMS floor,
+# but low/fast enough for normal phone speech to interrupt the agent.
+REALTIME_AEC_ENERGY_MIN = 500
+REALTIME_AEC_LOUD_OPEN_FRAMES = 2
 
 logger = logging.getLogger(__name__)
 
@@ -194,6 +195,11 @@ class PstnRealtimeVoiceLoop:
         self._voice_name = ""
         self._started_at: float | None = None
         self._intro_noted = False
+        self._deferred_greeting_frames: list[bytes] | None = None
+        self._deferred_greeting_text: str | None = None
+        self._deferred_greeting_armed = False
+        self._deferred_greeting_playing = False
+        self._deferred_greeting_task: asyncio.Task | None = None
         self._tts_started_emitted = False
         self._aec_loud_streak = 0
         self._aec_quiet_streak = 0
@@ -279,7 +285,6 @@ class PstnRealtimeVoiceLoop:
         greeting_wire_frames: list[bytes] | None = None,
         greeting_text: str | None = None,
     ) -> None:
-        _ = greeting_wire_frames  # Composed TTS frames are not used on this path.
         if self._call_started:
             return
         self._call_started = True
@@ -350,6 +355,31 @@ class PstnRealtimeVoiceLoop:
                 elif hasattr(adapter, "instructions"):
                     adapter.instructions = instructions
         self._adapter = adapter
+        if (
+            play_greeting
+            and direction == "outbound"
+            and greeting_wire_frames
+            and greeting_text
+        ):
+            self._deferred_greeting_frames = list(greeting_wire_frames)
+            self._deferred_greeting_text = greeting_text.strip()
+            self._deferred_greeting_armed = True
+        elif play_greeting and direction == "outbound" and greeting_text and not greeting_wire_frames:
+            log_pstn("greeting.deferred.miss", call_id=self.call_id, reason="no_prewarm_frames")
+        if self._deferred_greeting_armed:
+            auto_response = getattr(adapter, "set_auto_response", None)
+            if callable(auto_response):
+                await auto_response(False)
+            else:
+                # Without this control VAD can create a competing live reply.
+                log_pstn(
+                    "greeting.deferred.miss",
+                    call_id=self.call_id,
+                    reason="adapter_missing_auto_response_control",
+                )
+                self._deferred_greeting_frames = None
+                self._deferred_greeting_text = None
+                self._deferred_greeting_armed = False
         self._pump_task = asyncio.create_task(self._event_pump(), name=f"rt-voice-pump-{self.call_id}")
         log_pstn(
             "lifecycle.started",
@@ -360,6 +390,8 @@ class PstnRealtimeVoiceLoop:
             vad_mode="natural_vad",
             direction=direction,
             play_greeting=play_greeting,
+            deferred_greeting=self._deferred_greeting_armed,
+            deferred_frames=len(self._deferred_greeting_frames or []),
         )
         self._set_phase(PHASE_LISTENING)
 
@@ -381,6 +413,12 @@ class PstnRealtimeVoiceLoop:
                     self._aec_loud_streak += 1
                     self._aec_quiet_streak = 0
                     if self._aec_loud_streak >= REALTIME_AEC_LOUD_OPEN_FRAMES:
+                        if not self._aec_barge_open:
+                            log_pstn(
+                                "realtime_voice.barge_open",
+                                call_id=self.call_id,
+                                rms=round(rms, 1),
+                            )
                         self._aec_barge_open = True
                 else:
                     self._aec_quiet_streak += 1
@@ -434,6 +472,9 @@ class PstnRealtimeVoiceLoop:
                 await self.interrupt_tts()
             self._set_phase(PHASE_LISTENING)
             return
+        if kind == "speech_stopped" and self._deferred_greeting_armed:
+            self._schedule_deferred_greeting()
+            return
         if kind == "user_transcript":
             text = str(event.get("text") or "").strip()
             if not text:
@@ -455,6 +496,14 @@ class PstnRealtimeVoiceLoop:
                 self._user_partial = text
             return
         if kind == "response_created":
+            if not self._intro_noted and self._deferred_greeting_frames and self._adapter is not None:
+                try:
+                    await self._adapter.cancel_response()
+                except Exception as exc:
+                    log_pstn("greeting.deferred.cancel.failed", call_id=self.call_id, error=str(exc)[:160])
+                if self._deferred_greeting_armed:
+                    self._schedule_deferred_greeting()
+                return
             self.current_turn_id = self.current_turn_id or uuid.uuid4().hex[:12]
             self.current_generation_id = uuid.uuid4().hex[:12]
             self._assistant_text = ""
@@ -468,6 +517,10 @@ class PstnRealtimeVoiceLoop:
             pstn_media_flow.emit(self.call_id or "", "llm_started", "outbound", turn_id=self.current_turn_id)
             return
         if kind == "audio_delta":
+            if self._deferred_greeting_playing:
+                return
+            if not self._intro_noted and self._deferred_greeting_frames:
+                return
             pcm = event.get("pcm") or b""
             if pcm:
                 if not self._cleared_input_for_turn and self._adapter is not None:
@@ -538,7 +591,12 @@ class PstnRealtimeVoiceLoop:
             return
         if kind in ("response_done", "cancelled"):
             self._set_tts_active(False)
-            if kind == "response_done" and self._assistant_text.strip() and not self._intro_noted:
+            if (
+                kind == "response_done"
+                and self._assistant_text.strip()
+                and not self._intro_noted
+                and not self._deferred_greeting_frames
+            ):
                 noter = getattr(self._adapter, "note_assistant_text", None) if self._adapter else None
                 if callable(noter):
                     try:
@@ -591,6 +649,90 @@ class PstnRealtimeVoiceLoop:
             return
         if kind == "error":
             log_pstn("realtime_voice.error", call_id=self.call_id, error=str(event.get("message") or "")[:200])
+
+    def _schedule_deferred_greeting(self) -> None:
+        if not self._deferred_greeting_armed or self._closed:
+            return
+        task = self._deferred_greeting_task
+        if task is not None and not task.done():
+            return
+        self._deferred_greeting_task = asyncio.create_task(
+            self._on_first_user_speech_deferred_greeting(),
+            name=f"rt-deferred-greeting-{self.call_id}",
+        )
+
+    async def _on_first_user_speech_deferred_greeting(self) -> None:
+        if not self._deferred_greeting_armed or self._closed:
+            return
+        self._deferred_greeting_armed = False
+        if self._adapter is not None:
+            try:
+                await self._adapter.cancel_response()
+            except Exception as exc:
+                log_pstn("greeting.deferred.cancel.failed", call_id=self.call_id, error=str(exc)[:160])
+        await self._play_deferred_greeting()
+
+    async def _play_deferred_greeting(self) -> None:
+        frames = self._deferred_greeting_frames or []
+        text = (self._deferred_greeting_text or "").strip()
+        if not frames or not text or self._closed:
+            return
+
+        self._deferred_greeting_playing = True
+        self._set_phase(PHASE_INTRO)
+        self._set_tts_active(True)
+        self.current_turn_id = self.current_turn_id or uuid.uuid4().hex[:12]
+        self.current_generation_id = uuid.uuid4().hex[:12]
+        if self.playback is not None and hasattr(self.playback, "set_current_generation"):
+            self.playback.set_current_generation(self.current_generation_id)
+        log_pstn(
+            "greeting.deferred.play",
+            call_id=self.call_id,
+            frames=len(frames),
+            chars=len(text),
+        )
+        try:
+            for wire in frames:
+                if self._closed or self.emission_blocked():
+                    break
+                if self.call_id:
+                    self._archive.enqueue(self.call_id, "agent", wire)
+                self._wire_frames_out += 1
+                await self.on_agent_wire(wire)
+        finally:
+            self._set_tts_active(False)
+            self._deferred_greeting_playing = False
+
+        if self._closed:
+            return
+
+        noter = getattr(self._adapter, "note_assistant_text", None) if self._adapter else None
+        if callable(noter):
+            try:
+                await noter(text)
+            except Exception as exc:
+                log_pstn(
+                    "realtime_voice.note_assistant.failed",
+                    call_id=self.call_id,
+                    error=str(exc)[:160],
+                )
+        self._intro_noted = True
+        auto_response = getattr(self._adapter, "set_auto_response", None) if self._adapter else None
+        if callable(auto_response):
+            try:
+                await auto_response(True)
+            except Exception as exc:
+                log_pstn(
+                    "greeting.deferred.vad_restore.failed",
+                    call_id=self.call_id,
+                    error=str(exc)[:160],
+                )
+        if self.call_id:
+            from server.call.call_ledger import call_ledger
+
+            await call_ledger.append_assistant_turn(self.call_id, text)
+        log_pstn("greeting.deferred.done", call_id=self.call_id)
+        self._set_phase(PHASE_LISTENING)
 
     async def _emit_realtime_pcm(self, pcm24: bytes) -> None:
         if self.emission_blocked() or not pcm24:
