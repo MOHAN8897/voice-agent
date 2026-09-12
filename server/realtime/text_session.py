@@ -95,7 +95,9 @@ def build_audio_session_instructions(
             "CALL DIRECTION (outbound — mandatory)\n"
             "- You placed this call. VAD is on — wait for the callee to speak, then reply once with your scripted opening.\n"
             "- Do not speak first while the line is silent.\n"
-            "- After your first intro, continue the sales conversation naturally."
+            "- After your first intro, continue the sales conversation naturally.\n"
+            "- Turn discipline: decisive and short — answer, one useful beat, stop. Do not talk continuously.\n"
+            "- Collect missing lead details one at a time; when captured or they decline, confirm next step and close professionally."
         )
         line = (opening_greeting or "").strip()
         if line:

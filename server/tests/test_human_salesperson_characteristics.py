@@ -403,7 +403,7 @@ def test_live_turn_discipline_wraps_transcript_for_llm():
 def test_compiled_static_rules_version_and_sales_loop():
     from server.brain.sections import STATIC_OUTPUT_RULES, STATIC_OUTPUT_RULES_VERSION
 
-    assert STATIC_OUTPUT_RULES_VERSION == "sr_v26"
+    assert STATIC_OUTPUT_RULES_VERSION == "sr_v27"
     low = STATIC_OUTPUT_RULES.lower()
     assert "answer" in low and "first" in low
     assert "dense dump" in low

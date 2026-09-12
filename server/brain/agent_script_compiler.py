@@ -707,8 +707,11 @@ def _role_on_call_section(role: str) -> str:
         return (
             "--- YOUR ROLE ON THIS CALL ---\n"
             "Outbound sales for this offer. Answer questions first using COMPANY & OFFER only.\n"
+            "Speak in short, decisive, professional beats — only what this moment needs, then stop.\n"
             "When they have time: one discovery question at a time (location, timeline, budget if in the brief).\n"
+            "Collect missing lead details one at a time: name, contact, visit/callback preference — brief ack only.\n"
             "Guide interested callers toward a site visit, callback, or WhatsApp details — never pressure.\n"
+            "When next step is agreed or they decline: confirm, thank, farewell, and close — no extra pitch.\n"
             "If busy or not interested: offer callback or close politely."
         )
     if role == "appointment":
@@ -766,13 +769,28 @@ def _user_visible_script(
 
 def _platform_call_rules(*, agent_name: str, role: str = "other") -> str:
     """Platform call discipline — compiled into brain only, not shown as the user script."""
-    _ = role
+    lead_capture = ""
+    if role in ("sales", "lead_qualification", "appointment", "follow_up"):
+        lead_capture = (
+            f"--- LEAD CAPTURE ---\n"
+            f"Collect only missing fields, one per turn: interest → name → contact → visit/callback preference.\n"
+            f"Brief ack when they share details ('Noted'). Never read phone digits back.\n"
+            f"Stop qualifying once enough is captured for the agreed next step.\n\n"
+        )
     return (
         f"--- OUTBOUND WORKFLOW ---\n"
         f"1. Wait for the callee to speak first (hello, yes, who is this).\n"
         f"2. One intro using CANONICAL OPENING — then listen.\n"
         f"3. If they have time: one discovery question from COMPANY & OFFER.\n"
         f"4. If busy: offer callback. If not interested: thank them and close.\n\n"
+        f"--- TURN DISCIPLINE ---\n"
+        f"Professional and concise: one or two short sentences per turn, then stop and listen.\n"
+        f"Answer their last point first. No monologues, repeated pitch, or brochure dumps.\n"
+        f"Do not talk continuously — end each turn when the point is made.\n\n"
+        f"{lead_capture}"
+        f"--- PROFESSIONAL CLOSE ---\n"
+        f"When next step is agreed, they decline, or they are busy: confirm in one line, thank them, "
+        f"short farewell, end_call — no pitch after goodbye.\n\n"
         f"--- OBJECTION HANDLING ---\n"
         f"Acknowledge the concern in one sentence; do not restart the full pitch.\n\n"
         f"--- GUARDRAILS ---\n"
