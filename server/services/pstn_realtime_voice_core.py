@@ -193,6 +193,7 @@ class PstnRealtimeVoiceLoop:
         self._live_model = ""
         self._voice_name = ""
         self._started_at: float | None = None
+        self._intro_noted = False
         self._tts_started_emitted = False
         self._aec_loud_streak = 0
         self._aec_quiet_streak = 0
@@ -253,6 +254,13 @@ class PstnRealtimeVoiceLoop:
                 return str(lang)
         return str(self.stack_override.get("language") or "te-IN")
 
+    def _resolve_direction(self) -> str:
+        from server.call.call_context import get as get_ctx
+
+        ctx = get_ctx(self.call_id) if self.call_id else None
+        raw = str(getattr(ctx, "direction", "") or self.stack_override.get("direction") or "")
+        return "outbound" if raw.strip().lower() in ("outbound", "outgoing", "outbound-api") else "inbound"
+
     def _compiled_brain(self) -> str | None:
         from server.call.call_context import get as get_ctx
 
@@ -280,6 +288,7 @@ class PstnRealtimeVoiceLoop:
 
             audio_archive.set_agent_sample_rate(self.call_id, self.sample_rate)
         language = self._resolve_language()
+        direction = self._resolve_direction()
         brain = self._compiled_brain()
         cfg = realtime_voice_config(self.stack_override)
         from server.call.call_context import get as get_ctx
@@ -294,8 +303,15 @@ class PstnRealtimeVoiceLoop:
         self._live_model = model
         self._voice_name = str(cfg.get("voice") or "")
         self._started_at = time.monotonic()
+        opening = greeting_text
+        if opening is None and play_greeting:
+            opening = extract_opening_greeting(brain, language, direction=direction)
         instructions = build_audio_session_instructions(
-            brain, caller_id=str(caller_id or ""), language=language
+            brain,
+            caller_id=str(caller_id or "") if direction == "inbound" else None,
+            language=language,
+            direction=direction,
+            opening_greeting=opening,
         )
         adapter = self._injected_adapter
         if adapter is None and self.call_id:
@@ -327,33 +343,25 @@ class PstnRealtimeVoiceLoop:
                     max_output_tokens=max_output_tokens,
                 )
                 await adapter.wait_ready()
+            else:
+                updater = getattr(adapter, "update_instructions", None)
+                if callable(updater):
+                    await updater(instructions)
+                elif hasattr(adapter, "instructions"):
+                    adapter.instructions = instructions
         self._adapter = adapter
         self._pump_task = asyncio.create_task(self._event_pump(), name=f"rt-voice-pump-{self.call_id}")
-        greeting = greeting_text
-        if greeting is None and play_greeting:
-            greeting = extract_opening_greeting(brain, language)
         log_pstn(
             "lifecycle.started",
             call_id=self.call_id,
             session_id=self.session_id,
             sample_rate=self.sample_rate,
             pipeline="realtime_voice",
+            vad_mode="natural_vad",
+            direction=direction,
             play_greeting=play_greeting,
         )
-        if play_greeting:
-            self._set_phase(PHASE_INTRO)
-            self.current_turn_id = uuid.uuid4().hex[:12]
-            self.current_generation_id = uuid.uuid4().hex[:12]
-            if self.playback is not None and hasattr(self.playback, "set_current_generation"):
-                self.playback.set_current_generation(self.current_generation_id)
-            prompt = (
-                f"The phone call just connected. Speak this opening now, then wait for the caller:\n{greeting}"
-                if greeting
-                else "The phone call just connected. Greet the caller using the opening from your instructions, then wait."
-            )
-            await adapter.start_response(instructions=prompt)
-        else:
-            self._set_phase(PHASE_LISTENING)
+        self._set_phase(PHASE_LISTENING)
 
     async def feed_user_pcm16(self, pcm16: bytes) -> None:
         if not pcm16 or self._closed or self._adapter is None:
@@ -530,6 +538,18 @@ class PstnRealtimeVoiceLoop:
             return
         if kind in ("response_done", "cancelled"):
             self._set_tts_active(False)
+            if kind == "response_done" and self._assistant_text.strip() and not self._intro_noted:
+                noter = getattr(self._adapter, "note_assistant_text", None) if self._adapter else None
+                if callable(noter):
+                    try:
+                        await noter(self._assistant_text.strip())
+                        self._intro_noted = True
+                    except Exception as exc:
+                        log_pstn(
+                            "realtime_voice.note_assistant.failed",
+                            call_id=self.call_id,
+                            error=str(exc)[:160],
+                        )
             if kind == "response_done" and self._assistant_text and self.call_id:
                 from server.call.call_ledger import call_ledger
 

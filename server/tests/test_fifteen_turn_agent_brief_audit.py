@@ -120,11 +120,16 @@ def _script_quality(script: str, brain: str = "") -> dict[str, bool]:
     policy = (script + "\n" + brain).lower()
     return {
         "has_identity": "AGENT IDENTITY" in script,
-        "has_business": "BUSINESS KNOWLEDGE" in script,
-        "has_opening_hint": "OPENING HINT" in script,
+        "has_business": "COMPANY & OFFER" in script or "BUSINESS KNOWLEDGE" in script,
+        "has_opening_hint": "OPENING HINT" in script or "CANONICAL OPENING" in script,
         "no_live_guide_in_script": "LIVE CALL GUIDE" not in script,
         "no_flow_in_script": "CONVERSATION FLOW" not in script,
-        "help_first_opening": "ela sahayam" in lower or "how can i help" in lower or "offer help" in lower,
+        "moment_first_opening": (
+            "do you have a moment" in lower
+            or "konchem time" in lower
+            or "ek minute" in lower
+            or "have a moment" in lower
+        ),
         "no_step_tree": not bool(re.search(r"(?:^|\n)\s*step\s*[1-9]\s*[:.)]", script, re.I)),
         "no_question_tree": not bool(re.search(r"(?:^|\n)\s*question\s*[1-9]\s*[:.)]", script, re.I)),
         "platform_flow": "script is a guide" in policy and "never numbered question/step trees" in policy,

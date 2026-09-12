@@ -35,7 +35,7 @@ def test_agent_brief_creates_script_and_brain(monkeypatch):
     assert g["agentBrief"] == brief
     assert "Swetha" in g.get("agentScript", "")
     script_text = g.get("agentScript", "")
-    assert "BUSINESS KNOWLEDGE" in script_text
+    assert "BUSINESS KNOWLEDGE" in script_text or "COMPANY & OFFER" in script_text
     assert "LIVE CALL GUIDE" not in script_text
     assert g["limits"]["agentBriefMax"] == 1200
     assert g["limits"]["agentBriefMaxWords"] == 180
@@ -146,7 +146,7 @@ def test_agent_brief_truncated_json_payload_uses_deterministic(monkeypatch):
         r = c.post("/api/instructions", json={"sessionId": sid, "agentBrief": brief})
     assert r.status_code == 200, r.text
     script = r.json().get("agentScript", "")
-    assert "BUSINESS KNOWLEDGE" in script
+    assert "BUSINESS KNOWLEDGE" in script or "COMPANY & OFFER" in script
     assert "Ravi" in script
     c.delete("/api/instructions", params={"sessionId": sid})
     get_settings.cache_clear()
@@ -168,7 +168,7 @@ def test_agent_brief_deterministic_fallback(monkeypatch):
     script = j.get("agentScript", "")
     assert "Ravi" in script
     assert "[agent name]" not in script.lower()
-    assert "BUSINESS KNOWLEDGE" in script
+    assert "BUSINESS KNOWLEDGE" in script or "COMPANY & OFFER" in script
     c.delete("/api/instructions", params={"sessionId": sid})
     get_settings.cache_clear()
 
@@ -184,9 +184,9 @@ def test_agent_brief_unnamed_no_company_uses_work_scope(monkeypatch):
         r = c.post("/api/instructions", json={"sessionId": sid, "agentBrief": brief})
     assert r.status_code == 200, r.text
     script = r.json().get("agentScript", "")
-    assert "BUSINESS KNOWLEDGE" in script
+    assert "BUSINESS KNOWLEDGE" in script or "COMPANY & OFFER" in script
     assert "Priya" in script
-    assert "OPENING HINT" in script
+    assert "OPENING HINT" in script or "CANONICAL OPENING" in script
     assert "nundi matladutunnanu" not in script
     assert "[agent name]" not in script.lower()
     assert "[company" not in script.lower()

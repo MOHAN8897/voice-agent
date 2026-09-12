@@ -36,6 +36,7 @@ def build_session_instructions(
     *,
     caller_id: str | None = None,
     language: str = "te-IN",
+    direction: str | None = None,
 ) -> str:
     from server.prompts.agent_voice_rules import live_realtime_output_rules
 
@@ -43,10 +44,33 @@ def build_session_instructions(
         (compiled_brain or "").strip()
         or f"You are a helpful live voice agent. {LIVE_REPLY_BREVITY_RULE}"
     ]
-    parts.append(live_realtime_output_rules(language))
-    if caller_id:
+    parts.append(live_realtime_output_rules(language, direction=direction))
+    if _is_outbound(direction):
+        parts.append(
+            "[Call context]\nOutbound call — you placed this call. "
+            "Wait for the callee to speak first, then introduce yourself once."
+        )
+    elif caller_id:
         parts.append("[Caller context]\nInbound caller connected (do not read their number aloud).")
     return "\n\n".join(parts)
+
+
+def _is_outbound(direction: str | None) -> bool:
+    raw = str(direction or "").strip().lower()
+    return raw in ("outbound", "outgoing", "outbound-api")
+
+
+def first_turn_identity_rules(language: str | None, *, direction: str | None = None) -> str:
+    lang = (language or "te-IN").strip()
+    if _is_outbound(direction):
+        return f"""FIRST TURN / IDENTITY (outbound — you called them)
+- Language: {lang}. You placed this outbound call.
+- Do NOT speak until the callee says something first (hello, yes, who is this).
+- Your first reply: use the CANONICAL OPENING or OPENING HINT from the script — name, company, purpose, then ask if they have a moment.
+- NEVER use inbound help-desk phrasing on the first turn (generic assistance before confirming they have time).
+- Introduce yourself only once per call — never re-greet on turn two."""
+    return f"""FIRST TURN / IDENTITY (inbound — they called you)
+- Language: {lang}. Answer promptly with a short greeting and offer to help."""
 
 
 def build_audio_session_instructions(
@@ -54,6 +78,8 @@ def build_audio_session_instructions(
     *,
     caller_id: str | None = None,
     language: str = "te-IN",
+    direction: str | None = None,
+    opening_greeting: str | None = None,
 ) -> str:
     """Same compiled brain as the text PSTN path, with audio-output rules."""
     from server.prompts.agent_voice_rules import live_realtime_audio_rules
@@ -62,8 +88,19 @@ def build_audio_session_instructions(
         (compiled_brain or "").strip()
         or f"You are a helpful live voice agent. {LIVE_REPLY_BREVITY_RULE}"
     ]
-    parts.append(live_realtime_audio_rules(language))
-    if caller_id:
+    parts.append(live_realtime_audio_rules(language, direction=direction))
+    parts.append(first_turn_identity_rules(language, direction=direction))
+    if _is_outbound(direction):
+        parts.append(
+            "CALL DIRECTION (outbound — mandatory)\n"
+            "- You placed this call. VAD is on — wait for the callee to speak, then reply once with your scripted opening.\n"
+            "- Do not speak first while the line is silent.\n"
+            "- After your first intro, continue the sales conversation naturally."
+        )
+        line = (opening_greeting or "").strip()
+        if line:
+            parts.append(f"[Canonical opening line]\n{line}")
+    elif caller_id:
         parts.append("[Caller context]\nInbound caller connected (do not read their number aloud).")
     return "\n\n".join(parts)
 

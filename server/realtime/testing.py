@@ -87,6 +87,7 @@ class FakeRealtimeVoiceAdapter:
         self.voice = ""
         self.turn_detection = ""
         self.started_responses: list[str] = []
+        self.noted_assistant: list[str] = []
         self.last_session: dict[str, Any] | None = None
         self.max_output_tokens: int | None = None
         self.cleared_input = 0
@@ -101,6 +102,9 @@ class FakeRealtimeVoiceAdapter:
         tokens = _kwargs.get("max_output_tokens")
         self.max_output_tokens = int(tokens) if tokens is not None else None
 
+    async def update_instructions(self, instructions: str) -> None:
+        self.instructions = instructions
+
     def is_open(self) -> bool:
         return self.connected and not self.closed
 
@@ -109,6 +113,9 @@ class FakeRealtimeVoiceAdapter:
 
     async def append_pcm16(self, pcm16: bytes) -> None:
         self.appended.append(pcm16)
+
+    async def note_assistant_text(self, text: str) -> None:
+        self.noted_assistant.append(text)
 
     async def start_response(self, *, instructions: str | None = None) -> None:
         self.started_responses.append(instructions or "")

@@ -180,6 +180,18 @@ class OpenAIRealtimeVoiceAdapter:
         self.last_session = session
         await self._conn.send({"type": "session.update", "session": session})
 
+    async def update_instructions(self, instructions: str) -> None:
+        if self._conn is None or self._closed:
+            return
+        session = build_realtime_voice_session(
+            model=self.model,
+            instructions=instructions,
+            voice=self.voice,
+            turn_detection=self.turn_detection,
+        )
+        self.last_session = session
+        await self._conn.send({"type": "session.update", "session": session})
+
     def is_open(self) -> bool:
         return (
             not self._closed
@@ -278,6 +290,22 @@ class OpenAIRealtimeVoiceAdapter:
                     "type": "function_call_output",
                     "call_id": call_id,
                     "output": output,
+                },
+            }
+        )
+
+    async def note_assistant_text(self, text: str) -> None:
+        """Sync spoken assistant text into conversation history (prevents re-greeting)."""
+        spoken = (text or "").strip()
+        if not spoken or self._conn is None:
+            return
+        await self._conn.send(
+            {
+                "type": "conversation.item.create",
+                "item": {
+                    "type": "message",
+                    "role": "assistant",
+                    "content": [{"type": "output_text", "text": spoken}],
                 },
             }
         )

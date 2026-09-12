@@ -311,7 +311,7 @@ async def _build_prewarm_bundle(
     wire = _PROVIDER_WIRE.get(provider, _PROVIDER_WIRE["telnyx"])
     sample_rate = int(wire["sample_rate"])
     tts_codec = str(wire["tts_output_codec"])
-    greeting = extract_opening_greeting(compiled, language)
+    greeting = extract_opening_greeting(compiled, language, direction="outbound")
 
     settings = get_settings()
     from server.realtime.models import pipeline_mode
@@ -337,7 +337,12 @@ async def _build_prewarm_bundle(
             compiled_brain=compiled,
             model=stack.llm.model,
             language=language,
-            instructions=build_audio_session_instructions(compiled, language=language),
+            instructions=build_audio_session_instructions(
+                compiled,
+                language=language,
+                direction="outbound",
+                opening_greeting=greeting,
+            ),
             stack_override=pstn_opts.get("stack_override"),
             max_output_tokens=resolve_realtime_voice_max_output_tokens(
                 _runtime_max_output_tokens(config_session)

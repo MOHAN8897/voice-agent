@@ -96,7 +96,7 @@ _EXAMPLE_OPENING = re.compile(
     re.IGNORECASE,
 )
 _OPENING_SECTION = re.compile(
-    r"(?:^|\n)---\s*OPENING(?:\s+HINT)?\s*---\s*\n(.*?)(?=\n---\s|\Z)",
+    r"(?:^|\n)---\s*(?:OPENING(?:\s+HINT)?|CANONICAL\s+OPENING)\s*---\s*\n(.*?)(?=\n---\s|\Z)",
     re.IGNORECASE | re.DOTALL,
 )
 
@@ -138,10 +138,15 @@ def _spoken_opening_candidate(line: str) -> str | None:
     return raw[:280]
 
 
-def extract_opening_greeting(compiled_brain: str | None, language: str = "te-IN") -> str | None:
-    """Best-effort single opening line from compiled brain (intro + offer help only)."""
+def extract_opening_greeting(
+    compiled_brain: str | None,
+    language: str = "te-IN",
+    *,
+    direction: str | None = None,
+) -> str | None:
+    """Best-effort single opening line from compiled brain."""
     if not compiled_brain:
-        return _default_greeting(language)
+        return _default_greeting(language, direction=direction)
     text = compiled_brain
     quoted = re.search(
         r'opening_line(?:_te)?\s*:\s*"([^"]+)"',
@@ -158,7 +163,7 @@ def extract_opening_greeting(compiled_brain: str | None, language: str = "te-IN"
             candidate = _spoken_opening_candidate(line)
             if candidate:
                 return candidate
-    for header in ("--- OPENING ---", "## OPENING"):
+    for header in ("--- CANONICAL OPENING ---", "--- OPENING ---", "--- OPENING HINT ---", "## OPENING"):
         idx = text.upper().find(header.upper())
         if idx >= 0:
             chunk = text[idx + len(header) : idx + len(header) + 600]
@@ -167,12 +172,23 @@ def extract_opening_greeting(compiled_brain: str | None, language: str = "te-IN"
                 if candidate:
                     return candidate
             break
-    return _default_greeting(language)
+    return _default_greeting(language, direction=direction)
 
 
-def _default_greeting(language: str) -> str:
+def _default_greeting(language: str, *, direction: str | None = None) -> str:
+    outbound = str(direction or "outbound").strip().lower() not in ("inbound", "incoming")
     if language.startswith("te"):
-        return "నమస్కారం! నేను మీకు సహాయం చేస్తాను. మీకు ఎలా సహాయం కావాలి?"
+        return (
+            "Hi, konchem time unda?"
+            if outbound
+            else "నమస్కారం! నేను మీకు సహాయం చేస్తాను. మీకు ఎలా సహాయం కావాలి?"
+        )
     if language.startswith("hi"):
-        return "Namaste! Main aapki madad ke liye yahan hoon. Main aapki kaise madad karun?"
-    return "Hi, thanks for taking my call. How can I help you today?"
+        return (
+            "Hi, kya aapke paas ek minute hai?"
+            if outbound
+            else "Namaste! Main aapki madad ke liye yahan hoon. Main aapki kaise madad karun?"
+        )
+    if outbound:
+        return "Hi, this is a courtesy call. Do you have a moment?"
+    return "Hi, thanks for calling. How can I help you today?"

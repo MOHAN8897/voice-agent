@@ -577,7 +577,7 @@ def ensure_script_identity_and_scope(
     opening = (
         f"Example opening: {opening_line}\n"
         "ONE spoken reply per turn — never paste a greeting then restart with a second greeting.\n"
-        "First speak: opening once only (intro + offer help — no name/qualify in the same breath).\n"
+        "First speak: opening once only (intro + ask if they have a moment — no name/qualify in the same breath).\n"
         "If opening already spoken (PSTN): never re-greet. Answer briefly; if open, take next missing "
         "lead field (interest once → name → WORK SCOPE preference → next step). At most one question.\n"
         "If they already said interested: never re-ask interest — acknowledge and progress.\n"
@@ -598,6 +598,77 @@ def ensure_script_identity_and_scope(
     )
 
 
+def _sanitize_business_facts(brief: str, *, agent_name: str, company_name: str) -> str:
+    """Facts-only block: strip agent-creation boilerplate and other speaker names."""
+    scope = work_scope_from_brief(brief, company_name)
+    agent_lower = (agent_name or "").strip().lower()
+    if agent_lower:
+
+        def _strip_other_speaker(match: re.Match[str]) -> str:
+            name = _clean_identity_value(match.group(1))
+            if not name:
+                return ""
+            if name.lower() == agent_lower:
+                return match.group(0)
+            if len(name.split()) <= 3:
+                return ""
+            return match.group(0)
+
+        scope = re.sub(
+            r"\b(?:this is|i am|i'm|my name is)\s+([A-Za-z][A-Za-z\s]{0,40}?)(?=[,\s.]|$)",
+            _strip_other_speaker,
+            scope,
+            flags=re.I,
+        )
+    scope = re.sub(r"\s+", " ", scope).strip(" .,:;-")
+    return scope or "Use the business objective from the agent brief."
+
+
+def _structured_business_script(
+    brief: str,
+    *,
+    agent_name: str,
+    company_name: str,
+    work_scope: str,
+    opening_line: str,
+    language: str = "te-IN",
+) -> str:
+    """Industry-standard structured script: identity, offer, opening, workflow, guardrails."""
+    _ = language
+    business = _sanitize_business_facts(brief, agent_name=agent_name, company_name=company_name)
+    if not business.strip():
+        business = (work_scope or brief or "").strip()
+    if company_name:
+        identity = (
+            f"You are {agent_name}, representing {company_name}. "
+            f"You are the only speaker on this call — always speak as {agent_name}."
+        )
+    else:
+        identity = (
+            f"You are {agent_name}. "
+            f"You are the only speaker on this call — always speak as {agent_name}."
+        )
+    return (
+        f"--- AGENT IDENTITY ---\n{identity}\n\n"
+        f"--- COMPANY & OFFER ---\n{business}\n\n"
+        f"--- CANONICAL OPENING ---\n"
+        f"Say this once on your first turn after the callee speaks:\n{opening_line}\n"
+        f"Never use inbound help-desk phrasing on the first turn.\n\n"
+        f"--- OUTBOUND WORKFLOW ---\n"
+        f"1. Wait for the callee to speak first (hello, yes, who is this).\n"
+        f"2. One intro using CANONICAL OPENING — then listen.\n"
+        f"3. If they have time: one discovery question from COMPANY & OFFER.\n"
+        f"4. If busy: offer callback. If not interested: thank them and close.\n\n"
+        f"--- OBJECTION HANDLING ---\n"
+        f"Acknowledge the concern in one sentence; do not restart the full pitch.\n\n"
+        f"--- GUARDRAILS ---\n"
+        f"Never invent prices, availability, or policies.\n"
+        f"Never greet twice in one call.\n"
+        f"Never claim to be anyone except {agent_name}.\n"
+        f"Never use help-desk language on the first turn.\n"
+    )
+
+
 def _simple_business_script(
     brief: str,
     *,
@@ -607,16 +678,14 @@ def _simple_business_script(
     opening_line: str,
     language: str = "te-IN",
 ) -> str:
-    """Minimal script: identity + business facts from the brief. No conversational policy trees."""
-    if company_name:
-        identity = f"You are {agent_name}, representing {company_name}."
-    else:
-        identity = f"You are {agent_name}."
-    business = (work_scope or brief or "").strip() or brief.strip()
-    return (
-        f"--- AGENT IDENTITY ---\n{identity}\n\n"
-        f"--- BUSINESS KNOWLEDGE ---\n{business}\n\n"
-        f"--- OPENING HINT ---\nExample opening: {opening_line}"
+    """Minimal script: identity + business facts from the brief. Prefer _structured_business_script."""
+    return _structured_business_script(
+        brief,
+        agent_name=agent_name,
+        company_name=company_name,
+        work_scope=work_scope,
+        opening_line=opening_line,
+        language=language,
     )
 
 

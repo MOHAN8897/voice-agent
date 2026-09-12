@@ -29,16 +29,39 @@ async def test_brief_compiles_script_and_brain(key: str, spec: dict):
     assert CACHE_MIN_TOKENS <= comp_t <= BUDGET_MAX_TOKENS, f"{key}: tokens {comp_t}"
     assert result.agent_name.strip(), f"{key}: empty agent name"
     assert LIVE_TURN_DISCIPLINE.strip() not in compiled
-    for needle in ("AGENT IDENTITY", "BUSINESS KNOWLEDGE", "STATIC OUTPUT", "CALL END"):
+    for needle in ("AGENT IDENTITY", "COMPANY & OFFER", "CANONICAL OPENING", "STATIC OUTPUT", "CALL END"):
         assert needle in compiled, f"{key}: missing {needle}"
     assert STATIC_OUTPUT_RULES_VERSION.startswith("sr_v")
     script = result.agent_script or ""
-    assert "BUSINESS KNOWLEDGE" in script
+    assert "COMPANY & OFFER" in script
+    assert "OUTBOUND WORKFLOW" in script
     assert "LIVE CALL GUIDE" not in script
     assert "CONVERSATION FLOW" not in script
 
 
-def test_named_for_company_extraction_on_eval_briefs():
+def test_structured_script_strips_other_speaker_name():
+    from server.brain.agent_script_compiler import _structured_business_script
+
+    brief = (
+        "Agent named Priya. this is Mohan, related to Bindusara Agencies working in real estate "
+        "plots near outer ring road Hyderabad"
+    )
+    script = _structured_business_script(
+        brief,
+        agent_name="Priya",
+        company_name="Bindusara Agencies",
+        work_scope="plots near outer ring road Hyderabad",
+        opening_line="Hi, this is Priya calling from Bindusara Agencies. Do you have a moment?",
+        language="en-IN",
+    )
+    low = script.lower()
+    assert "you are priya" in low
+    assert "this is mohan" not in low
+    assert "do you have a moment" in low
+    assert "how can i help" not in low
+    assert "COMPANY & OFFER" in script
+    assert "OUTBOUND WORKFLOW" in script
+
     expected = {
         "sales": "Acme Realty",
         "priya_estates": "Priya Estates",

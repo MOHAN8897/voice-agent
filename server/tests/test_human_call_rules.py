@@ -25,7 +25,8 @@ def test_named_agent_brief_does_not_garble_work_scope():
     assert "50 lakhs" in work
     assert "create a t" not in work.lower()
     assert "satish" not in work.lower()
-    assert "Nenu satish" in opening
+    assert "nenu satish" in opening.lower()
+    assert "konchem time" in opening.lower() or "moment" in opening.lower()
 
 
 def test_extract_agent_named_pattern():
@@ -63,9 +64,9 @@ def test_extract_agent_named_pattern():
     assert "50 lakhs" in work
     assert "Priya from Acme" not in name
     assert "We offer residential" not in company
-    assert "Nenu Priya" in opening
+    assert "nenu priya" in opening.lower()
     assert "Acme Realty" in opening
-    assert "sahayam" in opening.lower() or "help" in opening.lower()
+    assert "konchem time" in opening.lower() or "moment" in opening.lower()
 
 
 def test_static_rules_forbid_interrogation_checklist():

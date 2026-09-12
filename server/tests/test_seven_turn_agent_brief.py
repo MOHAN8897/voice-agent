@@ -98,7 +98,7 @@ async def test_seven_turn_agent_brief_script_rules_and_conversation(client, caps
 
     assert save_j.get("compiledVersion", 0) >= 1
     assert "Kavya" in agent_script
-    assert "BUSINESS KNOWLEDGE" in agent_script
+    assert "BUSINESS KNOWLEDGE" in agent_script or "COMPANY & OFFER" in agent_script
     assert "LIVE CALL GUIDE" not in agent_script
 
     eff = client.get("/api/prompt/effective", params={"sessionId": sid, "transcript": "test"}).json()

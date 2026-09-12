@@ -139,7 +139,7 @@ LANGUAGE_LOCK: dict[str, str] = {
 }
 
 
-def live_realtime_output_rules(language: str | None) -> str:
+def live_realtime_output_rules(language: str | None, *, direction: str | None = None) -> str:
     """Strict live-call rules appended to Realtime session instructions."""
     from server.call.hangup_judge import HANGUP_JUDGMENT_RULES
 
@@ -148,6 +148,7 @@ def live_realtime_output_rules(language: str | None) -> str:
     unclear = UNCLEAR_FALLBACK[lang]
     slow_down = SLOW_DOWN_FALLBACK[lang]
     phone_ask = PHONE_ASK_FALLBACK[lang]
+    greeting_rules = greeting_and_availability_rules(direction)
     return f"""OUTPUT LANGUAGE RULES (mandatory — overrides caller language)
 - {LANGUAGE_LOCK[lang]}
 - Do NOT switch languages between sentences. Code-switching one English business word inside Telugu/Hindi is fine; whole sentences in another language are forbidden.
@@ -164,7 +165,7 @@ def live_realtime_output_rules(language: str | None) -> str:
 - Appointment/service: never re-ask when after day/time. Education: price then trial. Support: latest intent; no restart.
 - Prefer clear human speech inside each LENGTH band.
 - {SPEECH_GRAMMAR_RULES}
-- {GREETING_AND_AVAILABILITY_RULES}
+- {greeting_rules}
 - {PROFESSIONAL_CLOSE_RULES}
 - Never insert Tamil, Korean, Chinese, Japanese, Cyrillic, or other unrelated scripts.
 - {NUMBER_RULES}
@@ -172,7 +173,7 @@ def live_realtime_output_rules(language: str | None) -> str:
 - {CALLER_DETAIL_CAPTURE}"""
 
 
-def live_realtime_audio_rules(language: str | None) -> str:
+def live_realtime_audio_rules(language: str | None, *, direction: str | None = None) -> str:
     """Same live-call rules as the text PSTN path, plus audio-output constraints."""
     return (
         "OUTPUT MODALITY RULES (audio Realtime — mandatory)\n"
@@ -181,7 +182,7 @@ def live_realtime_audio_rules(language: str | None) -> str:
         "- Never read stage directions, tool names, or internal labels aloud.\n"
         "- Use the end_call tool in the SAME turn as your spoken farewell when the call should end.\n"
         "- Keep replies inside the LENGTH bands. One next question at most.\n\n"
-        + live_realtime_output_rules(language)
+        + live_realtime_output_rules(language, direction=direction)
     )
 
 
@@ -415,10 +416,22 @@ OPENING_WITH_COMPANY: dict[str, str] = {
     "hi-IN": "Namaste, main {name} bol rahi hoon, {company} se. Main aapki kaise madad karun?",
 }
 
+OPENING_OUTBOUND_WITH_COMPANY: dict[str, str] = {
+    "te-IN": "Hi, nenu {name}, {company} nundi matladutunnanu. Konchem time unda?",
+    "en-IN": "Hi, this is {name} calling from {company}. Do you have a moment?",
+    "hi-IN": "Namaste, main {name} bol rahi hoon, {company} se. Kya aapke paas ek minute hai?",
+}
+
 OPENING_WITH_COMPANY_PURPOSE: dict[str, str] = {
     "te-IN": "Namaste! Nenu {name}, {company} nundi {purpose} gurinchi matladutunnanu. Meeru ela sahayam kavali?",
     "en-IN": "Hi, this is {name} calling from {company} about {purpose}. How can I help you today?",
     "hi-IN": "Namaste, main {name} bol rahi hoon, {company} se, {purpose} ke baare mein. Main aapki kaise madad karun?",
+}
+
+OPENING_OUTBOUND_WITH_COMPANY_PURPOSE: dict[str, str] = {
+    "te-IN": "Hi, nenu {name}, {company} nundi {purpose} gurinchi matladutunnanu. Konchem time unda?",
+    "en-IN": "Hi, this is {name} calling from {company} about {purpose}. Do you have a moment?",
+    "hi-IN": "Namaste, main {name} bol rahi hoon, {company} se, {purpose} ke baare mein. Kya aapke paas ek minute hai?",
 }
 
 OPENING_NO_COMPANY: dict[str, str] = {
@@ -427,10 +440,22 @@ OPENING_NO_COMPANY: dict[str, str] = {
     "hi-IN": "Namaste, main {name} bol rahi hoon. {work} ke baare mein help karungi. Main aapki kaise madad karun?",
 }
 
+OPENING_OUTBOUND_NO_COMPANY: dict[str, str] = {
+    "te-IN": "Hi, nenu {name}. {work} gurinchi matladutunnanu. Konchem time unda?",
+    "en-IN": "Hi, this is {name}. I'm calling about {work}. Do you have a moment?",
+    "hi-IN": "Namaste, main {name} bol rahi hoon. {work} ke baare mein. Kya aapke paas ek minute hai?",
+}
+
 OPENING_NAME_ONLY: dict[str, str] = {
     "te-IN": "Namaste! Nenu {name}. Meeru ela sahayam kavali?",
     "en-IN": "Hi, this is {name}. How can I help you?",
     "hi-IN": "Namaste, main {name} bol rahi hoon. Main aapki kaise madad karun?",
+}
+
+OPENING_OUTBOUND_NAME_ONLY: dict[str, str] = {
+    "te-IN": "Hi, nenu {name}. Konchem time unda?",
+    "en-IN": "Hi, this is {name}. Do you have a moment?",
+    "hi-IN": "Namaste, main {name} bol rahi hoon. Kya aapke paas ek minute hai?",
 }
 
 _WORK_SENTENCE_START = re.compile(
@@ -454,11 +479,26 @@ IDENTITY_SPEAK: dict[str, str] = {
     ),
 }
 
-GREETING_AND_AVAILABILITY_RULES = """GREETING + AVAILABILITY (mandatory)
-- First turn only: one short greeting — your name, the company (if in the brief), and why you are calling (from the brief). Then offer help. One utterance only.
+GREETING_AND_AVAILABILITY_INBOUND = """GREETING + AVAILABILITY (inbound)
+- First turn: one short greeting — your name, the company (if in the brief), and offer to help. One utterance only.
 - Never greet twice in one reply. Never paste the opening example again after turn one.
-- If the caller says hello / hi / are you there / can you hear me again later in the call, they are checking you are still on the line — NOT starting over. Reply briefly ("Yes, I'm here") and continue from the current topic. Do not re-introduce yourself, repeat the company pitch, or restart from the beginning.
-- Do not repeat the same facts, pitch block, limitation, or next-step line on every turn. Say each thing once unless they ask again."""
+- If the caller says hello / hi / are you there again later, they are checking you are still on the line — reply briefly and continue. Do not re-introduce yourself."""
+
+GREETING_AND_AVAILABILITY_OUTBOUND = """GREETING + AVAILABILITY (outbound — we placed this call)
+- Do NOT speak until the callee says something first (hello, yes, who is this, etc.).
+- First reply only: one short intro — your name, company (if in brief), one-line purpose, then ask if they have a moment. One utterance only.
+- NEVER use inbound help-desk phrasing on the first turn (generic assistance before confirming they have time).
+- Never greet twice in one reply or repeat the full intro on turn two.
+- Later hello / hi / are you there means availability — answer briefly ("Yes, I'm here") and continue. Do not restart the pitch."""
+
+GREETING_AND_AVAILABILITY_RULES = GREETING_AND_AVAILABILITY_OUTBOUND
+
+
+def greeting_and_availability_rules(direction: str | None = None) -> str:
+    raw = str(direction or "outbound").strip().lower()
+    if raw in ("inbound", "incoming"):
+        return GREETING_AND_AVAILABILITY_INBOUND
+    return GREETING_AND_AVAILABILITY_OUTBOUND
 
 PROFESSIONAL_CLOSE_RULES = """PROFESSIONAL CLOSE (sales / lead roles)
 - Act as the business representative: build trust, answer first, collect only useful missing details, recommend when enough is known.
@@ -509,40 +549,48 @@ def opening_line_for(
     agent_name: str,
     company_name: str,
     work_scope: str,
+    direction: str | None = "outbound",
 ) -> str:
     lang = normalize_compile_language(language)
+    outbound = str(direction or "outbound").strip().lower() not in ("inbound", "incoming")
+    with_co = OPENING_OUTBOUND_WITH_COMPANY if outbound else OPENING_WITH_COMPANY
+    with_purpose = OPENING_OUTBOUND_WITH_COMPANY_PURPOSE if outbound else OPENING_WITH_COMPANY_PURPOSE
+    no_co = OPENING_OUTBOUND_NO_COMPANY if outbound else OPENING_NO_COMPANY
+    name_only = OPENING_OUTBOUND_NAME_ONLY if outbound else OPENING_NAME_ONLY
     if company_name:
         work = (work_scope or "").strip()
         if work and not _WORK_SENTENCE_START.match(work) and len(work) <= 70:
             if len(work) > 48:
                 work = work[:45].rsplit(" ", 1)[0]
-            return OPENING_WITH_COMPANY_PURPOSE[lang].format(
+            return with_purpose[lang].format(
                 name=agent_name,
                 company=company_name,
                 purpose=work,
             )
-        return OPENING_WITH_COMPANY[lang].format(name=agent_name, company=company_name)
+        return with_co[lang].format(name=agent_name, company=company_name)
     work = (work_scope or "").strip()
     if (not work) or _WORK_SENTENCE_START.match(work) or len(work) > 48:
-        return OPENING_NAME_ONLY[lang].format(name=agent_name)
+        return name_only[lang].format(name=agent_name)
     if len(work) > 70:
         work = work[:67].rsplit(" ", 1)[0]
-    return OPENING_NO_COMPANY[lang].format(name=agent_name, work=work)
+    return no_co[lang].format(name=agent_name, work=work)
 
 
 def opening_requirements_for(language: str | None) -> str:
     lang = normalize_compile_language(language)
     with_co = OPENING_WITH_COMPANY[lang].format(name="Priya", company="Acme")
     no_co = OPENING_NO_COMPANY[lang].format(name="Priya", work="the work in the brief")
-    with_purpose = OPENING_WITH_COMPANY_PURPOSE[lang].format(
+    with_purpose = OPENING_OUTBOUND_WITH_COMPANY_PURPOSE[lang].format(
         name="Priya", company="Acme", purpose="our new plots near Hyderabad"
     )
     return (
         "OPENING + WORK SCOPE (mandatory):\n"
         "- Write the agent as this business's phone sales representative (for sales/lead roles) — not a generic chatbot.\n"
+        "- Outbound calls: first-turn opening ends with a permission question such as "
+        "\"Do you have a moment?\" — never help-desk \"How can I help you?\".\n"
         "- Include one example first-turn opening as a SINGLE short utterance: your name, company (if in brief), "
         "why you are calling (one short phrase from the brief objective — plots, service plan, course, etc.), "
-        "then offer help. Never two pasted greetings in one reply.\n"
+        "then ask if they have a moment. Never two pasted greetings in one reply.\n"
         "- Do not ask for name, budget, or location in the opening line — those come later, one at a time. "
         "Introduce yourself only on the first turn — never mid-call.\n"
         "- Later hello / hi / are you there means availability — answer briefly and continue; do not restart the opening.\n"

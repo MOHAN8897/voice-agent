@@ -148,7 +148,7 @@ async def test_oversized_generated_script_falls_back_instead_of_failing(monkeypa
         use_llm=True,
     )
     assert result.optimizer_model == "simple_business_budget_fallback_v1"
-    assert "BUSINESS KNOWLEDGE" in result.agent_script
+    assert "BUSINESS KNOWLEDGE" in result.agent_script or "COMPANY & OFFER" in result.agent_script
     assert compiler.estimate_tokens(compiled) <= compiler.BUDGET_MAX_TOKENS
 
 

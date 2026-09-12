@@ -134,11 +134,11 @@ def test_extract_opening_greeting_from_opening_hint_section():
         "--- AGENT IDENTITY ---\nYou are Priya.\n\n"
         "--- BUSINESS KNOWLEDGE ---\nSell plots.\n\n"
         "--- OPENING HINT ---\n"
-        "Example opening: Hi, this is Priya. How can I help you?\n"
+        "Example opening: Hi, this is Priya. Do you have a moment?\n"
         "Speak natural Tanglish. Introduce yourself only on the first turn.\n"
     )
-    greet = extract_opening_greeting(brain, "en-IN") or ""
-    assert greet == "Hi, this is Priya. How can I help you?"
+    greet = extract_opening_greeting(brain, "en-IN", direction="outbound") or ""
+    assert greet == "Hi, this is Priya. Do you have a moment?"
     assert "Example" not in greet
     assert "Speak natural" not in greet
 
@@ -146,10 +146,10 @@ def test_extract_opening_greeting_from_opening_hint_section():
 def test_extract_opening_greeting_strips_example_first_line_label():
     brain = (
         "--- OPENING HINT ---\n"
-        "Example first line: Hi, this is Priya. How can I help you?\n"
+        "Example first line: Hi, this is Priya. Do you have a moment?\n"
     )
-    greet = extract_opening_greeting(brain, "en-IN") or ""
-    assert greet == "Hi, this is Priya. How can I help you?"
+    greet = extract_opening_greeting(brain, "en-IN", direction="outbound") or ""
+    assert greet == "Hi, this is Priya. Do you have a moment?"
 
 
 def test_extract_opening_greeting_from_opening_line_te():

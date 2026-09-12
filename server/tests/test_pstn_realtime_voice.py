@@ -116,6 +116,24 @@ def test_audio_instructions_reuse_compiled_brain():
             assert marker in audio or "end_call" in audio
 
 
+def test_outbound_audio_instructions_wait_for_callee():
+    brain = (
+        "--- AGENT IDENTITY ---\nYou are Priya, representing Bindusara Agencies.\n\n"
+        "--- CANONICAL OPENING ---\nHi, this is Priya calling from Bindusara Agencies. Do you have a moment?"
+    )
+    audio = build_audio_session_instructions(
+        brain,
+        language="en-IN",
+        direction="outbound",
+        opening_greeting="Hi, this is Priya calling from Bindusara Agencies. Do you have a moment?",
+    )
+    assert "FIRST TURN / IDENTITY (outbound" in audio
+    assert "Do NOT speak until the callee" in audio
+    assert "help-desk" in audio.lower()
+    assert "Inbound caller connected" not in audio
+    assert "Do you have a moment?" in audio
+
+
 def test_audio_token_cost_uses_mini_audio_rates():
     cost = cost_llm_usd(
         input_tokens=600,
@@ -549,6 +567,41 @@ def test_voice_adapter_drops_stale_audio_but_not_on_speech_started():
     assert accepted["type"] == "audio_delta"
     adapter._accepting = False
     assert adapter._normalize(delta) is None
+
+
+@pytest.mark.asyncio
+async def test_start_call_outbound_natural_vad_no_forced_greeting():
+    """Outbound: VAD on at lift — no start_response until callee speaks."""
+    wires: list[bytes] = []
+
+    async def on_wire(wire: bytes) -> None:
+        wires.append(wire)
+
+    adapter = FakeRealtimeVoiceAdapter()
+    adapter.connected = True
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+    from server.services.pstn_voice_core import PHASE_LISTENING
+
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id="c-natural-outbound",
+        on_agent_wire=on_wire,
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        adapter=adapter,
+        stack_override={"pipeline": "realtime_voice", "direction": "outbound"},
+    )
+    await loop.start_call(
+        play_greeting=True,
+        greeting_wire_frames=[b"\x00" * 640],
+        greeting_text="Hi, this is Priya. Do you have a moment?",
+    )
+    assert adapter.started_responses == []
+    assert wires == []
+    assert loop._phase == PHASE_LISTENING
+    assert "FIRST TURN / IDENTITY (outbound" in adapter.instructions
+    assert "Do NOT speak until the callee" in adapter.instructions
+    await loop.close()
 
 
 async def asyncio_wait_pump() -> None:

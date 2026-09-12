@@ -77,13 +77,27 @@ def test_streaming_chunk_does_not_gain_artificial_full_stop():
     assert out == "Hi, thanks for"
 
 
-def test_opening_line_offers_help():
+def test_opening_line_asks_for_moment_outbound():
     from server.prompts.agent_voice_rules import opening_line_for
 
     line = opening_line_for("en-IN", agent_name="Priya", company_name="Acme", work_scope="")
     assert "Priya" in line
-    assert "help" in line.lower()
+    assert "moment" in line.lower()
+    assert "how can i help" not in line.lower()
     assert "may i know your name" not in line.lower()
+
+
+def test_opening_line_inbound_offers_help():
+    from server.prompts.agent_voice_rules import opening_line_for
+
+    line = opening_line_for(
+        "en-IN",
+        agent_name="Priya",
+        company_name="Acme",
+        work_scope="",
+        direction="inbound",
+    )
+    assert "help" in line.lower()
 
 
 def test_opening_line_includes_call_purpose_with_company():
@@ -98,12 +112,12 @@ def test_opening_line_includes_call_purpose_with_company():
     assert "Priya" in line
     assert "Acme Realty" in line
     assert "plots" in line.lower()
-    assert "help" in line.lower()
+    assert "moment" in line.lower()
 
 
-def test_default_greeting_offers_help():
+def test_default_greeting_outbound_asks_for_moment():
     from server.services.pstn_text_chunker import extract_opening_greeting
 
-    g = extract_opening_greeting(None, "en-IN") or ""
-    assert "help" in g.lower()
-    assert "may i know your name" not in g.lower()
+    g = extract_opening_greeting(None, "en-IN", direction="outbound") or ""
+    assert "moment" in g.lower()
+    assert "how can i help" not in g.lower()
