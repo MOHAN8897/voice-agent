@@ -166,7 +166,22 @@ Vāṇi is a **production voice control plane** for Telugu-first business calls.
 | Telugu | `telugu` | Telugu script in previews and samples |
 | Semantic | `success`, `warning` | Online state, validation |
 
-Use accent sparingly — one primary action per section. Agentic UI uses mono labels and green `agent-online` dots, not purple gradients.
+## Console / Dev Portal tokens (Layer B — shipped)
+
+Marketing uses the YAML tokens above. **`/app` and `/dev` already use** `web/app/globals.css`:
+
+| Role | Hex | Use |
+|------|-----|-----|
+| Chassis | `#08090c` | Page |
+| Panel | `#111318` | Sidebar, cards |
+| Raised | `#171b22` | Hover |
+| Inset | `#0c0e12` | Wells |
+| Text | `#f0f2f5` | Primary |
+| Steel | `#8fa6c4` | Chrome, links |
+| Live | `#e11d48` | Recording / Test Studio |
+| Success / warn / error | `#4ade80` / `#fbbf24` / `#f87171` | Status |
+
+Do not recolor Dev Portal to marketing teal. Full page-look spec: [`prd/20-visual-design-and-ui-style.md`](prd/20-visual-design-and-ui-style.md).
 
 ## Typography
 

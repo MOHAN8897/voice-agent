@@ -86,7 +86,7 @@ Cross-origin CORS + cookies required. **Not the default MVP path.**
 |-------|--------|
 | Framework | **Next.js 14+ App Router** |
 | Language | TypeScript |
-| Styling | Tailwind CSS v4 (design tokens from `web-mvp-design` / `.better-react-web-ui.md`) |
+| Styling | Tailwind + CSS variables. **Normative look:** [20-visual-design-and-ui-style.md](./20-visual-design-and-ui-style.md). Marketing tokens: `DESIGN.md`. Console + Dev Portal: `web/app/globals.css` (already shipping). |
 | Data fetching | Server Components where possible; client components for live voice |
 | Hosting | **Railway `web` service** (primary) |
 | Live voice | Client components porting logic from `client/app.js`, `live-guards.js`, worklets — **same behavior**, Next.js implementation |
@@ -114,22 +114,33 @@ Runs in the **browser** or **Next.js server (RSC/SSR)** on the **web** Railway s
 | Semantic HTML | One `h1`, landmarks, Telugu-first copy |
 | Images | `next/image` |
 
-### 3.2 Dev Portal (`/dev/*` or subdomain)
+### 3.2 Dev Portal (`/dev/*`) — **implemented**
+
+The Dev Portal is **already built** in `web/app/dev/`. Align new work to these routes; do not create a parallel admin app. Visual look: [20-visual-design-and-ui-style.md](./20-visual-design-and-ui-style.md) Layer B.
+
+| Responsibility | Implementation (code) |
+|----------------|------------------------|
+| Login → API session cookie | `/dev/login` → `LoginForm` `POST /api/dev/login`; `AuthShell variant="dev"` |
+| Shell / nav | `DevShell`, `DevNav`, `DevPortalProvider` |
+| Overview workflow | `/dev` — env → stack → platform brain → test → promote |
+| Environment & key presence | `/dev/environment` (`EnvironmentPanel`) — booleans, never secrets |
+| Stack/tier UI | `/dev/stack` — STT/LLM/TTS per LOW/MEDIUM/PREMIUM |
+| Runtime (barge/VAD) | `/dev/runtime` |
+| Platform Brain editor | `/dev/platform-brain` — developer only; customers never see body |
+| Compiled preview | `/dev/compiled` |
+| Providers / agents / test | `/dev/providers`, `/dev/agents`, `/dev/test-studio` |
+| Benchmarks | `/dev/benchmarks` — gated until scenarios configured (`17`) |
+| Promotion staging → production | `/dev/promotion` — confirmation; `prd/11` §13 state machine |
+| Logout | `/api/dev/logout` |
+| Isolation | Not linked from marketing; `robots` disallow `/dev` |
+
+### Business Console (`/app/*`)
 
 | Responsibility | Implementation |
 |----------------|----------------|
-| Login → API session cookie | Server actions or client form → Railway API auth |
-| Platform Brain editor | Protected route; developer only |
-| Stack/tier UI | Calls `/api/dev/*` on API service |
-| Promotion staging → production | Confirmation modals |
-
-### 3.3 Business Console (`/app/*`)
-
-| Responsibility | Implementation |
-|----------------|----------------|
-| Agents, Business Brain accordion, campaigns, calls | App Router layouts |
-| Tier chips only in production mode | No provider matrix for customers |
-| Customer auth | P2 after Dev Portal |
+| Agents, Business Brain accordion, campaigns, calls | App Router layouts — **shipped** under `web/app/app/(console)` |
+| Tier chips only in production / ENV mode | No provider matrix for customers |
+| Customer auth | `/app/login` (P2 in `17`; **now implemented**) |
 
 ### 3.4 Live voice (client components)
 

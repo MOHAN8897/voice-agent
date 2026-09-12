@@ -51,6 +51,8 @@ Topic documents are normative where the master delegates detail. If documents co
 |---|---|
 | [05-ux-console-and-dashboards.md](./05-ux-console-and-dashboards.md) | Earlier console concept; subordinate to document 11 |
 | [11-ui-information-architecture.md](./11-ui-information-architecture.md) | Normative sitemap, screen contracts, responsive/SEO notes → **19** |
+| [**20-visual-design-and-ui-style.md**](./20-visual-design-and-ui-style.md) | **Color palettes, page look, UI elements.** Dev Portal **already shipped** in `web/app/dev`. Marketing vs console tokens. |
+| [**../frontend-spec/**](../frontend-spec/README.md) | Screen-level frontend build pack (landing, auth, billing, `/app`, `/dev`) aligned to this PRD |
 
 ### Architecture, APIs, security, and telephony
 
@@ -107,7 +109,7 @@ See [17-product-decisions.md](./17-product-decisions.md) for full list. Highligh
 - **Same LLM** structured `spoken_response` + `memory_update` per turn (CD-016).
 - **Compact memory** default: `facts`, `preferences`, `important_context`, `summary`; no cross-call memory in MVP.
 - **Multi-tenant** + unlimited agents + Dev/Staging/Production environments.
-- **Dev Portal auth P0** (env credentials); Business customer login P2.
+- **Dev Portal auth P0** (env credentials); **Dev Portal UI is implemented** at `/dev/*` (`web/app/dev`). Business customer login P2 (`/app/login` also exists). Visual system: [20](./20-visual-design-and-ui-style.md).
 - **Deployment:** **Next.js only** on Railway **web** service + Railway **api/worker/data** (optional Vercel for web later) — [19](./19-frontend-backend-nextjs-railway.md).
 - **Outbound campaigns in MVP**; CRM and RAG out of MVP.
 - **Benchmarks disabled** until owner configures.
