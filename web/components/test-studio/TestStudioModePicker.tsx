@@ -3,7 +3,7 @@
 import { SkeuoPanel } from "@/components/ui/skeuo/SkeuoPanel";
 import { cn } from "@/lib/cn";
 
-export type TestStudioMode = "agent" | "pstn";
+export type TestStudioMode = "agent" | "pstn" | "pstn_realtime";
 
 const MODES: { id: TestStudioMode; label: string; hint: string }[] = [
   {
@@ -14,7 +14,12 @@ const MODES: { id: TestStudioMode; label: string; hint: string }[] = [
   {
     id: "pstn",
     label: "Full PSTN flow",
-    hint: "Telnyx / Exotel / Plivo · outbound · media stream",
+    hint: "Telnyx · STT → Realtime text → TTS",
+  },
+  {
+    id: "pstn_realtime",
+    label: "Realtime PSTN",
+    hint: "Telnyx · OpenAI Realtime mini · audio in/out",
   },
 ];
 
@@ -35,7 +40,7 @@ export function TestStudioModePicker({
     <div data-testid="test-studio-mode-picker">
     <SkeuoPanel
       title="Test mode"
-      description="Agent-only uses your mic. Full PSTN uses Exotel virtual number + stream."
+      description="Agent-only uses your mic. Full PSTN keeps the current duplex stack. Realtime PSTN swaps the middle for OpenAI audio-to-audio."
       padding="sm"
     >
       <div className="flex flex-col gap-2 sm:flex-row">

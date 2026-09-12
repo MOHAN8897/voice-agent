@@ -43,11 +43,21 @@ async def save_test_studio_prefs(body: TestStudioUiPrefs):
         from fastapi import HTTPException
 
         form = body.stack or {}
-        runtime_patch = {key: form[field] for field, key in (
-            ("ttsVoiceId", "ttsSpeaker"), ("ttsModel", "ttsModel"),
-            ("sttModel", "sttModel"), ("sttMode", "sttMode"),
-            ("sttStreamType", "sttStreamType"),
-        ) if form.get(field)}
+        pipeline = ""
+        if isinstance(body.stackOverride, dict):
+            pipeline = str(body.stackOverride.get("pipeline") or "").strip()
+        if pipeline == "realtime_voice":
+            runtime_patch = {}
+            llm_model = str(form.get("llmModel") or "").strip()
+            if not llm_model.startswith("gpt-realtime"):
+                llm_model = "gpt-realtime-2.1-mini"
+            runtime_patch["openaiModel"] = llm_model
+        else:
+            runtime_patch = {key: form[field] for field, key in (
+                ("ttsVoiceId", "ttsSpeaker"), ("ttsModel", "ttsModel"),
+                ("sttModel", "sttModel"), ("sttMode", "sttMode"),
+                ("sttStreamType", "sttStreamType"),
+            ) if form.get(field)}
         try:
             if runtime_patch:
                 runtime_settings.update(body.sessionId, runtime_patch)

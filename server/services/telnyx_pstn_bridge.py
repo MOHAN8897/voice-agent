@@ -25,10 +25,8 @@ from server.services.audio_transcode import (
 )
 from server.services.pstn_debug import log_pstn, log_pstn_summary, mark
 from server.services.pstn_media_flow import CallMediaConfig, new_ws_id, pstn_media_flow
-from server.services.pstn_voice_core import (
-    PstnVoiceLoop,
-    pstn_call_options,
-)
+from server.services.pstn_voice_core import pstn_call_options
+from server.services.pstn_voice_flow import create_pstn_voice_loop
 from server.services.telnyx_client import TELNYX_RTP_CODEC, TELNYX_RTP_SAMPLE_RATE
 from server.utils.logger import log_tts, log_ws
 
@@ -447,14 +445,18 @@ class TelnyxPstnBridge:
                 begin_turn_metrics=self.begin_turn_playout_metrics,
                 end_turn_metrics=self.end_turn_playout_metrics,
             )
-            self._voice = PstnVoiceLoop(
+            from server.realtime.models import uses_realtime_voice
+
+            e2e = uses_realtime_voice(stack_override=pstn_opts.get("stack_override"))
+            self._voice = create_pstn_voice_loop(
+                stack_override=pstn_opts.get("stack_override"),
                 session_id=self.session_id,
                 call_id=self.call_id,
                 on_agent_wire=self._send_agent_wire,
                 sample_rate=_WIRE_SAMPLE_RATE,
                 tts_session_id=pstn_opts.get("tts_session_id"),
                 config_session_id=pstn_opts.get("config_session_id"),
-                tts_output_codec="mp3" if self._bidirectional_mode == "mp3" else "linear16",
+                tts_output_codec="linear16" if e2e or self._bidirectional_mode != "mp3" else "mp3",
                 is_agent_audio_active=self._playback.is_active,
                 playback=self._playback,
             )
@@ -915,7 +917,10 @@ class TelnyxPstnBridge:
 
     async def _send_agent_wire(self, wire: bytes) -> None:
         """Enqueue Telnyx RTP payloads — or send MP3 blobs in mp3 bidirectional mode."""
-        if self._bidirectional_mode == "mp3":
+        from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+
+        realtime_pcm = isinstance(self._voice, PstnRealtimeVoiceLoop)
+        if self._bidirectional_mode == "mp3" and not realtime_pcm:
             await self._send_agent_mp3(wire)
             return
         source_codec = self._voice.current_output_codec if self._voice else "PCMU"

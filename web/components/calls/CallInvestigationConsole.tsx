@@ -40,6 +40,19 @@ async function loadCallDetail(callId: string): Promise<CallDetailData> {
   return { meta, transcript, memory, outcome, trace, memoryEvents };
 }
 
+function shouldPollCallDetail(data: CallDetailData): boolean {
+  const status = String(data.meta.finalization?.status || data.meta.finalization_status || "");
+  const audio = String(data.meta.finalization?.audio || "");
+  const mixReady = Boolean(data.meta.audio?.mix);
+  return (
+    status === "processing" ||
+    status === "finalizing" ||
+    audio === "pending" ||
+    audio === "processing" ||
+    !mixReady
+  );
+}
+
 export function CallInvestigationConsole({ callId }: { callId: string }) {
   const [data, setData] = useState<CallDetailData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -47,20 +60,39 @@ export function CallInvestigationConsole({ callId }: { callId: string }) {
 
   useEffect(() => {
     let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     setLoading(true);
     setError(null);
-    loadCallDetail(callId)
-      .then((d) => {
-        if (!cancelled) setData(d);
-      })
-      .catch((e) => {
-        if (!cancelled) setError(e instanceof Error ? e.message : "Failed to load call");
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+
+    const run = async (attempt: number) => {
+      try {
+        const d = await loadCallDetail(callId);
+        if (cancelled) return;
+        setData(d);
+        setError(null);
+        setLoading(false);
+        if (shouldPollCallDetail(d) && attempt < 15) {
+          timer = setTimeout(() => {
+            void run(attempt + 1);
+          }, 800);
+        }
+      } catch (e) {
+        if (cancelled) return;
+        if (attempt < 8) {
+          timer = setTimeout(() => {
+            void run(attempt + 1);
+          }, 800);
+          return;
+        }
+        setError(e instanceof Error ? e.message : "Failed to load call");
+        setLoading(false);
+      }
+    };
+
+    void run(0);
     return () => {
       cancelled = true;
+      if (timer) clearTimeout(timer);
     };
   }, [callId]);
 

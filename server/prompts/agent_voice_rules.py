@@ -172,6 +172,19 @@ def live_realtime_output_rules(language: str | None) -> str:
 - {CALLER_DETAIL_CAPTURE}"""
 
 
+def live_realtime_audio_rules(language: str | None) -> str:
+    """Same live-call rules as the text PSTN path, plus audio-output constraints."""
+    return (
+        "OUTPUT MODALITY RULES (audio Realtime — mandatory)\n"
+        "- You are on a live phone call. Speak the reply as natural speech.\n"
+        "- Never emit JSON, XML, markdown fences, or field names such as spoken_response or memory_update.\n"
+        "- Never read stage directions, tool names, or internal labels aloud.\n"
+        "- Use the end_call tool in the SAME turn as your spoken farewell when the call should end.\n"
+        "- Keep replies inside the LENGTH bands. One next question at most.\n\n"
+        + live_realtime_output_rules(language)
+    )
+
+
 SPOKEN_PACK_TE = f"""--- SPOKEN LANGUAGE (te-IN) ---
 You are on a live phone call. Speak natural Tanglish: Telugu Unicode with everyday English (`budget`, `order`, `paisa`). Hyderabad phone register — not literary or pandit-style Telugu.
 {LANGUAGE_LOCK["te-IN"]}

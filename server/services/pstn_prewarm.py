@@ -27,6 +27,18 @@ def prewarm_realtime_key(provider: str, external_id: str) -> str:
     return f"prewarm-{provider}-{external_id}"
 
 
+def _runtime_max_output_tokens(session_id: str) -> int | None:
+    from server.services.runtime_settings import runtime_settings
+
+    raw = runtime_settings.get(session_id).get("openaiMaxTokens")
+    if raw is None or raw == "":
+        return None
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        return None
+
+
 @dataclass
 class PstnPrewarmBundle:
     provider: str
@@ -253,9 +265,14 @@ pstn_prewarm_registry = PstnPrewarmRegistry()
 
 async def _destroy_realtime(call_key: str) -> None:
     from server.realtime.manager import realtime_text_manager
+    from server.realtime.voice_manager import realtime_voice_manager
 
     try:
         await realtime_text_manager.destroy(call_key)
+    except Exception:
+        pass
+    try:
+        await realtime_voice_manager.destroy(call_key)
     except Exception:
         pass
 
@@ -299,7 +316,8 @@ async def _build_prewarm_bundle(
     settings = get_settings()
     from server.realtime.models import pipeline_mode
 
-    if pipeline_mode(settings=settings, stack_override=pstn_opts.get("stack_override")) == "realtime_text":
+    mode = pipeline_mode(settings=settings, stack_override=pstn_opts.get("stack_override"))
+    if mode == "realtime_text":
         await realtime_text_manager.create(
             rt_key,
             compiled_brain=compiled,
@@ -309,9 +327,32 @@ async def _build_prewarm_bundle(
             wait_ready=True,
         )
         log_pstn("prewarm.realtime.ready", control=external_id, provider=provider, model=stack.llm.model)
+    elif mode == "realtime_voice":
+        from server.realtime.models import resolve_realtime_voice_max_output_tokens
+        from server.realtime.text_session import build_audio_session_instructions
+        from server.realtime.voice_manager import realtime_voice_manager
+
+        await realtime_voice_manager.create(
+            rt_key,
+            compiled_brain=compiled,
+            model=stack.llm.model,
+            language=language,
+            instructions=build_audio_session_instructions(compiled, language=language),
+            stack_override=pstn_opts.get("stack_override"),
+            max_output_tokens=resolve_realtime_voice_max_output_tokens(
+                _runtime_max_output_tokens(config_session)
+            ),
+            wait_ready=True,
+        )
+        log_pstn(
+            "prewarm.realtime_voice.ready",
+            control=external_id,
+            provider=provider,
+            model=stack.llm.model,
+        )
 
     frames: list[bytes] = []
-    if greeting:
+    if greeting and mode != "realtime_voice":
         frames = await _synthesize_greeting_frames(
             greeting=greeting,
             session_id=config_session,

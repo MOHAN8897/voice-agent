@@ -221,3 +221,70 @@ def test_call_start_clears_session_conversation_history(monkeypatch, tmp_path):
     assert session_memory.get_summary("leak-sess") == ""
     get_settings.cache_clear()
 
+
+def test_get_call_merges_usage_cost_and_pipeline(monkeypatch, tmp_path):
+    c = _client(monkeypatch, tmp_path)
+    call_id = c.post("/api/call/start", json={"sessionId": "cost-sess", "channel": "pstn"}).json()["call_id"]
+    meta = call_ledger.read_meta(call_id)
+    assert meta.get("pipeline")
+    meta["pipeline"] = "realtime_voice"
+    meta["usage"] = {
+        "pipeline": "realtime_voice",
+        "llm_model": "gpt-realtime-2.1-mini",
+        "cost_usd": 0.1,
+        "cost_inr": 9.56,
+        "model_cost_usd": 0.1,
+        "model_cost_inr": 9.56,
+        "turns": 1,
+        "input_audio_tokens": 600,
+        "output_audio_tokens": 1200,
+        "fx_rate_inr": 95.64,
+    }
+    call_ledger.write_meta(call_id, meta)
+    c.post("/api/call/end", json={"callId": call_id})
+    body = c.get(f"/api/call/{call_id}").json()
+    assert body["pipeline"] == "realtime_voice"
+    usage = body["usage"]
+    assert usage["model_cost_usd"] == pytest.approx(0.1)
+    assert usage["telnyx_usd"] is not None
+    assert usage["cost_usd"] == pytest.approx(0.1 + float(usage["telnyx_usd"]))
+    assert usage["duration_sec"] is not None
+    assert "cost_inr_per_min" in usage
+    listed = c.get("/api/calls").json()["calls"]
+    row = next(x for x in listed if x["call_id"] == call_id)
+    assert row["cost_usd"] == pytest.approx(usage["cost_usd"])
+    assert row["pipeline"] == "realtime_voice"
+    get_settings.cache_clear()
+
+
+@pytest.mark.asyncio
+async def test_stamp_ended_usage_adds_telnyx_minutes(monkeypatch, tmp_path):
+    monkeypatch.setenv("DATA_DIR", str(tmp_path))
+    get_settings.cache_clear()
+    call_ledger.reset_for_tests()
+    from server.services.usage_pricing import TELNYX_OUTBOUND_USD_PER_MIN
+
+    cid = "stamp-telnyx"
+    await call_ledger.init(
+        cid,
+        {
+            "call_id": cid,
+            "channel": "pstn",
+            "pipeline": "realtime_voice",
+            "direction": "outbound",
+            "usage": {
+                "cost_usd": 0.03,
+                "cost_inr": 2.8692,
+                "model_cost_usd": 0.03,
+                "model_cost_inr": 2.8692,
+                "fx_rate_inr": 95.64,
+            },
+        },
+    )
+    call_ledger.stamp_ended_usage(cid, reason="user_stop", duration_sec=60)
+    meta = call_ledger.read_meta(cid)
+    assert meta["usage"]["telnyx_usd"] == pytest.approx(TELNYX_OUTBOUND_USD_PER_MIN)
+    assert meta["usage"]["cost_usd"] == pytest.approx(0.03 + TELNYX_OUTBOUND_USD_PER_MIN)
+    assert meta["usage"]["duration_sec"] == 60
+    get_settings.cache_clear()
+

@@ -4,14 +4,14 @@ import { useEffect, useState } from "react";
 import { ensureArray } from "@/lib/ensure-array";
 import { cn } from "@/lib/cn";
 import type { MemorySnapshot, OutcomePayload, TranscriptLine } from "@/lib/call-detail-types";
+import { CallAudioPanel } from "@/components/calls/detail/CallAudioPanel";
 
 /** Compact tabs for the Calls list detail inspector (split view). */
 export function CallDetailInspectorTabs({ callId }: { callId: string }) {
   const [lines, setLines] = useState<TranscriptLine[]>([]);
-  const [tab, setTab] = useState<"transcript" | "memory" | "outcome">("transcript");
+  const [tab, setTab] = useState<"recording" | "transcript" | "memory" | "outcome">("recording");
   const [memory, setMemory] = useState<MemorySnapshot>({});
   const [outcome, setOutcome] = useState<OutcomePayload | null>(null);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -34,8 +34,6 @@ export function CallDetailInspectorTabs({ callId }: { callId: string }) {
         const out = await outR.json();
         setOutcome((out.outcome as OutcomePayload) || null);
       }
-      const mixR = await fetch(`/api/call/${callId}/audio/mix`, { method: "HEAD", credentials: "include" });
-      if (mixR.ok) setAudioUrl(`/api/call/${callId}/audio/mix`);
     })();
     return () => {
       cancelled = true;
@@ -45,7 +43,7 @@ export function CallDetailInspectorTabs({ callId }: { callId: string }) {
   return (
     <div>
       <div className="flex flex-wrap gap-2">
-        {(["transcript", "memory", "outcome"] as const).map((name) => (
+        {(["recording", "transcript", "memory", "outcome"] as const).map((name) => (
           <button
             key={name}
             type="button"
@@ -59,6 +57,12 @@ export function CallDetailInspectorTabs({ callId }: { callId: string }) {
           </button>
         ))}
       </div>
+
+      {tab === "recording" && (
+        <div className="mt-4">
+          <CallAudioPanel callId={callId} />
+        </div>
+      )}
 
       {tab === "transcript" && (
         <div className="mt-4">
@@ -82,16 +86,6 @@ export function CallDetailInspectorTabs({ callId }: { callId: string }) {
               ))
             )}
           </ul>
-          {audioUrl ? (
-            <audio
-              controls
-              src={audioUrl}
-              className="mt-4 w-full"
-              onError={() => setAudioUrl(null)}
-            />
-          ) : (
-            <p className="mt-4 text-xs text-text-muted">Audio archive not ready yet.</p>
-          )}
         </div>
       )}
 

@@ -49,6 +49,25 @@ def build_session_instructions(
     return "\n\n".join(parts)
 
 
+def build_audio_session_instructions(
+    compiled_brain: str | None,
+    *,
+    caller_id: str | None = None,
+    language: str = "te-IN",
+) -> str:
+    """Same compiled brain as the text PSTN path, with audio-output rules."""
+    from server.prompts.agent_voice_rules import live_realtime_audio_rules
+
+    parts = [
+        (compiled_brain or "").strip()
+        or f"You are a helpful live voice agent. {LIVE_REPLY_BREVITY_RULE}"
+    ]
+    parts.append(live_realtime_audio_rules(language))
+    if caller_id:
+        parts.append("[Caller context]\nInbound caller connected (do not read their number aloud).")
+    return "\n\n".join(parts)
+
+
 class RealtimeTextSession:
     def __init__(
         self,

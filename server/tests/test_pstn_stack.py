@@ -39,6 +39,21 @@ def test_gemini_llm_override_stripped_for_pstn():
     assert any("llm override removed" in a for a in adj)
 
 
+def test_full_pstn_pipeline_wins_over_leftover_realtime_voice_flow():
+    raw = {
+        "pipeline": "realtime_text",
+        "voice_flow": "realtime_e2e",
+        "realtime_voice": {"voice": "marin"},
+        "stt": {"provider": "sarvam", "model": "saaras:v3-realtime"},
+        "tts": {"provider": "sarvam", "model": "bulbul:v3", "config": {"speaker": "shubh"}},
+    }
+    out, _adj = normalize_pstn_stack_override(raw, language="te-IN")
+    assert out["pipeline"] == "realtime_text"
+    assert "voice_flow" not in out
+    assert "realtime_voice" not in out
+    assert out["stt"]["model"] == "saaras:v3-realtime"
+
+
 def test_cartesia_tts_sarvam_speaker_replaced():
     raw = {
         "stt": {"provider": "sarvam", "model": "saaras:v3-realtime"},

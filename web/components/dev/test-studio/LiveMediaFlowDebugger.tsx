@@ -39,6 +39,7 @@ type MediaFlow = {
     stt?: string;
     realtime?: string;
     model?: string;
+    pipeline?: string;
     tts_provider?: string;
     tts_model?: string;
     tts_speaker?: string;
@@ -99,7 +100,7 @@ const FILTERS = ["All", "Inbound", "STT", "LLM", "TTS", "Conversion", "Queue", "
 const STAGE_FILTER: Record<string, string[]> = {
   Inbound: ["inbound_audio"],
   STT: ["stt_audio", "stt_final"],
-  LLM: ["llm_started", "llm_first_token"],
+  LLM: ["llm_started", "llm_first_token", "llm_usage"],
   TTS: ["tts_started", "tts_audio"],
   Conversion: ["converter"],
   Queue: ["outbound_queued", "queue_cleared", "tts_text_queued"],
@@ -238,6 +239,7 @@ export function LiveMediaFlowDebugger({ callId }: { callId?: string | null }) {
   const failures = flow?.health?.failures || [];
   const negotiated = flow?.negotiated;
   const configured = flow?.configured;
+  const audioE2e = flow?.diagnostics?.pipeline === "realtime_voice";
   const mismatch = configured && negotiated && (
     configured.codec !== negotiated.codec ||
     configured.sample_rate !== negotiated.sample_rate ||
@@ -265,9 +267,9 @@ export function LiveMediaFlowDebugger({ callId }: { callId?: string | null }) {
 
           <dl className="grid grid-cols-[repeat(auto-fit,minmax(130px,1fr))] gap-3 text-xs">
             <div><dt className="text-text-subtle">Agent</dt><dd className="break-all text-text">{flow.diagnostics?.agent_id || "pending"}</dd></div>
-            <div><dt className="text-text-subtle">STT stream</dt><dd className="text-text">{flow.diagnostics?.stt || "unknown"}</dd></div>
+            <div><dt className="text-text-subtle">{audioE2e ? "Audio in" : "STT stream"}</dt><dd className="text-text">{flow.diagnostics?.stt || "unknown"}</dd></div>
             <div><dt className="text-text-subtle">Realtime</dt><dd className="text-text">{flow.diagnostics?.realtime || "unknown"} · {flow.diagnostics?.model || "—"}</dd></div>
-            <div><dt className="text-text-subtle">TTS provider</dt><dd className="break-all text-text">{flow.diagnostics?.tts_provider || "—"} {flow.diagnostics?.tts_model ? `· ${flow.diagnostics.tts_model}` : ""} {flow.diagnostics?.tts_speaker ? `· ${flow.diagnostics.tts_speaker}` : ""}</dd></div>
+            <div><dt className="text-text-subtle">{audioE2e ? "Audio out" : "TTS provider"}</dt><dd className="break-all text-text">{flow.diagnostics?.tts_provider || "—"} {flow.diagnostics?.tts_model ? `· ${flow.diagnostics.tts_model}` : ""} {flow.diagnostics?.tts_speaker ? `· ${flow.diagnostics.tts_speaker}` : ""}</dd></div>
             <div><dt className="text-text-subtle">Turn / generation</dt><dd className="break-all text-text">{flow.diagnostics?.turn_id || "—"} / {flow.diagnostics?.generation_id || "—"}</dd></div>
           </dl>
 
@@ -282,24 +284,32 @@ export function LiveMediaFlowDebugger({ callId }: { callId?: string | null }) {
           ))}
 
           <section aria-label="Text pipeline" className="rounded-xl border border-surface-border-subtle bg-surface-raised/40 p-4">
-            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-text-subtle">Text pipeline · what the agent processes</p>
+            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-text-subtle">
+              {audioE2e ? "Audio E2E · Telnyx PCM ↔ OpenAI Realtime" : "Text pipeline · what the agent processes"}
+            </p>
             <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-accent">STT heard (caller → text)</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-accent">
+                  {audioE2e ? "Caller transcript" : "STT heard (caller → text)"}
+                </p>
                 <p className="mt-2 min-h-12 rounded-lg border border-surface-border bg-surface px-3 py-2 text-sm text-text">
                   {textPipeline.stt || "Waiting for caller speech…"}
                 </p>
               </div>
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-warning">LLM input (text → brain)</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-warning">
+                  {audioE2e ? "Realtime turn" : "LLM input (text → brain)"}
+                </p>
                 <p className="mt-2 min-h-12 rounded-lg border border-surface-border bg-surface px-3 py-2 text-sm text-text">
                   {textPipeline.llmIn || "No turn started yet…"}
                 </p>
               </div>
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-warning">TTS output (text → voice)</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-warning">
+                  {audioE2e ? "Realtime audio out" : "TTS output (text → voice)"}
+                </p>
                 <p className="mt-2 min-h-12 rounded-lg border border-surface-border bg-surface px-3 py-2 text-sm text-text">
-                  {textPipeline.tts || "No agent speech queued yet…"}
+                  {textPipeline.tts || (audioE2e ? "Waiting for OpenAI audio…" : "No agent speech queued yet…")}
                 </p>
               </div>
             </div>
@@ -312,18 +322,21 @@ export function LiveMediaFlowDebugger({ callId }: { callId?: string | null }) {
               <span className="self-center text-accent">→</span>
               <Node label="Telnyx inbound" stage={stages.inbound_audio} />
               <span className="self-center text-accent">→</span>
-              <Node label="PCM normalizer" stage={stages.stt_audio} />
+              <Node label={audioE2e ? "16k → 24k PCM" : "PCM normalizer"} stage={stages.stt_audio} />
               <span className="self-center text-accent">→</span>
-              <Node label="Streaming STT" stage={stages.stt_stream || stages.stt_final || stages.stt_audio} />
+              <Node
+                label={audioE2e ? "OpenAI audio in" : "Streaming STT"}
+                stage={stages.stt_stream || stages.stt_final || stages.stt_audio}
+              />
             </div>
           </section>
 
           <section aria-label="Outbound audio flow">
             <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-warning">Outbound · agent → caller</p>
             <div className="flex gap-2 overflow-x-auto pb-2">
-              <Node label="LLM" stage={stages.llm_first_token || stages.llm_started} />
+              <Node label={audioE2e ? "OpenAI Realtime" : "LLM"} stage={stages.llm_first_token || stages.llm_started} />
               <span className="self-center text-warning">→</span>
-              <Node label="TTS" stage={stages.tts_audio || stages.tts_started} />
+              <Node label={audioE2e ? "24k → 16k L16" : "TTS"} stage={stages.tts_audio || stages.tts_started} />
               <span className="self-center text-warning">→</span>
               <Node label="Converter" stage={stages.converter} />
               <span className="self-center text-warning">→</span>

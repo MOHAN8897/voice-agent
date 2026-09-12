@@ -34,6 +34,14 @@ class PstnArchiveWriter:
                 pass
 
     async def close(self) -> None:
+        if self._closed:
+            if self._task:
+                try:
+                    await asyncio.wait_for(self._task, timeout=2.0)
+                except (asyncio.TimeoutError, asyncio.CancelledError):
+                    self._task.cancel()
+                self._task = None
+            return
         self._closed = True
         try:
             self._q.put_nowait(None)

@@ -16,6 +16,21 @@ import {
 import { compileLanguageLabel } from "@/components/test-studio/CompileLanguagePicker";
 import { CartesiaVoiceSelect } from "@/components/test-studio/CartesiaVoiceSelect";
 import { SarvamVoiceSelect } from "@/components/test-studio/SarvamVoiceSelect";
+import {
+  DEFAULT_REALTIME_NOISE_REDUCTION,
+  DEFAULT_REALTIME_SPEED,
+  DEFAULT_REALTIME_TURN_DETECTION,
+  DEFAULT_REALTIME_VAD_EAGERNESS,
+  DEFAULT_REALTIME_VOICE,
+  REALTIME_MODEL_IDS,
+  REALTIME_NOISE_REDUCTION,
+  REALTIME_TURN_DETECTION,
+  REALTIME_VAD_EAGERNESS,
+  REALTIME_VOICES,
+  isRealtimePstnMode,
+  normalizeRealtimeSilenceMs,
+  normalizeRealtimeSpeed,
+} from "@/lib/realtime-voice";
 
 type Tab = "prompts" | "llm" | "voice";
 
@@ -101,6 +116,18 @@ export function TestStudioFineTuneWorkbench({
   onRuntimeSpeakerChange,
   sarvamSpeakersV3 = [],
   sarvamSpeakersV2 = [],
+  channel = "agent",
+  realtimeVoice,
+  realtimeTurnDetection,
+  realtimeVadEagerness,
+  realtimeNoiseReduction,
+  realtimeSpeed,
+  realtimeSilenceMs,
+  onRealtimeVoiceChange,
+  onRealtimeTurnDetectionChange,
+  onRealtimeSettingsChange,
+  liveLlmModel,
+  onLiveLlmChange,
 }: {
   agentId: string;
   portal: "app" | "dev";
@@ -113,6 +140,25 @@ export function TestStudioFineTuneWorkbench({
   onRuntimeSpeakerChange?: (speaker: string) => void;
   sarvamSpeakersV3?: string[];
   sarvamSpeakersV2?: string[];
+  channel?: "agent" | "pstn" | "pstn_realtime";
+  realtimeVoice?: string;
+  realtimeTurnDetection?: string;
+  realtimeVadEagerness?: string;
+  realtimeNoiseReduction?: string;
+  realtimeSpeed?: number;
+  realtimeSilenceMs?: number;
+  onRealtimeVoiceChange?: (voice: string) => void;
+  onRealtimeTurnDetectionChange?: (kind: string) => void;
+  onRealtimeSettingsChange?: (patch: {
+    realtimeVoice?: string;
+    realtimeTurnDetection?: string;
+    realtimeVadEagerness?: string;
+    realtimeNoiseReduction?: string;
+    realtimeSpeed?: number;
+    realtimeSilenceMs?: number;
+  }) => void;
+  liveLlmModel?: string;
+  onLiveLlmChange?: (model: string) => void;
 }) {
   const [internalTab, setInternalTab] = useState<Tab>("prompts");
   const tab = activeTab ?? internalTab;
@@ -138,6 +184,13 @@ export function TestStudioFineTuneWorkbench({
   const defaultCartesiaVoice =
     String(ttsCatalog?.defaultCartesiaVoiceId || "db6b0ed5-d5d3-463d-ae85-518a07d3c2b4");
   const useCartesia = stackTtsProvider === "cartesia" || String(ft.runtime.ttsModel || "").startsWith("sonic");
+  const realtime = isRealtimePstnMode(channel);
+  const filteredRealtime = allowedModels.filter((m) => m.startsWith("gpt-realtime"));
+  const llmModels = realtime
+    ? filteredRealtime.length
+      ? filteredRealtime
+      : [...REALTIME_MODEL_IDS]
+    : allowedModels;
 
   const brainHref =
     portal === "dev" ? `/dev/agents/${agentId}/brain` : `/app/agents/${agentId}/brain`;
@@ -388,20 +441,36 @@ export function TestStudioFineTuneWorkbench({
 
           {tab === "llm" && (
             <div className="grid gap-5 lg:grid-cols-2">
-              <Field label="OpenAI model">
+              <Field
+                label="OpenAI model"
+                hint={realtime ? "Audio-to-audio Realtime models only. Temperature is not sent on this path." : undefined}
+              >
                 <select
                   disabled={locked}
                   className={inputCls}
-                  value={String(ft.runtime.openaiModel ?? defaults.openaiModel ?? "")}
-                  onChange={(e) => ft.setRuntime((r) => ({ ...r, openaiModel: e.target.value }))}
+                  value={
+                    realtime
+                      ? liveLlmModel && llmModels.includes(liveLlmModel)
+                        ? liveLlmModel
+                        : llmModels.includes(String(ft.runtime.openaiModel ?? defaults.openaiModel ?? ""))
+                          ? String(ft.runtime.openaiModel ?? defaults.openaiModel ?? "")
+                          : "gpt-realtime-2.1-mini"
+                      : String(ft.runtime.openaiModel ?? defaults.openaiModel ?? "")
+                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    ft.setRuntime((r) => ({ ...r, openaiModel: value }));
+                    if (realtime) onLiveLlmChange?.(value);
+                  }}
                 >
-                  {allowedModels.map((m) => (
+                  {llmModels.map((m) => (
                     <option key={m} value={m}>
                       {modelLabels[m] || m}
                     </option>
                   ))}
                 </select>
               </Field>
+              {!realtime && (
               <Field label="Reasoning effort">
                 <select
                   disabled={locked}
@@ -420,6 +489,8 @@ export function TestStudioFineTuneWorkbench({
                   ))}
                 </select>
               </Field>
+              )}
+              {!realtime && (
               <Field label="Temperature">
                 <input
                   type="number"
@@ -434,6 +505,7 @@ export function TestStudioFineTuneWorkbench({
                   }
                 />
               </Field>
+              )}
               <Field label="Max output tokens">
                 <input
                   type="number"
@@ -470,6 +542,107 @@ export function TestStudioFineTuneWorkbench({
 
           {tab === "voice" && (
             <div className="grid gap-5 lg:grid-cols-2">
+              {realtime ? (
+                <>
+                  <Field
+                    label="Realtime voice"
+                    hint="OpenAI speech-to-speech voice. Locked after the first audio reply — start a new call to change it."
+                  >
+                    <select
+                      disabled={locked}
+                      className={inputCls}
+                      value={realtimeVoice || DEFAULT_REALTIME_VOICE}
+                      onChange={(e) => {
+                        onRealtimeVoiceChange?.(e.target.value);
+                        onRealtimeSettingsChange?.({ realtimeVoice: e.target.value });
+                      }}
+                    >
+                      {REALTIME_VOICES.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.label}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field
+                    label="Turn detection"
+                    hint="Semantic VAD waits for meaning; server VAD uses silence."
+                  >
+                    <select
+                      disabled={locked}
+                      className={inputCls}
+                      value={realtimeTurnDetection || DEFAULT_REALTIME_TURN_DETECTION}
+                      onChange={(e) => {
+                        onRealtimeTurnDetectionChange?.(e.target.value);
+                        onRealtimeSettingsChange?.({ realtimeTurnDetection: e.target.value });
+                      }}
+                    >
+                      {REALTIME_TURN_DETECTION.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.label}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                  {(realtimeTurnDetection || DEFAULT_REALTIME_TURN_DETECTION) === "semantic_vad" ? (
+                    <Field label="Semantic VAD eagerness" hint="How quickly the model takes the turn.">
+                      <select
+                        disabled={locked}
+                        className={inputCls}
+                        value={realtimeVadEagerness || DEFAULT_REALTIME_VAD_EAGERNESS}
+                        onChange={(e) => onRealtimeSettingsChange?.({ realtimeVadEagerness: e.target.value })}
+                      >
+                        {REALTIME_VAD_EAGERNESS.map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.label}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                  ) : (
+                    <Field label="Silence duration (ms)" hint="Server VAD endpointing — same role as STT silence on Full PSTN.">
+                      <input
+                        type="number"
+                        min={200}
+                        max={2000}
+                        disabled={locked}
+                        className={inputCls}
+                        value={normalizeRealtimeSilenceMs(realtimeSilenceMs)}
+                        onChange={(e) =>
+                          onRealtimeSettingsChange?.({ realtimeSilenceMs: Number(e.target.value) })
+                        }
+                      />
+                    </Field>
+                  )}
+                  <Field label="Noise reduction" hint="Far field is the usual choice for Telnyx PSTN.">
+                    <select
+                      disabled={locked}
+                      className={inputCls}
+                      value={realtimeNoiseReduction || DEFAULT_REALTIME_NOISE_REDUCTION}
+                      onChange={(e) => onRealtimeSettingsChange?.({ realtimeNoiseReduction: e.target.value })}
+                    >
+                      {REALTIME_NOISE_REDUCTION.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.label}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field label="Speech speed" hint="OpenAI audio output speed (0.25–1.5). Same idea as TTS pace.">
+                    <input
+                      type="number"
+                      step="0.05"
+                      min={0.25}
+                      max={1.5}
+                      disabled={locked}
+                      className={inputCls}
+                      value={normalizeRealtimeSpeed(realtimeSpeed ?? DEFAULT_REALTIME_SPEED)}
+                      onChange={(e) => onRealtimeSettingsChange?.({ realtimeSpeed: Number(e.target.value) })}
+                    />
+                  </Field>
+                </>
+              ) : (
+              <>
               {useCartesia ? (
                 <>
                   <Field
@@ -625,6 +798,8 @@ export function TestStudioFineTuneWorkbench({
                   />
                 </div>
               </Field>
+              </>
+              )}
             </div>
           )}
         </>

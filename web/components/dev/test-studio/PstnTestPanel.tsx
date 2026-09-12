@@ -7,9 +7,12 @@ import { DevCard } from "@/components/dev/DevCard";
 import { ensureArray } from "@/lib/ensure-array";
 import { portalFetch, refreshPortalSession } from "@/lib/auth-client";
 import { LiveMediaFlowDebugger } from "./LiveMediaFlowDebugger";
+import { CallAudioPanel } from "@/components/calls/detail/CallAudioPanel";
 import type { StackForm, StackMode } from "@/lib/test-studio-stack";
 import { effectivePstnLiveLlm, TEST_STUDIO_SESSION_ID } from "@/lib/test-studio-stack";
 import { DEFAULT_CARTESIA_VOICE_ID, ensureTtsVoice } from "@/lib/voice/tts-config";
+import { formatDuration, pipelineLabel } from "@/lib/call-list-utils";
+import { formatInr } from "@/lib/usage-cost";
 
 type ProviderStatus = {
   id: string;
@@ -69,6 +72,12 @@ type CallRow = {
   media_frames_in?: number;
   media_frames_out?: number;
   bidirectional_ok?: boolean;
+  pipeline?: string;
+  duration_sec?: number;
+  cost_inr?: number;
+  cost_usd?: number;
+  has_recording?: boolean;
+  end_reason?: string;
 };
 
 const PROVIDERS = [
@@ -105,6 +114,7 @@ export function PstnTestPanel({
   stackOverride,
   onInternalCallStart,
   onInternalCallEnd,
+  onReviewCall,
 }: {
   agentId: string;
   sourceSessionId?: string;
@@ -117,6 +127,7 @@ export function PstnTestPanel({
   stackOverride?: Record<string, unknown>;
   onInternalCallStart?: (callId: string) => void;
   onInternalCallEnd?: (callId: string) => void;
+  onReviewCall?: (callId: string) => void;
 }) {
   const [status, setStatus] = useState<TelephonyStatus | null>(null);
   const [calls, setCalls] = useState<CallRow[]>([]);
@@ -129,7 +140,10 @@ export function PstnTestPanel({
   const [toE164, setToE164] = useState("");
   const [providerDraft, setProviderDraft] = useState("telnyx");
   const [verifyCode, setVerifyCode] = useState("");
+  const [trackedCallId, setTrackedCallId] = useState<string | null>(null);
+  const [listenCallId, setListenCallId] = useState<string | null>(null);
   const trackedCallRef = useRef<string | null>(null);
+  const endedOnceRef = useRef<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const dialingRef = useRef(false);
   const fromInitRef = useRef(false);
@@ -195,6 +209,8 @@ export function PstnTestPanel({
         if (!internal) continue;
         if (!trackedCallRef.current && onInternalCallStart) {
           trackedCallRef.current = internal;
+          setTrackedCallId(internal);
+          endedOnceRef.current = null;
           onInternalCallStart(internal);
         }
         const st = (c.status || "").toLowerCase();
@@ -202,9 +218,12 @@ export function PstnTestPanel({
           trackedCallRef.current === internal &&
           st &&
           ["completed", "failed", "busy", "no-answer", "canceled", "hangup"].includes(st) &&
-          onInternalCallEnd
+          onInternalCallEnd &&
+          endedOnceRef.current !== internal
         ) {
+          endedOnceRef.current = internal;
           onInternalCallEnd(internal);
+          setListenCallId(internal);
           trackedCallRef.current = null;
         }
       }
@@ -242,7 +261,16 @@ export function PstnTestPanel({
     await load();
   }
 
-  const liveLlm = useMemo(() => effectivePstnLiveLlm(runtimeOpenAiModel), [runtimeOpenAiModel]);
+  const liveLlm = useMemo(
+    () => effectivePstnLiveLlm(runtimeOpenAiModel, stack?.llmModel),
+    [runtimeOpenAiModel, stack?.llmModel]
+  );
+  const realtimeE2e = stackOverride?.pipeline === "realtime_voice";
+  const realtimeVoice = useMemo(() => {
+    const block = stackOverride?.realtime_voice;
+    if (!block || typeof block !== "object") return null;
+    return block as Record<string, unknown>;
+  }, [stackOverride]);
   const stackOverrideKey = useMemo(
     () => (stackOverride ? JSON.stringify(stackOverride) : ""),
     [stackOverride]
@@ -321,6 +349,7 @@ export function PstnTestPanel({
     dialingRef.current = true;
     setBusy(true);
     trackedCallRef.current = null;
+    setTrackedCallId(null);
     setMessage(`Placing ${providerLabel(active)} outbound call…`);
     try {
       const dialBody: Record<string, unknown> = {
@@ -576,21 +605,56 @@ export function PstnTestPanel({
         </DevCard>
       )}
 
-      <DevCard
+        <DevCard
         title="Agent voice & stack"
-        description="Same Test Studio script, stack, voice, and fine-tune as Agent only (browser)"
+        description={
+          realtimeE2e
+            ? "Telnyx PCM ↔ OpenAI Realtime audio — same compiled brain as Agent only"
+            : "Same Test Studio script, stack, voice, and fine-tune as Agent only (browser)"
+        }
       >
         <dl className="grid gap-3 text-sm sm:grid-cols-2">
           <div>
             <dt className="text-text-muted">Stack</dt>
             <dd className="mt-1 font-mono text-xs text-text">
-              {stackMode === "custom" ? "custom" : `tier · ${tier || "medium"}`}
+              {realtimeE2e ? "realtime audio E2E" : stackMode === "custom" ? "custom" : `tier · ${tier || "medium"}`}
             </dd>
           </div>
           <div>
             <dt className="text-text-muted">Language</dt>
             <dd className="mt-1 font-mono text-xs text-text">{language || "te-IN"}</dd>
           </div>
+          {realtimeE2e ? (
+            <>
+          <div>
+            <dt className="text-text-muted">Realtime model</dt>
+            <dd className="mt-1 font-mono text-xs text-text">
+              {liveLlm.provider} / {liveLlm.model}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-text-muted">OpenAI voice</dt>
+            <dd className="mt-1 font-mono text-xs text-text">
+              {String(realtimeVoice?.voice || stack?.realtimeVoice || "marin")}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-text-muted">Turn detection</dt>
+            <dd className="mt-1 font-mono text-xs text-text">
+              {String(realtimeVoice?.turn_detection || stack?.realtimeTurnDetection || "semantic_vad")}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-text-muted">VAD / noise</dt>
+            <dd className="mt-1 font-mono text-xs text-text">
+              {String(realtimeVoice?.vad_eagerness || stack?.realtimeVadEagerness || "medium")}
+              {" · "}
+              {String(realtimeVoice?.noise_reduction || stack?.realtimeNoiseReduction || "far_field")}
+            </dd>
+          </div>
+            </>
+          ) : (
+            <>
           <div>
             <dt className="text-text-muted">STT</dt>
             <dd className="mt-1 font-mono text-xs text-text">
@@ -621,6 +685,8 @@ export function PstnTestPanel({
             <dt className="text-text-muted">Agent voice</dt>
             <dd className="mt-1 font-mono text-xs text-text">{voiceLabel(ttsProvider, ttsVoice)}</dd>
           </div>
+            </>
+          )}
         </dl>
         <p
           className={`mt-3 text-[11px] ${
@@ -696,10 +762,18 @@ export function PstnTestPanel({
       </DevCard>
 
       {active === "telnyx" ? (
-        <LiveMediaFlowDebugger callId={trackedCallRef.current} />
+        <LiveMediaFlowDebugger callId={trackedCallId} />
       ) : null}
 
-      <DevCard title="Recent PSTN calls" description="Local registry — internal call ID links to recording & transcript">
+      {listenCallId ? (
+        <CallAudioPanel
+          callId={listenCallId}
+          title="Listen to recording"
+          description="Mix, caller, and agent WAV — play after hangup"
+        />
+      ) : null}
+
+      <DevCard title="Recent PSTN calls" description="After hangup: Play recording here, or Review for transcript and cost">
         <div className="overflow-x-auto rounded-xl border border-surface-border-subtle">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-surface-border-subtle bg-surface-raised text-xs text-text-muted">
@@ -707,6 +781,9 @@ export function PstnTestPanel({
                 <th className="px-3 py-2">Provider ID</th>
                 <th className="px-3 py-2">Status</th>
                 <th className="px-3 py-2">Stream</th>
+                <th className="px-3 py-2">Pipeline</th>
+                <th className="px-3 py-2">Duration</th>
+                <th className="px-3 py-2">Cost</th>
                 <th className="px-3 py-2">Internal call</th>
                 <th className="px-3 py-2">Route</th>
               </tr>
@@ -714,7 +791,7 @@ export function PstnTestPanel({
             <tbody>
               {calls.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-3 py-4 text-text-muted">No calls yet.</td>
+                  <td colSpan={8} className="px-3 py-4 text-text-muted">No calls yet.</td>
                 </tr>
               ) : (
                 calls.map((c) => (
@@ -728,7 +805,44 @@ export function PstnTestPanel({
                           ? `in ${c.media_frames_in ?? 0} / out ${c.media_frames_out ?? 0}`
                           : "—"}
                     </td>
-                    <td className="px-3 py-2 font-mono text-xs">{c.internal_call_id?.slice(0, 12) || "—"}</td>
+                    <td className="px-3 py-2 text-xs">{pipelineLabel(c.pipeline, "pstn")}</td>
+                    <td className="px-3 py-2 font-mono text-xs">{formatDuration(c.duration_sec)}</td>
+                    <td className="px-3 py-2 font-mono text-xs">
+                      {c.cost_inr != null ? formatInr(Number(c.cost_inr)) : "—"}
+                    </td>
+                    <td className="px-3 py-2 font-mono text-xs">
+                      {c.internal_call_id ? (
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            className="text-accent-primary underline-offset-2 hover:underline"
+                            onClick={() => {
+                              setListenCallId(c.internal_call_id!);
+                              onReviewCall?.(c.internal_call_id!);
+                            }}
+                          >
+                            Review
+                          </button>
+                          <button
+                            type="button"
+                            className="text-[10px] uppercase tracking-wide text-accent-primary hover:underline"
+                            onClick={() => setListenCallId(c.internal_call_id!)}
+                          >
+                            Play
+                          </button>
+                          {c.has_recording ? (
+                            <Link
+                              href={`/app/calls/${c.internal_call_id}`}
+                              className="text-[10px] uppercase tracking-wide text-text-subtle hover:text-text"
+                            >
+                              Archive
+                            </Link>
+                          ) : null}
+                        </div>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
                     <td className="px-3 py-2 font-mono text-xs">{c.from || "—"} → {c.to || "—"}</td>
                   </tr>
                 ))

@@ -18,6 +18,18 @@ export type TraceTurn = {
   memory_ops_applied?: number;
   memory_merge_ms?: number;
   errors?: string[];
+  input_tokens?: number;
+  output_tokens?: number;
+  cached_tokens?: number;
+  cache_write_tokens?: number;
+  input_audio_tokens?: number;
+  output_audio_tokens?: number;
+  cost_usd?: number;
+  cost_inr?: number;
+  llm_model?: string;
+  pipeline?: string;
+  user_text?: string;
+  assistant_text?: string;
 };
 
 export type TracePayload = {
@@ -34,10 +46,33 @@ export type MemoryEvent = {
   at?: string;
 };
 
+export type CallUsage = {
+  pipeline?: string;
+  llm_model?: string;
+  input_tokens?: number;
+  output_tokens?: number;
+  input_audio_tokens?: number;
+  output_audio_tokens?: number;
+  cached_tokens?: number;
+  turns?: number;
+  cost_usd?: number;
+  cost_inr?: number;
+  duration_sec?: number;
+  cost_usd_per_min?: number;
+  cost_inr_per_min?: number;
+  fx_rate_inr?: number;
+  model_cost_usd?: number;
+  model_cost_inr?: number;
+  telnyx_usd?: number;
+  telnyx_inr?: number;
+};
+
 export type CallMeta = {
   call_id?: string;
   agent_id?: string;
   channel?: string;
+  pipeline?: string;
+  caller_id?: string;
   tier?: string;
   disposition?: string;
   duration_sec?: number;
@@ -52,6 +87,13 @@ export type CallMeta = {
   resolved_stack?: Record<string, unknown>;
   finalization?: Record<string, unknown>;
   status?: string;
+  usage?: CallUsage;
+  cost_usd?: number;
+  cost_inr?: number;
+  cost_inr_per_min?: number;
+  model_cost_inr?: number;
+  telnyx_inr?: number;
+  audio?: { mix?: boolean; user?: boolean; agent?: boolean };
 };
 
 export type MemorySnapshot = {

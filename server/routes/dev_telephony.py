@@ -21,6 +21,30 @@ from server.services.telephony import (
 router = APIRouter()
 
 
+def _enrich_telephony_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Attach ledger cost, pipeline, duration, and recording flag for the dev panel."""
+    from server.call.audio_archive import audio_archive
+    from server.call.call_ledger import call_ledger
+
+    enriched: list[dict[str, Any]] = []
+    for row in rows:
+        item = dict(row)
+        cid = str(item.get("internal_call_id") or "")
+        if cid:
+            review = call_ledger.review_fields(cid)
+            if review.get("usage"):
+                item["usage"] = review["usage"]
+            for key in ("cost_usd", "cost_inr", "cost_inr_per_min", "pipeline", "end_reason"):
+                if review.get(key) is not None:
+                    item[key] = review[key]
+            meta = call_ledger.read_meta(cid)
+            if meta.get("duration_sec") is not None:
+                item["duration_sec"] = meta.get("duration_sec")
+            item["has_recording"] = audio_archive.file_for(cid, "mix") is not None
+        enriched.append(item)
+    return enriched
+
+
 class SetProviderBody(BaseModel):
     provider: str = Field(..., pattern="^(exotel|telnyx|plivo)$")
 
@@ -498,17 +522,17 @@ async def dev_telephony_calls(session: SessionData = Depends(require_dev_session
         from server.services.exotel_call_registry import exotel_call_registry
 
         rows = exotel_call_registry.list_recent(30)
-        return {"ok": True, "provider": provider, "calls": rows}
+        return {"ok": True, "provider": provider, "calls": _enrich_telephony_rows(rows)}
     if provider == "telnyx":
         from server.services.telnyx_client import telnyx_call_registry
 
         rows = telnyx_call_registry.list_recent(30)
-        return {"ok": True, "provider": provider, "calls": rows}
+        return {"ok": True, "provider": provider, "calls": _enrich_telephony_rows(rows)}
     if provider == "plivo":
         from server.services.plivo_client import plivo_call_registry
 
         rows = plivo_call_registry.list_recent(30)
-        return {"ok": True, "provider": provider, "calls": rows}
+        return {"ok": True, "provider": provider, "calls": _enrich_telephony_rows(rows)}
     return {"ok": True, "provider": provider, "calls": []}
 
 
@@ -526,12 +550,16 @@ async def dev_telephony_media_flow(
         from server.services.telnyx_pstn_bridge import active_telnyx_bridges
         from server.services.telnyx_client import telnyx_call_registry
         from server.realtime.manager import realtime_text_manager
+        from server.realtime.voice_manager import realtime_voice_manager
+        from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
 
         external_id = str(flow.get("external_id") or "")
         bridge = active_telnyx_bridges.get(external_id)
         row = telnyx_call_registry.get(external_id) or {}
         voice = bridge._voice if bridge else None
         realtime = realtime_text_manager.get(str(flow.get("call_id") or ""))
+        voice_rt = realtime_voice_manager.get(str(flow.get("call_id") or ""))
+        audio_e2e = isinstance(voice, PstnRealtimeVoiceLoop) or voice_rt is not None
         tts_provider = None
         tts_speaker = None
         tts_model = None
@@ -553,15 +581,28 @@ async def dev_telephony_media_flow(
                     tts_speaker = (stack.tts.config or {}).get("speaker")
             except Exception:
                 pass
+        if audio_e2e:
+            tts_provider = "openai-realtime"
+            tts_model = getattr(voice_rt, "model", None) or getattr(voice, "_live_model", None)
+            tts_speaker = getattr(voice_rt, "voice", None) or getattr(voice, "_voice_name", None)
         flow["diagnostics"] = {
             "direction": row.get("direction"),
             "agent_id": bridge.agent_id if bridge else row.get("agent_id"),
-            "phase": voice._phase if voice else ("ended" if not flow.get("active") else "connecting"),
-            "turn_id": voice.current_turn_id if voice else None,
-            "generation_id": voice.current_generation_id if voice else None,
-            "stt": "streaming" if voice and voice._stt else "disconnected",
-            "realtime": "ready" if realtime and realtime.is_ready else "disconnected",
-            "model": realtime.model if realtime else None,
+            "phase": getattr(voice, "_phase", None) if voice else ("ended" if not flow.get("active") else "connecting"),
+            "turn_id": getattr(voice, "current_turn_id", None) if voice else None,
+            "generation_id": getattr(voice, "current_generation_id", None) if voice else None,
+            "stt": "openai-audio" if audio_e2e else ("streaming" if voice and getattr(voice, "_stt", None) else "disconnected"),
+            "realtime": (
+                "ready"
+                if (voice_rt and voice_rt.is_open()) or (realtime and realtime.is_ready)
+                else "disconnected"
+            ),
+            "model": (
+                getattr(voice_rt, "model", None)
+                or getattr(voice, "_live_model", None)
+                or (realtime.model if realtime else None)
+            ),
+            "pipeline": "realtime_voice" if audio_e2e else "realtime_text",
             "tts_provider": tts_provider,
             "tts_model": tts_model,
             "tts_speaker": tts_speaker,

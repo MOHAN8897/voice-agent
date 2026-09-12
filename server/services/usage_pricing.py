@@ -27,6 +27,11 @@ SARVAM_TTS_INR_PER_1K_CHARS = 3.0
 CARTESIA_PRO_USD_PER_CREDIT = 5.0 / 100_000.0
 CARTESIA_TTS_USD_PER_M_CHARS = CARTESIA_PRO_USD_PER_CREDIT * 1_000_000.0  # $50/M
 
+# Telnyx Voice API / Call Control list rates (public pricing, blended).
+# Outbound India/INTL is the typical Test Studio path. Override via env if needed.
+TELNYX_OUTBOUND_USD_PER_MIN = 0.012
+TELNYX_INBOUND_USD_PER_MIN = 0.005
+
 OPENAI_USD_PER_M: dict[str, dict[str, float]] = {
     "gpt-realtime-2.1-mini": {
         "input": 0.60,
@@ -72,6 +77,24 @@ OPENAI_USD_PER_M: dict[str, dict[str, float]] = {
     },
 }
 
+OPENAI_AUDIO_USD_PER_M: dict[str, dict[str, float]] = {
+    "gpt-realtime-2.1-mini": {
+        "input": 10.00,
+        "cached_input": 0.30,
+        "output": 20.00,
+    },
+    "gpt-realtime-2.1": {
+        "input": 32.00,
+        "cached_input": 0.40,
+        "output": 64.00,
+    },
+    "gpt-realtime-2": {
+        "input": 32.00,
+        "cached_input": 0.40,
+        "output": 64.00,
+    },
+}
+
 CacheEvent = Literal["cache_hit", "cache_write", "partial_hit", "cache_miss"]
 
 
@@ -99,6 +122,16 @@ def openai_rates_for_model(model: str | None) -> dict[str, float]:
         if m.startswith(key):
             return OPENAI_USD_PER_M[key]
     return OPENAI_USD_PER_M["gpt-5.6-luna"]
+
+
+def openai_audio_rates_for_model(model: str | None) -> dict[str, float]:
+    m = (model or "gpt-realtime-2.1-mini").lower().strip()
+    if m in OPENAI_AUDIO_USD_PER_M:
+        return OPENAI_AUDIO_USD_PER_M[m]
+    for key in sorted(OPENAI_AUDIO_USD_PER_M, key=len, reverse=True):
+        if m.startswith(key):
+            return OPENAI_AUDIO_USD_PER_M[key]
+    return OPENAI_AUDIO_USD_PER_M["gpt-realtime-2.1-mini"]
 
 
 def cartesia_stt_credits_per_sec(*, model: str = "", realtime: bool = True) -> float:
@@ -162,6 +195,9 @@ def build_pricing_metadata(fx_rate_inr: float) -> dict[str, Any]:
             "usd_cached_input_per_m": OPENAI_USD_PER_M["gpt-realtime-2.1-mini"]["cached_input"],
             "usd_cache_write_per_m": OPENAI_USD_PER_M["gpt-realtime-2.1-mini"]["cache_write"],
             "usd_output_per_m": OPENAI_USD_PER_M["gpt-realtime-2.1-mini"]["output"],
+            "usd_audio_input_per_m": OPENAI_AUDIO_USD_PER_M["gpt-realtime-2.1-mini"]["input"],
+            "usd_audio_cached_input_per_m": OPENAI_AUDIO_USD_PER_M["gpt-realtime-2.1-mini"]["cached_input"],
+            "usd_audio_output_per_m": OPENAI_AUDIO_USD_PER_M["gpt-realtime-2.1-mini"]["output"],
             "billing": "tokens_with_cache",
             "updated_at": PRICING_UPDATED_AT,
         },
@@ -171,6 +207,9 @@ def build_pricing_metadata(fx_rate_inr: float) -> dict[str, Any]:
             "usd_cached_input_per_m": OPENAI_USD_PER_M["gpt-realtime-2.1"]["cached_input"],
             "usd_cache_write_per_m": OPENAI_USD_PER_M["gpt-realtime-2.1"]["cache_write"],
             "usd_output_per_m": OPENAI_USD_PER_M["gpt-realtime-2.1"]["output"],
+            "usd_audio_input_per_m": OPENAI_AUDIO_USD_PER_M["gpt-realtime-2.1"]["input"],
+            "usd_audio_cached_input_per_m": OPENAI_AUDIO_USD_PER_M["gpt-realtime-2.1"]["cached_input"],
+            "usd_audio_output_per_m": OPENAI_AUDIO_USD_PER_M["gpt-realtime-2.1"]["output"],
             "billing": "tokens_with_cache",
             "updated_at": PRICING_UPDATED_AT,
         },
@@ -180,6 +219,9 @@ def build_pricing_metadata(fx_rate_inr: float) -> dict[str, Any]:
             "usd_cached_input_per_m": OPENAI_USD_PER_M["gpt-realtime-2"]["cached_input"],
             "usd_cache_write_per_m": OPENAI_USD_PER_M["gpt-realtime-2"]["cache_write"],
             "usd_output_per_m": OPENAI_USD_PER_M["gpt-realtime-2"]["output"],
+            "usd_audio_input_per_m": OPENAI_AUDIO_USD_PER_M["gpt-realtime-2"]["input"],
+            "usd_audio_cached_input_per_m": OPENAI_AUDIO_USD_PER_M["gpt-realtime-2"]["cached_input"],
+            "usd_audio_output_per_m": OPENAI_AUDIO_USD_PER_M["gpt-realtime-2"]["output"],
             "billing": "tokens_with_cache",
             "updated_at": PRICING_UPDATED_AT,
         },
@@ -235,6 +277,18 @@ def build_pricing_metadata(fx_rate_inr: float) -> dict[str, Any]:
             "credits_per_sec": cartesia_stt_credits_per_sec(model="ink-2"),
             "usd_per_hour": cartesia_stt_usd_per_hour_ink2,
             "billing": "audio_seconds",
+            "updated_at": PRICING_UPDATED_AT,
+        },
+        "telnyx:outbound": {
+            "unit": "minute",
+            "usd_per_unit": TELNYX_OUTBOUND_USD_PER_MIN,
+            "billing": "call_minutes",
+            "updated_at": PRICING_UPDATED_AT,
+        },
+        "telnyx:inbound": {
+            "unit": "minute",
+            "usd_per_unit": TELNYX_INBOUND_USD_PER_MIN,
+            "billing": "call_minutes",
             "updated_at": PRICING_UPDATED_AT,
         },
     }
@@ -307,9 +361,15 @@ def cost_llm_usd(
     cached_tokens: int = 0,
     cache_write_tokens: int = 0,
     llm_model: str | None = None,
+    input_audio_tokens: int = 0,
+    output_audio_tokens: int = 0,
 ) -> dict[str, float]:
+    audio_in_tok = max(0, int(input_audio_tokens or 0))
+    audio_out_tok = max(0, int(output_audio_tokens or 0))
+    text_in = max(0, int(input_tokens or 0) - audio_in_tok)
+    text_out = max(0, int(output_tokens or 0) - audio_out_tok)
     parts = split_llm_tokens(
-        input_tokens=input_tokens,
+        input_tokens=text_in,
         cached_tokens=cached_tokens,
         cache_write_tokens=cache_write_tokens,
     )
@@ -317,14 +377,29 @@ def cost_llm_usd(
     uncached = parts["uncached"] * rates["input"] / 1_000_000.0
     cached = parts["cached"] * rates["cached_input"] / 1_000_000.0
     written = parts["written"] * rates["cache_write"] / 1_000_000.0
-    output = max(0, int(output_tokens or 0)) * rates["output"] / 1_000_000.0
+    output = text_out * rates["output"] / 1_000_000.0
+    audio_rates = openai_audio_rates_for_model(llm_model)
+    audio_in = audio_in_tok * audio_rates["input"] / 1_000_000.0
+    audio_out = audio_out_tok * audio_rates["output"] / 1_000_000.0
     return {
         "uncached_usd": uncached,
         "cached_usd": cached,
         "cache_write_usd": written,
         "output_usd": output,
-        "total_usd": uncached + cached + written + output,
+        "audio_input_usd": audio_in,
+        "audio_output_usd": audio_out,
+        "total_usd": uncached + cached + written + output + audio_in + audio_out,
     }
+
+
+def cost_telnyx_call_usd(*, duration_sec: float | int | None, direction: str | None = "outbound") -> float:
+    """Telnyx Call Control per-minute cost for the connected call."""
+    minutes = max(0.0, float(duration_sec or 0)) / 60.0
+    if minutes <= 0:
+        return 0.0
+    inbound = str(direction or "outbound").strip().lower() == "inbound"
+    rate = TELNYX_INBOUND_USD_PER_MIN if inbound else TELNYX_OUTBOUND_USD_PER_MIN
+    return minutes * rate
 
 
 def estimate_turn_cost(
@@ -341,6 +416,8 @@ def estimate_turn_cost(
     cached_tokens: int,
     cache_write_tokens: int,
     fx_rate_inr: float,
+    input_audio_tokens: int = 0,
+    output_audio_tokens: int = 0,
 ) -> dict[str, Any]:
     fx = float(fx_rate_inr or 95.64)
     stt = cost_stt_usd(
@@ -361,6 +438,8 @@ def estimate_turn_cost(
         cached_tokens=cached_tokens,
         cache_write_tokens=cache_write_tokens,
         llm_model=llm_model,
+        input_audio_tokens=input_audio_tokens,
+        output_audio_tokens=output_audio_tokens,
     )
     total = stt + tts + llm["total_usd"]
     return {

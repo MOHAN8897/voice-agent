@@ -54,6 +54,8 @@ export type TurnCompleteEvent = {
     tts_chars?: number;
     /** TTS: PCM audio bytes received */
     tts_audio_bytes?: number;
+    input_audio_tokens?: number;
+    output_audio_tokens?: number;
   };
   memoryUpdate?: { operations?: unknown[] };
 };

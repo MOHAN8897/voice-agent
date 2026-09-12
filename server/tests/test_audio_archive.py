@@ -59,3 +59,38 @@ async def test_pcm_stereo_mix_left_user_right_agent(archive):
     left, right = struct.unpack("<hh", frames)
     assert left == 1000
     assert right == 2000
+    user_wav = archive.file_for(call_id, "user")
+    agent_wav = archive.file_for(call_id, "agent")
+    assert user_wav is not None and user_wav.suffix == ".wav"
+    assert agent_wav is not None and agent_wav.suffix == ".wav"
+
+
+@pytest.mark.asyncio
+async def test_flush_twice_does_not_wipe_pcm(archive):
+    call_id = "audio-twice"
+    archive.init(call_id)
+    archive.set_agent_sample_rate(call_id, 16000)
+    user = struct.pack("<" + "h" * 8, *([1000] * 8))
+    agent = struct.pack("<" + "h" * 8, *([2000] * 8))
+    await archive.append_user_pcm(call_id, user)
+    await archive.append_agent_audio(call_id, agent)
+    first = await archive.flush(call_id)
+    second = await archive.flush(call_id)
+    assert first["user"] == "complete"
+    assert second["user"] == "complete"
+    assert archive.user_pcm_path(call_id).read_bytes() == user
+    with wave.open(str(archive.mix_path(call_id)), "rb") as wf:
+        assert wf.getnframes() == 8
+
+
+@pytest.mark.asyncio
+async def test_sixteen_khz_agent_pcm_mix_is_not_stretched(archive):
+    call_id = "audio-16k-agent"
+    archive.init(call_id)
+    archive.set_agent_sample_rate(call_id, 16000)
+    agent = struct.pack("<" + "h" * 1600, *([400] * 1600))
+    await archive.append_agent_audio(call_id, agent)
+    await archive.flush(call_id)
+    with wave.open(str(archive.mix_path(call_id)), "rb") as wf:
+        assert wf.getframerate() == 16000
+        assert wf.getnframes() == 1600

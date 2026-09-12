@@ -6,7 +6,7 @@ export type TestStudioUiPrefs = {
   studioTab?: "live" | "config" | "tune" | "debug";
   stackMode?: "tier" | "custom";
   tier?: string;
-  channel?: "agent" | "pstn" | "browser";
+  channel?: "agent" | "pstn" | "pstn_realtime" | "browser";
   language?: string;
   stack?: Record<string, unknown>;
   fineTuneTab?: string;

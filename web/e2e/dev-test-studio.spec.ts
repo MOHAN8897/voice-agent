@@ -150,4 +150,17 @@ test.describe("Dev Test Studio UI", () => {
     await expect(page.getByRole("heading", { name: /^PSTN · / })).toBeVisible({ timeout: 15000 });
     await expect(page.getByRole("heading", { name: "Outbound test call" })).toBeVisible({ timeout: 15000 });
   });
+
+  test("realtime PSTN mode sits beside full PSTN", async ({ page }) => {
+    await ensureDevLogin(page);
+    const agentId = await defaultAgentId(page.request);
+    await page.goto(`/dev/test-studio/${agentId}`, { waitUntil: "domcontentloaded", timeout: 120000 });
+    await expect(page.getByTestId("test-mode-pstn")).toBeVisible({ timeout: 30000 });
+    await expect(page.getByTestId("test-mode-pstn_realtime")).toBeVisible();
+    await page.getByTestId("test-mode-pstn_realtime").click();
+    await expect(page.getByRole("heading", { name: /Realtime PSTN/ })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole("heading", { name: "Outbound test call" })).toBeVisible({ timeout: 15000 });
+    await page.getByRole("button", { name: /Config/i }).first().click();
+    await expect(page.getByTestId("config-channel-pstn_realtime")).toBeVisible();
+  });
 });

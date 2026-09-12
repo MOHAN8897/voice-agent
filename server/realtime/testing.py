@@ -73,3 +73,65 @@ class FakeRealtimeAdapter:
 
     async def close(self) -> None:
         self.closed = True
+
+
+class FakeRealtimeVoiceAdapter:
+    def __init__(self, events: list[dict[str, Any]] | None = None) -> None:
+        self.events_script = events
+        self.appended: list[bytes] = []
+        self.cancelled = 0
+        self.connected = False
+        self.closed = False
+        self.model = ""
+        self.instructions = ""
+        self.voice = ""
+        self.turn_detection = ""
+        self.started_responses: list[str] = []
+        self.last_session: dict[str, Any] | None = None
+        self.max_output_tokens: int | None = None
+        self.cleared_input = 0
+
+    async def connect(self, *, model: str, instructions: str, voice: str | None = None, turn_detection: str | None = None, **_kwargs: Any) -> None:
+        self.connected = True
+        self.closed = False
+        self.model = model
+        self.instructions = instructions
+        self.voice = str(voice or "")
+        self.turn_detection = str(turn_detection or "")
+        tokens = _kwargs.get("max_output_tokens")
+        self.max_output_tokens = int(tokens) if tokens is not None else None
+
+    def is_open(self) -> bool:
+        return self.connected and not self.closed
+
+    async def wait_ready(self, timeout: float = 8.0) -> None:
+        return None
+
+    async def append_pcm16(self, pcm16: bytes) -> None:
+        self.appended.append(pcm16)
+
+    async def start_response(self, *, instructions: str | None = None) -> None:
+        self.started_responses.append(instructions or "")
+
+    async def cancel_response(self) -> None:
+        self.cancelled += 1
+
+    async def submit_function_output(self, *, call_id: str, output: str) -> None:
+        self.started_responses.append(f"fn:{call_id}:{output}")
+
+    async def clear_output_audio(self) -> None:
+        self.cancelled += 1
+
+    async def clear_input_audio(self) -> None:
+        self.cleared_input += 1
+
+    def discard_queued(self) -> None:
+        return None
+
+    async def events(self) -> AsyncIterator[dict[str, Any]]:
+        script = list(self.events_script) if self.events_script is not None else []
+        for event in script:
+            yield event
+
+    async def close(self) -> None:
+        self.closed = True

@@ -12,21 +12,24 @@ import { TestStudioLivePanel } from "@/components/test-studio/TestStudioLivePane
 import { TestStudioDiagnostics } from "@/components/test-studio/TestStudioDiagnostics";
 import { CompileLanguagePicker } from "@/components/test-studio/CompileLanguagePicker";
 import { TestStudioFineTuneWorkbench } from "@/components/test-studio/TestStudioFineTuneWorkbench";
-import { TestStudioTurnMetrics, emptySessionTotals, type TurnMetricRow } from "@/components/test-studio/TestStudioTurnMetrics";
+import { TestStudioTurnMetrics, emptySessionTotals, type StampedSessionUsage, type TurnMetricRow } from "@/components/test-studio/TestStudioTurnMetrics";
 import { TestStudioModePicker, type TestStudioMode } from "@/components/test-studio/TestStudioModePicker";
 import { TestStudioMemoryPanel } from "@/components/test-studio/TestStudioMemoryPanel";
 import { useStackCatalog } from "@/components/test-studio/useStackCatalog";
 import { useTestStudioPrefs, patchPrefsCache } from "@/components/test-studio/useTestStudioPrefs";
 import {
+  buildPstnRealtimeStackOverride,
   buildPstnStackOverride,
   buildStackOverride,
   defaultStackForm,
+  effectivePstnLiveLlm,
   stackFormEqual,
   testStudioSessionId,
   type StackForm,
   type StackMode,
 } from "@/lib/test-studio-stack";
 import { applyPstnStackDefaults } from "@/lib/pstn-stack";
+import { isRealtimePstnMode } from "@/lib/realtime-voice";
 import { classifyCacheEvent, type PricingMeta } from "@/lib/usage-cost";
 import { billingCharCount } from "@/lib/billing-chars";
 import { DEFAULT_CARTESIA_VOICE_ID, ensureTtsVoice, voiceMatchesTtsProvider } from "@/lib/voice/tts-config";
@@ -91,6 +94,8 @@ export function AgentTestStudio({
   const [runtimeRevision, setRuntimeRevision] = useState(0);
   const [sessionStartedAt, setSessionStartedAt] = useState<number | null>(null);
   const [sessionEndedAt, setSessionEndedAt] = useState<number | null>(null);
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  const [stampedUsage, setStampedUsage] = useState<StampedSessionUsage | null>(null);
   const prefsHydratedRef = useRef(false);
   const prefsHadLanguageRef = useRef(false);
   const prefsHadTierRef = useRef(false);
@@ -148,7 +153,7 @@ export function AgentTestStudio({
     }
     if (loaded.channel && !channelTouchedRef.current) {
       const ch = loaded.channel === "browser" ? "agent" : loaded.channel;
-      if (ch === "agent" || ch === "pstn") setChannel(ch);
+      if (ch === "agent" || ch === "pstn" || ch === "pstn_realtime") setChannel(ch);
     }
     // Prefs may be stale vs the agent record — never treat prefs language as final.
     // Agent hydrate (below) is source of truth unless the user already clicked.
@@ -171,7 +176,7 @@ export function AgentTestStudio({
 
   useTestStudioPrefs(sessionId, uiPrefs, onPrefsLoaded);
 
-  async function saveConfig() {
+  const saveConfig = useCallback(async () => {
     setConfigSaving(true);
     setConfigStatus("");
     try {
@@ -179,8 +184,22 @@ export function AgentTestStudio({
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId, ...uiPrefs, saveConfig: true,
-          stackOverride: { ...buildStackOverride(stack), pipeline: "realtime_text" } }),
+        body: JSON.stringify({
+          sessionId,
+          ...uiPrefs,
+          saveConfig: true,
+          stackOverride: isRealtimePstnMode(channel)
+            ? buildPstnRealtimeStackOverride(stack)
+            : channel === "pstn"
+              ? buildPstnStackOverride(
+                  applyPstnStackDefaults(
+                    { ...stack, ttsVoiceId: stack.ttsVoiceId || runtimeTtsSpeaker },
+                    language
+                  ),
+                  stackMode
+                )
+              : buildStackOverride(stack),
+        }),
       });
       if (!response.ok) throw new Error(`Save failed (${response.status})`);
       const saved = await response.json();
@@ -194,7 +213,10 @@ export function AgentTestStudio({
     } finally {
       setConfigSaving(false);
     }
-  }
+  }, [sessionId, uiPrefs, channel, stack, runtimeTtsSpeaker, language, stackMode]);
+
+  const saveConfigRef = useRef(saveConfig);
+  saveConfigRef.current = saveConfig;
 
   useEffect(() => {
     if (scopedAgentRef.current === agentId) return;
@@ -223,7 +245,16 @@ export function AgentTestStudio({
           setStack((prev) => ({ ...prev, ttsVoiceId: speaker }));
         }
         const openaiModel = String(values.openaiModel || "");
-        if (openaiModel) setRuntimeOpenAiModel(openaiModel);
+        if (openaiModel) {
+          setRuntimeOpenAiModel(openaiModel);
+          if (openaiModel.startsWith("gpt-realtime")) {
+            setStack((prev) =>
+              String(prev.llmModel || "").startsWith("gpt-realtime")
+                ? prev
+                : { ...prev, llmModel: openaiModel }
+            );
+          }
+        }
         setVoiceRuntime({
           sttSilenceMs: values.sttSilenceMs != null ? Number(values.sttSilenceMs) : undefined,
           sttThreshold: values.sttThreshold != null ? Number(values.sttThreshold) : undefined,
@@ -238,11 +269,16 @@ export function AgentTestStudio({
 
   useEffect(() => {
     const refresh = (event: Event) => {
-      if ((event as CustomEvent).detail?.sessionId === sessionId) setRuntimeRevision((value) => value + 1);
+      const detail = (event as CustomEvent).detail;
+      if (detail?.sessionId !== sessionId) return;
+      setRuntimeRevision((value) => value + 1);
+      if (!detail?.patch && isRealtimePstnMode(channel)) {
+        void saveConfigRef.current();
+      }
     };
     window.addEventListener("test-studio-runtime-saved", refresh);
     return () => window.removeEventListener("test-studio-runtime-saved", refresh);
-  }, [sessionId]);
+  }, [sessionId, channel]);
 
   useEffect(() => {
     return onTestStudioVoiceSaved((speaker) => {
@@ -336,6 +372,43 @@ export function AgentTestStudio({
     return () => clearInterval(t);
   }, [callId, callEnded, refreshMemory]);
 
+  useEffect(() => {
+    if (!sessionStartedAt || sessionEndedAt) return;
+    setNowTick(Date.now());
+    const t = setInterval(() => setNowTick(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [sessionStartedAt, sessionEndedAt]);
+
+  useEffect(() => {
+    if (!callId || !callEnded || channel === "agent") return;
+    let cancelled = false;
+    const pull = async () => {
+      try {
+        const response = await fetch(`/api/call/${encodeURIComponent(callId)}`, { credentials: "include" });
+        if (!response.ok || cancelled) return;
+        const body = await response.json();
+        const usage = (body.usage || {}) as Record<string, unknown>;
+        setStampedUsage({
+          durationSec: Number(body.duration_sec ?? usage.duration_sec ?? 0) || undefined,
+          modelCostUsd: usage.model_cost_usd != null ? Number(usage.model_cost_usd) : undefined,
+          modelCostInr: Number(body.model_cost_inr ?? usage.model_cost_inr ?? 0) || undefined,
+          telnyxUsd: usage.telnyx_usd != null ? Number(usage.telnyx_usd) : undefined,
+          telnyxInr: Number(body.telnyx_inr ?? usage.telnyx_inr ?? 0) || undefined,
+          totalUsd: Number(body.cost_usd ?? usage.cost_usd ?? 0) || undefined,
+          totalInr: Number(body.cost_inr ?? usage.cost_inr ?? 0) || undefined,
+        });
+      } catch {
+        /* hangup stamp is best-effort */
+      }
+    };
+    void pull();
+    const t = setInterval(pull, 2000);
+    return () => {
+      cancelled = true;
+      clearInterval(t);
+    };
+  }, [callId, callEnded, channel]);
+
   const pricingMeta = useMemo<PricingMeta | null>(() => {
     if (!catalog) return null;
     const top = catalog as {
@@ -355,8 +428,8 @@ export function AgentTestStudio({
 
   const sessionDurationMs = useMemo(() => {
     if (!sessionStartedAt) return 0;
-    return (sessionEndedAt ?? Date.now()) - sessionStartedAt;
-  }, [sessionStartedAt, sessionEndedAt, turnRows, sessionStatus]);
+    return (sessionEndedAt ?? nowTick) - sessionStartedAt;
+  }, [sessionStartedAt, sessionEndedAt, nowTick]);
 
   const sessionTotals = useMemo(
     () =>
@@ -370,6 +443,8 @@ export function AgentTestStudio({
           llmCacheWrite: acc.llmCacheWrite + (r.cacheWriteTokens ?? 0),
           ttsChars: acc.ttsChars + (r.ttsChars ?? 0),
           ttsAudioBytes: acc.ttsAudioBytes + (r.ttsAudioBytes ?? 0),
+          llmAudioInput: acc.llmAudioInput + (r.inputAudioTokens ?? 0),
+          llmAudioOutput: acc.llmAudioOutput + (r.outputAudioTokens ?? 0),
           turns: acc.turns + 1,
         }),
         emptySessionTotals()
@@ -396,6 +471,8 @@ export function AgentTestStudio({
         outputTokens: Number(ev.usage?.output_tokens || 0),
         cachedTokens: cached,
         cacheWriteTokens: Number(ev.usage?.cache_write_tokens || 0),
+        inputAudioTokens: Number(ev.usage?.input_audio_tokens || 0),
+        outputAudioTokens: Number(ev.usage?.output_audio_tokens || 0),
         sttChars: Number(ev.usage?.stt_chars ?? billingCharCount(ev.userText)),
         sttAudioSec: Number(ev.usage?.stt_audio_sec ?? 0),
         ttsChars: Number(ev.usage?.tts_chars ?? billingCharCount(ev.assistantText)),
@@ -413,6 +490,7 @@ export function AgentTestStudio({
     setLocked(true);
     setEvents([]);
     setTurnRows([]);
+    setStampedUsage(null);
     setSessionStartedAt(Date.now());
     setSessionEndedAt(null);
     refreshMemory(id);
@@ -425,6 +503,76 @@ export function AgentTestStudio({
     setSessionEndedAt(Date.now());
     refreshMemory(id);
   }, [refreshMemory]);
+
+  const onReviewCall = useCallback((id: string) => {
+    setCallId(id);
+    setCallEnded(true);
+    setLocked(false);
+    setSessionStatus("ended");
+    refreshMemory(id);
+  }, [refreshMemory]);
+
+  useEffect(() => {
+    if (!isRealtimePstnMode(channel)) return;
+    setStack((prev) => {
+      if (String(prev.llmModel || "").startsWith("gpt-realtime")) return prev;
+      const fallback = String(runtimeOpenAiModel || "").startsWith("gpt-realtime")
+        ? runtimeOpenAiModel
+        : "gpt-realtime-2.1-mini";
+      return { ...prev, llmModel: fallback };
+    });
+  }, [channel, runtimeOpenAiModel]);
+
+  useEffect(() => {
+    if (!isRealtimePstnMode(channel) || !callId) return;
+    let cancelled = false;
+    const pull = async () => {
+      try {
+        const response = await fetch(`/api/call/${encodeURIComponent(callId)}/trace`, {
+          credentials: "include",
+        });
+        if (!response.ok || cancelled) return;
+        const body = await response.json();
+        const turns = Array.isArray(body.turns) ? body.turns : [];
+        setTurnRows(
+          turns.map((turn: Record<string, unknown>, index: number) => ({
+            turn: Number(turn.turn ?? index + 1),
+            userText: String(turn.user_text || ""),
+            assistantText: String(turn.assistant_text || ""),
+            at: Date.now(),
+            inputTokens: Number(turn.input_tokens || 0),
+            outputTokens: Number(turn.output_tokens || 0),
+            cachedTokens: Number(turn.cached_tokens || 0),
+            cacheWriteTokens: Number(turn.cache_write_tokens || 0),
+            inputAudioTokens: Number(turn.input_audio_tokens || 0),
+            outputAudioTokens: Number(turn.output_audio_tokens || 0),
+            sttChars: 0,
+            sttAudioSec: 0,
+            ttsChars: 0,
+            ttsAudioBytes: 0,
+          }))
+        );
+      } catch {
+        /* live meter is best-effort */
+      }
+    };
+    void pull();
+    const timer = setInterval(pull, 1500);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [channel, callId]);
+
+  const onRealtimeStackChange = useCallback(
+    (next: StackForm) => {
+      setStack(next);
+      if (isRealtimePstnMode(channel) && String(next.llmModel || "").startsWith("gpt-realtime")) {
+        setRuntimeOpenAiModel(next.llmModel);
+      }
+    },
+    [channel]
+  );
 
   const showPstn = portal === "dev";
   const stackLocked =
@@ -446,13 +594,29 @@ export function AgentTestStudio({
   }, [stackMode, stack, runtimeTtsSpeaker]);
 
   const pstnStackOverride = useMemo(() => {
+    if (isRealtimePstnMode(channel)) {
+      return buildPstnRealtimeStackOverride({
+        ...stack,
+        llmModel: String(stack.llmModel || "").startsWith("gpt-realtime")
+          ? stack.llmModel
+          : runtimeOpenAiModel || stack.llmModel,
+      });
+    }
     const voiceId = stack.ttsVoiceId || runtimeTtsSpeaker;
     const form = applyPstnStackDefaults(
       voiceId ? { ...stack, ttsVoiceId: voiceId } : stack,
       language
     );
     return buildPstnStackOverride(form, stackMode);
-  }, [stackMode, stack, runtimeTtsSpeaker, language]);
+  }, [stackMode, stack, runtimeTtsSpeaker, language, channel, runtimeOpenAiModel]);
+
+  const liveLlmSlug = useMemo(
+    () =>
+      isRealtimePstnMode(channel)
+        ? effectivePstnLiveLlm(runtimeOpenAiModel, stack.llmModel).model
+        : stack.llmModel,
+    [channel, runtimeOpenAiModel, stack.llmModel]
+  );
 
   return (
     <TestStudioSessionProvider agentId={agentId} sessionId={sessionId}>
@@ -529,8 +693,12 @@ export function AgentTestStudio({
                 />
               ) : (
                 <SkeuoPanel
-                  title="PSTN · Telephony"
-                  description="Telnyx L16 @ 16 kHz — same path as validation tests 1–10"
+                  title={isRealtimePstnMode(channel) ? "Realtime PSTN · Telnyx + OpenAI audio" : "PSTN · Telephony"}
+                  description={
+                    isRealtimePstnMode(channel)
+                      ? "Telnyx L16 @ 16 kHz → OpenAI Realtime PCM16 @ 24 kHz in/out · same compiled brain"
+                      : "Telnyx L16 @ 16 kHz — same path as validation tests 1–10"
+                  }
                   padding="md"
                 >
                   <PstnTestPanel
@@ -545,6 +713,7 @@ export function AgentTestStudio({
                     stackOverride={pstnStackOverride}
                     onInternalCallStart={onCallStart}
                     onInternalCallEnd={onCallEnd}
+                    onReviewCall={onReviewCall}
                   />
                 </SkeuoPanel>
               )}
@@ -558,12 +727,22 @@ export function AgentTestStudio({
                 ttsModel={stack.ttsModel}
                 sttProvider={stack.sttProvider}
                 sttModel={stack.sttModel}
-                llmModel={stack.llmModel}
+                llmModel={liveLlmSlug}
                 pricing={pricingMeta}
                 sessionDurationMs={sessionDurationMs}
+                stampedUsage={stampedUsage}
               />
             </div>
           </div>
+          {channel !== "agent" && callId && callEnded && (
+            <SkeuoPanel
+              title="Call recording & history"
+              description="Play mix / caller / agent, then transcript, metadata, and session cost"
+              padding="md"
+            >
+              <CallDetailView callId={callId} />
+            </SkeuoPanel>
+          )}
         </div>
 
       {studioTab === "config" && (
@@ -587,7 +766,7 @@ export function AgentTestStudio({
             tier={tier}
             onTierChange={setTier}
             stack={stack}
-            onStackChange={setStack}
+            onStackChange={onRealtimeStackChange}
             providers={providers}
             sttModes={sttModes}
             sttStreamTypes={sttStreamTypes}
@@ -608,9 +787,10 @@ export function AgentTestStudio({
             ttsModel={stack.ttsModel}
             sttProvider={stack.sttProvider}
             sttModel={stack.sttModel}
-            llmModel={stack.llmModel}
+            llmModel={liveLlmSlug}
             pricing={pricingMeta}
             sessionDurationMs={sessionDurationMs}
+            stampedUsage={stampedUsage}
           />
         </div>
       )}
@@ -628,6 +808,23 @@ export function AgentTestStudio({
           onRuntimeSpeakerChange={setRuntimeTtsSpeaker}
           sarvamSpeakersV3={sarvamSpeakersV3}
           sarvamSpeakersV2={sarvamSpeakersV2}
+          channel={channel}
+          liveLlmModel={stack.llmModel}
+          onLiveLlmChange={(llmModel) => {
+            setRuntimeOpenAiModel(llmModel);
+            setStack((prev) => ({ ...prev, llmModel }));
+          }}
+          realtimeVoice={stack.realtimeVoice}
+          realtimeTurnDetection={stack.realtimeTurnDetection}
+          realtimeVadEagerness={stack.realtimeVadEagerness}
+          realtimeNoiseReduction={stack.realtimeNoiseReduction}
+          realtimeSpeed={stack.realtimeSpeed}
+          realtimeSilenceMs={stack.realtimeSilenceMs}
+          onRealtimeVoiceChange={(realtimeVoice) => setStack((prev) => ({ ...prev, realtimeVoice }))}
+          onRealtimeTurnDetectionChange={(realtimeTurnDetection) =>
+            setStack((prev) => ({ ...prev, realtimeTurnDetection }))
+          }
+          onRealtimeSettingsChange={(patch) => setStack((prev) => ({ ...prev, ...patch }))}
         />
       </div>
 

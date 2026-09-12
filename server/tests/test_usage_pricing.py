@@ -1,4 +1,5 @@
 from server.services.usage_pricing import (
+    build_pricing_metadata,
     classify_cache_event,
     cost_llm_usd,
     cost_stt_usd,
@@ -7,6 +8,8 @@ from server.services.usage_pricing import (
     resolve_tts_provider,
     split_llm_tokens,
 )
+
+import pytest
 
 
 def test_sarvam_stt_is_thirty_rupees_per_hour():
@@ -90,3 +93,41 @@ def test_turn_cost_includes_inr_and_usd():
     assert abs(row["total_inr"] - row["total_usd"] * 95.64) < 1e-9
     assert row["cache_event"] == "cache_hit"
     assert row["resolved_tts_provider"] == "sarvam"
+
+
+def test_pricing_metadata_includes_audio_rates_for_all_realtime_models():
+    meta = build_pricing_metadata(95.64)
+    for slug in ("gpt-realtime-2.1-mini", "gpt-realtime-2.1", "gpt-realtime-2"):
+        block = meta[f"openai:{slug}"]
+        assert block["usd_audio_input_per_m"] > 0
+        assert block["usd_audio_output_per_m"] > 0
+    mini = estimate_turn_cost(
+        stt_audio_sec=0,
+        tts_chars=0,
+        tts_provider="openai",
+        llm_model="gpt-realtime-2.1-mini",
+        input_tokens=600,
+        output_tokens=1200,
+        cached_tokens=0,
+        cache_write_tokens=0,
+        fx_rate_inr=95.64,
+        input_audio_tokens=600,
+        output_audio_tokens=1200,
+    )
+    assert mini["stt_usd"] == 0
+    assert mini["tts_usd"] == 0
+    assert mini["total_usd"] == pytest.approx(0.03, rel=1e-6)
+
+
+def test_telnyx_per_minute_and_pricing_metadata():
+    from server.services.usage_pricing import TELNYX_OUTBOUND_USD_PER_MIN, cost_telnyx_call_usd
+
+    assert cost_telnyx_call_usd(duration_sec=0, direction="outbound") == 0
+    assert cost_telnyx_call_usd(duration_sec=60, direction="outbound") == pytest.approx(
+        TELNYX_OUTBOUND_USD_PER_MIN
+    )
+    inbound = cost_telnyx_call_usd(duration_sec=120, direction="inbound")
+    outbound = cost_telnyx_call_usd(duration_sec=120, direction="outbound")
+    assert inbound < outbound
+    meta = build_pricing_metadata(95.64)
+    assert meta["telnyx:outbound"]["usd_per_unit"] == TELNYX_OUTBOUND_USD_PER_MIN

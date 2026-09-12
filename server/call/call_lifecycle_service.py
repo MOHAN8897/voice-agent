@@ -90,6 +90,17 @@ class CallLifecycleService:
 
         saved = saved_call_config(lookup_session)
         stack_override = merge_stack(saved.get("stack_override"), stack_override)
+        if channel != "pstn" and isinstance(stack_override, dict):
+            pipeline_slug = str(stack_override.get("pipeline") or "").strip().lower()
+            flow_slug = str(stack_override.get("voice_flow") or "").strip().lower()
+            if pipeline_slug in ("realtime_voice", "realtime_e2e") or flow_slug in (
+                "realtime_e2e",
+                "realtime_voice",
+            ):
+                stack_override = dict(stack_override)
+                stack_override["pipeline"] = "realtime_text"
+                stack_override.pop("voice_flow", None)
+                stack_override.pop("realtime_voice", None)
         tier = tier or saved.get("tier")
 
         agent = await self._resolve_agent(agent_id)
@@ -146,6 +157,7 @@ class CallLifecycleService:
             "started_at": started.isoformat(),
             "environment": env,
             "resolved_stack": stack.to_safe_dict(),
+            "pipeline": pipeline,
         }
         await call_ledger.init(call_id, meta)
         audio_archive.init(call_id)
@@ -206,7 +218,26 @@ class CallLifecycleService:
         )
         call_context.put(ctx)
         realtime_status: dict[str, Any] = {"status": "n/a"}
-        if pipeline == "realtime_text":
+        if pipeline == "realtime_voice":
+            realtime_status = {"status": "voice_loop"}
+            try:
+                from server.realtime.voice_manager import realtime_voice_manager
+
+                adopted = (
+                    realtime_voice_manager.adopt_session(realtime_prewarm_key, call_id)
+                    if realtime_prewarm_key
+                    else None
+                )
+                if adopted is not None:
+                    log_pstn(
+                        "prewarm.realtime_voice.adopted",
+                        call_id=call_id,
+                        from_key=realtime_prewarm_key,
+                    )
+                    realtime_status = {"status": "ready"}
+            except Exception as e:
+                logger.warning("[CALL] realtime voice adopt failed %s: %s", call_id, str(e)[:200])
+        elif pipeline == "realtime_text":
             try:
                 from server.realtime.manager import realtime_text_manager
 
@@ -303,14 +334,16 @@ class CallLifecycleService:
 
         await drain(call_id)
         await realtime_text_manager.destroy(call_id)
+        try:
+            from server.realtime.voice_manager import realtime_voice_manager
+
+            await realtime_voice_manager.destroy(call_id)
+        except Exception:
+            pass
 
         await call_ledger.seal(call_id)
         if ctx:
             ctx.components["ledger"] = "complete"
-            meta = call_ledger.read_meta(call_id)
-            meta["ended_at"] = _utcnow().isoformat()
-            meta["end_reason"] = reason
-            call_ledger.write_meta(call_id, meta)
 
         ended = _utcnow()
         started = ctx.started_at if ctx else None
@@ -321,6 +354,11 @@ class CallLifecycleService:
             raw = stored["started_at"]
             st = datetime.fromisoformat(raw.replace("Z", "+00:00")) if isinstance(raw, str) else raw
             duration = max(0, int((ended - st).total_seconds()))
+
+        try:
+            call_ledger.stamp_ended_usage(call_id, reason=reason, duration_sec=duration)
+        except Exception:
+            pass
 
         await call_store.update(
             call_id,
@@ -375,6 +413,16 @@ class CallLifecycleService:
         if ctx:
             body["resolved_stack"] = ctx.resolved_stack.to_safe_dict()
             body["status"] = ctx.status
+            body["pipeline"] = ctx.pipeline
+        review = call_ledger.review_fields(call_id)
+        if review.get("resolved_stack") and body.get("resolved_stack"):
+            review = {k: v for k, v in review.items() if k != "resolved_stack"}
+        body.update(review)
+        body["audio"] = {
+            "mix": audio_archive.file_for(call_id, "mix") is not None,
+            "user": audio_archive.file_for(call_id, "user") is not None,
+            "agent": audio_archive.file_for(call_id, "agent") is not None,
+        }
         return body
 
     async def finalization(self, call_id: str) -> dict[str, Any]:
@@ -402,10 +450,16 @@ class CallLifecycleService:
 
         ended = bool(stored and stored.get("ended_at"))
         ledger = "complete" if ended else "pending"
-        audio = "complete" if ended else "pending"
         call_id = (stored or {}).get("call_id")
-        outcome_file = read_outcome(call_id) if call_id else None
+        mix_ok = bool(call_id and audio_archive.file_for(str(call_id), "mix"))
         row_status = (stored or {}).get("finalization_status")
+        if mix_ok:
+            audio = "complete"
+        elif ended:
+            audio = "processing" if row_status == "processing" else "empty"
+        else:
+            audio = "pending"
+        outcome_file = read_outcome(call_id) if call_id else None
         if outcome_file is not None:
             if outcome_file.get("generation_ok") is False:
                 outcome = "failed"

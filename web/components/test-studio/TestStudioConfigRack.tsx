@@ -19,16 +19,23 @@ import {
 } from "@/lib/pstn-stack";
 import { cn } from "@/lib/cn";
 import { defaultTtsVoice, ensureTtsVoice, ttsProviderFromStack } from "@/lib/voice/tts-config";
+import type { TestStudioMode } from "@/components/test-studio/TestStudioModePicker";
+import {
+  DEFAULT_REALTIME_NOISE_REDUCTION,
+  DEFAULT_REALTIME_TURN_DETECTION,
+  DEFAULT_REALTIME_VAD_EAGERNESS,
+  DEFAULT_REALTIME_VOICE,
+  REALTIME_NOISE_REDUCTION,
+  REALTIME_TURN_DETECTION,
+  REALTIME_VAD_EAGERNESS,
+  REALTIME_VOICES,
+  isRealtimePstnMode,
+  normalizeRealtimeSpeed,
+  normalizeRealtimeSilenceMs,
+} from "@/lib/realtime-voice";
 
-type ChannelTab = "agent" | "pstn";
+type ChannelTab = TestStudioMode;
 type RackTab = "channel" | "stack" | "voice" | "advanced";
-
-const RACK_TABS: { id: RackTab; label: string }[] = [
-  { id: "channel", label: "Channel" },
-  { id: "stack", label: "Stack" },
-  { id: "voice", label: "Voice" },
-  { id: "advanced", label: "STT" },
-];
 
 function StageSelect({
   label,
@@ -147,6 +154,13 @@ export function TestStudioConfigRack({
     channel === "pstn"
       ? sttModelsForPstn(providers, stack.sttProvider, language)
       : undefined;
+  const realtime = isRealtimePstnMode(channel);
+  const rackTabs: { id: RackTab; label: string }[] = [
+    { id: "channel", label: "Channel" },
+    { id: "stack", label: "Stack" },
+    { id: "voice", label: "Voice" },
+    { id: "advanced", label: realtime ? "VAD" : "STT" },
+  ];
 
   function patchStack(patch: Partial<StackForm>) {
     const next = { ...stack, ...patch };
@@ -159,7 +173,7 @@ export function TestStudioConfigRack({
     <SkeuoPanel title="Configuration" description="Channel · stack · voice · STT" padding="md">
       <div className="sticky top-0 z-20 -mx-1 mb-4 border-b border-surface-border-subtle bg-surface-panel/95 px-1 pb-3 backdrop-blur">
         <div className="flex flex-wrap gap-1 rounded-skeuo-sm border border-surface-border-subtle skeuo-inset p-1">
-          {RACK_TABS.map((t) => (
+          {rackTabs.map((t) => (
             <button
               key={t.id}
               type="button"
@@ -180,7 +194,7 @@ export function TestStudioConfigRack({
         {rackTab === "channel" && (
           <>
             <div className="flex flex-wrap gap-2">
-              {(["agent", ...(showPstn ? ["pstn"] : [])] as ChannelTab[]).map((c) => (
+              {(["agent", ...(showPstn ? ["pstn", "pstn_realtime"] : [])] as ChannelTab[]).map((c) => (
                 <button
                   key={c}
                   type="button"
@@ -193,19 +207,29 @@ export function TestStudioConfigRack({
                     locked && "opacity-50"
                   )}
                 >
-                  {c === "agent" ? "Agent only · mic" : "Full PSTN · phone"}
+                  {c === "agent"
+                    ? "Agent only · mic"
+                    : c === "pstn_realtime"
+                      ? "Realtime PSTN · audio"
+                      : "Full PSTN · phone"}
                 </button>
               ))}
             </div>
             <p className="text-xs text-text-muted">
-              Agent only tests STT, brain, TTS, and memory without telephony. Full PSTN adds handshake and
-              outbound dial (L16 @ 16 kHz on Telnyx).
+              Agent only tests STT, brain, TTS, and memory without telephony. Full PSTN keeps the current duplex
+              stack. Realtime PSTN uses Telnyx plus OpenAI Realtime mini audio-to-audio with the same compiled brain.
             </p>
             {channel === "pstn" && (
               <p className="rounded-skeuo-sm border border-accent/25 bg-accent/5 px-3 py-2 text-[11px] text-text-muted">
                 PSTN requires realtime STT (<span className="font-mono">saaras:v3-realtime</span> or Cartesia{" "}
                 <span className="font-mono">ink-whisper</span>). TTS voice must match provider (Sarvam name vs
                 Cartesia UUID).
+              </p>
+            )}
+            {realtime && (
+              <p className="rounded-skeuo-sm border border-accent/25 bg-accent/5 px-3 py-2 text-[11px] text-text-muted">
+                Realtime PSTN skips Sarvam STT/TTS. Configure OpenAI voice and VAD on the Voice / VAD tabs. The
+                compiled agent brain is unchanged.
               </p>
             )}
           </>
@@ -237,6 +261,7 @@ export function TestStudioConfigRack({
             )}
 
             {stackMode === "tier" || !showCustomStack ? (
+              <div className="space-y-3">
               <label className="block text-sm">
                 <span className="text-text-muted">Tier</span>
                 <select
@@ -259,11 +284,57 @@ export function TestStudioConfigRack({
                     override STT/TTS for PSTN dial.
                   </p>
                 )}
+                {realtime && (
+                  <p className="mt-2 text-[11px] text-text-subtle">
+                    Realtime PSTN ignores STT/TTS providers. Live model is OpenAI Realtime mini unless you pick
+                    another Realtime slug below.
+                  </p>
+                )}
               </label>
+              {realtime && (
+                <StageSelect
+                  label="Realtime LLM"
+                  stage="llm"
+                  providers={providers}
+                  provider="openai"
+                  model={stack.llmModel.startsWith("gpt-realtime") ? stack.llmModel : "gpt-realtime-2.1-mini"}
+                  disabled={locked}
+                  modelOptions={
+                    modelsFor(providers, "openai", "llm").filter((m) => m.id.startsWith("gpt-realtime")).length
+                      ? modelsFor(providers, "openai", "llm").filter((m) => m.id.startsWith("gpt-realtime"))
+                      : [
+                          { id: "gpt-realtime-2.1-mini", label: "gpt-realtime-2.1-mini" },
+                          { id: "gpt-realtime-2.1", label: "gpt-realtime-2.1" },
+                        ]
+                  }
+                  onProviderChange={(_p, llmModel) => patchStack({ llmProvider: "openai", llmModel })}
+                  onModelChange={(llmModel) => patchStack({ llmProvider: "openai", llmModel })}
+                />
+              )}
+              </div>
             ) : catalogLoading ? (
               <p className="text-xs text-text-muted">Loading providers…</p>
             ) : providers.length === 0 ? (
               <p className="text-xs text-status-warning">No providers in catalog. Check Environment keys.</p>
+            ) : realtime ? (
+              <div className="space-y-3">
+                <StageSelect
+                  label="Realtime LLM"
+                  stage="llm"
+                  providers={providers}
+                  provider="openai"
+                  model={stack.llmModel.startsWith("gpt-realtime") ? stack.llmModel : "gpt-realtime-2.1-mini"}
+                  disabled={locked}
+                  modelOptions={modelsFor(providers, "openai", "llm").filter((m) =>
+                    m.id.startsWith("gpt-realtime")
+                  )}
+                  onProviderChange={(_p, llmModel) => patchStack({ llmProvider: "openai", llmModel })}
+                  onModelChange={(llmModel) => patchStack({ llmProvider: "openai", llmModel })}
+                />
+                <p className="text-[11px] text-text-subtle">
+                  Audio in and audio out stay on this model. Sarvam STT/TTS are not used.
+                </p>
+              </div>
             ) : (
               <div className="space-y-3">
                 <StageSelect
@@ -331,6 +402,46 @@ export function TestStudioConfigRack({
 
         {rackTab === "voice" && (
           <div className="space-y-4">
+            {realtime ? (
+              <>
+                <p className="text-xs text-text-muted">
+                  OpenAI Realtime voice is locked after the first spoken reply on a call. Start a new call after
+                  changing it.
+                </p>
+                <label className="block text-sm">
+                  <span className="text-text-muted">Realtime voice</span>
+                  <select
+                    disabled={locked}
+                    className="mt-2 w-full rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-inset px-3 py-2 text-sm disabled:opacity-50"
+                    value={stack.realtimeVoice || DEFAULT_REALTIME_VOICE}
+                    onChange={(e) => patchStack({ realtimeVoice: e.target.value })}
+                  >
+                    {REALTIME_VOICES.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block text-sm">
+                  <span className="text-text-muted">Speech speed</span>
+                  <input
+                    type="number"
+                    step="0.05"
+                    min={0.25}
+                    max={1.5}
+                    disabled={locked}
+                    className="mt-2 w-full rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-inset px-3 py-2 text-sm disabled:opacity-50"
+                    value={normalizeRealtimeSpeed(stack.realtimeSpeed)}
+                    onChange={(e) => patchStack({ realtimeSpeed: Number(e.target.value) })}
+                  />
+                </label>
+                <p className="text-[10px] text-text-subtle">
+                  Model: <span className="font-mono">{stack.llmModel || "gpt-realtime-2.1-mini"}</span> · PCM16 @ 24 kHz
+                </p>
+              </>
+            ) : (
+              <>
             <p className="text-xs text-text-muted">
               Voice saves automatically. Start a <strong>new call</strong> after changing provider in Stack tab.
             </p>
@@ -368,11 +479,82 @@ export function TestStudioConfigRack({
               TTS provider: <span className="font-mono">{effectiveTtsProvider}</span> · model{" "}
               <span className="font-mono">{stack.ttsModel}</span>
             </p>
+              </>
+            )}
           </div>
         )}
 
         {rackTab === "advanced" && (
           <div className="space-y-3">
+            {realtime ? (
+              <>
+                <label className="block text-xs">
+                  <span className="text-text-muted">Turn detection</span>
+                  <select
+                    disabled={locked}
+                    className="mt-1 w-full rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-inset px-2.5 py-2 text-xs"
+                    value={stack.realtimeTurnDetection || DEFAULT_REALTIME_TURN_DETECTION}
+                    onChange={(e) => patchStack({ realtimeTurnDetection: e.target.value })}
+                  >
+                    {REALTIME_TURN_DETECTION.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {(stack.realtimeTurnDetection || DEFAULT_REALTIME_TURN_DETECTION) === "semantic_vad" ? (
+                  <label className="block text-xs">
+                    <span className="text-text-muted">Semantic VAD eagerness</span>
+                    <select
+                      disabled={locked}
+                      className="mt-1 w-full rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-inset px-2.5 py-2 text-xs"
+                      value={stack.realtimeVadEagerness || DEFAULT_REALTIME_VAD_EAGERNESS}
+                      onChange={(e) => patchStack({ realtimeVadEagerness: e.target.value })}
+                    >
+                      {REALTIME_VAD_EAGERNESS.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : (
+                  <label className="block text-xs">
+                    <span className="text-text-muted">Silence duration (ms)</span>
+                    <input
+                      type="number"
+                      min={200}
+                      max={2000}
+                      disabled={locked}
+                      className="mt-1 w-full rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-inset px-2.5 py-2 text-xs"
+                      value={normalizeRealtimeSilenceMs(stack.realtimeSilenceMs)}
+                      onChange={(e) => patchStack({ realtimeSilenceMs: Number(e.target.value) })}
+                    />
+                  </label>
+                )}
+                <label className="block text-xs">
+                  <span className="text-text-muted">Noise reduction</span>
+                  <select
+                    disabled={locked}
+                    className="mt-1 w-full rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-inset px-2.5 py-2 text-xs"
+                    value={stack.realtimeNoiseReduction || DEFAULT_REALTIME_NOISE_REDUCTION}
+                    onChange={(e) => patchStack({ realtimeNoiseReduction: e.target.value })}
+                  >
+                    {REALTIME_NOISE_REDUCTION.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <p className="text-[11px] text-text-subtle">
+                  Semantic VAD waits for a natural pause. Server VAD triggers on silence and is better for noisy
+                  lines.
+                </p>
+              </>
+            ) : (
+              <>
             <label className="block text-xs">
               <span className="text-text-muted">STT mode</span>
               <select
@@ -407,6 +589,8 @@ export function TestStudioConfigRack({
               <p className="text-[11px] text-text-subtle">
                 Cartesia is STT/TTS only (no LLM). Use Ink Whisper for Telugu STT, Sonic 3.5 for TTS.
               </p>
+            )}
+              </>
             )}
           </div>
         )}

@@ -7,9 +7,11 @@ import {
   callSummaryLine,
   formatCallTime,
   formatDuration,
+  pipelineLabel,
 } from "@/lib/call-list-utils";
 import { StatusBadge, dispositionTone } from "@/components/console/StatusBadge";
 import { SkeuoBadge } from "@/components/ui/skeuo/SkeuoBadge";
+import { formatInr } from "@/lib/usage-cost";
 
 export function CallListRow({
   call,
@@ -45,9 +47,15 @@ export function CallListRow({
       </div>
 
       <div className="mt-2 flex flex-wrap items-center gap-2">
-        <SkeuoBadge tone="muted">{call.channel || "—"}</SkeuoBadge>
+        <SkeuoBadge tone="muted">{pipelineLabel(call.pipeline, call.channel)}</SkeuoBadge>
         <SkeuoBadge tone="info">{call.tier?.toUpperCase() || "—"}</SkeuoBadge>
         <span className="font-mono text-[10px] text-text-subtle">{formatDuration(call.duration_sec)}</span>
+        {(call.cost_inr != null || call.usage?.cost_inr != null) && (
+          <span className="font-mono text-[10px] text-text-subtle">
+            {formatInr(Number(call.cost_inr ?? call.usage?.cost_inr ?? 0))}
+          </span>
+        )}
+        {call.has_recording ? <SkeuoBadge tone="success">Recording</SkeuoBadge> : null}
       </div>
 
       <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-text-muted">{callSummaryLine(call)}</p>

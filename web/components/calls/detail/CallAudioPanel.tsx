@@ -1,19 +1,48 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SkeuoPanel } from "@/components/ui/skeuo/SkeuoPanel";
 import { SkeuoButton } from "@/components/ui/skeuo/SkeuoButton";
 import { cn } from "@/lib/cn";
 
 type AudioKind = "mix" | "user" | "agent";
 
-export function CallAudioPanel({ callId }: { callId: string }) {
+const KIND_LABEL: Record<AudioKind, string> = {
+  mix: "Mix (both)",
+  user: "Caller",
+  agent: "Agent",
+};
+
+export function CallAudioPanel({
+  callId,
+  title = "Play recording",
+  description = "After hangup — mix, caller, and agent as WAV",
+}: {
+  callId: string;
+  title?: string;
+  description?: string;
+}) {
   const [kind, setKind] = useState<AudioKind>("mix");
   const [failed, setFailed] = useState(false);
-  const src = `/api/call/${callId}/audio/${kind}`;
+  const [retry, setRetry] = useState(0);
+  const src = `/api/call/${callId}/audio/${kind}?r=${retry}`;
+
+  useEffect(() => {
+    setFailed(false);
+    setRetry(0);
+  }, [callId, kind]);
+
+  useEffect(() => {
+    if (!failed || retry >= 8) return;
+    const timer = window.setTimeout(() => {
+      setFailed(false);
+      setRetry((n) => n + 1);
+    }, 1000);
+    return () => window.clearTimeout(timer);
+  }, [failed, retry]);
 
   return (
-    <SkeuoPanel title="Audio" description="Mix, user, and agent archives — scrub playback" padding="md">
+    <SkeuoPanel title={title} description={description} padding="md">
       <div className="flex flex-wrap gap-2">
         {(["mix", "user", "agent"] as AudioKind[]).map((k) => (
           <SkeuoButton
@@ -23,9 +52,10 @@ export function CallAudioPanel({ callId }: { callId: string }) {
             onClick={() => {
               setKind(k);
               setFailed(false);
+              setRetry(0);
             }}
           >
-            {k}
+            {KIND_LABEL[k]}
           </SkeuoButton>
         ))}
       </div>
@@ -35,19 +65,20 @@ export function CallAudioPanel({ callId }: { callId: string }) {
           <audio
             key={src}
             controls
+            preload="metadata"
             src={src}
             className="w-full"
             onError={() => setFailed(true)}
           />
         ) : (
           <p className="text-sm text-text-muted">
-            {kind} archive not available yet — finalization may still be processing.
+            {KIND_LABEL[kind]} archive not available yet — hang up and wait a few seconds for mix.wav.
           </p>
         )}
       </div>
 
       <p className={cn("mt-2 font-mono text-[10px] text-text-subtle")}>
-        USER AUDIO · scrub to correlate with transcript timeline below
+        Use the player controls to play / pause / scrub · Mix is stereo (L=caller R=agent)
       </p>
     </SkeuoPanel>
   );

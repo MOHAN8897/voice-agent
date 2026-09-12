@@ -11,7 +11,8 @@ from fastapi import WebSocket
 
 from server.services.audio_transcode import chunk_pcm_for_exotel
 from server.services.pstn_debug import log_pstn, log_pstn_summary
-from server.services.pstn_voice_core import PstnVoiceLoop, pstn_call_options
+from server.services.pstn_voice_core import pstn_call_options
+from server.services.pstn_voice_flow import create_pstn_voice_loop
 
 logger = logging.getLogger(__name__)
 
@@ -128,7 +129,8 @@ class ExotelPstnBridge:
         from server.services.pstn_playback import EstimatedPlaybackTracker
 
         self._playback = EstimatedPlaybackTracker(frame_ms=20.0)
-        self._voice = PstnVoiceLoop(
+        self._voice = create_pstn_voice_loop(
+            stack_override=pstn_opts.get("stack_override"),
             session_id=self.session_id,
             call_id=self.call_id,
             on_agent_wire=self._send_agent_wire,

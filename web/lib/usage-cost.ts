@@ -17,15 +17,22 @@ export const PRICING = {
   sarvamTtsInrPer1kChars: 3,
   cartesiaProUsdPerCredit: 5 / 100_000,
   cartesiaTtsUsdPerMChars: 50,
-  openaiUsdPerM: {
-    "gpt-realtime-2.1-mini": { input: 0.6, cachedInput: 0.06, cacheWrite: 0.6, output: 2.4 },
-    "gpt-realtime-2.1": { input: 4.0, cachedInput: 0.4, cacheWrite: 4.0, output: 24.0 },
-    "gpt-realtime-2": { input: 4.0, cachedInput: 0.4, cacheWrite: 4.0, output: 24.0 },
-    "gpt-5.6-luna": { input: 0.2, cachedInput: 0.02, cacheWrite: 0.25, output: 1.2 },
-    "gpt-5.5": { input: 5.0, cachedInput: 0.5, cacheWrite: 6.25, output: 30.0 },
-    "gpt-5.4": { input: 2.5, cachedInput: 0.25, cacheWrite: 3.125, output: 15.0 },
-    "gpt-5": { input: 5.0, cachedInput: 0.5, cacheWrite: 6.25, output: 30.0 },
-  },
+    openaiUsdPerM: {
+        "gpt-realtime-2.1-mini": { input: 0.6, cachedInput: 0.06, cacheWrite: 0.6, output: 2.4 },
+        "gpt-realtime-2.1": { input: 4.0, cachedInput: 0.4, cacheWrite: 4.0, output: 24.0 },
+        "gpt-realtime-2": { input: 4.0, cachedInput: 0.4, cacheWrite: 4.0, output: 24.0 },
+        "gpt-5.6-luna": { input: 0.2, cachedInput: 0.02, cacheWrite: 0.25, output: 1.2 },
+        "gpt-5.5": { input: 5.0, cachedInput: 0.5, cacheWrite: 6.25, output: 30.0 },
+        "gpt-5.4": { input: 2.5, cachedInput: 0.25, cacheWrite: 3.125, output: 15.0 },
+        "gpt-5": { input: 5.0, cachedInput: 0.5, cacheWrite: 6.25, output: 30.0 },
+    },
+    openaiAudioUsdPerM: {
+        "gpt-realtime-2.1-mini": { input: 10, cachedInput: 0.3, output: 20 },
+        "gpt-realtime-2.1": { input: 32, cachedInput: 0.4, output: 64 },
+        "gpt-realtime-2": { input: 32, cachedInput: 0.4, output: 64 },
+    },
+    telnyxOutboundUsdPerMin: 0.012,
+    telnyxInboundUsdPerMin: 0.005,
 } as const;
 
 export type CacheEvent = "cache_hit" | "cache_write" | "partial_hit" | "cache_miss";
@@ -34,12 +41,17 @@ export type PricingMeta = {
   fx_rate_inr?: number;
   "sarvam:saaras:v3"?: { inr_per_hour?: number; usd_per_unit?: number };
   "sarvam:bulbul:v3"?: { inr_per_1k_chars?: number; usd_per_unit?: number };
+  "openai:gpt-realtime-2.1-mini"?: LlmRateMeta;
+  "openai:gpt-realtime-2.1"?: LlmRateMeta;
+  "openai:gpt-realtime-2"?: LlmRateMeta;
   "openai:gpt-5.6-luna"?: LlmRateMeta;
   "openai:gpt-5.5"?: LlmRateMeta;
   "openai:gpt-5.4"?: LlmRateMeta;
   "cartesia:sonic-3.5"?: { usd_per_unit?: number };
   "cartesia:ink-whisper"?: { credits_per_sec?: number; usd_per_hour?: number };
   "cartesia:ink-2"?: { credits_per_sec?: number; usd_per_hour?: number };
+  "telnyx:outbound"?: { usd_per_unit?: number };
+  "telnyx:inbound"?: { usd_per_unit?: number };
 };
 
 type LlmRateMeta = {
@@ -47,6 +59,9 @@ type LlmRateMeta = {
   usd_cached_input_per_m?: number;
   usd_cache_write_per_m?: number;
   usd_output_per_m?: number;
+  usd_audio_input_per_m?: number;
+  usd_audio_cached_input_per_m?: number;
+  usd_audio_output_per_m?: number;
 };
 
 export function resolveTtsProvider(provider: string, model = ""): "sarvam" | "cartesia" {
@@ -61,6 +76,21 @@ export function resolveSttProvider(provider: string, model = ""): "sarvam" | "ca
   const m = (model || "").toLowerCase();
   if (p === "cartesia" || m.startsWith("ink")) return "cartesia";
   return "sarvam";
+}
+
+export function openaiAudioRatesForModel(model: string | undefined, meta?: PricingMeta | null) {
+  const m = (model || "gpt-realtime-2.1-mini").toLowerCase();
+  const key = `openai:${m}` as keyof PricingMeta;
+  const fromMeta = meta?.[key] as LlmRateMeta | undefined;
+  const fallback =
+    PRICING.openaiAudioUsdPerM[m as keyof typeof PRICING.openaiAudioUsdPerM] ||
+    Object.entries(PRICING.openaiAudioUsdPerM).find(([k]) => m.startsWith(k))?.[1] ||
+    PRICING.openaiAudioUsdPerM["gpt-realtime-2.1-mini"];
+  return {
+    input: Number(fromMeta?.usd_audio_input_per_m) || fallback.input,
+    cachedInput: Number(fromMeta?.usd_audio_cached_input_per_m) || fallback.cachedInput,
+    output: Number(fromMeta?.usd_audio_output_per_m) || fallback.output,
+  };
 }
 
 export function openaiRatesForModel(model: string | undefined, meta?: PricingMeta | null) {
@@ -144,19 +174,30 @@ export function costLlmUsd(opts: {
   cacheWriteTokens?: number;
   llmModel?: string;
   meta?: PricingMeta | null;
+  inputAudioTokens?: number;
+  outputAudioTokens?: number;
 }) {
-  const parts = splitLlmTokens(opts.inputTokens, opts.cachedTokens || 0, opts.cacheWriteTokens || 0);
+  const audioInTok = Math.max(0, opts.inputAudioTokens || 0);
+  const audioOutTok = Math.max(0, opts.outputAudioTokens || 0);
+  const textIn = Math.max(0, (opts.inputTokens || 0) - audioInTok);
+  const textOut = Math.max(0, (opts.outputTokens || 0) - audioOutTok);
+  const parts = splitLlmTokens(textIn, opts.cachedTokens || 0, opts.cacheWriteTokens || 0);
   const rates = openaiRatesForModel(opts.llmModel, opts.meta);
+  const audioRates = openaiAudioRatesForModel(opts.llmModel, opts.meta);
   const uncachedUsd = (parts.uncached * rates.input) / 1_000_000;
   const cachedUsd = (parts.cached * rates.cachedInput) / 1_000_000;
   const writeUsd = (parts.written * rates.cacheWrite) / 1_000_000;
-  const outputUsd = (Math.max(0, opts.outputTokens || 0) * rates.output) / 1_000_000;
+  const outputUsd = (textOut * rates.output) / 1_000_000;
+  const audioInUsd = (audioInTok * audioRates.input) / 1_000_000;
+  const audioOutUsd = (audioOutTok * audioRates.output) / 1_000_000;
   return {
     uncachedUsd,
     cachedUsd,
     cacheWriteUsd: writeUsd,
     outputUsd,
-    totalUsd: uncachedUsd + cachedUsd + writeUsd + outputUsd,
+    audioInputUsd: audioInUsd,
+    audioOutputUsd: audioOutUsd,
+    totalUsd: uncachedUsd + cachedUsd + writeUsd + outputUsd + audioInUsd + audioOutUsd,
     parts,
   };
 }
@@ -174,6 +215,20 @@ export type TurnCost = {
   fx: number;
 };
 
+export function costTelnyxUsd(
+  durationSec: number,
+  direction: "inbound" | "outbound" = "outbound",
+  meta?: PricingMeta | null
+): number {
+  const minutes = Math.max(0, durationSec) / 60;
+  if (minutes <= 0) return 0;
+  const key = direction === "inbound" ? "telnyx:inbound" : "telnyx:outbound";
+  const fromMeta = meta?.[key]?.usd_per_unit;
+  const fallback =
+    direction === "inbound" ? PRICING.telnyxInboundUsdPerMin : PRICING.telnyxOutboundUsdPerMin;
+  return minutes * (typeof fromMeta === "number" ? fromMeta : fallback);
+}
+
 export function estimateTurnCost(opts: {
   sttAudioSec: number;
   ttsChars: number;
@@ -186,6 +241,8 @@ export function estimateTurnCost(opts: {
   outputTokens: number;
   cachedTokens: number;
   cacheWriteTokens: number;
+  inputAudioTokens?: number;
+  outputAudioTokens?: number;
   meta?: PricingMeta | null;
 }): TurnCost {
   const fx = fxOf(opts.meta);
@@ -206,6 +263,8 @@ export function estimateTurnCost(opts: {
     cacheWriteTokens: opts.cacheWriteTokens,
     llmModel: opts.llmModel,
     meta: opts.meta,
+    inputAudioTokens: opts.inputAudioTokens,
+    outputAudioTokens: opts.outputAudioTokens,
   });
   const totalUsd = sttUsd + ttsUsd + llm.totalUsd;
   return {

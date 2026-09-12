@@ -128,11 +128,12 @@ async def list_calls(
 
 
 def _enrich_call_list_item(item: dict) -> dict:
-    """Attach outcome summary and customer label for list review rows."""
+    """Attach outcome summary, customer label, pipeline, and session cost."""
     from server.call.post_call_pipeline import read_outcome
 
     out = dict(item)
-    outcome = read_outcome(str(item.get("call_id") or ""))
+    cid = str(item.get("call_id") or "")
+    outcome = read_outcome(cid) if cid else None
     if outcome:
         summary = (outcome.get("summary_en") or outcome.get("summary_te") or "").strip()
         if summary:
@@ -143,6 +144,14 @@ def _enrich_call_list_item(item: dict) -> dict:
         customer = (fields.get("name") or fields.get("phone") or "").strip()
         if customer:
             out["customer"] = customer
+    if cid:
+        review = call_ledger.review_fields(cid)
+        if review.get("usage"):
+            out["usage"] = review["usage"]
+        for key in ("cost_usd", "cost_inr", "cost_inr_per_min", "pipeline"):
+            if review.get(key) is not None:
+                out[key] = review[key]
+        out["has_recording"] = audio_archive.file_for(cid, "mix") is not None
     return out
 
 
@@ -168,7 +177,7 @@ async def get_trace(call_id: str):
     return call_ledger.read_trace(call_id)
 
 
-@router.get("/api/call/{call_id}/audio/{kind}")
+@router.api_route("/api/call/{call_id}/audio/{kind}", methods=["GET", "HEAD"])
 async def get_audio(call_id: str, kind: Literal["mix", "user", "agent"]):
     path = audio_archive.file_for(call_id, kind)
     if path is None:
@@ -176,12 +185,17 @@ async def get_audio(call_id: str, kind: Literal["mix", "user", "agent"]):
             status_code=404,
             detail={"error": {"code": "not_found", "message": "Audio not available"}},
         )
+    suffix = path.suffix.lower()
     media = {
-        "mix": "audio/wav",
-        "user": "application/octet-stream",
-        "agent": "audio/mpeg" if path.suffix == ".mp3" else "application/octet-stream",
-    }[kind]
-    return FileResponse(path, media_type=media, filename=path.name)
+        ".wav": "audio/wav",
+        ".mp3": "audio/mpeg",
+    }.get(suffix, "application/octet-stream")
+    return FileResponse(
+        path,
+        media_type=media,
+        filename=path.name,
+        headers={"Accept-Ranges": "bytes", "Cache-Control": "no-store"},
+    )
 
 
 @router.get("/api/call/{call_id}/audio")

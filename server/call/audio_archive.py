@@ -64,6 +64,16 @@ def _strip_wav_pcm(data: bytes, default_rate: int) -> tuple[bytes, int]:
     return data, default_rate
 
 
+def _write_pcm16_wav(dest: Path, pcm: bytes, sample_rate: int) -> None:
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as wf:
+        wf.setnchannels(1)
+        wf.setsampwidth(2)
+        wf.setframerate(int(sample_rate) if sample_rate > 0 else SAMPLE_RATE)
+        wf.writeframes(pcm or b"")
+    dest.write_bytes(buf.getvalue())
+
+
 class AudioArchive:
     def user_pcm_path(self, call_id: str) -> Path:
         return call_dir(call_id) / "user.pcm"
@@ -82,6 +92,12 @@ class AudioArchive:
 
     def mix_path(self, call_id: str) -> Path:
         return call_dir(call_id) / "mix.wav"
+
+    def user_wav_path(self, call_id: str) -> Path:
+        return call_dir(call_id) / "user.wav"
+
+    def agent_wav_path(self, call_id: str) -> Path:
+        return call_dir(call_id) / "agent.wav"
 
     def init(self, call_id: str) -> None:
         _user_buffers[call_id] = bytearray()
@@ -109,12 +125,27 @@ class AudioArchive:
     async def flush(self, call_id: str) -> dict[str, str]:
         """Write buffers to disk and generate mix.wav. Safe to call twice."""
         async with _lock(call_id):
+            if call_id not in _user_buffers and call_id not in _agent_buffers:
+                mix = self.mix_path(call_id)
+                user_ok = self._nonempty(self.user_pcm_path(call_id)) or self._nonempty(
+                    self.user_wav_path(call_id)
+                )
+                agent_ok = self._nonempty(self.agent_path(call_id)) or self._nonempty(
+                    self.agent_wav_path(call_id)
+                )
+                return {
+                    "user": "complete" if user_ok else "empty",
+                    "agent": "complete" if agent_ok else "empty",
+                    "mix": "complete" if self._nonempty(mix) else "empty",
+                }
             user = bytes(_user_buffers.get(call_id, b""))
             agent = bytes(_agent_buffers.get(call_id, b""))
             agent_rate = _agent_rates.get(call_id, _AGENT_PCM_RATE)
             directory = call_dir(call_id)
             directory.mkdir(parents=True, exist_ok=True)
             self.user_pcm_path(call_id).write_bytes(user)
+            if user:
+                _write_pcm16_wav(self.user_wav_path(call_id), user, SAMPLE_RATE)
             agent_pcm = b""
             if agent and _is_mpeg(agent):
                 self.agent_mp3_path(call_id).write_bytes(agent)
@@ -124,6 +155,8 @@ class AudioArchive:
                 agent_pcm = pcm
                 if pcm_rate != agent_rate:
                     agent_rate = pcm_rate
+                if agent_pcm:
+                    _write_pcm16_wav(self.agent_wav_path(call_id), agent_pcm, agent_rate)
             self._write_mix_wav(self.mix_path(call_id), user, agent_pcm, agent_rate)
             status = {
                 "user": "complete" if user else "empty",
@@ -158,14 +191,26 @@ class AudioArchive:
             wf.writeframes(bytes(stereo) if frame_count else b"")
         dest.write_bytes(buf.getvalue())
 
+    @staticmethod
+    def _nonempty(path: Path) -> bool:
+        return path.exists() and path.stat().st_size > 0
+
     def file_for(self, call_id: str, kind: str) -> Path | None:
-        mapping = {
-            "user": self.user_pcm_path(call_id),
-            "agent": self.agent_path(call_id),
-            "mix": self.mix_path(call_id),
-        }
-        path = mapping.get(kind)
-        if path is None or not path.exists() or path.stat().st_size == 0:
+        if kind == "user":
+            wav = self.user_wav_path(call_id)
+            if self._nonempty(wav):
+                return wav
+            path = self.user_pcm_path(call_id)
+        elif kind == "agent":
+            wav = self.agent_wav_path(call_id)
+            if self._nonempty(wav):
+                return wav
+            path = self.agent_path(call_id)
+        elif kind == "mix":
+            path = self.mix_path(call_id)
+        else:
+            return None
+        if path is None or not self._nonempty(path):
             return None
         return path
 

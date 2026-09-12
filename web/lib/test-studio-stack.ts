@@ -1,4 +1,18 @@
 import { defaultTtsVoice, ensureTtsVoice, ttsProviderFromStack } from "@/lib/voice/tts-config";
+import {
+  DEFAULT_REALTIME_NOISE_REDUCTION,
+  DEFAULT_REALTIME_SILENCE_MS,
+  DEFAULT_REALTIME_SPEED,
+  DEFAULT_REALTIME_TURN_DETECTION,
+  DEFAULT_REALTIME_VAD_EAGERNESS,
+  DEFAULT_REALTIME_VOICE,
+  normalizeRealtimeNoiseReduction,
+  normalizeRealtimeSilenceMs,
+  normalizeRealtimeSpeed,
+  normalizeRealtimeTurnDetection,
+  normalizeRealtimeVadEagerness,
+  normalizeRealtimeVoice,
+} from "@/lib/realtime-voice";
 
 export type StackForm = {
   sttProvider: string;
@@ -11,6 +25,12 @@ export type StackForm = {
   ttsModel: string;
   ttsVoiceId: string;
   language: string;
+  realtimeVoice?: string;
+  realtimeTurnDetection?: string;
+  realtimeVadEagerness?: string;
+  realtimeNoiseReduction?: string;
+  realtimeSpeed?: number;
+  realtimeSilenceMs?: number;
 };
 
 export type StackMode = "tier" | "custom";
@@ -44,6 +64,12 @@ export function defaultStackForm(row?: TierResolved): StackForm {
     ttsModel,
     ttsVoiceId: defaultTtsVoice(ttsProviderFromStack(ttsProvider, ttsModel)),
     language: row?.language || "te-IN",
+    realtimeVoice: DEFAULT_REALTIME_VOICE,
+    realtimeTurnDetection: DEFAULT_REALTIME_TURN_DETECTION,
+    realtimeVadEagerness: DEFAULT_REALTIME_VAD_EAGERNESS,
+    realtimeNoiseReduction: DEFAULT_REALTIME_NOISE_REDUCTION,
+    realtimeSpeed: DEFAULT_REALTIME_SPEED,
+    realtimeSilenceMs: DEFAULT_REALTIME_SILENCE_MS,
   };
 }
 
@@ -84,12 +110,36 @@ export function buildPstnStackOverride(form: StackForm, stackMode: StackMode): R
   return { ...rest, pipeline: "realtime_text" };
 }
 
-export function effectivePstnLiveLlm(runtimeOpenAiModel?: string): { provider: string; model: string } {
-  const slug = String(runtimeOpenAiModel || "").trim();
-  if (slug.startsWith("gpt-realtime")) {
-    return { provider: "openai", model: slug };
+export function effectivePstnLiveLlm(
+  runtimeOpenAiModel?: string,
+  stackLlmModel?: string
+): { provider: string; model: string } {
+  for (const slug of [stackLlmModel, runtimeOpenAiModel]) {
+    const trimmed = String(slug || "").trim();
+    if (trimmed.startsWith("gpt-realtime")) {
+      return { provider: "openai", model: trimmed };
+    }
   }
   return { provider: "openai", model: "gpt-realtime-2.1-mini" };
+}
+
+export function buildPstnRealtimeStackOverride(form: StackForm): Record<string, unknown> {
+  const model = String(form.llmModel || "").startsWith("gpt-realtime")
+    ? form.llmModel
+    : "gpt-realtime-2.1-mini";
+  return {
+    pipeline: "realtime_voice",
+    voice_flow: "realtime_e2e",
+    llm: { provider: "openai", model },
+    realtime_voice: {
+      voice: normalizeRealtimeVoice(form.realtimeVoice),
+      turn_detection: normalizeRealtimeTurnDetection(form.realtimeTurnDetection),
+      vad_eagerness: normalizeRealtimeVadEagerness(form.realtimeVadEagerness),
+      noise_reduction: normalizeRealtimeNoiseReduction(form.realtimeNoiseReduction),
+      speed: normalizeRealtimeSpeed(form.realtimeSpeed),
+      silence_ms: normalizeRealtimeSilenceMs(form.realtimeSilenceMs),
+    },
+  };
 }
 
 export function stackFormEqual(a: StackForm, b: StackForm): boolean {
@@ -103,7 +153,16 @@ export function stackFormEqual(a: StackForm, b: StackForm): boolean {
     a.ttsProvider === b.ttsProvider &&
     a.ttsModel === b.ttsModel &&
     a.ttsVoiceId === b.ttsVoiceId &&
-    a.language === b.language
+    a.language === b.language &&
+    (a.realtimeVoice || DEFAULT_REALTIME_VOICE) === (b.realtimeVoice || DEFAULT_REALTIME_VOICE) &&
+    (a.realtimeTurnDetection || DEFAULT_REALTIME_TURN_DETECTION) ===
+      (b.realtimeTurnDetection || DEFAULT_REALTIME_TURN_DETECTION) &&
+    (a.realtimeVadEagerness || DEFAULT_REALTIME_VAD_EAGERNESS) ===
+      (b.realtimeVadEagerness || DEFAULT_REALTIME_VAD_EAGERNESS) &&
+    (a.realtimeNoiseReduction || DEFAULT_REALTIME_NOISE_REDUCTION) ===
+      (b.realtimeNoiseReduction || DEFAULT_REALTIME_NOISE_REDUCTION) &&
+    normalizeRealtimeSpeed(a.realtimeSpeed) === normalizeRealtimeSpeed(b.realtimeSpeed) &&
+    normalizeRealtimeSilenceMs(a.realtimeSilenceMs) === normalizeRealtimeSilenceMs(b.realtimeSilenceMs)
   );
 }
 

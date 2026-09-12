@@ -59,6 +59,66 @@ def _cartesia_stt_ok(model: str, language: str) -> bool:
     return False
 
 
+def _is_realtime_voice_override(out: dict[str, Any]) -> bool:
+    pipeline = str(out.get("pipeline") or "").strip().lower()
+    if pipeline in ("realtime_text", "classic"):
+        return False
+    voice_flow = str(out.get("voice_flow") or "").strip().lower()
+    return pipeline in ("realtime_voice", "realtime_e2e") or voice_flow in (
+        "realtime_e2e",
+        "realtime_voice",
+    )
+
+
+def _normalize_realtime_voice_override(
+    out: dict[str, Any], adjustments: list[str]
+) -> tuple[dict[str, Any], list[str]]:
+    """Audio-to-audio Realtime PSTN — no Sarvam STT/TTS; keep OpenAI mini + voice."""
+    from server.realtime.models import (
+        DEFAULT_REALTIME_MODEL,
+        DEFAULT_REALTIME_TURN_DETECTION,
+        DEFAULT_REALTIME_VOICE,
+        is_realtime_llm_model,
+        normalize_realtime_noise_reduction,
+        normalize_realtime_silence_ms,
+        normalize_realtime_speed,
+        normalize_realtime_turn_detection,
+        normalize_realtime_vad_eagerness,
+        normalize_realtime_voice,
+    )
+
+    out["pipeline"] = "realtime_voice"
+    out["voice_flow"] = "realtime_e2e"
+    llm = out.get("llm")
+    if not isinstance(llm, dict):
+        llm = {}
+        out["llm"] = llm
+    llm["provider"] = "openai"
+    model = str(llm.get("model") or "").strip()
+    if not is_realtime_llm_model(model):
+        llm["model"] = DEFAULT_REALTIME_MODEL
+        adjustments.append("llm.model set to gpt-realtime-2.1-mini for Realtime PSTN")
+    rv = out.get("realtime_voice")
+    if not isinstance(rv, dict):
+        rv = {}
+        out["realtime_voice"] = rv
+    voice = normalize_realtime_voice(rv.get("voice"))
+    if str(rv.get("voice") or "").strip().lower() not in ("", voice):
+        adjustments.append(f"realtime voice replaced with {voice}")
+    rv["voice"] = voice or DEFAULT_REALTIME_VOICE
+    td = normalize_realtime_turn_detection(rv.get("turn_detection"))
+    if str(rv.get("turn_detection") or "").strip().lower() not in ("", td):
+        adjustments.append(f"turn_detection set to {td}")
+    rv["turn_detection"] = td or DEFAULT_REALTIME_TURN_DETECTION
+    rv["vad_eagerness"] = normalize_realtime_vad_eagerness(rv.get("vad_eagerness"))
+    rv["noise_reduction"] = normalize_realtime_noise_reduction(rv.get("noise_reduction"))
+    rv["speed"] = normalize_realtime_speed(rv.get("speed"))
+    rv["silence_ms"] = normalize_realtime_silence_ms(rv.get("silence_ms"))
+    out.pop("stt", None)
+    out.pop("tts", None)
+    return out, adjustments
+
+
 def normalize_pstn_stack_override(
     stack_override: dict[str, Any] | None,
     *,
@@ -74,6 +134,9 @@ def normalize_pstn_stack_override(
 
     out = copy.deepcopy(stack_override)
     adjustments: list[str] = []
+
+    if _is_realtime_voice_override(out):
+        return _normalize_realtime_voice_override(out, adjustments)
 
     stt_provider = str(_deep_get(out, "stt", "provider") or "").strip().lower()
     stt_model = str(_deep_get(out, "stt", "model") or "").strip()
@@ -177,6 +240,8 @@ def normalize_pstn_stack_override(
 
 def _finalize_pstn_live_override(out: dict[str, Any], adjustments: list[str]) -> tuple[dict[str, Any], list[str]]:
     """PSTN live turns always use OpenAI Realtime + session fine-tune — never dial-time LLM overrides."""
+    if _is_realtime_voice_override(out):
+        return _normalize_realtime_voice_override(out, adjustments)
     if out.get("llm"):
         out.pop("llm", None)
         adjustments.append(
@@ -185,6 +250,8 @@ def _finalize_pstn_live_override(out: dict[str, Any], adjustments: list[str]) ->
     if str(out.get("pipeline") or "").strip().lower() != "realtime_text":
         out["pipeline"] = "realtime_text"
         adjustments.append("pipeline set to realtime_text for PSTN live path")
+    out.pop("voice_flow", None)
+    out.pop("realtime_voice", None)
     return out, adjustments
 
 
