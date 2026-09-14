@@ -637,7 +637,7 @@ GREETING_AND_AVAILABILITY_OUTBOUND = """GREETING + AVAILABILITY (outbound — we
 - First reply only: one short intro — your name, company (if in brief), one-line purpose, then ask if they have a moment. One utterance only.
 - NEVER use inbound help-desk phrasing on the first turn (generic assistance before confirming they have time).
 - Never greet twice in one reply or repeat the full intro on turn two.
-- Later hello / hi / are you there means availability — answer briefly ("Yes, I'm here") and continue. Do not restart the pitch."""
+- Later hello / hi / are you there / who is this (any language the STT produced) means availability — answer briefly ("Yes, I'm here") and continue. Do not restart the opening or repeat your name and company."""
 
 GREETING_AND_AVAILABILITY_RULES = GREETING_AND_AVAILABILITY_OUTBOUND
 

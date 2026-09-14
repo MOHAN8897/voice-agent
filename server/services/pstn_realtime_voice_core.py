@@ -27,6 +27,7 @@ from server.realtime.models import (
 )
 from server.realtime.text_session import build_audio_session_instructions
 from server.services.audio_transcode import StreamingPcmResampler, pcm16_to_mulaw
+from server.services.echo_guard import is_likely_echo
 from server.services.pstn_debug import log_pstn
 from server.services.pstn_media_flow import pstn_media_flow
 from server.services.pstn_text_chunker import extract_opening_greeting
@@ -41,20 +42,42 @@ from server.services.pstn_voice_core import (
 )
 
 # Telnyx already separates inbound/outbound tracks; this gate only filters
-# residual handset acoustic echo. Keep it above the composed 320 RMS floor,
-# but low/fast enough for normal phone speech to interrupt the agent.
-REALTIME_AEC_ENERGY_MIN = 500
-REALTIME_AEC_LOUD_OPEN_FRAMES = 2
+# residual handset acoustic echo. Echo of our own greeting sits ~500–1400 RMS
+# on some handsets — that must not PROVIDER_CLEAR live audio.
+REALTIME_AEC_ENERGY_MIN = 1600
+REALTIME_AEC_LOUD_OPEN_FRAMES = 4
+_BARGE_HOLD_SEC = 2.5
+_PICKUP_SUPPRESS_SEC = 1.8
 
 # Later hello / are-you-there after the intro is an availability check, not a new opening.
-_SIMPLE_HELLO_RE = re.compile(r"^(?:hello|hallo|hi|hey)[.!?]*\s*$", re.I)
-_ARE_YOU_THERE_RE = re.compile(r"^are you (?:there|here)\??\s*$", re.I)
+_SIMPLE_HELLO_RE = re.compile(
+    r"^(?:hello|hallo|hi+|hey|ഹലോ|హలో|हेलो|हैलो|नमस्ते)[.!?]*\s*$",
+    re.I | re.UNICODE,
+)
+_AVAILABILITY_RE = re.compile(
+    r"^(?:"
+    r"(?:hello|hallo|hi+|hey)(?:\s+\w+){0,3}[.!?]*|"
+    r"are you (?:still\s+)?(?:there|here)\??|"
+    r"(?:you|u) (?:there|here)\??|"
+    r"can you hear me\??|"
+    r"(?:hello[,.\s]+)?(?:who(?:'s| is) this)\??|"
+    r"ഹലോ[.!?]*|హలో[.!?]*|हेलो[.!?]*|हैलो[.!?]*|नमस्ते[.!?]*"
+    r")\s*$",
+    re.I | re.UNICODE,
+)
+_PICKUP_RE = re.compile(
+    r"^(?:(?:yes|yeah|ya|ok|okay|hai)[,.\s]+)?"
+    r"(?:hello|hallo|hi+|hey|ഹലോ|హలో)(?:[,.\s]+(?:who(?:'s| is) this))?[.!?]*$",
+    re.I | re.UNICODE,
+)
 # Arabic / Persian / Urdu / Thai / Hangul / CJK with no Latin or Indic — overlap STT junk.
 _FOREIGN_SCRIPT_RE = re.compile(
     r"[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF"
     r"\u0E00-\u0E7F\uAC00-\uD7AF\u3040-\u30FF\u4E00-\u9FFF]"
 )
-_LATIN_OR_INDIC_RE = re.compile(r"[A-Za-z\u0900-\u097F\u0C00-\u0C7F]")
+_LATIN_OR_INDIC_RE = re.compile(
+    r"[A-Za-z\u0900-\u097F\u0A80-\u0D7F]"
+)
 _REJECTED_END_CALL_FOLLOWUP = (
     "Stay on the line. Confirm or answer what they just said in one short sentence. "
     "Do not re-introduce yourself. Do not call end_call this turn."
@@ -77,7 +100,29 @@ def _is_simple_hello(text: str) -> bool:
 
 def _is_availability_check(text: str) -> bool:
     t = (text or "").strip()
-    return _is_simple_hello(t) or bool(_ARE_YOU_THERE_RE.fullmatch(t))
+    if not t or len(t) > 80:
+        return False
+    return _is_simple_hello(t) or bool(_AVAILABILITY_RE.fullmatch(t))
+
+
+def _is_pickup_phrase(text: str) -> bool:
+    t = (text or "").strip()
+    if not t:
+        return False
+    return _is_simple_hello(t) or bool(_PICKUP_RE.fullmatch(t)) or _is_availability_check(t)
+
+
+def _is_line_check(text: str) -> bool:
+    t = (text or "").strip()
+    if not t:
+        return False
+    return bool(
+        re.fullmatch(
+            r"(?:are you (?:still\s+)?(?:there|here)|(?:you|u) (?:there|here)|can you hear me)\??",
+            t,
+            flags=re.I,
+        )
+    )
 
 
 def _is_foreign_script_junk(text: str) -> bool:
@@ -268,6 +313,9 @@ class PstnRealtimeVoiceLoop:
         self._openai_response_id = ""
         self._followup_inflight = False
         self._heard_user_turn = False
+        self._heard_content_turn = False
+        self._barge_hold_until = 0.0
+        self._pickup_suppress_until = 0.0
         from server.services.pstn_archive_writer import PstnArchiveWriter
 
         self._archive = PstnArchiveWriter()
@@ -331,8 +379,26 @@ class PstnRealtimeVoiceLoop:
         self._pending_end_call = None
         self._pending_farewell_text = None
         self._farewell_response_active = False
+        self._clear_hangup_arm()
         log_pstn("hangup.aborted_barge", call_id=self.call_id)
         self._set_phase(PHASE_LISTENING)
+
+    def _clear_hangup_arm(self) -> None:
+        from server.call.call_context import get as get_ctx
+
+        ctx = get_ctx(self.call_id) if self.call_id else None
+        if ctx:
+            ctx.agent_hangup_armed = False
+            ctx.barge_in_flight = False
+
+    def _greeting_protected(self) -> bool:
+        return bool(self._deferred_greeting_armed or self._deferred_greeting_playing)
+
+    def _barge_hold_active(self) -> bool:
+        return bool(self._barge_hold_until and time.monotonic() < self._barge_hold_until)
+
+    def _pickup_suppressed(self) -> bool:
+        return bool(self._pickup_suppress_until and time.monotonic() < self._pickup_suppress_until)
 
     def _event_response_id(self, event: dict[str, Any]) -> str:
         return str(event.get("response_id") or "").strip()
@@ -347,24 +413,41 @@ class PstnRealtimeVoiceLoop:
             return True
         if _is_foreign_script_junk(text):
             return True
-        if (self._tts_active or self._agent_audio_playing()) and not self._aec_barge_open:
+        if self._greeting_protected():
             return True
+        if _is_pickup_phrase(text) or _is_availability_check(text):
+            return False
+        if self._aec_barge_open or self._barge_hold_active():
+            return False
+        if self._tts_active or self._agent_audio_playing():
+            spoken = (self._assistant_text or self._deferred_greeting_text or "").strip()
+            if spoken and is_likely_echo(text, spoken):
+                return True
+            words = [w for w in (text or "").split() if w]
+            if len(words) <= 2 and not text.rstrip().endswith("?"):
+                return True
+            return False
         return False
 
     async def _commit_local_barge(self) -> None:
         """Cut agent audio as soon as local AEC commits a barge — do not wait for VAD."""
         if self._closed:
             return
+        if self._greeting_protected():
+            log_pstn("realtime_voice.barge_ignored_greeting", call_id=self.call_id)
+            return
         self._barge_generation = self.current_generation_id
         self._suppress_until_user = False
         self._response_open = False
         self._followup_inflight = False
+        self._barge_hold_until = time.monotonic() + _BARGE_HOLD_SEC
         if self._on_barge:
             try:
                 await asyncio.wait_for(self._on_barge(), timeout=1.0)
             except Exception as exc:
                 log_pstn("playback.remote_clear.failed", call_id=self.call_id, error=str(exc)[:160])
         await self.interrupt_tts()
+        self._clear_hangup_arm()
         if self._hangup_started or self._phase == PHASE_CLOSING or self._farewell_response_active:
             self._abort_in_progress_hangup()
         else:
@@ -380,6 +463,33 @@ class PstnRealtimeVoiceLoop:
         self._assistant_text = ""
         await self._adapter.start_response(instructions=instruction)
         self._set_phase(PHASE_SPEAKING)
+
+    async def _handle_pickup_or_availability(self, text: str, *, first_user: bool) -> None:
+        """First hello is pickup (greeting already covers it). Later hello is availability."""
+        if self._adapter is None:
+            return
+        try:
+            await self._adapter.cancel_response()
+        except Exception:
+            pass
+        who = bool(re.search(r"who(?:'s| is) this", text or "", flags=re.I))
+        pickup = (first_user or (who and not self._heard_content_turn)) and not _is_line_check(text)
+        if pickup:
+            self._pickup_suppress_until = time.monotonic() + _PICKUP_SUPPRESS_SEC
+            log_pstn("realtime_voice.pickup_consumed", call_id=self.call_id, text=(text or "")[:80])
+            return
+        if not self._intro_noted:
+            return
+        log_pstn("realtime_voice.availability_check", call_id=self.call_id, text=(text or "")[:80])
+        try:
+            await self._start_injected_response(_AVAILABILITY_FOLLOWUP)
+        except Exception as exc:
+            log_pstn(
+                "realtime_voice.availability_followup.failed",
+                call_id=self.call_id,
+                error=str(exc)[:160],
+            )
+            self._pending_followup_instruction = _AVAILABILITY_FOLLOWUP
 
     def _resolve_language(self) -> str:
         from server.call.call_context import get as get_ctx
@@ -536,6 +646,8 @@ class PstnRealtimeVoiceLoop:
         # cuts the reply. Hold inbound (do not append zeros — that can look like
         # speech_stopped and spawn an overlapping response) until the level is a barge.
         if self._agent_audio_playing():
+            if self._greeting_protected():
+                return
             try:
                 from server.services.audio_transcode import pcm16_rms
 
@@ -875,6 +987,9 @@ class PstnRealtimeVoiceLoop:
         kind = str(event.get("type") or "")
         if kind == "speech_started":
             agent_out = self._tts_active or self._agent_audio_playing()
+            if self._greeting_protected():
+                log_pstn("realtime_voice.echo_ignore", call_id=self.call_id, reason="deferred_greeting")
+                return
             if agent_out and not self._aec_barge_open:
                 log_pstn("realtime_voice.echo_ignore", call_id=self.call_id)
                 return
@@ -907,6 +1022,8 @@ class PstnRealtimeVoiceLoop:
                 self._suppress_until_user = False
                 first_user = not self._heard_user_turn
                 self._heard_user_turn = True
+                if not (_is_pickup_phrase(text) or _is_availability_check(text)):
+                    self._heard_content_turn = True
                 if caller_requested_callback(text):
                     self._callback_request_text = text
                 self._capture_callback_detail(text)
@@ -957,29 +1074,23 @@ class PstnRealtimeVoiceLoop:
                                 error=str(exc)[:160],
                             )
                             self._pending_followup_instruction = _UNCLEAR_NAME_FOLLOWUP
-                    elif (
-                        self._intro_noted
-                        and _is_availability_check(text)
-                        and not (first_user and _is_simple_hello(text))
-                    ):
-                        log_pstn("realtime_voice.availability_check", call_id=self.call_id)
-                        try:
-                            await self._adapter.cancel_response()
-                        except Exception:
-                            pass
-                        try:
-                            await self._start_injected_response(_AVAILABILITY_FOLLOWUP)
-                        except Exception as exc:
-                            log_pstn(
-                                "realtime_voice.availability_followup.failed",
-                                call_id=self.call_id,
-                                error=str(exc)[:160],
-                            )
-                            self._pending_followup_instruction = _AVAILABILITY_FOLLOWUP
+                    elif _is_pickup_phrase(text) or _is_availability_check(text):
+                        await self._handle_pickup_or_availability(text, first_user=first_user)
             else:
                 self._user_partial = text
             return
         if kind == "response_created":
+            if (
+                self._greeting_protected()
+                or (self._pickup_suppressed() and not self._heard_content_turn)
+            ) and self._adapter is not None:
+                try:
+                    await self._adapter.cancel_response()
+                except Exception as exc:
+                    log_pstn("greeting.deferred.cancel.failed", call_id=self.call_id, error=str(exc)[:160])
+                if self._deferred_greeting_armed:
+                    self._schedule_deferred_greeting()
+                return
             if not self._intro_noted and self._deferred_greeting_frames and self._adapter is not None:
                 try:
                     await self._adapter.cancel_response()
@@ -1234,7 +1345,7 @@ class PstnRealtimeVoiceLoop:
         )
         try:
             for wire in frames:
-                if self._closed or self.emission_blocked():
+                if self._closed:
                     break
                 if self.call_id:
                     self._archive.enqueue(self.call_id, "agent", wire)
@@ -1258,6 +1369,18 @@ class PstnRealtimeVoiceLoop:
                     error=str(exc)[:160],
                 )
         self._intro_noted = True
+        self._pickup_suppress_until = time.monotonic() + _PICKUP_SUPPRESS_SEC
+        if self._adapter is not None:
+            try:
+                await self._adapter.cancel_response()
+            except Exception as exc:
+                log_pstn("greeting.deferred.cancel.failed", call_id=self.call_id, error=str(exc)[:160])
+            clearer = getattr(self._adapter, "clear_input_audio", None)
+            if callable(clearer):
+                try:
+                    await clearer()
+                except Exception:
+                    pass
         auto_response = getattr(self._adapter, "set_auto_response", None) if self._adapter else None
         if callable(auto_response):
             try:
