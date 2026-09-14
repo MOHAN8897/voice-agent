@@ -67,10 +67,10 @@ def is_incomplete_spoken_crumb(text: str) -> bool:
 
 LIVE_REPLY_BREVITY_RULE = (
     "LENGTH (natural phone speech):\n"
-    "- Primary rule: 1–2 concise spoken sentences, normally 8–25 words in English/Tanglish, "
-    "or an equally concise Telugu/Hindi equivalent. Answer the immediate question first.\n"
+    "- Primary rule: 1–2 concise spoken sentences, normally 8–25 words in English, "
+    "or an equally concise spoken equivalent in Telugu or Hindi. Answer the immediate question first.\n"
     "- Avoid unnecessary explanations and monologues. Character bands below are secondary "
-    "safety guidance, not a reason to break natural Indic phrasing.\n"
+    "safety guidance, not a reason to break natural spoken phrasing.\n"
     f"- Simple (yes / ack / thanks / wait): {LIVE_REPLY_MIN_CHARS}–{LIVE_REPLY_SIMPLE_MAX} characters.\n"
     f"- Normal fact or answer: 30–{LIVE_REPLY_NORMAL_MAX} characters.\n"
     f"- Objection: 30–{LIVE_REPLY_OBJECTION_MAX} characters.\n"
@@ -89,7 +89,7 @@ LIVE_REPLY_BREVITY_RULE = (
 
 # One-line form for LIVE CALL GUIDE / compact pointers (same numbers as above).
 LIVE_REPLY_BREVITY_COMPACT = (
-    "1–2 concise spoken sentences; normally 8–25 English/Tanglish words or concise Indic equivalent. "
+    "1–2 concise spoken sentences; normally 8–25 English words, or a concise Telugu/Hindi equivalent. "
     "Answer first. Secondary character safety bands: "
     f"LENGTH: simple {LIVE_REPLY_MIN_CHARS}–{LIVE_REPLY_SIMPLE_MAX}; "
     f"normal 30–{LIVE_REPLY_NORMAL_MAX}; "

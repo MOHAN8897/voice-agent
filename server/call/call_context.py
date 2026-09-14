@@ -36,6 +36,11 @@ class CallContext:
     slow_down_nudged: bool = False
     last_stt_partial_at: float = 0.0
     call_end_policy: dict[str, Any] | None = None
+    callback_request_text: str = ""
+    callback_close_phase: str = "idle"
+    callback_name: str = ""
+    callback_phone: str = ""
+    callback_when: str = ""
     pipeline: str = "realtime_text"
     components: dict[str, str] = field(
         default_factory=lambda: {"ledger": "pending", "audio": "pending", "outcome": "pending"}

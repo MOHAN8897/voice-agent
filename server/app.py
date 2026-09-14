@@ -85,6 +85,14 @@ async def lifespan(app: FastAPI):
             if await init_db():
                 await ensure_default_tenant()
                 try:
+                    from server.agent.instruction_store import instruction_store
+
+                    n = await instruction_store.hydrate_from_db()
+                    if n:
+                        logger.info(f"[VOICE] Restored {n} saved agent scripts from Postgres")
+                except Exception as e:
+                    logger.warning(f"[VOICE] Saved-instruction hydrate skipped: {e}")
+                try:
                     from server.db.tier_store import load_tier_cache
 
                     n = await load_tier_cache()

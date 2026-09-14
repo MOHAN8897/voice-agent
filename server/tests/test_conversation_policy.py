@@ -423,6 +423,24 @@ def test_english_ignores_stored_telugu_style():
     assert "spoken Indian English" in brain
 
 
+def test_native_english_brain_does_not_use_indian_register():
+    from server.brain.agent_script_compiler import _assemble_brain
+    from server.prompts.voice_defaults import style_for_language
+
+    assert "Indian English" not in style_for_language(
+        "warm, brief, 1-2 sentences, spoken Indian English like a person on a phone",
+        "en-US",
+    )
+    brain = _assemble_brain(
+        script="x",
+        language="en-US",
+        style="warm, brief, 1-2 sentences, spoken Indian English like a person on a phone",
+    )
+    assert "spoken Indian English" not in brain
+    assert "US and UK" in brain or "en-US" in brain
+    assert "Speak natural Tanglish" not in brain
+
+
 def test_language_contract_is_last_in_compiled_brain():
     from server.brain.agent_script_compiler import _assemble_brain
 

@@ -240,3 +240,50 @@ def test_out_of_scope_is_not_a_default_hangup_reason():
     from server.call.call_end_policy import default_call_end_policy
 
     assert "out_of_scope" not in default_call_end_policy("en-IN")["allowedReasons"]
+
+
+def test_contact_me_tomorrow_is_callback_not_a_question():
+    from server.call.end_call_validate import caller_requested_callback, caller_asked_to_record_details
+
+    phrase = "record my name and phone number and contact me tomorrow"
+    assert caller_requested_callback(phrase)
+    assert caller_asked_to_record_details(phrase)
+    assert caller_requested_callback("Can you record my name and phone number and contact me tomorrow?")
+    assert caller_requested_callback("please get back to me tomorrow")
+    assert not caller_requested_callback("how can I contact you?")
+    assert not caller_requested_callback("don't contact me")
+
+
+def test_record_details_callback_does_not_hangup_until_name_and_phone_exist():
+    phrase = "record my name and phone number and contact me tomorrow"
+    blocked = validate_end_call(
+        {"should_end": True, "reason": "goal_complete", "farewell": "Goodbye."},
+        user_text=phrase,
+        language="en-IN",
+        completed_turns=2,
+        callback_close_phase="collecting_name",
+    )
+    assert blocked.accepted is False
+    assert blocked.reject_code == "lead_details_missing"
+
+    ready = validate_end_call(
+        {"should_end": False, "reason": "none", "farewell": ""},
+        user_text=phrase,
+        language="en-IN",
+        completed_turns=3,
+        spoken_text="Thank you, Subhash. Our team will contact you tomorrow. Goodbye.",
+        memory_snapshot={"facts": {"caller_name": "Subhash", "callback_phone": "8897908470"}},
+    )
+    assert ready.accepted is True
+    assert ready.reason == "goal_complete"
+
+
+def test_busy_plus_contact_tomorrow_is_callback_not_stay_on_line():
+    d = validate_end_call(
+        {"should_end": True, "reason": "goal_complete", "farewell": "Goodbye."},
+        user_text="I am busy, contact me tomorrow",
+        language="en-IN",
+        completed_turns=2,
+    )
+    assert d.accepted is True
+    assert d.reason == "goal_complete"

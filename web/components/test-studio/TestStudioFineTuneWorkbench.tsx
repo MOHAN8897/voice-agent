@@ -65,6 +65,8 @@ const AGENT_BRIEF_PLACEHOLDER: Record<string, string> = {
     "Create a Telugu telecaller for Acme Realty.\nAgent name: Swetha.\nShe represents the business like a real teammate — listen, answer first, don't interrogate.\nKnown inventory: 1,000 sq ft from fifty lakhs. If they want a different size, follow them. Never invent prices.",
   "en-IN":
     "Create an English agent for Acme Support.\nAgent name: Priya.\nTalk like a person who works there — listen, answer first, don't interrogate.\nHandle billing tickets. Book callbacks. Never invent policies. Do not sell.",
+  "en-US":
+    "Create an English agent for Northwind Labs.\nAgent name: Sarah.\nTalk like a person who works there — listen, answer first, don't interrogate.\nSaaS is forty nine dollars a month. Book a demo. Never invent discounts. Do not assume WhatsApp.",
   "hi-IN":
     "Create a Hindi telecaller for Acme Realty.\nAgent name: Priya.\nHinglish, like a real teammate — listen, answer first, don't interrogate.\nKnown inventory: 1,000 sq ft from fifty lakhs. If they want a different size, follow them. Never invent prices.",
 };

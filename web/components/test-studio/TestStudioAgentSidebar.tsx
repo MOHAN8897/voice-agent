@@ -13,7 +13,7 @@ import { formatAgentLanguage, notifyTestStudioAgentsChanged, TEST_STUDIO_AGENTS_
 import { bootstrapTestStudioAgent } from "@/lib/bootstrap-test-studio-agent";
 import { refreshPortalSession } from "@/lib/auth-client";
 
-const LANGUAGES = ["te-IN", "en-IN", "hi-IN"] as const;
+const LANGUAGES = ["te-IN", "en-IN", "en-US", "hi-IN"] as const;
 
 export function testStudioAgentPath(agentId: string, portal: "app" | "dev") {
   return portal === "dev" ? `/dev/test-studio/${agentId}` : `/app/test-studio/${agentId}`;

@@ -90,22 +90,133 @@ _CALLBACK_REQUEST = re.compile(
     r"\b(?:call|phone|ring)\s+me\s+(?:(?:back|again)\b(?:\s+(?:later|tomorrow))?|"
     r"later\b|tomorrow\b|after\b|next\b|at\s+\d)|"
     r"\b(?:call|phone|ring)\s+me\s+(?:on\s+)?(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b|"
-    r"\b(?:repu|tarvata|malli)\s+(?:naaku\s+)?call\b|"
-    r"(?:రేపు|తర్వాత|మళ్ళీ|మళ్లీ).{0,16}(?:కాల్|call)|"
-    r"(?:कल|बाद में).{0,16}(?:कॉल|फोन)", re.I,
+    r"\b(?:contact|reach(?:\s+out)?(?:\s+to)?)\s+me\b(?:\s+(?:back|again|later|tomorrow|tonight|today|after|next|please|on\s+\w+))|"
+    r"\bget\s+back\s+to\s+me\b|"
+    r"\bfollow\s+up\b(?:\s+with\s+me)?(?:\s+(?:later|tomorrow|next|please))?"
+    r"|\bcallback\b(?:\s+(?:later|tomorrow|please|me))?"
+    r"|\b(?:repu|tarvata|malli)\s+(?:naaku\s+)?call\b|"
+    r"(?:రేపు|తర్వాత|మళ్ళీ|మళ్లీ).{0,16}(?:కాల్|call|contact)|"
+    r"(?:कल|बाद में).{0,16}(?:कॉल|फोन|संपर्क)",
+    re.I,
 )
 _NEGATED_CALLBACK = re.compile(
-    r"\b(?:don'?t|do not|never|cannot|can'?t)\s+(?:you\s+)?(?:call|phone|ring)\s+me|"
+    r"\b(?:don'?t|do not|never|cannot|can'?t)\s+(?:you\s+)?(?:call|phone|ring|contact)\s+me|"
     r"\b(?:can|could|should|will)\s+i\s+call\b|"
-    r"\b(?:if|whether)\s+you\s+(?:can\s+)?call\s+me|"
-    r"\b(?:before|first).{0,20}(?:tell|explain|answer)|\b(?:tell|explain|answer).{0,30}\bfirst\b", re.I,
+    r"\bhow\s+(?:can|do|should)\s+i\s+contact\b|"
+    r"\bwhat(?:'s| is)\s+(?:your|the)\s+contact\b|"
+    r"\b(?:if|whether)\s+you\s+(?:can\s+)?(?:call|contact)\s+me|"
+    r"\b(?:before|first).{0,20}(?:tell|explain|answer)|\b(?:tell|explain|answer).{0,30}\bfirst\b",
+    re.I,
 )
+_RECORD_DETAILS = re.compile(
+    r"\b(?:please\s+)?(?:record|note|save|take|collect|capture|write\s*down|note\s*down)\s+"
+    r"(?:down\s+)?(?:my\s+)?(?:name|number|phone|mobile|details|contact|info)\b|"
+    r"\b(?:my\s+)?(?:name|phone|number|details)\b.{0,48}\b(?:record|note|save|take|collect)\b|"
+    r"(?:పేరు|నంబర్|వివరాలు).{0,24}(?:రాయ|నోట్|తీసుకో)|"
+    r"(?:नाम|नंबर|विवरण).{0,24}(?:लिख|नोट|ले\s*लो)",
+    re.I,
+)
+_BARE_NAME_BLOCKLIST = frozenset(
+    {
+        "yes",
+        "yeah",
+        "yep",
+        "ok",
+        "okay",
+        "no",
+        "bye",
+        "goodbye",
+        "tomorrow",
+        "today",
+        "tonight",
+        "later",
+        "please",
+        "thanks",
+        "thank you",
+        "hello",
+        "hi",
+    }
+)
+
+
+def caller_asked_to_record_details(user_text: str) -> bool:
+    """Caller asked the agent to take name/phone/details — collect, then close."""
+    return bool(_RECORD_DETAILS.search(user_text or ""))
+
+
+def looks_like_bare_name(user_text: str) -> bool:
+    text = re.sub(r"^(?:my name is|this is|i am|i'm|name is)\s+", "", user_text or "", flags=re.I)
+    cleaned = text.strip(" .,!?:;")
+    if not cleaned or re.search(r"\d", cleaned):
+        return False
+    if cleaned.lower() in _BARE_NAME_BLOCKLIST:
+        return False
+    words = cleaned.split()
+    return 1 <= len(words) <= 4 and not looks_like_question(cleaned)
+
+
+def _lead_name_and_phone(user_text: str, memory_snapshot: dict[str, Any] | None) -> tuple[str, str]:
+    from server.call.caller_detail_capture import extract_caller_name, extract_caller_phone
+
+    facts = memory_snapshot.get("facts") if isinstance((memory_snapshot or {}).get("facts"), dict) else {}
+    facts = facts or {}
+    name = str(
+        facts.get("caller_name")
+        or facts.get("name")
+        or facts.get("customer_name")
+        or extract_caller_name(user_text)
+        or ""
+    ).strip()
+    if not name and looks_like_bare_name(user_text):
+        name = (user_text or "").strip(" .,!?:;")
+    phone = str(
+        facts.get("callback_phone")
+        or facts.get("phone")
+        or facts.get("phone_number")
+        or extract_caller_phone(user_text)
+        or ""
+    ).strip()
+    return name, phone
+
+
+def memory_with_live_lead(
+    memory_snapshot: dict[str, Any] | None, latest_text: str
+) -> dict[str, Any]:
+    """Copy snapshot facts plus name/phone extracted from the latest utterance."""
+    base = dict(memory_snapshot or {})
+    facts = dict(base.get("facts") or {}) if isinstance(base.get("facts"), dict) else {}
+    name, phone = _lead_name_and_phone(latest_text, {"facts": facts})
+    if name:
+        facts.setdefault("caller_name", name)
+        facts.setdefault("name", name)
+    if phone:
+        facts.setdefault("callback_phone", phone)
+        facts.setdefault("phone", phone)
+    base["facts"] = facts
+    return base
+
+
+def callback_ready_to_close(
+    user_text: str,
+    memory_snapshot: dict[str, Any] | None = None,
+    latest_text: str = "",
+) -> bool:
+    """True when a callback/lead-close can hang up now (details already in, or none were requested)."""
+    if not caller_requested_callback(user_text):
+        return False
+    if not caller_asked_to_record_details(user_text):
+        return True
+    snap = memory_with_live_lead(memory_snapshot, latest_text or user_text)
+    name, phone = _lead_name_and_phone(latest_text or user_text, snap)
+    return bool(name and phone)
 
 
 def caller_requested_callback(user_text: str) -> bool:
     """A direct request to move this conversation to a later call, not a question about callbacks."""
     text = user_text or ""
-    return bool(_CALLBACK_REQUEST.search(text) and not _NEGATED_CALLBACK.search(text))
+    if _NEGATED_CALLBACK.search(text):
+        return False
+    return bool(_CALLBACK_REQUEST.search(text) or _RECORD_DETAILS.search(text))
 
 
 def caller_explicit_end_request(user_text: str) -> bool:
@@ -176,7 +287,9 @@ def _evidence_ok(
     if reason == "abuse":
         return bool(_ABUSE.search(text))
     if reason == "goal_complete":
-        if caller_requested_callback(text):
+        if caller_requested_callback(text) and callback_ready_to_close(text, memory_snapshot):
+            return True
+        if caller_requested_callback(text) and not caller_asked_to_record_details(text):
             return True
         if looks_like_question(text):
             return False
@@ -251,6 +364,7 @@ def validate_end_call(
     memory_snapshot: dict[str, Any] | None = None,
     call_end_policy: dict[str, Any] | None = None,
     spoken_text: str = "",
+    callback_close_phase: str | None = None,
 ) -> EndCallDecision:
     parsed = parse_end_call_payload(raw)
     user = user_text or ""
@@ -262,9 +376,24 @@ def validate_end_call(
         parsed = _force_end("goodbye", parsed.get("farewell") or "", spoken, lang)
     elif caller_firm_refusal(user):
         parsed = _force_end("firm_refusal", parsed.get("farewell") or "", spoken, lang)
-    elif caller_requested_callback(user):
-        parsed = _force_end("goal_complete", parsed.get("farewell") or "", spoken, lang)
-    elif parsed["should_end"] and _STAY_ON_LINE.search(user):
+    elif caller_requested_callback(user) or callback_close_phase in {
+        "collecting_name",
+        "collecting_phone",
+        "closing_allowed",
+    }:
+        collecting = callback_close_phase in {"collecting_name", "collecting_phone"}
+        if collecting:
+            if parsed["should_end"]:
+                logger.info("[END_CALL] rejected code=lead_details_missing")
+                return EndCallDecision(
+                    False, False, "none", parsed.get("farewell") or "", "lead_details_missing"
+                )
+        elif callback_close_phase == "closing_allowed" or callback_ready_to_close(user, memory_snapshot):
+            parsed = _force_end("goal_complete", parsed.get("farewell") or "", spoken, lang)
+        elif parsed["should_end"] and caller_asked_to_record_details(user):
+            logger.info("[END_CALL] rejected code=lead_details_missing")
+            return EndCallDecision(False, False, "none", parsed.get("farewell") or "", "lead_details_missing")
+    elif parsed["should_end"] and _STAY_ON_LINE.search(user) and not caller_requested_callback(user):
         logger.info("[END_CALL] rejected code=stay_on_line reason=%s", parsed.get("reason"))
         return EndCallDecision(False, False, "none", parsed.get("farewell") or "", "stay_on_line")
     elif (

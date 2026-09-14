@@ -5,7 +5,12 @@ import asyncio
 from collections.abc import AsyncIterator
 from typing import Any, Literal
 
-from server.call.end_call_validate import caller_firm_refusal, caller_requested_hangup, caller_requested_callback
+from server.call.end_call_validate import (
+    callback_ready_to_close,
+    caller_firm_refusal,
+    caller_requested_callback,
+    caller_requested_hangup,
+)
 from server.call.hangup_judge import agent_spoke_closing
 from server.realtime.end_call_tool import parse_end_call_tool
 from server.realtime.language_guard import filter_unrelated_scripts
@@ -390,7 +395,11 @@ class RealtimeTextSession:
                         "reason": "firm_refusal",
                         "farewell": str(end_call.get("farewell") or spoken or default_farewell),
                     }
-                elif caller_requested_callback(transcript) and not end_call.get("should_end"):
+                elif (
+                    caller_requested_callback(transcript)
+                    and callback_ready_to_close(transcript)
+                    and not end_call.get("should_end")
+                ):
                     from server.call.hangup_judge import default_farewell_for
 
                     end_call = {

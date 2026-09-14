@@ -226,6 +226,30 @@ def role_may_sell(role: str) -> bool:
     return role in ("sales", "lead_qualification")
 
 
+def infer_call_direction(brief: str) -> str:
+    """Inbound only when the brief says they call us; default outbound."""
+    text = f" {(brief or '').lower()} "
+    inbound = bool(
+        re.search(
+            r"\binbound\b|\bincoming (?:call|support|line)\b|"
+            r"they call (?:us|you|in)\b|"
+            r"when (?:the )?(?:customer|caller|client)s? call|"
+            r"customers? (?:call|phone) (?:us|in)\b",
+            text,
+        )
+    )
+    outbound = bool(
+        re.search(
+            r"\boutbound\b|\bwe call them\b|"
+            r"\byou (?:will |should )?call (?:people|customers|leads|them)\b",
+            text,
+        )
+    )
+    if inbound and (not outbound or re.search(r"\b(support|billing|complaint|help ?desk)\b", text)):
+        return "inbound"
+    return "outbound"
+
+
 def infer_agent_role(brief: str, *, llm_role: str = "") -> str:
     guessed = str(llm_role or "").strip().lower().replace(" ", "_").replace("-", "_")
     text = f" {(brief or '').lower()} "
@@ -241,6 +265,11 @@ def infer_agent_role(brief: str, *, llm_role: str = "") -> str:
     # --- recruitment (avoid resume-your / interview-the-customer collisions)
     if re.search(r"\b(recruit|hiring|candidates?|applicants?|job opening|job seeker|talent)\b", text):
         scores["recruitment"] += 5
+    if re.search(
+        r"\b(hire|hiring)\s+(drivers?|candidates?|staff|people|engineers?|nurses?)\b",
+        text,
+    ):
+        scores["recruitment"] += 6
     if re.search(r"\bresume\b", text) and not re.search(r"resume your", text):
         scores["recruitment"] += 2
     if re.search(r"\binterview\b", text) and not re.search(r"interview the (customer|caller|client)", text):
@@ -301,7 +330,8 @@ def infer_agent_role(brief: str, *, llm_role: str = "") -> str:
 
     # --- follow-up
     if re.search(
-        r"follow[- ]up|checking in|check in on|requested a callback|showed interest",
+        r"follow[- ]up|checking in|check in on|requested a callback|"
+        r"collect callback|just collect callback|showed interest",
         text,
     ):
         scores["follow_up"] += 5
@@ -320,8 +350,8 @@ def infer_agent_role(brief: str, *, llm_role: str = "") -> str:
 
     # --- sales (objective verbs beat incidental nouns; ignore "do not sell")
     sales_text = re.sub(
-        r"do not sell|don't sell|must not sell|never sell|"
-        r"do not upsell|don't upsell|must not upsell|never upsell|"
+        r"do not sell|don't sell|dont sell|must not sell|never sell|"
+        r"do not upsell|don't upsell|dont upsell|must not upsell|never upsell|"
         r"sales pitch|a sales call|restart a sales|not a sales|"
         r"no sales|without selling|don't (?:restart|start) a sales|"
         r"after[- ]sales|non[- ]sales",
@@ -330,6 +360,10 @@ def infer_agent_role(brief: str, *, llm_role: str = "") -> str:
     )
     if re.search(r"\b(sell|selling|sales|closing|upsell|telecaller for|for sale)\b", sales_text):
         scores["sales"] += 6
+    if re.search(r"\bconvince\b", text) and productish:
+        scores["sales"] += 5
+    if re.search(r"\bto buy\b|\bbuy plots?\b|\bbuy (?:the )?(?:flats?|apartments?)\b", text):
+        scores["sales"] += 5
     if re.search(r"\b(crm|saas|subscription|software demo)\b", text):
         scores["sales"] += 5
     if re.search(r"choose the right plan", text) and scores["support"] == 0:

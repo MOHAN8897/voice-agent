@@ -40,7 +40,14 @@ def test_extract_agent_named_pattern():
     assert extract_agent_name_from_brief("Agent name: Swetha") == "Swetha"
     assert extract_agent_name_from_brief("Agent name Meera") == "Meera"
     assert extract_agent_name_from_brief("agent name Ravi") == "Ravi"
-    assert extract_agent_name_from_brief("Agent name Priya from Acme Realty.") == "Priya"
+    assert extract_agent_name_from_brief("agnet name ravi frm smylecare denal clinic") == "Ravi"
+    assert extract_agent_name_from_brief("Agent: Sita. Collect callbacks.") == "Sita"
+    assert extract_agent_name_from_brief("someone like ramesh who will call from Loantree") == "Ramesh"
+    assert extract_agent_name_from_brief("Ananya for Horizon Learning Institute in Hyderabad") == "Ananya"
+    assert "SKM" in extract_company_from_brief("The agent should speak for company SKM Plants. Sell indoor plants.")
+    assert extract_company_from_brief("inbound support at CityFiber. Agent name Neha.") == "CityFiber"
+    assert "FastHaul" in extract_company_from_brief("hire drivers for FastHaul logistics agent named Arjun")
+    assert extract_company_from_brief("make a bot for my shop we sell stuff") == ""
     assert extract_company_from_brief("Agent name Priya from Acme Realty. We offer plots.") == "Acme Realty"
     assert extract_company_from_brief(
         "Create an English sales agent named Priya for Acme Realty. Known listing: 2BHK."
@@ -51,6 +58,22 @@ def test_extract_agent_named_pattern():
     assert extract_company_from_brief(
         "Create an English service agent named Ravi for AutoCare Motors car service center."
     ) == "AutoCare Motors"
+    assert "Northwind" in extract_company_from_brief(
+        "Outbound sales for Northwind Labs. Agent name Sarah. SaaS at $49 per month."
+    )
+    assert extract_company_from_brief(
+        "Create an English appointment agent named James for Oak Street Dental in London."
+    ) == "Oak Street Dental"
+    assert "Northstar" in extract_company_from_brief(
+        "inbound support for Northstar Health. Agent Olivia."
+    )
+    name_us, company_us, _, opening_us = resolve_script_identity(
+        "Outbound sales for car servicing in Austin.",
+        language="en-US",
+    )
+    assert name_us == "Alex"
+    assert company_us == ""
+    assert "Do you have a minute?" in opening_us or "this is Alex" in opening_us
     assert extract_company_from_brief(
         "Create an English sales counselor named Karthik for DriveRight Auto Care in Hyderabad. "
         "Workshop with pickup from Hitec City and Gachibowli."
@@ -67,6 +90,41 @@ def test_extract_agent_named_pattern():
     assert "nenu priya" in opening.lower()
     assert "Acme Realty" in opening
     assert "konchem time" in opening.lower() or "moment" in opening.lower()
+
+
+def test_priya_represents_business_named_company():
+    from server.brain.agent_script_compiler import (
+        extract_agent_name_from_brief,
+        extract_company_from_brief,
+        resolve_script_identity,
+    )
+
+    brief = (
+        "the agent name is priya and a representative of business named auto cars private limited "
+        "where servicing of automobiles are provided at reasonable prices, office located in hyderabad. "
+        "we offer inspection, resale, consultation, repairing etc. we are in this buisness for about 20 years"
+    )
+    assert extract_agent_name_from_brief(brief) == "Priya"
+    assert extract_company_from_brief(brief) == "Auto Cars Private Limited"
+    name, company, work, opening = resolve_script_identity(brief, language="en-IN")
+    assert name == "Priya"
+    assert company == "Auto Cars Private Limited"
+    assert "priya" in opening.lower()
+    assert "Auto Cars Private Limited" in opening
+    assert not opening.lower().startswith("hi, this is auto cars")
+    assert "servicing" in work.lower()
+    assert "the where servicing" not in work.lower()
+
+
+def test_unnamed_brief_invents_person_name():
+    from server.brain.agent_script_compiler import infer_agent_name, resolve_script_identity
+
+    brief = "Outbound sales for car servicing in Hyderabad. Inspection, resale, and repairs."
+    assert infer_agent_name(brief) == "Priya"
+    name, company, _work, opening = resolve_script_identity(brief, language="en-IN")
+    assert name == "Priya"
+    assert company == ""
+    assert "priya" in opening.lower()
 
 
 def test_static_rules_forbid_interrogation_checklist():

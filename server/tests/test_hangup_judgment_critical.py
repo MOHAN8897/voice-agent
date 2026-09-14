@@ -155,3 +155,30 @@ def test_helpers_detect_closing_and_lead():
     assert caller_wants_to_continue("I'm interested, tell me more")
     assert memory_has_lead_handoff({"facts": {"callback_phone": "8897908470"}})
     assert not memory_has_lead_handoff({"facts": {"phone": "+13526146416"}})
+
+
+def test_record_name_phone_contact_tomorrow_waits_for_details():
+    d = _end(
+        {
+            "should_end": True,
+            "reason": "goal_complete",
+            "farewell": "Our team will contact you. Goodbye.",
+        },
+        user="record my name and phone number and contact me tomorrow",
+        spoken="Our team will contact you. Goodbye.",
+    )
+    assert d.accepted is False
+    assert d.reject_code == "lead_details_missing"
+
+    ok = _end(
+        {
+            "should_end": True,
+            "reason": "goal_complete",
+            "farewell": "Thank you, Subhash. Our team will contact you tomorrow. Goodbye.",
+        },
+        user="record my name and phone number and contact me tomorrow",
+        spoken="Thank you, Subhash. Our team will contact you tomorrow. Goodbye.",
+        memory={"facts": {"caller_name": "Subhash", "callback_phone": "8897908470"}},
+    )
+    assert ok.accepted is True
+    assert ok.reason == "goal_complete"

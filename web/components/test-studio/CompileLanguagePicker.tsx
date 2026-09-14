@@ -4,7 +4,8 @@ import { cn } from "@/lib/cn";
 
 export const COMPILE_LANGUAGES = [
   { id: "te-IN", label: "Telugu", native: "తెలుగు" },
-  { id: "en-IN", label: "English", native: "English" },
+  { id: "en-IN", label: "English (India)", native: "Indian English" },
+  { id: "en-US", label: "English (US/UK)", native: "English" },
   { id: "hi-IN", label: "Hindi", native: "हिन्दी" },
 ] as const;
 

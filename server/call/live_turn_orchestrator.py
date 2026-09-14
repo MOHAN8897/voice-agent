@@ -10,7 +10,12 @@ from typing import Any
 from server.call.caller_detail_capture import caller_detail_memory_operations
 from server.call import call_context, memory_projection as memory_projection_mod
 from server.call.call_ledger import call_ledger
-from server.call.end_call_validate import validate_end_call
+from server.call.callback_close import advance_callback_close
+from server.call.end_call_validate import (
+    caller_requested_callback,
+    memory_with_live_lead,
+    validate_end_call,
+)
 from server.call.live_turn_schema import LIVE_TURN_JSON_SCHEMA
 from server.call.memory_manager import memory_manager
 from server.call.rolling_summary import maybe_refresh_rolling_summary
@@ -137,9 +142,21 @@ class LiveTurnOrchestrator:
                 snapshot = memory_manager.get_snapshot(call_id)
             except Exception:
                 snapshot = None
+        callback_state = advance_callback_close(
+            ctx,
+            transcript,
+            snapshot,
+            request_text=ctx.callback_request_text if ctx else "",
+        )
+        if ctx is not None and caller_requested_callback(transcript):
+            ctx.callback_request_text = transcript
+        evidence = transcript
+        if ctx and ctx.callback_request_text:
+            evidence = ctx.callback_request_text
+            snapshot = memory_with_live_lead(snapshot, transcript)
         decision = validate_end_call(
             raw,
-            user_text=transcript,
+            user_text=evidence,
             language=language_code,
             call_status=ctx.status if ctx else "active",
             already_armed=bool(ctx and ctx.agent_hangup_armed),
@@ -149,6 +166,7 @@ class LiveTurnOrchestrator:
             memory_snapshot=snapshot,
             call_end_policy=ctx.call_end_policy if ctx else None,
             spoken_text=spoken_text,
+            callback_close_phase=callback_state.phase,
         )
         if not decision.accepted:
             return {"should_end": False, "reason": "none", "farewell": ""}
@@ -192,8 +210,31 @@ class LiveTurnOrchestrator:
         return (
             f"[Internal — you already said: \"{last_assistant[:180]}\". "
             "Do NOT repeat the same facts, pitch, or wording about this topic. "
-            "Answer only what is new, or move to one useful next step.]"
+            "Add only new information or the next step.]"
         )
+
+    def _maybe_callback_close_hint(
+        self,
+        transcript: str,
+        *,
+        ctx,
+        call_id: str | None,
+    ) -> str | None:
+        snapshot = None
+        if call_id:
+            try:
+                snapshot = memory_manager.get_snapshot(call_id)
+            except Exception:
+                snapshot = None
+        state = advance_callback_close(
+            ctx,
+            transcript,
+            snapshot,
+            request_text=ctx.callback_request_text if ctx else "",
+        )
+        if state.phase == "idle":
+            return None
+        return state.hint
 
     def _maybe_slow_down_hint(
         self,
@@ -302,6 +343,7 @@ class LiveTurnOrchestrator:
                         call_id=call_id,
                         ctx=ctx,
                     ),
+                    self._maybe_callback_close_hint(transcript, ctx=ctx, call_id=call_id),
                 )
                 if h
             ]
@@ -556,6 +598,7 @@ class LiveTurnOrchestrator:
         settings = get_settings()
         from server.call.end_call_validate import (
             caller_requested_callback, caller_requested_hangup, caller_firm_refusal,
+            callback_ready_to_close,
         )
         from server.call.hangup_judge import callback_farewell_for, default_farewell_for
 
@@ -563,7 +606,18 @@ class LiveTurnOrchestrator:
         language = str(kwargs.get("language_code") or "te-IN")
         # Clear end intent needs no network round trip or generative sales reply.
         # The normal gate below still owns policy, active-call, and barge checks.
-        if caller_requested_hangup(transcript) or caller_firm_refusal(transcript) or caller_requested_callback(transcript):
+        callback_state = advance_callback_close(
+            ctx,
+            transcript,
+            request_text=ctx.callback_request_text if ctx else "",
+        )
+        if caller_requested_hangup(transcript) or caller_firm_refusal(transcript) or (
+            caller_requested_callback(transcript)
+            and (
+                callback_state.phase == "closing_allowed"
+                or callback_ready_to_close(transcript)
+            )
+        ):
             decision = validate_end_call(
                 None, user_text=transcript, language=language,
                 call_status=ctx.status if ctx else "active",
@@ -571,6 +625,7 @@ class LiveTurnOrchestrator:
                 barge_in_flight=bool(ctx and ctx.barge_in_flight),
                 last_stt_partial_at=ctx.last_stt_partial_at if ctx else None,
                 call_end_policy=ctx.call_end_policy if ctx else None,
+                callback_close_phase=callback_state.phase,
             )
             if decision.accepted:
                 farewell = (callback_farewell_for(language)

@@ -22,6 +22,7 @@ import { detectHeadphones, headphonesFromStream } from "@/lib/voice/headphone-de
 import { warmupBrowserAec } from "@/lib/voice/aec-warmup";
 import { apiOrigin, wsUrl } from "@/lib/api";
 import { billingCharCount } from "@/lib/billing-chars";
+import { HANGUP_TRAIL_SILENCE_MS } from "@/lib/hangup";
 
 function isAbortError(e: unknown): boolean {
   return (
@@ -189,6 +190,7 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
   const STT_PCM_BUFFER_MAX = 32;
   const awaitingBargeRef = useRef(false);
   const pendingAgentHangupRef = useRef(false);
+  const pendingHangupReasonRef = useRef("agent_hangup");
   const speakCooldownUntilRef = useRef(0);
   const lastAssistantTextRef = useRef("");
   const lastAcceptedFinalRef = useRef<{ text: string; at: number }>({ text: "", at: 0 });
@@ -375,6 +377,7 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
     if (!callIdRef.current) return;
     const id = callIdRef.current;
     pendingAgentHangupRef.current = false;
+    pendingHangupReasonRef.current = "agent_hangup";
     await fetch("/api/call/end", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -617,8 +620,9 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
             brainCancelled = Boolean(ev.cancelled);
             streamUsage = ev.usage as TurnCompleteEvent["usage"];
             memoryUpdate = ev.memory_update as TurnCompleteEvent["memoryUpdate"];
-            const endCallEv = ev.end_call as { should_end?: boolean } | undefined;
+            const endCallEv = ev.end_call as { should_end?: boolean; reason?: string } | undefined;
             pendingAgentHangupRef.current = Boolean(endCallEv?.should_end);
+            if (endCallEv?.reason) pendingHangupReasonRef.current = String(endCallEv.reason);
           } else if (ev.text && !ev.delta) {
             out = String(ev.text);
           }
@@ -752,7 +756,8 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
           !awaitingBargeRef.current
         ) {
           pendingAgentHangupRef.current = false;
-          await endCall("agent_hangup");
+          await new Promise((resolve) => window.setTimeout(resolve, HANGUP_TRAIL_SILENCE_MS));
+          await endCall(pendingHangupReasonRef.current || "agent_hangup");
           return;
         }
         if (turnGen === turnGenRef.current) {

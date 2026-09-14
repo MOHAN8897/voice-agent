@@ -31,6 +31,16 @@ from server.services.session_persist import session_persist
 _TTL_SECONDS = 60 * 60 * 24
 
 
+def _is_saved_entry(entry: dict) -> bool:
+    return bool(
+        str(entry.get("agentScript") or "").strip()
+        or str(entry.get("agentBrief") or "").strip()
+        or str(entry.get("brainPrompt") or "").strip()
+        or str(entry.get("behaviour") or "").strip()
+        or str(entry.get("business") or "").strip()
+    )
+
+
 def _resolve_policy(raw, language: str | None) -> dict:
     return normalize_call_end_policy(raw, language=language)
 
@@ -58,10 +68,20 @@ class InstructionStore:
         entry = self._store.get(session_id)
         if entry:
             session_persist.set_instructions(session_id, entry)
+            try:
+                from server.services.saved_instruction_store import queue_upsert
+
+                queue_upsert(session_id, entry)
+            except Exception:
+                pass
 
     def _entry(self, session_id: str) -> Optional[dict]:
         entry = self._store.get(session_id)
-        if entry and time.time() - entry["updatedAt"] > _TTL_SECONDS:
+        if not entry:
+            return None
+        if _is_saved_entry(entry):
+            return entry
+        if time.time() - float(entry.get("updatedAt") or 0) > _TTL_SECONDS:
             self._store.pop(session_id, None)
             return None
         return entry
@@ -377,6 +397,36 @@ class InstructionStore:
         with self._lock:
             self._store.pop(session_id, None)
         session_persist.delete_instructions(session_id)
+        try:
+            from server.services.saved_instruction_store import queue_delete
+
+            queue_delete(session_id)
+        except Exception:
+            pass
+
+    async def hydrate_from_db(self) -> int:
+        """Overlay Postgres-saved scripts after disk hydrate (DB wins)."""
+        try:
+            from server.services.saved_instruction_store import load_all, upsert
+
+            rows = await load_all()
+        except Exception:
+            return 0
+        with self._lock:
+            snapshot = {sid: dict(entry) for sid, entry in self._store.items()}
+            for sid, payload in rows.items():
+                if not isinstance(payload, dict) or not payload.get("updatedAt"):
+                    continue
+                self._store[sid] = dict(payload)
+                session_persist.set_instructions(sid, payload)
+        for sid, entry in snapshot.items():
+            if sid in rows or not _is_saved_entry(entry):
+                continue
+            try:
+                await upsert(sid, entry)
+            except Exception:
+                pass
+        return len(rows)
 
     def get_with_meta(self, session_id: str) -> dict:
         with self._lock:

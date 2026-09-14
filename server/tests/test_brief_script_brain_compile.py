@@ -113,3 +113,28 @@ async def test_bindusara_tis_brief_compiled_script():
     assert "OUTBOUND WORKFLOW" not in script
     assert "mohan" not in script.lower()
     assert result.agent_name == "Tis"
+
+
+@pytest.mark.asyncio
+async def test_priya_auto_cars_script_uses_person_not_company():
+    from server.brain.agent_script_compiler import compile_agent_from_brief
+
+    brief = (
+        "the agent name is priya and a representative of business named auto cars private limited "
+        "where servicing of automobiles are provided at reasonable prices, office located in hyderabad. "
+        "we offer inspection, resale, consultation, repairing etc. we are in this buisness for about 20 years"
+    )
+    _compiled, result, *_ = await compile_agent_from_brief(brief=brief, language="en-IN", use_llm=False)
+    script = result.agent_script or ""
+    assert result.agent_name == "Priya"
+    assert result.company_name == "Auto Cars Private Limited"
+    assert "You are Priya, representing Auto Cars Private Limited" in script
+    assert "Always speak as Priya" in script
+    assert "You are Auto Cars Private Limited" not in script
+    assert "Hi, this is Priya calling from Auto Cars Private Limited" in script
+    assert "The where servicing" not in script
+    assert "inspection" in script.lower()
+    assert "--- AGENT IDENTITY ---" in script
+    assert "--- COMPANY & OFFER ---" in script
+    assert "--- CANONICAL OPENING ---" in script
+    assert "--- YOUR ROLE ON THIS CALL ---" in script

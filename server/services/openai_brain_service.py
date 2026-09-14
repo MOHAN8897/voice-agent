@@ -555,9 +555,12 @@ def _gate_end_call_for_brain(
     call_id: str | None = None,
 ) -> dict[str, Any]:
     """Apply server hangup repair so goodbye / that's-all never leave end_call false."""
+    from server.call.callback_close import advance_callback_close
     from server.call.end_call_validate import validate_end_call
+    from server.call import call_context
 
     snapshot = None
+    ctx = call_context.get(call_id) if call_id else None
     if call_id:
         try:
             from server.call.memory_manager import memory_manager
@@ -565,14 +568,25 @@ def _gate_end_call_for_brain(
             snapshot = memory_manager.get_snapshot(call_id)
         except Exception:
             snapshot = None
+    state = advance_callback_close(
+        ctx,
+        transcript,
+        snapshot,
+        request_text=ctx.callback_request_text if ctx else "",
+    )
     decision = validate_end_call(
         raw,
         user_text=transcript,
         language=language_code,
-        call_status="active",
+        call_status=ctx.status if ctx else "active",
+        already_armed=bool(ctx and ctx.agent_hangup_armed),
+        barge_in_flight=bool(ctx and ctx.barge_in_flight),
+        last_stt_partial_at=ctx.last_stt_partial_at if ctx else None,
         completed_turns=conversation_manager.get_completed_turns(session_id),
         memory_snapshot=snapshot,
+        call_end_policy=ctx.call_end_policy if ctx else None,
         spoken_text=spoken_text or "",
+        callback_close_phase=state.phase,
     )
     if not decision.accepted:
         return {"should_end": False, "reason": "none", "farewell": ""}

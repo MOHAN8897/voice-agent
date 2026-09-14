@@ -73,6 +73,7 @@ PHASE_LISTENING = "listening"
 PHASE_THINKING = "thinking"
 PHASE_SPEAKING = "speaking"
 PHASE_INTERRUPTING = "interrupting"
+PHASE_CLOSING = "closing"
 PHASE_ENDED = "ended"
 
 # PSTN telephony: 8 kHz (Exotel/Plivo μ-law) or 16 kHz (Telnyx L16).
@@ -198,6 +199,7 @@ class PstnVoiceLoop:
         self._last_barge_partial: str | None = None
         self._on_remote_hangup: Callable[[], Awaitable[None]] | None = None
         self._on_turn_audio_done: Callable[[], Awaitable[None]] | None = None
+        self._hangup_started = False
         # TTS text layers: generated/queued ≠ heard (echo must use heard only).
         self._tts_generated_text = ""
         self._tts_queued_text = ""
@@ -290,6 +292,8 @@ class PstnVoiceLoop:
         # ENDED is terminal — never reopen the FSM after hangup (8.3).
         if self._phase == PHASE_ENDED and phase != PHASE_ENDED:
             return
+        if self._phase == PHASE_CLOSING and phase not in (PHASE_CLOSING, PHASE_ENDED):
+            return
         self._phase = phase
         self._intro_phase = phase == PHASE_INTRO
         if self.call_id:
@@ -363,6 +367,47 @@ class PstnVoiceLoop:
 
     def set_hangup_handler(self, fn: Callable[[], Awaitable[None]]) -> None:
         self._on_remote_hangup = fn
+
+    def _farewell_still_on_the_line(self) -> bool:
+        """Playback still leaving the phone — ignore echo-tail used for barge AEC."""
+        if self._tts_active:
+            return True
+        if self.playback is not None and hasattr(self.playback, "is_active"):
+            try:
+                if self.playback.is_active():
+                    return True
+            except Exception:
+                pass
+        if self.is_agent_audio_active is not None:
+            try:
+                return bool(self.is_agent_audio_active())
+            except Exception:
+                return False
+        return False
+
+    async def _finish_agent_hangup(self, *, reason: str = "agent_hangup", spoke_farewell: bool = True) -> None:
+        """Speak-complete hangup: drain farewell, pause, then disconnect."""
+        if self._hangup_started or self._phase == PHASE_ENDED or self._closed:
+            return
+        self._hangup_started = True
+        self._pending_transcript = None
+        from server.call.close_call_executor import execute_agent_close
+
+        async def enter_closing():
+            await self._set_phase_async(PHASE_CLOSING)
+
+        async def enter_ended():
+            await self._set_phase_async(PHASE_ENDED)
+
+        await execute_agent_close(
+            call_id=self.call_id,
+            reason=reason,
+            spoke_farewell=spoke_farewell,
+            is_playing=self._farewell_still_on_the_line,
+            on_closing=enter_closing,
+            on_provider_hangup=self._on_remote_hangup,
+            on_ended=enter_ended,
+        )
 
     def set_turn_audio_done_handler(self, fn: Callable[[], Awaitable[None]]) -> None:
         self._on_turn_audio_done = fn
@@ -1660,6 +1705,7 @@ class PstnVoiceLoop:
             pending = ""
             spoke_from_stream = False
             accepted_end_call = False
+            hangup_reason = "agent_hangup"
             first_token_seen = False
             llm_rt = pstn_turn_runtime(self.config_session_id, self.session_id)
             self._clear_tts_text_layers()
@@ -1729,6 +1775,8 @@ class PstnVoiceLoop:
                             accepted_end_call = bool(
                                 isinstance(end_call, dict) and end_call.get("should_end")
                             )
+                            if accepted_end_call:
+                                hangup_reason = str(end_call.get("reason") or hangup_reason or "agent_hangup")
                             if tts_session.has_sent_text and not turn_cancelled and not self.emission_blocked():
                                 await tts_session.finish()
                     if (spoke_from_stream or tts_session.has_sent_text) and not turn_cancelled and not self.emission_blocked():
@@ -1753,18 +1801,10 @@ class PstnVoiceLoop:
                         cancelled=turn_cancelled,
                     )
                     if accepted_end_call and self.call_id and not turn_cancelled and not self.emission_blocked():
-                        from server.call.call_lifecycle_service import call_lifecycle_service
-
-                        # Synthesis complete != playback complete. Keep the voice
-                        # generation valid until the carrier has drained the farewell.
-                        self._pending_transcript = None
-                        if self._on_remote_hangup:
-                            try:
-                                await self._on_remote_hangup()
-                            except Exception as exc:
-                                log_pstn("hangup.provider.failed", call_id=self.call_id, error=str(exc)[:200])
-                        await self._set_phase_async(PHASE_ENDED)
-                        await call_lifecycle_service.end(self.call_id, reason="agent_hangup")
+                        # Synthesis complete != playback complete. Drain the farewell
+                        # on the carrier, pause like a person putting the phone down, then hang up.
+                        self._set_tts_active(False)
+                        await self._finish_agent_hangup(reason=hangup_reason)
                         return
                 finally:
                     self._set_tts_active(False)

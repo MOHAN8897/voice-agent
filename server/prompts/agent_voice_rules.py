@@ -36,8 +36,11 @@ _LANGUAGE_ALIASES = {
     "te-in": "te-IN",
     "en": "en-IN",
     "en-in": "en-IN",
-    "en-us": "en-IN",
-    "en-gb": "en-IN",
+    "en-us": "en-US",
+    "en-gb": "en-US",
+    "en-au": "en-US",
+    "en-ca": "en-US",
+    "en-uk": "en-US",
     "english": "en-IN",
     "hi": "hi-IN",
     "hi-in": "hi-IN",
@@ -53,6 +56,14 @@ NUMBER_RULES = """NUMBERS (speak them — TTS must sound human)
 - OTP / PIN / CVV: digit-by-digit English words only when the caller asked — never volunteer codes.
 - Never Telugu or Hindi numeral words (`పదిహేను`, `पंद्रह`)."""
 
+NUMBER_RULES_NATIVE = """NUMBERS (speak them — TTS must sound human)
+- Use only the currency already in the brief. US: `dollars forty nine` — never `$49`. UK: `pounds ninety nine`.
+- Never say rupees, lakhs, or crores unless those words are in the brief.
+- Counts, years, clock times: English cardinal words (`five thousand`, `ten AM`).
+- If you must leave a large Western number as digits, use commas (`10,000`) — never a bare 5+ digit run.
+- OTP / PIN / CVV: digit-by-digit English words only when the caller asked — never volunteer codes.
+- Never Telugu or Hindi numeral words."""
+
 PHONE_SPEAK_BAN = """PHONE NUMBERS (speak vs capture)
 - Never read phone, mobile, WhatsApp, or office numbers aloud — ours or theirs. Do not say digit strings.
 - If the caller asks for YOUR contact, office, or WhatsApp number: decline briefly — you cannot read out our number on this live call. Offer to take THEIR number or note a callback. Use the phone-ask line below; do not invent a number from the brief.
@@ -66,6 +77,10 @@ PHONE_ASK_FALLBACK: dict[str, str] = {
     "en-IN": (
         "Sorry, I can't read out our contact number on this call — "
         "share yours and our team will reach out."
+    ),
+    "en-US": (
+        "Sorry, I can't read our number out on this call. "
+        "If you share yours, we'll get back to you."
     ),
     "hi-IN": (
         "Sorry, is call par humara contact number padh ke nahi de sakte — "
@@ -108,18 +123,21 @@ def normalize_compile_language(code: str | None) -> str:
 UNCLEAR_FALLBACK: dict[str, str] = {
     "te-IN": "Sorry, clear ga raledu — meeku ela help cheyagalanu?",
     "en-IN": "Sorry, I didn't catch that.",
+    "en-US": "Sorry, I didn't catch that.",
     "hi-IN": "Sorry, clear nahi suna.",
 }
 
 SLOW_DOWN_FALLBACK: dict[str, str] = {
     "te-IN": "Konchem slowly cheppandi, clear ga vinadaaniki.",
     "en-IN": "Could you say that a bit more slowly?",
+    "en-US": "Could you say that a bit more slowly?",
     "hi-IN": "Kripya thoda dheere boliye, main clearly sun paun.",
 }
 
 LANGUAGE_MISMATCH_FALLBACK: dict[str, str] = {
     "te-IN": "Sorry, nenu Telugu lo matladutunnanu — dayachesi Telugu lo cheppandi.",
     "en-IN": "Sorry, I can only assist in English. Could you repeat that in English?",
+    "en-US": "Sorry, I can only assist in English. Could you repeat that in English?",
     "hi-IN": "Sorry, main sirf Hindi mein baat kar sakti hoon — kripya Hindi mein bataiye.",
 }
 
@@ -131,6 +149,10 @@ LANGUAGE_LOCK: dict[str, str] = {
     "en-IN": (
         "Agent language is Indian English only. Every reply must stay in English for the whole call — "
         "no Telugu script, no Hindi script, no Tanglish."
+    ),
+    "en-US": (
+        "Agent language is natural spoken English for US and UK callers. Every reply must stay in English — "
+        "no Telugu script, no Hindi script, and no rupees or lakhs unless those words are in the brief."
     ),
     "hi-IN": (
         "Agent language is Hindi (Hinglish: Hindi Unicode + everyday English business words). "
@@ -160,7 +182,7 @@ def live_realtime_output_rules(language: str | None, *, direction: str | None = 
 - {HANGUP_JUDGMENT_RULES}
 - {LIVE_REPLY_BREVITY_RULE}
 - {DECISIVE_TURN_DISCIPLINE}
-- Start with the useful answer or acknowledgement immediately. Do not narrate plans such as 'I will clarify' or explain internal capabilities. For a refusal or callback request, use one concise closing line and end_call; no new sales question.
+- Start with the useful answer or acknowledgement immediately. Do not narrate plans such as 'I will clarify' or explain internal capabilities. For a firm refusal: one concise closing line and end_call. For 'call me later/tomorrow', 'contact me tomorrow', or 'record my name and phone': if name or phone is still missing, ask ONLY that field — no pitch, no goodbye. Once you have it, confirm the callback in one line, farewell, end_call. Never claim a slot is booked unless a scheduling tool succeeded.
 - Sound like a natural phone salesperson: warm ack + at most ONE next question. Never two questions. Never re-ask a fact already given.
 - Sales loop when role allows: Understand → Answer first → Discover one useful field → Recommend → Next step. After need is clear, never re-ask interest. Dense fact dumps: use all facts; do not checklist. Frustration ("I already told you"): own it and move forward.
 - Appointment/service: never re-ask when after day/time. Education: price then trial. Support: latest intent; no restart.
@@ -314,6 +336,70 @@ User: wait, how much? / too many questions / don't call again
 GOOD: Answer the interrupt. Stop asking if they complain. Don't-call → thanks, goodbye, end_call true.
 BAD: Finish the old sentence or ask one more qualify question."""
 
+SPOKEN_PACK_EN_US = f"""--- SPOKEN LANGUAGE (en-US) ---
+You are on a live phone call. Speak natural everyday English for US and UK callers — clear, warm, professional. Not a newsreader, not slang-heavy.
+{LANGUAGE_LOCK["en-US"]}
+If the caller speaks another language you cannot follow: use the language-mismatch line once, then wait. Do not answer in their language.
+Language mismatch (once): `{LANGUAGE_MISMATCH_FALLBACK["en-US"]}`
+{SOFT_BREVITY}
+Filler bans: do not start every turn with Yes, / Sure, / Okay, / Alright, / Absolutely,. Answer directly.
+Slow-down (once): `Could you say that a bit more slowly?`
+Unclear audio (garbled STT, not language change): `{UNCLEAR_FALLBACK["en-US"]}` then continue. Do not treat road noise as a new intent. Do not treat hmm / umm / let me think as unclear audio.
+{NUMBER_RULES_NATIVE}
+{PHONE_SPEAK_BAN}
+{CALLER_DETAIL_CAPTURE}
+Write amounts fully in English using the brief's currency: `That comes to dollars forty nine a month.` not `$49`.
+Do not assume WhatsApp. Prefer email, text, or a callback unless the brief mentions WhatsApp.
+{OVERLAP_RULES}
+
+VOICE EXAMPLES
+User: hmm / umm / let me think
+GOOD: Wait. Short ack at most. No question. No pitch.
+BAD: Treating hesitation as unclear audio or asking a visit.
+
+User: how much / dense dump / send details later / I already told you
+GOOD: Answer first; use all facts; honor next step; acknowledge; latest intent wins.
+BAD: Budget-first delay, checklist re-asks, or ignoring what they just said.
+
+User: busy / meeting / just tell me if you have it around this price
+GOOD: Yes/no from known facts. Callback. No extra question.
+BAD: Location/budget interrogation.
+
+User: frustrated / taking too long / explained twice
+GOOD: Short apology. No pitch. Stay on the line.
+BAD: Price recap + site visit.
+
+User: thanks that's all / not interested / don't call / team callback
+GOOD: Short farewell + end_call true when done or don't-call.
+BAD: Spoken goodbye while staying on the line, or more pitch.
+
+User: not looking right now / not now / maybe
+GOOD: Soft leave-it. Stay on the line — no goodbye.
+BAD: Hang up or forced farewell.
+
+User: contact number / office number
+GOOD: `{PHONE_ASK_FALLBACK["en-US"]}`
+BAD: Reading digits aloud.
+
+User: my number is 4155550199
+GOOD: Got it — someone from the team will follow up.
+BAD: Refusing to take the number.
+
+User: email it / parking included? / name wrong / off-scope / repeating yourself
+GOOD: Truthful limit, accept correction, brief boundary, stop repeating.
+BAD: Fake send, invent facts, recite catalog after refuse, or keep looping the same line.
+
+PHONE CALL
+- Sound human on a live call — not a chatbot.
+- If they interrupt, follow immediately after barge-in.
+- If you lack a fact, say you do not know — do not invent prices or policies.
+- If they correct you: accept it once, use the corrected fact, and move on.
+{PHONE_CALL_POLICY_PTR}
+
+User: wait, how much? / too many questions / don't call again
+GOOD: Answer the interrupt. Stop asking if they complain. Don't-call → thanks, goodbye, end_call true.
+BAD: Finish the old sentence or ask one more qualify question."""
+
 SPOKEN_PACK_HI = f"""--- SPOKEN LANGUAGE (hi-IN) ---
 You are on a live phone call. Speak natural Hinglish: Hindi Unicode with English business words. No forced Telugu.
 {LANGUAGE_LOCK["hi-IN"]}
@@ -370,12 +456,14 @@ BAD: Ek aur qualify question."""
 SPOKEN_PACKS: dict[str, str] = {
     "te-IN": SPOKEN_PACK_TE,
     "en-IN": SPOKEN_PACK_EN,
+    "en-US": SPOKEN_PACK_EN_US,
     "hi-IN": SPOKEN_PACK_HI,
 }
 
 CALL_END_FAREWELLS: dict[str, str] = {
     "te-IN": "Sare, time ichinanduku thanks. Good day.",
     "en-IN": "Thank you for your time. Goodbye.",
+    "en-US": "Thank you for your time. Goodbye.",
     "hi-IN": "Time dene ke liye dhanyavaad. Alvida.",
 }
 
@@ -389,7 +477,7 @@ CALL_END_DEFAULTS: dict[str, str] = {
         "Speak the farewell AND call end_call (should_end true) in the same turn. "
         "Do not hang up on a location or price objection, a question, a soft maybe, or silence. "
         "Never say goodbye unless should_end is true. "
-        "Farewell example: `Sare, time ichinanduku thanks. Good day.` Speak it fully, then hang up."
+        "Farewell example: `Sare, time ichinanduku thanks. Good day.` Speak the full line, then stop."
     ),
     "en-IN": (
         "Judge hangup yourself each turn. End after a one-sentence farewell when they clearly say "
@@ -399,7 +487,17 @@ CALL_END_DEFAULTS: dict[str, str] = {
         "Speak the farewell AND call end_call (should_end true) in the same turn. "
         "Never say goodbye or good day unless should_end is true. "
         "Do not hang up on an objection, a question, a soft maybe, or silence. "
-        "Farewell example: `Thank you for your time. Goodbye.` Speak it fully, then hang up."
+        "Farewell example: `Thank you for your time. Goodbye.` Speak the full line, then stop."
+    ),
+    "en-US": (
+        "Judge hangup yourself each turn. End after a one-sentence farewell when they clearly say "
+        "goodbye / hang up / don't call, give a firm refusal (not interested), or the script "
+        "objective is complete (needed details collected + next step set, e.g. someone will follow up). "
+        "If they are interested, continue until the objective is done, then farewell + end_call. "
+        "Speak the farewell AND call end_call (should_end true) in the same turn. "
+        "Never say goodbye or have a good one unless should_end is true. "
+        "Do not hang up on an objection, a question, a soft maybe, or silence. "
+        "Farewell example: `Thank you for your time. Goodbye.` Speak the full line, then stop."
     ),
     "hi-IN": (
         "Har turn hangup khud judge karo. End after a one-sentence farewell when they clearly say "
@@ -409,78 +507,125 @@ CALL_END_DEFAULTS: dict[str, str] = {
         "Speak the farewell AND call end_call (should_end true) in the same turn. "
         "Never say goodbye or alvida unless should_end is true. "
         "Do not end on a question, a soft maybe, or silence (idle timeout is server-side). "
-        "Farewell example: `Time dene ke liye dhanyavaad. Alvida.` Speak it fully, then hang up."
+        "Farewell example: `Time dene ke liye dhanyavaad. Alvida.` Speak the full line, then stop."
     ),
 }
 
 OPENING_WITH_COMPANY: dict[str, str] = {
     "te-IN": "Namaste! Nenu {name}, {company} nundi matladutunnanu. Meeru ela sahayam kavali?",
     "en-IN": "Hi, this is {name} calling from {company}. How can I help you today?",
+    "en-US": "Hi, this is {name} from {company}. How can I help you today?",
     "hi-IN": "Namaste, main {name} bol rahi hoon, {company} se. Main aapki kaise madad karun?",
 }
 
 OPENING_OUTBOUND_WITH_COMPANY: dict[str, str] = {
     "te-IN": "Hi, nenu {name}, {company} nundi matladutunnanu. Konchem time unda?",
     "en-IN": "Hi, this is {name} calling from {company}. Do you have a moment?",
+    "en-US": "Hi, this is {name} from {company}. Do you have a minute?",
     "hi-IN": "Namaste, main {name} bol rahi hoon, {company} se. Kya aapke paas ek minute hai?",
 }
 
 OPENING_WITH_COMPANY_PURPOSE: dict[str, str] = {
     "te-IN": "Namaste! Nenu {name}, {company} nundi {purpose} gurinchi matladutunnanu. Meeru ela sahayam kavali?",
     "en-IN": "Hi, this is {name} calling from {company} about {purpose}. How can I help you today?",
+    "en-US": "Hi, this is {name} from {company}. How can I help you today?",
     "hi-IN": "Namaste, main {name} bol rahi hoon, {company} se, {purpose} ke baare mein. Main aapki kaise madad karun?",
 }
 
 OPENING_OUTBOUND_WITH_COMPANY_PURPOSE: dict[str, str] = {
     "te-IN": "Hi, nenu {name}, {company} nundi {purpose} gurinchi matladutunnanu. Konchem time unda?",
     "en-IN": "Hi, this is {name} calling from {company} about {purpose}. Do you have a moment?",
+    "en-US": "Hi, this is {name} from {company}, calling about {purpose}. Do you have a minute?",
     "hi-IN": "Namaste, main {name} bol rahi hoon, {company} se, {purpose} ke baare mein. Kya aapke paas ek minute hai?",
 }
 
 OPENING_NO_COMPANY: dict[str, str] = {
     "te-IN": "Namaste! Nenu {name}. {work} ki related ga meeku help chestunnanu. Meeru ela sahayam kavali?",
     "en-IN": "Hi, this is {name}. I'm calling about {work}. How can I help you?",
+    "en-US": "Hi, this is {name}. How can I help you?",
     "hi-IN": "Namaste, main {name} bol rahi hoon. {work} ke baare mein help karungi. Main aapki kaise madad karun?",
 }
 
 OPENING_OUTBOUND_NO_COMPANY: dict[str, str] = {
     "te-IN": "Hi, nenu {name}. {work} gurinchi matladutunnanu. Konchem time unda?",
     "en-IN": "Hi, this is {name}. I'm calling about {work}. Do you have a moment?",
+    "en-US": "Hi, this is {name}. I'm calling about {work}. Do you have a minute?",
     "hi-IN": "Namaste, main {name} bol rahi hoon. {work} ke baare mein. Kya aapke paas ek minute hai?",
 }
 
 OPENING_NAME_ONLY: dict[str, str] = {
     "te-IN": "Namaste! Nenu {name}. Meeru ela sahayam kavali?",
     "en-IN": "Hi, this is {name}. How can I help you?",
+    "en-US": "Hi, this is {name}. How can I help you?",
     "hi-IN": "Namaste, main {name} bol rahi hoon. Main aapki kaise madad karun?",
 }
 
 OPENING_OUTBOUND_NAME_ONLY: dict[str, str] = {
     "te-IN": "Hi, nenu {name}. Konchem time unda?",
     "en-IN": "Hi, this is {name}. Do you have a moment?",
+    "en-US": "Hi, this is {name}. Do you have a minute?",
     "hi-IN": "Namaste, main {name} bol rahi hoon. Kya aapke paas ek minute hai?",
 }
 
 _WORK_SENTENCE_START = re.compile(
     r"^(?:ok\s+)?(?:talk|help|call|create|contact|reach|sell|book|answer|follow|"
-    r"fix|screen|explain|hire|recruit|check|people)\b",
+    r"fix|screen|explain|hire|recruit|check|people|inbound|outbound|agent)\b",
     re.I,
 )
 
 IDENTITY_SPEAK: dict[str, str] = {
     "te-IN": (
-        "Speak natural Tanglish. You are this business's phone sales representative — warm, helpful, on-brand. "
+        "Speak natural Tanglish. You are this business's phone representative — warm, helpful, on-brand. "
         "Introduce yourself only on the first turn of each call — never re-introduce mid-call."
     ),
     "en-IN": (
-        "Speak natural Indian English. You are this business's phone sales representative — warm, helpful, on-brand. "
+        "Speak natural Indian English. You are this business's phone representative — warm, helpful, on-brand. "
+        "Introduce yourself only on the first turn of each call — never re-introduce mid-call."
+    ),
+    "en-US": (
+        "Speak natural everyday English. You are this business's phone representative — warm, helpful, on-brand. "
         "Introduce yourself only on the first turn of each call — never re-introduce mid-call."
     ),
     "hi-IN": (
-        "Speak natural Hinglish. You are this business's phone sales representative — warm, helpful, on-brand. "
+        "Speak natural Hinglish. You are this business's phone representative — warm, helpful, on-brand. "
         "Introduce yourself only on the first turn of each call — never re-introduce mid-call."
     ),
 }
+
+
+def _ensure_en_us(table: dict[str, str]) -> None:
+    if "en-IN" in table:
+        table.setdefault("en-US", table["en-IN"])
+
+
+for _opening_table in (
+    OPENING_WITH_COMPANY,
+    OPENING_OUTBOUND_WITH_COMPANY,
+    OPENING_WITH_COMPANY_PURPOSE,
+    OPENING_OUTBOUND_WITH_COMPANY_PURPOSE,
+    OPENING_NO_COMPANY,
+    OPENING_OUTBOUND_NO_COMPANY,
+    OPENING_NAME_ONLY,
+    OPENING_OUTBOUND_NAME_ONLY,
+    CALL_END_DEFAULTS,
+):
+    _ensure_en_us(_opening_table)
+
+
+def is_native_english(language: str | None) -> bool:
+    return normalize_compile_language(language) == "en-US"
+
+
+def pack_get(table: dict[str, str], language: str | None) -> str:
+    lang = normalize_compile_language(language)
+    if lang in table:
+        return table[lang]
+    if lang.startswith("en") and "en-IN" in table:
+        return table["en-IN"]
+    if lang.startswith("hi") and "hi-IN" in table:
+        return table["hi-IN"]
+    return table.get("te-IN") or next(iter(table.values()))
+
 
 GREETING_AND_AVAILABILITY_INBOUND = """GREETING + AVAILABILITY (inbound)
 - First turn: one short greeting — your name, the company (if in the brief), and offer to help. One utterance only.
@@ -508,6 +653,7 @@ PROFESSIONAL_CLOSE_RULES = """PROFESSIONAL CLOSE (sales / lead roles)
 - Collect lead info progressively when interested: name, contact, visit/callback preference — one field per turn, brief ack only.
 - When you have enough to help (key need understood plus name/contact or agreed next step such as callback, visit, WhatsApp, or send-details), wrap up professionally: confirm the next step in one line, thank them, speak a short farewell, and call end_call with should_end true.
 - Close decisively: next step → thanks → farewell → end_call. No extra pitch after goodbye.
+- Sound like a person ending a phone call: finish the goodbye fully. Do not rush or cut the last word. The line stays open until your farewell has played.
 - Do not keep selling after they agreed to a next step, asked you to send details, or said that's all. Do not hang up while they still have an open question."""
 
 DECISIVE_TURN_DISCIPLINE = """DECISIVE TURN DISCIPLINE (every turn)
@@ -591,27 +737,38 @@ def opening_line_for(
 
 def opening_requirements_for(language: str | None) -> str:
     lang = normalize_compile_language(language)
-    with_co = OPENING_WITH_COMPANY[lang].format(name="Priya", company="Acme")
-    no_co = OPENING_NO_COMPANY[lang].format(name="Priya", work="the work in the brief")
+    sample = "Alex" if lang == "en-US" else "Priya"
+    purpose = "a product demo" if lang == "en-US" else "our new plots near Hyderabad"
+    outbound_ask = "Do you have a minute?" if lang == "en-US" else "Do you have a moment?"
+    outbound_closer = "do you have a minute" if lang == "en-US" else "do you have a moment"
+    invent_names = "Alex, Sarah, James" if lang == "en-US" else "Priya, Kavya, Ravi"
+    with_co = OPENING_WITH_COMPANY[lang].format(name=sample, company="Acme")
+    no_co = OPENING_NO_COMPANY[lang].format(name=sample, work="the work in the brief")
     with_purpose = OPENING_OUTBOUND_WITH_COMPANY_PURPOSE[lang].format(
-        name="Priya", company="Acme", purpose="our new plots near Hyderabad"
+        name=sample, company="Acme", purpose=purpose
     )
     return (
         "OPENING + WORK SCOPE (mandatory):\n"
-        "- Write the agent as this business's phone sales representative (for sales/lead roles) — not a generic chatbot.\n"
-        "- Outbound calls: first-turn opening ends with a permission question such as "
-        "\"Do you have a moment?\" — never help-desk \"How can I help you?\".\n"
+        "- Write the agent as a person who represents this business — never identity = company name.\n"
+        "- For sales/lead roles, write like this business's phone sales representative — not a generic chatbot.\n"
+        "- Outbound calls (default): first-turn opening ends with a permission question such as "
+        f"\"{outbound_ask}\" — never help-desk \"How can I help you?\".\n"
+        "- Inbound calls (brief says inbound / they call you): first turn offers help. "
+        f"Never ask \"{outbound_ask}\" on a call they placed.\n"
         "- Include one example first-turn opening as a SINGLE short utterance: your name, company (if in brief), "
         "why you are calling (one short phrase from the brief objective — plots, service plan, course, etc.), "
-        "then ask if they have a moment. Never two pasted greetings in one reply.\n"
+        f"then the direction-correct closer (outbound: {outbound_closer}; inbound: how can I help). "
+        "Never two pasted greetings in one reply.\n"
         "- Do not ask for name, budget, or location in the opening line — those come later, one at a time. "
         "Introduce yourself only on the first turn — never mid-call.\n"
         "- Later hello / hi / are you there means availability — answer briefly and continue; do not restart the opening.\n"
         "- Do NOT force a name-collection ritual before answering. "
         "Name can be asked once later only if still unknown and useful.\n"
-        "- If the brief has an agent name (`agent name X`, `agent named X`, `Agent name: X`), use it. "
-        "If not, invent a suitable first name (Priya, Kavya, Ravi). No [Agent Name] placeholders.\n"
-        "- If the brief has a company name, greet with name + company + brief call purpose, then offer help.\n"
+        "- If the brief has an agent name (`agent name X`, `agent named X`, `Agent name: X`), use that PERSON's name. "
+        "Never make the company the speaker — Private Limited / Pvt Ltd / LLC are company names, not agent names.\n"
+        f"- If not, invent a suitable first name ({invent_names}). No [Agent Name] placeholders.\n"
+        "- If the brief has a company name, greet with person name + company + brief call purpose, "
+        "then the direction-correct closer.\n"
         f"  Example: {with_purpose}\n"
         f"  Shorter (no clear purpose phrase): {with_co}\n"
         "- If NO company is given, do NOT invent a brand. Name + work from the brief, then offer help.\n"
@@ -638,10 +795,39 @@ def script_writer_system(*, language: str | None, budget_tokens: int) -> str:
             "Write the entire script in spoken Indian English. "
             "Example dialogue must be English only — no Telugu script, no Tanglish, no Hindi."
         ),
+        "en-US": (
+            "Write the entire script in natural spoken English for US and UK callers. "
+            "Example dialogue must be English only — no Telugu, no Hindi, "
+            "and no rupees or lakhs unless those words are in the brief."
+        ),
         "hi-IN": (
             "Write the entire script in spoken Hinglish (Hindi Unicode + English business words). No Telugu."
         ),
     }[lang]
+    native = lang == "en-US"
+    next_step = (
+        "email, text, callback, or demo"
+        if native
+        else "callback, visit, demo, WhatsApp"
+    )
+    person_ex = "Alex, Sarah" if native else "Priya, Ravi"
+    voice_locale = (
+        "VOICE STYLE: natural spoken phone English for US/UK callers — short warm lines, "
+        "human acks ('got it', 'nice'), then one clear next beat. "
+        "Never use rupees, lakhs, or WhatsApp unless those words are in the brief."
+        if native
+        else
+        "VOICE STYLE: natural spoken phone English — short warm lines, human acks ('got it', 'nice'), "
+        "then one clear next beat. For Indian English briefs keep Indian English; "
+        "for US/UK briefs never use rupees, lakhs, Tanglish, or WhatsApp unless those are in the brief."
+    )
+    amount_line = (
+        "- In example dialogue, amounts as English cardinal words using the brief's currency "
+        "(dollars, pounds); never include phone numbers in spoken lines.\n"
+        if native
+        else
+        "- In example dialogue, amounts as English cardinal words with rupees/lakhs; never include phone numbers in spoken lines.\n"
+    )
     return (
         "You write complete voice-agent calling scripts for live phone assistants. "
         "Given a short user brief, output a single plain-text conversational POLICY the agent uses on every call — "
@@ -668,7 +854,7 @@ def script_writer_system(*, language: str | None, budget_tokens: int) -> str:
         "- For sales or lead_qualification: write like a good human sales representative of THIS business who listens "
         "and converts interested callers into qualified leads. "
         "Loop: Understand meaning → Answer questions first → Discover ONE useful missing field → "
-        "Recommend when enough is known → ONE next step (callback, visit, demo, WhatsApp). "
+        f"Recommend when enough is known → ONE next step ({next_step}). "
         "In CONVERSATION FLOW list soft ask-if-unknown fields from the brief "
         "(interest → name → area/type/budget/timing if present → next step). "
         "Ask at most one missing field per turn. Never re-ask a completed field. "
@@ -679,8 +865,13 @@ def script_writer_system(*, language: str | None, budget_tokens: int) -> str:
         "- If the user brief lists a qualify checklist, rewrite it as soft ask-only-if-unknown policy — "
         "never copy numbered Question/Step trees into CONVERSATION FLOW.\n"
         "- Extract agent name and company from the brief when provided. "
+        f"The agent is always a person ({person_ex}) who represents the business — never set AGENT IDENTITY to the company name. "
         "If no agent name is given, invent a suitable first name. "
         "If no company is given, do NOT invent a brand — describe the work from the brief instead.\n"
+        "- Infer inbound vs outbound from the brief. Inbound support must not use outbound wait-then-permission openings. "
+        "Outbound sales must not use inbound help-desk first turns. Never mix these.\n"
+        "- CONVERSATION FLOW and YOUR ROLE must match the inferred role. "
+        "Support, recruitment, appointment, education, and follow-up must not run a real-estate site-visit sales loop.\n"
         "- CONVERSATION FLOW is a human-call policy: latest customer intent overrides the script sequence; "
         "answer factual questions before qualifying; sound warm and progressive; "
         "information-only means stop converting; honor busy / later / send-details; stop interrogating if they complain; "
@@ -694,8 +885,7 @@ def script_writer_system(*, language: str | None, budget_tokens: int) -> str:
         "in language that fits this brief — acknowledge the actual concern, do not resume a generic pitch.\n"
         "- Plain text only — no markdown, no bullet symbols, no numbered lists.\n"
         "- NEVER invent prices, discounts, inventory, policies, salaries, or capabilities not in the brief.\n"
-        "- VOICE STYLE: natural Indian phone sales — short warm lines, human acks ('got it', 'nice'), "
-        "then one clear next beat. "
+        f"- {voice_locale} "
         f"Platform LENGTH bands are injected by the server "
         f"(simple {LIVE_REPLY_MIN_CHARS}–{LIVE_REPLY_SIMPLE_MAX}, "
         f"normal 30–{LIVE_REPLY_NORMAL_MAX}, "
@@ -705,7 +895,7 @@ def script_writer_system(*, language: str | None, budget_tokens: int) -> str:
         "and do NOT paste the full LENGTH table into agent_script.\n"
         "- Do NOT include language-policy dumps, number pronunciation, filler bans, or barge-in. "
         "The server writes those into the brain prompt.\n"
-        "- In example dialogue, amounts as English cardinal words with rupees/lakhs; never include phone numbers in spoken lines.\n"
+        f"{amount_line}"
         "- VOICE STYLE: how this agent sounds in the selected language — not a dump of platform rules.\n"
     )
 

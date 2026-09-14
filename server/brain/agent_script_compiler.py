@@ -29,6 +29,7 @@ from server.prompts.conversation_policy import (
     LIVE_CALL_GUIDE_BODY,
     flow_section,
     infer_agent_role,
+    infer_call_direction,
     role_section,
 )
 from server.brain.sections import STATIC_OUTPUT_RULES
@@ -37,6 +38,7 @@ from server.realtime.models import http_openai_model
 from server.prompts.agent_voice_rules import (
     IDENTITY_SPEAK,
     call_end_policy_section,
+    is_native_english,
     language_runtime_footer,
     normalize_compile_language,
     opening_line_for,
@@ -181,13 +183,50 @@ _WORKISH_FIRST = frozenset({
     "a", "an", "the", "people", "customers", "users", "callers", "someone",
     "car", "cars", "cab", "cabs", "taxi", "booking", "bookings", "help",
     "support", "insurance", "loan", "loans", "sales", "orders", "delivery",
-    "plant", "plants", "this", "that",
+    "plant", "plants", "this", "that", "my", "our", "your", "their", "some",
+    "stuff", "something", "maybe", "asdf",
 })
+_NOT_PERSON = frozenset({
+    "agent", "agnet", "company", "business", "create", "inbound", "outbound",
+    "support", "sales", "english", "appointment", "people", "customers", "users",
+    "please", "call", "about", "course", "clinic", "dental", "representative",
+    "private", "limited", "follow", "hire", "named", "name", "from", "for",
+    "shop", "bot", "voice", "assistant",
+})
+_LEGAL_ENTITY = re.compile(
+    r"\b(?:pvt\.?\s*ltd\.?|private\s+limited|limited|ltd\.?|llp|llc|inc\.?|"
+    r"incorporated|corp\.?|corporation|plc)\b",
+    re.I,
+)
+_ORG_BEFORE_NAMED = re.compile(
+    r"\b(?:business|company|firm|brand|agency|dealership|garage|workshop|showroom|"
+    r"organisation|organization)\s+$",
+    re.I,
+)
 _COMPANY_HINT = re.compile(
     r"(shop|mart|realty|estates?|agencies?|plants|pvt|ltd|limited|inc|corp|hospital|clinic|"
-    r"dental|hotel|bank|school|college|academy|nursery|store|studio|farms|farm|"
-    r"motors?|crm|saas|software|ventures?)",
+    r"dental|hotel|bank|school|college|academy|institute|nursery|store|studio|farms|farm|"
+    r"motors?|crm|saas|software|ventures?|logistics|fiber|solar|learning|hub|wash|"
+    r"finance|loantree|homes|labs?|health|dental)",
     re.I,
+)
+_CITY_NAME = re.compile(
+    r"\b(?:hyderabad|hydrabad|bengaluru|bangalore|chennai|mumbai|delhi|pune|"
+    r"vizag|visakhapatnam|madhapur|ameerpet|gachibowli|hitec|kukatpally|"
+    r"secunderabad|orr|austin|dallas|seattle|chicago|london|manchester|"
+    r"brooklyn|manhattan|boston|houston|miami|denver|portland|atlanta|"
+    r"california|birmingham|edinburgh)\b",
+    re.I,
+)
+_PASCAL_WORD = re.compile(r"^[A-Z][a-z]+[A-Z][A-Za-z0-9]*$")
+_LATIN_NAME = r"[A-Za-z][A-Za-z'\-]{1,23}"
+_INDIC_NAME = r"[\u0900-\u0D7F]{2,24}"
+_PERSON_TOKEN = rf"(?:{_LATIN_NAME}|{_INDIC_NAME})"
+_PERSON_NAME = rf"({_PERSON_TOKEN}(?:\s+{_PERSON_TOKEN})?)"
+_NAME_STOP = (
+    r"(?=\s+(?:from|frm|for|where|who|that|working|representing|representative|"
+    r"company|also|create|just|then|about|at\b|"
+    r"and\s+(?:a\s+)?(?:representative|rep)\b)\b|[.,;]|$)"
 )
 _LIVE_CALL_GUIDE_TITLE = "LIVE CALL GUIDE"
 _SECTION_NAMES = (
@@ -228,14 +267,62 @@ def _titlecase_name(name: str) -> str:
     parts = [p for p in (name or "").strip().split() if p]
     if not parts:
         return ""
+    if re.search(r"[\u0900-\u0D7F]", " ".join(parts)):
+        return " ".join(parts)
     return " ".join(p[:1].upper() + p[1:].lower() if len(p) > 1 else p.upper() for p in parts)
 
 
-def _looks_like_agent_name(name: str) -> bool:
+def _looks_like_company_name(name: str) -> bool:
     cleaned = _clean_identity_value(name)
     if not cleaned:
         return False
+    if _LEGAL_ENTITY.search(cleaned):
+        return True
+    return bool(_COMPANY_HINT.search(cleaned) and len(cleaned.split()) >= 2)
+
+
+def _normalize_brief_identity_text(brief: str) -> str:
+    """Fix the typos people actually type in agent briefs."""
+    text = brief or ""
+    text = re.sub(r"\b(?:agnet|agnt)\b", "agent", text, flags=re.I)
+    text = re.sub(r"\bfrm\b", "from", text, flags=re.I)
+    text = re.sub(r"\bdenal\b", "dental", text, flags=re.I)
+    text = re.sub(r"\bhydrabad\b", "hyderabad", text, flags=re.I)
+    text = re.sub(r"\brealted\b", "related", text, flags=re.I)
+    text = re.sub(r"\bnaed\b", "named", text, flags=re.I)
+    text = re.sub(r"\bbuisness\b", "business", text, flags=re.I)
+    return text
+
+
+def _clip_person_name(raw: str) -> str:
+    text = _clean_identity_value(raw)
+    text = re.split(
+        r"\s+(?:also|who|from|frm|for|company|and|that|where|working|people|just|at)\b",
+        text,
+        maxsplit=1,
+        flags=re.I,
+    )[0].strip()
+    keep: list[str] = []
+    for part in text.split()[:2]:
+        if part.lower() in _NOT_PERSON:
+            break
+        if not re.search(r"[A-Za-z\u0900-\u0D7F]", part):
+            break
+        keep.append(part)
+    return " ".join(keep)
+
+
+def _looks_like_agent_name(name: str) -> bool:
+    cleaned = _clip_person_name(name) or _clean_identity_value(name)
+    if not cleaned:
+        return False
+    if not re.search(r"[A-Za-z\u0900-\u0D7F]", cleaned):
+        return False
     if len(cleaned.split()) > 4 or len(cleaned) > 40:
+        return False
+    if cleaned.lower() in _NOT_PERSON or cleaned.lower() in _BAD_IDENTITY:
+        return False
+    if _looks_like_company_name(cleaned):
         return False
     if re.match(
         r"^(?:create|help|convince|sell|work|related|real\s*estate|plots?|users?)\b",
@@ -248,21 +335,28 @@ def _looks_like_agent_name(name: str) -> bool:
 
 def extract_agent_name_from_brief(brief: str) -> str:
     """Extract agent name; prefer explicit agent-named patterns over bare 'name is'."""
-    text = brief or ""
-    name_value = r"([^\n.,;]+?)(?=\s+(?:from|for|where|who|that|working)\b|[.,;]|$)"
+    text = _normalize_brief_identity_text(brief)
+    name_value = rf"{_PERSON_NAME}{_NAME_STOP}"
     patterns: tuple[tuple[int, str], ...] = (
-        (100, rf"create\s+(?:an?\s+)?(?:\w+\s+){0,4}agent\s+na?m?e?d\s+{name_value}"),
+        (100, rf"create\s+(?:an?\s+)?(?:\w+\s+){{0,4}}agent\s+na?m?e?d\s+{name_value}"),
         (90, rf"agent\s+na?m?e?d\s+{name_value}"),
+        (88, rf"agent\s*:\s*{name_value}"),
         (85, rf"agent\s*name\s*(?:(?:is)\b\s*|:\s*)?{name_value}"),
+        (78, rf"someone like\s+{name_value}"),
         (70, rf"\bnenu\s+{name_value}"),
+        (62, rf"\bagent\s+(?!name\b|named\b|for\b|should\b|will\b|to\b|that\b|who\b){name_value}"),
         (50, rf"(?<!\w)named\s+{name_value}"),
+        (40, rf"(?:^|[\n.])\s*{name_value}\s+for\s+[A-Z]"),
         (20, rf"name\s+is\s+{name_value}"),
     )
     hits: list[tuple[int, int, str]] = []
     for priority, pat in patterns:
         for match in re.finditer(pat, text, re.I):
-            name = _clean_identity_value(match.group(1))
+            name = _clip_person_name(match.group(1))
             if not _looks_like_agent_name(name):
+                continue
+            prefix = text[max(0, match.start() - 48) : match.start()]
+            if _ORG_BEFORE_NAMED.search(prefix):
                 continue
             hits.append((priority, match.start(), name))
     if not hits:
@@ -271,36 +365,119 @@ def extract_agent_name_from_brief(brief: str) -> str:
     return _titlecase_name(hits[0][2])
 
 
+def _strip_city_clause(candidate: str) -> str:
+    text = re.split(
+        r"\s+in\s+(?:Hyderabad|Hydrabad|Bengaluru|Bangalore|Chennai|Mumbai|Delhi|Pune|"
+        r"Vizag|Visakhapatnam|Madhapur|Ameerpet|Austin|Dallas|Seattle|Chicago|London|"
+        r"Boston|Houston|Miami|Denver|Portland|Atlanta|Manchester|Birmingham|Edinburgh)\b",
+        candidate,
+        maxsplit=1,
+        flags=re.I,
+    )[0]
+    text = re.split(
+        r"\b(?:car service|service center|service centre|that |who |which |where |"
+        r"book |about |selling |offering |providing |agent\s+(?:name|named)|named )\b",
+        text,
+        maxsplit=1,
+        flags=re.I,
+    )[0]
+    parts = text.split()
+    while parts and _CITY_NAME.fullmatch(parts[-1] or ""):
+        parts.pop()
+    return " ".join(parts).strip(" .,:;-")
+
+
 def extract_company_from_brief(brief: str) -> str:
-    text = brief or ""
+    text = _normalize_brief_identity_text(brief)
     match = re.search(r"company(?:\s*name)?\s*(?:is|:)\s*([^\n.]{2,50})", text, re.I)
     if match:
-        return _clean_identity_value(match.group(1))
+        return _clean_identity_value(_strip_city_clause(match.group(1)))
 
     def _accept_company(candidate: str) -> str:
-        candidate = _clean_identity_value(candidate)
+        candidate = _clean_identity_value(_strip_city_clause(candidate))
         if not candidate:
             return ""
-        # Reject pickup/location debris mistaken for a brand.
+        if candidate.lower() in {
+            "shop", "my shop", "our shop", "stuff", "something", "business",
+            "company", "agency", "cars", "plants", "idk", "maybe",
+        }:
+            return ""
         if re.search(
             r"\b(hitec|gachibowli|ameerpet|kukatpally|pickup|drop[- ]?off|near|area)\b",
             candidate,
             re.I,
         ):
             return ""
-        first = candidate.split()[0]
+        words = candidate.split()
+        first = words[0]
         if first.lower() in _WORKISH_FIRST or first[:1].isdigit():
             return ""
-        if _COMPANY_HINT.search(candidate) or len(candidate.split()) >= 2:
-            if candidate == candidate.lower():
-                return " ".join(part.capitalize() for part in candidate.split())
-            return candidate
-        if first[:1].isupper():
-            return candidate
-        return ""
+        hinted = bool(_COMPANY_HINT.search(candidate) or _LEGAL_ENTITY.search(candidate))
+        camel = any(_PASCAL_WORD.match(w) for w in words)
+        acronym = bool(re.match(r"^[A-Z]{2,6}\b", candidate)) and len(words) >= 2
+        titleish = len(words) >= 2 and all(
+            (w[:1].isupper() or w.lower() in {"of", "and", "the", "pvt", "ltd"})
+            for w in words
+        )
+        if len(words) == 1:
+            if first.lower() in {
+                "nursery", "clinic", "shop", "hospital", "school", "college",
+                "hotel", "bank", "agency", "studio", "farm", "store", "mart",
+                "realty", "plants", "cars", "logistics", "solar", "fiber",
+            }:
+                return ""
+            if not camel:
+                return ""
+        elif not (hinted or camel or acronym or titleish):
+            return ""
+        if candidate == candidate.lower():
+            return " ".join(part.capitalize() for part in words)
+        return candidate
 
     match = re.search(
-        r"realt?ed\s+to\s+([^\n.,;]{2,60}?)(?=\s+working|\s+who|\s+create|\s+in\s|\s+for\s+|,\s*create|[.,;]|$)",
+        r"\b(?:business|company|firm|brand|agency|dealership|garage|workshop|showroom)\s+"
+        r"(?:named|called)\s+([^\n.,;]{2,60}?)(?=\s+(?:where|who|that|which|located|offering|providing)|[.,;]|$)",
+        text,
+        re.I,
+    )
+    if match:
+        accepted = _accept_company(match.group(1))
+        if accepted:
+            return accepted
+
+    match = re.search(
+        r"\b(?:representative|rep|telecaller|salesperson|counsellor|counselor)\s+of\s+"
+        r"(?:(?:the\s+)?(?:business|company|firm)\s+(?:named|called)\s+)?"
+        r"([^\n.,;]{2,60}?)(?=\s+(?:where|who|that|which|located)|[.,;]|$)",
+        text,
+        re.I,
+    )
+    if match:
+        accepted = _accept_company(match.group(1))
+        if accepted:
+            return accepted
+
+    match = re.search(
+        r"(?:speak for|for(?:\s+the)?)\s+company\s+([^\n.,;]{2,60}?)(?=\s+(?:where|who|that|don'?t|do not)|[.,;]|$)",
+        text,
+        re.I,
+    )
+    if match:
+        accepted = _accept_company(match.group(1))
+        if accepted:
+            return accepted
+
+    match = re.search(
+        r"\bcompany\s+([A-Z][A-Za-z0-9&]+(?:\s+[A-Z][A-Za-z0-9&]+){0,4})",
+        text,
+    )
+    if match:
+        accepted = _accept_company(match.group(1))
+        if accepted:
+            return accepted
+
+    match = re.search(
+        r"(?:related|realted)\s+to\s+([^\n.,;]{2,60}?)(?=\s+working|\s+who|\s+create|\s+in\s|\s+for\s+|,\s*create|[.,;]|$)",
         text,
         re.I,
     )
@@ -316,29 +493,13 @@ def extract_company_from_brief(brief: str) -> str:
         re.I,
     )
     if match:
-        candidate = match.group(1)
-        candidate = re.split(
-            r"\b(?:car service|service center|service centre|that |who |which |where )\b",
-            candidate,
-            maxsplit=1,
-            flags=re.I,
-        )[0].strip(" .,:;-")
-        # "Horizon Learning Institute in Hyderabad" → company without city clause
-        candidate = re.split(
-            r"\s+in\s+(?:Hyderabad|Bengaluru|Bangalore|Chennai|Mumbai|Delhi|Pune)\b",
-            candidate,
-            maxsplit=1,
-            flags=re.I,
-        )[0].strip(" .,:;-")
-        accepted = _accept_company(candidate)
+        accepted = _accept_company(match.group(1))
         if accepted:
             return accepted
 
-    # "Agent name Priya from Acme Realty." / "calling from Acme Realty"
-    # Do NOT match bare "pickup from …" / "workshop from …".
     match = re.search(
-        r"(?:(?:agent\s*(?:name|named)\s*(?:(?:is)\b\s*|:\s*)?[^\n.,;]+?\s+)|(?:calling\s+))"
-        r"from\s+([^\n.,;]{2,50}?)(?=\s*[.,;]|$)",
+        r"(?:(?:agent\s*(?:name|named)\s*(?:(?:is)\b\s*|:\s*)?[^\n.,;]+?\s+)|(?:call(?:ing)?\s+))"
+        r"from\s+([^\n.,;]{2,80}?)(?=\s+(?:about|in\b|who\b|that\b|book\b)|[.,;]|$)",
         text,
         re.I,
     )
@@ -347,28 +508,82 @@ def extract_company_from_brief(brief: str) -> str:
         if accepted:
             return accepted
 
-    match = re.search(r"(?:telecaller|agent|caller)\s+for\s+(.+?)(?:\.|,|;|$)", text, re.I)
+    match = re.search(
+        r"(?:will call|call)\s+from\s+([^\n.,;]{2,50}?)(?=\s+(?:about|in\b|who\b)|[.,;]|$)",
+        text,
+        re.I,
+    )
+    if match:
+        accepted = _accept_company(match.group(1))
+        if accepted:
+            return accepted
+
+    match = re.search(
+        r"(?:telecaller|agent|caller)\s+for\s+(.+?)(?:\.|,|;|$)",
+        text,
+        re.I,
+    )
     if match:
         candidate = re.split(r"\bagent\s+name\b", match.group(1), flags=re.I)[0]
         accepted = _accept_company(candidate)
         if accepted:
             return accepted
+
+    match = re.search(
+        r"\bfor\s+([A-Z][A-Za-z0-9&]+(?:\s+[A-Za-z][A-Za-z0-9&]+){0,4})",
+        text,
+    )
+    if match:
+        accepted = _accept_company(match.group(1))
+        if accepted:
+            return accepted
+
+    match = re.search(
+        r"\b(?:from|at)\s+([A-Z][A-Za-z0-9&]+(?:\s+(?:Pvt\.?|Private|Limited|Ltd\.?|LLP|LLC)\b){0,3})",
+        text,
+    )
+    if match:
+        accepted = _accept_company(match.group(1))
+        if accepted:
+            return accepted
+
+    match = re.search(
+        r"\bfrom\s+([A-Za-z][A-Za-z0-9&]*(?:\s+[A-Za-z0-9&.]+){0,4}\s+"
+        r"(?:pvt\.?\s*ltd\.?|private\s+limited|ltd\.?|llp|llc))\b",
+        text,
+        re.I,
+    )
+    if match:
+        accepted = _accept_company(match.group(1))
+        if accepted:
+            return accepted
+
+    for camel in re.finditer(r"\b([A-Z][a-z]+[A-Z][A-Za-z0-9]*)\b", text):
+        accepted = _accept_company(camel.group(1))
+        if accepted:
+            return accepted
     return ""
 
 
-def infer_agent_name(brief: str) -> str:
+def infer_agent_name(brief: str, language: str = "te-IN") -> str:
     named = extract_agent_name_from_brief(brief)
-    if named:
+    if named and _looks_like_agent_name(named):
         return named
+    if is_native_english(language):
+        return "Alex"
     return "Priya"
 
 
 def work_scope_from_brief(brief: str, company: str) -> str:
-    text = " ".join((brief or "").split())
+    text = " ".join(_normalize_brief_identity_text(brief).split())
     text = re.sub(r"^ok\s+", "", text, flags=re.I)
+    text = re.sub(r"^ok so basically we need\s+", "", text, flags=re.I)
+    text = re.sub(r"\bsomeone like\s+[^\n.,;]{1,40}(?=\s+who|\s+from|[.,;]|$)", "", text, flags=re.I)
+    text = re.sub(r"\bthe\s+(?=agent\s*name)", "", text, flags=re.I)
+    text = re.sub(r"\bagent\s*:\s*[^\n.,;]{1,40}(?=[.,;]|$)", "", text, flags=re.I)
     text = re.sub(r"name\s+is\s+[^\n.,;]{1,40}(?=[,\s]|$)", "", text, flags=re.I)
     text = re.sub(
-        r"realt?ed\s+to\s+[^\n.,;]{2,60}(?=\s+working|\s+who|\s+create|,|\.)",
+        r"(?:related|realted)\s+to\s+[^\n.,;]{2,60}(?=\s+working|\s+who|\s+create|,|\.)",
         "",
         text,
         flags=re.I,
@@ -394,7 +609,20 @@ def work_scope_from_brief(brief: str, company: str) -> str:
     )
     text = re.sub(
         r"agent\s*name\s*(?:(?:is)\b\s*|:\s*)?[^\n.,;]{2,50}?"
-        r"(?=\s+(?:for|where)\b|[.,;]|$)[.,;]?\s*",
+        r"(?=\s+(?:from|for|where)\b|[.,;]|$)[.,;]?\s*",
+        "",
+        text,
+        flags=re.I,
+    )
+    text = re.sub(
+        r"\band\s+a\s+representative\s+of(?:\s+(?:the\s+)?(?:business|company|firm)\s+(?:named|called))?\s*",
+        "",
+        text,
+        flags=re.I,
+    )
+    text = re.sub(
+        r"\b(?:business|company|firm)\s+(?:named|called)\s+[^\n.,;]{2,60}?"
+        r"(?=\s+(?:where|who)|[.,;]|$)[.,;]?\s*",
         "",
         text,
         flags=re.I,
@@ -426,7 +654,11 @@ def work_scope_from_brief(brief: str, company: str) -> str:
     # After stripping company, clean leftover "for in Hyderabad" / "for ." debris.
     text = re.sub(r"\bfor\s+(?=in\b)", "", text, flags=re.I)
     text = re.sub(r"\bfor\s+(?=[.,;]|$)", "", text, flags=re.I)
+    text = re.sub(r"\bat\s+(?=[.,;]|$)", "", text, flags=re.I)
+    text = re.sub(r"\bfrom\s+(?=[.,;]|$)", "", text, flags=re.I)
+    text = re.sub(r"^(?:the\s+)?where\s+", "", text, flags=re.I)
     text = re.sub(r"\s+", " ", text).strip(" .,:;-")
+    text = re.sub(r"\s+([.,;])", r"\1", text)
     if not text:
         text = " ".join((brief or "").split())
     # Keep operational facts (fees/batches) — a 240-char chop was dropping prices mid-sentence.
@@ -453,12 +685,14 @@ def build_opening_line(
     company_name: str,
     work_scope: str,
     language: str = "te-IN",
+    direction: str = "outbound",
 ) -> str:
     return opening_line_for(
         language,
         agent_name=agent_name,
         company_name=company_name,
         work_scope=work_scope,
+        direction=direction,
     )
 
 
@@ -468,22 +702,33 @@ def resolve_script_identity(
     llm_name: str = "",
     llm_company: str = "",
     language: str = "te-IN",
+    direction: str | None = None,
 ) -> tuple[str, str, str, str]:
     """Return (agent_name, company_name, work_scope, opening_line). Never invent a company."""
+    direction = (direction or infer_call_direction(brief) or "outbound").strip().lower()
     brief_name = extract_agent_name_from_brief(brief)
     brief_company = extract_company_from_brief(brief)
-    name = _titlecase_name(_clean_identity_value(brief_name or llm_name)) or infer_agent_name(brief)
+    name = _titlecase_name(_clean_identity_value(brief_name or llm_name))
+    if name and not _looks_like_agent_name(name):
+        if not brief_company and _looks_like_company_name(name):
+            brief_company = name
+        name = ""
+    if not name:
+        name = infer_agent_name(brief, language)
     if brief_company:
         company = brief_company
     else:
         guessed = _clean_identity_value(llm_company)
         company = guessed if guessed and guessed.lower() in (brief or "").lower() else ""
+    if company and name.lower() == company.lower():
+        name = "Alex" if is_native_english(language) else "Priya"
     work = work_scope_from_brief(brief, company)
     opening = build_opening_line(
         agent_name=name,
         company_name=company,
         work_scope=work,
         language=language,
+        direction=direction,
     )
     return name, company, work, opening
 
@@ -668,6 +913,12 @@ def _sanitize_business_facts(brief: str, *, agent_name: str, company_name: str) 
             scope,
             flags=re.I,
         )
+        scope = re.sub(
+            rf"\bagent\s+{re.escape(agent_name)}\b",
+            "",
+            scope,
+            flags=re.I,
+        )
     scope = re.sub(r"\s+", " ", scope).strip(" .,:;-")
     return scope or "Use the business objective from the agent brief."
 
@@ -697,20 +948,37 @@ def _format_business_offer(
         return "Use the business objective from the agent brief."
     if scope[0].islower():
         scope = scope[0].upper() + scope[1:]
+    if company_name and company_name.lower() not in scope[:160].lower():
+        scope = f"{company_name}. {scope}"
     if not scope.endswith("."):
         scope += "."
     return scope[:480]
 
 
-def _role_on_call_section(role: str) -> str:
+def _role_on_call_section(role: str, *, direction: str = "outbound", language: str = "te-IN") -> str:
+    inbound = str(direction or "").strip().lower() in ("inbound", "incoming")
+    native_en = is_native_english(language)
     if role in ("sales", "lead_qualification"):
+        heading = "Inbound sales for this offer." if inbound else "Outbound sales for this offer."
+        if native_en:
+            next_step = "email, text, or a callback"
+            discover = "one useful missing fact from the brief"
+            collect = "callback or email preference"
+        elif inbound:
+            next_step = "a callback or WhatsApp details"
+            discover = "one discovery question at a time (location, timeline, budget if in the brief)"
+            collect = "visit/callback preference"
+        else:
+            next_step = "a site visit, callback, or WhatsApp details"
+            discover = "one discovery question at a time (location, timeline, budget if in the brief)"
+            collect = "visit/callback preference"
         return (
             "--- YOUR ROLE ON THIS CALL ---\n"
-            "Outbound sales for this offer. Answer questions first using COMPANY & OFFER only.\n"
+            f"{heading} Answer questions first using COMPANY & OFFER only.\n"
             "Speak in short, decisive, professional beats — only what this moment needs, then stop.\n"
-            "When they have time: one discovery question at a time (location, timeline, budget if in the brief).\n"
-            "Collect missing lead details one at a time: name, contact, visit/callback preference — brief ack only.\n"
-            "Guide interested callers toward a site visit, callback, or WhatsApp details — never pressure.\n"
+            f"When they have time: {discover}.\n"
+            f"Collect missing lead details one at a time: name, contact, {collect} — brief ack only.\n"
+            f"Guide interested callers toward {next_step} — never pressure.\n"
             "When next step is agreed or they decline: confirm, thank, farewell, and close — no extra pitch.\n"
             "If busy or not interested: offer callback or close politely."
         )
@@ -723,6 +991,29 @@ def _role_on_call_section(role: str) -> str:
         return (
             "--- YOUR ROLE ON THIS CALL ---\n"
             "Resolve the caller's issue using COMPANY & OFFER facts. Do not sell unless the brief requires it."
+        )
+    if role == "recruitment":
+        return (
+            "--- YOUR ROLE ON THIS CALL ---\n"
+            "Screen or inform candidates using COMPANY & OFFER facts. Never invent salary or benefits.\n"
+            "If they are a fit, agree a next step — do not sell unrelated products."
+        )
+    if role == "education":
+        return (
+            "--- YOUR ROLE ON THIS CALL ---\n"
+            "Counsel using COMPANY & OFFER facts (fees, batches, trial class). Do not invent prices.\n"
+            "Offer trial class, enrollment, or callback — no hard sell."
+        )
+    if role == "follow_up":
+        return (
+            "--- YOUR ROLE ON THIS CALL ---\n"
+            "Follow up on the pending request from COMPANY & OFFER. Do not restart a sales pitch.\n"
+            "Confirm status, collect a callback if needed, then close."
+        )
+    if role == "information":
+        return (
+            "--- YOUR ROLE ON THIS CALL ---\n"
+            "Answer from COMPANY & OFFER only. Do not convert or qualify for a sale."
         )
     return (
         "--- YOUR ROLE ON THIS CALL ---\n"
@@ -739,9 +1030,10 @@ def _user_visible_script(
     opening_line: str,
     role: str = "other",
     language: str = "te-IN",
+    direction: str = "outbound",
 ) -> str:
     """Business script shown in Test Studio — identity, offer, opening, role. No platform rules."""
-    _ = language
+    inbound = str(direction or "").strip().lower() in ("inbound", "incoming")
     business = _format_business_offer(
         brief,
         agent_name=agent_name,
@@ -758,31 +1050,71 @@ def _user_visible_script(
             f"You are {agent_name}. "
             f"Always speak as {agent_name} — the only speaker on this call."
         )
+    opening_lead = (
+        "When you answer, say once:"
+        if inbound
+        else "After the callee speaks, say once:"
+    )
     return (
         f"--- AGENT IDENTITY ---\n{identity}\n\n"
         f"--- COMPANY & OFFER ---\n{business}\n\n"
         f"--- CANONICAL OPENING ---\n"
-        f"After the callee speaks, say once:\n{opening_line}\n\n"
-        f"{_role_on_call_section(role)}"
+        f"{opening_lead}\n{opening_line}\n\n"
+        f"{_role_on_call_section(role, direction=direction, language=language)}"
     )
 
 
-def _platform_call_rules(*, agent_name: str, role: str = "other") -> str:
+def _platform_call_rules(
+    *,
+    agent_name: str,
+    role: str = "other",
+    direction: str = "outbound",
+    language: str = "te-IN",
+) -> str:
     """Platform call discipline — compiled into brain only, not shown as the user script."""
+    inbound = str(direction or "").strip().lower() in ("inbound", "incoming")
+    native = is_native_english(language)
     lead_capture = ""
-    if role in ("sales", "lead_qualification", "appointment", "follow_up"):
+    if role in ("sales", "lead_qualification"):
+        next_pref = (
+            "callback or email preference"
+            if native
+            else "visit/callback preference"
+        )
         lead_capture = (
             f"--- LEAD CAPTURE ---\n"
-            f"Collect only missing fields, one per turn: interest → name → contact → visit/callback preference.\n"
-            f"Brief ack when they share details ('Noted'). Never read phone digits back.\n"
+            f"Collect only missing fields, one per turn: interest → name → contact → {next_pref}.\n"
+            f"Brief ack when they share details ('Got it' / 'Noted'). Never read phone digits back.\n"
             f"Stop qualifying once enough is captured for the agreed next step.\n\n"
         )
+    elif role in ("appointment", "follow_up"):
+        lead_capture = (
+            f"--- LEAD CAPTURE ---\n"
+            f"Collect only missing fields, one per turn: name → contact → callback preference.\n"
+            f"Brief ack when they share details ('Got it' / 'Noted'). Never read phone digits back.\n\n"
+        )
+    if inbound:
+        workflow = (
+            f"--- INBOUND WORKFLOW ---\n"
+            f"1. Answer promptly with CANONICAL OPENING — name, company, offer to help.\n"
+            f"2. Listen to their issue or request first.\n"
+            f"3. Resolve using COMPANY & OFFER. If you cannot: one boundary, then a next step.\n"
+            f"4. When resolved or they are done: thank them and close.\n\n"
+        )
+        first_turn_guard = (
+            "Follow inbound CANONICAL OPENING — do not ask if they have a moment on a call they placed.\n"
+        )
+    else:
+        workflow = (
+            f"--- OUTBOUND WORKFLOW ---\n"
+            f"1. Wait for the callee to speak first (hello, yes, who is this).\n"
+            f"2. One intro using CANONICAL OPENING — then listen.\n"
+            f"3. If they have time: one discovery question from COMPANY & OFFER.\n"
+            f"4. If busy: offer callback. If not interested: thank them and close.\n\n"
+        )
+        first_turn_guard = "Never use help-desk language on the first turn.\n"
     return (
-        f"--- OUTBOUND WORKFLOW ---\n"
-        f"1. Wait for the callee to speak first (hello, yes, who is this).\n"
-        f"2. One intro using CANONICAL OPENING — then listen.\n"
-        f"3. If they have time: one discovery question from COMPANY & OFFER.\n"
-        f"4. If busy: offer callback. If not interested: thank them and close.\n\n"
+        f"{workflow}"
         f"--- TURN DISCIPLINE ---\n"
         f"Professional and concise: one or two short sentences per turn, then stop and listen.\n"
         f"Answer their last point first. No monologues, repeated pitch, or brochure dumps.\n"
@@ -797,7 +1129,7 @@ def _platform_call_rules(*, agent_name: str, role: str = "other") -> str:
         f"Never invent prices, availability, or policies.\n"
         f"Never greet twice in one call.\n"
         f"Never claim to be anyone except {agent_name}.\n"
-        f"Never use help-desk language on the first turn.\n"
+        f"{first_turn_guard}"
     )
 
 
@@ -810,6 +1142,7 @@ def _structured_business_script(
     opening_line: str,
     language: str = "te-IN",
     role: str = "other",
+    direction: str = "outbound",
 ) -> str:
     """User-visible business script (legacy name — prefer _user_visible_script)."""
     return _user_visible_script(
@@ -820,6 +1153,7 @@ def _structured_business_script(
         opening_line=opening_line,
         role=role,
         language=language,
+        direction=direction,
     )
 
 
@@ -832,6 +1166,7 @@ def _simple_business_script(
     opening_line: str,
     language: str = "te-IN",
     role: str = "other",
+    direction: str = "outbound",
 ) -> str:
     """Minimal user-visible script from the brief."""
     return _user_visible_script(
@@ -842,6 +1177,7 @@ def _simple_business_script(
         opening_line=opening_line,
         role=role,
         language=language,
+        direction=direction,
     )
 
 
@@ -1180,8 +1516,9 @@ def reassemble_brain_from_script(
 ) -> tuple[str, str]:
     """Rebuild cached brain from an existing user script (no GPT)."""
     platform = (platform_call_rules or "").strip() or _platform_call_rules(
-        agent_name=agent_name or "Priya",
+        agent_name=agent_name or ("Alex" if is_native_english(language) else "Priya"),
         role=role,
+        language=language,
     )
     return _ensure_cache_floor(
         script=script,
@@ -1236,9 +1573,11 @@ async def compile_agent_from_brief(
     llm_role = ""
     model = "simple_business_v1"
 
+    direction = infer_call_direction(cleaned)
     agent_name, company_name, work_scope, opening_line = resolve_script_identity(
         cleaned,
         language=lang,
+        direction=direction,
     )
     if not role_summary:
         role_summary = work_scope
@@ -1273,6 +1612,7 @@ async def compile_agent_from_brief(
                 llm_name=llm_name,
                 llm_company=llm_company,
                 language=lang,
+                direction=direction,
             )
         else:
             script = ""
@@ -1319,10 +1659,13 @@ async def compile_agent_from_brief(
             opening_line=opening_line,
             language=lang,
             role=role,
+            direction=direction,
         )
         validation_issues = []
 
-    platform_rules = _platform_call_rules(agent_name=agent_name, role=role)
+    platform_rules = _platform_call_rules(
+        agent_name=agent_name, role=role, direction=direction, language=lang
+    )
 
     if validation_issues and use_llm and llm_payload:
         from server.utils.logger import logger
@@ -1372,7 +1715,9 @@ async def compile_agent_from_brief(
             role=role,
         )
         model = "legacy_deterministic_validation_fallback_v1"
-        platform_rules = _platform_call_rules(agent_name=agent_name, role=role)
+        platform_rules = _platform_call_rules(
+            agent_name=agent_name, role=role, direction=direction, language=lang
+        )
 
     script, compiled = _ensure_cache_floor(
         script=script,
@@ -1394,8 +1739,11 @@ async def compile_agent_from_brief(
             opening_line=opening_line,
             language=lang,
             role=role,
+            direction=direction,
         )
-        platform_rules = _platform_call_rules(agent_name=agent_name, role=role)
+        platform_rules = _platform_call_rules(
+            agent_name=agent_name, role=role, direction=direction, language=lang
+        )
         script, compiled = _ensure_cache_floor(
             script=script,
             language=lang,

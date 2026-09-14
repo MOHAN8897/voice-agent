@@ -5,13 +5,16 @@ const ALIASES: Record<string, string> = {
   "te-in": "te-IN",
   en: "en-IN",
   "en-in": "en-IN",
-  "en-us": "en-IN",
-  "en-gb": "en-IN",
+  "en-us": "en-US",
+  "en-gb": "en-US",
+  "en-au": "en-US",
+  "en-ca": "en-US",
+  "en-uk": "en-US",
   hi: "hi-IN",
   "hi-in": "hi-IN",
 };
 
-const SUPPORTED = new Set(["te-IN", "en-IN", "hi-IN"]);
+const SUPPORTED = new Set(["te-IN", "en-IN", "en-US", "hi-IN"]);
 
 export function normalizeLanguageCode(code: string | null | undefined): string {
   const raw = String(code || "").trim();

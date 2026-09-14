@@ -161,8 +161,18 @@ class CallLedger:
         pipeline = meta.get("pipeline") or (usage or {}).get("pipeline")
         if pipeline:
             out["pipeline"] = pipeline
-        for key in ("caller_id", "end_reason", "compiled_brain_version", "combination_id", "campaign_id"):
-            if meta.get(key):
+        for key in (
+            "caller_id",
+            "end_reason",
+            "hangup_reason",
+            "hangup_playback_wait_ms",
+            "hangup_trail_ms",
+            "callback_close_phase",
+            "compiled_brain_version",
+            "combination_id",
+            "campaign_id",
+        ):
+            if meta.get(key) not in (None, ""):
                 out[key] = meta[key]
         stack = meta.get("resolved_stack")
         if isinstance(stack, dict) and stack:

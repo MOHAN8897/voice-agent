@@ -11,9 +11,11 @@ from collections.abc import Awaitable, Callable
 from typing import Any
 
 from server.call.end_call_validate import (
+    caller_asked_to_record_details,
     caller_firm_refusal,
     caller_requested_callback,
     caller_requested_hangup,
+    looks_like_bare_name,
     validate_end_call,
 )
 from server.realtime.end_call_tool import parse_end_call_tool
@@ -29,6 +31,7 @@ from server.services.pstn_debug import log_pstn
 from server.services.pstn_media_flow import pstn_media_flow
 from server.services.pstn_text_chunker import extract_opening_greeting
 from server.services.pstn_voice_core import (
+    PHASE_CLOSING,
     PHASE_ENDED,
     PHASE_INTRO,
     PHASE_LISTENING,
@@ -203,6 +206,7 @@ class PstnRealtimeVoiceLoop:
         self._callback_request_text = ""
         self._callback_collecting_field: str | None = None
         self._callback_details: dict[str, str] = {}
+        self._callback_close_phase = "idle"
         self._hangup_started = False
         self._stt = None
         self._live_model = ""
@@ -249,6 +253,8 @@ class PstnRealtimeVoiceLoop:
     def _set_phase(self, phase: str) -> None:
         if self._phase == PHASE_ENDED:
             return
+        if self._phase == PHASE_CLOSING and phase not in (PHASE_CLOSING, PHASE_ENDED):
+            return
         self._phase = phase
 
     def _set_tts_active(self, active: bool) -> None:
@@ -257,6 +263,12 @@ class PstnRealtimeVoiceLoop:
     def _agent_audio_playing(self) -> bool:
         if self._tts_active:
             return True
+        if self.playback is not None and hasattr(self.playback, "is_active"):
+            try:
+                if self.playback.is_active():
+                    return True
+            except Exception:
+                pass
         if self.is_agent_audio_active:
             try:
                 return bool(self.is_agent_audio_active())
@@ -489,6 +501,8 @@ class PstnRealtimeVoiceLoop:
             if 7 <= len(digits) <= 15:
                 self._callback_details["phone"] = digits
                 self._callback_collecting_field = None
+            elif looks_like_bare_name(value):
+                self._callback_details["name"] = value.strip(" .,!?:;")
         elif field == "timing":
             self._callback_details["timing"] = value[:120]
             self._callback_collecting_field = None
@@ -504,77 +518,46 @@ class PstnRealtimeVoiceLoop:
         if 7 <= len(digits) <= 15:
             self._callback_details["phone"] = digits
 
-    def _callback_missing_detail(self) -> str | None:
-        if not self._callback_request_text:
-            return None
-        facts: dict[str, Any] = {}
-        meta: dict[str, Any] = {}
+    def _sync_callback_close_state(self):
+        from server.call.callback_close import advance_callback_close
+        from server.call.call_context import get as get_ctx
+        from server.call.memory_manager import memory_manager
+
+        ctx = get_ctx(self.call_id) if self.call_id else None
+        snapshot = None
         if self.call_id:
             try:
-                from server.call.call_ledger import call_ledger
-                from server.call.memory_manager import memory_manager
-
                 snapshot = memory_manager.get_snapshot(self.call_id)
-                facts = snapshot.get("facts") if isinstance(snapshot.get("facts"), dict) else {}
-                meta = call_ledger.read_meta(self.call_id)
             except Exception:
-                facts = {}
-                meta = {}
-        phone = (
-            self._callback_details.get("phone")
-            or facts.get("phone")
-            or facts.get("callback_phone")
-            or facts.get("phone_number")
-            or facts.get("contact")
-            or meta.get("caller_id")
+                snapshot = None
+        state = advance_callback_close(
+            ctx,
+            self._user_partial,
+            snapshot,
+            extra_slots=self._callback_details,
+            request_text=self._callback_request_text,
         )
-        name = (
-            self._callback_details.get("name")
-            or facts.get("name")
-            or facts.get("caller_name")
-            or facts.get("customer_name")
-            or facts.get("full_name")
-        )
-        timing = self._callback_details.get("timing")
-        timing_match = re.search(
-            r"\b(tomorrow|today|tonight|morning|afternoon|evening|"
-            r"monday|tuesday|wednesday|thursday|friday|saturday|sunday|"
-            r"at\s+\d{1,2}(?::\d{2})?)\b",
-            self._callback_request_text,
-            re.IGNORECASE,
-        )
-        if not timing and timing_match:
-            timing = timing_match.group(0)
-            self._callback_details["timing"] = timing
-        if not phone:
-            return "phone"
-        if not name:
-            return "name"
-        if not timing:
-            return "timing"
-        return None
+        if caller_requested_callback(self._user_partial):
+            self._callback_request_text = self._user_partial
+        elif ctx and ctx.callback_request_text:
+            self._callback_request_text = ctx.callback_request_text
+        self._callback_close_phase = state.phase
+        self._callback_collecting_field = state.missing
+        if state.name:
+            self._callback_details["name"] = state.name
+        if state.phone:
+            self._callback_details["phone"] = state.phone
+        if state.when:
+            self._callback_details["timing"] = state.when
+        return state
+
+    def _callback_missing_detail(self) -> str | None:
+        return self._sync_callback_close_state().missing
 
     def _callback_followup_instruction(self, field: str) -> str:
-        language = self._resolve_language().lower()
-        prompts = {
-            "phone": {
-                "en": "Acknowledge the callback request warmly, then ask only for the best phone number. Do not say goodbye.",
-                "te": "Callback request ni warmly acknowledge chesi, best phone number మాత్రమే అడుగు. Goodbye చెప్పవద్దు.",
-                "hi": "Callback request ko warmly acknowledge karke sirf best phone number poochho. Goodbye mat kaho.",
-            },
-            "name": {
-                "en": "Say: Certainly, I can arrange that. May I have your name before I let you go?",
-                "te": "Say: తప్పకుండా, callback arrange చేస్తాను. మీరు వెళ్లే ముందు మీ పేరు చెప్పగలరా?",
-                "hi": "Say: Zaroor, main callback arrange kar deta hoon. Jaane se pehle aapka naam bata denge?",
-            },
-            "timing": {
-                "en": "Acknowledge briefly, then ask only what day or time works best for the callback. Do not say goodbye.",
-                "te": "Brief ga acknowledge chesi, callback కి ఏ రోజు లేదా సమయం బాగుంటుందో మాత్రమే అడుగు. Goodbye చెప్పవద్దు.",
-                "hi": "Briefly acknowledge karke sirf callback ka din ya samay poochho. Goodbye mat kaho.",
-            },
-        }
-        lang = "te" if language.startswith("te") else "hi" if language.startswith("hi") else "en"
-        return prompts[field][lang]
+        from server.call.callback_close import spoken_collect_instruction
+
+        return spoken_collect_instruction(field, self._resolve_language())
 
     def _persist_callback_details(self) -> None:
         if not self.call_id or not self._callback_request_text:
@@ -598,7 +581,11 @@ class PstnRealtimeVoiceLoop:
                     self._callback_details.get("phone", "")
                     or facts.get("phone", "")
                     or facts.get("callback_phone", "")
-                    or meta.get("caller_id", "")
+                    or (
+                        ""
+                        if caller_asked_to_record_details(self._callback_request_text)
+                        else meta.get("caller_id", "")
+                    )
                 ),
             }
             operations = [
@@ -622,11 +609,64 @@ class PstnRealtimeVoiceLoop:
                 error=str(exc)[:160],
             )
 
+    async def _maybe_resume_callback_close(self) -> None:
+        """If the caller asked to leave details / be contacted, keep collecting then hang up.
+
+        The model often keeps pitching instead of calling end_call. Drive the close here.
+        """
+        if not self._callback_request_text:
+            return
+        if self._pending_end_call or self._pending_followup_instruction:
+            return
+        if self._farewell_response_active or self._hangup_started:
+            return
+        if caller_requested_hangup(self._user_partial) or caller_firm_refusal(self._user_partial):
+            return
+        state = self._sync_callback_close_state()
+        spoken = self._assistant_text or ""
+        asked = {
+            "name": re.compile(
+                r"\b(your name|may i have your name|name please|మీ పేరు|aapka naam)\b",
+                re.I,
+            ),
+            "phone": re.compile(
+                r"\b(phone(?: number)?|mobile number|best number|నంబర్|नंबर)\b",
+                re.I,
+            ),
+        }
+        if state.missing:
+            self._callback_collecting_field = state.missing
+            if asked.get(state.missing) and asked[state.missing].search(spoken):
+                return
+            self._pending_followup_instruction = self._callback_followup_instruction(state.missing)
+            log_pstn("end_call.callback_prompted", call_id=self.call_id, missing=state.missing)
+            return
+        from server.call.hangup_judge import agent_spoke_closing
+
+        if agent_spoke_closing(spoken):
+            accepted = await self._gate_end_call_payload(
+                {
+                    "should_end": True,
+                    "reason": "goal_complete",
+                    "farewell": spoken,
+                }
+            )
+            if accepted:
+                self._pending_end_call = accepted
+                self._pending_farewell_text = str(accepted.get("farewell") or "").strip()
+            return
+        self._pending_followup_instruction = (
+            "The caller already asked to record their details and be contacted later. "
+            "Confirm the callback in one short sentence, thank them, say goodbye, "
+            "and call end_call with should_end true and reason goal_complete. Do not pitch."
+        )
+
     async def _gate_end_call_payload(self, parsed: dict[str, Any]) -> dict[str, Any] | None:
         if not parsed.get("should_end"):
             return None
         if caller_requested_callback(self._user_partial):
             self._callback_request_text = self._user_partial
+        state = self._sync_callback_close_state()
         callback_close = bool(
             self._callback_request_text
             and not caller_requested_hangup(self._user_partial)
@@ -635,14 +675,13 @@ class PstnRealtimeVoiceLoop:
         if callback_close:
             parsed = dict(parsed)
             parsed["reason"] = "goal_complete"
-            missing = self._callback_missing_detail()
-            if missing:
-                self._callback_collecting_field = missing
-                self._pending_followup_instruction = self._callback_followup_instruction(missing)
+            if state.missing:
+                self._callback_collecting_field = state.missing
+                self._pending_followup_instruction = self._callback_followup_instruction(state.missing)
                 log_pstn(
                     "end_call.callback_deferred",
                     call_id=self.call_id,
-                    missing=missing,
+                    missing=state.missing,
                 )
                 return None
             self._persist_callback_details()
@@ -671,6 +710,7 @@ class PstnRealtimeVoiceLoop:
             memory_snapshot=snapshot,
             call_end_policy=ctx.call_end_policy if ctx else None,
             spoken_text=self._assistant_text,
+            callback_close_phase=state.phase,
         )
         if not decision.accepted:
             log_pstn(
@@ -728,6 +768,7 @@ class PstnRealtimeVoiceLoop:
                 if caller_requested_callback(text):
                     self._callback_request_text = text
                 self._capture_callback_detail(text)
+                self._sync_callback_close_state()
                 if self.call_id:
                     from server.call.caller_detail_capture import caller_detail_memory_operations
                     from server.call.call_ledger import call_ledger
@@ -875,6 +916,8 @@ class PstnRealtimeVoiceLoop:
                 from server.call.call_ledger import call_ledger
 
                 await call_ledger.append_assistant_turn(self.call_id, self._assistant_text)
+            if kind == "response_done":
+                await self._maybe_resume_callback_close()
             usage = event.get("usage") if isinstance(event.get("usage"), dict) else {}
             if usage and self.call_id:
                 pstn_media_flow.emit(
@@ -1043,6 +1086,35 @@ class PstnRealtimeVoiceLoop:
             self._wire_frames_out += 1
             await self.on_agent_wire(chunk)
 
+    async def _flush_agent_pcm_to_wire(self) -> None:
+        """Send leftover farewell samples so hangup does not drop the last syllable."""
+        leftover = b""
+        try:
+            leftover = self._out_resampler.flush()
+        except Exception:
+            leftover = b""
+        if leftover:
+            if self.current_output_codec == "PCMU":
+                try:
+                    leftover = pcm16_to_mulaw(leftover, sample_rate=self.sample_rate)
+                except Exception:
+                    leftover = b""
+            if leftover:
+                self._out_pcm.extend(leftover)
+        frame = self._frame_bytes()
+        if self._out_pcm and len(self._out_pcm) < frame:
+            self._out_pcm.extend(b"\x00" * (frame - len(self._out_pcm)))
+        while len(self._out_pcm) >= frame:
+            chunk = bytes(self._out_pcm[:frame])
+            del self._out_pcm[:frame]
+            if self.call_id:
+                self._archive.enqueue(self.call_id, "agent", chunk)
+            self._wire_frames_out += 1
+            try:
+                await self.on_agent_wire(chunk)
+            except Exception:
+                break
+
     async def _drain_agent_archive(self) -> None:
         leftover = b""
         try:
@@ -1065,43 +1137,26 @@ class PstnRealtimeVoiceLoop:
         except Exception:
             pass
 
-    async def _wait_for_playback_idle(self, timeout_sec: float = 10.0) -> None:
-        """Do not disconnect while the provider still has farewell audio queued."""
-        deadline = time.monotonic() + timeout_sec
-        while time.monotonic() < deadline:
-            active = False
-            if self.is_agent_audio_active:
-                try:
-                    active = bool(self.is_agent_audio_active())
-                except Exception:
-                    active = False
-            if not active and self.playback is not None and hasattr(self.playback, "is_active"):
-                try:
-                    active = bool(self.playback.is_active())
-                except Exception:
-                    active = False
-            if not active:
-                return
-            await asyncio.sleep(0.05)
-        log_pstn("hangup.playback_wait_timeout", call_id=self.call_id)
-
     async def _finish_hangup(self) -> None:
         if self._hangup_started or self._phase == PHASE_ENDED:
             return
         self._hangup_started = True
-        await self._wait_for_playback_idle()
-        self._set_phase(PHASE_ENDED)
-        await self._drain_agent_archive()
-        if self._on_remote_hangup:
-            try:
-                await self._on_remote_hangup()
-            except Exception as exc:
-                log_pstn("hangup.provider.failed", call_id=self.call_id, error=str(exc)[:200])
-        if self.call_id:
-            from server.call.call_lifecycle_service import call_lifecycle_service
+        self._set_tts_active(False)
+        from server.call.close_call_executor import execute_agent_close
 
-            reason = str((self._pending_end_call or {}).get("reason") or "agent_hangup")
-            await call_lifecycle_service.end(self.call_id, reason=reason)
+        reason = str((self._pending_end_call or {}).get("reason") or "agent_hangup")
+        spoke = bool(self._response_had_audio or self._pending_farewell_text)
+        await execute_agent_close(
+            call_id=self.call_id,
+            reason=reason,
+            spoke_farewell=spoke,
+            flush_audio=self._flush_agent_pcm_to_wire,
+            is_playing=self._agent_audio_playing,
+            on_closing=lambda: self._set_phase(PHASE_CLOSING),
+            drain_archive=self._drain_agent_archive,
+            on_provider_hangup=self._on_remote_hangup,
+            on_ended=lambda: self._set_phase(PHASE_ENDED),
+        )
 
     async def speak(
         self,

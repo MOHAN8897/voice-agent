@@ -96,7 +96,7 @@ type MediaFlow = {
   };
 };
 
-const FILTERS = ["All", "Inbound", "STT", "LLM", "TTS", "Conversion", "Queue", "Outbound", "Errors"];
+const FILTERS = ["All", "Inbound", "STT", "LLM", "TTS", "Conversion", "Queue", "Outbound", "Hangup", "Errors"];
 const STAGE_FILTER: Record<string, string[]> = {
   Inbound: ["inbound_audio"],
   STT: ["stt_audio", "stt_final"],
@@ -105,6 +105,7 @@ const STAGE_FILTER: Record<string, string[]> = {
   Conversion: ["converter"],
   Queue: ["outbound_queued", "queue_cleared", "tts_text_queued"],
   Outbound: ["outbound_sent"],
+  Hangup: ["hangup_closing", "hangup_complete", "fsm_phase"],
 };
 
 function latestDetail(events: FlowEvent[] | undefined, stages: string[]) {

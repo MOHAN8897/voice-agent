@@ -151,6 +151,7 @@ async def test_run_turn_overlaps_tts_open_with_llm(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_run_turn_agent_hangup_calls_lifecycle(monkeypatch):
+    monkeypatch.setattr("server.call.natural_hangup.HANGUP_TRAIL_SILENCE_SEC", 0.01)
     ended = {}
     hung_up = {}
 
@@ -188,12 +189,13 @@ async def test_run_turn_agent_hangup_calls_lifecycle(monkeypatch):
     monkeypatch.setattr(lifecycle, "end", fake_end)
 
     await loop._run_turn("ok bye hang up")
-    assert ended == {"call_id": "c-hangup", "reason": "agent_hangup"}
+    assert ended == {"call_id": "c-hangup", "reason": "goodbye"}
     assert hung_up.get("ok") is True
 
 
 @pytest.mark.asyncio
 async def test_run_turn_firm_refusal_hangup(monkeypatch):
+    monkeypatch.setattr("server.call.natural_hangup.HANGUP_TRAIL_SILENCE_SEC", 0.01)
     ended = {}
     hung_up = {}
 
@@ -234,12 +236,13 @@ async def test_run_turn_firm_refusal_hangup(monkeypatch):
     monkeypatch.setattr(lifecycle, "end", fake_end)
 
     await loop._run_turn("I'm not interested")
-    assert ended == {"call_id": "c-refuse", "reason": "agent_hangup"}
+    assert ended == {"call_id": "c-refuse", "reason": "firm_refusal"}
     assert hung_up.get("ok") is True
 
 
 @pytest.mark.asyncio
 async def test_run_turn_goal_complete_hangup(monkeypatch):
+    monkeypatch.setattr("server.call.natural_hangup.HANGUP_TRAIL_SILENCE_SEC", 0.01)
     ended = {}
     hung_up = {}
     spoken = []
@@ -283,7 +286,7 @@ async def test_run_turn_goal_complete_hangup(monkeypatch):
     monkeypatch.setattr(lifecycle, "end", fake_end)
 
     await loop._run_turn("Yes, please have the team call me back")
-    assert ended == {"call_id": "c-goal", "reason": "agent_hangup"}
+    assert ended == {"call_id": "c-goal", "reason": "goal_complete"}
     assert hung_up.get("ok") is True
     assert spoken and any("team will contact" in t.lower() for t in spoken[0].texts)
 

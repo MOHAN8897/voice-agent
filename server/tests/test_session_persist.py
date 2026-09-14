@@ -30,6 +30,33 @@ def test_instructions_survive_store_reload():
     c.delete("/api/instructions", params={"sessionId": sid})
 
 
+def test_saved_agent_script_survives_ttl_and_memory_reload():
+    from server.agent import instruction_store as store_mod
+
+    sid = "persist-test-agent-script"
+    instruction_store.save_agent_script(
+        sid,
+        "Agent name Sarah for Northwind Labs. Sell the SaaS.",
+        "--- AGENT IDENTITY ---\nYou are Sarah.\n",
+        None,
+        compiled_brain="--- CALLING SCRIPT ---\nYou are Sarah.\n",
+        optimizer_report={"detected_role": "sales"},
+        source_checksum="abc",
+        language="en-US",
+    )
+    old = instruction_store._store[sid]["updatedAt"]
+    instruction_store._store[sid]["updatedAt"] = old - (store_mod._TTL_SECONDS * 3)
+    meta = instruction_store.get_with_meta(sid)
+    assert meta.get("agentScript")
+    assert "Sarah" in (meta.get("agentScript") or "")
+
+    instruction_store._store.clear()
+    instruction_store._hydrate_from_disk()
+    meta2 = instruction_store.get_with_meta(sid)
+    assert "Sarah" in (meta2.get("agentScript") or "")
+    instruction_store.clear(sid)
+
+
 def test_runtime_survive_store_reload():
     c = TestClient(app_mod.app)
     sid = "persist-test-runtime"

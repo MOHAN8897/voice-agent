@@ -52,14 +52,17 @@ def test_alembic_revision_chain():
     from pathlib import Path
 
     versions = Path(__file__).resolve().parents[1] / "db" / "migrations" / "versions"
-    p1 = versions / "001_phase1_initial.py"
-    p2 = versions / "002_phase2_brains.py"
-    p3 = versions / "003_phase3_calls.py"
-    for path, rev, down in (
-        (p1, "001_phase1", None),
-        (p2, "002_phase2_brains", "001_phase1"),
-        (p3, "003_phase3_calls", "002_phase2_brains"),
-    ):
+    chain = (
+        ("001_phase1_initial.py", "001_phase1", None),
+        ("002_phase2_brains.py", "002_phase2_brains", "001_phase1"),
+        ("003_phase3_calls.py", "003_phase3_calls", "002_phase2_brains"),
+        ("004_phase5_platform.py", "004_phase5", "003_phase3_calls"),
+        ("005_tier_stack_payload.py", "005_tier_stack", "004_phase5"),
+        ("006_dev_telephony.py", "006_dev_telephony", "005_tier_stack"),
+        ("007_saved_instructions.py", "007_saved_instructions", "006_dev_telephony"),
+    )
+    for filename, rev, down in chain:
+        path = versions / filename
         spec = importlib.util.spec_from_file_location(path.stem, path)
         assert spec and spec.loader
         mod = importlib.util.module_from_spec(spec)

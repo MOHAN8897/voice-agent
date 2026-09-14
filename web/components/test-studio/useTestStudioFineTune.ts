@@ -55,6 +55,7 @@ export const CALL_END_REASONS: { id: string; label: string }[] = [
 export const DEFAULT_CALL_END_FAREWELL: Record<string, string> = {
   "te-IN": "Sare, time ichinanduku thanks. Good day.",
   "en-IN": "Thank you for your time. Goodbye.",
+  "en-US": "Thank you for your time. Goodbye.",
   "hi-IN": "Time dene ke liye dhanyavaad. Alvida.",
 };
 
@@ -142,6 +143,7 @@ function spokenStyleMatchesLanguage(style: string, language: string): boolean {
   if (!s) return true;
   const lang = (language || "").toLowerCase();
   if (lang.startsWith("en") && (s.includes("spoken telugu") || s.includes("tanglish"))) return false;
+  if (lang === "en-us" && s.includes("spoken indian english")) return false;
   if (lang.startsWith("hi") && s.includes("spoken telugu")) return false;
   if (lang.startsWith("te") && s.includes("spoken indian english") && !s.includes("telugu")) return false;
   return true;

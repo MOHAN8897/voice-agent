@@ -2,13 +2,21 @@
 
 import { cn } from "@/lib/cn";
 
-export type PstnLifecycleStage = "idle" | "placed" | "ringing" | "lifted" | "ongoing" | "hangup";
+export type PstnLifecycleStage =
+  | "idle"
+  | "placed"
+  | "ringing"
+  | "lifted"
+  | "ongoing"
+  | "closing"
+  | "hangup";
 
 const STEPS: { id: PstnLifecycleStage; label: string; hint: string }[] = [
   { id: "placed", label: "Call placed", hint: "Outbound dial accepted by provider" },
   { id: "ringing", label: "Ringing", hint: "Callee phone is ringing" },
   { id: "lifted", label: "Call lifted", hint: "Callee answered — media stream starting" },
   { id: "ongoing", label: "In progress", hint: "Agent and caller are connected" },
+  { id: "closing", label: "Closing", hint: "Playing farewell — short pause, then disconnect" },
   { id: "hangup", label: "Hangup", hint: "Call ended — finalizing recording and cost" },
 ];
 
@@ -21,6 +29,7 @@ export function mapProviderStatus(status?: string, hasInternal?: boolean): PstnL
   const st = (status || "").toLowerCase();
   if (!st || st === "idle") return "idle";
   if (["completed", "failed", "busy", "no-answer", "canceled", "hangup"].includes(st)) return "hangup";
+  if (st === "closing" || st === "hangup_closing") return "closing";
   if (hasInternal || st === "streaming" || st === "in-progress" || st === "active") return "ongoing";
   if (st === "answered") return "lifted";
   if (st === "ringing" || st === "initiated") return st === "ringing" ? "ringing" : "placed";
@@ -61,14 +70,16 @@ export function PstnCallStatusTimeline({
               "rounded-full px-3 py-1 font-mono text-[10px] uppercase tracking-wider",
               stage === "hangup"
                 ? "bg-surface-raised text-text-muted"
-                : "bg-accent/15 text-accent animate-pulse"
+                : stage === "closing"
+                  ? "bg-accent/15 text-accent"
+                  : "bg-accent/15 text-accent animate-pulse"
             )}
           >
-            {stage === "hangup" ? "Ended" : "Live"}
+            {stage === "hangup" ? "Ended" : stage === "closing" ? "Closing" : "Live"}
           </span>
         )}
       </div>
-      <ol className="mt-4 grid gap-2 sm:grid-cols-5">
+      <ol className="mt-4 grid gap-2 sm:grid-cols-6">
         {STEPS.map((step, i) => {
           const done = activeIdx > i || (stage === "hangup" && i <= STEPS.length - 1);
           const current = activeIdx === i && stage !== "hangup";

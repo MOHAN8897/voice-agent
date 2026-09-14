@@ -6,8 +6,9 @@ import { PstnCallStatusTimeline, mapProviderStatus } from "@/components/dev/test
 import { PstnContactsPanel } from "@/components/dev/test-studio/PstnContactsPanel";
 import { PstnHistoryPanel } from "@/components/dev/test-studio/PstnHistoryPanel";
 import type { StackForm, StackMode } from "@/lib/test-studio-stack";
+import { portalFetch } from "@/lib/auth-client";
 import { isRealtimePstnMode } from "@/lib/realtime-voice";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const FLOW_LABEL: Record<"pstn" | "pstn_realtime", { title: string; hint: string }> = {
   pstn: {
@@ -64,6 +65,44 @@ export function PstnFlowWorkspace({
   const [lifecycleStage, setLifecycleStage] = useState<ReturnType<typeof mapProviderStatus>>("idle");
   const [placedAt, setPlacedAt] = useState<number | null>(null);
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
+  const [internalCallId, setInternalCallId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!internalCallId || lifecycleStage === "idle" || lifecycleStage === "hangup") return;
+    let cancelled = false;
+    async function pollClosing() {
+      try {
+        const response = await portalFetch(
+          "dev",
+          `/api/dev/telephony/media-flow?call_id=${encodeURIComponent(internalCallId || "")}`,
+        );
+        if (!response.ok || cancelled) return;
+        const body = await response.json();
+        const stages = body?.flow?.stages || {};
+        const events = body?.flow?.events || [];
+        const hasComplete =
+          Boolean(stages.hangup_complete) ||
+          events.some((event: { stage?: string }) => event.stage === "hangup_complete");
+        const hasClosing =
+          Boolean(stages.hangup_closing) ||
+          events.some((event: { stage?: string }) => event.stage === "hangup_closing");
+        if (cancelled) return;
+        if (hasComplete) {
+          setLifecycleStage("hangup");
+        } else if (hasClosing) {
+          setLifecycleStage((prev) => (prev === "hangup" ? prev : "closing"));
+        }
+      } catch {
+        /* live timeline is best-effort */
+      }
+    }
+    void pollClosing();
+    const timer = window.setInterval(pollClosing, 800);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [internalCallId, lifecycleStage]);
 
   const panelSection: PstnPanelSection =
     section === "setup" || section === "stack" || section === "live" ? section : "none";
@@ -96,7 +135,10 @@ export function PstnFlowWorkspace({
           setPlacedAt(Date.now());
           onDialPlaced?.();
         }}
-        onInternalCallStart={onInternalCallStart}
+        onInternalCallStart={(id) => {
+          setInternalCallId(id);
+          onInternalCallStart?.(id);
+        }}
         onInternalCallEnd={(id) => {
           setLifecycleStage("hangup");
           setHistoryRefreshKey((n) => n + 1);
@@ -105,12 +147,19 @@ export function PstnFlowWorkspace({
         onReviewCall={onReviewCall}
         onActiveCallChange={(call) => {
           if (!call) {
-            if (lifecycleStage === "ongoing" || lifecycleStage === "lifted" || lifecycleStage === "ringing") {
-              setLifecycleStage("hangup");
-            }
+            setLifecycleStage((prev) =>
+              prev === "ongoing" || prev === "lifted" || prev === "ringing" || prev === "closing"
+                ? "hangup"
+                : prev,
+            );
             return;
           }
-          setLifecycleStage(mapProviderStatus(call.status, Boolean(call.internal_call_id)));
+          const mapped = mapProviderStatus(call.status, Boolean(call.internal_call_id));
+          setLifecycleStage((prev) => {
+            if (prev === "hangup") return "hangup";
+            if (prev === "closing" && mapped === "ongoing") return "closing";
+            return mapped;
+          });
         }}
         onToChange={setToPhone}
       />

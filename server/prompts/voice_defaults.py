@@ -6,6 +6,7 @@ Language-specific spoken style is selected by default_style_for().
 DEFAULT_RESPONSE_STYLES: dict[str, str] = {
     "te-IN": "very brief, 1-2 sentences, spoken Telugu",
     "en-IN": "warm, brief, 1-2 sentences, spoken Indian English like a person on a phone",
+    "en-US": "warm, brief, 1-2 sentences, natural spoken English like a person on a phone",
     "hi-IN": "very brief, 1-2 sentences, spoken Hinglish",
 }
 
@@ -17,8 +18,10 @@ _STYLE_ALIASES = {
     "te-in": "te-IN",
     "en": "en-IN",
     "en-in": "en-IN",
-    "en-us": "en-IN",
-    "en-gb": "en-IN",
+    "en-us": "en-US",
+    "en-gb": "en-US",
+    "en-au": "en-US",
+    "en-ca": "en-US",
     "english": "en-IN",
     "hi": "hi-IN",
     "hi-in": "hi-IN",
@@ -33,6 +36,8 @@ def canonical_language(language: str | None) -> str:
     mapped = _STYLE_ALIASES.get(raw.lower())
     if mapped:
         return mapped
+    if raw.lower().startswith("en-us") or raw.lower() in {"en-gb", "en-au", "en-ca", "en-uk"}:
+        return "en-US"
     if raw.lower().startswith("en"):
         return "en-IN"
     if raw.lower().startswith("hi"):
@@ -47,6 +52,7 @@ def default_style_for(language: str | None) -> str:
 _LANG_STYLE_MARKERS = {
     "te-IN": ("spoken telugu", "tanglish"),
     "en-IN": ("spoken indian english",),
+    "en-US": ("natural spoken english", "us/uk"),
     "hi-IN": ("spoken hinglish",),
 }
 
