@@ -23,6 +23,17 @@ def test_ignores_non_mobile_without_cue():
 def test_extracts_email_and_name():
     assert extract_caller_email("email me at arun.test@example.com please") == "arun.test@example.com"
     assert extract_caller_name("Hi, my name is Arun") == "Arun"
+    assert extract_caller_name("Hi, my name is the recording") is None
+    assert extract_caller_name("my name is looking") is None
+
+
+def test_rejects_outbound_did_as_lead_phone():
+    from server.call.caller_detail_capture import is_usable_lead_phone, unclear_name_phrase
+
+    assert is_usable_lead_phone("+13526146416") is False
+    assert is_usable_lead_phone("8897908470") is True
+    assert unclear_name_phrase("Hi, my name is the recording") is True
+    assert unclear_name_phrase("I am busy, contact me tomorrow") is False
 
 
 def test_memory_ops_include_phone_and_context():

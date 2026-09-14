@@ -21,6 +21,26 @@ async def test_wait_returns_immediately_when_idle():
 
 
 @pytest.mark.asyncio
+async def test_wait_can_grace_for_playback_to_start():
+    state = {"playing": False}
+
+    async def start_later():
+        await asyncio.sleep(0.08)
+        state["playing"] = True
+        await asyncio.sleep(0.08)
+        state["playing"] = False
+
+    asyncio.create_task(start_later())
+    heard = await wait_for_farewell_playback(
+        lambda: state["playing"],
+        timeout_sec=1.0,
+        poll_sec=0.02,
+        wait_for_start_sec=0.2,
+    )
+    assert heard is True
+
+
+@pytest.mark.asyncio
 async def test_wait_until_playback_drains():
     state = {"playing": True}
 

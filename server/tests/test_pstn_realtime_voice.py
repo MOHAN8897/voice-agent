@@ -303,6 +303,7 @@ async def test_realtime_loop_holds_echo_pcm_during_agent_speech():
     for _ in range(REALTIME_AEC_LOUD_OPEN_FRAMES):
         await loop.feed_user_pcm16(loud)
     assert adapter.appended, "normal phone speech should reach OpenAI after two frames"
+    assert adapter.cancelled >= 1, "barge_open must cut the in-flight agent response immediately"
     await loop.close()
 
 
@@ -513,9 +514,9 @@ async def test_agent_hangup_drains_archive_before_lifecycle_end(monkeypatch, tmp
     pcm24 = struct.pack("<" + "h" * 960, *([900] * 960))
     adapter = FakeRealtimeVoiceAdapter(
         events=[
+            {"type": "user_transcript", "text": "Goodbye.", "final": True},
             {"type": "response_created"},
             {"type": "audio_delta", "pcm": pcm24},
-            {"type": "user_transcript", "text": "Goodbye.", "final": True},
             {
                 "type": "function_call",
                 "name": "end_call",
@@ -997,3 +998,299 @@ async def test_realtime_voice_persists_caller_details_from_normal_turn(monkeypat
     call_ledger.reset_for_tests()
     memory_manager.reset_for_tests()
     get_settings.cache_clear()
+
+
+@pytest.mark.asyncio
+async def test_realtime_loop_loud_pcm_interrupts_without_waiting_for_vad():
+    import struct
+
+    barged: list[int] = []
+
+    async def on_wire(_wire: bytes) -> None:
+        return None
+
+    async def on_barge() -> None:
+        barged.append(1)
+
+    adapter = FakeRealtimeVoiceAdapter()
+    from server.services.pstn_realtime_voice_core import (
+        REALTIME_AEC_LOUD_OPEN_FRAMES,
+        PstnRealtimeVoiceLoop,
+    )
+
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id="c-barge-open",
+        on_agent_wire=on_wire,
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        adapter=adapter,
+        stack_override={"pipeline": "realtime_voice"},
+    )
+    loop.set_barge_handler(on_barge)
+    await loop.start_call(play_greeting=False)
+    loop._set_tts_active(True)
+    loop.current_generation_id = "g-speak"
+    loud = struct.pack("<" + "h" * 320, *([600] * 320))
+    for _ in range(REALTIME_AEC_LOUD_OPEN_FRAMES):
+        await loop.feed_user_pcm16(loud)
+    assert barged
+    assert adapter.cancelled >= 1
+    assert loop._aec_barge_open is True
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_realtime_loop_drops_stacked_response_while_speaking():
+    import struct
+
+    adapter = FakeRealtimeVoiceAdapter()
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id=None,
+        on_agent_wire=AsyncMock(),
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        adapter=adapter,
+        stack_override={"pipeline": "realtime_voice"},
+    )
+    loop._adapter = adapter
+    await loop._handle_event({"type": "response_created"})
+    pcm24 = struct.pack("<" + "h" * 960, *([500] * 960))
+    await loop._handle_event({"type": "audio_delta", "pcm": pcm24})
+    gen = loop.current_generation_id
+    cancelled = adapter.cancelled
+    await loop._handle_event({"type": "response_created"})
+    assert adapter.cancelled > cancelled
+    assert loop.current_generation_id == gen
+
+
+@pytest.mark.asyncio
+async def test_realtime_loop_drops_auto_response_until_next_user_turn():
+    import struct
+
+    adapter = FakeRealtimeVoiceAdapter()
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id=None,
+        on_agent_wire=AsyncMock(),
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        adapter=adapter,
+        stack_override={"pipeline": "realtime_voice"},
+    )
+    loop._adapter = adapter
+    await loop._handle_event({"type": "response_created"})
+    pcm24 = struct.pack("<" + "h" * 960, *([500] * 960))
+    await loop._handle_event({"type": "audio_delta", "pcm": pcm24})
+    await loop._handle_event({"type": "assistant_transcript", "text": "I can help with that."})
+    await loop._handle_event({"type": "response_done"})
+    gen = loop.current_generation_id
+    cancelled = adapter.cancelled
+    await loop._handle_event({"type": "response_created"})
+    assert adapter.cancelled > cancelled
+    assert loop.current_generation_id == gen
+
+    await loop._handle_event({"type": "user_transcript", "text": "What is the price?", "final": True})
+    await loop._handle_event({"type": "response_created"})
+    assert loop.current_generation_id != gen
+
+
+@pytest.mark.asyncio
+async def test_rejected_end_call_speaks_instead_of_silence():
+    adapter = FakeRealtimeVoiceAdapter()
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id=None,
+        on_agent_wire=AsyncMock(),
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        adapter=adapter,
+        stack_override={"pipeline": "realtime_voice", "language": "en-IN"},
+    )
+    loop._adapter = adapter
+    await loop._handle_event({"type": "user_transcript", "text": "I want two plants", "final": True})
+    await loop._handle_event({"type": "response_created"})
+    await loop._handle_event(
+        {
+            "type": "function_call",
+            "name": "end_call",
+            "call_id": "fn-rej",
+            "arguments": '{"should_end": true, "reason": "goodbye", "farewell": ""}',
+        }
+    )
+    assert loop._pending_end_call is None
+    assert loop._pending_followup_instruction
+    await loop._handle_event({"type": "response_done"})
+    assert any("Stay on the line" in item for item in adapter.started_responses)
+
+
+@pytest.mark.asyncio
+async def test_availability_check_after_intro_does_not_regreet():
+    adapter = FakeRealtimeVoiceAdapter()
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id=None,
+        on_agent_wire=AsyncMock(),
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        adapter=adapter,
+        stack_override={"pipeline": "realtime_voice"},
+    )
+    loop._adapter = adapter
+    loop._intro_noted = True
+    await loop._handle_event({"type": "user_transcript", "text": "Are you there?", "final": True})
+    assert loop._user_partial == "Are you there?"
+    assert any("still on the line" in item for item in adapter.started_responses)
+    await loop._handle_event({"type": "user_transcript", "text": "Hallo", "final": True})
+    assert loop._user_partial == "Hallo"
+    assert sum("still on the line" in item for item in adapter.started_responses) >= 2
+
+
+@pytest.mark.asyncio
+async def test_overlap_junk_transcript_dropped_while_agent_speaks():
+    adapter = FakeRealtimeVoiceAdapter()
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id=None,
+        on_agent_wire=AsyncMock(),
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        adapter=adapter,
+        stack_override={"pipeline": "realtime_voice"},
+    )
+    loop._adapter = adapter
+    loop._set_tts_active(True)
+    await loop._handle_event({"type": "user_transcript", "text": "پاناکاشم", "final": True})
+    assert loop._user_partial == ""
+    await loop._handle_event({"type": "user_transcript", "text": "this is just echo of the pitch", "final": True})
+    assert loop._user_partial == ""
+    loop._aec_barge_open = True
+    await loop._handle_event({"type": "user_transcript", "text": "why did you call me", "final": True})
+    assert loop._user_partial == "why did you call me"
+
+
+@pytest.mark.asyncio
+async def test_outbound_first_hello_is_pickup_not_availability():
+    adapter = FakeRealtimeVoiceAdapter()
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id=None,
+        on_agent_wire=AsyncMock(),
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        adapter=adapter,
+        stack_override={"pipeline": "realtime_voice", "direction": "outbound"},
+    )
+    loop._adapter = adapter
+    loop._intro_noted = True
+    await loop._handle_event({"type": "user_transcript", "text": "Hallo?", "final": True})
+    assert loop._user_partial == "Hallo?"
+    assert not any("still on the line" in item for item in adapter.started_responses)
+    await loop._handle_event({"type": "user_transcript", "text": "Who is this?", "final": True})
+    assert not any("still on the line" in item for item in adapter.started_responses)
+
+
+@pytest.mark.asyncio
+async def test_unclear_name_asks_repeat_instead_of_inventing_channel():
+    adapter = FakeRealtimeVoiceAdapter()
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id=None,
+        on_agent_wire=AsyncMock(),
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        adapter=adapter,
+        stack_override={"pipeline": "realtime_voice"},
+    )
+    loop._adapter = adapter
+    await loop._handle_event(
+        {"type": "user_transcript", "text": "Hi, my name is the recording.", "final": True}
+    )
+    assert any("repeat their name" in item for item in adapter.started_responses)
+    assert any("messaging app" in item for item in adapter.started_responses)
+
+
+@pytest.mark.asyncio
+async def test_realtime_hangup_skips_when_caller_is_talking():
+    adapter = FakeRealtimeVoiceAdapter()
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+
+    remote_hangup = AsyncMock()
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id=None,
+        on_agent_wire=AsyncMock(),
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        adapter=adapter,
+        stack_override={"pipeline": "realtime_voice"},
+    )
+    loop._adapter = adapter
+    loop._on_remote_hangup = remote_hangup
+    loop._pending_end_call = {"reason": "goal_complete", "farewell": "Goodbye."}
+    loop._aec_barge_open = True
+    await loop._finish_hangup()
+    remote_hangup.assert_not_awaited()
+    assert loop._hangup_started is False
+
+
+@pytest.mark.asyncio
+async def test_realtime_hangup_aborts_when_caller_barges_farewell(monkeypatch):
+    monkeypatch.setattr("server.call.natural_hangup.HANGUP_TRAIL_SILENCE_SEC", 0.01)
+    adapter = FakeRealtimeVoiceAdapter()
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+
+    playing = {"on": True}
+
+    class Playback:
+        def is_active(self):
+            return playing["on"]
+
+        def clear(self):
+            playing["on"] = False
+
+        def invalidate_generation(self, _gen):
+            playing["on"] = False
+
+    remote_hangup = AsyncMock()
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id=None,
+        on_agent_wire=AsyncMock(),
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        adapter=adapter,
+        stack_override={"pipeline": "realtime_voice"},
+    )
+    loop._adapter = adapter
+    loop.playback = Playback()
+    loop._on_remote_hangup = remote_hangup
+    loop._pending_end_call = {"reason": "goal_complete", "farewell": "Goodbye."}
+    loop._response_had_audio = True
+    loop._farewell_response_active = True
+
+    async def barge_soon():
+        await asyncio.sleep(0.05)
+        loop._aec_barge_open = True
+        await loop._commit_local_barge()
+
+    asyncio.create_task(barge_soon())
+    await loop._finish_hangup()
+    remote_hangup.assert_not_awaited()
+    assert loop._hangup_started is False
+    assert loop._pending_end_call is None

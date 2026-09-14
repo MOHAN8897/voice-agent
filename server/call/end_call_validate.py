@@ -156,7 +156,12 @@ def looks_like_bare_name(user_text: str) -> bool:
 
 
 def _lead_name_and_phone(user_text: str, memory_snapshot: dict[str, Any] | None) -> tuple[str, str]:
-    from server.call.caller_detail_capture import extract_caller_name, extract_caller_phone
+    from server.call.caller_detail_capture import (
+        extract_caller_name,
+        extract_caller_phone,
+        is_usable_lead_name,
+        is_usable_lead_phone,
+    )
 
     facts = memory_snapshot.get("facts") if isinstance((memory_snapshot or {}).get("facts"), dict) else {}
     facts = facts or {}
@@ -167,8 +172,18 @@ def _lead_name_and_phone(user_text: str, memory_snapshot: dict[str, Any] | None)
         or extract_caller_name(user_text)
         or ""
     ).strip()
+    if name and not is_usable_lead_name(name):
+        name = ""
     if not name and looks_like_bare_name(user_text):
-        name = (user_text or "").strip(" .,!?:;")
+        stripped = re.sub(
+            r"^(?:my name is|this is|i am|i'm|name is)\s+",
+            "",
+            user_text or "",
+            flags=re.I,
+        )
+        candidate = stripped.strip(" .,!?:;")
+        if is_usable_lead_name(candidate):
+            name = candidate
     phone = str(
         facts.get("callback_phone")
         or facts.get("phone")
@@ -176,6 +191,8 @@ def _lead_name_and_phone(user_text: str, memory_snapshot: dict[str, Any] | None)
         or extract_caller_phone(user_text)
         or ""
     ).strip()
+    if phone and not is_usable_lead_phone(phone):
+        phone = ""
     return name, phone
 
 
@@ -447,6 +464,13 @@ def validate_end_call(
         if not (_OPT_OUT.search(user) or _CALLER_DONE.search(user)
                 or caller_explicit_end_request(user) or caller_requested_callback(user)):
             return _reject("user_asked_question")
+    if (
+        looks_like_question(spoken)
+        and reason == "goal_complete"
+        and not _user_wants_hangup(user)
+        and not caller_firm_refusal(user)
+    ):
+        return _reject("open_question")
     if not _evidence_ok(
         reason,
         user,

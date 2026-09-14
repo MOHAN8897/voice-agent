@@ -24,6 +24,37 @@ _NAME = re.compile(
     r"मेरा नाम|नाम है)\s+([A-Za-z\u0C00-\u0C7F\u0900-\u097F][\w\u0C00-\u0C7F\u0900-\u097F.'\-]{1,40})",
     re.I,
 )
+_JUNK_NAME_WORDS = frozenset(
+    {
+        "the",
+        "a",
+        "an",
+        "this",
+        "that",
+        "it",
+        "my",
+        "name",
+        "recording",
+        "looking",
+        "calling",
+        "interested",
+        "busy",
+        "here",
+        "not",
+        "i",
+        "i'm",
+        "im",
+        "yeah",
+        "yes",
+        "ok",
+        "okay",
+        "hello",
+        "hi",
+        "hey",
+        "hallo",
+        "who",
+    }
+)
 
 
 def _digits_only(value: str) -> str:
@@ -60,15 +91,54 @@ def extract_caller_email(text: str) -> str | None:
     return m.group(1).strip()[:120]
 
 
+_NAME_GIVE = re.compile(
+    r"\b(?:my name is|name(?:'s| is)|నా పేరు|मेरा नाम|नाम है)\b",
+    re.I,
+)
+
+
+def is_usable_lead_name(name: str | None) -> bool:
+    """True when a captured name is a real person, not STT junk like 'the recording'."""
+    cleaned = re.sub(r"[^\w\s'\-]", "", (name or "").strip(), flags=re.UNICODE).strip()
+    if len(cleaned) < 2:
+        return False
+    words = [w for w in re.split(r"\s+", cleaned.lower()) if w]
+    if not words:
+        return False
+    if any(w in _JUNK_NAME_WORDS for w in words):
+        return False
+    return True
+
+
+def is_usable_lead_phone(phone: str | None) -> bool:
+    """True for a spoken Indian mobile — not a US DID / outbound from-number."""
+    raw = (phone or "").strip()
+    if not raw:
+        return False
+    extracted = extract_caller_phone(raw)
+    if extracted:
+        return True
+    digits = _digits_only(raw)
+    if len(digits) == 12 and digits.startswith("91"):
+        digits = digits[2:]
+    if len(digits) == 11 and digits.startswith("0"):
+        digits = digits[1:]
+    return len(digits) == 10 and digits[0] in "6789"
+
+
+def unclear_name_phrase(text: str) -> bool:
+    """Caller tried to give a name but STT captured junk (e.g. 'my name is the recording')."""
+    if not _NAME_GIVE.search(text or ""):
+        return False
+    return extract_caller_name(text) is None
+
+
 def extract_caller_name(text: str) -> str | None:
     m = _NAME.search(text or "")
     if not m:
         return None
     name = (m.group(1) or "").strip(" .,!?")
-    if len(name) < 2:
-        return None
-    # Avoid capturing "not interested" style false positives.
-    if name.lower() in {"not", "calling", "interested", "busy", "here"}:
+    if not is_usable_lead_name(name):
         return None
     return name[:80]
 

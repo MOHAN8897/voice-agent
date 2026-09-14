@@ -46,6 +46,46 @@ from server.services.pstn_voice_core import (
 REALTIME_AEC_ENERGY_MIN = 500
 REALTIME_AEC_LOUD_OPEN_FRAMES = 2
 
+# Later hello / are-you-there after the intro is an availability check, not a new opening.
+_SIMPLE_HELLO_RE = re.compile(r"^(?:hello|hallo|hi|hey)[.!?]*\s*$", re.I)
+_ARE_YOU_THERE_RE = re.compile(r"^are you (?:there|here)\??\s*$", re.I)
+# Arabic / Persian / Urdu / Thai / Hangul / CJK with no Latin or Indic — overlap STT junk.
+_FOREIGN_SCRIPT_RE = re.compile(
+    r"[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF"
+    r"\u0E00-\u0E7F\uAC00-\uD7AF\u3040-\u30FF\u4E00-\u9FFF]"
+)
+_LATIN_OR_INDIC_RE = re.compile(r"[A-Za-z\u0900-\u097F\u0C00-\u0C7F]")
+_REJECTED_END_CALL_FOLLOWUP = (
+    "Stay on the line. Confirm or answer what they just said in one short sentence. "
+    "Do not re-introduce yourself. Do not call end_call this turn."
+)
+_AVAILABILITY_FOLLOWUP = (
+    "The caller is checking you are still on the line. "
+    "Say only that you are here, then continue the current topic. "
+    "Do not re-introduce yourself or restart the opening."
+)
+_UNCLEAR_NAME_FOLLOWUP = (
+    "The last thing they said was their name, but it was unclear. "
+    "Ask them to repeat their name only. Do not invent a name or a messaging app. "
+    "Do not re-introduce yourself."
+)
+
+
+def _is_simple_hello(text: str) -> bool:
+    return bool(_SIMPLE_HELLO_RE.fullmatch((text or "").strip()))
+
+
+def _is_availability_check(text: str) -> bool:
+    t = (text or "").strip()
+    return _is_simple_hello(t) or bool(_ARE_YOU_THERE_RE.fullmatch(t))
+
+
+def _is_foreign_script_junk(text: str) -> bool:
+    t = (text or "").strip()
+    if not t:
+        return False
+    return bool(_FOREIGN_SCRIPT_RE.search(t) and not _LATIN_OR_INDIC_RE.search(t))
+
 logger = logging.getLogger(__name__)
 
 OnAgentWire = Callable[[bytes], Awaitable[None]]
@@ -223,6 +263,11 @@ class PstnRealtimeVoiceLoop:
         self._aec_quiet_streak = 0
         self._aec_barge_open = False
         self._cleared_input_for_turn = False
+        self._response_open = False
+        self._suppress_until_user = False
+        self._openai_response_id = ""
+        self._followup_inflight = False
+        self._heard_user_turn = False
         from server.services.pstn_archive_writer import PstnArchiveWriter
 
         self._archive = PstnArchiveWriter()
@@ -254,7 +299,8 @@ class PstnRealtimeVoiceLoop:
         if self._phase == PHASE_ENDED:
             return
         if self._phase == PHASE_CLOSING and phase not in (PHASE_CLOSING, PHASE_ENDED):
-            return
+            if not (phase == PHASE_LISTENING and not self._hangup_started):
+                return
         self._phase = phase
 
     def _set_tts_active(self, active: bool) -> None:
@@ -275,6 +321,65 @@ class PstnRealtimeVoiceLoop:
             except Exception:
                 return False
         return False
+
+    def _farewell_still_on_the_line(self) -> bool:
+        """Playback still leaving the phone — same drain check as the classic PSTN hangup."""
+        return self._agent_audio_playing()
+
+    def _abort_in_progress_hangup(self) -> None:
+        self._hangup_started = False
+        self._pending_end_call = None
+        self._pending_farewell_text = None
+        self._farewell_response_active = False
+        log_pstn("hangup.aborted_barge", call_id=self.call_id)
+        self._set_phase(PHASE_LISTENING)
+
+    def _event_response_id(self, event: dict[str, Any]) -> str:
+        return str(event.get("response_id") or "").strip()
+
+    def _is_stale_openai_event(self, event: dict[str, Any]) -> bool:
+        rid = self._event_response_id(event)
+        current = self._openai_response_id
+        return bool(rid and current and rid != current)
+
+    def _should_drop_user_final(self, text: str) -> bool:
+        if not (text or "").strip():
+            return True
+        if _is_foreign_script_junk(text):
+            return True
+        if (self._tts_active or self._agent_audio_playing()) and not self._aec_barge_open:
+            return True
+        return False
+
+    async def _commit_local_barge(self) -> None:
+        """Cut agent audio as soon as local AEC commits a barge — do not wait for VAD."""
+        if self._closed:
+            return
+        self._barge_generation = self.current_generation_id
+        self._suppress_until_user = False
+        self._response_open = False
+        self._followup_inflight = False
+        if self._on_barge:
+            try:
+                await asyncio.wait_for(self._on_barge(), timeout=1.0)
+            except Exception as exc:
+                log_pstn("playback.remote_clear.failed", call_id=self.call_id, error=str(exc)[:160])
+        await self.interrupt_tts()
+        if self._hangup_started or self._phase == PHASE_CLOSING or self._farewell_response_active:
+            self._abort_in_progress_hangup()
+        else:
+            self._set_phase(PHASE_LISTENING)
+
+    async def _start_injected_response(self, instruction: str) -> None:
+        if self._adapter is None or not (instruction or "").strip():
+            return
+        self._pending_followup_instruction = None
+        self._suppress_until_user = False
+        self._response_open = False
+        self._followup_inflight = True
+        self._assistant_text = ""
+        await self._adapter.start_response(instructions=instruction)
+        self._set_phase(PHASE_SPEAKING)
 
     def _resolve_language(self) -> str:
         from server.call.call_context import get as get_ctx
@@ -445,7 +550,10 @@ class PstnRealtimeVoiceLoop:
                                 call_id=self.call_id,
                                 rms=round(rms, 1),
                             )
-                        self._aec_barge_open = True
+                            self._aec_barge_open = True
+                            await self._commit_local_barge()
+                        else:
+                            self._aec_barge_open = True
                 else:
                     self._aec_quiet_streak += 1
                     self._aec_loud_streak = 0
@@ -569,24 +677,35 @@ class PstnRealtimeVoiceLoop:
             meta = call_ledger.read_meta(self.call_id)
             snapshot = memory_manager.get_snapshot(self.call_id)
             facts = snapshot.get("facts") if isinstance(snapshot.get("facts"), dict) else {}
+            from server.call.caller_detail_capture import is_usable_lead_name, is_usable_lead_phone
+
+            name = (
+                self._callback_details.get("name", "")
+                or facts.get("name", "")
+                or facts.get("caller_name", "")
+            )
+            if not is_usable_lead_name(str(name or "")):
+                name = ""
+            phone = (
+                self._callback_details.get("phone", "")
+                or facts.get("callback_phone", "")
+                or facts.get("phone", "")
+            )
+            if not is_usable_lead_phone(str(phone or "")):
+                phone = ""
+            direction = str(meta.get("direction") or self._resolve_direction() or "")
+            if (
+                not phone
+                and direction.strip().lower() not in ("outbound", "outgoing", "outbound-api")
+                and not caller_asked_to_record_details(self._callback_request_text)
+            ):
+                ani = str(meta.get("caller_id") or "")
+                phone = ani if is_usable_lead_phone(ani) else ""
             values = {
                 "callback_requested": "true",
                 "callback_time": self._callback_details.get("timing", ""),
-                "name": (
-                    self._callback_details.get("name", "")
-                    or facts.get("name", "")
-                    or facts.get("caller_name", "")
-                ),
-                "phone": (
-                    self._callback_details.get("phone", "")
-                    or facts.get("phone", "")
-                    or facts.get("callback_phone", "")
-                    or (
-                        ""
-                        if caller_asked_to_record_details(self._callback_request_text)
-                        else meta.get("caller_id", "")
-                    )
-                ),
+                "name": name,
+                "phone": phone,
             }
             operations = [
                 {"op": "set_fact", "key": key, "value": str(value)}
@@ -641,8 +760,11 @@ class PstnRealtimeVoiceLoop:
             self._pending_followup_instruction = self._callback_followup_instruction(state.missing)
             log_pstn("end_call.callback_prompted", call_id=self.call_id, missing=state.missing)
             return
+        from server.call.end_call_validate import looks_like_question
         from server.call.hangup_judge import agent_spoke_closing
 
+        if looks_like_question(spoken) or asked["phone"].search(spoken) or asked["name"].search(spoken):
+            return
         if agent_spoke_closing(spoken):
             accepted = await self._gate_end_call_payload(
                 {
@@ -719,6 +841,12 @@ class PstnRealtimeVoiceLoop:
                 reason=decision.reason,
                 code=decision.reject_code,
             )
+            if (
+                not self._pending_followup_instruction
+                and not self._response_had_audio
+                and not (self._assistant_text or "").strip()
+            ):
+                self._pending_followup_instruction = _REJECTED_END_CALL_FOLLOWUP
             return None
         if ctx:
             ctx.agent_hangup_armed = True
@@ -727,6 +855,10 @@ class PstnRealtimeVoiceLoop:
             name = self._callback_details.get("name", "").strip()
             timing = self._callback_details.get("timing", "").strip()
             if self._resolve_language().lower().startswith("en"):
+                from server.call.caller_detail_capture import is_usable_lead_name
+
+                if name and not is_usable_lead_name(name):
+                    name = ""
                 greeting = f"Thank you, {name}. " if name else "Thank you. "
                 when = f" {timing}" if timing else ""
                 farewell = (
@@ -746,25 +878,35 @@ class PstnRealtimeVoiceLoop:
             if agent_out and not self._aec_barge_open:
                 log_pstn("realtime_voice.echo_ignore", call_id=self.call_id)
                 return
+            self._suppress_until_user = False
             if agent_out:
-                self._barge_generation = self.current_generation_id
-                if self._on_barge:
-                    try:
-                        await asyncio.wait_for(self._on_barge(), timeout=1.0)
-                    except Exception as exc:
-                        log_pstn("playback.remote_clear.failed", call_id=self.call_id, error=str(exc)[:160])
-                await self.interrupt_tts()
-            self._set_phase(PHASE_LISTENING)
+                await self._commit_local_barge()
+            else:
+                self._set_phase(PHASE_LISTENING)
             return
-        if kind == "speech_stopped" and self._deferred_greeting_armed:
-            self._schedule_deferred_greeting()
+        if kind == "speech_stopped":
+            agent_out = self._tts_active or self._agent_audio_playing()
+            if not (agent_out and not self._aec_barge_open):
+                self._suppress_until_user = False
+            if self._deferred_greeting_armed:
+                self._schedule_deferred_greeting()
             return
         if kind == "user_transcript":
             text = str(event.get("text") or "").strip()
             if not text:
                 return
             if event.get("final"):
+                if self._should_drop_user_final(text):
+                    log_pstn(
+                        "realtime_voice.transcript_drop",
+                        call_id=self.call_id,
+                        text=text[:80],
+                    )
+                    return
                 self._user_partial = text
+                self._suppress_until_user = False
+                first_user = not self._heard_user_turn
+                self._heard_user_turn = True
                 if caller_requested_callback(text):
                     self._callback_request_text = text
                 self._capture_callback_detail(text)
@@ -797,6 +939,43 @@ class PstnRealtimeVoiceLoop:
                     detail=text[:200],
                     turn_id=self.current_turn_id,
                 )
+                if self._adapter is not None:
+                    from server.call.caller_detail_capture import unclear_name_phrase
+
+                    if unclear_name_phrase(text):
+                        log_pstn("realtime_voice.unclear_name", call_id=self.call_id)
+                        try:
+                            await self._adapter.cancel_response()
+                        except Exception:
+                            pass
+                        try:
+                            await self._start_injected_response(_UNCLEAR_NAME_FOLLOWUP)
+                        except Exception as exc:
+                            log_pstn(
+                                "realtime_voice.unclear_name.failed",
+                                call_id=self.call_id,
+                                error=str(exc)[:160],
+                            )
+                            self._pending_followup_instruction = _UNCLEAR_NAME_FOLLOWUP
+                    elif (
+                        self._intro_noted
+                        and _is_availability_check(text)
+                        and not (first_user and _is_simple_hello(text))
+                    ):
+                        log_pstn("realtime_voice.availability_check", call_id=self.call_id)
+                        try:
+                            await self._adapter.cancel_response()
+                        except Exception:
+                            pass
+                        try:
+                            await self._start_injected_response(_AVAILABILITY_FOLLOWUP)
+                        except Exception as exc:
+                            log_pstn(
+                                "realtime_voice.availability_followup.failed",
+                                call_id=self.call_id,
+                                error=str(exc)[:160],
+                            )
+                            self._pending_followup_instruction = _AVAILABILITY_FOLLOWUP
             else:
                 self._user_partial = text
             return
@@ -809,6 +988,30 @@ class PstnRealtimeVoiceLoop:
                 if self._deferred_greeting_armed:
                     self._schedule_deferred_greeting()
                 return
+            extra = (
+                not self._followup_inflight
+                and not self._aec_barge_open
+                and not self._farewell_response_active
+                and not self._pending_followup_instruction
+                and (
+                    self._suppress_until_user
+                    or (self._response_open and self._response_had_audio)
+                )
+            )
+            if extra and self._adapter is not None:
+                log_pstn("realtime_voice.overlap_response_ignore", call_id=self.call_id)
+                try:
+                    await self._adapter.cancel_response()
+                except Exception:
+                    pass
+                return
+            self._followup_inflight = False
+            self._suppress_until_user = False
+            self._response_open = True
+            self._barge_generation = None
+            rid = self._event_response_id(event)
+            if rid:
+                self._openai_response_id = rid
             self.current_turn_id = self.current_turn_id or uuid.uuid4().hex[:12]
             self.current_generation_id = uuid.uuid4().hex[:12]
             self._assistant_text = ""
@@ -823,6 +1026,8 @@ class PstnRealtimeVoiceLoop:
             pstn_media_flow.emit(self.call_id or "", "llm_started", "outbound", turn_id=self.current_turn_id)
             return
         if kind == "audio_delta":
+            if self._is_stale_openai_event(event):
+                return
             if self._deferred_greeting_playing:
                 return
             if not self._intro_noted and self._deferred_greeting_frames:
@@ -894,7 +1099,12 @@ class PstnRealtimeVoiceLoop:
                     pass
             return
         if kind in ("response_done", "cancelled"):
+            if self._is_stale_openai_event(event):
+                return
             self._set_tts_active(False)
+            if kind == "cancelled":
+                self._response_open = False
+                self._suppress_until_user = False
             if (
                 kind == "response_done"
                 and self._assistant_text.strip()
@@ -945,10 +1155,7 @@ class PstnRealtimeVoiceLoop:
                         )
             if kind == "response_done" and self._pending_followup_instruction and self._adapter is not None:
                 instruction = self._pending_followup_instruction
-                self._pending_followup_instruction = None
-                self._assistant_text = ""
-                await self._adapter.start_response(instructions=instruction)
-                self._set_phase(PHASE_SPEAKING)
+                await self._start_injected_response(instruction)
                 return
             if kind == "response_done" and self._pending_end_call and not self._hangup_started:
                 if self._farewell_response_active:
@@ -963,14 +1170,16 @@ class PstnRealtimeVoiceLoop:
                 ):
                     farewell = self._pending_farewell_text
                     self._farewell_response_active = True
-                    self._assistant_text = ""
-                    await self._adapter.start_response(
-                        instructions=f"Speak this farewell exactly, then stop: {farewell}"
+                    await self._start_injected_response(
+                        f"Speak this farewell exactly, then stop: {farewell}"
                     )
-                    self._set_phase(PHASE_SPEAKING)
                     return
                 await self._finish_hangup()
                 return
+            if kind == "response_done":
+                self._response_open = False
+                if self._assistant_text.strip() or self._response_had_audio:
+                    self._suppress_until_user = True
             if self._on_turn_audio_done:
                 try:
                     await self._on_turn_audio_done()
@@ -1140,18 +1349,31 @@ class PstnRealtimeVoiceLoop:
     async def _finish_hangup(self) -> None:
         if self._hangup_started or self._phase == PHASE_ENDED:
             return
+        if self._aec_barge_open:
+            log_pstn("hangup.skip_caller_talking", call_id=self.call_id)
+            return
         self._hangup_started = True
-        self._set_tts_active(False)
         from server.call.close_call_executor import execute_agent_close
+        from server.call.natural_hangup import HANGUP_PLAYBACK_TIMEOUT_SEC, wait_for_farewell_playback
 
         reason = str((self._pending_end_call or {}).get("reason") or "agent_hangup")
         spoke = bool(self._response_had_audio or self._pending_farewell_text)
+        has_line = self.playback is not None or self.is_agent_audio_active is not None
+        heard = await wait_for_farewell_playback(
+            self._farewell_still_on_the_line,
+            timeout_sec=HANGUP_PLAYBACK_TIMEOUT_SEC,
+            wait_for_start_sec=0.5 if has_line and spoke else 0.0,
+        )
+        if self._closed or self._aec_barge_open or not self._hangup_started:
+            if self._hangup_started:
+                self._abort_in_progress_hangup()
+            return
         await execute_agent_close(
             call_id=self.call_id,
             reason=reason,
-            spoke_farewell=spoke,
+            spoke_farewell=spoke or heard,
             flush_audio=self._flush_agent_pcm_to_wire,
-            is_playing=self._agent_audio_playing,
+            is_playing=lambda: False,
             on_closing=lambda: self._set_phase(PHASE_CLOSING),
             drain_archive=self._drain_agent_archive,
             on_provider_hangup=self._on_remote_hangup,

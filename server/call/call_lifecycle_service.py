@@ -178,12 +178,18 @@ class CallLifecycleService:
         # lookup_session owns shared Test Studio configuration, not this call's
         # conversation. Clearing it here could erase another active browser call.
         if caller_id:
-            memory_manager.apply_proposals(
-                call_id,
-                [{"op": "set_fact", "key": "phone", "value": str(caller_id)[:200]}],
-                turn_seq=0,
-                source="telephony",
+            inbound = str(direction or "").strip().lower() not in (
+                "outbound",
+                "outgoing",
+                "outbound-api",
             )
+            if inbound:
+                memory_manager.apply_proposals(
+                    call_id,
+                    [{"op": "set_fact", "key": "phone", "value": str(caller_id)[:200]}],
+                    turn_seq=0,
+                    source="telephony",
+                )
 
         record = {
             "call_id": call_id,

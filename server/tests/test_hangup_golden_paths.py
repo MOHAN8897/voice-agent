@@ -87,6 +87,16 @@ def test_price_question_does_not_hang_up():
     assert d.reject_code == "user_asked_question"
 
 
+def test_agent_open_question_blocks_callback_hangup():
+    d = _end(
+        "yeah you can contact me tomorrow",
+        spoken="Great. Could you share the phone number you want us to call you on tomorrow?",
+        phase=PHASE_CLOSING_ALLOWED,
+    )
+    assert d.accepted is False
+    assert d.reject_code == "open_question"
+
+
 @pytest.mark.asyncio
 async def test_natural_hangup_test_module_still_covers_playback():
     """Sanity: golden suite depends on natural hangup wait+pause remaining the executor core."""

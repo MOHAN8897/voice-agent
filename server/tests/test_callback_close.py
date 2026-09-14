@@ -23,6 +23,17 @@ def test_simple_callback_is_ready_to_close():
     assert "end_call" in (state.hint or "")
 
 
+def test_junk_stt_name_and_ani_are_not_lead_details():
+    state = advance_callback_close(
+        None,
+        "I am busy, contact me tomorrow",
+        memory_snapshot={"facts": {"caller_name": "the recording", "phone": "+13526146416"}},
+    )
+    assert state.phase == PHASE_CLOSING_ALLOWED
+    assert state.name == ""
+    assert state.phone == ""
+
+
 def test_record_details_collects_name_then_phone():
     phrase = "record my name and phone number and contact me tomorrow"
     first = advance_callback_close(None, phrase, request_text=phrase)

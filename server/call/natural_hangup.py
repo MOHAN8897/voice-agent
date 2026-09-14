@@ -22,9 +22,11 @@ async def wait_for_farewell_playback(
     *,
     timeout_sec: float = HANGUP_PLAYBACK_TIMEOUT_SEC,
     poll_sec: float = _POLL_SEC,
+    wait_for_start_sec: float = 0.0,
 ) -> bool:
     """Block until farewell audio is no longer on the wire. True if any play was seen."""
     deadline = time.monotonic() + max(0.05, timeout_sec)
+    start_deadline = time.monotonic() + max(0.0, wait_for_start_sec)
     heard = False
     while time.monotonic() < deadline:
         try:
@@ -35,7 +37,12 @@ async def wait_for_farewell_playback(
             heard = True
             await asyncio.sleep(poll_sec)
             continue
-        return heard
+        if heard:
+            return True
+        if time.monotonic() < start_deadline:
+            await asyncio.sleep(poll_sec)
+            continue
+        return False
     return heard
 
 
