@@ -64,30 +64,71 @@ def _strip_wav_pcm(data: bytes, default_rate: int) -> tuple[bytes, int]:
     return data, default_rate
 
 
+def _speech_peak_pcm16(pcm: bytes, *, percentile: float = 0.95) -> int:
+    """Typical speech peak, ignoring a few clicks that would otherwise block gain."""
+    frame_count = len(pcm) // 2
+    if frame_count == 0:
+        return 0
+    values = [
+        abs(int.from_bytes(pcm[i * 2 : i * 2 + 2], "little", signed=True))
+        for i in range(frame_count)
+    ]
+    values.sort()
+    idx = min(frame_count - 1, max(0, int(frame_count * percentile) - 1))
+    return values[idx]
+
+
 def _peak_normalize_pcm16(
     pcm: bytes,
     *,
-    target_peak: int = 28000,
-    max_gain: float = 4.0,
+    target_peak: int = 31000,
+    max_gain: float = 24.0,
 ) -> bytes:
-    """Boost quiet PSTN captures toward a comfortable listening level without clipping loud calls."""
+    """Boost quiet PSTN speech toward a comfortable listening level.
+
+    Uses the 95th-percentile peak so one loud click cannot freeze gain at 1×.
+    """
     if not pcm or len(pcm) < 2:
         return pcm
-    frame_count = len(pcm) // 2
-    peak = 0
-    for i in range(frame_count):
-        sample = int.from_bytes(pcm[i * 2 : i * 2 + 2], "little", signed=True)
-        peak = max(peak, abs(sample))
-    if peak == 0 or peak >= target_peak:
+    speech_peak = _speech_peak_pcm16(pcm)
+    if speech_peak == 0:
         return pcm
-    gain = min(max_gain, target_peak / peak)
+    gain = min(max_gain, target_peak / speech_peak)
+    if gain <= 1.02:
+        return pcm
     out = bytearray(len(pcm))
+    frame_count = len(pcm) // 2
     for i in range(frame_count):
         sample = int.from_bytes(pcm[i * 2 : i * 2 + 2], "little", signed=True)
         boosted = int(sample * gain)
         boosted = max(-32768, min(32767, boosted))
         out[i * 2 : i * 2 + 2] = boosted.to_bytes(2, "little", signed=True)
     return bytes(out)
+
+
+def _blend_review_stereo(left_pcm: bytes, right_pcm: bytes) -> tuple[bytes, bytes]:
+    """Fold both parties into both ears so laptop speakers hear caller and agent."""
+    left_n = len(left_pcm) // 2
+    right_n = len(right_pcm) // 2
+    n = max(left_n, right_n, 1)
+    left_out = bytearray(n * 2)
+    right_out = bytearray(n * 2)
+    for i in range(n):
+        l = (
+            int.from_bytes(left_pcm[i * 2 : i * 2 + 2], "little", signed=True)
+            if i < left_n
+            else 0
+        )
+        r = (
+            int.from_bytes(right_pcm[i * 2 : i * 2 + 2], "little", signed=True)
+            if i < right_n
+            else 0
+        )
+        mixed_l = max(-32768, min(32767, int(l * 0.78 + r * 0.48)))
+        mixed_r = max(-32768, min(32767, int(r * 0.78 + l * 0.48)))
+        left_out[i * 2 : i * 2 + 2] = mixed_l.to_bytes(2, "little", signed=True)
+        right_out[i * 2 : i * 2 + 2] = mixed_r.to_bytes(2, "little", signed=True)
+    return bytes(left_out), bytes(right_out)
 
 
 def _write_pcm16_wav(dest: Path, pcm: bytes, sample_rate: int, *, normalize: bool = False) -> None:
@@ -203,6 +244,7 @@ class AudioArchive:
                 agent_rate,
                 normalize=True,
             )
+            self._clear_gain_mark(call_id).write_text("2", encoding="utf-8")
             status = {
                 "user": "complete" if user else "empty",
                 "agent": "complete" if agent else "empty",
@@ -228,6 +270,9 @@ class AudioArchive:
         if normalize:
             left_pcm = _peak_normalize_pcm16(left_pcm)
             right_pcm = _peak_normalize_pcm16(right_pcm)
+            left_pcm, right_pcm = _blend_review_stereo(left_pcm, right_pcm)
+            left_pcm = _peak_normalize_pcm16(left_pcm)
+            right_pcm = _peak_normalize_pcm16(right_pcm)
         user_frames = len(left_pcm) // 2
         agent_frames = len(right_pcm) // 2
         frame_count = max(user_frames, agent_frames, 1)
@@ -246,6 +291,49 @@ class AudioArchive:
             wf.setframerate(SAMPLE_RATE)
             wf.writeframes(bytes(stereo) if frame_count else b"")
         dest.write_bytes(buf.getvalue())
+
+    def _clear_gain_mark(self, call_id: str) -> Path:
+        return call_dir(call_id) / ".clear_gain_v2"
+
+    def refresh_clear_tracks(self, call_id: str) -> None:
+        """Rebuild loud review WAVs from archived caller/agent audio (existing calls)."""
+        if not call_id or self._clear_gain_mark(call_id).exists():
+            return
+        user_pcm, user_rate = b"", SAMPLE_RATE
+        agent_pcm, agent_rate = b"", SAMPLE_RATE
+        if self._nonempty(self.user_wav_path(call_id)):
+            user_pcm, user_rate = _strip_wav_pcm(self.user_wav_path(call_id).read_bytes(), SAMPLE_RATE)
+        elif self._nonempty(self.user_pcm_path(call_id)):
+            user_pcm = self.user_pcm_path(call_id).read_bytes()
+        if self._nonempty(self.agent_wav_path(call_id)):
+            agent_pcm, agent_rate = _strip_wav_pcm(self.agent_wav_path(call_id).read_bytes(), SAMPLE_RATE)
+        elif self._nonempty(self.agent_pcm_path(call_id)):
+            agent_pcm = self.agent_pcm_path(call_id).read_bytes()
+            agent_rate = SAMPLE_RATE
+        if not user_pcm and not agent_pcm:
+            return
+        if user_pcm:
+            _write_pcm16_wav(
+                self.user_clear_path(call_id),
+                user_pcm,
+                user_rate or SAMPLE_RATE,
+                normalize=True,
+            )
+        if agent_pcm:
+            _write_pcm16_wav(
+                self.agent_clear_path(call_id),
+                agent_pcm,
+                agent_rate or SAMPLE_RATE,
+                normalize=True,
+            )
+        self._write_mix_wav(
+            self.mix_clear_path(call_id),
+            user_pcm,
+            agent_pcm,
+            agent_rate or SAMPLE_RATE,
+            normalize=True,
+        )
+        self._clear_gain_mark(call_id).write_text("2", encoding="utf-8")
 
     @staticmethod
     def _nonempty(path: Path) -> bool:

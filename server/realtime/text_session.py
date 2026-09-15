@@ -105,7 +105,7 @@ def build_audio_session_instructions(
             "Only when essential, use two short sentences with 30 words total maximum.\n"
             "- Ask at most one question and stop immediately after it. Never keep explaining or pitching after a question.\n"
             "- Collect missing lead details one at a time; when captured or they decline, confirm next step and close professionally.\n"
-            "- Callback close: do NOT call end_call until callback phone, caller name, and requested day/time are known. "
+            "- For a callback the caller still wants, collect callback phone, caller name, and requested day/time. "
             "The connected outbound number already counts as the callback phone. Ask only one missing detail per turn.\n"
             "- Once callback details are ready, say the complete confirmation, thank them, say goodbye, and call end_call "
             "in that same turn. Never return a silent tool-only close."
@@ -115,6 +115,18 @@ def build_audio_session_instructions(
             parts.append(f"[Canonical opening line]\n{line}")
     elif caller_id:
         parts.append("[Caller context]\nInbound caller connected (do not read their number aloud).")
+    parts.append(
+        "CONVERSATION ACTIONS (override conflicting sales or callback instructions)\n"
+        "Use call_action to report intent, before speaking a closing line. Use END_CALL when the caller "
+        "clearly wants to finish, declines the offer, opts out, or withdraws a callback. "
+        "A refusal needs one respectful goodbye, no renewed pitch, no detail collection, and no promise "
+        "to call again. The latest intent overrides earlier callback consent. "
+        "Use CALLBACK only when the caller actually requests a callback. Never invent consent. "
+        "Do not end for okay, alright, thanks alone, uncertainty, or silence. If they ask another "
+        "question or say one more thing, continue. Judge the meaning in context, including negation. "
+        "The application plays the final response and disconnects after playback; do not manage timing. "
+        "If a tool rejects an action, follow its result and do not claim it succeeded."
+    )
     return "\n\n".join(parts)
 
 

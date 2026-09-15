@@ -12,6 +12,7 @@ import type { StackForm, StackMode } from "@/lib/test-studio-stack";
 import { effectivePstnLiveLlm, TEST_STUDIO_SESSION_ID } from "@/lib/test-studio-stack";
 import { DEFAULT_CARTESIA_VOICE_ID, ensureTtsVoice } from "@/lib/voice/tts-config";
 import { formatDuration, pipelineLabel } from "@/lib/call-list-utils";
+import { isTerminalProviderStatus, matchTelephonyRow } from "@/lib/pstn-lifecycle";
 import { formatInr } from "@/lib/usage-cost";
 
 type ProviderStatus = {
@@ -78,6 +79,7 @@ type CallRow = {
   cost_usd?: number;
   has_recording?: boolean;
   end_reason?: string;
+  ended?: boolean;
 };
 
 const PROVIDERS = [
@@ -164,6 +166,12 @@ export function PstnTestPanel({
   const dialingRef = useRef(false);
   const fromInitRef = useRef(false);
   const activeExternalRef = useRef<string | null>(null);
+  const onActiveCallChangeRef = useRef(onActiveCallChange);
+  const onInternalCallStartRef = useRef(onInternalCallStart);
+  const onInternalCallEndRef = useRef(onInternalCallEnd);
+  onActiveCallChangeRef.current = onActiveCallChange;
+  onInternalCallStartRef.current = onInternalCallStart;
+  onInternalCallEndRef.current = onInternalCallEnd;
 
   const active = status?.active_provider || providerDraft;
   const activeSt = status?.providers?.find((p) => p.id === active);
@@ -172,6 +180,29 @@ export function PstnTestPanel({
     if (!status?.providers?.length) return [];
     return PROVIDERS.filter((p) => status.providers?.find((s) => s.id === p.id)?.enabled);
   }, [status]);
+
+  const ingestCallRows = useCallback((rows: CallRow[]) => {
+    const activeRow = matchTelephonyRow(rows, activeExternalRef.current, trackedCallRef.current);
+    onActiveCallChangeRef.current?.(activeRow);
+    if (!activeRow) return;
+    const internal = activeRow.internal_call_id;
+    const endId = internal || callKey(activeRow);
+    if (internal && !trackedCallRef.current && endedOnceRef.current !== internal && endedOnceRef.current !== endId) {
+      trackedCallRef.current = internal;
+      setTrackedCallId(internal);
+      onInternalCallStartRef.current?.(internal);
+    }
+    if (
+      endId &&
+      isTerminalProviderStatus(activeRow.status, Boolean(activeRow.ended)) &&
+      endedOnceRef.current !== endId
+    ) {
+      endedOnceRef.current = endId;
+      onInternalCallEndRef.current?.(endId);
+      if (internal) setListenCallId(internal);
+      trackedCallRef.current = null;
+    }
+  }, []);
 
   const load = useCallback(async () => {
     setLoadError("");
@@ -200,14 +231,16 @@ export function PstnTestPanel({
       }
       if (callsR.ok) {
         const callsJ = await callsR.json();
-        setCalls(ensureArray<CallRow>(callsJ.calls));
+        const rows = ensureArray<CallRow>(callsJ.calls);
+        setCalls(rows);
+        ingestCallRows(rows);
       }
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : "Could not load telephony status");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [ingestCallRows]);
 
   useEffect(() => {
     load();
@@ -230,52 +263,20 @@ export function PstnTestPanel({
 
   useEffect(() => {
     if (pollRef.current) clearInterval(pollRef.current);
-    pollRef.current = setInterval(async () => {
+    const poll = async () => {
       const r = await portalFetch("dev", "/api/dev/telephony/calls");
       if (!r.ok) return;
       const j = await r.json();
       const rows = ensureArray<CallRow>(j.calls);
       setCalls(rows);
-      const activeExternal = activeExternalRef.current;
-      const activeRow =
-        (activeExternal
-          ? rows.find(
-              (c) =>
-                callKey(c) === activeExternal ||
-                c.call_sid === activeExternal ||
-                c.call_control_id === activeExternal ||
-                c.call_uuid === activeExternal
-            )
-          : null) ?? null;
-      onActiveCallChange?.(activeRow);
-      for (const c of rows) {
-        const internal = c.internal_call_id;
-        if (!internal) continue;
-        if (!trackedCallRef.current && onInternalCallStart) {
-          trackedCallRef.current = internal;
-          setTrackedCallId(internal);
-          endedOnceRef.current = null;
-          onInternalCallStart(internal);
-        }
-        const st = (c.status || "").toLowerCase();
-        if (
-          trackedCallRef.current === internal &&
-          st &&
-          ["completed", "failed", "busy", "no-answer", "canceled", "hangup"].includes(st) &&
-          onInternalCallEnd &&
-          endedOnceRef.current !== internal
-        ) {
-          endedOnceRef.current = internal;
-          onInternalCallEnd(internal);
-          setListenCallId(internal);
-          trackedCallRef.current = null;
-        }
-      }
-    }, 3000);
+      ingestCallRows(rows);
+    };
+    void poll();
+    pollRef.current = setInterval(poll, 800);
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
-  }, [onInternalCallStart, onInternalCallEnd, onActiveCallChange]);
+  }, [ingestCallRows]);
 
   async function setProvider(next: string) {
     setProviderDraft(next);
@@ -397,6 +398,7 @@ export function PstnTestPanel({
     setBusy(true);
     trackedCallRef.current = null;
     activeExternalRef.current = null;
+    endedOnceRef.current = null;
     setTrackedCallId(null);
     setMessage(`Placing ${providerLabel(active)} outbound call…`);
     try {

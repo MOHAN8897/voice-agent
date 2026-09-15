@@ -8,6 +8,7 @@ import json
 from collections.abc import AsyncIterator
 from typing import Any
 
+from server.call.call_controller import CALL_ACTION_TOOL
 from server.realtime.models import (
     DEFAULT_REALTIME_MODEL,
     DEFAULT_REALTIME_TURN_DETECTION,
@@ -93,7 +94,7 @@ def build_realtime_voice_session(
         "instructions": instructions,
         "output_modalities": ["audio"],
         "max_output_tokens": resolve_realtime_voice_max_output_tokens(max_output_tokens),
-        "tools": [END_CALL_TOOL],
+        "tools": [END_CALL_TOOL, CALL_ACTION_TOOL],
         "tool_choice": "auto",
         "audio": {
             "input": audio_in,
@@ -123,6 +124,8 @@ class OpenAIRealtimeVoiceAdapter:
         self._response_idle = asyncio.Event()
         self._response_idle.set()
         self._response_lock = asyncio.Lock()
+        self._auto_response_applied = asyncio.Event()
+        self._expected_auto_response: bool | None = None
         self._accepting = False
         self._current_output_item_ids: list[str] = []
         self.model = DEFAULT_REALTIME_MODEL
@@ -212,6 +215,8 @@ class OpenAIRealtimeVoiceAdapter:
         except (KeyError, TypeError):
             return
         self.last_session = session
+        self._expected_auto_response = bool(enabled)
+        self._auto_response_applied.clear()
         await self._conn.send({"type": "session.update", "session": session})
 
     def is_open(self) -> bool:
@@ -243,6 +248,12 @@ class OpenAIRealtimeVoiceAdapter:
         if self._conn is None:
             raise RuntimeError("realtime voice connection is not open")
         async with self._response_lock:
+            automatic = bool(self.last_session and self.last_session["audio"]["input"]["turn_detection"].get("create_response"))
+            if automatic:
+                await self.set_auto_response(False)
+                # The server may have started a VAD response before processing
+                # our update. Wait for its acknowledgement before cancel/create.
+                await asyncio.wait_for(self._auto_response_applied.wait(), timeout=3.0)
             if not self._response_idle.is_set():
                 await self._cancel_response_locked()
             self._accepting = True
@@ -261,6 +272,9 @@ class OpenAIRealtimeVoiceAdapter:
                 self._accepting = False
                 self._response_idle.set()
                 raise
+            finally:
+                if automatic:
+                    await self.set_auto_response(True)
 
     async def cancel_response(self) -> None:
         async with self._response_lock:
@@ -294,9 +308,9 @@ class OpenAIRealtimeVoiceAdapter:
             await asyncio.wait_for(self._response_idle.wait(), timeout=1.5)
         except Exception as e:
             logger.warning("[REALTIME_VOICE] cancel failed: %s", str(e)[:160])
-        finally:
-            self._active_response_id = None
-            self._response_idle.set()
+            # Do not manufacture an idle state after a timeout. The server may
+            # still be generating; a new response.create would overlap it.
+            raise
 
     async def submit_function_output(self, *, call_id: str, output: str) -> None:
         if self._conn is None or not call_id:
@@ -405,6 +419,13 @@ class OpenAIRealtimeVoiceAdapter:
                     if kind == "session.updated":
                         self._configured = True
                         self._ready.set()
+                        session = _event_field(event, "session") or {}
+                        audio = _event_field(session, "audio") or {}
+                        audio_input = _event_field(audio, "input") or {}
+                        detection = _event_field(audio_input, "turn_detection") or {}
+                        applied = _event_field(detection, "create_response")
+                        if applied is self._expected_auto_response:
+                            self._auto_response_applied.set()
                     if kind == "error":
                         err = _event_field(event, "error") or {}
                         message = (
@@ -503,6 +524,7 @@ class OpenAIRealtimeVoiceAdapter:
             return {
                 "type": "assistant_transcript_delta",
                 "delta": str(_event_field(event, "delta") or ""),
+                "response_id": _response_id(event),
             }
         if kind in (
             "response.output_audio_transcript.done",
@@ -511,6 +533,7 @@ class OpenAIRealtimeVoiceAdapter:
             return {
                 "type": "assistant_transcript",
                 "text": str(_event_field(event, "transcript") or _event_field(event, "text") or ""),
+                "response_id": _response_id(event),
             }
         if kind == "response.function_call_arguments.done":
             return {
@@ -518,9 +541,13 @@ class OpenAIRealtimeVoiceAdapter:
                 "name": str(_event_field(event, "name") or ""),
                 "arguments": _event_field(event, "arguments") or "",
                 "call_id": str(_event_field(event, "call_id") or ""),
+                "response_id": _response_id(event),
             }
         if kind == "response.done":
             response = _event_field(event, "response")
+            rid = _response_id(event)
+            if rid and self._active_response_id and rid != self._active_response_id:
+                return None
             self._accepting = False
             self._active_response_id = None
             self._response_idle.set()
@@ -542,12 +569,16 @@ class OpenAIRealtimeVoiceAdapter:
                 "usage": usage,
                 "failed": status == "failed",
                 "output": output,
+                "response_id": rid,
             }
         if kind == "response.cancelled":
+            rid = _response_id(event)
+            if rid and self._active_response_id and rid != self._active_response_id:
+                return None
             self._accepting = False
             self._active_response_id = None
             self._response_idle.set()
-            return {"type": "cancelled"}
+            return {"type": "cancelled", "response_id": rid}
         if kind in ("error", "response.failed"):
             err = _event_field(event, "error") or {}
             message = err if isinstance(err, str) else str(_event_field(err, "message") or err or kind)

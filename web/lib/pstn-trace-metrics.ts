@@ -7,6 +7,7 @@ type LedgerLine = {
   seq?: number;
   role?: string;
   text?: string;
+  ts?: string;
   stt_latency_ms?: number;
   brain_latency_ms?: number;
   tts_first_byte_ms?: number;
@@ -23,10 +24,11 @@ type TraceTurn = {
   input_audio_tokens?: number;
   output_audio_tokens?: number;
   stt_final_ms?: number;
+  e2e_ms?: number;
 };
 
-function pairLines(lines: LedgerLine[]): { userText: string; assistantText: string; sttMs: number }[] {
-  const pairs: { userText: string; assistantText: string; sttMs: number }[] = [];
+function pairLines(lines: LedgerLine[]): { userText: string; assistantText: string; sttMs: number; at: number; turnMs: number }[] {
+  const pairs: { userText: string; assistantText: string; sttMs: number; at: number; turnMs: number }[] = [];
   let pendingUser: LedgerLine | null = null;
   for (const line of lines) {
     if (line.role === "user") {
@@ -34,10 +36,16 @@ function pairLines(lines: LedgerLine[]): { userText: string; assistantText: stri
       continue;
     }
     if (line.role === "assistant") {
+      const userTs = pendingUser?.ts ? Date.parse(pendingUser.ts) : NaN;
+      const asstTs = line.ts ? Date.parse(line.ts) : NaN;
+      const turnMs =
+        Number.isFinite(userTs) && Number.isFinite(asstTs) && asstTs > userTs ? asstTs - userTs : 0;
       pairs.push({
         userText: pendingUser?.text || "",
         assistantText: line.text || "",
         sttMs: Number(pendingUser?.stt_latency_ms || 0),
+        at: Number.isFinite(userTs) ? userTs : 0,
+        turnMs,
       });
       pendingUser = null;
     }
@@ -60,11 +68,13 @@ export function mapPstnTraceToTurnRows(
     const cacheWrite = Number(turn.cache_write_tokens || 0);
     const sttMs = Number(turn.stt_final_ms || pair?.sttMs || 0);
     const cacheEvent: CacheEvent = classifyCacheEvent(input, cached, cacheWrite);
+    const turnMs = Number(turn.e2e_ms || 0) || pair?.turnMs || 0;
     return {
       turn: Number(turn.turn ?? index + 1),
       userText,
       assistantText,
-      at: Date.now(),
+      at: pair?.at || index + 1,
+      micDurationMs: turnMs > 0 ? turnMs : undefined,
       inputTokens: input,
       outputTokens: Number(turn.output_tokens || 0),
       cachedTokens: cached,

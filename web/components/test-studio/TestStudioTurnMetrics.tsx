@@ -132,6 +132,7 @@ export function TestStudioTurnMetrics({
   sessionDurationMs = 0,
   callDirection = "outbound",
   stampedUsage,
+  sessionEnded = false,
 }: {
   rows: TurnMetricRow[];
   sessionTotal: SessionUsageTotals;
@@ -145,6 +146,7 @@ export function TestStudioTurnMetrics({
   sessionDurationMs?: number;
   callDirection?: "inbound" | "outbound";
   stampedUsage?: StampedSessionUsage | null;
+  sessionEnded?: boolean;
 }) {
   const e2e = mode === "pstn_realtime";
   const pstn = mode === "pstn" || mode === "pstn_realtime";
@@ -201,7 +203,13 @@ export function TestStudioTurnMetrics({
             <StatCell
               label="Call session"
               value={formatClock(wallSec * 1000)}
-              sub={wallSec > 0 ? `${wallSec.toFixed(0)}s connected` : "starts when the call connects"}
+              sub={
+                wallSec > 0
+                  ? sessionEnded
+                    ? `${wallSec.toFixed(0)}s ended`
+                    : `${wallSec.toFixed(0)}s connected`
+                  : "starts when the call connects"
+              }
               accent
             />
             <StatCell

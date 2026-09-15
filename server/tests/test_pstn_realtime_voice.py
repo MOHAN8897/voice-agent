@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import struct
 from unittest.mock import AsyncMock
 
 import pytest
@@ -661,7 +662,7 @@ async def test_start_call_outbound_natural_vad_no_forced_greeting():
 
 
 @pytest.mark.asyncio
-async def test_deferred_greeting_plays_on_speech_stopped():
+async def test_deferred_greeting_waits_until_user_finishes():
     wires: list[bytes] = []
 
     async def on_wire(wire: bytes) -> None:
@@ -689,13 +690,55 @@ async def test_deferred_greeting_plays_on_speech_stopped():
     )
     assert wires == []
     assert adapter.auto_response_states == [False]
+    loud = struct.pack("<320h", *([1200] * 320))
+    for _ in range(5):
+        await loop.feed_user_pcm16(loud)
+    assert wires == []
+    assert loop._deferred_greeting_task is None
+    # High-eagerness VAD can fire this ~60ms into hello — must not play yet.
     await loop._handle_event({"type": "speech_stopped"})
+    await asyncio.sleep(0.05)
+    assert wires == []
+    for _ in range(8):
+        await loop.feed_user_pcm16(bytes(640))
     await asyncio.wait_for(loop._deferred_greeting_task, timeout=1.0)
     assert wires == frames
     assert adapter.noted_assistant == ["Hi, this is Tis. Do you have a moment?"]
     assert adapter.auto_response_states == [False, True]
     assert loop._intro_noted is True
     assert loop._phase == PHASE_LISTENING
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_deferred_greeting_ignores_early_speech_stopped():
+    wires: list[bytes] = []
+
+    async def on_wire(wire: bytes) -> None:
+        wires.append(wire)
+
+    adapter = FakeRealtimeVoiceAdapter()
+    adapter.connected = True
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id="c-early-stop",
+        on_agent_wire=on_wire,
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        adapter=adapter,
+        stack_override={"pipeline": "realtime_voice", "direction": "outbound"},
+    )
+    await loop.start_call(
+        play_greeting=True,
+        greeting_wire_frames=[b"\x01" * 640],
+        greeting_text="Hello there.",
+    )
+    await loop._handle_event({"type": "speech_stopped"})
+    await asyncio.sleep(0.05)
+    assert wires == []
+    assert loop._deferred_greeting_task is None
     await loop.close()
 
 
@@ -722,8 +765,8 @@ async def test_deferred_greeting_cancels_vad_response():
     await loop._handle_event({"type": "response_created", "response_id": "r1"})
     assert adapter.cancelled >= 1
     await asyncio.sleep(0.05)
-    if loop._deferred_greeting_task and not loop._deferred_greeting_task.done():
-        await asyncio.wait_for(loop._deferred_greeting_task, timeout=1.0)
+    assert loop._deferred_greeting_task is None
+    loop.on_agent_wire.assert_not_awaited()
     await loop.close()
 
 
@@ -908,6 +951,54 @@ async def test_record_name_and_contact_tomorrow_collects_then_hangs_up(monkeypat
     facts = memory_manager.get_snapshot(call_id)["facts"]
     assert facts["name"] == "Subhash"
     assert "8897908470" in str(facts["phone"])
+
+    call_ledger.reset_for_tests()
+    memory_manager.reset_for_tests()
+    get_settings.cache_clear()
+
+
+@pytest.mark.asyncio
+async def test_missed_end_call_after_handoff_hangs_up(monkeypatch, tmp_path):
+    from server.call.call_ledger import call_ledger
+    from server.call.memory_manager import memory_manager
+    from server.config.env import get_settings
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+
+    monkeypatch.setenv("DATA_DIR", str(tmp_path))
+    get_settings.cache_clear()
+    call_ledger.reset_for_tests()
+    memory_manager.reset_for_tests()
+    call_id = "c-missed-hangup"
+    await call_ledger.init(
+        call_id,
+        {"call_id": call_id, "pipeline": "realtime_voice", "caller_id": "+13526146416"},
+    )
+    memory_manager.init(call_id)
+    memory_manager.apply_proposals(
+        call_id,
+        [{"op": "set_fact", "key": "caller_name", "value": "Mohan"}],
+        turn_seq=1,
+        source="test",
+    )
+
+    adapter = FakeRealtimeVoiceAdapter()
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id=call_id,
+        on_agent_wire=AsyncMock(),
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        adapter=adapter,
+        stack_override={"pipeline": "realtime_voice", "language": "en-IN"},
+    )
+    loop._adapter = adapter
+    await call_ledger.append_assistant_turn(call_id, "Hi, this is Priya.")
+    await call_ledger.append_assistant_turn(call_id, "Got it, your name is Mohan.")
+    await loop._handle_event({"type": "user_transcript", "text": "Ja, danke.", "final": True})
+    loop._assistant_text = "All set, thanks for confirming — we'll take it from here."
+    await loop._maybe_hangup_missed_end_call()
+    assert loop._pending_end_call is not None
+    assert loop._pending_end_call["reason"] == "goal_complete"
 
     call_ledger.reset_for_tests()
     memory_manager.reset_for_tests()
@@ -1193,6 +1284,11 @@ async def test_overlap_junk_transcript_dropped_while_agent_speaks():
     loop._aec_barge_open = True
     await loop._handle_event({"type": "user_transcript", "text": "why did you call me", "final": True})
     assert loop._user_partial == "why did you call me"
+    loop._aec_barge_open = False
+    await loop._handle_event(
+        {"type": "user_transcript", "text": "Yeah, my friend, can you tell me why did you call me?", "final": True}
+    )
+    assert "why did you call me" in loop._user_partial
 
 
 @pytest.mark.asyncio

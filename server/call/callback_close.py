@@ -121,12 +121,20 @@ def advance_callback_close(
     """Advance (or derive) the callback close phase for this utterance."""
     from server.call.end_call_validate import (
         caller_asked_to_record_details,
+        caller_requested_hangup,
+        caller_firm_refusal,
         caller_requested_callback,
         memory_with_live_lead,
         _lead_name_and_phone,
     )
 
     extra = {k: str(v).strip() for k, v in (extra_slots or {}).items() if str(v).strip()}
+    if caller_requested_hangup(user_text) or caller_firm_refusal(user_text):
+        if ctx is not None:
+            ctx.callback_request_text = ""
+        state = CallbackCloseState(PHASE_IDLE)
+        _persist(ctx, state)
+        return state
     prev_phase = str(getattr(ctx, "callback_close_phase", "") or PHASE_IDLE)
     if prev_phase == PHASE_HANGUP_EXECUTED:
         name = str(getattr(ctx, "callback_name", "") or extra.get("name") or "")

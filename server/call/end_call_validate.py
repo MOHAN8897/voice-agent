@@ -9,6 +9,7 @@ from typing import Any
 from server.call.call_end_policy import HANGUP_REASONS as POLICY_REASONS, allowed_reasons_for
 from server.call.hangup_judge import (
     agent_spoke_closing,
+    agent_still_collecting_lead,
     caller_wants_to_continue,
     default_farewell_for,
     memory_has_lead_handoff,
@@ -75,7 +76,9 @@ _GOAL_COMPLETE_USER = re.compile(
     re.I,
 )
 _OPT_OUT = re.compile(
-    r"don't call|do not call|stop calling|keep calling|stop the calls|never (?:call|contact)|please stop calling",
+    r"don't call|do not call|stop calling|keep calling|stop the calls|never (?:call|contact)|please stop calling|"
+    r"\b(?:you\s+)?(?:don['’]?t|do not)\s+(?:have|need)\s+to\s+(?:call|contact)\s+me\b|"
+    r"\b(?:cancel|forget)\s+(?:the |my |that )?callback\b",
     re.I,
 )
 
@@ -268,6 +271,21 @@ def looks_like_question(text: str) -> bool:
     return bool(_QUESTION_RE.search(t))
 
 
+_SUBSTANTIVE_Q = re.compile(
+    r"\b(how|what|when|where|why|which|who|price|cost|much)\b",
+    re.I,
+)
+
+
+def _substantive_user_question(text: str) -> bool:
+    """True for a real information question — not a short close fragment with a '?'."""
+    if caller_wants_to_continue(text):
+        return True
+    if not looks_like_question(text):
+        return False
+    return bool(_SUBSTANTIVE_Q.search(text or ""))
+
+
 def memory_has_goal_complete(snapshot: dict[str, Any] | None) -> bool:
     if not snapshot:
         return False
@@ -308,14 +326,17 @@ def _evidence_ok(
             return True
         if caller_requested_callback(text) and not caller_asked_to_record_details(text):
             return True
-        if looks_like_question(text):
+        if looks_like_question(text) and _substantive_user_question(text):
+            return False
+        if looks_like_question(text) and not agent_spoke_closing(spoken):
             return False
         if _GOAL_COMPLETE_USER.search(text) or memory_has_goal_complete(memory_snapshot):
             return True
         # Objective closed: agent spoke handoff/farewell with lead details or a short ack.
-        if agent_spoke_closing(spoken) and (
+        if agent_spoke_closing(spoken) and not caller_wants_to_continue(text) and (
             memory_has_lead_handoff(memory_snapshot)
             or (user_short_close_ack(text) and completed_turns >= 1)
+            or (completed_turns >= 2 and not _substantive_user_question(text))
         ):
             return True
         return False
@@ -393,6 +414,9 @@ def validate_end_call(
         parsed = _force_end("goodbye", parsed.get("farewell") or "", spoken, lang)
     elif caller_firm_refusal(user):
         parsed = _force_end("firm_refusal", parsed.get("farewell") or "", spoken, lang)
+    elif agent_still_collecting_lead(spoken):
+        logger.info("[END_CALL] rejected code=lead_details_missing spoken_collecting=1")
+        return EndCallDecision(False, False, "none", parsed.get("farewell") or "", "lead_details_missing")
     elif caller_requested_callback(user) or callback_close_phase in {
         "collecting_name",
         "collecting_phone",
@@ -423,14 +447,21 @@ def validate_end_call(
         logger.info("[END_CALL] rejected code=caller_engaged reason=%s", parsed.get("reason"))
         return EndCallDecision(False, False, "none", "", "caller_engaged")
     elif not parsed["should_end"]:
+        if callback_close_phase in {"collecting_name", "collecting_phone"}:
+            return EndCallDecision(False, False, "none", "", "lead_details_missing")
         # Repair missed end_call tool when the turn already closed the conversation.
         if caller_confirmed_goal_complete(user) and (
             agent_spoke_closing(spoken) or parsed.get("farewell")
         ):
             parsed = _force_end("goal_complete", parsed.get("farewell") or "", spoken, lang)
-        elif agent_spoke_closing(spoken) and (
-            memory_has_lead_handoff(memory_snapshot)
-            or (user_short_close_ack(user) and completed_turns >= 1)
+        elif (
+            agent_spoke_closing(spoken)
+            and not caller_wants_to_continue(user)
+            and (
+                memory_has_lead_handoff(memory_snapshot)
+                or (user_short_close_ack(user) and completed_turns >= 1)
+                or (completed_turns >= 2 and not _substantive_user_question(user))
+            )
         ):
             parsed = _force_end("goal_complete", parsed.get("farewell") or "", spoken, lang)
 
@@ -463,7 +494,19 @@ def validate_end_call(
     if looks_like_question(user) and reason != "abuse":
         if not (_OPT_OUT.search(user) or _CALLER_DONE.search(user)
                 or caller_explicit_end_request(user) or caller_requested_callback(user)):
-            return _reject("user_asked_question")
+            # Short STT junk ("Ja, kann das?") after a real close must not block hangup.
+            if not (
+                reason == "goal_complete"
+                and agent_spoke_closing(spoken)
+                and not caller_wants_to_continue(user)
+                and not _substantive_user_question(user)
+                and (
+                    memory_has_lead_handoff(memory_snapshot)
+                    or user_short_close_ack(user)
+                    or completed_turns >= 2
+                )
+            ):
+                return _reject("user_asked_question")
     if (
         looks_like_question(spoken)
         and reason == "goal_complete"

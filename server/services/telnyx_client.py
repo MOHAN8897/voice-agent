@@ -67,7 +67,9 @@ class TelnyxClient:
         timeout = kwargs.pop("timeout", None)
         if timeout is None:
             timeout = httpx.Timeout(connect=15.0, read=25.0, write=15.0, pool=15.0)
-        max_attempts = 2
+        # A lost dial response does not mean the call was not placed. Retrying
+        # POST /calls creates another real call, leaving the first untracked.
+        max_attempts = 1 if method.upper() == "POST" and path == "/calls" else 2
         for attempt in range(max_attempts):
             try:
                 async with httpx.AsyncClient(timeout=timeout) as client:
@@ -243,7 +245,7 @@ class TelnyxClient:
         from_e164: str | None = None,
         stream_url: str | None = None,
         client_state: dict[str, Any] | None = None,
-        target_legs: str = "self",
+        target_legs: str = "both",
         bidirectional_mode: str = "rtp",
     ) -> dict[str, Any]:
         from_num = from_e164 or self.cfg.get("phone_number") or ""
@@ -312,9 +314,13 @@ class TelnyxClient:
         call_control_id: str,
         *,
         stream_url: str,
-        target_legs: str = "self",
+        target_legs: str = "both",
     ) -> dict[str, Any]:
-        """Start or restart bidirectional media stream (fallback if dial-time stream_url failed)."""
+        """Start or restart bidirectional media stream (fallback if dial-time stream_url failed).
+
+        `both` so answer-time streaming_start actually reaches the callee and
+        captures their inbound audio. `self` on outbound after answer is silent.
+        """
         payload: dict[str, Any] = {
             "stream_url": stream_url,
             "stream_track": "both_tracks",

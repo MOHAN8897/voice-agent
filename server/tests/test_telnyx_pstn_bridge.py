@@ -20,13 +20,27 @@ def test_dial_uses_rtp_bidirectional_and_both_legs():
     src = inspect.getsource(client.create_outbound_call)
     assert 'bidirectional_mode: str = "rtp"' in src
     assert '"stream_bidirectional_mode": bidirectional_mode' in src
-    assert 'target_legs: str = "self"' in src
+    assert 'target_legs: str = "both"' in src
+    stream_src = inspect.getsource(client.start_streaming)
+    assert 'target_legs: str = "both"' in stream_src
     assert '"stream_codec": TELNYX_RTP_CODEC' in src
     assert '"stream_bidirectional_codec": TELNYX_RTP_CODEC' in src
     assert "TELNYX_RTP_SAMPLE_RATE" in src
     assert '"send_silence_when_idle": True' in src
     assert "if stream_url:" in src
     assert 'stream_url: str | None = None' in src
+
+
+def test_outbound_telnyx_starts_media_on_answer_not_dial():
+    import inspect
+
+    from server.routes import dev_telephony
+
+    src = inspect.getsource(dev_telephony._outbound_telnyx)
+    assert "stream_url=None" in src
+    assert '"stream_started": bool(existing_call.get("stream_started"))' in src
+    assert '"stream_connected": bool(existing_call.get("stream_connected"))' in src
+    assert 'target_legs="both"' in src
 
 
 def test_pcm16_to_mulaw_frame_size():

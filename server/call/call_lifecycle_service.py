@@ -29,6 +29,8 @@ from server.utils.errors import AppError, ErrorCode
 from server.utils.logger import log_pstn, logger
 
 END_REASONS = {
+    "opt_out", "callback_cancelled", "silence_timeout", "max_duration",
+    "provider_failure", "runtime_failure", "farewell_timeout", "response_timeout", "response_failure",
     "user_stop",
     "timeout",
     "error",

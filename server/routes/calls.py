@@ -1,6 +1,7 @@
 """Call lifecycle HTTP routes — delegates to call_lifecycle_service."""
 from __future__ import annotations
 
+import asyncio
 from typing import Literal, Optional
 
 from fastapi import APIRouter, HTTPException, Query, Request
@@ -183,6 +184,8 @@ async def get_audio(
     kind: Literal["mix", "user", "agent", "mix_clear", "user_clear", "agent_clear"],
     download: bool = Query(False, alias="download"),
 ):
+    if kind.endswith("_clear"):
+        await asyncio.to_thread(audio_archive.refresh_clear_tracks, call_id)
     path = audio_archive.file_for(call_id, kind)
     if path is None:
         raise HTTPException(
@@ -195,13 +198,14 @@ async def get_audio(
         ".mp3": "audio/mpeg",
     }.get(suffix, "application/octet-stream")
     headers: dict[str, str] = {"Accept-Ranges": "bytes", "Cache-Control": "no-store"}
-    if download or kind.endswith("_clear"):
+    if download:
         headers["Content-Disposition"] = f'attachment; filename="{call_id}-{kind}{suffix}"'
     return FileResponse(
         path,
         media_type=media,
-        filename=path.name,
+        filename=path.name if download else None,
         headers=headers,
+        content_disposition_type="attachment" if download else "inline",
     )
 
 

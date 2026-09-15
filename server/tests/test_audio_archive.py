@@ -115,3 +115,60 @@ async def test_clear_audio_is_louder_than_raw(archive):
         return max(abs(s) for s in samples)
 
     assert peak(archive.mix_clear_path(call_id)) > peak(archive.mix_path(call_id))
+
+
+def test_peak_normalize_ignores_click_spike():
+    from server.call.audio_archive import _peak_normalize_pcm16
+
+    samples = [400] * 200
+    samples[50] = 30000
+    pcm = struct.pack("<" + "h" * 200, *samples)
+    out = _peak_normalize_pcm16(pcm)
+    boosted = struct.unpack("<200h", out)
+    assert abs(boosted[0]) > 2000
+    assert abs(boosted[50]) == 32767
+
+
+@pytest.mark.asyncio
+async def test_clear_mix_folds_both_parties_and_is_louder(archive):
+    call_id = "audio-fold"
+    archive.init(call_id)
+    archive.set_agent_sample_rate(call_id, 16000)
+    user = struct.pack("<" + "h" * 16, *([500] * 16))
+    agent = struct.pack("<" + "h" * 16, *([800] * 16))
+    await archive.append_user_pcm(call_id, user)
+    await archive.append_agent_audio(call_id, agent)
+    await archive.flush(call_id)
+    with wave.open(str(archive.mix_path(call_id)), "rb") as wf:
+        raw = struct.unpack("<hh", wf.readframes(1))
+    with wave.open(str(archive.mix_clear_path(call_id)), "rb") as wf:
+        clear = struct.unpack("<hh", wf.readframes(1))
+    assert raw == (500, 800)
+    assert clear[0] > raw[0]
+    assert clear[1] > raw[1]
+    # Folded review mix: both ears carry both parties.
+    assert clear[0] > 0 and clear[1] > 0
+
+
+@pytest.mark.asyncio
+async def test_refresh_clear_tracks_rebuilds_old_quiet_mix(archive):
+    call_id = "audio-refresh"
+    archive.init(call_id)
+    archive.set_agent_sample_rate(call_id, 16000)
+    quiet = struct.pack("<" + "h" * 32, *([300] * 32))
+    await archive.append_user_pcm(call_id, quiet)
+    await archive.append_agent_audio(call_id, quiet)
+    await archive.flush(call_id)
+    archive._clear_gain_mark(call_id).unlink()
+    archive.mix_clear_path(call_id).write_bytes(archive.mix_path(call_id).read_bytes())
+
+    def peak(path) -> int:
+        with wave.open(str(path), "rb") as wf:
+            data = wf.readframes(wf.getnframes())
+        samples = struct.unpack(f"<{len(data) // 2}h", data)
+        return max(abs(s) for s in samples)
+
+    assert peak(archive.mix_clear_path(call_id)) == peak(archive.mix_path(call_id))
+    archive.refresh_clear_tracks(call_id)
+    assert peak(archive.mix_clear_path(call_id)) > peak(archive.mix_path(call_id))
+    archive.refresh_clear_tracks(call_id)

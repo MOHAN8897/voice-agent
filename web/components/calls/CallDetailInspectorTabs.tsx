@@ -61,7 +61,7 @@ export function CallDetailInspectorTabs({ callId }: { callId: string }) {
 
       {tab === "recording" && (
         <div className="mt-4">
-          <CallAudioPanel callId={callId} />
+          <CallAudioPanel callId={callId} preferClearAudio />
         </div>
       )}
 

@@ -547,8 +547,8 @@ export function AgentTestStudio({
     setCallEnded(true);
     setLocked(false);
     setSessionStatus("ended");
-    setSessionEndedAt(Date.now());
-    refreshMemory(id);
+    setSessionEndedAt((prev) => prev ?? Date.now());
+    if (id) refreshMemory(id);
   }, [refreshMemory]);
 
   const onReviewCall = useCallback((id: string) => {
@@ -593,12 +593,17 @@ export function AgentTestStudio({
       }
     };
     void pull();
+    if (callEnded) {
+      return () => {
+        cancelled = true;
+      };
+    }
     const timer = setInterval(pull, 1500);
     return () => {
       cancelled = true;
       clearInterval(timer);
     };
-  }, [channel, callId]);
+  }, [channel, callId, callEnded]);
 
   const onRealtimeStackChange = useCallback(
     (next: StackForm) => {
@@ -732,6 +737,7 @@ export function AgentTestStudio({
                 pricing={pricingMeta}
                 sessionDurationMs={sessionDurationMs}
                 stampedUsage={stampedUsage}
+                sessionEnded={callEnded || sessionEndedAt != null}
               />
             </div>
       </div>
@@ -784,6 +790,7 @@ export function AgentTestStudio({
               pricing={pricingMeta}
               sessionDurationMs={sessionDurationMs}
               stampedUsage={stampedUsage}
+              sessionEnded={callEnded || sessionEndedAt != null}
             />
           </div>
           ) : null}
@@ -846,6 +853,7 @@ export function AgentTestStudio({
             pricing={pricingMeta}
             sessionDurationMs={sessionDurationMs}
             stampedUsage={stampedUsage}
+            sessionEnded={callEnded || sessionEndedAt != null}
           />
         </div>
       )}

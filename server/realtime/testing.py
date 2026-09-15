@@ -1,6 +1,7 @@
 """In-process Realtime adapter for tests — no OpenAI WebSocket."""
 from __future__ import annotations
 
+import asyncio
 from collections.abc import AsyncIterator
 from typing import Any
 
@@ -161,6 +162,9 @@ class FakeRealtimeVoiceAdapter:
         script = list(self.events_script) if self.events_script is not None else []
         for event in script:
             yield event
+        # A live websocket remains open between turns; exhaustion is not EOF.
+        while not self.closed:
+            await asyncio.sleep(0.01)
 
     async def close(self) -> None:
         self.closed = True

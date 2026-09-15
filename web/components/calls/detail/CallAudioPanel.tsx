@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { SkeuoPanel } from "@/components/ui/skeuo/SkeuoPanel";
 import { SkeuoButton } from "@/components/ui/skeuo/SkeuoButton";
@@ -18,11 +18,47 @@ const KIND_LABEL: Record<AudioKind, string> = {
   agent_clear: "Clear agent",
 };
 
+type BoostGraph = { ctx: AudioContext };
+
+function AudioContextCtor(): typeof AudioContext {
+  const w = window as Window & { webkitAudioContext?: typeof AudioContext };
+  return w.AudioContext || w.webkitAudioContext || AudioContext;
+}
+
+async function connectPlaybackBoost(el: HTMLAudioElement, existing: BoostGraph | null): Promise<BoostGraph> {
+  if (existing) {
+    if (existing.ctx.state === "suspended") await existing.ctx.resume();
+    return existing;
+  }
+  const ctx = new (AudioContextCtor())();
+  const source = ctx.createMediaElementSource(el);
+  const splitter = ctx.createChannelSplitter(2);
+  const merger = ctx.createChannelMerger(2);
+  const compressor = ctx.createDynamicsCompressor();
+  compressor.threshold.value = -34;
+  compressor.knee.value = 20;
+  compressor.ratio.value = 12;
+  compressor.attack.value = 0.003;
+  compressor.release.value = 0.12;
+  const makeup = ctx.createGain();
+  makeup.gain.value = 4.2;
+  source.connect(splitter);
+  splitter.connect(merger, 0, 0);
+  splitter.connect(merger, 0, 1);
+  splitter.connect(merger, 1, 0);
+  splitter.connect(merger, 1, 1);
+  merger.connect(compressor);
+  compressor.connect(makeup);
+  makeup.connect(ctx.destination);
+  if (ctx.state === "suspended") await ctx.resume();
+  return { ctx };
+}
+
 export function CallAudioPanel({
   callId,
   title = "Play recording",
-  description = "Clear mix is peak-normalized for dev review — louder and easier to hear on laptop speakers",
-  preferClearAudio = false,
+  description = "Clear mix is boosted and folded to both speakers so caller and agent are audible on a laptop",
+  preferClearAudio = true,
 }: {
   callId: string;
   title?: string;
@@ -31,6 +67,7 @@ export function CallAudioPanel({
   preferClearAudio?: boolean;
 }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const boostRef = useRef<BoostGraph | null>(null);
   const [kind, setKind] = useState<AudioKind>(preferClearAudio ? "mix_clear" : "mix");
   const [failed, setFailed] = useState(false);
   const [retry, setRetry] = useState(0);
@@ -51,6 +88,14 @@ export function CallAudioPanel({
   }, [callId, kind]);
 
   useEffect(() => {
+    return () => {
+      const boost = boostRef.current;
+      boostRef.current = null;
+      if (boost) void boost.ctx.close();
+    };
+  }, [src]);
+
+  useEffect(() => {
     if (!failed || retry >= 8) return;
     const timer = window.setTimeout(() => {
       setFailed(false);
@@ -59,11 +104,16 @@ export function CallAudioPanel({
     return () => window.clearTimeout(timer);
   }, [failed, retry]);
 
+  const attachBoost = useCallback(async (el: HTMLAudioElement) => {
+    boostRef.current = await connectPlaybackBoost(el, boostRef.current);
+  }, []);
+
   async function playRecording() {
     const el = audioRef.current;
     if (!el || failed) return;
     try {
       el.volume = 1;
+      await attachBoost(el);
       await el.play();
       setPlaying(true);
       setPaused(false);
@@ -151,6 +201,11 @@ export function CallAudioPanel({
             src={src}
             className="w-full"
             onPlay={() => {
+              const el = audioRef.current;
+              if (el) {
+                el.volume = 1;
+                void attachBoost(el);
+              }
               setPlaying(true);
               setPaused(false);
             }}
@@ -180,7 +235,7 @@ export function CallAudioPanel({
       </div>
 
       <p className={cn("mt-2 font-mono text-[10px] text-text-subtle")}>
-        Clear tracks boost quiet PSTN audio up to 4× toward ~90% peak · Play / Pause / Stop or native controls · Mix stereo L=caller R=agent
+        Playback folds L/R to both speakers and applies ~4× review gain · Clear WAV is speech-normalized at hangup · Mix stereo L=caller R=agent
       </p>
     </SkeuoPanel>
   );

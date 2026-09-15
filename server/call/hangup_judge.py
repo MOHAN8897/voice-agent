@@ -17,13 +17,19 @@ _AGENT_CLOSING = re.compile(
     r"we(?:'ll| will) (?:have )?(?:the )?team (?:contact|call|reach)|"
     r"someone from (?:our |the )?team (?:will )?(?:contact|call|reach)|"
     r"call you back|"
-    r"reach out (?:to you|shortly)"
+    r"reach out (?:to you|shortly)|"
+    r"take it from here|"
+    r"all set|"
+    r"(?:details|appointment|information) (?:is |are |have been )?(?:noted|saved|booked|confirmed)|"
+    r"booked (?:your |the )?appointment"
     r")\b",
     re.I,
 )
 _USER_SHORT_ACK = re.compile(
     r"^\s*(?:ok|okay|yes|yeah|yep|sure|fine|alright|great|perfect|"
-    r"thanks|thank you|thankyou|sare|సరే|ठीक|हाँ|अच्छा)[.!]?\s*$",
+    r"thanks|thank you|thankyou|thanks a lot|thank you so much|thank you very much|"
+    r"ja[,.]?\s*danke|danke(?:\s*sch[oö]n)?|"
+    r"sare|సరే|ठीक|हाँ|अच्छा)[.!]?\s*$",
     re.I,
 )
 _INTERESTED_CONTINUE = re.compile(
@@ -42,9 +48,31 @@ _LEAD_CONTEXT = re.compile(
 )
 
 
+_AGENT_STILL_COLLECTING = re.compile(
+    r"\b("
+    r"need your (?:name|phone|number)|"
+    r"may i have your (?:name|phone|number)|"
+    r"what(?:'s| is) your (?:name|phone|number)|"
+    r"once i have that|"
+    r"best (?:phone |callback )?number|"
+    r"good phone number|"
+    r"before i let you go"
+    r")\b",
+    re.I,
+)
+
+
 def agent_spoke_closing(spoken_text: str) -> bool:
     """True when the agent already delivered a closing / handoff line."""
-    return bool(_AGENT_CLOSING.search(spoken_text or ""))
+    spoken = spoken_text or ""
+    if agent_still_collecting_lead(spoken):
+        return False
+    return bool(_AGENT_CLOSING.search(spoken))
+
+
+def agent_still_collecting_lead(spoken_text: str) -> bool:
+    """True when the agent is still asking for name/phone in this utterance."""
+    return bool(_AGENT_STILL_COLLECTING.search(spoken_text or ""))
 
 
 def user_short_close_ack(user_text: str) -> bool:
@@ -104,6 +132,9 @@ HANG UP now (farewell + end_call.should_end true):
    Follow the server callback phase. If it is still collecting a field, ask ONLY that field.
    Do not pitch. Do not say goodbye until that field is captured. Then confirm the callback day/time
    they gave, speak a short farewell, and call end_call.
+5) goal_complete — appointment or details already confirmed and you told them the team will
+   take it from here / contact them. If they said thanks / okay / that's all, close now:
+   one short goodbye AND end_call in the SAME turn. Do not keep wrapping after the objective is done.
 
 KEEP TALKING (never end_call, never say goodbye):
 - Caller is interested or asks more (price, options, tell me more).

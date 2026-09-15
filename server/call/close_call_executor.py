@@ -19,6 +19,8 @@ MaybeAsync = Callable[[], Awaitable[None] | None]
 
 JUDGMENT_END_REASONS = frozenset(HANGUP_REASONS)
 LIFECYCLE_PASSTHROUGH = frozenset({
+    "opt_out", "callback_cancelled", "silence_timeout", "max_duration",
+    "provider_failure", "runtime_failure", "farewell_timeout", "response_timeout", "response_failure",
     "user_stop",
     "timeout",
     "error",
@@ -76,6 +78,7 @@ async def execute_agent_close(
     end_lifecycle: bool = True,
     trail_sec: float | None = None,
     playback_timeout_sec: float | None = None,
+    can_disconnect: Callable[[], bool] | None = None,
 ) -> CloseCallResult:
     from server.call.natural_hangup import HANGUP_PLAYBACK_TIMEOUT_SEC, HANGUP_TRAIL_SILENCE_SEC
     from server.services.pstn_media_flow import pstn_media_flow
@@ -109,6 +112,11 @@ async def execute_agent_close(
     trail_ms = int((trail if should_pause else 0) * 1000)
 
     await _maybe_await(drain_archive)
+    # A caller can resume during the trailing silence or archive drain, after
+    # playback already finished. Recheck immediately before touching the PSTN.
+    if can_disconnect is not None and not can_disconnect():
+        log_pstn("hangup.cancelled_before_disconnect", call_id=call_id)
+        return CloseCallResult(heard, wait_ms, trail_ms, canonical)
     try:
         await _maybe_await(on_provider_hangup)
     except Exception as exc:

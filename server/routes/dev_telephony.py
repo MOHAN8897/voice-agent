@@ -496,7 +496,10 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
         result = await client.create_outbound_call(
             to_e164=body.to_e164,
             from_e164=body.from_e164,
-            stream_url=stream_url,
+            # Do not attach WSS at dial — Telnyx opens media during ring, which
+            # through Cloudflare often dies as a silent dummy before answer.
+            # start_streaming on call.answered is the live media path.
+            stream_url=None,
             client_state={
                 "agent_id": body.agent_id,
                 "tier": tier,
@@ -525,7 +528,8 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
                 "stack_override": stack_override,
                 "stream_url": stream_url,
                 "stream_configured": True,
-                "stream_started": True,
+                "stream_started": bool(existing_call.get("stream_started")),
+                "stream_connected": bool(existing_call.get("stream_connected")),
                 "stream_state": existing_call.get("stream_state") or "pending_answer",
             },
         )
@@ -551,7 +555,7 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
             stream_url=stream_url.split("?", 1)[0],
             wire_codec=TELNYX_RTP_CODEC,
             wire_rate=TELNYX_RTP_SAMPLE_RATE,
-            target_legs="self",
+            target_legs="both",
             wire_mode="rtp",
         )
         payload: dict[str, Any] = {

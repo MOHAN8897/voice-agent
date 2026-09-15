@@ -151,10 +151,55 @@ def test_goodbye_hangs():
 
 def test_helpers_detect_closing_and_lead():
     assert agent_spoke_closing("Noted — our team will contact you. Goodbye.")
+    assert agent_spoke_closing("All set, thanks for confirming — we'll take it from here.")
+    assert not agent_spoke_closing(
+        "Got it, I’m passing that along. I just need your name and a good phone number. "
+        "Once I have that, our team will contact you tomorrow."
+    )
     assert user_short_close_ack("Okay")
+    assert user_short_close_ack("Ja, danke.")
     assert caller_wants_to_continue("I'm interested, tell me more")
     assert memory_has_lead_handoff({"facts": {"callback_phone": "8897908470"}})
     assert not memory_has_lead_handoff({"facts": {"phone": "+13526146416"}})
+
+
+def test_thanks_after_handoff_repairs_missed_end_call():
+    d = _end(
+        {"should_end": False, "reason": "none", "farewell": ""},
+        user="Ja, danke.",
+        spoken="All set, thanks for confirming — we'll take it from here.",
+        turns=6,
+        memory={"facts": {"caller_name": "Mohan"}},
+    )
+    assert d.accepted is True
+    assert d.reason == "goal_complete"
+
+
+def test_garbled_close_fragment_does_not_block_handoff_hangup():
+    d = _end(
+        {"should_end": False, "reason": "none", "farewell": ""},
+        user="Ja, kann das?",
+        spoken="All set, thanks for confirming — we'll take it from here.",
+        turns=8,
+        memory={"facts": {"caller_name": "Mohan"}},
+    )
+    assert d.accepted is True
+    assert d.reason == "goal_complete"
+
+
+def test_callback_name_request_does_not_hangup():
+    d = _end(
+        {"should_end": False, "reason": "none", "farewell": ""},
+        user="I'm busy right now. Can you call me tomorrow?",
+        spoken=(
+            "Got it, I’m passing that along. Since you asked to be called tomorrow, "
+            "I just need your name and a good phone number to reach you on. "
+            "Once I have that, our team will contact you tomorrow."
+        ),
+        turns=4,
+    )
+    assert d.accepted is False
+    assert d.reject_code == "lead_details_missing"
 
 
 def test_record_name_phone_contact_tomorrow_waits_for_details():

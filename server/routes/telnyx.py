@@ -266,7 +266,9 @@ async def _ensure_telnyx_streaming(
             if live.get("stream_connected"):
                 return
             try:
-                await client.start_streaming(call_control_id, stream_url=stream_url)
+                await client.start_streaming(
+                    call_control_id, stream_url=stream_url, target_legs="both"
+                )
                 # A WS start or hangup can arrive while the HTTP request is pending.
                 live = telnyx_call_registry.get(call_control_id) or {}
                 if _call_ended(live) or live.get("stream_connected"):
@@ -477,6 +479,11 @@ async def telnyx_webhook(request: Request):
                     "agent_id", "tier", "source_session_id", "inherit_test_studio_config",
                     "stack_override", "language", "direction",
                 ) if meta.get(k) is not None and existing.get(k) is None}
+                # Signed client_state describes the application dial leg; a
+                # provider's incoming/outgoing view must not turn it into a new
+                # inbound call and trigger a second answer path.
+                if meta.get("direction") == "outbound":
+                    recovered["direction"] = "outbound"
                 telnyx_call_registry.upsert(str(call_control_id), recovered)
             if meta.get("voice_check"):
                 telnyx_call_registry.upsert(
@@ -494,6 +501,8 @@ async def telnyx_webhook(request: Request):
             if claimed:
                 asyncio.create_task(_answer_inbound(str(call_control_id)), name=f"telnyx-answer-{str(call_control_id)[:24]}")
     elif event_type == "call.answered":
+        if _call_ended(telnyx_call_registry.get(str(call_control_id)) or {}):
+            return {"ok": True}
         # answered_handled only dedupes answer side-effects; streaming recovery stays
         # available via streaming.failed even after this claim.
         claimed = await telnyx_call_registry.atomic_check_and_set(
@@ -621,6 +630,11 @@ async def telnyx_webhook(request: Request):
                 },
             )
             await cancel_prewarm("telnyx", str(call_control_id))
+            from server.services.telnyx_pstn_bridge import active_telnyx_bridges
+
+            bridge = active_telnyx_bridges.get(str(call_control_id))
+            if bridge:
+                asyncio.create_task(bridge._cleanup("caller_disconnected"))
             watchdog = _stream_watchdogs.pop(str(call_control_id), None)
             if watchdog:
                 watchdog.cancel()

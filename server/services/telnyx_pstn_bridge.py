@@ -45,6 +45,10 @@ active_telnyx_bridges: dict[str, "TelnyxPstnBridge"] = {}
 _admission_lock = asyncio.Lock()
 
 
+class _OutboundPreAnswerStream(RuntimeError):
+    """Ring-time media WS for an outbound call — must not own the live path."""
+
+
 def _pstn_direction(raw: Any, *, default: str = "outbound") -> str:
     value = str(raw or "").strip().lower()
     if value in ("outbound", "outgoing", "outbound-api"):
@@ -137,6 +141,7 @@ class TelnyxPstnBridge:
         self._token_meta = dict(token_meta or {})
         self.agent_id = agent_id or self._token_meta.get("agent_id")
         self.tier = tier or self._token_meta.get("tier")
+        exit_reason = "media_disconnected"
         try:
             while not self._closed:
                 # Before media `start`, Telnyx may hold the socket open through the full
@@ -226,6 +231,14 @@ class TelnyxPstnBridge:
                                 event="stream_connected",
                                 source="ws_start",
                             )
+                    except _OutboundPreAnswerStream:
+                        self._start_handled = False
+                        log_pstn(
+                            "stream.pre_answer_ignored",
+                            control=self.call_control_id,
+                            reason="outbound_ring",
+                        )
+                        break
                     except Exception:
                         self._start_handled = False
                         raise
@@ -258,14 +271,15 @@ class TelnyxPstnBridge:
                         except Exception:
                             pass
                 elif event == "stop":
+                    exit_reason = "stop"
                     log_pstn("stream.stop", timer_key=self.call_control_id, control=self.call_control_id)
                     logger.info("[TELNYX] stream stop")
                     break
         finally:
             try:
-                await asyncio.shield(self._cleanup("stop"))
+                await asyncio.shield(self._cleanup(exit_reason))
             except asyncio.CancelledError:
-                await self._cleanup("stop")
+                await self._cleanup(exit_reason)
                 raise
 
     async def _decode_client_state(self, start: dict[str, Any]) -> None:
@@ -304,6 +318,21 @@ class TelnyxPstnBridge:
         self._wire_sample_rate = int(media.get("sample_rate") or (16000 if self._wire_codec == "L16" else 8000))
         channels = int(media.get("channels") or 1)
         await self._decode_client_state(start)
+        from server.services.telnyx_client import telnyx_call_registry
+
+        peek = telnyx_call_registry.get(self.call_control_id) or {}
+        merged_early = {**self._client_meta, **self._token_meta, **peek}
+        if (
+            _pstn_direction(merged_early.get("direction"), default="inbound") == "outbound"
+            and not peek.get("answered_handled")
+        ):
+            log_pstn(
+                "stream.pre_answer_ignored",
+                control=self.call_control_id,
+                reason="outbound_not_answered",
+            )
+            raise _OutboundPreAnswerStream("outbound media before answer")
+
         self._negotiated_media = CallMediaConfig(
             codec=self._wire_codec,
             sample_rate=self._wire_sample_rate,
@@ -1214,6 +1243,15 @@ class TelnyxPstnBridge:
         if self._cleanup_done:
             return
         self._closed = True
+        if reason == "media_disconnected" and self._owns_call and self.call_control_id:
+            from server.services.telnyx_client import TelnyxClient, telnyx_call_registry
+
+            row = telnyx_call_registry.get(self.call_control_id) or {}
+            if not row.get("ended"):
+                try:
+                    await TelnyxClient().hangup(self.call_control_id)
+                except Exception as exc:
+                    log_pstn("hangup.media_failure.failed", control=self.call_control_id, error=str(exc)[:160])
         await self._signal_queue_space(force=True)
         if not self._cleaned_voice_loop:
             if (self._voice_loop_task and not self._voice_loop_task.done()
