@@ -525,6 +525,9 @@ async def telnyx_webhook(request: Request):
                 try:
                     await _ensure_telnyx_streaming(cid, reason="answered")
                     _watch_stream_connect(cid)
+                    from server.services.telnyx_recordings import start_call_recording
+
+                    await start_call_recording(cid)
                 except Exception:
                     logger.exception("[PSTN_STREAM] background ensure crashed control=%s", cid)
 
@@ -612,8 +615,14 @@ async def telnyx_webhook(request: Request):
             row_now = telnyx_call_registry.get(str(call_control_id)) or {}
             if call_control_id and not row_now.get("skip_stream") and not _call_ended(row_now):
                 await _ensure_telnyx_streaming(str(call_control_id), reason="streaming_failed")
-    elif event_type == "call.recording.saved":
+    elif event_type in ("call.recording.saved", "recording.saved", "call.recording.saved.v1"):
         logger.info("[TELNYX] recording saved %s", payload.get("recording_urls"))
+        from server.services.telnyx_recordings import ingest_recording_saved
+
+        asyncio.create_task(
+            ingest_recording_saved(str(call_control_id), payload if isinstance(payload, dict) else {}),
+            name=f"telnyx-rec-{str(call_control_id)[:24]}",
+        )
     elif event_type in ("call.hangup", "call.failed"):
         from server.services.pstn_prewarm import cancel_prewarm
 

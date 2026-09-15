@@ -364,6 +364,11 @@ def infer_agent_role(brief: str, *, llm_role: str = "") -> str:
         scores["sales"] += 5
     if re.search(r"\bto buy\b|\bbuy plots?\b|\bbuy (?:the )?(?:flats?|apartments?)\b", text):
         scores["sales"] += 5
+    if re.search(
+        r"\bmake (?:them|users|callers|people) buy\b|\bbuy insurance\b|\binsurance polic",
+        text,
+    ):
+        scores["sales"] += 6
     if re.search(r"\b(crm|saas|subscription|software demo)\b", text):
         scores["sales"] += 5
     if re.search(r"choose the right plan", text) and scores["support"] == 0:

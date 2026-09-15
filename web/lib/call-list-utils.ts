@@ -15,6 +15,8 @@ export type CallListItem = {
   cost_inr?: number;
   cost_inr_per_min?: number;
   has_recording?: boolean;
+  has_telnyx_recording?: boolean;
+  recording_source?: "telnyx" | "local" | "none";
   usage?: {
     cost_usd?: number;
     cost_inr?: number;

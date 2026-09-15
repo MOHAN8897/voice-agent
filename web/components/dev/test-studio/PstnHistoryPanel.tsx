@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { DevCard } from "@/components/dev/DevCard";
 import { CallAudioPanel } from "@/components/calls/detail/CallAudioPanel";
@@ -14,7 +13,6 @@ import { formatDuration, pipelineLabel } from "@/lib/call-list-utils";
 import { formatInr, formatUsd } from "@/lib/usage-cost";
 import type { CallMeta, OutcomePayload, TranscriptLine } from "@/lib/call-detail-types";
 import type { DevTelephonyHistoryRow } from "@/lib/dev-telephony-types";
-import { callAudioUrl } from "@/lib/pstn-trace-metrics";
 import { cn } from "@/lib/cn";
 
 const PAGE_SIZE = 5;
@@ -235,14 +233,23 @@ export function PstnHistoryPanel({
                 <MetaCell label="Ended" value={selected.ended_at ? new Date(selected.ended_at).toLocaleString() : "—"} />
                 <MetaCell label="Internal call ID" value={selected.internal_call_id || "—"} mono />
                 <MetaCell label="Provider call ID" value={selected.external_id || "—"} mono />
-                <MetaCell label="Recording" value={selected.has_recording ? "Available" : "Pending or missing"} />
+                <MetaCell
+                  label="Recording"
+                  value={
+                    selected.has_telnyx_recording
+                      ? "Telnyx recording"
+                      : selected.has_recording
+                        ? "Local mix · Telnyx pending"
+                        : "Pending or missing"
+                  }
+                />
               </dl>
             </section>
 
             <div className="mt-4 rounded-xl border border-surface-border-subtle p-3">
               <p className="font-mono text-[10px] uppercase tracking-wider text-text-subtle">Cost breakdown</p>
               <div className="mt-2 grid gap-2 sm:grid-cols-3">
-                <CostCell label="Model (LLM/STT/TTS)" inr={selected.cost?.model_cost_inr} usd={selected.cost?.model_cost_usd} />
+                <CostCell label="OpenAI Realtime" inr={selected.cost?.model_cost_inr} usd={selected.cost?.model_cost_usd} />
                 <CostCell label="Telnyx minutes" inr={selected.cost?.telnyx_inr} usd={selected.cost?.telnyx_usd} />
                 <CostCell label="Total" inr={selected.cost?.cost_inr} usd={selected.cost?.cost_usd} accent />
               </div>
@@ -270,32 +277,8 @@ export function PstnHistoryPanel({
 
             {selected.internal_call_id ? (
               <div className="mt-4 space-y-4">
-                <CallAudioPanel callId={selected.internal_call_id} preferClearAudio />
+                <CallAudioPanel callId={selected.internal_call_id} />
                 <div className="flex flex-wrap gap-2">
-                  <Link
-                    href={callAudioUrl(selected.internal_call_id, "mix_clear", true)}
-                    className="rounded-lg border border-accent/30 bg-accent/10 px-3 py-2 text-xs font-medium text-accent hover:bg-accent/15"
-                  >
-                    Download clear mix
-                  </Link>
-                  <Link
-                    href={callAudioUrl(selected.internal_call_id, "mix", true)}
-                    className="rounded-lg border border-surface-border px-3 py-2 text-xs font-medium hover:bg-surface-raised"
-                  >
-                    Download raw mix
-                  </Link>
-                  <Link
-                    href={callAudioUrl(selected.internal_call_id, "user_clear", true)}
-                    className="rounded-lg border border-surface-border px-3 py-2 text-xs font-medium hover:bg-surface-raised"
-                  >
-                    Download clear caller
-                  </Link>
-                  <Link
-                    href={callAudioUrl(selected.internal_call_id, "agent_clear", true)}
-                    className="rounded-lg border border-surface-border px-3 py-2 text-xs font-medium hover:bg-surface-raised"
-                  >
-                    Download clear agent
-                  </Link>
                   <Button
                     type="button"
                     variant="secondary"

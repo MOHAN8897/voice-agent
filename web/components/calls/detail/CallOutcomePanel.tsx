@@ -35,16 +35,10 @@ export function CallOutcomePanel({ outcome }: { outcome: OutcomePayload | null }
             </div>
           )}
 
-          {outcome.summary_te && (
-            <div>
-              <p className="font-mono text-[10px] uppercase tracking-wider text-text-subtle">Summary · Telugu</p>
-              <p className="mt-1 text-sm leading-relaxed text-text">{outcome.summary_te}</p>
-            </div>
-          )}
           {outcome.summary_en && (
             <div>
-              <p className="font-mono text-[10px] uppercase tracking-wider text-text-subtle">Summary · English</p>
-              <p className="mt-1 text-sm leading-relaxed text-text-muted">{outcome.summary_en}</p>
+              <p className="font-mono text-[10px] uppercase tracking-wider text-text-subtle">Summary</p>
+              <p className="mt-1 text-sm leading-relaxed text-text">{outcome.summary_en}</p>
             </div>
           )}
 

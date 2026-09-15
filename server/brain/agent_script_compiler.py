@@ -98,6 +98,60 @@ AGENT_SCRIPT_SCHEMA: dict[str, Any] = {
     "additionalProperties": False,
 }
 
+BRIEF_INTERPRET_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "agent_name": {
+            "type": "string",
+            "description": "Person who speaks on the call. Empty if the brief has no name.",
+        },
+        "company_name": {
+            "type": "string",
+            "description": "Company in the brief, typos fixed. Empty if none.",
+        },
+        "persona": {
+            "type": "string",
+            "description": "Short job, e.g. a bank representative calling about insurance",
+        },
+        "role": {
+            "type": "string",
+            "enum": [
+                "sales",
+                "support",
+                "recruitment",
+                "appointment",
+                "education",
+                "information",
+                "lead_qualification",
+                "follow_up",
+                "other",
+            ],
+        },
+        "offer": {
+            "type": "string",
+            "description": "1-3 clean COMPANY & OFFER sentences. Facts only from the brief. Never paste the brief.",
+        },
+        "voice": {
+            "type": "string",
+            "description": "How to talk, from the brief (friendly, simple words). Empty if unspecified.",
+        },
+        "opening_line": {
+            "type": "string",
+            "description": "One spoken greeting with the real name and company, then a permission question.",
+        },
+    },
+    "required": [
+        "agent_name",
+        "company_name",
+        "persona",
+        "role",
+        "offer",
+        "voice",
+        "opening_line",
+    ],
+    "additionalProperties": False,
+}
+
 
 @dataclass
 class AgentScriptResult:
@@ -191,7 +245,9 @@ _NOT_PERSON = frozenset({
     "support", "sales", "english", "appointment", "people", "customers", "users",
     "please", "call", "about", "course", "clinic", "dental", "representative",
     "private", "limited", "follow", "hire", "named", "name", "from", "for",
-    "shop", "bot", "voice", "assistant",
+    "shop", "bot", "voice", "assistant", "the", "owner", "caller", "customer",
+    "friend", "colleague", "person", "user", "boss", "manager", "bank", "whose",
+    "work", "doing",
 })
 _LEGAL_ENTITY = re.compile(
     r"\b(?:pvt\.?\s*ltd\.?|private\s+limited|limited|ltd\.?|llp|llc|inc\.?|"
@@ -207,7 +263,7 @@ _COMPANY_HINT = re.compile(
     r"(shop|mart|realty|estates?|agencies?|plants|pvt|ltd|limited|inc|corp|hospital|clinic|"
     r"dental|hotel|bank|school|college|academy|institute|nursery|store|studio|farms|farm|"
     r"motors?|crm|saas|software|ventures?|logistics|fiber|solar|learning|hub|wash|"
-    r"finance|loantree|homes|labs?|health|dental)",
+    r"finance|loantree|homes|labs?|health|dental|insurance)",
     re.I,
 )
 _CITY_NAME = re.compile(
@@ -224,8 +280,10 @@ _INDIC_NAME = r"[\u0900-\u0D7F]{2,24}"
 _PERSON_TOKEN = rf"(?:{_LATIN_NAME}|{_INDIC_NAME})"
 _PERSON_NAME = rf"({_PERSON_TOKEN}(?:\s+{_PERSON_TOKEN})?)"
 _NAME_STOP = (
-    r"(?=\s+(?:from|frm|for|where|who|that|working|representing|representative|"
-    r"company|also|create|just|then|about|at\b|"
+    r"(?=\s+(?:from|frm|for|where|who|whose|that|working|work\b|doing|"
+    r"representing|representative|"
+    r"company|also|create|just|then|about|at\b|i\b|i'm|i'd|you\b|we\b|this\b|"
+    r"want\b|please\b|"
     r"and\s+(?:a\s+)?(?:representative|rep)\b)\b|[.,;]|$)"
 )
 _LIVE_CALL_GUIDE_TITLE = "LIVE CALL GUIDE"
@@ -291,13 +349,16 @@ def _normalize_brief_identity_text(brief: str) -> str:
     text = re.sub(r"\brealted\b", "related", text, flags=re.I)
     text = re.sub(r"\bnaed\b", "named", text, flags=re.I)
     text = re.sub(r"\bbuisness\b", "business", text, flags=re.I)
+    text = re.sub(r"\bcalsl\b", "calls", text, flags=re.I)
+    text = re.sub(r"\binsturance\b", "insurance", text, flags=re.I)
+    text = re.sub(r"\beveything\b", "everything", text, flags=re.I)
     return text
 
 
 def _clip_person_name(raw: str) -> str:
     text = _clean_identity_value(raw)
     text = re.split(
-        r"\s+(?:also|who|from|frm|for|company|and|that|where|working|people|just|at)\b",
+        r"\s+(?:also|who|whose|from|frm|for|company|and|that|where|working|work|doing|people|just|at)\b",
         text,
         maxsplit=1,
         flags=re.I,
@@ -339,6 +400,7 @@ def extract_agent_name_from_brief(brief: str) -> str:
     name_value = rf"{_PERSON_NAME}{_NAME_STOP}"
     patterns: tuple[tuple[int, str], ...] = (
         (100, rf"create\s+(?:an?\s+)?(?:\w+\s+){{0,4}}agent\s+na?m?e?d\s+{name_value}"),
+        (95, rf"(?:you|u)\s+are\s+(?:an?\s+)?(?:\w+\s+){{0,5}}named\s+{name_value}"),
         (90, rf"agent\s+na?m?e?d\s+{name_value}"),
         (88, rf"agent\s*:\s*{name_value}"),
         (85, rf"agent\s*name\s*(?:(?:is)\b\s*|:\s*)?{name_value}"),
@@ -347,6 +409,8 @@ def extract_agent_name_from_brief(brief: str) -> str:
         (62, rf"\bagent\s+(?!name\b|named\b|for\b|should\b|will\b|to\b|that\b|who\b){name_value}"),
         (50, rf"(?<!\w)named\s+{name_value}"),
         (40, rf"(?:^|[\n.])\s*{name_value}\s+for\s+[A-Z]"),
+        (25, rf"(?:^|[\n.])\s*my\s+name\s+is\s+{name_value}"),
+        (22, rf"\bi(?:'m|\s+am)\s+{name_value}"),
         (20, rf"name\s+is\s+{name_value}"),
     )
     hits: list[tuple[int, int, str]] = []
@@ -358,11 +422,121 @@ def extract_agent_name_from_brief(brief: str) -> str:
             prefix = text[max(0, match.start() - 48) : match.start()]
             if _ORG_BEFORE_NAMED.search(prefix):
                 continue
+            if re.search(r"(?:friend(?:'s)?|colleague(?:'s)?|customer(?:'s)?|her|his)\s+$", prefix, re.I):
+                continue
             hits.append((priority, match.start(), name))
     if not hits:
         return ""
     hits.sort(key=lambda item: (-item[0], item[1]))
     return _titlecase_name(hits[0][2])
+
+
+def extract_callee_name_from_brief(brief: str, *, agent_name: str = "") -> str:
+    """Callee / friend name from the brief — never the speaker."""
+    text = _normalize_brief_identity_text(brief)
+    name_value = rf"{_PERSON_NAME}{_NAME_STOP}"
+    patterns = (
+        rf"(?:my\s+)?friend(?:'s)?\s+name\s+is\s+{name_value}",
+        rf"(?:my\s+)?friend\s+(?:named|called)\s+{name_value}",
+        rf"call(?:ing)?\s+(?:my\s+)?friend\s+{name_value}",
+        rf"test(?:ing)?\s+(?:the\s+)?agent\s+on\s+(?:my\s+)?friend\s+{name_value}",
+        rf"(?:callee|customer|prospect|colleague)(?:'s)?\s+name\s+is\s+{name_value}",
+        rf"(?:my\s+)?colleague\s+{name_value}",
+        rf"her\s+name\s+is\s+{name_value}",
+        rf"his\s+name\s+is\s+{name_value}",
+    )
+    agent_lower = (agent_name or "").strip().lower()
+    for pat in patterns:
+        match = re.search(pat, text, re.I)
+        if not match:
+            continue
+        name = _titlecase_name(_clip_person_name(match.group(1)))
+        if not _looks_like_agent_name(name):
+            continue
+        if agent_lower and name.lower() == agent_lower:
+            continue
+        return name
+    return ""
+
+
+def _personal_call_context(brief: str, *, agent_name: str = "") -> dict[str, Any]:
+    text = brief or ""
+    return {
+        "callee": extract_callee_name_from_brief(text, agent_name=agent_name),
+        "is_test": bool(
+            re.search(r"\b(?:test call|this is a test|test the agent|testing the agent)\b", text, re.I)
+        ),
+        "is_friend": bool(
+            re.search(r"\b(?:talk |speak )?like a friend\b|\bmy friend\b|\bas a friend\b", text, re.I)
+        ),
+        "is_colleague": bool(re.search(r"\bcolleague\b", text, re.I)),
+        "represent_self": bool(
+            re.search(
+                r"\brepresent(?:s|ing)?\s+me\b|\btalk like (?:u|you) represent me\b|\bas me\b",
+                text,
+                re.I,
+            )
+        ),
+    }
+
+
+def _is_personal_brief(brief: str, company: str = "") -> bool:
+    if (company or "").strip():
+        return False
+    ctx = _personal_call_context(brief)
+    return bool(ctx["is_test"] or ctx["is_friend"] or ctx["represent_self"])
+
+
+def extract_persona_from_brief(brief: str) -> str:
+    """Short job line from 'you are a bank person named X' style briefs."""
+    text = _normalize_brief_identity_text(brief)
+    match = re.search(
+        r"(?:you|u)\s+are\s+(?:an?\s+)?(.+?)\s+named\s+",
+        text,
+        re.I,
+    )
+    raw = ""
+    if match:
+        raw = re.sub(r"\s+", " ", match.group(1)).strip(" .,:;-")
+    elif re.search(r"\bbank (?:person|officer|staff|representative|agent)\b", text, re.I):
+        raw = "bank representative"
+    elif re.search(r"\btelecaller\b", text, re.I):
+        raw = "telecaller"
+    cleaned = re.sub(r"\bbank person\b", "bank representative", raw, flags=re.I)
+    cleaned = re.sub(r"^(?:ok\s+)?", "", cleaned, flags=re.I).strip(" .,:;-")
+    if not cleaned or cleaned.lower() in _NOT_PERSON:
+        return ""
+    if len(cleaned.split()) > 6:
+        cleaned = " ".join(cleaned.split()[:4])
+    if cleaned and cleaned[0].islower() and not cleaned.startswith("a "):
+        cleaned = "a " + cleaned
+    return cleaned[:80]
+
+
+def extract_voice_from_brief(brief: str) -> str:
+    """How the agent should sound, taken from the brief — not invented."""
+    text = _normalize_brief_identity_text(brief)
+    bits: list[str] = []
+    if re.search(r"\bfriendly as possible\b|\bas friendly as possible\b|\btalk with users as friendly\b", text, re.I):
+        bits.append("Talk in a friendly, everyday way")
+    elif re.search(r"\bfriendly\b", text, re.I) and not re.search(r"\blike a friend\b", text, re.I):
+        bits.append("Stay friendly")
+    if re.search(r"\bsimple words\b|\bexplain eveything\b|\bexplain everything\b", text, re.I):
+        bits.append("Explain everything in simple words — no jargon")
+    return ". ".join(bits)
+
+
+def _is_raw_identity_dump(text: str) -> bool:
+    blob = (text or "").strip()
+    if not blob:
+        return False
+    return bool(
+        re.match(r"^(?:ok\s+)?(?:u|you)\s+are\b", blob, re.I)
+        or re.match(r"^whose\b", blob, re.I)
+        or re.search(r"\b(?:u|you)\s+are\s+(?:an?\s+)?(?:\w+\s+){0,5}named\b", blob, re.I)
+        or re.search(r"\bfor talk with users\b", blob, re.I)
+        or re.search(r"\bcalsl\b|\binsturance\b|\beveything\b", blob, re.I)
+    )
 
 
 def _strip_city_clause(candidate: str) -> str:
@@ -433,6 +607,18 @@ def extract_company_from_brief(brief: str) -> str:
         if candidate == candidate.lower():
             return " ".join(part.capitalize() for part in words)
         return candidate
+
+    match = re.search(
+        r"\b(?:for|from|at)\s+"
+        r"([A-Za-z][A-Za-z0-9&]*(?:\s+[A-Za-z0-9&.']+){0,6}\s+"
+        r"(?:pvt\.?\s*ltd\.?|private\s+limited|ltd\.?|llp|llc))\b",
+        text,
+        re.I,
+    )
+    if match:
+        accepted = _accept_company(match.group(1))
+        if accepted:
+            return accepted
 
     match = re.search(
         r"\b(?:business|company|firm|brand|agency|dealership|garage|workshop|showroom)\s+"
@@ -578,10 +764,19 @@ def work_scope_from_brief(brief: str, company: str) -> str:
     text = " ".join(_normalize_brief_identity_text(brief).split())
     text = re.sub(r"^ok\s+", "", text, flags=re.I)
     text = re.sub(r"^ok so basically we need\s+", "", text, flags=re.I)
+    text = re.sub(
+        r"^(?:u|you)\s+are\s+(?:an?\s+)?(?:\w+\s+){0,6}named\s+[A-Za-z][A-Za-z'\-]{1,23}\s*",
+        "",
+        text,
+        flags=re.I,
+    )
+    text = re.sub(r"^whose work is (?:doing\s+)?", "", text, flags=re.I)
     text = re.sub(r"\bsomeone like\s+[^\n.,;]{1,40}(?=\s+who|\s+from|[.,;]|$)", "", text, flags=re.I)
     text = re.sub(r"\bthe\s+(?=agent\s*name)", "", text, flags=re.I)
     text = re.sub(r"\bagent\s*:\s*[^\n.,;]{1,40}(?=[.,;]|$)", "", text, flags=re.I)
     text = re.sub(r"name\s+is\s+[^\n.,;]{1,40}(?=[,\s]|$)", "", text, flags=re.I)
+    text = re.sub(r"^my\s+", "", text, flags=re.I)
+    text = re.sub(r"\bi want you to (?:talk|speak)\b", "Talk", text, flags=re.I)
     text = re.sub(
         r"(?:related|realted)\s+to\s+[^\n.,;]{2,60}(?=\s+working|\s+who|\s+create|,|\.)",
         "",
@@ -679,6 +874,40 @@ def work_scope_from_brief(brief: str, company: str) -> str:
     return text
 
 
+def _personal_opening_line(
+    *,
+    agent_name: str,
+    callee_name: str,
+    is_test: bool,
+    language: str,
+    direction: str,
+) -> str:
+    lang = normalize_compile_language(language)
+    outbound = str(direction or "outbound").strip().lower() not in ("inbound", "incoming")
+    english = is_native_english(lang) or lang == "en-IN"
+    closer = (
+        "Do you have a minute?"
+        if lang == "en-US"
+        else "Do you have a moment?"
+        if english
+        else "Konchem time unda?"
+        if lang == "te-IN"
+        else "Kya aapke paas ek minute hai?"
+    )
+    if not outbound:
+        closer = "How can I help?" if english else "Nenu ela sahayam cheyagalanu?"
+    who = callee_name.strip()
+    test_bit = " This is a test call." if is_test and english else (" Idi oka test call." if is_test else "")
+    if english:
+        greet = f"Hi {who}," if who else "Hi,"
+        return f"{greet} this is {agent_name}.{test_bit} {closer}".replace("  ", " ").strip()
+    if lang == "te-IN":
+        greet = f"Hi {who}," if who else "Hi,"
+        return f"{greet} nenu {agent_name}.{test_bit} {closer}".replace("  ", " ").strip()
+    greet = f"Namaste {who}," if who else "Namaste,"
+    return f"{greet} main {agent_name} bol rahi hoon.{test_bit} {closer}".replace("  ", " ").strip()
+
+
 def build_opening_line(
     *,
     agent_name: str,
@@ -686,7 +915,18 @@ def build_opening_line(
     work_scope: str,
     language: str = "te-IN",
     direction: str = "outbound",
+    callee_name: str = "",
+    is_test: bool = False,
+    is_friend: bool = False,
 ) -> str:
+    if callee_name or is_test or is_friend:
+        return _personal_opening_line(
+            agent_name=agent_name,
+            callee_name=callee_name,
+            is_test=is_test,
+            language=language,
+            direction=direction,
+        )
     return opening_line_for(
         language,
         agent_name=agent_name,
@@ -723,12 +963,16 @@ def resolve_script_identity(
     if company and name.lower() == company.lower():
         name = "Alex" if is_native_english(language) else "Priya"
     work = work_scope_from_brief(brief, company)
+    ctx = _personal_call_context(brief, agent_name=name)
     opening = build_opening_line(
         agent_name=name,
         company_name=company,
         work_scope=work,
         language=language,
         direction=direction,
+        callee_name=str(ctx.get("callee") or ""),
+        is_test=bool(ctx.get("is_test")),
+        is_friend=bool(ctx.get("is_friend") or ctx.get("represent_self")),
     )
     return name, company, work, opening
 
@@ -919,6 +1163,15 @@ def _sanitize_business_facts(brief: str, *, agent_name: str, company_name: str) 
             scope,
             flags=re.I,
         )
+    scope = re.sub(
+        r"create\s+an?\s+(?:english\s+)?(?:\w+\s+){0,6}"
+        r"(?:agent|counsellor|counselor|representative|bot)\s+"
+        r"(?:na?m?e?d\s+)?[A-Za-z][A-Za-z'\-]{1,23}\s*"
+        r"(?:for\s+[^.]+?)?[.,;]?\s*",
+        "",
+        scope,
+        flags=re.I,
+    )
     scope = re.sub(r"\s+", " ", scope).strip(" .,:;-")
     return scope or "Use the business objective from the agent brief."
 
@@ -929,8 +1182,20 @@ def _format_business_offer(
     agent_name: str,
     company_name: str,
     work_scope: str,
+    persona: str = "",
+    voice: str = "",
+    offer_override: str = "",
 ) -> str:
     """Clean, customer-facing offer text — no agent-creation boilerplate."""
+    if (offer_override or "").strip():
+        scope = offer_override.strip()
+        if company_name and company_name.lower() not in scope[:180].lower():
+            scope = f"{company_name}. {scope}"
+        if scope[0].islower():
+            scope = scope[0].upper() + scope[1:]
+        if not scope.endswith("."):
+            scope += "."
+        return scope[:480]
     scope = _sanitize_business_facts(brief, agent_name=agent_name, company_name=company_name)
     scope = re.sub(
         r"who\s+should\s+convince\s+(?:the\s+)?users?\s+to\s+",
@@ -943,6 +1208,52 @@ def _format_business_offer(
         scope = scope[len(company_name) :].strip(" .,:;-")
     if not scope.strip():
         scope = (work_scope or brief or "").strip()
+    if _is_personal_brief(brief, company_name):
+        ctx = _personal_call_context(brief, agent_name=agent_name)
+        parts: list[str] = []
+        who = str(ctx["callee"] or "").strip()
+        if ctx["is_friend"]:
+            parts.append(
+                f"Speak as {agent_name} personally"
+                + (f", a friend of {who}" if who else ", like a friend")
+                + " — not a company salesperson"
+            )
+        elif ctx["represent_self"] or ctx["is_colleague"]:
+            parts.append(
+                f"Speak as {agent_name} personally"
+                + (f", calling {who}" if who else "")
+                + " — not a company salesperson"
+            )
+        if ctx["is_test"]:
+            parts.append(
+                f"This is a test call to {who or 'the person you called'}; say that clearly"
+            )
+        about = re.search(r"\babout\s+(?:the\s+)?([^.]{3,80})", brief or "", re.I)
+        if about and not ctx["is_friend"]:
+            purpose = about.group(0).strip(" .,:;-")
+            if purpose:
+                purpose = purpose[0].upper() + purpose[1:]
+                parts.append(purpose)
+        scope = ". ".join(p.rstrip(".") for p in parts if p)
+    elif _is_raw_identity_dump(scope) or _is_raw_identity_dump(work_scope):
+        parts = []
+        if company_name:
+            parts.append(company_name.rstrip("."))
+        job = (persona or extract_persona_from_brief(brief) or "").strip()
+        if job:
+            parts.append(f"{agent_name} is {job}")
+        text = _normalize_brief_identity_text(brief)
+        if re.search(r"\binsurance\b", text, re.I):
+            parts.append("Calls customers about insurance policies")
+            parts.append("Explain each policy in simple words")
+            if re.search(r"\bbuy\b", text, re.I):
+                parts.append(
+                    "Help interested callers choose and buy a policy using only facts from this brief — never invent premiums or coverage"
+                )
+        voice_line = (voice or extract_voice_from_brief(brief) or "").strip()
+        if voice_line:
+            parts.append(voice_line)
+        scope = ". ".join(p.rstrip(".") for p in parts if p)
     scope = re.sub(r"\s+", " ", scope).strip(" .,:;-")
     if not scope:
         return "Use the business objective from the agent brief."
@@ -955,23 +1266,45 @@ def _format_business_offer(
     return scope[:480]
 
 
-def _role_on_call_section(role: str, *, direction: str = "outbound", language: str = "te-IN") -> str:
+def _sales_next_step(brief: str, *, inbound: bool, native_en: bool) -> str:
+    text = f" {(brief or '').lower()} "
+    if re.search(r"\b(insurance|polic(?:y|ies)|premium)\b", text):
+        return "a callback or helping them start a policy"
+    if re.search(r"\b(plot|realty|2bhk|3bhk|site visit|villa|apartment)\b", text):
+        if native_en:
+            return "email, text, or a callback"
+        return "a site visit, callback, or WhatsApp details"
+    if native_en:
+        return "email, text, or a callback"
+    if inbound:
+        return "a callback or WhatsApp details"
+    return "a callback, WhatsApp details, or the next step named in COMPANY & OFFER"
+
+
+def _role_on_call_section(
+    role: str,
+    *,
+    direction: str = "outbound",
+    language: str = "te-IN",
+    brief: str = "",
+    voice: str = "",
+) -> str:
     inbound = str(direction or "").strip().lower() in ("inbound", "incoming")
     native_en = is_native_english(language)
+    voice_line = (voice or extract_voice_from_brief(brief) or "").strip()
+    extra = f"\nSpeak this way: {voice_line}." if voice_line else ""
     if role in ("sales", "lead_qualification"):
         heading = "Inbound sales for this offer." if inbound else "Outbound sales for this offer."
+        next_step = _sales_next_step(brief, inbound=inbound, native_en=native_en)
         if native_en:
-            next_step = "email, text, or a callback"
             discover = "one useful missing fact from the brief"
             collect = "callback or email preference"
         elif inbound:
-            next_step = "a callback or WhatsApp details"
-            discover = "one discovery question at a time (location, timeline, budget if in the brief)"
-            collect = "visit/callback preference"
+            discover = "one discovery question at a time (from COMPANY & OFFER only)"
+            collect = "callback preference"
         else:
-            next_step = "a site visit, callback, or WhatsApp details"
-            discover = "one discovery question at a time (location, timeline, budget if in the brief)"
-            collect = "visit/callback preference"
+            discover = "one discovery question at a time (from COMPANY & OFFER only)"
+            collect = "callback preference"
         return (
             "--- YOUR ROLE ON THIS CALL ---\n"
             f"{heading} Answer questions first using COMPANY & OFFER only.\n"
@@ -981,43 +1314,52 @@ def _role_on_call_section(role: str, *, direction: str = "outbound", language: s
             f"Guide interested callers toward {next_step} — never pressure.\n"
             "When next step is agreed or they decline: confirm, thank, farewell, and close — no extra pitch.\n"
             "If busy or not interested: offer callback or close politely."
+            f"{extra}"
         )
+    extra = f"\nSpeak this way: {voice_line}." if voice_line else ""
     if role == "appointment":
         return (
             "--- YOUR ROLE ON THIS CALL ---\n"
             "Book appointments using COMPANY & OFFER facts. Confirm date, time, and contact once interest is clear."
+            f"{extra}"
         )
     if role == "support":
         return (
             "--- YOUR ROLE ON THIS CALL ---\n"
             "Resolve the caller's issue using COMPANY & OFFER facts. Do not sell unless the brief requires it."
+            f"{extra}"
         )
     if role == "recruitment":
         return (
             "--- YOUR ROLE ON THIS CALL ---\n"
             "Screen or inform candidates using COMPANY & OFFER facts. Never invent salary or benefits.\n"
             "If they are a fit, agree a next step — do not sell unrelated products."
+            f"{extra}"
         )
     if role == "education":
         return (
             "--- YOUR ROLE ON THIS CALL ---\n"
             "Counsel using COMPANY & OFFER facts (fees, batches, trial class). Do not invent prices.\n"
             "Offer trial class, enrollment, or callback — no hard sell."
+            f"{extra}"
         )
     if role == "follow_up":
         return (
             "--- YOUR ROLE ON THIS CALL ---\n"
             "Follow up on the pending request from COMPANY & OFFER. Do not restart a sales pitch.\n"
             "Confirm status, collect a callback if needed, then close."
+            f"{extra}"
         )
     if role == "information":
         return (
             "--- YOUR ROLE ON THIS CALL ---\n"
             "Answer from COMPANY & OFFER only. Do not convert or qualify for a sale."
+            f"{extra}"
         )
     return (
         "--- YOUR ROLE ON THIS CALL ---\n"
         "Represent this business on the call. Answer from COMPANY & OFFER, then one useful next step."
+        f"{extra}"
     )
 
 
@@ -1031,16 +1373,50 @@ def _user_visible_script(
     role: str = "other",
     language: str = "te-IN",
     direction: str = "outbound",
+    persona: str = "",
+    voice: str = "",
+    offer_override: str = "",
 ) -> str:
     """Business script shown in Test Studio — identity, offer, opening, role. No platform rules."""
     inbound = str(direction or "").strip().lower() in ("inbound", "incoming")
+    job = (persona or extract_persona_from_brief(brief) or "").strip()
+    voice_line = (voice or extract_voice_from_brief(brief) or "").strip()
     business = _format_business_offer(
         brief,
         agent_name=agent_name,
         company_name=company_name,
         work_scope=work_scope,
+        persona=job,
+        voice=voice_line,
+        offer_override=offer_override,
     )
-    if company_name:
+    ctx = _personal_call_context(brief, agent_name=agent_name)
+    personal = _is_personal_brief(brief, company_name)
+    if personal:
+        identity_bits = [f"You are {agent_name}."]
+        if ctx["represent_self"] or ctx["is_friend"]:
+            identity_bits.append(f"Speak as {agent_name} — a real person, not a company bot.")
+        if ctx["callee"]:
+            identity_bits.append(f"You are calling {ctx['callee']}.")
+        identity_bits.append(f"Always speak as {agent_name} — the only speaker on this call.")
+        identity = " ".join(identity_bits)
+    elif job and company_name:
+        if "represent" in job.lower():
+            identity = (
+                f"You are {agent_name}, {job} for {company_name}. "
+                f"Always speak as {agent_name} — the only speaker on this call."
+            )
+        else:
+            identity = (
+                f"You are {agent_name}, {job} representing {company_name}. "
+                f"Always speak as {agent_name} — the only speaker on this call."
+            )
+    elif job:
+        identity = (
+            f"You are {agent_name}, {job}. "
+            f"Always speak as {agent_name} — the only speaker on this call."
+        )
+    elif company_name:
         identity = (
             f"You are {agent_name}, representing {company_name}. "
             f"Always speak as {agent_name} — the only speaker on this call."
@@ -1055,12 +1431,37 @@ def _user_visible_script(
         if inbound
         else "After the callee speaks, say once:"
     )
+    if personal:
+        who = str(ctx["callee"] or "the person you called")
+        if ctx["is_friend"]:
+            stance = f"Talk like a friend of {who}, representing {agent_name} personally."
+        else:
+            stance = (
+                f"Represent {agent_name} personally on this call with {who}. "
+                "Talk professionally. This is not a sales pitch."
+            )
+        role_block = (
+            "--- YOUR ROLE ON THIS CALL ---\n"
+            f"{stance}\n"
+            "Do not invent a company, product, or sales pitch.\n"
+            + (
+                "Tell them clearly this is a test call, then continue naturally.\n"
+                if ctx["is_test"]
+                else ""
+            )
+            + "Answer from COMPANY & OFFER. Keep turns short. Close when they are done."
+            + (f"\nSpeak this way: {voice_line}." if voice_line else "")
+        )
+    else:
+        role_block = _role_on_call_section(
+            role, direction=direction, language=language, brief=brief, voice=voice_line
+        )
     return (
         f"--- AGENT IDENTITY ---\n{identity}\n\n"
         f"--- COMPANY & OFFER ---\n{business}\n\n"
         f"--- CANONICAL OPENING ---\n"
         f"{opening_lead}\n{opening_line}\n\n"
-        f"{_role_on_call_section(role, direction=direction, language=language)}"
+        f"{role_block}"
     )
 
 
@@ -1167,6 +1568,9 @@ def _simple_business_script(
     language: str = "te-IN",
     role: str = "other",
     direction: str = "outbound",
+    persona: str = "",
+    voice: str = "",
+    offer_override: str = "",
 ) -> str:
     """Minimal user-visible script from the brief."""
     return _user_visible_script(
@@ -1178,6 +1582,9 @@ def _simple_business_script(
         role=role,
         language=language,
         direction=direction,
+        persona=persona,
+        voice=voice,
+        offer_override=offer_override,
     )
 
 
@@ -1340,6 +1747,137 @@ async def _llm_generate_script_plain(
         from server.utils.logger import logger
 
         logger.warning(f"[AGENT_SCRIPT] plain LLM failed: {type(exc).__name__}: {str(exc)[:200]}")
+        return None
+
+
+def _company_supported_by_brief(company: str, brief: str) -> bool:
+    blob = re.sub(r"[^a-z0-9]+", " ", _normalize_brief_identity_text(brief).lower())
+    words = [
+        w
+        for w in re.sub(r"[^a-z0-9]+", " ", (company or "").lower()).split()
+        if w not in {"private", "limited", "pvt", "ltd", "llc", "inc", "the", "and", "of"}
+    ]
+    if not words:
+        return False
+    return all(w in blob for w in words[:4])
+
+
+def _apply_brief_interpretation(
+    brief: str,
+    *,
+    agent_name: str,
+    company_name: str,
+    work_scope: str,
+    opening_line: str,
+    role: str,
+    language: str,
+    direction: str,
+    interpreted: dict[str, Any] | None,
+) -> tuple[str, str, str, str, str, str, str, str]:
+    """Merge LLM understanding into extracted identity. Regex names always win."""
+    persona = extract_persona_from_brief(brief)
+    voice = extract_voice_from_brief(brief)
+    offer = ""
+    text_l = _normalize_brief_identity_text(brief).lower()
+    brief_name = extract_agent_name_from_brief(brief)
+    if interpreted:
+        llm_name = _titlecase_name(_clean_identity_value(str(interpreted.get("agent_name") or "")))
+        if (
+            not brief_name
+            and llm_name
+            and _looks_like_agent_name(llm_name)
+            and llm_name.lower() in text_l
+        ):
+            agent_name = llm_name
+        llm_co = _clean_identity_value(str(interpreted.get("company_name") or ""))
+        if not company_name and llm_co and _company_supported_by_brief(llm_co, brief):
+            company_name = llm_co
+        llm_persona = str(interpreted.get("persona") or "").strip()
+        if 0 < len(llm_persona) < 80:
+            persona = llm_persona
+        llm_voice = str(interpreted.get("voice") or "").strip()
+        if 0 < len(llm_voice) < 160:
+            voice = llm_voice
+        llm_offer = str(interpreted.get("offer") or "").strip()
+        invented_priya = "priya" in llm_offer.lower() and "priya" not in text_l
+        if llm_offer and not _is_raw_identity_dump(llm_offer) and not invented_priya:
+            offer = llm_offer[:480]
+        llm_open = str(interpreted.get("opening_line") or "").strip().split("\n")[0][:180]
+        if llm_open and agent_name.lower() in llm_open.lower():
+            invented_open = "priya" in llm_open.lower() and "priya" not in text_l
+            if not invented_open:
+                opening_line = llm_open
+        llm_role = str(interpreted.get("role") or "").strip().lower()
+        if llm_role:
+            role = infer_agent_role(brief, llm_role=llm_role)
+    ctx = _personal_call_context(brief, agent_name=agent_name)
+    if agent_name.lower() not in (opening_line or "").lower():
+        opening_line = build_opening_line(
+            agent_name=agent_name,
+            company_name=company_name,
+            work_scope=work_scope,
+            language=language,
+            direction=direction,
+            callee_name=str(ctx.get("callee") or ""),
+            is_test=bool(ctx.get("is_test")),
+            is_friend=bool(ctx.get("is_friend") or ctx.get("represent_self")),
+        )
+    return agent_name, company_name, work_scope, opening_line, role, persona, voice, offer
+
+
+async def _llm_interpret_brief(brief: str, *, language: str) -> dict[str, Any] | None:
+    """Understand a messy brief into fields for the standard 4-section script."""
+    import os
+
+    if os.environ.get("PYTEST_CURRENT_TEST"):
+        return None
+    from server.services.dev_runtime import openai_enabled
+
+    if not openai_enabled():
+        return None
+    try:
+        import asyncio
+
+        from server.providers.base import LLMConfig
+        from server.providers.openai_llm import OpenAILLMAdapter
+
+        adapter = OpenAILLMAdapter()
+        settings = get_settings()
+        system = (
+            "You read a messy voice-agent brief typed by a non-technical user. "
+            "Extract who speaks, which company they represent, what they do, and how they should sound. "
+            "Fix obvious typos (calsl→calls, insturance→insurance, eveything→everything, realted→related). "
+            "Never invent a speaker name (do not use Priya or Alex unless that name is in the brief). "
+            "Never invent a company. Never invent prices, products, or policies. "
+            "offer must be clean customer-facing sentences — never paste the raw brief. "
+            "opening_line is one spoken greeting using the real name and company, then a permission question. "
+            f"Write opening_line in language {language}."
+        )
+        user = f"Language: {language}\n\nUser brief:\n{brief}\n"
+
+        async def _run():
+            return await adapter.structured_completion(
+                input_messages=[
+                    {"role": "developer", "content": [{"type": "input_text", "text": system}]},
+                    {"role": "user", "content": [{"type": "input_text", "text": user}]},
+                ],
+                schema=BRIEF_INTERPRET_SCHEMA,
+                config=LLMConfig(
+                    provider="openai",
+                    model=http_openai_model(settings),
+                ),
+                schema_name="brief_interpret",
+                max_output_tokens=700,
+            )
+
+        payload = await asyncio.wait_for(_run(), timeout=20)
+        if not isinstance(payload, dict):
+            return None
+        return payload
+    except Exception as exc:
+        from server.utils.logger import logger
+
+        logger.warning("[AGENT_SCRIPT] brief interpret failed: %s: %s", type(exc).__name__, str(exc)[:200])
         return None
 
 
@@ -1538,10 +2076,13 @@ async def compile_agent_from_brief(
     previous_compiled: str | None = None,
     call_end_policy: dict[str, Any] | None = None,
     use_llm: bool = False,
+    interpret_brief: bool = True,
 ) -> tuple[str, AgentScriptResult, int, int, int]:
     """
     Turn a short agent brief into a cached brain prompt.
-    Default: minimal business-knowledge script + platform rules in ``_assemble_brain``.
+    Default: understand the brief (LLM when available) and fill the standard
+    4-section user script (identity, offer, opening, role). Platform rules
+    are assembled separately in ``_assemble_brain``.
     Set ``use_llm=True`` for legacy full sectional script generation.
     Returns (compiled_brain, result, raw_token_est, compiled_token_est, effective_budget_tokens).
     """
@@ -1651,6 +2192,31 @@ async def compile_agent_from_brief(
             script, brief=cleaned, agent_name=agent_name
         )
     else:
+        interpreted = None
+        if interpret_brief:
+            interpreted = await _llm_interpret_brief(cleaned, language=lang)
+        (
+            agent_name,
+            company_name,
+            work_scope,
+            opening_line,
+            role,
+            persona,
+            voice,
+            offer_override,
+        ) = _apply_brief_interpretation(
+            cleaned,
+            agent_name=agent_name,
+            company_name=company_name,
+            work_scope=work_scope,
+            opening_line=opening_line,
+            role=role,
+            language=lang,
+            direction=direction,
+            interpreted=interpreted,
+        )
+        if interpreted:
+            model = "brief_interpret_v1"
         script = _simple_business_script(
             cleaned,
             agent_name=agent_name,
@@ -1660,6 +2226,9 @@ async def compile_agent_from_brief(
             language=lang,
             role=role,
             direction=direction,
+            persona=persona,
+            voice=voice,
+            offer_override=offer_override,
         )
         validation_issues = []
 

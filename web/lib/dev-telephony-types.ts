@@ -47,6 +47,8 @@ export type DevTelephonyHistoryRow = {
     end_reason?: string;
   };
   has_recording?: boolean;
+  has_telnyx_recording?: boolean;
+  recording_source?: "telnyx" | "local" | "none";
   transcript_lines?: number;
   transcript?: TranscriptLine[];
   outcome?: OutcomePayload | Record<string, unknown> | null;

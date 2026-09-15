@@ -62,7 +62,10 @@ def _enrich_telephony_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
             meta = call_ledger.read_meta(cid)
             if meta.get("duration_sec") is not None:
                 item["duration_sec"] = meta.get("duration_sec")
-            item["has_recording"] = audio_archive.file_for(cid, "mix") is not None
+            source = audio_archive.recording_source(cid)
+            item["has_recording"] = source != "none"
+            item["recording_source"] = source
+            item["has_telnyx_recording"] = source == "telnyx"
         enriched.append(item)
     return enriched
 
@@ -190,6 +193,7 @@ def _outbound_prewarm_meta(
         "agent_id": body.agent_id,
         "tier": tier,
         "language": language,
+        "direction": "outbound",
         "source_session_id": source_session_id,
         "inherit_test_studio_config": inherit_config,
         "stack_override": stack_override,
@@ -665,7 +669,10 @@ async def dev_telephony_history_detail(
         detail["ledger_meta"] = call_ledger.read_meta(cid)
         detail["review"] = call_ledger.review_fields(cid)
         detail["outcome"] = read_outcome(cid)
-        detail["has_recording"] = audio_archive.file_for(cid, "mix") is not None
+        source = audio_archive.recording_source(cid)
+        detail["has_recording"] = source != "none"
+        detail["recording_source"] = source
+        detail["has_telnyx_recording"] = source == "telnyx"
         detail["transcript"] = lines
         detail["transcript_lines"] = len(lines)
     return {"ok": True, "history": detail}

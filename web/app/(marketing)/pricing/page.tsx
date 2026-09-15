@@ -38,7 +38,7 @@ export default function PricingPage() {
             Pay for what your agents use
           </h1>
           <p className="mt-4 text-lg text-text-muted">
-            STT, LLM, and TTS billed per tier. Telephony via Exotel. Contact us for fleet pricing.
+            STT/LLM/TTS via OpenAI Realtime on PSTN, plus Telnyx per-minute telephony. Contact us for fleet pricing.
           </p>
         </div>
 

@@ -837,7 +837,7 @@ export function PstnTestPanel({
           callId={listenCallId}
           preferClearAudio
           title="Listen to recording"
-          description="Clear mix is normalized for dev review — use Download clear WAV for offline playback"
+          description="Complete Telnyx conversation once Telnyx saves the call"
         />
       ) : null}
 

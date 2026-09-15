@@ -363,14 +363,19 @@ def cost_llm_usd(
     llm_model: str | None = None,
     input_audio_tokens: int = 0,
     output_audio_tokens: int = 0,
+    cached_audio_tokens: int = 0,
 ) -> dict[str, float]:
     audio_in_tok = max(0, int(input_audio_tokens or 0))
     audio_out_tok = max(0, int(output_audio_tokens or 0))
     text_in = max(0, int(input_tokens or 0) - audio_in_tok)
     text_out = max(0, int(output_tokens or 0) - audio_out_tok)
+    audio_cached = min(audio_in_tok, max(0, int(cached_audio_tokens or 0)))
+    if audio_cached == 0 and cached_tokens:
+        audio_cached = min(audio_in_tok, max(0, int(cached_tokens or 0) - text_in))
+    text_cached = max(0, int(cached_tokens or 0) - audio_cached)
     parts = split_llm_tokens(
         input_tokens=text_in,
-        cached_tokens=cached_tokens,
+        cached_tokens=text_cached,
         cache_write_tokens=cache_write_tokens,
     )
     rates = openai_rates_for_model(llm_model)
@@ -379,7 +384,11 @@ def cost_llm_usd(
     written = parts["written"] * rates["cache_write"] / 1_000_000.0
     output = text_out * rates["output"] / 1_000_000.0
     audio_rates = openai_audio_rates_for_model(llm_model)
-    audio_in = audio_in_tok * audio_rates["input"] / 1_000_000.0
+    audio_uncached = audio_in_tok - audio_cached
+    audio_in = (
+        audio_uncached * audio_rates["input"]
+        + audio_cached * audio_rates.get("cached_input", audio_rates["input"])
+    ) / 1_000_000.0
     audio_out = audio_out_tok * audio_rates["output"] / 1_000_000.0
     return {
         "uncached_usd": uncached,
@@ -418,6 +427,7 @@ def estimate_turn_cost(
     fx_rate_inr: float,
     input_audio_tokens: int = 0,
     output_audio_tokens: int = 0,
+    cached_audio_tokens: int = 0,
 ) -> dict[str, Any]:
     fx = float(fx_rate_inr or 95.64)
     stt = cost_stt_usd(
@@ -440,6 +450,7 @@ def estimate_turn_cost(
         llm_model=llm_model,
         input_audio_tokens=input_audio_tokens,
         output_audio_tokens=output_audio_tokens,
+        cached_audio_tokens=cached_audio_tokens,
     )
     total = stt + tts + llm["total_usd"]
     return {

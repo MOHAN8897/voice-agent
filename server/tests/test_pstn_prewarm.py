@@ -267,4 +267,4 @@ async def test_start_call_uses_buffered_greeting_not_speak():
 def test_prewarm_adopt_wait_allows_bundle_build():
     from server.services.pstn_prewarm import PREWARM_ADOPT_WAIT_SEC
 
-    assert PREWARM_ADOPT_WAIT_SEC >= 3.0
+    assert PREWARM_ADOPT_WAIT_SEC >= 12.0

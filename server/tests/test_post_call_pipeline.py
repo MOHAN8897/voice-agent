@@ -143,6 +143,46 @@ async def test_invalid_disposition_from_llm_rejected(monkeypatch, tmp_path):
 
 
 @pytest.mark.asyncio
+async def test_outcome_summary_is_english_only(monkeypatch, tmp_path):
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    monkeypatch.setenv("SARVAM_API_KEY", "sarvam-test")
+    monkeypatch.setenv("DATA_DIR", str(tmp_path))
+    get_settings.cache_clear()
+    call_ledger.reset_for_tests()
+    memory_manager.reset_for_tests()
+    await call_ledger.init("en-only", {"call_id": "en-only"})
+    await call_ledger.append_user_turn("en-only", "hello")
+    await call_ledger.append_assistant_turn("en-only", "Hi, this is Tis.")
+    memory_manager.init("en-only")
+
+    async def fake_completion(*_a, **_k):
+        return {
+            "disposition": "no_outcome",
+            "disposition_confidence": 0.5,
+            "summary_te": "సారాంశం",
+            "summary_en": "Caller greeted and the agent introduced Tis.",
+            "next_action": None,
+            "extracted_fields": {},
+            "objections": [],
+        }
+
+    with patch("server.providers.get_provider_registry") as reg:
+        adapter = type("A", (), {"structured_completion": AsyncMock(side_effect=fake_completion)})()
+        reg.return_value.get_llm.return_value = adapter
+        outcome = await process_now("en-only")
+    assert outcome["summary_te"] == ""
+    assert "Tis" in outcome["summary_en"]
+    assert outcome["prompt_version"] == "outcome_v3"
+    disk = read_outcome("en-only")
+    assert disk is not None
+    assert disk["summary_te"] == ""
+    assert "Tis" in disk["summary_en"]
+    call_ledger.reset_for_tests()
+    memory_manager.reset_for_tests()
+    get_settings.cache_clear()
+
+
+@pytest.mark.asyncio
 async def test_outcome_failure_does_not_fail_overall_call(monkeypatch, tmp_path):
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
     monkeypatch.setenv("SARVAM_API_KEY", "sarvam-test")

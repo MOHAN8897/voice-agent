@@ -721,11 +721,16 @@ def opening_line_for(
         if work and not _WORK_SENTENCE_START.match(work) and len(work) <= 70:
             if len(work) > 48:
                 work = work[:45].rsplit(" ", 1)[0]
-            return with_purpose[lang].format(
-                name=agent_name,
-                company=company_name,
-                purpose=work,
+            catalogish = bool(
+                re.search(r"listing:|fee is|:", work, re.I)
+                or re.search(r"\b(?:at|from|for|about)$", work, re.I)
             )
+            if not catalogish:
+                return with_purpose[lang].format(
+                    name=agent_name,
+                    company=company_name,
+                    purpose=work,
+                )
         return with_co[lang].format(name=agent_name, company=company_name)
     work = (work_scope or "").strip()
     if (not work) or _WORK_SENTENCE_START.match(work) or len(work) > 48:

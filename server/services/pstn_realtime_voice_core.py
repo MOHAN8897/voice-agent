@@ -50,6 +50,9 @@ REALTIME_AEC_LOUD_OPEN_FRAMES = 4
 # Callee "hello" is quieter than barge. Keep pickup detection below the echo floor
 # so listen-first still starts the cached greeting without waiting for remote VAD.
 REALTIME_PICKUP_ENERGY_MIN = 500
+_PICKUP_MIN_SPEECH_MS = 250.0
+_PICKUP_QUIET_MS = 400.0
+_PICKUP_VAD_DEBOUNCE_SEC = 0.28
 _BARGE_HOLD_SEC = 2.5
 _PICKUP_SUPPRESS_SEC = 1.8
 
@@ -64,14 +67,13 @@ _AVAILABILITY_RE = re.compile(
     r"are you (?:still\s+)?(?:there|here)\??|"
     r"(?:you|u) (?:there|here)\??|"
     r"can you hear me\??|"
-    r"(?:hello[,.\s]+)?(?:who(?:'s| is) this)\??|"
-    r"ഹലോ[.!?]*|హలో[.!?]*|हेलो[.!?]*|हैलो[.!?]*|नमस्ते[.!?]*"
+    r"ഹലో[.!?]*|హలో[.!?]*|हेलो[.!?]*|हैलो[.!?]*|नमस्ते[.!?]*"
     r")\s*$",
     re.I | re.UNICODE,
 )
 _PICKUP_RE = re.compile(
     r"^(?:(?:yes|yeah|ya|ok|okay|hai)[,.\s]+)?"
-    r"(?:hello|hallo|hi+|hey|ഹലോ|హలో)(?:[,.\s]+(?:who(?:'s| is) this))?[.!?]*$",
+    r"(?:hello|hallo|hi+|hey|ഹലോ|హలో)[.!?]*$",
     re.I | re.UNICODE,
 )
 # Arabic / Persian / Urdu / Thai / Hangul / CJK with no Latin or Indic — overlap STT junk.
@@ -96,6 +98,11 @@ _UNCLEAR_NAME_FOLLOWUP = (
     "Ask them to repeat their name only. Do not invent a name or a messaging app. "
     "Do not re-introduce yourself."
 )
+_FIRST_TURN_FOLLOWUP = (
+    "You already delivered the opening greeting. The caller spoke first. "
+    "Answer or continue from what they just said in one short sentence. "
+    "Do not re-introduce yourself or repeat the opening."
+)
 
 
 def _is_simple_hello(text: str) -> bool:
@@ -105,6 +112,8 @@ def _is_simple_hello(text: str) -> bool:
 def _is_availability_check(text: str) -> bool:
     t = (text or "").strip()
     if not t or len(t) > 80:
+        return False
+    if re.search(r"\bwho\b", t, flags=re.I):
         return False
     return _is_simple_hello(t) or bool(_AVAILABILITY_RE.fullmatch(t))
 
@@ -163,14 +172,17 @@ async def record_realtime_voice_usage(
         return None
     from server.call.call_ledger import call_ledger
     from server.config.env import get_settings
+    from server.realtime.usage import extract_realtime_usage
     from server.services.usage_pricing import estimate_turn_cost
 
-    input_tokens = int(usage.get("input_tokens") or 0)
-    output_tokens = int(usage.get("output_tokens") or 0)
-    cached_tokens = int(usage.get("cached_tokens") or 0)
-    cache_write = int(usage.get("cache_write_tokens") or 0)
-    input_audio = int(usage.get("input_audio_tokens") or 0)
-    output_audio = int(usage.get("output_audio_tokens") or 0)
+    normalized = extract_realtime_usage({"usage": usage}) if usage else {}
+    input_tokens = int(normalized.get("input_tokens") or usage.get("input_tokens") or 0)
+    output_tokens = int(normalized.get("output_tokens") or usage.get("output_tokens") or 0)
+    cached_tokens = int(normalized.get("cached_tokens") or usage.get("cached_tokens") or 0)
+    cache_write = int(normalized.get("cache_write_tokens") or usage.get("cache_write_tokens") or 0)
+    input_audio = int(normalized.get("input_audio_tokens") or usage.get("input_audio_tokens") or 0)
+    output_audio = int(normalized.get("output_audio_tokens") or usage.get("output_audio_tokens") or 0)
+    cached_audio = int(normalized.get("cached_audio_tokens") or usage.get("cached_audio_tokens") or 0)
     if not any((input_tokens, output_tokens, input_audio, output_audio)):
         return None
     fx = float(get_settings().fx_rate_inr or 95.64)
@@ -186,6 +198,7 @@ async def record_realtime_voice_usage(
         fx_rate_inr=fx,
         input_audio_tokens=input_audio,
         output_audio_tokens=output_audio,
+        cached_audio_tokens=cached_audio,
     )
     meta = call_ledger.read_meta(call_id)
     prev = meta.get("usage") if isinstance(meta.get("usage"), dict) else {}
@@ -204,6 +217,7 @@ async def record_realtime_voice_usage(
         "cache_write_tokens": cache_write,
         "input_audio_tokens": input_audio,
         "output_audio_tokens": output_audio,
+        "cached_audio_tokens": cached_audio,
         "stt_final_ms": None,
         "llm_ttft_ms": None,
         "tts_first_audio_ms": None,
@@ -224,6 +238,7 @@ async def record_realtime_voice_usage(
         "input_audio_tokens": int(prev.get("input_audio_tokens") or 0) + input_audio,
         "output_audio_tokens": int(prev.get("output_audio_tokens") or 0) + output_audio,
         "cached_tokens": int(prev.get("cached_tokens") or 0) + cached_tokens,
+        "cached_audio_tokens": int(prev.get("cached_audio_tokens") or 0) + cached_audio,
         "turns": seq,
         "cost_usd": total_usd,
         "cost_inr": total_inr,
@@ -323,6 +338,8 @@ class PstnRealtimeVoiceLoop:
         self.controller = CallLifecycleController()
         self._pickup_speech_ms = 0.0
         self._pickup_quiet_ms = 0.0
+        self._pickup_user_text = ""
+        self._pickup_finish_task: asyncio.Task | None = None
         self._runtime_task: asyncio.Task | None = None
         self._last_activity_at = time.monotonic()
         self._silence_prompted = False
@@ -414,7 +431,10 @@ class PstnRealtimeVoiceLoop:
             ctx.barge_in_flight = False
 
     def _greeting_protected(self) -> bool:
-        return bool(self._deferred_greeting_armed or self._deferred_greeting_playing)
+        return bool(self._deferred_greeting_playing)
+
+    def _greeting_waiting(self) -> bool:
+        return bool(self._deferred_greeting_armed)
 
     def _barge_hold_active(self) -> bool:
         return bool(self._barge_hold_until and time.monotonic() < self._barge_hold_until)
@@ -435,6 +455,13 @@ class PstnRealtimeVoiceLoop:
             return True
         if _is_foreign_script_junk(text):
             return True
+        if self._deferred_greeting_playing:
+            spoken = (self._deferred_greeting_text or "").strip()
+            if spoken and is_likely_echo(text, spoken):
+                return True
+            return False
+        if self._greeting_waiting():
+            return False
         if self._greeting_protected():
             return True
         if _is_pickup_phrase(text) or _is_availability_check(text):
@@ -666,18 +693,18 @@ class PstnRealtimeVoiceLoop:
             return
         raw = pcm16
         if self._deferred_greeting_armed:
-            # Prewarm is ready. Keep VAD/speech on, but play only after the
-            # caller starts AND finishes (energy drop of 160ms), not on the
-            # first ~60ms of pickup. High-eagerness VAD can fire that early.
+            # Listen to the first utterance. Play the cached greeting only after
+            # they finish (enough speech + quiet, or debounced speech_stopped).
             from server.services.audio_transcode import pcm16_rms
 
             frame_ms = len(raw) * 1000 / (2 * self.sample_rate)
             if pcm16_rms(raw) >= REALTIME_PICKUP_ENERGY_MIN:
                 self._pickup_speech_ms += frame_ms
                 self._pickup_quiet_ms = 0.0
-            elif self._pickup_speech_ms >= 60:
+                self._cancel_pickup_finish()
+            elif self._pickup_speech_ms >= _PICKUP_MIN_SPEECH_MS:
                 self._pickup_quiet_ms += frame_ms
-                if self._pickup_quiet_ms >= 160:
+                if self._pickup_quiet_ms >= _PICKUP_QUIET_MS:
                     self._schedule_deferred_greeting()
             else:
                 self._pickup_speech_ms = 0.0
@@ -1219,8 +1246,15 @@ class PstnRealtimeVoiceLoop:
             self._response_activity_at = time.monotonic()
         if kind == "speech_started":
             agent_out = self._tts_active or self._agent_audio_playing()
-            if self._greeting_protected():
+            if self._deferred_greeting_playing:
                 log_pstn("realtime_voice.echo_ignore", call_id=self.call_id, reason="deferred_greeting")
+                return
+            if self._deferred_greeting_armed:
+                self._cancel_pickup_finish()
+                self._caller_speaking = True
+                self._last_activity_at = time.monotonic()
+                self._silence_prompted = False
+                self._set_phase(PHASE_LISTENING)
                 return
             if agent_out and not self._aec_barge_open:
                 log_pstn("realtime_voice.echo_ignore", call_id=self.call_id)
@@ -1242,9 +1276,8 @@ class PstnRealtimeVoiceLoop:
             agent_out = self._tts_active or self._agent_audio_playing()
             if not (agent_out and not self._aec_barge_open):
                 self._suppress_until_user = False
-            # Do not play the prewarm here — semantic VAD eagerness=high can
-            # emit speech_stopped ~60ms into "hello". Local quiet after speech
-            # in feed_user_pcm16 is the finish signal.
+            if self._deferred_greeting_armed:
+                self._arm_pickup_finish()
             return
         if kind == "user_transcript":
             text = str(event.get("text") or "").strip()
@@ -1319,6 +1352,8 @@ class PstnRealtimeVoiceLoop:
                                 error=str(exc)[:160],
                             )
                             self._pending_followup_instruction = _UNCLEAR_NAME_FOLLOWUP
+                    elif self._deferred_greeting_armed or self._deferred_greeting_playing:
+                        self._pickup_user_text = text
                     elif _is_pickup_phrase(text) or _is_availability_check(text):
                         await self._handle_pickup_or_availability(text, first_user=first_user)
             else:
@@ -1327,7 +1362,8 @@ class PstnRealtimeVoiceLoop:
         if kind == "response_created":
             self._response_activity_at = time.monotonic()
             if (
-                self._greeting_protected()
+                self._greeting_waiting()
+                or self._greeting_protected()
                 or (self._pickup_suppressed() and not self._heard_content_turn)
             ) and self._adapter is not None:
                 try:
@@ -1553,9 +1589,36 @@ class PstnRealtimeVoiceLoop:
         if kind == "error":
             log_pstn("realtime_voice.error", call_id=self.call_id, error=str(event.get("message") or "")[:200])
 
+    def _cancel_pickup_finish(self) -> None:
+        task = self._pickup_finish_task
+        self._pickup_finish_task = None
+        if task is not None and not task.done():
+            task.cancel()
+
+    def _arm_pickup_finish(self) -> None:
+        if not self._deferred_greeting_armed or self._closed:
+            return
+        if self._pickup_speech_ms < _PICKUP_MIN_SPEECH_MS:
+            return
+        self._cancel_pickup_finish()
+        self._pickup_finish_task = asyncio.create_task(
+            self._debounce_pickup_then_greet(),
+            name=f"rt-pickup-finish-{self.call_id}",
+        )
+
+    async def _debounce_pickup_then_greet(self) -> None:
+        try:
+            await asyncio.sleep(_PICKUP_VAD_DEBOUNCE_SEC)
+        except asyncio.CancelledError:
+            return
+        if self._closed or not self._deferred_greeting_armed or self._caller_speaking:
+            return
+        self._schedule_deferred_greeting()
+
     def _schedule_deferred_greeting(self) -> None:
         if not self._deferred_greeting_armed or self._closed:
             return
+        self._cancel_pickup_finish()
         task = self._deferred_greeting_task
         if task is not None and not task.done():
             return
@@ -1568,8 +1631,11 @@ class PstnRealtimeVoiceLoop:
         if not self._deferred_greeting_armed or self._closed:
             return
         self._deferred_greeting_armed = False
-        # Automatic responses are disabled while armed. A cancellation round-trip
-        # here delayed the first cached frame and cannot improve pickup latency.
+        if self._adapter is not None:
+            try:
+                await self._adapter.cancel_response()
+            except Exception as exc:
+                log_pstn("greeting.deferred.cancel.failed", call_id=self.call_id, error=str(exc)[:160])
         await self._play_deferred_greeting()
 
     async def _play_deferred_greeting(self) -> None:
@@ -1617,18 +1683,20 @@ class PstnRealtimeVoiceLoop:
                     error=str(exc)[:160],
                 )
         self._intro_noted = True
-        self._pickup_suppress_until = time.monotonic() + _PICKUP_SUPPRESS_SEC
+        pending = (self._pickup_user_text or self._user_partial or "").strip()
+        needs_answer = bool(pending) and not _is_simple_hello(pending)
         if self._adapter is not None:
             try:
                 await self._adapter.cancel_response()
             except Exception as exc:
                 log_pstn("greeting.deferred.cancel.failed", call_id=self.call_id, error=str(exc)[:160])
-            clearer = getattr(self._adapter, "clear_input_audio", None)
-            if callable(clearer):
-                try:
-                    await clearer()
-                except Exception:
-                    pass
+            if pending and not needs_answer:
+                clearer = getattr(self._adapter, "clear_input_audio", None)
+                if callable(clearer):
+                    try:
+                        await clearer()
+                    except Exception:
+                        pass
         auto_response = getattr(self._adapter, "set_auto_response", None) if self._adapter else None
         if callable(auto_response):
             try:
@@ -1639,6 +1707,16 @@ class PstnRealtimeVoiceLoop:
                     call_id=self.call_id,
                     error=str(exc)[:160],
                 )
+        if needs_answer:
+            try:
+                await self._start_injected_response(_FIRST_TURN_FOLLOWUP)
+            except Exception as exc:
+                log_pstn(
+                    "greeting.deferred.followup.failed",
+                    call_id=self.call_id,
+                    error=str(exc)[:160],
+                )
+                self._pending_followup_instruction = _FIRST_TURN_FOLLOWUP
         if self.call_id:
             from server.call.call_ledger import call_ledger
 
@@ -1813,7 +1891,7 @@ class PstnRealtimeVoiceLoop:
             return
         self._closed = True
         self.controller.end()
-        for task in (self._runtime_task, self._deferred_greeting_task):
+        for task in (self._runtime_task, self._deferred_greeting_task, self._pickup_finish_task):
             if task and task is not asyncio.current_task() and not task.done():
                 task.cancel()
                 try:

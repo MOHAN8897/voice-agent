@@ -15,7 +15,7 @@ from server.services.pstn_voice_core import pstn_call_options
 logger = logging.getLogger(__name__)
 
 PREWARM_TTL_SEC = 90.0
-PREWARM_ADOPT_WAIT_SEC = 3.0
+PREWARM_ADOPT_WAIT_SEC = 12.0
 
 _PROVIDER_WIRE: dict[str, dict[str, Any]] = {
     "telnyx": {"sample_rate": 16000, "tts_output_codec": "linear16"},
@@ -48,6 +48,8 @@ class PstnPrewarmBundle:
     greeting_text: str | None
     greeting_wire_frames: list[bytes] = field(default_factory=list)
     greeting_source: str | None = None
+    greeting_usage: dict[str, Any] | None = None
+    greeting_model: str | None = None
     compiled_brain_text: str | None = None
     compiled_brain_version: str | None = None
     compiled_brain_checksum: str | None = None
@@ -274,6 +276,23 @@ async def take_prewarm_for_answer(
     return bundle
 
 
+async def record_bundle_greeting_usage(call_id: str | None, bundle: PstnPrewarmBundle | None) -> None:
+    """Bill OpenAI Realtime tokens used to synthesize the deferred opening."""
+    if not call_id or bundle is None:
+        return
+    usage = bundle.greeting_usage
+    if not isinstance(usage, dict) or not usage:
+        return
+    from server.services.pstn_realtime_voice_core import record_realtime_voice_usage
+
+    await record_realtime_voice_usage(
+        call_id=call_id,
+        usage=usage,
+        llm_model=bundle.greeting_model or "gpt-realtime-2.1-mini",
+        assistant_text=bundle.greeting_text or "",
+    )
+
+
 pstn_prewarm_registry = PstnPrewarmRegistry()
 
 
@@ -372,13 +391,14 @@ async def _build_prewarm_bundle(
 
     frames: list[bytes] = []
     greeting_source: str | None = None
+    greeting_usage: dict[str, Any] | None = None
     if greeting and mode == "realtime_voice":
         adapter = realtime_voice_manager.get(rt_key)
         if adapter is not None:
             from server.services.pstn_realtime_greeting_prewarm import synthesize_realtime_greeting_frames
 
             try:
-                frames, greeting_transcript = await synthesize_realtime_greeting_frames(
+                frames, greeting_transcript, greeting_usage = await synthesize_realtime_greeting_frames(
                     adapter,
                     greeting_text=greeting,
                     sample_rate=sample_rate,
@@ -437,6 +457,8 @@ async def _build_prewarm_bundle(
         greeting_text=greeting,
         greeting_wire_frames=frames,
         greeting_source=greeting_source,
+        greeting_usage=greeting_usage,
+        greeting_model=stack.llm.model if greeting_source == "realtime_voice" else None,
         compiled_brain_text=compiled,
         compiled_brain_version=str(_version) if _version else None,
         compiled_brain_checksum=(

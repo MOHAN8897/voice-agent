@@ -153,6 +153,26 @@ def test_audio_token_cost_uses_mini_audio_rates():
     assert cost["total_usd"] == pytest.approx(0.03, rel=1e-6)
 
 
+def test_cached_audio_tokens_use_cached_audio_rate():
+    full = cost_llm_usd(
+        input_tokens=600,
+        output_tokens=0,
+        llm_model="gpt-realtime-2.1-mini",
+        input_audio_tokens=600,
+        cached_audio_tokens=0,
+    )
+    cached = cost_llm_usd(
+        input_tokens=600,
+        output_tokens=0,
+        llm_model="gpt-realtime-2.1-mini",
+        input_audio_tokens=600,
+        cached_audio_tokens=600,
+    )
+    assert full["audio_input_usd"] == pytest.approx(0.006, rel=1e-6)
+    assert cached["audio_input_usd"] == pytest.approx(600 * 0.30 / 1_000_000, rel=1e-6)
+    assert cached["audio_input_usd"] < full["audio_input_usd"]
+
+
 def test_factory_keeps_composed_loop_for_realtime_text():
     async def _wire(_b: bytes) -> None:
         return None
@@ -691,22 +711,60 @@ async def test_deferred_greeting_waits_until_user_finishes():
     assert wires == []
     assert adapter.auto_response_states == [False]
     loud = struct.pack("<320h", *([1200] * 320))
-    for _ in range(5):
+    for _ in range(15):
         await loop.feed_user_pcm16(loud)
     assert wires == []
     assert loop._deferred_greeting_task is None
-    # High-eagerness VAD can fire this ~60ms into hello — must not play yet.
+    # High-eagerness VAD can fire this ~60ms into hello — 15 frames is real speech,
+    # but playback still waits for the debounce after speech_stopped.
+    await loop._handle_event({"type": "speech_started"})
+    for _ in range(3):
+        await loop.feed_user_pcm16(loud)
     await loop._handle_event({"type": "speech_stopped"})
     await asyncio.sleep(0.05)
     assert wires == []
-    for _ in range(8):
-        await loop.feed_user_pcm16(bytes(640))
+    await asyncio.sleep(0.35)
     await asyncio.wait_for(loop._deferred_greeting_task, timeout=1.0)
     assert wires == frames
     assert adapter.noted_assistant == ["Hi, this is Tis. Do you have a moment?"]
     assert adapter.auto_response_states == [False, True]
     assert loop._intro_noted is True
     assert loop._phase == PHASE_LISTENING
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_first_turn_question_starts_llm_after_greeting():
+    adapter = FakeRealtimeVoiceAdapter()
+    adapter.connected = True
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id="c-first-q",
+        on_agent_wire=AsyncMock(),
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        adapter=adapter,
+        stack_override={"pipeline": "realtime_voice", "direction": "outbound"},
+    )
+    await loop.start_call(
+        play_greeting=True,
+        greeting_wire_frames=[b"\x01" * 640],
+        greeting_text="Hi, this is Tis. Do you have a moment?",
+    )
+    loud = struct.pack("<320h", *([1200] * 320))
+    for _ in range(15):
+        await loop.feed_user_pcm16(loud)
+    await loop._handle_event(
+        {"type": "user_transcript", "text": "Hello, who is this?", "final": True}
+    )
+    await loop._handle_event({"type": "speech_stopped"})
+    await asyncio.sleep(0.35)
+    await asyncio.wait_for(loop._deferred_greeting_task, timeout=1.0)
+    assert adapter.auto_response_states[-1] is True
+    assert any("caller spoke first" in item.lower() for item in adapter.started_responses)
+    assert adapter.cleared_input == 0
     await loop.close()
 
 
@@ -1418,11 +1476,12 @@ def test_availability_matcher_covers_indic_and_who_is_this():
 
     assert _is_simple_hello("ഹലോ")
     assert _is_simple_hello("Hello")
-    assert _is_availability_check("Hello, who is this?")
+    assert not _is_availability_check("Hello, who is this?")
     assert _is_availability_check("Hi Priya")
     assert _is_availability_check("Are you there?")
     assert _is_line_check("are you there")
-    assert _is_pickup_phrase("Hello, who is this?")
+    assert not _is_pickup_phrase("Hello, who is this?")
+    assert _is_pickup_phrase("Hello")
     assert not _is_availability_check("I needed a service for my car")
 
 

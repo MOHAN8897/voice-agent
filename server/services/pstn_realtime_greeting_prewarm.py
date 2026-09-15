@@ -60,26 +60,27 @@ async def synthesize_realtime_greeting_frames(
     tts_output_codec: str,
     timeout_sec: float = 12.0,
     control_id: str = "",
-) -> tuple[list[bytes], str]:
-    """Generate opening audio on a live Realtime session; returns wire frames + transcript."""
+) -> tuple[list[bytes], str, dict[str, Any] | None]:
+    """Generate opening audio on a live Realtime session; returns wire frames, transcript, usage."""
     spoken = prepare_spoken_reply(greeting_text or "").strip()
     if not spoken:
-        return [], ""
+        return [], "", None
 
     poll = getattr(adapter, "poll_event", None)
     if not callable(poll):
         log_pstn("prewarm.greeting.realtime.failed", control=control_id, error="adapter_missing_poll_event")
-        return [], ""
+        return [], "", None
 
     pcm_buf = bytearray()
     transcript = spoken
+    greeting_usage: dict[str, Any] | None = None
     try:
         await adapter.start_response(
             instructions=PREWARM_GREETING_INSTRUCTION.format(line=spoken.replace('"', "'"))
         )
     except Exception as exc:
         log_pstn("prewarm.greeting.realtime.failed", control=control_id, error=str(exc)[:200])
-        return [], ""
+        return [], "", None
 
     deadline = time.monotonic() + timeout_sec
     done = False
@@ -127,6 +128,8 @@ async def synthesize_realtime_greeting_frames(
             if kind == "cancelled" or event.get("failed"):
                 log_pstn("prewarm.greeting.realtime.empty", control=control_id, reason=kind)
                 pcm_buf.clear()
+            elif isinstance(event.get("usage"), dict):
+                greeting_usage = dict(event["usage"])
             done = True
 
     frames = realtime_pcm24_to_wire_frames(
@@ -136,7 +139,7 @@ async def synthesize_realtime_greeting_frames(
     )
     if not frames:
         log_pstn("prewarm.greeting.realtime.empty", control=control_id, reason="no_frames")
-        return [], ""
+        return [], "", None
 
     deleter = getattr(adapter, "delete_synthetic_response_items", None)
     if callable(deleter):
@@ -144,10 +147,10 @@ async def synthesize_realtime_greeting_frames(
             await deleter()
         except Exception as exc:
             log_pstn("prewarm.greeting.realtime.failed", control=control_id, error=f"delete:{exc}"[:200])
-            return [], ""
+            return [], "", None
 
     discard = getattr(adapter, "discard_queued", None)
     if callable(discard):
         discard()
 
-    return frames, transcript
+    return frames, transcript, greeting_usage

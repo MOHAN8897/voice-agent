@@ -80,7 +80,7 @@ async def test_synthesize_collects_audio_and_deletes_items():
             self.discarded = True
 
     adapter = StubAdapter()
-    frames, transcript = await synthesize_realtime_greeting_frames(
+    frames, transcript, usage = await synthesize_realtime_greeting_frames(
         adapter,
         greeting_text="Hi, this is Tis from Bindusara. Do you have a moment?",
         sample_rate=16000,
@@ -92,6 +92,7 @@ async def test_synthesize_collects_audio_and_deletes_items():
     assert adapter.discarded
     assert frames
     assert "Tis" in transcript
+    assert usage is None or isinstance(usage, dict)
 
 
 @pytest.mark.asyncio
@@ -107,7 +108,7 @@ async def test_synthesize_empty_on_timeout():
         async def cancel_response(self) -> None:
             return None
 
-    frames, transcript = await synthesize_realtime_greeting_frames(
+    frames, transcript, usage = await synthesize_realtime_greeting_frames(
         SlowAdapter(),
         greeting_text="Hello",
         sample_rate=16000,
@@ -117,11 +118,12 @@ async def test_synthesize_empty_on_timeout():
     )
     assert frames == []
     assert transcript == ""
+    assert usage is None
 
 
 @pytest.mark.asyncio
 async def test_synthesize_empty_greeting():
-    frames, transcript = await synthesize_realtime_greeting_frames(
+    frames, transcript, usage = await synthesize_realtime_greeting_frames(
         AsyncMock(),
         greeting_text="   ",
         sample_rate=16000,
@@ -129,3 +131,4 @@ async def test_synthesize_empty_greeting():
     )
     assert frames == []
     assert transcript == ""
+    assert usage is None

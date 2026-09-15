@@ -136,7 +136,7 @@ def _enrich_call_list_item(item: dict) -> dict:
     cid = str(item.get("call_id") or "")
     outcome = read_outcome(cid) if cid else None
     if outcome:
-        summary = (outcome.get("summary_en") or outcome.get("summary_te") or "").strip()
+        summary = (outcome.get("summary_en") or "").strip()
         if summary:
             out["summary"] = summary[:240]
         from server.call.outcome_schema import normalize_extracted_fields
@@ -152,7 +152,10 @@ def _enrich_call_list_item(item: dict) -> dict:
         for key in ("cost_usd", "cost_inr", "cost_inr_per_min", "pipeline"):
             if review.get(key) is not None:
                 out[key] = review[key]
-        out["has_recording"] = audio_archive.file_for(cid, "mix") is not None
+        source = audio_archive.recording_source(cid)
+        out["has_recording"] = source != "none"
+        out["recording_source"] = source
+        out["has_telnyx_recording"] = source == "telnyx"
     return out
 
 
@@ -178,12 +181,28 @@ async def get_trace(call_id: str):
     return call_ledger.read_trace(call_id)
 
 
+@router.get("/api/call/{call_id}/audio-status")
+async def get_audio_status(call_id: str):
+    await asyncio.to_thread(audio_archive.ensure_telnyx_review, call_id)
+    path = audio_archive.file_for(call_id, "mix_clear")
+    source = audio_archive.recording_source(call_id)
+    return {
+        "call_id": call_id,
+        "source": source,
+        "ready": path is not None,
+        "telnyx_ready": source == "telnyx",
+        "file": path.name if path else None,
+    }
+
+
 @router.api_route("/api/call/{call_id}/audio/{kind}", methods=["GET", "HEAD"])
 async def get_audio(
     call_id: str,
     kind: Literal["mix", "user", "agent", "mix_clear", "user_clear", "agent_clear"],
     download: bool = Query(False, alias="download"),
 ):
+    if kind in ("mix", "mix_clear"):
+        await asyncio.to_thread(audio_archive.ensure_telnyx_review, call_id)
     if kind.endswith("_clear"):
         await asyncio.to_thread(audio_archive.refresh_clear_tracks, call_id)
     path = audio_archive.file_for(call_id, kind)
@@ -197,13 +216,19 @@ async def get_audio(
         ".wav": "audio/wav",
         ".mp3": "audio/mpeg",
     }.get(suffix, "application/octet-stream")
-    headers: dict[str, str] = {"Accept-Ranges": "bytes", "Cache-Control": "no-store"}
-    if download:
-        headers["Content-Disposition"] = f'attachment; filename="{call_id}-{kind}{suffix}"'
+    source = "telnyx" if path.name.startswith("telnyx") else "local"
+    headers: dict[str, str] = {
+        "Accept-Ranges": "bytes",
+        "Cache-Control": "no-store",
+        "X-Recording-Source": source,
+        "Access-Control-Expose-Headers": "X-Recording-Source",
+    }
+    stem = "conversation" if path.name.startswith("telnyx") else kind
+    download_name = f"{call_id}-{stem}{suffix}"
     return FileResponse(
         path,
         media_type=media,
-        filename=path.name if download else None,
+        filename=download_name if download else None,
         headers=headers,
         content_disposition_type="attachment" if download else "inline",
     )

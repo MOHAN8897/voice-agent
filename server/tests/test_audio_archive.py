@@ -146,8 +146,6 @@ async def test_clear_mix_folds_both_parties_and_is_louder(archive):
     assert raw == (500, 800)
     assert clear[0] > raw[0]
     assert clear[1] > raw[1]
-    # Folded review mix: both ears carry both parties.
-    assert clear[0] > 0 and clear[1] > 0
 
 
 @pytest.mark.asyncio
@@ -172,3 +170,74 @@ async def test_refresh_clear_tracks_rebuilds_old_quiet_mix(archive):
     archive.refresh_clear_tracks(call_id)
     assert peak(archive.mix_clear_path(call_id)) > peak(archive.mix_path(call_id))
     archive.refresh_clear_tracks(call_id)
+
+
+@pytest.mark.asyncio
+async def test_clear_mix_does_not_bleed_agent_into_silent_caller(archive):
+    call_id = "audio-no-bleed"
+    archive.init(call_id)
+    archive.set_agent_sample_rate(call_id, 16000)
+    user = struct.pack("<" + "h" * 16, *([0] * 16))
+    agent = struct.pack("<" + "h" * 16, *([800] * 16))
+    await archive.append_user_pcm(call_id, user)
+    await archive.append_agent_audio(call_id, agent)
+    await archive.flush(call_id)
+    with wave.open(str(archive.mix_clear_path(call_id)), "rb") as wf:
+        left, right = struct.unpack("<hh", wf.readframes(1))
+    assert left == 0
+    assert abs(right) > abs(800)
+
+
+@pytest.mark.asyncio
+async def test_file_for_prefers_telnyx_recording(archive):
+    call_id = "audio-telnyx"
+    archive.init(call_id)
+    archive.save_telnyx_recording(call_id, b"RIFF" + b"\x00" * 40, suffix=".wav")
+    chosen = archive.file_for(call_id, "mix_clear")
+    assert chosen is not None
+    assert chosen.name.startswith("telnyx")
+
+
+def _stereo_wav(left: list[int], right: list[int], rate: int = 8000) -> bytes:
+    import io
+
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as wf:
+        wf.setnchannels(2)
+        wf.setsampwidth(2)
+        wf.setframerate(rate)
+        frames = b"".join(struct.pack("<hh", l, r) for l, r in zip(left, right))
+        wf.writeframes(frames)
+    return buf.getvalue()
+
+
+def test_telnyx_review_folds_split_channels(archive):
+    call_id = "audio-telnyx-fold"
+    archive.init(call_id)
+    wav = _stereo_wav([8000] * 160, [0] * 80 + [9000] * 80)
+    archive.save_telnyx_recording(call_id, wav, suffix=".wav")
+    review = archive.file_for(call_id, "mix_clear")
+    assert review is not None
+    assert review.name == "telnyx_review.wav"
+    with wave.open(str(review), "rb") as wf:
+        assert wf.getnchannels() == 2
+        first = struct.unpack("<hh", wf.readframes(1))
+        assert first[0] == first[1]
+        assert abs(first[0]) > 1000
+        wf.rewind()
+        raw = wf.readframes(wf.getnframes())
+    later = struct.unpack_from("<hh", raw, 80 * 4)
+    assert later[0] == later[1]
+    assert abs(later[0]) > abs(first[0])
+
+
+def test_save_telnyx_keeps_larger_dual(archive):
+    call_id = "audio-telnyx-keep"
+    archive.init(call_id)
+    bigger = _stereo_wav([1200] * 400, [800] * 400)
+    smaller = _stereo_wav([100] * 40, [100] * 40)
+    archive.save_telnyx_recording(call_id, bigger, suffix=".wav")
+    kept = archive.telnyx_wav_path(call_id).stat().st_size
+    archive.save_telnyx_recording(call_id, smaller, suffix=".wav")
+    assert archive.telnyx_wav_path(call_id).stat().st_size == kept
+

@@ -176,19 +176,26 @@ export function costLlmUsd(opts: {
   meta?: PricingMeta | null;
   inputAudioTokens?: number;
   outputAudioTokens?: number;
+  cachedAudioTokens?: number;
 }) {
   const audioInTok = Math.max(0, opts.inputAudioTokens || 0);
   const audioOutTok = Math.max(0, opts.outputAudioTokens || 0);
   const textIn = Math.max(0, (opts.inputTokens || 0) - audioInTok);
   const textOut = Math.max(0, (opts.outputTokens || 0) - audioOutTok);
-  const parts = splitLlmTokens(textIn, opts.cachedTokens || 0, opts.cacheWriteTokens || 0);
+  let audioCached = Math.min(audioInTok, Math.max(0, opts.cachedAudioTokens || 0));
+  if (audioCached === 0 && (opts.cachedTokens || 0) > 0) {
+    audioCached = Math.min(audioInTok, Math.max(0, (opts.cachedTokens || 0) - textIn));
+  }
+  const textCached = Math.max(0, (opts.cachedTokens || 0) - audioCached);
+  const parts = splitLlmTokens(textIn, textCached, opts.cacheWriteTokens || 0);
   const rates = openaiRatesForModel(opts.llmModel, opts.meta);
   const audioRates = openaiAudioRatesForModel(opts.llmModel, opts.meta);
   const uncachedUsd = (parts.uncached * rates.input) / 1_000_000;
   const cachedUsd = (parts.cached * rates.cachedInput) / 1_000_000;
   const writeUsd = (parts.written * rates.cacheWrite) / 1_000_000;
   const outputUsd = (textOut * rates.output) / 1_000_000;
-  const audioInUsd = (audioInTok * audioRates.input) / 1_000_000;
+  const audioInUsd =
+    ((audioInTok - audioCached) * audioRates.input + audioCached * audioRates.cachedInput) / 1_000_000;
   const audioOutUsd = (audioOutTok * audioRates.output) / 1_000_000;
   return {
     uncachedUsd,
@@ -243,6 +250,7 @@ export function estimateTurnCost(opts: {
   cacheWriteTokens: number;
   inputAudioTokens?: number;
   outputAudioTokens?: number;
+  cachedAudioTokens?: number;
   meta?: PricingMeta | null;
 }): TurnCost {
   const fx = fxOf(opts.meta);
@@ -265,6 +273,7 @@ export function estimateTurnCost(opts: {
     meta: opts.meta,
     inputAudioTokens: opts.inputAudioTokens,
     outputAudioTokens: opts.outputAudioTokens,
+    cachedAudioTokens: opts.cachedAudioTokens,
   });
   const totalUsd = sttUsd + ttsUsd + llm.totalUsd;
   return {

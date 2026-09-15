@@ -8,6 +8,7 @@ import { cn } from "@/lib/cn";
 import { callAudioUrl } from "@/lib/pstn-trace-metrics";
 
 type AudioKind = "mix" | "user" | "agent" | "mix_clear" | "user_clear" | "agent_clear";
+type RecordingSource = "telnyx" | "local" | "none";
 
 const KIND_LABEL: Record<AudioKind, string> = {
   mix: "Mix (both)",
@@ -18,63 +19,41 @@ const KIND_LABEL: Record<AudioKind, string> = {
   agent_clear: "Clear agent",
 };
 
-type BoostGraph = { ctx: AudioContext };
-
-function AudioContextCtor(): typeof AudioContext {
-  const w = window as Window & { webkitAudioContext?: typeof AudioContext };
-  return w.AudioContext || w.webkitAudioContext || AudioContext;
-}
-
-async function connectPlaybackBoost(el: HTMLAudioElement, existing: BoostGraph | null): Promise<BoostGraph> {
-  if (existing) {
-    if (existing.ctx.state === "suspended") await existing.ctx.resume();
-    return existing;
-  }
-  const ctx = new (AudioContextCtor())();
-  const source = ctx.createMediaElementSource(el);
-  const splitter = ctx.createChannelSplitter(2);
-  const merger = ctx.createChannelMerger(2);
-  const compressor = ctx.createDynamicsCompressor();
-  compressor.threshold.value = -34;
-  compressor.knee.value = 20;
-  compressor.ratio.value = 12;
-  compressor.attack.value = 0.003;
-  compressor.release.value = 0.12;
-  const makeup = ctx.createGain();
-  makeup.gain.value = 4.2;
-  source.connect(splitter);
-  splitter.connect(merger, 0, 0);
-  splitter.connect(merger, 0, 1);
-  splitter.connect(merger, 1, 0);
-  splitter.connect(merger, 1, 1);
-  merger.connect(compressor);
-  compressor.connect(makeup);
-  makeup.connect(ctx.destination);
-  if (ctx.state === "suspended") await ctx.resume();
-  return { ctx };
-}
-
 export function CallAudioPanel({
   callId,
   title = "Play recording",
-  description = "Clear mix is boosted and folded to both speakers so caller and agent are audible on a laptop",
+  description,
   preferClearAudio = true,
+  conversationOnly = true,
 }: {
   callId: string;
   title?: string;
   description?: string;
   /** Prefer peak-normalized WAV when available (generated at hangup). */
   preferClearAudio?: boolean;
+  /** History/review: one complete conversation mix, no per-track downloads. */
+  conversationOnly?: boolean;
 }) {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const boostRef = useRef<BoostGraph | null>(null);
   const [kind, setKind] = useState<AudioKind>(preferClearAudio ? "mix_clear" : "mix");
   const [failed, setFailed] = useState(false);
   const [retry, setRetry] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [paused, setPaused] = useState(false);
+  const [recordingSource, setRecordingSource] = useState<RecordingSource>("none");
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const prevSource = useRef<RecordingSource>("none");
   const base = callAudioUrl(callId, kind);
   const src = `${base}${base.includes("?") ? "&" : "?"}r=${retry}`;
+
+  const resolvedDescription =
+    description ??
+    (conversationOnly
+      ? recordingSource === "telnyx"
+        ? "Telnyx call recording (both speakers). Caller and agent are mixed onto both channels."
+        : recordingSource === "local"
+          ? "Waiting for the Telnyx recording. Playing the local mix until Telnyx saves the call."
+          : "Complete conversation. Telnyx recording is used as soon as Telnyx saves it."
+      : "Caller on the left, agent on the right. Clear mix is peak-normalized at hangup.");
 
   useEffect(() => {
     setKind(preferClearAudio ? "mix_clear" : "mix");
@@ -88,12 +67,53 @@ export function CallAudioPanel({
   }, [callId, kind]);
 
   useEffect(() => {
-    return () => {
-      const boost = boostRef.current;
-      boostRef.current = null;
-      if (boost) void boost.ctx.close();
+    setRecordingSource("none");
+    prevSource.current = "none";
+  }, [callId]);
+
+  useEffect(() => {
+    if (!callId) return;
+    let cancelled = false;
+    let attempts = 0;
+    let timer = 0;
+
+    const tick = async () => {
+      try {
+        const response = await fetch(`/api/call/${encodeURIComponent(callId)}/audio-status`, {
+          cache: "no-store",
+        });
+        if (!response.ok || cancelled) return;
+        const body = (await response.json()) as { source?: string };
+        const next: RecordingSource =
+          body.source === "telnyx" ? "telnyx" : body.source === "local" ? "local" : "none";
+        if (cancelled) return;
+        setRecordingSource(next);
+        if (next === "telnyx") return;
+      } catch {
+        /* keep polling — Telnyx save often arrives ~10s after hangup */
+      }
+      attempts += 1;
+      if (!cancelled && attempts < 24) {
+        timer = window.setTimeout(() => void tick(), 1500);
+      }
     };
-  }, [src]);
+
+    void tick();
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [callId]);
+
+  useEffect(() => {
+    if (recordingSource === "telnyx" && prevSource.current !== "telnyx") {
+      setRetry((n) => n + 1);
+      setFailed(false);
+      setPlaying(false);
+      setPaused(false);
+    }
+    prevSource.current = recordingSource;
+  }, [recordingSource]);
 
   useEffect(() => {
     if (!failed || retry >= 8) return;
@@ -104,23 +124,18 @@ export function CallAudioPanel({
     return () => window.clearTimeout(timer);
   }, [failed, retry]);
 
-  const attachBoost = useCallback(async (el: HTMLAudioElement) => {
-    boostRef.current = await connectPlaybackBoost(el, boostRef.current);
-  }, []);
-
-  async function playRecording() {
+  const playRecording = useCallback(async () => {
     const el = audioRef.current;
     if (!el || failed) return;
     try {
       el.volume = 1;
-      await attachBoost(el);
       await el.play();
       setPlaying(true);
       setPaused(false);
     } catch {
       setPlaying(false);
     }
-  }
+  }, [failed]);
 
   function pauseRecording() {
     const el = audioRef.current;
@@ -146,25 +161,34 @@ export function CallAudioPanel({
     setRetry(0);
   }
 
-  return (
-    <SkeuoPanel title={title} description={description} padding="md">
-      <div className="flex flex-wrap gap-2">
-        {(preferClearAudio
-          ? (["mix_clear", "user_clear", "agent_clear", "mix"] as AudioKind[])
-          : (["mix", "user", "agent"] as AudioKind[])
-        ).map((k) => (
-          <SkeuoButton
-            key={k}
-            variant={kind === k ? "primary" : "secondary"}
-            size="sm"
-            onClick={() => switchKind(k)}
-          >
-            {KIND_LABEL[k]}
-          </SkeuoButton>
-        ))}
-      </div>
+  const sourceLabel =
+    recordingSource === "telnyx"
+      ? "Telnyx recording"
+      : recordingSource === "local"
+        ? "Local mix · waiting for Telnyx"
+        : "Recording pending";
 
-      <div className="mt-4 flex flex-wrap gap-2">
+  return (
+    <SkeuoPanel title={title} description={resolvedDescription} padding="md">
+      {!conversationOnly ? (
+        <div className="flex flex-wrap gap-2">
+          {(preferClearAudio
+            ? (["mix_clear", "user_clear", "agent_clear", "mix"] as AudioKind[])
+            : (["mix", "user", "agent"] as AudioKind[])
+          ).map((k) => (
+            <SkeuoButton
+              key={k}
+              variant={kind === k ? "primary" : "secondary"}
+              size="sm"
+              onClick={() => switchKind(k)}
+            >
+              {KIND_LABEL[k]}
+            </SkeuoButton>
+          ))}
+        </div>
+      ) : null}
+
+      <div className={conversationOnly ? "flex flex-wrap items-center gap-2" : "mt-4 flex flex-wrap items-center gap-2"}>
         <SkeuoButton
           type="button"
           variant="primary"
@@ -181,14 +205,26 @@ export function CallAudioPanel({
           href={callAudioUrl(callId, kind, true)}
           className="inline-flex items-center rounded-lg border border-surface-border px-3 py-2 text-xs font-medium hover:bg-surface-raised"
         >
-          Download this track
+          {conversationOnly ? "Download conversation" : "Download this track"}
         </Link>
-        <Link
-          href={callAudioUrl(callId, kind.endsWith("_clear") ? kind : (`${kind}_clear` as AudioKind), true)}
-          className="inline-flex items-center rounded-lg border border-surface-border px-3 py-2 text-xs font-medium hover:bg-surface-raised"
+        {!conversationOnly ? (
+          <Link
+            href={callAudioUrl(callId, kind.endsWith("_clear") ? kind : (`${kind}_clear` as AudioKind), true)}
+            className="inline-flex items-center rounded-lg border border-surface-border px-3 py-2 text-xs font-medium hover:bg-surface-raised"
+          >
+            Download clear WAV
+          </Link>
+        ) : null}
+        <span
+          className={cn(
+            "rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide",
+            recordingSource === "telnyx"
+              ? "bg-emerald-500/15 text-emerald-700"
+              : "bg-surface-raised text-text-muted"
+          )}
         >
-          Download clear WAV
-        </Link>
+          {sourceLabel}
+        </span>
       </div>
 
       <div className="mt-4 skeuo-inset rounded-skeuo-md p-4">
@@ -202,10 +238,7 @@ export function CallAudioPanel({
             className="w-full"
             onPlay={() => {
               const el = audioRef.current;
-              if (el) {
-                el.volume = 1;
-                void attachBoost(el);
-              }
+              if (el) el.volume = 1;
               setPlaying(true);
               setPaused(false);
             }}
@@ -229,13 +262,15 @@ export function CallAudioPanel({
           />
         ) : (
           <p className="text-sm text-text-muted">
-            {KIND_LABEL[kind]} archive not available yet — hang up and wait a few seconds for mix.wav.
+            {KIND_LABEL[kind]} archive not available yet — hang up and wait a few seconds for the Telnyx recording.
           </p>
         )}
       </div>
 
       <p className={cn("mt-2 font-mono text-[10px] text-text-subtle")}>
-        Playback folds L/R to both speakers and applies ~4× review gain · Clear WAV is speech-normalized at hangup · Mix stereo L=caller R=agent
+        {conversationOnly
+          ? "History plays the Telnyx-saved conversation (not the local overlapped mix) · reloads when Telnyx finishes saving"
+          : "Caller L / agent R · Telnyx recording is used when present"}
       </p>
     </SkeuoPanel>
   );

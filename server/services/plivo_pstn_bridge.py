@@ -147,6 +147,9 @@ class PlivoPstnBridge:
                 greeting_wire_frames=prewarm.greeting_wire_frames if prewarm else None,
                 greeting_text=prewarm.greeting_text if prewarm else None,
             )
+            from server.services.pstn_prewarm import record_bundle_greeting_usage
+
+            await record_bundle_greeting_usage(self.call_id, prewarm)
         except Exception as exc:
             logger.exception("[PLIVO] voice loop failed uuid=%s: %s", self.plivo_call_uuid, exc)
 

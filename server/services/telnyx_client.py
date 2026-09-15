@@ -363,6 +363,26 @@ class TelnyxClient:
         )
         return data.get("data") or data
 
+    async def start_recording(
+        self,
+        call_control_id: str,
+        *,
+        fmt: str = "wav",
+        channels: str = "dual",
+    ) -> dict[str, Any]:
+        """Start a Telnyx Call Control recording (dual-channel WAV)."""
+        data = await self._request(
+            "POST",
+            f"/calls/{call_control_id}/actions/record_start",
+            json={
+                "format": fmt,
+                "channels": channels,
+                "play_beep": False,
+                "recording_track": "both",
+            },
+        )
+        return data.get("data") or data
+
     async def hangup(self, call_control_id: str) -> dict[str, Any]:
         """End an active Telnyx call (dev stress tests / cleanup)."""
         data = await self._request("POST", f"/calls/{call_control_id}/actions/hangup", json={})

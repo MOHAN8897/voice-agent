@@ -281,10 +281,10 @@ async def test_stamp_ended_usage_adds_telnyx_minutes(monkeypatch, tmp_path):
             },
         },
     )
-    call_ledger.stamp_ended_usage(cid, reason="user_stop", duration_sec=60)
+    call_ledger.stamp_ended_usage(cid, reason="user_stop", duration_sec=90)
     meta = call_ledger.read_meta(cid)
-    assert meta["usage"]["telnyx_usd"] == pytest.approx(TELNYX_OUTBOUND_USD_PER_MIN)
-    assert meta["usage"]["cost_usd"] == pytest.approx(0.03 + TELNYX_OUTBOUND_USD_PER_MIN)
-    assert meta["usage"]["duration_sec"] == 60
+    assert meta["usage"]["telnyx_usd"] == pytest.approx(TELNYX_OUTBOUND_USD_PER_MIN * 1.5)
+    assert meta["usage"]["cost_usd"] == pytest.approx(0.03 + TELNYX_OUTBOUND_USD_PER_MIN * 1.5)
+    assert meta["usage"]["duration_sec"] == 90
     get_settings.cache_clear()
 

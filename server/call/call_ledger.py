@@ -179,7 +179,7 @@ class CallLedger:
             out["resolved_stack"] = stack
         return out
 
-    def stamp_ended_usage(self, call_id: str, *, reason: str, duration_sec: int | None) -> None:
+    def stamp_ended_usage(self, call_id: str, *, reason: str, duration_sec: float | int | None) -> None:
         """Freeze wall-clock duration, Telnyx minutes, and ₹/min after hangup."""
         meta = self.read_meta(call_id)
         if not meta:
@@ -187,9 +187,9 @@ class CallLedger:
         meta["ended_at"] = _utcnow()
         meta["end_reason"] = reason
         if duration_sec is not None:
-            meta["duration_sec"] = duration_sec
+            meta["duration_sec"] = float(duration_sec)
         usage = meta.get("usage") if isinstance(meta.get("usage"), dict) else {}
-        minutes = max(0, int(duration_sec or 0)) / 60.0
+        minutes = max(0.0, float(duration_sec or 0)) / 60.0
         fx = float(usage.get("fx_rate_inr") or 0)
         if fx <= 0:
             try:

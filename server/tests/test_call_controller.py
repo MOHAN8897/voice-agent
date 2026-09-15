@@ -70,12 +70,14 @@ async def test_cached_greeting_uses_local_endpoint_without_waiting_for_remote_va
     loop, adapter = make_loop()
     frames = [b"\x01" * 640]
     await loop.start_call(greeting_wire_frames=frames, greeting_text="Hi, do you have a moment?")
-    for _ in range(5):
-        await loop.feed_user_pcm16(struct.pack("<320h", *([1200] * 320)))
+    loud = struct.pack("<320h", *([1200] * 320))
+    for _ in range(15):
+        await loop.feed_user_pcm16(loud)
     loop.on_agent_wire.assert_not_awaited()
-    for _ in range(8):
-        await loop.feed_user_pcm16(bytes(640))
-    await asyncio.wait_for(loop._deferred_greeting_task, 0.5)
+    await loop._handle_event({"type": "speech_stopped"})
+    await asyncio.sleep(0.35)
+    if loop._deferred_greeting_task:
+        await asyncio.wait_for(loop._deferred_greeting_task, 0.5)
     loop.on_agent_wire.assert_awaited_once_with(frames[0])
     # Leftover VAD is cancelled after the cached greeting, not used to start it.
     assert adapter.cancelled >= 1

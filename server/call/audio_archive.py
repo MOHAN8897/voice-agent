@@ -1,6 +1,7 @@
 """Audio archive — user PCM, agent stream, post-call stereo mix.wav."""
 from __future__ import annotations
 
+import array
 import asyncio
 import io
 import wave
@@ -106,31 +107,6 @@ def _peak_normalize_pcm16(
     return bytes(out)
 
 
-def _blend_review_stereo(left_pcm: bytes, right_pcm: bytes) -> tuple[bytes, bytes]:
-    """Fold both parties into both ears so laptop speakers hear caller and agent."""
-    left_n = len(left_pcm) // 2
-    right_n = len(right_pcm) // 2
-    n = max(left_n, right_n, 1)
-    left_out = bytearray(n * 2)
-    right_out = bytearray(n * 2)
-    for i in range(n):
-        l = (
-            int.from_bytes(left_pcm[i * 2 : i * 2 + 2], "little", signed=True)
-            if i < left_n
-            else 0
-        )
-        r = (
-            int.from_bytes(right_pcm[i * 2 : i * 2 + 2], "little", signed=True)
-            if i < right_n
-            else 0
-        )
-        mixed_l = max(-32768, min(32767, int(l * 0.78 + r * 0.48)))
-        mixed_r = max(-32768, min(32767, int(r * 0.78 + l * 0.48)))
-        left_out[i * 2 : i * 2 + 2] = mixed_l.to_bytes(2, "little", signed=True)
-        right_out[i * 2 : i * 2 + 2] = mixed_r.to_bytes(2, "little", signed=True)
-    return bytes(left_out), bytes(right_out)
-
-
 def _write_pcm16_wav(dest: Path, pcm: bytes, sample_rate: int, *, normalize: bool = False) -> None:
     body = _peak_normalize_pcm16(pcm) if normalize and pcm else (pcm or b"")
     buf = io.BytesIO()
@@ -140,6 +116,22 @@ def _write_pcm16_wav(dest: Path, pcm: bytes, sample_rate: int, *, normalize: boo
         wf.setframerate(int(sample_rate) if sample_rate > 0 else SAMPLE_RATE)
         wf.writeframes(body)
     dest.write_bytes(buf.getvalue())
+
+
+def _write_pcm16_stereo_wav(dest: Path, interleaved: bytes, sample_rate: int) -> None:
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as wf:
+        wf.setnchannels(2)
+        wf.setsampwidth(2)
+        wf.setframerate(int(sample_rate) if sample_rate > 0 else SAMPLE_RATE)
+        wf.writeframes(interleaved or b"")
+    dest.write_bytes(buf.getvalue())
+
+
+def _wav_header_channels(data: bytes) -> int:
+    if len(data) >= 24 and data[8:12] == b"WAVE":
+        return int.from_bytes(data[22:24], "little")
+    return 0
 
 
 class AudioArchive:
@@ -163,6 +155,103 @@ class AudioArchive:
 
     def mix_clear_path(self, call_id: str) -> Path:
         return call_dir(call_id) / "mix_clear.wav"
+
+    def telnyx_wav_path(self, call_id: str) -> Path:
+        return call_dir(call_id) / "telnyx.wav"
+
+    def telnyx_mp3_path(self, call_id: str) -> Path:
+        return call_dir(call_id) / "telnyx.mp3"
+
+    def telnyx_review_path(self, call_id: str) -> Path:
+        return call_dir(call_id) / "telnyx_review.wav"
+
+    def save_telnyx_recording(self, call_id: str, data: bytes, *, suffix: str = ".wav") -> Path:
+        """Store the provider recording as the canonical conversation file.
+
+        Telnyx may fire two recording.saved events (voice-profile + record_start).
+        Keep the dual-channel WAV, and never replace a larger file with a smaller one.
+        """
+        directory = call_dir(call_id)
+        directory.mkdir(parents=True, exist_ok=True)
+        ext = ".mp3" if str(suffix or "").lower().endswith("mp3") or (data[:3] == b"ID3") else ".wav"
+        dest = self.telnyx_mp3_path(call_id) if ext == ".mp3" else self.telnyx_wav_path(call_id)
+        if dest.exists() and dest.stat().st_size > 44 and data:
+            existing_size = dest.stat().st_size
+            old_ch = 0
+            if ext == ".wav":
+                with dest.open("rb") as handle:
+                    old_ch = _wav_header_channels(handle.read(64))
+            new_ch = _wav_header_channels(data) if ext == ".wav" else 0
+            if old_ch == 2 and new_ch == 1:
+                self.ensure_telnyx_review(call_id)
+                return dest
+            if len(data) < existing_size and (old_ch >= new_ch or old_ch == 0):
+                self.ensure_telnyx_review(call_id)
+                return dest
+        dest.write_bytes(data)
+        if ext == ".wav":
+            self.ensure_telnyx_review(call_id, force=True)
+        return dest
+
+    def ensure_telnyx_review(self, call_id: str, *, force: bool = False) -> Path | None:
+        """Fold Telnyx dual-channel WAV to dual-mono so history plays in both ears."""
+        src = self.telnyx_wav_path(call_id)
+        dest = self.telnyx_review_path(call_id)
+        if not self._nonempty(src):
+            return dest if self._nonempty(dest) else None
+        if (
+            not force
+            and self._nonempty(dest)
+            and dest.stat().st_mtime >= src.stat().st_mtime
+        ):
+            return dest
+        try:
+            self._write_telnyx_review(src, dest)
+        except Exception:
+            return dest if self._nonempty(dest) else None
+        return dest if self._nonempty(dest) else None
+
+    @staticmethod
+    def _write_telnyx_review(src: Path, dest: Path) -> None:
+        with wave.open(str(src), "rb") as wf:
+            channels = wf.getnchannels()
+            width = wf.getsampwidth()
+            rate = wf.getframerate()
+            raw = wf.readframes(wf.getnframes())
+        if width != 2 or not raw:
+            dest.write_bytes(src.read_bytes())
+            return
+        samples = array.array("h")
+        samples.frombytes(raw)
+        if channels <= 1:
+            mono = samples.tobytes()
+        else:
+            folded = array.array("h")
+            step = max(1, channels)
+            for i in range(0, len(samples) - step + 1, step):
+                acc = 0
+                for c in range(step):
+                    acc += samples[i + c]
+                if acc > 32767:
+                    acc = 32767
+                elif acc < -32767:
+                    acc = -32767
+                folded.append(acc)
+            mono = folded.tobytes()
+        stereo = array.array("h")
+        left = array.array("h")
+        left.frombytes(mono)
+        for sample in left:
+            stereo.append(sample)
+            stereo.append(sample)
+        _write_pcm16_stereo_wav(dest, stereo.tobytes(), rate)
+
+    def recording_source(self, call_id: str) -> str:
+        if self._nonempty(self.telnyx_wav_path(call_id)) or self._nonempty(self.telnyx_mp3_path(call_id)):
+            return "telnyx"
+        if self._nonempty(self.mix_path(call_id)) or self._nonempty(self.mix_clear_path(call_id)):
+            return "local"
+        return "none"
 
     def user_wav_path(self, call_id: str) -> Path:
         return call_dir(call_id) / "user.wav"
@@ -244,7 +333,10 @@ class AudioArchive:
                 agent_rate,
                 normalize=True,
             )
-            self._clear_gain_mark(call_id).write_text("2", encoding="utf-8")
+            self._clear_gain_mark(call_id).write_text("3", encoding="utf-8")
+            legacy = call_dir(call_id) / ".clear_gain_v2"
+            if legacy.exists():
+                legacy.unlink()
             status = {
                 "user": "complete" if user else "empty",
                 "agent": "complete" if agent else "empty",
@@ -270,9 +362,6 @@ class AudioArchive:
         if normalize:
             left_pcm = _peak_normalize_pcm16(left_pcm)
             right_pcm = _peak_normalize_pcm16(right_pcm)
-            left_pcm, right_pcm = _blend_review_stereo(left_pcm, right_pcm)
-            left_pcm = _peak_normalize_pcm16(left_pcm)
-            right_pcm = _peak_normalize_pcm16(right_pcm)
         user_frames = len(left_pcm) // 2
         agent_frames = len(right_pcm) // 2
         frame_count = max(user_frames, agent_frames, 1)
@@ -293,7 +382,7 @@ class AudioArchive:
         dest.write_bytes(buf.getvalue())
 
     def _clear_gain_mark(self, call_id: str) -> Path:
-        return call_dir(call_id) / ".clear_gain_v2"
+        return call_dir(call_id) / ".clear_gain_v3"
 
     def refresh_clear_tracks(self, call_id: str) -> None:
         """Rebuild loud review WAVs from archived caller/agent audio (existing calls)."""
@@ -333,7 +422,10 @@ class AudioArchive:
             agent_rate or SAMPLE_RATE,
             normalize=True,
         )
-        self._clear_gain_mark(call_id).write_text("2", encoding="utf-8")
+        self._clear_gain_mark(call_id).write_text("3", encoding="utf-8")
+        legacy = call_dir(call_id) / ".clear_gain_v2"
+        if legacy.exists():
+            legacy.unlink()
 
     @staticmethod
     def _nonempty(path: Path) -> bool:
@@ -366,13 +458,17 @@ class AudioArchive:
             if self._nonempty(wav):
                 return wav
             path = self.agent_path(call_id)
-        elif kind == "mix":
-            path = self.mix_path(call_id)
-        elif kind == "mix_clear":
-            path = self.mix_clear_path(call_id)
-            if self._nonempty(path):
-                return path
-            path = self.mix_path(call_id)
+        elif kind in ("mix", "mix_clear"):
+            for candidate in (
+                self.telnyx_review_path(call_id),
+                self.telnyx_wav_path(call_id),
+                self.telnyx_mp3_path(call_id),
+                self.mix_clear_path(call_id) if kind == "mix_clear" else None,
+                self.mix_path(call_id),
+            ):
+                if candidate is not None and self._nonempty(candidate):
+                    return candidate
+            return None
         else:
             return None
         if path is None or not self._nonempty(path):

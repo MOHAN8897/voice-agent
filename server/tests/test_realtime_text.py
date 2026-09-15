@@ -69,6 +69,28 @@ def test_realtime_usage_zero_audio():
     )
     assert usage["audio_tokens"] == 0
     assert usage["cached_tokens"] == 80
+    assert usage["cached_audio_tokens"] == 0
+
+
+def test_realtime_usage_cached_audio_tokens():
+    usage = extract_realtime_usage(
+        {
+            "usage": {
+                "input_tokens": 800,
+                "output_tokens": 200,
+                "input_token_details": {
+                    "audio_tokens": 600,
+                    "cached_tokens": 500,
+                    "text_tokens": 200,
+                    "cached_tokens_details": {"audio_tokens": 400, "text_tokens": 100},
+                },
+                "output_token_details": {"audio_tokens": 200, "text_tokens": 0},
+            }
+        }
+    )
+    assert usage["input_audio_tokens"] == 600
+    assert usage["cached_audio_tokens"] == 400
+    assert usage["cached_tokens"] == 500
 
 
 def test_gemini_is_not_a_live_llm():

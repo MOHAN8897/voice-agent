@@ -96,7 +96,7 @@ async def run_outcome(call_id: str, *, force: bool = False) -> dict[str, Any]:
         if (
             existing
             and existing.get("generation_ok")
-            and existing.get("prompt_version") == "outcome_v2"
+            and existing.get("prompt_version") == "outcome_v3"
             and not force
         ):
             return existing
@@ -120,15 +120,14 @@ async def _run_outcome_locked(call_id: str) -> dict[str, Any]:
     }
     _append_attempt(call_id, attempt)
     payload["model"] = model
-    payload["prompt_version"] = "outcome_v2"
+    payload["prompt_version"] = "outcome_v3"
     payload["generated_at"] = _utcnow()
     payload["generation_ok"] = error is None
     disposition = validate_disposition(payload.get("disposition"))
     if payload.get("disposition") not in DISPOSITIONS:
         payload["disposition"] = disposition
         payload["notes"] = (payload.get("notes") or "") + " (disposition coerced to no_outcome)"
-    payload["summary_te"] = filter_unrelated_scripts(str(payload.get("summary_te") or ""), "te-IN")
-    payload["summary_en"] = filter_unrelated_scripts(str(payload.get("summary_en") or ""), "en-IN")
+    _english_only_summaries(payload)
     facts = merge_outcome_facts(
         payload.get("extracted_fields"),
         snapshot,
@@ -169,6 +168,8 @@ async def _generate_outcome(
             "role": "developer",
             "content": (
                 "You analyze completed voice calls. Output structured JSON only. "
+                "Write the entire call summary in English only. Put it in summary_en. "
+                "Leave summary_te as an empty string. "
                 "Summaries must cover the entire call chronologically: caller intent, facts shared, "
                 "agent response, objections, agreed next step, and how the call ended. "
                 "Never claim an action was completed unless the transcript confirms it. "
@@ -247,6 +248,15 @@ async def _generate_outcome(
     failed["next_action"] = "Review the transcript and captured facts."
     failed["extracted_fields"] = normalize_extracted_fields(snapshot.get("facts"))
     return failed, last_error
+
+
+def _english_only_summaries(payload: dict[str, Any]) -> None:
+    en = str(payload.get("summary_en") or "").strip()
+    te = str(payload.get("summary_te") or "").strip()
+    if not en and te:
+        en = te
+    payload["summary_en"] = filter_unrelated_scripts(en, "en-IN")
+    payload["summary_te"] = ""
 
 
 def _write_call_summary(call_id: str, outcome: dict[str, Any]) -> None:
