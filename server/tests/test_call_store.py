@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from server.call.call_store import call_store
+from server.call.call_store import call_store, _parse_uuid
 from server.config.env import get_settings
 
 
@@ -64,3 +64,9 @@ async def test_pagination_and_tenant_scope(store):
     )
     assert dated_total == 1
     assert dated[0]["call_id"] == "c2"
+
+
+def test_parse_uuid_rejects_telnyx_control_id():
+    assert _parse_uuid("v3:Y2FsbF8...") is None
+    assert _parse_uuid("not-a-uuid") is None
+    assert _parse_uuid("11111111-1111-1111-1111-111111111111") is not None

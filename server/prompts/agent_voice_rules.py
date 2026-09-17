@@ -31,21 +31,6 @@ PHONE_CALL_POLICY_PTR = (
     "firm no / don't-call / goodbye → farewell and end_call; never invent facts or claim undone actions."
 )
 
-_LANGUAGE_ALIASES = {
-    "te": "te-IN",
-    "te-in": "te-IN",
-    "en": "en-IN",
-    "en-in": "en-IN",
-    "en-us": "en-US",
-    "en-gb": "en-US",
-    "en-au": "en-US",
-    "en-ca": "en-US",
-    "en-uk": "en-US",
-    "english": "en-IN",
-    "hi": "hi-IN",
-    "hi-in": "hi-IN",
-    "hindi": "hi-IN",
-}
 
 NUMBER_RULES = """NUMBERS (speak them — TTS must sound human)
 - Indian amounts: English cardinal words + unit — `rupees fifty lakhs`, `rupees one hundred`, `fifteen paisa`. Never raw `Rs.100`, `₹500`, or bare `5000`.
@@ -114,10 +99,15 @@ OVERLAP_RULES = """OVERLAP
 
 
 def normalize_compile_language(code: str | None) -> str:
+    from server.config.constants import coerce_supported_language, normalize_supported_language
+
     raw = (code or "te-IN").strip()
     if raw in SPOKEN_PACKS:
         return raw
-    return _LANGUAGE_ALIASES.get(raw.lower(), "te-IN")
+    mapped = normalize_supported_language(raw)
+    if mapped in SPOKEN_PACKS:
+        return mapped
+    return coerce_supported_language(raw)
 
 
 UNCLEAR_FALLBACK: dict[str, str] = {

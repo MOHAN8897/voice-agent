@@ -42,7 +42,18 @@ const TERMINAL = new Set([
   "cancelled",
   "hangup",
   "ended",
+  "stream-error",
+  "stream_error",
+  "voice_start_failed",
+  "stream_start_failed",
 ]);
+
+const INTERNAL_CALL_ID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isInternalCallId(id?: string | null): boolean {
+  return Boolean(id && INTERNAL_CALL_ID_RE.test(String(id).trim()));
+}
 
 export type ProviderStatusHints = {
   hasInternal?: boolean;
@@ -95,8 +106,9 @@ export function mapProviderStatus(status?: string, hints: boolean | ProviderStat
     return "ongoing";
   }
   if (frames > 0) return "ongoing";
-  if (st === "stream-stopped" || st === "stream-error" || st === "stream_stopped") {
-    return extra.hasInternal ? "ongoing" : "placed";
+  if (st === "stream-stopped" || st === "stream-error" || st === "stream_stopped" || st === "stream_error") {
+    if (extra.hasInternal) return "ongoing";
+    return "hangup";
   }
   if (st === "answered" || ev === "answered") return "lifted";
   if (extra.hasInternal) return "lifted";

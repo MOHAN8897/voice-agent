@@ -12,6 +12,14 @@ _CLIENT = None
 _RETRY_AFTER = 0.0
 _PREFIX = "voice:call:memory:"
 _TTL_SEC = 7200
+_RETRY_AFTER_SEC = 60.0
+
+
+def _mark_unavailable(exc: BaseException) -> None:
+    global _CLIENT, _RETRY_AFTER
+    _CLIENT = None
+    _RETRY_AFTER = time.monotonic() + _RETRY_AFTER_SEC
+    logger.warning(f"[REDIS] memory cache unavailable: {exc}")
 
 
 def _redis():
@@ -30,9 +38,7 @@ def _redis():
                                      socket_connect_timeout=0.25, socket_timeout=0.25)
             _CLIENT.ping()
         except Exception as e:
-            _CLIENT = None
-            _RETRY_AFTER = time.monotonic() + 10.0
-            logger.warning(f"[REDIS] memory cache unavailable: {e}")
+            _mark_unavailable(e)
             return None
     return _CLIENT
 
@@ -51,6 +57,7 @@ def get_snapshot(call_id: str) -> dict[str, Any] | None:
             return json.loads(raw)
     except Exception as e:
         logger.warning(f"[REDIS] get memory {call_id[:8]}: {e}")
+        _mark_unavailable(e)
     return None
 
 
@@ -62,6 +69,7 @@ def set_snapshot(call_id: str, snapshot: dict[str, Any]) -> None:
         client.setex(f"{_PREFIX}{call_id}", _TTL_SEC, json.dumps(snapshot))
     except Exception as e:
         logger.warning(f"[REDIS] set memory {call_id[:8]}: {e}")
+        _mark_unavailable(e)
 
 
 def delete_snapshot(call_id: str) -> None:

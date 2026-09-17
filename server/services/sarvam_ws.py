@@ -26,7 +26,7 @@ from typing import Any
 
 import websockets  # provided by uvicorn[standard]
 
-from server.config.constants import constants
+from server.config.constants import constants, provider_language_code
 from server.config.env import get_settings
 from server.services.dev_secrets_store import dev_secrets_store
 
@@ -65,7 +65,7 @@ def connect_stt_realtime(
 ):
     settings = get_settings()
     params = {
-        "language_code": language_code,
+        "language_code": provider_language_code(language_code, provider="sarvam", stage="stt"),
         "model": _resolve_realtime_stt_model(model),
         "stream_type": stream_type,
         "mode": mode,

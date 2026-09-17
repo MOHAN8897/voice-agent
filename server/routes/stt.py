@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
-from server.config.constants import constants
+from server.config.constants import language_in_supported, normalize_supported_language, constants
 from server.services.sarvam_stt_service import transcribe
 from server.utils.audio import is_allowed_audio, validate_audio_size
 from server.utils.errors import AppError
@@ -21,9 +21,8 @@ async def stt_route(
     language_code: str = Form("te-IN"),
     mode: str = Form("transcribe"),
 ):
-    # Validate language_code
-    if language_code not in constants.SUPPORTED_LANGUAGES and language_code != "unknown":
-        # Allow any te-IN etc but default to te-IN if invalid
+    language_code = normalize_supported_language(language_code)
+    if not language_in_supported(language_code, allow_unknown=True):
         language_code = "te-IN"
     if mode not in ("transcribe", "translate", "verbatim", "translit", "codemix"):
         mode = "transcribe"

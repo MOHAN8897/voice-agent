@@ -136,6 +136,7 @@ class TelnyxPstnBridge:
         self._cleaned_voice = False
         self._cleaned_lifecycle = False
         self._cleaned_registry = False
+        self._hangup_sent = False
 
     async def run(self, *, agent_id: str | None, tier: str | None, token_meta: dict[str, Any] | None) -> None:
         self._token_meta = dict(token_meta or {})
@@ -210,6 +211,9 @@ class TelnyxPstnBridge:
                     self._start_handled = True
                     try:
                         await self._on_start(ev)
+                        if self._closed:
+                            exit_reason = "stream_start_failed"
+                            break
                         # Media WS start is the ground-truth stream_connected signal.
                         if self.call_control_id:
                             from server.services.telnyx_client import telnyx_call_registry
@@ -449,6 +453,16 @@ class TelnyxPstnBridge:
                         self.call_control_id,
                         {"internal_call_id": self.call_id, "status": "streaming", "last_event": "stream-start"},
                     )
+                    try:
+                        from server.services.telnyx_recordings import attach_pending_recording
+
+                        await attach_pending_recording(self.call_control_id, self.call_id)
+                    except Exception:
+                        logger.warning(
+                            "[TELNYX] pending recording attach failed control=%s",
+                            self.call_control_id,
+                            exc_info=True,
+                        )
                 logger.info("[TELNYX] stream started call_id=%s control=%s", self.call_id, self.call_control_id)
 
             self._out_task = asyncio.create_task(self._out_worker())
@@ -493,14 +507,30 @@ class TelnyxPstnBridge:
             self._voice.set_hangup_handler(self._provider_hangup)
             self._voice_loop_task = asyncio.create_task(self._start_voice_loop())
         except Exception as exc:
+            from server.services.telnyx_client import telnyx_call_registry
+
             logger.exception("[TELNYX] stream start failed control=%s: %s", self.call_control_id, exc)
             if self.call_control_id:
                 telnyx_call_registry.upsert(
                     self.call_control_id,
-                    {"status": "stream-error", "last_event": "stream-error", "error": str(exc)[:200]},
+                    {
+                        "status": "stream-error",
+                        "last_event": "stream-error",
+                        "error": str(exc)[:200],
+                        "failure_reason": "stream_start_failed",
+                        "ended": True,
+                    },
                 )
-                await self._provider_hangup()
-            raise
+            try:
+                await asyncio.wait_for(self._provider_hangup(), timeout=4.0)
+            except Exception:
+                logger.warning("[TELNYX] stream start hangup did not complete", exc_info=True)
+            try:
+                await self.ws.close(code=1011)
+            except Exception:
+                pass
+            self._closed = True
+            return
 
     async def _start_voice_loop(self) -> None:
         if not self._voice:
@@ -1120,8 +1150,9 @@ class TelnyxPstnBridge:
         return False
 
     async def _provider_hangup(self) -> None:
-        if not self.call_control_id:
+        if not self.call_control_id or self._hangup_sent:
             return
+        self._hangup_sent = True
         from server.services.telnyx_client import TelnyxClient
 
         await self.drain_outbound(timeout_s=2.5)
@@ -1247,14 +1278,25 @@ class TelnyxPstnBridge:
             return
         self._closed = True
         if reason == "media_disconnected" and self._owns_call and self.call_control_id:
-            from server.services.telnyx_client import TelnyxClient, telnyx_call_registry
+            from server.services.telnyx_client import telnyx_call_registry
 
             row = telnyx_call_registry.get(self.call_control_id) or {}
-            if not row.get("ended"):
+            if not row.get("ended") and not self._hangup_sent:
                 try:
-                    await TelnyxClient().hangup(self.call_control_id)
+                    await self._provider_hangup()
                 except Exception as exc:
                     log_pstn("hangup.media_failure.failed", control=self.call_control_id, error=str(exc)[:160])
+        if self.call_control_id and self.call_id:
+            try:
+                from server.services.telnyx_recordings import attach_pending_recording
+
+                await attach_pending_recording(self.call_control_id, self.call_id)
+            except Exception:
+                logger.warning(
+                    "[TELNYX] pending recording attach on cleanup failed control=%s",
+                    self.call_control_id,
+                    exc_info=True,
+                )
         await self._signal_queue_space(force=True)
         if not self._cleaned_voice_loop:
             if (self._voice_loop_task and not self._voice_loop_task.done()

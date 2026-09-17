@@ -46,11 +46,36 @@ class Constants:
     TTS_BITRATES = ["32k", "64k", "96k", "128k", "192k"]
     TTS_SAMPLE_RATES = [8000, 16000, 22050, 24000]
 
-    # Supported languages — extensible by config
+    # Canonical BCP-47 codes the live stack accepts. Sarvam still uses IN English
+    # codes (sttCode/ttsCode); OpenAI Realtime / brain packs keep en-US.
+    LANGUAGE_ALIASES: dict[str, str] = {
+        "te": "te-IN",
+        "te-in": "te-IN",
+        "telugu": "te-IN",
+        "en": "en-IN",
+        "eng": "en-IN",
+        "en-in": "en-IN",
+        "english": "en-IN",
+        "en-us": "en-US",
+        "en-gb": "en-US",
+        "en-au": "en-US",
+        "en-ca": "en-US",
+        "en-uk": "en-US",
+        "english-us": "en-US",
+        "english-uk": "en-US",
+        "us-english": "en-US",
+        "uk-english": "en-US",
+        "american": "en-US",
+        "british": "en-US",
+        "hi": "hi-IN",
+        "hi-in": "hi-IN",
+        "hindi": "hi-IN",
+    }
     SUPPORTED_LANGUAGES: dict[str, dict[str, str]] = {
         "te-IN": {"sttCode": "te-IN", "ttsCode": "te-IN", "speaker": "shubh", "name": "Telugu"},
         "hi-IN": {"sttCode": "hi-IN", "ttsCode": "hi-IN", "speaker": "shubh", "name": "Hindi"},
-        "en-IN": {"sttCode": "en-IN", "ttsCode": "en-IN", "speaker": "shubh", "name": "English"},
+        "en-IN": {"sttCode": "en-IN", "ttsCode": "en-IN", "speaker": "shubh", "name": "English (India)"},
+        "en-US": {"sttCode": "en-IN", "ttsCode": "en-IN", "speaker": "shubh", "name": "English (US/UK)"},
     }
 
     # Tiers (L1 stack bundles — assignments configured via env / Dev Portal)
@@ -63,7 +88,7 @@ class Constants:
     CARTESIA_STT_MODELS: dict[str, dict] = {
         "ink-2": {
             "label": "Ink 2 (English, streaming)",
-            "languages": ["en", "en-IN"],
+            "languages": ["en", "en-IN", "en-US"],
             "modes": ["transcribe"],
             "realtime": True,
         },
@@ -169,3 +194,62 @@ class Constants:
 
 
 constants = Constants()
+
+_COMPACT_LANGUAGE_ALIASES = {
+    "enus": "en-US",
+    "enin": "en-IN",
+    "engb": "en-US",
+    "enuk": "en-US",
+    "enau": "en-US",
+    "enca": "en-US",
+    "tein": "te-IN",
+    "hiin": "hi-IN",
+    "eng": "en-IN",
+}
+
+
+def normalize_supported_language(code: str | None) -> str:
+    """Map Test Studio / locale aliases to a canonical live-stack language."""
+    raw = (code or "").strip()
+    if not raw:
+        return "te-IN"
+    if raw == "unknown":
+        return "unknown"
+    if raw in constants.SUPPORTED_LANGUAGES:
+        return raw
+    collapsed = raw.lower().replace("_", "-").replace(" ", "")
+    mapped = constants.LANGUAGE_ALIASES.get(raw.lower()) or constants.LANGUAGE_ALIASES.get(collapsed)
+    if mapped:
+        return mapped
+    return _COMPACT_LANGUAGE_ALIASES.get(collapsed.replace("-", ""), raw)
+
+
+def language_in_supported(code: str | None, *, allow_unknown: bool = False) -> bool:
+    lang = normalize_supported_language(code)
+    if allow_unknown and lang == "unknown":
+        return True
+    return lang in constants.SUPPORTED_LANGUAGES
+
+
+def coerce_supported_language(code: str | None, *, fallback: str = "te-IN") -> str:
+    lang = normalize_supported_language(code)
+    if lang in constants.SUPPORTED_LANGUAGES:
+        return lang
+    return fallback
+
+
+def provider_language_code(
+    code: str | None,
+    *,
+    provider: str = "sarvam",
+    stage: str = "tts",
+) -> str:
+    """BCP-47 the vendor API actually accepts (Sarvam has no en-US)."""
+    lang = coerce_supported_language(code)
+    entry = constants.SUPPORTED_LANGUAGES[lang]
+    if provider == "sarvam":
+        field = "sttCode" if stage == "stt" else "ttsCode"
+        return str(entry.get(field) or lang)
+    if provider == "cartesia" and lang.startswith("en"):
+        return "en"
+    return lang

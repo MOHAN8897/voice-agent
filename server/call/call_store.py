@@ -23,6 +23,13 @@ def _as_dt(value: Any) -> datetime | None:
     return None
 
 
+def _parse_uuid(value: str) -> uuid.UUID | None:
+    try:
+        return uuid.UUID(str(value))
+    except (ValueError, TypeError, AttributeError):
+        return None
+
+
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
@@ -93,8 +100,12 @@ class CallStore:
             rec = _MEM.get(call_id)
             return dict(rec) if rec else None
 
+        parsed = _parse_uuid(call_id)
+        if parsed is None:
+            return None
+
         async with factory() as session:
-            result = await session.execute(select(Call).where(Call.call_id == uuid.UUID(call_id)))
+            result = await session.execute(select(Call).where(Call.call_id == parsed))
             row = result.scalar_one_or_none()
             return _row_to_dict(row) if row else None
 
@@ -119,9 +130,12 @@ class CallStore:
             "end_reason",
             "last_heartbeat_at",
         }
+        parsed = _parse_uuid(call_id)
+        if parsed is None:
+            return None
         values = {k: v for k, v in fields.items() if k in allowed}
         async with factory() as session:
-            await session.execute(update(Call).where(Call.call_id == uuid.UUID(call_id)).values(**values))
+            await session.execute(update(Call).where(Call.call_id == parsed).values(**values))
             await session.commit()
         return await self.get(call_id)
 

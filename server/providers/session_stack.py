@@ -3,7 +3,7 @@ Session-scoped stack resolution — interim until Phase 3 call/start.
 """
 from __future__ import annotations
 
-from server.config.constants import constants
+from server.config.constants import constants, normalize_supported_language
 from server.config.env import Settings, get_settings
 from server.providers import resolve_stack
 from server.providers.base import ResolvedStack, StackSelection, StageSelection
@@ -57,7 +57,7 @@ def resolve_stack_for_session(session_id: str, *, language: str = "te-IN") -> Re
     """
     settings = get_settings()
     runtime = runtime_settings.get(session_id)
-    lang = runtime.get("sttLanguage") or language
+    lang = normalize_supported_language(runtime.get("sttLanguage") or language)
     config_mode = dev_secrets_store.effective("voice_agent_config_mode", settings.voice_agent_config_mode)
     tier = dev_secrets_store.effective("voice_agent_tier", settings.voice_agent_tier)
     app_env = dev_secrets_store.effective("app_environment", settings.app_environment)

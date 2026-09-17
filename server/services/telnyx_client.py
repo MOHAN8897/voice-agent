@@ -385,8 +385,19 @@ class TelnyxClient:
 
     async def hangup(self, call_control_id: str) -> dict[str, Any]:
         """End an active Telnyx call (dev stress tests / cleanup)."""
-        data = await self._request("POST", f"/calls/{call_control_id}/actions/hangup", json={})
-        return data.get("data") or data
+        try:
+            data = await self._request("POST", f"/calls/{call_control_id}/actions/hangup", json={})
+            return data.get("data") or data
+        except TelnyxApiError as exc:
+            # 404/422: already hung up or control id no longer active.
+            if exc.status in (404, 422):
+                logger.info(
+                    "[TELNYX] hangup skipped control=%s status=%s",
+                    call_control_id,
+                    exc.status,
+                )
+                return {}
+            raise
 
 
 class TelnyxCallRegistry:
@@ -413,7 +424,12 @@ class TelnyxCallRegistry:
         # Synchronous upsert is fine for single-threaded asyncio; the lock
         # is used by atomic_upsert for read-modify-write patterns.
         row = dict(self._calls.get(call_control_id) or {"call_control_id": call_control_id})
+        first_seen = row.get("first_seen_at")
         row.update(patch)
+        if first_seen:
+            row["first_seen_at"] = first_seen
+        elif not row.get("first_seen_at"):
+            row["first_seen_at"] = time.time()
         row["updated_at"] = int(time.time())
         self._calls[call_control_id] = row
         client = self._redis()
@@ -434,7 +450,12 @@ class TelnyxCallRegistry:
                     return merged
                     """
                     merged = client.eval(script, 1, f"{self._REDIS_PREFIX}{call_control_id}",
-                                         json.dumps({**patch, "call_control_id": call_control_id, "updated_at": row["updated_at"]}),
+                                         json.dumps({
+                                             **patch,
+                                             "call_control_id": call_control_id,
+                                             "updated_at": row["updated_at"],
+                                             "first_seen_at": row["first_seen_at"],
+                                         }),
                                          self._REDIS_TTL_SEC)
                     self._calls[call_control_id] = json.loads(merged)
                 else:

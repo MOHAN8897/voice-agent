@@ -113,6 +113,11 @@ class CallLifecycleService:
         agent = await self._resolve_agent(agent_id)
         env = environment or agent.get("environment") or effective_app_environment()
         effective_tier = tier or agent.get("default_tier") or effective_voice_tier()
+        from server.config.constants import normalize_supported_language
+
+        language = normalize_supported_language(
+            language or (agent.get("languages") or ["te-IN"])[0]
+        )
 
         previous = call_context.get_active_for_session(session_id)
         if previous:
@@ -131,7 +136,7 @@ class CallLifecycleService:
                 tier=effective_tier,  # type: ignore[arg-type]
                 environment=env,
                 stack_override=stack_override,
-                language=language or (agent.get("languages") or ["te-IN"])[0],
+                language=language,
             ),
             stack_override=stack_override,
         )

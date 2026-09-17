@@ -70,6 +70,23 @@ def test_realtime_voice_stack_keeps_mini_and_voice():
     assert "tts" not in out
 
 
+def test_realtime_voice_session_omits_noise_reduction_when_off():
+    session = build_realtime_voice_session(
+        model="gpt-realtime-2.1-mini",
+        instructions="You are a helpful agent.",
+        voice="marin",
+        noise_reduction="off",
+    )
+    assert "noise_reduction" not in session["audio"]["input"]
+
+
+def test_realtime_voice_config_reads_top_level_noise_reduction():
+    from server.realtime.models import realtime_voice_config
+
+    cfg = realtime_voice_config({"pipeline": "realtime_voice", "noise_reduction": "off"})
+    assert cfg["noise_reduction"] == "off"
+
+
 def test_realtime_voice_session_is_audio_pcm_24k():
     session = build_realtime_voice_session(
         model="gpt-realtime-2.1-mini",
@@ -715,6 +732,7 @@ async def test_deferred_greeting_waits_until_user_finishes():
         await loop.feed_user_pcm16(loud)
     assert wires == []
     assert loop._deferred_greeting_task is None
+    assert adapter.appended == []
     # High-eagerness VAD can fire this ~60ms into hello — 15 frames is real speech,
     # but playback still waits for the debounce after speech_stopped.
     await loop._handle_event({"type": "speech_started"})
@@ -734,7 +752,7 @@ async def test_deferred_greeting_waits_until_user_finishes():
 
 
 @pytest.mark.asyncio
-async def test_first_turn_question_starts_llm_after_greeting():
+async def test_first_turn_speech_never_reaches_llm():
     adapter = FakeRealtimeVoiceAdapter()
     adapter.connected = True
     from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
@@ -756,6 +774,7 @@ async def test_first_turn_question_starts_llm_after_greeting():
     loud = struct.pack("<320h", *([1200] * 320))
     for _ in range(15):
         await loop.feed_user_pcm16(loud)
+    assert adapter.appended == []
     await loop._handle_event(
         {"type": "user_transcript", "text": "Hello, who is this?", "final": True}
     )
@@ -763,8 +782,50 @@ async def test_first_turn_question_starts_llm_after_greeting():
     await asyncio.sleep(0.35)
     await asyncio.wait_for(loop._deferred_greeting_task, timeout=1.0)
     assert adapter.auto_response_states[-1] is True
-    assert any("caller spoke first" in item.lower() for item in adapter.started_responses)
-    assert adapter.cleared_input == 0
+    assert adapter.started_responses == []
+    assert adapter.cleared_input >= 1
+    assert adapter.appended == []
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_pickup_quiet_plays_greeting_without_sending_audio_to_llm():
+    adapter = FakeRealtimeVoiceAdapter()
+    adapter.connected = True
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+
+    wires: list[bytes] = []
+
+    async def on_wire(wire: bytes) -> None:
+        wires.append(wire)
+
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id="c-pickup-quiet",
+        on_agent_wire=on_wire,
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        adapter=adapter,
+        stack_override={"pipeline": "realtime_voice", "direction": "outbound"},
+    )
+    frames = [b"\x09" * 640]
+    await loop.start_call(
+        play_greeting=True,
+        greeting_wire_frames=frames,
+        greeting_text="Hi, this is Tis. Do you have a moment?",
+    )
+    loud = struct.pack("<320h", *([1200] * 320))
+    quiet = struct.pack("<320h", *([0] * 320))
+    for _ in range(15):
+        await loop.feed_user_pcm16(loud)
+    assert wires == []
+    for _ in range(25):
+        await loop.feed_user_pcm16(quiet)
+    await asyncio.wait_for(loop._deferred_greeting_task, timeout=1.0)
+    assert wires == frames
+    assert adapter.appended == []
+    assert adapter.started_responses == []
+    assert adapter.auto_response_states[-1] is True
     await loop.close()
 
 

@@ -231,7 +231,10 @@ def realtime_voice_config(stack_override: dict[str, Any] | None = None) -> dict[
         "voice": normalize_realtime_voice(block.get("voice")),
         "turn_detection": normalize_realtime_turn_detection(block.get("turn_detection")),
         "vad_eagerness": normalize_realtime_vad_eagerness(block.get("vad_eagerness")),
-        "noise_reduction": normalize_realtime_noise_reduction(block.get("noise_reduction")),
+        "noise_reduction": normalize_realtime_noise_reduction(
+            block.get("noise_reduction")
+            or (stack_override.get("noise_reduction") if isinstance(stack_override, dict) else None)
+        ),
         "speed": normalize_realtime_speed(block.get("speed")),
         "silence_ms": normalize_realtime_silence_ms(block.get("silence_ms")),
     }

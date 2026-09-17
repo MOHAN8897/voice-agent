@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 from server.agent.language_resolver import get_speaker_for_language
-from server.config.constants import constants
+from server.config.constants import coerce_supported_language, constants, provider_language_code
 from server.config.env import get_settings
 from server.services.runtime_settings import runtime_settings
 from server.utils.logger import log_tts
@@ -163,7 +163,7 @@ def _resolve_cartesia_tts_config(
         "volume": gen["volume"],
         "emotion": gen["emotion"],
         "generation_config": gen,
-        "language_code": language_code if language_code in constants.SUPPORTED_LANGUAGES else "te-IN",
+        "language_code": coerce_supported_language(language_code),
         "output_audio_codec": "linear16",
         "output_audio_bitrate": "128k",
         "sample_rate": resolved_sample_rate,
@@ -305,7 +305,7 @@ def resolve_tts_config(
         "model": resolved_model,
         "speaker": resolved_speaker,
         "pace": resolved_pace,
-        "language_code": language_code if language_code in constants.SUPPORTED_LANGUAGES else "te-IN",
+        "language_code": provider_language_code(language_code, provider="sarvam", stage="tts"),
         "output_audio_codec": resolved_codec,
         "output_audio_bitrate": resolved_bitrate,
         "sample_rate": resolved_sample_rate,

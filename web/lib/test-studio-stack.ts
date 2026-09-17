@@ -99,15 +99,34 @@ export function buildStackOverride(form: StackForm): Record<string, unknown> {
 /** PSTN outbound stack — STT/TTS from form; live LLM comes from test-studio session + Realtime API. */
 export function buildPstnStackOverride(form: StackForm, stackMode: StackMode): Record<string, unknown> {
   const speaker = ensureTtsVoice(form.ttsProvider, form.ttsVoiceId, form.ttsModel);
+  const noiseReduction = normalizeRealtimeNoiseReduction(form.realtimeNoiseReduction);
   if (stackMode === "tier") {
     return {
       pipeline: "realtime_text",
       tts: { config: { speaker } },
+      noise_reduction: noiseReduction,
     };
   }
   const full = buildStackOverride({ ...form, ttsVoiceId: speaker });
   const { llm: _omit, ...rest } = full as { llm?: unknown; stt?: unknown; tts?: unknown };
-  return { ...rest, pipeline: "realtime_text" };
+  return { ...rest, pipeline: "realtime_text", noise_reduction: noiseReduction };
+}
+
+/** Merge Place Call far-field toggle into the dial-time stack override. */
+export function applyFarFieldNoiseReduction(
+  override: Record<string, unknown> | undefined,
+  enabled: boolean
+): Record<string, unknown> {
+  const noiseReduction = enabled ? "far_field" : "off";
+  const base: Record<string, unknown> = { ...(override || {}) };
+  const existing =
+    base.realtime_voice && typeof base.realtime_voice === "object" && !Array.isArray(base.realtime_voice)
+      ? { ...(base.realtime_voice as Record<string, unknown>) }
+      : {};
+  existing.noise_reduction = noiseReduction;
+  base.noise_reduction = noiseReduction;
+  base.realtime_voice = existing;
+  return base;
 }
 
 export function effectivePstnLiveLlm(

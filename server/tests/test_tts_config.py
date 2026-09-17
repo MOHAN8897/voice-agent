@@ -182,3 +182,9 @@ def test_cartesia_default_voice_survives_english_cap():
         ws_model="bulbul:v3",
     )
     assert cfg["speaker"] == "priya"
+
+
+def test_sarvam_tts_maps_en_us_to_provider_en_in():
+    cfg = resolve_tts_config("cfg-test", language_code="en-US")
+    assert cfg["provider"] == "sarvam"
+    assert cfg["language_code"] == "en-IN"

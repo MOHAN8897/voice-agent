@@ -9,6 +9,7 @@ import type { StackForm, StackMode } from "@/lib/test-studio-stack";
 import { portalFetch } from "@/lib/auth-client";
 import {
   advanceLifecycle,
+  isInternalCallId,
   mapProviderStatus,
   type PstnLifecycleStage,
 } from "@/lib/pstn-lifecycle";
@@ -40,6 +41,7 @@ export function PstnFlowWorkspace({
   runtimeTtsSpeaker,
   runtimeOpenAiModel,
   stackOverride,
+  onFarFieldNoiseReductionChange,
   onInternalCallStart,
   onInternalCallEnd,
   onReviewCall,
@@ -57,6 +59,7 @@ export function PstnFlowWorkspace({
   runtimeTtsSpeaker?: string;
   runtimeOpenAiModel?: string;
   stackOverride?: Record<string, unknown>;
+  onFarFieldNoiseReductionChange?: (enabled: boolean) => void;
   onInternalCallStart?: (callId: string) => void;
   onInternalCallEnd?: (callId: string) => void;
   onReviewCall?: (callId: string) => void;
@@ -75,12 +78,13 @@ export function PstnFlowWorkspace({
   const onInternalCallEndRef = useRef(onInternalCallEnd);
   onInternalCallEndRef.current = onInternalCallEnd;
 
-  const notifyEnded = useCallback((id: string) => {
+  const notifyEnded = useCallback((id?: string) => {
     if (endedNotifiedRef.current) return;
     endedNotifiedRef.current = true;
     setLifecycleStage((prev) => advanceLifecycle(prev, "hangup"));
     setHistoryRefreshKey((n) => n + 1);
-    onInternalCallEndRef.current?.(id);
+    if (isInternalCallId(id)) onInternalCallEndRef.current?.(id);
+    else onInternalCallEndRef.current?.("");
   }, []);
 
   useEffect(() => {
@@ -147,6 +151,7 @@ export function PstnFlowWorkspace({
         runtimeTtsSpeaker={runtimeTtsSpeaker}
         runtimeOpenAiModel={runtimeOpenAiModel}
         stackOverride={stackOverride}
+        onFarFieldNoiseReductionChange={onFarFieldNoiseReductionChange}
         initialToE164={toPhone}
         requestDialTo={requestDialTo}
         hideHistory
@@ -170,14 +175,14 @@ export function PstnFlowWorkspace({
         onActiveCallChange={(call) => {
           if (!call) return;
           const mapped = mapProviderStatus(call.status, {
-            hasInternal: Boolean(call.internal_call_id),
+            hasInternal: isInternalCallId(call.internal_call_id),
             lastEvent: call.last_event,
             ended: Boolean(call.ended),
             mediaFramesIn: Number(call.media_frames_in || 0),
             mediaFramesOut: Number(call.media_frames_out || 0),
           });
           if (mapped === "hangup") {
-            notifyEnded(String(call.internal_call_id || call.call_control_id || call.call_sid || ""));
+            notifyEnded(isInternalCallId(call.internal_call_id) ? String(call.internal_call_id) : undefined);
             return;
           }
           setLifecycleStage((prev) => {

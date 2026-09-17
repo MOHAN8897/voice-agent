@@ -8,6 +8,7 @@ from __future__ import annotations
 import httpx
 
 from server.config.env import get_settings
+from server.config.constants import provider_language_code
 from server.services.dev_secrets_store import dev_secrets_store
 from server.utils.errors import AppError, ErrorCode, classify_http_status
 from server.utils.http_clients import get_sarvam_client
@@ -34,6 +35,7 @@ async def transcribe(
     model = model or settings.sarvam_stt_model
     timeout_s = (timeout_ms or settings.request_timeout_ms) / 1000
 
+    language_code = provider_language_code(language_code, provider="sarvam", stage="stt")
     log_stt("Audio submitted", bytes=len(audio_bytes), language_code=language_code, model=model, mode=mode)
 
     # httpx multipart

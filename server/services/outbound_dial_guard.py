@@ -18,13 +18,32 @@ _ACTIVE_CALL_STATUSES = {
 }
 
 INFLIGHT_TTL_SEC = 45.0
+# Ringing/queued rows older than this are zombies (provider never progressed).
+# Answered/streaming calls are never replaced, regardless of age.
+STALE_RING_SEC = 180.0
+# Kept for tests/callers that still import the old reuse window name.
+RECENT_DIAL_REUSE_SEC = STALE_RING_SEC
+
+_LIVE_LEG_STATUSES = {
+    "answered",
+    "streaming",
+    "bridged",
+    "active",
+    "in-progress",
+    "in_progress",
+}
 
 _outbound_lock = asyncio.Lock()
 _inflight: dict[str, float] = {}
 
 
+def dest_digits(value: str) -> str:
+    digits = "".join(ch for ch in (value or "") if ch.isdigit())
+    return digits[-10:] if len(digits) >= 10 else digits
+
+
 def _slot_key(provider: str, to_e164: str) -> str:
-    return f"{provider}:{(to_e164 or '').strip()}"
+    return f"{provider}:{dest_digits(to_e164) or (to_e164 or '').strip()}"
 
 
 def _is_active_status(status: str) -> bool:
@@ -34,6 +53,35 @@ def _is_active_status(status: str) -> bool:
     if raw in _ACTIVE_CALL_STATUSES:
         return True
     return "stream" in raw
+
+
+def _row_age_sec(row: dict[str, Any], now: float | None = None) -> float:
+    started = float(row.get("first_seen_at") or row.get("dialed_at") or 0)
+    if started <= 0:
+        return 0.0
+    return (now if now is not None else time.time()) - started
+
+
+def _status_slug(status: str) -> str:
+    return (status or "").strip().lower().replace("call.", "")
+
+
+def _is_live_leg(row: dict[str, Any]) -> bool:
+    raw = _status_slug(str(row.get("status") or ""))
+    if raw in _LIVE_LEG_STATUSES:
+        return True
+    return "stream" in raw
+
+
+def _is_replaceable_telnyx_row(row: dict[str, Any], now: float | None = None) -> bool:
+    """Hang up only voice-check / skip-stream legs, or a ringing row stuck for minutes."""
+    if row.get("voice_check") or row.get("skip_stream"):
+        return True
+    if not _is_active_status(str(row.get("status") or "")):
+        return False
+    if _is_live_leg(row):
+        return False
+    return _row_age_sec(row, now) >= STALE_RING_SEC
 
 
 async def acquire_outbound_slot(provider: str, to_e164: str) -> bool:
@@ -52,20 +100,42 @@ def release_outbound_slot(provider: str, to_e164: str) -> None:
     _inflight.pop(_slot_key(provider, to_e164), None)
 
 
+def peek_reusable_telnyx_call(to_e164: str) -> dict[str, Any] | None:
+    """Return the live/ringing call to this dest so a duplicate Place Call no-ops."""
+    from server.services.telnyx_client import telnyx_call_registry
+
+    dest = dest_digits(to_e164)
+    if not dest:
+        return None
+    now = time.time()
+    for row in telnyx_call_registry.list_recent(20):
+        if dest_digits(str(row.get("to") or "")) != dest:
+            continue
+        if not _is_active_status(str(row.get("status") or "")):
+            continue
+        if _is_replaceable_telnyx_row(row, now):
+            continue
+        return row
+    return None
+
+
 async def hangup_active_telnyx_to(client: Any, to_e164: str) -> None:
     from server.services.telnyx_client import TelnyxApiError, telnyx_call_registry
 
-    dest = (to_e164 or "").strip()
+    dest = dest_digits(to_e164)
     if not dest:
         return
+    now = time.time()
     for row in telnyx_call_registry.list_recent(20):
-        if str(row.get("to") or "").strip() != dest:
+        if dest_digits(str(row.get("to") or "")) != dest:
             continue
         status = str(row.get("status") or "")
         if not _is_active_status(status):
             continue
         control = str(row.get("call_control_id") or "")
         if not control:
+            continue
+        if not _is_replaceable_telnyx_row(row, now):
             continue
         try:
             await client.hangup(control)

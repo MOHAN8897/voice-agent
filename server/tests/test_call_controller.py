@@ -74,6 +74,7 @@ async def test_cached_greeting_uses_local_endpoint_without_waiting_for_remote_va
     for _ in range(15):
         await loop.feed_user_pcm16(loud)
     loop.on_agent_wire.assert_not_awaited()
+    assert adapter.appended == []
     await loop._handle_event({"type": "speech_stopped"})
     await asyncio.sleep(0.35)
     if loop._deferred_greeting_task:

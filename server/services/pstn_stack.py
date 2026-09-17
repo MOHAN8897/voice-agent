@@ -9,7 +9,7 @@ from __future__ import annotations
 import copy
 from typing import Any
 
-from server.config.constants import constants
+from server.config.constants import coerce_supported_language, constants
 from server.services.cartesia_voices import is_cartesia_voice_id
 
 
@@ -43,8 +43,8 @@ def _sarvam_speaker_names() -> set[str]:
 
 
 def _default_sarvam_speaker(language: str) -> str:
-    lang = constants.SUPPORTED_LANGUAGES.get(language) or constants.SUPPORTED_LANGUAGES["te-IN"]
-    return str(lang.get("speaker") or "shubh")
+    lang = constants.SUPPORTED_LANGUAGES.get(coerce_supported_language(language))
+    return str((lang or constants.SUPPORTED_LANGUAGES["te-IN"]).get("speaker") or "shubh")
 
 
 def _default_cartesia_voice_id() -> str:
@@ -132,6 +132,7 @@ def normalize_pstn_stack_override(
     if not stack_override:
         return None, []
 
+    language = coerce_supported_language(language)
     out = copy.deepcopy(stack_override)
     adjustments: list[str] = []
 
@@ -250,8 +251,16 @@ def _finalize_pstn_live_override(out: dict[str, Any], adjustments: list[str]) ->
     if str(out.get("pipeline") or "").strip().lower() != "realtime_text":
         out["pipeline"] = "realtime_text"
         adjustments.append("pipeline set to realtime_text for PSTN live path")
+    noise_reduction = out.get("noise_reduction")
+    rv = out.get("realtime_voice")
+    if noise_reduction is None and isinstance(rv, dict):
+        noise_reduction = rv.get("noise_reduction")
     out.pop("voice_flow", None)
     out.pop("realtime_voice", None)
+    if noise_reduction is not None:
+        from server.realtime.models import normalize_realtime_noise_reduction
+
+        out["noise_reduction"] = normalize_realtime_noise_reduction(noise_reduction)
     return out, adjustments
 
 

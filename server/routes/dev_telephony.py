@@ -292,12 +292,11 @@ async def dev_telephony_outbound(
             result = await _outbound_plivo(body, session)
         else:
             result = {"ok": False, "error": "unknown provider"}
-        if not result.get("ok"):
-            release_outbound_slot(provider, to_number)
         return result
-    except Exception:
+    finally:
+        # Slot only covers overlapping POSTs. Live ringing/answered calls are
+        # reused on the next Place Call instead of hung up.
         release_outbound_slot(provider, to_number)
-        raise
 
 
 _PSTN_VALIDATE_CACHE: dict[str, tuple[float, dict[str, Any]]] = {}
@@ -457,6 +456,8 @@ async def _outbound_exotel(body: OutboundTestBody) -> dict[str, Any]:
 
 
 async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict[str, Any]:
+    import time
+
     from server.brain.agent_service import agent_service
     from server.services.pstn_debug import log_pstn, mark
     from server.services.telnyx_client import (
@@ -495,6 +496,25 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
     stream_url = client.build_stream_ws_url(token=token)
     if not stream_url.startswith("wss://"):
         return {"ok": False, "error": "Configure a public HTTPS API/tunnel URL before placing a PSTN call."}
+    from server.services.outbound_dial_guard import peek_reusable_telnyx_call
+
+    reused = peek_reusable_telnyx_call(body.to_e164)
+    if reused and str(reused.get("call_control_id") or "").strip():
+        call_control_id = str(reused.get("call_control_id"))
+        log_pstn(
+            "dial.reuse",
+            timer_key=call_control_id,
+            control=call_control_id,
+            to=body.to_e164,
+            reason="active_same_dest",
+        )
+        return {
+            "ok": True,
+            "provider": "telnyx",
+            "call_control_id": call_control_id,
+            "stream_url": str(reused.get("stream_url") or stream_url),
+            "reused": True,
+        }
     await _hangup_active_telnyx_to(client, body.to_e164)
     try:
         result = await client.create_outbound_call(
@@ -535,6 +555,7 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
                 "stream_started": bool(existing_call.get("stream_started")),
                 "stream_connected": bool(existing_call.get("stream_connected")),
                 "stream_state": existing_call.get("stream_state") or "pending_answer",
+                "dialed_at": existing_call.get("dialed_at") or time.time(),
             },
         )
         if call_control_id:

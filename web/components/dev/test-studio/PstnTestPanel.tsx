@@ -9,11 +9,15 @@ import { portalFetch, refreshPortalSession } from "@/lib/auth-client";
 import { LiveMediaFlowDebugger } from "./LiveMediaFlowDebugger";
 import { CallAudioPanel } from "@/components/calls/detail/CallAudioPanel";
 import type { StackForm, StackMode } from "@/lib/test-studio-stack";
-import { effectivePstnLiveLlm, TEST_STUDIO_SESSION_ID } from "@/lib/test-studio-stack";
+import { effectivePstnLiveLlm, TEST_STUDIO_SESSION_ID, applyFarFieldNoiseReduction } from "@/lib/test-studio-stack";
 import { DEFAULT_CARTESIA_VOICE_ID, ensureTtsVoice } from "@/lib/voice/tts-config";
 import { formatDuration, pipelineLabel } from "@/lib/call-list-utils";
-import { isTerminalProviderStatus, matchTelephonyRow } from "@/lib/pstn-lifecycle";
+import { isInternalCallId, isTerminalProviderStatus, matchTelephonyRow } from "@/lib/pstn-lifecycle";
 import { formatInr } from "@/lib/usage-cost";
+
+/** Survives React Strict Mode remounts so Place Call cannot fire twice. */
+let pstnOutboundDialLock = false;
+let lastPstnDialNonce = 0;
 
 type ProviderStatus = {
   id: string;
@@ -120,6 +124,7 @@ export function PstnTestPanel({
   requestDialTo = null,
   hideHistory = false,
   section = "all",
+  onFarFieldNoiseReductionChange,
   onDialPlaced,
   onActiveCallChange,
   onInternalCallStart,
@@ -136,6 +141,7 @@ export function PstnTestPanel({
   runtimeTtsSpeaker?: string;
   runtimeOpenAiModel?: string;
   stackOverride?: Record<string, unknown>;
+  onFarFieldNoiseReductionChange?: (enabled: boolean) => void;
   initialToE164?: string;
   requestDialTo?: { phone: string; nonce: number } | null;
   hideHistory?: boolean;
@@ -160,6 +166,7 @@ export function PstnTestPanel({
   const [verifyCode, setVerifyCode] = useState("");
   const [trackedCallId, setTrackedCallId] = useState<string | null>(null);
   const [listenCallId, setListenCallId] = useState<string | null>(null);
+  const [farFieldNoiseReduction, setFarFieldNoiseReduction] = useState(true);
   const trackedCallRef = useRef<string | null>(null);
   const endedOnceRef = useRef<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -185,7 +192,7 @@ export function PstnTestPanel({
     const activeRow = matchTelephonyRow(rows, activeExternalRef.current, trackedCallRef.current);
     onActiveCallChangeRef.current?.(activeRow);
     if (!activeRow) return;
-    const internal = activeRow.internal_call_id;
+    const internal = isInternalCallId(activeRow.internal_call_id) ? String(activeRow.internal_call_id) : "";
     const endId = internal || callKey(activeRow);
     if (internal && !trackedCallRef.current && endedOnceRef.current !== internal && endedOnceRef.current !== endId) {
       trackedCallRef.current = internal;
@@ -198,7 +205,7 @@ export function PstnTestPanel({
       endedOnceRef.current !== endId
     ) {
       endedOnceRef.current = endId;
-      onInternalCallEndRef.current?.(endId);
+      if (internal) onInternalCallEndRef.current?.(internal);
       if (internal) setListenCallId(internal);
       trackedCallRef.current = null;
     }
@@ -255,7 +262,8 @@ export function PstnTestPanel({
   const lastDialNonceRef = useRef(0);
   useEffect(() => {
     if (!requestDialTo?.phone) return;
-    if (lastDialNonceRef.current === requestDialTo.nonce) return;
+    if (lastPstnDialNonce === requestDialTo.nonce || lastDialNonceRef.current === requestDialTo.nonce) return;
+    lastPstnDialNonce = requestDialTo.nonce;
     lastDialNonceRef.current = requestDialTo.nonce;
     void outboundDial(requestDialTo.phone);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- nonce is the trigger; outboundDial closes over latest stack
@@ -316,6 +324,19 @@ export function PstnTestPanel({
     if (!block || typeof block !== "object") return null;
     return block as Record<string, unknown>;
   }, [stackOverride]);
+  const parentNoiseReduction = useMemo(() => {
+    const fromVoice = String(realtimeVoice?.noise_reduction || "").trim();
+    if (fromVoice) return fromVoice;
+    const fromOverride = String(stackOverride?.noise_reduction || "").trim();
+    if (fromOverride) return fromOverride;
+    return String(stack?.realtimeNoiseReduction || "far_field");
+  }, [realtimeVoice, stackOverride, stack?.realtimeNoiseReduction]);
+  const parentNoiseRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (parentNoiseRef.current === parentNoiseReduction) return;
+    parentNoiseRef.current = parentNoiseReduction;
+    setFarFieldNoiseReduction(parentNoiseReduction !== "off");
+  }, [parentNoiseReduction]);
   const stackOverrideKey = useMemo(
     () => (stackOverride ? JSON.stringify(stackOverride) : ""),
     [stackOverride]
@@ -391,9 +412,10 @@ export function PstnTestPanel({
     }
     setToE164(to);
     onToChange?.(to);
-    if (dialingRef.current || busy) {
+    if (pstnOutboundDialLock || dialingRef.current || busy) {
       return;
     }
+    pstnOutboundDialLock = true;
     dialingRef.current = true;
     setBusy(true);
     trackedCallRef.current = null;
@@ -411,8 +433,9 @@ export function PstnTestPanel({
         inheritTestStudioConfig: true,
         sourceSessionId,
       };
-      if (stackOverride) {
-        dialBody.stackOverride = stackOverride;
+      const dialOverride = applyFarFieldNoiseReduction(stackOverride, farFieldNoiseReduction);
+      if (Object.keys(dialOverride).length) {
+        dialBody.stackOverride = dialOverride;
       }
       const r = await portalFetch("dev", "/api/dev/telephony/outbound", {
         method: "POST",
@@ -441,6 +464,7 @@ export function PstnTestPanel({
       setMessage(err instanceof Error ? err.message : "Outbound failed");
     } finally {
       dialingRef.current = false;
+      pstnOutboundDialLock = false;
       setBusy(false);
     }
   }
@@ -710,7 +734,7 @@ export function PstnTestPanel({
             <dd className="mt-1 font-mono text-xs text-text">
               {String(realtimeVoice?.vad_eagerness || stack?.realtimeVadEagerness || "medium")}
               {" · "}
-              {String(realtimeVoice?.noise_reduction || stack?.realtimeNoiseReduction || "far_field")}
+              {farFieldNoiseReduction ? "far_field" : "off"}
             </dd>
           </div>
             </>
@@ -787,6 +811,60 @@ export function PstnTestPanel({
               className="mt-2 w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2 text-sm font-mono"
             />
           </label>
+        </div>
+        <div
+          className={`mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 ${
+            farFieldNoiseReduction
+              ? "border-success/25 bg-success/[0.04]"
+              : "border-surface-border bg-surface-raised"
+          }`}
+        >
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-text">Far-field noise reduction</p>
+            <p className="mt-0.5 text-[11px] leading-5 text-text-muted">
+              {realtimeE2e
+                ? "OpenAI phone-input cleanup for this call. On uses far_field; Off sends none."
+                : "Sent on this Place Call as OpenAI far_field on/off. Realtime PSTN applies it to live audio."}
+            </p>
+          </div>
+          <div
+            className="flex shrink-0 rounded-xl border border-surface-border bg-surface-card p-0.5"
+            role="group"
+            aria-label="Far-field noise reduction"
+          >
+            <button
+              type="button"
+              aria-pressed={farFieldNoiseReduction}
+              disabled={busy}
+              onClick={() => {
+                setFarFieldNoiseReduction(true);
+                onFarFieldNoiseReductionChange?.(true);
+              }}
+              className={`rounded-[10px] px-3 py-1.5 text-xs font-semibold transition-colors ${
+                farFieldNoiseReduction
+                  ? "bg-accent text-white"
+                  : "text-text-muted hover:text-text"
+              }`}
+            >
+              On
+            </button>
+            <button
+              type="button"
+              aria-pressed={!farFieldNoiseReduction}
+              disabled={busy}
+              onClick={() => {
+                setFarFieldNoiseReduction(false);
+                onFarFieldNoiseReductionChange?.(false);
+              }}
+              className={`rounded-[10px] px-3 py-1.5 text-xs font-semibold transition-colors ${
+                !farFieldNoiseReduction
+                  ? "bg-accent text-white"
+                  : "text-text-muted hover:text-text"
+              }`}
+            >
+              Off
+            </button>
+          </div>
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
           <Button type="button" onClick={() => void outboundDial()} disabled={busy || notReady}>

@@ -41,6 +41,7 @@ import { persistAgentCallLanguage } from "@/lib/bootstrap-test-studio-agent";
 import Link from "next/link";
 import { TestStudioSessionProvider } from "@/components/test-studio/TestStudioSessionContext";
 import { normalizeLanguageCode, primaryAgentLanguage } from "@/lib/agent-language";
+import { isInternalCallId } from "@/lib/pstn-lifecycle";
 
 type ChannelTab = TestStudioMode;
 type FineTuneTab = "prompts" | "llm" | "voice";
@@ -315,6 +316,7 @@ export function AgentTestStudio({
   }, []);
 
   const refreshMemory = useCallback(async (id: string) => {
+    if (!isInternalCallId(id)) return;
     try {
       const r = await fetch(`/api/call/${id}/memory/projection`, { credentials: "include" });
       if (!r.ok) return;
@@ -407,7 +409,7 @@ export function AgentTestStudio({
   }, [sessionStartedAt, sessionEndedAt]);
 
   useEffect(() => {
-    if (!callId || !callEnded || channel === "agent") return;
+    if (!callId || !isInternalCallId(callId) || !callEnded || channel === "agent") return;
     let cancelled = false;
     const pull = async () => {
       try {
@@ -524,6 +526,7 @@ export function AgentTestStudio({
   }, []);
 
   const onCallStart = useCallback((id: string) => {
+    if (!isInternalCallId(id)) return;
     setCallId(id);
     setCallEnded(false);
     setLocked(true);
@@ -769,6 +772,12 @@ export function AgentTestStudio({
               runtimeTtsSpeaker={runtimeTtsSpeaker}
               runtimeOpenAiModel={runtimeOpenAiModel}
               stackOverride={pstnStackOverride}
+              onFarFieldNoiseReductionChange={(enabled) =>
+                setStack((prev) => ({
+                  ...prev,
+                  realtimeNoiseReduction: enabled ? "far_field" : "off",
+                }))
+              }
               onDialPlaced={onPstnDialPlaced}
               onInternalCallStart={onCallStart}
               onInternalCallEnd={onCallEnd}

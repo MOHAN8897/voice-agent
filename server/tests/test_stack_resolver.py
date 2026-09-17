@@ -32,6 +32,12 @@ def test_env_mode_resolves_medium_tier(resolver):
     assert len(stack.combination_id) == 16
 
 
+def test_env_mode_resolves_en_us(resolver):
+    stack = resolver.resolve(mode="env", tier="medium", language="en-US")
+    assert stack.language == "en-US"
+    assert stack.stt.provider == "sarvam"
+
+
 def test_frontend_mode_with_valid_selection(resolver):
     selection = StackSelection(
         stt=StageSelection("sarvam", "saaras:v3", {}),

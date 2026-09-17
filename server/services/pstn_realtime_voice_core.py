@@ -98,11 +98,6 @@ _UNCLEAR_NAME_FOLLOWUP = (
     "Ask them to repeat their name only. Do not invent a name or a messaging app. "
     "Do not re-introduce yourself."
 )
-_FIRST_TURN_FOLLOWUP = (
-    "You already delivered the opening greeting. The caller spoke first. "
-    "Answer or continue from what they just said in one short sentence. "
-    "Do not re-introduce yourself or repeat the opening."
-)
 
 
 def _is_simple_hello(text: str) -> bool:
@@ -455,13 +450,9 @@ class PstnRealtimeVoiceLoop:
             return True
         if _is_foreign_script_junk(text):
             return True
-        if self._deferred_greeting_playing:
-            spoken = (self._deferred_greeting_text or "").strip()
-            if spoken and is_likely_echo(text, spoken):
-                return True
-            return False
-        if self._greeting_waiting():
-            return False
+        if self._deferred_greeting_armed or self._deferred_greeting_playing:
+            # Pickup speech only arms the cached greeting — never a model turn.
+            return True
         if self._greeting_protected():
             return True
         if _is_pickup_phrase(text) or _is_availability_check(text):
@@ -693,8 +684,8 @@ class PstnRealtimeVoiceLoop:
             return
         raw = pcm16
         if self._deferred_greeting_armed:
-            # Listen to the first utterance. Play the cached greeting only after
-            # they finish (enough speech + quiet, or debounced speech_stopped).
+            # Pickup is local energy only. Do not append to OpenAI — the first
+            # utterance must not become an LLM turn.
             from server.services.audio_transcode import pcm16_rms
 
             frame_ms = len(raw) * 1000 / (2 * self.sample_rate)
@@ -708,6 +699,9 @@ class PstnRealtimeVoiceLoop:
                     self._schedule_deferred_greeting()
             else:
                 self._pickup_speech_ms = 0.0
+            if self.call_id:
+                self._archive.enqueue(self.call_id, "user", raw)
+            return
         if self.call_id:
             self._archive.enqueue(self.call_id, "user", raw)
         # Handset echo of agent audio looks like the caller to OpenAI VAD and
@@ -1352,8 +1346,6 @@ class PstnRealtimeVoiceLoop:
                                 error=str(exc)[:160],
                             )
                             self._pending_followup_instruction = _UNCLEAR_NAME_FOLLOWUP
-                    elif self._deferred_greeting_armed or self._deferred_greeting_playing:
-                        self._pickup_user_text = text
                     elif _is_pickup_phrase(text) or _is_availability_check(text):
                         await self._handle_pickup_or_availability(text, first_user=first_user)
             else:
@@ -1631,6 +1623,11 @@ class PstnRealtimeVoiceLoop:
         if not self._deferred_greeting_armed or self._closed:
             return
         self._deferred_greeting_armed = False
+        log_pstn(
+            "realtime_voice.pickup_consumed",
+            call_id=self.call_id,
+            speech_ms=int(self._pickup_speech_ms),
+        )
         if self._adapter is not None:
             try:
                 await self._adapter.cancel_response()
@@ -1683,20 +1680,19 @@ class PstnRealtimeVoiceLoop:
                     error=str(exc)[:160],
                 )
         self._intro_noted = True
-        pending = (self._pickup_user_text or self._user_partial or "").strip()
-        needs_answer = bool(pending) and not _is_simple_hello(pending)
+        self._pickup_user_text = ""
+        self._user_partial = ""
         if self._adapter is not None:
             try:
                 await self._adapter.cancel_response()
             except Exception as exc:
                 log_pstn("greeting.deferred.cancel.failed", call_id=self.call_id, error=str(exc)[:160])
-            if pending and not needs_answer:
-                clearer = getattr(self._adapter, "clear_input_audio", None)
-                if callable(clearer):
-                    try:
-                        await clearer()
-                    except Exception:
-                        pass
+            clearer = getattr(self._adapter, "clear_input_audio", None)
+            if callable(clearer):
+                try:
+                    await clearer()
+                except Exception:
+                    pass
         auto_response = getattr(self._adapter, "set_auto_response", None) if self._adapter else None
         if callable(auto_response):
             try:
@@ -1707,16 +1703,6 @@ class PstnRealtimeVoiceLoop:
                     call_id=self.call_id,
                     error=str(exc)[:160],
                 )
-        if needs_answer:
-            try:
-                await self._start_injected_response(_FIRST_TURN_FOLLOWUP)
-            except Exception as exc:
-                log_pstn(
-                    "greeting.deferred.followup.failed",
-                    call_id=self.call_id,
-                    error=str(exc)[:160],
-                )
-                self._pending_followup_instruction = _FIRST_TURN_FOLLOWUP
         if self.call_id:
             from server.call.call_ledger import call_ledger
 

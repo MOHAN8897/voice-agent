@@ -114,10 +114,12 @@ def pstn_call_options(local: dict[str, Any]) -> dict[str, Any]:
     from server.services.test_studio_config import merge_stack, saved_call_config
 
     saved = saved_call_config(config_session_id)
+    from server.config.constants import normalize_supported_language
+
     return {
         "tier": local.get("tier") or saved.get("tier"),
         "stack_override": merge_stack(saved.get("stack_override"), local.get("stack_override")),
-        "language": local.get("language") or saved.get("language"),
+        "language": normalize_supported_language(local.get("language") or saved.get("language")),
         "tts_session_id": config_session_id,
         "config_session_id": config_session_id,
     }

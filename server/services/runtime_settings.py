@@ -10,7 +10,7 @@ import threading
 import time
 from typing import Dict, Optional
 
-from server.config.constants import constants
+from server.config.constants import constants, language_in_supported, normalize_supported_language
 from server.prompts.voice_defaults import (
     DEFAULT_VOICE_PRESET_ID,
     VOICE_PIPELINE_PRESET_IDS,
@@ -131,8 +131,10 @@ class RuntimeSettingsStore:
                 raise SettingsValidationError(f"sttMode must be one of {constants.STT_MODES}")
             return val
         if key == "sttLanguage":
-            if val not in list(constants.SUPPORTED_LANGUAGES) + ["unknown"]:
-                raise SettingsValidationError("sttLanguage must be te-IN/hi-IN/en-IN/unknown")
+            val = normalize_supported_language(val)
+            if not language_in_supported(val, allow_unknown=True):
+                allowed = ", ".join(list(constants.SUPPORTED_LANGUAGES) + ["unknown"])
+                raise SettingsValidationError(f"sttLanguage must be one of {allowed}")
             return val
         if key == "sttStreamType":
             if val not in constants.STT_STREAM_TYPES:

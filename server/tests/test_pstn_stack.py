@@ -91,6 +91,20 @@ def test_pstn_stt_stream_type_normalized():
     assert any("fast" in a for a in adj)
 
 
+def test_full_pstn_keeps_place_call_noise_reduction():
+    raw = {
+        "pipeline": "realtime_text",
+        "noise_reduction": "off",
+        "realtime_voice": {"voice": "marin", "noise_reduction": "off"},
+        "stt": {"provider": "sarvam", "model": "saaras:v3-realtime"},
+        "tts": {"provider": "sarvam", "model": "bulbul:v3", "config": {"speaker": "shubh"}},
+    }
+    out, _adj = normalize_pstn_stack_override(raw, language="te-IN")
+    assert out["pipeline"] == "realtime_text"
+    assert "realtime_voice" not in out
+    assert out["noise_reduction"] == "off"
+
+
 def test_invalid_sarvam_speaker_raises():
     raw = {
         "tts": {"provider": "sarvam", "model": "bulbul:v3", "config": {"speaker": "not_a_real_voice"}},

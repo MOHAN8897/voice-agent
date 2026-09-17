@@ -8,7 +8,7 @@ import hashlib
 import json
 from typing import Any
 
-from server.config.constants import constants
+from server.config.constants import constants, normalize_supported_language
 from server.config.env import Settings, get_settings
 from server.providers.base import ConfigMode, ResolvedStack, StackSelection, StageSelection, TierName
 from server.providers.registry import ProviderRegistry, get_provider_registry
@@ -37,6 +37,8 @@ class StackResolver:
         effective_tier: TierName = tier or dev_secrets_store.effective(
             "voice_agent_tier", self._settings.voice_agent_tier
         )  # type: ignore[assignment]
+
+        language = normalize_supported_language(language)
 
         if stack_override and environment == "production":
             raise AppError(
