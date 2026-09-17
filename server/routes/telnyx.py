@@ -23,6 +23,16 @@ _stream_watchdogs: dict[str, asyncio.Task] = {}
 _STREAM_CONNECT_TIMEOUT_S = 3.0
 
 
+async def _start_answered_recording(call_control_id: str) -> None:
+    """Recording must not sit on the streaming_start await path."""
+    try:
+        from server.services.telnyx_recordings import start_call_recording
+
+        await start_call_recording(call_control_id)
+    except Exception:
+        logger.exception("[PSTN_STREAM] answered recording failed control=%s", call_control_id)
+
+
 def _watch_stream_connect(call_control_id: str) -> None:
     previous = _stream_watchdogs.get(call_control_id)
     if previous and not previous.done():
@@ -525,11 +535,13 @@ async def telnyx_webhook(request: Request):
                 try:
                     await _ensure_telnyx_streaming(cid, reason="answered")
                     _watch_stream_connect(cid)
-                    from server.services.telnyx_recordings import start_call_recording
-
-                    await start_call_recording(cid)
                 except Exception:
                     logger.exception("[PSTN_STREAM] background ensure crashed control=%s", cid)
+                    return
+                asyncio.create_task(
+                    _start_answered_recording(cid),
+                    name=f"telnyx-record-{cid[:24]}",
+                )
 
             asyncio.create_task(_bg_ensure(), name=f"telnyx-ensure-{cid[:24]}")
     elif event_type in ("streaming.started", "call.streaming.started"):

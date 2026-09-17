@@ -11,6 +11,7 @@ from server.agent.brain_prompt_composer import (
     compose_brain_prompt,
     estimate_tokens,
     sanitize_agent_brief,
+    sanitize_agent_script,
     sanitize_behaviour,
     sanitize_brain_prompt,
     sanitize_business,
@@ -68,12 +69,6 @@ class InstructionStore:
         entry = self._store.get(session_id)
         if entry:
             session_persist.set_instructions(session_id, entry)
-            try:
-                from server.services.saved_instruction_store import queue_upsert
-
-                queue_upsert(session_id, entry)
-            except Exception:
-                pass
 
     def _entry(self, session_id: str) -> Optional[dict]:
         entry = self._store.get(session_id)
@@ -146,7 +141,7 @@ class InstructionStore:
     ) -> dict:
         """Save short agent brief + GPT-expanded calling script as cached brain."""
         brief = sanitize_agent_brief(agent_brief or "")
-        script = (agent_script or "").strip()
+        script = sanitize_agent_script(agent_script or "")
         with self._lock:
             prev = self._store.get(session_id, {})
             style_val = style_for_language(style or prev.get("style"), language)
@@ -428,6 +423,25 @@ class InstructionStore:
                 pass
         return len(rows)
 
+    def raw_entry(self, session_id: str) -> Optional[dict]:
+        with self._lock:
+            entry = self._store.get(session_id)
+            return dict(entry) if entry else None
+
+    async def persist_to_db(self, session_id: str) -> bool:
+        entry = self.raw_entry(session_id)
+        if not entry:
+            return False
+        try:
+            from server.services.saved_instruction_store import upsert
+
+            return await upsert(session_id, entry)
+        except Exception as exc:
+            from server.utils.logger import logger
+
+            logger.warning("[INSTRUCTIONS] Postgres persist failed for %s: %s", session_id, exc)
+            return False
+
     def get_with_meta(self, session_id: str) -> dict:
         with self._lock:
             e = self._entry(session_id)
@@ -451,6 +465,7 @@ class InstructionStore:
                 }
             using_custom = bool(e.get("customBrainPrompt"))
             has_agent_brief = bool(e.get("agentBrief"))
+            has_agent_script = bool(str(e.get("agentScript") or "").strip())
             has_legacy = bool(e.get("behaviour") or e.get("business"))
             return {
                 "text": e["behaviour"] or DEFAULT_BEHAVIOUR_INSTRUCTIONS,
@@ -468,9 +483,9 @@ class InstructionStore:
                 "estimatedTokens": e.get("estimatedTokens") or estimate_tokens(e.get("brainPrompt", "")),
                 "budgetTokens": e.get("budgetTokens"),
                 "updatedAt": e["updatedAt"],
-                "present": using_custom or has_agent_brief or has_legacy,
+                "present": using_custom or has_agent_brief or has_agent_script or has_legacy,
                 "style": style_for_language(e.get("style"), e.get("language")),
-                "usingDefaults": not using_custom and not has_agent_brief and not has_legacy,
+                "usingDefaults": not using_custom and not has_agent_brief and not has_agent_script and not has_legacy,
                 "compiledVersion": e.get("compiledVersion", 0),
                 "optimizerReport": e.get("optimizerReport"),
                 "sourceChecksum": e.get("sourceChecksum"),

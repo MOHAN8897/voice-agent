@@ -3,6 +3,9 @@ Instructions routes — single brain prompt editing; legacy behaviour/business s
 """
 from __future__ import annotations
 
+import hashlib
+import re
+
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 from typing import Optional
@@ -13,6 +16,8 @@ from server.agent.brain_prompt_composer import (
     CACHE_MIN_TOKENS,
     MAX_AGENT_BRIEF_CHARS,
     MAX_AGENT_BRIEF_WORDS,
+    MAX_AGENT_SCRIPT_CHARS,
+    MAX_AGENT_SCRIPT_WORDS,
     MAX_BEHAVIOUR_CHARS,
     MAX_BEHAVIOUR_WORDS,
     MAX_BRAIN_PROMPT_CHARS,
@@ -21,11 +26,14 @@ from server.agent.brain_prompt_composer import (
     MAX_BUSINESS_WORDS,
     MEMORY_HEADROOM_TOKENS,
     RECOMMENDED_AGENT_BRIEF_WORDS,
+    RECOMMENDED_AGENT_SCRIPT_WORDS,
     RECOMMENDED_BEHAVIOUR_WORDS,
     RECOMMENDED_BUSINESS_WORDS,
     PromptBudgetExceeded,
     PromptSectionTooLong,
     estimate_tokens,
+    sanitize_agent_script,
+    validate_user_section,
 )
 from server.agent.instruction_store import instruction_store
 from server.agent.session_memory import session_memory
@@ -49,6 +57,11 @@ class SaveRequest(BaseModel):
     sessionId: str = Field("default", max_length=100)
     brainPrompt: str | None = Field(None, description="Single composed brain prompt (advanced)")
     agentBrief: str | None = Field(None, description="Short natural-language agent brief — expanded into calling script")
+    agentScript: str | None = Field(
+        None,
+        max_length=MAX_AGENT_SCRIPT_CHARS,
+        description="User-edited calling script — saved without regenerating from the brief",
+    )
     behaviourInstructions: str | None = Field(None, description="Legacy: HOW the agent should respond")
     businessInstructions: str | None = Field(None, description="Legacy: business knowledge")
     instructions: str | None = Field(None, max_length=MAX_BEHAVIOUR_CHARS)
@@ -124,6 +137,100 @@ async def save_instructions(body: SaveRequest):
                 compiled_brain=compiled,
                 estimated_tokens=est or None,
                 budget_tokens=budget,
+            )
+        elif body.agentScript is not None:
+            from server.brain.agent_script_compiler import (
+                build_compiler_sections,
+                reassemble_brain_from_script,
+                validate_agent_script,
+            )
+
+            prev_meta = instruction_store.get_with_meta(body.sessionId)
+            lang = normalize_compile_language(body.language_code or prev_meta.get("language"))
+            policy = normalize_call_end_policy(
+                body.callEndPolicy if body.callEndPolicy is not None else prev_meta.get("callEndPolicy"),
+                language=lang,
+            )
+            policy = policy or default_call_end_policy(lang)
+            script = sanitize_agent_script(body.agentScript)
+            validate_user_section(
+                "Agent script",
+                script,
+                word_limit=MAX_AGENT_SCRIPT_WORDS,
+                char_limit=MAX_AGENT_SCRIPT_CHARS,
+            )
+            if not script:
+                raise HTTPException(
+                    status_code=400,
+                    detail={
+                        "error": {
+                            "code": "validation_error",
+                            "message": "Calling script is empty — create an agent script first, then edit it.",
+                        }
+                    },
+                )
+            brief = body.agentBrief if body.agentBrief is not None else str(prev_meta.get("agentBrief") or "")
+            opt = prev_meta.get("optimizerReport") if isinstance(prev_meta.get("optimizerReport"), dict) else {}
+            from server.brain.agent_script_compiler import _platform_call_rules
+            from server.prompts.agent_voice_rules import is_native_english
+            from server.prompts.conversation_policy import infer_agent_role, infer_call_direction
+
+            ident_match = re.search(
+                r"(?is)---\s*AGENT IDENTITY\s*---\s*\n.{0,120}?\bYou are\s+([A-Za-z][A-Za-z'\-]{1,23})\b",
+                script,
+            )
+            agent_name = (ident_match.group(1) if ident_match else "") or str(opt.get("agent_name") or "")
+            role = infer_agent_role(f"{brief}\n{script}", llm_role=str(opt.get("detected_role") or ""))
+            direction = infer_call_direction(brief or script)
+            platform_rules = _platform_call_rules(
+                agent_name=agent_name or ("Alex" if is_native_english(lang) else "Priya"),
+                role=role,
+                direction=direction,
+                language=lang,
+            )
+            style_val = body.responseStyle or prev_meta.get("style")
+            _script, compiled = reassemble_brain_from_script(
+                script=script,
+                language=lang,
+                style=style_val,
+                call_end_policy=policy,
+                platform_call_rules=platform_rules,
+                agent_name=agent_name,
+                role=role,
+            )
+            est = estimate_tokens(compiled)
+            if est > budget and est <= BUDGET_MAX_TOKENS:
+                budget = est
+            warnings = validate_agent_script(script, brief=brief, agent_name=agent_name)
+            report = dict(opt)
+            report["user_edited"] = True
+            report["script_warnings"] = warnings
+            report["agent_name"] = agent_name
+            report["detected_role"] = role
+            report["platform_call_rules"] = platform_rules
+            compiler_sections = build_compiler_sections(
+                user_script=script,
+                platform_call_rules=platform_rules,
+                compiled_brain=compiled,
+                language=lang,
+                style=style_val,
+                call_end_policy=policy,
+            )
+            source_checksum = hashlib.sha256(
+                f"{brief}\n{script}\n{lang}\n{style_val or ''}".encode("utf-8")
+            ).hexdigest()
+            saved = instruction_store.save_agent_script(
+                body.sessionId,
+                brief,
+                script,
+                style_val,
+                compiled_brain=compiled,
+                optimizer_report=report,
+                source_checksum=source_checksum,
+                language=lang,
+                budget_tokens=budget,
+                raw_token_estimate=int(prev_meta.get("rawTokenEstimate") or est),
+                call_end_policy=policy,
             )
         elif body.brainPrompt is not None:
             if len(body.brainPrompt) > p_max:
@@ -259,6 +366,8 @@ async def save_instructions(body: SaveRequest):
     except Exception:
         pass
 
+    persisted = await instruction_store.persist_to_db(body.sessionId)
+
     payload = {
         "ok": True,
         "sessionId": body.sessionId,
@@ -285,6 +394,7 @@ async def save_instructions(body: SaveRequest):
         "tokensSaved": max(0, int(saved.get("rawTokenEstimate") or 0) - int(saved.get("estimatedTokens") or 0)),
         "callEndPolicy": saved.get("callEndPolicy"),
         "language": saved.get("language"),
+        "persistedToDb": persisted,
     }
     if compiler_sections is not None:
         payload["compilerSections"] = compiler_sections
@@ -324,18 +434,22 @@ async def get_instructions(
         "recommendedBehaviourWords": RECOMMENDED_BEHAVIOUR_WORDS,
         "recommendedBusinessWords": RECOMMENDED_BUSINESS_WORDS,
         "recommendedAgentBriefWords": RECOMMENDED_AGENT_BRIEF_WORDS,
+        "recommendedAgentScriptWords": RECOMMENDED_AGENT_SCRIPT_WORDS,
         "memoryHeadroomTokens": MEMORY_HEADROOM_TOKENS,
         "limits": {
             "brainPromptMax": p_max,
             "behaviourMax": b_max,
             "businessMax": z_max,
             "agentBriefMax": MAX_AGENT_BRIEF_CHARS,
+            "agentScriptMax": MAX_AGENT_SCRIPT_CHARS,
             "behaviourMaxWords": MAX_BEHAVIOUR_WORDS,
             "businessMaxWords": MAX_BUSINESS_WORDS,
             "agentBriefMaxWords": MAX_AGENT_BRIEF_WORDS,
+            "agentScriptMaxWords": MAX_AGENT_SCRIPT_WORDS,
             "recommendedBehaviourWords": RECOMMENDED_BEHAVIOUR_WORDS,
             "recommendedBusinessWords": RECOMMENDED_BUSINESS_WORDS,
             "recommendedAgentBriefWords": RECOMMENDED_AGENT_BRIEF_WORDS,
+            "recommendedAgentScriptWords": RECOMMENDED_AGENT_SCRIPT_WORDS,
             "maxWords": MAX_BRAIN_PROMPT_WORDS,
             "cacheMinTokens": CACHE_MIN_TOKENS,
             "memoryHeadroomTokens": MEMORY_HEADROOM_TOKENS,
@@ -363,4 +477,10 @@ async def get_instructions(
 async def clear_instructions(sessionId: str = "default"):
     instruction_store.clear(sessionId)
     session_memory.clear(sessionId)
+    try:
+        from server.services.saved_instruction_store import delete as delete_saved
+
+        await delete_saved(sessionId)
+    except Exception:
+        pass
     return {"ok": True, "sessionId": sessionId, "cleared": True}

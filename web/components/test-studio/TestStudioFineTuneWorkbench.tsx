@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ensureArray } from "@/lib/ensure-array";
 import { SkeuoPanel } from "@/components/ui/skeuo/SkeuoPanel";
 import { SkeuoButton } from "@/components/ui/skeuo/SkeuoButton";
 import { SkeuoBadge } from "@/components/ui/skeuo/SkeuoBadge";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { cn } from "@/lib/cn";
 import { StudioTabRail } from "@/components/test-studio/StudioTabRail";
 import {
@@ -35,6 +36,11 @@ import {
 } from "@/lib/realtime-voice";
 
 type Tab = "prompts" | "llm" | "voice";
+
+export type FineTuneUnsavedGuard = {
+  isDirty: boolean;
+  confirmLeave: () => Promise<boolean>;
+};
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "prompts", label: "Prompts" },
@@ -132,6 +138,7 @@ export function TestStudioFineTuneWorkbench({
   onRealtimeSettingsChange,
   liveLlmModel,
   onLiveLlmChange,
+  onUnsavedGuardChange,
 }: {
   agentId: string;
   portal: "app" | "dev";
@@ -163,11 +170,69 @@ export function TestStudioFineTuneWorkbench({
   }) => void;
   liveLlmModel?: string;
   onLiveLlmChange?: (model: string) => void;
+  onUnsavedGuardChange?: (guard: FineTuneUnsavedGuard | null) => void;
 }) {
   const [internalTab, setInternalTab] = useState<Tab>("prompts");
   const tab = activeTab ?? internalTab;
   const setTab = onTabChange ?? setInternalTab;
   const ft = useTestStudioFineTune(agentId, language, portal);
+  const [unsavedOpen, setUnsavedOpen] = useState(false);
+  const [createConfirmOpen, setCreateConfirmOpen] = useState(false);
+  const leaveResolverRef = useRef<((ok: boolean) => void) | null>(null);
+  const dirtyRef = useRef(ft.dirty);
+  dirtyRef.current = ft.dirty;
+  const saveRef = useRef(ft.saveFineTune);
+  saveRef.current = ft.saveFineTune;
+  const discardRef = useRef(ft.discardChanges);
+  discardRef.current = ft.discardChanges;
+
+  const confirmLeave = useCallback(() => {
+    if (!dirtyRef.current) return Promise.resolve(true);
+    return new Promise<boolean>((resolve) => {
+      leaveResolverRef.current = resolve;
+      setUnsavedOpen(true);
+    });
+  }, []);
+
+  useEffect(() => {
+    onUnsavedGuardChange?.({ isDirty: ft.dirty, confirmLeave });
+    return () => onUnsavedGuardChange?.(null);
+  }, [ft.dirty, confirmLeave, onUnsavedGuardChange]);
+
+  useEffect(() => {
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!dirtyRef.current) return;
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, []);
+
+  const settleLeave = (ok: boolean) => {
+    leaveResolverRef.current?.(ok);
+    leaveResolverRef.current = null;
+    setUnsavedOpen(false);
+  };
+
+  const handleSaveFromDialog = async () => {
+    const ok = await saveRef.current();
+    if (ok) settleLeave(true);
+  };
+
+  const handleDiscardFromDialog = () => {
+    discardRef.current();
+    settleLeave(true);
+  };
+
+  const requestCreateScript = () => {
+    if (ft.instructions.agentScript.trim()) {
+      setCreateConfirmOpen(true);
+      return;
+    }
+    void ft.saveInstructions();
+  };
+
   const langLabel = compileLanguageLabel(language);
   const savedLang = ft.optimizerMeta.savedLanguage;
   const scriptLangMismatch = Boolean(savedLang && savedLang !== language && ft.instructions.agentScript);
@@ -198,11 +263,19 @@ export function TestStudioFineTuneWorkbench({
 
   const brainHref =
     portal === "dev" ? `/dev/agents/${agentId}/brain` : `/app/agents/${agentId}/brain`;
+  const scriptOver =
+    countWords(ft.instructions.agentScript) > ft.limits.agentScriptMaxWords ||
+    ft.instructions.agentScript.length > ft.limits.agentScriptMax;
+  const briefOver =
+    countWords(ft.instructions.agentBrief) > ft.limits.agentBriefMaxWords ||
+    ft.instructions.agentBrief.length > ft.limits.agentBriefMax;
+  const saveBlocked = locked || ft.loading || ft.saving || scriptOver || briefOver;
 
   return (
+    <>
     <SkeuoPanel
       title="Fine-tune workbench"
-      description="Saved to disk per agent — survives server restart"
+      description="Saved to disk and database per agent — survives server restart"
       padding="md"
       className="console-page-enter"
     >
@@ -220,10 +293,15 @@ export function TestStudioFineTuneWorkbench({
               session: {ft.sessionId}
             </SkeuoBadge>
             <SkeuoButton type="button" variant="primary" size="sm"
-              disabled={locked || ft.loading || ft.saving}
-              onClick={tab === "prompts" ? ft.saveInstructions : ft.saveRuntime}>
-              {ft.saving ? "Saving…" : `Save ${tab === "prompts" ? "prompts" : tab === "llm" ? "LLM" : "voice / VAD"}`}
+              disabled={saveBlocked}
+              onClick={() => void ft.saveFineTune()}>
+              {ft.saving ? "Saving…" : "Save"}
             </SkeuoButton>
+            {ft.dirty && (
+              <SkeuoBadge tone="warning" className="text-[10px]">
+                Unsaved changes
+              </SkeuoBadge>
+            )}
             {locked && (
               <SkeuoBadge tone="warning" className="text-[10px]">
                 call in progress
@@ -307,16 +385,33 @@ export function TestStudioFineTuneWorkbench({
 
               <Field
                 label="Generated calling script"
-                hint="Business script only — identity, offer, opening, and role. Platform rules are in Compiler sections below."
+                hint={
+                  ft.instructions.agentScript || ft.optimizerMeta.compiledVersion
+                    ? `Edit after create — max ${ft.limits.agentScriptMaxWords} words / ${ft.limits.agentScriptMax} characters. Keep near ~${ft.limits.recommendedAgentScriptWords} words.`
+                    : "Create agent script first, then you can edit this calling script."
+                }
               >
                 <textarea
-                  readOnly
-                  className={cn(inputCls, "min-h-[200px] resize-y font-mono text-[11px] opacity-90")}
-                  value={
-                    ft.instructions.agentScript ||
-                    "Create agent script to generate the calling script from your brief…"
-                  }
+                  readOnly={!(ft.instructions.agentScript || ft.optimizerMeta.compiledVersion)}
+                  disabled={locked || ft.saving || !(ft.instructions.agentScript || ft.optimizerMeta.compiledVersion)}
+                  maxLength={ft.limits.agentScriptMax}
+                  placeholder="Create agent script to generate the calling script from your brief…"
+                  className={cn(inputCls, "min-h-[200px] resize-y font-mono text-[11px]", !(ft.instructions.agentScript || ft.optimizerMeta.compiledVersion) && "opacity-90")}
+                  value={ft.instructions.agentScript}
+                  onChange={(e) => {
+                    if (!(ft.instructions.agentScript || ft.optimizerMeta.compiledVersion)) return;
+                    ft.setInstructions((p) => ({ ...p, agentScript: e.target.value.slice(0, ft.limits.agentScriptMax) }));
+                  }}
                 />
+                {(ft.instructions.agentScript || ft.optimizerMeta.compiledVersion) ? (
+                  <SectionMeter
+                    words={countWords(ft.instructions.agentScript)}
+                    maxWords={ft.limits.agentScriptMaxWords}
+                    recommended={ft.limits.recommendedAgentScriptWords}
+                    chars={ft.instructions.agentScript.length}
+                    maxChars={ft.limits.agentScriptMax}
+                  />
+                ) : null}
               </Field>
 
               {portal === "dev" ? (
@@ -802,14 +897,14 @@ export function TestStudioFineTuneWorkbench({
       )}
 
       <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-surface-border-subtle pt-4">
-        <SkeuoButton type="button" variant="primary" disabled={locked || ft.loading || ft.saving} onClick={ft.saveAll}>
-          {ft.saving ? "Creating script…" : "Save all for test session"}
+        <SkeuoButton type="button" variant="primary" disabled={saveBlocked} onClick={() => void ft.saveFineTune()}>
+          {ft.saving ? "Saving…" : "Save fine-tune"}
         </SkeuoButton>
         <SkeuoButton
           type="button"
           variant="secondary"
-          disabled={locked || ft.loading || ft.saving}
-          onClick={ft.saveInstructions}
+          disabled={locked || ft.loading || ft.saving || briefOver}
+          onClick={requestCreateScript}
         >
           {ft.saving ? "Creating script…" : "Create agent script"}
         </SkeuoButton>
@@ -817,7 +912,7 @@ export function TestStudioFineTuneWorkbench({
           type="button"
           variant="secondary"
           disabled={locked || ft.loading || ft.saving}
-          onClick={ft.saveRuntime}
+          onClick={() => void ft.saveRuntime()}
         >
           Save runtime only
         </SkeuoButton>
@@ -841,5 +936,32 @@ export function TestStudioFineTuneWorkbench({
         )}
       </div>
     </SkeuoPanel>
+      <ConfirmDialog
+        open={unsavedOpen}
+        title="Save Fine-tune changes?"
+        description="You have unsaved Fine-tune edits. Save them, discard them, or keep editing."
+        confirmLabel="Save"
+        cancelLabel="Keep editing"
+        discardLabel="Discard"
+        busy={ft.saving}
+        onConfirm={() => void handleSaveFromDialog()}
+        onCancel={() => settleLeave(false)}
+        onDiscard={handleDiscardFromDialog}
+      />
+      <ConfirmDialog
+        open={createConfirmOpen}
+        title="Replace calling script?"
+        description="Creating a new script from the brief replaces the current calling script, including any unsaved edits."
+        confirmLabel="Create new script"
+        cancelLabel="Cancel"
+        variant="secondary"
+        busy={ft.saving}
+        onConfirm={() => {
+          setCreateConfirmOpen(false);
+          void ft.saveInstructions();
+        }}
+        onCancel={() => setCreateConfirmOpen(false)}
+      />
+    </>
   );
 }

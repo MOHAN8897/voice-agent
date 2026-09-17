@@ -11,7 +11,7 @@ import { TestStudioConfigRack } from "@/components/test-studio/TestStudioConfigR
 import { TestStudioLivePanel } from "@/components/test-studio/TestStudioLivePanel";
 import { TestStudioDiagnostics } from "@/components/test-studio/TestStudioDiagnostics";
 import { CompileLanguagePicker } from "@/components/test-studio/CompileLanguagePicker";
-import { TestStudioFineTuneWorkbench } from "@/components/test-studio/TestStudioFineTuneWorkbench";
+import { TestStudioFineTuneWorkbench, type FineTuneUnsavedGuard } from "@/components/test-studio/TestStudioFineTuneWorkbench";
 import { TestStudioTurnMetrics, emptySessionTotals, type StampedSessionUsage, type TurnMetricRow } from "@/components/test-studio/TestStudioTurnMetrics";
 import { TestStudioModePicker, type TestStudioMode } from "@/components/test-studio/TestStudioModePicker";
 import { TestStudioMemoryPanel } from "@/components/test-studio/TestStudioMemoryPanel";
@@ -119,6 +119,19 @@ export function AgentTestStudio({
   languageRef.current = language;
   const scopedAgentRef = useRef<string | null>(null);
   const channelTouchedRef = useRef(false);
+  const fineTuneGuardRef = useRef<FineTuneUnsavedGuard | null>(null);
+
+  const requestStudioTab = useCallback(async (tab: StudioTab) => {
+    if (studioTab === "tune" && tab !== "tune") {
+      const ok = (await fineTuneGuardRef.current?.confirmLeave()) ?? true;
+      if (!ok) return;
+    }
+    setStudioTab(tab);
+  }, [studioTab]);
+
+  const onFineTuneGuardChange = useCallback((guard: FineTuneUnsavedGuard | null) => {
+    fineTuneGuardRef.current = guard;
+  }, []);
 
   const setChannelMode = useCallback((next: ChannelTab) => {
     channelTouchedRef.current = true;
@@ -706,7 +719,9 @@ export function AgentTestStudio({
           testId: `studio-child-${t.id}`,
         }))}
         value={studioTab}
-        onChange={setStudioTab}
+        onChange={(tab) => {
+          void requestStudioTab(tab);
+        }}
         locked={stackLocked && (studioTab === "live" || studioTab === "setup")}
       />
 
@@ -897,6 +912,7 @@ export function AgentTestStudio({
             setStack((prev) => ({ ...prev, realtimeTurnDetection }))
           }
           onRealtimeSettingsChange={(patch) => setStack((prev) => ({ ...prev, ...patch }))}
+          onUnsavedGuardChange={onFineTuneGuardChange}
         />
       </div>
 

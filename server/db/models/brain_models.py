@@ -65,6 +65,17 @@ class SavedInstruction(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
 
+class SavedRuntime(Base):
+    """Per-session Fine-tune runtime overrides — survives server reloads."""
+
+    __tablename__ = "saved_runtime"
+
+    session_id: Mapped[str] = mapped_column(String(120), primary_key=True)
+    agent_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    payload: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+
 class CompiledBrainSnapshot(Base):
     __tablename__ = "compiled_brain_snapshots"
 

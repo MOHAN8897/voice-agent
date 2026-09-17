@@ -92,6 +92,7 @@ class FakeRealtimeVoiceAdapter:
         self.last_session: dict[str, Any] | None = None
         self.max_output_tokens: int | None = None
         self.cleared_input = 0
+        self.instruction_updates = 0
         self.deleted_item_ids: list[str] = []
         self.auto_response_states: list[bool] = []
         self._poll_events: list[dict[str, Any]] = []
@@ -123,6 +124,7 @@ class FakeRealtimeVoiceAdapter:
         self.max_output_tokens = int(tokens) if tokens is not None else None
 
     async def update_instructions(self, instructions: str) -> None:
+        self.instruction_updates += 1
         self.instructions = instructions
 
     async def set_auto_response(self, enabled: bool) -> None:

@@ -39,6 +39,8 @@ def test_agent_brief_creates_script_and_brain(monkeypatch):
     assert "LIVE CALL GUIDE" not in script_text
     assert g["limits"]["agentBriefMax"] == 1200
     assert g["limits"]["agentBriefMaxWords"] == 180
+    assert g["limits"]["agentScriptMax"] == 8000
+    assert g["limits"]["agentScriptMaxWords"] == 1200
     eff = c.get("/api/prompt/effective", params={"sessionId": sid, "transcript": "test"}).json()
     assert "Swetha" in eff["brainPrompt"]
     c.delete("/api/instructions", params={"sessionId": sid})

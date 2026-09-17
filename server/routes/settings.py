@@ -237,10 +237,17 @@ async def post_runtime(body: RuntimePatch):
     except Exception as e:
         # e.g., get_settings() ConfigError inside openaiModel validation
         raise HTTPException(status_code=500, detail={"error": {"code": "config_error", "message": str(e)[:300]}}) from e
-    return {"ok": True, "sessionId": body.sessionId, "values": values}
+    persisted = await runtime_settings.persist_to_db(body.sessionId)
+    return {"ok": True, "sessionId": body.sessionId, "values": values, "persistedToDb": persisted}
 
 
 @router.delete("/api/settings/runtime")
 async def delete_runtime(sessionId: str = Query("default")):
     runtime_settings.clear(sessionId)
+    try:
+        from server.services.saved_runtime_store import delete as delete_saved
+
+        await delete_saved(sessionId)
+    except Exception:
+        pass
     return {"ok": True, "sessionId": sessionId, "cleared": True}

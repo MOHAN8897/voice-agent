@@ -270,10 +270,70 @@ class RuntimeSettingsStore:
             entry = self._store.get(session_id)
             return dict(entry["values"]) if entry else {}
 
+    def raw_entry(self, session_id: str) -> Optional[dict]:
+        with self._lock:
+            entry = self._store.get(session_id)
+            if not entry:
+                return None
+            return {
+                "values": dict(entry.get("values") or {}),
+                "updatedAt": float(entry.get("updatedAt") or 0),
+            }
+
+    async def persist_to_db(self, session_id: str) -> bool:
+        entry = self.raw_entry(session_id)
+        if not entry:
+            return False
+        try:
+            from server.services.saved_runtime_store import upsert
+
+            return await upsert(session_id, entry)
+        except Exception as exc:
+            from server.utils.logger import logger
+
+            logger.warning("[RUNTIME] Postgres persist failed for %s: %s", session_id, exc)
+            return False
+
+    async def hydrate_from_db(self) -> int:
+        """Overlay Postgres-saved runtime after disk hydrate (DB wins)."""
+        try:
+            from server.services.saved_runtime_store import load_all, upsert
+
+            rows = await load_all()
+        except Exception:
+            return 0
+        with self._lock:
+            snapshot = {sid: dict(entry) for sid, entry in self._store.items()}
+            for sid, payload in rows.items():
+                if not isinstance(payload, dict):
+                    continue
+                values = payload.get("values")
+                if not isinstance(values, dict):
+                    continue
+                self._store[sid] = {
+                    "values": dict(values),
+                    "updatedAt": float(payload.get("updatedAt") or 0) or time.time(),
+                }
+                session_persist.set_runtime(sid, self._store[sid])
+        for sid, entry in snapshot.items():
+            if sid in rows or not (entry.get("values") or {}):
+                continue
+            try:
+                await upsert(sid, entry)
+            except Exception:
+                pass
+        return len(rows)
+
     def clear(self, session_id: str) -> None:
         with self._lock:
             self._store.pop(session_id, None)
         session_persist.delete_runtime(session_id)
+        try:
+            from server.services.saved_runtime_store import queue_delete
+
+            queue_delete(session_id)
+        except Exception:
+            pass
 
 
 runtime_settings = RuntimeSettingsStore()

@@ -16,6 +16,9 @@ MAX_BUSINESS_WORDS = 320
 MAX_AGENT_BRIEF_CHARS = 1_200
 MAX_AGENT_BRIEF_WORDS = 180
 RECOMMENDED_AGENT_BRIEF_WORDS = 80
+MAX_AGENT_SCRIPT_CHARS = 8_000
+MAX_AGENT_SCRIPT_WORDS = 1_200
+RECOMMENDED_AGENT_SCRIPT_WORDS = 500
 RECOMMENDED_BEHAVIOUR_WORDS = 180
 RECOMMENDED_BUSINESS_WORDS = 220
 MAX_BRAIN_PROMPT_WORDS = 8_000
@@ -100,6 +103,10 @@ def sanitize_agent_brief(text: str) -> str:
     if not text:
         return ""
     return _strip_legacy_tags(text.strip()[:MAX_AGENT_BRIEF_CHARS])
+
+
+def sanitize_agent_script(text: str) -> str:
+    return (text or "").strip()[:MAX_AGENT_SCRIPT_CHARS]
 
 
 def validate_user_section(section: str, text: str, *, word_limit: int, char_limit: int) -> None:

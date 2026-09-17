@@ -46,13 +46,16 @@ from server.services.pstn_voice_core import (
 # residual handset acoustic echo. Echo of our own greeting sits ~500–1400 RMS
 # on some handsets — that must not PROVIDER_CLEAR live audio.
 REALTIME_AEC_ENERGY_MIN = 1600
-REALTIME_AEC_LOUD_OPEN_FRAMES = 4
+REALTIME_AEC_LOUD_OPEN_FRAMES = 2
 # Callee "hello" is quieter than barge. Keep pickup detection below the echo floor
 # so listen-first still starts the cached greeting without waiting for remote VAD.
 REALTIME_PICKUP_ENERGY_MIN = 500
 _PICKUP_MIN_SPEECH_MS = 250.0
-_PICKUP_QUIET_MS = 400.0
+_PICKUP_QUIET_MS = 180.0
+_PICKUP_DIP_RESET_MS = 200.0
 _PICKUP_VAD_DEBOUNCE_SEC = 0.28
+_PICKUP_FALLBACK_SEC = 0.85
+_PENDING_INBOUND_MAX_BYTES = 16000 * 2 * 2
 _BARGE_HOLD_SEC = 2.5
 _PICKUP_SUPPRESS_SEC = 1.8
 
@@ -151,6 +154,16 @@ def _int_or_none(value: Any) -> int | None:
         return int(value)
     except (TypeError, ValueError):
         return None
+
+
+def _existing_adapter_instructions(adapter: Any) -> str:
+    text = str(getattr(adapter, "instructions", "") or "").strip()
+    if text:
+        return text
+    session = getattr(adapter, "last_session", None)
+    if isinstance(session, dict):
+        return str(session.get("instructions") or "").strip()
+    return ""
 
 
 async def record_realtime_voice_usage(
@@ -278,6 +291,9 @@ class PstnRealtimeVoiceLoop:
         self.stack_override = stack_override or {}
         self._injected_adapter = adapter
         self._adapter: Any | None = None
+        self._hold_inbound = True
+        self._pending_inbound: list[bytes] = []
+        self._pending_inbound_bytes = 0
         self._pump_task: asyncio.Task | None = None
         self._closed = False
         self._call_started = False
@@ -333,8 +349,12 @@ class PstnRealtimeVoiceLoop:
         self.controller = CallLifecycleController()
         self._pickup_speech_ms = 0.0
         self._pickup_quiet_ms = 0.0
+        self._pickup_dip_ms = 0.0
+        self._pickup_rms_logs = 0
         self._pickup_user_text = ""
         self._pickup_finish_task: asyncio.Task | None = None
+        self._pickup_fallback_task: asyncio.Task | None = None
+        self._greeting_protect_until = 0.0
         self._runtime_task: asyncio.Task | None = None
         self._last_activity_at = time.monotonic()
         self._silence_prompted = False
@@ -426,7 +446,9 @@ class PstnRealtimeVoiceLoop:
             ctx.barge_in_flight = False
 
     def _greeting_protected(self) -> bool:
-        return bool(self._deferred_greeting_playing)
+        if self._deferred_greeting_playing:
+            return True
+        return bool(self._greeting_protect_until and time.monotonic() < self._greeting_protect_until)
 
     def _greeting_waiting(self) -> bool:
         return bool(self._deferred_greeting_armed)
@@ -631,8 +653,15 @@ class PstnRealtimeVoiceLoop:
                 )
                 await adapter.wait_ready()
             else:
+                warm = _existing_adapter_instructions(adapter)
                 updater = getattr(adapter, "update_instructions", None)
-                if callable(updater):
+                if warm:
+                    log_pstn(
+                        "realtime_voice.instructions.kept_prewarm",
+                        call_id=self.call_id,
+                        chars=len(warm),
+                    )
+                elif callable(updater):
                     await updater(instructions)
                 elif hasattr(adapter, "instructions"):
                     adapter.instructions = instructions
@@ -665,6 +694,8 @@ class PstnRealtimeVoiceLoop:
         self._pump_task = asyncio.create_task(self._event_pump(), name=f"rt-voice-pump-{self.call_id}")
         self._last_activity_at = time.monotonic()
         self._runtime_task = asyncio.create_task(self._watch_runtime(), name=f"rt-watch-{self.call_id}")
+        if self._deferred_greeting_armed:
+            self._arm_pickup_fallback()
         log_pstn(
             "lifecycle.started",
             call_id=self.call_id,
@@ -678,9 +709,14 @@ class PstnRealtimeVoiceLoop:
             deferred_frames=len(self._deferred_greeting_frames or []),
         )
         self._set_phase(PHASE_LISTENING)
+        self._hold_inbound = False
+        await self._flush_pending_inbound()
 
     async def feed_user_pcm16(self, pcm16: bytes) -> None:
-        if not pcm16 or self._closed or self._adapter is None:
+        if not pcm16 or self._closed:
+            return
+        if self._hold_inbound or self._adapter is None:
+            self._queue_pending_inbound(pcm16)
             return
         raw = pcm16
         if self._deferred_greeting_armed:
@@ -689,27 +725,34 @@ class PstnRealtimeVoiceLoop:
             from server.services.audio_transcode import pcm16_rms
 
             frame_ms = len(raw) * 1000 / (2 * self.sample_rate)
-            if pcm16_rms(raw) >= REALTIME_PICKUP_ENERGY_MIN:
+            rms = pcm16_rms(raw)
+            if rms >= REALTIME_PICKUP_ENERGY_MIN:
                 self._pickup_speech_ms += frame_ms
                 self._pickup_quiet_ms = 0.0
+                self._pickup_dip_ms = 0.0
                 self._cancel_pickup_finish()
             elif self._pickup_speech_ms >= _PICKUP_MIN_SPEECH_MS:
                 self._pickup_quiet_ms += frame_ms
+                self._pickup_dip_ms = 0.0
                 if self._pickup_quiet_ms >= _PICKUP_QUIET_MS:
                     self._schedule_deferred_greeting()
             else:
-                self._pickup_speech_ms = 0.0
+                self._pickup_dip_ms += frame_ms
+                if self._pickup_dip_ms >= _PICKUP_DIP_RESET_MS:
+                    self._pickup_speech_ms = 0.0
+                    self._pickup_dip_ms = 0.0
+            self._note_pickup_rms(rms)
             if self.call_id:
                 self._archive.enqueue(self.call_id, "user", raw)
             return
         if self.call_id:
             self._archive.enqueue(self.call_id, "user", raw)
+        if self._greeting_protected():
+            return
         # Handset echo of agent audio looks like the caller to OpenAI VAD and
         # cuts the reply. Hold inbound (do not append zeros — that can look like
         # speech_stopped and spawn an overlapping response) until the level is a barge.
         if self._agent_audio_playing():
-            if self._greeting_protected():
-                return
             try:
                 from server.services.audio_transcode import pcm16_rms
 
@@ -1587,6 +1630,74 @@ class PstnRealtimeVoiceLoop:
         if task is not None and not task.done():
             task.cancel()
 
+    def _queue_pending_inbound(self, pcm16: bytes) -> None:
+        self._pending_inbound.append(pcm16)
+        self._pending_inbound_bytes += len(pcm16)
+        while self._pending_inbound and self._pending_inbound_bytes > _PENDING_INBOUND_MAX_BYTES:
+            dropped = self._pending_inbound.pop(0)
+            self._pending_inbound_bytes -= len(dropped)
+
+    async def _flush_pending_inbound(self) -> None:
+        pending = self._pending_inbound
+        self._pending_inbound = []
+        self._pending_inbound_bytes = 0
+        if not pending:
+            return
+        log_pstn(
+            "realtime_voice.inbound.flush",
+            call_id=self.call_id,
+            frames=len(pending),
+        )
+        for pcm in pending:
+            if self._closed:
+                return
+            await self.feed_user_pcm16(pcm)
+
+    def _note_pickup_rms(self, rms: int) -> None:
+        self._pickup_rms_logs += 1
+        if self._pickup_rms_logs not in (1, 10, 25, 50) and self._pickup_rms_logs < 50:
+            return
+        if self._pickup_rms_logs > 50:
+            return
+        log_pstn(
+            "realtime_voice.pickup_rms",
+            call_id=self.call_id,
+            n=self._pickup_rms_logs,
+            rms=int(rms),
+            speech_ms=int(self._pickup_speech_ms),
+            quiet_ms=int(self._pickup_quiet_ms),
+            dip_ms=int(self._pickup_dip_ms),
+        )
+
+    def _cancel_pickup_fallback(self) -> None:
+        task = self._pickup_fallback_task
+        self._pickup_fallback_task = None
+        if task is not None and not task.done():
+            task.cancel()
+
+    def _arm_pickup_fallback(self) -> None:
+        if not self._deferred_greeting_armed or self._closed:
+            return
+        self._cancel_pickup_fallback()
+        self._pickup_fallback_task = asyncio.create_task(
+            self._pickup_fallback_greet(),
+            name=f"rt-pickup-fallback-{self.call_id}",
+        )
+
+    async def _pickup_fallback_greet(self) -> None:
+        try:
+            await asyncio.sleep(_PICKUP_FALLBACK_SEC)
+        except asyncio.CancelledError:
+            return
+        if self._closed or not self._deferred_greeting_armed:
+            return
+        log_pstn(
+            "realtime_voice.pickup_fallback",
+            call_id=self.call_id,
+            speech_ms=int(self._pickup_speech_ms),
+        )
+        self._schedule_deferred_greeting()
+
     def _arm_pickup_finish(self) -> None:
         if not self._deferred_greeting_armed or self._closed:
             return
@@ -1611,6 +1722,7 @@ class PstnRealtimeVoiceLoop:
         if not self._deferred_greeting_armed or self._closed:
             return
         self._cancel_pickup_finish()
+        self._cancel_pickup_fallback()
         task = self._deferred_greeting_task
         if task is not None and not task.done():
             return
@@ -1634,6 +1746,23 @@ class PstnRealtimeVoiceLoop:
             except Exception as exc:
                 log_pstn("greeting.deferred.cancel.failed", call_id=self.call_id, error=str(exc)[:160])
         await self._play_deferred_greeting()
+
+    async def _wait_greeting_tail(self) -> None:
+        """Keep VAD off until leftover greeting RTP has left the phone."""
+        queued_ms = 0.0
+        if self.playback is not None:
+            try:
+                queued_ms = float(self.playback.queued_ms())
+            except Exception:
+                queued_ms = 0.0
+        hold_s = min(0.5, max(0.0, queued_ms / 1000.0 + 0.04 if queued_ms else 0.0))
+        if hold_s <= 0:
+            return
+        self._greeting_protect_until = time.monotonic() + hold_s
+        try:
+            await asyncio.sleep(hold_s)
+        except asyncio.CancelledError:
+            return
 
     async def _play_deferred_greeting(self) -> None:
         frames = self._deferred_greeting_frames or []
@@ -1669,6 +1798,8 @@ class PstnRealtimeVoiceLoop:
         if self._closed:
             return
 
+        await self._wait_greeting_tail()
+
         noter = getattr(self._adapter, "note_assistant_text", None) if self._adapter else None
         if callable(noter):
             try:
@@ -1703,6 +1834,7 @@ class PstnRealtimeVoiceLoop:
                     call_id=self.call_id,
                     error=str(exc)[:160],
                 )
+        self._greeting_protect_until = 0.0
         if self.call_id:
             from server.call.call_ledger import call_ledger
 
@@ -1877,7 +2009,7 @@ class PstnRealtimeVoiceLoop:
             return
         self._closed = True
         self.controller.end()
-        for task in (self._runtime_task, self._deferred_greeting_task, self._pickup_finish_task):
+        for task in (self._runtime_task, self._deferred_greeting_task, self._pickup_finish_task, self._pickup_fallback_task):
             if task and task is not asyncio.current_task() and not task.done():
                 task.cancel()
                 try:

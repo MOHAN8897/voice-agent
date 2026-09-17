@@ -93,6 +93,14 @@ async def lifespan(app: FastAPI):
                 except Exception as e:
                     logger.warning(f"[VOICE] Saved-instruction hydrate skipped: {e}")
                 try:
+                    from server.services.runtime_settings import runtime_settings
+
+                    n = await runtime_settings.hydrate_from_db()
+                    if n:
+                        logger.info(f"[VOICE] Restored {n} Fine-tune runtime overrides from Postgres")
+                except Exception as e:
+                    logger.warning(f"[VOICE] Saved-runtime hydrate skipped: {e}")
+                try:
                     from server.db.tier_store import load_tier_cache
 
                     n = await load_tier_cache()

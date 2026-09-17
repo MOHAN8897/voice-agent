@@ -426,6 +426,18 @@ async def test_ensure_retries_transport_errors(_isolate_registry):
 
 
 @pytest.mark.asyncio
+async def test_answered_recording_is_separate_from_stream_start(monkeypatch):
+    called = {}
+
+    async def _fake_start(cid):
+        called["cid"] = cid
+
+    monkeypatch.setattr("server.services.telnyx_recordings.start_call_recording", _fake_start)
+    await telnyx_routes._start_answered_recording("cc-record-1")
+    assert called["cid"] == "cc-record-1"
+
+
+@pytest.mark.asyncio
 async def test_telnyx_request_wraps_httpx_timeout(monkeypatch):
     """TelnyxClient._request maps transport timeouts to TelnyxApiError for retry loops."""
     import httpx

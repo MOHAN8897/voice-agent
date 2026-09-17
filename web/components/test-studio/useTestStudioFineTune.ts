@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ensureArray } from "@/lib/ensure-array";
 import { assembleRawPreview, type BrainSection } from "@/lib/brain-utils";
 import { testStudioSessionId } from "@/lib/test-studio-stack";
@@ -114,6 +114,9 @@ export type PromptLimits = {
   agentBriefMax: number;
   agentBriefMaxWords: number;
   recommendedAgentBriefWords: number;
+  agentScriptMax: number;
+  agentScriptMaxWords: number;
+  recommendedAgentScriptWords: number;
   behaviourMax: number;
   businessMax: number;
   behaviourMaxWords: number;
@@ -128,6 +131,9 @@ const DEFAULT_LIMITS: PromptLimits = {
   agentBriefMax: 1200,
   agentBriefMaxWords: 180,
   recommendedAgentBriefWords: 80,
+  agentScriptMax: 8000,
+  agentScriptMaxWords: 1200,
+  recommendedAgentScriptWords: 500,
   behaviourMax: 2000,
   businessMax: 2400,
   behaviourMaxWords: 280,
@@ -170,6 +176,24 @@ function apiErrorMessage(payload: unknown, fallback: string): string {
   }
   if (typeof j.message === "string") return j.message;
   return fallback;
+}
+
+function snapRuntime(runtime: RuntimeState): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const key of RUNTIME_SAVE_KEYS) {
+    if (key in runtime) out[key] = runtime[key];
+  }
+  return out;
+}
+
+function snapFineTune(instructions: InstructionsState, runtime: RuntimeState): string {
+  return JSON.stringify({
+    agentBrief: instructions.agentBrief,
+    agentScript: instructions.agentScript,
+    responseStyle: instructions.responseStyle,
+    callEndPolicy: instructions.callEndPolicy,
+    runtime: snapRuntime(runtime),
+  });
 }
 
 export type RuntimeState = Record<string, unknown>;
@@ -238,6 +262,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
     return () => window.removeEventListener("test-studio-runtime-saved", syncConfig);
   }, [sessionId]);
   const [limits, setLimits] = useState<PromptLimits>(DEFAULT_LIMITS);
+  const [baseline, setBaseline] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -287,6 +312,11 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
           agentBriefMaxWords: Number(lim.agentBriefMaxWords || DEFAULT_LIMITS.agentBriefMaxWords),
           recommendedAgentBriefWords: Number(
             lim.recommendedAgentBriefWords || DEFAULT_LIMITS.recommendedAgentBriefWords
+          ),
+          agentScriptMax: Number(lim.agentScriptMax || DEFAULT_LIMITS.agentScriptMax),
+          agentScriptMaxWords: Number(lim.agentScriptMaxWords || DEFAULT_LIMITS.agentScriptMaxWords),
+          recommendedAgentScriptWords: Number(
+            lim.recommendedAgentScriptWords || DEFAULT_LIMITS.recommendedAgentScriptWords
           ),
           behaviourMax: Number(lim.behaviourMax || DEFAULT_LIMITS.behaviourMax),
           businessMax: Number(lim.businessMax || DEFAULT_LIMITS.businessMax),
@@ -359,6 +389,19 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
     });
   }, [language]);
 
+  const currentSnap = useMemo(() => snapFineTune(instructions, runtime), [instructions, runtime]);
+  const dirty = Boolean(baseline) && currentSnap !== baseline;
+
+  useEffect(() => {
+    if (loading) return;
+    setBaseline(snapFineTune(instructions, runtime));
+    // Capture once per session fetch, not on later edits.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, sessionId]);
+
+  const persistWhere = (j: { persistedToDb?: unknown } | null | undefined) =>
+    j?.persistedToDb ? "disk + database" : "disk";
+
   const saveInstructions = useCallback(async () => {
     const briefWords = countWords(instructions.agentBrief);
     if (briefWords > limits.agentBriefMaxWords || instructions.agentBrief.length > limits.agentBriefMax) {
@@ -400,22 +443,25 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
         return false;
       }
       const effectiveBudget = Math.max(requestedBudget, Number(j.budgetTokens || 0));
-      setRuntime((prev) => ({
-        ...prev,
+      const nextRuntime = {
+        ...runtime,
         brainPromptBudgetTokens: effectiveBudget,
-      }));
-      setInstructions((prev) => ({
-        ...prev,
-        agentBrief: j.agentBrief ?? prev.agentBrief,
-        agentScript: j.agentScript ?? prev.agentScript,
-        responseStyle: j.responseStyle ?? prev.responseStyle,
-        brainPrompt: j.compiledBrainPrompt || j.brainPromptFull || prev.brainPrompt,
+      };
+      const nextInstructions: InstructionsState = {
+        ...instructions,
+        agentBrief: j.agentBrief ?? instructions.agentBrief,
+        agentScript: j.agentScript ?? instructions.agentScript,
+        responseStyle: j.responseStyle ?? instructions.responseStyle,
+        brainPrompt: j.compiledBrainPrompt || j.brainPromptFull || instructions.brainPrompt,
         estimatedTokens: j.estimatedTokens,
         budgetTokens: j.budgetTokens ?? effectiveBudget,
         headroom: j.headroom,
         cacheEligible: Boolean(j.cacheEligible),
         callEndPolicy: normalizeCallEndPolicyState(j.callEndPolicy, language),
-      }));
+      };
+      setRuntime(nextRuntime);
+      setInstructions(nextInstructions);
+      setBaseline(snapFineTune(nextInstructions, nextRuntime));
       setOptimizerMeta({
         compiledVersion: j.compiledVersion,
         optimizerModel: j.optimizerReport?.optimizer_model,
@@ -434,8 +480,8 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
         : `cache OFF — compiled ${j.estimatedTokens} tokens, need ≥${j.cacheMinTokens || 1024}`;
       setStatus(
         j.compiledVersion
-          ? `Agent script v${j.compiledVersion} created and saved · ${j.estimatedTokens} tokens · ${cacheNote}`
-          : `Agent script saved · ${cacheNote}`
+          ? `Agent script v${j.compiledVersion} created and saved to ${persistWhere(j)} · ${j.estimatedTokens} tokens · ${cacheNote}`
+          : `Agent script saved to ${persistWhere(j)} · ${cacheNote}`
       );
       // Keep live-turn budget aligned with the compiled brain size.
       void fetch("/api/settings/runtime", {
@@ -455,7 +501,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
     } finally {
       setSaving(false);
     }
-  }, [instructions, limits, runtime.brainPromptBudgetTokens, sessionId, language, agentId]);
+  }, [instructions, limits, runtime, sessionId, language, agentId]);
 
   const saveCallEndPolicy = useCallback(async () => {
     setSaving(true);
@@ -477,16 +523,18 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
         setStatus(apiErrorMessage(j, `Call-end save failed (${r.status})`));
         return false;
       }
-      setInstructions((prev) => ({
-        ...prev,
-        estimatedTokens: Number(j.estimatedTokens || prev.estimatedTokens),
-        budgetTokens: Number(j.budgetTokens || prev.budgetTokens),
-        headroom: Number(j.headroom || prev.headroom),
+      const nextInstructions: InstructionsState = {
+        ...instructions,
+        estimatedTokens: Number(j.estimatedTokens || instructions.estimatedTokens),
+        budgetTokens: Number(j.budgetTokens || instructions.budgetTokens),
+        headroom: Number(j.headroom || instructions.headroom),
         cacheEligible: Boolean(j.cacheEligible),
         callEndPolicy: normalizeCallEndPolicyState(j.callEndPolicy, language),
-      }));
+      };
+      setInstructions(nextInstructions);
+      setBaseline(snapFineTune(nextInstructions, runtime));
       setOptimizerMeta((prev) => ({ ...prev, savedLanguage: j.language || language }));
-      setStatus("Call-end policy saved into the compiled brain");
+      setStatus(`Call-end policy saved to ${persistWhere(j)}`);
       void persistAgentCallLanguage({ agentId, sessionId, language });
       return true;
     } catch {
@@ -495,11 +543,13 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
     } finally {
       setSaving(false);
     }
-  }, [instructions.callEndPolicy, language, sessionId, agentId]);
+  }, [instructions, language, sessionId, agentId, runtime]);
 
-  const saveRuntime = useCallback(async () => {
-    setSaving(true);
-    setStatus("Saving runtime…");
+  const saveRuntime = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) {
+      setSaving(true);
+      setStatus("Saving runtime…");
+    }
     try {
     const patch: Record<string, unknown> = { sessionId };
     for (const [key, val] of Object.entries(runtime)) {
@@ -507,7 +557,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
       patch[key] = val;
     }
     if (Object.keys(patch).length <= 1) {
-      setStatus("No runtime overrides to save");
+      if (!opts?.silent) setStatus("No runtime overrides to save");
       return true;
     }
     const r = await fetch("/api/settings/runtime", {
@@ -516,18 +566,29 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
       credentials: "include",
       body: JSON.stringify(patch),
     });
+    const j = await r.json().catch(() => ({}));
     if (!r.ok) {
-      let msg = "Runtime save failed";
-      try {
-        const j = await r.json();
-        msg = j.detail?.error?.message || msg;
-      } catch {
-        msg = `${msg} (${r.status})`;
-      }
+      const msg = j?.detail?.error?.message || `Runtime save failed (${r.status})`;
       setStatus(msg);
       return false;
     }
-    setStatus("Runtime saved for this agent's browser and phone calls");
+    setBaseline((prev) => {
+      try {
+        const parsed = prev ? JSON.parse(prev) : null;
+        return JSON.stringify({
+          agentBrief: parsed?.agentBrief ?? instructions.agentBrief,
+          agentScript: parsed?.agentScript ?? instructions.agentScript,
+          responseStyle: parsed?.responseStyle ?? instructions.responseStyle,
+          callEndPolicy: parsed?.callEndPolicy ?? instructions.callEndPolicy,
+          runtime: snapRuntime(runtime),
+        });
+      } catch {
+        return snapFineTune(instructions, runtime);
+      }
+    });
+    if (!opts?.silent) {
+      setStatus(`Runtime saved to ${persistWhere(j)} for this agent's browser and phone calls`);
+    }
     window.dispatchEvent(new CustomEvent("test-studio-runtime-saved", { detail: { sessionId } }));
     if (typeof patch.ttsSpeaker === "string" && patch.ttsSpeaker) {
       invalidateTtsConfigCache();
@@ -538,14 +599,187 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
       setStatus("Runtime save failed — network error. Try again.");
       return false;
     } finally {
+      if (!opts?.silent) setSaving(false);
+    }
+  }, [runtime, sessionId, instructions]);
+
+  const saveEditedScript = useCallback(async (opts?: { silent?: boolean }) => {
+    const script = instructions.agentScript;
+    const scriptWords = countWords(script);
+    if (scriptWords > limits.agentScriptMaxWords || script.length > limits.agentScriptMax) {
+      setStatus(
+        `Calling script is ${scriptWords} words / ${script.length} chars (max ${limits.agentScriptMaxWords} words / ${limits.agentScriptMax} chars). Shorten it before saving.`
+      );
+      return false;
+    }
+    const briefWords = countWords(instructions.agentBrief);
+    if (briefWords > limits.agentBriefMaxWords || instructions.agentBrief.length > limits.agentBriefMax) {
+      setStatus(
+        `Agent brief is ${briefWords} words / ${instructions.agentBrief.length} chars (max ${limits.agentBriefMaxWords} words / ${limits.agentBriefMax} chars). Shorten it before saving.`
+      );
+      return false;
+    }
+    if (!script.trim()) {
+      setStatus("Create an agent script first, then edit and save it.");
+      return false;
+    }
+    if (!opts?.silent) {
+      setSaving(true);
+      setStatus("Saving calling script…");
+    }
+    try {
+      const requestedBudget = Math.max(
+        Number(runtime.brainPromptBudgetTokens || 0),
+        Number(instructions.budgetTokens || 0),
+        6000
+      );
+      const r = await fetch("/api/instructions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          sessionId,
+          agentScript: script,
+          agentBrief: instructions.agentBrief,
+          responseStyle: spokenStyleMatchesLanguage(instructions.responseStyle, language)
+            ? instructions.responseStyle || undefined
+            : undefined,
+          brainPromptBudgetTokens: requestedBudget,
+          language_code: language,
+          callEndPolicy: normalizeCallEndPolicyState(instructions.callEndPolicy, language),
+        }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        setStatus(apiErrorMessage(j, `Calling script save failed (${r.status})`));
+        return false;
+      }
+      const effectiveBudget = Math.max(requestedBudget, Number(j.budgetTokens || 0));
+      const nextRuntime = {
+        ...runtime,
+        brainPromptBudgetTokens: effectiveBudget,
+      };
+      const nextInstructions: InstructionsState = {
+        ...instructions,
+        agentBrief: j.agentBrief ?? instructions.agentBrief,
+        agentScript: j.agentScript ?? instructions.agentScript,
+        responseStyle: j.responseStyle ?? instructions.responseStyle,
+        brainPrompt: j.compiledBrainPrompt || j.brainPromptFull || instructions.brainPrompt,
+        estimatedTokens: j.estimatedTokens,
+        budgetTokens: j.budgetTokens ?? effectiveBudget,
+        headroom: j.headroom,
+        cacheEligible: Boolean(j.cacheEligible),
+        callEndPolicy: normalizeCallEndPolicyState(j.callEndPolicy, language),
+      };
+      setRuntime(nextRuntime);
+      setInstructions(nextInstructions);
+      setBaseline(snapFineTune(nextInstructions, nextRuntime));
+      setOptimizerMeta({
+        compiledVersion: j.compiledVersion,
+        optimizerModel: j.optimizerReport?.optimizer_model,
+        tokensSaved: j.tokensSaved ?? j.optimizerReport?.tokens_saved,
+        rawTokenEstimate: j.rawTokenEstimate,
+        savedLanguage: j.language || language,
+        agentName: j.optimizerReport?.agent_name,
+        detectedRole: j.optimizerReport?.detected_role,
+        responseStyle: j.responseStyle || j.style,
+      });
+      if (j.compilerSections) {
+        setCompilerSections(j.compilerSections as CompilerSectionsPayload);
+      }
+      if (!opts?.silent) {
+        setStatus(
+          `Calling script${j.compiledVersion ? ` v${j.compiledVersion}` : ""} saved to ${persistWhere(j)} · ${j.estimatedTokens} tokens`
+        );
+      }
+      void persistAgentCallLanguage({ agentId, sessionId, language });
+      return true;
+    } catch {
+      setStatus("Calling script save failed — network error");
+      return false;
+    } finally {
+      if (!opts?.silent) setSaving(false);
+    }
+  }, [instructions, limits, runtime, sessionId, language, agentId]);
+
+  const saveFineTune = useCallback(async () => {
+    const script = instructions.agentScript.trim();
+    const scriptWords = countWords(instructions.agentScript);
+    if (script && (scriptWords > limits.agentScriptMaxWords || instructions.agentScript.length > limits.agentScriptMax)) {
+      setStatus(
+        `Calling script is ${scriptWords} words / ${instructions.agentScript.length} chars (max ${limits.agentScriptMaxWords} words / ${limits.agentScriptMax} chars). Shorten it before saving.`
+      );
+      return false;
+    }
+    const briefWords = countWords(instructions.agentBrief);
+    if (briefWords > limits.agentBriefMaxWords || instructions.agentBrief.length > limits.agentBriefMax) {
+      setStatus(
+        `Agent brief is ${briefWords} words / ${instructions.agentBrief.length} chars (max ${limits.agentBriefMaxWords} words / ${limits.agentBriefMax} chars). Shorten it before saving.`
+      );
+      return false;
+    }
+    setSaving(true);
+    setStatus("Saving Fine-tune…");
+    try {
+      const runOk = await saveRuntime({ silent: true });
+      if (!runOk) return false;
+      if (script) {
+        const scriptOk = await saveEditedScript({ silent: true });
+        if (!scriptOk) return false;
+        setStatus("Fine-tune saved");
+        return true;
+      }
+      setBaseline((prev) => {
+        try {
+          const parsed = prev ? JSON.parse(prev) : null;
+          return JSON.stringify({
+            agentBrief: parsed?.agentBrief ?? instructions.agentBrief,
+            agentScript: parsed?.agentScript ?? instructions.agentScript,
+            responseStyle: parsed?.responseStyle ?? instructions.responseStyle,
+            callEndPolicy: parsed?.callEndPolicy ?? instructions.callEndPolicy,
+            runtime: snapRuntime(runtime),
+          });
+        } catch {
+          return snapFineTune(instructions, runtime);
+        }
+      });
+      setStatus("Fine-tune runtime saved. Create an agent script to persist prompt edits.");
+      return true;
+    } catch {
+      setStatus("Fine-tune save failed — network error");
+      return false;
+    } finally {
       setSaving(false);
     }
-  }, [runtime, sessionId]);
+  }, [instructions, limits, runtime, saveRuntime, saveEditedScript]);
+
+  const discardChanges = useCallback(() => {
+    if (!baseline) return;
+    try {
+      const parsed = JSON.parse(baseline) as {
+        agentBrief: string;
+        agentScript: string;
+        responseStyle: string;
+        callEndPolicy: CallEndPolicyState;
+        runtime: RuntimeState;
+      };
+      setInstructions((prev) => ({
+        ...prev,
+        agentBrief: parsed.agentBrief,
+        agentScript: parsed.agentScript,
+        responseStyle: parsed.responseStyle,
+        callEndPolicy: parsed.callEndPolicy,
+      }));
+      setRuntime(parsed.runtime || {});
+      setStatus("Discarded unsaved Fine-tune changes");
+    } catch {
+      setStatus("Could not discard changes — reload the page");
+    }
+  }, [baseline]);
 
   const saveAll = useCallback(async () => {
-    if (!await saveRuntime()) return false;
-    return await saveInstructions();
-  }, [saveInstructions, saveRuntime]);
+    return saveFineTune();
+  }, [saveFineTune]);
 
   const clearSession = useCallback(async () => {
     setStatus("Clearing session…");
@@ -608,6 +842,10 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
     limits,
     load,
     saveInstructions,
+    saveEditedScript,
+    saveFineTune,
+    discardChanges,
+    dirty,
     saveCallEndPolicy,
     saveRuntime,
     saveAll,

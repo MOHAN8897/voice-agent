@@ -1670,3 +1670,155 @@ async def test_hangup_abort_clears_agent_hangup_armed():
     assert loop._pending_end_call is None
     clear_all()
 
+
+@pytest.mark.asyncio
+async def test_pickup_hangover_keeps_speech_across_short_dips():
+    wires: list[bytes] = []
+
+    async def on_wire(wire: bytes) -> None:
+        wires.append(wire)
+
+    adapter = FakeRealtimeVoiceAdapter()
+    adapter.connected = True
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id="c-pickup-dip",
+        on_agent_wire=on_wire,
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        adapter=adapter,
+        stack_override={"pipeline": "realtime_voice", "direction": "outbound"},
+    )
+    frames = [b"\x03" * 640]
+    await loop.start_call(
+        play_greeting=True,
+        greeting_wire_frames=frames,
+        greeting_text="Hi, this is Tis. Do you have a moment?",
+    )
+    loud = struct.pack("<320h", *([1200] * 320))
+    quiet = struct.pack("<320h", *([0] * 320))
+    for _ in range(8):
+        await loop.feed_user_pcm16(loud)
+    for _ in range(3):
+        await loop.feed_user_pcm16(quiet)
+    for _ in range(8):
+        await loop.feed_user_pcm16(loud)
+    assert wires == []
+    for _ in range(12):
+        await loop.feed_user_pcm16(quiet)
+    await asyncio.wait_for(loop._deferred_greeting_task, timeout=1.0)
+    assert wires == frames
+    assert adapter.appended == []
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_pickup_fallback_plays_greeting_if_callee_stays_quiet():
+    wires: list[bytes] = []
+
+    async def on_wire(wire: bytes) -> None:
+        wires.append(wire)
+
+    adapter = FakeRealtimeVoiceAdapter()
+    adapter.connected = True
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id="c-pickup-fallback",
+        on_agent_wire=on_wire,
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        adapter=adapter,
+        stack_override={"pipeline": "realtime_voice", "direction": "outbound"},
+    )
+    frames = [b"\x04" * 640]
+    await loop.start_call(
+        play_greeting=True,
+        greeting_wire_frames=frames,
+        greeting_text="Hi, this is Tis. Do you have a moment?",
+    )
+    await asyncio.sleep(0.95)
+    await asyncio.wait_for(loop._deferred_greeting_task, timeout=1.0)
+    assert wires == frames
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_inbound_pcm_is_buffered_until_adapter_ready():
+    adapter = FakeRealtimeVoiceAdapter()
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id="c-hold-in",
+        on_agent_wire=AsyncMock(),
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        adapter=adapter,
+        stack_override={"pipeline": "realtime_voice"},
+    )
+    loud = struct.pack("<320h", *([1800] * 320))
+    await loop.feed_user_pcm16(loud)
+    assert adapter.appended == []
+    assert loop._pending_inbound
+    await loop.start_call(play_greeting=False)
+    assert adapter.appended
+    assert loop._pending_inbound == []
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_start_call_keeps_prewarm_instructions():
+    adapter = FakeRealtimeVoiceAdapter()
+    adapter.connected = True
+    adapter.instructions = "prewarmed brain instructions"
+    adapter.last_session = {"instructions": "prewarmed brain instructions"}
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id="c-keep-prewarm",
+        on_agent_wire=AsyncMock(),
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        adapter=adapter,
+        stack_override={"pipeline": "realtime_voice", "direction": "outbound"},
+    )
+    await loop.start_call(
+        play_greeting=True,
+        greeting_wire_frames=[b"\x00" * 640],
+        greeting_text="Hi, this is Priya. Do you have a moment?",
+    )
+    assert adapter.instruction_updates == 0
+    assert adapter.instructions == "prewarmed brain instructions"
+    assert adapter.auto_response_states == [False]
+    assert loop._deferred_greeting_armed is True
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_greeting_protect_drops_inbound_after_dump():
+    import time
+
+    adapter = FakeRealtimeVoiceAdapter()
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id="c-greet-protect",
+        on_agent_wire=AsyncMock(),
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        adapter=adapter,
+        stack_override={"pipeline": "realtime_voice"},
+    )
+    await loop.start_call(play_greeting=False)
+    loop._greeting_protect_until = time.monotonic() + 2.0
+    loud = struct.pack("<320h", *([2200] * 320))
+    await loop.feed_user_pcm16(loud)
+    assert adapter.appended == []
+    await loop.close()
+

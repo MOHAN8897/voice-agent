@@ -60,6 +60,7 @@ def test_alembic_revision_chain():
         ("005_tier_stack_payload.py", "005_tier_stack", "004_phase5"),
         ("006_dev_telephony.py", "006_dev_telephony", "005_tier_stack"),
         ("007_saved_instructions.py", "007_saved_instructions", "006_dev_telephony"),
+        ("008_saved_runtime.py", "008_saved_runtime", "007_saved_instructions"),
     )
     for filename, rev, down in chain:
         path = versions / filename

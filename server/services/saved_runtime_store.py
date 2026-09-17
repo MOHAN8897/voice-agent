@@ -1,30 +1,19 @@
-"""Postgres mirror of compiled session instructions (brief, script, brain)."""
+"""Postgres mirror of Fine-tune runtime overrides."""
 from __future__ import annotations
 
 import asyncio
 import logging
 import threading
-import uuid
 from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy import select
 
 from server.db.connection import get_session_factory
-from server.db.models.brain_models import SavedInstruction
+from server.db.models.brain_models import SavedRuntime
+from server.services.saved_instruction_store import agent_id_from_session
 
 _log = logging.getLogger(__name__)
-
-
-def agent_id_from_session(session_id: str) -> uuid.UUID | None:
-    raw = (session_id or "").strip()
-    prefix = "test-studio:"
-    if raw.startswith(prefix):
-        raw = raw[len(prefix) :]
-    try:
-        return uuid.UUID(raw)
-    except ValueError:
-        return None
 
 
 def _jsonable(entry: dict[str, Any]) -> dict[str, Any]:
@@ -47,11 +36,11 @@ async def upsert(session_id: str, entry: dict[str, Any]) -> bool:
     agent_uuid = agent_id_from_session(session_id)
     try:
         async with factory() as session:
-            row = await session.get(SavedInstruction, session_id)
+            row = await session.get(SavedRuntime, session_id)
             now = datetime.now(timezone.utc)
             if row is None:
                 session.add(
-                    SavedInstruction(
+                    SavedRuntime(
                         session_id=session_id,
                         agent_id=agent_uuid,
                         payload=payload,
@@ -65,7 +54,7 @@ async def upsert(session_id: str, entry: dict[str, Any]) -> bool:
             await session.commit()
         return True
     except Exception as exc:
-        _log.warning("saved_instruction upsert failed: %s", exc)
+        _log.warning("saved_runtime upsert failed: %s", exc)
         return False
 
 
@@ -75,12 +64,12 @@ async def delete(session_id: str) -> None:
         return
     try:
         async with factory() as session:
-            row = await session.get(SavedInstruction, session_id)
+            row = await session.get(SavedRuntime, session_id)
             if row is not None:
                 await session.delete(row)
                 await session.commit()
     except Exception as exc:
-        _log.warning("saved_instruction delete failed: %s", exc)
+        _log.warning("saved_runtime delete failed: %s", exc)
 
 
 async def load_all() -> dict[str, dict[str, Any]]:
@@ -88,7 +77,7 @@ async def load_all() -> dict[str, dict[str, Any]]:
     if factory is None:
         return {}
     async with factory() as session:
-        result = await session.execute(select(SavedInstruction))
+        result = await session.execute(select(SavedRuntime))
         out: dict[str, dict[str, Any]] = {}
         for row in result.scalars():
             payload = dict(row.payload or {})
@@ -106,7 +95,7 @@ def _spawn(coro) -> None:
         try:
             await coro
         except Exception as exc:
-            _log.warning("saved_instruction task failed: %s", exc)
+            _log.warning("saved_runtime task failed: %s", exc)
 
     try:
         loop = asyncio.get_running_loop()
