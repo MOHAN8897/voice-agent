@@ -145,7 +145,7 @@ class FakeRealtimeVoiceAdapter:
     async def start_response(self, *, instructions: str | None = None) -> None:
         self.started_responses.append(instructions or "")
 
-    async def cancel_response(self) -> None:
+    async def cancel_response(self, *, response_id: str | None = None) -> None:
         self.cancelled += 1
 
     async def submit_function_output(self, *, call_id: str, output: str) -> None:

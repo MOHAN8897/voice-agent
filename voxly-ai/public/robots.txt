@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# Subscriber console is client-side (#dashboard/*) and marked noindex in-app when open.
+# Do not expose /api on the same host as marketing without blocking crawlers.
+
+Sitemap: https://voxly.ai/sitemap.xml

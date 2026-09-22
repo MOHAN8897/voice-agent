@@ -477,6 +477,44 @@ async def telnyx_webhook(request: Request):
             patch[key] = payload.get(key)
     if call_control_id:
         telnyx_call_registry.upsert(str(call_control_id), patch)
+    if call_control_id and (patch.get("direction") == "inbound" or (telnyx_call_registry.get(str(call_control_id)) or {}).get("direction") == "inbound"):
+        existing = telnyx_call_registry.get(str(call_control_id)) or {}
+        if not existing.get("agent_id"):
+            from server.services.saas.inbound_routing import resolve_inbound_route
+
+            route = await resolve_inbound_route(str(payload.get("to") or patch.get("to") or ""))
+            if route is not None:
+                telnyx_call_registry.upsert(
+                    str(call_control_id),
+                    {
+                        "agent_id": str(route.agent_id),
+                        "tier": route.tier,
+                        "language": route.language,
+                        "stack_override": route.stack_override,
+                        "tenant_id": str(route.tenant_id),
+                        "saas_inbound": True,
+                    },
+                )
+            elif payload.get("to") or patch.get("to"):
+                from server.services.saas.inbound_routing import _normalize_e164
+                from server.db.connection import get_session_factory
+                from server.db.models.phase5_models import PhoneNumber
+                from sqlalchemy import select
+
+                factory = get_session_factory()
+                to_num = _normalize_e164(str(payload.get("to") or patch.get("to") or ""))
+                if factory and to_num:
+                    async with factory() as session:
+                        owned = await session.execute(select(PhoneNumber).where(PhoneNumber.e164 == to_num))
+                        if owned.scalar_one_or_none() is not None:
+
+                            async def _hangup_unrouted() -> None:
+                                try:
+                                    await TelnyxClient().hangup(str(call_control_id))
+                                except Exception:
+                                    pass
+
+                            asyncio.create_task(_hangup_unrouted(), name=f"saas-hangup-{str(call_control_id)[:20]}")
     if payload.get("client_state"):
         try:
             import base64

@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Literal
 
 from dotenv import load_dotenv
-from pydantic import Field, field_validator
+from pydantic import AliasChoices, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Load .env from project root (D:\Telugu Agent\.env)
@@ -102,6 +102,7 @@ class Settings(BaseSettings):
     debug: bool = Field(False, alias="DEBUG")
     port: int = Field(8000, alias="PORT")
     client_url: str = Field("http://localhost:3000", alias="CLIENT_URL")
+    cors_origins: str = Field("", alias="CORS_ORIGINS")
     public_tunnel_url: str | None = Field(None, alias="PUBLIC_TUNNEL_URL")
     public_app_url: str | None = Field(None, alias="PUBLIC_APP_URL")
 
@@ -170,6 +171,59 @@ class Settings(BaseSettings):
     campaign_max_concurrency: int = Field(5, alias="CAMPAIGN_MAX_CONCURRENCY")
     campaign_default_retry_attempts: int = Field(3, alias="CAMPAIGN_DEFAULT_RETRY_ATTEMPTS")
     recording_consent_required: bool = Field(False, alias="RECORDING_CONSENT_REQUIRED")
+
+    # --- SaaS subscriber auth & billing ---
+    saas_auth_enabled: bool = Field(False, alias="SAAS_AUTH_ENABLED")
+    jwt_secret: str = Field("dev-jwt-secret-change-in-production", alias="JWT_SECRET")
+    jwt_access_ttl_minutes: int = Field(15, alias="JWT_ACCESS_TTL_MINUTES")
+    jwt_refresh_ttl_days: int = Field(30, alias="JWT_REFRESH_TTL_DAYS")
+    saas_require_email_verification_for_buy: bool = Field(
+        True, alias="SAAS_REQUIRE_EMAIL_VERIFICATION_FOR_BUY"
+    )
+    saas_require_email_verification_for_login: bool = Field(
+        True, alias="SAAS_REQUIRE_EMAIL_VERIFICATION_FOR_LOGIN"
+    )
+    resend_api_key: str | None = Field(
+        None,
+        validation_alias=AliasChoices("RESEND_API_KEY", "resend_api_key"),
+    )
+    resend_from_email: str | None = Field(None, alias="RESEND_FROM_EMAIL")
+    stripe_secret_key: str | None = Field(None, alias="STRIPE_SECRET_KEY")
+    stripe_webhook_secret: str | None = Field(None, alias="STRIPE_WEBHOOK_SECRET")
+    stripe_checkout_success_url: str = Field(
+        "http://localhost:5173/console/numbers?success=1", alias="STRIPE_CHECKOUT_SUCCESS_URL"
+    )
+    stripe_checkout_cancel_url: str = Field(
+        "http://localhost:5173/console/numbers?cancel=1", alias="STRIPE_CHECKOUT_CANCEL_URL"
+    )
+    number_reservation_ttl_minutes: int = Field(15, alias="NUMBER_RESERVATION_TTL_MINUTES")
+    saas_telephony_enabled: bool = Field(True, alias="SAAS_TELEPHONY_ENABLED")
+    pstn_min_balance_usd_cents: int = Field(50, alias="PSTN_MIN_BALANCE_USD_CENTS")
+    pstn_min_balance_inr_paise: int = Field(5000, alias="PSTN_MIN_BALANCE_INR_PAISE")
+    pstn_rate_usd_cents_per_min: int = Field(9, alias="PSTN_RATE_USD_CENTS_PER_MIN")
+    pstn_rate_inr_paise_per_min: int = Field(900, alias="PSTN_RATE_INR_PAISE_PER_MIN")
+    voxly_frontend_url: str = Field("http://localhost:5173", alias="VOXLY_FRONTEND_URL")
+
+    razorpay_api_key: str | None = Field(
+        None,
+        validation_alias=AliasChoices("RAZORPAY_API_KEY", "razorpay_api_key"),
+    )
+    razorpay_api_secret: str | None = Field(
+        None,
+        validation_alias=AliasChoices("RAZORPAY_API_SECRET", "razorpay_api_secret"),
+    )
+    google_oauth_client_id: str | None = Field(
+        None,
+        validation_alias=AliasChoices("GOOGLE_OAUTH_CLIENT_ID", "google_oauth_client_id"),
+    )
+    google_oauth_client_secret: str | None = Field(
+        None,
+        validation_alias=AliasChoices("GOOGLE_OAUTH_CLIENT_SECRET", "google_oauth_client_secret"),
+    )
+    google_oauth_redirect_uri: str | None = Field(
+        None,
+        validation_alias=AliasChoices("GOOGLE_OAUTH_REDIRECT_URI", "google_oauth_redirect_uri"),
+    )
 
     # --- Production canary (TEST 9) ---
     canary_enabled: bool = Field(False, alias="CANARY_ENABLED")

@@ -287,3 +287,58 @@ def test_busy_plus_contact_tomorrow_is_callback_not_stay_on_line():
     )
     assert d.accepted is True
     assert d.reason == "goal_complete"
+
+
+def test_polite_cut_the_call_hangs_up():
+    d = validate_end_call(
+        {"should_end": True, "reason": "goodbye", "farewell": "Goodbye."},
+        user_text="Can you cut the call please for me?",
+        language="en-IN",
+        completed_turns=3,
+    )
+    assert d.accepted is True
+    assert d.reason == "goodbye"
+
+
+def test_asr_call_this_call_hangs_up():
+    d = validate_end_call(
+        {"should_end": True, "reason": "goodbye", "farewell": "Goodbye."},
+        user_text="Okay, understood. Can you call this call please for me?",
+        language="en-IN",
+        completed_turns=4,
+    )
+    assert d.accepted is True
+    assert d.reason == "goodbye"
+
+
+def test_sleeping_now_hangs_up():
+    d = validate_end_call(
+        {"should_end": True, "reason": "goodbye", "farewell": "Goodbye."},
+        user_text="I'm sleeping now.",
+        language="en-IN",
+        completed_turns=4,
+    )
+    assert d.accepted is True
+    assert d.reason == "goodbye"
+
+
+def test_have_to_go_hangs_up():
+    d = validate_end_call(
+        {"should_end": False, "reason": "none", "farewell": ""},
+        user_text="I have to go now",
+        language="en-IN",
+        completed_turns=3,
+    )
+    assert d.accepted is True
+    assert d.reason == "goodbye"
+
+
+def test_sleeping_with_callback_is_not_forced_goodbye():
+    d = validate_end_call(
+        {"should_end": True, "reason": "goal_complete", "farewell": "Goodbye."},
+        user_text="I'm sleeping now, call me tomorrow",
+        language="en-IN",
+        completed_turns=2,
+    )
+    assert d.accepted is True
+    assert d.reason == "goal_complete"

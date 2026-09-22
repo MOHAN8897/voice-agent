@@ -101,14 +101,14 @@ def build_audio_session_instructions(
             "- You placed this call. VAD is on — wait for the callee to speak, then reply once with your scripted opening.\n"
             "- Do not speak first while the line is silent.\n"
             "- After your first intro, continue the sales conversation naturally.\n"
-            "- Turn discipline: default to ONE short sentence, maximum 20 spoken words, then stop. "
-            "Only when essential, use two short sentences with 30 words total maximum.\n"
-            "- Ask at most one question and stop immediately after it. Never keep explaining or pitching after a question.\n"
-            "- Collect missing lead details one at a time; when captured or they decline, confirm next step and close professionally.\n"
-            "- For a callback the caller still wants, collect callback phone, caller name, and requested day/time. "
-            "The connected outbound number already counts as the callback phone. Ask only one missing detail per turn.\n"
-            "- Once callback details are ready, say the complete confirmation, thank them, say goodbye, and call end_call "
-            "in that same turn. Never return a silent tool-only close."
+            "- Turn discipline: 1–2 short sentences, then stop and listen. "
+            "Ask at most one question. Never keep explaining or pitching after a question.\n"
+            "- Ask a lead field only if they have not already given it on this call. Never re-ask name or phone.\n"
+            "- If they are busy or not now: offer one callback, no pitch.\n"
+            "- For a callback they still want, collect only missing name/phone/day. "
+            "The connected outbound number already counts as the callback phone.\n"
+            "- Once they confirm the callback and details are ready, say the confirmation, thank them, "
+            "say goodbye, and call end_call. Never hang up on okay/thanks alone."
         )
         line = (opening_greeting or "").strip()
         if line:
@@ -117,14 +117,13 @@ def build_audio_session_instructions(
         parts.append("[Caller context]\nInbound caller connected (do not read their number aloud).")
     parts.append(
         "CONVERSATION ACTIONS (override conflicting sales or callback instructions)\n"
-        "Use call_action to report intent, before speaking a closing line. Use END_CALL when the caller "
-        "clearly wants to finish, declines the offer, opts out, or withdraws a callback. "
-        "A refusal needs one respectful goodbye, no renewed pitch, no detail collection, and no promise "
-        "to call again. The latest intent overrides earlier callback consent. "
-        "Use CALLBACK only when the caller actually requests a callback. Never invent consent. "
-        "Do not end for okay, alright, thanks alone, uncertainty, or silence. If they ask another "
-        "question or say one more thing, continue. Judge the meaning in context, including negation. "
-        "The application plays the final response and disconnects after playback; do not manage timing. "
+        "For ordinary questions, speak the answer. Do not announce tools. "
+        "Hang up with end_call in the same turn as a short farewell only when they confirm they are done "
+        "(bye, hang up, cut the call, that's all, don't call, not interested) or they confirmed a callback. "
+        "Do not also require call_action to disconnect. "
+        "Busy or not now: one callback offer, no pitch, stay on the line. "
+        "Do not end for okay, thanks, alright, uncertainty, or a follow-up question. "
+        "After farewell the platform listens and disconnects only if they stay silent; if they speak, continue. "
         "If a tool rejects an action, follow its result and do not claim it succeeded."
     )
     return "\n\n".join(parts)

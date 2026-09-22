@@ -4,7 +4,7 @@ from __future__ import annotations
 import asyncio
 from typing import Literal, Optional
 
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -12,7 +12,9 @@ from server.call.audio_archive import audio_archive
 from server.call.call_ledger import call_ledger
 from server.call.call_lifecycle_service import call_lifecycle_service
 from server.call.call_store import call_store
+from server.auth.calls_tenant import resolve_calls_tenant_id
 from server.auth.tenant_context import tenant_id_from_request
+from server.config.env import get_settings
 from server.utils.errors import AppError
 
 router = APIRouter()
@@ -96,25 +98,31 @@ async def call_finalization(call_id: str):
 
 
 @router.get("/api/call/{call_id}")
-async def get_call(call_id: str):
+async def get_call(call_id: str, scoped_tenant: str = Depends(resolve_calls_tenant_id)):
     try:
-        return await call_lifecycle_service.get_call(call_id)
+        result = await call_lifecycle_service.get_call(call_id)
     except AppError as e:
         _raise(e)
+    settings = get_settings()
+    if settings.saas_auth_enabled:
+        if str(result.get("tenant_id") or "") != scoped_tenant:
+            raise HTTPException(
+                status_code=404,
+                detail={"error": {"code": "not_found", "message": "Call not found"}},
+            )
+    return result
 
 
 @router.get("/api/calls")
 async def list_calls(
-    request: Request,
     agent_id: Optional[str] = Query(None, alias="agentId"),
-    tenant_id: Optional[str] = Query(None, alias="tenantId"),
     disposition: Optional[str] = None,
     since: Optional[str] = None,
     until: Optional[str] = None,
     limit: int = 20,
     offset: int = 0,
+    scoped_tenant: str = Depends(resolve_calls_tenant_id),
 ):
-    scoped_tenant = tenant_id or tenant_id_from_request(request)
     items, total = await call_store.list_calls(
         tenant_id=scoped_tenant,
         agent_id=agent_id,

@@ -25,6 +25,7 @@ const DEV_NAV = [
   { href: "/dev/test-studio", label: "Test Studio", icon: "mic" },
   { href: "/dev/benchmarks", label: "Benchmarks", icon: "benchmark" },
   { href: "/dev/promotion", label: "Promotion", icon: "chart" },
+  { href: "/dev/saas-admin", label: "SaaS Admin", icon: "settings" },
 ] as const;
 
 const ICONS: Record<string, React.ReactNode> = {

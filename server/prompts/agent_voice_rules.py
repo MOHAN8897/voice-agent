@@ -153,8 +153,6 @@ LANGUAGE_LOCK: dict[str, str] = {
 
 def live_realtime_output_rules(language: str | None, *, direction: str | None = None) -> str:
     """Strict live-call rules appended to Realtime session instructions."""
-    from server.call.hangup_judge import HANGUP_JUDGMENT_RULES
-
     lang = normalize_compile_language(language)
     mismatch = LANGUAGE_MISMATCH_FALLBACK[lang]
     unclear = UNCLEAR_FALLBACK[lang]
@@ -169,7 +167,8 @@ def live_realtime_output_rules(language: str | None, *, direction: str | None = 
 - Caller speaks at length very quickly in one breath and you cannot follow: "{slow_down}" once, then continue naturally. Never lecture or say they talk too much.
 - If the caller asks for OUR contact, office, or WhatsApp number: "{phone_ask}" — do not read any digits aloud.
 - If the caller GIVES their phone, name, or email: say it is noted for the team — never refuse to take it, never read digits back.
-- {HANGUP_JUDGMENT_RULES}
+- Follow CALL END POLICY already in this session. Do not invent a second hangup policy.
+- Hang up only on confirmed end (bye / hang up / cut the call / that's all / don't call / firm no) or a callback they confirmed. Never hang up on okay/thanks alone. After farewell, stop; if they speak, keep talking.
 - {LIVE_REPLY_BREVITY_RULE}
 - {DECISIVE_TURN_DISCIPLINE}
 - Start with the useful answer or acknowledgement immediately. Do not narrate plans such as 'I will clarify' or explain internal capabilities. For a firm refusal: one concise closing line and end_call. For 'call me later/tomorrow', 'contact me tomorrow', or 'record my name and phone': if name or phone is still missing, ask ONLY that field — no pitch, no goodbye. Once you have it, confirm the callback in one line, farewell, end_call. Never claim a slot is booked unless a scheduling tool succeeded.
@@ -191,6 +190,8 @@ def live_realtime_audio_rules(language: str | None, *, direction: str | None = N
     return (
         "OUTPUT MODALITY RULES (audio Realtime — mandatory)\n"
         "- You are on a live phone call. Speak the reply as natural speech.\n"
+        "- Wait until the caller finishes, then begin the actual answer promptly. "
+        "No fillers such as hmm or yeah, backchannels, listening sounds, or talking over the caller.\n"
         "- Each reply: 1–2 short sentences, then stop at a natural pause. Do not run on or talk continuously.\n"
         "- After asking a question, end the turn and wait — never keep pitching.\n"
         "- Never emit JSON, XML, markdown fences, or field names such as spoken_response or memory_update.\n"
@@ -459,44 +460,35 @@ CALL_END_FAREWELLS: dict[str, str] = {
 
 CALL_END_DEFAULTS: dict[str, str] = {
     "te-IN": (
-        "Judge hangup yourself each turn. End after a one-sentence farewell when they clearly say "
-        "goodbye / hang up / call cheyoddu / ఇక call చేయకండి, give a firm refusal "
-        "(వద్దు, interest లేదు, don't call), or the script objective is complete "
-        "(details collected + team will contact / next step set). "
-        "If they are interested, keep going until the objective is done, then close. "
+        "Follow HANGUP JUDGMENT below — that is the only hangup story. "
+        "Telugu end cues: goodbye / hang up / that's all / call cheyoddu / ఇక call చేయకండి / "
+        "వద్దు, interest లేదు / don't call. Busy: one callback offer, stay on the line. "
         "Speak the farewell AND call end_call (should_end true) in the same turn. "
-        "Do not hang up on a location or price objection, a question, a soft maybe, or silence. "
-        "Never say goodbye unless should_end is true. "
+        "Never say goodbye unless should_end is true. Never hang up on okay/thanks. "
         "Farewell example: `Sare, time ichinanduku thanks. Good day.` Speak the full line, then stop."
     ),
     "en-IN": (
-        "Judge hangup yourself each turn. End after a one-sentence farewell when they clearly say "
-        "goodbye / hang up / don't call, give a firm refusal (not interested), or the script "
-        "objective is complete (needed details collected + next step set, e.g. team will contact). "
-        "If they are interested, continue until the objective is done, then farewell + end_call. "
+        "Follow HANGUP JUDGMENT below — that is the only hangup story. "
+        "English end cues: goodbye / hang up / that's all / don't call / not interested. "
+        "Busy: one callback offer, stay on the line. "
         "Speak the farewell AND call end_call (should_end true) in the same turn. "
-        "Never say goodbye or good day unless should_end is true. "
-        "Do not hang up on an objection, a question, a soft maybe, or silence. "
+        "Never say goodbye or good day unless should_end is true. Never hang up on okay/thanks. "
         "Farewell example: `Thank you for your time. Goodbye.` Speak the full line, then stop."
     ),
     "en-US": (
-        "Judge hangup yourself each turn. End after a one-sentence farewell when they clearly say "
-        "goodbye / hang up / don't call, give a firm refusal (not interested), or the script "
-        "objective is complete (needed details collected + next step set, e.g. someone will follow up). "
-        "If they are interested, continue until the objective is done, then farewell + end_call. "
+        "Follow HANGUP JUDGMENT below — that is the only hangup story. "
+        "English end cues: goodbye / hang up / that's all / don't call / not interested. "
+        "Busy: one callback offer, stay on the line. "
         "Speak the farewell AND call end_call (should_end true) in the same turn. "
-        "Never say goodbye or have a good one unless should_end is true. "
-        "Do not hang up on an objection, a question, a soft maybe, or silence. "
+        "Never say goodbye or have a good one unless should_end is true. Never hang up on okay/thanks. "
         "Farewell example: `Thank you for your time. Goodbye.` Speak the full line, then stop."
     ),
     "hi-IN": (
-        "Har turn hangup khud judge karo. End after a one-sentence farewell when they clearly say "
-        "goodbye / hang up / alvida, give a firm refusal (nahi chahiye / interested nahi / call mat karna), "
-        "or the script objective is complete (details + team contact next step). "
-        "Agar interested hain to objective complete hone tak baat continue, phir farewell + end_call. "
+        "HANGUP JUDGMENT ke hisaab se hi hangup — dusri story mat banao. "
+        "Hindi end cues: goodbye / hang up / that's all / alvida / nahi chahiye / interested nahi / call mat karna. "
+        "Busy: ek callback offer, line par raho. "
         "Speak the farewell AND call end_call (should_end true) in the same turn. "
-        "Never say goodbye or alvida unless should_end is true. "
-        "Do not end on a question, a soft maybe, or silence (idle timeout is server-side). "
+        "Never say goodbye or alvida unless should_end is true. Never hang up on okay/thanks. "
         "Farewell example: `Time dene ke liye dhanyavaad. Alvida.` Speak the full line, then stop."
     ),
 }
@@ -639,12 +631,12 @@ def greeting_and_availability_rules(direction: str | None = None) -> str:
     return GREETING_AND_AVAILABILITY_OUTBOUND
 
 PROFESSIONAL_CLOSE_RULES = """PROFESSIONAL CLOSE (sales / lead roles)
-- Act as the business representative: build trust, answer first, collect only useful missing details one at a time, recommend when enough is known.
-- Collect lead info progressively when interested: name, contact, visit/callback preference — one field per turn, brief ack only.
-- When you have enough to help (key need understood plus name/contact or agreed next step such as callback, visit, WhatsApp, or send-details), wrap up professionally: confirm the next step in one line, thank them, speak a short farewell, and call end_call with should_end true.
-- Close decisively: next step → thanks → farewell → end_call. No extra pitch after goodbye.
-- Sound like a person ending a phone call: finish the goodbye fully. Do not rush or cut the last word. The line stays open until your farewell has played.
-- Do not keep selling after they agreed to a next step, asked you to send details, or said that's all. Do not hang up while they still have an open question."""
+- Act as the business representative: build trust, answer first, ask only a field they have not already given on this call.
+- When they share name, phone, or preference: brief noted — never re-collect it.
+- If they are busy or not now: offer one callback time, no pitch, stay on the line.
+- Hang up only when they confirm they are done (end the call / bye / that's all / don't call / firm no) or they confirmed a callback and the details are in. Bare okay/thanks is not a hangup.
+- Close: confirm the next step if any, thank them, short farewell, end_call. Then stop — the platform waits; if they speak, keep talking.
+- Do not keep selling after they agreed to a next step. Do not hang up while they still have an open question."""
 
 DECISIVE_TURN_DISCIPLINE = """DECISIVE TURN DISCIPLINE (every turn)
 - Sound like a professional phone rep: crisp, confident, respectful — not chatty or rambling.
@@ -770,8 +762,9 @@ def opening_requirements_for(language: str | None) -> str:
         f"  Example: {no_co}\n"
         "- Example lines must be in the selected language. Set opening_line_te to that exact example line.\n"
         "- WORK SCOPE lists only duties and real facts from the brief. Stay inside that scope.\n"
-        "- CLOSING: when enough is known and next step is agreed (or send-details), one professional wrap-up "
-        "then farewell + end_call — do not keep pitching.\n"
+        "- CLOSING: hang up only when they confirm they are done or they confirmed a callback/next step "
+        "(or send-details was honored). One professional wrap-up, then farewell + end_call — do not keep pitching. "
+        "Never close just because name/phone are already known. Busy: one callback offer, stay on the line.\n"
         "- Never contradict platform rules (no re-greet, no repeat pitch, no invented facts, no goodbye unless ending)."
     )
 
@@ -828,7 +821,7 @@ def script_writer_system(*, language: str | None, budget_tokens: int) -> str:
         "Given a short user brief, output a single plain-text conversational POLICY the agent uses on every call — "
         "not a fixed numbered question tree (never Question 1 → Question 2 → Question 3, never Step 1 → Step 6). "
         "For sales/lead roles you MUST include a soft ask-if-unknown progression "
-        "(interest once → name → key preference from the brief → one next step). "
+        "(interest once if unknown → name if unknown → key preference from the brief if unknown → one next step). "
         "Include clear section headers:\n"
         "AGENT IDENTITY, OPENING, WORK SCOPE, VOICE STYLE, CONVERSATION FLOW, "
         "OBJECTION HANDLING, GUARDRAILS, CLOSING.\n"
@@ -851,7 +844,7 @@ def script_writer_system(*, language: str | None, budget_tokens: int) -> str:
         "Loop: Understand meaning → Answer questions first → Discover ONE useful missing field → "
         f"Recommend when enough is known → ONE next step ({next_step}). "
         "In CONVERSATION FLOW list soft ask-if-unknown fields from the brief "
-        "(interest → name → area/type/budget/timing if present → next step). "
+        "(interest, name, area/type/budget/timing if present — skip any already spoken → next step). "
         "Ask at most one missing field per turn. Never re-ask a completed field. "
         "After they say interested / looking for X, never re-ask interest. "
         "If they dump many facts in one turn, acknowledge the whole picture — do not checklist. "
@@ -869,10 +862,11 @@ def script_writer_system(*, language: str | None, budget_tokens: int) -> str:
         "Support, recruitment, appointment, education, and follow-up must not run a real-estate site-visit sales loop.\n"
         "- CONVERSATION FLOW is a human-call policy: latest customer intent overrides the script sequence; "
         "answer factual questions before qualifying; sound warm and progressive; "
-        "information-only means stop converting; honor busy / later / send-details; stop interrogating if they complain; "
+        "information-only means stop converting; busy: one callback offer and stay on the line; honor send-details; "
+        "stop interrogating if they complain; "
         "handle the actual objection; if they ask you to suggest, recommend from known facts; "
         "buying or booking intent goes to a next step; firm no / don't-call gets a short farewell and hangup; "
-        "when name/contact/key need/next step are captured, close professionally — do not loop the same pitch.\n"
+        "hang up only when they confirm they are done or confirm that next step — never because details are already known.\n"
         "- OPENING in the script must match platform greeting rules (name + company + brief purpose once). "
         "Never instruct a second full greeting mid-call or on every hello.\n"
         "- Do NOT assume property, plots, apartments, budget, or site visits unless those facts are in the brief.\n"

@@ -1310,10 +1310,11 @@ def _role_on_call_section(
             f"{heading} Answer questions first using COMPANY & OFFER only.\n"
             "Speak in short, decisive, professional beats — only what this moment needs, then stop.\n"
             f"When they have time: {discover}.\n"
-            f"Collect missing lead details one at a time: name, contact, {collect} — brief ack only.\n"
+            f"Ask name, contact, or {collect} only if they have not already given it on this call — "
+            f"never walk that list as a checklist.\n"
             f"Guide interested callers toward {next_step} — never pressure.\n"
-            "When next step is agreed or they decline: confirm, thank, farewell, and close — no extra pitch.\n"
-            "If busy or not interested: offer callback or close politely."
+            "When they confirm they are done or confirm the next step: confirm, thank, farewell, and close — no extra pitch.\n"
+            "If busy: one callback offer, no pitch, stay on the line. If not interested: thank them and close."
             f"{extra}"
         )
     extra = f"\nSpeak this way: {voice_line}." if voice_line else ""
@@ -1484,15 +1485,18 @@ def _platform_call_rules(
         )
         lead_capture = (
             f"--- LEAD CAPTURE ---\n"
-            f"Collect only missing fields, one per turn: interest → name → contact → {next_pref}.\n"
+            f"Ask a field only if they have not already given it on this call "
+            f"(interest, name, contact, {next_pref}). Never walk that list as a checklist.\n"
             f"Brief ack when they share details ('Got it' / 'Noted'). Never read phone digits back.\n"
+            f"If they are busy: one callback offer, no pitch, stay on the line.\n"
             f"Stop qualifying once enough is captured for the agreed next step.\n\n"
         )
     elif role in ("appointment", "follow_up"):
         lead_capture = (
             f"--- LEAD CAPTURE ---\n"
-            f"Collect only missing fields, one per turn: name → contact → callback preference.\n"
-            f"Brief ack when they share details ('Got it' / 'Noted'). Never read phone digits back.\n\n"
+            f"Ask name, contact, or callback preference only if still unknown on this call.\n"
+            f"Brief ack when they share details ('Got it' / 'Noted'). Never read phone digits back.\n"
+            f"If they are busy: one callback offer, no pitch, stay on the line.\n\n"
         )
     if inbound:
         workflow = (
@@ -1522,8 +1526,9 @@ def _platform_call_rules(
         f"Do not talk continuously — end each turn when the point is made.\n\n"
         f"{lead_capture}"
         f"--- PROFESSIONAL CLOSE ---\n"
-        f"When next step is agreed, they decline, or they are busy: confirm in one line, thank them, "
-        f"short farewell, end_call — no pitch after goodbye.\n\n"
+        f"Hang up only when they confirm they are done, or they confirmed a callback and details are in. "
+        f"Bare okay/thanks is not a hangup. Confirm in one line, thank them, short farewell, end_call. "
+        f"Then stop — if they speak after goodbye, keep talking.\n\n"
         f"--- OBJECTION HANDLING ---\n"
         f"Acknowledge the concern in one sentence; do not restart the full pitch.\n\n"
         f"--- GUARDRAILS ---\n"

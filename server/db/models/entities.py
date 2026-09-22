@@ -25,9 +25,22 @@ class Tenant(Base):
     tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     plan: Mapped[str] = mapped_column(String(50), default="dev")
+    status: Mapped[str] = mapped_column(String(30), default="active")
+    stripe_customer_id: Mapped[str | None] = mapped_column(String(255), nullable=True, unique=True)
+    limits: Mapped[dict] = mapped_column(JSONB, default=dict)
+    default_agent_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("agents.agent_id"), nullable=True)
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    billing_source: Mapped[str] = mapped_column(String(30), default="self_serve")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
-    agents: Mapped[list["Agent"]] = relationship(back_populates="tenant")
+    default_agent: Mapped["Agent | None"] = relationship(
+        foreign_keys=[default_agent_id],
+        post_update=True,
+    )
+    agents: Mapped[list["Agent"]] = relationship(
+        back_populates="tenant",
+        foreign_keys="Agent.tenant_id",
+    )
     calls: Mapped[list["Call"]] = relationship(back_populates="tenant")
 
 
@@ -43,9 +56,13 @@ class Agent(Base):
     languages: Mapped[list[str]] = mapped_column(ARRAY(String), default=["te-IN"])
     memory_schema: Mapped[str] = mapped_column(String(64), default="compact_v1")
     environment: Mapped[str] = mapped_column(String(50), default="development")
+    voice_settings: Mapped[dict] = mapped_column(JSONB, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
-    tenant: Mapped["Tenant"] = relationship(back_populates="agents")
+    tenant: Mapped["Tenant"] = relationship(
+        back_populates="agents",
+        foreign_keys=[tenant_id],
+    )
     calls: Mapped[list["Call"]] = relationship(back_populates="agent")
 
 

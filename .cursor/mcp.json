@@ -3,6 +3,13 @@
     "graft": {
       "command": "graft",
       "args": ["mcp"]
+    },
+    "google-cloud-cli": {
+      "url": "https://cloudcli.googleapis.com/mcp"
+    },
+    "chrome-devtools": {
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "chrome-devtools-mcp@latest"]
     }
   }
 }

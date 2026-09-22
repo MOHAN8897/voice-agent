@@ -1,7 +1,7 @@
 # Shared helpers for local API / Next / tunnel windows.
 # Dot-source from other scripts. Do not run this file directly.
 
-$script:DevListenPorts = @(8000, 3000, 3001, 3002, 3003)
+$script:DevListenPorts = @(8000, 3000, 3001, 3002, 3003, 5173)
 $script:WrapperProcessNames = @(
     "powershell.exe", "pwsh.exe", "cmd.exe", "conhost.exe",
     "npm.cmd", "node.exe", "python.exe", "pythonw.exe"

@@ -5,6 +5,8 @@ import asyncio
 import base64
 import copy
 import json
+import uuid
+from collections import deque
 from collections.abc import AsyncIterator
 from typing import Any
 
@@ -88,13 +90,28 @@ def build_realtime_voice_session(
     noise = normalize_realtime_noise_reduction(noise_reduction)
     if noise != "off":
         audio_in["noise_reduction"] = {"type": noise}
+    else:
+        # An omitted field preserves an existing session setting on update.
+        audio_in["noise_reduction"] = None
     return {
         "type": "realtime",
         "model": model or DEFAULT_REALTIME_MODEL,
         "instructions": instructions,
         "output_modalities": ["audio"],
         "max_output_tokens": resolve_realtime_voice_max_output_tokens(max_output_tokens),
-        "tools": [END_CALL_TOOL, CALL_ACTION_TOOL],
+        "tools": [END_CALL_TOOL, {
+            **CALL_ACTION_TOOL,
+            "description": (
+                "Report conversational intent in the same turn as your speech. "
+                "Answer ordinary questions directly without calling a tool first. "
+                "For a clear refusal or a confirmed end (bye, hang up, that's all, don't call), "
+                "speak a short farewell, then report END_CALL. "
+                "Use CALLBACK only for an explicitly requested callback; a withdrawal overrides earlier consent. "
+                "Do not end for a bare okay/thanks, a pause, a follow-up question, or unspoken enough-is-known. "
+                "Busy: one callback offer and stay on the line. Hangup is owned by end_call. "
+                "Wait for the tool result before claiming a transfer or callback has been arranged."
+            ),
+        }],
         "tool_choice": "auto",
         "audio": {
             "input": audio_in,
@@ -124,8 +141,9 @@ class OpenAIRealtimeVoiceAdapter:
         self._response_idle = asyncio.Event()
         self._response_idle.set()
         self._response_lock = asyncio.Lock()
-        self._auto_response_applied = asyncio.Event()
-        self._expected_auto_response: bool | None = None
+        self._cancelled_response_ids: deque[str] = deque(maxlen=128)
+        self._cancelled_request_tokens: deque[str] = deque(maxlen=128)
+        self._pending_response_token: str | None = None
         self._accepting = False
         self._current_output_item_ids: list[str] = []
         self.model = DEFAULT_REALTIME_MODEL
@@ -159,6 +177,9 @@ class OpenAIRealtimeVoiceAdapter:
         self._closed = False
         self._accepting = False
         self._active_response_id = None
+        self._cancelled_response_ids.clear()
+        self._cancelled_request_tokens.clear()
+        self._pending_response_token = None
         self._current_output_item_ids = []
         self._response_idle = asyncio.Event()
         self._response_idle.set()
@@ -215,8 +236,6 @@ class OpenAIRealtimeVoiceAdapter:
         except (KeyError, TypeError):
             return
         self.last_session = session
-        self._expected_auto_response = bool(enabled)
-        self._auto_response_applied.clear()
         await self._conn.send({"type": "session.update", "session": session})
 
     def is_open(self) -> bool:
@@ -249,36 +268,41 @@ class OpenAIRealtimeVoiceAdapter:
             raise RuntimeError("realtime voice connection is not open")
         async with self._response_lock:
             automatic = bool(self.last_session and self.last_session["audio"]["input"]["turn_detection"].get("create_response"))
-            if automatic:
-                await self.set_auto_response(False)
-                # The server may have started a VAD response before processing
-                # our update. Wait for its acknowledgement before cancel/create.
-                await asyncio.wait_for(self._auto_response_applied.wait(), timeout=3.0)
-            if not self._response_idle.is_set():
-                await self._cancel_response_locked()
-            self._accepting = True
-            self._active_response_id = None
-            self._current_output_item_ids = []
-            self._response_idle.clear()
-            payload: dict[str, Any] = {
-                "type": "response.create",
-                "response": {"output_modalities": ["audio"]},
-            }
-            if instructions:
-                payload["response"]["instructions"] = instructions
             try:
+                if automatic:
+                    await self.set_auto_response(False)
+                # Commands share an ordered WebSocket. A VAD response may have
+                # started remotely before disable, without response.created
+                # reaching us yet, so cancel the default conversation as well.
+                await self._cancel_response_locked(force=automatic)
+                self._accepting = False
+                self._active_response_id = None
+                self._current_output_item_ids = []
+                self._response_idle.clear()
+                self._pending_response_token = uuid.uuid4().hex
+                payload: dict[str, Any] = {
+                    "type": "response.create",
+                    "response": {
+                        "output_modalities": ["audio"],
+                        "metadata": {"pstn_request": self._pending_response_token},
+                    },
+                }
+                if instructions:
+                    payload["response"]["instructions"] = instructions
                 await self._conn.send(payload)
             except Exception:
                 self._accepting = False
+                self._pending_response_token = None
                 self._response_idle.set()
                 raise
             finally:
                 if automatic:
                     await self.set_auto_response(True)
 
-    async def cancel_response(self) -> None:
+    async def cancel_response(self, *, response_id: str | None = None) -> None:
+        """Send cancellation without waiting for response.done on the audio path."""
         async with self._response_lock:
-            await self._cancel_response_locked()
+            await self._cancel_response_locked(response_id=response_id)
 
     async def clear_output_audio(self) -> None:
         """Compatibility no-op: this Realtime endpoint rejects output_audio_buffer.clear."""
@@ -293,23 +317,36 @@ class OpenAIRealtimeVoiceAdapter:
         except Exception as e:
             logger.warning("[REALTIME_VOICE] input_audio_buffer.clear failed: %s", str(e)[:160])
 
-    async def _cancel_response_locked(self) -> None:
+    async def _cancel_response_locked(
+        self, *, response_id: str | None = None, force: bool = False,
+    ) -> None:
         had_active = not self._response_idle.is_set()
-        self._accepting = False
+        if self._pending_response_token and not response_id:
+            self._cancelled_request_tokens.append(self._pending_response_token)
+            self._pending_response_token = None
+        rid = response_id or self._active_response_id
+        if rid and rid in self._cancelled_response_ids and not force:
+            return
+        if not response_id or rid == self._active_response_id:
+            self._accepting = False
         if self._conn is None:
             self._active_response_id = None
             self._response_idle.set()
             return
-        if not had_active:
-            self._active_response_id = None
+        if not had_active and not response_id and not force:
             return
+        payload: dict[str, Any] = {"type": "response.cancel"}
+        if rid:
+            if not force:
+                payload["response_id"] = rid
+            if rid not in self._cancelled_response_ids:
+                self._cancelled_response_ids.append(rid)
         try:
-            await self._conn.send({"type": "response.cancel"})
-            await asyncio.wait_for(self._response_idle.wait(), timeout=1.5)
+            await self._conn.send(payload)
         except Exception as e:
+            if rid and rid in self._cancelled_response_ids:
+                self._cancelled_response_ids.remove(rid)
             logger.warning("[REALTIME_VOICE] cancel failed: %s", str(e)[:160])
-            # Do not manufacture an idle state after a timeout. The server may
-            # still be generating; a new response.create would overlap it.
             raise
 
     async def submit_function_output(self, *, call_id: str, output: str) -> None:
@@ -358,13 +395,16 @@ class OpenAIRealtimeVoiceAdapter:
     async def poll_event(self, timeout: float = 0.5) -> dict[str, Any] | None:
         """Read one normalized event (prewarm greeting capture). None = timeout."""
         try:
-            item = await asyncio.wait_for(self._events.get(), timeout=timeout)
+            async with asyncio.timeout(timeout):
+                while True:
+                    item = await self._events.get()
+                    if item is None:
+                        self._events.put_nowait(None)
+                        return {"type": "_stream_end"}
+                    if item.get("response_id") not in self._cancelled_response_ids:
+                        return item
         except asyncio.TimeoutError:
             return None
-        if item is None:
-            self._events.put_nowait(None)
-            return {"type": "_stream_end"}
-        return item
 
     def discard_queued(self) -> None:
         dumped = 0
@@ -385,6 +425,10 @@ class OpenAIRealtimeVoiceAdapter:
             item = await self._events.get()
             if item is None:
                 break
+            if item.get("response_id") in self._cancelled_response_ids:
+                # Cancellation may happen after normalization but before the
+                # PSTN event consumer catches up with the receive queue.
+                continue
             yield item
 
     async def close(self) -> None:
@@ -419,15 +463,12 @@ class OpenAIRealtimeVoiceAdapter:
                     if kind == "session.updated":
                         self._configured = True
                         self._ready.set()
-                        session = _event_field(event, "session") or {}
-                        audio = _event_field(session, "audio") or {}
-                        audio_input = _event_field(audio, "input") or {}
-                        detection = _event_field(audio_input, "turn_detection") or {}
-                        applied = _event_field(detection, "create_response")
-                        if applied is self._expected_auto_response:
-                            self._auto_response_applied.set()
                     if kind == "error":
                         err = _event_field(event, "error") or {}
+                        if _event_field(err, "code") == "response_cancel_not_active":
+                            # Targeted cancel can race response.done; the session
+                            # and any newer response remain valid.
+                            continue
                         message = (
                             err
                             if isinstance(err, str)
@@ -455,8 +496,31 @@ class OpenAIRealtimeVoiceAdapter:
 
     def _normalize(self, event: Any) -> dict[str, Any] | None:
         kind = _event_type(event)
+        rid = _response_id(event)
+        if rid and rid in self._cancelled_response_ids:
+            if kind not in ("response.done", "response.cancelled"):
+                return None
+            # A cancelled response may finish after a replacement was requested,
+            # even before its response.created arrives. Never mark that idle.
+            if rid != self._active_response_id:
+                if self._active_response_id is None and self._pending_response_token is None:
+                    self._response_idle.set()
+                return None
         if kind == "response.created":
             rid = _response_id(event)
+            response = _event_field(event, "response") or {}
+            metadata = _event_field(response, "metadata") or {}
+            token = _event_field(metadata, "pstn_request")
+            if token and token in self._cancelled_request_tokens:
+                if rid:
+                    self._cancelled_response_ids.append(rid)
+                return None
+            if self._pending_response_token:
+                if token != self._pending_response_token:
+                    if rid:
+                        self._cancelled_response_ids.append(rid)
+                    return None
+                self._pending_response_token = None
             if rid:
                 self._active_response_id = rid
             self._accepting = True
