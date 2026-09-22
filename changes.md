@@ -1,5 +1,7 @@
 # SaaS flow audit (Voxly console ↔ voice-agent backend)
 
+**Branch overview (full description):** [docs/branch-working-app-23-09-2026.md](./docs/branch-working-app-23-09-2026.md) — `working-app-23-09-2026` on GitHub.
+
 End-to-end path: **sign-in → dashboard sync → agents → numbers (search/buy/assign) → outbound/inbound PSTN → billing → leads/campaigns**.
 
 > **Historical findings** below describe the state *before* the Mar 2026 hardening pass.  
