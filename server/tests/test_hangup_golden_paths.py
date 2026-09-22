@@ -87,6 +87,22 @@ def test_price_question_does_not_hang_up():
     assert d.reject_code == "user_asked_question"
 
 
+def test_asr_end_request_hangs_up():
+    d = _end(
+        "Okay, understood. Can you call this call please for me?",
+        spoken="",
+        reason="goodbye",
+    )
+    assert d.accepted is True
+    assert d.reason == "goodbye"
+
+
+def test_sleeping_now_hangs_up():
+    d = _end("I'm sleeping now.", spoken="", reason="goodbye")
+    assert d.accepted is True
+    assert d.reason == "goodbye"
+
+
 def test_agent_open_question_blocks_callback_hangup():
     d = _end(
         "yeah you can contact me tomorrow",

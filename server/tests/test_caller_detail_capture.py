@@ -25,6 +25,8 @@ def test_extracts_email_and_name():
     assert extract_caller_name("Hi, my name is Arun") == "Arun"
     assert extract_caller_name("Hi, my name is the recording") is None
     assert extract_caller_name("my name is looking") is None
+    assert extract_caller_name("I'm sleeping now.") is None
+    assert extract_caller_name("I think I'm guessing.") is None
 
 
 def test_rejects_outbound_did_as_lead_phone():

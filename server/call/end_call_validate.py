@@ -12,8 +12,6 @@ from server.call.hangup_judge import (
     agent_still_collecting_lead,
     caller_wants_to_continue,
     default_farewell_for,
-    memory_has_lead_handoff,
-    user_short_close_ack,
 )
 from server.prompts.agent_voice_rules import normalize_compile_language
 from server.utils.logger import logger
@@ -83,10 +81,29 @@ _OPT_OUT = re.compile(
 )
 
 # Polite requests are grammatically questions, but explicitly end this call.
+# "call this call" is a common ASR swap for "cut this call".
 _END_REQUEST = re.compile(
-    r"\b(?:hang\s*up|(?:cut|end|disconnect|stop)\s+(?:the |this |our )?call)\b|"
+    r"\b(?:hang\s*up|hangup)\b|"
+    r"\b(?:please\s+)?(?:cut|end|disconnect|stop|close|drop|terminate)\s+"
+    r"(?:the |this |our )?(?:call|conversation|line)\b|"
+    r"\b(?:can|could|would)\s+you\s+(?:please\s+)?"
+    r"(?:cut|end|hang\s*up|disconnect|stop|close|drop)\s+"
+    r"(?:the |this |our )?(?:call|conversation|line)?\b|"
+    r"\b(?:call|cut)\s+(?:the |this |our )?call\b|"
     r"\bcall\s+(?:cut|band|end)\s*(?:karo|kar do|chey|cheyyi|cheyandi)?\b|"
-    r"కాల్\s*(?:కట్|ఆపండి|ముగించండి)|कॉल\s*(?:काट|बंद)", re.I,
+    r"కాల్\s*(?:కట్|ఆపండి|ముగించండి)|कॉल\s*(?:काट|बंद)",
+    re.I,
+)
+# Caller cannot continue now — close politely (not a callback unless they also asked).
+_UNAVAILABLE_NOW = re.compile(
+    r"\b(?:i(?:'m| am)\s+(?:going\s+to\s+|gonna\s+|about\s+to\s+)?sleep(?:ing)?(?:\s+now)?|"
+    r"going\s+to\s+(?:sleep|bed)|"
+    r"i\s+(?:need|have|want|got)\s+to\s+(?:sleep|go\s+to\s+bed)|"
+    r"i(?:'m| am)\s+in\s+bed|"
+    r"(?:i\s+)?(?:gotta|have\s+to|need\s+to|got\s+to)\s+go(?:\s+now)?"
+    r"(?!\s+(?:over|through|into|to\s+(?:the|a|my)))|"
+    r"i(?:'ve| have)\s+got\s+to\s+go)\b",
+    re.I,
 )
 _NEGATED_END = re.compile(r"\b(?:don'?t|do not|never)\s+(?:hang\s*up|end|cut|disconnect)\b", re.I)
 _CALLBACK_REQUEST = re.compile(
@@ -138,6 +155,12 @@ _BARE_NAME_BLOCKLIST = frozenset(
         "thank you",
         "hello",
         "hi",
+        "sleeping",
+        "sleep",
+        "guessing",
+        "understood",
+        "going",
+        "done",
     }
 )
 
@@ -244,6 +267,16 @@ def caller_explicit_end_request(user_text: str) -> bool:
     return bool(_END_REQUEST.search(text) and not _NEGATED_END.search(text))
 
 
+def caller_unavailable_now(user_text: str) -> bool:
+    """True when the caller is clearly leaving the line (sleeping, have to go)."""
+    text = user_text or ""
+    if not text.strip() or _NEGATED_END.search(text):
+        return False
+    if caller_requested_callback(text):
+        return False
+    return bool(_UNAVAILABLE_NOW.search(text))
+
+
 @dataclass(frozen=True)
 class EndCallDecision:
     accepted: bool
@@ -316,7 +349,12 @@ def _evidence_ok(
     text = user_text or ""
     spoken = spoken_text or ""
     if reason == "goodbye":
-        return bool(_GOODBYE.search(text) or _CALLER_DONE.search(text) or caller_explicit_end_request(text))
+        return bool(
+            _GOODBYE.search(text)
+            or _CALLER_DONE.search(text)
+            or caller_explicit_end_request(text)
+            or caller_unavailable_now(text)
+        )
     if reason == "firm_refusal":
         return bool(_REFUSAL.search(text))
     if reason == "abuse":
@@ -332,11 +370,11 @@ def _evidence_ok(
             return False
         if _GOAL_COMPLETE_USER.search(text) or memory_has_goal_complete(memory_snapshot):
             return True
-        # Objective closed: agent spoke handoff/farewell with lead details or a short ack.
-        if agent_spoke_closing(spoken) and not caller_wants_to_continue(text) and (
-            memory_has_lead_handoff(memory_snapshot)
-            or (user_short_close_ack(text) and completed_turns >= 1)
-            or (completed_turns >= 2 and not _substantive_user_question(text))
+        # Objective closed only when they confirmed the next step — not okay/thanks, not turn count.
+        if (
+            agent_spoke_closing(spoken)
+            and not caller_wants_to_continue(text)
+            and caller_confirmed_goal_complete(text)
         ):
             return True
         return False
@@ -376,6 +414,10 @@ def _user_wants_hangup(user_text: str) -> bool:
     if _NEGATED_END.search(text):
         return False
     if _OPT_OUT.search(text) or _CALLER_DONE.search(text):
+        return True
+    if caller_requested_callback(text):
+        return False
+    if caller_unavailable_now(text):
         return True
     if looks_like_question(text):
         return False
@@ -454,16 +496,7 @@ def validate_end_call(
             agent_spoke_closing(spoken) or parsed.get("farewell")
         ):
             parsed = _force_end("goal_complete", parsed.get("farewell") or "", spoken, lang)
-        elif (
-            agent_spoke_closing(spoken)
-            and not caller_wants_to_continue(user)
-            and (
-                memory_has_lead_handoff(memory_snapshot)
-                or (user_short_close_ack(user) and completed_turns >= 1)
-                or (completed_turns >= 2 and not _substantive_user_question(user))
-            )
-        ):
-            parsed = _force_end("goal_complete", parsed.get("farewell") or "", spoken, lang)
+        # Do not repair hangup from a spoken goodbye plus okay/thanks or turn count.
 
     if not parsed["should_end"]:
         return EndCallDecision(False, False, "none", "", None)
@@ -491,22 +524,11 @@ def validate_end_call(
         return _reject("policy_overlay")
     if not user.strip():
         return _reject("empty_user_turn")
-    if looks_like_question(user) and reason != "abuse":
+    if looks_like_question(user) and reason != "abuse" and not _user_wants_hangup(user):
         if not (_OPT_OUT.search(user) or _CALLER_DONE.search(user)
-                or caller_explicit_end_request(user) or caller_requested_callback(user)):
-            # Short STT junk ("Ja, kann das?") after a real close must not block hangup.
-            if not (
-                reason == "goal_complete"
-                and agent_spoke_closing(spoken)
-                and not caller_wants_to_continue(user)
-                and not _substantive_user_question(user)
-                and (
-                    memory_has_lead_handoff(memory_snapshot)
-                    or user_short_close_ack(user)
-                    or completed_turns >= 2
-                )
-            ):
-                return _reject("user_asked_question")
+                or caller_explicit_end_request(user) or caller_requested_callback(user)
+                or caller_unavailable_now(user)):
+            return _reject("user_asked_question")
     if (
         looks_like_question(spoken)
         and reason == "goal_complete"

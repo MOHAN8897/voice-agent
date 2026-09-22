@@ -110,3 +110,18 @@ def test_5_natural_speech_room_and_deterministic_sales_script():
     assert "interested" in low or "interest" in low
     assert "name" in low
     assert HUMAN_FLOW_SECTION.split("Role on this call")[0] in script or "natural sales progression" in low
+
+
+def test_platform_rules_ask_unknown_and_busy_stay():
+    from server.brain.agent_script_compiler import _platform_call_rules
+
+    rules = _platform_call_rules(
+        agent_name="Priya",
+        role="sales",
+        direction="outbound",
+        language="en-IN",
+    ).lower()
+    assert "have not already given" in rules
+    assert "stay on the line" in rules
+    assert "okay/thanks" in rules or "bare okay" in rules
+    assert "collect missing lead details one at a time" not in rules

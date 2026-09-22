@@ -134,6 +134,8 @@ async def test_structured_refusal_overrides_callback_and_waits_for_goodbye(monke
     await loop._handle_event({"type": "response_created", "response_id": "goodbye"})
     await loop._handle_event({"type": "audio_delta", "response_id": "goodbye", "pcm": bytes(1920)})
     await loop._handle_event({"type": "response_done", "response_id": "goodbye"})
+    loop._on_remote_hangup.assert_not_awaited()
+    await loop._check_runtime((loop._close_listen_until or 0) + 0.05)
     loop._on_remote_hangup.assert_awaited_once()
     assert loop.controller.state == CallState.ENDED
     await loop.close()
@@ -223,6 +225,7 @@ async def test_user_resumes_before_disconnect():
     loop, _ = make_loop()
     loop.controller.state = CallState.ENDING
     loop._pending_end_call = {"reason": "goal_complete"}
+    loop._caller_requested_close = True
     await loop._handle_event({"type": "speech_started"})
     assert loop.controller.state == CallState.ACTIVE
     assert loop._pending_end_call is None
@@ -246,7 +249,7 @@ async def test_provider_eof_hangs_up_once():
 
 
 @pytest.mark.asyncio
-async def test_injected_response_waits_for_vad_disable_and_cancellation_ack():
+async def test_injected_response_orders_commands_without_waiting_for_ack():
     from server.realtime.providers.openai_voice import OpenAIRealtimeVoiceAdapter, build_realtime_voice_session
 
     queue = asyncio.Queue()

@@ -61,6 +61,11 @@ def test_alembic_revision_chain():
         ("006_dev_telephony.py", "006_dev_telephony", "005_tier_stack"),
         ("007_saved_instructions.py", "007_saved_instructions", "006_dev_telephony"),
         ("008_saved_runtime.py", "008_saved_runtime", "007_saved_instructions"),
+        ("009_saas_identity.py", "009_saas_identity", "008_saved_runtime"),
+        ("010_saas_telephony_commerce.py", "010_saas_telephony", "009_saas_identity"),
+        ("011_saas_leads_billing.py", "011_saas_leads_billing", "010_saas_telephony"),
+        ("012_razorpay_invoices.py", "012_razorpay_invoices", "011_saas_leads_billing"),
+        ("013_email_verification_tokens.py", "013_email_verification", "012_razorpay_invoices"),
     )
     for filename, rev, down in chain:
         path = versions / filename

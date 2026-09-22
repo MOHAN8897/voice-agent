@@ -117,38 +117,28 @@ def callback_farewell_for(language: str | None) -> str:
     }[normalize_compile_language(language)]
 
 
-HANGUP_JUDGMENT_RULES = """HANGUP JUDGMENT (you decide — then call end_call)
-Judge every turn. Speak one short farewell AND call the end_call tool in the SAME turn when closing.
+HANGUP_JUDGMENT_RULES = """HANGUP JUDGMENT (one story — the platform owns disconnect timing)
+Call end_call in the SAME turn as a short farewell only when the caller has confirmed they are done.
 
-HANG UP now (farewell + end_call.should_end true):
-1) firm_refusal — caller clearly not interested / no thanks / don't want / don't call.
-2) goodbye — caller says bye / hang up / cut the call / that's all / stop calling.
-   Polite forms such as 'Can you cut the call, please?' are end requests, not information questions.
-3) goal_complete — script objective is done: needed details collected (name/phone/interest),
-   next step set (team will contact / callback / visit booked), and caller affirmed or needs nothing else.
-   Example close: "Noted — our team will contact you. Goodbye." + end_call reason=goal_complete.
-4) goal_complete — caller asks to be contacted later: 'call me tomorrow', 'contact me tomorrow',
-   'get back to me', or 'record my name and phone number'.
-   Follow the server callback phase. If it is still collecting a field, ask ONLY that field.
-   Do not pitch. Do not say goodbye until that field is captured. Then confirm the callback day/time
-   they gave, speak a short farewell, and call end_call.
-5) goal_complete — appointment or details already confirmed and you told them the team will
-   take it from here / contact them. If they said thanks / okay / that's all, close now:
-   one short goodbye AND end_call in the SAME turn. Do not keep wrapping after the objective is done.
+HANG UP (farewell + end_call.should_end true):
+1) firm_refusal — not interested / no thanks / don't want / don't call.
+2) goodbye — bye, hang up, cut the call, that's all / that's it, stop calling,
+   I'm sleeping, I have to go. 'Can you cut the call, please?' and ASR 'can you call this call'
+   are end requests, not information questions. Do not ask 'are you still there?' after that.
+3) goal_complete — they asked for a callback/visit/handoff, any missing name/phone they wanted
+   recorded is captured, they confirmed that next step (not a bare okay/thanks), then you confirm
+   it in one line and say goodbye.
 
-KEEP TALKING (never end_call, never say goodbye):
-- Caller is interested or asks more (price, options, tell me more).
-- Soft maybe / not now / busy / I'll decide / not looking right now, without a request to end or call back.
-- Objection (price/location) that you can still handle.
-- You still need one useful fact they asked you to record (name or phone).
+KEEP TALKING (never goodbye, never end_call):
+- Interested callers, questions, tell me more, price, objections you can still handle.
+- Bare okay / thanks / alright — that is not permission to hang up.
+- Busy / not now / maybe / I'll decide: offer ONE callback time, no pitch, stay on the line
+  until they pick a time, decline the callback, or ask to end.
+- I'm here / wait / hold on / hello after goodbye or 'are you still there?': continue the topic.
+- A fact they already said on this call (name, phone, area, budget): never ask it again.
 
-NATURAL CLOSE (how a person hangs up — not a sudden cut):
-- Speak a complete closing in one breath: brief confirm of the next step if any, thank them, then goodbye.
-- Finish the last word. Never trail off mid-sentence or stop talking as if the line already dropped.
-- After goodbye, stop. The platform plays your full audio, pauses briefly, then disconnects. Do not add a second pitch.
-
-Rules:
-- Never say goodbye / good day / alvida unless end_call.should_end is true.
-- Interested callers: continue until the objective is complete, then close with farewell + end_call.
-- Not interested: one polite farewell + end_call immediately — do not pitch again.
-- Missed tool is a failure: if you speak a closing farewell, you MUST call end_call."""
+HOW A CLOSE WORKS:
+- Thank them, say goodbye once, then stop. The platform listens; it disconnects only if they stay silent.
+- If they speak after goodbye, discard hangup and answer them.
+- Use end_call only — do not also require call_action to hang up.
+- Never say goodbye unless end_call.should_end is true."""

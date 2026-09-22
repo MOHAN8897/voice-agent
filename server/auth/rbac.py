@@ -23,17 +23,39 @@ APP_READ_ROLES = frozenset(
     }
 )
 
+_CUSTOMER_WRITE = frozenset({ROLE_CUSTOMER_ADMIN, ROLE_PLATFORM_ADMIN, ROLE_ADMINISTRATOR})
+_VOICE_WRITE = frozenset({ROLE_CUSTOMER_ADMIN, ROLE_VOICE_ENGINEER, ROLE_PLATFORM_ADMIN, ROLE_ADMINISTRATOR})
+
 _PERMISSIONS: dict[str, FrozenSet[str]] = {
     "dev.stack.read": DEV_ROLES,
     "dev.stack.write": DEV_ROLES,
     "dev.promote": DEV_ROLES,
     "dev.platform_brain": frozenset({ROLE_ADMINISTRATOR, ROLE_DEVELOPER, ROLE_PLATFORM_ADMIN}),
-    "app.brain.write": frozenset({ROLE_CUSTOMER_ADMIN, ROLE_PLATFORM_ADMIN, ROLE_ADMINISTRATOR}),
+    "dev.admin.users": frozenset({ROLE_ADMINISTRATOR, ROLE_DEVELOPER, ROLE_PLATFORM_ADMIN}),
+    "dev.admin.tenants": frozenset({ROLE_ADMINISTRATOR, ROLE_DEVELOPER, ROLE_PLATFORM_ADMIN}),
+    "dev.admin.numbers": frozenset({ROLE_ADMINISTRATOR, ROLE_DEVELOPER, ROLE_PLATFORM_ADMIN}),
+    "dev.admin.billing": frozenset({ROLE_ADMINISTRATOR, ROLE_DEVELOPER, ROLE_PLATFORM_ADMIN}),
+    "app.brain.write": _CUSTOMER_WRITE | frozenset({ROLE_VOICE_ENGINEER}),
+    "app.agents.write": _VOICE_WRITE,
+    "app.telephony.write": _VOICE_WRITE,
+    "app.billing.read": APP_READ_ROLES,
+    "app.billing.write": _CUSTOMER_WRITE,
+    "app.members.write": _CUSTOMER_WRITE,
     "app.calls.read": APP_READ_ROLES,
     "app.test_studio": frozenset({ROLE_VOICE_ENGINEER, ROLE_DEVELOPER, ROLE_ADMINISTRATOR, ROLE_PLATFORM_ADMIN}),
     "app.campaigns.write": frozenset({ROLE_CUSTOMER_ADMIN, ROLE_ADMINISTRATOR, ROLE_DEVELOPER}),
     "app.integrations": frozenset({ROLE_CUSTOMER_ADMIN, ROLE_ADMINISTRATOR, ROLE_DEVELOPER}),
 }
+
+
+def require_role_permission(role: str, permission: str) -> None:
+    from fastapi import HTTPException
+
+    if not role_has_permission(role, permission):
+        raise HTTPException(
+            status_code=403,
+            detail={"error": {"code": "auth_error", "message": "Permission denied"}},
+        )
 
 
 def role_has_permission(role: str, permission: str) -> bool:

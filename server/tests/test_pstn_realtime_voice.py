@@ -22,6 +22,11 @@ from server.services.pstn_voice_flow import create_pstn_voice_loop
 from server.services.usage_pricing import cost_llm_usd
 
 
+async def _expire_close_listen(loop) -> None:
+    until = float(getattr(loop, "_close_listen_until", 0.0) or 0.0)
+    await loop._check_runtime(until + 0.05)
+
+
 def test_pipeline_mode_realtime_voice_from_stack():
     assert pipeline_mode(stack_override={"pipeline": "realtime_voice"}) == "realtime_voice"
     assert uses_realtime_voice(stack_override={"voice_flow": "realtime_e2e"})
@@ -70,14 +75,14 @@ def test_realtime_voice_stack_keeps_mini_and_voice():
     assert "tts" not in out
 
 
-def test_realtime_voice_session_omits_noise_reduction_when_off():
+def test_realtime_voice_session_explicitly_disables_noise_reduction_when_off():
     session = build_realtime_voice_session(
         model="gpt-realtime-2.1-mini",
         instructions="You are a helpful agent.",
         voice="marin",
         noise_reduction="off",
     )
-    assert "noise_reduction" not in session["audio"]["input"]
+    assert session["audio"]["input"]["noise_reduction"] is None
 
 
 def test_realtime_voice_config_reads_top_level_noise_reduction():
@@ -153,8 +158,9 @@ def test_outbound_audio_instructions_wait_for_callee():
     assert "help-desk" in audio.lower()
     assert "Inbound caller connected" not in audio
     assert "Do you have a moment?" in audio
-    assert "maximum 20 spoken words" in audio
     assert "Ask at most one question" in audio
+    assert "never re-ask" in audio.lower()
+    assert "maximum 20 spoken words" not in audio
 
 
 def test_audio_token_cost_uses_mini_audio_rates():
@@ -518,6 +524,7 @@ async def test_realtime_loop_archives_user_and_agent_pcm(monkeypatch, tmp_path):
 @pytest.mark.asyncio
 async def test_agent_hangup_drains_archive_before_lifecycle_end(monkeypatch, tmp_path):
     monkeypatch.setattr("server.call.natural_hangup.HANGUP_TRAIL_SILENCE_SEC", 0.01)
+    monkeypatch.setattr("server.services.pstn_realtime_voice_core.CLOSE_LISTEN_SEC", 0.01)
     import struct
 
     from server.call.audio_archive import _agent_buffers, _user_buffers, audio_archive
@@ -1077,7 +1084,7 @@ async def test_record_name_and_contact_tomorrow_collects_then_hangs_up(monkeypat
 
 
 @pytest.mark.asyncio
-async def test_missed_end_call_after_handoff_hangs_up(monkeypatch, tmp_path):
+async def test_missed_end_call_after_thanks_does_not_hang_up(monkeypatch, tmp_path):
     from server.call.call_ledger import call_ledger
     from server.call.memory_manager import memory_manager
     from server.config.env import get_settings
@@ -1116,8 +1123,7 @@ async def test_missed_end_call_after_handoff_hangs_up(monkeypatch, tmp_path):
     await loop._handle_event({"type": "user_transcript", "text": "Ja, danke.", "final": True})
     loop._assistant_text = "All set, thanks for confirming — we'll take it from here."
     await loop._maybe_hangup_missed_end_call()
-    assert loop._pending_end_call is not None
-    assert loop._pending_end_call["reason"] == "goal_complete"
+    assert loop._pending_end_call is None
 
     call_ledger.reset_for_tests()
     memory_manager.reset_for_tests()
@@ -1148,23 +1154,17 @@ async def test_tool_only_farewell_finishes_before_provider_hangup(monkeypatch):
     loop._adapter = adapter
     loop._on_remote_hangup = remote_hangup
     await loop._handle_event({"type": "user_transcript", "text": "Goodbye.", "final": True})
-    await loop._handle_event({"type": "response_created"})
-    await loop._handle_event(
-        {
-            "type": "function_call",
-            "name": "end_call",
-            "call_id": "fn-goodbye",
-            "arguments": '{"should_end": true, "reason": "goodbye", "farewell": "Thank you. Goodbye."}',
-        }
-    )
-    await loop._handle_event({"type": "response_done"})
     remote_hangup.assert_not_awaited()
-    assert any("Speak this farewell exactly" in item for item in adapter.started_responses)
+    assert loop._pending_end_call is not None
+    assert adapter.started_responses
 
     await loop._handle_event({"type": "response_created"})
     pcm24 = struct.pack("<" + "h" * 960, *([500] * 960))
     await loop._handle_event({"type": "audio_delta", "pcm": pcm24})
     await loop._handle_event({"type": "response_done"})
+    remote_hangup.assert_not_awaited()
+    assert loop._close_listen_until > 0
+    await _expire_close_listen(loop)
     remote_hangup.assert_awaited_once()
 
 
@@ -1251,7 +1251,7 @@ async def test_realtime_loop_loud_pcm_interrupts_without_waiting_for_vad():
 
 
 @pytest.mark.asyncio
-async def test_realtime_loop_drops_stacked_response_while_speaking():
+async def test_realtime_loop_accepts_new_response_after_previous_audio():
     import struct
 
     adapter = FakeRealtimeVoiceAdapter()
@@ -1273,12 +1273,12 @@ async def test_realtime_loop_drops_stacked_response_while_speaking():
     gen = loop.current_generation_id
     cancelled = adapter.cancelled
     await loop._handle_event({"type": "response_created"})
-    assert adapter.cancelled > cancelled
-    assert loop.current_generation_id == gen
+    assert adapter.cancelled == cancelled
+    assert loop.current_generation_id != gen
 
 
 @pytest.mark.asyncio
-async def test_realtime_loop_drops_auto_response_until_next_user_turn():
+async def test_realtime_loop_accepts_answer_before_delayed_user_transcript():
     import struct
 
     adapter = FakeRealtimeVoiceAdapter()
@@ -1302,8 +1302,8 @@ async def test_realtime_loop_drops_auto_response_until_next_user_turn():
     gen = loop.current_generation_id
     cancelled = adapter.cancelled
     await loop._handle_event({"type": "response_created"})
-    assert adapter.cancelled > cancelled
-    assert loop.current_generation_id == gen
+    assert adapter.cancelled == cancelled
+    assert loop.current_generation_id != gen
 
     await loop._handle_event({"type": "user_transcript", "text": "What is the price?", "final": True})
     await loop._handle_event({"type": "response_created"})
@@ -1408,6 +1408,39 @@ async def test_overlap_junk_transcript_dropped_while_agent_speaks():
         {"type": "user_transcript", "text": "Yeah, my friend, can you tell me why did you call me?", "final": True}
     )
     assert "why did you call me" in loop._user_partial
+    await loop._handle_event({"type": "user_transcript", "text": "stop", "final": True})
+    assert loop._user_partial == "stop"
+
+
+def test_short_barge_stop_is_kept_while_agent_speaks():
+    adapter = FakeRealtimeVoiceAdapter()
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id=None,
+        on_agent_wire=AsyncMock(),
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        adapter=adapter,
+        stack_override={"pipeline": "realtime_voice"},
+    )
+    loop._adapter = adapter
+    loop._set_tts_active(True)
+    loop._assistant_text = "Hi, this is Priya calling from Auto Cars Private Limited. Do you have a moment?"
+    assert loop._should_drop_user_final("stop") is False
+    assert loop._should_drop_user_final("wait") is False
+
+
+def test_presence_reply_matches_indic_im_here():
+    from server.services.pstn_realtime_voice_core import _is_presence_reply
+
+    assert _is_presence_reply("I'm here")
+    assert _is_presence_reply("still here")
+    assert _is_presence_reply("hold on")
+    assert _is_presence_reply("నేను ఇక్కడ ఉన్నాను")
+    assert _is_presence_reply("मैं यहाँ हूँ")
+    assert not _is_presence_reply("I want a two bedroom plot")
 
 
 @pytest.mark.asyncio
@@ -1532,6 +1565,8 @@ def test_availability_matcher_covers_indic_and_who_is_this():
         _is_availability_check,
         _is_line_check,
         _is_pickup_phrase,
+        _is_presence_reply,
+        _is_silence_prompt_ack,
         _is_simple_hello,
     )
 
@@ -1544,6 +1579,13 @@ def test_availability_matcher_covers_indic_and_who_is_this():
     assert not _is_pickup_phrase("Hello, who is this?")
     assert _is_pickup_phrase("Hello")
     assert not _is_availability_check("I needed a service for my car")
+    assert _is_presence_reply("I'm here")
+    assert _is_presence_reply("I am here")
+    assert _is_presence_reply("still here")
+    assert _is_presence_reply("నేను ఉన్నాను")
+    assert _is_presence_reply("मैं यहाँ हूँ")
+    assert _is_silence_prompt_ack("yes")
+    assert not _is_presence_reply("I needed a service for my car")
 
 
 @pytest.mark.asyncio
@@ -1821,4 +1863,169 @@ async def test_greeting_protect_drops_inbound_after_dump():
     await loop.feed_user_pcm16(loud)
     assert adapter.appended == []
     await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_asr_cut_this_call_transcript_arms_hangup():
+    adapter = FakeRealtimeVoiceAdapter()
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id=None,
+        on_agent_wire=AsyncMock(),
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        adapter=adapter,
+        stack_override={"pipeline": "realtime_voice", "language": "en-IN"},
+    )
+    loop._adapter = adapter
+    await loop._handle_event(
+        {
+            "type": "user_transcript",
+            "text": "Okay, understood. Can you call this call please for me?",
+            "final": True,
+        }
+    )
+    assert loop._pending_end_call is not None
+    assert loop._pending_end_call["reason"] == "goodbye"
+    assert loop._caller_requested_close is True
+    assert any("goodbye" in item.lower() or "leaving" in item.lower() for item in adapter.started_responses)
+
+
+@pytest.mark.asyncio
+async def test_sleeping_now_transcript_arms_hangup_not_silence_prompt():
+    adapter = FakeRealtimeVoiceAdapter()
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id=None,
+        on_agent_wire=AsyncMock(),
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        adapter=adapter,
+        stack_override={"pipeline": "realtime_voice", "language": "en-IN"},
+    )
+    loop._adapter = adapter
+    await loop._handle_event({"type": "user_transcript", "text": "I'm sleeping now.", "final": True})
+    assert loop._pending_end_call is not None
+    assert loop._caller_requested_close is True
+    assert adapter.started_responses
+    assert all("Ask only 'Are you still there?'" not in item for item in adapter.started_responses)
+
+
+@pytest.mark.asyncio
+async def test_speech_after_end_request_aborts_hangup_until_confirmed():
+    adapter = FakeRealtimeVoiceAdapter()
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id=None,
+        on_agent_wire=AsyncMock(),
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        adapter=adapter,
+        stack_override={"pipeline": "realtime_voice", "language": "en-IN"},
+    )
+    loop._adapter = adapter
+    await loop._handle_event(
+        {
+            "type": "user_transcript",
+            "text": "Can you call this call please for me?",
+            "final": True,
+        }
+    )
+    assert loop._pending_end_call is not None
+    await loop._handle_event({"type": "speech_started"})
+    assert loop._pending_end_call is None
+    await loop._handle_event({"type": "user_transcript", "text": "I am here", "final": True})
+    assert loop._pending_end_call is None
+    assert any("still on the line" in item.lower() for item in adapter.started_responses)
+
+
+@pytest.mark.asyncio
+async def test_sleeping_after_abort_rearms_confirmed_close():
+    adapter = FakeRealtimeVoiceAdapter()
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id=None,
+        on_agent_wire=AsyncMock(),
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        adapter=adapter,
+        stack_override={"pipeline": "realtime_voice", "language": "en-IN"},
+    )
+    loop._adapter = adapter
+    await loop._handle_event(
+        {
+            "type": "user_transcript",
+            "text": "Can you call this call please for me?",
+            "final": True,
+        }
+    )
+    await loop._handle_event({"type": "speech_started"})
+    assert loop._pending_end_call is None
+    await loop._handle_event({"type": "user_transcript", "text": "I'm sleeping now.", "final": True})
+    assert loop._pending_end_call is not None
+    assert loop._caller_requested_close is True
+
+
+@pytest.mark.asyncio
+async def test_im_here_after_still_there_stays_on_line():
+    adapter = FakeRealtimeVoiceAdapter()
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id=None,
+        on_agent_wire=AsyncMock(),
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        adapter=adapter,
+        stack_override={"pipeline": "realtime_voice", "language": "en-IN"},
+    )
+    loop._adapter = adapter
+    loop._tts_active = True
+    loop._awaiting_presence_reply = True
+    loop._silence_prompted = True
+    loop._heard_user_turn = True
+    loop._heard_content_turn = True
+    assert loop._should_drop_user_final("I'm here") is False
+    loop._tts_active = False
+    await loop._handle_event({"type": "user_transcript", "text": "I'm here", "final": True})
+    assert loop._pending_end_call is None
+    assert loop._awaiting_presence_reply is False
+    assert any("still on the line" in item.lower() for item in adapter.started_responses)
+
+
+@pytest.mark.asyncio
+async def test_farewell_silence_after_listen_window_hangs_up(monkeypatch):
+    monkeypatch.setattr("server.call.natural_hangup.HANGUP_TRAIL_SILENCE_SEC", 0.01)
+    adapter = FakeRealtimeVoiceAdapter()
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+
+    remote_hangup = AsyncMock()
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id=None,
+        on_agent_wire=AsyncMock(),
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        adapter=adapter,
+        stack_override={"pipeline": "realtime_voice", "language": "en-IN"},
+    )
+    loop._adapter = adapter
+    loop._on_remote_hangup = remote_hangup
+    await loop._handle_event({"type": "user_transcript", "text": "End the call please.", "final": True})
+    await loop._handle_event({"type": "response_created"})
+    await loop._handle_event({"type": "audio_delta", "pcm": struct.pack("<" + "h" * 960, *([400] * 960))})
+    await loop._handle_event({"type": "response_done"})
+    remote_hangup.assert_not_awaited()
+    assert loop._pending_end_call is not None
+    await _expire_close_listen(loop)
+    remote_hangup.assert_awaited_once()
 

@@ -32,12 +32,25 @@ def _end(
 
 
 def test_hangup_judgment_rules_in_realtime_instructions():
-    rules = live_realtime_output_rules("en-IN")
-    assert "HANGUP JUDGMENT" in rules
-    assert "goal_complete" in rules
+    from server.call.call_end_policy import format_call_end_section
+
+    brain_end = format_call_end_section("en-IN")
+    overlay = live_realtime_output_rules("en-IN")
+    assert "HANGUP JUDGMENT" in brain_end
+    assert "goal_complete" in brain_end
+    assert "okay/thanks" in overlay.lower()
+    assert "HANGUP JUDGMENT" not in overlay
+    assert "objective is complete" not in brain_end.lower()
     assert "firm_refusal" in END_CALL_TOOL["description"]
     assert "goal_complete" in END_CALL_TOOL["description"]
     assert "interested" in HANGUP_JUDGMENT_RULES.lower()
+    assert "keep talking" in HANGUP_JUDGMENT_RULES.lower()
+    assert "one callback" in HANGUP_JUDGMENT_RULES.lower()
+    from server.prompts.voice_defaults import CACHE_FLOOR_PAD, DEFAULT_BEHAVIOUR_INSTRUCTIONS
+
+    assert "objective is complete" not in CACHE_FLOOR_PAD.lower()
+    assert "okay/thanks" in CACHE_FLOOR_PAD.lower()
+    assert "stay on the line" in DEFAULT_BEHAVIOUR_INSTRUCTIONS.lower()
 
 
 def test_not_interested_hangs_even_without_model_tool():
@@ -80,6 +93,15 @@ def test_interested_caller_continues_despite_premature_goal_complete():
     assert d.reject_code == "caller_engaged"
 
 
+def test_busy_without_end_request_stays_on_line():
+    d = _end(
+        {"should_end": True, "reason": "goodbye", "farewell": "Goodbye."},
+        user="I'm busy right now",
+    )
+    assert d.accepted is False
+    assert d.reject_code == "stay_on_line"
+
+
 def test_soft_maybe_stays_on_line():
     d = _end(
         {"should_end": True, "reason": "goodbye", "farewell": "Goodbye."},
@@ -103,26 +125,24 @@ def test_objective_complete_callback_confirmed():
     assert d.reason == "goal_complete"
 
 
-def test_objective_complete_repairs_missed_tool_with_lead_memory():
+def test_objective_complete_does_not_hangup_on_bare_okay():
     d = _end(
         {"should_end": False, "reason": "none", "farewell": ""},
         user="Okay",
         spoken="Noted — our team will contact you. Goodbye.",
         memory={"facts": {"callback_phone": "8897908470"}},
     )
-    assert d.accepted is True
-    assert d.reason == "goal_complete"
+    assert d.accepted is False
 
 
-def test_objective_complete_short_ack_after_closing():
+def test_objective_complete_does_not_hangup_on_bare_thanks():
     d = _end(
         {"should_end": False, "reason": "none", "farewell": ""},
         user="Thanks",
         spoken="Our team will reach out shortly. Goodbye.",
         turns=3,
     )
-    assert d.accepted is True
-    assert d.reason == "goal_complete"
+    assert d.accepted is False
 
 
 def test_price_question_does_not_hang_on_closing_speech():
@@ -138,6 +158,16 @@ def test_price_question_does_not_hang_on_closing_speech():
     )
     assert d.accepted is False
     assert d.reject_code in {"user_asked_question", "caller_engaged"}
+
+
+def test_thats_all_hangs_up():
+    d = _end(
+        {"should_end": False, "reason": "none", "farewell": ""},
+        user="that's all, thanks",
+        spoken="Happy to help.",
+    )
+    assert d.accepted is True
+    assert d.reason == "goodbye"
 
 
 def test_goodbye_hangs():
@@ -163,7 +193,7 @@ def test_helpers_detect_closing_and_lead():
     assert not memory_has_lead_handoff({"facts": {"phone": "+13526146416"}})
 
 
-def test_thanks_after_handoff_repairs_missed_end_call():
+def test_thanks_after_handoff_does_not_auto_hangup():
     d = _end(
         {"should_end": False, "reason": "none", "farewell": ""},
         user="Ja, danke.",
@@ -171,11 +201,10 @@ def test_thanks_after_handoff_repairs_missed_end_call():
         turns=6,
         memory={"facts": {"caller_name": "Mohan"}},
     )
-    assert d.accepted is True
-    assert d.reason == "goal_complete"
+    assert d.accepted is False
 
 
-def test_garbled_close_fragment_does_not_block_handoff_hangup():
+def test_garbled_question_does_not_force_handoff_hangup():
     d = _end(
         {"should_end": False, "reason": "none", "farewell": ""},
         user="Ja, kann das?",
@@ -183,8 +212,7 @@ def test_garbled_close_fragment_does_not_block_handoff_hangup():
         turns=8,
         memory={"facts": {"caller_name": "Mohan"}},
     )
-    assert d.accepted is True
-    assert d.reason == "goal_complete"
+    assert d.accepted is False
 
 
 def test_callback_name_request_does_not_hangup():

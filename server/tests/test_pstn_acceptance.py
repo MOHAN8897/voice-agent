@@ -86,7 +86,9 @@ async def test_cartesia_402_greeting_recovers_and_next_turn_uses_fallback(failin
     bridge = TelnyxPstnBridge(SimpleNamespace(close=AsyncMock()))
     bridge.call_id = "fallback"
     bridge._voice = voice
-    bridge._prewarm_bundle = SimpleNamespace(greeting_wire_frames=[], greeting_text="Hello, how can I help?")
+    bridge._prewarm_bundle = SimpleNamespace(
+        greeting_wire_frames=[], greeting_text="Hello, how can I help?", greeting_usage=None,
+    )
     bridge._provider_hangup = AsyncMock()
     bridge._cleanup = AsyncMock()
 

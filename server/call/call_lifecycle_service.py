@@ -412,6 +412,14 @@ class CallLifecycleService:
             if ctx:
                 ctx.components["audio"] = "failed"
         await enqueue_post_call(call_id)
+        try:
+            from server.config.env import get_settings
+            from server.services.saas.billing_wallet_service import bill_pstn_call_if_applicable
+
+            if get_settings().saas_auth_enabled:
+                asyncio.create_task(bill_pstn_call_if_applicable(call_id))
+        except Exception as e:
+            logger.warning(f"[CALL] wallet bill skipped {call_id}: {str(e)[:120]}")
 
     def _accepted_payload(self, call_id: str, status: str) -> dict[str, Any]:
         return {

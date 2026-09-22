@@ -51,20 +51,24 @@ class AgentService:
             await session.refresh(agent)
             return self._row_to_dict(agent)
 
-    async def list_agents(self) -> list[dict[str, Any]]:
+    async def list_agents(self, tenant_id: str | None = None) -> list[dict[str, Any]]:
         factory = get_session_factory()
         if factory is None:
             if not _MEM_AGENTS:
                 await self.ensure_default_agent()
-            return [a for a in _MEM_AGENTS.values() if a.get("status") != "archived"]
+            agents = [a for a in _MEM_AGENTS.values() if a.get("status") != "archived"]
+            if tenant_id:
+                agents = [a for a in agents if a.get("tenant_id") == tenant_id]
+            return agents
 
         async with factory() as session:
-            result = await session.execute(
-                select(Agent).where(Agent.status != "archived").order_by(Agent.created_at)
-            )
+            q = select(Agent).where(Agent.status != "archived")
+            if tenant_id:
+                q = q.where(Agent.tenant_id == uuid.UUID(tenant_id))
+            result = await session.execute(q.order_by(Agent.created_at))
             return [self._row_to_dict(r) for r in result.scalars()]
 
-    async def get_agent(self, agent_id: str) -> dict[str, Any]:
+    async def get_agent(self, agent_id: str, tenant_id: str | None = None) -> dict[str, Any]:
         factory = get_session_factory()
         if factory is None:
             if agent_id in _MEM_AGENTS:
@@ -92,6 +96,8 @@ class AgentService:
             result = await session.execute(select(Agent).where(Agent.agent_id == agent_uuid))
             row = result.scalar_one_or_none()
             if not row:
+                raise KeyError(agent_id)
+            if tenant_id and str(row.tenant_id) != tenant_id:
                 raise KeyError(agent_id)
             return self._row_to_dict(row)
 
@@ -128,7 +134,7 @@ class AgentService:
             await session.commit()
             return self._row_to_dict(agent)
 
-    async def patch_agent(self, agent_id: str, patch: dict[str, Any]) -> dict[str, Any]:
+    async def patch_agent(self, agent_id: str, patch: dict[str, Any], tenant_id: str | None = None) -> dict[str, Any]:
         from server.prompts.agent_voice_rules import normalize_compile_language
 
         factory = get_session_factory()
@@ -136,7 +142,7 @@ class AgentService:
             cleaned = [str(x).strip() for x in patch["languages"] if str(x).strip()]
             patch["languages"] = [normalize_compile_language(cleaned[0])] if cleaned else ["te-IN"]
         if factory is None:
-            agent = await self.get_agent(agent_id)
+            agent = await self.get_agent(agent_id, tenant_id=tenant_id)
             agent.update({k: v for k, v in patch.items() if v is not None})
             _MEM_AGENTS[agent_id] = agent
             return agent
@@ -145,6 +151,8 @@ class AgentService:
             result = await session.execute(select(Agent).where(Agent.agent_id == uuid.UUID(agent_id)))
             row = result.scalar_one_or_none()
             if not row:
+                raise KeyError(agent_id)
+            if tenant_id and str(row.tenant_id) != tenant_id:
                 raise KeyError(agent_id)
             for key in ("name", "status", "default_tier", "memory_schema", "active_compiled_brain_version"):
                 if key in patch and patch[key] is not None:
@@ -156,12 +164,12 @@ class AgentService:
             await session.refresh(row)
             return self._row_to_dict(row)
 
-    async def delete_agent(self, agent_id: str) -> dict[str, Any]:
+    async def delete_agent(self, agent_id: str, tenant_id: str | None = None) -> dict[str, Any]:
         from server.agent.instruction_store import instruction_store
         from server.services.runtime_settings import runtime_settings
         from server.services.session_persist import session_persist
 
-        await self.get_agent(agent_id)
+        await self.get_agent(agent_id, tenant_id=tenant_id)
         archived = False
         factory = get_session_factory()
         if factory is None:
@@ -173,6 +181,8 @@ class AgentService:
                 result = await session.execute(select(Agent).where(Agent.agent_id == uuid.UUID(agent_id)))
                 row = result.scalar_one_or_none()
                 if not row:
+                    raise KeyError(agent_id)
+                if tenant_id and str(row.tenant_id) != tenant_id:
                     raise KeyError(agent_id)
                 try:
                     await session.delete(row)

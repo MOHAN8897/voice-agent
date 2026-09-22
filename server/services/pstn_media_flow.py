@@ -264,6 +264,11 @@ class PstnMediaFlowStore:
         # STT capture occurs before llm_started; use the most recent final and
         # nearest preceding audio evidence, never a greeting's TTS events.
         before = events[:turn_start]
+        previous_start = starts[-2] if len(starts) > 1 else -1
+        for event in reversed(events[previous_start + 1:turn_start]):
+            if event.get("stage") == "vad_speech_stopped":
+                first["vad_speech_stopped"] = float(event.get("timestamp") or 0)
+                break
         for i in range(len(before) - 1, -1, -1):
             if before[i].get("stage") == "stt_final":
                 first["stt_final"] = float(before[i].get("timestamp") or 0)
@@ -281,6 +286,8 @@ class PstnMediaFlowStore:
             return round((first[end] - first[start]) * 1000)
 
         return {
+            # Measured after OpenAI detects turn end; excludes the VAD wait.
+            "vad_stop_to_first_audio_ms": delta("vad_speech_stopped", "outbound_sent"),
             "stt_final_to_llm_ms": delta("stt_final", "llm_started"),
             "stt_final_to_first_audio_ms": delta("stt_final", "outbound_sent"),
             "stt_final_ms": delta("stt_audio", "stt_final"),

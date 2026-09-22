@@ -34,6 +34,12 @@ from server.routes.benchmarks import router as benchmarks_router
 from server.routes.ws import router as ws_router
 from server.routes.calls import router as calls_router
 from server.routes.auth import router as auth_router
+from server.routes.app_auth import router as app_auth_router
+from server.routes.app_telephony import router as app_telephony_router
+from server.routes.stripe_webhook import router as stripe_webhook_router
+from server.routes.dev_admin import router as dev_admin_router
+from server.routes.app_billing import router as app_billing_router
+from server.routes.app_leads import router as app_leads_router
 from server.routes.dev_stack import router as dev_stack_router
 from server.routes.dev_environment import router as dev_environment_router
 from server.routes.dev_audit import router as dev_audit_router
@@ -144,9 +150,48 @@ async def lifespan(app: FastAPI):
             logger.info("[VOICE] Cartesia voice catalog warmed")
         except Exception as e:
             logger.warning(f"[VOICE] Cartesia voice warm skipped: {e}")
+        provision_task = None
+        try:
+            import asyncio
+
+            from server.config.env import get_settings as _gs_prov
+
+            if _gs_prov().database_url:
+
+                async def _provision_worker_loop() -> None:
+                    while True:
+                        try:
+                            from server.services.saas.provision_worker import process_one_job
+
+                            from server.services.saas.reservation_cleanup import purge_expired_reservations
+                            from server.services.saas.teardown_worker import process_one_teardown
+
+                            did_prov = await process_one_job()
+                            did_teardown = await process_one_teardown()
+                            await purge_expired_reservations()
+                            if not did_prov and not did_teardown:
+                                await asyncio.sleep(5)
+                            else:
+                                await asyncio.sleep(0.5)
+                        except asyncio.CancelledError:
+                            break
+                        except Exception as loop_err:
+                            logger.warning(f"[VOICE] Provision worker: {loop_err}")
+                            await asyncio.sleep(5)
+
+                provision_task = asyncio.create_task(_provision_worker_loop())
+                app.state.saas_provision_task = provision_task
+        except Exception as e:
+            logger.warning(f"[VOICE] SaaS provision worker not started: {e}")
     except ConfigError as e:
         logger.warning(f"[VOICE] Config invalid at startup: {e}. /api/health will report. Set .env and restart.")
     yield
+    try:
+        task = getattr(app.state, "saas_provision_task", None)
+        if task:
+            task.cancel()
+    except Exception:
+        pass
     # Shutdown: close pooled HTTP clients
     try:
         from server.db import close_db
@@ -170,10 +215,16 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS — allow local dev
+def _cors_origins_list() -> list[str]:
+    raw = (get_settings().cors_origins or "").strip()
+    if raw:
+        return [o.strip() for o in raw.split(",") if o.strip()]
+    return ["*"]
+
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_cors_origins_list(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -288,6 +339,12 @@ app.include_router(agents_business_brain_router)
 app.include_router(benchmarks_router)
 app.include_router(calls_router)
 app.include_router(auth_router)
+app.include_router(app_auth_router)
+app.include_router(app_telephony_router)
+app.include_router(stripe_webhook_router)
+app.include_router(dev_admin_router)
+app.include_router(app_billing_router)
+app.include_router(app_leads_router)
 app.include_router(dev_stack_router)
 app.include_router(dev_environment_router)
 app.include_router(dev_audit_router)

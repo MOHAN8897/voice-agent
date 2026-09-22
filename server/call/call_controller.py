@@ -58,10 +58,11 @@ CALL_ACTION_TOOL = {
     "type": "function",
     "name": "call_action",
     "description": (
-        "Report conversational intent before speaking a final response. END_CALL for a clear "
-        "refusal or completed conversation; CALLBACK only for an explicitly requested callback. "
-        "A withdrawal overrides an earlier callback. Do not end for a bare okay/thanks, a pause, "
-        "or a follow-up question. The application plays response and owns hangup/transfer. "
+        "Report conversational intent before speaking a final response. "
+        "Follow CALL END POLICY for hangup — do not treat a completed pitch, enough-known details, "
+        "or a bare okay/thanks as END_CALL. CALLBACK only for an explicitly requested callback. "
+        "A withdrawal overrides an earlier callback. Do not end for a pause or a follow-up question. "
+        "The application plays the response; end_call owns disconnect. "
         "Wait for the tool result; never claim an unavailable transfer or unconfirmed callback."
     ),
     "parameters": {

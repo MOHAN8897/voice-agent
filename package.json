@@ -10,6 +10,7 @@
     "dev:up": "powershell -ExecutionPolicy Bypass -File scripts/dev_up.ps1 -KillStale -Wait",
     "dev:api": "python -m uvicorn server.app:app --host 127.0.0.1 --port 8000 --reload --reload-dir server",
     "dev:web": "npm run dev --prefix web -- -p 3000",
+    "dev:voxly": "npm run dev --prefix voxly-ai",
     "dev:local": "powershell -ExecutionPolicy Bypass -File scripts/dev_stack.ps1 -KillStale -Mode local",
     "dev:full": "powershell -ExecutionPolicy Bypass -File scripts/dev_stack.ps1 -KillStale -Mode telephony",
     "dev:tunnel": "powershell -ExecutionPolicy Bypass -File scripts/tunnel_cloudflared.ps1",

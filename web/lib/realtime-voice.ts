@@ -1,9 +1,9 @@
 export const DEFAULT_REALTIME_VOICE = "marin";
 export const DEFAULT_REALTIME_TURN_DETECTION = "semantic_vad";
-export const DEFAULT_REALTIME_VAD_EAGERNESS = "medium";
+export const DEFAULT_REALTIME_VAD_EAGERNESS = "high";
 export const DEFAULT_REALTIME_NOISE_REDUCTION = "far_field";
 export const DEFAULT_REALTIME_SPEED = 1;
-export const DEFAULT_REALTIME_SILENCE_MS = 500;
+export const DEFAULT_REALTIME_SILENCE_MS = 250;
 
 export const REALTIME_MODEL_IDS = [
   "gpt-realtime-2.1-mini",

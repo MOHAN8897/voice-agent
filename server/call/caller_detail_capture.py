@@ -40,6 +40,7 @@ _JUNK_NAME_WORDS = frozenset(
         "interested",
         "busy",
         "here",
+        "there",
         "not",
         "i",
         "i'm",
@@ -53,6 +54,17 @@ _JUNK_NAME_WORDS = frozenset(
         "hey",
         "hallo",
         "who",
+        "sleeping",
+        "sleep",
+        "guessing",
+        "understood",
+        "going",
+        "done",
+        "good",
+        "fine",
+        "sorry",
+        "calling",
+        "nothing",
     }
 )
 

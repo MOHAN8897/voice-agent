@@ -3,7 +3,7 @@ Metrics & Prompt transparency — server/routes/metrics.py
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
 from server.agent.brain_prompt_composer import (
     compose_brain_prompt_sections,
@@ -18,6 +18,7 @@ from server.config.env import get_settings
 from server.services.brain_budget import resolve_brain_budget
 from server.services.prompt_cache_key import cache_eligible
 from server.services.prompt_cache_tracker import prompt_cache_tracker
+from server.auth.calls_tenant import resolve_calls_tenant_id
 from server.auth.tenant_context import tenant_id_from_request
 from server.call.call_store import call_store
 from server.utils.metrics import metrics
@@ -26,19 +27,22 @@ router = APIRouter()
 
 
 @router.get("/api/metrics/calls/{call_id}")
-async def call_metrics(call_id: str):
+async def call_metrics(call_id: str, scoped_tenant: str = Depends(resolve_calls_tenant_id)):
     from server.call.call_ledger import call_ledger
-    from server.call.call_store import call_store
     from server.call.memory_manager import memory_manager
 
     stored = await call_store.get(call_id)
     if stored is None and not call_ledger.meta_path(call_id).exists():
-        from fastapi import HTTPException
-
         raise HTTPException(
             status_code=404,
             detail={"error": {"code": "not_found", "message": "Call not found"}},
         )
+    if get_settings().saas_auth_enabled and stored:
+        if str(stored.get("tenant_id") or "") != scoped_tenant:
+            raise HTTPException(
+                status_code=404,
+                detail={"error": {"code": "not_found", "message": "Call not found"}},
+            )
     trace = call_ledger.read_trace(call_id)
     turns = trace.get("turns") or []
     memory_ops = sum(int(t.get("memory_ops_applied") or 0) for t in turns)
@@ -71,9 +75,11 @@ async def get_metrics():
 
 
 @router.get("/api/analytics/fleet")
-async def fleet_analytics(request: Request, limit: int = Query(500, ge=1, le=500)):
+async def fleet_analytics(
+    limit: int = Query(500, ge=1, le=500),
+    tenant_id: str = Depends(resolve_calls_tenant_id),
+):
     """Aggregate call-archive metrics for fleet analytics (tenant-scoped)."""
-    tenant_id = tenant_id_from_request(request)
     items, total = await call_store.list_calls(tenant_id=tenant_id, limit=limit)
     dispositions: dict[str, int] = {}
     channels: dict[str, int] = {}

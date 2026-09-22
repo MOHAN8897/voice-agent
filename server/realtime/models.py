@@ -42,10 +42,10 @@ REALTIME_VOICES: tuple[str, ...] = (
 REALTIME_TURN_DETECTION: tuple[str, ...] = ("semantic_vad", "server_vad")
 REALTIME_VAD_EAGERNESS: tuple[str, ...] = ("low", "medium", "high", "auto")
 REALTIME_NOISE_REDUCTION: tuple[str, ...] = ("near_field", "far_field", "off")
-DEFAULT_REALTIME_VAD_EAGERNESS = "medium"
+DEFAULT_REALTIME_VAD_EAGERNESS = "high"
 DEFAULT_REALTIME_NOISE_REDUCTION = "far_field"
 DEFAULT_REALTIME_SPEED = 1.0
-DEFAULT_REALTIME_SILENCE_MS = 500
+DEFAULT_REALTIME_SILENCE_MS = 250
 PIPELINE_MODES: tuple[str, ...] = ("classic", "realtime_text", "realtime_voice")
 
 END_CALL_REASONS: tuple[str, ...] = (
@@ -60,17 +60,18 @@ END_CALL_TOOL: dict[str, Any] = {
     "type": "function",
     "name": "end_call",
     "description": (
-        "Judge the call and hang up when appropriate. Call this in the SAME turn as your "
-        "spoken farewell. Use firm_refusal when the caller is not interested; goodbye when "
-        "they say bye/don't-call/that's-all; goal_complete when the script objective is done "
-        "(details collected + next step set, e.g. team will contact them). "
-        "Use goodbye for 'can you cut the call please'. For 'call me later/again/tomorrow', "
-        "'contact me tomorrow', or 'record my name and phone number', first ensure callback "
-        "phone and caller name are known, asking one missing detail per turn. Only then use "
-        "goal_complete after confirming that our team will call; never invent a manager. Put the complete short closing line "
-        "with confirmation, thanks, and goodbye in farewell; the server "
-        "speaks it before disconnecting even if you produce only this tool call. "
-        "Do NOT call for information questions, uncertainty, or busy without an end/callback request."
+        "Judge the call and hang up when the caller has confirmed they are done. "
+        "Call this in the SAME turn as your spoken farewell. "
+        "Use firm_refusal when they are not interested; goodbye when they say bye/hang up/"
+        "cut the call/that's-all/don't-call/'can you call this call' (ASR for cut)/I'm sleeping/"
+        "I have to go. Use goal_complete only after they confirmed a callback/visit and any "
+        "name/phone they asked you to record is captured — never on okay/thanks alone. "
+        "For 'call me tomorrow' or 'record my name and phone', ask only a still-missing field, "
+        "then confirm and close. Never invent a manager. "
+        "The server waits after farewell and disconnects only if they stay silent; "
+        "if they speak again, stay on the line. "
+        "Do NOT call for information questions, uncertainty, busy without an end/callback, "
+        "or a bare okay/thanks."
     ),
     "parameters": {
         "type": "object",

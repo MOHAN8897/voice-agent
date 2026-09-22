@@ -32,7 +32,9 @@ $env:Path = $env:Path + ";" + [System.Environment]::GetEnvironmentVariable("Path
     [System.Environment]::GetEnvironmentVariable("Path", "User")
 
 $WebUrl = "http://127.0.0.1:3000"
+$VoxlyUrl = "http://127.0.0.1:5173"
 $ApiUrl = "http://127.0.0.1:8000"
+$VoxlyRoot = Join-Path $RepoRoot "voxly-ai"
 $DevLoginUrl = "$WebUrl/dev/login"
 $TestStudioUrl = "$WebUrl/dev/test-studio"
 $AppLoginUrl = "$WebUrl/app/login"
@@ -41,12 +43,13 @@ $MarketingUrl = "$WebUrl/"
 function Write-DevBanner {
     param(
         [bool]$ApiOk,
-        [bool]$WebOk
+        [bool]$WebOk,
+        [bool]$VoxlyOk = $false
     )
     Write-Host ""
     Write-Host "============================================================"
     if ($ApiOk -and $WebOk) {
-        Write-Host "  Voice agent - local dev is running"
+        Write-Host "  Voice agent - local dev is running (API + dev portal + Voxly)"
     } else {
         Write-Host "  Voice agent - dev start incomplete"
     }
@@ -59,6 +62,12 @@ function Write-DevBanner {
         Write-Host "  Test Studio           $TestStudioUrl"
         Write-Host "  Business app login    $AppLoginUrl"
         Write-Host "    credentials: e2e / e2e-test"
+        if ($VoxlyOk) {
+            Write-Host "  Voxly marketing+console $VoxlyUrl"
+            Write-Host "    subscriber auth: /api/auth/* (JWT + HttpOnly refresh cookie)"
+        } else {
+            Write-Host "  Voxly                 NOT RUNNING (see voxly.log)"
+        }
     } else {
         Write-Host "  Website               NOT RUNNING"
         Write-Host "  Check the 'Voice Agent Web' window or: $LogDir\web.log"
@@ -93,6 +102,7 @@ if ($KillStale) {
 
 $apiOk = $false
 $webOk = $false
+$voxlyOk = $false
 
 if (-not $WebOnly) {
     Write-Host "Starting API on $ApiUrl"
@@ -171,7 +181,23 @@ if (-not $ApiOnly) {
     $webOk = $true
 }
 
-Write-DevBanner -ApiOk $apiOk -WebOk $webOk
+if (-not $ApiOnly -and (Test-Path $VoxlyRoot) -and $apiOk) {
+    if (-not (Test-Path (Join-Path $VoxlyRoot "node_modules"))) {
+        Write-Host "Installing Voxly dependencies (first run)..."
+        Push-Location $VoxlyRoot
+        try {
+            & $npm install
+            if ($LASTEXITCODE -ne 0) { throw "Voxly dependency installation failed." }
+        } finally { Pop-Location }
+    }
+    Write-Host "Starting Voxly on $VoxlyUrl"
+    Start-DevWindow -Title "Voxly AI" -WorkingDir $VoxlyRoot `
+        -Command "& '$npm' run dev" `
+        -LogFile (Join-Path $LogDir "voxly.log")
+    $voxlyOk = Wait-ForService -Label "Voxly" -Url $VoxlyUrl -MaxAttempts 60
+}
+
+Write-DevBanner -ApiOk $apiOk -WebOk $webOk -VoxlyOk $voxlyOk
 
 if ($Open -and $webOk) {
     Write-Host "Opening dev portal in browser..."

@@ -1,0 +1,89 @@
+# ==============================================================================
+# VOXLY AI - SYSTEM & DEPENDENCY REQUIREMENTS
+# ==============================================================================
+# Project: Voxly AI - Interactive 3D AI Employee Platform
+# Repository: https://github.com/saiskm115/voxly-ai
+# Build System: Vite + React 18 + Three.js / React Three Fiber
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. CORE SYSTEM PREREQUISITES
+# ------------------------------------------------------------------------------
+# Ensure you have the following installed on your operating system:
+#
+# - Node.js:  v18.0.0 or higher (v20.x LTS or v22.x LTS recommended)
+#             Download: https://nodejs.org/
+# - npm:      v9.0.0 or higher (comes bundled with Node.js)
+#             Alternative package managers: pnpm (>= 8.0) or yarn (>= 1.22)
+# - OS:       Windows 10/11, macOS 11+, or Linux (Ubuntu 20.04+, Debian, Fedora, Arch)
+# - Browser:  Any modern browser with WebGL2 & Web Audio API support
+#             (Chrome >= 90, Edge >= 90, Firefox >= 88, Safari >= 15)
+
+# ------------------------------------------------------------------------------
+# 2. RUNTIME DEPENDENCIES (package.json - dependencies)
+# ------------------------------------------------------------------------------
+# These packages provide the application UI, 3D WebGL rendering, and animations:
+#
+react@^18.3.1
+react-dom@^18.3.1
+three@^0.173.0
+@react-three/fiber@^8.17.14
+@react-three/drei@^9.121.4
+lucide-react@^0.475.0
+gsap@^3.12.7
+canvas-confetti@^1.9.4
+
+# ------------------------------------------------------------------------------
+# 3. DEVELOPMENT DEPENDENCIES (package.json - devDependencies)
+# ------------------------------------------------------------------------------
+# These packages power the development server, JSX compilation, and styling:
+#
+vite@^6.1.0
+@vitejs/plugin-react@^4.3.4
+@types/react@^18.3.18
+@types/react-dom@^18.3.5
+tailwindcss@^3.4.17
+postcss@^8.5.2
+autoprefixer@^10.4.20
+
+# ------------------------------------------------------------------------------
+# 4. 3D ASSETS & HARDWARE REQUIREMENTS
+# ------------------------------------------------------------------------------
+# - 3D Model: public/models/VoxlyBot_AIEmployee_Interactive.glb (2.12 MB)
+#   Embedded features:
+#   * 20-Bone Kinematic Rig (Root, Body, Head, Arms, Forearms, Hands, Fingers)
+#   * Symmetrical resting arm poses & forward-facing circular palm glow insets
+#   * 17 Facial morph targets (Blink, HappyEyes, SquintEyes, MouthSmile, MouthOpen, etc.)
+#   * 15 Baked skeletal animations & audio-responsive procedural controller
+# - GPU: Any integrated or dedicated GPU supporting WebGL 2.0 (Intel Iris/UHD, AMD Radeon, NVIDIA GeForce, Apple Silicon)
+
+# ------------------------------------------------------------------------------
+# 5. OPTIONAL PYTHON DEPENDENCIES (Only for scripts/generate_hero_tts.py)
+# ------------------------------------------------------------------------------
+# If you wish to regenerate or modify the offline TTS audio clips in public/audio/:
+# - Python >= 3.10
+# - gTTS >= 2.5.0
+# - edge-tts >= 6.1.0
+
+# ------------------------------------------------------------------------------
+# 6. QUICK START GUIDE (RUN SERVER IMMEDIATELY)
+# ------------------------------------------------------------------------------
+# OPTION A: Automatic 1-Click Launch (Windows)
+#   Double click "run_server.bat" or open cmd/PowerShell and run:
+#   .\run_server.bat
+#
+# OPTION B: Manual Setup via Terminal
+#   Step 1: Install all dependencies:
+#     npm install
+#
+#   Step 2: Start the interactive development server:
+#     npm run server
+#     (or: npm run dev)
+#
+#   Step 3: Open your browser at:
+#     http://localhost:5173
+#     (Note: If port 5173 is in use, Vite will automatically use http://localhost:5174)
+#
+#   Step 4: Build for production deployment (optional):
+#     npm run build
+#     npm run preview
