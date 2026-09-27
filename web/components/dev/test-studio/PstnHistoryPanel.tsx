@@ -17,6 +17,13 @@ import { cn } from "@/lib/cn";
 
 const PAGE_SIZE = 5;
 
+function voiceModelCostLabel(row: DevTelephonyHistoryRow): string {
+  const model = String(row.cost?.llm_model || (row.usage as { llm_model?: string } | undefined)?.llm_model || "").toLowerCase();
+  if (model.includes("gemini")) return "Gemini Live";
+  if (model.includes("gpt-realtime") || model.includes("realtime")) return "OpenAI Realtime";
+  return "Voice model";
+}
+
 function historyToMeta(row: DevTelephonyHistoryRow): CallMeta {
   const ledger = (row.ledger_meta || {}) as CallMeta;
   const usage = (ledger.usage || row.usage || {}) as CallMeta["usage"];
@@ -85,6 +92,30 @@ export function PstnHistoryPanel({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [selected]);
+
+  useEffect(() => {
+    if (!selected?.history_id) return;
+    const outcome = selected.outcome as { summary_en?: string; generation_ok?: boolean } | undefined;
+    if (outcome?.summary_en?.trim()) return;
+    let cancelled = false;
+    let attempts = 0;
+    const poll = async () => {
+      attempts += 1;
+      const r = await portalFetch("dev", `/api/dev/telephony/history/${selected.history_id}`);
+      if (!r.ok || cancelled) return;
+      const j = await r.json();
+      const row = (j.history as DevTelephonyHistoryRow) || selected;
+      setSelected(row);
+      const next = row.outcome as { summary_en?: string } | undefined;
+      if (next?.summary_en?.trim() || attempts >= 20) return;
+      timer = window.setTimeout(() => void poll(), 1500);
+    };
+    let timer = window.setTimeout(() => void poll(), 400);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [selected?.history_id, (selected?.outcome as { summary_en?: string } | undefined)?.summary_en]);
 
   async function openDetail(row: DevTelephonyHistoryRow) {
     setSelected(row);
@@ -227,7 +258,12 @@ export function PstnHistoryPanel({
                 <MetaCell label="Route" value={`${selected.from_e164 || "—"} → ${selected.to_e164 || "—"}`} mono />
                 <MetaCell label="Pipeline" value={pipelineLabel(selected.pipeline, "pstn")} />
                 <MetaCell label="Status" value={selected.status || "—"} />
-                <MetaCell label="Duration" value={formatDuration(selected.duration_sec ?? undefined)} />
+                <MetaCell
+                  label="Duration"
+                  value={formatDuration(
+                    historyToMeta(selected).duration_sec ?? selected.duration_sec ?? undefined,
+                  )}
+                />
                 <MetaCell label="Placed" value={selected.placed_at ? new Date(selected.placed_at).toLocaleString() : "—"} />
                 <MetaCell label="Answered" value={selected.answered_at ? new Date(selected.answered_at).toLocaleString() : "—"} />
                 <MetaCell label="Ended" value={selected.ended_at ? new Date(selected.ended_at).toLocaleString() : "—"} />
@@ -249,13 +285,25 @@ export function PstnHistoryPanel({
             <div className="mt-4 rounded-xl border border-surface-border-subtle p-3">
               <p className="font-mono text-[10px] uppercase tracking-wider text-text-subtle">Cost breakdown</p>
               <div className="mt-2 grid gap-2 sm:grid-cols-3">
-                <CostCell label="OpenAI Realtime" inr={selected.cost?.model_cost_inr} usd={selected.cost?.model_cost_usd} />
+                <CostCell label={voiceModelCostLabel(selected)} inr={selected.cost?.model_cost_inr} usd={selected.cost?.model_cost_usd} />
                 <CostCell label="Telnyx minutes" inr={selected.cost?.telnyx_inr} usd={selected.cost?.telnyx_usd} />
                 <CostCell label="Total" inr={selected.cost?.cost_inr} usd={selected.cost?.cost_usd} accent />
               </div>
               {selected.cost?.cost_inr_per_min != null ? (
                 <p className="mt-2 text-xs text-text-muted">
-                  Effective rate {formatInr(Number(selected.cost.cost_inr_per_min))}/min
+                  All-in {formatInr(Number(selected.cost.cost_inr_per_min))}/min (model + Telnyx)
+                  {selected.cost.model_cost_inr_per_min != null
+                    ? ` · model ${formatInr(Number(selected.cost.model_cost_inr_per_min))}/min`
+                    : ""}
+                  {selected.cost.telnyx_inr_per_min != null
+                    ? ` · Telnyx ${formatInr(Number(selected.cost.telnyx_inr_per_min))}/min`
+                    : ""}
+                </p>
+              ) : null}
+              {selected.cost?.gemini_list_audio_inr_per_min != null ? (
+                <p className="mt-1 text-xs text-text-muted">
+                  Gemini list audio {formatInr(Number(selected.cost.gemini_list_audio_inr_per_min))}/min
+                  {" "}($0.005 in + $0.018 out) — not the all-in session rate
                 </p>
               ) : null}
             </div>

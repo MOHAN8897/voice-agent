@@ -4,15 +4,18 @@ import { SkeuoPanel } from "@/components/ui/skeuo/SkeuoPanel";
 import { cn } from "@/lib/cn";
 import {
   cacheEventLabel,
-  costTelnyxUsd,
+  costTelnyxBreakdown,
+  telnyxDestinationCountryFromE164,
   estimateTurnCost,
   formatInr,
   formatUsd,
   perMinute,
+  PRICING,
   splitLlmTokens,
   type CacheEvent,
   type PricingMeta,
 } from "@/lib/usage-cost";
+import { isGeminiLiveVoiceModel } from "@/lib/realtime-voice";
 
 export type TurnMetricRow = {
   turn: number;
@@ -58,6 +61,7 @@ export type StampedSessionUsage = {
   modelCostInr?: number;
   telnyxUsd?: number;
   telnyxInr?: number;
+  telnyxDestinationCountry?: string;
   totalUsd?: number;
   totalInr?: number;
 };
@@ -131,6 +135,7 @@ export function TestStudioTurnMetrics({
   pricing,
   sessionDurationMs = 0,
   callDirection = "outbound",
+  telnyxDestinationE164,
   stampedUsage,
   sessionEnded = false,
 }: {
@@ -145,6 +150,8 @@ export function TestStudioTurnMetrics({
   pricing?: PricingMeta | null;
   sessionDurationMs?: number;
   callDirection?: "inbound" | "outbound";
+  /** PSTN callee E.164 — used for India vs US SIP estimate. */
+  telnyxDestinationE164?: string;
   stampedUsage?: StampedSessionUsage | null;
   sessionEnded?: boolean;
 }) {
@@ -166,13 +173,22 @@ export function TestStudioTurnMetrics({
     outputAudioTokens: e2e ? sessionTotal.llmAudioOutput : 0,
     meta: pricing,
   });
-  const wallSec = Math.max(
-    stampedUsage?.durationSec ?? 0,
-    sessionDurationMs / 1000,
-    sessionTotal.sttAudioSec,
-    0
-  );
-  const estimatedTelnyxUsd = pstn ? costTelnyxUsd(wallSec, callDirection, pricing) : 0;
+  const connectedSec = sessionDurationMs / 1000;
+  const wallSec =
+    sessionEnded && stampedUsage?.durationSec != null && stampedUsage.durationSec > 0
+      ? stampedUsage.durationSec
+      : Math.max(stampedUsage?.durationSec ?? 0, connectedSec, e2e ? 0 : sessionTotal.sttAudioSec, 0);
+  const telnyxDestCountry =
+    stampedUsage?.telnyxDestinationCountry ??
+    telnyxDestinationCountryFromE164(telnyxDestinationE164);
+  const telnyxLiveEstimate = pstn
+    ? costTelnyxBreakdown(wallSec, callDirection, pricing, {
+        mediaStreaming: true,
+        callRecording: true,
+        destinationCountry: telnyxDestCountry,
+      })
+    : null;
+  const estimatedTelnyxUsd = telnyxLiveEstimate?.totalUsd ?? 0;
   const modelUsd = stampedUsage?.modelCostUsd ?? sessionCost.totalUsd;
   const modelInr = stampedUsage?.modelCostInr ?? sessionCost.totalInr;
   const telnyxUsd = stampedUsage?.telnyxUsd ?? estimatedTelnyxUsd;
@@ -190,7 +206,7 @@ export function TestStudioTurnMetrics({
         title="Usage per turn"
         description={
           mode === "pstn_realtime"
-            ? "Session clock · OpenAI audio in/out tokens · Telnyx call minutes · total ₹"
+            ? "Session clock · Live speech model audio tokens (OpenAI or Gemini) · Telnyx · total ₹"
             : mode === "agent"
             ? "STT chars (user transcript) · TTS chars (LLM reply → speech) · LLM tokens (cache hit vs write)"
             : "Session clock · Sarvam STT/TTS · OpenAI tokens · Telnyx call minutes · total ₹"
@@ -233,7 +249,13 @@ export function TestStudioTurnMetrics({
               <StatCell
                 label="Telnyx"
                 value={formatInr(telnyxInr)}
-                sub={`${(wallSec / 60).toFixed(2)} min · ${callDirection}`}
+                sub={
+                  telnyxLiveEstimate
+                    ? `${(wallSec / 60).toFixed(2)} min · API+SIP${telnyxDestCountry ? ` ${telnyxDestCountry}` : ""}+media${
+                        telnyxLiveEstimate.callRecordingUsd > 0 ? "+rec" : ""
+                      }`
+                    : `${(wallSec / 60).toFixed(2)} min · ${callDirection}`
+                }
               />
               <StatCell
                 label="Per minute"
@@ -319,9 +341,27 @@ export function TestStudioTurnMetrics({
             </p>
           ) : null}
           <p className="font-mono text-[9px] text-text-subtle">
-            FX ₹{sessionCost.fx.toFixed(2)}/$ · {e2e ? "OpenAI Realtime audio E2E" : `STT ${sttProvider}/${sttModel || "default"} · TTS ${ttsProvider}/${ttsModel || "default"}`} · LLM {llmModel}
-            {pstn ? " · Telnyx per connected minute" : ""}
+            FX ₹{sessionCost.fx.toFixed(2)}/$ ·{" "}
+            {e2e
+              ? `Speech-to-speech E2E · ${llmModel}`
+              : `STT ${sttProvider}/${sttModel || "default"} · TTS ${ttsProvider}/${ttsModel || "default"} · LLM ${llmModel}`}
+            {pstn
+              ? " · Telnyx = Voice API + SIP (dest) + WebSocket media (+ recording est.) on connected seconds"
+              : ""}
           </p>
+          {e2e && isGeminiLiveVoiceModel(llmModel) ? (
+            <p className="font-mono text-[9px] text-text-subtle">
+              Gemini model cost uses billed tokens (session-cumulative; context can re-bill). Text{" "}
+              {Math.max(0, sessionTotal.llmInput - sessionTotal.llmAudioInput)} tok · audio{" "}
+              {sessionTotal.llmAudioInput} in / {sessionTotal.llmAudioOutput} out — not call duration ×
+              list audio ₹/min (ref continuous speech ≈ ₹
+              {(
+                (PRICING.geminiLiveAudioInputUsdPerMin + PRICING.geminiLiveAudioOutputUsdPerMin) *
+                sessionCost.fx
+              ).toFixed(2)}
+              /min if speaking both ways the whole time).
+            </p>
+          ) : null}
         </div>
 
         {rows.length === 0 ? (
@@ -436,7 +476,7 @@ export function TestStudioTurnMetrics({
                   <p className="mt-1.5 truncate text-text-muted">You: {r.userText.slice(0, 50)}</p>
                   <div className="mt-1 flex flex-wrap gap-2">
                     <span className={cn("rounded px-1.5 py-0.5 font-mono text-[9px]", cacheTone(event))}>
-                      {cacheEventLabel(event)}
+                      {cacheEventLabel(event, { llmModel })}
                     </span>
                     {(r.memoryOps ?? 0) > 0 && (
                       <span className="rounded bg-accent-primary/10 px-1.5 py-0.5 font-mono text-[9px] text-accent-primary">

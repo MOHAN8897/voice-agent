@@ -71,13 +71,18 @@ def _is_realtime_voice_override(out: dict[str, Any]) -> bool:
 
 
 def _normalize_realtime_voice_override(
-    out: dict[str, Any], adjustments: list[str]
+    out: dict[str, Any],
+    adjustments: list[str],
+    *,
+    language: str = "te-IN",
 ) -> tuple[dict[str, Any], list[str]]:
     """Audio-to-audio Realtime PSTN — no Sarvam STT/TTS; keep OpenAI mini + voice."""
     from server.realtime.models import (
+        DEFAULT_GEMINI_LIVE_MODEL,
         DEFAULT_REALTIME_MODEL,
         DEFAULT_REALTIME_TURN_DETECTION,
         DEFAULT_REALTIME_VOICE,
+        is_gemini_live_voice_model,
         is_realtime_llm_model,
         normalize_realtime_noise_reduction,
         normalize_realtime_silence_ms,
@@ -93,17 +98,25 @@ def _normalize_realtime_voice_override(
     if not isinstance(llm, dict):
         llm = {}
         out["llm"] = llm
-    llm["provider"] = "openai"
+    provider = str(llm.get("provider") or "openai").strip().lower()
     model = str(llm.get("model") or "").strip()
-    if not is_realtime_llm_model(model):
-        llm["model"] = DEFAULT_REALTIME_MODEL
-        adjustments.append("llm.model set to gpt-realtime-2.1-mini for Realtime PSTN")
+    if provider == "gemini" or is_gemini_live_voice_model(model):
+        llm["provider"] = "gemini"
+        if not is_gemini_live_voice_model(model):
+            llm["model"] = DEFAULT_GEMINI_LIVE_MODEL
+            adjustments.append("llm.model set to gemini-3.8-live for Gemini Live PSTN")
+    else:
+        llm["provider"] = "openai"
+        if not is_realtime_llm_model(model):
+            llm["model"] = DEFAULT_REALTIME_MODEL
+            adjustments.append("llm.model set to gpt-realtime-2.1-mini for Realtime PSTN")
     rv = out.get("realtime_voice")
     if not isinstance(rv, dict):
         rv = {}
         out["realtime_voice"] = rv
-    voice = normalize_realtime_voice(rv.get("voice"))
-    if str(rv.get("voice") or "").strip().lower() not in ("", voice):
+    raw_voice = str(rv.get("voice") or "").strip()
+    voice = normalize_realtime_voice(raw_voice)
+    if raw_voice and raw_voice != voice and raw_voice.lower() != str(voice).lower():
         adjustments.append(f"realtime voice replaced with {voice}")
     rv["voice"] = voice or DEFAULT_REALTIME_VOICE
     td = normalize_realtime_turn_detection(rv.get("turn_detection"))
@@ -116,6 +129,10 @@ def _normalize_realtime_voice_override(
     rv["silence_ms"] = normalize_realtime_silence_ms(rv.get("silence_ms"))
     out.pop("stt", None)
     out.pop("tts", None)
+    lang = coerce_supported_language(str(out.get("language") or language or "te-IN"))
+    if str(out.get("language") or "").strip() != lang:
+        adjustments.append(f"language set to {lang} for PSTN realtime")
+    out["language"] = lang
     return out, adjustments
 
 
@@ -137,7 +154,7 @@ def normalize_pstn_stack_override(
     adjustments: list[str] = []
 
     if _is_realtime_voice_override(out):
-        return _normalize_realtime_voice_override(out, adjustments)
+        return _normalize_realtime_voice_override(out, adjustments, language=language)
 
     stt_provider = str(_deep_get(out, "stt", "provider") or "").strip().lower()
     stt_model = str(_deep_get(out, "stt", "model") or "").strip()
@@ -236,13 +253,18 @@ def normalize_pstn_stack_override(
                 if isinstance(cfg, dict):
                     cfg["speaker"] = speaker
 
-    return _finalize_pstn_live_override(out, adjustments)
+    return _finalize_pstn_live_override(out, adjustments, language=language)
 
 
-def _finalize_pstn_live_override(out: dict[str, Any], adjustments: list[str]) -> tuple[dict[str, Any], list[str]]:
-    """PSTN live turns always use OpenAI Realtime + session fine-tune — never dial-time LLM overrides."""
+def _finalize_pstn_live_override(
+    out: dict[str, Any],
+    adjustments: list[str],
+    *,
+    language: str = "te-IN",
+) -> tuple[dict[str, Any], list[str]]:
+    """PSTN realtime_text uses session fine-tune LLM; realtime_voice keeps dial-stack llm + voice."""
     if _is_realtime_voice_override(out):
-        return _normalize_realtime_voice_override(out, adjustments)
+        return _normalize_realtime_voice_override(out, adjustments, language=language)
     if out.get("llm"):
         out.pop("llm", None)
         adjustments.append(

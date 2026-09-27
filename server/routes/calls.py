@@ -97,6 +97,31 @@ async def call_finalization(call_id: str):
         _raise(e)
 
 
+@router.get("/api/call/{call_id}/prompt-preview")
+async def call_prompt_preview(
+    call_id: str,
+    redacted: bool = Query(False),
+    scoped_tenant: str = Depends(resolve_calls_tenant_id),
+):
+    """Actual model instructions for this call (locked brain + live session rules)."""
+    from server.call.call_prompt_preview import get_call_prompt_preview
+
+    try:
+        preview = await get_call_prompt_preview(call_id, redacted=redacted)
+    except AppError as e:
+        _raise(e)
+    settings = get_settings()
+    if settings.saas_auth_enabled:
+        stored = await call_store.get(call_id)
+        tenant = str((stored or {}).get("tenant_id") or "")
+        if tenant and tenant != scoped_tenant:
+            raise HTTPException(
+                status_code=404,
+                detail={"error": {"code": "not_found", "message": "Call not found"}},
+            )
+    return preview
+
+
 @router.get("/api/call/{call_id}")
 async def get_call(call_id: str, scoped_tenant: str = Depends(resolve_calls_tenant_id)):
     try:
@@ -219,7 +244,18 @@ async def get_audio(
             status_code=404,
             detail={"error": {"code": "not_found", "message": "Audio not available"}},
         )
+    serve_path = path
     suffix = path.suffix.lower()
+    if download and kind in ("mix", "mix_clear"):
+        telnyx_mp3 = audio_archive.telnyx_mp3_path(call_id)
+        if telnyx_mp3.is_file() and telnyx_mp3.stat().st_size > 0:
+            serve_path = telnyx_mp3
+            suffix = ".mp3"
+        elif suffix == ".wav":
+            mp3 = await asyncio.to_thread(audio_archive.ensure_conversation_mp3, call_id, path)
+            if mp3 is not None:
+                serve_path = mp3
+                suffix = ".mp3"
     media = {
         ".wav": "audio/wav",
         ".mp3": "audio/mpeg",
@@ -230,11 +266,12 @@ async def get_audio(
         "Cache-Control": "no-store",
         "X-Recording-Source": source,
         "Access-Control-Expose-Headers": "X-Recording-Source",
+        "X-Audio-Encoding": suffix.lstrip("."),
     }
     stem = "conversation" if path.name.startswith("telnyx") else kind
     download_name = f"{call_id}-{stem}{suffix}"
     return FileResponse(
-        path,
+        serve_path,
         media_type=media,
         filename=download_name if download else None,
         headers=headers,

@@ -92,7 +92,7 @@ async def test_edited_script_locks_into_live_brain_and_busts_cache_key(monkeypat
     assert "Never claim to be anyone except Kailash" in after
     assert compute_cache_key(before, 6000) != compute_cache_key(after, 6000)
     svc = CallLifecycleService()
-    version, text = await svc._lock_compiled_brain("any-agent", session_id=sid)
+    version, text, _source = await svc._lock_compiled_brain("any-agent", session_id=sid)
     assert str(version).startswith("session-v")
     assert marker in (text or "")
     assert "Kailash" in (text or "")

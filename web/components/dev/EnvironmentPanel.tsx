@@ -16,6 +16,7 @@ type EnvRow = {
   source?: string;
   editable?: boolean;
   cleared?: boolean;
+  hint?: string;
 };
 
 type EnvGroup = Record<string, EnvRow[]>;
@@ -468,6 +469,30 @@ export function EnvironmentPanel() {
           </div>
         )}
       </DevCard>
+
+      {(groups.llm_defaults || []).length > 0 && (
+        <DevCard
+          title="LLM defaults (.env)"
+          description="Read-only — edit GEMINI_MODEL and VOICE_PIPELINE_MODE in .env; restart API after changes"
+          delayMs={60}
+        >
+          <div className="grid gap-3 sm:grid-cols-2">
+            {(groups.llm_defaults || []).map((row) => (
+              <div
+                key={row.field}
+                className="rounded-xl border border-surface-border-subtle bg-surface-raised p-4"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="font-mono text-xs font-medium text-text">{row.env_name}</p>
+                  <SourceBadge source={row.source || "env"} />
+                </div>
+                <p className="mt-2 font-mono text-sm text-text">{String(row.value ?? "—")}</p>
+                {row.hint ? <p className="mt-2 text-[11px] text-text-subtle">{row.hint}</p> : null}
+              </div>
+            ))}
+          </div>
+        </DevCard>
+      )}
 
       <DevCard title="Provider toggles" description="Enable or disable provider adapters" delayMs={80}>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

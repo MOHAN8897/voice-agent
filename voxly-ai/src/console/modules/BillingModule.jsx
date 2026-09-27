@@ -40,19 +40,22 @@ export function BillingModule() {
   const [amount, setAmount] = useState(wallet.autoRechargeAmountUsd);
   const [serverWallet, setServerWallet] = useState(null);
   const [invoices, setInvoices] = useState([]);
+  const [transactions, setTransactions] = useState([]);
   const [razorpayEnabled, setRazorpayEnabled] = useState(false);
   const [payBusy, setPayBusy] = useState(false);
 
   const refreshBilling = useCallback(async () => {
     try {
-      const [w, inv, cfg] = await Promise.all([
+      const [w, inv, cfg, tx] = await Promise.all([
         api.billing.getWallet(),
         api.billing.listInvoices(),
         api.billing.razorpayConfig(),
+        api.billing.listTransactions(40),
       ]);
       setServerWallet(w);
       setInvoices(inv);
       setRazorpayEnabled(!!cfg?.enabled);
+      setTransactions(tx);
     } catch {
       /* demo wallet fallback */
     }
@@ -286,7 +289,7 @@ export function BillingModule() {
 
             <div className="flex items-baseline gap-3 my-2 flex-wrap">
               <span className="text-3xl sm:text-4xl font-mono font-bold text-[#0F0E17] tracking-tight">
-                {wallet.remainingMinutes.toLocaleString()} min
+              {Number(wallet?.remainingMinutes || 0).toLocaleString()} min
               </span>
               <span className="text-sm font-mono text-[#524E5E]">
                 (${(serverWallet?.balanceUsd ?? wallet.usdEquivalent).toFixed(2)} USD
@@ -295,7 +298,13 @@ export function BillingModule() {
             </div>
 
             <p className="text-xs text-[#524E5E]">
-              Billed at <strong className="text-[#0F0E17] font-semibold">$0.095 per minute</strong> ($0.001583/sec). Zero charges for unanswered or busy calls.
+              PSTN billed at{' '}
+              <strong className="text-[#0F0E17] font-semibold">
+                ₹{Number(serverWallet?.rateInrPerMin ?? wallet.rateInrPerMin ?? 9).toFixed(2)}/min
+              </strong>
+              . Web tests billed at ₹{Number(serverWallet?.webRateInrPerMin ?? wallet.webRateInrPerMin ?? 7).toFixed(2)}/min.
+              Your usage this workspace: ₹{Number(serverWallet?.myUsageInr ?? wallet.myUsageInr ?? 0).toFixed(2)}.
+              Unanswered carrier legs are not billed.
             </p>
           </div>
 
@@ -459,6 +468,39 @@ export function BillingModule() {
       </div>
 
       {/* Paid invoices (Razorpay wallet) */}
+      {transactions.length > 0 && (
+        <SolidCard className="overflow-hidden" padding="p-0">
+          <div className="px-5 py-3 border-b border-[#E4E2EB]">
+            <h3 className="text-xs font-bold text-[#0F0E17]">Usage ledger</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="bg-[#FAF9FD] text-[10px] font-bold text-[#8C879A] uppercase">
+                  <th className="py-2 px-4">When</th>
+                  <th className="py-2 px-4">Kind</th>
+                  <th className="py-2 px-4 font-mono">INR</th>
+                  <th className="py-2 px-4 font-mono">User</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#E4E2EB]">
+                {transactions.map((row) => (
+                  <tr key={row.id}>
+                    <td className="py-2 px-4 font-mono text-[#524E5E]">
+                      {row.createdAt ? new Date(row.createdAt).toLocaleString() : '—'}
+                    </td>
+                    <td className="py-2 px-4">{row.kind}</td>
+                    <td className="py-2 px-4 font-mono">
+                      ₹{(Number(row.amountInrPaise || 0) / 100).toFixed(2)}
+                    </td>
+                    <td className="py-2 px-4 font-mono text-[10px]">{row.userId ? row.userId.slice(0, 8) : '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </SolidCard>
+      )}
       {invoices.length > 0 && (
         <SolidCard padding="p-0" className="overflow-hidden">
           <div className="p-4 border-b border-[#E4E2EB]">

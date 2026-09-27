@@ -42,9 +42,16 @@ _PERMISSIONS: dict[str, FrozenSet[str]] = {
     "app.billing.write": _CUSTOMER_WRITE,
     "app.members.write": _CUSTOMER_WRITE,
     "app.calls.read": APP_READ_ROLES,
-    "app.test_studio": frozenset({ROLE_VOICE_ENGINEER, ROLE_DEVELOPER, ROLE_ADMINISTRATOR, ROLE_PLATFORM_ADMIN}),
-    "app.campaigns.write": frozenset({ROLE_CUSTOMER_ADMIN, ROLE_ADMINISTRATOR, ROLE_DEVELOPER}),
-    "app.integrations": frozenset({ROLE_CUSTOMER_ADMIN, ROLE_ADMINISTRATOR, ROLE_DEVELOPER}),
+    "app.test_studio": frozenset(
+        {ROLE_VOICE_ENGINEER, ROLE_DEVELOPER, ROLE_ADMINISTRATOR, ROLE_PLATFORM_ADMIN, ROLE_CUSTOMER_ADMIN}
+    ),
+    "app.admin": frozenset({ROLE_PLATFORM_ADMIN, ROLE_ADMINISTRATOR}),
+    "app.campaigns.write": frozenset(
+        {ROLE_CUSTOMER_ADMIN, ROLE_ADMINISTRATOR, ROLE_DEVELOPER, ROLE_PLATFORM_ADMIN}
+    ),
+    "app.integrations": frozenset(
+        {ROLE_CUSTOMER_ADMIN, ROLE_ADMINISTRATOR, ROLE_DEVELOPER, ROLE_PLATFORM_ADMIN}
+    ),
 }
 
 

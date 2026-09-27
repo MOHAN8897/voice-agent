@@ -29,13 +29,19 @@ async def send_email(to: str, subject: str, html: str) -> bool:
     return True
 
 
-async def send_verification_email(to: str, verify_url: str) -> bool:
+async def send_verification_email(to: str, verify_url: str, otp_code: str | None = None) -> bool:
+    otp_block = ""
+    if otp_code:
+        otp_block = f"""
+    <p style="font-size:28px;font-weight:bold;letter-spacing:6px;margin:16px 0;">{otp_code}</p>
+    <p>Enter this code in the Voxly sign-in screen. It expires in 15 minutes.</p>
+    """
     html = f"""
     <p>Welcome to Voxly.</p>
-    <p><a href="{verify_url}">Verify your email</a> to activate your account.</p>
-    <p>This link expires in 24 hours.</p>
+    {otp_block}
+    <p>Or verify with this link: <a href="{verify_url}">Confirm email</a></p>
     """
-    return await send_email(to, "Verify your Voxly email", html)
+    return await send_email(to, "Your Voxly verification code", html)
 
 
 async def send_password_reset_email(to: str, reset_url: str) -> bool:

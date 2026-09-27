@@ -43,6 +43,12 @@ export type DevTelephonyHistoryRow = {
     model_cost_inr?: number;
     telnyx_usd?: number;
     telnyx_inr?: number;
+    model_cost_inr_per_min?: number;
+    telnyx_inr_per_min?: number;
+    gemini_list_audio_inr_per_min?: number;
+    fx_rate_inr?: number;
+    fx_source?: string;
+    llm_model?: string;
     pipeline?: string;
     end_reason?: string;
   };

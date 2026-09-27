@@ -6,6 +6,7 @@ import base64
 import json
 import logging
 import time
+import uuid
 from dataclasses import dataclass
 from typing import Any
 
@@ -56,6 +57,43 @@ def _pstn_direction(raw: Any, *, default: str = "outbound") -> str:
     if value in ("inbound", "incoming"):
         return "inbound"
     return default
+
+
+def _resolve_billed_user_id(merged: dict[str, Any]) -> str | None:
+    raw = merged.get("billed_user_id")
+    if not raw:
+        return None
+    try:
+        return str(uuid.UUID(str(raw)))
+    except ValueError:
+        return None
+
+
+async def _billed_user_for_did(e164: str | None) -> str | None:
+    number = str(e164 or "").strip()
+    if not number:
+        return None
+    from sqlalchemy import select
+
+    from server.db.connection import get_session_factory
+    from server.db.models.phase5_models import PhoneNumber
+    from server.db.models.saas_models import NumberPurchase
+
+    factory = get_session_factory()
+    if factory is None:
+        return None
+    async with factory() as session:
+        pn = (
+            await session.execute(
+                select(PhoneNumber).where(PhoneNumber.e164 == number, PhoneNumber.released_at.is_(None))
+            )
+        ).scalar_one_or_none()
+        if pn is None or pn.purchase_id is None:
+            return None
+        purchase = await session.get(NumberPurchase, pn.purchase_id)
+        if purchase and purchase.user_id:
+            return str(purchase.user_id)
+    return None
 
 
 @dataclass(frozen=True)
@@ -309,6 +347,7 @@ class TelnyxPstnBridge:
         if expected_control and expected_control != self.call_control_id:
             raise ValueError("Stream token does not belong to this call")
         self.caller_id = start.get("from") or start.get("caller")
+        self._called_id = start.get("to") or start.get("called")
         media = start.get("media_format") or {}
         raw_codec = str(media.get("encoding") or media.get("codec") or "L16").upper()
         if "L16" in raw_codec:
@@ -395,7 +434,13 @@ class TelnyxPstnBridge:
             raise RuntimeError("No PSTN agent could be resolved")
         self.tier = self.tier or merged_local.get("tier")
         merged_local["agent_id"] = self.agent_id
-        if _pstn_direction(merged_local.get("direction"), default="inbound") == "inbound":
+        if (
+            _pstn_direction(merged_local.get("direction"), default="inbound") == "inbound"
+            and not merged_local.get("stack_override")
+            and merged_local.get("inherit_test_studio_config") is None
+        ):
+            # Dev inbound with no platform/SaaS stack: inherit Test Studio.
+            # Do not force this when SaaS inbound already attached stack_override.
             merged_local["inherit_test_studio_config"] = True
         pstn_opts = pstn_call_options(merged_local)
         self.tier = pstn_opts.get("tier") or self.tier
@@ -425,21 +470,38 @@ class TelnyxPstnBridge:
             if self.agent_id:
                 from server.call.call_lifecycle_service import call_lifecycle_service
 
+                direction = _pstn_direction(merged_local.get("direction"), default="inbound")
+                billed_user_id = _resolve_billed_user_id(merged_local)
+                if not billed_user_id:
+                    did = (
+                        merged_local.get("from")
+                        if direction == "outbound"
+                        else (merged_local.get("to") or getattr(self, "_called_id", None))
+                    )
+                    billed_user_id = await _billed_user_for_did(str(did) if did else None)
                 started = await call_lifecycle_service.start(
                     agent_id=self.agent_id,
                     session_id=f"pstn-telnyx-{self.call_control_id}",
                     config_session_id=pstn_opts.get("config_session_id"),
                     channel="pstn",
-                    direction=_pstn_direction(merged_local.get("direction"), default="inbound"),
+                    direction=direction,
                     tier=self.tier,
                     caller_id=self.caller_id,
                     stack_override=pstn_opts.get("stack_override"),
                     language=str(pstn_opts.get("language") or "te-IN"),
                     realtime_prewarm_key=prewarm.realtime_key if prewarm else None,
+                    billed_user_id=billed_user_id,
                 )
                 self.call_id = started["call_id"]
                 pstn_media_flow.bind_call_id(self.call_control_id or self.ws_id, self.call_id)
                 self.session_id = started["session_id"]
+                callee = str(merged_local.get("to") or getattr(self, "_called_id", "") or "").strip()
+                if callee and self.call_id:
+                    from server.call.call_ledger import call_ledger
+
+                    patch = call_ledger.read_meta(self.call_id) or {}
+                    patch["callee_e164"] = callee
+                    call_ledger.write_meta(self.call_id, patch)
                 mark(self.call_id)
                 log_pstn(
                     "call.started",

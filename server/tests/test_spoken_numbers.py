@@ -87,6 +87,15 @@ def test_opening_line_asks_for_moment_outbound():
     assert "may i know your name" not in line.lower()
 
 
+def test_opening_line_telugu_natural_permission():
+    from server.prompts.agent_voice_rules import opening_line_for
+
+    line = opening_line_for("te-IN", agent_name="Murthi", company_name="Raghava Sales", work_scope="")
+    assert "Murthi" in line
+    assert "konchem time unda" not in line.lower()
+    assert "moment" in line.lower() or "free" in line.lower()
+
+
 def test_opening_line_inbound_offers_help():
     from server.prompts.agent_voice_rules import opening_line_for
 

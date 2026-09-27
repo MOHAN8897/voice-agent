@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { SkeuoPanel } from "@/components/ui/skeuo/SkeuoPanel";
 import { SkeuoButton } from "@/components/ui/skeuo/SkeuoButton";
 import { cn } from "@/lib/cn";
@@ -161,6 +160,29 @@ export function CallAudioPanel({
     setRetry(0);
   }
 
+  const downloadRecording = useCallback(async () => {
+    const downloadKind = conversationOnly ? "mix" : kind;
+    const url = callAudioUrl(callId, downloadKind, true);
+    try {
+      const response = await fetch(url, { credentials: "include", cache: "no-store" });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = objectUrl;
+      anchor.download = `${callId}-conversation.mp3`;
+      anchor.rel = "noopener";
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+  }, [callId, kind]);
+
   const sourceLabel =
     recordingSource === "telnyx"
       ? "Telnyx recording"
@@ -201,19 +223,39 @@ export function CallAudioPanel({
         <SkeuoButton type="button" variant="secondary" size="sm" disabled={failed || (!playing && !paused)} onClick={stopRecording}>
           Stop
         </SkeuoButton>
-        <Link
-          href={callAudioUrl(callId, kind, true)}
-          className="inline-flex items-center rounded-lg border border-surface-border px-3 py-2 text-xs font-medium hover:bg-surface-raised"
+        <SkeuoButton
+          type="button"
+          variant="secondary"
+          size="sm"
+          disabled={failed}
+          onClick={() => void downloadRecording()}
         >
           {conversationOnly ? "Download conversation" : "Download this track"}
-        </Link>
+        </SkeuoButton>
         {!conversationOnly ? (
-          <Link
-            href={callAudioUrl(callId, kind.endsWith("_clear") ? kind : (`${kind}_clear` as AudioKind), true)}
-            className="inline-flex items-center rounded-lg border border-surface-border px-3 py-2 text-xs font-medium hover:bg-surface-raised"
+          <SkeuoButton
+            type="button"
+            variant="secondary"
+            size="sm"
+            disabled={failed}
+            onClick={() => {
+              const clearKind = kind.endsWith("_clear") ? kind : (`${kind}_clear` as AudioKind);
+              void (async () => {
+                const url = callAudioUrl(callId, clearKind, true);
+                const response = await fetch(url, { credentials: "include", cache: "no-store" });
+                if (!response.ok) return;
+                const blob = await response.blob();
+                const objectUrl = URL.createObjectURL(blob);
+                const anchor = document.createElement("a");
+                anchor.href = objectUrl;
+                anchor.download = `${callId}-${clearKind}.wav`;
+                anchor.click();
+                URL.revokeObjectURL(objectUrl);
+              })();
+            }}
           >
             Download clear WAV
-          </Link>
+          </SkeuoButton>
         ) : null}
         <span
           className={cn(

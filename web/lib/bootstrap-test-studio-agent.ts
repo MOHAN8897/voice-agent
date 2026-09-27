@@ -20,6 +20,16 @@ export async function bootstrapTestStudioAgent(agentId: string, language: string
       credentials: "include",
       body: JSON.stringify({ sessionId, sttLanguage: lang }),
     }),
+    fetch("/api/instructions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        sessionId,
+        language_code: lang,
+        reassembleOnly: true,
+      }),
+    }).catch(() => null),
   ]);
   patchPrefsCache(sessionId, { language: lang });
 }

@@ -29,6 +29,7 @@ def _client(monkeypatch, tmp_path):
     monkeypatch.setenv("SARVAM_API_KEY", "sarvam-test")
     monkeypatch.setenv("DATA_DIR", str(tmp_path))
     monkeypatch.setenv("CALL_AUTO_END_ON_START", "true")
+    monkeypatch.setenv("SAAS_AUTH_ENABLED", "false")
     _reset()
     return TestClient(app_mod.app)
 
@@ -262,7 +263,7 @@ async def test_stamp_ended_usage_adds_telnyx_minutes(monkeypatch, tmp_path):
     monkeypatch.setenv("DATA_DIR", str(tmp_path))
     get_settings.cache_clear()
     call_ledger.reset_for_tests()
-    from server.services.usage_pricing import TELNYX_OUTBOUND_USD_PER_MIN
+    from server.services.usage_pricing import cost_telnyx_call_usd, telnyx_estimate_call_recording
 
     cid = "stamp-telnyx"
     await call_ledger.init(
@@ -283,8 +284,50 @@ async def test_stamp_ended_usage_adds_telnyx_minutes(monkeypatch, tmp_path):
     )
     call_ledger.stamp_ended_usage(cid, reason="user_stop", duration_sec=90)
     meta = call_ledger.read_meta(cid)
-    assert meta["usage"]["telnyx_usd"] == pytest.approx(TELNYX_OUTBOUND_USD_PER_MIN * 1.5)
-    assert meta["usage"]["cost_usd"] == pytest.approx(0.03 + TELNYX_OUTBOUND_USD_PER_MIN * 1.5)
+    telnyx_90 = cost_telnyx_call_usd(
+        duration_sec=90,
+        direction="outbound",
+        media_streaming=True,
+        call_recording=telnyx_estimate_call_recording(),
+    )
+    assert meta["usage"]["telnyx_usd"] == pytest.approx(telnyx_90)
+    assert meta["usage"]["telnyx_media_stream_usd"] > 0
+    assert meta["usage"]["cost_usd"] == pytest.approx(0.03 + telnyx_90)
     assert meta["usage"]["duration_sec"] == 90
+    assert meta["usage"]["gst_inr"] == 0.0
+    assert meta["usage"]["model_cost_inr_per_min"] == pytest.approx(0.03 * 95.64 / 1.5)
+    assert meta["usage"]["telnyx_inr_per_min"] == pytest.approx(telnyx_90 * 95.64 / 1.5)
+    assert meta["usage"]["cost_inr_per_min"] == pytest.approx((0.03 + telnyx_90) * 95.64 / 1.5)
+    get_settings.cache_clear()
+
+
+@pytest.mark.asyncio
+async def test_stamp_ended_usage_stamps_gemini_list_audio_rate(monkeypatch, tmp_path):
+    monkeypatch.setenv("DATA_DIR", str(tmp_path))
+    get_settings.cache_clear()
+    call_ledger.reset_for_tests()
+    from server.services.usage_pricing import GEMINI_LIVE_AUDIO_INPUT_USD_PER_MIN, GEMINI_LIVE_AUDIO_OUTPUT_USD_PER_MIN
+
+    cid = "stamp-gemini"
+    await call_ledger.init(
+        cid,
+        {
+            "call_id": cid,
+            "channel": "pstn",
+            "pipeline": "realtime_voice",
+            "direction": "outbound",
+            "usage": {
+                "llm_model": "gemini-3.8-live",
+                "cost_usd": 0.01,
+                "model_cost_usd": 0.01,
+                "fx_rate_inr": 95.64,
+            },
+        },
+    )
+    call_ledger.stamp_ended_usage(cid, reason="user_stop", duration_sec=18)
+    meta = call_ledger.read_meta(cid)
+    listed = GEMINI_LIVE_AUDIO_INPUT_USD_PER_MIN + GEMINI_LIVE_AUDIO_OUTPUT_USD_PER_MIN
+    assert meta["usage"]["gemini_list_audio_inr_per_min"] == pytest.approx(listed * 95.64)
+    assert meta["usage"]["cost_inr_per_min"] != pytest.approx(listed * 95.64)
     get_settings.cache_clear()
 

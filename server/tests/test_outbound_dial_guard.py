@@ -178,3 +178,44 @@ async def test_voice_check_is_replaced_even_when_recent():
         client.hangup.assert_awaited_once_with("ctl-check")
     finally:
         telnyx_call_registry._calls = previous
+
+
+@pytest.mark.asyncio
+async def test_stream_stopped_call_is_not_reused():
+    from server.services.telnyx_client import telnyx_call_registry
+
+    previous = dict(telnyx_call_registry._calls)
+    try:
+        telnyx_call_registry._calls.clear()
+        telnyx_call_registry.upsert(
+            "ctl-stopped",
+            {
+                "to": "+918897908470",
+                "status": "stream-stopped",
+                "call_control_id": "ctl-stopped",
+            },
+        )
+        assert peek_reusable_telnyx_call("+918897908470") is None
+    finally:
+        telnyx_call_registry._calls = previous
+
+
+@pytest.mark.asyncio
+async def test_ended_flag_is_not_reused_even_if_status_still_streaming():
+    from server.services.telnyx_client import telnyx_call_registry
+
+    previous = dict(telnyx_call_registry._calls)
+    try:
+        telnyx_call_registry._calls.clear()
+        telnyx_call_registry.upsert(
+            "ctl-ended",
+            {
+                "to": "+918897908470",
+                "status": "streaming",
+                "ended": True,
+                "call_control_id": "ctl-ended",
+            },
+        )
+        assert peek_reusable_telnyx_call("+918897908470") is None
+    finally:
+        telnyx_call_registry._calls = previous

@@ -19,7 +19,7 @@ async def test_pstn_start_locks_session_brain_via_config_session(monkeypatch):
         source_checksum="pstn-abc",
     )
     svc = CallLifecycleService()
-    version, text = await svc._lock_compiled_brain("any-agent", session_id=sid)
+    version, text, _source = await svc._lock_compiled_brain("any-agent", session_id=sid)
     assert version == "session-v1"
     assert "PSTN inherits" in (text or "")
     instruction_store.clear(sid)

@@ -13,19 +13,15 @@ import {
   IconSettings,
 } from "@/components/ui/skeuo/icons";
 
+/** Slim dev nav — Voxly is the subscriber product; this portal is for agents + Test Studio. */
 const DEV_NAV = [
   { href: "/dev", label: "Overview", icon: "overview" },
-  { href: "/dev/environment", label: "Environment", icon: "settings" },
-  { href: "/dev/stack", label: "Stack & tiers", icon: "rack" },
-  { href: "/dev/runtime", label: "Runtime tuning", icon: "chart" },
-  { href: "/dev/platform-brain", label: "Platform Brain", icon: "settings" },
-  { href: "/dev/compiled", label: "Compiled preview", icon: "chart" },
-  { href: "/dev/providers", label: "Providers", icon: "rack" },
-  { href: "/dev/agents", label: "Agents", icon: "agents" },
+  { href: "/dev/agents", label: "Agents & brain", icon: "agents" },
+  { href: "/dev/saas-phone-stack", label: "SaaS phone AI", icon: "rack" },
+  { href: "/dev/stack", label: "Stack & tiers", icon: "chart" },
   { href: "/dev/test-studio", label: "Test Studio", icon: "mic" },
-  { href: "/dev/benchmarks", label: "Benchmarks", icon: "benchmark" },
-  { href: "/dev/promotion", label: "Promotion", icon: "chart" },
-  { href: "/dev/saas-admin", label: "SaaS Admin", icon: "settings" },
+  { href: "/dev/saas-admin", label: "SaaS admin", icon: "settings" },
+  { href: "/dev/environment", label: "Environment", icon: "settings" },
 ] as const;
 
 const ICONS: Record<string, React.ReactNode> = {

@@ -11,6 +11,7 @@ import { StatusBadge } from '../ui/StatusBadge';
 import { TactileButton } from '../ui/TactileButton';
 import { Modal } from '../ui/Modal';
 import { useWorkspace } from '../context/WorkspaceContext';
+import { showToast } from '../ui/ToastHost';
 
 export function CampaignsModule() {
   const {
@@ -20,6 +21,9 @@ export function CampaignsModule() {
     startCampaign,
     fetchCampaignAnalytics,
     agents,
+    phoneNumbers,
+    setPreferredOutboundFrom,
+    outboundFromE164,
   } = useWorkspace();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [launchError, setLaunchError] = useState(null);
@@ -34,8 +38,16 @@ export function CampaignsModule() {
     contactsCount: 1500,
     concurrencyLimit: 20,
     callingHours: '09:00 - 18:00 (Local Recipient Time)',
+    fromE164: outboundFromE164 || '',
+    maxAttemptsPerContact: 2,
     contactLines: '',
   });
+
+  useEffect(() => {
+    if (!formData.agentId && agents[0]?.id) {
+      setFormData((prev) => ({ ...prev, agentId: agents[0].id }));
+    }
+  }, [agents, formData.agentId]);
 
   useEffect(() => {
     if (!campaigns.length) return;
@@ -79,8 +91,9 @@ export function CampaignsModule() {
           <h2 className="text-xl font-bold text-[#0F0E17] tracking-tight">
             Bulk Outbound Campaigns ({campaigns.length})
           </h2>
-          <p className="text-xs text-[#524E5E] mt-0.5">
-            Automate phone outreach at scale with AI agents, smart pacing, and Answering Machine Detection (AMD).
+          <p className="text-xs text-[#524E5E] mt-0.5 max-w-2xl">
+            Campaigns use the same live phone AI as single outgoing calls — published script, wallet balance,
+            and fair-use rate limits.
           </p>
         </div>
 
@@ -123,7 +136,19 @@ export function CampaignsModule() {
               {/* Pause / Resume Action */}
               <div className="flex items-center gap-2">
                 {camp.status === 'draft' && (
-                  <TactileButton size="sm" variant="primary" icon={Play} onClick={() => startCampaign(camp.id)}>
+                  <TactileButton
+                    size="sm"
+                    variant="primary"
+                    icon={Play}
+                    onClick={async () => {
+                      try {
+                        await startCampaign(camp.id);
+                        showToast('Campaign started', 'success');
+                      } catch (e) {
+                        showToast(e.message || 'Could not start campaign', 'error');
+                      }
+                    }}
+                  >
                     Start dialer
                   </TactileButton>
                 )}
@@ -212,7 +237,7 @@ export function CampaignsModule() {
               </div>
 
               <div>
-                <label className="block font-bold text-[#0F0E17] mb-1">Select AI Employee</label>
+                <label className="block font-bold text-[#0F0E17] mb-1">AI employee (voice + script)</label>
                 <select
                   value={formData.agentId}
                   onChange={(e) => setFormData({ ...formData, agentId: e.target.value })}
@@ -221,6 +246,27 @@ export function CampaignsModule() {
                   {agents.map((a) => (
                     <option key={a.id} value={a.id}>
                       {a.name} — {a.role}
+                      {a.assignedNumber ? ` · ${a.assignedNumber}` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-bold text-[#0F0E17] mb-1">Outbound caller ID (optional)</label>
+                <select
+                  value={formData.fromE164}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setFormData({ ...formData, fromE164: v });
+                    setPreferredOutboundFrom?.(v);
+                  }}
+                  className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl p-2.5 text-xs font-mono text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
+                >
+                  <option value="">Agent assigned DID</option>
+                  {phoneNumbers.map((n) => (
+                    <option key={n.id} value={n.number}>
+                      {n.number}
                     </option>
                   ))}
                 </select>
@@ -268,9 +314,7 @@ export function CampaignsModule() {
               </div>
 
               <div>
-                <label className="block font-bold text-[#0F0E17] mb-1">
-                  TCPA Calling Hours Window
-                </label>
+                <label className="block font-bold text-[#0F0E17] mb-1">Calling hours window</label>
                 <input
                   type="text"
                   value={formData.callingHours}
@@ -279,18 +323,39 @@ export function CampaignsModule() {
                 />
               </div>
 
+              <div>
+                <label className="block font-bold text-[#0F0E17] mb-1">
+                  Max dial attempts per contact: {formData.maxAttemptsPerContact}
+                </label>
+                <input
+                  type="range"
+                  min="1"
+                  max="5"
+                  step="1"
+                  value={formData.maxAttemptsPerContact}
+                  onChange={(e) =>
+                    setFormData({ ...formData, maxAttemptsPerContact: parseInt(e.target.value, 10) })
+                  }
+                  className="w-full accent-[#6344E7]"
+                />
+              </div>
+
               <div className="p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] space-y-1 font-mono text-[11px]">
                 <div className="flex justify-between text-[#524E5E]">
-                  <span>Total Contacts</span>
-                  <span className="text-[#0F0E17] font-bold">1,500</span>
+                  <span>Contacts in list</span>
+                  <span className="text-[#0F0E17] font-bold">
+                    {formData.contactLines.split('\n').filter((l) => l.trim()).length}
+                  </span>
                 </div>
                 <div className="flex justify-between text-[#524E5E]">
-                  <span>Est. Talk Time</span>
-                  <span className="text-[#0F0E17] font-bold">~3,200 min</span>
+                  <span>Caller ID</span>
+                  <span className="text-[#0F0E17] font-bold truncate max-w-[180px]">
+                    {formData.fromE164 || 'Agent DID'}
+                  </span>
                 </div>
                 <div className="flex justify-between text-[#524E5E]">
-                  <span>Est. Total Cost</span>
-                  <span className="font-bold text-[#047857]">$152.00 USD</span>
+                  <span>Stack</span>
+                  <span className="font-bold text-[#047857]">Subscriber PSTN</span>
                 </div>
               </div>
 

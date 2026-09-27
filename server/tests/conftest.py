@@ -19,6 +19,8 @@ def _isolate_test_database(tmp_path_factory):
     previous_database_url = os.environ.pop("DATABASE_URL", None)
     previous_data_dir = os.environ.get("DATA_DIR")
     os.environ["DATA_DIR"] = str(tmp_path_factory.mktemp("voice-agent-unit-data"))
+    previous_fx_live = os.environ.get("FX_RATE_LIVE")
+    os.environ["FX_RATE_LIVE"] = "false"
     test_secrets = {key: os.environ.get(key) for key in ("OPENAI_API_KEY", "SARVAM_API_KEY")}
     Settings.model_config["env_file"] = None
     for key in test_secrets:
@@ -45,6 +47,10 @@ def _isolate_test_database(tmp_path_factory):
         os.environ.pop("DATA_DIR", None)
     else:
         os.environ["DATA_DIR"] = previous_data_dir
+    if previous_fx_live is None:
+        os.environ.pop("FX_RATE_LIVE", None)
+    else:
+        os.environ["FX_RATE_LIVE"] = previous_fx_live
     if previous_database_url is not None:
         os.environ["DATABASE_URL"] = previous_database_url
     for key, value in test_secrets.items():

@@ -10,13 +10,16 @@ import {
   Settings,
   Plus,
   ArrowRight,
-  Mic
+  Mic,
+  Shield
 } from 'lucide-react';
 import { useWorkspace } from './context/WorkspaceContext';
+import { useAuth } from '../context/AuthContext';
 
 export function CommandPalette({ isOpen, onClose, onNavigate }) {
   const [query, setQuery] = useState('');
   const { agents, phoneNumbers, leads } = useWorkspace();
+  const { isPlatformAdmin } = useAuth();
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -39,12 +42,20 @@ export function CommandPalette({ isOpen, onClose, onNavigate }) {
   const quickActions = [
     { label: 'Create AI Employee', category: 'Actions', icon: Plus, action: () => onNavigate('employees', { openCreate: true }) },
     { label: 'Buy Virtual Number', category: 'Actions', icon: Phone, action: () => onNavigate('phone-numbers', { openBuy: true }) },
-    { label: 'Test Voice Agent in Real-Time', category: 'Actions', icon: Mic, action: () => onNavigate('talk-to-ai') },
+    {
+      label: 'Test voice agent (live)',
+      category: 'Actions',
+      icon: Mic,
+      action: () => onNavigate('employees', { step: 'test' }),
+    },
     { label: 'Launch Outbound Campaign', category: 'Actions', icon: Megaphone, action: () => onNavigate('campaigns', { openCreate: true }) },
     { label: 'Inspect Call Transcripts', category: 'Navigation', icon: PhoneCall, action: () => onNavigate('calls') },
     { label: 'View Lead Pipeline', category: 'Navigation', icon: Users, action: () => onNavigate('leads') },
     { label: 'Top-up Balance & Invoices', category: 'Billing', icon: CreditCard, action: () => onNavigate('billing') },
-    { label: 'Workspace Settings & API Keys', category: 'Settings', icon: Settings, action: () => onNavigate('settings') }
+    { label: 'Workspace Settings & API Keys', category: 'Settings', icon: Settings, action: () => onNavigate('settings') },
+    ...(isPlatformAdmin
+      ? [{ label: 'Platform admin', category: 'Admin', icon: Shield, action: () => onNavigate('admin') }]
+      : []),
   ];
 
   const filteredAgents = agents
@@ -53,11 +64,15 @@ export function CommandPalette({ isOpen, onClose, onNavigate }) {
       label: `${a.name} — ${a.role}`,
       category: 'AI Employees',
       icon: Bot,
-      action: () => onNavigate('agent-studio', { agentId: a.id })
+      action: () => onNavigate('employees', { agentId: a.id, step: 'script' }),
     }));
 
   const filteredNumbers = phoneNumbers
-    .filter((n) => n.number.includes(query) || n.assignedAgentName.toLowerCase().includes(query.toLowerCase()))
+    .filter(
+      (n) =>
+        (n.number || '').includes(query) ||
+        (n.assignedAgentName || '').toLowerCase().includes(query.toLowerCase())
+    )
     .map((n) => ({
       label: `${n.number} (${n.assignedAgentName})`,
       category: 'Virtual Numbers',
@@ -66,7 +81,11 @@ export function CommandPalette({ isOpen, onClose, onNavigate }) {
     }));
 
   const filteredLeads = leads
-    .filter((l) => l.name.toLowerCase().includes(query.toLowerCase()) || l.company.toLowerCase().includes(query.toLowerCase()))
+    .filter(
+      (l) =>
+        (l.name || '').toLowerCase().includes(query.toLowerCase()) ||
+        (l.company || '').toLowerCase().includes(query.toLowerCase())
+    )
     .map((l) => ({
       label: `${l.name} — ${l.company} (BANT ${l.bantScore})`,
       category: 'Leads',

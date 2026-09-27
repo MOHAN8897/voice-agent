@@ -1,12 +1,21 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ensureArray } from "@/lib/ensure-array";
 import { assembleRawPreview, type BrainSection } from "@/lib/brain-utils";
 import { testStudioSessionId } from "@/lib/test-studio-stack";
+import {
+  applyEntityTagsToScript,
+  EMPTY_SCRIPT_ENTITIES,
+  hasScriptEntityValues,
+  parseEntityTagsFromScript,
+  stripEntityTagsSection,
+  type ScriptEntities,
+} from "@/lib/script-entities";
 import { persistAgentCallLanguage } from "@/lib/bootstrap-test-studio-agent";
 import { invalidateTtsConfigCache } from "@/lib/voice/tts-config";
 import { notifyTestStudioVoiceSaved } from "@/lib/voice/voice-runtime-events";
+import { isGeminiLiveVoiceModel } from "@/lib/realtime-voice";
 
 /** Keys that must be changed via voicePresetId, not individually. */
 const VOICE_BUNDLED_KEYS = new Set([
@@ -251,6 +260,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [compilerSections, setCompilerSections] = useState<CompilerSectionsPayload | null>(null);
+  const [scriptEntities, setScriptEntities] = useState<ScriptEntities>(EMPTY_SCRIPT_ENTITIES);
   useEffect(() => {
     const syncConfig = (event: Event) => {
       const detail = (event as CustomEvent).detail;
@@ -263,6 +273,22 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
   }, [sessionId]);
   const [limits, setLimits] = useState<PromptLimits>(DEFAULT_LIMITS);
   const [baseline, setBaseline] = useState("");
+  const autoRecompileRef = useRef(false);
+  const [conflictOnLoad, setConflictOnLoad] = useState(false);
+
+  function scriptForEditor(fullScript: string): string {
+    return stripEntityTagsSection(fullScript || "");
+  }
+
+  function scriptForSave(bodyScript: string, entities: ScriptEntities): string {
+    const body = stripEntityTagsSection(bodyScript || "");
+    const merged: ScriptEntities = {
+      ...entities,
+      language: entities.language || language,
+      direction: entities.direction || "outbound",
+    };
+    return applyEntityTagsToScript(body, merged);
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -272,8 +298,8 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
         fetch("/api/settings/catalog", { credentials: "include" }),
         fetch(`/api/settings/runtime?sessionId=${encodeURIComponent(sessionId)}`, { credentials: "include" }),
         fetch(
-          `/api/instructions?sessionId=${encodeURIComponent(sessionId)}${
-            portal === "dev" ? "&includeCompiled=true&includeCompilerSections=true" : ""
+          `/api/instructions?sessionId=${encodeURIComponent(sessionId)}&includeCompilerSections=true${
+            portal === "dev" ? "&includeCompiled=true" : ""
           }`,
           { credentials: "include" }
         ),
@@ -290,9 +316,14 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
 
       if (insR.ok) {
         const j = await insR.json();
+        const fullScript = String(j.agentScript || "");
+        const editorScript =
+          typeof j.agentScriptBody === "string" && j.agentScriptBody
+            ? j.agentScriptBody
+            : scriptForEditor(fullScript);
         setInstructions({
           agentBrief: j.agentBrief || "",
-          agentScript: j.agentScript || "",
+          agentScript: editorScript,
           behaviourInstructions: j.behaviour || "",
           businessInstructions: j.business || "",
           responseStyle: spokenStyleMatchesLanguage(j.responseStyle || j.style || "", language)
@@ -346,6 +377,18 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
         if (j.compilerSections) {
           setCompilerSections(j.compilerSections as CompilerSectionsPayload);
         }
+        const fromApi = j.scriptEntities as Partial<ScriptEntities> | undefined;
+        const parsed = parseEntityTagsFromScript(fullScript);
+        setScriptEntities(
+          hasScriptEntityValues(fromApi)
+            ? { ...EMPTY_SCRIPT_ENTITIES, ...fromApi }
+            : hasScriptEntityValues(parsed)
+              ? parsed
+              : { ...EMPTY_SCRIPT_ENTITIES, ...fromApi }
+        );
+        setConflictOnLoad(
+          Boolean(j.scriptConflictWithBrief && String(j.agentBrief || "").trim())
+        );
       }
 
       if (agentR.ok) {
@@ -375,6 +418,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
   }, [agentId, sessionId, portal]);
 
   useEffect(() => {
+    autoRecompileRef.current = false;
     load();
   }, [load]);
 
@@ -429,6 +473,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
         body: JSON.stringify({
           sessionId,
           agentBrief: instructions.agentBrief,
+          compileFromBrief: true,
           responseStyle: spokenStyleMatchesLanguage(instructions.responseStyle, language)
             ? instructions.responseStyle || undefined
             : undefined,
@@ -447,10 +492,15 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
         ...runtime,
         brainPromptBudgetTokens: effectiveBudget,
       };
+      const savedFull = String(j.agentScript ?? instructions.agentScript);
+      const editorScript =
+        typeof j.agentScriptBody === "string" && j.agentScriptBody
+          ? j.agentScriptBody
+          : scriptForEditor(savedFull);
       const nextInstructions: InstructionsState = {
         ...instructions,
         agentBrief: j.agentBrief ?? instructions.agentBrief,
-        agentScript: j.agentScript ?? instructions.agentScript,
+        agentScript: editorScript,
         responseStyle: j.responseStyle ?? instructions.responseStyle,
         brainPrompt: j.compiledBrainPrompt || j.brainPromptFull || instructions.brainPrompt,
         estimatedTokens: j.estimatedTokens,
@@ -475,6 +525,17 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
       if (j.compilerSections) {
         setCompilerSections(j.compilerSections as CompilerSectionsPayload);
       }
+      const ent = (j.scriptEntities ?? j.optimizerReport?.script_entities) as
+        | Partial<ScriptEntities>
+        | undefined;
+      const parsedAfterCreate = parseEntityTagsFromScript(savedFull);
+      setScriptEntities(
+        hasScriptEntityValues(ent)
+          ? { ...EMPTY_SCRIPT_ENTITIES, ...ent }
+          : hasScriptEntityValues(parsedAfterCreate)
+            ? parsedAfterCreate
+            : { ...EMPTY_SCRIPT_ENTITIES, ...ent }
+      );
       const cacheNote = j.cacheEligible
         ? `cache ON (≥${j.cacheMinTokens || 1024} tokens)`
         : `cache OFF — compiled ${j.estimatedTokens} tokens, need ≥${j.cacheMinTokens || 1024}`;
@@ -554,6 +615,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
     const patch: Record<string, unknown> = { sessionId };
     for (const [key, val] of Object.entries(runtime)) {
       if (!RUNTIME_SAVE_KEYS.has(key) || val == null || val === "") continue;
+      if (key === "openaiModel" && isGeminiLiveVoiceModel(String(val))) continue;
       patch[key] = val;
     }
     if (Object.keys(patch).length <= 1) {
@@ -603,8 +665,16 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
     }
   }, [runtime, sessionId, instructions]);
 
+  useEffect(() => {
+    if (!conflictOnLoad || loading || saving || autoRecompileRef.current) return;
+    autoRecompileRef.current = true;
+    setConflictOnLoad(false);
+    setStatus("Saved script does not match brief — regenerating from brief…");
+    void saveInstructions();
+  }, [conflictOnLoad, loading, saving, saveInstructions]);
+
   const saveEditedScript = useCallback(async (opts?: { silent?: boolean }) => {
-    const script = instructions.agentScript;
+    const script = scriptForSave(instructions.agentScript, scriptEntities);
     const scriptWords = countWords(script);
     if (scriptWords > limits.agentScriptMaxWords || script.length > limits.agentScriptMax) {
       setStatus(
@@ -659,10 +729,15 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
         ...runtime,
         brainPromptBudgetTokens: effectiveBudget,
       };
+      const savedFull = String(j.agentScript ?? script);
+      const editorScript =
+        typeof j.agentScriptBody === "string" && j.agentScriptBody
+          ? j.agentScriptBody
+          : scriptForEditor(savedFull);
       const nextInstructions: InstructionsState = {
         ...instructions,
         agentBrief: j.agentBrief ?? instructions.agentBrief,
-        agentScript: j.agentScript ?? instructions.agentScript,
+        agentScript: editorScript,
         responseStyle: j.responseStyle ?? instructions.responseStyle,
         brainPrompt: j.compiledBrainPrompt || j.brainPromptFull || instructions.brainPrompt,
         estimatedTokens: j.estimatedTokens,
@@ -687,6 +762,17 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
       if (j.compilerSections) {
         setCompilerSections(j.compilerSections as CompilerSectionsPayload);
       }
+      const entSave = (j.scriptEntities ?? j.optimizerReport?.script_entities) as
+        | Partial<ScriptEntities>
+        | undefined;
+      const parsedSave = parseEntityTagsFromScript(savedFull);
+      setScriptEntities(
+        hasScriptEntityValues(entSave)
+          ? { ...EMPTY_SCRIPT_ENTITIES, ...entSave }
+          : hasScriptEntityValues(parsedSave)
+            ? parsedSave
+            : EMPTY_SCRIPT_ENTITIES
+      );
       if (!opts?.silent) {
         setStatus(
           `Calling script${j.compiledVersion ? ` v${j.compiledVersion}` : ""} saved to ${persistWhere(j)} · ${j.estimatedTokens} tokens`
@@ -700,9 +786,27 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
     } finally {
       if (!opts?.silent) setSaving(false);
     }
-  }, [instructions, limits, runtime, sessionId, language, agentId]);
+  }, [instructions, limits, runtime, sessionId, language, agentId, scriptEntities]);
 
   const saveFineTune = useCallback(async () => {
+    let briefChanged = false;
+    try {
+      if (baseline) {
+        const parsed = JSON.parse(baseline) as { agentBrief?: string };
+        briefChanged =
+          (parsed.agentBrief || "").trim() !== (instructions.agentBrief || "").trim() &&
+          Boolean(instructions.agentBrief.trim());
+      }
+    } catch {
+      briefChanged = false;
+    }
+    if (briefChanged) {
+      setSaving(true);
+      setStatus("Brief changed — regenerating calling script from brief…");
+      const ok = await saveInstructions();
+      setSaving(false);
+      return ok;
+    }
     const script = instructions.agentScript.trim();
     const scriptWords = countWords(instructions.agentScript);
     if (script && (scriptWords > limits.agentScriptMaxWords || instructions.agentScript.length > limits.agentScriptMax)) {
@@ -751,7 +855,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
     } finally {
       setSaving(false);
     }
-  }, [instructions, limits, runtime, saveRuntime, saveEditedScript]);
+  }, [instructions, limits, runtime, baseline, saveInstructions, saveRuntime, saveEditedScript]);
 
   const discardChanges = useCallback(() => {
     if (!baseline) return;
@@ -813,6 +917,20 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
     setStatus("Loaded factory default — click Create agent script to apply");
   }, [language]);
 
+  const mergeEntityTagsIntoScript = useCallback(() => {
+    const merged: ScriptEntities = {
+      ...scriptEntities,
+      language: scriptEntities.language || language,
+      direction: scriptEntities.direction || "outbound",
+    };
+    setScriptEntities(merged);
+    setInstructions((prev) => ({
+      ...prev,
+      agentScript: stripEntityTagsSection(prev.agentScript),
+    }));
+    setStatus("Entity tags updated — Save fine-tune to persist (tags merge into stored script on save).");
+  }, [scriptEntities, language]);
+
   const importFromAgentDraft = useCallback(() => {
     const sections = agentMeta.draftSections;
     if (!sections?.length) {
@@ -853,5 +971,8 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
     loadFactoryDefault,
     importFromAgentDraft,
     compilerSections,
+    scriptEntities,
+    setScriptEntities,
+    mergeEntityTagsIntoScript,
   };
 }

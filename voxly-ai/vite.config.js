@@ -12,6 +12,11 @@ export default defineConfig({
         target: process.env.VITE_BACKEND_ORIGIN || 'http://localhost:8000',
         changeOrigin: true,
       },
+      '/ws': {
+        target: process.env.VITE_BACKEND_ORIGIN || 'http://localhost:8000',
+        changeOrigin: true,
+        ws: true,
+      },
     },
   },
   build: {

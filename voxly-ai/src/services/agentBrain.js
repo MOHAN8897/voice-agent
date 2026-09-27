@@ -2,14 +2,18 @@
  * Map Voxly Agent Studio fields → Business Brain API (draft + publish).
  */
 import { api } from './api';
+import {
+  SAAS_CALLING_SCRIPT_TITLE,
+  scriptVariablesSection,
+  voiceConfigSection,
+} from '../lib/voiceStack';
 
 function voiceSection(voice, language) {
   if (!voice && !language) return null;
   const lines = [];
   if (language) lines.push(`Language: ${language}`);
   if (voice) {
-    lines.push(`TTS provider: ${voice.provider || 'default'}`);
-    lines.push(`Voice: ${voice.voiceName || voice.voiceId || 'default'}`);
+    lines.push(`Voice style: ${voice.voiceName || voice.voiceId || 'default'}`);
     if (voice.speed != null) lines.push(`Speed: ${voice.speed}`);
     if (voice.pitch != null) lines.push(`Pitch: ${voice.pitch}`);
     if (voice.stability != null) lines.push(`Stability: ${voice.stability}`);
@@ -34,22 +38,55 @@ function routingSection(inboundRouting) {
   };
 }
 
-function sectionsFromStudio({ script, greeting, boundaries, objectionRules, role, voice, language, inboundRouting }) {
+function sectionsFromStudio({
+  script,
+  greeting,
+  boundaries,
+  objectionRules,
+  role,
+  voice,
+  language,
+  inboundRouting,
+  variableDefinitions,
+}) {
   const guardrails = (boundaries || []).map((b) => `- ${b}`).join('\n');
   const faq = (objectionRules || [])
     .map((o) => `When: ${o.trigger}\nReply: ${o.response}`)
     .join('\n\n');
-  const identity = [
-    role ? `Role: ${role}` : '',
-    greeting ? `Opening greeting: ${greeting}` : '',
-    'Speak naturally on a live phone call. Keep replies concise.',
-  ]
+  const callingScript = [greeting ? `OPENING LINE\n${greeting.trim()}` : '', (script || '').trim()]
     .filter(Boolean)
     .join('\n\n');
+  const langCode =
+    typeof language === 'string' && language.includes('-')
+      ? language
+      : language || 'en-IN';
+  const varSection = scriptVariablesSection(variableDefinitions);
+  const voiceSec = voiceConfigSection(voice, langCode);
   const sections = [
-    { type: 'identity_purpose', title: 'Identity & Purpose', order: 10, raw_text: identity, enabled: true },
-    { type: 'facts', title: 'Business Facts', order: 20, raw_text: script || '', enabled: true },
-    { type: 'guardrails', title: 'Guardrails', order: 30, raw_text: guardrails || 'Follow business facts only.', enabled: true },
+    ...(voiceSec ? [{ ...voiceSec, enabled: false }] : []),
+    ...(varSection ? [{ ...varSection, enabled: false }] : []),
+    {
+      type: 'identity_purpose',
+      title: 'Identity & Purpose',
+      order: 10,
+      raw_text:
+        'You are a live phone agent for this business. Follow the Calling script section exclusively.',
+      enabled: true,
+    },
+    {
+      type: 'facts',
+      title: SAAS_CALLING_SCRIPT_TITLE,
+      order: 20,
+      raw_text: callingScript || script || '',
+      enabled: true,
+    },
+    {
+      type: 'guardrails',
+      title: 'Guardrails',
+      order: 30,
+      raw_text: guardrails || 'Do not invent prices or policies not in the script.',
+      enabled: true,
+    },
     { type: 'faq', title: 'FAQ & Objections', order: 40, raw_text: faq || '', enabled: !!faq },
   ];
   const v = voiceSection(voice, language);

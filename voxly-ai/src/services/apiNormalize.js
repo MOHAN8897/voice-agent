@@ -33,10 +33,13 @@ export function normalizePhoneNumber(row, agentsById = {}) {
     type: row.type || 'Local DID',
     assignedAgentId: agentId || null,
     assignedAgentName: agent?.name || (agentId ? 'Assigned' : 'Unassigned (Pool)'),
-    monthlyCost: row.monthlyCost ?? 5,
+    monthlyCost: row.monthlyCost ?? row.monthlyUsd ?? 5,
+    monthlyInr: row.monthlyInr ?? null,
     status: row.status || 'active',
     capabilities: row.capabilities || ['Voice'],
     usageMinutesThisMonth: row.usageMinutesThisMonth ?? 0,
+    isDevSandbox: Boolean(row.isDevSandbox),
+    label: row.label || null,
     inboundRouting: row.inboundRouting || {
       action: agentId ? 'ai_agent' : 'voicemail',
       greetingPhrase: 'Thank you for calling.',
@@ -50,7 +53,10 @@ export function normalizePhoneNumber(row, agentsById = {}) {
 export function normalizeWallet(apiWallet, fallback) {
   if (!apiWallet) return fallback;
   const usd = apiWallet.balanceUsd ?? 0;
-  const minutes = Math.max(0, Math.floor((usd / 0.095) * 60) / 60);
+  const minutes =
+    apiWallet.remainingMinutes != null
+      ? Number(apiWallet.remainingMinutes)
+      : Math.max(0, Math.floor((usd / 0.095) * 60) / 60);
   return {
     ...fallback,
     balanceUsd: usd,
@@ -58,6 +64,10 @@ export function normalizeWallet(apiWallet, fallback) {
     usdEquivalent: usd,
     remainingMinutes: minutes,
     currency: apiWallet.currency || 'USD',
+    rateInrPerMin: apiWallet.rateInrPerMin,
+    webRateInrPerMin: apiWallet.webRateInrPerMin,
+    didMonthlyInr: apiWallet.didMonthlyInr,
+    myUsageInr: apiWallet.myUsageInr,
   };
 }
 
@@ -126,7 +136,12 @@ export function normalizeCall(row, agentsById = {}) {
     outcome: row.disposition || row.summary || row.outcome || '—',
     disposition: row.disposition,
     summary: row.summary,
+    costInr: row.cost_inr ?? row.costInr,
+    costUsd: row.cost_usd ?? row.costUsd,
+    endReason: row.end_reason || row.endReason,
+    pipeline: row.pipeline,
     hasRecording: row.has_recording ?? row.hasRecording ?? false,
+    durationSec: row.duration_sec ?? row.durationSec ?? null,
   };
 }
 
@@ -148,6 +163,11 @@ export function normalizeCampaign(row) {
 
 export function normalizeCatalogItem(item) {
   const e164 = item.e164 || item.phone_number || item.number;
+  const monthlyInr = item.monthlyInr ?? item.didMonthlyInr ?? null;
+  const monthlyUsd =
+    item.monthlyUsd ??
+    item.fee ??
+    (item.monthlyCents ? item.monthlyCents / 100 : 5);
   return {
     e164,
     number: e164,
@@ -156,7 +176,9 @@ export function normalizeCatalogItem(item) {
     type: item.type || 'Local DID',
     areaCode: item.areaCode || '',
     locality: item.locality || '',
-    fee: item.fee ?? item.monthlyCents ? item.monthlyCents / 100 : 5,
+    fee: monthlyUsd,
+    monthlyInr,
+    monthlyUsd,
     features: item.features || ['Voice'],
   };
 }

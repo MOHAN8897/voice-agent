@@ -11,6 +11,7 @@ import { StatusBadge } from '../ui/StatusBadge';
 import { TactileButton } from '../ui/TactileButton';
 import { Modal } from '../ui/Modal';
 import { useWorkspace } from '../context/WorkspaceContext';
+import { showToast } from '../ui/ToastHost';
 
 export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyModal }) {
   const {
@@ -32,16 +33,29 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
   const [purchasedSuccess, setPurchasedSuccess] = useState(null);
   const [buyError, setBuyError] = useState(null);
   const [buying, setBuying] = useState(false);
+  const [catalogLoading, setCatalogLoading] = useState(false);
+  const [catalogError, setCatalogError] = useState(null);
 
   useEffect(() => {
-    if (isBuyModalOpen) reloadCatalog?.(selectedCountry).catch(() => {});
+    if (!isBuyModalOpen) return;
+    setCatalogLoading(true);
+    setCatalogError(null);
+    reloadCatalog?.(selectedCountry)
+      .catch((e) => setCatalogError(e.message || 'Could not load numbers for this country'))
+      .finally(() => setCatalogLoading(false));
   }, [isBuyModalOpen, selectedCountry, reloadCatalog]);
 
-  // Filter available numbers catalog
+  const unassignedCount = phoneNumbers.filter((n) => !n.assignedAgentId).length;
+  const assignedCount = phoneNumbers.length - unassignedCount;
+
   const filteredCatalog = availableCatalog.filter((item) => {
-    const matchesCountry = item.country === selectedCountry;
-    const matchesType = selectedType === 'All' || item.type === selectedType;
-    const matchesArea = !searchAreaCode || item.areaCode.includes(searchAreaCode) || item.number.includes(searchAreaCode);
+    const cc = (item.country || '').toUpperCase();
+    const matchesCountry = cc === selectedCountry.toUpperCase();
+    const matchesType = selectedType === 'All' || !item.type || item.type === selectedType;
+    const matchesArea =
+      !searchAreaCode ||
+      (item.areaCode && item.areaCode.includes(searchAreaCode)) ||
+      (item.number && item.number.includes(searchAreaCode));
     return matchesCountry && matchesType && matchesArea;
   });
 
@@ -71,7 +85,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-[#0F0E17] tracking-tight">
-            Virtual Phone Numbers ({phoneNumbers.length})
+            Phone lines ({phoneNumbers.length})
           </h2>
           <p className="text-xs text-[#524E5E] mt-0.5">
             Buy local DIDs and toll-free numbers across 40+ countries and connect them directly to your AI agents.
@@ -86,6 +100,21 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
         >
           Buy Phone Number
         </TactileButton>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <SolidCard className="p-4">
+          <div className="text-[10px] font-bold text-[#8C879A] uppercase">Owned lines</div>
+          <div className="text-2xl font-bold text-[#0F0E17]">{phoneNumbers.length}</div>
+        </SolidCard>
+        <SolidCard className="p-4">
+          <div className="text-[10px] font-bold text-[#8C879A] uppercase">Available to assign</div>
+          <div className="text-2xl font-bold text-[#047857]">{unassignedCount}</div>
+        </SolidCard>
+        <SolidCard className="p-4">
+          <div className="text-[10px] font-bold text-[#8C879A] uppercase">Linked to agents</div>
+          <div className="text-2xl font-bold text-[#6344E7]">{assignedCount}</div>
+        </SolidCard>
       </div>
 
       {/* Numbers Inventory Table Card */}
@@ -108,12 +137,17 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                 <tr key={num.id} className="hover:bg-[#FAF9FD] transition-colors">
                   {/* Number & Capabilities */}
                   <td className="py-4 px-5">
-                    <div className="font-mono font-bold text-sm text-[#0F0E17] flex items-center gap-2">
+                    <div className="font-mono font-bold text-sm text-[#0F0E17] flex items-center gap-2 flex-wrap">
                       <Phone className="w-3.5 h-3.5 text-[#6344E7]" />
                       <span>{num.number}</span>
+                      {num.isDevSandbox && (
+                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-50 text-amber-900 border border-amber-200">
+                          {num.label || 'Shared test line'}
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center gap-1.5 mt-1">
-                      {num.capabilities.map((cap) => (
+                      {num.capabilities?.map((cap) => (
                         <span key={cap} className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[#F0EEF6] text-[#524E5E] border border-[#E4E2EB]">
                           {cap}
                         </span>
@@ -131,7 +165,14 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                   <td className="py-4 px-4">
                     <select
                       value={num.assignedAgentId || ''}
-                      onChange={(e) => assignNumberToAgent(num.id, e.target.value)}
+                      onChange={async (e) => {
+                        try {
+                          await assignNumberToAgent(num.id, e.target.value);
+                          showToast(e.target.value ? 'Number assigned' : 'Number unassigned', 'success');
+                        } catch (err) {
+                          showToast(err.message || 'Could not assign number', 'error');
+                        }
+                      }}
                       className="bg-[#FAF9FD] border border-[#E4E2EB] hover:border-[#D1CFDB] rounded-xl px-2.5 py-1.5 text-xs text-[#0F0E17] font-medium focus:outline-none focus:border-[#6344E7] transition-colors"
                     >
                       <option value="">Unassigned (Pool)</option>
@@ -145,7 +186,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
 
                   {/* Monthly Cost */}
                   <td className="py-4 px-4 font-mono text-[#524E5E]">
-                    ${num.monthlyCost.toFixed(2)}/mo
+                    {num.monthlyInr != null ? `₹${Number(num.monthlyInr).toFixed(0)}/mo` : `$${Number(num.monthlyCost || 0).toFixed(2)}/mo`}
                   </td>
 
                   {/* Minutes Used */}
@@ -184,7 +225,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
         isOpen={isBuyModalOpen}
         onClose={onCloseBuyModal}
         title="Buy Virtual Telephone Number"
-        subtitle="Search carrier inventory and instantly provision a virtual DID linked to an AI agent."
+        subtitle="Only numbers currently available in your selected country are shown."
         maxWidth="max-w-2xl"
       >
         <div className="space-y-5">
@@ -268,9 +309,15 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
 
               {/* Available Inventory Results */}
               <div className="space-y-2 max-h-72 overflow-y-auto">
-                {filteredCatalog.length === 0 ? (
+                {catalogLoading ? (
+                  <div className="p-8 text-center text-xs text-[#524E5E]">Loading available numbers…</div>
+                ) : catalogError ? (
+                  <div className="p-6 text-center text-xs text-red-800 bg-red-50 border border-red-200 rounded-xl">
+                    {catalogError}
+                  </div>
+                ) : filteredCatalog.length === 0 ? (
                   <div className="p-8 text-center text-xs text-[#524E5E]">
-                    No available numbers match this search. Try area code 415 or 800.
+                    No phone numbers are available for <strong>{selectedCountry}</strong> right now. Try another country or check back later.
                   </div>
                 ) : (
                   filteredCatalog.map((item) => (
@@ -290,7 +337,9 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
 
                       <div className="flex items-center gap-3">
                         <span className="text-xs font-mono font-semibold text-[#524E5E]">
-                          ${item.fee.toFixed(2)}/mo
+                          {item.monthlyInr != null
+                            ? `₹${Number(item.monthlyInr).toFixed(0)}/mo`
+                            : `$${Number(item.fee || 0).toFixed(2)}/mo`}
                         </span>
                         <TactileButton
                           size="xs"

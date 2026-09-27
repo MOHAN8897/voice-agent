@@ -10,72 +10,192 @@ import {
   Plus,
   Trash2,
   CheckCircle2,
-  Radio
+  Radio,
+  Mic,
+  ArrowLeft,
+  PhoneOutgoing,
 } from 'lucide-react';
+import { TalkToAiConsole } from './TalkToAiConsole';
 import { SolidCard } from '../ui/SolidCard';
 import { StatusBadge } from '../ui/StatusBadge';
 import { TactileButton } from '../ui/TactileButton';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { voiceAgent } from '../../services/voiceAgent';
+import { LANGUAGE_OPTIONS } from '../../lib/voicePresets';
+import { PHONE_STACK_LABEL } from '../../lib/phoneLabels';
+import {
+  fetchPhoneVoiceOptions,
+  parseScriptVariablesFromSections,
+  parseStudioFieldsFromSections,
+  parseVoiceConfigFromSections,
+} from '../../lib/voiceStack';
+import { formatPhoneVoiceLabel, groupPhoneVoices } from '../../lib/voiceDisplay';
+import { loadAgentBrain } from '../../services/agentBrain';
 
-export function AgentStudioModule({ onNavigate, onOpenBuyNumber }) {
+const EMPTY_FORM = {
+  name: '',
+  role: 'Sales',
+  greeting: '',
+  script: '',
+  dynamicVariables: [],
+  objectionRules: [],
+  boundaries: [],
+  variableDefinitions: [],
+  voice: { speed: 1, pitch: 0, voiceName: '', provider: 'openai' },
+  language: 'en-US',
+  inboundRouting: {
+    businessHours: '08:00 - 18:00 (PST)',
+    afterHoursAction: 'voicemail',
+    greetingPhrase: '',
+  },
+};
+
+function formFromAgent(agent) {
+  if (!agent) return { ...EMPTY_FORM };
+  return {
+    name: agent.name || '',
+    role: agent.role || 'Sales',
+    greeting: agent.greeting || '',
+    script: agent.script || '',
+    dynamicVariables: agent.dynamicVariables || [],
+    objectionRules: agent.objectionRules || [],
+    boundaries: agent.boundaries || [],
+    variableDefinitions: agent.variableDefinitions || [],
+    voice: { ...EMPTY_FORM.voice, ...(agent.voice || {}) },
+    language: agent.language || 'en-US',
+    inboundRouting: agent.inboundRouting || {
+      businessHours: '08:00 - 18:00 (PST)',
+      afterHoursAction: 'voicemail',
+      greetingPhrase: agent.greeting || '',
+    },
+  };
+}
+
+const FLOW_TABS = [
+  { id: 'script', label: 'Script & flow', icon: FileCode2 },
+  { id: 'voice', label: 'Voice', icon: Volume2 },
+  { id: 'telephony', label: 'Phone lines', icon: Phone },
+  { id: 'test', label: 'Live test', icon: Mic },
+  { id: 'knowledge', label: 'Knowledge', icon: BookOpen },
+];
+
+export function AgentStudioModule({
+  onNavigate,
+  onOpenBuyNumber,
+  flowStep,
+  onFlowStepChange,
+  onBackToFleet,
+}) {
   const {
     agents,
+    isLoading,
     selectedAgentId,
     setSelectedAgentId,
     selectedAgent,
     updateAgent,
     updateNumberRouting,
+    phoneNumbers,
+    assignNumberToAgent,
   } = useWorkspace();
 
-  const [activeTab, setActiveTab] = useState('script');
-  const [isSaved, setIsSaved] = useState(false);
-  const [isPlayingVoice, setIsPlayingVoice] = useState(false);
-
-  // Local editor form state
-  const [formData, setFormData] = useState({
-    name: selectedAgent.name,
-    role: selectedAgent.role,
-    greeting: selectedAgent.greeting,
-    script: selectedAgent.script,
-    dynamicVariables: selectedAgent.dynamicVariables || [],
-    objectionRules: selectedAgent.objectionRules || [],
-    boundaries: selectedAgent.boundaries || [],
-    voice: { ...selectedAgent.voice },
-    language: selectedAgent.language,
-    inboundRouting: selectedAgent.inboundRouting || {
-      businessHours: '08:00 - 18:00 (PST)',
-      afterHoursAction: 'voicemail',
-      greetingPhrase: selectedAgent.greeting || '',
-    },
-  });
+  const [activeTab, setActiveTab] = useState(flowStep || 'script');
+  const [phoneVoices, setPhoneVoices] = useState([]);
+  const [stackLabel, setStackLabel] = useState(PHONE_STACK_LABEL);
 
   useEffect(() => {
-    if (selectedAgent) {
-      setFormData({
-        name: selectedAgent.name,
-        role: selectedAgent.role,
-        greeting: selectedAgent.greeting,
-        script: selectedAgent.script,
-        dynamicVariables: selectedAgent.dynamicVariables || [],
-        objectionRules: selectedAgent.objectionRules || [],
-        boundaries: selectedAgent.boundaries || [],
-        voice: { ...selectedAgent.voice },
-        language: selectedAgent.language,
-        inboundRouting: selectedAgent.inboundRouting || {
-          businessHours: '08:00 - 18:00 (PST)',
-          afterHoursAction: 'voicemail',
-          greetingPhrase: selectedAgent.greeting || '',
-        },
+    fetchPhoneVoiceOptions()
+      .then((o) => {
+        setPhoneVoices(o.voices || []);
+        setStackLabel(o.stackLabel || PHONE_STACK_LABEL);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (flowStep) setActiveTab(flowStep);
+  }, [flowStep]);
+
+  const selectTab = (id) => {
+    setActiveTab(id);
+    onFlowStepChange?.(id);
+  };
+  const [isSaved, setIsSaved] = useState(false);
+  const [isPlayingVoice, setIsPlayingVoice] = useState(false);
+  const [brainLoadError, setBrainLoadError] = useState(null);
+  const [brainLoading, setBrainLoading] = useState(false);
+
+  const [formData, setFormData] = useState(() => formFromAgent(selectedAgent));
+
+  // Agent list rows do not include script — load draft brain once per selection (not on every list refresh).
+  useEffect(() => {
+    const agentId = selectedAgentId || selectedAgent?.id;
+    if (!agentId) return;
+
+    let cancelled = false;
+    setBrainLoading(true);
+    setBrainLoadError(null);
+
+    const agent =
+      selectedAgent?.id === agentId
+        ? selectedAgent
+        : agents.find((a) => a.id === agentId) || selectedAgent;
+    const base = formFromAgent(agent);
+
+    loadAgentBrain(agentId)
+      .then((data) => {
+        if (cancelled) return;
+        const studio = parseStudioFieldsFromSections(data?.draft?.sections);
+        const cfg = parseVoiceConfigFromSections(data?.draft?.sections);
+        const voiceMeta = (phoneVoices.length ? phoneVoices : []).find(
+          (v) => v.id === cfg.realtimeVoice
+        );
+        setFormData({
+          ...base,
+          script: studio.script || '',
+          greeting: studio.greeting || base.greeting,
+          variableDefinitions: studio.variableDefinitions?.length
+            ? studio.variableDefinitions
+            : base.variableDefinitions,
+          language: cfg.language || base.language,
+          voice: {
+            ...base.voice,
+            realtimeVoice: cfg.realtimeVoice || base.voice?.realtimeVoice,
+            voiceId: cfg.realtimeVoice || base.voice?.voiceId || 'marin',
+            voiceName: voiceMeta?.label || base.voice?.voiceName || cfg.realtimeVoice,
+            speed: cfg.speed ?? base.voice?.speed ?? 1,
+          },
+        });
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setBrainLoadError(err?.message || 'Could not load calling script');
+          setFormData(base);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setBrainLoading(false);
       });
-    }
-  }, [selectedAgentId, selectedAgent]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedAgentId, phoneVoices]);
+
+  useEffect(() => {
+    if (!selectedAgent) return;
+    setFormData((prev) => ({
+      ...prev,
+      name: selectedAgent.name || prev.name,
+      role: selectedAgent.role || prev.role,
+    }));
+  }, [selectedAgent?.id, selectedAgent?.name, selectedAgent?.role]);
 
   // Handle Save
   const [saveError, setSaveError] = useState(null);
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
+    if (!selectedAgent?.id) return;
     setSaveError(null);
     setSaving(true);
     try {
@@ -84,8 +204,8 @@ export function AgentStudioModule({ onNavigate, onOpenBuyNumber }) {
         await updateNumberRouting(selectedAgent.numberId, {
           ...formData.inboundRouting,
           assignedAgentId: selectedAgent.id,
-          inboundEnabled: true,
-          outboundEnabled: true,
+          inboundEnabled: formData.inboundRouting?.inboundEnabled !== false,
+          outboundEnabled: formData.inboundRouting?.outboundEnabled !== false,
         });
       }
       setIsSaved(true);
@@ -157,6 +277,29 @@ export function AgentStudioModule({ onNavigate, onOpenBuyNumber }) {
     );
   };
 
+  if (!isLoading && agents.length === 0) {
+    return (
+      <SolidCard className="p-10 text-center space-y-4 max-w-lg mx-auto">
+        <FileCode2 className="w-10 h-10 text-[#6344E7] mx-auto" />
+        <h2 className="text-lg font-bold text-[#0F0E17]">No agents yet</h2>
+        <p className="text-sm text-[#524E5E]">
+          Create an AI employee first, then edit scripts, voice, and telephony routing here in Script Studio.
+        </p>
+        <TactileButton onClick={() => onNavigate?.('employees', { openCreate: true })}>
+          Create your first AI employee
+        </TactileButton>
+      </SolidCard>
+    );
+  }
+
+  if (!selectedAgent) {
+    return (
+      <SolidCard className="p-10 text-center space-y-3 max-w-lg mx-auto">
+        <p className="text-sm text-[#524E5E]">{isLoading ? 'Loading agents…' : 'Select an agent to edit.'}</p>
+      </SolidCard>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {saveError && (
@@ -166,6 +309,16 @@ export function AgentStudioModule({ onNavigate, onOpenBuyNumber }) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-white border border-[#E4E2EB] shadow-craft-xs">
         {/* Left: Agent Avatar & Selector */}
         <div className="flex items-center gap-3.5">
+          {onBackToFleet && (
+            <button
+              type="button"
+              onClick={onBackToFleet}
+              className="p-2 rounded-xl border border-[#E4E2EB] text-[#524E5E] hover:text-[#0F0E17] hover:bg-[#FAF9FD]"
+              title="Back to fleet"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+          )}
           <div className="w-12 h-12 rounded-2xl bg-[#F0EEF6] border border-[#E4E2EB] flex items-center justify-center text-[#0F0E17] font-bold text-lg shadow-2xs">
             {selectedAgent.name.charAt(0)}
           </div>
@@ -192,13 +345,8 @@ export function AgentStudioModule({ onNavigate, onOpenBuyNumber }) {
 
         {/* Right Action Buttons */}
         <div className="flex items-center gap-2.5">
-          <TactileButton
-            variant="secondary"
-            size="sm"
-            icon={Play}
-            onClick={() => onNavigate('talk-to-ai')}
-          >
-            Test Live Voice
+          <TactileButton variant="secondary" size="sm" icon={Play} onClick={() => selectTab('test')}>
+            Live test
           </TactileButton>
 
           <TactileButton
@@ -215,18 +363,13 @@ export function AgentStudioModule({ onNavigate, onOpenBuyNumber }) {
 
       {/* Tabs Navigation Bar */}
       <div className="flex items-center gap-1 p-1.5 rounded-2xl bg-white border border-[#E4E2EB] overflow-x-auto shadow-craft-xs">
-        {[
-          { id: 'script', label: 'Script & Conversation Flow', icon: FileCode2 },
-          { id: 'voice', label: 'Voice & Acoustic Tuning', icon: Volume2 },
-          { id: 'telephony', label: 'Phone & Routing', icon: Phone },
-          { id: 'knowledge', label: 'Knowledge Base & FAQs', icon: BookOpen }
-        ].map((tab) => {
+        {FLOW_TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => selectTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
                 isActive
                   ? 'bg-[#0F0E17] text-white shadow-xs font-bold'
@@ -243,28 +386,19 @@ export function AgentStudioModule({ onNavigate, onOpenBuyNumber }) {
       {/* TAB 1: SCRIPT & CONVERSATION FLOW */}
       {activeTab === 'script' && (
         <div className="space-y-6 animate-in fade-in duration-150">
-          {/* Opening Greeting */}
-          <SolidCard>
-            <label className="block text-xs font-bold text-[#0F0E17] mb-1.5">
-              Opening Inbound Greeting
-            </label>
-            <input
-              type="text"
-              value={formData.greeting}
-              onChange={(e) => setFormData({ ...formData, greeting: e.target.value })}
-              className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-3.5 py-2.5 text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
-            />
-            <p className="text-[11px] text-[#524E5E] mt-1.5">
-              Synthesized within 280ms of call connect before the caller speaks.
-            </p>
-          </SolidCard>
-
-          {/* Script Editor with Dynamic Variables Ribbon */}
           <SolidCard>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
               <div>
-                <h3 className="text-xs font-bold text-[#0F0E17]">Agent Prompt & Script Directives</h3>
-                <p className="text-[11px] text-[#524E5E]">Full instructions governing conversation flow, tone, and goals.</p>
+                <h3 className="text-xs font-bold text-[#0F0E17]">Calling script</h3>
+                <p className="text-[11px] text-[#524E5E]">
+                  Same single section as dev Test Studio — identity, offer, opening, and role. Published to the cached brain on save.
+                </p>
+                {brainLoading && (
+                  <p className="text-[11px] text-[#6344E7] mt-1">Loading script from your agent brain…</p>
+                )}
+                {brainLoadError && (
+                  <p className="text-[11px] text-red-600 mt-1">{brainLoadError}</p>
+                )}
               </div>
 
               {/* Dynamic Variables Chips */}
@@ -272,12 +406,18 @@ export function AgentStudioModule({ onNavigate, onOpenBuyNumber }) {
                 <span className="text-[10px] text-[#8C879A] uppercase font-bold tracking-wider mr-1">
                   Inject:
                 </span>
-                {['caller_name', 'service_type', 'preferred_date', 'insurance_carrier'].map((v) => (
+                {(formData.variableDefinitions?.length
+                  ? formData.variableDefinitions.map((v) => v.key)
+                  : ['caller_name', 'callback_phone', 'business_name']
+                ).map((v) => (
                   <button
                     key={v}
                     type="button"
                     onClick={() => handleInsertVariable(v)}
                     className="px-2.5 py-1 rounded-lg bg-[#F0EEF6] border border-[#E4E2EB] hover:border-[#6344E7] text-[10px] font-mono text-[#6344E7] hover:text-[#5034CE] transition-all font-semibold"
+                    title={
+                      formData.variableDefinitions?.find((d) => d.key === v)?.description || ''
+                    }
                   >
                     + {`{{${v}}}`}
                   </button>
@@ -372,43 +512,66 @@ export function AgentStudioModule({ onNavigate, onOpenBuyNumber }) {
       {activeTab === 'voice' && (
         <div className="space-y-6 animate-in fade-in duration-150">
           <SolidCard>
-            <h3 className="text-xs font-bold text-[#0F0E17] mb-4">Voice Engine Selection</h3>
+            <p className="text-[11px] text-[#524E5E] mb-3">
+              {stackLabel} — these voices apply to incoming calls, outgoing calls, and browser practice
+              calls after you save & publish.
+            </p>
+            <h3 className="text-xs font-bold text-[#0F0E17] mb-4">Speaking voice</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-[#0F0E17] mb-1">
-                  Engine Provider
-                </label>
+                <label className="block text-xs font-bold text-[#0F0E17] mb-1">Voice</label>
                 <select
-                  value={formData.voice.provider}
-                  onChange={(e) =>
+                  value={formData.voice?.realtimeVoice || formData.voice?.voiceId || 'marin'}
+                  onChange={(e) => {
+                    const id = e.target.value;
+                    const meta = phoneVoices.find((v) => v.id === id);
                     setFormData({
                       ...formData,
-                      voice: { ...formData.voice, provider: e.target.value }
-                    })
-                  }
+                      voice: {
+                        ...formData.voice,
+                        provider: 'phone_ai',
+                        realtimeVoice: id,
+                        voiceId: id,
+                        voiceName: formatPhoneVoiceLabel(meta),
+                      },
+                    });
+                  }}
                   className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl p-2.5 text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
                 >
-                  <option value="Cartesia">Cartesia Sonic (90ms Latency — Recommended)</option>
-                  <option value="ElevenLabs">ElevenLabs Turbo v2.5 (140ms — High Realism)</option>
-                  <option value="Deepgram">Deepgram Aura (110ms — Crisp Phone Articulation)</option>
-                  <option value="PlayHT">PlayHT 3.0-mini (130ms)</option>
+                  {(() => {
+                    const { openai, gemini } = groupPhoneVoices(phoneVoices);
+                    const fallback = [{ id: 'marin', label: 'Marin', gender: 'female', tone: 'Warm & clear' }];
+                    const o = openai.length ? openai : fallback;
+                    return (
+                      <>
+                        <optgroup label="OpenAI (phone default)">
+                          {o.map((p) => (
+                            <option key={p.id} value={p.id}>{formatPhoneVoiceLabel(p)}</option>
+                          ))}
+                        </optgroup>
+                        {gemini.length > 0 && (
+                          <optgroup label="Gemini Live">
+                            {gemini.map((p) => (
+                              <option key={p.id} value={p.id}>{formatPhoneVoiceLabel(p)}</option>
+                            ))}
+                          </optgroup>
+                        )}
+                      </>
+                    );
+                  })()}
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#0F0E17] mb-1">
-                  Language & Dialect
-                </label>
+                <label className="block text-xs font-bold text-[#0F0E17] mb-1">Language</label>
                 <select
                   value={formData.language}
                   onChange={(e) => setFormData({ ...formData, language: e.target.value })}
                   className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl p-2.5 text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
                 >
-                  <option value="English (US & UK)">English (US & UK)</option>
-                  <option value="Indian English">Indian English</option>
-                  <option value="Telugu & English">Telugu & English</option>
-                  <option value="Hindi & Hinglish">Hindi & Hinglish</option>
-                  <option value="Spanish">Spanish (Latin America)</option>
+                  {LANGUAGE_OPTIONS.map((l) => (
+                    <option key={l.code} value={l.code}>{l.label}</option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -532,26 +695,32 @@ export function AgentStudioModule({ onNavigate, onOpenBuyNumber }) {
                 {isPlayingVoice ? 'Stop Audio' : 'Preview Voice'}
               </TactileButton>
 
-              <TactileButton
-                variant="secondary"
-                size="sm"
-                onClick={() => onNavigate('talk-to-ai')}
-              >
-                Open Full WebRTC Voice Lab
+              <TactileButton variant="secondary" size="sm" onClick={() => selectTab('test')}>
+                Open live test
               </TactileButton>
             </div>
           </SolidCard>
         </div>
       )}
 
+      {activeTab === 'test' && (
+        <div className="animate-in fade-in duration-150">
+          <TalkToAiConsole embedded />
+        </div>
+      )}
+
       {/* TAB 3: TELEPHONY & ROUTING */}
       {activeTab === 'telephony' && (
         <div className="space-y-6 animate-in fade-in duration-150">
+          <div className="rounded-xl border border-[#E4E2EB] bg-[#F0EEF6]/50 px-3 py-2.5 text-xs text-[#524E5E]">
+            Phone calls use your published script and wallet credits. Incoming and outgoing calls use the same
+            {stackLabel} engine as the browser practice call.
+          </div>
           <SolidCard>
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="text-xs font-bold text-[#0F0E17]">Assigned Phone Number</h3>
-                <p className="text-[11px] text-[#524E5E]">The virtual DID routed directly to this voice agent.</p>
+                <p className="text-[11px] text-[#524E5E]">Inbound DID and default outbound caller ID for this agent.</p>
               </div>
 
               <TactileButton
@@ -564,25 +733,63 @@ export function AgentStudioModule({ onNavigate, onOpenBuyNumber }) {
               </TactileButton>
             </div>
 
-            <div className="p-4 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] flex items-center justify-between">
-              <div>
-                <div className="font-mono font-bold text-sm text-[#0F0E17]">
-                  {selectedAgent.assignedNumber || 'No number assigned'}
-                </div>
-                <div className="text-[11px] text-[#524E5E] mt-0.5">
-                  Inbound PSTN & Outbound Caller ID
-                </div>
-              </div>
-
+            <div className="space-y-3">
+              <label className="block text-xs font-bold text-[#0F0E17]">Inbound / outbound caller ID</label>
+              <select
+                value={
+                  phoneNumbers.find((n) => n.assignedAgentId === selectedAgent.id)?.id ||
+                  selectedAgent.numberId ||
+                  ''
+                }
+                onChange={async (e) => {
+                  const nextId = e.target.value;
+                  const current = phoneNumbers.find((n) => n.assignedAgentId === selectedAgent.id);
+                  try {
+                    if (current && current.id !== nextId) {
+                      await assignNumberToAgent(current.id, '');
+                    }
+                    if (nextId) {
+                      await assignNumberToAgent(nextId, selectedAgent.id, selectedAgent.name);
+                    }
+                  } catch {
+                    /* toast handled in workspace */
+                  }
+                }}
+                className="w-full bg-white border border-[#E4E2EB] rounded-xl px-3 py-2 text-sm font-mono"
+              >
+                <option value="">No number — browser test only</option>
+                {phoneNumbers.map((n) => (
+                  <option key={n.id} value={n.id} disabled={n.assignedAgentId && n.assignedAgentId !== selectedAgent.id}>
+                    {n.number}
+                    {n.assignedAgentId && n.assignedAgentId !== selectedAgent.id ? ' (assigned elsewhere)' : ''}
+                    {!n.assignedAgentId ? ' · available' : ''}
+                  </option>
+                ))}
+              </select>
               <StatusBadge status={selectedAgent.assignedNumber ? 'Active' : 'Idle'} size="xs" />
             </div>
           </SolidCard>
 
           <SolidCard>
-            <h3 className="text-xs font-bold text-[#0F0E17] mb-3">Inbound Call Routing Schedule</h3>
+            <h3 className="text-xs font-bold text-[#0F0E17] mb-3">Inbound routing</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div>
-                <label className="block font-bold text-[#0F0E17] mb-1">Active Business Hours</label>
+                <label className="block font-bold text-[#0F0E17] mb-1">Greeting (spoken on connect)</label>
+                <input
+                  type="text"
+                  value={formData.inboundRouting?.greetingPhrase || formData.greeting || ''}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      greeting: e.target.value,
+                      inboundRouting: { ...formData.inboundRouting, greetingPhrase: e.target.value },
+                    })
+                  }
+                  className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl p-2.5 text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block font-bold text-[#0F0E17] mb-1">Active business hours</label>
                 <input
                   type="text"
                   value={formData.inboundRouting?.businessHours || ''}
@@ -597,7 +804,7 @@ export function AgentStudioModule({ onNavigate, onOpenBuyNumber }) {
               </div>
 
               <div>
-                <label className="block font-bold text-[#0F0E17] mb-1">After-Hours Fallback Action</label>
+                <label className="block font-bold text-[#0F0E17] mb-1">After-hours action</label>
                 <select
                   value={formData.inboundRouting?.afterHoursAction || 'voicemail'}
                   onChange={(e) =>
@@ -608,11 +815,61 @@ export function AgentStudioModule({ onNavigate, onOpenBuyNumber }) {
                   }
                   className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl p-2.5 text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
                 >
-                  <option value="voicemail">Take Voicemail & Transcribe</option>
-                  <option value="transfer">Warm Transfer to Human On-Call</option>
-                  <option value="ai_always">Let AI Answer 24/7</option>
+                  <option value="voicemail">Voicemail & transcribe</option>
+                  <option value="transfer">Warm transfer</option>
+                  <option value="ai_always">AI answers 24/7</option>
                 </select>
               </div>
+              <div className="flex flex-col gap-2 justify-end">
+                <label className="flex items-center justify-between p-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
+                  <span className="font-semibold text-[#0F0E17]">Accept incoming calls</span>
+                  <input
+                    type="checkbox"
+                    checked={formData.inboundRouting?.inboundEnabled !== false}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        inboundRouting: { ...formData.inboundRouting, inboundEnabled: e.target.checked },
+                      })
+                    }
+                  />
+                </label>
+                <label className="flex items-center justify-between p-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
+                  <span className="font-semibold text-[#0F0E17]">Outbound caller ID</span>
+                  <input
+                    type="checkbox"
+                    checked={formData.inboundRouting?.outboundEnabled !== false}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        inboundRouting: { ...formData.inboundRouting, outboundEnabled: e.target.checked },
+                      })
+                    }
+                  />
+                </label>
+              </div>
+            </div>
+          </SolidCard>
+
+          <SolidCard>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="text-xs font-bold text-[#0F0E17]">Outbound calls</h3>
+                <p className="text-[11px] text-[#524E5E] mt-0.5">
+                  One-off dials and campaigns use this agent after you publish the script. Rate limits apply per
+                  workspace.
+                </p>
+              </div>
+              <TactileButton
+                variant="secondary"
+                size="sm"
+                icon={PhoneOutgoing}
+                onClick={() =>
+                  onNavigate?.('calls', { agentId: selectedAgent.id, focusDial: true })
+                }
+              >
+                Place outbound call
+              </TactileButton>
             </div>
           </SolidCard>
         </div>

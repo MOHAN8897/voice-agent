@@ -12,7 +12,9 @@ export function Modal({
   subtitle = null,
   children,
   maxWidth = 'max-w-2xl',
-  className = ''
+  className = '',
+  headerless = false,
+  panelClassName = '',
 }) {
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -44,30 +46,30 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
-        className={`relative w-full ${maxWidth} bg-white border border-[#E4E2EB] rounded-2xl shadow-2xl z-10 overflow-hidden my-auto ${className}`}
+        className={`relative w-full ${maxWidth} bg-white border border-[#E4E2EB] rounded-2xl shadow-2xl z-10 overflow-hidden my-auto ${panelClassName} ${className}`}
       >
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4 p-5 sm:p-6 border-b border-[#E4E2EB]">
-          <div>
-            <h2 id="modal-title" className="text-base sm:text-lg font-bold text-[#0F0E17] tracking-tight">
-              {title}
-            </h2>
-            {subtitle && (
-              <p className="text-xs text-[#524E5E] mt-1">{subtitle}</p>
-            )}
+        {!headerless && (
+          <div className="flex items-start justify-between gap-4 p-5 sm:p-6 border-b border-[#E4E2EB]">
+            <div>
+              <h2 id="modal-title" className="text-base sm:text-lg font-bold text-[#0F0E17] tracking-tight">
+                {title}
+              </h2>
+              {subtitle && (
+                <p className="text-xs text-[#524E5E] mt-1">{subtitle}</p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close dialog"
+              className="min-w-[40px] min-h-[40px] flex items-center justify-center p-2 rounded-xl text-[#524E5E] hover:text-[#0F0E17] hover:bg-[#FAF9FD] border border-transparent hover:border-[#E4E2EB] transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close dialog"
-            className="min-w-[40px] min-h-[40px] flex items-center justify-center p-2 rounded-xl text-[#524E5E] hover:text-[#0F0E17] hover:bg-[#FAF9FD] border border-transparent hover:border-[#E4E2EB] transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
+        )}
 
-        {/* Modal Body Content */}
-        <div className="p-5 sm:p-6 max-h-[calc(85vh-120px)] overflow-y-auto">
+        <div className={`${headerless ? 'p-0' : 'p-5 sm:p-6'} max-h-[calc(92vh-24px)] overflow-y-auto`}>
           {children}
         </div>
       </div>

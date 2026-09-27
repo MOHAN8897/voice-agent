@@ -25,7 +25,23 @@ REALTIME_MODEL_IDS: tuple[str, ...] = (
     "gpt-realtime-2",
 )
 
-# OpenAI Realtime GA voices (audio output). Voice is locked after first audio reply.
+DEFAULT_GEMINI_LIVE_MODEL = "gemini-3.8-live"
+GEMINI_LIVE_MODEL_IDS: tuple[str, ...] = (
+    "gemini-3.8-live",
+    "gemini-2.5-flash-native-audio-latest",
+)
+
+GEMINI_LIVE_VOICES: tuple[str, ...] = (
+    "Puck",
+    "Charon",
+    "Kore",
+    "Fenrir",
+    "Aoede",
+    "Leda",
+    "Orus",
+    "Zephyr",
+)
+_GEMINI_VOICE_BY_LOWER = {name.lower(): name for name in GEMINI_LIVE_VOICES}
 REALTIME_VOICES: tuple[str, ...] = (
     "alloy",
     "ash",
@@ -93,6 +109,17 @@ OUTPUT LANGUAGE RULES
 """.strip()
 
 
+def is_gemini_live_voice_model(model: str | None) -> bool:
+    slug = str(model or "").strip().lower()
+    if not slug:
+        return False
+    if slug in GEMINI_LIVE_MODEL_IDS:
+        return True
+    if slug.endswith("-live") and slug.startswith("gemini-"):
+        return True
+    return "native-audio" in slug and slug.startswith("gemini-")
+
+
 def is_realtime_llm_model(model: str | None) -> bool:
     slug = str(model or "").strip().lower()
     if not slug:
@@ -114,6 +141,19 @@ def http_openai_model(settings=None) -> str:
     return model or DEFAULT_HTTP_LLM_MODEL
 
 
+def live_gemini_model(model: str | None, settings=None) -> str:
+    if is_gemini_live_voice_model(model):
+        return str(model).strip()
+    if settings is None:
+        from server.config.env import get_settings
+
+        settings = get_settings()
+    preferred = (settings.gemini_model or "").strip()
+    if is_gemini_live_voice_model(preferred):
+        return preferred
+    return DEFAULT_GEMINI_LIVE_MODEL
+
+
 def live_openai_model(model: str | None, settings=None) -> str:
     """Live-call OpenAI Realtime model (text PSTN or audio E2E)."""
     if is_realtime_llm_model(model):
@@ -128,20 +168,45 @@ def live_openai_model(model: str | None, settings=None) -> str:
     return DEFAULT_REALTIME_MODEL
 
 
+def realtime_voice_llm_provider(
+    stack_override: dict[str, Any] | None,
+    runtime_model: str | None = None,
+    *,
+    settings=None,
+) -> tuple[str, str]:
+    """Return (provider, model) for speech-to-speech PSTN."""
+    if isinstance(stack_override, dict):
+        llm = stack_override.get("llm")
+        if isinstance(llm, dict):
+            provider = str(llm.get("provider") or "").strip().lower()
+            model = str(llm.get("model") or "").strip()
+            if provider == "gemini" and is_gemini_live_voice_model(model):
+                return "gemini", live_gemini_model(model, settings)
+            if is_gemini_live_voice_model(model):
+                return "gemini", live_gemini_model(model, settings)
+            if provider == "openai" and is_realtime_llm_model(model):
+                return "openai", live_openai_model(model, settings)
+            if is_realtime_llm_model(model):
+                return "openai", live_openai_model(model, settings)
+        raw = str(stack_override.get("model") or "").strip()
+        if is_gemini_live_voice_model(raw):
+            return "gemini", live_gemini_model(raw, settings)
+        if is_realtime_llm_model(raw):
+            return "openai", live_openai_model(raw, settings)
+    if is_gemini_live_voice_model(runtime_model):
+        return "gemini", live_gemini_model(runtime_model, settings)
+    if is_realtime_llm_model(runtime_model):
+        return "openai", live_openai_model(runtime_model, settings)
+    return "openai", live_openai_model(runtime_model, settings)
+
+
 def resolve_realtime_voice_model(
     stack_override: dict[str, Any] | None = None,
     runtime_model: str | None = None,
 ) -> str:
     """Prefer the dial-stack Realtime slug, then Fine-tune runtime, then mini."""
-    if isinstance(stack_override, dict):
-        llm = stack_override.get("llm")
-        if isinstance(llm, dict) and is_realtime_llm_model(llm.get("model")):
-            return str(llm.get("model")).strip()
-        if is_realtime_llm_model(stack_override.get("model")):
-            return str(stack_override.get("model")).strip()
-    if is_realtime_llm_model(runtime_model):
-        return str(runtime_model).strip()
-    return live_openai_model(runtime_model)
+    _, model = realtime_voice_llm_provider(stack_override, runtime_model)
+    return model
 
 
 def _stack_voice_flow(stack_override: dict[str, Any] | None) -> str:
@@ -176,8 +241,12 @@ def uses_realtime_voice(*, settings=None, stack_override: dict[str, Any] | None 
 
 
 def normalize_realtime_voice(voice: str | None) -> str:
-    slug = str(voice or "").strip().lower()
-    return slug if slug in REALTIME_VOICES else DEFAULT_REALTIME_VOICE
+    slug = str(voice or "").strip()
+    gemini = _GEMINI_VOICE_BY_LOWER.get(slug.lower())
+    if gemini:
+        return gemini
+    lower = slug.lower()
+    return lower if lower in REALTIME_VOICES else DEFAULT_REALTIME_VOICE
 
 
 def normalize_realtime_turn_detection(kind: str | None) -> str:
@@ -248,12 +317,14 @@ def coerce_live_llm_selection(
     settings=None,
     stack_override: dict[str, Any] | None = None,
 ) -> tuple[str, str]:
-    """Live realtime path is OpenAI Realtime only — never Gemini or HTTP-only slugs."""
-    live = uses_realtime_text(settings=settings, stack_override=stack_override) or uses_realtime_voice(
-        settings=settings, stack_override=stack_override
-    )
-    if not live:
-        if str(provider or "").strip().lower() == "gemini":
-            return "openai", http_openai_model(settings)
-        return provider, model
-    return "openai", live_openai_model(model, settings)
+    """Live voice E2E may use OpenAI Realtime or Gemini Live; text PSTN stays OpenAI Realtime."""
+    if uses_realtime_voice(settings=settings, stack_override=stack_override):
+        prov, slug = realtime_voice_llm_provider(stack_override, model, settings=settings)
+        if prov == "gemini":
+            return prov, slug
+        return "openai", slug
+    if uses_realtime_text(settings=settings, stack_override=stack_override):
+        return "openai", live_openai_model(model, settings)
+    if str(provider or "").strip().lower() == "gemini":
+        return "openai", http_openai_model(settings)
+    return provider, model

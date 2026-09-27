@@ -132,6 +132,8 @@ async def _run_outcome_locked(call_id: str) -> dict[str, Any]:
         payload.get("extracted_fields"),
         snapshot,
         caller_id=str(meta.get("caller_id") or "") or None,
+        callee_e164=str(meta.get("callee_e164") or "") or None,
+        direction=str(meta.get("direction") or "") or None,
     )
     payload["extracted_fields"] = facts
     payload["facts"] = facts

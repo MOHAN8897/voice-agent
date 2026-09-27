@@ -1,7 +1,7 @@
 # Unified dev stack - API + Web + Cloudflare tunnel (one command)
 #
 # Usage:
-#   npm run dev              # local + auto tunnel when Exotel / named CF config exists
+#   npm run dev              # Voxly + API + named Cloudflare tunnel (PSTN)
 #   npm run dev:open         # same + open browser
 #   npm run share            # full stack + print friend share link
 #   npm run dev:down         # stop everything including tunnel
@@ -13,8 +13,8 @@
 #   share     - API + web + tunnel + public app link for friends
 
 param(
-    [ValidateSet("auto", "local", "telephony", "share")]
-    [string]$Mode = "auto",
+    [ValidateSet("auto", "local", "voxly", "telephony", "share")]
+    [string]$Mode = "voxly",
     [switch]$Open,
     [switch]$KillStale
 )
@@ -30,7 +30,13 @@ function Test-EnvFlag {
     param([string]$Key)
     $envFile = Join-Path $RepoRoot ".env"
     if (-not (Test-Path $envFile)) { return $false }
-    foreach ($line in Get-Content $envFile) {
+    $lines = @()
+    try {
+        $lines = Get-Content -Path $envFile -Encoding UTF8 -ErrorAction Stop
+    } catch {
+        $lines = Get-Content -Path $envFile -ErrorAction SilentlyContinue
+    }
+    foreach ($line in $lines) {
         if ($line -match "^$Key=(.+)$") {
             return $Matches[1].Trim() -match "^(?i)(true|1|yes)$"
         }
@@ -44,11 +50,22 @@ function Test-NamedTunnelConfig {
 
 function Should-StartTunnel {
     if ($Mode -eq "local") { return $false }
-    if ($Mode -in @("telephony", "share")) { return $true }
-    # auto
-    if (Test-NamedTunnelConfig) { return $true }
-    if (Test-EnvFlag "ENABLE_EXOTEL") { return $true }
+    if ($Mode -in @("telephony", "share", "voxly")) {
+        return Test-NamedTunnelConfig
+    }
+    # auto: tunnel only when explicitly enabled (avoids heavy CF + public URL sync on every dev)
+    if (Test-EnvFlag "DEV_ENABLE_TUNNEL") {
+        if (Test-NamedTunnelConfig) { return $true }
+        if (Test-EnvFlag "ENABLE_EXOTEL") { return $true }
+    }
     return $false
+}
+
+function Should-SyncRemoteEnv {
+    if ($Mode -eq "local") { return $false }
+    if ($Mode -in @("telephony", "share")) { return $true }
+    if ($Mode -eq "voxly" -and (Test-NamedTunnelConfig)) { return $true }
+    return Test-EnvFlag "DEV_ENABLE_TUNNEL"
 }
 
 # --- Step 1: clean slate ---
@@ -62,25 +79,26 @@ if (-not (Stop-VoiceAgentDevStack)) {
     Write-Error "Could not free dev ports. Close leftover Voice Agent windows and retry."
 }
 
-# --- Step 2: sync env URLs from named tunnel config ---
+# --- Step 2: sync env URLs from named tunnel config (optional; off in voxly/local mode) ---
 $synced = $null
-if (Test-NamedTunnelConfig) {
+if (Should-SyncRemoteEnv -and (Test-NamedTunnelConfig)) {
     $synced = & (Join-Path $PSScriptRoot "env_sync.ps1")
 }
 
 # --- Step 3: start API + web ---
 $productionWeb = $Mode -in @("share", "telephony")
+$voxlyFocus = $Mode -eq "voxly"
 if ($Open) {
-    & (Join-Path $PSScriptRoot "dev_up.ps1") -Wait -Open -ProductionWeb:$productionWeb
+    & (Join-Path $PSScriptRoot "dev_up.ps1") -Wait -Open -ProductionWeb:$productionWeb -VoxlyFocus:$voxlyFocus
 } else {
-    & (Join-Path $PSScriptRoot "dev_up.ps1") -Wait -ProductionWeb:$productionWeb
+    & (Join-Path $PSScriptRoot "dev_up.ps1") -Wait -ProductionWeb:$productionWeb -VoxlyFocus:$voxlyFocus
 }
 if ($LASTEXITCODE -ne 0) {
     throw "Local stack failed to start. See data/dev-logs/api.log and web.log."
 }
 
-# Share/telephony cannot usefully continue without a live local API.
-if ($Mode -in @("share", "telephony")) {
+# PSTN webhooks need a live local origin before Cloudflare can proxy them.
+if (Should-StartTunnel) {
     if (-not (Test-HttpOk "http://127.0.0.1:8000/api/health" 3)) {
         Write-Error "Local API is not healthy after start. Check data\dev-logs\api.log - refusing to start tunnel."
     }
@@ -136,9 +154,23 @@ Write-Host "============================================================"
 Write-Host "  Voice agent stack"
 Write-Host "============================================================"
 Write-Host ""
-Write-Host "  Local website     http://localhost:3000/dev/login  (dev / devpass)"
-Write-Host "  Local API         http://127.0.0.1:8000/api/health"
-Write-Host "  Test Studio       http://localhost:3000/dev/test-studio"
+if ($Mode -eq "voxly") {
+    Write-Host "  Voxly (product UI)  http://127.0.0.1:5173"
+    Write-Host "  Dev portal          http://localhost:3000/dev/login  (DEV_PORTAL_USERNAME / DEV_PORTAL_PASSWORD in .env)"
+    Write-Host "  Test Studio         http://localhost:3000/dev/test-studio"
+    Write-Host "  API                 http://127.0.0.1:8000/api/health"
+    Write-Host ""
+    Write-Host '  Marketing and /app console redirect to Voxly.'
+    if ($tunnelStarted) {
+        Write-Host '  Cloudflare tunnel is up for Telnyx/PSTN media (api-dev.hustlelabs.in).'
+    } else {
+        Write-Host '  PSTN tunnel did not start. Install cloudflared and run scripts/setup_cloudflare_tunnel.ps1'
+    }
+} else {
+    Write-Host "  Local website     http://localhost:3000/dev/login  (DEV_PORTAL_* in .env)"
+    Write-Host "  Local API         http://127.0.0.1:8000/api/health"
+    Write-Host "  Test Studio       http://localhost:3000/dev/test-studio"
+}
 if ($tunnelStarted -and $publicApi) {
     Write-Host ""
     Write-Host "  Public API        $publicApi"
@@ -157,7 +189,7 @@ if ($tunnelStarted -and $publicApp -and $publicApp -notmatch "localhost") {
 }
 if ($Mode -eq "share" -and $tunnelStarted -and $publicApp) {
     Write-Host ""
-    Write-Host "  >>> COPY THIS LINK: $publicApp/dev/test-studio"
+    Write-Host "  COPY THIS LINK: $publicApp/dev/test-studio"
 }
 Write-Host ""
 Write-Host "  Stop everything: npm run dev:down"

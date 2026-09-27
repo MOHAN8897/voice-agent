@@ -16,6 +16,8 @@ function normalizeUser(meOrAuth) {
     tenantId: tenant?.tenantId,
     tenantName: tenant?.name,
     role: meOrAuth?.role,
+    isPlatformAdmin: Boolean(meOrAuth?.isPlatformAdmin),
+    isDevTester: Boolean(meOrAuth?.isDevTester),
   };
 }
 
@@ -124,6 +126,9 @@ export function AuthProvider({ children }) {
 
   const signupWithEmail = async (name, email, password) => {
     const data = await authService.signUpWithEmailPassword(name, email, password);
+    if (data?.requiresEmailVerification) {
+      return data;
+    }
     const normalized = normalizeUser(data);
     setUser(normalized);
     return normalized;
@@ -149,6 +154,8 @@ export function AuthProvider({ children }) {
   const value = {
     user,
     isAuthenticated: !!user && !!api.getToken(),
+    isPlatformAdmin: Boolean(user?.isPlatformAdmin),
+    isDevTester: Boolean(user?.isDevTester),
     isLoading,
     loginWithGoogle,
     loginWithGithub,

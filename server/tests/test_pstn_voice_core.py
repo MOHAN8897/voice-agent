@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock
 from server.services.pstn_text_chunker import (
     drain_complete_sentences,
     extract_opening_greeting,
+    extract_prewarm_greeting,
     join_speakable_chunks,
     resolve_stream_tts_tail,
 )
@@ -161,6 +162,34 @@ def test_extract_opening_greeting_from_opening_line_te():
     greet = extract_opening_greeting(brain, "te-IN")
     assert greet and "Broski" in greet
     assert "opening_line" not in (greet or "").lower()
+
+
+def test_enrich_outbound_spoken_intro_adds_identity():
+    from server.services.pstn_text_chunker import enrich_outbound_spoken_intro
+
+    brain = (
+        "--- AGENT IDENTITY ---\n"
+        "You are Priya, calling from Broski Realty.\n"
+        "--- OPENING ---\n"
+        'Example opening: Hi, konchem time unda?\n'
+    )
+    line = enrich_outbound_spoken_intro(brain, "Hi, konchem time unda?", "te-IN") or ""
+    assert "Priya" in line
+    assert "Broski" in line
+    assert "konchem" in line.lower()
+
+
+def test_extract_prewarm_greeting_prefers_long_canonical_opening():
+    brain = (
+        "--- CANONICAL OPENING ---\n"
+        "Hi, this is Priya from Broski Realty calling about your plot inquiry. Do you have a moment?\n"
+        'opening_line_te: "Hi, konchem time unda?"\n'
+    )
+    short = extract_opening_greeting(brain, "te-IN", direction="outbound") or ""
+    long = extract_prewarm_greeting(brain, "te-IN", direction="outbound") or ""
+    assert "Broski" in long
+    assert len(long) > len(short)
+
 
 @pytest.mark.asyncio
 async def test_flush_stale_outbound_playback_invalidates_prior_generation():

@@ -121,7 +121,7 @@ export const authService = {
 
     const res = await api.auth.signup(name.trim(), email.trim(), password);
     if (res.requiresEmailVerification) {
-      return res;
+      return { ...res, requiresEmailVerification: true, email: res.email || email.trim() };
     }
     const user = {
       id: res.user?.userId,

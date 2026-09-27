@@ -17,6 +17,10 @@ import {
 } from "@/components/test-studio/useTestStudioFineTune";
 import { compileLanguageLabel } from "@/components/test-studio/CompileLanguagePicker";
 import { CompilerSectionsPanel } from "@/components/test-studio/CompilerSectionsPanel";
+import { RealtimeVoiceSelect } from "@/components/test-studio/RealtimeVoiceSelect";
+import { ScriptEntityTagsPanel } from "@/components/test-studio/ScriptEntityTagsPanel";
+import { LivePromptPreviewPanel } from "@/components/test-studio/LivePromptPreviewPanel";
+import { hasScriptEntityValues } from "@/lib/script-entities";
 import { CartesiaVoiceSelect } from "@/components/test-studio/CartesiaVoiceSelect";
 import { SarvamVoiceSelect } from "@/components/test-studio/SarvamVoiceSelect";
 import {
@@ -29,7 +33,8 @@ import {
   REALTIME_NOISE_REDUCTION,
   REALTIME_TURN_DETECTION,
   REALTIME_VAD_EAGERNESS,
-  REALTIME_VOICES,
+  GEMINI_LIVE_MODEL_IDS,
+  isGeminiLiveVoiceModel,
   isRealtimePstnMode,
   normalizeRealtimeSilenceMs,
   normalizeRealtimeSpeed,
@@ -139,6 +144,7 @@ export function TestStudioFineTuneWorkbench({
   liveLlmModel,
   onLiveLlmChange,
   onUnsavedGuardChange,
+  callId,
 }: {
   agentId: string;
   portal: "app" | "dev";
@@ -146,6 +152,7 @@ export function TestStudioFineTuneWorkbench({
   locked: boolean;
   activeTab?: Tab;
   onTabChange?: (tab: Tab) => void;
+  callId?: string | null;
   stackTtsProvider?: string;
   runtimeTtsSpeaker?: string;
   onRuntimeSpeakerChange?: (speaker: string) => void;
@@ -254,11 +261,14 @@ export function TestStudioFineTuneWorkbench({
     String(ttsCatalog?.defaultCartesiaVoiceId || "db6b0ed5-d5d3-463d-ae85-518a07d3c2b4");
   const useCartesia = stackTtsProvider === "cartesia" || String(ft.runtime.ttsModel || "").startsWith("sonic");
   const realtime = isRealtimePstnMode(channel);
-  const filteredRealtime = allowedModels.filter((m) => m.startsWith("gpt-realtime"));
+  const filteredRealtime = [
+    ...allowedModels.filter((m) => m.startsWith("gpt-realtime")),
+    ...GEMINI_LIVE_MODEL_IDS.filter((m) => !allowedModels.includes(m)),
+  ];
   const llmModels = realtime
     ? filteredRealtime.length
       ? filteredRealtime
-      : [...REALTIME_MODEL_IDS]
+      : [...REALTIME_MODEL_IDS, ...GEMINI_LIVE_MODEL_IDS]
     : allowedModels;
 
   const brainHref =
@@ -383,11 +393,19 @@ export function TestStudioFineTuneWorkbench({
                 />
               </Field>
 
+              <ScriptEntityTagsPanel
+                entities={ft.scriptEntities}
+                scriptHasTags={hasScriptEntityValues(ft.scriptEntities)}
+                disabled={locked || ft.saving}
+                onChange={ft.setScriptEntities}
+                onApplyToScript={ft.mergeEntityTagsIntoScript}
+              />
+
               <Field
                 label="Generated calling script"
                 hint={
                   ft.instructions.agentScript || ft.optimizerMeta.compiledVersion
-                    ? `Edit after create — max ${ft.limits.agentScriptMaxWords} words / ${ft.limits.agentScriptMax} characters. Keep near ~${ft.limits.recommendedAgentScriptWords} words.`
+                    ? `Business sections only (identity, offer, opening, role). Extracted fields are saved separately. Max ${ft.limits.agentScriptMaxWords} words.`
                     : "Create agent script first, then you can edit this calling script."
                 }
               >
@@ -400,7 +418,8 @@ export function TestStudioFineTuneWorkbench({
                   value={ft.instructions.agentScript}
                   onChange={(e) => {
                     if (!(ft.instructions.agentScript || ft.optimizerMeta.compiledVersion)) return;
-                    ft.setInstructions((p) => ({ ...p, agentScript: e.target.value.slice(0, ft.limits.agentScriptMax) }));
+                    const next = e.target.value.slice(0, ft.limits.agentScriptMax);
+                    ft.setInstructions((p) => ({ ...p, agentScript: next }));
                   }}
                 />
                 {(ft.instructions.agentScript || ft.optimizerMeta.compiledVersion) ? (
@@ -414,9 +433,35 @@ export function TestStudioFineTuneWorkbench({
                 ) : null}
               </Field>
 
-              {portal === "dev" ? (
-                <CompilerSectionsPanel data={ft.compilerSections} className="mt-2" />
+              {(ft.instructions.agentScript || ft.optimizerMeta.compiledVersion) && hasScriptEntityValues(ft.scriptEntities) ? (
+                <details className="rounded-skeuo-sm border border-surface-border-subtle p-3">
+                  <summary className="cursor-pointer text-xs font-medium text-text-muted">
+                    Full script package (JSON preview)
+                  </summary>
+                  <pre className="mt-2 max-h-48 overflow-auto font-mono text-[10px] text-text-subtle whitespace-pre-wrap">
+                    {JSON.stringify(
+                      {
+                        script_entities: ft.scriptEntities,
+                        business_script: ft.instructions.agentScript,
+                      },
+                      null,
+                      2
+                    )}
+                  </pre>
+                </details>
               ) : null}
+
+              <LivePromptPreviewPanel
+                sessionId={ft.sessionId}
+                callId={callId}
+                direction={channel === "pstn" || channel === "pstn_realtime" ? "outbound" : "outbound"}
+                llmModel={liveLlmModel}
+                pipeline={
+                  channel === "pstn" || channel === "pstn_realtime" ? "realtime_voice" : "realtime_text"
+                }
+              />
+
+              <CompilerSectionsPanel data={ft.compilerSections} className="mt-2" />
 
               <div className="rounded-skeuo-sm border border-surface-border-subtle p-4">
                 <p className="text-sm text-text-muted">Call end</p>
@@ -533,8 +578,12 @@ export function TestStudioFineTuneWorkbench({
           {tab === "llm" && (
             <div className="grid gap-5 lg:grid-cols-2">
               <Field
-                label="OpenAI model"
-                hint={realtime ? "Audio-to-audio Realtime models only. Temperature is not sent on this path." : undefined}
+                label={realtime ? "Live speech model (OpenAI or Gemini)" : "OpenAI model"}
+                hint={
+                  realtime
+                    ? "Speech-to-speech only. Gemini uses Test Studio stack prefs — not saved as openaiModel in runtime."
+                    : undefined
+                }
               >
                 <select
                   disabled={locked}
@@ -550,8 +599,14 @@ export function TestStudioFineTuneWorkbench({
                   }
                   onChange={(e) => {
                     const value = e.target.value;
-                    ft.setRuntime((r) => ({ ...r, openaiModel: value }));
-                    if (realtime) onLiveLlmChange?.(value);
+                    if (realtime) {
+                      onLiveLlmChange?.(value);
+                      if (!isGeminiLiveVoiceModel(value)) {
+                        ft.setRuntime((r) => ({ ...r, openaiModel: value }));
+                      }
+                    } else {
+                      ft.setRuntime((r) => ({ ...r, openaiModel: value }));
+                    }
                   }}
                 >
                   {llmModels.map((m) => (
@@ -637,23 +692,17 @@ export function TestStudioFineTuneWorkbench({
                 <>
                   <Field
                     label="Realtime voice"
-                    hint="OpenAI speech-to-speech voice. Locked after the first audio reply — start a new call to change it."
+                    hint="OpenAI slug; Gemini Live maps to a prebuilt voice on PSTN. Locked after the first audio reply."
                   >
-                    <select
+                    <RealtimeVoiceSelect
                       disabled={locked}
-                      className={inputCls}
                       value={realtimeVoice || DEFAULT_REALTIME_VOICE}
-                      onChange={(e) => {
-                        onRealtimeVoiceChange?.(e.target.value);
-                        onRealtimeSettingsChange?.({ realtimeVoice: e.target.value });
+                      llmModel={liveLlmModel}
+                      onChange={(voiceId) => {
+                        onRealtimeVoiceChange?.(voiceId);
+                        onRealtimeSettingsChange?.({ realtimeVoice: voiceId });
                       }}
-                    >
-                      {REALTIME_VOICES.map((v) => (
-                        <option key={v.id} value={v.id}>
-                          {v.label}
-                        </option>
-                      ))}
-                    </select>
+                    />
                   </Field>
                   <Field
                     label="Turn detection"

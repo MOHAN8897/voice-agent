@@ -6,7 +6,7 @@ from typing import Any
 from server.config.constants import constants
 from server.config.env import Settings
 from server.prompts.voice_defaults import DEFAULT_OPENAI_MODEL, OPENAI_MODEL_CATALOG
-from server.realtime.models import is_realtime_llm_model
+from server.realtime.models import is_gemini_live_voice_model, is_realtime_llm_model
 
 
 def llm_models_for_provider(provider_id: str, settings: Settings) -> list[dict[str, Any]]:
@@ -44,6 +44,25 @@ def llm_models_for_provider(provider_id: str, settings: Settings) -> list[dict[s
             }
             for m in settings.allowed_openai_models
         ]
+
+    if provider_id == "gemini":
+        default_model = (settings.gemini_model or "gemini-3.5-flash-lite").strip()
+        rows: list[dict[str, Any]] = []
+        for mid, meta in constants.GEMINI_LLM_MODELS.items():
+            realtime = bool(meta.get("realtime")) or is_gemini_live_voice_model(mid)
+            rows.append(
+                {
+                    "id": mid,
+                    "label": meta["label"],
+                    "structured_output": bool(meta.get("structured_output", True)),
+                    "prompt_caching": bool(meta.get("prompt_caching", False)),
+                    "realtime": realtime,
+                    "pricing_key": f"gemini:{mid}",
+                    "tier": meta.get("tier"),
+                    "default": mid == default_model,
+                }
+            )
+        return rows
 
     if provider_id == "deepseek":
         default_model = (settings.deepseek_model or "deepseek-chat").strip()

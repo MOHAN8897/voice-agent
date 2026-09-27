@@ -31,7 +31,7 @@ import {
   type StackMode,
 } from "@/lib/test-studio-stack";
 import { applyPstnStackDefaults } from "@/lib/pstn-stack";
-import { isRealtimePstnMode } from "@/lib/realtime-voice";
+import { isGeminiLiveVoiceModel, isRealtimePstnMode, isRealtimeSpeechToSpeechModel } from "@/lib/realtime-voice";
 import { mapPstnTraceToTurnRows } from "@/lib/pstn-trace-metrics";
 import { classifyCacheEvent, type PricingMeta } from "@/lib/usage-cost";
 import { billingCharCount } from "@/lib/billing-chars";
@@ -230,7 +230,7 @@ export function AgentTestStudio({
           ...uiPrefs,
           saveConfig: true,
           stackOverride: isRealtimePstnMode(channel)
-            ? buildPstnRealtimeStackOverride(stack)
+            ? buildPstnRealtimeStackOverride({ ...stack, language })
             : channel === "pstn"
               ? buildPstnStackOverride(
                   applyPstnStackDefaults(
@@ -288,11 +288,15 @@ export function AgentTestStudio({
         const openaiModel = String(values.openaiModel || "");
         if (openaiModel) {
           setRuntimeOpenAiModel(openaiModel);
-          if (openaiModel.startsWith("gpt-realtime")) {
+          if (isRealtimeSpeechToSpeechModel(openaiModel)) {
             setStack((prev) =>
-              String(prev.llmModel || "").startsWith("gpt-realtime")
+              isRealtimeSpeechToSpeechModel(prev.llmModel)
                 ? prev
-                : { ...prev, llmModel: openaiModel }
+                : {
+                    ...prev,
+                    llmModel: openaiModel,
+                    llmProvider: isGeminiLiveVoiceModel(openaiModel) ? "gemini" : "openai",
+                  }
             );
           }
         }
@@ -436,6 +440,10 @@ export function AgentTestStudio({
           modelCostInr: Number(body.model_cost_inr ?? usage.model_cost_inr ?? 0) || undefined,
           telnyxUsd: usage.telnyx_usd != null ? Number(usage.telnyx_usd) : undefined,
           telnyxInr: Number(body.telnyx_inr ?? usage.telnyx_inr ?? 0) || undefined,
+          telnyxDestinationCountry:
+            typeof usage.telnyx_destination_country === "string"
+              ? usage.telnyx_destination_country
+              : undefined,
           totalUsd: Number(body.cost_usd ?? usage.cost_usd ?? 0) || undefined,
           totalInr: Number(body.cost_inr ?? usage.cost_inr ?? 0) || undefined,
         });
@@ -533,7 +541,7 @@ export function AgentTestStudio({
     setEvents([]);
     setTurnRows([]);
     setStampedUsage(null);
-    setSessionStartedAt(Date.now());
+    setSessionStartedAt(null);
     setSessionEndedAt(null);
     setSessionStatus("connecting");
   }, []);
@@ -543,6 +551,8 @@ export function AgentTestStudio({
     setCallId(id);
     setCallEnded(false);
     setLocked(true);
+    setSessionStartedAt((prev) => prev ?? Date.now());
+    setSessionEndedAt(null);
     setSessionStatus("listening");
     refreshMemory(id);
   }, [refreshMemory]);
@@ -578,11 +588,12 @@ export function AgentTestStudio({
   useEffect(() => {
     if (!isRealtimePstnMode(channel)) return;
     setStack((prev) => {
-      if (String(prev.llmModel || "").startsWith("gpt-realtime")) return prev;
-      const fallback = String(runtimeOpenAiModel || "").startsWith("gpt-realtime")
-        ? runtimeOpenAiModel
+      if (isRealtimeSpeechToSpeechModel(prev.llmModel)) return prev;
+      const fromRuntime = String(runtimeOpenAiModel || "");
+      const fallback = isRealtimeSpeechToSpeechModel(fromRuntime)
+        ? fromRuntime
         : "gpt-realtime-2.1-mini";
-      return { ...prev, llmModel: fallback };
+      return { ...prev, llmModel: fallback, llmProvider: isGeminiLiveVoiceModel(fallback) ? "gemini" : "openai" };
     });
   }, [channel, runtimeOpenAiModel]);
 
@@ -624,8 +635,10 @@ export function AgentTestStudio({
   const onRealtimeStackChange = useCallback(
     (next: StackForm) => {
       setStack(next);
-      if (isRealtimePstnMode(channel) && String(next.llmModel || "").startsWith("gpt-realtime")) {
-        setRuntimeOpenAiModel(next.llmModel);
+      if (isRealtimePstnMode(channel) && isRealtimeSpeechToSpeechModel(next.llmModel)) {
+        if (!isGeminiLiveVoiceModel(next.llmModel)) {
+          setRuntimeOpenAiModel(next.llmModel);
+        }
       }
     },
     [channel]
@@ -652,12 +665,10 @@ export function AgentTestStudio({
 
   const pstnStackOverride = useMemo(() => {
     if (isRealtimePstnMode(channel)) {
-      return buildPstnRealtimeStackOverride({
-        ...stack,
-        llmModel: String(stack.llmModel || "").startsWith("gpt-realtime")
-          ? stack.llmModel
-          : runtimeOpenAiModel || stack.llmModel,
-      });
+      const slug = isRealtimeSpeechToSpeechModel(stack.llmModel)
+        ? stack.llmModel
+        : runtimeOpenAiModel || stack.llmModel;
+      return buildPstnRealtimeStackOverride({ ...stack, llmModel: slug, language });
     }
     const voiceId = stack.ttsVoiceId || runtimeTtsSpeaker;
     const form = applyPstnStackDefaults(
@@ -898,8 +909,14 @@ export function AgentTestStudio({
           channel={channel}
           liveLlmModel={stack.llmModel}
           onLiveLlmChange={(llmModel) => {
-            setRuntimeOpenAiModel(llmModel);
-            setStack((prev) => ({ ...prev, llmModel }));
+            if (!isGeminiLiveVoiceModel(llmModel)) {
+              setRuntimeOpenAiModel(llmModel);
+            }
+            setStack((prev) => ({
+              ...prev,
+              llmModel,
+              llmProvider: isGeminiLiveVoiceModel(llmModel) ? "gemini" : "openai",
+            }));
           }}
           realtimeVoice={stack.realtimeVoice}
           realtimeTurnDetection={stack.realtimeTurnDetection}
@@ -913,6 +930,7 @@ export function AgentTestStudio({
           }
           onRealtimeSettingsChange={(patch) => setStack((prev) => ({ ...prev, ...patch }))}
           onUnsavedGuardChange={onFineTuneGuardChange}
+          callId={callId}
         />
       </div>
 

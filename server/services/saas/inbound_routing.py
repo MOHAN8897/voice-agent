@@ -10,7 +10,7 @@ from sqlalchemy import select
 from server.db.connection import get_session_factory
 from server.db.models.entities import Agent, Tenant
 from server.db.models.phase5_models import PhoneNumber
-from server.services.saas.telephony_orchestrator import saas_stack_override
+from server.services.saas.pstn_saas_stack import saas_stack_override_for_agent
 
 logger = logging.getLogger(__name__)
 
@@ -62,11 +62,16 @@ async def resolve_inbound_route(to_e164: str | None) -> InboundRoute | None:
         agent = await session.get(Agent, agent_uuid)
         if agent is None or agent.tenant_id != tenant.tenant_id:
             return None
-        lang = (agent.languages or ["te-IN"])[0]
+        agent_dict = {
+            "agent_id": str(agent.agent_id),
+            "languages": agent.languages or ["te-IN"],
+        }
+        stack_override = await saas_stack_override_for_agent(agent_dict)
+        lang = str(stack_override.get("language") or (agent.languages or ["te-IN"])[0])
         return InboundRoute(
             tenant_id=tenant.tenant_id,
             agent_id=agent.agent_id,
             tier=agent.default_tier or "medium",
             language=lang,
-            stack_override=saas_stack_override(lang),
+            stack_override=stack_override,
         )

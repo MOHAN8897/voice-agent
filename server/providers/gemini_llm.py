@@ -41,23 +41,98 @@ def thinking_config_for(model: str) -> dict[str, str] | None:
     return {"thinkingLevel": "LOW"}
 
 
-def gemini_usage_from_metadata(meta: dict[str, Any] | None) -> dict[str, int]:
+def _safe_token_count(value: Any) -> int:
+    try:
+        return max(0, int(value or 0))
+    except (TypeError, ValueError):
+        return 0
+
+
+def _modality_name(item: Any) -> str:
+    raw = item.get("modality") if isinstance(item, dict) else getattr(item, "modality", None)
+    return str(getattr(raw, "name", None) or raw or "").upper()
+
+
+def _modality_count(item: Any) -> int:
+    if isinstance(item, dict):
+        return _safe_token_count(item.get("tokenCount") or item.get("token_count"))
+    return _safe_token_count(getattr(item, "token_count", None) or getattr(item, "tokenCount", None))
+
+
+def _split_modality_tokens(details: Any) -> tuple[int, int, int]:
+    """Return (audio, image_or_video, other) from Live/generateContent detail lists."""
+    audio = 0
+    image = 0
+    other = 0
+    if not isinstance(details, list):
+        return 0, 0, 0
+    for item in details:
+        n = _modality_count(item)
+        name = _modality_name(item)
+        if "AUDIO" in name:
+            audio += n
+        elif "IMAGE" in name or "VIDEO" in name:
+            image += n
+        else:
+            other += n
+    return audio, image, other
+
+
+def gemini_usage_from_metadata(
+    meta: dict[str, Any] | None,
+    *,
+    native_audio: bool = False,
+) -> dict[str, int]:
     if not isinstance(meta, dict):
         return {}
-    prompt = int(meta.get("promptTokenCount") or meta.get("prompt_token_count") or 0)
-    out = int(meta.get("candidatesTokenCount") or meta.get("candidates_token_count") or 0)
-    total = int(meta.get("totalTokenCount") or meta.get("total_token_count") or 0)
-    cached = int(
-        meta.get("cachedContentTokenCount")
-        or meta.get("cached_content_token_count")
-        or 0
+    prompt = _safe_token_count(meta.get("promptTokenCount") or meta.get("prompt_token_count"))
+    out = _safe_token_count(
+        meta.get("candidatesTokenCount")
+        or meta.get("candidates_token_count")
+        or meta.get("responseTokenCount")
+        or meta.get("response_token_count")
     )
+    total = _safe_token_count(meta.get("totalTokenCount") or meta.get("total_token_count"))
+    cached = _safe_token_count(
+        meta.get("cachedContentTokenCount") or meta.get("cached_content_token_count")
+    )
+    prompt_details = (
+        meta.get("promptTokensDetails")
+        or meta.get("prompt_tokens_details")
+        or []
+    )
+    response_details = (
+        meta.get("responseTokensDetails")
+        or meta.get("response_tokens_details")
+        or meta.get("candidatesTokensDetails")
+        or meta.get("candidates_tokens_details")
+        or []
+    )
+    audio_in, image_in, other_in = _split_modality_tokens(prompt_details)
+    audio_out, image_out, other_out = _split_modality_tokens(response_details)
+    if prompt <= 0:
+        prompt = audio_in + image_in + other_in
+    if out <= 0:
+        out = audio_out + image_out + other_out
+    has_details = bool(prompt_details) or bool(response_details)
+    if not has_details:
+        # generateContent: missing details must not be billed as audio.
+        # Live S2S: prompt without details is system text; spoken reply is audio out.
+        audio_in = 0
+        image_in = 0
+        audio_out = out if native_audio else 0
+        image_out = 0
     return {
         "input_tokens": prompt,
         "output_tokens": out,
         "total_tokens": total or (prompt + out),
         "cached_tokens": cached,
         "cache_write_tokens": 0,
+        "input_audio_tokens": min(prompt, audio_in),
+        "output_audio_tokens": min(out, audio_out),
+        "input_image_tokens": min(prompt, image_in),
+        "output_image_tokens": min(out, image_out),
+        "cached_audio_tokens": min(audio_in, cached) if audio_in else 0,
     }
 
 

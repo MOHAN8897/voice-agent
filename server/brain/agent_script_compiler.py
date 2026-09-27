@@ -171,11 +171,15 @@ class AgentScriptResult:
     platform_call_rules: str = ""
 
     def to_dict(self) -> dict[str, Any]:
+        from server.brain.script_entities import entity_tags_to_api, parse_entity_tags
+
+        entities = parse_entity_tags(self.agent_script)
         return {
             "optimized_business_prompt": self.agent_script,
             "agent_script": self.agent_script,
             "agent_name": self.agent_name,
             "company_name": self.company_name,
+            "script_entities": entity_tags_to_api(entities),
             "role_summary": self.role_summary,
             "preserved_facts": self.key_facts[:8],
             "detected_role": self.detected_role,
@@ -563,7 +567,12 @@ def _strip_city_clause(candidate: str) -> str:
 
 def extract_company_from_brief(brief: str) -> str:
     text = _normalize_brief_identity_text(brief)
-    match = re.search(r"company(?:\s*name)?\s*(?:is|:)\s*([^\n.]{2,50})", text, re.I)
+    match = re.search(
+        r"(?:company|business)(?:\s*name)?\s*(?:is|:)\s*"
+        r"([^\n.]{2,80}?)(?=\s+whose\b|\s+who\b|\s+where\b|\s+which\b|[.,;]|$)",
+        text,
+        re.I,
+    )
     if match:
         return _clean_identity_value(_strip_city_clause(match.group(1)))
 
@@ -890,9 +899,9 @@ def _personal_opening_line(
         if lang == "en-US"
         else "Do you have a moment?"
         if english
-        else "Konchem time unda?"
+        else "Meeku oka moment unda?"
         if lang == "te-IN"
-        else "Kya aapke paas ek minute hai?"
+        else "Kya aap free hain — ek minute mil sakta hai?"
     )
     if not outbound:
         closer = "How can I help?" if english else "Nenu ela sahayam cheyagalanu?"
@@ -993,7 +1002,10 @@ def _sanitize_conversation_flow(script: str, role: str = "other") -> str:
     Platform FLOW always provides natural progression policy. Writer soft fields
     are preserved when they are not numbered trees.
     """
-    from server.prompts.conversation_policy import checklist_flow_detected
+    from server.prompts.conversation_policy import (
+        checklist_flow_detected,
+        writer_flow_must_preserve,
+    )
 
     header = "CONVERSATION FLOW"
     pattern = re.compile(
@@ -1022,6 +1034,12 @@ def _sanitize_conversation_flow(script: str, role: str = "other") -> str:
         if soft and len(soft) > 40:
             soft_fields = soft[:1200]
     platform = flow_section(role, brief_fields=soft_fields)
+    if match and writer_body and writer_flow_must_preserve(writer_body):
+        preserved = (
+            f"--- CONVERSATION FLOW ---\n{writer_body.strip()}\n\n"
+            f"--- PLATFORM FLOW POLICY ---\n{platform.strip()}"
+        )
+        return pattern.sub("\n" + preserved, script, count=1).strip()
     if match:
         return pattern.sub("\n" + platform, script, count=1).strip()
     body = (script or "").strip()
@@ -1044,6 +1062,7 @@ def validate_agent_script(
     *,
     brief: str,
     agent_name: str,
+    company_name: str = "",
 ) -> list[str]:
     """
     Post-sanitize checks before save. FLOW is always platform-replaced; this catches
@@ -1079,6 +1098,29 @@ def validate_agent_script(
         if key not in brief_keys:
             reasons.append(f"price/amount not in brief: {span[:48]}")
             break
+
+    co = (company_name or "").strip().lower()
+    if co and len(co) >= 3:
+        if co not in (body or "").lower():
+            reasons.append(f"company missing from script: {company_name[:48]}")
+        open_m = re.search(
+            r"(?:Example opening|CANONICAL OPENING)[^\n]*\n+([^\n]{8,280})",
+            body,
+            re.I,
+        )
+        if open_m:
+            opening = open_m.group(1).lower()
+            if co not in opening:
+                from_m = re.search(
+                    r"\b(?:from|at|with|representing)\s+([a-z][a-z0-9\s&'.-]{2,48})",
+                    opening,
+                )
+                if from_m:
+                    found = from_m.group(1).strip().lower().rstrip(".,")
+                    if found and found != co and co not in found and found not in co:
+                        reasons.append(
+                            f"opening may name wrong company (expected {company_name})"
+                        )
 
     return reasons
 
@@ -1195,8 +1237,10 @@ def _format_business_offer(
             scope = scope[0].upper() + scope[1:]
         if not scope.endswith("."):
             scope += "."
-        return scope[:480]
-    scope = _sanitize_business_facts(brief, agent_name=agent_name, company_name=company_name)
+        spoken = scope[:480]
+        return spoken
+    full_facts = _sanitize_business_facts(brief, agent_name=agent_name, company_name=company_name)
+    scope = full_facts
     scope = re.sub(
         r"who\s+should\s+convince\s+(?:the\s+)?users?\s+to\s+",
         "Help callers ",
@@ -1263,7 +1307,46 @@ def _format_business_offer(
         scope = f"{company_name}. {scope}"
     if not scope.endswith("."):
         scope += "."
-    return scope[:480]
+    spoken = scope[:480]
+    extras: list[str] = []
+    _mandatory_kw = (
+        "not eligible",
+        "exclusion",
+        "refund",
+        "mandatory",
+        "never ",
+        "do not ",
+        "only after",
+        "before ",
+        "₹",
+        "rs ",
+        "inr ",
+        "price",
+        "fee",
+    )
+    for chunk in re.split(r"(?<=[.!?])\s+|\n+", brief or ""):
+        line = chunk.strip(" .,:;-")
+        if len(line) < 14:
+            continue
+        low = line.lower()
+        if not any(kw in low for kw in _mandatory_kw):
+            continue
+        if low in spoken.lower():
+            continue
+        clean = _sanitize_business_facts(
+            line, agent_name=agent_name, company_name=company_name
+        ).strip(" .,:;-")
+        if not clean or len(clean) < 12:
+            continue
+        if clean.lower() in spoken.lower():
+            continue
+        extras.append(clean.rstrip(".") + ".")
+    if extras:
+        block = " ".join(extras[:10])
+        return (
+            f"{spoken}\n\nMANDATORY BUSINESS FACTS (never omit or contradict):\n{block}"
+        )[:1200]
+    return spoken
 
 
 def _sales_next_step(brief: str, *, inbound: bool, native_en: bool) -> str:
@@ -1855,8 +1938,10 @@ async def _llm_interpret_brief(brief: str, *, language: str) -> dict[str, Any] |
             "Never invent a speaker name (do not use Priya or Alex unless that name is in the brief). "
             "Never invent a company. Never invent prices, products, or policies. "
             "offer must be clean customer-facing sentences — never paste the raw brief. "
-            "opening_line is one spoken greeting using the real name and company, then a permission question. "
-            f"Write opening_line in language {language}."
+            "opening_line is one natural spoken greeting: your name, company (if any), brief purpose if obvious, "
+            "then a polite permission question (e.g. Do you have a moment? / Are you free for a quick call? / "
+            "Meeku oka moment unda? / Meeru free unnara?). Never stiff phrases like only 'Konchem time unda?'. "
+            f"Write opening_line entirely in language {language}."
         )
         user = f"Language: {language}\n\nUser brief:\n{brief}\n"
 
@@ -1940,17 +2025,26 @@ def build_compiler_sections(
     call_end_policy: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Break the cached realtime brain into editable sections for the dev panel."""
+    from server.brain.script_entities import strip_entity_tags_section
+
     lang = normalize_compile_language(language)
     style_val = style_for_language(style, lang)
-    sections = [
+    script_body = strip_entity_tags_section(user_script or "")
+    sections: list[dict[str, Any]] = []
+    sections.extend(
+        [
         {
             "id": "user_script",
-            "title": "Calling script (user-facing)",
-            "description": "Business identity, offer, opening, and role — shown after Create agent script.",
+            "title": "Calling script (business sections)",
+            "description": "Identity, offer, opening, and role — entity tags are edited in the fields above, not here.",
             "editable": True,
             "cached": True,
-            "text": (user_script or "").strip(),
+            "text": script_body.strip(),
         },
+        ]
+    )
+    sections.extend(
+        [
         {
             "id": "platform_call_rules",
             "title": "Platform call rules (system)",
@@ -1999,7 +2093,8 @@ def build_compiler_sections(
             "cached": True,
             "text": language_runtime_footer(lang, style_val).strip(),
         },
-    ]
+        ]
+    )
     return {
         "sections": sections,
         "fullCompiled": (compiled_brain or "").strip(),
@@ -2082,6 +2177,7 @@ async def compile_agent_from_brief(
     call_end_policy: dict[str, Any] | None = None,
     use_llm: bool = False,
     interpret_brief: bool = True,
+    direction: str | None = None,
 ) -> tuple[str, AgentScriptResult, int, int, int]:
     """
     Turn a short agent brief into a cached brain prompt.
@@ -2118,8 +2214,16 @@ async def compile_agent_from_brief(
     key_facts: list[str] = []
     llm_role = ""
     model = "simple_business_v1"
+    interpreted: dict[str, Any] | None = None
+    persona = ""
+    voice = ""
+    offer_override = ""
 
-    direction = infer_call_direction(cleaned)
+    if direction:
+        d = direction.strip().lower()
+        direction = "inbound" if d in ("inbound", "in") else "outbound"
+    else:
+        direction = infer_call_direction(cleaned)
     agent_name, company_name, work_scope, opening_line = resolve_script_identity(
         cleaned,
         language=lang,
@@ -2194,7 +2298,10 @@ async def compile_agent_from_brief(
                 model = "legacy_deterministic_quality_floor_v1"
 
         validation_issues = validate_agent_script(
-            script, brief=cleaned, agent_name=agent_name
+            script,
+            brief=cleaned,
+            agent_name=agent_name,
+            company_name=company_name,
         )
     else:
         interpreted = None
@@ -2235,7 +2342,12 @@ async def compile_agent_from_brief(
             voice=voice,
             offer_override=offer_override,
         )
-        validation_issues = []
+        validation_issues = validate_agent_script(
+            script,
+            brief=cleaned,
+            agent_name=agent_name,
+            company_name=company_name,
+        )
 
     platform_rules = _platform_call_rules(
         agent_name=agent_name, role=role, direction=direction, language=lang
@@ -2258,7 +2370,10 @@ async def compile_agent_from_brief(
             if repaired:
                 script = _bind_script(repaired)
                 validation_issues = validate_agent_script(
-                    script, brief=cleaned, agent_name=agent_name
+                    script,
+                    brief=cleaned,
+                    agent_name=agent_name,
+                    company_name=company_name,
                 )
                 if not validation_issues:
                     llm_payload = repair_payload
@@ -2272,27 +2387,69 @@ async def compile_agent_from_brief(
         if not _script_has_full_sections(script):
             validation_issues = list(validation_issues) + ["incomplete_script_sections"]
 
-    if validation_issues and use_llm:
+    if validation_issues:
         from server.utils.logger import logger
 
         logger.warning(
-            f"[AGENT_SCRIPT] legacy validation fallback: "
+            f"[AGENT_SCRIPT] validation fallback: "
             f"{'; '.join(validation_issues)[:240]}"
         )
-        script = _legacy_deterministic_script(
-            cleaned,
-            agent_name=agent_name,
-            company_name=company_name,
-            work_scope=work_scope,
-            opening_line=opening_line,
-            language=lang,
-            role=role,
-        )
-        model = "legacy_deterministic_validation_fallback_v1"
+        if not use_llm and (offer_override or interpreted):
+            script = _simple_business_script(
+                cleaned,
+                agent_name=agent_name,
+                company_name=company_name,
+                work_scope=work_scope,
+                opening_line=opening_line,
+                language=lang,
+                role=role,
+                direction=direction,
+                persona=persona,
+                voice=voice,
+                offer_override="",
+            )
+            validation_issues = validate_agent_script(
+                script,
+                brief=cleaned,
+                agent_name=agent_name,
+                company_name=company_name,
+            )
+        if validation_issues:
+            script = _legacy_deterministic_script(
+                cleaned,
+                agent_name=agent_name,
+                company_name=company_name,
+                work_scope=work_scope,
+                opening_line=opening_line,
+                language=lang,
+                role=role,
+            )
+            if model != "legacy_deterministic_quality_floor_v1":
+                model = "legacy_deterministic_validation_fallback_v1"
+            validation_issues = validate_agent_script(
+                script,
+                brief=cleaned,
+                agent_name=agent_name,
+                company_name=company_name,
+            )
         platform_rules = _platform_call_rules(
             agent_name=agent_name, role=role, direction=direction, language=lang
         )
 
+    from server.brain.script_entities import build_script_entities, with_entity_tags_section
+
+    script = with_entity_tags_section(
+        script,
+        build_script_entities(
+            agent_name=agent_name,
+            company_name=company_name,
+            work_scope=work_scope,
+            role=role,
+            language=lang,
+            direction=direction or "outbound",
+            opening_line=opening_line,
+        ),
+    )
     script, compiled = _ensure_cache_floor(
         script=script,
         language=lang,
@@ -2317,6 +2474,18 @@ async def compile_agent_from_brief(
         )
         platform_rules = _platform_call_rules(
             agent_name=agent_name, role=role, direction=direction, language=lang
+        )
+        script = with_entity_tags_section(
+            script,
+            build_script_entities(
+                agent_name=agent_name,
+                company_name=company_name,
+                work_scope=work_scope,
+                role=role,
+                language=lang,
+                direction=direction or "outbound",
+                opening_line=opening_line,
+            ),
         )
         script, compiled = _ensure_cache_floor(
             script=script,

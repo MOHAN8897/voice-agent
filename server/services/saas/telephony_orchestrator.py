@@ -12,22 +12,37 @@ from server.brain.agent_service import agent_service
 from server.db.connection import get_session_factory
 from server.db.models.entities import Call
 from server.db.models.phase5_models import PhoneNumber
-from server.services.saas.tenant_guard import SubscriberPrincipal
+from server.config.env import get_settings
+from server.services.saas.platform_admins import is_dev_tester_email
+from server.services.saas.pstn_saas_stack import saas_stack_override_for_agent
+from server.services.saas.tenant_guard import SubscriberPrincipal, subscriber_workspace_tenant_id
 
 
-def saas_stack_override(language: str) -> dict[str, Any]:
-    return {"pipeline": "realtime_voice", "language": language}
+def dev_sandbox_e164() -> str | None:
+    v = (get_settings().telnyx_phone_number or "").strip()
+    return v or None
+
+
+def is_dev_sandbox_line(e164: str | None, user_email: str | None) -> bool:
+    sandbox = dev_sandbox_e164()
+    if not sandbox or not e164:
+        return False
+    return is_dev_tester_email(user_email) and e164.strip() == sandbox
 
 
 async def resolve_outbound_from_e164(
     tenant_id: uuid.UUID,
     agent_id: str,
     from_e164: str | None,
+    *,
+    user_email: str | None = None,
 ) -> str:
     """Pick caller ID: explicit fromE164, else agent-assigned DID, else any outbound-enabled tenant number."""
     if from_e164 and from_e164.strip():
-        await assert_from_number(tenant_id, from_e164.strip())
-        return from_e164.strip()
+        explicit = from_e164.strip()
+        if not is_dev_sandbox_line(explicit, user_email):
+            await assert_from_number(tenant_id, explicit)
+        return explicit
     factory = get_session_factory()
     if factory is None:
         raise HTTPException(
@@ -111,7 +126,8 @@ async def assert_concurrent_limit(tenant_id: uuid.UUID, limits: dict) -> None:
         if count >= max_pstn:
             raise HTTPException(
                 status_code=429,
-                detail={"error": {"code": "concurrency_limit", "message": "Too many active calls"}},
+                detail={"error": {"code": "concurrency_limit", "message": "Too many active calls", "retry_after": 15}},
+                headers={"Retry-After": "15"},
             )
 
 
@@ -125,7 +141,8 @@ async def subscriber_outbound(
     from server.routes.dev_telephony import OutboundTestBody, _outbound_telnyx
     from server.services.telephony import active_telephony_provider, telephony_guard_error
 
-    agent = await agent_service.get_agent(agent_id, tenant_id=str(principal.tenant_id))
+    workspace_tid = subscriber_workspace_tenant_id(principal)
+    agent = await agent_service.get_agent(agent_id, tenant_id=str(workspace_tid))
     if not agent.get("active_compiled_brain_version"):
         raise HTTPException(
             status_code=400,
@@ -134,7 +151,12 @@ async def subscriber_outbound(
     from server.services.saas.billing_wallet_service import assert_wallet_allows_pstn
 
     await assert_wallet_allows_pstn(principal.tenant_id)
-    resolved_from = await resolve_outbound_from_e164(principal.tenant_id, agent_id, from_e164)
+    resolved_from = await resolve_outbound_from_e164(
+        workspace_tid,
+        agent_id,
+        from_e164,
+        user_email=principal.email,
+    )
     from server.db.models.entities import Tenant
 
     factory = get_session_factory()
@@ -150,14 +172,15 @@ async def subscriber_outbound(
     if guard:
         return {"ok": False, "error": guard, "provider": provider}
 
-    lang = (agent.get("languages") or ["te-IN"])[0]
+    stack = await saas_stack_override_for_agent(agent)
+    lang = str(stack.get("language") or (agent.get("languages") or ["te-IN"])[0])
     body = OutboundTestBody(
         agentId=agent_id,
         fromE164=resolved_from,
         toE164=to_e164.strip(),
         tier="medium",
         language=lang,
-        stackOverride=saas_stack_override(lang),
+        stackOverride=stack,
         inheritTestStudioConfig=False,
     )
     session_stub = SessionData(

@@ -312,3 +312,144 @@ async def promotion_rollback(promotion_id: str, session: SessionData = Depends(r
             )
             await db.commit()
     return {"ok": True, "promotion_id": promotion_id, "tier_rows_synced": count}
+
+
+class SaasPhoneStackBody(BaseModel):
+    stack_override: dict[str, Any] = Field(default_factory=dict, alias="stackOverride")
+    language: str = "te-IN"
+
+    model_config = {"populate_by_name": True}
+
+
+def _gemini_api_key_configured() -> bool:
+    from server.services.dev_secrets_store import dev_secrets_store
+
+    settings = get_settings()
+    key = (dev_secrets_store.effective_secret("gemini_api_key") or settings.gemini_api_key or "").strip()
+    return bool(key)
+
+
+def _saas_phone_stack_credentials() -> dict[str, Any]:
+    settings = get_settings()
+    gemini_key = _gemini_api_key_configured()
+    return {
+        "openai": {"configured": bool((settings.openai_api_key or "").strip())},
+        "gemini": {
+            "enabled": bool(settings.enable_gemini),
+            "configured": gemini_key,
+            "ready": bool(settings.enable_gemini and gemini_key),
+        },
+    }
+
+
+def _saas_phone_stack_warnings(resolved: dict[str, Any] | None) -> list[str]:
+    if not resolved:
+        return []
+    llm = resolved.get("llm") if isinstance(resolved.get("llm"), dict) else {}
+    provider = str(llm.get("provider") or "").strip().lower()
+    creds = _saas_phone_stack_credentials()
+    warnings: list[str] = []
+    if provider == "gemini":
+        if not creds["gemini"]["enabled"]:
+            warnings.append("ENABLE_GEMINI is false — Gemini Live PSTN will not connect.")
+        if not creds["gemini"]["configured"]:
+            warnings.append("GEMINI_API_KEY is missing — set it in Environment or .env.")
+    elif provider == "openai" and not creds["openai"]["configured"]:
+        warnings.append("OPENAI_API_KEY is missing — OpenAI Realtime PSTN will not connect.")
+    pipeline = str(resolved.get("pipeline") or "").strip().lower()
+    if pipeline not in ("realtime_voice", "realtime_e2e"):
+        warnings.append(
+            f"Pipeline is '{pipeline or 'unset'}' — SaaS phone uses realtime_voice (speech-to-speech). "
+            "STT/TTS tiers are ignored on subscriber PSTN."
+        )
+    return warnings
+
+
+def _saas_phone_stack_alignment(resolved: dict[str, Any] | None) -> dict[str, Any]:
+    if not resolved:
+        return {"ok": False, "notes": ["No stack configured"]}
+    from server.realtime.models import realtime_voice_llm_provider
+
+    llm = resolved.get("llm") if isinstance(resolved.get("llm"), dict) else {}
+    provider, model = realtime_voice_llm_provider(resolved, str(llm.get("model") or ""))
+    rv = resolved.get("realtime_voice") if isinstance(resolved.get("realtime_voice"), dict) else {}
+    voice_slug = str(rv.get("voice") or "marin")
+    notes = [
+        "Subscriber PSTN uses this stack; agents only override voice slug, speed, and language.",
+        "Sarvam/Cartesia STT/TTS blocks are stripped for realtime_voice dials.",
+    ]
+    if provider == "gemini":
+        from server.realtime.providers.gemini_voice import normalize_gemini_live_voice
+
+        notes.append(
+            f"Gemini Live maps console voice '{voice_slug}' → "
+            f"'{normalize_gemini_live_voice(voice_slug)}' at connect."
+        )
+        notes.append("PCM: 16 kHz in / 24 kHz out on the Gemini Live wire.")
+    else:
+        notes.append("OpenAI Realtime: 24 kHz PCM on the speech-to-speech wire.")
+    return {
+        "ok": True,
+        "pipeline": resolved.get("pipeline"),
+        "liveProvider": provider,
+        "liveModel": model,
+        "realtimeVoice": voice_slug,
+        "language": resolved.get("language"),
+        "notes": notes,
+    }
+
+
+@router.get("/api/dev/stack/saas-phone")
+async def dev_stack_saas_phone_get(session: SessionData = Depends(require_dev_session)):
+    """Universal live-phone stack applied to all SaaS PSTN + web practice calls."""
+    require_permission(session, "dev.stack.read")
+    from server.services.saas.platform_phone_stack import (
+        load_universal_phone_stack_raw,
+        resolve_platform_phone_stack,
+    )
+
+    saved = load_universal_phone_stack_raw()
+    lang = str((saved or {}).get("language") or "te-IN")
+    resolved = await resolve_platform_phone_stack(lang)
+    return {
+        "ok": True,
+        "saved": saved,
+        "resolved": resolved,
+        "credentials": _saas_phone_stack_credentials(),
+        "warnings": _saas_phone_stack_warnings(resolved),
+        "alignment": _saas_phone_stack_alignment(resolved),
+        "adjustments": (saved or {}).get("adjustments") or [],
+    }
+
+
+@router.put("/api/dev/stack/saas-phone")
+async def dev_stack_saas_phone_put(body: SaasPhoneStackBody, session: SessionData = Depends(require_dev_session)):
+    require_permission(session, "dev.stack.write")
+    from server.services.pstn_stack import normalize_pstn_stack_override
+    from server.services.saas.platform_phone_stack import save_universal_phone_stack_raw
+
+    lang = (body.language or "te-IN").strip() or "te-IN"
+    raw = body.stack_override or {"pipeline": "realtime_voice", "language": lang}
+    raw.setdefault("pipeline", "realtime_voice")
+    raw.setdefault("language", lang)
+    normalized, adjustments = normalize_pstn_stack_override(raw, language=lang, tier="medium")
+    resolved = normalized or raw
+    payload = {
+        "stack_override": resolved,
+        "language": lang,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "updated_by": session.subject,
+    }
+    if adjustments:
+        payload["adjustments"] = adjustments
+    save_universal_phone_stack_raw(payload)
+    warnings = _saas_phone_stack_warnings(resolved)
+    return {
+        "ok": True,
+        "saved": payload,
+        "resolved": resolved,
+        "adjustments": adjustments,
+        "warnings": warnings,
+        "alignment": _saas_phone_stack_alignment(resolved),
+        "credentials": _saas_phone_stack_credentials(),
+    }

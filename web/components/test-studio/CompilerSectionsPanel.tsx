@@ -26,7 +26,10 @@ type Props = {
 
 export function CompilerSectionsPanel({ data, className }: Props) {
   const [openId, setOpenId] = useState<string>("user_script");
-  const sections = useMemo(() => data?.sections ?? [], [data]);
+  const sections = useMemo(
+    () => (data?.sections ?? []).filter((s) => s.id !== "entity_tags"),
+    [data]
+  );
 
   if (!data || !sections.length) {
     return (

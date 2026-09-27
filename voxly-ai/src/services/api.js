@@ -25,14 +25,26 @@ function applyAuthResponse(data) {
 const fetchOpts = { credentials: 'include' };
 
 export function parseApiError(data, status) {
-  const err = data?.error;
+  const detail = data?.detail;
+  const err =
+    data?.error ||
+    (detail && typeof detail === 'object' && (detail.error || detail)) ||
+    null;
   const code = typeof err === 'object' ? err?.code : undefined;
   const message =
-    (typeof err === 'object' && err?.message) ||
+    (typeof err === 'object' && (err?.message || err?.code)) ||
     (typeof err === 'string' ? err : null) ||
+    (typeof detail === 'string' ? detail : null) ||
     data?.message ||
-    `HTTP ${status}`;
-  return { code, message };
+    (status === 402
+      ? 'Insufficient wallet credits. Add funds to continue.'
+      : status === 429
+        ? 'Too many requests. Wait a moment and try again.'
+        : `HTTP ${status}`);
+  const retryAfter = typeof err === 'object' ? err?.retry_after : undefined;
+  const retryHint =
+    status === 429 && retryAfter ? ` Retry in ${retryAfter}s.` : '';
+  return { code, message: `${message}${retryHint}`, retryAfter, status };
 }
 
 function parseError(data, status) {
@@ -46,6 +58,12 @@ export const api = {
     if (stored) return stored.replace(/\/$/, '');
     if (typeof window !== 'undefined') return `${window.location.origin}/api`;
     return 'http://localhost:8000/api';
+  },
+
+  getWsOrigin() {
+    const api = this.getBackendUrl().replace(/\/$/, '');
+    const http = api.replace(/\/api$/, '');
+    return http.replace(/^http/, 'ws');
   },
 
   setBackendUrl(url) {
@@ -136,19 +154,20 @@ export const api = {
     if (!response.ok) {
       const isAuthRoute = path.includes('/auth/');
       const parsed = parseApiError(data, response.status);
-      if (backendUrl && !allowMock && !isAuthRoute) {
+      const fail = () => {
         const e = new Error(parsed.message);
         e.code = parsed.code;
+        e.status = response.status;
+        e.retryAfter = Number(response.headers.get('Retry-After') || parsed.retryAfter || 0);
         throw e;
-      }
+      };
+      if (backendUrl && !allowMock && !isAuthRoute) fail();
       if (!backendUrl || allowMock) {
         const mockResult = await mockBackend.handleRequest(method, endpoint, body, headers);
         if (mockResult.status >= 400) throw new Error(mockResult.data?.error || 'Request failed');
         return mockResult.data;
       }
-      const e = new Error(parsed.message);
-      e.code = parsed.code;
-      throw e;
+      fail();
     }
 
     return data;
@@ -184,6 +203,12 @@ export const api = {
 
     async verifyEmail(token) {
       return await api.request('POST', '/api/auth/verify-email', { token });
+    },
+
+    async verifyEmailOtp(email, otp) {
+      const data = await api.request('POST', '/api/auth/verify-email-otp', { email, otp });
+      applyAuthResponse(data);
+      return data;
     },
 
     async resendVerification(email) {
@@ -273,6 +298,36 @@ export const api = {
     async delete(id) {
       return await api.request('DELETE', `/api/agents/${id}`);
     },
+    async composeOnboarding(payload) {
+      const data = await api.request('POST', '/api/app/agents/compose-onboarding', {
+        name: payload.name,
+        role: payload.role,
+        language: payload.language,
+        businessSummary: payload.businessSummary,
+        goals: payload.goals,
+        notes: payload.notes || '',
+        brief: payload.brief || '',
+        mode: payload.mode || 'instant_lead',
+        industry: payload.industry || '',
+        naturalSpokenStyle: Boolean(payload.naturalSpokenStyle),
+      });
+      return data;
+    },
+    async buildEmployee(payload) {
+      const data = await api.request('POST', '/api/app/agents/build-employee', {
+        brief: payload.brief,
+        language: payload.language,
+        mode: payload.mode || 'instant_lead',
+        industry: payload.industry || '',
+        naturalSpokenStyle: Boolean(payload.naturalSpokenStyle),
+        employeeName: payload.employeeName || '',
+      });
+      const agent = data.agent || {};
+      return {
+        ...data,
+        id: data.agentId || agent.agent_id || agent.id,
+      };
+    },
   },
 
   telephony: {
@@ -281,15 +336,23 @@ export const api = {
       const rows = data.numbers || data;
       return Array.isArray(rows) ? rows : [];
     },
-    async buyNumber(catalogItem) {
+    async buyNumber(catalogItem, assignAgentId = null) {
       const e164 = catalogItem?.e164 || catalogItem?.phone_number || catalogItem;
-      return await api.request('POST', '/api/telephony/buy', {
+      const body = {
         e164: typeof e164 === 'string' ? e164 : catalogItem?.e164,
         country: catalogItem?.country || catalogItem?.countryCode || 'IN',
-      });
+        payMethod: catalogItem?.payMethod || 'wallet',
+      };
+      if (assignAgentId) body.assignAgentId = assignAgentId;
+      return await api.request('POST', '/api/telephony/buy', body);
     },
     async assignNumber(numberId, agentId) {
-      return await api.request('POST', `/api/telephony/numbers/${numberId}/assign`, { agentId });
+      return await api.request('POST', `/api/telephony/numbers/${numberId}/assign`, {
+        agentId: agentId || null,
+      });
+    },
+    async unassignNumber(numberId) {
+      return await api.request('POST', `/api/telephony/numbers/${numberId}/assign`, { agentId: null });
     },
     async releaseNumber(numberId) {
       return await api.request('POST', `/api/telephony/numbers/${numberId}/release`);
@@ -308,28 +371,27 @@ export const api = {
       }
       return await api.request('PUT', `/api/telephony/numbers/${numberId}/routing`, body);
     },
+    async getVoiceOptions() {
+      return await api.request('GET', '/api/telephony/voice-options');
+    },
     async getCatalog(country = 'IN') {
-      try {
-        const data = await api.request('GET', `/api/telephony/numbers/search?country=${country}`);
-        const rows = data.numbers || [];
-        return rows.map(normalizeCatalogItem);
-      } catch {
-        const data = await api.request('GET', '/api/billing/catalog');
-        const skus = data.numberSkus || [];
-        return skus.map((s) =>
-          normalizeCatalogItem({
-            country: s.country,
-            fee: (s.monthlyCents || 500) / 100,
-            e164: s.sampleE164 || '+910000000000',
-          })
-        );
-      }
+      const data = await api.request('GET', `/api/telephony/numbers/search?country=${encodeURIComponent(country)}`);
+      const rows = data.numbers || [];
+      return rows.map((item) =>
+        normalizeCatalogItem({
+          ...item,
+          country: item.country || item.country_code || country,
+        })
+      );
     },
   },
 
   calls: {
-    async list() {
-      const data = await api.request('GET', '/api/calls?limit=100');
+    async list({ agentId, disposition, limit = 100 } = {}) {
+      const qs = new URLSearchParams({ limit: String(limit) });
+      if (agentId) qs.set('agentId', agentId);
+      if (disposition) qs.set('disposition', disposition);
+      const data = await api.request('GET', `/api/calls?${qs}`);
       const rows = data.calls || data;
       if (!Array.isArray(rows)) return [];
       const agents = await api.agents.list().catch(() => []);
@@ -341,6 +403,9 @@ export const api = {
     },
     async get(id) {
       return await api.request('GET', `/api/calls/${id}`);
+    },
+    async transcript(id) {
+      return await api.request('GET', `/api/call/${id}/transcript`);
     },
     async triggerOutbound({ agentId, toE164, fromE164 = null }) {
       const body = { agentId, toE164 };
@@ -431,9 +496,24 @@ export const api = {
     async razorpayConfig() {
       return await api.request('GET', '/api/billing/razorpay/config');
     },
-    async listTransactions(limit = 50) {
-      const data = await api.request('GET', `/api/billing/transactions?limit=${limit}`);
+    async listTransactions(limit = 50, mine = false) {
+      const qs = new URLSearchParams({ limit: String(limit) });
+      if (mine) qs.set('mine', 'true');
+      const data = await api.request('GET', `/api/billing/transactions?${qs.toString()}`);
       return data.transactions || [];
+    },
+  },
+
+  admin: {
+    async overview() {
+      return await api.request('GET', '/api/admin/overview');
+    },
+    async tenants() {
+      const data = await api.request('GET', '/api/admin/tenants');
+      return data.tenants || [];
+    },
+    async grantCredits({ tenantId, amountInrPaise, reason }) {
+      return await api.request('POST', '/api/admin/credits', { tenantId, amountInrPaise, reason });
     },
   },
 

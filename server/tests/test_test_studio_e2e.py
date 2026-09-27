@@ -27,6 +27,8 @@ async def test_test_studio_call_lifecycle():
 
     transport = ASGITransport(app=app_mod.app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
+        login = await client.post("/api/dev/login", json={"username": "dev", "password": "devpass"})
+        assert login.status_code == 200
         agents = await client.get("/api/agents")
         assert agents.status_code == 200
         agent_list = agents.json().get("agents") or []

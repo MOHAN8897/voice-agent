@@ -138,6 +138,143 @@ def _spoken_opening_candidate(line: str) -> str | None:
     return raw[:280]
 
 
+def _parse_agent_identity(compiled_brain: str) -> tuple[str, str]:
+    """@entity tags first, then --- AGENT IDENTITY --- (You are Name, calling from Co.)."""
+    from server.brain.script_entities import parse_entity_tags
+
+    tags = parse_entity_tags(compiled_brain)
+    if tags.get("agent_name"):
+        return tags["agent_name"].strip(), (tags.get("company_name") or "").strip()
+    block = re.search(
+        r"(?:^|\n)---\s*AGENT IDENTITY\s*---\s*\n(.*?)(?=\n---\s|\Z)",
+        compiled_brain or "",
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+    if not block:
+        return "", ""
+    first = (block.group(1) or "").strip().splitlines()[0].strip()
+    if not first:
+        return "", ""
+    m = re.match(r"You are\s+([^,]+),\s*calling from\s+([^.]+)\.", first, flags=re.IGNORECASE)
+    if m:
+        return m.group(1).strip(), m.group(2).strip()
+    m_rep = re.search(
+        r"representing\s+([^.]+)\.",
+        first,
+        flags=re.IGNORECASE,
+    )
+    m2 = re.match(r"You are\s+([^,]+)", first, flags=re.IGNORECASE)
+    if m2 and m_rep:
+        return m2.group(1).strip(), m_rep.group(1).strip()
+    m2 = re.match(r"You are\s+([^.,]+)", first, flags=re.IGNORECASE)
+    if m2:
+        return m2.group(1).strip(), ""
+    return "", ""
+
+
+def enrich_outbound_spoken_intro(
+    compiled_brain: str | None,
+    line: str | None,
+    language: str = "te-IN",
+) -> str | None:
+    """Prewarm / deferred PCM: name + company + opening when the script only has a short time-check."""
+    spoken = (line or "").strip()
+    if not compiled_brain:
+        return spoken or None
+    name, company = _parse_agent_identity(compiled_brain)
+    if not name:
+        return spoken or None
+    if len(spoken) >= 52 and name.lower() in spoken.lower():
+        return spoken[:280]
+    lang = (language or "te-IN").lower()
+    if lang.startswith("te"):
+        intro = f"Namaste andi, nenu {name}"
+        intro += f", {company} nundi matladutunnanu." if company else " matladutunnanu."
+    elif lang.startswith("hi"):
+        intro = f"Namaste, main {name}"
+        intro += f", {company} se bol raha hoon." if company else " bol raha hoon."
+    else:
+        intro = f"Hi, this is {name}"
+        intro += f" calling from {company}." if company else "."
+    if spoken and spoken.lower() not in intro.lower():
+        return f"{intro} {spoken}"[:280]
+    return (spoken or intro)[:280]
+
+
+def _opening_section_candidates(compiled_brain: str) -> list[str]:
+    """Speakable lines from OPENING / CANONICAL OPENING sections, longest first."""
+    text = compiled_brain or ""
+    found: list[str] = []
+    section = _OPENING_SECTION.search(text)
+    if section:
+        for line in section.group(1).splitlines():
+            candidate = _spoken_opening_candidate(line)
+            if candidate:
+                found.append(candidate)
+    for header in ("--- CANONICAL OPENING ---", "--- OPENING ---", "--- OPENING HINT ---", "## OPENING"):
+        idx = text.upper().find(header.upper())
+        if idx < 0:
+            continue
+        chunk = text[idx + len(header) : idx + len(header) + 800]
+        for line in chunk.splitlines():
+            candidate = _spoken_opening_candidate(line)
+            if candidate and candidate not in found:
+                found.append(candidate)
+        if found:
+            break
+    found.sort(key=len, reverse=True)
+    return found
+
+
+def extract_prewarm_greeting(
+    compiled_brain: str | None,
+    language: str = "te-IN",
+    *,
+    direction: str | None = None,
+) -> str | None:
+    """Outbound prewarm PCM: prefer full canonical intro (name + company), not a bare time check."""
+    if not compiled_brain:
+        return extract_opening_greeting(compiled_brain, language, direction=direction)
+    from server.brain.script_entities import parse_entity_tags
+
+    tags = parse_entity_tags(compiled_brain)
+    tagged_open = (tags.get("opening_line") or "").strip()
+    if tagged_open and len(tagged_open) >= 20:
+        enriched = enrich_outbound_spoken_intro(compiled_brain, tagged_open, language)
+        return (enriched or tagged_open)[:280]
+    text = compiled_brain
+    candidates = _opening_section_candidates(text)
+    if candidates:
+        best = candidates[0]
+        if len(best) >= 36:
+            enriched = enrich_outbound_spoken_intro(text, best, language)
+            return (enriched or best)[:280]
+        if len(candidates) >= 2 and len(best) < 36:
+            merged = f"{candidates[0]} {candidates[1]}".strip()
+            if len(merged) >= 20:
+                enriched = enrich_outbound_spoken_intro(text, merged, language)
+                return (enriched or merged)[:280]
+        if len(best) >= 20:
+            enriched = enrich_outbound_spoken_intro(text, best, language)
+            return (enriched or best)[:280]
+    quoted = re.search(
+        r'opening_line(?:_te)?\s*:\s*"([^"]+)"',
+        text,
+        flags=re.IGNORECASE,
+    )
+    if quoted:
+        line = _spoken_opening_candidate(quoted.group(1))
+        if line and len(line) >= 20:
+            return enrich_outbound_spoken_intro(text, line, language)
+    short = extract_opening_greeting(compiled_brain, language, direction=direction)
+    if short and candidates and len(short) < 28 and len(candidates[0]) > len(short):
+        short = candidates[0]
+    outbound = str(direction or "outbound").strip().lower() not in ("inbound", "incoming")
+    if outbound:
+        return enrich_outbound_spoken_intro(text, short, language)
+    return short
+
+
 def extract_opening_greeting(
     compiled_brain: str | None,
     language: str = "te-IN",

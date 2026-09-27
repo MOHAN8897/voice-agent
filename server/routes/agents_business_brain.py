@@ -8,7 +8,12 @@ from pydantic import BaseModel, Field
 
 from server.auth.subscriber_dependencies import require_subscriber_jwt_if_enabled
 from server.brain.business_brain_store import assemble_raw_business_prompt, business_brain_store
-from server.services.saas.tenant_guard import SubscriberPrincipal, load_agent_for_tenant, require_subscriber_permission
+from server.services.saas.tenant_guard import (
+    SubscriberPrincipal,
+    load_agent_for_tenant,
+    require_subscriber_permission,
+    subscriber_workspace_tenant_id,
+)
 from server.brain.business_prompt_optimizer import optimize_business_prompt
 from server.brain.compiled_brain_service import compiled_brain_service
 from server.brain.semantic_validation import validate_sections
@@ -25,7 +30,7 @@ async def _guard_agent(
 ) -> None:
     if principal is None:
         return
-    await load_agent_for_tenant(agent_id, principal.tenant_id)
+    await load_agent_for_tenant(agent_id, subscriber_workspace_tenant_id(principal))
     if write:
         require_subscriber_permission(principal, "app.brain.write")
 

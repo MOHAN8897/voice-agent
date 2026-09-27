@@ -32,6 +32,13 @@ class SubscriberPrincipal:
         )
 
 
+def subscriber_workspace_tenant_id(principal: SubscriberPrincipal) -> uuid.UUID:
+    """Tenant used for agents, phone lines, and call records (dev testers → platform default)."""
+    from server.services.saas.dev_tester_workspace import workspace_tenant_id_for_subscriber
+
+    return workspace_tenant_id_for_subscriber(principal.tenant_id, principal.email)
+
+
 async def assert_tenant_active(session: AsyncSession, tenant_id: uuid.UUID) -> Tenant:
     tenant = await session.get(Tenant, tenant_id)
     if tenant is None or tenant.deleted_at is not None:

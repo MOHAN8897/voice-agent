@@ -143,19 +143,29 @@ class CompiledBrainService:
         return await self.compile_for_agent(agent_id)
 
     async def get_active_for_agent(self, agent_id: str) -> dict[str, Any]:
-        version_id = _AGENT_ACTIVE.get(agent_id)
-        if version_id and version_id in _COMPILED_CACHE:
-            return _COMPILED_CACHE[version_id]
-
         factory = get_session_factory()
+        db_active: str | None = None
         if factory is not None:
             async with factory() as session:
                 result = await session.execute(select(Agent).where(Agent.agent_id == uuid.UUID(agent_id)))
                 agent = result.scalar_one_or_none()
                 if agent and agent.active_compiled_brain_version:
-                    snap = await self.get_snapshot(agent.active_compiled_brain_version)
-                    _AGENT_ACTIVE[agent_id] = snap["compiled_version"]
-                    return snap
+                    db_active = agent.active_compiled_brain_version
+
+        cached_active = _AGENT_ACTIVE.get(agent_id)
+        if db_active and cached_active and cached_active != db_active:
+            _AGENT_ACTIVE.pop(agent_id, None)
+
+        version_id = db_active or cached_active
+        if version_id and version_id in _COMPILED_CACHE:
+            if db_active:
+                _AGENT_ACTIVE[agent_id] = db_active
+            return _COMPILED_CACHE[version_id]
+
+        if factory is not None and db_active:
+            snap = await self.get_snapshot(db_active)
+            _AGENT_ACTIVE[agent_id] = snap["compiled_version"]
+            return snap
 
         # Bootstrap compile on first access
         await platform_brain_store.ensure_seed()

@@ -349,7 +349,8 @@ class OpenAIRealtimeVoiceAdapter:
             logger.warning("[REALTIME_VOICE] cancel failed: %s", str(e)[:160])
             raise
 
-    async def submit_function_output(self, *, call_id: str, output: str) -> None:
+    async def submit_function_output(self, *, call_id: str, output: str, name: str | None = None) -> None:
+        _ = name
         if self._conn is None or not call_id:
             return
         await self._conn.send(

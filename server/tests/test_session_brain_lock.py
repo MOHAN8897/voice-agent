@@ -19,7 +19,8 @@ async def test_lock_session_brain_over_versioned(monkeypatch):
         source_checksum="abc",
     )
     svc = CallLifecycleService()
-    version, text = await svc._lock_compiled_brain("any-agent", session_id=sid)
+    version, text, source = await svc._lock_compiled_brain("any-agent", session_id=sid)
+    assert source == "test_studio_session"
     assert version == "session-v1"
     assert "Priya" in (text or "")
     instruction_store.clear(sid)

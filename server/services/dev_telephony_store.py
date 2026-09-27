@@ -173,6 +173,23 @@ class DevTelephonyStore:
                 self._finalize_costs(entry)
                 self._save()
 
+    def sync_internal_call(self, internal_call_id: str) -> bool:
+        """Refresh persisted history row from call ledger after hangup."""
+        cid = str(internal_call_id or "").strip()
+        if not cid:
+            return False
+        with self._lock:
+            entry = self._find_by_internal(cid)
+            if entry is None:
+                return False
+            if entry.get("status") != "ended":
+                entry["status"] = "ended"
+                entry["ended_at"] = entry.get("ended_at") or _utcnow()
+            changed = self._finalize_costs(entry)
+            if changed:
+                self._save()
+            return changed
+
     def _finalize_costs(self, entry: dict[str, Any]) -> bool:
         cid = str(entry.get("internal_call_id") or "")
         if not cid:
@@ -191,6 +208,13 @@ class DevTelephonyStore:
             "model_cost_inr": review.get("model_cost_inr"),
             "telnyx_usd": review.get("telnyx_usd"),
             "telnyx_inr": review.get("telnyx_inr"),
+            "model_cost_inr_per_min": review.get("model_cost_inr_per_min") or usage.get("model_cost_inr_per_min"),
+            "telnyx_inr_per_min": review.get("telnyx_inr_per_min") or usage.get("telnyx_inr_per_min"),
+            "gemini_list_audio_inr_per_min": review.get("gemini_list_audio_inr_per_min")
+            or usage.get("gemini_list_audio_inr_per_min"),
+            "fx_rate_inr": usage.get("fx_rate_inr"),
+            "fx_source": review.get("fx_source") or usage.get("fx_source"),
+            "llm_model": usage.get("llm_model"),
             "pipeline": review.get("pipeline") or entry.get("pipeline"),
             "end_reason": review.get("end_reason") or meta.get("end_reason"),
         }

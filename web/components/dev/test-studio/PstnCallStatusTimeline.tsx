@@ -14,10 +14,13 @@ export { mapProviderStatus, advanceLifecycle } from "@/lib/pstn-lifecycle";
 export function PstnCallStatusTimeline({
   stage,
   placedAt,
+  connectedAt,
   sessionClockMs = 0,
 }: {
   stage: PstnLifecycleStage;
   placedAt?: number | null;
+  /** Media stream connected — billing session clock starts here (not at dial). */
+  connectedAt?: number | null;
   sessionClockMs?: number;
 }) {
   const [now, setNow] = useState(() => Date.now());
@@ -31,7 +34,13 @@ export function PstnCallStatusTimeline({
     if (stage === "hangup") {
       if (frozenMsRef.current == null) {
         frozenMsRef.current =
-          placedAt != null ? Math.max(0, Date.now() - placedAt) : sessionClockMs;
+          connectedAt != null
+            ? Math.max(0, Date.now() - connectedAt)
+            : sessionClockMs > 0
+              ? sessionClockMs
+              : placedAt != null
+                ? Math.max(0, Date.now() - placedAt)
+                : 0;
       }
       return;
     }
@@ -39,15 +48,19 @@ export function PstnCallStatusTimeline({
     setNow(Date.now());
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(timer);
-  }, [stage, placedAt, sessionClockMs]);
+  }, [stage, placedAt, connectedAt, sessionClockMs]);
 
   const activeIdx = stageIndex(stage);
+  const billingMs =
+    connectedAt != null ? Math.max(0, now - connectedAt) : sessionClockMs > 0 ? sessionClockMs : 0;
   const liveMs =
     stage === "hangup"
-      ? frozenMsRef.current ?? sessionClockMs
-      : placedAt != null && stage !== "idle"
-        ? Math.max(0, now - placedAt)
-        : sessionClockMs;
+      ? frozenMsRef.current ?? billingMs
+      : connectedAt != null && (stage === "ongoing" || stage === "closing" || stage === "lifted")
+        ? billingMs
+        : placedAt != null && stage !== "idle"
+          ? Math.max(0, now - placedAt)
+          : billingMs;
   const clock =
     liveMs > 0
       ? `${String(Math.floor(liveMs / 60000)).padStart(2, "0")}:${String(
@@ -63,7 +76,9 @@ export function PstnCallStatusTimeline({
           <p className="mt-1 text-sm text-text-muted">
             {stage === "idle"
               ? "Place a call to start the session clock and usage meter."
-              : `Session clock ${clock}${placedAt ? ` · started ${new Date(placedAt).toLocaleTimeString()}` : ""}`}
+              : connectedAt
+                ? `Connected ${clock}${placedAt ? ` · dialed ${new Date(placedAt).toLocaleTimeString()}` : ""}`
+                : `Session clock ${clock}${placedAt ? ` · dialing since ${new Date(placedAt).toLocaleTimeString()}` : ""}`}
           </p>
         </div>
         {stage !== "idle" && (

@@ -11,18 +11,65 @@ export const REALTIME_MODEL_IDS = [
   "gpt-realtime-2",
 ] as const;
 
-export const REALTIME_VOICES: { id: string; label: string }[] = [
-  { id: "marin", label: "Marin" },
-  { id: "cedar", label: "Cedar" },
-  { id: "alloy", label: "Alloy" },
-  { id: "ash", label: "Ash" },
-  { id: "ballad", label: "Ballad" },
-  { id: "coral", label: "Coral" },
-  { id: "echo", label: "Echo" },
-  { id: "sage", label: "Sage" },
-  { id: "shimmer", label: "Shimmer" },
-  { id: "verse", label: "Verse" },
+export const GEMINI_LIVE_MODEL_IDS = [
+  "gemini-3.8-live",
+  "gemini-2.5-flash-native-audio-latest",
+] as const;
+
+export function isGeminiLiveVoiceModel(slug: string | undefined): boolean {
+  const id = String(slug || "").trim().toLowerCase();
+  if (!id) return false;
+  if ((GEMINI_LIVE_MODEL_IDS as readonly string[]).includes(id)) return true;
+  return id.startsWith("gemini-") && (id.endsWith("-live") || id.includes("native-audio"));
+}
+
+export function isRealtimeSpeechToSpeechModel(slug: string | undefined): boolean {
+  const id = String(slug || "").trim();
+  return id.startsWith("gpt-realtime") || isGeminiLiveVoiceModel(id);
+}
+
+export type RealtimeVoiceOption = {
+  id: string;
+  label: string;
+  gender: string;
+  tone: string;
+  geminiVoice: string;
+  geminiGender: string;
+};
+
+/** Display metadata — keep in sync with server/services/saas/voice_catalog.py */
+export const REALTIME_VOICE_OPTIONS: RealtimeVoiceOption[] = [
+  { id: "marin", label: "Marin", gender: "female", tone: "Warm & clear", geminiVoice: "Puck", geminiGender: "male" },
+  { id: "cedar", label: "Cedar", gender: "male", tone: "Calm & steady", geminiVoice: "Charon", geminiGender: "male" },
+  { id: "alloy", label: "Alloy", gender: "neutral", tone: "Balanced", geminiVoice: "Kore", geminiGender: "female" },
+  { id: "ash", label: "Ash", gender: "male", tone: "Soft", geminiVoice: "Aoede", geminiGender: "female" },
+  { id: "ballad", label: "Ballad", gender: "male", tone: "Expressive", geminiVoice: "Zephyr", geminiGender: "female" },
+  { id: "coral", label: "Coral", gender: "female", tone: "Friendly", geminiVoice: "Aoede", geminiGender: "female" },
+  { id: "echo", label: "Echo", gender: "male", tone: "Bright", geminiVoice: "Fenrir", geminiGender: "male" },
+  { id: "sage", label: "Sage", gender: "female", tone: "Professional", geminiVoice: "Orus", geminiGender: "male" },
+  { id: "shimmer", label: "Shimmer", gender: "female", tone: "Light", geminiVoice: "Leda", geminiGender: "female" },
+  { id: "verse", label: "Verse", gender: "male", tone: "Crisp", geminiVoice: "Puck", geminiGender: "male" },
 ];
+
+export const REALTIME_VOICES: { id: string; label: string }[] = REALTIME_VOICE_OPTIONS.map((v) => ({
+  id: v.id,
+  label: v.label,
+}));
+
+export function realtimeVoiceOptionLabel(
+  voiceId: string | undefined,
+  opts?: { geminiLive?: boolean }
+): string {
+  const id = normalizeRealtimeVoice(voiceId);
+  const row = REALTIME_VOICE_OPTIONS.find((v) => v.id === id);
+  if (!row) return id;
+  const gender = opts?.geminiLive ? row.geminiGender : row.gender;
+  const gTag = gender && gender !== "neutral" ? ` · ${gender}` : "";
+  if (opts?.geminiLive) {
+    return `${row.label} → Gemini ${row.geminiVoice}${gTag}`;
+  }
+  return `${row.label}${gTag}`;
+}
 
 export const REALTIME_TURN_DETECTION: { id: string; label: string }[] = [
   { id: "semantic_vad", label: "Semantic VAD (recommended)" },

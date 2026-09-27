@@ -501,10 +501,17 @@ OPENING_WITH_COMPANY: dict[str, str] = {
 }
 
 OPENING_OUTBOUND_WITH_COMPANY: dict[str, str] = {
-    "te-IN": "Hi, nenu {name}, {company} nundi matladutunnanu. Konchem time unda?",
+    "te-IN": "Hi, nenu {name}, {company} nundi matladutunnanu. Meeku oka moment unda?",
     "en-IN": "Hi, this is {name} calling from {company}. Do you have a moment?",
     "en-US": "Hi, this is {name} from {company}. Do you have a minute?",
-    "hi-IN": "Namaste, main {name} bol rahi hoon, {company} se. Kya aapke paas ek minute hai?",
+    "hi-IN": "Namaste, main {name} bol rahi hoon, {company} se. Kya aap free hain — ek minute mil sakta hai?",
+    "ta-IN": "Hi, naan {name}, {company}-la irundhu pesuren. Oru nimisham pesalaama?",
+    "kn-IN": "Hi, naanu {name}, {company} inda. Ondu nimisha matladabahuda?",
+    "ml-IN": "Hi, njan {name}, {company} il ninnanu. Oru nimisham samsarikkamo?",
+    "mr-IN": "Namaskar, mi {name}, {company} madhun bolto aahe. Ek minute bolu shakta ka?",
+    "bn-IN": "Namaskar, ami {name}, {company} theke. Ek minute kotha bolte pari?",
+    "gu-IN": "Namaste, hu {name}, {company} maathi. Ek minute vaat kar shakay?",
+    "pa-IN": "Sat sri akaal, main {name}, {company} ton. Ik minute gall kar sakde ho?",
 }
 
 OPENING_WITH_COMPANY_PURPOSE: dict[str, str] = {
@@ -515,10 +522,17 @@ OPENING_WITH_COMPANY_PURPOSE: dict[str, str] = {
 }
 
 OPENING_OUTBOUND_WITH_COMPANY_PURPOSE: dict[str, str] = {
-    "te-IN": "Hi, nenu {name}, {company} nundi {purpose} gurinchi matladutunnanu. Konchem time unda?",
+    "te-IN": "Hi, nenu {name}, {company} nundi {purpose} gurinchi matladutunnanu. Meeru free unnara — oka moment unda?",
     "en-IN": "Hi, this is {name} calling from {company} about {purpose}. Do you have a moment?",
     "en-US": "Hi, this is {name} from {company}, calling about {purpose}. Do you have a minute?",
-    "hi-IN": "Namaste, main {name} bol rahi hoon, {company} se, {purpose} ke baare mein. Kya aapke paas ek minute hai?",
+    "hi-IN": "Namaste, main {name} bol rahi hoon, {company} se, {purpose} ke baare mein. Kya aap free hain — ek minute?",
+    "ta-IN": "Hi, naan {name}, {company}-la irundhu {purpose} pathi. Oru nimisham pesalaama?",
+    "kn-IN": "Hi, naanu {name}, {company} inda {purpose} bagge. Ondu nimisha matladabahuda?",
+    "ml-IN": "Hi, njan {name}, {company} il ninnanu {purpose} kurichu. Oru nimisham samsarikkamo?",
+    "mr-IN": "Namaskar, mi {name}, {company} madhun {purpose} sathi. Ek minute bolu shakta ka?",
+    "bn-IN": "Namaskar, ami {name}, {company} theke {purpose} niye. Ek minute bolte pari?",
+    "gu-IN": "Namaste, hu {name}, {company} maathi {purpose} mate. Ek minute vaat kar shakay?",
+    "pa-IN": "Sat sri akaal, main {name}, {company} ton {purpose} lai. Ik minute gall kar sakde ho?",
 }
 
 OPENING_NO_COMPANY: dict[str, str] = {
@@ -529,10 +543,17 @@ OPENING_NO_COMPANY: dict[str, str] = {
 }
 
 OPENING_OUTBOUND_NO_COMPANY: dict[str, str] = {
-    "te-IN": "Hi, nenu {name}. {work} gurinchi matladutunnanu. Konchem time unda?",
+    "te-IN": "Hi, nenu {name}. {work} gurinchi matladutunnanu. Meeku oka moment unda?",
     "en-IN": "Hi, this is {name}. I'm calling about {work}. Do you have a moment?",
     "en-US": "Hi, this is {name}. I'm calling about {work}. Do you have a minute?",
-    "hi-IN": "Namaste, main {name} bol rahi hoon. {work} ke baare mein. Kya aapke paas ek minute hai?",
+    "hi-IN": "Namaste, main {name} bol rahi hoon. {work} ke baare mein. Kya aap free hain?",
+    "ta-IN": "Hi, naan {name}. {work} pathi pesuren. Oru nimisham pesalaama?",
+    "kn-IN": "Hi, naanu {name}. {work} bagge. Ondu nimisha matladabahuda?",
+    "ml-IN": "Hi, njan {name}. {work} kurichu. Oru nimisham samsarikkamo?",
+    "mr-IN": "Namaskar, mi {name}. {work} sathi. Ek minute bolu shakta ka?",
+    "bn-IN": "Namaskar, ami {name}. {work} niye. Ek minute bolte pari?",
+    "gu-IN": "Namaste, hu {name}. {work} mate. Ek minute vaat kar shakay?",
+    "pa-IN": "Sat sri akaal, main {name}. {work} lai. Ik minute gall kar sakde ho?",
 }
 
 OPENING_NAME_ONLY: dict[str, str] = {
@@ -543,10 +564,17 @@ OPENING_NAME_ONLY: dict[str, str] = {
 }
 
 OPENING_OUTBOUND_NAME_ONLY: dict[str, str] = {
-    "te-IN": "Hi, nenu {name}. Konchem time unda?",
+    "te-IN": "Hi, nenu {name}. Meeru free unnara — oka moment unda?",
     "en-IN": "Hi, this is {name}. Do you have a moment?",
     "en-US": "Hi, this is {name}. Do you have a minute?",
-    "hi-IN": "Namaste, main {name} bol rahi hoon. Kya aapke paas ek minute hai?",
+    "hi-IN": "Namaste, main {name} bol rahi hoon. Kya aap free hain — ek minute?",
+    "ta-IN": "Hi, naan {name}. Oru nimisham pesalaama?",
+    "kn-IN": "Hi, naanu {name}. Ondu nimisha matladabahuda?",
+    "ml-IN": "Hi, njan {name}. Oru nimisham samsarikkamo?",
+    "mr-IN": "Namaskar, mi {name}. Ek minute bolu shakta ka?",
+    "bn-IN": "Namaskar, ami {name}. Ek minute bolte pari?",
+    "gu-IN": "Namaste, hu {name}. Ek minute vaat kar shakay?",
+    "pa-IN": "Sat sri akaal, main {name}. Ik minute gall kar sakde ho?",
 }
 
 _WORK_SENTENCE_START = re.compile(
@@ -648,15 +676,21 @@ DECISIVE_TURN_DISCIPLINE = """DECISIVE TURN DISCIPLINE (every turn)
 
 
 def spoken_pack_for(language: str | None) -> str:
+    raw = (language or "te-IN").strip()
+    if raw in SPOKEN_PACKS:
+        return SPOKEN_PACKS[raw]
+    if raw in OPENING_OUTBOUND_WITH_COMPANY:
+        return SPOKEN_PACKS["hi-IN"]
     return SPOKEN_PACKS[normalize_compile_language(language)]
 
 
 def language_runtime_footer(language: str | None, style: str) -> str:
-    lang = normalize_compile_language(language)
-    lock = LANGUAGE_LOCK[lang]
-    mismatch = LANGUAGE_MISMATCH_FALLBACK[lang]
+    raw = (language or "te-IN").strip()
+    pack_lang = raw if raw in SPOKEN_PACKS else normalize_compile_language(language)
+    lock = LANGUAGE_LOCK.get(pack_lang, LANGUAGE_LOCK["hi-IN"])
+    mismatch = LANGUAGE_MISMATCH_FALLBACK.get(pack_lang, LANGUAGE_MISMATCH_FALLBACK["hi-IN"])
     return (
-        f"Language: {lang}. Style: {style}. {lock} "
+        f"Language: {raw}. Style: {style}. {lock} "
         f"If the caller uses another language: say once '{mismatch}' — do not switch languages. "
         "A refusal or off-scope redirect stands alone; never append business facts or a pitch."
     )
@@ -684,6 +718,14 @@ def phone_ask_fallback_for(language: str | None) -> str:
     return PHONE_ASK_FALLBACK[normalize_compile_language(language)]
 
 
+def _opening_lang_key(language: str | None) -> str:
+    """Pick template language; extended Indic codes use their own opening lines when defined."""
+    raw = (language or "te-IN").strip()
+    if raw in OPENING_OUTBOUND_WITH_COMPANY:
+        return raw
+    return normalize_compile_language(language)
+
+
 def opening_line_for(
     language: str | None,
     *,
@@ -692,7 +734,7 @@ def opening_line_for(
     work_scope: str,
     direction: str | None = "outbound",
 ) -> str:
-    lang = normalize_compile_language(language)
+    lang = _opening_lang_key(language)
     outbound = str(direction or "outbound").strip().lower() not in ("inbound", "incoming")
     with_co = OPENING_OUTBOUND_WITH_COMPANY if outbound else OPENING_WITH_COMPANY
     with_purpose = OPENING_OUTBOUND_WITH_COMPANY_PURPOSE if outbound else OPENING_WITH_COMPANY_PURPOSE

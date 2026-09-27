@@ -25,7 +25,13 @@ export function testStudioHomePath(portal: "app" | "dev") {
 
 export function parseTestStudioAgentId(pathname: string): string | null {
   const m = pathname.match(/\/test-studio\/([^/]+)/);
-  return m?.[1] || null;
+  const id = m?.[1] || null;
+  if (!id || id === "new") return null;
+  return id;
+}
+
+export function testStudioNewAgentPath(portal: "app" | "dev") {
+  return portal === "dev" ? "/dev/test-studio/new" : "/app/test-studio/new";
 }
 
 export function TestStudioAgentSidebar({ portal }: { portal: "app" | "dev" }) {
@@ -36,8 +42,8 @@ export function TestStudioAgentSidebar({ portal }: { portal: "app" | "dev" }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [creating, setCreating] = useState(false);
-  const [newName, setNewName] = useState("");
   const [newLanguage, setNewLanguage] = useState("te-IN");
+  const onNewAgentPage = pathname.includes("/test-studio/new");
   const [deletingId, setDeletingId] = useState("");
 
   const loadAgents = useCallback(async () => {
@@ -68,8 +74,7 @@ export function TestStudioAgentSidebar({ portal }: { portal: "app" | "dev" }) {
   }, [loadAgents]);
 
   async function createAgent() {
-    const name = newName.trim();
-    if (!name) return;
+    const name = `Lab ${new Date().toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}`;
     setCreating(true);
     setError("");
     try {
@@ -87,7 +92,6 @@ export function TestStudioAgentSidebar({ portal }: { portal: "app" | "dev" }) {
       const agentId = String(j.agent?.agent_id || "");
       if (!agentId) throw new Error("Agent created but no id returned");
       await bootstrapTestStudioAgent(agentId, newLanguage);
-      setNewName("");
       await loadAgents();
       router.push(testStudioAgentPath(agentId, portal));
     } catch (e) {
@@ -184,35 +188,43 @@ export function TestStudioAgentSidebar({ portal }: { portal: "app" | "dev" }) {
         )}
       </div>
 
-      <div className="border-t border-surface-border-subtle p-3 space-y-3">
-        {error && (
-          <p className="rounded-skeuo-sm border border-red-500/30 bg-red-500/10 px-2 py-1.5 text-xs text-red-200">{error}</p>
-        )}
-        <div className="space-y-2 rounded-skeuo-sm skeuo-inset p-3">
-          <p className="font-mono text-[10px] uppercase tracking-wider text-text-subtle">Create agent</p>
-          <input
-            className="w-full rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-inset px-2.5 py-2 text-sm"
-            placeholder="Agent name (e.g. Priya)"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            disabled={creating}
-          />
-          <select
-            className="w-full rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-inset px-2.5 py-2 text-sm"
-            value={newLanguage}
-            onChange={(e) => setNewLanguage(e.target.value)}
-            disabled={creating}
-            aria-label="Agent language"
-          >
-            {LANGUAGES.map((code) => (
-              <option key={code} value={code}>{compileLanguageLabel(code)}</option>
-            ))}
-          </select>
-          <SkeuoButton variant="primary" size="sm" className="w-full" disabled={creating || !newName.trim()} onClick={() => void createAgent()}>
-            {creating ? "Creating…" : "Create agent"}
-          </SkeuoButton>
+      {!onNewAgentPage ? (
+        <div className="border-t border-surface-border-subtle p-3 space-y-3">
+          {error && (
+            <p className="rounded-skeuo-sm border border-red-500/30 bg-red-500/10 px-2 py-1.5 text-xs text-red-200">{error}</p>
+          )}
+          <div className="space-y-2 rounded-skeuo-sm skeuo-inset p-3">
+            <p className="font-mono text-[10px] uppercase tracking-wider text-text-subtle">Create agent</p>
+            <Link
+              href={testStudioNewAgentPath(portal)}
+              className="flex w-full items-center justify-center rounded-skeuo-sm border border-accent-primary/40 bg-accent-primary/10 px-3 py-2 text-sm font-medium text-text hover:bg-accent-primary/15"
+            >
+              New agent from brief →
+            </Link>
+            <p className="text-[10px] text-text-subtle">Or quick empty lab (set brief in fine-tune later):</p>
+            <select
+              className="w-full rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-inset px-2.5 py-2 text-sm"
+              value={newLanguage}
+              onChange={(e) => setNewLanguage(e.target.value)}
+              disabled={creating}
+              aria-label="Agent language"
+            >
+              {LANGUAGES.map((code) => (
+                <option key={code} value={code}>{compileLanguageLabel(code)}</option>
+              ))}
+            </select>
+            <SkeuoButton
+              variant="secondary"
+              size="sm"
+              className="w-full"
+              disabled={creating}
+              onClick={() => void createAgent()}
+            >
+              {creating ? "Creating…" : "Quick create (empty lab)"}
+            </SkeuoButton>
+          </div>
         </div>
-      </div>
+      ) : null}
     </aside>
   );
 }

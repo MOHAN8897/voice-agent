@@ -5,11 +5,12 @@ import asyncio
 import hashlib
 import logging
 import time
+import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
 from server.services.pstn_debug import log_pstn
-from server.services.pstn_text_chunker import extract_opening_greeting
+from server.services.pstn_text_chunker import extract_opening_greeting, extract_prewarm_greeting
 from server.services.pstn_voice_core import pstn_call_options
 
 logger = logging.getLogger(__name__)
@@ -104,6 +105,7 @@ class _PrewarmEntry:
     external_id: str
     task: asyncio.Task
     created_at: float
+    realtime_key: str = ""
     bundle: PstnPrewarmBundle | None = None
     error: str | None = None
 
@@ -120,10 +122,13 @@ class PstnPrewarmRegistry:
         key = self._key(provider, external_id)
         async with self._lock:
             existing = self._entries.get(key)
-            if existing and not existing.task.done():
-                existing.task.cancel()
+            if existing:
+                # Duplicate dial webhooks must not cancel a warming socket.
+                # Brain changes are checked against the call snapshot at answer.
+                return
+            rt_key = f"{prewarm_realtime_key(provider, external_id)}-{uuid.uuid4().hex[:12]}"
             task = asyncio.create_task(
-                self._run(provider, external_id, dial_meta),
+                self._run(provider, external_id, dial_meta, rt_key=rt_key),
                 name=f"pstn-prewarm-{provider}-{external_id}",
             )
             self._entries[key] = _PrewarmEntry(
@@ -131,17 +136,17 @@ class PstnPrewarmRegistry:
                 external_id=external_id,
                 task=task,
                 created_at=time.monotonic(),
+                realtime_key=rt_key,
             )
 
-    async def _run(self, provider: str, external_id: str, dial_meta: dict[str, Any]) -> None:
+    async def _run(self, provider: str, external_id: str, dial_meta: dict[str, Any], *, rt_key: str) -> None:
         key = self._key(provider, external_id)
-        rt_key = prewarm_realtime_key(provider, external_id)
         bundle: PstnPrewarmBundle | None = None
         try:
             bundle = await _build_prewarm_bundle(provider, external_id, dial_meta, rt_key)
             async with self._lock:
                 entry = self._entries.get(key)
-                if entry is not None:
+                if entry is not None and entry.task is asyncio.current_task():
                     entry.bundle = bundle
             log_pstn(
                 "prewarm.ready",
@@ -151,20 +156,21 @@ class PstnPrewarmRegistry:
                 greeting_frames=len(bundle.greeting_wire_frames),
             )
             asyncio.create_task(
-                self._expire_if_unclaimed(key, rt_key),
+                self._expire_if_unclaimed(key, rt_key, owner=asyncio.current_task()),
                 name=f"pstn-prewarm-expire-{provider}-{external_id}",
             )
         except asyncio.CancelledError:
             await _destroy_realtime(rt_key)
             raise
         except Exception as exc:
+            err = str(exc).strip() or f"{type(exc).__name__}"
             async with self._lock:
                 entry = self._entries.get(key)
-                if entry is not None:
-                    entry.error = str(exc)[:200]
+                if entry is not None and entry.task is asyncio.current_task():
+                    entry.error = err[:200]
             await _destroy_realtime(rt_key)
-            log_pstn("prewarm.failed", control=external_id, provider=provider, error=str(exc)[:200])
-            logger.warning("[PSTN] prewarm failed %s %s: %s", provider, external_id, str(exc)[:200])
+            log_pstn("prewarm.failed", control=external_id, provider=provider, error=err[:200])
+            logger.warning("[PSTN] prewarm failed %s %s: %s", provider, external_id, err[:200])
 
     async def take(
         self,
@@ -180,12 +186,15 @@ class PstnPrewarmRegistry:
                 return None
             task = entry.task
             bundle = entry.bundle
+            claimed_entry = entry
         if bundle is None and task and not task.done():
             try:
                 await asyncio.wait_for(asyncio.shield(task), timeout=wait_sec)
             except asyncio.TimeoutError:
                 pass
         async with self._lock:
+            if self._entries.get(key) is not claimed_entry:
+                return None
             entry = self._entries.pop(key, None)
         if entry is None:
             return None
@@ -221,13 +230,19 @@ class PstnPrewarmRegistry:
                 pass
             except Exception:
                 pass
-        await _destroy_realtime(prewarm_realtime_key(provider, external_id))
+        if entry.bundle and entry.bundle.realtime_key:
+            await _destroy_realtime(entry.bundle.realtime_key)
+        else:
+            await _destroy_realtime(getattr(entry, "realtime_key", "") or prewarm_realtime_key(provider, external_id))
         log_pstn("prewarm.cancelled", control=external_id, provider=provider)
 
-    async def _expire_if_unclaimed(self, key: str, rt_key: str) -> None:
+    async def _expire_if_unclaimed(self, key: str, rt_key: str, *, owner: asyncio.Task | None = None) -> None:
         await asyncio.sleep(PREWARM_TTL_SEC)
         async with self._lock:
-            entry = self._entries.pop(key, None)
+            entry = self._entries.get(key)
+            if entry is None or (owner is not None and entry.task is not owner):
+                return
+            self._entries.pop(key, None)
         if entry is not None:
             await _destroy_realtime(rt_key)
             log_pstn("prewarm.expired", control=entry.external_id, provider=entry.provider)
@@ -252,7 +267,7 @@ async def take_prewarm_for_answer(
         try:
             from server.call.call_lifecycle_service import call_lifecycle_service
 
-            current_version, current_text = await call_lifecycle_service._lock_compiled_brain(
+            current_version, current_text, _src = await call_lifecycle_service._lock_compiled_brain(
                 bundle.agent_id,
                 session_id=bundle.config_session_id,
             )
@@ -277,11 +292,14 @@ async def take_prewarm_for_answer(
 
 
 async def record_bundle_greeting_usage(call_id: str | None, bundle: PstnPrewarmBundle | None) -> None:
-    """Bill OpenAI Realtime tokens used to synthesize the deferred opening."""
+    """Record provider-reported usage for the separate deferred opening."""
     if not call_id or bundle is None:
         return
     usage = bundle.greeting_usage
     if not isinstance(usage, dict) or not usage:
+        model = getattr(bundle, "greeting_model", None)
+        if model:
+            log_pstn("prewarm.usage.unavailable", call_id=call_id, model=model)
         return
     from server.services.pstn_realtime_voice_core import record_realtime_voice_usage
 
@@ -290,6 +308,7 @@ async def record_bundle_greeting_usage(call_id: str | None, bundle: PstnPrewarmB
         usage=usage,
         llm_model=bundle.greeting_model or "gpt-realtime-2.1-mini",
         assistant_text=bundle.greeting_text or "",
+        prewarm=True,
     )
 
 
@@ -337,14 +356,14 @@ async def _build_prewarm_bundle(
         ),
         stack_override=pstn_opts.get("stack_override"),
     )
-    _version, compiled = await call_lifecycle_service._lock_compiled_brain(
+    _version, compiled, _brain_src = await call_lifecycle_service._lock_compiled_brain(
         agent["agent_id"],
         session_id=config_session,
     )
     wire = _PROVIDER_WIRE.get(provider, _PROVIDER_WIRE["telnyx"])
     sample_rate = int(wire["sample_rate"])
     tts_codec = str(wire["tts_output_codec"])
-    greeting = extract_opening_greeting(compiled, language, direction="outbound")
+    greeting = extract_prewarm_greeting(compiled, language, direction="outbound")
 
     settings = get_settings()
     from server.realtime.models import pipeline_mode
@@ -362,7 +381,7 @@ async def _build_prewarm_bundle(
         log_pstn("prewarm.realtime.ready", control=external_id, provider=provider, model=stack.llm.model)
     elif mode == "realtime_voice":
         from server.realtime.models import resolve_realtime_voice_max_output_tokens
-        from server.realtime.text_session import build_audio_session_instructions
+        from server.realtime.voice_instructions import build_realtime_voice_instructions
         from server.realtime.voice_manager import realtime_voice_manager
 
         await realtime_voice_manager.create(
@@ -370,8 +389,10 @@ async def _build_prewarm_bundle(
             compiled_brain=compiled,
             model=stack.llm.model,
             language=language,
-            instructions=build_audio_session_instructions(
+            instructions=build_realtime_voice_instructions(
                 compiled,
+                model=stack.llm.model,
+                stack_override=pstn_opts.get("stack_override"),
                 language=language,
                 direction="outbound",
                 opening_greeting=greeting,
@@ -395,16 +416,40 @@ async def _build_prewarm_bundle(
     if greeting and mode == "realtime_voice":
         adapter = realtime_voice_manager.get(rt_key)
         if adapter is not None:
-            from server.services.pstn_realtime_greeting_prewarm import synthesize_realtime_greeting_frames
+            from server.realtime.models import is_gemini_live_voice_model, realtime_voice_config
+            from server.services.pstn_realtime_greeting_prewarm import (
+                synthesize_gemini_greeting_on_side_session,
+                synthesize_realtime_greeting_frames,
+            )
 
             try:
-                frames, greeting_transcript, greeting_usage = await synthesize_realtime_greeting_frames(
-                    adapter,
-                    greeting_text=greeting,
-                    sample_rate=sample_rate,
-                    tts_output_codec=tts_codec,
-                    control_id=external_id,
-                )
+                if is_gemini_live_voice_model(stack.llm.model):
+                    # Gemini cannot delete conversation items. Speak the opening
+                    # on a throwaway Live session so the adopted PSTN session
+                    # stays history-clean, matching OpenAI's item.delete flow.
+                    cfg = realtime_voice_config(pstn_opts.get("stack_override"))
+                    frames, greeting_transcript, greeting_usage = (
+                        await synthesize_gemini_greeting_on_side_session(
+                            greeting_text=greeting,
+                            sample_rate=sample_rate,
+                            tts_output_codec=tts_codec,
+                            model=stack.llm.model,
+                            voice=str(cfg.get("voice") or ""),
+                            turn_detection=str(cfg.get("turn_detection") or ""),
+                            max_output_tokens=resolve_realtime_voice_max_output_tokens(
+                                _runtime_max_output_tokens(config_session)
+                            ),
+                            control_id=external_id,
+                        )
+                    )
+                else:
+                    frames, greeting_transcript, greeting_usage = await synthesize_realtime_greeting_frames(
+                        adapter,
+                        greeting_text=greeting,
+                        sample_rate=sample_rate,
+                        tts_output_codec=tts_codec,
+                        control_id=external_id,
+                    )
                 if frames:
                     auto_response = getattr(adapter, "set_auto_response", None)
                     if not callable(auto_response):

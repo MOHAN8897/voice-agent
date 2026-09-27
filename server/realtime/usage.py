@@ -13,6 +13,7 @@ _EMPTY = {
     "audio_tokens": 0,
     "input_audio_tokens": 0,
     "output_audio_tokens": 0,
+    "input_image_tokens": 0,
     "text_tokens": 0,
     "reasoning_tokens": 0,
     "cached_audio_tokens": 0,
@@ -54,6 +55,7 @@ def extract_realtime_usage(response: Any) -> dict[str, Any]:
     cached_details = _as_dict(input_details.get("cached_tokens_details"))
     input_audio = _num(input_details.get("audio_tokens")) or _num(dump.get("input_audio_tokens"))
     output_audio = _num(output_details.get("audio_tokens")) or _num(dump.get("output_audio_tokens"))
+    input_image = _num(input_details.get("image_tokens")) or _num(dump.get("input_image_tokens"))
     cached_tokens = _num(input_details.get("cached_tokens")) or _num(dump.get("cached_tokens"))
     cached_audio = _num(cached_details.get("audio_tokens")) or _num(dump.get("cached_audio_tokens"))
     return {
@@ -64,6 +66,7 @@ def extract_realtime_usage(response: Any) -> dict[str, Any]:
         "audio_tokens": input_audio + output_audio,
         "input_audio_tokens": input_audio,
         "output_audio_tokens": output_audio,
+        "input_image_tokens": input_image,
         "text_tokens": _num(input_details.get("text_tokens")) + _num(output_details.get("text_tokens")),
         "reasoning_tokens": _num(cached_details.get("reasoning_tokens")),
         "cached_audio_tokens": cached_audio,

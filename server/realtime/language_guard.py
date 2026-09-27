@@ -31,6 +31,22 @@ def _in_ranges(cp: int, ranges: tuple[tuple[int, int], ...]) -> bool:
     return any(lo <= cp <= hi for lo, hi in ranges)
 
 
+def enforce_output_language_script(text: str, language: str = "te-IN") -> str:
+    """Strip script leakage on live calls (e.g. Hindi Devanagari on te-IN Tanglish)."""
+    if not (text or "").strip():
+        return text
+    lang = (language or "te-IN").strip().lower()
+    if lang.startswith("te"):
+        cleaned = re.sub(r"[\u0900-\u097F]+", " ", text)
+        cleaned = _WS.sub(" ", cleaned).strip()
+        return cleaned if cleaned else text
+    if lang.startswith("hi"):
+        cleaned = re.sub(r"[\u0C00-\u0C7F]+", " ", text)
+        cleaned = _WS.sub(" ", cleaned).strip()
+        return cleaned if cleaned else text
+    return text
+
+
 def filter_unrelated_scripts(
     text: str,
     language: str = "te-IN",

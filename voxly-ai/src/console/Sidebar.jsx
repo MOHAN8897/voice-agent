@@ -2,8 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   LayoutDashboard,
   Bot,
-  FileCode2,
-  Mic,
   Phone,
   PhoneCall,
   Megaphone,
@@ -16,12 +14,12 @@ import {
   Zap,
   Check,
   Plus,
-  LogOut,
   Building2,
-  Sparkles,
+  Shield,
   X
 } from 'lucide-react';
 import { useWorkspace } from './context/WorkspaceContext';
+import { useAuth } from '../context/AuthContext';
 
 export function Sidebar({
   activeTab,
@@ -30,7 +28,6 @@ export function Sidebar({
   onOpenBuyNumber,
   onOpenAddFunds,
   onBackToLanding,
-  onSignOut,
   isMobileOpen = false,
   onCloseMobile
 }) {
@@ -43,6 +40,7 @@ export function Sidebar({
     switchWorkspace,
     createWorkspace
   } = useWorkspace();
+  const { isPlatformAdmin } = useAuth();
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -89,18 +87,14 @@ export function Sidebar({
     },
     {
       group: 'AI WORKFORCE',
-      items: [
-        { id: 'employees', label: 'AI Employees', icon: Bot, badge: agents.length },
-        { id: 'agent-studio', label: 'Script Studio', icon: FileCode2 },
-        { id: 'talk-to-ai', label: 'Voice Testing', icon: Mic }
-      ]
+      items: [{ id: 'employees', label: 'AI Employees', icon: Bot, badge: agents.length }],
     },
     {
-      group: 'TELEPHONY',
+      group: 'PHONE',
       items: [
-        { id: 'phone-numbers', label: 'Virtual Numbers', icon: Phone, badge: phoneNumbers.length },
-        { id: 'calls', label: 'Call History', icon: PhoneCall },
-        { id: 'campaigns', label: 'Bulk Campaigns', icon: Megaphone }
+        { id: 'phone-numbers', label: 'Phone lines', icon: Phone, badge: phoneNumbers.length },
+        { id: 'calls', label: 'Calls', icon: PhoneCall },
+        { id: 'campaigns', label: 'Campaigns', icon: Megaphone }
       ]
     },
     {
@@ -114,7 +108,8 @@ export function Sidebar({
       items: [
         { id: 'billing', label: 'Billing & Usage', icon: CreditCard },
         { id: 'integrations', label: 'Integrations', icon: Blocks },
-        { id: 'settings', label: 'Settings', icon: Settings }
+        { id: 'settings', label: 'Settings', icon: Settings },
+        ...(isPlatformAdmin ? [{ id: 'admin', label: 'Platform admin', icon: Shield }] : []),
       ]
     }
   ];
@@ -241,37 +236,6 @@ export function Sidebar({
 
             <div className="my-1 border-t border-[#E4E2EB]" />
 
-            {/* Organization Options */}
-            <div className="pt-1 px-2 pb-0.5 text-[10px] font-bold text-[#8C879A] uppercase tracking-wider">
-              Organization Options
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                setIsDropdownOpen(false);
-                handleSelectTab('settings');
-              }}
-              className="w-full flex items-center gap-2 px-2 py-1.5 rounded-xl text-[#524E5E] hover:text-[#0F0E17] hover:bg-[#FAF9FD] transition-all font-medium text-xs"
-            >
-              <Settings className="w-3.5 h-3.5 text-[#6344E7]" />
-              <span>Workspace Settings & RBAC</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setIsDropdownOpen(false);
-                handleSelectTab('billing');
-              }}
-              className="w-full flex items-center gap-2 px-2 py-1.5 rounded-xl text-[#524E5E] hover:text-[#0F0E17] hover:bg-[#FAF9FD] transition-all font-medium text-xs"
-            >
-              <CreditCard className="w-3.5 h-3.5 text-[#6344E7]" />
-              <span>Plan & Usage Billing</span>
-            </button>
-
-            <div className="my-1 border-t border-[#E4E2EB]" />
-
             {/* Create New Workspace */}
             <button
               type="button"
@@ -282,22 +246,8 @@ export function Sidebar({
               className="w-full flex items-center gap-2 px-2 py-1.5 rounded-xl text-[#6344E7] hover:bg-[#F0EEF6] font-semibold transition-all text-xs"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>+ Create New Workspace</span>
+              <span>Create workspace</span>
             </button>
-
-            {onSignOut && (
-              <button
-                type="button"
-                onClick={() => {
-                  setIsDropdownOpen(false);
-                  onSignOut();
-                }}
-                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-xl text-[#DC2626] hover:bg-[#FEF2F2] transition-all text-xs"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-                <span>Sign out</span>
-              </button>
-            )}
           </div>
         )}
       </div>
@@ -361,12 +311,14 @@ export function Sidebar({
               Talk Time
             </span>
             <span className="text-xs font-bold font-mono text-[#0F0E17]">
-              {wallet.remainingMinutes.toLocaleString()} min
+              {Number(wallet?.remainingMinutes || 0).toLocaleString()} min
             </span>
           </div>
           <div className="flex items-center justify-between gap-2">
             <span className="text-[10px] text-[#524E5E] font-mono">
-              ${wallet.usdEquivalent.toFixed(2)} USD
+              {wallet.balanceInr != null
+                ? `₹${Number(wallet.balanceInr).toFixed(0)}`
+                : `$${Number(wallet.usdEquivalent || 0).toFixed(2)} USD`}
             </span>
             <button
               onClick={onOpenAddFunds}
@@ -377,25 +329,14 @@ export function Sidebar({
           </div>
         </div>
 
-        {/* Public Landing Page Switcher */}
         <button
           type="button"
           onClick={onBackToLanding}
           className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-semibold text-[#524E5E] hover:text-[#0F0E17] hover:bg-[#FAF9FD] border border-[#E4E2EB] active:scale-[0.98] transition-all"
         >
           <ExternalLink className="w-3.5 h-3.5" />
-          <span>Back to voxly.ai</span>
+          <span>Marketing site</span>
         </button>
-        {onSignOut && (
-          <button
-            type="button"
-            onClick={onSignOut}
-            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-semibold text-[#DC2626] hover:bg-[#FEF2F2] border border-[#FECACA] active:scale-[0.98] transition-all"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>Sign out</span>
-          </button>
-        )}
       </div>
 
       {/* Modal: Create New Workspace */}

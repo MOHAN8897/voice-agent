@@ -91,6 +91,18 @@ def test_pstn_stt_stream_type_normalized():
     assert any("fast" in a for a in adj)
 
 
+def test_gemini_realtime_keeps_prebuilt_voice():
+    raw = {
+        "pipeline": "realtime_voice",
+        "llm": {"provider": "gemini", "model": "gemini-3.8-live"},
+        "realtime_voice": {"voice": "Puck", "turn_detection": "semantic_vad"},
+    }
+    out, _adj = normalize_pstn_stack_override(raw, language="te-IN")
+    assert out is not None
+    assert out["llm"]["provider"] == "gemini"
+    assert out["realtime_voice"]["voice"] == "Puck"
+
+
 def test_full_pstn_keeps_place_call_noise_reduction():
     raw = {
         "pipeline": "realtime_text",

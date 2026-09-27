@@ -18,7 +18,7 @@ import { useWorkspace } from '../context/WorkspaceContext';
 import { useAuth } from '../../context/AuthContext';
 
 export function OverviewModule({ onNavigate, onOpenCreateAgent, onOpenBuyNumber }) {
-  const { agents, calls, leads, phoneNumbers, wallet, setSelectedAgentId, setSelectedCallId } =
+  const { agents, calls, leads, phoneNumbers, wallet, setSelectedCallId } =
     useWorkspace();
   const { user } = useAuth();
   const displayName = user?.fullName || user?.name || user?.email?.split('@')[0] || 'there';
@@ -112,6 +112,17 @@ export function OverviewModule({ onNavigate, onOpenCreateAgent, onOpenBuyNumber 
           value={String(totalMinutes)}
           trend="Metered"
           trendLabel="from call logs"
+          icon={Clock}
+        />
+        <MetricCard
+          title="Wallet minutes"
+          value={String(Number(wallet?.remainingMinutes || 0))}
+          trend="Prepaid"
+          trendLabel={
+            wallet?.balanceInr != null
+              ? `₹${Number(wallet.balanceInr).toFixed(0)} remaining`
+              : 'from billing API'
+          }
           icon={Clock}
         />
         <MetricCard
@@ -238,24 +249,18 @@ export function OverviewModule({ onNavigate, onOpenCreateAgent, onOpenBuyNumber 
                   <span>{agent.assignedNumber || 'No number'}</span>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => {
-                        setSelectedAgentId(agent.id);
-                        onNavigate('talk-to-ai');
-                      }}
+                      onClick={() => onNavigate('employees', { agentId: agent.id, step: 'test' })}
                       className="text-[#6344E7] hover:text-[#5034CE] font-semibold flex items-center gap-1"
                     >
                       <Play className="w-3 h-3" />
                       <span>Test</span>
                     </button>
                     <button
-                      onClick={() => {
-                        setSelectedAgentId(agent.id);
-                        onNavigate('agent-studio');
-                      }}
+                      onClick={() => onNavigate('employees', { agentId: agent.id, step: 'script' })}
                       className="text-[#524E5E] hover:text-[#0F0E17] font-semibold flex items-center gap-1"
                     >
                       <FileCode2 className="w-3 h-3" />
-                      <span>Script</span>
+                      <span>Build</span>
                     </button>
                   </div>
                 </div>

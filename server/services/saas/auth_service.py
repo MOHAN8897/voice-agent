@@ -14,6 +14,11 @@ from server.auth.jwt_tokens import AccessTokenClaims, create_access_token
 from server.auth.passwords import hash_portal_password, verify_portal_password
 from server.auth.rbac import ROLE_CUSTOMER_ADMIN
 from server.config.env import get_settings
+from server.services.saas.platform_admins import (
+    effective_membership_role,
+    is_dev_tester_email,
+    is_platform_admin_email,
+)
 from server.db.connection import get_session_factory
 from server.db.models.entities import Agent, Tenant
 from server.db.models.phase5_models import PhoneNumber
@@ -117,6 +122,29 @@ def _tenant_public(tenant: Tenant) -> dict[str, Any]:
     }
 
 
+def _session_public(user: User, tenant: Tenant, role: str) -> dict[str, Any]:
+    return {
+        "user": _user_public(user),
+        "tenant": _tenant_public(tenant),
+        "role": role,
+        "isPlatformAdmin": is_platform_admin_email(user.email),
+        "isDevTester": is_dev_tester_email(user.email),
+    }
+
+
+def _role_for_user(email: str, stored_role: str | None = None) -> str:
+    return effective_membership_role(email, stored_role or ROLE_CUSTOMER_ADMIN)
+
+
+async def _seed_admin_wallet(tenant_id: uuid.UUID, user_id: uuid.UUID, email: str) -> None:
+    try:
+        from server.services.saas.billing_wallet_service import maybe_seed_admin_credits
+
+        await maybe_seed_admin_credits(tenant_id, user_id, email)
+    except Exception:
+        pass
+
+
 async def login_or_create_oauth_user(
     *,
     email: str,
@@ -154,21 +182,22 @@ async def login_or_create_oauth_user(
             )
             session.add(tenant)
             await session.flush()
+            signup_role = _role_for_user(norm)
             session.add(
                 TenantMembership(
                     user_id=user.user_id,
                     tenant_id=tenant.tenant_id,
-                    role=ROLE_CUSTOMER_ADMIN,
+                    role=signup_role,
                     created_at=_utcnow(),
                 )
             )
             await _log_event(session, f"signup_{provider}", user_id=user.user_id, tenant_id=tenant.tenant_id)
-            tokens = await _issue_tokens(session, user, tenant.tenant_id, ROLE_CUSTOMER_ADMIN)
+            tokens = await _issue_tokens(session, user, tenant.tenant_id, signup_role)
             await session.commit()
+            await _seed_admin_wallet(tenant.tenant_id, user.user_id, norm)
             return {
                 **tokens,
-                "user": _user_public(user),
-                "tenant": _tenant_public(tenant),
+                **_session_public(user, tenant, signup_role),
             }
         mem = await session.execute(
             select(TenantMembership, Tenant)
@@ -182,14 +211,26 @@ async def login_or_create_oauth_user(
         membership, tenant = row
         if user.email_verified_at is None:
             user.email_verified_at = _utcnow()
-        tokens = await _issue_tokens(session, user, tenant.tenant_id, membership.role)
+        if user.status == "pending_verification":
+            user.status = "active"
+            user.updated_at = _utcnow()
+        role = _role_for_user(user.email, membership.role)
+        if membership.role != role:
+            membership.role = role
+        tokens = await _issue_tokens(session, user, tenant.tenant_id, role)
         await _log_event(session, f"login_{provider}", user_id=user.user_id, tenant_id=tenant.tenant_id)
         await session.commit()
-        return {**tokens, "user": _user_public(user), "tenant": _tenant_public(tenant)}
+        await _seed_admin_wallet(tenant.tenant_id, user.user_id, user.email)
+        return {**tokens, **_session_public(user, tenant, role)}
 
 
-async def _create_email_verification_token(session: AsyncSession, user_id: uuid.UUID) -> str:
+def _generate_email_otp() -> str:
+    return f"{secrets.randbelow(1_000_000):06d}"
+
+
+async def _create_email_verification_token(session: AsyncSession, user_id: uuid.UUID) -> tuple[str, str]:
     raw = secrets.token_urlsafe(32)
+    otp = _generate_email_otp()
     await session.execute(
         delete(EmailVerificationToken).where(
             EmailVerificationToken.user_id == user_id,
@@ -200,11 +241,12 @@ async def _create_email_verification_token(session: AsyncSession, user_id: uuid.
         EmailVerificationToken(
             token_hash=_hash_token(raw),
             user_id=user_id,
-            expires_at=_utcnow() + timedelta(hours=24),
+            otp_hash=_hash_token(otp),
+            expires_at=_utcnow() + timedelta(minutes=15),
             created_at=_utcnow(),
         )
     )
-    return raw
+    return raw, otp
 
 
 async def signup(
@@ -246,27 +288,29 @@ async def signup(
         )
         session.add(tenant)
         await session.flush()
+        signup_role = _role_for_user(norm)
         session.add(
             TenantMembership(
                 user_id=user.user_id,
                 tenant_id=tenant.tenant_id,
-                role=ROLE_CUSTOMER_ADMIN,
+                role=signup_role,
                 created_at=_utcnow(),
             )
         )
         await _log_event(session, "signup", user_id=user.user_id, tenant_id=tenant.tenant_id, ip=ip)
-        verify_raw = await _create_email_verification_token(session, user.user_id)
+        verify_raw, otp = await _create_email_verification_token(session, user.user_id)
         user_out = _user_public(user)
         tenant_out = _tenant_public(tenant)
         await session.commit()
     settings = get_settings()
     base = settings.voxly_frontend_url.rstrip("/")
     verify_url = f"{base}/#verify-email?token={verify_raw}"
-    await send_verification_email(norm, verify_url)
+    await send_verification_email(norm, verify_url, otp)
     return {
         "ok": True,
         "requiresEmailVerification": True,
-        "message": "If signup succeeded, check your email to verify your account.",
+        "message": "Enter the 6-digit code we sent to your email to finish signing up.",
+        "email": norm,
         "user": user_out,
         "tenant": tenant_out,
     }
@@ -288,12 +332,12 @@ async def login(*, email: str, password: str, ip: str | None = None) -> dict[str
                 await session.commit()
             raise ValueError("invalid_credentials")
         settings = get_settings()
-        if settings.saas_require_email_verification_for_login and user.email_verified_at is None:
+        if user.email_verified_at is None:
             raise ValueError("email_unverified")
         if user.status == "disabled":
             raise ValueError("account_disabled")
         if user.status == "pending_verification" and user.email_verified_at is None:
-            raise ValueError("invalid_credentials")
+            raise ValueError("email_unverified")
         mem = await session.execute(
             select(TenantMembership, Tenant)
             .join(Tenant, Tenant.tenant_id == TenantMembership.tenant_id)
@@ -306,6 +350,9 @@ async def login(*, email: str, password: str, ip: str | None = None) -> dict[str
         membership, tenant = row
         if tenant.status in ("suspended", "deleted", "pending_deletion"):
             raise ValueError("tenant_inactive")
+        role = _role_for_user(user.email, membership.role)
+        if membership.role != role:
+            membership.role = role
         await _log_event(
             session,
             "login",
@@ -313,13 +360,12 @@ async def login(*, email: str, password: str, ip: str | None = None) -> dict[str
             tenant_id=tenant.tenant_id,
             ip=ip,
         )
-        tokens = await _issue_tokens(session, user, tenant.tenant_id, membership.role)
+        tokens = await _issue_tokens(session, user, tenant.tenant_id, role)
         await session.commit()
+        await _seed_admin_wallet(tenant.tenant_id, user.user_id, user.email)
         return {
             **tokens,
-            "user": _user_public(user),
-            "tenant": _tenant_public(tenant),
-            "role": membership.role,
+            **_session_public(user, tenant, role),
         }
 
 
@@ -352,9 +398,13 @@ async def refresh(refresh_token: str) -> dict[str, Any]:
         tenant = await session.get(Tenant, membership.tenant_id)
         if tenant is None or tenant.status in ("suspended", "deleted"):
             raise ValueError("tenant_inactive")
-        tokens = await _issue_tokens(session, user, membership.tenant_id, membership.role)
+        role = _role_for_user(user.email, membership.role)
+        if membership.role != role:
+            membership.role = role
+        tokens = await _issue_tokens(session, user, membership.tenant_id, role)
         await session.commit()
-        return {**tokens, "user": _user_public(user), "tenant": _tenant_public(tenant)}
+        await _seed_admin_wallet(membership.tenant_id, user.user_id, user.email)
+        return {**tokens, **_session_public(user, tenant, role)}
 
 
 async def logout(refresh_token: str | None) -> None:
@@ -409,12 +459,17 @@ async def get_me(principal_user_id: uuid.UUID, principal_tenant_id: uuid.UUID) -
             )
         )
         current = mem.scalar_one_or_none()
-        return {
-            "user": _user_public(user),
-            "tenant": _tenant_public(tenant),
-            "role": current.role if current else None,
+        stored = current.role if current else ROLE_CUSTOMER_ADMIN
+        role = _role_for_user(user.email, stored)
+        if current is not None and current.role != role:
+            current.role = role
+            await session.commit()
+        payload = {
+            **_session_public(user, tenant, role),
             "memberships": mems,
         }
+        await _seed_admin_wallet(principal_tenant_id, user.user_id, user.email)
+        return payload
 
 
 async def change_password(user_id: uuid.UUID, current: str, new: str) -> None:
@@ -734,6 +789,57 @@ async def remove_member(tenant_id: uuid.UUID, admin_id: uuid.UUID, member_user_i
         await session.commit()
 
 
+async def verify_email_otp(email: str, otp: str, *, ip: str | None = None) -> dict[str, Any]:
+    factory = get_session_factory()
+    if factory is None:
+        raise RuntimeError("database_required")
+    norm = _normalize_email(email)
+    code = (otp or "").strip()
+    if not code.isdigit() or len(code) != 6:
+        raise ValueError("invalid_otp")
+    otp_h = _hash_token(code)
+    async with factory() as session:
+        result = await session.execute(
+            select(User).where(func.lower(User.email) == norm, User.deleted_at.is_(None))
+        )
+        user = result.scalar_one_or_none()
+        if user is None:
+            raise ValueError("invalid_otp")
+        tok = await session.execute(
+            select(EmailVerificationToken).where(
+                EmailVerificationToken.user_id == user.user_id,
+                EmailVerificationToken.otp_hash == otp_h,
+                EmailVerificationToken.expires_at > _utcnow(),
+                EmailVerificationToken.used_at.is_(None),
+            )
+        )
+        row = tok.scalar_one_or_none()
+        if row is None:
+            raise ValueError("invalid_otp")
+        row.used_at = _utcnow()
+        user.email_verified_at = _utcnow()
+        user.status = "active"
+        user.updated_at = _utcnow()
+        mem = await session.execute(
+            select(TenantMembership, Tenant)
+            .join(Tenant, Tenant.tenant_id == TenantMembership.tenant_id)
+            .where(TenantMembership.user_id == user.user_id)
+            .order_by(TenantMembership.created_at)
+        )
+        mem_row = mem.first()
+        if mem_row is None:
+            raise ValueError("no_tenant")
+        membership, tenant = mem_row
+        role = _role_for_user(user.email, membership.role)
+        if membership.role != role:
+            membership.role = role
+        await _log_event(session, "email_verified_otp", user_id=user.user_id, tenant_id=tenant.tenant_id, ip=ip)
+        tokens = await _issue_tokens(session, user, tenant.tenant_id, role)
+        await session.commit()
+        await _seed_admin_wallet(tenant.tenant_id, user.user_id, user.email)
+        return {**tokens, **_session_public(user, tenant, role)}
+
+
 async def verify_email_token(token: str) -> None:
     factory = get_session_factory()
     if factory is None:
@@ -772,8 +878,8 @@ async def resend_verification_email(email: str) -> None:
         user = result.scalar_one_or_none()
         if user is None or user.email_verified_at is not None:
             return
-        verify_raw = await _create_email_verification_token(session, user.user_id)
+        verify_raw, otp = await _create_email_verification_token(session, user.user_id)
         await session.commit()
     settings = get_settings()
     verify_url = f"{settings.voxly_frontend_url.rstrip('/')}/#verify-email?token={verify_raw}"
-    await send_verification_email(norm, verify_url)
+    await send_verification_email(norm, verify_url, otp)

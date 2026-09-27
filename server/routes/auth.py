@@ -19,6 +19,14 @@ class LoginBody(BaseModel):
     password: str = Field(..., min_length=1)
 
 
+def _portal_username_matches(expected: str | None, provided: str) -> bool:
+    exp = (expected or "").strip()
+    got = (provided or "").strip()
+    if not exp or not got:
+        return False
+    return exp.casefold() == got.casefold()
+
+
 def _cookie_opts() -> dict:
     secure = get_settings().app_environment == "production"
     return {"httponly": True, "secure": secure, "samesite": "lax", "path": "/"}
@@ -66,7 +74,7 @@ async def dev_login(body: LoginBody, request: Request, response: Response):
             "ok": False,
             "error": {"code": "rate_limit", "message": "Too many login attempts", "retry_after": retry},
         }
-    if body.username != settings.dev_portal_username or not verify_portal_password(
+    if not _portal_username_matches(settings.dev_portal_username, body.username) or not verify_portal_password(
         settings.dev_portal_password, body.password
     ):
         return {"ok": False, "error": {"code": "auth_error", "message": "Invalid credentials"}}
@@ -109,7 +117,7 @@ async def app_login(body: LoginBody, response: Response):
             "ok": False,
             "error": {"code": "rate_limit", "message": "Too many login attempts", "retry_after": retry},
         }
-    if body.username != settings.app_console_username or not verify_portal_password(
+    if not _portal_username_matches(settings.app_console_username, body.username) or not verify_portal_password(
         settings.app_console_password, body.password
     ):
         return {"ok": False, "error": {"code": "auth_error", "message": "Invalid credentials"}}

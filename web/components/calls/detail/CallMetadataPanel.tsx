@@ -45,6 +45,9 @@ export function CallMetadataPanel({ meta }: { meta: CallMeta }) {
       value: `${usage.input_audio_tokens ?? 0} in / ${usage.output_audio_tokens ?? 0} out`,
     });
   }
+  if (usage.input_image_tokens) {
+    rows.push({ label: "Image tokens", value: String(usage.input_image_tokens) });
+  }
   const modelInr = meta.model_cost_inr ?? usage.model_cost_inr;
   const telnyxInr = meta.telnyx_inr ?? usage.telnyx_inr;
   if (modelInr != null) {
@@ -63,7 +66,23 @@ export function CallMetadataPanel({ meta }: { meta: CallMeta }) {
     rows.push({ label: "Total cost", value: `${formatInr(Number(costInr))} (${formatUsd(Number(costUsd || 0))})` });
   }
   if (perMin != null) {
-    rows.push({ label: "₹ / min", value: formatInr(Number(perMin)) });
+    rows.push({ label: "All-in ₹/min", value: formatInr(Number(perMin)) });
+  }
+  if (usage.model_cost_inr_per_min != null) {
+    rows.push({ label: "Model ₹/min", value: formatInr(Number(usage.model_cost_inr_per_min)) });
+  }
+  if (usage.telnyx_inr_per_min != null) {
+    rows.push({ label: "Telnyx ₹/min", value: formatInr(Number(usage.telnyx_inr_per_min)) });
+  }
+  if (usage.gemini_list_audio_inr_per_min != null) {
+    rows.push({
+      label: "Gemini audio list ₹/min",
+      value: `${formatInr(Number(usage.gemini_list_audio_inr_per_min))} ($0.005 in + $0.018 out)`,
+    });
+  }
+  if (usage.fx_rate_inr != null) {
+    const src = usage.fx_source ? ` (${usage.fx_source})` : "";
+    rows.push({ label: "FX USD→INR", value: `${Number(usage.fx_rate_inr)}${src}` });
   }
 
   return (

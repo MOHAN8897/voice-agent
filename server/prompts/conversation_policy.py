@@ -229,7 +229,7 @@ def role_may_sell(role: str) -> bool:
 
 
 def infer_call_direction(brief: str) -> str:
-    """Inbound only when the brief says they call us; default outbound."""
+    """Inbound only when the brief clearly says they call us; default outbound."""
     text = f" {(brief or '').lower()} "
     inbound = bool(
         re.search(
@@ -247,6 +247,12 @@ def infer_call_direction(brief: str) -> str:
             text,
         )
     )
+    if inbound and outbound:
+        if re.search(r"\b(support|billing|complaint|help ?desk|when they call)\b", text) and not re.search(
+            r"\boutbound (?:call|sales|campaign)\b", text
+        ):
+            return "inbound"
+        return "outbound"
     if inbound and (not outbound or re.search(r"\b(support|billing|complaint|help ?desk)\b", text)):
         return "inbound"
     return "outbound"
@@ -427,6 +433,27 @@ def role_section(role: str) -> str:
 
 def checklist_flow_detected(flow_body: str) -> bool:
     return bool(_CHECKLIST_FLOW.search(flow_body or ""))
+
+
+_CUSTOM_FLOW_CONDITION = re.compile(
+    r"\b("
+    r"before (?:we |you )?(?:discuss|share|talk|send)|"
+    r"only (?:after|if|once)|"
+    r"do not (?:discuss|mention|share).{0,48}(?:until|before|without)|"
+    r"must (?:verify|check|confirm|ask)|"
+    r"(?:ask|get) permission|"
+    r"enrollment date|refund|whatsapp.{0,20}(?:permission|consent|follow-up)"
+    r")\b",
+    re.I,
+)
+
+
+def writer_flow_must_preserve(flow_body: str) -> bool:
+    """Business-specific conditional steps must not be replaced by generic platform FLOW."""
+    body = (flow_body or "").strip()
+    if not body:
+        return False
+    return bool(_CUSTOM_FLOW_CONDITION.search(body))
 
 
 _QUALIFY = re.compile(

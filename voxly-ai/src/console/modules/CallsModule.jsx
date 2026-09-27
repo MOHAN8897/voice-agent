@@ -1,51 +1,237 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Search,
-  Play,
-  Pause,
   Volume2,
   Sparkles,
-  FileText
+  FileText,
+  RefreshCw,
+  Filter,
 } from 'lucide-react';
 import { SolidCard } from '../ui/SolidCard';
 import { StatusBadge } from '../ui/StatusBadge';
+import { TactileButton } from '../ui/TactileButton';
 import { useWorkspace } from '../context/WorkspaceContext';
+import { api } from '../../services/api';
+import { showToast } from '../ui/ToastHost';
+import { CALL_BUCKET_LABELS, callBucket, PHONE_STACK_LABEL } from '../../lib/phoneLabels';
 
 export function CallsModule() {
-  const { calls, selectedCallId, setSelectedCallId } = useWorkspace();
+  const {
+    calls,
+    selectedCallId,
+    setSelectedCallId,
+    agents,
+    phoneNumbers,
+    loadWorkspaceData,
+  } = useWorkspace();
   const [filterDirection, setFilterDirection] = useState('All');
+  const [filterAgentId, setFilterAgentId] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-  const [playbackTime, setPlaybackTime] = useState(12);
+  const [toNumber, setToNumber] = useState('');
+  const [fromNumber, setFromNumber] = useState('');
+  const [agentId, setAgentId] = useState('');
+  const [dialBusy, setDialBusy] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [transcriptLines, setTranscriptLines] = useState([]);
+  const [mainTab, setMainTab] = useState('history');
+  const [historyBucket, setHistoryBucket] = useState('all');
+
+  useEffect(() => {
+    const stored =
+      typeof window !== 'undefined' ? sessionStorage.getItem('voxly_calls_agent') : null;
+    if (stored && agents.some((a) => a.id === stored)) {
+      setAgentId(stored);
+      setFilterAgentId(stored);
+      sessionStorage.removeItem('voxly_calls_agent');
+    }
+  }, [agents]);
 
   const filteredCalls = calls.filter((call) => {
+    const matchesAgent =
+      filterAgentId === 'all' || call.agentId === filterAgentId || call.agentName === agents.find((a) => a.id === filterAgentId)?.name;
     const matchesDir = filterDirection === 'All' || call.direction.toLowerCase() === filterDirection.toLowerCase();
     const matchesSearch =
-      call.callerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      call.callerPhone.includes(searchQuery) ||
-      call.agentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      call.outcome.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesDir && matchesSearch;
+      (call.callerName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (call.callerPhone || '').includes(searchQuery) ||
+      (call.agentName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (call.outcome || '').toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesDir && matchesSearch && matchesAgent;
   });
 
-  const activeCall = calls.find((c) => c.id === selectedCallId) || (calls.length > 0 ? calls[0] : null);
+  const bucketFiltered = filteredCalls.filter((call) => {
+    if (historyBucket === 'all') return true;
+    const b = callBucket(call);
+    if (historyBucket === 'answered') return b === 'answered' || b === 'inbound';
+    return b === historyBucket;
+  });
+
+  const bucketCounts = filteredCalls.reduce(
+    (acc, c) => {
+      const b = callBucket(c);
+      acc.all += 1;
+      if (b === 'missed') acc.missed += 1;
+      if (b === 'declined') acc.declined += 1;
+      if (b === 'outbound') acc.outbound += 1;
+      if (b === 'answered' || b === 'inbound') acc.answered += 1;
+      return acc;
+    },
+    { all: 0, answered: 0, missed: 0, declined: 0, outbound: 0 }
+  );
+
+  const activeCall =
+    bucketFiltered.find((c) => c.id === selectedCallId) ||
+    (bucketFiltered.length > 0 ? bucketFiltered[0] : null);
+
+  useEffect(() => {
+    if (agents[0]?.id && !agentId) setAgentId(agents[0].id);
+  }, [agents, agentId]);
+
+  useEffect(() => {
+    if (!activeCall?.id) {
+      setTranscriptLines([]);
+      return;
+    }
+    let cancelled = false;
+    api.calls
+      .transcript(activeCall.id)
+      .then((data) => {
+        if (!cancelled) setTranscriptLines(data.lines || []);
+      })
+      .catch(() => {
+        if (!cancelled) setTranscriptLines([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeCall?.id]);
+
+  const refreshCalls = async () => {
+    setRefreshing(true);
+    try {
+      await loadWorkspaceData?.();
+      showToast('Call list updated', 'success');
+    } catch (e) {
+      showToast(e.message || 'Could not refresh', 'error');
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const placeCall = async () => {
+    if (!agentId || !toNumber.trim()) return;
+    setDialBusy(true);
+    try {
+      await api.calls.triggerOutbound({
+        agentId,
+        toE164: toNumber.trim(),
+        fromE164: fromNumber || null,
+      });
+      showToast('Outbound call started', 'success');
+      await loadWorkspaceData?.();
+    } catch (e) {
+      showToast(e.message || 'Could not place call', 'error');
+    } finally {
+      setDialBusy(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-[#0F0E17] tracking-tight">
-            Call Logs & Transcripts ({calls.length})
-          </h2>
-          <p className="text-xs text-[#524E5E] mt-0.5">
-            Inspect real-time conversation audio, diarized speaker transcripts, and AI-extracted sentiment.
+          <h2 className="text-xl font-bold text-[#0F0E17] tracking-tight">Calls ({calls.length})</h2>
+          <p className="text-xs text-[#524E5E] mt-0.5 max-w-2xl">
+            {PHONE_STACK_LABEL}: transcripts, recordings, and wallet usage for real phone conversations.
           </p>
         </div>
+        <TactileButton variant="secondary" size="sm" icon={RefreshCw} loading={refreshing} onClick={refreshCalls}>
+          Refresh
+        </TactileButton>
+      </div>
+
+      <div className="flex items-center gap-1 p-1 rounded-2xl bg-white border border-[#E4E2EB] w-fit">
+        {[
+          { id: 'history', label: 'Call history' },
+          { id: 'outbound', label: 'Place outgoing call' },
+        ].map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => setMainTab(t.id)}
+            className={`px-4 py-2 rounded-xl text-xs font-semibold ${
+              mainTab === t.id ? 'bg-[#0F0E17] text-white' : 'text-[#524E5E] hover:text-[#0F0E17]'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {mainTab === 'outbound' && (
+        <SolidCard className="p-4 space-y-3">
+          <div>
+            <div className="text-xs font-bold text-[#0F0E17]">Outgoing call</div>
+            <p className="text-[11px] text-[#524E5E] mt-1">
+              Needs wallet balance, a published agent script, and a phone line as caller ID. Rate limits apply.
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-4 gap-2">
+            <select
+              value={agentId}
+              onChange={(e) => setAgentId(e.target.value)}
+              className="bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-2.5 py-2 text-xs"
+            >
+              {agents.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name}
+                </option>
+              ))}
+            </select>
+            <select
+              value={fromNumber}
+              onChange={(e) => setFromNumber(e.target.value)}
+              className="bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-2.5 py-2 text-xs font-mono"
+            >
+              <option value="">Agent phone line</option>
+              {phoneNumbers.map((n) => (
+                <option key={n.id} value={n.number}>
+                  {n.label ? `${n.label} · ${n.number}` : n.number}
+                </option>
+              ))}
+            </select>
+            <input
+              value={toNumber}
+              onChange={(e) => setToNumber(e.target.value)}
+              placeholder="+91…"
+              className="bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-2.5 py-2 text-xs font-mono"
+            />
+            <TactileButton variant="primary" size="sm" loading={dialBusy} onClick={placeCall}>
+              Call now
+            </TactileButton>
+          </div>
+        </SolidCard>
+      )}
+
+      {mainTab === 'history' && (
+        <>
+      <div className="flex flex-wrap items-center gap-1 p-1 rounded-xl bg-[#F0EEF6] border border-[#E4E2EB]">
+        {['all', 'answered', 'missed', 'declined', 'outbound'].map((key) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setHistoryBucket(key)}
+            className={`px-3 py-1 rounded-lg text-xs font-semibold ${
+              historyBucket === key ? 'bg-white text-[#0F0E17] shadow-xs' : 'text-[#524E5E]'
+            }`}
+          >
+            {CALL_BUCKET_LABELS[key]} ({bucketCounts[key] ?? 0})
+          </button>
+        ))}
       </div>
 
       {/* Filter Tabs & Search Bar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-2.5 rounded-2xl bg-white border border-[#E4E2EB] shadow-craft-xs">
+        <div className="flex flex-wrap items-center gap-2">
         <div className="flex items-center p-1 rounded-xl bg-[#F0EEF6] border border-[#E4E2EB]">
           {['All', 'Inbound', 'Outbound'].map((tab) => (
             <button
@@ -60,6 +246,22 @@ export function CallsModule() {
               {tab}
             </button>
           ))}
+        </div>
+        <div className="flex items-center gap-1.5 text-xs">
+          <Filter className="w-3.5 h-3.5 text-[#8C879A]" />
+          <select
+            value={filterAgentId}
+            onChange={(e) => setFilterAgentId(e.target.value)}
+            className="bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-2 py-1 text-xs"
+          >
+            <option value="all">All agents</option>
+            {agents.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name}
+              </option>
+            ))}
+          </select>
+        </div>
         </div>
 
         <div className="relative min-w-[240px]">
@@ -92,7 +294,7 @@ export function CallsModule() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E4E2EB]">
-                  {filteredCalls.map((call) => {
+                  {bucketFiltered.map((call) => {
                     const isSelected = activeCall && activeCall.id === call.id;
                     return (
                       <tr
@@ -110,14 +312,14 @@ export function CallsModule() {
                         <td className="py-3.5 px-3">
                           <StatusBadge status={call.direction} size="xs" />
                         </td>
-                        <td className="py-3.5 px-3 font-mono font-bold text-[#0F0E17]">{call.formattedDuration}</td>
+                        <td className="py-3.5 px-3 font-mono font-bold text-[#0F0E17]">{call.duration}</td>
                         <td className="py-3.5 px-3">
                           <span className="text-[11px] text-[#524E5E] truncate max-w-[150px] block">
                             {call.outcome}
                           </span>
                         </td>
                         <td className="py-3.5 px-4 text-right text-[11px] text-[#8C879A]">
-                          {call.timestamp}
+                          {call.startedAt ? new Date(call.startedAt).toLocaleString() : '—'}
                         </td>
                       </tr>
                     );
@@ -142,7 +344,7 @@ export function CallsModule() {
                     {activeCall.callerName} ({activeCall.callerPhone})
                   </h3>
                 </div>
-                <StatusBadge status={activeCall.sentiment} size="xs" />
+                <StatusBadge status={activeCall.channel || activeCall.direction} size="xs" />
               </div>
 
               {/* Dual-Track Audio Waveform Player Simulation */}
@@ -153,41 +355,32 @@ export function CallsModule() {
                     <span>Call Recording Audio</span>
                   </span>
                   <span className="font-mono text-[11px] text-[#524E5E]">
-                    00:{playbackTime < 10 ? `0${playbackTime}` : playbackTime} / {activeCall.formattedDuration}
+                    {activeCall.duration}
                   </span>
                 </div>
 
                 {/* Animated / Clickable Waveform Bars */}
-                <div className="h-10 flex items-center gap-1 cursor-pointer py-1">
+                <div className="h-10 flex items-center gap-1 py-1">
                   {[20, 45, 60, 80, 50, 30, 75, 90, 100, 65, 40, 25, 60, 85, 40, 20, 70, 95, 80, 55, 35, 65, 90, 45, 30, 55, 75, 60, 40, 25].map(
                     (barHeight, idx) => (
                       <div
                         key={idx}
-                        onClick={() => setPlaybackTime(idx * 5)}
                         style={{ height: `${barHeight}%` }}
-                        className={`flex-1 rounded-full transition-all ${
-                          idx < 8 ? 'bg-[#6344E7]' : 'bg-[#E4E2EB] hover:bg-[#D1CFDB]'
-                        }`}
+                        className={`flex-1 rounded-full ${idx < 8 ? 'bg-[#6344E7]' : 'bg-[#E4E2EB]'}`}
                       />
                     )
                   )}
                 </div>
 
-                {/* Player Controls */}
-                <div className="flex items-center justify-between pt-1">
-                  <button
-                    type="button"
-                    onClick={() => setIsPlayingAudio(!isPlayingAudio)}
-                    className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#0F0E17] text-white text-xs font-semibold hover:bg-[#232130] active:scale-[0.98] transition-all shadow-2xs"
-                  >
-                    {isPlayingAudio ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
-                    <span>{isPlayingAudio ? 'Pause' : 'Play'}</span>
-                  </button>
-
-                  <span className="text-[10px] font-mono text-[#524E5E]">
-                    Cost: {activeCall.cost} (Billed {activeCall.durationSeconds}s)
-                  </span>
-                </div>
+                <span className="text-[10px] font-mono text-[#524E5E]">
+                    {activeCall.costInr != null
+                      ? `₹${Number(activeCall.costInr).toFixed(2)}`
+                      : activeCall.costUsd != null
+                        ? `$${Number(activeCall.costUsd).toFixed(3)}`
+                        : 'Usage billed at hangup'}
+                    {activeCall.endReason ? ` · ${activeCall.endReason}` : ''}
+                    {activeCall.pipeline ? ` · ${activeCall.pipeline}` : ''}
+                </span>
               </div>
 
               {/* AI Structured Summary */}
@@ -216,12 +409,15 @@ export function CallsModule() {
               <div>
                 <h4 className="text-xs font-bold text-[#0F0E17] mb-2.5 flex items-center gap-1.5">
                   <FileText className="w-3.5 h-3.5 text-[#524E5E]" />
-                  <span>Diarized Transcript ({activeCall.transcript?.length || 0} turns)</span>
+                  <span>Transcript ({transcriptLines.length} turns)</span>
                 </h4>
 
                 <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
-                  {(activeCall.transcript || []).map((t, idx) => {
-                    const isAgent = t.speaker === activeCall.agentName;
+                  {transcriptLines.length === 0 && (
+                    <p className="text-xs text-[#8C879A]">Transcript appears after the call finalizes.</p>
+                  )}
+                  {transcriptLines.map((t, idx) => {
+                    const isAgent = (t.role || t.speaker) === 'assistant' || t.role === 'agent';
                     return (
                       <div
                         key={idx}
@@ -233,9 +429,8 @@ export function CallsModule() {
                       >
                         <div className="flex items-center justify-between text-[10px] text-[#8C879A] mb-1 font-mono">
                           <span className={`font-bold ${isAgent ? 'text-[#6344E7]' : 'text-[#0F0E17]'}`}>
-                            {t.speaker}
+                            {isAgent ? activeCall.agentName : 'Caller'}
                           </span>
-                          <span>{t.time}</span>
                         </div>
                         <p className="text-[#0F0E17]">{t.text}</p>
                       </div>
@@ -247,6 +442,8 @@ export function CallsModule() {
           </div>
         )}
       </div>
+        </>
+      )}
     </div>
   );
 }

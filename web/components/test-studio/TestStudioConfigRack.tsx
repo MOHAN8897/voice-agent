@@ -4,10 +4,12 @@ import { useState } from "react";
 import { SkeuoPanel } from "@/components/ui/skeuo/SkeuoPanel";
 import { SkeuoBadge } from "@/components/ui/skeuo/SkeuoBadge";
 import { CartesiaVoiceSelect } from "@/components/test-studio/CartesiaVoiceSelect";
+import { RealtimeVoiceSelect } from "@/components/test-studio/RealtimeVoiceSelect";
 import { SarvamVoiceSelect } from "@/components/test-studio/SarvamVoiceSelect";
 import { TIER_META, TIER_ORDER, type TierName } from "@/lib/voice-tier-meta";
 import {
   modelsFor,
+  realtimeSpeechModelOptions,
   type ProviderEntry,
   type StackForm,
   type StackMode,
@@ -29,8 +31,9 @@ import {
   REALTIME_NOISE_REDUCTION,
   REALTIME_TURN_DETECTION,
   REALTIME_VAD_EAGERNESS,
-  REALTIME_VOICES,
+  isGeminiLiveVoiceModel,
   isRealtimePstnMode,
+  isRealtimeSpeechToSpeechModel,
   normalizeRealtimeSpeed,
   normalizeRealtimeSilenceMs,
 } from "@/lib/realtime-voice";
@@ -279,30 +282,35 @@ export function TestStudioConfigRack({
                 )}
                 {realtime && (
                   <p className="mt-2 text-[11px] text-text-subtle">
-                    Realtime PSTN ignores STT/TTS providers. Live model is OpenAI Realtime mini unless you pick
-                    another Realtime slug below.
+                    Realtime PSTN ignores Sarvam/Cartesia STT/TTS. Pick OpenAI Realtime or Gemini 3.8 Live for
+                    speech-to-speech audio.
                   </p>
                 )}
               </label>
               {realtime && (
-                <StageSelect
-                  label="Realtime LLM"
-                  stage="llm"
-                  providers={providers}
-                  provider="openai"
-                  model={stack.llmModel.startsWith("gpt-realtime") ? stack.llmModel : "gpt-realtime-2.1-mini"}
-                  disabled={locked}
-                  modelOptions={
-                    modelsFor(providers, "openai", "llm").filter((m) => m.id.startsWith("gpt-realtime")).length
-                      ? modelsFor(providers, "openai", "llm").filter((m) => m.id.startsWith("gpt-realtime"))
-                      : [
-                          { id: "gpt-realtime-2.1-mini", label: "gpt-realtime-2.1-mini" },
-                          { id: "gpt-realtime-2.1", label: "gpt-realtime-2.1" },
-                        ]
-                  }
-                  onProviderChange={(_p, llmModel) => patchStack({ llmProvider: "openai", llmModel })}
-                  onModelChange={(llmModel) => patchStack({ llmProvider: "openai", llmModel })}
-                />
+                <label className="block text-sm">
+                  <span className="text-text-muted">Realtime LLM</span>
+                  <select
+                    disabled={locked}
+                    className="mt-2 w-full rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-inset px-3 py-2 text-sm disabled:opacity-50"
+                    value={
+                      isRealtimeSpeechToSpeechModel(stack.llmModel)
+                        ? stack.llmModel
+                        : "gpt-realtime-2.1-mini"
+                    }
+                    onChange={(e) => {
+                      const llmModel = e.target.value;
+                      const row = realtimeSpeechModelOptions(providers).find((m) => m.id === llmModel);
+                      patchStack({ llmModel, llmProvider: row?.provider || "openai" });
+                    }}
+                  >
+                    {realtimeSpeechModelOptions(providers).map((m) => (
+                      <option key={`${m.provider}:${m.id}`} value={m.id}>
+                        {m.provider === "gemini" ? "Gemini" : "OpenAI"} — {m.label || m.id}
+                      </option>
+                    ))}
+                  </select>
+                </label>
               )}
               </div>
             ) : catalogLoading ? (
@@ -311,19 +319,29 @@ export function TestStudioConfigRack({
               <p className="text-xs text-status-warning">No providers in catalog. Check Environment keys.</p>
             ) : realtime ? (
               <div className="space-y-3">
-                <StageSelect
-                  label="Realtime LLM"
-                  stage="llm"
-                  providers={providers}
-                  provider="openai"
-                  model={stack.llmModel.startsWith("gpt-realtime") ? stack.llmModel : "gpt-realtime-2.1-mini"}
-                  disabled={locked}
-                  modelOptions={modelsFor(providers, "openai", "llm").filter((m) =>
-                    m.id.startsWith("gpt-realtime")
-                  )}
-                  onProviderChange={(_p, llmModel) => patchStack({ llmProvider: "openai", llmModel })}
-                  onModelChange={(llmModel) => patchStack({ llmProvider: "openai", llmModel })}
-                />
+                <label className="block text-sm">
+                  <span className="text-text-muted">Realtime LLM</span>
+                  <select
+                    disabled={locked}
+                    className="mt-2 w-full rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-inset px-3 py-2 text-sm disabled:opacity-50"
+                    value={
+                      isRealtimeSpeechToSpeechModel(stack.llmModel)
+                        ? stack.llmModel
+                        : "gpt-realtime-2.1-mini"
+                    }
+                    onChange={(e) => {
+                      const llmModel = e.target.value;
+                      const row = realtimeSpeechModelOptions(providers).find((m) => m.id === llmModel);
+                      patchStack({ llmModel, llmProvider: row?.provider || "openai" });
+                    }}
+                  >
+                    {realtimeSpeechModelOptions(providers).map((m) => (
+                      <option key={`${m.provider}:${m.id}`} value={m.id}>
+                        {m.provider === "gemini" ? "Gemini" : "OpenAI"} — {m.label || m.id}
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 <p className="text-[11px] text-text-subtle">
                   Audio in and audio out stay on this model. Sarvam STT/TTS are not used.
                 </p>
@@ -398,23 +416,19 @@ export function TestStudioConfigRack({
             {realtime ? (
               <>
                 <p className="text-xs text-text-muted">
-                  OpenAI Realtime voice is locked after the first spoken reply on a call. Start a new call after
+                  Realtime voice (OpenAI or Gemini) is locked after the first spoken reply. Start a new call after
                   changing it.
                 </p>
                 <label className="block text-sm">
                   <span className="text-text-muted">Realtime voice</span>
-                  <select
-                    disabled={locked}
-                    className="mt-2 w-full rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-inset px-3 py-2 text-sm disabled:opacity-50"
-                    value={stack.realtimeVoice || DEFAULT_REALTIME_VOICE}
-                    onChange={(e) => patchStack({ realtimeVoice: e.target.value })}
-                  >
-                    {REALTIME_VOICES.map((v) => (
-                      <option key={v.id} value={v.id}>
-                        {v.label}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="mt-2">
+                    <RealtimeVoiceSelect
+                      disabled={locked}
+                      value={stack.realtimeVoice || DEFAULT_REALTIME_VOICE}
+                      llmModel={stack.llmModel}
+                      onChange={(voiceId) => patchStack({ realtimeVoice: voiceId })}
+                    />
+                  </div>
                 </label>
                 <label className="block text-sm">
                   <span className="text-text-muted">Speech speed</span>
@@ -430,7 +444,13 @@ export function TestStudioConfigRack({
                   />
                 </label>
                 <p className="text-[10px] text-text-subtle">
-                  Model: <span className="font-mono">{stack.llmModel || "gpt-realtime-2.1-mini"}</span> · PCM16 @ 24 kHz
+                  Model: <span className="font-mono">{stack.llmModel || "gpt-realtime-2.1-mini"}</span>
+                  {isGeminiLiveVoiceModel(stack.llmModel) ? " · Gemini Live" : " · OpenAI Realtime"} · voice{" "}
+                  <span className="font-mono">{stack.realtimeVoice || DEFAULT_REALTIME_VOICE}</span>
+                  {isGeminiLiveVoiceModel(stack.llmModel)
+                    ? " (mapped to Gemini prebuilt voice on connect)"
+                    : ""}{" "}
+                  · PCM in 16 kHz (Gemini) / 24 kHz (OpenAI) · out 24 kHz
                 </p>
               </>
             ) : (

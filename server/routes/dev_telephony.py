@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import json
 import time
+import uuid
 from typing import Any
 
 from fastapi import APIRouter, Depends
@@ -164,11 +165,18 @@ def _outbound_pstn_context(body: OutboundTestBody) -> tuple[str, str, dict[str, 
 
     from server.services.test_studio_config import merge_stack, saved_call_config
 
-    source, _ = _resolve_outbound_source_session(body)
-    saved = saved_call_config(source)
+    source, inherit = _resolve_outbound_source_session(body)
+    saved = saved_call_config(source) if source else {}
     tier = (body.tier or saved.get("tier") or "medium").strip()
     language = (body.language or saved.get("language") or "te-IN").strip()
-    override = merge_stack(saved.get("stack_override"), body.stack_override)
+    if inherit:
+        override = merge_stack(saved.get("stack_override"), body.stack_override)
+    elif body.stack_override:
+        override = body.stack_override
+    else:
+        from server.services.saas.platform_phone_stack import resolve_platform_phone_stack_sync
+
+        override = resolve_platform_phone_stack_sync(language)
     if not override:
         return tier, language, None, []
     try:
@@ -188,8 +196,9 @@ def _outbound_prewarm_meta(
     source_session_id: str | None,
     inherit_config: bool,
     stack_override: dict[str, Any] | None,
+    billed_user_id: str | None = None,
 ) -> dict[str, Any]:
-    return {
+    meta = {
         "agent_id": body.agent_id,
         "tier": tier,
         "language": language,
@@ -198,6 +207,17 @@ def _outbound_prewarm_meta(
         "inherit_test_studio_config": inherit_config,
         "stack_override": stack_override,
     }
+    if billed_user_id:
+        meta["billed_user_id"] = billed_user_id
+    return meta
+
+
+def _billed_user_id_from_session(session: SessionData) -> str | None:
+    raw = str(getattr(session, "subject", "") or "").strip()
+    try:
+        return str(uuid.UUID(raw))
+    except ValueError:
+        return None
 
 
 async def _hangup_active_telnyx_to(client: Any, to_e164: str) -> None:
@@ -471,6 +491,7 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
 
     tier, language, stack_override, stack_adjustments = _outbound_pstn_context(body)
     source_session_id, inherit_config = _resolve_outbound_source_session(body)
+    billed_user_id = _billed_user_id_from_session(session)
 
     try:
         await agent_service.get_agent(body.agent_id)
@@ -532,6 +553,8 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
                 "language": language,
                 "stack_override": stack_override,
                 "direction": "outbound",
+                "billed_user_id": billed_user_id,
+                "tenant_id": session.tenant_id,
             },
         )
         call_control_id = str(result.get("call_control_id") or result.get("id") or "")
@@ -556,6 +579,8 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
                 "stream_connected": bool(existing_call.get("stream_connected")),
                 "stream_state": existing_call.get("stream_state") or "pending_answer",
                 "dialed_at": existing_call.get("dialed_at") or time.time(),
+                "billed_user_id": billed_user_id,
+                "tenant_id": session.tenant_id,
             },
         )
         if call_control_id:
@@ -567,6 +592,8 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
                 "agent_id": body.agent_id,
                 "tier": tier,
                 "call_control_id": call_control_id,
+                "billed_user_id": billed_user_id,
+                "tenant_id": session.tenant_id,
             }
             telnyx_stream_tokens.put(token, **merged_meta)
         log_pstn(
@@ -604,6 +631,7 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
                     source_session_id=source_session_id,
                     inherit_config=inherit_config,
                     stack_override=stack_override,
+                    billed_user_id=billed_user_id,
                 ),
             )
             payload["history"] = _record_dev_dial(
@@ -780,6 +808,8 @@ async def dev_telephony_media_flow(
     from server.services.pstn_media_flow import pstn_media_flow
 
     flow = pstn_media_flow.snapshot(call_id)
+    if not flow and call_id:
+        flow = pstn_media_flow.snapshot(None)
     if flow:
         from server.services.telnyx_pstn_bridge import active_telnyx_bridges
         from server.services.telnyx_client import telnyx_call_registry

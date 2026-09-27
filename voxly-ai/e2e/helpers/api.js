@@ -56,6 +56,26 @@ export async function createAgent(accessToken, name) {
   return { ok: res.ok, data };
 }
 
+export async function buildEmployee(accessToken, payload) {
+  const res = await fetch(`${API}/api/app/agents/build-employee`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      brief: payload.brief,
+      language: payload.language || 'en-IN',
+      mode: payload.mode || 'instant_lead',
+      industry: payload.industry || '',
+        naturalSpokenStyle: Boolean(payload.naturalSpokenStyle),
+      employeeName: payload.employeeName || '',
+    }),
+  });
+  const data = await res.json().catch(() => ({}));
+  return { ok: res.ok, status: res.status, data };
+}
+
 export async function googleConfig() {
   const res = await fetch(`${API}/api/auth/google/config`);
   return { ok: res.ok, data: await res.json() };

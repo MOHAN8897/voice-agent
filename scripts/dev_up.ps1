@@ -16,6 +16,7 @@ param(
     [switch]$ApiOnly,
     [switch]$WebOnly,
     [switch]$ProductionWeb,
+    [switch]$VoxlyFocus,
     # Retained for compatibility; production mode always builds current sources.
     [switch]$ForceWebBuild
 )
@@ -44,29 +45,33 @@ function Write-DevBanner {
     param(
         [bool]$ApiOk,
         [bool]$WebOk,
-        [bool]$VoxlyOk = $false
+        [bool]$VoxlyOk = $false,
+        [bool]$VoxlyFocus = $false
     )
     Write-Host ""
     Write-Host "============================================================"
     if ($ApiOk -and $WebOk) {
-        Write-Host "  Voice agent - local dev is running (API + dev portal + Voxly)"
+        if ($VoxlyFocus) {
+            Write-Host "  Voxly + dev panel (light local stack)"
+        } else {
+            Write-Host "  Voice agent - local dev is running (API + dev portal + Voxly)"
+        }
     } else {
         Write-Host "  Voice agent - dev start incomplete"
     }
     Write-Host "============================================================"
     Write-Host ""
     if ($WebOk) {
-        Write-Host "  Website (marketing)   $MarketingUrl"
-        Write-Host "  Dev portal (login)    $DevLoginUrl"
-        Write-Host "    credentials: dev / devpass"
-        Write-Host "  Test Studio           $TestStudioUrl"
-        Write-Host "  Business app login    $AppLoginUrl"
-        Write-Host "    credentials: e2e / e2e-test"
         if ($VoxlyOk) {
-            Write-Host "  Voxly marketing+console $VoxlyUrl"
-            Write-Host "    subscriber auth: /api/auth/* (JWT + HttpOnly refresh cookie)"
+            Write-Host "  Voxly (subscriber UI) $VoxlyUrl"
         } else {
             Write-Host "  Voxly                 NOT RUNNING (see voxly.log)"
+        }
+        Write-Host "  Dev portal            $DevLoginUrl  (dev / devpass)"
+        Write-Host "  Test Studio           $TestStudioUrl"
+        if (-not $VoxlyFocus) {
+            Write-Host "  Legacy marketing      $MarketingUrl  (redirects to Voxly)"
+            Write-Host "  Legacy /app console   $AppLoginUrl  (redirects to Voxly)"
         }
     } else {
         Write-Host "  Website               NOT RUNNING"
@@ -105,6 +110,9 @@ $webOk = $false
 $voxlyOk = $false
 
 if (-not $WebOnly) {
+    if (-not (Test-VoiceAgentPythonDeps -PythonPath $python -RepoRoot $RepoRoot)) {
+        throw "Install Python dependencies before starting the API (see commands above)."
+    }
     Write-Host "Starting API on $ApiUrl"
     # Share/telephony need a stable single worker (PSTN + reliable health waits).
     $apiNoReload = [bool]$ProductionWeb
@@ -197,11 +205,12 @@ if (-not $ApiOnly -and (Test-Path $VoxlyRoot) -and $apiOk) {
     $voxlyOk = Wait-ForService -Label "Voxly" -Url $VoxlyUrl -MaxAttempts 60
 }
 
-Write-DevBanner -ApiOk $apiOk -WebOk $webOk -VoxlyOk $voxlyOk
+Write-DevBanner -ApiOk $apiOk -WebOk $webOk -VoxlyOk $voxlyOk -VoxlyFocus:$VoxlyFocus
 
 if ($Open -and $webOk) {
-    Write-Host "Opening dev portal in browser..."
-    Start-Process $DevLoginUrl
+    $openUrl = if ($VoxlyFocus -and $voxlyOk) { $VoxlyUrl } else { $DevLoginUrl }
+    Write-Host "Opening $openUrl in browser..."
+    Start-Process $openUrl
 }
 
 if (-not $apiOk -or -not $webOk) {

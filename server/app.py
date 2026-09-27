@@ -36,6 +36,7 @@ from server.routes.calls import router as calls_router
 from server.routes.auth import router as auth_router
 from server.routes.app_auth import router as app_auth_router
 from server.routes.app_telephony import router as app_telephony_router
+from server.routes.app_agents import router as app_agents_router
 from server.routes.stripe_webhook import router as stripe_webhook_router
 from server.routes.dev_admin import router as dev_admin_router
 from server.routes.app_billing import router as app_billing_router
@@ -53,6 +54,8 @@ from server.routes.telnyx_ws import router as telnyx_ws_router
 from server.routes.plivo import router as plivo_router
 from server.routes.campaigns import router as campaigns_router
 from server.routes.test_studio import router as test_studio_router
+from server.routes.web_agent_ws import router as web_agent_ws_router
+from server.routes.app_admin import router as app_admin_router
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from server.utils.errors import AppError
@@ -341,6 +344,7 @@ app.include_router(calls_router)
 app.include_router(auth_router)
 app.include_router(app_auth_router)
 app.include_router(app_telephony_router)
+app.include_router(app_agents_router)
 app.include_router(stripe_webhook_router)
 app.include_router(dev_admin_router)
 app.include_router(app_billing_router)
@@ -359,6 +363,8 @@ app.include_router(plivo_router)
 app.include_router(campaigns_router)
 app.include_router(test_studio_router)
 app.include_router(ws_router)
+app.include_router(web_agent_ws_router)
+app.include_router(app_admin_router)
 
 
 @app.get("/api/meta")

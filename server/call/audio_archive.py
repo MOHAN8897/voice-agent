@@ -156,6 +156,15 @@ class AudioArchive:
     def mix_clear_path(self, call_id: str) -> Path:
         return call_dir(call_id) / "mix_clear.wav"
 
+    def mix_mp3_path(self, call_id: str) -> Path:
+        return call_dir(call_id) / "mix.mp3"
+
+    def mix_clear_mp3_path(self, call_id: str) -> Path:
+        return call_dir(call_id) / "mix_clear.mp3"
+
+    def conversation_mp3_path(self, call_id: str) -> Path:
+        return call_dir(call_id) / "conversation.mp3"
+
     def telnyx_wav_path(self, call_id: str) -> Path:
         return call_dir(call_id) / "telnyx.wav"
 
@@ -430,6 +439,28 @@ class AudioArchive:
     @staticmethod
     def _nonempty(path: Path) -> bool:
         return path.exists() and path.stat().st_size > 0
+
+    def ensure_mp3_for_wav(self, wav_path: Path, mp3_path: Path) -> Path | None:
+        """Cache MP3 next to WAV; return mp3 path when encoding succeeds."""
+        if not self._nonempty(wav_path):
+            return None
+        if wav_path.suffix.lower() == ".mp3":
+            return wav_path
+        if self._nonempty(mp3_path) and mp3_path.stat().st_mtime >= wav_path.stat().st_mtime:
+            return mp3_path
+        from server.call.audio_mp3 import convert_wav_to_mp3
+
+        if convert_wav_to_mp3(wav_path, mp3_path):
+            return mp3_path if self._nonempty(mp3_path) else None
+        return None
+
+    def ensure_conversation_mp3(self, call_id: str, wav_path: Path | None) -> Path | None:
+        if wav_path is None or not self._nonempty(wav_path):
+            return None
+        if wav_path.suffix.lower() == ".mp3":
+            return wav_path
+        dest = self.conversation_mp3_path(call_id)
+        return self.ensure_mp3_for_wav(wav_path, dest)
 
     def file_for(self, call_id: str, kind: str) -> Path | None:
         if kind == "user":

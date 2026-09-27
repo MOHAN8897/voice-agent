@@ -1,5 +1,6 @@
 # Environment & secrets — never commit
 .env
+.env.bak-encoding
 .env.local
 .tunnel-url
 .tunnel-share-urls.json
@@ -60,3 +61,9 @@ Thumbs.db
 
 # graft's local graph cache — regenerable, not committed (run `graft build`).
 /graft/
+
+# Local isolated regression-test runtime and downloads
+/.python/
+/.test-deps/
+/.uv-cache/
+/.pytest-tmp-*/

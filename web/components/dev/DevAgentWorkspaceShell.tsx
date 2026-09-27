@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { SetupProgressStrip, SkeuoWorkspaceNav } from "@/components/agents/SkeuoWorkspaceNav";
 import { ConsolePage } from "@/components/console/ConsolePage";
 import { StatusBadge } from "@/components/console/StatusBadge";
@@ -31,7 +32,6 @@ export function DevAgentWorkspaceShell({
   const agentName = agent.name || agentId;
   const status = agent.status || "";
   const env = agent.environment || "development";
-  const tier = agent.default_tier || "medium";
   const langs = (agent.languages || ["te-IN"]).join(", ");
   const version = agent.active_compiled_brain_version || "—";
 
@@ -47,7 +47,9 @@ export function DevAgentWorkspaceShell({
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           <SkeuoBadge tone="muted">Env {env}</SkeuoBadge>
-          <SkeuoBadge tone="accent">Tier {tier}</SkeuoBadge>
+          <Link href="/dev/saas-phone-stack" className="inline-flex">
+            <SkeuoBadge tone="accent">SaaS phone AI (universal)</SkeuoBadge>
+          </Link>
           <SkeuoBadge tone="info">{langs}</SkeuoBadge>
           <SkeuoBadge tone="muted">v{version}</SkeuoBadge>
         </div>

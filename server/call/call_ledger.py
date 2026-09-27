@@ -154,8 +154,12 @@ class CallLedger:
             out["cost_inr_per_min"] = usage.get("cost_inr_per_min")
             out["model_cost_usd"] = usage.get("model_cost_usd")
             out["model_cost_inr"] = usage.get("model_cost_inr")
+            out["model_cost_inr_per_min"] = usage.get("model_cost_inr_per_min")
             out["telnyx_usd"] = usage.get("telnyx_usd")
             out["telnyx_inr"] = usage.get("telnyx_inr")
+            out["telnyx_inr_per_min"] = usage.get("telnyx_inr_per_min")
+            out["gemini_list_audio_inr_per_min"] = usage.get("gemini_list_audio_inr_per_min")
+            out["fx_source"] = usage.get("fx_source")
         if usage and usage.get("duration_sec") is not None:
             out["duration_sec"] = usage.get("duration_sec")
         pipeline = meta.get("pipeline") or (usage or {}).get("pipeline")
@@ -171,6 +175,7 @@ class CallLedger:
             "compiled_brain_version",
             "combination_id",
             "campaign_id",
+            "billed_user_id",
         ):
             if meta.get(key) not in (None, ""):
                 out[key] = meta[key]
@@ -189,27 +194,34 @@ class CallLedger:
         if duration_sec is not None:
             meta["duration_sec"] = float(duration_sec)
         usage = meta.get("usage") if isinstance(meta.get("usage"), dict) else {}
+        # Telnyx list is per minute; prorate by wall-clock seconds (no ceil).
         minutes = max(0.0, float(duration_sec or 0)) / 60.0
-        fx = float(usage.get("fx_rate_inr") or 0)
-        if fx <= 0:
-            try:
-                from server.config.env import get_settings
+        from server.services.usage_pricing import resolve_fx_rate_inr
 
-                fx = float(get_settings().fx_rate_inr or 95.64)
-            except Exception:
-                fx = 95.64
+        fx_info = resolve_fx_rate_inr(preferred=usage.get("fx_rate_inr"))
+        fx = float(fx_info["rate"] or 95.64)
         model_usd = float(usage.get("model_cost_usd") if usage.get("model_cost_usd") is not None else usage.get("cost_usd") or 0)
-        model_inr = float(usage.get("model_cost_inr") if usage.get("model_cost_inr") is not None else usage.get("cost_inr") or 0)
+        model_inr = model_usd * fx
         telnyx_usd = 0.0
         channel = str(meta.get("channel") or "")
         pipeline = str(meta.get("pipeline") or usage.get("pipeline") or "")
+        telnyx_breakdown: dict[str, Any] = {}
         if channel == "pstn" or pipeline == "realtime_voice":
-            from server.services.usage_pricing import cost_telnyx_call_usd
+            from server.services.usage_pricing import (
+                cost_telnyx_call_breakdown,
+                telnyx_destination_country_from_e164,
+                telnyx_estimate_call_recording,
+            )
 
-            telnyx_usd = cost_telnyx_call_usd(
+            dest = telnyx_destination_country_from_e164(str(meta.get("callee_e164") or ""))
+            telnyx_breakdown = cost_telnyx_call_breakdown(
                 duration_sec=duration_sec,
                 direction=str(meta.get("direction") or "outbound"),
+                media_streaming=True,
+                call_recording=telnyx_estimate_call_recording(),
+                destination_country=dest,
             )
+            telnyx_usd = float(telnyx_breakdown.get("total_usd") or 0)
         telnyx_inr = telnyx_usd * fx
         total_usd = model_usd + telnyx_usd
         total_inr = model_inr + telnyx_inr
@@ -219,11 +231,45 @@ class CallLedger:
         usage["model_cost_inr"] = model_inr
         usage["telnyx_usd"] = telnyx_usd
         usage["telnyx_inr"] = telnyx_inr
+        if telnyx_breakdown:
+            usage["telnyx_voice_api_usd"] = telnyx_breakdown.get("voice_api_usd")
+            usage["telnyx_sip_usd"] = telnyx_breakdown.get("sip_usd")
+            usage["telnyx_media_stream_usd"] = telnyx_breakdown.get("media_stream_usd")
+            usage["telnyx_call_recording_usd"] = telnyx_breakdown.get("call_recording_usd")
+            usage["telnyx_destination_country"] = telnyx_breakdown.get("destination_country")
+            usage["telnyx_sip_usd_per_min"] = telnyx_breakdown.get("sip_usd_per_min")
+            usage["telnyx_cost_is_estimate"] = True
         usage["cost_usd"] = total_usd
         usage["cost_inr"] = total_inr
+        usage["cost_is_estimate"] = False
         usage["fx_rate_inr"] = fx
+        usage["fx_source"] = fx_info.get("source")
+        if fx_info.get("as_of"):
+            usage["fx_as_of"] = fx_info["as_of"]
+        usage["gst_inr"] = 0.0
         usage["cost_usd_per_min"] = (total_usd / minutes) if minutes > 0 else 0.0
         usage["cost_inr_per_min"] = (total_inr / minutes) if minutes > 0 else 0.0
+        usage["model_cost_usd_per_min"] = (model_usd / minutes) if minutes > 0 else 0.0
+        usage["model_cost_inr_per_min"] = (model_inr / minutes) if minutes > 0 else 0.0
+        usage["telnyx_usd_per_min"] = (telnyx_usd / minutes) if minutes > 0 else 0.0
+        usage["telnyx_inr_per_min"] = (telnyx_inr / minutes) if minutes > 0 else 0.0
+        from server.realtime.models import is_gemini_live_voice_model
+        from server.services.usage_pricing import (
+            GEMINI_LIVE_AUDIO_INPUT_USD_PER_MIN,
+            GEMINI_LIVE_AUDIO_OUTPUT_USD_PER_MIN,
+        )
+
+        if is_gemini_live_voice_model(str(usage.get("llm_model") or "")):
+            usage["gemini_list_audio_input_usd_per_min"] = GEMINI_LIVE_AUDIO_INPUT_USD_PER_MIN
+            usage["gemini_list_audio_output_usd_per_min"] = GEMINI_LIVE_AUDIO_OUTPUT_USD_PER_MIN
+            usage["gemini_list_audio_inr_per_min"] = (
+                GEMINI_LIVE_AUDIO_INPUT_USD_PER_MIN + GEMINI_LIVE_AUDIO_OUTPUT_USD_PER_MIN
+            ) * fx
+            usage["gemini_billing"] = usage.get("gemini_billing") or "session_cumulative_tokens"
+            usage["gemini_billing_note"] = (
+                usage.get("gemini_billing_note")
+                or "Model cost uses billed token totals (text+audio+image), not call duration × list audio $/min."
+            )
         meta["usage"] = usage
         self.write_meta(call_id, meta)
 

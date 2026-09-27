@@ -43,3 +43,20 @@ class RateLimiter:
 rate_limiter = RateLimiter(max_requests=60, window_s=60)
 # Stricter for TTS/voice: 20/min
 tts_limiter = RateLimiter(max_requests=20, window_s=60)
+
+
+def raise_rate_limited(retry_after: int, message: str = "Too many requests") -> None:
+    from fastapi import HTTPException
+
+    retry = max(1, int(retry_after or 1))
+    raise HTTPException(
+        status_code=429,
+        detail={
+            "error": {
+                "code": "rate_limit",
+                "message": message,
+                "retry_after": retry,
+            }
+        },
+        headers={"Retry-After": str(retry)},
+    )

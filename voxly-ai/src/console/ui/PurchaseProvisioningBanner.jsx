@@ -29,6 +29,8 @@ export function PurchaseProvisioningBanner() {
           sessionStorage.removeItem(STORAGE_ASSIGN_AGENT);
           if (agentId) {
             await assignNumberToAgent(row.phoneNumberId, agentId);
+          } else if (row.assignAgentId) {
+            await assignNumberToAgent(row.phoneNumberId, row.assignAgentId);
           }
           await loadWorkspaceData();
           setVariant('success');
@@ -39,7 +41,7 @@ export function PurchaseProvisioningBanner() {
           sessionStorage.removeItem(STORAGE_PURCHASE);
           sessionStorage.removeItem(STORAGE_ASSIGN_AGENT);
           setVariant('error');
-          setMessage('Number provisioning failed. Check Stripe/Telnyx or contact support.');
+          setMessage('Number provisioning failed. Check billing and try again, or contact support.');
           return;
         }
         setVariant('info');

@@ -12,6 +12,40 @@ $script:NeverKillNames = @(
     "cursor.exe", "code.exe"
 )
 
+function Test-VoiceAgentPythonDeps {
+    param(
+        [Parameter(Mandatory = $true)][string]$PythonPath,
+        [Parameter(Mandatory = $true)][string]$RepoRoot
+    )
+    $check = @"
+import importlib.util
+missing = []
+for mod in ('uvicorn', 'fastapi', 'pydantic_settings'):
+    if importlib.util.find_spec(mod) is None:
+        missing.append(mod)
+if missing:
+    raise SystemExit('missing:' + ','.join(missing))
+import server.app
+"@
+    $out = & $PythonPath -c $check 2>&1 | Out-String
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host ""
+        Write-Host "Python API dependencies are not installed in this environment." -ForegroundColor Red
+        if ($out -match 'missing:([^\r\n]+)') {
+            Write-Host "  Missing modules: $($Matches[1])" -ForegroundColor Yellow
+        } elseif ($out.Trim()) {
+            Write-Host "  $($out.Trim())" -ForegroundColor Yellow
+        }
+        Write-Host ""
+        Write-Host "Fix (from repo root):" -ForegroundColor Cyan
+        Write-Host "  .\.venv\Scripts\python.exe -m ensurepip --upgrade"
+        Write-Host "  .\.venv\Scripts\python.exe -m pip install -e `".[dev]`""
+        Write-Host ""
+        return $false
+    }
+    return $true
+}
+
 function Get-UvicornDevCommand {
     param(
         [Parameter(Mandatory = $true)][string]$PythonPath,

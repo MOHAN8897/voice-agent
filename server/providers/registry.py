@@ -38,6 +38,7 @@ class ProviderRegistry:
         enable_openai = bool(dev_secrets_store.effective("enable_openai", s.enable_openai))
         enable_deepseek = bool(dev_secrets_store.effective("enable_deepseek", s.enable_deepseek))
         enable_cartesia = bool(dev_secrets_store.effective("enable_cartesia", s.enable_cartesia))
+        enable_gemini = bool(dev_secrets_store.effective("enable_gemini", s.enable_gemini))
 
         sarvam_key = dev_secrets_store.effective_secret("sarvam_api_key") or s.sarvam_api_key
         openai_key = dev_secrets_store.effective_secret("openai_api_key") or s.openai_api_key
@@ -59,6 +60,18 @@ class ProviderRegistry:
             entry = self._openai_provider_entry(s)
             entry["enabled"] = enable_openai
             entry["configured"] = bool(openai_key)
+            providers.append(entry)
+
+        if enable_gemini:
+            gemini_key = dev_secrets_store.effective_secret("gemini_api_key") or s.gemini_api_key
+            if gemini_key:
+                from server.providers.gemini_llm import GeminiLLMAdapter
+
+                self._llm["gemini"] = GeminiLLMAdapter()
+            entry = self._gemini_provider_entry(s)
+            entry["enabled"] = enable_gemini
+            entry["configured"] = bool(gemini_key)
+            entry["adapter_available"] = bool(gemini_key)
             providers.append(entry)
 
         if enable_deepseek:
@@ -121,6 +134,27 @@ class ProviderRegistry:
                 ],
             },
             "capabilities": {"streaming": True, "realtime_stt": True, "realtime_tts": True},
+        }
+
+    def _gemini_provider_entry(self, s: Settings) -> dict[str, Any]:
+        models = llm_models_for_provider("gemini", s)
+        return {
+            "id": "gemini",
+            "label": "Google Gemini",
+            "stages": ["llm"],
+            "enabled": s.enable_gemini,
+            "configured": bool(s.gemini_api_key),
+            "healthy": bool(s.gemini_api_key),
+            "adapter_available": bool(s.gemini_api_key),
+            "languages": ["multilingual"],
+            "models": {"llm": models},
+            "capabilities": {
+                "streaming": True,
+                "structured_output": True,
+                "prompt_caching": True,
+                "realtime_voice": True,
+            },
+            "notes": "HTTP Gemini for classic stacks; gemini-3.8-live for Test Studio speech-to-speech PSTN.",
         }
 
     def _deepseek_provider_entry(self, s: Settings) -> dict[str, Any]:

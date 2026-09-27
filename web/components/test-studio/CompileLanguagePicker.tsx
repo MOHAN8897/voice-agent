@@ -2,17 +2,14 @@
 
 import { cn } from "@/lib/cn";
 
-export const COMPILE_LANGUAGES = [
-  { id: "te-IN", label: "Telugu", native: "తెలుగు" },
-  { id: "en-IN", label: "English (India)", native: "Indian English" },
-  { id: "en-US", label: "English (US/UK)", native: "English" },
-  { id: "hi-IN", label: "Hindi", native: "हिन्दी" },
-] as const;
+import { COMPILE_LANGUAGE_OPTIONS, compileLanguageLabel as labelFor } from "@/lib/compile-languages";
 
-export type CompileLanguageId = (typeof COMPILE_LANGUAGES)[number]["id"];
+export const COMPILE_LANGUAGES = COMPILE_LANGUAGE_OPTIONS;
+
+export type CompileLanguageId = string;
 
 export function compileLanguageLabel(id: string): string {
-  return COMPILE_LANGUAGES.find((l) => l.id === id)?.label ?? id;
+  return labelFor(id);
 }
 
 export function CompileLanguagePicker({
@@ -30,7 +27,7 @@ export function CompileLanguagePicker({
   id?: string;
   compact?: boolean;
 }) {
-  const selected = COMPILE_LANGUAGES.some((l) => l.id === value) ? value : "te-IN";
+  const selected = COMPILE_LANGUAGES.some((l) => l.id === value) ? value : value || "te-IN";
   const labelId = id ? `${id}-label` : undefined;
   return (
     <div data-testid={id || "compile-language-picker"}>
@@ -52,7 +49,10 @@ export function CompileLanguagePicker({
           compact ? "mt-1.5" : "mt-2"
         )}
       >
-        {COMPILE_LANGUAGES.map((lang) => {
+        {(["India", "English (global)"] as const).flatMap((group) => {
+          const items = COMPILE_LANGUAGES.filter((l) => l.group === group);
+          if (!items.length) return [];
+          return items.map((lang) => {
           const on = selected === lang.id;
           return (
             <button
@@ -90,6 +90,7 @@ export function CompileLanguagePicker({
               )}
             </button>
           );
+        });
         })}
       </div>
       {hint && compact ? <p className="mt-1 text-[10px] text-text-subtle">{hint}</p> : null}

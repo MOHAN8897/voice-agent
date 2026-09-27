@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { DevCard } from "@/components/dev/DevCard";
+import Link from "next/link";
 import { portalFetch, refreshPortalSession } from "@/lib/auth-client";
 
 type ModelOption = {
@@ -201,6 +202,16 @@ export function StackTierWorkbench() {
       {error && (
         <p className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">{error}</p>
       )}
+
+      <DevCard delayMs={0}>
+        <p className="text-sm text-text-muted">
+          Subscriber PSTN and browser practice use the{" "}
+          <Link href="/dev/saas-phone-stack" className="font-semibold text-accent underline-offset-2 hover:underline">
+            universal SaaS phone AI stack
+          </Link>
+          , not per-agent tier assignments.
+        </p>
+      </DevCard>
 
       <DevCard delayMs={0}>
         <p className="text-sm text-text-muted">

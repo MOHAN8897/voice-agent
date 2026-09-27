@@ -97,6 +97,8 @@ def merge_outcome_facts(
     memory_snapshot: dict[str, Any] | None,
     *,
     caller_id: str | None = None,
+    callee_e164: str | None = None,
+    direction: str | None = None,
 ) -> dict[str, str]:
     """Merge deterministic memory facts with LLM extraction for owner review."""
     merged: dict[str, str] = {}
@@ -111,8 +113,13 @@ def merge_outcome_facts(
         text = str(value or "").strip()
         if text:
             merged[str(key)] = text
-    if caller_id and not any(k in merged for k in ("phone", "callback_phone", "contact", "phone_number")):
-        merged["phone"] = str(caller_id).strip()
+    dir_norm = str(direction or "").strip().lower()
+    outbound = dir_norm in ("outbound", "outgoing", "outbound-api")
+    if not any(k in merged for k in ("phone", "callback_phone", "contact", "phone_number")):
+        if outbound and callee_e164:
+            merged["phone"] = str(callee_e164).strip()
+        elif not outbound and caller_id:
+            merged["phone"] = str(caller_id).strip()
     return dict(sorted(merged.items()))
 
 

@@ -88,6 +88,43 @@ def caller_wants_to_continue(user_text: str) -> bool:
     return bool(_INTERESTED_CONTINUE.search(text))
 
 
+_CALLBACK_WITHDRAWAL = re.compile(
+    r"\b("
+    r"don'?t (?:have to |need to )?call|"
+    r"do not call|don'?t call(?: me)?|"
+    r"no callback|cancel (?:the )?callback|"
+    r"stop calling"
+    r")\b",
+    re.I,
+)
+_DECLINE_MORE_HELP = re.compile(
+    r"^(?:no(?:pe)?|nah)(?:[,.]?\s*(?:ma'?am|sir|thanks?|thank you))?[.!?]*\s*$"
+    r"|^(?:nothing else|no thanks|that'?s (?:all|it)|not really)[.!?]*\s*$",
+    re.I,
+)
+_GENERIC_INBOUND_GREETING = re.compile(
+    r"^(?:hello[!,.]?\s*)?how can i help you(?: today)?[.!?]*\s*$",
+    re.I,
+)
+
+
+def caller_withdrew_callback(user_text: str) -> bool:
+    """Explicit callback cancellation — not a bare 'no' to 'anything else?'."""
+    return bool(_CALLBACK_WITHDRAWAL.search((user_text or "").strip()))
+
+
+def caller_declines_more_help(user_text: str) -> bool:
+    """Short negative after the agent asked if there is anything else."""
+    text = (user_text or "").strip()
+    if not text or caller_withdrew_callback(text) or caller_wants_to_continue(text):
+        return False
+    return bool(_DECLINE_MORE_HELP.match(text))
+
+
+def is_generic_inbound_greeting(spoken_text: str) -> bool:
+    return bool(_GENERIC_INBOUND_GREETING.match((spoken_text or "").strip()))
+
+
 def memory_has_lead_handoff(snapshot: dict[str, Any] | None) -> bool:
     """Lead details captured for team follow-up (not bare telephony CLI phone)."""
     if not snapshot:
@@ -104,17 +141,42 @@ def memory_has_lead_handoff(snapshot: dict[str, Any] | None) -> bool:
 def default_farewell_for(language: str | None) -> str:
     from server.prompts.agent_voice_rules import CALL_END_FAREWELLS, normalize_compile_language
 
-    return CALL_END_FAREWELLS[normalize_compile_language(language)]
+    lang = normalize_compile_language(language)
+    return CALL_END_FAREWELLS.get(lang) or CALL_END_FAREWELLS["en-IN"]
 
 
 def callback_farewell_for(language: str | None) -> str:
     from server.prompts.agent_voice_rules import normalize_compile_language
 
-    return {
+    lang = normalize_compile_language(language)
+    pack = {
         "en-IN": "Your callback request is noted. Thank you for your time. Goodbye.",
+        "en-US": "Your callback request is noted. Thank you for your time. Goodbye.",
         "te-IN": "మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నోట్ చేసుకున్నాను. ధన్యవాదాలు.",
         "hi-IN": "दोबारा कॉल करने का आपका अनुरोध नोट कर लिया है। धन्यवाद।",
-    }[normalize_compile_language(language)]
+    }
+    return pack.get(lang) or default_farewell_for(lang)
+
+
+def silence_close_instruction(language: str | None) -> str:
+    farewell = default_farewell_for(language)
+    return (
+        "The caller has been silent. Speak a brief goodbye in the configured language "
+        f"(example: {farewell}), then stop. No question, no pitch."
+    )
+
+
+def map_call_action_end_reason(reason: str | None) -> str:
+    raw = str(reason or "").strip().lower()
+    return {
+        "goodbye": "goodbye",
+        "goal_complete": "goal_complete",
+        "firm_refusal": "firm_refusal",
+        "opt_out": "goodbye",
+        "callback_cancelled": "goodbye",
+        "abuse": "abuse",
+        "out_of_scope": "out_of_scope",
+    }.get(raw, "goodbye")
 
 
 HANGUP_JUDGMENT_RULES = """HANGUP JUDGMENT (one story — the platform owns disconnect timing)

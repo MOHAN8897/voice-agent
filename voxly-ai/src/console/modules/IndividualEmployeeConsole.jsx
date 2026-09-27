@@ -268,7 +268,7 @@ export function IndividualEmployeeConsole({
               icon={Play}
               onClick={() => {
                 onClose();
-                onNavigate('talk-to-ai');
+                onNavigate('employees', { agentId, step: 'test' });
               }}
             >
               Test in WebRTC Lab
@@ -747,7 +747,7 @@ export function IndividualEmployeeConsole({
                     size="sm"
                     onClick={() => {
                       onClose();
-                      onNavigate('talk-to-ai');
+                      onNavigate('employees', { agentId, step: 'test' });
                     }}
                   >
                     Open Live WebRTC Studio

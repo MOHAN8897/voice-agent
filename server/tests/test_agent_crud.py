@@ -19,10 +19,17 @@ def _dev_headers(c: TestClient) -> dict[str, str]:
     return {"X-CSRF-Token": csrf}
 
 
-def test_list_agents_has_default(monkeypatch):
+def _dev_client(monkeypatch) -> TestClient:
     monkeypatch.setenv("DEV_PORTAL_USERNAME", "dev")
     monkeypatch.setenv("DEV_PORTAL_PASSWORD", "devpass")
     c = _client(monkeypatch)
+    login = c.post("/api/dev/login", json={"username": "dev", "password": "devpass"})
+    assert login.status_code == 200
+    return c
+
+
+def test_list_agents_has_default(monkeypatch):
+    c = _dev_client(monkeypatch)
     r = c.get("/api/agents")
     assert r.status_code == 200
     agents = r.json()["agents"]
@@ -31,9 +38,7 @@ def test_list_agents_has_default(monkeypatch):
 
 
 def test_create_agent_respects_language(monkeypatch):
-    monkeypatch.setenv("DEV_PORTAL_USERNAME", "dev")
-    monkeypatch.setenv("DEV_PORTAL_PASSWORD", "devpass")
-    c = _client(monkeypatch)
+    c = _dev_client(monkeypatch)
     created = c.post("/api/agents", json={"name": "Priya", "languages": ["en-IN"]})
     assert created.status_code == 200
     agent = created.json()["agent"]
@@ -50,9 +55,7 @@ def test_create_agent_respects_language(monkeypatch):
 
 
 def test_create_and_patch_agent(monkeypatch):
-    monkeypatch.setenv("DEV_PORTAL_USERNAME", "dev")
-    monkeypatch.setenv("DEV_PORTAL_PASSWORD", "devpass")
-    c = _client(monkeypatch)
+    c = _dev_client(monkeypatch)
     created = c.post("/api/agents", json={"name": "sales-bot"})
     assert created.status_code == 200
     agent_id = created.json()["agent"]["agent_id"]

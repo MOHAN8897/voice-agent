@@ -87,27 +87,20 @@ class CallLifecycleService:
         caller_id: str | None = None,
         language: str = "te-IN",
         realtime_prewarm_key: str | None = None,
+        billed_user_id: str | None = None,
     ) -> dict[str, Any]:
         settings = get_settings()
         session_id = session_id or "default"
         channel = channel if channel in ("browser", "pstn") else "browser"
         direction = direction if direction in ("inbound", "outbound") else "inbound"
         lookup_session = (config_session_id or session_id).strip() or session_id
-        from server.services.test_studio_config import merge_stack, saved_call_config
+        from server.services.test_studio_config import saved_call_config
 
         saved = saved_call_config(lookup_session)
-        stack_override = merge_stack(saved.get("stack_override"), stack_override)
-        if channel != "pstn" and isinstance(stack_override, dict):
-            pipeline_slug = str(stack_override.get("pipeline") or "").strip().lower()
-            flow_slug = str(stack_override.get("voice_flow") or "").strip().lower()
-            if pipeline_slug in ("realtime_voice", "realtime_e2e") or flow_slug in (
-                "realtime_e2e",
-                "realtime_voice",
-            ):
-                stack_override = dict(stack_override)
-                stack_override["pipeline"] = "realtime_text"
-                stack_override.pop("voice_flow", None)
-                stack_override.pop("realtime_voice", None)
+        # Explicit dial/web stack wins. Merging saved Test Studio prefs here
+        # overwrote the SaaS Gemini platform stack with leftover OpenAI settings.
+        if not stack_override:
+            stack_override = saved.get("stack_override")
         tier = tier or saved.get("tier")
 
         agent = await self._resolve_agent(agent_id)
@@ -141,7 +134,7 @@ class CallLifecycleService:
             stack_override=stack_override,
         )
         pipeline = pipeline_mode(settings=settings, stack_override=stack_override)
-        compiled_version, compiled_text = await self._lock_compiled_brain(
+        compiled_version, compiled_text, brain_source = await self._lock_compiled_brain(
             agent["agent_id"],
             session_id=lookup_session,
         )
@@ -166,10 +159,15 @@ class CallLifecycleService:
             "tier": stack.tier,
             "combination_id": stack.combination_id,
             "compiled_brain_version": compiled_version,
+            "compiled_brain_text": compiled_text,
+            "brain_source": brain_source,
+            "config_session_id": lookup_session,
+            "language": language,
             "started_at": started.isoformat(),
             "environment": env,
             "resolved_stack": stack.to_safe_dict(),
             "pipeline": pipeline,
+            "billed_user_id": billed_user_id,
         }
         await call_ledger.init(call_id, meta)
         audio_archive.init(call_id)
@@ -214,6 +212,7 @@ class CallLifecycleService:
             "finalization_status": "pending",
             "storage_path": storage_path,
             "last_heartbeat_at": started,
+            "billed_user_id": billed_user_id,
         }
         await call_store.insert(record)
 
@@ -411,7 +410,19 @@ class CallLifecycleService:
             logger.warning(f"[CALL] audio flush failed {call_id}: {str(e)[:200]}")
             if ctx:
                 ctx.components["audio"] = "failed"
-        await enqueue_post_call(call_id)
+        try:
+            from server.call.post_call_pipeline import process_now
+
+            await process_now(call_id)
+        except Exception as e:
+            logger.warning(f"[CALL] post-call outcome failed {call_id}: {str(e)[:200]}")
+            await enqueue_post_call(call_id)
+        try:
+            from server.services.dev_telephony_store import dev_telephony_store
+
+            dev_telephony_store.sync_internal_call(call_id)
+        except Exception:
+            pass
         try:
             from server.config.env import get_settings
             from server.services.saas.billing_wallet_service import bill_pstn_call_if_applicable
@@ -444,6 +455,8 @@ class CallLifecycleService:
         if review.get("resolved_stack") and body.get("resolved_stack"):
             review = {k: v for k, v in review.items() if k != "resolved_stack"}
         body.update(review)
+        if not body.get("pipeline") and stored:
+            body["pipeline"] = stored.get("pipeline")
         body["audio"] = {
             "mix": audio_archive.file_for(call_id, "mix") is not None,
             "user": audio_archive.file_for(call_id, "user") is not None,
@@ -640,40 +653,15 @@ class CallLifecycleService:
         agent_id: str,
         *,
         session_id: str | None = None,
-    ) -> tuple[str | None, str | None]:
+    ) -> tuple[str | None, str | None, str]:
         """Lock brain for call duration. Session fine-tune overrides take priority."""
-        if session_id:
-            from server.agent.instruction_store import instruction_store
+        from server.call.call_brain_lock import resolve_locked_compiled_brain
 
-            meta = instruction_store.get_with_meta(session_id)
-            brain = (meta.get("brainPrompt") or "").strip()
-            version = meta.get("compiledVersion") or 0
-            if brain and (meta.get("present") or version or meta.get("agentBrief") or meta.get("agentScript")):
-                label = f"session-v{version}" if version else "session"
-                return label, brain
-
-        from server.brain.compiled_brain_service import compiled_brain_service
-
-        try:
-            snap = await compiled_brain_service.get_active_for_agent(agent_id)
-            text = (snap.get("compiled_text") or "").strip()
-            if text:
-                return snap.get("compiled_version"), text
-        except Exception as e:
-            logger.warning(f"[CALL] compiled brain lock skipped: {str(e)[:160]}")
-
-        settings = get_settings()
-        if settings.use_versioned_brains:
-            return None, None
-
-        if session_id:
-            from server.agent.instruction_store import instruction_store
-
-            brain = instruction_store.get_brain_prompt(session_id)
-            if brain and brain.strip():
-                return "session-default", brain.strip()
-
-        return None, None
+        version, text, source = await resolve_locked_compiled_brain(
+            agent_id,
+            session_id=session_id,
+        )
+        return version, text, source
 
 
 call_lifecycle_service = CallLifecycleService()

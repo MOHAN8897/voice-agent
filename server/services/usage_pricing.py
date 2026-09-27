@@ -12,12 +12,24 @@ Sources (verified 2026-09-03):
   Cartesia — https://docs.cartesia.ai/pricing + https://cartesia.ai/pricing
             TTS ~1 credit/character; Pro $5 / 100K credits ≈ $50 / 1M chars
             STT ink-whisper websocket 1 credit/sec; ink-2 websocket 3 credits/sec
+  Telnyx  — https://telnyx.com/pricing/voice-api (Voice API + SIP trunk + optional features)
+            Components (pay-as-you-go list): Voice API $0.002/min, SIP from $0.005/min outbound
+            (destination-specific — use rate deck / TELNYX_SIP_OUTBOUND_INDIA_USD_PER_MIN for IN),
+            Media streaming WebSockets $0.0035/min, call recording $0.002/min when enabled.
+  Gemini  — https://ai.google.dev/gemini-api/docs/pricing (Live API)
+            Billed on actual text/audio/image tokens; usage_metadata is session-cumulative and
+            prior context can be re-billed each turn — not wall-clock × list $/audio-minute.
 """
 from __future__ import annotations
 
+import os
+import re
+import time
 from typing import Any, Literal
 
-PRICING_UPDATED_AT = "2026-09-03"
+PRICING_UPDATED_AT = "2026-09-23"
+
+DEFAULT_FX_RATE_INR = 95.64
 
 SARVAM_STT_INR_PER_HOUR = 30.0
 SARVAM_STT_DIARIZATION_INR_PER_HOUR = 45.0
@@ -27,10 +39,22 @@ SARVAM_TTS_INR_PER_1K_CHARS = 3.0
 CARTESIA_PRO_USD_PER_CREDIT = 5.0 / 100_000.0
 CARTESIA_TTS_USD_PER_M_CHARS = CARTESIA_PRO_USD_PER_CREDIT * 1_000_000.0  # $50/M
 
-# Telnyx Voice API / Call Control list rates (public pricing, blended).
-# Outbound India/INTL is the typical Test Studio path. Override via env if needed.
-TELNYX_OUTBOUND_USD_PER_MIN = 0.012
-TELNYX_INBOUND_USD_PER_MIN = 0.005
+# Telnyx list rates (Voice API pricing, Sep 2026). PSTN realtime = API + SIP + media stream.
+TELNYX_VOICE_API_USD_PER_MIN = 0.002
+TELNYX_SIP_OUTBOUND_USD_PER_MIN = 0.005  # US / generic list; India varies — see below.
+TELNYX_SIP_INBOUND_USD_PER_MIN = 0.0032
+TELNYX_MEDIA_STREAM_USD_PER_MIN = 0.0035
+TELNYX_CALL_RECORDING_USD_PER_MIN = 0.002
+# Destination deck default for +91 outbound (override to match your Telnyx invoice).
+TELNYX_SIP_OUTBOUND_INDIA_USD_PER_MIN = 0.009
+
+# Legacy single-line aliases (US outbound + media, no recording) for quick comparisons.
+TELNYX_OUTBOUND_USD_PER_MIN = (
+    TELNYX_VOICE_API_USD_PER_MIN + TELNYX_SIP_OUTBOUND_USD_PER_MIN + TELNYX_MEDIA_STREAM_USD_PER_MIN
+)
+TELNYX_INBOUND_USD_PER_MIN = (
+    TELNYX_VOICE_API_USD_PER_MIN + TELNYX_SIP_INBOUND_USD_PER_MIN + TELNYX_MEDIA_STREAM_USD_PER_MIN
+)
 
 OPENAI_USD_PER_M: dict[str, dict[str, float]] = {
     "gpt-realtime-2.1-mini": {
@@ -75,6 +99,49 @@ OPENAI_USD_PER_M: dict[str, dict[str, float]] = {
         "cache_write": 6.25,
         "output": 30.00,
     },
+}
+
+# Gemini Live native audio — ai.google.dev/gemini-api/docs/pricing (Live API, Sep 2026).
+# gemini-3.8-live: text $0.75 / $4.50; audio $3.00 / $12.00; image/video $1.00/M.
+# Published audio list minutes: $0.005 in / $0.018 out ≈ 25 tok/s × token rates
+# ($3/M × 1500 tok/min = $0.0045, docs round to $0.005). Caching is not supported.
+# gemini-2.5-flash-native-audio: text $0.50 / $2.00; audio $3.00 / $12.00;
+# audio/video share the $3 input rate.
+GEMINI_LIVE_AUDIO_TOKENS_PER_SEC = 25
+GEMINI_LIVE_AUDIO_INPUT_USD_PER_MIN = 0.005
+GEMINI_LIVE_AUDIO_OUTPUT_USD_PER_MIN = 0.018
+
+GEMINI_LIVE_USD_PER_M: dict[str, dict[str, float]] = {
+    "gemini-3.8-live": {
+        "input": 0.75,
+        "cached_input": 0.0,
+        "cache_write": 0.0,
+        "output": 4.50,
+    },
+    "gemini-2.5-flash-native-audio-latest": {
+        "input": 0.50,
+        "cached_input": 0.0,
+        "cache_write": 0.0,
+        "output": 2.00,
+    },
+}
+
+GEMINI_LIVE_AUDIO_USD_PER_M: dict[str, dict[str, float]] = {
+    "gemini-3.8-live": {
+        "input": 3.00,
+        "cached_input": 0.0,
+        "output": 12.00,
+    },
+    "gemini-2.5-flash-native-audio-latest": {
+        "input": 3.00,
+        "cached_input": 0.0,
+        "output": 12.00,
+    },
+}
+
+GEMINI_LIVE_IMAGE_USD_PER_M: dict[str, float] = {
+    "gemini-3.8-live": 1.00,
+    "gemini-2.5-flash-native-audio-latest": 3.00,
 }
 
 OPENAI_AUDIO_USD_PER_M: dict[str, dict[str, float]] = {
@@ -124,6 +191,39 @@ def openai_rates_for_model(model: str | None) -> dict[str, float]:
     return OPENAI_USD_PER_M["gpt-5.6-luna"]
 
 
+def gemini_rates_for_model(model: str | None) -> dict[str, float]:
+    from server.realtime.models import is_gemini_live_voice_model
+
+    m = (model or "gemini-3.8-live").lower().strip()
+    if m in GEMINI_LIVE_USD_PER_M:
+        return GEMINI_LIVE_USD_PER_M[m]
+    if is_gemini_live_voice_model(m):
+        return GEMINI_LIVE_USD_PER_M["gemini-3.8-live"]
+    return GEMINI_LIVE_USD_PER_M["gemini-3.8-live"]
+
+
+def gemini_audio_rates_for_model(model: str | None) -> dict[str, float]:
+    from server.realtime.models import is_gemini_live_voice_model
+
+    m = (model or "gemini-3.8-live").lower().strip()
+    if m in GEMINI_LIVE_AUDIO_USD_PER_M:
+        return GEMINI_LIVE_AUDIO_USD_PER_M[m]
+    if is_gemini_live_voice_model(m):
+        return GEMINI_LIVE_AUDIO_USD_PER_M["gemini-3.8-live"]
+    return GEMINI_LIVE_AUDIO_USD_PER_M["gemini-3.8-live"]
+
+
+def gemini_image_rate_for_model(model: str | None) -> float:
+    from server.realtime.models import is_gemini_live_voice_model
+
+    m = (model or "gemini-3.8-live").lower().strip()
+    if m in GEMINI_LIVE_IMAGE_USD_PER_M:
+        return GEMINI_LIVE_IMAGE_USD_PER_M[m]
+    if is_gemini_live_voice_model(m):
+        return GEMINI_LIVE_IMAGE_USD_PER_M["gemini-3.8-live"]
+    return GEMINI_LIVE_IMAGE_USD_PER_M["gemini-3.8-live"]
+
+
 def openai_audio_rates_for_model(model: str | None) -> dict[str, float]:
     m = (model or "gpt-realtime-2.1-mini").lower().strip()
     if m in OPENAI_AUDIO_USD_PER_M:
@@ -142,8 +242,55 @@ def cartesia_stt_credits_per_sec(*, model: str = "", realtime: bool = True) -> f
     return 1.0 if realtime else 0.5
 
 
+_FX_LIVE: dict[str, Any] = {"rate": None, "fetched_at": 0.0, "as_of": None}
+
+
+def clear_fx_live_cache() -> None:
+    _FX_LIVE.update({"rate": None, "fetched_at": 0.0, "as_of": None})
+
+
+def _fetch_usd_inr() -> tuple[float | None, str | None]:
+    try:
+        import httpx
+
+        response = httpx.get("https://api.frankfurter.app/latest?from=USD&to=INR", timeout=1.5)
+        response.raise_for_status()
+        data = response.json()
+        rate = float((data.get("rates") or {}).get("INR") or 0)
+        as_of = str(data.get("date") or "") or None
+        if rate > 0:
+            return rate, as_of
+    except Exception:
+        return None, None
+    return None, None
+
+
+def resolve_fx_rate_inr(*, preferred: float | None = None) -> dict[str, Any]:
+    """USD→INR for display. Gemini/OpenAI invoice USD; GST is not added."""
+    from server.config.env import get_settings
+
+    settings = get_settings()
+    env_rate = float(preferred or 0) or float(getattr(settings, "fx_rate_inr", 0) or DEFAULT_FX_RATE_INR)
+    if env_rate <= 0:
+        env_rate = DEFAULT_FX_RATE_INR
+    live = bool(getattr(settings, "fx_rate_live", False))
+    if not live:
+        return {"rate": env_rate, "source": "env", "as_of": None}
+    now = time.monotonic()
+    ttl = float(getattr(settings, "fx_rate_live_ttl_sec", 21600) or 21600)
+    cached = _FX_LIVE.get("rate")
+    fetched_at = float(_FX_LIVE.get("fetched_at") or 0)
+    if cached and (now - fetched_at) < ttl:
+        return {"rate": float(cached), "source": "live_cache", "as_of": _FX_LIVE.get("as_of")}
+    rate, as_of = _fetch_usd_inr()
+    if rate and rate > 0:
+        _FX_LIVE.update({"rate": rate, "fetched_at": now, "as_of": as_of})
+        return {"rate": float(rate), "source": "live", "as_of": as_of}
+    return {"rate": env_rate, "source": "env_fallback", "as_of": None}
+
+
 def build_pricing_metadata(fx_rate_inr: float) -> dict[str, Any]:
-    fx = float(fx_rate_inr) or 95.64
+    fx = float(fx_rate_inr) or DEFAULT_FX_RATE_INR
     stt_usd_per_hour = SARVAM_STT_INR_PER_HOUR / fx
     tts_usd_per_1k = SARVAM_TTS_INR_PER_1K_CHARS / fx
     cartesia_stt_usd_per_hour_whisper = cartesia_stt_credits_per_sec(model="ink-whisper") * 3600 * CARTESIA_PRO_USD_PER_CREDIT
@@ -155,11 +302,19 @@ def build_pricing_metadata(fx_rate_inr: float) -> dict[str, Any]:
             "sarvam": "https://www.sarvam.ai/api-pricing",
             "openai": "https://developers.openai.com/api/docs/pricing",
             "cartesia": "https://docs.cartesia.ai/pricing",
+            "gemini": "https://ai.google.dev/gemini-api/docs/pricing",
+            "telnyx": "https://telnyx.com/pricing/call-control",
         },
         "notes": {
             "stt": "Sarvam bills audio duration (₹30/hour). Cartesia STT bills credits/sec (Pro plan default).",
             "tts": "Sarvam bills Unicode characters (₹3 / 1k). Cartesia ~1 credit/char (Pro ≈ $50 / 1M chars).",
-            "llm": "OpenAI bills tokenizer tokens. Cache reads are 10% of input; writes are 1.25× input.",
+            "llm": "OpenAI bills tokenizer tokens. Gemini Live bills text/audio/image tokens (no prompt cache on 3.8-live).",
+            "inr": "INR is USD×FX for display. Providers invoice USD. GST is not added.",
+            "cost_inr_per_min": "All-in (model tokens + Telnyx wall-clock components), prorated by connected seconds.",
+            "telnyx": "Sum of Voice API + SIP (destination) + media WebSocket (+ recording if estimated). Not one flat ₹/min.",
+            "gemini_live": "Model cost from cumulative usage_metadata deltas (text+audio+image tokens). "
+            "List $0.005/$0.018 audio-min is reference only — silence does not bill output audio.",
+            "gemini_audio_list": "Published $0.005 in / $0.018 out per continuous audio minute ≈ 25 tok/s × $3/$12 per 1M.",
         },
         "sarvam:saaras:v3": {
             "unit": "minute",
@@ -225,6 +380,36 @@ def build_pricing_metadata(fx_rate_inr: float) -> dict[str, Any]:
             "billing": "tokens_with_cache",
             "updated_at": PRICING_UPDATED_AT,
         },
+        "gemini:gemini-3.8-live": {
+            "unit": "1m_tokens",
+            "usd_input_per_m": GEMINI_LIVE_USD_PER_M["gemini-3.8-live"]["input"],
+            "usd_cached_input_per_m": GEMINI_LIVE_USD_PER_M["gemini-3.8-live"]["cached_input"],
+            "usd_cache_write_per_m": GEMINI_LIVE_USD_PER_M["gemini-3.8-live"]["cache_write"],
+            "usd_output_per_m": GEMINI_LIVE_USD_PER_M["gemini-3.8-live"]["output"],
+            "usd_audio_input_per_m": GEMINI_LIVE_AUDIO_USD_PER_M["gemini-3.8-live"]["input"],
+            "usd_audio_cached_input_per_m": GEMINI_LIVE_AUDIO_USD_PER_M["gemini-3.8-live"]["cached_input"],
+            "usd_audio_output_per_m": GEMINI_LIVE_AUDIO_USD_PER_M["gemini-3.8-live"]["output"],
+            "usd_image_input_per_m": GEMINI_LIVE_IMAGE_USD_PER_M["gemini-3.8-live"],
+            "usd_audio_input_per_min_list": GEMINI_LIVE_AUDIO_INPUT_USD_PER_MIN,
+            "usd_audio_output_per_min_list": GEMINI_LIVE_AUDIO_OUTPUT_USD_PER_MIN,
+            "billing": "tokens_audio_native",
+            "updated_at": PRICING_UPDATED_AT,
+        },
+        "gemini:gemini-2.5-flash-native-audio-latest": {
+            "unit": "1m_tokens",
+            "usd_input_per_m": GEMINI_LIVE_USD_PER_M["gemini-2.5-flash-native-audio-latest"]["input"],
+            "usd_cached_input_per_m": GEMINI_LIVE_USD_PER_M["gemini-2.5-flash-native-audio-latest"]["cached_input"],
+            "usd_cache_write_per_m": GEMINI_LIVE_USD_PER_M["gemini-2.5-flash-native-audio-latest"]["cache_write"],
+            "usd_output_per_m": GEMINI_LIVE_USD_PER_M["gemini-2.5-flash-native-audio-latest"]["output"],
+            "usd_audio_input_per_m": GEMINI_LIVE_AUDIO_USD_PER_M["gemini-2.5-flash-native-audio-latest"]["input"],
+            "usd_audio_cached_input_per_m": GEMINI_LIVE_AUDIO_USD_PER_M["gemini-2.5-flash-native-audio-latest"]["cached_input"],
+            "usd_audio_output_per_m": GEMINI_LIVE_AUDIO_USD_PER_M["gemini-2.5-flash-native-audio-latest"]["output"],
+            "usd_image_input_per_m": GEMINI_LIVE_IMAGE_USD_PER_M["gemini-2.5-flash-native-audio-latest"],
+            "usd_audio_input_per_min_list": GEMINI_LIVE_AUDIO_INPUT_USD_PER_MIN,
+            "usd_audio_output_per_min_list": GEMINI_LIVE_AUDIO_OUTPUT_USD_PER_MIN,
+            "billing": "tokens_audio_native",
+            "updated_at": PRICING_UPDATED_AT,
+        },
         "openai:gpt-5.6-luna": {
             "unit": "1m_tokens",
             "usd_per_unit": OPENAI_USD_PER_M["gpt-5.6-luna"]["input"] / 1000.0,
@@ -279,16 +464,52 @@ def build_pricing_metadata(fx_rate_inr: float) -> dict[str, Any]:
             "billing": "audio_seconds",
             "updated_at": PRICING_UPDATED_AT,
         },
+        "telnyx:voice_api": {
+            "unit": "minute",
+            "usd_per_unit": TELNYX_VOICE_API_USD_PER_MIN,
+            "billing": "connected_call",
+            "updated_at": PRICING_UPDATED_AT,
+        },
+        "telnyx:sip_outbound": {
+            "unit": "minute",
+            "usd_per_unit": TELNYX_SIP_OUTBOUND_USD_PER_MIN,
+            "billing": "destination_specific",
+            "updated_at": PRICING_UPDATED_AT,
+        },
+        "telnyx:sip_outbound_india": {
+            "unit": "minute",
+            "usd_per_unit": _telnyx_sip_outbound_india_rate(),
+            "billing": "destination_specific",
+            "updated_at": PRICING_UPDATED_AT,
+        },
+        "telnyx:sip_inbound": {
+            "unit": "minute",
+            "usd_per_unit": TELNYX_SIP_INBOUND_USD_PER_MIN,
+            "billing": "connected_call",
+            "updated_at": PRICING_UPDATED_AT,
+        },
+        "telnyx:media_stream": {
+            "unit": "minute",
+            "usd_per_unit": TELNYX_MEDIA_STREAM_USD_PER_MIN,
+            "billing": "websocket_media",
+            "updated_at": PRICING_UPDATED_AT,
+        },
+        "telnyx:call_recording": {
+            "unit": "minute",
+            "usd_per_unit": TELNYX_CALL_RECORDING_USD_PER_MIN,
+            "billing": "optional",
+            "updated_at": PRICING_UPDATED_AT,
+        },
         "telnyx:outbound": {
             "unit": "minute",
             "usd_per_unit": TELNYX_OUTBOUND_USD_PER_MIN,
-            "billing": "call_minutes",
+            "billing": "voice_api_plus_sip_us_plus_media",
             "updated_at": PRICING_UPDATED_AT,
         },
         "telnyx:inbound": {
             "unit": "minute",
             "usd_per_unit": TELNYX_INBOUND_USD_PER_MIN,
-            "billing": "call_minutes",
+            "billing": "voice_api_plus_sip_inbound_plus_media",
             "updated_at": PRICING_UPDATED_AT,
         },
     }
@@ -364,10 +585,12 @@ def cost_llm_usd(
     input_audio_tokens: int = 0,
     output_audio_tokens: int = 0,
     cached_audio_tokens: int = 0,
+    input_image_tokens: int = 0,
 ) -> dict[str, float]:
     audio_in_tok = max(0, int(input_audio_tokens or 0))
     audio_out_tok = max(0, int(output_audio_tokens or 0))
-    text_in = max(0, int(input_tokens or 0) - audio_in_tok)
+    image_in_tok = max(0, int(input_image_tokens or 0))
+    text_in = max(0, int(input_tokens or 0) - audio_in_tok - image_in_tok)
     text_out = max(0, int(output_tokens or 0) - audio_out_tok)
     audio_cached = min(audio_in_tok, max(0, int(cached_audio_tokens or 0)))
     if audio_cached == 0 and cached_tokens:
@@ -378,18 +601,26 @@ def cost_llm_usd(
         cached_tokens=text_cached,
         cache_write_tokens=cache_write_tokens,
     )
-    rates = openai_rates_for_model(llm_model)
+    from server.realtime.models import is_gemini_live_voice_model
+
+    gemini = is_gemini_live_voice_model(llm_model)
+    if gemini:
+        rates = gemini_rates_for_model(llm_model)
+        audio_rates = gemini_audio_rates_for_model(llm_model)
+    else:
+        rates = openai_rates_for_model(llm_model)
+        audio_rates = openai_audio_rates_for_model(llm_model)
     uncached = parts["uncached"] * rates["input"] / 1_000_000.0
     cached = parts["cached"] * rates["cached_input"] / 1_000_000.0
     written = parts["written"] * rates["cache_write"] / 1_000_000.0
     output = text_out * rates["output"] / 1_000_000.0
-    audio_rates = openai_audio_rates_for_model(llm_model)
     audio_uncached = audio_in_tok - audio_cached
     audio_in = (
         audio_uncached * audio_rates["input"]
         + audio_cached * audio_rates.get("cached_input", audio_rates["input"])
     ) / 1_000_000.0
     audio_out = audio_out_tok * audio_rates["output"] / 1_000_000.0
+    image_in = (image_in_tok * gemini_image_rate_for_model(llm_model) / 1_000_000.0) if gemini else 0.0
     return {
         "uncached_usd": uncached,
         "cached_usd": cached,
@@ -397,18 +628,122 @@ def cost_llm_usd(
         "output_usd": output,
         "audio_input_usd": audio_in,
         "audio_output_usd": audio_out,
-        "total_usd": uncached + cached + written + output + audio_in + audio_out,
+        "image_input_usd": image_in,
+        "total_usd": uncached + cached + written + output + audio_in + audio_out + image_in,
     }
 
 
-def cost_telnyx_call_usd(*, duration_sec: float | int | None, direction: str | None = "outbound") -> float:
-    """Telnyx Call Control per-minute cost for the connected call."""
+def _telnyx_env_float(name: str, default: float) -> float:
+    raw = os.getenv(name, "").strip()
+    if not raw:
+        return default
+    try:
+        return float(raw)
+    except ValueError:
+        return default
+
+
+def telnyx_estimate_call_recording() -> bool:
+    """Whether to include Telnyx call-recording $/min in PSTN estimates (default on)."""
+    return os.getenv("TELNYX_ESTIMATE_CALL_RECORDING", "true").strip().lower() not in {
+        "0",
+        "false",
+        "no",
+        "off",
+    }
+
+
+def _telnyx_sip_outbound_india_rate() -> float:
+    return _telnyx_env_float("TELNYX_SIP_OUTBOUND_INDIA_USD_PER_MIN", TELNYX_SIP_OUTBOUND_INDIA_USD_PER_MIN)
+
+
+def telnyx_destination_country_from_e164(e164: str | None) -> str | None:
+    digits = re.sub(r"\D", "", str(e164 or ""))
+    if not digits:
+        return None
+    if digits.startswith("91") and len(digits) >= 12:
+        return "IN"
+    if digits.startswith("1") and len(digits) >= 11:
+        return "US"
+    return None
+
+
+def telnyx_sip_usd_per_min(*, direction: str | None, destination_country: str | None) -> float:
+    inbound = str(direction or "outbound").strip().lower() == "inbound"
+    if inbound:
+        return _telnyx_env_float("TELNYX_SIP_INBOUND_USD_PER_MIN", TELNYX_SIP_INBOUND_USD_PER_MIN)
+    country = (destination_country or "").strip().upper()
+    if country == "IN":
+        return _telnyx_sip_outbound_india_rate()
+    return _telnyx_env_float("TELNYX_SIP_OUTBOUND_USD_PER_MIN", TELNYX_SIP_OUTBOUND_USD_PER_MIN)
+
+
+def cost_telnyx_call_breakdown(
+    *,
+    duration_sec: float | int | None,
+    direction: str | None = "outbound",
+    media_streaming: bool = False,
+    call_recording: bool = False,
+    destination_country: str | None = None,
+) -> dict[str, float | str | None]:
+    """Telnyx Voice API + SIP + optional media stream / recording (wall-clock minutes)."""
     minutes = max(0.0, float(duration_sec or 0)) / 60.0
     if minutes <= 0:
-        return 0.0
-    inbound = str(direction or "outbound").strip().lower() == "inbound"
-    rate = TELNYX_INBOUND_USD_PER_MIN if inbound else TELNYX_OUTBOUND_USD_PER_MIN
-    return minutes * rate
+        return {
+            "minutes": 0.0,
+            "voice_api_usd": 0.0,
+            "sip_usd": 0.0,
+            "media_stream_usd": 0.0,
+            "call_recording_usd": 0.0,
+            "total_usd": 0.0,
+            "destination_country": destination_country,
+            "sip_usd_per_min": 0.0,
+        }
+    voice_rate = _telnyx_env_float("TELNYX_VOICE_API_USD_PER_MIN", TELNYX_VOICE_API_USD_PER_MIN)
+    sip_rate = telnyx_sip_usd_per_min(direction=direction, destination_country=destination_country)
+    media_rate = (
+        _telnyx_env_float("TELNYX_MEDIA_STREAM_USD_PER_MIN", TELNYX_MEDIA_STREAM_USD_PER_MIN)
+        if media_streaming
+        else 0.0
+    )
+    recording_rate = (
+        _telnyx_env_float("TELNYX_CALL_RECORDING_USD_PER_MIN", TELNYX_CALL_RECORDING_USD_PER_MIN)
+        if call_recording
+        else 0.0
+    )
+    voice_api = minutes * voice_rate
+    sip = minutes * sip_rate
+    media = minutes * media_rate
+    recording = minutes * recording_rate
+    return {
+        "minutes": minutes,
+        "voice_api_usd": voice_api,
+        "sip_usd": sip,
+        "media_stream_usd": media,
+        "call_recording_usd": recording,
+        "total_usd": voice_api + sip + media + recording,
+        "destination_country": destination_country,
+        "sip_usd_per_min": sip_rate,
+    }
+
+
+def cost_telnyx_call_usd(
+    *,
+    duration_sec: float | int | None,
+    direction: str | None = "outbound",
+    media_streaming: bool = False,
+    call_recording: bool = False,
+    destination_country: str | None = None,
+) -> float:
+    return float(
+        cost_telnyx_call_breakdown(
+            duration_sec=duration_sec,
+            direction=direction,
+            media_streaming=media_streaming,
+            call_recording=call_recording,
+            destination_country=destination_country,
+        )["total_usd"]
+    )
 
 
 def estimate_turn_cost(
@@ -428,8 +763,9 @@ def estimate_turn_cost(
     input_audio_tokens: int = 0,
     output_audio_tokens: int = 0,
     cached_audio_tokens: int = 0,
+    input_image_tokens: int = 0,
 ) -> dict[str, Any]:
-    fx = float(fx_rate_inr or 95.64)
+    fx = float(fx_rate_inr or DEFAULT_FX_RATE_INR)
     stt = cost_stt_usd(
         audio_sec=stt_audio_sec,
         fx_rate_inr=fx,
@@ -451,6 +787,7 @@ def estimate_turn_cost(
         input_audio_tokens=input_audio_tokens,
         output_audio_tokens=output_audio_tokens,
         cached_audio_tokens=cached_audio_tokens,
+        input_image_tokens=input_image_tokens,
     )
     total = stt + tts + llm["total_usd"]
     return {

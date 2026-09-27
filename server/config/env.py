@@ -5,6 +5,7 @@ Industry standard: pydantic-settings + dotenv.
 """
 from __future__ import annotations
 
+import io
 import os
 from functools import lru_cache
 from pathlib import Path
@@ -16,7 +17,27 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Load .env from project root (D:\Telugu Agent\.env)
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-load_dotenv(PROJECT_ROOT / ".env", override=False)
+
+
+def _load_project_dotenv() -> None:
+    """Load .env even if a Windows editor saved it as cp1252 instead of UTF-8."""
+    path = PROJECT_ROOT / ".env"
+    if not path.exists():
+        return
+    raw = path.read_bytes()
+    text: str | None = None
+    for encoding in ("utf-8", "utf-8-sig", "cp1252"):
+        try:
+            text = raw.decode(encoding)
+            break
+        except UnicodeDecodeError:
+            continue
+    if text is None:
+        text = raw.decode("utf-8", errors="replace")
+    load_dotenv(stream=io.StringIO(text), override=False)
+
+
+_load_project_dotenv()
 
 
 class ConfigError(Exception):
@@ -126,6 +147,8 @@ class Settings(BaseSettings):
     allow_publish_during_calls: bool = Field(False, alias="ALLOW_PUBLISH_DURING_CALLS")
     enable_benchmarks: bool = Field(False, alias="ENABLE_BENCHMARKS")
     fx_rate_inr: float = Field(95.64, alias="FX_RATE_INR")
+    fx_rate_live: bool = Field(True, alias="FX_RATE_LIVE")
+    fx_rate_live_ttl_sec: int = Field(21600, alias="FX_RATE_LIVE_TTL_SEC")
 
     database_url: str | None = Field(None, alias="DATABASE_URL")
 
@@ -202,6 +225,22 @@ class Settings(BaseSettings):
     pstn_min_balance_inr_paise: int = Field(5000, alias="PSTN_MIN_BALANCE_INR_PAISE")
     pstn_rate_usd_cents_per_min: int = Field(9, alias="PSTN_RATE_USD_CENTS_PER_MIN")
     pstn_rate_inr_paise_per_min: int = Field(900, alias="PSTN_RATE_INR_PAISE_PER_MIN")
+    web_agent_rate_usd_cents_per_min: int = Field(7, alias="WEB_AGENT_RATE_USD_CENTS_PER_MIN")
+    web_agent_rate_inr_paise_per_min: int = Field(700, alias="WEB_AGENT_RATE_INR_PAISE_PER_MIN")
+    did_monthly_usd_cents: int = Field(500, alias="DID_MONTHLY_USD_CENTS")
+    did_monthly_inr_paise: int = Field(50000, alias="DID_MONTHLY_INR_PAISE")
+    saas_platform_admin_emails: str = Field("", alias="SAAS_PLATFORM_ADMIN_EMAILS")
+    saas_dev_tester_emails: str = Field("", alias="SAAS_DEV_TESTER_EMAILS")
+    saas_admin_seed_inr_paise: int = Field(500000, alias="SAAS_ADMIN_SEED_INR_PAISE")
+    pstn_close_listen_sec: float = Field(3.5, alias="PSTN_CLOSE_LISTEN_SEC")
+    pstn_silence_nudge_sec: float = Field(
+        8.0,
+        validation_alias=AliasChoices("PSTN_SILENCE_NUDGE_SEC", "SILENCE_NUDGE_SEC"),
+    )
+    pstn_silence_hangup_sec: float = Field(
+        20.0,
+        validation_alias=AliasChoices("PSTN_SILENCE_HANGUP_SEC", "SILENCE_HANGUP_SEC"),
+    )
     voxly_frontend_url: str = Field("http://localhost:5173", alias="VOXLY_FRONTEND_URL")
 
     razorpay_api_key: str | None = Field(

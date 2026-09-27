@@ -5,7 +5,7 @@ import { analytics } from '../services/analytics';
 import { api } from '../services/api';
 
 export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSuccess }) {
-  const { loginWithGoogle, loginWithEmail, signupWithEmail } = useAuth();
+  const { loginWithGoogle, loginWithEmail, signupWithEmail, refreshSession } = useAuth();
 
   const [mode, setMode] = useState(initialMode);
   const [name, setName] = useState('');
@@ -19,6 +19,8 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
   const [googleConfigHint, setGoogleConfigHint] = useState('');
   const [showResendVerification, setShowResendVerification] = useState(false);
   const [resendStatus, setResendStatus] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  const [pendingVerifyEmail, setPendingVerifyEmail] = useState('');
 
   useEffect(() => {
     const onAuthErr = (e) => {
@@ -38,7 +40,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
         if (cancelled) return;
         setGoogleSignInEnabled(Boolean(cfg?.enabled));
         if (!cfg?.enabled) {
-          setGoogleConfigHint('Google sign-in requires GOOGLE_OAUTH_* on the API server.');
+          setGoogleConfigHint('Google sign-in is not configured for this environment.');
         } else {
           setGoogleConfigHint('');
         }
@@ -107,8 +109,10 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
         setLoadingMethod('email');
         const signupRes = await signupWithEmail(name, email, password);
         if (signupRes?.requiresEmailVerification) {
-          setSuccessMessage(signupRes.message || 'Check your email to verify your account, then sign in.');
-          setMode('signin');
+          setPendingVerifyEmail(signupRes.email || email.trim());
+          setOtpCode('');
+          setSuccessMessage(signupRes.message || 'Enter the 6-digit code we sent to your email.');
+          setMode('verify-otp');
           return;
         }
         authedUser = signupRes;
@@ -147,6 +151,31 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
     }
   };
 
+  const handleOtpSubmit = async (e) => {
+    e.preventDefault();
+    setErrorMessage('');
+    const targetEmail = pendingVerifyEmail || email.trim();
+    if (!targetEmail || otpCode.length !== 6) {
+      setErrorMessage('Enter the 6-digit code from your email.');
+      return;
+    }
+    try {
+      setLoadingMethod('otp');
+      await api.auth.verifyEmailOtp(targetEmail, otpCode);
+      const authedUser = await refreshSession();
+      analytics.track('auth_signup_verified', { userId: authedUser?.id });
+      setSuccessMessage(`Welcome to Voxly, ${authedUser?.name || 'there'}!`);
+      setTimeout(() => {
+        onClose();
+        if (onAuthSuccess) onAuthSuccess(authedUser);
+      }, 500);
+    } catch (err) {
+      setErrorMessage(err.message || 'Invalid or expired code.');
+    } finally {
+      setLoadingMethod(null);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
       {/* Backdrop */}
@@ -166,7 +195,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
               <Lock className="w-4 h-4" />
             </div>
             <span className="text-xs font-mono font-semibold text-[#524E5E] uppercase tracking-wider">
-              Voxly Fleet Identity
+              Voxly account
             </span>
           </div>
           <button
@@ -181,12 +210,18 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
         {/* Title */}
         <div className="px-6 pt-3 pb-4 border-b border-[#E4E2EB]">
           <h3 className="text-xl font-extrabold text-[#0F0E17] tracking-tight">
-            {mode === 'signup' ? 'Create your account' : 'Sign in to build your agent'}
+            {mode === 'signup'
+              ? 'Create your account'
+              : mode === 'verify-otp'
+                ? 'Verify your email'
+                : 'Sign in to your console'}
           </h3>
           <p className="text-xs text-[#524E5E] mt-1">
-            {mode === 'signup'
-              ? 'One account for the marketing site and your private agent console.'
-              : 'Same sign-in as “Build your agent” — opens your subscriber console.'}
+            {mode === 'verify-otp'
+              ? 'Use the same email for password sign-in and Google — one account per email.'
+              : mode === 'signup'
+                ? 'Email, Google, and your console share one Voxly account.'
+                : 'Sign in with email or Google to open your agent console.'}
           </p>
         </div>
 
@@ -218,7 +253,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
                   setResendStatus('');
                   try {
                     await api.auth.resendVerification(email.trim());
-                    setResendStatus('If this email is registered, we sent a new verification link.');
+                    setResendStatus('If this email is registered, we sent a new verification code.');
                   } catch (e) {
                     setResendStatus(e.message || 'Could not resend.');
                   }
@@ -232,6 +267,57 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
           )}
 
           {/* Social Sign-in Buttons (shown in standard signin/signup modes) */}
+          {mode === 'verify-otp' && (
+            <form onSubmit={handleOtpSubmit} className="space-y-4">
+              <p className="text-xs text-[#524E5E]">
+                Code sent to <strong className="text-[#0F0E17]">{pendingVerifyEmail || email}</strong>
+              </p>
+              <div>
+                <label className="block text-xs font-semibold text-[#0F0E17] mb-1">6-digit code</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  pattern="[0-9]{6}"
+                  required
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  className="w-full text-center tracking-[0.4em] text-lg font-mono px-3 py-3 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] focus:outline-none focus:border-[#6344E7]"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loadingMethod !== null || otpCode.length !== 6}
+                className="w-full py-3 rounded-xl text-xs font-semibold text-white bg-[#0F0E17] disabled:opacity-50"
+              >
+                {loadingMethod === 'otp' ? 'Verifying…' : 'Verify & continue'}
+              </button>
+              <button
+                type="button"
+                className="w-full text-xs font-semibold text-[#6344E7]"
+                onClick={async () => {
+                  try {
+                    await api.auth.resendVerification(pendingVerifyEmail || email);
+                    setResendStatus('New code sent if the account exists.');
+                  } catch (err) {
+                    setResendStatus(err.message);
+                  }
+                }}
+              >
+                Resend code
+              </button>
+              {resendStatus && <p className="text-[11px] text-[#524E5E]">{resendStatus}</p>}
+              <button
+                type="button"
+                onClick={() => setMode('signin')}
+                className="w-full text-xs text-[#524E5E] hover:text-[#0F0E17]"
+              >
+                Back to sign in
+              </button>
+            </form>
+          )}
+
           {(mode === 'signin' || mode === 'signup') && (
             <div className="space-y-2.5">
               {/* Google OAuth Button */}

@@ -3,9 +3,13 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
-from server.realtime.models import DEFAULT_REALTIME_MODEL, live_openai_model, realtime_voice_config
-from server.realtime.providers.openai_voice import OpenAIRealtimeVoiceAdapter
-from server.realtime.text_session import build_audio_session_instructions
+from server.realtime.models import (
+    DEFAULT_REALTIME_MODEL,
+    realtime_voice_config,
+    realtime_voice_llm_provider,
+)
+from server.realtime.voice_factory import create_realtime_voice_adapter
+from server.realtime.voice_instructions import build_realtime_voice_instructions
 from server.utils.logger import logger
 
 AdapterFactory = Callable[[], Any]
@@ -13,11 +17,11 @@ AdapterFactory = Callable[[], Any]
 
 class RealtimeVoiceManager:
     def __init__(self, adapter_factory: AdapterFactory | None = None) -> None:
-        self._sessions: dict[str, OpenAIRealtimeVoiceAdapter] = {}
-        self._adapter_factory = adapter_factory or OpenAIRealtimeVoiceAdapter
+        self._sessions: dict[str, Any] = {}
+        self._adapter_factory = adapter_factory
         self._meta: dict[str, dict[str, Any]] = {}
 
-    def get(self, call_id: str | None) -> OpenAIRealtimeVoiceAdapter | None:
+    def get(self, call_id: str | None) -> Any | None:
         if not call_id:
             return None
         return self._sessions.get(call_id)
@@ -37,15 +41,20 @@ class RealtimeVoiceManager:
         stack_override: dict[str, Any] | None = None,
         max_output_tokens: int | None = None,
         wait_ready: bool = True,
-    ) -> OpenAIRealtimeVoiceAdapter:
+    ) -> Any:
         if call_id in self._sessions:
             raise RuntimeError(f"Realtime voice session already owns call_id={call_id}")
-        text = instructions if instructions is not None else build_audio_session_instructions(
-            compiled_brain, caller_id=caller_id, language=language
+        text = instructions if instructions is not None else build_realtime_voice_instructions(
+            compiled_brain,
+            model=model,
+            stack_override=stack_override,
+            caller_id=caller_id,
+            language=language,
         )
         cfg = realtime_voice_config(stack_override)
-        live_model = live_openai_model(model)
-        session = adapter or self._adapter_factory()
+        _provider, live_model = realtime_voice_llm_provider(stack_override, model)
+        factory = self._adapter_factory or create_realtime_voice_adapter
+        session = adapter or factory(stack_override=stack_override, model=live_model)
         self._sessions[call_id] = session
         self._meta[call_id] = {"instructions": text, "language": language}
         try:
@@ -84,7 +93,7 @@ class RealtimeVoiceManager:
         await session.close()
         logger.info("[REALTIME_VOICE] session closed call=%s", call_id)
 
-    def adopt_session(self, from_call_id: str, to_call_id: str) -> OpenAIRealtimeVoiceAdapter | None:
+    def adopt_session(self, from_call_id: str, to_call_id: str) -> Any | None:
         session = self._sessions.pop(from_call_id, None)
         if session is None:
             return None

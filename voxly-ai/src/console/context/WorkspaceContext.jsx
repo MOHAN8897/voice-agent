@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { initialWallet, availableNumbersCatalog } from '../data/initialWorkspaceData';
 import { api } from '../../services/api';
 import { normalizeAgent, normalizePhoneNumber, normalizeWallet } from '../../services/apiNormalize';
+import { isUuid } from '../../lib/voiceDisplay';
 import { saveAndPublishAgentBrain } from '../../services/agentBrain';
 import { stashPurchaseForRedirect } from '../ui/PurchaseProvisioningBanner';
 
@@ -91,7 +92,7 @@ export function WorkspaceProvider({ children }) {
   };
 
   // Active workspace navigation and selection states
-  const [selectedAgentId, setSelectedAgentId] = useState('agent-maya');
+  const [selectedAgentId, setSelectedAgentId] = useState(null);
   const [selectedCallId, setSelectedCallId] = useState(null);
   const [selectedLeadId, setSelectedLeadId] = useState(null);
 
@@ -148,6 +149,13 @@ export function WorkspaceProvider({ children }) {
         ]);
 
       setAgents(normAgents);
+      if (normAgents.length > 0) {
+        setSelectedAgentId((prev) =>
+          prev && normAgents.some((a) => a.id === prev) ? prev : normAgents[0].id
+        );
+      } else {
+        setSelectedAgentId(null);
+      }
       setPhoneNumbers(normNumbers);
       setCalls(fetchedCalls || []);
       setLeads(fetchedLeads || []);
@@ -246,6 +254,7 @@ export function WorkspaceProvider({ children }) {
         },
       ]);
       setCurrentWorkspaceId('ws-signed-out');
+      setSelectedAgentId(null);
     };
     window.addEventListener('voxly:session', onAuth);
     window.addEventListener('voxly:logout', onLogout);
@@ -270,7 +279,7 @@ export function WorkspaceProvider({ children }) {
       ) {
         await saveAndPublishAgentBrain(created.id, newAgentData);
       }
-      if (newAgentData.numberId) {
+      if (newAgentData.numberId && isUuid(String(newAgentData.numberId))) {
         await assignNumberToAgent(newAgentData.numberId, created.id, created.name);
       }
       await loadWorkspaceData();
@@ -304,7 +313,8 @@ export function WorkspaceProvider({ children }) {
           updates.greeting ||
           updates.voice ||
           updates.inboundRouting ||
-          updates.boundaries?.length
+          updates.boundaries?.length ||
+          updates.variableDefinitions?.length
         ) {
           await saveAndPublishAgentBrain(agentId, updates);
         }
@@ -392,8 +402,10 @@ export function WorkspaceProvider({ children }) {
   const buyPhoneNumber = async (catalogItem, assignToAgentId = null) => {
     try {
       const provisioned = await api.telephony.buyNumber(catalogItem, assignToAgentId);
-      if (provisioned?.checkoutUrl || provisioned?.url) {
+      if (provisioned?.purchaseId) {
         stashPurchaseForRedirect(provisioned.purchaseId, assignToAgentId || null);
+      }
+      if (provisioned?.checkoutUrl || provisioned?.url) {
         window.location.href = provisioned.checkoutUrl || provisioned.url;
         return provisioned;
       }
@@ -446,7 +458,11 @@ export function WorkspaceProvider({ children }) {
   const assignNumberToAgent = async (numberId, agentId, agentName = '') => {
     try {
       if (authed()) {
-        await api.telephony.assignNumber(numberId, agentId);
+        if (!agentId) {
+          await api.telephony.unassignNumber(numberId);
+        } else {
+          await api.telephony.assignNumber(numberId, agentId);
+        }
         await loadWorkspaceData();
         return;
       }

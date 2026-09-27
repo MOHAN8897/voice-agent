@@ -132,3 +132,73 @@ async def test_synthesize_empty_greeting():
     assert frames == []
     assert transcript == ""
     assert usage is None
+
+
+@pytest.mark.asyncio
+async def test_gemini_side_session_greeting_closes_throwaway_adapter():
+    pcm = _make_pcm24(60)
+    from server.services.pstn_realtime_greeting_prewarm import (
+        GEMINI_GREETING_SIDE_SESSION_INSTRUCTIONS,
+        synthesize_gemini_greeting_on_side_session,
+    )
+
+    class SideAdapter:
+        def __init__(self) -> None:
+            self.connected = False
+            self.closed = False
+            self.include_tools = True
+            self.instructions = ""
+            self._events = [
+                {"type": "audio_delta", "pcm": pcm},
+                {"type": "assistant_transcript", "text": "time unda?"},
+                {"type": "response_done", "status": "completed", "failed": False},
+            ]
+            self._idx = 0
+
+        async def connect(self, **kwargs):
+            self.connected = True
+            self.include_tools = kwargs.get("include_tools", True)
+            self.instructions = str(kwargs.get("instructions") or "")
+            self.model = kwargs.get("model")
+
+        async def wait_ready(self, timeout: float = 12.0):
+            _ = timeout
+
+        async def start_response(self, *, instructions: str | None = None) -> None:
+            self.started = instructions
+
+        async def poll_event(self, timeout: float = 0.5):
+            _ = timeout
+            if self._idx >= len(self._events):
+                return None
+            event = self._events[self._idx]
+            self._idx += 1
+            return event
+
+        async def cancel_response(self) -> None:
+            return None
+
+        async def delete_synthetic_response_items(self) -> None:
+            return None
+
+        def discard_queued(self) -> None:
+            return None
+
+        async def close(self) -> None:
+            self.closed = True
+
+    side = SideAdapter()
+    frames, transcript, usage = await synthesize_gemini_greeting_on_side_session(
+        greeting_text="time unda?",
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        model="gemini-3.8-live",
+        adapter_factory=lambda: side,
+    )
+    assert frames
+    assert "time unda" in transcript
+    assert side.connected
+    assert side.closed
+    assert side.include_tools is False
+    assert side.instructions == GEMINI_GREETING_SIDE_SESSION_INSTRUCTIONS
+    assert usage is None or isinstance(usage, dict)

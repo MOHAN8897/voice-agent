@@ -53,6 +53,7 @@ export type CallUsage = {
   output_tokens?: number;
   input_audio_tokens?: number;
   output_audio_tokens?: number;
+  input_image_tokens?: number;
   cached_tokens?: number;
   turns?: number;
   cost_usd?: number;
@@ -60,7 +61,17 @@ export type CallUsage = {
   duration_sec?: number;
   cost_usd_per_min?: number;
   cost_inr_per_min?: number;
+  model_cost_usd_per_min?: number;
+  model_cost_inr_per_min?: number;
+  telnyx_usd_per_min?: number;
+  telnyx_inr_per_min?: number;
+  gemini_list_audio_inr_per_min?: number;
+  gemini_list_audio_input_usd_per_min?: number;
+  gemini_list_audio_output_usd_per_min?: number;
   fx_rate_inr?: number;
+  fx_source?: string;
+  fx_as_of?: string;
+  gst_inr?: number;
   model_cost_usd?: number;
   model_cost_inr?: number;
   telnyx_usd?: number;

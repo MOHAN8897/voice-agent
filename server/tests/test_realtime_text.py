@@ -94,9 +94,25 @@ def test_realtime_usage_cached_audio_tokens():
 
 
 def test_gemini_is_not_a_live_llm():
-    provider, model = coerce_live_llm_selection("gemini", "gemini-3.5-flash-lite")
+    from server.realtime.models import http_openai_model
+
+    provider, model = coerce_live_llm_selection(
+        "gemini",
+        "gemini-3.5-flash-lite",
+        stack_override={"pipeline": "classic"},
+    )
     assert provider == "openai"
-    assert is_realtime_llm_model(model)
+    assert model == http_openai_model()
+
+
+def test_gemini_live_for_realtime_voice_stack():
+    provider, model = coerce_live_llm_selection(
+        "gemini",
+        "gemini-3.8-live",
+        stack_override={"pipeline": "realtime_voice", "llm": {"provider": "gemini", "model": "gemini-3.8-live"}},
+    )
+    assert provider == "gemini"
+    assert model == "gemini-3.8-live"
 
 
 @pytest.mark.asyncio

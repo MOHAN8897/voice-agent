@@ -1,75 +1,103 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Search,
   Plus,
   Phone,
   Radio,
   Menu,
-  ExternalLink,
+  ChevronDown,
+  Settings,
+  CreditCard,
   LogOut,
+  ExternalLink,
 } from 'lucide-react';
 import { TactileButton } from './ui/TactileButton';
 import { useWorkspace } from './context/WorkspaceContext';
 
+const EMPLOYEE_STEP_LABELS = {
+  script: 'Script & flow',
+  voice: 'Voice',
+  telephony: 'Phone lines',
+  test: 'Live test',
+  knowledge: 'Knowledge',
+};
+
 export function Topbar({
   activeTab,
+  employeeFlowStep,
   onOpenCommandPalette,
   onOpenCreateAgent,
   onOpenBuyNumber,
   user,
   onToggleMobileSidebar,
-  isMobileSidebarOpen,
   onBackToLanding,
   onSignOut,
+  onNavigate,
 }) {
   const { campaigns } = useWorkspace();
   const runningCampaign = campaigns.find((c) => c.status === 'running');
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const tabLabels = {
-    overview: 'Workspace Overview',
-    employees: 'AI Employees Fleet',
-    'agent-studio': 'Agent Studio & Script Flow',
-    'phone-numbers': 'Virtual Numbers & Routing',
-    calls: 'Call Logs & Audio Inspector',
-    leads: 'Autonomous Lead Pipeline',
-    campaigns: 'Bulk Outbound Campaigns',
-    billing: 'Wallet, Usage & Billing',
-    integrations: 'Integrations & Webhooks',
-    settings: 'Settings & Security',
-    'talk-to-ai': 'Realtime Voice Testing Console'
+    overview: 'Overview',
+    employees: 'AI Employees',
+    'phone-numbers': 'Phone numbers',
+    calls: 'Call history & outbound',
+    leads: 'Leads',
+    campaigns: 'Outbound campaigns',
+    billing: 'Billing & usage',
+    integrations: 'Integrations',
+    settings: 'Settings',
+    admin: 'Platform admin',
+  };
+
+  const go = (tab) => {
+    setUserMenuOpen(false);
+    onNavigate?.(tab);
   };
 
   return (
     <header className="h-14 bg-white/95 backdrop-blur-md border-b border-[#E4E2EB] px-3 sm:px-6 flex items-center justify-between gap-3 sticky top-0 z-30 shadow-2xs">
-      {/* Left Area: Mobile Hamburger + Breadcrumb / Title */}
       <div className="flex items-center gap-2 min-w-0">
-        {/* Mobile Sidebar Hamburger Toggle */}
         <button
           type="button"
           onClick={onToggleMobileSidebar}
           className="md:hidden min-w-[44px] min-h-[44px] -ml-1 p-2.5 rounded-xl text-[#0F0E17] hover:bg-[#FAF9FD] border border-transparent hover:border-[#E4E2EB] flex items-center justify-center transition-colors active:scale-95"
           aria-label="Open navigation menu"
-          title="Toggle navigation"
         >
           <Menu className="w-5 h-5 text-[#0F0E17]" />
         </button>
 
-        <span className="text-xs text-[#524E5E] font-medium hidden sm:inline">Console</span>
-        <span className="text-xs text-[#8C879A] hidden sm:inline">/</span>
-        <h1 className="text-xs sm:text-sm font-bold text-[#0F0E17] truncate">
-          {tabLabels[activeTab] || 'Dashboard'}
+        <h1 className="text-sm font-bold text-[#0F0E17] truncate">
+          {tabLabels[activeTab] || 'Console'}
+          {activeTab === 'employees' && employeeFlowStep && EMPLOYEE_STEP_LABELS[employeeFlowStep] && (
+            <span className="text-[#524E5E] font-semibold">
+              {' '}
+              · {EMPLOYEE_STEP_LABELS[employeeFlowStep]}
+            </span>
+          )}
         </h1>
 
         {runningCampaign && (
-          <div className="hidden lg:flex items-center gap-1.5 ml-3 px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[11px] font-mono text-[#047857]">
+          <div className="hidden lg:flex items-center gap-1.5 ml-2 px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[11px] font-mono text-[#047857]">
             <Radio className="w-3 h-3 animate-pulse text-[#10B981]" />
             <span>Dialing: {runningCampaign.name}</span>
           </div>
         )}
       </div>
 
-      {/* Center Search / Command Palette Bar */}
-      <div className="flex-1 max-w-md hidden md:block">
+      <div className="flex-1 max-w-md hidden md:block mx-4">
         <button
           type="button"
           onClick={onOpenCommandPalette}
@@ -77,7 +105,7 @@ export function Topbar({
         >
           <div className="flex items-center gap-2">
             <Search className="w-3.5 h-3.5 text-[#524E5E] group-hover:text-[#0F0E17]" />
-            <span>Search agents, numbers, leads, calls...</span>
+            <span>Search workspace…</span>
           </div>
           <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-white text-[#524E5E] border border-[#E4E2EB] shadow-2xs">
             ⌘K
@@ -85,54 +113,93 @@ export function Topbar({
         </button>
       </div>
 
-      {/* Right Quick Actions */}
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-2">
         <button
           type="button"
           onClick={onOpenBuyNumber}
           className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white hover:bg-[#FAF9FD] text-[#0F0E17] border border-[#E4E2EB] shadow-2xs transition-all active:scale-[0.98]"
         >
           <Phone className="w-3.5 h-3.5 text-[#6344E7]" />
-          <span>Buy Number</span>
+          <span>Buy number</span>
         </button>
 
-        <TactileButton
-          onClick={onOpenCreateAgent}
-          size="sm"
-          variant="primary"
-          icon={Plus}
-        >
-          <span>Create Agent</span>
+        <TactileButton onClick={onOpenCreateAgent} size="sm" variant="primary" icon={Plus}>
+          <span className="hidden xs:inline">New agent</span>
+          <span className="xs:hidden">New</span>
         </TactileButton>
 
-        {onBackToLanding && (
+        <div className="relative" ref={userMenuRef}>
           <button
             type="button"
-            onClick={onBackToLanding}
-            className="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-[#524E5E] hover:bg-[#FAF9FD] border border-[#E4E2EB]"
-            title="Marketing site"
+            onClick={() => setUserMenuOpen((o) => !o)}
+            className="flex items-center gap-1.5 pl-1 pr-2 py-1 rounded-xl border border-[#E4E2EB] bg-white hover:bg-[#FAF9FD] transition-all"
+            aria-expanded={userMenuOpen}
+            aria-haspopup="menu"
           >
-            <ExternalLink className="w-3.5 h-3.5" />
-            Site
+            <div
+              className="w-8 h-8 rounded-lg bg-[#0F0E17] text-white flex items-center justify-center text-xs font-mono font-bold"
+              title={user?.email || user?.name || 'Account'}
+            >
+              {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+            </div>
+            <ChevronDown className={`w-3.5 h-3.5 text-[#524E5E] transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
           </button>
-        )}
 
-        {onSignOut && (
-          <button
-            type="button"
-            onClick={onSignOut}
-            className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-[#DC2626] hover:bg-[#FEF2F2] border border-[#FECACA]"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            Sign out
-          </button>
-        )}
-
-        <div
-          className="w-8 h-8 rounded-xl bg-[#0F0E17] text-white flex items-center justify-center text-xs font-mono font-bold shadow-2xs"
-          title={user?.email || user?.name || 'User'}
-        >
-          {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+          {userMenuOpen && (
+            <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl border border-[#E4E2EB] shadow-xl p-2 z-50 text-xs">
+              {(user?.name || user?.email) && (
+                <div className="px-2 py-2 mb-1 border-b border-[#E4E2EB]">
+                  <div className="font-bold text-[#0F0E17] truncate">{user?.name}</div>
+                  <div className="text-[11px] text-[#524E5E] truncate">{user?.email}</div>
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => go('settings')}
+                className="w-full flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-[#FAF9FD] text-left font-medium text-[#0F0E17]"
+              >
+                <Settings className="w-3.5 h-3.5 text-[#524E5E]" />
+                Settings
+              </button>
+              <button
+                type="button"
+                onClick={() => go('billing')}
+                className="w-full flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-[#FAF9FD] text-left font-medium text-[#0F0E17]"
+              >
+                <CreditCard className="w-3.5 h-3.5 text-[#524E5E]" />
+                Billing & usage
+              </button>
+              {onBackToLanding && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUserMenuOpen(false);
+                    onBackToLanding();
+                  }}
+                  className="w-full flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-[#FAF9FD] text-left font-medium text-[#524E5E]"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  Marketing site
+                </button>
+              )}
+              {onSignOut && (
+                <>
+                  <div className="my-1 border-t border-[#E4E2EB]" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUserMenuOpen(false);
+                      onSignOut();
+                    }}
+                    className="w-full flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-red-50 text-left font-semibold text-red-600"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    Sign out
+                  </button>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </header>

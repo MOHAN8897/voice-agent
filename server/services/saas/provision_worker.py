@@ -82,6 +82,9 @@ async def process_one_job() -> bool:
         await provision_ordered_number(client, purchase.e164)
     except Exception as e:
         logger.exception("provision failed purchase=%s", purchase_id)
+        refund_tenant = None
+        refund_user = None
+        refund_wallet = False
         async with factory() as session:
             purchase = await session.get(NumberPurchase, purchase_id)
             job = (
@@ -91,7 +94,21 @@ async def process_one_job() -> bool:
             job.last_error = {"message": str(e)}
             if purchase:
                 purchase.status = "failed"
+                refund_tenant = purchase.tenant_id
+                refund_user = purchase.user_id
+                refund_wallet = not purchase.stripe_checkout_session_id
             await session.commit()
+        if refund_wallet and refund_tenant is not None:
+            try:
+                from server.services.saas.billing_wallet_service import refund_did_purchase
+
+                await refund_did_purchase(
+                    refund_tenant,
+                    user_id=refund_user,
+                    purchase_id=purchase_id,
+                )
+            except Exception:
+                logger.exception("did refund failed purchase=%s", purchase_id)
         return True
 
     async with factory() as session:
@@ -101,14 +118,23 @@ async def process_one_job() -> bool:
         ).scalar_one()
         if purchase is None:
             return True
+        phone_tenant_id = purchase.tenant_id
+        if purchase.user_id:
+            from server.db.models.saas_models import User
+            from server.services.saas.dev_tester_workspace import workspace_tenant_id_for_subscriber
+
+            user = await session.get(User, purchase.user_id)
+            if user:
+                phone_tenant_id = workspace_tenant_id_for_subscriber(purchase.tenant_id, user.email)
         pn = PhoneNumber(
-            tenant_id=purchase.tenant_id,
+            tenant_id=phone_tenant_id,
             e164=purchase.e164,
             status="active",
             purchase_id=purchase.id,
-            billing_source="stripe",
+            billing_source="wallet" if not purchase.stripe_checkout_session_id else "stripe",
             inbound_enabled=True,
             outbound_enabled=True,
+            agent_id=purchase.assign_agent_id,
             created_at=_utcnow(),
         )
         session.add(pn)

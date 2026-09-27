@@ -23,7 +23,7 @@ const FLOW_LABEL: Record<"pstn" | "pstn_realtime", { title: string; hint: string
   },
   pstn_realtime: {
     title: "Realtime PSTN",
-    hint: "Telnyx · OpenAI Realtime audio in/out",
+    hint: "Telnyx · SaaS universal phone stack (dev panel) · speech-to-speech",
   },
 };
 
@@ -72,6 +72,7 @@ export function PstnFlowWorkspace({
   const [requestDialTo, setRequestDialTo] = useState<{ phone: string; nonce: number } | null>(null);
   const [lifecycleStage, setLifecycleStage] = useState<PstnLifecycleStage>("idle");
   const [placedAt, setPlacedAt] = useState<number | null>(null);
+  const [connectedAt, setConnectedAt] = useState<number | null>(null);
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
   const [internalCallId, setInternalCallId] = useState<string | null>(null);
   const endedNotifiedRef = useRef(false);
@@ -138,7 +139,12 @@ export function PstnFlowWorkspace({
       <p className="text-sm text-text-muted">{flow.hint}</p>
 
       {section === "live" ? (
-        <PstnCallStatusTimeline stage={lifecycleStage} placedAt={placedAt} sessionClockMs={sessionClockMs} />
+        <PstnCallStatusTimeline
+          stage={lifecycleStage}
+          placedAt={placedAt}
+          connectedAt={connectedAt}
+          sessionClockMs={sessionClockMs}
+        />
       ) : null}
 
       <PstnTestPanel
@@ -159,12 +165,14 @@ export function PstnFlowWorkspace({
         onDialPlaced={() => {
           endedNotifiedRef.current = false;
           setInternalCallId(null);
+          setConnectedAt(null);
           setLifecycleStage("placed");
           setPlacedAt(Date.now());
           onDialPlaced?.();
         }}
         onInternalCallStart={(id) => {
           setInternalCallId(id);
+          setConnectedAt((t) => t ?? Date.now());
           setLifecycleStage((prev) => advanceLifecycle(prev, "lifted"));
           onInternalCallStart?.(id);
         }}

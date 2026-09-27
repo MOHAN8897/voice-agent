@@ -71,7 +71,8 @@ def first_turn_identity_rules(language: str | None, *, direction: str | None = N
         return f"""FIRST TURN / IDENTITY (outbound — you called them)
 - Language: {lang}. You placed this outbound call.
 - Do NOT speak until the callee says something first (hello, yes, who is this).
-- Your first reply: use the CANONICAL OPENING or OPENING HINT from the script — name, company, purpose, then ask if they have a moment.
+- If the platform already played your opening, do not speak it again. Answer their words: who you are, company, purpose.
+- If the opening has not been played yet, your first reply is the CANONICAL OPENING — name, company, purpose, then ask if they have a moment.
 - NEVER use inbound help-desk phrasing on the first turn (generic assistance before confirming they have time).
 - Introduce yourself only once per call — never re-greet on turn two."""
     return f"""FIRST TURN / IDENTITY (inbound — they called you)
@@ -98,8 +99,9 @@ def build_audio_session_instructions(
     if _is_outbound(direction):
         parts.append(
             "CALL DIRECTION (outbound — mandatory)\n"
-            "- You placed this call. VAD is on — wait for the callee to speak, then reply once with your scripted opening.\n"
-            "- Do not speak first while the line is silent.\n"
+            "- You placed this call. VAD is on — do not speak first while the line is silent.\n"
+            "- The platform may already play your scripted opening. If that line was already spoken, never repeat it; answer the callee.\n"
+            "- If the opening has not been spoken yet, reply once with your scripted opening when they pick up, then continue.\n"
             "- After your first intro, continue the sales conversation naturally.\n"
             "- Turn discipline: 1–2 short sentences, then stop and listen. "
             "Ask at most one question. Never keep explaining or pitching after a question.\n"

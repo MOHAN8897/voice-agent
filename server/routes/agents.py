@@ -3,12 +3,17 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from server.auth.subscriber_dependencies import require_subscriber_jwt_if_enabled
+from server.auth.tenant_context import tenant_id_from_request
 from server.brain.agent_service import agent_service
-from server.services.saas.tenant_guard import SubscriberPrincipal, require_subscriber_permission
+from server.services.saas.tenant_guard import (
+    SubscriberPrincipal,
+    require_subscriber_permission,
+    subscriber_workspace_tenant_id,
+)
 
 router = APIRouter()
 
@@ -27,24 +32,30 @@ class PatchAgentBody(BaseModel):
     memorySchema: Optional[str] = None
 
 
-def _tenant_id(principal: SubscriberPrincipal | None) -> str | None:
-    return str(principal.tenant_id) if principal else None
+def _tenant_id(request: Request, principal: SubscriberPrincipal | None) -> str | None:
+    if principal:
+        return str(subscriber_workspace_tenant_id(principal))
+    return tenant_id_from_request(request)
 
 
 @router.get("/api/agents")
-async def list_agents(principal: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled)):
-    agents = await agent_service.list_agents(tenant_id=_tenant_id(principal))
+async def list_agents(
+    request: Request,
+    principal: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled),
+):
+    agents = await agent_service.list_agents(tenant_id=_tenant_id(request, principal))
     return {"agents": agents}
 
 
 @router.post("/api/agents")
 async def create_agent(
+    request: Request,
     body: CreateAgentBody,
     principal: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled),
 ):
     if principal:
         require_subscriber_permission(principal, "app.agents.write")
-    tenant_id = _tenant_id(principal) or body.tenantId
+    tenant_id = _tenant_id(request, principal) or body.tenantId
     if principal and body.tenantId and body.tenantId != str(principal.tenant_id):
         raise HTTPException(status_code=400, detail={"error": {"code": "invalid_tenant", "message": "Invalid tenant"}})
     agent = await agent_service.create_agent(
@@ -57,11 +68,12 @@ async def create_agent(
 
 @router.get("/api/agents/{agent_id}")
 async def get_agent(
+    request: Request,
     agent_id: str,
     principal: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled),
 ):
     try:
-        return {"agent": await agent_service.get_agent(agent_id, tenant_id=_tenant_id(principal))}
+        return {"agent": await agent_service.get_agent(agent_id, tenant_id=_tenant_id(request, principal))}
     except KeyError:
         raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Agent not found"}})
     except ValueError:
@@ -70,6 +82,7 @@ async def get_agent(
 
 @router.patch("/api/agents/{agent_id}")
 async def patch_agent(
+    request: Request,
     agent_id: str,
     body: PatchAgentBody,
     principal: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled),
@@ -88,7 +101,7 @@ async def patch_agent(
     if body.memorySchema is not None:
         patch["memory_schema"] = body.memorySchema
     try:
-        agent = await agent_service.patch_agent(agent_id, patch, tenant_id=_tenant_id(principal))
+        agent = await agent_service.patch_agent(agent_id, patch, tenant_id=_tenant_id(request, principal))
     except KeyError:
         raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Agent not found"}})
     return {"ok": True, "agent": agent}
@@ -96,22 +109,24 @@ async def patch_agent(
 
 @router.put("/api/agents/{agent_id}")
 async def put_agent(
+    request: Request,
     agent_id: str,
     body: PatchAgentBody,
     principal: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled),
 ):
-    return await patch_agent(agent_id, body, principal)
+    return await patch_agent(request, agent_id, body, principal)
 
 
 @router.delete("/api/agents/{agent_id}")
 async def delete_agent(
+    request: Request,
     agent_id: str,
     principal: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled),
 ):
     if principal:
         require_subscriber_permission(principal, "app.agents.write")
     try:
-        return await agent_service.delete_agent(agent_id, tenant_id=_tenant_id(principal))
+        return await agent_service.delete_agent(agent_id, tenant_id=_tenant_id(request, principal))
     except KeyError:
         raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Agent not found"}})
     except ValueError:

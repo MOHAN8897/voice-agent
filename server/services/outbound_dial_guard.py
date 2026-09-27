@@ -17,6 +17,22 @@ _ACTIVE_CALL_STATUSES = {
     "in_progress",
 }
 
+# Terminal / zombie rows must never block a new Place Call.
+_TERMINAL_CALL_STATUSES = {
+    "hangup",
+    "completed",
+    "failed",
+    "busy",
+    "no-answer",
+    "no_answer",
+    "canceled",
+    "cancelled",
+    "ended",
+    "stream-error",
+    "stream-stopped",
+    "stream-ended",
+}
+
 INFLIGHT_TTL_SEC = 45.0
 # Ringing/queued rows older than this are zombies (provider never progressed).
 # Answered/streaming calls are never replaced, regardless of age.
@@ -48,11 +64,9 @@ def _slot_key(provider: str, to_e164: str) -> str:
 
 def _is_active_status(status: str) -> bool:
     raw = (status or "").strip().lower().replace("call.", "")
-    if raw in ("hangup", "completed", "failed", "busy", "no-answer", "canceled", "stream-error"):
+    if raw in _TERMINAL_CALL_STATUSES:
         return False
-    if raw in _ACTIVE_CALL_STATUSES:
-        return True
-    return "stream" in raw
+    return raw in _ACTIVE_CALL_STATUSES
 
 
 def _row_age_sec(row: dict[str, Any], now: float | None = None) -> float:
@@ -67,10 +81,12 @@ def _status_slug(status: str) -> str:
 
 
 def _is_live_leg(row: dict[str, Any]) -> bool:
+    if row.get("ended"):
+        return False
     raw = _status_slug(str(row.get("status") or ""))
-    if raw in _LIVE_LEG_STATUSES:
-        return True
-    return "stream" in raw
+    if raw in _TERMINAL_CALL_STATUSES:
+        return False
+    return raw in _LIVE_LEG_STATUSES
 
 
 def _is_replaceable_telnyx_row(row: dict[str, Any], now: float | None = None) -> bool:
@@ -111,6 +127,8 @@ def peek_reusable_telnyx_call(to_e164: str) -> dict[str, Any] | None:
     for row in telnyx_call_registry.list_recent(20):
         if dest_digits(str(row.get("to") or "")) != dest:
             continue
+        if row.get("ended"):
+            continue
         if not _is_active_status(str(row.get("status") or "")):
             continue
         if _is_replaceable_telnyx_row(row, now):
@@ -128,6 +146,8 @@ async def hangup_active_telnyx_to(client: Any, to_e164: str) -> None:
     now = time.time()
     for row in telnyx_call_registry.list_recent(20):
         if dest_digits(str(row.get("to") or "")) != dest:
+            continue
+        if row.get("ended"):
             continue
         status = str(row.get("status") or "")
         if not _is_active_status(status):

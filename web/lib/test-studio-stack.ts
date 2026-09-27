@@ -12,6 +12,10 @@ import {
   normalizeRealtimeTurnDetection,
   normalizeRealtimeVadEagerness,
   normalizeRealtimeVoice,
+  isGeminiLiveVoiceModel,
+  isRealtimeSpeechToSpeechModel,
+  GEMINI_LIVE_MODEL_IDS,
+  REALTIME_MODEL_IDS,
 } from "@/lib/realtime-voice";
 
 export type StackForm = {
@@ -138,18 +142,40 @@ export function effectivePstnLiveLlm(
     if (trimmed.startsWith("gpt-realtime")) {
       return { provider: "openai", model: trimmed };
     }
+    if (isGeminiLiveVoiceModel(trimmed)) {
+      return { provider: "gemini", model: trimmed };
+    }
   }
   return { provider: "openai", model: "gpt-realtime-2.1-mini" };
 }
 
+export function realtimeSpeechModelOptions(
+  providers: ProviderEntry[]
+): { id: string; label?: string; provider: string }[] {
+  const openai = modelsFor(providers, "openai", "llm").filter((m) => m.id.startsWith("gpt-realtime"));
+  const gemini = modelsFor(providers, "gemini", "llm").filter((m) => isGeminiLiveVoiceModel(m.id));
+  const fallbackGemini = GEMINI_LIVE_MODEL_IDS.map((id) => ({ id, label: id, provider: "gemini" as const }));
+  const openaiRows = (openai.length ? openai : REALTIME_MODEL_IDS.map((id) => ({ id, label: id }))).map((m) => ({
+    ...m,
+    provider: "openai" as const,
+  }));
+  const geminiRows = (gemini.length ? gemini : fallbackGemini).map((m) => ({
+    ...m,
+    provider: "gemini" as const,
+  }));
+  return [...openaiRows, ...geminiRows];
+}
+
 export function buildPstnRealtimeStackOverride(form: StackForm): Record<string, unknown> {
-  const model = String(form.llmModel || "").startsWith("gpt-realtime")
-    ? form.llmModel
-    : "gpt-realtime-2.1-mini";
+  const live = effectivePstnLiveLlm(undefined, form.llmModel);
+  const model = isRealtimeSpeechToSpeechModel(form.llmModel) ? form.llmModel : live.model;
+  const provider = isGeminiLiveVoiceModel(model) ? "gemini" : "openai";
+  const language = String(form.language || "te-IN").trim() || "te-IN";
   return {
     pipeline: "realtime_voice",
     voice_flow: "realtime_e2e",
-    llm: { provider: "openai", model },
+    language,
+    llm: { provider, model },
     realtime_voice: {
       voice: normalizeRealtimeVoice(form.realtimeVoice),
       turn_detection: normalizeRealtimeTurnDetection(form.realtimeTurnDetection),

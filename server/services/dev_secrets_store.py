@@ -257,6 +257,26 @@ class DevSecretsStore:
                 self._toggle_row("ENABLE_CARTESIA", "enable_cartesia", settings, overlay),
                 self._toggle_row("ENABLE_GEMINI", "enable_gemini", settings, overlay),
             ],
+            "llm_defaults": [
+                {
+                    "env_name": "GEMINI_MODEL",
+                    "field": "gemini_model",
+                    "value": settings.gemini_model,
+                    "source": "env",
+                    "type": "string",
+                    "editable": False,
+                    "hint": "HTTP Gemini for classic stacks. Live PSTN E2E uses gemini-3.8-live from Test Studio stack.",
+                },
+                {
+                    "env_name": "VOICE_PIPELINE_MODE",
+                    "field": "voice_pipeline_mode",
+                    "value": settings.voice_pipeline_mode,
+                    "source": "env",
+                    "type": "string",
+                    "editable": False,
+                    "hint": "Env default when dial has no stack_override. Test Studio PSTN realtime sets pipeline per call.",
+                },
+            ],
             "telephony": [
                 self._string_row("TELEPHONY_PROVIDER", "telephony_provider", settings, overlay),
                 self._toggle_row("ENABLE_EXOTEL", "enable_exotel", settings, overlay),

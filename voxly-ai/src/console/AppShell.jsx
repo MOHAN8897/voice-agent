@@ -7,7 +7,12 @@ import { CommandPalette } from './CommandPalette';
 // Submodules
 import { OverviewModule } from './modules/OverviewModule';
 import { EmployeesModule } from './modules/EmployeesModule';
-import { AgentStudioModule } from './modules/AgentStudioModule';
+import {
+  parseDashboardHash,
+  buildEmployeesHash,
+  legacyEmployeeStep,
+  resolveConsoleTab,
+} from './employeeFlowHash';
 import { CreateAgentWizard } from './modules/CreateAgentWizard';
 import { PhoneNumbersModule } from './modules/PhoneNumbersModule';
 import { CallsModule } from './modules/CallsModule';
@@ -16,10 +21,11 @@ import { CampaignsModule } from './modules/CampaignsModule';
 import { BillingModule } from './modules/BillingModule';
 import { IntegrationsModule } from './modules/IntegrationsModule';
 import { SettingsModule } from './modules/SettingsModule';
-import { TalkToAiConsole } from './modules/TalkToAiConsole';
+import { AdminModule } from './modules/AdminModule';
 import { useAuth } from '../context/AuthContext';
 import { ConsoleSyncBanner } from './ui/ConsoleSyncBanner';
 import { PurchaseProvisioningBanner } from './ui/PurchaseProvisioningBanner';
+import { ToastHost } from './ui/ToastHost';
 
 export function AppShell({ onBackToLanding, onSignOut }) {
   const { user } = useAuth();
@@ -31,31 +37,41 @@ export function AppShell({ onBackToLanding, onSignOut }) {
     isCommandPaletteOpen,
     setIsCommandPaletteOpen,
     loadWorkspaceData,
+    setSelectedAgentId,
   } = useWorkspace();
 
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
+  const [employeeFlowStep, setEmployeeFlowStep] = useState(null);
+
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window !== 'undefined' && window.location.hash.startsWith('#dashboard/')) {
-      const tab = window.location.hash.replace('#dashboard/', '').split('?')[0];
-      return tab || 'overview';
+      const { tab } = parseDashboardHash(window.location.hash);
+      return resolveConsoleTab(tab) || 'overview';
     }
     return 'overview';
   });
 
-  // Handle hash changes if hash points to a specific tab
+  const applyHash = (hash) => {
+    if (!hash.startsWith('#dashboard/')) return;
+    const { tab, step, agentId } = parseDashboardHash(hash);
+    const legacyStep = legacyEmployeeStep(tab);
+    const resolvedTab = resolveConsoleTab(tab);
+    if (resolvedTab) setActiveTab(resolvedTab);
+    const flowStep = legacyStep || (resolvedTab === 'employees' ? step : null);
+    setEmployeeFlowStep(flowStep);
+    if (agentId) setSelectedAgentId(agentId);
+    if (legacyStep && resolvedTab === 'employees') {
+      window.history.replaceState(null, '', buildEmployeesHash({ step: legacyStep, agentId }));
+    }
+  };
+
   useEffect(() => {
-    const handleHash = () => {
-      const hash = window.location.hash;
-      if (hash.startsWith('#dashboard/')) {
-        const tab = hash.replace('#dashboard/', '').split('?')[0];
-        if (tab) setActiveTab(tab);
-      }
-    };
-    handleHash();
+    applyHash(window.location.hash);
+    const handleHash = () => applyHash(window.location.hash);
     window.addEventListener('hashchange', handleHash);
     return () => window.removeEventListener('hashchange', handleHash);
-  }, []);
+  }, [setSelectedAgentId]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -71,15 +87,43 @@ export function AppShell({ onBackToLanding, onSignOut }) {
   };
 
   const handleNavigate = (tabId, options = {}) => {
-    setActiveTab(tabId);
-    window.location.hash = `#dashboard/${tabId}`;
     setIsMobileSidebarOpen(false);
-    if (options.openCreate) {
-      setIsCreateAgentOpen(true);
+    const legacyStep = legacyEmployeeStep(tabId);
+    const tab = legacyStep ? 'employees' : tabId;
+    setActiveTab(tab);
+
+    if (tab === 'employees' && (legacyStep || options.step)) {
+      const step = options.step || legacyStep;
+      if (options.agentId) setSelectedAgentId(options.agentId);
+      setEmployeeFlowStep(step || null);
+      window.location.hash = buildEmployeesHash({ step, agentId: options.agentId });
+    } else if (tab === 'employees' && !options.step && !legacyStep) {
+      setEmployeeFlowStep(null);
+      window.location.hash = '#dashboard/employees';
+    } else {
+      setEmployeeFlowStep(null);
+      window.location.hash = `#dashboard/${tab}`;
+      if (options.agentId) {
+        setSelectedAgentId(options.agentId);
+        if (tab === 'calls' && typeof window !== 'undefined') {
+          sessionStorage.setItem('voxly_calls_agent', options.agentId);
+        }
+      }
     }
-    if (options.openBuy) {
-      setIsBuyNumberOpen(true);
-    }
+
+    if (options.openCreate) setIsCreateAgentOpen(true);
+    if (options.openBuy) setIsBuyNumberOpen(true);
+  };
+
+  const handleEmployeeFlowStepChange = (step, agentId) => {
+    setEmployeeFlowStep(step);
+    if (agentId) setSelectedAgentId(agentId);
+    window.location.hash = buildEmployeesHash({ step, agentId });
+  };
+
+  const handleBackToFleet = () => {
+    setEmployeeFlowStep(null);
+    window.location.hash = '#dashboard/employees';
   };
 
   return (
@@ -95,7 +139,6 @@ export function AppShell({ onBackToLanding, onSignOut }) {
         }}
         onOpenAddFunds={() => handleSelectTab('billing')}
         onBackToLanding={onBackToLanding}
-        onSignOut={onSignOut}
         isMobileOpen={isMobileSidebarOpen}
         onCloseMobile={() => setIsMobileSidebarOpen(false)}
       />
@@ -104,16 +147,17 @@ export function AppShell({ onBackToLanding, onSignOut }) {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#FAF9FD]">
         <Topbar
           activeTab={activeTab}
+          employeeFlowStep={employeeFlowStep}
           onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
           onOpenCreateAgent={() => setIsCreateAgentOpen(true)}
           onOpenBuyNumber={() => {
             handleSelectTab('phone-numbers');
             setIsBuyNumberOpen(true);
           }}
+          onNavigate={handleSelectTab}
           user={user}
           onBackToLanding={onBackToLanding}
           onSignOut={onSignOut}
-          isMobileSidebarOpen={isMobileSidebarOpen}
           onToggleMobileSidebar={() => setIsMobileSidebarOpen((prev) => !prev)}
         />
 
@@ -136,6 +180,9 @@ export function AppShell({ onBackToLanding, onSignOut }) {
             {activeTab === 'employees' && (
               <EmployeesModule
                 onNavigate={handleNavigate}
+                employeeFlowStep={employeeFlowStep}
+                onEmployeeFlowStepChange={handleEmployeeFlowStepChange}
+                onBackToFleet={handleBackToFleet}
                 onOpenCreateAgent={() => setIsCreateAgentOpen(true)}
                 onOpenBuyNumber={() => {
                   handleSelectTab('phone-numbers');
@@ -143,18 +190,6 @@ export function AppShell({ onBackToLanding, onSignOut }) {
                 }}
               />
             )}
-
-            {activeTab === 'agent-studio' && (
-              <AgentStudioModule
-                onNavigate={handleNavigate}
-                onOpenBuyNumber={() => {
-                  handleSelectTab('phone-numbers');
-                  setIsBuyNumberOpen(true);
-                }}
-              />
-            )}
-
-            {activeTab === 'talk-to-ai' && <TalkToAiConsole />}
 
             {activeTab === 'phone-numbers' && (
               <PhoneNumbersModule
@@ -175,6 +210,7 @@ export function AppShell({ onBackToLanding, onSignOut }) {
             {activeTab === 'integrations' && <IntegrationsModule />}
 
             {activeTab === 'settings' && <SettingsModule />}
+            {activeTab === 'admin' && <AdminModule />}
           </div>
         </main>
       </div>
@@ -184,8 +220,13 @@ export function AppShell({ onBackToLanding, onSignOut }) {
         isOpen={isCreateAgentOpen}
         onClose={() => setIsCreateAgentOpen(false)}
         onNavigate={handleNavigate}
+        onOpenBuyNumber={() => {
+          setIsCreateAgentOpen(false);
+          setIsBuyNumberOpen(true);
+        }}
       />
 
+      <ToastHost />
       <CommandPalette
         isOpen={isCommandPaletteOpen}
         onClose={() => setIsCommandPaletteOpen(false)}

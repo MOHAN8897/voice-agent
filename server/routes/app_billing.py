@@ -13,7 +13,7 @@ from server.services.saas.billing_wallet_service import (
 )
 from server.services.saas.razorpay_service import confirm_wallet_payment, create_wallet_order, list_invoices
 from server.services.saas.tenant_guard import SubscriberPrincipal, require_subscriber_permission
-from server.utils.rate_limiter import RateLimiter
+from server.utils.rate_limiter import RateLimiter, raise_rate_limited
 
 router = APIRouter()
 _billing_limiter = RateLimiter(max_requests=30, window_s=300)
@@ -50,7 +50,7 @@ async def billing_catalog():
 async def billing_wallet(principal: SubscriberPrincipal = Depends(require_subscriber_jwt)):
     require_subscriber_permission(principal, "app.billing.read")
     try:
-        return await wallet_summary(principal.tenant_id)
+        return await wallet_summary(principal.tenant_id, user_id=principal.user_id)
     except RuntimeError:
         raise HTTPException(status_code=503, detail="Database required")
 
@@ -60,7 +60,7 @@ async def billing_topup(body: TopupBody, principal: SubscriberPrincipal = Depend
     require_subscriber_permission(principal, "app.billing.write")
     allowed, retry = _billing_limiter.allow(f"topup:{principal.user_id}")
     if not allowed:
-        raise HTTPException(status_code=429, detail={"error": {"code": "rate_limit", "retry_after": retry}})
+        raise_rate_limited(retry, "Top-up rate limit reached.")
     try:
         return await create_topup_checkout(principal.tenant_id, body.amountUsd, principal.email)
     except ValueError as e:
@@ -77,7 +77,7 @@ async def razorpay_create_order(
     require_subscriber_permission(principal, "app.billing.write")
     allowed, retry = _billing_limiter.allow(f"rzp:{principal.user_id}")
     if not allowed:
-        raise HTTPException(status_code=429, detail={"error": {"code": "rate_limit", "retry_after": retry}})
+        raise_rate_limited(retry, "Payment rate limit reached.")
     try:
         return await create_wallet_order(principal.tenant_id, body.amountInr)
     except ValueError as e:
@@ -108,9 +108,16 @@ async def billing_invoices(principal: SubscriberPrincipal = Depends(require_subs
 async def billing_transactions(
     principal: SubscriberPrincipal = Depends(require_subscriber_jwt),
     limit: int = 50,
+    mine: bool = False,
 ):
     require_subscriber_permission(principal, "app.billing.read")
-    return {"transactions": await list_wallet_transactions(principal.tenant_id, limit=limit)}
+    return {
+        "transactions": await list_wallet_transactions(
+            principal.tenant_id,
+            limit=limit,
+            user_id=principal.user_id if mine else None,
+        )
+    }
 
 
 @router.get("/api/billing/razorpay/config")

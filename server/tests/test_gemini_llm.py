@@ -62,6 +62,77 @@ def test_gemini_usage_maps_cached_tokens():
     assert usage["cached_tokens"] == 2000
 
 
+def test_gemini_live_usage_splits_text_and_audio_modalities():
+    usage = gemini_usage_from_metadata(
+        {
+            "promptTokenCount": 5904,
+            "responseTokenCount": 180,
+            "totalTokenCount": 6084,
+            "cachedContentTokenCount": 0,
+            "promptTokensDetails": [
+                {"modality": "TEXT", "tokenCount": 5500},
+                {"modality": "AUDIO", "tokenCount": 404},
+            ],
+            "responseTokensDetails": [
+                {"modality": "AUDIO", "tokenCount": 180},
+            ],
+        }
+    )
+    assert usage["input_tokens"] == 5904
+    assert usage["output_tokens"] == 180
+    assert usage["input_audio_tokens"] == 404
+    assert usage["output_audio_tokens"] == 180
+    assert usage["cached_tokens"] == 0
+
+
+def test_gemini_live_usage_does_not_bill_prompt_as_audio_without_details():
+    usage = gemini_usage_from_metadata(
+        {
+            "promptTokenCount": 5904,
+            "candidatesTokenCount": 0,
+            "totalTokenCount": 5904,
+        }
+    )
+    assert usage["input_audio_tokens"] == 0
+    assert usage["output_audio_tokens"] == 0
+    assert usage["input_tokens"] == 5904
+
+
+def test_gemini_live_usage_without_details_bills_output_as_audio():
+    usage = gemini_usage_from_metadata(
+        {
+            "promptTokenCount": 5904,
+            "candidatesTokenCount": 180,
+            "totalTokenCount": 6084,
+        },
+        native_audio=True,
+    )
+    assert usage["input_audio_tokens"] == 0
+    assert usage["output_audio_tokens"] == 180
+    assert usage["input_tokens"] == 5904
+    assert usage["output_tokens"] == 180
+
+
+def test_gemini_live_usage_splits_image_and_video_tokens():
+    usage = gemini_usage_from_metadata(
+        {
+            "promptTokenCount": 2000,
+            "responseTokenCount": 80,
+            "promptTokensDetails": [
+                {"modality": "TEXT", "tokenCount": 1500},
+                {"modality": "IMAGE", "tokenCount": 300},
+                {"modality": "VIDEO", "tokenCount": 100},
+                {"modality": "AUDIO", "tokenCount": 100},
+            ],
+            "responseTokensDetails": [{"modality": "AUDIO", "tokenCount": 80}],
+        }
+    )
+    assert usage["input_image_tokens"] == 400
+    assert usage["input_audio_tokens"] == 100
+    assert usage["output_audio_tokens"] == 80
+    assert usage["input_tokens"] == 2000
+
+
 @pytest.mark.asyncio
 async def test_openai_adapter_drops_model_kwarg(monkeypatch):
     import inspect

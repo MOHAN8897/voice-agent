@@ -165,6 +165,8 @@ export function PstnTestPanel({
   const [providerDraft, setProviderDraft] = useState("telnyx");
   const [verifyCode, setVerifyCode] = useState("");
   const [trackedCallId, setTrackedCallId] = useState<string | null>(null);
+  const [mediaFlowCallId, setMediaFlowCallId] = useState<string | null>(null);
+  const [platformPhoneStack, setPlatformPhoneStack] = useState<Record<string, unknown> | null>(null);
   const [listenCallId, setListenCallId] = useState<string | null>(null);
   const [farFieldNoiseReduction, setFarFieldNoiseReduction] = useState(true);
   const trackedCallRef = useRef<string | null>(null);
@@ -183,6 +185,34 @@ export function PstnTestPanel({
   const active = status?.active_provider || providerDraft;
   const activeSt = status?.providers?.find((p) => p.id === active);
 
+  const isRealtimeE2e = useMemo(
+    () => stackOverride?.pipeline === "realtime_voice",
+    [stackOverride],
+  );
+
+  useEffect(() => {
+    if (!isRealtimeE2e) {
+      setPlatformPhoneStack(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await portalFetch("dev", "/api/dev/stack/saas-phone");
+        if (!r.ok || cancelled) return;
+        const j = await r.json();
+        if (j.resolved && typeof j.resolved === "object") {
+          setPlatformPhoneStack(j.resolved as Record<string, unknown>);
+        }
+      } catch {
+        /* platform stack optional until dial */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isRealtimeE2e, language]);
+
   const enabledProviders = useMemo(() => {
     if (!status?.providers?.length) return [];
     return PROVIDERS.filter((p) => status.providers?.find((s) => s.id === p.id)?.enabled);
@@ -194,9 +224,12 @@ export function PstnTestPanel({
     if (!activeRow) return;
     const internal = isInternalCallId(activeRow.internal_call_id) ? String(activeRow.internal_call_id) : "";
     const endId = internal || callKey(activeRow);
+    const external = String(activeRow.call_control_id || activeRow.call_sid || activeRow.call_uuid || "").trim();
+    if (external) setMediaFlowCallId(external);
     if (internal && !trackedCallRef.current && endedOnceRef.current !== internal && endedOnceRef.current !== endId) {
       trackedCallRef.current = internal;
       setTrackedCallId(internal);
+      setMediaFlowCallId(internal);
       onInternalCallStartRef.current?.(internal);
     }
     if (
@@ -418,22 +451,37 @@ export function PstnTestPanel({
     pstnOutboundDialLock = true;
     dialingRef.current = true;
     setBusy(true);
-    trackedCallRef.current = null;
-    activeExternalRef.current = null;
-    endedOnceRef.current = null;
-    setTrackedCallId(null);
     setMessage(`Placing ${providerLabel(active)} outbound call…`);
     try {
+      let resolvedPlatform = platformPhoneStack;
+      if (isRealtimeE2e && !resolvedPlatform) {
+        try {
+          const pr = await portalFetch("dev", "/api/dev/stack/saas-phone");
+          const pj = await pr.json();
+          if (pj.resolved && typeof pj.resolved === "object") {
+            resolvedPlatform = pj.resolved as Record<string, unknown>;
+            setPlatformPhoneStack(resolvedPlatform);
+          }
+        } catch {
+          /* fall back to panel override */
+        }
+      }
       const dialBody: Record<string, unknown> = {
         toE164: to,
         fromE164: fromE164.trim() || undefined,
         agentId,
         tier: tier || "medium",
         language: language || "te-IN",
+        // Realtime E2E (Gemini/OpenAI Live) still needs Test Studio brain + fine-tune;
+        // only the telephony stack override comes from the platform phone profile.
         inheritTestStudioConfig: true,
         sourceSessionId,
       };
-      const dialOverride = applyFarFieldNoiseReduction(stackOverride, farFieldNoiseReduction);
+      const stackForDial =
+        isRealtimeE2e && resolvedPlatform
+          ? { ...resolvedPlatform, language: language || "te-IN" }
+          : stackOverride;
+      const dialOverride = applyFarFieldNoiseReduction(stackForDial, farFieldNoiseReduction);
       if (Object.keys(dialOverride).length) {
         dialBody.stackOverride = dialOverride;
       }
@@ -450,12 +498,21 @@ export function PstnTestPanel({
       const errDetail =
         j.validation_errors?.length ? j.validation_errors.join("; ") : j.error?.message || j.error || j.body;
       const externalId = j.call_sid || j.call_control_id || j.call_uuid || "";
+      const reused = Boolean(j.reused);
       setMessage(
         apiOk
-          ? `Call initiated · ${externalId || "queued"}${adj}`
+          ? reused
+            ? `Call already in progress · ${externalId || "same destination"}. Hang up first to place a new call.`
+            : `Call initiated · ${externalId || "queued"}${adj}`
           : errDetail || "Outbound failed"
       );
       if (apiOk) {
+        if (!reused) {
+          trackedCallRef.current = null;
+          endedOnceRef.current = null;
+          setTrackedCallId(null);
+          setMediaFlowCallId(null);
+        }
         if (externalId) activeExternalRef.current = String(externalId);
         onDialPlaced?.();
       }
@@ -907,7 +964,7 @@ export function PstnTestPanel({
       ) : null}
 
       {showLive && active === "telnyx" ? (
-        <LiveMediaFlowDebugger callId={trackedCallId} />
+        <LiveMediaFlowDebugger callId={mediaFlowCallId || trackedCallId} />
       ) : null}
 
       {showLive && listenCallId ? (

@@ -77,7 +77,7 @@ class FakeRealtimeAdapter:
 
 
 class FakeRealtimeVoiceAdapter:
-    def __init__(self, events: list[dict[str, Any]] | None = None) -> None:
+    def __init__(self, events: list[dict[str, Any]] | None = None, **_kwargs: Any) -> None:
         self.events_script = events
         self.appended: list[bytes] = []
         self.cancelled = 0
@@ -95,6 +95,8 @@ class FakeRealtimeVoiceAdapter:
         self.instruction_updates = 0
         self.deleted_item_ids: list[str] = []
         self.auto_response_states: list[bool] = []
+        self.opening_history_clean = True
+        self.opening_delivered = False
         self._poll_events: list[dict[str, Any]] = []
         self._poll_index = 0
 
@@ -142,13 +144,16 @@ class FakeRealtimeVoiceAdapter:
     async def note_assistant_text(self, text: str) -> None:
         self.noted_assistant.append(text)
 
+    async def note_opening_delivered(self) -> None:
+        self.opening_delivered = True
+
     async def start_response(self, *, instructions: str | None = None) -> None:
         self.started_responses.append(instructions or "")
 
     async def cancel_response(self, *, response_id: str | None = None) -> None:
         self.cancelled += 1
 
-    async def submit_function_output(self, *, call_id: str, output: str) -> None:
+    async def submit_function_output(self, *, call_id: str, output: str, name: str | None = None) -> None:
         self.started_responses.append(f"fn:{call_id}:{output}")
 
     async def clear_output_audio(self) -> None:

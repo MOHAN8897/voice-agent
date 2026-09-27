@@ -49,6 +49,20 @@ def test_composed_pstn_stack_still_strips_llm():
     assert out["stt"]["model"] == "saaras:v3-realtime"
 
 
+def test_realtime_voice_stack_keeps_gemini_live():
+    raw = {
+        "pipeline": "realtime_voice",
+        "voice_flow": "realtime_e2e",
+        "llm": {"provider": "gemini", "model": "gemini-3.8-live"},
+        "realtime_voice": {"voice": "ash", "turn_detection": "semantic_vad", "noise_reduction": "far_field"},
+    }
+    out, _adj = normalize_pstn_stack_override(raw, language="en-US")
+    assert out["llm"]["provider"] == "gemini"
+    assert out["llm"]["model"] == "gemini-3.8-live"
+    assert out["realtime_voice"]["noise_reduction"] == "far_field"
+    assert out["language"] == "en-US"
+
+
 def test_realtime_voice_stack_keeps_mini_and_voice():
     raw = {
         "pipeline": "realtime_voice",
@@ -160,6 +174,7 @@ def test_outbound_audio_instructions_wait_for_callee():
     assert "Do you have a moment?" in audio
     assert "Ask at most one question" in audio
     assert "never re-ask" in audio.lower()
+    assert "never repeat" in audio.lower()
     assert "maximum 20 spoken words" not in audio
 
 
@@ -174,6 +189,20 @@ def test_audio_token_cost_uses_mini_audio_rates():
     assert cost["audio_input_usd"] == pytest.approx(0.006, rel=1e-6)
     assert cost["audio_output_usd"] == pytest.approx(0.024, rel=1e-6)
     assert cost["total_usd"] == pytest.approx(0.03, rel=1e-6)
+
+
+def test_audio_token_cost_uses_gemini_live_audio_rates():
+    cost = cost_llm_usd(
+        input_tokens=1000,
+        output_tokens=500,
+        llm_model="gemini-3.8-live",
+        input_audio_tokens=1000,
+        output_audio_tokens=500,
+    )
+    assert cost["audio_input_usd"] == pytest.approx(0.003, rel=1e-6)
+    assert cost["audio_output_usd"] == pytest.approx(0.006, rel=1e-6)
+    assert cost["uncached_usd"] == pytest.approx(0.0, abs=1e-9)
+    assert cost["total_usd"] == pytest.approx(0.009, rel=1e-6)
 
 
 def test_cached_audio_tokens_use_cached_audio_rate():
@@ -420,6 +449,87 @@ async def test_realtime_loop_uses_stack_model_and_records_audio_cost():
 
 
 @pytest.mark.asyncio
+async def test_gemini_usage_events_are_session_snapshots_not_summed(monkeypatch, tmp_path):
+    from server.call.call_ledger import call_ledger
+    from server.config.env import get_settings
+    from server.services.pstn_realtime_voice_core import record_realtime_voice_usage
+
+    monkeypatch.setenv("DATA_DIR", str(tmp_path))
+    get_settings.cache_clear()
+    call_ledger.reset_for_tests()
+    cid = "gemini-snap"
+    await call_ledger.init(cid, {"call_id": cid})
+    snap = {
+        "input_tokens": 5904,
+        "output_tokens": 180,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "input_audio_tokens": 404,
+        "output_audio_tokens": 180,
+    }
+    first = await record_realtime_voice_usage(call_id=cid, usage=snap, llm_model="gemini-3.8-live")
+    dup = await record_realtime_voice_usage(call_id=cid, usage=snap, llm_model="gemini-3.8-live")
+    assert first is not None
+    assert dup is None
+    meta = call_ledger.read_meta(cid)
+    assert meta["usage"]["input_tokens"] == 5904
+    assert meta["usage"]["turns"] == 1
+    grown = {**snap, "input_tokens": 7000, "input_audio_tokens": 1500}
+    second = await record_realtime_voice_usage(call_id=cid, usage=grown, llm_model="gemini-3.8-live")
+    assert second is not None
+    meta = call_ledger.read_meta(cid)
+    assert meta["usage"]["input_tokens"] == 7000
+    assert meta["usage"]["input_audio_tokens"] == 1500
+    assert meta["usage"]["turns"] == 2
+    assert meta["usage"]["cost_usd"] == pytest.approx(second["cost_usd"] + first["cost_usd"], rel=1e-9)
+    get_settings.cache_clear()
+
+
+@pytest.mark.asyncio
+async def test_gemini_prewarm_usage_is_added_to_live_snapshot(monkeypatch, tmp_path):
+    from server.call.call_ledger import call_ledger
+    from server.config.env import get_settings
+    from server.services.pstn_realtime_voice_core import record_realtime_voice_usage
+
+    monkeypatch.setenv("DATA_DIR", str(tmp_path))
+    get_settings.cache_clear()
+    call_ledger.reset_for_tests()
+    cid = "gemini-prewarm"
+    await call_ledger.init(cid, {"call_id": cid})
+    greet = {
+        "input_tokens": 200,
+        "output_tokens": 40,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "input_audio_tokens": 0,
+        "output_audio_tokens": 40,
+    }
+    billed = await record_realtime_voice_usage(
+        call_id=cid,
+        usage=greet,
+        llm_model="gemini-3.8-live",
+        assistant_text="time unda?",
+        prewarm=True,
+    )
+    assert billed is not None
+    live = {
+        "input_tokens": 5904,
+        "output_tokens": 180,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "input_audio_tokens": 404,
+        "output_audio_tokens": 180,
+    }
+    snap = await record_realtime_voice_usage(call_id=cid, usage=live, llm_model="gemini-3.8-live")
+    assert snap is not None
+    meta = call_ledger.read_meta(cid)
+    assert meta["usage"]["input_tokens"] == 6104
+    assert meta["usage"]["output_tokens"] == 220
+    assert meta["usage"]["prewarm_input_tokens"] == 200
+    get_settings.cache_clear()
+
+
+@pytest.mark.asyncio
 async def test_save_config_realtime_voice_writes_openai_model_not_sarvam(monkeypatch):
     from server.routes import test_studio
     from server.services.session_persist import SessionPersist
@@ -524,7 +634,10 @@ async def test_realtime_loop_archives_user_and_agent_pcm(monkeypatch, tmp_path):
 @pytest.mark.asyncio
 async def test_agent_hangup_drains_archive_before_lifecycle_end(monkeypatch, tmp_path):
     monkeypatch.setattr("server.call.natural_hangup.HANGUP_TRAIL_SILENCE_SEC", 0.01)
-    monkeypatch.setattr("server.services.pstn_realtime_voice_core.CLOSE_LISTEN_SEC", 0.01)
+    monkeypatch.setattr(
+        "server.services.pstn_realtime_voice_core.PstnRealtimeVoiceLoop._close_listen_sec",
+        lambda self: 0.01,
+    )
     import struct
 
     from server.call.audio_archive import _agent_buffers, _user_buffers, audio_archive
@@ -1166,6 +1279,33 @@ async def test_tool_only_farewell_finishes_before_provider_hangup(monkeypatch):
     assert loop._close_listen_until > 0
     await _expire_close_listen(loop)
     remote_hangup.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_polite_thanks_during_close_listen_finishes_hangup(monkeypatch):
+    monkeypatch.setattr("server.call.natural_hangup.HANGUP_TRAIL_SILENCE_SEC", 0.01)
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+
+    adapter = FakeRealtimeVoiceAdapter()
+    remote_hangup = AsyncMock()
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id=None,
+        on_agent_wire=AsyncMock(),
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        adapter=adapter,
+        stack_override={"pipeline": "realtime_voice", "language": "en-US"},
+    )
+    loop._on_remote_hangup = remote_hangup
+    loop._pending_end_call = {"should_end": True, "reason": "goal_complete"}
+    loop._begin_close_listen()
+    assert loop._close_listen_until > 0
+
+    await loop._handle_event({"type": "user_transcript", "text": "Thank you.", "final": True})
+
+    remote_hangup.assert_awaited_once()
+    assert loop._close_listen_until == 0.0
 
 
 @pytest.mark.asyncio
@@ -1816,8 +1956,9 @@ async def test_inbound_pcm_is_buffered_until_adapter_ready():
 async def test_start_call_keeps_prewarm_instructions():
     adapter = FakeRealtimeVoiceAdapter()
     adapter.connected = True
-    adapter.instructions = "prewarmed brain instructions"
-    adapter.last_session = {"instructions": "prewarmed brain instructions"}
+    warm = "prewarmed brain instructions: Hi, this is Priya. Do you have a moment?"
+    adapter.instructions = warm
+    adapter.last_session = {"instructions": warm}
     from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
 
     loop = PstnRealtimeVoiceLoop(
@@ -1835,7 +1976,7 @@ async def test_start_call_keeps_prewarm_instructions():
         greeting_text="Hi, this is Priya. Do you have a moment?",
     )
     assert adapter.instruction_updates == 0
-    assert adapter.instructions == "prewarmed brain instructions"
+    assert adapter.instructions == warm
     assert adapter.auto_response_states == [False]
     assert loop._deferred_greeting_armed is True
     await loop.close()

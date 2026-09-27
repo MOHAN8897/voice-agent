@@ -247,6 +247,11 @@ class VerifyEmailBody(BaseModel):
     token: str = Field(..., min_length=10)
 
 
+class VerifyEmailOtpBody(BaseModel):
+    email: str = Field(..., min_length=3)
+    otp: str = Field(..., min_length=6, max_length=6)
+
+
 @router.post("/api/auth/verify-email")
 async def auth_verify_email(body: VerifyEmailBody):
     _ensure_saas_db()
@@ -255,6 +260,26 @@ async def auth_verify_email(body: VerifyEmailBody):
         return {"ok": True, "message": "Email verified. You can sign in now."}
     except ValueError:
         raise HTTPException(status_code=400, detail={"error": {"code": "invalid_token", "message": "Invalid or expired link"}})
+
+
+@router.post("/api/auth/verify-email-otp")
+async def auth_verify_email_otp(body: VerifyEmailOtpBody, request: Request, response: Response):
+    _ensure_saas_db()
+    ip = _client_ip(request) or "unknown"
+    allowed, retry = _login_limiter.allow(f"verify-otp:{ip}:{body.email}")
+    if not allowed:
+        raise HTTPException(status_code=429, detail={"error": {"code": "rate_limit", "retry_after": retry}})
+    try:
+        data = await auth_service.verify_email_otp(body.email, body.otp, ip=ip)
+        return _attach_refresh(response, data)
+    except ValueError as e:
+        code = str(e)
+        if code == "invalid_otp":
+            raise HTTPException(
+                status_code=400,
+                detail={"error": {"code": "invalid_otp", "message": "Invalid or expired code. Request a new one."}},
+            )
+        raise HTTPException(status_code=400, detail={"error": {"code": code, "message": code}})
 
 
 @router.post("/api/auth/resend-verification")
