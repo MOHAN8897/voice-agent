@@ -1277,10 +1277,10 @@ async def test_tool_only_farewell_finishes_before_provider_hangup(monkeypatch):
     pcm24 = struct.pack("<" + "h" * 960, *([500] * 960))
     await loop._handle_event({"type": "audio_delta", "pcm": pcm24})
     await loop._handle_event({"type": "response_done"})
-    remote_hangup.assert_not_awaited()
-    assert loop._close_listen_until > 0
-    await _expire_close_listen(loop)
     remote_hangup.assert_awaited_once()
+    assert loop._close_listen_until == 0
+    if loop._background_hangup_task:
+        await loop._background_hangup_task
 
 
 @pytest.mark.asyncio
@@ -1492,7 +1492,7 @@ async def test_rejected_end_call_speaks_instead_of_silence():
         stack_override={"pipeline": "realtime_voice", "language": "en-IN"},
     )
     loop._adapter = adapter
-    await loop._handle_event({"type": "user_transcript", "text": "I want two plants", "final": True})
+    await loop._handle_event({"type": "user_transcript", "text": "tell me more about the plants", "final": True})
     await loop._handle_event({"type": "response_created"})
     await loop._handle_event(
         {
@@ -1724,6 +1724,8 @@ async def test_realtime_hangup_aborts_when_caller_barges_farewell(monkeypatch):
     await loop._finish_hangup()
     remote_hangup.assert_not_awaited()
     assert loop._hangup_started is False
+    assert loop._pending_end_call is not None
+    await loop._handle_event({"type": "user_transcript", "text": "tell me more about the plots", "final": True})
     assert loop._pending_end_call is None
 
 
@@ -1873,7 +1875,7 @@ async def test_hangup_abort_clears_agent_hangup_armed():
     loop._hangup_started = True
     loop._pending_end_call = {"reason": "goal_complete"}
     loop._farewell_response_active = True
-    await loop._commit_local_barge()
+    loop._abort_in_progress_hangup()
     assert get_ctx(call_id).agent_hangup_armed is False
     assert loop._hangup_started is False
     assert loop._pending_end_call is None
@@ -2106,8 +2108,6 @@ async def test_speech_after_end_request_aborts_hangup_until_confirmed():
         }
     )
     assert loop._pending_end_call is not None
-    await loop._handle_event({"type": "speech_started"})
-    assert loop._pending_end_call is None
     await loop._handle_event({"type": "user_transcript", "text": "I am here", "final": True})
     assert loop._pending_end_call is None
     assert any("still on the line" in item.lower() for item in adapter.started_responses)
@@ -2135,7 +2135,7 @@ async def test_sleeping_after_abort_rearms_confirmed_close():
             "final": True,
         }
     )
-    await loop._handle_event({"type": "speech_started"})
+    await loop._handle_event({"type": "user_transcript", "text": "I am here", "final": True})
     assert loop._pending_end_call is None
     await loop._handle_event({"type": "user_transcript", "text": "I'm sleeping now.", "final": True})
     assert loop._pending_end_call is not None
@@ -2171,7 +2171,7 @@ async def test_im_here_after_still_there_stays_on_line():
 
 
 @pytest.mark.asyncio
-async def test_farewell_silence_after_listen_window_hangs_up(monkeypatch):
+async def test_farewell_completion_hangs_up_without_listen_window(monkeypatch):
     monkeypatch.setattr("server.call.natural_hangup.HANGUP_TRAIL_SILENCE_SEC", 0.01)
     adapter = FakeRealtimeVoiceAdapter()
     from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
@@ -2192,8 +2192,7 @@ async def test_farewell_silence_after_listen_window_hangs_up(monkeypatch):
     await loop._handle_event({"type": "response_created"})
     await loop._handle_event({"type": "audio_delta", "pcm": struct.pack("<" + "h" * 960, *([400] * 960))})
     await loop._handle_event({"type": "response_done"})
-    remote_hangup.assert_not_awaited()
     assert loop._pending_end_call is not None
-    await _expire_close_listen(loop)
     remote_hangup.assert_awaited_once()
+    await loop._background_hangup_task
 

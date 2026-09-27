@@ -17,7 +17,7 @@
 
 **Verdict on the proposed remediation (below):** Use a **three-layer** design (tool → small backup detector → safety state machine). It can fix the **0e84ae17** class and cut idle Telnyx minutes, but it does **not** “solve hangup totally” without Gemini calling `request_end_call` on most closes. **Do not** grow a huge multilingual regex catalog (especially not hundreds of goodbye phrasings per language)—that is unmaintainable and the wrong primary mechanism.
 
-**Code status (2026-09-27):** Partial hangup work exists (fast hangup constants, `request_end_call`, `tool_sourced` trust for `firm_refusal`, multilang tests for **interest ledu** Telugu). **Pass 3 items marked OPEN are not fully implemented** in `pstn_realtime_voice_core.py` / `end_call_validate.py` unless explicitly noted ✅.
+**Code status (2026-09-27):** Pass 3 hangup layers landed in `pstn_realtime_voice_core.py` / `end_call_validate.py` (`caller_backup_end_intent`, tool-trust `goodbye`, 150ms tool/STT defer, hangup-aware stuck-response, hello fast-ack). Gate: `server/tests/test_pass3_hangup_golden.py` TEST 1–5.
 
 ---
 
@@ -115,18 +115,18 @@ Detailed row-level evidence lives in `pstn-critical-for-chatgpt/TELNYX_PSTN_FULL
 
 | # | Issue | Sev | Status | What happens today |
 |---|--------|-----|--------|-------------------|
-| 10.B.1 | **Backup detector misses golden refusal** (tool not called) | 🔴 | 🔴 OPEN | e.g. `కాల్ అవసరం లేదు` → no arm path today (incident `0e84ae17`); fix = **add to small detector + TEST 1**, not regex explosion |
-| 10.B.2 | **Tool not called** on clear decline | 🟡 | 🟡 PARTIAL | Platform depends on model; callback-close speech (“noted in records”) can run instead |
-| 10.B.3 | **`response_timeout` (30s)** on stuck `_response_open` | 🔴 | 🔴 OPEN | `_check_runtime` → `_runtime_end("response_timeout")` — not clean `pstn_hangup` |
-| 10.B.4 | **Tool `goodbye` still needs regex cues** on user text when `tool_sourced` | 🟡 | 🔴 OPEN | `_trust_live_tool_evidence` lines 403–410 require `_GOODBYE` / `_CALLER_DONE` for `goodbye` |
-| 10.B.5 | **Tool vs STT race** (empty/stale `_user_partial`) | 🟡 | 🔴 OPEN | No `_last_user_final_text` / deferred validate in core |
-| 10.B.6 | **No preempt cancel** on STT final before model monologue | 🟡 | 🔴 OPEN | Refusal final can race open Live response |
-| 10.B.7 | **Barge aborts hangup** (`_abort_in_progress_hangup`) | 🟡 | 🟡 PARTIAL | Fast path has `hangup.fast_ack`; barge during close can still reopen on non-fast paths |
-| 10.B.8 | **Follow-up inject during hangup flow** | 🟡 | 🟡 PARTIAL | `response_done` can chain `_start_injected_response` while `_pending_followup_instruction` set |
-| 10.B.9 | **`function_call` ignored if `_farewell_response_active`** | 🟡 | 🟡 PARTIAL | Second `request_end_call` dropped at ~2515 |
-| 10.B.10 | **Callback withdrawal vs firm refusal** | 🟡 | 🟡 PARTIAL | `_cancel_callback` + memory without `closing` → CRM fact without hangup arm |
+| 10.B.1 | **Backup detector misses golden refusal** (tool not called) | 🔴 | ✅ FIXED | `caller_backup_end_intent` + TEST 1 (`కాల్ అవసరం లేదు` / incident line) |
+| 10.B.2 | **Tool not called** on clear decline | 🟡 | 🟡 PARTIAL | Backup + prompt now cover the miss; Primary still depends on the model |
+| 10.B.3 | **`response_timeout` (30s)** on stuck `_response_open` | 🔴 | ✅ FIXED | `_recover_stuck_response_for_hangup` → cancel + `_finish_hangup` when end intent known |
+| 10.B.4 | **Tool `goodbye` still needs regex cues** on user text when `tool_sourced` | 🟡 | ✅ FIXED | `_trust_live_tool_evidence` trusts `goodbye`; blocks `caller_wants_to_continue` only |
+| 10.B.5 | **Tool vs STT race** (empty/stale `_user_partial`) | 🟡 | ✅ FIXED | `_last_user_final_text` + `TOOL_STT_DEFER_SEC` (150ms) before validate |
+| 10.B.6 | **No preempt cancel** on STT final before model monologue | 🟡 | ✅ FIXED | Backup/refusal STT final → `_arm_hangup_from_caller_words` cancels Live |
+| 10.B.7 | **Barge aborts hangup** (`_abort_in_progress_hangup`) | 🟡 | ✅ FIXED | VAD/barge no longer aborts; bare `hello` → `hangup.fast_ack`; “I’m here” / tell me more still re-engage |
+| 10.B.8 | **Follow-up inject during hangup flow** | 🟡 | ✅ FIXED | `response_done` drops `_pending_followup_instruction` when `_hangup_flow_active()` |
+| 10.B.9 | **`function_call` ignored if `_farewell_response_active`** | 🟡 | ✅ FIXED | Duplicate `request_end_call` ACKs the already-armed hangup |
+| 10.B.10 | **Callback withdrawal vs firm refusal** | 🟡 | ✅ FIXED | Backup/refusal cancels callback and arms `firm_refusal` (no callback-close inject) |
 | 10.B.11 | **Brain text contradicts platform** (“keep talking after goodbye”) | 🟡 | ⬜ BY DESIGN | Test Studio compiled brains — ops/content fix, not bridge code |
-| 10.B.12 | **`looks_like_question` on Indic** (e.g. `సరేనా?`) | 🟡 | 🟡 PARTIAL | Can block `validate_end_call` on edge phrasing |
+| 10.B.12 | **`looks_like_question` on Indic** (e.g. `సరేనా?`) | 🟡 | 🟡 PARTIAL | Can still block `validate_end_call` on edge phrasing |
 
 ### 10.C Incident appendix: `0e84ae17-1832-4ace-b423-f65fef0a00f3`
 
@@ -164,17 +164,17 @@ Detailed row-level evidence lives in `pstn-critical-for-chatgpt/TELNYX_PSTN_FULL
 
 | ID | Layer | Change | Status | Solves | Will **not** solve alone | Risks if careless |
 |----|-------|--------|--------|--------|---------------------------|-------------------|
-| **P1** | Primary | Prompt/brain: hangup = `request_end_call` in same turn as short farewell | ⬜ OPS | 10.B.2, 10.B.11 | Backup still needed when model omits tool | None in bridge |
-| **P2** | Primary | `_trust_live_tool_evidence`: trust `caller_goodbye` when `tool_sourced` (block `caller_wants_to_continue` only) | 🔴 OPEN | 10.B.4 | Tool never called | Premature goodbye if model wrong |
-| **B1** | Backup | **Small intent detector** (`caller_backup_end_intent`): golden lines + tight rules; wire `closing` / arm path | 🔴 OPEN | 10.B.1 | Novel phrasing without tool | False arm—mitigate with golden tests only, no phrase explosion |
-| **B2** | Backup | On backup end intent: arm `firm_refusal`, skip callback-close inject | 🔴 OPEN | 10.B.10 | — | Same as B1 |
-| **B3** | Backup | STT final preempt: `cancel_response`, `auto_response off`, `_arm_hangup_from_caller_words` | 🔴 OPEN | 10.B.6 | — | Only when B1 true |
-| **S1** | Safety | `_last_user_final_text` + ~150ms defer on tool before validate | 🔴 OPEN | 10.B.5 | — | Double-accept if not idempotent |
-| **S2** | Safety | Hangup-aware `response_timeout` → cancel / `_finish_hangup` | 🔴 OPEN | 10.B.3 | True deadlocks | Stuck call if misclassified |
-| **S3** | Safety | Fast-ack / no full `_abort_in_progress_hangup` on “hello” during fast close listen | 🟡 PARTIAL | 10.B.7 | Real re-engage | TEST 5 |
-| **S4** | Safety | Gate `_pending_followup_instruction` when `_hangup_flow_active()` | 🔴 OPEN | 10.B.8 | — | Block legit callback collect if hangup wrongly armed |
-| **S5** | Safety | Idempotent duplicate `request_end_call` during farewell arm | 🔴 OPEN | 10.B.9 | — | Low |
-| **E1** | Ops | Logs: `hangup.arm_source` = `tool` \| `backup` \| `repair` \| `silence` | 🔴 OPEN | Debug | — | — |
+| **P1** | Primary | Prompt/brain: hangup = `request_end_call` in same turn as short farewell | 🟡 PARTIAL | 10.B.2, 10.B.11 | Backup still needed when model omits tool | Compiled brains still ops |
+| **P2** | Primary | `_trust_live_tool_evidence`: trust `caller_goodbye` when `tool_sourced` (block `caller_wants_to_continue` only) | ✅ FIXED | 10.B.4 | Tool never called | Premature goodbye if model wrong |
+| **B1** | Backup | **Small intent detector** (`caller_backup_end_intent`): golden lines + tight rules; wire `closing` / arm path | ✅ FIXED | 10.B.1 | Novel phrasing without tool | False arm—mitigate with golden tests only, no phrase explosion |
+| **B2** | Backup | On backup end intent: arm `firm_refusal`, skip callback-close inject | ✅ FIXED | 10.B.10 | — | Same as B1 |
+| **B3** | Backup | STT final preempt: `cancel_response`, `auto_response off`, `_arm_hangup_from_caller_words` | ✅ FIXED | 10.B.6 | — | Only when B1 true |
+| **S1** | Safety | `_last_user_final_text` + ~150ms defer on tool before validate | ✅ FIXED | 10.B.5 | — | Duplicate tool is idempotent (S5) |
+| **S2** | Safety | Hangup-aware `response_timeout` → cancel / `_finish_hangup` | ✅ FIXED | 10.B.3 | True deadlocks | Stuck call if misclassified |
+| **S3** | Safety | Fast-ack / no full `_abort_in_progress_hangup` on “hello” during fast close listen | ✅ FIXED | 10.B.7 | Real re-engage | TEST 5 |
+| **S4** | Safety | Gate `_pending_followup_instruction` when `_hangup_flow_active()` | ✅ FIXED | 10.B.8 | — | Block legit callback collect if hangup wrongly armed |
+| **S5** | Safety | Idempotent duplicate `request_end_call` during farewell arm | ✅ FIXED | 10.B.9 | — | Low |
+| **E1** | Ops | Logs: `hangup.arm_source` = `tool` \| `backup` \| `repair` \| `silence` | ✅ FIXED | Debug | — | — |
 
 ### Does this solve the problem totally?
 
@@ -308,7 +308,7 @@ These are the **contract** for Pass 3 hangup. Implement as automated pytest (loo
 ## Summary
 
 - **Pass 2:** Transport and classic pipeline — **closed** (see archive file for full tables).
-- **Pass 3:** Realtime Voice hangup — **open**; incident-proven.
+- **Pass 3:** Realtime Voice hangup — **TEST 1–5 green** (`server/tests/test_pass3_hangup_golden.py`). Residual: model omitting the tool on novel phrasing (backup is small by design), `looks_like_question` Indic edges, compiled-brain copy (P1/10.B.11).
 - **Design:** **Primary** (Gemini → `request_end_call`) → **Backup** (STT final → **small** intent detector) → **Safety** (state machine). **Do not** build a huge multilingual regex catalog.
 - **Ship gate:** **TEST 1–5** green before claiming hangup fixed.
 - **Root `TELNYX_PSTN_FULL_FLOW_AUDIT.md`** is the canonical Pass 3 addendum.

@@ -127,6 +127,8 @@ class TelnyxPstnBridge:
         )
         self._negotiated_media = self._configured_media
         self._ws_send_lock = asyncio.Lock()
+        self._hangup_lock = asyncio.Lock()
+        self._playback_marks: dict[str, asyncio.Future] = {}
         self._out_queue: asyncio.Queue[OutboundFrame] = asyncio.Queue(maxsize=MAX_AUDIO_QUEUE_FRAMES)
         self._queue_space: asyncio.Condition | None = None
         self._queue_metrics: dict[str, int] = {
@@ -307,6 +309,7 @@ class TelnyxPstnBridge:
                         call_id=self.call_id,
                         name=str(name or "")[:80],
                     )
+                    self._ack_playback_mark(str(name or ""))
                     if self._playback is not None and hasattr(self._playback, "on_provider_mark"):
                         try:
                             self._playback.on_provider_mark(name)
@@ -1211,18 +1214,45 @@ class TelnyxPstnBridge:
         )
         return False
 
-    async def _provider_hangup(self) -> None:
-        if not self.call_control_id or self._hangup_sent:
-            return
-        self._hangup_sent = True
-        from server.services.telnyx_client import TelnyxClient
+    def _ack_playback_mark(self, name: str) -> None:
+        waiter = self._playback_marks.get(name)
+        if waiter is not None and not waiter.done():
+            waiter.set_result(True)
 
-        await self.drain_outbound(timeout_s=2.5)
+    async def _wait_provider_playback(self, timeout_s: float = 1.0) -> bool:
+        """A matching mark acknowledges playback, not just websocket delivery."""
+        if self._closed:
+            return False
+        import uuid
+
+        name = f"farewell-{uuid.uuid4().hex}"
+        waiter = asyncio.get_running_loop().create_future()
+        self._playback_marks[name] = waiter
         try:
-            await TelnyxClient().hangup(self.call_control_id)
-            log_pstn("hangup.provider", control=self.call_control_id, call_id=self.call_id)
+            async with asyncio.timeout(timeout_s):
+                async with self._ws_send_lock:
+                    await self.ws.send_text(json.dumps({"event": "mark", "mark": {"name": name}}))
+                return bool(await waiter)
         except Exception as exc:
-            log_pstn("hangup.provider.failed", control=self.call_control_id, error=str(exc)[:200])
+            # Bound failures: never leave a billed caller leg open for a lost ACK.
+            log_pstn("hangup.playback_mark.unconfirmed", call_id=self.call_id, error=type(exc).__name__)
+            return False
+        finally:
+            self._playback_marks.pop(name, None)
+
+    async def _provider_hangup(self) -> None:
+        async with self._hangup_lock:
+            if not self.call_control_id or self._hangup_sent:
+                return
+            from server.services.telnyx_client import TelnyxClient
+
+            drained = await self.drain_outbound(timeout_s=14.0) if not self._closed else False
+            if drained:
+                await self._wait_provider_playback()
+            # Latch only success. Concurrent calls serialize; failure remains retryable.
+            await TelnyxClient().hangup(self.call_control_id)
+            self._hangup_sent = True
+            log_pstn("hangup.provider", control=self.call_control_id, call_id=self.call_id)
 
     async def _barge_in(self) -> None:
         generation_id = (getattr(self._voice, "_barge_generation", None)
@@ -1285,6 +1315,9 @@ class TelnyxPstnBridge:
             queue_ms=playback.queued_ms() if playback else 0,
         )
         async with self._ws_send_lock:
+            for waiter in self._playback_marks.values():
+                if not waiter.done():
+                    waiter.set_result(False)
             await self.ws.send_text(json.dumps({"event": "clear"}))
         pstn_media_flow.emit(self.call_control_id or self.ws_id, "remote_cleared", "outbound", generation_id=generation_id)
 
@@ -1385,6 +1418,9 @@ class TelnyxPstnBridge:
             if self._voice:
                 try:
                     await self._voice.close()
+                    background = getattr(self._voice, "_background_hangup_task", None)
+                    if background is not None and background is not asyncio.current_task():
+                        await asyncio.shield(background)
                 except Exception:
                     pass
                 self._voice = None

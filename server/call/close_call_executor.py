@@ -1,21 +1,21 @@
 """Single speak-then-disconnect executor for every live hangup path.
 
-Sequence: closing signal → flush remaining audio → wait until farewell is
-off the wire → human trail pause → drain archive → provider hangup →
-lifecycle end with the real hangup reason.
+Sequence: flush audio, finish playback, disconnect the provider, then persist
+archive and lifecycle in a retained background task.
 """
 from __future__ import annotations
 
+import asyncio
 import inspect
 import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from typing import Any
 
 from server.call.call_end_policy import HANGUP_REASONS
 from server.call.natural_hangup import pause_before_disconnect, wait_for_farewell_playback
 
 MaybeAsync = Callable[[], Awaitable[None] | None]
+_BACKGROUND_CLOSE_TASKS: set[asyncio.Task] = set()
 
 JUDGMENT_END_REASONS = frozenset(HANGUP_REASONS)
 LIFECYCLE_PASSTHROUGH = frozenset({
@@ -54,6 +54,7 @@ class CloseCallResult:
     playback_wait_ms: int
     trail_ms: int
     reason: str
+    background_task: asyncio.Task | None = None
 
 
 async def _maybe_await(fn: MaybeAsync | None) -> None:
@@ -111,16 +112,13 @@ async def execute_agent_close(
     await pause_before_disconnect(should_pause=should_pause, trail_sec=trail)
     trail_ms = int((trail if should_pause else 0) * 1000)
 
-    await _maybe_await(drain_archive)
-    # A caller can resume during the trailing silence or archive drain, after
+    # A caller can resume while waiting for playback, after
     # playback already finished. Recheck immediately before touching the PSTN.
     if can_disconnect is not None and not can_disconnect():
         log_pstn("hangup.cancelled_before_disconnect", call_id=call_id)
         return CloseCallResult(heard, wait_ms, trail_ms, canonical)
-    try:
-        await _maybe_await(on_provider_hangup)
-    except Exception as exc:
-        log_pstn("hangup.provider.failed", call_id=call_id, error=str(exc)[:200])
+    # Provider errors propagate so the caller can retry; never mark failure ended.
+    await _maybe_await(on_provider_hangup)
 
     await _maybe_await(on_ended)
 
@@ -130,26 +128,36 @@ async def execute_agent_close(
         trail_ms=trail_ms,
         reason=canonical,
     )
-    _stamp_hangup_telemetry(call_id, result)
-    if end_lifecycle and call_id:
-        from server.call.call_lifecycle_service import call_lifecycle_service
+    async def complete_in_background():
+        try:
+            await _maybe_await(drain_archive)
+            _stamp_hangup_telemetry(call_id, result)
+            if end_lifecycle and call_id:
+                from server.call.call_lifecycle_service import call_lifecycle_service
 
-        await call_lifecycle_service.end(call_id, reason=canonical)
-    if call_id:
-        pstn_media_flow.emit(
-            call_id,
-            "hangup_complete",
-            "internal",
-            detail=canonical,
-            extra={
-                "playback_wait_ms": wait_ms,
-                "trail_ms": trail_ms,
-                "heard_playback": heard,
-            },
-        )
-    from server.call.callback_close import mark_hangup_executed
+                await call_lifecycle_service.end(call_id, reason=canonical)
+            if call_id:
+                pstn_media_flow.emit(
+                    call_id,
+                    "hangup_complete",
+                    "internal",
+                    detail=canonical,
+                    extra={
+                        "playback_wait_ms": wait_ms,
+                        "trail_ms": trail_ms,
+                        "heard_playback": heard,
+                    },
+                )
+            from server.call.callback_close import mark_hangup_executed
 
-    mark_hangup_executed(call_id)
+            mark_hangup_executed(call_id)
+        except Exception as exc:
+            log_pstn("hangup.background.failed", call_id=call_id, error=str(exc)[:200])
+
+    task = asyncio.create_task(complete_in_background(), name=f"close-background-{call_id}")
+    _BACKGROUND_CLOSE_TASKS.add(task)
+    task.add_done_callback(_BACKGROUND_CLOSE_TASKS.discard)
+    result.background_task = task
     return result
 
 

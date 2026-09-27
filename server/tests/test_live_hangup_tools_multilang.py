@@ -83,6 +83,25 @@ def test_english_tool_goodbye():
     assert d.reason == "goodbye"
 
 
+def test_tool_goodbye_trusts_hindi_without_english_regex():
+    d = _tool_end(
+        {"should_end": True, "reason": "goodbye", "farewell": "अलविदा।"},
+        "मैं जा रहा हूँ",
+        lang="hi-IN",
+    )
+    assert d.accepted is True
+    assert d.reason == "goodbye"
+
+
+def test_tool_goodbye_still_blocks_continue():
+    d = _tool_end(
+        {"should_end": True, "reason": "goodbye", "farewell": "Goodbye."},
+        "yes please tell me more",
+        lang="en-IN",
+    )
+    assert d.accepted is False
+
+
 def test_tool_firm_refusal_rejects_bare_thanks():
     d = _tool_end(
         {"should_end": True, "reason": "firm_refusal", "farewell": "Goodbye."},
@@ -131,7 +150,7 @@ async def test_loop_accepts_request_end_call_telugu_refusal():
     assert loop._pending_end_call is not None
     assert loop._pending_end_call.get("reason") == "firm_refusal"
     assert loop._firm_refusal_close is True
-    assert loop._close_listen_sec() == FAST_REFUSAL_POST_FAREWELL_SEC
+    assert loop._close_listen_sec() == 0.0
 
 
 def test_pstn_loop_arm_flags_on_tool_accept(monkeypatch):

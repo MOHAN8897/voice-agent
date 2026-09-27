@@ -1611,7 +1611,7 @@ def _platform_call_rules(
         f"--- PROFESSIONAL CLOSE ---\n"
         f"Hang up only when they confirm they are done, or they confirmed a callback and details are in. "
         f"Bare okay/thanks is not a hangup. Confirm in one line, thank them, short farewell, end_call. "
-        f"Then stop — if they speak after goodbye, keep talking.\n\n"
+        f"Then stop — the platform disconnects when farewell playback finishes.\n\n"
         f"--- OBJECTION HANDLING ---\n"
         f"Acknowledge the concern in one sentence; do not restart the full pitch.\n\n"
         f"--- GUARDRAILS ---\n"

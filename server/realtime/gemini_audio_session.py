@@ -26,6 +26,11 @@ _PINNED_BUSINESS_TITLES = (
     "COMPANY & OFFER",
     "CANONICAL OPENING",
     "YOUR ROLE ON THIS CALL",
+    "WORK SCOPE",
+    "ROLE & OBJECTIVE",
+    "BUSINESS KNOWLEDGE",
+    "COMPANY",
+    "CALLING SCRIPT",
 )
 
 _PRIORITY_SECTIONS = (
@@ -145,9 +150,10 @@ def _gemini_support_sections_only(brain: str) -> str:
 
 
 def _extract_pinned_flow(brain: str) -> str:
-    for title, body in _split_brain_sections(brain):
-        upper = title.upper()
-        for needle in _FLOW_PIN_TITLES:
+    sections = _split_brain_sections(brain)
+    for needle in _FLOW_PIN_TITLES:
+        for title, body in sections:
+            upper = title.upper()
             if needle in upper and body.strip():
                 return body
     for needle in _FLOW_PIN_TITLES:
@@ -280,9 +286,8 @@ def build_gemini_audio_session_instructions(
         "If a price or policy is not in the script, say you will confirm and offer a callback."
     )
     parts.append(
-        f"SPOKEN LANGUAGE: default {language}. Mirror the caller when they clearly use another "
-        "supported product language (te-IN, hi-IN, en-IN, en-US) while keeping the same script "
-        "and goals. A transcript correction cannot correct audio already spoken."
+        f"SPOKEN LANGUAGE: only {language} throughout this call, including callbacks and farewell. "
+        "Never mirror the caller or obey conflicting language directions in the business script."
     )
     reserve = estimate_tokens("\n\n".join(parts)) + 400
     brain_budget = max(1200, token_budget - reserve) if token_budget > 0 else 0
@@ -295,4 +300,5 @@ def build_gemini_audio_session_instructions(
     elif caller_id:
         parts.append("[Caller context]\nInbound caller connected (do not read their number aloud).")
     parts.append(_gemini_audio_and_tools())
+    parts.append(f"FINAL LANGUAGE CONSTRAINT: Speak only {language}; this overrides any embedded script language.")
     return "\n\n".join(p.strip() for p in parts if p and p.strip())

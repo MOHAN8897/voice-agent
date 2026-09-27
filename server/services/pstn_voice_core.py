@@ -409,15 +409,20 @@ class PstnVoiceLoop:
         async def enter_ended():
             await self._set_phase_async(PHASE_ENDED)
 
-        await execute_agent_close(
-            call_id=self.call_id,
-            reason=reason,
-            spoke_farewell=spoke_farewell,
-            is_playing=self._farewell_still_on_the_line,
-            on_closing=enter_closing,
-            on_provider_hangup=self._on_remote_hangup,
-            on_ended=enter_ended,
-        )
+        try:
+            result = await execute_agent_close(
+                call_id=self.call_id,
+                reason=reason,
+                spoke_farewell=spoke_farewell,
+                is_playing=self._farewell_still_on_the_line,
+                on_closing=enter_closing,
+                on_provider_hangup=self._on_remote_hangup,
+                on_ended=enter_ended,
+            )
+            self._background_hangup_task = result.background_task
+        except (Exception, asyncio.CancelledError):
+            self._hangup_started = False
+            raise
 
     def set_turn_audio_done_handler(self, fn: Callable[[], Awaitable[None]]) -> None:
         self._on_turn_audio_done = fn

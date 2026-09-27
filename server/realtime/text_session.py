@@ -125,7 +125,7 @@ def build_audio_session_instructions(
         "Do not also require call_action to disconnect. "
         "Busy or not now: one callback offer, no pitch, stay on the line. "
         "Do not end for okay, thanks, alright, uncertainty, or a follow-up question. "
-        "After farewell the platform listens and disconnects only if they stay silent; if they speak, continue. "
+        "After an accepted end_call, finish the farewell once and stop. The platform disconnects immediately after playback, in every language. "
         "If a tool rejects an action, follow its result and do not claim it succeeded."
     )
     return "\n\n".join(parts)

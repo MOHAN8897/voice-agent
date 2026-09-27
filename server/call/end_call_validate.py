@@ -65,6 +65,21 @@ _CALLER_DONE = re.compile(
     r"(?:[,.]?\s*(?:bye|goodbye))?\s*[.!]?\s*$",
     re.I,
 )
+# Backup hangup (Pass 3): golden substrings + tight negation-near-call/need.
+# Not a phrase catalog — add a named pytest when you add a line.
+_BACKUP_GOLDEN = (
+    "కాల్ అవసరం లేదు",
+    "मुझे इसकी जरूरत नहीं है",
+    "मुझे इसकी ज़रूरत नहीं है",
+)
+_BACKUP_STRUCT = re.compile(
+    r"కాల్.{0,40}(?:అవసరం|అవసరము).{0,16}లేదు|"
+    r"కాల్.{0,16}వద్దు|"
+    r"వద్దు.{0,16}కాల్|"
+    r"(?:इसकी|इसको|कॉल).{0,16}(?:जरूरत|ज़रूरत).{0,12}नहीं|"
+    r"(?:जरूरत|ज़रूरत).{0,12}नहीं.{0,16}(?:कॉल|इसकी)",
+    re.I | re.S,
+)
 _GOAL_COMPLETE_USER = re.compile(
     r"\b(that answers (?:it|my question)|that(?:'s| is) (?:sorted|resolved)|"
     r"i (?:have|got) (?:the|my) answer|i know .{1,40} now|"
@@ -358,7 +373,7 @@ def _evidence_ok(
             or caller_unavailable_now(text)
         )
     if reason == "firm_refusal":
-        return bool(_REFUSAL.search(text))
+        return caller_firm_refusal(text)
     if reason == "abuse":
         return bool(_ABUSE.search(text))
     if reason == "goal_complete":
@@ -401,14 +416,7 @@ def _trust_live_tool_evidence(
     if reason == "firm_refusal":
         return not (user_short_close_ack(text) and not caller_firm_refusal(text))
     if reason == "goodbye":
-        if user_short_close_ack(text) and not _user_wants_hangup(text):
-            return False
-        return bool(
-            _GOODBYE.search(text)
-            or _CALLER_DONE.search(text)
-            or caller_explicit_end_request(text)
-            or caller_unavailable_now(text)
-        )
+        return True
     if reason == "abuse":
         return True
     if reason == "goal_complete":
@@ -425,6 +433,19 @@ def caller_requested_hangup(user_text: str) -> bool:
     return _user_wants_hangup(user_text)
 
 
+def caller_backup_end_intent(user_text: str) -> bool:
+    """STT-final backup when Live omits request_end_call. Goldens + tight structure only."""
+    text = user_text or ""
+    if not text.strip() or looks_like_question(text):
+        return False
+    if _STAY_ON_LINE.search(text):
+        return False
+    compact = re.sub(r"\s+", " ", text)
+    if any(golden in compact for golden in _BACKUP_GOLDEN):
+        return True
+    return bool(_BACKUP_STRUCT.search(compact))
+
+
 def caller_firm_refusal(user_text: str) -> bool:
     """True when the caller clearly refuses — hang up (not soft maybe / not looking)."""
     text = user_text or ""
@@ -432,7 +453,7 @@ def caller_firm_refusal(user_text: str) -> bool:
         return False
     if _STAY_ON_LINE.search(text):
         return False
-    return bool(_REFUSAL.search(text))
+    return bool(_REFUSAL.search(text) or caller_backup_end_intent(text))
 
 
 def caller_confirmed_goal_complete(user_text: str) -> bool:

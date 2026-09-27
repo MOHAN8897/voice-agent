@@ -54,19 +54,21 @@ REQUEST_LANGUAGE_CALLBACK_TOOL: dict[str, Any] = {
     "type": "function",
     "name": "request_language_callback",
     "description": (
-        "Caller is speaking a language you cannot continue the call in. "
-        "Call once to play the configured language-mismatch line, then wait. "
-        "Do not hang up and do not pitch."
+        "Handle a substantive language mismatch without changing the configured spoken language. "
+        "First use remind, politely ask for the configured language and wait. Only after a later "
+        "caller turn still needs another language use request_callback. On success confirm the "
+        "request (not a scheduled booking), say farewell in configured language, then end_call. "
+        "Do not use for loanwords, transliteration, unclear audio, or opt-outs."
     ),
     "parameters": {
         "type": "object",
         "additionalProperties": False,
         "properties": {
-            "caller_language": {
-                "type": "string",
-                "description": "Best guess: en, hi, te, ta, unknown, etc.",
-            },
+            "action": {"type": "string", "enum": ["remind", "request_callback"]},
+            "caller_language": {"type": "string", "description": "BCP-47 language code, e.g. hi-IN; unknown if unclear."},
+            "summary": {"type": "string", "maxLength": 1200, "description": "English handoff: caller need, known details, requested language. No invented booking or time."},
         },
+        "required": ["action", "caller_language", "summary"],
     },
 }
 

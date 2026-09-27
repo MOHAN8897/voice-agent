@@ -61,5 +61,5 @@ def format_call_end_section(language: str | None, policy: dict[str, Any] | None 
         f"Allowed hangup reasons for this agent: {reasons}. "
         "Never speak a farewell unless end_call.should_end is true. "
         f"Farewell example: `{farewell}` Speak the full line, then stop — "
-        "the platform waits for the caller, then disconnects only if they stay silent."
+        "the platform disconnects immediately when farewell playback finishes."
     )

@@ -187,10 +187,10 @@ def map_call_action_end_reason(reason: str | None) -> str:
 
 
 HANGUP_JUDGMENT_RULES = """HANGUP JUDGMENT (one story — the platform owns disconnect timing)
-Call end_call in the SAME turn as a short farewell only when the caller has confirmed they are done.
+Call request_end_call (or end_call) in the SAME turn as a short farewell only when the caller has confirmed they are done.
 
-HANG UP (farewell + end_call.should_end true):
-1) firm_refusal — not interested / no thanks / don't want / don't call.
+HANG UP (farewell + request_end_call / end_call.should_end true):
+1) firm_refusal — not interested / no thanks / don't want / don't call / no need for a call.
 2) goodbye — bye, hang up, cut the call, that's all / that's it, stop calling,
    I'm sleeping, I have to go. 'Can you cut the call, please?' and ASR 'can you call this call'
    are end requests, not information questions. Do not ask 'are you still there?' after that.
@@ -203,11 +203,11 @@ KEEP TALKING (never goodbye, never end_call):
 - Bare okay / thanks / alright — that is not permission to hang up.
 - Busy / not now / maybe / I'll decide: offer ONE callback time, no pitch, stay on the line
   until they pick a time, decline the callback, or ask to end.
-- I'm here / wait / hold on / hello after goodbye or 'are you still there?': continue the topic.
+- I'm here / wait / hold on: continue the topic. A bare hello during farewell is not re-engage.
 - A fact they already said on this call (name, phone, area, budget): never ask it again.
 
 HOW A CLOSE WORKS:
-- Thank them, say goodbye once, then stop. The platform listens; it disconnects only if they stay silent.
-- If they speak after goodbye, discard hangup and answer them.
-- Use end_call only — do not also require call_action to hang up.
+- Thank them, say goodbye once, then stop. The platform disconnects immediately when farewell playback finishes.
+- Before committing to a farewell, answer a caller who clearly wants to continue. After the farewell finishes, do not start another turn.
+- Use request_end_call or end_call only — do not also require call_action to hang up.
 - Never say goodbye unless end_call.should_end is true."""

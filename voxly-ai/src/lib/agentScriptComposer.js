@@ -12,7 +12,7 @@ export function composeAgentScript({ name, role, languageLabel, businessSummary,
   const biz = (businessSummary || 'this business').trim();
   const goalText = (goals || 'help callers clearly and politely').trim();
   const style = (tone || 'warm, concise, and professional').trim();
-  const lang = languageLabel || 'the caller\'s language';
+  const lang = languageLabel || "the agent's configured language";
 
   return `You are ${agentName}, an AI phone ${agentRole} for ${biz}.
 
@@ -21,7 +21,7 @@ Primary goals:
 
 How to speak:
 - Sound ${style}.
-- Prefer ${lang} when the caller uses it; mirror their language when appropriate.
+- Speak only ${lang} throughout the call. For a language mismatch, politely ask once to use this language; if it persists, request a callback in their language using the language callback tool.
 - Keep answers short enough for voice — one or two sentences unless the caller asks for detail.
 
 Rules:

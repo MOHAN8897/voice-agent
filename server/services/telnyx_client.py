@@ -384,20 +384,31 @@ class TelnyxClient:
         return data.get("data") or data
 
     async def hangup(self, call_control_id: str) -> dict[str, Any]:
-        """End an active Telnyx call (dev stress tests / cleanup)."""
-        try:
-            data = await self._request("POST", f"/calls/{call_control_id}/actions/hangup", json={})
-            return data.get("data") or data
-        except TelnyxApiError as exc:
-            # 404/422: already hung up or control id no longer active.
-            if exc.status in (404, 422):
-                logger.info(
-                    "[TELNYX] hangup skipped control=%s status=%s",
-                    call_control_id,
-                    exc.status,
+        """Retry transient failures with one stable, idempotent command ID."""
+        import json
+        import uuid
+
+        command_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"telnyx:hangup:{call_control_id}"))
+        for attempt in range(3):
+            try:
+                data = await self._request(
+                    "POST", f"/calls/{call_control_id}/actions/hangup",
+                    json={"command_id": command_id}, timeout=httpx.Timeout(3.0),
                 )
-                return {}
-            raise
+                return data.get("data") or data
+            except TelnyxApiError as exc:
+                body = exc.body or ""
+                try:
+                    errors = json.loads(body).get("errors", [])
+                except (ValueError, AttributeError):
+                    errors = []
+                already_ended = any(str(error.get("code")) == "90018" for error in errors if isinstance(error, dict))
+                if exc.status == 404 or (exc.status == 422 and (already_ended or "call already ended" in body.lower())):
+                    return {}
+                if attempt < 2 and (exc.status is None or exc.status == 429 or exc.status >= 500):
+                    await asyncio.sleep(0.15 * (attempt + 1))
+                    continue
+                raise
 
 
 class TelnyxCallRegistry:

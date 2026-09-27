@@ -189,6 +189,7 @@ async def test_run_turn_agent_hangup_calls_lifecycle(monkeypatch):
     monkeypatch.setattr(lifecycle, "end", fake_end)
 
     await loop._run_turn("ok bye hang up")
+    await loop._background_hangup_task
     assert ended == {"call_id": "c-hangup", "reason": "goodbye"}
     assert hung_up.get("ok") is True
 
@@ -236,6 +237,7 @@ async def test_run_turn_firm_refusal_hangup(monkeypatch):
     monkeypatch.setattr(lifecycle, "end", fake_end)
 
     await loop._run_turn("I'm not interested")
+    await loop._background_hangup_task
     assert ended == {"call_id": "c-refuse", "reason": "firm_refusal"}
     assert hung_up.get("ok") is True
 
@@ -286,6 +288,7 @@ async def test_run_turn_goal_complete_hangup(monkeypatch):
     monkeypatch.setattr(lifecycle, "end", fake_end)
 
     await loop._run_turn("Yes, please have the team call me back")
+    await loop._background_hangup_task
     assert ended == {"call_id": "c-goal", "reason": "goal_complete"}
     assert hung_up.get("ok") is True
     assert spoken and any("team will contact" in t.lower() for t in spoken[0].texts)

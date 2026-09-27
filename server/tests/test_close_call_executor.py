@@ -79,8 +79,9 @@ async def test_execute_agent_close_order_and_lifecycle_reason(monkeypatch):
         on_provider_hangup=provider,
         on_ended=ended_phase,
     )
+    await result.background_task
     elapsed = time.monotonic() - t0
-    assert order == ["closing", "flush", "drain", "provider", "ended", "lifecycle"]
+    assert order == ["closing", "flush", "provider", "ended", "drain", "lifecycle"]
     assert result.reason == "goodbye"
     assert result.heard_playback is True
     assert elapsed >= 0.08

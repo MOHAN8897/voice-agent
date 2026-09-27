@@ -102,5 +102,6 @@ async def test_classic_hangup_waits_for_playback_then_disconnects(monkeypatch):
     await loop._finish_agent_hangup(reason="agent_hangup", spoke_farewell=True)
     assert hung_up_at.get("at") is not None
     assert hung_up_at["at"] - t0 >= 0.12
+    await loop._background_hangup_task
     assert ended == {"call_id": "c-natural", "reason": "agent_hangup"}
     assert playing["on"] is False
