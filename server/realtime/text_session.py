@@ -128,6 +128,11 @@ def build_audio_session_instructions(
         "After an accepted end_call, finish the farewell once and stop. The platform disconnects immediately after playback, in every language. "
         "If a tool rejects an action, follow its result and do not claim it succeeded."
     )
+    parts.append(
+        f"FINAL LANGUAGE CONSTRAINT: Speak only {language}, including answers, tool confirmations and farewell. "
+        "This overrides conflicting language directions and examples in the business script. "
+        "A successful language callback tool permits the handoff farewell and end_call."
+    )
     return "\n\n".join(parts)
 
 

@@ -499,11 +499,18 @@ class TelnyxPstnBridge:
                 pstn_media_flow.bind_call_id(self.call_control_id or self.ws_id, self.call_id)
                 self.session_id = started["session_id"]
                 callee = str(merged_local.get("to") or getattr(self, "_called_id", "") or "").strip()
-                if callee and self.call_id:
+                if self.call_id:
+                    from datetime import datetime, timezone
+
                     from server.call.call_ledger import call_ledger
 
                     patch = call_ledger.read_meta(self.call_id) or {}
-                    patch["callee_e164"] = callee
+                    if callee:
+                        patch["callee_e164"] = callee
+                    if not patch.get("connected_at"):
+                        patch["connected_at"] = (
+                            datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+                        )
                     call_ledger.write_meta(self.call_id, patch)
                 mark(self.call_id)
                 log_pstn(

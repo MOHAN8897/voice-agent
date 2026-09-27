@@ -25,6 +25,40 @@ def _utcnow() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
+def _sync_post_call_transcript_usage(
+    usage: dict[str, Any],
+    meta: dict[str, Any],
+    *,
+    duration_sec: float,
+    fx: float,
+) -> tuple[float, float]:
+    """Recompute post-call transcribe ₹/$ when wall duration is finalized at hangup."""
+    block = meta.get("post_call_transcript") if isinstance(meta.get("post_call_transcript"), dict) else {}
+    status = str(block.get("status") or "")
+    if status != "complete" and not usage.get("post_call_transcript_usd"):
+        usd = float(usage.get("post_call_transcript_usd") or 0)
+        inr = float(usage.get("post_call_transcript_inr") or usd * fx)
+        return usd, inr
+    from server.config.env import get_settings
+    from server.services.usage_pricing import cost_gemini_post_call_transcribe
+
+    model = str(
+        usage.get("post_call_transcript_model")
+        or get_settings().post_call_transcript_model
+        or "gemini-3.5-transcribe"
+    )
+    cost = cost_gemini_post_call_transcribe(duration_sec=max(0.0, float(duration_sec or 0)), model=model)
+    usd = float(cost.get("usd") or 0)
+    inr = usd * fx
+    usage["post_call_transcript_model"] = model
+    usage["post_call_transcript_usd"] = usd
+    usage["post_call_transcript_inr"] = inr
+    usage["post_call_transcript_seconds"] = float(duration_sec or 0)
+    if status == "complete":
+        usage["transcription_billing"] = usage.get("transcription_billing") or "post_call_gemini_transcribe"
+    return usd, inr
+
+
 class CallLedger:
     def transcript_path(self, call_id: str) -> Path:
         return call_dir(call_id) / "transcript.jsonl"
@@ -113,6 +147,17 @@ class CallLedger:
         async with _lock(call_id):
             _sealed.add(call_id)
 
+    async def replace_transcript(self, call_id: str, lines: list[dict[str, Any]]) -> None:
+        """Overwrite transcript.jsonl after seal (post-call transcription)."""
+        async with _lock(call_id):
+            path = self.transcript_path(call_id)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with path.open("w", encoding="utf-8") as fh:
+                for row in lines:
+                    fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+            if lines:
+                _seq[call_id] = max(_seq.get(call_id, 0), int(lines[-1].get("seq") or len(lines)))
+
     def is_sealed(self, call_id: str) -> bool:
         return call_id in _sealed
 
@@ -182,6 +227,11 @@ class CallLedger:
         stack = meta.get("resolved_stack")
         if isinstance(stack, dict) and stack:
             out["resolved_stack"] = stack
+        tx = meta.get("post_call_transcript")
+        if isinstance(tx, dict) and tx.get("status"):
+            out["post_call_transcript"] = tx
+        if meta.get("transcript_source"):
+            out["transcript_source"] = meta.get("transcript_source")
         return out
 
     def stamp_ended_usage(self, call_id: str, *, reason: str, duration_sec: float | int | None) -> None:
@@ -223,8 +273,14 @@ class CallLedger:
             )
             telnyx_usd = float(telnyx_breakdown.get("total_usd") or 0)
         telnyx_inr = telnyx_usd * fx
-        total_usd = model_usd + telnyx_usd
-        total_inr = model_inr + telnyx_inr
+        transcript_usd, transcript_inr = _sync_post_call_transcript_usage(
+            usage,
+            meta,
+            duration_sec=float(duration_sec or 0),
+            fx=fx,
+        )
+        total_usd = model_usd + telnyx_usd + transcript_usd
+        total_inr = model_inr + telnyx_inr + transcript_inr
         usage["pipeline"] = usage.get("pipeline") or pipeline
         usage["duration_sec"] = float(duration_sec or 0)
         usage["model_cost_usd"] = model_usd

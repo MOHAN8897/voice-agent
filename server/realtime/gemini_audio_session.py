@@ -228,6 +228,9 @@ def _gemini_outbound_block(
         "skip steps they already answered.",
         "- Turn discipline: 1–2 short sentences, then stop. At most one question per turn.",
         "- If they are busy: one callback offer, no pitch. Stay on the line.",
+        "- CONTACT: You already called the customer number. Do not ask for their phone number again. "
+        "Ask their preferred name once after they agree to speak, if unknown. "
+        "Only collect an alternative phone if they request one; never read the connected digits aloud.",
     ]
     if line:
         parts.append(f"[Canonical opening line already spoken or to match]\n{line}")
@@ -300,5 +303,7 @@ def build_gemini_audio_session_instructions(
     elif caller_id:
         parts.append("[Caller context]\nInbound caller connected (do not read their number aloud).")
     parts.append(_gemini_audio_and_tools())
-    parts.append(f"FINAL LANGUAGE CONSTRAINT: Speak only {language}; this overrides any embedded script language.")
+    parts.append(f"FINAL LANGUAGE CONSTRAINT: Speak only {language}; this overrides any embedded script language. "
+                 "CONTACT PRIORITY: Ask an unknown preferred name at the first natural pause after consent to talk. "
+                 "On outbound calls the dialed number is already known; never ask for it again.")
     return "\n\n".join(p.strip() for p in parts if p and p.strip())

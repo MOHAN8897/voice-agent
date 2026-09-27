@@ -76,9 +76,17 @@ CLOSE_LISTEN_SEC = 3.5
 # Cost-optimized hangup: brief post-farewell wait, then Telnyx + Live teardown (no long listen).
 FAST_REFUSAL_POST_FAREWELL_SEC = 0.45
 FAST_GOAL_COMPLETE_POST_FAREWELL_SEC = 2.0
-TOOL_STT_DEFER_SEC = 0.15
 HANGUP_RESPONSE_TIMEOUT_SEC = 14.0
 _BACKGROUND_HANGUP_TASKS: set[asyncio.Task] = set()
+
+
+def gemini_post_call_transcript_ledger_disabled(llm_model: str | None) -> bool:
+    from server.config.env import get_settings
+    from server.realtime.models import is_gemini_live_voice_model
+
+    if not is_gemini_live_voice_model(llm_model or ""):
+        return False
+    return bool(get_settings().post_call_transcript_enabled)
 
 # Later hello / are-you-there after the intro is an availability check, not a new opening.
 _SIMPLE_HELLO_RE = re.compile(
@@ -279,6 +287,7 @@ async def record_realtime_voice_usage(
     if not call_id:
         return None
     from server.call.call_ledger import call_ledger
+    from server.config.env import get_settings
     from server.realtime.models import is_gemini_live_voice_model
     from server.realtime.usage import extract_realtime_usage
     from server.services.usage_pricing import estimate_turn_cost, resolve_fx_rate_inr
@@ -336,6 +345,10 @@ async def record_realtime_voice_usage(
         cached_audio_tokens=cached_audio,
         input_image_tokens=input_image,
     )
+    component_keys = ("uncached_usd", "cached_usd", "cache_write_usd", "output_usd",
+                      "audio_input_usd", "audio_output_usd", "image_input_usd")
+    previous_parts = prev.get("cost_breakdown_usd") or {}
+    prewarm_parts = dict(prev.get("prewarm_cost_breakdown_usd") or {})
     seq = int(prev.get("turns") or 0) + 1
     duration_sec = max(0.0, time.monotonic() - started_at) if started_at else 0.0
     minutes = duration_sec / 60.0 if duration_sec > 0 else 0.0
@@ -354,7 +367,8 @@ async def record_realtime_voice_usage(
                   "cached_tokens": cached_tokens, "cached_audio_tokens": cached_audio,
                   "input_image_tokens": input_image, "cache_write_tokens": cache_write}
         snapshots[usage_id] = {**values, "fingerprint": fingerprint,
-                               "cost_usd": float(cost["total_usd"]), "cost_inr": float(cost["total_inr"])}
+                               "cost_usd": float(cost["total_usd"]), "cost_inr": float(cost["total_inr"]),
+                               "cost_breakdown_usd": cost["llm"]}
         input_tokens = max(0, input_tokens - int(prior_snapshot.get("input_tokens", 0)))
         output_tokens = max(0, output_tokens - int(prior_snapshot.get("output_tokens", 0)))
         input_audio = max(0, input_audio - int(prior_snapshot.get("input_audio_tokens", 0)))
@@ -428,6 +442,15 @@ async def record_realtime_voice_usage(
         prewarm_image += input_image
         prewarm_usd += float(cost["total_usd"])
         prewarm_inr += float(cost["total_inr"])
+    if session_snapshot:
+        cost_parts = {k: float(cost["llm"].get(k, 0)) + float(prewarm_parts.get(k, 0)) for k in component_keys}
+    elif response_snapshot:
+        cost_parts = {k: float(previous_parts.get(k, 0)) + float(cost["llm"].get(k, 0))
+                      - float(prior_snapshot.get("cost_breakdown_usd", {}).get(k, 0)) for k in component_keys}
+    else:
+        cost_parts = {k: float(previous_parts.get(k, 0)) + float(cost["llm"].get(k, 0)) for k in component_keys}
+    if prewarm:
+        prewarm_parts = {k: float(prewarm_parts.get(k, 0)) + float(cost["llm"].get(k, 0)) for k in component_keys}
     model_per_min_usd = (total_usd / minutes) if minutes > 0 else 0.0
     model_per_min_inr = (total_inr / minutes) if minutes > 0 else 0.0
     turn = {
@@ -479,6 +502,18 @@ async def record_realtime_voice_usage(
         "response_usage": snapshots,
         "cost_usd": total_usd,
         "cost_inr": total_inr,
+        "cost_breakdown_usd": cost_parts,
+        "prewarm_cost_breakdown_usd": prewarm_parts,
+        "transcription_model": (
+            (get_settings().post_call_transcript_model or "gemini-3.5-transcribe")
+            if gemini_live and get_settings().post_call_transcript_enabled
+            else (llm_model if gemini_live else "gpt-4o-mini-transcribe")
+        ),
+        "transcription_billing": (
+            "post_call_gemini_transcribe"
+            if gemini_live and get_settings().post_call_transcript_enabled
+            else ("included_text_output" if gemini_live else "separate_not_metered")
+        ),
         "model_cost_usd": total_usd,
         "model_cost_inr": total_inr,
         "duration_sec": round(duration_sec, 3),
@@ -563,6 +598,8 @@ class PstnRealtimeVoiceLoop:
         self._wire_frames_out = 0
         self._user_partial = ""
         self._last_user_final_text = ""
+        self._language_user_turn = 0
+        self._language_reminder_turn = None
         self._hangup_arm_source: str | None = None
         self._assistant_text = ""
         self._response_had_audio = False
@@ -661,6 +698,9 @@ class PstnRealtimeVoiceLoop:
     def _caller_text(self) -> str:
         return (self._last_user_final_text or self._user_partial or "").strip()
 
+    def _persist_live_transcript_ledger(self) -> bool:
+        return not gemini_post_call_transcript_ledger_disabled(self._live_model)
+
     def _set_hangup_arm_source(self, source: str) -> None:
         if self._hangup_arm_source:
             return
@@ -702,6 +742,90 @@ class PstnRealtimeVoiceLoop:
 
         text = (spoken or "").strip()
         return text or default_farewell_for(self._resolve_language())
+
+    def _farewell_audio_engaged(self) -> bool:
+        return bool(
+            self._farewell_complete
+            or self._response_had_audio
+            or (
+                self._farewell_response_active
+                and self._hangup_farewell_inject_tried
+                and (self._assistant_text or "").strip()
+            )
+        )
+
+    async def _play_farewell_side_session(self) -> bool:
+        from server.realtime.models import is_gemini_live_voice_model
+
+        if not is_gemini_live_voice_model(self._live_model or ""):
+            return False
+        text = (self._pending_farewell_text or self._localized_farewell()).strip()
+        if not text or self._closed:
+            return False
+        from server.services.pstn_realtime_greeting_prewarm import synthesize_gemini_greeting_on_side_session
+
+        voice = str(getattr(self._adapter, "voice", "") or "")
+        frames, transcript, _usage = await synthesize_gemini_greeting_on_side_session(
+            greeting_text=text,
+            sample_rate=self.sample_rate,
+            tts_output_codec=self.tts_output_codec,
+            model=self._live_model or "gemini-3.8-live",
+            language=self._resolve_language(),
+            voice=voice or None,
+            control_id=self.call_id or self.session_id,
+        )
+        if not frames:
+            return False
+        self._farewell_response_active = True
+        self._set_tts_active(True)
+        try:
+            for wire in frames:
+                if self._closed:
+                    break
+                if self.call_id:
+                    self._archive.enqueue(self.call_id, "agent", wire)
+                self._wire_frames_out += 1
+                await self.on_agent_wire(wire)
+        finally:
+            self._set_tts_active(False)
+        spoken = (transcript or text).strip()
+        if spoken:
+            self._assistant_text = spoken
+            self._last_ledger_assistant = spoken
+        self._response_had_audio = True
+        self._farewell_complete = True
+        if self.call_id and spoken and self._persist_live_transcript_ledger():
+            from server.call.call_ledger import call_ledger
+
+            await call_ledger.append_assistant_turn(self.call_id, spoken)
+        log_pstn("hangup.farewell.side_session", call_id=self.call_id, chars=len(spoken))
+        return True
+
+    async def _ensure_hangup_farewell_audio(self, *, prefer_side_session: bool = False) -> None:
+        if self._farewell_audio_engaged() or self._hangup_started or self._closed:
+            return
+        text = (self._pending_farewell_text or self._localized_farewell()).strip()
+        if not text:
+            return
+        self._farewell_response_active = True
+        if prefer_side_session:
+            if await self._play_farewell_side_session():
+                if self._pending_end_call and not self._hangup_started:
+                    await self._finish_hangup()
+            return
+        if self._adapter is not None and not self._hangup_farewell_inject_tried:
+            self._hangup_farewell_inject_tried = True
+            try:
+                await self._start_injected_response(
+                    f"Say exactly this farewell once in audio in {self._resolve_language()}, then stop. "
+                    f"No tools, no questions.\n{text}"
+                )
+                return
+            except Exception as exc:
+                log_pstn("hangup.farewell_inject.failed", call_id=self.call_id, error=str(exc)[:160])
+        if await self._play_farewell_side_session():
+            if self._pending_end_call and not self._hangup_started:
+                await self._finish_hangup()
 
     async def _notify_hangup(self, stage: str, reason: str) -> None:
         log_pstn("hangup.notice", call_id=self.call_id, stage=stage, reason=reason)
@@ -885,6 +1009,10 @@ class PstnRealtimeVoiceLoop:
                 return
             if self._closed or self._hangup_started or not self._pending_end_call:
                 return
+            if not self._farewell_audio_engaged():
+                await self._ensure_hangup_farewell_audio(prefer_side_session=True)
+            if self._hangup_started or self._closed:
+                return
             log_pstn("hangup.force_finish", call_id=self.call_id, reason="watchdog")
             self._farewell_complete = True
             await self._finish_hangup()
@@ -1053,6 +1181,14 @@ class PstnRealtimeVoiceLoop:
         self._followup_inflight = True
         self._response_activity_at = time.monotonic()
         self._assistant_text = ""
+        # OpenAI response instructions replace the session instructions for this turn.
+        # Keep the business script and language lock during injected recovery replies.
+        base = _existing_adapter_instructions(self._adapter)
+        instruction = (
+            f"{base}\n\nCURRENT TURN TASK\n{instruction}\n\n"
+            f"FINAL LANGUAGE CONSTRAINT: Speak only {self._resolve_language()}. "
+            "Keep the business facts and required script steps. Do not translate into the caller's language."
+        )
         await self._adapter.start_response(instructions=instruction)
         self._set_phase(PHASE_SPEAKING)
 
@@ -1695,6 +1831,14 @@ class PstnRealtimeVoiceLoop:
                 ctx.callback_request_text = ""
                 ctx.callback_close_phase = "idle"
                 ctx.components["callback_cancelled"] = True
+            from server.call.call_ledger import call_ledger
+            try:
+                meta = call_ledger.read_meta(self.call_id)
+                if meta.get("language_callback"):
+                    meta["language_callback"]["status"] = "cancelled"
+                    call_ledger.write_meta(self.call_id, meta)
+            except Exception as exc:
+                log_pstn("language_callback.cancel_failed", call_id=self.call_id, error=str(exc)[:160])
             if self._should_persist_callback_withdrawal():
                 if not self._callback_cancellation_persisted:
                     from server.call.call_ledger import call_ledger
@@ -1715,8 +1859,6 @@ class PstnRealtimeVoiceLoop:
         error: str | None
         if action is None:
             error = "invalid_action"
-        elif action.action == CallAction.END_CALL and not self._caller_text():
-            error = "empty_user_turn"
         elif action.action == CallAction.END_CALL:
             from server.call.hangup_judge import map_call_action_end_reason
 
@@ -1725,7 +1867,8 @@ class PstnRealtimeVoiceLoop:
                     "should_end": True,
                     "reason": map_call_action_end_reason(action.reason),
                     "farewell": action.response or "",
-                }
+                },
+                tool_sourced=True,
             )
             if accepted:
                 error = self.controller.request(action, caller_speaking=self._caller_speaking)
@@ -1885,6 +2028,9 @@ class PstnRealtimeVoiceLoop:
             if not is_usable_lead_phone(str(phone or "")):
                 phone = ""
             direction = str(meta.get("direction") or self._resolve_direction() or "")
+            if not phone and direction.strip().lower() in ("outbound", "outgoing", "outbound-api"):
+                dialed = str(meta.get("callee_e164") or "")
+                phone = dialed if is_usable_lead_phone(dialed) else ""
             if (
                 not phone
                 and direction.strip().lower() not in ("outbound", "outgoing", "outbound-api")
@@ -2022,24 +2168,88 @@ class PstnRealtimeVoiceLoop:
         lang = self._resolve_language()
         line = language_mismatch_fallback_for(lang)
         ctx = get_ctx(self.call_id) if self.call_id else None
-        already = bool(ctx and ctx.language_mismatch_handled)
-        ok = not already
-        if ctx and not already:
-            ctx.language_mismatch_handled = True
+
+        raw_args = event.get("arguments")
+        if isinstance(raw_args, str):
             try:
-                await self._start_injected_response(
-                    "Say exactly this once in audio, then wait. Do not hang up.\n"
-                    f"{line}"
+                raw_args = json.loads(raw_args)
+            except (json.JSONDecodeError, TypeError):
+                raw_args = {}
+        args = raw_args if isinstance(raw_args, dict) else {}
+        action = args.get("action")
+        caller_language = str(args.get("caller_language") or "").strip()[:80]
+        summary = str(args.get("summary") or "").strip()[:1200]
+        result: dict[str, Any] = {"ok": False, "action": action}
+        instruction = ""
+        if not ctx or ctx.status != "active":
+            result["error"] = "call_not_active"
+        elif (self.controller.callback_cancelled or caller_requested_hangup(self._caller_text())
+              or caller_firm_refusal(self._caller_text())):
+            result["error"] = "caller_opted_out"
+        elif action == "remind":
+            if self._language_reminder_turn is not None:
+                result["error"] = "already_reminded"
+                result["instruction"] = "Wait for a later caller turn. Do not repeat the reminder."
+            else:
+                self._language_reminder_turn = self._language_user_turn
+                ctx.language_mismatch_handled = True
+                result["ok"] = True
+                instruction = (
+                    f"Speak only {lang}. Say exactly this once, then wait for the caller. "
+                    f"Do not hang up or request a callback on this turn: {line}"
                 )
-            except Exception as exc:
-                log_pstn("language_callback.inject.failed", call_id=self.call_id, error=str(exc)[:160])
-                ok = False
+        elif action == "request_callback":
+            if (self._language_reminder_turn is None
+                    or self._language_user_turn <= self._language_reminder_turn):
+                result["error"] = "reminder_and_later_caller_turn_required"
+            elif not caller_language or caller_language.lower() == "unknown" or not summary:
+                result["error"] = "caller_language_and_english_summary_required"
+            else:
+                from server.call.call_ledger import call_ledger
+                try:
+                    meta = call_ledger.read_meta(self.call_id)
+                    handoff = meta.get("language_callback") or {
+                        "status": "requested", "caller_language": caller_language,
+                        "configured_language": lang, "summary": summary,
+                    }
+                    meta["language_callback"] = handoff
+                    call_ledger.write_meta(self.call_id, meta)
+                except Exception as exc:
+                    result["error"] = "callback_save_failed"
+                    log_pstn("language_callback.persist_failed", call_id=self.call_id, error=str(exc)[:160])
+                else:
+                    ctx.language_callback_summary = handoff["summary"]
+                    ctx.language_callback_language = handoff["caller_language"]
+                    ctx.callback_request_text = "Language callback requested: " + handoff["summary"]
+                    self._callback_request_text = ctx.callback_request_text
+                    ctx.callback_close_phase = self._callback_close_phase = "closing_allowed"
+                    self._persist_callback_details()
+                    result.update(ok=True, callback_recorded=True, handoff=handoff)
+                    instruction = (
+                        f"Speak only {lang}. Professionally confirm that a callback request in "
+                        f"{handoff['caller_language']} has been recorded for the team. "
+                        "Do not promise a booked time. Say a brief farewell, then use "
+                        "request_end_call with reason=goal_complete."
+                    )
+        else:
+            result["error"] = "invalid_action"
+        if instruction:
+            result["instruction"] = instruction
+        elif "instruction" not in result:
+            result["instruction"] = (
+                f"Continue only in {lang}. Do not claim a callback was saved. "
+                "Respect opt-outs; otherwise correct the missing prerequisite before retrying."
+            )
         if self._adapter and event.get("call_id"):
             await self._adapter.submit_function_output(
-                call_id=str(event["call_id"]),
-                output=json.dumps({"ok": ok, "already_handled": already}),
-                name=str(event.get("name") or "request_language_callback"),
+                call_id=str(event["call_id"]), output=json.dumps(result),
+                name="request_language_callback",
             )
+            # Gemini resumes from its tool response. OpenAI requires response.create.
+            from server.realtime.models import is_gemini_live_voice_model
+            if instruction and not is_gemini_live_voice_model(self._live_model or ""):
+                await self._start_injected_response(instruction)
+
 
     async def _gate_end_call_payload(
         self,
@@ -2100,6 +2310,9 @@ class PstnRealtimeVoiceLoop:
                 1 for row in call_ledger.read_lines(self.call_id) if row.get("role") == "assistant"
             )
         evidence_user = self._callback_request_text if callback_close else user
+        spoken_for_gate = (self._assistant_text or "").strip()
+        if tool_sourced:
+            spoken_for_gate = spoken_for_gate or str(parsed.get("farewell") or "").strip()
         decision = validate_end_call(
             parsed,
             user_text=evidence_user,
@@ -2111,7 +2324,7 @@ class PstnRealtimeVoiceLoop:
             completed_turns=completed,
             memory_snapshot=snapshot,
             call_end_policy=ctx.call_end_policy if ctx else None,
-            spoken_text=self._assistant_text,
+            spoken_text=spoken_for_gate,
             callback_close_phase=state.phase,
             tool_sourced=tool_sourced,
         )
@@ -2200,18 +2413,13 @@ class PstnRealtimeVoiceLoop:
             await self._adapter.cancel_response()
         except Exception:
             pass
-        try:
-            await self._start_injected_response(
-                "The caller asked to end or is leaving the line. "
-                "Thank them briefly for their time and say goodbye only, in the configured language. "
-                "No question, no pitch, no 'are you still there'."
-            )
-        except Exception as exc:
-            log_pstn(
-                "end_call.transcript_farewell.failed",
-                call_id=self.call_id,
-                error=str(exc)[:160],
-            )
+        from server.realtime.models import is_gemini_live_voice_model
+
+        prefer_side = is_gemini_live_voice_model(self._live_model or "")
+        asyncio.create_task(
+            self._ensure_hangup_farewell_audio(prefer_side_session=prefer_side),
+            name=f"rt-farewell-{self.call_id}",
+        )
 
     async def _maybe_hangup_missed_end_call(self) -> None:
         """Repair a missed end_call only when the caller confirmed they are done."""
@@ -2336,6 +2544,7 @@ class PstnRealtimeVoiceLoop:
                     return
                 self._user_partial = text
                 self._last_user_final_text = text
+                self._language_user_turn += 1
                 self._caller_speaking = False
                 self._last_activity_at = time.monotonic()
                 closing = caller_requested_hangup(text) or caller_firm_refusal(text)
@@ -2349,13 +2558,26 @@ class PstnRealtimeVoiceLoop:
                 )
                 self._silence_prompted = False
                 if awaiting_close and not closing:
+                    if self._uses_fast_hangup() and not self._farewell_audio_engaged():
+                        if _is_simple_hello(text) or _is_presence_reply(text):
+                            log_pstn(
+                                "hangup.presence_before_farewell",
+                                call_id=self.call_id,
+                                text=text[:80],
+                            )
+                            from server.realtime.models import is_gemini_live_voice_model
+
+                            await self._ensure_hangup_farewell_audio(
+                                prefer_side_session=is_gemini_live_voice_model(self._live_model or "")
+                            )
+                            return
                     if _is_simple_hello(text) or not (
                         caller_wants_to_continue(text) or _is_presence_reply(text)
                     ):
                         self._resume_after_close = False
                         self._awaiting_presence_reply = False
                         self._close_listen_until = 0.0
-                        if self.call_id:
+                        if self.call_id and self._persist_live_transcript_ledger():
                             from server.call.call_ledger import call_ledger
 
                             await call_ledger.append_user_turn(self.call_id, text)
@@ -2387,9 +2609,11 @@ class PstnRealtimeVoiceLoop:
                     from server.call.call_ledger import call_ledger
                     from server.call.memory_manager import memory_manager
 
-                    line = await call_ledger.append_user_turn(self.call_id, text)
+                    line: dict[str, Any] = {}
+                    if self._persist_live_transcript_ledger():
+                        line = await call_ledger.append_user_turn(self.call_id, text)
                     detail_ops = [] if closing else caller_detail_memory_operations(text)
-                    if detail_ops:
+                    if detail_ops and line:
                         try:
                             memory_manager.apply_proposals(
                                 self.call_id,
@@ -2549,8 +2773,6 @@ class PstnRealtimeVoiceLoop:
                     accepted = self._pending_end_call or parsed
                     log_pstn("hangup.duplicate_tool", call_id=self.call_id, tool=tool_name)
                 else:
-                    if not self._caller_text():
-                        await asyncio.sleep(TOOL_STT_DEFER_SEC)
                     accepted = await self._gate_end_call_payload(parsed, tool_sourced=True)
                     if accepted:
                         await self._arm_accepted_hangup(accepted, tool_sourced=True)
@@ -2622,7 +2844,11 @@ class PstnRealtimeVoiceLoop:
                 line = self._assistant_text.strip()
                 if line and is_generic_inbound_greeting(line):
                     line = ""
-                if line and line != self._last_ledger_assistant:
+                if (
+                    line
+                    and line != self._last_ledger_assistant
+                    and self._persist_live_transcript_ledger()
+                ):
                     self._last_ledger_assistant = line
                     self._run_post_turn(call_ledger.append_assistant_turn(self.call_id, line))
             if kind == "response_done":
@@ -2911,7 +3137,7 @@ class PstnRealtimeVoiceLoop:
                     error=str(exc)[:160],
                 )
         self._greeting_protect_until = 0.0
-        if self.call_id:
+        if self.call_id and self._persist_live_transcript_ledger():
             from server.call.call_ledger import call_ledger
 
             await call_ledger.append_assistant_turn(self.call_id, text)

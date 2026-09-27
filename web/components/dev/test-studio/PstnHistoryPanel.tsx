@@ -11,6 +11,8 @@ import { portalFetch } from "@/lib/auth-client";
 import { ensureArray } from "@/lib/ensure-array";
 import { formatDuration, pipelineLabel } from "@/lib/call-list-utils";
 import { formatInr, formatUsd } from "@/lib/usage-cost";
+import { CallTranscriptSourceBadge } from "@/components/calls/detail/CallTranscriptSourceBadge";
+import { resolveTranscriptSource } from "@/lib/transcript-source";
 import type { CallMeta, OutcomePayload, TranscriptLine } from "@/lib/call-detail-types";
 import type { DevTelephonyHistoryRow } from "@/lib/dev-telephony-types";
 import { cn } from "@/lib/cn";
@@ -46,7 +48,26 @@ function historyToMeta(row: DevTelephonyHistoryRow): CallMeta {
     model_cost_inr: row.cost?.model_cost_inr ?? ledger.model_cost_inr,
     telnyx_inr: row.cost?.telnyx_inr ?? ledger.telnyx_inr,
     resolved_stack: ledger.resolved_stack || row.meta?.stack_override,
+    post_call_transcript:
+      ledger.post_call_transcript ||
+      (row.post_call_transcript as CallMeta["post_call_transcript"]) ||
+      undefined,
+    transcript_source:
+      ledger.transcript_source ||
+      (row.transcript_source as string | undefined) ||
+      undefined,
   };
+}
+
+function historyTranscriptLabel(row: DevTelephonyHistoryRow): string {
+  const info = resolveTranscriptSource(historyToMeta(row));
+  return info?.badge.replace(/^Transcript:\s*/, "") || "—";
+}
+
+function historyPostCallInr(row: DevTelephonyHistoryRow): number {
+  const usage = (row.usage || {}) as { post_call_transcript_inr?: number };
+  const cost = row.cost as { post_call_transcript_inr?: number } | undefined;
+  return Number(cost?.post_call_transcript_inr ?? usage.post_call_transcript_inr ?? 0);
 }
 
 export function PstnHistoryPanel({
@@ -145,19 +166,21 @@ export function PstnHistoryPanel({
                 <th className="px-3 py-2">Duration</th>
                 <th className="px-3 py-2">Model</th>
                 <th className="px-3 py-2">Telnyx</th>
+                <th className="px-3 py-2">Transcript</th>
+                <th className="px-3 py-2">3.5 TX</th>
                 <th className="px-3 py-2">Total</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="px-3 py-4 text-text-muted">
+                  <td colSpan={10} className="px-3 py-4 text-text-muted">
                     Loading history…
                   </td>
                 </tr>
               ) : rows.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-3 py-4 text-text-muted">
+                  <td colSpan={10} className="px-3 py-4 text-text-muted">
                     No persisted calls yet. Place an outbound test call to start history.
                   </td>
                 </tr>
@@ -192,6 +215,12 @@ export function PstnHistoryPanel({
                     </td>
                     <td className="px-3 py-2 font-mono text-xs">
                       {row.cost?.telnyx_inr != null ? formatInr(Number(row.cost.telnyx_inr)) : "—"}
+                    </td>
+                    <td className="px-3 py-2 font-mono text-[10px] text-text-muted">
+                      {historyTranscriptLabel(row)}
+                    </td>
+                    <td className="px-3 py-2 font-mono text-xs">
+                      {historyPostCallInr(row) > 0 ? formatInr(historyPostCallInr(row)) : "—"}
                     </td>
                     <td className="px-3 py-2 font-mono text-xs">
                       {row.cost?.cost_inr != null ? formatInr(Number(row.cost.cost_inr)) : "—"}
@@ -282,16 +311,28 @@ export function PstnHistoryPanel({
               </dl>
             </section>
 
+            <div className="mt-4">
+              <CallTranscriptSourceBadge meta={historyToMeta(selected)} />
+            </div>
+
             <div className="mt-4 rounded-xl border border-surface-border-subtle p-3">
               <p className="font-mono text-[10px] uppercase tracking-wider text-text-subtle">Cost breakdown</p>
-              <div className="mt-2 grid gap-2 sm:grid-cols-3">
+              <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                 <CostCell label={voiceModelCostLabel(selected)} inr={selected.cost?.model_cost_inr} usd={selected.cost?.model_cost_usd} />
                 <CostCell label="Telnyx minutes" inr={selected.cost?.telnyx_inr} usd={selected.cost?.telnyx_usd} />
+                <CostCell
+                  label="Post-call transcript"
+                  inr={historyPostCallInr(selected) || undefined}
+                  usd={
+                    (selected.cost as { post_call_transcript_usd?: number })?.post_call_transcript_usd ??
+                    (selected.usage as { post_call_transcript_usd?: number })?.post_call_transcript_usd
+                  }
+                />
                 <CostCell label="Total" inr={selected.cost?.cost_inr} usd={selected.cost?.cost_usd} accent />
               </div>
               {selected.cost?.cost_inr_per_min != null ? (
                 <p className="mt-2 text-xs text-text-muted">
-                  All-in {formatInr(Number(selected.cost.cost_inr_per_min))}/min (model + Telnyx)
+                  All-in {formatInr(Number(selected.cost.cost_inr_per_min))}/min (model + Telnyx + post-call transcribe)
                   {selected.cost.model_cost_inr_per_min != null
                     ? ` · model ${formatInr(Number(selected.cost.model_cost_inr_per_min))}/min`
                     : ""}
@@ -335,7 +376,7 @@ export function PstnHistoryPanel({
                     Open review console
                   </Button>
                 </div>
-                <CallTranscriptTimeline lines={transcript} />
+                <CallTranscriptTimeline lines={transcript} meta={historyToMeta(selected)} />
                 <CallOutcomePanel outcome={(selected.outcome as OutcomePayload | null) || null} />
                 <CallMetadataPanel meta={historyToMeta(selected)} />
               </div>

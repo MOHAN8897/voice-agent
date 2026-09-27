@@ -45,7 +45,8 @@ def resolve_platform_phone_stack_sync(language: str = "te-IN") -> dict[str, Any]
     stored = load_universal_phone_stack_raw()
     if stored and stored.get("stack_override"):
         base = dict(stored["stack_override"])
-        base.setdefault("language", lang)
+        # Provider/voice defaults are global; spoken language belongs to this agent.
+        base["language"] = lang
         normalized, _ = normalize_pstn_stack_override(base, language=lang, tier="medium")
         return normalized or base
 

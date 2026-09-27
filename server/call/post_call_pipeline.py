@@ -135,6 +135,15 @@ async def _run_outcome_locked(call_id: str) -> dict[str, Any]:
         callee_e164=str(meta.get("callee_e164") or "") or None,
         direction=str(meta.get("direction") or "") or None,
     )
+    handoff = meta.get("language_callback")
+    if isinstance(handoff, dict):
+        payload["language_callback"] = handoff
+        if handoff.get("status") == "requested":
+            payload["disposition"] = "callback_required"
+            facts["preferred_language"] = handoff["caller_language"]
+            facts["callback_requested"] = "true"
+            payload["summary_en"] = (payload.get("summary_en") or "") + " Language handoff: " + handoff["summary"]
+            payload["next_action"] = f"Arrange a callback in {handoff['caller_language']}. No callback time has been booked."
     payload["extracted_fields"] = facts
     payload["facts"] = facts
     payload["status_tags"] = derive_status_tags(
@@ -264,6 +273,7 @@ def _english_only_summaries(payload: dict[str, Any]) -> None:
 def _write_call_summary(call_id: str, outcome: dict[str, Any]) -> None:
     summary = {
         "call_id": call_id,
+        "language_callback": outcome.get("language_callback"),
         "disposition": validate_disposition(outcome.get("disposition")),
         "disposition_confidence": outcome.get("disposition_confidence"),
         "summary_te": outcome.get("summary_te") or "",

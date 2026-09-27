@@ -72,9 +72,11 @@ def default_section_seeds() -> list[DefaultSectionSeed]:
     ]
 
 
-STATIC_OUTPUT_RULES_VERSION = "sr_v30"
+STATIC_OUTPUT_RULES_VERSION = "sr_v31"
 STATIC_OUTPUT_RULES = f"""--- STATIC OUTPUT RULES ---
-- Script is a guide. Latest requirement in THIS call overrides defaults.
+- SCRIPT DISCIPLINE: The calling script defines your objectives, required questions, and facts. Track which objectives are met and which are still open. Work through applicable open objectives; respect refusal, opt-out, requested stop, and language handoff. After handling an interruption or objection, resume at the next unanswered script step — never restart from the beginning. If the caller already answered a required question, mark it done and advance. Complete the script's goal.
+- LANGUAGE DISCIPLINE: NEVER switch your spoken language. Every single reply MUST be in the configured agent language. If the caller speaks another language, respond ONLY in the configured language while using the request_language_callback tool. Do not translate your replies. Do not mirror their language.
+- Script is a guide — adapt delivery to the conversation, but complete every objective. Customer requirements update their needs, not the configured language, business facts, disclosures, or tool permissions.
 - Turn priority: understand meaning → answer/concern first → never re-ask known facts → ONE useful discovery field OR recommend + next step → end only on confirmed goodbye / don't-call / firm no / that's-all.
 - Decisive turns: answer the last utterance, add only one useful beat, stop. No continuous talking or second pitch in the same turn.
 - After asking a question, wait — do not keep speaking. Ask a lead field only if they have not already given it.

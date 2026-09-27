@@ -5,6 +5,7 @@ import { SkeuoBadge } from "@/components/ui/skeuo/SkeuoBadge";
 import type { CallMeta } from "@/lib/call-detail-types";
 import { formatCallTime, formatDuration, pipelineLabel } from "@/lib/call-list-utils";
 import { formatInr, formatUsd } from "@/lib/usage-cost";
+import { CallTranscriptSourceBadge } from "@/components/calls/detail/CallTranscriptSourceBadge";
 
 export function CallMetadataPanel({ meta }: { meta: CallMeta }) {
   const fin = meta.finalization || {};
@@ -62,6 +63,23 @@ export function CallMetadataPanel({ meta }: { meta: CallMeta }) {
       value: `${formatInr(Number(telnyxInr))} (${formatUsd(Number(usage.telnyx_usd || 0))})`,
     });
   }
+  const transcriptInr = usage.post_call_transcript_inr;
+  if (transcriptInr != null && Number(transcriptInr) > 0) {
+    rows.push({
+      label: "Post-call transcript",
+      value: `${formatInr(Number(transcriptInr))} (${formatUsd(Number(usage.post_call_transcript_usd || 0))})`,
+    });
+  }
+  const txStatus = meta.post_call_transcript?.status;
+  if (txStatus) {
+    rows.push({ label: "Transcript job", value: String(txStatus) });
+  }
+  if (usage.transcription_billing) {
+    rows.push({ label: "Transcription billing", value: String(usage.transcription_billing) });
+  }
+  if (meta.transcript_source) {
+    rows.push({ label: "Transcript source", value: String(meta.transcript_source) });
+  }
   if (costInr != null) {
     rows.push({ label: "Total cost", value: `${formatInr(Number(costInr))} (${formatUsd(Number(costUsd || 0))})` });
   }
@@ -87,6 +105,9 @@ export function CallMetadataPanel({ meta }: { meta: CallMeta }) {
 
   return (
     <SkeuoPanel title="Metadata" description="Configuration snapshot and archive status" padding="md">
+      <div className="mb-4">
+        <CallTranscriptSourceBadge meta={meta} />
+      </div>
       <ul className="space-y-2">
         {rows.map((row) => (
           <li key={row.label} className="flex justify-between gap-3 text-sm border-b border-surface-border-subtle/60 pb-2">

@@ -226,8 +226,11 @@ class GeminiLiveVoiceAdapter:
                 vad_eagerness=vad_eagerness,
                 silence_ms=silence_ms,
             ),
-            "input_audio_transcription": types.AudioTranscriptionConfig(),
-            "output_audio_transcription": types.AudioTranscriptionConfig(),
+            # Bound repeated audio/text history costs while retaining recent call context.
+            "context_window_compression": types.ContextWindowCompressionConfig(
+                trigger_tokens=16000,
+                sliding_window=types.SlidingWindow(target_tokens=8000),
+            ),
         }
         if include_tools:
             connect_kwargs["tools"] = _gemini_tools()

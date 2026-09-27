@@ -2,10 +2,11 @@
 
 import { SkeuoPanel } from "@/components/ui/skeuo/SkeuoPanel";
 import { cn } from "@/lib/cn";
-import type { TranscriptLine } from "@/lib/call-detail-types";
+import type { CallMeta, TranscriptLine } from "@/lib/call-detail-types";
 import { elapsedFromStart } from "@/lib/call-timeline-utils";
+import { CallTranscriptSourceBadge } from "@/components/calls/detail/CallTranscriptSourceBadge";
 
-export function CallTranscriptTimeline({ lines }: { lines: TranscriptLine[] }) {
+export function CallTranscriptTimeline({ lines, meta }: { lines: TranscriptLine[]; meta?: CallMeta | null }) {
   const startTs = lines[0]?.ts;
 
   return (
@@ -14,6 +15,11 @@ export function CallTranscriptTimeline({ lines }: { lines: TranscriptLine[] }) {
       description="Speaker, timestamp, interruption metadata, and per-component latencies"
       padding="md"
     >
+      {meta ? (
+        <div className="mb-3">
+          <CallTranscriptSourceBadge meta={meta} />
+        </div>
+      ) : null}
       {lines.length === 0 ? (
         <p className="text-sm text-text-muted">No transcript lines yet.</p>
       ) : (

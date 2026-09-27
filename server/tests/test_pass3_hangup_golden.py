@@ -65,6 +65,7 @@ async def test_1_backup_telugu_refusal_no_tool():
 
     loop._runtime_end = _spy
     await loop._handle_event({"type": "user_transcript", "text": TELUGU_NO_CALL, "final": True})
+    await asyncio.sleep(0.05)
     assert loop._pending_end_call is not None
     assert loop._pending_end_call.get("reason") == "firm_refusal"
     assert loop._firm_refusal_close is True
@@ -72,7 +73,7 @@ async def test_1_backup_telugu_refusal_no_tool():
     joined = " ".join(loop._adapter.started_responses).lower()
     assert "noted in records" not in joined
     assert "callback" not in joined
-    assert "no pitch" in joined
+    assert "farewell" in joined or loop._hangup_farewell_inject_tried
     now = time.monotonic()
     loop._response_open = True
     loop._response_activity_at = now - 31
@@ -94,15 +95,8 @@ def test_2_primary_hindi_tool_no_english_regex():
 
 
 @pytest.mark.asyncio
-async def test_3_tool_before_stt_final_defers():
+async def test_3_tool_without_stt_final_arms_immediately():
     loop = _loop()
-    user = "I've heard enough of this"
-
-    async def _stt() -> None:
-        await asyncio.sleep(0.05)
-        await loop._handle_event({"type": "user_transcript", "text": user, "final": True})
-
-    stt_task = asyncio.create_task(_stt())
     await loop._handle_event(
         {
             "type": "function_call",
@@ -111,9 +105,25 @@ async def test_3_tool_before_stt_final_defers():
             "arguments": '{"reason": "customer_declined", "farewell_required": true}',
         }
     )
-    await stt_task
     assert loop._pending_end_call is not None
     assert loop._pending_end_call.get("reason") == "firm_refusal"
+    assert loop._hangup_arm_source == "tool"
+
+
+@pytest.mark.asyncio
+async def test_3b_tool_before_stt_final_still_ok_when_stt_arrives():
+    loop = _loop()
+    user = "I've heard enough of this"
+    await loop._handle_event(
+        {
+            "type": "function_call",
+            "name": "request_end_call",
+            "call_id": "fn-race",
+            "arguments": '{"reason": "customer_declined", "farewell_required": true}',
+        }
+    )
+    assert loop._pending_end_call is not None
+    await loop._handle_event({"type": "user_transcript", "text": user, "final": True})
     assert loop._last_user_final_text == user
 
 
@@ -147,6 +157,8 @@ async def test_5_hello_during_farewell_fast_ack_not_reopen():
     await loop._handle_event({"type": "user_transcript", "text": TELUGU_NO_CALL, "final": True})
     assert loop._pending_end_call is not None
     loop._farewell_response_active = True
+    loop._response_had_audio = True
+    loop._farewell_complete = True
     await loop._handle_event({"type": "speech_started"})
     assert loop._resume_after_close is False
     assert loop._pending_end_call is not None

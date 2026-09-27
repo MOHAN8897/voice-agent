@@ -29,8 +29,8 @@ const inputCls =
   "w-full rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-inset px-3 py-2 text-sm";
 
 function labNameFromCompileResponse(j: Record<string, unknown>): string {
-  const ent = (j.scriptEntities || j.optimizerReport?.script_entities) as Record<string, string> | undefined;
   const opt = j.optimizerReport as Record<string, unknown> | undefined;
+  const ent = (j.scriptEntities || opt?.script_entities) as Record<string, string> | undefined;
   const agent = String(ent?.agent_name || opt?.agent_name || "").trim();
   const company = String(ent?.company_name || opt?.company_name || "").trim();
   if (agent && company) return `${agent} · ${company}`.slice(0, 255);

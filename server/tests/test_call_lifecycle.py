@@ -331,3 +331,31 @@ async def test_stamp_ended_usage_stamps_gemini_list_audio_rate(monkeypatch, tmp_
     assert meta["usage"]["cost_inr_per_min"] != pytest.approx(listed * 95.64)
     get_settings.cache_clear()
 
+
+def test_billable_duration_uses_connected_at(monkeypatch, tmp_path):
+    monkeypatch.setenv("DATA_DIR", str(tmp_path))
+    get_settings.cache_clear()
+    call_ledger.reset_for_tests()
+    from datetime import datetime, timedelta, timezone
+
+    from server.call.call_lifecycle_service import _billable_duration_sec
+
+    cid = "billable-connected"
+    started = datetime.now(timezone.utc) - timedelta(seconds=120)
+    connected = datetime.now(timezone.utc) - timedelta(seconds=45)
+    ended = datetime.now(timezone.utc)
+    call_ledger.write_meta(
+        cid,
+        {
+            "call_id": cid,
+            "channel": "pstn",
+            "pipeline": "realtime_voice",
+            "started_at": started.isoformat().replace("+00:00", "Z"),
+            "connected_at": connected.isoformat().replace("+00:00", "Z"),
+        },
+    )
+    fallback = int((ended - started).total_seconds())
+    billable = _billable_duration_sec(cid, ended, fallback)
+    assert billable == pytest.approx(45, abs=2)
+    get_settings.cache_clear()
+

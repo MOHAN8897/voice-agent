@@ -281,3 +281,14 @@ def test_fx_env_skips_live_fetch(monkeypatch):
     assert info["rate"] == pytest.approx(95.64)
     assert info["source"] == "env"
     get_settings.cache_clear()
+
+
+def test_live_fx_follows_redirects_and_keeps_quote_date(monkeypatch):
+    import httpx
+    from server.services.usage_pricing import _fetch_usd_inr
+    def fake_get(url, **kwargs):
+        assert kwargs["follow_redirects"] is True
+        return httpx.Response(200, json={"rates": {"INR": 95.82}, "date": "2026-09-25"},
+                              request=httpx.Request("GET", url))
+    monkeypatch.setattr(httpx, "get", fake_get)
+    assert _fetch_usd_inr() == (95.82, "2026-09-25")

@@ -42,6 +42,8 @@ class CallContext:
     callback_name: str = ""
     callback_phone: str = ""
     callback_when: str = ""
+    language_callback_summary: str = ""
+    language_callback_language: str = ""
     pipeline: str = "realtime_text"
     components: dict[str, str] = field(
         default_factory=lambda: {"ledger": "pending", "audio": "pending", "outcome": "pending"}

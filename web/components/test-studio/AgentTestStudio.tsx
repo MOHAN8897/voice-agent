@@ -6,7 +6,7 @@ import { CallDetailView } from "@/components/calls/CallDetailView";
 import { PstnFlowWorkspace } from "@/components/dev/test-studio/PstnFlowWorkspace";
 import { SkeuoPanel } from "@/components/ui/skeuo/SkeuoPanel";
 import { SkeuoButton } from "@/components/ui/skeuo/SkeuoButton";
-import { refreshPortalSession } from "@/lib/auth-client";
+import { portalFetch, refreshPortalSession } from "@/lib/auth-client";
 import { TestStudioConfigRack } from "@/components/test-studio/TestStudioConfigRack";
 import { TestStudioLivePanel } from "@/components/test-studio/TestStudioLivePanel";
 import { TestStudioDiagnostics } from "@/components/test-studio/TestStudioDiagnostics";
@@ -43,11 +43,39 @@ import { TestStudioSessionProvider } from "@/components/test-studio/TestStudioSe
 import { normalizeLanguageCode, primaryAgentLanguage } from "@/lib/agent-language";
 import { isInternalCallId } from "@/lib/pstn-lifecycle";
 
+async function fetchCallDetailForUsage(callId: string): Promise<Record<string, unknown> | null> {
+  try {
+    const response = await fetch(`/api/call/${encodeURIComponent(callId)}`, { credentials: "include" });
+    if (response.ok) {
+      return (await response.json()) as Record<string, unknown>;
+    }
+  } catch {
+    /* fall through */
+  }
+  try {
+    const dev = await portalFetch("dev", `/api/dev/telephony/calls/${encodeURIComponent(callId)}/detail`);
+    if (!dev.ok) return null;
+    const body = (await dev.json()) as Record<string, unknown>;
+    if (body.ok === false) return null;
+    return body;
+  } catch {
+    return null;
+  }
+}
+
 function stampedUsageFromCallBody(body: Record<string, unknown>): StampedSessionUsage {
   const usage = (body.usage || {}) as Record<string, unknown>;
   const modelUsd = usage.model_cost_usd != null ? Number(usage.model_cost_usd) : undefined;
   const modelInr = usage.model_cost_inr != null ? Number(usage.model_cost_inr) : undefined;
   return {
+    costBreakdownUsd: usage.cost_breakdown_usd as Record<string, number> | undefined,
+    fxRateInr: usage.fx_rate_inr != null ? Number(usage.fx_rate_inr) : undefined,
+    fxSource: typeof usage.fx_source === "string" ? usage.fx_source : undefined,
+    fxAsOf: typeof usage.fx_as_of === "string" ? usage.fx_as_of : undefined,
+    llmModel: typeof usage.llm_model === "string" ? usage.llm_model : undefined,
+    cachedTokens: Number(usage.cached_tokens ?? 0),
+    cachedAudioTokens: Number(usage.cached_audio_tokens ?? 0),
+    inputImageTokens: Number(usage.input_image_tokens ?? 0),
     durationSec: Number(body.duration_sec ?? usage.duration_sec ?? 0) || undefined,
     modelCostUsd: modelUsd,
     modelCostInr: modelInr,
@@ -57,10 +85,22 @@ function stampedUsageFromCallBody(body: Record<string, unknown>): StampedSession
       typeof usage.telnyx_destination_country === "string" ? usage.telnyx_destination_country : undefined,
     totalUsd: Number(body.cost_usd ?? usage.cost_usd ?? 0) || undefined,
     totalInr: Number(body.cost_inr ?? usage.cost_inr ?? 0) || undefined,
-    inputTokens: Number(usage.input_tokens ?? 0) || undefined,
-    outputTokens: Number(usage.output_tokens ?? 0) || undefined,
-    inputAudioTokens: Number(usage.input_audio_tokens ?? 0) || undefined,
-    outputAudioTokens: Number(usage.output_audio_tokens ?? 0) || undefined,
+    inputTokens: usage.input_tokens != null ? Number(usage.input_tokens) : undefined,
+    outputTokens: usage.output_tokens != null ? Number(usage.output_tokens) : undefined,
+    inputAudioTokens: usage.input_audio_tokens != null ? Number(usage.input_audio_tokens) : undefined,
+    outputAudioTokens: usage.output_audio_tokens != null ? Number(usage.output_audio_tokens) : undefined,
+    postCallTranscriptUsd:
+      usage.post_call_transcript_usd != null ? Number(usage.post_call_transcript_usd) : undefined,
+    postCallTranscriptInr:
+      usage.post_call_transcript_inr != null ? Number(usage.post_call_transcript_inr) : undefined,
+    transcriptionBilling:
+      typeof usage.transcription_billing === "string" ? usage.transcription_billing : undefined,
+    transcriptSource:
+      typeof body.transcript_source === "string" ? body.transcript_source : undefined,
+    postCallTranscriptStatus:
+      typeof (body.post_call_transcript as { status?: string } | undefined)?.status === "string"
+        ? String((body.post_call_transcript as { status: string }).status)
+        : undefined,
   };
 }
 
@@ -452,9 +492,8 @@ export function AgentTestStudio({
     let cancelled = false;
     const pull = async () => {
       try {
-        const response = await fetch(`/api/call/${encodeURIComponent(callId)}`, { credentials: "include" });
-        if (!response.ok || cancelled) return;
-        const body = (await response.json()) as Record<string, unknown>;
+        const body = await fetchCallDetailForUsage(callId);
+        if (!body || cancelled) return;
         setStampedUsage(stampedUsageFromCallBody(body));
       } catch {
         /* hangup stamp is best-effort */
@@ -592,11 +631,15 @@ export function AgentTestStudio({
     setCallId(id);
     setCallEnded(false);
     setLocked(true);
-    setSessionStartedAt((prev) => prev ?? Date.now());
     setSessionEndedAt(null);
-    setSessionStatus("listening");
+    setSessionStatus("connecting");
     refreshMemory(id);
   }, [refreshMemory]);
+
+  const onSessionClockStart = useCallback((atMs: number) => {
+    setSessionStartedAt((prev) => prev ?? atMs);
+    setSessionStatus("listening");
+  }, []);
 
   const onAgentCallStart = useCallback(
     (id: string) => {
@@ -617,6 +660,16 @@ export function AgentTestStudio({
     setSessionEndedAt((prev) => prev ?? Date.now());
     if (id) refreshMemory(id);
   }, [refreshMemory]);
+
+  useEffect(() => {
+    if (!callEnded || stampedUsage?.durationSec == null || sessionStartedAt == null) return;
+    const end = sessionStartedAt + stampedUsage.durationSec * 1000;
+    setSessionEndedAt((prev) => {
+      if (prev == null) return end;
+      if (Math.abs(prev - end) <= 2500) return prev;
+      return end;
+    });
+  }, [callEnded, stampedUsage?.durationSec, sessionStartedAt]);
 
   const onReviewCall = useCallback((id: string) => {
     setCallId(id);
@@ -644,10 +697,10 @@ export function AgentTestStudio({
     const e2e = isRealtimePstnMode(channel);
     const pull = async () => {
       try {
-        const [traceRes, transcriptRes, callRes] = await Promise.all([
+        const [traceRes, transcriptRes, callBody] = await Promise.all([
           fetch(`/api/call/${encodeURIComponent(callId)}/trace`, { credentials: "include" }),
           fetch(`/api/call/${encodeURIComponent(callId)}/transcript`, { credentials: "include" }),
-          fetch(`/api/call/${encodeURIComponent(callId)}`, { credentials: "include" }),
+          fetchCallDetailForUsage(callId),
         ]);
         if (!traceRes.ok || cancelled) return;
         const body = await traceRes.json();
@@ -657,8 +710,7 @@ export function AgentTestStudio({
             ? ((await transcriptRes.json()).lines as Record<string, unknown>[]) || []
             : [];
         setTurnRows(mapPstnTraceToTurnRows(turns, lines, e2e));
-        if (callRes.ok && !cancelled) {
-          const callBody = (await callRes.json()) as Record<string, unknown>;
+        if (callBody && !cancelled) {
           setStampedUsage(stampedUsageFromCallBody(callBody));
         }
       } catch {
@@ -852,6 +904,7 @@ export function AgentTestStudio({
               }
               onDialPlaced={onPstnDialPlaced}
               onInternalCallStart={onCallStart}
+              onSessionClockStart={onSessionClockStart}
               onInternalCallEnd={onCallEnd}
               onReviewCall={onReviewCall}
               sessionClockMs={sessionDurationMs}

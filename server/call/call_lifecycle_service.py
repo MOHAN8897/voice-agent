@@ -67,6 +67,24 @@ def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _billable_duration_sec(call_id: str, ended: datetime, fallback: int | None) -> int | None:
+    """PSTN/realtime_voice: bill from media connect (answer), not dial/ring."""
+    meta = call_ledger.read_meta(call_id) or {}
+    conn = meta.get("connected_at")
+    channel = str(meta.get("channel") or "")
+    pipeline = str(meta.get("pipeline") or "")
+    if not conn or not (channel == "pstn" or pipeline == "realtime_voice"):
+        return fallback
+    try:
+        st = datetime.fromisoformat(str(conn).replace("Z", "+00:00"))
+        if st.tzinfo is None:
+            st = st.replace(tzinfo=timezone.utc)
+        end = ended if ended.tzinfo else ended.replace(tzinfo=timezone.utc)
+        return max(0, int((end - st).total_seconds()))
+    except (ValueError, TypeError):
+        return fallback
+
+
 def status_url(call_id: str) -> str:
     return f"/api/call/{call_id}/finalization"
 
@@ -372,6 +390,8 @@ class CallLifecycleService:
             st = datetime.fromisoformat(raw.replace("Z", "+00:00")) if isinstance(raw, str) else raw
             duration = max(0, int((ended - st).total_seconds()))
 
+        duration = _billable_duration_sec(call_id, ended, duration)
+
         try:
             call_ledger.stamp_ended_usage(call_id, reason=reason, duration_sec=duration)
         except Exception:
@@ -410,6 +430,12 @@ class CallLifecycleService:
             logger.warning(f"[CALL] audio flush failed {call_id}: {str(e)[:200]}")
             if ctx:
                 ctx.components["audio"] = "failed"
+        try:
+            from server.call.post_call_transcription import schedule_post_call_transcription
+
+            schedule_post_call_transcription(call_id)
+        except Exception as e:
+            logger.warning(f"[CALL] post_call_transcript schedule failed {call_id}: {str(e)[:120]}")
         try:
             from server.call.post_call_pipeline import process_now
 

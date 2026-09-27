@@ -51,7 +51,12 @@ export type DevTelephonyHistoryRow = {
     llm_model?: string;
     pipeline?: string;
     end_reason?: string;
+    post_call_transcript_usd?: number;
+    post_call_transcript_inr?: number;
+    transcription_billing?: string;
   };
+  transcript_source?: string;
+  post_call_transcript?: { status?: string; model?: string; source?: string };
   has_recording?: boolean;
   has_telnyx_recording?: boolean;
   recording_source?: "telnyx" | "local" | "none";

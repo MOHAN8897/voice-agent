@@ -93,6 +93,26 @@ def test_tool_goodbye_trusts_hindi_without_english_regex():
     assert d.reason == "goodbye"
 
 
+def test_tool_goodbye_without_stt_text():
+    d = _tool_end(
+        {"should_end": True, "reason": "goodbye", "farewell": "Goodbye."},
+        "",
+        lang="en-IN",
+    )
+    assert d.accepted is True
+    assert d.reason == "goodbye"
+
+
+def test_tool_firm_refusal_without_stt_text():
+    d = _tool_end(
+        parse_request_end_call_tool({"reason": "customer_declined"}) or {},
+        "",
+        lang="te-IN",
+    )
+    assert d.accepted is True
+    assert d.reason == "firm_refusal"
+
+
 def test_tool_goodbye_still_blocks_continue():
     d = _tool_end(
         {"should_end": True, "reason": "goodbye", "farewell": "Goodbye."},
@@ -114,6 +134,38 @@ def test_tool_firm_refusal_rejects_bare_thanks():
 
 def test_telugu_agent_closing_detected():
     assert agent_spoke_closing("సరే అండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు.")
+
+
+@pytest.mark.asyncio
+async def test_hangup_tool_without_live_native_transcript_events():
+    """Gemini PSTN: hangup arms from request_end_call only (no user_transcript / Live STT)."""
+    from unittest.mock import AsyncMock
+
+    from server.realtime.testing import FakeRealtimeVoiceAdapter
+
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id=None,
+        on_agent_wire=AsyncMock(),
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        adapter=FakeRealtimeVoiceAdapter(),
+        stack_override={"pipeline": "realtime_voice", "language": "te-IN"},
+    )
+    await loop._handle_event(
+        {
+            "type": "function_call",
+            "name": "request_end_call",
+            "call_id": "fn-no-stt",
+            "arguments": '{"reason": "customer_declined", "farewell_required": true}',
+        }
+    )
+    assert loop._pending_end_call is not None
+    assert loop._pending_end_call.get("reason") == "firm_refusal"
+    assert loop._hangup_arm_source == "tool"
+    assert loop._last_user_final_text == ""
 
 
 @pytest.mark.asyncio

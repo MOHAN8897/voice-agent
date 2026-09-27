@@ -126,7 +126,7 @@ export function CallInvestigationConsole({ callId }: { callId: string }) {
         <CallAudioPanel callId={callId} preferClearAudio />
       </div>
 
-      <CallTranscriptTimeline lines={data.transcript} />
+      <CallTranscriptTimeline lines={data.transcript} meta={data.meta} />
 
       <CallUnifiedTimeline events={timelineEvents} />
 

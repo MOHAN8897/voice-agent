@@ -14,13 +14,20 @@ type LedgerLine = {
 };
 
 type TraceTurn = {
+  kind?: string;
   turn?: number;
   user_text?: string;
   assistant_text?: string;
+  post_call_transcript_usd?: number;
+  post_call_transcript_inr?: number;
+  post_call_transcript_model?: string;
+  transcript_lines?: number;
   input_tokens?: number;
   output_tokens?: number;
   cached_tokens?: number;
   cache_write_tokens?: number;
+  input_image_tokens?: number;
+  cached_audio_tokens?: number;
   input_audio_tokens?: number;
   output_audio_tokens?: number;
   stt_final_ms?: number;
@@ -62,8 +69,33 @@ export function mapPstnTraceToTurnRows(
   e2e: boolean
 ): TurnMetricRow[] {
   const pairs = pairLines(lines);
+  let dialogIndex = 0;
   return turns.map((turn, index) => {
-    const pair = pairs[index];
+    if (turn.kind === "post_call_transcript") {
+      const usd = Number(turn.post_call_transcript_usd || 0);
+      const inr = Number(turn.post_call_transcript_inr || usd);
+      const model = turn.post_call_transcript_model || "gemini-3.5-transcribe";
+      const lineCount = Number(turn.transcript_lines || 0);
+      return {
+        turn: Number(turn.turn ?? index + 1),
+        userText: "",
+        assistantText: `Post-call transcript (${model}${lineCount > 0 ? `, ${lineCount} lines` : ""})`,
+        at: index + 1,
+        inputTokens: 0,
+        outputTokens: 0,
+        cachedTokens: 0,
+        cacheWriteTokens: 0,
+        sttChars: 0,
+        sttAudioSec: 0,
+        ttsChars: 0,
+        ttsAudioBytes: 0,
+        cacheHit: false,
+        costUsd: usd > 0 ? usd : undefined,
+        costInr: inr > 0 ? inr : undefined,
+      };
+    }
+    const pair = pairs[dialogIndex];
+    dialogIndex += 1;
     const userText = String(turn.user_text || pair?.userText || "");
     const assistantText = String(turn.assistant_text || pair?.assistantText || "");
     const input = Number(turn.input_tokens || 0);
@@ -82,6 +114,8 @@ export function mapPstnTraceToTurnRows(
       outputTokens: Number(turn.output_tokens || 0),
       cachedTokens: cached,
       cacheWriteTokens: cacheWrite,
+      inputImageTokens: Number(turn.input_image_tokens || 0),
+      cachedAudioTokens: Number(turn.cached_audio_tokens || 0),
       inputAudioTokens: Number(turn.input_audio_tokens || 0),
       outputAudioTokens: Number(turn.output_audio_tokens || 0),
       sttChars: e2e ? 0 : billingCharCount(userText),
@@ -90,8 +124,8 @@ export function mapPstnTraceToTurnRows(
       ttsAudioBytes: 0,
       cacheEvent,
       cacheHit: cached > 0,
-      costUsd: Number(turn.cost_usd || 0) || undefined,
-      costInr: Number(turn.cost_inr || 0) || undefined,
+      costUsd: turn.cost_usd != null ? Number(turn.cost_usd) : undefined,
+      costInr: turn.cost_inr != null ? Number(turn.cost_inr) : undefined,
     };
   });
 }

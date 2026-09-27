@@ -27,7 +27,7 @@ import re
 import time
 from typing import Any, Literal
 
-PRICING_UPDATED_AT = "2026-09-23"
+PRICING_UPDATED_AT = "2026-09-27"
 
 DEFAULT_FX_RATE_INR = 95.64
 
@@ -110,6 +110,14 @@ OPENAI_USD_PER_M: dict[str, dict[str, float]] = {
 GEMINI_LIVE_AUDIO_TOKENS_PER_SEC = 25
 GEMINI_LIVE_AUDIO_INPUT_USD_PER_MIN = 0.005
 GEMINI_LIVE_AUDIO_OUTPUT_USD_PER_MIN = 0.018
+# gemini-3.5-transcribe batch (post-call); list ≈ $0.009/min blended (preview).
+GEMINI_35_TRANSCRIBE_USD_PER_MIN = 0.009
+
+
+def cost_gemini_post_call_transcribe(*, duration_sec: float, model: str) -> dict[str, float]:
+    minutes = max(0.0, float(duration_sec or 0)) / 60.0
+    rate = GEMINI_35_TRANSCRIBE_USD_PER_MIN
+    return {"usd": minutes * rate, "minutes": minutes, "usd_per_min": rate, "model": (model or "gemini-3.5-transcribe")}
 
 GEMINI_LIVE_USD_PER_M: dict[str, dict[str, float]] = {
     "gemini-3.8-live": {
@@ -253,7 +261,7 @@ def _fetch_usd_inr() -> tuple[float | None, str | None]:
     try:
         import httpx
 
-        response = httpx.get("https://api.frankfurter.app/latest?from=USD&to=INR", timeout=1.5)
+        response = httpx.get("https://api.frankfurter.dev/v1/latest?base=USD&symbols=INR", timeout=3.0, follow_redirects=True)
         response.raise_for_status()
         data = response.json()
         rate = float((data.get("rates") or {}).get("INR") or 0)
@@ -297,6 +305,8 @@ def build_pricing_metadata(fx_rate_inr: float) -> dict[str, Any]:
     cartesia_stt_usd_per_hour_ink2 = cartesia_stt_credits_per_sec(model="ink-2") * 3600 * CARTESIA_PRO_USD_PER_CREDIT
     return {
         "updated_at": PRICING_UPDATED_AT,
+        "openai:gpt-4o-mini-transcribe": {"usd_per_minute": 0.003},
+        "transcription_note": "Gemini PSTN realtime_voice uses post-call gemini-3.5-transcribe on Telnyx recordings (separate line item). OpenAI Realtime uses gpt-4o-mini-transcribe during the call.",
         "fx_rate_inr": fx,
         "sources": {
             "sarvam": "https://www.sarvam.ai/api-pricing",

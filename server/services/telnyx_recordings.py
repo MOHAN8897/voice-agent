@@ -128,6 +128,9 @@ def _commit_recording(
         bytes=dest.stat().st_size if dest.exists() else len(body),
         path=dest.name,
     )
+    from server.call.post_call_transcription import schedule_post_call_transcription
+
+    schedule_post_call_transcription(call_id)
 
 
 def _stash_pending(

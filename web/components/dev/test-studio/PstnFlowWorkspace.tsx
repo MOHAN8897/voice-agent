@@ -44,6 +44,7 @@ export function PstnFlowWorkspace({
   onFarFieldNoiseReductionChange,
   onInternalCallStart,
   onInternalCallEnd,
+  onSessionClockStart,
   onReviewCall,
   onDialPlaced,
   sessionClockMs,
@@ -62,6 +63,8 @@ export function PstnFlowWorkspace({
   onFarFieldNoiseReductionChange?: (enabled: boolean) => void;
   onInternalCallStart?: (callId: string) => void;
   onInternalCallEnd?: (callId: string) => void;
+  /** Fires once when callee answers / media is live — billing session clock starts here. */
+  onSessionClockStart?: (atMs: number) => void;
   onReviewCall?: (callId: string) => void;
   onDialPlaced?: () => void;
   sessionClockMs?: number;
@@ -78,13 +81,24 @@ export function PstnFlowWorkspace({
   const endedNotifiedRef = useRef(false);
   const onInternalCallEndRef = useRef(onInternalCallEnd);
   onInternalCallEndRef.current = onInternalCallEnd;
+  const onSessionClockStartRef = useRef(onSessionClockStart);
+  onSessionClockStartRef.current = onSessionClockStart;
+  const connectedAtRef = useRef<number | null>(null);
+
+  const markSessionConnected = useCallback(() => {
+    if (connectedAtRef.current != null) return;
+    const at = Date.now();
+    connectedAtRef.current = at;
+    setConnectedAt(at);
+    onSessionClockStartRef.current?.(at);
+  }, []);
 
   const notifyEnded = useCallback((id?: string) => {
     if (endedNotifiedRef.current) return;
     endedNotifiedRef.current = true;
     setLifecycleStage((prev) => advanceLifecycle(prev, "hangup"));
     setHistoryRefreshKey((n) => n + 1);
-    if (isInternalCallId(id)) onInternalCallEndRef.current?.(id);
+    if (id && isInternalCallId(id)) onInternalCallEndRef.current?.(id);
     else onInternalCallEndRef.current?.("");
   }, []);
 
@@ -116,6 +130,7 @@ export function PstnFlowWorkspace({
         } else if (hasClosing) {
           setLifecycleStage((prev) => advanceLifecycle(prev, "closing"));
         } else if (talking) {
+          markSessionConnected();
           setLifecycleStage((prev) => advanceLifecycle(prev, "ongoing"));
         }
       } catch {
@@ -128,7 +143,7 @@ export function PstnFlowWorkspace({
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [internalCallId, lifecycleStage, notifyEnded]);
+  }, [internalCallId, lifecycleStage, notifyEnded, markSessionConnected]);
 
   const panelSection: PstnPanelSection =
     section === "setup" || section === "stack" || section === "live" ? section : "none";
@@ -165,6 +180,7 @@ export function PstnFlowWorkspace({
         onDialPlaced={() => {
           endedNotifiedRef.current = false;
           setInternalCallId(null);
+          connectedAtRef.current = null;
           setConnectedAt(null);
           setLifecycleStage("placed");
           setPlacedAt(Date.now());
@@ -172,8 +188,7 @@ export function PstnFlowWorkspace({
         }}
         onInternalCallStart={(id) => {
           setInternalCallId(id);
-          setConnectedAt((t) => t ?? Date.now());
-          setLifecycleStage((prev) => advanceLifecycle(prev, "lifted"));
+          setLifecycleStage((prev) => advanceLifecycle(prev, "ringing"));
           onInternalCallStart?.(id);
         }}
         onInternalCallEnd={(id) => {
@@ -192,6 +207,10 @@ export function PstnFlowWorkspace({
           if (mapped === "hangup") {
             notifyEnded(isInternalCallId(call.internal_call_id) ? String(call.internal_call_id) : undefined);
             return;
+          }
+          if (mapped === "lifted" || mapped === "ongoing" || mapped === "closing") {
+            const frames = Number(call.media_frames_in || 0) + Number(call.media_frames_out || 0);
+            if (frames > 0 || call.answered_at) markSessionConnected();
           }
           setLifecycleStage((prev) => {
             if (prev === "hangup") return "hangup";

@@ -76,6 +76,10 @@ export type CallUsage = {
   model_cost_inr?: number;
   telnyx_usd?: number;
   telnyx_inr?: number;
+  post_call_transcript_usd?: number;
+  post_call_transcript_inr?: number;
+  post_call_transcript_model?: string;
+  transcription_billing?: string;
 };
 
 export type CallMeta = {
@@ -104,6 +108,8 @@ export type CallMeta = {
   cost_inr_per_min?: number;
   model_cost_inr?: number;
   telnyx_inr?: number;
+  post_call_transcript?: { status?: string; model?: string; lines?: number };
+  transcript_source?: string;
   audio?: { mix?: boolean; user?: boolean; agent?: boolean };
 };
 

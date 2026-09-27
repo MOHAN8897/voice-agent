@@ -46,6 +46,34 @@ async def test_seal_rejects_further_appends(ledger):
     assert len(ledger.read_lines(call_id)) == 1
 
 
+def test_stamp_ended_usage_refreshes_post_call_transcript_cost(ledger):
+    call_id = "stamp-post-call-tx"
+    ledger.write_meta(
+        call_id,
+        {
+            "call_id": call_id,
+            "channel": "pstn",
+            "pipeline": "realtime_voice",
+            "callee_e164": "+919876543210",
+            "direction": "outbound",
+            "usage": {
+                "llm_model": "gemini-3.8-live",
+                "model_cost_usd": 0.05,
+                "model_cost_inr": 4.78,
+                "post_call_transcript_usd": 0.0045,
+                "post_call_transcript_model": "gemini-3.5-transcribe",
+            },
+            "post_call_transcript": {"status": "complete", "lines": 4},
+        },
+    )
+    ledger.stamp_ended_usage(call_id, reason="pstn_hangup", duration_sec=120)
+    usage = ledger.read_meta(call_id)["usage"]
+    expected_tx = 120 / 60.0 * 0.009
+    assert abs(float(usage["post_call_transcript_usd"]) - expected_tx) < 1e-9
+    total = float(usage["model_cost_usd"]) + float(usage["telnyx_usd"]) + expected_tx
+    assert abs(float(usage["cost_usd"]) - total) < 1e-9
+
+
 @pytest.mark.asyncio
 async def test_user_turn_records_stt_latency(ledger):
     call_id = "ledger-stt"

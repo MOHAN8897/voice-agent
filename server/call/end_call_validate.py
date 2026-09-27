@@ -410,6 +410,12 @@ def _trust_live_tool_evidence(
     """Accept Live API hangup tool intent; regex evidence is repair-only."""
     text = (user_text or "").strip()
     if not text:
+        if reason in {"goodbye", "firm_refusal", "abuse"}:
+            return True
+        if reason == "goal_complete":
+            return bool(memory_has_goal_complete(memory_snapshot))
+        if reason == "out_of_scope":
+            return completed_turns >= 1
         return False
     if caller_wants_to_continue(text):
         return False
@@ -515,7 +521,11 @@ def validate_end_call(
         parsed = _force_end("goodbye", parsed.get("farewell") or "", spoken, lang)
     elif caller_firm_refusal(user):
         parsed = _force_end("firm_refusal", parsed.get("farewell") or "", spoken, lang)
-    elif agent_still_collecting_lead(spoken):
+    elif agent_still_collecting_lead(spoken) and not (
+        tool_sourced
+        and parsed.get("should_end")
+        and parsed.get("reason") in {"goodbye", "firm_refusal", "abuse"}
+    ):
         logger.info("[END_CALL] rejected code=lead_details_missing spoken_collecting=1")
         return EndCallDecision(False, False, "none", parsed.get("farewell") or "", "lead_details_missing")
     elif caller_requested_callback(user) or callback_close_phase in {
@@ -576,16 +586,20 @@ def validate_end_call(
     if call_status and call_status != "active":
         return _reject("call_not_active")
     clock = now if now is not None else time.monotonic()
-    if last_stt_partial_at and (clock - last_stt_partial_at) < 0.4:
+    if (
+        not tool_sourced
+        and last_stt_partial_at
+        and (clock - last_stt_partial_at) < 0.4
+    ):
         return _reject("caller_still_talking")
     if reason not in HANGUP_REASONS:
         return _reject("reason_invalid")
     allowed = allowed_reasons if allowed_reasons is not None else allowed_reasons_for(call_end_policy)
     if reason not in allowed:
         return _reject("policy_overlay")
-    if not user.strip():
+    if not user.strip() and not (tool_sourced and parsed.get("should_end")):
         return _reject("empty_user_turn")
-    if looks_like_question(user) and reason != "abuse" and not _user_wants_hangup(user):
+    if user.strip() and looks_like_question(user) and reason != "abuse" and not _user_wants_hangup(user):
         if not (_OPT_OUT.search(user) or _CALLER_DONE.search(user)
                 or caller_explicit_end_request(user) or caller_requested_callback(user)
                 or caller_unavailable_now(user)):

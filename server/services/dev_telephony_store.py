@@ -132,6 +132,18 @@ class DevTelephonyStore:
             return
         events.append({"at": _utcnow(), "stage": stage, "detail": detail})
 
+    @staticmethod
+    def _stamp_ledger_connected_at(internal_call_id: str, at: str | None) -> None:
+        if not internal_call_id or not at:
+            return
+        from server.call.call_ledger import call_ledger
+
+        meta = call_ledger.read_meta(internal_call_id) or {}
+        if meta.get("connected_at"):
+            return
+        meta["connected_at"] = at
+        call_ledger.write_meta(internal_call_id, meta)
+
     def sync_registry_row(self, row: dict[str, Any], *, provider: str) -> None:
         external_id = str(
             row.get("call_control_id") or row.get("call_sid") or row.get("call_uuid") or ""
@@ -149,6 +161,7 @@ class DevTelephonyStore:
                 entry["internal_call_id"] = internal
                 self._append_event(entry, "answered", "Media stream connected")
                 entry["answered_at"] = entry.get("answered_at") or _utcnow()
+                self._stamp_ledger_connected_at(internal, entry.get("answered_at"))
                 entry["status"] = "ongoing"
                 changed = True
             if status in {"ringing", "initiated"} and entry.get("status") == "placed":
@@ -161,6 +174,8 @@ class DevTelephonyStore:
             }:
                 entry["status"] = "ongoing"
                 entry["answered_at"] = entry.get("answered_at") or _utcnow()
+                if internal:
+                    self._stamp_ledger_connected_at(internal, entry.get("answered_at"))
                 self._append_event(entry, "ongoing", "Call in progress")
                 changed = True
             if status in {"completed", "failed", "busy", "no-answer", "canceled", "hangup"}:
@@ -217,8 +232,19 @@ class DevTelephonyStore:
             "llm_model": usage.get("llm_model"),
             "pipeline": review.get("pipeline") or entry.get("pipeline"),
             "end_reason": review.get("end_reason") or meta.get("end_reason"),
+            "post_call_transcript_usd": usage.get("post_call_transcript_usd"),
+            "post_call_transcript_inr": usage.get("post_call_transcript_inr"),
+            "transcription_billing": usage.get("transcription_billing"),
         }
         changed = False
+        tx_src = meta.get("transcript_source")
+        if tx_src and entry.get("transcript_source") != tx_src:
+            entry["transcript_source"] = tx_src
+            changed = True
+        tx_block = meta.get("post_call_transcript")
+        if isinstance(tx_block, dict) and tx_block and entry.get("post_call_transcript") != tx_block:
+            entry["post_call_transcript"] = tx_block
+            changed = True
         if usage and entry.get("usage") != usage:
             entry["usage"] = usage
             changed = True

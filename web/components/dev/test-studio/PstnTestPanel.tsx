@@ -76,6 +76,7 @@ type CallRow = {
   updated_at?: number;
   media_frames_in?: number;
   media_frames_out?: number;
+  answered_at?: string | null;
   bidirectional_ok?: boolean;
   pipeline?: string;
   duration_sec?: number;

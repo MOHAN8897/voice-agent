@@ -60,7 +60,14 @@ export const PRICING = {
     },
     geminiLiveAudioInputUsdPerMin: 0.005,
     geminiLiveAudioOutputUsdPerMin: 0.018,
+    /** gemini-3.5-transcribe post-call (batch), aligned with server usage_pricing.py */
+    gemini35TranscribeUsdPerMin: 0.009,
 } as const;
+
+export function costGeminiPostCallTranscribeUsd(durationSec: number): number {
+  const minutes = Math.max(0, durationSec) / 60;
+  return minutes * PRICING.gemini35TranscribeUsdPerMin;
+}
 
 export type CacheEvent = "cache_hit" | "cache_write" | "partial_hit" | "cache_miss";
 
@@ -321,7 +328,8 @@ export type TelnyxCostOptions = {
 };
 
 function telnyxRate(meta: PricingMeta | null | undefined, key: keyof PricingMeta, fallback: number): number {
-  const fromMeta = meta?.[key]?.usd_per_unit;
+  const entry = meta?.[key];
+  const fromMeta = entry && typeof entry === "object" && "usd_per_unit" in entry ? entry.usd_per_unit : undefined;
   return typeof fromMeta === "number" ? fromMeta : fallback;
 }
 

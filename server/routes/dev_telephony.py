@@ -695,6 +695,32 @@ async def dev_telephony_history(
     return {"ok": True, "history": items, "total": total, "limit": limit, "offset": offset}
 
 
+@router.get("/api/dev/telephony/calls/{internal_call_id}/detail")
+async def dev_telephony_call_detail(
+    internal_call_id: str,
+    session: SessionData = Depends(require_dev_session),
+):
+    """Ledger-backed call body for Test Studio when /api/call/{id} is auth-gated."""
+    require_permission(session, "dev.stack.read")
+    cid = str(internal_call_id or "").strip()
+    if not cid:
+        return {"ok": False, "error": "missing_call_id"}
+    from server.call.call_ledger import call_ledger
+
+    meta = call_ledger.read_meta(cid)
+    if not meta:
+        return {"ok": False, "error": "not_found"}
+    review = call_ledger.review_fields(cid)
+    body: dict[str, Any] = {"call_id": cid, **review}
+    if meta.get("usage") and not body.get("usage"):
+        body["usage"] = meta["usage"]
+    if meta.get("post_call_transcript"):
+        body["post_call_transcript"] = meta["post_call_transcript"]
+    if meta.get("transcript_source"):
+        body["transcript_source"] = meta["transcript_source"]
+    return {"ok": True, **body}
+
+
 @router.get("/api/dev/telephony/history/{history_id}")
 async def dev_telephony_history_detail(
     history_id: str,

@@ -112,6 +112,10 @@ class Settings(BaseSettings):
     memory_extraction_max_output_tokens: int = Field(400, alias="MEMORY_EXTRACTION_MAX_OUTPUT_TOKENS")
     post_call_llm_model: str = Field("gpt-5.6-luna", alias="POST_CALL_LLM_MODEL")
     post_call_max_retries: int = Field(3, alias="POST_CALL_MAX_RETRIES")
+    post_call_transcript_enabled: bool = Field(True, alias="POST_CALL_TRANSCRIPT_ENABLED")
+    post_call_transcript_model: str = Field("gemini-3.5-transcribe", alias="POST_CALL_TRANSCRIPT_MODEL")
+    post_call_transcript_max_retries: int = Field(6, alias="POST_CALL_TRANSCRIPT_MAX_RETRIES")
+    post_call_transcript_retry_base_sec: float = Field(3.0, alias="POST_CALL_TRANSCRIPT_RETRY_BASE_SEC")
 
     # --- Fine-tune allowlist (industry: restrict client-selectable models) ---
     allowed_openai_models_csv: str = Field(
