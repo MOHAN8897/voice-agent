@@ -12,6 +12,7 @@ from typing import Any
 _AGENT_CLOSING = re.compile(
     r"\b("
     r"goodbye|good day|alvida|"
+    r"time ichinanduku|ichinanduku thanks|dhanyavaadalu|"
     r"team will (?:contact|reach|call|get back)|"
     r"our team will|"
     r"we(?:'ll| will) (?:have )?(?:the )?team (?:contact|call|reach)|"
@@ -62,12 +63,18 @@ _AGENT_STILL_COLLECTING = re.compile(
 )
 
 
+_INDIC_CLOSING = re.compile(
+    r"ధన్యవాదాలు|సమయం\s*ఇచ్చినందుకు|ఇచ్చినందుకు\s*ధన్యవాదాలు|धन्यवाद|समय\s*देने\s*के\s*लिए",
+    re.I,
+)
+
+
 def agent_spoke_closing(spoken_text: str) -> bool:
     """True when the agent already delivered a closing / handoff line."""
     spoken = spoken_text or ""
     if agent_still_collecting_lead(spoken):
         return False
-    return bool(_AGENT_CLOSING.search(spoken))
+    return bool(_AGENT_CLOSING.search(spoken) or _INDIC_CLOSING.search(spoken))
 
 
 def agent_still_collecting_lead(spoken_text: str) -> bool:

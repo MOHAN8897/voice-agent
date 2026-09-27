@@ -25,6 +25,9 @@ type TraceTurn = {
   output_audio_tokens?: number;
   stt_final_ms?: number;
   e2e_ms?: number;
+  cost_usd?: number;
+  cost_inr?: number;
+  token_scope?: string;
 };
 
 function pairLines(lines: LedgerLine[]): { userText: string; assistantText: string; sttMs: number; at: number; turnMs: number }[] {
@@ -87,6 +90,8 @@ export function mapPstnTraceToTurnRows(
       ttsAudioBytes: 0,
       cacheEvent,
       cacheHit: cached > 0,
+      costUsd: Number(turn.cost_usd || 0) || undefined,
+      costInr: Number(turn.cost_inr || 0) || undefined,
     };
   });
 }

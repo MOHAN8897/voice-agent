@@ -12,6 +12,10 @@ _INTERNAL_MONOLOGUE = re.compile(
     r"i(?:'ve| have) already ended the call|"
     r"i will now end the call|"
     r"the user provided|"
+    r"the user explicitly stated|"
+    r"per the instructions|"
+    r"call the end_call tool|"
+    r"must accept the firm refusal|"
     r"i have confirmed the callback|"
     r"goal is complete"
     r")",
@@ -36,7 +40,13 @@ def sanitize_live_assistant_transcript(text: str) -> str:
         return ""
     if _MARKDOWN_GARBAGE.search(raw):
         return ""
-    if _REASONING_LINE.search(raw) and "\n" in raw:
+    if _REASONING_LINE.search(raw) and ("\n" in raw or len(raw) > 120):
+        return ""
+    if re.search(r"\b(?:end_call|firm_refusal|should_end)\b", raw, re.I) and re.search(
+        r"\b(?:per the instructions|explicitly stated|terminate the conversation)\b",
+        raw,
+        re.I,
+    ):
         return ""
     from server.call.hangup_judge import is_generic_inbound_greeting
 

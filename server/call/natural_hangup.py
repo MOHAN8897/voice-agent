@@ -10,7 +10,8 @@ import time
 from collections.abc import Callable
 
 # Last RTP / provider buffer can still be playing after local TTS flush.
-HANGUP_PLAYBACK_TIMEOUT_SEC = 12.0
+HANGUP_PLAYBACK_TIMEOUT_SEC = 14.0
+HANGUP_PLAYBACK_START_WAIT_SEC = 2.5
 # Brief silence after the last word — like a person pausing before hanging up.
 HANGUP_TRAIL_SILENCE_SEC = 0.55
 HANGUP_TRAIL_SILENCE_MS = int(HANGUP_TRAIL_SILENCE_SEC * 1000)

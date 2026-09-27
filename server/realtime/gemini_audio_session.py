@@ -231,8 +231,8 @@ def _gemini_outbound_block(
 def _gemini_audio_and_tools() -> str:
     return (
         "CONVERSATION ACTIONS (override conflicting sales instructions)\n"
-        "Speak answers naturally. end_call in the same turn as a short farewell when they clearly end "
-        "or confirmed a callback. Do not end for okay/thanks alone.\n\n"
+        "Speak answers naturally. request_end_call (or end_call) in the same turn as a short farewell "
+        "when they clearly end or confirmed a callback. Do not end for okay/thanks alone.\n\n"
         "AUDIO & TOOLS\n"
         "- Speak naturally; no JSON, markdown, labels, or tool names aloud.\n"
         "- Do not hang up on okay, thanks, or a follow-up question alone."
@@ -279,9 +279,11 @@ def build_gemini_audio_session_instructions(
         "ADHERENCE: Answer only from PINNED BUSINESS SCRIPT and COMPANY & OFFER facts. "
         "If a price or policy is not in the script, say you will confirm and offer a callback."
     )
-    parts.append(f"SPOKEN LANGUAGE: {language}. Keep your spoken reply in this language even "
-                 "when the caller code-switches, unless they explicitly request a language change. "
-                 "A transcript correction cannot correct audio already spoken.")
+    parts.append(
+        f"SPOKEN LANGUAGE: default {language}. Mirror the caller when they clearly use another "
+        "supported product language (te-IN, hi-IN, en-IN, en-US) while keeping the same script "
+        "and goals. A transcript correction cannot correct audio already spoken."
+    )
     reserve = estimate_tokens("\n\n".join(parts)) + 400
     brain_budget = max(1200, token_budget - reserve) if token_budget > 0 else 0
     support = _gemini_support_sections_only(raw_brain) if raw_brain else ""

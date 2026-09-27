@@ -343,9 +343,15 @@ async def _build_prewarm_bundle(
 
     pstn_opts = pstn_call_options(dial_meta)
     config_session = str(pstn_opts.get("config_session_id") or rt_key)
-    language = str(pstn_opts.get("language") or dial_meta.get("language") or "te-IN")
     agent_id = str(dial_meta.get("agent_id") or "")
     agent = await call_lifecycle_service._resolve_agent(agent_id or None)
+    from server.config.constants import normalize_supported_language
+
+    language = normalize_supported_language(
+        pstn_opts.get("language")
+        or dial_meta.get("language")
+        or (agent.get("languages") or ["te-IN"])[0]
+    )
     stack = call_lifecycle_service._coerce_pipeline_stack(
         call_lifecycle_service._resolve_locked_stack(
             session_id=config_session,
@@ -433,6 +439,7 @@ async def _build_prewarm_bundle(
                             greeting_text=greeting,
                             sample_rate=sample_rate,
                             tts_output_codec=tts_codec,
+                            language=language,
                             model=stack.llm.model,
                             voice=str(cfg.get("voice") or ""),
                             turn_detection=str(cfg.get("turn_detection") or ""),
@@ -448,6 +455,7 @@ async def _build_prewarm_bundle(
                         greeting_text=greeting,
                         sample_rate=sample_rate,
                         tts_output_codec=tts_codec,
+                        language=language,
                         control_id=external_id,
                     )
                 if frames:

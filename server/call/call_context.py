@@ -32,6 +32,7 @@ class CallContext:
     ws_clients: int = 0
     end_reason: str | None = None
     agent_hangup_armed: bool = False
+    language_mismatch_handled: bool = False
     barge_in_flight: bool = False
     slow_down_nudged: bool = False
     last_stt_partial_at: float = 0.0

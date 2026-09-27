@@ -13,9 +13,9 @@ from google.genai import types
 
 from server.call.call_controller import CALL_ACTION_TOOL
 from server.providers.gemini_llm import _api_key, gemini_usage_from_metadata
+from server.realtime.hangup_tools import REQUEST_LANGUAGE_CALLBACK_TOOL, realtime_hangup_tool_declarations
 from server.realtime.models import (
     DEFAULT_REALTIME_TURN_DETECTION,
-    END_CALL_TOOL,
     REALTIME_PCM_RATE,
     normalize_realtime_silence_ms,
     normalize_realtime_turn_detection,
@@ -61,7 +61,7 @@ def normalize_gemini_live_voice(voice: str | None) -> str:
 
 def _gemini_tools() -> list[types.Tool]:
     decls: list[types.FunctionDeclaration] = []
-    for tool in (END_CALL_TOOL, CALL_ACTION_TOOL):
+    for tool in (*realtime_hangup_tool_declarations(), REQUEST_LANGUAGE_CALLBACK_TOOL, CALL_ACTION_TOOL):
         decls.append(
             types.FunctionDeclaration(
                 name=tool["name"],

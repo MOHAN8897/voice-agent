@@ -9,11 +9,35 @@ import re
 from server.config.constants import constants
 
 TELUGU_RANGE = re.compile(r"[\u0C00-\u0C7F]")
+DEVANAGARI_RANGE = re.compile(r"[\u0900-\u097F]")
 LATIN_RANGE = re.compile(r"[A-Za-z]")
 
 
 def is_code_mixed(transcript: str) -> bool:
     return bool(TELUGU_RANGE.search(transcript) and LATIN_RANGE.search(transcript))
+
+
+def infer_spoken_language_from_text(text: str, *, agent_language: str = "te-IN") -> str | None:
+    """Heuristic for PSTN Realtime when the caller clearly uses another product language."""
+    raw = (text or "").strip()
+    if len(raw) < 6:
+        return None
+    telugu = len(TELUGU_RANGE.findall(raw))
+    hindi = len(DEVANAGARI_RANGE.findall(raw))
+    latin = len(LATIN_RANGE.findall(raw))
+    letters = telugu + hindi + latin
+    if letters < 4:
+        return None
+    if telugu >= max(2, hindi, latin // 2):
+        return "te-IN"
+    if hindi >= max(2, telugu, latin // 2):
+        return "hi-IN"
+    if latin >= 4 and telugu == 0 and hindi == 0:
+        agent = (agent_language or "te-IN").strip().lower()
+        if agent.startswith("en"):
+            return "en-US" if agent == "en-us" else "en-IN"
+        return "en-IN"
+    return None
 
 
 def resolve_language(

@@ -162,6 +162,37 @@ async def test_gemini_response_usage_bills_session_cumulative_not_per_id(monkeyp
 
 
 @pytest.mark.asyncio
+async def test_gemini_duplicate_trailer_same_fingerprint_different_usage_id(monkeypatch, tmp_path):
+    from server.call.call_ledger import call_ledger
+    from server.config.env import get_settings
+
+    monkeypatch.setenv("DATA_DIR", str(tmp_path))
+    get_settings.cache_clear()
+    call_ledger.reset_for_tests()
+    cid = "gemini-dup-trailer"
+    await call_ledger.init(cid, {"call_id": cid})
+    args = {"call_id": cid, "llm_model": "gemini-3.8-live"}
+    usage = {
+        "input_tokens": 5000,
+        "output_tokens": 80,
+        "input_audio_tokens": 400,
+        "output_audio_tokens": 80,
+        "usage_scope": "response",
+        "usage_id": "turn-a",
+    }
+    first = await record_realtime_voice_usage(**args, usage=usage)
+    dup = await record_realtime_voice_usage(
+        **args,
+        usage={**usage, "usage_id": "turn-a-trailer"},
+    )
+    assert first is not None
+    assert dup is None
+    meta = call_ledger.read_meta(cid)["usage"]
+    assert meta["turns"] == 1
+    get_settings.cache_clear()
+
+
+@pytest.mark.asyncio
 async def test_response_usage_counts_identical_distinct_turns_once(monkeypatch, tmp_path):
     from server.call.call_ledger import call_ledger
     from server.config.env import get_settings

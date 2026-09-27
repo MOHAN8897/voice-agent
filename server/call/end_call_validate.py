@@ -12,6 +12,7 @@ from server.call.hangup_judge import (
     agent_still_collecting_lead,
     caller_wants_to_continue,
     default_farewell_for,
+    user_short_close_ack,
 )
 from server.prompts.agent_voice_rules import normalize_compile_language
 from server.utils.logger import logger
@@ -36,8 +37,9 @@ _REFUSAL = re.compile(
     r"mat karo|no interest|not for me|no need|remove me|"
     r"don'?t (?:want|need) (?:this|it|any)|stop (?:this|the) call)\b|"
     r"\b(vaddu|ledu)\b.{0,48}interest|interest.{0,24}\b(vaddu|ledu)\b|"
-    r"interest\s*లేదు|interested\s*nahi|"
-    r"(?:వద్దు.{0,48}(?:interest|call)|(?:interest|call).{0,24}వద్దు)",
+    r"interest\s*లేదు|ఇంట్రెస్ట్\s*లేదు|interested\s*nahi|"
+    r"లేదు.{0,32}ఇంట్రెస్ట్|ఇంట్రెస్ట్.{0,32}లేదు|"
+    r"(?:వద్దు.{0,48}(?:interest|call|ఇంట్రెస్ట్)|(?:interest|call|ఇంట్రెస్ట్).{0,24}వద్దు)",
     re.I | re.S,
 )
 _ABUSE = re.compile(
@@ -383,6 +385,41 @@ def _evidence_ok(
     return False
 
 
+def _trust_live_tool_evidence(
+    reason: str,
+    user_text: str,
+    *,
+    memory_snapshot: dict[str, Any] | None = None,
+    completed_turns: int = 0,
+) -> bool:
+    """Accept Live API hangup tool intent; regex evidence is repair-only."""
+    text = (user_text or "").strip()
+    if not text:
+        return False
+    if caller_wants_to_continue(text):
+        return False
+    if reason == "firm_refusal":
+        return not (user_short_close_ack(text) and not caller_firm_refusal(text))
+    if reason == "goodbye":
+        if user_short_close_ack(text) and not _user_wants_hangup(text):
+            return False
+        return bool(
+            _GOODBYE.search(text)
+            or _CALLER_DONE.search(text)
+            or caller_explicit_end_request(text)
+            or caller_unavailable_now(text)
+        )
+    if reason == "abuse":
+        return True
+    if reason == "goal_complete":
+        if looks_like_question(text) and _substantive_user_question(text):
+            return False
+        return True
+    if reason == "out_of_scope":
+        return bool(text) and not looks_like_question(text) and completed_turns >= 1
+    return False
+
+
 def caller_requested_hangup(user_text: str) -> bool:
     """True when the caller explicitly asked to stop / said goodbye."""
     return _user_wants_hangup(user_text)
@@ -445,6 +482,7 @@ def validate_end_call(
     call_end_policy: dict[str, Any] | None = None,
     spoken_text: str = "",
     callback_close_phase: str | None = None,
+    tool_sourced: bool = False,
 ) -> EndCallDecision:
     parsed = parse_end_call_payload(raw)
     user = user_text or ""
@@ -482,9 +520,11 @@ def validate_end_call(
     elif (
         parsed["should_end"]
         and caller_wants_to_continue(user)
-        and parsed.get("reason") in {"firm_refusal", "goal_complete"}
+        and parsed.get("reason") in {"firm_refusal", "goal_complete", "goodbye"}
+        and not looks_like_question(user)
         and not caller_firm_refusal(user)
         and not caller_confirmed_goal_complete(user)
+        and not _user_wants_hangup(user)
     ):
         logger.info("[END_CALL] rejected code=caller_engaged reason=%s", parsed.get("reason"))
         return EndCallDecision(False, False, "none", "", "caller_engaged")
@@ -536,14 +576,24 @@ def validate_end_call(
         and not caller_firm_refusal(user)
     ):
         return _reject("open_question")
-    if not _evidence_ok(
-        reason,
-        user,
-        language=lang,
-        completed_turns=completed_turns,
-        memory_snapshot=memory_snapshot,
-        spoken_text=spoken,
-    ):
+    evidence_ok = (
+        _trust_live_tool_evidence(
+            reason,
+            user,
+            memory_snapshot=memory_snapshot,
+            completed_turns=completed_turns,
+        )
+        if tool_sourced and parsed.get("should_end")
+        else _evidence_ok(
+            reason,
+            user,
+            language=lang,
+            completed_turns=completed_turns,
+            memory_snapshot=memory_snapshot,
+            spoken_text=spoken,
+        )
+    )
+    if not evidence_ok:
         return _reject("no_evidence")
     if len(farewell) > 240:
         return _reject("farewell_too_long")

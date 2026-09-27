@@ -10,14 +10,23 @@ from server.services.audio_transcode import StreamingPcmResampler, pcm16_to_mula
 from server.services.pstn_debug import log_pstn
 from server.services.spoken_numbers import prepare_spoken_reply
 
-PREWARM_GREETING_INSTRUCTION = (
-    'Speak aloud in audio exactly the following opening line once. '
-    "Then wait silently for the caller. Do not hang up. Do not use tools:\n\"{line}\""
-)
+def prewarm_greeting_response_instructions(language: str, line: str) -> str:
+    from server.prompts.agent_voice_rules import LANGUAGE_LOCK, normalize_compile_language
+
+    lang = normalize_compile_language(language)
+    lock = LANGUAGE_LOCK.get(lang, LANGUAGE_LOCK["te-IN"])
+    safe = (line or "").replace('"', "'").strip()
+    return (
+        f"You are recording a phone greeting. {lock} "
+        f"Speak aloud once in audio in {lang} with natural pronunciation. "
+        "Then wait silently. Do not hang up. Do not use tools.\n"
+        f'Opening line: "{safe}"'
+    )
+
 
 GEMINI_GREETING_SIDE_SESSION_INSTRUCTIONS = (
     "You are a voice actor for a phone greeting. "
-    "Speak the requested opening line once in audio, then stop. "
+    "Speak the requested opening line once in the agent language in audio, then stop. "
     "Do not ask questions, do not use tools, do not hang up."
 )
 
@@ -65,6 +74,7 @@ async def synthesize_realtime_greeting_frames(
     greeting_text: str,
     sample_rate: int,
     tts_output_codec: str,
+    language: str = "te-IN",
     timeout_sec: float = 12.0,
     control_id: str = "",
 ) -> tuple[list[bytes], str, dict[str, Any] | None]:
@@ -83,7 +93,7 @@ async def synthesize_realtime_greeting_frames(
     greeting_usage: dict[str, Any] | None = None
     try:
         await adapter.start_response(
-            instructions=PREWARM_GREETING_INSTRUCTION.format(line=spoken.replace('"', "'"))
+            instructions=prewarm_greeting_response_instructions(language, spoken)
         )
     except Exception as exc:
         log_pstn("prewarm.greeting.realtime.failed", control=control_id, error=str(exc)[:200])
@@ -209,6 +219,7 @@ async def synthesize_gemini_greeting_on_side_session(
     sample_rate: int,
     tts_output_codec: str,
     model: str,
+    language: str = "te-IN",
     voice: str | None = None,
     turn_detection: str | None = None,
     max_output_tokens: int | None = None,
@@ -231,10 +242,16 @@ async def synthesize_gemini_greeting_on_side_session(
         from server.realtime.providers.gemini_voice import GeminiLiveVoiceAdapter
 
         adapter = GeminiLiveVoiceAdapter()
+    from server.prompts.agent_voice_rules import LANGUAGE_LOCK, normalize_compile_language
+
+    lang = normalize_compile_language(language)
+    side_instructions = (
+        f"{GEMINI_GREETING_SIDE_SESSION_INSTRUCTIONS} {LANGUAGE_LOCK.get(lang, '')}"
+    )
     try:
         await adapter.connect(
             model=model,
-            instructions=GEMINI_GREETING_SIDE_SESSION_INSTRUCTIONS,
+            instructions=side_instructions,
             voice=voice,
             turn_detection=turn_detection,
             max_output_tokens=max_output_tokens,
@@ -248,6 +265,7 @@ async def synthesize_gemini_greeting_on_side_session(
             greeting_text=spoken,
             sample_rate=sample_rate,
             tts_output_codec=tts_output_codec,
+            language=lang,
             timeout_sec=timeout_sec,
             control_id=control_id,
         )

@@ -66,6 +66,8 @@ export type CacheEvent = "cache_hit" | "cache_write" | "partial_hit" | "cache_mi
 
 export type PricingMeta = {
   fx_rate_inr?: number;
+  fx_source?: string;
+  fx_as_of?: string;
   "sarvam:saaras:v3"?: { inr_per_hour?: number; usd_per_unit?: number };
   "sarvam:bulbul:v3"?: { inr_per_1k_chars?: number; usd_per_unit?: number };
   "openai:gpt-realtime-2.1-mini"?: LlmRateMeta;

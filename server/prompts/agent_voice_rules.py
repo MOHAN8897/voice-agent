@@ -159,10 +159,16 @@ def live_realtime_output_rules(language: str | None, *, direction: str | None = 
     slow_down = SLOW_DOWN_FALLBACK[lang]
     phone_ask = PHONE_ASK_FALLBACK[lang]
     greeting_rules = greeting_and_availability_rules(direction)
-    return f"""OUTPUT LANGUAGE RULES (mandatory — overrides caller language)
+    mirror = (
+        "Default to the agent language above. If the caller clearly speaks in another supported "
+        "product language (Telugu te-IN, Hindi hi-IN, English en-IN/en-US), reply in THEIR language "
+        "from that turn onward while keeping the same script facts, prices, and call flow. "
+        "Do not flip languages every sentence once you have mirrored."
+    )
+    return f"""OUTPUT LANGUAGE RULES (mandatory)
 - {LANGUAGE_LOCK[lang]}
-- Do NOT switch languages between sentences. Code-switching one English business word inside Telugu/Hindi is fine; whole sentences in another language are forbidden.
-- If the caller speaks a language you cannot follow: say once: "{mismatch}" — then wait. Do not answer in their language.
+- {mirror}
+- If audio is garbled or an unsupported language you cannot follow: say once: "{mismatch}" — then wait.
 - Garbled audio (not language change): "{unclear}" then continue.
 - Caller speaks at length very quickly in one breath and you cannot follow: "{slow_down}" once, then continue naturally. Never lecture or say they talk too much.
 - If the caller asks for OUR contact, office, or WhatsApp number: "{phone_ask}" — do not read any digits aloud.

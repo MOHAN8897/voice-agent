@@ -39,6 +39,9 @@ export type TurnMetricRow = {
   memoryOps?: number;
   cacheHit?: boolean;
   cacheEvent?: CacheEvent;
+  /** Server-billed delta for this trace turn (PSTN realtime). */
+  costUsd?: number;
+  costInr?: number;
 };
 
 export type SessionUsageTotals = {
@@ -64,6 +67,11 @@ export type StampedSessionUsage = {
   telnyxDestinationCountry?: string;
   totalUsd?: number;
   totalInr?: number;
+  /** Live ledger cumulative tokens (Gemini session snapshot). */
+  inputTokens?: number;
+  outputTokens?: number;
+  inputAudioTokens?: number;
+  outputAudioTokens?: number;
 };
 
 function formatClock(ms: number): string {
@@ -157,6 +165,15 @@ export function TestStudioTurnMetrics({
 }) {
   const e2e = mode === "pstn_realtime";
   const pstn = mode === "pstn" || mode === "pstn_realtime";
+  const ledgerTokens =
+    stampedUsage?.inputTokens != null
+      ? {
+          inputTokens: stampedUsage.inputTokens ?? 0,
+          outputTokens: stampedUsage.outputTokens ?? 0,
+          inputAudioTokens: stampedUsage.inputAudioTokens ?? 0,
+          outputAudioTokens: stampedUsage.outputAudioTokens ?? 0,
+        }
+      : null;
   const sessionCost = estimateTurnCost({
     sttAudioSec: e2e ? 0 : sessionTotal.sttAudioSec,
     ttsChars: e2e ? 0 : sessionTotal.ttsChars,
@@ -165,12 +182,12 @@ export function TestStudioTurnMetrics({
     sttProvider,
     sttModel,
     llmModel,
-    inputTokens: sessionTotal.llmInput,
-    outputTokens: sessionTotal.llmOutput,
+    inputTokens: ledgerTokens?.inputTokens ?? sessionTotal.llmInput,
+    outputTokens: ledgerTokens?.outputTokens ?? sessionTotal.llmOutput,
     cachedTokens: sessionTotal.llmCached,
     cacheWriteTokens: sessionTotal.llmCacheWrite,
-    inputAudioTokens: e2e ? sessionTotal.llmAudioInput : 0,
-    outputAudioTokens: e2e ? sessionTotal.llmAudioOutput : 0,
+    inputAudioTokens: e2e ? ledgerTokens?.inputAudioTokens ?? sessionTotal.llmAudioInput : 0,
+    outputAudioTokens: e2e ? ledgerTokens?.outputAudioTokens ?? sessionTotal.llmAudioOutput : 0,
     meta: pricing,
   });
   const connectedSec = sessionDurationMs / 1000;
@@ -341,7 +358,11 @@ export function TestStudioTurnMetrics({
             </p>
           ) : null}
           <p className="font-mono text-[9px] text-text-subtle">
-            FX ₹{sessionCost.fx.toFixed(2)}/$ ·{" "}
+            FX ₹{sessionCost.fx.toFixed(2)}/$
+            {pricing?.fx_source
+              ? ` (${pricing.fx_source}${pricing.fx_as_of ? ` · ${pricing.fx_as_of}` : ""})`
+              : ""}{" "}
+            ·{" "}
             {e2e
               ? `Speech-to-speech E2E · ${llmModel}`
               : `STT ${sttProvider}/${sttModel || "default"} · TTS ${ttsProvider}/${ttsModel || "default"} · LLM ${llmModel}`}
@@ -380,7 +401,7 @@ export function TestStudioTurnMetrics({
               <span>{e2e ? "Turn cost" : "TTS chars"}</span>
             </div>
             {rows.map((r) => {
-              const cost = estimateTurnCost({
+              const estimated = estimateTurnCost({
                 sttAudioSec: e2e ? 0 : r.sttAudioSec ?? 0,
                 ttsChars: e2e ? 0 : r.ttsChars ?? 0,
                 ttsProvider,
@@ -396,6 +417,16 @@ export function TestStudioTurnMetrics({
                 outputAudioTokens: r.outputAudioTokens ?? 0,
                 meta: pricing,
               });
+              const cost =
+                e2e && r.costUsd != null && r.costUsd > 0
+                  ? {
+                      ...estimated,
+                      totalUsd: r.costUsd,
+                      totalInr: r.costInr ?? r.costUsd * estimated.fx,
+                      llmUsd: r.costUsd,
+                      llmInr: r.costInr ?? r.costUsd * estimated.fx,
+                    }
+                  : estimated;
               const event = r.cacheEvent || cost.cacheEvent;
               const turnSec = (r.micDurationMs ?? 0) / 1000 || r.sttAudioSec || 0;
               const turnPerMin = perMinute(cost.totalUsd, turnSec, cost.fx);

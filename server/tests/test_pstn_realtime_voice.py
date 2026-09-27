@@ -127,7 +127,9 @@ def test_realtime_voice_session_is_audio_pcm_24k():
     assert session["audio"]["input"]["turn_detection"]["interrupt_response"] is False
     assert session["audio"]["input"]["noise_reduction"]["type"] == "far_field"
     assert session["max_output_tokens"] == 4096
-    assert any(t.get("name") == "end_call" for t in session["tools"])
+    tool_names = {t.get("name") for t in session["tools"]}
+    assert "end_call" in tool_names
+    assert "request_end_call" in tool_names
 
 
 def test_realtime_voice_ignores_text_turn_token_cap():
@@ -1309,6 +1311,31 @@ async def test_polite_thanks_during_close_listen_finishes_hangup(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_hello_after_firm_refusal_close_finishes_hangup(monkeypatch):
+    monkeypatch.setattr("server.call.natural_hangup.HANGUP_TRAIL_SILENCE_SEC", 0.01)
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+
+    adapter = FakeRealtimeVoiceAdapter()
+    remote_hangup = AsyncMock()
+    loop = PstnRealtimeVoiceLoop(
+        session_id="s",
+        call_id=None,
+        on_agent_wire=AsyncMock(),
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        adapter=adapter,
+        stack_override={"pipeline": "realtime_voice", "language": "te-IN"},
+    )
+    loop._adapter = adapter
+    loop._on_remote_hangup = remote_hangup
+    loop._firm_refusal_close = True
+    loop._pending_end_call = {"should_end": True, "reason": "firm_refusal"}
+    loop._begin_close_listen()
+    await loop._handle_event({"type": "user_transcript", "text": "Hello. Hello.", "final": True})
+    remote_hangup.assert_awaited_once()
+
+
+@pytest.mark.asyncio
 async def test_realtime_voice_persists_caller_details_from_normal_turn(monkeypatch, tmp_path):
     from server.call.call_ledger import call_ledger
     from server.call.memory_manager import memory_manager
@@ -1647,7 +1674,7 @@ async def test_realtime_hangup_skips_when_caller_is_talking():
     loop._adapter = adapter
     loop._on_remote_hangup = remote_hangup
     loop._pending_end_call = {"reason": "goal_complete", "farewell": "Goodbye."}
-    loop._aec_barge_open = True
+    loop._caller_speaking = True
     await loop._finish_hangup()
     remote_hangup.assert_not_awaited()
     assert loop._hangup_started is False

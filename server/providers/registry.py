@@ -14,11 +14,9 @@ from server.providers.llm_catalog import llm_models_for_provider
 from server.providers.openai_llm import OpenAILLMAdapter
 from server.providers.sarvam_stt import SarvamSTTAdapter
 from server.providers.sarvam_tts import SarvamTTSAdapter
-from server.services.usage_pricing import build_pricing_metadata
+from server.services.usage_pricing import build_pricing_metadata, resolve_fx_rate_inr
 
 _REGISTRY: "ProviderRegistry | None" = None
-
-_PRICING_METADATA: dict[str, Any] = build_pricing_metadata(95.64)
 
 
 class ProviderRegistry:
@@ -97,14 +95,18 @@ class ProviderRegistry:
         config_mode = dev_secrets_store.effective("voice_agent_config_mode", s.voice_agent_config_mode)
         active_tier = dev_secrets_store.effective("voice_agent_tier", s.voice_agent_tier)
 
+        fx_info = resolve_fx_rate_inr(preferred=s.fx_rate_inr)
+        fx_rate = float(fx_info["rate"])
         self._catalog = {
             "generated_at": datetime.now(timezone.utc).isoformat(),
-            "fx_rate_inr": s.fx_rate_inr,
+            "fx_rate_inr": fx_rate,
+            "fx_source": fx_info.get("source"),
+            "fx_as_of": fx_info.get("as_of"),
             "config_mode": config_mode,
             "active_tier": active_tier,
             "tiers": list(constants.TIER_NAMES),
             "providers": providers,
-            "pricing_metadata": build_pricing_metadata(s.fx_rate_inr),
+            "pricing_metadata": build_pricing_metadata(fx_rate),
         }
 
     def _sarvam_provider_entry(self, s: Settings) -> dict[str, Any]:

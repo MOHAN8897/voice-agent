@@ -29,6 +29,14 @@ async def providers_catalog():
     return _catalog_handler()
 
 
+@router.get("/api/providers/fx")
+async def providers_fx():
+    """Live USD→INR for client-side cost display (same source as call ledger)."""
+    from server.providers.catalog_refresh import get_live_fx
+
+    return get_live_fx()
+
+
 @router.get("/api/providers/status")
 async def providers_status():
     from server.services.dev_fallback_store import dev_fallback_store

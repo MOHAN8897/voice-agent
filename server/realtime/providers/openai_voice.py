@@ -11,11 +11,11 @@ from collections.abc import AsyncIterator
 from typing import Any
 
 from server.call.call_controller import CALL_ACTION_TOOL
+from server.realtime.hangup_tools import REQUEST_LANGUAGE_CALLBACK_TOOL, realtime_hangup_tool_declarations
 from server.realtime.models import (
     DEFAULT_REALTIME_MODEL,
     DEFAULT_REALTIME_TURN_DETECTION,
     DEFAULT_REALTIME_VOICE,
-    END_CALL_TOOL,
     REALTIME_PCM_RATE,
     normalize_realtime_noise_reduction,
     normalize_realtime_silence_ms,
@@ -99,7 +99,7 @@ def build_realtime_voice_session(
         "instructions": instructions,
         "output_modalities": ["audio"],
         "max_output_tokens": resolve_realtime_voice_max_output_tokens(max_output_tokens),
-        "tools": [END_CALL_TOOL, {
+        "tools": [*realtime_hangup_tool_declarations(), REQUEST_LANGUAGE_CALLBACK_TOOL, {
             **CALL_ACTION_TOOL,
             "description": (
                 "Report conversational intent in the same turn as your speech. "

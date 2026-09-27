@@ -43,6 +43,27 @@ import { TestStudioSessionProvider } from "@/components/test-studio/TestStudioSe
 import { normalizeLanguageCode, primaryAgentLanguage } from "@/lib/agent-language";
 import { isInternalCallId } from "@/lib/pstn-lifecycle";
 
+function stampedUsageFromCallBody(body: Record<string, unknown>): StampedSessionUsage {
+  const usage = (body.usage || {}) as Record<string, unknown>;
+  const modelUsd = usage.model_cost_usd != null ? Number(usage.model_cost_usd) : undefined;
+  const modelInr = usage.model_cost_inr != null ? Number(usage.model_cost_inr) : undefined;
+  return {
+    durationSec: Number(body.duration_sec ?? usage.duration_sec ?? 0) || undefined,
+    modelCostUsd: modelUsd,
+    modelCostInr: modelInr,
+    telnyxUsd: usage.telnyx_usd != null ? Number(usage.telnyx_usd) : undefined,
+    telnyxInr: usage.telnyx_inr != null ? Number(usage.telnyx_inr) : undefined,
+    telnyxDestinationCountry:
+      typeof usage.telnyx_destination_country === "string" ? usage.telnyx_destination_country : undefined,
+    totalUsd: Number(body.cost_usd ?? usage.cost_usd ?? 0) || undefined,
+    totalInr: Number(body.cost_inr ?? usage.cost_inr ?? 0) || undefined,
+    inputTokens: Number(usage.input_tokens ?? 0) || undefined,
+    outputTokens: Number(usage.output_tokens ?? 0) || undefined,
+    inputAudioTokens: Number(usage.input_audio_tokens ?? 0) || undefined,
+    outputAudioTokens: Number(usage.output_audio_tokens ?? 0) || undefined,
+  };
+}
+
 type ChannelTab = TestStudioMode;
 type FineTuneTab = "prompts" | "llm" | "voice";
 type StudioTab = "live" | "setup" | "stack" | "history" | "config" | "tune" | "debug";
@@ -111,6 +132,7 @@ export function AgentTestStudio({
   const [sessionEndedAt, setSessionEndedAt] = useState<number | null>(null);
   const [nowTick, setNowTick] = useState(() => Date.now());
   const [stampedUsage, setStampedUsage] = useState<StampedSessionUsage | null>(null);
+  const [liveFx, setLiveFx] = useState<{ rate: number; source?: string; asOf?: string } | null>(null);
   const prefsHydratedRef = useRef(false);
   const prefsHadLanguageRef = useRef(false);
   const prefsHadTierRef = useRef(false);
@@ -432,21 +454,8 @@ export function AgentTestStudio({
       try {
         const response = await fetch(`/api/call/${encodeURIComponent(callId)}`, { credentials: "include" });
         if (!response.ok || cancelled) return;
-        const body = await response.json();
-        const usage = (body.usage || {}) as Record<string, unknown>;
-        setStampedUsage({
-          durationSec: Number(body.duration_sec ?? usage.duration_sec ?? 0) || undefined,
-          modelCostUsd: usage.model_cost_usd != null ? Number(usage.model_cost_usd) : undefined,
-          modelCostInr: Number(body.model_cost_inr ?? usage.model_cost_inr ?? 0) || undefined,
-          telnyxUsd: usage.telnyx_usd != null ? Number(usage.telnyx_usd) : undefined,
-          telnyxInr: Number(body.telnyx_inr ?? usage.telnyx_inr ?? 0) || undefined,
-          telnyxDestinationCountry:
-            typeof usage.telnyx_destination_country === "string"
-              ? usage.telnyx_destination_country
-              : undefined,
-          totalUsd: Number(body.cost_usd ?? usage.cost_usd ?? 0) || undefined,
-          totalInr: Number(body.cost_inr ?? usage.cost_inr ?? 0) || undefined,
-        });
+        const body = (await response.json()) as Record<string, unknown>;
+        setStampedUsage(stampedUsageFromCallBody(body));
       } catch {
         /* hangup stamp is best-effort */
       }
@@ -459,22 +468,54 @@ export function AgentTestStudio({
     };
   }, [callId, callEnded, channel]);
 
+  useEffect(() => {
+    let cancelled = false;
+    const pullFx = async () => {
+      try {
+        const res = await fetch("/api/providers/fx", { credentials: "include" });
+        if (!res.ok || cancelled) return;
+        const body = (await res.json()) as {
+          fx_rate_inr?: number;
+          source?: string;
+          as_of?: string;
+        };
+        const rate = Number(body.fx_rate_inr);
+        if (rate > 0) {
+          setLiveFx({ rate, source: body.source, asOf: body.as_of });
+        }
+      } catch {
+        /* catalog FX fallback */
+      }
+    };
+    void pullFx();
+    const timer = setInterval(pullFx, 30 * 60 * 1000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, []);
+
   const pricingMeta = useMemo<PricingMeta | null>(() => {
     if (!catalog) return null;
     const top = catalog as {
       pricing_metadata?: PricingMeta;
       fx_rate_inr?: number;
+      fx_source?: string;
+      fx_as_of?: string;
       providers?: { pricing_metadata?: PricingMeta; fx_rate_inr?: number } | unknown[];
     };
-    if (top.pricing_metadata) {
-      return { ...top.pricing_metadata, fx_rate_inr: top.fx_rate_inr ?? top.pricing_metadata.fx_rate_inr };
-    }
-    const nested = top.providers;
-    if (nested && !Array.isArray(nested) && nested.pricing_metadata) {
-      return { ...nested.pricing_metadata, fx_rate_inr: nested.fx_rate_inr ?? nested.pricing_metadata.fx_rate_inr };
-    }
-    return null;
-  }, [catalog]);
+    const base =
+      top.pricing_metadata ??
+      (top.providers && !Array.isArray(top.providers) ? top.providers.pricing_metadata : undefined);
+    if (!base) return null;
+    const rate = liveFx?.rate ?? top.fx_rate_inr ?? base.fx_rate_inr;
+    return {
+      ...base,
+      fx_rate_inr: rate,
+      fx_source: liveFx?.source ?? top.fx_source ?? base.fx_source,
+      fx_as_of: liveFx?.asOf ?? top.fx_as_of ?? base.fx_as_of,
+    };
+  }, [catalog, liveFx]);
 
   const sessionDurationMs = useMemo(() => {
     if (!sessionStartedAt) return 0;
@@ -603,9 +644,10 @@ export function AgentTestStudio({
     const e2e = isRealtimePstnMode(channel);
     const pull = async () => {
       try {
-        const [traceRes, transcriptRes] = await Promise.all([
+        const [traceRes, transcriptRes, callRes] = await Promise.all([
           fetch(`/api/call/${encodeURIComponent(callId)}/trace`, { credentials: "include" }),
           fetch(`/api/call/${encodeURIComponent(callId)}/transcript`, { credentials: "include" }),
+          fetch(`/api/call/${encodeURIComponent(callId)}`, { credentials: "include" }),
         ]);
         if (!traceRes.ok || cancelled) return;
         const body = await traceRes.json();
@@ -615,6 +657,10 @@ export function AgentTestStudio({
             ? ((await transcriptRes.json()).lines as Record<string, unknown>[]) || []
             : [];
         setTurnRows(mapPstnTraceToTurnRows(turns, lines, e2e));
+        if (callRes.ok && !cancelled) {
+          const callBody = (await callRes.json()) as Record<string, unknown>;
+          setStampedUsage(stampedUsageFromCallBody(callBody));
+        }
       } catch {
         /* live meter is best-effort */
       }
