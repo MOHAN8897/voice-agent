@@ -366,6 +366,14 @@ async def _build_prewarm_bundle(
         agent["agent_id"],
         session_id=config_session,
     )
+    if compiled:
+        from server.brain.script_entities import realign_compiled_brain_for_session
+
+        compiled = realign_compiled_brain_for_session(
+            compiled,
+            language,
+            direction="outbound",
+        )
     wire = _PROVIDER_WIRE.get(provider, _PROVIDER_WIRE["telnyx"])
     sample_rate = int(wire["sample_rate"])
     tts_codec = str(wire["tts_output_codec"])

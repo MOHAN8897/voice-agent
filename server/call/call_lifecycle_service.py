@@ -156,6 +156,14 @@ class CallLifecycleService:
             agent["agent_id"],
             session_id=lookup_session,
         )
+        if compiled_text:
+            from server.brain.script_entities import realign_compiled_brain_for_session
+
+            compiled_text = realign_compiled_brain_for_session(
+                compiled_text,
+                language,
+                direction=direction,
+            )
         if config_session_id and lookup_session != session_id and not compiled_text:
             logger.warning(
                 "[CALL] config session %s has no saved script; using agent published brain",

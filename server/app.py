@@ -87,6 +87,11 @@ async def lifespan(app: FastAPI):
         dev_secrets_store.reload()
         init_provider_registry(settings)
         logger.info("[VOICE] Provider registry initialized")
+        if not (settings.redis_url or "").strip():
+            logger.warning(
+                "[VOICE] REDIS_URL is unset — Telnyx stream tokens and call registry are "
+                "process-local only. Multi-worker deploys need Redis or media WS may close with 1008."
+            )
         try:
             from server.db import init_db
             from server.db.seed import ensure_default_tenant

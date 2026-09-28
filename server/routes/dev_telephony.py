@@ -513,6 +513,7 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
         language=language,
         stack_override=stack_override,
         direction="outbound",
+        callee_e164=body.to_e164,
     )
     stream_url = client.build_stream_ws_url(token=token)
     if not stream_url.startswith("wss://"):
@@ -566,6 +567,7 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
                 "agent_id": body.agent_id,
                 "tier": tier,
                 "to": body.to_e164,
+                "callee_e164": body.to_e164,
                 "from": body.from_e164,
                 "direction": "outbound",
                 "status": existing_call.get("status") or "initiated",

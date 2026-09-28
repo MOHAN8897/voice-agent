@@ -190,6 +190,90 @@ async def regenerate_calling_script_from_brief(
     return compiled, result.agent_script, result
 
 
+def sync_entity_language_tag(entities: dict[str, str], language: str) -> dict[str, str]:
+    """Keep @language aligned with the session/Test Studio dial language (LANG-1/LANG-2)."""
+    from server.prompts.agent_voice_rules import normalize_compile_language, opening_line_for
+
+    lang = normalize_compile_language(language or "te-IN")
+    out = dict(entities)
+    prev = normalize_compile_language(out.get("language") or "") if out.get("language") else ""
+    if lang:
+        out["language"] = lang
+    if prev and prev != lang and (out.get("agent_name") or out.get("company_name")):
+        out["opening_line"] = opening_line_for(
+            lang,
+            agent_name=(out.get("agent_name") or "Agent").strip(),
+            company_name=(out.get("company_name") or "Company").strip(),
+            work_scope=(out.get("work_scope") or "").strip(),
+            direction=(out.get("direction") or "outbound").strip(),
+        )
+    return out
+
+
+_CALLING_SCRIPT_MARKER = "--- CALLING SCRIPT ---"
+_SPOKEN_LANG_HEADER = re.compile(r"--- SPOKEN LANGUAGE \([^)]+\) ---", re.IGNORECASE)
+
+
+def patch_calling_script_language_markers(script: str, language: str) -> str:
+    """Fix stale SPOKEN LANGUAGE headers inside the user script when dial language differs."""
+    from server.prompts.agent_voice_rules import normalize_compile_language
+
+    lang = normalize_compile_language(language or "te-IN")
+    if not script.strip():
+        return script
+    return _SPOKEN_LANG_HEADER.sub(f"--- SPOKEN LANGUAGE ({lang}) ---", script, count=1)
+
+
+def realign_calling_script_for_session(
+    script: str,
+    language: str,
+    *,
+    brief: str = "",
+    direction: str | None = None,
+) -> str:
+    """Sync entity tags + language markers on the user script before PSTN/live use."""
+    aligned = backfill_entity_tags_in_script(
+        script,
+        brief=brief,
+        language=language,
+        direction=direction,
+    )
+    return patch_calling_script_language_markers(aligned, language)
+
+
+def realign_compiled_brain_for_session(
+    compiled: str,
+    language: str,
+    *,
+    brief: str = "",
+    direction: str | None = None,
+) -> str:
+    """LANG-1: align the CALLING SCRIPT block inside a locked compiled brain."""
+    text = (compiled or "").strip()
+    if not text:
+        return compiled or ""
+    start = text.find(_CALLING_SCRIPT_MARKER)
+    if start < 0:
+        return compiled
+    body_start = start + len(_CALLING_SCRIPT_MARKER)
+    rest = text[body_start:].lstrip("\n")
+    end = len(rest)
+    for marker in ("--- PLATFORM CALL RULES ---", "\n--- SAFETY ---"):
+        idx = rest.find(marker)
+        if idx >= 0:
+            end = min(end, idx)
+    script = rest[:end].strip()
+    suffix = rest[end:]
+    aligned = realign_calling_script_for_session(
+        script,
+        language,
+        brief=brief,
+        direction=direction,
+    )
+    prefix = text[:body_start]
+    return f"{prefix}\n{aligned}\n\n{suffix.lstrip()}"
+
+
 def backfill_entity_tags_in_script(
     script: str,
     *,
@@ -200,7 +284,7 @@ def backfill_entity_tags_in_script(
     """Add ENTITY TAGS when missing (legacy scripts) using brief + script sections."""
     existing = parse_entity_tags(script)
     if entities_have_values(existing):
-        return with_entity_tags_section(script, existing)
+        return with_entity_tags_section(script, sync_entity_language_tag(existing, language))
     from server.prompts.conversation_policy import infer_agent_role, infer_call_direction
     from server.services.pstn_text_chunker import extract_opening_greeting
 

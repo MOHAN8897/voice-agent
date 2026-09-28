@@ -47,6 +47,7 @@ export function PstnFlowWorkspace({
   onSessionClockStart,
   onReviewCall,
   onDialPlaced,
+  onDialToE164Change,
   sessionClockMs,
 }: {
   channel: TestStudioMode;
@@ -67,6 +68,7 @@ export function PstnFlowWorkspace({
   onSessionClockStart?: (atMs: number) => void;
   onReviewCall?: (callId: string) => void;
   onDialPlaced?: () => void;
+  onDialToE164Change?: (e164: string) => void;
   sessionClockMs?: number;
 }) {
   const flowKey = isRealtimePstnMode(channel) ? "pstn_realtime" : "pstn";
@@ -218,7 +220,10 @@ export function PstnFlowWorkspace({
             return advanceLifecycle(prev, mapped);
           });
         }}
-        onToChange={setToPhone}
+        onToChange={(phone) => {
+          setToPhone(phone);
+          onDialToE164Change?.(phone);
+        }}
       />
 
       {section === "live" ? (

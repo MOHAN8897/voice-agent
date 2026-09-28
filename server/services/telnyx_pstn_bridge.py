@@ -498,7 +498,18 @@ class TelnyxPstnBridge:
                 self.call_id = started["call_id"]
                 pstn_media_flow.bind_call_id(self.call_control_id or self.ws_id, self.call_id)
                 self.session_id = started["session_id"]
-                callee = str(merged_local.get("to") or getattr(self, "_called_id", "") or "").strip()
+                from server.services.telnyx_client import telnyx_call_registry
+
+                reg_row = (
+                    telnyx_call_registry.get(self.call_control_id) if self.call_control_id else {}
+                ) or {}
+                callee = str(
+                    merged_local.get("to")
+                    or reg_row.get("callee_e164")
+                    or reg_row.get("to")
+                    or getattr(self, "_called_id", "")
+                    or ""
+                ).strip()
                 if self.call_id:
                     from datetime import datetime, timezone
 

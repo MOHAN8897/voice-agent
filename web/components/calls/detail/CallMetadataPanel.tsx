@@ -37,6 +37,12 @@ export function CallMetadataPanel({ meta }: { meta: CallMeta }) {
   if (usage.llm_model) {
     rows.push({ label: "Realtime model", value: String(usage.llm_model) });
   }
+  if (meta.pipeline === "realtime_voice" || meta.channel === "pstn_realtime") {
+    rows.push({
+      label: "STT/TTS on stack",
+      value: "Not used — Live speech model handles audio (Sarvam/Cartesia slots ignored)",
+    });
+  }
   if (usage.turns != null) {
     rows.push({ label: "Billed turns", value: String(usage.turns) });
   }

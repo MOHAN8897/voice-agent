@@ -64,7 +64,7 @@ export function callSummaryLine(call: CallListItem): string {
 }
 
 export function pipelineLabel(pipeline?: string, channel?: string): string {
-  if (pipeline === "realtime_voice") return "Realtime PSTN";
+  if (pipeline === "realtime_voice") return "Realtime PSTN (Live only)";
   if (pipeline === "realtime_text" && channel === "pstn") return "Full PSTN";
   if (pipeline === "realtime_text" && channel === "browser") return "Agent";
   if (pipeline === "realtime_text") return "Composed";

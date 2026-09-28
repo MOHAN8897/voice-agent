@@ -65,7 +65,7 @@ async def test_1_backup_telugu_refusal_no_tool():
 
     loop._runtime_end = _spy
     await loop._handle_event({"type": "user_transcript", "text": TELUGU_NO_CALL, "final": True})
-    await asyncio.sleep(0.05)
+    await asyncio.sleep(0.28)
     assert loop._pending_end_call is not None
     assert loop._pending_end_call.get("reason") == "firm_refusal"
     assert loop._firm_refusal_close is True
@@ -140,6 +140,7 @@ async def test_4_stuck_response_after_refusal_is_clean_hangup():
     loop._runtime_end = _spy
     adapter = loop._adapter
     await loop._handle_event({"type": "user_transcript", "text": TELUGU_NO_CALL, "final": True})
+    await asyncio.sleep(0.28)
     now = time.monotonic()
     loop._response_open = True
     loop._response_activity_at = now - 31
@@ -155,6 +156,7 @@ async def test_4_stuck_response_after_refusal_is_clean_hangup():
 async def test_5_hello_during_farewell_fast_ack_not_reopen():
     loop = _loop()
     await loop._handle_event({"type": "user_transcript", "text": TELUGU_NO_CALL, "final": True})
+    await asyncio.sleep(0.28)
     assert loop._pending_end_call is not None
     loop._farewell_response_active = True
     loop._response_had_audio = True

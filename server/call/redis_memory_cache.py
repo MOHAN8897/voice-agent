@@ -34,8 +34,12 @@ def _redis():
         try:
             import redis
 
-            _CLIENT = redis.from_url(url, decode_responses=True,
-                                     socket_connect_timeout=0.25, socket_timeout=0.25)
+            _CLIENT = redis.from_url(
+                url,
+                decode_responses=True,
+                socket_connect_timeout=1.0,
+                socket_timeout=0.75,
+            )
             _CLIENT.ping()
         except Exception as e:
             _mark_unavailable(e)

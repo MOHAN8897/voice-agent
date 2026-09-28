@@ -522,9 +522,13 @@ def validate_end_call(
     elif caller_firm_refusal(user):
         parsed = _force_end("firm_refusal", parsed.get("farewell") or "", spoken, lang)
     elif agent_still_collecting_lead(spoken) and not (
-        tool_sourced
-        and parsed.get("should_end")
-        and parsed.get("reason") in {"goodbye", "firm_refusal", "abuse"}
+        (
+            tool_sourced
+            and parsed.get("should_end")
+            and parsed.get("reason") in {"goodbye", "firm_refusal", "abuse"}
+        )
+        or caller_firm_refusal(user)
+        or _user_wants_hangup(user)
     ):
         logger.info("[END_CALL] rejected code=lead_details_missing spoken_collecting=1")
         return EndCallDecision(False, False, "none", parsed.get("farewell") or "", "lead_details_missing")

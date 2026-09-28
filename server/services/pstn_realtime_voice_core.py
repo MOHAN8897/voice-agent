@@ -645,6 +645,7 @@ class PstnRealtimeVoiceLoop:
         self._pickup_user_text = ""
         self._pickup_finish_task: asyncio.Task | None = None
         self._pickup_fallback_task: asyncio.Task | None = None
+        self._backup_hangup_task: asyncio.Task | None = None
         self._greeting_protect_until = 0.0
         self._runtime_task: asyncio.Task | None = None
         self._last_activity_at = time.monotonic()
@@ -1239,14 +1240,31 @@ class PstnRealtimeVoiceLoop:
             self._pending_followup_instruction = _STILL_ON_LINE_FOLLOWUP
 
     def _resolve_language(self) -> str:
+        from server.prompts.agent_voice_rules import normalize_compile_language
+
+        cached = getattr(self, "_cached_resolve_language", None)
+        if cached:
+            return cached
+        if self.call_id:
+            from server.call.call_ledger import call_ledger
+
+            meta_lang = (call_ledger.read_meta(self.call_id) or {}).get("language")
+            if meta_lang:
+                self._cached_resolve_language = normalize_compile_language(str(meta_lang))
+                return self._cached_resolve_language
         from server.call.call_context import get as get_ctx
 
         ctx = get_ctx(self.call_id) if self.call_id else None
         if ctx and getattr(ctx, "resolved_stack", None):
             lang = getattr(ctx.resolved_stack, "language", None)
             if lang:
-                return str(lang)
-        return str(self.stack_override.get("language") or "te-IN")
+                self._cached_resolve_language = normalize_compile_language(str(lang))
+                return self._cached_resolve_language
+        lang = normalize_compile_language(
+            str(self.stack_override.get("language") or "te-IN")
+        )
+        self._cached_resolve_language = lang
+        return lang
 
     def _active_spoken_language(self) -> str:
         return self._spoken_reply_language or self._resolve_language()
@@ -1268,6 +1286,32 @@ class PstnRealtimeVoiceLoop:
                 f"The caller is speaking in {inferred}. Reply in {inferred} from now on, "
                 "keeping the same script facts and call flow."
             )
+        self._maybe_auto_language_mismatch_reminder(inferred)
+
+    def _maybe_auto_language_mismatch_reminder(self, inferred: str) -> None:
+        """LANG-3: one platform mismatch line without waiting for the Live tool race."""
+        from server.call.call_context import get as get_ctx
+        from server.prompts.agent_voice_rules import language_mismatch_fallback_for
+
+        ctx = get_ctx(self.call_id) if self.call_id else None
+        if not ctx or ctx.language_mismatch_handled or self._language_reminder_turn is not None:
+            return
+        if self._hangup_flow_active() or self._pending_end_call:
+            return
+        lang = self._resolve_language()
+        line = language_mismatch_fallback_for(lang)
+        self._language_reminder_turn = self._language_user_turn
+        ctx.language_mismatch_handled = True
+        self._pending_followup_instruction = (
+            f"Speak only {lang}. Say exactly this once, then wait for the caller. "
+            f"Do not hang up or request a callback on this turn: {line}"
+        )
+        log_pstn(
+            "realtime_voice.language_mismatch_reminder",
+            call_id=self.call_id,
+            inferred=inferred,
+            agent_lang=lang,
+        )
 
     def _resolve_direction(self) -> str:
         from server.call.call_context import get as get_ctx
@@ -1789,6 +1833,12 @@ class PstnRealtimeVoiceLoop:
             await self._arm_hangup_from_caller_words(self._caller_text())
         if not self._pending_end_call:
             return False
+        if self._adapter is not None and not self._farewell_audio_engaged():
+            from server.realtime.models import is_gemini_live_voice_model
+
+            await self._ensure_hangup_farewell_audio(
+                prefer_side_session=is_gemini_live_voice_model(self._live_model or "")
+            )
         await self._finish_hangup()
         return True
 
@@ -1799,6 +1849,16 @@ class PstnRealtimeVoiceLoop:
 
         meta = call_ledger.read_meta(self.call_id) or {}
         raw = str(meta.get("callee_e164") or "").strip()
+        if not raw:
+            from server.services.pstn_media_flow import pstn_media_flow
+
+            snap = pstn_media_flow.snapshot(self.call_id) or {}
+            ext = str(snap.get("external_id") or "").strip()
+            if ext:
+                from server.services.telnyx_client import telnyx_call_registry
+
+                row = telnyx_call_registry.get(ext) or {}
+                raw = str(row.get("callee_e164") or row.get("to") or "").strip()
         if not raw:
             return None
         digits = re.sub(r"\D", "", raw)
@@ -2366,9 +2426,29 @@ class PstnRealtimeVoiceLoop:
             "farewell": farewell,
         }
 
+    def _schedule_backup_hangup_from_words(self, text: str) -> None:
+        """Defer backup hangup so a same-turn request_end_call tool can win (HUP-1)."""
+        if self._backup_hangup_task and not self._backup_hangup_task.done():
+            self._backup_hangup_task.cancel()
+
+        async def _run() -> None:
+            try:
+                await asyncio.sleep(0.22)
+                if self._hangup_started or self._closed:
+                    return
+                if self._hangup_arm_source == "tool":
+                    return
+                await self._arm_hangup_from_caller_words(text)
+            except asyncio.CancelledError:
+                return
+
+        self._backup_hangup_task = asyncio.create_task(_run())
+
     async def _arm_hangup_from_caller_words(self, text: str) -> None:
         """Close from the caller's words even if the Realtime tool raced STT."""
         if self._hangup_started or self._closed:
+            return
+        if not (caller_requested_hangup(text) or caller_firm_refusal(text)):
             return
         if caller_wants_to_continue(text) and not caller_requested_hangup(text):
             return
@@ -2586,6 +2666,14 @@ class PstnRealtimeVoiceLoop:
                             call_id=self.call_id,
                             text=text[:80],
                         )
+                        if self._adapter is not None and not self._farewell_audio_engaged():
+                            from server.realtime.models import is_gemini_live_voice_model
+
+                            await self._ensure_hangup_farewell_audio(
+                                prefer_side_session=is_gemini_live_voice_model(self._live_model or "")
+                            )
+                            if not self._farewell_audio_engaged():
+                                return
                         await self._finish_hangup()
                         return
                     self._abort_in_progress_hangup()
@@ -2637,7 +2725,7 @@ class PstnRealtimeVoiceLoop:
                 if closing:
                     if caller_firm_refusal(text):
                         self._firm_refusal_close = True
-                    await self._arm_hangup_from_caller_words(text)
+                    self._schedule_backup_hangup_from_words(text)
                     return
                 if stay:
                     self._resume_after_close = False

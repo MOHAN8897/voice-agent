@@ -415,6 +415,7 @@ class TelnyxCallRegistry:
     """Telnyx call event registry — process memory + optional Redis for multi-worker (1.4)."""
 
     _REDIS_PREFIX = "voice:telnyx:call:"
+    _REDIS_RECENT_KEY = "voice:telnyx:calls:recent"
     _REDIS_TTL_SEC = 7200
 
     def __init__(self) -> None:
@@ -471,8 +472,14 @@ class TelnyxCallRegistry:
                     self._calls[call_control_id] = json.loads(merged)
                 else:
                     client.setex(f"{self._REDIS_PREFIX}{call_control_id}", self._REDIS_TTL_SEC, json.dumps(row))
-            except Exception:
-                pass
+                client.zadd(self._REDIS_RECENT_KEY, {call_control_id: row["updated_at"]})
+                client.expire(self._REDIS_RECENT_KEY, self._REDIS_TTL_SEC)
+            except Exception as exc:
+                logger.warning(
+                    "[TELNYX] registry redis mirror failed control=%s: %s",
+                    call_control_id,
+                    str(exc)[:160],
+                )
 
     async def atomic_check_and_set(self, call_control_id: str, key: str, value: Any = True) -> bool:
         """Atomically check if key is falsy, then set it. Returns True if set, False if already set.
@@ -523,7 +530,28 @@ class TelnyxCallRegistry:
 
     def list_recent(self, limit: int = 20) -> list[dict[str, Any]]:
         self._prune_stale()
-        rows = sorted(self._calls.values(), key=lambda r: r.get("updated_at") or 0, reverse=True)
+        by_id: dict[str, dict[str, Any]] = {}
+        for row in self._calls.values():
+            cid = str(row.get("call_control_id") or "")
+            if cid:
+                by_id[cid] = row
+        client = self._redis()
+        if client is not None:
+            try:
+                import json
+
+                for cid in client.zrevrange(self._REDIS_RECENT_KEY, 0, max(limit * 3, 40) - 1):
+                    if cid in by_id:
+                        continue
+                    raw = client.get(f"{self._REDIS_PREFIX}{cid}")
+                    if not raw:
+                        continue
+                    data = json.loads(raw)
+                    if isinstance(data, dict) and data.get("call_control_id"):
+                        by_id[str(data["call_control_id"])] = data
+            except Exception as exc:
+                logger.debug("[TELNYX] registry list_recent redis: %s", str(exc)[:120])
+        rows = sorted(by_id.values(), key=lambda r: r.get("updated_at") or 0, reverse=True)
         return rows[:limit]
 
     def _prune_stale(self, *, max_age_s: int = 3600) -> None:
@@ -588,8 +616,11 @@ class TelnyxStreamTokens:
                     self._REDIS_TTL_SEC,
                     json.dumps(meta),
                 )
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.warning(
+                    "[TELNYX] stream token redis mirror failed: %s",
+                    str(exc)[:160],
+                )
 
     def consume(self, token: str) -> dict[str, Any] | None:
         meta = self._tokens.pop(token, None)

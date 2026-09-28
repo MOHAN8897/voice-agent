@@ -164,6 +164,7 @@ export function AgentTestStudio({
   const [sessionStatus, setSessionStatus] = useState("idle");
   const [locked, setLocked] = useState(false);
   const [turnRows, setTurnRows] = useState<TurnMetricRow[]>([]);
+  const [pstnDialToE164, setPstnDialToE164] = useState("");
   const [prefsReady, setPrefsReady] = useState(false);
   const [configSaving, setConfigSaving] = useState(false);
   const [configStatus, setConfigStatus] = useState("");
@@ -561,26 +562,35 @@ export function AgentTestStudio({
     return (sessionEndedAt ?? nowTick) - sessionStartedAt;
   }, [sessionStartedAt, sessionEndedAt, nowTick]);
 
-  const sessionTotals = useMemo(
-    () =>
-      turnRows.reduce(
-        (acc, r) => ({
-          sttChars: acc.sttChars + (r.sttChars ?? 0),
-          sttAudioSec: acc.sttAudioSec + (r.sttAudioSec ?? 0),
-          llmInput: acc.llmInput + (r.inputTokens ?? 0),
-          llmOutput: acc.llmOutput + (r.outputTokens ?? 0),
-          llmCached: acc.llmCached + (r.cachedTokens ?? 0),
-          llmCacheWrite: acc.llmCacheWrite + (r.cacheWriteTokens ?? 0),
-          ttsChars: acc.ttsChars + (r.ttsChars ?? 0),
-          ttsAudioBytes: acc.ttsAudioBytes + (r.ttsAudioBytes ?? 0),
-          llmAudioInput: acc.llmAudioInput + (r.inputAudioTokens ?? 0),
-          llmAudioOutput: acc.llmAudioOutput + (r.outputAudioTokens ?? 0),
-          turns: acc.turns + 1,
-        }),
-        emptySessionTotals()
-      ),
-    [turnRows]
-  );
+  const sessionTotals = useMemo(() => {
+    const summed = turnRows.reduce(
+      (acc, r) => ({
+        sttChars: acc.sttChars + (r.sttChars ?? 0),
+        sttAudioSec: acc.sttAudioSec + (r.sttAudioSec ?? 0),
+        llmInput: acc.llmInput + (r.inputTokens ?? 0),
+        llmOutput: acc.llmOutput + (r.outputTokens ?? 0),
+        llmCached: acc.llmCached + (r.cachedTokens ?? 0),
+        llmCacheWrite: acc.llmCacheWrite + (r.cacheWriteTokens ?? 0),
+        ttsChars: acc.ttsChars + (r.ttsChars ?? 0),
+        ttsAudioBytes: acc.ttsAudioBytes + (r.ttsAudioBytes ?? 0),
+        llmAudioInput: acc.llmAudioInput + (r.inputAudioTokens ?? 0),
+        llmAudioOutput: acc.llmAudioOutput + (r.outputAudioTokens ?? 0),
+        turns: acc.turns + 1,
+      }),
+      emptySessionTotals()
+    );
+    if (!isRealtimePstnMode(channel) || stampedUsage?.inputTokens == null) {
+      return summed;
+    }
+    return {
+      ...summed,
+      llmInput: stampedUsage.inputTokens ?? summed.llmInput,
+      llmOutput: stampedUsage.outputTokens ?? summed.llmOutput,
+      llmCached: stampedUsage.cachedTokens ?? summed.llmCached,
+      llmAudioInput: stampedUsage.inputAudioTokens ?? summed.llmAudioInput,
+      llmAudioOutput: stampedUsage.outputAudioTokens ?? summed.llmAudioOutput,
+    };
+  }, [turnRows, channel, stampedUsage]);
 
   function onTrace(event: SessionTraceEvent) {
     setEvents((prev) => [...prev, event]);
@@ -903,6 +913,7 @@ export function AgentTestStudio({
                 }))
               }
               onDialPlaced={onPstnDialPlaced}
+              onDialToE164Change={setPstnDialToE164}
               onInternalCallStart={onCallStart}
               onSessionClockStart={onSessionClockStart}
               onInternalCallEnd={onCallEnd}
@@ -923,6 +934,7 @@ export function AgentTestStudio({
               llmModel={liveLlmSlug}
               pricing={pricingMeta}
               sessionDurationMs={sessionDurationMs}
+              telnyxDestinationE164={pstnDialToE164}
               stampedUsage={stampedUsage}
               sessionEnded={callEnded || sessionEndedAt != null}
             />

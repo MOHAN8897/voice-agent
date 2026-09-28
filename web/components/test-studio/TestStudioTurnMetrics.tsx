@@ -266,8 +266,14 @@ export function TestStudioTurnMetrics({
       : postCallTranscript
         ? { usage: { transcription_billing: "post_call_gemini_transcribe" } }
         : null;
-  const totalUsd = stampedUsage?.totalUsd ?? modelUsd + telnyxUsd + transcriptUsd;
-  const totalInr = stampedUsage?.totalInr ?? modelInr + telnyxInr + transcriptInr;
+  const transcriptForTotal =
+    sessionEnded && stampedUsage?.totalUsd != null
+      ? transcriptUsdStamped
+      : sessionEnded
+        ? transcriptUsdStamped
+        : transcriptUsd;
+  const totalUsd = stampedUsage?.totalUsd ?? modelUsd + telnyxUsd + transcriptForTotal;
+  const totalInr = stampedUsage?.totalInr ?? modelInr + telnyxInr + transcriptForTotal * sessionCost.fx;
   const perMinWall = perMinute(totalUsd, wallSec, sessionCost.fx);
   const perMinStt = perMinute(sessionCost.totalUsd, sessionTotal.sttAudioSec, sessionCost.fx);
   const audioIn = ledgerTokens?.inputAudioTokens ?? sessionTotal.llmAudioInput;
@@ -354,11 +360,14 @@ export function TestStudioTurnMetrics({
                 <div className="flex justify-between gap-3"><dt>Telnyx phone charges</dt><dd className="font-mono text-text">{formatInr(telnyxInr)}</dd></div>
               </dl>
               <p className="mt-3 text-xs leading-relaxed text-text-muted">
-                {gemini && postCallTranscript
+                {gemini && (postCallTranscript || mode === "pstn_realtime")
                   ? "Live call is voice-only (Gemini 3.8 Live). After hangup, Telnyx recording is transcribed with Gemini 3.5 Transcribe; that post-call line is shown above and is not part of live audio token rows."
                   : gemini
                     ? "Transcription uses Gemini Live. Its text output charge is included above; no separate OpenAI transcription call is made."
                     : "Transcription uses gpt-4o-mini-transcribe (about $0.003 per audio minute). This separate provider charge is not included unless metered."}
+                {e2e && !stampedUsage?.totalUsd && sessionEnded
+                  ? " Session totals finalize from the call ledger after hangup; per-turn rows are usage deltas."
+                  : null}
               </p>
             </div>
             <details className="text-xs text-text-muted">
