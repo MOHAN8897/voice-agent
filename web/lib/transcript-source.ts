@@ -18,10 +18,19 @@ export function resolveTranscriptSource(meta?: {
       "",
   ).trim();
   const billing = String(meta.usage?.transcription_billing || "").trim();
+  const liveOpenai =
+    billing.includes("live_openai_transcribe") || source.includes("gpt-4o-mini-transcribe") || source.startsWith("live:");
   const postCall =
-    billing === "post_call_gemini_transcribe" ||
+    billing.includes("post_call_gemini_transcribe") ||
     source.includes("gemini-3.5-transcribe") ||
     source.includes("telnyx+gemini");
+  if (liveOpenai && !postCall) {
+    return {
+      badge: "Transcript: gpt-4o-mini-transcribe (live)",
+      detail: "Caller audio transcribed during the call with OpenAI gpt-4o-mini-transcribe.",
+      isPostCallGemini: false,
+    };
+  }
   if (postCall) {
     const model =
       meta.post_call_transcript?.model ||

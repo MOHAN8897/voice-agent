@@ -164,6 +164,9 @@ class CallLifecycleService:
                 language,
                 direction=direction,
             )
+            from server.brain.brain_prompt_validate import assert_rendered_brain_valid
+
+            assert_rendered_brain_valid(compiled_text, language)
         if config_session_id and lookup_session != session_id and not compiled_text:
             logger.warning(
                 "[CALL] config session %s has no saved script; using agent published brain",
@@ -195,6 +198,29 @@ class CallLifecycleService:
             "pipeline": pipeline,
             "billed_user_id": billed_user_id,
         }
+        from server.services.transcription_policy import attach_normalized_stack_override
+
+        attach_normalized_stack_override(
+            meta,
+            stack_override,
+            language=language,
+            tier=str(effective_tier or "medium"),
+        )
+        if stack_override:
+            from server.realtime.models import is_gemini_live_voice_model
+            from server.services.transcription_policy import (
+                pstn_stack_from_meta,
+                transcription_billing_tag,
+                transcription_policy_from_meta,
+            )
+
+            pstn = pstn_stack_from_meta(meta)
+            llm = pstn.get("llm") if isinstance(pstn.get("llm"), dict) else {}
+            gemini = is_gemini_live_voice_model(str(llm.get("model") or ""))
+            policy = transcription_policy_from_meta(meta)
+            tag = transcription_billing_tag(policy, gemini_live=gemini)
+            usage_seed = {"transcription_billing": tag, "transcription_model": policy.live_model if policy.live_enabled else policy.post_call_model}
+            meta["usage"] = usage_seed
         await call_ledger.init(call_id, meta)
         audio_archive.init(call_id)
         from server.call.memory_manager import memory_manager

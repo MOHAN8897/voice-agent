@@ -93,6 +93,10 @@ function stampedUsageFromCallBody(body: Record<string, unknown>): StampedSession
       usage.post_call_transcript_usd != null ? Number(usage.post_call_transcript_usd) : undefined,
     postCallTranscriptInr:
       usage.post_call_transcript_inr != null ? Number(usage.post_call_transcript_inr) : undefined,
+    liveTranscriptUsd:
+      usage.live_transcript_usd != null ? Number(usage.live_transcript_usd) : undefined,
+    liveTranscriptInr:
+      usage.live_transcript_inr != null ? Number(usage.live_transcript_inr) : undefined,
     transcriptionBilling:
       typeof usage.transcription_billing === "string" ? usage.transcription_billing : undefined,
     transcriptSource:

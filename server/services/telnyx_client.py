@@ -528,7 +528,7 @@ class TelnyxCallRegistry:
             pass
         return row
 
-    def list_recent(self, limit: int = 20) -> list[dict[str, Any]]:
+    def list_recent(self, limit: int | None = 20) -> list[dict[str, Any]]:
         self._prune_stale()
         by_id: dict[str, dict[str, Any]] = {}
         for row in self._calls.values():
@@ -540,7 +540,7 @@ class TelnyxCallRegistry:
             try:
                 import json
 
-                for cid in client.zrevrange(self._REDIS_RECENT_KEY, 0, max(limit * 3, 40) - 1):
+                for cid in client.zrevrange(self._REDIS_RECENT_KEY, 0, -1 if limit is None else max(limit * 3, 40) - 1):
                     if cid in by_id:
                         continue
                     raw = client.get(f"{self._REDIS_PREFIX}{cid}")
@@ -552,7 +552,7 @@ class TelnyxCallRegistry:
             except Exception as exc:
                 logger.debug("[TELNYX] registry list_recent redis: %s", str(exc)[:120])
         rows = sorted(by_id.values(), key=lambda r: r.get("updated_at") or 0, reverse=True)
-        return rows[:limit]
+        return rows if limit is None else rows[:limit]
 
     def _prune_stale(self, *, max_age_s: int = 3600) -> None:
         """Drop completed/orphaned rows so a long-lived process does not leak memory."""

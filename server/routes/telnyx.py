@@ -453,11 +453,11 @@ async def telnyx_webhook(request: Request):
     payload = data.get("payload") or data
     event_type = data.get("event_type") or payload.get("event_type") or ""
     call_control_id = payload.get("call_control_id") or payload.get("call_session_id") or ""
-    patch: dict[str, Any] = {
-        "last_event": event_type,
-    }
-    if event_type:
-        patch["status"] = event_type.replace("call.", "")
+    from server.services.telnyx_event_state import event_state_patch
+    patch = event_state_patch(
+        telnyx_call_registry.get(str(call_control_id)) or {}, event_type,
+        event_id=str(data.get("id") or ""), occurred_at=str(data.get("occurred_at") or ""),
+    )
     if payload.get("from"):
         patch["from"] = payload.get("from")
     if payload.get("to"):
@@ -559,6 +559,9 @@ async def telnyx_webhook(request: Request):
         if not claimed:
             logger.info("[TELNYX] duplicate call.answered ignored %s", call_control_id)
             return {"ok": True}
+        from server.services.pstn_debug import record_milestone
+
+        record_milestone(str(call_control_id), "answered")
         log_pstn("webhook.answered", timer_key=str(call_control_id), control=call_control_id)
         row = telnyx_call_registry.get(str(call_control_id)) or {}
         if row.get("voice_check"):
@@ -627,21 +630,20 @@ async def telnyx_webhook(request: Request):
         else:
             # Clean streaming.stopped on a live answered call usually means natural end.
             normal_stop = True
-        telnyx_call_registry.upsert(
-            str(call_control_id),
-            {
-                "stream_connected": False,
-                "stream_started": False,
-                "stream_failed": not normal_stop,
-                "stream_state": "stopped" if normal_stop else "failed",
-                "stream_error": str(fail_reason)[:300],
-                "status": (
-                    before_row.get("status")
-                    if _call_ended(before_row)
-                    else ("stream-stopped" if normal_stop else "stream-error")
-                ),
-            },
-        )
+        stream_patch: dict[str, Any] = {
+            "stream_connected": False,
+            "stream_started": False,
+            "stream_failed": not normal_stop,
+            "stream_state": "stopped" if normal_stop else "failed",
+            "stream_error": str(fail_reason)[:300],
+            "media_status": "stopped" if normal_stop else "error",
+        }
+        # Keep telephone-leg status separate from media (audit C5).
+        if _call_ended(before_row):
+            stream_patch["status"] = before_row.get("status")
+        elif not normal_stop:
+            stream_patch["status"] = "stream-error"
+        telnyx_call_registry.upsert(str(call_control_id), stream_patch)
         log_pstn(
             "PSTN_STREAM",
             call_id=call_control_id,

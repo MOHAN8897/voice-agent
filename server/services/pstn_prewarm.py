@@ -16,7 +16,7 @@ from server.services.pstn_voice_core import pstn_call_options
 logger = logging.getLogger(__name__)
 
 PREWARM_TTL_SEC = 90.0
-PREWARM_ADOPT_WAIT_SEC = 12.0
+PREWARM_ADOPT_WAIT_SEC = 1.5
 
 _PROVIDER_WIRE: dict[str, dict[str, Any]] = {
     "telnyx": {"sample_rate": 16000, "tts_output_codec": "linear16"},
@@ -48,6 +48,7 @@ class PstnPrewarmBundle:
     realtime_key: str
     greeting_text: str | None
     greeting_wire_frames: list[bytes] = field(default_factory=list)
+    greeting_transcript: str | None = None
     greeting_source: str | None = None
     greeting_usage: dict[str, Any] | None = None
     greeting_model: str | None = None
@@ -271,6 +272,14 @@ async def take_prewarm_for_answer(
                 bundle.agent_id,
                 session_id=bundle.config_session_id,
             )
+            if current_text and bundle.language:
+                from server.brain.script_entities import realign_compiled_brain_for_session
+
+                current_text = realign_compiled_brain_for_session(
+                    current_text,
+                    str(bundle.language),
+                    direction="outbound",
+                )
             current_checksum = (
                 hashlib.sha256(current_text.encode("utf-8")).hexdigest()
                 if current_text
@@ -378,6 +387,7 @@ async def _build_prewarm_bundle(
     sample_rate = int(wire["sample_rate"])
     tts_codec = str(wire["tts_output_codec"])
     greeting = extract_prewarm_greeting(compiled, language, direction="outbound")
+    generated_greeting_transcript = None
 
     settings = get_settings()
     from server.realtime.models import pipeline_mode
@@ -481,7 +491,8 @@ async def _build_prewarm_bundle(
                         # arrive; only automatic response.create is disabled.
                         await auto_response(False)
                 if frames:
-                    greeting = greeting_transcript or greeting
+                    # Generated transcript is delivery evidence, not a new opening source.
+                    generated_greeting_transcript = greeting_transcript or greeting
                     greeting_source = "realtime_voice"
                     log_pstn(
                         "prewarm.greeting.realtime",
@@ -516,6 +527,7 @@ async def _build_prewarm_bundle(
         external_id=external_id,
         realtime_key=rt_key,
         greeting_text=greeting,
+        greeting_transcript=generated_greeting_transcript,
         greeting_wire_frames=frames,
         greeting_source=greeting_source,
         greeting_usage=greeting_usage,

@@ -120,6 +120,13 @@ UNCLEAR_FALLBACK: dict[str, str] = {
     "en-IN": "Sorry, I didn't catch that.",
     "en-US": "Sorry, I didn't catch that.",
     "hi-IN": "Sorry, clear nahi suna.",
+    "ta-IN": "Sorry, clear-a keela — ungalukku enna help venum?",
+    "kn-IN": "Sorry, clear agilla — nimge hege help madabahudu?",
+    "ml-IN": "Sorry, clear aayilla — ningalkku engane help cheyyam?",
+    "mr-IN": "Sorry, clear ayla — tumhala kashi madat karu?",
+    "bn-IN": "Sorry, clear shona jay na — apnake ki help korte pari?",
+    "gu-IN": "Sorry, clear nathi — tamne shu help kari shaku?",
+    "pa-IN": "Sorry, clear nahi suneya — tuhade lai ki help kar sakdi haan?",
 }
 
 SLOW_DOWN_FALLBACK: dict[str, str] = {
@@ -134,6 +141,13 @@ LANGUAGE_MISMATCH_FALLBACK: dict[str, str] = {
     "en-IN": "Sorry, I can only assist in English. Could you repeat that in English?",
     "en-US": "Sorry, I can only assist in English. Could you repeat that in English?",
     "hi-IN": "Sorry, main sirf Hindi mein baat kar sakti hoon — kripya Hindi mein bataiye.",
+    "ta-IN": "Sorry, naan Tamil-la pesuren — dayavu seithu Tamil-la sollunga.",
+    "kn-IN": "Sorry, naanu Kannada-dalli maataduttene — dayavittu Kannada-dalli heli.",
+    "ml-IN": "Sorry, njan Malayalam-il samsarikkunnu — dayavayi Malayalam-il parayuka.",
+    "mr-IN": "Sorry, mi Marathi madhe bolto aahe — krupaya Marathi madhe sanga.",
+    "bn-IN": "Sorry, ami Bangla-te kotha bolchi — onugroho kore Bangla-te bolun.",
+    "gu-IN": "Sorry, hu Gujarati ma bolu chu — krupaya Gujarati ma kaho.",
+    "pa-IN": "Sorry, main Punjabi vich gal kar rahi haan — kirpa karke Punjabi vich daso.",
 }
 
 LANGUAGE_LOCK: dict[str, str] = {
@@ -158,6 +172,34 @@ LANGUAGE_LOCK: dict[str, str] = {
         "ABSOLUTE RULE: Every reply MUST stay in Hindi/Hinglish for the ENTIRE call — "
         "NEVER switch to Telugu, English-only, or any other language, even if the caller speaks another language. "
         "If the caller speaks another language, respond ONLY in Hindi/Hinglish."
+    ),
+    "ta-IN": (
+        "Agent language is Tamil. ABSOLUTE RULE: Every reply MUST stay in Tamil for the ENTIRE call — "
+        "NEVER switch to Hindi, Telugu, or English-only, even if the caller speaks another language."
+    ),
+    "kn-IN": (
+        "Agent language is Kannada. ABSOLUTE RULE: Every reply MUST stay in Kannada for the ENTIRE call — "
+        "NEVER switch to Hindi, Telugu, or English-only, even if the caller speaks another language."
+    ),
+    "ml-IN": (
+        "Agent language is Malayalam. ABSOLUTE RULE: Every reply MUST stay in Malayalam for the ENTIRE call — "
+        "NEVER switch to Hindi, Telugu, or English-only, even if the caller speaks another language."
+    ),
+    "mr-IN": (
+        "Agent language is Marathi. ABSOLUTE RULE: Every reply MUST stay in Marathi for the ENTIRE call — "
+        "NEVER switch to Hindi, Telugu, or English-only, even if the caller speaks another language."
+    ),
+    "bn-IN": (
+        "Agent language is Bengali. ABSOLUTE RULE: Every reply MUST stay in Bengali for the ENTIRE call — "
+        "NEVER switch to Hindi, Telugu, or English-only, even if the caller speaks another language."
+    ),
+    "gu-IN": (
+        "Agent language is Gujarati. ABSOLUTE RULE: Every reply MUST stay in Gujarati for the ENTIRE call — "
+        "NEVER switch to Hindi, Telugu, or English-only, even if the caller speaks another language."
+    ),
+    "pa-IN": (
+        "Agent language is Punjabi. ABSOLUTE RULE: Every reply MUST stay in Punjabi for the ENTIRE call — "
+        "NEVER switch to Hindi, Telugu, or English-only, even if the caller speaks another language."
     ),
 }
 
@@ -187,7 +229,7 @@ def live_realtime_output_rules(language: str | None, *, direction: str | None = 
 - Garbled audio (not language change): "{unclear}" then continue.
 - Caller speaks at length very quickly in one breath and you cannot follow: "{slow_down}" once, then continue naturally. Never lecture or say they talk too much.
 - If the caller asks for OUR contact, office, or WhatsApp number: "{phone_ask}" — do not read any digits aloud.
-- If the caller GIVES their phone, name, or email: say it is noted for the team — never refuse to take it, never read digits back.
+- If the caller GIVES their phone, name, or email: say it is noted for the team — never refuse to take it, confirm only an uncertain caller-supplied number segment once; do not recite the dialed number.
 - Follow CALL END POLICY already in this session. Do not invent a second hangup policy.
 - Hang up only on confirmed end (bye / hang up / cut the call / that's all / don't call / firm no) or a callback they confirmed. Never hang up on okay/thanks alone. After the final farewell, let playback finish and disconnect promptly.
 - {LIVE_REPLY_BREVITY_RULE}
@@ -208,6 +250,22 @@ def live_realtime_output_rules(language: str | None, *, direction: str | None = 
 - {NUMBER_RULES}
 - {PHONE_SPEAK_BAN}
 - {CALLER_DETAIL_CAPTURE}"""
+
+
+def live_audio_modality_rules() -> str:
+    """Audio/output shape only — language policy lives in the compiled brain pack."""
+    return (
+        "OUTPUT MODALITY RULES (audio Realtime — mandatory)\n"
+        "- You are on a live phone call. Speak the reply as natural speech.\n"
+        "- Wait until the caller finishes, then begin the actual answer promptly. "
+        "No fillers such as hmm or yeah, backchannels, listening sounds, or talking over the caller.\n"
+        "- Each reply: 1–2 short sentences, then stop at a natural pause. Do not run on or talk continuously.\n"
+        "- After asking a question, end the turn and wait — never keep pitching.\n"
+        "- Never emit JSON, XML, markdown fences, or field names such as spoken_response or memory_update.\n"
+        "- Never read stage directions, tool names, or internal labels aloud.\n"
+        "- Use the end_call tool in the SAME turn as your spoken farewell when the call should end.\n"
+        "- Keep replies inside the LENGTH bands. One next question at most."
+    )
 
 
 def live_realtime_audio_rules(language: str | None, *, direction: str | None = None) -> str:
@@ -492,12 +550,26 @@ SPOKEN_PACKS: dict[str, str] = {
     "hi-IN": SPOKEN_PACK_HI,
 }
 
+from server.prompts.indic_spoken_packs import INDIC_SPOKEN_PACKS  # noqa: E402
+
+SPOKEN_PACKS.update(INDIC_SPOKEN_PACKS)
+
 CALL_END_FAREWELLS: dict[str, str] = {
     "te-IN": "Sare, time ichinanduku thanks. Good day.",
     "en-IN": "Thank you for your time. Goodbye.",
     "en-US": "Thank you for your time. Goodbye.",
     "hi-IN": "Time dene ke liye dhanyavaad. Alvida.",
 }
+
+CALL_END_FAREWELLS.update({
+    "ta-IN": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+    "kn-IN": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+    "ml-IN": "നിങ്ങളുടെ സമയത്തിന് നന്ദി. നമസ്കാരം.",
+    "mr-IN": "तुमच्या वेळेबद्दल धन्यवाद. नमस्कार.",
+    "bn-IN": "আপনার সময়ের জন্য ধন্যবাদ। নমস্কার।",
+    "gu-IN": "તમારા સમય માટે આભાર. આવજો.",
+    "pa-IN": "ਤੁਹਾਡੇ ਸਮੇਂ ਲਈ ਧੰਨਵਾਦ। ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ।",
+})
 
 CALL_END_DEFAULTS: dict[str, str] = {
     "te-IN": (
@@ -641,6 +713,34 @@ IDENTITY_SPEAK: dict[str, str] = {
         "Speak natural Hinglish. You are this business's phone representative — warm, helpful, on-brand. "
         "Introduce yourself only on the first turn of each call — never re-introduce mid-call."
     ),
+    "ta-IN": (
+        "Speak natural Tamil. You are this business's phone representative — warm, helpful, on-brand. "
+        "Introduce yourself only on the first turn of each call — never re-introduce mid-call."
+    ),
+    "kn-IN": (
+        "Speak natural Kannada. You are this business's phone representative — warm, helpful, on-brand. "
+        "Introduce yourself only on the first turn of each call — never re-introduce mid-call."
+    ),
+    "ml-IN": (
+        "Speak natural Malayalam. You are this business's phone representative — warm, helpful, on-brand. "
+        "Introduce yourself only on the first turn of each call — never re-introduce mid-call."
+    ),
+    "mr-IN": (
+        "Speak natural Marathi. You are this business's phone representative — warm, helpful, on-brand. "
+        "Introduce yourself only on the first turn of each call — never re-introduce mid-call."
+    ),
+    "bn-IN": (
+        "Speak natural Bengali. You are this business's phone representative — warm, helpful, on-brand. "
+        "Introduce yourself only on the first turn of each call — never re-introduce mid-call."
+    ),
+    "gu-IN": (
+        "Speak natural Gujarati. You are this business's phone representative — warm, helpful, on-brand. "
+        "Introduce yourself only on the first turn of each call — never re-introduce mid-call."
+    ),
+    "pa-IN": (
+        "Speak natural Punjabi. You are this business's phone representative — warm, helpful, on-brand. "
+        "Introduce yourself only on the first turn of each call — never re-introduce mid-call."
+    ),
 }
 
 
@@ -704,7 +804,7 @@ PROFESSIONAL_CLOSE_RULES = """PROFESSIONAL CLOSE (sales / lead roles)
 - When they share name, phone, or preference: brief noted — never re-collect it.
 - If they are busy or not now: offer one callback time, no pitch, stay on the line.
 - Hang up only when they confirm they are done (end the call / bye / that's all / don't call / firm no) or they confirmed a callback and the details are in. Bare okay/thanks is not a hangup.
-- Close: confirm the next step if any, thank them, short farewell, end_call. Then stop — the platform waits; if they speak, keep talking.
+- Close: confirm the next step if any, thank them, short farewell, end_call. Then stop — after farewell playback finishes the platform disconnects; a meaningful request to continue before disconnect is committed may cancel closing.
 - Do not keep selling after they agreed to a next step. Do not hang up while they still have an open question."""
 
 DECISIVE_TURN_DISCIPLINE = """DECISIVE TURN DISCIPLINE (every turn)
@@ -717,19 +817,33 @@ DECISIVE_TURN_DISCIPLINE = """DECISIVE TURN DISCIPLINE (every turn)
 
 
 def spoken_pack_for(language: str | None) -> str:
+    from server.config.constants import normalize_supported_language
     raw = (language or "te-IN").strip()
-    if raw in SPOKEN_PACKS:
-        return SPOKEN_PACKS[raw]
-    if raw in OPENING_OUTBOUND_WITH_COMPANY:
-        return SPOKEN_PACKS["hi-IN"]
-    return SPOKEN_PACKS[normalize_compile_language(language)]
+    lang = normalize_supported_language(raw)
+    if lang not in SPOKEN_PACKS:
+        raise KeyError(f"No spoken language pack for locale {raw}")
+    return SPOKEN_PACKS[lang]
+
+
+def assert_spoken_pack_available(language: str | None) -> None:
+    from server.config.constants import normalize_supported_language
+    raw = (language or "te-IN").strip()
+    if normalize_supported_language(raw) not in SPOKEN_PACKS:
+        from server.services.pstn_stack import PstnStackValidationError
+        raise PstnStackValidationError(
+            f"Language {raw} is not available for PSTN until a spoken pack is configured",
+            details=[f"Missing spoken pack for {raw}"],
+        )
 
 
 def language_runtime_footer(language: str | None, style: str) -> str:
+    assert_spoken_pack_available(language)
     raw = (language or "te-IN").strip()
     pack_lang = raw if raw in SPOKEN_PACKS else normalize_compile_language(language)
-    lock = LANGUAGE_LOCK.get(pack_lang, LANGUAGE_LOCK["hi-IN"])
-    mismatch = LANGUAGE_MISMATCH_FALLBACK.get(pack_lang, LANGUAGE_MISMATCH_FALLBACK["hi-IN"])
+    if pack_lang not in LANGUAGE_LOCK:
+        assert_spoken_pack_available(raw)
+    lock = LANGUAGE_LOCK[pack_lang]
+    mismatch = LANGUAGE_MISMATCH_FALLBACK.get(pack_lang, LANGUAGE_MISMATCH_FALLBACK["en-IN"])
     return (
         f"Language: {raw}. Style: {style}. {lock} "
         f"If the caller uses another language: say once '{mismatch}' — do not switch languages. "

@@ -518,12 +518,18 @@ class TelnyxPstnBridge:
                     patch = call_ledger.read_meta(self.call_id) or {}
                     if callee:
                         patch["callee_e164"] = callee
+                    if reg_row.get("dial_request_id"):
+                        patch["dial_request_id"] = reg_row.get("dial_request_id")
                     if not patch.get("connected_at"):
                         patch["connected_at"] = (
                             datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
                         )
                     call_ledger.write_meta(self.call_id, patch)
+                from server.services.pstn_debug import record_milestone
+
                 mark(self.call_id)
+                if self.call_control_id:
+                    record_milestone(self.call_control_id, "voice_loop_started")
                 log_pstn(
                     "call.started",
                     timer_key=self.call_control_id,
@@ -848,7 +854,7 @@ class TelnyxPstnBridge:
         voice = self._voice
         if voice is None:
             return False
-        if getattr(voice, "_tts_active", False):
+        if getattr(voice, "_tts_active", False) or getattr(voice, "_response_open", False):
             return True
         session = getattr(voice, "_active_tts_session", None)
         return session is not None and not getattr(session, "_closed", True)
@@ -871,7 +877,7 @@ class TelnyxPstnBridge:
             return False
         voice = self._voice
         if voice is not None:
-            if getattr(voice, "_tts_active", False):
+            if getattr(voice, "_tts_active", False) or getattr(voice, "_response_open", False):
                 return False
             playing = getattr(voice, "_agent_audio_playing", None)
             if callable(playing):
@@ -882,14 +888,32 @@ class TelnyxPstnBridge:
                     pass
         return True
 
+    def _agent_audio_expected(self) -> bool:
+        voice = self._voice
+        if voice is None:
+            return False
+        if getattr(voice, "_tts_active", False) or getattr(voice, "_response_open", False):
+            return True
+        playing = getattr(voice, "_agent_audio_playing", None)
+        if callable(playing):
+            try:
+                return bool(playing())
+            except Exception:
+                return False
+        return bool(getattr(voice, "_farewell_response_active", False))
+
     async def _out_worker(self) -> None:
-        """Send one RTP frame every 20 ms — TEST 5/6 validation path (single pacer, no PLC)."""
+        """Send one RTP frame every 20 ms — monotonic deadline pacing (audit A3)."""
+        frame_interval = 0.02
+        next_send = time.monotonic()
         try:
             while not self._closed:
                 self._out_sending = False
                 try:
-                    frame = await asyncio.wait_for(self._out_queue.get(), timeout=0.25)
+                    frame = await asyncio.wait_for(self._out_queue.get(), timeout=frame_interval)
                 except asyncio.TimeoutError:
+                    if self._agent_audio_expected() and self._out_queue.qsize() == 0:
+                        self._note_queue_metric("playout_underrun_count", 1)
                     continue
                 playback = getattr(self, "_playback", None)
                 chunk = frame.payload
@@ -917,6 +941,10 @@ class TelnyxPstnBridge:
                         expected=self._negotiated_media.frame_bytes,
                     )
                     continue
+                # Schedule before sending. Rebase late deadlines so idle periods
+                # never create a burst of catch-up frames.
+                next_send = max(next_send, time.monotonic())
+                await asyncio.sleep(max(0.0, next_send - time.monotonic()))
                 self._out_sending = True
                 encoded = base64.b64encode(chunk).decode("ascii")
                 message = json.dumps({"event": "media", "media": {"payload": encoded}})
@@ -933,6 +961,10 @@ class TelnyxPstnBridge:
                 self._last_outgoing_payload = chunk
                 self._last_out_frame_at = time.monotonic()
                 self._media_frames_out += 1
+                if self._media_frames_out == 1 and self.call_control_id:
+                    from server.services.pstn_debug import record_milestone
+
+                    record_milestone(self.call_control_id, "first_outbound_sent")
                 await self._signal_queue_space()
                 pstn_media_flow.emit(
                     self.call_control_id or self.ws_id,
@@ -975,7 +1007,7 @@ class TelnyxPstnBridge:
                         frames_out=self._media_frames_out,
                         queue_qsize=self._out_queue.qsize(),
                     )
-                await asyncio.sleep(0.02)
+                next_send += frame_interval
         except asyncio.CancelledError:
             pass
         except Exception as exc:
@@ -1399,6 +1431,13 @@ class TelnyxPstnBridge:
                     await self._provider_hangup()
                 except Exception as exc:
                     log_pstn("hangup.media_failure.failed", control=self.call_control_id, error=str(exc)[:160])
+        if self.call_id:
+            try:
+                from server.services.pstn_forensics import flush_meta
+
+                flush_meta(self.call_id)
+            except Exception:
+                pass
         if self.call_control_id and self.call_id:
             try:
                 from server.services.telnyx_recordings import attach_pending_recording

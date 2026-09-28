@@ -7,6 +7,7 @@ from server.prompts.agent_voice_rules import (
     CALL_END_DEFAULTS,
     CALL_END_FAREWELLS,
     normalize_compile_language,
+    pack_get,
 )
 
 HANGUP_REASONS = ("goodbye", "firm_refusal", "goal_complete", "abuse", "out_of_scope")
@@ -19,7 +20,7 @@ def default_call_end_policy(language: str | None = None) -> dict[str, Any]:
         # Out-of-scope cannot be proven from one turn. It remains available as
         # an explicit policy overlay, but is unsafe as a default hangup reason.
         "allowedReasons": list(DEFAULT_HANGUP_REASONS),
-        "farewell": CALL_END_FAREWELLS[lang],
+        "farewell": pack_get(CALL_END_FAREWELLS, lang),
     }
 
 
@@ -56,7 +57,7 @@ def format_call_end_section(language: str | None, policy: dict[str, Any] | None 
     farewell = normalized["farewell"]
     return (
         "--- CALL END POLICY ---\n"
-        f"{CALL_END_DEFAULTS[lang]}\n"
+        f"{pack_get(CALL_END_DEFAULTS, lang)}\n"
         f"{HANGUP_JUDGMENT_RULES}\n"
         f"Allowed hangup reasons for this agent: {reasons}. "
         "Never speak a farewell unless end_call.should_end is true. "

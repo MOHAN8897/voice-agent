@@ -124,7 +124,7 @@ async def _llm_compress_prompt(raw_prompt: str, *, budget_tokens: int) -> dict[s
             "You compress voice-agent instructions for a Telugu phone assistant. "
             "Merge duplicate rules, remove repetition, and keep ALL facts, prices, names, "
             "policies, URLs, workflows, and guardrails exactly. "
-            "Phone numbers may appear in the brief for reference only — add a rule that the agent must never read phone numbers aloud on a live call. "
+            "Phone numbers may appear in the brief for reference only — add a rule that the agent must not recite the dialed number, but may confirm an uncertain caller-supplied callback number segment once. "
             "Do not invent policy, pricing, or capabilities. "
             "Do not repeat Telugu-voice or safety rules that already exist in the platform prefix. "
             "Use concise section headers. Plain text only."

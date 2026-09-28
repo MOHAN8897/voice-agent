@@ -6,6 +6,7 @@ import {
   cacheEventLabel,
   costTelnyxBreakdown,
   costGeminiPostCallTranscribeUsd,
+  costOpenaiLiveTranscribeUsd,
   costLlmUsd,
   telnyxDestinationCountryFromE164,
   estimateTurnCost,
@@ -88,6 +89,8 @@ export type StampedSessionUsage = {
   outputAudioTokens?: number;
   postCallTranscriptUsd?: number;
   postCallTranscriptInr?: number;
+  liveTranscriptUsd?: number;
+  liveTranscriptInr?: number;
   transcriptionBilling?: string;
   transcriptSource?: string;
   postCallTranscriptStatus?: string;
@@ -239,18 +242,25 @@ export function TestStudioTurnMetrics({
   const telnyxUsd = stampedUsage?.telnyxUsd ?? estimatedTelnyxUsd;
   const telnyxInr = stampedUsage?.telnyxInr ?? telnyxUsd * sessionCost.fx;
   const gemini = isGeminiLiveVoiceModel(llmModel);
-  const transcriptUsdStamped = stampedUsage?.postCallTranscriptUsd ?? 0;
-  const postCallTranscript =
-    stampedUsage?.transcriptionBilling === "post_call_gemini_transcribe" ||
-    transcriptUsdStamped > 0 ||
-    (mode === "pstn_realtime" && gemini);
+  const billingTag = stampedUsage?.transcriptionBilling ?? "";
+  const postCallEnabled =
+    billingTag.includes("post_call_gemini_transcribe") ||
+    (stampedUsage?.postCallTranscriptUsd ?? 0) > 0 ||
+    Boolean(stampedUsage?.postCallTranscriptStatus);
+  const liveTranscriptEnabled =
+    billingTag.includes("live_openai_transcribe") || (stampedUsage?.liveTranscriptUsd ?? 0) > 0;
+  const postCallUsdStamped = stampedUsage?.postCallTranscriptUsd ?? 0;
+  const liveUsdStamped = stampedUsage?.liveTranscriptUsd ?? 0;
   const postCallEstimateUsd =
-    postCallTranscript && transcriptUsdStamped <= 0 && wallSec > 0
-      ? costGeminiPostCallTranscribeUsd(wallSec)
-      : 0;
-  const transcriptUsd = transcriptUsdStamped > 0 ? transcriptUsdStamped : postCallEstimateUsd;
+    postCallEnabled && postCallUsdStamped <= 0 && wallSec > 0 ? costGeminiPostCallTranscribeUsd(wallSec) : 0;
+  const liveEstimateUsd =
+    liveTranscriptEnabled && liveUsdStamped <= 0 && wallSec > 0 ? costOpenaiLiveTranscribeUsd(wallSec) : 0;
+  const postCallUsd = postCallUsdStamped > 0 ? postCallUsdStamped : postCallEstimateUsd;
+  const liveUsd = liveUsdStamped > 0 ? liveUsdStamped : liveEstimateUsd;
+  const transcriptUsd = postCallUsd + liveUsd;
   const transcriptInr =
-    stampedUsage?.postCallTranscriptInr ?? (transcriptUsd > 0 ? transcriptUsd * sessionCost.fx : 0);
+    (stampedUsage?.postCallTranscriptInr ?? postCallUsd * sessionCost.fx) +
+    (stampedUsage?.liveTranscriptInr ?? liveUsd * sessionCost.fx);
   const usageMetaForTx: CallMeta | null =
     stampedUsage?.transcriptSource || stampedUsage?.transcriptionBilling
       ? {
@@ -263,15 +273,17 @@ export function TestStudioTurnMetrics({
             ? { status: stampedUsage.postCallTranscriptStatus }
             : undefined,
         }
-      : postCallTranscript
-        ? { usage: { transcription_billing: "post_call_gemini_transcribe" } }
+      : postCallEnabled || liveTranscriptEnabled
+        ? {
+            usage: {
+              transcription_billing:
+                billingTag ||
+                (postCallEnabled ? "post_call_gemini_transcribe" : "live_openai_transcribe"),
+            },
+          }
         : null;
   const transcriptForTotal =
-    sessionEnded && stampedUsage?.totalUsd != null
-      ? transcriptUsdStamped
-      : sessionEnded
-        ? transcriptUsdStamped
-        : transcriptUsd;
+    sessionEnded && stampedUsage?.totalUsd != null ? postCallUsdStamped + liveUsdStamped : transcriptUsd;
   const totalUsd = stampedUsage?.totalUsd ?? modelUsd + telnyxUsd + transcriptForTotal;
   const totalInr = stampedUsage?.totalInr ?? modelInr + telnyxInr + transcriptForTotal * sessionCost.fx;
   const perMinWall = perMinute(totalUsd, wallSec, sessionCost.fx);
@@ -335,17 +347,29 @@ export function TestStudioTurnMetrics({
                   ["Audio spoken", breakdownAudioOut],
                   ["Prompt and conversation context", breakdownContext],
                   [
-                    postCallTranscript ? "Text output (voice session)" : "Text output / native transcripts",
+                    postCallEnabled || liveTranscriptEnabled
+                      ? "Text output (voice session)"
+                      : "Text output / native transcripts",
                     breakdownTextOut,
                   ],
                   ...(breakdownImage > 0 ? [["Image input", breakdownImage]] : []),
-                  ...(postCallTranscript && transcriptUsd > 0
+                  ...(liveTranscriptEnabled && liveUsd > 0
                     ? [
                         [
-                          transcriptUsdStamped > 0
+                          liveUsdStamped > 0
+                            ? "Live transcript (gpt-4o-mini-transcribe)"
+                            : "Live transcript (gpt-4o-mini-transcribe, est.)",
+                          liveUsd,
+                        ],
+                      ]
+                    : []),
+                  ...(postCallEnabled && postCallUsd > 0
+                    ? [
+                        [
+                          postCallUsdStamped > 0
                             ? "Post-call transcript (Gemini 3.5)"
                             : "Post-call transcript (Gemini 3.5, est.)",
-                          transcriptUsd,
+                          postCallUsd,
                         ],
                       ]
                     : []),
@@ -360,11 +384,17 @@ export function TestStudioTurnMetrics({
                 <div className="flex justify-between gap-3"><dt>Telnyx phone charges</dt><dd className="font-mono text-text">{formatInr(telnyxInr)}</dd></div>
               </dl>
               <p className="mt-3 text-xs leading-relaxed text-text-muted">
-                {gemini && (postCallTranscript || mode === "pstn_realtime")
-                  ? "Live call is voice-only (Gemini 3.8 Live). After hangup, Telnyx recording is transcribed with Gemini 3.5 Transcribe; that post-call line is shown above and is not part of live audio token rows."
-                  : gemini
-                    ? "Transcription uses Gemini Live. Its text output charge is included above; no separate OpenAI transcription call is made."
-                    : "Transcription uses gpt-4o-mini-transcribe (about $0.003 per audio minute). This separate provider charge is not included unless metered."}
+                {liveTranscriptEnabled
+                  ? "Live caller transcription uses gpt-4o-mini-transcribe (~$0.003/min of audio sent to OpenAI). "
+                  : ""}
+                {postCallEnabled
+                  ? "Post-call transcript uses Telnyx recording + Gemini 3.5 Transcribe after hangup. "
+                  : ""}
+                {!liveTranscriptEnabled && !postCallEnabled && gemini
+                  ? "Transcription add-ons are off for this stack; only live model token rows apply."
+                  : !liveTranscriptEnabled && !postCallEnabled
+                    ? "Enable live or post-call transcription in the SaaS phone stack to meter transcript add-ons."
+                    : ""}
                 {e2e && !stampedUsage?.totalUsd && sessionEnded
                   ? " Session totals finalize from the call ledger after hangup; per-turn rows are usage deltas."
                   : null}

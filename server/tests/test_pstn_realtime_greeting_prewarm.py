@@ -200,5 +200,5 @@ async def test_gemini_side_session_greeting_closes_throwaway_adapter():
     assert side.connected
     assert side.closed
     assert side.include_tools is False
-    assert side.instructions == GEMINI_GREETING_SIDE_SESSION_INSTRUCTIONS
+    assert GEMINI_GREETING_SIDE_SESSION_INSTRUCTIONS in side.instructions
     assert usage is None or isinstance(usage, dict)

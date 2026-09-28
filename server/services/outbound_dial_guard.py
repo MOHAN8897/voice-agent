@@ -53,13 +53,25 @@ _outbound_lock = asyncio.Lock()
 _inflight: dict[str, float] = {}
 
 
+def _normalize_dest_e164(value: str) -> str:
+    from server.services.saas.inbound_routing import _normalize_e164
+
+    normalized = _normalize_e164((value or "").strip())
+    return normalized or (value or "").strip()
+
+
 def dest_digits(value: str) -> str:
+    """Legacy ten-digit helper — prefer _normalize_dest_e164 for matching."""
     digits = "".join(ch for ch in (value or "") if ch.isdigit())
     return digits[-10:] if len(digits) >= 10 else digits
 
 
+def _dest_matches(row_to: str, to_e164: str) -> bool:
+    return _normalize_dest_e164(row_to) == _normalize_dest_e164(to_e164)
+
+
 def _slot_key(provider: str, to_e164: str) -> str:
-    return f"{provider}:{dest_digits(to_e164) or (to_e164 or '').strip()}"
+    return f"{provider}:{_normalize_dest_e164(to_e164)}"
 
 
 def _is_active_status(status: str) -> bool:
@@ -120,12 +132,11 @@ def peek_reusable_telnyx_call(to_e164: str) -> dict[str, Any] | None:
     """Return the live/ringing call to this dest so a duplicate Place Call no-ops."""
     from server.services.telnyx_client import telnyx_call_registry
 
-    dest = dest_digits(to_e164)
-    if not dest:
+    if not _normalize_dest_e164(to_e164):
         return None
     now = time.time()
-    for row in telnyx_call_registry.list_recent(20):
-        if dest_digits(str(row.get("to") or "")) != dest:
+    for row in telnyx_call_registry.list_recent(None):
+        if not _dest_matches(str(row.get("to") or row.get("callee_e164") or ""), to_e164):
             continue
         if row.get("ended"):
             continue
@@ -140,12 +151,11 @@ def peek_reusable_telnyx_call(to_e164: str) -> dict[str, Any] | None:
 async def hangup_active_telnyx_to(client: Any, to_e164: str) -> None:
     from server.services.telnyx_client import TelnyxApiError, telnyx_call_registry
 
-    dest = dest_digits(to_e164)
-    if not dest:
+    if not _normalize_dest_e164(to_e164):
         return
     now = time.time()
-    for row in telnyx_call_registry.list_recent(20):
-        if dest_digits(str(row.get("to") or "")) != dest:
+    for row in telnyx_call_registry.list_recent(None):
+        if not _dest_matches(str(row.get("to") or row.get("callee_e164") or ""), to_e164):
             continue
         if row.get("ended"):
             continue

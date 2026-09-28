@@ -31,11 +31,18 @@ def _meta_block(meta: dict[str, Any]) -> dict[str, Any]:
 
 
 def call_uses_gemini_post_call_transcript(meta: dict[str, Any] | None) -> bool:
-    if not meta or not get_settings().post_call_transcript_enabled:
+    if not meta:
         return False
     if str(meta.get("pipeline") or "") != "realtime_voice":
         return False
-    stack = meta.get("resolved_stack") if isinstance(meta.get("resolved_stack"), dict) else {}
+    from server.services.transcription_policy import transcription_policy_from_meta
+
+    policy = transcription_policy_from_meta(meta)
+    if not policy.post_call_enabled:
+        return False
+    from server.services.transcription_policy import pstn_stack_from_meta
+
+    stack = pstn_stack_from_meta(meta)
     llm = stack.get("llm") if isinstance(stack.get("llm"), dict) else {}
     model = str(llm.get("model") or (meta.get("usage") or {}).get("llm_model") or "")
     return is_gemini_live_voice_model(model)

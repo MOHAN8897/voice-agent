@@ -35,6 +35,8 @@ export type StackForm = {
   realtimeNoiseReduction?: string;
   realtimeSpeed?: number;
   realtimeSilenceMs?: number;
+  /** Mutually exclusive with post-call — only one transcription mode on the stack. */
+  transcriptionMode?: "off" | "live" | "post_call";
 };
 
 export type StackMode = "tier" | "custom";
@@ -74,6 +76,7 @@ export function defaultStackForm(row?: TierResolved): StackForm {
     realtimeNoiseReduction: DEFAULT_REALTIME_NOISE_REDUCTION,
     realtimeSpeed: DEFAULT_REALTIME_SPEED,
     realtimeSilenceMs: DEFAULT_REALTIME_SILENCE_MS,
+    transcriptionMode: "post_call",
   };
 }
 
@@ -183,6 +186,12 @@ export function buildPstnRealtimeStackOverride(form: StackForm): Record<string, 
       noise_reduction: normalizeRealtimeNoiseReduction(form.realtimeNoiseReduction),
       speed: normalizeRealtimeSpeed(form.realtimeSpeed),
       silence_ms: normalizeRealtimeSilenceMs(form.realtimeSilenceMs),
+    },
+    transcription: {
+      live_enabled: form.transcriptionMode === "live",
+      post_call_enabled: form.transcriptionMode === "post_call",
+      live_model: "gpt-4o-mini-transcribe",
+      post_call_model: "gemini-3.5-transcribe",
     },
   };
 }

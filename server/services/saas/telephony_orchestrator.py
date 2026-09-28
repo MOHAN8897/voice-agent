@@ -137,7 +137,12 @@ async def subscriber_outbound(
     agent_id: str,
     from_e164: str | None,
     to_e164: str,
+    dial_request_id: str | None = None,
 ) -> dict[str, Any]:
+    import uuid
+
+    if not (dial_request_id or "").strip():
+        dial_request_id = str(uuid.uuid4())
     from server.routes.dev_telephony import OutboundTestBody, _outbound_telnyx
     from server.services.telephony import active_telephony_provider, telephony_guard_error
 
@@ -201,7 +206,13 @@ async def subscriber_outbound(
         }
     try:
         if provider == "telnyx":
-            return await _outbound_telnyx(body, session_stub)
+            from server.services.outbound_dial_attempt import execute_dial_attempt
+            return await execute_dial_attempt(
+                request_id=dial_request_id,
+                scope=f"app:{principal.tenant_id}:{principal.user_id}:{provider}",
+                payload={"agent": agent_id, "from": resolved_from, "to": to_number, "stack": stack},
+                operation=lambda: _outbound_telnyx(body, session_stub),
+            )
         return {"ok": False, "error": f"Provider {provider} not supported for subscriber PSTN yet"}
     finally:
         release_outbound_slot(provider, to_number)

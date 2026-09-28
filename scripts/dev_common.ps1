@@ -27,14 +27,28 @@ if missing:
     raise SystemExit('missing:' + ','.join(missing))
 import server.app
 "@
-    $out = & $PythonPath -c $check 2>&1 | Out-String
-    if ($LASTEXITCODE -ne 0) {
+    # dev_stack.ps1 uses Stop; Python tracebacks on stderr must not abort before we print them.
+    $prevEa = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    $out = ""
+    $code = 0
+    try {
+        Push-Location $RepoRoot
+        $out = & $PythonPath -c $check 2>&1 | Out-String
+        if ($null -ne $LASTEXITCODE) { $code = [int]$LASTEXITCODE }
+    } finally {
+        Pop-Location
+        $ErrorActionPreference = $prevEa
+    }
+    if ($code -ne 0) {
         Write-Host ""
         Write-Host "Python API dependencies are not installed in this environment." -ForegroundColor Red
         if ($out -match 'missing:([^\r\n]+)') {
             Write-Host "  Missing modules: $($Matches[1])" -ForegroundColor Yellow
         } elseif ($out.Trim()) {
-            Write-Host "  $($out.Trim())" -ForegroundColor Yellow
+            foreach ($line in ($out.Trim() -split "`r?`n")) {
+                Write-Host "  $line" -ForegroundColor Yellow
+            }
         }
         Write-Host ""
         Write-Host "Fix (from repo root):" -ForegroundColor Cyan

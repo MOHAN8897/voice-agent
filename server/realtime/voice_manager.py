@@ -52,23 +52,32 @@ class RealtimeVoiceManager:
             language=language,
         )
         cfg = realtime_voice_config(stack_override)
+        from server.services.transcription_policy import transcription_policy_from_stack
+
+        tx_policy = transcription_policy_from_stack(stack_override)
         _provider, live_model = realtime_voice_llm_provider(stack_override, model)
         factory = self._adapter_factory or create_realtime_voice_adapter
         session = adapter or factory(stack_override=stack_override, model=live_model)
         self._sessions[call_id] = session
         self._meta[call_id] = {"instructions": text, "language": language}
         try:
-            await session.connect(
-                model=live_model or DEFAULT_REALTIME_MODEL,
-                instructions=text,
-                voice=voice or cfg["voice"],
-                turn_detection=turn_detection or cfg["turn_detection"],
-                vad_eagerness=cfg.get("vad_eagerness"),
-                noise_reduction=cfg.get("noise_reduction"),
-                speed=cfg.get("speed"),
-                silence_ms=cfg.get("silence_ms"),
-                max_output_tokens=max_output_tokens,
-            )
+            connect_kwargs: dict[str, Any] = {
+                "model": live_model or DEFAULT_REALTIME_MODEL,
+                "instructions": text,
+                "voice": voice or cfg["voice"],
+                "turn_detection": turn_detection or cfg["turn_detection"],
+                "vad_eagerness": cfg.get("vad_eagerness"),
+                "noise_reduction": cfg.get("noise_reduction"),
+                "speed": cfg.get("speed"),
+                "silence_ms": cfg.get("silence_ms"),
+                "max_output_tokens": max_output_tokens,
+            }
+            if hasattr(session, "connect"):
+                import inspect
+
+                if "input_transcription_enabled" in inspect.signature(session.connect).parameters:
+                    connect_kwargs["input_transcription_enabled"] = tx_policy.openai_session_input_transcription()
+            await session.connect(**connect_kwargs)
             if wait_ready and hasattr(session, "wait_ready"):
                 await session.wait_ready()
             logger.info("[REALTIME_VOICE] session started call=%s model=%s", call_id, live_model)

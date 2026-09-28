@@ -7,6 +7,7 @@ import { DevCard } from "@/components/dev/DevCard";
 import { ensureArray } from "@/lib/ensure-array";
 import { portalFetch, refreshPortalSession } from "@/lib/auth-client";
 import { LiveMediaFlowDebugger } from "./LiveMediaFlowDebugger";
+import { PstnForensicsPanel } from "./PstnForensicsPanel";
 import { CallAudioPanel } from "@/components/calls/detail/CallAudioPanel";
 import type { StackForm, StackMode } from "@/lib/test-studio-stack";
 import { effectivePstnLiveLlm, TEST_STUDIO_SESSION_ID, applyFarFieldNoiseReduction } from "@/lib/test-studio-stack";
@@ -467,12 +468,17 @@ export function PstnTestPanel({
           /* fall back to panel override */
         }
       }
+      const dialRequestId =
+        typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+          ? crypto.randomUUID()
+          : `dial-${Date.now()}`;
       const dialBody: Record<string, unknown> = {
         toE164: to,
         fromE164: fromE164.trim() || undefined,
         agentId,
         tier: tier || "medium",
         language: language || "te-IN",
+        dialRequestId,
         // Realtime E2E (Gemini/OpenAI Live) still needs Test Studio brain + fine-tune;
         // only the telephony stack override comes from the platform phone profile.
         inheritTestStudioConfig: true,
@@ -965,7 +971,10 @@ export function PstnTestPanel({
       ) : null}
 
       {showLive && active === "telnyx" ? (
-        <LiveMediaFlowDebugger callId={mediaFlowCallId || trackedCallId} />
+        <>
+          <PstnForensicsPanel callId={mediaFlowCallId || trackedCallId} />
+          <LiveMediaFlowDebugger callId={mediaFlowCallId || trackedCallId} />
+        </>
       ) : null}
 
       {showLive && listenCallId ? (

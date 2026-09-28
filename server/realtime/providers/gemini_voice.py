@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import uuid
 from collections import deque
 from collections.abc import AsyncIterator
@@ -14,6 +15,8 @@ from google.genai import types
 from server.call.call_controller import CALL_ACTION_TOOL
 from server.providers.gemini_llm import _api_key, gemini_usage_from_metadata
 from server.realtime.hangup_tools import REQUEST_LANGUAGE_CALLBACK_TOOL, realtime_hangup_tool_declarations
+logger = logging.getLogger(__name__)
+
 from server.realtime.models import (
     DEFAULT_REALTIME_TURN_DETECTION,
     REALTIME_PCM_RATE,
@@ -87,10 +90,12 @@ def _vad_config(
             )
         )
     start = _EAGERNESS_TO_START.get(normalize_realtime_vad_eagerness(vad_eagerness), "START_SENSITIVITY_HIGH")
+    silence_ms = normalize_realtime_silence_ms(silence_ms) if silence_ms else 650
     return types.RealtimeInputConfig(
         automatic_activity_detection=types.AutomaticActivityDetection(
             disabled=False,
             start_of_speech_sensitivity=start,
+            silence_duration_ms=silence_ms,
         )
     )
 
@@ -235,12 +240,20 @@ class GeminiLiveVoiceAdapter:
         if include_tools:
             connect_kwargs["tools"] = _gemini_tools()
         config = types.LiveConnectConfig(**connect_kwargs)
+        aad = getattr(connect_kwargs.get("realtime_input_config"), "automatic_activity_detection", None)
         self.last_session = {
             "model": self.model,
             "instructions": instructions,
             "voice": self.voice,
             "turn_detection": self.turn_detection,
+            "effective_vad": {
+                "mode": self.turn_detection,
+                "silence_duration_ms": getattr(aad, "silence_duration_ms", None),
+                "start_of_speech_sensitivity": getattr(aad, "start_of_speech_sensitivity", None),
+                "ignored_ui": {"noise_reduction": noise_reduction, "speed": speed},
+            },
         }
+        logger.info("[gemini_voice] connect effective_vad=%s", self.last_session["effective_vad"])
         self._connect_cm = self._client.aio.live.connect(model=self.model, config=config)
         self._session = await self._connect_cm.__aenter__()
         self._pump_task = asyncio.create_task(self._pump(), name="gemini-live-voice-recv")

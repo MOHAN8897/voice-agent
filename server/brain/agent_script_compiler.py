@@ -1570,7 +1570,8 @@ def _platform_call_rules(
             f"--- LEAD CAPTURE ---\n"
             f"Ask a field only if they have not already given it on this call "
             f"(interest, name, contact, {next_pref}). Never walk that list as a checklist.\n"
-            f"Brief ack when they share details ('Got it' / 'Noted'). Never read phone digits back.\n"
+            f"Brief ack when they share details ('Got it' / 'Noted'). Do not read the dialed number aloud; "
+            f"if they give or correct a callback number and you are unsure, confirm only the uncertain part once.\n"
             f"If they are busy: one callback offer, no pitch, stay on the line.\n"
             f"Stop qualifying once enough is captured for the agreed next step.\n\n"
         )
@@ -1578,7 +1579,8 @@ def _platform_call_rules(
         lead_capture = (
             f"--- LEAD CAPTURE ---\n"
             f"Ask name, contact, or callback preference only if still unknown on this call.\n"
-            f"Brief ack when they share details ('Got it' / 'Noted'). Never read phone digits back.\n"
+            f"Brief ack when they share details ('Got it' / 'Noted'). Do not read the dialed number aloud; "
+            f"if they give or correct a callback number and you are unsure, confirm only the uncertain part once.\n"
             f"If they are busy: one callback offer, no pitch, stay on the line.\n\n"
         )
     if inbound:
@@ -1607,7 +1609,8 @@ def _platform_call_rules(
         f"You are a professional telecaller. Your calling script defines the objectives for this call.\n"
         f"Track which objectives you have completed and which are still open.\n"
         f"After handling any interruption, objection, or tangent, return to the next open script objective.\n"
-        f"Never close the call prematurely — work through all objectives unless the caller explicitly ends.\n"
+        f"Respect refusal, opt-out, and requested stop before optional discovery — do not close prematurely, "
+        f"but do not checklist every optional field when the caller is done.\n"
         f"Adapt your delivery naturally, but do not abandon the script's structure or skip required steps.\n"
         f"If the caller answers a script question without being asked, mark it as done and advance.\n"
         f"Act like a skilled human telecaller: systematic but natural, persistent but respectful.\n\n"
@@ -2006,23 +2009,16 @@ def _assemble_brain(
     call_end_policy: dict[str, Any] | None = None,
     platform_call_rules: str = "",
 ) -> str:
-    lang = normalize_compile_language(language)
-    style_val = style_for_language(style, lang)
-    calling = f"--- CALLING SCRIPT ---\n{script.strip()}\n\n"
-    platform = (platform_call_rules or "").strip()
-    if platform:
-        calling += f"--- PLATFORM CALL RULES ---\n{platform.strip()}\n\n"
-    body = (
-        f"{SECTION_SAFETY}\n\n"
-        f"{spoken_pack_for(lang)}\n\n"
-        f"{calling}"
-        f"{call_end_policy_section(lang, call_end_policy)}\n\n"
-        f"{STATIC_OUTPUT_RULES}\n\n"
-        f"{language_runtime_footer(lang, style_val)}"
+    from server.brain.compiled_brain_artifact import assemble_unified_brain
+
+    return assemble_unified_brain(
+        language=language,
+        script=script,
+        style=style,
+        call_end_policy=call_end_policy,
+        platform_call_rules=platform_call_rules,
+        extra_pad=extra_pad,
     )
-    if extra_pad:
-        return f"{body}\n\n{extra_pad.strip()}"
-    return body
 
 
 def build_compiler_sections(
@@ -2135,21 +2131,9 @@ def _ensure_cache_floor(
     if estimate_tokens(compiled) >= CACHE_MIN_TOKENS:
         return body, compiled
 
-    pad_block = f"{STATIC_OUTPUT_RULES}\n\n{spoken_pack_for(lang)}"
-    extra = ""
-    for _ in range(8):
-        extra = f"{extra}\n\n{pad_block}".strip()
-        compiled = _assemble_brain(
-            script=body,
-            language=lang,
-            style=style_val,
-            extra_pad=extra,
-            call_end_policy=call_end_policy,
-            platform_call_rules=platform_call_rules,
-        )
-        if estimate_tokens(compiled) >= CACHE_MIN_TOKENS:
-            return body, compiled
+    # Prompt caching must not add padding or duplicate behavioral policy.
     return body, compiled
+
 
 
 def reassemble_brain_from_script(

@@ -74,9 +74,14 @@ def test_words_to_lines_preserves_telugu():
 def test_call_uses_gemini_post_call_transcript_gate():
     meta = {
         "pipeline": "realtime_voice",
-        "resolved_stack": {"llm": {"model": "gemini-3.8-live"}},
+        "resolved_stack": {
+            "llm": {"model": "gemini-3.8-live"},
+            "transcription": {"post_call_enabled": True, "live_enabled": False},
+        },
     }
     assert call_uses_gemini_post_call_transcript(meta) is True
+    meta["resolved_stack"]["transcription"]["post_call_enabled"] = False
+    assert call_uses_gemini_post_call_transcript(meta) is False
     meta["pipeline"] = "classic"
     assert call_uses_gemini_post_call_transcript(meta) is False
 

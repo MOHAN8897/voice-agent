@@ -133,6 +133,10 @@ def _normalize_realtime_voice_override(
     if str(out.get("language") or "").strip() != lang:
         adjustments.append(f"language set to {lang} for PSTN realtime")
     out["language"] = lang
+    from server.services.transcription_policy import normalize_transcription_block
+
+    tx = out.get("transcription")
+    out["transcription"] = normalize_transcription_block(tx if isinstance(tx, dict) else None, adjustments=adjustments)
     return out, adjustments
 
 
@@ -306,4 +310,7 @@ def prepare_pstn_dial_stack(
     tier: str = "medium",
 ) -> tuple[dict[str, Any] | None, list[str]]:
     """Used by dev telephony outbound before placing a PSTN call."""
+    from server.prompts.agent_voice_rules import assert_spoken_pack_available
+
+    assert_spoken_pack_available(language)
     return normalize_pstn_stack_override(stack_override, language=language, tier=tier)

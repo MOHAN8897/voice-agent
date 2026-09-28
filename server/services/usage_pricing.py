@@ -119,6 +119,15 @@ def cost_gemini_post_call_transcribe(*, duration_sec: float, model: str) -> dict
     rate = GEMINI_35_TRANSCRIBE_USD_PER_MIN
     return {"usd": minutes * rate, "minutes": minutes, "usd_per_min": rate, "model": (model or "gemini-3.5-transcribe")}
 
+
+OPENAI_MINI_TRANSCRIBE_USD_PER_MIN = 0.003
+
+
+def cost_openai_live_transcribe(*, duration_sec: float, model: str = "gpt-4o-mini-transcribe") -> dict[str, float]:
+    minutes = max(0.0, float(duration_sec or 0)) / 60.0
+    rate = OPENAI_MINI_TRANSCRIBE_USD_PER_MIN
+    return {"usd": minutes * rate, "minutes": minutes, "usd_per_min": rate, "model": model or "gpt-4o-mini-transcribe"}
+
 GEMINI_LIVE_USD_PER_M: dict[str, dict[str, float]] = {
     "gemini-3.8-live": {
         "input": 0.75,

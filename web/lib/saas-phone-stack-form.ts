@@ -69,6 +69,13 @@ export function saasPhoneStackFromOverride(override: Record<string, unknown> | n
         ? "openai"
         : base.llmProvider;
 
+  const tx =
+    override.transcription &&
+    typeof override.transcription === "object" &&
+    !Array.isArray(override.transcription)
+      ? (override.transcription as Record<string, unknown>)
+      : {};
+
   return {
     ...base,
     language: String(override.language || base.language).trim() || base.language,
@@ -84,6 +91,13 @@ export function saasPhoneStackFromOverride(override: Record<string, unknown> | n
     ),
     realtimeSpeed: normalizeRealtimeSpeed(rv.speed as number | string | undefined),
     realtimeSilenceMs: normalizeRealtimeSilenceMs(rv.silence_ms as number | string | undefined),
+    transcriptionMode: tx.live_enabled
+      ? "live"
+      : tx.post_call_enabled !== undefined
+        ? tx.post_call_enabled
+          ? "post_call"
+          : "off"
+        : "post_call",
   };
 }
 

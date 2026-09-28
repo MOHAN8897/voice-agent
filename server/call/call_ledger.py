@@ -33,20 +33,22 @@ def _sync_post_call_transcript_usage(
     fx: float,
 ) -> tuple[float, float]:
     """Recompute post-call transcribe ₹/$ when wall duration is finalized at hangup."""
+    from server.services.transcription_policy import transcription_policy_from_meta
+
+    policy = transcription_policy_from_meta(meta)
+    if not policy.post_call_enabled:
+        usage["post_call_transcript_usd"] = 0.0
+        usage["post_call_transcript_inr"] = 0.0
+        return 0.0, 0.0
     block = meta.get("post_call_transcript") if isinstance(meta.get("post_call_transcript"), dict) else {}
     status = str(block.get("status") or "")
     if status != "complete" and not usage.get("post_call_transcript_usd"):
         usd = float(usage.get("post_call_transcript_usd") or 0)
         inr = float(usage.get("post_call_transcript_inr") or usd * fx)
         return usd, inr
-    from server.config.env import get_settings
     from server.services.usage_pricing import cost_gemini_post_call_transcribe
 
-    model = str(
-        usage.get("post_call_transcript_model")
-        or get_settings().post_call_transcript_model
-        or "gemini-3.5-transcribe"
-    )
+    model = str(usage.get("post_call_transcript_model") or policy.post_call_model or "gemini-3.5-transcribe")
     cost = cost_gemini_post_call_transcribe(duration_sec=max(0.0, float(duration_sec or 0)), model=model)
     usd = float(cost.get("usd") or 0)
     inr = usd * fx
@@ -56,6 +58,37 @@ def _sync_post_call_transcript_usage(
     usage["post_call_transcript_seconds"] = float(duration_sec or 0)
     if status == "complete":
         usage["transcription_billing"] = usage.get("transcription_billing") or "post_call_gemini_transcribe"
+    return usd, inr
+
+
+def _sync_live_transcript_usage(
+    usage: dict[str, Any],
+    meta: dict[str, Any],
+    *,
+    duration_sec: float,
+    fx: float,
+) -> tuple[float, float]:
+    from server.services.transcription_policy import transcription_policy_from_meta
+    from server.services.usage_pricing import cost_openai_live_transcribe
+
+    policy = transcription_policy_from_meta(meta)
+    billed_sec = float(usage.get("live_transcript_seconds") or 0)
+    if billed_sec <= 0 and policy.live_enabled:
+        billed_sec = max(0.0, float(duration_sec or 0))
+    if not policy.live_enabled or billed_sec <= 0:
+        usage["live_transcript_usd"] = 0.0
+        usage["live_transcript_inr"] = 0.0
+        return 0.0, 0.0
+    model = str(usage.get("live_transcript_model") or policy.live_model or "gpt-4o-mini-transcribe")
+    cost = cost_openai_live_transcribe(duration_sec=billed_sec, model=model)
+    usd = float(cost.get("usd") or 0)
+    inr = usd * fx
+    usage["live_transcript_model"] = model
+    usage["live_transcript_usd"] = usd
+    usage["live_transcript_inr"] = inr
+    usage["live_transcript_seconds"] = billed_sec
+    if not usage.get("transcription_billing"):
+        usage["transcription_billing"] = "live_openai_transcribe"
     return usd, inr
 
 
@@ -273,12 +306,20 @@ class CallLedger:
             )
             telnyx_usd = float(telnyx_breakdown.get("total_usd") or 0)
         telnyx_inr = telnyx_usd * fx
-        transcript_usd, transcript_inr = _sync_post_call_transcript_usage(
+        post_tx_usd, post_tx_inr = _sync_post_call_transcript_usage(
             usage,
             meta,
             duration_sec=float(duration_sec or 0),
             fx=fx,
         )
+        live_tx_usd, live_tx_inr = _sync_live_transcript_usage(
+            usage,
+            meta,
+            duration_sec=float(duration_sec or 0),
+            fx=fx,
+        )
+        transcript_usd = post_tx_usd + live_tx_usd
+        transcript_inr = post_tx_inr + live_tx_inr
         total_usd = model_usd + telnyx_usd + transcript_usd
         total_inr = model_inr + telnyx_inr + transcript_inr
         usage["pipeline"] = usage.get("pipeline") or pipeline

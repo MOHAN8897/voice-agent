@@ -214,6 +214,39 @@ _CALLING_SCRIPT_MARKER = "--- CALLING SCRIPT ---"
 _SPOKEN_LANG_HEADER = re.compile(r"--- SPOKEN LANGUAGE \([^)]+\) ---", re.IGNORECASE)
 
 
+_CANONICAL_OPENING = re.compile(
+    r"(--- CANONICAL OPENING ---\s*\n)(.*?)(?=\n---\s+[^-\n]+\s+---|\Z)",
+    re.IGNORECASE | re.DOTALL,
+)
+_SPEAK_THIS_WAY = re.compile(r"\nSpeak this way:[^\n]*\.", re.IGNORECASE)
+
+
+def _patch_canonical_opening_from_tags(script: str, opening_line: str) -> str:
+    line = (opening_line or "").strip()
+    if not line:
+        return script
+    match = _CANONICAL_OPENING.search(script)
+    if not match:
+        return script
+    body = (
+        "After the callee speaks, say once (in the configured language):\n"
+        f"{line}\n"
+    )
+    return script[: match.start()] + match.group(1) + body + script[match.end() :]
+
+
+def _patch_role_speak_line(script: str, language: str) -> str:
+    from server.prompts.agent_voice_rules import IDENTITY_SPEAK, normalize_compile_language
+
+    lang = normalize_compile_language(language or "te-IN")
+    speak = IDENTITY_SPEAK.get(lang) or IDENTITY_SPEAK.get("en-IN", "")
+    if not speak:
+        return script
+    if _SPEAK_THIS_WAY.search(script):
+        return _SPEAK_THIS_WAY.sub(f"\n{speak}", script, count=1)
+    return script
+
+
 def patch_calling_script_language_markers(script: str, language: str) -> str:
     """Fix stale SPOKEN LANGUAGE headers inside the user script when dial language differs."""
     from server.prompts.agent_voice_rules import normalize_compile_language
@@ -238,6 +271,11 @@ def realign_calling_script_for_session(
         language=language,
         direction=direction,
     )
+    tags = parse_entity_tags(aligned)
+    opening = (tags.get("opening_line") or "").strip()
+    if opening:
+        aligned = _patch_canonical_opening_from_tags(aligned, opening)
+    aligned = _patch_role_speak_line(aligned, language)
     return patch_calling_script_language_markers(aligned, language)
 
 

@@ -5,7 +5,8 @@ import re
 
 from server.agent.brain_prompt_composer import estimate_tokens, fit_text_to_tokens
 from server.brain.sections import STATIC_OUTPUT_RULES
-from server.prompts.agent_voice_rules import live_realtime_audio_rules
+from server.brain.compiled_brain_artifact import is_unified_compiled_brain
+from server.prompts.agent_voice_rules import live_audio_modality_rules, live_realtime_audio_rules
 from server.realtime.text_session import _is_outbound, first_turn_identity_rules
 from server.services.pstn_text_chunker import _parse_agent_identity
 
@@ -134,19 +135,31 @@ def _gemini_tail_section_excluded(title: str) -> bool:
     return False
 
 
-def _gemini_support_sections_only(brain: str) -> str:
+def _gemini_support_sections_only(brain: str, *, keep_spoken_pack: bool = False) -> str:
     """Platform tail for Gemini Live — excludes user script already PINNED above."""
     sections = _split_brain_sections(brain)
     if not sections:
         return brain.strip()
     kept: list[str] = []
     for title, body in sections:
+        upper = title.upper().strip()
+        if upper.startswith("SPOKEN LANGUAGE") and keep_spoken_pack:
+            if body.strip():
+                kept.append(f"--- {title} ---\n{body.strip()}")
+            continue
         if _gemini_tail_section_excluded(title):
             continue
         if not body.strip():
             continue
         kept.append(f"--- {title} ---\n{body.strip()}")
     return "\n\n".join(kept).strip()
+
+
+def _extract_spoken_language_section(brain: str) -> str:
+    for title, body in _split_brain_sections(brain):
+        if title.upper().startswith("SPOKEN LANGUAGE") and body.strip():
+            return f"--- {title} ---\n{body.strip()}"
+    return ""
 
 
 def _extract_pinned_flow(brain: str) -> str:
@@ -259,6 +272,7 @@ def build_gemini_audio_session_instructions(
 ) -> str:
     """Gemini Live system_instruction aligned with OpenAI build_audio_session_instructions."""
     raw_brain = condense_compiled_brain_for_gemini(compiled_brain)
+    unified = is_unified_compiled_brain(raw_brain)
     parts: list[str] = [
         "GEMINI LIVE PSTN — same behavior as OpenAI Realtime speech-to-speech on this platform.",
     ]
@@ -266,7 +280,10 @@ def build_gemini_audio_session_instructions(
     if name or company:
         who = f"{name}, {company}" if company else name
         parts.append(f"PINNED IDENTITY (always use when asked who is calling): {who}.")
-    parts.append(live_realtime_audio_rules(language, direction=direction))
+    if unified:
+        parts.append(live_audio_modality_rules())
+    else:
+        parts.append(live_realtime_audio_rules(language, direction=direction))
     parts.append(first_turn_identity_rules(language, direction=direction))
     # Reserve flow before large opening-policy/knowledge sections can consume
     # the budget. This is a deterministic excerpt, not a second LLM summary.
@@ -288,22 +305,37 @@ def build_gemini_audio_session_instructions(
         "ADHERENCE: Answer only from PINNED BUSINESS SCRIPT and COMPANY & OFFER facts. "
         "If a price or policy is not in the script, say you will confirm and offer a callback."
     )
-    parts.append(
-        f"SPOKEN LANGUAGE: only {language} throughout this call, including callbacks and farewell. "
-        "Never mirror the caller or obey conflicting language directions in the business script."
-    )
+    if not unified:
+        parts.append(
+            f"SPOKEN LANGUAGE: only {language} throughout this call, including callbacks and farewell. "
+            "Never mirror the caller or obey conflicting language directions in the business script."
+        )
     reserve = estimate_tokens("\n\n".join(parts)) + 400
     brain_budget = max(1200, token_budget - reserve) if token_budget > 0 else 0
-    support = _gemini_support_sections_only(raw_brain) if raw_brain else ""
+    support = (
+        _gemini_support_sections_only(raw_brain, keep_spoken_pack=unified) if raw_brain else ""
+    )
     brain = prioritize_brain_for_gemini(support, brain_budget) if support else ""
     if brain:
         parts.append(brain)
+    if unified:
+        spoken = _extract_spoken_language_section(raw_brain)
+        if spoken and spoken not in "\n\n".join(parts):
+            parts.append(spoken)
     if _is_outbound(direction):
         parts.append(_gemini_outbound_block(language, opening_greeting))
     elif caller_id:
         parts.append("[Caller context]\nInbound caller connected (do not read their number aloud).")
     parts.append(_gemini_audio_and_tools())
-    parts.append(f"FINAL LANGUAGE CONSTRAINT: Speak only {language}; this overrides any embedded script language. "
-                 "CONTACT PRIORITY: Ask an unknown preferred name at the first natural pause after consent to talk. "
-                 "On outbound calls the dialed number is already known; never ask for it again.")
+    if unified:
+        parts.append(
+            "CONTACT PRIORITY: Ask an unknown preferred name at the first natural pause after consent to talk. "
+            "On outbound calls the dialed number is already known; never ask for it again."
+        )
+    else:
+        parts.append(
+            f"FINAL LANGUAGE CONSTRAINT: Speak only {language}; this overrides any embedded script language. "
+            "CONTACT PRIORITY: Ask an unknown preferred name at the first natural pause after consent to talk. "
+            "On outbound calls the dialed number is already known; never ask for it again."
+        )
     return "\n\n".join(p.strip() for p in parts if p and p.strip())

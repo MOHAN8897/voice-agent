@@ -91,6 +91,7 @@ class PstnTurnTtsSession:
         self._chars_sent = 0
         self._interrupted = False
         self._had_error = False
+        self.partial_timeout = False
         self._bound_generation: str | None = None
         self._awaiting_audio = False
         self._collecting_frames = False
@@ -314,6 +315,7 @@ class PstnTurnTtsSession:
         self._audio_buf.clear()
         self._interrupted = False
         self._had_error = False
+        self.partial_timeout = False
         self._awaiting_audio = False
         self._collecting_frames = False
         self._collected_frames = []
@@ -348,10 +350,12 @@ class PstnTurnTtsSession:
         try:
             await asyncio.wait_for(self._done.wait(), timeout=12.0)
         except asyncio.TimeoutError:
-            log_pstn("tts.finish.timeout", call_id=self._voice.call_id)
-            # Treat silent hang as an error so the turn can speak a fallback (6.5).
             if self._tts_audio_bytes <= 0:
+                log_pstn("tts.finish.timeout", call_id=self._voice.call_id)
                 self._had_error = True
+            else:
+                log_pstn("tts.finish.partial_timeout", call_id=self._voice.call_id, bytes=self._tts_audio_bytes)
+                self.partial_timeout = True
             self._done.set()
         finally:
             self._awaiting_audio = False

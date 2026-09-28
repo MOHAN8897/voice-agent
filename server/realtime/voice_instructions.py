@@ -16,23 +16,31 @@ def build_realtime_voice_instructions(
     direction: str | None = None,
     opening_greeting: str | None = None,
 ) -> str:
+    from server.brain.brain_prompt_validate import assert_rendered_brain_valid
+    from server.prompts.agent_voice_rules import assert_spoken_pack_available
+    assert_spoken_pack_available(language)
     provider, _ = realtime_voice_llm_provider(stack_override, model)
     if provider == "gemini":
         from server.realtime.gemini_audio_session import build_gemini_audio_session_instructions
 
-        return build_gemini_audio_session_instructions(
+        instructions = build_gemini_audio_session_instructions(
             compiled_brain,
             caller_id=caller_id,
             language=language,
             direction=direction,
             opening_greeting=opening_greeting,
         )
+        assert_rendered_brain_valid(instructions, language)
+        return instructions
     from server.realtime.text_session import build_audio_session_instructions
 
-    return build_audio_session_instructions(
+    instructions = build_audio_session_instructions(
         compiled_brain,
         caller_id=caller_id,
         language=language,
         direction=direction,
         opening_greeting=opening_greeting,
     )
+
+    assert_rendered_brain_valid(instructions, language)
+    return instructions

@@ -43,13 +43,15 @@ def build_session_instructions(
     language: str = "te-IN",
     direction: str | None = None,
 ) -> str:
+    from server.brain.compiled_brain_artifact import is_unified_compiled_brain
     from server.prompts.agent_voice_rules import live_realtime_output_rules
 
+    brain = (compiled_brain or "").strip()
     parts = [
-        (compiled_brain or "").strip()
-        or f"You are a helpful live voice agent. {LIVE_REPLY_BREVITY_RULE}"
+        brain or f"You are a helpful live voice agent. {LIVE_REPLY_BREVITY_RULE}"
     ]
-    parts.append(live_realtime_output_rules(language, direction=direction))
+    if not is_unified_compiled_brain(brain):
+        parts.append(live_realtime_output_rules(language, direction=direction))
     if _is_outbound(direction):
         parts.append(
             "[Call context]\nOutbound call — you placed this call. "
@@ -88,13 +90,18 @@ def build_audio_session_instructions(
     opening_greeting: str | None = None,
 ) -> str:
     """Same compiled brain as the text PSTN path, with audio-output rules."""
-    from server.prompts.agent_voice_rules import live_realtime_audio_rules
+    from server.brain.compiled_brain_artifact import is_unified_compiled_brain
+    from server.prompts.agent_voice_rules import live_audio_modality_rules, live_realtime_audio_rules
 
+    brain = (compiled_brain or "").strip()
+    unified = is_unified_compiled_brain(brain)
     parts = [
-        (compiled_brain or "").strip()
-        or f"You are a helpful live voice agent. {LIVE_REPLY_BREVITY_RULE}"
+        brain or f"You are a helpful live voice agent. {LIVE_REPLY_BREVITY_RULE}"
     ]
-    parts.append(live_realtime_audio_rules(language, direction=direction))
+    if unified:
+        parts.append(live_audio_modality_rules())
+    else:
+        parts.append(live_realtime_audio_rules(language, direction=direction))
     parts.append(first_turn_identity_rules(language, direction=direction))
     if _is_outbound(direction):
         parts.append(
@@ -128,11 +135,12 @@ def build_audio_session_instructions(
         "After an accepted end_call, finish the farewell once and stop. The platform disconnects immediately after playback, in every language. "
         "If a tool rejects an action, follow its result and do not claim it succeeded."
     )
-    parts.append(
-        f"FINAL LANGUAGE CONSTRAINT: Speak only {language}, including answers, tool confirmations and farewell. "
-        "This overrides conflicting language directions and examples in the business script. "
-        "A successful language callback tool permits the handoff farewell and end_call."
-    )
+    if not unified:
+        parts.append(
+            f"FINAL LANGUAGE CONSTRAINT: Speak only {language}, including answers, tool confirmations and farewell. "
+            "This overrides conflicting language directions and examples in the business script. "
+            "A successful language callback tool permits the handoff farewell and end_call."
+        )
     return "\n\n".join(parts)
 
 

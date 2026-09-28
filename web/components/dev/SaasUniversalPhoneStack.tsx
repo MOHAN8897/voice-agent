@@ -344,6 +344,49 @@ export function SaasUniversalPhoneStack() {
             </label>
           </div>
 
+          <div className="rounded-xl border border-border bg-surface-panel-inset p-4 space-y-3">
+            <div>
+              <p className="text-sm font-semibold text-text">Transcription (one mode)</p>
+              <p className="text-xs text-text-muted mt-1">
+                Pick live or post-call — not both. Usage per turn bills only the selected mode. Off = voice-only, no
+                transcript add-on line items.
+              </p>
+            </div>
+            {(
+              [
+                {
+                  id: "off" as const,
+                  title: "Off",
+                  detail: "No transcript add-on; live model tokens only.",
+                },
+                {
+                  id: "live" as const,
+                  title: "Live — gpt-4o-mini-transcribe",
+                  detail: "~$0.003/min. OpenAI Realtime: session STT. Gemini PSTN: parallel caller STT on inbound audio.",
+                },
+                {
+                  id: "post_call" as const,
+                  title: "Post-call — Gemini 3.5 Transcribe",
+                  detail: "~$0.009/min after hangup (Telnyx recording). History modal when complete. Gemini PSTN only.",
+                },
+              ] as const
+            ).map((opt) => (
+              <label key={opt.id} className="flex items-start gap-3 text-sm cursor-pointer">
+                <input
+                  type="radio"
+                  name="transcriptionMode"
+                  className="mt-1"
+                  checked={(form.transcriptionMode || "off") === opt.id}
+                  onChange={() => patch({ transcriptionMode: opt.id })}
+                />
+                <span>
+                  <span className="font-medium text-text">{opt.title}</span>
+                  <span className="block text-xs text-text-muted">{opt.detail}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+
           {(warnings.length > 0 || adjustments.length > 0) && (
             <div className="rounded-xl border border-border bg-surface-panel-inset p-3 space-y-2">
               {warnings.map((w) => (

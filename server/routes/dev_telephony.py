@@ -136,6 +136,7 @@ class OutboundTestBody(BaseModel):
     source_session_id: str | None = Field(None, alias="sourceSessionId")
     stack_override: dict[str, Any] | None = Field(None, alias="stackOverride")
     inherit_test_studio_config: bool = Field(False, alias="inheritTestStudioConfig")
+    dial_request_id: str | None = Field(None, alias="dialRequestId")
 
     model_config = {"populate_by_name": True}
 
@@ -304,15 +305,23 @@ async def dev_telephony_outbound(
             "provider": provider,
         }
     try:
-        if provider == "exotel":
-            result = await _outbound_exotel(body)
-        elif provider == "telnyx":
-            result = await _outbound_telnyx(body, session)
-        elif provider == "plivo":
-            result = await _outbound_plivo(body, session)
-        else:
-            result = {"ok": False, "error": "unknown provider"}
-        return result
+        from server.services.outbound_dial_attempt import execute_dial_attempt
+
+        async def dial():
+            if provider == "exotel":
+                return await _outbound_exotel(body)
+            if provider == "telnyx":
+                return await _outbound_telnyx(body, session)
+            if provider == "plivo":
+                return await _outbound_plivo(body, session)
+            return {"ok": False, "error": "unknown provider"}
+
+        return await execute_dial_attempt(
+            request_id=body.dial_request_id,
+            scope=f"dev:{session.tenant_id}:{session.subject}:{provider}",
+            payload=body.model_dump(exclude={"dial_request_id"}),
+            operation=dial,
+        )
     finally:
         # Slot only covers overlapping POSTs. Live ringing/answered calls are
         # reused on the next Place Call instead of hung up.
@@ -583,6 +592,7 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
                 "dialed_at": existing_call.get("dialed_at") or time.time(),
                 "billed_user_id": billed_user_id,
                 "tenant_id": session.tenant_id,
+                "dial_request_id": body.dial_request_id,
             },
         )
         if call_control_id:
@@ -720,6 +730,9 @@ async def dev_telephony_call_detail(
         body["post_call_transcript"] = meta["post_call_transcript"]
     if meta.get("transcript_source"):
         body["transcript_source"] = meta["transcript_source"]
+    from server.services.pstn_forensics import build_forensics_snapshot
+
+    body["pstn_forensics"] = meta.get("pstn_forensics") or build_forensics_snapshot(cid)
     return {"ok": True, **body}
 
 
@@ -900,6 +913,19 @@ async def dev_telephony_media_flow(
             "tts_speaker": tts_speaker,
         }
     return {"ok": True, "flow": flow}
+
+
+@router.get("/api/dev/telephony/forensics")
+async def dev_telephony_forensics(
+    call_id: str | None = None,
+    session: SessionData = Depends(require_dev_session),
+):
+    """IDs, carrier leg, startup timeline, and playback metrics for manual PSTN debugging."""
+    require_permission(session, "dev.stack.read")
+    from server.services.pstn_forensics import build_forensics_snapshot
+
+    snap = build_forensics_snapshot(call_id)
+    return {"ok": True, "forensics": snap}
 
 
 @router.post("/api/dev/telephony/media-flow/purge")

@@ -69,6 +69,13 @@ export function costGeminiPostCallTranscribeUsd(durationSec: number): number {
   return minutes * PRICING.gemini35TranscribeUsdPerMin;
 }
 
+export const OPENAI_MINI_TRANSCRIBE_USD_PER_MIN = 0.003;
+
+export function costOpenaiLiveTranscribeUsd(durationSec: number): number {
+  const minutes = Math.max(0, durationSec) / 60;
+  return minutes * OPENAI_MINI_TRANSCRIBE_USD_PER_MIN;
+}
+
 export type CacheEvent = "cache_hit" | "cache_write" | "partial_hit" | "cache_miss";
 
 export type PricingMeta = {

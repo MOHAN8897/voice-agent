@@ -3,7 +3,6 @@ Compiled brain service — sole L2 writer (Phase 2).
 """
 from __future__ import annotations
 
-import hashlib
 import uuid
 from datetime import datetime, timezone
 from typing import Any
@@ -14,7 +13,13 @@ from server.agent.brain_prompt_composer import estimate_tokens
 from server.brain.business_brain_store import assemble_raw_business_prompt, business_brain_store
 from server.brain.business_prompt_optimizer import optimize_business_prompt
 from server.brain.platform_brain_store import platform_brain_store
-from server.brain.sections import STATIC_OUTPUT_RULES, STATIC_OUTPUT_RULES_VERSION
+from server.brain.compiled_brain_artifact import (
+    assemble_unified_brain,
+    checksum_instructions,
+    platform_body_for_agent_language,
+)
+from server.brain.sections import STATIC_OUTPUT_RULES_VERSION
+from server.prompts.agent_voice_rules import normalize_compile_language
 from server.brain.semantic_validation import validate_sections
 from server.config.env import get_settings
 from server.db.connection import get_session_factory
@@ -27,8 +32,19 @@ _DEFAULT_AGENT_ID: str | None = None
 
 
 class CompiledBrainService:
+    async def _primary_language(self, agent_id: str) -> str:
+        factory = get_session_factory()
+        if factory is None:
+            return "te-IN"
+        async with factory() as session:
+            row = await session.get(Agent, uuid.UUID(agent_id))
+            if row and row.languages:
+                return normalize_compile_language(row.languages[0])
+        return "te-IN"
+
     async def compile_for_agent(self, agent_id: str, *, business_version_id: str | None = None) -> dict[str, Any]:
         platform = await platform_brain_store.get_active()
+        lang = await self._primary_language(agent_id)
         sections = await business_brain_store.ensure_default_sections(agent_id)
         raw_prompt, source_checksum = assemble_raw_business_prompt(sections)
 
@@ -51,8 +67,13 @@ class CompiledBrainService:
             optimized_text = published["optimized_prompt"]
             business_version = published["version_id"]
 
-        compiled_text = f"{platform['body']}\n\n{optimized_text}\n\n{STATIC_OUTPUT_RULES}"
-        checksum = hashlib.sha256(compiled_text.encode("utf-8")).hexdigest()
+        platform_rules = platform_body_for_agent_language(platform["body"], lang)
+        compiled_text = assemble_unified_brain(
+            language=lang,
+            script=optimized_text,
+            platform_call_rules=platform_rules,
+        )
+        checksum = checksum_instructions(compiled_text)
         compiled_version = f"cb_v{datetime.now(timezone.utc).strftime('%Y%m%d')}_{uuid.uuid4().hex[:6]}"
         token_estimate = estimate_tokens(compiled_text)
 

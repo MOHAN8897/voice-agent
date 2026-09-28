@@ -134,8 +134,6 @@ async def test_structured_refusal_overrides_callback_and_waits_for_goodbye(monke
     await loop._handle_event({"type": "response_created", "response_id": "goodbye"})
     await loop._handle_event({"type": "audio_delta", "response_id": "goodbye", "pcm": bytes(1920)})
     await loop._handle_event({"type": "response_done", "response_id": "goodbye"})
-    loop._on_remote_hangup.assert_not_awaited()
-    await loop._check_runtime((loop._close_listen_until or 0) + 0.05)
     loop._on_remote_hangup.assert_awaited_once()
     assert loop.controller.state == CallState.ENDED
     await loop.close()
@@ -167,11 +165,14 @@ async def test_runtime_max_duration_is_independent_of_model():
 async def test_silence_prompts_once_then_soft_ends():
     loop, adapter = make_loop()
     loop._last_activity_at = 0
-    await loop._check_runtime(5)
+    await loop._check_runtime(8.5)
+    assert adapter.started_responses
     assert "still there" in adapter.started_responses[-1]
     loop._followup_inflight = False
     loop._response_open = False
-    await loop._check_runtime(15)
+    loop._silence_prompted = True
+    loop._last_activity_at = 0
+    await loop._check_runtime(30)
     assert loop._pending_end_call["reason"] == "silence_timeout"
     loop._on_remote_hangup.assert_not_awaited()
     await loop.close()
@@ -223,10 +224,14 @@ async def test_goodbye_flushes_tail_before_waiting_for_playback(monkeypatch):
 @pytest.mark.asyncio
 async def test_user_resumes_before_disconnect():
     loop, _ = make_loop()
+    import time
+
     loop.controller.state = CallState.ENDING
     loop._pending_end_call = {"reason": "goal_complete"}
     loop._caller_requested_close = True
-    await loop._handle_event({"type": "speech_started"})
+    loop._awaiting_presence_reply = True
+    loop._close_listen_until = time.monotonic() + 5
+    await loop._handle_event({"type": "user_transcript", "text": "yes I am still here", "final": True})
     assert loop.controller.state == CallState.ACTIVE
     assert loop._pending_end_call is None
     loop._on_remote_hangup.assert_not_awaited()

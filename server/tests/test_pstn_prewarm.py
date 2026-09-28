@@ -173,7 +173,7 @@ async def test_stale_brain_keeps_buffered_greeting():
         patch("server.services.pstn_prewarm._destroy_realtime", destroy),
         patch(
             "server.call.call_lifecycle_service.call_lifecycle_service._lock_compiled_brain",
-            AsyncMock(return_value=("session-v2", "new session brain")),
+            AsyncMock(return_value=("session-v2", "new session brain", "test_studio_session")),
         ),
     ):
         taken = await take_prewarm_for_answer("telnyx", "ctrl-stale")
@@ -264,7 +264,8 @@ async def test_start_call_uses_buffered_greeting_not_speak():
     speak.assert_not_called()
 
 
-def test_prewarm_adopt_wait_allows_bundle_build():
+def test_prewarm_adopt_wait_bounded_at_answer():
+    """C1: post-answer prewarm adoption must not block for multi-second hangs."""
     from server.services.pstn_prewarm import PREWARM_ADOPT_WAIT_SEC
 
-    assert PREWARM_ADOPT_WAIT_SEC >= 12.0
+    assert 0.5 <= PREWARM_ADOPT_WAIT_SEC <= 3.0

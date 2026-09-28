@@ -38,6 +38,7 @@ class OutboundCallBody(BaseModel):
     agentId: str
     fromE164: str | None = None
     toE164: str
+    dialRequestId: str | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -86,6 +87,7 @@ async def telephony_outbound(body: OutboundCallBody, principal: SubscriberPrinci
         agent_id=body.agentId,
         from_e164=body.fromE164,
         to_e164=body.toE164,
+        dial_request_id=body.dialRequestId,
     )
 
 

@@ -5,7 +5,7 @@ import { MathUtils } from 'three';
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { createVoxlyController } from './BotController';
 
-const GLB_URL = '/models/VoxlyBot_AIEmployee_Interactive.glb';
+const GLB_URL = '/models/VoxlyBot_AIEmployee_Interactive.glb?rig=3.1';
 
 export function VoxlyBot({
   state = 'IDLE',
@@ -23,6 +23,7 @@ export function VoxlyBot({
   const groupRef = useRef();
   const bodyYawRef = useRef(0);
   const bodyPitchRef = useRef(0);
+  const reducedMotionRef = useRef(false);
 
   // Clone scene with skeletons preserved
   const clonedScene = useMemo(() => {
@@ -48,6 +49,17 @@ export function VoxlyBot({
     });
   }, [clonedScene]);
 
+  useEffect(() => {
+    const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const sync = () => {
+      reducedMotionRef.current = preference.matches;
+      controller.setReducedMotion(preference.matches);
+    };
+    sync();
+    preference.addEventListener('change', sync);
+    return () => preference.removeEventListener('change', sync);
+  }, [controller]);
+
   // Sync state & controller ready callback
   useEffect(() => {
     if (controller && onControllerReady) {
@@ -71,7 +83,7 @@ export function VoxlyBot({
 
   // Sync audio analyser for real-time lip-sync mouth movement
   useEffect(() => {
-    if (controller && audioAnalyser) {
+    if (controller) {
       controller.attachAnalyser(audioAnalyser);
     }
   }, [controller, audioAnalyser]);
@@ -86,6 +98,7 @@ export function VoxlyBot({
   // Frame update: body follows mouse cursor at 60/120fps with zero-rerender ref tracking
   useFrame(({ clock, pointer: r3fPointer }, delta) => {
     const time = clock.getElapsedTime();
+    const motion = reducedMotionRef.current ? 0 : 1;
 
     // Zero-rerender cursor tracking:
     // Priority: pointerRef (window-level smooth tracking) -> pointer prop -> R3F Canvas pointer
@@ -106,8 +119,8 @@ export function VoxlyBot({
     const baseScale = size.width < 480 ? 0.38 : size.width < 640 ? 0.40 : 0.42;
 
     // Snappy, silky-smooth dampening reduced by 20% for natural, precise mouse tracking
-    const targetBodyYaw = MathUtils.clamp(pX, -1, 1) * MathUtils.degToRad(40);
-    const targetBodyPitch = MathUtils.clamp(-pY, -1, 1) * MathUtils.degToRad(11.2);
+    const targetBodyYaw = motion * MathUtils.clamp(pX, -1, 1) * MathUtils.degToRad(18);
+    const targetBodyPitch = motion * MathUtils.clamp(-pY, -1, 1) * MathUtils.degToRad(7);
 
     bodyYawRef.current = MathUtils.damp(bodyYawRef.current, targetBodyYaw, 14, delta);
     bodyPitchRef.current = MathUtils.damp(bodyPitchRef.current, targetBodyPitch, 14, delta);
@@ -125,12 +138,12 @@ export function VoxlyBot({
       // Smoothly interpolate X offset and apply responsive scale
       groupRef.current.position.x = MathUtils.damp(groupRef.current.position.x, targetX, 10, delta);
       // Floating hover motion with celebratory roll hop
-      groupRef.current.position.y = basePosY + Math.sin(time * 2.4) * 0.06 + rollHop;
+      groupRef.current.position.y = basePosY + motion * Math.sin(time * 2.4) * 0.06 + rollHop;
       groupRef.current.scale.setScalar(baseScale);
       // Body rotation following cursor + lively jiggle + 360 roll (dampened by 20%)
-      groupRef.current.rotation.y = bodyYawRef.current + Math.sin(time * 1.5) * 0.02 + rollAngle;
+      groupRef.current.rotation.y = bodyYawRef.current + motion * Math.sin(time * 1.5) * 0.02 + rollAngle;
       groupRef.current.rotation.x = bodyPitchRef.current;
-      groupRef.current.rotation.z = Math.sin(time * 3.0) * 0.012 - MathUtils.clamp(pX, -1, 1) * MathUtils.degToRad(2.4) + rollTilt;
+      groupRef.current.rotation.z = motion * (Math.sin(time * 3.0) * 0.012 - MathUtils.clamp(pX, -1, 1) * MathUtils.degToRad(2.4)) + rollTilt;
     }
 
     if (controller) {

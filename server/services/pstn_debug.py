@@ -14,6 +14,7 @@ from server.utils.log_config import should_log
 
 # monotonic anchors keyed by call_control_id, call_id, or session id
 _t0: dict[str, float] = {}
+_milestones: dict[str, dict[str, int]] = {}
 
 
 def _enabled() -> bool:
@@ -35,6 +36,28 @@ def mark(key: str) -> None:
 def clear(key: str) -> None:
     if key:
         _t0.pop(key, None)
+        _milestones.pop(key, None)
+
+
+def record_milestone(key: str, name: str) -> None:
+    """Record elapsed ms since mark(key) for forensics timelines (idempotent per name)."""
+    if not key or not name:
+        return
+    ms = elapsed_ms(key)
+    if ms is None:
+        return
+    bucket = _milestones.setdefault(key, {})
+    bucket.setdefault(name, ms)
+
+
+def milestones_for(*keys: str) -> dict[str, int]:
+    out: dict[str, int] = {}
+    for key in keys:
+        if not key:
+            continue
+        for name, ms in (_milestones.get(key) or {}).items():
+            out[name if len(keys) == 1 else f"{key}:{name}"] = ms
+    return out
 
 
 def elapsed_ms(key: str | None) -> int | None:

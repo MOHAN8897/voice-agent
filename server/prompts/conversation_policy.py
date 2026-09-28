@@ -139,7 +139,7 @@ LIVE_CALL_GUIDE_BODY = (
     "If opening already spoken (PSTN), never re-greet. "
     "Later hello/hi = availability — brief yes and continue, not a new introduction.\n"
     "Appointment/service: after day/time given, never re-ask when; confirm the slot.\n"
-    "Caller-shared phone/name/email: note for the team — never refuse, never read digits aloud."
+    "Caller-shared phone/name/email: note for the team — never refuse, confirm only an uncertain caller-supplied number segment once; do not recite the dialed number."
 )
 
 _FLOW_SHARED = (

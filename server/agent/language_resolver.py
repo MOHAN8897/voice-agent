@@ -13,14 +13,30 @@ DEVANAGARI_RANGE = re.compile(r"[\u0900-\u097F]")
 LATIN_RANGE = re.compile(r"[A-Za-z]")
 
 
+def latin_only_word(text: str) -> bool:
+    raw = (text or "").strip()
+    if not raw or TELUGU_RANGE.search(raw) or DEVANAGARI_RANGE.search(raw):
+        return False
+    letters = [c for c in raw if c.isalpha()]
+    return bool(letters) and all(LATIN_RANGE.match(c) for c in letters)
+
+
 def is_code_mixed(transcript: str) -> bool:
     return bool(TELUGU_RANGE.search(transcript) and LATIN_RANGE.search(transcript))
+
+
+_SHORT_ACK = re.compile(
+    r"^(?:ok(?:ay)?|thanks?|thank you|yes|yeah|yep|sure|hello|hi|hey)[.!?,\s]*$",
+    re.I,
+)
 
 
 def infer_spoken_language_from_text(text: str, *, agent_language: str = "te-IN") -> str | None:
     """Heuristic for PSTN Realtime when the caller clearly uses another product language."""
     raw = (text or "").strip()
-    if len(raw) < 6:
+    if len(raw) < 12 or _SHORT_ACK.match(raw):
+        return None
+    if len(raw.split()) <= 2 and latin_only_word(raw):
         return None
     telugu = len(TELUGU_RANGE.findall(raw))
     hindi = len(DEVANAGARI_RANGE.findall(raw))

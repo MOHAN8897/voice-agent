@@ -61,13 +61,13 @@ def _assemble_session_brain(
     call_end_policy: dict | None = None,
 ) -> str:
     """Every session-brain variant keeps the default hangup section."""
-    return (
-        f"{SECTION_SAFETY}\n\n"
-        f"{spoken_pack_for(language)}\n\n"
-        f"{body.strip()}\n\n"
-        f"{call_end_policy_section(language, call_end_policy)}\n\n"
-        f"{STATIC_OUTPUT_RULES}\n\n"
-        f"{language_runtime_footer(language, style_val)}"
+    from server.brain.compiled_brain_artifact import assemble_unified_brain
+
+    return assemble_unified_brain(
+        language=language,
+        script=body.strip(),
+        style=style_val,
+        call_end_policy=call_end_policy,
     )
 
 

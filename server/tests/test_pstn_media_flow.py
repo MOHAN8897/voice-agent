@@ -234,3 +234,21 @@ async def test_out_worker_does_not_emit_without_queued_frames():
     worker.cancel()
     await worker
     assert ws.messages == []
+
+
+@pytest.mark.asyncio
+async def test_out_worker_underrun_increments_queue_metrics_not_missing_attr():
+    """Regression: A4 underrun path must not reference missing _playout_underrun_count."""
+    ws = FakeWebSocket()
+    bridge = TelnyxPstnBridge(ws)  # type: ignore[arg-type]
+    bridge._negotiated_media = CallMediaConfig(codec="PCMU")
+    bridge._voice = type("_V", (), {"_response_open": True, "_tts_active": False})()
+    worker = asyncio.create_task(bridge._out_worker())
+    await asyncio.sleep(0.03)
+    bridge._closed = True
+    worker.cancel()
+    try:
+        await worker
+    except asyncio.CancelledError:
+        pass
+    assert int(bridge._queue_metrics.get("playout_underrun_count") or 0) >= 1

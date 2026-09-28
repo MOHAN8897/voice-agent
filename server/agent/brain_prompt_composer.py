@@ -153,33 +153,15 @@ def compose_brain_prompt(
     style: str | None = None,
 ) -> str:
     """Merge sections into ONE string. No runtime trimming."""
-    from server.brain.sections import STATIC_OUTPUT_RULES
-    from server.prompts.agent_voice_rules import (
-        call_end_policy_section,
-        language_runtime_footer,
-        spoken_pack_for,
-    )
+    from server.brain.compiled_brain_artifact import assemble_unified_brain, session_brain_body
 
     behaviour = sanitize_behaviour(behaviour) or DEFAULT_BRAIN_PROMPT_SECTIONS["behaviour"]
     business = sanitize_business(business) or DEFAULT_BRAIN_PROMPT_SECTIONS["business"]
-    style_line = style_for_language(style, language)
-
-    parts = [
-        DEFAULT_BRAIN_PROMPT_SECTIONS["safety"],
-        spoken_pack_for(language),
-        f"--- BEHAVIOUR ---\n{behaviour}",
-        f"--- BUSINESS ---\n{business}",
-        call_end_policy_section(language),
-        STATIC_OUTPUT_RULES,
-        language_runtime_footer(language, style_line),
-    ]
-    text = "\n\n".join(parts)
-    pad = f"\n\n{STATIC_OUTPUT_RULES}"
-    extra = 0
-    while estimate_tokens(text) < CACHE_MIN_TOKENS and extra < 6:
-        text += pad
-        extra += 1
-    return text
+    return assemble_unified_brain(
+        language=language,
+        script=session_brain_body(behaviour=behaviour, business=business),
+        style=style,
+    )
 
 
 def compose_brain_prompt_sections(

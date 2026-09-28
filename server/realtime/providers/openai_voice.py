@@ -62,6 +62,7 @@ def build_realtime_voice_session(
     speed: float | None = None,
     silence_ms: int | None = None,
     max_output_tokens: int | None = None,
+    input_transcription_enabled: bool = True,
 ) -> dict[str, Any]:
     """GA session.update payload — PCM16 @ 24 kHz audio in, audio out (OpenAI Realtime)."""
     vad = normalize_realtime_turn_detection(turn_detection)
@@ -85,8 +86,9 @@ def build_realtime_voice_session(
     audio_in: dict[str, Any] = {
         "format": {"type": "audio/pcm", "rate": REALTIME_PCM_RATE},
         "turn_detection": detection,
-        "transcription": {"model": "gpt-4o-mini-transcribe"},
     }
+    if input_transcription_enabled:
+        audio_in["transcription"] = {"model": "gpt-4o-mini-transcribe"}
     noise = normalize_realtime_noise_reduction(noise_reduction)
     if noise != "off":
         audio_in["noise_reduction"] = {"type": noise}
@@ -150,6 +152,7 @@ class OpenAIRealtimeVoiceAdapter:
         self.voice = DEFAULT_REALTIME_VOICE
         self.turn_detection = DEFAULT_REALTIME_TURN_DETECTION
         self.last_session: dict[str, Any] | None = None
+        self._input_transcription_enabled = True
 
     async def connect(
         self,
@@ -164,12 +167,14 @@ class OpenAIRealtimeVoiceAdapter:
         noise_reduction: str | None = None,
         speed: float | None = None,
         silence_ms: int | None = None,
+        input_transcription_enabled: bool = True,
     ) -> None:
         from openai import AsyncOpenAI
 
         from server.config.env import get_settings
 
         _ = temperature
+        self._input_transcription_enabled = bool(input_transcription_enabled)
         settings = get_settings()
         self.model = model or DEFAULT_REALTIME_MODEL
         self.voice = normalize_realtime_voice(voice)
@@ -203,6 +208,7 @@ class OpenAIRealtimeVoiceAdapter:
             speed=speed,
             silence_ms=silence_ms,
             max_output_tokens=max_output_tokens,
+            input_transcription_enabled=self._input_transcription_enabled,
         )
         self.last_session = session
         await self._conn.send({"type": "session.update", "session": session})

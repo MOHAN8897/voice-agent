@@ -80,13 +80,10 @@ HANGUP_RESPONSE_TIMEOUT_SEC = 14.0
 _BACKGROUND_HANGUP_TASKS: set[asyncio.Task] = set()
 
 
-def gemini_post_call_transcript_ledger_disabled(llm_model: str | None) -> bool:
-    from server.config.env import get_settings
-    from server.realtime.models import is_gemini_live_voice_model
+def _transcription_policy_for_stack(stack: dict[str, Any] | None):
+    from server.services.transcription_policy import transcription_policy_from_stack
 
-    if not is_gemini_live_voice_model(llm_model or ""):
-        return False
-    return bool(get_settings().post_call_transcript_enabled)
+    return transcription_policy_from_stack(stack)
 
 # Later hello / are-you-there after the intro is an availability check, not a new opening.
 _SIMPLE_HELLO_RE = re.compile(
@@ -260,6 +257,36 @@ def _realtime_usage_fingerprint(
 
 
 _usage_locks: weakref.WeakValueDictionary[str, asyncio.Lock] = weakref.WeakValueDictionary()
+
+
+def _usage_transcription_model(call_id: str | None, llm_model: str, gemini_live: bool) -> str:
+    from server.call.call_ledger import call_ledger
+    from server.services.transcription_policy import transcription_policy_from_meta
+
+    meta = call_ledger.read_meta(call_id) if call_id else {}
+    policy = transcription_policy_from_meta(meta if isinstance(meta, dict) else None)
+    if policy.post_call_enabled and gemini_live:
+        return policy.post_call_model
+    if policy.live_enabled:
+        return policy.live_model
+    return llm_model if gemini_live else "gpt-4o-mini-transcribe"
+
+
+def _usage_transcription_billing(call_id: str | None, llm_model: str, gemini_live: bool) -> str:
+    from server.call.call_ledger import call_ledger
+    from server.services.transcription_policy import transcription_policy_from_meta
+
+    meta = call_ledger.read_meta(call_id) if call_id else {}
+    policy = transcription_policy_from_meta(meta if isinstance(meta, dict) else None)
+    live = policy.live_enabled
+    post = policy.post_call_enabled and gemini_live
+    if post:
+        return "post_call_gemini_transcribe"
+    if live:
+        return "live_openai_transcribe"
+    if gemini_live:
+        return "none"
+    return "separate_not_metered"
 
 
 def _serialize_call_usage(fn):
@@ -504,16 +531,8 @@ async def record_realtime_voice_usage(
         "cost_inr": total_inr,
         "cost_breakdown_usd": cost_parts,
         "prewarm_cost_breakdown_usd": prewarm_parts,
-        "transcription_model": (
-            (get_settings().post_call_transcript_model or "gemini-3.5-transcribe")
-            if gemini_live and get_settings().post_call_transcript_enabled
-            else (llm_model if gemini_live else "gpt-4o-mini-transcribe")
-        ),
-        "transcription_billing": (
-            "post_call_gemini_transcribe"
-            if gemini_live and get_settings().post_call_transcript_enabled
-            else ("included_text_output" if gemini_live else "separate_not_metered")
-        ),
+        "transcription_model": _usage_transcription_model(call_id, llm_model, gemini_live),
+        "transcription_billing": _usage_transcription_billing(call_id, llm_model, gemini_live),
         "model_cost_usd": total_usd,
         "model_cost_inr": total_inr,
         "duration_sec": round(duration_sec, 3),
@@ -628,6 +647,7 @@ class PstnRealtimeVoiceLoop:
         self._aec_loud_streak = 0
         self._aec_quiet_streak = 0
         self._aec_barge_open = False
+        self._agent_audio_out_since = 0.0
         self._ignored_response_ids: deque[str] = deque(maxlen=128)
         self._response_open = False
         self._suppress_until_user = False
@@ -638,6 +658,7 @@ class PstnRealtimeVoiceLoop:
         self._barge_hold_until = 0.0
         self._pickup_suppress_until = 0.0
         self.controller = CallLifecycleController()
+        self._caller_stt: Any | None = None
         self._pickup_speech_ms = 0.0
         self._pickup_quiet_ms = 0.0
         self._pickup_dip_ms = 0.0
@@ -699,8 +720,79 @@ class PstnRealtimeVoiceLoop:
     def _caller_text(self) -> str:
         return (self._last_user_final_text or self._user_partial or "").strip()
 
+    def _transcription_policy(self):
+        if self.call_id:
+            from server.call.call_ledger import call_ledger
+            from server.services.transcription_policy import transcription_policy_from_meta
+
+            meta = call_ledger.read_meta(self.call_id) or {}
+            policy = transcription_policy_from_meta(meta if isinstance(meta, dict) else None)
+            if policy.live_enabled or policy.post_call_enabled:
+                return policy
+        return _transcription_policy_for_stack(self.stack_override)
+
     def _persist_live_transcript_ledger(self) -> bool:
-        return not gemini_post_call_transcript_ledger_disabled(self._live_model)
+        return self._transcription_policy().persist_live_transcript_ledger(self._live_model)
+
+    def _persist_user_turn_to_ledger(self) -> bool:
+        """Ledger user lines: OpenAI live session or Gemini+sidecar; never both writers."""
+        if not self._persist_live_transcript_ledger():
+            return False
+        return self._caller_stt is None
+
+    def _start_caller_stt_sidecar(self, language: str, llm_provider: str) -> None:
+        policy = self._transcription_policy()
+        from server.realtime.models import is_gemini_live_voice_model
+
+        if not policy.gemini_use_openai_live_stt(self._live_model) or llm_provider != "gemini":
+            return
+        from server.services.openai_caller_transcribe_sidecar import OpenaiCallerTranscribeSidecar
+
+        sidecar = OpenaiCallerTranscribeSidecar(language=language, on_final=self._on_caller_stt_final)
+        sidecar.start()
+        self._caller_stt = sidecar
+        log_pstn("realtime_voice.caller_stt.start", call_id=self.call_id, model=policy.live_model)
+
+    async def _on_caller_stt_final(self, text: str) -> None:
+        # Billing/history only — hangup and turn logic use Gemini native input_transcription.
+        cleaned = (text or "").strip()
+        if not cleaned or not self.call_id or not self._persist_live_transcript_ledger():
+            return
+        if self._should_drop_user_final(cleaned):
+            return
+        from server.call.call_ledger import call_ledger
+
+        await call_ledger.append_user_turn(self.call_id, cleaned)
+
+    async def _sync_caller_stt_usage(self) -> None:
+        sec = float(self._caller_stt.billed_audio_sec or 0) if self._caller_stt else 0.0
+        await self._finalize_live_transcript_usage(sidecar_sec=sec)
+
+    async def _finalize_live_transcript_usage(self, *, sidecar_sec: float | None = None) -> None:
+        if not self.call_id:
+            return
+        policy = self._transcription_policy()
+        if not policy.live_enabled:
+            return
+        from server.call.call_ledger import call_ledger
+
+        meta = call_ledger.read_meta(self.call_id) or {"call_id": self.call_id}
+        usage = meta.get("usage") if isinstance(meta.get("usage"), dict) else {}
+        usage = dict(usage)
+        if float(usage.get("live_transcript_seconds") or 0) > 0:
+            return
+        sec = float(sidecar_sec or 0)
+        if sec <= 0 and self._started_at:
+            sec = max(0.0, time.monotonic() - float(self._started_at))
+        if sec <= 0:
+            return
+        usage["live_transcript_seconds"] = sec
+        usage["live_transcript_model"] = policy.live_model
+        usage["transcription_billing"] = "live_openai_transcribe"
+        usage["transcription_model"] = policy.live_model
+        meta["usage"] = usage
+        meta["transcript_source"] = f"live:{policy.live_model}"
+        call_ledger.write_meta(self.call_id, meta)
 
     def _set_hangup_arm_source(self, source: str) -> None:
         if self._hangup_arm_source:
@@ -931,6 +1023,8 @@ class PstnRealtimeVoiceLoop:
 
     def _set_tts_active(self, active: bool) -> None:
         self._tts_active = bool(active)
+        if active:
+            self._agent_audio_out_since = time.monotonic()
 
     def _agent_audio_playing(self) -> bool:
         # Transport queue + frame in flight are authoritative. Model generation
@@ -1270,23 +1364,9 @@ class PstnRealtimeVoiceLoop:
         return self._spoken_reply_language or self._resolve_language()
 
     def _maybe_mirror_caller_language(self, text: str) -> None:
-        from server.agent.language_resolver import infer_spoken_language_from_text
-        from server.config.constants import language_in_supported, normalize_supported_language
-
-        agent = normalize_supported_language(self._resolve_language())
-        inferred = infer_spoken_language_from_text(text, agent_language=agent)
-        if not inferred or inferred == agent or not language_in_supported(inferred):
-            return
-        if self._spoken_reply_language == inferred:
-            return
-        self._spoken_reply_language = inferred
-        log_pstn("realtime_voice.mirror_language", call_id=self.call_id, language=inferred)
-        if not self._pending_followup_instruction:
-            self._pending_followup_instruction = (
-                f"The caller is speaking in {inferred}. Reply in {inferred} from now on, "
-                "keeping the same script facts and call flow."
-            )
-        self._maybe_auto_language_mismatch_reminder(inferred)
+        """Fixed-language mode (audit B2): do not auto-switch spoken language from STT."""
+        _ = text
+        return
 
     def _maybe_auto_language_mismatch_reminder(self, inferred: str) -> None:
         """LANG-3: one platform mismatch line without waiting for the Live tool race."""
@@ -1443,6 +1523,8 @@ class PstnRealtimeVoiceLoop:
         from server.realtime.voice_factory import realtime_voice_llm_provider
 
         llm_provider, _ = realtime_voice_llm_provider(self.stack_override, model)
+        tx_policy = self._transcription_policy()
+        input_transcription = tx_policy.openai_session_input_transcription()
         deferred_frames = list(greeting_wire_frames or [])
         deferred_text = (greeting_text or "").strip()
         if (
@@ -1499,17 +1581,22 @@ class PstnRealtimeVoiceLoop:
                 log_pstn("realtime_voice.prewarm.reconnect", call_id=self.call_id, reason="instructions_changed")
                 await adapter.close()
             if not adapter.is_open():
-                await adapter.connect(
-                    model=model,
-                    instructions=instructions,
-                    voice=cfg["voice"],
-                    turn_detection=cfg["turn_detection"],
-                    vad_eagerness=cfg.get("vad_eagerness"),
-                    noise_reduction=cfg.get("noise_reduction"),
-                    speed=cfg.get("speed"),
-                    silence_ms=cfg.get("silence_ms"),
-                    max_output_tokens=max_output_tokens,
-                )
+                connect_kw: dict[str, Any] = {
+                    "model": model,
+                    "instructions": instructions,
+                    "voice": cfg["voice"],
+                    "turn_detection": cfg["turn_detection"],
+                    "vad_eagerness": cfg.get("vad_eagerness"),
+                    "noise_reduction": cfg.get("noise_reduction"),
+                    "speed": cfg.get("speed"),
+                    "silence_ms": cfg.get("silence_ms"),
+                    "max_output_tokens": max_output_tokens,
+                }
+                import inspect
+
+                if "input_transcription_enabled" in inspect.signature(adapter.connect).parameters:
+                    connect_kw["input_transcription_enabled"] = input_transcription
+                await adapter.connect(**connect_kw)
                 await adapter.wait_ready()
             else:
                 warm = _existing_adapter_instructions(adapter)
@@ -1527,6 +1614,7 @@ class PstnRealtimeVoiceLoop:
                 elif hasattr(adapter, "instructions"):
                     adapter.instructions = instructions
         self._adapter = adapter
+        self._start_caller_stt_sidecar(language, llm_provider)
         if play_greeting and direction == "outbound" and deferred_frames and deferred_text:
             self._deferred_greeting_frames = list(deferred_frames)
             self._deferred_greeting_text = deferred_text.strip()
@@ -1635,10 +1723,22 @@ class PstnRealtimeVoiceLoop:
                 from server.services.audio_transcode import pcm16_rms
 
                 rms = pcm16_rms(raw)
-                if rms >= REALTIME_AEC_ENERGY_MIN:
+                # ponytail: echo tail ~550ms after agent audio starts — stricter RMS/frame gate (A2).
+                echo_tail = (
+                    self._agent_audio_out_since > 0
+                    and (time.monotonic() - self._agent_audio_out_since) < 0.55
+                )
+                need_rms = REALTIME_AEC_ENERGY_MIN + (550 if echo_tail else 0)
+                need_frames = REALTIME_AEC_LOUD_OPEN_FRAMES
+                partial = (self._user_partial or "").strip()
+                spoken = (self._assistant_text or "").strip()
+                if partial and spoken and is_likely_echo(partial, spoken):
+                    self._aec_loud_streak = 0
+                    return
+                if rms >= need_rms:
                     self._aec_loud_streak += 1
                     self._aec_quiet_streak = 0
-                    if self._aec_loud_streak >= REALTIME_AEC_LOUD_OPEN_FRAMES:
+                    if self._aec_loud_streak >= need_frames:
                         if not self._aec_barge_open:
                             log_pstn(
                                 "realtime_voice.barge_open",
@@ -1662,9 +1762,12 @@ class PstnRealtimeVoiceLoop:
             self._aec_loud_streak = 0
             self._aec_quiet_streak = 0
             self._aec_barge_open = False
+            self._agent_audio_out_since = 0.0
         pcm24 = self._in_resampler.feed(pcm16)
         if not pcm24:
             return
+        if self._caller_stt is not None:
+            self._caller_stt.feed_pcm16(pcm24)
         try:
             await self._adapter.append_pcm16(pcm24)
         except Exception as exc:
@@ -2444,6 +2547,17 @@ class PstnRealtimeVoiceLoop:
 
         self._backup_hangup_task = asyncio.create_task(_run())
 
+    async def _arm_hangup_from_transcript_closing(self, text: str) -> None:
+        """Arm from STT immediately unless a model response may still emit end_call."""
+        explicit = caller_requested_hangup(text) or caller_firm_refusal(text)
+        if not explicit and (self._openai_response_id or self._response_open or self._followup_inflight):
+            self._schedule_backup_hangup_from_words(text)
+            return
+        if explicit and self._followup_inflight:
+            self._followup_inflight = False
+            self._pending_followup_instruction = None
+        await self._arm_hangup_from_caller_words(text)
+
     async def _arm_hangup_from_caller_words(self, text: str) -> None:
         """Close from the caller's words even if the Realtime tool raced STT."""
         if self._hangup_started or self._closed:
@@ -2496,10 +2610,7 @@ class PstnRealtimeVoiceLoop:
         from server.realtime.models import is_gemini_live_voice_model
 
         prefer_side = is_gemini_live_voice_model(self._live_model or "")
-        asyncio.create_task(
-            self._ensure_hangup_farewell_audio(prefer_side_session=prefer_side),
-            name=f"rt-farewell-{self.call_id}",
-        )
+        await self._ensure_hangup_farewell_audio(prefer_side_session=prefer_side)
 
     async def _maybe_hangup_missed_end_call(self) -> None:
         """Repair a missed end_call only when the caller confirmed they are done."""
@@ -2638,8 +2749,12 @@ class PstnRealtimeVoiceLoop:
                 )
                 self._silence_prompted = False
                 if awaiting_close and not closing:
-                    if self._uses_fast_hangup() and not self._farewell_audio_engaged():
-                        if _is_simple_hello(text) or _is_presence_reply(text):
+                    if (
+                        self._uses_fast_hangup()
+                        and not self._farewell_audio_engaged()
+                        and not (self._firm_refusal_close and _is_simple_hello(text))
+                    ):
+                        if _is_simple_hello(text):
                             log_pstn(
                                 "hangup.presence_before_farewell",
                                 call_id=self.call_id,
@@ -2651,13 +2766,19 @@ class PstnRealtimeVoiceLoop:
                                 prefer_side_session=is_gemini_live_voice_model(self._live_model or "")
                             )
                             return
+                    if self._firm_refusal_close and (
+                        _is_simple_hello(text)
+                        or bool(re.fullmatch(r"(?i)(?:hello[!,.]?\s*)+$", (text or "").strip()))
+                    ):
+                        await self._finish_hangup()
+                        return
                     if _is_simple_hello(text) or not (
                         caller_wants_to_continue(text) or _is_presence_reply(text)
                     ):
                         self._resume_after_close = False
                         self._awaiting_presence_reply = False
                         self._close_listen_until = 0.0
-                        if self.call_id and self._persist_live_transcript_ledger():
+                        if self.call_id and self._persist_user_turn_to_ledger():
                             from server.call.call_ledger import call_ledger
 
                             await call_ledger.append_user_turn(self.call_id, text)
@@ -2698,7 +2819,7 @@ class PstnRealtimeVoiceLoop:
                     from server.call.memory_manager import memory_manager
 
                     line: dict[str, Any] = {}
-                    if self._persist_live_transcript_ledger():
+                    if self._persist_user_turn_to_ledger():
                         line = await call_ledger.append_user_turn(self.call_id, text)
                     detail_ops = [] if closing else caller_detail_memory_operations(text)
                     if detail_ops and line:
@@ -2725,7 +2846,7 @@ class PstnRealtimeVoiceLoop:
                 if closing:
                     if caller_firm_refusal(text):
                         self._firm_refusal_close = True
-                    self._schedule_backup_hangup_from_words(text)
+                    await self._arm_hangup_from_transcript_closing(text)
                     return
                 if stay:
                     self._resume_after_close = False
@@ -3145,6 +3266,17 @@ class PstnRealtimeVoiceLoop:
         if not frames or not text or self._closed:
             return
 
+        pickup = (self._pickup_user_text or self._last_user_final_text or "").strip()
+        if pickup and (caller_requested_hangup(pickup) or caller_firm_refusal(pickup)):
+            self._deferred_greeting_armed = False
+            self._deferred_greeting_playing = False
+            if self.call_id and self._persist_user_turn_to_ledger():
+                from server.call.call_ledger import call_ledger
+
+                await call_ledger.append_user_turn(self.call_id, pickup)
+            await self._arm_hangup_from_transcript_closing(pickup)
+            return
+
         self._deferred_greeting_playing = True
         self._set_phase(PHASE_INTRO)
         self._set_tts_active(True)
@@ -3200,6 +3332,10 @@ class PstnRealtimeVoiceLoop:
                     call_id=self.call_id,
                     error=str(extra)[:160],
                 )
+        if pickup and self.call_id and self._persist_user_turn_to_ledger():
+            from server.call.call_ledger import call_ledger
+
+            await call_ledger.append_user_turn(self.call_id, pickup)
         self._intro_noted = True
         self._pickup_user_text = ""
         self._user_partial = ""
@@ -3306,6 +3442,18 @@ class PstnRealtimeVoiceLoop:
 
     async def _stop_live_media_session(self) -> None:
         """Stop Gemini/OpenAI Live websocket and pump — caller leg may already be down."""
+        sidecar_sec = 0.0
+        if self._caller_stt is not None:
+            sidecar_sec = float(self._caller_stt.billed_audio_sec or 0)
+            try:
+                await self._caller_stt.close()
+            except Exception as exc:
+                log_pstn("realtime_voice.caller_stt.close_failed", call_id=self.call_id, error=str(exc)[:120])
+            self._caller_stt = None
+        try:
+            await self._finalize_live_transcript_usage(sidecar_sec=sidecar_sec or None)
+        except Exception as exc:
+            log_pstn("realtime_voice.live_tx_usage.failed", call_id=self.call_id, error=str(exc)[:120])
         if self._pump_task and self._pump_task is not asyncio.current_task() and not self._pump_task.done():
             self._pump_task.cancel()
             try:

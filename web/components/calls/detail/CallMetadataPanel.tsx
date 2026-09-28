@@ -29,6 +29,7 @@ export function CallMetadataPanel({ meta }: { meta: CallMeta }) {
     { label: "End reason", value: meta.end_reason || "—" },
     { label: "Combination", value: meta.combination_id || "—" },
     { label: "Brain version", value: meta.compiled_brain_version || "—" },
+    { label: "Dial request ID", value: String((meta as { dial_request_id?: string }).dial_request_id || "—") },
     { label: "Finalization", value: String(meta.finalization_status || fin.status || "—") },
     { label: "Ledger", value: String(fin.ledger || "—") },
     { label: "Audio archive", value: String(fin.audio || "—") },
@@ -107,6 +108,18 @@ export function CallMetadataPanel({ meta }: { meta: CallMeta }) {
   if (usage.fx_rate_inr != null) {
     const src = usage.fx_source ? ` (${usage.fx_source})` : "";
     rows.push({ label: "FX USD→INR", value: `${Number(usage.fx_rate_inr)}${src}` });
+  }
+  const forensics = (meta as CallMeta & { pstn_forensics?: Record<string, unknown> }).pstn_forensics;
+  const derived = (forensics?.derived_ms || {}) as Record<string, number | null | undefined>;
+  if (derived.answer_to_first_audio_sent != null) {
+    rows.push({
+      label: "Answer → first audio sent",
+      value: `${derived.answer_to_first_audio_sent} ms`,
+    });
+  }
+  const playback = (forensics?.playback || {}) as Record<string, number | undefined>;
+  if (playback.playout_underrun_count != null) {
+    rows.push({ label: "Playout underruns", value: String(playback.playout_underrun_count) });
   }
 
   return (
