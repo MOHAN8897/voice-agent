@@ -1,0 +1,155 @@
+﻿diff --git a/server/call/call_prompt_preview.py b/server/call/call_prompt_preview.py
+index 1440fb6..7aee23c 100644
+--- a/server/call/call_prompt_preview.py
++++ b/server/call/call_prompt_preview.py
+@@ -155,8 +155,6 @@ async def get_call_prompt_preview(
+ 
+     from server.brain.script_entities import entity_tags_to_api, parse_entity_tags
+ 
+-    from server.brain.script_entities import entity_tags_to_api, parse_entity_tags
+-
+     opening = _opening_from_brain(compiled_text, language=language, direction=direction)
+     live_prompt, provider, layers = build_live_prompt_for_call(
+         compiled_text,
+@@ -170,14 +168,12 @@ async def get_call_prompt_preview(
+     )
+ 
+     preview_text = live_prompt
++    brain_preview = compiled_text
+     if redacted and compiled_text:
+         from server.brain.compiled_brain_service import compiled_brain_service
+ 
+-        preview_text = live_prompt.replace(
+-            compiled_text,
+-            compiled_brain_service.redacted_preview(compiled_text),
+-            1,
+-        )
++        brain_preview = compiled_brain_service.redacted_preview(compiled_text)
++        preview_text = live_prompt.replace(compiled_text, brain_preview, 1)
+ 
+     return {
+         "call_id": call_id,
+@@ -194,10 +190,12 @@ async def get_call_prompt_preview(
+         "opening_line": opening,
+         "script_entities": entity_tags_to_api(parse_entity_tags(compiled_text)),
+         "layers": layers,
++        "compiled_brain": brain_preview,
+         "compiled_brain_chars": len(compiled_text),
+         "live_prompt_chars": len(live_prompt),
+         "token_estimate": estimate_tokens(live_prompt),
+         "live_prompt": preview_text,
++        "prewarm_greeting_line": _opening_from_brain(compiled_text, language=language, direction=direction),
+         "note": (
+             "This is the instruction bundle used at connect time: locked compiled brain "
+             "plus live session rules. Test Studio session brain overrides published agent "
+@@ -234,6 +232,13 @@ async def get_session_live_prompt_preview(
+         if str(direction or "").strip().lower() in ("inbound", "incoming")
+         else "outbound"
+     )
++    from server.brain.script_entities import realign_compiled_brain_for_session
++
++    compiled_text = realign_compiled_brain_for_session(
++        compiled_text,
++        lang,
++        direction=dir_norm,
++    )
+     pipe = (pipeline or "realtime_voice").strip().lower()
+     opening = _opening_from_brain(compiled_text, language=lang, direction=dir_norm)
+     prewarm = extract_prewarm_greeting(compiled_text, lang, direction=dir_norm)
+diff --git a/server/routes/instructions.py b/server/routes/instructions.py
+index fe68a5d..8dce989 100644
+--- a/server/routes/instructions.py
++++ b/server/routes/instructions.py
+@@ -699,10 +699,16 @@ async def instructions_live_prompt_preview(
+             language=lang,
+         )
+     except Exception as exc:
++        from server.services.pstn_stack import PstnStackValidationError
+         from server.utils.errors import AppError
+ 
+         if isinstance(exc, AppError):
+             raise HTTPException(status_code=exc.status_code, detail=exc.message) from exc
++        if isinstance(exc, PstnStackValidationError):
++            raise HTTPException(
++                status_code=422,
++                detail={"message": str(exc), "issues": list(exc.details or [])},
++            ) from exc
+         raise
+ 
+ 
+diff --git a/server/tests/test_call_prompt_preview.py b/server/tests/test_call_prompt_preview.py
+index a767d94..44d6897 100644
+--- a/server/tests/test_call_prompt_preview.py
++++ b/server/tests/test_call_prompt_preview.py
+@@ -17,6 +17,14 @@ from server.config.env import get_settings
+ from server.providers.base import ResolvedStack, StageSelection
+ 
+ 
++def _te_brain(body: str) -> str:
++    return (
++        "@language: te-IN\n"
++        "Speak in Telugu (Tanglish) for every reply.\n\n"
++        f"{body.strip()}\n"
++    )
++
++
+ def _reset(monkeypatch, tmp_path):
+     monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+     monkeypatch.setenv("SARVAM_API_KEY", "sarvam-test")
+@@ -32,9 +40,9 @@ def _reset(monkeypatch, tmp_path):
+ def test_prompt_preview_api_active_call(monkeypatch, tmp_path):
+     _reset(monkeypatch, tmp_path)
+     sid = "preview-api-session"
+-    brain = (
++    brain = _te_brain(
+         "--- AGENT IDENTITY ---\nYou are Priya from Acme Insurance.\n\n"
+-        "--- CANONICAL OPENING ---\nExample opening: Hi, Priya from Acme. Moment?\n"
++        "--- CANONICAL OPENING ---\nExample opening: Hi, Priya from Acme. Moment?"
+     )
+     instruction_store.save_agent_script(
+         sid,
+@@ -68,7 +76,7 @@ def test_prompt_preview_api_active_call(monkeypatch, tmp_path):
+ async def test_prompt_preview_session_brain_locked_in_meta(monkeypatch, tmp_path):
+     _reset(monkeypatch, tmp_path)
+     sid = "preview-lock-meta"
+-    locked = "LOCKED SESSION BRAIN " + ("z " * 200)
++    locked = _te_brain("LOCKED SESSION BRAIN " + ("z " * 200))
+     instruction_store.save_agent_script(
+         sid,
+         "brief",
+@@ -91,6 +99,35 @@ async def test_prompt_preview_session_brain_locked_in_meta(monkeypatch, tmp_path
+     instruction_store.clear(sid)
+ 
+ 
++def test_instructions_live_prompt_preview_session(monkeypatch, tmp_path):
++    _reset(monkeypatch, tmp_path)
++    sid = "preview-session-live"
++    brain = _te_brain(
++        "--- AGENT IDENTITY ---\nAlex from Spandana.\n\n"
++        "--- CANONICAL OPENING ---\nHi, moment unda?"
++    )
++    instruction_store.save_agent_script(
++        sid,
++        "brief",
++        "ROLE\nSell cars.",
++        "friendly",
++        compiled_brain=brain,
++        optimizer_report={},
++        source_checksum="prev2",
++    )
++    c = TestClient(app_mod.app)
++    r = c.get(
++        f"/api/instructions/live-prompt-preview?sessionId={sid}"
++        "&direction=outbound&pipeline=realtime_voice&llmModel=gpt-realtime-2.1-mini"
++    )
++    assert r.status_code == 200
++    body = r.json()
++    assert body["compiled_brain"]
++    assert "Alex" in body["live_prompt"]
++    assert body["prewarm_greeting_line"]
++    instruction_store.clear(sid)
++
++
+ def test_live_prompt_gemini_includes_pinned_flow_header():
+     brain = (
+         "--- AGENT IDENTITY ---\nPriya, Acme.\n\n"
