@@ -54,7 +54,8 @@ REQUEST_LANGUAGE_CALLBACK_TOOL: dict[str, Any] = {
     "type": "function",
     "name": "request_language_callback",
     "description": (
-        "Handle a substantive language mismatch without changing the configured spoken language. "
+        "Handle a genuine communication barrier, not simply a different caller language. "
+        "If the meaning is understood, answer in the configured language without this tool. "
         "First use remind, politely ask for the configured language and wait. Only after a later "
         "caller turn still needs another language use request_callback. On success confirm the "
         "request (not a scheduled booking), say farewell in configured language, then end_call. "
@@ -65,10 +66,11 @@ REQUEST_LANGUAGE_CALLBACK_TOOL: dict[str, Any] = {
         "additionalProperties": False,
         "properties": {
             "action": {"type": "string", "enum": ["remind", "request_callback"]},
+            "communication_blocked": {"type": "boolean", "description": "True only when a genuine language barrier prevents progress. False for understood mixed-language speech, names, short replies or garbled audio."},
             "caller_language": {"type": "string", "description": "BCP-47 language code, e.g. hi-IN; unknown if unclear."},
             "summary": {"type": "string", "maxLength": 1200, "description": "English handoff: caller need, known details, requested language. No invented booking or time."},
         },
-        "required": ["action", "caller_language", "summary"],
+        "required": ["action", "caller_language", "summary", "communication_blocked"],
     },
 }
 
@@ -92,7 +94,12 @@ def parse_request_end_call_tool(raw: Any) -> dict[str, Any] | None:
             return None
     if not isinstance(payload, dict):
         return None
+    raw_end = payload.get("should_end")
+    if raw_end is False or (isinstance(raw_end, str) and raw_end.strip().lower() in ("false", "0", "no")):
+        return {"should_end": False, "reason": "none", "farewell": ""}
     reason_key = str(payload.get("reason") or "").strip().lower()
+    if reason_key in ("", "none", "null"):
+        return None
     internal = _REQUEST_TO_INTERNAL.get(reason_key)
     if not internal or internal not in END_CALL_REASONS:
         return None

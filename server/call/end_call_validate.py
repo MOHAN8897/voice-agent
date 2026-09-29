@@ -9,6 +9,7 @@ from typing import Any
 from server.call.call_end_policy import HANGUP_REASONS as POLICY_REASONS, allowed_reasons_for
 from server.call.hangup_judge import (
     agent_spoke_closing,
+    agent_spoke_disqualification_close,
     agent_still_collecting_lead,
     caller_wants_to_continue,
     default_farewell_for,
@@ -394,6 +395,8 @@ def _evidence_ok(
             and caller_confirmed_goal_complete(text)
         ):
             return True
+        if agent_spoke_disqualification_close(spoken) and agent_spoke_closing(spoken):
+            return True
         return False
     if reason == "out_of_scope":
         return bool(text.strip()) and not looks_like_question(text) and completed_turns >= 1
@@ -406,9 +409,11 @@ def _trust_live_tool_evidence(
     *,
     memory_snapshot: dict[str, Any] | None = None,
     completed_turns: int = 0,
+    spoken_text: str = "",
 ) -> bool:
     """Accept Live API hangup tool intent; regex evidence is repair-only."""
     text = (user_text or "").strip()
+    spoken = spoken_text or ""
     if not text:
         if reason in {"goodbye", "firm_refusal", "abuse"}:
             return True
@@ -418,6 +423,8 @@ def _trust_live_tool_evidence(
             return completed_turns >= 1
         return False
     if caller_wants_to_continue(text):
+        if reason == "goal_complete" and agent_spoke_disqualification_close(spoken):
+            return True
         return False
     if reason == "firm_refusal":
         return not (user_short_close_ack(text) and not caller_firm_refusal(text))
@@ -426,6 +433,8 @@ def _trust_live_tool_evidence(
     if reason == "abuse":
         return True
     if reason == "goal_complete":
+        if agent_spoke_disqualification_close(spoken):
+            return True
         if looks_like_question(text) and _substantive_user_question(text):
             return False
         return True
@@ -560,6 +569,14 @@ def validate_end_call(
         and not caller_firm_refusal(user)
         and not caller_confirmed_goal_complete(user)
         and not _user_wants_hangup(user)
+        and not (
+            tool_sourced
+            and parsed.get("reason") in {"goal_complete", "firm_refusal", "goodbye"}
+            and (
+                agent_spoke_disqualification_close(spoken)
+                or agent_spoke_closing(spoken)
+            )
+        )
     ):
         logger.info("[END_CALL] rejected code=caller_engaged reason=%s", parsed.get("reason"))
         return EndCallDecision(False, False, "none", "", "caller_engaged")
@@ -604,7 +621,12 @@ def validate_end_call(
     if not user.strip() and not (tool_sourced and parsed.get("should_end")):
         return _reject("empty_user_turn")
     if user.strip() and looks_like_question(user) and reason != "abuse" and not _user_wants_hangup(user):
-        if not (_OPT_OUT.search(user) or _CALLER_DONE.search(user)
+        skip_question = (
+            tool_sourced
+            and reason == "goal_complete"
+            and agent_spoke_disqualification_close(spoken)
+        )
+        if not skip_question and not (_OPT_OUT.search(user) or _CALLER_DONE.search(user)
                 or caller_explicit_end_request(user) or caller_requested_callback(user)
                 or caller_unavailable_now(user)):
             return _reject("user_asked_question")
@@ -621,6 +643,7 @@ def validate_end_call(
             user,
             memory_snapshot=memory_snapshot,
             completed_turns=completed_turns,
+            spoken_text=spoken,
         )
         if tool_sourced and parsed.get("should_end")
         else _evidence_ok(

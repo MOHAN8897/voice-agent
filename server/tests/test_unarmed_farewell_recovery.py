@@ -30,6 +30,34 @@ async def test_location_question_false_end_recovers_once():
 
 
 @pytest.mark.asyncio
+async def test_polite_close_after_callback_repairs_missed_end_call():
+    loop = make_loop()
+    loop._callback_request_text = "Yes, yes, yes."
+    loop._last_user_final_text = loop._user_partial = "Yeah, thank you."
+    loop._response_had_audio = True
+    loop._assistant_text = "You're welcome. Have a great day."
+    await loop._maybe_hangup_missed_end_call()
+    assert loop._pending_end_call is not None
+    assert loop._pending_followup_instruction is None
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_disqualification_close_repairs_missed_end_call():
+    loop = make_loop()
+    loop._last_user_final_text = loop._user_partial = "Can you do everything for the car."
+    loop._response_had_audio = True
+    loop._assistant_text = (
+        "Thank you, Mohan. Since you don't have a vehicle yourself, "
+        "I will thank you for your time today."
+    )
+    await loop._maybe_hangup_missed_end_call()
+    assert loop._pending_end_call is not None
+    assert loop._pending_end_call.get("reason") == "goal_complete"
+    await loop.close()
+
+
+@pytest.mark.asyncio
 async def test_regular_answer_does_not_inject_recovery():
     loop = make_loop()
     loop._last_user_final_text = loop._user_partial = "Where are you?"

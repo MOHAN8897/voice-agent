@@ -37,6 +37,7 @@ async def invoke(loop, action, **extra):
     await loop._handle_language_callback_tool({
         "call_id": "tool-1", "arguments": json.dumps({
             "action": action, "caller_language": "hi-IN",
+            "communication_blocked": True,
             "summary": "Caller needs bike servicing and speaks Hindi.", **extra,
         }),
     })
@@ -87,6 +88,23 @@ async def test_gemini_uses_tool_continuation_without_duplicate_response(loop):
     loop._live_model = "gemini-2.5-flash-native-audio-preview-12-2025"
     await invoke(loop, "remind")
     loop._start_injected_response.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("text", ["Hello", "¿Cómo?", "Bueno.", "Yes ma'am"])
+async def test_short_asr_fragments_cannot_trigger_language_handoff(loop, text):
+    loop._last_user_final_text = text
+    result = await invoke(loop, "remind")
+    assert result["error"] == "insufficient_language_barrier_evidence"
+    assert loop._language_reminder_turn is None
+    loop._start_injected_response.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_understood_caller_does_not_need_language_reminder(loop):
+    result = await invoke(loop, "remind", communication_blocked=False)
+    assert not result["ok"]
+    assert loop._language_reminder_turn is None
 
 
 @pytest.mark.asyncio

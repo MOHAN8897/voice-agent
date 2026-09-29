@@ -22,7 +22,20 @@ _AGENT_CLOSING = re.compile(
     r"take it from here|"
     r"all set|"
     r"(?:details|appointment|information) (?:is |are |have been )?(?:noted|saved|booked|confirmed)|"
-    r"booked (?:your |the )?appointment"
+    r"booked (?:your |the )?appointment|"
+    r"thank(?:s| you) for your time|thanks for your time|"
+    r"have a (?:great|good|nice) day|you'?re welcome"
+    r")\b",
+    re.I,
+)
+_AGENT_DISQUALIFY = re.compile(
+    r"\b("
+    r"since you don'?t have|"
+    r"you don'?t (?:have|own) (?:a |any )?(?:car|vehicle|bike|motorbike)|"
+    r"not (?:able|eligible) to (?:help|assist)|"
+    r"unable to (?:help|assist) you(?: today)?|"
+    r"won'?t be able to (?:help|service)|"
+    r"doesn'?t (?:apply|qualify)"
     r")\b",
     re.I,
 )
@@ -77,6 +90,11 @@ def agent_spoke_closing(spoken_text: str) -> bool:
     return bool(_AGENT_CLOSING.search(spoken) or _INDIC_CLOSING.search(spoken))
 
 
+def agent_spoke_disqualification_close(spoken_text: str) -> bool:
+    """True when the agent closed because the caller is not a service lead (e.g. no vehicle)."""
+    return bool(_AGENT_DISQUALIFY.search(spoken_text or ""))
+
+
 def agent_still_collecting_lead(spoken_text: str) -> bool:
     """True when the agent is still asking for name/phone in this utterance."""
     return bool(_AGENT_STILL_COLLECTING.search(spoken_text or ""))
@@ -85,6 +103,25 @@ def agent_still_collecting_lead(spoken_text: str) -> bool:
 def user_short_close_ack(user_text: str) -> bool:
     """True for a short affirmative close ("ok", "thanks") — not a new question."""
     return bool(_USER_SHORT_ACK.match((user_text or "").strip()))
+
+
+_POLITE_THANKS_ONLY = re.compile(
+    r"^\s*(?:"
+    r"(?:yeah|yes|yep|ok|okay|sure|fine|alright|mhm|mm[- ]?hm|uh[- ]?huh)"
+    r"(?:[,.]?\s+then)?[,.]?\s+)?"
+    r"(?:thanks?|thank you)(?:\s+so much)?[.!]?\s*$",
+    re.I,
+)
+
+
+def caller_polite_thanks_only(user_text: str) -> bool:
+    """Thanks / yeah thank you after the agent closed — not a new request."""
+    text = (user_text or "").strip()
+    if not text or "?" in text:
+        return False
+    if caller_wants_to_continue(text):
+        return False
+    return bool(_USER_SHORT_ACK.match(text) or _POLITE_THANKS_ONLY.match(text))
 
 
 def caller_wants_to_continue(user_text: str) -> bool:
@@ -196,7 +233,8 @@ HANG UP (farewell + request_end_call / end_call.should_end true):
    are end requests, not information questions. Do not ask 'are you still there?' after that.
 3) goal_complete — the script's required outcome is met, required details are captured, and
    the caller confirmed the next step (callback/visit/handoff where applicable). Confirm it
-   in one line, say goodbye, and invoke the tool. Do not require a separate goodbye.
+   in one line, say goodbye (or have a great day), and invoke the tool in that SAME turn.
+   After callback is agreed and they thank you, do not start a new topic — farewell + tool.
    An offer alone, unclear audio or an unanswered question is not completion.
 
 KEEP TALKING (never goodbye, never end_call):

@@ -27,7 +27,21 @@ def parse_end_call_tool(raw: Any) -> dict[str, Any] | None:
         payload = {k: v for k, v in payload.items() if k in _ALLOWED_KEYS}
     if "should_end" not in payload:
         return None
-    should_end = bool(payload.get("should_end"))
+    raw_should = payload.get("should_end")
+    if isinstance(raw_should, bool):
+        should_end = raw_should
+    elif isinstance(raw_should, (int, float)) and raw_should in (0, 1):
+        should_end = bool(raw_should)
+    elif isinstance(raw_should, str):
+        low = raw_should.strip().lower()
+        if low in ("true", "1"):
+            should_end = True
+        elif low in ("false", "0", "no"):
+            should_end = False
+        else:
+            return None
+    else:
+        return None
     reason = str(payload.get("reason") or "").strip()
     if should_end and reason not in END_CALL_REASONS:
         return None

@@ -74,7 +74,7 @@ CALLER_DETAIL_CAPTURE = """CALLER DETAILS (mandatory)
 - Once they agree to talk, ask their preferred name at the first natural pause if unknown, before other lead details. Answer an immediate question first. Use their name naturally; never guess it or insist after they decline.
 - On outbound PSTN calls the dialed customer number is ALREADY KNOWN. Never ask them to dictate it again, including for a callback — only if they explicitly request a different one. The business caller ID is not the customer number.
 - Ask only for details the script needs: if the name is unknown, ask the name, not the known number. This overrides generic script examples asking for a phone number.
-- When they share details: acknowledge in one beat ("Noted — our team will use this") and continue. Never refuse, never say you cannot record/save/note it, never ask them to repeat it. Do not read their digits back."""
+- When they share details: acknowledge in one beat ("Noted — our team will use this") and continue. Never refuse, never say you cannot record/save/note it, never re-ask clear details. Confirm only an uncertain part once instead of guessing. Do not read their digits back."""
 
 
 SCRIPT_AS_GUIDE = """SCRIPT IS A GUIDE — BUT COMPLETE THE OBJECTIVE
@@ -252,6 +252,11 @@ def live_audio_modality_rules() -> str:
     return (
         "OUTPUT MODALITY RULES (audio Realtime — mandatory)\n"
         "- You are on a live phone call. Speak the reply as natural speech.\n"
+        "- Language policy applies to YOUR output, not to what the caller is allowed to say. "
+        "If you understand their meaning, answer in the configured language without requesting a language change. "
+        "A foreign-looking transcript, accent, name, loanword or short reply is not a language barrier. "
+        "For unclear audio ask one neutral clarification; never guess a name, vehicle or intent. "
+        "Use the language callback tool only when a genuine communication barrier prevents progress.\n"
         "- Represent the business using we/our after the introduction. Repeat its name only when asked "
         "or needed to resolve confusion; do not restart the introduction or repeat the caller's name every turn.\n"
         "- Use idiomatic speech in the configured language, with complete syllables, clear word endings "
@@ -285,7 +290,7 @@ def live_realtime_audio_rules(language: str | None, *, direction: str | None = N
         + live_realtime_output_rules(language, direction=direction)
         + "\nLANGUAGE HANDOFF (MANDATORY — NEVER SWITCH LANGUAGES):\n"
         "- ABSOLUTE RULE: You MUST NEVER switch your spoken language. Every reply stays in the configured language.\n"
-        "- If the caller speaks a different language clearly and substantively:\n"
+        "- Only if a genuine communication barrier prevents understanding (not merely another language):\n"
         "  Step 1: Call request_language_callback with action=remind. Politely ask ONCE in the configured "
         "language to continue in this language. Then WAIT for the caller's response.\n"
         "  Step 2: ONLY if a LATER caller turn STILL uses another language, call request_language_callback "

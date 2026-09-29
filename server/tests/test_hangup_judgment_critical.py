@@ -179,6 +179,23 @@ def test_goodbye_hangs():
     assert d.reason == "goodbye"
 
 
+def test_tool_goal_complete_after_disqualification_despite_can_you():
+    spoken = (
+        "Thank you, Mohan. Since you don't have a vehicle yourself, "
+        "I will thank you for your time today. Goodbye."
+    )
+    d = validate_end_call(
+        {"should_end": True, "reason": "goal_complete", "farewell": "Goodbye."},
+        user_text="Can you do everything for the car.",
+        language="en-IN",
+        completed_turns=4,
+        spoken_text=spoken,
+        tool_sourced=True,
+    )
+    assert d.accepted is True
+    assert d.reason == "goal_complete"
+
+
 def test_helpers_detect_closing_and_lead():
     assert agent_spoke_closing("Noted — our team will contact you. Goodbye.")
     assert agent_spoke_closing("All set, thanks for confirming — we'll take it from here.")

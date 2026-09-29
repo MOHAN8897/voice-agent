@@ -1020,6 +1020,7 @@ class TelnyxPstnBridge:
         """Send one RTP frame every 20 ms — monotonic deadline pacing (audit A3)."""
         frame_interval = 0.02
         next_send = time.monotonic()
+        buffered_generation: object = object()
         try:
             while not self._closed:
                 self._out_sending = False
@@ -1055,6 +1056,23 @@ class TelnyxPstnBridge:
                         expected=self._negotiated_media.frame_bytes,
                     )
                     continue
+                # Keep up to 60 ms of lookahead at speech start / after a gap.
+                # No samples are repeated or dropped; short completed turns do
+                # not wait, and cancellation is rechecked before the send.
+                if frame.generation_id != buffered_generation or (
+                    self._last_out_frame_at and time.monotonic() - self._last_out_frame_at > 0.06
+                ):
+                    self._out_sending = True  # held frame is still audible work
+                    deadline = time.monotonic() + 0.06
+                    while (
+                        self._out_queue.qsize() < 2
+                        and self._tts_still_generating()
+                        and not self._closed
+                        and not self._generation_cancelled(frame.generation_id, playback)
+                        and time.monotonic() < deadline
+                    ):
+                        await asyncio.sleep(0.005)
+                    buffered_generation = frame.generation_id
                 # Schedule before sending. Rebase late deadlines so idle periods
                 # never create a burst of catch-up frames.
                 next_send = max(next_send, time.monotonic())

@@ -76,7 +76,8 @@ CLOSE_LISTEN_SEC = 3.5
 # Cost-optimized hangup: brief post-farewell wait, then Telnyx + Live teardown (no long listen).
 FAST_REFUSAL_POST_FAREWELL_SEC = 0.45
 FAST_GOAL_COMPLETE_POST_FAREWELL_SEC = 2.0
-HANGUP_RESPONSE_TIMEOUT_SEC = 14.0
+HANGUP_RESPONSE_TIMEOUT_SEC = 6.0
+PENDING_HANGUP_STUCK_SEC = 8.0
 _BACKGROUND_HANGUP_TASKS: set[asyncio.Task] = set()
 
 
@@ -716,7 +717,10 @@ class PstnRealtimeVoiceLoop:
         self._on_hangup_notice = fn
 
     def _uses_fast_hangup(self) -> bool:
-        return bool(self._firm_refusal_close or self._fast_script_farewell)
+        if self._firm_refusal_close or self._fast_script_farewell or self._farewell_complete:
+            return True
+        reason = str((self._pending_end_call or {}).get("reason") or "")
+        return reason in {"goal_complete", "goodbye", "firm_refusal"}
 
     def _caller_text(self) -> str:
         return (self._last_user_final_text or self._user_partial or "").strip()
@@ -1123,6 +1127,23 @@ class PstnRealtimeVoiceLoop:
             self._hangup_armed_at = time.monotonic()
         self._schedule_hangup_force_finish()
 
+    def _commit_pending_hangup(self, accepted: dict[str, Any], *, source: str) -> None:
+        reason = str(accepted.get("reason") or "agent_hangup")
+        self._pending_end_call = accepted
+        self._pending_farewell_text = self._localized_farewell(str(accepted.get("farewell") or ""))
+        self._pending_followup_instruction = None
+        self._apply_hangup_close_flags(reason)
+        self._set_hangup_arm_source(source)
+        self._ending_at = time.monotonic()
+        self.controller.state = CallState.ENDING
+        self._note_hangup_armed()
+
+    async def _repair_arm_hangup(self, accepted: dict[str, Any], *, log_event: str) -> None:
+        reason = str(accepted.get("reason") or "goal_complete")
+        self._commit_pending_hangup(accepted, source="repair")
+        log_pstn(log_event, call_id=self.call_id)
+        await self._notify_hangup("initiated", reason)
+
     async def _finalize_hangup_after_farewell(self) -> None:
         """Drain the completed farewell, then disconnect without a listen window."""
         spoken = (self._assistant_text or "").strip()
@@ -1143,10 +1164,16 @@ class PstnRealtimeVoiceLoop:
             await self._finish_hangup()
             return
         if self._hangup_farewell_inject_tried:
-            self._farewell_response_active = False
-            self._farewell_complete = True
-            await self._finish_hangup()
-            return
+            if self._response_had_audio:
+                self._farewell_response_active = False
+                self._pending_followup_instruction = None
+                if reason in ("goal_complete", "goodbye", "firm_refusal"):
+                    self._apply_hangup_close_flags(reason)
+                self._farewell_complete = True
+                await self._finish_hangup()
+                return
+            # Inject finished without audio — do not disconnect; allow one more inject.
+            self._hangup_farewell_inject_tried = False
         text = (self._pending_farewell_text or self._localized_farewell()).strip()
         if text and self._adapter is not None:
             self._hangup_farewell_inject_tried = True
@@ -2013,7 +2040,15 @@ class PstnRealtimeVoiceLoop:
                 return
             if not self._close_listen_until and not self._farewell_response_active:
                 self._begin_close_listen()
-            if self._hangup_armed_at and now - self._hangup_armed_at >= 26.0:
+            if (
+                self._uses_fast_hangup()
+                and not self._farewell_response_active
+                and not self._farewell_audio_engaged()
+            ):
+                log_pstn("hangup.fast_finish_pending", call_id=self.call_id)
+                await self._finish_hangup()
+                return
+            if self._hangup_armed_at and now - self._hangup_armed_at >= PENDING_HANGUP_STUCK_SEC:
                 log_pstn("hangup.stuck_pending", call_id=self.call_id)
                 await self._finish_hangup()
             return
@@ -2453,15 +2488,11 @@ class PstnRealtimeVoiceLoop:
         tool_sourced: bool,
     ) -> None:
         reason = str(accepted.get("reason") or "agent_hangup")
-        self._pending_end_call = accepted
-        self._pending_farewell_text = self._localized_farewell(str(accepted.get("farewell") or ""))
-        self._pending_followup_instruction = None
-        self._apply_hangup_close_flags(reason)
-        self._note_hangup_armed()
+        self._commit_pending_hangup(accepted, source="tool" if tool_sourced else "gate")
         if tool_sourced:
-            self._set_hangup_arm_source("tool")
             # Gemini's disable operation cancels the active response. Keep the
             # farewell response alive through its audio and response_done.
+            await self._set_live_auto_response(False)
         await self._notify_hangup("initiated", reason)
 
     async def _handle_language_callback_tool(self, event: dict[str, Any]) -> None:
@@ -2489,6 +2520,17 @@ class PstnRealtimeVoiceLoop:
         elif (self.controller.callback_cancelled or caller_requested_hangup(self._caller_text())
               or caller_firm_refusal(self._caller_text())):
             result["error"] = "caller_opted_out"
+        elif (
+            args.get("communication_blocked") is not True
+            or not caller_language or caller_language.lower() == "unknown"
+            or caller_language.split("-")[0].lower() == lang.split("-")[0].lower()
+            or (self._caller_text().strip() and len(self._caller_text().split()) < 3)
+        ):
+            result["error"] = "insufficient_language_barrier_evidence"
+            result["instruction"] = (
+                f"Answer the caller's meaning in {lang} if understood. Otherwise ask one neutral "
+                "clarification. Do not repeat a language reminder or arrange a callback."
+            )
         elif action == "remind":
             if self._language_reminder_turn is not None:
                 result["error"] = "already_reminded"
@@ -2767,22 +2809,64 @@ class PstnRealtimeVoiceLoop:
             caller_requested_callback,
             looks_like_question,
         )
-        from server.call.hangup_judge import agent_spoke_closing
+        from server.call.hangup_judge import (
+            agent_spoke_closing,
+            agent_spoke_disqualification_close,
+            caller_polite_thanks_only,
+        )
         from server.call.memory_manager import memory_manager
 
         snapshot = memory_manager.get_snapshot(self.call_id) if self.call_id else None
-        explicit_end = caller_requested_hangup(self._caller_text()) or caller_firm_refusal(self._caller_text())
-        confirmed_done = caller_confirmed_goal_complete(self._caller_text())
-        callback_done = caller_requested_callback(self._caller_text()) and callback_ready_to_close(
-            self._caller_text(), snapshot
+        user = self._caller_text()
+        explicit_end = caller_requested_hangup(user) or caller_firm_refusal(user)
+        confirmed_done = caller_confirmed_goal_complete(user)
+        callback_done = caller_requested_callback(user) and callback_ready_to_close(user, snapshot)
+        callback_scheduled = bool(self._callback_request_text and not self._callback_collecting_field)
+        if agent_spoke_disqualification_close(spoken) and agent_spoke_closing(spoken):
+            accepted = await self._gate_end_call_payload(
+                {
+                    "should_end": True,
+                    "reason": "goal_complete",
+                    "farewell": spoken,
+                },
+                tool_sourced=True,
+            )
+            if accepted:
+                await self._repair_arm_hangup(
+                    accepted, log_event="end_call.repaired_disqualification_close"
+                )
+            return
+        _spoken_goodbye = bool(
+            re.search(r"\b(?:goodbye|good day|have a (?:great|good|nice) day)\b", spoken, re.I)
         )
+        polite_close_ready = (
+            agent_spoke_closing(spoken)
+            and not looks_like_question(spoken)
+            and (
+                confirmed_done
+                or callback_done
+                or (callback_scheduled and caller_polite_thanks_only(user))
+                or (caller_polite_thanks_only(user) and _spoken_goodbye)
+            )
+        )
+        if polite_close_ready:
+            accepted = await self._gate_end_call_payload(
+                {
+                    "should_end": True,
+                    "reason": "goal_complete",
+                    "farewell": spoken,
+                },
+                tool_sourced=True,
+            )
+            if accepted:
+                await self._repair_arm_hangup(accepted, log_event="end_call.repaired_polite_close")
+            return
         if not explicit_end and not confirmed_done and not callback_done:
             # A model can announce an end without calling a tool, even while
             # answering a question. Do not turn that hallucination into a hangup
             # or silently wait. Recover once per caller turn to avoid a loop.
             false_end = bool(re.search(
-                r"\b(?:this|the) call (?:has ended|is (?:over|ended))\b|"
-                r"\b(?:goodbye|have a (?:great|good|nice) day)\b",
+                r"\b(?:this|the) call (?:has ended|is (?:over|ended))\b",
                 spoken, re.I,
             ))
             if (
@@ -2811,9 +2895,7 @@ class PstnRealtimeVoiceLoop:
             }
         )
         if accepted:
-            self._pending_end_call = accepted
-            self._pending_farewell_text = self._localized_farewell(str(accepted.get("farewell") or ""))
-            self._set_hangup_arm_source("repair")
+            self._commit_pending_hangup(accepted, source="repair")
             log_pstn("end_call.repaired_missed_tool", call_id=self.call_id)
             await self._notify_hangup("initiated", str(accepted.get("reason") or "agent_hangup"))
             if explicit_end and (looks_like_question(spoken) or not agent_spoke_closing(spoken)):
@@ -2912,23 +2994,21 @@ class PstnRealtimeVoiceLoop:
                 )
                 self._silence_prompted = False
                 if awaiting_close and not closing:
+                    from server.call.hangup_judge import agent_spoke_closing
+
+                    farewell_already_spoken = bool(
+                        self._farewell_complete
+                        or agent_spoke_closing(self._assistant_text or "")
+                        or agent_spoke_closing(self._last_ledger_assistant or "")
+                    )
                     if (
                         self._uses_fast_hangup()
                         and not self._farewell_audio_engaged()
-                        and not (self._firm_refusal_close and _is_simple_hello(text))
+                        and farewell_already_spoken
                     ):
-                        if _is_simple_hello(text):
-                            log_pstn(
-                                "hangup.presence_before_farewell",
-                                call_id=self.call_id,
-                                text=text[:80],
-                            )
-                            from server.realtime.models import is_gemini_live_voice_model
-
-                            await self._ensure_hangup_farewell_audio(
-                                prefer_side_session=is_gemini_live_voice_model(self._live_model or "")
-                            )
-                            return
+                        log_pstn("hangup.fast_ack_pending", call_id=self.call_id, text=text[:80])
+                        await self._finish_hangup()
+                        return
                     if self._firm_refusal_close and (
                         _is_simple_hello(text)
                         or bool(re.fullmatch(r"(?i)(?:hello[!,.]?\s*)+$", (text or "").strip()))
@@ -3142,7 +3222,9 @@ class PstnRealtimeVoiceLoop:
                 return
             parsed = parse_live_hangup_tool(tool_name, event.get("arguments"))
             accepted: dict[str, Any] | None = None
-            if parsed and parsed.get("should_end"):
+            if parsed is not None and not parsed.get("should_end"):
+                log_pstn("end_call.tool_declined", call_id=self.call_id, tool=tool_name)
+            elif parsed and parsed.get("should_end"):
                 if self._pending_end_call or self._farewell_response_active:
                     accepted = self._pending_end_call or parsed
                     log_pstn("hangup.duplicate_tool", call_id=self.call_id, tool=tool_name)
@@ -3171,6 +3253,9 @@ class PstnRealtimeVoiceLoop:
             if self._is_stale_openai_event(event):
                 return
             self._assistant_text = self._sanitize_live_assistant_text(self._assistant_text)
+            if kind == "response_done" and not event.get("failed") and not event.get("provider_interrupted"):
+                # Preserve the final partial frame of ordinary answers too.
+                await self._flush_agent_pcm_to_wire()
             if event.get("provider_interrupted"):
                 await self.interrupt_tts(cancel_provider=False)
                 if self._on_barge:
@@ -3572,7 +3657,8 @@ class PstnRealtimeVoiceLoop:
                 self._out_pcm.extend(leftover)
         frame = self._frame_bytes()
         if self._out_pcm and len(self._out_pcm) < frame:
-            self._out_pcm.extend(b"\x00" * (frame - len(self._out_pcm)))
+            silence = b"\xff" if self.current_output_codec == "PCMU" else b"\x00"
+            self._out_pcm.extend(silence * (frame - len(self._out_pcm)))
         while len(self._out_pcm) >= frame:
             chunk = bytes(self._out_pcm[:frame])
             del self._out_pcm[:frame]
@@ -3736,12 +3822,14 @@ class PstnRealtimeVoiceLoop:
             )
 
             reason = str((self._pending_end_call or {}).get("reason") or "agent_hangup")
-            spoke = bool(
-                self._response_had_audio
-                or self._pending_farewell_text
-                or agent_spoke_closing(self._assistant_text or "")
-                or agent_spoke_closing(self._last_ledger_assistant or "")
-            )
+            farewell_required = bool((self._pending_end_call or {}).get("farewell_required", True))
+            spoke = bool(self._response_had_audio)
+            if not farewell_required:
+                spoke = spoke or bool(
+                    self._pending_farewell_text
+                    or agent_spoke_closing(self._assistant_text or "")
+                    or agent_spoke_closing(self._last_ledger_assistant or "")
+                )
             await self._flush_agent_pcm_to_wire()
             playback_cap = HANGUP_PLAYBACK_TIMEOUT_SEC
             wait_start = 0.0
