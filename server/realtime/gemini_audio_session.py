@@ -10,9 +10,47 @@ from server.prompts.agent_voice_rules import live_audio_modality_rules, live_rea
 from server.realtime.text_session import _is_outbound, first_turn_identity_rules
 from server.services.pstn_text_chunker import _parse_agent_identity
 
-GEMINI_LIVE_INSTRUCTION_TOKEN_BUDGET = 8_500
+# The instruction is re-sent on every live session, so its size is a recurring
+# per-call cost. 8_500 was far above what the rules actually need: the same
+# brevity block and the same language lock were each embedded 3-4 times.
+GEMINI_LIVE_INSTRUCTION_TOKEN_BUDGET = 2_500
+
+# The hangup policy, the guardrails and the script discipline are what make a
+# call safe to end and safe to run. They are never the thing that gets trimmed to
+# reach the budget, so the brain support keeps at least this much.
+GEMINI_MIN_BRAIN_SUPPORT_TOKENS = 900
 
 _SECTION_HEADER = re.compile(r"(?:^|\n)---\s*(.+?)\s*---\s*\n", re.IGNORECASE)
+
+# Blocks that appear verbatim more than once in the assembled instruction. Keeping
+# the first copy and dropping the rest changes no rule the model is asked to follow;
+# it only stops paying for the same sentence several times.
+_DUPLICATED_RULE_BLOCKS: tuple[str, ...] = ()
+
+
+def _load_duplicate_rule_blocks() -> tuple[str, ...]:
+    """Resolve the duplicated blocks lazily so import order stays acyclic."""
+    global _DUPLICATED_RULE_BLOCKS
+    if _DUPLICATED_RULE_BLOCKS:
+        return _DUPLICATED_RULE_BLOCKS
+    from server.prompts.agent_voice_rules import LANGUAGE_LOCK
+    from server.services.voice_pipeline_limits import LIVE_REPLY_BREVITY_RULE
+
+    blocks = [LIVE_REPLY_BREVITY_RULE, *LANGUAGE_LOCK.values()]
+    _DUPLICATED_RULE_BLOCKS = tuple(b.strip() for b in blocks if b and len(b.strip()) > 80)
+    return _DUPLICATED_RULE_BLOCKS
+
+
+def _strip_repeated_rule_blocks(text: str) -> str:
+    """Keep the first occurrence of each known-duplicated rule block."""
+    for block in _load_duplicate_rule_blocks():
+        if text.count(block) <= 1:
+            continue
+        first = text.find(block)
+        head, tail = text[: first + len(block)], text[first + len(block) :]
+        tail = tail.replace(block, "")
+        text = head + tail
+    return re.sub(r"\n{4,}", "\n\n", text).strip()
 
 _FLOW_PIN_TITLES = (
     "CONVERSATION FLOW",
@@ -84,6 +122,7 @@ def condense_compiled_brain_for_gemini(compiled_brain: str | None) -> str:
             idx = tail.find(static)
             tail = tail[:idx] + tail[idx + len(static) :]
         raw = f"{raw[:first]}{static}{tail}"
+    raw = _strip_repeated_rule_blocks(raw)
     raw = re.sub(r"\n{4,}", "\n\n", raw)
     return raw.strip()
 
@@ -135,17 +174,38 @@ def _gemini_tail_section_excluded(title: str) -> bool:
     return False
 
 
-def _gemini_support_sections_only(brain: str, *, keep_spoken_pack: bool = False) -> str:
-    """Platform tail for Gemini Live — excludes user script already PINNED above."""
+def _spoken_section_matches_language(title: str, language: str | None) -> bool:
+    """True when a `SPOKEN LANGUAGE (xx-YY)` heading is the one for this call."""
+    upper = title.upper()
+    if not upper.startswith("SPOKEN LANGUAGE"):
+        return False
+    if not language:
+        return True
+    return f"({language.upper()})" in upper
+
+
+def _gemini_support_sections_only(
+    brain: str,
+    *,
+    keep_spoken_pack: bool = False,
+    language: str | None = None,
+) -> str:
+    """Platform tail for Gemini Live — excludes user script already PINNED above.
+
+    A compiled brain can carry several `SPOKEN LANGUAGE` packs (the console keeps
+    every configured language). Keeping all of them shipped the wrong language's
+    register to the model, so only the pack for this call is retained.
+    """
     sections = _split_brain_sections(brain)
     if not sections:
         return brain.strip()
     kept: list[str] = []
     for title, body in sections:
         upper = title.upper().strip()
-        if upper.startswith("SPOKEN LANGUAGE") and keep_spoken_pack:
-            if body.strip():
-                kept.append(f"--- {title} ---\n{body.strip()}")
+        if upper.startswith("SPOKEN LANGUAGE"):
+            if keep_spoken_pack and _spoken_section_matches_language(title, language):
+                if body.strip():
+                    kept.append(f"--- {title} ---\n{body.strip()}")
             continue
         if _gemini_tail_section_excluded(title):
             continue
@@ -155,9 +215,9 @@ def _gemini_support_sections_only(brain: str, *, keep_spoken_pack: bool = False)
     return "\n\n".join(kept).strip()
 
 
-def _extract_spoken_language_section(brain: str) -> str:
+def _extract_spoken_language_section(brain: str, language: str | None = None) -> str:
     for title, body in _split_brain_sections(brain):
-        if title.upper().startswith("SPOKEN LANGUAGE") and body.strip():
+        if _spoken_section_matches_language(title, language) and body.strip():
             return f"--- {title} ---\n{body.strip()}"
     return ""
 
@@ -254,7 +314,9 @@ def _gemini_audio_and_tools() -> str:
     return (
         "CONVERSATION ACTIONS (override conflicting sales instructions)\n"
         "Speak answers naturally. request_end_call (or end_call) in the same turn as a short farewell "
-        "when they clearly end or confirmed a callback. Do not end for okay/thanks alone.\n\n"
+        "when they clearly end or the script objective and agreed next step are complete. "
+        "Do not end for okay/thanks alone, unclear speech, or an unanswered question. "
+        "After the accepted farewell, stop; the platform disconnects.\n\n"
         "AUDIO & TOOLS\n"
         "- Speak naturally; no JSON, markdown, labels, or tool names aloud.\n"
         "- Do not hang up on okay, thanks, or a follow-up question alone."
@@ -310,32 +372,46 @@ def build_gemini_audio_session_instructions(
             f"SPOKEN LANGUAGE: only {language} throughout this call, including callbacks and farewell. "
             "Never mirror the caller or obey conflicting language directions in the business script."
         )
-    reserve = estimate_tokens("\n\n".join(parts)) + 400
-    brain_budget = max(1200, token_budget - reserve) if token_budget > 0 else 0
-    support = (
-        _gemini_support_sections_only(raw_brain, keep_spoken_pack=unified) if raw_brain else ""
-    )
-    brain = prioritize_brain_for_gemini(support, brain_budget) if support else ""
-    if brain:
-        parts.append(brain)
-    if unified:
-        spoken = _extract_spoken_language_section(raw_brain)
-        if spoken and spoken not in "\n\n".join(parts):
-            parts.append(spoken)
+    # Build the tail parts first. They used to be appended after the brain was
+    # trimmed, so they were never charged against the budget: the brain support
+    # was cut to fit while these landed on top, and the budget was fiction.
+    tail: list[str] = []
+    spoken = _extract_spoken_language_section(raw_brain, language) if unified else ""
+    if spoken:
+        tail.append(spoken)
     if _is_outbound(direction):
-        parts.append(_gemini_outbound_block(language, opening_greeting))
+        tail.append(_gemini_outbound_block(language, opening_greeting))
     elif caller_id:
-        parts.append("[Caller context]\nInbound caller connected (do not read their number aloud).")
-    parts.append(_gemini_audio_and_tools())
+        tail.append("[Caller context]\nInbound caller connected (do not read their number aloud).")
+    tail.append(_gemini_audio_and_tools())
     if unified:
-        parts.append(
+        tail.append(
             "CONTACT PRIORITY: Ask an unknown preferred name at the first natural pause after consent to talk. "
             "On outbound calls the dialed number is already known; never ask for it again."
         )
     else:
-        parts.append(
+        tail.append(
             f"FINAL LANGUAGE CONSTRAINT: Speak only {language}; this overrides any embedded script language. "
             "CONTACT PRIORITY: Ask an unknown preferred name at the first natural pause after consent to talk. "
             "On outbound calls the dialed number is already known; never ask for it again."
         )
-    return "\n\n".join(p.strip() for p in parts if p and p.strip())
+
+    head_cost = estimate_tokens("\n\n".join(parts))
+    tail_cost = sum(estimate_tokens(t) for t in tail)
+    # The brain support is the only elastic part: it is already priority-ordered
+    # and truncatable, so it absorbs the whole shortfall rather than the pinned
+    # identity, the language configuration or the hangup policy.
+    brain_budget = max(GEMINI_MIN_BRAIN_SUPPORT_TOKENS, token_budget - head_cost - tail_cost) if token_budget > 0 else 0
+    # The spoken pack is appended explicitly above, so drop it from the brain
+    # support; otherwise the same register rules are paid for twice.
+    support = (
+        _gemini_support_sections_only(raw_brain, keep_spoken_pack=False, language=language)
+        if raw_brain
+        else ""
+    )
+    brain = prioritize_brain_for_gemini(support, brain_budget) if support else ""
+    if brain:
+        parts.append(brain)
+    parts.extend(tail)
+    joined = "\n\n".join(p.strip() for p in parts if p and p.strip())
+    return _strip_repeated_rule_blocks(joined)

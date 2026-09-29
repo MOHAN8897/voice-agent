@@ -62,6 +62,18 @@ def is_unified_compiled_brain(text: str | None) -> bool:
     return has_spoken and has_static
 
 
+def strip_section_markers(script: str | None) -> str:
+    """Drop `<!-- section:type:uuid -->` bookkeeping from the compiled artifact.
+
+    The markers let the optimizer and the section editor find their boundaries in
+    the raw and optimized business prompts, where they are load-bearing. In the
+    compiled brain they are dead weight the model pays to read on every call, so
+    they are removed here — after both consumers have run.
+    """
+    cleaned = re.sub(r"(?m)^[ \t]*<!--\s*section:.*?-->[ \t]*\n?", "", script or "")
+    return re.sub(r"\n{3,}", "\n\n", cleaned).strip()
+
+
 def assemble_unified_brain(
     *,
     language: str,
@@ -75,18 +87,24 @@ def assemble_unified_brain(
     """Canonical compile output used by brief, session, factory, and SaaS paths."""
     lang = normalize_compile_language(language)
     style_val = style_for_language(style, lang)
-    calling = f"--- CALLING SCRIPT ---\n{(script or '').strip()}\n\n"
+    calling = f"--- CALLING SCRIPT ---\n{strip_section_markers(script)}\n\n"
     platform = (platform_call_rules or "").strip()
     if platform:
         calling += f"--- PLATFORM CALL RULES ---\n{platform.strip()}\n\n"
     core = (core_safety or SECTION_SAFETY).strip()
+    # The brevity bands and the language lock each already ship in full inside
+    # STATIC_OUTPUT_RULES and the spoken pack, so the pack and footer are asked
+    # for their lean forms here. `core_only` additionally drops the number/phone
+    # TTS blocks and the worked examples, which restate rules the static rules
+    # already carry. Without this the same guidance was sent two or three times
+    # in every compiled brain.
     body = (
         f"{core}\n\n"
-        f"{spoken_pack_for(lang)}\n\n"
+        f"{spoken_pack_for(lang, include_brevity=False, core_only=True)}\n\n"
         f"{calling}"
         f"{call_end_policy_section(lang, call_end_policy)}\n\n"
         f"{STATIC_OUTPUT_RULES}\n\n"
-        f"{language_runtime_footer(lang, style_val)}"
+        f"{language_runtime_footer(lang, style_val, include_language_lock=False)}"
     )
     if extra_pad:
         return f"{body}\n\n{extra_pad.strip()}"

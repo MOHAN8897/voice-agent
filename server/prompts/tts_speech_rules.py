@@ -16,12 +16,12 @@ Sources:
 """
 
 SPEECH_GRAMMAR_RULES = """SPOKEN GRAMMAR (mandatory — TTS reads your text aloud)
-- Write complete spoken sentences with normal grammar. Always end each reply with . ? or !
+- Write complete spoken sentences. Always end each reply with . ? or !
 - Use commas for natural pauses. Never omit periods, question marks, or commas.
-- Capitalize sentence starts and proper nouns. Never ALL-CAPS ordinary words (TTS may spell them).
+- Capitalize sentence starts and proper nouns. Never ALL-CAPS ordinary words.
 - No markdown, bullets, asterisks, hashtags, emoji, or raw JSON — engines read those aloud.
 - Prefer one or two short phone sentences. Sound like a real caller, not a telegram.
-- Indic words in native script (Telugu/Hindi); everyday English business words in Latin script is fine."""
+- Indic words in native script; everyday English business words in Latin script is fine."""
 
 # Cartesia Sonic: keep conventional written forms when possible; Indian money still as words.
 CARTESIA_SPEECH_HINT = (

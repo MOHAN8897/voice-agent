@@ -618,6 +618,7 @@ class PstnRealtimeVoiceLoop:
         self._user_partial = ""
         self._last_user_final_text = ""
         self._language_user_turn = 0
+        self._unarmed_close_repair_turn: int | None = None
         self._language_reminder_turn = None
         self._hangup_arm_source: str | None = None
         self._assistant_text = ""
@@ -2776,6 +2777,29 @@ class PstnRealtimeVoiceLoop:
             self._caller_text(), snapshot
         )
         if not explicit_end and not confirmed_done and not callback_done:
+            # A model can announce an end without calling a tool, even while
+            # answering a question. Do not turn that hallucination into a hangup
+            # or silently wait. Recover once per caller turn to avoid a loop.
+            false_end = bool(re.search(
+                r"\b(?:this|the) call (?:has ended|is (?:over|ended))\b|"
+                r"\b(?:goodbye|have a (?:great|good|nice) day)\b",
+                spoken, re.I,
+            ))
+            if (
+                false_end
+                and self._unarmed_close_repair_turn != self._language_user_turn
+                and self._adapter is not None
+            ):
+                self._unarmed_close_repair_turn = self._language_user_turn
+                self._pending_followup_instruction = (
+                    "The call is still connected. Your last farewell was premature; no end action was accepted. "
+                    "Briefly apologize in the configured language and answer the caller's last question "
+                    "using the business facts. If unclear, ask one clarification instead of guessing. "
+                    "Continue the next unfinished script objective. Do not repeat the greeting or farewell. "
+                    "Only after the objective and agreed next step are complete, call end_call with "
+                    "reason goal_complete and a short farewell in the same turn."
+                )
+                log_pstn("end_call.recover_unarmed_farewell", call_id=self.call_id)
             return
         if not explicit_end and (looks_like_question(spoken) or not agent_spoke_closing(spoken)):
             return
@@ -3097,7 +3121,9 @@ class PstnRealtimeVoiceLoop:
                 await self._emit_realtime_pcm(pcm)
             return
         if kind == "assistant_transcript_delta":
-            self._assistant_text += self._sanitize_live_assistant_text(str(event.get("delta") or ""))
+            # Deltas may split words or contain only the space between words.
+            # Sanitize the complete turn, not each fragment (which strips it).
+            self._assistant_text += str(event.get("delta") or "")
             return
         if kind == "assistant_transcript":
             text = self._sanitize_live_assistant_text(str(event.get("text") or "").strip())
@@ -3144,6 +3170,7 @@ class PstnRealtimeVoiceLoop:
         if kind in ("response_done", "cancelled"):
             if self._is_stale_openai_event(event):
                 return
+            self._assistant_text = self._sanitize_live_assistant_text(self._assistant_text)
             if event.get("provider_interrupted"):
                 await self.interrupt_tts(cancel_provider=False)
                 if self._on_barge:

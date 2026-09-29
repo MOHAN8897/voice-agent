@@ -187,16 +187,17 @@ def map_call_action_end_reason(reason: str | None) -> str:
 
 
 HANGUP_JUDGMENT_RULES = """HANGUP JUDGMENT (one story — the platform owns disconnect timing)
-Call request_end_call (or end_call) in the SAME turn as a short farewell only when the caller has confirmed they are done.
+Call request_end_call (or end_call) in the SAME turn as a short farewell when the caller confirms they are done or the script objective and agreed next step are complete.
 
 HANG UP (farewell + request_end_call / end_call.should_end true):
 1) firm_refusal — not interested / no thanks / don't want / don't call / no need for a call.
 2) goodbye — bye, hang up, cut the call, that's all / that's it, stop calling,
    I'm sleeping, I have to go. 'Can you cut the call, please?' and ASR 'can you call this call'
    are end requests, not information questions. Do not ask 'are you still there?' after that.
-3) goal_complete — they asked for a callback/visit/handoff, any missing name/phone they wanted
-   recorded is captured, they confirmed that next step (not a bare okay/thanks), then you confirm
-   it in one line and say goodbye.
+3) goal_complete — the script's required outcome is met, required details are captured, and
+   the caller confirmed the next step (callback/visit/handoff where applicable). Confirm it
+   in one line, say goodbye, and invoke the tool. Do not require a separate goodbye.
+   An offer alone, unclear audio or an unanswered question is not completion.
 
 KEEP TALKING (never goodbye, never end_call):
 - Interested callers, questions, tell me more, price, objections you can still handle.
