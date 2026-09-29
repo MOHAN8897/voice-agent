@@ -14,8 +14,11 @@ tunnel: REPLACE_WITH_TUNNEL_UUID
 credentials-file: C:\Users\subha\.cloudflared\REPLACE_WITH_TUNNEL_UUID.json
 
 ingress:
+  # Carrier webhooks (Telnyx / Exotel) must reach the API directly.
   - hostname: api-dev.hustlelabs.in
     service: http://127.0.0.1:8000
+  # Public product UI. Voxly proxies /api and /ws to 8000, and /dev to the admin
+  # panel, so one public link covers the product and the back office.
   - hostname: app-dev.hustlelabs.in
-    service: http://127.0.0.1:3000
+    service: http://127.0.0.1:5173
   - service: http_status:404

@@ -266,6 +266,7 @@ async def test_start_call_uses_buffered_greeting_not_speak():
 
 def test_prewarm_adopt_wait_bounded_at_answer():
     """C1: post-answer prewarm adoption must not block for multi-second hangs."""
-    from server.services.pstn_prewarm import PREWARM_ADOPT_WAIT_SEC
+    from server.services.pstn_prewarm import MAX_PREWARM_ADOPT_TOTAL_SEC, PREWARM_ADOPT_WAIT_SEC
 
     assert 0.5 <= PREWARM_ADOPT_WAIT_SEC <= 3.0
+    assert PREWARM_ADOPT_WAIT_SEC <= MAX_PREWARM_ADOPT_TOTAL_SEC <= 15.0

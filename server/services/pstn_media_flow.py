@@ -5,7 +5,17 @@ import time
 import uuid
 from collections import deque
 from dataclasses import asdict, dataclass, field
+from functools import wraps
+from threading import RLock
 from typing import Any
+
+
+def _locked(method):
+    @wraps(method)
+    def wrapped(self, *args, **kwargs):
+        with self._lock:
+            return method(self, *args, **kwargs)
+    return wrapped
 
 
 SUPPORTED_TELNYX_CODECS = frozenset({"PCMU", "PCMA", "L16"})
@@ -68,10 +78,12 @@ class FlowEvent:
 
 class PstnMediaFlowStore:
     def __init__(self) -> None:
+        self._lock = RLock()
         self._calls: dict[str, dict[str, Any]] = {}
         self._aliases: dict[str, str] = {}
         self._seq = 0
 
+    @_locked
     def start(
         self,
         *,
@@ -129,6 +141,7 @@ class PstnMediaFlowStore:
         if call_id:
             self._aliases[call_id] = key
 
+    @_locked
     def bind_call_id(self, external_id: str, call_id: str) -> None:
         key = self._aliases.get(external_id, external_id)
         row = self._calls.get(key)
@@ -137,6 +150,7 @@ class PstnMediaFlowStore:
         row["call_id"] = call_id
         self._aliases[call_id] = key
 
+    @_locked
     def negotiate(self, identifier: str, actual: CallMediaConfig) -> list[str]:
         row = self._row(identifier)
         if not row:
@@ -155,6 +169,7 @@ class PstnMediaFlowStore:
         row["failures"].extend(f for f in failures if f not in row["failures"])
         return failures
 
+    @_locked
     def emit(self, identifier: str, stage: str, direction: str, **kwargs: Any) -> None:
         row = self._row(identifier)
         if not row:
@@ -213,22 +228,27 @@ class PstnMediaFlowStore:
         if event.status == "failed" and event.detail and event.detail not in row["failures"]:
             row["failures"].append(event.detail)
 
+    @_locked
     def increment(self, identifier: str, key: str, amount: int) -> None:
         row = self._row(identifier)
         if row:
             row["metrics"][key] = int(row["metrics"].get(key) or 0) + amount
 
+    @_locked
     def finish(self, identifier: str) -> None:
         row = self._row(identifier)
         if row:
             row["active"] = False
             row["updated_at"] = time.time()
 
+    @_locked
     def snapshot(self, identifier: str | None = None) -> dict[str, Any] | None:
         row = self._row(identifier) if identifier else self.latest()
         if not row:
             return None
-        out = {**row, "events": list(row["events"])}
+        from copy import deepcopy
+
+        out = deepcopy({**row, "events": list(row["events"])})
         elapsed = max(0.001, (out.get("updated_at") or time.time()) - (out.get("started_at") or time.time()))
         metrics = dict(out.get("metrics") or {})
         metrics["inbound_packets_per_sec"] = round(metrics.get("inbound_frames", 0) / elapsed, 1)
@@ -307,7 +327,10 @@ class PstnMediaFlowStore:
             "tts": "tts_audio" in stages,
             "conversion": "converter" in stages and stages["converter"].get("status") != "failed",
             "queue": (row.get("metrics") or {}).get("queue_duration_ms", 0) < AUDIO_BACKLOG_MS,
-            "telnyx_outbound": "outbound_sent" in stages,
+            "telnyx_outbound": bool(
+                (row.get("metrics") or {}).get("outbound_sent_frames", 0) > 0
+                and stages.get("outbound_sent", {}).get("status") != "failed"
+            ),
         }
         derived_failures = list(row.get("failures") or [])
         metrics = row.get("metrics") or {}

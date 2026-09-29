@@ -1,4 +1,4 @@
-# Stop local dev servers (API 8000, Next 3000-3003) and Cloudflare/ngrok tunnels.
+# Stop local dev servers (API 8000, Next 3000-3003, Voxly 5173) and Cloudflare/ngrok tunnels.
 # Kills process trees (uvicorn reloader + worker, npm/node, wrapper PowerShell windows)
 # and waits until the ports are actually free.
 

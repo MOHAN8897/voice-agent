@@ -1,66 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { DevCard } from "@/components/dev/DevCard";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-type Dashboard = { tenants: number; users: number; activeNumbers: number; failedPurchases: number };
-
-async function devFetch(path: string) {
-  const res = await fetch(path, { credentials: "include" });
-  if (!res.ok) throw new Error(`${res.status}`);
-  return res.json();
-}
-
-export default function SaasAdminPage() {
-  const [dash, setDash] = useState<Dashboard | null>(null);
-  const [tenants, setTenants] = useState<unknown[]>([]);
-  const [assignments, setAssignments] = useState<unknown[]>([]);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    try {
-      setError(null);
-      const [d, t, a] = await Promise.all([
-        devFetch("/api/dev/admin/dashboard"),
-        devFetch("/api/dev/admin/tenants"),
-        devFetch("/api/dev/admin/phone-assignments"),
-      ]);
-      setDash(d);
-      setTenants((t as { tenants: unknown[] }).tenants || []);
-      setAssignments((a as { assignments: unknown[] }).assignments || []);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load");
-    }
-  }, []);
-
+/**
+ * `/dev/saas-admin` was a single JSON dump. It is replaced by the `/dev/admin/*`
+ * console, so this keeps old bookmarks working instead of 404ing.
+ */
+export default function SaasAdminRedirect() {
+  const router = useRouter();
   useEffect(() => {
-    load();
-  }, [load]);
-
+    router.replace("/dev/admin");
+  }, [router]);
   return (
-    <div className="space-y-6 p-6">
-      <h1 className="text-xl font-semibold text-[var(--skeuo-fg)]">SaaS Admin</h1>
-      {error && <p className="text-sm text-red-400">Requires dev login + DATABASE_URL. {error}</p>}
-      {dash && (
-        <div className="grid gap-4 md:grid-cols-4">
-          {[
-            ["Tenants", dash.tenants],
-            ["Users", dash.users],
-            ["Numbers", dash.activeNumbers],
-            ["Failed purchases", dash.failedPurchases],
-          ].map(([label, value]) => (
-            <DevCard key={String(label)} title={String(label)}>
-              <p className="text-2xl font-mono">{value}</p>
-            </DevCard>
-          ))}
-        </div>
-      )}
-      <DevCard title="Tenants">
-        <pre className="max-h-64 overflow-auto text-xs">{JSON.stringify(tenants, null, 2)}</pre>
-      </DevCard>
-      <DevCard title="Phone assignments">
-        <pre className="max-h-96 overflow-auto text-xs">{JSON.stringify(assignments, null, 2)}</pre>
-      </DevCard>
-    </div>
+    <p className="p-6 text-sm text-text-muted" role="status">
+      Moved to <span className="text-text">SaaS admin → Overview</span>…
+    </p>
   );
 }

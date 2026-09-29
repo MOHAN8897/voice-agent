@@ -1,4 +1,5 @@
-# Share website via Cloudflare quick tunnel (port 3000). No account needed.
+# Share website via Cloudflare quick tunnel (port 5173 = Voxly, which also proxies
+# /api, /ws and the admin panel at /dev). No account needed.
 # Usage: powershell -ExecutionPolicy Bypass -File scripts/tunnel_cloudflared_share.ps1
 
 $ErrorActionPreference = "Stop"
@@ -21,14 +22,14 @@ try {
     $ok = $false
     for ($i = 0; $i -lt 10; $i++) {
         try {
-            Invoke-WebRequest -Uri "http://localhost:3000/dev/login" -UseBasicParsing -TimeoutSec 3 | Out-Null
+            Invoke-WebRequest -Uri "http://127.0.0.1:5173/dev/login" -UseBasicParsing -TimeoutSec 5 | Out-Null
             $ok = $true
             break
         } catch { Start-Sleep -Seconds 1 }
     }
     if (-not $ok) { throw "not ready" }
 } catch {
-    Write-Error "Website must be running on port 3000. Run: npm run share"
+    Write-Error "Voxly must be running on port 5173. Run: npm run share"
 }
 
 $cf = Find-CloudflaredExe
@@ -40,8 +41,8 @@ Get-CimInstance Win32_Process -Filter "Name='cloudflared.exe'" -ErrorAction Sile
     Where-Object { $_.CommandLine -match "tunnel --url" } |
     ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
 
-Write-Host "Starting Cloudflare tunnel on port 3000..."
-Start-Process -FilePath $cf -ArgumentList @("tunnel", "--url", "http://127.0.0.1:3000") `
+Write-Host "Starting Cloudflare tunnel on port 5173 (Voxly)..."
+Start-Process -FilePath $cf -ArgumentList @("tunnel", "--url", "http://127.0.0.1:5173") `
     -RedirectStandardError $LogFile -WindowStyle Hidden | Out-Null
 
 $publicUrl = $null
@@ -60,7 +61,7 @@ if (-not $publicUrl) {
 }
 
 @{ web = $publicUrl; mode = "cloudflared" } | ConvertTo-Json | Set-Content -Path $UrlFile
-$shareLink = "$publicUrl/dev/test-studio"
+$shareLink = "$publicUrl"
 
 Write-Host ""
 Write-Host "============================================================"
@@ -69,7 +70,8 @@ Write-Host "============================================================"
 Write-Host ""
 Write-Host "  $shareLink"
 Write-Host ""
-Write-Host "  Login: $publicUrl/dev/login  (dev / devpass)"
+Write-Host "  Product (Voxly)   $publicUrl"
+Write-Host "  Admin panel       $publicUrl/dev/login  (dev / devpass)"
 Write-Host "============================================================"
 
 return $shareLink

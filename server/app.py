@@ -406,46 +406,58 @@ async def meta():
             "stt_ws": "/ws/stt-realtime (browser PCM16 → saaras:v3-realtime, partials + VAD)",
             "tts_ws": "/ws/tts?model=bulbul:v3 (config/text/flush → base64 audio chunks)",
         },
-        "finetune": {"catalog": "GET /api/settings/catalog", "runtime": "GET/POST/DELETE /api/settings/runtime", "console": "/settings.html"},
+        "finetune": {"catalog": "GET /api/settings/catalog", "runtime": "GET/POST/DELETE /api/settings/runtime"},
     }
 
 
 def _should_serve_client() -> bool:
+    """Opt-in only.
+
+    The legacy `client/` app used to be served at `/`, which meant the public API
+    hostname showed an obsolete "Telugu Agent" page instead of the product. Voxly is
+    the frontend, so this is off unless it is explicitly re-enabled.
+    """
     try:
         return get_settings().serve_client_static
     except Exception:
-        return os.getenv("SERVE_CLIENT_STATIC", "true").lower() in ("true", "1", "yes")
+        return os.getenv("SERVE_CLIENT_STATIC", "false").lower() in ("true", "1", "yes")
 
 
-# Serve client static (if exists) — gated when Next.js web service is primary
+@app.get("/")
+async def root():
+    """Send visitors to the product rather than serving a dead page.
+
+    The API host is public because carrier webhooks use it, so opening it in a browser
+    should land on the real UI rather than JSON or a legacy page.
+    """
+    from fastapi.responses import RedirectResponse
+
+    try:
+        product = (get_settings().voxly_frontend_url or "").strip().rstrip("/")
+    except Exception:
+        product = ""
+    if product:
+        return RedirectResponse(url=f"{product}/", status_code=307)
+    return JSONResponse(
+        {
+            "service": "voxly-api",
+            "message": "This host serves the API. The product UI is on a separate URL.",
+            "health": "/api/health",
+        }
+    )
+
+
+# Serve the legacy client only when explicitly enabled, and never at `/`, so it can
+# no longer shadow a real API route. It is superseded by voxly-ai.
 if CLIENT_DIR.exists() and _should_serve_client():
-    # Serve index.html at /
-    @app.get("/")
-    async def serve_index():
+    @app.get("/legacy")
+    async def serve_legacy_index():
         index = CLIENT_DIR / "index.html"
         if index.exists():
             return FileResponse(str(index))
-        return {"message": "Client not built — API is running. See /api/health"}
+        return {"message": "Legacy client not built."}
 
-    # Mount client dir for css/js
     try:
-        app.mount("/client", StaticFiles(directory=str(CLIENT_DIR)), name="client")
+        app.mount("/legacy/static", StaticFiles(directory=str(CLIENT_DIR)), name="client")
     except Exception:
         pass
-
-    # Also serve assets at root for relative paths (catch-all prevents future 404s)
-    _CLIENT_MEDIA = {
-        ".js": "application/javascript",
-        ".css": "text/css",
-        ".html": "text/html",
-    }
-
-    @app.get("/{asset_name}")
-    async def serve_client_asset(asset_name: str):
-        if ".." in asset_name or "/" in asset_name or "\\" in asset_name:
-            return JSONResponse(status_code=404, content={"error": "not found"})
-        p = CLIENT_DIR / asset_name
-        media = _CLIENT_MEDIA.get(p.suffix.lower())
-        if not media or not p.is_file():
-            return JSONResponse(status_code=404, content={"error": "not found"})
-        return FileResponse(str(p), media_type=media)

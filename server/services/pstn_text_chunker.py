@@ -125,7 +125,21 @@ def _spoken_opening_candidate(line: str) -> str | None:
     if m:
         raw = m.group(1).strip().strip('"').strip("'")
     low = raw.lower()
-    if low.startswith(("opening_line", "say this", "one spoken", "if you speak", "if the caller")):
+    if low.startswith((
+        "opening_line",
+        "say this",
+        "one spoken",
+        "if you speak",
+        "if the caller",
+        # An all-caps imperative is an instruction to the model, never a greeting
+        # the agent should speak. Labelled-opening extraction widened what reaches
+        # here, so policy prose must be rejected here rather than read aloud.
+        "never ",
+        "do not ",
+        "don't ",
+        "always ",
+        "you must ",
+    )):
         return None
     if _OPENING_POLICY_HINT.search(raw):
         return None
@@ -184,7 +198,16 @@ def enrich_outbound_spoken_intro(
     name, company = _parse_agent_identity(compiled_brain)
     if not name:
         return spoken or None
-    if len(spoken) >= 52 and name.lower() in spoken.lower():
+    # If the line already introduces the agent, prepending a second intro doubles it
+    # ("Hi, this is Priya calling from X. Hi, this is Priya. Do you have a moment?").
+    # Length was not part of that question: any self-introduction counts.
+    if name.lower() in spoken.lower():
+        if company and company.lower() not in spoken.lower():
+            # Already a self-introduction, only the company is missing. Add just that,
+            # rather than a second full intro.
+            first, sep, rest = spoken.partition(". ")
+            if sep:
+                return f"{first}, calling from {company}. {rest}"[:280]
         return spoken[:280]
     lang = (language or "te-IN").lower()
     if lang.startswith("te"):
@@ -201,27 +224,73 @@ def enrich_outbound_spoken_intro(
     return (spoken or intro)[:280]
 
 
+# Every brain writer on this platform stores the opening as a *labelled* line
+# rather than a `--- OPENING ---` block: the SaaS studio writes
+# "Opening greeting: ...", the brief compiler writes "Example opening: ...", and
+# the Voxly console writes "OPENING LINE" followed by the greeting. Reading only
+# the block form made those brains fall through to a generic default greeting, so
+# outbound calls opened with "Hi, konchem time unda?" and no agent identity.
+#
+# The label set is deliberately narrow. Bare "Opening:" / "Greeting:" also appear as
+# policy prose, and matching those would put instructions such as "NEVER read this
+# aloud" into the agent's mouth.
+_OPENING_LABELLED = re.compile(
+    r"^[ \t]*(?:"
+    r"example\s+(?:opening|first\s+line)"
+    r"|opening\s+greeting"
+    r"|canonical\s+opening"
+    r"|opening\s+line(?:_te)?"
+    r")\s*[:=]\s*(?P<inline>.+?)\s*$",
+    re.IGNORECASE | re.MULTILINE,
+)
+# A bare header on its own line, with the greeting on the following line.
+_OPENING_BARE_HEADER = re.compile(
+    r"^[ \t]*(?:OPENING\s+LINE|CANONICAL\s+OPENING)\s*$\s*\n(?P<body>[^\n]+)",
+    re.IGNORECASE | re.MULTILINE,
+)
+
+
+def _labelled_opening_candidates(compiled_brain: str) -> list[str]:
+    """Speakable greetings from labelled lines, newest-style writers included."""
+    text = compiled_brain or ""
+    found: list[str] = []
+    for match in _OPENING_LABELLED.finditer(text):
+        candidate = _spoken_opening_candidate(match.group("inline"))
+        if candidate and candidate not in found:
+            found.append(candidate)
+    for match in _OPENING_BARE_HEADER.finditer(text):
+        candidate = _spoken_opening_candidate(match.group("body"))
+        if candidate and candidate not in found:
+            found.append(candidate)
+    return found
+
+
 def _opening_section_candidates(compiled_brain: str) -> list[str]:
     """Speakable lines from OPENING / CANONICAL OPENING sections, longest first."""
     text = compiled_brain or ""
-    found: list[str] = []
+    found: list[str] = list(_labelled_opening_candidates(text))
     section = _OPENING_SECTION.search(text)
     if section:
         for line in section.group(1).splitlines():
             candidate = _spoken_opening_candidate(line)
             if candidate:
                 found.append(candidate)
-    for header in ("--- CANONICAL OPENING ---", "--- OPENING ---", "--- OPENING HINT ---", "## OPENING"):
-        idx = text.upper().find(header.upper())
-        if idx < 0:
-            continue
-        chunk = text[idx + len(header) : idx + len(header) + 800]
-        for line in chunk.splitlines():
-            candidate = _spoken_opening_candidate(line)
-            if candidate and candidate not in found:
-                found.append(candidate)
-        if found:
-            break
+    else:
+        # Only when the fenced block is absent. Running this window over a brain that
+        # already matched above pulled in the following 800 characters, so unrelated
+        # policy lines ("RUNTIME TAGS", "{{callback_phone}}", step lists) outranked the
+        # real greeting once sorted longest-first.
+        for header in ("--- CANONICAL OPENING ---", "--- OPENING ---", "--- OPENING HINT ---", "## OPENING"):
+            idx = text.upper().find(header.upper())
+            if idx < 0:
+                continue
+            chunk = text[idx + len(header) : idx + len(header) + 800]
+            for line in chunk.splitlines():
+                candidate = _spoken_opening_candidate(line)
+                if candidate and candidate not in found:
+                    found.append(candidate)
+            if found:
+                break
     found.sort(key=len, reverse=True)
     return found
 
@@ -294,21 +363,27 @@ def extract_opening_greeting(
         line = _spoken_opening_candidate(quoted.group(1))
         if line:
             return line
+    labelled = _labelled_opening_candidates(text)
+    if labelled:
+        return labelled[0]
     section = _OPENING_SECTION.search(text)
     if section:
         for line in section.group(1).splitlines():
             candidate = _spoken_opening_candidate(line)
             if candidate:
                 return candidate
-    for header in ("--- CANONICAL OPENING ---", "--- OPENING ---", "--- OPENING HINT ---", "## OPENING"):
-        idx = text.upper().find(header.upper())
-        if idx >= 0:
-            chunk = text[idx + len(header) : idx + len(header) + 600]
-            for line in chunk.splitlines():
-                candidate = _spoken_opening_candidate(line)
-                if candidate:
-                    return candidate
-            break
+    else:
+        # Same rationale as _opening_section_candidates: the free-text window is a
+        # fallback for unfenced headers only, never a second pass over a matched block.
+        for header in ("--- CANONICAL OPENING ---", "--- OPENING ---", "--- OPENING HINT ---", "## OPENING"):
+            idx = text.upper().find(header.upper())
+            if idx >= 0:
+                chunk = text[idx + len(header) : idx + len(header) + 600]
+                for line in chunk.splitlines():
+                    candidate = _spoken_opening_candidate(line)
+                    if candidate:
+                        return candidate
+                break
     return _default_greeting(language, direction=direction)
 
 

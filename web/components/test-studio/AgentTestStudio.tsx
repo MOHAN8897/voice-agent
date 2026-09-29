@@ -110,7 +110,7 @@ function stampedUsageFromCallBody(body: Record<string, unknown>): StampedSession
 
 type ChannelTab = TestStudioMode;
 type FineTuneTab = "prompts" | "llm" | "voice";
-type StudioTab = "live" | "setup" | "stack" | "history" | "config" | "tune" | "debug";
+type StudioTab = "live" | "setup" | "history" | "config" | "tune" | "debug";
 
 const AGENT_CHILD_TABS: { id: StudioTab; label: string; hint: string }[] = [
   { id: "live", label: "Live", hint: "Mic · transcript · conversation" },
@@ -119,12 +119,14 @@ const AGENT_CHILD_TABS: { id: StudioTab; label: string; hint: string }[] = [
   { id: "debug", label: "Debug", hint: "Events · memory · review" },
 ];
 
+// The separate "Stack" tab duplicated Config, which already renders the full stack
+// rack (tier, providers, voice, tokens). PSTN keeps Provider, which is the only
+// genuinely distinct view.
 const PSTN_CHILD_TABS: { id: StudioTab; label: string; hint: string }[] = [
   { id: "live", label: "Live call", hint: "Dial · contacts · recording" },
   { id: "setup", label: "Provider", hint: "SIP · handshake · Telnyx" },
-  { id: "stack", label: "Stack", hint: "STT · LLM · TTS path" },
-  { id: "history", label: "History", hint: "Cost · download · review" },
   { id: "config", label: "Config", hint: "Stack · voice · tokens" },
+  { id: "history", label: "History", hint: "Cost · download · review" },
   { id: "tune", label: "Fine-tune", hint: "Prompts · LLM · VAD" },
   { id: "debug", label: "Debug", hint: "Events · memory · review" },
 ];
@@ -897,7 +899,7 @@ export function AgentTestStudio({
             <PstnFlowWorkspace
               channel={channel}
               section={
-                studioTab === "setup" || studioTab === "stack" || studioTab === "history"
+                studioTab === "setup" || studioTab === "history"
                   ? studioTab
                   : "live"
               }

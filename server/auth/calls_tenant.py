@@ -24,3 +24,22 @@ async def resolve_calls_tenant_id(
     if tenant_id:
         return tenant_id
     return tenant_id_from_request(request)
+
+
+async def resolve_prompt_preview_tenant_id(
+    request: Request,
+    authorization: Annotated[str | None, Header()] = None,
+) -> str | None:
+    """Allow signed Dev Portal operators; keep subscriber previews tenant-scoped."""
+    from server.auth.dependencies import require_permission
+    from server.auth.session import cookie_names, parse_session_token
+    from server.auth.subscriber_dependencies import has_portal_session
+
+    session = parse_session_token(request.cookies.get(cookie_names()["dev"], ""), "dev")
+    if session is not None:
+        require_permission(session, "dev.platform_brain")
+        return None
+    # Test Studio / dev telephony use session cookies, not Bearer JWT.
+    if has_portal_session(request):
+        return None
+    return await resolve_calls_tenant_id(request, authorization)

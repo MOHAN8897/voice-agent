@@ -40,7 +40,7 @@ def _voice_loop(call_id: str | None, external_id: str) -> Any | None:
     if bridge and getattr(bridge, "_voice", None):
         return bridge._voice
     if call_id:
-        for bridge in active_telnyx_bridges.values():
+        for bridge in list(active_telnyx_bridges.values()):
             if getattr(bridge, "call_id", None) == call_id:
                 return getattr(bridge, "_voice", None)
     return None
@@ -62,8 +62,9 @@ def build_forensics_snapshot(call_id: str | None) -> dict[str, Any]:
     meta = call_ledger.read_meta(ledger_id) if ledger_id else {}
     stored = (meta.get("pstn_forensics") or {}) if isinstance(meta.get("pstn_forensics"), dict) else {}
 
-    timer_keys = [k for k in (external_id, cid) if k]
-    timeline = milestones_for(*timer_keys)
+    # Dial/answer/first-send share the carrier clock. Passing both aliases
+    # prefixes every milestone key and makes the latency calculation miss them.
+    timeline = milestones_for(external_id or cid) if (external_id or cid) else {}
     latencies = flow.get("latencies") or {}
     metrics = flow.get("metrics") or {}
 
@@ -118,11 +119,9 @@ def build_forensics_snapshot(call_id: str | None) -> dict[str, Any]:
         "outbound_sent_frames": metrics.get("outbound_sent_frames"),
     }
 
-    answer_to_first_sent_ms = timeline.get("first_outbound_sent")
-    if answer_to_first_sent_ms is None and timeline.get("answered") is not None:
-        pass
-    elif timeline.get("answered") is not None and timeline.get("first_outbound_sent") is not None:
-        answer_to_first_sent_ms = timeline["first_outbound_sent"] - timeline["answered"]
+    answer_to_first_sent_ms = None
+    if timeline.get("answered") is not None and timeline.get("first_outbound_sent") is not None:
+        answer_to_first_sent_ms = max(0, timeline["first_outbound_sent"] - timeline["answered"])
 
     hints: list[str] = []
     if (metrics.get("playout_underrun_count") or 0) > 0:

@@ -531,7 +531,7 @@ class TelnyxCallRegistry:
     def list_recent(self, limit: int | None = 20) -> list[dict[str, Any]]:
         self._prune_stale()
         by_id: dict[str, dict[str, Any]] = {}
-        for row in self._calls.values():
+        for row in list(self._calls.values()):
             cid = str(row.get("call_control_id") or "")
             if cid:
                 by_id[cid] = row
@@ -561,7 +561,7 @@ class TelnyxCallRegistry:
         now = int(time.time())
         stale = [
             cid
-            for cid, row in self._calls.items()
+            for cid, row in list(self._calls.items())
             if (now - int(row.get("updated_at") or 0)) > max_age_s
             and str(row.get("status") or "") in {"completed", "stream-error", "hangup", "failed"}
         ]

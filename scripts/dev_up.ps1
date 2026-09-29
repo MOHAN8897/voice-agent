@@ -17,6 +17,9 @@ param(
     [switch]$WebOnly,
     [switch]$ProductionWeb,
     [switch]$VoxlyFocus,
+    # dev_stack.ps1 prints the canonical banner (it knows about the tunnel), so it
+    # suppresses this one. Without it the two blocks stack up and look duplicated.
+    [switch]$QuietBanner,
     # Retained for compatibility; production mode always builds current sources.
     [switch]$ForceWebBuild
 )
@@ -205,7 +208,9 @@ if (-not $ApiOnly -and (Test-Path $VoxlyRoot) -and $apiOk) {
     $voxlyOk = Wait-ForService -Label "Voxly" -Url $VoxlyUrl -MaxAttempts 60
 }
 
-Write-DevBanner -ApiOk $apiOk -WebOk $webOk -VoxlyOk $voxlyOk -VoxlyFocus:$VoxlyFocus
+if (-not $QuietBanner) {
+    Write-DevBanner -ApiOk $apiOk -WebOk $webOk -VoxlyOk $voxlyOk -VoxlyFocus:$VoxlyFocus
+}
 
 if ($Open -and $webOk) {
     $openUrl = if ($VoxlyFocus -and $voxlyOk) { $VoxlyUrl } else { $DevLoginUrl }

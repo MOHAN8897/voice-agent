@@ -171,7 +171,8 @@ class Settings(BaseSettings):
     app_console_username: str | None = Field(None, alias="APP_CONSOLE_USERNAME")
     app_console_password: str | None = Field(None, alias="APP_CONSOLE_PASSWORD")
     default_tenant_id: str = Field("00000000-0000-4000-8000-000000000001", alias="DEFAULT_TENANT_ID")
-    serve_client_static: bool = Field(True, alias="SERVE_CLIENT_STATIC")
+    # The legacy client/ app is superseded by voxly-ai. Opt in explicitly if needed.
+    serve_client_static: bool = Field(False, alias="SERVE_CLIENT_STATIC")
     redis_url: str | None = Field(None, alias="REDIS_URL")
 
     enable_exotel: bool = Field(False, alias="ENABLE_EXOTEL")
@@ -190,6 +191,11 @@ class Settings(BaseSettings):
     telnyx_phone_number: str | None = Field(None, alias="TELNYX_PHONE_NUMBER")
     telnyx_outbound_voice_profile_id: str | None = Field(None, alias="TELNYX_OUTBOUND_VOICE_PROFILE_ID")
     telnyx_webhook_tolerance_sec: int = Field(300, alias="TELNYX_WEBHOOK_TOLERANCE_SEC")
+    # How long an answered PSTN call may produce no agent audio before it is ended.
+    # A missing opening greeting once left calls connected and silent until the
+    # customer gave up, billing the tenant for a mute line. Generous enough for a
+    # cold provider session; lower it if your first-token latency is faster.
+    telnyx_first_audio_grace_sec: float = Field(12.0, alias="TELNYX_FIRST_AUDIO_GRACE_SEC")
     telnyx_max_concurrent_calls: int = Field(50, alias="TELNYX_MAX_CONCURRENT_CALLS")
     enable_plivo: bool = Field(False, alias="ENABLE_PLIVO")
     plivo_auth_id: str | None = Field(None, alias="PLIVO_AUTH_ID")

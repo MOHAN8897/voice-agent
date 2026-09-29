@@ -17,6 +17,8 @@ logger = logging.getLogger(__name__)
 
 PREWARM_TTL_SEC = 90.0
 PREWARM_ADOPT_WAIT_SEC = 1.5
+# First slice at answer is short (C1); keep waiting for a dial-time bundle before giving up.
+MAX_PREWARM_ADOPT_TOTAL_SEC = 12.0
 
 _PROVIDER_WIRE: dict[str, dict[str, Any]] = {
     "telnyx": {"sample_rate": 16000, "tts_output_codec": "linear16"},
@@ -119,6 +121,36 @@ class PstnPrewarmRegistry:
     def _key(self, provider: str, external_id: str) -> str:
         return f"{provider}:{external_id}"
 
+    async def prepare(self, provider: str, external_id: str, dial_meta: dict[str, Any],
+                      *, timeout_sec: float = 20.0) -> None:
+        """Finish the opening before dialing, so a fast pickup cannot cancel it."""
+        await self.start(provider, external_id, dial_meta)
+        entry = self._entries[self._key(provider, external_id)]
+        try:
+            await asyncio.wait_for(asyncio.shield(entry.task), timeout=timeout_sec)
+            bundle = entry.bundle
+            if bundle is None or not bundle.greeting_text or not bundle.greeting_wire_frames:
+                raise RuntimeError("Opening audio preparation failed; call was not placed")
+        except BaseException:
+            await self.cancel(provider, external_id)
+            raise
+
+    async def bind(self, provider: str, prepared_id: str, external_id: str) -> None:
+        """Move a prepared bundle to its carrier ID after the dial API returns."""
+        async with self._lock:
+            entry = self._entries.pop(self._key(provider, prepared_id), None)
+            if entry is None:
+                # A very fast answer may already have claimed the prepared ID
+                # from signed stream metadata while the dial HTTP was in flight.
+                return
+            entry.external_id = external_id
+            if entry.bundle:
+                entry.bundle.external_id = external_id
+            key = self._key(provider, external_id)
+            self._entries[key] = entry
+        asyncio.create_task(self._expire_if_unclaimed(key, entry.realtime_key, owner=entry.task))
+        log_pstn("prewarm.bound", control=external_id, call_id=prepared_id)
+
     async def start(self, provider: str, external_id: str, dial_meta: dict[str, Any]) -> None:
         key = self._key(provider, external_id)
         async with self._lock:
@@ -189,10 +221,33 @@ class PstnPrewarmRegistry:
             bundle = entry.bundle
             claimed_entry = entry
         if bundle is None and task and not task.done():
-            try:
-                await asyncio.wait_for(asyncio.shield(task), timeout=wait_sec)
-            except asyncio.TimeoutError:
-                pass
+            deadline = time.monotonic() + MAX_PREWARM_ADOPT_TOTAL_SEC
+            while bundle is None and not task.done():
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    log_pstn(
+                        "prewarm.adopt_timeout",
+                        control=external_id,
+                        provider=provider,
+                        wait_sec=wait_sec,
+                        reason="greeting_not_ready_at_answer",
+                    )
+                    break
+                try:
+                    await asyncio.wait_for(
+                        asyncio.shield(task),
+                        timeout=min(wait_sec, remaining),
+                    )
+                except asyncio.TimeoutError:
+                    async with self._lock:
+                        live = self._entries.get(key)
+                        if live is not None:
+                            bundle = live.bundle
+                    continue
+            async with self._lock:
+                live = self._entries.get(key)
+                if live is not None and bundle is None:
+                    bundle = live.bundle
         async with self._lock:
             if self._entries.get(key) is not claimed_entry:
                 return None
@@ -501,6 +556,18 @@ async def _build_prewarm_bundle(
                         frames=len(frames),
                         chars=len(greeting or ""),
                     )
+                else:
+                    # Silently ending up with no opening meant the agent said nothing
+                    # until the callee spoke, on an answered billable call.
+                    log_pstn(
+                        "prewarm.greeting.realtime.empty",
+                        control=external_id,
+                        provider=provider,
+                        model=stack.llm.model,
+                        chars=len(greeting or ""),
+                        greeting=(greeting or "")[:120],
+                        reason="provider_returned_no_audio",
+                    )
             except Exception as exc:
                 log_pstn(
                     "prewarm.greeting.realtime.failed",
@@ -521,6 +588,16 @@ async def _build_prewarm_bundle(
         )
         if frames:
             greeting_source = "tts"
+    elif greeting:
+        # greeting is set but the pipeline is neither realtime_voice nor classic.
+        log_pstn(
+            "prewarm.greeting.skipped",
+            control=external_id,
+            provider=provider,
+            mode=mode,
+            chars=len(greeting),
+            reason="unsupported_pipeline",
+        )
 
     return PstnPrewarmBundle(
         provider=provider,

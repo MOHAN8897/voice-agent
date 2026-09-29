@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import secrets
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -14,12 +14,22 @@ from server.config.env import get_settings
 
 from server.auth.dependencies import require_dev_session, require_permission
 from server.auth.passwords import hash_portal_password
+from server.auth.rbac import (
+    ROLE_ADMINISTRATOR,
+    ROLE_CUSTOMER_ADMIN,
+    ROLE_CUSTOMER_VIEWER,
+    ROLE_DEVELOPER,
+    ROLE_PLATFORM_ADMIN,
+    ROLE_VOICE_ENGINEER,
+)
 from server.auth.session import SessionData
 from server.db.connection import get_session_factory
-from server.db.models.entities import Agent, Call, Tenant
+from server.db.models.entities import Agent, Call, CallAttempt, Tenant
 from server.db.models.phase5_models import PhoneNumber
 from server.db.models.saas_models import (
     AuthEvent,
+    BillingWallet,
+    BillingWalletTransaction,
     NumberPurchase,
     ProvisionJob,
     TenantMembership,
@@ -354,6 +364,192 @@ async def user_auth_events(user_id: str, session: SessionData = Depends(require_
             {"eventType": e.event_type, "createdAt": e.created_at.isoformat(), "ip": e.ip}
             for e in rows
         ]
+    }
+
+
+@router.get("/api/dev/admin/access")
+async def admin_access(session: SessionData = Depends(require_dev_session)):
+    """Serve the RBAC matrix straight from the authorization source of truth.
+
+    The admin UI must never carry its own copy of this table, or the permission
+    screen would drift from what the API actually enforces.
+    """
+    require_permission(session, "dev.admin.tenants")
+    from server.auth import rbac
+
+    roles = sorted(
+        {
+            ROLE_ADMINISTRATOR,
+            ROLE_DEVELOPER,
+            ROLE_PLATFORM_ADMIN,
+            ROLE_CUSTOMER_ADMIN,
+            ROLE_VOICE_ENGINEER,
+            ROLE_CUSTOMER_VIEWER,
+        },
+        key=lambda r: r,
+    )
+    permissions = [
+        {
+            "name": name,
+            "roles": sorted(allowed),
+            "devOnly": name.startswith("dev."),
+        }
+        for name, allowed in sorted(rbac._PERMISSIONS.items())
+    ]
+    return {
+        "roles": roles,
+        "permissions": permissions,
+        "currentRole": session.role,
+        "currentSubject": session.subject,
+        "currentPermissions": sorted(
+            p["name"] for p in permissions if session.role in p["roles"]
+        ),
+    }
+
+
+@router.get("/api/dev/admin/analytics")
+async def admin_analytics(days: int = Query(30, ge=1, le=365), session: SessionData = Depends(require_dev_session)):
+    """Operational analytics for maintaining the SaaS product.
+
+    Everything here is aggregated from the real tables. No metric is estimated and
+    none is hard-coded, so the page cannot quietly show a stale or invented number.
+    """
+    require_permission(session, "dev.admin.tenants")
+    _require_db()
+    since = datetime.now(timezone.utc) - timedelta(days=days)
+    day0 = since.date().isoformat()
+
+    async with get_session_factory()() as db:
+        async def scalar(stmt):
+            return (await db.execute(stmt)).scalar()
+
+        # Call volume and talk time per day, PSTN only (a browser test is not usage).
+        daily = (
+            await db.execute(
+                select(
+                    func.date(Call.started_at).label("d"),
+                    func.count(Call.call_id),
+                    func.coalesce(func.sum(Call.duration_sec), 0),
+                )
+                .where(Call.started_at.isnot(None), Call.started_at >= since)
+                .group_by(func.date(Call.started_at))
+                .order_by(func.date(Call.started_at))
+            )
+        ).all()
+        daily_series = [
+            {"date": str(r[0]), "calls": int(r[1] or 0), "seconds": int(r[2] or 0)}
+            for r in daily
+        ]
+
+        by_status = (
+            await db.execute(
+                select(Call.status, func.count(Call.call_id))
+                .where(Call.started_at >= since)
+                .group_by(Call.status)
+            )
+        ).all()
+        by_direction = (
+            await db.execute(
+                select(Call.direction, func.count(Call.call_id))
+                .where(Call.started_at >= since)
+                .group_by(Call.direction)
+            )
+        ).all()
+
+        # Missed calls are a first-class outcome now, so surface them separately.
+        missed = int(
+            await scalar(
+                select(func.count())
+                .select_from(CallAttempt)
+                .where(CallAttempt.started_at >= since, CallAttempt.status.in_(("missed", "no_answer")))
+            )
+            or 0
+        )
+
+        # Money in: wallet top-ups only. Debits are spend, not revenue.
+        topups = (
+            await db.execute(
+                select(
+                    func.date(BillingWalletTransaction.created_at).label("d"),
+                    func.coalesce(func.sum(BillingWalletTransaction.amount_cents), 0),
+                    func.coalesce(func.sum(BillingWalletTransaction.amount_inr_paise), 0),
+                )
+                .where(
+                    BillingWalletTransaction.kind.in_(("topup", "top_up", "deposit")),
+                    BillingWalletTransaction.created_at >= since,
+                )
+                .group_by(func.date(BillingWalletTransaction.created_at))
+                .order_by(func.date(BillingWalletTransaction.created_at))
+            )
+        ).all()
+
+        tenants_total = int(await scalar(select(func.count()).select_from(Tenant)) or 0)
+        tenants_active = int(
+            await scalar(
+                select(func.count()).select_from(Tenant).where(Tenant.status == "active")
+            )
+            or 0
+        )
+        users_total = int(
+            await scalar(
+                select(func.count()).select_from(User).where(User.deleted_at.is_(None))
+            )
+            or 0
+        )
+        numbers_active = int(
+            await scalar(
+                select(func.count())
+                .select_from(PhoneNumber)
+                .where(PhoneNumber.released_at.is_(None))
+            )
+            or 0
+        )
+        purchases_failed = int(
+            await scalar(
+                select(func.count())
+                .select_from(NumberPurchase)
+                .where(NumberPurchase.status == "failed")
+            )
+            or 0
+        )
+        balance_cents = int(
+            await scalar(select(func.coalesce(func.sum(BillingWallet.balance_cents), 0))) or 0
+        )
+        top_tenants = (
+            await db.execute(
+                select(Tenant.name, func.count(Call.call_id))
+                .select_from(Call)
+                .join(Tenant, Tenant.tenant_id == Call.tenant_id)
+                .where(Call.started_at >= since)
+                .group_by(Tenant.name)
+                .order_by(func.count(Call.call_id).desc())
+                .limit(8)
+            )
+        ).all()
+
+    return {
+        "windowDays": days,
+        "since": since.isoformat(),
+        "totals": {
+            "calls": sum(d["calls"] for d in daily_series),
+            "seconds": sum(d["seconds"] for d in daily_series),
+            "missedCalls": missed,
+            "tenants": tenants_total,
+            "tenantsActive": tenants_active,
+            "users": users_total,
+            "activeNumbers": numbers_active,
+            "failedPurchases": purchases_failed,
+            "walletBalanceCents": balance_cents,
+        },
+        "callsByDay": daily_series,
+        "callsByStatus": {str(k or "unknown"): int(v or 0) for k, v in by_status},
+        "callsByDirection": {str(k or "unknown"): int(v or 0) for k, v in by_direction},
+        "topUpsByDay": [
+            {"date": str(r[0]), "cents": int(r[1] or 0), "inrPaise": int(r[2] or 0)}
+            for r in topups
+        ],
+        "topTenantsByCalls": [{"name": str(r[0]), "calls": int(r[1] or 0)} for r in top_tenants],
+        "emptyDay": day0,
     }
 
 

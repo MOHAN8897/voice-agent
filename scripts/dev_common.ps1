@@ -304,7 +304,7 @@ function Test-DevCommandLine {
     if ($CommandLine -match '(?i)uvicorn\s+server\.app') { return $true }
     $repoPath = [regex]::Escape((Split-Path -Parent $PSScriptRoot))
     if ($CommandLine -match '(?i)(cloudflared|ngrok)' -and
-        ($CommandLine -match $repoPath -or $CommandLine -match '(?i)https?://(localhost|127\.0\.0\.1):(8000|3000)\b')) { return $true }
+        ($CommandLine -match $repoPath -or $CommandLine -match '(?i)https?://(localhost|127\.0\.0\.1):(8000|3000|4173|5173)\b')) { return $true }
     if ($CommandLine -match '(?i)dev_window\.ps1') { return $true }
     if ($CommandLine -match '(?i)voice-agent-dev-(runners|jobs)') { return $true }
     if ($CommandLine -match '(?i)Voice Agent (API|Web|Tunnel)') { return $true }

@@ -86,12 +86,17 @@ if (Should-SyncRemoteEnv -and (Test-NamedTunnelConfig)) {
 }
 
 # --- Step 3: start API + web ---
-$productionWeb = $Mode -in @("share", "telephony")
+# The admin panel is reachable from outside through the tunnel, so a Next.js dev
+# server there is slow on first hit. A production build is faster to use publicly,
+# but it costs a full `next build` and kills hot reload, so it stays opt-in via
+# DEV_PRODUCTION_PANEL=1 (or the share/telephony modes, which exist for sharing).
+$productionWeb =
+    ($Mode -in @("share", "telephony")) -or (Test-EnvFlag "DEV_PRODUCTION_PANEL")
 $voxlyFocus = $Mode -eq "voxly"
 if ($Open) {
-    & (Join-Path $PSScriptRoot "dev_up.ps1") -Wait -Open -ProductionWeb:$productionWeb -VoxlyFocus:$voxlyFocus
+    & (Join-Path $PSScriptRoot "dev_up.ps1") -Wait -Open -QuietBanner -ProductionWeb:$productionWeb -VoxlyFocus:$voxlyFocus
 } else {
-    & (Join-Path $PSScriptRoot "dev_up.ps1") -Wait -ProductionWeb:$productionWeb -VoxlyFocus:$voxlyFocus
+    & (Join-Path $PSScriptRoot "dev_up.ps1") -Wait -QuietBanner -ProductionWeb:$productionWeb -VoxlyFocus:$voxlyFocus
 }
 if ($LASTEXITCODE -ne 0) {
     throw "Local stack failed to start. See data/dev-logs/api.log and web.log."
@@ -126,15 +131,18 @@ if (Should-StartTunnel) {
                 }
             }
             if ($publicApp) {
-                if (-not (Wait-ForService -Label "Public App" -Url "$publicApp/dev/login" -MaxAttempts 45)) {
-                    throw "Public website tunnel is not healthy. See data/dev-logs/cloudflared-named.log."
+                if (-not (Wait-ForService -Label "Public Voxly" -Url $publicApp -MaxAttempts 45)) {
+                    throw "Public Voxly tunnel is not healthy. See data/dev-logs/cloudflared-named.log."
                 }
-                if (-not (Wait-ForService -Label "Public App API proxy" -Url "$publicApp/api/health" -MaxAttempts 45)) {
-                    throw "Public website API proxy is not healthy."
+                if (-not (Wait-ForService -Label "Public Voxly API proxy" -Url "$publicApp/api/health" -MaxAttempts 45)) {
+                    throw "Public Voxly API proxy is not healthy."
+                }
+                if (-not (Wait-ForService -Label "Public admin panel" -Url "$publicApp/dev/login" -MaxAttempts 45)) {
+                    throw "Public admin panel (/dev) is not healthy."
                 }
             }
             if ($Mode -eq "share" -and (-not $publicApi -or -not $publicApp)) {
-                throw "Named tunnel config must include API (8000) and website (3000) ingress hosts."
+                throw "Named tunnel config must include API (8000) and Voxly (5173) ingress hosts."
             }
             $tunnelStarted = $true
         }
@@ -154,44 +162,40 @@ Write-Host "============================================================"
 Write-Host "  Voice agent stack"
 Write-Host "============================================================"
 Write-Host ""
-if ($Mode -eq "voxly") {
-    Write-Host "  Voxly (product UI)  http://127.0.0.1:5173"
-    Write-Host "  Dev portal          http://localhost:3000/dev/login  (DEV_PORTAL_USERNAME / DEV_PORTAL_PASSWORD in .env)"
-    Write-Host "  Test Studio         http://localhost:3000/dev/test-studio"
-    Write-Host "  API                 http://127.0.0.1:8000/api/health"
+Write-Host "  LOCAL"
+Write-Host "    Voxly (product)  http://127.0.0.1:5173"
+Write-Host "    Admin panel      http://localhost:3000/dev/login  (DEV_PORTAL_* in .env)"
+Write-Host "    Test Studio      http://localhost:3000/dev/test-studio"
+Write-Host "    API health       http://127.0.0.1:8000/api/health"
+Write-Host ""
+if ($tunnelStarted -and $publicApp -and $publicApp -notmatch "localhost") {
+    # One public origin serves both UIs: the product at /, the admin panel at /dev.
+    Write-Host "  PUBLIC (Cloudflare tunnel)"
+    Write-Host "    Voxly (product)  $publicApp"
+    Write-Host "    Admin panel      $publicApp/dev/login"
     Write-Host ""
-    Write-Host '  Marketing and /app console redirect to Voxly.'
-    if ($tunnelStarted) {
-        Write-Host '  Cloudflare tunnel is up for Telnyx/PSTN media (api-dev.hustlelabs.in).'
-    } else {
-        Write-Host '  PSTN tunnel did not start. Install cloudflared and run scripts/setup_cloudflare_tunnel.ps1'
+    if (-not $productionWeb) {
+        Write-Host "  Note: the public admin panel is a Next.js dev server, so the first"
+        Write-Host "  hit of each page compiles first. Set DEV_PRODUCTION_PANEL=1 in .env"
+        Write-Host "  for a production build (slower startup, no hot reload)."
+        Write-Host ""
     }
-} else {
-    Write-Host "  Local website     http://localhost:3000/dev/login  (DEV_PORTAL_* in .env)"
-    Write-Host "  Local API         http://127.0.0.1:8000/api/health"
-    Write-Host "  Test Studio       http://localhost:3000/dev/test-studio"
 }
 if ($tunnelStarted -and $publicApi) {
+    Write-Host "  CARRIER WEBHOOKS (public, required for PSTN)"
+    Write-Host "    Telnyx API       $publicApi/api/telnyx/webhook"
+    Write-Host "    Exotel callback  $publicApi/api/exotel/status-callback"
+    Write-Host "    Exotel WSS       wss://$($publicApi -replace '^https?://','')/ws/exotel-stream"
     Write-Host ""
-    Write-Host "  Public API        $publicApi"
-    Write-Host "  Exotel webhooks   $publicApi/api/exotel/status-callback"
-    Write-Host "  Exotel WSS        wss://$($publicApi -replace '^https?://','')/ws/exotel-stream"
-}
-if ($tunnelStarted -and $publicApp -and $publicApp -notmatch "localhost") {
+} elseif (-not $tunnelStarted) {
+    Write-Host "  Tunnel is DOWN - carrier webhooks and public links will not work."
+    Write-Host "  Run: npm run dev:cf-tunnel"
     Write-Host ""
-    Write-Host "  Public website    $publicApp"
-    if ($productionWeb) {
-        Write-Host "  Dev portal (public) $publicApp/dev/login"
-    } else {
-        Write-Host "  Dev portal (public) use localhost:3000/dev/login (dev bundles too large for tunnel)"
-    }
-    Write-Host "  Share with friend $publicApp/dev/test-studio"
 }
-if ($Mode -eq "share" -and $tunnelStarted -and $publicApp) {
+if ($Mode -eq "share" -and $tunnelStarted -and $publicApp -and $publicApp -notmatch "localhost") {
+    Write-Host "  COPY THIS LINK: $publicApp"
     Write-Host ""
-    Write-Host "  COPY THIS LINK: $publicApp/dev/test-studio"
 }
-Write-Host ""
 Write-Host "  Stop everything: npm run dev:down"
 Write-Host "============================================================"
 Write-Host ""

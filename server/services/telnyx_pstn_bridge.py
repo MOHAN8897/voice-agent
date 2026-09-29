@@ -12,6 +12,7 @@ from typing import Any
 
 from fastapi import WebSocket
 from starlette.websockets import WebSocketDisconnect
+from uvicorn.protocols.utils import ClientDisconnected
 
 from server.services.audio_transcode import (
     StreamingPcmResampler,
@@ -42,6 +43,29 @@ QUEUE_LOW_WATERMARK = 6
 QUEUE_FRAME_MS = 20
 # Kept for metrics API compatibility; live PSTN path does not use concealment.
 PLAYOUT_CONCEALMENT_MAX_FRAMES = 0
+# How long an answered call may produce no agent audio before it is ended. A greeting
+# plus first-token latency is a few seconds even on a cold provider session, so this
+# is generous; the point is to stop billing an unbounded mute call, not to race a
+# slow synthesis. Overridable per environment via TELNYX_FIRST_AUDIO_GRACE_SEC.
+_DEFAULT_FIRST_AUDIO_GRACE_SEC = 12.0
+
+
+def _default_first_audio_grace_sec() -> float:
+    try:
+        from server.config.env import get_settings
+
+        value = float(get_settings().telnyx_first_audio_grace_sec)
+        if value > 0:
+            return value
+    except Exception:
+        pass
+    return _DEFAULT_FIRST_AUDIO_GRACE_SEC
+
+
+# Module-level so tests can shrink it; the watchdog reads this, not a captured value.
+FIRST_OUTBOUND_AUDIO_GRACE_SEC = _default_first_audio_grace_sec()
+
+MEDIA_SEND_TIMEOUT_SEC = 2.0
 active_telnyx_bridges: dict[str, "TelnyxPstnBridge"] = {}
 _admission_lock = asyncio.Lock()
 
@@ -143,6 +167,7 @@ class TelnyxPstnBridge:
             "hangup_discarded_frames": 0,
         }
         self._out_task: asyncio.Task | None = None
+        self._silence_watchdog_task: asyncio.Task | None = None
         self._logged_first_out = False
         self._client_meta: dict[str, Any] = {}
         self._token_meta: dict[str, Any] = {}
@@ -219,9 +244,13 @@ class TelnyxPstnBridge:
                     )
                     break
                 except WebSocketDisconnect as exc:
+                    log_pstn("stream.disconnected", control=self.call_control_id,
+                             call_id=self.call_id, close_code=exc.code)
                     logger.info("[TELNYX] websocket closed code=%s", exc.code)
                     break
                 if message.get("type") == "websocket.disconnect":
+                    log_pstn("stream.disconnected", control=self.call_control_id,
+                             call_id=self.call_id, close_code=message.get("code"))
                     break
                 raw = message.get("text")
                 if not raw:
@@ -466,7 +495,10 @@ class TelnyxPstnBridge:
                 from server.services.pstn_prewarm import take_prewarm_for_answer
 
                 try:
-                    prewarm = await take_prewarm_for_answer("telnyx", self.call_control_id)
+                    prewarm = await take_prewarm_for_answer(
+                        "telnyx", self.call_control_id,
+                        fallback_external_id=merged_local.get("prewarm_external_id"),
+                    )
                 except Exception as exc:
                     log_pstn("prewarm.adopt_failed", control=self.call_control_id, error=str(exc)[:160])
             self._prewarm_bundle = prewarm
@@ -613,6 +645,9 @@ class TelnyxPstnBridge:
             self._voice.set_barge_handler(self._barge_in)
             self._voice.set_hangup_handler(self._provider_hangup)
             self._voice_loop_task = asyncio.create_task(self._start_voice_loop())
+            if (direction == "outbound" and not self._client_meta.get("skip_greeting")
+                    and not self._client_meta.get("test_mode")):
+                self._silence_watchdog_task = asyncio.create_task(self._watch_first_outbound_audio())
         except Exception as exc:
             from server.services.telnyx_client import telnyx_call_registry
 
@@ -638,6 +673,51 @@ class TelnyxPstnBridge:
                 pass
             self._closed = True
             return
+
+    async def _watch_first_outbound_audio(self) -> None:
+        """End an answered call that never produces audio, instead of billing silence.
+
+        A missing or empty opening greeting, a provider that returns no frames, and a
+        cancelled playout all look identical from the carrier's side: the customer
+        hears nothing. Previously the call stayed up until they gave up and hung up,
+        so the tenant paid for a mute line. Ending it makes the failure bounded and
+        visible, and is the same outcome the callee would have chosen a moment later.
+        """
+        try:
+            grace = FIRST_OUTBOUND_AUDIO_GRACE_SEC
+            await asyncio.sleep(grace)
+        except asyncio.CancelledError:
+            return
+        if self._closed or self._media_frames_out > 0:
+            return
+        pstn_media_flow.emit(
+            self._flow_id(), "outbound_sent", "outbound", status="failed",
+            detail="FIRST_OUTBOUND_AUDIO_TIMEOUT", queue_size=self._out_queue.qsize(),
+        )
+        log_pstn(
+            "media.out.silent",
+            call_id=self.call_id,
+            control=self.call_control_id,
+            reason="no_outbound_audio_after_grace",
+            grace_sec=grace,
+            frames_in=self._media_frames_in,
+        )
+        logger.error(
+            "[TELNYX] answered call produced no outbound audio in %.0fs; hanging up"
+            " control=%s call_id=%s",
+            grace,
+            self.call_control_id,
+            self.call_id,
+        )
+        self._closed = True
+        try:
+            await asyncio.wait_for(self._provider_hangup(), timeout=4.0)
+        except Exception:
+            logger.warning("[TELNYX] silent-call hangup failed", exc_info=True)
+        try:
+            await self.ws.close(code=1011)
+        except Exception:
+            pass
 
     async def _start_voice_loop(self) -> None:
         if not self._voice:
@@ -685,6 +765,7 @@ class TelnyxPstnBridge:
                 timer_key=self.call_control_id,
                 control=self.call_control_id,
                 call_id=self.call_id,
+                error_type=type(exc).__name__,
                 error=str(exc)[:200],
             )
             logger.exception("[TELNYX] voice loop failed control=%s: %s", self.call_control_id, exc)
@@ -978,6 +1059,11 @@ class TelnyxPstnBridge:
                 # never create a burst of catch-up frames.
                 next_send = max(next_send, time.monotonic())
                 await asyncio.sleep(max(0.0, next_send - time.monotonic()))
+                if self._last_out_frame_at:
+                    lag_ms = int((time.monotonic() - self._last_out_frame_at) * 1000) - QUEUE_FRAME_MS
+                    if lag_ms > 200 and self._out_queue.qsize() > 0:
+                        log_pstn("media.out.playout_gap", control=self.call_control_id,
+                                 call_id=self.call_id, lag_ms=lag_ms, queued=self._out_queue.qsize())
                 self._out_sending = True
                 encoded = base64.b64encode(chunk).decode("ascii")
                 message = json.dumps({"event": "media", "media": {"payload": encoded}})
@@ -988,7 +1074,7 @@ class TelnyxPstnBridge:
                     ):
                         self._note_stale_discard()
                         continue
-                    await self.ws.send_text(message)
+                    await asyncio.wait_for(self.ws.send_text(message), timeout=MEDIA_SEND_TIMEOUT_SEC)
                     if self._voice is not None and hasattr(self._voice, "_promote_queued_tts_to_heard"):
                         self._voice._promote_queued_tts_to_heard()
                 self._last_outgoing_payload = chunk
@@ -1043,6 +1129,34 @@ class TelnyxPstnBridge:
                 next_send += frame_interval
         except asyncio.CancelledError:
             pass
+        except (ClientDisconnected, WebSocketDisconnect, RuntimeError, asyncio.TimeoutError) as exc:
+            # The carrier socket can drop mid-call. One failed send used to close the
+            # bridge outright, which silenced the agent for the rest of an answered,
+            # billable call. End the call instead of leaving it running mute: a hangup
+            # is a visible, non-billable outcome, unlike a customer hearing nothing.
+            log_pstn(
+                "media.out.socket_lost",
+                call_id=self.call_id,
+                control=self.call_control_id,
+                error_type=type(exc).__name__,
+                close_code=getattr(exc, "code", None),
+                error=f"{type(exc).__name__}: {str(exc)[:160]}" or type(exc).__name__,
+                frames_out=self._media_frames_out,
+                queued=self._out_queue.qsize(),
+            )
+            pstn_media_flow.emit(
+                self._flow_id(), "outbound_sent", "outbound", status="failed",
+                detail=f"MEDIA_SEND_FAILED:{type(exc).__name__}", queue_size=self._out_queue.qsize(),
+            )
+            self._closed = True
+            try:
+                await asyncio.wait_for(self._provider_hangup(), timeout=4.0)
+            except Exception:
+                logger.warning("[TELNYX] hangup after media socket loss failed", exc_info=True)
+            try:
+                await self.ws.close(code=1001)
+            except Exception:
+                pass
         except Exception as exc:
             pstn_media_flow.emit(
                 self.call_control_id or self.ws_id,
@@ -1052,10 +1166,18 @@ class TelnyxPstnBridge:
                 detail=str(exc)[:200],
                 queue_size=self._out_queue.qsize(),
             )
-            log_pstn("media.out.failed", call_id=self.call_id, error=str(exc)[:200])
+            log_pstn("media.out.failed", call_id=self.call_id, control=self.call_control_id,
+                     error_type=type(exc).__name__, error=str(exc)[:200])
             logger.exception("[TELNYX] outbound worker failed: %s", str(exc)[:200])
             self._closed = True
-            await self.ws.close(code=1011)
+            try:
+                await asyncio.wait_for(self._provider_hangup(), timeout=4.0)
+            except Exception:
+                logger.warning("[TELNYX] hangup after playout failure failed", exc_info=True)
+            try:
+                await self.ws.close(code=1011)
+            except Exception:
+                pass
         finally:
             self._out_sending = False
 
@@ -1468,7 +1590,7 @@ class TelnyxPstnBridge:
             try:
                 from server.services.pstn_forensics import flush_meta
 
-                flush_meta(self.call_id)
+                await asyncio.to_thread(flush_meta, self.call_id)
             except Exception:
                 pass
         if self.call_control_id and self.call_id:
@@ -1484,13 +1606,20 @@ class TelnyxPstnBridge:
                 )
         await self._signal_queue_space(force=True)
         if not self._cleaned_voice_loop:
-            if (self._voice_loop_task and not self._voice_loop_task.done()
-                    and self._voice_loop_task is not asyncio.current_task()):
-                self._voice_loop_task.cancel()
-                try:
-                    await self._voice_loop_task
-                except (asyncio.CancelledError, Exception):
-                    pass
+            watchdog = self._silence_watchdog_task
+            if (watchdog and not watchdog.done()
+                    and watchdog is not asyncio.current_task()):
+                watchdog.cancel()
+            for task in (
+                self._voice_loop_task,
+                self._silence_watchdog_task,
+            ):
+                if task and not task.done() and task is not asyncio.current_task():
+                    task.cancel()
+                    try:
+                        await task
+                    except (asyncio.CancelledError, Exception):
+                        pass
             self._cleaned_voice_loop = True
         leftover = self._discard_queued_frames()
         if leftover:

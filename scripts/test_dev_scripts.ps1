@@ -19,7 +19,8 @@ $script:ProbeExit = 28
 $script:ProbeCode = '200'
 Assert-Equal (Test-HttpOk 'http://test.invalid') $false 'Timed out probe'
 
-Assert-Equal (Test-DevCommandLine 'cloudflared.exe tunnel --url http://127.0.0.1:3000') $true 'Own quick tunnel'
+Assert-Equal (Test-DevCommandLine 'cloudflared.exe tunnel --url http://127.0.0.1:5173') $true 'Own quick tunnel'
+Assert-Equal (Test-DevCommandLine 'cloudflared.exe tunnel --url http://127.0.0.1:3000') $true 'Quick tunnel on the admin panel port'
 Assert-Equal (Test-DevCommandLine 'cloudflared.exe tunnel --url http://127.0.0.1:9000') $false 'Unrelated quick tunnel'
 Assert-Equal (Test-DevCommandLine 'ngrok.exe http 9000') $false 'Unrelated ngrok'
 $repo = Split-Path -Parent $PSScriptRoot

@@ -1,4 +1,4 @@
-# Share the full website via ngrok (single tunnel on port 3000).
+# Share the full website via ngrok (single tunnel on port 5173 = Voxly).
 # Next.js proxies /api and /ws to the local API - friend only needs one link.
 #
 # Usage: powershell -ExecutionPolicy Bypass -File scripts/tunnel_ngrok_share.ps1
@@ -101,11 +101,11 @@ version: "2"
 authtoken: $Token
 tunnels:
   voice-web:
-    addr: 3000
+    addr: 5173
     proto: http
 "@ | Set-Content -Path $NgrokConfig -Encoding ASCII
 
-    Write-Host "Starting ngrok tunnel on port 3000..."
+    Write-Host "Starting ngrok tunnel on port 5173 (Voxly)..."
     $logFile = Join-Path $RepoRoot "data\dev-logs\ngrok.log"
     New-Item -ItemType Directory -Force -Path (Split-Path $logFile) | Out-Null
     Start-Process -FilePath $NgrokExe `
@@ -170,21 +170,21 @@ try {
     $ok = $false
     for ($i = 0; $i -lt 10; $i++) {
         try {
-            Invoke-WebRequest -Uri "http://localhost:3000/dev/login" -UseBasicParsing -TimeoutSec 3 | Out-Null
+            Invoke-WebRequest -Uri "http://127.0.0.1:5173/dev/login" -UseBasicParsing -TimeoutSec 5 | Out-Null
             $ok = $true
             break
         } catch { Start-Sleep -Seconds 1 }
     }
     if (-not $ok) { throw "not ready" }
 } catch {
-    Write-Error "Website must be running on port 3000 before ngrok starts. Run: npm run share"
+    Write-Error "Voxly must be running on port 5173 before ngrok starts. Run: npm run share"
 }
 
 $webUrl = Start-NgrokTunnel -Token $token -NgrokExe $ngrokExe
 Set-WebEnvSameOriginShare
 @{ web = $webUrl; mode = "single-tunnel" } | ConvertTo-Json | Set-Content -Path $UrlFile
 
-$shareLink = "$webUrl/dev/test-studio"
+$shareLink = "$webUrl"
 
 Write-Host ""
 Write-Host "============================================================"
@@ -193,7 +193,8 @@ Write-Host "============================================================"
 Write-Host ""
 Write-Host "  $shareLink"
 Write-Host ""
-Write-Host "  Login: $webUrl/dev/login  (dev / devpass)"
+Write-Host "  Product (Voxly)   $webUrl"
+Write-Host "  Admin panel       $webUrl/dev/login  (dev / devpass)"
 Write-Host "  ngrok dashboard: http://127.0.0.1:4040"
 Write-Host "============================================================"
 

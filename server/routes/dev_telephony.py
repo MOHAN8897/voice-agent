@@ -7,7 +7,7 @@ import time
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from pydantic import BaseModel, Field
 
 from server.auth.dependencies import require_dev_session, require_permission
@@ -22,6 +22,33 @@ from server.services.telephony import (
 router = APIRouter()
 
 _hydrated = False
+
+
+@router.get("/api/dev/telephony/diagnostics")
+async def dev_pstn_diagnostics(
+    response: Response,
+    call_id: str | None = Query(None, min_length=1, max_length=256),
+    after: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=300),
+    session: SessionData = Depends(require_dev_session),
+):
+    """Private, content-free live PSTN timeline, cursor-pollable by admins."""
+    require_permission(session, "dev.stack.read")
+    from server.services.pstn_diagnostics import pstn_diagnostics
+    from server.services.pstn_media_flow import pstn_media_flow
+
+    response.headers["Cache-Control"] = "private, no-store"
+    response.headers["Vary"] = "Cookie"
+    timeline = pstn_diagnostics.snapshot(call_id, after=after, limit=limit)
+    if timeline is None:
+        raise HTTPException(404, "Call diagnostics not found", headers={"Cache-Control": "no-store"})
+    flow = next((f for identifier in timeline["ids"]
+                 if (f := pstn_media_flow.snapshot(identifier))), None)
+    media = None if flow is None else {
+        key: flow.get(key) for key in ("active", "configured", "negotiated", "metrics", "latencies")
+    }
+    return {"ok": True, "timeline": timeline, "media": media,
+            "audibility": "Sent frames confirm transport only, not handset audibility"}
 
 
 async def _ensure_dev_telephony_hydrated() -> None:
@@ -514,6 +541,7 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
         return {"ok": False, "error": canary_block, "canary_blocked": True}
 
     client = TelnyxClient()
+    prewarm_external_id = f"dial-{uuid.uuid4().hex}"
     token = telnyx_stream_tokens.create(
         agent_id=body.agent_id,
         tier=tier,
@@ -523,6 +551,7 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
         stack_override=stack_override,
         direction="outbound",
         callee_e164=body.to_e164,
+        prewarm_external_id=prewarm_external_id,
     )
     stream_url = client.build_stream_ws_url(token=token)
     if not stream_url.startswith("wss://"):
@@ -547,6 +576,23 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
             "reused": True,
         }
     await _hangup_active_telnyx_to(client, body.to_e164)
+    from server.services.pstn_prewarm import pstn_prewarm_registry
+
+    try:
+        await pstn_prewarm_registry.prepare(
+            "telnyx", prewarm_external_id,
+            _outbound_prewarm_meta(
+                body, tier=tier or "medium", language=language,
+                source_session_id=source_session_id, inherit_config=inherit_config,
+                stack_override=stack_override, billed_user_id=billed_user_id,
+            ),
+        )
+    except Exception as exc:
+        log_pstn("dial.preparation.failed", control=prewarm_external_id,
+                 error_type=type(exc).__name__)
+        return {"ok": False, "error": "Opening audio could not be prepared. Call was not placed.",
+                "code": "prewarm_failed"}
+    bound = False
     try:
         result = await client.create_outbound_call(
             to_e164=body.to_e164,
@@ -565,9 +611,14 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
                 "direction": "outbound",
                 "billed_user_id": billed_user_id,
                 "tenant_id": session.tenant_id,
+                "prewarm_external_id": prewarm_external_id,
             },
         )
         call_control_id = str(result.get("call_control_id") or result.get("id") or "")
+        if not call_control_id:
+            raise RuntimeError("Telnyx did not return a call ID")
+        await pstn_prewarm_registry.bind("telnyx", prewarm_external_id, call_control_id)
+        bound = True
         mark(call_control_id)
         existing_call = telnyx_call_registry.get(call_control_id) or {}
         telnyx_call_registry.upsert(
@@ -593,6 +644,7 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
                 "billed_user_id": billed_user_id,
                 "tenant_id": session.tenant_id,
                 "dial_request_id": body.dial_request_id,
+                "prewarm_external_id": prewarm_external_id,
             },
         )
         if call_control_id:
@@ -631,21 +683,6 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
         if stack_adjustments:
             payload["stack_adjustments"] = stack_adjustments
         if call_control_id:
-            from server.services.pstn_prewarm import schedule_prewarm
-
-            schedule_prewarm(
-                "telnyx",
-                call_control_id,
-                _outbound_prewarm_meta(
-                    body,
-                    tier=tier or "medium",
-                    language=language,
-                    source_session_id=source_session_id,
-                    inherit_config=inherit_config,
-                    stack_override=stack_override,
-                    billed_user_id=billed_user_id,
-                ),
-            )
             payload["history"] = _record_dev_dial(
                 provider="telnyx",
                 external_id=call_control_id,
@@ -660,10 +697,14 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
     except TelnyxApiError as e:
         detail = (e.body or str(e))[:400]
         return {"ok": False, "error": detail, "status": e.status, "telnyx_error": detail}
+    finally:
+        if not bound:
+            await pstn_prewarm_registry.cancel("telnyx", prewarm_external_id)
 
 
 @router.get("/api/dev/telephony/calls")
 async def dev_telephony_calls(session: SessionData = Depends(require_dev_session)):
+    import asyncio
     require_permission(session, "dev.stack.read")
     from server.services.dev_telephony_store import dev_telephony_store
 
@@ -671,15 +712,15 @@ async def dev_telephony_calls(session: SessionData = Depends(require_dev_session
     if provider == "exotel":
         from server.services.exotel_call_registry import exotel_call_registry
 
-        rows = exotel_call_registry.list_recent(30)
+        rows = await asyncio.to_thread(exotel_call_registry.list_recent, 30)
     elif provider == "telnyx":
         from server.services.telnyx_client import telnyx_call_registry
 
-        rows = telnyx_call_registry.list_recent(30)
+        rows = await asyncio.to_thread(telnyx_call_registry.list_recent, 30)
     elif provider == "plivo":
         from server.services.plivo_client import plivo_call_registry
 
-        rows = plivo_call_registry.list_recent(30)
+        rows = await asyncio.to_thread(plivo_call_registry.list_recent, 30)
     else:
         rows = []
     for row in rows:
@@ -708,7 +749,7 @@ async def dev_telephony_history(
 
 
 @router.get("/api/dev/telephony/calls/{internal_call_id}/detail")
-async def dev_telephony_call_detail(
+def dev_telephony_call_detail(
     internal_call_id: str,
     session: SessionData = Depends(require_dev_session),
 ):
@@ -840,7 +881,7 @@ async def dev_telephony_contacts_delete(
 
 
 @router.get("/api/dev/telephony/media-flow")
-async def dev_telephony_media_flow(
+def dev_telephony_media_flow(
     call_id: str | None = None,
     session: SessionData = Depends(require_dev_session),
 ):
@@ -849,8 +890,6 @@ async def dev_telephony_media_flow(
     from server.services.pstn_media_flow import pstn_media_flow
 
     flow = pstn_media_flow.snapshot(call_id)
-    if not flow and call_id:
-        flow = pstn_media_flow.snapshot(None)
     if flow:
         from server.services.telnyx_pstn_bridge import active_telnyx_bridges
         from server.services.telnyx_client import telnyx_call_registry
@@ -916,7 +955,7 @@ async def dev_telephony_media_flow(
 
 
 @router.get("/api/dev/telephony/forensics")
-async def dev_telephony_forensics(
+def dev_telephony_forensics(
     call_id: str | None = None,
     session: SessionData = Depends(require_dev_session),
 ):

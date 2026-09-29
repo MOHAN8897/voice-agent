@@ -1299,6 +1299,20 @@ class PstnRealtimeVoiceLoop:
         pickup = (first_user or (who and not self._heard_content_turn)) and not _is_line_check(text)
         if pickup:
             self._pickup_suppress_until = time.monotonic() + _PICKUP_SUPPRESS_SEC
+            if not self._intro_noted and self._wire_frames_out == 0:
+                # A prewarm miss means there is no delivered opening to cover
+                # this hello. Cancelling its VAD reply and consuming it silently
+                # leaves both sides waiting forever.
+                from server.services.pstn_realtime_greeting_prewarm import prewarm_greeting_response_instructions
+
+                opening = getattr(self, "_opening_text", None) or extract_opening_greeting(
+                    self._compiled_brain(), self._resolve_language(), direction="outbound",
+                )
+                await self._start_injected_response(prewarm_greeting_response_instructions(
+                    self._resolve_language(), opening,
+                ))
+                log_pstn("greeting.pickup.recovery", call_id=self.call_id)
+                return
             log_pstn("realtime_voice.pickup_consumed", call_id=self.call_id, text=(text or "")[:80])
             return
         if not self._intro_noted:
@@ -1481,9 +1495,90 @@ class PstnRealtimeVoiceLoop:
                 call_id=self.call_id, usage=_usage, llm_model=model, prewarm=True,
             )
         if not frames:
-            # Never play a known stale identity/offer when regeneration fails.
+            # Never play a known stale identity/offer when regeneration fails, but do
+            # not go silent without a trace: the platform has no opening left to play
+            # and the model is instructed not to speak first, so the callee hears
+            # nothing until they talk.
+            log_pstn(
+                "greeting.deferred.resynth_failed",
+                call_id=self.call_id,
+                model=model,
+                old_chars=len(line),
+                new_chars=len(refreshed),
+                reason="side_session_returned_no_audio",
+            )
             return refreshed, []
         return (transcript or refreshed).strip(), frames
+
+    async def _recover_outbound_deferred_opening(
+        self,
+        *,
+        brain: str | None,
+        language: str,
+        model: str,
+        cfg: dict[str, Any],
+        max_output_tokens: int | None,
+        adapter: Any,
+    ) -> tuple[str | None, list[bytes]]:
+        """Answer-time PCM when dial-time prewarm was not adopted (multi-worker, adopt miss, etc.)."""
+        if not (brain or "").strip():
+            return None, []
+        line = extract_prewarm_greeting(brain, language, direction="outbound")
+        if not line:
+            return None, []
+        from server.realtime.models import is_gemini_live_voice_model
+        from server.services.pstn_realtime_greeting_prewarm import (
+            synthesize_gemini_greeting_on_side_session,
+            synthesize_realtime_greeting_frames,
+        )
+
+        log_pstn(
+            "greeting.deferred.recover",
+            call_id=self.call_id,
+            model=model,
+            chars=len(line),
+        )
+        if is_gemini_live_voice_model(model):
+            frames, transcript, usage = await synthesize_gemini_greeting_on_side_session(
+                greeting_text=line,
+                sample_rate=self.sample_rate,
+                tts_output_codec=self.tts_output_codec,
+                language=language,
+                model=model,
+                voice=str(cfg.get("voice") or ""),
+                turn_detection=str(cfg.get("turn_detection") or ""),
+                max_output_tokens=max_output_tokens,
+                control_id=self.call_id or self.session_id,
+            )
+            if usage and self.call_id:
+                await record_realtime_voice_usage(
+                    call_id=self.call_id, usage=usage, llm_model=model, prewarm=True,
+                )
+        else:
+            frames, transcript, usage = await synthesize_realtime_greeting_frames(
+                adapter,
+                greeting_text=line,
+                sample_rate=self.sample_rate,
+                tts_output_codec=self.tts_output_codec,
+                language=language,
+                control_id=self.call_id or self.session_id,
+            )
+            if usage and self.call_id:
+                await record_realtime_voice_usage(
+                    call_id=self.call_id,
+                    usage=usage,
+                    llm_model=model,
+                    prewarm=True,
+                )
+        if not frames:
+            log_pstn(
+                "greeting.deferred.recover_failed",
+                call_id=self.call_id,
+                model=model,
+                reason="no_audio_frames",
+            )
+            return None, []
+        return (transcript or line).strip(), list(frames)
 
     def _frame_bytes(self) -> int:
         if self.current_output_codec == "L16":
@@ -1548,6 +1643,7 @@ class PstnRealtimeVoiceLoop:
                 opening = extract_prewarm_greeting(brain, language, direction=direction)
             if not opening:
                 opening = extract_opening_greeting(brain, language, direction=direction)
+        self._opening_text = opening
         instructions = build_realtime_voice_instructions(
             brain,
             model=model,
@@ -1619,8 +1715,38 @@ class PstnRealtimeVoiceLoop:
             self._deferred_greeting_frames = list(deferred_frames)
             self._deferred_greeting_text = deferred_text.strip()
             self._deferred_greeting_armed = True
-        elif play_greeting and direction == "outbound" and greeting_text and not greeting_wire_frames:
-            log_pstn("greeting.deferred.miss", call_id=self.call_id, reason="no_prewarm_frames")
+        elif play_greeting and direction == "outbound":
+            # Outbound with no pre-synthesized opening. This must always leave a
+            # trace: without an opening the model is told not to speak first, so
+            # the callee hears silence until they talk, and the call is billable.
+            log_pstn(
+                "greeting.deferred.miss",
+                call_id=self.call_id,
+                reason="no_prewarm_frames" if not deferred_frames else "no_greeting_text",
+                llm_provider=llm_provider,
+                model=model,
+                chars=len(deferred_text or ""),
+            )
+            recovered_text, recovered_frames = await self._recover_outbound_deferred_opening(
+                brain=brain,
+                language=language,
+                model=model,
+                cfg=cfg,
+                max_output_tokens=max_output_tokens,
+                adapter=adapter,
+            )
+            if recovered_frames and recovered_text:
+                deferred_text = recovered_text
+                deferred_frames = recovered_frames
+                self._deferred_greeting_frames = list(deferred_frames)
+                self._deferred_greeting_text = deferred_text.strip()
+                self._deferred_greeting_armed = True
+                log_pstn(
+                    "greeting.deferred.recovered",
+                    call_id=self.call_id,
+                    frames=len(recovered_frames),
+                    chars=len(recovered_text),
+                )
         if self._deferred_greeting_armed:
             auto_response = getattr(adapter, "set_auto_response", None)
             if callable(auto_response):
@@ -1640,7 +1766,9 @@ class PstnRealtimeVoiceLoop:
         self._runtime_task = asyncio.create_task(self._watch_runtime(), name=f"rt-watch-{self.call_id}")
         if self._deferred_greeting_armed:
             self._arm_pickup_fallback()
-        elif play_greeting and opening and getattr(adapter, "needs_explicit_opening", False):
+        elif play_greeting and opening and (
+            direction == "outbound" or getattr(adapter, "needs_explicit_opening", False)
+        ):
             played_side = await self._play_gemini_inbound_opening_if_needed(
                 adapter=adapter,
                 opening=opening,
@@ -1654,7 +1782,11 @@ class PstnRealtimeVoiceLoop:
                     prewarm_greeting_response_instructions,
                 )
 
+                auto_response = getattr(adapter, "set_auto_response", None)
+                if callable(auto_response):
+                    await auto_response(False)
                 try:
+                    log_pstn("greeting.fallback.requested", call_id=self.call_id, model=model)
                     await adapter.start_response(
                         instructions=prewarm_greeting_response_instructions(
                             self._resolve_language(), opening
@@ -1662,6 +1794,13 @@ class PstnRealtimeVoiceLoop:
                     )
                 except Exception as exc:
                     log_pstn("realtime_voice.opening.failed", call_id=self.call_id, error=str(exc)[:160])
+                    raise RuntimeError("Opening response could not be started") from exc
+                finally:
+                    if callable(auto_response):
+                        try:
+                            await auto_response(True)
+                        except Exception:
+                            pass
         log_pstn(
             "lifecycle.started",
             call_id=self.call_id,

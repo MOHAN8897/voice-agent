@@ -14,7 +14,7 @@ from server.call.call_lifecycle_service import call_lifecycle_service
 from server.call.call_status import CALL_STATUSES
 from server.call.call_store import call_store
 from server.call.call_timeline import list_timeline, timeline_stats
-from server.auth.calls_tenant import resolve_calls_tenant_id
+from server.auth.calls_tenant import resolve_calls_tenant_id, resolve_prompt_preview_tenant_id
 from server.auth.tenant_context import tenant_id_from_request
 from server.config.env import get_settings
 from server.utils.errors import AppError
@@ -103,25 +103,25 @@ async def call_finalization(call_id: str):
 async def call_prompt_preview(
     call_id: str,
     redacted: bool = Query(False),
-    scoped_tenant: str = Depends(resolve_calls_tenant_id),
+    scoped_tenant: str | None = Depends(resolve_prompt_preview_tenant_id),
 ):
     """Actual model instructions for this call (locked brain + live session rules)."""
     from server.call.call_prompt_preview import get_call_prompt_preview
 
-    try:
-        preview = await get_call_prompt_preview(call_id, redacted=redacted)
-    except AppError as e:
-        _raise(e)
     settings = get_settings()
-    if settings.saas_auth_enabled:
+    if settings.saas_auth_enabled and scoped_tenant is not None:
         stored = await call_store.get(call_id)
         tenant = str((stored or {}).get("tenant_id") or "")
-        if tenant and tenant != scoped_tenant:
+        if not tenant or tenant != scoped_tenant:
             raise HTTPException(
                 status_code=404,
                 detail={"error": {"code": "not_found", "message": "Call not found"}},
             )
-    return preview
+    try:
+        preview = await get_call_prompt_preview(call_id, redacted=redacted)
+    except AppError as e:
+        _raise(e)
+    return JSONResponse(preview, headers={"Cache-Control": "private, no-store", "Vary": "Cookie, Authorization"})
 
 
 @router.get("/api/call/{call_id}")

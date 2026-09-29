@@ -708,7 +708,7 @@ async def telnyx_webhook(request: Request):
                 existing = telnyx_call_registry.get(str(call_control_id)) or {}
                 recovered = {k: meta[k] for k in (
                     "agent_id", "tier", "source_session_id", "inherit_test_studio_config",
-                    "stack_override", "language", "direction",
+                    "stack_override", "language", "direction", "prewarm_external_id",
                 ) if meta.get(k) is not None and existing.get(k) is None}
                 # Signed client_state describes the application dial leg; a
                 # provider's incoming/outgoing view must not turn it into a new

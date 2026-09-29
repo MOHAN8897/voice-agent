@@ -55,7 +55,7 @@ def milestones_for(*keys: str) -> dict[str, int]:
     for key in keys:
         if not key:
             continue
-        for name, ms in (_milestones.get(key) or {}).items():
+        for name, ms in list((_milestones.get(key) or {}).items()):
             out[name if len(keys) == 1 else f"{key}:{name}"] = ms
     return out
 
@@ -67,6 +67,9 @@ def elapsed_ms(key: str | None) -> int | None:
 
 
 def log_pstn(phase: str, *, timer_key: str | None = None, **kv: Any) -> None:
+    from server.services.pstn_diagnostics import pstn_diagnostics
+
+    pstn_diagnostics.record(phase, timer_key=timer_key, **kv)
     if not _enabled():
         return
     from server.utils.logger import log_pstn as _log

@@ -20,7 +20,7 @@ function Read-CloudflaredHosts {
     if ($text -match "hostname:\s*(\S+)\s*\r?\n\s*service:\s*http://127\.0\.0\.1:8000") {
         $apiHost = $Matches[1]
     }
-    if ($text -match "hostname:\s*(\S+)\s*\r?\n\s*service:\s*http://127\.0\.0\.1:3000") {
+    if ($text -match "hostname:\s*(\S+)\s*\r?\n\s*service:\s*http://127\.0\.0\.1:5173") {
         $appHost = $Matches[1]
     }
     if ($apiHost -and $appHost) {
@@ -69,6 +69,9 @@ if (Test-Path $EnvFile) {
     $lines = Set-EnvKey $lines "EXOTEL_WEBHOOK_BASE_URL" $ApiUrl
     $lines = Set-EnvKey $lines "CLIENT_URL" $AppUrl
     $lines = Set-EnvKey $lines "PUBLIC_APP_URL" $AppUrl
+    # Public origin of the product UI. The API redirects / here, and it is what
+    # Google OAuth and password-reset links point at, so it must not stay localhost.
+    $lines = Set-EnvKey $lines "VOXLY_FRONTEND_URL" $AppUrl
     Set-Content -Path $EnvFile -Value $lines
     Write-Host "Synced .env -> API $ApiUrl | App $AppUrl"
 }

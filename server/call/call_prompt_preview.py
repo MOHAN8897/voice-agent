@@ -101,11 +101,10 @@ async def get_call_prompt_preview(
     redacted: bool = False,
 ) -> dict[str, Any]:
     ctx = get_call_ctx(call_id)
-    stored = await call_store.get(call_id)
-    if not ctx and not stored:
-        raise AppError(ErrorCode.NOT_FOUND, message="Call not found", status_code=404)
-
+    stored = await call_store.get(call_id) or {}
     meta = call_ledger.read_meta(call_id) if call_ledger.meta_path(call_id).exists() else {}
+    if not ctx and not stored and not meta:
+        raise AppError(ErrorCode.NOT_FOUND, message="Call not found", status_code=404)
 
     agent_id = (ctx.agent_id if ctx else None) or stored.get("agent_id") or meta.get("agent_id")
     session_id = (ctx.session_id if ctx else None) or stored.get("session_id") or meta.get("session_id")

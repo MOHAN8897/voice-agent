@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { portalFetch } from "@/lib/auth-client";
 import { SkeuoButton } from "@/components/ui/skeuo/SkeuoButton";
 import { cn } from "@/lib/cn";
 
@@ -45,9 +46,7 @@ export function LivePromptPreviewPanel({
     try {
       const params = new URLSearchParams();
       if (callId) {
-        const r = await fetch(`/api/call/${encodeURIComponent(callId)}/prompt-preview`, {
-          credentials: "include",
-        });
+        const r = await portalFetch("dev", `/api/call/${encodeURIComponent(callId)}/prompt-preview`);
         const j = await r.json().catch(() => ({}));
         if (!r.ok) {
         const detail = j.detail;

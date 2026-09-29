@@ -12,7 +12,9 @@ param(
     [string]$ApiHost = "api-dev.hustlelabs.in",
     [string]$AppHost = "app-dev.hustlelabs.in",
     [int]$ApiPort = 8000,
-    [int]$AppPort = 3000
+    # 5173 is Voxly, the product UI. It proxies /api and /ws to 8000 and /dev to the
+    # admin panel on 3000, so one public hostname covers product + back office.
+    [int]$AppPort = 5173
 )
 
 $ErrorActionPreference = "Stop"
@@ -106,6 +108,8 @@ if (Test-Path $EnvFile) {
         "PUBLIC_TUNNEL_URL"      = $publicApi
         "EXOTEL_WEBHOOK_BASE_URL" = $publicApi
         "CLIENT_URL"             = "https://$AppHost"
+        "PUBLIC_APP_URL"         = "https://$AppHost"
+        "VOXLY_FRONTEND_URL"     = "https://$AppHost"
     }
     foreach ($key in $map.Keys) {
         $val = $map[$key]
@@ -120,7 +124,7 @@ if (Test-Path $EnvFile) {
         if (-not $found) { $lines += "$key=$val" }
     }
     Set-Content -Path $EnvFile -Value $lines
-    Write-Host "Updated .env (PUBLIC_TUNNEL_URL, EXOTEL_WEBHOOK_BASE_URL, CLIENT_URL)."
+    Write-Host "Updated .env (PUBLIC_TUNNEL_URL, EXOTEL_WEBHOOK_BASE_URL, CLIENT_URL, VOXLY_FRONTEND_URL)."
 }
 
 # web/.env.local for stable public API when testing from browser
@@ -136,6 +140,8 @@ Write-Host ""
 Write-Host "=== Cloudflare tunnel ready ==="
 Write-Host "Stable API:  https://$ApiHost"
 Write-Host "Stable App:  https://$AppHost"
+Write-Host "  product (Voxly)      https://$AppHost"
+Write-Host "  admin panel          https://$AppHost/dev/login"
 Write-Host "Exotel passthru:  https://$ApiHost/api/exotel/passthru"
 Write-Host "Exotel callback: https://$ApiHost/api/exotel/status-callback"
 Write-Host ""

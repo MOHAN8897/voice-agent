@@ -410,7 +410,9 @@ def extract_agent_name_from_brief(brief: str) -> str:
         (85, rf"agent\s*name\s*(?:(?:is)\b\s*|:\s*)?{name_value}"),
         (78, rf"someone like\s+{name_value}"),
         (70, rf"\bnenu\s+{name_value}"),
-        (62, rf"\bagent\s+(?!name\b|named\b|for\b|should\b|will\b|to\b|that\b|who\b){name_value}"),
+        # "Agent is Priya" must yield "Priya", not "Is Priya": the copula is part of
+        # the phrasing, not the name, and "Is" was then spoken to the callee.
+        (62, rf"\bagent\s+(?!name\b|named\b|for\b|should\b|will\b|to\b|that\b|who\b|is\b|am\b|are\b|was\b){name_value}"),
         (50, rf"(?<!\w)named\s+{name_value}"),
         (40, rf"(?:^|[\n.])\s*{name_value}\s+for\s+[A-Z]"),
         (25, rf"(?:^|[\n.])\s*my\s+name\s+is\s+{name_value}"),
