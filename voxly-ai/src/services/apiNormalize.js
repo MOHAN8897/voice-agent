@@ -1,5 +1,7 @@
 /** Map voice-agent API shapes → Voxly console UI models */
 
+import { callStatus } from '../lib/callStatus';
+
 export function normalizeAgent(row) {
   if (!row) return null;
   const id = row.agent_id || row.id || row.agentId;
@@ -40,13 +42,11 @@ export function normalizePhoneNumber(row, agentsById = {}) {
     usageMinutesThisMonth: row.usageMinutesThisMonth ?? 0,
     isDevSandbox: Boolean(row.isDevSandbox),
     label: row.label || null,
-    inboundRouting: row.inboundRouting || {
-      action: agentId ? 'ai_agent' : 'voicemail',
-      greetingPhrase: 'Thank you for calling.',
-      businessHours: '08:00 - 18:00',
-      afterHoursAction: 'voicemail',
-      recordingEnabled: true,
-    },
+    // Line-level toggles. Greeting/hours live on the agent's telephony profile,
+    // not here — see api.agents.getTelephonyProfile.
+    inboundEnabled: row.inboundEnabled ?? true,
+    outboundEnabled: row.outboundEnabled ?? true,
+    billingSource: row.billingSource || null,
   };
 }
 
@@ -115,33 +115,47 @@ export function normalizeLead(row) {
 
 export function normalizeCall(row, agentsById = {}) {
   if (!row) return null;
-  const id = row.call_id || row.callId || row.id;
+  // Timeline rows carry call_id; a never-answered attempt carries attempt_id.
+  const id = row.call_id || row.callId || row.id || row.attempt_id || row.attemptId;
   const agentId = row.agent_id || row.agentId;
   const agent = agentId ? agentsById[agentId] : null;
   const started = row.started_at || row.startedAt;
   const durationSec = row.duration_sec ?? row.durationSec ?? 0;
   const mins = Math.floor(durationSec / 60);
   const secs = durationSec % 60;
+  const status = callStatus(row);
+  const isAttempt = Boolean(row.is_attempt ?? row.isAttempt);
   return {
     id,
-    callId: id,
+    callId: row.call_id || row.callId || id,
+    attemptId: row.attempt_id || row.attemptId || null,
+    isAttempt,
+    connected: Boolean(row.connected ?? !isAttempt),
     direction: row.direction || 'inbound',
     channel: row.channel || 'pstn',
+    status,
+    inProgress: Boolean(row.in_progress ?? row.inProgress ?? status === 'in_progress'),
     agentId,
-    agentName: agent?.name || row.agentName || 'Agent',
-    callerName: row.customer || row.callerName || 'Caller',
-    callerPhone: row.caller_phone || row.callerPhone || row.to_e164 || '—',
+    agentName: agent?.name || row.agentName || (agentId ? 'Agent' : 'Unassigned'),
+    customer: row.customer || null,
+    callerName: row.customer || row.callerName || (row.caller_phone ? 'Caller' : '—'),
+    callerPhone:
+      row.caller_phone || row.callerPhone || row.to_e164 || row.from_number || row.fromNumber || null,
+    calledPhone: row.called_phone || row.calledPhone || row.to_number || row.toNumber || null,
     startedAt: started,
-    duration: `${mins}m ${String(secs).padStart(2, '0')}s`,
-    outcome: row.disposition || row.summary || row.outcome || '—',
+    endedAt: row.ended_at || row.endedAt || null,
+    duration: durationSec > 0 ? `${mins}m ${String(secs).padStart(2, '0')}s` : '—',
+    outcome: row.disposition || row.summary || '—',
     disposition: row.disposition,
-    summary: row.summary,
+    summary: row.summary || null,
+    policyReason: row.policy_reason || row.policyReason || null,
     costInr: row.cost_inr ?? row.costInr,
     costUsd: row.cost_usd ?? row.costUsd,
     endReason: row.end_reason || row.endReason,
     pipeline: row.pipeline,
     hasRecording: row.has_recording ?? row.hasRecording ?? false,
-    durationSec: row.duration_sec ?? row.durationSec ?? null,
+    hasTranscript: Boolean(row.has_transcript ?? row.hasTranscript),
+    durationSec: durationSec || null,
   };
 }
 

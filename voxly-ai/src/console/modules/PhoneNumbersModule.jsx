@@ -23,6 +23,9 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
     releasePhoneNumber,
     buyNumberPreselectedAgent,
     reloadCatalog,
+    updateNumberRouting,
+    wallet,
+    refreshWallet,
   } = useWorkspace();
 
   // Buy Modal Form State
@@ -47,6 +50,35 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
 
   const unassignedCount = phoneNumbers.filter((n) => !n.assignedAgentId).length;
   const assignedCount = phoneNumbers.length - unassignedCount;
+  const monthlyRentalInr = phoneNumbers.reduce(
+    (sum, n) => sum + (Number(n.monthlyInr) || 0),
+    0
+  );
+  const monthlyRentalUsd = phoneNumbers.reduce(
+    (sum, n) => sum + (Number(n.monthlyCost) || 0),
+    0
+  );
+  const balanceUsd = Number(wallet?.balanceUsd) || 0;
+  const balanceInr = Number(wallet?.balanceInr) || 0;
+
+  // Price and wallet top-up floor come from the server so the console can never
+  // quote something `/api/telephony/buy` or `/api/billing/topup` would reject.
+  const [catalog, setCatalog] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    api.billing
+      .getCatalog()
+      .then((c) => {
+        if (!cancelled) setCatalog(c);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const numberPriceUsd = Number(catalog?.rates?.numberMonthlyUsd) || 4;
+  const numberPriceInr = Number(catalog?.rates?.numberMonthlyInr) || 500;
+  const canAffordNumber = balanceUsd >= numberPriceUsd || balanceInr >= numberPriceInr;
 
   const filteredCatalog = availableCatalog.filter((item) => {
     const cc = (item.country || '').toUpperCase();
@@ -61,6 +93,15 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
 
   const handleBuyNumber = async (catalogItem) => {
     setBuyError(null);
+    // Payment wall: the rental is charged to the wallet the moment it is bought.
+    if (balanceUsd < numberPriceUsd && balanceInr < numberPriceInr) {
+      setBuyError(
+        `A phone number costs $${numberPriceUsd.toFixed(2)} (or ₹${numberPriceInr.toFixed(
+          2
+        )}) per month. Add credit to your wallet to buy one.`
+      );
+      return;
+    }
     setBuying(true);
     try {
       const bought = await buyPhoneNumber(catalogItem, targetAgentId || null);
@@ -73,7 +114,17 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
         onCloseBuyModal();
       }, 1800);
     } catch (e) {
-      setBuyError(e.message || 'Could not start number purchase');
+      // The server is the authority on wallet state; a 402 means it disagrees.
+      if (e.status === 402 || e.code === 'insufficient_balance') {
+        setBuyError(
+          `${e.message} A phone number costs $${numberPriceUsd.toFixed(2)} (or ₹${numberPriceInr.toFixed(
+            2
+          )}) per month.`
+        );
+        await refreshWallet?.();
+      } else {
+        setBuyError(e.message || 'Could not start number purchase');
+      }
     } finally {
       setBuying(false);
     }
@@ -88,7 +139,8 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
             Phone lines ({phoneNumbers.length})
           </h2>
           <p className="text-xs text-[#524E5E] mt-0.5">
-            Buy local DIDs and toll-free numbers across 40+ countries and connect them directly to your AI agents.
+            Buy a number and connect it to an AI agent. Rental is billed monthly; call time is billed
+            from your wallet.
           </p>
         </div>
 
@@ -117,6 +169,16 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
         </SolidCard>
       </div>
 
+      {/* Money the current lines cost per month, from the server's rates. */}
+      <div className="text-[11px] text-[#524E5E]">
+        Monthly rental for these {phoneNumbers.length} line
+        {phoneNumbers.length === 1 ? '' : 's'}:{' '}
+        <span className="font-mono font-semibold text-[#0F0E17]">
+          ₹{monthlyRentalInr.toFixed(2)}
+        </span>{' '}
+        (${monthlyRentalUsd.toFixed(2)}). Call time is billed separately from your wallet.
+      </div>
+
       {/* Numbers Inventory Table Card */}
       <SolidCard padding="p-0" className="overflow-hidden">
         <div className="overflow-x-auto">
@@ -127,7 +189,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                 <th className="py-3 px-4">Location / Type</th>
                 <th className="py-3 px-4">Assigned AI Employee</th>
                 <th className="py-3 px-4 font-mono">Monthly Rate</th>
-                <th className="py-3 px-4 font-mono">Usage (Mins)</th>
+                <th className="py-3 px-4">Calls</th>
                 <th className="py-3 px-4">Status</th>
                 <th className="py-3 px-5 text-right">Actions</th>
               </tr>
@@ -189,9 +251,46 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                     {num.monthlyInr != null ? `₹${Number(num.monthlyInr).toFixed(0)}/mo` : `$${Number(num.monthlyCost || 0).toFixed(2)}/mo`}
                   </td>
 
-                  {/* Minutes Used */}
-                  <td className="py-4 px-4 font-mono font-bold text-[#0F0E17]">
-                    {num.usageMinutesThisMonth.toLocaleString()} min
+                  {/* Line-level inbound/outbound switches */}
+                  <td className="py-4 px-4">
+                    <div className="flex flex-col gap-1">
+                      <label className="flex items-center gap-1.5 text-[10px] text-[#524E5E]">
+                        <input
+                          type="checkbox"
+                          checked={num.inboundEnabled !== false}
+                          onChange={async (e) => {
+                            try {
+                              await updateNumberRouting(num.id, {
+                                inboundEnabled: e.target.checked,
+                              });
+                            } catch (err) {
+                              showToast(err.message || 'Could not update', 'error');
+                            }
+                          }}
+                          data-testid={`number-inbound-${num.id}`}
+                          className="w-3 h-3 accent-[#6344E7]"
+                        />
+                        Accepts calls
+                      </label>
+                      <label className="flex items-center gap-1.5 text-[10px] text-[#524E5E]">
+                        <input
+                          type="checkbox"
+                          checked={num.outboundEnabled !== false}
+                          onChange={async (e) => {
+                            try {
+                              await updateNumberRouting(num.id, {
+                                outboundEnabled: e.target.checked,
+                              });
+                            } catch (err) {
+                              showToast(err.message || 'Could not update', 'error');
+                            }
+                          }}
+                          data-testid={`number-outbound-${num.id}`}
+                          className="w-3 h-3 accent-[#6344E7]"
+                        />
+                        Can call out
+                      </label>
+                    </div>
                   </td>
 
                   {/* Status */}
@@ -239,10 +338,34 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
           ) : (
             <>
               {buyError && (
-                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-900">
+                <div
+                  data-testid="buy-number-error"
+                  role="alert"
+                  className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-900"
+                >
                   {buyError}
                 </div>
               )}
+
+              {/* Price and affordability, both from the server. */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
+                <div className="text-[11px] text-[#524E5E]">
+                  <span className="font-semibold text-[#0F0E17]">
+                    ${numberPriceUsd.toFixed(2)} / month
+                  </span>{' '}
+                  (₹{numberPriceInr.toFixed(2)}), charged to your wallet when you buy.
+                  <span className="block mt-0.5">
+                    Wallet: ${balanceUsd.toFixed(2)}
+                    {balanceInr > 0 ? ` · ₹${balanceInr.toFixed(2)}` : ''}
+                  </span>
+                </div>
+                {!canAffordNumber && (
+                  <span className="shrink-0 text-[11px] font-semibold text-[#B45309]">
+                    Add credit to buy a number
+                  </span>
+                )}
+              </div>
+
               {/* Search Filters */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
                 {/* Country */}
@@ -346,6 +469,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                           variant="primary"
                           disabled={buying}
                           onClick={() => handleBuyNumber(item)}
+                          data-testid="buy-number-submit"
                         >
                           Buy & Bind
                         </TactileButton>

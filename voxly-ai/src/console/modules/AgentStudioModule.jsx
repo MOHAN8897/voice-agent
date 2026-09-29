@@ -31,6 +31,7 @@ import {
 } from '../../lib/voiceStack';
 import { formatPhoneVoiceLabel, groupPhoneVoices } from '../../lib/voiceDisplay';
 import { loadAgentBrain } from '../../services/agentBrain';
+import { TelephonySettingsCard } from './TelephonySettingsCard';
 
 const EMPTY_FORM = {
   name: '',
@@ -93,7 +94,6 @@ export function AgentStudioModule({
     setSelectedAgentId,
     selectedAgent,
     updateAgent,
-    updateNumberRouting,
     phoneNumbers,
     assignNumberToAgent,
   } = useWorkspace();
@@ -200,14 +200,6 @@ export function AgentStudioModule({
     setSaving(true);
     try {
       await updateAgent(selectedAgent.id, formData);
-      if (selectedAgent.numberId && formData.inboundRouting) {
-        await updateNumberRouting(selectedAgent.numberId, {
-          ...formData.inboundRouting,
-          assignedAgentId: selectedAgent.id,
-          inboundEnabled: formData.inboundRouting?.inboundEnabled !== false,
-          outboundEnabled: formData.inboundRouting?.outboundEnabled !== false,
-        });
-      }
       setIsSaved(true);
       setTimeout(() => setIsSaved(false), 2500);
     } catch (e) {
@@ -432,9 +424,22 @@ export function AgentStudioModule({
               className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl p-4 text-xs text-[#0F0E17] font-mono leading-relaxed focus:outline-none focus:border-[#6344E7] transition-colors"
             />
 
-            <div className="flex items-center justify-between text-[11px] text-[#524E5E] font-mono mt-2">
-              <span>Tokens: ~{Math.floor(formData.script.length / 4)} tokens (Cached)</span>
-              <span>Estimated TTFT: ~160ms</span>
+            {/* Only show what is real. Token counts and latency are internal
+                engineering metrics; the server does not report them here, so
+                guessing would be worse than saying nothing. */}
+            <div className="flex items-center justify-between text-[11px] text-[#8C879A] mt-2">
+              <span>
+                {formData.script.trim()
+                  ? `${formData.script.trim().split(/\s+/).length} words`
+                  : 'Script is empty'}
+              </span>
+              <button
+                type="button"
+                onClick={() => setActiveTab('test')}
+                className="font-semibold text-[#5034CE] hover:underline"
+              >
+                Test this script
+              </button>
             </div>
           </SolidCard>
 
@@ -770,103 +775,24 @@ export function AgentStudioModule({
             </div>
           </SolidCard>
 
-          <SolidCard>
-            <h3 className="text-xs font-bold text-[#0F0E17] mb-3">Inbound routing</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-              <div>
-                <label className="block font-bold text-[#0F0E17] mb-1">Greeting (spoken on connect)</label>
-                <input
-                  type="text"
-                  value={formData.inboundRouting?.greetingPhrase || formData.greeting || ''}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      greeting: e.target.value,
-                      inboundRouting: { ...formData.inboundRouting, greetingPhrase: e.target.value },
-                    })
-                  }
-                  className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl p-2.5 text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
-                />
-              </div>
-              <div>
-                <label className="block font-bold text-[#0F0E17] mb-1">Active business hours</label>
-                <input
-                  type="text"
-                  value={formData.inboundRouting?.businessHours || ''}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      inboundRouting: { ...formData.inboundRouting, businessHours: e.target.value },
-                    })
-                  }
-                  className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl p-2.5 text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold text-[#0F0E17] mb-1">After-hours action</label>
-                <select
-                  value={formData.inboundRouting?.afterHoursAction || 'voicemail'}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      inboundRouting: { ...formData.inboundRouting, afterHoursAction: e.target.value },
-                    })
-                  }
-                  className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl p-2.5 text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
-                >
-                  <option value="voicemail">Voicemail & transcribe</option>
-                  <option value="transfer">Warm transfer</option>
-                  <option value="ai_always">AI answers 24/7</option>
-                </select>
-              </div>
-              <div className="flex flex-col gap-2 justify-end">
-                <label className="flex items-center justify-between p-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
-                  <span className="font-semibold text-[#0F0E17]">Accept incoming calls</span>
-                  <input
-                    type="checkbox"
-                    checked={formData.inboundRouting?.inboundEnabled !== false}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        inboundRouting: { ...formData.inboundRouting, inboundEnabled: e.target.checked },
-                      })
-                    }
-                  />
-                </label>
-                <label className="flex items-center justify-between p-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
-                  <span className="font-semibold text-[#0F0E17]">Outbound caller ID</span>
-                  <input
-                    type="checkbox"
-                    checked={formData.inboundRouting?.outboundEnabled !== false}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        inboundRouting: { ...formData.inboundRouting, outboundEnabled: e.target.checked },
-                      })
-                    }
-                  />
-                </label>
-              </div>
-            </div>
-          </SolidCard>
+          {/* Operational phone settings live on the server and are enforced by
+              the live inbound path — see TelephonySettingsCard. */}
+          <TelephonySettingsCard agentId={selectedAgent.id} />
 
           <SolidCard>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h3 className="text-xs font-bold text-[#0F0E17]">Outbound calls</h3>
                 <p className="text-[11px] text-[#524E5E] mt-0.5">
-                  One-off dials and campaigns use this agent after you publish the script. Rate limits apply per
-                  workspace.
+                  One-off dials, callbacks and campaigns use this agent after you publish the script. Rate
+                  limits apply per workspace.
                 </p>
               </div>
               <TactileButton
                 variant="secondary"
                 size="sm"
                 icon={PhoneOutgoing}
-                onClick={() =>
-                  onNavigate?.('calls', { agentId: selectedAgent.id, focusDial: true })
-                }
+                onClick={() => onNavigate?.('calls', { agentId: selectedAgent.id })}
               >
                 Place outbound call
               </TactileButton>

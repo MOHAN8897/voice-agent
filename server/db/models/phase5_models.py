@@ -49,6 +49,40 @@ class PhoneNumber(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
 
+class AgentTelephonyProfile(Base):
+    """Operational phone configuration for one agent.
+
+    Deliberately separate from the Business Brain: this is how the *telephone*
+    behaves (does it ring, when, what does the caller hear, what happens at night),
+    not how the *agent* thinks. A row is created lazily on first read so every
+    existing agent keeps working with no profile and no migration backfill.
+    """
+
+    __tablename__ = "agent_telephony_profiles"
+    __table_args__ = (UniqueConstraint("agent_id", name="uq_agent_telephony_profile_agent"),)
+
+    profile_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    agent_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("agents.agent_id"), nullable=False)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.tenant_id"), nullable=False)
+    #: Spoken by the agent as the opening line on inbound calls. Empty = derive
+    #: from the compiled brain exactly as today.
+    greeting_phrase: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    #: {"mon": [{"open": "09:00", "close": "18:00"}], ...}. Empty = always open.
+    business_hours: Mapped[dict] = mapped_column(JSONB, default=dict)
+    #: IANA zone the business hours are expressed in.
+    timezone: Mapped[str] = mapped_column(String(64), default="Asia/Kolkata")
+    #: voicemail | hangup | transfer | always — what to do outside business hours.
+    after_hours_action: Mapped[str] = mapped_column(String(30), default="voicemail")
+    #: Required when after_hours_action == "transfer".
+    transfer_number: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    #: When false the live inbound path does not answer this agent at all.
+    inbound_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    #: When false outbound calls for this agent are refused before dialling.
+    outbound_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+
 class DncEntry(Base):
     __tablename__ = "dnc_list"
     __table_args__ = (UniqueConstraint("tenant_id", "phone_e164", name="uq_dnc_tenant_phone"),)

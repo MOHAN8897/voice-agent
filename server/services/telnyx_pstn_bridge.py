@@ -540,8 +540,26 @@ class TelnyxPstnBridge:
                 if self.call_control_id:
                     telnyx_call_registry.upsert(
                         self.call_control_id,
-                        {"internal_call_id": self.call_id, "status": "streaming", "last_event": "stream-start"},
+                        {
+                            "internal_call_id": self.call_id,
+                            "linked_call_id": self.call_id,
+                            "status": "streaming",
+                            "last_event": "stream-start",
+                        },
                     )
+                    # The ringing attempt became a real conversation — link them so
+                    # history shows one entry, not a missed call plus a call.
+                    try:
+                        from server.call.call_store import call_attempt_store
+
+                        await call_attempt_store.link_to_call(self.call_control_id, self.call_id)
+                    except Exception:
+                        logger.warning(
+                            "[TELNYX] attempt link failed control=%s call=%s",
+                            self.call_control_id,
+                            self.call_id,
+                            exc_info=True,
+                        )
                     try:
                         from server.services.telnyx_recordings import attach_pending_recording
 
@@ -630,10 +648,25 @@ class TelnyxPstnBridge:
                 or self._client_meta.get("test_mode") == "cartesia_bilingual"
             )
             prewarm = getattr(self, "_prewarm_bundle", None)
+            # An operator-set greeting on the agent's telephony profile wins over the
+            # brain-derived opening. Absent or blank, the prewarm text is used exactly
+            # as before, so nothing changes for agents without a profile.
+            profile_greeting = ""
+            try:
+                from server.services.telnyx_client import telnyx_call_registry
+
+                live = (
+                    telnyx_call_registry.get(self.call_control_id) if self.call_control_id else {}
+                ) or {}
+                profile_greeting = str(live.get("inbound_greeting") or "").strip()
+            except Exception:
+                profile_greeting = ""
+            greeting_text = profile_greeting or (prewarm.greeting_text if prewarm else None)
+            greeting_frames = None if profile_greeting else (prewarm.greeting_wire_frames if prewarm else None)
             await self._voice.start_call(
                 play_greeting=bool(self.call_id) and not skip_greeting,
-                greeting_wire_frames=prewarm.greeting_wire_frames if prewarm else None,
-                greeting_text=prewarm.greeting_text if prewarm else None,
+                greeting_wire_frames=greeting_frames,
+                greeting_text=greeting_text,
             )
             from server.services.pstn_prewarm import record_bundle_greeting_usage
 

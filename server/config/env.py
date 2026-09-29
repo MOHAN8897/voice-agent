@@ -231,8 +231,17 @@ class Settings(BaseSettings):
     pstn_rate_inr_paise_per_min: int = Field(900, alias="PSTN_RATE_INR_PAISE_PER_MIN")
     web_agent_rate_usd_cents_per_min: int = Field(7, alias="WEB_AGENT_RATE_USD_CENTS_PER_MIN")
     web_agent_rate_inr_paise_per_min: int = Field(700, alias="WEB_AGENT_RATE_INR_PAISE_PER_MIN")
-    did_monthly_usd_cents: int = Field(500, alias="DID_MONTHLY_USD_CENTS")
+    did_monthly_usd_cents: int = Field(400, alias="DID_MONTHLY_USD_CENTS")
     did_monthly_inr_paise: int = Field(50000, alias="DID_MONTHLY_INR_PAISE")
+    #: Smallest wallet top-up a workspace may buy, in USD. Kept low so a new
+    #: workspace can fund itself without a large first payment.
+    topup_min_usd: float = Field(3.0, alias="TOPUP_MIN_USD")
+    topup_max_usd: float = Field(500.0, alias="TOPUP_MAX_USD")
+    #: Refuse to answer inbound calls when the wallet is below the minimum.
+    #: Fail-open by design: any lookup problem still answers the call.
+    pstn_enforce_wallet_on_inbound: bool = Field(
+        True, alias="PSTN_ENFORCE_WALLET_ON_INBOUND"
+    )
     saas_platform_admin_emails: str = Field("", alias="SAAS_PLATFORM_ADMIN_EMAILS")
     saas_dev_tester_emails: str = Field("", alias="SAAS_DEV_TESTER_EMAILS")
     saas_admin_seed_inr_paise: int = Field(500000, alias="SAAS_ADMIN_SEED_INR_PAISE")

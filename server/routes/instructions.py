@@ -699,10 +699,16 @@ async def instructions_live_prompt_preview(
             language=lang,
         )
     except Exception as exc:
+        from server.services.pstn_stack import PstnStackValidationError
         from server.utils.errors import AppError
 
         if isinstance(exc, AppError):
             raise HTTPException(status_code=exc.status_code, detail=exc.message) from exc
+        if isinstance(exc, PstnStackValidationError):
+            raise HTTPException(
+                status_code=422,
+                detail={"message": str(exc), "issues": list(exc.details or [])},
+            ) from exc
         raise
 
 

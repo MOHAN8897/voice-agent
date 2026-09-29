@@ -142,6 +142,37 @@ async def assert_wallet_allows_pstn(tenant_id: uuid.UUID) -> None:
 assert_wallet_allows_usage = assert_wallet_allows_pstn
 
 
+async def wallet_allows_inbound(tenant_id: uuid.UUID | None) -> bool:
+    """Whether inbound calls should be answered for this tenant.
+
+    Returns a decision, never raises: the caller is on the live PSTN answer path,
+    where an exception or a slow query must not drop a customer's call. On any
+    internal error this returns True, which matches the pre-wallet behaviour of
+    answering everything.
+    """
+    settings = get_settings()
+    if not settings.saas_auth_enabled:
+        return True
+    if not settings.pstn_enforce_wallet_on_inbound:
+        return True
+    if tenant_id is None:
+        return True
+    try:
+        wallet = await get_or_create_wallet(tenant_id)
+    except Exception:
+        logger.warning("[WALLET] inbound balance check failed; answering (fail open)")
+        return True
+    allowed = _wallet_has_minimum(wallet)
+    if not allowed:
+        logger.info(
+            "[WALLET] inbound blocked tenant=%s below minimum usd_cents=%s inr_paise=%s",
+            tenant_id,
+            settings.pstn_min_balance_usd_cents,
+            settings.pstn_min_balance_inr_paise,
+        )
+    return allowed
+
+
 async def maybe_seed_admin_credits(tenant_id: uuid.UUID, user_id: uuid.UUID, email: str) -> None:
     from server.services.saas.platform_admins import is_platform_admin_email, is_dev_tester_email
 
@@ -405,16 +436,76 @@ async def debit_did_purchase(
     e164: str,
     purchase_id: uuid.UUID,
 ) -> dict:
+    """Charge the monthly number rental.
+
+    A number is bought either from the USD credit or the INR credit, whichever the
+    workspace actually holds — the price is the same in both, so a tenant funded in
+    one currency is never locked out by the other's empty balance.
+    """
     settings = get_settings()
-    return await debit_wallet(
-        tenant_id,
-        kind="did_purchase",
-        reference_id=f"did:{purchase_id}",
-        user_id=user_id,
-        amount_cents=settings.did_monthly_usd_cents,
-        amount_inr_paise=settings.did_monthly_inr_paise,
-        allow_partial=False,
-    )
+    want_cents = int(settings.did_monthly_usd_cents)
+    want_paise = int(settings.did_monthly_inr_paise)
+    factory = get_session_factory()
+    if factory is None:
+        raise RuntimeError("database_required")
+
+    async with factory() as session:
+        ref = f"did:{purchase_id}"
+        dup = await session.execute(
+            select(BillingWalletTransaction).where(BillingWalletTransaction.reference_id == ref)
+        )
+        if dup.scalar_one_or_none():
+            return {"ok": True, "duplicate": True, "amountCents": 0, "amountInrPaise": 0}
+        wallet = await session.get(BillingWallet, tenant_id)
+        if wallet is None:
+            wallet = BillingWallet(tenant_id=tenant_id, balance_cents=0, balance_inr_paise=0, updated_at=_utcnow())
+            session.add(wallet)
+            await session.flush()
+
+        have_cents = int(wallet.balance_cents or 0)
+        have_paise = int(wallet.balance_inr_paise or 0)
+        # Prefer the wallet's own primary currency, then whichever leg can cover it.
+        primary = (wallet.currency or "usd").lower()
+        if primary == "inr" and have_paise >= want_paise:
+            take_cents, take_paise = 0, want_paise
+        elif have_cents >= want_cents:
+            take_cents, take_paise = want_cents, 0
+        elif have_paise >= want_paise:
+            take_cents, take_paise = 0, want_paise
+        else:
+            raise HTTPException(
+                status_code=402,
+                detail={
+                    "error": {
+                        "code": "insufficient_balance",
+                        "message": (
+                            "Add funds to your wallet before buying a phone number. "
+                            f"A number costs ${want_cents / 100:.2f} or ₹{want_paise / 100:.2f}."
+                        ),
+                    }
+                },
+            )
+
+        wallet.balance_cents = have_cents - take_cents
+        wallet.balance_inr_paise = have_paise - take_paise
+        if take_paise and not take_cents:
+            wallet.currency = "inr"
+        elif take_cents and not take_paise:
+            wallet.currency = "usd"
+        wallet.updated_at = _utcnow()
+        session.add(
+            BillingWalletTransaction(
+                tenant_id=tenant_id,
+                user_id=user_id,
+                amount_cents=-take_cents,
+                amount_inr_paise=-take_paise,
+                kind="did_purchase",
+                reference_id=ref,
+                created_at=_utcnow(),
+            )
+        )
+        await session.commit()
+        return {"ok": True, "amountCents": take_cents, "amountInrPaise": take_paise}
 
 
 async def refund_did_purchase(
@@ -422,23 +513,79 @@ async def refund_did_purchase(
     *,
     user_id: uuid.UUID | None,
     purchase_id: uuid.UUID,
-) -> None:
-    settings = get_settings()
-    await credit_wallet(
-        tenant_id,
-        amount_cents=settings.did_monthly_usd_cents,
-        amount_inr_paise=settings.did_monthly_inr_paise,
-        kind="did_refund",
-        reference_id=f"did_refund:{purchase_id}",
-        user_id=user_id,
+) -> dict[str, Any]:
+    """Reverse exactly what a number purchase took.
+
+    The purchase debits a single currency leg (whichever the workspace was funded
+    in), so the refund must credit that same leg. Crediting both would mint money
+    that was never collected. The original ledger row is therefore the source of
+    truth, not the current price — a price change between purchase and refund must
+    not alter what is returned.
+    """
+    factory = get_session_factory()
+    if factory is None:
+        raise RuntimeError("database_required")
+    ref = f"did:{purchase_id}"
+    async with factory() as session:
+        original = (
+            await session.execute(
+                select(BillingWalletTransaction).where(BillingWalletTransaction.reference_id == ref)
+            )
+        ).scalar_one_or_none()
+        if original is None:
+            logger.warning("[WALLET] refund skipped: no debit found for %s", ref)
+            return {"ok": False, "reason": "no_original_debit"}
+
+        refund_ref = f"did_refund:{purchase_id}"
+        dup = (
+            await session.execute(
+                select(BillingWalletTransaction).where(
+                    BillingWalletTransaction.reference_id == refund_ref
+                )
+            )
+        ).scalar_one_or_none()
+        if dup is not None:
+            return {"ok": True, "duplicate": True}
+
+        # Reverse the signs of whatever was actually debited.
+        back_cents = abs(int(original.amount_cents or 0))
+        back_paise = abs(int(original.amount_inr_paise or 0))
+        wallet = await session.get(BillingWallet, tenant_id)
+        if wallet is None:
+            wallet = BillingWallet(
+                tenant_id=tenant_id, balance_cents=0, balance_inr_paise=0, updated_at=_utcnow()
+            )
+            session.add(wallet)
+            await session.flush()
+        wallet.balance_cents = int(wallet.balance_cents or 0) + back_cents
+        wallet.balance_inr_paise = int(wallet.balance_inr_paise or 0) + back_paise
+        wallet.updated_at = _utcnow()
+        session.add(
+            BillingWalletTransaction(
+                tenant_id=tenant_id,
+                user_id=user_id or original.user_id,
+                amount_cents=back_cents,
+                amount_inr_paise=back_paise,
+                kind="did_refund",
+                reference_id=refund_ref,
+                created_at=_utcnow(),
+            )
+        )
+        await session.commit()
+    logger.info(
+        "[WALLET] refunded did purchase=%s cents=%s paise=%s",
+        purchase_id,
+        back_cents,
+        back_paise,
     )
+    return {"ok": True, "amountCents": back_cents, "amountInrPaise": back_paise}
 
 
 async def create_topup_checkout(tenant_id: uuid.UUID, amount_usd: float, email: str) -> dict:
     settings = get_settings()
     if not settings.stripe_secret_key:
         raise ValueError("stripe_not_configured")
-    if amount_usd < 5 or amount_usd > 500:
+    if amount_usd < settings.topup_min_usd or amount_usd > settings.topup_max_usd:
         raise ValueError("amount_out_of_range")
     cents = int(round(amount_usd * 100))
     import stripe

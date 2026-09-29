@@ -26,6 +26,7 @@ import { useAuth } from '../context/AuthContext';
 import { ConsoleSyncBanner } from './ui/ConsoleSyncBanner';
 import { PurchaseProvisioningBanner } from './ui/PurchaseProvisioningBanner';
 import { ToastHost } from './ui/ToastHost';
+import { AddFundsModal } from './ui/AddFundsModal';
 
 export function AppShell({ onBackToLanding, onSignOut }) {
   const { user } = useAuth();
@@ -36,6 +37,11 @@ export function AppShell({ onBackToLanding, onSignOut }) {
     setIsBuyNumberOpen,
     isCommandPaletteOpen,
     setIsCommandPaletteOpen,
+    isAddFundsOpen,
+    addFundsReason,
+    closeAddFunds,
+    openAddFunds,
+    requireFunds,
     loadWorkspaceData,
     setSelectedAgentId,
   } = useWorkspace();
@@ -137,7 +143,7 @@ export function AppShell({ onBackToLanding, onSignOut }) {
           handleSelectTab('phone-numbers');
           setIsBuyNumberOpen(true);
         }}
-        onOpenAddFunds={() => handleSelectTab('billing')}
+        onOpenAddFunds={() => openAddFunds(null)}
         onBackToLanding={onBackToLanding}
         isMobileOpen={isMobileSidebarOpen}
         onCloseMobile={() => setIsMobileSidebarOpen(false)}
@@ -195,11 +201,17 @@ export function AppShell({ onBackToLanding, onSignOut }) {
               <PhoneNumbersModule
                 isBuyModalOpen={isBuyNumberOpen}
                 onCloseBuyModal={() => setIsBuyNumberOpen(false)}
-                onOpenBuyModal={() => setIsBuyNumberOpen(true)}
+                onOpenBuyModal={() => {
+                  // Payment wall: buying a number charges the wallet immediately.
+                  if (requireFunds('A phone number costs $4 per month, charged to your wallet.')) {
+                    return;
+                  }
+                  setIsBuyNumberOpen(true);
+                }}
               />
             )}
 
-            {activeTab === 'calls' && <CallsModule />}
+            {activeTab === 'calls' && <CallsModule onRequireFunds={() => openAddFunds('Add credit to your wallet to place a call.')} />}
 
             {activeTab === 'leads' && <LeadsModule />}
 
@@ -222,6 +234,7 @@ export function AppShell({ onBackToLanding, onSignOut }) {
         onNavigate={handleNavigate}
         onOpenBuyNumber={() => {
           setIsCreateAgentOpen(false);
+          handleSelectTab('phone-numbers');
           setIsBuyNumberOpen(true);
         }}
       />
@@ -232,6 +245,7 @@ export function AppShell({ onBackToLanding, onSignOut }) {
         onClose={() => setIsCommandPaletteOpen(false)}
         onNavigate={handleNavigate}
       />
+      <AddFundsModal isOpen={isAddFundsOpen} onClose={closeAddFunds} reason={addFundsReason} />
     </div>
   );
 }

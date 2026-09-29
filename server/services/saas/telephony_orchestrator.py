@@ -8,7 +8,6 @@ from fastapi import HTTPException
 from sqlalchemy import func, select
 
 from server.auth.session import SessionData
-from server.brain.agent_service import agent_service
 from server.db.connection import get_session_factory
 from server.db.models.entities import Call
 from server.db.models.phase5_models import PhoneNumber
@@ -144,10 +143,12 @@ async def subscriber_outbound(
     if not (dial_request_id or "").strip():
         dial_request_id = str(uuid.uuid4())
     from server.routes.dev_telephony import OutboundTestBody, _outbound_telnyx
+    from server.services.saas.call_callback_service import resolve_workspace_agent
     from server.services.telephony import active_telephony_provider, telephony_guard_error
 
     workspace_tid = subscriber_workspace_tenant_id(principal)
-    agent = await agent_service.get_agent(agent_id, tenant_id=str(workspace_tid))
+    # An unknown or foreign agent must be a clean 404, never a leaked 500.
+    agent = await resolve_workspace_agent(agent_id, str(workspace_tid))
     if not agent.get("active_compiled_brain_version"):
         raise HTTPException(
             status_code=400,

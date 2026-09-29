@@ -37,6 +37,7 @@ from server.routes.auth import router as auth_router
 from server.routes.app_auth import router as app_auth_router
 from server.routes.app_telephony import router as app_telephony_router
 from server.routes.app_agents import router as app_agents_router
+from server.routes.app_agent_telephony import router as app_agent_telephony_router
 from server.routes.stripe_webhook import router as stripe_webhook_router
 from server.routes.dev_admin import router as dev_admin_router
 from server.routes.app_billing import router as app_billing_router
@@ -145,6 +146,19 @@ async def lifespan(app: FastAPI):
                 logger.info(f"[VOICE] Recovered {recovered} stale calls")
         except Exception as e:
             logger.warning(f"[VOICE] Call recovery skipped: {e}")
+        try:
+            # Re-affirm the demo/platform-admin account on boot. Idempotent, and a
+            # failure here must never block startup.
+            from server.services.saas.demo_admin import ensure_all_demo_admins
+
+            seeded = await ensure_all_demo_admins()
+            if seeded:
+                logger.info(
+                    "[VOICE] Demo admin accounts ready: %s",
+                    ", ".join(str(row.get("email")) for row in seeded),
+                )
+        except Exception as e:
+            logger.warning(f"[VOICE] Demo admin provisioning skipped: {e}")
         try:
             from server.utils.http_clients import warm_openai_client
             warm_result = await warm_openai_client()
@@ -350,6 +364,7 @@ app.include_router(auth_router)
 app.include_router(app_auth_router)
 app.include_router(app_telephony_router)
 app.include_router(app_agents_router)
+app.include_router(app_agent_telephony_router)
 app.include_router(stripe_webhook_router)
 app.include_router(dev_admin_router)
 app.include_router(app_billing_router)

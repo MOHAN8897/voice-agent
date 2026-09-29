@@ -110,8 +110,79 @@ class Call(Base):
     finalization_status: Mapped[str] = mapped_column(String(20), default="pending")
     storage_path: Mapped[str] = mapped_column(String(512), nullable=False)
     end_reason: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    #: Canonical status (server/call/call_status.py). Materialised so it can be
+    #: filtered in SQL; NULL on rows written before the column existed, and
+    #: derived on read for those.
+    status: Mapped[str | None] = mapped_column(String(20), nullable=True, index=True)
     last_heartbeat_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
     tenant: Mapped["Tenant"] = relationship(back_populates="calls")
     agent: Mapped["Agent"] = relationship(back_populates="calls")
+
+
+class CallAttempt(Base):
+    """One ringing event, persisted even when the call never connects.
+
+    A ``calls`` row only exists once media streams, so a caller who rings out and
+    hangs up used to leave no trace at all. This table is the "attempt" half of the
+    model: ``linked_call_id`` points at the ``calls`` row when the attempt became a
+    real conversation, and is NULL while the attempt is missed/declined/voicemail.
+    Written only from the carrier webhook, never on the answered path.
+    """
+
+    __tablename__ = "call_attempts"
+    __table_args__ = (
+        UniqueConstraint("provider_call_control_id", name="uq_call_attempt_control"),
+    )
+
+    attempt_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.tenant_id"), nullable=False, index=True)
+    agent_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("agents.agent_id"), nullable=True)
+    provider: Mapped[str] = mapped_column(String(30), default="telnyx")
+    provider_call_control_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    direction: Mapped[str] = mapped_column(String(20), default="inbound")
+    from_number: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    to_number: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    linked_call_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("calls.call_id"), nullable=True)
+    #: Canonical status (server/call/call_status.py).
+    status: Mapped[str] = mapped_column(String(20), default="in_progress", index=True)
+    #: Why the ingress decided what it decided: answered, inbound_disabled,
+    #: after_hours_voicemail, after_hours_hangup, carrier_hangup, …
+    policy_reason: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    end_reason: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, index=True)
+    answered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+
+class CallCallback(Base):
+    """A user- or system-initiated attempt to call a missed caller back.
+
+    Owns idempotency (unique ``dial_request_id``) and the audit trail, and is the
+    extension point for AI redial and scheduled callbacks.
+    """
+
+    __tablename__ = "call_callbacks"
+    __table_args__ = (
+        UniqueConstraint("dial_request_id", name="uq_call_callback_dial_request"),
+    )
+
+    callback_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.tenant_id"), nullable=False, index=True)
+    user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.user_id"), nullable=True)
+    original_call_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("calls.call_id"), nullable=True)
+    original_attempt_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("call_attempts.attempt_id"), nullable=True)
+    agent_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    to_e164: Mapped[str] = mapped_column(String(32), nullable=False)
+    from_e164: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    dial_request_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    #: manual | ai_redial | scheduled — the reason the dial happened.
+    mode: Mapped[str] = mapped_column(String(30), default="manual")
+    status: Mapped[str] = mapped_column(String(30), default="pending", index=True)
+    provider: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    provider_call_control_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    error: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)

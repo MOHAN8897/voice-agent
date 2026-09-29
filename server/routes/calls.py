@@ -11,7 +11,9 @@ from pydantic import BaseModel, ConfigDict, Field
 from server.call.audio_archive import audio_archive
 from server.call.call_ledger import call_ledger
 from server.call.call_lifecycle_service import call_lifecycle_service
+from server.call.call_status import CALL_STATUSES
 from server.call.call_store import call_store
+from server.call.call_timeline import list_timeline, timeline_stats
 from server.auth.calls_tenant import resolve_calls_tenant_id
 from server.auth.tenant_context import tenant_id_from_request
 from server.config.env import get_settings
@@ -146,19 +148,77 @@ async def list_calls(
     until: Optional[str] = None,
     limit: int = 20,
     offset: int = 0,
+    status: Optional[str] = Query(None, description="Canonical status filter; comma-separated for several"),
+    direction: Optional[str] = Query(None, description="inbound | outbound"),
+    include_attempts: bool = Query(True, description="Include never-answered ringing attempts"),
     scoped_tenant: str = Depends(resolve_calls_tenant_id),
 ):
-    items, total = await call_store.list_calls(
+    """One ordered call history, including calls that never connected.
+
+    ``status`` uses the canonical vocabulary in ``server/call/call_status.py``.
+    Connected calls are enriched exactly as before; ringing attempts carry the same
+    envelope so the console renders both from a single list.
+    """
+    from server.call.call_status import normalize_call_statuses
+
+    items, total = await list_timeline(
         tenant_id=scoped_tenant,
         agent_id=agent_id,
-        disposition=disposition,
+        statuses=normalize_call_statuses(status),
+        direction=direction,
         since=since,
         until=until,
         limit=limit,
         offset=offset,
+        include_attempts=include_attempts,
     )
-    enriched = [_enrich_call_list_item(item) for item in items]
-    return {"calls": enriched, "total": total, "limit": limit, "offset": offset}
+    enriched = [_enrich_timeline_item(item) for item in items]
+    return {
+        "calls": enriched,
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+        "statuses": list(CALL_STATUSES),
+    }
+
+
+@router.get("/api/calls/stats")
+async def calls_stats(
+    agent_id: Optional[str] = Query(None, alias="agentId"),
+    since: Optional[str] = None,
+    until: Optional[str] = None,
+    include_attempts: bool = Query(True),
+    scoped_tenant: str = Depends(resolve_calls_tenant_id),
+):
+    """Counts and totals for the call history header."""
+    return await timeline_stats(
+        tenant_id=scoped_tenant,
+        agent_id=agent_id,
+        since=since,
+        until=until,
+    )
+
+
+def _enrich_timeline_item(item: dict) -> dict:
+    """Attach summary, cost and recording flags to a timeline row."""
+    if not item.get("connected"):
+        # A ringing attempt has no ledger, no outcome and no recording.
+        return item
+    enriched = _enrich_call_list_item(
+        {
+            "call_id": item.get("call_id"),
+            "direction": item.get("direction"),
+            "disposition": item.get("disposition"),
+            "duration_sec": item.get("duration_sec"),
+        }
+    )
+    out = dict(item)
+    for key in ("summary", "customer", "usage", "cost_usd", "cost_inr", "cost_inr_per_min", "pipeline", "has_recording", "recording_source", "has_telnyx_recording"):
+        if key in enriched:
+            out[key] = enriched[key]
+    if out.get("summary"):
+        out["has_transcript"] = True
+    return out
 
 
 def _enrich_call_list_item(item: dict) -> dict:

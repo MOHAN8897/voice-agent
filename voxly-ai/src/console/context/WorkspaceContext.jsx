@@ -16,6 +16,8 @@ export function WorkspaceProvider({ children }) {
   const [agents, setAgents] = useState([]);
   const [phoneNumbers, setPhoneNumbers] = useState([]);
   const [calls, setCalls] = useState([]);
+  /** Server-computed canonical status counts for the call history header. */
+  const [callStats, setCallStats] = useState(null);
   const [leads, setLeads] = useState([]);
   const [campaigns, setCampaigns] = useState([]);
   const [wallet, setWallet] = useState(initialWallet);
@@ -102,6 +104,38 @@ export function WorkspaceProvider({ children }) {
   const [buyNumberPreselectedAgent, setBuyNumberPreselectedAgent] = useState(null);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isDialerModalOpen, setIsDialerModalOpen] = useState(false);
+  // Payment wall. `addFundsReason` explains why it was opened, e.g. before a call.
+  const [isAddFundsOpen, setIsAddFundsOpen] = useState(false);
+  const [addFundsReason, setAddFundsReason] = useState(null);
+
+  const openAddFunds = useCallback((reason = null) => {
+    setAddFundsReason(reason);
+    setIsAddFundsOpen(true);
+  }, []);
+
+  const closeAddFunds = useCallback(() => {
+    setIsAddFundsOpen(false);
+    setAddFundsReason(null);
+  }, []);
+
+  /** True when the wallet is at or below the balance needed to make a billed call. */
+  const canAffordCalls = useCallback(() => {
+    const inr = Number(wallet?.balanceInr) || 0;
+    const usd = Number(wallet?.balanceUsd) || 0;
+    if (inr > 0) return true;
+    if (usd > 0) return true;
+    return false;
+  }, [wallet]);
+
+  /** Ask for money only when the wallet is actually short. */
+  const requireFunds = useCallback(
+    (reason) => {
+      if (canAffordCalls()) return false;
+      openAddFunds(reason);
+      return true;
+    },
+    [canAffordCalls, openAddFunds]
+  );
 
   // ----------------------------------------------------------------
   // Initial Sync from API Gateway
@@ -134,18 +168,21 @@ export function WorkspaceProvider({ children }) {
 
       const fetchedNumbers = await capture('Phone numbers', () => api.telephony.getNumbers(), []);
       const normNumbers = (fetchedNumbers || []).map((n) => normalizePhoneNumber(n, agentMap));
+      // Every agent the server returns is shown, including ones provisioned on the
+      // shared platform tenant for the demo account. No client-side filtering.
       normAgents = normAgents.map((a) => {
         const num = normNumbers.find((n) => n.assignedAgentId === a.id);
         return num ? { ...a, assignedNumber: num.number, numberId: num.id } : a;
       });
 
-      const [fetchedCalls, fetchedLeads, fetchedCampaigns, fetchedWallet, fetchedCatalog] =
+      const [fetchedCalls, fetchedLeads, fetchedCampaigns, fetchedWallet, fetchedCatalog, fetchedCallStats] =
         await Promise.all([
-          capture('Calls', () => api.calls.list(), []),
+          capture('Calls', () => api.calls.list({ limit: 100 }), []),
           capture('Leads', () => api.leads.list(), []),
           capture('Campaigns', () => api.campaigns.list(), []),
           capture('Wallet', () => api.billing.getWallet(), null),
           capture('Number catalog', () => api.telephony.getCatalog(catalogCountry), []),
+          capture('Call summary', () => api.calls.stats(), null),
         ]);
 
       setAgents(normAgents);
@@ -158,6 +195,7 @@ export function WorkspaceProvider({ children }) {
       }
       setPhoneNumbers(normNumbers);
       setCalls(fetchedCalls || []);
+      setCallStats(fetchedCallStats);
       setLeads(fetchedLeads || []);
       setCampaigns(fetchedCampaigns || []);
       if (fetchedWallet) setWallet(normalizeWallet(fetchedWallet, initialWallet));
@@ -237,6 +275,7 @@ export function WorkspaceProvider({ children }) {
       setAgents([]);
       setPhoneNumbers([]);
       setCalls([]);
+      setCallStats(null);
       setLeads([]);
       setCampaigns([]);
       setWallet(initialWallet);
@@ -490,11 +529,13 @@ export function WorkspaceProvider({ children }) {
     }
   };
 
+  /**
+   * Line-level routing toggles. Greeting, business hours and after-hours action are
+   * agent-level settings and live on the telephony profile, not here.
+   */
   const updateNumberRouting = async (numberId, routingUpdates) => {
     setPhoneNumbers((prev) =>
-      prev.map((num) =>
-        num.id === numberId ? { ...num, inboundRouting: { ...num.inboundRouting, ...routingUpdates } } : num
-      )
+      prev.map((num) => (num.id === numberId ? { ...num, ...routingUpdates } : num))
     );
 
     try {
@@ -503,8 +544,12 @@ export function WorkspaceProvider({ children }) {
         ...routingUpdates,
         assignedAgentId: num?.assignedAgentId,
       });
+      await loadWorkspaceData();
     } catch (e) {
-      if (api.getToken()) throw e;
+      if (api.getToken()) {
+        await loadWorkspaceData();
+        throw e;
+      }
       console.warn('API updateNumberRouting error:', e);
     }
   };
@@ -664,6 +709,7 @@ export function WorkspaceProvider({ children }) {
     agents,
     phoneNumbers,
     calls,
+    callStats,
     leads,
     campaigns,
     wallet,
@@ -704,6 +750,13 @@ export function WorkspaceProvider({ children }) {
     setIsCommandPaletteOpen,
     isDialerModalOpen,
     setIsDialerModalOpen,
+    isAddFundsOpen,
+    setIsAddFundsOpen,
+    addFundsReason,
+    openAddFunds,
+    closeAddFunds,
+    canAffordCalls,
+    requireFunds,
 
     // Handlers
     createAgent,

@@ -267,6 +267,26 @@ export const api = {
       const rows = data.agents || data;
       return Array.isArray(rows) ? rows.map(normalizeAgent) : [];
     },
+    /**
+     * Operational phone settings for one agent: greeting, business hours,
+     * after-hours action, and the inbound/outbound toggles. Kept server-side and
+     * separate from the Business Brain, which holds the AI's behaviour.
+     */
+    async getTelephonyProfile(agentId) {
+      const data = await api.request('GET', `/api/agents/${agentId}/telephony-profile`);
+      return {
+        profile: data.profile || {},
+        afterHoursActions: data.afterHoursActions || [],
+      };
+    },
+    async saveTelephonyProfile(agentId, profile) {
+      const data = await api.request('PUT', `/api/agents/${agentId}/telephony-profile`, profile);
+      return data.profile || {};
+    },
+    /** What the live inbound path would decide right now, and why. */
+    async getEffectiveTelephony(agentId) {
+      return await api.request('GET', `/api/agents/${agentId}/telephony-profile/effective`);
+    },
     async get(id) {
       const data = await api.request('GET', `/api/agents/${id}`);
       return normalizeAgent(data.agent || data);
@@ -298,6 +318,61 @@ export const api = {
     async delete(id) {
       return await api.request('DELETE', `/api/agents/${id}`);
     },
+    /**
+     * Save an edited calling script back to the agent's published brain.
+     * Only the script text changes; the compiler is not re-run, so the user's
+     * wording is what the agent will say.
+     */
+    async saveCallingScript(agentId, script) {
+      const data = await api.request('PUT', `/api/agents/${agentId}/business-brain/calling-script`, {
+        script,
+      });
+      return data;
+    },
+
+    /**
+     * Persist voice selection. Stored in the brain's voice config section, which
+     * is what the live voice pipeline reads.
+     */
+    async saveVoice(agentId, { voiceId, speed, language }) {
+      return await api.request('PUT', `/api/agents/${agentId}/business-brain/voice`, {
+        voiceId,
+        speed,
+        language,
+      });
+    },
+
+    /** The agent's stored brain: script, variables and voice config. */
+    async getBusinessBrain(agentId) {
+      const data = await api.request('GET', `/api/agents/${agentId}/business-brain`);
+      const sections = data?.draft?.sections || [];
+      const byTitle = (title) => sections.find((s) => s.title === title);
+      const scriptSection =
+        sections.find((s) => s.type === 'facts') || byTitle('Calling script') || null;
+      const variablesSection = byTitle('saas_script_variables');
+      const voiceSection = byTitle('saas_voice_config');
+      let variables = [];
+      let voice = {};
+      try {
+        if (variablesSection?.raw_text) {
+          variables = JSON.parse(variablesSection.raw_text)?.variables || [];
+        }
+      } catch {
+        variables = [];
+      }
+      try {
+        if (voiceSection?.raw_text) voice = JSON.parse(voiceSection.raw_text) || {};
+      } catch {
+        voice = {};
+      }
+      return {
+        callingScript: scriptSection?.raw_text || '',
+        variables,
+        voice,
+        published: data?.published || null,
+      };
+    },
+
     async composeOnboarding(payload) {
       const data = await api.request('POST', '/api/app/agents/compose-onboarding', {
         name: payload.name,
@@ -387,10 +462,18 @@ export const api = {
   },
 
   calls: {
-    async list({ agentId, disposition, limit = 100 } = {}) {
+    /**
+     * Call history. `status` uses the server's canonical vocabulary
+     * (answered | missed | outbound | declined | failed | voicemail | in_progress)
+     * and includes calls that never connected, so the Missed tab is real.
+     */
+    async list({ agentId, status, statuses, direction, limit = 100, offset = 0 } = {}) {
       const qs = new URLSearchParams({ limit: String(limit) });
+      if (offset) qs.set('offset', String(offset));
       if (agentId) qs.set('agentId', agentId);
-      if (disposition) qs.set('disposition', disposition);
+      if (status) qs.set('status', status);
+      if (statuses?.length) qs.set('status', statuses.join(','));
+      if (direction) qs.set('direction', direction);
       const data = await api.request('GET', `/api/calls?${qs}`);
       const rows = data.calls || data;
       if (!Array.isArray(rows)) return [];
@@ -401,16 +484,46 @@ export const api = {
       });
       return rows.map((r) => normalizeCall(r, agentMap));
     },
+    /** Counts and totals for the history header. */
+    async stats({ agentId, since, until } = {}) {
+      const qs = new URLSearchParams();
+      if (agentId) qs.set('agentId', agentId);
+      if (since) qs.set('since', since);
+      if (until) qs.set('until', until);
+      const suffix = qs.toString() ? `?${qs}` : '';
+      return await api.request('GET', `/api/calls/stats${suffix}`);
+    },
     async get(id) {
       return await api.request('GET', `/api/calls/${id}`);
     },
     async transcript(id) {
       return await api.request('GET', `/api/call/${id}/transcript`);
     },
-    async triggerOutbound({ agentId, toE164, fromE164 = null }) {
+    /** Structured post-call outcome: disposition, summary, extracted fields. */
+    async outcome(id) {
+      return await api.request('GET', `/api/call/${id}/outcome`);
+    },
+    async triggerOutbound({ agentId, toE164, fromE164 = null, dialRequestId = null }) {
       const body = { agentId, toE164 };
       if (fromE164) body.fromE164 = fromE164;
+      if (dialRequestId) body.dialRequestId = dialRequestId;
       return await api.request('POST', '/api/calls/outbound', body);
+    },
+    /**
+     * Call a missed caller back. Goes through the same outbound path as a manual
+     * call, so every server-side guard still applies. Works for both a connected
+     * call id and a ringing-attempt id.
+     */
+    async callback(callId, { toE164, agentId, fromE164, mode = 'manual' } = {}) {
+      const body = { mode };
+      if (toE164) body.toE164 = toE164;
+      if (agentId) body.agentId = agentId;
+      if (fromE164) body.fromE164 = fromE164;
+      return await api.request('POST', `/api/calls/${callId}/callback`, body);
+    },
+    async listCallbacks(callId) {
+      const data = await api.request('GET', `/api/calls/${callId}/callbacks`);
+      return data.callbacks || [];
     },
   },
 
@@ -479,6 +592,10 @@ export const api = {
   billing: {
     async getWallet() {
       return await api.request('GET', '/api/billing/wallet');
+    },
+    /** Server-authoritative prices: number rental, top-up bounds, call rates. */
+    async getCatalog() {
+      return await api.request('GET', '/api/billing/catalog');
     },
     async topUp(amountUsd) {
       return await api.request('POST', '/api/billing/topup', { amountUsd });

@@ -24,13 +24,27 @@ export function OverviewModule({ onNavigate, onOpenCreateAgent, onOpenBuyNumber 
   const displayName = user?.fullName || user?.name || user?.email?.split('@')[0] || 'there';
   const [activityTimeframe, setActivityTimeframe] = useState('Today');
 
+  const RANGE_DAYS = { Today: 1, '7 Days': 7, '30 Days': 30 };
+
+  // The toggle must actually filter, or it is a control that lies to the user.
+  const callsInRange = useMemo(() => {
+    const days = RANGE_DAYS[activityTimeframe] ?? 1;
+    const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+    return calls.filter((c) => {
+      const raw = c.startedAt || c.started_at;
+      if (!raw) return false;
+      const d = new Date(raw).getTime();
+      return !Number.isNaN(d) && d >= cutoff;
+    });
+  }, [calls, activityTimeframe]);
+
   const hourlyData = useMemo(() => {
     const buckets = {};
     for (let h = 8; h <= 17; h++) {
       const label = `${String(h).padStart(2, '0')}:00`;
       buckets[label] = { hour: label, inbound: 0, outbound: 0 };
     }
-    for (const c of calls) {
+    for (const c of callsInRange) {
       const raw = c.startedAt || c.started_at;
       if (!raw) continue;
       const d = new Date(raw);
@@ -42,11 +56,14 @@ export function OverviewModule({ onNavigate, onOpenCreateAgent, onOpenBuyNumber 
       else buckets[label].inbound += 1;
     }
     return Object.values(buckets);
-  }, [calls]);
+  }, [callsInRange]);
 
   const maxCalls = Math.max(1, ...hourlyData.map((d) => d.inbound + d.outbound));
   const totalMinutes = useMemo(() => {
     return calls.reduce((acc, c) => {
+      // Prefer the numeric seconds; fall back to parsing the formatted string.
+      const seconds = Number(c.durationSec);
+      if (Number.isFinite(seconds) && seconds > 0) return acc + Math.round(seconds / 60);
       const m = parseInt(String(c.duration || '0').split('m')[0], 10);
       return acc + (Number.isFinite(m) ? m : 0);
     }, 0);
@@ -362,14 +379,15 @@ export function OverviewModule({ onNavigate, onOpenCreateAgent, onOpenBuyNumber 
                   <div className="font-semibold text-xs text-[#0F0E17] group-hover:text-[#6344E7] transition-colors">
                     {lead.name}
                   </div>
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#ECFDF5] text-[#047857] border border-[#A7F3D0]">
-                    BANT {lead.bantScore}
+                  {/* Show the stage the API actually returns, not a score it does not. */}
+                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-[#ECFDF5] text-[#047857] border border-[#A7F3D0]">
+                    {lead.stage || 'New'}
                   </span>
                 </div>
                 <div className="text-[11px] text-[#524E5E] truncate">{lead.company}</div>
                 <div className="text-[10px] text-[#8C879A] mt-1.5 flex items-center justify-between">
-                  <span>{lead.agentName}</span>
-                  <span>{lead.lastCallDate}</span>
+                  <span>{lead.phone || 'No number yet'}</span>
+                  <span>{lead.updatedAt ? new Date(lead.updatedAt).toLocaleDateString() : 'New'}</span>
                 </div>
               </div>
             ))}

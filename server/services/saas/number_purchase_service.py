@@ -1,6 +1,7 @@
 """Stripe checkout + number reservations (PRD-04)."""
 from __future__ import annotations
 
+import re
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -12,6 +13,9 @@ from server.db.models.entities import Agent, Tenant
 from server.db.models.phase5_models import PhoneNumber
 from server.db.models.saas_models import NumberPurchase, NumberReservation, ProvisionJob
 from server.services.saas.tenant_guard import SubscriberPrincipal, subscriber_workspace_tenant_id
+
+#: Strict E.164: '+', then 8-15 digits, first digit 1-9 (never 0).
+E164_RE = re.compile(r"^\+[1-9]\d{7,14}$")
 
 
 def _utcnow() -> datetime:
@@ -66,7 +70,7 @@ async def create_purchase_checkout(
     factory = get_session_factory()
     if factory is None:
         raise RuntimeError("database_required")
-    e164 = e164.strip()
+    e164 = normalize_e164(e164)
     if await _active_reservation_conflict(e164):
         raise ValueError("number_reserved")
     async with factory() as session:
@@ -124,7 +128,17 @@ async def create_purchase_checkout(
                 "e164": e164,
                 "user_id": str(principal.user_id),
             },
-            "line_items": [{"price_data": {"currency": "usd", "product_data": {"name": f"Phone {e164}"}, "unit_amount": 500}, "quantity": 1}],
+            "line_items": [
+            {
+                "price_data": {
+                    "currency": "usd",
+                    "product_data": {"name": f"Phone {e164} (monthly)"},
+                    # Same price the wallet path charges, from one place.
+                    "unit_amount": int(settings.did_monthly_usd_cents),
+                },
+                "quantity": 1,
+            }
+        ],
         }
         checkout = stripe.checkout.Session.create(**session_params)
         purchase.stripe_checkout_session_id = checkout.id
@@ -154,6 +168,33 @@ async def get_purchase(purchase_id: uuid.UUID, tenant_id: uuid.UUID) -> dict | N
         }
 
 
+def normalize_e164(raw: str) -> str:
+    """Validate and normalise a phone number to strict E.164.
+
+    A number is charged for and handed to the carrier, so the shape must be right
+    before any money moves. Accepts the loose forms a human types ("+1 415 555 2671",
+    "0044 …", bare 10-digit) and returns strict E.164, or raises ``invalid_e164``.
+    """
+    value = (raw or "").strip()
+    if not value:
+        raise ValueError("invalid_e164")
+    if value.startswith("00"):
+        value = f"+{value[2:]}"
+    if value.startswith("+"):
+        candidate = "+" + re.sub(r"\D", "", value[1:])
+    else:
+        digits = re.sub(r"\D", "", value)
+        if len(digits) == 10:
+            candidate = f"+91{digits}"
+        else:
+            candidate = f"+{digits}"
+    # E.164: a leading '+', a country code that does not start with 0, and 8-15
+    # digits in total. "+0123…" and "+1234567" are both rejected.
+    if not E164_RE.match(candidate):
+        raise ValueError("invalid_e164")
+    return candidate
+
+
 async def purchase_with_wallet(
     principal: SubscriberPrincipal,
     *,
@@ -170,9 +211,7 @@ async def purchase_with_wallet(
     factory = get_session_factory()
     if factory is None:
         raise RuntimeError("database_required")
-    e164 = e164.strip()
-    if not e164.startswith("+") or len(e164) < 8:
-        raise ValueError("invalid_e164")
+    e164 = normalize_e164(e164)
     if await _active_reservation_conflict(e164):
         raise ValueError("number_reserved")
     async with factory() as session:

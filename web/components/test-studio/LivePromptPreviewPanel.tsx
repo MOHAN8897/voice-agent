@@ -49,13 +49,24 @@ export function LivePromptPreviewPanel({
           credentials: "include",
         });
         const j = await r.json().catch(() => ({}));
-        if (!r.ok) throw new Error(j.detail || j.message || `HTTP ${r.status}`);
+        if (!r.ok) {
+        const detail = j.detail;
+        const msg =
+          typeof detail === "string"
+            ? detail
+            : detail?.message ||
+              (Array.isArray(detail?.issues) ? detail.issues.join("; ") : undefined) ||
+              j.message ||
+              `HTTP ${r.status}`;
+        throw new Error(msg);
+      }
         setData({
           live_prompt: j.live_prompt,
-          compiled_brain: undefined,
+          compiled_brain: j.compiled_brain,
           token_estimate: j.token_estimate,
           provider: j.provider,
           opening_line: j.opening_line,
+          prewarm_greeting_line: j.prewarm_greeting_line,
           script_entities: j.script_entities,
           note: j.note,
           call_id: j.call_id,
@@ -70,7 +81,17 @@ export function LivePromptPreviewPanel({
         credentials: "include",
       });
       const j = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(j.detail || j.message || `HTTP ${r.status}`);
+      if (!r.ok) {
+        const detail = j.detail;
+        const msg =
+          typeof detail === "string"
+            ? detail
+            : detail?.message ||
+              (Array.isArray(detail?.issues) ? detail.issues.join("; ") : undefined) ||
+              j.message ||
+              `HTTP ${r.status}`;
+        throw new Error(msg);
+      }
       setData(j as LivePromptPreview);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load prompt preview");

@@ -21,6 +21,35 @@ import { TactileButton } from '../ui/TactileButton';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { PRICING_TIERS } from '../../data/siteContent';
 
+/** Plain-language labels for wallet ledger kinds. */
+const TRANSACTION_LABEL = {
+  usage_pstn: 'Phone call usage',
+  usage_web: 'Browser test call',
+  did_purchase: 'Phone number',
+  did_refund: 'Phone number refund',
+  admin_seed: 'Starting credits',
+  admin_grant: 'Credits added',
+  topup: 'Top-up (USD)',
+  razorpay_topup_inr: 'Top-up (INR)',
+};
+
+function describeTransactionKind(kind) {
+  return TRANSACTION_LABEL[kind] || kind || 'Adjustment';
+}
+
+function toCsv(rows) {
+  const header = ['when', 'type', 'reference', 'inr', 'usd'];
+  const body = rows.map((r) => [
+    r.createdAt || '',
+    describeTransactionKind(r.kind),
+    r.referenceId || '',
+    ((Number(r.amountInrPaise) || 0) / 100).toFixed(2),
+    ((Number(r.amountCents) || 0) / 100).toFixed(2),
+  ]);
+  const escape = (cell) => `"${String(cell).replace(/"/g, '""')}"`;
+  return [header, ...body].map((line) => line.map(escape).join(',')).join('\n');
+}
+
 export function BillingModule() {
   const { user } = useAuth();
   const {
@@ -107,8 +136,21 @@ export function BillingModule() {
   };
 
   const handleSelectPlan = (_tierName) => {
-    setTopupError('Plan changes are not billed yet — use wallet top-up for PSTN usage.');
+    setTopupError('Plan changes are not billed yet — use wallet top-up for call usage.');
   };
+
+  const exportTransactionsCsv = useCallback(() => {
+    if (typeof window === 'undefined' || !transactions.length) return;
+    const blob = new Blob([toCsv(transactions)], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `voxly-billing-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, [transactions]);
 
   const activeTierName = (currentWorkspace?.tier || 'Professional Fleet').replace(' Fleet', '');
 
@@ -342,29 +384,29 @@ export function BillingModule() {
           </div>
         </SolidCard>
 
-        {/* Right Col: Default Card on File */}
+        {/* Right Col: payment methods actually offered by the server */}
         <SolidCard className="space-y-3">
           <div className="flex items-center justify-between text-xs">
-            <span className="font-bold text-[#0F0E17]">Payment Method</span>
+            <span className="font-bold text-[#0F0E17]">Payment methods</span>
             <span className="text-[10px] text-[#15803D] font-mono font-medium bg-[#22C55E]/10 border border-[#22C55E]/20 px-2 py-0.5 rounded-md">
               {razorpayEnabled ? 'Razorpay + Stripe' : 'Stripe'}
             </span>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-6 rounded-md bg-white border border-[#E4E2EB] flex items-center justify-center text-[10px] font-bold text-[#0F0E17] shadow-craft-xs">
-                VISA
-              </div>
-              <div>
-                <div className="text-xs font-mono font-semibold text-[#0F0E17]">•••• 4242</div>
-                <div className="text-[10px] text-[#524E5E]">Expires 12/2028</div>
-              </div>
-            </div>
-          </div>
+          <ul className="space-y-2 text-xs text-[#524E5E]">
+            <li className="flex items-center justify-between p-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
+              <span className="font-semibold text-[#0F0E17]">Razorpay</span>
+              <span>{razorpayEnabled ? 'Cards, UPI, netbanking (INR)' : 'Not enabled'}</span>
+            </li>
+            <li className="flex items-center justify-between p-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
+              <span className="font-semibold text-[#0F0E17]">Stripe</span>
+              <span>Cards (USD)</span>
+            </li>
+          </ul>
 
           <p className="text-[11px] text-[#524E5E] leading-relaxed">
-            All payments are processed securely via Stripe. Invoices and receipts include itemized telephony tax breakdowns.
+            Card details are entered on the provider's checkout and never touch our servers. Receipts
+            are listed below under Wallet invoices.
           </p>
         </SolidCard>
       </div>
@@ -433,74 +475,48 @@ export function BillingModule() {
 
           <div className="flex items-center gap-2 text-[11px] text-[#524E5E]">
             <ShieldCheck className="w-4 h-4 text-[#15803D] shrink-0" />
-            <span>Emergency Overdraft Buffer: <strong className="text-[#0F0E17] font-semibold">$15.00 buffer</strong> allows active calls to complete gracefully if payment declines.</span>
+            <span>
+              Calls stop at the minimum balance of{' '}
+              <strong className="text-[#0F0E17] font-semibold">
+                ₹{Number(serverWallet?.minBalanceInr ?? 0).toFixed(2)}
+              </strong>{' '}
+              (or ${Number(serverWallet?.minBalanceUsd ?? 0).toFixed(2)}). Top up to keep your agents
+              taking calls.
+            </span>
           </div>
         </SolidCard>
 
-        {/* Transparent Cost Decomposition */}
+        {/* What a call costs, taken from the live rates the server bills by. */}
         <SolidCard className="space-y-3">
-          <h3 className="text-xs font-bold text-[#0F0E17]">Transparent Cost Decomposition</h3>
-          <p className="text-[11px] text-[#524E5E]">Exactly how your $0.095/min ($0.001583/sec) is allocated across infrastructure.</p>
+          <h3 className="text-xs font-bold text-[#0F0E17]">What a call costs</h3>
+          <p className="text-[11px] text-[#524E5E]">
+            These are the rates your workspace is charged. Each call's actual cost is itemised in the
+            usage ledger below.
+          </p>
 
           <div className="space-y-2 text-xs font-mono">
             <div className="p-2.5 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB] flex justify-between">
-              <span className="text-[#524E5E]">1. Carrier PSTN Inbound/Outbound</span>
-              <span className="text-[#0F0E17] font-semibold">$0.0120 / min</span>
+              <span className="text-[#524E5E]">Phone call (per minute)</span>
+              <span className="text-[#0F0E17] font-semibold">
+                ₹{Number(serverWallet?.rateInrPerMin ?? 0).toFixed(2)}
+              </span>
             </div>
             <div className="p-2.5 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB] flex justify-between">
-              <span className="text-[#524E5E]">2. Streaming STT (Deepgram Nova-2)</span>
-              <span className="text-[#0F0E17] font-semibold">$0.0070 / min</span>
+              <span className="text-[#524E5E]">Browser test call (per minute)</span>
+              <span className="text-[#0F0E17] font-semibold">
+                ₹{Number(serverWallet?.webRateInrPerMin ?? 0).toFixed(2)}
+              </span>
             </div>
             <div className="p-2.5 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB] flex justify-between">
-              <span className="text-[#524E5E]">3. LLM Tokens (Streaming First-Token)</span>
-              <span className="text-[#0F0E17] font-semibold">$0.0250 / min</span>
-            </div>
-            <div className="p-2.5 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB] flex justify-between">
-              <span className="text-[#524E5E]">4. Neural Voice Synthesis (Cartesia/11Labs)</span>
-              <span className="text-[#0F0E17] font-semibold">$0.0460 / min</span>
-            </div>
-            <div className="p-2.5 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB] flex justify-between">
-              <span className="text-[#524E5E]">5. Regional Media Edge & Transcoding</span>
-              <span className="text-[#0F0E17] font-semibold">$0.0050 / min</span>
+              <span className="text-[#524E5E]">Phone number rental (per month)</span>
+              <span className="text-[#0F0E17] font-semibold">
+                ₹{Number(serverWallet?.didMonthlyInr ?? 0).toFixed(2)}
+              </span>
             </div>
           </div>
         </SolidCard>
       </div>
 
-      {/* Paid invoices (Razorpay wallet) */}
-      {transactions.length > 0 && (
-        <SolidCard className="overflow-hidden" padding="p-0">
-          <div className="px-5 py-3 border-b border-[#E4E2EB]">
-            <h3 className="text-xs font-bold text-[#0F0E17]">Usage ledger</h3>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="bg-[#FAF9FD] text-[10px] font-bold text-[#8C879A] uppercase">
-                  <th className="py-2 px-4">When</th>
-                  <th className="py-2 px-4">Kind</th>
-                  <th className="py-2 px-4 font-mono">INR</th>
-                  <th className="py-2 px-4 font-mono">User</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#E4E2EB]">
-                {transactions.map((row) => (
-                  <tr key={row.id}>
-                    <td className="py-2 px-4 font-mono text-[#524E5E]">
-                      {row.createdAt ? new Date(row.createdAt).toLocaleString() : '—'}
-                    </td>
-                    <td className="py-2 px-4">{row.kind}</td>
-                    <td className="py-2 px-4 font-mono">
-                      ₹{(Number(row.amountInrPaise || 0) / 100).toFixed(2)}
-                    </td>
-                    <td className="py-2 px-4 font-mono text-[10px]">{row.userId ? row.userId.slice(0, 8) : '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </SolidCard>
-      )}
       {invoices.length > 0 && (
         <SolidCard padding="p-0" className="overflow-hidden">
           <div className="p-4 border-b border-[#E4E2EB]">
@@ -536,50 +552,70 @@ export function BillingModule() {
         </SolidCard>
       )}
 
-      {/* Itemized Cost Ledger Table */}
+      {/* Every wallet movement, straight from the billing ledger. */}
       <SolidCard padding="p-0" className="overflow-hidden">
-        <div className="p-4 border-b border-[#E4E2EB] flex items-center justify-between">
-          <h3 className="text-xs font-bold text-[#0F0E17]">Recent Per-Second Usage Ledger</h3>
+        <div className="p-4 border-b border-[#E4E2EB] flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-xs font-bold text-[#0F0E17]">Billing activity</h3>
+            <p className="text-[11px] text-[#524E5E] mt-0.5">
+              Top-ups, call usage and number rentals as they were charged.
+            </p>
+          </div>
           <button
             type="button"
-            onClick={() => alert('Downloading itemized CSV usage ledger...')}
-            className="flex items-center gap-1.5 text-xs text-[#6344E7] font-semibold hover:underline"
+            onClick={exportTransactionsCsv}
+            disabled={!transactions.length}
+            data-testid="billing-export-csv"
+            className="flex items-center gap-1.5 text-xs text-[#6344E7] font-semibold hover:underline disabled:opacity-40 disabled:hover:no-underline"
           >
             <Download className="w-3.5 h-3.5" />
             <span>Export CSV</span>
           </button>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs font-mono">
-            <thead>
-              <tr className="border-b border-[#E4E2EB] bg-[#FAF9FD] text-[10px] text-[#524E5E] uppercase tracking-wider font-semibold">
-                <th className="py-2.5 px-4">Transaction ID</th>
-                <th className="py-2.5 px-3">Agent</th>
-                <th className="py-2.5 px-3">Duration</th>
-                <th className="py-2.5 px-3">PSTN</th>
-                <th className="py-2.5 px-3">STT</th>
-                <th className="py-2.5 px-3">LLM</th>
-                <th className="py-2.5 px-3">TTS</th>
-                <th className="py-2.5 px-4 text-right">Total Charged</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#E4E2EB]">
-              {wallet.costLedger.map((row) => (
-                <tr key={row.id} className="hover:bg-[#FAF9FD]/80 transition-colors">
-                  <td className="py-2.5 px-4 text-[#0F0E17] font-semibold">{row.id}</td>
-                  <td className="py-2.5 px-3 text-[#524E5E]">{row.agent}</td>
-                  <td className="py-2.5 px-3 text-[#0F0E17]">{row.durationSeconds}s</td>
-                  <td className="py-2.5 px-3 text-[#524E5E]">{row.telecom}</td>
-                  <td className="py-2.5 px-3 text-[#524E5E]">{row.stt}</td>
-                  <td className="py-2.5 px-3 text-[#524E5E]">{row.llm}</td>
-                  <td className="py-2.5 px-3 text-[#524E5E]">{row.tts}</td>
-                  <td className="py-2.5 px-4 text-right font-bold text-[#15803D]">{row.total}</td>
+        {transactions.length === 0 ? (
+          <p className="px-4 py-6 text-center text-xs text-[#8C879A]">
+            No charges yet. Add funds to place calls or buy a number.
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs font-mono">
+              <thead>
+                <tr className="border-b border-[#E4E2EB] bg-[#FAF9FD] text-[10px] text-[#524E5E] uppercase tracking-wider font-semibold">
+                  <th className="py-2.5 px-4">When</th>
+                  <th className="py-2.5 px-3">Type</th>
+                  <th className="py-2.5 px-3">Reference</th>
+                  <th className="py-2.5 px-4 text-right">Amount</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-[#E4E2EB]">
+                {transactions.map((row) => {
+                  const inr = Number(row.amountInrPaise || 0) / 100;
+                  const usd = Number(row.amountCents || 0) / 100;
+                  const isCredit = inr > 0 || usd > 0;
+                  return (
+                    <tr key={row.id} className="hover:bg-[#FAF9FD]/80 transition-colors">
+                      <td className="py-2.5 px-4 text-[#524E5E]">
+                        {row.createdAt ? new Date(row.createdAt).toLocaleString() : '—'}
+                      </td>
+                      <td className="py-2.5 px-3 text-[#0F0E17]">{describeTransactionKind(row.kind)}</td>
+                      <td className="py-2.5 px-3 text-[#8C879A] truncate max-w-[220px]">
+                        {row.referenceId || '—'}
+                      </td>
+                      <td
+                        className={`py-2.5 px-4 text-right font-bold ${
+                          isCredit ? 'text-[#15803D]' : 'text-[#0F0E17]'
+                        }`}
+                      >
+                        {inr !== 0 ? `₹${inr.toFixed(2)}` : usd !== 0 ? `$${usd.toFixed(2)}` : '—'}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </SolidCard>
     </div>
   );

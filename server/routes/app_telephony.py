@@ -13,6 +13,10 @@ from server.db.connection import get_session_factory
 from server.db.models.entities import Agent, Call
 from server.db.models.phase5_models import PhoneNumber
 from server.db.models.saas_models import TelephonyContact
+from server.services.saas.call_callback_service import (
+    list_callbacks,
+    request_callback,
+)
 from server.services.saas.number_purchase_service import (
     create_purchase_checkout,
     get_purchase,
@@ -343,21 +347,93 @@ async def get_call_detail(call_id: str, principal: SubscriberPrincipal = Depends
     factory = get_session_factory()
     if factory is None:
         raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Not found"}})
+    try:
+        call_uuid = uuid.UUID(call_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": {"code": "invalid_call_id", "message": "Invalid call id"}},
+        )
     async with factory() as session:
-        row = await session.get(Call, uuid.UUID(call_id))
+        row = await session.get(Call, call_uuid)
         if row is None or row.tenant_id != principal.tenant_id:
             raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Not found"}})
+        from server.call.call_status import status_for_record
+
+        record = {
+            "direction": row.direction,
+            "duration_sec": row.duration_sec,
+            "end_reason": row.end_reason,
+            "disposition": row.disposition,
+            "ended_at": row.ended_at,
+        }
         return {
             "callId": str(row.call_id),
             "agentId": str(row.agent_id),
             "direction": row.direction,
             "channel": row.channel,
+            "status": row.status or status_for_record(record),
             "startedAt": row.started_at.isoformat(),
             "endedAt": row.ended_at.isoformat() if row.ended_at else None,
             "durationSec": row.duration_sec,
             "disposition": row.disposition,
             "endReason": row.end_reason,
         }
+
+
+class CallbackBody(BaseModel):
+    """Call a missed caller back. Any field may be omitted; we infer where safe."""
+
+    toE164: str | None = None
+    agentId: str | None = None
+    fromE164: str | None = None
+    dialRequestId: str | None = None
+    mode: str = Field("manual", max_length=24)
+
+    @model_validator(mode="before")
+    @classmethod
+    def reject_stack_fields(cls, data):
+        if isinstance(data, dict):
+            for key in ("stackOverride", "stack_override", "tier", "pipeline"):
+                if key in data:
+                    raise ValueError(f"{key} not allowed for subscriber calls")
+        return data
+
+
+@router.post("/api/calls/{call_id}/callback")
+async def call_back(
+    call_id: str,
+    body: CallbackBody,
+    principal: SubscriberPrincipal = Depends(require_subscriber_jwt),
+):
+    """Re-dial a missed caller using the same outbound path as a manual call.
+
+    Accepts either a connected call id or a ringing-attempt id, so the Missed tab
+    and the call detail drawer share one action.
+    """
+    require_subscriber_permission(principal, "app.telephony.write")
+    allowed, retry = _outbound_limiter.allow(f"callback:{principal.tenant_id}")
+    if not allowed:
+        raise_rate_limited(retry, "Callback rate limit reached. Wait and try again.")
+    return await request_callback(
+        principal,
+        call_id=call_id,
+        to_e164=body.toE164,
+        agent_id=body.agentId,
+        from_e164=body.fromE164,
+        dial_request_id=body.dialRequestId,
+        mode=body.mode,
+    )
+
+
+@router.get("/api/calls/{call_id}/callbacks")
+async def call_callbacks(
+    call_id: str,
+    principal: SubscriberPrincipal = Depends(require_subscriber_jwt),
+):
+    """Callback history for one call — who tried to call back, and whether it connected."""
+    require_subscriber_permission(principal, "app.calls.read")
+    return {"callbacks": await list_callbacks(principal, call_id=call_id)}
 
 
 @router.patch("/api/telephony/contacts/{contact_id}")

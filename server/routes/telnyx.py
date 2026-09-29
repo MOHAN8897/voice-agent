@@ -3,9 +3,11 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import uuid
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request
+from sqlalchemy import select
 
 from server.config.env import get_settings
 from server.services.pstn_debug import log_pstn, mark
@@ -427,6 +429,187 @@ async def _answer_inbound(call_control_id: str) -> None:
         logger.exception("[TELNYX] inbound answer failed control=%s", call_control_id)
 
 
+async def _record_inbound_attempt(
+    call_control_id: str,
+    payload: dict,
+    *,
+    policy_reason: str,
+) -> None:
+    """Persist an inbound ringing event so never-answered calls are visible.
+
+    Runs as a background task and swallows every error: this is observability, and
+    it must never delay the webhook ACK or fail a live call.
+    """
+    try:
+        from_number = str(payload.get("from") or payload.get("caller") or "") or None
+        to_number = str(payload.get("to") or payload.get("called") or "") or None
+        from server.services.saas.telephony_profile import profile_for_number, public_profile
+
+        profile = await profile_for_number(to_number)
+        tenant_id = str(profile.get("tenant_id")) if profile else ""
+        if not tenant_id:
+            # No agent owns this number: keep today's behaviour, but still record the
+            # attempt under the platform tenant so the demo console can show it.
+            from server.config.env import get_settings as _settings
+
+            tenant_id = str(_settings().default_tenant_id)
+        await call_attempt_store.upsert_by_control(
+            call_control_id,
+            tenant_id=tenant_id,
+            agent_id=str(profile.get("agent_id")) if profile else None,
+            provider="telnyx",
+            direction="inbound",
+            from_number=from_number,
+            to_number=to_number,
+            status="in_progress",
+            policy_reason=policy_reason,
+        )
+        if profile:
+            telnyx_call_registry.upsert(
+                call_control_id,
+                {
+                    "telephony_profile": public_profile(profile),
+                    "telephony_agent_id": str(profile.get("agent_id")),
+                },
+            )
+    except Exception as exc:
+        log_pstn("call_attempt.record_failed", control=call_control_id, error=str(exc)[:200])
+        logger.warning("[TELNYX] inbound attempt record failed control=%s", call_control_id, exc_info=True)
+
+
+async def _finalize_inbound_attempt(call_control_id: str, hangup_cause: Any) -> None:
+    """Close an inbound attempt with its canonical status. Never raises."""
+    try:
+        from server.call.call_status import classify_call_status
+        from server.call.call_store import call_attempt_store
+
+        row = telnyx_call_registry.get(call_control_id) or {}
+        linked = row.get("linked_call_id")
+        if linked:
+            await call_attempt_store.link_to_call(call_control_id, str(linked))
+            return
+        reason = str(hangup_cause or row.get("status") or "hangup")
+        policy = (row.get("inbound_policy") or {}) if isinstance(row.get("inbound_policy"), dict) else {}
+        route = str(policy.get("route") or "")
+        if route == "voicemail":
+            status = "voicemail"
+        else:
+            status = classify_call_status(
+                direction="inbound",
+                duration_sec=0,
+                end_reason=reason,
+                disposition=None,
+            )
+        await call_attempt_store.finalize_by_control(
+            call_control_id, status=status, end_reason=reason
+        )
+    except Exception as exc:
+        log_pstn("call_attempt.finalize_failed", control=call_control_id, error=str(exc)[:200])
+
+
+async def _apply_inbound_policy(call_control_id: str, payload: dict) -> bool:
+    """Answer or decline per the agent's telephony profile and the wallet balance.
+
+    Returns True when the call should be answered. Any lookup problem falls back to
+    answering, which is exactly today's behaviour — a bad config or a slow balance
+    check can never silently stop a live number from working.
+    """
+    try:
+        to_number = str(payload.get("to") or payload.get("called") or "")
+        from_number = str(payload.get("from") or payload.get("caller") or "")
+        from server.services.saas.telephony_profile import (
+            evaluate_inbound_policy,
+            profile_for_number,
+        )
+
+        profile = await profile_for_number(to_number)
+        decision = evaluate_inbound_policy(profile)
+        telnyx_call_registry.upsert(
+            call_control_id,
+            {
+                "inbound_policy": decision.to_dict(),
+                "inbound_policy_agent": decision.agent_id,
+                "inbound_greeting": decision.greeting_phrase,
+            },
+        )
+        if not decision.should_answer:
+            log_pstn(
+                "inbound.declined",
+                control=call_control_id,
+                to=to_number,
+                from_=from_number,
+                reason=decision.reason,
+            )
+            asyncio.create_task(
+                _record_inbound_attempt(call_control_id, payload, policy_reason=decision.reason),
+                name=f"telnyx-attempt-{str(call_control_id)[:24]}",
+            )
+            return False
+
+        # Telephony config says answer; now the payment wall.
+        tenant_id = await _wallet_tenant_for_number(to_number)
+        allowed = await _wallet_allows_inbound(tenant_id)
+        if not allowed:
+            log_pstn(
+                "inbound.declined",
+                control=call_control_id,
+                to=to_number,
+                from_=from_number,
+                reason="insufficient_balance",
+            )
+            asyncio.create_task(
+                _record_inbound_attempt(
+                    call_control_id, payload, policy_reason="insufficient_balance"
+                ),
+                name=f"telnyx-attempt-{str(call_control_id)[:24]}",
+            )
+            return False
+
+        asyncio.create_task(
+            _record_inbound_attempt(call_control_id, payload, policy_reason=decision.reason),
+            name=f"telnyx-attempt-{str(call_control_id)[:24]}",
+        )
+        return True
+    except Exception as exc:
+        # Fail open: answering matches the pre-profile behaviour exactly.
+        log_pstn("inbound.policy_fallback", control=call_control_id, error=str(exc)[:200])
+        logger.warning("[TELNYX] inbound policy lookup failed control=%s", call_control_id, exc_info=True)
+        asyncio.create_task(
+            _record_inbound_attempt(call_control_id, payload, policy_reason="policy_fallback"),
+            name=f"telnyx-attempt-{str(call_control_id)[:24]}",
+        )
+        return True
+
+
+async def _wallet_tenant_for_number(e164: str) -> uuid.UUID | None:
+    """The tenant that owns an inbound destination number, for the payment wall."""
+    from server.db.connection import get_session_factory
+    from server.db.models.phase5_models import PhoneNumber
+
+    factory = get_session_factory()
+    if factory is None or not e164:
+        return None
+    try:
+        async with factory() as session:
+            row = (
+                await session.execute(
+                    select(PhoneNumber).where(
+                        PhoneNumber.e164 == e164,
+                        PhoneNumber.released_at.is_(None),
+                    )
+                )
+            ).scalar_one_or_none()
+            return row.tenant_id if row is not None else None
+    except Exception:
+        return None
+
+
+async def _wallet_allows_inbound(tenant_id: uuid.UUID | None) -> bool:
+    from server.services.saas.billing_wallet_service import wallet_allows_inbound
+
+    return await wallet_allows_inbound(tenant_id)
+
+
 @router.post("/api/telnyx/webhook")
 @router.get("/api/telnyx/webhook")
 async def telnyx_webhook(request: Request):
@@ -547,7 +730,12 @@ async def telnyx_webhook(request: Request):
         if call_control_id and row.get("direction") == "inbound" and not _call_ended(row):
             claimed = await telnyx_call_registry.atomic_check_and_set(str(call_control_id), "answer_requested")
             if claimed:
-                asyncio.create_task(_answer_inbound(str(call_control_id)), name=f"telnyx-answer-{str(call_control_id)[:24]}")
+                should_answer = await _apply_inbound_policy(str(call_control_id), payload)
+                if should_answer:
+                    asyncio.create_task(
+                        _answer_inbound(str(call_control_id)),
+                        name=f"telnyx-answer-{str(call_control_id)[:24]}",
+                    )
     elif event_type == "call.answered":
         if _call_ended(telnyx_call_registry.get(str(call_control_id)) or {}):
             return {"ok": True}
@@ -690,6 +878,14 @@ async def telnyx_webhook(request: Request):
                     "status": "hangup" if event_type == "call.hangup" else "failed",
                 },
             )
+            if event_type == "call.hangup":
+                # Close out the ringing attempt: a bridge will link it to the real
+                # call row when the call had connected, otherwise it stays a
+                # genuine missed/voicemail/declined record.
+                asyncio.create_task(
+                    _finalize_inbound_attempt(str(call_control_id), hangup_cause),
+                    name=f"telnyx-attempt-end-{str(call_control_id)[:24]}",
+                )
             await cancel_prewarm("telnyx", str(call_control_id))
             from server.services.telnyx_pstn_bridge import active_telnyx_bridges
 

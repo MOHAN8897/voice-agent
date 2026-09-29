@@ -42,6 +42,10 @@ export function Sidebar({
   } = useWorkspace();
   const { isPlatformAdmin } = useAuth();
 
+  // Drives the payment-wall styling on the wallet pill.
+  const walletIsEmpty =
+    (Number(wallet?.balanceInr) || 0) <= 0 && (Number(wallet?.balanceUsd) || 0) <= 0;
+
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
@@ -303,31 +307,43 @@ export function Sidebar({
 
       {/* Footer Area: Credit Wallet & User Switcher */}
       <div className="p-3 border-t border-[#E4E2EB] space-y-2 bg-white">
-        {/* Live Wallet Pill */}
-        <div className="p-3 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
+        {/* Live Wallet Pill — the whole pill opens the payment wall. */}
+        <button
+          type="button"
+          onClick={onOpenAddFunds}
+          data-testid="sidebar-wallet-pill"
+          className={`w-full text-left p-3 rounded-xl border transition-colors ${
+            walletIsEmpty
+              ? 'bg-[#FFFBEB] border-[#FDE68A] hover:bg-[#FEF3C7]'
+              : 'bg-[#FAF9FD] border-[#E4E2EB] hover:border-[#6344E7]/40'
+          }`}
+        >
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-[11px] font-medium text-[#524E5E] flex items-center gap-1">
               <Zap className="w-3 h-3 text-[#D97706]" />
-              Talk Time
+              {walletIsEmpty ? 'Add credit to call' : 'Talk Time'}
             </span>
-            <span className="text-xs font-bold font-mono text-[#0F0E17]">
-              {Number(wallet?.remainingMinutes || 0).toLocaleString()} min
+            <span
+              className={`text-xs font-bold font-mono ${
+                walletIsEmpty ? 'text-[#B45309]' : 'text-[#0F0E17]'
+              }`}
+            >
+              {walletIsEmpty
+                ? 'Empty'
+                : `${Number(wallet?.remainingMinutes || 0).toLocaleString()} min`}
             </span>
           </div>
           <div className="flex items-center justify-between gap-2">
             <span className="text-[10px] text-[#524E5E] font-mono">
-              {wallet.balanceInr != null
-                ? `₹${Number(wallet.balanceInr).toFixed(0)}`
-                : `$${Number(wallet.usdEquivalent || 0).toFixed(2)} USD`}
+              {Number(wallet?.balanceInr || 0) > 0
+                ? `₹${Number(wallet.balanceInr).toFixed(2)}`
+                : `$${Number(wallet?.balanceUsd || 0).toFixed(2)} USD`}
             </span>
-            <button
-              onClick={onOpenAddFunds}
-              className="text-[10px] font-semibold text-[#6344E7] hover:text-[#5034CE] hover:underline"
-            >
+            <span className="text-[10px] font-semibold text-[#6344E7]">
               + Add Funds
-            </button>
+            </span>
           </div>
-        </div>
+        </button>
 
         <button
           type="button"

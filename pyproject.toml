@@ -22,6 +22,9 @@ dependencies = [
     "stripe>=11.0",
     "razorpay>=1.4",
     "audioop-lts>=0.2.1; python_version >= '3.13'",
+    # IANA tz database for zoneinfo. Windows has no system tzdata, and the
+    # inbound business-hours policy must not fall back to naive UTC there.
+    "tzdata>=2024.1",
 ]
 
 [project.optional-dependencies]

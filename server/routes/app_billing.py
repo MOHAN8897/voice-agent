@@ -20,7 +20,7 @@ _billing_limiter = RateLimiter(max_requests=30, window_s=300)
 
 
 class TopupBody(BaseModel):
-    amountUsd: float = Field(..., ge=5, le=500)
+    amountUsd: float = Field(..., ge=3, le=500)
 
 
 class RazorpayOrderBody(BaseModel):
@@ -35,14 +35,34 @@ class RazorpayVerifyBody(BaseModel):
 
 @router.get("/api/billing/catalog")
 async def billing_catalog():
+    """Prices the console displays. The server is the only source of truth for these."""
+    settings = get_settings()
     return {
         "plans": [
             {"id": "starter", "name": "Starter", "numbersIncluded": 0},
             {"id": "growth", "name": "Growth", "numbersIncluded": 0},
         ],
-        "numberSkus": [{"country": "IN", "currency": "USD", "monthlyCents": 500}],
-        "topupMinUsd": 5,
-        "topupMaxUsd": 500,
+        "numberSkus": [
+            {
+                "country": "IN",
+                "currency": "USD",
+                "monthlyCents": settings.did_monthly_usd_cents,
+                "monthlyInr": round(settings.did_monthly_inr_paise / 100.0, 2),
+            }
+        ],
+        "topupMinUsd": settings.topup_min_usd,
+        "topupMaxUsd": settings.topup_max_usd,
+        "topupMinInr": 100,
+        "topupMaxInr": 500000,
+        "rates": {
+            "pstnUsdPerMin": round(settings.pstn_rate_usd_cents_per_min / 100.0, 3),
+            "pstnInrPerMin": round(settings.pstn_rate_inr_paise_per_min / 100.0, 2),
+            "webInrPerMin": round(settings.web_agent_rate_inr_paise_per_min / 100.0, 2),
+            "numberMonthlyUsd": round(settings.did_monthly_usd_cents / 100.0, 2),
+            "numberMonthlyInr": round(settings.did_monthly_inr_paise / 100.0, 2),
+            "minBalanceUsd": round(settings.pstn_min_balance_usd_cents / 100.0, 2),
+            "minBalanceInr": round(settings.pstn_min_balance_inr_paise / 100.0, 2),
+        },
     }
 
 

@@ -40,9 +40,22 @@ test('create employee with injected dev-tester session', async ({ page }) => {
   const brief =
     'Playwright E2E dummy agent for a spa in Hyderabad. Book appointments and collect caller name.';
   await page.getByTestId('employee-brief-input').fill(brief);
-  await page.getByTestId('employee-build-submit').click();
+  await page.getByTestId('create-next').click();
 
-  await expect(page.getByTestId('create-employee-modal')).toBeHidden({ timeout: 120000 });
+  // Step 2 reviews the compiled script before anything is saved or dialled.
+  await expect(page.getByTestId('create-step-script')).toHaveAttribute('aria-current', 'step', {
+    timeout: 120000,
+  });
+  await expect(page.getByTestId('script-preview')).not.toBeEmpty({ timeout: 30000 });
+
+  // Walk the remaining steps to finish the flow.
+  await page.getByTestId('create-next').click(); // -> configure
+  await expect(page.getByTestId('create-step-configure')).toHaveAttribute('aria-current', 'step');
+  await page.getByTestId('create-next').click(); // -> ready
+  await expect(page.getByTestId('create-step-ready')).toHaveAttribute('aria-current', 'step');
+
+  await page.getByTestId('create-next').click(); // done
+  await expect(page.getByTestId('create-employee-modal')).toBeHidden({ timeout: 60000 });
   await expect(page.getByText(/script|calling|greeting|opening/i).first()).toBeVisible({
     timeout: 30000,
   });

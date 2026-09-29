@@ -155,8 +155,6 @@ async def get_call_prompt_preview(
 
     from server.brain.script_entities import entity_tags_to_api, parse_entity_tags
 
-    from server.brain.script_entities import entity_tags_to_api, parse_entity_tags
-
     opening = _opening_from_brain(compiled_text, language=language, direction=direction)
     live_prompt, provider, layers = build_live_prompt_for_call(
         compiled_text,
@@ -170,14 +168,12 @@ async def get_call_prompt_preview(
     )
 
     preview_text = live_prompt
+    brain_preview = compiled_text
     if redacted and compiled_text:
         from server.brain.compiled_brain_service import compiled_brain_service
 
-        preview_text = live_prompt.replace(
-            compiled_text,
-            compiled_brain_service.redacted_preview(compiled_text),
-            1,
-        )
+        brain_preview = compiled_brain_service.redacted_preview(compiled_text)
+        preview_text = live_prompt.replace(compiled_text, brain_preview, 1)
 
     return {
         "call_id": call_id,
@@ -194,10 +190,12 @@ async def get_call_prompt_preview(
         "opening_line": opening,
         "script_entities": entity_tags_to_api(parse_entity_tags(compiled_text)),
         "layers": layers,
+        "compiled_brain": brain_preview,
         "compiled_brain_chars": len(compiled_text),
         "live_prompt_chars": len(live_prompt),
         "token_estimate": estimate_tokens(live_prompt),
         "live_prompt": preview_text,
+        "prewarm_greeting_line": _opening_from_brain(compiled_text, language=language, direction=direction),
         "note": (
             "This is the instruction bundle used at connect time: locked compiled brain "
             "plus live session rules. Test Studio session brain overrides published agent "
@@ -233,6 +231,13 @@ async def get_session_live_prompt_preview(
         "inbound"
         if str(direction or "").strip().lower() in ("inbound", "incoming")
         else "outbound"
+    )
+    from server.brain.script_entities import realign_compiled_brain_for_session
+
+    compiled_text = realign_compiled_brain_for_session(
+        compiled_text,
+        lang,
+        direction=dir_norm,
     )
     pipe = (pipeline or "realtime_voice").strip().lower()
     opening = _opening_from_brain(compiled_text, language=lang, direction=dir_norm)

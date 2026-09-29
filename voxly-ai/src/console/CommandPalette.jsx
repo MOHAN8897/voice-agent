@@ -87,7 +87,9 @@ export function CommandPalette({ isOpen, onClose, onNavigate }) {
         (l.company || '').toLowerCase().includes(query.toLowerCase())
     )
     .map((l) => ({
-      label: `${l.name} — ${l.company} (BANT ${l.bantScore})`,
+      // Only show a stage we actually have. The API does not return a BANT score,
+      // so rendering one produced "BANT undefined" for every lead.
+      label: `${l.name} — ${l.company} · ${l.stage || 'New'}`,
       category: 'Leads',
       icon: Users,
       action: () => onNavigate('leads', { leadId: l.id })

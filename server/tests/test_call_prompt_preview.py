@@ -17,6 +17,14 @@ from server.config.env import get_settings
 from server.providers.base import ResolvedStack, StageSelection
 
 
+def _te_brain(body: str) -> str:
+    return (
+        "@language: te-IN\n"
+        "Speak in Telugu (Tanglish) for every reply.\n\n"
+        f"{body.strip()}\n"
+    )
+
+
 def _reset(monkeypatch, tmp_path):
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
     monkeypatch.setenv("SARVAM_API_KEY", "sarvam-test")
@@ -32,9 +40,9 @@ def _reset(monkeypatch, tmp_path):
 def test_prompt_preview_api_active_call(monkeypatch, tmp_path):
     _reset(monkeypatch, tmp_path)
     sid = "preview-api-session"
-    brain = (
+    brain = _te_brain(
         "--- AGENT IDENTITY ---\nYou are Priya from Acme Insurance.\n\n"
-        "--- CANONICAL OPENING ---\nExample opening: Hi, Priya from Acme. Moment?\n"
+        "--- CANONICAL OPENING ---\nExample opening: Hi, Priya from Acme. Moment?"
     )
     instruction_store.save_agent_script(
         sid,
@@ -68,7 +76,7 @@ def test_prompt_preview_api_active_call(monkeypatch, tmp_path):
 async def test_prompt_preview_session_brain_locked_in_meta(monkeypatch, tmp_path):
     _reset(monkeypatch, tmp_path)
     sid = "preview-lock-meta"
-    locked = "LOCKED SESSION BRAIN " + ("z " * 200)
+    locked = _te_brain("LOCKED SESSION BRAIN " + ("z " * 200))
     instruction_store.save_agent_script(
         sid,
         "brief",
@@ -88,6 +96,35 @@ async def test_prompt_preview_session_brain_locked_in_meta(monkeypatch, tmp_path
     preview = await get_call_prompt_preview(call_id)
     assert "LOCKED SESSION BRAIN" in preview["live_prompt"]
     assert preview["brain_source"] == "test_studio_session"
+    instruction_store.clear(sid)
+
+
+def test_instructions_live_prompt_preview_session(monkeypatch, tmp_path):
+    _reset(monkeypatch, tmp_path)
+    sid = "preview-session-live"
+    brain = _te_brain(
+        "--- AGENT IDENTITY ---\nAlex from Spandana.\n\n"
+        "--- CANONICAL OPENING ---\nHi, moment unda?"
+    )
+    instruction_store.save_agent_script(
+        sid,
+        "brief",
+        "ROLE\nSell cars.",
+        "friendly",
+        compiled_brain=brain,
+        optimizer_report={},
+        source_checksum="prev2",
+    )
+    c = TestClient(app_mod.app)
+    r = c.get(
+        f"/api/instructions/live-prompt-preview?sessionId={sid}"
+        "&direction=outbound&pipeline=realtime_voice&llmModel=gpt-realtime-2.1-mini"
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["compiled_brain"]
+    assert "Alex" in body["live_prompt"]
+    assert body["prewarm_greeting_line"]
     instruction_store.clear(sid)
 
 
