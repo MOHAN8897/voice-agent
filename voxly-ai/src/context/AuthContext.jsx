@@ -27,6 +27,13 @@ export function AuthProvider({ children }) {
 
   const refreshSession = useCallback(async () => {
     if (!api.getToken()) {
+      // Cold load with no prior local session → skip refresh. Calling /auth/refresh
+      // without a cookie returns 401 and Chrome logs a noisy "Failed to load resource".
+      const hadSession = Boolean(authService.getSession());
+      if (!hadSession) {
+        setUser(null);
+        return null;
+      }
       const refreshed = await api.refreshAccessToken();
       if (!refreshed) {
         setUser(null);
@@ -40,7 +47,10 @@ export function AuthProvider({ children }) {
       setUser(normalized);
       window.dispatchEvent(new Event('voxly:session'));
       return normalized;
-    } catch {
+    } catch (err) {
+      if (import.meta.env.DEV) {
+        console.warn('[voxly:auth] Session restore failed:', err?.message || err);
+      }
       api.clearToken();
       authService.clearSession();
       setUser(null);

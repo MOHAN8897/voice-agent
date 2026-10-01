@@ -51,7 +51,15 @@ const panelProxy = {
 };
 
 export default defineConfig({
-  plugins: [reticle({ sourceMapping: false }), react()],
+  // Tunnel hostname (app-dev.hustlelabs.in) is not localhost — Reticle refuses to
+  // connect unless allowNonLocalhost is on. Pairing token still comes from the daemon.
+  plugins: [
+    reticle({
+      sourceMapping: false,
+      allowNonLocalhost: true,
+    }),
+    react(),
+  ],
   assetsInclude: ['**/*.glb', '**/*.gltf'],
   server: {
     port: 5173,

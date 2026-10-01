@@ -73,6 +73,23 @@ function parseError(data, status) {
   return parseApiError(data, status).message;
 }
 
+/** Dev-only structured API diagnostics (browser console + optional beacon). */
+function logApiEvent(level, event, detail = {}) {
+  if (typeof window === 'undefined' || !import.meta.env.DEV) return;
+  const line = `[voxly:api] ${event}`;
+  const payload = { ...detail, at: new Date().toISOString() };
+  if (level === 'error') console.error(line, payload);
+  else if (level === 'warn') console.warn(line, payload);
+  else console.debug(line, payload);
+  try {
+    const buf = (window.__voxlyApiLog = window.__voxlyApiLog || []);
+    buf.push({ level, event, ...payload });
+    if (buf.length > 100) buf.shift();
+  } catch {
+    /* ignore */
+  }
+}
+
 function normalizeApiBase(url) {
   const u = String(url || '').trim().replace(/\/$/, '');
   if (!u) return u;
@@ -242,11 +259,22 @@ export const api = {
           ...fetchOpts,
           body: JSON.stringify({}),
         });
-        if (!res.ok) return false;
+        if (!res.ok) {
+          logApiEvent(res.status === 401 ? 'debug' : 'warn', 'refresh_failed', {
+            status: res.status,
+            hint:
+              res.status === 401
+                ? 'No valid refresh cookie (signed out or cookie on wrong host)'
+                : 'Refresh endpoint error',
+          });
+          return false;
+        }
         const data = await res.json();
         applyAuthResponse(data);
+        logApiEvent('debug', 'refresh_ok', {});
         return true;
-      } catch {
+      } catch (err) {
+        logApiEvent('warn', 'refresh_network_error', { message: String(err?.message || err) });
         return false;
       }
     })();
@@ -331,6 +359,16 @@ export const api = {
         e.code = parsed.code || (refreshDead ? 'session_expired' : undefined);
         e.status = response.status;
         e.retryAfter = Number(response.headers.get('Retry-After') || parsed.retryAfter || 0);
+        logApiEvent(refreshDead ? 'warn' : 'error', 'request_failed', {
+          method,
+          path,
+          status: response.status,
+          code: e.code,
+          message: e.message,
+          triedRefresh,
+          refreshOk,
+          quietLogout: this._logoutOn401 === false,
+        });
         if (refreshDead) this._scheduleSessionLogout();
         throw e;
       };

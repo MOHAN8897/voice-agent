@@ -1,0 +1,65 @@
+{
+  "version": 2,
+  "name": "drive-refreshing-call-history-keeps-tenant-data-loaded",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1790859692883,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Refresh"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Refresh"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "urlContains": "/api/calls/stats",
+            "status": 200
+          },
+          {
+            "kind": "not",
+            "predicate": {
+              "kind": "text",
+              "contains": "session expired"
+            }
+          }
+        ]
+      },
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "intent": "Refreshing call history keeps tenant data loaded without session-expired sync errors.",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "desktop"
+  },
+  "intentId": "flow:drive-refreshing-call-history-keeps-tenant-data-loaded"
+}

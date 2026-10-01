@@ -390,15 +390,17 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
               )}
 
               <div>
-                <label className="block text-xs font-semibold text-[#0F0E17] mb-1">
+                <label htmlFor="voxly-auth-email" className="block text-xs font-semibold text-[#0F0E17] mb-1">
                   Work Email
                 </label>
                 <input
+                  id="voxly-auth-email"
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="alex@company.com"
+                  autoComplete="username"
                   className="w-full text-xs px-3.5 py-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] focus:outline-none focus:border-[#0F0E17] text-[#0F0E17] placeholder:text-[#635F70]"
                 />
               </div>
@@ -406,7 +408,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
               {mode !== 'forgot' && (
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-semibold text-[#0F0E17]">
+                  <label htmlFor="voxly-auth-password" className="block text-xs font-semibold text-[#0F0E17]">
                     Password
                   </label>
                   {mode === 'signin' && (
@@ -421,11 +423,13 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
                 </div>
                 <div className="relative">
                   <input
+                    id="voxly-auth-password"
                     type={showPassword ? 'text' : 'password'}
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••••••"
+                    autoComplete="current-password"
                     className="w-full text-xs px-3.5 py-2.5 pr-10 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] focus:outline-none focus:border-[#0F0E17] text-[#0F0E17] placeholder:text-[#635F70]"
                   />
                   <button

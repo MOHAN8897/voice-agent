@@ -43,6 +43,12 @@
       "subject": "drive-operator-confirms-bulk-campaign-cr"
     },
     {
+      "id": "flow:drive-refreshing-call-history-keeps-tenant-data-loaded",
+      "statement": "Refreshing call history keeps tenant data loaded without session-expire…",
+      "status": "proposed",
+      "subject": "drive-refreshing-call-history-keeps-tena"
+    },
+    {
       "id": "flow:drive-the-open-builder-action-on-an-agent-card-enters",
       "statement": "The Open builder action on an agent card enters the workspace with Over…",
       "status": "proposed",
