@@ -1,4 +1,4 @@
-import { api } from '../services/api';
+import { api, stripEntityTags } from '../services/api';
 
 let cachedOptions = null;
 
@@ -40,7 +40,7 @@ export function parseStudioFieldsFromSections(sections) {
         s.title === 'Agent script' ||
         s.title === 'Business Facts')
   );
-  const script = String(scriptRow?.raw_text || '').trim();
+  const script = stripEntityTags(String(scriptRow?.raw_text || '')).trim();
   const identity = sections.find((s) => s.type === 'identity_purpose');
   let greeting = '';
   const idText = String(identity?.raw_text || '');

@@ -83,7 +83,9 @@ async def save_business_draft(
     principal: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled),
 ):
     await _guard_agent(agent_id, principal, write=True)
-    saved = await business_brain_store.save_draft_sections(agent_id, body.sections)
+    saved = await business_brain_store.save_draft_sections(
+        agent_id, await _carry_entity_tags_forward(agent_id, body.sections)
+    )
     raw_prompt, checksum = assemble_raw_business_prompt(saved)
     return {"ok": True, "sections": saved, "raw_checksum": checksum}
 
@@ -148,6 +150,46 @@ class CallingScriptBody(BaseModel):
         return value
 
 
+def _display_script(script: str | None) -> str:
+    """The script as a person should read it — no machine-readable entity tags.
+
+    The tags are an internal contract between the compiler and the runtime (PSTN
+    prewarm pins the opening line and identity from them). They stay in the stored
+    section and the compiled brain, but they are not part of the document the
+    customer edits.
+    """
+    from server.brain.script_entities import strip_entity_tags_section
+
+    return strip_entity_tags_section(script or "")
+
+
+async def _carry_entity_tags_forward(agent_id: str, sections: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Re-attach entity tags to a rewritten calling script.
+
+    Any write path that replaces the `Calling script` section from customer-edited
+    text would otherwise delete the tags — and with them the runtime's pinned identity
+    and opening line. Preserving them here rather than in each caller means no edit
+    path can silently drop them.
+    """
+    row = next((s for s in sections if s.get("title") == CALLING_SCRIPT_TITLE), None)
+    if row is None:
+        return sections
+    row["raw_text"] = await _preserve_tags(agent_id, row.get("raw_text") or "")
+    return sections
+
+
+async def _preserve_tags(agent_id: str, script: str) -> str:
+    """Keep the tags the stored script already has when its body is replaced."""
+    from server.brain.script_entities import parse_entity_tags, with_entity_tags_section
+
+    if parse_entity_tags(script):
+        return script
+    stored = await business_brain_store.get_sections(agent_id)
+    previous = next((s for s in stored if s.get("title") == CALLING_SCRIPT_TITLE), None)
+    entities = parse_entity_tags((previous or {}).get("raw_text") or "")
+    return with_entity_tags_section(script, entities) if entities else script
+
+
 class VoiceConfigBody(BaseModel):
     """Voice selection for the live voice pipeline."""
 
@@ -209,7 +251,7 @@ async def save_calling_script(
         agent_id,
         section_type="facts",
         title=CALLING_SCRIPT_TITLE,
-        raw_text=body.script.strip(),
+        raw_text=await _preserve_tags(agent_id, body.script.strip()),
     )
     return {"ok": True, "compiled_version": await _active_version(agent_id)}
 
@@ -254,7 +296,7 @@ async def read_calling_script(
     variables_section = next((s for s in sections if s.get("title") == SAAS_VARIABLES_TITLE), None)
     return {
         "agent_id": agent_id,
-        "callingScript": (script_section or {}).get("raw_text", ""),
+        "callingScript": _display_script((script_section or {}).get("raw_text", "")),
         "variables": _parse_variables(variables_section),
     }
 

@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 
 from server.auth.subscriber_dependencies import require_subscriber_jwt
 from server.brain.agent_service import agent_service
+from server.brain.script_entities import strip_entity_tags_section
 from server.services.saas.agent_onboarding_compose import compose_agent_onboarding
 from server.services.saas.employee_brain_build import publish_saas_employee_brain
 from server.services.saas.tenant_guard import (
@@ -128,7 +129,9 @@ async def build_employee(
         "ok": True,
         "agent": agent,
         "agentId": agent_id,
-        "script": published.get("script"),
+        # Entity tags are the compiler/runtime contract, not part of the document the
+        # customer reads. They stay in the stored section and the compiled brain.
+        "script": strip_entity_tags_section(published.get("script") or ""),
         "variables": published.get("variables"),
         "source": "agent_script_compiler",
     }

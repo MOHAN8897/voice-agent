@@ -24,6 +24,20 @@ function applyAuthResponse(data) {
 
 const fetchOpts = { credentials: 'include' };
 
+/**
+ * Drop the machine-readable `--- ENTITY TAGS ---` block from a calling script.
+ * The tags are an internal compiler/runtime contract (PSTN pins the opening line
+ * and identity from them); they live in the stored script and the compiled brain
+ * but are never part of the script a person reads or edits.
+ */
+export function stripEntityTags(script) {
+  if (!script) return '';
+  return script
+    .replace(/(?:^|\n)--- ENTITY TAGS ---\s*\n[\s\S]*?(?=\n--- [^\n-][^\n]*---|\s*$)/i, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 export function parseApiError(data, status) {
   const detail = data?.detail;
   const err =
@@ -100,18 +114,39 @@ export const api = {
     store?.removeItem(AUTH_TOKEN_KEY);
   },
 
+  /**
+   * Exchange the httpOnly refresh cookie for a new access token.
+   *
+   * Refresh tokens are single-use: the server revokes the presented one and issues
+   * a replacement. The console fires many requests in parallel (workspace sync is 8
+   * at once), so without deduplication those simultaneous 401s each presented the
+   * same cookie and rotated it past each other — the browser was left holding a
+   * revoked cookie and every later request failed with "Invalid or expired token".
+   * One in-flight refresh is therefore shared by every caller.
+   */
   async refreshAccessToken() {
+    if (api._refreshInFlight) return api._refreshInFlight;
+
     const backendUrl = this.getBackendUrl().replace(/\/$/, '');
-    const res = await fetch(`${backendUrl}/auth/refresh`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      ...fetchOpts,
-      body: JSON.stringify({}),
-    });
-    if (!res.ok) return false;
-    const data = await res.json();
-    applyAuthResponse(data);
-    return true;
+    const attempt = (async () => {
+      const res = await fetch(`${backendUrl}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        ...fetchOpts,
+        body: JSON.stringify({}),
+      });
+      if (!res.ok) return false;
+      const data = await res.json();
+      applyAuthResponse(data);
+      return true;
+    })();
+
+    api._refreshInFlight = attempt;
+    try {
+      return await attempt;
+    } finally {
+      if (api._refreshInFlight === attempt) api._refreshInFlight = null;
+    }
   },
 
   async request(method, endpoint, body = null, customHeaders = {}, { allowMock = false } = {}) {
@@ -155,10 +190,19 @@ export const api = {
       const isAuthRoute = path.includes('/auth/');
       const parsed = parseApiError(data, response.status);
       const fail = () => {
-        const e = new Error(parsed.message);
+        // A 401 that survived the refresh attempt means the session itself is gone.
+        // "Invalid or expired token" is a backend string with no next step for the
+        // person looking at it; say what happened and what to do instead.
+        const sessionGone = response.status === 401 && !isAuthRoute;
+        const e = new Error(
+          sessionGone ? 'Your session expired. Sign in again to continue.' : parsed.message
+        );
         e.code = parsed.code;
         e.status = response.status;
         e.retryAfter = Number(response.headers.get('Retry-After') || parsed.retryAfter || 0);
+        if (sessionGone) {
+          window.dispatchEvent(new Event('voxly:logout'));
+        }
         throw e;
       };
       if (backendUrl && !allowMock && !isAuthRoute) fail();
@@ -366,7 +410,7 @@ export const api = {
         voice = {};
       }
       return {
-        callingScript: scriptSection?.raw_text || '',
+        callingScript: stripEntityTags(scriptSection?.raw_text || ''),
         variables,
         voice,
         published: data?.published || null,

@@ -13,7 +13,7 @@ async function signInFromMarketing(page) {
   await page.waitForTimeout(2000);
 }
 
-/** Open the four-step creation flow. */
+/** Open the one-step creation flow. */
 async function openWizard(page) {
   await page.goto('/#dashboard/employees');
   await page.getByRole('heading', { name: /ai employees/i }).waitFor({ timeout: 20000 });
@@ -46,9 +46,14 @@ test.describe('Create AI employee', () => {
     expect(res.data.agentId || res.data.agent?.agent_id).toBeTruthy();
     expect(String(res.data.script || '')).toBeTruthy();
     expect(Array.isArray(res.data.variables)).toBeTruthy();
+
+    // The machine-readable entity tags are a compiler/runtime contract. They belong in
+    // the compiled brain, never in the script the customer reads.
+    expect(res.data.script).not.toContain('ENTITY TAGS');
+    expect(res.data.script).not.toContain('@agent_name');
   });
 
-  test('step 1 asks for a brief before it will continue', async ({ page }) => {
+  test('asks for a brief before it will create', async ({ page }) => {
     test.skip(!E2E_EMAIL || !E2E_PASSWORD, 'Set E2E_EMAIL and E2E_PASSWORD');
 
     await signInFromMarketing(page);
@@ -70,86 +75,57 @@ test.describe('Create AI employee', () => {
     await expect(page.getByTestId('employee-natural-spoken-style')).toBeVisible();
   });
 
-  test('all four steps are shown and reachable in order', async ({ page }) => {
+  test('creation is a single step and lands on the agent page', async ({ page }) => {
     test.skip(!E2E_EMAIL || !E2E_PASSWORD, 'Set E2E_EMAIL and E2E_PASSWORD');
 
     await signInFromMarketing(page);
     await openWizard(page);
 
-    for (const step of ['brief', 'script', 'configure', 'ready']) {
-      await expect(page.getByTestId(`create-step-${step}`)).toBeVisible();
-    }
-    // Only the first step is active before anything is created.
-    await expect(page.getByTestId('create-step-brief')).toHaveAttribute('aria-current', 'step');
-  });
+    // There is no stepper any more — everything needed is on this one screen.
+    await expect(page.getByRole('list', { name: /agent creation progress/i })).toHaveCount(0);
+    await expect(page.getByTestId('employee-brief-input')).toBeVisible();
+    await expect(page.getByTestId('employee-language-select')).toBeVisible();
+    await expect(page.getByTestId('employee-role-select')).toBeVisible();
 
-  test('full flow compiles a script, shows it, then configures the phone', async ({ page }) => {
-    test.skip(!E2E_EMAIL || !E2E_PASSWORD, 'Set E2E_EMAIL and E2E_PASSWORD');
-
-    await signInFromMarketing(page);
-    await openWizard(page);
-
-    // ---- Step 1: describe
     await page
       .getByTestId('employee-brief-input')
       .fill(
         'E2E Playwright dental clinic in Hyderabad. Book cleanings and collect the patient name and phone.'
       );
+    await page.getByTestId('employee-language-select').selectOption('en-IN');
     await page.getByTestId('create-next').click();
 
-    // ---- Step 2: review the generated script. The modal stays open, because
-    // the user is meant to see and edit what the agent will actually say.
-    await expect(page.getByTestId('create-step-script')).toHaveAttribute('aria-current', 'step', {
-      timeout: 60000,
-    });
-    const script = page.getByTestId('script-preview');
-    await expect(script).toBeVisible();
-    await expect(script).not.toBeEmpty();
+    // The modal closes and the agent page opens on the script, which is where the
+    // rest of the settings now live.
+    await expect(page.getByTestId('create-employee-modal')).toBeHidden({ timeout: 60000 });
+    await expect(page.getByText(/calling script/i).first()).toBeVisible({ timeout: 20000 });
+  });
 
-    // The brief the agent was built from is shown alongside it.
-    await expect(page.getByText(/built from your description/i)).toBeVisible();
+  test('the generated script is readable English with no entity tags', async ({ page }) => {
+    test.skip(!E2E_EMAIL || !E2E_PASSWORD, 'Set E2E_EMAIL and E2E_PASSWORD');
 
-    // Editing must stick.
-    await page.getByTestId('script-toggle-edit').click();
+    await signInFromMarketing(page);
+    await openWizard(page);
+
     await page
-      .getByTestId('script-editor')
-      .fill('Greet the caller. Ask for the patient name. Book the next slot. Repeat the time back.');
-    await expect(page.getByTestId('script-editor')).toHaveValue(/book the next slot/i);
+      .getByTestId('employee-brief-input')
+      .fill(
+        'Agent name is Mohan. Business is Spandana Junior College. Call parents about junior college admission and IIT JEE coaching. Low fees.'
+      );
+    await page.getByTestId('employee-language-select').selectOption('en-IN');
     await page.getByTestId('create-next').click();
 
-    // ---- Step 3: phone and voice
-    await expect(page.getByTestId('create-step-configure')).toHaveAttribute('aria-current', 'step');
-    await expect(page.getByTestId('config-inbound-enabled')).toBeVisible();
-    await expect(page.getByTestId('config-outbound-enabled')).toBeVisible();
+    await expect(page.getByTestId('create-employee-modal')).toBeHidden({ timeout: 60000 });
+    const editor = page.locator('textarea').filter({ hasText: /AGENT IDENTITY/ });
+    await expect(editor).toBeVisible({ timeout: 20000 });
 
-    // Business hours are a real schedule, not a free-text field.
-    await expect(page.getByTestId('config-hours-summary')).toBeVisible();
-    await page.getByTestId('config-day-mon').click();
-    await expect(page.getByTestId('config-hours-mon-open')).toBeVisible();
-
-    // After-hours behaviour is an explicit choice.
-    await page.getByTestId('config-after-hours-voicemail').click();
-    await expect(page.getByTestId('config-after-hours-voicemail')).toHaveAttribute('aria-pressed', 'true');
-
-    // The greeting the caller hears is a real field.
-    await page.getByTestId('config-greeting').fill('Thanks for calling the clinic.');
-
-    // Switch inbound off and back on to prove the toggles are wired.
-    await page.getByTestId('config-inbound-enabled').uncheck();
-    await expect(page.getByTestId('config-inbound-enabled')).not.toBeChecked();
-    await page.getByTestId('config-inbound-enabled').check();
-
-    await page.getByTestId('create-next').click();
-
-    // ---- Step 4: ready, with a plain-language summary of what was configured.
-    await expect(page.getByTestId('create-step-ready')).toHaveAttribute('aria-current', 'step');
-    await expect(page.getByTestId('ready-test-call')).toBeVisible();
-    await expect(page.getByTestId('ready-place-call')).toBeVisible();
-    await expect(page.getByText(/is live/i).first()).toBeVisible();
-
-    // Finishing closes the flow and lands in the agent editor.
-    await page.getByTestId('create-next').click();
-    await expect(page.getByTestId('create-employee-modal')).toBeHidden();
+    const script = await editor.inputValue();
+    expect(script).toContain('AGENT IDENTITY');
+    expect(script).toContain('CANONICAL OPENING');
+    expect(script).not.toContain('ENTITY TAGS');
+    expect(script).not.toContain('@agent_name');
+    // An English agent must not open the call in another language.
+    expect(script).not.toMatch(/[\u0900-\u097F\u0C00-\u0C7F]/);
   });
 
   test('call history uses the server status vocabulary', async ({ page }) => {

@@ -1,11 +1,10 @@
-/** Constants for the four-step agent creation flow. */
-
-export const AGENT_CREATION_STEPS = [
-  { id: 'brief', label: 'Describe', hint: 'What should this agent do on calls?' },
-  { id: 'script', label: 'Review script', hint: 'Check what the agent will say.' },
-  { id: 'configure', label: 'Phone & voice', hint: 'How callers reach it.' },
-  { id: 'ready', label: 'Ready', hint: 'Test it and go live.' },
-];
+/**
+ * Constants for agent creation and the agent page's phone settings.
+ *
+ * Creation itself is one step (brief + language + role). Everything below the
+ * creation form is edited on the agent page, which is why the business-hours
+ * helpers live here alongside the form options.
+ */
 
 export const CALL_MODES = [
   {

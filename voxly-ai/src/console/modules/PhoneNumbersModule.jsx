@@ -12,6 +12,7 @@ import { TactileButton } from '../ui/TactileButton';
 import { Modal } from '../ui/Modal';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { showToast } from '../ui/ToastHost';
+import { api } from '../../services/api';
 
 export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyModal }) {
   const {

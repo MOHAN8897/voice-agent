@@ -42,21 +42,8 @@ test('create employee with injected dev-tester session', async ({ page }) => {
   await page.getByTestId('employee-brief-input').fill(brief);
   await page.getByTestId('create-next').click();
 
-  // Step 2 reviews the compiled script before anything is saved or dialled.
-  await expect(page.getByTestId('create-step-script')).toHaveAttribute('aria-current', 'step', {
-    timeout: 120000,
-  });
-  await expect(page.getByTestId('script-preview')).not.toBeEmpty({ timeout: 30000 });
-
-  // Walk the remaining steps to finish the flow.
-  await page.getByTestId('create-next').click(); // -> configure
-  await expect(page.getByTestId('create-step-configure')).toHaveAttribute('aria-current', 'step');
-  await page.getByTestId('create-next').click(); // -> ready
-  await expect(page.getByTestId('create-step-ready')).toHaveAttribute('aria-current', 'step');
-
-  await page.getByTestId('create-next').click(); // done
-  await expect(page.getByTestId('create-employee-modal')).toBeHidden({ timeout: 60000 });
-  await expect(page.getByText(/script|calling|greeting|opening/i).first()).toBeVisible({
-    timeout: 30000,
-  });
+  // Creation is one step: the agent is compiled, published and opened on its own
+  // page, where the script and the rest of the settings are edited.
+  await expect(page.getByTestId('create-employee-modal')).toBeHidden({ timeout: 120000 });
+  await expect(page.getByText(/calling script/i).first()).toBeVisible({ timeout: 30000 });
 });

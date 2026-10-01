@@ -232,11 +232,6 @@ export function AppShell({ onBackToLanding, onSignOut }) {
         isOpen={isCreateAgentOpen}
         onClose={() => setIsCreateAgentOpen(false)}
         onNavigate={handleNavigate}
-        onOpenBuyNumber={() => {
-          setIsCreateAgentOpen(false);
-          handleSelectTab('phone-numbers');
-          setIsBuyNumberOpen(true);
-        }}
       />
 
       <ToastHost />

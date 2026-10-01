@@ -48,7 +48,12 @@ from server.prompts.agent_voice_rules import (
 from server.prompts.brain_prompt import SECTION_SAFETY
 from server.prompts.voice_defaults import style_for_language
 
-COMPILER_VERSION = "agent_script_v17"
+COMPILER_VERSION = "agent_script_v18"
+
+# Devanagari + the Dravidian and other Indic blocks. The user-visible script is an
+# English document (the product's writing language), so any of these inside it mean
+# an opening line or a generated phrase leaked in another language.
+_INDIC_SCRIPT_RE = re.compile(r"[\u0900-\u0DFF\u0C00-\u0C7F\u0D80-\u0DFF\u0A00-\u0A7F]")
 
 AGENT_SCRIPT_SCHEMA: dict[str, Any] = {
     "type": "object",
@@ -323,6 +328,117 @@ def _clean_identity_value(value: str) -> str:
     if not text or text.lower() in {"none", "n/a", "na", "unknown"}:
         return ""
     return text[:60]
+
+
+# Transliterated greetings carry no Unicode, so a script check alone misses them. These
+# are function words that do not appear in an English opening but do appear in the
+# Tanglish/Hinglish hand-offs an interpreter produces for an English agent.
+_TRANSLITERATION_MARKERS = (
+    # Telugu / Tanglish
+    "nenu",
+    "nunchi",
+    "meeru",
+    "meeku",
+    "konchem",
+    "chalagandi",
+    "kavali",
+    "undi",
+    "unnara",
+    "cheppadaniki",
+    "padh",
+    # Hindi / Hinglish
+    "hoon",
+    "kya",
+    "aapke",
+    "aapko",
+    "aapki",
+    "hain",
+    "krupaya",
+    "dheere",
+    "kijiye",
+    "humara",
+    "thandri",
+    "bol raha",
+    "bol rahi",
+    "main aap",
+)
+
+_TRANSLITERATION_RE = re.compile(
+    r"\b(?:"
+    + "|".join(re.escape(m) for m in sorted(_TRANSLITERATION_MARKERS, key=len, reverse=True))
+    + r")\b"
+)
+
+
+def _looks_transliterated_indic(text: str) -> bool:
+    """True when a Latin-script line carries several other-language function words."""
+    return len(set(_TRANSLITERATION_RE.findall((text or "").lower()))) >= 2
+
+
+def _generated_opening_allowed(language: str) -> bool:
+    """English locales always take the template greeting, never the interpreter's.
+
+    An English agent whose greeting drifted into Hinglish opened every call in the
+    wrong language, and the drift was different on each compile — it could not be
+    pattern-matched after the fact. The templates already carry the real agent name,
+    company and purpose, so the interpreter's version is not worth the risk here.
+    Indic locales keep using it, because a natural local greeting is the point.
+    """
+    return not normalize_compile_language(language).startswith("en")
+
+
+def _opening_line_is_language_compatible(opening: str, language: str) -> bool:
+    """Reject a greeting written in a language the agent is not configured to speak.
+
+    The brief interpreter is asked for the opening in the agent's language, but an
+    English agent ("en-IN"/"en-US") can come back with a Hindi or Tanglish greeting.
+    Accepting it made the English agent open every call in Hindi. The template
+    openings in ``agent_voice_rules`` are the source of truth, so anything written in
+    another language is discarded for English locales.
+
+    Both spellings have to be caught: real Devanagari/Telugu script, and the same
+    language transliterated into Latin letters, which is what a phone greeting
+    actually sounds like.
+    """
+    text = (opening or "").strip()
+    if not text:
+        return False
+    lang = normalize_compile_language(language)
+    if lang.startswith("en"):
+        return not _INDIC_SCRIPT_RE.search(text) and not _looks_transliterated_indic(text)
+    # Non-English locales legitimately script their own opening in their own script.
+    return True
+
+
+def _clip_sentence(text: str, limit: int) -> str:
+    """Trim to `limit` on a word boundary so a greeting never ends mid-word.
+
+    The LLM returns one long spoken greeting; a hard slice left the script reading
+    "...call kar rah", which the model then spoke aloud.
+    """
+    clean = re.sub(r"\s+", " ", (text or "").strip())
+    if len(clean) <= limit:
+        return clean
+    cut = clean[:limit].rsplit(" ", 1)[0].rstrip(" ,;:-")
+    # Prefer the last complete sentence if one lands close to the limit.
+    tail = clean[:limit]
+    for match in re.finditer(r"[.!?]\s", tail):
+        if match.end() >= limit - 60:
+            return clean[: match.end() - 1].strip()
+    return cut
+
+
+def _english_opening_fallback(
+    *, agent_name: str, company_name: str, work_scope: str, direction: str
+) -> str:
+    """English opening used whenever the generated one is unusable or wrong-language."""
+    return opening_line_for(
+        "en-IN",
+        agent_name=agent_name,
+        company_name=company_name,
+        work_scope=work_scope,
+        direction=direction,
+    )
 
 
 def _titlecase_name(name: str) -> str:
@@ -985,6 +1101,10 @@ def resolve_script_identity(
         is_test=bool(ctx.get("is_test")),
         is_friend=bool(ctx.get("is_friend") or ctx.get("represent_self")),
     )
+    if not _opening_line_is_language_compatible(opening, language):
+        opening = _english_opening_fallback(
+            agent_name=name, company_name=company, work_scope=work, direction=direction
+        )
     return name, company, work, opening
 
 
@@ -1366,6 +1486,101 @@ def _sales_next_step(brief: str, *, inbound: bool, native_en: bool) -> str:
     return "a callback, WhatsApp details, or the next step named in COMPANY & OFFER"
 
 
+def _conversation_plan(
+    brief: str,
+    *,
+    agent_name: str,
+    company_name: str,
+    work_scope: str,
+    role: str,
+    direction: str,
+) -> str:
+    """A spoken beat-by-beat plan for the call, in English, from the brief's own facts.
+
+    The compiled brain already carries platform flow policy. What it cannot know is
+    what *this* business actually needs to hear, so this section spells out the beats
+    a short brief leaves implicit. Nothing here may invent a fact: every line is
+    either a generic call mechanic or derived from text already in the brief.
+    """
+    inbound = str(direction or "").strip().lower() in ("inbound", "incoming")
+    scope = " ".join((work_scope or brief or "").split())
+    beats = [
+        "Answer first. Whatever they just asked gets a direct answer before you add anything else.",
+        "Ask one question at a time, then stop and listen. Two questions in a row sounds like an interrogation.",
+    ]
+    if inbound:
+        beats.append(
+            "They called you, so they already want something. Find out what it is in their first sentence, then help."
+        )
+    else:
+        beats.append(
+            "You placed this call. Do not launch into a pitch — say who you are, why you are calling, and ask if they have a moment. If they say no, respect it immediately."
+        )
+    if re.search(r"\b(fee|fees|price|cost|afford|cheap|discount|fee structure)\b", scope, re.I):
+        beats.append(
+            "Fees come up early on a call like this. State only the figures that appear in COMPANY & OFFER, "
+            "and say the team will confirm the exact current number if they ask for something not written there."
+        )
+    if re.search(r"\b(follow[- ]?up|callback|call back|again|pending)\b", scope, re.I):
+        beats.append(
+            "This is a follow-up. Say which earlier conversation you are continuing, then move straight to the "
+            "update. Do not restart the whole introduction."
+        )
+    if re.search(r"\b(enquir|inquir|question|doubt|ask|explain|tell me)\b", scope, re.I):
+        beats.append(
+            "Expect questions rather than objections. Answer in plain words, one idea per sentence, and check "
+            "they followed before moving on."
+        )
+    if re.search(r"\b(busy|not interested|no need|don't call|do not call)\b", scope, re.I):
+        beats.append(
+            "A refusal ends the pitch, not the politeness. Thank them once, do not re-offer, and close."
+        )
+    beats.append(
+        "Confirm the next step out loud before you hang up — who does what, and when they will hear from the team."
+    )
+    beats.append(
+        "Never say you are an AI. You are the person who works for this business."
+    )
+    return "--- HOW THE CALL SHOULD GO ---\n" + "\n".join(f"- {b}" for b in beats)
+
+
+def _what_to_remember(
+    *, agent_name: str, company_name: str, work_scope: str, role: str
+) -> str:
+    """What the agent should hold on to from the call, before it ends."""
+    business = company_name or "the business"
+    wants = {
+        "education": "which course they asked about, and whether the child has already joined",
+        "sales": "what they are looking for, and the next step they agreed to",
+        "lead_qualification": "whether they are a genuine lead, and how to reach them",
+        "appointment": "the date and time they asked for",
+        "follow_up": "what was pending and what happens next",
+        "support": "the issue in their own words, and what you told them",
+        "recruitment": "their interest and eligibility for what was discussed",
+        "information": "what they asked about, so the next call is not repetitive",
+    }.get(role, "what they asked for and what happens next")
+    return (
+        "--- WHAT TO REMEMBER BEFORE YOU CLOSE ---\n"
+        f"- Their name, once they give it. Never guess it and never insist if they decline.\n"
+        f"- {wants}\n"
+        f"- A way to reach them, only if they want to be contacted. Never read a number back out loud.\n"
+        f"- Anything they said {business} should be told about, in their words rather than yours."
+    )
+
+
+def _when_you_dont_know(brief: str, *, company_name: str, role: str) -> str:
+    """The honest-unknown rule, which is where most hallucinated prices come from."""
+    return (
+        "--- WHEN YOU DO NOT KNOW SOMETHING ---\n"
+        "Say plainly that you do not have that detail, and offer to have someone confirm it. "
+        "An honest \"let me check and call you back\" is always better than a confident guess.\n"
+        "Never invent a price, a discount, a start date, a seat count, a policy, or an outcome. "
+        "Never claim a booking, a payment, or a message was sent unless a tool actually confirmed it.\n"
+        "If they ask about something outside this business, give one brief honest line and steer "
+        "back to what you can actually help with."
+    )
+
+
 def _role_on_call_section(
     role: str,
     *,
@@ -1542,12 +1757,24 @@ def _user_visible_script(
         role_block = _role_on_call_section(
             role, direction=direction, language=language, brief=brief, voice=voice_line
         )
+    if personal:
+        # A personal call has no business plan to lay out; the beats would be noise.
+        return (
+            f"--- AGENT IDENTITY ---\n{identity}\n\n"
+            f"--- COMPANY & OFFER ---\n{business}\n\n"
+            f"--- CANONICAL OPENING ---\n"
+            f"{opening_lead}\n{opening_line}\n\n"
+            f"{role_block}"
+        )
     return (
         f"--- AGENT IDENTITY ---\n{identity}\n\n"
         f"--- COMPANY & OFFER ---\n{business}\n\n"
         f"--- CANONICAL OPENING ---\n"
         f"{opening_lead}\n{opening_line}\n\n"
-        f"{role_block}"
+        f"{role_block}\n\n"
+        f"{_conversation_plan(brief, agent_name=agent_name, company_name=company_name, work_scope=work_scope, role=role, direction=direction)}\n\n"
+        f"{_when_you_dont_know(brief, company_name=company_name, role=role)}\n\n"
+        f"{_what_to_remember(agent_name=agent_name, company_name=company_name, work_scope=work_scope, role=role)}"
     )
 
 
@@ -1905,16 +2132,22 @@ def _apply_brief_interpretation(
         invented_priya = "priya" in llm_offer.lower() and "priya" not in text_l
         if llm_offer and not _is_raw_identity_dump(llm_offer) and not invented_priya:
             offer = llm_offer[:480]
-        llm_open = str(interpreted.get("opening_line") or "").strip().split("\n")[0][:180]
+        llm_open = _clip_sentence(str(interpreted.get("opening_line") or "").strip().split("\n")[0], 180)
         if llm_open and agent_name.lower() in llm_open.lower():
             invented_open = "priya" in llm_open.lower() and "priya" not in text_l
-            if not invented_open:
+            if (
+                not invented_open
+                and _generated_opening_allowed(language)
+                and _opening_line_is_language_compatible(llm_open, language)
+            ):
                 opening_line = llm_open
         llm_role = str(interpreted.get("role") or "").strip().lower()
         if llm_role:
             role = infer_agent_role(brief, llm_role=llm_role)
     ctx = _personal_call_context(brief, agent_name=agent_name)
-    if agent_name.lower() not in (opening_line or "").lower():
+    if agent_name.lower() not in (opening_line or "").lower() or not _opening_line_is_language_compatible(
+        opening_line, language
+    ):
         opening_line = build_opening_line(
             agent_name=agent_name,
             company_name=company_name,
@@ -1924,6 +2157,15 @@ def _apply_brief_interpretation(
             callee_name=str(ctx.get("callee") or ""),
             is_test=bool(ctx.get("is_test")),
             is_friend=bool(ctx.get("is_friend") or ctx.get("represent_self")),
+        )
+    # Final gate: an English agent must never open a call in another language, whichever
+    # path produced the greeting.
+    if not _opening_line_is_language_compatible(opening_line, language):
+        opening_line = _english_opening_fallback(
+            agent_name=agent_name,
+            company_name=company_name,
+            work_scope=work_scope,
+            direction=direction,
         )
     return agent_name, company_name, work_scope, opening_line, role, persona, voice, offer
 
