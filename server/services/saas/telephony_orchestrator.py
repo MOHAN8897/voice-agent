@@ -107,7 +107,11 @@ async def assert_from_number(tenant_id: uuid.UUID, from_e164: str) -> PhoneNumbe
 
 
 async def assert_concurrent_limit(tenant_id: uuid.UUID, limits: dict) -> None:
-    max_pstn = int(limits.get("max_concurrent_pstn") or 3)
+    from server.config.env import get_settings
+
+    settings = get_settings()
+    platform_cap = max(1, min(20, int(settings.saas_max_concurrent_pstn or 20)))
+    max_pstn = max(1, min(platform_cap, int(limits.get("max_concurrent_pstn") or platform_cap)))
     factory = get_session_factory()
     if factory is None:
         return
@@ -149,6 +153,17 @@ async def subscriber_outbound(
     workspace_tid = subscriber_workspace_tenant_id(principal)
     # An unknown or foreign agent must be a clean 404, never a leaked 500.
     agent = await resolve_workspace_agent(agent_id, str(workspace_tid))
+    status = str(agent.get("status") or "").strip().lower()
+    if status in {"paused", "inactive", "disabled"}:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": {
+                    "code": "agent_paused",
+                    "message": "This agent is paused. Switch it to Live before placing a call.",
+                }
+            },
+        )
     if not agent.get("active_compiled_brain_version"):
         raise HTTPException(
             status_code=400,

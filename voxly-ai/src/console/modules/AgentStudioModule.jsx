@@ -1,9 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   FileCode2,
   Volume2,
-  Phone,
-  BookOpen,
   Save,
   Play,
   Square,
@@ -11,27 +9,40 @@ import {
   Trash2,
   CheckCircle2,
   Radio,
-  Mic,
   ArrowLeft,
-  PhoneOutgoing,
+  LayoutDashboard,
+  History,
+  Settings,
 } from 'lucide-react';
-import { TalkToAiConsole } from './TalkToAiConsole';
+import { AgentTestCallPanel } from './agent-workspace/AgentTestCallPanel';
 import { SolidCard } from '../ui/SolidCard';
 import { StatusBadge } from '../ui/StatusBadge';
 import { TactileButton } from '../ui/TactileButton';
+import { Modal } from '../ui/Modal';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { voiceAgent } from '../../services/voiceAgent';
 import { LANGUAGE_OPTIONS } from '../../lib/voicePresets';
 import { PHONE_STACK_LABEL } from '../../lib/phoneLabels';
 import {
   fetchPhoneVoiceOptions,
-  parseScriptVariablesFromSections,
   parseStudioFieldsFromSections,
   parseVoiceConfigFromSections,
 } from '../../lib/voiceStack';
 import { formatPhoneVoiceLabel, groupPhoneVoices } from '../../lib/voiceDisplay';
 import { loadAgentBrain } from '../../services/agentBrain';
-import { TelephonySettingsCard } from './TelephonySettingsCard';
+import { AgentOverview } from './agent-workspace/AgentOverview';
+import { AgentCallsPanel } from './agent-workspace/AgentCallsPanel';
+import { AgentSettingsPanel } from './agent-workspace/AgentSettingsPanel';
+import { resolveEmployeeStep } from '../employeeFlowHash';
+
+/** The five workspace tabs. Test call is a header button, not a tab. */
+const FLOW_TABS = [
+  { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+  { id: 'script', label: 'Script', icon: FileCode2 },
+  { id: 'calls', label: 'Calls', icon: History },
+  { id: 'voice', label: 'Voice', icon: Volume2 },
+  { id: 'settings', label: 'Settings', icon: Settings },
+];
 
 const EMPTY_FORM = {
   name: '',
@@ -72,14 +83,6 @@ function formFromAgent(agent) {
   };
 }
 
-const FLOW_TABS = [
-  { id: 'script', label: 'Script & flow', icon: FileCode2 },
-  { id: 'voice', label: 'Voice', icon: Volume2 },
-  { id: 'telephony', label: 'Phone lines', icon: Phone },
-  { id: 'test', label: 'Live test', icon: Mic },
-  { id: 'knowledge', label: 'Knowledge', icon: BookOpen },
-];
-
 export function AgentStudioModule({
   onNavigate,
   onOpenBuyNumber,
@@ -94,11 +97,14 @@ export function AgentStudioModule({
     setSelectedAgentId,
     selectedAgent,
     updateAgent,
-    phoneNumbers,
-    assignNumberToAgent,
   } = useWorkspace();
 
-  const [activeTab, setActiveTab] = useState(flowStep || 'script');
+  const [activeTab, setActiveTab] = useState(() => resolveEmployeeStep(flowStep).step);
+  const [callPanel, setCallPanel] = useState(() => resolveEmployeeStep(flowStep).callPanel || 'history');
+  const [testCallOpen, setTestCallOpen] = useState(() => Boolean(resolveEmployeeStep(flowStep).openTestCall));
+  // The Test call modal is a header action, so closing it must return focus to the
+  // button that opened it rather than dropping the user back at the top of the page.
+  const testCallButtonRef = useRef(null);
   const [phoneVoices, setPhoneVoices] = useState([]);
   const [stackLabel, setStackLabel] = useState(PHONE_STACK_LABEL);
 
@@ -111,8 +117,14 @@ export function AgentStudioModule({
       .catch(() => {});
   }, []);
 
+  // A legacy ?step=telephony or ?step=test link resolves here on first mount and on
+  // every later hash change, so old bookmarks still land somewhere useful.
   useEffect(() => {
-    if (flowStep) setActiveTab(flowStep);
+    if (!flowStep) return;
+    const next = resolveEmployeeStep(flowStep);
+    setActiveTab(next.step);
+    if (next.callPanel) setCallPanel(next.callPanel);
+    if (next.openTestCall) setTestCallOpen(true);
   }, [flowStep]);
 
   const selectTab = (id) => {
@@ -337,8 +349,17 @@ export function AgentStudioModule({
 
         {/* Right Action Buttons */}
         <div className="flex items-center gap-2.5">
-          <TactileButton variant="secondary" size="sm" icon={Play} onClick={() => selectTab('test')}>
-            Live test
+          <TactileButton
+            variant="secondary"
+            size="sm"
+            icon={Radio}
+            onClick={(e) => {
+              testCallButtonRef.current = e.currentTarget;
+              setTestCallOpen(true);
+            }}
+            data-testid="agent-test-call"
+          >
+            Test call
           </TactileButton>
 
           <TactileButton
@@ -347,6 +368,7 @@ export function AgentStudioModule({
             icon={isSaved ? CheckCircle2 : Save}
             onClick={handleSave}
             disabled={saving}
+            data-testid="agent-save"
           >
             {isSaved ? 'Saved!' : saving ? 'Saving…' : 'Save & Publish'}
           </TactileButton>
@@ -354,13 +376,23 @@ export function AgentStudioModule({
       </div>
 
       {/* Tabs Navigation Bar */}
-      <div className="flex items-center gap-1 p-1.5 rounded-2xl bg-white border border-[#E4E2EB] overflow-x-auto shadow-craft-xs">
+      <div
+        className="flex items-center gap-1 p-1.5 rounded-2xl bg-white border border-[#E4E2EB] overflow-x-auto shadow-craft-xs"
+        role="tablist"
+        aria-label="Agent workspace"
+      >
         {FLOW_TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
           return (
             <button
               key={tab.id}
+              type="button"
+              role="tab"
+              id={`agent-tab-${tab.id}`}
+              aria-selected={isActive}
+              aria-controls={`agent-panel-${tab.id}`}
+              data-testid={`agent-tab-${tab.id}`}
               onClick={() => selectTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
                 isActive
@@ -375,9 +407,26 @@ export function AgentStudioModule({
         })}
       </div>
 
-      {/* TAB 1: SCRIPT & CONVERSATION FLOW */}
+      {/* TAB: OVERVIEW */}
+      {activeTab === 'overview' && (
+        <div
+          role="tabpanel"
+          id="agent-panel-overview"
+          aria-labelledby="agent-tab-overview"
+          className="animate-in fade-in duration-150"
+        >
+          <AgentOverview agent={selectedAgent} onOpenTab={selectTab} />
+        </div>
+      )}
+
+      {/* TAB: SCRIPT & CONVERSATION FLOW */}
       {activeTab === 'script' && (
-        <div className="space-y-6 animate-in fade-in duration-150">
+        <div
+          role="tabpanel"
+          id="agent-panel-script"
+          aria-labelledby="agent-tab-script"
+          className="space-y-6 animate-in fade-in duration-150"
+        >
           <SolidCard>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
               <div>
@@ -513,9 +562,14 @@ export function AgentStudioModule({
         </div>
       )}
 
-      {/* TAB 2: VOICE & ACOUSTIC TUNING */}
+      {/* TAB: VOICE & ACOUSTIC TUNING */}
       {activeTab === 'voice' && (
-        <div className="space-y-6 animate-in fade-in duration-150">
+        <div
+          role="tabpanel"
+          id="agent-panel-voice"
+          aria-labelledby="agent-tab-voice"
+          className="space-y-6 animate-in fade-in duration-150"
+        >
           <SolidCard>
             <p className="text-[11px] text-[#524E5E] mb-3">
               {stackLabel} — these voices apply to incoming calls, outgoing calls, and browser practice
@@ -700,137 +754,67 @@ export function AgentStudioModule({
                 {isPlayingVoice ? 'Stop Audio' : 'Preview Voice'}
               </TactileButton>
 
-              <TactileButton variant="secondary" size="sm" onClick={() => selectTab('test')}>
-                Open live test
+              <TactileButton
+                variant="secondary"
+                size="sm"
+                icon={Radio}
+                onClick={() => setTestCallOpen(true)}
+              >
+                Test call
               </TactileButton>
             </div>
           </SolidCard>
         </div>
       )}
 
-      {activeTab === 'test' && (
-        <div className="animate-in fade-in duration-150">
-          <TalkToAiConsole embedded />
-        </div>
-      )}
-
-      {/* TAB 3: TELEPHONY & ROUTING */}
-      {activeTab === 'telephony' && (
-        <div className="space-y-6 animate-in fade-in duration-150">
+      {/* TAB: CALLS (history | leads | call settings) */}
+      {activeTab === 'calls' && (
+        <div
+          role="tabpanel"
+          id="agent-panel-calls"
+          aria-labelledby="agent-tab-calls"
+          className="space-y-4 animate-in fade-in duration-150"
+        >
           <div className="rounded-xl border border-[#E4E2EB] bg-[#F0EEF6]/50 px-3 py-2.5 text-xs text-[#524E5E]">
-            Phone calls use your published script and wallet credits. Incoming and outgoing calls use the same
-            {stackLabel} engine as the browser practice call.
+            Phone calls use your published script and wallet credits. Incoming and outgoing calls use the
+            same {stackLabel} engine as the browser practice call.
           </div>
-          <SolidCard>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-xs font-bold text-[#0F0E17]">Assigned Phone Number</h3>
-                <p className="text-[11px] text-[#524E5E]">Inbound DID and default outbound caller ID for this agent.</p>
-              </div>
-
-              <TactileButton
-                variant="secondary"
-                size="sm"
-                icon={Phone}
-                onClick={onOpenBuyNumber}
-              >
-                Change / Buy Number
-              </TactileButton>
-            </div>
-
-            <div className="space-y-3">
-              <label className="block text-xs font-bold text-[#0F0E17]">Inbound / outbound caller ID</label>
-              <select
-                value={
-                  phoneNumbers.find((n) => n.assignedAgentId === selectedAgent.id)?.id ||
-                  selectedAgent.numberId ||
-                  ''
-                }
-                onChange={async (e) => {
-                  const nextId = e.target.value;
-                  const current = phoneNumbers.find((n) => n.assignedAgentId === selectedAgent.id);
-                  try {
-                    if (current && current.id !== nextId) {
-                      await assignNumberToAgent(current.id, '');
-                    }
-                    if (nextId) {
-                      await assignNumberToAgent(nextId, selectedAgent.id, selectedAgent.name);
-                    }
-                  } catch {
-                    /* toast handled in workspace */
-                  }
-                }}
-                className="w-full bg-white border border-[#E4E2EB] rounded-xl px-3 py-2 text-sm font-mono"
-              >
-                <option value="">No number — browser test only</option>
-                {phoneNumbers.map((n) => (
-                  <option key={n.id} value={n.id} disabled={n.assignedAgentId && n.assignedAgentId !== selectedAgent.id}>
-                    {n.number}
-                    {n.assignedAgentId && n.assignedAgentId !== selectedAgent.id ? ' (assigned elsewhere)' : ''}
-                    {!n.assignedAgentId ? ' · available' : ''}
-                  </option>
-                ))}
-              </select>
-              <StatusBadge status={selectedAgent.assignedNumber ? 'Active' : 'Idle'} size="xs" />
-            </div>
-          </SolidCard>
-
-          {/* Operational phone settings live on the server and are enforced by
-              the live inbound path — see TelephonySettingsCard. */}
-          <TelephonySettingsCard agentId={selectedAgent.id} />
-
-          <SolidCard>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <h3 className="text-xs font-bold text-[#0F0E17]">Outbound calls</h3>
-                <p className="text-[11px] text-[#524E5E] mt-0.5">
-                  One-off dials, callbacks and campaigns use this agent after you publish the script. Rate
-                  limits apply per workspace.
-                </p>
-              </div>
-              <TactileButton
-                variant="secondary"
-                size="sm"
-                icon={PhoneOutgoing}
-                onClick={() => onNavigate?.('calls', { agentId: selectedAgent.id })}
-              >
-                Place outbound call
-              </TactileButton>
-            </div>
-          </SolidCard>
+          <AgentCallsPanel
+            agentId={selectedAgent.id}
+            agentName={selectedAgent.name}
+            initialPanel={callPanel}
+          />
         </div>
       )}
 
-      {/* TAB 4: KNOWLEDGE BASE & FAQS */}
-      {activeTab === 'knowledge' && (
-        <div className="space-y-6 animate-in fade-in duration-150">
-          <SolidCard>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-xs font-bold text-[#0F0E17]">Attached Knowledge Documents</h3>
-                <p className="text-[11px] text-[#524E5E]">Vector chunks retrieved in real-time when callers ask business questions.</p>
-              </div>
-              <TactileButton variant="secondary" size="sm" icon={Plus}>
-                Upload Document
-              </TactileButton>
-            </div>
-
-            <div className="space-y-2">
-              {(selectedAgent.knowledgeSources || []).map((doc, i) => (
-                <div
-                  key={i}
-                  className="p-3 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] flex items-center justify-between text-xs"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <BookOpen className="w-4 h-4 text-[#6344E7]" />
-                    <span className="font-semibold text-[#0F0E17]">{doc}</span>
-                  </div>
-                  <span className="text-[10px] font-mono text-[#047857]">Indexed & Active</span>
-                </div>
-              ))}
-            </div>
-          </SolidCard>
+      {/* TAB: SETTINGS */}
+      {activeTab === 'settings' && (
+        <div
+          role="tabpanel"
+          id="agent-panel-settings"
+          aria-labelledby="agent-tab-settings"
+          className="animate-in fade-in duration-150"
+        >
+          <AgentSettingsPanel agent={selectedAgent} onOpenBuyNumber={onOpenBuyNumber} />
         </div>
+      )}
+
+      {/* Test call is a header action, not a tab. Focus returns to the button on close. */}
+      {testCallOpen && (
+        <Modal
+          isOpen={testCallOpen}
+          onClose={() => {
+            setTestCallOpen(false);
+            requestAnimationFrame(() => testCallButtonRef.current?.focus());
+          }}
+          title={`Test call — ${selectedAgent.name}`}
+          subtitle="Browser mic or live-number dial (wallet-billed). Empty wallet prompts a Razorpay top-up."
+          maxWidth="max-w-lg"
+        >
+          <div data-testid="agent-test-call-panel">
+            <AgentTestCallPanel agent={selectedAgent} />
+          </div>
+        </Modal>
       )}
     </div>
   );

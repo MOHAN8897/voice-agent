@@ -14,11 +14,27 @@ def realtime_voice_catalog() -> list[dict[str, str]]:
     return phone_voice_catalog()
 
 
+def _agent_spoken_language(agent: dict[str, Any], voice_cfg: dict[str, Any]) -> str:
+    """Settings languages[] win over stale voice-section language."""
+    langs = agent.get("languages") or []
+    if isinstance(langs, list) and langs:
+        code = str(langs[0] or "").strip()
+        if code:
+            return code
+    single = str(agent.get("language") or "").strip()
+    if single:
+        return single
+    voice_lang = str(voice_cfg.get("language") or "").strip()
+    if voice_lang:
+        return voice_lang
+    return "en-US"
+
+
 async def saas_stack_override_for_agent(agent: dict[str, Any]) -> dict[str, Any]:
     """Platform stack from dev panel; agent only overrides spoken voice, speed, and language."""
     agent_id = str(agent.get("agent_id") or agent.get("id") or "")
     voice_cfg = await load_agent_voice_config(agent_id) if agent_id else {}
-    lang = str(voice_cfg.get("language") or (agent.get("languages") or ["te-IN"])[0] or "te-IN")
+    lang = _agent_spoken_language(agent, voice_cfg)
     stack = await resolve_platform_phone_stack(lang)
     rv = dict(stack.get("realtime_voice") or {})
     realtime_voice = str(voice_cfg.get("realtimeVoice") or voice_cfg.get("voiceId") or rv.get("voice") or DEFAULT_REALTIME_VOICE)

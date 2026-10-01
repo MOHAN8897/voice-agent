@@ -1,0 +1,21 @@
+---
+description: Project agent tooling — Chisle, Reticle, Graft (replaces Ponytail)
+alwaysApply: true
+---
+
+# Agent tooling (voice-agent)
+
+## Efficiency — Chisle (not Ponytail)
+
+Use **Chisle** for prose + code efficiency (`.cursor/rules/chisle.mdc`).  
+**Ponytail is retired** in this repo — do not follow `.ponytail-ref/` rules or write `ponytail:` comments; use `chisle:` if you must mark a deliberate ceiling.
+
+## UI verification — Reticle
+
+User-facing UI work on **voxly-ai** (Vite) is verified with **Reticle** (`reticle_*` MCP tools).  
+Instrumented app: `voxly-ai/` · skill: `.agents/skills/install-and-verify` · details: `AGENTS.md` (reticle block) + `RETICLE.md`.  
+No verdict from `reticle_act_and_wait` / `reticle_assert` → do not claim the UI change is done. Skip Reticle for docs/backend-only with one-line reason.
+
+## Code navigation — Graft
+
+Prefer `graft ask` / MCP graft tools before broad greps (see `AGENTS.md` graft block).

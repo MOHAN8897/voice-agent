@@ -194,7 +194,15 @@ function RecordingPlayer({ call }) {
   );
 }
 
-export function CallsModule({ onRequireFunds = null }) {
+/**
+ * Call history for the whole fleet, or for one agent.
+ *
+ * `agentId` locks every read and filter to that agent — the agent workspace's Calls
+ * tab passes it, and nothing else changes: same endpoints, same payload, same
+ * callback/transcript/outcome handling. `embedded` drops the page chrome (fleet
+ * header, dialer tab) because the workspace supplies its own around it.
+ */
+export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = null, agentName = '', embedded = false }) {
   const {
     calls,
     selectedCallId,
@@ -222,6 +230,11 @@ export function CallsModule({ onRequireFunds = null }) {
   const [callbackTarget, setCallbackTarget] = useState('');
 
   useEffect(() => {
+    if (lockedAgentId) {
+      setAgentId(lockedAgentId);
+      setFilterAgentId(lockedAgentId);
+      return;
+    }
     const stored =
       typeof window !== 'undefined' ? sessionStorage.getItem('voxly_calls_agent') : null;
     if (stored && agents.some((a) => a.id === stored)) {
@@ -229,11 +242,12 @@ export function CallsModule({ onRequireFunds = null }) {
       setFilterAgentId(stored);
       sessionStorage.removeItem('voxly_calls_agent');
     }
-  }, [agents]);
+  }, [agents, lockedAgentId]);
 
   useEffect(() => {
+    if (lockedAgentId) return;
     if (agents[0]?.id && !agentId) setAgentId(agents[0].id);
-  }, [agents, agentId]);
+  }, [agents, agentId, lockedAgentId]);
 
   // The status tab is a server-side filter, so refetch rather than filter locally.
   // Keeping the full list in context means the other tabs stay instant.
@@ -249,7 +263,7 @@ export function CallsModule({ onRequireFunds = null }) {
       }
       setStatusLoading(true);
       try {
-        const rows = await api.calls.list({ statuses: [status], limit: 100 });
+        const rows = await api.calls.list({ statuses: [status], agentId: lockedAgentId, limit: 100 });
         setStatusCalls(rows);
       } catch (e) {
         showToast(e.message || 'Could not load calls', 'error');
@@ -258,7 +272,7 @@ export function CallsModule({ onRequireFunds = null }) {
         setStatusLoading(false);
       }
     },
-    []
+    [lockedAgentId]
   );
 
   useEffect(() => {
@@ -279,20 +293,25 @@ export function CallsModule({ onRequireFunds = null }) {
   }, [loadWorkspaceData, historyBucket, loadByStatus]);
 
   // Tab counts always describe the whole (unfiltered-by-status) list.
+  const bucketCalls = useMemo(
+    () => (lockedAgentId ? calls.filter((c) => c.agentId === lockedAgentId) : calls),
+    [calls, lockedAgentId]
+  );
+
   const bucketCounts = useMemo(() => {
     const acc = { all: 0 };
     for (const status of CALL_STATUS_TABS) {
       if (status.id !== 'all') acc[status.id] = 0;
     }
-    for (const c of calls) {
+    for (const c of bucketCalls) {
       acc.all += 1;
       const status = callStatus(c);
       if (acc[status] != null) acc[status] += 1;
     }
     return acc;
-  }, [calls]);
+  }, [bucketCalls]);
 
-  const scopedCalls = statusCalls ?? calls;
+  const scopedCalls = statusCalls ?? bucketCalls;
 
   const filteredCalls = useMemo(
     () =>
@@ -463,7 +482,7 @@ export function CallsModule({ onRequireFunds = null }) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-[#0F0E17] tracking-tight">
-            Calls ({bucketCounts.all})
+            {embedded ? `${agentName || 'Agent'} calls (${bucketCounts.all})` : `Calls (${bucketCounts.all})`}
           </h2>
           <p className="text-xs text-[#524E5E] mt-0.5 max-w-2xl">
             {PHONE_STACK_LABEL}: transcripts, recordings, and wallet usage for real phone conversations.
@@ -480,25 +499,27 @@ export function CallsModule({ onRequireFunds = null }) {
         </TactileButton>
       </div>
 
-      <div className="flex items-center gap-1 p-1 rounded-2xl bg-white border border-[#E4E2EB] w-fit">
-        {[
-          { id: 'history', label: 'Call history' },
-          { id: 'outbound', label: 'Place outgoing call' },
-        ].map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => setMainTab(t.id)}
-            className={`px-4 py-2 rounded-xl text-xs font-semibold ${
-              mainTab === t.id ? 'bg-[#0F0E17] text-white' : 'text-[#524E5E] hover:text-[#0F0E17]'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      {!embedded && (
+        <div className="flex items-center gap-1 p-1 rounded-2xl bg-white border border-[#E4E2EB] w-fit">
+          {[
+            { id: 'history', label: 'Call history' },
+            { id: 'outbound', label: 'Place outgoing call' },
+          ].map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setMainTab(t.id)}
+              className={`px-4 py-2 rounded-xl text-xs font-semibold ${
+                mainTab === t.id ? 'bg-[#0F0E17] text-white' : 'text-[#524E5E] hover:text-[#0F0E17]'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      )}
 
-      {mainTab === 'outbound' && (
+      {!embedded && mainTab === 'outbound' && (
         <SolidCard className="p-4 space-y-3">
           <div>
             <div className="text-xs font-bold text-[#0F0E17]">Outgoing call</div>
@@ -566,7 +587,7 @@ export function CallsModule({ onRequireFunds = null }) {
         </SolidCard>
       )}
 
-      {mainTab === 'history' && (
+      {(embedded || mainTab === 'history') && (
         <>
           {/* Canonical status tabs, driven by the server's status vocabulary. */}
           <div className="flex flex-wrap items-center gap-1 p-1 rounded-xl bg-[#F0EEF6] border border-[#E4E2EB]">
@@ -609,7 +630,9 @@ export function CallsModule({ onRequireFunds = null }) {
                 <select
                   value={filterAgentId}
                   onChange={(e) => setFilterAgentId(e.target.value)}
-                  className="bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-2 py-1 text-xs"
+                  disabled={Boolean(lockedAgentId)}
+                  aria-label="Filter by agent"
+                  className="bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-2 py-1 text-xs disabled:opacity-50"
                 >
                   <option value="all">All agents</option>
                   {agents.map((a) => (

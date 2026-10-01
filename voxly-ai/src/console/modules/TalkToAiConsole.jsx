@@ -102,7 +102,7 @@ export function TalkToAiConsole({ embedded = false }) {
         setCallId(data.callId);
         setSessionState('CONNECTED');
         setBotState('SPEAKING');
-        setStatusNote('Live. Speak naturally — hangup is validated like PSTN.');
+        setStatusNote('Live. Speak naturally — hangup is validated like a phone call.');
         pushNote('Live voice session started. The agent will greet you on this line.');
       }
       if (event === 'audio') {

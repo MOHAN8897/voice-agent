@@ -7,7 +7,6 @@ from pydantic import BaseModel, Field
 from server.auth.subscriber_dependencies import require_subscriber_jwt
 from server.config.env import get_settings
 from server.services.saas.billing_wallet_service import (
-    create_topup_checkout,
     list_wallet_transactions,
     wallet_summary,
 )
@@ -36,7 +35,10 @@ class RazorpayVerifyBody(BaseModel):
 @router.get("/api/billing/catalog")
 async def billing_catalog():
     """Prices the console displays. The server is the only source of truth for these."""
+    from server.services.saas.billing_rates import effective_rates
+
     settings = get_settings()
+    rates = effective_rates()
     return {
         "plans": [
             {"id": "starter", "name": "Starter", "numbersIncluded": 0},
@@ -45,23 +47,26 @@ async def billing_catalog():
         "numberSkus": [
             {
                 "country": "IN",
-                "currency": "USD",
-                "monthlyCents": settings.did_monthly_usd_cents,
-                "monthlyInr": round(settings.did_monthly_inr_paise / 100.0, 2),
+                "currency": "INR",
+                "monthlyCents": rates["did_monthly_usd_cents"],
+                "monthlyInr": round(rates["did_monthly_inr_paise"] / 100.0, 2),
             }
         ],
         "topupMinUsd": settings.topup_min_usd,
         "topupMaxUsd": settings.topup_max_usd,
         "topupMinInr": 100,
         "topupMaxInr": 500000,
+        "paymentProvider": "razorpay",
         "rates": {
-            "pstnUsdPerMin": round(settings.pstn_rate_usd_cents_per_min / 100.0, 3),
-            "pstnInrPerMin": round(settings.pstn_rate_inr_paise_per_min / 100.0, 2),
-            "webInrPerMin": round(settings.web_agent_rate_inr_paise_per_min / 100.0, 2),
-            "numberMonthlyUsd": round(settings.did_monthly_usd_cents / 100.0, 2),
-            "numberMonthlyInr": round(settings.did_monthly_inr_paise / 100.0, 2),
+            "pstnUsdPerMin": round(rates["pstn_rate_usd_cents_per_min"] / 100.0, 3),
+            "pstnInrPerMin": round(rates["pstn_rate_inr_paise_per_min"] / 100.0, 2),
+            "webInrPerMin": round(rates["web_agent_rate_inr_paise_per_min"] / 100.0, 2),
+            "webUsdPerMin": round(rates["web_agent_rate_usd_cents_per_min"] / 100.0, 3),
+            "numberMonthlyUsd": round(rates["did_monthly_usd_cents"] / 100.0, 2),
+            "numberMonthlyInr": round(rates["did_monthly_inr_paise"] / 100.0, 2),
             "minBalanceUsd": round(settings.pstn_min_balance_usd_cents / 100.0, 2),
             "minBalanceInr": round(settings.pstn_min_balance_inr_paise / 100.0, 2),
+            "fxRateInr": rates["fx_rate_inr"],
         },
     }
 
@@ -77,16 +82,20 @@ async def billing_wallet(principal: SubscriberPrincipal = Depends(require_subscr
 
 @router.post("/api/billing/topup")
 async def billing_topup(body: TopupBody, principal: SubscriberPrincipal = Depends(require_subscriber_jwt)):
+    """Legacy USD top-up → convert to INR Razorpay order (Stripe removed)."""
     require_subscriber_permission(principal, "app.billing.write")
     allowed, retry = _billing_limiter.allow(f"topup:{principal.user_id}")
     if not allowed:
         raise_rate_limited(retry, "Top-up rate limit reached.")
+    from server.services.saas.billing_rates import effective_rates
+
+    fx = float(effective_rates().get("fx_rate_inr") or 95.64)
+    amount_inr = max(100.0, round(float(body.amountUsd) * fx, 2))
     try:
-        return await create_topup_checkout(principal.tenant_id, body.amountUsd, principal.email)
+        order = await create_wallet_order(principal.tenant_id, amount_inr)
+        return {**order, "convertedFromUsd": body.amountUsd, "fxRateInr": fx}
     except ValueError as e:
-        code = str(e)
-        status = 503 if code == "stripe_not_configured" else 400
-        raise HTTPException(status_code=status, detail={"error": {"code": code, "message": code}})
+        raise HTTPException(status_code=400, detail={"error": {"code": str(e), "message": str(e)}})
 
 
 @router.post("/api/billing/razorpay/create-order")

@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
+import { reticle } from '@reticlehq/vite-plugin';
 // The public tunnel reaches this dev server with a real hostname (Host header is
 // app-dev.hustlelabs.in), which Vite blocks unless the host is allow-listed.
 const allowedHosts = (
@@ -50,7 +51,7 @@ const panelProxy = {
 };
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [reticle({ sourceMapping: false }), react()],
   assetsInclude: ['**/*.glb', '**/*.gltf'],
   server: {
     port: 5173,

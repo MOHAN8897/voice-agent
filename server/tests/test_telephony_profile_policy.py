@@ -109,6 +109,25 @@ def test_no_business_hours_configured_is_always_open():
     assert is_within_business_hours(None, at=IST_11PM) is True
 
 
+def test_closed_date_is_outside_hours():
+    hours = {
+        "tue": [{"open": "09:00", "close": "18:00"}],
+        "closed": ["2026-03-03"],  # Tuesday
+    }
+    assert is_within_business_hours(hours, tz_name=DEFAULT_TIMEZONE, at=IST_10AM) is False
+
+
+def test_closed_dates_only_leave_other_days_open():
+    hours = normalize_business_hours({"closed": ["2026-12-25"]})
+    assert hours["closed"] == ["2026-12-25"]
+    assert is_within_business_hours(hours, tz_name=DEFAULT_TIMEZONE, at=IST_10AM) is True
+
+
+def test_normalize_rejects_bad_closed_date():
+    with pytest.raises(TelephonyProfileError):
+        normalize_business_hours({"closed": ["25-12-2026"]})
+
+
 def test_window_crossing_midnight():
     hours = {"tue": [{"open": "22:00", "close": "02:00"}]}
     assert is_within_business_hours(hours, tz_name=DEFAULT_TIMEZONE, at=IST_11PM) is True
@@ -237,7 +256,8 @@ def test_malformed_profile_falls_back_to_answering(broken):
 def test_malformed_hours_do_not_silence_the_number():
     """Bad hours are treated as always-open, not as permanently closed."""
     hours = {"funday": [{"open": "09:00", "close": "18:00"}]}
-    assert is_within_business_hours(hours, at=IST_10AM) is False  # unknown day is simply closed
+    # Unknown keys are ignored — no weekday windows means always open (except closed dates).
+    assert is_within_business_hours(hours, at=IST_10AM) is True
     decision = evaluate_inbound_policy(profile(business_hours=hours), at=IST_10AM)
     assert decision.used_fallback is True
     assert decision.should_answer is True

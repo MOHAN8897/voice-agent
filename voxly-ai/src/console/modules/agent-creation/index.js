@@ -30,8 +30,9 @@ export const AGENT_ROLES = [
 ];
 
 export const PRIMARY_LANGUAGES = [
-  { code: 'en-IN', label: 'English (India)', sub: 'Neutral Indian English' },
   { code: 'en-US', label: 'English (US)', sub: 'US English' },
+  { code: 'en-GB', label: 'English (UK)', sub: 'UK English' },
+  { code: 'en-IN', label: 'English (India)', sub: 'Neutral Indian English' },
   { code: 'hi-IN', label: 'Hindi', sub: 'हिन्दी' },
   { code: 'te-IN', label: 'Telugu', sub: 'తెలుగు' },
   { code: 'ta-IN', label: 'Tamil', sub: 'தமிழ்' },
@@ -133,7 +134,10 @@ export function emptyBusinessHours() {
 
 export function isBusinessHoursEmpty(hours) {
   if (!hours || typeof hours !== 'object') return true;
-  return Object.values(hours).every((windows) => !Array.isArray(windows) || windows.length === 0);
+  const DAYS = new Set(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']);
+  return Object.entries(hours).every(
+    ([key, windows]) => !DAYS.has(key) || !Array.isArray(windows) || windows.length === 0
+  );
 }
 
 export function countOpenDays(hours) {

@@ -15,11 +15,11 @@ import { TactileButton } from './ui/TactileButton';
 import { useWorkspace } from './context/WorkspaceContext';
 
 const EMPLOYEE_STEP_LABELS = {
-  script: 'Script & flow',
+  overview: 'Overview',
+  script: 'Script',
+  calls: 'Calls',
   voice: 'Voice',
-  telephony: 'Phone lines',
-  test: 'Live test',
-  knowledge: 'Knowledge',
+  settings: 'Settings',
 };
 
 export function Topbar({
@@ -34,10 +34,18 @@ export function Topbar({
   onSignOut,
   onNavigate,
 }) {
-  const { campaigns } = useWorkspace();
+  const { campaigns, wallet, openAddFunds } = useWorkspace();
   const runningCampaign = campaigns.find((c) => c.status === 'running');
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef(null);
+  const balanceInr = Number(wallet?.balanceInr) || 0;
+  const balanceUsd = Number(wallet?.balanceUsd) || 0;
+  const fx = Number(wallet?.fxRateInr) || 95.64;
+  const displayUsd = balanceUsd > 0 ? balanceUsd : balanceInr > 0 ? balanceInr / fx : 0;
+  const walletLabel = `$${displayUsd.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -114,6 +122,17 @@ export function Topbar({
       </div>
 
       <div className="flex items-center gap-2">
+        <button
+          type="button"
+          data-testid="topbar-wallet"
+          onClick={() => openAddFunds?.('topbar')}
+          className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white hover:bg-[#FAF9FD] text-[#0F0E17] border border-[#E4E2EB] shadow-2xs transition-all active:scale-[0.98]"
+          title="Wallet balance — click to add funds"
+        >
+          <CreditCard className="w-3.5 h-3.5 text-[#6344E7]" />
+          <span className="font-mono">{walletLabel}</span>
+        </button>
+
         <button
           type="button"
           onClick={onOpenBuyNumber}

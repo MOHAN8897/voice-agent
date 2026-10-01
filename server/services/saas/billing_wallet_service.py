@@ -42,13 +42,16 @@ async def get_or_create_wallet(tenant_id: uuid.UUID) -> BillingWallet:
 
 
 async def wallet_summary(tenant_id: uuid.UUID, user_id: uuid.UUID | None = None) -> dict:
+    from server.services.saas.billing_rates import effective_rates
+
     settings = get_settings()
+    rates = effective_rates()
     wallet = await get_or_create_wallet(tenant_id)
     inr_paise = int(getattr(wallet, "balance_inr_paise", 0) or 0)
     primary = (wallet.currency or "usd").lower()
-    rate_inr = settings.pstn_rate_inr_paise_per_min or 900
+    rate_inr = rates["pstn_rate_inr_paise_per_min"] or 900
     remaining_min = int(inr_paise // rate_inr) if primary == "inr" and rate_inr else int(
-        (wallet.balance_cents or 0) // max(1, settings.pstn_rate_usd_cents_per_min)
+        (wallet.balance_cents or 0) // max(1, rates["pstn_rate_usd_cents_per_min"])
     )
     summary = {
         "balanceUsd": round(wallet.balance_cents / 100.0, 2),
@@ -60,12 +63,16 @@ async def wallet_summary(tenant_id: uuid.UUID, user_id: uuid.UUID | None = None)
         "tenantId": str(tenant_id),
         "minBalanceUsd": round(settings.pstn_min_balance_usd_cents / 100.0, 2),
         "minBalanceInr": round(settings.pstn_min_balance_inr_paise / 100.0, 2),
-        "rateUsdPerMin": round(settings.pstn_rate_usd_cents_per_min / 100.0, 3),
-        "rateInrPerMin": round(settings.pstn_rate_inr_paise_per_min / 100.0, 2),
-        "webRateInrPerMin": round(settings.web_agent_rate_inr_paise_per_min / 100.0, 2),
-        "didMonthlyInr": round(settings.did_monthly_inr_paise / 100.0, 2),
+        "rateUsdPerMin": round(rates["pstn_rate_usd_cents_per_min"] / 100.0, 3),
+        "rateInrPerMin": round(rates["pstn_rate_inr_paise_per_min"] / 100.0, 2),
+        "webRateUsdPerMin": round(rates["web_agent_rate_usd_cents_per_min"] / 100.0, 3),
+        "webRateInrPerMin": round(rates["web_agent_rate_inr_paise_per_min"] / 100.0, 2),
+        "didMonthlyUsd": round(rates["did_monthly_usd_cents"] / 100.0, 2),
+        "didMonthlyInr": round(rates["did_monthly_inr_paise"] / 100.0, 2),
+        "fxRateInr": float(rates.get("fx_rate_inr") or 95.64),
         "remainingMinutes": remaining_min,
         "myUsageInr": 0.0,
+        "myUsageUsd": 0.0,
         "myUsagePaise": 0,
     }
     if user_id is not None:
@@ -84,6 +91,8 @@ async def wallet_summary(tenant_id: uuid.UUID, user_id: uuid.UUID | None = None)
                 paise = abs(int(spent or 0))
                 summary["myUsagePaise"] = paise
                 summary["myUsageInr"] = round(paise / 100.0, 2)
+                fx = float(rates.get("fx_rate_inr") or 95.64)
+                summary["myUsageUsd"] = round((paise / 100.0) / fx, 2) if fx else 0.0
     return summary
 
 
@@ -356,12 +365,15 @@ def _resolve_call_wallet_debit(
     minutes = max(0.0, float(duration_sec)) / 60.0
     if minutes <= 0:
         minutes = 1.0 / 60.0
+    from server.services.saas.billing_rates import effective_rates
+
+    rates = effective_rates()
     if channel == "pstn":
-        cents = int(round(minutes * settings.pstn_rate_usd_cents_per_min))
-        paise = int(round(minutes * settings.pstn_rate_inr_paise_per_min))
+        cents = int(round(minutes * rates["pstn_rate_usd_cents_per_min"]))
+        paise = int(round(minutes * rates["pstn_rate_inr_paise_per_min"]))
     else:
-        cents = int(round(minutes * settings.web_agent_rate_usd_cents_per_min))
-        paise = int(round(minutes * settings.web_agent_rate_inr_paise_per_min))
+        cents = int(round(minutes * rates["web_agent_rate_usd_cents_per_min"]))
+        paise = int(round(minutes * rates["web_agent_rate_inr_paise_per_min"]))
     return max(1, cents), max(1, paise), "catalog_prorated"
 
 

@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "origin": "failed-assert",
+  "expected": "element ?",
+  "observed": "no element matched {\"testid\":\"lead-form-name\"} — testids present here: sidebar-wallet-pill, agent-test-call, agent-save, agent-tab-overview, agent-tab-script, agent-tab-calls, agent-tab-voice, agent-tab-settings, agent-calls-panel-tab-history, agent-calls-panel-tab-leads, agent-calls-panel-tab-settings",
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "",
+        "source": {
+          "file": "src/console/ui/TactileButton.jsx",
+          "line": 69,
+          "column": 5
+        }
+      },
+      "action": "click"
+    }
+  ],
+  "id": "1790834950480-click-1f06c351",
+  "createdAt": 1790834950481,
+  "seen": 1,
+  "lastSeenAt": 1790834950481
+}

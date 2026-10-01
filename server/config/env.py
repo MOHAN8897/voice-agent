@@ -201,8 +201,9 @@ class Settings(BaseSettings):
     plivo_auth_id: str | None = Field(None, alias="PLIVO_AUTH_ID")
     plivo_auth_token: str | None = Field(None, alias="PLIVO_AUTH_TOKEN")
     plivo_phone_number: str | None = Field(None, alias="PLIVO_PHONE_NUMBER")
-    campaign_max_concurrency: int = Field(5, alias="CAMPAIGN_MAX_CONCURRENCY")
+    campaign_max_concurrency: int = Field(20, alias="CAMPAIGN_MAX_CONCURRENCY")
     campaign_default_retry_attempts: int = Field(3, alias="CAMPAIGN_DEFAULT_RETRY_ATTEMPTS")
+    saas_max_concurrent_pstn: int = Field(20, alias="SAAS_MAX_CONCURRENT_PSTN")
     recording_consent_required: bool = Field(False, alias="RECORDING_CONSENT_REQUIRED")
 
     # --- SaaS subscriber auth & billing ---

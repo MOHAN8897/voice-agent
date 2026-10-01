@@ -16,7 +16,6 @@ import { StatusBadge } from '../ui/StatusBadge';
 import { TactileButton } from '../ui/TactileButton';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { AgentStudioModule } from './AgentStudioModule';
-import { EMPLOYEE_FLOW_STEPS } from '../employeeFlowHash';
 
 export function EmployeesModule({
   onNavigate,
@@ -39,8 +38,9 @@ export function EmployeesModule({
   const [filter, setFilter] = useState('All');
   const [search, setSearch] = useState('');
 
-  const inWorkbench =
-    employeeFlowStep && EMPLOYEE_FLOW_STEPS.includes(employeeFlowStep) && agents.length > 0;
+  // A legacy ?step=telephony / ?step=test link must still open the workspace, not fall
+  // back to the fleet list — resolveEmployeeStep maps it to a real tab.
+  const inWorkbench = Boolean(employeeFlowStep) && agents.length > 0;
 
   useEffect(() => {
     if (inWorkbench && selectedAgentId) return;
@@ -49,7 +49,7 @@ export function EmployeesModule({
     }
   }, [employeeFlowStep, agents, selectedAgentId, setSelectedAgentId, inWorkbench]);
 
-  const openWorkbench = (agentId, step = 'script') => {
+  const openWorkbench = (agentId, step = 'overview') => {
     setSelectedAgentId(agentId);
     onEmployeeFlowStepChange?.(step, agentId);
   };
@@ -165,7 +165,7 @@ export function EmployeesModule({
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div>
                   <span className="text-[10px] text-[#8C879A] uppercase tracking-wider block font-bold">
-                    Phone (PSTN)
+                    Live number
                   </span>
                   <div className="flex items-center gap-1 font-mono font-semibold text-[#0F0E17] mt-0.5 truncate">
                     <Phone className="w-3 h-3 text-[#6344E7] shrink-0" />
@@ -209,7 +209,7 @@ export function EmployeesModule({
                   size="sm"
                   variant="primary"
                   icon={Sliders}
-                  onClick={() => openWorkbench(agent.id, 'script')}
+                  onClick={() => openWorkbench(agent.id, 'overview')}
                 >
                   Open builder
                 </TactileButton>
@@ -218,18 +218,18 @@ export function EmployeesModule({
                   size="sm"
                   variant="secondary"
                   icon={Play}
-                  onClick={() => openWorkbench(agent.id, 'test')}
+                  onClick={() => openWorkbench(agent.id, 'script')}
                 >
-                  Live test
+                  Script
                 </TactileButton>
 
                 <TactileButton
                   size="sm"
                   variant="ghost"
                   icon={FileCode2}
-                  onClick={() => openWorkbench(agent.id, 'telephony')}
+                  onClick={() => openWorkbench(agent.id, 'calls')}
                 >
-                  Phone
+                  Calls
                 </TactileButton>
               </div>
 

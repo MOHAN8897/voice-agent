@@ -12,14 +12,10 @@ import {
   AlertCircle,
   Plus,
   ArrowUpRight,
-  Check,
-  Sparkles,
-  ArrowRight
 } from 'lucide-react';
 import { SolidCard } from '../ui/SolidCard';
 import { TactileButton } from '../ui/TactileButton';
 import { useWorkspace } from '../context/WorkspaceContext';
-import { PRICING_TIERS } from '../../data/siteContent';
 
 /** Plain-language labels for wallet ledger kinds. */
 const TRANSACTION_LABEL = {
@@ -27,10 +23,12 @@ const TRANSACTION_LABEL = {
   usage_web: 'Browser test call',
   did_purchase: 'Phone number',
   did_refund: 'Phone number refund',
-  admin_seed: 'Starting credits',
-  admin_grant: 'Credits added',
+  admin_seed: 'Starting balance',
+  admin_grant: 'Balance added',
+  admin_debit: 'Balance removed',
   topup: 'Top-up (USD)',
-  razorpay_topup_inr: 'Top-up (INR)',
+  razorpay_topup_inr: 'Top-up',
+  razorpay_topup: 'Top-up',
 };
 
 function describeTransactionKind(kind) {
@@ -54,17 +52,12 @@ export function BillingModule() {
   const { user } = useAuth();
   const {
     wallet,
-    addFunds,
     toggleAutoRecharge,
     updateAutoRechargeSettings,
-    currentWorkspace,
-    updateWorkspaceTier
   } = useWorkspace();
 
   const [topupSuccess, setTopupSuccess] = useState(null);
   const [topupError, setTopupError] = useState(null);
-  const [planSuccess, setPlanSuccess] = useState(null);
-  const [annualBilling, setAnnualBilling] = useState(true);
   const [threshold, setThreshold] = useState(wallet.autoRechargeThresholdUsd);
   const [amount, setAmount] = useState(wallet.autoRechargeAmountUsd);
   const [serverWallet, setServerWallet] = useState(null);
@@ -94,17 +87,20 @@ export function BillingModule() {
     refreshBilling();
   }, [refreshBilling]);
 
-  const handleTopupInr = async (amountInr) => {
+  const handleTopupUsd = async (amountUsd) => {
     setTopupError(null);
     setPayBusy(true);
     try {
       const cfg = await api.billing.razorpayConfig();
       if (!cfg?.enabled) throw new Error('Razorpay is not configured on the server.');
+      const fx = Number(serverWallet?.fxRateInr) || 95.64;
+      const amountInr = Math.max(100, Math.round(Number(amountUsd) * fx));
       const order = await api.billing.createRazorpayOrder(amountInr);
       await openRazorpayWalletCheckout({
         order,
         keyId: cfg.keyId,
         user,
+        hideUpi: true,
         onSuccess: async (response) => {
           const result = await api.billing.verifyRazorpayPayment({
             razorpay_order_id: response.razorpay_order_id,
@@ -126,19 +122,6 @@ export function BillingModule() {
     }
   };
 
-  const handleTopup = async (amtUsd) => {
-    setTopupError(null);
-    try {
-      await addFunds(amtUsd);
-    } catch (err) {
-      setTopupError(err.message || 'Top-up failed');
-    }
-  };
-
-  const handleSelectPlan = (_tierName) => {
-    setTopupError('Plan changes are not billed yet — use wallet top-up for call usage.');
-  };
-
   const exportTransactionsCsv = useCallback(() => {
     if (typeof window === 'undefined' || !transactions.length) return;
     const blob = new Blob([toCsv(transactions)], { type: 'text/csv;charset=utf-8' });
@@ -152,17 +135,14 @@ export function BillingModule() {
     URL.revokeObjectURL(url);
   }, [transactions]);
 
-  const activeTierName = (currentWorkspace?.tier || 'Professional Fleet').replace(' Fleet', '');
-
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
         <h2 className="text-xl font-bold text-[#0F0E17] tracking-tight">
-          Wallet, Per-Second Billing & Plans
+          Wallet & per-second billing
         </h2>
         <p className="text-xs text-[#524E5E] mt-0.5">
-          Pure per-second telephony metering with zero charges for unanswered rings and customizable plan tiers.
+          Pay-as-you-go wallet. Phone and browser calls meter by the second; unanswered carrier legs are free.
         </p>
       </div>
 
@@ -180,140 +160,6 @@ export function BillingModule() {
         </div>
       )}
 
-      {planSuccess && (
-        <div className="p-3.5 rounded-xl bg-[#6344E7]/10 border border-[#6344E7]/20 text-xs font-semibold text-[#6344E7] flex items-center gap-2 animate-in fade-in duration-150">
-          <Sparkles className="w-4 h-4 shrink-0 text-[#6344E7]" />
-          <span>{planSuccess}</span>
-        </div>
-      )}
-
-      {/* Subscription Plans Section */}
-      <SolidCard className="space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E4E2EB]">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-[#0F0E17] uppercase tracking-wider">
-                Fleet Subscription Plan
-              </span>
-              <span className="text-[10px] font-mono font-bold text-[#15803D] bg-[#22C55E]/10 border border-[#22C55E]/20 px-2 py-0.5 rounded-md">
-                Active: {currentWorkspace?.tier || 'Professional Fleet'}
-              </span>
-            </div>
-            <p className="text-xs text-[#524E5E] mt-0.5">
-              Select or switch your fleet tier to scale concurrent voice channels, agent limits, and included minutes.
-            </p>
-          </div>
-
-          {/* Monthly vs Annual Toggle */}
-          <div className="inline-flex p-1 rounded-xl bg-[#F0EEF6] border border-[#E4E2EB] self-start sm:self-center">
-            <button
-              type="button"
-              onClick={() => setAnnualBilling(false)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
-                !annualBilling
-                  ? 'bg-white text-[#0F0E17] shadow-xs'
-                  : 'text-[#524E5E] hover:text-[#0F0E17]'
-              }`}
-            >
-              Monthly
-            </button>
-            <button
-              type="button"
-              onClick={() => setAnnualBilling(true)}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
-                annualBilling
-                  ? 'bg-white text-[#0F0E17] shadow-xs'
-                  : 'text-[#524E5E] hover:text-[#0F0E17]'
-              }`}
-            >
-              <span>Annual</span>
-              <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-[#0F0E17] text-white">
-                -20%
-              </span>
-            </button>
-          </div>
-        </div>
-
-        {/* 3 Interactive Plan Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {PRICING_TIERS.map((tier) => {
-            const price = annualBilling ? tier.priceAnnual : tier.priceMonthly;
-            const isCurrentActive = activeTierName.toLowerCase() === tier.name.toLowerCase();
-
-            return (
-              <div
-                key={tier.name}
-                onClick={() => handleSelectPlan(tier.name)}
-                className={`p-5 rounded-xl border flex flex-col justify-between transition-all cursor-pointer relative group ${
-                  isCurrentActive
-                    ? 'bg-white border-2 border-[#6344E7] shadow-craft-md ring-2 ring-[#6344E7]/10'
-                    : 'bg-[#FAF9FD] border-[#E4E2EB] hover:border-[#D1CFDB] hover:bg-white'
-                }`}
-              >
-                {/* Active Indicator Badge */}
-                {isCurrentActive && (
-                  <div className="absolute -top-2.5 right-4 bg-[#6344E7] text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-xs">
-                    <Check className="w-2.5 h-2.5 stroke-[3]" />
-                    <span>Active Plan</span>
-                  </div>
-                )}
-
-                <div>
-                  <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#6344E7] mb-1">
-                    {tier.badge}
-                  </div>
-                  <h3 className="text-base font-bold text-[#0F0E17]">{tier.name}</h3>
-                  <p className="text-xs text-[#524E5E] mt-1 line-clamp-2 leading-relaxed">
-                    {tier.description}
-                  </p>
-
-                  <div className="my-3 pb-3 border-b border-[#E4E2EB] flex items-baseline gap-1">
-                    <span className="text-2xl font-bold font-mono text-[#0F0E17]">${price}</span>
-                    <span className="text-xs text-[#524E5E]">/ month</span>
-                    {annualBilling && (
-                      <span className="text-[10px] text-[#15803D] font-mono font-semibold ml-1">
-                        (Annual)
-                      </span>
-                    )}
-                  </div>
-
-                  <ul className="space-y-1.5 text-xs text-[#524E5E] mb-4">
-                    {tier.features.slice(0, 4).map((f, idx) => (
-                      <li key={idx} className="flex items-center gap-1.5">
-                        <Check className="w-3 h-3 text-[#15803D] shrink-0" />
-                        <span className="truncate">{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleSelectPlan(tier.name);
-                  }}
-                  className={`w-full py-2 px-3 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 active:scale-[0.98] ${
-                    isCurrentActive
-                      ? 'bg-[#6344E7] text-white shadow-xs font-bold'
-                      : 'bg-white border border-[#E4E2EB] hover:bg-[#FAF9FD] text-[#0F0E17]'
-                  }`}
-                >
-                  {isCurrentActive ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 stroke-[3]" />
-                      <span>Current Plan</span>
-                    </>
-                  ) : (
-                    <span>Switch to {tier.name}</span>
-                  )}
-                </button>
-              </div>
-            );
-          })}
-        </div>
-      </SolidCard>
-
       {/* Primary Balance Ribbon */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {/* Left 2 Cols: Balance & Top-Up Buttons */}
@@ -325,7 +171,7 @@ export function BillingModule() {
                 <span>Available Talk Time Balance</span>
               </span>
               <span className="text-[11px] font-mono font-medium text-[#15803D] bg-[#22C55E]/10 border border-[#22C55E]/20 px-2 py-0.5 rounded-md">
-                Active Fleet Funded
+                Wallet funded
               </span>
             </div>
 
@@ -334,53 +180,43 @@ export function BillingModule() {
               {Number(wallet?.remainingMinutes || 0).toLocaleString()} min
               </span>
               <span className="text-sm font-mono text-[#524E5E]">
-                (${(serverWallet?.balanceUsd ?? wallet.usdEquivalent).toFixed(2)} USD
-                {serverWallet?.balanceInr != null ? ` · ₹${serverWallet.balanceInr.toFixed(2)} INR` : ''})
+                (${Number(serverWallet?.balanceUsd ?? wallet.usdEquivalent ?? 0).toFixed(2)} USD)
               </span>
             </div>
 
             <p className="text-xs text-[#524E5E]">
-              PSTN billed at{' '}
+              Phone calls billed at{' '}
               <strong className="text-[#0F0E17] font-semibold">
-                ₹{Number(serverWallet?.rateInrPerMin ?? wallet.rateInrPerMin ?? 9).toFixed(2)}/min
+                ${Number(serverWallet?.rateUsdPerMin ?? wallet.rateUsdPerMin ?? 0.12).toFixed(3)}/min
               </strong>
-              . Web tests billed at ₹{Number(serverWallet?.webRateInrPerMin ?? wallet.webRateInrPerMin ?? 7).toFixed(2)}/min.
-              Your usage this workspace: ₹{Number(serverWallet?.myUsageInr ?? wallet.myUsageInr ?? 0).toFixed(2)}.
+              . Web tests billed at $
+              {Number(serverWallet?.webRateUsdPerMin ?? wallet.webRateUsdPerMin ?? 0.09).toFixed(3)}/min.
+              Your usage this workspace: $
+              {Number(serverWallet?.myUsageUsd ?? wallet.myUsageUsd ?? 0).toFixed(2)}.
               Unanswered carrier legs are not billed.
             </p>
           </div>
 
-          {/* Quick Top-Up Strip */}
+          {/* Quick Top-Up Strip — USD display */}
           <div className="pt-5 mt-4 border-t border-[#E4E2EB] space-y-3">
-            {razorpayEnabled && (
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-semibold text-[#524E5E] mr-1">Top up (INR · Razorpay):</span>
-                {[500, 1000, 2500, 5000].map((inr) => (
-                  <button
-                    key={inr}
-                    type="button"
-                    disabled={payBusy}
-                    onClick={() => handleTopupInr(inr)}
-                    className="px-3.5 py-1.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] hover:border-[#6344E7] text-xs font-mono font-bold text-[#0F0E17] hover:text-[#6344E7] active:scale-[0.98] transition-all shadow-craft-xs disabled:opacity-50"
-                  >
-                    +₹{inr}
-                  </button>
-                ))}
-              </div>
-            )}
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-semibold text-[#524E5E] mr-1">Top up (USD · Stripe):</span>
-              {[50, 100, 250, 500].map((val) => (
+              <span className="text-xs font-semibold text-[#524E5E] mr-1">Top up (USD):</span>
+              {[5, 10, 25, 50, 100].map((usd) => (
                 <button
-                  key={val}
+                  key={usd}
                   type="button"
-                  onClick={() => handleTopup(val)}
-                  className="px-3.5 py-1.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] hover:border-[#6344E7] text-xs font-mono font-bold text-[#0F0E17] hover:text-[#6344E7] active:scale-[0.98] transition-all shadow-craft-xs"
+                  disabled={payBusy || !razorpayEnabled}
+                  onClick={() => handleTopupUsd(usd)}
+                  data-testid={`billing-topup-usd-${usd}`}
+                  className="px-3.5 py-1.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] hover:border-[#6344E7] text-xs font-mono font-bold text-[#0F0E17] hover:text-[#6344E7] active:scale-[0.98] transition-all shadow-craft-xs disabled:opacity-50"
                 >
-                  +${val}
+                  +${usd}
                 </button>
               ))}
             </div>
+            {!razorpayEnabled && (
+              <p className="text-[11px] text-[#B45309]">Razorpay is not enabled — wallet top-up is unavailable.</p>
+            )}
           </div>
         </SolidCard>
 
@@ -389,24 +225,19 @@ export function BillingModule() {
           <div className="flex items-center justify-between text-xs">
             <span className="font-bold text-[#0F0E17]">Payment methods</span>
             <span className="text-[10px] text-[#15803D] font-mono font-medium bg-[#22C55E]/10 border border-[#22C55E]/20 px-2 py-0.5 rounded-md">
-              {razorpayEnabled ? 'Razorpay + Stripe' : 'Stripe'}
+              {razorpayEnabled ? 'Razorpay' : 'Offline'}
             </span>
           </div>
 
           <ul className="space-y-2 text-xs text-[#524E5E]">
             <li className="flex items-center justify-between p-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
               <span className="font-semibold text-[#0F0E17]">Razorpay</span>
-              <span>{razorpayEnabled ? 'Cards, UPI, netbanking (INR)' : 'Not enabled'}</span>
-            </li>
-            <li className="flex items-center justify-between p-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
-              <span className="font-semibold text-[#0F0E17]">Stripe</span>
-              <span>Cards (USD)</span>
+              <span>{razorpayEnabled ? 'Cards & netbanking' : 'Not enabled'}</span>
             </li>
           </ul>
 
           <p className="text-[11px] text-[#524E5E] leading-relaxed">
-            Card details are entered on the provider's checkout and never touch our servers. Receipts
-            are listed below under Wallet invoices.
+            Card details stay on Razorpay. Wallet balance is shown in USD. UPI is disabled for this product.
           </p>
         </SolidCard>
       </div>
@@ -478,10 +309,9 @@ export function BillingModule() {
             <span>
               Calls stop at the minimum balance of{' '}
               <strong className="text-[#0F0E17] font-semibold">
-                ₹{Number(serverWallet?.minBalanceInr ?? 0).toFixed(2)}
-              </strong>{' '}
-              (or ${Number(serverWallet?.minBalanceUsd ?? 0).toFixed(2)}). Top up to keep your agents
-              taking calls.
+                ${Number(serverWallet?.minBalanceUsd ?? 0).toFixed(2)}
+              </strong>
+              . Top up to keep your agents taking calls.
             </span>
           </div>
         </SolidCard>
@@ -498,19 +328,19 @@ export function BillingModule() {
             <div className="p-2.5 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB] flex justify-between">
               <span className="text-[#524E5E]">Phone call (per minute)</span>
               <span className="text-[#0F0E17] font-semibold">
-                ₹{Number(serverWallet?.rateInrPerMin ?? 0).toFixed(2)}
+                ${Number(serverWallet?.rateUsdPerMin ?? 0).toFixed(3)}
               </span>
             </div>
             <div className="p-2.5 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB] flex justify-between">
               <span className="text-[#524E5E]">Browser test call (per minute)</span>
               <span className="text-[#0F0E17] font-semibold">
-                ₹{Number(serverWallet?.webRateInrPerMin ?? 0).toFixed(2)}
+                ${Number(serverWallet?.webRateUsdPerMin ?? 0).toFixed(3)}
               </span>
             </div>
             <div className="p-2.5 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB] flex justify-between">
               <span className="text-[#524E5E]">Phone number rental (per month)</span>
               <span className="text-[#0F0E17] font-semibold">
-                ₹{Number(serverWallet?.didMonthlyInr ?? 0).toFixed(2)}
+                ${Number(serverWallet?.didMonthlyUsd ?? 0).toFixed(2)}
               </span>
             </div>
           </div>
@@ -541,7 +371,13 @@ export function BillingModule() {
                     <td className="py-2.5 px-3 text-[#524E5E]">
                       {inv.createdAt ? new Date(inv.createdAt).toLocaleString() : '—'}
                     </td>
-                    <td className="py-2.5 px-3 text-[#0F0E17]">₹{inv.amountInr?.toFixed(2)}</td>
+                    <td className="py-2.5 px-3 text-[#0F0E17]">
+                      {inv.amountUsd != null
+                        ? `$${Number(inv.amountUsd).toFixed(2)}`
+                        : inv.amountInr != null
+                          ? `$${(Number(inv.amountInr) / (Number(serverWallet?.fxRateInr) || 95.64)).toFixed(2)}`
+                          : '—'}
+                    </td>
                     <td className="py-2.5 px-3 text-[#15803D] capitalize">{inv.status}</td>
                     <td className="py-2.5 px-4 text-[#524E5E] truncate max-w-[140px]">{inv.paymentId || '—'}</td>
                   </tr>
@@ -607,7 +443,11 @@ export function BillingModule() {
                           isCredit ? 'text-[#15803D]' : 'text-[#0F0E17]'
                         }`}
                       >
-                        {inr !== 0 ? `₹${inr.toFixed(2)}` : usd !== 0 ? `$${usd.toFixed(2)}` : '—'}
+                        {usd !== 0
+                          ? `$${usd.toFixed(2)}`
+                          : inr !== 0
+                            ? `$${(inr / (Number(serverWallet?.fxRateInr) || 95.64)).toFixed(2)}`
+                            : '—'}
                       </td>
                     </tr>
                   );

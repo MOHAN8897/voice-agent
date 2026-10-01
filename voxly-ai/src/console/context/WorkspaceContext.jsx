@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { initialWallet, availableNumbersCatalog } from '../data/initialWorkspaceData';
 import { api } from '../../services/api';
 import { normalizeAgent, normalizePhoneNumber, normalizeWallet } from '../../services/apiNormalize';
@@ -25,6 +25,7 @@ export function WorkspaceProvider({ children }) {
   const [isLoading, setIsLoading] = useState(false);
   const [syncError, setSyncError] = useState(null);
   const [syncPartialErrors, setSyncPartialErrors] = useState([]);
+  const loadInflightRef = useRef(null);
   const [outboundFromE164, setOutboundFromE164] = useState(() => {
     if (typeof window === 'undefined') return '';
     return sessionStorage.getItem('voxly_outbound_from') || '';
@@ -144,6 +145,11 @@ export function WorkspaceProvider({ children }) {
     if (!api.getToken()) {
       return;
     }
+    // Coalesce overlapping refreshes — StrictMode + auth events must not fan out
+    // parallel wallet/agents/calls GETs against the SaaS API.
+    if (loadInflightRef.current) {
+      return loadInflightRef.current;
+    }
     setIsLoading(true);
     setSyncError(null);
     setSyncPartialErrors([]);
@@ -152,11 +158,13 @@ export function WorkspaceProvider({ children }) {
       try {
         return await fn();
       } catch (e) {
-        setSyncPartialErrors((prev) => [...prev, `${label}: ${e.message || e}`]);
+        const msg = `${label}: ${e.message || e}`;
+        setSyncPartialErrors((prev) => (prev.includes(msg) ? prev : [...prev, msg]));
         return fallback;
       }
     };
 
+    const run = (async () => {
     try {
       const fetchedAgents = await capture('Agents', () => api.agents.list(), []);
       const agentMap = {};
@@ -205,7 +213,11 @@ export function WorkspaceProvider({ children }) {
       console.warn('Workspace sync error:', err);
     } finally {
       setIsLoading(false);
+      loadInflightRef.current = null;
     }
+    })();
+    loadInflightRef.current = run;
+    return run;
   }, [catalogCountry]);
 
   const reloadCatalog = useCallback(
@@ -602,26 +614,32 @@ export function WorkspaceProvider({ children }) {
     return created;
   };
 
-  const triggerCallToLead = async (leadId) => {
-    const lead = leads.find((l) => l.id === leadId);
-    if (!lead) throw new Error('Lead not found');
-    if (!lead.phone) throw new Error('Add a phone number to this lead before calling.');
-    const agentId = lead.agentId || agents[0]?.id;
+  const placeOutboundCall = async ({ agentId, toE164, fromE164 } = {}) => {
     if (!agentId) throw new Error('Create a voice agent before placing outbound calls.');
+    if (!toE164) throw new Error('Destination number is required.');
     const fromLine =
+      fromE164 ||
       outboundFromE164 ||
       phoneNumbers.find((n) => n.assignedAgentId === agentId)?.number ||
       phoneNumbers[0]?.number ||
       null;
     const result = await api.calls.triggerOutbound({
       agentId,
-      toE164: lead.phone,
+      toE164,
       fromE164: fromLine,
     });
     await loadWorkspaceData();
     const callId = result.call_id || result.callId || result.id;
     if (callId) setSelectedCallId(callId);
     return result;
+  };
+
+  const triggerCallToLead = async (leadId) => {
+    const lead = leads.find((l) => l.id === leadId);
+    if (!lead) throw new Error('Lead not found');
+    if (!lead.phone) throw new Error('Add a phone number to this lead before calling.');
+    const agentId = lead.agentId || agents[0]?.id;
+    return placeOutboundCall({ agentId, toE164: lead.phone });
   };
 
   // ----------------------------------------------------------------
@@ -674,9 +692,25 @@ export function WorkspaceProvider({ children }) {
   // Wallet Operations
   // ----------------------------------------------------------------
   const addFunds = async (amountUsd) => {
+    // Stripe removed — convert USD request to INR Razorpay order (legacy callers).
     const result = await api.billing.topUp(amountUsd);
-    if (result?.checkoutUrl) {
-      window.location.href = result.checkoutUrl;
+    if (result?.orderId) {
+      const { openRazorpayWalletCheckout } = await import('../../utils/razorpayCheckout');
+      const cfg = await api.billing.razorpayConfig();
+      await openRazorpayWalletCheckout({
+        order: result,
+        keyId: cfg?.keyId,
+        user: null,
+        onSuccess: async (response) => {
+          await api.billing.verifyRazorpayPayment({
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+          });
+          await loadWorkspaceData();
+        },
+        onError: () => {},
+      });
       return result;
     }
     await loadWorkspaceData();
@@ -772,6 +806,7 @@ export function WorkspaceProvider({ children }) {
     updateLeadNotes,
     createLead,
     triggerCallToLead,
+    placeOutboundCall,
     refreshWallet,
     reloadCatalog,
     catalogCountry,

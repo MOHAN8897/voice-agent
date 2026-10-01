@@ -12,15 +12,38 @@ import {
   isBusinessHoursEmpty,
 } from './agent-creation';
 
+/**
+ * Frontend default only. The server's DEFAULT_TIMEZONE is unchanged — this just
+ * decides what an empty profile starts on in this console.
+ */
 const DEFAULT_PROFILE = {
   greetingPhrase: '',
   businessHours: {},
-  timezone: 'Asia/Kolkata',
+  closedDates: [],
+  timezone: 'America/New_York',
   afterHoursAction: 'voicemail',
   transferNumber: '',
   inboundEnabled: true,
   outboundEnabled: true,
 };
+
+/** US/EU favourites, all valid IANA zones the server already accepts. */
+const TIMEZONE_FAVOURITES = [
+  'America/New_York',
+  'America/Chicago',
+  'America/Denver',
+  'America/Los_Angeles',
+  'Europe/London',
+  'Europe/Dublin',
+  'Europe/Berlin',
+  'Asia/Kolkata',
+];
+
+const HOURS_HELP =
+  'Times are read in the timezone below, not the caller’s. Many US states and most of ' +
+  'the UK restrict sales and marketing calls to roughly 8am–9pm local time, so Mon–Fri ' +
+  '09:00–17:00 is a safe default. Outbound calling outside your window is a compliance ' +
+  'question we cannot enforce for you — set hours that match the rules you operate under.';
 
 const DECISION_LABEL = {
   in_hours: 'Inside business hours — the agent answers',
@@ -126,7 +149,8 @@ export function TelephonySettingsCard({ agentId, disabled = false }) {
       await api.agents.saveTelephonyProfile(agentId, {
         greetingPhrase: profile.greetingPhrase || '',
         businessHours: profile.businessHours || {},
-        timezone: profile.timezone || 'Asia/Kolkata',
+        closedDates: Array.isArray(profile.closedDates) ? profile.closedDates : [],
+        timezone: profile.timezone || DEFAULT_PROFILE.timezone,
         afterHoursAction: profile.afterHoursAction || 'voicemail',
         transferNumber: profile.transferNumber || '',
         inboundEnabled: profile.inboundEnabled !== false,
@@ -212,6 +236,29 @@ export function TelephonySettingsCard({ agentId, disabled = false }) {
             {!isBusinessHoursEmpty(hours) && ` · ${profile.timezone}`}
           </span>
         </div>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <label className="text-[11px] font-bold text-[#0F0E17]" htmlFor="studio-timezone">
+            Timezone
+          </label>
+          <input
+            id="studio-timezone"
+            list="studio-timezone-options"
+            value={profile.timezone || DEFAULT_PROFILE.timezone}
+            onChange={(e) => set({ timezone: e.target.value.trim() })}
+            disabled={disabled}
+            data-testid="studio-timezone"
+            className="bg-white border border-[#E4E2EB] rounded-lg px-2 py-1 text-[11px] font-mono disabled:opacity-50"
+          />
+          <datalist id="studio-timezone-options">
+            {TIMEZONE_FAVOURITES.map((tz) => (
+              <option key={tz} value={tz} />
+            ))}
+          </datalist>
+          <span className="text-[10px] text-[#8C879A]">
+            IANA name. Common US/EU zones are suggested; any valid zone works.
+          </span>
+        </div>
+        <p className="mt-2 text-[10px] text-[#8C879A] leading-relaxed">{HOURS_HELP}</p>
         <div className="mt-2 space-y-1.5">
           {WEEKDAYS.map((day) => {
             const windows = hours[day.id] || [];
@@ -290,6 +337,30 @@ export function TelephonySettingsCard({ agentId, disabled = false }) {
         >
           {isBusinessHoursEmpty(hours) ? 'Set standard business hours' : 'Clear hours (always open)'}
         </button>
+      </div>
+
+      <div>
+        <span className="text-xs font-bold text-[#0F0E17]">Holidays / closed dates</span>
+        <span className="block text-[10px] text-[#8C879A] mb-1">
+          One YYYY-MM-DD per line. On these dates the agent follows the after-hours action
+          even if the weekday would normally be open.
+        </span>
+        <textarea
+          value={(profile.closedDates || []).join('\n')}
+          onChange={(e) =>
+            set({
+              closedDates: e.target.value
+                .split(/[\n,;]+/)
+                .map((s) => s.trim())
+                .filter(Boolean),
+            })
+          }
+          rows={3}
+          disabled={disabled}
+          placeholder={'2026-12-25\n2026-01-01'}
+          data-testid="studio-closed-dates"
+          className="w-full rounded-xl bg-white border border-[#E4E2EB] px-3 py-2 text-xs font-mono text-[#0F0E17] placeholder:text-[#8C879A] focus:outline-none focus:border-[#6344E7] resize-none disabled:opacity-50"
+        />
       </div>
 
       <div>

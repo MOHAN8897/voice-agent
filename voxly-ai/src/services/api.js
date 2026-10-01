@@ -65,18 +65,68 @@ function parseError(data, status) {
   return parseApiError(data, status).message;
 }
 
+function normalizeApiBase(url) {
+  const u = String(url || '').trim().replace(/\/$/, '');
+  if (!u) return u;
+  // Stored/env values are often the API origin without /api (e.g. http://127.0.0.1:8000).
+  // request() strips a leading /api from paths, so the base MUST end with /api or every
+  // call lands on /agents → FastAPI 404 "Not found".
+  if (/\/api$/i.test(u)) return u;
+  return `${u}/api`;
+}
+
+/** Local Vite/dev — always use same-origin /api proxy (avoids CORS + missing-/api 404s). */
+function preferSameOriginApi() {
+  if (typeof window === 'undefined') return false;
+  const host = window.location.hostname;
+  return host === 'localhost' || host === '127.0.0.1';
+}
+
 export const api = {
   getBackendUrl() {
-    if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL.replace(/\/$/, '');
+    // On local Vite, ignore stale localStorage pointing at :8000 without /api (or with CORS
+    // mismatches between localhost vs 127.0.0.1). The Vite proxy is the source of truth.
+    if (preferSameOriginApi()) {
+      const stored = localStorage.getItem('voxly_backend_url');
+      if (stored) {
+        try {
+          const origin = new URL(normalizeApiBase(stored).replace(/\/api$/i, '')).origin;
+          const pageOrigin = window.location.origin;
+          // Only honor an explicit local override when it is same-host API (normalized).
+          if (origin === pageOrigin || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin)) {
+            // Drop cross-port :8000 overrides — they cause Not found / CORS; use the proxy.
+            if (/:(8000|8001)$/i.test(origin) && origin !== pageOrigin) {
+              localStorage.removeItem('voxly_backend_url');
+            } else {
+              return normalizeApiBase(stored);
+            }
+          } else {
+            localStorage.removeItem('voxly_backend_url');
+          }
+        } catch {
+          localStorage.removeItem('voxly_backend_url');
+        }
+      }
+      return `${window.location.origin}/api`;
+    }
+    if (import.meta.env.VITE_API_URL) {
+      return normalizeApiBase(import.meta.env.VITE_API_URL);
+    }
     const stored = localStorage.getItem('voxly_backend_url');
-    if (stored) return stored.replace(/\/$/, '');
+    if (stored) {
+      const normalized = normalizeApiBase(stored);
+      if (normalized !== stored.replace(/\/$/, '')) {
+        localStorage.setItem('voxly_backend_url', normalized);
+      }
+      return normalized;
+    }
     if (typeof window !== 'undefined') return `${window.location.origin}/api`;
     return 'http://localhost:8000/api';
   },
 
   getWsOrigin() {
-    const api = this.getBackendUrl().replace(/\/$/, '');
-    const http = api.replace(/\/api$/, '');
+    const apiBase = this.getBackendUrl().replace(/\/$/, '');
+    const http = apiBase.replace(/\/api$/i, '');
     return http.replace(/^http/, 'ws');
   },
 
@@ -85,14 +135,16 @@ export const api = {
       localStorage.removeItem('voxly_backend_url');
       return;
     }
-    const normalized = url.replace(/\/$/, '');
+    const normalized = normalizeApiBase(url);
+    const origin = normalized.replace(/\/api$/i, '');
     const allowed =
       typeof window !== 'undefined' &&
-      (normalized === window.location.origin ||
+      (origin === window.location.origin ||
         normalized === `${window.location.origin}/api` ||
-        /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/api)?$/i.test(normalized));
+        /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin) ||
+        /^https?:\/\/[\w.-]+\.hustlelabs\.in$/i.test(origin));
     if (!allowed) {
-      throw new Error('Backend URL must be this site origin or localhost.');
+      throw new Error('Backend URL must be this site origin, localhost, or the hustlelabs API host.');
     }
     localStorage.setItem('voxly_backend_url', normalized);
   },
@@ -176,6 +228,20 @@ export const api = {
       if (refreshed) {
         headers.Authorization = `Bearer ${this.getToken()}`;
         response = await doFetch();
+      }
+    }
+    // Stale voxly_backend_url without /api → FastAPI {"detail":"Not found"} on /agents etc.
+    if (response.status === 404 && preferSameOriginApi()) {
+      localStorage.removeItem('voxly_backend_url');
+      const fixedBase = this.getBackendUrl().replace(/\/$/, '');
+      if (fixedBase !== backendUrl) {
+        const retryUrl = `${fixedBase}${path.replace(/^\/api/, '')}`;
+        response = await fetch(retryUrl, {
+          method,
+          headers,
+          ...fetchOpts,
+          ...(body != null ? { body: JSON.stringify(body) } : {}),
+        });
       }
     }
 
@@ -608,12 +674,15 @@ export const api = {
         name: campaignData.name,
         agentId: campaignData.agentId || campaignData.agent_id,
         concurrency: campaignData.concurrencyLimit || campaignData.concurrency || 5,
+        maxAttempts: campaignData.maxAttemptsPerContact || campaignData.maxAttempts,
+        retryDelayMinutes: campaignData.retryDelayMinutes,
+        fromE164: campaignData.fromE164,
       });
       const row = data.campaign || data;
       return normalizeCampaign({
         ...row,
         name: row.name || campaignData.name,
-        totalContacts: campaignData.totalContacts || 0,
+        totalContacts: campaignData.totalContacts || campaignData.contacts?.length || 0,
         objective: campaignData.objective,
       });
     },

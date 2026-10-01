@@ -1,0 +1,18 @@
+{
+  "intents": {
+    "flow:drive-creating-an-ai-employee-lands-the-operator-in-th": {
+      "declaredAt": 1790836503332,
+      "id": "flow:drive-creating-an-ai-employee-lands-the-operator-in-th",
+      "state": "declared",
+      "statement": "Creating an AI employee lands the operator in the agent workspace with the five-tab shell and a Test call header action available.",
+      "status": "proposed",
+      "subject": "drive-creating-an-ai-employee-lands-the",
+      "surface": {
+        "flow": "drive-creating-an-ai-employee-lands-the-operator-in-th"
+      },
+      "updatedAt": 1790836503394
+    }
+  },
+  "subject": "drive-creating-an-ai-employee-lands-the",
+  "version": 1
+}

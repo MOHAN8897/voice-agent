@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { portalFetch, refreshPortalSession } from "@/lib/auth-client";
 
 /**
- * Authenticated dev-portal fetch.
+ * Authenticated dev-portal fetch (includes X-CSRF-Token for mutating calls).
  *
  * Lives here rather than in a page because the admin console spans several routes.
  * Non-2xx responses throw with the server's own message, so a permission problem
@@ -13,7 +14,15 @@ export async function devFetch(
   path: string,
   init: RequestInit = {}
 ): Promise<unknown> {
-  const res = await fetch(path, { credentials: "include", ...init });
+  let res = await portalFetch("dev", path, init);
+  // Session CSRF can go stale after long idle — refresh once then retry.
+  if (res.status === 403) {
+    const probe = await res.clone().text();
+    if (/csrf/i.test(probe)) {
+      await refreshPortalSession("dev");
+      res = await portalFetch("dev", path, init);
+    }
+  }
   const text = await res.text();
   let body: unknown = null;
   if (text) {
@@ -104,6 +113,11 @@ export async function adminAction<T = unknown>(
 export function formatUsd(cents: number | null | undefined): string {
   const v = Number(cents ?? 0) / 100;
   return v.toLocaleString("en-US", { style: "currency", currency: "USD" });
+}
+
+export function formatInr(paise: number | null | undefined): string {
+  const v = Number(paise ?? 0) / 100;
+  return v.toLocaleString("en-IN", { style: "currency", currency: "INR" });
 }
 
 export function formatMinutes(seconds: number | null | undefined): string {

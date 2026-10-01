@@ -74,7 +74,7 @@ const ADMIN_GROUPS: Array<{
       },
       {
         href: "/dev/admin/billing",
-        label: "Billing",
+        label: "Wallet & rates",
         icon: <IconChart className="h-4 w-4" />,
       },
       {

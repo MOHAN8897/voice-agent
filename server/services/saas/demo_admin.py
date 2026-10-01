@@ -100,7 +100,7 @@ async def ensure_demo_admin(
                 name="Demo Workspace",
                 plan="enterprise",
                 status="active",
-                limits={"max_concurrent_pstn": 3, "max_agents": 50},
+                limits={"max_concurrent_pstn": 20, "max_agents": 50},
             )
             session.add(tenant)
             await session.flush()

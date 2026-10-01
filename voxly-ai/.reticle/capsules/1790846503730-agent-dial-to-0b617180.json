@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "origin": "failed-assert",
+  "expected": "POST /api/calls/outbound",
+  "observed": "no request to /api/calls/outbound",
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-dial-to",
+        "source": {
+          "file": "src/console/modules/agent-workspace/AgentDialBulkPanel.jsx",
+          "line": 179,
+          "column": 13
+        }
+      },
+      "action": "fill"
+    }
+  ],
+  "id": "1790846503730-agent-dial-to-0b617180",
+  "createdAt": 1790846503736,
+  "seen": 1,
+  "lastSeenAt": 1790846503736
+}

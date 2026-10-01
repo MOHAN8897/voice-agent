@@ -17,6 +17,16 @@ class ApiTenantContext:
     role: str
     subject: str
     subscriber: bool
+    email: str | None = None
+
+    @property
+    def workspace_tenant_id(self) -> uuid.UUID:
+        """Tenant for agents/phone/campaigns — remaps dev testers to the platform workspace."""
+        if not self.subscriber:
+            return self.tenant_id
+        from server.services.saas.dev_tester_workspace import workspace_tenant_id_for_subscriber
+
+        return workspace_tenant_id_for_subscriber(self.tenant_id, self.email)
 
 
 async def require_api_tenant(
@@ -32,6 +42,7 @@ async def require_api_tenant(
             role=principal.role,
             subject=str(principal.user_id),
             subscriber=True,
+            email=principal.email,
         )
     session = await require_app_session(request, x_csrf_token)
     tid = session.tenant_id or settings.default_tenant_id
@@ -40,4 +51,5 @@ async def require_api_tenant(
         role=session.role,
         subject=session.subject,
         subscriber=False,
+        email=None,
     )

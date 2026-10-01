@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "origin": "failed-assert",
+  "expected": "text \"?\" AND not text \"?\"",
+  "observed": "negated predicate unexpectedly held",
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "",
+        "source": {
+          "file": "src/console/Sidebar.jsx",
+          "line": 290,
+          "column": 19
+        }
+      },
+      "action": "click"
+    }
+  ],
+  "id": "1790848917281-click-c4d725b9",
+  "createdAt": 1790848917288,
+  "seen": 1,
+  "lastSeenAt": 1790848917288
+}

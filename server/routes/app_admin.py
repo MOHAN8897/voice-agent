@@ -25,8 +25,41 @@ def _require_admin(principal: SubscriberPrincipal) -> None:
 
 class CreditBody(BaseModel):
     tenantId: str
-    amountInrPaise: int = Field(..., ge=1, le=50_000_000)
+    amountInrPaise: int = Field(..., ge=-50_000_000, le=50_000_000)
     reason: str = Field("admin_grant", max_length=80)
+
+
+@router.post("/api/admin/credits")
+async def admin_credits(body: CreditBody, principal: SubscriberPrincipal = Depends(require_subscriber_jwt)):
+    _require_admin(principal)
+    try:
+        tenant_id = uuid.UUID(body.tenantId)
+    except ValueError:
+        raise HTTPException(status_code=400, detail={"error": {"code": "invalid_tenant", "message": "Invalid tenant"}})
+    if body.amountInrPaise == 0:
+        raise HTTPException(status_code=400, detail={"error": {"code": "invalid_amount", "message": "Amount cannot be zero"}})
+    # reference_id column is varchar(64) — keep under that.
+    ref_tail = uuid.uuid4().hex[:12]
+    if body.amountInrPaise > 0:
+        await credit_wallet(
+            tenant_id,
+            amount_inr_paise=body.amountInrPaise,
+            kind=body.reason or "admin_grant",
+            reference_id=f"agr:{tenant_id.hex}:{ref_tail}",
+            user_id=principal.user_id,
+        )
+    else:
+        from server.services.saas.billing_wallet_service import debit_wallet
+
+        await debit_wallet(
+            tenant_id,
+            kind=body.reason or "admin_debit",
+            reference_id=f"adb:{tenant_id.hex}:{ref_tail}",
+            user_id=principal.user_id,
+            amount_inr_paise=abs(body.amountInrPaise),
+            allow_partial=False,
+        )
+    return {"ok": True, "wallet": await wallet_summary(tenant_id)}
 
 
 @router.get("/api/admin/overview")
@@ -91,20 +124,3 @@ async def admin_tenants(principal: SubscriberPrincipal = Depends(require_subscri
                 }
             )
         return {"tenants": out}
-
-
-@router.post("/api/admin/credits")
-async def admin_credits(body: CreditBody, principal: SubscriberPrincipal = Depends(require_subscriber_jwt)):
-    _require_admin(principal)
-    try:
-        tenant_id = uuid.UUID(body.tenantId)
-    except ValueError:
-        raise HTTPException(status_code=400, detail={"error": {"code": "invalid_tenant", "message": "Invalid tenant"}})
-    await credit_wallet(
-        tenant_id,
-        amount_inr_paise=body.amountInrPaise,
-        kind="admin_grant",
-        reference_id=f"admin_grant:{tenant_id}:{uuid.uuid4()}",
-        user_id=principal.user_id,
-    )
-    return {"ok": True, "wallet": await wallet_summary(tenant_id)}

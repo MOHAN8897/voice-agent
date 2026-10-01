@@ -1,0 +1,18 @@
+{
+  "intents": {
+    "flow:drive-billing-page-shows-wallet-only-no-subscription-p": {
+      "declaredAt": 1790853459623,
+      "id": "flow:drive-billing-page-shows-wallet-only-no-subscription-p",
+      "state": "declared",
+      "statement": "Billing page shows wallet only, no subscription plans",
+      "status": "proposed",
+      "subject": "drive-billing-page-shows-wallet-only-no",
+      "surface": {
+        "flow": "drive-billing-page-shows-wallet-only-no-subscription-p"
+      },
+      "updatedAt": 1790853459685
+    }
+  },
+  "subject": "drive-billing-page-shows-wallet-only-no",
+  "version": 1
+}

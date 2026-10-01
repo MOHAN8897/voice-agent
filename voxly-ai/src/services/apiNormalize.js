@@ -65,9 +65,14 @@ export function normalizeWallet(apiWallet, fallback) {
     remainingMinutes: minutes,
     currency: apiWallet.currency || 'USD',
     rateInrPerMin: apiWallet.rateInrPerMin,
+    rateUsdPerMin: apiWallet.rateUsdPerMin,
     webRateInrPerMin: apiWallet.webRateInrPerMin,
+    webRateUsdPerMin: apiWallet.webRateUsdPerMin,
     didMonthlyInr: apiWallet.didMonthlyInr,
+    didMonthlyUsd: apiWallet.didMonthlyUsd,
+    fxRateInr: apiWallet.fxRateInr,
     myUsageInr: apiWallet.myUsageInr,
+    myUsageUsd: apiWallet.myUsageUsd,
   };
 }
 
@@ -162,6 +167,7 @@ export function normalizeCall(row, agentsById = {}) {
 export function normalizeCampaign(row) {
   if (!row) return null;
   const id = row.campaignId || row.campaign_id || row.id;
+  const retry = row.retryRules || row.retry_rules || {};
   return {
     id,
     campaignId: id,
@@ -169,6 +175,9 @@ export function normalizeCampaign(row) {
     status: row.status || 'draft',
     agentId: row.agentId || row.agent_id,
     concurrency: row.concurrency ?? 5,
+    concurrencyLimit: row.concurrency ?? row.concurrencyLimit ?? 5,
+    maxAttempts: retry.max_attempts ?? retry.maxAttempts ?? null,
+    retryDelayMinutes: retry.retry_delay_minutes ?? retry.retryDelayMinutes ?? null,
     totalContacts: row.totalContacts ?? row.total_contacts ?? 0,
     objective: row.objective || '',
     callingHours: row.callingHours || '09:00 - 18:00',

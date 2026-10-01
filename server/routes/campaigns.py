@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict, AliasChoices
 from sqlalchemy import select
 
 from server.auth.api_tenant import ApiTenantContext, require_api_tenant
@@ -19,11 +19,18 @@ router = APIRouter()
 
 
 class CampaignCreate(BaseModel):
-    name: str
-    agent_id: str = Field(..., alias="agentId")
-    concurrency: int = 5
+    model_config = ConfigDict(populate_by_name=True)
 
-    model_config = {"populate_by_name": True}
+    name: str
+    agent_id: str = Field(..., validation_alias=AliasChoices("agentId", "agent_id"))
+    concurrency: int = 5
+    max_attempts: int | None = Field(
+        None, validation_alias=AliasChoices("maxAttempts", "max_attempts")
+    )
+    retry_delay_minutes: int | None = Field(
+        None, validation_alias=AliasChoices("retryDelayMinutes", "retry_delay_minutes")
+    )
+    from_e164: str | None = Field(None, validation_alias=AliasChoices("fromE164", "from_e164"))
 
 
 class CampaignStatusPatch(BaseModel):
@@ -35,10 +42,10 @@ class ContactImport(BaseModel):
 
 
 class DncBody(BaseModel):
-    phone_e164: str = Field(..., alias="phoneE164")
-    reason: str | None = None
+    model_config = ConfigDict(populate_by_name=True)
 
-    model_config = {"populate_by_name": True}
+    phone_e164: str = Field(..., validation_alias=AliasChoices("phoneE164", "phone_e164"))
+    reason: str | None = None
 
 
 class PhoneNumberBody(BaseModel):
@@ -59,8 +66,9 @@ async def list_campaigns(ctx: ApiTenantContext = Depends(require_api_tenant)):
     factory = get_session_factory()
     if factory is None:
         return {"campaigns": []}
+    tenant_id = ctx.workspace_tenant_id
     async with factory() as db:
-        result = await db.execute(select(Campaign).where(Campaign.tenant_id == ctx.tenant_id))
+        result = await db.execute(select(Campaign).where(Campaign.tenant_id == tenant_id))
         rows = result.scalars().all()
         return {
             "campaigns": [
@@ -72,6 +80,8 @@ async def list_campaigns(ctx: ApiTenantContext = Depends(require_api_tenant)):
                     "agentId": str(r.agent_id),
                     "agent_id": str(r.agent_id),
                     "concurrency": r.concurrency,
+                    "retryRules": r.retry_rules or {},
+                    "retry_rules": r.retry_rules or {},
                 }
                 for r in rows
             ]
@@ -84,19 +94,37 @@ async def create_campaign(body: CampaignCreate, ctx: ApiTenantContext = Depends(
     factory = get_session_factory()
     if factory is None:
         return {"ok": False, "error": {"code": "config_error", "message": "Database not configured"}}
+    from server.config.env import get_settings
+
+    settings = get_settings()
+    tenant_id = ctx.workspace_tenant_id
+    # Cap below Telnyx/plan headroom — never trust the client concurrency alone.
+    hard_cap = max(1, min(20, int(settings.campaign_max_concurrency or 20)))
+    concurrency = max(1, min(hard_cap, int(body.concurrency or 1)))
+    max_attempts = max(1, min(5, int(body.max_attempts or settings.campaign_default_retry_attempts or 3)))
+    retry_delay = max(5, min(24 * 60, int(body.retry_delay_minutes or 30)))
+    retry_rules = {
+        "max_attempts": max_attempts,
+        "retry_delay_minutes": retry_delay,
+    }
+    schedule: dict[str, Any] = {}
+    if body.from_e164:
+        schedule["from_e164"] = body.from_e164.strip()
     cid = uuid.uuid4()
     async with factory() as db:
         agent = await db.get(Agent, uuid.UUID(body.agent_id))
-        if agent is None or agent.tenant_id != ctx.tenant_id:
+        if agent is None or agent.tenant_id != tenant_id:
             raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Agent not found"}})
         db.add(
             Campaign(
                 campaign_id=cid,
-                tenant_id=ctx.tenant_id,
+                tenant_id=tenant_id,
                 agent_id=agent.agent_id,
                 name=body.name,
                 status="draft",
-                concurrency=body.concurrency,
+                concurrency=concurrency,
+                retry_rules=retry_rules,
+                schedule=schedule,
             )
         )
         await db.commit()
@@ -111,7 +139,10 @@ async def create_campaign(body: CampaignCreate, ctx: ApiTenantContext = Depends(
             "status": "draft",
             "agentId": str(agent.agent_id),
             "agent_id": str(agent.agent_id),
-            "concurrency": body.concurrency,
+            "concurrency": concurrency,
+            "retryRules": retry_rules,
+            "retry_rules": retry_rules,
+            "schedule": schedule,
         },
     }
 
@@ -127,7 +158,7 @@ async def patch_campaign_status(
     if factory is None:
         return {"ok": False}
     async with factory() as db:
-        camp = await _campaign_for_tenant(db, campaign_id, ctx.tenant_id)
+        camp = await _campaign_for_tenant(db, campaign_id, ctx.workspace_tenant_id)
         camp.status = body.status
         await db.commit()
     return {"ok": True, "status": body.status}
@@ -145,7 +176,7 @@ async def import_contacts(
         return {"ok": False, "error": {"code": "config_error", "message": "Database not configured"}}
     imported = 0
     async with factory() as db:
-        await _campaign_for_tenant(db, campaign_id, ctx.tenant_id)
+        await _campaign_for_tenant(db, campaign_id, ctx.workspace_tenant_id)
         for c in body.contacts:
             phone = c.get("phone_e164") or c.get("phoneE164") or c.get("phone")
             if not phone:
@@ -171,7 +202,7 @@ async def start_campaign(campaign_id: str, ctx: ApiTenantContext = Depends(requi
         return {"ok": False, "error": {"code": "config_error", "message": "Database not configured"}}
     run_id = uuid.uuid4()
     async with factory() as db:
-        camp = await _campaign_for_tenant(db, campaign_id, ctx.tenant_id)
+        camp = await _campaign_for_tenant(db, campaign_id, ctx.workspace_tenant_id)
         camp.status = "running"
         db.add(
             CampaignRun(
@@ -182,6 +213,25 @@ async def start_campaign(campaign_id: str, ctx: ApiTenantContext = Depends(requi
             )
         )
         await db.commit()
+    # Prefer in-process dialer (works without Redis). Redis enqueue stays best-effort.
+    try:
+        from server.services.saas.campaign_runner import spawn_campaign_runner
+        from server.services.saas.tenant_guard import SubscriberPrincipal
+
+        principal = SubscriberPrincipal(
+            user_id=uuid.UUID(ctx.subject) if ctx.subscriber else uuid.uuid4(),
+            tenant_id=ctx.tenant_id,
+            role=ctx.role,
+            email=ctx.email or "",
+        )
+        spawn_campaign_runner(
+            campaign_id,
+            str(run_id),
+            principal=principal,
+            workspace_tenant_id=ctx.workspace_tenant_id,
+        )
+    except Exception:
+        pass
     try:
         from worker.dialer import enqueue_campaign_run
 
@@ -198,7 +248,7 @@ async def pause_campaign(campaign_id: str, ctx: ApiTenantContext = Depends(requi
     if factory is None:
         return {"ok": False}
     async with factory() as db:
-        camp = await _campaign_for_tenant(db, campaign_id, ctx.tenant_id)
+        camp = await _campaign_for_tenant(db, campaign_id, ctx.workspace_tenant_id)
         camp.status = "paused"
         await db.commit()
     return {"ok": True, "status": "paused"}
@@ -211,7 +261,7 @@ async def cancel_campaign(campaign_id: str, ctx: ApiTenantContext = Depends(requ
     if factory is None:
         return {"ok": False}
     async with factory() as db:
-        camp = await _campaign_for_tenant(db, campaign_id, ctx.tenant_id)
+        camp = await _campaign_for_tenant(db, campaign_id, ctx.workspace_tenant_id)
         camp.status = "cancelled"
         await db.commit()
     return {"ok": True, "status": "cancelled"}
@@ -224,7 +274,7 @@ async def campaign_analytics(campaign_id: str, ctx: ApiTenantContext = Depends(r
     if factory is None:
         return {"attempts": 0, "connects": 0, "dispositions": {}}
     async with factory() as db:
-        await _campaign_for_tenant(db, campaign_id, ctx.tenant_id)
+        await _campaign_for_tenant(db, campaign_id, ctx.workspace_tenant_id)
         contacts = await db.execute(
             select(CampaignContact).where(CampaignContact.campaign_id == uuid.UUID(campaign_id))
         )

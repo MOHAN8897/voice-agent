@@ -1,0 +1,18 @@
+{
+  "intents": {
+    "flow:drive-business-hours-and-timezone-saved-from-the-agent": {
+      "declaredAt": 1790835604013,
+      "id": "flow:drive-business-hours-and-timezone-saved-from-the-agent",
+      "state": "declared",
+      "statement": "Business hours and timezone saved from the agent workspace reach the same telephony profile endpoint with the same field names.",
+      "status": "proposed",
+      "subject": "drive-business-hours-and-timezone-saved",
+      "surface": {
+        "flow": "drive-business-hours-and-timezone-saved-from-the-agent"
+      },
+      "updatedAt": 1790835604521
+    }
+  },
+  "subject": "drive-business-hours-and-timezone-saved",
+  "version": 1
+}

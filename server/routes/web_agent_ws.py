@@ -65,6 +65,27 @@ async def web_agent_ws(websocket: WebSocket):
         await _send(websocket, {"type": "error", "code": "not_found", "message": "Agent not found."})
         await websocket.close(code=1008)
         return
+    status = str(agent.get("status") or "").strip().lower()
+    if status in {"paused", "inactive", "disabled"}:
+        from server.services.saas.session_failure_log import record_session_failure
+
+        record_session_failure(
+            channel="web_agent",
+            code="agent_paused",
+            message="Agent is paused",
+            agent_id=agent_id,
+            tenant_id=str(principal.tenant_id),
+        )
+        await _send(
+            websocket,
+            {
+                "type": "error",
+                "code": "agent_paused",
+                "message": "This agent is paused. Switch it to Live in Settings before testing.",
+            },
+        )
+        await websocket.close(code=1008)
+        return
     if not agent.get("active_compiled_brain_version"):
         await _send(
             websocket,
@@ -204,8 +225,22 @@ async def web_agent_ws(websocket: WebSocket):
                 break
     except WebSocketDisconnect:
         pass
-    except Exception:
+    except Exception as exc:
         logger.exception("[WEB_AGENT] session failed call=%s", call_id)
+        try:
+            from server.services.saas.session_failure_log import record_session_failure
+
+            record_session_failure(
+                channel="web_agent",
+                code="session_failed",
+                message="Voice session failed.",
+                agent_id=agent_id,
+                tenant_id=str(getattr(principal, "tenant_id", "") or ""),
+                call_id=call_id,
+                detail=str(exc),
+            )
+        except Exception:
+            pass
         await send_event({"type": "error", "code": "session_failed", "message": "Voice session failed."})
     finally:
         closed = True

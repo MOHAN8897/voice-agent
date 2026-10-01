@@ -1,0 +1,21 @@
+{
+  "intents": {
+    "flow:drive-changing-a-lead-s-pipeline-stage-from-the-agent": {
+      "binding": {
+        "flow": "drive-changing-a-lead-s-pipeline-stage-from-the-agent"
+      },
+      "declaredAt": 1790835393469,
+      "id": "flow:drive-changing-a-lead-s-pipeline-stage-from-the-agent",
+      "state": "bound",
+      "statement": "Changing a lead's pipeline stage from the agent workspace writes through the existing lead stage endpoint.",
+      "status": "proposed",
+      "subject": "drive-changing-a-lead-s-pipeline-stage-f",
+      "surface": {
+        "flow": "drive-changing-a-lead-s-pipeline-stage-from-the-agent"
+      },
+      "updatedAt": 1790835393620
+    }
+  },
+  "subject": "drive-changing-a-lead-s-pipeline-stage-f",
+  "version": 1
+}

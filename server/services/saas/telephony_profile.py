@@ -27,7 +27,10 @@ from server.db.models.phase5_models import AgentTelephonyProfile
 DEFAULT_TIMEZONE: Final = "Asia/Kolkata"
 AFTER_HOURS_ACTIONS: Final[tuple[str, ...]] = ("voicemail", "hangup", "transfer", "always")
 WEEKDAYS: Final[tuple[str, ...]] = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
+#: Reserved business_hours keys for YYYY-MM-DD holiday closures (no DB migration).
+CLOSED_KEYS: Final[frozenset[str]] = frozenset({"closed", "closed_dates", "holidays"})
 MAX_GREETING_CHARS: Final = 500
+MAX_CLOSED_DATES: Final = 60
 
 #: Decision vocabulary returned to the ingress and surfaced in the console.
 ROUTE_AGENT: Final = "agent"
@@ -36,6 +39,7 @@ ROUTE_TRANSFER: Final = "transfer"
 ROUTE_DECLINE: Final = "decline"
 
 _TIME_RE = re.compile(r"^([01]?\d|2[0-3]):([0-5]\d)$")
+_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _E164_RE = re.compile(r"^\+[1-9]\d{7,14}$")
 
 #: Every phone number in this product is Indian unless a tenant says otherwise.
@@ -134,18 +138,50 @@ def normalize_transfer_number(value: Any) -> str | None:
     return raw
 
 
-def normalize_business_hours(value: Any) -> dict[str, list[dict[str, str]]]:
-    """Accept ``{"mon": [{"open": "09:00", "close": "18:00"}]}``.
+def normalize_closed_dates(value: Any) -> list[str]:
+    """Accept ``["2026-12-25"]`` or a newline/comma-separated string. Cap length."""
+    if value is None or value == "":
+        return []
+    if isinstance(value, str):
+        raw_items = re.split(r"[\s,;]+", value.strip())
+    elif isinstance(value, list):
+        raw_items = value
+    else:
+        raise TelephonyProfileError("closedDates must be a list of YYYY-MM-DD strings")
+    out: list[str] = []
+    seen: set[str] = set()
+    for item in raw_items:
+        raw = str(item or "").strip()
+        if not raw:
+            continue
+        if not _DATE_RE.match(raw):
+            raise TelephonyProfileError(f"closedDates entry must be YYYY-MM-DD, got {raw!r}")
+        if raw in seen:
+            continue
+        seen.add(raw)
+        out.append(raw)
+        if len(out) > MAX_CLOSED_DATES:
+            raise TelephonyProfileError(f"closedDates supports at most {MAX_CLOSED_DATES} dates")
+    return out
 
-    An empty object means "always open", which is how a fresh profile behaves.
+
+def normalize_business_hours(value: Any) -> dict[str, Any]:
+    """Accept weekday windows plus optional ``closed`` holiday dates.
+
+    ``{"mon": [{"open": "09:00", "close": "18:00"}], "closed": ["2026-12-25"]}``.
+    An empty object means "always open". Holidays alone close those dates only.
     """
     if value is None:
         return {}
     if not isinstance(value, dict):
         raise TelephonyProfileError("businessHours must be an object keyed by weekday")
-    out: dict[str, list[dict[str, str]]] = {}
+    out: dict[str, Any] = {}
+    closed: list[str] = []
     for raw_day, windows in value.items():
         day = str(raw_day or "").strip().lower()
+        if day in CLOSED_KEYS:
+            closed = normalize_closed_dates(windows)
+            continue
         if day not in WEEKDAYS:
             raise TelephonyProfileError(f"businessHours keys must be one of {', '.join(WEEKDAYS)}")
         if not isinstance(windows, list):
@@ -163,6 +199,8 @@ def normalize_business_hours(value: Any) -> dict[str, list[dict[str, str]]]:
             parsed.append({"open": open_raw, "close": close_raw})
         if parsed:
             out[day] = parsed
+    if closed:
+        out["closed"] = closed
     return out
 
 
@@ -215,7 +253,7 @@ def is_within_business_hours(
     """True when ``at`` falls inside a configured window. No config = always open.
 
     Never raises: malformed hours are treated as "always open" so a bad config
-    cannot silence a live number.
+    cannot silence a live number. Dates in ``closed`` are always outside hours.
     """
     if not isinstance(business_hours, dict) or not business_hours:
         return True
@@ -224,8 +262,14 @@ def is_within_business_hours(
     if moment.tzinfo is None:
         moment = moment.replace(tzinfo=zone)
     local = moment.astimezone(zone)
+    closed = business_hours.get("closed")
+    if isinstance(closed, list) and local.date().isoformat() in closed:
+        return False
+    day_windows = {k: v for k, v in business_hours.items() if k in WEEKDAYS}
+    if not day_windows:
+        return True
     day = WEEKDAYS[local.weekday()]
-    windows = business_hours.get(day)
+    windows = day_windows.get(day)
     if not isinstance(windows, list) or not windows:
         return False
     now_t = local.time()
@@ -369,10 +413,17 @@ def _profile_to_dict(row: AgentTelephonyProfile) -> dict[str, Any]:
 def public_profile(data: dict[str, Any]) -> dict[str, Any]:
     """camelCase contract shared by the API and the console."""
     hours = data.get("business_hours") or {}
+    closed = hours.get("closed") if isinstance(hours, dict) else []
+    day_hours = {
+        day: list(windows)
+        for day, windows in hours.items()
+        if day in WEEKDAYS and isinstance(windows, list)
+    }
     return {
         "agentId": str(data.get("agent_id") or ""),
         "greetingPhrase": data.get("greeting_phrase") or "",
-        "businessHours": {day: list(windows) for day, windows in hours.items()},
+        "businessHours": day_hours,
+        "closedDates": list(closed) if isinstance(closed, list) else [],
         "timezone": data.get("timezone") or DEFAULT_TIMEZONE,
         "afterHoursAction": data.get("after_hours_action") or "voicemail",
         "transferNumber": data.get("transfer_number") or "",

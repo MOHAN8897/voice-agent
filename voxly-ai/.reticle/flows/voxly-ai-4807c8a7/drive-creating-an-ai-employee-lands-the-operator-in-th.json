@@ -1,0 +1,216 @@
+{
+  "version": 2,
+  "name": "drive-creating-an-ai-employee-lands-the-operator-in-th",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1790836503247,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Continue — sign in"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "textbox",
+        "name": "alex@company.com"
+      },
+      "args": {
+        "value": "repro.wizard@example.com"
+      },
+      "action": "fill",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "textbox",
+        "name": "••••••••••••"
+      },
+      "args": {
+        "value": "ReproPass123!"
+      },
+      "action": "fill",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "textbox",
+        "name": "alex@company.com"
+      },
+      "args": {
+        "value": "repro.wizard@example.com"
+      },
+      "action": "fill",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "textbox",
+        "name": "••••••••••••"
+      },
+      "args": {
+        "value": "ReproPass123!"
+      },
+      "action": "fill",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Sign In"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Create AI Employee"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "create-next",
+        "source": {
+          "file": "src/console/modules/CreateAgentWizard.jsx",
+          "line": 315,
+          "column": 7
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "employee-brief-input",
+        "source": {
+          "file": "src/console/modules/CreateAgentWizard.jsx",
+          "line": 183,
+          "column": 11
+        }
+      },
+      "args": {
+        "value": "Agent name is Dana. Business is Harbor Eye Care in Seattle. Call patients to confirm annual eye exam appointments, collect the patient name and best callback number, and answer questions about rescheduling."
+      },
+      "action": "fill",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "create-next",
+        "source": {
+          "file": "src/console/modules/CreateAgentWizard.jsx",
+          "line": 315,
+          "column": 7
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "testid": "agent-test-call"
+            }
+          },
+          {
+            "kind": "allOf",
+            "predicates": [
+              {
+                "kind": "element",
+                "query": {
+                  "testid": "agent-tab-overview"
+                }
+              },
+              {
+                "kind": "element",
+                "query": {
+                  "testid": "agent-tab-script"
+                }
+              },
+              {
+                "kind": "element",
+                "query": {
+                  "testid": "agent-tab-calls"
+                }
+              },
+              {
+                "kind": "element",
+                "query": {
+                  "testid": "agent-tab-voice"
+                }
+              },
+              {
+                "kind": "element",
+                "query": {
+                  "testid": "agent-tab-settings"
+                }
+              },
+              {
+                "kind": "element",
+                "query": {
+                  "testid": "agent-test-call"
+                }
+              },
+              {
+                "kind": "element",
+                "query": {
+                  "testid": "agent-save"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "intent": "Creating an AI employee lands the operator in the agent workspace with the five-tab shell and a Test call header action available.",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "reticle-cli"
+  },
+  "intentId": "flow:drive-creating-an-ai-employee-lands-the-operator-in-th"
+}

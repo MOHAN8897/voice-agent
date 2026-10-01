@@ -1,0 +1,18 @@
+{
+  "intents": {
+    "flow:drive-the-open-builder-action-on-an-agent-card-enters": {
+      "declaredAt": 1790836609557,
+      "id": "flow:drive-the-open-builder-action-on-an-agent-card-enters",
+      "state": "declared",
+      "statement": "The Open builder action on an agent card enters the workspace with Overview selected, not Script.",
+      "status": "proposed",
+      "subject": "drive-the-open-builder-action-on-an-agen",
+      "surface": {
+        "flow": "drive-the-open-builder-action-on-an-agent-card-enters"
+      },
+      "updatedAt": 1790836609569
+    }
+  },
+  "subject": "drive-the-open-builder-action-on-an-agen",
+  "version": 1
+}

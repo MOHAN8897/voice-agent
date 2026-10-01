@@ -14,7 +14,7 @@ import {
 
 const EMPTY_DRAFT = {
   brief: '',
-  language: 'en-IN',
+  language: 'en-US',
   mode: 'instant_lead',
   role: 'sales',
   direction: 'outbound',

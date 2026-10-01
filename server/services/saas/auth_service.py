@@ -176,7 +176,7 @@ async def login_or_create_oauth_user(
                 name=f"{full_name}'s Workspace",
                 plan="starter",
                 status="active",
-                limits={"max_concurrent_pstn": 3, "max_agents": 20},
+                limits={"max_concurrent_pstn": 20, "max_agents": 20},
                 billing_source="self_serve",
                 created_at=_utcnow(),
             )
@@ -282,7 +282,7 @@ async def signup(
             name=org_name.strip(),
             plan="starter",
             status="active",
-            limits={"max_concurrent_pstn": 3, "max_agents": 20},
+            limits={"max_concurrent_pstn": 20, "max_agents": 20},
             billing_source="self_serve",
             created_at=_utcnow(),
         )

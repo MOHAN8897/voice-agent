@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { DevCard } from "@/components/dev/DevCard";
 import {
   AdminError,
@@ -26,16 +26,35 @@ type Assignment = {
   numberId: string;
   tenant: string;
   tenantId: string;
+  tenantPlan?: string | null;
+  tenantStatus?: string | null;
   agent: string | null;
   agentId: string | null;
   purchaseStatus: string | null;
   stripeSubscriptionId: string | null;
   telnyxNumberId: string | null;
+  walletBalanceUsd?: number;
+  walletCurrency?: string;
   createdAt: string | null;
 };
 
-type Tenant = { tenantId: string; name: string };
-type Agent = { agent_id?: string; agentId?: string; id?: string; name: string; tenant_id?: string; tenantId?: string };
+type Tenant = {
+  tenantId: string;
+  name: string;
+  walletBalanceUsd?: number;
+  walletCurrency?: string;
+};
+
+type PoolNumber = {
+  e164: string;
+  numberId: string | null;
+  telnyxNumberId: string | null;
+  tenantId: string | null;
+  tenantName: string | null;
+  status: string;
+  source: string;
+  available: boolean;
+};
 
 const PURCHASE_TONE: Record<string, "success" | "warning" | "danger" | "muted"> = {
   active: "success",
@@ -50,13 +69,20 @@ export default function AdminNumbersPage() {
     "/api/dev/admin/phone-assignments"
   );
   const tenants = useAdminResource<{ tenants: Tenant[] }>("/api/dev/admin/tenants");
-  const agents = useAdminResource<{ agents: Agent[] }>("/api/agents");
+  const pool = useAdminResource<{ numbers: PoolNumber[]; telnyxError?: string }>(
+    "/api/dev/admin/numbers/pool"
+  );
 
   const [busy, setBusy] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [newNumber, setNewNumber] = useState("");
+  const [selectedE164, setSelectedE164] = useState("");
   const [newTenant, setNewTenant] = useState("");
   const [query, setQuery] = useState("");
+
+  const selectedPool = useMemo(
+    () => (pool.data?.numbers ?? []).find((n) => n.e164 === selectedE164) || null,
+    [pool.data, selectedE164]
+  );
 
   const rows = (numbers.data?.assignments ?? []).filter((a) =>
     query.trim()
@@ -78,12 +104,19 @@ export default function AdminNumbersPage() {
 
   function allocate() {
     return run("allocate", async () => {
+      if (!selectedE164.trim() || !newTenant) {
+        throw new Error("Pick a number and a tenant");
+      }
       await adminAction("/api/dev/admin/numbers/allocate", {
         method: "POST",
-        body: { e164: newNumber.trim(), tenantId: newTenant },
+        body: {
+          e164: selectedE164.trim(),
+          tenantId: newTenant,
+          telnyxNumberId: selectedPool?.telnyxNumberId || null,
+        },
       });
-      setNewNumber("");
-      await numbers.reload();
+      setSelectedE164("");
+      await Promise.all([numbers.reload(), pool.reload(), tenants.reload()]);
     });
   }
 
@@ -93,7 +126,7 @@ export default function AdminNumbersPage() {
         method: "PATCH",
         body: { tenantId },
       });
-      await numbers.reload();
+      await Promise.all([numbers.reload(), pool.reload()]);
     });
   }
 
@@ -107,7 +140,7 @@ export default function AdminNumbersPage() {
     }
     return run(`release:${a.numberId}`, async () => {
       await adminAction(`/api/dev/admin/numbers/${a.numberId}/release`, { method: "POST" });
-      await numbers.reload();
+      await Promise.all([numbers.reload(), pool.reload()]);
     });
   }
 
@@ -115,56 +148,83 @@ export default function AdminNumbersPage() {
     <div className="space-y-6 p-6">
       <AdminPageHeader
         title="Phone numbers"
-        description="Numbers are routed to a tenant, and optionally pinned to one agent so inbound calls reach the right brain."
+        description="Account DIDs from Telnyx plus database rows. Assign any available number to a tenant — wallets stay linked on the same tenant id."
       />
 
       <AdminError error={error} />
       <AdminError error={numbers.error} />
       <AdminError error={tenants.error} />
+      <AdminError error={pool.error} />
+      {pool.data?.telnyxError && (
+        <AdminError error={`Telnyx inventory: ${pool.data.telnyxError}`} />
+      )}
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <AdminStat label="Active numbers" value={numbers.data?.assignments.length ?? "—"} />
+        <AdminStat label="Assigned" value={numbers.data?.assignments.length ?? "—"} />
         <AdminStat
-          label="Provisioned"
-          value={(numbers.data?.assignments ?? []).filter((a) => a.telnyxNumberId).length}
-          hint="carrier id present"
+          label="Available in pool"
+          value={(pool.data?.numbers ?? []).filter((n) => n.available).length}
+          hint="not tied to a tenant"
         />
         <AdminStat
-          label="Unassigned to agent"
-          value={(numbers.data?.assignments ?? []).filter((a) => !a.agentId).length}
-          tone={(numbers.data?.assignments ?? []).some((a) => !a.agentId) ? "warn" : "good"}
-          hint="inbound routing not pinned"
+          label="Tenants"
+          value={tenants.data?.tenants.length ?? "—"}
+          hint="same list as Tenants / Wallets"
         />
       </div>
 
-      <DevCard title="Allocate a number" description="Manually attach an existing number to a tenant.">
+      <DevCard
+        title="Assign number to tenant"
+        description="Choose from every available number on the account, then pick the tenant workspace."
+      >
         <div className="flex flex-wrap items-end gap-3">
-          <SkeuoInput
-            placeholder="+14155550123"
-            value={newNumber}
-            onChange={(e) => setNewNumber(e.target.value)}
-            aria-label="Number in E.164"
-          />
-          <select
-            value={newTenant}
-            onChange={(e) => setNewTenant(e.target.value)}
-            aria-label="Tenant"
-            className="rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised px-3 py-2 text-sm text-text"
-          >
-            <option value="">Select tenant…</option>
-            {(tenants.data?.tenants ?? []).map((t) => (
-              <option key={t.tenantId} value={t.tenantId}>
-                {t.name}
-              </option>
-            ))}
-          </select>
+          <label className="block text-xs">
+            <span className="mb-1 block text-text-muted">Available number</span>
+            <select
+              value={selectedE164}
+              onChange={(e) => setSelectedE164(e.target.value)}
+              aria-label="Available number"
+              className="min-w-[220px] rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised px-3 py-2 font-mono text-sm text-text"
+            >
+              <option value="">Select number…</option>
+              {(pool.data?.numbers ?? [])
+                .filter((n) => n.available)
+                .map((n) => (
+                  <option key={n.e164} value={n.e164}>
+                    {n.e164} · {n.source}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <label className="block text-xs">
+            <span className="mb-1 block text-text-muted">Tenant</span>
+            <select
+              value={newTenant}
+              onChange={(e) => setNewTenant(e.target.value)}
+              aria-label="Tenant"
+              className="min-w-[200px] rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised px-3 py-2 text-sm text-text"
+            >
+              <option value="">Select tenant…</option>
+              {(tenants.data?.tenants ?? []).map((t) => (
+                <option key={t.tenantId} value={t.tenantId}>
+                  {t.name}
+                  {t.walletBalanceUsd != null ? ` · $${Number(t.walletBalanceUsd).toFixed(2)}` : ""}
+                </option>
+              ))}
+            </select>
+          </label>
           <SkeuoButton
             onClick={allocate}
-            disabled={!newNumber.trim() || !newTenant || busy === "allocate"}
+            disabled={!selectedE164.trim() || !newTenant || busy === "allocate"}
           >
-            {busy === "allocate" ? "Allocating…" : "Allocate"}
+            {busy === "allocate" ? "Assigning…" : "Assign to tenant"}
           </SkeuoButton>
         </div>
+        {(pool.data?.numbers ?? []).filter((n) => n.available).length === 0 && !pool.loading && (
+          <p className="mt-3 text-xs text-text-muted">
+            No unassigned account numbers. Buy/provision on Telnyx first, or reassign from the table below.
+          </p>
+        )}
       </DevCard>
 
       <DevCard title="Assignments">
@@ -182,6 +242,7 @@ export default function AdminNumbersPage() {
           <SkeuoTableHead>
             <SkeuoTh>Number</SkeuoTh>
             <SkeuoTh>Tenant</SkeuoTh>
+            <SkeuoTh>Wallet</SkeuoTh>
             <SkeuoTh>Agent</SkeuoTh>
             <SkeuoTh>Purchase</SkeuoTh>
             <SkeuoTh>Created</SkeuoTh>
@@ -191,11 +252,16 @@ export default function AdminNumbersPage() {
             {rows.map((a) => (
               <SkeuoTableRow key={a.numberId}>
                 <SkeuoTd className="font-mono">{a.e164}</SkeuoTd>
-                <SkeuoTd className="text-sm">{a.tenant}</SkeuoTd>
+                <SkeuoTd className="text-sm">
+                  <div className="font-medium">{a.tenant}</div>
+                  <p className="font-mono text-[10px] text-text-subtle">{a.tenantId}</p>
+                  <p className="text-[10px] text-text-muted">{a.tenantStatus || "—"}</p>
+                </SkeuoTd>
+                <SkeuoTd className="font-mono text-xs">
+                  ${Number(a.walletBalanceUsd ?? 0).toFixed(2)}
+                </SkeuoTd>
                 <SkeuoTd className="text-sm text-text-muted">
-                  {a.agent ?? (
-                    <SkeuoBadge tone="warning">not pinned</SkeuoBadge>
-                  )}
+                  {a.agent ?? <SkeuoBadge tone="warning">not pinned</SkeuoBadge>}
                 </SkeuoTd>
                 <SkeuoTd>
                   <SkeuoBadge tone={PURCHASE_TONE[a.purchaseStatus ?? ""] ?? "muted"}>
@@ -231,9 +297,7 @@ export default function AdminNumbersPage() {
             ))}
             {rows.length === 0 && !numbers.loading && (
               <SkeuoTableRow>
-                <SkeuoTd className="text-text-muted">
-                  No active numbers.
-                </SkeuoTd>
+                <SkeuoTd className="text-text-muted">No active numbers.</SkeuoTd>
               </SkeuoTableRow>
             )}
           </SkeuoTableBody>

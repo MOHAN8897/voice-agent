@@ -1,9 +1,10 @@
 # Agent workspace UI redesign (voxly-ai frontend only)
 
-**Status:** Spec only (not implemented)  
-**Date:** 2026-10-01 (revised — frontend-only scope locked)  
+**Status:** Mostly implemented in `voxly-ai` (P0–P3). Doc header previously said “spec only” — that is outdated.  
+**Remaining:** P4 shadcn polish optional; keep §8 deferred items out of UI.  
+**Date:** 2026-10-01 (revised — frontend-only scope locked; status refreshed 2026-10-01)  
 **App:** `voxly-ai/` (Vite React console the customer opens after login)  
-**UI kit:** Prefer [shadcn/ui](https://ui.shadcn.com/) inside this Vite app only  
+**UI kit:** Prefer [shadcn/ui](https://ui.shadcn.com/) inside this Vite app only (P4 not done — still custom craft UI)  
 
 ---
 
@@ -351,19 +352,36 @@ Do **not** ship toggles for these until APIs exist:
 - New lead stage `Do not call` unless API stage enum expands  
 - Currency conversion / USD billing display beyond what wallet payload already returns  
 
+### 8.1 Found while building this pass (2026-10-01)
+
+- **Leads have no agent link.** `server/db/models/saas_models.py::Lead` has no
+  `agent_id`, and `GET /api/leads` never returns one, so "leads for this agent" cannot be
+  answered today. §4.1/§4.3 assumed a normalized `lead.agentId` that `apiNormalize.js`
+  reads but the API never populates. The Calls → Leads panel and the Overview leads card
+  therefore filter on `agentId` (correct the day the field exists) and fall back to the
+  real workspace pipeline with a visible note, rather than showing a permanently empty
+  board. Needs a backend field plus `lead_agent_id` on list responses.
+- **`api.agents.update` sends only `name`, `status`, `languages`.** Settings therefore has
+  no website, support email, role or retention field. Those stay in the Script text until
+  the PATCH body grows them (§4.5).
+- **The old Knowledge tab was dead UI.** It read `selectedAgent.knowledgeSources`, which
+  `apiNormalize.js` never sets, and its "Upload Document" button had no `onClick` — no
+  method in `api.js` uploads documents. Deleted rather than re-skinned, per §0.3 rule 3.
+  Its one real artefact (objection rules) already lives on the Script tab.  
+
 Document them here only so product does not confuse “UI redesign” with “compliance engine.”
 
 ---
 
 ## 9. Implementation phases (frontend only)
 
-| Phase | Deliverable | Success check |
-|-------|-------------|---------------|
-| **P0** | Five-tab shell + hash migration + Overview KPIs from existing stats/list | Open builder → Overview; old `?step=telephony` lands on Calls settings |
-| **P1** | Calls = History (agent-scoped) + Leads (filtered) + embedded TelephonySettingsCard | Callback, stage change, save hours still hit same APIs |
-| **P2** | Script + Voice polish (labels, grouping, en-US first) | Save script/voice; live call still uses published brain unchanged |
-| **P3** | Settings = name/status/language/number assign + Test call modal | Assign number still works; AdminModule untouched |
-| **P4** | shadcn styling pass on these five tabs only | No `server/` or `web/` diffs |
+| Phase | Deliverable | Status (2026-10-01) | Success check |
+|-------|-------------|---------------------|---------------|
+| **P0** | Five-tab shell + hash migration + Overview KPIs from existing stats/list | ✅ `FLOW_TABS`, `employeeFlowHash.js`, `agent-workspace/AgentOverview.jsx` | Open builder → Overview; old `?step=telephony` lands on Calls settings |
+| **P1** | Calls = History (agent-scoped) + Leads (filtered) + embedded TelephonySettingsCard | ✅ `AgentCallsPanel.jsx` | Callback, stage change, save hours still hit same APIs |
+| **P2** | Script + Voice polish (labels, grouping, en-US first) | ✅ Script/Voice tabs in `AgentStudioModule`; `en-US` first in `voicePresets.js`; `groupPhoneVoices` | Save script/voice; live call still uses published brain unchanged |
+| **P3** | Settings = name/status/language/number assign + Test call modal | ✅ `AgentSettingsPanel.jsx` + Test call header → `TalkToAiConsole` modal | Assign number still works; AdminModule untouched |
+| **P4** | shadcn styling pass on these five tabs only | ❌ Not started (`voxly-ai/src/components/ui/` absent) | No `server/` or `web/` diffs |
 
 After each phase: smoke Open builder → edit → save → place/test call using **existing** Talk to AI / outbound UI. Confirm platform admin page still loads unchanged.
 

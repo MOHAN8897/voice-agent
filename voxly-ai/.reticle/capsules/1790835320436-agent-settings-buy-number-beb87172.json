@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "origin": "failed-assert",
+  "expected": "text \"Search numbers\"",
+  "observed": "no element matched {\"text\":\"Search numbers\"} in state 'visible'",
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-settings-buy-number",
+        "source": {
+          "file": "src/console/ui/TactileButton.jsx",
+          "line": 69,
+          "column": 5
+        }
+      },
+      "action": "click"
+    }
+  ],
+  "id": "1790835320436-agent-settings-buy-number-beb87172",
+  "createdAt": 1790835320437,
+  "seen": 1,
+  "lastSeenAt": 1790835320437
+}

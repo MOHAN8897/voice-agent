@@ -203,7 +203,7 @@ class BillingWalletTransaction(Base):
     amount_cents: Mapped[int] = mapped_column(Integer, nullable=False)
     amount_inr_paise: Mapped[int] = mapped_column(Integer, default=0)
     kind: Mapped[str] = mapped_column(String(40), nullable=False)
-    reference_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    reference_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     stripe_session_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 

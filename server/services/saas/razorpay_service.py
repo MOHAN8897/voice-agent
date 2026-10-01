@@ -116,6 +116,7 @@ async def confirm_wallet_payment(
             BillingWalletTransaction(
                 tenant_id=tenant_id,
                 amount_cents=0,
+                amount_inr_paise=paise,
                 kind="razorpay_topup_inr",
                 stripe_session_id=payment_id,
                 created_at=_utcnow(),

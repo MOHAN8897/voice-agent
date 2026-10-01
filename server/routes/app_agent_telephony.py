@@ -6,6 +6,8 @@ not how the *agent* thinks. Every route is tenant-scoped through
 """
 from __future__ import annotations
 
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
@@ -36,7 +38,8 @@ class BusinessHoursBody(BaseModel):
 
 class TelephonyProfileBody(BaseModel):
     greetingPhrase: str | None = Field(None, max_length=500)
-    businessHours: dict[str, list[dict[str, str]]] | None = None
+    businessHours: dict[str, Any] | None = None
+    closedDates: list[str] | None = None
     timezone: str | None = Field(None, max_length=64)
     afterHoursAction: str | None = Field(None, max_length=24)
     transferNumber: str | None = Field(None, max_length=32)
@@ -73,10 +76,13 @@ async def write_telephony_profile(
     workspace_tid = subscriber_workspace_tenant_id(principal)
     await load_agent_for_tenant(agent_id, workspace_tid)
 
+    hours = dict(body.businessHours or {})
+    if body.closedDates is not None:
+        hours["closed"] = body.closedDates
     payload = validate_policy_payload(
         {
             "greeting_phrase": body.greetingPhrase,
-            "business_hours": body.businessHours,
+            "business_hours": hours if (body.businessHours is not None or body.closedDates is not None) else None,
             "timezone": body.timezone,
             "after_hours_action": body.afterHoursAction,
             "transfer_number": body.transferNumber,

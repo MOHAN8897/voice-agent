@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "origin": "failed-assert",
+  "expected": "element ?",
+  "observed": "no element matched {\"testid\":\"script-editor-fallback-marker\"} — testids present here: sidebar-wallet-pill, agent-test-call, agent-save, agent-tab-overview, agent-tab-script, agent-tab-calls, agent-tab-voice, agent-tab-settings",
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-tab-script",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 407,
+          "column": 13
+        }
+      },
+      "action": "click"
+    }
+  ],
+  "id": "1790834744411-agent-tab-script-580f5456",
+  "createdAt": 1790834744424,
+  "seen": 1,
+  "lastSeenAt": 1790834744424
+}

@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "origin": "failed-assert",
+  "expected": "element ?",
+  "observed": "no element matched {\"testid\":\"agent-tab-overview\"} — testids present here: sidebar-wallet-pill",
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "e115",
+        "source": {
+          "file": "src/components/AuthModal.jsx",
+          "line": 462,
+          "column": 15
+        }
+      },
+      "action": "click"
+    }
+  ],
+  "id": "1790836351811-click-0537e141",
+  "createdAt": 1790836351814,
+  "seen": 1,
+  "lastSeenAt": 1790836351814
+}

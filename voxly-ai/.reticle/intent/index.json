@@ -1,0 +1,209 @@
+{
+  "entries": [
+    {
+      "id": "flow:drive-billing-page-shows-wallet-only-no-subscription-p",
+      "statement": "Billing page shows wallet only, no subscription plans",
+      "status": "proposed",
+      "subject": "drive-billing-page-shows-wallet-only-no"
+    },
+    {
+      "id": "flow:drive-business-hours-and-timezone-saved-from-the-agent",
+      "statement": "Business hours and timezone saved from the agent workspace reach the sa…",
+      "status": "proposed",
+      "subject": "drive-business-hours-and-timezone-saved"
+    },
+    {
+      "id": "flow:drive-changing-a-lead-s-pipeline-stage-from-the-agent",
+      "statement": "Changing a lead's pipeline stage from the agent workspace writes throug…",
+      "status": "proposed",
+      "subject": "drive-changing-a-lead-s-pipeline-stage-f"
+    },
+    {
+      "id": "flow:drive-creating-an-agent-lands-the-operator-on-the-agen",
+      "statement": "Creating an agent lands the operator on the agent workspace Overview ta…",
+      "status": "proposed",
+      "subject": "drive-creating-an-agent-lands-the-operat"
+    },
+    {
+      "id": "flow:drive-creating-an-ai-employee-lands-the-operator-in-th",
+      "statement": "Creating an AI employee lands the operator in the agent workspace with…",
+      "status": "proposed",
+      "subject": "drive-creating-an-ai-employee-lands-the"
+    },
+    {
+      "id": "flow:drive-open-the-test-call-modal-so-operators-get-call-c",
+      "statement": "Open the test call modal so operators get call chrome with timer and 3D…",
+      "status": "proposed",
+      "subject": "drive-open-the-test-call-modal-so-operat"
+    },
+    {
+      "id": "flow:drive-operator-confirms-bulk-campaign-create-returned",
+      "statement": "Operator confirms bulk campaign create returned success and dialer star…",
+      "status": "proposed",
+      "subject": "drive-operator-confirms-bulk-campaign-cr"
+    },
+    {
+      "id": "flow:drive-the-open-builder-action-on-an-agent-card-enters",
+      "statement": "The Open builder action on an agent card enters the workspace with Over…",
+      "status": "proposed",
+      "subject": "drive-the-open-builder-action-on-an-agen"
+    },
+    {
+      "id": "inline:billing-has-no-fleet-subscription-plan-section-7e3ebf3f",
+      "statement": "Billing has no Fleet Subscription Plan section",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:billing-is-wallet-only-with-no-fleet-subscriptio-cd10753a",
+      "statement": "Billing is wallet-only with no fleet subscription plans",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:billing-page-shows-wallet-only-no-subscription-p-0085ec59",
+      "statement": "Billing page shows wallet only, no subscription plans",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:business-hours-and-timezone-saved-from-the-agent-53028e3d",
+      "statement": "Business hours and timezone saved from the agent workspace reach the sa…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:changing-a-lead-s-pipeline-stage-from-the-agent-8213a879",
+      "statement": "Changing a lead's pipeline stage from the agent workspace writes throug…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:console-sync-banner-is-gone-agents-load-from-api-9dc641e8",
+      "statement": "Console sync banner is gone; agents load from API without Not found",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:console-sync-banner-is-gone-and-phone-line-count-c7d1974d",
+      "statement": "Console sync banner is gone and phone line count shows assigned number",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:creating-an-agent-lands-the-operator-on-the-agen-5e758005",
+      "statement": "Creating an agent lands the operator on the agent workspace Overview ta…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:creating-an-ai-employee-lands-the-operator-in-th-254f8110",
+      "statement": "Creating an AI employee lands the operator in the agent workspace with…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:customer-initiates-razorpay-wallet-top-up-for-in-6e0faf57",
+      "statement": "Customer initiates Razorpay wallet top-up for INR 415",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:customer-tops-up-wallet-with-razorpay-inr-no-str-91055f6a",
+      "statement": "Customer tops up wallet with Razorpay INR — no Stripe path",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:open-test-call-modal-from-agent-workspace-header-2ee9f12c",
+      "statement": "Open test call modal from agent workspace header so the call chrome wit…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:open-the-test-call-modal-so-operators-get-call-c-08cc1200",
+      "statement": "Open the test call modal so operators get call chrome with timer and 3D…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:operator-confirms-bulk-campaign-create-returned-1729483f",
+      "statement": "Operator confirms bulk campaign create returned success and dialer star…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:operator-opens-calls-tab-to-dial-outbound-and-ru-0a5d5787",
+      "statement": "Operator opens Calls tab to dial outbound and run bulk concurrent campa…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:operator-opens-mohan-agent-builder-to-place-outb-cd07e743",
+      "statement": "Operator opens Mohan agent builder to place outbound and bulk campaign…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:operator-opens-outbound-dial-panel-to-place-a-li-41c58251",
+      "statement": "Operator opens Outbound dial panel to place a live PSTN call and start…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:operator-places-a-live-outbound-pstn-call-to-918-50cb110a",
+      "statement": "Operator places a live outbound PSTN call to +918897908470 from the age…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:operator-places-a-live-outbound-pstn-call-to-918-9342a5d5",
+      "statement": "Operator places a live outbound PSTN call to +918897908470 from Mohan a…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:platform-admin-views-tenant-wallet-balances-in-i-9888e2f0",
+      "statement": "Platform admin views tenant wallet balances in INR and can adjust them",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:retry-sync-is-unnecessary-because-data-already-l-50c88dac",
+      "statement": "Retry sync is unnecessary because data already loaded",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:saving-from-the-agent-workspace-script-tab-persi-554e2153",
+      "statement": "Saving from the agent workspace Script tab persists the calling script…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:switch-test-call-to-live-number-mode-without-pst-8756a1fb",
+      "statement": "Switch test call to live-number mode without PSTN wording.",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:the-open-builder-action-on-an-agent-card-enters-dab944d9",
+      "statement": "The Open builder action on an agent card enters the workspace with Over…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:voxly-ai-landing-instrumented-after-reticle-init-7b0c610e",
+      "statement": "voxly-ai landing instrumented after Reticle init",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:wallet-balance-shown-in-dollars-on-the-test-call-5d90d096",
+      "statement": "Wallet balance shown in dollars on the test call chrome.",
+      "status": "proved",
+      "subject": "unsorted"
+    }
+  ],
+  "version": 1
+}

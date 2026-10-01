@@ -1,0 +1,603 @@
+{
+  "intents": {
+    "inline:billing-has-no-fleet-subscription-plan-section-7e3ebf3f": {
+      "binding": {
+        "absent": true,
+        "contains": "Fleet Subscription Plan",
+        "kind": "text"
+      },
+      "declaredAt": 1790853482821,
+      "id": "inline:billing-has-no-fleet-subscription-plan-section-7e3ebf3f",
+      "state": "bound",
+      "statement": "Billing has no Fleet Subscription Plan section",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790853482864
+    },
+    "inline:billing-is-wallet-only-with-no-fleet-subscriptio-cd10753a": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "contains": "Wallet & per-second billing",
+            "kind": "text"
+          },
+          {
+            "absent": true,
+            "contains": "Fleet Subscription Plan",
+            "kind": "text"
+          }
+        ]
+      },
+      "declaredAt": 1790853779927,
+      "id": "inline:billing-is-wallet-only-with-no-fleet-subscriptio-cd10753a",
+      "provenBy": {
+        "at": 1790853780318,
+        "grade": "presence",
+        "verdictId": "reticle_assert:1790853780318"
+      },
+      "state": "proved",
+      "statement": "Billing is wallet-only with no fleet subscription plans",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "route": "/console"
+      },
+      "updatedAt": 1790853780421
+    },
+    "inline:billing-page-shows-wallet-only-no-subscription-p-0085ec59": {
+      "binding": {
+        "contains": "Wallet & per-second billing",
+        "kind": "text"
+      },
+      "declaredAt": 1790853446510,
+      "id": "inline:billing-page-shows-wallet-only-no-subscription-p-0085ec59",
+      "provenBy": {
+        "at": 1790853447820,
+        "grade": "presence",
+        "verdictId": "reticle_act_and_wait:1790853447819"
+      },
+      "state": "proved",
+      "statement": "Billing page shows wallet only, no subscription plans",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/console/Sidebar.jsx"
+        ],
+        "route": "/console"
+      },
+      "updatedAt": 1790853447847
+    },
+    "inline:business-hours-and-timezone-saved-from-the-agent-53028e3d": {
+      "binding": {
+        "kind": "net",
+        "method": "PUT",
+        "status": 200,
+        "urlContains": "telephony-profile"
+      },
+      "declaredAt": 1790835441325,
+      "id": "inline:business-hours-and-timezone-saved-from-the-agent-53028e3d",
+      "state": "bound",
+      "statement": "Business hours and timezone saved from the agent workspace reach the same telephony profile endpoint with the same field names.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790835441404
+    },
+    "inline:changing-a-lead-s-pipeline-stage-from-the-agent-8213a879": {
+      "binding": {
+        "kind": "net",
+        "method": "PATCH",
+        "status": 200,
+        "urlContains": "/api/leads/"
+      },
+      "declaredAt": 1790835284414,
+      "id": "inline:changing-a-lead-s-pipeline-stage-from-the-agent-8213a879",
+      "state": "bound",
+      "statement": "Changing a lead's pipeline stage from the agent workspace writes through the existing lead stage endpoint.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790835284474
+    },
+    "inline:console-sync-banner-is-gone-agents-load-from-api-9dc641e8": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "absent": true,
+            "contains": "Some console data could not be loaded",
+            "kind": "text"
+          },
+          {
+            "contains": "AI Employees",
+            "kind": "text"
+          }
+        ]
+      },
+      "declaredAt": 1790854447066,
+      "id": "inline:console-sync-banner-is-gone-agents-load-from-api-9dc641e8",
+      "provenBy": {
+        "at": 1790854447604,
+        "grade": "presence",
+        "verdictId": "reticle_assert:1790854447604"
+      },
+      "state": "proved",
+      "statement": "Console sync banner is gone; agents load from API without Not found",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "route": "/console"
+      },
+      "updatedAt": 1790854447678
+    },
+    "inline:console-sync-banner-is-gone-and-phone-line-count-c7d1974d": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "absent": true,
+            "contains": "Some console data could not be loaded",
+            "kind": "text"
+          },
+          {
+            "contains": "Phone lines",
+            "kind": "text"
+          }
+        ]
+      },
+      "declaredAt": 1790853779922,
+      "id": "inline:console-sync-banner-is-gone-and-phone-line-count-c7d1974d",
+      "provenBy": {
+        "at": 1790853780242,
+        "grade": "presence",
+        "verdictId": "reticle_assert:1790853780242"
+      },
+      "state": "proved",
+      "statement": "Console sync banner is gone and phone line count shows assigned number",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "route": "/console"
+      },
+      "updatedAt": 1790853780296
+    },
+    "inline:creating-an-agent-lands-the-operator-on-the-agen-5e758005": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "agent-tab-overview"
+        }
+      },
+      "declaredAt": 1790834420237,
+      "id": "inline:creating-an-agent-lands-the-operator-on-the-agen-5e758005",
+      "provenBy": {
+        "at": 1790834431159,
+        "grade": "presence",
+        "verdictId": "reticle_act_and_wait:1790834431156"
+      },
+      "state": "proved",
+      "statement": "Creating an agent lands the operator on the agent workspace Overview tab, where per-agent call activity and pipeline are visible.",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/console/modules/CreateAgentWizard.jsx"
+        ]
+      },
+      "updatedAt": 1790834431217
+    },
+    "inline:creating-an-ai-employee-lands-the-operator-in-th-254f8110": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "agent-test-call"
+        }
+      },
+      "declaredAt": 1790836372202,
+      "id": "inline:creating-an-ai-employee-lands-the-operator-in-th-254f8110",
+      "provenBy": {
+        "at": 1790836454457,
+        "grade": "presence",
+        "verdictId": "reticle_act_and_wait:1790836454457"
+      },
+      "state": "proved",
+      "statement": "Creating an AI employee lands the operator in the agent workspace with the five-tab shell and a Test call header action available.",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/console/modules/CreateAgentWizard.jsx"
+        ]
+      },
+      "updatedAt": 1790836454478
+    },
+    "inline:customer-initiates-razorpay-wallet-top-up-for-in-6e0faf57": {
+      "binding": {
+        "kind": "anyOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "POST",
+            "status": 200,
+            "urlContains": "/api/billing/razorpay/create-order"
+          },
+          {
+            "contains": "Opening",
+            "kind": "text"
+          },
+          {
+            "kind": "element",
+            "query": {
+              "by": "testid",
+              "value": "add-funds-modal"
+            }
+          }
+        ]
+      },
+      "declaredAt": 1790848927121,
+      "id": "inline:customer-initiates-razorpay-wallet-top-up-for-in-6e0faf57",
+      "state": "bound",
+      "statement": "Customer initiates Razorpay wallet top-up for INR 415",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790848927629
+    },
+    "inline:customer-tops-up-wallet-with-razorpay-inr-no-str-91055f6a": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "contains": "Razorpay",
+            "kind": "text"
+          },
+          {
+            "kind": "not",
+            "predicate": {
+              "contains": "Stripe",
+              "kind": "text"
+            }
+          }
+        ]
+      },
+      "declaredAt": 1790848892801,
+      "id": "inline:customer-tops-up-wallet-with-razorpay-inr-no-str-91055f6a",
+      "state": "bound",
+      "statement": "Customer tops up wallet with Razorpay INR — no Stripe path",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790848892875
+    },
+    "inline:open-test-call-modal-from-agent-workspace-header-2ee9f12c": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "agent-test-call-panel-inner"
+        }
+      },
+      "declaredAt": 1790850892072,
+      "id": "inline:open-test-call-modal-from-agent-workspace-header-2ee9f12c",
+      "state": "bound",
+      "statement": "Open test call modal from agent workspace header so the call chrome with timer and 3D avatar is visible.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790850892997
+    },
+    "inline:open-the-test-call-modal-so-operators-get-call-c-08cc1200": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "agent-test-call-panel-inner"
+        }
+      },
+      "declaredAt": 1790851206989,
+      "id": "inline:open-the-test-call-modal-so-operators-get-call-c-08cc1200",
+      "provenBy": {
+        "at": 1790851208009,
+        "grade": "presence",
+        "verdictId": "reticle_act_and_wait:1790851208006"
+      },
+      "state": "proved",
+      "statement": "Open the test call modal so operators get call chrome with timer and 3D avatar.",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/console/ui/TactileButton.jsx"
+        ],
+        "route": "/console"
+      },
+      "updatedAt": 1790851208115
+    },
+    "inline:operator-confirms-bulk-campaign-create-returned-1729483f": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "GET",
+            "status": 200,
+            "urlContains": "/api/billing/wallet"
+          },
+          {
+            "contains": "₹",
+            "kind": "text"
+          }
+        ]
+      },
+      "declaredAt": 1790846713705,
+      "id": "inline:operator-confirms-bulk-campaign-create-returned-1729483f",
+      "provenBy": {
+        "at": 1790846717932,
+        "grade": "net",
+        "verdictId": "reticle_act_and_wait:1790846717931"
+      },
+      "state": "proved",
+      "statement": "Operator confirms bulk campaign create returned success and dialer started concurrent calls",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/console/Sidebar.jsx"
+        ],
+        "route": "/console"
+      },
+      "updatedAt": 1790846717981
+    },
+    "inline:operator-opens-calls-tab-to-dial-outbound-and-ru-0a5d5787": {
+      "binding": {
+        "kind": "anyOf",
+        "predicates": [
+          {
+            "contains": "Place call",
+            "kind": "text"
+          },
+          {
+            "contains": "Bulk",
+            "kind": "text"
+          },
+          {
+            "contains": "Destination",
+            "kind": "text"
+          },
+          {
+            "contains": "concurrency",
+            "kind": "text"
+          },
+          {
+            "kind": "element",
+            "query": {
+              "by": "testid",
+              "value": "agent-dial-bulk"
+            }
+          }
+        ]
+      },
+      "declaredAt": 1790846437374,
+      "id": "inline:operator-opens-calls-tab-to-dial-outbound-and-ru-0a5d5787",
+      "state": "bound",
+      "statement": "Operator opens Calls tab to dial outbound and run bulk concurrent campaigns",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790846437444
+    },
+    "inline:operator-opens-mohan-agent-builder-to-place-outb-cd07e743": {
+      "binding": {
+        "contains": "Calls",
+        "kind": "text"
+      },
+      "declaredAt": 1790846420080,
+      "id": "inline:operator-opens-mohan-agent-builder-to-place-outb-cd07e743",
+      "state": "bound",
+      "statement": "Operator opens Mohan agent builder to place outbound and bulk campaign calls",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790846420222
+    },
+    "inline:operator-opens-outbound-dial-panel-to-place-a-li-41c58251": {
+      "binding": {
+        "kind": "anyOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "by": "testid",
+              "value": "agent-dial-bulk"
+            }
+          },
+          {
+            "contains": "Place call",
+            "kind": "text"
+          },
+          {
+            "contains": "E.164",
+            "kind": "text"
+          },
+          {
+            "contains": "campaign",
+            "kind": "text"
+          }
+        ]
+      },
+      "declaredAt": 1790846458456,
+      "id": "inline:operator-opens-outbound-dial-panel-to-place-a-li-41c58251",
+      "state": "bound",
+      "statement": "Operator opens Outbound dial panel to place a live PSTN call and start a concurrent bulk campaign",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790846458524
+    },
+    "inline:operator-places-a-live-outbound-pstn-call-to-918-50cb110a": {
+      "binding": {
+        "kind": "net",
+        "method": "POST",
+        "urlContains": "/api/calls/outbound"
+      },
+      "declaredAt": 1790846473131,
+      "id": "inline:operator-places-a-live-outbound-pstn-call-to-918-50cb110a",
+      "state": "bound",
+      "statement": "Operator places a live outbound PSTN call to +918897908470 from the agent workspace",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790846473186
+    },
+    "inline:operator-places-a-live-outbound-pstn-call-to-918-9342a5d5": {
+      "binding": {
+        "kind": "net",
+        "method": "POST",
+        "status": 200,
+        "urlContains": "/api/calls/outbound"
+      },
+      "declaredAt": 1790846511887,
+      "id": "inline:operator-places-a-live-outbound-pstn-call-to-918-9342a5d5",
+      "state": "bound",
+      "statement": "Operator places a live outbound PSTN call to +918897908470 from Mohan agent workspace",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790846511945
+    },
+    "inline:platform-admin-views-tenant-wallet-balances-in-i-9888e2f0": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "by": "testid",
+              "value": "admin-wallet-panel"
+            }
+          },
+          {
+            "contains": "INR",
+            "kind": "text"
+          }
+        ]
+      },
+      "declaredAt": 1790846731283,
+      "id": "inline:platform-admin-views-tenant-wallet-balances-in-i-9888e2f0",
+      "provenBy": {
+        "at": 1790846732353,
+        "grade": "presence",
+        "verdictId": "reticle_act_and_wait:1790846732352"
+      },
+      "state": "proved",
+      "statement": "Platform admin views tenant wallet balances in INR and can adjust them",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/console/Sidebar.jsx"
+        ],
+        "route": "/console"
+      },
+      "updatedAt": 1790846732391
+    },
+    "inline:retry-sync-is-unnecessary-because-data-already-l-50c88dac": {
+      "binding": {
+        "contains": "AI Employees (2)",
+        "kind": "text"
+      },
+      "declaredAt": 1790854447169,
+      "id": "inline:retry-sync-is-unnecessary-because-data-already-l-50c88dac",
+      "state": "bound",
+      "statement": "Retry sync is unnecessary because data already loaded",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790854447424
+    },
+    "inline:saving-from-the-agent-workspace-script-tab-persi-554e2153": {
+      "binding": {
+        "kind": "net",
+        "method": "PUT",
+        "status": 200,
+        "urlContains": "/business-brain/"
+      },
+      "declaredAt": 1790834756138,
+      "id": "inline:saving-from-the-agent-workspace-script-tab-persi-554e2153",
+      "state": "bound",
+      "statement": "Saving from the agent workspace Script tab persists the calling script through the existing calling-script endpoint.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790834756191
+    },
+    "inline:switch-test-call-to-live-number-mode-without-pst-8756a1fb": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "test-call-live-number"
+        }
+      },
+      "declaredAt": 1790851215086,
+      "id": "inline:switch-test-call-to-live-number-mode-without-pst-8756a1fb",
+      "provenBy": {
+        "at": 1790851216100,
+        "grade": "presence",
+        "verdictId": "reticle_act_and_wait:1790851216099"
+      },
+      "state": "proved",
+      "statement": "Switch test call to live-number mode without PSTN wording.",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/console/modules/agent-workspace/AgentTestCallPanel.jsx"
+        ],
+        "route": "/console"
+      },
+      "updatedAt": 1790851216301
+    },
+    "inline:the-open-builder-action-on-an-agent-card-enters-dab944d9": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "agent-panel-overview"
+        }
+      },
+      "declaredAt": 1790836534798,
+      "id": "inline:the-open-builder-action-on-an-agent-card-enters-dab944d9",
+      "state": "bound",
+      "statement": "The Open builder action on an agent card enters the workspace with Overview selected, not Script.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790836534820
+    },
+    "inline:voxly-ai-landing-instrumented-after-reticle-init-7b0c610e": {
+      "binding": {
+        "contains": "Voxly",
+        "kind": "text"
+      },
+      "declaredAt": 1790832722375,
+      "id": "inline:voxly-ai-landing-instrumented-after-reticle-init-7b0c610e",
+      "state": "bound",
+      "statement": "voxly-ai landing instrumented after Reticle init",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790832722607
+    },
+    "inline:wallet-balance-shown-in-dollars-on-the-test-call-5d90d096": {
+      "binding": {
+        "contains": "Wallet $",
+        "kind": "text"
+      },
+      "declaredAt": 1790851233300,
+      "id": "inline:wallet-balance-shown-in-dollars-on-the-test-call-5d90d096",
+      "provenBy": {
+        "at": 1790851233521,
+        "grade": "presence",
+        "verdictId": "reticle_assert:1790851233520"
+      },
+      "state": "proved",
+      "statement": "Wallet balance shown in dollars on the test call chrome.",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/console/modules/agent-workspace/AgentTestCallPanel.jsx"
+        ],
+        "route": "/console"
+      },
+      "updatedAt": 1790851233621
+    }
+  },
+  "subject": "unsorted",
+  "version": 1
+}

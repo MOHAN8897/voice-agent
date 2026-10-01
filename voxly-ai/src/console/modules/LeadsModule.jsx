@@ -10,7 +10,14 @@ import { TactileButton } from '../ui/TactileButton';
 import { Modal } from '../ui/Modal';
 import { useWorkspace } from '../context/WorkspaceContext';
 
-export function LeadsModule() {
+/**
+ * Lead pipeline for the fleet, or for one agent.
+ *
+ * `agentId` scopes the list to that agent's leads; stage and notes edits still go
+ * through `api.leads.updateStage` / `updateNotes` exactly as before, so a stage
+ * changed here behaves identically to one changed on the fleet page.
+ */
+export function LeadsModule({ agentId = null, agentName = '' }) {
   const {
     leads,
     updateLeadStage,
@@ -31,7 +38,15 @@ export function LeadsModule() {
 
   const stages = ['New', 'Contacted', 'Qualified', 'Meeting Booked', 'Unqualified'];
 
-  const filteredLeads = leads.filter((l) => {
+  // Leads are not attributed to an individual agent yet (the Lead record has no agent
+  // column), so a per-agent list would always be empty. When the filter matches
+  // nothing we fall back to the real workspace pipeline and say so, instead of
+  // showing a blank board that reads as "this agent produced nothing".
+  const scopedLeads = agentId ? leads.filter((l) => l.agentId === agentId) : leads;
+  const agentAttributionMissing = Boolean(agentId) && scopedLeads.length === 0;
+  const visibleLeads = agentAttributionMissing ? leads : scopedLeads;
+
+  const filteredLeads = visibleLeads.filter((l) => {
     const q = searchQuery.toLowerCase();
     return (
       (l.name || '').toLowerCase().includes(q) ||
@@ -63,11 +78,22 @@ export function LeadsModule() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-[#0F0E17] tracking-tight">
-            Autonomous Lead Pipeline ({leads.length})
+            {agentId
+              ? `${agentName || 'Agent'} leads (${visibleLeads.length})`
+              : `Autonomous Lead Pipeline (${leads.length})`}
           </h2>
           <p className="text-xs text-[#524E5E] mt-0.5">
             Leads automatically captured, BANT-qualified, and scored by AI voice employees during phone calls.
           </p>
+          {agentAttributionMissing && (
+            <p
+              data-testid="leads-no-agent-attribution"
+              className="text-[11px] text-[#B45309] mt-1"
+            >
+              Leads are not linked to an individual agent yet, so this is the whole workspace
+              pipeline. Per-agent attribution is on the list for a backend field.
+            </p>
+          )}
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">

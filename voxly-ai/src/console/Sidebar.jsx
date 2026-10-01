@@ -49,7 +49,6 @@ export function Sidebar({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
-  const [newWorkspaceTier, setNewWorkspaceTier] = useState('Professional Fleet');
   const dropdownRef = useRef(null);
 
   const handleSelectTab = (tabId) => {
@@ -75,7 +74,7 @@ export function Sidebar({
   const handleCreateWorkspaceSubmit = (e) => {
     e.preventDefault();
     if (!newWorkspaceName.trim()) return;
-    createWorkspace(newWorkspaceName.trim(), newWorkspaceTier);
+    createWorkspace(newWorkspaceName.trim());
     setNewWorkspaceName('');
     setIsCreateModalOpen(false);
     setIsDropdownOpen(false);
@@ -158,7 +157,7 @@ export function Sidebar({
                 {currentWorkspace?.name || 'Acme Health Corp'}
               </div>
               <div className="text-[10px] text-[#524E5E] font-mono truncate">
-                {currentWorkspace?.tier || 'Enterprise Fleet'}
+                Workspace
               </div>
             </div>
           </div>
@@ -335,9 +334,13 @@ export function Sidebar({
           </div>
           <div className="flex items-center justify-between gap-2">
             <span className="text-[10px] text-[#524E5E] font-mono">
-              {Number(wallet?.balanceInr || 0) > 0
-                ? `₹${Number(wallet.balanceInr).toFixed(2)}`
-                : `$${Number(wallet?.balanceUsd || 0).toFixed(2)} USD`}
+              {(() => {
+                const usd = Number(wallet?.balanceUsd || 0);
+                const inr = Number(wallet?.balanceInr || 0);
+                const fx = Number(wallet?.fxRateInr) || 95.64;
+                const display = usd > 0 ? usd : inr > 0 ? inr / fx : 0;
+                return `$${display.toFixed(2)}`;
+              })()}
             </span>
             <span className="text-[10px] font-semibold text-[#6344E7]">
               + Add Funds
@@ -390,21 +393,6 @@ export function Sidebar({
                   onChange={(e) => setNewWorkspaceName(e.target.value)}
                   className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-3 py-2 text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7]"
                 />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[#0F0E17] mb-1">
-                  Fleet Plan Tier
-                </label>
-                <select
-                  value={newWorkspaceTier}
-                  onChange={(e) => setNewWorkspaceTier(e.target.value)}
-                  className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-3 py-2 text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7]"
-                >
-                  <option value="Starter Fleet">Starter Fleet (1 Agent, 500 min)</option>
-                  <option value="Professional Fleet">Professional Fleet (5 Agents, 2,500 min)</option>
-                  <option value="Enterprise Fleet">Enterprise Fleet (Unlimited Agents, Dedicated SLA)</option>
-                </select>
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#E4E2EB]">

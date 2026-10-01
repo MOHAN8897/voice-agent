@@ -20,9 +20,16 @@ export function loadRazorpayScript() {
   });
 }
 
-export async function openRazorpayWalletCheckout({ order, keyId, user, onSuccess, onError }) {
+export async function openRazorpayWalletCheckout({
+  order,
+  keyId,
+  user,
+  onSuccess,
+  onError,
+  hideUpi = true,
+}) {
   const Razorpay = await loadRazorpayScript();
-  const rzp = new Razorpay({
+  const options = {
     key: order.keyId || keyId,
     amount: order.amountPaise,
     currency: order.currency || 'INR',
@@ -40,7 +47,21 @@ export async function openRazorpayWalletCheckout({ order, keyId, user, onSuccess
     modal: {
       ondismiss: () => onError?.(new Error('Payment cancelled')),
     },
-  });
+  };
+  if (hideUpi) {
+    options.config = {
+      display: {
+        hide: [{ method: 'upi' }],
+      },
+    };
+    options.method = {
+      upi: false,
+      card: true,
+      netbanking: true,
+      wallet: false,
+    };
+  }
+  const rzp = new Razorpay(options);
   rzp.on('payment.failed', (response) => {
     onError?.(new Error(response.error?.description || 'Payment failed'));
   });
