@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { authService } from '../services/authService';
 import { api } from '../services/api';
+import { initAuthSessionSync } from '../services/authSessionSync';
 import { loadGoogleIdentityScript } from '../utils/loadGoogleIdentity';
 
 const AuthContext = createContext(null);
@@ -60,6 +61,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const run = async () => {
+      initAuthSessionSync();
       const hash = window.location.hash || '';
       if (hash.includes('auth/callback')) {
         const qs = hash.split('?')[1] || '';
@@ -94,6 +96,35 @@ export function AuthProvider({ children }) {
     };
     run();
   }, [refreshSession]);
+
+  // Cross-tab logout / access adoption + proactive refresh on tab focus.
+  useEffect(() => {
+    initAuthSessionSync();
+    const onSync = (ev) => {
+      const detail = ev?.detail;
+      if (!detail) return;
+      if (detail.type === 'logout') {
+        api.clearToken();
+        authService.clearSession();
+        setUser(null);
+        return;
+      }
+      if (detail.type === 'access' && detail.accessToken) {
+        api.adoptPeerAccessToken(detail.accessToken);
+      }
+    };
+    const onVis = () => {
+      if (document.visibilityState !== 'visible') return;
+      if (!api.getToken()) return;
+      api.ensureFreshAccessToken().catch(() => {});
+    };
+    window.addEventListener('voxly:auth-sync', onSync);
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      window.removeEventListener('voxly:auth-sync', onSync);
+      document.removeEventListener('visibilitychange', onVis);
+    };
+  }, []);
 
   const loginWithGoogle = async () => {
     let clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';

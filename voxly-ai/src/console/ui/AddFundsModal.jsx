@@ -71,7 +71,7 @@ export function AddFundsModal({ isOpen, onClose, reason = null }) {
   const amountInr = Math.max(100, Math.round(amountUsd * fx));
 
   const pay = useCallback(async () => {
-    if (!canPay) return;
+    if (!canPay || busy) return;
     setBusy(true);
     setError(null);
     try {
@@ -105,7 +105,7 @@ export function AddFundsModal({ isOpen, onClose, reason = null }) {
     } finally {
       setBusy(false);
     }
-  }, [amountInr, amountUsd, canPay, razorpay, refreshWallet, user]);
+  }, [amountInr, amountUsd, busy, canPay, razorpay, refreshWallet, user]);
 
   const buyMinutes = useMemo(
     () => (rateUsd > 0 ? Math.floor(amountUsd / rateUsd) : 0),

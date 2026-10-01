@@ -253,6 +253,21 @@ app.add_middleware(
 )
 
 
+class AuthNoStoreMiddleware(BaseHTTPMiddleware):
+    """Auth responses must never be cached (shared proxies / bfcache / CDN)."""
+
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        path = request.url.path or ""
+        if path.startswith("/api/auth"):
+            response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, private"
+            response.headers["Pragma"] = "no-cache"
+        return response
+
+
+app.add_middleware(AuthNoStoreMiddleware)
+
+
 # Rate limiting middleware (Phase 5 hardening)
 
 

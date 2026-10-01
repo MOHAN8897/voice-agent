@@ -1,6 +1,8 @@
 """HttpOnly refresh-token cookies for subscriber auth (Voxly / SPA)."""
 from __future__ import annotations
 
+import os
+
 from fastapi import Request, Response
 
 from server.config.env import get_settings
@@ -9,7 +11,16 @@ REFRESH_COOKIE = "voxly_refresh"
 
 
 def _cookie_opts() -> dict:
-    secure = get_settings().app_environment == "production"
+    settings = get_settings()
+    # Secure in production. Localhost HTTP must keep Secure=false or the browser
+    # drops the cookie. Optional VOXLY_COOKIE_SECURE=1 when SPA is HTTPS-only.
+    override = (os.getenv("VOXLY_COOKIE_SECURE") or "").strip().lower()
+    if override in ("1", "true", "yes"):
+        secure = True
+    elif override in ("0", "false", "no"):
+        secure = False
+    else:
+        secure = settings.app_environment == "production"
     return {"httponly": True, "secure": secure, "samesite": "lax", "path": "/"}
 
 

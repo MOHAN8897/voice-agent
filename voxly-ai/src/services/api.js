@@ -10,6 +10,13 @@ import {
   normalizeCampaign,
   leadStageToApi,
 } from './apiNormalize';
+import {
+  accessExpiresSoon,
+  initAuthSessionSync,
+  publishAccessToken,
+  publishLogout,
+  withRefreshLock,
+} from './authSessionSync';
 
 const AUTH_TOKEN_KEY = 'voxly_auth_token';
 
@@ -189,8 +196,24 @@ export const api = {
   setToken(token) {
     const store = tokenStorage();
     if (!store) return;
-    if (token) store.setItem(AUTH_TOKEN_KEY, token);
-    else store.removeItem(AUTH_TOKEN_KEY);
+    if (token) {
+      store.setItem(AUTH_TOKEN_KEY, token);
+      if (!api._suppressAuthBroadcast) publishAccessToken(token);
+    } else {
+      store.removeItem(AUTH_TOKEN_KEY);
+    }
+  },
+
+  /** Adopt a peer tab's access token without re-broadcasting (avoids echo loops). */
+  adoptPeerAccessToken(token) {
+    if (!token) return;
+    api._suppressAuthBroadcast = true;
+    try {
+      this.setToken(token);
+      api._refreshSettled = { at: Date.now(), ok: true };
+    } finally {
+      api._suppressAuthBroadcast = false;
+    }
   },
 
   clearToken() {
@@ -208,6 +231,7 @@ export const api = {
     this._logoutTimer = setTimeout(() => {
       this._logoutTimer = null;
       this.clearToken();
+      publishLogout();
       window.dispatchEvent(new Event('voxly:logout'));
     }, 50);
   },
@@ -244,6 +268,7 @@ export const api = {
    * briefly collapses that whole burst into one rotation.
    */
   async refreshAccessToken() {
+    initAuthSessionSync();
     const settled = api._refreshSettled;
     if (settled && Date.now() - settled.at < REFRESH_COALESCE_MS) {
       return settled.ok;
@@ -252,31 +277,39 @@ export const api = {
 
     const backendUrl = this.getBackendUrl().replace(/\/$/, '');
     const attempt = (async () => {
-      try {
-        const res = await fetch(`${backendUrl}/auth/refresh`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          ...fetchOpts,
-          body: JSON.stringify({}),
-        });
-        if (!res.ok) {
-          logApiEvent(res.status === 401 ? 'debug' : 'warn', 'refresh_failed', {
-            status: res.status,
-            hint:
-              res.status === 401
-                ? 'No valid refresh cookie (signed out or cookie on wrong host)'
-                : 'Refresh endpoint error',
+      const locked = await withRefreshLock(async () => {
+        try {
+          const res = await fetch(`${backendUrl}/auth/refresh`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            ...fetchOpts,
+            body: JSON.stringify({}),
           });
+          if (!res.ok) {
+            logApiEvent(res.status === 401 ? 'debug' : 'warn', 'refresh_failed', {
+              status: res.status,
+              hint:
+                res.status === 401
+                  ? 'No valid refresh cookie (signed out or cookie on wrong host)'
+                  : 'Refresh endpoint error',
+            });
+            return false;
+          }
+          const data = await res.json();
+          applyAuthResponse(data);
+          logApiEvent('debug', 'refresh_ok', {});
+          return true;
+        } catch (err) {
+          logApiEvent('warn', 'refresh_network_error', { message: String(err?.message || err) });
           return false;
         }
-        const data = await res.json();
-        applyAuthResponse(data);
-        logApiEvent('debug', 'refresh_ok', {});
+      });
+
+      if (locked.fromPeer && locked.accessToken) {
+        this.adoptPeerAccessToken(locked.accessToken);
         return true;
-      } catch (err) {
-        logApiEvent('warn', 'refresh_network_error', { message: String(err?.message || err) });
-        return false;
       }
+      return Boolean(locked.ok);
     })();
 
     api._refreshInFlight = attempt;
@@ -287,6 +320,14 @@ export const api = {
     } finally {
       if (api._refreshInFlight === attempt) api._refreshInFlight = null;
     }
+  },
+
+  /** Proactive refresh when the tab is focused and access JWT is near expiry. */
+  async ensureFreshAccessToken() {
+    const token = this.getToken();
+    if (!token) return false;
+    if (!accessExpiresSoon(token)) return true;
+    return this.refreshAccessToken();
   },
 
   async request(method, endpoint, body = null, customHeaders = {}, { allowMock = false } = {}) {
@@ -475,6 +516,7 @@ export const api = {
         /* still clear local session */
       } finally {
         api.clearToken();
+        publishLogout();
       }
       return { ok: true };
     },

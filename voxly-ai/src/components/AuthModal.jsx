@@ -101,6 +101,8 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
 
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
+    // Duplicate-submit guard (double-click / Enter while in-flight).
+    if (loadingMethod !== null) return;
     setErrorMessage('');
 
     try {
@@ -153,6 +155,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
 
   const handleOtpSubmit = async (e) => {
     e.preventDefault();
+    if (loadingMethod !== null) return;
     setErrorMessage('');
     const targetEmail = pendingVerifyEmail || email.trim();
     if (!targetEmail || otpCode.length !== 6) {

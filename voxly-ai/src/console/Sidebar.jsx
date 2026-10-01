@@ -351,9 +351,10 @@ export function Sidebar({
         <button
           type="button"
           onClick={onBackToLanding}
+          title="Stay in this tab — returns to the marketing landing"
           className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-semibold text-[#524E5E] hover:text-[#0F0E17] hover:bg-[#FAF9FD] border border-[#E4E2EB] active:scale-[0.98] transition-all"
         >
-          <ExternalLink className="w-3.5 h-3.5" />
+          <ExternalLink className="w-3.5 h-3.5" aria-hidden />
           <span>Marketing site</span>
         </button>
       </div>
