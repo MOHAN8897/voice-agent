@@ -32,10 +32,17 @@ from server.db.models.saas_models import (
     User,
 )
 from server.services.saas.email_service import send_password_reset_email, send_verification_email
+from server.services.saas.tenant_guard import resolve_usable_tenant
 
 
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
+
+
+# How long after a rotation a replay of the same token still counts as the parallel
+# -request race rather than a leaked token. Long enough to cover a burst of console
+# requests landing a few hundred ms apart, short enough that real reuse is caught.
+REFRESH_REUSE_GRACE_SECONDS = 30
 
 
 def _hash_token(raw: str) -> str:
@@ -75,6 +82,7 @@ async def _issue_tokens(
     user: User,
     tenant_id: uuid.UUID,
     role: str,
+    family_id: uuid.UUID | None = None,
 ) -> dict[str, Any]:
     claims = AccessTokenClaims(
         user_id=str(user.user_id),
@@ -84,7 +92,9 @@ async def _issue_tokens(
     )
     access, expires_in = create_access_token(claims)
     raw_refresh = secrets.token_urlsafe(48)
-    family_id = uuid.uuid4()
+    # A rotation continues the caller's family so reuse detection can see the whole
+    # chain; a fresh sign-in starts a new one.
+    family_id = family_id or uuid.uuid4()
     settings = get_settings()
     session.add(
         RefreshToken(
@@ -338,18 +348,17 @@ async def login(*, email: str, password: str, ip: str | None = None) -> dict[str
             raise ValueError("account_disabled")
         if user.status == "pending_verification" and user.email_verified_at is None:
             raise ValueError("email_unverified")
-        mem = await session.execute(
-            select(TenantMembership, Tenant)
-            .join(Tenant, Tenant.tenant_id == TenantMembership.tenant_id)
-            .where(TenantMembership.user_id == user.user_id)
-            .order_by(TenantMembership.created_at)
-        )
-        row = mem.first()
-        if row is None:
-            raise ValueError("no_tenant")
-        membership, tenant = row
-        if tenant.status in ("suspended", "deleted", "pending_deletion"):
-            raise ValueError("tenant_inactive")
+        picked = await resolve_usable_tenant(session, user.user_id)
+        if picked is None:
+            # Distinguish "no workspace at all" from "every workspace is closed" so the
+            # route keeps returning its specific error.
+            total = await session.scalar(
+                select(func.count())
+                .select_from(TenantMembership)
+                .where(TenantMembership.user_id == user.user_id)
+            )
+            raise ValueError("tenant_inactive" if total else "no_tenant")
+        membership, tenant = picked
         role = _role_for_user(user.email, membership.role)
         if membership.role != role:
             membership.role = role
@@ -370,38 +379,69 @@ async def login(*, email: str, password: str, ip: str | None = None) -> dict[str
 
 
 async def refresh(refresh_token: str) -> dict[str, Any]:
+    """
+    Rotate a refresh token (OAuth 2.0 Security BCP 4.14.2).
+
+    Refresh tokens are single-use: presenting one revokes it and issues a replacement
+    in the same family. The console fires a workspace sync as several parallel
+    requests, and they do not all observe a rotated cookie at the same instant, so a
+    token can legitimately be presented twice within milliseconds. Rejecting the
+    second presentation logged the user out mid-sync — it surfaced as one resource
+    failing with "Your session expired" while its siblings succeeded.
+
+    So a replay is judged by *when* it arrives:
+      - inside REFRESH_REUSE_GRACE_SECONDS of the rotation, it is that race → re-issue.
+      - after the grace window, an already-used token is a real reuse → burn the whole
+        family, because that means the token leaked and one of the two holders is an
+        attacker. Revoking only the presented token would leave the thief working.
+    """
     factory = get_session_factory()
     if factory is None:
         raise RuntimeError("database_required")
     th = _hash_token(refresh_token)
     async with factory() as session:
-        result = await session.execute(
-            select(RefreshToken).where(
-                RefreshToken.token_hash == th,
-                RefreshToken.revoked_at.is_(None),
-                RefreshToken.expires_at > _utcnow(),
-            )
-        )
+        now = _utcnow()
+        result = await session.execute(select(RefreshToken).where(RefreshToken.token_hash == th))
         row = result.scalar_one_or_none()
-        if row is None:
+        if row is None or row.expires_at <= now:
             raise ValueError("invalid_refresh")
+
+        is_race_replay = False
+        if row.revoked_at is not None:
+            if (now - row.revoked_at).total_seconds() > REFRESH_REUSE_GRACE_SECONDS:
+                # Too late to be the rotation race — treat as theft and kill the chain.
+                await session.execute(
+                    update(RefreshToken)
+                    .where(
+                        RefreshToken.family_id == row.family_id,
+                        RefreshToken.revoked_at.is_(None),
+                    )
+                    .values(revoked_at=now)
+                )
+                await session.commit()
+                raise ValueError("invalid_refresh")
+            is_race_replay = True
+
         user = await session.get(User, row.user_id)
         if user is None or user.deleted_at is not None or user.status == "disabled":
             raise ValueError("invalid_refresh")
-        row.revoked_at = _utcnow()
-        mem = await session.execute(
-            select(TenantMembership).where(TenantMembership.user_id == user.user_id).limit(1)
-        )
-        membership = mem.scalar_one_or_none()
-        if membership is None:
-            raise ValueError("no_tenant")
-        tenant = await session.get(Tenant, membership.tenant_id)
-        if tenant is None or tenant.status in ("suspended", "deleted"):
+
+        picked = await resolve_usable_tenant(session, user.user_id)
+        if picked is None:
+            # Every workspace for this user is soft-deleted or closed, so there is
+            # nothing to re-issue against. The client must sign in again rather than
+            # retry into a dead tenant.
+            if not is_race_replay:
+                row.revoked_at = now
+                await session.commit()
             raise ValueError("tenant_inactive")
+        membership, tenant = picked
         role = _role_for_user(user.email, membership.role)
         if membership.role != role:
             membership.role = role
-        tokens = await _issue_tokens(session, user, membership.tenant_id, role)
+        if not is_race_replay:
+            row.revoked_at = now
+        tokens = await _issue_tokens(session, user, membership.tenant_id, role, family_id=row.family_id)
         await session.commit()
         await _seed_admin_wallet(membership.tenant_id, user.user_id, user.email)
         return {**tokens, **_session_public(user, tenant, role)}
@@ -567,7 +607,7 @@ async def assert_tenant_active_simple(session: AsyncSession, tenant_id: uuid.UUI
     tenant = await session.get(Tenant, tenant_id)
     if tenant is None or tenant.deleted_at is not None:
         raise ValueError("not_found")
-    if tenant.status in ("suspended", "deleted", "pending_deletion"):
+    if tenant.status in ("suspended", "deleted", "pending_deletion", "cancelled"):
         raise ValueError("tenant_inactive")
     return tenant
 

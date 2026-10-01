@@ -13,6 +13,14 @@ import {
 
 const AUTH_TOKEN_KEY = 'voxly_auth_token';
 
+/**
+ * Window in which a just-finished token refresh is reused instead of starting
+ * another. Covers a burst of parallel 401s landing slightly apart, so one burst
+ * rotates the single-use refresh cookie once. Kept well under the server's
+ * REFRESH_REUSE_GRACE_SECONDS so a genuine later refresh is never suppressed.
+ */
+const REFRESH_COALESCE_MS = 5000;
+
 function tokenStorage() {
   return typeof window !== 'undefined' ? window.sessionStorage : null;
 }
@@ -75,11 +83,18 @@ function normalizeApiBase(url) {
   return `${u}/api`;
 }
 
-/** Local Vite/dev — always use same-origin /api proxy (avoids CORS + missing-/api 404s). */
+/**
+ * Prefer same-origin `/api` so the httpOnly refresh cookie is set on the page host
+ * (Vite/Cloudflare proxy → API). Cross-origin API Set-Cookie never sticks for the SPA.
+ */
 function preferSameOriginApi() {
   if (typeof window === 'undefined') return false;
   const host = window.location.hostname;
-  return host === 'localhost' || host === '127.0.0.1';
+  return (
+    host === 'localhost' ||
+    host === '127.0.0.1' ||
+    host === 'app-dev.hustlelabs.in'
+  );
 }
 
 export const api = {
@@ -166,36 +181,81 @@ export const api = {
     store?.removeItem(AUTH_TOKEN_KEY);
   },
 
+  /** Default true. Workspace sync sets false so one failed resource cannot wipe the session. */
+  _logoutOn401: true,
+  _logoutTimer: null,
+
+  _scheduleSessionLogout() {
+    if (this._logoutOn401 === false) return;
+    if (this._logoutTimer) return;
+    this._logoutTimer = setTimeout(() => {
+      this._logoutTimer = null;
+      this.clearToken();
+      window.dispatchEvent(new Event('voxly:logout'));
+    }, 50);
+  },
+
+  /**
+   * Run `fn` under a temporary auth policy (e.g. suppress logout during workspace sync).
+   */
+  async withAuthPolicy(opts, fn) {
+    const prev = this._logoutOn401;
+    if (opts && Object.prototype.hasOwnProperty.call(opts, 'logoutOn401')) {
+      this._logoutOn401 = opts.logoutOn401;
+    }
+    try {
+      return await fn();
+    } finally {
+      this._logoutOn401 = prev;
+    }
+  },
+
   /**
    * Exchange the httpOnly refresh cookie for a new access token.
    *
-   * Refresh tokens are single-use: the server revokes the presented one and issues
-   * a replacement. The console fires many requests in parallel (workspace sync is 8
-   * at once), so without deduplication those simultaneous 401s each presented the
-   * same cookie and rotated it past each other — the browser was left holding a
-   * revoked cookie and every later request failed with "Invalid or expired token".
-   * One in-flight refresh is therefore shared by every caller.
+   * Refresh tokens are single-use: the server revokes the presented one and issues a
+   * replacement. The console fires many requests in parallel (workspace sync is 8 at
+   * once), so without deduplication those simultaneous 401s each presented the same
+   * cookie and rotated it past each other — the browser was left holding a revoked
+   * cookie and every later request failed with "Invalid or expired token".
+   *
+   * Sharing one in-flight promise only covers callers that overlap exactly. A request
+   * that lands a moment *after* the rotation finished would start a second one, and
+   * the browser may not have applied the new cookie yet — so it would present the
+   * token that was just consumed. That is what produced a single resource failing
+   * with "Your session expired" while its siblings succeeded. Holding the result
+   * briefly collapses that whole burst into one rotation.
    */
   async refreshAccessToken() {
+    const settled = api._refreshSettled;
+    if (settled && Date.now() - settled.at < REFRESH_COALESCE_MS) {
+      return settled.ok;
+    }
     if (api._refreshInFlight) return api._refreshInFlight;
 
     const backendUrl = this.getBackendUrl().replace(/\/$/, '');
     const attempt = (async () => {
-      const res = await fetch(`${backendUrl}/auth/refresh`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        ...fetchOpts,
-        body: JSON.stringify({}),
-      });
-      if (!res.ok) return false;
-      const data = await res.json();
-      applyAuthResponse(data);
-      return true;
+      try {
+        const res = await fetch(`${backendUrl}/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          ...fetchOpts,
+          body: JSON.stringify({}),
+        });
+        if (!res.ok) return false;
+        const data = await res.json();
+        applyAuthResponse(data);
+        return true;
+      } catch {
+        return false;
+      }
     })();
 
     api._refreshInFlight = attempt;
     try {
-      return await attempt;
+      const ok = await attempt;
+      api._refreshSettled = { at: Date.now(), ok };
+      return ok;
     } finally {
       if (api._refreshInFlight === attempt) api._refreshInFlight = null;
     }
@@ -223,9 +283,12 @@ export const api = {
       });
 
     let response = await doFetch();
+    let refreshOk = false;
+    let triedRefresh = false;
     if (response.status === 401 && token) {
-      const refreshed = await this.refreshAccessToken();
-      if (refreshed) {
+      triedRefresh = true;
+      refreshOk = await this.refreshAccessToken();
+      if (refreshOk) {
         headers.Authorization = `Bearer ${this.getToken()}`;
         response = await doFetch();
       }
@@ -256,19 +319,19 @@ export const api = {
       const isAuthRoute = path.includes('/auth/');
       const parsed = parseApiError(data, response.status);
       const fail = () => {
-        // A 401 that survived the refresh attempt means the session itself is gone.
-        // "Invalid or expired token" is a backend string with no next step for the
-        // person looking at it; say what happened and what to do instead.
-        const sessionGone = response.status === 401 && !isAuthRoute;
+        // Logout only when refresh itself failed (cookie dead). A 401 after a
+        // successful rotation is authorization/resource-level — do not wipe the session.
+        const refreshDead =
+          response.status === 401 && !isAuthRoute && (!triedRefresh || !refreshOk);
         const e = new Error(
-          sessionGone ? 'Your session expired. Sign in again to continue.' : parsed.message
+          refreshDead
+            ? 'Your session expired. Sign in again to continue.'
+            : parsed.message || `HTTP ${response.status}`
         );
-        e.code = parsed.code;
+        e.code = parsed.code || (refreshDead ? 'session_expired' : undefined);
         e.status = response.status;
         e.retryAfter = Number(response.headers.get('Retry-After') || parsed.retryAfter || 0);
-        if (sessionGone) {
-          window.dispatchEvent(new Event('voxly:logout'));
-        }
+        if (refreshDead) this._scheduleSessionLogout();
         throw e;
       };
       if (backendUrl && !allowMock && !isAuthRoute) fail();
@@ -337,7 +400,15 @@ export const api = {
 
     googleRedirectLogin() {
       const base = api.getBackendUrl().replace(/\/api\/?$/, '');
-      window.location.href = `${base}/api/auth/google/start`;
+      const returnTo = encodeURIComponent(window.location.origin);
+      window.location.href = `${base}/api/auth/google/start?return_to=${returnTo}`;
+    },
+
+    /** Exchange a one-time OAuth handoff id for access + same-origin refresh cookie. */
+    async consumeHandoff(handoff) {
+      const data = await api.request('POST', '/api/auth/handoff', { handoff });
+      applyAuthResponse(data);
+      return data;
     },
 
     async githubLogin() {
@@ -577,7 +648,7 @@ export const api = {
      * (answered | missed | outbound | declined | failed | voicemail | in_progress)
      * and includes calls that never connected, so the Missed tab is real.
      */
-    async list({ agentId, status, statuses, direction, limit = 100, offset = 0 } = {}) {
+    async list({ agentId, status, statuses, direction, limit = 100, offset = 0, agentMap = null } = {}) {
       const qs = new URLSearchParams({ limit: String(limit) });
       if (offset) qs.set('offset', String(offset));
       if (agentId) qs.set('agentId', agentId);
@@ -587,12 +658,15 @@ export const api = {
       const data = await api.request('GET', `/api/calls?${qs}`);
       const rows = data.calls || data;
       if (!Array.isArray(rows)) return [];
-      const agents = await api.agents.list().catch(() => []);
-      const agentMap = {};
-      agents.forEach((a) => {
-        agentMap[a.id] = a;
-      });
-      return rows.map((r) => normalizeCall(r, agentMap));
+      let map = agentMap;
+      if (!map) {
+        const agents = await api.agents.list().catch(() => []);
+        map = {};
+        agents.forEach((a) => {
+          map[a.id] = a;
+        });
+      }
+      return rows.map((r) => normalizeCall(r, map));
     },
     /** Counts and totals for the history header. */
     async stats({ agentId, since, until } = {}) {

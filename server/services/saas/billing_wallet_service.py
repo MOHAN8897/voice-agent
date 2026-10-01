@@ -48,14 +48,25 @@ async def wallet_summary(tenant_id: uuid.UUID, user_id: uuid.UUID | None = None)
     rates = effective_rates()
     wallet = await get_or_create_wallet(tenant_id)
     inr_paise = int(getattr(wallet, "balance_inr_paise", 0) or 0)
+    cents = int(wallet.balance_cents or 0)
     primary = (wallet.currency or "usd").lower()
+    fx = float(rates.get("fx_rate_inr") or 95.64) or 95.64
+    usd_from_cents = round(cents / 100.0, 2)
+    usd_from_inr = round((inr_paise / 100.0) / fx, 2) if fx else 0.0
+    # Razorpay credits INR; show FX-converted USD when cents are empty so the console matches.
+    if primary == "inr" or (inr_paise > 0 and cents <= 0):
+        balance_usd = usd_from_inr
+    else:
+        balance_usd = usd_from_cents if usd_from_cents > 0 else usd_from_inr
     rate_inr = rates["pstn_rate_inr_paise_per_min"] or 900
-    remaining_min = int(inr_paise // rate_inr) if primary == "inr" and rate_inr else int(
-        (wallet.balance_cents or 0) // max(1, rates["pstn_rate_usd_cents_per_min"])
-    )
+    rate_usd = max(1, rates["pstn_rate_usd_cents_per_min"])
+    if inr_paise > 0:
+        remaining_min = int(inr_paise // rate_inr)
+    else:
+        remaining_min = int(cents // rate_usd)
     summary = {
-        "balanceUsd": round(wallet.balance_cents / 100.0, 2),
-        "balanceCents": wallet.balance_cents,
+        "balanceUsd": balance_usd,
+        "balanceCents": cents,
         "balanceInr": round(inr_paise / 100.0, 2),
         "balanceInrPaise": inr_paise,
         "currency": (wallet.currency or "usd").upper(),
@@ -69,7 +80,7 @@ async def wallet_summary(tenant_id: uuid.UUID, user_id: uuid.UUID | None = None)
         "webRateInrPerMin": round(rates["web_agent_rate_inr_paise_per_min"] / 100.0, 2),
         "didMonthlyUsd": round(rates["did_monthly_usd_cents"] / 100.0, 2),
         "didMonthlyInr": round(rates["did_monthly_inr_paise"] / 100.0, 2),
-        "fxRateInr": float(rates.get("fx_rate_inr") or 95.64),
+        "fxRateInr": fx,
         "remainingMinutes": remaining_min,
         "myUsageInr": 0.0,
         "myUsageUsd": 0.0,
@@ -123,11 +134,15 @@ async def list_wallet_transactions(tenant_id: uuid.UUID, limit: int = 50, user_i
 
 
 def _wallet_has_minimum(wallet: BillingWallet) -> bool:
+    """True if either INR or USD balance clears the configured floor.
+
+    Razorpay top-ups credit INR only; wallets often still have currency='usd'.
+    Checking both sides avoids blocking paid tenants after an INR top-up.
+    """
     settings = get_settings()
-    primary = (wallet.currency or "usd").lower()
-    if primary == "inr":
-        return int(wallet.balance_inr_paise or 0) >= settings.pstn_min_balance_inr_paise
-    return wallet.balance_cents >= settings.pstn_min_balance_usd_cents
+    inr_ok = int(wallet.balance_inr_paise or 0) >= settings.pstn_min_balance_inr_paise
+    usd_ok = int(wallet.balance_cents or 0) >= settings.pstn_min_balance_usd_cents
+    return inr_ok or usd_ok
 
 
 async def assert_wallet_allows_pstn(tenant_id: uuid.UUID) -> None:

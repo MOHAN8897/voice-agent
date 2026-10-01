@@ -49,6 +49,42 @@
       "subject": "drive-the-open-builder-action-on-an-agen"
     },
     {
+      "id": "inline:a-signed-in-subscriber-s-workspace-loads-from-th-b36101c2",
+      "statement": "A signed-in subscriber's workspace loads from the API: /api/agents answ…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:a-signed-in-subscriber-s-workspace-loads-from-th-b5fd5c7b",
+      "statement": "A signed-in subscriber's workspace loads from the API: the agent and ph…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:a-subscriber-holding-a-session-token-for-a-since-8411239e",
+      "statement": "A subscriber holding a session token for a since-deleted workspace reco…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:a-subscriber-s-console-workspace-sync-completes-d4c45a80",
+      "statement": "A subscriber's console workspace sync completes with every resource loa…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:a-subscriber-whose-session-token-pointed-at-a-de-26a03115",
+      "statement": "A subscriber whose session token pointed at a deleted workspace ends up…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:after-login-console-sync-completes-without-sessi-2b4953d2",
+      "statement": "After login, console sync completes without session-expired banner; Cal…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
       "id": "inline:billing-has-no-fleet-subscription-plan-section-7e3ebf3f",
       "statement": "Billing has no Fleet Subscription Plan section",
       "status": "proposed",
@@ -166,6 +202,18 @@
       "id": "inline:platform-admin-views-tenant-wallet-balances-in-i-9888e2f0",
       "statement": "Platform admin views tenant wallet balances in INR and can adjust them",
       "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:refresh-reloads-call-stats-and-history-without-a-78af6dd9",
+      "statement": "Refresh reloads call stats and history without auth failure.",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:refreshing-call-history-keeps-tenant-data-loaded-8abd72d5",
+      "statement": "Refreshing call history keeps tenant data loaded without session-expire…",
+      "status": "proposed",
       "subject": "unsorted"
     },
     {

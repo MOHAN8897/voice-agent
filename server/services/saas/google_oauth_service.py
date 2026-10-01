@@ -1,15 +1,19 @@
-"""Google Sign-In — ID token verify + OAuth redirect."""
+"""Google Sign-In — ID token verify + OAuth redirect + same-origin handoff."""
 from __future__ import annotations
 
 import secrets
 import time
 from typing import Any
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse
 
 import httpx
 
 _OAUTH_STATE_TTL_SEC = 600
-_oauth_states: dict[str, float] = {}
+_HANDOFF_TTL_SEC = 90
+# state -> {"at": float, "return_to": str | None}
+_oauth_states: dict[str, dict[str, Any]] = {}
+# handoff_id -> auth payload + exp
+_auth_handoffs: dict[str, dict[str, Any]] = {}
 
 from server.config.env import get_settings
 from server.services.saas import auth_service
@@ -88,23 +92,80 @@ async def exchange_code_for_tokens(code: str) -> str:
     return str(id_token)
 
 
-def new_oauth_state() -> str:
+def allowed_frontend_origin(origin: str | None) -> str | None:
+    """Return a normalized origin if allowlisted; else None."""
+    if not origin:
+        return None
+    raw = origin.strip().rstrip("/")
+    try:
+        parsed = urlparse(raw if "://" in raw else f"https://{raw}")
+    except Exception:
+        return None
+    if parsed.scheme not in ("http", "https") or not parsed.netloc:
+        return None
+    candidate = f"{parsed.scheme}://{parsed.netloc}"
+    settings = get_settings()
+    allowed = {
+        settings.voxly_frontend_url.rstrip("/"),
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "https://app-dev.hustlelabs.in",
+    }
+    if candidate in allowed:
+        return candidate
+    host = parsed.hostname or ""
+    if host in ("localhost", "127.0.0.1") and parsed.scheme == "http":
+        return candidate
+    return None
+
+
+def new_oauth_state(return_to: str | None = None) -> str:
     now = time.time()
-    expired = [k for k, t in _oauth_states.items() if now - t > _OAUTH_STATE_TTL_SEC]
+    expired = [k for k, v in _oauth_states.items() if now - float(v.get("at", 0)) > _OAUTH_STATE_TTL_SEC]
     for k in expired:
         _oauth_states.pop(k, None)
     state = secrets.token_urlsafe(24)
-    _oauth_states[state] = now
+    _oauth_states[state] = {"at": now, "return_to": allowed_frontend_origin(return_to)}
     return state
 
 
-def consume_oauth_state(state: str | None) -> bool:
+def consume_oauth_state(state: str | None) -> dict[str, Any] | None:
+    """Validate + pop OAuth state. Returns {"return_to": origin|None} or None if invalid."""
     if not state:
-        return False
-    created = _oauth_states.pop(state, None)
-    if created is None:
-        return False
-    return time.time() - created <= _OAUTH_STATE_TTL_SEC
+        return None
+    entry = _oauth_states.pop(state, None)
+    if entry is None:
+        return None
+    # Back-compat: older entries were plain floats
+    if isinstance(entry, (int, float)):
+        if time.time() - float(entry) > _OAUTH_STATE_TTL_SEC:
+            return None
+        return {"return_to": None}
+    if time.time() - float(entry.get("at", 0)) > _OAUTH_STATE_TTL_SEC:
+        return None
+    return {"return_to": entry.get("return_to")}
+
+
+def create_auth_handoff(payload: dict[str, Any]) -> str:
+    """Store login payload briefly; SPA redeems via same-origin POST to set refresh cookie."""
+    now = time.time()
+    expired = [k for k, v in _auth_handoffs.items() if now > float(v.get("exp", 0))]
+    for k in expired:
+        _auth_handoffs.pop(k, None)
+    hid = secrets.token_urlsafe(24)
+    _auth_handoffs[hid] = {**payload, "exp": now + _HANDOFF_TTL_SEC}
+    return hid
+
+
+def consume_auth_handoff(handoff_id: str | None) -> dict[str, Any] | None:
+    if not handoff_id:
+        return None
+    entry = _auth_handoffs.pop(handoff_id, None)
+    if entry is None:
+        return None
+    if time.time() > float(entry.get("exp", 0)):
+        return None
+    return {k: v for k, v in entry.items() if k != "exp"}
 
 
 def google_signin_config() -> dict[str, Any]:

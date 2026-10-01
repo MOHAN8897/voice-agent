@@ -35,11 +35,20 @@ export function AddFundsModal({ isOpen, onClose, reason = null }) {
     let cancelled = false;
     Promise.all([
       api.billing.getCatalog().catch(() => null),
-      api.billing.razorpayConfig().catch(() => ({ enabled: false, keyId: '' })),
+      api.billing.razorpayConfig().catch((e) => ({
+        enabled: false,
+        keyId: '',
+        loadError: e?.message || 'Could not reach billing config',
+      })),
     ]).then(([cat, rz]) => {
       if (cancelled) return;
       setCatalog(cat);
       setRazorpay(rz || { enabled: false, keyId: '' });
+      if (rz?.loadError) {
+        setError(
+          `${rz.loadError}. If you just set RAZORPAY_API_KEY / SECRET, restart the API and hard-refresh.`
+        );
+      }
       if (cat?.topupMinUsd) setAmountUsd(Math.max(Number(cat.topupMinUsd) || 5, 10));
     });
     return () => {
@@ -146,7 +155,10 @@ export function AddFundsModal({ isOpen, onClose, reason = null }) {
 
             {!razorpay.enabled && (
               <p className="text-[11px] text-[#B45309]" data-testid="add-funds-razorpay-off">
-                Razorpay is not enabled on this deployment. Ask support to set RAZORPAY_API_KEY / SECRET.
+                Razorpay is not enabled on this API. Set <code>RAZORPAY_API_KEY</code> and{' '}
+                <code>RAZORPAY_API_SECRET</code> in the API <code>.env</code>, restart the API
+                process, then hard-refresh this page. Keys must be on the same backend this console
+                proxies to (local Vite → port 8000).
               </p>
             )}
 

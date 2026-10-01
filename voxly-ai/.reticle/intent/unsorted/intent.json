@@ -1,5 +1,270 @@
 {
   "intents": {
+    "inline:a-signed-in-subscriber-s-workspace-loads-from-th-b36101c2": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "count": 1,
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/agents"
+          },
+          {
+            "count": 1,
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/telephony/numbers"
+          },
+          {
+            "kind": "not",
+            "predicate": {
+              "contains": "could not be loaded from the API",
+              "kind": "text"
+            }
+          }
+        ]
+      },
+      "declaredAt": 1790855932128,
+      "id": "inline:a-signed-in-subscriber-s-workspace-loads-from-th-b36101c2",
+      "state": "bound",
+      "statement": "A signed-in subscriber's workspace loads from the API: /api/agents answers 200 with their employees, and the console never shows the 'Some console data could not be loaded from the API' warning.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790855932173
+    },
+    "inline:a-signed-in-subscriber-s-workspace-loads-from-th-b5fd5c7b": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/agents"
+          },
+          {
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/telephony/numbers"
+          },
+          {
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/billing/wallet"
+          },
+          {
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/leads"
+          },
+          {
+            "kind": "not",
+            "predicate": {
+              "contains": "could not be loaded from the API",
+              "kind": "text"
+            }
+          }
+        ]
+      },
+      "declaredAt": 1790855942522,
+      "id": "inline:a-signed-in-subscriber-s-workspace-loads-from-th-b5fd5c7b",
+      "provenBy": {
+        "at": 1790855942598,
+        "grade": "net",
+        "verdictId": "reticle_assert:1790855942598"
+      },
+      "state": "proved",
+      "statement": "A signed-in subscriber's workspace loads from the API: the agent and phone-number requests answer 200 and the console never shows the 'Some console data could not be loaded from the API' warning.",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "route": "/console"
+      },
+      "updatedAt": 1790855942626
+    },
+    "inline:a-subscriber-holding-a-session-token-for-a-since-8411239e": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/auth/refresh"
+          },
+          {
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/agents"
+          },
+          {
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/telephony/numbers"
+          },
+          {
+            "kind": "not",
+            "predicate": {
+              "contains": "could not be loaded from the API",
+              "kind": "text"
+            }
+          }
+        ]
+      },
+      "declaredAt": 1790856329800,
+      "id": "inline:a-subscriber-holding-a-session-token-for-a-since-8411239e",
+      "state": "bound",
+      "statement": "A subscriber holding a session token for a since-deleted workspace recovers silently onto their surviving workspace: the console reloads the agent list after a successful token refresh and never shows the 'Some console data could not be loaded from the API' warning.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790856329839
+    },
+    "inline:a-subscriber-s-console-workspace-sync-completes-d4c45a80": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/agents"
+          },
+          {
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/telephony/numbers"
+          },
+          {
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/campaigns"
+          },
+          {
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/leads"
+          },
+          {
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/billing/wallet"
+          },
+          {
+            "kind": "not",
+            "predicate": {
+              "contains": "could not be loaded from the API",
+              "kind": "text"
+            }
+          }
+        ]
+      },
+      "declaredAt": 1790857960613,
+      "id": "inline:a-subscriber-s-console-workspace-sync-completes-d4c45a80",
+      "provenBy": {
+        "at": 1790857961066,
+        "grade": "net",
+        "verdictId": "reticle_assert:1790857961066"
+      },
+      "state": "proved",
+      "statement": "A subscriber's console workspace sync completes with every resource loaded: agents, phone numbers, campaigns, leads and wallet all answer 200, and no sync warning is shown.",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "route": "/console"
+      },
+      "updatedAt": 1790857961136
+    },
+    "inline:a-subscriber-whose-session-token-pointed-at-a-de-26a03115": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/agents"
+          },
+          {
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/telephony/numbers"
+          },
+          {
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/billing/wallet"
+          },
+          {
+            "kind": "not",
+            "predicate": {
+              "contains": "could not be loaded from the API",
+              "kind": "text"
+            }
+          },
+          {
+            "kind": "element",
+            "query": {
+              "by": "role",
+              "name": "mohan",
+              "value": "heading"
+            }
+          }
+        ]
+      },
+      "declaredAt": 1790856351177,
+      "id": "inline:a-subscriber-whose-session-token-pointed-at-a-de-26a03115",
+      "provenBy": {
+        "at": 1790856351295,
+        "grade": "net",
+        "verdictId": "reticle_assert:1790856351295"
+      },
+      "state": "proved",
+      "statement": "A subscriber whose session token pointed at a deleted workspace ends up signed in to their surviving workspace with their employees listed, and the console never shows the 'Some console data could not be loaded from the API' warning.",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "route": "/console"
+      },
+      "updatedAt": 1790856351338
+    },
+    "inline:after-login-console-sync-completes-without-sessi-2b4953d2": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "contains": "mohan saiteja's Workspace",
+            "kind": "text"
+          },
+          {
+            "contains": "All calls",
+            "kind": "text"
+          },
+          {
+            "kind": "not",
+            "predicate": {
+              "contains": "session expired",
+              "kind": "text"
+            }
+          },
+          {
+            "kind": "not",
+            "predicate": {
+              "contains": "could not be loaded",
+              "kind": "text"
+            }
+          }
+        ]
+      },
+      "declaredAt": 1790859525267,
+      "id": "inline:after-login-console-sync-completes-without-sessi-2b4953d2",
+      "provenBy": {
+        "at": 1790859525631,
+        "grade": "presence",
+        "verdictId": "reticle_assert:1790859525631"
+      },
+      "state": "proved",
+      "statement": "After login, console sync completes without session-expired banner; Calls history loads for the tenant.",
+      "status": "proved",
+      "subject": "unsorted",
+      "updatedAt": 1790859525673
+    },
     "inline:billing-has-no-fleet-subscription-plan-section-7e3ebf3f": {
       "binding": {
         "absent": true,
@@ -490,6 +755,74 @@
         "route": "/console"
       },
       "updatedAt": 1790846732391
+    },
+    "inline:refresh-reloads-call-stats-and-history-without-a-78af6dd9": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/calls/stats"
+          },
+          {
+            "kind": "not",
+            "predicate": {
+              "contains": "session expired",
+              "kind": "text"
+            }
+          }
+        ]
+      },
+      "declaredAt": 1790859538722,
+      "id": "inline:refresh-reloads-call-stats-and-history-without-a-78af6dd9",
+      "provenBy": {
+        "at": 1790859542732,
+        "grade": "net",
+        "verdictId": "reticle_act_and_wait:1790859542731"
+      },
+      "state": "proved",
+      "statement": "Refresh reloads call stats and history without auth failure.",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/console/ui/TactileButton.jsx"
+        ]
+      },
+      "updatedAt": 1790859542779
+    },
+    "inline:refreshing-call-history-keeps-tenant-data-loaded-8abd72d5": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "contains": "All calls",
+            "kind": "text"
+          },
+          {
+            "kind": "not",
+            "predicate": {
+              "contains": "session expired",
+              "kind": "text"
+            }
+          },
+          {
+            "kind": "not",
+            "predicate": {
+              "contains": "could not be loaded",
+              "kind": "text"
+            }
+          }
+        ]
+      },
+      "declaredAt": 1790859526665,
+      "id": "inline:refreshing-call-history-keeps-tenant-data-loaded-8abd72d5",
+      "state": "bound",
+      "statement": "Refreshing call history keeps tenant data loaded without session-expired sync errors.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790859526824
     },
     "inline:retry-sync-is-unnecessary-because-data-already-l-50c88dac": {
       "binding": {

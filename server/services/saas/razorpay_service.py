@@ -98,6 +98,7 @@ async def confirm_wallet_payment(
             session.add(wallet)
             await session.flush()
         wallet.balance_inr_paise += paise
+        wallet.currency = "inr"
         wallet.updated_at = _utcnow()
         row.status = "paid"
         inv_num = f"INV-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{uuid.uuid4().hex[:8].upper()}"

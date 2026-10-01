@@ -390,6 +390,10 @@ class GoogleTokenBody(BaseModel):
     idToken: str = Field(..., min_length=10)
 
 
+class HandoffBody(BaseModel):
+    handoff: str = Field(..., min_length=10, max_length=200)
+
+
 @router.get("/api/auth/google/config")
 async def auth_google_config():
     from server.services.saas.google_oauth_service import google_signin_config
@@ -398,14 +402,14 @@ async def auth_google_config():
 
 
 @router.get("/api/auth/google/start")
-async def auth_google_start():
+async def auth_google_start(return_to: str | None = None):
     from fastapi.responses import RedirectResponse
 
     from server.services.saas.google_oauth_service import google_oauth_authorize_url, new_oauth_state
 
     _ensure_saas_db()
     try:
-        state = new_oauth_state()
+        state = new_oauth_state(return_to)
         url = google_oauth_authorize_url(state)
         return RedirectResponse(url)
     except ValueError as e:
@@ -423,26 +427,44 @@ async def auth_google_callback(
     from server.config.env import get_settings
     from server.services.saas.google_oauth_service import (
         consume_oauth_state,
+        create_auth_handoff,
         exchange_code_for_tokens,
         login_or_register_google,
     )
 
     settings = get_settings()
+    default_front = settings.voxly_frontend_url.rstrip("/")
+    state_info = consume_oauth_state(state)
+    front = (state_info or {}).get("return_to") or default_front
     if error or not code:
-        return RedirectResponse(f"{settings.voxly_frontend_url}/?auth_error=google")
-    if not consume_oauth_state(state):
-        return RedirectResponse(f"{settings.voxly_frontend_url}/?auth_error=google_state")
+        return RedirectResponse(f"{front}/?auth_error=google")
+    if state_info is None:
+        return RedirectResponse(f"{front}/?auth_error=google_state")
     _ensure_saas_db()
     try:
         id_token = await exchange_code_for_tokens(code)
         data = await login_or_register_google(id_token)
-        q = f"accessToken={data['accessToken']}&expiresIn={data.get('expiresIn', 900)}"
-        resp = RedirectResponse(f"{settings.voxly_frontend_url}/#auth/callback?{q}")
-        if data.get("refreshToken"):
-            set_refresh_cookie(resp, data["refreshToken"])
-        return resp
+        # Do NOT Set-Cookie on this redirect — the API host is often not the SPA
+        # origin (api-dev vs app-dev / Vite). SPA redeems handoff via same-origin /api.
+        hid = create_auth_handoff(data)
+        return RedirectResponse(f"{front}/#auth/callback?handoff={hid}")
     except ValueError:
-        return RedirectResponse(f"{settings.voxly_frontend_url}/?auth_error=google")
+        return RedirectResponse(f"{front}/?auth_error=google")
+
+
+@router.post("/api/auth/handoff")
+async def auth_handoff(body: HandoffBody, response: Response):
+    """Redeem a one-time OAuth handoff; sets refresh cookie on the SPA origin (via proxy)."""
+    _ensure_saas_db()
+    from server.services.saas.google_oauth_service import consume_auth_handoff
+
+    data = consume_auth_handoff(body.handoff)
+    if not data or not data.get("accessToken"):
+        raise HTTPException(
+            status_code=401,
+            detail={"error": {"code": "invalid_handoff", "message": "Sign-in link expired. Try again."}},
+        )
+    return _attach_refresh(response, data)
 
 
 @router.post("/api/auth/google")

@@ -52,15 +52,19 @@ export function normalizePhoneNumber(row, agentsById = {}) {
 
 export function normalizeWallet(apiWallet, fallback) {
   if (!apiWallet) return fallback;
-  const usd = apiWallet.balanceUsd ?? 0;
+  const fx = Number(apiWallet.fxRateInr) || 95.64;
+  const inr = Number(apiWallet.balanceInr) || 0;
+  let usd = Number(apiWallet.balanceUsd) || 0;
+  // Razorpay top-ups land in INR; surface FX-converted USD when cents are empty.
+  if (usd <= 0 && inr > 0 && fx > 0) usd = inr / fx;
   const minutes =
     apiWallet.remainingMinutes != null
       ? Number(apiWallet.remainingMinutes)
-      : Math.max(0, Math.floor((usd / 0.095) * 60) / 60);
+      : Math.max(0, Math.floor(usd / Math.max(0.001, Number(apiWallet.rateUsdPerMin) || 0.12)));
   return {
     ...fallback,
     balanceUsd: usd,
-    balanceInr: apiWallet.balanceInr,
+    balanceInr: inr,
     usdEquivalent: usd,
     remainingMinutes: minutes,
     currency: apiWallet.currency || 'USD',
@@ -70,7 +74,7 @@ export function normalizeWallet(apiWallet, fallback) {
     webRateUsdPerMin: apiWallet.webRateUsdPerMin,
     didMonthlyInr: apiWallet.didMonthlyInr,
     didMonthlyUsd: apiWallet.didMonthlyUsd,
-    fxRateInr: apiWallet.fxRateInr,
+    fxRateInr: fx,
     myUsageInr: apiWallet.myUsageInr,
     myUsageUsd: apiWallet.myUsageUsd,
   };

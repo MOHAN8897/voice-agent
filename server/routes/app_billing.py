@@ -151,9 +151,13 @@ async def billing_transactions(
 
 @router.get("/api/billing/razorpay/config")
 async def razorpay_public_config():
+    """Public: key id for Checkout. Re-reads env so keys added after process start apply."""
+    get_settings.cache_clear()
     settings = get_settings()
+    key = (settings.razorpay_api_key or "").strip()
+    secret = (settings.razorpay_api_secret or "").strip()
     return {
-        "enabled": bool(settings.razorpay_api_key and settings.razorpay_api_secret),
-        "keyId": settings.razorpay_api_key or "",
+        "enabled": bool(key and secret),
+        "keyId": key,
         "currency": "INR",
     }

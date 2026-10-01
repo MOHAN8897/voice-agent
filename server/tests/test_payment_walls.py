@@ -64,6 +64,13 @@ async def test_inr_wallet_uses_the_inr_minimum(monkeypatch):
     await bws.assert_wallet_allows_pstn(uuid.uuid4())
 
 
+async def test_razorpay_inr_credit_counts_even_if_currency_still_usd(monkeypatch):
+    """Razorpay used to leave currency=usd while only balance_inr_paise grew."""
+    _use_wallet(monkeypatch, FakeWallet(cents=0, paise=6000, currency="usd"))
+    await bws.assert_wallet_allows_pstn(uuid.uuid4())
+    assert await bws.wallet_allows_inbound(uuid.uuid4()) is True
+
+
 async def test_no_wall_when_saas_auth_is_off(monkeypatch):
     monkeypatch.setenv("SAAS_AUTH_ENABLED", "false")
     get_settings.cache_clear()

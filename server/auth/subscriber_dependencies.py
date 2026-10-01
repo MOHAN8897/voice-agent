@@ -15,7 +15,7 @@ from server.services.saas.platform_admins import effective_membership_role
 from server.services.saas.tenant_guard import (
     SubscriberPrincipal,
     assert_membership,
-    assert_tenant_active,
+    assert_session_tenant,
 )
 
 
@@ -72,7 +72,7 @@ async def principal_from_verified_token(token: str) -> SubscriberPrincipal:
     user_id = uuid.UUID(claims.user_id)
     tenant_id = uuid.UUID(claims.tenant_id)
     async with factory() as session:
-        await assert_tenant_active(session, tenant_id)
+        await assert_session_tenant(session, user_id, tenant_id)
         membership = await assert_membership(session, user_id, tenant_id)
         user = await session.get(User, user_id)
         if user is None or user.deleted_at is not None or user.status == "disabled":

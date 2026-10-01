@@ -165,6 +165,8 @@ export function WorkspaceProvider({ children }) {
     };
 
     const run = (async () => {
+    // Suppress logout during batch sync — one 401 must not wipe the session mid-flight.
+    await api.withAuthPolicy({ logoutOn401: false }, async () => {
     try {
       const fetchedAgents = await capture('Agents', () => api.agents.list(), []);
       const agentMap = {};
@@ -185,7 +187,7 @@ export function WorkspaceProvider({ children }) {
 
       const [fetchedCalls, fetchedLeads, fetchedCampaigns, fetchedWallet, fetchedCatalog, fetchedCallStats] =
         await Promise.all([
-          capture('Calls', () => api.calls.list({ limit: 100 }), []),
+          capture('Calls', () => api.calls.list({ limit: 100, agentMap }), []),
           capture('Leads', () => api.leads.list(), []),
           capture('Campaigns', () => api.campaigns.list(), []),
           capture('Wallet', () => api.billing.getWallet(), null),
@@ -215,6 +217,7 @@ export function WorkspaceProvider({ children }) {
       setIsLoading(false);
       loadInflightRef.current = null;
     }
+    });
     })();
     loadInflightRef.current = run;
     return run;
@@ -277,13 +280,21 @@ export function WorkspaceProvider({ children }) {
   }, [agents.length, currentWorkspaceId]);
 
   useEffect(() => {
-    loadWorkspaceData();
-    syncTenantWorkspace();
-    const onAuth = () => {
-      loadWorkspaceData();
-      syncTenantWorkspace();
+    let debounceTimer = null;
+    const scheduleSync = () => {
+      if (!api.getToken()) return;
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        loadWorkspaceData();
+        syncTenantWorkspace();
+      }, 120);
     };
+    // Boot: AuthProvider fires voxly:session after refreshSession — do not also
+    // kick an immediate load here or we race two syncs on every hard reload.
+    scheduleSync();
+    const onAuth = () => scheduleSync();
     const onLogout = () => {
+      clearTimeout(debounceTimer);
       setAgents([]);
       setPhoneNumbers([]);
       setCalls([]);
@@ -310,6 +321,7 @@ export function WorkspaceProvider({ children }) {
     window.addEventListener('voxly:session', onAuth);
     window.addEventListener('voxly:logout', onLogout);
     return () => {
+      clearTimeout(debounceTimer);
       window.removeEventListener('voxly:session', onAuth);
       window.removeEventListener('voxly:logout', onLogout);
     };

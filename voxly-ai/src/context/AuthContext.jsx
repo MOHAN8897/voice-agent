@@ -54,9 +54,25 @@ export function AuthProvider({ children }) {
       if (hash.includes('auth/callback')) {
         const qs = hash.split('?')[1] || '';
         const params = new URLSearchParams(qs);
+        const handoff = params.get('handoff');
         const access = params.get('accessToken');
-        if (access) api.setToken(access);
         window.location.hash = '#dashboard/employees';
+        if (handoff) {
+          try {
+            const data = await api.auth.consumeHandoff(handoff);
+            const normalized = normalizeUser(data);
+            if (normalized) {
+              authService.saveSession(normalized);
+              setUser(normalized);
+            }
+          } catch {
+            /* refreshSession below will clear a dead handoff */
+          }
+        } else if (access) {
+          // Legacy redirect put access in the hash but Set-Cookie on the API host —
+          // cookie never reaches the SPA origin. Prefer handoff; this still restores access.
+          api.setToken(access);
+        }
       }
 
       const stored = authService.getSession();
@@ -121,6 +137,7 @@ export function AuthProvider({ children }) {
     const data = await authService.signInWithEmailPassword(email, password);
     const normalized = normalizeUser(data);
     setUser(normalized);
+    window.dispatchEvent(new Event('voxly:session'));
     return normalized;
   };
 
@@ -131,6 +148,7 @@ export function AuthProvider({ children }) {
     }
     const normalized = normalizeUser(data);
     setUser(normalized);
+    window.dispatchEvent(new Event('voxly:session'));
     return normalized;
   };
 

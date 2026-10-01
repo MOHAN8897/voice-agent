@@ -215,7 +215,10 @@ export function BillingModule() {
               ))}
             </div>
             {!razorpayEnabled && (
-              <p className="text-[11px] text-[#B45309]">Razorpay is not enabled — wallet top-up is unavailable.</p>
+              <p className="text-[11px] text-[#B45309]">
+                Razorpay is not enabled on this API — set RAZORPAY_API_KEY / RAZORPAY_API_SECRET,
+                restart the API, then hard-refresh. Wallet top-up stays unavailable until then.
+              </p>
             )}
           </div>
         </SolidCard>
