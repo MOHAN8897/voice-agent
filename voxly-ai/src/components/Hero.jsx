@@ -197,6 +197,7 @@ export function Hero({
   const loopIndexRef = useRef(0);
   const isHoveredRef = useRef(false);
   const isInteractingRef = useRef(false);
+  const handleBotClickRef = useRef(() => {});
 
   // Preload all robot voice audio clips for zero-delay instant playback
   useEffect(() => {
@@ -374,9 +375,8 @@ export function Hero({
     resetDismissTimer(3000);
   };
 
-  // HIGH-PERFORMANCE ZERO-RERENDER MOUSE TRACKING:
-  // Updates heroPointerRef directly at 60/120fps without triggering React component re-renders.
-  // Caches container bounding rect on scroll/resize to eliminate layout thrashing.
+  // Pointer tracking for mouse + touch (mousemove alone leaves phones stationary).
+  // Updates heroPointerRef at frame rate without React re-renders.
   useEffect(() => {
     const updateBotRect = () => {
       if (sceneContainerRef.current) {
@@ -384,11 +384,7 @@ export function Hero({
       }
     };
 
-    updateBotRect();
-    window.addEventListener('resize', updateBotRect, { passive: true });
-    window.addEventListener('scroll', updateBotRect, { passive: true });
-
-    const handleMouseMove = (e) => {
+    const setPointerFromClient = (clientX, clientY) => {
       if (!botRectRef.current && sceneContainerRef.current) {
         botRectRef.current = sceneContainerRef.current.getBoundingClientRect();
       }
@@ -396,56 +392,102 @@ export function Hero({
       if (!rect) return;
 
       const isDesktop = window.innerWidth >= 960;
-      // On desktop, the 3D robot is shifted left (-0.22 in Three.js ≈ -55px on screen)
       const botOffsetX = isDesktop ? -55 : 0;
       const botCenterX = rect.left + rect.width * 0.5 + botOffsetX;
       const botCenterY = rect.top + rect.height * 0.45;
 
-      const diffX = e.clientX - botCenterX;
-      const diffY = e.clientY - botCenterY;
-
-      // Natural, responsive distance normalization across viewport
       const maxDistX = Math.max(window.innerWidth * 0.45, 380);
-      const maxDistY = Math.max(window.innerHeight * 0.40, 280);
-
-      const normX = Math.max(-1, Math.min(1, diffX / maxDistX));
-      const normY = -Math.max(-1, Math.min(1, diffY / maxDistY));
+      const maxDistY = Math.max(window.innerHeight * 0.4, 280);
+      const normX = Math.max(-1, Math.min(1, (clientX - botCenterX) / maxDistX));
+      const normY = -Math.max(-1, Math.min(1, (clientY - botCenterY) / maxDistY));
 
       heroPointerRef.current.x = normX;
       heroPointerRef.current.y = normY;
     };
 
-    const handleMouseLeave = () => {
+    const resetPointer = () => {
       heroPointerRef.current.x = 0;
       heroPointerRef.current.y = 0;
     };
 
+    updateBotRect();
+    window.addEventListener('resize', updateBotRect, { passive: true });
+    window.addEventListener('scroll', updateBotRect, { passive: true });
+
+    const handleMouseMove = (e) => setPointerFromClient(e.clientX, e.clientY);
+    document.addEventListener('mouseleave', resetPointer);
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
-    document.addEventListener('mouseleave', handleMouseLeave);
+
+    // Touch: finger over the hero scene drives look-at. No DeviceOrientation —
+    // that would prompt for motion/sensor permission before Live Mic.
+    // Short stationary taps also fire handleBotClick — some Android GPUs miss
+    // R3F mesh raycasts, which made the bot "only talk" after a lucky first hit.
+    const sceneEl = sceneContainerRef.current;
+    const touchOrigin = { x: 0, y: 0, moved: false, active: false };
+
+    const handlePointerDown = (e) => {
+      if (e.pointerType === 'mouse') return;
+      touchOrigin.x = e.clientX;
+      touchOrigin.y = e.clientY;
+      touchOrigin.moved = false;
+      touchOrigin.active = true;
+      setPointerFromClient(e.clientX, e.clientY);
+    };
+    const handlePointerMove = (e) => {
+      if (e.pointerType === 'mouse') return;
+      if (!touchOrigin.active) return;
+      if (typeof e.clientX !== 'number') return;
+      const dx = e.clientX - touchOrigin.x;
+      const dy = e.clientY - touchOrigin.y;
+      if (dx * dx + dy * dy > 100) touchOrigin.moved = true;
+      setPointerFromClient(e.clientX, e.clientY);
+    };
+    const handlePointerUp = (e) => {
+      if (e.pointerType === 'mouse') return;
+      const wasTap = touchOrigin.active && !touchOrigin.moved;
+      touchOrigin.active = false;
+      window.setTimeout(resetPointer, 420);
+      if (wasTap) handleBotClickRef.current();
+    };
+
+    if (sceneEl) {
+      sceneEl.addEventListener('pointerdown', handlePointerDown, { passive: true });
+      sceneEl.addEventListener('pointermove', handlePointerMove, { passive: true });
+      sceneEl.addEventListener('pointerup', handlePointerUp, { passive: true });
+      sceneEl.addEventListener('pointercancel', handlePointerUp, { passive: true });
+    }
 
     return () => {
       window.removeEventListener('resize', updateBotRect);
       window.removeEventListener('scroll', updateBotRect);
       window.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseleave', handleMouseLeave);
+      document.removeEventListener('mouseleave', resetPointer);
+      if (sceneEl) {
+        sceneEl.removeEventListener('pointerdown', handlePointerDown);
+        sceneEl.removeEventListener('pointermove', handlePointerMove);
+        sceneEl.removeEventListener('pointerup', handlePointerUp);
+        sceneEl.removeEventListener('pointercancel', handlePointerUp);
+      }
     };
+    // handleBotClick is stable enough via refs; re-bind only on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // MANUAL CLICKS:
-  // First click is always "Hi!" with right hand raised high waving palm front.
-  // Subsequent clicks cycle through dialogue responses, voices, and body interaction states.
-  // Protection: when clicking initiates an interaction, until that interaction is completed
-  // the 3D model does NOT jump to a different interaction (prevents manhandling/click-spam).
+  // MANUAL CLICKS / TAPS:
+  // First tap is always "Hi!" with wave. Later taps cycle dialogue + gestures.
+  // A second deliberate tap can interrupt speech so phones don't feel stuck
+  // in a "talking only" state while the first clip plays.
   const handleBotClick = () => {
-    if (voiceAgent.isSpeaking || isInteractingRef.current) {
-      return;
-    }
-
     const now = Date.now();
-    if (now - lastClickTimeRef.current < 400) {
+    if (now - lastClickTimeRef.current < 350) {
       return; // Ignore duplicate synthetic/bubbling events
     }
     lastClickTimeRef.current = now;
+
+    if (voiceAgent.isSpeaking || isInteractingRef.current) {
+      voiceAgent.stopTTS();
+      isInteractingRef.current = false;
+    }
 
     clickCountRef.current += 1;
     const count = clickCountRef.current;
@@ -472,6 +514,7 @@ export function Hero({
 
     executeStep(stepData);
   };
+  handleBotClickRef.current = handleBotClick;
 
   return (
     <section
@@ -544,6 +587,7 @@ export function Hero({
             <div
               ref={sceneContainerRef}
               className="relative w-full h-[380px] sm:h-[440px] lg:h-[500px] flex items-center justify-center cursor-pointer select-none"
+              style={{ touchAction: 'none' }}
             >
               <VoxlyScene
                 state={botState}

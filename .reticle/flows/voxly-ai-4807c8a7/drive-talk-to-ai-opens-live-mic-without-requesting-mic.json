@@ -1,0 +1,93 @@
+{
+  "version": 2,
+  "name": "drive-talk-to-ai-opens-live-mic-without-requesting-mic",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1790928331724,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Talk to AI"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "text",
+        "contains": "Browser microphone only"
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Start speaking with microphone"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "text",
+            "contains": "Tap Voxly for a surprise"
+          },
+          {
+            "kind": "allOf",
+            "predicates": [
+              {
+                "kind": "text",
+                "contains": "Microphone permission next"
+              },
+              {
+                "kind": "text",
+                "contains": "Allow microphone & start"
+              },
+              {
+                "kind": "text",
+                "contains": "Confirm above, then allow microphone"
+              }
+            ]
+          }
+        ]
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Not now"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "text",
+        "contains": "Click to speak via microphone"
+      },
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "intent": "Talk to AI opens Live Mic without requesting microphone on open.",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "desktop"
+  },
+  "intentId": "flow:drive-talk-to-ai-opens-live-mic-without-requesting-mic"
+}

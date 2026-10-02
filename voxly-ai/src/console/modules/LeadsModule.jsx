@@ -20,6 +20,7 @@ import { useWorkspace } from '../context/WorkspaceContext';
 export function LeadsModule({ agentId = null, agentName = '' }) {
   const {
     leads,
+    leadsForAgent,
     updateLeadStage,
     updateLeadNotes,
     triggerCallToLead,
@@ -38,13 +39,11 @@ export function LeadsModule({ agentId = null, agentName = '' }) {
 
   const stages = ['New', 'Contacted', 'Qualified', 'Meeting Booked', 'Unqualified'];
 
-  // Leads are not attributed to an individual agent yet (the Lead record has no agent
-  // column), so a per-agent list would always be empty. When the filter matches
-  // nothing we fall back to the real workspace pipeline and say so, instead of
-  // showing a blank board that reads as "this agent produced nothing".
-  const scopedLeads = agentId ? leads.filter((l) => l.agentId === agentId) : leads;
-  const agentAttributionMissing = Boolean(agentId) && scopedLeads.length === 0;
-  const visibleLeads = agentAttributionMissing ? leads : scopedLeads;
+  // Leads carry an owning agent, and the workspace fetches them with a server-side
+  // agentId filter. Inside an agent workspace this shows only that agent's leads;
+  // there is deliberately no fallback to the shared pipeline, because doing that
+  // put one agent's leads in another agent's board.
+  const visibleLeads = leadsForAgent(agentId);
 
   const filteredLeads = visibleLeads.filter((l) => {
     const q = searchQuery.toLowerCase();
@@ -85,15 +84,6 @@ export function LeadsModule({ agentId = null, agentName = '' }) {
           <p className="text-xs text-[#524E5E] mt-0.5">
             Leads automatically captured, BANT-qualified, and scored by AI voice employees during phone calls.
           </p>
-          {agentAttributionMissing && (
-            <p
-              data-testid="leads-no-agent-attribution"
-              className="text-[11px] text-[#B45309] mt-1"
-            >
-              Leads are not linked to an individual agent yet, so this is the whole workspace
-              pipeline. Per-agent attribution is on the list for a backend field.
-            </p>
-          )}
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
@@ -406,7 +396,9 @@ export function LeadsModule({ agentId = null, agentName = '' }) {
               setAddError(null);
               try {
                 if (!addForm.name.trim()) throw new Error('Name is required');
-                await createLead(addForm);
+                // Attribute a hand-added lead to the agent whose workspace it was
+                // added in, so it lands on that agent's board and nowhere else.
+                await createLead({ ...addForm, agentId });
                 setIsAddOpen(false);
                 setAddForm({ name: '', phone: '', email: '', notes: '' });
               } catch (e) {

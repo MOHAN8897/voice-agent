@@ -125,7 +125,7 @@ export function Topbar({
         <button
           type="button"
           data-testid="topbar-wallet"
-          onClick={() => openAddFunds?.('topbar')}
+          onClick={() => openAddFunds?.(null)}
           className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white hover:bg-[#FAF9FD] text-[#0F0E17] border border-[#E4E2EB] shadow-2xs transition-all active:scale-[0.98]"
           title="Wallet balance — click to add funds"
         >

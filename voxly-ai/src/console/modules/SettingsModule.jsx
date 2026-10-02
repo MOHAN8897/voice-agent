@@ -3,6 +3,7 @@ import { Shield, Users, Wallet } from 'lucide-react';
 import { SolidCard } from '../ui/SolidCard';
 import { useAuth } from '../../context/AuthContext';
 import { useWorkspace } from '../context/WorkspaceContext';
+import { VerifyIdentityCard } from '../ui/VerifyIdentityCard';
 
 export function SettingsModule() {
   const { user, isPlatformAdmin, isDevTester } = useAuth();
@@ -17,6 +18,18 @@ export function SettingsModule() {
           decided by the API on every request.
         </p>
       </div>
+
+      <SolidCard className="space-y-3">
+        <h3 className="text-xs font-bold text-[#0F0E17] flex items-center gap-2">
+          <Shield className="w-3.5 h-3.5 text-[#6344E7]" />
+          Identity verification
+        </h3>
+        <p className="text-[11px] text-[#524E5E] leading-relaxed">
+          Complete KYC once. Buying phone numbers and placing live phone calls require an approved
+          identity check.
+        </p>
+        <VerifyIdentityCard />
+      </SolidCard>
 
       <SolidCard className="space-y-3">
         <h3 className="text-xs font-bold text-[#0F0E17] flex items-center gap-2">

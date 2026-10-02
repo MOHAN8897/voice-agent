@@ -1,11 +1,13 @@
 """Stripe checkout + number reservations (PRD-04)."""
 from __future__ import annotations
 
+import logging
 import re
 import uuid
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
+from sqlalchemy.exc import IntegrityError
 
 from server.config.env import get_settings
 from server.db.connection import get_session_factory
@@ -13,6 +15,8 @@ from server.db.models.entities import Agent, Tenant
 from server.db.models.phase5_models import PhoneNumber
 from server.db.models.saas_models import NumberPurchase, NumberReservation, ProvisionJob
 from server.services.saas.tenant_guard import SubscriberPrincipal, subscriber_workspace_tenant_id
+
+logger = logging.getLogger(__name__)
 
 #: Strict E.164: '+', then 8-15 digits, first digit 1-9 (never 0).
 E164_RE = re.compile(r"^\+[1-9]\d{7,14}$")
@@ -159,12 +163,21 @@ async def get_purchase(purchase_id: uuid.UUID, tenant_id: uuid.UUID) -> dict | N
         row = await session.get(NumberPurchase, purchase_id)
         if row is None or row.tenant_id != tenant_id:
             return None
+        # The provision job's error is the only explanation a user gets for a
+        # failed purchase — surface it rather than a bare "failed".
+        job = (
+            await session.execute(
+                select(ProvisionJob).where(ProvisionJob.purchase_id == row.id)
+            )
+        ).scalar_one_or_none()
+        last_error = job.last_error if job is not None and job.last_error else None
         return {
             "purchaseId": str(row.id),
             "e164": row.e164,
             "status": row.status,
             "phoneNumberId": str(row.phone_number_id) if row.phone_number_id else None,
             "assignAgentId": str(row.assign_agent_id) if row.assign_agent_id else None,
+            "lastError": last_error,
         }
 
 
@@ -195,6 +208,163 @@ def normalize_e164(raw: str) -> str:
     return candidate
 
 
+async def assert_carrier_can_buy(e164: str) -> None:
+    """The account DID must be ordered from Telnyx in the same breath.
+
+    Without this, a workspace whose Telnyx balance is empty has its wallet debited,
+    sees a "paid" purchase, and only discovers the carrier refused when the
+    provision job fails — then gets an async refund. Checking first turns that
+    into an honest, synchronous failure before any money moves.
+    """
+    from server.services.telnyx_client import TelnyxClient
+
+    try:
+        balance = await TelnyxClient().get_balance()
+    except Exception as exc:
+        # Carrier unreachable is not proof of no balance — let the purchase through
+        # and let provisioning decide, rather than blocking every buyer on a
+        # transient API error.
+        logger.warning("telnyx balance check failed, allowing purchase: %s", exc)
+        return
+    remaining = _carrier_remaining(balance)
+    # Telnyx returns balance as a string ("0.56"); treat low prepaid credit as
+    # exhausted before we debit a customer and place an order that will 402.
+    if remaining is not None and remaining < CARRIER_MIN_BALANCE_USD:
+        logger.warning(
+            "telnyx balance too low for DID order e164=%s remaining=%s",
+            e164,
+            remaining,
+        )
+        raise ValueError("carrier_balance_exhausted")
+
+
+#: Typical local DID order needs ~$1 prepaid; $0.56 still 402s at Telnyx.
+CARRIER_MIN_BALANCE_USD = 1.0
+
+
+def _carrier_remaining(balance: dict) -> float | None:
+    """Remaining prepaid balance, or None when the carrier did not report one."""
+    if not isinstance(balance, dict):
+        return None
+    data = balance.get("data")
+    record = data if isinstance(data, dict) else balance
+    for key in ("available_credit", "balance", "available_balance", "amount"):
+        value = record.get(key)
+        if isinstance(value, (int, float)):
+            return float(value)
+        if isinstance(value, str):
+            try:
+                return float(value.strip().replace(",", ""))
+            except ValueError:
+                continue
+    return None
+
+
+async def _purchase_from_inventory(
+    principal: SubscriberPrincipal,
+    *,
+    e164: str,
+    country_code: str,
+    assign_agent_id: str | None,
+) -> dict | None:
+    """Transfer an admin-pool DID to the buyer. Returns None if not in inventory."""
+    from server.services.saas.billing_wallet_service import debit_did_purchase
+    from server.services.saas.billing_rates import rates_with_derived_inr
+    from server.services.saas.number_inventory import (
+        ensure_platform_inventory_tenant,
+        get_inventory_number,
+    )
+
+    inv = await get_inventory_number(e164)
+    if inv is None:
+        return None
+    factory = get_session_factory()
+    if factory is None:
+        raise RuntimeError("database_required")
+    workspace_tid = subscriber_workspace_tenant_id(principal)
+    inventory_tid = await ensure_platform_inventory_tenant()
+
+    async with factory() as session:
+        pn = await session.get(PhoneNumber, inv.id)
+        if pn is None or pn.tenant_id != inventory_tid or pn.released_at is not None:
+            return None
+        bind_agent = await _tenant_agent_id(
+            session, workspace_tid, parse_assign_agent_id(assign_agent_id)
+        )
+        purchase = NumberPurchase(
+            tenant_id=principal.tenant_id,
+            user_id=principal.user_id,
+            e164=e164,
+            country_code=country_code,
+            status="paid",
+            assign_agent_id=bind_agent,
+            created_at=_utcnow(),
+            updated_at=_utcnow(),
+        )
+        session.add(purchase)
+        await session.flush()
+        purchase_id = purchase.id
+        # Hold the inventory row so a concurrent buyer cannot take it.
+        pn.tenant_id = workspace_tid
+        pn.status = "active"
+        pn.billing_source = "wallet"
+        pn.agent_id = bind_agent
+        pn.purchase_id = purchase_id
+        pn.inbound_enabled = True
+        pn.outbound_enabled = True
+        await session.commit()
+        phone_number_id = pn.id
+        telnyx_number_id = pn.telnyx_number_id
+
+    try:
+        await debit_did_purchase(
+            principal.tenant_id,
+            user_id=principal.user_id,
+            e164=e164,
+            purchase_id=purchase_id,
+        )
+    except Exception:
+        # Roll ownership back to inventory if the wallet debit fails.
+        async with factory() as session:
+            pn = await session.get(PhoneNumber, phone_number_id)
+            row = await session.get(NumberPurchase, purchase_id)
+            if pn is not None:
+                pn.tenant_id = inventory_tid
+                pn.status = "available"
+                pn.billing_source = "inventory"
+                pn.agent_id = None
+                pn.purchase_id = None
+                pn.inbound_enabled = False
+                pn.outbound_enabled = False
+            if row is not None:
+                row.status = "failed"
+                row.updated_at = _utcnow()
+            await session.commit()
+        raise
+
+    async with factory() as session:
+        row = await session.get(NumberPurchase, purchase_id)
+        if row is not None:
+            row.status = "provisioned"
+            row.updated_at = _utcnow()
+            await session.commit()
+
+    rates = rates_with_derived_inr()
+    return {
+        "purchaseId": str(purchase_id),
+        "e164": e164,
+        "status": "provisioned",
+        "provisioning": False,
+        "payment": "wallet",
+        "phoneNumberId": str(phone_number_id),
+        "id": str(phone_number_id),
+        "telnyxNumberId": telnyx_number_id,
+        "source": "inventory",
+        "didMonthlyUsd": round(rates["did_monthly_usd_cents"] / 100.0, 2),
+        "didMonthlyInr": round(rates["did_monthly_inr_paise"] / 100.0, 2),
+    }
+
+
 async def purchase_with_wallet(
     principal: SubscriberPrincipal,
     *,
@@ -202,9 +372,17 @@ async def purchase_with_wallet(
     country_code: str = "IN",
     assign_agent_id: str | None = None,
 ) -> dict:
-    """Reserve → debit wallet → enqueue Telnyx provision (prepaid DID)."""
+    """Reserve → debit wallet → enqueue Telnyx provision (prepaid DID).
+
+    Prefer admin inventory transfer (no carrier order) when the DID already sits
+    in the Platform inventory pool.
+    """
     from server.db.models.saas_models import User
-    from server.services.saas.billing_wallet_service import debit_did_purchase
+    from server.services.saas.billing_wallet_service import (
+        assert_wallet_can_afford_did,
+        debit_did_purchase,
+    )
+    from server.services.saas.number_inventory import ensure_platform_inventory_tenant
     from server.services.saas.provision_worker import enqueue_provision
 
     settings = get_settings()
@@ -214,9 +392,30 @@ async def purchase_with_wallet(
     e164 = normalize_e164(e164)
     if await _active_reservation_conflict(e164):
         raise ValueError("number_reserved")
+
+    # Customer wallet first — same gate for inventory transfer and Telnyx order.
+    await assert_wallet_can_afford_did(principal.tenant_id)
+
+    transferred = await _purchase_from_inventory(
+        principal,
+        e164=e164,
+        country_code=country_code,
+        assign_agent_id=assign_agent_id,
+    )
+    if transferred is not None:
+        return transferred
+
+    # Platform Telnyx prepaid next: never debit a buyer for a DID we cannot order.
+    await assert_carrier_can_buy(e164)
+    inventory_tid = await ensure_platform_inventory_tenant()
     async with factory() as session:
-        owned = await session.execute(select(PhoneNumber).where(PhoneNumber.e164 == e164, PhoneNumber.released_at.is_(None)))
-        if owned.scalar_one_or_none():
+        owned = (
+            await session.execute(
+                select(PhoneNumber).where(PhoneNumber.e164 == e164, PhoneNumber.released_at.is_(None))
+            )
+        ).scalar_one_or_none()
+        # Already on another tenant (not inventory) → unavailable.
+        if owned is not None and owned.tenant_id != inventory_tid:
             raise ValueError("number_unavailable")
         user = await session.get(User, principal.user_id)
         if user and user.email_verified_at is None and settings.saas_require_email_verification_for_buy:
@@ -247,6 +446,14 @@ async def purchase_with_wallet(
         session.add(purchase)
         await session.flush()
         ttl = settings.number_reservation_ttl_minutes
+        # Expiry is enforced by a partial-free unique index on e164, so stale rows
+        # have to go or they would block this number permanently.
+        await session.execute(
+            delete(NumberReservation).where(
+                NumberReservation.e164 == e164,
+                NumberReservation.expires_at <= _utcnow(),
+            )
+        )
         session.add(
             NumberReservation(
                 e164=e164,
@@ -257,8 +464,16 @@ async def purchase_with_wallet(
             )
         )
         purchase_id = purchase.id
-        await session.commit()
+        try:
+            await session.commit()
+        except IntegrityError:
+            # Lost the race to a concurrent buyer of the same number.
+            await session.rollback()
+            raise ValueError("number_reserved") from None
 
+    # The DID is bound to the agent only once the carrier actually provisions it —
+    # process_one_job owns that write, so a failed purchase never leaves an
+    # agent pointing at a number nobody owns.
     try:
         await debit_did_purchase(
             principal.tenant_id,
@@ -272,14 +487,26 @@ async def purchase_with_wallet(
             if row:
                 row.status = "failed"
                 row.updated_at = _utcnow()
-                await session.commit()
+            await session.execute(
+                delete(NumberReservation).where(NumberReservation.purchase_id == purchase_id)
+            )
+            await session.commit()
         raise
     await enqueue_provision(purchase_id)
+    # The admin-configured rate, not the env default, so the quoted price and the
+    # charged price are the same number.
+    from server.services.saas.billing_rates import rates_with_derived_inr
+
+    rates = rates_with_derived_inr()
     return {
         "purchaseId": str(purchase_id),
         "e164": e164,
+        # Provisioning is async — the carrier order can still fail. Saying "paid"
+        # here is accurate; the console polls /telephony/purchases/{id} for the
+        # terminal status rather than claiming the number already exists.
         "status": "paid",
+        "provisioning": True,
         "payment": "wallet",
-        "didMonthlyInr": round(settings.did_monthly_inr_paise / 100.0, 2),
-        "didMonthlyUsd": round(settings.did_monthly_usd_cents / 100.0, 2),
+        "didMonthlyUsd": round(rates["did_monthly_usd_cents"] / 100.0, 2),
+        "didMonthlyInr": round(rates["did_monthly_inr_paise"] / 100.0, 2),
     }

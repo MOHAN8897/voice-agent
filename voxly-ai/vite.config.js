@@ -50,6 +50,61 @@ const panelProxy = {
   },
 };
 
+const LOCAL_DEV_HOSTS = new Set(['localhost', '127.0.0.1', '::1', '[::1]']);
+const allowRemoteDevPortal =
+  process.env.DEV_PORTAL_ALLOW_REMOTE === '1' || process.env.DEV_PORTAL_ALLOW_REMOTE === 'true';
+
+function hostnameIsLocal(hostname) {
+  const h = String(hostname || '')
+    .trim()
+    .toLowerCase()
+    .split('%')[0];
+  const bare = h.startsWith('[') && h.endsWith(']') ? h.slice(1, -1) : h;
+  return LOCAL_DEV_HOSTS.has(h) || LOCAL_DEV_HOSTS.has(bare) || bare.endsWith('.localhost');
+}
+
+function requestHostsAreLocal(req) {
+  if (allowRemoteDevPortal) return true;
+  const candidates = [];
+  for (const header of ['x-forwarded-host', 'host']) {
+    const raw = req.headers[header] || '';
+    for (const part of String(raw).split(',')) {
+      const host = part.trim().split(':')[0]?.trim();
+      if (host) candidates.push(host);
+    }
+  }
+  if (!candidates.length) return false;
+  return candidates.every(hostnameIsLocal);
+}
+
+/** Refuse /dev and /api/dev on the public tunnel so share links never expose ops. */
+function localOnlyDevPortalPlugin() {
+  return {
+    name: 'local-only-dev-portal',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const url = req.url || '';
+        const path = url.split('?')[0] || '';
+        const guarded =
+          path === '/dev' ||
+          path.startsWith('/dev/') ||
+          path.startsWith('/_next') ||
+          path === '/api/dev' ||
+          path.startsWith('/api/dev/');
+        if (!guarded || requestHostsAreLocal(req)) {
+          return next();
+        }
+        res.statusCode = 404;
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-store');
+        res.end(
+          'Dev admin is available on localhost only.\nOpen http://localhost:3000/dev — not the public tunnel link.\n',
+        );
+      });
+    },
+  };
+}
+
 export default defineConfig({
   // Tunnel hostname (app-dev.hustlelabs.in) is not localhost — Reticle refuses to
   // connect unless allowNonLocalhost is on. Pairing token still comes from the daemon.
@@ -59,6 +114,7 @@ export default defineConfig({
       allowNonLocalhost: true,
     }),
     react(),
+    localOnlyDevPortalPlugin(),
   ],
   assetsInclude: ['**/*.glb', '**/*.gltf'],
   server: {
@@ -75,7 +131,7 @@ export default defineConfig({
         changeOrigin: true,
         ws: true,
       },
-      // Voxly routes on the URL hash, so the /dev path space is free to hand over.
+      // Local-only: public Host is blocked above. Ops opens localhost:3000/dev.
       '/dev': panelProxy,
       '/_next': panelProxy,
     },

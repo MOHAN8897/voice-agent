@@ -42,10 +42,10 @@ async def get_or_create_wallet(tenant_id: uuid.UUID) -> BillingWallet:
 
 
 async def wallet_summary(tenant_id: uuid.UUID, user_id: uuid.UUID | None = None) -> dict:
-    from server.services.saas.billing_rates import effective_rates
+    from server.services.saas.billing_rates import rates_with_derived_inr
 
     settings = get_settings()
-    rates = effective_rates()
+    rates = rates_with_derived_inr()
     wallet = await get_or_create_wallet(tenant_id)
     inr_paise = int(getattr(wallet, "balance_inr_paise", 0) or 0)
     cents = int(wallet.balance_cents or 0)
@@ -65,11 +65,13 @@ async def wallet_summary(tenant_id: uuid.UUID, user_id: uuid.UUID | None = None)
     else:
         remaining_min = int(cents // rate_usd)
     summary = {
+        # USD everywhere: the console quotes and displays one currency only.
+        "currency": "USD",
         "balanceUsd": balance_usd,
         "balanceCents": cents,
         "balanceInr": round(inr_paise / 100.0, 2),
         "balanceInrPaise": inr_paise,
-        "currency": (wallet.currency or "usd").upper(),
+        "walletCurrency": (wallet.currency or "usd").upper(),
         "primaryCurrency": primary,
         "tenantId": str(tenant_id),
         "minBalanceUsd": round(settings.pstn_min_balance_usd_cents / 100.0, 2),
@@ -164,6 +166,21 @@ async def assert_wallet_allows_pstn(tenant_id: uuid.UUID) -> None:
 
 
 assert_wallet_allows_usage = assert_wallet_allows_pstn
+
+
+async def assert_wallet_can_afford_did(tenant_id: uuid.UUID) -> None:
+    """Fail fast before inventory transfer or Telnyx order when the wallet cannot cover monthly DID rent."""
+    from server.services.saas.billing_rates import rates_with_derived_inr
+
+    rates = rates_with_derived_inr()
+    want_cents = int(rates["did_monthly_usd_cents"])
+    want_paise = int(rates["did_monthly_inr_paise"])
+    wallet = await get_or_create_wallet(tenant_id)
+    have_cents = int(wallet.balance_cents or 0)
+    have_paise = int(wallet.balance_inr_paise or 0)
+    if have_cents >= want_cents or have_paise >= want_paise:
+        return
+    raise ValueError("insufficient_balance")
 
 
 async def wallet_allows_inbound(tenant_id: uuid.UUID | None) -> bool:
@@ -380,16 +397,17 @@ def _resolve_call_wallet_debit(
     minutes = max(0.0, float(duration_sec)) / 60.0
     if minutes <= 0:
         minutes = 1.0 / 60.0
-    from server.services.saas.billing_rates import effective_rates
-
-    rates = effective_rates()
+    # USD is authoritative. The INR leg is derived from the USD charge at the
+    # chargeable FX, so the two can never disagree and no rupee rate is read
+    # from a second place.
     if channel == "pstn":
-        cents = int(round(minutes * rates["pstn_rate_usd_cents_per_min"]))
-        paise = int(round(minutes * rates["pstn_rate_inr_paise_per_min"]))
+        cents = int(round(minutes * int(settings.pstn_rate_usd_cents_per_min)))
     else:
-        cents = int(round(minutes * rates["web_agent_rate_usd_cents_per_min"]))
-        paise = int(round(minutes * rates["web_agent_rate_inr_paise_per_min"]))
-    return max(1, cents), max(1, paise), "catalog_prorated"
+        cents = int(round(minutes * int(settings.web_agent_rate_usd_cents_per_min)))
+    cents = max(1, cents)
+    fx = float(getattr(settings, "fx_rate_inr", 0) or 95.64) or 95.64
+    paise = max(1, int(round(cents * fx)))
+    return cents, paise, "catalog_prorated"
 
 
 async def bill_call_usage_if_applicable(call_id: str) -> None:
@@ -425,7 +443,10 @@ async def bill_call_usage_if_applicable(call_id: str) -> None:
     duration_sec = int(stored.get("duration_sec") or 0)
     if duration_sec <= 0:
         duration_sec = 60
-    kind = "usage_pstn" if channel == "pstn" else "usage_web"
+    # A browser practice run is still billable when it is attributed to a user —
+    # that is the existing contract — but it is not a real conversation, so it is
+    # tagged distinctly in the ledger and never mixed into PSTN usage reporting.
+    kind = "usage_pstn" if channel == "pstn" else ("usage_web_test" if stored.get("is_test") else "usage_web")
     ref = f"call:{call_id}"
     cents, paise, billing_mode = _resolve_call_wallet_debit(
         call_id=call_id,
@@ -469,9 +490,13 @@ async def debit_did_purchase(
     workspace actually holds — the price is the same in both, so a tenant funded in
     one currency is never locked out by the other's empty balance.
     """
-    settings = get_settings()
-    want_cents = int(settings.did_monthly_usd_cents)
-    want_paise = int(settings.did_monthly_inr_paise)
+    from server.services.saas.billing_rates import rates_with_derived_inr
+
+    # The admin-configured rate, not the env default — otherwise a price change
+    # in the admin panel changes what the console quotes but not what it charges.
+    rates = rates_with_derived_inr()
+    want_cents = int(rates["did_monthly_usd_cents"])
+    want_paise = int(rates["did_monthly_inr_paise"])
     factory = get_session_factory()
     if factory is None:
         raise RuntimeError("database_required")
@@ -507,7 +532,7 @@ async def debit_did_purchase(
                         "code": "insufficient_balance",
                         "message": (
                             "Add funds to your wallet before buying a phone number. "
-                            f"A number costs ${want_cents / 100:.2f} or ₹{want_paise / 100:.2f}."
+                            f"A number costs ${want_cents / 100:.2f} per month."
                         ),
                     }
                 },

@@ -8,13 +8,14 @@ import {
   BRIEF_MIN_CHARS,
   BRIEF_PLACEHOLDER,
   CALL_MODES,
+  DEFAULT_ENABLED_LANGUAGE_CODES,
   INDUSTRY_CHIPS,
-  PRIMARY_LANGUAGES,
+  toLanguageOptions,
 } from './agent-creation';
 
 const EMPTY_DRAFT = {
   brief: '',
-  language: 'en-US',
+  language: DEFAULT_ENABLED_LANGUAGE_CODES[0],
   mode: 'instant_lead',
   role: 'sales',
   direction: 'outbound',
@@ -36,6 +37,10 @@ export function CreateAgentWizard({ isOpen, onClose, onNavigate }) {
   const [draft, setDraft] = useState(EMPTY_DRAFT);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
+  // Which languages exist is an admin setting, not a bundle constant.
+  const [languageOptions, setLanguageOptions] = useState(() =>
+    toLanguageOptions(null)
+  );
 
   const set = useCallback((patch) => setDraft((prev) => ({ ...prev, ...patch })), []);
 
@@ -44,6 +49,30 @@ export function CreateAgentWizard({ isOpen, onClose, onNavigate }) {
     setDraft(EMPTY_DRAFT);
     setError(null);
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    api.agents
+      .languages()
+      .then((languages) => {
+        if (cancelled) return;
+        const options = toLanguageOptions(languages);
+        setLanguageOptions(options);
+        // Keep the draft on a language the platform still offers.
+        set((prev) =>
+          options.some((o) => o.code === prev.language)
+            ? prev
+            : { ...prev, language: options[0]?.code || prev.language }
+        );
+      })
+      .catch(() => {
+        /* keep the bundled fallback labels */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, set]);
 
   const ready = draft.brief.trim().length >= BRIEF_MIN_CHARS;
 
@@ -213,7 +242,7 @@ export function CreateAgentWizard({ isOpen, onClose, onNavigate }) {
               data-testid="employee-language-select"
               className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-3 py-2 text-xs"
             >
-              {PRIMARY_LANGUAGES.map((lang) => (
+              {languageOptions.map((lang) => (
                 <option key={lang.code} value={lang.code}>
                   {lang.label}
                 </option>

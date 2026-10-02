@@ -9,6 +9,7 @@ from server.brain.agent_service import agent_service
 from server.brain.script_entities import strip_entity_tags_section
 from server.services.saas.agent_onboarding_compose import compose_agent_onboarding
 from server.services.saas.employee_brain_build import publish_saas_employee_brain
+from server.services.saas import platform_languages
 from server.services.saas.tenant_guard import (
     SubscriberPrincipal,
     require_subscriber_permission,
@@ -16,6 +17,18 @@ from server.services.saas.tenant_guard import (
 )
 
 router = APIRouter()
+
+
+@router.get("/api/app/agents/languages")
+async def available_languages():
+    """Languages the creation UI may offer.
+
+    Admin-configurable, so the picker is never a hardcoded list in the bundle.
+    """
+    return {
+        "languages": platform_languages.language_options(),
+        "default": platform_languages.enabled_languages()[0],
+    }
 
 
 class ComposeOnboardingBody(BaseModel):
@@ -70,6 +83,19 @@ async def build_employee(
     """Brief → dev-panel script compiler → single Calling script section → cached brain."""
     require_subscriber_permission(principal, "app.agents.write")
     lang = (body.language.strip() or "en-IN")
+    # The picker only offers enabled languages; enforce it here too, or a crafted
+    # request could create an agent in a language the platform has switched off.
+    # Existing agents keep working — this only gates creation.
+    if not platform_languages.is_enabled(lang):
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": {
+                    "code": "language_not_enabled",
+                    "message": f"{lang} is not available for new agents right now.",
+                }
+            },
+        )
     tenant_id = str(subscriber_workspace_tenant_id(principal))
 
     voice_config = {

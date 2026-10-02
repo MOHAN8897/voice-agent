@@ -41,13 +41,18 @@ def test_wallet_debit_uses_stamped_ledger_cost():
 
 
 def test_wallet_debit_prorates_catalog_when_no_ledger():
+    """INR is the mirror of the USD price at the chargeable FX, not its own rate.
+
+    Prices are authored in dollars now, so an independently stored rupee rate
+    could disagree with the dollar price it mirrors and quietly overcharge.
+    """
     settings = SimpleNamespace(
         pstn_rate_usd_cents_per_min=12,
-        pstn_rate_inr_paise_per_min=900,
         web_agent_rate_usd_cents_per_min=10,
-        web_agent_rate_inr_paise_per_min=700,
+        did_monthly_usd_cents=400,
         fx_rate_inr=95.64,
     )
+    fx = settings.fx_rate_inr
 
     class _Ledger:
         @staticmethod
@@ -63,5 +68,5 @@ def test_wallet_debit_prorates_catalog_when_no_ledger():
         )
 
     assert mode == "catalog_prorated"
-    assert paise == int(round(1.5 * 900))
     assert cents == int(round(1.5 * 12))
+    assert paise == int(round(cents * fx))

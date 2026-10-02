@@ -1,0 +1,62 @@
+{
+  "version": 2,
+  "name": "drive-journey-82511b",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1790876656186,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Buy number"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "buy-number-submit"
+        }
+      }
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "buy-number-submit",
+        "source": {
+          "file": "src/console/ui/TactileButton.jsx",
+          "line": 69,
+          "column": 5
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "buy-number-error"
+        }
+      },
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "desktop"
+  }
+}

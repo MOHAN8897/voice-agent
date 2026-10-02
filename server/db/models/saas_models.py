@@ -29,6 +29,31 @@ class User(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
 
+class KycVerification(Base):
+    """Didit KYC state for one user.
+
+    `status` mirrors Didit's session status literals exactly ("Not Started" |
+    "In Progress" | "Awaiting User" | "In Review" | "Approved" | "Declined" |
+    "Resubmitted" | "Abandoned" | "Expired" | "Kyc Expired") because those are the
+    dispatch keys in the webhook handler.
+
+    Only the signature-verified webhook writes `status`. The create-session
+    response and the browser return-trip are hints, never proof of approval.
+    """
+
+    __tablename__ = "kyc_verifications"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.tenant_id"), nullable=False)
+    status: Mapped[str] = mapped_column(String(30), nullable=False, default="Not Started")
+    didit_session_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    decision: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+
 class TenantMembership(Base):
     __tablename__ = "tenant_memberships"
     __table_args__ = (UniqueConstraint("user_id", "tenant_id", name="uq_tenant_membership"),)
@@ -127,7 +152,17 @@ class NumberPurchase(Base):
 
 
 class NumberReservation(Base):
+    """Holds an E.164 while a purchase is in flight.
+
+    Uniquely indexed on `e164` so two concurrent buyers of the same number cannot
+    both pass the "is it reserved?" check — the second insert raises instead of
+    silently double-selling the DID.
+    """
+
     __tablename__ = "number_reservations"
+    __table_args__ = (
+        UniqueConstraint("e164", name="uq_number_reservations_e164_live"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     e164: Mapped[str] = mapped_column(String(20), nullable=False)
@@ -175,7 +210,11 @@ class BillingInvoice(Base):
     invoice_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.tenant_id"), nullable=False)
     invoice_number: Mapped[str] = mapped_column(String(32), nullable=False)
+    #: Settled INR value — what the wallet is actually credited.
     amount_inr_paise: Mapped[int] = mapped_column(Integer, nullable=False)
+    #: Currency the customer was charged in, and that amount in minor units.
+    currency: Mapped[str] = mapped_column(String(8), default="INR", nullable=False)
+    amount_minor: Mapped[int | None] = mapped_column(Integer, nullable=True)
     status: Mapped[str] = mapped_column(String(30), nullable=False)
     razorpay_order_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     razorpay_payment_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
@@ -188,7 +227,11 @@ class RazorpayOrder(Base):
 
     order_id: Mapped[str] = mapped_column(String(64), primary_key=True)
     tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.tenant_id"), nullable=False)
+    #: What the wallet will be credited. Overwritten with Razorpay's settled
+    #: figure on confirmation when the payment reports one.
     amount_inr_paise: Mapped[int] = mapped_column(Integer, nullable=False)
+    currency: Mapped[str] = mapped_column(String(8), default="INR", nullable=False)
+    amount_minor: Mapped[int | None] = mapped_column(Integer, nullable=True)
     status: Mapped[str] = mapped_column(String(30), default="created")
     purpose: Mapped[str] = mapped_column(String(40), default="wallet_topup")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
@@ -213,6 +256,10 @@ class Lead(Base):
 
     lead_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.tenant_id"), nullable=False)
+    #: Which AI employee produced this lead. Nullable: leads created by hand in the
+    #: CRM, and leads that predate attribution, have no owner and stay visible to the
+    #: workspace pipeline. Set for every lead the post-call pipeline writes.
+    agent_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     phone: Mapped[str | None] = mapped_column(String(32), nullable=True)
     email: Mapped[str | None] = mapped_column(String(320), nullable=True)

@@ -169,7 +169,11 @@ async def auth_me(request: Request):
             import uuid
 
             try:
-                return await saas_auth.get_me(uuid.UUID(claims.user_id), uuid.UUID(claims.tenant_id))
+                return await saas_auth.get_me(
+                    uuid.UUID(claims.user_id),
+                    uuid.UUID(claims.tenant_id),
+                    impersonator=claims.impersonator,
+                )
             except ValueError:
                 raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Not found"}})
     names = cookie_names()

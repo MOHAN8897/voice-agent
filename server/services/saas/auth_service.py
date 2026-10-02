@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from server.auth.jwt_tokens import AccessTokenClaims, create_access_token
 from server.auth.passwords import hash_portal_password, verify_portal_password
-from server.auth.rbac import ROLE_CUSTOMER_ADMIN
+from server.auth.rbac import ROLE_CUSTOMER_ADMIN, ROLE_PLATFORM_ADMIN
 from server.config.env import get_settings
 from server.services.saas.platform_admins import (
     effective_membership_role,
@@ -83,33 +83,122 @@ async def _issue_tokens(
     tenant_id: uuid.UUID,
     role: str,
     family_id: uuid.UUID | None = None,
+    *,
+    impersonator: str | None = None,
+    access_ttl_seconds: int | None = None,
 ) -> dict[str, Any]:
     claims = AccessTokenClaims(
         user_id=str(user.user_id),
         tenant_id=str(tenant_id),
         role=role,
         email=user.email,
+        impersonator=impersonator,
     )
-    access, expires_in = create_access_token(claims)
+    access, expires_in = create_access_token(claims, ttl_seconds=access_ttl_seconds)
     raw_refresh = secrets.token_urlsafe(48)
     # A rotation continues the caller's family so reuse detection can see the whole
     # chain; a fresh sign-in starts a new one.
     family_id = family_id or uuid.uuid4()
     settings = get_settings()
+    # Impersonation refresh is short-lived so a leaked handoff cannot linger.
+    refresh_days = 1 if impersonator else settings.jwt_refresh_ttl_days
     session.add(
         RefreshToken(
             user_id=user.user_id,
             token_hash=_hash_token(raw_refresh),
             family_id=family_id,
-            expires_at=_utcnow() + timedelta(days=settings.jwt_refresh_ttl_days),
+            expires_at=_utcnow() + timedelta(days=refresh_days),
             created_at=_utcnow(),
         )
     )
-    return {
+    out: dict[str, Any] = {
         "accessToken": access,
         "refreshToken": raw_refresh,
         "expiresIn": expires_in,
     }
+    if impersonator:
+        out["impersonation"] = {
+            "actor": impersonator,
+            "expiresIn": expires_in,
+        }
+    return out
+
+
+async def issue_impersonation_session(
+    *,
+    tenant_id: uuid.UUID,
+    actor: str,
+    user_id: uuid.UUID | None = None,
+    ttl_seconds: int = 30 * 60,
+) -> dict[str, Any]:
+    """Mint a time-boxed subscriber session as a tenant member (support impersonation)."""
+    factory = get_session_factory()
+    if factory is None:
+        raise RuntimeError("database_required")
+    async with factory() as session:
+        tenant = await session.get(Tenant, tenant_id)
+        if tenant is None or tenant.deleted_at is not None:
+            raise ValueError("tenant_not_found")
+        if tenant.status in {"cancelled"}:
+            raise ValueError("tenant_cancelled")
+        mem_q = (
+            select(TenantMembership, User)
+            .join(User, User.user_id == TenantMembership.user_id)
+            .where(
+                TenantMembership.tenant_id == tenant_id,
+                User.deleted_at.is_(None),
+                User.status == "active",
+            )
+            .order_by(TenantMembership.created_at)
+        )
+        rows = (await session.execute(mem_q)).all()
+        if not rows:
+            raise ValueError("no_active_member")
+        chosen = None
+        if user_id is not None:
+            for m, u in rows:
+                if u.user_id == user_id:
+                    chosen = (m, u)
+                    break
+            if chosen is None:
+                raise ValueError("user_not_member")
+        else:
+            # Prefer customer_admin so the support view matches the tenant's admin console.
+            for m, u in rows:
+                if m.role in (ROLE_CUSTOMER_ADMIN, "customer_admin", ROLE_PLATFORM_ADMIN):
+                    chosen = (m, u)
+                    break
+            if chosen is None:
+                chosen = rows[0]
+        membership, user = chosen
+        role = _role_for_user(user.email, membership.role)
+        tokens = await _issue_tokens(
+            session,
+            user,
+            tenant_id,
+            role,
+            impersonator=actor.strip() or "dev-admin",
+            access_ttl_seconds=ttl_seconds,
+        )
+        await _log_event(
+            session,
+            "admin_impersonation",
+            user_id=user.user_id,
+            tenant_id=tenant_id,
+        )
+        await session.commit()
+        return {
+            **tokens,
+            **_session_public(user, tenant, role),
+            "impersonation": {
+                "actor": actor,
+                "tenantId": str(tenant_id),
+                "tenantName": tenant.name,
+                "userId": str(user.user_id),
+                "userEmail": user.email,
+                "expiresIn": tokens["expiresIn"],
+            },
+        }
 
 
 def _user_public(user: User) -> dict[str, Any]:
@@ -476,7 +565,12 @@ async def logout_all(user_id: uuid.UUID) -> None:
         await session.commit()
 
 
-async def get_me(principal_user_id: uuid.UUID, principal_tenant_id: uuid.UUID) -> dict[str, Any]:
+async def get_me(
+    principal_user_id: uuid.UUID,
+    principal_tenant_id: uuid.UUID,
+    *,
+    impersonator: str | None = None,
+) -> dict[str, Any]:
     factory = get_session_factory()
     if factory is None:
         raise RuntimeError("database_required")
@@ -508,6 +602,14 @@ async def get_me(principal_user_id: uuid.UUID, principal_tenant_id: uuid.UUID) -
             **_session_public(user, tenant, role),
             "memberships": mems,
         }
+        if impersonator:
+            payload["impersonation"] = {
+                "actor": impersonator,
+                "tenantId": str(principal_tenant_id),
+                "tenantName": tenant.name,
+                "userId": str(user.user_id),
+                "userEmail": user.email,
+            }
         await _seed_admin_wallet(principal_tenant_id, user.user_id, user.email)
         return payload
 

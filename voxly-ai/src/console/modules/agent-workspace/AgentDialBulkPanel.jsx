@@ -191,7 +191,7 @@ export function AgentDialBulkPanel({ agentId, agentName }) {
         </div>
         <p className="text-[11px] text-[#524E5E]">
           Paste numbers (one per line, optional name after comma). Concurrent dials are capped
-          for Telnyx + your wallet balance. Retries use the delay below when a contact does not connect.
+          based on your plan and wallet balance. Retries use the delay below when a contact does not connect.
         </p>
         <label className="block text-[11px] font-semibold text-[#0F0E17]">
           Campaign name

@@ -37,6 +37,7 @@ from server.routes.auth import router as auth_router
 from server.routes.app_auth import router as app_auth_router
 from server.routes.app_telephony import router as app_telephony_router
 from server.routes.app_agents import router as app_agents_router
+from server.routes.app_kyc import router as app_kyc_router
 from server.routes.app_agent_telephony import router as app_agent_telephony_router
 from server.routes.stripe_webhook import router as stripe_webhook_router
 from server.routes.dev_admin import router as dev_admin_router
@@ -45,6 +46,7 @@ from server.routes.app_leads import router as app_leads_router
 from server.routes.dev_stack import router as dev_stack_router
 from server.routes.dev_environment import router as dev_environment_router
 from server.routes.dev_audit import router as dev_audit_router
+from server.routes.dev_activity import router as dev_activity_router
 from server.routes.dev_compiled import router as dev_compiled_router
 from server.routes.dev_exotel import router as dev_exotel_router
 from server.routes.dev_telephony import router as dev_telephony_router
@@ -268,6 +270,65 @@ class AuthNoStoreMiddleware(BaseHTTPMiddleware):
 app.add_middleware(AuthNoStoreMiddleware)
 
 
+_LOCAL_DEV_HOSTS = frozenset({"localhost", "127.0.0.1", "::1", "[::1]"})
+
+
+def _hostname_is_local(hostname: str) -> bool:
+    h = (hostname or "").strip().lower().split("%")[0]
+    if h.startswith("[") and h.endswith("]"):
+        h = h[1:-1]
+    return h in _LOCAL_DEV_HOSTS or h.endswith(".localhost")
+
+
+def _dev_portal_hosts_allowed(request: Request) -> bool:
+    """True only when every Host / X-Forwarded-Host hop is loopback.
+
+    Cloudflare + Vite set X-Forwarded-Host to the public name while changeOrigin
+    rewrites Host to localhost — checking only Host would wrongly allow tunnel traffic.
+    """
+    candidates: list[str] = []
+    for header in ("x-forwarded-host", "host"):
+        raw = request.headers.get(header) or ""
+        for part in raw.split(","):
+            host = part.strip().split(":")[0].strip()
+            if host:
+                candidates.append(host)
+    if not candidates:
+        return False
+    return all(_hostname_is_local(h) for h in candidates)
+
+
+class DevPortalLocalOnlyMiddleware(BaseHTTPMiddleware):
+    """Block /api/dev* from public tunnel hostnames unless explicitly allowed."""
+
+    async def dispatch(self, request: Request, call_next):
+        path = request.url.path or ""
+        if not path.startswith("/api/dev"):
+            return await call_next(request)
+        try:
+            from server.config.env import get_settings
+
+            if get_settings().dev_portal_allow_remote:
+                return await call_next(request)
+        except Exception:
+            pass
+        if _dev_portal_hosts_allowed(request):
+            return await call_next(request)
+        return JSONResponse(
+            status_code=404,
+            content={
+                "error": {
+                    "code": "dev_portal_local_only",
+                    "message": "Dev admin is available on localhost only (http://localhost:3000/dev).",
+                }
+            },
+            headers={"Cache-Control": "no-store"},
+        )
+
+
+app.add_middleware(DevPortalLocalOnlyMiddleware)
+
+
 # Rate limiting middleware (Phase 5 hardening)
 
 
@@ -309,6 +370,23 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
 
 app.add_middleware(RateLimitMiddleware)
+
+
+@app.middleware("http")
+async def expose_request_for_activity_log(request: Request, call_next):
+    """Make the in-flight request readable to the activity log.
+
+    Lets every log row carry the caller's IP, user agent and request id without
+    each call site threading a `Request` through. The token is always reset, so a
+    finished request cannot leak its context into the next one on this task.
+    """
+    from server.services.saas.request_context import reset_current_request, set_current_request
+
+    token = set_current_request(request)
+    try:
+        return await call_next(request)
+    finally:
+        reset_current_request(token)
 
 
 @app.exception_handler(RequestValidationError)
@@ -379,6 +457,7 @@ app.include_router(auth_router)
 app.include_router(app_auth_router)
 app.include_router(app_telephony_router)
 app.include_router(app_agents_router)
+app.include_router(app_kyc_router)
 app.include_router(app_agent_telephony_router)
 app.include_router(stripe_webhook_router)
 app.include_router(dev_admin_router)
@@ -387,6 +466,7 @@ app.include_router(app_leads_router)
 app.include_router(dev_stack_router)
 app.include_router(dev_environment_router)
 app.include_router(dev_audit_router)
+app.include_router(dev_activity_router)
 app.include_router(dev_compiled_router)
 app.include_router(dev_exotel_router)
 app.include_router(dev_telephony_router)

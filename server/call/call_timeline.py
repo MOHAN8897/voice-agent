@@ -65,6 +65,7 @@ def _call_to_item(row: dict[str, Any]) -> dict[str, Any]:
         "direction": row.get("direction"),
         "status": status,
         "in_progress": is_in_progress_record(row),
+        "is_test": bool(row.get("is_test")),
         "started_at": row.get("started_at"),
         "ended_at": row.get("ended_at"),
         "answered_at": None,
@@ -109,8 +110,13 @@ async def list_timeline(
     limit: int = 20,
     offset: int = 0,
     include_attempts: bool = True,
+    include_tests: bool = False,
 ) -> tuple[list[dict[str, Any]], int]:
-    """One chronological list of everything that rang, with canonical status."""
+    """One chronological list of everything that rang, with canonical status.
+
+    Browser practice sessions (``is_test``) are excluded unless ``include_tests``
+    is set — they are not real conversations and must not inflate the rollups.
+    """
     limit = max(1, min(limit, 100))
     offset = max(0, offset)
     wanted = set(normalize_call_statuses(statuses))
@@ -122,6 +128,7 @@ async def list_timeline(
         until=until,
         limit=_MAX_FETCH,
         offset=0,
+        include_tests=include_tests,
     )
     items = [_call_to_item(c) for c in calls]
 

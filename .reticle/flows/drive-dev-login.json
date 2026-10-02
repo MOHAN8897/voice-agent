@@ -1,0 +1,67 @@
+{
+  "version": 2,
+  "name": "drive-dev-login",
+  "createdAt": 1790950312259,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "textbox",
+        "name": "Username"
+      },
+      "args": {
+        "value": "admin"
+      },
+      "action": "fill",
+      "page": "/dev/login"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "textbox",
+        "name": "Password"
+      },
+      "args": {
+        "value": "<redacted: supply at replay>"
+      },
+      "action": "fill",
+      "page": "/dev/login"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Sign in"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "admin-activity-page"
+        }
+      },
+      "page": "/dev/login",
+      "endPage": "/dev/admin/activity"
+    }
+  ],
+  "startPath": "/dev/login",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/dev/login"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/dev/admin/activity"
+    }
+  ],
+  "author": {
+    "agent": "desktop"
+  }
+}

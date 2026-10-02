@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "origin": "failed-assert",
+  "expected": "GET /api/agents → 200",
+  "observed": "no request to /api/agents",
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "",
+        "source": {
+          "file": "src/components/Navbar.jsx",
+          "line": 88,
+          "column": 11
+        }
+      },
+      "action": "click"
+    }
+  ],
+  "id": "1790922506709-click-ae03abc4",
+  "createdAt": 1790922506709,
+  "seen": 1,
+  "lastSeenAt": 1790922506709
+}

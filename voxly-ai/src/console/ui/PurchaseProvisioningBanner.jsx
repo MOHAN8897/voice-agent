@@ -23,18 +23,27 @@ export function PurchaseProvisioningBanner() {
       try {
         const row = await api.telephony.getPurchase(purchaseId);
         const status = row?.status || '';
-        if (status === 'active' && row.phoneNumberId) {
+        if (
+          (status === 'active' || status === 'provisioned') &&
+          (row.phoneNumberId || status === 'provisioned')
+        ) {
           const agentId = sessionStorage.getItem(STORAGE_ASSIGN_AGENT);
           sessionStorage.removeItem(STORAGE_PURCHASE);
           sessionStorage.removeItem(STORAGE_ASSIGN_AGENT);
-          if (agentId) {
-            await assignNumberToAgent(row.phoneNumberId, agentId);
-          } else if (row.assignAgentId) {
-            await assignNumberToAgent(row.phoneNumberId, row.assignAgentId);
+          if (row.phoneNumberId) {
+            if (agentId) {
+              await assignNumberToAgent(row.phoneNumberId, agentId);
+            } else if (row.assignAgentId) {
+              await assignNumberToAgent(row.phoneNumberId, row.assignAgentId);
+            }
           }
           await loadWorkspaceData();
           setVariant('success');
-          setMessage(`Number ${row.e164 || ''} is active and ready.`);
+          setMessage(
+            row.phoneNumberId || row.e164
+              ? `Number ${row.e164 || ''} is active and ready.`
+              : 'Number purchase completed.'
+          );
           return;
         }
         if (status === 'failed') {

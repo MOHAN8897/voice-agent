@@ -29,17 +29,46 @@ export const AGENT_ROLES = [
   { id: 'other', label: 'Something else' },
 ];
 
-export const PRIMARY_LANGUAGES = [
-  { code: 'en-US', label: 'English (US)', sub: 'US English' },
-  { code: 'en-GB', label: 'English (UK)', sub: 'UK English' },
-  { code: 'en-IN', label: 'English (India)', sub: 'Neutral Indian English' },
-  { code: 'hi-IN', label: 'Hindi', sub: 'हिन्दी' },
-  { code: 'te-IN', label: 'Telugu', sub: 'తెలుగు' },
-  { code: 'ta-IN', label: 'Tamil', sub: 'தமிழ்' },
-  { code: 'kn-IN', label: 'Kannada', sub: 'ಕನ್ನಡ' },
-  { code: 'ml-IN', label: 'Malayalam', sub: 'മലയാളം' },
-  { code: 'mr-IN', label: 'Marathi', sub: 'मराठी' },
-];
+/**
+ * Fallback labels only.
+ *
+ * Which languages are actually offered is a platform setting owned by the admin
+ * API (`GET /api/app/agents/languages`) — an operator can enable or disable
+ * languages without a frontend deploy. This list only labels the codes that come
+ * back; it never decides which ones exist.
+ */
+export const LANGUAGE_LABELS = {
+  'en-US': { label: 'English (US)', sub: 'US English' },
+  'en-GB': { label: 'English (UK)', sub: 'UK English' },
+  'en-IN': { label: 'English (India)', sub: 'Neutral Indian English' },
+  'hi-IN': { label: 'Hindi', sub: 'हिन्दी' },
+  'te-IN': { label: 'Telugu', sub: 'తెలుగు' },
+  'ta-IN': { label: 'Tamil', sub: 'தமிழ்' },
+  'kn-IN': { label: 'Kannada', sub: 'ಕನ್ನಡ' },
+  'ml-IN': { label: 'Malayalam', sub: 'മലയാളം' },
+  'mr-IN': { label: 'Marathi', sub: 'मराठी' },
+  'bn-IN': { label: 'Bengali', sub: 'বাংলা' },
+  'gu-IN': { label: 'Gujarati', sub: 'ગુજરાતી' },
+  'pa-IN': { label: 'Punjabi', sub: 'ਪੰਜਾਬੀ' },
+};
+
+/** Last-resort default so the picker is never empty if the API is unreachable. */
+export const DEFAULT_ENABLED_LANGUAGE_CODES = ['en-US', 'en-IN'];
+
+export function describeLanguage(code) {
+  return LANGUAGE_LABELS[code] || { label: code, sub: code };
+}
+
+/** Map an API language list into picker entries. */
+export function toLanguageOptions(languages) {
+  if (!Array.isArray(languages) || languages.length === 0) {
+    return DEFAULT_ENABLED_LANGUAGE_CODES.map((code) => ({ code, ...describeLanguage(code) }));
+  }
+  return languages.map((lang) => {
+    const code = typeof lang === 'string' ? lang : lang.code;
+    return { code, ...describeLanguage(code), ...(typeof lang === 'object' && lang.label ? { label: lang.label } : {}) };
+  });
+}
 
 export const INDUSTRY_CHIPS = [
   {

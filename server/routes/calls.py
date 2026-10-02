@@ -151,6 +151,9 @@ async def list_calls(
     status: Optional[str] = Query(None, description="Canonical status filter; comma-separated for several"),
     direction: Optional[str] = Query(None, description="inbound | outbound"),
     include_attempts: bool = Query(True, description="Include never-answered ringing attempts"),
+    include_tests: bool = Query(
+        False, description="Include browser practice sessions (not real calls)"
+    ),
     scoped_tenant: str = Depends(resolve_calls_tenant_id),
 ):
     """One ordered call history, including calls that never connected.
@@ -171,6 +174,7 @@ async def list_calls(
         limit=limit,
         offset=offset,
         include_attempts=include_attempts,
+        include_tests=include_tests,
     )
     enriched = [_enrich_timeline_item(item) for item in items]
     return {

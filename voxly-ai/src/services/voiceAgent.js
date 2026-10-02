@@ -53,9 +53,28 @@ class VoiceAgentAdapter {
     return this.audioContext;
   }
 
+  /**
+   * Returns existing analyser without creating AudioContext / prompting anything.
+   * Call ensureAudioContext() first when playback starts.
+   */
   getAnalyser() {
-    this.ensureAudioContext();
     return this.analyser;
+  }
+
+  /**
+   * Non-prompting mic permission probe. "prompt" / "unknown" means we have not
+   * asked yet — do not call getUserMedia until the user confirms Live Mic.
+   */
+  async getMicrophonePermissionState() {
+    try {
+      if (navigator.permissions?.query) {
+        const status = await navigator.permissions.query({ name: 'microphone' });
+        return status.state; // granted | denied | prompt
+      }
+    } catch (e) {
+      /* Firefox / Safari may reject microphone PermissionName */
+    }
+    return 'unknown';
   }
 
   subscribe(listener) {
@@ -75,27 +94,34 @@ class VoiceAgentAdapter {
     this.ensureAudioContext();
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      if (onError) onError(new Error("Microphone API not supported in this browser."));
+      const err = new Error('Microphone is not supported in this browser.');
+      this.notify('error', { message: err.message });
+      if (onError) onError(err);
       return false;
     }
 
     try {
-      this.mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Audio only — never request video/camera or other device capabilities.
+      this.mediaStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+        video: false,
+      });
       this.isListening = true;
       this.notify('stateChange', { state: 'LISTENING', text: 'Listening to your voice...' });
 
-      // Connect microphone to an analyser
       if (this.audioContext && this.mediaStream) {
         try {
           const source = this.audioContext.createMediaStreamSource(this.mediaStream);
-          // Only route to analyser, NOT to audioContext.destination to avoid feedback loop
           if (this.analyser) {
             source.connect(this.analyser);
           }
         } catch (e) {}
       }
 
-      // SpeechRecognition support
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (SpeechRecognition) {
         const recognition = new SpeechRecognition();
@@ -110,33 +136,80 @@ class VoiceAgentAdapter {
           this.handleUserInput(transcript);
         };
 
-        recognition.onerror = (e) => {
+        recognition.onerror = () => {
           this.stopListening();
-          if (onSpeechResult) onSpeechResult("Can you tell me how Voxly handles voice calls?");
-          this.handleUserInput("Can you tell me how Voxly handles voice calls?");
+          if (onSpeechResult) onSpeechResult('Can you tell me how Voxly handles voice calls?');
+          this.handleUserInput('Can you tell me how Voxly handles voice calls?');
         };
 
         recognition.start();
         this.recognition = recognition;
       } else {
-        // Fallback simulation timer for browsers without SpeechRecognition
         setTimeout(() => {
-          if (this.isListening) {
-            this.stopListening();
-            const fallbackText = "Tell me how Voxly qualifies inbound leads.";
-            if (onSpeechResult) onSpeechResult(fallbackText);
-            this.handleUserInput(fallbackText);
-          }
-        }, 2800);
+          this.stopListening();
+          const fallback = 'Can you tell me how Voxly handles voice calls?';
+          if (onSpeechResult) onSpeechResult(fallback);
+          this.handleUserInput(fallback);
+        }, 2200);
       }
-
       return true;
-    } catch (err) {
-      console.warn("Microphone access denied or unavailable:", err);
-      if (onError) onError(err);
-      this.notify('error', { message: "Microphone access is needed for live conversation." });
+    } catch (e) {
+      const message =
+        e?.name === 'NotAllowedError' || e?.name === 'PermissionDeniedError'
+          ? 'Microphone permission was denied. Allow the microphone for this site to use Live Mic, or use the text prompts instead.'
+          : e?.message || 'Could not access the microphone.';
+      this.notify('error', { message });
+      if (onError) onError(new Error(message));
       return false;
     }
+  }
+
+  /**
+   * Play an audio Blob through the Web Audio graph.
+   * Returns false instead of falling back — caller decides what to show.
+   */
+  async playAudioBuffer(blob, onEnd, onStart) {
+    this.stopTTS(false);
+    const currentToken = ++this.playbackToken;
+
+    const ctx = this.ensureAudioContext();
+    if (!ctx || !blob) return false;
+    if (ctx.state === 'suspended') {
+      try {
+        await ctx.resume();
+      } catch (e) {
+        return false;
+      }
+    }
+
+    let buffer;
+    try {
+      buffer = await ctx.decodeAudioData(await blob.arrayBuffer());
+    } catch (e) {
+      return false;
+    }
+    if (this.playbackToken !== currentToken) return false;
+
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    if (this.analyser) {
+      source.connect(this.analyser);
+      this.analyser.connect(ctx.destination);
+    } else {
+      source.connect(ctx.destination);
+    }
+    source.onended = () => {
+      if (this.playbackToken !== currentToken) return;
+      this.isSpeaking = false;
+      this.currentAudioElement = null;
+      this.notify('stateChange', { state: 'IDLE' });
+      if (onEnd) onEnd();
+    };
+    source.start();
+    this.isSpeaking = true;
+    this.notify('stateChange', { state: 'TALKING' });
+    if (onStart) onStart();
+    return true;
   }
 
   stopListening() {

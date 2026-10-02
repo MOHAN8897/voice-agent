@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "origin": "failed-assert",
+  "expected": "text \"?\" AND text \"?\"",
+  "observed": "no element matched {\"text\":\"do not use camera\"} — that text IS on the page, split across the children of paragraph — no single element's own text carries it, so no text query can match it; retry as {\"kind\":\"text\",\"contains\":\"do not use camera\",\"scope\":\"e317\",\"self\":true}",
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "",
+        "source": {
+          "file": "src/components/TalkToMeModal.jsx",
+          "line": 254,
+          "column": 11
+        }
+      },
+      "action": "click"
+    }
+  ],
+  "id": "1790928163815-click-fee42d49",
+  "createdAt": 1790928163816,
+  "seen": 1,
+  "lastSeenAt": 1790928163816
+}

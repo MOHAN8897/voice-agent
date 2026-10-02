@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Phone, Save, CheckCircle2 } from 'lucide-react';
 import { SolidCard } from '../../ui/SolidCard';
 import { StatusBadge } from '../../ui/StatusBadge';
@@ -17,7 +17,7 @@ import { api } from '../../../services/api';
  * not accept one — those belong in the script text until the API grows them.
  */
 export function AgentSettingsPanel({ agent, onOpenBuyNumber }) {
-  const { phoneNumbers, assignNumberToAgent, updateAgent, toggleAgentStatus } = useWorkspace();
+  const { phoneNumbers, agents, assignNumberToAgent, updateAgent, toggleAgentStatus } = useWorkspace();
   const [name, setName] = useState(agent?.name || '');
   const [language, setLanguage] = useState(
     (agent?.languages && agent.languages[0]) || agent?.language || 'en-US'
@@ -39,6 +39,23 @@ export function AgentSettingsPanel({ agent, onOpenBuyNumber }) {
   const assigned = phoneNumbers.find((n) => n.assignedAgentId === agentId);
   const currentNumberId = assigned?.id || agent?.numberId || '';
   const isActive = agent?.status === 'active';
+
+  /**
+   * A number is only genuinely taken if its owner is an agent that still exists.
+   *
+   * `assignedAgentId` could survive the owner being deleted (the row is archived,
+   * not removed, when call history blocks a hard delete), which made freed numbers
+   * render as "(assigned elsewhere)" and — worse — be disabled, so the pool looked
+   * empty. Treating an unknown owner as unassigned keeps the pool truthful even if
+   * the server ever regresses; the real fix is in delete_agent and the FK.
+   */
+  const knownAgentIds = useMemo(() => new Set((agents || []).map((a) => a.id)), [agents]);
+  const ownerOf = (n) =>
+    n.assignedAgentId && knownAgentIds.has(n.assignedAgentId) ? n.assignedAgentId : null;
+  const isTakenByOther = (n) => {
+    const owner = ownerOf(n);
+    return Boolean(owner && owner !== agentId);
+  };
 
   const saveIdentity = async () => {
     if (!agentId || saving) return;
@@ -221,19 +238,17 @@ export function AgentSettingsPanel({ agent, onOpenBuyNumber }) {
           className="w-full bg-white border border-[#E4E2EB] rounded-xl px-3 py-2 text-sm font-mono disabled:opacity-50"
         >
           <option value="">No number — browser test calls only</option>
-          {phoneNumbers.map((n) => (
-            <option
-              key={n.id}
-              value={n.id}
-              disabled={n.assignedAgentId && n.assignedAgentId !== agentId}
-            >
-              {n.number}
-              {n.assignedAgentId && n.assignedAgentId !== agentId
-                ? ' (assigned elsewhere)'
-                : ''}
-              {!n.assignedAgentId ? ' · available' : ''}
-            </option>
-          ))}
+          {phoneNumbers.map((n) => {
+            const taken = isTakenByOther(n);
+            const owner = ownerOf(n);
+            return (
+              <option key={n.id} value={n.id} disabled={taken}>
+                {n.number}
+                {taken ? ' (assigned elsewhere)' : ''}
+                {!owner ? ' · available' : ''}
+              </option>
+            );
+          })}
         </select>
       </SolidCard>
     </div>

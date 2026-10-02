@@ -10,6 +10,10 @@
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <meta name="googlebot" content="index, follow" />
     <meta name="theme-color" content="#0F0E17" />
+    <!-- Block sensors/camera on load so browsers never ask for vague “other apps”
+         access. Microphone is NOT requested here — getUserMedia runs only when the
+         user starts Live Mic / web-agent test (and is skipped if already granted). -->
+    <meta http-equiv="Permissions-Policy" content="camera=(), geolocation=(), accelerometer=(), gyroscope=(), magnetometer=(), interest-cohort=(), usb=(), serial=(), bluetooth=(), hid=(), midi=(), xr-spatial-tracking=()" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="canonical" href="https://voxly.ai" />

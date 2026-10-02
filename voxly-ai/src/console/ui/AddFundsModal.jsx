@@ -11,22 +11,54 @@ import { openRazorpayWalletCheckout } from '../../utils/razorpayCheckout';
 /** USD presets for English-speaking SaaS; Razorpay still settles in INR under the hood. */
 const USD_PRESETS = [5, 10, 25, 50, 100];
 
+/** Internal call-site keys → customer copy. Raw env/admin strings never show. */
+const REASON_COPY = {
+  topbar: null,
+  billing: null,
+  'buy-number': 'Add credit to buy a phone number.',
+};
+
 function moneyUsd(n) {
   return `$${(Number(n) || 0).toFixed(2)}`;
 }
 
+function friendlyReason(reason) {
+  if (reason == null || reason === '') return null;
+  if (typeof reason !== 'string') return null;
+  if (Object.prototype.hasOwnProperty.call(REASON_COPY, reason)) return REASON_COPY[reason];
+  if (/RAZORPAY|API_KEY|API_SECRET|\.env|Didit|STRIPE|secret/i.test(reason)) {
+    return 'Add credit to continue.';
+  }
+  return reason;
+}
+
+function customerPaymentError(raw) {
+  const msg = String(raw || '');
+  if (/RAZORPAY|API_KEY|API_SECRET|\.env|not configured|not enabled/i.test(msg)) {
+    return 'Card payments are temporarily unavailable. Please try again later or contact support.';
+  }
+  return msg || 'Payment failed';
+}
+
 /**
- * Wallet top-up: USD UI → INR Razorpay order. UPI hidden for international card users.
+ * Wallet top-up via Razorpay.
+ *
+ * Charged in the currency the account is configured for (USD once international
+ * payments are enabled, INR otherwise). UPI settles domestically only, so it is
+ * hidden for any non-INR order — otherwise checkout offers a rail that cannot
+ * take the payment.
  */
 export function AddFundsModal({ isOpen, onClose, reason = null }) {
   const { user } = useAuth();
   const { wallet, refreshWallet } = useWorkspace();
   const [amountUsd, setAmountUsd] = useState(10);
   const [catalog, setCatalog] = useState(null);
-  const [razorpay, setRazorpay] = useState({ enabled: false, keyId: '' });
+  const [razorpay, setRazorpay] = useState({ enabled: false, keyId: '', international: false, currency: 'USD' });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [done, setDone] = useState(null);
+
+  const banner = friendlyReason(reason);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -35,19 +67,17 @@ export function AddFundsModal({ isOpen, onClose, reason = null }) {
     let cancelled = false;
     Promise.all([
       api.billing.getCatalog().catch(() => null),
-      api.billing.razorpayConfig().catch((e) => ({
+      api.billing.razorpayConfig().catch(() => ({
         enabled: false,
         keyId: '',
-        loadError: e?.message || 'Could not reach billing config',
+        loadError: true,
       })),
     ]).then(([cat, rz]) => {
       if (cancelled) return;
       setCatalog(cat);
-      setRazorpay(rz || { enabled: false, keyId: '' });
-      if (rz?.loadError) {
-        setError(
-          `${rz.loadError}. If you just set RAZORPAY_API_KEY / SECRET, restart the API and hard-refresh.`
-        );
+      setRazorpay({ international: false, currency: 'USD', ...(rz || {}) });
+      if (rz?.loadError || rz?.enabled === false) {
+        /* shown via the soft unavailable banner below — no env var names */
       }
       if (cat?.topupMinUsd) setAmountUsd(Math.max(Number(cat.topupMinUsd) || 5, 10));
     });
@@ -68,7 +98,10 @@ export function AddFundsModal({ isOpen, onClose, reason = null }) {
   const tooSmall = amountUsd < minUsd;
   const tooLarge = amountUsd > maxUsd;
   const canPay = !tooSmall && !tooLarge && amountUsd > 0 && razorpay.enabled;
-  const amountInr = Math.max(100, Math.round(amountUsd * fx));
+  const chargeCurrency = razorpay.currency || 'USD';
+  const isInternational = chargeCurrency !== 'INR';
+  const symbol = chargeCurrency === 'INR' ? '₹' : chargeCurrency === 'USD' ? '$' : `${chargeCurrency} `;
+  const amountLabel = isInternational ? `${symbol}${amountUsd}` : `₹${Math.round(amountUsd * fx)}`;
 
   const pay = useCallback(async () => {
     if (!canPay || busy) return;
@@ -76,14 +109,15 @@ export function AddFundsModal({ isOpen, onClose, reason = null }) {
     setError(null);
     try {
       if (!razorpay.enabled) {
-        throw new Error('Razorpay is not enabled. Check RAZORPAY_API_KEY / RAZORPAY_API_SECRET on the API.');
+        throw new Error('payments_unavailable');
       }
-      const order = await api.billing.createRazorpayOrder(amountInr);
+      const chargeAmount = isInternational ? amountUsd : Math.max(100, Math.round(amountUsd * fx));
+      const order = await api.billing.createRazorpayOrder(chargeAmount, chargeCurrency);
       await openRazorpayWalletCheckout({
         order,
         keyId: razorpay.keyId,
         user: { email: user?.email, name: user?.name },
-        hideUpi: true,
+        hideUpi: isInternational,
         onSuccess: async (response) => {
           try {
             await api.billing.verifyRazorpayPayment({
@@ -92,20 +126,23 @@ export function AddFundsModal({ isOpen, onClose, reason = null }) {
               razorpay_signature: response.razorpay_signature,
             });
             await refreshWallet();
-            setDone(`${moneyUsd(amountUsd)} added to your wallet.`);
+            const charged = response.razorpay_payment?.currency
+              ? `${response.razorpay_payment.currency} ${Number(response.razorpay_payment.amount || 0) / 100}`
+              : amountLabel;
+            setDone(`${charged} added to your wallet.`);
             showToast('Payment received', 'success');
           } catch (e) {
-            setError(e.message || 'Could not verify the payment');
+            setError(customerPaymentError(e.message));
           }
         },
-        onError: (e) => setError(e.message || 'Payment cancelled'),
+        onError: (e) => setError(customerPaymentError(e.message || 'Payment cancelled')),
       });
     } catch (e) {
-      setError(e.message || 'Payment failed');
+      setError(customerPaymentError(e.message));
     } finally {
       setBusy(false);
     }
-  }, [amountInr, amountUsd, busy, canPay, razorpay, refreshWallet, user]);
+  }, [amountLabel, amountUsd, busy, canPay, chargeCurrency, fx, isInternational, razorpay, refreshWallet, user]);
 
   const buyMinutes = useMemo(
     () => (rateUsd > 0 ? Math.floor(amountUsd / rateUsd) : 0),
@@ -117,14 +154,14 @@ export function AddFundsModal({ isOpen, onClose, reason = null }) {
       isOpen={isOpen}
       onClose={onClose}
       title="Add credit to your wallet"
-      subtitle="Pay in USD (cards via Razorpay). Unused balance never expires."
+      subtitle={`Pay by card${isInternational ? ` in ${chargeCurrency}` : ''}. Unused balance never expires.`}
       maxWidth="max-w-lg"
     >
       <div data-testid="add-funds-modal" className="space-y-4">
-        {reason && (
+        {banner && (
           <div className="flex items-start gap-2 p-3 rounded-xl bg-[#FFFBEB] border border-[#FDE68A]">
             <AlertCircle className="w-4 h-4 text-[#B45309] mt-0.5 shrink-0" />
-            <p className="text-xs text-[#78350F]">{reason}</p>
+            <p className="text-xs text-[#78350F]">{banner}</p>
           </div>
         )}
 
@@ -155,10 +192,7 @@ export function AddFundsModal({ isOpen, onClose, reason = null }) {
 
             {!razorpay.enabled && (
               <p className="text-[11px] text-[#B45309]" data-testid="add-funds-razorpay-off">
-                Razorpay is not enabled on this API. Set <code>RAZORPAY_API_KEY</code> and{' '}
-                <code>RAZORPAY_API_SECRET</code> in the API <code>.env</code>, restart the API
-                process, then hard-refresh this page. Keys must be on the same backend this console
-                proxies to (local Vite → port 8000).
+                Card payments are temporarily unavailable. Please try again later or contact support.
               </p>
             )}
 
@@ -198,13 +232,13 @@ export function AddFundsModal({ isOpen, onClose, reason = null }) {
                 ))}
               </div>
               <p className="text-[10px] text-[#8C879A] mt-1.5">
-                Minimum {moneyUsd(minUsd)}. ≈ {buyMinutes} min at {moneyUsd(rateUsd)}/min.
+                Minimum {symbol}{minUsd}. ≈ {buyMinutes} min at {moneyUsd(rateUsd)}/min.
               </p>
             </div>
 
             {(tooSmall || tooLarge) && (
               <p className="text-[11px] text-[#B91C1C]">
-                Enter between {moneyUsd(minUsd)} and {moneyUsd(maxUsd)}.
+                Enter between {symbol}{minUsd} and {symbol}{maxUsd}.
               </p>
             )}
             {error && (
@@ -227,12 +261,14 @@ export function AddFundsModal({ isOpen, onClose, reason = null }) {
               onClick={pay}
               className="w-full justify-center"
             >
-              {busy ? 'Opening checkout…' : `Pay ${moneyUsd(amountUsd)}`}
+              {busy ? 'Opening checkout…' : `Pay ${amountLabel}`}
             </TactileButton>
 
             <p className="text-[10px] text-center text-[#8C879A] flex items-center justify-center gap-1">
               {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
-              Cards and netbanking via Razorpay. We never see your card details.
+              {isInternational
+                ? `Secure card checkout. Charged in ${chargeCurrency}. We never see your card details.`
+                : 'Secure card checkout. We never see your card details.'}
             </p>
           </>
         )}

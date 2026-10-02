@@ -1,0 +1,18 @@
+{
+  "intents": {
+    "flow:drive-when-identity-is-not-approved-buy-number-shows-o": {
+      "declaredAt": 1790962148558,
+      "id": "flow:drive-when-identity-is-not-approved-buy-number-shows-o",
+      "state": "declared",
+      "statement": "When identity is not approved, Buy Number shows only the modern verification gate — no number catalog yet.",
+      "status": "proposed",
+      "subject": "drive-when-identity-is-not-approved-buy",
+      "surface": {
+        "flow": "drive-when-identity-is-not-approved-buy-number-shows-o"
+      },
+      "updatedAt": 1790962148588
+    }
+  },
+  "subject": "drive-when-identity-is-not-approved-buy",
+  "version": 1
+}

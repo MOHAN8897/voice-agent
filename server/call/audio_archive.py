@@ -17,6 +17,9 @@ _locks: dict[str, asyncio.Lock] = {}
 _user_buffers: dict[str, bytearray] = {}
 _agent_buffers: dict[str, bytearray] = {}
 _agent_rates: dict[str, int] = {}
+#: Calls that must never be written to disk (browser practice sessions). Real PSTN
+#: calls stay recorded; test sessions are not conversations worth keeping audio of.
+_no_record: set[str] = set()
 
 
 def _lock(call_id: str) -> asyncio.Lock:
@@ -274,24 +277,28 @@ class AudioArchive:
     def agent_clear_path(self, call_id: str) -> Path:
         return call_dir(call_id) / "agent_clear.wav"
 
-    def init(self, call_id: str) -> None:
+    def init(self, call_id: str, *, record: bool = True) -> None:
         _user_buffers[call_id] = bytearray()
         _agent_buffers[call_id] = bytearray()
         _agent_rates[call_id] = _AGENT_PCM_RATE
+        if not record:
+            # Test sessions keep the buffers so the voice loop's bookkeeping is
+            # unchanged, but nothing is ever written to disk for them.
+            _no_record.add(call_id)
 
     def set_agent_sample_rate(self, call_id: str, rate: int) -> None:
         if rate > 0:
             _agent_rates[call_id] = rate
 
     async def append_user_pcm(self, call_id: str, pcm: bytes) -> None:
-        if not pcm or not get_settings().enable_call_archive:
+        if not pcm or not get_settings().enable_call_archive or call_id in _no_record:
             return
         async with _lock(call_id):
             buf = _user_buffers.setdefault(call_id, bytearray())
             buf.extend(pcm)
 
     async def append_agent_audio(self, call_id: str, chunk: bytes) -> None:
-        if not chunk or not get_settings().enable_call_archive:
+        if not chunk or not get_settings().enable_call_archive or call_id in _no_record:
             return
         async with _lock(call_id):
             buf = _agent_buffers.setdefault(call_id, bytearray())
@@ -299,6 +306,14 @@ class AudioArchive:
 
     async def flush(self, call_id: str) -> dict[str, str]:
         """Write buffers to disk and generate mix.wav. Safe to call twice."""
+        if call_id in _no_record:
+            # Nothing was buffered, so drop the (empty) buffers and leave disk clean.
+            async with _lock(call_id):
+                _user_buffers.pop(call_id, None)
+                _agent_buffers.pop(call_id, None)
+                _agent_rates.pop(call_id, None)
+                _no_record.discard(call_id)
+            return {"user": "empty", "agent": "empty", "mix": "empty"}
         async with _lock(call_id):
             if call_id not in _user_buffers and call_id not in _agent_buffers:
                 mix = self.mix_path(call_id)

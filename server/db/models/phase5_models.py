@@ -16,6 +16,14 @@ def _utcnow() -> datetime:
 
 
 class AuditLog(Base):
+    """One row per notable action, from admins, subscribers and background jobs.
+
+    The activity log is the answer to "what just happened, and did any of it
+    fail", so a row carries its origin (`source`), its result (`outcome`), how bad
+    it is (`severity`), and enough request context to trace one user action
+    across the request that produced it.
+    """
+
     __tablename__ = "audit_log"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -25,6 +33,16 @@ class AuditLog(Base):
     resource_type: Mapped[str] = mapped_column(String(50), nullable=False)
     resource_id: Mapped[str] = mapped_column(String(255), nullable=False)
     payload: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    #: Who produced this row — `admin`, `subscriber`, `webhook` or `system`.
+    source: Mapped[str] = mapped_column(String(20), nullable=False, default="admin")
+    #: `ok` or `error`. A refused purchase and a completed one are both here.
+    outcome: Mapped[str] = mapped_column(String(20), nullable=False, default="ok")
+    #: `info`, `warning` or `error`. Lets the log open on what needs attention.
+    severity: Mapped[str] = mapped_column(String(20), nullable=False, default="info")
+    #: Correlates every row written while handling one HTTP request.
+    request_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    ip: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    user_agent: Mapped[str | None] = mapped_column(String(400), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
 
@@ -36,8 +54,10 @@ class PhoneNumber(Base):
     e164: Mapped[str] = mapped_column(String(20), nullable=False)
     plivo_number_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
     status: Mapped[str] = mapped_column(String(30), default="pending")
+    #: Set NULL on agent deletion: a number must return to the pool rather than
+    #: keep pointing at an agent row that no longer exists.
     agent_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("agents.agent_id"), nullable=True
+        UUID(as_uuid=True), ForeignKey("agents.agent_id", ondelete="SET NULL"), nullable=True
     )
     purchase_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     telnyx_number_id: Mapped[str | None] = mapped_column(String(100), nullable=True)

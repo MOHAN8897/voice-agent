@@ -330,6 +330,49 @@ export const api = {
     return this.refreshAccessToken();
   },
 
+  /**
+   * POST and return binary (audio) rather than JSON.
+   *
+   * Separate from `request` because that one unconditionally parses JSON, and a
+   * WAV body would throw it away. Shares the auth header and backend-URL fixups
+   * so binary and JSON calls cannot drift apart on auth.
+   */
+  async requestBinary(method, endpoint, body = null, customHeaders = {}) {
+    const backendUrl = this.getBackendUrl().replace(/\/$/, '');
+    const token = this.getToken();
+    const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    const fullUrl = `${backendUrl}${path.replace(/^\/api/, '')}`;
+    const response = await fetch(fullUrl, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...customHeaders,
+      },
+      body: body != null ? JSON.stringify(body) : undefined,
+    });
+    if (!response.ok) {
+      let message = `HTTP ${response.status}`;
+      try {
+        const data = await response.json();
+        message = parseApiError(data, response.status).message || message;
+      } catch {
+        /* keep the status text */
+      }
+      const e = new Error(message);
+      e.status = response.status;
+      throw e;
+    }
+    return {
+      blob: await response.blob(),
+      headers: {
+        voice: response.headers.get('X-Voice-Name'),
+        label: response.headers.get('X-Voice-Label'),
+        model: response.headers.get('X-Voice-Model'),
+      },
+    };
+  },
+
   async request(method, endpoint, body = null, customHeaders = {}, { allowMock = false } = {}) {
     const backendUrl = this.getBackendUrl().replace(/\/$/, '');
     const token = this.getToken();
@@ -664,6 +707,12 @@ export const api = {
         id: data.agentId || agent.agent_id || agent.id,
       };
     },
+
+    /** Languages the platform currently offers at creation (admin-configurable). */
+    async languages() {
+      const data = await api.request('GET', '/api/app/agents/languages');
+      return data.languages || [];
+    },
   },
 
   telephony: {
@@ -710,7 +759,19 @@ export const api = {
     async getVoiceOptions() {
       return await api.request('GET', '/api/telephony/voice-options');
     },
-    async getCatalog(country = 'IN') {
+
+    /**
+     * Speak a line in the agent's real production voice (the live model, not the
+     * browser's speech engine) and return the WAV plus which voice spoke it.
+     */
+    async previewVoice({ text, voiceId } = {}) {
+      const { blob, headers } = await api.requestBinary('POST', '/api/telephony/voice-preview', {
+        text,
+        voiceId: voiceId || null,
+      });
+      return { blob, url: URL.createObjectURL(blob), voice: headers.voice, label: headers.label, model: headers.model };
+    },
+    async getCatalog(country = 'US') {
       const data = await api.request('GET', `/api/telephony/numbers/search?country=${encodeURIComponent(country)}`);
       const rows = data.numbers || [];
       return rows.map((item) =>
@@ -719,6 +780,22 @@ export const api = {
           country: item.country || item.country_code || country,
         })
       );
+    },
+    async getCountries() {
+      const data = await api.request('GET', '/api/telephony/countries');
+      return {
+        countries: data.countries || [],
+        default: data.default || 'US',
+      };
+    },
+  },
+
+  kyc: {
+    async getStatus() {
+      return await api.request('GET', '/api/kyc/status');
+    },
+    async createSession(email = null) {
+      return await api.request('POST', '/api/kyc/session', email ? { email } : {});
     },
   },
 
@@ -792,8 +869,13 @@ export const api = {
   },
 
   leads: {
-    async list() {
-      const data = await api.request('GET', '/api/leads');
+    /**
+     * `agentId` is sent to the server, which filters on it. Filtering client-side
+     * would still ship every agent's leads to every agent's browser.
+     */
+    async list({ agentId } = {}) {
+      const qs = agentId ? `?agentId=${encodeURIComponent(agentId)}` : '';
+      const data = await api.request('GET', `/api/leads${qs}`);
       const rows = data.leads || data;
       return Array.isArray(rows) ? rows.map(normalizeLead) : [];
     },
@@ -812,6 +894,7 @@ export const api = {
         email: leadData.email,
         stage: leadStageToApi(leadData.stage || 'New'),
         notes: leadData.notes,
+        agentId: leadData.agentId || null,
       });
       return normalizeLead(data.lead || data);
     },
@@ -867,8 +950,9 @@ export const api = {
     async topUp(amountUsd) {
       return await api.request('POST', '/api/billing/topup', { amountUsd });
     },
-    async createRazorpayOrder(amountInr) {
-      return await api.request('POST', '/api/billing/razorpay/create-order', { amountInr });
+    /** `currency` is the account's charge currency (USD when international is on). */
+    async createRazorpayOrder(amount, currency) {
+      return await api.request('POST', '/api/billing/razorpay/create-order', { amount, currency });
     },
     async verifyRazorpayPayment(payload) {
       return await api.request('POST', '/api/billing/razorpay/verify', payload);

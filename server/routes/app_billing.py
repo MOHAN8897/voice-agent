@@ -23,7 +23,14 @@ class TopupBody(BaseModel):
 
 
 class RazorpayOrderBody(BaseModel):
-    amountInr: float = Field(..., ge=100, le=500000)
+    """A top-up in the currency the customer is charged.
+
+    Ignored when International Payments is off, in which case the account only
+    accepts INR and the server charges INR regardless of what was asked for.
+    """
+
+    amount: float = Field(..., gt=0, le=1_000_000)
+    currency: str | None = Field(None, max_length=8)
 
 
 class RazorpayVerifyBody(BaseModel):
@@ -34,12 +41,17 @@ class RazorpayVerifyBody(BaseModel):
 
 @router.get("/api/billing/catalog")
 async def billing_catalog():
-    """Prices the console displays. The server is the only source of truth for these."""
-    from server.services.saas.billing_rates import effective_rates
+    """Prices the console displays. The server is the only source of truth for these.
+
+    Every price is USD. The INR figures are derived mirrors at the chargeable FX
+    rate, exposed for admin reference only — the customer-facing surface quotes USD.
+    """
+    from server.services.saas.billing_rates import rates_with_derived_inr
 
     settings = get_settings()
-    rates = effective_rates()
+    rates = rates_with_derived_inr()
     return {
+        "currency": "USD",
         "plans": [
             {"id": "starter", "name": "Starter", "numbersIncluded": 0},
             {"id": "growth", "name": "Growth", "numbersIncluded": 0},
@@ -47,8 +59,9 @@ async def billing_catalog():
         "numberSkus": [
             {
                 "country": "IN",
-                "currency": "INR",
+                "currency": "USD",
                 "monthlyCents": rates["did_monthly_usd_cents"],
+                "monthlyUsd": round(rates["did_monthly_usd_cents"] / 100.0, 2),
                 "monthlyInr": round(rates["did_monthly_inr_paise"] / 100.0, 2),
             }
         ],
@@ -89,6 +102,8 @@ async def billing_topup(body: TopupBody, principal: SubscriberPrincipal = Depend
         raise_rate_limited(retry, "Top-up rate limit reached.")
     from server.services.saas.billing_rates import effective_rates
 
+    # Charge at the admin-configured rate, not the live market rate, so a
+    # top-up cannot change price between quote and payment.
     fx = float(effective_rates().get("fx_rate_inr") or 95.64)
     amount_inr = max(100.0, round(float(body.amountUsd) * fx, 2))
     try:
@@ -108,9 +123,24 @@ async def razorpay_create_order(
     if not allowed:
         raise_rate_limited(retry, "Payment rate limit reached.")
     try:
-        return await create_wallet_order(principal.tenant_id, body.amountInr)
+        return await create_wallet_order(
+            principal.tenant_id, body.amount, currency=body.currency
+        )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail={"error": {"code": str(e), "message": str(e)}})
+        code = str(e)
+        messages = {
+            "razorpay_not_configured": "Card payments are temporarily unavailable. Please try again later or contact support.",
+            "minimum_amount": "That amount is below the minimum charge.",
+            "maximum_amount": "That amount is above the maximum single top-up.",
+            "razorpay_auth_failed": (
+                "Card payments are temporarily unavailable. Please try again later or contact support."
+            ),
+            "razorpay_order_failed": "Could not start payment. Please try again in a moment.",
+        }
+        raise HTTPException(
+            status_code=400,
+            detail={"error": {"code": code, "message": messages.get(code, code)}},
+        ) from None
 
 
 @router.post("/api/billing/razorpay/verify")
@@ -151,13 +181,33 @@ async def billing_transactions(
 
 @router.get("/api/billing/razorpay/config")
 async def razorpay_public_config():
-    """Public: key id for Checkout. Re-reads env so keys added after process start apply."""
+    """Public: key id for Checkout, plus which currencies this account accepts.
+
+    Re-reads env so keys added after process start apply without a redeploy.
+    `international` must be true before a foreign-issued card will be offered —
+    it reflects the operator having enabled it in the Razorpay dashboard, and the
+    client uses it to avoid showing a currency the account would reject.
+    """
+    from server.services.saas.razorpay_service import (
+        SUPPORTED_CURRENCIES,
+        normalize_currency,
+    )
+    from server.services.saas.payment_settings import is_international_enabled
+
     get_settings.cache_clear()
     settings = get_settings()
     key = (settings.razorpay_api_key or "").strip()
     secret = (settings.razorpay_api_secret or "").strip()
+    enabled = bool(key and secret)
+    # Read the admin's saved choice, not the env default — otherwise turning
+    # international on in the panel would be silently ignored by checkout.
+    international = enabled and is_international_enabled()
     return {
-        "enabled": bool(key and secret),
+        "enabled": enabled,
         "keyId": key,
-        "currency": "INR",
+        "international": international,
+        # What checkout will actually be created in right now.
+        "currency": normalize_currency(None) if enabled else "INR",
+        # What the account could accept if the operator turns international on.
+        "availableCurrencies": list(SUPPORTED_CURRENCIES) if international else ["INR"],
     }

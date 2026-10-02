@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "origin": "failed-assert",
+  "expected": "POST routing → 200",
+  "observed": "no request to routing",
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-settings-number",
+        "source": {
+          "file": "src/console/modules/agent-workspace/AgentSettingsPanel.jsx",
+          "line": 251,
+          "column": 9
+        }
+      },
+      "action": "select"
+    }
+  ],
+  "id": "1790922804254-agent-settings-number-a10dd663",
+  "createdAt": 1790922804254,
+  "seen": 1,
+  "lastSeenAt": 1790922804254
+}

@@ -19,7 +19,9 @@ import {
   SkeuoTh,
 } from "@/components/ui/skeuo";
 import { adminAction, formatWhen, useAdminResource } from "@/lib/useAdminResource";
-import { useState } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useMemo, useState } from "react";
 
 type UserRow = {
   userId: string;
@@ -46,7 +48,16 @@ const STATUS_TONE: Record<string, "success" | "warning" | "danger" | "muted"> = 
 };
 
 export default function AdminUsersPage() {
-  const users = useAdminResource<{ users: UserRow[] }>("/api/dev/admin/users");
+  const searchParams = useSearchParams();
+  const tenantFilter = searchParams.get("tenantId") || "";
+  const usersUrl = useMemo(
+    () =>
+      tenantFilter
+        ? `/api/dev/admin/users?tenantId=${encodeURIComponent(tenantFilter)}`
+        : "/api/dev/admin/users",
+    [tenantFilter]
+  );
+  const users = useAdminResource<{ users: UserRow[] }>(usersUrl, [usersUrl]);
   const tenants = useAdminResource<{ tenants: Array<{ tenantId: string; name: string }> }>(
     "/api/dev/admin/tenants"
   );
@@ -128,7 +139,18 @@ export default function AdminUsersPage() {
     <div className="space-y-6 p-6">
       <AdminPageHeader
         title="Users"
-        description="Every account on the platform. Suspending blocks sign-in immediately without deleting history."
+        description={
+          tenantFilter
+            ? `Filtered to tenant ${tenantFilter}.`
+            : "Every account on the platform. Suspending blocks sign-in immediately without deleting history."
+        }
+        actions={
+          tenantFilter ? (
+            <Link href={`/dev/admin/tenants/${tenantFilter}`}>
+              <SkeuoButton variant="ghost">Open tenant cockpit</SkeuoButton>
+            </Link>
+          ) : undefined
+        }
       />
 
       <AdminError error={error} />
@@ -297,7 +319,13 @@ export default function AdminUsersPage() {
                 <ul className="mt-1 space-y-1 text-sm text-text-muted">
                   {detail.memberships.map((m) => (
                     <li key={m.tenantId}>
-                      <span className="font-mono text-xs">{m.tenantId.slice(0, 8)}</span> — {m.role}
+                      <Link
+                        href={`/dev/admin/tenants/${m.tenantId}`}
+                        className="font-mono text-xs underline hover:text-text"
+                      >
+                        {m.tenantId.slice(0, 8)}…
+                      </Link>{" "}
+                      — {m.role}
                     </li>
                   ))}
                 </ul>

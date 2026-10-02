@@ -17,8 +17,9 @@ ingress:
   # Carrier webhooks (Telnyx / Exotel) must reach the API directly.
   - hostname: api-dev.hustlelabs.in
     service: http://127.0.0.1:8000
-  # Public product UI. Voxly proxies /api and /ws to 8000, and /dev to the admin
-  # panel, so one public link covers the product and the back office.
+  # Public product UI only. Voxly proxies /api and /ws to 8000.
+  # /dev and /api/dev are blocked on non-localhost Host (see vite + API middleware);
+  # open the ops console at http://localhost:3000/dev on the machine running the stack.
   - hostname: app-dev.hustlelabs.in
     service: http://127.0.0.1:5173
   - service: http_status:404

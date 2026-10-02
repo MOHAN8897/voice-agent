@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
+import { useMemo, useState } from "react";
 import { DevCard } from "@/components/dev/DevCard";
 import {
   AdminError,
@@ -24,39 +25,54 @@ type Tenant = {
   tenantId: string;
   name: string;
   status: string;
+  plan?: string | null;
   createdAt: string | null;
   walletBalanceUsd?: number;
   walletCurrency?: string;
+  numberCount?: number;
+  memberCount?: number;
+  isInventory?: boolean;
 };
 
-type TenantDetail = {
-  tenant: Record<string, unknown>;
-  wallet?: {
-    balanceUsd?: number;
-    balanceInr?: number;
-    currency?: string;
-    updatedAt?: string | null;
-  } | null;
-  agents: Array<{ agentId?: string; agent_id?: string; name: string; status?: string }>;
-  numbers: Array<{ id?: string; e164: string; agentId?: string | null; status?: string }>;
-  users?: Array<{ userId: string; email?: string; role: string; fullName?: string }>;
-  members?: Array<{ userId: string; email?: string; role: string }>;
-  recentCalls?: Array<{ callId: string; startedAt?: string | null; status?: string | null }>;
-};
-
-const STATUSES = ["active", "suspended", "past_due", "cancelled"];
+const STATUSES = ["", "active", "suspended", "past_due", "cancelled"];
+const PLANS = ["", "starter", "growth", "enterprise", "default", "dev", "platform"];
+const PAGE_SIZE = 50;
 
 export default function AdminTenantsPage() {
   const [query, setQuery] = useState("");
-  const tenants = useAdminResource<{ tenants: Tenant[] }>(
-    `/api/dev/admin/tenants?q=${encodeURIComponent(query)}`,
-    [query]
-  );
+  const [status, setStatus] = useState("");
+  const [plan, setPlan] = useState("");
+  const [hasNumbers, setHasNumbers] = useState("");
+  const [balanceBand, setBalanceBand] = useState("");
+  const [showInventory, setShowInventory] = useState(false);
+  const [offset, setOffset] = useState(0);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [detail, setDetail] = useState<TenantDetail | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [newName, setNewName] = useState("");
+  const [newPlan, setNewPlan] = useState("starter");
+
+  const listUrl = useMemo(() => {
+    const p = new URLSearchParams();
+    if (query.trim()) p.set("q", query.trim());
+    if (status) p.set("status", status);
+    if (plan) p.set("plan", plan);
+    if (hasNumbers === "yes") p.set("hasNumbers", "true");
+    if (hasNumbers === "no") p.set("hasNumbers", "false");
+    if (balanceBand === "zero") {
+      p.set("maxBalanceUsd", "0");
+    } else if (balanceBand === "low") {
+      p.set("maxBalanceUsd", "5");
+    } else if (balanceBand === "funded") {
+      p.set("minBalanceUsd", "5");
+    }
+    p.set("excludeInventory", showInventory ? "false" : "true");
+    p.set("limit", String(PAGE_SIZE));
+    p.set("offset", String(offset));
+    return `/api/dev/admin/tenants?${p.toString()}`;
+  }, [query, status, plan, hasNumbers, balanceBand, showInventory, offset]);
+
+  const tenants = useAdminResource<{ tenants: Tenant[]; total?: number }>(listUrl, [listUrl]);
 
   async function run(key: string, fn: () => Promise<void>) {
     setBusy(key);
@@ -70,147 +86,207 @@ export default function AdminTenantsPage() {
     }
   }
 
-  function patch(t: Tenant, body: Record<string, unknown>) {
-    return run(`patch:${t.tenantId}`, async () => {
-      await adminAction(`/api/dev/admin/tenants/${t.tenantId}`, { method: "PATCH", body });
-      await tenants.reload();
-    });
-  }
-
-  async function openDetail(tenantId: string) {
-    await run(`detail:${tenantId}`, async () => {
-      const { devFetch } = await import("@/lib/useAdminResource");
-      setDetail((await devFetch(`/api/dev/admin/tenants/${tenantId}`)) as TenantDetail);
-    });
-  }
-
   function createTenant() {
     return run("create", async () => {
       await adminAction("/api/dev/admin/tenants", {
         method: "POST",
-        body: { name: newName.trim(), status: "active" },
+        body: { name: newName.trim(), status: "active", plan: newPlan },
       });
       setNewName("");
       setCreateOpen(false);
+      setOffset(0);
       await tenants.reload();
     });
   }
 
-  function deleteTenant(t: Tenant) {
-    if (
-      !window.confirm(
-        `Delete tenant “${t.name}”? Soft-deletes the workspace (status cancelled). Numbers must be released first unless you force.`
-      )
-    ) {
-      return;
-    }
-    return run(`delete:${t.tenantId}`, async () => {
-      try {
-        await adminAction(`/api/dev/admin/tenants/${t.tenantId}`, { method: "DELETE" });
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : "";
-        if (/active number/i.test(msg) && window.confirm(`${msg}\n\nForce delete anyway?`)) {
-          await adminAction(`/api/dev/admin/tenants/${t.tenantId}?force=true`, { method: "DELETE" });
-        } else {
-          throw e;
-        }
-      }
-      if (detail?.tenant?.tenantId === t.tenantId) setDetail(null);
-      await tenants.reload();
-    });
-  }
-
-  const members = detail?.users?.length ? detail.users : detail?.members ?? [];
+  const total = tenants.data?.total ?? tenants.data?.tenants?.length ?? 0;
+  const rows = tenants.data?.tenants ?? [];
 
   return (
     <div className="space-y-6 p-6">
       <AdminPageHeader
         title="Tenants"
-        description="One customer workspace each. Same tenant ids appear on Numbers and Wallets. Data is stored in Postgres and survives API restarts."
+        description="Customer workspaces. Open a row for the full cockpit (plan, limits, wallet, numbers, audit)."
+        actions={
+          <SkeuoButton variant="primary" onClick={() => setCreateOpen(true)}>
+            Add tenant
+          </SkeuoButton>
+        }
       />
 
       <AdminError error={error} />
       <AdminError error={tenants.error} />
 
       <DevCard title="All tenants">
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <SkeuoInput
-            placeholder="Search tenants by name"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            aria-label="Search tenants"
-            className="max-w-sm"
-          />
-          <SkeuoButton variant="primary" onClick={() => setCreateOpen(true)}>
-            Add tenant
-          </SkeuoButton>
+        <div className="mb-3 flex flex-wrap items-end gap-2">
+          <label className="text-xs text-text-muted">
+            Search
+            <SkeuoInput
+              placeholder="Name"
+              value={query}
+              onChange={(e) => {
+                setOffset(0);
+                setQuery(e.target.value);
+              }}
+              aria-label="Search tenants"
+              className="mt-1 max-w-xs"
+            />
+          </label>
+          <label className="text-xs text-text-muted">
+            Status
+            <select
+              value={status}
+              onChange={(e) => {
+                setOffset(0);
+                setStatus(e.target.value);
+              }}
+              className="mt-1 block rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised px-2 py-1.5 text-xs text-text"
+              aria-label="Filter by status"
+            >
+              {STATUSES.map((s) => (
+                <option key={s || "all"} value={s}>
+                  {s || "All statuses"}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-xs text-text-muted">
+            Plan
+            <select
+              value={plan}
+              onChange={(e) => {
+                setOffset(0);
+                setPlan(e.target.value);
+              }}
+              className="mt-1 block rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised px-2 py-1.5 text-xs text-text"
+              aria-label="Filter by plan"
+            >
+              {PLANS.map((p) => (
+                <option key={p || "all"} value={p}>
+                  {p || "All plans"}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-xs text-text-muted">
+            Numbers
+            <select
+              value={hasNumbers}
+              onChange={(e) => {
+                setOffset(0);
+                setHasNumbers(e.target.value);
+              }}
+              className="mt-1 block rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised px-2 py-1.5 text-xs text-text"
+              aria-label="Filter by numbers"
+            >
+              <option value="">Any</option>
+              <option value="yes">Has numbers</option>
+              <option value="no">No numbers</option>
+            </select>
+          </label>
+          <label className="text-xs text-text-muted">
+            Balance
+            <select
+              value={balanceBand}
+              onChange={(e) => {
+                setOffset(0);
+                setBalanceBand(e.target.value);
+              }}
+              className="mt-1 block rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised px-2 py-1.5 text-xs text-text"
+              aria-label="Filter by balance"
+            >
+              <option value="">Any balance</option>
+              <option value="zero">$0</option>
+              <option value="low">Under $5</option>
+              <option value="funded">$5+</option>
+            </select>
+          </label>
+          <label className="flex items-center gap-2 text-xs text-text-muted">
+            <input
+              type="checkbox"
+              checked={showInventory}
+              onChange={(e) => {
+                setOffset(0);
+                setShowInventory(e.target.checked);
+              }}
+            />
+            Show Platform inventory
+          </label>
         </div>
+
         <AdminLoading loading={tenants.loading} />
         <SkeuoTable>
           <SkeuoTableHead>
             <SkeuoTh>Name</SkeuoTh>
+            <SkeuoTh>Plan</SkeuoTh>
             <SkeuoTh>Wallet</SkeuoTh>
+            <SkeuoTh>Members</SkeuoTh>
+            <SkeuoTh>Numbers</SkeuoTh>
             <SkeuoTh>Status</SkeuoTh>
             <SkeuoTh>Created</SkeuoTh>
             <SkeuoTh className="text-right">Actions</SkeuoTh>
           </SkeuoTableHead>
           <SkeuoTableBody>
-            {(tenants.data?.tenants ?? []).map((t) => (
+            {rows.map((t) => (
               <SkeuoTableRow key={t.tenantId}>
                 <SkeuoTd>
-                  <button
-                    type="button"
-                    className="text-left font-medium hover:underline"
-                    onClick={() => openDetail(t.tenantId)}
+                  <Link
+                    href={`/dev/admin/tenants/${t.tenantId}`}
+                    className="font-medium text-text hover:underline"
                   >
                     {t.name}
-                  </button>
+                  </Link>
                   <p className="font-mono text-[10px] text-text-subtle">{t.tenantId}</p>
+                </SkeuoTd>
+                <SkeuoTd>
+                  <SkeuoBadge>{t.plan || "—"}</SkeuoBadge>
                 </SkeuoTd>
                 <SkeuoTd className="font-mono text-xs">
                   ${Number(t.walletBalanceUsd ?? 0).toFixed(2)}
                 </SkeuoTd>
+                <SkeuoTd className="font-mono text-xs">{t.memberCount ?? 0}</SkeuoTd>
+                <SkeuoTd className="font-mono text-xs">{t.numberCount ?? 0}</SkeuoTd>
                 <SkeuoTd>
-                  <select
-                    defaultValue={t.status ?? "active"}
-                    onChange={(e) => patch(t, { status: e.target.value })}
-                    disabled={busy === `patch:${t.tenantId}`}
-                    aria-label={`Status for ${t.name}`}
-                    className="rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised px-2 py-1 text-xs text-text"
-                  >
-                    {STATUSES.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
+                  <SkeuoBadge>{t.status ?? "active"}</SkeuoBadge>
                 </SkeuoTd>
                 <SkeuoTd className="text-xs text-text-muted">{formatWhen(t.createdAt)}</SkeuoTd>
-                <SkeuoTd className="text-right space-x-2">
-                  <SkeuoButton
-                    variant="ghost"
-                    disabled={busy === `detail:${t.tenantId}`}
-                    onClick={() => openDetail(t.tenantId)}
-                  >
-                    Inspect
-                  </SkeuoButton>
-                  <SkeuoButton
-                    variant="ghost"
-                    disabled={busy === `delete:${t.tenantId}`}
-                    onClick={() => deleteTenant(t)}
-                  >
-                    Delete
-                  </SkeuoButton>
+                <SkeuoTd className="text-right">
+                  <Link href={`/dev/admin/tenants/${t.tenantId}`}>
+                    <SkeuoButton variant="ghost">Open</SkeuoButton>
+                  </Link>
                 </SkeuoTd>
               </SkeuoTableRow>
             ))}
-            {(tenants.data?.tenants ?? []).length === 0 && !tenants.loading && (
+            {rows.length === 0 && !tenants.loading && (
               <SkeuoTableRow>
                 <SkeuoTd className="text-text-muted">No tenants match.</SkeuoTd>
               </SkeuoTableRow>
             )}
           </SkeuoTableBody>
         </SkeuoTable>
+
+        <div className="mt-3 flex items-center justify-between text-xs text-text-muted">
+          <span>
+            {total} tenant{total === 1 ? "" : "s"}
+            {total > PAGE_SIZE ? ` · showing ${offset + 1}–${Math.min(offset + PAGE_SIZE, total)}` : ""}
+          </span>
+          <div className="flex gap-2">
+            <SkeuoButton
+              variant="ghost"
+              disabled={offset <= 0 || Boolean(busy)}
+              onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
+            >
+              Previous
+            </SkeuoButton>
+            <SkeuoButton
+              variant="ghost"
+              disabled={offset + PAGE_SIZE >= total || Boolean(busy)}
+              onClick={() => setOffset(offset + PAGE_SIZE)}
+            >
+              Next
+            </SkeuoButton>
+          </div>
+        </div>
       </DevCard>
 
       {createOpen && (
@@ -225,7 +301,7 @@ export default function AdminTenantsPage() {
               Add tenant
             </h3>
             <p className="mt-1 text-xs text-text-muted">
-              Creates a workspace with an empty USD wallet (persisted in the database).
+              Creates a workspace with an empty USD wallet.
             </p>
             <label className="mt-4 block text-xs font-medium text-text">
               Name
@@ -235,6 +311,20 @@ export default function AdminTenantsPage() {
                 onChange={(e) => setNewName(e.target.value)}
                 placeholder="Acme Corp"
               />
+            </label>
+            <label className="mt-3 block text-xs font-medium text-text">
+              Plan
+              <select
+                value={newPlan}
+                onChange={(e) => setNewPlan(e.target.value)}
+                className="mt-1 block w-full rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised px-2 py-1.5 text-xs text-text"
+              >
+                {PLANS.filter(Boolean).map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </select>
             </label>
             <div className="mt-4 flex justify-end gap-2">
               <SkeuoButton variant="ghost" onClick={() => setCreateOpen(false)}>
@@ -248,134 +338,6 @@ export default function AdminTenantsPage() {
                 Create
               </SkeuoButton>
             </div>
-          </div>
-        </div>
-      )}
-
-      {detail && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="inspect-tenant-title"
-        >
-          <div className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-xl border border-surface-border bg-surface-panel p-5 shadow-lg">
-            <button
-              type="button"
-              className="absolute right-4 top-4 text-xs text-text-muted hover:text-text"
-              onClick={() => setDetail(null)}
-            >
-              Close
-            </button>
-            <h3 id="inspect-tenant-title" className="pr-12 text-sm font-semibold text-text">
-              {String(detail.tenant.name ?? "Workspace")}
-            </h3>
-            <p className="mt-1 font-mono text-[10px] text-text-subtle">
-              {String(detail.tenant.tenantId ?? "")}
-            </p>
-
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-lg border border-surface-border-subtle p-3">
-                <h4 className="text-xs font-semibold text-text">Meta</h4>
-                <dl className="mt-2 space-y-1 text-xs text-text-muted">
-                  <div className="flex justify-between gap-2">
-                    <dt>Status</dt>
-                    <dd>
-                      <SkeuoBadge>{String(detail.tenant.status ?? "—")}</SkeuoBadge>
-                    </dd>
-                  </div>
-                  <div className="flex justify-between gap-2">
-                    <dt>Created</dt>
-                    <dd>{formatWhen(String(detail.tenant.createdAt ?? "") || null)}</dd>
-                  </div>
-                  <div className="flex justify-between gap-2">
-                    <dt>Billing source</dt>
-                    <dd>{String(detail.tenant.billingSource ?? "—")}</dd>
-                  </div>
-                </dl>
-              </div>
-              <div className="rounded-lg border border-surface-border-subtle p-3">
-                <h4 className="text-xs font-semibold text-text">Wallet</h4>
-                {detail.wallet ? (
-                  <dl className="mt-2 space-y-1 text-xs text-text-muted">
-                    <div className="flex justify-between gap-2">
-                      <dt>USD</dt>
-                      <dd className="font-mono">${Number(detail.wallet.balanceUsd ?? 0).toFixed(2)}</dd>
-                    </div>
-                    <div className="flex justify-between gap-2">
-                      <dt>Currency</dt>
-                      <dd>{detail.wallet.currency || "USD"}</dd>
-                    </div>
-                    <div className="flex justify-between gap-2">
-                      <dt>Updated</dt>
-                      <dd>{formatWhen(detail.wallet.updatedAt ?? null)}</dd>
-                    </div>
-                  </dl>
-                ) : (
-                  <p className="mt-2 text-xs text-text-muted">No wallet row yet.</p>
-                )}
-              </div>
-            </div>
-
-            <div className="mt-4 grid gap-4 md:grid-cols-3">
-              <div>
-                <h4 className="text-sm font-medium text-text">Agents</h4>
-                {detail.agents?.length ? (
-                  <ul className="mt-1 space-y-1 text-sm text-text-muted">
-                    {detail.agents.map((a) => (
-                      <li key={a.agentId || a.agent_id}>
-                        {a.name}
-                        {a.status ? ` · ${a.status}` : ""}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="mt-1 text-sm text-text-muted">None.</p>
-                )}
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-text">Phone numbers</h4>
-                {detail.numbers?.length ? (
-                  <ul className="mt-1 space-y-1 font-mono text-sm text-text-muted">
-                    {detail.numbers.map((n) => (
-                      <li key={n.id || n.e164}>{n.e164}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="mt-1 text-sm text-text-muted">None.</p>
-                )}
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-text">Members</h4>
-                {members.length ? (
-                  <ul className="mt-1 space-y-1 text-sm text-text-muted">
-                    {members.map((m) => (
-                      <li key={m.userId}>
-                        {m.email || m.userId} · {m.role}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="mt-1 text-sm text-text-muted">
-                    None. A tenant with no members cannot be signed into.
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {!!detail.recentCalls?.length && (
-              <div className="mt-4">
-                <h4 className="text-sm font-medium text-text">Recent calls</h4>
-                <ul className="mt-1 space-y-1 font-mono text-xs text-text-muted">
-                  {detail.recentCalls.map((c) => (
-                    <li key={c.callId}>
-                      {c.callId.slice(0, 8)}… · {formatWhen(c.startedAt ?? null)}
-                      {c.status ? ` · ${c.status}` : ""}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
           </div>
         </div>
       )}

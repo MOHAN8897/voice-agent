@@ -106,10 +106,14 @@ class CallLifecycleService:
         language: str = "te-IN",
         realtime_prewarm_key: str | None = None,
         billed_user_id: str | None = None,
+        is_test: bool | None = None,
     ) -> dict[str, Any]:
         settings = get_settings()
         session_id = session_id or "default"
         channel = channel if channel in ("browser", "pstn") else "browser"
+        # A browser session is a practice run unless the caller says otherwise;
+        # PSTN is always a real call regardless of the flag.
+        is_test = (channel == "browser") if is_test is None else bool(is_test)
         direction = direction if direction in ("inbound", "outbound") else "inbound"
         lookup_session = (config_session_id or session_id).strip() or session_id
         from server.services.test_studio_config import saved_call_config
@@ -197,6 +201,7 @@ class CallLifecycleService:
             "resolved_stack": stack.to_safe_dict(),
             "pipeline": pipeline,
             "billed_user_id": billed_user_id,
+            "is_test": is_test,
         }
         from server.services.transcription_policy import attach_normalized_stack_override
 
@@ -222,7 +227,7 @@ class CallLifecycleService:
             usage_seed = {"transcription_billing": tag, "transcription_model": policy.live_model if policy.live_enabled else policy.post_call_model}
             meta["usage"] = usage_seed
         await call_ledger.init(call_id, meta)
-        audio_archive.init(call_id)
+        audio_archive.init(call_id, record=not is_test)
         from server.call.memory_manager import memory_manager
 
         memory_manager.init(call_id)
@@ -265,6 +270,7 @@ class CallLifecycleService:
             "storage_path": storage_path,
             "last_heartbeat_at": started,
             "billed_user_id": billed_user_id,
+            "is_test": is_test,
         }
         await call_store.insert(record)
 

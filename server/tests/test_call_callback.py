@@ -14,6 +14,11 @@ from server.services.saas import call_callback_service as svc
 from server.services.saas.tenant_guard import SubscriberPrincipal
 
 
+async def _approved(_principal, *, action: str) -> None:
+    """Stand-in for a passed KYC gate, for tests that are not about the gate."""
+    return None
+
+
 @pytest.fixture
 def principal():
     return SubscriberPrincipal(
@@ -194,12 +199,50 @@ async def test_outbound_route_also_returns_404_for_an_unknown_agent(principal, m
         raise KeyError(agent_id)
 
     monkeypatch.setattr("server.brain.agent_service.agent_service.get_agent", _missing)
+    # The KYC gate runs before the agent lookup and refuses an unverified caller
+    # with 403. This test is about the 404 for an unknown agent, so the gate is
+    # switched off here — otherwise the result depends on whether the developer
+    # running it has Didit keys in .env, which is not what this test is asserting.
+    monkeypatch.setattr(
+        "server.services.saas.kyc_gate.assert_kyc_approved", _approved, raising=True
+    )
 
     with pytest.raises(HTTPException) as exc:
         await subscriber_outbound(
             principal, agent_id="ghost-agent", from_e164=None, to_e164="+919999999999"
         )
     assert exc.value.status_code == 404
+
+
+async def test_an_unverified_caller_is_stopped_before_the_agent_lookup(principal, monkeypatch):
+    """With Didit configured, the compliance gate refuses before anything is dialled.
+
+    Kept next to the 404 test on purpose: the two gates sit on the same path, and
+    it is the interaction between them that is easy to break silently.
+    """
+    from fastapi import HTTPException
+
+    from server.services.saas import kyc_service
+    from server.services.saas.telephony_orchestrator import subscriber_outbound
+
+    async def _not_approved(_user_id):
+        return False
+
+    async def _never_looked_up(*_a, **_kw):
+        raise AssertionError("the agent must not be resolved before the gate")
+
+    # Stub Didit's own answers, not the gate: the gate under test here is the real
+    # one, and it reads both of these at call time.
+    monkeypatch.setattr(kyc_service, "is_configured", lambda: True)
+    monkeypatch.setattr(kyc_service, "is_approved", _not_approved)
+    monkeypatch.setattr("server.brain.agent_service.agent_service.get_agent", _never_looked_up)
+
+    with pytest.raises(HTTPException) as exc:
+        await subscriber_outbound(
+            principal, agent_id="ghost-agent", from_e164=None, to_e164="+919999999999"
+        )
+    assert exc.value.status_code == 403
+    assert exc.value.detail["error"]["code"] == "kyc_required"
 
 
 async def test_callback_authorises_the_chosen_agent(principal, monkeypatch):

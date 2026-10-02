@@ -1,0 +1,21 @@
+{
+  "intents": {
+    "flow:drive-buy-number-modal-skips-kyc-card-when-user-is-alr": {
+      "binding": {
+        "flow": "drive-buy-number-modal-skips-kyc-card-when-user-is-alr"
+      },
+      "declaredAt": 1790934292423,
+      "id": "flow:drive-buy-number-modal-skips-kyc-card-when-user-is-alr",
+      "state": "bound",
+      "statement": "Buy-number modal skips KYC card when user is already Approved",
+      "status": "proposed",
+      "subject": "drive-buy-number-modal-skips-kyc-card-wh",
+      "surface": {
+        "flow": "drive-buy-number-modal-skips-kyc-card-when-user-is-alr"
+      },
+      "updatedAt": 1790934292552
+    }
+  },
+  "subject": "drive-buy-number-modal-skips-kyc-card-wh",
+  "version": 1
+}

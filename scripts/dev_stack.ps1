@@ -86,10 +86,8 @@ if (Should-SyncRemoteEnv -and (Test-NamedTunnelConfig)) {
 }
 
 # --- Step 3: start API + web ---
-# The admin panel is reachable from outside through the tunnel, so a Next.js dev
-# server there is slow on first hit. A production build is faster to use publicly,
-# but it costs a full `next build` and kills hot reload, so it stays opt-in via
-# DEV_PRODUCTION_PANEL=1 (or the share/telephony modes, which exist for sharing).
+# Admin panel is localhost-only (Vite + Next + API gate /dev). Tunnel still
+# serves the product UI and carrier webhooks; never expect public /dev to be OK.
 $productionWeb =
     ($Mode -in @("share", "telephony")) -or (Test-EnvFlag "DEV_PRODUCTION_PANEL")
 $voxlyFocus = $Mode -eq "voxly"
@@ -137,9 +135,19 @@ if (Should-StartTunnel) {
                 if (-not (Wait-ForService -Label "Public Voxly API proxy" -Url "$publicApp/api/health" -MaxAttempts 45)) {
                     throw "Public Voxly API proxy is not healthy."
                 }
-                if (-not (Wait-ForService -Label "Public admin panel" -Url "$publicApp/dev/login" -MaxAttempts 45)) {
-                    throw "Public admin panel (/dev) is not healthy."
+                # Admin is localhost-only: public /dev must 404 (not 200).
+                $publicDevCode = Get-HttpStatusCode "$publicApp/dev/login" 8
+                if ($publicDevCode -eq 404) {
+                    Write-Host "Public /dev is blocked (404) - admin stays on localhost only."
+                } elseif ($publicDevCode -ge 200 -and $publicDevCode -lt 400) {
+                    throw "Public /dev is reachable (HTTP $publicDevCode). Dev admin must be localhost-only; check Vite/Next/API gates."
+                } else {
+                    Write-Warning "Could not confirm public /dev block (HTTP $publicDevCode). Expected 404."
                 }
+                if (-not (Test-HttpOk "http://127.0.0.1:3000/dev/login" 5)) {
+                    throw "Local admin panel is not healthy at http://127.0.0.1:3000/dev/login"
+                }
+                Write-Host "Local admin panel is ready (http://localhost:3000/dev/login)."
             }
             if ($Mode -eq "share" -and (-not $publicApi -or -not $publicApp)) {
                 throw "Named tunnel config must include API (8000) and Voxly (5173) ingress hosts."
@@ -169,17 +177,11 @@ Write-Host "    Test Studio      http://localhost:3000/dev/test-studio"
 Write-Host "    API health       http://127.0.0.1:8000/api/health"
 Write-Host ""
 if ($tunnelStarted -and $publicApp -and $publicApp -notmatch "localhost") {
-    # One public origin serves both UIs: the product at /, the admin panel at /dev.
     Write-Host "  PUBLIC (Cloudflare tunnel)"
     Write-Host "    Voxly (product)  $publicApp"
-    Write-Host "    Admin panel      $publicApp/dev/login"
+    Write-Host "    Admin panel      localhost only - http://localhost:3000/dev/login"
+    Write-Host "                     (public $publicApp/dev is blocked)"
     Write-Host ""
-    if (-not $productionWeb) {
-        Write-Host "  Note: the public admin panel is a Next.js dev server, so the first"
-        Write-Host "  hit of each page compiles first. Set DEV_PRODUCTION_PANEL=1 in .env"
-        Write-Host "  for a production build (slower startup, no hot reload)."
-        Write-Host ""
-    }
 }
 if ($tunnelStarted -and $publicApi) {
     Write-Host "  CARRIER WEBHOOKS (public, required for PSTN)"

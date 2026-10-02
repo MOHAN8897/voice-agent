@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "origin": "failed-assert",
+  "expected": "element ?",
+  "observed": "no element matched {\"testid\":\"voice-preview-error\"} — testids present here: sidebar-wallet-pill, topbar-wallet, agent-studio-back, agent-studio-switcher, agent-test-call, agent-save, agent-tab-overview, agent-tab-script, agent-tab-calls, agent-tab-voice, agent-tab-settings",
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-tab-voice",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 579,
+          "column": 13
+        }
+      },
+      "action": "click"
+    }
+  ],
+  "id": "1790923130850-agent-tab-voice-680992a8",
+  "createdAt": 1790923130850,
+  "seen": 1,
+  "lastSeenAt": 1790923130850
+}

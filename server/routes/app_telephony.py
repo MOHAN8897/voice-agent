@@ -3,9 +3,11 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import select
+
+from server.utils.logger import logger
 
 from server.auth.subscriber_dependencies import require_subscriber_jwt
 from server.config.env import get_settings
@@ -56,7 +58,7 @@ class OutboundCallBody(BaseModel):
 
 class BuyNumberBody(BaseModel):
     e164: str = Field(..., min_length=8)
-    country: str = Field("IN", max_length=8)
+    country: str = Field("US", max_length=8)
     payMethod: str = Field("wallet")
     assignAgentId: str | None = None
 
@@ -103,10 +105,11 @@ async def calls_outbound_alias(body: OutboundCallBody, principal: SubscriberPrin
 @router.get("/api/telephony/voice-options")
 async def telephony_voice_options(principal: SubscriberPrincipal = Depends(require_subscriber_jwt)):
     """Subscriber-safe voice list for the production phone AI stack (no dev stack UI)."""
-    languages = [
-        {"code": code, "label": label}
-        for code, label in constants.SUPPORTED_LANGUAGES.items()
-    ]
+    # Only languages the platform offers at creation, so the settings tab cannot
+    # be used to sidestep the admin enablement list.
+    from server.services.saas.platform_languages import language_options
+
+    languages = language_options()
     return {
         "stackLabel": "Live phone AI",
         "stackDescription": "Same voice engine for incoming calls, outgoing calls, and browser practice calls.",
@@ -114,6 +117,55 @@ async def telephony_voice_options(principal: SubscriberPrincipal = Depends(requi
         "voices": phone_voice_catalog(),
         "languages": languages,
     }
+
+
+class VoicePreviewBody(BaseModel):
+    text: str = Field(..., min_length=1, max_length=400)
+    voiceId: str | None = Field(None, max_length=64)
+
+
+@router.post("/api/telephony/voice-preview")
+async def voice_preview(
+    body: VoicePreviewBody, principal: SubscriberPrincipal = Depends(require_subscriber_jwt)
+):
+    """Speak `text` in the agent's real production voice, and return it as a WAV.
+
+    Runs the same live model a caller would reach, so what the operator hears in
+    the studio is what a customer hears on the line. The browser's own speech
+    synthesis is deliberately not used — it is a different engine with different
+    voices, and approving against it means approving the wrong thing.
+    """
+    require_subscriber_permission(principal, "app.billing.write")
+    from server.services.saas.voice_preview import synthesize_preview
+
+    try:
+        result = await synthesize_preview(body.text, voice_id=body.voiceId)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": {"code": str(exc), "message": "Nothing to preview."}},
+        ) from None
+    except Exception as exc:
+        logger.warning("[VOICE] preview failed: %s", exc)
+        raise HTTPException(
+            status_code=502,
+            detail={
+                "error": {
+                    "code": "voice_preview_unavailable",
+                    "message": "Could not reach the voice service. Check the voice configuration.",
+                }
+            },
+        ) from None
+    return Response(
+        content=result["audio"],
+        media_type="audio/wav",
+        headers={
+            "X-Voice-Name": result["voice"],
+            "X-Voice-Label": result["label"],
+            "X-Voice-Model": result["model"],
+            "Cache-Control": "no-store",
+        },
+    )
 
 
 @router.get("/api/telephony/numbers")
@@ -131,10 +183,25 @@ async def list_numbers(principal: SubscriberPrincipal = Depends(require_subscrib
             )
         )
         numbers = []
-        settings = get_settings()
-        monthly_usd = round(settings.did_monthly_usd_cents / 100.0, 2)
-        monthly_inr = round(settings.did_monthly_inr_paise / 100.0, 2)
+        from server.services.saas.billing_rates import rates_with_derived_inr
+
+        rates = rates_with_derived_inr()
+        monthly_usd = round(rates["did_monthly_usd_cents"] / 100.0, 2)
+        monthly_inr = round(rates["did_monthly_inr_paise"] / 100.0, 2)
         for n in result.scalars():
+            e164 = n.e164 or ""
+            if e164.startswith("+1"):
+                country = "US"
+            elif e164.startswith("+44"):
+                country = "GB"
+            elif e164.startswith("+61"):
+                country = "AU"
+            elif e164.startswith("+91"):
+                country = "IN"
+            elif e164.startswith("+65"):
+                country = "SG"
+            else:
+                country = None
             numbers.append(
                 {
                     "id": str(n.id),
@@ -146,6 +213,7 @@ async def list_numbers(principal: SubscriberPrincipal = Depends(require_subscrib
                     "billingSource": n.billing_source,
                     "monthlyCost": monthly_usd,
                     "monthlyInr": monthly_inr,
+                    "country": country,
                 }
             )
     return {"numbers": numbers}
@@ -153,63 +221,138 @@ async def list_numbers(principal: SubscriberPrincipal = Depends(require_subscrib
 
 @router.get("/api/telephony/numbers/search")
 async def search_numbers(
-    country: str = "IN",
+    country: str = "US",
     principal: SubscriberPrincipal = Depends(require_subscriber_jwt),
 ):
     require_subscriber_permission(principal, "app.telephony.write")
     from server.services.telnyx_client import TelnyxClient
+    from server.services.saas.telephony_countries import normalize_buy_country
+    from server.services.saas.billing_rates import rates_with_derived_inr
+    from server.services.saas.number_inventory import list_inventory_for_sale
 
-    client = TelnyxClient()
-    numbers = await client.search_available_numbers(country=country, limit=10)
-    settings = get_settings()
-    monthly_inr = round(settings.did_monthly_inr_paise / 100.0, 2)
-    monthly_usd = round(settings.did_monthly_usd_cents / 100.0, 2)
-    priced = []
+    country = normalize_buy_country(country)
+    rates = rates_with_derived_inr()
+    # Chargeable platform rate — must match wallet debit and the buy-modal header.
+    monthly_usd = round(rates["did_monthly_usd_cents"] / 100.0, 2)
+    monthly_inr = round(rates["did_monthly_inr_paise"] / 100.0, 2)
+
+    priced: list[dict] = []
+    seen: set[str] = set()
+    # Admin inventory first — already on the account, no Telnyx order required.
+    for item in await list_inventory_for_sale(country=country):
+        e164 = str(item.get("e164") or "")
+        if not e164 or e164 in seen:
+            continue
+        seen.add(e164)
+        priced.append(
+            {
+                **item,
+                "monthlyUsd": monthly_usd,
+                "monthlyInr": monthly_inr,
+                "fee": monthly_usd,
+                "country": country,
+            }
+        )
+
+    try:
+        numbers = await TelnyxClient().search_available_numbers(country=country, limit=10)
+    except Exception as exc:
+        logger.warning("telnyx catalog search failed country=%s: %s", country, exc)
+        numbers = []
     for row in numbers:
         item = dict(row) if isinstance(row, dict) else {"e164": str(row)}
-        item.setdefault("monthlyInr", monthly_inr)
-        item.setdefault("monthlyUsd", monthly_usd)
-        item.setdefault("fee", monthly_usd)
+        e164 = str(item.get("e164") or item.get("phone_number") or "")
+        if e164 and e164 in seen:
+            continue
+        if e164:
+            seen.add(e164)
+        item["monthlyInr"] = monthly_inr
+        item["monthlyUsd"] = monthly_usd
+        item["fee"] = monthly_usd
+        item["country"] = country
+        item.setdefault("source", "telnyx")
         priced.append(item)
-    return {"numbers": priced, "didMonthlyInr": monthly_inr, "didMonthlyUsd": monthly_usd}
+    return {
+        "numbers": priced,
+        "country": country,
+        "didMonthlyInr": monthly_inr,
+        "didMonthlyUsd": monthly_usd,
+    }
+
+
+@router.get("/api/telephony/countries")
+async def list_buy_countries(principal: SubscriberPrincipal = Depends(require_subscriber_jwt)):
+    """Countries English-speaking SaaS buyers can purchase Telnyx numbers in."""
+    require_subscriber_permission(principal, "app.telephony.write")
+    from server.services.saas.telephony_countries import buy_country_options
+
+    return {"countries": buy_country_options(), "default": "US"}
 
 
 @router.post("/api/telephony/buy")
-async def buy_number(body: BuyNumberBody, principal: SubscriberPrincipal = Depends(require_subscriber_jwt)):
+async def buy_number(
+    body: BuyNumberBody,
+    request: Request,
+    principal: SubscriberPrincipal = Depends(require_subscriber_jwt),
+):
     require_subscriber_permission(principal, "app.billing.write")
+    # Buying a number is a compliance-gated action (see server/services/saas/kyc_gate.py).
+    from server.services.saas.activity_log import record_event
+    from server.services.saas.kyc_gate import assert_kyc_approved
+
     allowed, retry = _buy_limiter.allow(f"buy:{principal.tenant_id}")
     if not allowed:
         raise_rate_limited(retry, "Number purchase rate limit reached.")
     pay = (body.payMethod or "wallet").strip().lower()
+    # Every attempt is logged, including the ones that stop at the KYC gate. A
+    # refused purchase is the thing an operator needs to see, and it never reaches
+    # the purchase service — so logging only there would hide every refusal.
     try:
+        await assert_kyc_approved(principal, action="buy a phone number")
         if pay == "stripe":
-            return await create_purchase_checkout(
+            result = await create_purchase_checkout(
                 principal,
                 e164=body.e164,
                 country_code=body.country,
                 assign_agent_id=body.assignAgentId,
             )
-        return await purchase_with_wallet(
-            principal,
-            e164=body.e164,
-            country_code=body.country,
-            assign_agent_id=body.assignAgentId,
+        else:
+            result = await purchase_with_wallet(
+                principal,
+                e164=body.e164,
+                country_code=body.country,
+                assign_agent_id=body.assignAgentId,
+            )
+    except HTTPException as exc:
+        await _log_purchase_refusal(
+            request, principal, body, pay, exc, getattr(exc, "status_code", 500)
         )
-    except HTTPException:
         raise
     except ValueError as e:
         code = str(e)
+        await _log_purchase_refusal_code(
+            request, principal, body, pay, code, _purchase_error_status(code)
+        )
         if code == "verification_required":
             status = 403
         elif code == "stripe_not_configured":
             status = 503
         elif code == "insufficient_balance":
             status = 402
+        elif code == "carrier_balance_exhausted":
+            # 503: our carrier account is out of funds, not the customer's problem.
+            status = 503
+        elif code == "kyc_required":
+            status = 403
         else:
             status = 400
         messages = {
             "stripe_not_configured": "Card checkout is not configured. Use wallet credits to buy a number.",
             "verification_required": "Verify your email before buying a number.",
+            "kyc_required": "Verify your identity before buying a phone number.",
+            "carrier_balance_exhausted": (
+                "Phone numbers are temporarily unavailable. Your wallet was not charged."
+            ),
             "number_reserved": "This number is reserved by another checkout. Try a different number.",
             "number_unavailable": "This number is no longer available.",
             "number_limit": "This workspace has reached its phone number limit.",
@@ -221,6 +364,106 @@ async def buy_number(body: BuyNumberBody, principal: SubscriberPrincipal = Depen
             status_code=status,
             detail={"error": {"code": code, "message": messages.get(code, code)}},
         )
+
+    # Paid and enqueued. Recorded here rather than in the service so the row also
+    # captures what the customer actually asked for.
+    await record_event(
+        action="number.purchase.accepted",
+        resource_type="number_purchase",
+        resource_id=str(result.get("purchaseId") or ""),
+        actor=principal.email or str(principal.user_id),
+        tenant_id=principal.tenant_id,
+        payload={
+            "e164": body.e164,
+            "country": body.country,
+            "payMethod": pay,
+            "assignAgentId": body.assignAgentId,
+            "status": result.get("status"),
+        },
+        source="subscriber",
+        request=request,
+    )
+    return result
+
+
+#: Why a purchase was refused, in the operator's language. A refusal with no
+#: explanation here is the case they cannot diagnose from the log.
+_REFUSAL_HINTS = {
+    "kyc_required": "identity verification not approved",
+    "verification_required": "email not verified",
+    "insufficient_balance": "wallet could not cover the number",
+    "carrier_balance_exhausted": "carrier account out of funds — operator action",
+    "number_reserved": "another checkout holds this number",
+    "number_unavailable": "number no longer available at the carrier",
+    "number_limit": "workspace number limit reached",
+    "invalid_e164": "malformed number",
+    "invalid_agent": "assignAgentId is not an agent of this workspace",
+}
+
+
+def _purchase_error_status(code: str) -> int:
+    if code in ("verification_required", "kyc_required"):
+        return 403
+    if code == "stripe_not_configured":
+        return 503
+    if code == "insufficient_balance":
+        return 402
+    if code == "carrier_balance_exhausted":
+        # Our carrier account is out of funds, not the customer's problem.
+        return 503
+    return 400
+
+
+async def _log_purchase_refusal_code(
+    request: Request,
+    principal: SubscriberPrincipal,
+    body: BuyNumberBody,
+    pay: str,
+    code: str,
+    status: int,
+) -> None:
+    from server.services.saas.activity_log import record_event
+
+    await record_event(
+        action="number.purchase.refused",
+        resource_type="number_purchase",
+        resource_id=body.e164,
+        actor=principal.email or str(principal.user_id),
+        tenant_id=principal.tenant_id,
+        payload={
+            "error": code,
+            "hint": _REFUSAL_HINTS.get(code, code),
+            "httpStatus": status,
+            "e164": body.e164,
+            "country": body.country,
+            "payMethod": pay,
+            "assignAgentId": body.assignAgentId,
+        },
+        source="subscriber",
+        # 402 is the customer's wallet; 5xx is ours. Only ours is an "error".
+        outcome="error" if status >= 500 else "ok",
+        severity="warning" if status < 500 else "error",
+        request=request,
+    )
+
+
+async def _log_purchase_refusal(
+    request: Request,
+    principal: SubscriberPrincipal,
+    body: BuyNumberBody,
+    pay: str,
+    exc: HTTPException,
+    status: int,
+) -> None:
+    """Log an HTTP-shaped refusal (the KYC gate raises one)."""
+    code = "unknown"
+    try:
+        detail = exc.detail
+        if isinstance(detail, dict):
+            code = str((detail.get("error") or {}).get("code") or "unknown")
+    except Exception:
+        pass
+    await _log_purchase_refusal_code(request, principal, body, pay, code, status)
 
 
 @router.get("/api/telephony/purchases/{purchase_id}")
@@ -460,24 +703,22 @@ async def patch_contact(
 @router.post("/api/telephony/numbers/{number_id}/release")
 async def release_number(number_id: str, principal: SubscriberPrincipal = Depends(require_subscriber_jwt)):
     require_subscriber_permission(principal, "app.telephony.write")
-    from datetime import datetime, timezone
+    from server.services.saas.number_inventory import move_to_inventory
 
     factory = get_session_factory()
     if factory is None:
         raise HTTPException(status_code=503, detail="Database required")
     workspace_tid = subscriber_workspace_tenant_id(principal)
-    now = datetime.now(timezone.utc)
     async with factory() as session:
         pn = await session.get(PhoneNumber, uuid.UUID(number_id))
         if pn is None or pn.tenant_id != workspace_tid:
             raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Not found"}})
-        pn.released_at = now
-        pn.status = "released"
-        pn.inbound_enabled = False
-        pn.outbound_enabled = False
-        pn.agent_id = None
-        await session.commit()
-    return {"ok": True}
+        e164 = pn.e164
+        telnyx_id = pn.telnyx_number_id
+        nid = pn.id
+    # Return the DID to the admin inventory pool — still on Telnyx, available to buy again.
+    moved = await move_to_inventory(number_id=nid, e164=e164, telnyx_number_id=telnyx_id)
+    return {"ok": True, "inventory": moved}
 
 
 @router.delete("/api/telephony/contacts/{contact_id}")

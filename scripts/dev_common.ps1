@@ -101,6 +101,32 @@ function Test-HttpOk {
     }
 }
 
+# Raw status code (0 on transport failure). Used for intentional 404 checks.
+function Get-HttpStatusCode {
+    param([string]$Url, [int]$TimeoutSec = 5)
+    $curl = Get-Command curl.exe -ErrorAction SilentlyContinue
+    if ($curl) {
+        try {
+            $code = & curl.exe -s -S -o NUL -m $TimeoutSec -w "%{http_code}" $Url 2>$null
+            if ($LASTEXITCODE -ne 0) { return 0 }
+            $n = 0
+            if ([int]::TryParse([string]$code, [ref]$n)) { return $n }
+            return 0
+        } catch {
+            return 0
+        }
+    }
+    try {
+        $r = Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec $TimeoutSec
+        return [int]$r.StatusCode
+    } catch {
+        if ($_.Exception.Response -and $_.Exception.Response.StatusCode) {
+            return [int]$_.Exception.Response.StatusCode
+        }
+        return 0
+    }
+}
+
 function Wait-ForService {
     param(
         [string]$Label,

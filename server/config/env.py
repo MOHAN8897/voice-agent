@@ -156,6 +156,18 @@ class Settings(BaseSettings):
 
     database_url: str | None = Field(None, alias="DATABASE_URL")
 
+    # --- Identity verification (Didit KYC) ---
+    #: Server-side only. Never returned to the browser, never logged.
+    didit_api_key: str | None = Field(None, alias="DIDIT_API_KEY")
+    #: Signing key for the X-Signature-V2 HMAC on inbound webhooks.
+    didit_webhook_secret: str | None = Field(None, alias="DIDIT_WEBHOOK_SECRET")
+    #: Public origin Didit redirects the user back to.
+    didit_callback_url: str | None = Field(None, alias="DIDIT_CALLBACK_URL")
+    #: Compliance workflow. Per-session config, not a secret.
+    didit_workflow_id: str = Field("", alias="DIDIT_WORKFLOW_ID")
+    #: Require an Approved decision before buying a number / placing a PSTN call.
+    kyc_gate_purchases: bool = Field(True, alias="KYC_GATE_PURCHASES")
+
     # --- Phase 3: Call lifecycle ---
     call_auto_end_on_start: bool = Field(True, alias="CALL_AUTO_END_ON_START")
     call_retention_days: int = Field(90, alias="CALL_RETENTION_DAYS")
@@ -168,6 +180,10 @@ class Settings(BaseSettings):
     session_secret: str = Field("dev-session-secret-change-in-production", alias="SESSION_SECRET")
     dev_portal_username: str | None = Field(None, alias="DEV_PORTAL_USERNAME")
     dev_portal_password: str | None = Field(None, alias="DEV_PORTAL_PASSWORD")
+    # Dev/admin UI + /api/dev/* are localhost-only by default so the public tunnel
+    # (app-dev / share link) never exposes the ops console to customers.
+    # Set DEV_PORTAL_ALLOW_REMOTE=1 only for a deliberate remote ops session.
+    dev_portal_allow_remote: bool = Field(False, alias="DEV_PORTAL_ALLOW_REMOTE")
     app_console_username: str | None = Field(None, alias="APP_CONSOLE_USERNAME")
     app_console_password: str | None = Field(None, alias="APP_CONSOLE_PASSWORD")
     default_tenant_id: str = Field("00000000-0000-4000-8000-000000000001", alias="DEFAULT_TENANT_ID")
@@ -271,6 +287,16 @@ class Settings(BaseSettings):
         None,
         validation_alias=AliasChoices("RAZORPAY_API_SECRET", "razorpay_api_secret"),
     )
+    #: Razorpay International Payments must be enabled on the account in
+    #: Account & Settings -> Payment methods, otherwise foreign-issued cards are
+    #: declined. This flag records that the operator has done so; it does not
+    #: enable it at Razorpay.
+    razorpay_international_enabled: bool = Field(
+        False, alias="RAZORPAY_INTERNATIONAL_ENABLED"
+    )
+    #: Currency the customer is charged in. INR settles domestically; any other
+    #: value is an international payment that Razorpay converts to INR.
+    razorpay_currency: str = Field("USD", alias="RAZORPAY_CURRENCY")
     google_oauth_client_id: str | None = Field(
         None,
         validation_alias=AliasChoices("GOOGLE_OAUTH_CLIENT_ID", "google_oauth_client_id"),

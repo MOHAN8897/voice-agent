@@ -1,0 +1,45 @@
+{
+  "version": 2,
+  "name": "drive-get-razorpay-config",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1790879339181,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "topbar-wallet",
+        "source": {
+          "file": "src/console/Topbar.jsx",
+          "line": 144,
+          "column": 9
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "net",
+        "method": "GET",
+        "urlContains": "razorpay/config",
+        "status": 200
+      },
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "desktop"
+  }
+}

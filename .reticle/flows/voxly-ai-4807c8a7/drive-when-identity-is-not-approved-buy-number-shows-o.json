@@ -1,0 +1,65 @@
+{
+  "version": 2,
+  "name": "drive-when-identity-is-not-approved-buy-number-shows-o",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1790962147787,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Buy number"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "testid": "kyc-verify-card"
+            }
+          },
+          {
+            "kind": "text",
+            "contains": "Verify your identity first"
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "kyc-start-verification"
+            }
+          },
+          {
+            "kind": "text",
+            "contains": "Didit",
+            "absent": true
+          },
+          {
+            "kind": "text",
+            "contains": "buy-number-country",
+            "absent": true
+          }
+        ]
+      },
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "intent": "When identity is not approved, Buy Number shows only the modern verification gate — no number catalog yet.",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "intentId": "flow:drive-when-identity-is-not-approved-buy-number-shows-o"
+}

@@ -1,0 +1,80 @@
+{
+  "version": 2,
+  "name": "drive-get-api-app-agents-languages-7ee7c7",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1790877932283,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Create AI Employee"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "net",
+        "method": "GET",
+        "urlContains": "/api/app/agents/languages",
+        "status": 200
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Close dialog"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Create AI Employee"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "GET",
+            "urlContains": "/api/app/agents/languages",
+            "status": 200
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "employee-language-select"
+            }
+          }
+        ]
+      },
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "desktop"
+  }
+}

@@ -4,7 +4,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
@@ -22,6 +22,9 @@ class LeadCreate(BaseModel):
     email: str | None = None
     stage: str = "new"
     notes: str | None = None
+    #: Which AI employee owns this lead. Optional — a hand-created CRM lead may
+    #: belong to the workspace rather than to one agent.
+    agentId: str | None = Field(None, max_length=36)
 
 
 class LeadStagePatch(BaseModel):
@@ -30,11 +33,16 @@ class LeadStagePatch(BaseModel):
 
 class LeadNotesPatch(BaseModel):
     notes: str | None = None
+    agentId: str | None = Field(None, max_length=36)
 
 
 def _lead_dict(row: Lead) -> dict:
     return {
         "leadId": str(row.lead_id),
+        # Ownership is what scopes a lead to one agent workspace. Returning it is
+        # not optional: the console filters by it, and a lead with no owner simply
+        # never matches an agent, which silently reads as "this agent has no leads".
+        "agentId": row.agent_id,
         "name": row.name,
         "phone": row.phone,
         "email": row.email,
@@ -46,15 +54,24 @@ def _lead_dict(row: Lead) -> dict:
 
 
 @router.get("/api/leads")
-async def list_leads(principal: SubscriberPrincipal = Depends(require_subscriber_jwt)):
+async def list_leads(
+    agentId: str | None = Query(None, alias="agentId", max_length=36),
+    principal: SubscriberPrincipal = Depends(require_subscriber_jwt),
+):
+    """Leads for the workspace, or for one agent when `agentId` is given.
+
+    The filter is a real query, not a client-side one: an agent workspace must
+    never receive another agent's leads in the payload, even briefly.
+    """
     require_subscriber_permission(principal, "app.calls.read")
     factory = get_session_factory()
     if factory is None:
         return {"leads": []}
     async with factory() as session:
-        result = await session.execute(
-            select(Lead).where(Lead.tenant_id == principal.tenant_id).order_by(Lead.updated_at.desc()).limit(500)
-        )
+        stmt = select(Lead).where(Lead.tenant_id == principal.tenant_id)
+        if agentId:
+            stmt = stmt.where(Lead.agent_id == agentId)
+        result = await session.execute(stmt.order_by(Lead.updated_at.desc()).limit(500))
         return {"leads": [_lead_dict(r) for r in result.scalars()]}
 
 
@@ -68,6 +85,7 @@ async def create_lead(body: LeadCreate, principal: SubscriberPrincipal = Depends
     async with factory() as session:
         row = Lead(
             tenant_id=principal.tenant_id,
+            agent_id=(body.agentId or None),
             name=body.name.strip(),
             phone=body.phone,
             email=body.email,
@@ -118,6 +136,8 @@ async def patch_lead(
             raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Not found"}})
         if body.notes is not None:
             row.notes = body.notes
+        if body.agentId is not None:
+            row.agent_id = body.agentId or None
         row.updated_at = datetime.now(timezone.utc)
         await session.commit()
     return {"ok": True, "lead": _lead_dict(row)}

@@ -10,6 +10,7 @@ function normalizeUser(meOrAuth) {
   const user = meOrAuth?.user || meOrAuth;
   const tenant = meOrAuth?.tenant;
   if (!user) return null;
+  const imp = meOrAuth?.impersonation || null;
   return {
     id: user.userId || user.id,
     name: user.fullName || user.name || user.email,
@@ -19,7 +20,36 @@ function normalizeUser(meOrAuth) {
     role: meOrAuth?.role,
     isPlatformAdmin: Boolean(meOrAuth?.isPlatformAdmin),
     isDevTester: Boolean(meOrAuth?.isDevTester),
+    impersonation: imp
+      ? {
+          actor: imp.actor,
+          tenantId: imp.tenantId || tenant?.tenantId,
+          tenantName: imp.tenantName || tenant?.name,
+          userEmail: imp.userEmail || user.email,
+          expiresIn: imp.expiresIn,
+        }
+      : null,
   };
+}
+
+const IMP_KEY = 'voxly_impersonation';
+
+function readStoredImpersonation() {
+  try {
+    const raw = sessionStorage.getItem(IMP_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredImpersonation(imp) {
+  try {
+    if (imp) sessionStorage.setItem(IMP_KEY, JSON.stringify(imp));
+    else sessionStorage.removeItem(IMP_KEY);
+  } catch {
+    /* ignore */
+  }
 }
 
 export function AuthProvider({ children }) {
@@ -74,6 +104,16 @@ export function AuthProvider({ children }) {
             const data = await api.auth.consumeHandoff(handoff);
             const normalized = normalizeUser(data);
             if (normalized) {
+              if (data?.impersonation) {
+                writeStoredImpersonation(data.impersonation);
+                normalized.impersonation = {
+                  actor: data.impersonation.actor,
+                  tenantId: data.impersonation.tenantId,
+                  tenantName: data.impersonation.tenantName,
+                  userEmail: data.impersonation.userEmail,
+                  expiresIn: data.impersonation.expiresIn,
+                };
+              }
               authService.saveSession(normalized);
               setUser(normalized);
             }
@@ -89,9 +129,16 @@ export function AuthProvider({ children }) {
 
       const stored = authService.getSession();
       if (stored && api.getToken()) {
-        setUser(stored);
+        const withImp = { ...stored, impersonation: stored.impersonation || readStoredImpersonation() };
+        setUser(withImp);
       }
-      await refreshSession();
+      const refreshed = await refreshSession();
+      if (refreshed && !refreshed.impersonation) {
+        const storedImp = readStoredImpersonation();
+        if (storedImp) {
+          setUser({ ...refreshed, impersonation: storedImp });
+        }
+      }
       setIsLoading(false);
     };
     run();
@@ -106,6 +153,7 @@ export function AuthProvider({ children }) {
       if (detail.type === 'logout') {
         api.clearToken();
         authService.clearSession();
+        writeStoredImpersonation(null);
         setUser(null);
         return;
       }
@@ -131,7 +179,7 @@ export function AuthProvider({ children }) {
     try {
       const cfg = await api.auth.googleConfig();
       if (!cfg?.enabled) {
-        throw new Error('Google sign-in is not configured on this server. Add GOOGLE_OAUTH_CLIENT_ID and secret to the API .env.');
+        throw new Error('Google sign-in is not available. Please try email sign-in or contact support.');
       }
       if (!clientId && cfg.clientId) clientId = cfg.clientId;
     } catch (e) {
@@ -205,6 +253,7 @@ export function AuthProvider({ children }) {
     try {
       await authService.signOut();
     } finally {
+      writeStoredImpersonation(null);
       setUser(null);
       window.dispatchEvent(new Event('voxly:logout'));
     }

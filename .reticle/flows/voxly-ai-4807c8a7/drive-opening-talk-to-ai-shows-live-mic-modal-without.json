@@ -1,0 +1,52 @@
+{
+  "version": 2,
+  "name": "drive-opening-talk-to-ai-shows-live-mic-modal-without",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1790928118081,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Talk to AI"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "text",
+        "contains": "Live Mic Experience"
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Start speaking with microphone"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "intent": "Opening Talk to AI shows Live Mic modal without requesting microphone until the user confirms.",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "desktop"
+  },
+  "intentId": "flow:drive-opening-talk-to-ai-shows-live-mic-modal-without"
+}

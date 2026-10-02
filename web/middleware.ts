@@ -4,6 +4,31 @@ import type { NextRequest } from "next/server";
 const API_URL = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 const VOXLY_URL =
   process.env.VOXLY_DEV_URL || process.env.NEXT_PUBLIC_VOXLY_URL || "http://127.0.0.1:5173";
+const DEV_PORTAL_ALLOW_REMOTE =
+  process.env.DEV_PORTAL_ALLOW_REMOTE === "1" || process.env.DEV_PORTAL_ALLOW_REMOTE === "true";
+
+const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
+
+function hostnameIsLocal(hostname: string): boolean {
+  const h = hostname.trim().toLowerCase().split("%")[0];
+  const bare = h.startsWith("[") && h.endsWith("]") ? h.slice(1, -1) : h;
+  return LOCAL_HOSTS.has(h) || LOCAL_HOSTS.has(bare) || bare.endsWith(".localhost");
+}
+
+/** Tunnel Host / X-Forwarded-Host must not reach the ops console. */
+function requestIsLocalDevHost(request: NextRequest): boolean {
+  if (DEV_PORTAL_ALLOW_REMOTE) return true;
+  const candidates: string[] = [];
+  for (const header of ["x-forwarded-host", "host"] as const) {
+    const raw = request.headers.get(header) || "";
+    for (const part of raw.split(",")) {
+      const host = part.trim().split(":")[0]?.trim();
+      if (host) candidates.push(host);
+    }
+  }
+  if (!candidates.length) return false;
+  return candidates.every(hostnameIsLocal);
+}
 
 function redirectToVoxly(path = "/") {
   const base = VOXLY_URL.replace(/\/$/, "");
@@ -59,6 +84,18 @@ export async function middleware(request: NextRequest) {
   }
 
   if (pathname.startsWith("/dev")) {
+    if (!requestIsLocalDevHost(request)) {
+      return new NextResponse(
+        "Dev admin is available on localhost only.\nOpen http://localhost:3000/dev — not the public tunnel link.",
+        {
+          status: 404,
+          headers: {
+            "Content-Type": "text/plain; charset=utf-8",
+            "Cache-Control": "no-store",
+          },
+        }
+      );
+    }
     if (pathname.startsWith("/dev/login")) {
       return NextResponse.next();
     }

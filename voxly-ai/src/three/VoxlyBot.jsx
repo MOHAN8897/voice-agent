@@ -95,32 +95,32 @@ export function VoxlyBot({
     }
   }, [controller, audioAmplitude]);
 
-  // Frame update: body follows mouse cursor at 60/120fps with zero-rerender ref tracking
+  // Frame update: body follows pointer (mouse or finger) at display refresh rate
   useFrame(({ clock, pointer: r3fPointer }, delta) => {
     const time = clock.getElapsedTime();
-    const motion = reducedMotionRef.current ? 0 : 1;
+    // Decorative float/jiggle respects reduced-motion. Look-at still tracks
+    // user input so phones with "remove animations" don't look frozen.
+    const decor = reducedMotionRef.current ? 0 : 1;
+    const lookScale = reducedMotionRef.current ? 0.55 : 1;
 
-    // Zero-rerender cursor tracking:
-    // Priority: pointerRef (window-level smooth tracking) -> pointer prop -> R3F Canvas pointer
-    const pX = pointerRef?.current?.x !== undefined 
-      ? pointerRef.current.x 
+    // Priority: pointerRef (window/touch tracking) -> pointer prop -> R3F Canvas pointer
+    const pX = pointerRef?.current?.x !== undefined
+      ? pointerRef.current.x
       : (pointer?.x !== undefined ? pointer.x : r3fPointer.x);
-    const pY = pointerRef?.current?.y !== undefined 
-      ? pointerRef.current.y 
+    const pY = pointerRef?.current?.y !== undefined
+      ? pointerRef.current.y
       : (pointer?.y !== undefined ? pointer.y : r3fPointer.y);
 
-    // Responsive horizontal offset & vertical clearance:
-    // Desktop: Shift robot slightly to left (-0.22) so top-right dialogue box has clean gap without touching.
-    // Mobile: Center robot, scale down slightly (0.38), and lower position so dialogue box sits cleanly in top-right without overlap.
+    // Desktop: Shift robot slightly left so dialogue has gap.
+    // Mobile: Center + slightly smaller so the callout fits.
     const isDesktop = size.width >= 960;
     const isTablet = size.width >= 640 && size.width < 960;
     const targetX = isDesktop ? -0.22 : isTablet ? -0.15 : 0;
     const basePosY = size.width < 640 ? -1.02 : -0.95;
     const baseScale = size.width < 480 ? 0.38 : size.width < 640 ? 0.40 : 0.42;
 
-    // Snappy, silky-smooth dampening reduced by 20% for natural, precise mouse tracking
-    const targetBodyYaw = motion * MathUtils.clamp(pX, -1, 1) * MathUtils.degToRad(18);
-    const targetBodyPitch = motion * MathUtils.clamp(-pY, -1, 1) * MathUtils.degToRad(7);
+    const targetBodyYaw = lookScale * MathUtils.clamp(pX, -1, 1) * MathUtils.degToRad(18);
+    const targetBodyPitch = lookScale * MathUtils.clamp(-pY, -1, 1) * MathUtils.degToRad(7);
 
     bodyYawRef.current = MathUtils.damp(bodyYawRef.current, targetBodyYaw, 14, delta);
     bodyPitchRef.current = MathUtils.damp(bodyPitchRef.current, targetBodyPitch, 14, delta);
@@ -128,22 +128,20 @@ export function VoxlyBot({
     const rollProg = controller?.rollProgress || 0;
     const isDoubleRoll = (controller?.currentRollDuration || 1.6) > 2;
     const totalSpins = isDoubleRoll ? 2 : 1;
-    // True smooth acrobatic spin roll (continuous ease)
     const rollEase = rollProg > 0 ? (1 - Math.cos(rollProg * Math.PI)) * 0.5 : 0;
     const rollAngle = rollEase * Math.PI * 2 * totalSpins;
     const rollHop = Math.sin(rollProg * Math.PI) * (isDoubleRoll ? 0.40 : 0.32);
     const rollTilt = Math.sin(rollProg * Math.PI * 2 * totalSpins) * 0.22;
 
     if (groupRef.current) {
-      // Smoothly interpolate X offset and apply responsive scale
       groupRef.current.position.x = MathUtils.damp(groupRef.current.position.x, targetX, 10, delta);
-      // Floating hover motion with celebratory roll hop
-      groupRef.current.position.y = basePosY + motion * Math.sin(time * 2.4) * 0.06 + rollHop;
+      groupRef.current.position.y = basePosY + decor * Math.sin(time * 2.4) * 0.06 + rollHop;
       groupRef.current.scale.setScalar(baseScale);
-      // Body rotation following cursor + lively jiggle + 360 roll (dampened by 20%)
-      groupRef.current.rotation.y = bodyYawRef.current + motion * Math.sin(time * 1.5) * 0.02 + rollAngle;
+      groupRef.current.rotation.y = bodyYawRef.current + decor * Math.sin(time * 1.5) * 0.02 + rollAngle;
       groupRef.current.rotation.x = bodyPitchRef.current;
-      groupRef.current.rotation.z = motion * (Math.sin(time * 3.0) * 0.012 - MathUtils.clamp(pX, -1, 1) * MathUtils.degToRad(2.4)) + rollTilt;
+      groupRef.current.rotation.z =
+        decor * (Math.sin(time * 3.0) * 0.012 - MathUtils.clamp(pX, -1, 1) * MathUtils.degToRad(2.4)) +
+        rollTilt;
     }
 
     if (controller) {

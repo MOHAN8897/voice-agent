@@ -2,6 +2,7 @@
 
 import { api } from './api';
 import { showToast } from '../console/ui/ToastHost';
+import { voiceAgent } from './voiceAgent';
 
 const SAMPLE_RATE = 16000;
 
@@ -161,8 +162,25 @@ export function createWebAgentSession() {
 
       audioContext = new AudioContext({ sampleRate: SAMPLE_RATE });
       if (audioContext.state === 'suspended') await audioContext.resume();
+
+      // Mic only when the user starts a web-agent session — never on page load.
+      // If already granted, getUserMedia is silent (no second OS prompt).
+      const micState = await voiceAgent.getMicrophonePermissionState();
+      if (micState === 'denied') {
+        throw new Error(
+          'Microphone is blocked for this site. Allow the mic in browser settings, then start again.'
+        );
+      }
+      if (micState === 'prompt' || micState === 'unknown') {
+        showToast('Allow the microphone for this call (audio only — no camera).', 'info', 5000);
+      }
       mediaStream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+        video: false,
       });
       source = audioContext.createMediaStreamSource(mediaStream);
       processor = audioContext.createScriptProcessor(2048, 1, 1);

@@ -64,7 +64,7 @@ if (-not $shareLink) {
     Write-Error "Could not start a public tunnel."
 }
 $publicOrigin = ([uri]$shareLink).GetLeftPart([System.UriPartial]::Authority)
-if (-not (Wait-ForService -Label 'Public website' -Url "$publicOrigin/dev/login" -MaxAttempts 45)) {
+if (-not (Wait-ForService -Label 'Public website' -Url $publicOrigin -MaxAttempts 45)) {
     throw 'The public website is not reachable.'
 }
 if (-not (Wait-ForService -Label 'Public API proxy' -Url "$publicOrigin/api/health" -MaxAttempts 45)) {
@@ -79,7 +79,7 @@ Write-Host ""
 Write-Host "  $shareLink"
 Write-Host ""
 Write-Host "  Your friend opens this in Chrome/Edge and allows microphone."
-Write-Host "  Login if needed: dev / devpass"
+Write-Host "  Admin panel stays on this PC: http://localhost:3000/dev/login"
 Write-Host ""
 Write-Host "  Keep this PC on. Stop with: npm run dev:down"
 Write-Host "============================================================"

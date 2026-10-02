@@ -29,10 +29,14 @@ export async function openRazorpayWalletCheckout({
   hideUpi = true,
 }) {
   const Razorpay = await loadRazorpayScript();
+  // `amountMinor` is the order amount in the order's own currency subunit.
+  // Razorpay validates checkout against the order, so these two must match it
+  // exactly or the payment is rejected after the customer has entered details.
+  const currency = order.currency || 'INR';
   const options = {
     key: order.keyId || keyId,
-    amount: order.amountPaise,
-    currency: order.currency || 'INR',
+    amount: order.amountMinor,
+    currency,
     name: 'Voxly AI',
     description: 'Wallet top-up',
     order_id: order.orderId,
@@ -49,17 +53,16 @@ export async function openRazorpayWalletCheckout({
     },
   };
   if (hideUpi) {
+    // UPI and netbanking settle domestically, so neither can fund a
+    // foreign-currency order. Cards are the international rail.
     options.config = {
       display: {
-        hide: [{ method: 'upi' }],
+        hide: [{ method: 'upi' }, { method: 'netbanking' }],
       },
     };
-    options.method = {
-      upi: false,
-      card: true,
-      netbanking: true,
-      wallet: false,
-    };
+    options.method = currency === 'INR'
+      ? { upi: false, card: true, netbanking: true, wallet: false }
+      : { card: true, upi: false, netbanking: false, wallet: false };
   }
   const rzp = new Razorpay(options);
   rzp.on('payment.failed', (response) => {

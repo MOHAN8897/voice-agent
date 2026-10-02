@@ -170,7 +170,7 @@ try {
     $ok = $false
     for ($i = 0; $i -lt 10; $i++) {
         try {
-            Invoke-WebRequest -Uri "http://127.0.0.1:5173/dev/login" -UseBasicParsing -TimeoutSec 5 | Out-Null
+            Invoke-WebRequest -Uri "http://127.0.0.1:5173/" -UseBasicParsing -TimeoutSec 5 | Out-Null
             $ok = $true
             break
         } catch { Start-Sleep -Seconds 1 }
@@ -194,7 +194,7 @@ Write-Host ""
 Write-Host "  $shareLink"
 Write-Host ""
 Write-Host "  Product (Voxly)   $webUrl"
-Write-Host "  Admin panel       $webUrl/dev/login  (dev / devpass)"
+Write-Host "  Admin panel       localhost only - http://localhost:3000/dev/login"
 Write-Host "  ngrok dashboard: http://127.0.0.1:4040"
 Write-Host "============================================================"
 

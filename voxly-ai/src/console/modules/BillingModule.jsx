@@ -64,7 +64,16 @@ export function BillingModule() {
   const [invoices, setInvoices] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [razorpayEnabled, setRazorpayEnabled] = useState(false);
+  const [razorpayCurrency, setRazorpayCurrency] = useState('USD');
   const [payBusy, setPayBusy] = useState(false);
+
+  const customerPayError = (raw) => {
+    const msg = String(raw || '');
+    if (/RAZORPAY|API_KEY|API_SECRET|\.env|not configured|not enabled/i.test(msg)) {
+      return 'Card payments are temporarily unavailable. Please try again later or contact support.';
+    }
+    return msg || 'Could not start payment';
+  };
 
   const refreshBilling = useCallback(async () => {
     try {
@@ -77,6 +86,7 @@ export function BillingModule() {
       setServerWallet(w);
       setInvoices(inv);
       setRazorpayEnabled(!!cfg?.enabled);
+      setRazorpayCurrency(cfg?.currency || 'USD');
       setTransactions(tx);
     } catch {
       /* demo wallet fallback */
@@ -92,15 +102,21 @@ export function BillingModule() {
     setPayBusy(true);
     try {
       const cfg = await api.billing.razorpayConfig();
-      if (!cfg?.enabled) throw new Error('Razorpay is not configured on the server.');
+      if (!cfg?.enabled) {
+        throw new Error('Card payments are temporarily unavailable. Please try again later or contact support.');
+      }
+      const currency = cfg.currency || razorpayCurrency || 'USD';
       const fx = Number(serverWallet?.fxRateInr) || 95.64;
-      const amountInr = Math.max(100, Math.round(Number(amountUsd) * fx));
-      const order = await api.billing.createRazorpayOrder(amountInr);
+      const isInternational = currency !== 'INR';
+      const chargeAmount = isInternational
+        ? Number(amountUsd)
+        : Math.max(100, Math.round(Number(amountUsd) * fx));
+      const order = await api.billing.createRazorpayOrder(chargeAmount, currency);
       await openRazorpayWalletCheckout({
         order,
         keyId: cfg.keyId,
         user,
-        hideUpi: true,
+        hideUpi: isInternational,
         onSuccess: async (response) => {
           const result = await api.billing.verifyRazorpayPayment({
             razorpay_order_id: response.razorpay_order_id,
@@ -113,10 +129,10 @@ export function BillingModule() {
           );
           setTimeout(() => setTopupSuccess(null), 5000);
         },
-        onError: (err) => setTopupError(err.message || 'Payment failed'),
+        onError: (err) => setTopupError(customerPayError(err.message)),
       });
     } catch (err) {
-      setTopupError(err.message || 'Could not start payment');
+      setTopupError(customerPayError(err.message));
     } finally {
       setPayBusy(false);
     }
@@ -215,32 +231,36 @@ export function BillingModule() {
               ))}
             </div>
             {!razorpayEnabled && (
-              <p className="text-[11px] text-[#B45309]">
-                Razorpay is not enabled on this API — set RAZORPAY_API_KEY / RAZORPAY_API_SECRET,
-                restart the API, then hard-refresh. Wallet top-up stays unavailable until then.
+              <p className="text-[11px] text-[#B45309]" data-testid="billing-payments-unavailable">
+                Card payments are temporarily unavailable. Please try again later or contact support.
               </p>
             )}
           </div>
         </SolidCard>
 
-        {/* Right Col: payment methods actually offered by the server */}
         <SolidCard className="space-y-3">
           <div className="flex items-center justify-between text-xs">
             <span className="font-bold text-[#0F0E17]">Payment methods</span>
-            <span className="text-[10px] text-[#15803D] font-mono font-medium bg-[#22C55E]/10 border border-[#22C55E]/20 px-2 py-0.5 rounded-md">
-              {razorpayEnabled ? 'Razorpay' : 'Offline'}
+            <span
+              className={`text-[10px] font-medium px-2 py-0.5 rounded-md border ${
+                razorpayEnabled
+                  ? 'text-[#15803D] bg-[#22C55E]/10 border-[#22C55E]/20'
+                  : 'text-[#92400E] bg-[#FFFBEB] border-[#FDE68A]'
+              }`}
+            >
+              {razorpayEnabled ? 'Available' : 'Unavailable'}
             </span>
           </div>
 
           <ul className="space-y-2 text-xs text-[#524E5E]">
             <li className="flex items-center justify-between p-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
-              <span className="font-semibold text-[#0F0E17]">Razorpay</span>
-              <span>{razorpayEnabled ? 'Cards & netbanking' : 'Not enabled'}</span>
+              <span className="font-semibold text-[#0F0E17]">Card</span>
+              <span>{razorpayEnabled ? 'Visa, Mastercard & more' : 'Temporarily unavailable'}</span>
             </li>
           </ul>
 
           <p className="text-[11px] text-[#524E5E] leading-relaxed">
-            Card details stay on Razorpay. Wallet balance is shown in USD. UPI is disabled for this product.
+            Card details stay with our payment partner. Wallet balance is shown in USD.
           </p>
         </SolidCard>
       </div>
@@ -253,7 +273,7 @@ export function BillingModule() {
             <div>
               <h3 className="text-xs font-bold text-[#0F0E17]">Auto-Recharge Protection</h3>
               <p className="text-[11px] text-[#524E5E]">Prevents active telephone calls from dropping due to depleted credits.</p>
-              <p className="text-[10px] text-[#8C879A] mt-1">Preview only — auto-recharge is not stored on the server yet. Top up manually via Razorpay or Stripe.</p>
+              <p className="text-[10px] text-[#8C879A] mt-1">Coming soon — for now, top up manually above when your balance runs low.</p>
             </div>
             <button
               type="button"

@@ -19,6 +19,14 @@ export function WorkspaceProvider({ children }) {
   /** Server-computed canonical status counts for the call history header. */
   const [callStats, setCallStats] = useState(null);
   const [leads, setLeads] = useState([]);
+  /**
+   * Leads owned by the currently selected agent, fetched with a server-side
+   * `agentId` filter. Kept separate from `leads` (the whole-workspace pipeline)
+   * so an agent workspace never renders another agent's pipeline, and never even
+   * receives it. Re-fetched whenever the selection changes.
+   */
+  const [agentLeads, setAgentLeads] = useState([]);
+  const [agentLeadsId, setAgentLeadsId] = useState(null);
   const [campaigns, setCampaigns] = useState([]);
   const [wallet, setWallet] = useState(initialWallet);
   const [availableCatalog, setAvailableCatalog] = useState(availableNumbersCatalog);
@@ -300,6 +308,8 @@ export function WorkspaceProvider({ children }) {
       setCalls([]);
       setCallStats(null);
       setLeads([]);
+      setAgentLeads([]);
+      setAgentLeadsId(null);
       setCampaigns([]);
       setWallet(initialWallet);
       setAvailableCatalog([]);
@@ -326,6 +336,59 @@ export function WorkspaceProvider({ children }) {
       window.removeEventListener('voxly:logout', onLogout);
     };
   }, [loadWorkspaceData, syncTenantWorkspace]);
+
+  /**
+   * Reload the selected agent's leads whenever the selection changes.
+   *
+   * This is the enforcement point for "one agent's data stays in its own
+   * workspace": the filter is applied by the server, and `agentLeadsId` records
+   * which agent the current `agentLeads` actually belong to so a slow response
+   * for a previous agent cannot land in the new agent's workspace.
+   */
+  useEffect(() => {
+    if (!api.getToken()) {
+      setAgentLeads([]);
+      setAgentLeadsId(null);
+      return;
+    }
+    if (!selectedAgentId) {
+      setAgentLeads([]);
+      setAgentLeadsId(null);
+      return;
+    }
+    let cancelled = false;
+    api.leads
+      .list({ agentId: selectedAgentId })
+      .then((rows) => {
+        if (cancelled) return;
+        setAgentLeads(rows);
+        setAgentLeadsId(selectedAgentId);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setAgentLeads([]);
+        setAgentLeadsId(selectedAgentId);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedAgentId]);
+
+  /**
+   * Leads for an agent workspace, or the whole pipeline when no agent is given.
+   * Returns [] rather than falling back to another agent's rows — an empty board
+   * is the honest answer for "this agent has no leads yet".
+   */
+  const leadsForAgent = useCallback(
+    (agentId) => {
+      if (!agentId) return leads;
+      if (agentId === agentLeadsId) return agentLeads;
+      // Selection changed but the scoped fetch has not landed yet. Falling back
+      // to the workspace-wide list here would show the wrong agent's leads.
+      return leads.filter((l) => l.agentId === agentId);
+    },
+    [agentLeads, agentLeadsId, leads]
+  );
 
   // ----------------------------------------------------------------
   // Agent Operations
@@ -421,24 +484,37 @@ export function WorkspaceProvider({ children }) {
     }
   };
 
-  const toggleAgentStatus = async (agentId) => {
+  // `nextStatus` is honoured when given — the card, settings panel and test panel
+// each compute it from their own view, and deriving it again from this (possibly
+// stale) `agents` array made them disagree.
+  const toggleAgentStatus = async (agentId, nextStatus) => {
     const current = agents.find((a) => a.id === agentId);
-    const nextStatus = current?.status === 'active' ? 'paused' : 'active';
+    const target =
+      nextStatus || (current?.status === 'active' ? 'paused' : 'active');
+    if (!current || target === current.status) return target;
+    // Optimistic, like toggleCampaignStatus: the card icon must flip on click,
+    // not after a seven-endpoint workspace refetch.
+    setAgents((prev) =>
+      prev.map((a) =>
+        a.id === agentId
+          ? { ...a, status: target, updatedAt: new Date().toISOString() }
+          : a
+      )
+    );
     try {
       if (authed()) {
-        await api.agents.toggleStatus(agentId, nextStatus);
-        await loadWorkspaceData();
-        return;
+        await api.agents.toggleStatus(agentId, target);
+        return target;
       }
-      setAgents((prev) =>
-        prev.map((a) => (a.id === agentId ? { ...a, status: nextStatus, updatedAt: new Date().toISOString() } : a))
-      );
+      return target;
     } catch (e) {
-      if (authed()) {
-        await loadWorkspaceData();
-        throw e;
-      }
+      // Roll back to what the server still believes, then surface the error.
+      setAgents((prev) =>
+        prev.map((a) => (a.id === agentId ? { ...a, status: current.status } : a))
+      );
+      if (authed()) throw e;
       console.warn('API toggleAgentStatus error:', e);
+      return current.status;
     }
   };
 
@@ -462,23 +538,73 @@ export function WorkspaceProvider({ children }) {
   // ----------------------------------------------------------------
   // Virtual Number Operations
   // ----------------------------------------------------------------
+
+  /**
+   * Poll a purchase until the carrier order settles.
+   *
+   * A buy is a paid intent, not a live line: Telnyx provisioning is async and can
+   * fail on out-of-account credit, in which case the wallet is refunded. Without
+   * this the UI would report success for a number that never arrives.
+   */
+  const waitForPurchase = async (
+    purchaseId,
+    { attempts = 12, intervalMs = 1500, onFailed = null } = {}
+  ) => {
+    for (let i = 0; i < attempts; i += 1) {
+      const purchase = await api.telephony.getPurchase(purchaseId).catch(() => null);
+      if (!purchase) break;
+      const status = String(purchase.status || '').toLowerCase();
+      if (status === 'active') {
+        await loadWorkspaceData();
+        return { ...purchase, ok: true };
+      }
+      if (status === 'failed') {
+        // The wallet was refunded server-side; re-read it so the balance the user
+        // sees is the balance they actually have.
+        await onFailed?.();
+        return { ...purchase, ok: false, failureReason: purchase.lastError?.message || 'provision_failed' };
+      }
+      await new Promise((r) => setTimeout(r, intervalMs));
+    }
+    return { purchaseId, status: 'pending', ok: false, failureReason: 'pending' };
+  };
+
   const buyPhoneNumber = async (catalogItem, assignToAgentId = null) => {
     try {
       const provisioned = await api.telephony.buyNumber(catalogItem, assignToAgentId);
-      if (provisioned?.purchaseId) {
+      // Only poll for carrier async provision. Inventory transfers already return a
+      // phoneNumberId — stashing them leaves a forever "Provisioning…" banner.
+      if (provisioned?.purchaseId && provisioned?.provisioning && !provisioned?.phoneNumberId) {
         stashPurchaseForRedirect(provisioned.purchaseId, assignToAgentId || null);
       }
       if (provisioned?.checkoutUrl || provisioned?.url) {
         window.location.href = provisioned.checkoutUrl || provisioned.url;
         return provisioned;
       }
-      const norm = normalizePhoneNumber(provisioned, {});
-      setPhoneNumbers((prev) => [norm, ...prev]);
-      setAvailableCatalog((prev) => prev.filter((n) => n.formatted !== catalogItem.formatted));
-
+      // Telnyx provisioning is async: the buy response is a paid purchase, not a
+      // phone line. Only add to the pool once the server hands back a real
+      // number id — otherwise a failed provision leaves a phantom line in the UI
+      // and the agent gets bound to a number that does not exist.
       const phoneId = provisioned?.phoneNumberId || provisioned?.id;
-      if (assignToAgentId && phoneId) {
-        await assignNumberToAgent(phoneId, assignToAgentId);
+      if (phoneId) {
+        // Only a provisioned number is a line. Nothing else may enter the pool.
+        setPhoneNumbers((prev) => [normalizePhoneNumber(provisioned, {}), ...prev]);
+        setAvailableCatalog((prev) =>
+          prev.filter((n) => n.formatted !== catalogItem.formatted)
+        );
+        if (assignToAgentId) {
+          await assignNumberToAgent(phoneId, assignToAgentId);
+        }
+        return provisioned;
+      }
+      if (provisioned?.provisioning && provisioned?.purchaseId) {
+        // The carrier order is async and can still fail (out of carrier credit, a
+        // number that vanished). Poll for the terminal status so the caller can
+        // report the real outcome instead of a hopeful success.
+        const settled = await waitForPurchase(provisioned.purchaseId, {
+          onFailed: refreshWallet,
+        });
+        return settled;
       }
       return provisioned;
     } catch (e) {
@@ -595,9 +721,11 @@ export function WorkspaceProvider({ children }) {
   // Lead Pipeline Operations
   // ----------------------------------------------------------------
   const updateLeadStage = async (leadId, newStage) => {
-    setLeads((prev) =>
-      prev.map((lead) => (lead.id === leadId ? { ...lead, stage: newStage } : lead))
-    );
+    // Patch both caches: the workspace pipeline and the scoped agent board.
+    const patch = (prev) =>
+      prev.map((lead) => (lead.id === leadId ? { ...lead, stage: newStage } : lead));
+    setLeads(patch);
+    setAgentLeads(patch);
 
     try {
       await api.leads.updateStage(leadId, newStage);
@@ -608,9 +736,10 @@ export function WorkspaceProvider({ children }) {
   };
 
   const updateLeadNotes = async (leadId, notes) => {
-    setLeads((prev) =>
-      prev.map((lead) => (lead.id === leadId ? { ...lead, notes } : lead))
-    );
+    const patch = (prev) =>
+      prev.map((lead) => (lead.id === leadId ? { ...lead, notes } : lead));
+    setLeads(patch);
+    setAgentLeads(patch);
 
     try {
       await api.leads.updateNotes(leadId, notes);
@@ -621,8 +750,16 @@ export function WorkspaceProvider({ children }) {
   };
 
   const createLead = async (leadData) => {
-    const created = await api.leads.create(leadData);
+    // A lead created inside an agent workspace belongs to that agent, or it would
+    // vanish the moment the workspace switches to its scoped view.
+    const withOwner = leadData.agentId
+      ? leadData
+      : { ...leadData, agentId: leadData.agentId === null ? null : selectedAgentId };
+    const created = await api.leads.create(withOwner);
     setLeads((prev) => [created, ...prev]);
+    if (created.agentId === agentLeadsId) {
+      setAgentLeads((prev) => [created, ...prev]);
+    }
     return created;
   };
 
@@ -729,11 +866,17 @@ export function WorkspaceProvider({ children }) {
     return result;
   };
 
-  const refreshWallet = async () => {
+  const refreshWallet = useCallback(async () => {
     if (!authed()) return;
-    const fetchedWallet = await api.billing.getWallet();
-    setWallet(normalizeWallet(fetchedWallet, initialWallet));
-  };
+    try {
+      const fetchedWallet = await api.billing.getWallet();
+      setWallet(normalizeWallet(fetchedWallet, initialWallet));
+    } catch (e) {
+      // Never let a background wallet refresh throw into a caller's flow — it
+      // would be reported as a purchase failure the customer did not cause.
+      console.warn('refreshWallet failed:', e?.message || e);
+    }
+  }, [authed]);
 
   const toggleAutoRecharge = () => {
     setWallet((prev) => ({
@@ -757,6 +900,8 @@ export function WorkspaceProvider({ children }) {
     calls,
     callStats,
     leads,
+    agentLeads,
+    leadsForAgent,
     campaigns,
     wallet,
     availableCatalog,

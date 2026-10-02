@@ -1,0 +1,18 @@
+{
+  "intents": {
+    "flow:drive-buy-modal-quotes-the-same-4-00-month-platform-di": {
+      "declaredAt": 1790936358961,
+      "id": "flow:drive-buy-modal-quotes-the-same-4-00-month-platform-di",
+      "state": "declared",
+      "statement": "Buy modal quotes the same $4.00/month platform DID rate as list rows and blocks purchase when the wallet cannot cover it.",
+      "status": "proposed",
+      "subject": "drive-buy-modal-quotes-the-same-4-00-mon",
+      "surface": {
+        "flow": "drive-buy-modal-quotes-the-same-4-00-month-platform-di"
+      },
+      "updatedAt": 1790936358981
+    }
+  },
+  "subject": "drive-buy-modal-quotes-the-same-4-00-mon",
+  "version": 1
+}

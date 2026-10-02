@@ -14,15 +14,20 @@ import { MetricCard } from '../ui/MetricCard';
 import { SolidCard } from '../ui/SolidCard';
 import { StatusBadge } from '../ui/StatusBadge';
 import { TactileButton } from '../ui/TactileButton';
+import { ModuleSkeleton } from '../ui/Skeleton';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { useAuth } from '../../context/AuthContext';
 
 export function OverviewModule({ onNavigate, onOpenCreateAgent, onOpenBuyNumber }) {
-  const { agents, calls, leads, phoneNumbers, wallet, setSelectedCallId } =
+  const { agents, calls, leads, phoneNumbers, wallet, setSelectedCallId, isLoading } =
     useWorkspace();
   const { user } = useAuth();
   const displayName = user?.fullName || user?.name || user?.email?.split('@')[0] || 'there';
   const [activityTimeframe, setActivityTimeframe] = useState('Today');
+
+  if (isLoading && !agents.length && !calls.length) {
+    return <ModuleSkeleton cards={4} />;
+  }
 
   const RANGE_DAYS = { Today: 1, '7 Days': 7, '30 Days': 30 };
 

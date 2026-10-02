@@ -151,6 +151,11 @@ async def subscriber_outbound(
     from server.services.telephony import active_telephony_provider, telephony_guard_error
 
     workspace_tid = subscriber_workspace_tenant_id(principal)
+    # Placing a real PSTN call is a compliance-gated action: it uses a customer
+    # number and can reach anyone. Browser practice calls stay ungated.
+    from server.services.saas.kyc_gate import assert_kyc_approved
+
+    await assert_kyc_approved(principal, action="place a phone call")
     # An unknown or foreign agent must be a clean 404, never a leaked 500.
     agent = await resolve_workspace_agent(agent_id, str(workspace_tid))
     status = str(agent.get("status") or "").strip().lower()

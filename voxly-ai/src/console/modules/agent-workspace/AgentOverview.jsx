@@ -38,7 +38,7 @@ function KpiCard({ icon: Icon, label, value, hint }) {
  * history says so rather than showing zeroes that look like a failed call.
  */
 export function AgentOverview({ agent, onOpenTab }) {
-  const { leads } = useWorkspace();
+  const { leads, leadsForAgent } = useWorkspace();
   const [range, setRange] = useState('7 days');
   const [stats, setStats] = useState(null);
   const [recent, setRecent] = useState([]);
@@ -71,10 +71,9 @@ export function AgentOverview({ agent, onOpenTab }) {
     load();
   }, [load]);
 
-  const agentLeads = useMemo(
-    () => (leads || []).filter((l) => l.agentId === agentId),
-    [leads, agentId]
-  );
+  // Server-filtered for this agent, not filtered here — the workspace-wide list
+// would otherwise have to be downloaded to render one agent's pipeline.
+const agentLeads = useMemo(() => leadsForAgent(agentId), [leadsForAgent, agentId]);
 
   if (error) {
     return (
@@ -199,9 +198,9 @@ export function AgentOverview({ agent, onOpenTab }) {
             </button>
           </div>
           {agentLeads.length === 0 ? (
-            <p className="text-xs text-[#8C879A] py-4 text-center">
-              Leads are not linked to an individual agent yet, so nothing can be counted here.
-              The workspace has {(leads || []).length}.
+            <p className="text-xs text-[#8C879A] py-4 text-center" data-testid="agent-overview-no-leads">
+              This agent has no leads yet. Leads are created automatically from its
+              calls, or added by hand.
             </p>
           ) : (
             <>

@@ -1,0 +1,18 @@
+{
+  "intents": {
+    "flow:drive-console-entry-is-reachable-from-landing-so-kyc-s": {
+      "declaredAt": 1790930478257,
+      "id": "flow:drive-console-entry-is-reachable-from-landing-so-kyc-s",
+      "state": "declared",
+      "statement": "Console entry is reachable from landing so KYC settings can be opened after sign-in.",
+      "status": "proposed",
+      "subject": "drive-console-entry-is-reachable-from-la",
+      "surface": {
+        "flow": "drive-console-entry-is-reachable-from-landing-so-kyc-s"
+      },
+      "updatedAt": 1790930478528
+    }
+  },
+  "subject": "drive-console-entry-is-reachable-from-la",
+  "version": 1
+}

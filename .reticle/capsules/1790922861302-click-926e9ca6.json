@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "origin": "failed-assert",
+  "expected": "DELETE /api/agents/69db00f4 → 200",
+  "observed": "no request to /api/agents/69db00f4",
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "e243",
+        "source": {
+          "file": "src/console/modules/EmployeesModule.jsx",
+          "line": 285,
+          "column": 17
+        }
+      },
+      "action": "click"
+    }
+  ],
+  "id": "1790922861302-click-926e9ca6",
+  "createdAt": 1790922861303,
+  "seen": 1,
+  "lastSeenAt": 1790922861303
+}

@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "origin": "failed-assert",
+  "expected": "GET /api/leads?agentId= → 200",
+  "observed": "no request to /api/leads?agentId=",
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "e117",
+        "source": {
+          "file": "src/console/ui/TactileButton.jsx",
+          "line": 69,
+          "column": 5
+        }
+      },
+      "action": "click"
+    }
+  ],
+  "id": "1790922535371-click-ea5095e8",
+  "createdAt": 1790922535371,
+  "seen": 1,
+  "lastSeenAt": 1790922535371
+}

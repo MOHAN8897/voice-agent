@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import {
   Phone,
   Plus,
-  Search,
   CheckCircle2,
-  Trash2
+  X,
 } from 'lucide-react';
 import { SolidCard } from '../ui/SolidCard';
 import { StatusBadge } from '../ui/StatusBadge';
@@ -13,8 +12,23 @@ import { Modal } from '../ui/Modal';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { showToast } from '../ui/ToastHost';
 import { api } from '../../services/api';
+import { VerifyIdentityCard } from '../ui/VerifyIdentityCard';
+import { CatalogSkeleton } from '../ui/Skeleton';
 
-export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyModal }) {
+const FALLBACK_COUNTRIES = [
+  { code: 'US', name: 'United States', dial: '+1' },
+  { code: 'GB', name: 'United Kingdom', dial: '+44' },
+  { code: 'CA', name: 'Canada', dial: '+1' },
+  { code: 'AU', name: 'Australia', dial: '+61' },
+  { code: 'IE', name: 'Ireland', dial: '+353' },
+  { code: 'NZ', name: 'New Zealand', dial: '+64' },
+  { code: 'SG', name: 'Singapore', dial: '+65' },
+  { code: 'ZA', name: 'South Africa', dial: '+27' },
+  { code: 'PH', name: 'Philippines', dial: '+63' },
+  { code: 'IN', name: 'India', dial: '+91' },
+];
+
+export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyModal, onNavigate }) {
   const {
     phoneNumbers,
     agents,
@@ -27,10 +41,13 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
     updateNumberRouting,
     wallet,
     refreshWallet,
+    isLoading,
+    openAddFunds,
   } = useWorkspace();
 
-  // Buy Modal Form State
-  const [selectedCountry, setSelectedCountry] = useState('IN');
+  // Buy Modal Form State — default US for English-speaking SaaS buyers.
+  const [selectedCountry, setSelectedCountry] = useState('US');
+  const [countries, setCountries] = useState(FALLBACK_COUNTRIES);
   const [selectedType, setSelectedType] = useState('Local DID');
   const [searchAreaCode, setSearchAreaCode] = useState('');
   const [targetAgentId, setTargetAgentId] = useState(buyNumberPreselectedAgent || '');
@@ -39,9 +56,11 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
   const [buying, setBuying] = useState(false);
   const [catalogLoading, setCatalogLoading] = useState(false);
   const [catalogError, setCatalogError] = useState(null);
+  const [kycApproved, setKycApproved] = useState(false);
 
   useEffect(() => {
     if (!isBuyModalOpen) return;
+    setBuyError(null);
     setCatalogLoading(true);
     setCatalogError(null);
     reloadCatalog?.(selectedCountry)
@@ -49,18 +68,63 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
       .finally(() => setCatalogLoading(false));
   }, [isBuyModalOpen, selectedCountry, reloadCatalog]);
 
+  // Refresh KYC every time the buy modal opens — status can change outside this tab.
+  useEffect(() => {
+    if (!isBuyModalOpen) return undefined;
+    let cancelled = false;
+    api.kyc
+      .getStatus()
+      .then((st) => {
+        if (cancelled) return;
+        setKycApproved(Boolean(st?.approved));
+      })
+      .catch(() => {
+        if (!cancelled) setKycApproved(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isBuyModalOpen]);
+
+  useEffect(() => {
+    let cancelled = false;
+    api.telephony
+      .getCountries()
+      .then((data) => {
+        if (cancelled) return;
+        if (data.countries?.length) setCountries(data.countries);
+        if (data.default) setSelectedCountry((prev) => prev || data.default);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Inline alerts should not sit forever — toast pattern: 5s, dismissible.
+  useEffect(() => {
+    if (!buyError) return undefined;
+    const id = window.setTimeout(() => setBuyError(null), 5000);
+    return () => window.clearTimeout(id);
+  }, [buyError]);
+
+  useEffect(() => {
+    if (!catalogError) return undefined;
+    const id = window.setTimeout(() => setCatalogError(null), 5000);
+    return () => window.clearTimeout(id);
+  }, [catalogError]);
+
+  useEffect(() => {
+    if (buyNumberPreselectedAgent) setTargetAgentId(buyNumberPreselectedAgent);
+  }, [buyNumberPreselectedAgent]);
+
   const unassignedCount = phoneNumbers.filter((n) => !n.assignedAgentId).length;
   const assignedCount = phoneNumbers.length - unassignedCount;
-  const monthlyRentalInr = phoneNumbers.reduce(
-    (sum, n) => sum + (Number(n.monthlyInr) || 0),
-    0
-  );
   const monthlyRentalUsd = phoneNumbers.reduce(
     (sum, n) => sum + (Number(n.monthlyCost) || 0),
     0
   );
   const balanceUsd = Number(wallet?.balanceUsd) || 0;
-  const balanceInr = Number(wallet?.balanceInr) || 0;
 
   // Price and wallet top-up floor come from the server so the console can never
   // quote something `/api/telephony/buy` or `/api/billing/topup` would reject.
@@ -77,9 +141,12 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
       cancelled = true;
     };
   }, []);
-  const numberPriceUsd = Number(catalog?.rates?.numberMonthlyUsd) || 4;
-  const numberPriceInr = Number(catalog?.rates?.numberMonthlyInr) || 500;
-  const canAffordNumber = balanceUsd >= numberPriceUsd || balanceInr >= numberPriceInr;
+  // USD is the only quoted currency. A missing catalog means we do not know the
+  // price, so we must not invent one — the buy button stays honest by asking the
+  // server, which is the authority anyway.
+  const numberPriceUsd = Number(catalog?.rates?.numberMonthlyUsd);
+  const priceKnown = Number.isFinite(numberPriceUsd) && numberPriceUsd > 0;
+  const canAffordNumber = priceKnown && balanceUsd >= numberPriceUsd;
 
   const filteredCatalog = availableCatalog.filter((item) => {
     const cc = (item.country || '').toUpperCase();
@@ -94,35 +161,66 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
 
   const handleBuyNumber = async (catalogItem) => {
     setBuyError(null);
-    // Payment wall: the rental is charged to the wallet the moment it is bought.
-    if (balanceUsd < numberPriceUsd && balanceInr < numberPriceInr) {
-      setBuyError(
-        `A phone number costs $${numberPriceUsd.toFixed(2)} (or ₹${numberPriceInr.toFixed(
-          2
-        )}) per month. Add credit to your wallet to buy one.`
-      );
+    if (!kycApproved) {
+      try {
+        const st = await api.kyc.getStatus();
+        if (!st?.approved) {
+          setKycApproved(false);
+          showToast('Complete identity verification before buying a number', 'error', 5000);
+          return;
+        }
+        setKycApproved(true);
+      } catch {
+        /* server still enforces KYC on /buy */
+      }
+    }
+    if (priceKnown && balanceUsd < numberPriceUsd) {
+      const msg = `A phone number costs $${numberPriceUsd.toFixed(
+        2
+      )} per month. Add credit to your wallet to buy one.`;
+      setBuyError(msg);
       return;
     }
     setBuying(true);
+    setPurchasedSuccess(null);
     try {
       const bought = await buyPhoneNumber(catalogItem, targetAgentId || null);
       if (bought?.checkoutUrl) {
         return;
       }
+      if (bought?.ok === false) {
+        const failed =
+          bought.failureReason === 'pending'
+            ? 'The order is still being placed. It will appear in your lines shortly.'
+            : bought.failureReason === 'carrier_balance_exhausted'
+              ? 'Phone numbers are temporarily unavailable. Your wallet was not charged.'
+              : 'Purchase failed — the number could not be provisioned. Your wallet has been refunded.';
+        setBuyError(failed);
+        if (bought.failureReason !== 'pending') await refreshWallet?.();
+        return;
+      }
       setPurchasedSuccess(catalogItem.formatted || catalogItem.number);
+      showToast('Number purchased — provisioning to your workspace', 'success', 5000);
+      await refreshWallet?.();
       setTimeout(() => {
         setPurchasedSuccess(null);
         onCloseBuyModal();
       }, 1800);
     } catch (e) {
-      // The server is the authority on wallet state; a 402 means it disagrees.
       if (e.status === 402 || e.code === 'insufficient_balance') {
-        setBuyError(
-          `${e.message} A phone number costs $${numberPriceUsd.toFixed(2)} (or ₹${numberPriceInr.toFixed(
-            2
-          )}) per month.`
-        );
+        const msg = priceKnown
+          ? `${e.message} A phone number costs $${numberPriceUsd.toFixed(2)} per month.`
+          : e.message;
+        setBuyError(msg);
         await refreshWallet?.();
+      } else if (e.status === 403 || e.code === 'kyc_required') {
+        setKycApproved(false);
+        setBuyError('Verify your identity to buy a phone number.');
+      } else if (e.code === 'carrier_balance_exhausted' || e.status === 503) {
+        setBuyError(
+          e.message ||
+            'Phone numbers are temporarily unavailable. Your wallet was not charged.'
+        );
       } else {
         setBuyError(e.message || 'Could not start number purchase');
       }
@@ -175,9 +273,9 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
         Monthly rental for these {phoneNumbers.length} line
         {phoneNumbers.length === 1 ? '' : 's'}:{' '}
         <span className="font-mono font-semibold text-[#0F0E17]">
-          ₹{monthlyRentalInr.toFixed(2)}
+          ${monthlyRentalUsd.toFixed(2)}
         </span>{' '}
-        (${monthlyRentalUsd.toFixed(2)}). Call time is billed separately from your wallet.
+        per month. Call time is billed separately from your wallet.
       </div>
 
       {/* Numbers Inventory Table Card */}
@@ -249,7 +347,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
 
                   {/* Monthly Cost */}
                   <td className="py-4 px-4 font-mono text-[#524E5E]">
-                    {num.monthlyInr != null ? `₹${Number(num.monthlyInr).toFixed(0)}/mo` : `$${Number(num.monthlyCost || 0).toFixed(2)}/mo`}
+                    ${Number(num.monthlyCost || 0).toFixed(2)}/mo
                   </td>
 
                   {/* Line-level inbound/outbound switches */}
@@ -324,8 +422,20 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
       <Modal
         isOpen={isBuyModalOpen}
         onClose={onCloseBuyModal}
-        title="Buy Virtual Telephone Number"
-        subtitle="Only numbers currently available in your selected country are shown."
+        title={
+          purchasedSuccess
+            ? 'Number ready'
+            : !kycApproved
+              ? 'Verify identity'
+              : 'Buy Virtual Telephone Number'
+        }
+        subtitle={
+          purchasedSuccess
+            ? undefined
+            : !kycApproved
+              ? 'One quick ID check unlocks phone numbers and live calls.'
+              : 'Only numbers currently available in your selected country are shown.'
+        }
         maxWidth="max-w-2xl"
       >
         <div className="space-y-5">
@@ -336,34 +446,55 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
               <p className="font-mono text-sm text-[#6344E7]">{purchasedSuccess}</p>
               <p className="text-xs text-[#524E5E]">Inbound calls will now route directly to your selected AI agent.</p>
             </div>
+          ) : !kycApproved ? (
+            <VerifyIdentityCard
+              variant="gate"
+              onApproved={() => {
+                setKycApproved(true);
+              }}
+            />
           ) : (
             <>
               {buyError && (
                 <div
                   data-testid="buy-number-error"
                   role="alert"
-                  className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-900"
+                  className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-900 flex items-start gap-2"
                 >
-                  {buyError}
+                  <p className="flex-1">{buyError}</p>
+                  <button
+                    type="button"
+                    aria-label="Dismiss"
+                    className="shrink-0 p-1 rounded-md hover:bg-red-100"
+                    onClick={() => setBuyError(null)}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               )}
 
-              {/* Price and affordability, both from the server. */}
+              {/* Price and affordability, both from the server. USD only. */}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
                 <div className="text-[11px] text-[#524E5E]">
                   <span className="font-semibold text-[#0F0E17]">
-                    ${numberPriceUsd.toFixed(2)} / month
-                  </span>{' '}
-                  (₹{numberPriceInr.toFixed(2)}), charged to your wallet when you buy.
-                  <span className="block mt-0.5">
+                    {priceKnown ? `$${numberPriceUsd.toFixed(2)}` : 'Loading price…'} / month
+                  </span>
+                  {', charged to your wallet when you buy.'}
+                  <span className="block mt-0.5 text-[10px] text-[#8C879A]">
+                    Same rate on every number below — monthly rental.
+                  </span>
+                  <span className="block mt-0.0">
                     Wallet: ${balanceUsd.toFixed(2)}
-                    {balanceInr > 0 ? ` · ₹${balanceInr.toFixed(2)}` : ''}
                   </span>
                 </div>
-                {!canAffordNumber && (
-                  <span className="shrink-0 text-[11px] font-semibold text-[#B45309]">
+                {priceKnown && !canAffordNumber && (
+                  <button
+                    type="button"
+                    className="shrink-0 text-[11px] font-semibold text-[#B45309] hover:underline"
+                    onClick={() => openAddFunds?.('buy-number')}
+                  >
                     Add credit to buy a number
-                  </span>
+                  </button>
                 )}
               </div>
 
@@ -376,11 +507,13 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                     value={selectedCountry}
                     onChange={(e) => setSelectedCountry(e.target.value)}
                     className="w-full bg-white border border-[#E4E2EB] rounded-lg p-2 text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
+                    data-testid="buy-number-country"
                   >
-                    <option value="IN">India (+91)</option>
-                    <option value="US">United States (+1)</option>
-                    <option value="GB">United Kingdom (+44)</option>
-                    <option value="AU">Australia (+61)</option>
+                    {countries.map((c) => (
+                      <option key={c.code} value={c.code}>
+                        {c.name} ({c.dial})
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -434,19 +567,23 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
               {/* Available Inventory Results */}
               <div className="space-y-2 max-h-72 overflow-y-auto">
                 {catalogLoading ? (
-                  <div className="p-8 text-center text-xs text-[#524E5E]">Loading available numbers…</div>
+                  <CatalogSkeleton rows={4} />
                 ) : catalogError ? (
-                  <div className="p-6 text-center text-xs text-red-800 bg-red-50 border border-red-200 rounded-xl">
-                    {catalogError}
+                  <div className="p-6 text-center text-xs text-red-800 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2">
+                    <p className="flex-1">{catalogError}</p>
+                    <button type="button" aria-label="Dismiss" onClick={() => setCatalogError(null)}>
+                      <X className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 ) : filteredCatalog.length === 0 ? (
                   <div className="p-8 text-center text-xs text-[#524E5E]">
-                    No phone numbers are available for <strong>{selectedCountry}</strong> right now. Try another country or check back later.
+                    No phone numbers are available for <strong>{selectedCountry}</strong> right
+                    now. Try another country or check back later.
                   </div>
                 ) : (
                   filteredCatalog.map((item) => (
                     <div
-                      key={item.formatted}
+                      key={item.formatted || item.number || item.e164}
                       className="p-3.5 rounded-xl bg-white border border-[#E4E2EB] hover:border-[#D1CFDB] flex items-center justify-between gap-4 transition-all shadow-2xs"
                     >
                       <div className="flex items-center gap-3">
@@ -461,18 +598,22 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
 
                       <div className="flex items-center gap-3">
                         <span className="text-xs font-mono font-semibold text-[#524E5E]">
-                          {item.monthlyInr != null
-                            ? `₹${Number(item.monthlyInr).toFixed(0)}/mo`
-                            : `$${Number(item.fee || 0).toFixed(2)}/mo`}
+                          ${Number(
+                            numberPriceUsd || item.monthlyUsd || item.fee || 0
+                          ).toFixed(2)}/mo
+                          {item.source === 'inventory' ? (
+                            <span className="ml-1 text-[10px] text-[#047857]">In stock</span>
+                          ) : null}
                         </span>
                         <TactileButton
                           size="xs"
                           variant="primary"
-                          disabled={buying}
+                          disabled={buying || (priceKnown && !canAffordNumber)}
+                          loading={buying}
                           onClick={() => handleBuyNumber(item)}
                           data-testid="buy-number-submit"
                         >
-                          Buy & Bind
+                          {buying ? 'Buying…' : 'Buy & Bind'}
                         </TactileButton>
                       </div>
                     </div>

@@ -5,11 +5,15 @@ import logging
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 
 from server.db.connection import get_session_factory
 from server.db.models.phase5_models import PhoneNumber
-from server.db.models.saas_models import NumberPurchase, ProvisionJob
+from server.db.models.saas_models import (
+    NumberPurchase,
+    NumberReservation,
+    ProvisionJob,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -97,6 +101,15 @@ async def process_one_job() -> bool:
                 refund_tenant = purchase.tenant_id
                 refund_user = purchase.user_id
                 refund_wallet = not purchase.stripe_checkout_session_id
+                # Release the hold. The number was never bought, so leaving a
+                # reservation would make it look reserved by "another checkout"
+                # for the rest of the TTL — and the unique index would block the
+                # retry outright.
+                await session.execute(
+                    delete(NumberReservation).where(
+                        NumberReservation.purchase_id == purchase_id
+                    )
+                )
             await session.commit()
         if refund_wallet and refund_tenant is not None:
             try:
@@ -107,8 +120,29 @@ async def process_one_job() -> bool:
                     user_id=refund_user,
                     purchase_id=purchase_id,
                 )
+                refunded = True
             except Exception:
                 logger.exception("did refund failed purchase=%s", purchase_id)
+        # The single most important row in the log: money was taken and then
+        # returned, or was taken and could not be returned. Either way the
+        # operator has to be able to find it without reconstructing the job.
+        from server.services.saas.activity_log import record_event
+
+        await record_event(
+            action="number.provision.failed",
+            resource_type="number_purchase",
+            resource_id=str(purchase_id),
+            actor="system",
+            tenant_id=refund_tenant,
+            payload={
+                "error": str(e)[:400],
+                "refunded": refunded if refund_wallet else False,
+                "refundAttempted": refund_wallet,
+            },
+            source="system",
+            outcome="error",
+            severity="error",
+        )
         return True
 
     async with factory() as session:
@@ -143,5 +177,29 @@ async def process_one_job() -> bool:
         purchase.status = "active"
         job.status = "done"
         job.updated_at = _utcnow()
+        # The number is now owned, so the in-flight hold has done its job. Leaving
+        # it would collide with the unique index on the next purchase of any
+        # number, and read as a false "reserved by another checkout".
+        await session.execute(
+            delete(NumberReservation).where(
+                NumberReservation.purchase_id == purchase_id
+            )
+        )
         await session.commit()
+
+    from server.services.saas.activity_log import record_event
+
+    await record_event(
+        action="number.provision.done",
+        resource_type="phone_number",
+        resource_id=str(pn.id),
+        actor="system",
+        tenant_id=phone_tenant_id,
+        payload={
+            "purchaseId": str(purchase_id),
+            "e164": purchase.e164,
+            "assignedAgentId": purchase.assign_agent_id,
+        },
+        source="system",
+    )
     return True

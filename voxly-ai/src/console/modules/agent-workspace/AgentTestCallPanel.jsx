@@ -74,7 +74,8 @@ export function AgentTestCallPanel({ agent }) {
   }, [lines]);
 
   useEffect(() => {
-    if (!isLive || !startedAtRef.current) {
+    // CONNECTING has no start stamp, so the clock stays at 00:00 until `ready` lands.
+  if (!isLive || !startedAtRef.current) {
       setElapsedMs(0);
       return undefined;
     }
@@ -130,7 +131,9 @@ export function AgentTestCallPanel({ agent }) {
     setLines([]);
     setIsMuted(false);
     setElapsedMs(0);
-    startedAtRef.current = Date.now();
+    // The clock starts on `ready` (server accepted the session and the voice loop is
+    // live), not here — time spent handshaking is not billed time.
+    startedAtRef.current = null;
     setStatusNote('Connecting to agent…');
     const session = createWebAgentSession();
     sessionRef.current = session;
@@ -138,6 +141,7 @@ export function AgentTestCallPanel({ agent }) {
       if (event === 'ready') {
         setSessionState('CONNECTED');
         setBotState('SPEAKING');
+        startedAtRef.current = Date.now();
         speakingUntilRef.current = Date.now() + 2500;
         setStatusNote('Connected — agent is live');
         push('Live session started. Agent follows your published script.');

@@ -1,13 +1,16 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { DevCard } from "@/components/dev/DevCard";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
 import {
   AdminError,
   AdminLoading,
   AdminPageHeader,
   AdminStat,
 } from "@/components/admin/AdminNav";
+import { DevCard } from "@/components/dev/DevCard";
 import {
   SkeuoBadge,
   SkeuoButton,
@@ -54,6 +57,7 @@ type PoolNumber = {
   status: string;
   source: string;
   available: boolean;
+  inInventory?: boolean;
 };
 
 const PURCHASE_TONE: Record<string, "success" | "warning" | "danger" | "muted"> = {
@@ -62,9 +66,12 @@ const PURCHASE_TONE: Record<string, "success" | "warning" | "danger" | "muted"> 
   failed: "danger",
   refunded: "muted",
   pending: "warning",
+  provisioned: "success",
 };
 
 export default function AdminNumbersPage() {
+  const searchParams = useSearchParams();
+  const tenantFocus = searchParams.get("tenantId") || "";
   const numbers = useAdminResource<{ assignments: Assignment[] }>(
     "/api/dev/admin/phone-assignments"
   );
@@ -76,19 +83,26 @@ export default function AdminNumbersPage() {
   const [busy, setBusy] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [selectedE164, setSelectedE164] = useState("");
-  const [newTenant, setNewTenant] = useState("");
+  const [newTenant, setNewTenant] = useState(tenantFocus);
   const [query, setQuery] = useState("");
+  const [releaseTarget, setReleaseTarget] = useState<Assignment | null>(null);
 
   const selectedPool = useMemo(
     () => (pool.data?.numbers ?? []).find((n) => n.e164 === selectedE164) || null,
     [pool.data, selectedE164]
   );
 
-  const rows = (numbers.data?.assignments ?? []).filter((a) =>
-    query.trim()
-      ? `${a.e164} ${a.tenant} ${a.agent ?? ""}`.toLowerCase().includes(query.trim().toLowerCase())
-      : true
+  const availablePool = useMemo(
+    () => (pool.data?.numbers ?? []).filter((n) => n.available),
+    [pool.data]
   );
+  const inventoryCount = availablePool.filter((n) => n.inInventory || n.source.includes("inventory")).length;
+
+  const rows = (numbers.data?.assignments ?? []).filter((a) => {
+    if (tenantFocus && a.tenantId !== tenantFocus) return false;
+    if (!query.trim()) return true;
+    return `${a.e164} ${a.tenant} ${a.agent ?? ""}`.toLowerCase().includes(query.trim().toLowerCase());
+  });
 
   async function run(key: string, fn: () => Promise<void>) {
     setBusy(key);
@@ -130,16 +144,15 @@ export default function AdminNumbersPage() {
     });
   }
 
-  function release(a: Assignment) {
-    if (
-      !window.confirm(
-        `Release ${a.e164}? It stops routing immediately. The rental is not refunded automatically.`
-      )
-    ) {
-      return;
-    }
+  function confirmRelease(statement: string) {
+    if (!releaseTarget) return;
+    const a = releaseTarget;
     return run(`release:${a.numberId}`, async () => {
-      await adminAction(`/api/dev/admin/numbers/${a.numberId}/release`, { method: "POST" });
+      await adminAction(`/api/dev/admin/numbers/${a.numberId}/release`, {
+        method: "POST",
+        body: { note: statement },
+      });
+      setReleaseTarget(null);
       await Promise.all([numbers.reload(), pool.reload()]);
     });
   }
@@ -148,7 +161,7 @@ export default function AdminNumbersPage() {
     <div className="space-y-6 p-6">
       <AdminPageHeader
         title="Phone numbers"
-        description="Account DIDs from Telnyx plus database rows. Assign any available number to a tenant — wallets stay linked on the same tenant id."
+        description="Release returns a DID to Platform inventory (still on Telnyx, for sale again). Assignments exclude inventory — those show in the available pool."
       />
 
       <AdminError error={error} />
@@ -159,13 +172,14 @@ export default function AdminNumbersPage() {
         <AdminError error={`Telnyx inventory: ${pool.data.telnyxError}`} />
       )}
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <AdminStat label="Assigned" value={numbers.data?.assignments.length ?? "—"} />
+      <div className="grid gap-4 sm:grid-cols-4">
+        <AdminStat label="Assigned to tenants" value={numbers.data?.assignments.length ?? "—"} />
         <AdminStat
           label="Available in pool"
-          value={(pool.data?.numbers ?? []).filter((n) => n.available).length}
-          hint="not tied to a tenant"
+          value={availablePool.length}
+          hint="unassigned + platform inventory"
         />
+        <AdminStat label="In inventory" value={inventoryCount} tone="good" hint="ready for customer buy" />
         <AdminStat
           label="Tenants"
           value={tenants.data?.tenants.length ?? "—"}
@@ -175,7 +189,7 @@ export default function AdminNumbersPage() {
 
       <DevCard
         title="Assign number to tenant"
-        description="Choose from every available number on the account, then pick the tenant workspace."
+        description="Platform inventory and Telnyx-only DIDs appear here. Prefer inventory for sales so customers are not blocked by carrier prepaid balance."
       >
         <div className="flex flex-wrap items-end gap-3">
           <label className="block text-xs">
@@ -187,13 +201,11 @@ export default function AdminNumbersPage() {
               className="min-w-[220px] rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised px-3 py-2 font-mono text-sm text-text"
             >
               <option value="">Select number…</option>
-              {(pool.data?.numbers ?? [])
-                .filter((n) => n.available)
-                .map((n) => (
-                  <option key={n.e164} value={n.e164}>
-                    {n.e164} · {n.source}
-                  </option>
-                ))}
+              {availablePool.map((n) => (
+                <option key={n.e164} value={n.e164}>
+                  {n.e164} · {n.inInventory || n.source.includes("inventory") ? "inventory" : n.source}
+                </option>
+              ))}
             </select>
           </label>
           <label className="block text-xs">
@@ -220,14 +232,14 @@ export default function AdminNumbersPage() {
             {busy === "allocate" ? "Assigning…" : "Assign to tenant"}
           </SkeuoButton>
         </div>
-        {(pool.data?.numbers ?? []).filter((n) => n.available).length === 0 && !pool.loading && (
+        {availablePool.length === 0 && !pool.loading && (
           <p className="mt-3 text-xs text-text-muted">
-            No unassigned account numbers. Buy/provision on Telnyx first, or reassign from the table below.
+            No available numbers. Release a tenant DID to inventory, or provision on Telnyx first.
           </p>
         )}
       </DevCard>
 
-      <DevCard title="Assignments">
+      <DevCard title="Tenant assignments">
         <div className="mb-3">
           <SkeuoInput
             placeholder="Filter by number, tenant, or agent"
@@ -253,7 +265,12 @@ export default function AdminNumbersPage() {
               <SkeuoTableRow key={a.numberId}>
                 <SkeuoTd className="font-mono">{a.e164}</SkeuoTd>
                 <SkeuoTd className="text-sm">
-                  <div className="font-medium">{a.tenant}</div>
+                  <Link
+                    href={`/dev/admin/tenants/${a.tenantId}`}
+                    className="font-medium hover:underline"
+                  >
+                    {a.tenant}
+                  </Link>
                   <p className="font-mono text-[10px] text-text-subtle">{a.tenantId}</p>
                   <p className="text-[10px] text-text-muted">{a.tenantStatus || "—"}</p>
                 </SkeuoTd>
@@ -287,9 +304,9 @@ export default function AdminNumbersPage() {
                     <SkeuoButton
                       variant="ghost"
                       disabled={busy === `release:${a.numberId}`}
-                      onClick={() => release(a)}
+                      onClick={() => setReleaseTarget(a)}
                     >
-                      Release
+                      Release to inventory
                     </SkeuoButton>
                   </div>
                 </SkeuoTd>
@@ -297,12 +314,24 @@ export default function AdminNumbersPage() {
             ))}
             {rows.length === 0 && !numbers.loading && (
               <SkeuoTableRow>
-                <SkeuoTd className="text-text-muted">No active numbers.</SkeuoTd>
+                <SkeuoTd className="text-text-muted">No tenant-assigned numbers.</SkeuoTd>
               </SkeuoTableRow>
             )}
           </SkeuoTableBody>
         </SkeuoTable>
       </DevCard>
+
+      <AdminConfirmDialog
+        open={Boolean(releaseTarget)}
+        title={`Release ${releaseTarget?.e164 ?? ""} to inventory`}
+        description="Stops routing for the tenant immediately. The DID stays on Telnyx under Platform inventory and becomes buyable again. Rental is not auto-refunded."
+        confirmLabel="Release to inventory"
+        tone="danger"
+        statementPlaceholder="e.g. Tenant churned; return DID to sales inventory"
+        busy={Boolean(busy)}
+        onCancel={() => setReleaseTarget(null)}
+        onConfirm={(statement) => void confirmRelease(statement)}
+      />
     </div>
   );
 }

@@ -17,11 +17,17 @@ class AccessTokenClaims:
     tenant_id: str
     role: str
     email: str
+    impersonator: str | None = None
 
 
-def create_access_token(claims: AccessTokenClaims) -> tuple[str, int]:
+def create_access_token(
+    claims: AccessTokenClaims,
+    *,
+    ttl_seconds: int | None = None,
+) -> tuple[str, int]:
     settings = get_settings()
-    expires_in = settings.jwt_access_ttl_minutes * 60
+    expires_in = int(ttl_seconds) if ttl_seconds is not None else settings.jwt_access_ttl_minutes * 60
+    expires_in = max(60, min(expires_in, 24 * 3600))
     now = datetime.now(timezone.utc)
     payload: dict[str, Any] = {
         "sub": claims.user_id,
@@ -32,6 +38,8 @@ def create_access_token(claims: AccessTokenClaims) -> tuple[str, int]:
         "exp": int((now + timedelta(seconds=expires_in)).timestamp()),
         "jti": str(uuid.uuid4()),
     }
+    if claims.impersonator:
+        payload["imp"] = claims.impersonator
     token = jwt.encode(payload, settings.jwt_secret, algorithm="HS256")
     return token, expires_in
 
@@ -48,9 +56,11 @@ def decode_access_token(token: str) -> AccessTokenClaims | None:
     email = payload.get("email")
     if not sub or not tid or not role:
         return None
+    imp = payload.get("imp")
     return AccessTokenClaims(
         user_id=str(sub),
         tenant_id=str(tid),
         role=str(role),
         email=str(email or ""),
+        impersonator=str(imp) if imp else None,
     )

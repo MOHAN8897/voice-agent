@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useCallback, useMemo, useState, useEffect, useRef } from 'react';
 import {
   FileCode2,
   Volume2,
@@ -30,10 +30,28 @@ import {
 } from '../../lib/voiceStack';
 import { formatPhoneVoiceLabel, groupPhoneVoices } from '../../lib/voiceDisplay';
 import { loadAgentBrain } from '../../services/agentBrain';
+import { api } from '../../services/api';
 import { AgentOverview } from './agent-workspace/AgentOverview';
 import { AgentCallsPanel } from './agent-workspace/AgentCallsPanel';
 import { AgentSettingsPanel } from './agent-workspace/AgentSettingsPanel';
 import { resolveEmployeeStep } from '../employeeFlowHash';
+
+/**
+ * Canonical text for the dirty check. Only the fields the editor owns count —
+ * `updatedAt` and other list-row metadata would make every refresh look dirty.
+ */
+function snapForm(form) {
+  if (!form) return '';
+  return JSON.stringify({
+    name: form.name || '',
+    role: form.role || '',
+    greeting: form.greeting || '',
+    script: form.script || '',
+    language: form.language || '',
+    voice: form.voice || null,
+    variableDefinitions: form.variableDefinitions || [],
+  });
+}
 
 /** The five workspace tabs. Test call is a header button, not a tab. */
 const FLOW_TABS = [
@@ -127,16 +145,77 @@ export function AgentStudioModule({
     if (next.openTestCall) setTestCallOpen(true);
   }, [flowStep]);
 
-  const selectTab = (id) => {
-    setActiveTab(id);
-    onFlowStepChange?.(id);
-  };
   const [isSaved, setIsSaved] = useState(false);
   const [isPlayingVoice, setIsPlayingVoice] = useState(false);
+  const [voicePreviewError, setVoicePreviewError] = useState(null);
+  // Which voice actually spoke, so the operator knows this is the real one.
+  const [voiceSpoken, setVoiceSpoken] = useState({ voice: null, model: null });
   const [brainLoadError, setBrainLoadError] = useState(null);
   const [brainLoading, setBrainLoading] = useState(false);
 
   const [formData, setFormData] = useState(() => formFromAgent(selectedAgent));
+  // The last-loaded (saved) state. Dirty = formData differs from this, which is
+  // what the Save/Discard guard compares against.
+  const [savedSnapshot, setSavedSnapshot] = useState(() => snapForm(formData));
+  // A published agent must not be swapped out from under unsaved script edits.
+  // Held as a plain value, not a resolver promise: a pending promise silently
+  // drops the state update if the component unmounts or re-keys mid-flight, and
+  // the user then gets no dialog at all and no explanation.
+  const [pendingLeave, setPendingLeave] = useState(null);
+  const dirty = snapForm(formData) !== savedSnapshot;
+
+  const confirmLeave = useCallback(
+    () => (dirty ? new Promise((resolve) => setPendingLeave(() => resolve)) : Promise.resolve(true)),
+    [dirty]
+  );
+
+  const settleLeave = useCallback((ok) => {
+    setPendingLeave((prev) => {
+      if (typeof prev === 'function') prev(ok);
+      return null;
+    });
+  }, []);
+
+  const discardChanges = useCallback(() => {
+    setFormData((prev) => JSON.parse(savedSnapshot));
+    setSaveError(null);
+    setIsSaved(false);
+  }, [savedSnapshot]);
+
+  const guardedAction = useCallback(
+    (run) => async (...args) => {
+      if (!(await confirmLeave())) return undefined;
+      return run(...args);
+    },
+    [confirmLeave]
+  );
+
+  // Never let a refresh or a hard navigation silently discard an edited script.
+  useEffect(() => {
+    const onBeforeUnload = (event) => {
+      if (!dirty) return;
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [dirty]);
+
+  const selectAgent = useMemo(
+    () => guardedAction((agentId, step) => {
+      setSelectedAgentId(agentId);
+      onFlowStepChange?.(step, agentId);
+    }),
+    [guardedAction, setSelectedAgentId, onFlowStepChange]
+  );
+
+  const selectTab = useMemo(
+    () => guardedAction((id) => {
+      setActiveTab(id);
+      onFlowStepChange?.(id);
+    }),
+    [guardedAction, onFlowStepChange]
+  );
 
   // Agent list rows do not include script — load draft brain once per selection (not on every list refresh).
   useEffect(() => {
@@ -161,7 +240,7 @@ export function AgentStudioModule({
         const voiceMeta = (phoneVoices.length ? phoneVoices : []).find(
           (v) => v.id === cfg.realtimeVoice
         );
-        setFormData({
+        const loaded = {
           ...base,
           script: studio.script || '',
           greeting: studio.greeting || base.greeting,
@@ -176,12 +255,17 @@ export function AgentStudioModule({
             voiceName: voiceMeta?.label || base.voice?.voiceName || cfg.realtimeVoice,
             speed: cfg.speed ?? base.voice?.speed ?? 1,
           },
-        });
+        };
+        setFormData(loaded);
+        // What the server just sent IS the saved baseline, so switching agents
+        // never reports a phantom "unsaved changes".
+        setSavedSnapshot(snapForm(loaded));
       })
       .catch((err) => {
         if (!cancelled) {
           setBrainLoadError(err?.message || 'Could not load calling script');
           setFormData(base);
+          setSavedSnapshot(snapForm(base));
         }
       })
       .finally(() => {
@@ -212,6 +296,8 @@ export function AgentStudioModule({
     setSaving(true);
     try {
       await updateAgent(selectedAgent.id, formData);
+      // Re-baseline: after a successful publish there is nothing left to guard.
+      setSavedSnapshot(snapForm(formData));
       setIsSaved(true);
       setTimeout(() => setIsSaved(false), 2500);
     } catch (e) {
@@ -219,6 +305,7 @@ export function AgentStudioModule({
     } finally {
       setSaving(false);
     }
+    return true;
   };
 
   // Variable chip insertion into script cursor
@@ -254,31 +341,44 @@ export function AgentStudioModule({
     };
   }, []);
 
-  const handlePlayVoicePreview = () => {
+  const handlePlayVoicePreview = async () => {
     if (isPlayingVoice) {
       voiceAgent.stopTTS();
       setIsPlayingVoice(false);
       return;
     }
 
-    const previewText = formData.greeting || `Hi there! I am ${formData.name}. I am calibrated and ready to take your calls.`;
+    const previewText =
+      formData.greeting ||
+      `Hi there! I am ${formData.name}. I am calibrated and ready to take your calls.`;
+    setVoicePreviewError(null);
+    setVoiceSpoken({ voice: null, model: null });
     setIsPlayingVoice(true);
 
-    voiceAgent.playTTS(
-      previewText,
-      () => {
+    // Speak through the real live model the caller will reach. The previous
+    // implementation used window.speechSynthesis — an unrelated OS voice — so the
+    // preview could be approved while the shipped voice was something else.
+    try {
+      const { blob, voice, model } = await api.telephony.previewVoice({
+        text: previewText,
+        voiceId: formData.voice?.voiceId || formData.voice?.id || null,
+      });
+      setVoiceSpoken({ voice: voice || null, model: model || null });
+      const played = await voiceAgent.playAudioBuffer(
+        blob,
+        () => setIsPlayingVoice(false),
+        () => setIsPlayingVoice(true)
+      );
+      if (!played) {
         setIsPlayingVoice(false);
-      },
-      () => {
-        setIsPlayingVoice(true);
-      },
-      {
-        speed: formData.voice?.speed || 1.0,
-        pitch: formData.voice?.pitch || 0.0,
-        voiceName: formData.voice?.voiceName || formData.name,
-        provider: formData.voice?.provider
+        setVoicePreviewError('The preview audio could not be played. Check your sound output.');
       }
-    );
+    } catch (e) {
+      setIsPlayingVoice(false);
+      setVoicePreviewError(
+        e?.message || 'Could not reach the voice service to preview this voice.'
+      );
+    }
   };
 
   if (!isLoading && agents.length === 0) {
@@ -309,6 +409,79 @@ export function AgentStudioModule({
       {saveError && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-900">{saveError}</div>
       )}
+      {/* Unsaved-changes guard. Every leave path (tab, agent switch, back, unload)
+          funnels through confirmLeave, so nothing silently discards a script. */}
+      {dirty && (
+        <div
+          data-testid="agent-studio-unsaved"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+        >
+          <span className="font-semibold">Unsaved changes</span>
+          <span className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={discardChanges}
+              data-testid="agent-studio-discard"
+              className="rounded-lg border border-amber-300 px-2.5 py-1 font-semibold"
+            >
+              Discard
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+              data-testid="agent-studio-save-inline"
+              className="rounded-lg bg-[#0F0E17] px-2.5 py-1 font-semibold text-white disabled:opacity-50"
+            >
+              {saving ? 'Saving…' : 'Save & publish'}
+            </button>
+          </span>
+        </div>
+      )}
+
+      <Modal
+        isOpen={Boolean(pendingLeave)}
+        onClose={() => settleLeave(false)}
+        title="Unsaved script changes"
+        subtitle="Your edits have not been published yet."
+        maxWidth="max-w-md"
+      >
+        <div className="space-y-4" data-testid="agent-studio-leave-dialog">
+          <p className="text-xs text-[#524E5E]">
+            Leaving now discards the script edits you have not saved.
+          </p>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={discardChanges}
+              data-testid="leave-discard"
+              className="mr-auto rounded-xl px-3 py-2 text-xs font-semibold text-[#B42318] hover:bg-[#FEF2F2]"
+            >
+              Discard changes
+            </button>
+            <button
+              type="button"
+              onClick={() => settleLeave(false)}
+              data-testid="leave-cancel"
+              className="rounded-xl px-3 py-2 text-xs font-semibold text-[#524E5E] hover:bg-[#FAF9FD]"
+            >
+              Keep editing
+            </button>
+            <button
+              type="button"
+              disabled={saving}
+              data-testid="leave-save"
+              onClick={async () => {
+                const ok = await handleSave();
+                if (ok) settleLeave(true);
+              }}
+              className="rounded-xl bg-[#6344E7] px-3 py-2 text-xs font-bold text-white disabled:opacity-50"
+            >
+              {saving ? 'Saving…' : 'Save & publish'}
+            </button>
+          </div>
+        </div>
+      </Modal>
       {/* Workbench Header: Agent Switcher, Status & Save */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-white border border-[#E4E2EB] shadow-craft-xs">
         {/* Left: Agent Avatar & Selector */}
@@ -316,7 +489,10 @@ export function AgentStudioModule({
           {onBackToFleet && (
             <button
               type="button"
-              onClick={onBackToFleet}
+              onClick={() => void (async () => {
+                  if (await confirmLeave()) onBackToFleet?.();
+                })()}
+              data-testid="agent-studio-back"
               className="p-2 rounded-xl border border-[#E4E2EB] text-[#524E5E] hover:text-[#0F0E17] hover:bg-[#FAF9FD]"
               title="Back to fleet"
             >
@@ -330,7 +506,8 @@ export function AgentStudioModule({
             <div className="flex items-center gap-2">
               <select
                 value={selectedAgentId}
-                onChange={(e) => setSelectedAgentId(e.target.value)}
+                onChange={(e) => void selectAgent(e.target.value)}
+                data-testid="agent-studio-switcher"
                 className="bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-2.5 py-1 text-sm font-bold text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
               >
                 {agents.map((a) => (
@@ -484,7 +661,7 @@ export function AgentStudioModule({
               </span>
               <button
                 type="button"
-                onClick={() => setActiveTab('test')}
+                onClick={() => void selectTab('test')}
                 className="font-semibold text-[#5034CE] hover:underline"
               >
                 Test this script
@@ -712,7 +889,9 @@ export function AgentStudioModule({
                   <Radio className="w-3.5 h-3.5 text-[#6344E7]" />
                   <span>Acoustic Voice Preview & Live Test</span>
                 </h3>
-                <p className="text-[11px] text-[#524E5E]">Hear this voice speak the opening greeting using the calibrated speed and pitch.</p>
+                <p className="text-[11px] text-[#524E5E]">
+                  Hear the greeting in the exact live voice a caller will reach — same model, same voice.
+                </p>
               </div>
 
               <span className={`text-[10px] font-mono px-2 py-0.5 rounded-md border font-semibold ${
@@ -722,6 +901,14 @@ export function AgentStudioModule({
               }`}>
                 {isPlayingVoice ? '● Audio Playing' : 'Ready'}
               </span>
+              {voiceSpoken.voice && (
+                <span
+                  data-testid="voice-preview-spoke"
+                  className="text-[10px] font-mono px-2 py-0.5 rounded-md border bg-[#F0EEF6] text-[#524E5E] border-[#E4E2EB]"
+                >
+                  spoke {voiceSpoken.voice} · {voiceSpoken.model}
+                </span>
+              )}
             </div>
 
             <div className="p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] space-y-3">
@@ -739,8 +926,18 @@ export function AgentStudioModule({
                       style={{ height: `${h}px`, animationDelay: `${i * 70}ms` }}
                     />
                   ))}
-                  <span className="text-[10px] font-mono text-[#524E5E] ml-auto">Synthesizing Speech...</span>
+                  <span className="text-[10px] font-mono text-[#524E5E] ml-auto">Playing live voice…</span>
                 </div>
+              )}
+
+              {voicePreviewError && (
+                <p
+                  role="alert"
+                  data-testid="voice-preview-error"
+                  className="text-[11px] text-[#B91C1C]"
+                >
+                  {voicePreviewError}
+                </p>
               )}
             </div>
 

@@ -32,6 +32,7 @@ from server.db.models.saas_models import (
     BillingWalletTransaction,
     NumberPurchase,
     ProvisionJob,
+    RefreshToken,
     TenantMembership,
     User,
 )
@@ -51,6 +52,16 @@ class TenantPatchBody(BaseModel):
     plan: Optional[str] = None
     limits: Optional[dict[str, Any]] = None
     name: Optional[str] = None
+    billingSource: Optional[str] = None
+    note: Optional[str] = Field(None, max_length=500)
+    releaseNumbers: bool = False
+    revokeSessions: bool = False
+
+
+class ImpersonateBody(BaseModel):
+    note: str = Field(..., min_length=8, max_length=500)
+    userId: Optional[str] = None
+    ttlMinutes: int = Field(30, ge=5, le=120)
 
 
 class TenantCreateBody(BaseModel):
@@ -60,8 +71,13 @@ class TenantCreateBody(BaseModel):
     limits: Optional[dict[str, Any]] = None
 
 
+_TENANT_STATUS_VALUES = frozenset({"active", "suspended", "past_due", "cancelled"})
+_TENANT_PLAN_VALUES = frozenset({"starter", "growth", "enterprise", "default", "platform", "dev"})
+
+
 class TenantDeleteBody(BaseModel):
     force: bool = False
+    note: Optional[str] = Field(None, max_length=500)
 
 
 class UserPatchBody(BaseModel):
@@ -121,28 +137,45 @@ async def admin_dashboard(session: SessionData = Depends(require_dev_session)):
 @router.get("/api/dev/admin/tenants")
 async def list_tenants(
     q: str = "",
+    status: str | None = None,
+    plan: str | None = None,
+    excludeInventory: bool = Query(True, alias="excludeInventory"),
+    hasNumbers: bool | None = Query(None, alias="hasNumbers"),
+    minBalanceUsd: float | None = Query(None, alias="minBalanceUsd"),
+    maxBalanceUsd: float | None = Query(None, alias="maxBalanceUsd"),
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
     session: SessionData = Depends(require_dev_session),
 ):
     require_permission(session, "dev.admin.tenants")
     _require_db()
+    from server.services.saas.number_inventory import INVENTORY_TENANT_NAME
+
     async with get_session_factory()() as db:
-        stmt = select(Tenant).where(Tenant.deleted_at.is_(None)).order_by(desc(Tenant.created_at))
+        stmt = select(Tenant).where(Tenant.deleted_at.is_(None))
         if q.strip():
             stmt = stmt.where(Tenant.name.ilike(f"%{q.strip()}%"))
-        rows = (await db.execute(stmt.limit(200))).scalars().all()
+        if status and status.strip():
+            stmt = stmt.where(Tenant.status == status.strip())
+        if plan and plan.strip():
+            stmt = stmt.where(Tenant.plan == plan.strip())
+        if excludeInventory:
+            stmt = stmt.where(Tenant.name != INVENTORY_TENANT_NAME)
+        stmt = stmt.order_by(desc(Tenant.created_at))
+        all_rows = (await db.execute(stmt)).scalars().all()
+
         wallets = {
             w.tenant_id: w
             for w in (
                 await db.execute(
                     select(BillingWallet).where(
-                        BillingWallet.tenant_id.in_([t.tenant_id for t in rows] or [uuid.uuid4()])
+                        BillingWallet.tenant_id.in_([t.tenant_id for t in all_rows] or [uuid.uuid4()])
                     )
                 )
             ).scalars().all()
         }
-        # Persist empty wallets so tenants/numbers/billing pages share the same row after restarts.
         created = False
-        for t in rows:
+        for t in all_rows:
             if t.tenant_id not in wallets:
                 w = BillingWallet(
                     tenant_id=t.tenant_id,
@@ -156,25 +189,81 @@ async def list_tenants(
                 created = True
         if created:
             await db.commit()
-    return {
-        "tenants": [
-            {
-                "tenantId": str(t.tenant_id),
-                "name": t.name,
-                "plan": t.plan,
-                "status": getattr(t, "status", "active"),
-                "createdAt": t.created_at.isoformat() if t.created_at else None,
-                "walletBalanceUsd": round((wallets[t.tenant_id].balance_cents or 0) / 100.0, 2)
-                if t.tenant_id in wallets
-                else 0,
-                "walletBalanceInr": round((wallets[t.tenant_id].balance_inr_paise or 0) / 100.0, 2)
-                if t.tenant_id in wallets
-                else 0,
-                "walletCurrency": ((wallets[t.tenant_id].currency if t.tenant_id in wallets else None) or "usd").upper(),
-            }
-            for t in rows
-        ]
-    }
+
+        number_counts: dict[uuid.UUID, int] = {}
+        if all_rows:
+            count_rows = (
+                await db.execute(
+                    select(PhoneNumber.tenant_id, func.count())
+                    .where(
+                        PhoneNumber.tenant_id.in_([t.tenant_id for t in all_rows]),
+                        PhoneNumber.released_at.is_(None),
+                    )
+                    .group_by(PhoneNumber.tenant_id)
+                )
+            ).all()
+            number_counts = {tid: int(c or 0) for tid, c in count_rows}
+
+        member_counts: dict[uuid.UUID, int] = {}
+        if all_rows:
+            mem_rows = (
+                await db.execute(
+                    select(TenantMembership.tenant_id, func.count())
+                    .where(TenantMembership.tenant_id.in_([t.tenant_id for t in all_rows]))
+                    .group_by(TenantMembership.tenant_id)
+                )
+            ).all()
+            member_counts = {tid: int(c or 0) for tid, c in mem_rows}
+
+        from server.services.saas.billing_rates import effective_rates
+
+        fx = float(effective_rates()["fx_rate_inr"]) or 95.64
+
+        def _usd_balance(tid: uuid.UUID) -> float:
+            w = wallets.get(tid)
+            if w is None:
+                return 0.0
+            cents = int(w.balance_cents or 0)
+            if cents > 0:
+                return cents / 100.0
+            paise = int(w.balance_inr_paise or 0)
+            return round((paise / 100.0) / fx, 2) if paise else 0.0
+
+        filtered = []
+        for t in all_rows:
+            n_count = number_counts.get(t.tenant_id, 0)
+            if hasNumbers is True and n_count <= 0:
+                continue
+            if hasNumbers is False and n_count > 0:
+                continue
+            bal = _usd_balance(t.tenant_id)
+            if minBalanceUsd is not None and bal < minBalanceUsd:
+                continue
+            if maxBalanceUsd is not None and bal > maxBalanceUsd:
+                continue
+            filtered.append((t, bal, n_count))
+
+        total = len(filtered)
+        page = filtered[offset : offset + limit]
+        tenants_out = []
+        for t, bal, n_count in page:
+            w = wallets[t.tenant_id]
+            tenants_out.append(
+                {
+                    "tenantId": str(t.tenant_id),
+                    "name": t.name,
+                    "plan": t.plan,
+                    "status": getattr(t, "status", "active"),
+                    "createdAt": t.created_at.isoformat() if t.created_at else None,
+                    "walletBalanceUsd": round(bal, 2),
+                    "walletBalanceInr": round((w.balance_inr_paise or 0) / 100.0, 2),
+                    "walletCurrency": (w.currency or "usd").upper(),
+                    "numberCount": n_count,
+                    "memberCount": member_counts.get(t.tenant_id, 0),
+                    "isInventory": t.name == INVENTORY_TENANT_NAME,
+                }
+            )
+    return {"tenants": tenants_out, "total": total, "limit": limit, "offset": offset}
 
 
 @router.get("/api/dev/admin/tenants/{tenant_id}")
@@ -197,11 +286,45 @@ async def tenant_detail(tenant_id: str, session: SessionData = Depends(require_d
             await db.execute(select(Call).where(Call.tenant_id == tid).order_by(desc(Call.started_at)).limit(20))
         ).scalars().all()
         wallet = await db.get(BillingWallet, tid)
+        call_count = int(
+            (await db.execute(select(func.count()).select_from(Call).where(Call.tenant_id == tid))).scalar_one() or 0
+        )
+    from server.services.saas.billing_wallet_service import list_wallet_transactions
+    from server.services.saas import kyc_service
+
+    transactions = await list_wallet_transactions(tid, limit=50)
+    verifications = []
+    for _m, u in mems:
+        try:
+            st = await kyc_service.get_status(u.user_id)
+            verifications.append(
+                {
+                    "userId": str(u.user_id),
+                    "email": u.email,
+                    "fullName": u.full_name,
+                    "status": st.get("status") or st.get("state") or "Not Started",
+                    "approved": bool(st.get("approved")),
+                    "updatedAt": st.get("updatedAt") or st.get("verifiedAt"),
+                }
+            )
+        except Exception:
+            verifications.append(
+                {
+                    "userId": str(u.user_id),
+                    "email": u.email,
+                    "fullName": u.full_name,
+                    "status": "Not Started",
+                    "approved": False,
+                    "updatedAt": None,
+                }
+            )
     wallet_payload = None
     if wallet is not None:
         wallet_payload = {
             "balanceUsd": round((wallet.balance_cents or 0) / 100.0, 2),
             "balanceInr": round((wallet.balance_inr_paise or 0) / 100.0, 2),
+            "balanceCents": int(wallet.balance_cents or 0),
+            "balanceInrPaise": int(wallet.balance_inr_paise or 0),
             "currency": (wallet.currency or "usd").upper(),
             "updatedAt": wallet.updated_at.isoformat() if wallet.updated_at else None,
         }
@@ -217,6 +340,14 @@ async def tenant_detail(tenant_id: str, session: SessionData = Depends(require_d
             "stripeCustomerId": tenant.stripe_customer_id,
         },
         "wallet": wallet_payload,
+        "walletTransactions": transactions,
+        "verifications": verifications,
+        "counts": {
+            "agents": len(agents),
+            "numbers": len(numbers),
+            "members": len(mems),
+            "calls": call_count,
+        },
         "agents": [
             {
                 "agentId": str(a.agent_id),
@@ -340,28 +471,154 @@ async def patch_tenant(
     require_permission(session, "dev.admin.tenants")
     _require_db()
     tid = uuid.UUID(tenant_id)
+    note = (body.note or "").strip()
+    status_changing = body.status is not None
+    if status_changing:
+        status = body.status.strip() if body.status else ""
+        if status not in _TENANT_STATUS_VALUES:
+            raise HTTPException(status_code=400, detail=f"Invalid status. Use: {', '.join(sorted(_TENANT_STATUS_VALUES))}")
+        if len(note) < 8:
+            raise HTTPException(
+                status_code=400,
+                detail="Admin statement required (min 8 chars) when changing tenant status.",
+            )
+    if body.plan is not None:
+        plan = body.plan.strip()
+        if plan and plan not in _TENANT_PLAN_VALUES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid plan. Use: {', '.join(sorted(_TENANT_PLAN_VALUES))}",
+            )
+    released: list[str] = []
+    revoked_sessions = 0
+    prev_status: str | None = None
     async with get_session_factory()() as db:
         tenant = await db.get(Tenant, tid)
         if tenant is None or tenant.deleted_at is not None:
             raise HTTPException(status_code=404, detail="Not found")
+        prev_status = tenant.status
         if body.name is not None:
             tenant.name = body.name.strip() or tenant.name
         if body.status is not None:
-            tenant.status = body.status
+            tenant.status = body.status.strip()
         if body.plan is not None:
-            tenant.plan = body.plan
+            tenant.plan = body.plan.strip() or tenant.plan
         if body.limits is not None:
             tenant.limits = body.limits
+        if body.billingSource is not None:
+            src = body.billingSource.strip()
+            if src:
+                tenant.billing_source = src
+        if body.revokeSessions and status_changing and body.status in {"suspended", "cancelled"}:
+            member_ids = (
+                await db.execute(
+                    select(TenantMembership.user_id).where(TenantMembership.tenant_id == tid)
+                )
+            ).scalars().all()
+            if member_ids:
+                result = await db.execute(
+                    update(RefreshToken)
+                    .where(
+                        RefreshToken.user_id.in_(list(member_ids)),
+                        RefreshToken.revoked_at.is_(None),
+                    )
+                    .values(revoked_at=datetime.now(timezone.utc))
+                )
+                revoked_sessions = int(result.rowcount or 0)
         await db.commit()
+
+    if body.releaseNumbers and status_changing and body.status in {"suspended", "cancelled"}:
+        from server.services.saas.number_inventory import move_to_inventory
+
+        async with get_session_factory()() as db:
+            nums = (
+                await db.execute(
+                    select(PhoneNumber).where(
+                        PhoneNumber.tenant_id == tid,
+                        PhoneNumber.released_at.is_(None),
+                    )
+                )
+            ).scalars().all()
+            e164s = [n.e164 for n in nums if n.e164]
+        for e164 in e164s:
+            try:
+                await move_to_inventory(e164=e164)
+                released.append(e164)
+            except Exception:
+                pass
+
     await record_admin_action(
         actor=session.subject,
         action="tenant.patch",
         resource_type="tenant",
         resource_id=tenant_id,
         tenant_id=tid,
-        payload=body.model_dump(exclude_none=True),
+        payload={
+            **body.model_dump(exclude_none=True),
+            "previousStatus": prev_status if status_changing else None,
+            "releasedNumbers": released or None,
+            "revokedSessions": revoked_sessions or None,
+        },
     )
-    return {"ok": True}
+    return {
+        "ok": True,
+        "releasedNumbers": released,
+        "revokedSessions": revoked_sessions,
+    }
+
+
+@router.post("/api/dev/admin/tenants/{tenant_id}/impersonate")
+async def impersonate_tenant(
+    tenant_id: str,
+    body: ImpersonateBody,
+    session: SessionData = Depends(require_dev_session),
+):
+    """Time-boxed 'Open as customer' session for support. Audited; console shows a banner."""
+    require_permission(session, "dev.admin.tenants")
+    _require_db()
+    tid = uuid.UUID(tenant_id)
+    note = body.note.strip()
+    uid = uuid.UUID(body.userId) if body.userId else None
+    from server.services.saas import auth_service
+    from server.services.saas.google_oauth_service import create_auth_handoff
+
+    try:
+        data = await auth_service.issue_impersonation_session(
+            tenant_id=tid,
+            actor=session.subject,
+            user_id=uid,
+            ttl_seconds=int(body.ttlMinutes) * 60,
+        )
+    except ValueError as e:
+        code = str(e)
+        raise HTTPException(status_code=400, detail=code.replace("_", " "))
+
+    settings = get_settings()
+    front = (settings.voxly_frontend_url or "http://localhost:5173").rstrip("/")
+    # Prefer local Vite for ops handoff so tunnel never receives the session.
+    if "localhost" not in front and "127.0.0.1" not in front:
+        front = "http://localhost:5173"
+    hid = create_auth_handoff(data)
+    url = f"{front}/#auth/callback?handoff={hid}"
+    await record_admin_action(
+        actor=session.subject,
+        action="tenant.impersonate",
+        resource_type="tenant",
+        resource_id=tenant_id,
+        tenant_id=tid,
+        payload={
+            "note": note,
+            "userId": data.get("impersonation", {}).get("userId"),
+            "userEmail": data.get("impersonation", {}).get("userEmail"),
+            "ttlMinutes": body.ttlMinutes,
+        },
+    )
+    return {
+        "ok": True,
+        "url": url,
+        "expiresIn": data.get("expiresIn"),
+        "impersonation": data.get("impersonation"),
+    }
 
 
 @router.get("/api/dev/admin/users")
@@ -623,6 +880,13 @@ async def admin_analytics(days: int = Query(30, ge=1, le=365), session: SessionD
                 .group_by(Call.direction)
             )
         ).all()
+        by_channel = (
+            await db.execute(
+                select(Call.channel, func.count(Call.call_id), func.coalesce(func.sum(Call.duration_sec), 0))
+                .where(Call.started_at >= since)
+                .group_by(Call.channel)
+            )
+        ).all()
 
         # Missed calls are a first-class outcome now, so surface them separately.
         missed = int(
@@ -712,6 +976,10 @@ async def admin_analytics(days: int = Query(30, ge=1, le=365), session: SessionD
         "callsByDay": daily_series,
         "callsByStatus": {str(k or "unknown"): int(v or 0) for k, v in by_status},
         "callsByDirection": {str(k or "unknown"): int(v or 0) for k, v in by_direction},
+        "callsByChannel": {
+            str(k or "unknown"): {"calls": int(v or 0), "seconds": int(s or 0)}
+            for k, v, s in by_channel
+        },
         "topUpsByDay": [
             {"date": str(r[0]), "cents": int(r[1] or 0), "inrPaise": int(r[2] or 0)}
             for r in topups
@@ -750,6 +1018,9 @@ async def admin_membership(body: MembershipBody, session: SessionData = Depends(
 async def phone_assignments(session: SessionData = Depends(require_dev_session)):
     require_permission(session, "dev.admin.numbers")
     _require_db()
+    from server.services.saas.number_inventory import INVENTORY_TENANT_NAME, ensure_platform_inventory_tenant
+
+    inventory_tid = await ensure_platform_inventory_tenant()
     async with get_session_factory()() as db:
         rows = (
             await db.execute(
@@ -758,7 +1029,11 @@ async def phone_assignments(session: SessionData = Depends(require_dev_session))
                 .outerjoin(Agent, Agent.agent_id == PhoneNumber.agent_id)
                 .outerjoin(NumberPurchase, NumberPurchase.id == PhoneNumber.purchase_id)
                 .outerjoin(BillingWallet, BillingWallet.tenant_id == PhoneNumber.tenant_id)
-                .where(PhoneNumber.released_at.is_(None))
+                .where(
+                    PhoneNumber.released_at.is_(None),
+                    # Inventory pool is not a customer assignment — shown in the pool UI.
+                    PhoneNumber.tenant_id != inventory_tid,
+                )
                 .order_by(desc(PhoneNumber.created_at))
                 .limit(500)
             )
@@ -777,21 +1052,28 @@ async def phone_assignments(session: SessionData = Depends(require_dev_session))
                 "purchaseStatus": np.status if np else None,
                 "stripeSubscriptionId": pn.stripe_subscription_id,
                 "telnyxNumberId": pn.telnyx_number_id,
+                "status": pn.status,
+                "billingSource": pn.billing_source,
                 "walletBalanceUsd": round((w.balance_cents or 0) / 100.0, 2) if w else 0,
                 "walletBalanceInr": round((w.balance_inr_paise or 0) / 100.0, 2) if w else 0,
                 "walletCurrency": ((w.currency if w else None) or "usd").upper(),
                 "createdAt": pn.created_at.isoformat() if pn.created_at else None,
             }
             for pn, t, a, np, w in rows
-        ]
+        ],
+        "inventoryTenantName": INVENTORY_TENANT_NAME,
     }
 
 
 @router.get("/api/dev/admin/numbers/pool")
 async def number_pool(session: SessionData = Depends(require_dev_session)):
-    """All account DIDs (Telnyx + DB) with tenant assignment ? pick one then assign."""
+    """All account DIDs (Telnyx + DB) with tenant assignment — pick one then assign."""
     require_permission(session, "dev.admin.numbers")
     _require_db()
+    from server.services.saas.number_inventory import INVENTORY_TENANT_NAME, ensure_platform_inventory_tenant
+
+    inventory_tid = await ensure_platform_inventory_tenant()
+    inventory_tid_s = str(inventory_tid)
     by_e164: dict[str, dict[str, Any]] = {}
 
     async with get_session_factory()() as db:
@@ -804,16 +1086,24 @@ async def number_pool(session: SessionData = Depends(require_dev_session)):
         ).all()
         for pn, t in rows:
             tenant_gone = t is None or t.deleted_at is not None or getattr(t, "status", "active") == "cancelled"
+            in_inventory = pn.tenant_id == inventory_tid or (t is not None and t.name == INVENTORY_TENANT_NAME)
             by_e164[pn.e164] = {
                 "e164": pn.e164,
                 "numberId": str(pn.id),
                 "telnyxNumberId": pn.telnyx_number_id,
-                "tenantId": None if tenant_gone else (str(pn.tenant_id) if pn.tenant_id else None),
-                "tenantName": None if tenant_gone else (t.name if t else None),
+                "tenantId": None
+                if tenant_gone or in_inventory
+                else (str(pn.tenant_id) if pn.tenant_id else None),
+                "tenantName": (
+                    INVENTORY_TENANT_NAME
+                    if in_inventory
+                    else (None if tenant_gone else (t.name if t else None))
+                ),
                 "status": pn.status,
-                "source": "database",
-                # Soft-deleted / cancelled tenants free the DID for reassignment.
-                "available": tenant_gone or not pn.tenant_id,
+                "source": "inventory" if in_inventory else "database",
+                "inInventory": in_inventory,
+                # Platform inventory + unassigned + cancelled tenants are allocatable.
+                "available": tenant_gone or in_inventory or not pn.tenant_id,
             }
 
     try:
@@ -832,7 +1122,9 @@ async def number_pool(session: SessionData = Depends(require_dev_session)):
             if existing:
                 if tid and not existing.get("telnyxNumberId"):
                     existing["telnyxNumberId"] = tid
-                existing["source"] = "telnyx+database"
+                existing["source"] = (
+                    "telnyx+inventory" if existing.get("inInventory") else "telnyx+database"
+                )
             else:
                 by_e164[phone] = {
                     "e164": phone,
@@ -842,21 +1134,29 @@ async def number_pool(session: SessionData = Depends(require_dev_session)):
                     "tenantName": None,
                     "status": "unassigned",
                     "source": "telnyx",
+                    "inInventory": False,
                     "available": True,
                 }
     except Exception as exc:
         return {
             "numbers": sorted(by_e164.values(), key=lambda n: n["e164"]),
+            "inventoryTenantId": inventory_tid_s,
             "telnyxError": str(exc)[:300],
         }
 
     for item in by_e164.values():
-        item["available"] = not bool(item.get("tenantId"))
+        # Never wipe inventory availability — only customer tenantIds block the pool.
+        if item.get("inInventory"):
+            item["available"] = True
+            item["tenantId"] = None
+        else:
+            item["available"] = not bool(item.get("tenantId"))
     return {
         "numbers": sorted(
             by_e164.values(),
             key=lambda n: (0 if n.get("available") else 1, n["e164"]),
-        )
+        ),
+        "inventoryTenantId": inventory_tid_s,
     }
 
 
@@ -954,28 +1254,71 @@ async def patch_number(number_id: str, body: NumberPatchBody, session: SessionDa
     return {"ok": True}
 
 
+class ReleaseNumberBody(BaseModel):
+    note: str = Field("", max_length=500)
+
+
 @router.post("/api/dev/admin/numbers/{number_id}/release")
-async def release_number(number_id: str, session: SessionData = Depends(require_dev_session)):
+async def release_number(
+    number_id: str,
+    session: SessionData = Depends(require_dev_session),
+    body: ReleaseNumberBody | None = None,
+):
+    """Return a DID to the Platform inventory pool (admin-owned, for sale again)."""
     require_permission(session, "dev.admin.numbers")
     _require_db()
+    from server.services.saas.number_inventory import move_to_inventory
+
+    statement = ((body.note if body else "") or "").strip()
+    if len(statement) < 8:
+        raise HTTPException(
+            status_code=400,
+            detail="Admin statement required (at least 8 characters) before releasing a number.",
+        )
     nid = uuid.UUID(number_id)
     async with get_session_factory()() as db:
         pn = await db.get(PhoneNumber, nid)
         if pn is None:
             raise HTTPException(status_code=404, detail="Not found")
-        pn.status = "released"
-        pn.released_at = datetime.now(timezone.utc)
-        pn.inbound_enabled = False
-        pn.outbound_enabled = False
-        await db.commit()
+        e164 = pn.e164
+        telnyx_id = pn.telnyx_number_id
+        prev_tenant = pn.tenant_id
+    moved = await move_to_inventory(number_id=nid, e164=e164, telnyx_number_id=telnyx_id)
     await record_admin_action(
         actor=session.subject,
-        action="number.release",
+        action="number.release_to_inventory",
         resource_type="phone_number",
         resource_id=number_id,
-        tenant_id=pn.tenant_id,
+        tenant_id=prev_tenant,
+        payload={"e164": e164, "note": statement, "inventory": moved},
     )
-    return {"ok": True}
+    return {"ok": True, "inventory": moved}
+
+
+class InventoryParkBody(BaseModel):
+    e164: str
+    telnyxNumberId: str | None = None
+
+
+@router.post("/api/dev/admin/numbers/inventory")
+async def park_in_inventory(body: InventoryParkBody, session: SessionData = Depends(require_dev_session)):
+    """Park any DID (by E.164) in the admin inventory pool."""
+    require_permission(session, "dev.admin.numbers")
+    _require_db()
+    from server.services.saas.number_inventory import move_to_inventory
+
+    e164 = body.e164.strip()
+    if not e164.startswith("+"):
+        raise HTTPException(status_code=400, detail="E.164 required")
+    moved = await move_to_inventory(e164=e164, telnyx_number_id=body.telnyxNumberId)
+    await record_admin_action(
+        actor=session.subject,
+        action="number.park_inventory",
+        resource_type="phone_number",
+        resource_id=moved["numberId"],
+        payload={"e164": e164},
+    )
+    return {"ok": True, "inventory": moved}
 
 
 @router.get("/api/dev/admin/purchases")
@@ -1057,9 +1400,18 @@ async def refund_purchase(purchase_id: str, session: SessionData = Depends(requi
 
 
 class WalletAdjustBody(BaseModel):
+    """Adjust a wallet in USD.
+
+    The INR field is accepted for backwards compatibility; when only it is sent
+    the amount is converted at the chargeable FX rate so old clients keep working
+    without the admin panel ever having to think in rupees.
+    """
+
     tenantId: str
-    amountInrPaise: int = Field(..., ge=-50_000_000, le=50_000_000)
+    amountUsdCents: int | None = Field(None, ge=-50_000_000, le=50_000_000)
+    amountInrPaise: int | None = Field(None, ge=-50_000_000, le=50_000_000)
     reason: str = Field("admin_adjust", max_length=40)
+    note: str = Field("", max_length=500)
 
 
 @router.get("/api/dev/admin/wallets")
@@ -1097,11 +1449,16 @@ async def list_wallets(session: SessionData = Depends(require_dev_session)):
                 if wallet is not None:
                     await db.refresh(wallet)
         rows = synced
+    from server.services.saas.billing_rates import effective_rates
+
+    fx = float(effective_rates()["fx_rate_inr"]) or 95.64
     wallets = []
     for tenant, wallet in rows:
         paise = int(wallet.balance_inr_paise or 0) if wallet else 0
         cents = int(wallet.balance_cents or 0) if wallet else 0
-        currency = (wallet.currency if wallet else "usd") or "usd"
+        # A Razorpay top-up credits INR only, so show the converted dollar figure
+        # rather than an empty USD column next to a full rupee balance.
+        balance_usd = cents / 100 if cents > 0 else round((paise / 100.0) / fx, 2)
         wallets.append(
             {
                 "tenantId": str(tenant.tenant_id),
@@ -1110,31 +1467,61 @@ async def list_wallets(session: SessionData = Depends(require_dev_session)):
                 "balanceInrPaise": paise,
                 "balanceInr": paise / 100,
                 "balanceCents": cents,
-                "balanceUsd": cents / 100,
-                "currency": currency,
+                "balanceUsd": balance_usd,
+                "currency": "USD",
+                "walletCurrency": (wallet.currency if wallet else "usd") or "usd",
                 "updatedAt": wallet.updated_at.isoformat() if wallet and wallet.updated_at else None,
             }
         )
-    return {"wallets": wallets}
+    return {"wallets": wallets, "currency": "USD", "fxRateInr": fx}
 
 
 @router.post("/api/dev/admin/wallets/adjust")
 async def adjust_wallet(body: WalletAdjustBody, session: SessionData = Depends(require_dev_session)):
     require_permission(session, "dev.admin.billing")
     _require_db()
-    if body.amountInrPaise == 0:
+    from server.services.saas.billing_rates import usd_to_inr_cents
+    from server.services.saas.billing_wallet_service import (
+        credit_wallet,
+        debit_wallet,
+        get_or_create_wallet,
+        wallet_summary,
+    )
+
+    cents = body.amountUsdCents
+    if cents is None and body.amountInrPaise is not None:
+        # Legacy clients send INR; convert so the rest of the path stays USD-authored.
+        from server.services.saas.billing_rates import effective_rates
+
+        fx = float(effective_rates()["fx_rate_inr"]) or 95.64
+        cents = int(round((int(body.amountInrPaise) / 100.0) / fx * 100))
+    if not cents:
         raise HTTPException(status_code=400, detail="Amount cannot be zero")
+    note = (body.note or "").strip()
+    if len(note) < 8:
+        raise HTTPException(
+            status_code=400,
+            detail="Admin statement required (at least 8 characters) for wallet adjustments.",
+        )
     try:
         tenant_id = uuid.UUID(body.tenantId)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid tenant")
-    from server.services.saas.billing_wallet_service import credit_wallet, debit_wallet, wallet_summary
 
     ref_tail = uuid.uuid4().hex[:12]
-    if body.amountInrPaise > 0:
+    paise = usd_to_inr_cents(abs(cents))
+    wallet = await get_or_create_wallet(tenant_id)
+    # Credit/debit ONE leg only — writing both doubles purchasing power.
+    use_inr = (wallet.currency or "usd").lower() == "inr" or (
+        int(wallet.balance_inr_paise or 0) > 0 and int(wallet.balance_cents or 0) <= 0
+    )
+    credit_cents = 0 if use_inr else abs(cents)
+    credit_paise = paise if use_inr else 0
+    if cents > 0:
         await credit_wallet(
             tenant_id,
-            amount_inr_paise=body.amountInrPaise,
+            amount_cents=credit_cents,
+            amount_inr_paise=credit_paise,
             kind=body.reason or "admin_grant",
             reference_id=f"agr:{tenant_id.hex}:{ref_tail}",
         )
@@ -1143,7 +1530,8 @@ async def adjust_wallet(body: WalletAdjustBody, session: SessionData = Depends(r
             tenant_id,
             kind=body.reason or "admin_debit",
             reference_id=f"adb:{tenant_id.hex}:{ref_tail}",
-            amount_inr_paise=abs(body.amountInrPaise),
+            amount_cents=credit_cents,
+            amount_inr_paise=credit_paise,
             allow_partial=False,
         )
     await record_admin_action(
@@ -1152,48 +1540,71 @@ async def adjust_wallet(body: WalletAdjustBody, session: SessionData = Depends(r
         resource_type="tenant",
         resource_id=body.tenantId,
         tenant_id=tenant_id,
-        payload={"amountInrPaise": body.amountInrPaise, "reason": body.reason},
+        payload={
+            "amountUsdCents": cents,
+            "leg": "inr" if use_inr else "usd",
+            "reason": body.reason,
+            "note": note,
+        },
     )
     return {"ok": True, "wallet": await wallet_summary(tenant_id)}
 
 
 class BillingRatesBody(BaseModel):
-    pstnInrPerMin: float | None = Field(None, ge=0.01, le=1000)
-    webInrPerMin: float | None = Field(None, ge=0.01, le=1000)
+    """USD prices plus the chargeable FX rate.
+
+    INR fields are accepted for backwards compatibility but ignored: prices are
+    authored in USD and the INR figure is derived, so a stored rupee price could
+    drift away from the dollar price it is supposed to mirror.
+    """
+
     pstnUsdPerMin: float | None = Field(None, ge=0.001, le=100)
     webUsdPerMin: float | None = Field(None, ge=0.001, le=100)
-    didMonthlyInr: float | None = Field(None, ge=0, le=100000)
+    #: Monthly rental for a bought phone number.
+    numberMonthlyUsd: float | None = Field(None, ge=0, le=100000)
+    fxRateInr: float | None = Field(None, ge=0.01, le=100000)
+    # Deprecated, ignored. Kept so an old admin client does not 422.
+    pstnInrPerMin: float | None = None
+    webInrPerMin: float | None = None
+    didMonthlyInr: float | None = None
+
+
+def _rates_payload(r: dict[str, int | float]) -> dict[str, float]:
+    return {
+        "pstnUsdPerMin": round(r["pstn_rate_usd_cents_per_min"] / 100.0, 3),
+        "webUsdPerMin": round(r["web_agent_rate_usd_cents_per_min"] / 100.0, 3),
+        "numberMonthlyUsd": round(r["did_monthly_usd_cents"] / 100.0, 2),
+        "fxRateInr": round(float(r["fx_rate_inr"]), 4),
+        # Derived mirrors — display only, never charged.
+        "pstnInrPerMin": round(r["pstn_rate_inr_paise_per_min"] / 100.0, 2),
+        "webInrPerMin": round(r["web_agent_rate_inr_paise_per_min"] / 100.0, 2),
+        "numberMonthlyInr": round(r["did_monthly_inr_paise"] / 100.0, 2),
+    }
 
 
 @router.get("/api/dev/admin/billing-rates")
 async def get_billing_rates(session: SessionData = Depends(require_dev_session)):
     require_permission(session, "dev.admin.billing")
-    from server.services.saas.billing_rates import effective_rates
+    from server.services.saas.billing_rates import live_fx, rates_with_derived_inr
 
-    r = effective_rates()
     return {
-        "rates": {
-            "pstnInrPerMin": round(r["pstn_rate_inr_paise_per_min"] / 100.0, 2),
-            "webInrPerMin": round(r["web_agent_rate_inr_paise_per_min"] / 100.0, 2),
-            "pstnUsdPerMin": round(r["pstn_rate_usd_cents_per_min"] / 100.0, 3),
-            "webUsdPerMin": round(r["web_agent_rate_usd_cents_per_min"] / 100.0, 3),
-            "didMonthlyInr": round(r["did_monthly_inr_paise"] / 100.0, 2),
-            "fxRateInr": r["fx_rate_inr"],
-        }
+        "currency": "USD",
+        "rates": _rates_payload(rates_with_derived_inr()),
+        # Market rate for reference in the converter; charging uses fxRateInr.
+        "fx": live_fx(),
     }
 
 
 @router.put("/api/dev/admin/billing-rates")
 async def put_billing_rates(body: BillingRatesBody, session: SessionData = Depends(require_dev_session)):
     require_permission(session, "dev.admin.billing")
-    from server.services.saas.billing_rates import effective_rates, update_rates
+    from server.services.saas.billing_rates import rates_with_derived_inr, update_rates
 
     r = update_rates(
-        pstn_inr_per_min=body.pstnInrPerMin,
-        web_inr_per_min=body.webInrPerMin,
         pstn_usd_per_min=body.pstnUsdPerMin,
         web_usd_per_min=body.webUsdPerMin,
-        did_monthly_inr=body.didMonthlyInr,
+        did_monthly_usd=body.numberMonthlyUsd,
+        fx_rate_inr=body.fxRateInr,
     )
     await record_admin_action(
         actor=session.subject,
@@ -1202,16 +1613,147 @@ async def put_billing_rates(body: BillingRatesBody, session: SessionData = Depen
         resource_id="rates",
         payload=body.model_dump(exclude_none=True),
     )
-    return {
-        "ok": True,
-        "rates": {
-            "pstnInrPerMin": round(r["pstn_rate_inr_paise_per_min"] / 100.0, 2),
-            "webInrPerMin": round(r["web_agent_rate_inr_paise_per_min"] / 100.0, 2),
-            "pstnUsdPerMin": round(r["pstn_rate_usd_cents_per_min"] / 100.0, 3),
-            "webUsdPerMin": round(r["web_agent_rate_usd_cents_per_min"] / 100.0, 3),
-            "didMonthlyInr": round(r["did_monthly_inr_paise"] / 100.0, 2),
-        },
-    }
+    return {"ok": True, "currency": "USD", "rates": _rates_payload(r)}
+
+class PlatformLanguagesBody(BaseModel):
+    enabled: list[str] = Field(..., min_length=1, max_length=64)
+
+
+class PaymentSettingsBody(BaseModel):
+    internationalEnabled: bool | None = None
+    currency: str | None = Field(None, max_length=8)
+
+
+@router.get("/api/dev/admin/payments")
+async def get_payment_settings(session: SessionData = Depends(require_dev_session)):
+    """Razorpay status, including whether international cards are switched on."""
+    require_permission(session, "dev.admin.billing")
+    from server.services.saas.payment_settings import settings_state
+
+    return settings_state()
+
+
+@router.put("/api/dev/admin/payments")
+async def put_payment_settings(
+    body: PaymentSettingsBody, session: SessionData = Depends(require_dev_session)
+):
+    """Turn International Payments on/off and choose the currency to charge in.
+
+    Enabling international requires the operator to have activated it in the
+    Razorpay dashboard first; this records that so orders stop being created as
+    INR and start being created in the chosen currency.
+    """
+    require_permission(session, "dev.admin.billing")
+    from server.services.saas.payment_settings import settings_state, update_settings
+
+    try:
+        state = update_settings(
+            international_enabled=body.internationalEnabled,
+            currency=body.currency,
+        )
+    except ValueError as exc:
+        code = str(exc)
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": {
+                    "code": code,
+                    "message": "Razorpay does not support that currency.",
+                }
+            },
+        ) from None
+    await record_admin_action(
+        actor=session.subject,
+        action="payments.settings",
+        resource_type="platform",
+        resource_id="payments",
+        payload=body.model_dump(exclude_none=True),
+    )
+    return {"ok": True, **state}
+
+
+@router.get("/api/dev/admin/payments/orders")
+async def list_payment_orders(
+    limit: int = Query(50, ge=1, le=200),
+    session: SessionData = Depends(require_dev_session),
+):
+    """Recent top-up orders with the currency each was charged in."""
+    require_permission(session, "dev.admin.billing")
+    _require_db()
+    from server.db.models.saas_models import RazorpayOrder
+    from server.services.saas.razorpay_service import from_minor
+
+    async with get_session_factory()() as db:
+        rows = (
+            await db.execute(
+                select(RazorpayOrder, Tenant)
+                .outerjoin(Tenant, Tenant.tenant_id == RazorpayOrder.tenant_id)
+                .order_by(desc(RazorpayOrder.created_at))
+                .limit(limit)
+            )
+        ).all()
+        return {
+            "orders": [
+                {
+                    "orderId": order.order_id,
+                    "tenantId": str(order.tenant_id),
+                    "tenantName": tenant.name if tenant else None,
+                    "status": order.status,
+                    "currency": getattr(order, "currency", None) or "INR",
+                    "amount": from_minor(order.amount_minor, getattr(order, "currency", None) or "INR")
+                    if getattr(order, "amount_minor", None)
+                    else order.amount_inr_paise / 100,
+                    "amountInr": order.amount_inr_paise / 100,
+                    "createdAt": order.created_at.isoformat() if order.created_at else None,
+                }
+                for order, tenant in rows
+            ]
+        }
+
+
+@router.get("/api/dev/admin/languages")
+async def get_platform_languages(session: SessionData = Depends(require_dev_session)):
+    """Every language the platform can speak, and which are offered at creation."""
+    require_permission(session, "dev.admin.billing")
+    from server.services.saas.platform_languages import state
+
+    return state()
+
+
+@router.put("/api/dev/admin/languages")
+async def put_platform_languages(
+    body: PlatformLanguagesBody, session: SessionData = Depends(require_dev_session)
+):
+    """Enable/disable languages offered in the agent-creation UI.
+
+    Turning a language off only removes it from the picker — agents that already
+    speak it keep working, which is why this is an enablement list layered over
+    the supported set rather than a deletion.
+    """
+    require_permission(session, "dev.admin.billing")
+    from server.services.saas.platform_languages import set_enabled, state
+
+    try:
+        set_enabled(body.enabled)
+    except ValueError as exc:
+        code = str(exc)
+        messages = {
+            "unknown_language": "One or more languages are not supported by the platform.",
+            "no_languages": "At least one language must stay enabled.",
+        }
+        raise HTTPException(
+            status_code=400,
+            detail={"error": {"code": code, "message": messages.get(code, code)}},
+        )
+    await record_admin_action(
+        actor=session.subject,
+        action="platform.languages",
+        resource_type="platform",
+        resource_id="languages",
+        payload={"enabled": body.enabled},
+    )
+    return {"ok": True, **state()}
+
 
 @router.get("/api/dev/admin/session-failures")
 async def session_failures(
@@ -1223,3 +1765,79 @@ async def session_failures(
     from server.services.saas.session_failure_log import list_session_failures
 
     return {"failures": list_session_failures(limit)}
+
+
+class KycStatusBody(BaseModel):
+    status: str
+    reason: str = Field(..., min_length=8, max_length=500)
+
+
+@router.get("/api/dev/admin/kyc")
+async def list_kyc(
+    status: str | None = None,
+    session: SessionData = Depends(require_dev_session),
+):
+    """Identity verification queue for ops — Didit webhook state + manual overrides."""
+    require_permission(session, "dev.admin.users")
+    _require_db()
+    from server.config.env import get_settings
+    from server.services.saas import kyc_service
+
+    settings = get_settings()
+    return {
+        "configured": kyc_service.is_configured(),
+        "workflowId": settings.didit_workflow_id or None,
+        "gatePurchases": bool(settings.kyc_gate_purchases),
+        "verifications": await kyc_service.list_verifications(status=status),
+    }
+
+
+@router.post("/api/dev/admin/kyc/{user_id}/status")
+async def set_kyc_status(
+    user_id: str,
+    body: KycStatusBody,
+    session: SessionData = Depends(require_dev_session),
+):
+    """Manual Approve / Decline / reset when Didit stalls or a webhook is missed."""
+    require_permission(session, "dev.admin.users")
+    _require_db()
+    from server.services.saas import kyc_service
+
+    reason = (body.reason or "").strip()
+    if len(reason) < 8:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": {
+                    "code": "statement_required",
+                    "message": "Write a short statement (8+ chars) before changing verification status.",
+                }
+            },
+        )
+
+    try:
+        uid = uuid.UUID(user_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="invalid_user_id") from exc
+
+    try:
+        state = await kyc_service.admin_set_status(
+            user_id=uid,
+            status=body.status,
+            actor=session.subject,
+            reason=reason,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": {"code": "invalid_status", "message": str(exc)}},
+        ) from exc
+
+    await record_admin_action(
+        actor=session.subject,
+        action="kyc.status",
+        resource_type="kyc",
+        resource_id=user_id,
+        payload={"status": body.status, "reason": reason, "decision": state.get("decision")},
+    )
+    return {"ok": True, "verification": state}

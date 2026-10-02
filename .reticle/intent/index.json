@@ -1,0 +1,251 @@
+{
+  "entries": [
+    {
+      "id": "flow:drive-buy-modal-quotes-the-same-4-00-month-platform-di",
+      "statement": "Buy modal quotes the same $4.00/month platform DID rate as list rows an…",
+      "status": "proposed",
+      "subject": "drive-buy-modal-quotes-the-same-4-00-mon"
+    },
+    {
+      "id": "flow:drive-buy-number-modal-skips-kyc-card-when-user-is-alr",
+      "statement": "Buy-number modal skips KYC card when user is already Approved",
+      "status": "proposed",
+      "subject": "drive-buy-number-modal-skips-kyc-card-wh"
+    },
+    {
+      "id": "flow:drive-console-entry-is-reachable-from-landing-so-kyc-s",
+      "statement": "Console entry is reachable from landing so KYC settings can be opened a…",
+      "status": "proposed",
+      "subject": "drive-console-entry-is-reachable-from-la"
+    },
+    {
+      "id": "flow:drive-console-entry-is-reachable-so-billing-and-wallet",
+      "statement": "Console entry is reachable so billing and wallet UI can be verified wit…",
+      "status": "proposed",
+      "subject": "drive-console-entry-is-reachable-so-bill"
+    },
+    {
+      "id": "flow:drive-opening-talk-to-ai-shows-live-mic-modal-without",
+      "statement": "Opening Talk to AI shows Live Mic modal without requesting microphone u…",
+      "status": "proposed",
+      "subject": "drive-opening-talk-to-ai-shows-live-mic"
+    },
+    {
+      "id": "flow:drive-settings-page-shows-identity-verification-card-f",
+      "statement": "Settings page shows identity verification card for Didit KYC",
+      "status": "proposed",
+      "subject": "drive-settings-page-shows-identity-verif"
+    },
+    {
+      "id": "flow:drive-talk-to-ai-opens-live-mic-without-requesting-mic",
+      "statement": "Talk to AI opens Live Mic without requesting microphone on open.",
+      "status": "proposed",
+      "subject": "drive-talk-to-ai-opens-live-mic-without"
+    },
+    {
+      "id": "flow:drive-when-identity-is-not-approved-buy-number-shows-o",
+      "statement": "When identity is not approved, Buy Number shows only the modern verific…",
+      "status": "proposed",
+      "subject": "drive-when-identity-is-not-approved-buy"
+    },
+    {
+      "id": "inline:admin-approved-kyc-shows-identity-verified-in-th-b62fafbc",
+      "statement": "Admin-approved KYC shows Identity verified in the console Settings card",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:approved-kyc-status-appears-in-settings-after-ad-d8b2105d",
+      "statement": "Approved KYC status appears in Settings after admin override",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:approved-users-see-buy-catalog-without-start-ver-60e2dbbc",
+      "statement": "Approved users see buy catalog without Start verification KYC card",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:before-any-browser-mic-prompt-live-mic-shows-an-9b005f71",
+      "statement": "Before any browser mic prompt, Live Mic shows an explicit microphone-on…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:billing-page-shows-card-payment-methods-without-c795753c",
+      "statement": "Billing page shows card payment methods without Razorpay env or admin s…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:buy-modal-does-not-show-kyc-start-card-after-ide-08e299d4",
+      "statement": "Buy modal does not show KYC start card after identity already Approved",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:buy-modal-quotes-the-same-4-00-month-platform-di-d302ef42",
+      "statement": "Buy modal quotes the same $4.00/month platform DID rate as list rows an…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:buy-modal-shows-aligned-4-monthly-did-rate-and-b-f4df3c25",
+      "statement": "Buy modal shows aligned $4 monthly DID rate and blocks purchase when wa…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:buy-number-modal-shows-a-verification-first-gate-43fe78a3",
+      "statement": "Buy number modal shows a verification-first gate before the number cata…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:buy-number-modal-skips-kyc-card-when-user-is-alr-26960625",
+      "statement": "Buy-number modal skips KYC card when user is already Approved",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:console-entry-is-reachable-from-landing-so-kyc-s-6897be55",
+      "statement": "Console entry is reachable from landing so KYC settings can be opened a…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:console-entry-is-reachable-so-billing-and-wallet-744fbfec",
+      "statement": "Console entry is reachable so billing and wallet UI can be verified wit…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:customer-add-funds-ui-never-shows-razorpay-env-v-7266a9bf",
+      "statement": "Customer Add Funds UI never shows Razorpay env var or secret names.",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:customer-can-open-console-auth-to-reach-phone-nu-cfff6ec5",
+      "statement": "Customer can open console auth to reach phone-numbers KYC gate",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:customer-can-start-didit-hosted-kyc-session-from-938be527",
+      "statement": "Customer can start Didit hosted KYC session from Settings",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:declining-mic-consent-returns-to-idle-without-re-34da05a9",
+      "statement": "Declining mic consent returns to idle without requesting microphone.",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:didit-session-create-returns-success-so-verifica-993134a6",
+      "statement": "Didit session create returns success so verification can proceed",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:inventory-did-13526146416-is-owned-by-the-buyer-8b9ede61",
+      "statement": "Inventory DID +13526146416 is owned by the buyer tenant after wallet pu…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:landing-hero-invites-interaction-with-the-3d-cha-1a9e9216",
+      "statement": "Landing hero invites interaction with the 3D character.",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:live-mic-consent-explains-microphone-only-access-bef9f894",
+      "statement": "Live Mic consent explains microphone-only access before the browser per…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:live-mic-shows-an-in-app-microphone-consent-expl-eabe4d66",
+      "statement": "Live Mic shows an in-app microphone consent explanation before any brow…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:no-react-hooks-crash-on-employees-after-the-earl-373a2153",
+      "statement": "No React hooks crash on Employees after the early-return fix",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:opening-add-funds-from-the-wallet-chip-does-not-f31e8d74",
+      "statement": "Opening Add Funds from the wallet chip does not show an internal topbar…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:opening-talk-to-ai-shows-live-mic-modal-without-65ccea73",
+      "statement": "Opening Talk to AI shows Live Mic modal without requesting microphone u…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:pay-from-add-funds-creates-a-razorpay-order-with-10498fee",
+      "statement": "Pay from Add Funds creates a Razorpay order without exposing API secret…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:phone-numbers-buy-flow-surfaces-kyc-verify-card-db4437cf",
+      "statement": "Phone numbers buy flow surfaces KYC verify card when identity gate appl…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:settings-identity-card-never-mentions-didit-keys-3c93496c",
+      "statement": "Settings identity card never mentions Didit keys to customers.",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:settings-page-shows-identity-verification-card-f-3a36ca43",
+      "statement": "Settings page shows identity verification card for Didit KYC",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:signed-in-user-reaches-the-agent-console-after-e-af7224a9",
+      "statement": "Signed-in user reaches the agent console after email login.",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:talk-to-ai-opens-live-mic-without-requesting-mic-6c1e73ef",
+      "statement": "Talk to AI opens Live Mic without requesting microphone on open.",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:unauthenticated-users-see-a-clear-sign-in-gate-b-0c99c860",
+      "statement": "Unauthenticated users see a clear sign-in gate before console KYC and n…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:user-can-open-the-sign-in-form-from-the-console-1e2b2152",
+      "statement": "User can open the sign-in form from the console gate.",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:when-identity-is-not-approved-buy-number-shows-o-b014b8a3",
+      "statement": "When identity is not approved, Buy Number shows only the modern verific…",
+      "status": "proved",
+      "subject": "unsorted"
+    }
+  ],
+  "version": 1
+}

@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "origin": "failed-assert",
+  "expected": "text \"?\"",
+  "observed": "no element matched {\"text\":\"Microphone permission next\"}",
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "",
+        "source": {
+          "file": "src/components/TalkToMeModal.jsx",
+          "line": 257,
+          "column": 11
+        }
+      },
+      "action": "click"
+    }
+  ],
+  "id": "1790928082192-click-42a44b6d",
+  "createdAt": 1790928082196,
+  "seen": 1,
+  "lastSeenAt": 1790928082196
+}

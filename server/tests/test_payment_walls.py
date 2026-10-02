@@ -204,6 +204,42 @@ def _use_session(monkeypatch, session, factory_returned=None):
     monkeypatch.setattr(bws, "get_session_factory", lambda: _Factory())
 
 
+@pytest.fixture(autouse=True)
+def _pinned_number_price(monkeypatch):
+    """Pin the number rental for these tests.
+
+    The price is admin-configurable at runtime, so a literal assertion would fail
+    whenever someone changes it in the panel — which is exactly what these tests
+    are meant to catch. Pin it and assert against the pin.
+    """
+    from server.services.saas import billing_rates
+
+    monkeypatch.setattr(
+        billing_rates,
+        "effective_rates",
+        lambda: {
+            "did_monthly_usd_cents": 400,
+            "pstn_rate_usd_cents_per_min": 9,
+            "web_agent_rate_usd_cents_per_min": 7,
+            "fx_rate_inr": 95.64,
+        },
+    )
+    monkeypatch.setattr(
+        billing_rates,
+        "rates_with_derived_inr",
+        lambda: {
+            "did_monthly_usd_cents": 400,
+            "did_monthly_inr_paise": 38256,
+            "pstn_rate_usd_cents_per_min": 9,
+            "pstn_rate_inr_paise_per_min": 861,
+            "web_agent_rate_usd_cents_per_min": 7,
+            "web_agent_rate_inr_paise_per_min": 669,
+            "fx_rate_inr": 95.64,
+        },
+    )
+    return 400
+
+
 async def test_number_purchase_charges_usd_when_usd_is_funded(monkeypatch):
     wallet = FakeWallet(cents=1000, paise=0, currency="usd")
     session, added = _fake_session(wallet)
@@ -219,15 +255,20 @@ async def test_number_purchase_charges_usd_when_usd_is_funded(monkeypatch):
 
 
 async def test_number_purchase_charges_inr_when_inr_is_funded(monkeypatch):
-    # ₹600 available, ₹500 for the number.
-    wallet = FakeWallet(cents=0, paise=60000, currency="inr")
+    # The INR charge is the derived mirror of the USD price ($4.00 at the
+    # configured FX), not an independently stored rupee figure — a rupee price
+    # authored separately would drift from the dollar price it mirrors.
+    from server.services.saas.billing_rates import rates_with_derived_inr
+
+    want_paise = int(rates_with_derived_inr()["did_monthly_inr_paise"])
+    wallet = FakeWallet(cents=0, paise=want_paise + 10000, currency="inr")
     session, added = _fake_session(wallet)
     _use_session(monkeypatch, session)
 
     result = await bws.debit_did_purchase(
         uuid.uuid4(), user_id=uuid.uuid4(), e164="+14155552671", purchase_id=uuid.uuid4()
     )
-    assert result["amountInrPaise"] == 50000
+    assert result["amountInrPaise"] == want_paise
     assert result["amountCents"] == 0
     assert wallet.balance_inr_paise == 10000
     assert wallet.currency == "inr"

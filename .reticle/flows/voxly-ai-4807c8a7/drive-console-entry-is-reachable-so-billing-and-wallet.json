@@ -1,0 +1,238 @@
+{
+  "version": 2,
+  "name": "drive-console-entry-is-reachable-so-billing-and-wallet",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1790958451012,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "link",
+        "name": "Agent console"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Continue — sign in"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "textbox",
+        "name": "Work Email"
+      },
+      "args": {
+        "value": "mohansaiteja.99@gmail.com"
+      },
+      "action": "fill",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "textbox",
+        "name": "Password"
+      },
+      "args": {
+        "value": "<redacted: supply at replay>"
+      },
+      "action": "fill",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Sign In"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "topbar-wallet",
+        "source": {
+          "file": "src/console/Topbar.jsx",
+          "line": 144,
+          "column": 9
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "testid": "add-funds-modal"
+            }
+          },
+          {
+            "kind": "text",
+            "contains": "topbar",
+            "absent": true
+          },
+          {
+            "kind": "text",
+            "contains": "RAZORPAY_API",
+            "absent": true
+          }
+        ]
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "add-funds-submit",
+        "source": {
+          "file": "src/console/ui/TactileButton.jsx",
+          "line": 69,
+          "column": 5
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Close dialog"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "unresolved"
+      },
+      "args": {
+        "text": "Escape"
+      },
+      "action": "press",
+      "degraded": true,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Billing & Usage"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "text",
+            "contains": "Wallet"
+          },
+          {
+            "kind": "text",
+            "contains": "RAZORPAY_API",
+            "absent": true
+          },
+          {
+            "kind": "text",
+            "contains": "Stripe",
+            "absent": true
+          },
+          {
+            "kind": "text",
+            "contains": "API_SECRET",
+            "absent": true
+          }
+        ]
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Buy number"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Settings"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "testid": "kyc-verify-card"
+            }
+          },
+          {
+            "kind": "text",
+            "contains": "Didit",
+            "absent": true
+          },
+          {
+            "kind": "text",
+            "contains": "RAZORPAY",
+            "absent": true
+          }
+        ]
+      },
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "intent": "Console entry is reachable so billing and wallet UI can be verified without admin/env leaks.",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "desktop"
+  },
+  "intentId": "flow:drive-console-entry-is-reachable-so-billing-and-wallet"
+}

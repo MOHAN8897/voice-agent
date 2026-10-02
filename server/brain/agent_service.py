@@ -171,6 +171,7 @@ class AgentService:
 
         await self.get_agent(agent_id, tenant_id=tenant_id)
         archived = False
+        released_numbers = 0
         factory = get_session_factory()
         if factory is None:
             _MEM_AGENTS.pop(agent_id, None)
@@ -184,11 +185,20 @@ class AgentService:
                     raise KeyError(agent_id)
                 if tenant_id and str(row.tenant_id) != tenant_id:
                     raise KeyError(agent_id)
+                # Release the number before touching the agent row, in its own
+                # transaction. On the archive path the agent row survives, so nothing
+                # else would ever clear this — the number would keep its owner id and
+                # the pool would keep refusing it as "(assigned elsewhere)" for an
+                # agent the user can no longer see.
+                released_numbers = await self._release_agent_numbers(session, agent_id)
                 try:
                     await session.delete(row)
                     await session.commit()
                 except IntegrityError:
                     await session.rollback()
+                    # The release was committed separately, so this rollback cannot
+                    # undo it. Sharing one transaction here silently restored the
+                    # orphaned assignment on every archived agent.
                     row = await session.get(Agent, uuid.UUID(agent_id))
                     if row is None:
                         raise KeyError(agent_id)
@@ -200,7 +210,39 @@ class AgentService:
         instruction_store.clear(session_id)
         runtime_settings.clear(session_id)
         session_persist.delete_ui(session_id)
-        return {"ok": True, "agent_id": agent_id, "archived": archived}
+        return {
+            "ok": True,
+            "agent_id": agent_id,
+            "archived": archived,
+            "released_numbers": released_numbers,
+        }
+
+    @staticmethod
+    async def _release_agent_numbers(session, agent_id: str) -> int:
+        """Return every number this agent held to the unassigned pool.
+
+        Commits on its own, deliberately. `delete_agent` falls back to archiving
+        the agent when call history blocks the hard delete, and that fallback
+        rolls the session back — which would otherwise discard this release along
+        with the failed delete, leaving the number assigned to an agent the user
+        can no longer see.
+
+        Releases are not tenant-scoped: a phone number is already a per-tenant row
+        keyed by its own agent_id, and scoping by tenant here would strand a
+        cross-tenant row on a deleted agent.
+        """
+        from sqlalchemy import update
+
+        from server.db.models.phase5_models import PhoneNumber
+
+        result = await session.execute(
+            update(PhoneNumber)
+            .where(PhoneNumber.agent_id == uuid.UUID(agent_id))
+            .values(agent_id=None)
+        )
+        released = int(result.rowcount or 0)
+        await session.commit()
+        return released
 
     async def resolve_default_agent_id(self) -> str:
         agent = await self.ensure_default_agent()

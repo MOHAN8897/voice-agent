@@ -157,7 +157,33 @@ async def _run_outcome_locked(call_id: str) -> dict[str, Any]:
     status = "complete" if error is None else "failed"
     await call_store.update(call_id, {"disposition": payload["disposition"]})
     await _mark_outcome(call_id, status)
+    # The judgement above is only useful if it lands in the CRM, attributed to the
+    # agent that took the call. Runs last so a lead write can never invalidate the
+    # outcome the console reads, and swallows its own errors for the same reason.
+    payload["lead"] = await _sync_lead(call_id, payload, meta)
     return payload
+
+
+async def _sync_lead(
+    call_id: str, outcome: dict[str, Any], meta: dict[str, Any]
+) -> dict[str, Any] | None:
+    """Attribute this call's outcome to a lead owned by the calling agent."""
+    try:
+        record = await call_store.get(call_id)
+    except Exception:
+        logger.warning("lead_sync: could not load call %s", call_id, exc_info=True)
+        return None
+    if not record:
+        return None
+    from server.services.saas.lead_sync import sync_outcome_to_lead
+
+    return await sync_outcome_to_lead(
+        outcome=outcome,
+        tenant_id=record.get("tenant_id"),
+        agent_id=record.get("agent_id"),
+        meta=meta,
+        call_id=call_id,
+    )
 
 
 async def _generate_outcome(

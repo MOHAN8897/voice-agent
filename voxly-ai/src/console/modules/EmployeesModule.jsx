@@ -14,6 +14,7 @@ import {
 import { SolidCard } from '../ui/SolidCard';
 import { StatusBadge } from '../ui/StatusBadge';
 import { TactileButton } from '../ui/TactileButton';
+import { ModuleSkeleton } from '../ui/Skeleton';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { AgentStudioModule } from './AgentStudioModule';
 
@@ -33,6 +34,7 @@ export function EmployeesModule({
     toggleAgentStatus,
     deleteAgent,
     setBuyNumberPreselectedAgent,
+    isLoading,
   } = useWorkspace();
 
   const [filter, setFilter] = useState('All');
@@ -42,6 +44,8 @@ export function EmployeesModule({
   // back to the fleet list — resolveEmployeeStep maps it to a real tab.
   const inWorkbench = Boolean(employeeFlowStep) && agents.length > 0;
 
+  // Hooks must run before any conditional return — early skeleton used to skip
+  // this effect and crash with "Rendered more hooks than during the previous render".
   useEffect(() => {
     if (inWorkbench && selectedAgentId) return;
     if (employeeFlowStep && agents.length && !selectedAgentId) {
@@ -68,6 +72,10 @@ export function EmployeesModule({
 
     return matchesFilter && matchesSearch;
   });
+
+  if (isLoading && agents.length === 0) {
+    return <ModuleSkeleton cards={3} />;
+  }
 
   if (inWorkbench) {
     return (
@@ -238,9 +246,22 @@ export function EmployeesModule({
                   type="button"
                   onClick={() => toggleAgentStatus(agent.id)}
                   title={agent.status === 'active' ? 'Pause' : 'Activate'}
+                  aria-label={
+                    agent.status === 'active'
+                      ? `Pause ${agent.name}`
+                      : `Activate ${agent.name}`
+                  }
+                  aria-pressed={agent.status === 'active'}
+                  data-testid={`agent-toggle-${agent.id}`}
+                  data-status={agent.status}
                   className="p-2 rounded-xl text-[#524E5E] hover:text-[#0F0E17] hover:bg-[#FAF9FD] border border-transparent hover:border-[#E4E2EB] transition-all"
                 >
-                  <Pause className="w-3.5 h-3.5" />
+                  {/* Icon follows state: a paused agent offers Play, not Pause. */}
+                  {agent.status === 'active' ? (
+                    <Pause className="w-3.5 h-3.5" data-testid="agent-toggle-icon-pause" />
+                  ) : (
+                    <Play className="w-3.5 h-3.5" data-testid="agent-toggle-icon-play" />
+                  )}
                 </button>
                 <button
                   type="button"

@@ -354,8 +354,10 @@ export function createVoxlyController(gltf, { onExpressionChange } = {}) {
       } else if (!gesture) play(clips.has(state) ? state : 'IDLE');
     },
     setPointer(x, y) {
-      pointerX = reducedMotion ? 0 : MathUtils.clamp(x, -1, 1);
-      pointerY = reducedMotion ? 0 : MathUtils.clamp(y, -1, 1);
+      // User-driven look-at stays active under reduced-motion (not decorative).
+      const scale = reducedMotion ? 0.55 : 1;
+      pointerX = scale * MathUtils.clamp(x, -1, 1);
+      pointerY = scale * MathUtils.clamp(y, -1, 1);
     },
     setAudioAmplitude(value) {
       amplitude = clamp(value);

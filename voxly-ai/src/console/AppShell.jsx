@@ -24,6 +24,7 @@ import { SettingsModule } from './modules/SettingsModule';
 import { AdminModule } from './modules/AdminModule';
 import { useAuth } from '../context/AuthContext';
 import { ConsoleSyncBanner } from './ui/ConsoleSyncBanner';
+import { ImpersonationBanner } from './ui/ImpersonationBanner';
 import { PurchaseProvisioningBanner } from './ui/PurchaseProvisioningBanner';
 import { ToastHost } from './ui/ToastHost';
 import { AddFundsModal } from './ui/AddFundsModal';
@@ -151,6 +152,7 @@ export function AppShell({ onBackToLanding, onSignOut }) {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#FAF9FD]">
+        <ImpersonationBanner />
         <Topbar
           activeTab={activeTab}
           employeeFlowStep={employeeFlowStep}
@@ -208,6 +210,7 @@ export function AppShell({ onBackToLanding, onSignOut }) {
                   }
                   setIsBuyNumberOpen(true);
                 }}
+                onNavigate={handleNavigate}
               />
             )}
 

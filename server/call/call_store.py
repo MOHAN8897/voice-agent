@@ -55,6 +55,7 @@ def _row_to_dict(row: Call) -> dict[str, Any]:
         "finalization_status": row.finalization_status,
         "storage_path": row.storage_path,
         "end_reason": row.end_reason,
+        "is_test": bool(row.is_test),
         "last_heartbeat_at": row.last_heartbeat_at.isoformat() if row.last_heartbeat_at else None,
     }
     # Rows written before the status column keep status=None; derive it so every
@@ -91,6 +92,7 @@ class CallStore:
                 started_at=record.get("started_at") or _utcnow(),
                 finalization_status=record.get("finalization_status", "pending"),
                 storage_path=record["storage_path"],
+                is_test=bool(record.get("is_test", False)),
                 last_heartbeat_at=record.get("last_heartbeat_at") or _utcnow(),
             )
             if isinstance(row.started_at, str):
@@ -180,6 +182,7 @@ class CallStore:
         offset: int = 0,
         statuses: list[str] | None = None,
         direction: str | None = None,
+        include_tests: bool = False,
     ) -> tuple[list[dict[str, Any]], int]:
         limit = max(1, min(limit, 100))
         offset = max(0, offset)
@@ -195,6 +198,8 @@ class CallStore:
                 rows = [r for r in rows if r.get("disposition") == disposition]
             if direction:
                 rows = [r for r in rows if (r.get("direction") or "") == direction]
+            if not include_tests:
+                rows = [r for r in rows if not r.get("is_test")]
             if since:
                 since_dt = datetime.fromisoformat(since.replace("Z", "+00:00"))
                 rows = [r for r in rows if _as_dt(r.get("started_at")) is not None and _as_dt(r.get("started_at")) >= since_dt]
@@ -223,6 +228,9 @@ class CallStore:
             if direction:
                 stmt = stmt.where(Call.direction == direction)
                 count_stmt = count_stmt.where(Call.direction == direction)
+            if not include_tests:
+                stmt = stmt.where(Call.is_test.is_(False))
+                count_stmt = count_stmt.where(Call.is_test.is_(False))
             if since:
                 since_dt = datetime.fromisoformat(since.replace("Z", "+00:00"))
                 stmt = stmt.where(Call.started_at >= since_dt)

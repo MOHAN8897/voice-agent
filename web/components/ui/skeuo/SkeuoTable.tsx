@@ -26,15 +26,23 @@ export function SkeuoTableBody({ children }: { children: React.ReactNode }) {
   return <tbody className="divide-y divide-surface-border-subtle">{children}</tbody>;
 }
 
+// Row and cell take their native element props as well as the styled defaults:
+// a selectable row needs onClick, and a detail row spanning the table needs
+// colSpan. Without these the only way to build an expandable table was to drop
+// out of the shared component and lose the styling.
 export function SkeuoTableRow({
   children,
   className,
+  ...rest
 }: {
   children: React.ReactNode;
   className?: string;
-}) {
+} & React.ComponentPropsWithoutRef<"tr">) {
   return (
-    <tr className={cn("bg-surface-panel transition-colors hover:bg-surface-panel-raised/50", className)}>
+    <tr
+      className={cn("bg-surface-panel transition-colors hover:bg-surface-panel-raised/50", className)}
+      {...rest}
+    >
       {children}
     </tr>
   );
@@ -43,12 +51,16 @@ export function SkeuoTableRow({
 export function SkeuoTh({
   children,
   className,
+  ...rest
 }: {
   children: React.ReactNode;
   className?: string;
-}) {
+} & React.ComponentPropsWithoutRef<"th">) {
   return (
-    <th className={cn("px-4 py-3 font-mono text-[10px] uppercase tracking-wider font-medium", className)}>
+    <th
+      className={cn("px-4 py-3 font-mono text-[10px] uppercase tracking-wider font-medium", className)}
+      {...rest}
+    >
       {children}
     </th>
   );
@@ -57,9 +69,14 @@ export function SkeuoTh({
 export function SkeuoTd({
   children,
   className,
+  ...rest
 }: {
   children: React.ReactNode;
   className?: string;
-}) {
-  return <td className={cn("px-4 py-3", className)}>{children}</td>;
+} & React.ComponentPropsWithoutRef<"td">) {
+  return (
+    <td className={cn("px-4 py-3", className)} {...rest}>
+      {children}
+    </td>
+  );
 }

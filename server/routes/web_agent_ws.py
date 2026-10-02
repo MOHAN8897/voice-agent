@@ -174,6 +174,9 @@ async def web_agent_ws(websocket: WebSocket):
             session_id=session_id,
             channel="browser",
             direction="inbound",
+            # A browser practice run, not a conversation: excluded from call
+            # rollups and never archived to disk.
+            is_test=True,
             language=str(lang),
             stack_override=stack,
             billed_user_id=str(principal.user_id),

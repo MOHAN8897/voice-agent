@@ -16,7 +16,13 @@ if (import.meta.env.DEV) {
   // No state library detected. If you add one, register it here — see https://docs.reticle.sh/state-management
 
   registerCapabilities({
-    testids: ['sidebar-wallet-pill', 'billing-export-csv', 'call-recording-toggle', 'calls-payment-wall', 'calls-payment-wall-add', 'call-callback-panel', 'call-callback-number', 'call-callback-submit', 'create-employee-modal', 'employee-brief-input', 'employee-language-select', 'employee-role-select', 'employee-natural-spoken-style', 'employee-create-error', 'create-next', 'buy-number-error', 'buy-number-submit', 'studio-inbound-enabled', 'studio-outbound-enabled', 'studio-hours-summary', 'studio-hours-toggle-all', 'studio-transfer-number', 'studio-greeting', 'studio-telephony-error', 'studio-telephony-save', 'add-funds-modal', 'add-funds-amount', 'add-funds-error', 'add-funds-submit'],
+    testids: ['sidebar-wallet-pill', 'billing-export-csv', 'call-recording-toggle', 'calls-payment-wall', 'calls-payment-wall-add', 'call-callback-panel', 'call-callback-number', 'call-callback-submit', 'create-employee-modal', 'employee-brief-input', 'employee-language-select', 'employee-role-select', 'employee-natural-spoken-style', 'employee-create-error', 'create-next', 'buy-number-error', 'buy-number-submit', 'studio-inbound-enabled', 'studio-outbound-enabled', 'studio-hours-summary', 'studio-hours-toggle-all', 'studio-transfer-number', 'studio-greeting', 'studio-telephony-error', 'studio-telephony-save', 'add-funds-modal', 'add-funds-amount', 'add-funds-error', 'add-funds-submit',
+      // Agent card play/pause, and the unsaved-script guard on the studio.
+      'agent-studio-unsaved', 'agent-studio-discard', 'agent-studio-save-inline',
+      'agent-studio-back', 'agent-studio-switcher', 'agent-studio-leave-dialog',
+      'leave-save', 'leave-cancel', 'leave-discard',
+      'kyc-required-prompt', 'kyc-verify-now',
+      'test-call-timer', 'test-call-start-browser', 'test-call-end-browser'],
     signals: [], // names you pass to reticle.signal()
     stores: [], // the keys you registered above
   });

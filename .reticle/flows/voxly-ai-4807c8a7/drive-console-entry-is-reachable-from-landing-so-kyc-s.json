@@ -1,0 +1,41 @@
+{
+  "version": 2,
+  "name": "drive-console-entry-is-reachable-from-landing-so-kyc-s",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1790930477777,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "link",
+        "name": "Agent console"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "text",
+        "contains": "Sign in to build your agent"
+      },
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "intent": "Console entry is reachable from landing so KYC settings can be opened after sign-in.",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "desktop"
+  },
+  "intentId": "flow:drive-console-entry-is-reachable-from-landing-so-kyc-s"
+}

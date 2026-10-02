@@ -61,12 +61,18 @@ export async function devFetch(
  * never substitute a plausible number for a missing one, so a failed load is
  * surfaced as an error state rather than a zero.
  */
-export function useAdminResource<T>(path: string, deps: unknown[] = []) {
+export function useAdminResource<T>(path: string | null | undefined, deps: unknown[] = []) {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(Boolean(path));
 
   const load = useCallback(async () => {
+    if (!path) {
+      setData(null);
+      setError(null);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {

@@ -20,23 +20,38 @@ export function normalizeAgent(row) {
   };
 }
 
+function countryFromE164(e164) {
+  const n = String(e164 || '');
+  if (n.startsWith('+1')) return 'US';
+  if (n.startsWith('+44')) return 'GB';
+  if (n.startsWith('+61')) return 'AU';
+  if (n.startsWith('+91')) return 'IN';
+  if (n.startsWith('+65')) return 'SG';
+  if (n.startsWith('+353')) return 'IE';
+  if (n.startsWith('+64')) return 'NZ';
+  if (n.startsWith('+27')) return 'ZA';
+  if (n.startsWith('+63')) return 'PH';
+  return null;
+}
+
 export function normalizePhoneNumber(row, agentsById = {}) {
   if (!row) return null;
   const id = row.id || row.numberId;
   const e164 = row.e164 || row.number;
   const agentId = row.agentId || row.assignedAgentId;
   const agent = agentId ? agentsById[agentId] : null;
+  const inferred = countryFromE164(e164);
   return {
     id,
     number: e164,
     formatted: row.formatted || e164,
-    country: row.country || 'IN',
-    countryCode: row.countryCode || row.country || 'IN',
+    country: row.country || inferred || 'US',
+    countryCode: row.countryCode || row.country || inferred || 'US',
     type: row.type || 'Local DID',
     assignedAgentId: agentId || null,
     assignedAgentName: agent?.name || (agentId ? 'Assigned' : 'Unassigned (Pool)'),
-    monthlyCost: row.monthlyCost ?? row.monthlyUsd ?? 5,
-    monthlyInr: row.monthlyInr ?? null,
+    // 0 means "price not supplied", which the UI renders as unknown rather than free.
+monthlyCost: row.monthlyCost ?? row.monthlyUsd ?? 0,
     status: row.status || 'active',
     capabilities: row.capabilities || ['Voice'],
     usageMinutesThisMonth: row.usageMinutesThisMonth ?? 0,
@@ -55,7 +70,8 @@ export function normalizeWallet(apiWallet, fallback) {
   const fx = Number(apiWallet.fxRateInr) || 95.64;
   const inr = Number(apiWallet.balanceInr) || 0;
   let usd = Number(apiWallet.balanceUsd) || 0;
-  // Razorpay top-ups land in INR; surface FX-converted USD when cents are empty.
+  // Razorpay top-ups land in INR only, so the dollar figure is derived here when
+  // the server left cents empty. USD is the single displayed currency.
   if (usd <= 0 && inr > 0 && fx > 0) usd = inr / fx;
   const minutes =
     apiWallet.remainingMinutes != null
@@ -67,7 +83,8 @@ export function normalizeWallet(apiWallet, fallback) {
     balanceInr: inr,
     usdEquivalent: usd,
     remainingMinutes: minutes,
-    currency: apiWallet.currency || 'USD',
+    // Always USD in the console, whatever leg the wallet actually holds.
+currency: 'USD',
     rateInrPerMin: apiWallet.rateInrPerMin,
     rateUsdPerMin: apiWallet.rateUsdPerMin,
     webRateInrPerMin: apiWallet.webRateInrPerMin,
@@ -110,6 +127,9 @@ export function normalizeLead(row) {
   return {
     id,
     leadId: id,
+    // Which AI employee owns this lead. Null for hand-created workspace-level
+    // leads. Must survive normalization — every per-agent filter keys off it.
+    agentId: row.agentId || row.agent_id || null,
     name: row.name || 'Lead',
     phone: row.phone || '',
     email: row.email || '',
@@ -190,11 +210,8 @@ export function normalizeCampaign(row) {
 
 export function normalizeCatalogItem(item) {
   const e164 = item.e164 || item.phone_number || item.number;
-  const monthlyInr = item.monthlyInr ?? item.didMonthlyInr ?? null;
-  const monthlyUsd =
-    item.monthlyUsd ??
-    item.fee ??
-    (item.monthlyCents ? item.monthlyCents / 100 : 5);
+  // No invented fallback: a missing price must surface as unknown, not as $5.
+  const monthlyUsd = item.monthlyUsd ?? item.fee ?? (item.monthlyCents != null ? item.monthlyCents / 100 : null);
   return {
     e164,
     number: e164,
@@ -204,7 +221,6 @@ export function normalizeCatalogItem(item) {
     areaCode: item.areaCode || '',
     locality: item.locality || '',
     fee: monthlyUsd,
-    monthlyInr,
     monthlyUsd,
     features: item.features || ['Voice'],
   };

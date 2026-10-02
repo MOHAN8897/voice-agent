@@ -58,8 +58,19 @@ export function LoginForm({ title, subtitle, endpoint, redirectTo, portalKind }:
         credentials: "include",
         body: JSON.stringify({ username, password }),
       });
-      const j = await r.json();
-      if (!j.ok) {
+      const text = await r.text();
+      let j: { ok?: boolean; csrf_token?: string; error?: { message?: string } } = {};
+      try {
+        j = text ? JSON.parse(text) : {};
+      } catch {
+        setError(
+          r.status >= 500 || !r.ok
+            ? "API is not responding. Run npm run dev so the backend is on port 8000, then try again."
+            : "Unexpected login response. Refresh the page and try again."
+        );
+        return;
+      }
+      if (!r.ok || !j.ok) {
         setError(j.error?.message || "Invalid credentials. Please try again.");
         return;
       }
@@ -68,7 +79,9 @@ export function LoginForm({ title, subtitle, endpoint, redirectTo, portalKind }:
       }
       router.push(next.startsWith("/") ? next : redirectTo);
     } catch {
-      setError("Could not reach the server. Check that the API is running.");
+      setError(
+        "Could not reach the server. Start the API with npm run dev (port 8000), then use http://localhost:3000/dev/login."
+      );
     } finally {
       setLoading(false);
     }
@@ -79,11 +92,11 @@ export function LoginForm({ title, subtitle, endpoint, redirectTo, portalKind }:
       <div className="space-y-2">
         <p className="text-sm text-text-muted">Checking session…</p>
         <p className="max-w-sm text-xs text-text-muted">
-          On the public tunnel link? Use{" "}
+          Dev admin is localhost-only. Open{" "}
           <a href="http://localhost:3000/dev/login" className="text-accent underline">
-            localhost:3000/dev/login
+            http://localhost:3000/dev/login
           </a>{" "}
-          if this does not finish in a few seconds.
+          on this machine — the public tunnel link will not serve /dev.
         </p>
       </div>
     );

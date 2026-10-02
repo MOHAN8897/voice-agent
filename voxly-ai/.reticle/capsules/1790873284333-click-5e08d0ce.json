@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "origin": "failed-assert",
+  "expected": "settled",
+  "observed": "not settled: 1 request(s) still in flight",
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "",
+        "source": {
+          "file": "src/console/Topbar.jsx",
+          "line": 155,
+          "column": 9
+        }
+      },
+      "action": "click"
+    }
+  ],
+  "id": "1790873284333-click-5e08d0ce",
+  "createdAt": 1790873284337,
+  "seen": 1,
+  "lastSeenAt": 1790873284337
+}
