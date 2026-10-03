@@ -1,0 +1,21 @@
+{
+  "intents": {
+    "flow:drive-the-marketing-page-plays-the-product-s-own-neura": {
+      "binding": {
+        "flow": "drive-the-marketing-page-plays-the-product-s-own-neura"
+      },
+      "declaredAt": 1791015913723,
+      "id": "flow:drive-the-marketing-page-plays-the-product-s-own-neura",
+      "state": "bound",
+      "statement": "the marketing page plays the product's own neural voice per industry, driven by real audio rather than a browser speech voice",
+      "status": "proposed",
+      "subject": "drive-the-marketing-page-plays-the-produ",
+      "surface": {
+        "flow": "drive-the-marketing-page-plays-the-product-s-own-neura"
+      },
+      "updatedAt": 1791015913756
+    }
+  },
+  "subject": "drive-the-marketing-page-plays-the-produ",
+  "version": 1
+}

@@ -1,10 +1,27 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from 'react';
 import { authService } from '../services/authService';
-import { api } from '../services/api';
+import { api, subscribeSessionPolicy } from '../services/api';
 import { initAuthSessionSync } from '../services/authSessionSync';
+import { createIdleSessionMonitor, DEFAULT_IDLE_TIMEOUT_MS } from '../services/sessionIdle';
+import { IdleWarningModal } from '../components/IdleWarningModal';
 import { loadGoogleIdentityScript } from '../utils/loadGoogleIdentity';
 
 const AuthContext = createContext(null);
+
+/** Why the session ended, so the sign-in screen can say something useful. */
+const SIGN_OUT_REASONS = {
+  idle: 'You were signed out after a period of inactivity. Please sign in again.',
+  absolute_max: 'Your session reached its maximum length. Please sign in again.',
+  manual: '',
+};
 
 function normalizeUser(meOrAuth) {
   const user = meOrAuth?.user || meOrAuth;
@@ -55,6 +72,31 @@ function writeStoredImpersonation(imp) {
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  // Session policy, learned from the server on every auth response. Held in state so
+  // the idle monitor is rebuilt whenever the server's bounds change.
+  const [sessionPolicy, setSessionPolicy] = useState(null);
+  const [idleWarning, setIdleWarning] = useState(null);
+  const [signOutReason, setSignOutReason] = useState('');
+  const idleRef = useRef(null);
+
+  const adoptSessionPolicy = useCallback((policy) => {
+    if (!policy || typeof policy !== 'object') return;
+    setSessionPolicy((prev) => {
+      const next = {
+        idleTimeoutMinutes: Number(policy.idleTimeoutMinutes) || 0,
+        absoluteMaxHours: Number(policy.absoluteMaxHours) || 0,
+        accessTokenMinutes: Number(policy.accessTokenMinutes) || 0,
+      };
+      if (
+        prev &&
+        prev.idleTimeoutMinutes === next.idleTimeoutMinutes &&
+        prev.absoluteMaxHours === next.absoluteMaxHours
+      ) {
+        return prev;
+      }
+      return next;
+    });
+  }, []);
 
   const refreshSession = useCallback(async () => {
     if (!api.getToken()) {
@@ -160,6 +202,15 @@ export function AuthProvider({ children }) {
       if (detail.type === 'access' && detail.accessToken) {
         api.adoptPeerAccessToken(detail.accessToken);
       }
+      if (detail.type === 'activity') {
+        // Real human input happened in a sibling tab.
+        idleRef.current?.syncFromPeer(detail.at);
+        setIdleWarning(null);
+        return;
+      }
+      if (detail.type === 'idle-warning') {
+        setIdleWarning((prev) => prev ?? { remainingMs: 120000 });
+      }
     };
     const onVis = () => {
       if (document.visibilityState !== 'visible') return;
@@ -172,6 +223,58 @@ export function AuthProvider({ children }) {
       window.removeEventListener('voxly:auth-sync', onSync);
       document.removeEventListener('visibilitychange', onVis);
     };
+  }, []);
+
+  // Learn the server's session bounds from any auth response.
+  useEffect(() => subscribeSessionPolicy(adoptSessionPolicy), [adoptSessionPolicy]);
+
+  // Inactivity timeout. Runs only while signed in; the server refuses a stale refresh
+  // regardless, so this exists to warn first and to release the session cleanly.
+  useEffect(() => {
+    if (!user || !api.getToken()) {
+      idleRef.current?.dispose();
+      idleRef.current = null;
+      setIdleWarning(null);
+      return undefined;
+    }
+    const monitor = createIdleSessionMonitor({
+      idleTimeoutMinutes: sessionPolicy?.idleTimeoutMinutes || DEFAULT_IDLE_TIMEOUT_MS / 60000,
+      absoluteMaxHours: sessionPolicy?.absoluteMaxHours || 24,
+      onState: (state) => {
+        if (state.state === 'warning') {
+          setIdleWarning({ remainingMs: state.remainingMs });
+        } else if (state.state === 'active') {
+          setIdleWarning(null);
+        }
+      },
+      onExpire: (reason) => {
+        const key = reason === 'session_absolute_max' ? 'absolute_max' : 'idle';
+        // Best-effort server logout; the local session is cleared either way because
+        // the refresh cookie is dead server-side too.
+        authService.signOut().catch(() => {});
+        writeStoredImpersonation(null);
+        setSignOutReason(SIGN_OUT_REASONS[key] || SIGN_OUT_REASONS.idle);
+        setUser(null);
+        setIdleWarning(null);
+      },
+    });
+    idleRef.current = monitor;
+    monitor.start();
+    // Exposed so an end-to-end test can shorten the window (a 30-minute policy is
+    // otherwise untestable) and so support can inspect the live countdown.
+    if (typeof window !== 'undefined') window.__voxlyIdle = monitor;
+    return () => {
+      monitor.dispose();
+      if (typeof window !== 'undefined' && window.__voxlyIdle === monitor) {
+        delete window.__voxlyIdle;
+      }
+      idleRef.current = null;
+    };
+  }, [user, sessionPolicy?.idleTimeoutMinutes, sessionPolicy?.absoluteMaxHours]);
+
+  const staySignedIn = useCallback(() => {
+    idleRef.current?.extend();
+    setIdleWarning(null);
   }, []);
 
   const loginWithGoogle = async () => {
@@ -226,6 +329,8 @@ export function AuthProvider({ children }) {
     const data = await authService.signInWithEmailPassword(email, password);
     const normalized = normalizeUser(data);
     setUser(normalized);
+    setSignOutReason('');
+    idleRef.current?.resetSession();
     window.dispatchEvent(new Event('voxly:session'));
     return normalized;
   };
@@ -237,6 +342,7 @@ export function AuthProvider({ children }) {
     }
     const normalized = normalizeUser(data);
     setUser(normalized);
+    idleRef.current?.resetSession();
     window.dispatchEvent(new Event('voxly:session'));
     return normalized;
   };
@@ -254,28 +360,74 @@ export function AuthProvider({ children }) {
       await authService.signOut();
     } finally {
       writeStoredImpersonation(null);
+      setSignOutReason('');
+      setIdleWarning(null);
+      idleRef.current?.resetSession();
       setUser(null);
       window.dispatchEvent(new Event('voxly:logout'));
     }
   };
 
-  const value = {
-    user,
-    isAuthenticated: !!user && !!api.getToken(),
-    isPlatformAdmin: Boolean(user?.isPlatformAdmin),
-    isDevTester: Boolean(user?.isDevTester),
-    isLoading,
-    loginWithGoogle,
-    loginWithGithub,
-    loginWithEmail,
-    signupWithEmail,
-    loginWithMagicLink,
-    loginWithSSO,
-    logout,
-    refreshSession,
-  };
+  /** Adopt a session handed over by password reset / OTP verification. */
+  const adoptSession = useCallback(async () => {
+    const normalized = await refreshSession();
+    if (normalized) idleRef.current?.resetSession();
+    return normalized;
+  }, [refreshSession]);
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  const signOutFromWarning = useCallback(() => logout(), [logout]);
+
+  const value = useMemo(
+    () => ({
+      user,
+      isAuthenticated: !!user && !!api.getToken(),
+      isPlatformAdmin: Boolean(user?.isPlatformAdmin),
+      isDevTester: Boolean(user?.isDevTester),
+      isLoading,
+      sessionPolicy,
+      signOutReason,
+      clearSignOutReason: () => setSignOutReason(''),
+      staySignedIn,
+      loginWithGoogle,
+      loginWithGithub,
+      loginWithEmail,
+      signupWithEmail,
+      loginWithMagicLink,
+      loginWithSSO,
+      logout,
+      refreshSession,
+      adoptSession,
+    }),
+    [
+      user,
+      isLoading,
+      sessionPolicy,
+      signOutReason,
+      staySignedIn,
+      loginWithGoogle,
+      loginWithGithub,
+      loginWithEmail,
+      signupWithEmail,
+      loginWithMagicLink,
+      loginWithSSO,
+      logout,
+      refreshSession,
+      adoptSession,
+    ]
+  );
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+      <IdleWarningModal
+        isOpen={Boolean(idleWarning)}
+        remainingMs={idleWarning?.remainingMs ?? 0}
+        email={user?.email || ''}
+        onStay={staySignedIn}
+        onSignOut={signOutFromWarning}
+      />
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {

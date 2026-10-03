@@ -14,7 +14,12 @@ from server.call.call_lifecycle_service import call_lifecycle_service
 from server.call.call_status import CALL_STATUSES
 from server.call.call_store import call_store
 from server.call.call_timeline import list_timeline, timeline_stats
-from server.auth.calls_tenant import resolve_calls_tenant_id, resolve_prompt_preview_tenant_id
+from server.auth.calls_tenant import (
+    resolve_calls_scope,
+    resolve_calls_tenant_id,
+    resolve_prompt_preview_tenant_id,
+)
+from server.services.saas.call_redaction import redact_call_detail_for_tenant
 from server.auth.tenant_context import tenant_id_from_request
 from server.config.env import get_settings
 from server.utils.errors import AppError
@@ -125,7 +130,8 @@ async def call_prompt_preview(
 
 
 @router.get("/api/call/{call_id}")
-async def get_call(call_id: str, scoped_tenant: str = Depends(resolve_calls_tenant_id)):
+async def get_call(call_id: str, scope: tuple[str, bool] = Depends(resolve_calls_scope)):
+    scoped_tenant, internal_viewer = scope
     try:
         result = await call_lifecycle_service.get_call(call_id)
     except AppError as e:
@@ -137,7 +143,12 @@ async def get_call(call_id: str, scoped_tenant: str = Depends(resolve_calls_tena
                 status_code=404,
                 detail={"error": {"code": "not_found", "message": "Call not found"}},
             )
-    return result
+    if internal_viewer:
+        return result
+    # Wholesale carrier cost, upstream model list rates, the resolved provider stack
+    # and PSTN forensics stay on the platform side. Redacted on the response, not in
+    # the UI — a field hidden in React is still on the wire.
+    return redact_call_detail_for_tenant(result)
 
 
 @router.get("/api/calls")

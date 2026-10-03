@@ -1,0 +1,21 @@
+{
+  "intents": {
+    "flow:drive-every-industry-on-the-landing-page-plays-a-real": {
+      "binding": {
+        "flow": "drive-every-industry-on-the-landing-page-plays-a-real"
+      },
+      "declaredAt": 1791023789010,
+      "id": "flow:drive-every-industry-on-the-landing-page-plays-a-real",
+      "state": "bound",
+      "statement": "every industry on the landing page plays a real clip rendered by the live speech model, not the browser's built-in voice",
+      "status": "proposed",
+      "subject": "drive-every-industry-on-the-landing-page",
+      "surface": {
+        "flow": "drive-every-industry-on-the-landing-page-plays-a-real"
+      },
+      "updatedAt": 1791023789071
+    }
+  },
+  "subject": "drive-every-industry-on-the-landing-page",
+  "version": 1
+}

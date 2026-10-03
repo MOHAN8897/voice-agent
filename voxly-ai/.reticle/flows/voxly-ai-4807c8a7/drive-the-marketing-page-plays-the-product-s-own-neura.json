@@ -1,0 +1,45 @@
+{
+  "version": 2,
+  "name": "drive-the-marketing-page-plays-the-product-s-own-neura",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1791015913343,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "voice-sample-play",
+        "source": {
+          "file": "src/components/TalkToAiSection.jsx",
+          "line": 332,
+          "column": 17
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "signal",
+        "name": "voxly:voice-sample-audible"
+      },
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "intent": "the marketing page plays the product's own neural voice per industry, driven by real audio rather than a browser speech voice",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "desktop"
+  },
+  "intentId": "flow:drive-the-marketing-page-plays-the-product-s-own-neura"
+}

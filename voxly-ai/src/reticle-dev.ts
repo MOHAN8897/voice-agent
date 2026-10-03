@@ -22,8 +22,22 @@ if (import.meta.env.DEV) {
       'agent-studio-back', 'agent-studio-switcher', 'agent-studio-leave-dialog',
       'leave-save', 'leave-cancel', 'leave-discard',
       'kyc-required-prompt', 'kyc-verify-now',
-      'test-call-timer', 'test-call-start-browser', 'test-call-end-browser'],
-    signals: [], // names you pass to reticle.signal()
+      'test-call-timer', 'test-call-start-browser', 'test-call-end-browser',
+      // Marketing voice showcase: the real clips, the transcript, the waveform, and
+      // the A/B against the browser's own voice.
+      'voice-sample-play', 'voice-sample-status', 'voice-sample-waveform',
+      'voice-sample-transcript', 'voice-mode-product', 'voice-mode-browser',
+      'voice-sample-healthcare-clinic', 'voice-sample-logistics',
+      'voice-industry-healthcare-clinic', 'voice-industry-logistics',
+      'talk-to-ai-live', 'walkthrough-toggle',
+      // Auth: reset link (dev), the new confirm field, and the idle sign-out.
+      'auth-debug-reset-link', 'auth-reset-confirm', 'idle-warning-modal',
+      'idle-stay-signed-in', 'idle-sign-out',
+      // Settings: change password.
+      'change-password-form', 'change-password-current', 'change-password-new',
+      'change-password-confirm', 'change-password-submit', 'change-password-error',
+      'change-password-notice', 'session-idle-minutes'],
+    signals: ['voxly:voice-sample-started', 'voxly:voice-sample-audible', 'voxly:voice-sample-ended'],
     stores: [], // the keys you registered above
   });
 }

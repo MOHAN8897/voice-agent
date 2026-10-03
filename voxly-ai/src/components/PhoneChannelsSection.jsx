@@ -1,21 +1,10 @@
 import React, { useState } from 'react';
-import {
-  PhoneIncoming,
-  PhoneOutgoing,
-  ListPlus,
-  PhoneCall,
-  CheckCircle2,
-  ArrowRight,
-  ShieldCheck,
-  Zap,
-  Phone
-} from 'lucide-react';
+import { PhoneIncoming, PhoneOutgoing, PhoneCall, CheckCircle2, ArrowRight } from 'lucide-react';
 import { PHONE_CHANNELS } from '../data/siteContent';
 
 const TAB_ICONS = {
   inbound: PhoneIncoming,
   outbound: PhoneOutgoing,
-  campaigns: ListPlus,
 };
 
 export function PhoneChannelsSection({ onGetStarted }) {
@@ -37,11 +26,13 @@ export function PhoneChannelsSection({ onGetStarted }) {
             Put your AI on the phone.
           </h2>
           <p className="text-base sm:text-lg text-[#524E5E] leading-relaxed">
-            From single toll-free inbound lines to high-velocity outbound follow-ups and automated bulk lists, deploy dedicated voice numbers across 100+ countries with sub-500ms carrier latency.
+            Deploy dedicated voice numbers across more than a hundred countries, then point them
+            at your employee. Bulk list calling has its own section below.
           </p>
         </div>
 
-        {/* 3 Interactive Channel Segmented Control Tabs */}
+        {/* 2 Interactive Channel Segmented Control Tabs. Campaigns used to be a third tab
+            here and duplicated the section that follows it. */}
         <div className="flex justify-start mb-8">
           <div className="inline-flex p-1 rounded-xl bg-[#F0EEF6] border border-[#E4E2EB]">
             {PHONE_CHANNELS.map((ch) => {

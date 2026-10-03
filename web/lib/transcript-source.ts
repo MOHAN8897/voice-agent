@@ -6,12 +6,27 @@ export type TranscriptSourceInfo = {
   isPostCallGemini: boolean;
 };
 
-export function resolveTranscriptSource(meta?: {
+type TranscriptSourceMeta = {
   transcript_source?: string | null;
   usage?: { transcription_billing?: string; post_call_transcript_model?: string };
   post_call_transcript?: { status?: string; model?: string; source?: string };
-} | null): TranscriptSourceInfo | null {
+  internal_fields_hidden?: boolean;
+} | null;
+
+/**
+ * Provenance, in the words the viewer is allowed to have.
+ *
+ * Naming the transcription vendors and the exact model told a tenant which suppliers
+ * sit behind their call and what each of them charges — the same class of leak as the
+ * wholesale rates on the metadata panel. A tenant gets "how this call was
+ * transcribed"; the platform team still gets the model names for debugging.
+ */
+export function resolveTranscriptSource(
+  meta?: TranscriptSourceMeta,
+  audience: "tenant" | "internal" = "internal"
+): TranscriptSourceInfo | null {
   if (!meta) return null;
+  const internal = audience === "internal" && !meta.internal_fields_hidden;
   const source = String(
     meta.transcript_source ||
       meta.post_call_transcript?.source ||
@@ -23,7 +38,28 @@ export function resolveTranscriptSource(meta?: {
   const postCall =
     billing.includes("post_call_gemini_transcribe") ||
     source.includes("gemini-3.5-transcribe") ||
-    source.includes("telnyx+gemini");
+    source.includes("telnyx+gemini") ||
+    Boolean(meta.post_call_transcript?.status);
+
+  if (!internal) {
+    if (postCall) {
+      return {
+        badge: "Transcript: recorded and transcribed",
+        detail:
+          "The call was recorded and transcribed after the conversation finished, so the transcript is available in full.",
+        isPostCallGemini: true,
+      };
+    }
+    if (liveOpenai || source || billing) {
+      return {
+        badge: "Transcript: live",
+        detail: "Speech was transcribed during the call.",
+        isPostCallGemini: false,
+      };
+    }
+    return null;
+  }
+
   if (liveOpenai && !postCall) {
     return {
       badge: "Transcript: gpt-4o-mini-transcribe (live)",

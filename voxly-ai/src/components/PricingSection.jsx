@@ -32,7 +32,7 @@ export function PricingSection({ onSelectPlan }) {
           badge="Predictable Metering"
           title="Transparent Plans for Every"
           highlight="Fleet Size"
-          subtitle="No telephony markup or rounding up to the nearest minute. Select a plan below to configure your voice fleet with dedicated DIDs and minutes."
+          subtitle="Billed per connected second, never rounded up to the next minute, and unanswered rings are free. Pick a plan to configure your employees, numbers and minutes."
         />
 
         {/* Monthly vs Annual Segmented Toggle */}

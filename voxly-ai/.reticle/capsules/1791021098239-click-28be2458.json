@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "origin": "failed-assert",
+  "expected": "text \"Welcome back\"",
+  "observed": "no element matched {\"text\":\"Welcome back\"}",
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "",
+        "source": {
+          "file": "src/components/AuthModal.jsx",
+          "line": 544,
+          "column": 15
+        }
+      },
+      "action": "click"
+    }
+  ],
+  "id": "1791021098239-click-28be2458",
+  "createdAt": 1791021098240,
+  "seen": 1,
+  "lastSeenAt": 1791021098240
+}

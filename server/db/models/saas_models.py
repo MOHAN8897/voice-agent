@@ -76,6 +76,18 @@ class RefreshToken(Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    # Sliding-window enforcement: last moment this token was actually presented. A
+    # refresh older than SESSION_IDLE_TIMEOUT_MINUTES is refused server-side, so an
+    # unattended tab cannot hold a live session for the whole 30-day token lifetime
+    # just because something in the page re-issued the cookie.
+    last_active_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=_utcnow
+    )
+    # Absolute ceiling for one sign-in regardless of activity (SOC2 / OWASP: force a
+    # full re-auth at least this often).
+    absolute_expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=_utcnow
+    )
 
 
 class PasswordResetToken(Base):

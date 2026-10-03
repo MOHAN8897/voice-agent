@@ -38,6 +38,19 @@ function getChannel() {
         );
       } else if (msg.type === 'logout') {
         window.dispatchEvent(new CustomEvent('voxly:auth-sync', { detail: { type: 'logout' } }));
+      } else if (msg.type === 'activity') {
+        // A sibling tab saw input. Idle must be judged from real human activity, not
+        // per-tab timers, or an open dashboard in a background tab would sign the
+        // person out of the tab they are actually using.
+        window.dispatchEvent(
+          new CustomEvent('voxly:auth-sync', { detail: { type: 'activity', at: msg.at } })
+        );
+      } else if (msg.type === 'idle-warning') {
+        window.dispatchEvent(
+          new CustomEvent('voxly:auth-sync', {
+            detail: { type: 'idle-warning', at: msg.at, reason: msg.reason },
+          })
+        );
       }
     };
   }
@@ -60,6 +73,24 @@ export function publishAccessToken(accessToken) {
 export function publishLogout() {
   try {
     getChannel()?.postMessage({ type: 'logout', tabId, at: Date.now() });
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Share "the user is still here" so idle is measured across every open tab. */
+export function publishActivity() {
+  try {
+    getChannel()?.postMessage({ type: 'activity', tabId, at: Date.now() });
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Tell siblings the idle window is closing so every tab shows the same countdown. */
+export function publishIdleWarning(reason = 'idle_timeout') {
+  try {
+    getChannel()?.postMessage({ type: 'idle-warning', tabId, at: Date.now(), reason });
   } catch {
     /* ignore */
   }

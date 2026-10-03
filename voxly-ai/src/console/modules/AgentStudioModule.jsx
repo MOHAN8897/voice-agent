@@ -28,7 +28,7 @@ import {
   parseStudioFieldsFromSections,
   parseVoiceConfigFromSections,
 } from '../../lib/voiceStack';
-import { formatPhoneVoiceLabel, groupPhoneVoices } from '../../lib/voiceDisplay';
+import { formatPhoneVoiceLabel, groupVoicesByTier } from '../../lib/voiceDisplay';
 import { loadAgentBrain } from '../../services/agentBrain';
 import { api } from '../../services/api';
 import { AgentOverview } from './agent-workspace/AgentOverview';
@@ -814,25 +814,20 @@ export function AgentStudioModule({
                   className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl p-2.5 text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
                 >
                   {(() => {
-                    const { openai, gemini } = groupPhoneVoices(phoneVoices);
+                    // Grouped by how the voice sounds, not by which vendor serves it.
+                    // Naming the suppliers invited tenants to compare our rate against
+                    // their own API bill; the choice they are making is tone and fit.
                     const fallback = [{ id: 'marin', label: 'Marin', gender: 'female', tone: 'Warm & clear' }];
-                    const o = openai.length ? openai : fallback;
-                    return (
-                      <>
-                        <optgroup label="OpenAI (phone default)">
-                          {o.map((p) => (
-                            <option key={p.id} value={p.id}>{formatPhoneVoiceLabel(p)}</option>
-                          ))}
-                        </optgroup>
-                        {gemini.length > 0 && (
-                          <optgroup label="Gemini Live">
-                            {gemini.map((p) => (
-                              <option key={p.id} value={p.id}>{formatPhoneVoiceLabel(p)}</option>
-                            ))}
-                          </optgroup>
-                        )}
-                      </>
+                    const groups = groupVoicesByTier(
+                      phoneVoices.length ? phoneVoices : fallback
                     );
+                    return groups.map((group) => (
+                      <optgroup key={group.label} label={group.label}>
+                        {group.voices.map((p) => (
+                          <option key={p.id} value={p.id}>{formatPhoneVoiceLabel(p)}</option>
+                        ))}
+                      </optgroup>
+                    ));
                   })()}
                 </select>
               </div>

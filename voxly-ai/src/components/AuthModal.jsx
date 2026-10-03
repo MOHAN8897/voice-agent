@@ -4,13 +4,14 @@ import { useAuth } from '../context/AuthContext';
 import { analytics } from '../services/analytics';
 import { api } from '../services/api';
 
-export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSuccess }) {
+export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSuccess, notice = '' }) {
   const { loginWithGoogle, loginWithEmail, signupWithEmail, refreshSession } = useAuth();
 
   const [mode, setMode] = useState(initialMode);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loadingMethod, setLoadingMethod] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
@@ -21,6 +22,19 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
   const [resendStatus, setResendStatus] = useState('');
   const [otpCode, setOtpCode] = useState('');
   const [pendingVerifyEmail, setPendingVerifyEmail] = useState('');
+  const [resetDebugUrl, setResetDebugUrl] = useState('');
+  const [debugOtp, setDebugOtp] = useState('');
+
+  /**
+   * The single-use reset token lives in the URL fragment.
+   *
+   * Read it when the form is submitted rather than once at mount: the modal is mounted
+   * for the life of the app, so a value captured on mount is the hash the visitor
+   * arrived with — empty if they opened the reset link later in the same tab, which
+   * then failed with "invalid or expired" for a perfectly good link.
+   */
+  const readResetToken = () =>
+    new URLSearchParams((window.location.hash.split('?')[1]) || '').get('token') || '';
 
   useEffect(() => {
     const onAuthErr = (e) => {
@@ -60,7 +74,12 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
     setMode(initialMode);
     setErrorMessage('');
     setSuccessMessage('');
+    setConfirmPassword('');
   }, [initialMode, isOpen]);
+
+  useEffect(() => {
+    if (notice) setErrorMessage(notice);
+  }, [notice]);
 
   useEffect(() => {
     if (!isOpen && window.location.hash?.includes('reset-password')) {
@@ -113,6 +132,12 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
         if (signupRes?.requiresEmailVerification) {
           setPendingVerifyEmail(signupRes.email || email.trim());
           setOtpCode('');
+          // Dev deployment with no mail provider: the code comes back in the response,
+          // otherwise this step is a dead end with no way forward.
+          if (signupRes.debugOtp) {
+            setDebugOtp(String(signupRes.debugOtp));
+            setOtpCode(String(signupRes.debugOtp));
+          }
           setSuccessMessage(signupRes.message || 'Enter the 6-digit code we sent to your email.');
           setMode('verify-otp');
           return;
@@ -122,19 +147,30 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
         setSuccessMessage(`Account created! Welcome to Voxly, ${authedUser.name}.`);
       } else if (mode === 'forgot') {
         setLoadingMethod('email');
-        await api.auth.forgotPassword(email);
-        setSuccessMessage('If an account exists, reset instructions were sent to your email.');
+        const res = await api.auth.forgotPassword(email);
+        setSuccessMessage(res?.message || 'If an account exists, reset instructions were sent to your email.');
+        if (res?.debugResetUrl) {
+          // Dev deployment (AUTH_DEBUG_EXPOSE_RESET_TOKEN): no working mail provider,
+          // so surface the link instead of leaving the flow unfinishable.
+          setResetDebugUrl(res.debugResetUrl);
+        }
         setMode('signin');
         return;
       } else if (mode === 'reset') {
         setLoadingMethod('email');
-        const token = new URLSearchParams((window.location.hash.split('?')[1]) || '').get('token');
+        const token = readResetToken();
         if (!token) throw new Error('Reset link is invalid or expired.');
-        await api.auth.resetPassword(token, password);
-        setSuccessMessage('Password updated. Sign in with your new password.');
+        if (password !== confirmPassword) {
+          throw new Error('The two passwords do not match.');
+        }
+        // The server signs the user in here — a valid single-use reset token is proof
+        // that the mailbox owner asked for this. Retyping the new password on the
+        // sign-in form right afterwards was pure friction.
+        const data = await api.auth.resetPassword(token, password);
         window.location.hash = '';
-        setMode('signin');
-        return;
+        authedUser = await refreshSession();
+        analytics.track('auth_password_reset', { userId: authedUser?.id });
+        setSuccessMessage(`Password updated. Welcome back, ${authedUser?.name || 'there'}!`);
       } else if (mode === 'signin') {
         setLoadingMethod('email');
         authedUser = await loginWithEmail(email, password);
@@ -217,14 +253,18 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
               ? 'Create your account'
               : mode === 'verify-otp'
                 ? 'Verify your email'
-                : 'Sign in to your console'}
+                : mode === 'reset'
+                  ? 'Choose a new password'
+                  : 'Sign in to your console'}
           </h3>
           <p className="text-xs text-[#524E5E] mt-1">
             {mode === 'verify-otp'
               ? 'Use the same email for password sign-in and Google — one account per email.'
               : mode === 'signup'
                 ? 'Email, Google, and your console share one Voxly account.'
-                : 'Sign in with email or Google to open your agent console.'}
+                : mode === 'reset'
+                  ? 'This link signed you in once it is used. Pick a password you have not used before.'
+                  : 'Sign in with email or Google to open your agent console.'}
           </p>
         </div>
 
@@ -243,6 +283,22 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
             <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>{successMessage}</span>
+            </div>
+          )}
+
+          {resetDebugUrl && (
+            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs space-y-2">
+              <p className="font-semibold">Development mode: email delivery is not configured.</p>
+              <p className="text-[11px] text-amber-800">
+                The server returned the reset link directly instead of mailing it.
+              </p>
+              <a
+                href={resetDebugUrl}
+                data-testid="auth-debug-reset-link"
+                className="block font-mono text-[11px] underline break-all"
+              >
+                {resetDebugUrl}
+              </a>
             </div>
           )}
 
@@ -289,6 +345,18 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
                   className="w-full text-center tracking-[0.4em] text-lg font-mono px-3 py-3 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] focus:outline-none focus:border-[#6344E7]"
                 />
               </div>
+              {debugOtp && (
+                <div
+                  data-testid="auth-debug-otp"
+                  className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs space-y-1"
+                >
+                  <p className="font-semibold">Development mode: email delivery is not configured.</p>
+                  <p className="text-[11px] text-amber-800">
+                    The server returned the code directly instead of mailing it.
+                  </p>
+                  <p className="font-mono text-sm tracking-[0.3em]">{debugOtp}</p>
+                </div>
+              )}
               <button
                 type="submit"
                 disabled={loadingMethod !== null || otpCode.length !== 6}
@@ -301,7 +369,11 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
                 className="w-full text-xs font-semibold text-[#6344E7]"
                 onClick={async () => {
                   try {
-                    await api.auth.resendVerification(pendingVerifyEmail || email);
+                    const res = await api.auth.resendVerification(pendingVerifyEmail || email);
+                    if (res?.debugOtp) {
+                      setDebugOtp(String(res.debugOtp));
+                      setOtpCode(String(res.debugOtp));
+                    }
                     setResendStatus('New code sent if the account exists.');
                   } catch (err) {
                     setResendStatus(err.message);
@@ -392,6 +464,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
                 </div>
               )}
 
+              {mode !== 'reset' && (
               <div>
                 <label htmlFor="voxly-auth-email" className="block text-xs font-semibold text-[#0F0E17] mb-1">
                   Work Email
@@ -407,12 +480,13 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
                   className="w-full text-xs px-3.5 py-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] focus:outline-none focus:border-[#0F0E17] text-[#0F0E17] placeholder:text-[#635F70]"
                 />
               </div>
+              )}
 
               {mode !== 'forgot' && (
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label htmlFor="voxly-auth-password" className="block text-xs font-semibold text-[#0F0E17]">
-                    Password
+                    {mode === 'reset' ? 'New password' : 'Password'}
                   </label>
                   {mode === 'signin' && (
                     <button
@@ -429,10 +503,11 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
                     id="voxly-auth-password"
                     type={showPassword ? 'text' : 'password'}
                     required
+                    minLength={mode === 'reset' ? 8 : undefined}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••••••"
-                    autoComplete="current-password"
+                    autoComplete={mode === 'reset' ? 'new-password' : 'current-password'}
                     className="w-full text-xs px-3.5 py-2.5 pr-10 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] focus:outline-none focus:border-[#0F0E17] text-[#0F0E17] placeholder:text-[#635F70]"
                   />
                   <button
@@ -444,7 +519,30 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
+                {mode === 'reset' && (
+                  <p className="mt-1 text-[11px] text-[#524E5E]">At least 8 characters.</p>
+                )}
               </div>
+              )}
+
+              {mode === 'reset' && (
+                <div>
+                  <label htmlFor="voxly-auth-confirm" className="block text-xs font-semibold text-[#0F0E17] mb-1">
+                    Confirm new password
+                  </label>
+                  <input
+                    id="voxly-auth-confirm"
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    minLength={8}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••••••"
+                    autoComplete="new-password"
+                    data-testid="auth-reset-confirm"
+                    className="w-full text-xs px-3.5 py-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] focus:outline-none focus:border-[#0F0E17] text-[#0F0E17] placeholder:text-[#635F70]"
+                  />
+                </div>
               )}
 
               <button

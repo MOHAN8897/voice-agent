@@ -1,0 +1,18 @@
+{
+  "intents": {
+    "flow:drive-a-deployment-whose-mail-provider-cannot-deliver": {
+      "declaredAt": 1791021755697,
+      "id": "flow:drive-a-deployment-whose-mail-provider-cannot-deliver",
+      "state": "declared",
+      "statement": "a deployment whose mail provider cannot deliver says so, and hands back the reset link, instead of showing a silent 'check your inbox'",
+      "status": "proposed",
+      "subject": "drive-a-deployment-whose-mail-provider-c",
+      "surface": {
+        "flow": "drive-a-deployment-whose-mail-provider-cannot-deliver"
+      },
+      "updatedAt": 1791021755752
+    }
+  },
+  "subject": "drive-a-deployment-whose-mail-provider-c",
+  "version": 1
+}

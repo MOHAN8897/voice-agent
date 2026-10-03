@@ -32,9 +32,61 @@ function tokenStorage() {
   return typeof window !== 'undefined' ? window.sessionStorage : null;
 }
 
+/**
+ * Server-authoritative session bounds, learned from every auth response.
+ *
+ * The idle timer's limits used to be a constant in the frontend that nobody could
+ * change without a redeploy — so a security policy change on the server and the
+ * behaviour in the browser could silently disagree. The server sends the policy on
+ * each auth response and the client adopts it.
+ */
+let sessionPolicy = null;
+const sessionPolicyListeners = new Set();
+
+function applySessionPolicy(policy) {
+  if (!policy || typeof policy !== 'object') return;
+  const next = {
+    idleTimeoutMinutes: Number(policy.idleTimeoutMinutes) || 0,
+    absoluteMaxHours: Number(policy.absoluteMaxHours) || 0,
+    accessTokenMinutes: Number(policy.accessTokenMinutes) || 0,
+  };
+  if (
+    sessionPolicy &&
+    sessionPolicy.idleTimeoutMinutes === next.idleTimeoutMinutes &&
+    sessionPolicy.absoluteMaxHours === next.absoluteMaxHours
+  ) {
+    return;
+  }
+  sessionPolicy = next;
+  sessionPolicyListeners.forEach((fn) => {
+    try {
+      fn(next);
+    } catch {
+      /* ignore */
+    }
+  });
+}
+
+export function getSessionPolicy() {
+  return sessionPolicy;
+}
+
+export function subscribeSessionPolicy(fn) {
+  sessionPolicyListeners.add(fn);
+  if (sessionPolicy) {
+    try {
+      fn(sessionPolicy);
+    } catch {
+      /* ignore */
+    }
+  }
+  return () => sessionPolicyListeners.delete(fn);
+}
+
 function applyAuthResponse(data) {
   const access = data?.accessToken || data?.token;
   if (access) api.setToken(access);
+  applySessionPolicy(data?.sessionPolicy);
 }
 
 const fetchOpts = { credentials: 'include' };
@@ -492,8 +544,34 @@ export const api = {
       return await api.request('POST', '/api/auth/forgot-password', { email });
     },
 
+    /**
+     * Redeem a single-use reset token. The server answers with a fresh session (the
+     * token proved mailbox ownership), so this applies the access token exactly like
+     * sign-in does and the console opens without a second password prompt.
+     */
     async resetPassword(token, newPassword) {
-      return await api.request('POST', '/api/auth/reset-password', { token, newPassword });
+      const data = await api.request('POST', '/api/auth/reset-password', { token, newPassword });
+      applyAuthResponse(data);
+      return data;
+    },
+
+    /**
+     * Change the signed-in user's password. Also returns a session: every other
+     * session for the account is revoked, and this browser gets a fresh one so the
+     * person who changed it is not signed out of the tab they did it in.
+     */
+    async changePassword(currentPassword, newPassword) {
+      const data = await api.request('POST', '/api/auth/change-password', {
+        currentPassword,
+        newPassword,
+      });
+      applyAuthResponse(data);
+      return data;
+    },
+
+    /** Server-authoritative idle / absolute session bounds the client timer mirrors. */
+    async sessionPolicy() {
+      return await api.request('GET', '/api/auth/session-policy');
     },
 
     async verifyEmail(token) {

@@ -11,7 +11,7 @@ import {
 import { useWorkspace } from '../../context/WorkspaceContext';
 import { TactileButton } from '../../ui/TactileButton';
 import { SolidCard } from '../../ui/SolidCard';
-import { VoxlyScene } from '../../../three/VoxlyScene';
+import { LazyVoxlyScene } from '../../../three/LazyVoxlyScene';
 import { createWebAgentSession } from '../../../services/webAgentClient';
 import { showToast } from '../../ui/ToastHost';
 
@@ -333,7 +333,7 @@ export function AgentTestCallPanel({ agent }) {
             </div>
 
             <div className="h-[220px] sm:h-[260px] rounded-2xl bg-[#0F0E17]/95 border border-[#262438] overflow-hidden relative">
-              <VoxlyScene
+              <LazyVoxlyScene
                 state={
                   sessionState === 'CONNECTING'
                     ? 'THINKING'

@@ -1,92 +1,110 @@
-import React, { useState, useEffect } from 'react';
-import { X, Play, Pause, RotateCcw, CheckCircle2 } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { X, Play, Square, RotateCcw, Mic, CheckCircle2 } from 'lucide-react';
 import { voiceAgent } from '../services/voiceAgent';
+import { VOICE_SAMPLES, playVoiceSample, sampleDurationLabel } from '../services/marketingVoice';
 
-const DEMO_STEPS = [
+/**
+ * Product walkthrough.
+ *
+ * This used to play a fictional discovery call — invented company, invented 4.2x
+ * speedup, invented savings — through `speechSynthesis`, and it passed the callbacks as
+ * `playTTS(text, { onEnd })` when the signature is `playTTS(text, onEnd, onStart, options)`,
+ * so the player threw on `onEnd()` and the walkthrough never advanced past line one.
+ *
+ * Both are fixed here by showing something that is actually true: the real voice
+ * samples, the transcript that was spoken, and the states the mascot moves through
+ * while it plays. The claims live on the sections below this modal, where they can be
+ * checked.
+ */
+const WALKTHROUGH = [
   {
-    speaker: "Voxly AI",
-    text: "Hello! Thank you for calling CloudMetrics. My name is Voxly, your autonomous voice rep. Are you looking to upgrade your current data warehousing plan or resolve an existing pipeline question?",
-    time: "0:03",
+    id: 'healthcare-clinic',
+    botState: 'TALKING',
+    caption: 'First ring, in the caller\u2019s language, no hold music.',
   },
   {
-    speaker: "Prospect",
-    text: "Hi! We're currently processing 40 million events per day on Snowflake and our queries are hitting concurrency limits. What's your integration timeline?",
-    time: "0:09",
+    id: 'car-dealership',
+    botState: 'CONFIDENT',
+    caption: 'Qualifies and books on the call \u2014 the outcome is already in the CRM.',
   },
   {
-    speaker: "Voxly AI",
-    text: "We deploy a direct zero-copy connector with Snowflake that activates in under 15 minutes. Our enterprise customers typically see a 4.2x speedup on concurrent analytics while cutting compute spend by 30%. Would you like to schedule a 15-minute technical benchmark with our solutions team?",
-    time: "0:17",
+    id: 'it-support',
+    botState: 'THINKING',
+    caption: 'Reads your knowledge base before it answers, so it never guesses.',
   },
   {
-    speaker: "Prospect",
-    text: "Yes, that sounds great. What days do you have open this week?",
-    time: "0:23",
-  },
-  {
-    speaker: "Voxly AI",
-    text: "I have Thursday at 11 AM Eastern or Friday at 2 PM Eastern available on our solutions architect's calendar. Which one suits your schedule best?",
-    time: "0:29",
+    id: 'logistics',
+    botState: 'LISTENING',
+    caption: 'Barge-in handled: the caller can interrupt at any point.',
   },
 ];
 
-export function WatchDemoModal({ isOpen, onClose, onSelectBotState }) {
-  const [currentStep, setCurrentStep] = useState(0);
+export function WatchDemoModal({ isOpen, onClose, onSelectBotState, onTryLive }) {
+  const [index, setIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const stopRef = useRef(null);
+
+  const stop = useCallback(() => {
+    stopRef.current?.();
+    stopRef.current = null;
+    setIsPlaying(false);
+    if (onSelectBotState) onSelectBotState('IDLE');
+  }, [onSelectBotState]);
 
   useEffect(() => {
-    if (!isOpen) {
-      voiceAgent.stopTTS();
-      setIsPlaying(false);
-      setCurrentStep(0);
-      if (onSelectBotState) onSelectBotState('IDLE');
+    if (isOpen) return;
+    stop();
+    setIndex(0);
+  }, [isOpen, stop]);
+
+  // Advance the walkthrough when a clip finishes.
+  useEffect(() => {
+    if (isOpen && isPlaying && !stopRef.current) {
+      setIndex((prev) => (prev < WALKTHROUGH.length - 1 ? prev + 1 : 0));
     }
-  }, [isOpen, onSelectBotState]);
+  }, [isOpen, isPlaying, index]);
 
-  useEffect(() => {
-    let timer = null;
+  useEffect(() => () => stop(), [stop]);
+
+  const playStep = useCallback(
+    (stepIndex) => {
+      const step = WALKTHROUGH[stepIndex];
+      const sample = VOICE_SAMPLES.find((s) => s.id === step.id);
+      if (!sample) return;
+      stopRef.current?.();
+      setIsPlaying(true);
+      if (onSelectBotState) onSelectBotState(step.botState);
+      stopRef.current = playVoiceSample(sample, {
+        onEnd: () => {
+          stopRef.current = null;
+          setIsPlaying(false);
+          if (onSelectBotState) onSelectBotState('IDLE');
+          if (stepIndex < WALKTHROUGH.length - 1) {
+            setIndex(stepIndex + 1);
+            playStep(stepIndex + 1);
+          }
+        },
+      });
+    },
+    [onSelectBotState]
+  );
+
+  const togglePlay = useCallback(() => {
     if (isPlaying) {
-      const step = DEMO_STEPS[currentStep];
-      if (step.speaker === 'Voxly AI') {
-        if (onSelectBotState) onSelectBotState('TALKING');
-        voiceAgent.playTTS(step.text, {
-          onEnd: () => {
-            proceedToNext();
-          },
-        });
-      } else {
-        if (onSelectBotState) onSelectBotState('LISTENING');
-        timer = setTimeout(() => {
-          proceedToNext();
-        }, 3200);
-      }
+      stop();
+      return;
     }
-    return () => clearTimeout(timer);
-  }, [isPlaying, currentStep]);
-
-  const proceedToNext = () => {
-    if (currentStep < DEMO_STEPS.length - 1) {
-      setCurrentStep((prev) => prev + 1);
-    } else {
-      setIsPlaying(false);
-      if (onSelectBotState) onSelectBotState('IDLE');
-    }
-  };
-
-  const handleTogglePlay = () => {
-    if (!isPlaying && currentStep >= DEMO_STEPS.length - 1) {
-      setCurrentStep(0);
-    }
-    setIsPlaying(!isPlaying);
-  };
+    playStep(index);
+  }, [index, isPlaying, playStep, stop]);
 
   if (!isOpen) return null;
+
+  const current = WALKTHROUGH[index];
+  const sample = VOICE_SAMPLES.find((s) => s.id === current?.id);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0F0E17]/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="relative w-full max-w-lg bg-white rounded-2xl p-5 sm:p-6 shadow-2xl border border-[#E4E2EB] overflow-hidden">
-        
-        {/* Header */}
         <div className="flex items-center justify-between pb-3.5 border-b border-[#E4E2EB] mb-4">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-[#0F0E17] flex items-center justify-center text-white shadow-xs">
@@ -105,82 +123,99 @@ export function WatchDemoModal({ isOpen, onClose, onSelectBotState }) {
               </svg>
             </div>
             <div>
-              <h3 className="text-sm font-bold text-[#0F0E17]">
-                Live Telephony Simulation
-              </h3>
+              <h3 className="text-sm font-bold text-[#0F0E17]">How a Voxly call sounds</h3>
               <p className="text-[11px] text-[#524E5E]">
-                Bidirectional call simulation with synthesized neural voice
+                Real audio from the live speech model &mdash; not a scripted voice-over
               </p>
             </div>
           </div>
           <button
-            onClick={onClose}
+            type="button"
+            onClick={() => {
+              stop();
+              onClose();
+            }}
             className="w-7 h-7 rounded-lg bg-[#FAF9FD] hover:bg-[#F0EEF6] border border-[#E4E2EB] flex items-center justify-center text-[#524E5E] hover:text-[#0F0E17] transition-colors"
+            aria-label="Close walkthrough"
           >
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        {/* Live Conversation Display */}
-        <div className="space-y-2.5 mb-5 max-h-[280px] overflow-y-auto pr-1">
-          {DEMO_STEPS.slice(0, currentStep + 1).map((step, idx) => {
-            const isVoxly = step.speaker === 'Voxly AI';
-            const isCurrent = idx === currentStep;
+        <ol className="space-y-2.5 mb-5 max-h-[300px] overflow-y-auto pr-1">
+          {WALKTHROUGH.map((step, i) => {
+            const stepSample = VOICE_SAMPLES.find((s) => s.id === step.id);
+            const isCurrent = i === index;
+            const isPast = i < index;
             return (
-              <div
-                key={idx}
+              <li
+                key={step.id}
                 className={`p-3.5 rounded-xl border text-left transition-all duration-200 ${
-                  isVoxly
-                    ? 'bg-[#FAF9FD] border-[#E4E2EB]'
-                    : 'bg-white border-[#E4E2EB]'
-                } ${isCurrent ? 'ring-1 ring-[#0F0E17]' : 'opacity-85'}`}
+                  isCurrent ? 'bg-[#FAF9FD] border-[#E4E2EB] ring-1 ring-[#0F0E17]' : 'bg-white border-[#E4E2EB]'
+                } ${isPast ? 'opacity-70' : ''}`}
               >
-                <div className="flex items-center justify-between mb-1">
-                  <span className={`text-xs font-bold ${isVoxly ? 'text-[#6344E7]' : 'text-[#0F0E17]'}`}>
-                    {step.speaker}
+                <div className="flex items-center justify-between mb-1 gap-2">
+                  <span className="text-xs font-bold text-[#6344E7]">
+                    {stepSample?.industry} &middot; {stepSample?.label}
                   </span>
-                  <span className="text-[10px] text-[#524E5E] font-mono">{step.time}</span>
+                  <span className="text-[10px] text-[#524E5E] font-mono shrink-0">
+                    {sampleDurationLabel(stepSample?.durationSeconds)}
+                  </span>
                 </div>
                 <p className="text-xs text-[#0F0E17] leading-relaxed">
-                  {step.text}
+                  &ldquo;{stepSample?.text}&rdquo;
                 </p>
-              </div>
+                <p className="text-[11px] text-[#524E5E] leading-relaxed mt-1.5">{step.caption}</p>
+              </li>
             );
           })}
-        </div>
+        </ol>
 
-        {/* Playback Controls */}
         <div className="flex flex-wrap items-center justify-between gap-3 pt-3.5 border-t border-[#E4E2EB]">
           <div className="flex items-center gap-1.5 text-xs text-[#10B981] font-mono font-medium">
             <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>Telemetry Active</span>
+            <span>{isPlaying ? 'Playing real audio' : 'Real samples'}</span>
           </div>
 
           <div className="flex items-center gap-2">
             <button
+              type="button"
               onClick={() => {
-                setCurrentStep(0);
-                setIsPlaying(false);
-                voiceAgent.stopTTS();
-                if (onSelectBotState) onSelectBotState('IDLE');
+                stop();
+                setIndex(0);
               }}
               className="p-2 rounded-lg bg-[#FAF9FD] hover:bg-[#F0EEF6] border border-[#E4E2EB] text-[#524E5E]"
-              title="Restart Demo"
+              title="Restart"
+              aria-label="Restart walkthrough"
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </button>
 
+            {onTryLive && (
+              <button
+                type="button"
+                onClick={onTryLive}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-[#0F0E17] bg-white border border-[#E4E2EB] hover:bg-[#FAF9FD] active:scale-[0.98] transition-all"
+              >
+                <Mic className="w-3.5 h-3.5" />
+                <span>Try live</span>
+              </button>
+            )}
+
             <button
-              onClick={handleTogglePlay}
+              type="button"
+              onClick={togglePlay}
+              data-testid="walkthrough-toggle"
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-[#0F0E17] hover:bg-[#232130] active:scale-[0.98] transition-all shadow-xs"
             >
-              {isPlaying ? <Pause className="w-3.5 h-3.5 fill-current" /> : <Play className="w-3.5 h-3.5 fill-current" />}
-              <span>{isPlaying ? 'Pause' : 'Play Live Call'}</span>
+              {isPlaying ? <Square className="w-3.5 h-3.5 fill-current" /> : <Play className="w-3.5 h-3.5 fill-current" />}
+              <span>{isPlaying ? 'Stop' : 'Play'}</span>
             </button>
           </div>
         </div>
-
       </div>
     </div>
   );
 }
+
+export default WatchDemoModal;

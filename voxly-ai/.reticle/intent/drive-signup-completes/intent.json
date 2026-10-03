@@ -1,0 +1,21 @@
+{
+  "intents": {
+    "flow:drive-signup-completes": {
+      "binding": {
+        "flow": "drive-signup-completes"
+      },
+      "declaredAt": 1791031773964,
+      "id": "flow:drive-signup-completes",
+      "state": "bound",
+      "statement": "signup-completes",
+      "status": "proposed",
+      "subject": "drive-signup-completes",
+      "surface": {
+        "flow": "drive-signup-completes"
+      },
+      "updatedAt": 1791031773998
+    }
+  },
+  "subject": "drive-signup-completes",
+  "version": 1
+}

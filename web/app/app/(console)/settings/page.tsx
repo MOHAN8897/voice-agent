@@ -2,6 +2,7 @@ import { ConsolePage } from "@/components/console/ConsolePage";
 import { PageHeader } from "@/components/console/PageHeader";
 import { Panel } from "@/components/console/Panel";
 import { SkeuoInput } from "@/components/ui/skeuo";
+import { ChangePasswordCard } from "@/components/auth/ChangePasswordCard";
 
 export default function SettingsPage() {
   return (
@@ -12,6 +13,7 @@ export default function SettingsPage() {
         description="Retention, members, and environment — server RBAC remains authoritative."
       />
       <div className="mt-8 grid gap-4 lg:grid-cols-2">
+        <ChangePasswordCard />
         <Panel title="Retention & privacy">
           <label className="block text-sm text-text-muted">
             Call retention (days)

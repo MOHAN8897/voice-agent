@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { VoxlyScene } from '../three/VoxlyScene';
+import { LazyVoxlyScene } from '../three/LazyVoxlyScene';
 import { HERO_CONTENT } from '../data/siteContent';
 import { voiceAgent } from '../services/voiceAgent';
 import { Check, Mic, X } from 'lucide-react';
@@ -90,9 +90,9 @@ const CLICK_INTERACTIONS = [
     mood: "celebration",
   },
   {
-    title: "Voxly • Sub-400ms Speed",
-    message: "Did you know? ⚡ Sub-400ms latency creates natural, fluid human conversations!",
-    speech: "Did you know? Sub-400 millisecond response time means natural, human conversation!",
+    title: "Voxly • Answers On The First Ring",
+    message: "No hold music, no voicemail. It picks up and works out what the caller needs. 👋",
+    speech: "No hold music, no voicemail. It picks up and works out what the caller needs.",
     audioSrc: "/audio/voxly/hero_surprise.mp3",
     expression: "SURPRISED",
     gesture: "RIGHT_HAND_WAVE",
@@ -589,7 +589,7 @@ export function Hero({
               className="relative w-full h-[380px] sm:h-[440px] lg:h-[500px] flex items-center justify-center cursor-pointer select-none"
               style={{ touchAction: 'none' }}
             >
-              <VoxlyScene
+              <LazyVoxlyScene
                 state={botState}
                 onBotClick={handleBotClick}
                 pointerRef={heroPointerRef}

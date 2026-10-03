@@ -5,7 +5,9 @@ import { TactileButton } from '../../ui/TactileButton';
 import { useWorkspace } from '../../context/WorkspaceContext';
 import { showToast } from '../../ui/ToastHost';
 
-const MAX_CONCURRENCY = 20; // SaaS platform ceiling; Telnyx account may be 10 until support raises channels
+// Workspace plan ceiling for simultaneous outbound lines. The number is the tenant's,
+// so it is stated without reference to how the carriers behind it are provisioned.
+const MAX_CONCURRENCY = 20;
 
 function parseContactLines(text) {
   return text

@@ -1,6 +1,7 @@
 """SaaS subscriber auth — JWT (PRD-03)."""
 from __future__ import annotations
 
+import logging
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
@@ -17,9 +18,20 @@ from server.services.saas import auth_service
 from server.services.saas.tenant_guard import SubscriberPrincipal
 from server.utils.rate_limiter import RateLimiter
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
 _signup_limiter = RateLimiter(max_requests=20, window_s=3600)
 _login_limiter = RateLimiter(max_requests=30, window_s=300)
+
+
+def _mask_email(email: str) -> str:
+    """Enough to correlate a log line with an account, not enough to harvest one."""
+    local, _, domain = (email or "").partition("@")
+    if not domain:
+        return "***"
+    head = local[:1] or "*"
+    return f"{head}***@{domain}"
 
 
 class SignupBody(BaseModel):
@@ -93,11 +105,14 @@ def _ensure_saas_db() -> None:
 
 def _attach_refresh(response: Response, payload: dict) -> dict:
     refresh = payload.get("refreshToken")
+    out = payload
     if refresh:
         set_refresh_cookie(response, refresh)
-        safe = {k: v for k, v in payload.items() if k != "refreshToken"}
-        return safe
-    return payload
+        out = {k: v for k, v in payload.items() if k != "refreshToken"}
+    # Every authenticated response carries the policy the browser mirrors for its idle
+    # timer, so the client never has a hard-coded copy that can drift from the server.
+    out.setdefault("sessionPolicy", auth_service.session_policy())
+    return out
 
 
 @router.post("/api/auth/signup")
@@ -110,6 +125,30 @@ async def auth_signup(body: SignupBody, request: Request, response: Response):
             status_code=429,
             detail={"error": {"code": "rate_limit", "message": "Too many signups", "retry_after": retry}},
         )
+
+    from server.services.saas.email_service import email_provider_status
+
+    settings = get_settings()
+    # Same gate /forgot-password uses, for the same reason. signup() commits the account
+    # before it sends, so an undeliverable provider would strand a pending_verification
+    # account nobody can complete — and every retry after that answers 409 "email taken",
+    # which reads as "your details are wrong". Refusing first keeps signup retryable.
+    # A dev deployment with the debug flag set has no working mail by definition, so it
+    # skips the gate and hands back the code instead.
+    if not settings.auth_debug_expose_reset_token:
+        provider = await email_provider_status()
+        if not provider.get("deliverable"):
+            logger.error("signup refused: email delivery unavailable (%s)", provider.get("reason"))
+            raise HTTPException(
+                status_code=503,
+                detail={
+                    "error": {
+                        "code": "email_delivery_unavailable",
+                        "message": "We could not send your verification email right now. Please try again shortly.",
+                    }
+                },
+            )
+
     try:
         data = await auth_service.signup(
             email=body.email,
@@ -117,6 +156,7 @@ async def auth_signup(body: SignupBody, request: Request, response: Response):
             full_name=body.fullName,
             org_name=body.orgName,
             ip=ip,
+            expose_debug_otp=settings.auth_debug_expose_reset_token,
         )
         return data
     except ValueError as e:
@@ -124,7 +164,12 @@ async def auth_signup(body: SignupBody, request: Request, response: Response):
         if code == "email_taken":
             raise HTTPException(
                 status_code=409,
-                detail={"error": {"code": "signup_failed", "message": "Unable to create an account with these details."}},
+                detail={
+                    "error": {
+                        "code": "email_taken",
+                        "message": "An account already exists for this email. Sign in instead, or reset your password.",
+                    }
+                },
             )
         raise HTTPException(status_code=400, detail={"error": {"code": code, "message": code}})
 
@@ -159,6 +204,12 @@ async def auth_login(body: LoginBody, request: Request, response: Response):
         raise HTTPException(status_code=400, detail={"error": {"code": code, "message": code}})
 
 
+@router.get("/api/auth/session-policy")
+async def auth_session_policy():
+    """Idle / absolute session limits, so the client timer matches the server's."""
+    return {"ok": True, "policy": auth_service.session_policy()}
+
+
 @router.post("/api/auth/refresh")
 async def auth_refresh(request: Request, response: Response, body: RefreshBody | None = None):
     _ensure_saas_db()
@@ -168,7 +219,24 @@ async def auth_refresh(request: Request, response: Response, body: RefreshBody |
     try:
         data = await auth_service.refresh(token)
         return _attach_refresh(response, data)
-    except ValueError:
+    except ValueError as e:
+        code = str(e)
+        if code in ("session_idle", "session_absolute_max"):
+            # Not an error state — the session was closed on purpose. Tell the client
+            # which bound it hit so the sign-in screen can explain the sign-out.
+            clear_refresh_cookie(response)
+            message = (
+                "You were signed out after a period of inactivity. Please sign in again."
+                if code == "session_idle"
+                else "Your session reached its maximum length. Please sign in again."
+            )
+            raise HTTPException(status_code=401, detail={"error": {"code": code, "message": message}})
+        if code == "tenant_inactive":
+            clear_refresh_cookie(response)
+            raise HTTPException(
+                status_code=401,
+                detail={"error": {"code": code, "message": "This workspace is no longer active."}},
+            )
         raise HTTPException(status_code=401, detail={"error": {"code": "invalid_refresh", "message": "Invalid refresh token"}})
 
 
@@ -205,12 +273,35 @@ async def auth_patch_me(body: PatchMeBody, principal: SubscriberPrincipal = Depe
 
 
 @router.post("/api/auth/change-password")
-async def auth_change_password(body: ChangePasswordBody, principal: SubscriberPrincipal = Depends(require_subscriber_jwt)):
+async def auth_change_password(
+    body: ChangePasswordBody,
+    request: Request,
+    response: Response,
+    principal: SubscriberPrincipal = Depends(require_subscriber_jwt),
+):
     try:
-        await auth_service.change_password(principal.user_id, body.currentPassword, body.newPassword)
-        return {"ok": True}
-    except ValueError:
-        raise HTTPException(status_code=401, detail={"error": {"code": "invalid_credentials", "message": "Invalid password"}})
+        data = await auth_service.change_password(principal.user_id, body.currentPassword, body.newPassword)
+    except ValueError as e:
+        code = str(e)
+        if code in ("invalid_credentials",):
+            raise HTTPException(
+                status_code=401,
+                detail={"error": {"code": "invalid_credentials", "message": "Current password is incorrect."}},
+            )
+        if code == "password_too_short":
+            raise HTTPException(
+                status_code=400,
+                detail={"error": {"code": code, "message": "New password must be at least 8 characters."}},
+            )
+        if code == "tenant_inactive":
+            raise HTTPException(
+                status_code=403,
+                detail={"error": {"code": code, "message": "This workspace is not active."}},
+            )
+        raise HTTPException(status_code=400, detail={"error": {"code": code, "message": code}})
+    # All other sessions were revoked; hand this browser a fresh one so the person who
+    # changed the password stays signed in here.
+    return _attach_refresh(response, data)
 
 
 @router.post("/api/auth/forgot-password")
@@ -220,27 +311,98 @@ async def auth_forgot_password(body: ForgotPasswordBody, request: Request):
     allowed, retry = _login_limiter.allow(f"forgot:{ip}")
     if not allowed:
         raise HTTPException(status_code=429, detail={"error": {"code": "rate_limit", "retry_after": retry}})
-    token = await auth_service.forgot_password(body.email)
+
+    from server.services.saas.email_service import email_provider_status, send_password_reset_email
+
     settings = get_settings()
+    provider = await email_provider_status()
+    # Fail loudly, but identically for every caller. Reporting "delivery is broken"
+    # only when it is broken platform-wide leaks nothing about whether *this* address
+    # has an account; reporting it per-address would be an account-existence oracle.
+    # A dev deployment with the debug flag set has no working mail by definition, so it
+    # skips the gate and hands back the link instead of 503-ing the whole flow.
+    if not provider.get("deliverable") and not settings.auth_debug_expose_reset_token:
+        logger.error("forgot-password refused: email delivery unavailable (%s)", provider.get("reason"))
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "error": {
+                    "code": "email_delivery_unavailable",
+                    "message": "We could not send the reset email right now. Please try again shortly or contact support.",
+                }
+            },
+        )
+
+    email = body.email.strip().lower()
+    token = await auth_service.forgot_password(email)
+
+    delivery: dict = {"attempted": False}
     if token:
         reset_url = f"{settings.voxly_frontend_url.rstrip('/')}/#reset-password?token={token}"
-        from server.services.saas.email_service import send_password_reset_email
+        result = await send_password_reset_email(email, reset_url)
+        delivery = {"attempted": True, "sent": result.ok, "reason": result.code}
+        if not result.ok:
+            # Still 200 with the same generic message — the address may simply be
+            # undeliverable. The operator needs the real reason in the logs, not the
+            # person who pressed "reset" finding out how the backend is wired.
+            logger.error(
+                "password reset email not delivered to %s: code=%s status=%s detail=%s",
+                _mask_email(email),
+                result.code,
+                result.provider_status,
+                result.detail,
+            )
 
-        await send_password_reset_email(body.email.strip().lower(), reset_url)
-    return {
+    payload: dict = {
         "ok": True,
         "message": "If an account exists for this email, password reset instructions were sent.",
     }
+    if settings.auth_debug_expose_reset_token and token:
+        # Dev/staging only (AUTH_DEBUG_EXPOSE_RESET_TOKEN): without a working mail
+        # provider there is no way to drive the rest of the flow, and a dead link is
+        # indistinguishable from a broken endpoint.
+        payload["debugResetUrl"] = f"{settings.voxly_frontend_url.rstrip('/')}/#reset-password?token={token}"
+    if delivery.get("attempted") and not delivery.get("sent"):
+        # Still the same generic message — the address may simply be undeliverable. The
+        # operator needs the real reason in the logs, not the person who pressed "reset"
+        # finding out how the backend is wired.
+        logger.error(
+            "password reset email not delivered to %s: code=%s status=%s detail=%s",
+            _mask_email(email),
+            delivery.get("reason"),
+            provider.get("reason"),
+            provider.get("detail") or "",
+        )
+        if settings.app_environment != "production":
+            payload["debugDelivery"] = {**delivery, "provider": provider.get("reason")}
+    return payload
 
 
 @router.post("/api/auth/reset-password")
-async def auth_reset_password(body: ResetPasswordBody):
+async def auth_reset_password(body: ResetPasswordBody, request: Request, response: Response):
     _ensure_saas_db()
+    ip = _client_ip(request) or "unknown"
+    allowed, retry = _login_limiter.allow(f"reset:{ip}")
+    if not allowed:
+        raise HTTPException(status_code=429, detail={"error": {"code": "rate_limit", "retry_after": retry}})
     try:
-        await auth_service.reset_password(body.token, body.newPassword)
-        return {"ok": True}
-    except ValueError:
-        raise HTTPException(status_code=400, detail={"error": {"code": "invalid_token", "message": "Invalid token"}})
+        data = await auth_service.reset_password(body.token, body.newPassword)
+    except ValueError as e:
+        code = str(e)
+        if code == "invalid_token":
+            raise HTTPException(
+                status_code=400,
+                detail={"error": {"code": code, "message": "This reset link is invalid or has expired."}},
+            )
+        if code == "password_too_short":
+            raise HTTPException(
+                status_code=400,
+                detail={"error": {"code": code, "message": "Password must be at least 8 characters."}},
+            )
+        raise HTTPException(status_code=400, detail={"error": {"code": code, "message": code}})
+    # The token already proved the person owns the mailbox, so the reset signs them in
+    # instead of dumping them back on the sign-in form with a message to retype it.
+    return _attach_refresh(response, data)
 
 
 class VerifyEmailBody(BaseModel):
@@ -289,8 +451,11 @@ async def auth_resend_verification(body: ResendVerificationBody, request: Reques
     allowed, retry = _signup_limiter.allow(f"resend:{ip}")
     if not allowed:
         raise HTTPException(status_code=429, detail={"error": {"code": "rate_limit", "retry_after": retry}})
-    await auth_service.resend_verification_email(body.email)
-    return {"ok": True, "message": "If an unverified account exists, a new email was sent."}
+    settings = get_settings()
+    data = await auth_service.resend_verification_email(
+        body.email, expose_debug_otp=settings.auth_debug_expose_reset_token
+    )
+    return {"ok": True, "message": "If an unverified account exists, a new email was sent.", **data}
 
 
 @router.post("/api/auth/switch-tenant")

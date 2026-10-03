@@ -1,6 +1,12 @@
 {
   "entries": [
     {
+      "id": "flow:drive-a-deployment-whose-mail-provider-cannot-deliver",
+      "statement": "a deployment whose mail provider cannot deliver says so, and hands back…",
+      "status": "proposed",
+      "subject": "drive-a-deployment-whose-mail-provider-c"
+    },
+    {
       "id": "flow:drive-billing-page-shows-wallet-only-no-subscription-p",
       "statement": "Billing page shows wallet only, no subscription plans",
       "status": "proposed",
@@ -31,6 +37,12 @@
       "subject": "drive-creating-an-ai-employee-lands-the"
     },
     {
+      "id": "flow:drive-every-industry-on-the-landing-page-plays-a-real",
+      "statement": "every industry on the landing page plays a real clip rendered by the li…",
+      "status": "proposed",
+      "subject": "drive-every-industry-on-the-landing-page"
+    },
+    {
       "id": "flow:drive-open-the-test-call-modal-so-operators-get-call-c",
       "statement": "Open the test call modal so operators get call chrome with timer and 3D…",
       "status": "proposed",
@@ -49,10 +61,34 @@
       "subject": "drive-refreshing-call-history-keeps-tena"
     },
     {
+      "id": "flow:drive-signup-completes",
+      "statement": "signup-completes",
+      "status": "proposed",
+      "subject": "drive-signup-completes"
+    },
+    {
+      "id": "flow:drive-the-marketing-page-plays-the-product-s-own-neura",
+      "statement": "the marketing page plays the product's own neural voice per industry, d…",
+      "status": "proposed",
+      "subject": "drive-the-marketing-page-plays-the-produ"
+    },
+    {
       "id": "flow:drive-the-open-builder-action-on-an-agent-card-enters",
       "statement": "The Open builder action on an agent card enters the workspace with Over…",
       "status": "proposed",
       "subject": "drive-the-open-builder-action-on-an-agen"
+    },
+    {
+      "id": "inline:a-deployment-whose-mail-provider-cannot-deliver-4c2a706c",
+      "statement": "a deployment whose mail provider cannot deliver says so, and hands back…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:a-new-signup-can-complete-email-verification-and-9f4d8f65",
+      "statement": "A new signup can complete email verification and land signed in on the…",
+      "status": "proposed",
+      "subject": "unsorted"
     },
     {
       "id": "inline:a-signed-in-subscriber-s-workspace-loads-from-th-b36101c2",
@@ -81,6 +117,12 @@
     {
       "id": "inline:a-subscriber-whose-session-token-pointed-at-a-de-26a03115",
       "statement": "A subscriber whose session token pointed at a deleted workspace ends up…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:after-de-duplicating-the-landing-copy-the-voice-ebe61ed7",
+      "statement": "after de-duplicating the landing copy, the voice showcase still plays r…",
       "status": "proved",
       "subject": "unsorted"
     },
@@ -157,6 +199,12 @@
       "subject": "unsorted"
     },
     {
+      "id": "inline:every-industry-on-the-landing-page-plays-a-real-982871e2",
+      "statement": "every industry on the landing page plays a real clip rendered by the li…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
       "id": "inline:open-test-call-modal-from-agent-workspace-header-2ee9f12c",
       "statement": "Open test call modal from agent workspace header so the call chrome wit…",
       "status": "proposed",
@@ -211,6 +259,18 @@
       "subject": "unsorted"
     },
     {
+      "id": "inline:redeeming-a-password-reset-link-leaves-the-perso-c75c8cb8",
+      "statement": "redeeming a password reset link leaves the person signed in on their co…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:redeeming-a-password-reset-link-signs-the-person-6bf8ef40",
+      "statement": "redeeming a password reset link signs the person straight into their co…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
       "id": "inline:refresh-reloads-call-stats-and-history-without-a-78af6dd9",
       "statement": "Refresh reloads call stats and history without auth failure.",
       "status": "proved",
@@ -241,6 +301,12 @@
       "subject": "unsorted"
     },
     {
+      "id": "inline:the-marketing-page-plays-the-product-s-own-neura-275c6600",
+      "statement": "the marketing page plays the product's own neural voice per industry, d…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
       "id": "inline:the-open-builder-action-on-an-agent-card-enters-dab944d9",
       "statement": "The Open builder action on an agent card enters the workspace with Over…",
       "status": "proposed",
@@ -256,6 +322,12 @@
       "id": "inline:wallet-balance-shown-in-dollars-on-the-test-call-5d90d096",
       "statement": "Wallet balance shown in dollars on the test call chrome.",
       "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "signup-completes",
+      "statement": "A person who creates an account with an email and a password can finish…",
+      "status": "proposed",
       "subject": "unsorted"
     }
   ],

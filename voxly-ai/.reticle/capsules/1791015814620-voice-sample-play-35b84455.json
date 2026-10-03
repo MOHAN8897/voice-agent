@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "origin": "failed-assert",
+  "expected": "signal voxly:voice-sample-audible",
+  "observed": "signal \"voxly:voice-sample-audible\" never fired",
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "voice-sample-play",
+        "source": {
+          "file": "src/components/TalkToAiSection.jsx",
+          "line": 332,
+          "column": 17
+        }
+      },
+      "action": "click"
+    }
+  ],
+  "id": "1791015814620-voice-sample-play-35b84455",
+  "createdAt": 1791015814620,
+  "seen": 1,
+  "lastSeenAt": 1791015814620
+}

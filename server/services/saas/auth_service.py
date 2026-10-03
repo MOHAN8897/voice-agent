@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -33,6 +34,8 @@ from server.db.models.saas_models import (
 )
 from server.services.saas.email_service import send_password_reset_email, send_verification_email
 from server.services.saas.tenant_guard import resolve_usable_tenant
+
+logger = logging.getLogger(__name__)
 
 
 def _utcnow() -> datetime:
@@ -86,6 +89,7 @@ async def _issue_tokens(
     *,
     impersonator: str | None = None,
     access_ttl_seconds: int | None = None,
+    absolute_expires_at: datetime | None = None,
 ) -> dict[str, Any]:
     claims = AccessTokenClaims(
         user_id=str(user.user_id),
@@ -102,19 +106,32 @@ async def _issue_tokens(
     settings = get_settings()
     # Impersonation refresh is short-lived so a leaked handoff cannot linger.
     refresh_days = 1 if impersonator else settings.jwt_refresh_ttl_days
+    now = _utcnow()
+    # The absolute ceiling belongs to the *sign-in*, not the token, so a rotation must
+    # carry the family's original deadline forward. Otherwise every refresh would
+    # restart the clock and the ceiling would never be reached.
+    out_exp = await _session_absolute_deadline(
+        session,
+        family_id,
+        default=now + timedelta(hours=max(1, settings.session_absolute_max_hours or 24)),
+        inherit=absolute_expires_at,
+    )
     session.add(
         RefreshToken(
             user_id=user.user_id,
             token_hash=_hash_token(raw_refresh),
             family_id=family_id,
-            expires_at=_utcnow() + timedelta(days=refresh_days),
-            created_at=_utcnow(),
+            expires_at=now + timedelta(days=refresh_days),
+            created_at=now,
+            last_active_at=now,
+            absolute_expires_at=out_exp,
         )
     )
     out: dict[str, Any] = {
         "accessToken": access,
         "refreshToken": raw_refresh,
         "expiresIn": expires_in,
+        "sessionExpiresAt": out_exp.isoformat(),
     }
     if impersonator:
         out["impersonation"] = {
@@ -122,6 +139,36 @@ async def _issue_tokens(
             "expiresIn": expires_in,
         }
     return out
+
+
+async def _session_absolute_deadline(
+    session: AsyncSession,
+    family_id: uuid.UUID,
+    *,
+    default: datetime,
+    inherit: datetime | None,
+) -> datetime:
+    """Deadline that caps one sign-in, however often the token rotates."""
+    if inherit is not None:
+        return inherit
+    existing = await session.scalar(
+        select(func.min(RefreshToken.absolute_expires_at)).where(
+            RefreshToken.family_id == family_id
+        )
+    )
+    if existing is not None:
+        return existing
+    return default
+
+
+def session_policy() -> dict[str, Any]:
+    """The policy the client mirrors for its idle timer."""
+    settings = get_settings()
+    return {
+        "idleTimeoutMinutes": settings.session_idle_timeout_minutes,
+        "absoluteMaxHours": settings.session_absolute_max_hours,
+        "accessTokenMinutes": settings.jwt_access_ttl_minutes,
+    }
 
 
 async def issue_impersonation_session(
@@ -355,6 +402,7 @@ async def signup(
     full_name: str,
     org_name: str,
     ip: str | None = None,
+    expose_debug_otp: bool = False,
 ) -> dict[str, Any]:
     factory = get_session_factory()
     if factory is None:
@@ -404,8 +452,20 @@ async def signup(
     settings = get_settings()
     base = settings.voxly_frontend_url.rstrip("/")
     verify_url = f"{base}/#verify-email?token={verify_raw}"
-    await send_verification_email(norm, verify_url, otp)
-    return {
+    delivery = await send_verification_email(norm, verify_url, otp)
+    if not delivery.ok:
+        # The account row is committed before the send, so a swallowed send failure
+        # strands a pending_verification account nobody can complete — and the only
+        # thing the person can do next is retry signup, which reads as "email taken".
+        # The reason belongs in the operator's log, not in the signup response.
+        logger.error(
+            "signup verification email not delivered to %s: code=%s status=%s detail=%s",
+            norm,
+            delivery.code,
+            delivery.provider_status,
+            delivery.detail,
+        )
+    payload = {
         "ok": True,
         "requiresEmailVerification": True,
         "message": "Enter the 6-digit code we sent to your email to finish signing up.",
@@ -413,6 +473,11 @@ async def signup(
         "user": user_out,
         "tenant": tenant_out,
     }
+    if expose_debug_otp:
+        # Dev/staging only (AUTH_DEBUG_EXPOSE_RESET_TOKEN). Without a working mail
+        # provider there is no other way to drive the rest of the flow.
+        payload["debugOtp"] = otp
+    return payload
 
 
 async def login(*, email: str, password: str, ip: str | None = None) -> dict[str, Any]:
@@ -483,10 +548,18 @@ async def refresh(refresh_token: str) -> dict[str, Any]:
       - after the grace window, an already-used token is a real reuse → burn the whole
         family, because that means the token leaked and one of the two holders is an
         attacker. Revoking only the presented token would leave the thief working.
+
+    Two time bounds also apply before any of that (see SESSION_IDLE_TIMEOUT_MINUTES /
+    SESSION_ABSOLUTE_MAX_HOURS). They are what stop a 30-day token from acting as a
+    30-day session: the browser's silent 401-refresh used to resurrect a session that
+    nobody had touched for hours, on a machine that had been walked away from.
     """
     factory = get_session_factory()
     if factory is None:
         raise RuntimeError("database_required")
+    settings = get_settings()
+    idle_limit = settings.session_idle_timeout_minutes
+    absolute_limit = settings.session_absolute_max_hours
     th = _hash_token(refresh_token)
     async with factory() as session:
         now = _utcnow()
@@ -494,6 +567,29 @@ async def refresh(refresh_token: str) -> dict[str, Any]:
         row = result.scalar_one_or_none()
         if row is None or row.expires_at <= now:
             raise ValueError("invalid_refresh")
+
+        # Sliding window + absolute ceiling. Both are per-family, so they revoke the
+        # whole chain rather than leaving sibling tokens usable.
+        last_active = row.last_active_at or row.created_at or now
+        absolute_deadline = row.absolute_expires_at or row.expires_at
+        breach: str | None = None
+        if idle_limit and idle_limit > 0 and (now - last_active) > timedelta(minutes=idle_limit):
+            breach = "session_idle"
+        elif (
+            absolute_limit
+            and absolute_limit > 0
+            and (now - (row.created_at or now)) >= timedelta(hours=absolute_limit)
+        ):
+            breach = "session_absolute_max"
+        if breach is not None:
+            await session.execute(
+                update(RefreshToken)
+                .where(RefreshToken.family_id == row.family_id, RefreshToken.revoked_at.is_(None))
+                .values(revoked_at=now)
+            )
+            await _log_event(session, breach, user_id=row.user_id, tenant_id=None)
+            await session.commit()
+            raise ValueError(breach)
 
         is_race_replay = False
         if row.revoked_at is not None:
@@ -530,7 +626,14 @@ async def refresh(refresh_token: str) -> dict[str, Any]:
             membership.role = role
         if not is_race_replay:
             row.revoked_at = now
-        tokens = await _issue_tokens(session, user, membership.tenant_id, role, family_id=row.family_id)
+        tokens = await _issue_tokens(
+            session,
+            user,
+            membership.tenant_id,
+            role,
+            family_id=row.family_id,
+            absolute_expires_at=absolute_deadline,
+        )
         await session.commit()
         await _seed_admin_wallet(membership.tenant_id, user.user_id, user.email)
         return {**tokens, **_session_public(user, tenant, role)}
@@ -614,7 +717,14 @@ async def get_me(
         return payload
 
 
-async def change_password(user_id: uuid.UUID, current: str, new: str) -> None:
+async def change_password(user_id: uuid.UUID, current: str, new: str) -> dict[str, Any]:
+    """Rotate a signed-in user's password.
+
+    Every other session for the account is revoked (a password change must log out
+    anyone holding a stolen cookie), and the caller gets a fresh session of its own so
+    the person who just changed the password is not signed out of the tab they did it
+    in — they would otherwise have to re-enter the new password immediately.
+    """
     _validate_password(new)
     factory = get_session_factory()
     if factory is None:
@@ -625,9 +735,29 @@ async def change_password(user_id: uuid.UUID, current: str, new: str) -> None:
             raise ValueError("invalid_credentials")
         user.password_hash = hash_portal_password(new)
         user.updated_at = _utcnow()
+        await session.execute(
+            update(RefreshToken)
+            .where(RefreshToken.user_id == user.user_id, RefreshToken.revoked_at.is_(None))
+            .values(revoked_at=_utcnow())
+        )
         await _log_event(session, "password_change", user_id=user.user_id)
+        session_payload = await _reissue_session(session, user)
         await session.commit()
-    await logout_all(user_id)
+    await _seed_admin_wallet(session_payload["tenant"]["tenantId"], user.user_id, user.email)
+    return session_payload
+
+
+async def _reissue_session(session: AsyncSession, user: User) -> dict[str, Any]:
+    """Fresh access + refresh for a user who has just proved who they are."""
+    picked = await resolve_usable_tenant(session, user.user_id)
+    if picked is None:
+        raise ValueError("tenant_inactive")
+    membership, tenant = picked
+    role = _role_for_user(user.email, membership.role)
+    if membership.role != role:
+        membership.role = role
+    tokens = await _issue_tokens(session, user, membership.tenant_id, role)
+    return {**tokens, **_session_public(user, tenant, role)}
 
 
 async def forgot_password(email: str) -> str | None:
@@ -656,7 +786,7 @@ async def forgot_password(email: str) -> str | None:
         return raw
 
 
-async def reset_password(token: str, new_password: str) -> None:
+async def reset_password(token: str, new_password: str) -> dict[str, Any]:
     _validate_password(new_password)
     factory = get_session_factory()
     if factory is None:
@@ -678,8 +808,21 @@ async def reset_password(token: str, new_password: str) -> None:
         user.password_hash = hash_portal_password(new_password)
         user.updated_at = _utcnow()
         await session.delete(row)
+        # Everything else on the account is signed out — the reset link may have been
+        # forwarded, and the old password is no longer trustworthy.
+        await session.execute(
+            update(RefreshToken)
+            .where(RefreshToken.user_id == user.user_id, RefreshToken.revoked_at.is_(None))
+            .values(revoked_at=_utcnow())
+        )
+        await _log_event(session, "password_reset", user_id=user.user_id)
+        # Holding a valid single-use reset token *is* proof of identity — the email
+        # owner clicked it. Returning a session here means the reset lands the person
+        # straight in their console instead of making them retype the new password.
+        session_payload = await _reissue_session(session, user)
         await session.commit()
-    await logout_all(user.user_id)
+    await _seed_admin_wallet(session_payload["tenant"]["tenantId"], user.user_id, user.email)
+    return session_payload
 
 
 async def switch_tenant(user_id: uuid.UUID, tenant_id: uuid.UUID) -> dict[str, Any]:
@@ -1008,7 +1151,7 @@ async def verify_email_token(token: str) -> None:
         await session.commit()
 
 
-async def resend_verification_email(email: str) -> None:
+async def resend_verification_email(email: str, *, expose_debug_otp: bool = False) -> dict[str, Any]:
     factory = get_session_factory()
     if factory is None:
         raise RuntimeError("database_required")
@@ -1019,9 +1162,23 @@ async def resend_verification_email(email: str) -> None:
         )
         user = result.scalar_one_or_none()
         if user is None or user.email_verified_at is not None:
-            return
+            return {}
         verify_raw, otp = await _create_email_verification_token(session, user.user_id)
         await session.commit()
     settings = get_settings()
     verify_url = f"{settings.voxly_frontend_url.rstrip('/')}/#verify-email?token={verify_raw}"
-    await send_verification_email(norm, verify_url, otp)
+    delivery = await send_verification_email(norm, verify_url, otp)
+    if not delivery.ok:
+        logger.error(
+            "resent verification email not delivered to %s: code=%s status=%s detail=%s",
+            norm,
+            delivery.code,
+            delivery.provider_status,
+            delivery.detail,
+        )
+    # Never claim an account exists here: an unknown or already-verified address takes
+    # the same path as a failed send and comes back empty. The debug flag alone is the
+    # gate, exactly as it is for debugResetUrl on /forgot-password — it is documented as
+    # never-on in production, and it is the only setting that makes the code obtainable
+    # at all when no mail provider exists.
+    return {"debugOtp": otp} if expose_debug_otp else {}

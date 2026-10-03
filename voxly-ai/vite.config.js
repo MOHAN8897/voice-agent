@@ -144,12 +144,47 @@ export default defineConfig({
   build: {
     target: 'esnext',
     minify: 'esbuild',
+    // Keep the native <link rel=modulepreload> hints for the entry's static imports
+    // but drop Vite's JS polyfill: the helper now lives in its own `vite-helpers`
+    // chunk (see manualChunks), so it can no longer drag a lazily-imported chunk into
+    // the entry graph.
+    modulePreload: { polyfill: false },
     rollupOptions: {
       output: {
-        manualChunks: {
-          'three-core': ['three'],
-          'three-fiber': ['@react-three/fiber', '@react-three/drei'],
-          'ui-vendor': ['lucide-react'],
+        manualChunks(id) {
+          // Vite's dynamic-import preload helper is shared between the entry and the
+          // lazy 3D chunk. Rollup folds a shared module into the biggest chunk that
+          // needs it, which put the helper in `three` — so the entry imported the 3D
+          // chunk *for the helper* and the browser fetched three.js before it was
+          // wanted. Giving the helper its own tiny chunk keeps the 3D payload lazy.
+          if (id.includes('vite/preload-helper') || id.includes('modulepreload-polyfill')) {
+            return 'vite-helpers';
+          }
+          if (!id.includes('node_modules')) return undefined;
+          const p = id.replace(/\\/g, '/');
+          // React has to live in its own chunk, not inside the 3D one. `@react-three/*`
+          // pulls in react-dom through `its-fine`, so without a named chunk for it the
+          // whole react-dom payload ended up inside the lazy chunk — which made the
+          // entry import that chunk statically and put ~1 MB back on the critical path,
+          // silently undoing the dynamic import.
+          if (/node_modules\/(react|react-dom|scheduler|react-reconciler)\//.test(p)) {
+            return 'react-vendor';
+          }
+          // These are only ever reached through the WebGL packages, so they can ride
+          // along in the chunk the lazy 3D scene loads.
+          if (/node_modules\/(its-fine|zustand)\//.test(p)) return 'three';
+          // Everything else in the WebGL stack belongs to the chunk only the lazy 3D
+          // scene reaches.
+          if (
+            p.includes('/three/') ||
+            p.includes('three-stdlib') ||
+            p.includes('/maath/') ||
+            p.includes('@react-three')
+          ) {
+            return 'three';
+          }
+          if (p.includes('lucide-react')) return 'ui-vendor';
+          return undefined;
         },
       },
     },

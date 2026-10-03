@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useWorkspace } from '../context/WorkspaceContext';
-import { VoxlyScene } from '../../three/VoxlyScene';
+import { LazyVoxlyScene } from '../../three/LazyVoxlyScene';
 import { SolidCard } from '../ui/SolidCard';
 import { TactileButton } from '../ui/TactileButton';
 import { createWebAgentSession } from '../../services/webAgentClient';
@@ -253,7 +253,7 @@ export function TalkToAiConsole({ embedded = false }) {
                 </span>
               </div>
               <div className="h-[220px] sm:h-[260px] rounded-2xl bg-[#0F0E17]/95 border border-[#262438] overflow-hidden relative">
-                <VoxlyScene
+                <LazyVoxlyScene
                   state={botState}
                   audioAmplitude={
                     botState === 'SPEAKING' ? 0.7 : sessionState === 'CONNECTED' ? 0.28 : 0.06

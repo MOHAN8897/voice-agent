@@ -15,15 +15,31 @@ async def resolve_calls_tenant_id(
     request: Request,
     authorization: Annotated[str | None, Header()] = None,
 ) -> str:
+    tenant_id, _ = await resolve_calls_scope(request, authorization)
+    return tenant_id
+
+
+async def resolve_calls_scope(
+    request: Request,
+    authorization: Annotated[str | None, Header()] = None,
+) -> tuple[str, bool]:
+    """Tenant id for the caller plus whether they may see internal economics.
+
+    Call detail carries wholesale carrier cost, upstream model rates and the resolved
+    provider stack. Those are the platform's numbers, so the endpoint needs to know the
+    viewer's role to decide what to send — the tenant id alone cannot express that.
+    """
+    from server.services.saas.call_redaction import is_internal_viewer
+
     settings = get_settings()
     if settings.saas_auth_enabled:
         principal = await require_subscriber_jwt(request, authorization)
         require_subscriber_permission(principal, "app.calls.read")
-        return str(principal.tenant_id)
+        return str(principal.tenant_id), is_internal_viewer(principal.role)
     tenant_id = request.query_params.get("tenantId") or request.query_params.get("tenant_id")
     if tenant_id:
-        return tenant_id
-    return tenant_id_from_request(request)
+        return tenant_id, True
+    return tenant_id_from_request(request), True
 
 
 async def resolve_prompt_preview_tenant_id(

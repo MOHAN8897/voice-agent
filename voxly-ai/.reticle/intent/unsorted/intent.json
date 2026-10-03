@@ -1,5 +1,54 @@
 {
   "intents": {
+    "inline:a-deployment-whose-mail-provider-cannot-deliver-4c2a706c": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "auth-debug-reset-link"
+        }
+      },
+      "declaredAt": 1791021008108,
+      "id": "inline:a-deployment-whose-mail-provider-cannot-deliver-4c2a706c",
+      "provenBy": {
+        "at": 1791021010849,
+        "grade": "presence",
+        "verdictId": "reticle_act_and_wait:1791021010849"
+      },
+      "state": "proved",
+      "statement": "a deployment whose mail provider cannot deliver says so, and hands back the reset link, instead of showing a silent 'check your inbox'",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/components/AuthModal.jsx"
+        ]
+      },
+      "updatedAt": 1791021010910
+    },
+    "inline:a-new-signup-can-complete-email-verification-and-9f4d8f65": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "POST",
+            "status": 200,
+            "urlContains": "/api/auth/verify-email-otp"
+          },
+          {
+            "kind": "settled",
+            "quietMs": 400
+          }
+        ]
+      },
+      "declaredAt": 1791031700347,
+      "id": "inline:a-new-signup-can-complete-email-verification-and-9f4d8f65",
+      "state": "bound",
+      "statement": "A new signup can complete email verification and land signed in on the console",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1791031700371
+    },
     "inline:a-signed-in-subscriber-s-workspace-loads-from-th-b36101c2": {
       "binding": {
         "kind": "allOf",
@@ -223,6 +272,29 @@
         "route": "/console"
       },
       "updatedAt": 1790856351338
+    },
+    "inline:after-de-duplicating-the-landing-copy-the-voice-ebe61ed7": {
+      "binding": {
+        "kind": "signal",
+        "name": "voxly:voice-sample-audible"
+      },
+      "declaredAt": 1791033249809,
+      "id": "inline:after-de-duplicating-the-landing-copy-the-voice-ebe61ed7",
+      "provenBy": {
+        "at": 1791033251376,
+        "grade": "signal",
+        "verdictId": "reticle_act_and_wait:1791033251376"
+      },
+      "state": "proved",
+      "statement": "after de-duplicating the landing copy, the voice showcase still plays real rendered audio for the visitor to judge",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/components/TalkToAiSection.jsx"
+        ]
+      },
+      "updatedAt": 1791033251401
     },
     "inline:after-login-console-sync-completes-without-sessi-2b4953d2": {
       "binding": {
@@ -532,6 +604,29 @@
       "subject": "unsorted",
       "updatedAt": 1790848892875
     },
+    "inline:every-industry-on-the-landing-page-plays-a-real-982871e2": {
+      "binding": {
+        "kind": "signal",
+        "name": "voxly:voice-sample-audible"
+      },
+      "declaredAt": 1791023741690,
+      "id": "inline:every-industry-on-the-landing-page-plays-a-real-982871e2",
+      "provenBy": {
+        "at": 1791023743734,
+        "grade": "signal",
+        "verdictId": "reticle_act_and_wait:1791023743734"
+      },
+      "state": "proved",
+      "statement": "every industry on the landing page plays a real clip rendered by the live speech model, not the browser's built-in voice",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/components/TalkToAiSection.jsx"
+        ]
+      },
+      "updatedAt": 1791023743803
+    },
     "inline:open-test-call-modal-from-agent-workspace-header-2ee9f12c": {
       "binding": {
         "kind": "element",
@@ -756,6 +851,44 @@
       },
       "updatedAt": 1790846732391
     },
+    "inline:redeeming-a-password-reset-link-leaves-the-perso-c75c8cb8": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "sidebar-wallet-pill"
+        }
+      },
+      "declaredAt": 1791021387890,
+      "id": "inline:redeeming-a-password-reset-link-leaves-the-perso-c75c8cb8",
+      "provenBy": {
+        "at": 1791021395903,
+        "grade": "presence",
+        "verdictId": "reticle_assert:1791021395903"
+      },
+      "state": "proved",
+      "statement": "redeeming a password reset link leaves the person signed in on their console, without asking them to retype the password",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/components/AuthModal.jsx"
+        ]
+      },
+      "updatedAt": 1791021395924
+    },
+    "inline:redeeming-a-password-reset-link-signs-the-person-6bf8ef40": {
+      "binding": {
+        "contains": "Welcome back",
+        "kind": "text"
+      },
+      "declaredAt": 1791021072445,
+      "id": "inline:redeeming-a-password-reset-link-signs-the-person-6bf8ef40",
+      "state": "bound",
+      "statement": "redeeming a password reset link signs the person straight into their console instead of asking them to retype the password they just set",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1791021072480
+    },
     "inline:refresh-reloads-call-stats-and-history-without-a-78af6dd9": {
       "binding": {
         "kind": "allOf",
@@ -878,6 +1011,29 @@
       },
       "updatedAt": 1790851216301
     },
+    "inline:the-marketing-page-plays-the-product-s-own-neura-275c6600": {
+      "binding": {
+        "kind": "signal",
+        "name": "voxly:voice-sample-audible"
+      },
+      "declaredAt": 1791015730967,
+      "id": "inline:the-marketing-page-plays-the-product-s-own-neura-275c6600",
+      "provenBy": {
+        "at": 1791015891637,
+        "grade": "signal",
+        "verdictId": "reticle_act_and_wait:1791015891637"
+      },
+      "state": "proved",
+      "statement": "the marketing page plays the product's own neural voice per industry, driven by real audio rather than a browser speech voice",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/components/TalkToAiSection.jsx"
+        ]
+      },
+      "updatedAt": 1791015891665
+    },
     "inline:the-open-builder-action-on-an-agent-card-enters-dab944d9": {
       "binding": {
         "kind": "element",
@@ -929,6 +1085,20 @@
         "route": "/console"
       },
       "updatedAt": 1790851233621
+    },
+    "signup-completes": {
+      "declaredAt": 1791031620509,
+      "id": "signup-completes",
+      "state": "declared",
+      "statement": "A person who creates an account with an email and a password can finish email verification and reach the console — signup never dead-ends on a generic 'Unable to create an account with these details', and an email that is already registered is told what actually happened along with a way to proceed.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/components/AuthModal.jsx"
+        ]
+      },
+      "updatedAt": 1791031677735
     }
   },
   "subject": "unsorted",

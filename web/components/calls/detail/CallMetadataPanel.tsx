@@ -7,13 +7,32 @@ import { formatCallTime, formatDuration, pipelineLabel } from "@/lib/call-list-u
 import { formatInr, formatUsd } from "@/lib/usage-cost";
 import { CallTranscriptSourceBadge } from "@/components/calls/detail/CallTranscriptSourceBadge";
 
+/**
+ * Call metadata, split by audience.
+ *
+ * Wholesale carrier cost, upstream model list rates, the resolved provider stack and
+ * PSTN forensics are the platform's internals — a tenant can read their margin off them
+ * and shop the same vendors directly. They are only rendered when
+ * `internalFieldsHidden` is absent, which is the signal the API sets when it withheld
+ * them. The API is the real boundary (see call_redaction.py); this keeps the panel
+ * honest about what it is showing instead of leaving blank rows behind.
+ */
 export function CallMetadataPanel({ meta }: { meta: CallMeta }) {
+  const internal = !(meta as { internal_fields_hidden?: boolean }).internal_fields_hidden;
   const fin = meta.finalization || {};
-  const stack = meta.resolved_stack || {};
-  const usage = meta.usage || {};
-  const costInr = meta.cost_inr ?? usage.cost_inr;
+  const stack = internal ? meta.resolved_stack || {} : {};
+  const rawUsage = meta.usage || {};
+  // Per-minute wholesale rates are internal; the billed total is the customer's.
+  const usage: Record<string, any> = internal
+    ? rawUsage
+    : Object.fromEntries(
+        Object.entries(rawUsage).filter(([key]) =>
+          ["turns", "input_audio_tokens", "output_audio_tokens", "duration_sec"].includes(key),
+        ),
+      );
   const costUsd = meta.cost_usd ?? usage.cost_usd;
-  const perMin = meta.cost_inr_per_min ?? usage.cost_inr_per_min;
+  const costInr = internal ? meta.cost_inr ?? usage.cost_inr : undefined;
+  const perMin = internal ? meta.cost_inr_per_min ?? usage.cost_inr_per_min : undefined;
 
   const rows: Array<{ label: string; value: string }> = [
     { label: "Agent", value: meta.agent_id || "—" },
@@ -27,18 +46,33 @@ export function CallMetadataPanel({ meta }: { meta: CallMeta }) {
     { label: "Ended", value: formatCallTime(meta.ended_at) },
     { label: "Duration", value: formatDuration(meta.duration_sec ?? usage.duration_sec) },
     { label: "End reason", value: meta.end_reason || "—" },
-    { label: "Combination", value: meta.combination_id || "—" },
-    { label: "Brain version", value: meta.compiled_brain_version || "—" },
-    { label: "Dial request ID", value: String((meta as { dial_request_id?: string }).dial_request_id || "—") },
-    { label: "Finalization", value: String(meta.finalization_status || fin.status || "—") },
-    { label: "Ledger", value: String(fin.ledger || "—") },
-    { label: "Audio archive", value: String(fin.audio || "—") },
-    { label: "Outcome job", value: String(fin.outcome || "—") },
   ];
-  if (usage.llm_model) {
+  if (internal) {
+    // Internal bookkeeping: only meaningful to the platform team.
+    rows.push(
+      { label: "Combination", value: meta.combination_id || "—" },
+      { label: "Brain version", value: meta.compiled_brain_version || "—" },
+      {
+        label: "Dial request ID",
+        value: String((meta as { dial_request_id?: string }).dial_request_id || "—"),
+      },
+    );
+  }
+  rows.push({ label: "Finalization", value: String(meta.finalization_status || fin.status || "—") });
+  if (internal) {
+    rows.push(
+      { label: "Ledger", value: String(fin.ledger || "—") },
+      { label: "Audio archive", value: String(fin.audio || "—") },
+      { label: "Outcome job", value: String(fin.outcome || "—") },
+    );
+  }
+  if (internal && usage.llm_model) {
     rows.push({ label: "Realtime model", value: String(usage.llm_model) });
   }
-  if (meta.pipeline === "realtime_voice" || meta.channel === "pstn_realtime") {
+  if (
+    internal &&
+    (meta.pipeline === "realtime_voice" || meta.channel === "pstn_realtime")
+  ) {
     rows.push({
       label: "STT/TTS on stack",
       value: "Not used — Live speech model handles audio (Sarvam/Cartesia slots ignored)",
@@ -56,8 +90,8 @@ export function CallMetadataPanel({ meta }: { meta: CallMeta }) {
   if (usage.input_image_tokens) {
     rows.push({ label: "Image tokens", value: String(usage.input_image_tokens) });
   }
-  const modelInr = meta.model_cost_inr ?? usage.model_cost_inr;
-  const telnyxInr = meta.telnyx_inr ?? usage.telnyx_inr;
+  const modelInr = internal ? meta.model_cost_inr ?? usage.model_cost_inr : undefined;
+  const telnyxInr = internal ? meta.telnyx_inr ?? usage.telnyx_inr : undefined;
   if (modelInr != null) {
     rows.push({
       label: "Model cost",
@@ -66,12 +100,12 @@ export function CallMetadataPanel({ meta }: { meta: CallMeta }) {
   }
   if (telnyxInr != null) {
     rows.push({
-      label: "Telnyx minutes",
+      label: "Carrier minutes",
       value: `${formatInr(Number(telnyxInr))} (${formatUsd(Number(usage.telnyx_usd || 0))})`,
     });
   }
   const transcriptInr = usage.post_call_transcript_inr;
-  if (transcriptInr != null && Number(transcriptInr) > 0) {
+  if (internal && transcriptInr != null && Number(transcriptInr) > 0) {
     rows.push({
       label: "Post-call transcript",
       value: `${formatInr(Number(transcriptInr))} (${formatUsd(Number(usage.post_call_transcript_usd || 0))})`,
@@ -81,63 +115,66 @@ export function CallMetadataPanel({ meta }: { meta: CallMeta }) {
   if (txStatus) {
     rows.push({ label: "Transcript job", value: String(txStatus) });
   }
-  if (usage.transcription_billing) {
+  if (internal && usage.transcription_billing) {
     rows.push({ label: "Transcription billing", value: String(usage.transcription_billing) });
   }
-  if (meta.transcript_source) {
+  if (internal && meta.transcript_source) {
     rows.push({ label: "Transcript source", value: String(meta.transcript_source) });
   }
   // USD leads everywhere; the rupee figure stays as a secondary reference because
   // settlement is in INR and the two are not the same number at a given rate.
   // The rate comes from the call's own usage record, so a historical call is
   // converted at the rate that actually applied to it.
-  const fx = Number(usage.fx_rate_inr) || 1;
-  const inrToUsd = (inr: number | null | undefined) =>
-    formatUsd(Number(inr || 0) / fx);
 
-  if (costInr != null) {
+  if (costUsd != null) {
     rows.push({
-      label: "Total cost",
-      value: `${formatUsd(Number(costUsd || 0))} (settled ₹${Number(costInr).toFixed(2)})`,
+      label: "Call cost",
+      value: internal && costInr != null
+        ? `${formatUsd(Number(costUsd))} (settled ₹${Number(costInr).toFixed(2)})`
+        : formatUsd(Number(costUsd)),
     });
   }
   if (perMin != null) {
-    rows.push({ label: "All-in $/min", value: formatUsd(Number(perMin) / (Number(usage.fx_rate_inr) || 1)) });
+    rows.push({
+      label: "All-in $/min",
+      value: formatUsd(Number(perMin) / (Number(usage.fx_rate_inr) || 1)),
+    });
   }
-  if (usage.model_cost_inr_per_min != null) {
+  if (internal && usage.model_cost_inr_per_min != null) {
     rows.push({
       label: "Model $/min",
       value: formatUsd(Number(usage.model_cost_inr_per_min) / (Number(usage.fx_rate_inr) || 1)),
     });
   }
-  if (usage.telnyx_inr_per_min != null) {
+  if (internal && usage.telnyx_inr_per_min != null) {
     rows.push({
-      label: "Telnyx $/min",
+      label: "Carrier $/min",
       value: formatUsd(Number(usage.telnyx_inr_per_min) / (Number(usage.fx_rate_inr) || 1)),
     });
   }
-  if (usage.gemini_list_audio_inr_per_min != null) {
+  if (internal && usage.gemini_list_audio_inr_per_min != null) {
     rows.push({
-      label: "Gemini audio list $/min",
-      value: `${formatUsd(
-        Number(usage.gemini_list_audio_inr_per_min) / (Number(usage.fx_rate_inr) || 1)
-      )} ($0.005 in + $0.018 out)`,
+      label: "Audio list rate $/min",
+      value: formatUsd(
+        Number(usage.gemini_list_audio_inr_per_min) / (Number(usage.fx_rate_inr) || 1),
+      ),
     });
   }
-  void inrToUsd;
-  if (usage.fx_rate_inr != null) {
+  if (internal && usage.fx_rate_inr != null) {
     const src = usage.fx_source ? ` (${usage.fx_source})` : "";
     rows.push({ label: "FX USD→INR", value: `${Number(usage.fx_rate_inr)}${src}` });
   }
-  const forensics = (meta as CallMeta & { pstn_forensics?: Record<string, unknown> }).pstn_forensics;
-  const derived = (forensics?.derived_ms || {}) as Record<string, number | null | undefined>;
+  const forensics = internal
+    ? ((meta as CallMeta & { pstn_forensics?: Record<string, unknown> }).pstn_forensics ?? {})
+    : {};
+  const derived = (forensics.derived_ms || {}) as Record<string, number | null | undefined>;
   if (derived.answer_to_first_audio_sent != null) {
     rows.push({
       label: "Answer → first audio sent",
       value: `${derived.answer_to_first_audio_sent} ms`,
     });
   }
-  const playback = (forensics?.playback || {}) as Record<string, number | undefined>;
+  const playback = (forensics.playback || {}) as Record<string, number | undefined>;
   if (playback.playout_underrun_count != null) {
     rows.push({ label: "Playout underruns", value: String(playback.playout_underrun_count) });
   }
@@ -156,7 +193,7 @@ export function CallMetadataPanel({ meta }: { meta: CallMeta }) {
         ))}
       </ul>
 
-      {Object.keys(stack).length > 0 && (
+      {internal && Object.keys(stack).length > 0 && (
         <div className="mt-4">
           <p className="font-mono text-[10px] uppercase tracking-wider text-text-subtle">Resolved stack</p>
           <pre className="mt-2 max-h-40 overflow-auto rounded-skeuo-sm skeuo-inset p-3 font-mono text-[10px] text-text-muted">
@@ -166,10 +203,16 @@ export function CallMetadataPanel({ meta }: { meta: CallMeta }) {
       )}
 
       <div className="mt-4 flex flex-wrap gap-2">
-        <SkeuoBadge tone="muted">meta.json</SkeuoBadge>
-        <SkeuoBadge tone="muted">trace.json</SkeuoBadge>
-        <SkeuoBadge tone="muted">transcript.jsonl</SkeuoBadge>
-        <SkeuoBadge tone="muted">outcome.json</SkeuoBadge>
+        {internal ? (
+          <>
+            <SkeuoBadge tone="muted">meta.json</SkeuoBadge>
+            <SkeuoBadge tone="muted">trace.json</SkeuoBadge>
+            <SkeuoBadge tone="muted">transcript.jsonl</SkeuoBadge>
+            <SkeuoBadge tone="muted">outcome.json</SkeuoBadge>
+          </>
+        ) : (
+          <SkeuoBadge tone="muted">Billing and archive status</SkeuoBadge>
+        )}
       </div>
     </SkeuoPanel>
   );

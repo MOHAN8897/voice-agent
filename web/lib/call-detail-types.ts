@@ -111,6 +111,12 @@ export type CallMeta = {
   post_call_transcript?: { status?: string; model?: string; lines?: number };
   transcript_source?: string;
   audio?: { mix?: boolean; user?: boolean; agent?: boolean };
+  /**
+   * Set by the API when it withheld the platform-internal parts of the record
+   * (wholesale carrier cost, upstream model rates, resolved stack, PSTN forensics).
+   * The UI uses it to show the customer-facing view instead of empty rows.
+   */
+  internal_fields_hidden?: boolean;
 };
 
 export type MemorySnapshot = {

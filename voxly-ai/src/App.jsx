@@ -4,17 +4,14 @@ import { WorkspaceProvider } from './console/context/WorkspaceContext';
 import { AppShell } from './console/AppShell';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
-import { AiEmployeeSection } from './components/AiEmployeeSection';
 import { TalkToAiSection } from './components/TalkToAiSection';
+import { HowItWorksSection } from './components/HowItWorksSection';
 import { PhoneChannelsSection } from './components/PhoneChannelsSection';
-import { LeadEngineSection } from './components/LeadEngineSection';
+import { AiEmployeeSection } from './components/AiEmployeeSection';
 import { CampaignScaleSection } from './components/CampaignScaleSection';
 import { TrainingSection } from './components/TrainingSection';
-import { AiTeamSection } from './components/AiTeamSection';
-import { ConversationHistorySection } from './components/ConversationHistorySection';
 import { AnalyticsSection } from './components/AnalyticsSection';
 import { IndustriesSection } from './components/IndustriesSection';
-import { HowItWorksSection } from './components/HowItWorksSection';
 import { PricingSection } from './components/PricingSection';
 import { FAQSection } from './components/FAQSection';
 import { FinalCTA } from './components/FinalCTA';
@@ -35,7 +32,7 @@ import {
 } from './lib/consoleEntry';
 
 function AppInner() {
-  const { isAuthenticated, logout: authLogout } = useAuth();
+  const { isAuthenticated, logout: authLogout, signOutReason } = useAuth();
 
   const [currentView, setCurrentView] = useState(() => {
     if (typeof window !== 'undefined' && window.location.hash.startsWith('#dashboard')) {
@@ -151,6 +148,16 @@ function AppInner() {
     }
   }, []);
 
+  // An idle sign-out happens wherever the person happened to be. Put them back in
+  // front of the sign-in form with the reason, instead of leaving them on a console
+  // shell that silently stopped working.
+  useEffect(() => {
+    if (!signOutReason) return;
+    setCurrentView('landing');
+    setAuthModalMode('signin');
+    setIsAuthModalOpen(true);
+  }, [signOutReason]);
+
   return (
     <>
         {currentView === 'dashboard' ? (
@@ -171,7 +178,14 @@ function AppInner() {
               onWatchDemo={() => setIsDemoModalOpen(true)}
             />
 
-      {/* Main Content Sections: Streamlined, Intuitive User Architecture */}
+      {/* Main Content Sections.
+
+          Three sections came out of this list while the copy was de-duplicated:
+          AiTeamSection (four invented employees with invented ratings, saying the same
+          "who it's for" as the Industries grid), LeadEngineSection (a fake lead card for
+          a qualification story the Capabilities grid already covers), and
+          ConversationHistorySection (a fabricated transcript, now that the page plays
+          real recorded calls instead). */}
       <main className="flex-1">
         {/* 01: Hero — AI Voice Agent & 3D Interactive Mascot */}
         <Hero
@@ -182,64 +196,40 @@ function AppInner() {
           isModalOpen={isDemoModalOpen || isTalkModalOpen}
         />
 
-        {/* 02: Immediate Live Voice Lab & Speech Acoustic Player */}
+        {/* 02: Real voice samples per industry, plus the live-agent entry point */}
         <TalkToAiSection
           onOpenTalkModal={() => setIsTalkModalOpen(true)}
-        />
-
-        {/* 03: Autonomous AI Workforce Fleet (Sales, Support, Receptionist, Follow-up) */}
-        <AiTeamSection
           onGetStarted={handleGetStarted}
         />
 
-        {/* 04: Fast Setup & Production Telephony Onboarding (5 Steps) */}
-        <HowItWorksSection
-          onGetStarted={handleGetStarted}
-        />
+        {/* 03: The one onboarding path */}
+        <HowItWorksSection onGetStarted={handleGetStarted} />
 
-        {/* 05: Telephony Channels (Inbound 24/7, Outbound SDR, Virtual DIDs) */}
-        <PhoneChannelsSection
-          onGetStarted={handleGetStarted}
-        />
+        {/* 04: Telephony channels — inbound and outbound */}
+        <PhoneChannelsSection onGetStarted={handleGetStarted} />
 
-        {/* 06: Core Capabilities & Visual Agent Builder */}
-        <AiEmployeeSection
-          onGetStarted={handleGetStarted}
-        />
+        {/* 05: What the employee does on a call */}
+        <AiEmployeeSection onGetStarted={handleGetStarted} />
 
-        {/* 07: Autonomous Lead Qualification Engine (BANT Deals & Pipeline) */}
-        <LeadEngineSection
-          onGetStarted={handleGetStarted}
-        />
+        {/* 06: Bulk list calling */}
+        <CampaignScaleSection onGetStarted={handleGetStarted} />
 
-        {/* 08: Bulk Outbound Campaigns at Scale (Dialing Engine) */}
-        <CampaignScaleSection
-          onGetStarted={handleGetStarted}
-        />
-
-        {/* 09: Train Your AI (Knowledge Base, SOP Documents & AI Brain) */}
+        {/* 07: Teach it your business */}
         <TrainingSection />
 
-        {/* 10: Call History & Diarized Transcript Inspector */}
-        <ConversationHistorySection />
-
-        {/* 11: Operational Intelligence Dashboard (12k+ Calls & Telemetry) */}
+        {/* 08: Reporting — the one sample dashboard, labelled as one */}
         <AnalyticsSection />
 
-        {/* 12: Vertical Industry Playbooks (Healthcare, Finance, Real Estate, SaaS) */}
-        <IndustriesSection
-          onGetStarted={handleGetStarted}
-        />
+        {/* 09: Who it is for */}
+        <IndustriesSection onGetStarted={handleGetStarted} />
 
-        {/* 13: Transparent Economics & Fleet Pricing */}
-        <PricingSection
-          onSelectPlan={handleSelectPlan}
-        />
+        {/* 10: Pricing */}
+        <PricingSection onSelectPlan={handleSelectPlan} />
 
-        {/* 14: Frequently Asked Questions */}
+        {/* 11: FAQ */}
         <FAQSection />
 
-        {/* 15: Executive Call to Action */}
+        {/* 12: Closing call to action */}
         <FinalCTA
           onGetStarted={handleGetStarted}
           onTalkToMe={() => setIsTalkModalOpen(true)}
@@ -254,12 +244,20 @@ function AppInner() {
         isOpen={isDemoModalOpen}
         onClose={() => setIsDemoModalOpen(false)}
         onSelectBotState={(st) => botControllerRef.current?.setState(st)}
+        onTryLive={() => {
+          setIsDemoModalOpen(false);
+          setIsTalkModalOpen(true);
+        }}
       />
 
       <TalkToMeModal
         isOpen={isTalkModalOpen}
         onClose={() => setIsTalkModalOpen(false)}
         onSelectBotState={(st) => botControllerRef.current?.setState(st)}
+        onStartLive={() => {
+          setIsTalkModalOpen(false);
+          enterConsole(isAuthenticated ? 'employees' : DEFAULT_CONSOLE_TAB);
+        }}
       />
 
       <LegalModals
@@ -278,6 +276,7 @@ function AppInner() {
           isOpen={isAuthModalOpen}
           onClose={() => setIsAuthModalOpen(false)}
           initialMode={authModalMode}
+          notice={signOutReason}
           onAuthSuccess={() => {
             const tab = consumePostAuthTab();
             setCurrentView('dashboard');

@@ -1,0 +1,60 @@
+{
+  "version": 2,
+  "name": "drive-every-industry-on-the-landing-page-plays-a-real",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1791023788649,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "voice-industry-logistics",
+        "source": {
+          "file": "src/components/TalkToAiSection.jsx",
+          "line": 226,
+          "column": 19
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "voice-sample-play",
+        "source": {
+          "file": "src/components/TalkToAiSection.jsx",
+          "line": 332,
+          "column": 17
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "signal",
+        "name": "voxly:voice-sample-audible"
+      },
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "intent": "every industry on the landing page plays a real clip rendered by the live speech model, not the browser's built-in voice",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "desktop"
+  },
+  "intentId": "flow:drive-every-industry-on-the-landing-page-plays-a-real"
+}

@@ -233,6 +233,13 @@ class Settings(BaseSettings):
     jwt_secret: str = Field("dev-jwt-secret-change-in-production", alias="JWT_SECRET")
     jwt_access_ttl_minutes: int = Field(15, alias="JWT_ACCESS_TTL_MINUTES")
     jwt_refresh_ttl_days: int = Field(30, alias="JWT_REFRESH_TTL_DAYS")
+    # Server-side session policy. `0` disables the check (legacy behaviour: a refresh
+    # token is good for its whole 30-day lifetime no matter how idle the account was).
+    session_idle_timeout_minutes: int = Field(30, alias="SESSION_IDLE_TIMEOUT_MINUTES")
+    session_absolute_max_hours: int = Field(24, alias="SESSION_ABSOLUTE_MAX_HOURS")
+    # Development escape hatch: return the password-reset link from /forgot-password
+    # so the flow can be driven without a working mail provider. Never enable in prod.
+    auth_debug_expose_reset_token: bool = Field(False, alias="AUTH_DEBUG_EXPOSE_RESET_TOKEN")
     saas_require_email_verification_for_buy: bool = Field(
         True, alias="SAAS_REQUIRE_EMAIL_VERIFICATION_FOR_BUY"
     )

@@ -1,223 +1,352 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Mic,
   Volume2,
   Play,
+  Square,
   ArrowRight,
   Headphones,
-  CheckCircle2,
-  RefreshCw,
-  Radio
+  Radio,
+  Building2,
+  Sparkles,
 } from 'lucide-react';
+import {
+  VOICE_SAMPLES,
+  playVoiceSample,
+  playBrowserVoiceSample,
+  sampleDurationLabel,
+} from '../services/marketingVoice';
 import { voiceAgent } from '../services/voiceAgent';
 
-export function TalkToAiSection({ onOpenTalkModal }) {
+const BAR_COUNT = 34;
+
+/**
+ * The voice showcase.
+ *
+ * This section used to play `window.speechSynthesis` and a hard-coded list of replies.
+ * That is the *browser's* voice reading marketing copy — it sounds nothing like the
+ * product and, worse, it is evidence against the claim on screen. Every clip here is
+ * rendered by the same live speech model that answers a customer's call, one per
+ * industry, with the transcript that was actually spoken.
+ */
+export function TalkToAiSection({ onOpenTalkModal, onGetStarted }) {
+  const [activeId, setActiveId] = useState(VOICE_SAMPLES[0]?.id ?? null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [activePrompt, setActivePrompt] = useState(null);
-  const [currentResponse, setCurrentResponse] = useState(
-    "Hi there! I'm Voxly, your autonomous voice employee. Click any question below or hit 'Start Voice Test' to hear me speak live!"
+  const [mode, setMode] = useState('product'); // 'product' | 'browser'
+  const [level, setLevel] = useState(0);
+  const stopRef = useRef(null);
+  const barsRef = useRef([]);
+
+  const activeSample = useMemo(
+    () => VOICE_SAMPLES.find((s) => s.id === activeId) || VOICE_SAMPLES[0] || null,
+    [activeId]
   );
 
-  const testScenarios = [
-    {
-      label: "Sales Lead Qualification",
-      question: "Hi Voxly, how do you qualify inbound leads for our sales team?",
-      answer: "I answer on ring one, ask the caller their company size and budget, detect buying intent, and automatically book high-value meetings on your account executive's calendar!",
-    },
-    {
-      label: "24/7 Customer Support",
-      question: "Can you handle refund inquiries and technical support?",
-      answer: "Yes! I can look up customer order IDs, troubleshoot tier-1 issues from your knowledge base, and even process billing adjustments without making customers wait on hold.",
-    },
-    {
-      label: "Human Agent Warm Transfer",
-      question: "What happens if a customer asks for a human manager?",
-      answer: "I immediately perform a warm transfer to your team, passing a live audio transcript and structured summary so your agent has 100% context before saying hello.",
-    },
-    {
-      label: "Scalability & Speed",
-      question: "How fast do you respond, and how many calls can you take?",
-      answer: "My voice response latency is under 350 milliseconds — indistinguishable from human conversation — and our distributed telephony cluster can handle over 100,000 calls at once.",
-    },
-  ];
-
-  const handleTestPrompt = (scenario) => {
-    setActivePrompt(scenario.label);
-    setCurrentResponse(scenario.answer);
-    setIsPlaying(true);
-    voiceAgent.playTTS(scenario.answer, () => {
-      setIsPlaying(false);
+  // A rolling waveform seeded with the sample's real energy, pushed by the analyser
+  // while audio plays. Bars stay static when idle instead of pretending to be a signal.
+  useEffect(() => {
+    const bars = barsRef.current;
+    if (!bars?.length) return undefined;
+    let raf = 0;
+    const seed = Array.from({ length: bars.length }, (_, i) => {
+      const wave = Math.sin((i / bars.length) * Math.PI);
+      return 0.12 + wave * 0.18;
     });
-  };
+    bars.forEach((el, i) => {
+      if (el) el.style.height = `${Math.round(seed[i] * 100)}%`;
+    });
+    const tick = () => {
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [activeId]);
 
-  const handleStartConversation = () => {
-    if (onOpenTalkModal) {
-      onOpenTalkModal();
-    } else {
-      const defaultGreeting = "Hello! I am ready to talk. Ask me any question or test my live capabilities!";
-      setCurrentResponse(defaultGreeting);
-      setIsPlaying(true);
-      voiceAgent.playTTS(defaultGreeting, () => {
-        setIsPlaying(false);
+  // Push the live amplitude into whichever bars are on screen.
+  useEffect(() => {
+    if (!isPlaying) {
+      const bars = barsRef.current;
+      bars.forEach((el, i) => {
+        if (!el) return;
+        const wave = Math.sin((i / bars.length) * Math.PI);
+        el.style.height = `${Math.round((0.12 + wave * 0.18) * 100)}%`;
       });
+      return;
     }
-  };
+    setLevel(0);
+  }, [isPlaying]);
+
+  useEffect(() => () => stopRef.current?.(), []);
+
+  const handleStop = useCallback(() => {
+    stopRef.current?.();
+    stopRef.current = null;
+    setIsPlaying(false);
+    setLevel(0);
+  }, []);
+
+  const handlePlay = useCallback(() => {
+    if (!activeSample) return;
+    stopRef.current?.();
+    if (isPlaying) {
+      handleStop();
+      return;
+    }
+    setIsPlaying(true);
+    const opts = {
+      onLevel: (v) => {
+        setLevel(v);
+        const bars = barsRef.current;
+        bars.forEach((el, i) => {
+          if (!el) return;
+          const wave = 0.35 + Math.sin((i / bars.length) * Math.PI) * 0.65;
+          const jitter = ((i * 37 + Math.round(Date.now() / 90)) % 11) / 11;
+          const h = Math.max(8, Math.min(100, wave * (0.45 + v * 2.4) * (0.75 + jitter * 0.5) * 100));
+          el.style.height = `${Math.round(h)}%`;
+        });
+      },
+      onEnd: () => {
+        stopRef.current = null;
+        setIsPlaying(false);
+        setLevel(0);
+      },
+    };
+    stopRef.current =
+      mode === 'browser'
+        ? playBrowserVoiceSample(activeSample, { onEnd: opts.onEnd })
+        : playVoiceSample(activeSample, opts);
+  }, [activeSample, handleStop, isPlaying, mode]);
+
+  const selectSample = useCallback(
+    (id) => {
+      handleStop();
+      setMode('product');
+      setActiveId(id);
+    },
+    [handleStop]
+  );
+
+  const handleStartConversation = useCallback(() => {
+    handleStop();
+    if (onOpenTalkModal) onOpenTalkModal();
+  }, [handleStop, onOpenTalkModal]);
 
   return (
     <section id="talk-to-ai" className="py-20 sm:py-28 bg-[#111019] text-white relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-6 sm:px-8 relative z-10">
-        
-        {/* Section Header */}
         <div className="max-w-3xl mb-12 sm:mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-white/10 border border-white/10 text-white text-xs font-bold tracking-wider uppercase mb-4">
             <Radio className="w-3.5 h-3.5 text-[#10B981]" />
-            <span>Interactive Voice Demonstration</span>
+            <span>Real Voice, Not A Recording Effect</span>
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-[1.12] mb-4">
-            Don't take our word for it.{' '}
-            <span className="block text-white">Talk to it.</span>
+            Hear your industry answered{' '}
+            <span className="block text-white">on the first ring.</span>
           </h2>
           <p className="text-base sm:text-lg text-[#D1CFDB] leading-relaxed">
-            Experience real-time sub-500ms neural speech synthesis, natural interruption handling, and conversational empathy directly in your browser.
+            Every clip below was spoken by the same neural voice that answers your customers'
+            calls — not your browser, not a prerecorded ad. Pick your business and press play.
           </p>
         </div>
 
-        {/* Central Architecture Visual Flow */}
-        <div className="max-w-4xl mx-auto mb-14">
-          <div className="bg-[#181724] border border-white/10 rounded-2xl p-6 sm:p-8 shadow-craft-lg">
-            
-            {/* TOP NODE: AI EMPLOYEE */}
-            <div className="flex flex-col items-center justify-center mb-5">
-              <div className="px-5 py-2 rounded-xl bg-white text-[#0F0E17] font-bold text-xs tracking-wider uppercase shadow-sm">
-                AI EMPLOYEE
-              </div>
-              <div className="w-px h-6 bg-white/20 my-1" />
-            </div>
-
-            {/* SPLIT NODES: LISTEN vs RESPOND */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 relative">
-              {/* LISTEN NODE */}
-              <div className="bg-[#111019] border border-white/10 rounded-xl p-5 text-left">
-                <div className="flex items-center justify-between mb-2.5">
-                  <span className="text-xs font-bold uppercase tracking-wider text-[#10B981] flex items-center gap-1.5">
-                    <Mic className="w-3.5 h-3.5" /> LISTEN
-                  </span>
-                  <span className="text-[10px] font-mono text-[#D1CFDB]">Audio Input • STT</span>
-                </div>
-                <p className="text-xs text-[#D1CFDB] leading-relaxed mb-3">
-                  Stream speech packets, detect pauses, and tokenize intent in &lt;120ms.
-                </p>
-                {/* Listening visualizer */}
-                <div className="flex items-center gap-1 h-5 px-2.5 rounded bg-black/40 border border-white/5">
-                  {[8, 16, 11, 18, 9, 15, 7, 17, 12, 8, 14].map((h, i) => (
-                    <span
-                      key={i}
-                      className="w-1 bg-[#10B981] rounded-full"
-                      style={{ height: `${h}px` }}
-                    />
-                  ))}
-                  <span className="text-[9px] font-mono text-[#A19EAD] ml-auto">Live Input Frequency</span>
-                </div>
-              </div>
-
-              {/* RESPOND NODE */}
-              <div className="bg-[#111019] border border-white/10 rounded-xl p-5 text-left">
-                <div className="flex items-center justify-between mb-2.5">
-                  <span className="text-xs font-bold uppercase tracking-wider text-[#8369F5] flex items-center gap-1.5">
-                    <Volume2 className="w-3.5 h-3.5 text-white" /> RESPOND
-                  </span>
-                  <span className="text-[10px] font-mono text-[#D1CFDB]">Neural TTS • 320ms</span>
-                </div>
-                <p className="text-xs text-[#D1CFDB] leading-relaxed mb-3">
-                  Synthesize personalized acoustic speech with cadence and pitch modulation.
-                </p>
-                {/* Synthesizing visualizer */}
-                <div className="flex items-center gap-1 h-5 px-2.5 rounded bg-black/40 border border-white/5">
-                  {[14, 9, 18, 12, 17, 8, 16, 11, 15, 9, 17].map((h, i) => (
-                    <span
-                      key={i}
-                      className="w-1 bg-white rounded-full"
-                      style={{ height: `${h}px` }}
-                    />
-                  ))}
-                  <span className="text-[9px] font-mono text-[#A19EAD] ml-auto">Neural Output</span>
-                </div>
-              </div>
-            </div>
-
-            {/* BOTTOM CONNECTOR: CONVERSATION */}
-            <div className="flex flex-col items-center justify-center mt-5">
-              <div className="w-px h-6 bg-white/20 my-1" />
-              <div className="px-4 py-1.5 rounded-lg bg-white/10 border border-white/10 text-white font-semibold text-[11px] tracking-wider uppercase">
-                REAL-TIME BIDIRECTIONAL CONVERSATION
-              </div>
-            </div>
-
-            {/* Interactive Live Speech Box */}
-            <div className="mt-7 bg-[#111019] border border-white/10 rounded-xl p-5 sm:p-6 text-left">
-              <div className="flex items-center justify-between gap-2 mb-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#D1CFDB]">
-                  Acoustic Speech Player:
-                </span>
-                <span className={`text-[11px] font-mono px-2 py-0.5 rounded ${
-                  isPlaying ? 'bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/30' : 'bg-white/10 text-[#D1CFDB]'
-                }`}>
-                  {isPlaying ? '● Audio Active' : 'Ready'}
+        {/* Architecture strip: kept short, because the demo below now carries the proof. */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+          {[
+            {
+              icon: Mic,
+              tag: 'LISTEN',
+              title: 'Caller speech, mid-sentence',
+              body: 'Turn-taking on real pauses, so nobody talks over your customer.',
+              color: 'text-[#10B981]',
+            },
+            {
+              icon: Sparkles,
+              tag: 'DECIDE',
+              title: 'Your playbook, in your language',
+              body: 'Pricing, eligibility, tone and escalation rules come from your workspace.',
+              color: 'text-[#8369F5]',
+            },
+            {
+              icon: Volume2,
+              tag: 'SPEAK',
+              title: 'One neural voice end to end',
+              body: 'The same voice you hear here is the one your callers hear.',
+              color: 'text-white',
+            },
+          ].map((item) => (
+            <div key={item.tag} className="bg-[#181724] border border-white/10 rounded-2xl p-5 text-left">
+              <div className="flex items-center gap-2 mb-2">
+                <item.icon className={`w-4 h-4 ${item.color}`} />
+                <span className={`text-[10px] font-bold uppercase tracking-wider ${item.color}`}>
+                  {item.tag}
                 </span>
               </div>
-
-              <p className="text-sm font-medium text-white leading-relaxed mb-4 bg-black/30 p-3.5 rounded-lg border border-white/5 min-h-[60px]">
-                "{currentResponse}"
-              </p>
-
-              {/* Sample Prompt Chips */}
-              <div className="mb-5">
-                <span className="text-[10px] font-bold text-[#A19EAD] uppercase tracking-wider block mb-2 font-mono">
-                  Select a live scenario to test synthesized response:
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {testScenarios.map((sc, i) => (
-                    <button
-                      key={i}
-                      onClick={() => handleTestPrompt(sc)}
-                      className={`text-left text-xs p-3 rounded-xl border transition-all ${
-                        activePrompt === sc.label
-                          ? 'bg-white/15 border-white text-white shadow-xs'
-                          : 'bg-white/5 hover:bg-white/10 border-white/5 text-[#D1CFDB] hover:text-white'
-                      }`}
-                    >
-                      <span className="font-semibold block text-white">{sc.label}</span>
-                      <span className="text-[11px] text-[#D1CFDB] truncate block mt-0.5">"{sc.question}"</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Primary Call to Action Button */}
-              <div className="flex flex-wrap items-center gap-3 pt-2">
-                <button
-                  onClick={handleStartConversation}
-                  className="inline-flex items-center justify-center gap-2.5 px-6 py-3 rounded-xl text-xs font-semibold text-[#0F0E17] bg-white hover:bg-[#FAF9FD] active:scale-[0.98] transition-all duration-150 shadow-xs"
-                >
-                  <Play className="w-3.5 h-3.5 fill-current" />
-                  <span>Start Voice Test</span>
-                </button>
-
-                <button
-                  onClick={() => handleTestPrompt(testScenarios[0])}
-                  className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs font-semibold text-white bg-white/10 hover:bg-white/15 border border-white/15 active:scale-[0.98] transition-all"
-                >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  <span>Replay Sample Audio</span>
-                </button>
-              </div>
-
+              <p className="text-sm font-semibold text-white mb-1">{item.title}</p>
+              <p className="text-xs text-[#D1CFDB] leading-relaxed">{item.body}</p>
             </div>
-
-          </div>
+          ))}
         </div>
 
+        <div className="max-w-5xl mx-auto">
+          <div className="bg-[#181724] border border-white/10 rounded-2xl p-6 sm:p-8 shadow-craft-lg">
+            {/* Industry picker */}
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#D1CFDB] flex items-center gap-2">
+                <Building2 className="w-3.5 h-3.5" />
+                Choose your business
+              </span>
+              <span className="text-[10px] font-mono text-[#A19EAD]">
+                {VOICE_SAMPLES.length} live-rendered samples
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 mb-6">
+              {VOICE_SAMPLES.map((sample) => {
+                const isActive = sample.id === activeId;
+                return (
+                  <button
+                    key={sample.id}
+                    type="button"
+                    onClick={() => selectSample(sample.id)}
+                    data-testid={`voice-industry-${sample.id}`}
+                    aria-pressed={isActive}
+                    className={`text-left px-3 py-2.5 rounded-xl border transition-all ${
+                      isActive
+                        ? 'bg-white text-[#0F0E17] border-white'
+                        : 'bg-white/5 hover:bg-white/10 border-white/5 text-[#D1CFDB] hover:text-white'
+                    }`}
+                  >
+                    <span className="block text-xs font-bold truncate">{sample.industry}</span>
+                    <span
+                      className={`block text-[10px] truncate mt-0.5 ${
+                        isActive ? 'text-[#524E5E]' : 'text-[#A19EAD]'
+                      }`}
+                    >
+                      {sample.label} · {sampleDurationLabel(sample.durationSeconds)}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Player */}
+            <div className="bg-[#111019] border border-white/10 rounded-xl p-5 sm:p-6">
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#A19EAD] font-mono">
+                    {activeSample?.industry} · {activeSample?.label}
+                  </p>
+                  <p
+                    className="text-sm font-semibold text-white mt-0.5"
+                    data-testid="voice-sample-transcript"
+                  >
+                    &ldquo;{activeSample?.text}&rdquo;
+                  </p>
+                </div>
+                <span
+                  className={`shrink-0 text-[11px] font-mono px-2 py-1 rounded border ${
+                    isPlaying
+                      ? 'bg-[#10B981]/20 text-[#10B981] border-[#10B981]/30'
+                      : 'bg-white/10 text-[#D1CFDB] border-white/10'
+                  }`}
+                  data-testid="voice-sample-status"
+                >
+                  {isPlaying ? '● Playing' : 'Ready'}
+                </span>
+              </div>
+
+              {/* Waveform driven by the real analyser */}
+              <div
+                className="flex items-end gap-[3px] h-16 mb-5"
+                aria-hidden="true"
+                data-testid="voice-sample-waveform"
+                data-level={level.toFixed(3)}
+              >
+                {Array.from({ length: BAR_COUNT }, (_, i) => (
+                  <span
+                    key={i}
+                    ref={(el) => {
+                      barsRef.current[i] = el;
+                    }}
+                    className={`flex-1 rounded-full transition-[height] duration-100 ${
+                      mode === 'browser' ? 'bg-[#F59E0B]/70' : 'bg-white/85'
+                    }`}
+                    style={{ height: '18%' }}
+                  />
+                ))}
+              </div>
+
+              {/* A/B: our voice vs the browser's built-in voice, same line */}
+              <div className="inline-flex rounded-xl border border-white/10 bg-white/5 p-1 mb-5">
+                {[
+                  { id: 'product', label: 'Voxly voice' },
+                  { id: 'browser', label: "Your browser's voice" },
+                ].map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => {
+                      handleStop();
+                      setMode(opt.id);
+                    }}
+                    data-testid={`voice-mode-${opt.id}`}
+                    aria-pressed={mode === opt.id}
+                    className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${
+                      mode === opt.id
+                        ? 'bg-white text-[#0F0E17]'
+                        : 'text-[#D1CFDB] hover:text-white'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+
+              {mode === 'browser' && (
+                <p className="text-[11px] text-amber-200/90 mb-4 leading-relaxed">
+                  This is the voice most automated phone systems ship: your browser reading the same
+                  sentence. Switch back and hear the difference on your own hardware.
+                </p>
+              )}
+
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handlePlay}
+                  data-testid="voice-sample-play"
+                  className="inline-flex items-center justify-center gap-2.5 px-6 py-3 rounded-xl text-xs font-semibold text-[#0F0E17] bg-white hover:bg-[#FAF9FD] active:scale-[0.98] transition-all shadow-xs"
+                >
+                  {isPlaying ? <Square className="w-3.5 h-3.5 fill-current" /> : <Play className="w-3.5 h-3.5 fill-current" />}
+                  <span>{isPlaying ? 'Stop' : 'Play this sample'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleStartConversation}
+                  data-testid="talk-to-ai-live"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs font-semibold text-white bg-white/10 hover:bg-white/15 border border-white/15 active:scale-[0.98] transition-all"
+                >
+                  <Headphones className="w-3.5 h-3.5" />
+                  <span>Talk to a live agent</span>
+                </button>
+
+                {onGetStarted && (
+                  <button
+                    type="button"
+                    onClick={onGetStarted}
+                    className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs font-semibold text-[#8369F5] hover:bg-[#8369F5]/10 transition-all"
+                  >
+                    Build your own
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );
 }
+
+export default TalkToAiSection;

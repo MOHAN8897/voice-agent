@@ -177,7 +177,10 @@ export function LegalModals({ isOpen, onClose, defaultTab = 'privacy' }) {
                   4. Service Level Agreement (SLA) & Uptime
                 </h4>
                 <p>
-                  Enterprise plans carry a 99.95% telephony uptime guarantee covering SIP gateway availability and sub-500 millisecond neural acoustic processing. Scheduled maintenance windows are communicated at least 72 hours in advance.
+                  Service levels, uptime commitments and maintenance notice periods for
+                  Enterprise plans are set out in the signed order form rather than on this
+                  page. If you need a specific commitment before you buy, ask for the order form
+                  and we will put the numbers in writing.
                 </p>
               </section>
             </div>

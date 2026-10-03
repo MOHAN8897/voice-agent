@@ -15,7 +15,7 @@ export function IntegrationsModule() {
         <Blocks className="w-10 h-10 text-[#6344E7] mx-auto opacity-80" />
         <p className="text-sm font-semibold text-[#0F0E17]">Integrations coming soon</p>
         <p className="text-xs text-[#524E5E] max-w-md mx-auto">
-          Your calls, leads, and wallet already sync with the voice-agent API. HubSpot, Salesforce, and
+          Your calls, leads, and wallet already sync with the Voxly platform API. HubSpot, Salesforce, and
           signed webhooks will be added when the subscriber integrations API ships.
         </p>
       </SolidCard>

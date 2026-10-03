@@ -12,40 +12,48 @@ import {
   Lock
 } from 'lucide-react';
 
+/**
+ * What you can teach the employee.
+ *
+ * "Zero hallucinations" and "100% grounded" were absolute guarantees on a page that
+ * also says nothing can be promised. Grounding is real and worth stating; a guarantee
+ * that it never gets anything wrong is not, and one refusal to answer wrongly is
+ * enough to lose the trust the rest of the page is trying to earn.
+ */
 const KNOWLEDGE_PILLARS = [
   {
     id: 'instructions',
     title: 'Instructions',
-    desc: 'Core operational directives, conversational boundaries, tone of voice, and custom sales scripts.',
-    items: ['B2B Sales Qualification Script', 'Empathetic Customer Greeting', 'Objection Handling Playbook'],
+    desc: 'Operational directives, conversational boundaries, tone, and the wording you want it to use.',
+    items: ['Qualification script', 'Opening lines', 'Objection handling'],
     icon: FileText,
   },
   {
     id: 'knowledge',
     title: 'Knowledge',
-    desc: 'Uploaded product manuals, service offerings, tech specs, pricing matrices, and CRM fields.',
-    items: ['Enterprise_Pricing_Matrix_2026.pdf', 'Platform_Architecture_SLA.pdf', 'Product_Manual_v3.pdf'],
+    desc: 'Product material, service descriptions, specifications and pricing that it answers from.',
+    items: ['Product manual', 'Pricing sheet', 'Service catalogue'],
     icon: Layers,
   },
   {
     id: 'faqs',
     title: 'FAQs',
-    desc: 'Hundreds of curated question-and-answer pairs covering common buyer questions and edge cases.',
-    items: ['140 Curated Technical Q&As', 'Competitor Comparison Tables', 'Billing & Refund Rules'],
+    desc: 'The questions your team answers every day, written down once instead of repeatedly.',
+    items: ['Common questions', 'Edge cases', 'Escalation triggers'],
     icon: HelpCircle,
   },
   {
     id: 'policies',
     title: 'Policies',
-    desc: 'Compliance guardrails, Do-Not-Call (DNC) registry rules, HIPAA/SOC2 guidelines, and refund limits.',
-    items: ['Zero Hallucination Guardrails', 'TCPA & DNC Scrubbing Rules', 'Escalation Protocol for Disputes'],
+    desc: 'The lines it must not cross, the compliance rules it applies, and when it must stop and hand over.',
+    items: ['Do-Not-Call rules', 'Recording consent', 'Refund and dispute limits'],
     icon: ShieldCheck,
   },
   {
     id: 'personality',
     title: 'Personality',
-    desc: 'Humanized conversational rhythm, natural breathing pauses, empathy inflection, and polite affirmations.',
-    items: ['Consultative Pacing (145 WPM)', 'Empathetic Active Listening', 'Adaptive Humor & Politeness'],
+    desc: 'How it speaks: pace, pauses, warmth, and how it sounds when the caller is difficult.',
+    items: ['Pace & pauses', 'Warmth', 'Tone when pushed'],
     icon: Sparkles,
   },
 ];
@@ -67,7 +75,8 @@ export function TrainingSection() {
             Teach it how your business works.
           </h2>
           <p className="text-base sm:text-lg text-[#524E5E] leading-relaxed">
-            Give your agent the knowledge, instructions, and behavior it needs to represent your business with absolute precision and zero hallucinations.
+            Every reply is drawn from what you give it here. When a question falls outside that,
+            it says so and offers a callback instead of inventing an answer.
           </p>
         </div>
 
@@ -100,7 +109,7 @@ export function TrainingSection() {
                     </div>
                     <div>
                       <span className="text-xs font-bold text-[#0F0E17] block mb-0.5">{p.title}</span>
-                      <span className="text-[10px] text-[#524E5E] leading-tight block">{p.items.length} rule sets</span>
+                      <span className="text-[10px] text-[#524E5E] leading-tight block">{p.items.length} examples</span>
                     </div>
                   </button>
                 );
@@ -118,8 +127,8 @@ export function TrainingSection() {
                   <span className="text-[11px] text-[#524E5E]">Semantic chunking + strict policy guardrails</span>
                 </div>
               </div>
-              <span className="text-xs font-mono font-semibold text-[#10B981] bg-[#10B981]/10 px-2.5 py-1 rounded border border-[#10B981]/20">
-                100% Grounded
+              <span className="text-xs font-semibold text-[#10B981] bg-[#10B981]/10 px-2.5 py-1 rounded border border-[#10B981]/20">
+                Answers grounded in your material
               </span>
             </div>
           </div>

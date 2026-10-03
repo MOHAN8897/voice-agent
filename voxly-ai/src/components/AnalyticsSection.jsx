@@ -19,10 +19,10 @@ export function AnalyticsSection() {
         {/* Section Header */}
         <div className="max-w-3xl mb-12 sm:mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-white border border-[#E4E2EB] text-[#6344E7] text-xs font-bold tracking-wider uppercase mb-4 shadow-craft-xs">
-            <span>Fleet Telemetry</span>
+            <span>Reporting</span>
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#0F0E17] tracking-tight leading-[1.12] mb-4">
-            Your AI gets better when you can see everything.
+            {PERFORMANCE_STATS.headline}
           </h2>
           <p className="text-base sm:text-lg text-[#524E5E] leading-relaxed">
             {PERFORMANCE_STATS.subtitle}
@@ -31,7 +31,20 @@ export function AnalyticsSection() {
 
         {/* Large Top Dashboard Mockup Card */}
         <div className="max-w-5xl bg-white rounded-2xl border border-[#E4E2EB] shadow-craft-md p-6 sm:p-8 mb-10">
-          
+
+          {/* Labelled as an example, because the numbers are. This page used to carry five
+              mock dashboards in five sections, each showing a different invented business —
+              a visitor comparing two of them saw two different companies. */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-5 mb-6 border-b border-[#E4E2EB]">
+            <div className="flex items-center gap-2.5">
+              <BarChart3 className="w-4 h-4 text-[#6344E7]" />
+              <span className="text-sm font-bold text-[#0F0E17]">Example workspace</span>
+            </div>
+            <span className="text-[11px] font-mono text-[#524E5E]">
+              Sample data — your workspace shows your own calls
+            </span>
+          </div>
+
           {/* 4 Primary Top Metrics Grid */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pb-6 border-b border-[#E4E2EB] mb-6 font-mono">
             {PERFORMANCE_STATS.metrics.map((m) => (
@@ -42,9 +55,7 @@ export function AnalyticsSection() {
                 <div className="text-2xl sm:text-3xl font-bold text-[#0F0E17] mb-1 tracking-tight">
                   {m.value}
                 </div>
-                <span className="text-[11px] font-semibold text-[#10B981] flex items-center gap-1 font-mono">
-                  <TrendingUp className="w-3.5 h-3.5" /> {m.change}
-                </span>
+                <span className="text-[11px] font-semibold text-[#524E5E] font-mono">{m.note}</span>
               </div>
             ))}
           </div>
@@ -72,9 +83,7 @@ export function AnalyticsSection() {
               ))}
             </div>
 
-            <span className="text-xs font-mono text-[#524E5E]">
-              Telemetry updated 3s ago
-            </span>
+            <span className="text-xs font-mono text-[#524E5E]">Last 30 days</span>
           </div>
 
           {/* Chart 1: Calls Over Time */}
@@ -82,8 +91,8 @@ export function AnalyticsSection() {
             <div className="space-y-4">
               <div className="h-56 flex items-end justify-between gap-4 sm:gap-8 pt-4 pb-2 border-b border-[#E4E2EB]">
                 {PERFORMANCE_STATS.charts.callsOverTime.map((item) => {
-                  const heightCalls = (item.calls / 13000) * 100;
-                  const heightResolved = (item.resolved / 13000) * 100;
+                  const heightCalls = (item.calls / 1400) * 100;
+                  const heightResolved = (item.resolved / 1400) * 100;
                   return (
                     <div key={item.month} className="flex-1 flex flex-col items-center gap-2 h-full justify-end">
                       <div className="w-full max-w-[40px] flex items-end justify-center gap-1.5 h-full">
@@ -108,7 +117,7 @@ export function AnalyticsSection() {
                   <span className="w-2.5 h-2.5 rounded-xs bg-[#0F0E17]" /> Total Calls Placed & Received
                 </span>
                 <span className="flex items-center gap-2 text-[#10B981]">
-                  <span className="w-2.5 h-2.5 rounded-xs bg-[#10B981]" /> Resolved Autonomously (82%)
+                  <span className="w-2.5 h-2.5 rounded-xs bg-[#10B981]" /> Resolved by the agent
                 </span>
               </div>
             </div>
@@ -156,7 +165,7 @@ export function AnalyticsSection() {
           {activeChartTab === 'hours' && (
             <div className="py-4 text-center space-y-4">
               <span className="text-xs font-bold text-[#524E5E] uppercase tracking-wider block font-mono">
-                Call Volume Distribution by Hour (24/7 Enterprise Availability)
+                Call volume by hour — the agent works while your team is asleep
               </span>
               <div className="grid grid-cols-6 sm:grid-cols-12 gap-1.5 max-w-3xl mx-auto">
                 {[
@@ -175,7 +184,7 @@ export function AnalyticsSection() {
                 ))}
               </div>
               <p className="text-xs text-[#524E5E]">
-                Zero hold times guaranteed even during peak traffic windows.
+                Calls are answered on the first ring, so a peak in traffic does not turn into a queue.
               </p>
             </div>
           )}

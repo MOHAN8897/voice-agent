@@ -30,7 +30,8 @@ export function FinalCTA({ onGetStarted, onTalkToMe }) {
             </h2>
 
             <p className="text-sm sm:text-base text-[#D1CFDB] leading-relaxed mb-8 max-w-lg mx-auto">
-              Give your business an AI that can talk, listen, learn and work around the clock with sub-500ms voice intelligence.
+              Hear it on the page above, or put one on your own number and judge it on a real
+              caller.
             </p>
 
             <div className="flex flex-wrap items-center justify-center gap-3">
@@ -38,7 +39,7 @@ export function FinalCTA({ onGetStarted, onTalkToMe }) {
                 onClick={onGetStarted}
                 className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl text-sm font-semibold text-[#0F0E17] bg-white hover:bg-[#FAF9FD] active:scale-[0.98] transition-all duration-150 shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6344E7]"
               >
-                <span>Build Your Agent</span>
+                <span>Build your agent</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
 
@@ -47,7 +48,7 @@ export function FinalCTA({ onGetStarted, onTalkToMe }) {
                 className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-semibold text-white bg-white/10 hover:bg-white/15 border border-white/20 active:scale-[0.98] transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6344E7]"
               >
                 <Mic className="w-4 h-4" />
-                <span>Talk to AI</span>
+                <span>Hear a sample first</span>
               </button>
             </div>
           </div>

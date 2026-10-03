@@ -25,10 +25,6 @@ export function OverviewModule({ onNavigate, onOpenCreateAgent, onOpenBuyNumber 
   const displayName = user?.fullName || user?.name || user?.email?.split('@')[0] || 'there';
   const [activityTimeframe, setActivityTimeframe] = useState('Today');
 
-  if (isLoading && !agents.length && !calls.length) {
-    return <ModuleSkeleton cards={4} />;
-  }
-
   const RANGE_DAYS = { Today: 1, '7 Days': 7, '30 Days': 30 };
 
   // The toggle must actually filter, or it is a control that lies to the user.
@@ -73,6 +69,14 @@ export function OverviewModule({ onNavigate, onOpenCreateAgent, onOpenBuyNumber 
       return acc + (Number.isFinite(m) ? m : 0);
     }, 0);
   }, [calls]);
+
+  // Every hook above must run on every render, so the loading skeleton is returned
+  // *after* them. Returning early made the first render use fewer hooks than the next,
+  // which React rejects outright ("Rendered more hooks than during the previous
+  // render") and takes the whole console down with it.
+  if (isLoading && !agents.length && !calls.length) {
+    return <ModuleSkeleton cards={4} />;
+  }
 
   return (
     <div className="space-y-6">
