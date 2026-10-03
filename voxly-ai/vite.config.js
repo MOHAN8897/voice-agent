@@ -105,10 +105,26 @@ function localOnlyDevPortalPlugin() {
   };
 }
 
+function devNoCachePlugin() {
+  return {
+    name: 'dev-no-cache',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        // Prevent Cloudflare tunnel and browser edge from caching dynamic dev assets
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+        next();
+      });
+    },
+  };
+}
+
 export default defineConfig({
   // Tunnel hostname (app-dev.hustlelabs.in) is not localhost — Reticle refuses to
   // connect unless allowNonLocalhost is on. Pairing token still comes from the daemon.
   plugins: [
+    devNoCachePlugin(),
     reticle({
       sourceMapping: false,
       allowNonLocalhost: true,

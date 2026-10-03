@@ -33,7 +33,7 @@ client/node_modules/
 dist/
 
 # Call archives & local dev overlays (API keys, fallback chains)
-data/
+/data/
 
 # Benchmark / probe artifacts (local run output — do not commit)
 benchmark_results.json

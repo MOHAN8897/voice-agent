@@ -52,14 +52,21 @@ export function HowItWorksSection({ onGetStarted }) {
                 <CreditCard className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-white">{BILLING_USAGE_PREVIEW.headline}</h3>
-                <p className="text-xs text-[#10B981] font-mono">{BILLING_USAGE_PREVIEW.tagline}</p>
+                <h3 className="text-base font-bold text-white">{BILLING_USAGE_PREVIEW?.headline || 'Pay for conversations. Know what you are spending.'}</h3>
+                <p className="text-xs text-[#10B981] font-mono">{BILLING_USAGE_PREVIEW?.tagline || 'Per connected second. Nothing for ringing that nobody answers.'}</p>
               </div>
             </div>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6 font-mono">
-            {BILLING_USAGE_PREVIEW.items.map((item) => (
+            {(
+              BILLING_USAGE_PREVIEW?.items || [
+                { label: 'Included minutes', value: '2,500 / mo' },
+                { label: 'Overage rate', value: '$0.11 / min' },
+                { label: 'Setup fee', value: '$0' },
+                { label: 'Unanswered rings', value: 'Free' },
+              ]
+            ).map((item) => (
               <div key={item.label} className="bg-black/30 p-3.5 rounded-xl border border-white/5">
                 <span className="text-[10px] font-sans font-bold text-[#A19EAD] uppercase tracking-wider block mb-1">
                   {item.label}
@@ -70,7 +77,7 @@ export function HowItWorksSection({ onGetStarted }) {
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-white/10 text-xs">
-            <span className="text-[#D1CFDB] max-w-xl">{BILLING_USAGE_PREVIEW.footnote}</span>
+            <span className="text-[#D1CFDB] max-w-xl">{BILLING_USAGE_PREVIEW?.footnote || 'You are billed from the moment the call connects until it ends. Ring-outs, busy signals and voicemail cost nothing.'}</span>
             <button
               onClick={onGetStarted}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold text-[#0F0E17] bg-white hover:bg-[#FAF9FD] active:scale-[0.98] transition-all"
