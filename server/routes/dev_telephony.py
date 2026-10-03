@@ -164,6 +164,7 @@ class OutboundTestBody(BaseModel):
     stack_override: dict[str, Any] | None = Field(None, alias="stackOverride")
     inherit_test_studio_config: bool = Field(False, alias="inheritTestStudioConfig")
     dial_request_id: str | None = Field(None, alias="dialRequestId")
+    contact: dict[str, Any] | None = None
 
     model_config = {"populate_by_name": True}
 
@@ -612,6 +613,7 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
                 "billed_user_id": billed_user_id,
                 "tenant_id": session.tenant_id,
                 "prewarm_external_id": prewarm_external_id,
+                "contact": body.contact or {},
             },
         )
         call_control_id = str(result.get("call_control_id") or result.get("id") or "")

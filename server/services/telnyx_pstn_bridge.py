@@ -526,6 +526,7 @@ class TelnyxPstnBridge:
                     language=str(pstn_opts.get("language") or "te-IN"),
                     realtime_prewarm_key=prewarm.realtime_key if prewarm else None,
                     billed_user_id=billed_user_id,
+                    contact=merged_local.get("contact"),
                 )
                 self.call_id = started["call_id"]
                 pstn_media_flow.bind_call_id(self.call_control_id or self.ws_id, self.call_id)

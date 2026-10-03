@@ -345,24 +345,36 @@ async def login_or_create_oauth_user(
                 **tokens,
                 **_session_public(user, tenant, signup_role),
             }
-        mem = await session.execute(
-            select(TenantMembership, Tenant)
-            .join(Tenant, Tenant.tenant_id == TenantMembership.tenant_id)
-            .where(TenantMembership.user_id == user.user_id)
-            .limit(1)
-        )
-        row = mem.first()
-        if row is None:
-            raise ValueError("no_tenant")
-        membership, tenant = row
+        picked = await resolve_usable_tenant(session, user.user_id)
+        if picked is None:
+            tenant = Tenant(
+                name=f"{user.full_name or 'My'}'s Workspace",
+                plan="starter",
+                status="active",
+                limits={"max_concurrent_pstn": 20, "max_agents": 20},
+                billing_source="self_serve",
+                created_at=_utcnow(),
+            )
+            session.add(tenant)
+            await session.flush()
+            role = _role_for_user(user.email)
+            membership = TenantMembership(
+                user_id=user.user_id,
+                tenant_id=tenant.tenant_id,
+                role=role,
+                created_at=_utcnow(),
+            )
+            session.add(membership)
+        else:
+            membership, tenant = picked
+            role = _role_for_user(user.email, membership.role)
+            if membership.role != role:
+                membership.role = role
         if user.email_verified_at is None:
             user.email_verified_at = _utcnow()
         if user.status == "pending_verification":
             user.status = "active"
             user.updated_at = _utcnow()
-        role = _role_for_user(user.email, membership.role)
-        if membership.role != role:
-            membership.role = role
         tokens = await _issue_tokens(session, user, tenant.tenant_id, role)
         await _log_event(session, f"login_{provider}", user_id=user.user_id, tenant_id=tenant.tenant_id)
         await session.commit()
@@ -473,9 +485,8 @@ async def signup(
         "user": user_out,
         "tenant": tenant_out,
     }
-    if expose_debug_otp:
-        # Dev/staging only (AUTH_DEBUG_EXPOSE_RESET_TOKEN). Without a working mail
-        # provider there is no other way to drive the rest of the flow.
+    if expose_debug_otp and not delivery.ok:
+        # Dev/staging only (AUTH_DEBUG_EXPOSE_RESET_TOKEN). Only expose fallback when delivery failed.
         payload["debugOtp"] = otp
     return payload
 
@@ -1176,9 +1187,4 @@ async def resend_verification_email(email: str, *, expose_debug_otp: bool = Fals
             delivery.provider_status,
             delivery.detail,
         )
-    # Never claim an account exists here: an unknown or already-verified address takes
-    # the same path as a failed send and comes back empty. The debug flag alone is the
-    # gate, exactly as it is for debugResetUrl on /forgot-password — it is documented as
-    # never-on in production, and it is the only setting that makes the code obtainable
-    # at all when no mail provider exists.
-    return {"debugOtp": otp} if expose_debug_otp else {}
+    return {"debugOtp": otp} if (expose_debug_otp and not delivery.ok) else {}

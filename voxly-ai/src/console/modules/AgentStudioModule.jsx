@@ -204,8 +204,16 @@ export function AgentStudioModule({
   const [voiceSpoken, setVoiceSpoken] = useState({ voice: null, model: null });
   const [brainLoadError, setBrainLoadError] = useState(null);
   const [brainLoading, setBrainLoading] = useState(false);
+  const [variablePickerOpen, setVariablePickerOpen] = useState(false);
 
   const [formData, setFormData] = useState(() => formFromAgent(selectedAgent));
+
+  const insertVariable = (token) => {
+    setFormData((prev) => ({
+      ...prev,
+      script: prev.script ? `${prev.script} ${token}` : token,
+    }));
+  };
   // The last-loaded (saved) state. Dirty = formData differs from this, which is
   // what the Save/Discard guard compares against.
   const [savedSnapshot, setSavedSnapshot] = useState(() => snapForm(formData));
@@ -673,11 +681,81 @@ export function AgentStudioModule({
                 )}
               </div>
 
-              {/* Variable-injection chips are hidden here on purpose. `{{token}}`
-                  is a compiler contract, not something a caller should say, and
-                  putting insert buttons beside the script invited operators to
-                  paste them into text the agent would speak aloud. Definitions
-                  live in Settings; the script stays prose. */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setVariablePickerOpen(!variablePickerOpen)}
+                  className="px-2.5 py-1.5 rounded-lg border border-[#E4E2EB] bg-[#FAF9FD] hover:bg-[#F0EEF6] text-xs font-semibold text-[#6344E7] flex items-center gap-1.5 shadow-2xs transition-colors"
+                  data-testid="insert-variable-btn"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Insert variable +</span>
+                </button>
+
+                {variablePickerOpen && (
+                  <div className="absolute right-0 top-full mt-1.5 w-64 bg-white border border-[#E4E2EB] rounded-xl shadow-xl z-30 p-2 text-xs space-y-2">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase text-[#8C879A] px-2 block mb-1">
+                        Contact Personalization
+                      </span>
+                      <div className="space-y-0.5">
+                        {[
+                          { label: 'First Name', token: '{{contact.first_name}}' },
+                          { label: 'Last Name', token: '{{contact.last_name}}' },
+                          { label: 'Full Name', token: '{{contact.full_name}}' },
+                          { label: 'Phone', token: '{{contact.phone}}' },
+                          { label: 'Email', token: '{{contact.email}}' },
+                          { label: 'Company', token: '{{contact.company}}' },
+                          { label: 'City', token: '{{contact.city}}' },
+                          { label: 'State', token: '{{contact.state}}' },
+                          { label: 'Country', token: '{{contact.country}}' },
+                          { label: 'Notes', token: '{{contact.notes}}' },
+                        ].map((v) => (
+                          <button
+                            key={v.token}
+                            type="button"
+                            onClick={() => {
+                              insertVariable(v.token);
+                              setVariablePickerOpen(false);
+                            }}
+                            className="w-full text-left px-2 py-1 rounded hover:bg-[#FAF9FD] flex items-center justify-between text-[#0F0E17]"
+                          >
+                            <span>{v.label}</span>
+                            <span className="text-[10px] font-mono text-[#6344E7]">{v.token}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="border-t border-[#E4E2EB] pt-1.5">
+                      <span className="text-[10px] font-bold uppercase text-[#8C879A] px-2 block mb-1">
+                        Custom Fields
+                      </span>
+                      <div className="space-y-0.5">
+                        {[
+                          { label: 'Product', token: '{{contact.custom_fields.product}}' },
+                          { label: 'Appointment Date', token: '{{contact.custom_fields.appointment_date}}' },
+                          { label: 'Balance', token: '{{contact.custom_fields.balance}}' },
+                          { label: 'Lead Type', token: '{{contact.custom_fields.lead_type}}' },
+                        ].map((v) => (
+                          <button
+                            key={v.token}
+                            type="button"
+                            onClick={() => {
+                              insertVariable(v.token);
+                              setVariablePickerOpen(false);
+                            }}
+                            className="w-full text-left px-2 py-1 rounded hover:bg-[#FAF9FD] flex items-center justify-between text-[#0F0E17]"
+                          >
+                            <span>{v.label}</span>
+                            <span className="text-[10px] font-mono text-[#6344E7]">{v.token}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             <textarea

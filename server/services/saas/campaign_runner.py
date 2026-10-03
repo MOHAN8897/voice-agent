@@ -56,6 +56,7 @@ async def _dial_one(
     to_e164: str,
     campaign_id: str,
     contact_id: uuid.UUID,
+    contact: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     from server.services.saas.telephony_orchestrator import subscriber_outbound
 
@@ -65,6 +66,7 @@ async def _dial_one(
         from_e164=from_e164,
         to_e164=to_e164,
         dial_request_id=f"camp:{campaign_id}:{contact_id}:{uuid.uuid4().hex[:8]}",
+        contact=contact,
     )
     return result if isinstance(result, dict) else {"ok": False, "error": "bad_response"}
 
@@ -139,6 +141,12 @@ async def run_campaign(
                 await session.commit()
                 phone = row.phone_e164
                 attempt_id = attempt.id
+                contact_payload = {
+                    "campaign_id": campaign_id,
+                    "contact_id": str(contact.id),
+                    **(row.metadata_ or {}),
+                    "resolved_variables": row.resolved_variables or {},
+                }
 
             try:
                 result = await _dial_one(
@@ -148,6 +156,7 @@ async def run_campaign(
                     to_e164=phone,
                     campaign_id=campaign_id,
                     contact_id=contact.id,
+                    contact=contact_payload,
                 )
                 ok = bool(result.get("ok") or result.get("call_id") or result.get("callId"))
                 call_id = result.get("call_id") or result.get("callId")

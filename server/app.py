@@ -56,6 +56,7 @@ from server.routes.telnyx import router as telnyx_router
 from server.routes.telnyx_ws import router as telnyx_ws_router
 from server.routes.plivo import router as plivo_router
 from server.routes.campaigns import router as campaigns_router
+from server.routes.contacts import router as contacts_router
 from server.routes.test_studio import router as test_studio_router
 from server.routes.web_agent_ws import router as web_agent_ws_router
 from server.routes.app_admin import router as app_admin_router
@@ -476,6 +477,7 @@ app.include_router(telnyx_router)
 app.include_router(telnyx_ws_router)
 app.include_router(plivo_router)
 app.include_router(campaigns_router)
+app.include_router(contacts_router)
 app.include_router(test_studio_router)
 app.include_router(ws_router)
 app.include_router(web_agent_ws_router)

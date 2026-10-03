@@ -114,6 +114,56 @@ class DncEntry(Base):
     added_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
 
+class ContactList(Base):
+    __tablename__ = "contact_lists"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.tenant_id"), nullable=False, index=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    total_contacts: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+
+class Contact(Base):
+    __tablename__ = "contacts"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.tenant_id"), nullable=False, index=True)
+    contact_list_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("contact_lists.id"), nullable=True, index=True)
+    phone: Mapped[str] = mapped_column(String(30), nullable=False, index=True)
+    first_name: Mapped[str | None] = mapped_column(String(150), nullable=True)
+    last_name: Mapped[str | None] = mapped_column(String(150), nullable=True)
+    full_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    company: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    job_title: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    country: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    city: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    state: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    timezone: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    custom_fields: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    raw_data: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    source: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+
+class ContactImportTemplate(Base):
+    __tablename__ = "contact_import_templates"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.tenant_id"), nullable=False, index=True)
+    template_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    source_headers: Mapped[list] = mapped_column(JSONB, nullable=False)
+    mapping: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    default_country: Mapped[str] = mapped_column(String(10), default="US")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+
 class Campaign(Base):
     __tablename__ = "campaigns"
 
@@ -121,6 +171,8 @@ class Campaign(Base):
     tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.tenant_id"), nullable=False)
     agent_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("agents.agent_id"), nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    default_country: Mapped[str] = mapped_column(String(10), default="US")
     status: Mapped[str] = mapped_column(String(30), default="draft")
     schedule: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     retry_rules: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
@@ -133,11 +185,15 @@ class CampaignContact(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     campaign_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("campaigns.campaign_id"), nullable=False)
-    phone_e164: Mapped[str] = mapped_column(String(20), nullable=False)
+    contact_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("contacts.id"), nullable=True)
+    phone_e164: Mapped[str] = mapped_column(String(30), nullable=False)
+    phone_snapshot: Mapped[str | None] = mapped_column(String(30), nullable=True)
     status: Mapped[str] = mapped_column(String(30), default="pending")
     metadata_: Mapped[dict] = mapped_column("metadata", JSONB, nullable=False, default=dict)
+    resolved_variables: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     attempts: Mapped[int] = mapped_column(Integer, default=0)
     last_attempt_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    next_attempt_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class CampaignRun(Base):

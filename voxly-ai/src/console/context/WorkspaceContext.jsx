@@ -796,11 +796,16 @@ export function WorkspaceProvider({ children }) {
   // ----------------------------------------------------------------
   const createCampaign = async (campaignData) => {
     const created = await api.campaigns.create(campaignData);
-    if (campaignData.contacts?.length) {
+    // If backend did not handle contacts or legacy caller passed contacts without backend support:
+    if (campaignData.contacts?.length && !created.totalContacts) {
       await api.campaigns.importContacts(created.id, campaignData.contacts);
     }
-    if (campaignData.autoStart) {
-      await api.campaigns.start(created.id);
+    if (campaignData.autoStart && created.status !== 'running') {
+      try {
+        await api.campaigns.start(created.id);
+      } catch {
+        /* already started or starting */
+      }
     }
     await loadWorkspaceData();
     return created;

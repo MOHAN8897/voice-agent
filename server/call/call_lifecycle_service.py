@@ -107,6 +107,7 @@ class CallLifecycleService:
         realtime_prewarm_key: str | None = None,
         billed_user_id: str | None = None,
         is_test: bool | None = None,
+        contact: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         settings = get_settings()
         session_id = session_id or "default"
@@ -171,6 +172,11 @@ class CallLifecycleService:
             from server.brain.brain_prompt_validate import assert_rendered_brain_valid
 
             assert_rendered_brain_valid(compiled_text, language)
+
+        if compiled_text and contact:
+            from server.services.saas.contact_import_service import render_agent_prompt_for_contact
+            compiled_text = render_agent_prompt_for_contact(compiled_text, contact)
+
         if config_session_id and lookup_session != session_id and not compiled_text:
             logger.warning(
                 "[CALL] config session %s has no saved script; using agent published brain",
@@ -202,6 +208,7 @@ class CallLifecycleService:
             "pipeline": pipeline,
             "billed_user_id": billed_user_id,
             "is_test": is_test,
+            "contact": contact or {},
         }
         from server.services.transcription_policy import attach_normalized_stack_override
 

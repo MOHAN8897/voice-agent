@@ -141,6 +141,7 @@ async def subscriber_outbound(
     from_e164: str | None,
     to_e164: str,
     dial_request_id: str | None = None,
+    contact: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     import uuid
 
@@ -208,6 +209,7 @@ async def subscriber_outbound(
         language=lang,
         stackOverride=stack,
         inheritTestStudioConfig=False,
+        contact=contact,
     )
     session_stub = SessionData(
         kind="app",

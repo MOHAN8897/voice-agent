@@ -357,10 +357,8 @@ async def auth_forgot_password(body: ForgotPasswordBody, request: Request):
         "ok": True,
         "message": "If an account exists for this email, password reset instructions were sent.",
     }
-    if settings.auth_debug_expose_reset_token and token:
-        # Dev/staging only (AUTH_DEBUG_EXPOSE_RESET_TOKEN): without a working mail
-        # provider there is no way to drive the rest of the flow, and a dead link is
-        # indistinguishable from a broken endpoint.
+    if settings.auth_debug_expose_reset_token and token and not delivery.get("sent"):
+        # Dev/staging only fallback when email delivery failed or is unconfigured.
         payload["debugResetUrl"] = f"{settings.voxly_frontend_url.rstrip('/')}/#reset-password?token={token}"
     if delivery.get("attempted") and not delivery.get("sent"):
         # Still the same generic message — the address may simply be undeliverable. The

@@ -1000,13 +1000,18 @@ export const api = {
         maxAttempts: campaignData.maxAttemptsPerContact || campaignData.maxAttempts,
         retryDelayMinutes: campaignData.retryDelayMinutes,
         fromE164: campaignData.fromE164,
+        description: campaignData.description || campaignData.objective,
+        defaultCountry: campaignData.defaultCountry || 'US',
+        contactListId: campaignData.contactListId,
+        contacts: campaignData.contacts,
+        autoStart: campaignData.autoStart ?? false,
       });
       const row = data.campaign || data;
       return normalizeCampaign({
         ...row,
         name: row.name || campaignData.name,
         totalContacts: campaignData.totalContacts || campaignData.contacts?.length || 0,
-        objective: campaignData.objective,
+        objective: campaignData.objective || campaignData.description,
       });
     },
     async toggleStatus(id, currentStatus) {
@@ -1022,6 +1027,36 @@ export const api = {
     },
     async analytics(id) {
       return await api.request('GET', `/api/campaigns/${id}/analytics`);
+    },
+    async validateVariables(agentId, contacts) {
+      return await api.request('POST', '/api/campaigns/validate-variables', {
+        agentId,
+        contacts,
+      });
+    },
+  },
+
+  contacts: {
+    async parse(payload) {
+      return await api.request('POST', '/api/contacts/parse', payload);
+    },
+    async normalizePreview(payload) {
+      return await api.request('POST', '/api/contacts/normalize-preview', payload);
+    },
+    async getTemplates() {
+      return await api.request('GET', '/api/contacts/templates');
+    },
+    async saveTemplate(payload) {
+      return await api.request('POST', '/api/contacts/templates', payload);
+    },
+    async getLists() {
+      return await api.request('GET', '/api/contacts/lists');
+    },
+    async createList(payload) {
+      return await api.request('POST', '/api/contacts/lists', payload);
+    },
+    async getListContacts(listId) {
+      return await api.request('GET', `/api/contacts/lists/${listId}/contacts`);
     },
   },
 
