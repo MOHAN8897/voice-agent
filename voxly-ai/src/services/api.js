@@ -771,6 +771,14 @@ export const api = {
       });
       return { blob, url: URL.createObjectURL(blob), voice: headers.voice, label: headers.label, model: headers.model };
     },
+
+    /** Per-country compliance obligations for an agent. */
+    async getAgentCompliance(agentId) {
+      return await api.request('GET', `/api/agents/${encodeURIComponent(agentId)}/compliance`);
+    },
+    async saveAgentCompliance(agentId, body) {
+      return await api.request('PUT', `/api/agents/${encodeURIComponent(agentId)}/compliance`, body);
+    },
     async getCatalog(country = 'US') {
       const data = await api.request('GET', `/api/telephony/numbers/search?country=${encodeURIComponent(country)}`);
       const rows = data.numbers || [];

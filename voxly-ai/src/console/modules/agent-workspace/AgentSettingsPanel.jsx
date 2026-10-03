@@ -26,6 +26,9 @@ export function AgentSettingsPanel({ agent, onOpenBuyNumber }) {
   const [saved, setSaved] = useState(false);
   const [assigning, setAssigning] = useState(false);
   const [error, setError] = useState(null);
+  const [compliance, setCompliance] = useState(null);
+  const [complianceLoading, setComplianceLoading] = useState(false);
+  const [complianceError, setComplianceError] = useState(null);
 
   // Re-seed when the header switcher moves to a different agent.
   const agentId = agent?.id;
@@ -35,6 +38,51 @@ export function AgentSettingsPanel({ agent, onOpenBuyNumber }) {
     setName(agent?.name || '');
     setLanguage((agent?.languages && agent.languages[0]) || agent?.language || 'en-US');
   }
+
+  // Compliance is per agent, so it is fetched on selection rather than held in
+  // the workspace. A failure here must not blank the rest of the settings panel.
+  React.useEffect(() => {
+    if (!agentId) {
+      setCompliance(null);
+      return undefined;
+    }
+    let cancelled = false;
+    setComplianceLoading(true);
+    setComplianceError(null);
+    api.telephony
+      .getAgentCompliance(agentId)
+      .then((row) => {
+        if (!cancelled) setCompliance(row);
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        setComplianceError(e?.message || 'Could not load compliance obligations');
+      })
+      .finally(() => {
+        if (!cancelled) setComplianceLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [agentId]);
+
+  const toggleCompliance = async (key, next) => {
+    if (!agentId) return;
+    const previous = compliance;
+    // Optimistic: a checkbox that waits on the network feels broken.
+    setCompliance((prev) =>
+      prev ? { ...prev, acknowledged: { ...prev.acknowledged, [key]: next } } : prev
+    );
+    try {
+      const saved = await api.telephony.saveAgentCompliance(agentId, {
+        acknowledged: { ...(previous?.acknowledged || {}), [key]: next },
+      });
+      setCompliance(saved);
+    } catch (e) {
+      setCompliance(previous);
+      showToast(e?.message || 'Could not save compliance setting', 'error');
+    }
+  };
 
   const assigned = phoneNumbers.find((n) => n.assignedAgentId === agentId);
   const currentNumberId = assigned?.id || agent?.numberId || '';
@@ -250,6 +298,64 @@ export function AgentSettingsPanel({ agent, onOpenBuyNumber }) {
             );
           })}
         </select>
+      </SolidCard>
+
+      {/* Compliance. Advisory only — these toggles record what the operator has
+          confirmed and never change how a call is placed. */}
+      <SolidCard>
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div>
+            <h3 className="text-xs font-bold text-[#0F0E17]">Compliance</h3>
+            <p className="text-[11px] text-[#524E5E] mt-0.5">
+              Obligations for the market this agent numbers in. Confirm each one you meet.
+            </p>
+          </div>
+          {compliance && (
+            <span
+              data-testid="agent-compliance-regulation"
+              className="shrink-0 rounded-full bg-[#F0EEF6] border border-[#E4E2EB] px-2.5 py-1 text-[10px] font-semibold text-[#524E5E]"
+            >
+              {compliance.country} · {compliance.regulation}
+            </span>
+          )}
+        </div>
+
+        {complianceLoading && (
+          <p className="text-[11px] text-[#8C879A]">Loading obligations…</p>
+        )}
+        {complianceError && (
+          <p className="text-[11px] text-red-600" data-testid="agent-compliance-error">
+            {complianceError}
+          </p>
+        )}
+
+        {compliance && (
+          <>
+            <p className="text-[11px] text-[#524E5E] mb-3">{compliance.summary}</p>
+            <ul className="space-y-2">
+              {(compliance.acknowledged ? Object.entries(compliance.acknowledged) : []).map(
+                ([key, on]) => (
+                  <li key={key} className="flex items-start justify-between gap-3">
+                    <label className="flex items-start gap-2 text-[12px] text-[#0F0E17] capitalize">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(on)}
+                        onChange={(e) => toggleCompliance(key, e.target.checked)}
+                        data-testid={`agent-compliance-${key}`}
+                        className="mt-0.5 h-4 w-4 shrink-0"
+                      />
+                      <span>{key.replace(/_/g, ' ')}</span>
+                    </label>
+                  </li>
+                )
+              )}
+            </ul>
+            <p className="text-[10px] text-[#8C879A] mt-3">
+              Recorded against this agent. These are notes for your compliance review — they do
+              not change how calls are placed.
+            </p>
+          </>
+        )}
       </SolidCard>
     </div>
   );

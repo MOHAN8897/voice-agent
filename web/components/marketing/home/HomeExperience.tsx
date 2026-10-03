@@ -36,7 +36,7 @@ const FEATURES = [
   {
     title: "Structured outcomes",
     body: "Summary, sentiment, and extracted fields land on the call record automatically — not in a spreadsheet later.",
-    sample: "Budget ₹1.5–2 Cr · Timeline immediate · Sentiment: positive",
+    sample: "Budget $180k–$240k · Timeline immediate · Sentiment: positive",
   },
   {
     title: "Production reliability",

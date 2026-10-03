@@ -548,8 +548,10 @@ export default function TenantCockpitPage() {
             <div className="grid gap-4 lg:grid-cols-2">
               <DevCard title="Adjust wallet (USD)">
                 <p className="mb-2 text-xs text-text-muted">
-                  Balance ${Number(detail.data.wallet?.balanceUsd ?? 0).toFixed(2)} USD · ₹
-                  {Number(detail.data.wallet?.balanceInr ?? 0).toFixed(2)}
+                  Balance ${Number(detail.data.wallet?.balanceUsd ?? 0).toFixed(2)} USD
+                  {detail.data.wallet?.balanceInr
+                    ? ` · ≈ ₹${Number(detail.data.wallet.balanceInr).toFixed(2)} settled`
+                    : ''}
                 </p>
                 <label className="block text-xs">
                   <span className="text-text-muted">Amount (USD)</span>

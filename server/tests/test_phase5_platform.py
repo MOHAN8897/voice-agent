@@ -1,6 +1,8 @@
 """Phase 5 tests — auth, transcode, exotel, campaigns."""
 from __future__ import annotations
 
+from server.tests.conftest import DEV_TEST_BASE_URL
+
 import base64
 
 import pytest
@@ -19,7 +21,7 @@ def _client(monkeypatch):
     get_settings.cache_clear()
     import server.app as app_mod
 
-    return TestClient(app_mod.app)
+    return TestClient(app_mod.app, base_url=DEV_TEST_BASE_URL)
 
 
 def test_audio_transcode_roundtrip():
@@ -48,7 +50,7 @@ def test_exotel_passthru(monkeypatch):
     get_settings.cache_clear()
     import server.app as app_mod
 
-    c = TestClient(app_mod.app)
+    c = TestClient(app_mod.app, base_url=DEV_TEST_BASE_URL)
     r = c.post("/api/exotel/passthru?CallSid=test-sid&From=%2B911234567890")
     assert r.status_code == 200
     get_settings.cache_clear()
@@ -60,7 +62,7 @@ def test_exotel_status(monkeypatch):
     get_settings.cache_clear()
     import server.app as app_mod
 
-    c = TestClient(app_mod.app)
+    c = TestClient(app_mod.app, base_url=DEV_TEST_BASE_URL)
     r = c.get("/api/exotel/status")
     assert r.status_code == 200
     body = r.json()

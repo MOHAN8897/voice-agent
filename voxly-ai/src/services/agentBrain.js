@@ -69,8 +69,16 @@ function sectionsFromStudio({
       type: 'identity_purpose',
       title: 'Identity & Purpose',
       order: 10,
-      raw_text:
+      // The greeting lives here as well as being pinned into the script section.
+      // Writing it in only one place meant the editor could never read it back:
+      // the loader looks for this exact line, and without it the greeting was
+      // absorbed into the script body and duplicated on every save.
+      raw_text: [
         'You are a live phone agent for this business. Follow the Calling script section exclusively.',
+        greeting ? `Opening greeting: ${String(greeting).split('\n')[0].trim()}` : '',
+      ]
+        .filter(Boolean)
+        .join('\n'),
       enabled: true,
     },
     {

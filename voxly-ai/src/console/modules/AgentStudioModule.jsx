@@ -37,20 +37,70 @@ import { AgentSettingsPanel } from './agent-workspace/AgentSettingsPanel';
 import { resolveEmployeeStep } from '../employeeFlowHash';
 
 /**
- * Canonical text for the dirty check. Only the fields the editor owns count —
- * `updatedAt` and other list-row metadata would make every refresh look dirty.
+ * Canonical text for the dirty check, and the payload "Discard" restores.
+ *
+ * These are the same thing on purpose. They used to be a hand-picked subset,
+ * which meant Discard restored a form with `objectionRules`, `boundaries`,
+ * `dynamicVariables` and `inboundRouting` missing — the editor then crashed on
+ * the next `.map`, and a rejected edit silently erased the caller's rules.
+ *
+ * Snapshot and form are therefore built from one field list, so they cannot
+ * drift apart again: adding an editor field to `formFromAgent` without adding it
+ * here is the only way to reintroduce the bug, and it now fails visibly.
  */
+const EDITABLE_FIELDS = [
+  'name',
+  'role',
+  'greeting',
+  'script',
+  'language',
+  'dynamicVariables',
+  'objectionRules',
+  'boundaries',
+  'variableDefinitions',
+  'voice',
+  'inboundRouting',
+];
+
+/**
+ * Reduce a form to just the editable fields, with every collection normalised to
+ * an array. The normalisation is not cosmetic: a restored snapshot that lacks a
+ * key would leave `undefined` in place of a list, and the first `.map` over it
+ * would throw and take the whole workspace down.
+ */
+function editableSubset(form) {
+  const out = {};
+  for (const key of EDITABLE_FIELDS) {
+    const value = form?.[key];
+    if (Array.isArray(value)) {
+      out[key] = value;
+    } else if (value && typeof value === 'object') {
+      out[key] = value;
+    } else {
+      out[key] = value ?? '';
+    }
+  }
+  return out;
+}
+
 function snapForm(form) {
-  if (!form) return '';
-  return JSON.stringify({
-    name: form.name || '',
-    role: form.role || '',
-    greeting: form.greeting || '',
-    script: form.script || '',
-    language: form.language || '',
-    voice: form.voice || null,
-    variableDefinitions: form.variableDefinitions || [],
-  });
+  if (!form) return JSON.stringify(editableSubset(EMPTY_FORM));
+  return JSON.stringify(editableSubset(form));
+}
+
+/** Turn a stored snapshot back into a complete, renderable form. */
+function formFromSnapshot(snapshot) {
+  const parsed = JSON.parse(snapshot || '{}');
+  return {
+    ...editableSubset(parsed),
+    // Never inherit a malformed list from an older or hand-edited snapshot.
+    dynamicVariables: Array.isArray(parsed.dynamicVariables) ? parsed.dynamicVariables : [],
+    objectionRules: Array.isArray(parsed.objectionRules) ? parsed.objectionRules : [],
+    boundaries: Array.isArray(parsed.boundaries) ? parsed.boundaries : [],
+    variableDefinitions: Array.isArray(parsed.variableDefinitions)
+      ? parsed.variableDefinitions
+      : [],
+  };
 }
 
 /** The five workspace tabs. Test call is a header button, not a tab. */
@@ -83,21 +133,23 @@ const EMPTY_FORM = {
 function formFromAgent(agent) {
   if (!agent) return { ...EMPTY_FORM };
   return {
-    name: agent.name || '',
-    role: agent.role || 'Sales',
-    greeting: agent.greeting || '',
-    script: agent.script || '',
-    dynamicVariables: agent.dynamicVariables || [],
-    objectionRules: agent.objectionRules || [],
-    boundaries: agent.boundaries || [],
-    variableDefinitions: agent.variableDefinitions || [],
-    voice: { ...EMPTY_FORM.voice, ...(agent.voice || {}) },
-    language: agent.language || 'en-US',
-    inboundRouting: agent.inboundRouting || {
-      businessHours: '08:00 - 18:00 (PST)',
-      afterHoursAction: 'voicemail',
-      greetingPhrase: agent.greeting || '',
-    },
+    ...editableSubset({
+      name: agent.name || '',
+      role: agent.role || 'Sales',
+      greeting: agent.greeting || '',
+      script: agent.script || '',
+      dynamicVariables: agent.dynamicVariables || [],
+      objectionRules: agent.objectionRules || [],
+      boundaries: agent.boundaries || [],
+      variableDefinitions: agent.variableDefinitions || [],
+      voice: { ...EMPTY_FORM.voice, ...(agent.voice || {}) },
+      language: agent.language || 'en-US',
+      inboundRouting: agent.inboundRouting || {
+        businessHours: '08:00 - 18:00 (PST)',
+        afterHoursAction: 'voicemail',
+        greetingPhrase: agent.greeting || '',
+      },
+    }),
   };
 }
 
@@ -177,7 +229,9 @@ export function AgentStudioModule({
   }, []);
 
   const discardChanges = useCallback(() => {
-    setFormData((prev) => JSON.parse(savedSnapshot));
+    // Restore through the same normaliser the snapshot was built with, so a
+    // restored form always has the collections the editor maps over.
+    setFormData(formFromSnapshot(savedSnapshot));
     setSaveError(null);
     setIsSaved(false);
   }, [savedSnapshot]);
@@ -609,7 +663,7 @@ export function AgentStudioModule({
               <div>
                 <h3 className="text-xs font-bold text-[#0F0E17]">Calling script</h3>
                 <p className="text-[11px] text-[#524E5E]">
-                  Same single section as dev Test Studio — identity, offer, opening, and role. Published to the cached brain on save.
+                  What your agent says on a call. Published to the cached brain on save.
                 </p>
                 {brainLoading && (
                   <p className="text-[11px] text-[#6344E7] mt-1">Loading script from your agent brain…</p>
@@ -619,28 +673,11 @@ export function AgentStudioModule({
                 )}
               </div>
 
-              {/* Dynamic Variables Chips */}
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-[10px] text-[#8C879A] uppercase font-bold tracking-wider mr-1">
-                  Inject:
-                </span>
-                {(formData.variableDefinitions?.length
-                  ? formData.variableDefinitions.map((v) => v.key)
-                  : ['caller_name', 'callback_phone', 'business_name']
-                ).map((v) => (
-                  <button
-                    key={v}
-                    type="button"
-                    onClick={() => handleInsertVariable(v)}
-                    className="px-2.5 py-1 rounded-lg bg-[#F0EEF6] border border-[#E4E2EB] hover:border-[#6344E7] text-[10px] font-mono text-[#6344E7] hover:text-[#5034CE] transition-all font-semibold"
-                    title={
-                      formData.variableDefinitions?.find((d) => d.key === v)?.description || ''
-                    }
-                  >
-                    + {`{{${v}}}`}
-                  </button>
-                ))}
-              </div>
+              {/* Variable-injection chips are hidden here on purpose. `{{token}}`
+                  is a compiler contract, not something a caller should say, and
+                  putting insert buttons beside the script invited operators to
+                  paste them into text the agent would speak aloud. Definitions
+                  live in Settings; the script stays prose. */}
             </div>
 
             <textarea
@@ -687,7 +724,9 @@ export function AgentStudioModule({
             </div>
 
             <div className="space-y-3">
-              {formData.objectionRules.map((rule, idx) => (
+              {/* Defensive: a malformed form must degrade to an empty list, not
+                  crash the whole agent workspace with an unhandled TypeError. */}
+              {(formData.objectionRules || []).map((rule, idx) => (
                 <div
                   key={idx}
                   className="p-3 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] grid grid-cols-1 sm:grid-cols-2 gap-3 relative group"

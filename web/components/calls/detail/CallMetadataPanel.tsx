@@ -87,24 +87,44 @@ export function CallMetadataPanel({ meta }: { meta: CallMeta }) {
   if (meta.transcript_source) {
     rows.push({ label: "Transcript source", value: String(meta.transcript_source) });
   }
+  // USD leads everywhere; the rupee figure stays as a secondary reference because
+  // settlement is in INR and the two are not the same number at a given rate.
+  // The rate comes from the call's own usage record, so a historical call is
+  // converted at the rate that actually applied to it.
+  const fx = Number(usage.fx_rate_inr) || 1;
+  const inrToUsd = (inr: number | null | undefined) =>
+    formatUsd(Number(inr || 0) / fx);
+
   if (costInr != null) {
-    rows.push({ label: "Total cost", value: `${formatInr(Number(costInr))} (${formatUsd(Number(costUsd || 0))})` });
+    rows.push({
+      label: "Total cost",
+      value: `${formatUsd(Number(costUsd || 0))} (settled ₹${Number(costInr).toFixed(2)})`,
+    });
   }
   if (perMin != null) {
-    rows.push({ label: "All-in ₹/min", value: formatInr(Number(perMin)) });
+    rows.push({ label: "All-in $/min", value: formatUsd(Number(perMin) / (Number(usage.fx_rate_inr) || 1)) });
   }
   if (usage.model_cost_inr_per_min != null) {
-    rows.push({ label: "Model ₹/min", value: formatInr(Number(usage.model_cost_inr_per_min)) });
+    rows.push({
+      label: "Model $/min",
+      value: formatUsd(Number(usage.model_cost_inr_per_min) / (Number(usage.fx_rate_inr) || 1)),
+    });
   }
   if (usage.telnyx_inr_per_min != null) {
-    rows.push({ label: "Telnyx ₹/min", value: formatInr(Number(usage.telnyx_inr_per_min)) });
+    rows.push({
+      label: "Telnyx $/min",
+      value: formatUsd(Number(usage.telnyx_inr_per_min) / (Number(usage.fx_rate_inr) || 1)),
+    });
   }
   if (usage.gemini_list_audio_inr_per_min != null) {
     rows.push({
-      label: "Gemini audio list ₹/min",
-      value: `${formatInr(Number(usage.gemini_list_audio_inr_per_min))} ($0.005 in + $0.018 out)`,
+      label: "Gemini audio list $/min",
+      value: `${formatUsd(
+        Number(usage.gemini_list_audio_inr_per_min) / (Number(usage.fx_rate_inr) || 1)
+      )} ($0.005 in + $0.018 out)`,
     });
   }
+  void inrToUsd;
   if (usage.fx_rate_inr != null) {
     const src = usage.fx_source ? ` (${usage.fx_source})` : "";
     rows.push({ label: "FX USD→INR", value: `${Number(usage.fx_rate_inr)}${src}` });

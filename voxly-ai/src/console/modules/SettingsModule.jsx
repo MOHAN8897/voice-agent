@@ -57,10 +57,8 @@ export function SettingsModule() {
           {Number(wallet?.remainingMinutes || 0).toLocaleString()} min
         </p>
         <p className="text-xs text-[#524E5E]">
-          {wallet?.balanceInr != null
-            ? `₹${Number(wallet.balanceInr).toFixed(2)} workspace wallet`
-            : `$${Number(wallet?.balanceUsd || 0).toFixed(2)} workspace wallet`}
-          {wallet?.myUsageInr != null ? ` · your usage ₹${Number(wallet.myUsageInr).toFixed(2)}` : ''}
+          {`$${Number(wallet?.balanceUsd || 0).toFixed(2)} workspace wallet`}
+          {wallet?.myUsageUsd != null ? ` · your usage $${Number(wallet.myUsageUsd).toFixed(2)}` : ''}
         </p>
       </SolidCard>
 

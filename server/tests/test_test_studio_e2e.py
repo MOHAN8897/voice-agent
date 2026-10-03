@@ -10,7 +10,7 @@ async def test_agent_get_by_name_default():
     import server.app as app_mod
 
     transport = ASGITransport(app=app_mod.app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(transport=transport, base_url="http://localhost") as client:
         login = await client.post("/api/dev/login", json={"username": "dev", "password": "devpass"})
         assert login.status_code == 200
 
@@ -26,7 +26,7 @@ async def test_test_studio_call_lifecycle():
     import server.app as app_mod
 
     transport = ASGITransport(app=app_mod.app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(transport=transport, base_url="http://localhost") as client:
         login = await client.post("/api/dev/login", json={"username": "dev", "password": "devpass"})
         assert login.status_code == 200
         agents = await client.get("/api/agents")
@@ -56,7 +56,7 @@ async def test_catalog_voice_presets_is_array():
     import server.app as app_mod
 
     transport = ASGITransport(app=app_mod.app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(transport=transport, base_url="http://localhost") as client:
         r = await client.get("/api/settings/catalog")
         assert r.status_code == 200
         presets = r.json().get("tts", {}).get("voicePresets")

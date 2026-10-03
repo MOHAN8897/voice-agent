@@ -16,7 +16,7 @@ async def test_dev_login_admin_password_with_at_symbol(monkeypatch):
     import server.app as app_mod
 
     transport = ASGITransport(app=app_mod.app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(transport=transport, base_url="http://localhost") as client:
         bad = await client.post("/api/dev/login", json={"username": "admin", "password": "wrong"})
         assert bad.status_code == 200
         assert bad.json().get("ok") is False

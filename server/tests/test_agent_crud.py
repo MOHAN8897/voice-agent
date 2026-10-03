@@ -3,13 +3,14 @@ from fastapi.testclient import TestClient
 
 import server.app as app_mod
 from server.config.env import get_settings
+from server.tests.conftest import DEV_TEST_BASE_URL
 
 
 def _client(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
     monkeypatch.setenv("SARVAM_API_KEY", "sarvam-test")
     get_settings.cache_clear()
-    return TestClient(app_mod.app)
+    return TestClient(app_mod.app, base_url=DEV_TEST_BASE_URL)
 
 
 def _dev_headers(c: TestClient) -> dict[str, str]:

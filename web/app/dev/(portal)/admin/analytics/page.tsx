@@ -292,7 +292,7 @@ export default function AdminAnalyticsPage() {
                       <SkeuoTd className="font-mono text-xs">{d.date}</SkeuoTd>
                       <SkeuoTd className="text-right font-mono">{formatUsd(d.cents)}</SkeuoTd>
                       <SkeuoTd className="text-right font-mono text-xs">
-                        ₹{(d.inrPaise / 100).toFixed(2)}
+                        ₹≈ ₹{(d.inrPaise / 100).toFixed(2)}
                       </SkeuoTd>
                     </SkeuoTableRow>
                   ))

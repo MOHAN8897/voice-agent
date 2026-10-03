@@ -165,6 +165,12 @@ class Settings(BaseSettings):
     didit_callback_url: str | None = Field(None, alias="DIDIT_CALLBACK_URL")
     #: Compliance workflow. Per-session config, not a secret.
     didit_workflow_id: str = Field("", alias="DIDIT_WORKFLOW_ID")
+    #: Country the verification flow is collected for (ISO-3166 alpha-2).
+    #: Defaults to US: the product is sold to English-speaking buyers, and Didit
+    #: otherwise falls back to the workflow's own region, which was India.
+    didit_country: str = Field("US", alias="DIDIT_COUNTRY")
+    #: Flow language. Didit renders the hosted flow in this locale.
+    didit_language: str = Field("en", alias="DIDIT_LANGUAGE")
     #: Require an Approved decision before buying a number / placing a PSTN call.
     kyc_gate_purchases: bool = Field(True, alias="KYC_GATE_PURCHASES")
 

@@ -173,6 +173,11 @@ async def create_session(
         "workflow_id": settings.didit_workflow_id,
         # Our stable internal user id — this is what the webhook reports back.
         "vendor_data": str(user_id),
+        # Set explicitly rather than inheriting the workflow's region. The
+        # account was configured for India, so an unset value produced an
+        # Indian flow for a customer buying a US number.
+        "country_of_residence": (settings.didit_country or "US").strip().upper(),
+        "language": settings.didit_language or "en",
     }
     if settings.didit_callback_url:
         body["callback"] = settings.didit_callback_url

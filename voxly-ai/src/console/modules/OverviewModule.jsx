@@ -93,9 +93,7 @@ export function OverviewModule({ onNavigate, onOpenCreateAgent, onOpenBuyNumber 
             {phoneNumbers.length} number{phoneNumbers.length === 1 ? '' : 's'},{' '}
             {calls.length} recent call{calls.length === 1 ? '' : 's'},{' '}
             {leads.length} lead{leads.length === 1 ? '' : 's'} — wallet{' '}
-            {wallet.balanceInr != null
-              ? `₹${Number(wallet.balanceInr).toFixed(0)}`
-              : `$${Number(wallet.balanceUsd ?? wallet.usdEquivalent ?? 0).toFixed(2)}`}
+            {`$${Number(wallet.balanceUsd ?? wallet.usdEquivalent ?? 0).toFixed(2)}`}
             .
           </p>
         </div>
@@ -141,8 +139,8 @@ export function OverviewModule({ onNavigate, onOpenCreateAgent, onOpenBuyNumber 
           value={String(Number(wallet?.remainingMinutes || 0))}
           trend="Prepaid"
           trendLabel={
-            wallet?.balanceInr != null
-              ? `₹${Number(wallet.balanceInr).toFixed(0)} remaining`
+            wallet?.balanceUsd != null
+              ? `$${Number(wallet.balanceUsd).toFixed(2)} remaining`
               : 'from billing API'
           }
           icon={Clock}

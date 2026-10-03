@@ -5,12 +5,20 @@ import { SolidCard } from '../ui/SolidCard';
 import { TactileButton } from '../ui/TactileButton';
 import { showToast } from '../ui/ToastHost';
 
-function moneyInr(paise) {
-  return `₹${(Number(paise || 0) / 100).toFixed(2)}`;
-}
-
 function moneyUsd(cents) {
   return `$${(Number(cents || 0) / 100).toFixed(2)}`;
+}
+
+/**
+ * USD is the display currency everywhere in this console.
+ *
+ * The server sends `balanceUsdCents` already converted at the admin-configured
+ * rate, so nothing here re-derives a rate — a rate hardcoded in the UI is how
+ * the screen and the invoice drift apart.
+ */
+function walletUsdCents(t) {
+  if (t?.balanceUsdCents != null) return Number(t.balanceUsdCents) || 0;
+  return Number(t?.balanceCents) || 0;
 }
 
 export function AdminModule() {
@@ -18,7 +26,7 @@ export function AdminModule() {
   const [tenants, setTenants] = useState([]);
   const [error, setError] = useState(null);
   const [grantTenant, setGrantTenant] = useState('');
-  const [grantInr, setGrantInr] = useState('5000');
+  const [grantUsd, setGrantUsd] = useState('50');
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
@@ -41,9 +49,16 @@ export function AdminModule() {
   }, [tenants, grantTenant]);
 
   const adjust = async (sign) => {
-    const rupees = Math.abs(Number(grantInr));
-    const paise = Math.round(rupees * 100) * (sign < 0 ? -1 : 1);
-    if (!grantTenant || !Number.isFinite(rupees) || rupees <= 0) return;
+    // The operator types USD — that is the currency this console speaks. The API
+    // takes INR paise, so convert once here at the server-supplied charge rate.
+    const usd = Math.abs(Number(grantUsd));
+    if (!grantTenant || !Number.isFinite(usd) || usd <= 0) return;
+    if (!fxRateInr) {
+      showToast('No USD/INR rate available — cannot convert the amount', 'error');
+      return;
+    }
+    const usdCents = Math.round(usd * 100);
+    const paise = Math.round(usd * fxRateInr * 100) * (sign < 0 ? -1 : 1);
     setBusy(true);
     try {
       await api.admin.grantCredits({
@@ -51,7 +66,10 @@ export function AdminModule() {
         amountInrPaise: paise,
         reason: sign < 0 ? 'admin_debit' : 'admin_grant',
       });
-      showToast(sign < 0 ? `Debited ${moneyInr(Math.abs(paise))}` : `Credited ${moneyInr(paise)}`, 'success');
+      showToast(
+        sign < 0 ? `Debited ${moneyUsd(usdCents)}` : `Credited ${moneyUsd(usdCents)}`,
+        'success'
+      );
       await load();
     } catch (e) {
       showToast(e.message || 'Wallet adjust failed', 'error');
@@ -61,13 +79,16 @@ export function AdminModule() {
   };
 
   const selected = tenants.find((t) => t.tenantId === grantTenant);
+  // Charge rate from the server, not a constant: an admin changing the rate must
+  // not leave this screen quoting a different dollar figure.
+  const fxRateInr = Number(selected?.fxRateInr || tenants.find((t) => t.fxRateInr)?.fxRateInr) || 0;
 
   return (
     <div className="space-y-6" data-testid="admin-wallet-panel">
       <div>
         <h2 className="text-xl font-bold text-[#0F0E17] tracking-tight">Platform admin</h2>
         <p className="text-xs text-[#524E5E] mt-1">
-          Wallet balances are real currency (INR / USD), not abstract credits. Access is
+          Wallet balances are real currency, shown in USD. Access is
           re-checked against the server allowlist on every request.
         </p>
       </div>
@@ -95,12 +116,11 @@ export function AdminModule() {
       <SolidCard className="p-5 space-y-4">
         <div className="flex items-center gap-2">
           <Wallet className="w-4 h-4 text-[#6344E7]" />
-          <h3 className="text-sm font-bold text-[#0F0E17]">Adjust wallet balance (INR)</h3>
+          <h3 className="text-sm font-bold text-[#0F0E17]">Adjust wallet balance (USD)</h3>
         </div>
         {selected && (
           <p className="text-[11px] text-[#524E5E]" data-testid="admin-selected-wallet">
-            Selected: {selected.name} · {moneyInr(selected.balanceInrPaise)}
-            {selected.balanceCents ? ` · ${moneyUsd(selected.balanceCents)}` : ''}
+            Selected: {selected.name} · {moneyUsd(walletUsdCents(selected))}
           </p>
         )}
         <div className="grid sm:grid-cols-4 gap-3">
@@ -112,18 +132,18 @@ export function AdminModule() {
           >
             {tenants.map((t) => (
               <option key={t.tenantId} value={t.tenantId}>
-                {t.name} — {moneyInr(t.balanceInrPaise)}
+                {t.name} — {moneyUsd(walletUsdCents(t))}
               </option>
             ))}
           </select>
           <input
             type="number"
             min="1"
-            value={grantInr}
-            onChange={(e) => setGrantInr(e.target.value)}
+            value={grantUsd}
+            onChange={(e) => setGrantUsd(e.target.value)}
             data-testid="admin-credit-amount"
             className="bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-3 py-2 text-xs font-mono"
-            placeholder="Amount INR"
+            placeholder="Amount USD"
           />
           <div className="flex gap-2">
             <TactileButton
@@ -149,8 +169,9 @@ export function AdminModule() {
           </div>
         </div>
         <p className="text-[10px] text-[#8C879A]">
-          Customer top-ups via Razorpay credit INR automatically after payment verification.
-          Use Add/Debit only for support adjustments.
+          Customer top-ups via Razorpay are credited in the currency they paid
+          after payment verification. Amounts are entered here in USD and converted at
+          the current rate. Use Add/Debit only for support adjustments.
         </p>
       </SolidCard>
       <SolidCard padding="p-0" className="overflow-hidden">

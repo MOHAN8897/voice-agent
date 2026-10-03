@@ -5,6 +5,16 @@ import os
 
 import pytest
 
+#: Base URL for tests that exercise `/api/dev/*`.
+#:
+#: `DevPortalLocalOnlyMiddleware` refuses the dev portal on any non-loopback Host,
+#: and both the TestClient default (`testserver`) and the httpx ASGI-transport
+#: default (`test`) are non-loopback. Tests were therefore passing or failing
+#: depending on whether the ambient environment happened to set
+#: DEV_PORTAL_ALLOW_REMOTE — a result that had nothing to do with what they
+#: asserted. Anything testing dev-portal behaviour must present a local Host.
+DEV_TEST_BASE_URL = "http://localhost"
+
 
 @pytest.fixture(scope="session", autouse=True)
 def _isolate_test_database(tmp_path_factory):

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import select
 
@@ -287,6 +287,116 @@ async def list_buy_countries(principal: SubscriberPrincipal = Depends(require_su
     from server.services.saas.telephony_countries import buy_country_options
 
     return {"countries": buy_country_options(), "default": "US"}
+
+
+@router.get("/api/telephony/compliance")
+async def list_compliance(
+    country: str | None = Query(None, description="ISO-3166 alpha-2; omit for the full catalogue"),
+    principal: SubscriberPrincipal = Depends(require_subscriber_jwt),
+):
+    """Compliance obligations for one country, or the catalogue for all of them.
+
+    Advisory metadata for the agent settings screen. It is not consulted by the
+    call path — nothing here changes how a call is placed.
+    """
+    require_subscriber_permission(principal, "app.telephony.write")
+    from server.services.saas.country_compliance import compliance_catalog, compliance_for_country
+
+    if country:
+        return compliance_for_country(country)
+    return {"countries": compliance_catalog()}
+
+
+class ComplianceBody(BaseModel):
+    """Which obligations the operator has confirmed for this agent."""
+
+    acknowledged: dict[str, bool] = Field(default_factory=dict)
+
+
+@router.put("/api/agents/{agent_id}/compliance")
+async def put_agent_compliance(
+    agent_id: str,
+    body: ComplianceBody,
+    principal: SubscriberPrincipal = Depends(require_subscriber_jwt),
+):
+    """Record the operator's compliance acknowledgements for an agent.
+
+    Persisted onto the agent so it survives a reload. Unknown keys are dropped
+    rather than stored: a typo must not look like a satisfied obligation later.
+    """
+    require_subscriber_permission(principal, "app.agents.write")
+    from server.services.saas.country_compliance import merge_agent_compliance
+
+    factory = get_session_factory()
+    if factory is None:
+        raise HTTPException(status_code=503, detail="Database required")
+    async with factory() as session:
+        row = await session.get(Agent, uuid.UUID(agent_id))
+        if row is None or str(row.tenant_id) != str(principal.tenant_id):
+            raise HTTPException(
+                status_code=404,
+                detail={"error": {"code": "not_found", "message": "Agent not found"}},
+            )
+        current = dict(row.voice_settings or {})
+        current["compliance"] = {"acknowledged": body.acknowledged}
+        row.voice_settings = current
+        await session.commit()
+        merged = merge_agent_compliance(current["compliance"], await _agent_country(row, session))
+    from server.services.saas.activity_log import record_event
+
+    await record_event(
+        action="agent.compliance.updated",
+        resource_type="agent",
+        resource_id=agent_id,
+        actor=principal.email or str(principal.user_id),
+        tenant_id=principal.tenant_id,
+        payload=merged,
+        source="subscriber",
+    )
+    return {"ok": True, **merged}
+
+
+@router.get("/api/agents/{agent_id}/compliance")
+async def get_agent_compliance(
+    agent_id: str, principal: SubscriberPrincipal = Depends(require_subscriber_jwt)
+):
+    """Stored acknowledgements merged over the catalogue for the agent's country."""
+    require_subscriber_permission(principal, "app.calls.read")
+    from server.services.saas.country_compliance import merge_agent_compliance
+
+    factory = get_session_factory()
+    if factory is None:
+        raise HTTPException(status_code=503, detail="Database required")
+    async with factory() as session:
+        row = await session.get(Agent, uuid.UUID(agent_id))
+        if row is None or str(row.tenant_id) != str(principal.tenant_id):
+            raise HTTPException(
+                status_code=404,
+                detail={"error": {"code": "not_found", "message": "Agent not found"}},
+            )
+        saved = (row.voice_settings or {}).get("compliance")
+        return merge_agent_compliance(saved, await _agent_country(row, session))
+
+
+async def _agent_country(row, session) -> str:
+    """The country this agent operates in, from its assigned number.
+
+    Falls back to the platform default so the settings screen always shows a
+    jurisdiction rather than an empty card.
+    """
+    from server.db.models.phase5_models import PhoneNumber
+
+    result = await session.execute(
+        select(PhoneNumber).where(PhoneNumber.agent_id == row.agent_id).limit(1)
+    )
+    number = result.scalars().first()
+    if number and number.e164:
+        # E.164 country calling code -> ISO-3166 alpha-2. NANP numbers (the +1
+        # trunk) cover US, CA and AU, so the dialled number alone cannot tell them
+        # apart; US is the platform default for a NANP number with no better signal.
+        dial = str(number.e164).lstrip("+").split(".")[0][:1]
+        return {"1": "US"}.get(dial, "US")
+    return "US"
 
 
 @router.post("/api/telephony/buy")

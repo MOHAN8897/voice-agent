@@ -182,10 +182,10 @@ function RecordingPlayer({ call }) {
       </div>
 
       <span className="text-[10px] text-[#524E5E]">
-        {call.costInr != null
-          ? `₹${Number(call.costInr).toFixed(2)}`
-          : call.costUsd != null
-            ? `$${Number(call.costUsd).toFixed(3)}`
+        {call.costUsd != null
+          ? `$${Number(call.costUsd).toFixed(3)}`
+          : call.costInr != null
+            ? `$${(Number(call.costInr) / 85).toFixed(3)}`
             : 'Billed after the call'}
         {reasonLabel ? ` · ${reasonLabel}` : ''}
         {voiceLabel ? ` · ${voiceLabel}` : ''}
@@ -577,7 +577,7 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
             <input
               value={toNumber}
               onChange={(e) => setToNumber(e.target.value)}
-              placeholder="+91…"
+              placeholder="+1…"
               className="bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-2.5 py-2 text-xs font-mono"
             />
             <TactileButton variant="primary" size="sm" loading={dialBusy} onClick={placeCall}>

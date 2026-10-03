@@ -104,6 +104,12 @@ async def admin_tenants(principal: SubscriberPrincipal = Depends(require_subscri
     factory = get_session_factory()
     if factory is None:
         return {"tenants": []}
+    # The console shows dollars, but a wallet funded in INR has to be converted.
+    # Sending the admin-configured rate means the number on screen is the same
+    # one the billing engine charges with, rather than a constant in the UI.
+    from server.services.saas.billing_rates import effective_rates
+
+    fx_rate_inr = float(effective_rates()["fx_rate_inr"])
     async with factory() as session:
         rows = (await session.execute(select(Tenant).order_by(Tenant.created_at.desc()).limit(100))).scalars()
         wallets = {
@@ -113,14 +119,20 @@ async def admin_tenants(principal: SubscriberPrincipal = Depends(require_subscri
         out = []
         for t in rows:
             w = wallets.get(t.tenant_id)
+            cents = int(w.balance_cents) if w else 0
+            paise = int(getattr(w, "balance_inr_paise", 0) or 0) if w else 0
             out.append(
                 {
                     "tenantId": str(t.tenant_id),
                     "name": t.name,
                     "plan": t.plan,
                     "status": t.status,
-                    "balanceInrPaise": int(getattr(w, "balance_inr_paise", 0) or 0) if w else 0,
-                    "balanceCents": int(w.balance_cents) if w else 0,
+                    "balanceInrPaise": paise,
+                    "balanceCents": cents,
+                    # USD is the display currency. A USD-funded wallet is used
+                    # as-is; an INR-only one is converted at the charge rate.
+                    "balanceUsdCents": cents or int(round(paise / 100 / fx_rate_inr * 100)),
+                    "fxRateInr": fx_rate_inr,
                 }
             )
         return {"tenants": out}

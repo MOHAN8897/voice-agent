@@ -30,6 +30,34 @@ export function parseVoiceConfigFromSections(sections) {
 export const SAAS_SCRIPT_VARIABLES_TITLE = 'saas_script_variables';
 export const SAAS_CALLING_SCRIPT_TITLE = 'Calling script';
 
+/**
+ * Marker the compiler uses to pin the agent's opening line.
+ *
+ * It is written into the stored script section, never into the script a person
+ * edits — same contract as the entity tags. Round-tripping it into the editor
+ * meant the greeting became part of the script body and was re-saved inside it
+ * on every subsequent save.
+ */
+const OPENING_LINE_MARKER = 'OPENING LINE';
+
+/** Pull the opening line back out of a stored script section. */
+export function splitOpeningLine(rawText) {
+  const text = String(rawText || '').replace(/^\s+/, '');
+  if (!text.startsWith(OPENING_LINE_MARKER)) {
+    return { greeting: '', script: text.trim() };
+  }
+  const afterMarker = text.slice(OPENING_LINE_MARKER.length).replace(/^\s*:?\s*/, '');
+  // The greeting is a single line; everything after the first blank line is script.
+  const breakAt = afterMarker.search(/\n\s*\n/);
+  if (breakAt === -1) {
+    return { greeting: afterMarker.trim(), script: '' };
+  }
+  return {
+    greeting: afterMarker.slice(0, breakAt).trim(),
+    script: afterMarker.slice(breakAt).trim(),
+  };
+}
+
 export function parseStudioFieldsFromSections(sections) {
   if (!Array.isArray(sections)) return { script: '', greeting: '', variableDefinitions: [] };
   const scriptRow = sections.find(
@@ -40,15 +68,17 @@ export function parseStudioFieldsFromSections(sections) {
         s.title === 'Agent script' ||
         s.title === 'Business Facts')
   );
-  const script = stripEntityTags(String(scriptRow?.raw_text || '')).trim();
+  const stored = stripEntityTags(String(scriptRow?.raw_text || '')).trim();
+  // Prefer the identity section's explicit greeting; fall back to splitting the
+  // marker out of the script, which is where older saves put it.
   const identity = sections.find((s) => s.type === 'identity_purpose');
-  let greeting = '';
   const idText = String(identity?.raw_text || '');
   const gm = idText.match(/Opening greeting:\s*(.+)/i);
-  if (gm) greeting = gm[1].split('\n')[0].trim();
+  const identityGreeting = gm ? gm[1].split('\n')[0].trim() : '';
+  const split = splitOpeningLine(stored);
   return {
-    script,
-    greeting,
+    script: split.script,
+    greeting: identityGreeting || split.greeting,
     variableDefinitions: parseScriptVariablesFromSections(sections),
   };
 }

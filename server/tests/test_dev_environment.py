@@ -13,7 +13,7 @@ async def test_dev_environment_patch_toggle():
     import server.app as app_mod
 
     transport = ASGITransport(app=app_mod.app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(transport=transport, base_url="http://localhost") as client:
         login = await client.post(
             "/api/dev/login",
             json={"username": "dev", "password": "devpass"},
@@ -49,7 +49,7 @@ async def test_dev_environment_patch_cartesia_with_telnyx_fields():
     import server.app as app_mod
 
     transport = ASGITransport(app=app_mod.app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(transport=transport, base_url="http://localhost") as client:
         login = await client.post(
             "/api/dev/login",
             json={"username": "dev", "password": "devpass"},
