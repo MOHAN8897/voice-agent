@@ -1,409 +1,578 @@
-# Backend Scalability, Concurrency Bottleneck Audit & Production Cloud Deployment Architecture
+# Backend Scalability & Railway Deployment Architecture
 
-This document provides a thorough, code-level architectural audit of the voice backend, evaluating whether it can scale on platforms like **Railway** as tenants and concurrent call sessions increase. It identifies the 5 critical architectural bottlenecks in the current codebase, presents the industry-standard decoupled micro-architecture, details the Cloudflare R2 zero-egress storage migration, and provides a turnkey Railway deployment blueprint designed for maximum capacity and minimum cloud spend.
-
----
-
-## 1. Executive Scalability Assessment (The Reality Check)
-
-> [!CAUTION]
-> **Can the current backend scale as-is if deployed on Railway with increasing tenants and call volume?**
-> **Verdict: NO.** 
-> While the real-time audio and telephony bridge logic ([pstn_realtime_voice_core.py](file:///d:/voice%20agent/server/services/pstn_realtime_voice_core.py), [telnyx_pstn_bridge.py](file:///d:/voice%20agent/server/services/telnyx_pstn_bridge.py)) is functionally rich and robust on a single development machine, the backend is currently built as an **in-memory, stateful single-process monolith**.
->
-> If you spin up multiple replicas on Railway or any cloud container platform, the system will immediately suffer from:
-> 1. **50-80% of inbound phone calls failing** due to in-memory stream token fragmentation across round-robin load balancers.
-> 2. **Database pool exhaustion (`QueuePoolLimitReached`)** under as few as 20 concurrent calls.
-> 3. **Catastrophic call audio and outcome data loss** on every deployment or container restart due to local filesystem storage.
-> 4. **Silently dropped post-call analytics and webhook jobs** due to an in-process, non-durable `asyncio.Queue`.
-> 5. **Audio jitter, crackling, and latency spikes (>500ms)** because heavy HTTP REST requests compete with real-time audio DSP on the single Python event loop.
+**Status:** Testing on local machine → Deploy on Railway when ready  
+**Goal:** Zero-surprise Railway deploy now, auto-scale gracefully as user base grows, minimal maintenance cost.
 
 ---
 
-## 2. Code-Level Audit: The 5 Core Scalability Bottlenecks
+## TL;DR: Where You Are & What to Do
 
-### Bottleneck 1: Distributed WebSocket Routing & Token Fragmentation
-- **Vulnerable Code:** [server/services/telnyx_client.py:582-640](file:///d:/voice%20agent/server/services/telnyx_client.py#L582-L640) and [server/routes/telnyx_ws.py:16-33](file:///d:/voice%20agent/server/routes/telnyx_ws.py#L16-L33)
-- **The Problem:**
-  When Telnyx initiates a media stream, it makes a webhook call to generate a token, followed by a WebSocket connection to `/ws/telnyx-stream?token=...`.
-  In `TelnyxStreamTokens`:
-  ```python
-  def __init__(self) -> None:
-      self._tokens: dict[str, dict[str, Any]] = {}  # In-memory dictionary
-  ```
-  If Redis is not actively enforced, Replica A handles the webhook and stores the token in its local RAM. When Telnyx connects the WebSocket, Railway's round-robin router sends the WebSocket to Replica B. Replica B checks its local dictionary, finds nothing, and terminates the call with:
-  ```python
-  await websocket.close(code=1008, reason="Invalid or expired stream token")
-  ```
-- **Concurrency Impact:** As replica count increases, call failure rate approaches `1 - (1/N)` (e.g. 75% failure on 4 replicas).
+| Phase | Trigger | Action |
+|---|---|---|
+| **Now (local testing)** | — | Add `REDIS_URL`, bump DB pool, fix ephemeral disk |
+| **First Railway deploy** | Any time | Follow §4 step-by-step |
+| **~10+ concurrent calls** | Calls drop or queue times up | Split voice WebSocket to its own Railway service |
+| **~100+ tenants** | DB query times creep up | Add PgBouncer + read replica |
+| **Sustained high load** | CPU/RAM alerts firing | Horizontal scaling + autoscale config |
+
+You do not need to over-engineer today. The changes in **Phase 1** below take under an hour and make the Railway deploy solid from day one.
 
 ---
 
-### Bottleneck 2: Database Connection Starvation & Storms
-- **Vulnerable Code:** [server/db/connection.py:43](file:///d:/voice%20agent/server/db/connection.py#L43)
-  ```python
-  _engine = create_async_engine(url, pool_pre_ping=True, pool_size=5, max_overflow=10)
-  ```
-- **The Problem:**
-  The maximum number of connections per instance is capped at **15** (`pool_size=5` + `max_overflow=10`).
-  In a multi-tenant voice environment:
-  - Each active call acquires connections for wallet verification, turn logging, and state recording.
-  - Concurrent tenant dashboard users query analytics, agent lists, and billing metrics.
-  - When 15 concurrent requests are in flight, the 16th throws `TimeoutError: QueuePool limit of size 5 overflow 10 reached, connection timed out, timeout 30.00`.
-- **The Multi-Replica Storm:**
-  If you attempt to fix this by increasing `pool_size=50` across 5 Railway replicas without a proxy, your backend opens **250 simultaneous connections** to PostgreSQL, overwhelming PostgreSQL's memory limits and crashing the database.
+## 1. Current Codebase Architecture (What You Have)
 
----
+### 1.1 Single-Process Monolith
 
-### Bottleneck 3: Ephemeral Local Filesystem Data Loss
-- **Vulnerable Code:** [server/call/paths.py:1-23](file:///d:/voice%20agent/server/call/paths.py#L1-L23) and [server/call/post_call_pipeline.py:38-46](file:///d:/voice%20agent/server/call/post_call_pipeline.py#L38-L46)
-  ```python
-  def calls_root() -> Path:
-      root = get_settings().data_path / "calls"
-      root.mkdir(parents=True, exist_ok=True)
-      return root
+The backend is a single FastAPI process defined in [server/app.py](file:///d:/voice%20agent/server/app.py). On startup it:
+- Connects to PostgreSQL ([server/db/connection.py:43](file:///d:/voice%20agent/server/db/connection.py#L43))
+- Starts an in-process `_provision_worker_loop()` asyncio task ([server/app.py:186-207](file:///d:/voice%20agent/server/app.py#L186-L207))
+- Registers all 30+ HTTP & WebSocket routes from `server/routes/`
 
-  def outcome_path(call_id: str):
-      return call_dir(call_id) / "outcome.json"
-  ```
-- **The Problem:**
-  Call recordings (WAV/PCM), post-call LLM extraction summaries (`outcome.json`), and call ledgers are written to the container's local disk (`data/calls/{call_id}/`).
-  On Railway, AWS ECS, or Fly.io, containers are **ephemeral**:
-  - Every time you git push or trigger a deployment, Railway destroys the old container.
-  - If a container restarts due to high memory or host migration, the entire disk is wiped.
-  - **All call recordings and customer outcome data are permanently lost.**
+On Railway this single process handles everything: REST API, authentication, billing, Telnyx/Exotel WebSockets, realtime audio loops, and post-call analytics. That's fine for launch. The problems only appear when you add replicas.
 
----
+### 1.2 What Already Works Well (Don't Change)
 
-### Bottleneck 4: In-Memory Background Queues (Crash & Restart Vulnerability)
-- **Vulnerable Code:** [server/call/post_call_pipeline.py:28-30](file:///d:/voice%20agent/server/call/post_call_pipeline.py#L28-L30)
-  ```python
-  _QUEUE: asyncio.Queue[tuple[str, bool]] = asyncio.Queue()
-  _WORKER: asyncio.Task | None = None
-  _CALL_LOCKS: dict[str, asyncio.Lock] = {}
-  ```
-- **The Problem:**
-  Post-call LLM analysis, outcome extraction, CRM syncing (HubSpot/Salesforce), and webhook notifications run inside a single Python in-memory `asyncio.Queue`.
-  - It is not persistent: If the container restarts or crashes, all queued jobs in memory are lost forever.
-  - It is not distributable: Work cannot be spread across worker nodes; a surge in completed calls backs up the voice server's CPU.
+| Component | File | Status |
+|---|---|---|
+| Redis-optional token store | [server/services/telnyx_client.py:582](file:///d:/voice%20agent/server/services/telnyx_client.py#L582) | ✅ Falls back to in-memory; uses Redis when `REDIS_URL` set |
+| Redis-optional memory cache | [server/call/redis_memory_cache.py](file:///d:/voice%20agent/server/call/redis_memory_cache.py) | ✅ Falls back to Postgres; uses Redis when available |
+| Async SQLAlchemy + asyncpg | [pyproject.toml:17-18](file:///d:/voice%20agent/pyproject.toml#L17-L18) | ✅ Correct async drivers already in place |
+| Alembic migrations (29 versions) | [server/db/migrations/versions/](file:///d:/voice%20agent/server/db/migrations/versions/) | ✅ Schema managed properly |
+| Worker process | [worker/main.py](file:///d:/voice%20agent/worker/main.py) + [Dockerfile.worker](file:///d:/voice%20agent/Dockerfile.worker) | ✅ Separate process, deployable separately |
+| Multi-service railway.json | [railway.json](file:///d:/voice%20agent/railway.json) | ✅ Already defines `web`, `api`, `worker` |
+| Docker files | [Dockerfile.api](file:///d:/voice%20agent/Dockerfile.api), [Dockerfile.worker](file:///d:/voice%20agent/Dockerfile.worker) | ✅ Exist, need minor hardening |
 
----
+### 1.3 The 4 Real Bottlenecks (Ranked by Impact)
 
-### Bottleneck 5: Audio Stream Event Loop Jitter & GIL Contention
-- **Vulnerable Architecture:** Monolithic event loop
-- **The Problem:**
-  The server executes HTTP REST endpoints (JSON parsing, database queries, heavy dashboard aggregations) on the exact same Python `asyncio` event loop as the low-latency audio stream pumps ([server/services/pstn_realtime_voice_core.py](file:///d:/voice%20agent/server/services/pstn_realtime_voice_core.py)).
-  - Real-time telephony requires sending 20ms audio frames every 20ms without delay.
-  - If a tenant requests a large analytics report or exports 5,000 call records, the event loop blocks for 80ms-250ms.
-  - The caller experiences audio crackling, speech stuttering, and dropped packets.
-
----
-
-## 3. Target Production Architecture: The Decoupled 3-Tier Model
-
-To achieve enterprise multi-tenant scale (1,000+ concurrent calls and thousands of tenants) at minimal server cost, the backend must be partitioned into three decoupled tiers:
-
+#### Bottleneck A: Database Pool Too Small  
+**File:** [server/db/connection.py:43](file:///d:/voice%20agent/server/db/connection.py#L43)  
+```python
+# Current — will fail under ~15 concurrent requests
+_engine = create_async_engine(url, pool_pre_ping=True, pool_size=5, max_overflow=10)
 ```
-                                  [ INTERNET TRAFFIC ]
-                                            |
-                         +------------------+------------------+
-                         |                                     |
-                (HTTP REST & Auth)                     (PSTN & Web WebSockets)
-                         v                                     v
-         +-------------------------------+     +-----------------------------------+
-         |      TIER 1: STATENESS        |     |     TIER 2: REAL-TIME MEDIA       |
-         |      API & DASHBOARD          |     |     GATEWAY WORKERS               |
-         |  - Tenant Auth & Wallet       |     |  - Telnyx / Exotel WebSockets     |
-         |  - Agent Configuration CRUD   |     |  - In-Browser Web Agent Audio     |
-         |  - Analytics & Webhooks       |     |  - OpenAI/Gemini Duplex Audio     |
-         |  - Scales on HTTP RPS / CPU   |     |  - Scales on ACTIVE CALL COUNT    |
-         +---------------+---------------+     +-----------------+-----------------+
-                         |                                       |
-                         |        +---------------------+        |
-                         +------->| REDIS CLUSTER / PUB |<-------+
-                                  | - Shared Stream Tks |
-                                  | - Active Call Reg   |
-                                  | - Distributed Locks |
-                                  +----------+----------+
-                                             |
-                                             v (Enqueue Post-Call Jobs)
-                                  +---------------------+
-                                  |  TIER 3: ASYNC      |
-                                  |  WORKER POOL (ARQ)  |
-                                  | - LLM Outcome Extr  |
-                                  | - Composio CRM Sync |
-                                  | - Audio Transcode   |
-                                  +----------+----------+
-                                             |
-                         +-------------------+-------------------+
-                         |                                       |
-                         v                                       v
-         +-------------------------------+     +-----------------------------------+
-         |      MANAGED POSTGRESQL       |     |        CLOUDFLARE R2 BUCKET       |
-         |  + PgBouncer (Tx Pooling)     |     |  - Call Recordings (WAV/MP3)      |
-         |  - 250+ Virtual Connections   |     |  - Outcome JSON & Transcripts     |
-         |  - Multi-tenant Row Isolation |     |  - $0 DATA EGRESS FEES FOREVER    |
-         +-------------------------------+     +-----------------------------------+
+Each active call uses 2–4 DB connections (wallet check, ledger write, state update). At 10 concurrent calls + 5 dashboard users = easily 35+ concurrent connections. Pool exhausts → `TimeoutError: QueuePool limit reached`.  
+**Fix:** Single line change, shown in §2.1.
+
+#### Bottleneck B: Stream Tokens Fragmented Across Replicas  
+**File:** [server/services/telnyx_client.py:594](file:///d:/voice%20agent/server/services/telnyx_client.py#L594)  
+```python
+self._tokens: dict[str, dict[str, Any]] = {}  # In-memory dict
 ```
+The code already supports Redis (lines 596–641), but **only if `REDIS_URL` is set**. On a single Railway instance with one replica, this is fine. The moment you add a second replica (to handle more load), Telnyx webhook hits Replica A, stores the token there, then the media WebSocket hits Replica B — which has no token and closes with `1008`.  
+**Fix:** Set `REDIS_URL` in Railway environment variables before going to 2 replicas.
 
-### Component Roles
+#### Bottleneck C: Call Data on Ephemeral Disk  
+**File:** [server/call/paths.py](file:///d:/voice%20agent/server/call/paths.py)  
+```python
+def calls_root() -> Path:
+    root = get_settings().data_path / "calls"   # writes to container disk
+```
+All call recordings (WAV), outcome JSONs, and ledger files are written to `data/calls/{call_id}/` inside the container. On Railway, every deployment wipes this disk. You lose every call recording and outcome.  
+**Fix:** Add Cloudflare R2 upload after archive finalization (shown in §3).
 
-| Tier | Service Name | Scaling Metric | CPU/RAM Profile |
-|---|---|---|---|
-| **Tier 1** | `voxly-api` | HTTP RPS / CPU load | 0.5 - 1 vCPU, 512MB RAM |
-| **Tier 2** | `voxly-voice-gateway` | Active Concurrent Calls (1 pod per 25-30 calls) | 1 - 2 vCPU, 1GB RAM (Network & Event-Loop optimized) |
-| **Tier 3** | `voxly-worker` | Queue Depth (`post_call_jobs`) | 1 - 2 vCPU, 1GB RAM (Compute/LLM heavy) |
-| **Broker** | `voxly-redis` | Memory & Operations/sec | 512MB RAM |
-| **Database**| `PostgreSQL + PgBouncer` | Active queries | Managed 1GB - 2GB RAM |
-| **Storage** | `Cloudflare R2` | Elastic Serverless | Infinite scale, $0 egress |
+#### Bottleneck D: Post-Call Queue is In-Memory  
+**File:** [server/call/post_call_pipeline.py:28](file:///d:/voice%20agent/server/call/post_call_pipeline.py#L28)  
+```python
+_QUEUE: asyncio.Queue[tuple[str, bool]] = asyncio.Queue()
+_WORKER: asyncio.Task | None = None
+```
+If the server restarts mid-queue (e.g. during a Railway deployment), all pending post-call analysis, transcript generation, and outcome extraction jobs are silently lost.  
+**Fix:** Persist queue jobs to Redis or DB before processing (shown in §2.3).
 
 ---
 
-## 4. Cloudflare R2 Storage Service (Zero Egress Costs)
+## 2. Phase 1 Fixes — Do These Before First Railway Deploy
 
-### 4.1 Why Cloudflare R2 Beats AWS S3
-The repository `.env` already contains active Cloudflare credentials ([.env:212-214](file:///d:/voice%20agent/.env#L212-L214)):
-```bash
-CLOUDFLARE_API_TOKEN=<YOUR_CLOUDFLARE_API_TOKEN_IN_ENV>
-CLOUDFLARE_ACCOUNT_ID=<YOUR_CLOUDFLARE_ACCOUNT_ID_IN_ENV>
-```
-- **AWS S3 Pricing:** $0.023/GB storage + **$0.09/GB egress**. When tenants listen to call recordings in the dashboard, S3 bandwidth costs skyrocket.
-- **Cloudflare R2 Pricing:** $0.015/GB storage + **$0.00 egress (FREE)**. S3-compatible API.
+These are small, safe changes you can make now on your local machine and push. They make your single-instance Railway deploy bulletproof.
 
-### 4.2 Production Storage Adapter Implementation ([server/services/r2_storage.py](file:///d:/voice%20agent/server/services/r2_storage.py))
+### 2.1 Increase DB Pool Size
+
+**File:** [server/db/connection.py](file:///d:/voice%20agent/server/db/connection.py) — change line 43:
 
 ```python
-"""Cloudflare R2 Object Storage Service (Zero Egress)."""
+# Before:
+_engine = create_async_engine(url, pool_pre_ping=True, pool_size=5, max_overflow=10)
+
+# After (handles 40+ concurrent connections per replica, Railway Hobby plan):
+_engine = create_async_engine(
+    url,
+    pool_pre_ping=True,
+    pool_size=15,       # Keep 15 warm connections alive
+    max_overflow=15,    # Allow burst to 30 total
+    pool_timeout=20.0,  # Fail fast instead of hanging
+    pool_recycle=1800,  # Recycle connections every 30 min (avoids firewall drops)
+)
+```
+
+> [!NOTE]
+> On Railway Hobby with a single replica, 30 connections is well within Supabase free tier (100 limit) and Railway Postgres (100 limit). If you later add a second replica without PgBouncer, set `pool_size=10` so 2 replicas × 20 = 40 total, still safe.
+
+### 2.2 Add Redis URL Startup Enforcement
+
+In [server/app.py:94-98](file:///d:/voice%20agent/server/app.py#L94-L98) the server already warns about missing `REDIS_URL`. To make it actionable in your Railway env variable list, ensure the following are always set when `APP_ENVIRONMENT=production`:
+
+**Required Railway Environment Variables:**
+```bash
+APP_ENVIRONMENT=production
+SESSION_SECRET=<random-64-char-hex>
+JWT_SECRET=<random-64-char-hex>
+REDIS_URL=${{Redis.REDIS_URL}}          # Railway private networking — auto-filled
+DATABASE_URL=${{Postgres.DATABASE_URL}} # Railway private networking — auto-filled
+```
+
+The application already reads `REDIS_URL` and uses Redis for:
+- Stream token storage ([server/services/telnyx_client.py:610](file:///d:/voice%20agent/server/services/telnyx_client.py#L610))
+- Working memory cache ([server/call/redis_memory_cache.py:60](file:///d:/voice%20agent/server/call/redis_memory_cache.py#L60))
+
+You get multi-replica safety for free just by setting this env var.
+
+### 2.3 Persist Post-Call Jobs Before In-Memory Queue
+
+Add job persistence to [server/call/post_call_pipeline.py:60](file:///d:/voice%20agent/server/call/post_call_pipeline.py#L60). When a call ends, write the pending job to the `calls` table before enqueuing in memory:
+
+```python
+# In enqueue() function, before putting into _QUEUE:
+async def enqueue(call_id: str, *, force: bool = False) -> None:
+    # ADDED: Persist job intent to DB so we can recover after restart
+    try:
+        from server.db.session import get_session
+        async with get_session() as db:
+            await db.execute(
+                text("UPDATE calls SET post_call_status='pending' WHERE id=:id"),
+                {"id": call_id}
+            )
+            await db.commit()
+    except Exception:
+        pass  # Best-effort; in-memory queue still catches it this session
+    
+    await _QUEUE.put((call_id, force))
+```
+
+Add a recovery call in the lifespan startup (already exists in [server/app.py:145-151](file:///d:/voice%20agent/server/app.py#L145-L151) for stale calls) to re-enqueue any `post_call_status='pending'` rows after restart.
+
+### 2.4 Add `uvloop` for 20-30% Async Throughput Gain
+
+Add to [pyproject.toml](file:///d:/voice%20agent/pyproject.toml):
+```toml
+dependencies = [
+    ...
+    "uvloop>=0.21; sys_platform != 'win32'",  # Faster event loop on Linux (Railway)
+]
+```
+
+Update [Dockerfile.api](file:///d:/voice%20agent/Dockerfile.api) start command:
+```dockerfile
+CMD ["sh", "-c", "uvicorn server.app:app --host 0.0.0.0 --port ${PORT:-8000} --loop uvloop --no-access-log"]
+```
+`uvloop` replaces Python's default asyncio event loop with a C-extension based loop. 20-30% faster I/O on Railway's Linux containers with no code changes.
+
+### 2.5 Harden the Existing Dockerfiles
+
+**[Dockerfile.api](file:///d:/voice%20agent/Dockerfile.api)** — replace entirely:
+```dockerfile
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Install system deps (needed for audioop, asyncpg C extension)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy and install dependencies first (Docker layer cache)
+COPY pyproject.toml README.md ./
+RUN pip install --no-cache-dir -e ".[dev]" && pip install uvloop
+
+# Copy application source
+COPY server ./server
+COPY scripts ./scripts
+
+ENV PORT=8000
+EXPOSE 8000
+
+# Run DB migration then start server (idempotent, safe on every deploy)
+CMD ["sh", "-c", "python -m alembic -c alembic.ini upgrade head && uvicorn server.app:app --host 0.0.0.0 --port ${PORT:-8000} --loop uvloop --no-access-log"]
+```
+
+> [!IMPORTANT]
+> The `alembic upgrade head` in the CMD ensures every Railway deploy automatically applies new database migrations before traffic arrives. It's idempotent — safe to run on every boot.
+
+---
+
+## 3. Cloudflare R2 Storage (Zero Egress Fees)
+
+Your `.env` already has Cloudflare credentials. R2 gives you S3-compatible object storage with **$0 egress** — you never pay for tenants downloading call recordings.
+
+### 3.1 Add R2 Env Variables
+
+Add to Railway environment variables:
+```bash
+R2_ACCESS_KEY_ID=<from Cloudflare R2 API Tokens>
+R2_SECRET_ACCESS_KEY=<from Cloudflare R2 API Tokens>
+R2_BUCKET_NAME=voxly-call-archives
+R2_ACCOUNT_ID=<your cloudflare account id from .env>
+```
+
+Add to [server/config/env.py](file:///d:/voice%20agent/server/config/env.py) `Settings` class:
+```python
+# --- Cloudflare R2 object storage ---
+r2_account_id: str | None = Field(None, alias="R2_ACCOUNT_ID")
+r2_access_key_id: str | None = Field(None, alias="R2_ACCESS_KEY_ID")
+r2_secret_access_key: str | None = Field(None, alias="R2_SECRET_ACCESS_KEY")
+r2_bucket_name: str = Field("voxly-call-archives", alias="R2_BUCKET_NAME")
+```
+
+Add `aioboto3>=12.0` to [pyproject.toml](file:///d:/voice%20agent/pyproject.toml) dependencies.
+
+### 3.2 R2 Storage Service ([server/services/r2_storage.py](file:///d:/voice%20agent/server/services/r2_storage.py))
+
+```python
+"""Cloudflare R2 object storage — zero egress fees, S3-compatible."""
 from __future__ import annotations
 
 import json
 from typing import Any
-import aioboto3
+
 from server.config.env import get_settings
 from server.utils.logger import logger
 
+
 class R2StorageService:
     def __init__(self) -> None:
-        settings = get_settings()
-        self.account_id = settings.cloudflare_account_id or "cloudflare-account-id"
-        self.bucket_name = "voxly-call-archives"
-        self.endpoint_url = f"https://{self.account_id}.r2.cloudflarestorage.com"
-        self.session = aioboto3.Session()
+        self._session = None
 
-    def _get_client_args(self) -> dict[str, Any]:
-        settings = get_settings()
+    def _is_configured(self) -> bool:
+        s = get_settings()
+        return bool(s.r2_access_key_id and s.r2_secret_access_key and s.r2_account_id)
+
+    def _client_kwargs(self) -> dict[str, Any]:
+        s = get_settings()
         return {
             "service_name": "s3",
-            "endpoint_url": self.endpoint_url,
-            "aws_access_key_id": settings.r2_access_key_id,
-            "aws_secret_access_key": settings.r2_secret_access_key,
+            "endpoint_url": f"https://{s.r2_account_id}.r2.cloudflarestorage.com",
+            "aws_access_key_id": s.r2_access_key_id,
+            "aws_secret_access_key": s.r2_secret_access_key,
             "region_name": "auto",
         }
 
-    async def upload_call_recording(self, call_id: str, audio_bytes: bytes, format: str = "wav") -> str:
-        """Upload call audio to Cloudflare R2."""
-        key = f"calls/{call_id}/recording.{format}"
-        content_type = "audio/wav" if format == "wav" else "audio/mpeg"
-        
-        async with self.session.client(**self._get_client_args()) as s3:
-            await s3.put_object(
-                Bucket=self.bucket_name,
-                Key=key,
-                Body=audio_bytes,
-                ContentType=content_type,
-            )
-        logger.info("[R2] Uploaded audio recording for call %s (bytes=%d)", call_id, len(audio_bytes))
-        return key
+    async def upload_audio(self, call_id: str, audio_bytes: bytes, fmt: str = "wav") -> str | None:
+        """Upload call recording. Returns R2 key or None if R2 not configured."""
+        if not self._is_configured() or not audio_bytes:
+            return None
+        try:
+            import aioboto3
+            key = f"calls/{call_id}/recording.{fmt}"
+            session = aioboto3.Session()
+            async with session.client(**self._client_kwargs()) as s3:
+                await s3.put_object(
+                    Bucket=get_settings().r2_bucket_name,
+                    Key=key,
+                    Body=audio_bytes,
+                    ContentType=f"audio/{fmt}",
+                )
+            logger.info("[R2] Uploaded audio for call %s (%d bytes)", call_id, len(audio_bytes))
+            return key
+        except Exception as exc:
+            logger.warning("[R2] Audio upload failed for %s: %s", call_id, exc)
+            return None
 
-    async def upload_call_outcome(self, call_id: str, outcome_data: dict[str, Any]) -> str:
-        """Upload call outcome JSON to Cloudflare R2."""
-        key = f"calls/{call_id}/outcome.json"
-        body = json.dumps(outcome_data, indent=2, ensure_ascii=False).encode("utf-8")
-        
-        async with self.session.client(**self._get_client_args()) as s3:
-            await s3.put_object(
-                Bucket=self.bucket_name,
-                Key=key,
-                Body=body,
-                ContentType="application/json",
-            )
-        return key
+    async def upload_outcome(self, call_id: str, outcome: dict[str, Any]) -> str | None:
+        """Upload outcome JSON to R2."""
+        if not self._is_configured():
+            return None
+        try:
+            import aioboto3
+            key = f"calls/{call_id}/outcome.json"
+            body = json.dumps(outcome, ensure_ascii=False, indent=2).encode()
+            session = aioboto3.Session()
+            async with session.client(**self._client_kwargs()) as s3:
+                await s3.put_object(
+                    Bucket=get_settings().r2_bucket_name,
+                    Key=key,
+                    Body=body,
+                    ContentType="application/json",
+                )
+            return key
+        except Exception as exc:
+            logger.warning("[R2] Outcome upload failed for %s: %s", call_id, exc)
+            return None
 
-    async def generate_presigned_download_url(self, key: str, expires_in: int = 3600) -> str:
-        """Generate presigned audio playback URL for dashboard players."""
-        async with self.session.client(**self._get_client_args()) as s3:
-            url = await s3.generate_presigned_url(
-                ClientMethod="get_object",
-                Params={"Bucket": self.bucket_name, "Key": key},
-                ExpiresIn=expires_in,
-            )
-        return url
+    async def presigned_url(self, key: str, expires_in: int = 3600) -> str | None:
+        """Generate a pre-signed download URL for dashboard audio playback."""
+        if not self._is_configured():
+            return None
+        try:
+            import aioboto3
+            session = aioboto3.Session()
+            async with session.client(**self._client_kwargs()) as s3:
+                return await s3.generate_presigned_url(
+                    "get_object",
+                    Params={"Bucket": get_settings().r2_bucket_name, "Key": key},
+                    ExpiresIn=expires_in,
+                )
+        except Exception:
+            return None
+
 
 r2_storage = R2StorageService()
 ```
 
----
+### 3.3 Hook R2 Into Audio Archive
 
-## 5. Distributed Task Queue & Redis Pipeline Migration
-
-Replace the in-process `asyncio.Queue` in [server/call/post_call_pipeline.py](file:///d:/voice%20agent/server/call/post_call_pipeline.py) with **ARQ** (Async Redis Queue) to guarantee persistence across container redeployments.
-
-### 5.1 Worker Task Definition ([server/workers/post_call_worker.py](file:///d:/voice%20agent/server/workers/post_call_worker.py))
+In [server/call/audio_archive.py](file:///d:/voice%20agent/server/call/audio_archive.py), at the end of the function that writes the final WAV to disk, add an async R2 upload:
 
 ```python
-"""Durable Post-Call Worker consuming from Redis."""
-from __future__ import annotations
-
-import asyncio
-from typing import Any
-from arq import create_pool
-from arq.connections import RedisSettings
+# After the existing local disk write:
 from server.services.r2_storage import r2_storage
-from server.services.composio_service import composio_service
-from server.utils.logger import logger
-
-async def process_post_call_job(ctx: dict[str, Any], call_id: str) -> None:
-    """Idempotent background worker task for call summarization and tool sync."""
-    logger.info("[WORKER] Executing post-call processing for %s", call_id)
-    
-    # 1. Fetch transcript and context from Redis / DB
-    # 2. Run LLM outcome extraction
-    outcome = await run_llm_outcome_extraction(call_id)
-    
-    # 3. Upload outcome and audio to Cloudflare R2 (Persisting ephemeral state)
-    await r2_storage.upload_call_outcome(call_id, outcome)
-    
-    # 4. Trigger Composio post-call actions (HubSpot, Slack, Email)
-    await execute_composio_post_call_sync(call_id, outcome)
-    
-    logger.info("[WORKER] Completed post-call processing for %s", call_id)
-
-class WorkerSettings:
-    functions = [process_post_call_job]
-    redis_settings = RedisSettings.from_dsn(get_settings().redis_url or "redis://localhost:6379")
-    max_jobs = 20
-    poll_delay = 0.5
+asyncio.create_task(r2_storage.upload_audio(call_id, wav_bytes, "wav"))
 ```
+
+This is fire-and-forget — it doesn't block the voice call teardown and gracefully does nothing if R2 isn't configured.
 
 ---
 
-## 6. Railway Deployment Configuration Blueprint
+## 4. Railway Deployment — Step-by-Step
 
-To deploy seamlessly on Railway with multi-service isolation, use a root [railway.json](file:///d:/voice%20agent/railway.json) and specific commands per service.
+### 4.1 Update [railway.json](file:///d:/voice%20agent/railway.json)
 
-### 6.1 Multi-Service Configuration ([railway.json](file:///d:/voice%20agent/railway.json))
+Replace with this production-ready config:
 
 ```json
 {
   "$schema": "https://railway.app/railway.schema.json",
-  "build": {
-    "builder": "DOCKERFILE",
-    "dockerfilePath": "Dockerfile"
-  },
-  "deploy": {
-    "numReplicas": 1,
-    "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 10
+  "services": {
+    "api": {
+      "rootDirectory": ".",
+      "dockerfilePath": "Dockerfile.api",
+      "healthcheckPath": "/api/health",
+      "healthcheckTimeout": 60,
+      "sleepApplication": false
+    },
+    "worker": {
+      "rootDirectory": ".",
+      "dockerfilePath": "Dockerfile.worker"
+    }
   }
 }
 ```
 
-### 6.2 Service Process Definitions ([Procfile](file:///d:/voice%20agent/Procfile))
+> [!NOTE]
+> `sleepApplication: false` for the `api` service prevents Railway from putting the voice backend to sleep during low traffic periods. Sleep-to-zero causes unacceptable cold start delays for telephony webhooks. The `worker` service CAN sleep — it will auto-restart when new jobs arrive.
 
-```procfile
-# Service 1: Stateless REST API & Tenant Dashboard Ingress
-web: uvicorn server.main:app --host 0.0.0.0 --port $PORT --workers 2 --no-access-log
+### 4.2 Add Required Services in Railway Dashboard
 
-# Service 2: Real-time Telephony Media Gateway (WebSockets only)
-voice-gateway: uvicorn server.voice_gateway_main:app --host 0.0.0.0 --port $PORT --workers 1 --ws-ping-interval 15 --ws-ping-timeout 20
+In your Railway project, add these managed services:
+1. **PostgreSQL** — Railway managed Postgres. Automatically sets `DATABASE_URL`.
+2. **Redis** — Railway managed Redis. Automatically sets `REDIS_URL`.
 
-# Service 3: Background Worker for Post-Call Processing & CRM Sync
-worker: arq server.workers.post_call_worker.WorkerSettings
+Link them to your `api` service using Railway's **Reference Variables**: `${{Postgres.DATABASE_URL}}` and `${{Redis.REDIS_URL}}`.
+
+### 4.3 Environment Variables Checklist
+
+Set these in Railway Dashboard → api service → Variables:
+
+```bash
+# Core
+APP_ENVIRONMENT=production
+PORT=8000  # Railway injects this automatically but explicit is safer
+
+# Database (Railway auto-provides if you add Postgres service)
+DATABASE_URL=${{Postgres.DATABASE_URL}}
+
+# Redis (Railway auto-provides if you add Redis service)
+REDIS_URL=${{Redis.REDIS_URL}}
+
+# Security (generate unique values — never reuse dev secrets)
+SESSION_SECRET=<64-char random hex>
+JWT_SECRET=<64-char random hex>
+
+# Cloudflare R2 (optional but strongly recommended)
+R2_ACCOUNT_ID=<your account id>
+R2_ACCESS_KEY_ID=<r2 api key id>
+R2_SECRET_ACCESS_KEY=<r2 api secret>
+R2_BUCKET_NAME=voxly-call-archives
+
+# App config
+SAAS_AUTH_ENABLED=true
+PUBLIC_APP_URL=https://<your-railway-domain>.up.railway.app
+CORS_ORIGINS=https://<your-railway-domain>.up.railway.app,https://<your-vite-frontend>.up.railway.app
+
+# All your AI API keys
+OPENAI_API_KEY=<key>
+SARVAM_API_KEY=<key>
+# ... etc, same as .env but through Railway Variables (never committed to git)
 ```
 
-### 6.3 Dockerfile for Production Containerization ([Dockerfile](file:///d:/voice%20agent/Dockerfile))
+### 4.4 Deploy Commands
 
+```bash
+# Install Railway CLI
+npm install -g @railway/cli
+
+# Login
+railway login
+
+# Link to your project
+railway link
+
+# Deploy (triggers Docker build + deploy from current git branch)
+railway up
+```
+
+### 4.5 Verify Deployment
+
+```bash
+# Check health
+curl https://<your-domain>.up.railway.app/api/health
+
+# Watch logs in real time
+railway logs --follow
+
+# Check DB connection
+curl https://<your-domain>.up.railway.app/api/health | jq .database
+```
+
+---
+
+## 5. When to Scale: Decision Thresholds
+
+### 5.1 Stay on Single Replica Until
+
+| Metric | Threshold to Act |
+|---|---|
+| Concurrent active calls | < 15 |
+| Railway CPU usage | < 70% sustained |
+| Railway memory | < 80% of plan limit |
+| DB connection wait time | < 100ms (from health endpoint) |
+| API p95 response time | < 500ms |
+
+Monitor these in the Railway dashboard. At this scale the monolith is perfectly adequate and cheapest.
+
+### 5.2 Add Second Replica When Any Threshold Is Hit
+
+When you go to 2+ replicas, the only change required is:
+1. `REDIS_URL` is already set (done in §2.2) — so stream tokens work across replicas ✅
+2. Set `pool_size=10` (so 2 replicas × 20 connections = 40 total, within limits) ✅
+
+Railway makes horizontal scaling a slider in the dashboard. No code changes needed because the Redis integration is already implemented.
+
+### 5.3 Separate Voice WebSocket Service at ~30+ Concurrent Calls
+
+When you consistently run 30+ simultaneous phone calls, the voice WebSocket connections compete with REST API traffic on the event loop. At this point:
+
+1. Create a second Railway service pointing to a `Dockerfile.voice` with only the voice routes:
 ```dockerfile
-FROM python:3.11-slim
-
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    DEBIAN_FRONTEND=noninteractive
-
-WORKDIR /app
-
-# Install system dependencies (build-essential, ffmpeg for audio transcoding)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    ffmpeg \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY . .
-
-EXPOSE 8000
-
-CMD ["uvicorn", "server.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "uvicorn server.voice_app:app --host 0.0.0.0 --port ${PORT:-8000} --loop uvloop --ws-ping-interval 15 --ws-ping-timeout 30"]
 ```
 
----
-
-## 7. Database Scaling & Connection Pooling (PgBouncer)
-
-In [server/db/connection.py:43](file:///d:/voice%20agent/server/db/connection.py#L43), tune the pool parameters for production:
-
+2. Create `server/voice_app.py` that only registers the WebSocket routes:
 ```python
-# Updated production engine configuration:
-_engine = create_async_engine(
-    url,
-    pool_pre_ping=True,
-    pool_size=20,           # Keep 20 connections per replica alive
-    max_overflow=20,        # Allow burst up to 40 connections
-    pool_timeout=15.0,      # Fail fast if pool is congested
-    pool_recycle=1800,      # Recycle connections every 30m to avoid stale firewall cuts
-)
+from fastapi import FastAPI
+from server.routes.telnyx_ws import router as telnyx_ws_router
+from server.routes.exotel_ws import router as exotel_ws_router  
+from server.routes.web_agent_ws import router as web_agent_ws_router
+
+app = FastAPI()
+app.include_router(telnyx_ws_router)
+app.include_router(exotel_ws_router)
+app.include_router(web_agent_ws_router)
 ```
 
-### PgBouncer Transaction Pooling Mode
-When deploying on Railway or Supabase:
-- Connect your backend to the **PgBouncer port** (`6543`) rather than the direct PostgreSQL port (`5432`).
-- Set mode to `TRANSACTION`. This allows 500+ client connections while keeping direct PostgreSQL connections under 30.
+This lets voice WebSocket workers scale independently from the REST API, and prevents a large analytics query from causing audio jitter.
 
 ---
 
-## 8. Cost Optimization Analysis: Running at Maximum Capacity for Minimum Cost
+## 6. Database Scaling Path
 
-### 8.1 Monthly Infrastructure Cost Breakdown (at 50,000 Call Minutes/Month)
+### 6.1 Current — Single Postgres Instance
 
-| Component | Unoptimized Architecture | Optimized 3-Tier Architecture | Monthly Savings |
+Adequate for: < 1,000 tenants, < 50 concurrent calls.
+
+Railway Postgres starts at $5/month and scales on demand. The async SQLAlchemy pool in [server/db/connection.py](file:///d:/voice%20agent/server/db/connection.py) is already correct for this tier.
+
+### 6.2 When Traffic Grows — Add PgBouncer
+
+PgBouncer acts as a connection proxy that allows hundreds of application connections while maintaining only a small pool of actual Postgres connections:
+
+```
+100 Uvicorn workers → PgBouncer (transaction mode) → 25 real Postgres connections
+```
+
+**Railway setup:**
+- Deploy PgBouncer as a separate Railway service using the `edoburu/pgbouncer` image.
+- Set `DATABASE_URL` in your api service to point to PgBouncer's internal Railway URL.
+- Postgres connection string goes into PgBouncer's config.
+- `pool_mode = transaction` (best for FastAPI async workloads).
+
+### 6.3 Heavy Analytics — Add Read Replica
+
+When tenant dashboard analytics (call history, billing, campaign results) start competing with live voice write operations:
+1. Add a Postgres read replica (available on Railway Pro).
+2. Route read-only queries (analytics, reporting) to the replica.
+3. Route all writes (call state, billing ledger) to primary.
+
+---
+
+## 7. Cost Optimization Summary
+
+### 7.1 Monthly Cost Comparison
+
+| Component | Without Optimization | With This Architecture | Savings |
 |---|---|---|---|
-| **Audio Storage** | AWS S3: $45 (Storage) + $135 (Egress) = **$180** | Cloudflare R2: $7.50 (Storage) + $0.00 (Egress) = **$7.50** | **$172.50 / mo (96% savings)** |
-| **Server Compute** | 2x Large 8GB Instances ($140/mo) | 1x API (512MB) + 2x Voice (1GB) + 1x Worker (512MB) on Railway: **$35/mo** | **$105.00 / mo (75% savings)** |
-| **Database** | Large RDS PostgreSQL ($85/mo) | Managed Postgres + PgBouncer ($20/mo) | **$65.00 / mo (76% savings)** |
-| **Redis Broker** | Managed Enterprise Redis ($40/mo) | Railway Redis (512MB) ($5/mo) | **$35.00 / mo (87% savings)** |
-| **Total Cloud Infra** | **$445 / month** | **$67.50 / month** | **$377.50 / month (85% Net Savings)** |
+| **Server** | 1× large instance, always on | Railway: pay-per-second, right-sized | ~60% |
+| **Call recordings** | Disk storage lost on restart | Cloudflare R2: $0.015/GB, $0 egress | No data loss |
+| **Redis** | Not used (fragile) | Railway Redis: ~$5/mo | Bug prevention |
+| **Database** | Small pool, crashes | Railway Postgres + tuned pool: ~$15/mo | Stability |
+| **Total (launch)** | Broken at 2 replicas | ~$25/mo, scales to 100s of calls | Correct |
 
-### 8.2 Voice Session Compute Optimization
-1. **Opus / G.711 Direct Passthrough:** Avoid software transcoding where possible. Pass Telnyx G.711 mu-law straight to PCM16 in C extensions (`audioop` or `numpy`) rather than Python loops.
-2. **Dynamic Turn Detection Tuning:** Avoid sending silent audio frames across OpenAI/Gemini WebSockets. Set VAD silence duration to `500ms` to close voice turns promptly, saving bidirectional audio streaming tokens.
+### 7.2 Cost-Control Tips for Railway
+
+1. **Scale to zero for staging/dev:** Set minimum replicas = 0 on your staging environment. Railway bills per-second, so idle staging = $0.
+2. **Worker service can sleep:** The `worker` service (campaign dialer, post-call retries) can scale-to-zero since jobs aren't time-critical to the millisecond.
+3. **Use private networking:** Ensure `DATABASE_URL` and `REDIS_URL` use Railway's internal hostnames (not public URLs) to avoid external egress fees and reduce latency.
+4. **Cache aggressively:** The Redis working memory cache ([server/call/redis_memory_cache.py](file:///d:/voice%20agent/server/call/redis_memory_cache.py)) is already implemented — it reduces Postgres reads significantly during active calls.
 
 ---
 
-## 9. Production Readiness Checklist & Migration Roadmap
+## 8. Production Readiness Checklist
 
-### Phase 1: Immediate Stability Fixes (Week 1)
-- [ ] Enforce `REDIS_URL` in [server/services/telnyx_client.py](file:///d:/voice%20agent/server/services/telnyx_client.py) so stream tokens are never stored only in RAM.
-- [ ] Increase database pool size in [server/db/connection.py](file:///d:/voice%20agent/server/db/connection.py) from `pool_size=5` to `pool_size=20`.
-- [ ] Implement `R2StorageService` ([server/services/r2_storage.py](file:///d:/voice%20agent/server/services/r2_storage.py)) and upload recordings directly to Cloudflare R2 instead of ephemeral disk.
+### Before First Railway Deploy
+- [ ] Bump DB pool size in [server/db/connection.py:43](file:///d:/voice%20agent/server/db/connection.py#L43): `pool_size=15, max_overflow=15`
+- [ ] Add `REDIS_URL` to Railway Variables (link to Railway Redis service)
+- [ ] Generate fresh `SESSION_SECRET` and `JWT_SECRET` (64-char random hex each)
+- [ ] Set `APP_ENVIRONMENT=production` in Railway Variables
+- [ ] Add `uvloop` to [pyproject.toml](file:///d:/voice%20agent/pyproject.toml) dependencies
+- [ ] Update [Dockerfile.api](file:///d:/voice%20agent/Dockerfile.api) CMD to include `alembic upgrade head &&` prefix
+- [ ] Set `PUBLIC_APP_URL` and `CORS_ORIGINS` to production domain
 
-### Phase 2: Decoupled Processing & Queues (Week 2)
-- [ ] Replace `asyncio.Queue` in [server/call/post_call_pipeline.py](file:///d:/voice%20agent/server/call/post_call_pipeline.py) with ARQ Redis worker tasks.
-- [ ] Implement graceful shutdown hooks in Uvicorn so active calls finish speaking before container terminates during deploys.
+### Before Going Multi-Replica
+- [ ] Verify `REDIS_URL` is set and Redis health check passes (`/api/health`)
+- [ ] Confirm Telnyx stream tokens are stored in Redis (check logs for `[TELNYX] stream token redis mirror`)
+- [ ] Set `pool_size=10` (single replica: 15, two replicas: 10 each)
+- [ ] Configure Cloudflare R2 so call data persists across deploys
 
-### Phase 3: Railway Multi-Service Deployment (Week 3)
-- [ ] Configure `railway.json` and deploy separate services: `voxly-api`, `voxly-voice-gateway`, `voxly-worker`, and `voxly-redis`.
-- [ ] Connect PgBouncer in transaction mode to PostgreSQL.
-- [ ] Execute load tests using 50 concurrent WebSockets to verify sub-500ms audio turnaround under multi-tenant load.
+### Before Handling High Volume (100+ tenants)
+- [ ] Deploy `Dockerfile.worker` as its own Railway service
+- [ ] Set up call recording uploads to Cloudflare R2 ([server/services/r2_storage.py](file:///d:/voice%20agent/server/services/r2_storage.py))
+- [ ] Add PgBouncer if p95 DB query time > 100ms
+- [ ] Consider splitting voice WebSocket routes to dedicated service
+
+---
+
+## 9. Quick Reference: Key Files
+
+| What | File |
+|---|---|
+| DB pool config | [server/db/connection.py:43](file:///d:/voice%20agent/server/db/connection.py#L43) |
+| Redis memory cache | [server/call/redis_memory_cache.py](file:///d:/voice%20agent/server/call/redis_memory_cache.py) |
+| Stream token storage | [server/services/telnyx_client.py:582](file:///d:/voice%20agent/server/services/telnyx_client.py#L582) |
+| Post-call queue | [server/call/post_call_pipeline.py:28](file:///d:/voice%20agent/server/call/post_call_pipeline.py#L28) |
+| Audio archive (disk) | [server/call/audio_archive.py](file:///d:/voice%20agent/server/call/audio_archive.py) |
+| Call file paths | [server/call/paths.py](file:///d:/voice%20agent/server/call/paths.py) |
+| App startup/lifespan | [server/app.py:71](file:///d:/voice%20agent/server/app.py#L71) |
+| Env settings | [server/config/env.py](file:///d:/voice%20agent/server/config/env.py) |
+| Railway config | [railway.json](file:///d:/voice%20agent/railway.json) |
+| Docker (api) | [Dockerfile.api](file:///d:/voice%20agent/Dockerfile.api) |
+| Docker (worker) | [Dockerfile.worker](file:///d:/voice%20agent/Dockerfile.worker) |
+| DB migrations | [server/db/migrations/versions/](file:///d:/voice%20agent/server/db/migrations/versions/) |
