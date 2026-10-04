@@ -15,6 +15,11 @@ import {
 } from 'lucide-react';
 import { SolidCard } from '../ui/SolidCard';
 import { TactileButton } from '../ui/TactileButton';
+import {
+  BillingBalanceSkeleton,
+  InvoiceRowsSkeleton,
+  TransactionRowsSkeleton,
+} from '../ui/Skeleton';
 import { useWorkspace } from '../context/WorkspaceContext';
 
 /** Plain-language labels for wallet ledger kinds. */
@@ -66,6 +71,7 @@ export function BillingModule() {
   const [razorpayEnabled, setRazorpayEnabled] = useState(false);
   const [razorpayCurrency, setRazorpayCurrency] = useState('USD');
   const [payBusy, setPayBusy] = useState(false);
+  const [billingLoading, setBillingLoading] = useState(true);
 
   const customerPayError = (raw) => {
     const msg = String(raw || '');
@@ -84,12 +90,14 @@ export function BillingModule() {
         api.billing.listTransactions(40),
       ]);
       setServerWallet(w);
-      setInvoices(inv);
+      setInvoices(inv || []);
       setRazorpayEnabled(!!cfg?.enabled);
       setRazorpayCurrency(cfg?.currency || 'USD');
-      setTransactions(tx);
+      setTransactions(tx || []);
     } catch {
       /* demo wallet fallback */
+    } finally {
+      setBillingLoading(false);
     }
   }, []);
 
@@ -191,14 +199,20 @@ export function BillingModule() {
               </span>
             </div>
 
-            <div className="flex items-baseline gap-3 my-2 flex-wrap">
-              <span className="text-3xl sm:text-4xl font-mono font-bold text-[#0F0E17] tracking-tight">
-              {Number(wallet?.remainingMinutes || 0).toLocaleString()} min
-              </span>
-              <span className="text-sm font-mono text-[#524E5E]">
-                (${Number(serverWallet?.balanceUsd ?? wallet.usdEquivalent ?? 0).toFixed(2)} USD)
-              </span>
-            </div>
+            {billingLoading && !serverWallet ? (
+              <div className="py-2">
+                <BillingBalanceSkeleton />
+              </div>
+            ) : (
+              <div className="flex items-baseline gap-3 my-2 flex-wrap">
+                <span className="text-3xl sm:text-4xl font-mono font-bold text-[#0F0E17] tracking-tight">
+                {Number(wallet?.remainingMinutes || 0).toLocaleString()} min
+                </span>
+                <span className="text-sm font-mono text-[#524E5E]">
+                  (${Number(serverWallet?.balanceUsd ?? wallet.usdEquivalent ?? 0).toFixed(2)} USD)
+                </span>
+              </div>
+            )}
 
             <p className="text-xs text-[#524E5E]">
               Phone calls billed at{' '}
@@ -370,43 +384,47 @@ export function BillingModule() {
         </SolidCard>
       </div>
 
-      {invoices.length > 0 && (
+      {(billingLoading || invoices.length > 0) && (
         <SolidCard padding="p-0" className="overflow-hidden">
           <div className="p-4 border-b border-[#E4E2EB]">
             <h3 className="text-xs font-bold text-[#0F0E17]">Wallet invoices</h3>
             <p className="text-[11px] text-[#524E5E] mt-0.5">Paid top-ups with Razorpay reference IDs.</p>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs font-mono">
-              <thead>
-                <tr className="border-b border-[#E4E2EB] bg-[#FAF9FD] text-[10px] text-[#524E5E] uppercase tracking-wider font-semibold">
-                  <th className="py-2.5 px-4">Invoice #</th>
-                  <th className="py-2.5 px-3">Date</th>
-                  <th className="py-2.5 px-3">Amount</th>
-                  <th className="py-2.5 px-3">Status</th>
-                  <th className="py-2.5 px-4">Payment ID</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#E4E2EB]">
-                {invoices.map((inv) => (
-                  <tr key={inv.invoiceId} className="hover:bg-[#FAF9FD]/80">
-                    <td className="py-2.5 px-4 font-semibold text-[#0F0E17]">{inv.invoiceNumber}</td>
-                    <td className="py-2.5 px-3 text-[#524E5E]">
-                      {inv.createdAt ? new Date(inv.createdAt).toLocaleString() : '—'}
-                    </td>
-                    <td className="py-2.5 px-3 text-[#0F0E17]">
-                      {inv.amountUsd != null
-                        ? `$${Number(inv.amountUsd).toFixed(2)}`
-                        : inv.amountInr != null
-                          ? `$${(Number(inv.amountInr) / (Number(serverWallet?.fxRateInr) || 95.64)).toFixed(2)}`
-                          : '—'}
-                    </td>
-                    <td className="py-2.5 px-3 text-[#15803D] capitalize">{inv.status}</td>
-                    <td className="py-2.5 px-4 text-[#524E5E] truncate max-w-[140px]">{inv.paymentId || '—'}</td>
+            {billingLoading && invoices.length === 0 ? (
+              <InvoiceRowsSkeleton rows={3} />
+            ) : (
+              <table className="w-full text-left text-xs font-mono">
+                <thead>
+                  <tr className="border-b border-[#E4E2EB] bg-[#FAF9FD] text-[10px] text-[#524E5E] uppercase tracking-wider font-semibold">
+                    <th className="py-2.5 px-4">Invoice #</th>
+                    <th className="py-2.5 px-3">Date</th>
+                    <th className="py-2.5 px-3">Amount</th>
+                    <th className="py-2.5 px-3">Status</th>
+                    <th className="py-2.5 px-4">Payment ID</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-[#E4E2EB]">
+                  {invoices.map((inv) => (
+                    <tr key={inv.invoiceId} className="hover:bg-[#FAF9FD]/80">
+                      <td className="py-2.5 px-4 font-semibold text-[#0F0E17]">{inv.invoiceNumber}</td>
+                      <td className="py-2.5 px-3 text-[#524E5E]">
+                        {inv.createdAt ? new Date(inv.createdAt).toLocaleString() : '—'}
+                      </td>
+                      <td className="py-2.5 px-3 text-[#0F0E17]">
+                        {inv.amountUsd != null
+                          ? `$${Number(inv.amountUsd).toFixed(2)}`
+                          : inv.amountInr != null
+                            ? `$${(Number(inv.amountInr) / (Number(serverWallet?.fxRateInr) || 95.64)).toFixed(2)}`
+                            : '—'}
+                      </td>
+                      <td className="py-2.5 px-3 text-[#15803D] capitalize">{inv.status}</td>
+                      <td className="py-2.5 px-4 text-[#524E5E] truncate max-w-[140px]">{inv.paymentId || '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </SolidCard>
       )}
@@ -432,7 +450,9 @@ export function BillingModule() {
           </button>
         </div>
 
-        {transactions.length === 0 ? (
+        {billingLoading && transactions.length === 0 ? (
+          <TransactionRowsSkeleton rows={6} />
+        ) : transactions.length === 0 ? (
           <p className="px-4 py-6 text-center text-xs text-[#8C879A]">
             No charges yet. Add funds to place calls or buy a number.
           </p>

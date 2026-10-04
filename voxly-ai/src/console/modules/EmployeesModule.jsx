@@ -14,7 +14,7 @@ import {
 import { SolidCard } from '../ui/SolidCard';
 import { StatusBadge } from '../ui/StatusBadge';
 import { TactileButton } from '../ui/TactileButton';
-import { ModuleSkeleton } from '../ui/Skeleton';
+import { AgentCardsGridSkeleton } from '../ui/Skeleton';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { AgentStudioModule } from './AgentStudioModule';
 
@@ -74,7 +74,15 @@ export function EmployeesModule({
   });
 
   if (isLoading && agents.length === 0) {
-    return <ModuleSkeleton cards={3} />;
+    return (
+      <div className="space-y-6" data-testid="employees-loading" aria-busy="true">
+        <div className="space-y-2 animate-pulse">
+          <div className="h-6 w-48 bg-[#E4E2EB]/80 rounded-lg" />
+          <div className="h-3.5 w-96 max-w-full bg-[#E4E2EB]/80 rounded-lg" />
+        </div>
+        <AgentCardsGridSkeleton count={3} />
+      </div>
+    );
   }
 
   if (inWorkbench) {
@@ -144,7 +152,7 @@ export function EmployeesModule({
         </div>
       </div>
 
-      {filteredAgents.length === 0 && (
+      {!isLoading && filteredAgents.length === 0 && (
         <SolidCard className="p-10 text-center space-y-3">
           <p className="text-sm text-[#524E5E]">No agents match your filters.</p>
           <TactileButton onClick={onOpenCreateAgent} variant="primary" icon={Plus}>

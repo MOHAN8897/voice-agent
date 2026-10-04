@@ -122,22 +122,34 @@ async def _campaign_for_tenant(db, campaign_id: str, tenant_id: uuid.UUID) -> Ca
 
 
 @router.get("/api/campaigns")
-async def list_campaigns(ctx: ApiTenantContext = Depends(require_api_tenant)):
+async def list_campaigns(
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    ctx: ApiTenantContext = Depends(require_api_tenant),
+):
     require_role_permission(ctx.role, "app.calls.read")
     factory = get_session_factory()
     if factory is None:
         return {"campaigns": []}
     tenant_id = ctx.workspace_tenant_id
     async with factory() as db:
-        result = await db.execute(select(Campaign).where(Campaign.tenant_id == tenant_id).order_by(Campaign.created_at.desc()))
-        rows = result.scalars().all()
         from sqlalchemy import func
 
+        # chisel: single SQL outerjoin and group_by eliminates N+1 query loop
+        stmt = (
+            select(Campaign, func.count(CampaignContact.id).label("total_contacts"))
+            .outerjoin(CampaignContact, CampaignContact.campaign_id == Campaign.campaign_id)
+            .where(Campaign.tenant_id == tenant_id)
+            .group_by(Campaign.campaign_id)
+            .order_by(Campaign.created_at.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+        result = await db.execute(stmt)
+        rows = result.all()
+
         out = []
-        for r in rows:
-            cnt = await db.scalar(
-                select(func.count()).select_from(CampaignContact).where(CampaignContact.campaign_id == r.campaign_id)
-            ) or 0
+        for r, cnt in rows:
             out.append({
                 "campaignId": str(r.campaign_id),
                 "campaign_id": str(r.campaign_id),
@@ -152,7 +164,7 @@ async def list_campaigns(ctx: ApiTenantContext = Depends(require_api_tenant)):
                 "concurrencyLimit": r.concurrency,
                 "retryRules": r.retry_rules or {},
                 "retry_rules": r.retry_rules or {},
-                "totalContacts": cnt,
+                "totalContacts": int(cnt or 0),
                 "createdAt": r.created_at.isoformat() if r.created_at else None,
             })
         return {"campaigns": out}

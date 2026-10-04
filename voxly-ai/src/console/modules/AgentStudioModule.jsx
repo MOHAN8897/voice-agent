@@ -19,6 +19,7 @@ import { SolidCard } from '../ui/SolidCard';
 import { StatusBadge } from '../ui/StatusBadge';
 import { TactileButton } from '../ui/TactileButton';
 import { Modal } from '../ui/Modal';
+import { AgentStudioHeaderSkeleton, AgentStudioEditorSkeleton } from '../ui/Skeleton';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { voiceAgent } from '../../services/voiceAgent';
 import { LANGUAGE_OPTIONS } from '../../lib/voicePresets';
@@ -459,9 +460,17 @@ export function AgentStudioModule({
   }
 
   if (!selectedAgent) {
+    if (isLoading) {
+      return (
+        <div className="space-y-6" data-testid="agent-studio-loading" aria-busy="true">
+          <AgentStudioHeaderSkeleton />
+          <AgentStudioEditorSkeleton />
+        </div>
+      );
+    }
     return (
       <SolidCard className="p-10 text-center space-y-3 max-w-lg mx-auto">
-        <p className="text-sm text-[#524E5E]">{isLoading ? 'Loading agents…' : 'Select an agent to edit.'}</p>
+        <p className="text-sm text-[#524E5E]">Select an agent to edit.</p>
       </SolidCard>
     );
   }

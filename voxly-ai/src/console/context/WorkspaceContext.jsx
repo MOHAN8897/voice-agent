@@ -193,13 +193,13 @@ export function WorkspaceProvider({ children }) {
         return num ? { ...a, assignedNumber: num.number, numberId: num.id } : a;
       });
 
-      const [fetchedCalls, fetchedLeads, fetchedCampaigns, fetchedWallet, fetchedCatalog, fetchedCallStats] =
+      // chisel: live carrier inventory search is deferred to Buy Number modal on-demand
+      const [fetchedCalls, fetchedLeads, fetchedCampaigns, fetchedWallet, fetchedCallStats] =
         await Promise.all([
           capture('Calls', () => api.calls.list({ limit: 100, agentMap }), []),
           capture('Leads', () => api.leads.list(), []),
           capture('Campaigns', () => api.campaigns.list(), []),
           capture('Wallet', () => api.billing.getWallet(), null),
-          capture('Number catalog', () => api.telephony.getCatalog(catalogCountry), []),
           capture('Call summary', () => api.calls.stats(), null),
         ]);
 
@@ -217,7 +217,6 @@ export function WorkspaceProvider({ children }) {
       setLeads(fetchedLeads || []);
       setCampaigns(fetchedCampaigns || []);
       if (fetchedWallet) setWallet(normalizeWallet(fetchedWallet, initialWallet));
-      setAvailableCatalog(fetchedCatalog?.length ? fetchedCatalog : []);
     } catch (err) {
       setSyncError(err.message || 'Could not sync workspace from API');
       console.warn('Workspace sync error:', err);
@@ -229,7 +228,7 @@ export function WorkspaceProvider({ children }) {
     })();
     loadInflightRef.current = run;
     return run;
-  }, [catalogCountry]);
+  }, []);
 
   const reloadCatalog = useCallback(
     async (country = catalogCountry) => {

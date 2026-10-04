@@ -8,6 +8,7 @@ import { SolidCard } from '../ui/SolidCard';
 import { StatusBadge } from '../ui/StatusBadge';
 import { TactileButton } from '../ui/TactileButton';
 import { Modal } from '../ui/Modal';
+import { KanbanSkeleton, LeadsTableSkeleton } from '../ui/Skeleton';
 import { useWorkspace } from '../context/WorkspaceContext';
 
 /**
@@ -28,6 +29,7 @@ export function LeadsModule({ agentId = null, agentName = '' }) {
     phoneNumbers,
     outboundFromE164,
     setPreferredOutboundFrom,
+    isLoading,
   } = useWorkspace();
   const [viewMode, setViewMode] = useState('kanban'); // 'kanban' | 'table'
   const [searchQuery, setSearchQuery] = useState('');
@@ -145,7 +147,10 @@ export function LeadsModule({ agentId = null, agentName = '' }) {
 
       {/* KANBAN PIPELINE VIEW */}
       {viewMode === 'kanban' && (
-        <div className="flex md:grid md:grid-cols-5 gap-4 overflow-x-auto pb-4 max-w-full">
+        isLoading && leads.length === 0 ? (
+          <KanbanSkeleton columns={5} />
+        ) : (
+          <div className="flex md:grid md:grid-cols-5 gap-4 overflow-x-auto pb-4 max-w-full">
           {stages.map((stage) => {
             const stageLeads = filteredLeads.filter((l) => l.stage === stage);
             return (
@@ -220,7 +225,8 @@ export function LeadsModule({ agentId = null, agentName = '' }) {
               </div>
             );
           })}
-        </div>
+          </div>
+        )
       )}
 
       {/* DATA TABLE VIEW */}
@@ -240,37 +246,51 @@ export function LeadsModule({ agentId = null, agentName = '' }) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E4E2EB]">
-                {filteredLeads.map((lead) => (
-                  <tr
-                    key={lead.id}
-                    onClick={() => setSelectedLead(lead)}
-                    className="hover:bg-[#FAF9FD] transition-colors cursor-pointer"
-                  >
-                    <td className="py-3 px-4">
-                      <div className="font-semibold text-[#0F0E17]">{lead.name}</div>
-                      <div className="text-[10px] font-mono text-[#524E5E]">{lead.phone}</div>
-                    </td>
-                    <td className="py-3 px-3 text-[#524E5E] font-medium">{lead.company}</td>
-                    <td className="py-3 px-3 font-mono font-bold text-[#047857]">{lead.bantScore}/100</td>
-                    <td className="py-3 px-3">
-                      <StatusBadge status={lead.stage} size="xs" />
-                    </td>
-                    <td className="py-3 px-3 text-[#524E5E] truncate max-w-[160px]">{lead.intent}</td>
-                    <td className="py-3 px-3 text-[#8C879A]">{lead.agentName}</td>
-                    <td className="py-3 px-4 text-right">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleTriggerCall(lead);
-                        }}
-                        className="text-xs font-semibold text-[#6344E7] hover:underline"
-                      >
-                        Call Now
-                      </button>
+                {isLoading && leads.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="p-0">
+                      <LeadsTableSkeleton rows={5} />
                     </td>
                   </tr>
-                ))}
+                ) : filteredLeads.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-8 px-4 text-center text-[#8C879A]">
+                      No leads match your search criteria.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredLeads.map((lead) => (
+                    <tr
+                      key={lead.id}
+                      onClick={() => setSelectedLead(lead)}
+                      className="hover:bg-[#FAF9FD] transition-colors cursor-pointer"
+                    >
+                      <td className="py-3 px-4">
+                        <div className="font-semibold text-[#0F0E17]">{lead.name}</div>
+                        <div className="text-[10px] font-mono text-[#524E5E]">{lead.phone}</div>
+                      </td>
+                      <td className="py-3 px-3 text-[#524E5E] font-medium">{lead.company}</td>
+                      <td className="py-3 px-3 font-mono font-bold text-[#047857]">{lead.bantScore}/100</td>
+                      <td className="py-3 px-3">
+                        <StatusBadge status={lead.stage} size="xs" />
+                      </td>
+                      <td className="py-3 px-3 text-[#524E5E] truncate max-w-[160px]">{lead.intent}</td>
+                      <td className="py-3 px-3 text-[#8C879A]">{lead.agentName}</td>
+                      <td className="py-3 px-4 text-right">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleTriggerCall(lead);
+                          }}
+                          className="text-xs font-semibold text-[#6344E7] hover:underline"
+                        >
+                          Call Now
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

@@ -214,6 +214,10 @@ async def calls_stats(
     )
 
 
+_ENRICH_CALL_CACHE: dict[str, dict] = {}
+_CACHE_MAX_ENTRIES = 2000
+
+
 def _enrich_timeline_item(item: dict) -> dict:
     """Attach summary, cost and recording flags to a timeline row."""
     if not item.get("connected"):
@@ -225,6 +229,9 @@ def _enrich_timeline_item(item: dict) -> dict:
             "direction": item.get("direction"),
             "disposition": item.get("disposition"),
             "duration_sec": item.get("duration_sec"),
+            "summary": item.get("summary"),
+            "has_recording": item.get("has_recording"),
+            "in_progress": item.get("in_progress"),
         }
     )
     out = dict(item)
@@ -237,33 +244,52 @@ def _enrich_timeline_item(item: dict) -> dict:
 
 
 def _enrich_call_list_item(item: dict) -> dict:
-    """Attach outcome summary, customer label, pipeline, and session cost."""
-    from server.call.post_call_pipeline import read_outcome
+    """Attach outcome summary, customer label, pipeline, and session cost with memory caching."""
+    cid = str(item.get("call_id") or "")
+    if not cid:
+        return dict(item)
+
+    is_in_progress = bool(item.get("in_progress"))
+    if not is_in_progress and cid in _ENRICH_CALL_CACHE:
+        cached = dict(_ENRICH_CALL_CACHE[cid])
+        cached.update({k: v for k, v in item.items() if v is not None})
+        return cached
 
     out = dict(item)
-    cid = str(item.get("call_id") or "")
-    outcome = read_outcome(cid) if cid else None
-    if outcome:
-        summary = (outcome.get("summary_en") or "").strip()
-        if summary:
-            out["summary"] = summary[:240]
-        from server.call.outcome_schema import normalize_extracted_fields
+    # chisel: if summary is already present, avoid outcome disk read
+    if not out.get("summary"):
+        from server.call.post_call_pipeline import read_outcome
 
-        fields = normalize_extracted_fields(outcome.get("extracted_fields"))
-        customer = (fields.get("name") or fields.get("phone") or "").strip()
-        if customer:
-            out["customer"] = customer
-    if cid:
-        review = call_ledger.review_fields(cid)
-        if review.get("usage"):
-            out["usage"] = review["usage"]
-        for key in ("cost_usd", "cost_inr", "cost_inr_per_min", "pipeline"):
-            if review.get(key) is not None:
-                out[key] = review[key]
-        source = audio_archive.recording_source(cid)
-        out["has_recording"] = source != "none"
-        out["recording_source"] = source
-        out["has_telnyx_recording"] = source == "telnyx"
+        outcome = read_outcome(cid)
+        if outcome:
+            summary = (outcome.get("summary_en") or "").strip()
+            if summary:
+                out["summary"] = summary[:240]
+            from server.call.outcome_schema import normalize_extracted_fields
+
+            fields = normalize_extracted_fields(outcome.get("extracted_fields"))
+            customer = (fields.get("name") or fields.get("phone") or "").strip()
+            if customer:
+                out["customer"] = customer
+
+    review = call_ledger.review_fields(cid)
+    if review.get("usage"):
+        out["usage"] = review["usage"]
+    for key in ("cost_usd", "cost_inr", "cost_inr_per_min", "pipeline"):
+        if review.get(key) is not None:
+            out[key] = review[key]
+    source = audio_archive.recording_source(cid)
+    out["has_recording"] = source != "none"
+    out["recording_source"] = source
+    out["has_telnyx_recording"] = source == "telnyx"
+
+    if not is_in_progress:
+        if len(_ENRICH_CALL_CACHE) >= _CACHE_MAX_ENTRIES:
+            keys_to_remove = list(_ENRICH_CALL_CACHE.keys())[:200]
+            for k in keys_to_remove:
+                _ENRICH_CALL_CACHE.pop(k, None)
+        _ENRICH_CALL_CACHE[cid] = out
+
     return out
 
 

@@ -56,6 +56,8 @@ def _lead_dict(row: Lead) -> dict:
 @router.get("/api/leads")
 async def list_leads(
     agentId: str | None = Query(None, alias="agentId", max_length=36),
+    limit: int = Query(100, ge=1, le=500),
+    offset: int = Query(0, ge=0),
     principal: SubscriberPrincipal = Depends(require_subscriber_jwt),
 ):
     """Leads for the workspace, or for one agent when `agentId` is given.
@@ -71,7 +73,7 @@ async def list_leads(
         stmt = select(Lead).where(Lead.tenant_id == principal.tenant_id)
         if agentId:
             stmt = stmt.where(Lead.agent_id == agentId)
-        result = await session.execute(stmt.order_by(Lead.updated_at.desc()).limit(500))
+        result = await session.execute(stmt.order_by(Lead.updated_at.desc()).limit(limit).offset(offset))
         return {"leads": [_lead_dict(r) for r in result.scalars()]}
 
 

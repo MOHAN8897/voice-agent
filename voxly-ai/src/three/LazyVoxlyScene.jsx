@@ -61,7 +61,9 @@ export function LazyVoxlyScene(props = {}) {
 
   return (
     <Suspense fallback={<SceneFallback className={props.className} />}>
-      <LazyScene {...props} />
+      <div className="w-full h-full transition-opacity duration-500 animate-fade-in">
+        <LazyScene {...props} />
+      </div>
     </Suspense>
   );
 }

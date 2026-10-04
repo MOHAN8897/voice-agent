@@ -15,6 +15,7 @@ import {
 import { SolidCard } from '../ui/SolidCard';
 import { TactileButton } from '../ui/TactileButton';
 import { Modal } from '../ui/Modal';
+import { DncTableSkeleton } from '../ui/Skeleton';
 import { showToast } from '../ui/ToastHost';
 import { api } from '../../services/api';
 
@@ -219,7 +220,7 @@ export function DncRegistryPanel() {
       {/* Registry Table */}
       <SolidCard className="p-0 overflow-hidden">
         {loading && entries.length === 0 ? (
-          <div className="p-12 text-center text-xs text-[#524E5E]">Loading Do Not Call registry…</div>
+          <DncTableSkeleton rows={5} />
         ) : entries.length === 0 ? (
           <div className="p-12 text-center space-y-2">
             <PhoneOff className="w-8 h-8 text-[#8C879A] mx-auto opacity-50" />

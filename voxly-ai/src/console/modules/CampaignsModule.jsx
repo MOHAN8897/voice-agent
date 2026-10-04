@@ -28,6 +28,7 @@ import { StatusBadge } from '../ui/StatusBadge';
 import { TactileButton } from '../ui/TactileButton';
 import { Modal } from '../ui/Modal';
 import { CampaignComplianceModal } from '../ui/CampaignComplianceModal';
+import { CampaignCardSkeleton } from '../ui/Skeleton';
 import { DncRegistryPanel } from './DncRegistryPanel';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { showToast } from '../ui/ToastHost';
@@ -84,6 +85,7 @@ export function CampaignsModule() {
     phoneNumbers,
     setPreferredOutboundFrom,
     outboundFromE164,
+    isLoading,
   } = useWorkspace();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -533,7 +535,9 @@ export function CampaignsModule() {
 
       {/* Campaigns List */}
       <div className="space-y-4">
-        {campaigns.length === 0 ? (
+        {isLoading && campaigns.length === 0 ? (
+          <CampaignCardSkeleton count={3} />
+        ) : campaigns.length === 0 ? (
           <SolidCard className="py-12 text-center space-y-3">
             <div className="w-12 h-12 rounded-2xl bg-[#F0EEF6] border border-[#E4E2EB] flex items-center justify-center text-[#6344E7] mx-auto">
               <Megaphone className="w-6 h-6" />

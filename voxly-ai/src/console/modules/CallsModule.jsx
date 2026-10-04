@@ -18,6 +18,7 @@ import {
 import { SolidCard } from '../ui/SolidCard';
 import { StatusBadge } from '../ui/StatusBadge';
 import { TactileButton } from '../ui/TactileButton';
+import { CallsTableSkeleton, CallDetailSkeleton, WaveformSkeleton } from '../ui/Skeleton';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { api } from '../../services/api';
 import { showToast } from '../ui/ToastHost';
@@ -211,6 +212,7 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
     phoneNumbers,
     wallet,
     loadWorkspaceData,
+    isLoading,
   } = useWorkspace();
   const [filterDirection, setFilterDirection] = useState('All');
   const [filterAgentId, setFilterAgentId] = useState('all');
@@ -672,21 +674,19 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#E4E2EB]">
-                      {statusLoading && (
+                      {statusLoading || (isLoading && !calls.length) ? (
                         <tr>
-                          <td colSpan={6} className="py-6 px-4 text-center text-[#8C879A]">
-                            Loading calls…
+                          <td colSpan={6} className="p-0">
+                            <CallsTableSkeleton rows={6} />
                           </td>
                         </tr>
-                      )}
-                      {!statusLoading && filteredCalls.length === 0 && (
+                      ) : filteredCalls.length === 0 ? (
                         <tr>
                           <td colSpan={6} className="py-6 px-4 text-center text-[#8C879A]">
                             No calls match this filter yet.
                           </td>
                         </tr>
-                      )}
-                      {!statusLoading &&
+                      ) : (
                         filteredCalls.map((call) => {
                           const isSelected = activeCall && activeCall.id === call.id;
                           return (
@@ -721,7 +721,8 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                               </td>
                             </tr>
                           );
-                        })}
+                        })
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -807,14 +808,22 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                       <Sparkles className="w-3.5 h-3.5 text-[#6344E7]" />
                       <span>AI summary</span>
                     </div>
-                    <p className="text-xs text-[#524E5E] leading-relaxed">
-                      {summaryText ||
-                        (outcomeLoading
-                          ? 'Generating…'
-                          : activeCall.connected
-                            ? 'No summary yet. It appears once the call finishes processing.'
-                            : 'No conversation, so there is nothing to summarise.')}
-                    </p>
+                    <div className="text-xs text-[#524E5E] leading-relaxed">
+                      {summaryText ? (
+                        summaryText
+                      ) : outcomeLoading ? (
+                        <div className="flex items-center gap-2 py-1">
+                          <WaveformSkeleton />
+                          <span className="text-[11px] font-mono text-[#6344E7] animate-pulse">
+                            Analyzing audio transcript & outcomes…
+                          </span>
+                        </div>
+                      ) : activeCall.connected ? (
+                        'No summary yet. It appears once the call finishes processing.'
+                      ) : (
+                        'No conversation, so there is nothing to summarise.'
+                      )}
+                    </div>
 
                     {extracted && Object.keys(extracted).length > 0 && (
                       <div className="pt-2 border-t border-[#E4E2EB] grid grid-cols-2 gap-2 text-[11px] font-mono">

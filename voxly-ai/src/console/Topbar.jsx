@@ -12,6 +12,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { TactileButton } from './ui/TactileButton';
+import { TopbarBalanceSkeleton } from './ui/Skeleton';
 import { useWorkspace } from './context/WorkspaceContext';
 
 const EMPLOYEE_STEP_LABELS = {
@@ -34,7 +35,7 @@ export function Topbar({
   onSignOut,
   onNavigate,
 }) {
-  const { campaigns, wallet, openAddFunds } = useWorkspace();
+  const { campaigns, wallet, openAddFunds, isLoading } = useWorkspace();
   const runningCampaign = campaigns.find((c) => c.status === 'running');
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef(null);
@@ -131,7 +132,11 @@ export function Topbar({
           title="Wallet balance — click to add funds"
         >
           <CreditCard className="w-3.5 h-3.5 text-[#6344E7]" />
-          <span className="font-mono">{walletLabel}</span>
+          {isLoading && !wallet ? (
+            <TopbarBalanceSkeleton />
+          ) : (
+            <span className="font-mono">{walletLabel}</span>
+          )}
         </button>
 
         <button

@@ -14,7 +14,12 @@ import { MetricCard } from '../ui/MetricCard';
 import { SolidCard } from '../ui/SolidCard';
 import { StatusBadge } from '../ui/StatusBadge';
 import { TactileButton } from '../ui/TactileButton';
-import { ModuleSkeleton } from '../ui/Skeleton';
+import {
+  Skeleton,
+  MetricsGridSkeleton,
+  AgentCardsGridSkeleton,
+  TableRowsSkeleton,
+} from '../ui/Skeleton';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { useAuth } from '../../context/AuthContext';
 
@@ -75,7 +80,39 @@ export function OverviewModule({ onNavigate, onOpenCreateAgent, onOpenBuyNumber 
   // which React rejects outright ("Rendered more hooks than during the previous
   // render") and takes the whole console down with it.
   if (isLoading && !agents.length && !calls.length) {
-    return <ModuleSkeleton cards={4} />;
+    return (
+      <div className="space-y-6" data-testid="overview-loading" aria-busy="true">
+        <div className="p-6 rounded-2xl bg-white border border-[#E4E2EB] shadow-craft-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-pulse">
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-7 w-64" />
+            <Skeleton className="h-3.5 w-96 max-w-full" />
+          </div>
+          <div className="flex gap-2.5">
+            <Skeleton className="h-9 w-28 rounded-xl" />
+            <Skeleton className="h-9 w-32 rounded-xl" />
+          </div>
+        </div>
+
+        <MetricsGridSkeleton count={4} />
+
+        <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="h-4 w-20" />
+          </div>
+          <AgentCardsGridSkeleton count={3} />
+        </div>
+
+        <div className="rounded-2xl border border-[#E4E2EB] bg-white p-4 space-y-3">
+          <div className="flex justify-between items-center">
+            <Skeleton className="h-5 w-36" />
+            <Skeleton className="h-4 w-24" />
+          </div>
+          <TableRowsSkeleton rows={4} cols={5} />
+        </div>
+      </div>
+    );
   }
 
   return (

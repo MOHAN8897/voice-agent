@@ -3,6 +3,7 @@ import { Shield, Users, Phone, Building2, Wallet, Minus, Plus } from 'lucide-rea
 import { api } from '../../services/api';
 import { SolidCard } from '../ui/SolidCard';
 import { TactileButton } from '../ui/TactileButton';
+import { AdminMetricsSkeleton } from '../ui/Skeleton';
 import { showToast } from '../ui/ToastHost';
 
 function moneyUsd(cents) {
@@ -95,7 +96,7 @@ export function AdminModule() {
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-800">{error}</div>
       )}
-      {overview && (
+      {overview ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
             ['Tenants', overview.tenants, Building2],
@@ -112,6 +113,8 @@ export function AdminModule() {
             </SolidCard>
           ))}
         </div>
+      ) : (
+        <AdminMetricsSkeleton count={4} />
       )}
       <SolidCard className="p-5 space-y-4">
         <div className="flex items-center gap-2">

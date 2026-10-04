@@ -981,8 +981,12 @@ export const api = {
      * `agentId` is sent to the server, which filters on it. Filtering client-side
      * would still ship every agent's leads to every agent's browser.
      */
-    async list({ agentId } = {}) {
-      const qs = agentId ? `?agentId=${encodeURIComponent(agentId)}` : '';
+    async list({ agentId, limit, offset } = {}) {
+      const params = new URLSearchParams();
+      if (agentId) params.set('agentId', agentId);
+      if (limit != null) params.set('limit', String(limit));
+      if (offset != null) params.set('offset', String(offset));
+      const qs = params.toString() ? `?${params.toString()}` : '';
       const data = await api.request('GET', `/api/leads${qs}`);
       const rows = data.leads || data;
       return Array.isArray(rows) ? rows.map(normalizeLead) : [];
@@ -1009,8 +1013,12 @@ export const api = {
   },
 
   campaigns: {
-    async list() {
-      const data = await api.request('GET', '/api/campaigns');
+    async list({ limit, offset } = {}) {
+      const params = new URLSearchParams();
+      if (limit != null) params.set('limit', String(limit));
+      if (offset != null) params.set('offset', String(offset));
+      const qs = params.toString() ? `?${params.toString()}` : '';
+      const data = await api.request('GET', `/api/campaigns${qs}`);
       const rows = data.campaigns || data;
       return Array.isArray(rows) ? rows.map(normalizeCampaign) : [];
     },
