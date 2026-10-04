@@ -69,6 +69,23 @@ async def check_db_health() -> dict[str, Any]:
     try:
         async with _engine.connect() as conn:
             await conn.execute(text("SELECT 1"))
-        return {"ok": True, "configured": True, "message": "connected"}
+        pool = getattr(_engine.sync_engine, "pool", None)
+        pool_metrics: dict[str, int] = {}
+        if pool is not None:
+            try:
+                pool_metrics = {
+                    "size": pool.size(),
+                    "checkedin": pool.checkedin(),
+                    "checkedout": pool.checkedout(),
+                    "overflow": pool.overflow(),
+                }
+            except Exception:
+                pass
+        return {
+            "ok": True,
+            "configured": True,
+            "message": "connected",
+            "pool": pool_metrics,
+        }
     except Exception as e:
         return {"ok": False, "configured": True, "message": str(e)[:200]}

@@ -1,0 +1,24 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Install system dependencies needed for asyncpg, uvloop, and audio processing
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Cache dependencies
+COPY pyproject.toml README.md ./
+RUN pip install --no-cache-dir -e .
+
+# Copy application source
+COPY server ./server
+COPY scripts ./scripts
+COPY alembic.ini ./
+
+ENV PORT=8000
+EXPOSE 8000
+
+# Launch dedicated voice WebSocket app with tuned WebSocket ping intervals
+CMD ["sh", "-c", "uvicorn server.voice_app:app --host 0.0.0.0 --port ${PORT:-8000} --loop uvloop --ws-ping-interval 15 --ws-ping-timeout 30 --no-access-log"]

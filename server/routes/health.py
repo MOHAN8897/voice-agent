@@ -59,6 +59,16 @@ async def health():
             "reason": "probe_error",
             "detail": str(e)[:200],
         }
+    try:
+        from server.services.r2_storage import r2_storage
+
+        r2_configured = r2_storage.is_configured()
+        r2_status = {
+            "configured": r2_configured,
+            "bucket": settings.r2_bucket_name if r2_configured else None,
+        }
+    except Exception as e:
+        r2_status = {"configured": False, "error": str(e)[:120]}
     return {
         "ok": env_valid and (not db_status.get("configured") or db_status.get("ok")),
         "envValid": env_valid,
@@ -66,6 +76,7 @@ async def health():
         "presence": presence,  # booleans only
         "database": db_status,
         "redis": redis_status,
+        "r2": r2_status,
         "email": email_status,
         "error": error,
         "supportedLanguages": list(constants.SUPPORTED_LANGUAGES.keys()),
