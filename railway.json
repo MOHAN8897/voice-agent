@@ -10,15 +10,15 @@
     },
     "api": {
       "rootDirectory": ".",
-      "buildCommand": "pip install -e .",
-      "startCommand": "uvicorn server.app:app --host 0.0.0.0 --port 8000",
+      "dockerfilePath": "Dockerfile.api",
       "healthcheckPath": "/api/health",
-      "healthcheckTimeout": 120
+      "healthcheckTimeout": 60,
+      "sleepApplication": false
     },
     "worker": {
       "rootDirectory": ".",
-      "buildCommand": "pip install -e .",
-      "startCommand": "python -m worker.main"
+      "dockerfilePath": "Dockerfile.worker",
+      "sleepApplication": false
     }
   }
 }

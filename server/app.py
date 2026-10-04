@@ -150,6 +150,14 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.warning(f"[VOICE] Call recovery skipped: {e}")
         try:
+            from server.call.post_call_pipeline import recover_pending_post_calls
+
+            pending_recovered = await recover_pending_post_calls()
+            if pending_recovered:
+                logger.info(f"[VOICE] Recovered and re-queued {pending_recovered} pending post-call jobs")
+        except Exception as e:
+            logger.warning(f"[VOICE] Pending post-call recovery skipped: {e}")
+        try:
             # Re-affirm the demo/platform-admin account on boot. Idempotent, and a
             # failure here must never block startup.
             from server.services.saas.demo_admin import ensure_all_demo_admins

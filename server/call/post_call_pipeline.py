@@ -58,8 +58,31 @@ def read_outcome(call_id: str) -> dict[str, Any] | None:
 
 
 async def enqueue(call_id: str, *, force: bool = False) -> None:
+    try:
+        await call_store.update(call_id, {"finalization_status": "pending"})
+    except Exception as exc:
+        logger.warning(f"[CALL] failed to set pending finalization_status for {call_id}: {exc}")
     await _QUEUE.put((call_id, force))
     _ensure_worker()
+
+
+async def recover_pending_post_calls() -> int:
+    """Find any calls whose post-call processing was interrupted by restart and re-queue."""
+    try:
+        pending = await call_store.list_pending_finalization()
+        count = 0
+        for rec in pending:
+            cid = rec.get("call_id")
+            if cid:
+                logger.info(f"[RECOVERY] Re-enqueuing interrupted post-call analysis for {cid}")
+                await enqueue(str(cid), force=True)
+                count += 1
+        if count:
+            logger.info(f"[RECOVERY] Re-enqueued {count} pending post-call jobs")
+        return count
+    except Exception as exc:
+        logger.warning(f"[RECOVERY] post-call recovery failed: {exc}")
+        return 0
 
 
 def _ensure_worker() -> None:

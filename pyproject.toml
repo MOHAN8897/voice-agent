@@ -25,6 +25,9 @@ dependencies = [
     # IANA tz database for zoneinfo. Windows has no system tzdata, and the
     # inbound business-hours policy must not fall back to naive UTC there.
     "tzdata>=2024.1",
+    "redis>=5.0",
+    "aioboto3>=12.0",
+    "uvloop>=0.21; sys_platform != 'win32'",
 ]
 
 [project.optional-dependencies]
@@ -33,7 +36,6 @@ dev = [
     "pytest-asyncio>=0.24",
     "httpx>=0.27",
     "ruff>=0.9",
-    "redis>=5.0",
 ]
 
 [tool.pytest.ini_options]

@@ -478,6 +478,16 @@ class CallLifecycleService:
             if ctx:
                 ctx.components["audio"] = "failed"
         try:
+            from server.services.r2_storage import r2_storage
+
+            if r2_storage.is_configured():
+                mix_file = audio_archive.file_for(call_id, "mix")
+                if mix_file:
+                    ext = mix_file.suffix.lstrip(".").lower() or "wav"
+                    await r2_storage.upload_audio_file(call_id, mix_file, fmt=ext)
+        except Exception as e:
+            logger.warning(f"[CALL] R2 audio upload failed {call_id}: {str(e)[:160]}")
+        try:
             from server.call.post_call_transcription import schedule_post_call_transcription
 
             schedule_post_call_transcription(call_id)
@@ -490,6 +500,16 @@ class CallLifecycleService:
         except Exception as e:
             logger.warning(f"[CALL] post-call outcome failed {call_id}: {str(e)[:200]}")
             await enqueue_post_call(call_id)
+        try:
+            from server.services.r2_storage import r2_storage
+            from server.call.post_call_pipeline import read_outcome
+
+            if r2_storage.is_configured():
+                outcome_data = read_outcome(call_id)
+                if outcome_data:
+                    await r2_storage.upload_outcome(call_id, outcome_data)
+        except Exception as e:
+            logger.warning(f"[CALL] R2 outcome upload failed {call_id}: {str(e)[:160]}")
         try:
             from server.services.dev_telephony_store import dev_telephony_store
 

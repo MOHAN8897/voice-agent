@@ -40,7 +40,14 @@ async def init_db() -> bool:
     if not settings.database_url:
         return False
     url = _to_async_url(settings.database_url)
-    _engine = create_async_engine(url, pool_pre_ping=True, pool_size=5, max_overflow=10)
+    _engine = create_async_engine(
+        url,
+        pool_pre_ping=True,
+        pool_size=settings.db_pool_size,
+        max_overflow=settings.db_max_overflow,
+        pool_timeout=settings.db_pool_timeout,
+        pool_recycle=settings.db_pool_recycle,
+    )
     _session_factory = async_sessionmaker(_engine, expire_on_commit=False)
     return True
 

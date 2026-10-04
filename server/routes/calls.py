@@ -341,6 +341,13 @@ async def get_audio(
         await asyncio.to_thread(audio_archive.refresh_clear_tracks, call_id)
     path = audio_archive.file_for(call_id, kind)
     if path is None:
+        from server.services.r2_storage import r2_storage
+        if r2_storage.is_configured():
+            for ext in ("wav", "mp3"):
+                presigned = await r2_storage.presigned_url(f"calls/{call_id}/recording.{ext}")
+                if presigned:
+                    from fastapi.responses import RedirectResponse
+                    return RedirectResponse(presigned, status_code=307)
         raise HTTPException(
             status_code=404,
             detail={"error": {"code": "not_found", "message": "Audio not available"}},

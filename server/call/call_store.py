@@ -287,6 +287,27 @@ class CallStore:
             result = await session.execute(select(Call).where(Call.ended_at.is_(None)))
             return [_row_to_dict(r) for r in result.scalars()]
 
+    async def list_pending_finalization(self, limit: int = 100) -> list[dict[str, Any]]:
+        """List calls that have ended but finalization_status is still pending or processing."""
+        factory = get_session_factory()
+        if factory is None:
+            return [
+                dict(rec)
+                for rec in _MEM.values()
+                if rec.get("ended_at") and rec.get("finalization_status") in ("pending", "processing")
+            ][:limit]
+        async with factory() as session:
+            result = await session.execute(
+                select(Call)
+                .where(
+                    Call.ended_at.is_not(None),
+                    Call.finalization_status.in_(["pending", "processing"]),
+                )
+                .order_by(Call.started_at.desc())
+                .limit(limit)
+            )
+            return [_row_to_dict(r) for r in result.scalars()]
+
     def reset_for_tests(self) -> None:
         _MEM.clear()
         _ATTEMPT_MEM.clear()

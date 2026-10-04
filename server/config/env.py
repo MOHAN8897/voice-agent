@@ -155,6 +155,10 @@ class Settings(BaseSettings):
     fx_rate_live_ttl_sec: int = Field(21600, alias="FX_RATE_LIVE_TTL_SEC")
 
     database_url: str | None = Field(None, alias="DATABASE_URL")
+    db_pool_size: int = Field(5, alias="DB_POOL_SIZE")
+    db_max_overflow: int = Field(5, alias="DB_MAX_OVERFLOW")
+    db_pool_timeout: float = Field(20.0, alias="DB_POOL_TIMEOUT")
+    db_pool_recycle: int = Field(1800, alias="DB_POOL_RECYCLE")
 
     # --- Identity verification (Didit KYC) ---
     #: Server-side only. Never returned to the browser, never logged.
@@ -196,6 +200,12 @@ class Settings(BaseSettings):
     # The legacy client/ app is superseded by voxly-ai. Opt in explicitly if needed.
     serve_client_static: bool = Field(False, alias="SERVE_CLIENT_STATIC")
     redis_url: str | None = Field(None, alias="REDIS_URL")
+
+    # --- Cloudflare R2 object storage ---
+    r2_account_id: str | None = Field(None, alias="R2_ACCOUNT_ID")
+    r2_access_key_id: str | None = Field(None, alias="R2_ACCESS_KEY_ID")
+    r2_secret_access_key: str | None = Field(None, alias="R2_SECRET_ACCESS_KEY")
+    r2_bucket_name: str = Field("voxly-call-archives", alias="R2_BUCKET_NAME")
 
     enable_exotel: bool = Field(False, alias="ENABLE_EXOTEL")
     exotel_api_key: str | None = Field(None, alias="EXOTEL_API_KEY")
