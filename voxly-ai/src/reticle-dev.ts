@@ -36,7 +36,18 @@ if (import.meta.env.DEV) {
       // Settings: change password.
       'change-password-form', 'change-password-current', 'change-password-new',
       'change-password-confirm', 'change-password-submit', 'change-password-error',
-      'change-password-notice', 'session-idle-minutes'],
+      'change-password-notice', 'session-idle-minutes',
+      // Phase 4: Compliance, DND, and Onboarding
+      'agent-recording-disclosure-toggle', 'agent-recording-disclosure-text', 'agent-recording-disclosure-save',
+      'compliance-attestation-checkbox', 'confirm-launch-campaign-btn', 'campaign-wizard-launch-btn',
+      'main-tab-campaigns', 'main-tab-dnd', 'campaigns-tab-button', 'dnd-registry-tab-button',
+      'dnc-registry-panel', 'dnc-tab-active', 'dnc-tab-deactivated', 'add-dnc-button',
+      'add-dnc-single-phone', 'add-dnc-bulk-phones', 'add-dnc-submit-btn',
+      'dnc-deactivate-reason-input', 'dnc-reconsent-checkbox', 'dnc-deactivate-confirm-btn',
+      'onboarding-survey-modal', 'onboarding-step-1', 'onboarding-step-2', 'onboarding-step-3',
+      'onboarding-fullname-input', 'onboarding-company-input', 'onboarding-role-select',
+      'onboarding-referral-select', 'onboarding-usecase-select', 'onboarding-volume-select',
+      'onboarding-terms-checkbox', 'onboarding-next-btn', 'onboarding-submit-btn'],
     signals: ['voxly:voice-sample-started', 'voxly:voice-sample-audible', 'voxly:voice-sample-ended'],
     stores: [], // the keys you registered above
   });

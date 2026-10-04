@@ -290,3 +290,31 @@ class TelephonyContact(Base):
     phone: Mapped[str] = mapped_column(String(20), nullable=False)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+
+class UserOnboardingSurvey(Base):
+    __tablename__ = "user_onboarding_surveys"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.user_id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("tenants.tenant_id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    role: Mapped[str] = mapped_column(String(64), nullable=False)
+    referral_source: Mapped[str] = mapped_column(String(64), nullable=False)
+    primary_use_case: Mapped[str] = mapped_column(String(64), nullable=False)
+    estimated_monthly_minutes: Mapped[str] = mapped_column(String(32), nullable=False)
+    terms_and_telephony_accepted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    terms_version: Mapped[str] = mapped_column(String(32), default="2026-10-v1", nullable=False)
+    acceptable_use_version: Mapped[str] = mapped_column(String(32), default="2026-10-v1", nullable=False)
+    terms_accepted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)

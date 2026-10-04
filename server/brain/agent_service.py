@@ -107,6 +107,8 @@ class AgentService:
         name: str,
         tenant_id: str | None = None,
         languages: list[str] | None = None,
+        recording_disclosure_enabled: bool = False,
+        recording_disclosure_text: str | None = None,
     ) -> dict[str, Any]:
         from server.prompts.agent_voice_rules import normalize_compile_language
 
@@ -116,6 +118,8 @@ class AgentService:
         if factory is None:
             row = self._default_agent_dict(aid, name=name)
             row["languages"] = lang_list
+            row["recording_disclosure_enabled"] = bool(recording_disclosure_enabled)
+            row["recording_disclosure_text"] = recording_disclosure_text
             _MEM_AGENTS[aid] = row
             return row
 
@@ -129,6 +133,8 @@ class AgentService:
                 name=name,
                 status="active",
                 languages=lang_list,
+                recording_disclosure_enabled=bool(recording_disclosure_enabled),
+                recording_disclosure_text=recording_disclosure_text,
             )
             session.add(agent)
             await session.commit()
@@ -154,7 +160,15 @@ class AgentService:
                 raise KeyError(agent_id)
             if tenant_id and str(row.tenant_id) != tenant_id:
                 raise KeyError(agent_id)
-            for key in ("name", "status", "default_tier", "memory_schema", "active_compiled_brain_version"):
+            for key in (
+                "name",
+                "status",
+                "default_tier",
+                "memory_schema",
+                "active_compiled_brain_version",
+                "recording_disclosure_enabled",
+                "recording_disclosure_text",
+            ):
                 if key in patch and patch[key] is not None:
                     setattr(row, key, patch[key])
             if "languages" in patch and patch["languages"] is not None:
@@ -261,6 +275,8 @@ class AgentService:
             "languages": ["te-IN"],
             "memory_schema": "compact_v1",
             "environment": "development",
+            "recording_disclosure_enabled": False,
+            "recording_disclosure_text": None,
         }
 
     @staticmethod
@@ -275,6 +291,8 @@ class AgentService:
             "languages": list(row.languages or ["te-IN"]),
             "memory_schema": row.memory_schema,
             "environment": getattr(row, "environment", None) or "development",
+            "recording_disclosure_enabled": bool(getattr(row, "recording_disclosure_enabled", False)),
+            "recording_disclosure_text": getattr(row, "recording_disclosure_text", None),
         }
 
 

@@ -74,3 +74,115 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* ==========================================================================
+   Driver.js Component Guided Tour Theme
+   ========================================================================== */
+
+.driver-popover.voxly-tour-popover {
+  background: #ffffff !important;
+  color: #0F0E17 !important;
+  border: 1px solid #E4E2EB !important;
+  border-radius: 20px !important;
+  box-shadow: 0 20px 40px -10px rgba(15, 14, 23, 0.28), 0 0 0 1px rgba(15, 14, 23, 0.06) !important;
+  padding: 18px 22px !important;
+  max-width: 360px !important;
+  min-width: 290px !important;
+  z-index: 100000000 !important;
+  animation: tour-popover-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+@keyframes tour-popover-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.driver-popover.voxly-tour-popover .driver-popover-title {
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  color: #0F0E17 !important;
+  letter-spacing: -0.02em !important;
+  margin-bottom: 6px !important;
+  line-height: 1.35 !important;
+}
+
+.driver-popover.voxly-tour-popover .driver-popover-description {
+  font-size: 12.5px !important;
+  line-height: 1.6 !important;
+  color: #524E5E !important;
+  margin-bottom: 16px !important;
+}
+
+.driver-popover.voxly-tour-popover .driver-popover-footer {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-top: 14px !important;
+  padding-top: 12px !important;
+  border-top: 1px solid #F0EEF6 !important;
+}
+
+.driver-popover.voxly-tour-popover .driver-popover-progress-text {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: #FF5C35 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+}
+
+.driver-popover.voxly-tour-popover .driver-popover-close-btn {
+  color: #8C879A !important;
+  font-size: 18px !important;
+  top: 12px !important;
+  right: 14px !important;
+  transition: color 0.15s ease !important;
+}
+
+.driver-popover.voxly-tour-popover .driver-popover-close-btn:hover {
+  color: #0F0E17 !important;
+}
+
+.driver-popover.voxly-tour-popover .driver-popover-prev-btn {
+  all: unset !important;
+  background: #FAF9FD !important;
+  color: #524E5E !important;
+  border: 1px solid #E4E2EB !important;
+  border-radius: 12px !important;
+  padding: 6px 14px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.driver-popover.voxly-tour-popover .driver-popover-prev-btn:hover {
+  background: #F0EEF6 !important;
+  color: #0F0E17 !important;
+}
+
+.driver-popover.voxly-tour-popover .driver-popover-next-btn {
+  all: unset !important;
+  background: #0F0E17 !important;
+  color: #ffffff !important;
+  border: 1px solid #0F0E17 !important;
+  border-radius: 12px !important;
+  padding: 6px 16px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  box-shadow: 0 2px 6px rgba(15, 14, 23, 0.15) !important;
+}
+
+.driver-popover.voxly-tour-popover .driver-popover-next-btn:hover {
+  background: #FF5C35 !important;
+  border-color: #FF5C35 !important;
+}
+

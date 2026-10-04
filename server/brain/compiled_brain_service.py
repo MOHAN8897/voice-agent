@@ -32,19 +32,29 @@ _DEFAULT_AGENT_ID: str | None = None
 
 
 class CompiledBrainService:
-    async def _primary_language(self, agent_id: str) -> str:
+    async def _agent_info(self, agent_id: str) -> tuple[str, bool, str | None]:
         factory = get_session_factory()
         if factory is None:
-            return "te-IN"
+            return "te-IN", False, None
         async with factory() as session:
-            row = await session.get(Agent, uuid.UUID(agent_id))
-            if row and row.languages:
-                return normalize_compile_language(row.languages[0])
-        return "te-IN"
+            try:
+                row = await session.get(Agent, uuid.UUID(agent_id))
+            except (ValueError, TypeError):
+                return "te-IN", False, None
+            if row:
+                lang = normalize_compile_language(row.languages[0]) if row.languages else "te-IN"
+                disclosure_enabled = bool(getattr(row, "recording_disclosure_enabled", False))
+                disclosure_text = getattr(row, "recording_disclosure_text", None)
+                return lang, disclosure_enabled, disclosure_text
+        return "te-IN", False, None
+
+    async def _primary_language(self, agent_id: str) -> str:
+        lang, _, _ = await self._agent_info(agent_id)
+        return lang
 
     async def compile_for_agent(self, agent_id: str, *, business_version_id: str | None = None) -> dict[str, Any]:
         platform = await platform_brain_store.get_active()
-        lang = await self._primary_language(agent_id)
+        lang, disclosure_enabled, disclosure_text = await self._agent_info(agent_id)
         sections = await business_brain_store.ensure_default_sections(agent_id)
         raw_prompt, source_checksum = assemble_raw_business_prompt(sections)
 
@@ -68,6 +78,13 @@ class CompiledBrainService:
             business_version = published["version_id"]
 
         platform_rules = platform_body_for_agent_language(platform["body"], lang)
+        if disclosure_enabled:
+            from server.prompts.agent_voice_rules import build_recording_disclosure_instruction
+
+            platform_rules = (platform_rules or "").rstrip() + build_recording_disclosure_instruction(
+                disclosure_text=disclosure_text,
+                language=lang,
+            )
         compiled_text = assemble_unified_brain(
             language=lang,
             script=optimized_text,

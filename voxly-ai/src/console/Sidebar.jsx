@@ -270,6 +270,8 @@ export function Sidebar({
                   <button
                     key={item.id}
                     onClick={() => handleSelectTab(item.id)}
+                    data-tour={`nav-${item.id}`}
+                    data-testid={`nav-${item.id}`}
                     className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all group ${
                       isActive
                         ? 'bg-[#0F0E17] text-white shadow-xs font-bold'

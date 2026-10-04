@@ -5,8 +5,8 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field, ConfigDict, AliasChoices
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from pydantic import BaseModel, Field, ConfigDict, AliasChoices, field_validator
 from sqlalchemy import select
 
 from server.auth.api_tenant import ApiTenantContext, require_api_tenant
@@ -16,6 +16,13 @@ from server.db.models.entities import Agent
 from server.db.models.phase5_models import Campaign, CampaignContact, CampaignRun, DncEntry, PhoneNumber
 
 router = APIRouter()
+
+
+def _client_ip(request: Request) -> str | None:
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else None
 
 
 class CampaignCreate(BaseModel):
@@ -36,6 +43,17 @@ class CampaignCreate(BaseModel):
     contacts: list[dict[str, Any]] = Field(default_factory=list)
     contact_list_id: str | None = Field(None, validation_alias=AliasChoices("contactListId", "contact_list_id"))
     auto_start: bool = Field(False, validation_alias=AliasChoices("autoStart", "auto_start"))
+    # Compliance Attestation
+    consent_confirmed: bool = Field(..., validation_alias=AliasChoices("consentConfirmed", "consent_confirmed"))
+    consent_version: str = Field("2026-10-v1", validation_alias=AliasChoices("consentVersion", "consent_version"))
+    dnd_scrub_enabled: bool = Field(True, validation_alias=AliasChoices("dndScrubEnabled", "dnd_scrub_enabled"))
+
+    @field_validator("consent_confirmed")
+    @classmethod
+    def validate_consent(cls, v: bool) -> bool:
+        if not v:
+            raise ValueError("You must confirm consent to launch campaigns.")
+        return v
 
 
 class ValidateVariablesBody(BaseModel):
@@ -58,7 +76,37 @@ class DncBody(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     phone_e164: str = Field(..., validation_alias=AliasChoices("phoneE164", "phone_e164"))
-    reason: str | None = None
+    reason: str | None = "manual_operator"
+
+
+class DncBulkBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    phones: list[str] = Field(default_factory=list)
+    reason: str | None = "bulk_upload"
+
+
+class DncDeactivateBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    removal_reason: str = Field(
+        ...,
+        min_length=5,
+        validation_alias=AliasChoices("removalReason", "removal_reason"),
+        description="Reason for removing contact from DND list",
+    )
+    reconsent_confirmed: bool = Field(
+        ...,
+        validation_alias=AliasChoices("reconsentConfirmed", "reconsent_confirmed"),
+        description="Must explicitly confirm new recipient authorization",
+    )
+
+    @field_validator("reconsent_confirmed")
+    @classmethod
+    def validate_reconsent(cls, v: bool) -> bool:
+        if not v:
+            raise ValueError("You must explicitly confirm new recipient authorization.")
+        return v
 
 
 class PhoneNumberBody(BaseModel):
@@ -156,8 +204,22 @@ async def validate_variables(
 
 
 @router.post("/api/campaigns")
-async def create_campaign(body: CampaignCreate, ctx: ApiTenantContext = Depends(require_api_tenant)):
+async def create_campaign(
+    request: Request,
+    body: CampaignCreate,
+    ctx: ApiTenantContext = Depends(require_api_tenant),
+):
     require_role_permission(ctx.role, "app.campaigns.write")
+    if not body.consent_confirmed:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": {
+                    "code": "consent_required",
+                    "message": "You must confirm that you have obtained required legal consent for these recipient contacts.",
+                }
+            },
+        )
     factory = get_session_factory()
     if factory is None:
         return {"ok": False, "error": {"code": "config_error", "message": "Database not configured"}}
@@ -185,13 +247,16 @@ async def create_campaign(body: CampaignCreate, ctx: ApiTenantContext = Depends(
         schedule["from_e164"] = body.from_e164.strip()
     cid = uuid.uuid4()
     imported_count = 0
+    client_ip = _client_ip(request) or "unknown"
+    user_agent = (request.headers.get("user-agent") or "unknown")[:255]
+    attested_user_id = uuid.UUID(ctx.subject) if ctx.subscriber and ctx.subject else None
 
     async with factory() as db:
         agent = await db.get(Agent, uuid.UUID(body.agent_id))
         if agent is None or agent.tenant_id != tenant_id:
             raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Agent not found"}})
 
-        # Create Campaign record
+        # Create Campaign record with legal attestation audit trail
         camp = Campaign(
             campaign_id=cid,
             tenant_id=tenant_id,
@@ -203,6 +268,12 @@ async def create_campaign(body: CampaignCreate, ctx: ApiTenantContext = Depends(
             concurrency=concurrency,
             retry_rules=retry_rules,
             schedule=schedule,
+            consent_confirmed=True,
+            consent_attestation_version=body.consent_version,
+            attested_by_user_id=attested_user_id,
+            attested_at=datetime.now(timezone.utc),
+            attested_ip=client_ip,
+            attested_user_agent=user_agent,
         )
         db.add(camp)
 
@@ -234,6 +305,17 @@ async def create_campaign(body: CampaignCreate, ctx: ApiTenantContext = Depends(
                 })
 
         # Process and snapshot contacts
+        active_dnc_set: set[str] = set()
+        if body.dnd_scrub_enabled:
+            dnc_rows = await db.execute(
+                select(DncEntry.phone_e164).where(
+                    DncEntry.tenant_id == tenant_id,
+                    DncEntry.active.is_(True),
+                )
+            )
+            active_dnc_set = set(dnc_rows.scalars().all())
+
+        dnd_excluded_count = 0
         seen_phones: set[str] = set()
         for c in raw_contact_list:
             raw_phone = str(c.get("phone") or c.get("phone_e164") or c.get("phoneE164") or "").strip()
@@ -249,6 +331,12 @@ async def create_campaign(body: CampaignCreate, ctx: ApiTenantContext = Depends(
             if e164 in seen_phones:
                 continue
             seen_phones.add(e164)
+
+            # Check DND list exclusion
+            is_dnc = e164 in active_dnc_set
+            contact_status = "dnc_excluded" if is_dnc else "pending"
+            if is_dnc:
+                dnd_excluded_count += 1
 
             # Derive names & variables snapshot
             c_derived = derive_names(dict(c))
@@ -269,7 +357,7 @@ async def create_campaign(body: CampaignCreate, ctx: ApiTenantContext = Depends(
                     contact_id=contact_uuid,
                     phone_e164=e164,
                     phone_snapshot=e164,
-                    status="pending",
+                    status=contact_status,
                     metadata_=c_derived,
                     resolved_variables=resolved_vars,
                     attempts=0,
@@ -278,7 +366,7 @@ async def create_campaign(body: CampaignCreate, ctx: ApiTenantContext = Depends(
             imported_count += 1
 
         run_id = None
-        if body.auto_start and imported_count > 0:
+        if body.auto_start and (imported_count - dnd_excluded_count) > 0:
             run_id = uuid.uuid4()
             db.add(
                 CampaignRun(
@@ -317,6 +405,8 @@ async def create_campaign(body: CampaignCreate, ctx: ApiTenantContext = Depends(
         "campaign_id": str(cid),
         "id": str(cid),
         "totalContacts": imported_count,
+        "dndExcludedCount": dnd_excluded_count,
+        "dnd_excluded_count": dnd_excluded_count,
         "campaign": {
             "campaignId": str(cid),
             "campaign_id": str(cid),
@@ -332,6 +422,8 @@ async def create_campaign(body: CampaignCreate, ctx: ApiTenantContext = Depends(
             "retry_rules": retry_rules,
             "schedule": schedule,
             "totalContacts": imported_count,
+            "dndExcludedCount": dnd_excluded_count,
+            "dnd_excluded_count": dnd_excluded_count,
         },
     }
 
@@ -475,14 +567,54 @@ async def campaign_analytics(campaign_id: str, ctx: ApiTenantContext = Depends(r
 
 
 @router.get("/api/dnc")
-async def list_dnc(ctx: ApiTenantContext = Depends(require_api_tenant)):
+async def list_dnc(
+    status: str = Query("active", description="active | inactive | all"),
+    search: str | None = Query(None, description="Phone search substring"),
+    page: int = Query(1, ge=1),
+    limit: int = Query(50, ge=1, le=500),
+    ctx: ApiTenantContext = Depends(require_api_tenant),
+):
     require_role_permission(ctx.role, "app.calls.read")
     factory = get_session_factory()
     if factory is None:
-        return {"entries": []}
+        return {"entries": [], "total": 0, "page": page, "limit": limit}
+    tenant_id = ctx.workspace_tenant_id
     async with factory() as db:
-        result = await db.execute(select(DncEntry).where(DncEntry.tenant_id == ctx.tenant_id))
-        return {"entries": [{"phone_e164": r.phone_e164, "reason": r.reason} for r in result.scalars().all()]}
+        q = select(DncEntry).where(DncEntry.tenant_id == tenant_id)
+        status_norm = (status or "active").strip().lower()
+        if status_norm == "active":
+            q = q.where(DncEntry.active.is_(True))
+        elif status_norm in ("inactive", "deactivated"):
+            q = q.where(DncEntry.active.is_(False))
+        # "all" does not filter by active
+        if search and search.strip():
+            clean_search = search.strip().replace("%", "").replace("_", "")
+            q = q.where(DncEntry.phone_e164.ilike(f"%{clean_search}%"))
+
+        from sqlalchemy import func
+
+        total = await db.scalar(select(func.count()).select_from(q.subquery())) or 0
+        offset = (page - 1) * limit
+        rows = await db.execute(q.order_by(DncEntry.added_at.desc()).offset(offset).limit(limit))
+        entries = []
+        for r in rows.scalars().all():
+            entries.append({
+                "id": str(r.id),
+                "phone_e164": r.phone_e164,
+                "phoneE164": r.phone_e164,
+                "reason": r.reason,
+                "source": getattr(r, "source", "manual") or "manual",
+                "active": getattr(r, "active", True),
+                "added_at": r.added_at.isoformat() if r.added_at else None,
+                "addedAt": r.added_at.isoformat() if r.added_at else None,
+                "removed_at": r.removed_at.isoformat() if getattr(r, "removed_at", None) else None,
+                "removedAt": r.removed_at.isoformat() if getattr(r, "removed_at", None) else None,
+                "removal_reason": getattr(r, "removal_reason", None),
+                "removalReason": getattr(r, "removal_reason", None),
+                "reconsent_confirmed": getattr(r, "reconsent_confirmed", False),
+                "reconsentConfirmed": getattr(r, "reconsent_confirmed", False),
+            })
+        return {"entries": entries, "total": total, "page": page, "limit": limit}
 
 
 @router.post("/api/dnc")
@@ -491,17 +623,143 @@ async def add_dnc(body: DncBody, ctx: ApiTenantContext = Depends(require_api_ten
     factory = get_session_factory()
     if factory is None:
         return {"ok": False}
+    from server.services.saas.contact_import_service import normalize_e164_phone
+
+    phone = (body.phone_e164 or "").strip()
+    norm_phone, _ = normalize_e164_phone(phone, "US")
+    norm_phone = norm_phone or phone
+    tenant_id = ctx.workspace_tenant_id
+    user_id = uuid.UUID(ctx.subject) if ctx.subscriber and ctx.subject else None
+
     async with factory() as db:
-        db.add(
-            DncEntry(
-                id=uuid.uuid4(),
-                tenant_id=ctx.tenant_id,
-                phone_e164=body.phone_e164,
-                reason=body.reason,
-            )
+        existing = await db.execute(
+            select(DncEntry).where(DncEntry.tenant_id == tenant_id, DncEntry.phone_e164 == norm_phone)
         )
+        row = existing.scalar_one_or_none()
+        now = datetime.now(timezone.utc)
+        if row:
+            row.active = True
+            row.reason = body.reason or "manual_operator"
+            row.source = "operator_ui"
+            row.added_at = now
+            row.added_by_user_id = user_id
+            row.removed_at = None
+            row.removed_by_user_id = None
+            row.removal_reason = None
+            row.reconsent_confirmed = False
+        else:
+            db.add(
+                DncEntry(
+                    id=uuid.uuid4(),
+                    tenant_id=tenant_id,
+                    phone_e164=norm_phone,
+                    reason=body.reason or "manual_operator",
+                    source="operator_ui",
+                    active=True,
+                    added_at=now,
+                    added_by_user_id=user_id,
+                )
+            )
         await db.commit()
-    return {"ok": True}
+    return {"ok": True, "phone_e164": norm_phone, "active": True}
+
+
+@router.post("/api/dnc/bulk")
+async def bulk_add_dnc(body: DncBulkBody, ctx: ApiTenantContext = Depends(require_api_tenant)):
+    require_role_permission(ctx.role, "app.campaigns.write")
+    factory = get_session_factory()
+    if factory is None:
+        return {"ok": False, "added": 0}
+    from server.services.saas.contact_import_service import normalize_e164_phone
+
+    tenant_id = ctx.workspace_tenant_id
+    user_id = uuid.UUID(ctx.subject) if ctx.subscriber and ctx.subject else None
+    count = 0
+    now = datetime.now(timezone.utc)
+
+    async with factory() as db:
+        for p in body.phones:
+            raw = str(p or "").strip()
+            if not raw:
+                continue
+            norm, _ = normalize_e164_phone(raw, "US")
+            norm = norm or raw
+            existing = await db.execute(
+                select(DncEntry).where(DncEntry.tenant_id == tenant_id, DncEntry.phone_e164 == norm)
+            )
+            row = existing.scalar_one_or_none()
+            if row:
+                row.active = True
+                row.reason = body.reason or "bulk_upload"
+                row.source = "bulk_upload"
+                row.added_at = now
+                row.added_by_user_id = user_id
+                row.removed_at = None
+                row.removed_by_user_id = None
+                row.removal_reason = None
+                row.reconsent_confirmed = False
+            else:
+                db.add(
+                    DncEntry(
+                        id=uuid.uuid4(),
+                        tenant_id=tenant_id,
+                        phone_e164=norm,
+                        reason=body.reason or "bulk_upload",
+                        source="bulk_upload",
+                        active=True,
+                        added_at=now,
+                        added_by_user_id=user_id,
+                    )
+                )
+            count += 1
+        await db.commit()
+    return {"ok": True, "added": count}
+
+
+@router.post("/api/dnc/{phone_e164}/deactivate")
+async def deactivate_dnc(
+    phone_e164: str,
+    body: DncDeactivateBody,
+    ctx: ApiTenantContext = Depends(require_api_tenant),
+):
+    require_role_permission(ctx.role, "app.campaigns.write")
+    if not body.reconsent_confirmed:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": {
+                    "code": "reconsent_required",
+                    "message": "You must confirm that this contact has provided new authorization to receive calls.",
+                }
+            },
+        )
+    factory = get_session_factory()
+    if factory is None:
+        raise HTTPException(status_code=503, detail="Database required")
+    tenant_id = ctx.workspace_tenant_id
+    user_id = uuid.UUID(ctx.subject) if ctx.subscriber and ctx.subject else None
+
+    async with factory() as db:
+        clean_phone = phone_e164.strip()
+        entry = await db.execute(
+            select(DncEntry).where(DncEntry.tenant_id == tenant_id, DncEntry.phone_e164 == clean_phone)
+        )
+        row = entry.scalar_one_or_none()
+        if not row:
+            alt = f"+{clean_phone.lstrip('+')}" if not clean_phone.startswith("+") else clean_phone.lstrip("+")
+            entry2 = await db.execute(
+                select(DncEntry).where(DncEntry.tenant_id == tenant_id, DncEntry.phone_e164 == alt)
+            )
+            row = entry2.scalar_one_or_none()
+        if not row:
+            raise HTTPException(status_code=404, detail="DND entry not found")
+        row.active = False
+        row.removed_at = datetime.now(timezone.utc)
+        row.removed_by_user_id = user_id
+        row.removal_reason = body.removal_reason.strip()
+        row.reconsent_confirmed = True
+        await db.commit()
+    return {"ok": True, "phone_e164": row.phone_e164, "active": False}
 
 
 @router.get("/api/phone-numbers")

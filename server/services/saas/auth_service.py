@@ -248,13 +248,31 @@ async def issue_impersonation_session(
         }
 
 
-def _user_public(user: User) -> dict[str, Any]:
+async def check_user_completed_onboarding(session: AsyncSession, user_id: uuid.UUID) -> bool:
+    try:
+        from server.db.models.saas_models import UserOnboardingSurvey
+
+        result = await session.execute(
+            select(UserOnboardingSurvey.id)
+            .where(
+                UserOnboardingSurvey.user_id == user_id,
+                UserOnboardingSurvey.terms_and_telephony_accepted.is_(True),
+            )
+            .limit(1)
+        )
+        return result.scalar_one_or_none() is not None
+    except Exception:
+        return False
+
+
+def _user_public(user: User, has_completed_onboarding: bool = False) -> dict[str, Any]:
     return {
         "userId": str(user.user_id),
         "email": user.email,
         "fullName": user.full_name,
         "status": user.status,
         "emailVerified": user.email_verified_at is not None,
+        "hasCompletedOnboarding": has_completed_onboarding,
     }
 
 
@@ -268,13 +286,19 @@ def _tenant_public(tenant: Tenant) -> dict[str, Any]:
     }
 
 
-def _session_public(user: User, tenant: Tenant, role: str) -> dict[str, Any]:
+def _session_public(
+    user: User,
+    tenant: Tenant,
+    role: str,
+    has_completed_onboarding: bool = False,
+) -> dict[str, Any]:
     return {
-        "user": _user_public(user),
+        "user": _user_public(user, has_completed_onboarding=has_completed_onboarding),
         "tenant": _tenant_public(tenant),
         "role": role,
         "isPlatformAdmin": is_platform_admin_email(user.email),
         "isDevTester": is_dev_tester_email(user.email),
+        "hasCompletedOnboarding": has_completed_onboarding,
     }
 
 
@@ -377,9 +401,10 @@ async def login_or_create_oauth_user(
             user.updated_at = _utcnow()
         tokens = await _issue_tokens(session, user, tenant.tenant_id, role)
         await _log_event(session, f"login_{provider}", user_id=user.user_id, tenant_id=tenant.tenant_id)
+        onboarded = await check_user_completed_onboarding(session, user.user_id)
         await session.commit()
         await _seed_admin_wallet(tenant.tenant_id, user.user_id, user.email)
-        return {**tokens, **_session_public(user, tenant, role)}
+        return {**tokens, **_session_public(user, tenant, role, has_completed_onboarding=onboarded)}
 
 
 def _generate_email_otp() -> str:
@@ -535,11 +560,12 @@ async def login(*, email: str, password: str, ip: str | None = None) -> dict[str
             ip=ip,
         )
         tokens = await _issue_tokens(session, user, tenant.tenant_id, role)
+        onboarded = await check_user_completed_onboarding(session, user.user_id)
         await session.commit()
         await _seed_admin_wallet(tenant.tenant_id, user.user_id, user.email)
         return {
             **tokens,
-            **_session_public(user, tenant, role),
+            **_session_public(user, tenant, role, has_completed_onboarding=onboarded),
         }
 
 
@@ -645,9 +671,10 @@ async def refresh(refresh_token: str) -> dict[str, Any]:
             family_id=row.family_id,
             absolute_expires_at=absolute_deadline,
         )
+        onboarded = await check_user_completed_onboarding(session, user.user_id)
         await session.commit()
         await _seed_admin_wallet(membership.tenant_id, user.user_id, user.email)
-        return {**tokens, **_session_public(user, tenant, role)}
+        return {**tokens, **_session_public(user, tenant, role, has_completed_onboarding=onboarded)}
 
 
 async def logout(refresh_token: str | None) -> None:
@@ -712,8 +739,9 @@ async def get_me(
         if current is not None and current.role != role:
             current.role = role
             await session.commit()
+        onboarded = await check_user_completed_onboarding(session, user.user_id)
         payload = {
-            **_session_public(user, tenant, role),
+            **_session_public(user, tenant, role, has_completed_onboarding=onboarded),
             "memberships": mems,
         }
         if impersonator:
@@ -768,7 +796,8 @@ async def _reissue_session(session: AsyncSession, user: User) -> dict[str, Any]:
     if membership.role != role:
         membership.role = role
     tokens = await _issue_tokens(session, user, membership.tenant_id, role)
-    return {**tokens, **_session_public(user, tenant, role)}
+    onboarded = await check_user_completed_onboarding(session, user.user_id)
+    return {**tokens, **_session_public(user, tenant, role, has_completed_onboarding=onboarded)}
 
 
 async def forgot_password(email: str) -> str | None:
@@ -1131,9 +1160,10 @@ async def verify_email_otp(email: str, otp: str, *, ip: str | None = None) -> di
             membership.role = role
         await _log_event(session, "email_verified_otp", user_id=user.user_id, tenant_id=tenant.tenant_id, ip=ip)
         tokens = await _issue_tokens(session, user, tenant.tenant_id, role)
+        onboarded = await check_user_completed_onboarding(session, user.user_id)
         await session.commit()
         await _seed_admin_wallet(tenant.tenant_id, user.user_id, user.email)
-        return {**tokens, **_session_public(user, tenant, role)}
+        return {**tokens, **_session_public(user, tenant, role, has_completed_onboarding=onboarded)}
 
 
 async def verify_email_token(token: str) -> None:

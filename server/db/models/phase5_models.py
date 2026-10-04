@@ -112,6 +112,17 @@ class DncEntry(Base):
     phone_e164: Mapped[str] = mapped_column(String(20), nullable=False)
     reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
     added_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    active: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
+    source: Mapped[str] = mapped_column(String(64), default="manual")
+    added_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.user_id", ondelete="SET NULL"), nullable=True
+    )
+    removed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    removed_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.user_id", ondelete="SET NULL"), nullable=True
+    )
+    removal_reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    reconsent_confirmed: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class ContactList(Base):
@@ -177,6 +188,14 @@ class Campaign(Base):
     schedule: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     retry_rules: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     concurrency: Mapped[int] = mapped_column(Integer, default=5)
+    consent_confirmed: Mapped[bool] = mapped_column(Boolean, default=False)
+    consent_attestation_version: Mapped[str] = mapped_column(String(32), default="2026-10-v1")
+    attested_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.user_id", ondelete="SET NULL"), nullable=True
+    )
+    attested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    attested_ip: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    attested_user_agent: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
 

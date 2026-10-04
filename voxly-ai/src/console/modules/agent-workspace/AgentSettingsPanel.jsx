@@ -7,6 +7,7 @@ import { useWorkspace } from '../../context/WorkspaceContext';
 import { showToast } from '../../ui/ToastHost';
 import { LANGUAGE_OPTIONS } from '../../../lib/voicePresets';
 import { api } from '../../../services/api';
+import { TelephonySettingsCard } from '../TelephonySettingsCard';
 
 /**
  * Agent identity and number assignment.
@@ -29,6 +30,14 @@ export function AgentSettingsPanel({ agent, onOpenBuyNumber }) {
   const [compliance, setCompliance] = useState(null);
   const [complianceLoading, setComplianceLoading] = useState(false);
   const [complianceError, setComplianceError] = useState(null);
+  const [recordingDisclosureEnabled, setRecordingDisclosureEnabled] = useState(
+    Boolean(agent?.recordingDisclosureEnabled)
+  );
+  const [recordingDisclosureText, setRecordingDisclosureText] = useState(
+    agent?.recordingDisclosureText || 'This call may be recorded for quality and training purposes.'
+  );
+  const [disclosureSaving, setDisclosureSaving] = useState(false);
+  const [disclosureSaved, setDisclosureSaved] = useState(false);
 
   // Re-seed when the header switcher moves to a different agent.
   const agentId = agent?.id;
@@ -37,6 +46,10 @@ export function AgentSettingsPanel({ agent, onOpenBuyNumber }) {
     setSeedFor(agentId);
     setName(agent?.name || '');
     setLanguage((agent?.languages && agent.languages[0]) || agent?.language || 'en-US');
+    setRecordingDisclosureEnabled(Boolean(agent?.recordingDisclosureEnabled));
+    setRecordingDisclosureText(
+      agent?.recordingDisclosureText || 'This call may be recorded for quality and training purposes.'
+    );
   }
 
   // Compliance is per agent, so it is fetched on selection rather than held in
@@ -114,6 +127,8 @@ export function AgentSettingsPanel({ agent, onOpenBuyNumber }) {
         name: name.trim(),
         status: agent.status,
         languages: [language],
+        recordingDisclosureEnabled,
+        recordingDisclosureText: recordingDisclosureText.trim(),
       });
       // Keep voice-section language in sync so web + phone stacks both pick it up.
       try {
@@ -162,6 +177,27 @@ export function AgentSettingsPanel({ agent, onOpenBuyNumber }) {
       setError(e.message || 'Could not assign number');
     } finally {
       setAssigning(false);
+    }
+  };
+
+  const saveDisclosureSettings = async () => {
+    if (!agentId || disclosureSaving) return;
+    setDisclosureSaving(true);
+    setError(null);
+    try {
+      await updateAgent(agentId, {
+        recordingDisclosureEnabled,
+        recordingDisclosureText:
+          recordingDisclosureText.trim() || 'This call may be recorded for quality and training purposes.',
+      });
+      setDisclosureSaved(true);
+      setTimeout(() => setDisclosureSaved(false), 2500);
+      showToast('Recording disclosure saved', 'success');
+    } catch (e) {
+      setError(e.message || 'Could not save recording disclosure');
+      showToast(e.message || 'Could not save recording disclosure', 'error');
+    } finally {
+      setDisclosureSaving(false);
     }
   };
 
@@ -298,6 +334,77 @@ export function AgentSettingsPanel({ agent, onOpenBuyNumber }) {
             );
           })}
         </select>
+      </SolidCard>
+
+      {/* Call Settings & Operating Schedule */}
+      {agentId && (
+        <div className="space-y-2">
+          <TelephonySettingsCard agentId={agentId} />
+        </div>
+      )}
+
+      {/* Call Recording & Disclosure */}
+      <SolidCard className="space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-xs font-bold text-[#0F0E17]">Call Recording &amp; Disclosure</h3>
+            <p className="text-[11px] text-[#524E5E] mt-0.5">
+              The agent will naturally deliver this disclosure during its first response turn after the caller speaks.
+            </p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={recordingDisclosureEnabled}
+            data-testid="agent-recording-disclosure-toggle"
+            onClick={() => setRecordingDisclosureEnabled(!recordingDisclosureEnabled)}
+            disabled={disclosureSaving}
+            className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors disabled:opacity-50 ${
+              recordingDisclosureEnabled
+                ? 'bg-[#FF5C35] border-[#FF5C35]'
+                : 'bg-[#D1CFDB] border-[#C4C0D0]'
+            }`}
+          >
+            <span
+              className={`inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                recordingDisclosureEnabled ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+            <span className="sr-only">Enable recording disclosure</span>
+          </button>
+        </div>
+
+        {recordingDisclosureEnabled && (
+          <div className="space-y-3 pt-2 border-t border-[#E4E2EB]">
+            <label className="block">
+              <span className="text-[11px] font-bold text-[#0F0E17]">Disclosure script:</span>
+              <textarea
+                value={recordingDisclosureText}
+                onChange={(e) => setRecordingDisclosureText(e.target.value)}
+                rows={2}
+                data-testid="agent-recording-disclosure-text"
+                placeholder="This call may be recorded for quality and training purposes."
+                className="mt-1 w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-3 py-2 text-xs text-[#0F0E17] focus:border-[#6344E7] focus:outline-none"
+              />
+            </label>
+            <p className="text-[10px] text-[#8C879A]">
+              Spoken conversationally after the customer responds to the opening greeting. Zero legal disclaimers play in the sub-500ms prewarm greeting.
+            </p>
+          </div>
+        )}
+
+        <div className="flex justify-end pt-1">
+          <TactileButton
+            variant="secondary"
+            size="sm"
+            icon={disclosureSaved ? CheckCircle2 : Save}
+            onClick={saveDisclosureSettings}
+            loading={disclosureSaving}
+            data-testid="agent-recording-disclosure-save"
+          >
+            {disclosureSaved ? 'Saved' : 'Save disclosure'}
+          </TactileButton>
+        </div>
       </SolidCard>
 
       {/* Compliance. Advisory only — these toggles record what the operator has

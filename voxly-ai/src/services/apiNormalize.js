@@ -16,6 +16,8 @@ export function normalizeAgent(row) {
     assignedNumber: row.assignedNumber || null,
     numberId: row.numberId || null,
     stats: row.stats || { totalCalls: 0, totalMinutes: 0, successRate: 100, avgDuration: '0m 00s' },
+    recordingDisclosureEnabled: Boolean(row.recording_disclosure_enabled ?? row.recordingDisclosureEnabled ?? false),
+    recordingDisclosureText: row.recording_disclosure_text ?? row.recordingDisclosureText ?? null,
     updatedAt: row.updated_at || row.updatedAt || new Date().toISOString(),
   };
 }

@@ -37,6 +37,9 @@ function normalizeUser(meOrAuth) {
     role: meOrAuth?.role,
     isPlatformAdmin: Boolean(meOrAuth?.isPlatformAdmin),
     isDevTester: Boolean(meOrAuth?.isDevTester),
+    hasCompletedOnboarding: Boolean(
+      user.hasCompletedOnboarding ?? meOrAuth?.hasCompletedOnboarding ?? false
+    ),
     impersonation: imp
       ? {
           actor: imp.actor,
@@ -377,6 +380,15 @@ export function AuthProvider({ children }) {
 
   const signOutFromWarning = useCallback(() => logout(), [logout]);
 
+  const updateUser = useCallback((patch) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const next = { ...prev, ...patch };
+      authService.saveSession(next);
+      return next;
+    });
+  }, []);
+
   const value = useMemo(
     () => ({
       user,
@@ -397,6 +409,7 @@ export function AuthProvider({ children }) {
       logout,
       refreshSession,
       adoptSession,
+      updateUser,
     }),
     [
       user,
@@ -413,6 +426,7 @@ export function AuthProvider({ children }) {
       logout,
       refreshSession,
       adoptSession,
+      updateUser,
     ]
   );
 

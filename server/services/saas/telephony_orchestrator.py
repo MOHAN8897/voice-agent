@@ -221,6 +221,46 @@ async def subscriber_outbound(
     from server.services.outbound_dial_guard import acquire_outbound_slot, release_outbound_slot
 
     to_number = body.to_e164.strip()
+    if factory:
+        from server.db.models.phase5_models import DncEntry
+        from sqlalchemy import select
+
+        async with factory() as session:
+            dnc_hit = (
+                await session.execute(
+                    select(DncEntry.id)
+                    .where(
+                        DncEntry.tenant_id == principal.tenant_id,
+                        DncEntry.phone_e164 == to_number,
+                        DncEntry.active.is_(True),
+                    )
+                    .limit(1)
+                )
+            ).scalar_one_or_none()
+            if not dnc_hit and not to_number.startswith("+"):
+                alt = f"+{to_number}"
+                dnc_hit = (
+                    await session.execute(
+                        select(DncEntry.id)
+                        .where(
+                            DncEntry.tenant_id == principal.tenant_id,
+                            DncEntry.phone_e164 == alt,
+                            DncEntry.active.is_(True),
+                        )
+                        .limit(1)
+                    )
+                ).scalar_one_or_none()
+        if dnc_hit:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "error": {
+                        "code": "dnc_blocked",
+                        "message": "This phone number is on your tenant's Do Not Call (DND) list.",
+                    }
+                },
+            )
+
     if not await acquire_outbound_slot(provider, to_number):
         return {
             "ok": False,

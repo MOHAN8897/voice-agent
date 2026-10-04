@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from server.auth.subscriber_dependencies import require_subscriber_jwt_if_enabled
 from server.auth.tenant_context import tenant_id_from_request
@@ -19,17 +19,25 @@ router = APIRouter()
 
 
 class CreateAgentBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     name: str = Field(..., min_length=1, max_length=255)
     tenantId: Optional[str] = None
     languages: Optional[list[str]] = None
+    recordingDisclosureEnabled: Optional[bool] = None
+    recordingDisclosureText: Optional[str] = None
 
 
 class PatchAgentBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     name: Optional[str] = None
     status: Optional[str] = None
     defaultTier: Optional[str] = None
     languages: Optional[list[str]] = None
     memorySchema: Optional[str] = None
+    recordingDisclosureEnabled: Optional[bool] = None
+    recordingDisclosureText: Optional[str] = None
 
 
 def _tenant_id(request: Request, principal: SubscriberPrincipal | None) -> str | None:
@@ -62,6 +70,8 @@ async def create_agent(
         name=body.name,
         tenant_id=tenant_id,
         languages=body.languages,
+        recording_disclosure_enabled=body.recordingDisclosureEnabled or False,
+        recording_disclosure_text=body.recordingDisclosureText,
     )
     return {"ok": True, "agent": agent}
 
@@ -100,6 +110,10 @@ async def patch_agent(
         patch["languages"] = body.languages
     if body.memorySchema is not None:
         patch["memory_schema"] = body.memorySchema
+    if body.recordingDisclosureEnabled is not None:
+        patch["recording_disclosure_enabled"] = body.recordingDisclosureEnabled
+    if body.recordingDisclosureText is not None:
+        patch["recording_disclosure_text"] = body.recordingDisclosureText
     try:
         agent = await agent_service.patch_agent(agent_id, patch, tenant_id=_tenant_id(request, principal))
     except KeyError:

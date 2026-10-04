@@ -178,6 +178,7 @@ export function Hero({
   onTalkToMe,
   onWatchDemo,
   onGetStarted,
+  onOpenTour,
   botControllerRef,
   isModalOpen = false,
 }) {
@@ -565,6 +566,7 @@ export function Hero({
                 </div>
                 <span>{HERO_CONTENT.ctaSecondary}</span>
               </button>
+
             </div>
 
             {/* Value Props / Checkmarks */}

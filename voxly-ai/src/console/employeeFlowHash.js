@@ -17,7 +17,7 @@ const LEGACY_TAB_STEP = {
 const LEGACY_STEP = {
   script: { step: 'script' },
   voice: { step: 'voice' },
-  telephony: { step: 'calls', callPanel: 'settings' },
+  telephony: { step: 'settings' },
   test: { step: 'overview', openTestCall: true },
   knowledge: { step: 'script' },
 };

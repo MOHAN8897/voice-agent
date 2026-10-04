@@ -1092,6 +1092,7 @@ export function AgentStudioModule({
             agentId={selectedAgent.id}
             agentName={selectedAgent.name}
             initialPanel={callPanel}
+            onNavigateToSettings={() => selectTab('settings')}
           />
         </div>
       )}

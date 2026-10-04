@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { WorkspaceProvider } from './console/context/WorkspaceContext';
 import { AppShell } from './console/AppShell';
@@ -20,6 +20,7 @@ import { WatchDemoModal } from './components/WatchDemoModal';
 import { TalkToMeModal } from './components/TalkToMeModal';
 import { LegalModals } from './components/LegalModals';
 import { AuthModal } from './components/AuthModal';
+import { startTourGuide, isTourCompleted } from './services/tourGuide';
 import { VerifyEmailBanner } from './components/VerifyEmailBanner';
 import { ConsoleGate } from './components/ConsoleGate';
 import { useAuth } from './context/AuthContext';
@@ -32,7 +33,7 @@ import {
 } from './lib/consoleEntry';
 
 function AppInner() {
-  const { isAuthenticated, logout: authLogout, signOutReason } = useAuth();
+  const { isAuthenticated, logout: authLogout, signOutReason, user } = useAuth();
 
   const [currentView, setCurrentView] = useState(() => {
     if (typeof window !== 'undefined' && window.location.hash.startsWith('#dashboard')) {
@@ -48,6 +49,29 @@ function AppInner() {
   const [authModalMode, setAuthModalMode] = useState('signin');
   const [legalModalTab, setLegalModalTab] = useState('privacy');
   const botControllerRef = useRef(null);
+
+  const launchTour = useCallback(
+    (isForce = false) => {
+      if (!isForce && isTourCompleted(user)) {
+        return;
+      }
+      if (currentView !== 'dashboard') {
+        setCurrentView('dashboard');
+      }
+      window.location.hash = '#dashboard/overview';
+      startTourGuide(user, { force: isForce });
+    },
+    [user, currentView]
+  );
+
+  useEffect(() => {
+    const handleOpenTour = (e) => {
+      const isForce = e?.detail?.force === true;
+      launchTour(isForce);
+    };
+    window.addEventListener('voxly:open-tour', handleOpenTour);
+    return () => window.removeEventListener('voxly:open-tour', handleOpenTour);
+  }, [launchTour]);
 
   useEffect(() => {
     if (window.location.hash.includes('reset-password')) {

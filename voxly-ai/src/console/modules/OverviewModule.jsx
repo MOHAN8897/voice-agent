@@ -108,6 +108,8 @@ export function OverviewModule({ onNavigate, onOpenCreateAgent, onOpenBuyNumber 
             variant="secondary"
             icon={Phone}
             size="sm"
+            data-tour="buy-number"
+            data-testid="overview-buy-number-btn"
           >
             Buy Number
           </TactileButton>
@@ -116,6 +118,8 @@ export function OverviewModule({ onNavigate, onOpenCreateAgent, onOpenBuyNumber 
             variant="primary"
             icon={Bot}
             size="sm"
+            data-tour="create-agent"
+            data-testid="overview-create-agent-btn"
           >
             Create Agent
           </TactileButton>

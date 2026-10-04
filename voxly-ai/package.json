@@ -19,6 +19,7 @@
     "@react-three/drei": "^9.121.4",
     "@react-three/fiber": "^8.17.14",
     "canvas-confetti": "^1.9.4",
+    "driver.js": "^1.9.0",
     "gsap": "^3.12.7",
     "lucide-react": "^0.475.0",
     "react": "^18.3.1",

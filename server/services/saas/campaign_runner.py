@@ -15,7 +15,7 @@ from sqlalchemy import select
 
 from server.config.env import get_settings
 from server.db.connection import get_session_factory
-from server.db.models.phase5_models import Campaign, CampaignContact, CampaignRun, DialAttempt
+from server.db.models.phase5_models import Campaign, CampaignContact, CampaignRun, DialAttempt, DncEntry
 
 logger = logging.getLogger(__name__)
 
@@ -147,6 +147,39 @@ async def run_campaign(
                     **(row.metadata_ or {}),
                     "resolved_variables": row.resolved_variables or {},
                 }
+
+            # Authoritative tenant-wide check executed at the last possible millisecond immediately before dialing
+            async with factory() as session:
+                dnc_hit = (
+                    await session.execute(
+                        select(DncEntry.id)
+                        .where(
+                            DncEntry.tenant_id == principal.tenant_id,
+                            DncEntry.phone_e164 == phone,
+                            DncEntry.active.is_(True),
+                        )
+                        .limit(1)
+                    )
+                ).scalar_one_or_none()
+
+            if dnc_hit:
+                logger.info(
+                    "campaign_runner.dnc_skipped campaign=%s phone=%s tenant=%s",
+                    campaign_id,
+                    phone,
+                    principal.tenant_id,
+                )
+                async with factory() as session:
+                    row = await session.get(CampaignContact, contact.id)
+                    att = await session.get(DialAttempt, attempt_id)
+                    if att:
+                        att.status = "dnc_skipped"
+                        att.error = "Excluded by Do-Not-Call (DND) check immediately prior to dial."
+                    if row:
+                        row.status = "dnc_excluded"
+                    await session.commit()
+                stats["dnc_skipped"] = stats.get("dnc_skipped", 0) + 1
+                return  # NEVER dial this contact
 
             try:
                 result = await _dial_one(

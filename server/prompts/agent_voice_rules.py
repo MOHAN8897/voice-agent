@@ -1141,3 +1141,32 @@ AGENT_VOICE_RULE_MARKERS: tuple[str, ...] = (
     "adapt",
     "guide",
 )
+
+
+def build_recording_disclosure_instruction(
+    disclosure_text: str | None = None,
+    language: str = "te-IN",
+) -> str:
+    """Build a natural Turn-1-only recording disclosure policy prompt block.
+
+    Zero disclosure in the sub-500ms prewarm opening greeting. This is delivered
+    exclusively on the agent's first response turn after the caller speaks.
+    """
+    clean_text = (disclosure_text or "").strip()
+    if not clean_text:
+        lang = (language or "").strip().lower()
+        if lang.startswith("te"):
+            clean_text = "నాణ్యత మరియు శిక్షణ ప్రయోజనాల కోసం ఈ కాల్ రికార్డ్ చేయబడవచ్చు."
+        else:
+            clean_text = "This call may be recorded for quality and training purposes."
+
+    return (
+        f"\n\n### RECORDING DISCLOSURE POLICY (FIRST RESPONSE TURN ONLY):\n"
+        f"Recording disclosure is ENABLED.\n"
+        f"In your very first response turn after the caller speaks in response to your greeting, "
+        f"you must naturally state the recording disclosure along with your answer or acknowledgment:\n"
+        f'"{clean_text}"\n'
+        f"- Deliver it smoothly and conversationally (e.g., 'Got it! Just so you know, this call may be recorded for quality and training. Regarding your consultation...').\n"
+        f"- Do NOT repeat this statement in any subsequent turns.\n"
+    )
+

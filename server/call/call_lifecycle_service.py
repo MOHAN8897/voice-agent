@@ -504,6 +504,15 @@ class CallLifecycleService:
                 asyncio.create_task(bill_pstn_call_if_applicable(call_id))
         except Exception as e:
             logger.warning(f"[CALL] wallet bill skipped {call_id}: {str(e)[:120]}")
+        try:
+            from server.services.saas.dnc_service import handle_call_opt_out
+
+            stored_row = await call_store.get(call_id)
+            disposition = (stored_row or {}).get("disposition")
+            end_reason = (stored_row or {}).get("end_reason")
+            await handle_call_opt_out(call_id, reason=end_reason, disposition=disposition)
+        except Exception as e:
+            logger.warning(f"[CALL] opt-out DND auto-enroll check failed {call_id}: {str(e)[:120]}")
 
     def _accepted_payload(self, call_id: str, status: str) -> dict[str, Any]:
         return {

@@ -4,7 +4,7 @@ import { Menu, X, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { DEFAULT_CONSOLE_TAB } from '../lib/consoleEntry';
 
-export function Navbar({ onEnterConsole, onWatchDemo }) {
+export function Navbar({ onEnterConsole, onWatchDemo, onOpenTour }) {
   const { isAuthenticated } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -65,11 +65,12 @@ export function Navbar({ onEnterConsole, onWatchDemo }) {
           ))}
         </nav>
 
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden md:flex items-center gap-2.5">
+
           <button
             type="button"
             onClick={openConsole}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-white bg-[#0F0E17] hover:bg-[#232130] active:scale-[0.98] transition-all shadow-xs"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-[#0F0E17] hover:bg-[#232130] active:scale-[0.98] transition-all shadow-xs"
           >
             <span>{isAuthenticated ? 'Open console' : 'Sign in to console'}</span>
             <ArrowRight className="w-3.5 h-3.5" />

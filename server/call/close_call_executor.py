@@ -136,6 +136,13 @@ async def execute_agent_close(
                 from server.call.call_lifecycle_service import call_lifecycle_service
 
                 await call_lifecycle_service.end(call_id, reason=canonical)
+            if canonical == "opt_out" and call_id:
+                try:
+                    from server.services.saas.dnc_service import handle_call_opt_out
+
+                    await handle_call_opt_out(call_id, reason="opt_out")
+                except Exception as exc:
+                    log_pstn("hangup.opt_out_dnc_failed", call_id=call_id, error=str(exc)[:200])
             if call_id:
                 pstn_media_flow.emit(
                     call_id,

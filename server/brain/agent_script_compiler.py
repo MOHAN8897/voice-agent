@@ -37,6 +37,7 @@ from server.config.env import get_settings
 from server.realtime.models import http_openai_model
 from server.prompts.agent_voice_rules import (
     IDENTITY_SPEAK,
+    build_recording_disclosure_instruction,
     call_end_policy_section,
     is_native_english,
     language_runtime_footer,
@@ -1784,6 +1785,8 @@ def _platform_call_rules(
     role: str = "other",
     direction: str = "outbound",
     language: str = "te-IN",
+    recording_disclosure_enabled: bool = False,
+    recording_disclosure_text: str | None = None,
 ) -> str:
     """Platform call discipline — compiled into brain only, not shown as the user script."""
     inbound = str(direction or "").strip().lower() in ("inbound", "incoming")
@@ -1832,6 +1835,14 @@ def _platform_call_rules(
             f"4. If busy: offer callback. If not interested: thank them and close.\n\n"
         )
         first_turn_guard = "Never use help-desk language on the first turn.\n"
+
+    disclosure_block = ""
+    if recording_disclosure_enabled:
+        disclosure_block = build_recording_disclosure_instruction(
+            disclosure_text=recording_disclosure_text,
+            language=language,
+        )
+
     return (
         f"{workflow}"
         f"--- SCRIPT DISCIPLINE ---\n"
@@ -1861,6 +1872,7 @@ def _platform_call_rules(
         f"Never claim to be anyone except {agent_name}.\n"
         f"Never switch your spoken language — respond only in the configured language.\n"
         f"{first_turn_guard}"
+        f"{disclosure_block}"
     )
 
 
@@ -2389,12 +2401,16 @@ def reassemble_brain_from_script(
     platform_call_rules: str | None = None,
     agent_name: str = "",
     role: str = "other",
+    recording_disclosure_enabled: bool = False,
+    recording_disclosure_text: str | None = None,
 ) -> tuple[str, str]:
     """Rebuild cached brain from an existing user script (no GPT)."""
     platform = (platform_call_rules or "").strip() or _platform_call_rules(
         agent_name=agent_name or ("Alex" if is_native_english(language) else "Priya"),
         role=role,
         language=language,
+        recording_disclosure_enabled=recording_disclosure_enabled,
+        recording_disclosure_text=recording_disclosure_text,
     )
     return _ensure_cache_floor(
         script=script,
@@ -2416,6 +2432,8 @@ async def compile_agent_from_brief(
     use_llm: bool = False,
     interpret_brief: bool = True,
     direction: str | None = None,
+    recording_disclosure_enabled: bool = False,
+    recording_disclosure_text: str | None = None,
 ) -> tuple[str, AgentScriptResult, int, int, int]:
     """
     Turn a short agent brief into a cached brain prompt.
@@ -2588,7 +2606,12 @@ async def compile_agent_from_brief(
         )
 
     platform_rules = _platform_call_rules(
-        agent_name=agent_name, role=role, direction=direction, language=lang
+        agent_name=agent_name,
+        role=role,
+        direction=direction,
+        language=lang,
+        recording_disclosure_enabled=recording_disclosure_enabled,
+        recording_disclosure_text=recording_disclosure_text,
     )
 
     if validation_issues and use_llm and llm_payload:
@@ -2671,7 +2694,12 @@ async def compile_agent_from_brief(
                 company_name=company_name,
             )
         platform_rules = _platform_call_rules(
-            agent_name=agent_name, role=role, direction=direction, language=lang
+            agent_name=agent_name,
+            role=role,
+            direction=direction,
+            language=lang,
+            recording_disclosure_enabled=recording_disclosure_enabled,
+            recording_disclosure_text=recording_disclosure_text,
         )
 
     from server.brain.script_entities import build_script_entities, with_entity_tags_section
@@ -2711,7 +2739,12 @@ async def compile_agent_from_brief(
             direction=direction,
         )
         platform_rules = _platform_call_rules(
-            agent_name=agent_name, role=role, direction=direction, language=lang
+            agent_name=agent_name,
+            role=role,
+            direction=direction,
+            language=lang,
+            recording_disclosure_enabled=recording_disclosure_enabled,
+            recording_disclosure_text=recording_disclosure_text,
         )
         script = with_entity_tags_section(
             script,

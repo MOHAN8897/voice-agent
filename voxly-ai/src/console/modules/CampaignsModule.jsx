@@ -20,12 +20,15 @@ import {
   Sliders,
   Users,
   ShieldCheck,
+  ShieldAlert,
   RefreshCw,
 } from 'lucide-react';
 import { SolidCard } from '../ui/SolidCard';
 import { StatusBadge } from '../ui/StatusBadge';
 import { TactileButton } from '../ui/TactileButton';
 import { Modal } from '../ui/Modal';
+import { CampaignComplianceModal } from '../ui/CampaignComplianceModal';
+import { DncRegistryPanel } from './DncRegistryPanel';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { showToast } from '../ui/ToastHost';
 import { api } from '../../services/api';
@@ -86,6 +89,8 @@ export function CampaignsModule() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [launchError, setLaunchError] = useState(null);
   const [analytics, setAnalytics] = useState({});
+  const [activeMainTab, setActiveMainTab] = useState('campaigns'); // 'campaigns' | 'dnd'
+  const [isComplianceOpen, setIsComplianceOpen] = useState(false);
 
   // 6-step Wizard State
   const [step, setStep] = useState(1);
@@ -423,8 +428,8 @@ export function CampaignsModule() {
         setPreferredOutboundFrom?.(config.fromE164);
       }
 
-      // Create campaign
-      await createCampaign({
+      // Create campaign with compliance attestation and DND scrub enabled
+      const res = await createCampaign({
         name: config.name.trim() || 'Outbound Campaign',
         description: config.description.trim() || undefined,
         agentId: config.agentId,
@@ -437,13 +442,25 @@ export function CampaignsModule() {
         contactListId: createdListId || undefined,
         contacts: contactsToLaunch,
         autoStart: true,
+        consentConfirmed: true,
+        consentVersion: '2026-10-v1',
+        dndScrubEnabled: true,
       });
+
+      const scrubCount = res?.dndExcludedCount ?? res?.campaign?.dndExcludedCount ?? 0;
+      if (scrubCount > 0) {
+        showToast(
+          `${scrubCount} number${scrubCount === 1 ? '' : 's'} on your tenant Do Not Call list were excluded.`,
+          'info'
+        );
+      }
 
       setImportProgress(100);
       showToast(
-        `Campaign "${config.name || 'Outbound Campaign'}" launched with ${contactsToLaunch.length} contacts!`,
+        `Campaign "${config.name || 'Outbound Campaign'}" launched with ${contactsToLaunch.length - scrubCount} active contacts!`,
         'success'
       );
+      setIsComplianceOpen(false);
       setIsCreateModalOpen(false);
       resetWizard();
     } catch (err) {
@@ -455,8 +472,42 @@ export function CampaignsModule() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Main Sub-navigation Tabs */}
+      <div className="flex border-b border-[#E4E2EB] gap-6 text-xs sm:text-sm font-semibold">
+        <button
+          type="button"
+          onClick={() => setActiveMainTab('campaigns')}
+          className={`pb-3 transition-colors border-b-2 flex items-center gap-2 ${
+            activeMainTab === 'campaigns'
+              ? 'border-[#FF5C35] text-[#FF5C35]'
+              : 'border-transparent text-[#524E5E] hover:text-[#0F0E17]'
+          }`}
+          data-testid="campaigns-tab-button"
+        >
+          <Megaphone className="w-4 h-4" />
+          Campaigns ({campaigns.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveMainTab('dnd')}
+          className={`pb-3 transition-colors border-b-2 flex items-center gap-2 ${
+            activeMainTab === 'dnd'
+              ? 'border-[#FF5C35] text-[#FF5C35]'
+              : 'border-transparent text-[#524E5E] hover:text-[#0F0E17]'
+          }`}
+          data-testid="dnd-registry-tab-button"
+        >
+          <ShieldAlert className="w-4 h-4" />
+          Do Not Call (DND) Registry
+        </button>
+      </div>
+
+      {activeMainTab === 'dnd' ? (
+        <DncRegistryPanel />
+      ) : (
+        <>
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-[#0F0E17] tracking-tight">
             Bulk Outbound Campaigns ({campaigns.length})
@@ -1584,9 +1635,10 @@ export function CampaignsModule() {
                 <TactileButton
                   variant="primary"
                   size="md"
-                  onClick={handleLaunchCampaign}
+                  onClick={() => setIsComplianceOpen(true)}
                   disabled={busy}
                   icon={Play}
+                  data-testid="campaign-wizard-launch-btn"
                 >
                   {busy ? 'Launching Campaign...' : 'Launch Campaign'}
                 </TactileButton>
@@ -1595,6 +1647,18 @@ export function CampaignsModule() {
           )}
         </div>
       </Modal>
+
+      {/* Compliance Attestation Modal */}
+      <CampaignComplianceModal
+        isOpen={isComplianceOpen}
+        onClose={() => setIsComplianceOpen(false)}
+        onConfirm={handleLaunchCampaign}
+        campaignName={config.name || 'Outbound Campaign'}
+        contactCount={validationResult?.validContacts?.length || 0}
+        isSubmitting={busy}
+      />
+        </>
+      )}
     </div>
   );
 }

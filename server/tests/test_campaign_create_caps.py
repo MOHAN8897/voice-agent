@@ -15,6 +15,7 @@ def test_campaign_create_accepts_retry_fields():
             "maxAttempts": 4,
             "retryDelayMinutes": 45,
             "fromE164": "+14155552671",
+            "consentConfirmed": True,
         }
     )
     assert body.concurrency == 99  # route clamps; schema only stores intent

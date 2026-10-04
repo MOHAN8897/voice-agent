@@ -57,6 +57,10 @@ class Agent(Base):
     memory_schema: Mapped[str] = mapped_column(String(64), default="compact_v1")
     environment: Mapped[str] = mapped_column(String(50), default="development")
     voice_settings: Mapped[dict] = mapped_column(JSONB, default=dict)
+    recording_disclosure_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    recording_disclosure_text: Mapped[str] = mapped_column(
+        String(255), default="This call may be recorded for quality and training purposes."
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
     tenant: Mapped["Tenant"] = relationship(

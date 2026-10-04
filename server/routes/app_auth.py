@@ -4,8 +4,10 @@ from __future__ import annotations
 import logging
 import uuid
 
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field, field_validator
 
 from server.auth.subscriber_cookies import (
     clear_refresh_cookie,
@@ -83,6 +85,29 @@ class DeleteAccountBody(BaseModel):
 
 class PatchMeBody(BaseModel):
     fullName: str | None = None
+
+
+class OnboardingSurveyBody(BaseModel):
+    fullName: str = Field(..., min_length=2, validation_alias=AliasChoices("fullName", "full_name"))
+    companyName: str = Field(..., min_length=2, validation_alias=AliasChoices("companyName", "company_name"))
+    role: str
+    referralSource: str = Field(..., validation_alias=AliasChoices("referralSource", "referral_source"))
+    primaryUseCase: str = Field(..., validation_alias=AliasChoices("primaryUseCase", "primary_use_case"))
+    estimatedMonthlyMinutes: str = Field(
+        ..., validation_alias=AliasChoices("estimatedMonthlyMinutes", "estimated_monthly_minutes")
+    )
+    termsAccepted: bool = Field(..., validation_alias=AliasChoices("termsAccepted", "terms_accepted"))
+    termsVersion: str = Field("2026-10-v1", validation_alias=AliasChoices("termsVersion", "terms_version"))
+    acceptableUseVersion: str = Field(
+        "2026-10-v1", validation_alias=AliasChoices("acceptableUseVersion", "acceptable_use_version")
+    )
+
+    @field_validator("termsAccepted")
+    @classmethod
+    def validate_terms_accepted(cls, v: bool) -> bool:
+        if not v:
+            raise ValueError("You must agree to the Terms of Service and Telephony Acceptable Use Policy.")
+        return v
 
 
 def _client_ip(request: Request) -> str | None:
@@ -656,3 +681,113 @@ async def tenants_delete(principal: SubscriberPrincipal = Depends(require_subscr
         return {"ok": True, "jobId": str(job_id)}
     except ValueError as e:
         raise HTTPException(status_code=403, detail={"error": {"code": str(e), "message": str(e)}})
+
+
+@router.post("/api/auth/onboarding-survey")
+async def submit_onboarding_survey(
+    body: OnboardingSurveyBody,
+    principal: SubscriberPrincipal = Depends(require_subscriber_jwt),
+):
+    if not body.termsAccepted:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": {
+                    "code": "terms_required",
+                    "message": "You must accept the Terms of Service and Telephony Acceptable Use Policy.",
+                }
+            },
+        )
+    from server.db.connection import get_session_factory
+
+    factory = get_session_factory()
+    if factory is None:
+        raise HTTPException(status_code=503, detail="Database required")
+
+    from server.db.models.entities import Tenant
+    from server.db.models.saas_models import User, UserOnboardingSurvey
+    from sqlalchemy import select
+
+    now = datetime.now(timezone.utc)
+    async with factory() as session:
+        # 1. Update canonical profile records (source of truth)
+        user = await session.get(User, principal.user_id)
+        if user:
+            user.full_name = body.fullName.strip()
+        tenant = await session.get(Tenant, principal.tenant_id)
+        if tenant:
+            tenant.name = body.companyName.strip()
+
+        # 2. Persist telemetry to user_onboarding_surveys (no duplicate name columns)
+        existing_survey = await session.execute(
+            select(UserOnboardingSurvey).where(UserOnboardingSurvey.user_id == principal.user_id)
+        )
+        survey = existing_survey.scalar_one_or_none()
+        if survey:
+            survey.tenant_id = principal.tenant_id
+            survey.role = body.role
+            survey.referral_source = body.referralSource
+            survey.primary_use_case = body.primaryUseCase
+            survey.estimated_monthly_minutes = body.estimatedMonthlyMinutes
+            survey.terms_and_telephony_accepted = True
+            survey.terms_version = body.termsVersion
+            survey.acceptable_use_version = body.acceptableUseVersion
+            survey.terms_accepted_at = now
+        else:
+            survey = UserOnboardingSurvey(
+                id=uuid.uuid4(),
+                user_id=principal.user_id,
+                tenant_id=principal.tenant_id,
+                role=body.role,
+                referral_source=body.referralSource,
+                primary_use_case=body.primaryUseCase,
+                estimated_monthly_minutes=body.estimatedMonthlyMinutes,
+                terms_and_telephony_accepted=True,
+                terms_version=body.termsVersion,
+                acceptable_use_version=body.acceptableUseVersion,
+                terms_accepted_at=now,
+                created_at=now,
+            )
+            session.add(survey)
+
+        await session.commit()
+
+    return {
+        "ok": True,
+        "hasCompletedOnboarding": True,
+        "fullName": body.fullName.strip(),
+        "companyName": body.companyName.strip(),
+    }
+
+
+@router.get("/api/auth/onboarding-survey")
+async def get_onboarding_survey(principal: SubscriberPrincipal = Depends(require_subscriber_jwt)):
+    from server.db.connection import get_session_factory
+
+    factory = get_session_factory()
+    if factory is None:
+        return {"hasCompletedOnboarding": False, "survey": None}
+
+    from server.db.models.saas_models import UserOnboardingSurvey
+    from sqlalchemy import select
+
+    async with factory() as session:
+        result = await session.execute(
+            select(UserOnboardingSurvey).where(UserOnboardingSurvey.user_id == principal.user_id)
+        )
+        survey = result.scalar_one_or_none()
+        if not survey:
+            return {"hasCompletedOnboarding": False, "survey": None}
+        return {
+            "hasCompletedOnboarding": bool(survey.terms_and_telephony_accepted),
+            "survey": {
+                "role": survey.role,
+                "referralSource": survey.referral_source,
+                "primaryUseCase": survey.primary_use_case,
+                "estimatedMonthlyMinutes": survey.estimated_monthly_minutes,
+                "termsAccepted": survey.terms_and_telephony_accepted,
+                "termsVersion": survey.terms_version,
+                "acceptableUseVersion": survey.acceptable_use_version,
+                "termsAcceptedAt": survey.terms_accepted_at.isoformat() if survey.terms_accepted_at else None,
+            },
+        }

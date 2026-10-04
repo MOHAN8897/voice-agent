@@ -623,6 +623,14 @@ export const api = {
       return await api.request('GET', '/api/auth/me');
     },
 
+    async submitOnboardingSurvey(data) {
+      return await api.request('POST', '/api/auth/onboarding-survey', data);
+    },
+
+    async getOnboardingSurvey() {
+      return await api.request('GET', '/api/auth/onboarding-survey');
+    },
+
     async logout() {
       const backendUrl = api.getBackendUrl().replace(/\/$/, '');
       const path = '/auth/logout';
@@ -675,18 +683,32 @@ export const api = {
     },
     async create(agentData) {
       const langs = agentData.languages || (agentData.language ? [agentData.language] : ['en-IN']);
-      const data = await api.request('POST', '/api/agents', {
+      const body = {
         name: agentData.name,
         languages: langs,
-      });
+      };
+      if (agentData.recordingDisclosureEnabled !== undefined) {
+        body.recordingDisclosureEnabled = Boolean(agentData.recordingDisclosureEnabled);
+      }
+      if (agentData.recordingDisclosureText !== undefined) {
+        body.recordingDisclosureText = agentData.recordingDisclosureText;
+      }
+      const data = await api.request('POST', '/api/agents', body);
       return normalizeAgent(data.agent || data);
     },
     async update(id, updates) {
-      const data = await api.request('PATCH', `/api/agents/${id}`, {
+      const body = {
         name: updates.name,
         status: updates.status,
         languages: updates.languages,
-      });
+      };
+      if (updates.recordingDisclosureEnabled !== undefined) {
+        body.recordingDisclosureEnabled = Boolean(updates.recordingDisclosureEnabled);
+      }
+      if (updates.recordingDisclosureText !== undefined) {
+        body.recordingDisclosureText = updates.recordingDisclosureText;
+      }
+      const data = await api.request('PATCH', `/api/agents/${id}`, body);
       return normalizeAgent(data.agent || data);
     },
     async toggleStatus(id, status) {
@@ -1005,6 +1027,9 @@ export const api = {
         contactListId: campaignData.contactListId,
         contacts: campaignData.contacts,
         autoStart: campaignData.autoStart ?? false,
+        consentConfirmed: campaignData.consentConfirmed ?? false,
+        consentVersion: campaignData.consentVersion || '2026-10-v1',
+        dndScrubEnabled: campaignData.dndScrubEnabled ?? true,
       });
       const row = data.campaign || data;
       return normalizeCampaign({
@@ -1032,6 +1057,26 @@ export const api = {
       return await api.request('POST', '/api/campaigns/validate-variables', {
         agentId,
         contacts,
+      });
+    },
+  },
+
+  dnc: {
+    async list({ status = 'active', search = '', page = 1, limit = 50 } = {}) {
+      const qs = new URLSearchParams({ status, page: String(page), limit: String(limit) });
+      if (search) qs.set('search', search);
+      return await api.request('GET', `/api/dnc?${qs}`);
+    },
+    async add(phone, reason = 'manual_operator') {
+      return await api.request('POST', '/api/dnc', { phoneE164: phone, reason });
+    },
+    async bulkAdd(phones, reason = 'bulk_upload') {
+      return await api.request('POST', '/api/dnc/bulk', { phones, reason });
+    },
+    async deactivate(phone, removalReason, reconsentConfirmed = true) {
+      return await api.request('POST', `/api/dnc/${encodeURIComponent(phone)}/deactivate`, {
+        removalReason,
+        reconsentConfirmed: Boolean(reconsentConfirmed),
       });
     },
   },
