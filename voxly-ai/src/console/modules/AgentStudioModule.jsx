@@ -19,7 +19,7 @@ import { SolidCard } from '../ui/SolidCard';
 import { StatusBadge } from '../ui/StatusBadge';
 import { TactileButton } from '../ui/TactileButton';
 import { Modal } from '../ui/Modal';
-import { AgentStudioHeaderSkeleton, AgentStudioEditorSkeleton } from '../ui/Skeleton';
+import { AgentStudioHeaderSkeleton, AgentStudioEditorSkeleton, WaveformSkeleton } from '../ui/Skeleton';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { voiceAgent } from '../../services/voiceAgent';
 import { LANGUAGE_OPTIONS } from '../../lib/voicePresets';
@@ -200,6 +200,7 @@ export function AgentStudioModule({
 
   const [isSaved, setIsSaved] = useState(false);
   const [isPlayingVoice, setIsPlayingVoice] = useState(false);
+  const [isBufferingVoice, setIsBufferingVoice] = useState(false);
   const [voicePreviewError, setVoicePreviewError] = useState(null);
   // Which voice actually spoke, so the operator knows this is the real one.
   const [voiceSpoken, setVoiceSpoken] = useState({ voice: null, model: null });
@@ -405,9 +406,10 @@ export function AgentStudioModule({
   }, []);
 
   const handlePlayVoicePreview = async () => {
-    if (isPlayingVoice) {
+    if (isPlayingVoice || isBufferingVoice) {
       voiceAgent.stopTTS();
       setIsPlayingVoice(false);
+      setIsBufferingVoice(false);
       return;
     }
 
@@ -416,7 +418,7 @@ export function AgentStudioModule({
       `Hi there! I am ${formData.name}. I am calibrated and ready to take your calls.`;
     setVoicePreviewError(null);
     setVoiceSpoken({ voice: null, model: null });
-    setIsPlayingVoice(true);
+    setIsBufferingVoice(true);
 
     // Speak through the real live model the caller will reach. The previous
     // implementation used window.speechSynthesis — an unrelated OS voice — so the
@@ -427,6 +429,8 @@ export function AgentStudioModule({
         voiceId: formData.voice?.voiceId || formData.voice?.id || null,
       });
       setVoiceSpoken({ voice: voice || null, model: model || null });
+      setIsBufferingVoice(false);
+      setIsPlayingVoice(true);
       const played = await voiceAgent.playAudioBuffer(
         blob,
         () => setIsPlayingVoice(false),
@@ -437,6 +441,7 @@ export function AgentStudioModule({
         setVoicePreviewError('The preview audio could not be played. Check your sound output.');
       }
     } catch (e) {
+      setIsBufferingVoice(false);
       setIsPlayingVoice(false);
       setVoicePreviewError(
         e?.message || 'Could not reach the voice service to preview this voice.'
@@ -1018,9 +1023,11 @@ export function AgentStudioModule({
               <span className={`text-[10px] font-mono px-2 py-0.5 rounded-md border font-semibold ${
                 isPlayingVoice
                   ? 'bg-[#22C55E]/15 text-[#15803D] border-[#22C55E]/30 animate-pulse'
-                  : 'bg-[#F0EEF6] text-[#524E5E] border-[#E4E2EB]'
+                  : isBufferingVoice
+                    ? 'bg-[#6344E7]/10 text-[#6344E7] border-[#6344E7]/30 animate-pulse'
+                    : 'bg-[#F0EEF6] text-[#524E5E] border-[#E4E2EB]'
               }`}>
-                {isPlayingVoice ? '● Audio Playing' : 'Ready'}
+                {isPlayingVoice ? '● Audio Playing' : isBufferingVoice ? 'Synthesizing…' : 'Ready'}
               </span>
               {voiceSpoken.voice && (
                 <span
@@ -1036,6 +1043,16 @@ export function AgentStudioModule({
               <div className="text-xs font-medium text-[#0F0E17] leading-relaxed italic">
                 "{formData.greeting || `Hi there! I am ${formData.name}. I am calibrated and ready to take your calls.`}"
               </div>
+
+              {/* chisel: Waveform shimmer while neural voice audio buffers */}
+              {isBufferingVoice && (
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-white border border-[#E4E2EB]">
+                  <WaveformSkeleton />
+                  <span className="text-[10px] font-mono text-[#6344E7] animate-pulse">
+                    Synthesizing neural voice stream…
+                  </span>
+                </div>
+              )}
 
               {/* Sound visualizer animation when playing */}
               {isPlayingVoice && (
@@ -1067,9 +1084,10 @@ export function AgentStudioModule({
                 variant={isPlayingVoice ? 'danger' : 'primary'}
                 size="sm"
                 icon={isPlayingVoice ? Square : Play}
+                loading={isBufferingVoice}
                 onClick={handlePlayVoicePreview}
               >
-                {isPlayingVoice ? 'Stop Audio' : 'Preview Voice'}
+                {isPlayingVoice ? 'Stop Audio' : isBufferingVoice ? 'Buffering…' : 'Preview Voice'}
               </TactileButton>
 
               <TactileButton

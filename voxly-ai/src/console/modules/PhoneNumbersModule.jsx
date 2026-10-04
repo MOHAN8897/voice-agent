@@ -13,7 +13,7 @@ import { useWorkspace } from '../context/WorkspaceContext';
 import { showToast } from '../ui/ToastHost';
 import { api } from '../../services/api';
 import { VerifyIdentityCard } from '../ui/VerifyIdentityCard';
-import { CatalogSkeleton } from '../ui/Skeleton';
+import { CatalogSkeleton, PhoneNumberRowSkeleton } from '../ui/Skeleton';
 
 const FALLBACK_COUNTRIES = [
   { code: 'US', name: 'United States', dial: '+1' },
@@ -294,10 +294,35 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E4E2EB]">
-              {phoneNumbers.map((num) => (
-                <tr key={num.id} className="hover:bg-[#FAF9FD] transition-colors">
-                  {/* Number & Capabilities */}
-                  <td className="py-4 px-5">
+              {/* chisel: layout-stable skeleton while loading; explicit empty state otherwise */}
+              {isLoading && phoneNumbers.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="p-0">
+                    <PhoneNumberRowSkeleton rows={3} />
+                  </td>
+                </tr>
+              ) : phoneNumbers.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center">
+                    <div className="max-w-xs mx-auto space-y-2">
+                      <div className="w-10 h-10 rounded-2xl bg-[#F0EEF6] flex items-center justify-center text-[#6344E7] mx-auto">
+                        <Phone className="w-5 h-5" />
+                      </div>
+                      <p className="text-xs font-bold text-[#0F0E17]">No active phone lines</p>
+                      <p className="text-[11px] text-[#524E5E]">
+                        Buy a virtual number to begin routing calls to your AI employees.
+                      </p>
+                      <TactileButton onClick={onOpenBuyModal} variant="primary" size="sm" icon={Plus}>
+                        Buy number
+                      </TactileButton>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                phoneNumbers.map((num) => (
+                  <tr key={num.id} className="hover:bg-[#FAF9FD] transition-colors">
+                    {/* Number & Capabilities */}
+                    <td className="py-4 px-5">
                     <div className="font-mono font-bold text-sm text-[#0F0E17] flex items-center gap-2 flex-wrap">
                       <Phone className="w-3.5 h-3.5 text-[#6344E7]" />
                       <span>{num.number}</span>
@@ -412,7 +437,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                     </button>
                   </td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>
@@ -565,7 +590,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
               </div>
 
               {/* Available Inventory Results */}
-              <div className="space-y-2 max-h-72 overflow-y-auto">
+              <div className="space-y-2 max-h-72 overflow-y-auto transition-opacity duration-200">
                 {catalogLoading ? (
                   <CatalogSkeleton rows={4} />
                 ) : catalogError ? (

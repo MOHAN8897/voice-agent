@@ -166,12 +166,18 @@ function RecordingPlayer({ call }) {
         >
           {playing ? 'Pause' : 'Play'}
         </TactileButton>
-        <div className="flex-1 h-1.5 rounded-full bg-[#E4E2EB] overflow-hidden">
-          <div
-            className="h-full bg-[#6344E7] transition-[width] duration-200"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
+        {loading ? (
+          <div className="flex-1 flex items-center justify-center">
+            <WaveformSkeleton />
+          </div>
+        ) : (
+          <div className="flex-1 h-1.5 rounded-full bg-[#E4E2EB] overflow-hidden">
+            <div
+              className="h-full bg-[#6344E7] transition-[width] duration-200"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        )}
         <a
           href={`${src}?download=true`}
           download
@@ -605,7 +611,13 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                     : 'text-[#524E5E]'
                 }`}
               >
-                {tab.label} ({bucketCounts[tab.id] ?? 0})
+                {/* chisel: subtle pulse shimmer until callStats settles */}
+                {tab.label}{' '}
+                {isLoading && !callStats ? (
+                  <span className="inline-block w-4 h-3 bg-[#E4E2EB] rounded animate-pulse align-middle" />
+                ) : (
+                  `(${bucketCounts[tab.id] ?? 0})`
+                )}
               </button>
             ))}
           </div>
@@ -865,13 +877,25 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                     </h4>
 
                     <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
-                      {transcriptLines.length === 0 && (
+                      {/* chisel: conversational turn bubble skeletons while transcript is resolving */}
+                      {activeCall.connected && transcriptLines.length === 0 && outcomeLoading ? (
+                        <div className="space-y-2 animate-pulse py-1">
+                          <div className="p-3 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] mr-6 space-y-1.5">
+                            <div className="h-2.5 w-16 bg-[#E4E2EB] rounded" />
+                            <div className="h-3 w-4/5 bg-[#E4E2EB]/80 rounded" />
+                          </div>
+                          <div className="p-3 rounded-xl bg-white border border-[#E4E2EB] ml-6 space-y-1.5">
+                            <div className="h-2.5 w-16 bg-[#E4E2EB] rounded" />
+                            <div className="h-3 w-3/4 bg-[#E4E2EB]/80 rounded" />
+                          </div>
+                        </div>
+                      ) : transcriptLines.length === 0 ? (
                         <p className="text-xs text-[#8C879A]">
                           {activeCall.connected
                             ? 'Transcript appears after the call finalizes.'
                             : 'This call never connected, so there is no transcript.'}
                         </p>
-                      )}
+                      ) : null}
                       {transcriptLines.map((t, idx) => {
                         const isAgent =
                           (t.role || t.speaker) === 'assistant' || t.role === 'agent';

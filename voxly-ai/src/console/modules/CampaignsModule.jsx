@@ -344,6 +344,10 @@ export function CampaignsModule() {
         }
       }
 
+      // chisel: enter step 4 with validation skeleton immediately while normalizer runs
+      setStep(4);
+      setValidationResult(null);
+
       // Call normalizePreview
       const normRes = await api.contacts.normalizePreview({
         rows: parsedData.previewRows,
@@ -354,8 +358,8 @@ export function CampaignsModule() {
       });
 
       setValidationResult(normRes);
-      setStep(4);
     } catch (err) {
+      setStep(3);
       setLaunchError(err.message || 'Validation failed');
     } finally {
       setBusy(false);
@@ -978,6 +982,21 @@ export function CampaignsModule() {
                 </div>
               )}
 
+              {/* chisel: file parsing shimmer progress card */}
+              {busy && (
+                <div className="p-4 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] space-y-2 animate-pulse" aria-busy="true">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-[#0F0E17]">
+                      {uploadedFile ? `Parsing ${uploadedFile.name}…` : 'Analyzing contact rows…'}
+                    </span>
+                    <span className="text-[#6344E7] font-mono text-[11px]">Detecting columns</span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-[#E4E2EB] overflow-hidden">
+                    <div className="h-full bg-[#6344E7] w-2/3 animate-pulse rounded-full" />
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center justify-between pt-3 border-t border-[#E4E2EB]">
                 <button
                   type="button"
@@ -1192,6 +1211,34 @@ export function CampaignsModule() {
           {/* ========================================================================= */}
           {/* STEP 4: VALIDATION & DUPLICATE HANDLING */}
           {/* ========================================================================= */}
+          {/* chisel: 6-row table skeleton while normalizePreview validates contacts */}
+          {step === 4 && !validationResult && (
+            <div className="space-y-4 animate-pulse" aria-busy="true" aria-label="Validating contacts">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="p-3 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] space-y-1">
+                    <div className="h-2.5 w-16 bg-[#E4E2EB] rounded" />
+                    <div className="h-5 w-12 bg-[#E4E2EB] rounded" />
+                  </div>
+                ))}
+              </div>
+              <div className="p-4 rounded-xl bg-white border border-[#E4E2EB] space-y-3">
+                <div className="h-4 w-48 bg-[#E4E2EB] rounded" />
+                <div className="space-y-2">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-[#FAF9FD]">
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 rounded-full bg-[#E4E2EB]" />
+                        <div className="h-3 w-28 bg-[#E4E2EB] rounded font-mono" />
+                      </div>
+                      <div className="h-4 w-16 bg-[#E4E2EB] rounded-full" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           {step === 4 && validationResult && (
             <div className="space-y-4">
               {/* Quality Stat Cards */}

@@ -38,7 +38,8 @@ export function Sidebar({
     workspaces,
     currentWorkspace,
     switchWorkspace,
-    createWorkspace
+    createWorkspace,
+    isLoading
   } = useWorkspace();
   const { isPlatformAdmin } = useAuth();
 
@@ -148,19 +149,30 @@ export function Sidebar({
                   : 'bg-[#FAF9FD] border-[#E4E2EB] hover:border-[#D1CFDB]'
               }`}
             >
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-7 h-7 rounded-lg bg-[#0F0E17] flex items-center justify-center text-white font-bold text-xs shadow-xs shrink-0">
-              {currentWorkspace?.avatar || 'V'}
-            </div>
-            <div className="min-w-0">
-              <div className="text-xs font-bold text-[#0F0E17] truncate">
-                {currentWorkspace?.name || 'Acme Health Corp'}
-              </div>
-              <div className="text-[10px] text-[#524E5E] font-mono truncate">
-                Workspace
+          {/* chisel: show subtle skeleton placeholder if workspace is loading */}
+          {isLoading && !currentWorkspace ? (
+            <div className="flex items-center gap-2.5 min-w-0 animate-pulse">
+              <div className="w-7 h-7 rounded-lg bg-[#E4E2EB] shrink-0" />
+              <div className="min-w-0 space-y-1">
+                <div className="h-3 w-24 bg-[#E4E2EB] rounded" />
+                <div className="h-2 w-16 bg-[#E4E2EB]/60 rounded" />
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-7 h-7 rounded-lg bg-[#0F0E17] flex items-center justify-center text-white font-bold text-xs shadow-xs shrink-0">
+                {currentWorkspace?.avatar || 'V'}
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs font-bold text-[#0F0E17] truncate">
+                  {currentWorkspace?.name || 'Acme Health Corp'}
+                </div>
+                <div className="text-[10px] text-[#524E5E] font-mono truncate">
+                  Workspace
+                </div>
+              </div>
+            </div>
+          )}
           <ChevronDown
             className={`w-3.5 h-3.5 text-[#524E5E] shrink-0 transition-transform duration-200 ${
               isDropdownOpen ? 'rotate-180 text-[#6344E7]' : 'group-hover:text-[#0F0E17]'
@@ -287,16 +299,26 @@ export function Sidebar({
                       <span className="truncate">{item.label}</span>
                     </div>
 
+                    {/* chisel: subtle badge pulse skeleton while workspace data loads */}
                     {item.badge !== undefined && (
-                      <span
-                        className={`text-[10px] font-mono px-1.5 py-0.5 rounded-md ${
-                          isActive
-                            ? 'bg-white/20 text-white font-bold'
-                            : 'bg-[#F0EEF6] text-[#524E5E] border border-[#E4E2EB]'
-                        }`}
-                      >
-                        {item.badge}
-                      </span>
+                      isLoading && item.badge === 0 ? (
+                        <span
+                          className={`inline-block h-4 w-5 rounded-md animate-pulse ${
+                            isActive ? 'bg-white/20' : 'bg-[#E4E2EB]/80'
+                          }`}
+                          aria-hidden="true"
+                        />
+                      ) : (
+                        <span
+                          className={`text-[10px] font-mono px-1.5 py-0.5 rounded-md ${
+                            isActive
+                              ? 'bg-white/20 text-white font-bold'
+                              : 'bg-[#F0EEF6] text-[#524E5E] border border-[#E4E2EB]'
+                          }`}
+                        >
+                          {item.badge}
+                        </span>
+                      )
                     )}
                   </button>
                 );

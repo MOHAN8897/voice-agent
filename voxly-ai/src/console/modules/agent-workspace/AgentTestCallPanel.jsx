@@ -346,9 +346,16 @@ export function AgentTestCallPanel({ agent }) {
                 audioAmplitude={audioAmplitude}
                 isInView={true}
               />
+              {/* chisel: pulse animation with radial ripples (animate-ping) on microphone circle during connection handshake */}
               {sessionState === 'CONNECTING' && (
-                <div className="absolute inset-0 flex items-center justify-center bg-[#0F0E17]/50 backdrop-blur-[1px]">
-                  <p className="text-xs font-semibold text-white animate-pulse">Connecting…</p>
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#0F0E17]/70 backdrop-blur-xs">
+                  <div className="relative flex items-center justify-center">
+                    <span className="animate-ping absolute inline-flex h-12 w-12 rounded-full bg-[#6344E7] opacity-60" />
+                    <span className="relative inline-flex rounded-full h-10 w-10 bg-[#6344E7] items-center justify-center text-white shadow-lg">
+                      <Mic className="w-5 h-5 animate-pulse" />
+                    </span>
+                  </div>
+                  <p className="text-xs font-semibold text-white tracking-wide">Connecting WebRTC audio…</p>
                 </div>
               )}
             </div>

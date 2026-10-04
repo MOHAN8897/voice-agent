@@ -18,7 +18,7 @@ import { useAuth } from '../context/AuthContext';
 
 export function CommandPalette({ isOpen, onClose, onNavigate }) {
   const [query, setQuery] = useState('');
-  const { agents, phoneNumbers, leads } = useWorkspace();
+  const { agents, phoneNumbers, leads, isLoading } = useWorkspace();
   const { isPlatformAdmin } = useAuth();
 
   useEffect(() => {
@@ -128,7 +128,20 @@ export function CommandPalette({ isOpen, onClose, onNavigate }) {
 
         {/* Results List */}
         <div className="max-h-80 overflow-y-auto p-2 space-y-1">
-          {allResults.length === 0 ? (
+          {isLoading && query.trim() && allResults.length === 0 ? (
+            <div className="p-3 space-y-2 animate-pulse" aria-busy="true" aria-label="Searching workspace">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 p-2.5 rounded-xl bg-[#FAF9FD]">
+                  <div className="w-8 h-8 rounded-lg bg-[#E4E2EB]" />
+                  <div className="flex-1 space-y-1.5 min-w-0">
+                    <div className="h-3 w-36 bg-[#E4E2EB] rounded" />
+                    <div className="h-2 w-20 bg-[#E4E2EB]/60 rounded" />
+                  </div>
+                  <div className="h-4 w-12 bg-[#E4E2EB] rounded-md" />
+                </div>
+              ))}
+            </div>
+          ) : allResults.length === 0 ? (
             <div className="p-8 text-center text-xs text-[#524E5E]">
               No results found for "{query}"
             </div>

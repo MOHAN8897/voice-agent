@@ -94,16 +94,62 @@ export function VerifyIdentityCard({ compact = false, variant = 'default', onApp
     }
   };
 
+  // chisel: variant-specific layout-stable skeletons while Didit/KYC state resolves
   if (loading) {
+    if (variant === 'gate') {
+      return (
+        <div
+          className="rounded-2xl border border-[#E4E2EB] bg-[#FAF9FD] p-6 sm:p-8 space-y-6 animate-pulse"
+          data-testid="kyc-status-loading"
+          aria-busy="true"
+        >
+          <div className="flex flex-col items-center text-center space-y-3">
+            <div className="w-14 h-14 rounded-2xl bg-[#E4E2EB]" />
+            <div className="space-y-2 max-w-sm w-full flex flex-col items-center">
+              <div className="h-5 w-48 bg-[#E4E2EB] rounded-md" />
+              <div className="h-3 w-64 bg-[#E4E2EB]/70 rounded" />
+              <div className="h-3 w-48 bg-[#E4E2EB]/60 rounded" />
+            </div>
+          </div>
+          <div className="h-10 w-full rounded-xl bg-[#E4E2EB] max-w-xs mx-auto" />
+        </div>
+      );
+    }
+    if (compact) {
+      return (
+        <div
+          className="rounded-xl border border-[#E4E2EB] bg-[#FAF9FD] p-3 flex items-center justify-between gap-3 animate-pulse"
+          data-testid="kyc-status-loading"
+          aria-busy="true"
+        >
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-[#E4E2EB]" />
+            <div className="space-y-1">
+              <div className="h-3 w-28 bg-[#E4E2EB] rounded" />
+              <div className="h-2 w-20 bg-[#E4E2EB]/60 rounded" />
+            </div>
+          </div>
+          <div className="h-6 w-16 bg-[#E4E2EB] rounded-md" />
+        </div>
+      );
+    }
     return (
       <div
-        className={`rounded-2xl border border-[#E4E2EB] bg-[#FAF9FD] ${
-          variant === 'gate' ? 'p-8' : compact ? 'p-3' : 'p-4'
-        } flex items-center justify-center gap-2 text-xs text-[#524E5E]`}
+        className="rounded-2xl border border-[#E4E2EB] bg-[#FAF9FD] p-4 space-y-3 animate-pulse"
         data-testid="kyc-status-loading"
+        aria-busy="true"
       >
-        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-        Checking identity status…
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-[#E4E2EB]" />
+            <div className="space-y-1">
+              <div className="h-3.5 w-32 bg-[#E4E2EB] rounded" />
+              <div className="h-2.5 w-24 bg-[#E4E2EB]/60 rounded" />
+            </div>
+          </div>
+          <div className="h-6 w-20 bg-[#E4E2EB] rounded-md" />
+        </div>
+        <div className="h-8 w-28 bg-[#E4E2EB] rounded-lg" />
       </div>
     );
   }
