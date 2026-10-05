@@ -204,13 +204,13 @@ export function DncRegistryPanel() {
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             data-testid="dnc-search-input"
-            className="w-full text-xs pl-9 pr-4 py-2 bg-white border border-[#E4E2EB] rounded-xl focus:outline-none focus:border-[#FF5C35] text-[#0F0E17]"
+            className="w-full text-base sm:text-xs pl-9 pr-4 py-2.5 sm:py-2 min-h-[42px] sm:min-h-[36px] bg-white border border-[#E4E2EB] rounded-xl focus:outline-none focus:border-[#FF5C35] text-[#0F0E17]"
           />
         </div>
         <button
           type="button"
           onClick={() => fetchEntries()}
-          className="p-2 text-[#524E5E] hover:text-[#0F0E17] hover:bg-[#FAF9FD] rounded-xl border border-[#E4E2EB] transition-colors"
+          className="p-2 min-w-[42px] min-h-[42px] sm:min-w-[36px] sm:min-h-[36px] flex items-center justify-center text-[#524E5E] hover:text-[#0F0E17] hover:bg-[#FAF9FD] rounded-xl border border-[#E4E2EB] transition-colors shrink-0"
           title="Refresh registry"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -234,7 +234,7 @@ export function DncRegistryPanel() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto touch-pan-x">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="border-b border-[#E4E2EB] bg-[#FAF9FD] text-[#524E5E] font-semibold">

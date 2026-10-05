@@ -211,17 +211,17 @@ export function AddFundsModal({ isOpen, onClose, reason = null }) {
                   value={amountUsd}
                   onChange={(e) => setAmountUsd(Number(e.target.value))}
                   data-testid="add-funds-amount"
-                  className="flex-1 bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-3 py-2 text-sm font-mono"
+                  className="flex-1 bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-3 py-2 text-base sm:text-sm min-h-[42px] sm:min-h-[38px] font-mono text-[#0F0E17]"
                 />
               </div>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-2">
                 {USD_PRESETS.map((p) => (
                   <button
                     key={p}
                     type="button"
                     onClick={() => setAmountUsd(p)}
                     data-testid={`add-funds-preset-${p}`}
-                    className={`px-2.5 py-1.5 rounded-xl text-xs font-mono font-bold border transition-all ${
+                    className={`min-w-[44px] min-h-[38px] sm:min-h-[34px] px-3 py-1.5 rounded-xl text-xs font-mono font-bold border transition-all flex items-center justify-center ${
                       amountUsd === p
                         ? 'bg-[#0F0E17] text-white border-[#0F0E17]'
                         : 'bg-white text-[#524E5E] border-[#E4E2EB] hover:border-[#6344E7]'
@@ -259,7 +259,7 @@ export function AddFundsModal({ isOpen, onClose, reason = null }) {
               disabled={!canPay}
               data-testid="add-funds-submit"
               onClick={pay}
-              className="w-full justify-center"
+              className="w-full justify-center min-h-[44px]"
             >
               {busy ? 'Opening checkout…' : `Pay ${amountLabel}`}
             </TactileButton>

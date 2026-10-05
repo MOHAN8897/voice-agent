@@ -513,7 +513,14 @@ class TelnyxPstnBridge:
                         if direction == "outbound"
                         else (merged_local.get("to") or getattr(self, "_called_id", None))
                     )
-                    billed_user_id = await _billed_user_for_did(str(did) if did else None)
+                from server.services.telnyx_client import telnyx_call_registry
+
+                reg_row = (
+                    telnyx_call_registry.get(self.call_control_id) if self.call_control_id else {}
+                ) or {}
+                inbound_policy = reg_row.get("inbound_policy") or {}
+                is_voicemail = str(inbound_policy.get("route") or "").lower() == "voicemail"
+
                 started = await call_lifecycle_service.start(
                     agent_id=self.agent_id,
                     session_id=f"pstn-telnyx-{self.call_control_id}",
@@ -527,6 +534,7 @@ class TelnyxPstnBridge:
                     realtime_prewarm_key=prewarm.realtime_key if prewarm else None,
                     billed_user_id=billed_user_id,
                     contact=merged_local.get("contact"),
+                    voicemail_mode=is_voicemail,
                 )
                 self.call_id = started["call_id"]
                 pstn_media_flow.bind_call_id(self.call_control_id or self.ws_id, self.call_id)
@@ -731,8 +739,8 @@ class TelnyxPstnBridge:
             prewarm = getattr(self, "_prewarm_bundle", None)
             # An operator-set greeting on the agent's telephony profile wins over the
             # brain-derived opening. Absent or blank, the prewarm text is used exactly
-            # as before, so nothing changes for agents without a profile.
             profile_greeting = ""
+            is_voicemail = False
             try:
                 from server.services.telnyx_client import telnyx_call_registry
 
@@ -740,8 +748,19 @@ class TelnyxPstnBridge:
                     telnyx_call_registry.get(self.call_control_id) if self.call_control_id else {}
                 ) or {}
                 profile_greeting = str(live.get("inbound_greeting") or "").strip()
+                inbound_policy = live.get("inbound_policy") or {}
+                is_voicemail = str(inbound_policy.get("route") or "").lower() == "voicemail"
             except Exception:
                 profile_greeting = ""
+                is_voicemail = False
+
+            if not profile_greeting and is_voicemail:
+                lang = str(pstn_opts.get("language") or "te-IN").lower()
+                if lang.startswith("te"):
+                    profile_greeting = "నమస్కారం, మా కార్యాలయం ప్రస్తుతం మూసివేయబడింది. దయచేసి మీ పేరు, ఫోన్ నంబర్ మరియు సందేశాన్ని చెప్పండి, మేము త్వరలోనే సంప్రదిస్తాము."
+                else:
+                    profile_greeting = "Hello, thanks for calling. Our offices are currently closed. Please leave your name, phone number, and a brief message, and we will get back to you soon."
+
             greeting_text = profile_greeting or (prewarm.greeting_text if prewarm else None)
             greeting_frames = None if profile_greeting else (prewarm.greeting_wire_frames if prewarm else None)
             await self._voice.start_call(

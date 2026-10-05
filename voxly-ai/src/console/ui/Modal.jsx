@@ -46,10 +46,10 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
-        className={`relative w-full ${maxWidth} bg-white border border-[#E4E2EB] rounded-2xl shadow-2xl z-10 overflow-hidden my-auto ${panelClassName} ${className}`}
+        className={`relative w-full ${maxWidth} bg-white border border-[#E4E2EB] rounded-2xl shadow-2xl z-10 overflow-hidden my-auto max-h-[calc(100dvh-2rem)] flex flex-col ${panelClassName} ${className}`}
       >
         {!headerless && (
-          <div className="flex items-start justify-between gap-4 p-5 sm:p-6 border-b border-[#E4E2EB]">
+          <div className="flex items-start justify-between gap-4 p-5 sm:p-6 border-b border-[#E4E2EB] shrink-0">
             <div>
               <h2 id="modal-title" className="text-base sm:text-lg font-bold text-[#0F0E17] tracking-tight">
                 {title}
@@ -62,7 +62,7 @@ export function Modal({
               type="button"
               onClick={onClose}
               aria-label="Close dialog"
-              className="min-w-[40px] min-h-[40px] flex items-center justify-center p-2 rounded-xl text-[#524E5E] hover:text-[#0F0E17] hover:bg-[#FAF9FD] border border-transparent hover:border-[#E4E2EB] transition-colors"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2.5 rounded-xl text-[#524E5E] hover:text-[#0F0E17] hover:bg-[#FAF9FD] border border-transparent hover:border-[#E4E2EB] transition-colors"
             >
               <X className="w-4 h-4" />
             </button>

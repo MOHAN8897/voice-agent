@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "origin": "failed-assert",
+  "expected": "a /api/integrations/LINEAR",
+  "observed": "no request to /api/integrations/LINEAR",
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "e463",
+        "source": {
+          "file": "src/console/modules/IntegrationsModule.jsx",
+          "line": 503,
+          "column": 19
+        }
+      },
+      "action": "click"
+    }
+  ],
+  "id": "1791139113978-click-97909ebf",
+  "createdAt": 1791139113984,
+  "seen": 1,
+  "lastSeenAt": 1791139113984
+}

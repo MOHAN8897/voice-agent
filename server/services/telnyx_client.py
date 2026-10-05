@@ -410,6 +410,24 @@ class TelnyxClient:
                     continue
                 raise
 
+    async def transfer(
+        self,
+        call_control_id: str,
+        *,
+        to: str,
+        from_: str | None = None,
+    ) -> dict[str, Any]:
+        """Transfer an ongoing call to a target E.164 phone number."""
+        payload: dict[str, Any] = {"to": to}
+        if from_:
+            payload["from"] = from_
+        data = await self._request(
+            "POST",
+            f"/calls/{call_control_id}/actions/transfer",
+            json=payload,
+        )
+        return data.get("data") or data
+
 
 class TelnyxCallRegistry:
     """Telnyx call event registry — process memory + optional Redis for multi-worker (1.4)."""

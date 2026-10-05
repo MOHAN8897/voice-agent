@@ -25,14 +25,14 @@ function PasswordField({ id, label, value, onChange, autoComplete, testId, show,
           minLength={MIN_LENGTH}
           required
           data-testid={testId}
-          className="w-full text-xs px-3.5 py-2.5 pr-9 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] focus:outline-none focus:border-[#6344E7] text-[#0F0E17]"
+          className="w-full text-base sm:text-xs min-h-[42px] sm:min-h-[38px] px-3.5 py-2.5 pr-9 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] focus:outline-none focus:border-[#6344E7] text-[#0F0E17]"
         />
         <button
           type="button"
           onClick={onToggle}
           tabIndex={-1}
           aria-label={show ? 'Hide password' : 'Show password'}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-[#635F70] hover:text-[#0F0E17]"
+          className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-[#635F70] hover:text-[#0F0E17]"
         >
           {show ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
         </button>
@@ -160,7 +160,7 @@ function SecurityPasswordCard() {
           type="submit"
           disabled={busy}
           data-testid="change-password-submit"
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-[#0F0E17] hover:bg-[#232130] active:scale-[0.98] transition-all disabled:opacity-60"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 min-h-[44px] sm:min-h-[38px] rounded-xl text-xs font-semibold text-white bg-[#0F0E17] hover:bg-[#232130] active:scale-[0.98] transition-all disabled:opacity-60"
         >
           {busy ? 'Updating…' : 'Update password'}
         </button>

@@ -189,6 +189,8 @@ async def web_agent_ws(websocket: WebSocket):
             sample_rate=16000,
             tts_output_codec="linear16",
             stack_override=stack,
+            tenant_id=str(principal.tenant_id),
+            agent_id=str(agent_id),
         )
         loop.set_hangup_notice_handler(on_hangup_notice)
         loop.set_hangup_handler(on_provider_hangup)

@@ -67,6 +67,8 @@ export function VoxlyScene({
           alt="Voxly AI Employee Preview"
           width="320"
           height="320"
+          loading="lazy"
+          decoding="async"
           className="max-h-[320px] object-contain drop-shadow-xl"
         />
       </div>

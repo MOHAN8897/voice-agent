@@ -214,7 +214,7 @@ export function AgentDialBulkPanel({ agentId, agentName }) {
             <label className="block text-[11px] font-semibold text-[#0F0E17]">
               From
               <select
-                className="mt-1 w-full rounded-xl border border-[#E4E2EB] px-3 py-2 text-xs"
+                className="mt-1 w-full rounded-xl border border-[#E4E2EB] px-3 py-2 text-base sm:text-xs min-h-[42px] sm:min-h-[36px] bg-white text-[#0F0E17]"
                 value={fromNumber}
                 onChange={(e) => setFromNumber(e.target.value)}
                 data-testid="agent-dial-from"
@@ -230,7 +230,7 @@ export function AgentDialBulkPanel({ agentId, agentName }) {
             <label className="block text-[11px] font-semibold text-[#0F0E17]">
               To (E.164)
               <input
-                className="mt-1 w-full rounded-xl border border-[#E4E2EB] px-3 py-2 text-xs"
+                className="mt-1 w-full rounded-xl border border-[#E4E2EB] px-3 py-2 text-base sm:text-xs min-h-[42px] sm:min-h-[36px] bg-white text-[#0F0E17]"
                 placeholder="+9188…"
                 value={toNumber}
                 onChange={(e) => setToNumber(e.target.value)}
@@ -246,6 +246,7 @@ export function AgentDialBulkPanel({ agentId, agentName }) {
             onClick={dial}
             disabled={!agentId}
             data-testid="agent-dial-start"
+            className="w-full sm:w-auto min-h-[42px] sm:min-h-[36px]"
           >
             Call now
           </TactileButton>
@@ -265,7 +266,7 @@ export function AgentDialBulkPanel({ agentId, agentName }) {
           <label className="block text-[11px] font-semibold text-[#0F0E17]">
             Campaign name
             <input
-              className="mt-1 w-full rounded-xl border border-[#E4E2EB] px-3 py-2 text-xs"
+              className="mt-1 w-full rounded-xl border border-[#E4E2EB] px-3 py-2 text-base sm:text-xs min-h-[42px] sm:min-h-[36px] bg-white text-[#0F0E17]"
               value={bulkName}
               onChange={(e) => setBulkName(e.target.value)}
               data-testid="agent-bulk-name"
@@ -274,7 +275,7 @@ export function AgentDialBulkPanel({ agentId, agentName }) {
           <label className="block text-[11px] font-semibold text-[#0F0E17]">
             Contacts (one per line)
             <textarea
-              className="mt-1 w-full rounded-xl border border-[#E4E2EB] px-3 py-2 text-xs font-mono min-h-[100px]"
+              className="mt-1 w-full rounded-xl border border-[#E4E2EB] px-3 py-2 text-base sm:text-xs font-mono min-h-[100px] bg-white text-[#0F0E17]"
               placeholder={'+918897908470, Alex\n+14155552671'}
               value={contactLines}
               onChange={(e) => setContactLines(e.target.value)}
@@ -288,7 +289,7 @@ export function AgentDialBulkPanel({ agentId, agentName }) {
                 type="number"
                 min={1}
                 max={MAX_CONCURRENCY}
-                className="mt-1 w-full rounded-xl border border-[#E4E2EB] px-3 py-2 text-xs"
+                className="mt-1 w-full rounded-xl border border-[#E4E2EB] px-3 py-2 text-base sm:text-xs min-h-[42px] sm:min-h-[36px] bg-white text-[#0F0E17]"
                 value={concurrency}
                 onChange={(e) => setConcurrency(e.target.value)}
                 data-testid="agent-bulk-concurrency"
@@ -300,7 +301,7 @@ export function AgentDialBulkPanel({ agentId, agentName }) {
                 type="number"
                 min={1}
                 max={5}
-                className="mt-1 w-full rounded-xl border border-[#E4E2EB] px-3 py-2 text-xs"
+                className="mt-1 w-full rounded-xl border border-[#E4E2EB] px-3 py-2 text-base sm:text-xs min-h-[42px] sm:min-h-[36px] bg-white text-[#0F0E17]"
                 value={maxAttempts}
                 onChange={(e) => setMaxAttempts(e.target.value)}
                 data-testid="agent-bulk-attempts"
@@ -311,7 +312,7 @@ export function AgentDialBulkPanel({ agentId, agentName }) {
               <input
                 type="number"
                 min={5}
-                className="mt-1 w-full rounded-xl border border-[#E4E2EB] px-3 py-2 text-xs"
+                className="mt-1 w-full rounded-xl border border-[#E4E2EB] px-3 py-2 text-base sm:text-xs min-h-[42px] sm:min-h-[36px] bg-white text-[#0F0E17]"
                 value={retryDelayMin}
                 onChange={(e) => setRetryDelayMin(e.target.value)}
                 data-testid="agent-bulk-retry-delay"

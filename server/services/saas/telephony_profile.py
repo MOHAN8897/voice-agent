@@ -68,6 +68,8 @@ class InboundDecision:
     used_fallback: bool = False
     #: Populated when the destination number matched an agent.
     agent_id: str | None = None
+    #: Destination phone number for after_hours_action == "transfer".
+    transfer_number: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -78,6 +80,7 @@ class InboundDecision:
             "greetingPhrase": self.greeting_phrase,
             "usedFallback": self.used_fallback,
             "agentId": self.agent_id,
+            "transferNumber": self.transfer_number,
         }
 
 
@@ -312,6 +315,14 @@ def evaluate_inbound_policy(
     agent_id = data.get("agent_id")
 
     try:
+        agent_status = str(data.get("agent_status") or "").strip().lower()
+        if agent_status in ("paused", "inactive", "disabled"):
+            return InboundDecision(
+                should_answer=False,
+                route=ROUTE_DECLINE,
+                reason="agent_paused",
+                agent_id=agent_id,
+            )
         if data.get("inbound_enabled") is False:
             return InboundDecision(
                 should_answer=False,
@@ -379,6 +390,7 @@ def evaluate_inbound_policy(
             after_hours=True,
             greeting_phrase=greeting,
             agent_id=agent_id,
+            transfer_number=transfer_number,
         )
     return InboundDecision(
         should_answer=True,
@@ -568,19 +580,34 @@ async def profile_for_number(e164: str | None) -> dict[str, Any] | None:
     if factory is None:
         return None
     async with factory() as session:
+        from server.db.models.entities import Agent
         from server.db.models.phase5_models import PhoneNumber
 
         result = await session.execute(
-            select(PhoneNumber).where(
+            select(PhoneNumber, Agent)
+            .outerjoin(Agent, Agent.agent_id == PhoneNumber.agent_id)
+            .where(
                 PhoneNumber.e164 == raw,
                 PhoneNumber.released_at.is_(None),
             )
         )
-        row = result.scalar_one_or_none()
-        if row is None or row.agent_id is None:
+        row = result.first()
+        if row is None or row[0] is None or row[0].agent_id is None:
             return None
-        agent_id = str(row.agent_id)
-    return await get_profile(agent_id)
+        pn, agent = row
+        agent_id = str(pn.agent_id)
+        agent_status = str(agent.status or "active") if agent else "active"
+
+    prof = await get_profile(agent_id)
+    if prof is not None:
+        prof["agent_status"] = agent_status
+        return prof
+    return {
+        "agent_id": agent_id,
+        "agent_status": agent_status,
+        "inbound_enabled": True,
+        "outbound_enabled": True,
+    }
 
 
 async def profile_for_agent_ids(agent_ids: list[str]) -> dict[str, dict[str, Any] | None]:

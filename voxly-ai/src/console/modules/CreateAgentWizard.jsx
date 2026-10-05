@@ -197,7 +197,7 @@ export function CreateAgentWizard({ isOpen, onClose, onNavigate }) {
             onChange={(e) => set({ brief: e.target.value })}
             rows={8}
             placeholder={BRIEF_PLACEHOLDER}
-            className="w-full rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] px-3.5 py-3 text-sm text-[#0F0E17] placeholder:text-[#8C879A] focus:outline-none focus:border-[#6344E7] resize-y leading-relaxed"
+            className="w-full rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] px-3.5 py-3 text-base sm:text-sm text-[#0F0E17] placeholder:text-[#8C879A] focus:outline-none focus:border-[#6344E7] resize-y leading-relaxed"
           />
           <p className="text-[10px] text-[#8C879A] mt-1">
             Write it the way you would brief a new employee — include the agent&rsquo;s name, your
@@ -216,7 +216,7 @@ export function CreateAgentWizard({ isOpen, onClose, onNavigate }) {
                 type="button"
                 data-testid={`employee-industry-${chip.id}`}
                 onClick={() => appendIndustry(chip)}
-                className={`text-[11px] font-semibold px-3 py-1.5 rounded-full border transition-colors ${
+                className={`text-[11px] font-semibold px-3 py-1.5 min-h-[36px] flex items-center rounded-full border transition-colors ${
                   draft.industry === chip.id
                     ? 'bg-[#F0EEF6] border-[#6344E7] text-[#5034CE]'
                     : 'bg-white border-[#E4E2EB] text-[#524E5E] hover:border-[#6344E7]/35'
@@ -231,7 +231,7 @@ export function CreateAgentWizard({ isOpen, onClose, onNavigate }) {
           </div>
         </div>
 
-        <div className="grid sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-wider text-[#8C879A] mb-2">
               Spoken language
@@ -240,7 +240,7 @@ export function CreateAgentWizard({ isOpen, onClose, onNavigate }) {
               value={draft.language}
               onChange={(e) => set({ language: e.target.value })}
               data-testid="employee-language-select"
-              className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-3 py-2 text-xs"
+              className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-3 py-2 text-base sm:text-xs min-h-[42px] sm:min-h-[36px]"
             >
               {languageOptions.map((lang) => (
                 <option key={lang.code} value={lang.code}>
@@ -257,7 +257,7 @@ export function CreateAgentWizard({ isOpen, onClose, onNavigate }) {
               value={draft.role}
               onChange={(e) => set({ role: e.target.value })}
               data-testid="employee-role-select"
-              className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-3 py-2 text-xs"
+              className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-3 py-2 text-base sm:text-xs min-h-[42px] sm:min-h-[36px]"
             >
               {AGENT_ROLES.map((r) => (
                 <option key={r.id} value={r.id}>
@@ -327,7 +327,7 @@ function StepFooter({ onNext, nextLabel, nextDisabled = false, busy = false, bus
         onClick={onNext}
         disabled={busy || nextDisabled}
         data-testid="create-next"
-        className="px-4 py-2.5 rounded-xl bg-[#0F0E17] text-white text-xs font-bold disabled:opacity-40 sm:ml-auto"
+        className="w-full sm:w-auto px-5 py-2.5 min-h-[44px] rounded-xl bg-[#0F0E17] text-white text-xs font-bold disabled:opacity-40 sm:ml-auto flex items-center justify-center transition-all active:scale-[0.98]"
       >
         {busy && busyLabel ? busyLabel : nextLabel}
       </button>

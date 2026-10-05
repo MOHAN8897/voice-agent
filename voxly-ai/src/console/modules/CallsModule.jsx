@@ -121,7 +121,7 @@ function RecordingPlayer({ call }) {
     if (el && el.duration) setProgress((el.currentTime / el.duration) * 100);
   };
 
-  if (!call.hasRecording) {
+  if (!call || !call.hasRecording) {
     return (
       <div className="p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] space-y-1.5">
         <div className="flex items-center gap-1.5 text-xs font-semibold text-[#0F0E17]">
@@ -129,7 +129,7 @@ function RecordingPlayer({ call }) {
           <span>Call recording</span>
         </div>
         <p className="text-[11px] text-[#8C879A]">
-          {call.connected
+          {call?.connected
             ? 'No recording for this call.'
             : 'Never connected, so there is no recording.'}
         </p>
@@ -558,11 +558,11 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
             </div>
           )}
 
-          <div className="grid sm:grid-cols-4 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
             <select
               value={agentId}
               onChange={(e) => setAgentId(e.target.value)}
-              className="bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-2.5 py-2 text-xs"
+              className="bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-2.5 py-2 text-base sm:text-xs min-h-[40px] sm:min-h-[34px]"
             >
               {agents.map((a) => (
                 <option key={a.id} value={a.id}>
@@ -573,7 +573,7 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
             <select
               value={fromNumber}
               onChange={(e) => setFromNumber(e.target.value)}
-              className="bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-2.5 py-2 text-xs font-mono"
+              className="bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-2.5 py-2 text-base sm:text-xs min-h-[40px] sm:min-h-[34px] font-mono"
             >
               <option value="">Agent phone line</option>
               {phoneNumbers.map((n) => (
@@ -586,9 +586,9 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
               value={toNumber}
               onChange={(e) => setToNumber(e.target.value)}
               placeholder="+1…"
-              className="bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-2.5 py-2 text-xs font-mono"
+              className="bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-2.5 py-2 text-base sm:text-xs min-h-[40px] sm:min-h-[34px] font-mono"
             />
-            <TactileButton variant="primary" size="sm" loading={dialBusy} onClick={placeCall}>
+            <TactileButton variant="primary" size="sm" loading={dialBusy} onClick={placeCall} className="min-h-[40px] sm:min-h-[34px]">
               Call now
             </TactileButton>
           </div>
@@ -605,7 +605,7 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                 type="button"
                 data-testid={`calls-status-${tab.id}`}
                 onClick={() => setHistoryBucket(tab.id)}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold ${
+                className={`px-3 py-1.5 min-h-[34px] rounded-lg text-xs font-semibold ${
                   historyBucket === tab.id
                     ? 'bg-white text-[#0F0E17] shadow-xs'
                     : 'text-[#524E5E]'
@@ -629,7 +629,7 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                   <button
                     key={tab}
                     onClick={() => setFilterDirection(tab)}
-                    className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                    className={`px-3 py-1.5 min-h-[34px] rounded-lg text-xs font-semibold transition-all ${
                       filterDirection === tab
                         ? 'bg-white text-[#0F0E17] shadow-xs'
                         : 'text-[#524E5E] hover:text-[#0F0E17]'
@@ -646,7 +646,7 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                   onChange={(e) => setFilterAgentId(e.target.value)}
                   disabled={Boolean(lockedAgentId)}
                   aria-label="Filter by agent"
-                  className="bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-2 py-1 text-xs disabled:opacity-50"
+                  className="bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-2 py-1.5 min-h-[36px] sm:min-h-[30px] text-base sm:text-xs disabled:opacity-50"
                 >
                   <option value="all">All agents</option>
                   {agents.map((a) => (

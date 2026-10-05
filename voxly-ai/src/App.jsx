@@ -95,6 +95,27 @@ function AppInner() {
   }, []);
 
   useEffect(() => {
+    const updateTitle = () => {
+      if (window.location.hash.startsWith('#dashboard')) {
+        const hash = window.location.hash || '';
+        const tabMatch = hash.match(/#dashboard\/([a-z0-9_-]+)/i);
+        const tab = tabMatch ? tabMatch[1] : '';
+        const titles = {
+          overview: 'Workspace Overview — Voxly Console',
+          employees: 'AI Employees & Personas — Voxly Console',
+          calls: 'Call Activity & Transcripts — Voxly Console',
+          integrations: 'Tool Integrations (177+ Tools) — Voxly Console',
+          telephony: 'Phone Numbers & SIP Trunks — Voxly Console',
+          billing: 'Billing & Telephony Credits — Voxly Console',
+          campaigns: 'Outbound Calling Campaigns — Voxly Console',
+          compliance: 'Telephony Compliance & DNC Registry — Voxly Console',
+        };
+        document.title = titles[tab] || 'Dashboard — Voxly Console';
+      } else {
+        document.title = 'Voxly — The AI Employee for Every Conversation';
+      }
+    };
+
     const handleHashChange = () => {
       if (window.location.hash.includes('reset-password')) {
         setAuthModalMode('reset');
@@ -106,10 +127,12 @@ function AppInner() {
       } else if (!window.location.hash || window.location.hash === '#' || !window.location.hash.includes('dashboard')) {
         setCurrentView('landing');
       }
+      updateTitle();
     };
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
+
 
   const openAuthModal = (mode = 'signin', postAuthTab = DEFAULT_CONSOLE_TAB) => {
     rememberPostAuthTab(postAuthTab);
@@ -150,6 +173,8 @@ function AppInner() {
   useEffect(() => {
     const isConsole = currentView === 'dashboard';
     let tag = document.querySelector('meta[name="robots"][data-voxly-console]');
+    let canonical = document.querySelector('link[rel="canonical"]');
+
     if (isConsole) {
       if (!tag) {
         tag = document.createElement('meta');
@@ -158,10 +183,33 @@ function AppInner() {
         tag.setAttribute('content', 'noindex, nofollow');
         document.head.appendChild(tag);
       }
-    } else if (tag) {
-      tag.remove();
+
+      // Update dynamic document title for dashboard tabs
+      const hash = window.location.hash || '';
+      const tabMatch = hash.match(/#dashboard\/([a-z0-9_-]+)/i);
+      const tab = tabMatch ? tabMatch[1] : '';
+      const titles = {
+        overview: 'Workspace Overview — Voxly Console',
+        employees: 'AI Employees & Personas — Voxly Console',
+        calls: 'Call Activity & Transcripts — Voxly Console',
+        integrations: 'Tool Integrations (177+ Tools) — Voxly Console',
+        telephony: 'Phone Numbers & SIP Trunks — Voxly Console',
+        billing: 'Billing & Telephony Credits — Voxly Console',
+        campaigns: 'Outbound Calling Campaigns — Voxly Console',
+        compliance: 'Telephony Compliance & DNC Registry — Voxly Console',
+      };
+      document.title = titles[tab] || 'Dashboard — Voxly Console';
+    } else {
+      if (tag) {
+        tag.remove();
+      }
+      document.title = 'Voxly — The AI Employee for Every Conversation';
+      if (canonical) {
+        canonical.setAttribute('href', 'https://voxly.ai/');
+      }
     }
   }, [currentView]);
+
 
   useEffect(() => {
     const hash = window.location.hash || '';

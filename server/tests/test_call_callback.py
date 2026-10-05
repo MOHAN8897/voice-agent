@@ -406,3 +406,58 @@ async def test_callback_history_without_a_filter_lists_the_tenant(principal, mon
     found = await module.list_callbacks(principal)
     assert len(found) == 1
     assert found[0]["toE164"] == "+919000000001"
+
+
+async def test_outbound_fails_when_agent_outbound_disabled(principal, monkeypatch):
+    from fastapi import HTTPException
+    from server.services.saas.telephony_orchestrator import subscriber_outbound
+
+    async def _mock_agent(aid, tid):
+        return {"agent_id": aid, "status": "active", "active_compiled_brain_version": "v1"}
+
+    async def _mock_profile(aid):
+        return {"outbound_enabled": False}
+
+    monkeypatch.setattr(
+        "server.services.saas.kyc_gate.assert_kyc_approved", _approved, raising=True
+    )
+    monkeypatch.setattr(
+        "server.services.saas.call_callback_service.resolve_workspace_agent",
+        _mock_agent,
+    )
+    monkeypatch.setattr(
+        "server.services.saas.telephony_profile.get_profile",
+        _mock_profile,
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        await subscriber_outbound(
+            principal, agent_id="agent-123", from_e164=None, to_e164="+919999999999"
+        )
+    assert exc.value.status_code == 400
+    assert exc.value.detail["error"]["code"] == "agent_outbound_disabled"
+
+
+async def test_outbound_fails_when_agent_paused(principal, monkeypatch):
+    from fastapi import HTTPException
+    from server.services.saas.telephony_orchestrator import subscriber_outbound
+
+    async def _mock_paused_agent(aid, tid):
+        return {"agent_id": aid, "status": "paused", "active_compiled_brain_version": "v1"}
+
+    monkeypatch.setattr(
+        "server.services.saas.kyc_gate.assert_kyc_approved", _approved, raising=True
+    )
+    monkeypatch.setattr(
+        "server.services.saas.call_callback_service.resolve_workspace_agent",
+        _mock_paused_agent,
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        await subscriber_outbound(
+            principal, agent_id="agent-123", from_e164=None, to_e164="+919999999999"
+        )
+    assert exc.value.status_code == 400
+    assert exc.value.detail["error"]["code"] == "agent_paused"
+
+

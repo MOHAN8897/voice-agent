@@ -534,7 +534,7 @@ export function Hero({
             </div>
 
             {/* Main Headline: Solid high-contrast text */}
-            <h1 className="text-4xl sm:text-5xl lg:text-[56px] font-extrabold text-[#0F0E17] leading-[1.08] tracking-tight mb-5">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[56px] font-extrabold text-[#0F0E17] leading-[1.08] tracking-tight mb-5">
               {HERO_CONTENT.titleLine1}{' '}
               <span className="block text-[#0F0E17]">
                 {HERO_CONTENT.titleHighlight}
@@ -547,11 +547,11 @@ export function Hero({
             </p>
 
             {/* CTA Buttons: Emil Kowalski tactile buttons */}
-            <div className="flex flex-wrap items-center gap-3.5 sm:gap-4 mb-8 w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 sm:gap-4 mb-8 w-full sm:w-auto">
               {/* Primary CTA */}
               <button
                 onClick={onGetStarted}
-                className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl text-sm font-semibold text-white bg-[#0F0E17] hover:bg-[#232130] active:scale-[0.98] shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6344E7]"
+                className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl text-sm font-semibold text-white bg-[#0F0E17] hover:bg-[#232130] active:scale-[0.98] shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6344E7]"
               >
                 <span>{HERO_CONTENT.ctaPrimary}</span>
               </button>
@@ -559,7 +559,7 @@ export function Hero({
               {/* Secondary CTA: Talk to AI */}
               <button
                 onClick={onTalkToMe}
-                className="inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl text-sm font-semibold text-[#0F0E17] bg-white hover:bg-[#F9F8FD] border border-[#E4E2EB] active:scale-[0.98] shadow-xs transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6344E7]"
+                className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl text-sm font-semibold text-[#0F0E17] bg-white hover:bg-[#F9F8FD] border border-[#E4E2EB] active:scale-[0.98] shadow-xs transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6344E7]"
               >
                 <div className="w-6 h-6 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB] flex items-center justify-center text-[#6344E7]">
                   <Mic className="w-3.5 h-3.5" />
@@ -583,12 +583,12 @@ export function Hero({
           </div>
 
           {/* RIGHT COLUMN: 3D Three.js WebGL Scene */}
-          <div className="lg:col-span-6 relative flex flex-col items-center justify-center">
+          <div className="lg:col-span-6 relative flex flex-col items-center justify-center w-full">
             
             {/* 3D WebGL Canvas Container */}
             <div
               ref={sceneContainerRef}
-              className="relative w-full h-[380px] sm:h-[440px] lg:h-[500px] flex items-center justify-center cursor-pointer select-none"
+              className="relative w-full h-[320px] sm:h-[420px] lg:h-[500px] flex items-center justify-center cursor-pointer select-none"
               style={{ touchAction: 'none' }}
             >
               <LazyVoxlyScene

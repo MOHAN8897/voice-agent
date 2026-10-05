@@ -37,20 +37,38 @@ export function AgentInboundPanel({ agentId, agentName, onNavigateToSettings }) 
     if (!agentId) return;
 
     setLoading(true);
-    api.telephony
-      .getAgentProfile(agentId)
-      .then((data) => {
+    const loadProfile = async () => {
+      try {
+        let data = null;
+        if (typeof api.telephony?.getAgentProfile === 'function') {
+          data = await api.telephony.getAgentProfile(agentId);
+        } else if (typeof api.agents?.getTelephonyProfile === 'function') {
+          const [prof, eff] = await Promise.all([
+            api.agents.getTelephonyProfile(agentId).catch(() => ({ profile: {} })),
+            typeof api.agents?.getEffectiveTelephony === 'function'
+              ? api.agents.getEffectiveTelephony(agentId).catch(() => null)
+              : Promise.resolve(null),
+          ]);
+          data = {
+            profile: prof?.profile || {},
+            decision: eff?.decision || null,
+          };
+        }
         if (!active) return;
-        setProfile(data.profile || {});
-        setDecision(data.decision || null);
-      })
-      .catch(() => {
-        if (!active) return;
-        setProfile({});
-      })
-      .finally(() => {
+        setProfile(data?.profile || {});
+        setDecision(data?.decision || null);
+      } catch (err) {
+        console.warn('Could not load agent telephony profile:', err);
+        if (active) {
+          setProfile({});
+          setDecision(null);
+        }
+      } finally {
         if (active) setLoading(false);
-      });
+      }
+    };
+
+    loadProfile();
 
     return () => {
       active = false;

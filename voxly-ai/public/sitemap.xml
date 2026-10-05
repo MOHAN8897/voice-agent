@@ -1,8 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://voxly.ai/</loc>
-    <changefreq>weekly</changefreq>
+    <lastmod>2026-10-05T00:00:00+00:00</lastmod>
+    <changefreq>daily</changefreq>
     <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://voxly.ai/images/VoxlyBot_preview.png</image:loc>
+      <image:title>Voxly AI Autonomous Voice Employee</image:title>
+      <image:caption>Deploy autonomous AI voice employees that handle phone calls and customer support 24/7</image:caption>
+    </image:image>
   </url>
 </urlset>

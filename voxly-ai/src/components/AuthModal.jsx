@@ -225,10 +225,15 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
       />
 
       {/* Modal Dialog */}
-      <div className="relative bg-white rounded-2xl border border-[#E4E2EB] shadow-2xl w-full max-w-md overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-200 text-left">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="auth-modal-title"
+        className="relative bg-white rounded-2xl border border-[#E4E2EB] shadow-2xl w-full max-w-md max-h-[calc(100dvh-2rem)] flex flex-col overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-200 text-left my-auto"
+      >
         
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 pt-6 pb-2">
+        <div className="flex items-center justify-between px-6 pt-5 pb-2 shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-[#0F0E17] flex items-center justify-center text-white shadow-xs">
               <Lock className="w-4 h-4" />
@@ -239,7 +244,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-lg bg-[#FAF9FD] hover:bg-[#F0EEF6] border border-[#E4E2EB] flex items-center justify-center text-[#524E5E] hover:text-[#0F0E17] transition-colors"
+            className="w-9 h-9 sm:w-8 sm:h-8 rounded-lg bg-[#FAF9FD] hover:bg-[#F0EEF6] border border-[#E4E2EB] flex items-center justify-center text-[#524E5E] hover:text-[#0F0E17] transition-colors"
             aria-label="Close dialog"
           >
             <X className="w-4 h-4" />
@@ -247,8 +252,8 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
         </div>
 
         {/* Title */}
-        <div className="px-6 pt-3 pb-4 border-b border-[#E4E2EB]">
-          <h3 className="text-xl font-extrabold text-[#0F0E17] tracking-tight">
+        <div className="px-6 pt-2 pb-4 border-b border-[#E4E2EB] shrink-0">
+          <h3 id="auth-modal-title" className="text-xl font-extrabold text-[#0F0E17] tracking-tight">
             {mode === 'signup'
               ? 'Create your account'
               : mode === 'verify-otp'
@@ -269,7 +274,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
         </div>
 
         {/* Content Body */}
-        <div className="p-6 space-y-4">
+        <div className="p-6 space-y-4 overflow-y-auto">
           
           {/* Alerts: Error & Success */}
           {errorMessage && (
@@ -360,7 +365,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
               <button
                 type="submit"
                 disabled={loadingMethod !== null || otpCode.length !== 6}
-                className="w-full py-3 rounded-xl text-xs font-semibold text-white bg-[#0F0E17] disabled:opacity-50"
+                className="w-full py-3 min-h-[44px] rounded-xl text-xs font-semibold text-white bg-[#0F0E17] disabled:opacity-50"
               >
                 {loadingMethod === 'otp' ? 'Verifying…' : 'Verify & continue'}
               </button>
@@ -406,7 +411,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
                 onClick={handleGoogleSignIn}
                 disabled={loadingMethod !== null || !googleSignInEnabled}
                 title={!googleSignInEnabled ? googleConfigHint : undefined}
-                className="w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl bg-white hover:bg-[#FAF9FD] text-[#0F0E17] font-semibold text-xs border border-[#E4E2EB] shadow-xs active:scale-[0.98] transition-all disabled:opacity-60"
+                className="w-full min-h-[44px] flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl bg-white hover:bg-[#FAF9FD] text-[#0F0E17] font-semibold text-xs border border-[#E4E2EB] shadow-xs active:scale-[0.98] transition-all disabled:opacity-60"
               >
                 {loadingMethod === 'google' ? (
                   <div className="w-4 h-4 border-2 border-[#E4E2EB] border-t-[#0F0E17] rounded-full animate-spin" />
@@ -459,7 +464,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Sarah Connor"
-                    className="w-full text-xs px-3.5 py-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] focus:outline-none focus:border-[#0F0E17] text-[#0F0E17] placeholder:text-[#635F70]"
+                    className="w-full text-base sm:text-xs px-3.5 py-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] focus:outline-none focus:border-[#0F0E17] text-[#0F0E17] placeholder:text-[#635F70]"
                   />
                 </div>
               )}
@@ -477,7 +482,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="alex@company.com"
                   autoComplete="username"
-                  className="w-full text-xs px-3.5 py-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] focus:outline-none focus:border-[#0F0E17] text-[#0F0E17] placeholder:text-[#635F70]"
+                  className="w-full text-base sm:text-xs px-3.5 py-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] focus:outline-none focus:border-[#0F0E17] text-[#0F0E17] placeholder:text-[#635F70]"
                 />
               </div>
               )}
@@ -508,12 +513,12 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••••••"
                     autoComplete={mode === 'reset' ? 'new-password' : 'current-password'}
-                    className="w-full text-xs px-3.5 py-2.5 pr-10 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] focus:outline-none focus:border-[#0F0E17] text-[#0F0E17] placeholder:text-[#635F70]"
+                    className="w-full text-base sm:text-xs px-3.5 py-2.5 pr-10 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] focus:outline-none focus:border-[#0F0E17] text-[#0F0E17] placeholder:text-[#635F70]"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#524E5E] hover:text-[#0F0E17]"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#524E5E] hover:text-[#0F0E17] p-1"
                     tabIndex="-1"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -540,7 +545,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
                     placeholder="••••••••••••"
                     autoComplete="new-password"
                     data-testid="auth-reset-confirm"
-                    className="w-full text-xs px-3.5 py-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] focus:outline-none focus:border-[#0F0E17] text-[#0F0E17] placeholder:text-[#635F70]"
+                    className="w-full text-base sm:text-xs px-3.5 py-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] focus:outline-none focus:border-[#0F0E17] text-[#0F0E17] placeholder:text-[#635F70]"
                   />
                 </div>
               )}
@@ -548,7 +553,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
               <button
                 type="submit"
                 disabled={loadingMethod !== null}
-                className="w-full mt-2 inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-semibold text-white bg-[#0F0E17] hover:bg-[#232130] active:scale-[0.98] transition-all shadow-xs disabled:opacity-60"
+                className="w-full mt-2 inline-flex items-center justify-center gap-2 py-3 px-4 min-h-[44px] rounded-xl text-xs font-semibold text-white bg-[#0F0E17] hover:bg-[#232130] active:scale-[0.98] transition-all shadow-xs disabled:opacity-60"
               >
                 {loadingMethod === 'email' ? (
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

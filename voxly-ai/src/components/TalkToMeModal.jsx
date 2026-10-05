@@ -73,7 +73,12 @@ export function TalkToMeModal({ isOpen, onClose, onSelectBotState, onStartLive }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0F0E17]/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-md bg-white rounded-2xl p-5 sm:p-6 shadow-2xl border border-[#E4E2EB] overflow-hidden max-h-[90vh] overflow-y-auto">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Audio sample player"
+        className="relative w-full max-w-md bg-white rounded-2xl p-5 sm:p-6 shadow-2xl border border-[#E4E2EB] overflow-hidden max-h-[90vh] overflow-y-auto"
+      >
         <div className="flex items-center justify-between pb-3.5 border-b border-[#E4E2EB] mb-4">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-[#0F0E17] flex items-center justify-center text-white shadow-xs">
@@ -90,10 +95,10 @@ export function TalkToMeModal({ isOpen, onClose, onSelectBotState, onStartLive }
               stop();
               onClose();
             }}
-            className="w-7 h-7 rounded-lg bg-[#FAF9FD] hover:bg-[#F0EEF6] border border-[#E4E2EB] flex items-center justify-center text-[#524E5E] hover:text-[#0F0E17] transition-colors"
+            className="w-8 h-8 sm:w-7 sm:h-7 min-w-[36px] min-h-[36px] rounded-lg bg-[#FAF9FD] hover:bg-[#F0EEF6] border border-[#E4E2EB] flex items-center justify-center text-[#524E5E] hover:text-[#0F0E17] transition-colors"
             aria-label="Close"
           >
-            <X className="w-3.5 h-3.5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
@@ -118,7 +123,7 @@ export function TalkToMeModal({ isOpen, onClose, onSelectBotState, onStartLive }
                   setActiveId(sample.id);
                 }}
                 data-testid={`talk-modal-sample-${sample.id}`}
-                className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition-colors ${
+                className={`px-2.5 py-2 min-h-[36px] rounded-lg text-[11px] font-semibold border transition-colors ${
                   sample.id === activeId
                     ? 'bg-[#0F0E17] text-white border-[#0F0E17]'
                     : 'bg-white text-[#524E5E] border-[#E4E2EB] hover:bg-[#F0EEF6]'
@@ -132,7 +137,7 @@ export function TalkToMeModal({ isOpen, onClose, onSelectBotState, onStartLive }
             type="button"
             onClick={handlePlay}
             data-testid="talk-modal-play"
-            className="w-full py-2.5 rounded-xl text-xs font-semibold text-white bg-[#0F0E17] hover:bg-[#232130] active:scale-[0.98] transition-all"
+            className="w-full py-2.5 min-h-[44px] rounded-xl text-xs font-semibold text-white bg-[#0F0E17] hover:bg-[#232130] active:scale-[0.98] transition-all flex items-center justify-center"
           >
             {isPlaying ? 'Stop' : 'Play sample'}
           </button>
@@ -159,7 +164,7 @@ export function TalkToMeModal({ isOpen, onClose, onSelectBotState, onStartLive }
             type="button"
             onClick={handleStartLive}
             data-testid="talk-modal-start-live"
-            className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold text-white bg-[#6344E7] hover:bg-[#5440d0] active:scale-[0.98] transition-all"
+            className="w-full inline-flex items-center justify-center gap-2 py-2.5 min-h-[44px] rounded-xl text-xs font-semibold text-white bg-[#6344E7] hover:bg-[#5440d0] active:scale-[0.98] transition-all"
           >
             {isAuthenticated ? <Mic className="w-3.5 h-3.5" /> : <LogIn className="w-3.5 h-3.5" />}
             <span>{isAuthenticated ? 'Start live voice' : 'Create a workspace to talk live'}</span>

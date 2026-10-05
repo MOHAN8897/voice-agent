@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "origin": "failed-assert",
+  "expected": "a /api/integrations/composio/connect",
+  "observed": "no request to /api/integrations/composio/connect",
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "e48",
+        "source": {
+          "file": "src/console/modules/IntegrationsModule.jsx",
+          "line": 203,
+          "column": 17
+        }
+      },
+      "action": "click"
+    }
+  ],
+  "id": "1791135134796-click-994dd7d5",
+  "createdAt": 1791135134802,
+  "seen": 1,
+  "lastSeenAt": 1791135134802
+}

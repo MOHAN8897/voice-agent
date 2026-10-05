@@ -41,6 +41,7 @@ class RealtimeVoiceManager:
         stack_override: dict[str, Any] | None = None,
         max_output_tokens: int | None = None,
         wait_ready: bool = True,
+        extra_tools: list[dict] | None = None,
     ) -> Any:
         if call_id in self._sessions:
             raise RuntimeError(f"Realtime voice session already owns call_id={call_id}")
@@ -71,6 +72,7 @@ class RealtimeVoiceManager:
                 "speed": cfg.get("speed"),
                 "silence_ms": cfg.get("silence_ms"),
                 "max_output_tokens": max_output_tokens,
+                "extra_tools": extra_tools or [],
             }
             if hasattr(session, "connect"):
                 import inspect

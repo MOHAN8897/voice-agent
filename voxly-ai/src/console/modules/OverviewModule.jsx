@@ -164,7 +164,7 @@ export function OverviewModule({ onNavigate, onOpenCreateAgent, onOpenBuyNumber 
       </div>
 
       {/* KPI Metrics Ribbon */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         <MetricCard
           title="Total Calls"
           value={String(calls.length)}
@@ -210,19 +210,19 @@ export function OverviewModule({ onNavigate, onOpenCreateAgent, onOpenBuyNumber 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left 2 Cols: Interactive Hourly Call Volume Canvas */}
         <SolidCard className="lg:col-span-2">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
             <div>
               <h3 className="text-sm font-bold text-[#0F0E17]">Call Activity Distribution</h3>
               <p className="text-xs text-[#524E5E]">Inbound reception vs. Outbound campaign calls</p>
             </div>
 
             {/* Segmented Timeframe Toggle */}
-            <div className="flex items-center p-1 rounded-xl bg-[#F0EEF6] border border-[#E4E2EB]">
+            <div className="flex items-center p-1 rounded-xl bg-[#F0EEF6] border border-[#E4E2EB] self-start sm:self-auto">
               {['Today', '7 Days', '30 Days'].map((t) => (
                 <button
                   key={t}
                   onClick={() => setActivityTimeframe(t)}
-                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                  className={`px-3 py-1.5 min-h-[36px] flex items-center rounded-lg text-xs font-semibold transition-all ${
                     activityTimeframe === t
                       ? 'bg-white text-[#0F0E17] shadow-xs'
                       : 'text-[#524E5E] hover:text-[#0F0E17]'

@@ -530,6 +530,7 @@ async def _apply_inbound_policy(call_control_id: str, payload: dict) -> bool:
                 "inbound_policy": decision.to_dict(),
                 "inbound_policy_agent": decision.agent_id,
                 "inbound_greeting": decision.greeting_phrase,
+                "transfer_number": decision.transfer_number,
             },
         )
         if not decision.should_answer:
@@ -752,6 +753,18 @@ async def telnyx_webhook(request: Request):
         record_milestone(str(call_control_id), "answered")
         log_pstn("webhook.answered", timer_key=str(call_control_id), control=call_control_id)
         row = telnyx_call_registry.get(str(call_control_id)) or {}
+        policy = (row.get("inbound_policy") or {}) if isinstance(row.get("inbound_policy"), dict) else {}
+        if policy.get("route") == "transfer":
+            transfer_to = policy.get("transferNumber") or row.get("transfer_number")
+            if transfer_to:
+                logger.info("[TELNYX] executing after-hours transfer to %s for %s", transfer_to, call_control_id)
+                client = TelnyxClient()
+                try:
+                    await client.transfer(str(call_control_id), to=transfer_to)
+                    log_pstn("inbound.transferred", control=call_control_id, to=transfer_to)
+                    return {"ok": True}
+                except Exception as exc:
+                    logger.warning("[TELNYX] transfer failed %s: %s, falling back to agent stream", call_control_id, exc)
         if row.get("voice_check"):
             await _run_voice_check(str(call_control_id))
         else:

@@ -281,6 +281,119 @@ async def test_phase3_compiler_recording_disclosure_injection():
 
 
 @pytest.mark.asyncio
+async def test_dynamic_recording_disclosure_sync_in_call_lifecycle(monkeypatch):
+    from server.call.call_lifecycle_service import call_lifecycle_service
+
+    base_brain = (
+        "@agent_name: Maya\n@company_name: Acme\n@language: en-US\n@direction: inbound\n"
+        "--- SPOKEN LANGUAGE (en-US) ---\n"
+        "Hello, this is Maya from Acme.\n"
+        "--- PLATFORM CALL RULES ---\n"
+        "Speak English only."
+    )
+
+    async def _mock_resolve_agent(aid):
+        return {
+            "agent_id": aid,
+            "tenant_id": "tenant-1",
+            "environment": "development",
+            "default_tier": "medium",
+            "languages": ["en-US"],
+            "recording_disclosure_enabled": True,
+            "recording_disclosure_text": "Custom compliance disclosure notice.",
+        }
+
+    async def _mock_lock_compiled_brain(aid, session_id=None):
+        return "v1", base_brain, "published"
+
+    monkeypatch.setattr(call_lifecycle_service, "_resolve_agent", _mock_resolve_agent)
+    monkeypatch.setattr(call_lifecycle_service, "_lock_compiled_brain", _mock_lock_compiled_brain)
+
+    res = await call_lifecycle_service.start(
+        agent_id="agent-disc-test",
+        session_id="test-disc-session",
+        channel="browser",
+        direction="inbound",
+        language="en-US",
+    )
+    from server.call import call_context
+    ctx = call_context.get(res["call_id"])
+    assert ctx is not None
+    prompt = ctx.compiled_brain_text
+    assert "RECORDING DISCLOSURE POLICY" in prompt
+    assert "Custom compliance disclosure notice." in prompt
+
+    # Test dynamic disabling
+    async def _mock_resolve_agent_disabled(aid):
+        return {
+            "agent_id": aid,
+            "tenant_id": "tenant-1",
+            "environment": "development",
+            "default_tier": "medium",
+            "languages": ["en-US"],
+            "recording_disclosure_enabled": False,
+        }
+
+    monkeypatch.setattr(call_lifecycle_service, "_resolve_agent", _mock_resolve_agent_disabled)
+    res_disabled = await call_lifecycle_service.start(
+        agent_id="agent-disc-test-2",
+        session_id="test-disc-session-2",
+        channel="browser",
+        direction="inbound",
+        language="en-US",
+    )
+    ctx_disabled = call_context.get(res_disabled["call_id"])
+    assert ctx_disabled is not None
+    prompt_disabled = ctx_disabled.compiled_brain_text
+    assert "RECORDING DISCLOSURE POLICY" not in prompt_disabled
+
+
+@pytest.mark.asyncio
+async def test_voicemail_mode_injection_in_call_lifecycle(monkeypatch):
+    from server.call.call_lifecycle_service import call_lifecycle_service
+
+    base_brain = (
+        "@agent_name: Maya\n@company_name: Acme\n@language: en-US\n@direction: inbound\n"
+        "--- SPOKEN LANGUAGE (en-US) ---\n"
+        "Hello, this is Maya from Acme.\n"
+        "--- PLATFORM CALL RULES ---\n"
+        "Speak English only."
+    )
+
+    async def _mock_resolve_agent(aid):
+        return {
+            "agent_id": aid,
+            "tenant_id": "tenant-1",
+            "environment": "development",
+            "default_tier": "medium",
+            "languages": ["en-US"],
+            "recording_disclosure_enabled": False,
+        }
+
+    async def _mock_lock_compiled_brain(aid, session_id=None):
+        return "v1", base_brain, "published"
+
+    monkeypatch.setattr(call_lifecycle_service, "_resolve_agent", _mock_resolve_agent)
+    monkeypatch.setattr(call_lifecycle_service, "_lock_compiled_brain", _mock_lock_compiled_brain)
+
+    res = await call_lifecycle_service.start(
+        agent_id="agent-vm-test",
+        session_id="test-vm-session",
+        channel="pstn",
+        direction="inbound",
+        language="en-US",
+        voicemail_mode=True,
+    )
+    from server.call import call_context
+    ctx = call_context.get(res["call_id"])
+    assert ctx is not None
+    prompt = ctx.compiled_brain_text
+    assert "AFTER-HOURS VOICEMAIL MODE" in prompt
+
+
+
+
+@pytest.mark.asyncio
 async def test_tenant_wide_dnd_blocks_all_agents():
     """Verify that a DND entry added for a tenant blocks dialing regardless of which agent is calling."""
     tenant_id = uuid.uuid4()

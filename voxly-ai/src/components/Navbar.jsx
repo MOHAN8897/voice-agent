@@ -33,7 +33,7 @@ export function Navbar({ onEnterConsole, onWatchDemo, onOpenTour }) {
             window.location.hash = '';
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
-          className="flex items-center gap-2.5 group"
+          className="flex items-center gap-2.5 group min-h-[44px]"
         >
           <div className="w-8 h-8 rounded-lg bg-[#0F0E17] flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
             <svg
@@ -80,22 +80,27 @@ export function Navbar({ onEnterConsole, onWatchDemo, onOpenTour }) {
         <button
           type="button"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden min-w-[44px] min-h-[44px] p-2.5 rounded-xl text-[#0F0E17] hover:bg-[#FAF9FD] border border-[#E4E2EB] flex items-center justify-center"
+          className="md:hidden min-w-[44px] min-h-[44px] p-2.5 rounded-xl text-[#0F0E17] hover:bg-[#FAF9FD] border border-[#E4E2EB] flex items-center justify-center transition-colors active:scale-95"
           aria-label="Toggle navigation"
+          aria-expanded={mobileMenuOpen}
         >
           {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
       </div>
 
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-b border-[#E4E2EB] px-6 py-5 space-y-4 shadow-xl">
+        <div
+          data-testid="mobile-menu"
+          className="md:hidden bg-white/98 backdrop-blur-md border-b border-[#E4E2EB] px-6 py-5 space-y-4 shadow-xl animate-in fade-in slide-in-from-top-2 duration-150"
+        >
           <div className="space-y-1">
             {NAV_LINKS.map((link) => (
               <a
                 key={link.name}
                 href={link.href}
+                data-testid="mobile-nav-link"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block py-2 text-sm font-semibold text-[#0F0E17]"
+                className="min-h-[44px] flex items-center px-3 py-2.5 text-sm font-semibold text-[#0F0E17] rounded-xl hover:bg-[#F0EEF6] active:bg-[#E4E2EB] transition-colors"
               >
                 {link.name}
               </a>
@@ -104,13 +109,15 @@ export function Navbar({ onEnterConsole, onWatchDemo, onOpenTour }) {
           <div className="pt-3 border-t border-[#E4E2EB] flex flex-col gap-2.5">
             <button
               type="button"
+              data-testid="mobile-console-btn"
               onClick={() => {
                 setMobileMenuOpen(false);
                 openConsole();
               }}
-              className="w-full py-3 rounded-xl text-xs font-semibold text-white bg-[#0F0E17] text-center"
+              className="w-full min-h-[44px] py-3 rounded-xl text-xs font-semibold text-white bg-[#0F0E17] hover:bg-[#232130] flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-xs"
             >
-              {isAuthenticated ? 'Open console' : 'Sign in to console'}
+              <span>{isAuthenticated ? 'Open console' : 'Sign in to console'}</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </button>
             <button
               type="button"
@@ -118,7 +125,7 @@ export function Navbar({ onEnterConsole, onWatchDemo, onOpenTour }) {
                 setMobileMenuOpen(false);
                 onWatchDemo?.();
               }}
-              className="w-full py-2.5 text-xs font-semibold text-[#524E5E] rounded-xl border border-[#E4E2EB]"
+              className="w-full min-h-[44px] py-2.5 text-xs font-semibold text-[#524E5E] hover:text-[#0F0E17] rounded-xl border border-[#E4E2EB] hover:bg-[#FAF9FD] flex items-center justify-center active:scale-[0.98] transition-all"
             >
               Watch demo
             </button>

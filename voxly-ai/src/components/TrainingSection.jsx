@@ -71,7 +71,7 @@ export function TrainingSection() {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB] text-[#6344E7] text-xs font-bold tracking-wider uppercase mb-4 shadow-craft-xs">
             <span>Knowledge Architecture</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#0F0E17] tracking-tight leading-[1.12] mb-4">
+          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-[#0F0E17] tracking-tight leading-[1.12] mb-4">
             Teach it how your business works.
           </h2>
           <p className="text-base sm:text-lg text-[#524E5E] leading-relaxed">
@@ -82,13 +82,13 @@ export function TrainingSection() {
 
         {/* Central Visual Architecture Diagram */}
         <div className="max-w-5xl mb-12">
-          <div className="bg-[#FAF9FD] rounded-2xl p-6 sm:p-8 border border-[#E4E2EB] text-left">
+          <div className="bg-[#FAF9FD] rounded-2xl p-4 sm:p-8 border border-[#E4E2EB] text-left">
             <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#524E5E] block mb-4">
               Ingestion Channels (Select to inspect):
             </span>
 
             {/* 5 Ingestion Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3 mb-6">
               {KNOWLEDGE_PILLARS.map((p, idx) => {
                 const Icon = p.icon;
                 const isSelected = activePillar === idx;
@@ -96,7 +96,7 @@ export function TrainingSection() {
                   <button
                     key={p.id}
                     onClick={() => setActivePillar(idx)}
-                    className={`p-4 rounded-xl border text-left transition-all duration-150 flex flex-col justify-between ${
+                    className={`p-3 sm:p-4 rounded-xl border text-left transition-all duration-150 flex flex-col justify-between min-h-[96px] ${
                       isSelected
                         ? 'bg-white border-[#0F0E17] shadow-craft-sm ring-1 ring-[#0F0E17]'
                         : 'bg-white/80 hover:bg-white border-[#E4E2EB] hover:border-[#D1CFDB]'
@@ -117,9 +117,9 @@ export function TrainingSection() {
             </div>
 
             {/* Ingestion Pipeline Bar */}
-            <div className="flex items-center justify-between p-4 rounded-xl bg-white border border-[#E4E2EB]">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-white border border-[#E4E2EB]">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB] flex items-center justify-center text-[#0F0E17]">
+                <div className="w-8 h-8 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB] flex items-center justify-center text-[#0F0E17] shrink-0">
                   <Database className="w-4 h-4" />
                 </div>
                 <div>
@@ -127,7 +127,7 @@ export function TrainingSection() {
                   <span className="text-[11px] text-[#524E5E]">Semantic chunking + strict policy guardrails</span>
                 </div>
               </div>
-              <span className="text-xs font-semibold text-[#10B981] bg-[#10B981]/10 px-2.5 py-1 rounded border border-[#10B981]/20">
+              <span className="text-xs font-semibold text-[#10B981] bg-[#10B981]/10 px-2.5 py-1 rounded border border-[#10B981]/20 self-start sm:self-auto shrink-0">
                 Answers grounded in your material
               </span>
             </div>

@@ -418,7 +418,7 @@ export function AgentTestCallPanel({ agent }) {
               onChange={(e) => setToE164(e.target.value)}
               placeholder="+1555…"
               data-testid="test-call-phone-to"
-              className="mt-1 w-full rounded-xl border border-[#E4E2EB] bg-white px-3 py-2 font-mono text-sm"
+              className="mt-1 w-full rounded-xl border border-[#E4E2EB] bg-white px-3 py-2 font-mono text-base sm:text-xs min-h-[42px] sm:min-h-[38px]"
             />
           </label>
           {fromLine && (
@@ -431,7 +431,7 @@ export function AgentTestCallPanel({ agent }) {
             loading={dialBusy}
             onClick={dialPhone}
             data-testid="test-call-start-phone"
-            className="w-full justify-center"
+            className="w-full justify-center min-h-[44px]"
             disabled={!isActive}
           >
             Call live number

@@ -33,7 +33,7 @@ export function IndustriesSection({ onGetStarted }) {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-white border border-[#E4E2EB] text-[#6344E7] text-xs font-bold tracking-wider uppercase mb-4 shadow-craft-xs">
             <span>Vertical Solutions</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#0F0E17] tracking-tight leading-[1.12] mb-4">
+          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-[#0F0E17] tracking-tight leading-[1.12] mb-4">
             One AI platform. Every conversation.
           </h2>
           <p className="text-base sm:text-lg text-[#524E5E] leading-relaxed">
@@ -93,7 +93,7 @@ export function IndustriesSection({ onGetStarted }) {
                       e.stopPropagation();
                       onGetStarted();
                     }}
-                    className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold text-[#0F0E17] bg-[#FAF9FD] hover:bg-[#F0EEF6] border border-[#E4E2EB] transition-all"
+                    className="w-full flex items-center justify-center gap-1.5 py-2.5 px-3 min-h-[44px] rounded-lg text-xs font-semibold text-[#0F0E17] bg-[#FAF9FD] hover:bg-[#F0EEF6] border border-[#E4E2EB] active:scale-[0.99] transition-all"
                   >
                     <span>Deploy {ind.title} Agent</span>
                     <ArrowRight className="w-3.5 h-3.5" />

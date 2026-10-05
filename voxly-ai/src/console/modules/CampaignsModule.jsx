@@ -479,11 +479,11 @@ export function CampaignsModule() {
   return (
     <div className="space-y-6">
       {/* Main Sub-navigation Tabs */}
-      <div className="flex border-b border-[#E4E2EB] gap-6 text-xs sm:text-sm font-semibold">
+      <div className="flex border-b border-[#E4E2EB] gap-4 sm:gap-6 text-xs sm:text-sm font-semibold overflow-x-auto scrollbar-none touch-pan-x">
         <button
           type="button"
           onClick={() => setActiveMainTab('campaigns')}
-          className={`pb-3 transition-colors border-b-2 flex items-center gap-2 ${
+          className={`pb-3 min-h-[44px] whitespace-nowrap transition-colors border-b-2 flex items-center gap-2 ${
             activeMainTab === 'campaigns'
               ? 'border-[#FF5C35] text-[#FF5C35]'
               : 'border-transparent text-[#524E5E] hover:text-[#0F0E17]'
@@ -491,12 +491,12 @@ export function CampaignsModule() {
           data-testid="campaigns-tab-button"
         >
           <Megaphone className="w-4 h-4" />
-          Campaigns ({campaigns.length})
+          <span>Campaigns ({campaigns.length})</span>
         </button>
         <button
           type="button"
           onClick={() => setActiveMainTab('dnd')}
-          className={`pb-3 transition-colors border-b-2 flex items-center gap-2 ${
+          className={`pb-3 min-h-[44px] whitespace-nowrap transition-colors border-b-2 flex items-center gap-2 ${
             activeMainTab === 'dnd'
               ? 'border-[#FF5C35] text-[#FF5C35]'
               : 'border-transparent text-[#524E5E] hover:text-[#0F0E17]'
@@ -504,7 +504,7 @@ export function CampaignsModule() {
           data-testid="dnd-registry-tab-button"
         >
           <ShieldAlert className="w-4 h-4" />
-          Do Not Call (DND) Registry
+          <span>Do Not Call (DND) Registry</span>
         </button>
       </div>
 

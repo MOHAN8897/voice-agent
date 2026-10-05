@@ -63,7 +63,7 @@ export function AiEmployeeSection({ onGetStarted }) {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-white border border-[#E4E2EB] text-[#6344E7] text-xs font-bold tracking-wider uppercase mb-4 shadow-craft-xs">
             <span>Capabilities</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#0F0E17] tracking-tight leading-[1.12] mb-4">
+          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-[#0F0E17] tracking-tight leading-[1.12] mb-4">
             More than a voice bot.{' '}
             <span className="block text-[#0F0E17]">Your AI employee.</span>
           </h2>
@@ -155,7 +155,7 @@ export function AiEmployeeSection({ onGetStarted }) {
             <div className="pt-6 mt-6 border-t border-white/10">
               <button
                 onClick={onGetStarted}
-                className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-xs font-semibold text-[#0F0E17] bg-white hover:bg-[#FAF9FD] active:scale-[0.98] transition-all"
+                className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 min-h-[44px] rounded-xl text-xs font-semibold text-[#0F0E17] bg-white hover:bg-[#FAF9FD] active:scale-[0.98] transition-all"
               >
                 <span>Build this employee</span>
                 <ArrowRight className="w-3.5 h-3.5" />

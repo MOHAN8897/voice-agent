@@ -16,6 +16,7 @@
     "test:stagehand": "node scripts/stagehand-smoke.mjs"
   },
   "dependencies": {
+    "@nangohq/frontend": "^0.71.12",
     "@react-three/drei": "^9.121.4",
     "@react-three/fiber": "^8.17.14",
     "canvas-confetti": "^1.9.4",

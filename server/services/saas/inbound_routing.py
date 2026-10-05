@@ -62,6 +62,10 @@ async def resolve_inbound_route(to_e164: str | None) -> InboundRoute | None:
         agent = await session.get(Agent, agent_uuid)
         if agent is None or agent.tenant_id != tenant.tenant_id:
             return None
+        agent_status = str(agent.status or "").strip().lower()
+        if agent_status in ("paused", "inactive", "disabled"):
+            logger.info("[SAAS_INBOUND] reject paused/inactive agent=%s did=%s", agent_uuid, e164)
+            return None
         agent_dict = {
             "agent_id": str(agent.agent_id),
             "languages": agent.languages or ["te-IN"],

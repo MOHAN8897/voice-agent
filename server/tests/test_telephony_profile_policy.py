@@ -294,3 +294,32 @@ def test_normalizers_accept_valid_input():
 def test_normalizers_reject_invalid_input(fn, value):
     with pytest.raises(TelephonyProfileError):
         fn(value)
+
+
+def test_paused_agent_declines_inbound():
+    decision = evaluate_inbound_policy(profile(agent_status="paused"), at=IST_10AM)
+    assert decision.should_answer is False
+    assert decision.route == ROUTE_DECLINE
+    assert decision.reason == "agent_paused"
+
+    decision_inactive = evaluate_inbound_policy(profile(agent_status="inactive"), at=IST_10AM)
+    assert decision_inactive.should_answer is False
+    assert decision_inactive.reason == "agent_paused"
+
+
+def test_transfer_action_populates_transfer_number():
+    target = "+919876543210"
+    decision = evaluate_inbound_policy(
+        profile(
+            business_hours=WEEKDAY_9_TO_6,
+            after_hours_action="transfer",
+            transfer_number=target,
+        ),
+        at=IST_11PM,
+    )
+    assert decision.should_answer is True
+    assert decision.route == ROUTE_TRANSFER
+    assert decision.reason == "after_hours_transfer"
+    assert decision.transfer_number == target
+    assert decision.to_dict()["transferNumber"] == target
+

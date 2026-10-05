@@ -93,7 +93,7 @@ export function LeadsModule({ agentId = null, agentName = '' }) {
             <select
               value={outboundFromE164 || ''}
               onChange={(e) => setPreferredOutboundFrom(e.target.value)}
-              className="text-xs border border-[#E4E2EB] rounded-lg px-2 py-1.5 bg-white"
+              className="text-base sm:text-xs min-h-[40px] sm:min-h-[34px] border border-[#E4E2EB] rounded-lg px-2.5 py-1.5 bg-white font-medium text-[#0F0E17]"
               aria-label="Outbound caller ID"
             >
               <option value="">Auto-select DID</option>
@@ -104,7 +104,7 @@ export function LeadsModule({ agentId = null, agentName = '' }) {
               ))}
             </select>
           )}
-          <TactileButton variant="primary" size="sm" onClick={() => setIsAddOpen(true)}>
+          <TactileButton variant="primary" size="sm" className="min-h-[40px] sm:min-h-[34px]" onClick={() => setIsAddOpen(true)}>
             Add lead
           </TactileButton>
         </div>
@@ -150,7 +150,7 @@ export function LeadsModule({ agentId = null, agentName = '' }) {
         isLoading && leads.length === 0 ? (
           <KanbanSkeleton columns={5} />
         ) : (
-          <div className="flex md:grid md:grid-cols-5 gap-4 overflow-x-auto pb-4 max-w-full">
+          <div className="flex md:grid md:grid-cols-5 gap-4 overflow-x-auto pb-4 max-w-full scrollbar-none touch-pan-x">
           {stages.map((stage) => {
             const stageLeads = filteredLeads.filter((l) => l.stage === stage);
             return (
@@ -232,7 +232,7 @@ export function LeadsModule({ agentId = null, agentName = '' }) {
       {/* DATA TABLE VIEW */}
       {viewMode === 'table' && (
         <SolidCard padding="p-0" className="overflow-hidden">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto scrollbar-none touch-pan-x">
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="border-b border-[#E4E2EB] bg-[#FAF9FD] text-[10px] font-bold text-[#8C879A] uppercase tracking-wider">
@@ -316,7 +316,7 @@ export function LeadsModule({ agentId = null, agentName = '' }) {
                   updateLeadStage(selectedLead.id, e.target.value);
                   setSelectedLead({ ...selectedLead, stage: e.target.value });
                 }}
-                className="bg-white border border-[#E4E2EB] rounded-lg px-2.5 py-1 text-xs text-[#0F0E17] font-semibold focus:outline-none focus:border-[#6344E7] transition-colors"
+                className="bg-white border border-[#E4E2EB] rounded-lg px-2.5 py-1.5 text-base sm:text-xs min-h-[38px] sm:min-h-[32px] text-[#0F0E17] font-semibold focus:outline-none focus:border-[#6344E7] transition-colors"
               >
                 {stages.map((st) => (
                   <option key={st} value={st}>
@@ -327,7 +327,7 @@ export function LeadsModule({ agentId = null, agentName = '' }) {
             </div>
 
             {/* Contact Details */}
-            <div className="grid grid-cols-2 gap-3 p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
               <div>
                 <span className="text-[10px] text-[#8C879A] uppercase block">Phone</span>
                 <span className="font-mono text-[#0F0E17] font-semibold">{selectedLead.phone}</span>
@@ -358,17 +358,18 @@ export function LeadsModule({ agentId = null, agentName = '' }) {
                   updateLeadNotes(selectedLead.id, e.target.value);
                   setSelectedLead({ ...selectedLead, notes: e.target.value });
                 }}
-                className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl p-3 text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
+                className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl p-3 text-base sm:text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
               />
             </div>
 
             {/* Modal Bottom CTA */}
-            <div className="flex items-center justify-between pt-3 border-t border-[#E4E2EB]">
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t border-[#E4E2EB]">
               <span className="text-[11px] text-[#8C879A]">Saved to your tenant CRM</span>
               <TactileButton
                 variant="primary"
                 size="sm"
                 icon={PhoneCall}
+                className="w-full sm:w-auto min-h-[42px] sm:min-h-[36px]"
                 onClick={() => {
                   handleTriggerCall(selectedLead);
                   setSelectedLead(null);
@@ -385,25 +386,25 @@ export function LeadsModule({ agentId = null, agentName = '' }) {
         <div className="space-y-3">
           {addError && <p className="text-xs text-red-700">{addError}</p>}
           <input
-            className="w-full border border-[#E4E2EB] rounded-lg p-2 text-xs"
+            className="w-full border border-[#E4E2EB] rounded-lg p-2.5 text-base sm:text-xs min-h-[42px] sm:min-h-[36px] bg-white text-[#0F0E17]"
             placeholder="Name"
             value={addForm.name}
             onChange={(e) => setAddForm({ ...addForm, name: e.target.value })}
           />
           <input
-            className="w-full border border-[#E4E2EB] rounded-lg p-2 text-xs"
+            className="w-full border border-[#E4E2EB] rounded-lg p-2.5 text-base sm:text-xs min-h-[42px] sm:min-h-[36px] bg-white text-[#0F0E17]"
             placeholder="Phone (E.164)"
             value={addForm.phone}
             onChange={(e) => setAddForm({ ...addForm, phone: e.target.value })}
           />
           <input
-            className="w-full border border-[#E4E2EB] rounded-lg p-2 text-xs"
+            className="w-full border border-[#E4E2EB] rounded-lg p-2.5 text-base sm:text-xs min-h-[42px] sm:min-h-[36px] bg-white text-[#0F0E17]"
             placeholder="Email"
             value={addForm.email}
             onChange={(e) => setAddForm({ ...addForm, email: e.target.value })}
           />
           <textarea
-            className="w-full border border-[#E4E2EB] rounded-lg p-2 text-xs"
+            className="w-full border border-[#E4E2EB] rounded-lg p-2.5 text-base sm:text-xs bg-white text-[#0F0E17]"
             placeholder="Notes"
             rows={3}
             value={addForm.notes}
@@ -412,6 +413,7 @@ export function LeadsModule({ agentId = null, agentName = '' }) {
           <TactileButton
             variant="primary"
             size="sm"
+            className="w-full sm:w-auto min-h-[42px] sm:min-h-[36px]"
             onClick={async () => {
               setAddError(null);
               try {

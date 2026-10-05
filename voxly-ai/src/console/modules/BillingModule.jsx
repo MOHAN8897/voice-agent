@@ -238,7 +238,7 @@ export function BillingModule() {
                   disabled={payBusy || !razorpayEnabled}
                   onClick={() => handleTopupUsd(usd)}
                   data-testid={`billing-topup-usd-${usd}`}
-                  className="px-3.5 py-1.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] hover:border-[#6344E7] text-xs font-mono font-bold text-[#0F0E17] hover:text-[#6344E7] active:scale-[0.98] transition-all shadow-craft-xs disabled:opacity-50"
+                  className="px-3.5 py-2 min-h-[38px] rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] hover:border-[#6344E7] text-xs font-mono font-bold text-[#0F0E17] hover:text-[#6344E7] active:scale-[0.98] transition-all shadow-craft-xs disabled:opacity-50"
                 >
                   +${usd}
                 </button>
@@ -318,7 +318,7 @@ export function BillingModule() {
                     setThreshold(v);
                     updateAutoRechargeSettings(v, amount);
                   }}
-                  className="w-16 bg-white border border-[#E4E2EB] rounded-lg px-2 py-1 text-right text-[#0F0E17] focus:outline-none focus:border-[#6344E7] shadow-craft-xs"
+                  className="w-20 bg-white border border-[#E4E2EB] rounded-lg px-2 py-1.5 text-right text-base sm:text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] shadow-craft-xs"
                 />
               </div>
             </div>
@@ -335,7 +335,7 @@ export function BillingModule() {
                     setAmount(v);
                     updateAutoRechargeSettings(threshold, v);
                   }}
-                  className="w-16 bg-white border border-[#E4E2EB] rounded-lg px-2 py-1 text-right text-[#0F0E17] focus:outline-none focus:border-[#6344E7] shadow-craft-xs"
+                  className="w-20 bg-white border border-[#E4E2EB] rounded-lg px-2 py-1.5 text-right text-base sm:text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] shadow-craft-xs"
                 />
               </div>
             </div>

@@ -41,7 +41,7 @@ export function PricingSection({ onSelectPlan }) {
             <button
               type="button"
               onClick={() => setAnnual(false)}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              className={`px-3.5 py-2 min-h-[40px] flex items-center rounded-lg text-xs font-semibold transition-all ${
                 !annual
                   ? 'bg-white text-[#0F0E17] shadow-craft-xs'
                   : 'text-[#524E5E] hover:text-[#0F0E17]'
@@ -52,14 +52,14 @@ export function PricingSection({ onSelectPlan }) {
             <button
               type="button"
               onClick={() => setAnnual(true)}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              className={`flex items-center gap-1.5 px-3.5 py-2 min-h-[40px] rounded-lg text-xs font-semibold transition-all ${
                 annual
                   ? 'bg-white text-[#0F0E17] shadow-craft-xs'
                   : 'text-[#524E5E] hover:text-[#0F0E17]'
               }`}
             >
               <span>Annual Billing</span>
-              <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-[#0F0E17] text-white">
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#0F0E17] text-white">
                 -20%
               </span>
             </button>
@@ -112,13 +112,13 @@ export function PricingSection({ onSelectPlan }) {
                     {tier.description}
                   </p>
 
-                  <div className="flex items-baseline gap-1 mb-6 pb-6 border-b border-[#E4E2EB]">
+                  <div className="flex items-baseline flex-wrap gap-1.5 mb-6 pb-6 border-b border-[#E4E2EB]">
                     <span className="text-4xl font-extrabold text-[#0F0E17] tracking-tight">
                       ${price}
                     </span>
                     <span className="text-xs font-semibold text-[#524E5E]">/ month</span>
                     {annual && (
-                      <span className="text-[11px] font-mono text-[#15803D] ml-2 font-bold">
+                      <span className="text-[11px] font-mono text-[#15803D] font-bold">
                         (Billed Annually)
                       </span>
                     )}
@@ -151,7 +151,7 @@ export function PricingSection({ onSelectPlan }) {
                     e.stopPropagation();
                     handleConfirm(tier.name);
                   }}
-                  className={`w-full py-3.5 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2 active:scale-[0.98] ${
+                  className={`w-full py-3.5 min-h-[44px] rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2 active:scale-[0.98] ${
                     isSelected
                       ? 'bg-[#0F0E17] hover:bg-[#232130] text-white shadow-xs font-bold'
                       : 'bg-[#FAF9FD] hover:bg-[#F0EEF6] border border-[#E4E2EB] text-[#0F0E17]'

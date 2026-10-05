@@ -26,7 +26,7 @@ class DurableJob:
 
     call_id: str
     tenant_id: str
-    job_type: str  # "post_call_summary" | "recording_upload" | "composio_action"
+    job_type: str  # "post_call_summary" | "recording_upload" | "nango_action" | "composio_action"
     payload: dict[str, Any] = field(default_factory=dict)
     job_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     status: JobStatus = JobStatus.PENDING

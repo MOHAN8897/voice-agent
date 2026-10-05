@@ -17,6 +17,7 @@ import { TactileButton } from '../ui/TactileButton';
 import { AgentCardsGridSkeleton } from '../ui/Skeleton';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { AgentStudioModule } from './AgentStudioModule';
+import { ErrorBoundary } from '../ui/ErrorBoundary';
 
 export function EmployeesModule({
   onNavigate,
@@ -87,13 +88,20 @@ export function EmployeesModule({
 
   if (inWorkbench) {
     return (
-      <AgentStudioModule
-        onNavigate={onNavigate}
-        onOpenBuyNumber={onOpenBuyNumber}
-        flowStep={employeeFlowStep}
-        onFlowStepChange={(step) => onEmployeeFlowStepChange?.(step, selectedAgentId)}
-        onBackToFleet={onBackToFleet}
-      />
+      <ErrorBoundary
+        key={selectedAgentId}
+        title="Unable to load AI Employee Studio"
+        description="An unexpected error occurred while rendering the agent workspace. You can return to your agent fleet or retry."
+        onRetry={onBackToFleet}
+      >
+        <AgentStudioModule
+          onNavigate={onNavigate}
+          onOpenBuyNumber={onOpenBuyNumber}
+          flowStep={employeeFlowStep}
+          onFlowStepChange={(step) => onEmployeeFlowStepChange?.(step, selectedAgentId)}
+          onBackToFleet={onBackToFleet}
+        />
+      </ErrorBoundary>
     );
   }
 
@@ -118,7 +126,7 @@ export function EmployeesModule({
       </div>
 
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-2.5 rounded-2xl bg-white border border-[#E4E2EB] shadow-craft-xs">
-        <div className="flex items-center p-1 rounded-xl bg-[#F0EEF6] border border-[#E4E2EB]">
+        <div className="flex items-center p-1 rounded-xl bg-[#F0EEF6] border border-[#E4E2EB] overflow-x-auto scrollbar-none touch-pan-x">
           {['All', 'Active', 'Paused', 'Draft'].map((tab) => {
             const count =
               tab === 'All'
@@ -128,7 +136,7 @@ export function EmployeesModule({
               <button
                 key={tab}
                 onClick={() => setFilter(tab)}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                className={`px-3 py-1.5 min-h-[36px] flex items-center whitespace-nowrap rounded-lg text-xs font-semibold transition-all ${
                   filter === tab
                     ? 'bg-white text-[#0F0E17] shadow-xs'
                     : 'text-[#524E5E] hover:text-[#0F0E17]'
@@ -140,14 +148,14 @@ export function EmployeesModule({
           })}
         </div>
 
-        <div className="relative min-w-[240px]">
+        <div className="relative w-full sm:w-auto sm:min-w-[240px]">
           <Search className="w-3.5 h-3.5 text-[#524E5E] absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search agents..."
-            className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl pl-8 pr-3 py-1.5 text-xs text-[#0F0E17] placeholder-[#8C879A] focus:outline-none focus:border-[#6344E7] transition-colors"
+            className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl pl-8 pr-3 py-2 sm:py-1.5 min-h-[40px] sm:min-h-[34px] text-base sm:text-xs text-[#0F0E17] placeholder-[#8C879A] focus:outline-none focus:border-[#6344E7] transition-colors"
           />
         </div>
       </div>
@@ -163,7 +171,7 @@ export function EmployeesModule({
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
         {filteredAgents.map((agent) => (
-          <SolidCard key={agent.id} className="flex flex-col justify-between hover:shadow-craft-sm transition-shadow">
+          <SolidCard key={agent.id} data-testid="agent-card" className="flex flex-col justify-between hover:shadow-craft-sm transition-shadow">
             <div className="space-y-4">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-3">
@@ -226,6 +234,7 @@ export function EmployeesModule({
                   variant="primary"
                   icon={Sliders}
                   onClick={() => openWorkbench(agent.id, 'overview')}
+                  data-testid="agent-open-builder"
                 >
                   Open builder
                 </TactileButton>
@@ -235,6 +244,7 @@ export function EmployeesModule({
                   variant="secondary"
                   icon={Play}
                   onClick={() => openWorkbench(agent.id, 'script')}
+                  data-testid="agent-open-script"
                 >
                   Script
                 </TactileButton>
@@ -244,6 +254,7 @@ export function EmployeesModule({
                   variant="ghost"
                   icon={FileCode2}
                   onClick={() => openWorkbench(agent.id, 'calls')}
+                  data-testid="agent-open-calls"
                 >
                   Calls
                 </TactileButton>

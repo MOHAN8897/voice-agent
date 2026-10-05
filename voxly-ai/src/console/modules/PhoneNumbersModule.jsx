@@ -280,7 +280,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
 
       {/* Numbers Inventory Table Card */}
       <SolidCard padding="p-0" className="overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto touch-pan-x">
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-[#E4E2EB] bg-[#FAF9FD] text-[10px] font-bold text-[#8C879A] uppercase tracking-wider">
@@ -531,7 +531,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                   <select
                     value={selectedCountry}
                     onChange={(e) => setSelectedCountry(e.target.value)}
-                    className="w-full bg-white border border-[#E4E2EB] rounded-lg p-2 text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
+                    className="w-full bg-white border border-[#E4E2EB] rounded-lg p-2 min-h-[40px] sm:min-h-[34px] text-base sm:text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
                     data-testid="buy-number-country"
                   >
                     {countries.map((c) => (
@@ -548,7 +548,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                   <select
                     value={selectedType}
                     onChange={(e) => setSelectedType(e.target.value)}
-                    className="w-full bg-white border border-[#E4E2EB] rounded-lg p-2 text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
+                    className="w-full bg-white border border-[#E4E2EB] rounded-lg p-2 min-h-[40px] sm:min-h-[34px] text-base sm:text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
                   >
                     <option value="Local DID">Local DID (Area Code)</option>
                     <option value="Toll-Free">Toll-Free (800 / 888)</option>
@@ -564,13 +564,13 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                     value={searchAreaCode}
                     onChange={(e) => setSearchAreaCode(e.target.value)}
                     placeholder="e.g. 415, 212, 800"
-                    className="w-full bg-white border border-[#E4E2EB] rounded-lg p-2 text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
+                    className="w-full bg-white border border-[#E4E2EB] rounded-lg p-2 min-h-[40px] sm:min-h-[34px] text-base sm:text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
                   />
                 </div>
               </div>
 
               {/* Direct Agent Binding Dropdown */}
-              <div className="p-3 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] flex items-center justify-between gap-4">
+              <div className="p-3 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <span className="text-xs font-bold text-[#0F0E17] block">Assign Directly to AI Employee</span>
                   <span className="text-[11px] text-[#524E5E]">Optional: Route all inbound traffic immediately to this agent.</span>
@@ -578,7 +578,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                 <select
                   value={targetAgentId}
                   onChange={(e) => setTargetAgentId(e.target.value)}
-                  className="bg-white border border-[#E4E2EB] rounded-xl px-3 py-1.5 text-xs text-[#0F0E17] font-semibold focus:outline-none focus:border-[#6344E7] transition-colors"
+                  className="bg-white border border-[#E4E2EB] rounded-xl px-3 py-2 sm:py-1.5 min-h-[40px] sm:min-h-[34px] text-base sm:text-xs text-[#0F0E17] font-semibold focus:outline-none focus:border-[#6344E7] transition-colors"
                 >
                   <option value="">Leave Unassigned (Pool)</option>
                   {agents.map((a) => (

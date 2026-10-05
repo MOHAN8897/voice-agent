@@ -62,7 +62,7 @@ def normalize_gemini_live_voice(voice: str | None) -> str:
     return mapped
 
 
-def _gemini_tools() -> list[types.Tool]:
+def _gemini_tools(extra_tools: list[dict] | None = None) -> list[types.Tool]:
     decls: list[types.FunctionDeclaration] = []
     for tool in (*realtime_hangup_tool_declarations(), REQUEST_LANGUAGE_CALLBACK_TOOL, CALL_ACTION_TOOL):
         decls.append(
@@ -72,6 +72,18 @@ def _gemini_tools() -> list[types.Tool]:
                 parameters_json_schema=tool.get("parameters"),
             )
         )
+    # Add tenant-specific integration tools
+    for tool in (extra_tools or []):
+        try:
+            decls.append(
+                types.FunctionDeclaration(
+                    name=tool["name"],
+                    description=tool.get("description", ""),
+                    parameters_json_schema=tool.get("parameters"),
+                )
+            )
+        except Exception:
+            pass
     return [types.Tool(function_declarations=decls)]
 
 
@@ -187,6 +199,7 @@ class GeminiLiveVoiceAdapter:
         speed: float | None = None,
         silence_ms: int | None = None,
         include_tools: bool = True,
+        extra_tools: list[dict] | None = None,
     ) -> None:
         _ = temperature, noise_reduction, speed
         key = (self._api_key or _api_key()).strip()
@@ -238,7 +251,7 @@ class GeminiLiveVoiceAdapter:
             ),
         }
         if include_tools:
-            connect_kwargs["tools"] = _gemini_tools()
+            connect_kwargs["tools"] = _gemini_tools(extra_tools=extra_tools)
         config = types.LiveConnectConfig(**connect_kwargs)
         aad = getattr(connect_kwargs.get("realtime_input_config"), "automatic_activity_detection", None)
         self.last_session = {

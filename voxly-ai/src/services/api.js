@@ -623,6 +623,14 @@ export const api = {
       return await api.request('GET', '/api/auth/me');
     },
 
+    async magicLink(email) {
+      return await api.request('POST', '/api/auth/magic-link', { email });
+    },
+
+    async ssoLogin(domain) {
+      return await api.request('POST', '/api/auth/sso', { domain });
+    },
+
     async submitOnboardingSurvey(data) {
       return await api.request('POST', '/api/auth/onboarding-survey', data);
     },
@@ -676,6 +684,9 @@ export const api = {
     /** What the live inbound path would decide right now, and why. */
     async getEffectiveTelephony(agentId) {
       return await api.request('GET', `/api/agents/${agentId}/telephony-profile/effective`);
+    },
+    async getAgentProfile(agentId) {
+      return await api.telephony.getAgentProfile(agentId);
     },
     async get(id) {
       const data = await api.request('GET', `/api/agents/${id}`);
@@ -878,6 +889,21 @@ export const api = {
     },
     async saveAgentCompliance(agentId, body) {
       return await api.request('PUT', `/api/agents/${encodeURIComponent(agentId)}/compliance`, body);
+    },
+    /** Operational phone profile + live inbound decision for an agent. */
+    async getAgentProfile(agentId) {
+      const [profData, effData] = await Promise.all([
+        api.agents.getTelephonyProfile(agentId).catch(() => ({ profile: {} })),
+        api.agents.getEffectiveTelephony(agentId).catch(() => null),
+      ]);
+      return {
+        profile: profData?.profile || {},
+        decision: effData?.decision || null,
+        afterHoursActions: profData?.afterHoursActions || [],
+      };
+    },
+    async saveAgentProfile(agentId, profile) {
+      return await api.agents.saveTelephonyProfile(agentId, profile);
     },
     async getCatalog(country = 'US') {
       const data = await api.request('GET', `/api/telephony/numbers/search?country=${encodeURIComponent(country)}`);

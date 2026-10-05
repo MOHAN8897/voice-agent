@@ -164,11 +164,11 @@ export function Footer({ onOpenLegal }) {
                     }}
                     placeholder="work@company.com"
                     aria-label="Work email address"
-                    className="w-full text-xs px-3 py-2 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] focus:outline-none focus:border-[#0F0E17] text-[#0F0E17] placeholder:text-[#635F70]"
+                    className="w-full text-base sm:text-xs px-3 py-2 min-h-[44px] sm:min-h-[36px] rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] focus:outline-none focus:border-[#0F0E17] text-[#0F0E17] placeholder:text-[#635F70]"
                   />
                   <button
                     type="submit"
-                    className="p-2 rounded-xl bg-[#0F0E17] text-white hover:bg-[#232130] active:scale-[0.98] transition-all"
+                    className="p-2 min-w-[44px] min-h-[44px] sm:min-w-[36px] sm:min-h-[36px] flex items-center justify-center rounded-xl bg-[#0F0E17] text-white hover:bg-[#232130] active:scale-[0.98] transition-all shrink-0"
                     aria-label="Subscribe to newsletter"
                   >
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -184,26 +184,26 @@ export function Footer({ onOpenLegal }) {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#524E5E]">
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#524E5E] text-center sm:text-left">
           <div>
             © {new Date().getFullYear()} Voxly AI Inc. All rights reserved.
           </div>
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center justify-center sm:justify-end gap-x-6 gap-y-2">
             <button
               type="button"
               onClick={() => onOpenLegal && onOpenLegal('terms')}
-              className="hover:text-[#0F0E17] transition-colors"
+              className="hover:text-[#0F0E17] transition-colors py-1 min-h-[36px] flex items-center"
             >
               Terms of Service
             </button>
             <button
               type="button"
               onClick={() => onOpenLegal && onOpenLegal('privacy')}
-              className="hover:text-[#0F0E17] transition-colors"
+              className="hover:text-[#0F0E17] transition-colors py-1 min-h-[36px] flex items-center"
             >
               Privacy Policy
             </button>
-            <span className="flex items-center gap-1 text-[#524E5E]">
+            <span className="flex items-center gap-1 text-[#524E5E] py-1">
               <ShieldCheck className="w-3.5 h-3.5 text-[#10B981]" />
               <span>TLS 1.3 / SRTP Encrypted</span>
             </span>

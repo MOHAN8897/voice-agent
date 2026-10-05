@@ -104,7 +104,12 @@ export function WatchDemoModal({ isOpen, onClose, onSelectBotState, onTryLive })
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0F0E17]/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-lg bg-white rounded-2xl p-5 sm:p-6 shadow-2xl border border-[#E4E2EB] overflow-hidden">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Product walkthrough demo"
+        className="relative w-full max-w-lg bg-white rounded-2xl p-5 sm:p-6 shadow-2xl border border-[#E4E2EB] overflow-hidden"
+      >
         <div className="flex items-center justify-between pb-3.5 border-b border-[#E4E2EB] mb-4">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-[#0F0E17] flex items-center justify-center text-white shadow-xs">
@@ -135,10 +140,10 @@ export function WatchDemoModal({ isOpen, onClose, onSelectBotState, onTryLive })
               stop();
               onClose();
             }}
-            className="w-7 h-7 rounded-lg bg-[#FAF9FD] hover:bg-[#F0EEF6] border border-[#E4E2EB] flex items-center justify-center text-[#524E5E] hover:text-[#0F0E17] transition-colors"
+            className="w-8 h-8 sm:w-7 sm:h-7 min-w-[36px] min-h-[36px] rounded-lg bg-[#FAF9FD] hover:bg-[#F0EEF6] border border-[#E4E2EB] flex items-center justify-center text-[#524E5E] hover:text-[#0F0E17] transition-colors"
             aria-label="Close walkthrough"
           >
-            <X className="w-3.5 h-3.5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
@@ -171,7 +176,7 @@ export function WatchDemoModal({ isOpen, onClose, onSelectBotState, onTryLive })
           })}
         </ol>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-3.5 border-t border-[#E4E2EB]">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3.5 border-t border-[#E4E2EB]">
           <div className="flex items-center gap-1.5 text-xs text-[#10B981] font-mono font-medium">
             <CheckCircle2 className="w-3.5 h-3.5" />
             <span>{isPlaying ? 'Playing real audio' : 'Real samples'}</span>
@@ -184,7 +189,7 @@ export function WatchDemoModal({ isOpen, onClose, onSelectBotState, onTryLive })
                 stop();
                 setIndex(0);
               }}
-              className="p-2 rounded-lg bg-[#FAF9FD] hover:bg-[#F0EEF6] border border-[#E4E2EB] text-[#524E5E]"
+              className="p-2 min-h-[40px] min-w-[40px] flex items-center justify-center rounded-lg bg-[#FAF9FD] hover:bg-[#F0EEF6] border border-[#E4E2EB] text-[#524E5E]"
               title="Restart"
               aria-label="Restart walkthrough"
             >
@@ -195,7 +200,7 @@ export function WatchDemoModal({ isOpen, onClose, onSelectBotState, onTryLive })
               <button
                 type="button"
                 onClick={onTryLive}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-[#0F0E17] bg-white border border-[#E4E2EB] hover:bg-[#FAF9FD] active:scale-[0.98] transition-all"
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2 min-h-[40px] rounded-xl text-xs font-semibold text-[#0F0E17] bg-white border border-[#E4E2EB] hover:bg-[#FAF9FD] active:scale-[0.98] transition-all"
               >
                 <Mic className="w-3.5 h-3.5" />
                 <span>Try live</span>
@@ -206,7 +211,7 @@ export function WatchDemoModal({ isOpen, onClose, onSelectBotState, onTryLive })
               type="button"
               onClick={togglePlay}
               data-testid="walkthrough-toggle"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-[#0F0E17] hover:bg-[#232130] active:scale-[0.98] transition-all shadow-xs"
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2 min-h-[40px] rounded-xl text-xs font-semibold text-white bg-[#0F0E17] hover:bg-[#232130] active:scale-[0.98] transition-all shadow-xs"
             >
               {isPlaying ? <Square className="w-3.5 h-3.5 fill-current" /> : <Play className="w-3.5 h-3.5 fill-current" />}
               <span>{isPlaying ? 'Stop' : 'Play'}</span>

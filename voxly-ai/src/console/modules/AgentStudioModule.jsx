@@ -35,6 +35,7 @@ import { api } from '../../services/api';
 import { AgentOverview } from './agent-workspace/AgentOverview';
 import { AgentCallsPanel } from './agent-workspace/AgentCallsPanel';
 import { AgentSettingsPanel } from './agent-workspace/AgentSettingsPanel';
+import { ErrorBoundary } from '../ui/ErrorBoundary';
 import { resolveEmployeeStep } from '../employeeFlowHash';
 
 /**
@@ -584,7 +585,7 @@ export function AgentStudioModule({
                 value={selectedAgentId}
                 onChange={(e) => void selectAgent(e.target.value)}
                 data-testid="agent-studio-switcher"
-                className="bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-2.5 py-1 text-sm font-bold text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
+                className="bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-2.5 py-1.5 min-h-[40px] sm:min-h-[34px] text-base sm:text-sm font-bold text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
               >
                 {agents.map((a) => (
                   <option key={a.id} value={a.id}>
@@ -611,6 +612,7 @@ export function AgentStudioModule({
               setTestCallOpen(true);
             }}
             data-testid="agent-test-call"
+            className="min-h-[38px]"
           >
             Test call
           </TactileButton>
@@ -622,6 +624,7 @@ export function AgentStudioModule({
             onClick={handleSave}
             disabled={saving}
             data-testid="agent-save"
+            className="min-h-[38px]"
           >
             {isSaved ? 'Saved!' : saving ? 'Saving…' : 'Save & Publish'}
           </TactileButton>
@@ -630,7 +633,7 @@ export function AgentStudioModule({
 
       {/* Tabs Navigation Bar */}
       <div
-        className="flex items-center gap-1 p-1.5 rounded-2xl bg-white border border-[#E4E2EB] overflow-x-auto shadow-craft-xs"
+        className="flex items-center gap-1 p-1.5 rounded-2xl bg-white border border-[#E4E2EB] overflow-x-auto scrollbar-none touch-pan-x shadow-craft-xs"
         role="tablist"
         aria-label="Agent workspace"
       >
@@ -647,7 +650,7 @@ export function AgentStudioModule({
               aria-controls={`agent-panel-${tab.id}`}
               data-testid={`agent-tab-${tab.id}`}
               onClick={() => selectTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 min-h-[40px] rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
                 isActive
                   ? 'bg-[#0F0E17] text-white shadow-xs font-bold'
                   : 'text-[#524E5E] hover:text-[#0F0E17] hover:bg-[#FAF9FD]'
@@ -668,7 +671,9 @@ export function AgentStudioModule({
           aria-labelledby="agent-tab-overview"
           className="animate-in fade-in duration-150"
         >
-          <AgentOverview agent={selectedAgent} onOpenTab={selectTab} />
+          <ErrorBoundary title="Unable to load agent overview">
+            <AgentOverview agent={selectedAgent} onOpenTab={selectTab} />
+          </ErrorBoundary>
         </div>
       )}
 
@@ -1115,12 +1120,14 @@ export function AgentStudioModule({
             Phone calls use your published script and wallet credits. Incoming and outgoing calls use the
             same {stackLabel} engine as the browser practice call.
           </div>
-          <AgentCallsPanel
-            agentId={selectedAgent.id}
-            agentName={selectedAgent.name}
-            initialPanel={callPanel}
-            onNavigateToSettings={() => selectTab('settings')}
-          />
+          <ErrorBoundary title="Unable to load agent calls panel">
+            <AgentCallsPanel
+              agentId={selectedAgent.id}
+              agentName={selectedAgent.name}
+              initialPanel={callPanel}
+              onNavigateToSettings={() => selectTab('settings')}
+            />
+          </ErrorBoundary>
         </div>
       )}
 
@@ -1132,7 +1139,9 @@ export function AgentStudioModule({
           aria-labelledby="agent-tab-settings"
           className="animate-in fade-in duration-150"
         >
-          <AgentSettingsPanel agent={selectedAgent} onOpenBuyNumber={onOpenBuyNumber} />
+          <ErrorBoundary title="Unable to load agent settings">
+            <AgentSettingsPanel agent={selectedAgent} onOpenBuyNumber={onOpenBuyNumber} />
+          </ErrorBoundary>
         </div>
       )}
 
@@ -1149,7 +1158,9 @@ export function AgentStudioModule({
           maxWidth="max-w-lg"
         >
           <div data-testid="agent-test-call-panel">
-            <AgentTestCallPanel agent={selectedAgent} />
+            <ErrorBoundary title="Unable to initialize test call">
+              <AgentTestCallPanel agent={selectedAgent} />
+            </ErrorBoundary>
           </div>
         </Modal>
       )}

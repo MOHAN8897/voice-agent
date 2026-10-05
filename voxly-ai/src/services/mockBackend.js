@@ -312,6 +312,78 @@ export const mockBackend = {
       return { status: 201, data: clone };
     }
 
+    const agentTelephonyProfileMatch = cleanEndpoint.match(/^\/api\/agents\/([a-zA-Z0-9_-]+)\/telephony-profile$/);
+    if (agentTelephonyProfileMatch) {
+      if (method === 'GET') {
+        return {
+          status: 200,
+          data: {
+            profile: {
+              inboundEnabled: true,
+              outboundEnabled: true,
+              businessHours: {
+                mon: [{ open: '09:00', close: '18:00' }],
+                tue: [{ open: '09:00', close: '18:00' }],
+                wed: [{ open: '09:00', close: '18:00' }],
+                thu: [{ open: '09:00', close: '18:00' }],
+                fri: [{ open: '09:00', close: '18:00' }],
+                sat: [{ open: '09:00', close: '14:00' }],
+              },
+              timezone: 'Asia/Kolkata',
+              afterHoursAction: 'voicemail',
+            },
+            afterHoursActions: ['voicemail', 'hangup', 'transfer', 'always'],
+          },
+        };
+      }
+      if (method === 'PUT') {
+        return {
+          status: 200,
+          data: {
+            profile: body || {},
+          },
+        };
+      }
+    }
+
+    const agentEffectiveTelephonyMatch = cleanEndpoint.match(/^\/api\/agents\/([a-zA-Z0-9_-]+)\/telephony-profile\/effective$/);
+    if (agentEffectiveTelephonyMatch && method === 'GET') {
+      return {
+        status: 200,
+        data: {
+          decision: {
+            reason: 'in_hours',
+            afterHours: false,
+            greetingPhrase: '',
+          },
+          hasProfile: true,
+          timezone: 'Asia/Kolkata',
+        },
+      };
+    }
+
+    const agentComplianceMatch = cleanEndpoint.match(/^\/api\/agents\/([a-zA-Z0-9_-]+)\/compliance$/);
+    if (agentComplianceMatch) {
+      if (method === 'GET') {
+        return {
+          status: 200,
+          data: {
+            country: 'IN',
+            acknowledged: { dnd: true, consent: true, disclosure: true },
+          },
+        };
+      }
+      if (method === 'PUT') {
+        return {
+          status: 200,
+          data: {
+            country: 'IN',
+            acknowledged: body?.acknowledged || {},
+          },
+        };
+      }
+    }
+
     // =========================================================================
     // 3. TELEPHONY & VIRTUAL NUMBER ENDPOINTS
     // =========================================================================
@@ -462,6 +534,21 @@ export const mockBackend = {
       const call = db.calls.find((c) => c.id === callDetailMatch[1]);
       if (!call) return { status: 404, data: { error: 'Call record not found' } };
       return { status: 200, data: call };
+    }
+
+    if (cleanEndpoint === '/api/calls/stats' && method === 'GET') {
+      const total = db.calls.length;
+      return {
+        status: 200,
+        data: {
+          total,
+          connected: total,
+          missed: 0,
+          inbound: Math.ceil(total / 2),
+          outbound: Math.floor(total / 2),
+          avgDurationSec: 45,
+        },
+      };
     }
 
     // =========================================================================

@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "composio": {
+      "serverUrl": "https://connect.composio.dev/mcp"
+    }
+  }
+}

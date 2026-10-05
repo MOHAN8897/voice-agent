@@ -21,7 +21,7 @@ export function AnalyticsSection() {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-white border border-[#E4E2EB] text-[#6344E7] text-xs font-bold tracking-wider uppercase mb-4 shadow-craft-xs">
             <span>Reporting</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#0F0E17] tracking-tight leading-[1.12] mb-4">
+          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-[#0F0E17] tracking-tight leading-[1.12] mb-4">
             {PERFORMANCE_STATS.headline}
           </h2>
           <p className="text-base sm:text-lg text-[#524E5E] leading-relaxed">
@@ -30,7 +30,7 @@ export function AnalyticsSection() {
         </div>
 
         {/* Large Top Dashboard Mockup Card */}
-        <div className="max-w-5xl bg-white rounded-2xl border border-[#E4E2EB] shadow-craft-md p-6 sm:p-8 mb-10">
+        <div className="max-w-5xl bg-white rounded-2xl border border-[#E4E2EB] shadow-craft-md p-4 sm:p-8 mb-10">
 
           {/* Labelled as an example, because the numbers are. This page used to carry five
               mock dashboards in five sections, each showing a different invented business —
@@ -46,9 +46,9 @@ export function AnalyticsSection() {
           </div>
 
           {/* 4 Primary Top Metrics Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pb-6 border-b border-[#E4E2EB] mb-6 font-mono">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 pb-6 border-b border-[#E4E2EB] mb-6 font-mono">
             {PERFORMANCE_STATS.metrics.map((m) => (
-              <div key={m.label} className="bg-[#FAF9FD] p-4 rounded-xl border border-[#E4E2EB]">
+              <div key={m.label} className="bg-[#FAF9FD] p-3 sm:p-4 rounded-xl border border-[#E4E2EB]">
                 <span className="text-[10px] font-sans font-bold text-[#524E5E] uppercase tracking-wider block mb-1">
                   {m.label}
                 </span>
@@ -61,29 +61,31 @@ export function AnalyticsSection() {
           </div>
 
           {/* Interactive Chart View Segmented Control */}
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-            <div className="inline-flex p-1 rounded-xl bg-[#F0EEF6] border border-[#E4E2EB]">
-              {[
-                { id: 'calls', label: 'Calls over time' },
-                { id: 'outcomes', label: 'Outcomes' },
-                { id: 'funnel', label: 'Conversion funnel' },
-                { id: 'hours', label: 'Business hours' },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveChartTab(tab.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                    activeChartTab === tab.id
-                      ? 'bg-white text-[#0F0E17] shadow-craft-xs'
-                      : 'text-[#524E5E] hover:text-[#0F0E17]'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div className="w-full sm:w-auto overflow-x-auto scrollbar-none touch-pan-x pb-1 sm:pb-0">
+              <div className="inline-flex p-1 rounded-xl bg-[#F0EEF6] border border-[#E4E2EB] min-w-max">
+                {[
+                  { id: 'calls', label: 'Calls over time' },
+                  { id: 'outcomes', label: 'Outcomes' },
+                  { id: 'funnel', label: 'Conversion funnel' },
+                  { id: 'hours', label: 'Business hours' },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveChartTab(tab.id)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap min-h-[36px] flex items-center transition-all ${
+                      activeChartTab === tab.id
+                        ? 'bg-white text-[#0F0E17] shadow-craft-xs'
+                        : 'text-[#524E5E] hover:text-[#0F0E17]'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <span className="text-xs font-mono text-[#524E5E]">Last 30 days</span>
+            <span className="text-xs font-mono text-[#524E5E] shrink-0">Last 30 days</span>
           </div>
 
           {/* Chart 1: Calls Over Time */}

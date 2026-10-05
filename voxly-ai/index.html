@@ -8,7 +8,9 @@
     <meta name="description" content="Deploy autonomous AI voice employees that handle inbound support, place outbound qualification calls, and book meetings 24/7 with human-grade sub-500ms voice intelligence." />
     <meta name="keywords" content="AI voice employee, AI voice agent, autonomous voice bot, AI phone agent, inbound customer support AI, outbound sales AI, AI receptionist, telephony AI, sub-500ms voice, Voxly AI" />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
-    <meta name="googlebot" content="index, follow" />
+    <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="bingbot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="author" content="Voxly AI" />
     <meta name="theme-color" content="#0F0E17" />
     <!-- Block sensors/camera on load so browsers never ask for vague “other apps”
          access. Microphone is NOT requested here — getUserMedia runs only when the
@@ -16,18 +18,20 @@
     <meta http-equiv="Permissions-Policy" content="camera=(), geolocation=(), accelerometer=(), gyroscope=(), magnetometer=(), interest-cohort=(), usb=(), serial=(), bluetooth=(), hid=(), midi=(), xr-spatial-tracking=()" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <link rel="canonical" href="https://voxly.ai" />
+    <link rel="canonical" href="https://voxly.ai/" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://voxly.ai" />
+    <meta property="og:url" content="https://voxly.ai/" />
     <meta property="og:site_name" content="Voxly AI" />
+    <meta property="og:locale" content="en_US" />
     <meta property="og:title" content="Voxly — The AI Employee for Every Conversation" />
     <meta property="og:description" content="Autonomous AI voice employees for high-growth revenue, support, and dispatch teams. Sub-500ms latency, zero hold times." />
     <meta property="og:image" content="https://voxly.ai/images/VoxlyBot_preview.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="Voxly AI Autonomous Voice Employee" />
+
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
@@ -69,9 +73,53 @@
           "offers": {
             "@type": "Offer",
             "price": "39.00",
-            "priceCurrency": "USD"
+            "priceCurrency": "USD",
+            "priceValidUntil": "2027-12-31"
           },
-          "description": "Enterprise autonomous AI voice employee platform for inbound customer support and outbound revenue calls."
+          "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.9",
+            "ratingCount": "128",
+            "bestRating": "5",
+            "worstRating": "1"
+          },
+          "description": "Enterprise autonomous AI voice employee platform for inbound customer support, outbound revenue calls, and sub-500ms real-time conversational telephony."
+        },
+        {
+          "@type": "BreadcrumbList",
+          "@id": "https://voxly.ai/#breadcrumbs",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://voxly.ai/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "AI Capabilities",
+              "item": "https://voxly.ai/#capabilities"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Industries",
+              "item": "https://voxly.ai/#industries"
+            },
+            {
+              "@type": "ListItem",
+              "position": 4,
+              "name": "Pricing",
+              "item": "https://voxly.ai/#pricing"
+            },
+            {
+              "@type": "ListItem",
+              "position": 5,
+              "name": "FAQ",
+              "item": "https://voxly.ai/#faq"
+            }
+          ]
         },
         {
           "@type": "FAQPage",
@@ -79,50 +127,50 @@
           "mainEntity": [
             {
               "@type": "Question",
-              "name": "How does Voxly sound so natural and human-like?",
+              "name": "How does Voxly sound so natural?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Voxly utilizes state-of-the-art neural acoustic models with sub-350 millisecond round-trip response times. It understands natural interruptions, speech disfluencies, pauses, and tone modulation so the customer never feels like they are waiting on a robotic IVR."
+                "text": "The same neural voice model that answers your customers calls renders every word, with natural turn-taking, so a caller can interrupt mid-sentence and be heard. You can hear it on this page — pick an industry above and press play."
               }
             },
             {
               "@type": "Question",
-              "name": "Does Voxly require engineering or coding knowledge to deploy?",
+              "name": "Do I need engineers to deploy this?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "None at all. You can build, prompt, and train an AI voice employee in under 5 minutes using our visual persona builder. Simply paste your website URL, upload your sales FAQ documents, or select from pre-tuned templates."
+                "text": "No. You set the role, connect a website or upload documents, choose a voice, and attach a number. There is no code to write and no telephony hardware to install."
               }
             },
             {
               "@type": "Question",
-              "name": "Can Voxly integrate directly with our phone numbers and existing CRM?",
+              "name": "Can it use our own phone numbers and CRM?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Yes. You can instantly provision local phone numbers across 100+ countries, port your existing business lines, or connect your SIP trunk (Twilio, Telnyx, Plivo). Voxly natively logs call recordings, transcripts, and qualified deal stages straight into Salesforce, HubSpot, and Zoho."
+                "text": "Yes. Claim a local or toll-free number in over a hundred countries, port a number you already own, or bring your own SIP trunk. Qualified calls and transcripts are written into your CRM."
               }
             },
             {
               "@type": "Question",
-              "name": "What happens if a customer asks a question outside the bot's knowledge?",
+              "name": "What happens when it does not know something?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "You can configure graceful fallback rules: Voxly can intelligently warm-transfer the caller to a live human rep along with a synthesized context summary, or capture the contact details for guaranteed callback."
+                "text": "It says so and offers a callback rather than inventing an answer. Every reply is grounded in the material you gave it, and anything outside that is escalated to a person with the transcript attached."
               }
             },
             {
               "@type": "Question",
-              "name": "How are compliance and Do-Not-Call (DNC) rules enforced?",
+              "name": "What does it cost?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Voxly features automated national and state DNC registry scrubbing before any outbound campaign initiates, plus real-time verbal opt-out detection. If a recipient says 'remove me from your list', the system immediately registers the block across your fleet."
+                "text": "A monthly plan that includes call minutes, then a per-minute overage rate. Unanswered rings, busy signals and voicemail are free. See the pricing section for current rates."
               }
             },
             {
               "@type": "Question",
-              "name": "Can I test the voice bot right now before signing up?",
+              "name": "Is this compliant with calling rules?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Yes! Click 'Talk to AI' in the hero or test the interactive voice section directly on this page to have a live conversation through your web browser."
+                "text": "Call recording and consent requirements vary by country. Compliance tooling is built in and Do-Not-Call scrubbing is available on the Professional plan and above; your counsel should confirm the obligations for the markets you call."
               }
             }
           ]

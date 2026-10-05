@@ -170,6 +170,19 @@ async def subscriber_outbound(
                 }
             },
         )
+    from server.services.saas.telephony_profile import get_profile
+
+    telephony_profile = await get_profile(agent_id)
+    if telephony_profile is not None and telephony_profile.get("outbound_enabled") is False:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": {
+                    "code": "agent_outbound_disabled",
+                    "message": "Outbound calls are disabled for this agent in Telephony Settings.",
+                }
+            },
+        )
     if not agent.get("active_compiled_brain_version"):
         raise HTTPException(
             status_code=400,

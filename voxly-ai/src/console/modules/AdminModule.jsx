@@ -49,6 +49,11 @@ export function AdminModule() {
     if (!grantTenant && tenants[0]?.tenantId) setGrantTenant(tenants[0].tenantId);
   }, [tenants, grantTenant]);
 
+  const selected = tenants.find((t) => t.tenantId === grantTenant);
+  // Charge rate from the server, not a constant: an admin changing the rate must
+  // not leave this screen quoting a different dollar figure.
+  const fxRateInr = Number(selected?.fxRateInr || tenants.find((t) => t.fxRateInr)?.fxRateInr) || 0;
+
   const adjust = async (sign) => {
     // The operator types USD — that is the currency this console speaks. The API
     // takes INR paise, so convert once here at the server-supplied charge rate.
@@ -78,11 +83,6 @@ export function AdminModule() {
       setBusy(false);
     }
   };
-
-  const selected = tenants.find((t) => t.tenantId === grantTenant);
-  // Charge rate from the server, not a constant: an admin changing the rate must
-  // not leave this screen quoting a different dollar figure.
-  const fxRateInr = Number(selected?.fxRateInr || tenants.find((t) => t.fxRateInr)?.fxRateInr) || 0;
 
   return (
     <div className="space-y-6" data-testid="admin-wallet-panel">
@@ -126,12 +126,12 @@ export function AdminModule() {
             Selected: {selected.name} · {moneyUsd(walletUsdCents(selected))}
           </p>
         )}
-        <div className="grid sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
           <select
             value={grantTenant}
             onChange={(e) => setGrantTenant(e.target.value)}
             data-testid="admin-tenant-select"
-            className="bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-3 py-2 text-xs sm:col-span-2"
+            className="bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-3 py-2 text-base sm:text-xs min-h-[42px] sm:min-h-[36px] sm:col-span-2 text-[#0F0E17]"
           >
             {tenants.map((t) => (
               <option key={t.tenantId} value={t.tenantId}>
@@ -145,7 +145,7 @@ export function AdminModule() {
             value={grantUsd}
             onChange={(e) => setGrantUsd(e.target.value)}
             data-testid="admin-credit-amount"
-            className="bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-3 py-2 text-xs font-mono"
+            className="bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-3 py-2 text-base sm:text-xs min-h-[42px] sm:min-h-[36px] font-mono text-[#0F0E17]"
             placeholder="Amount USD"
           />
           <div className="flex gap-2">
@@ -155,6 +155,7 @@ export function AdminModule() {
               loading={busy}
               onClick={() => adjust(1)}
               data-testid="admin-credit-add"
+              className="flex-1 sm:flex-initial min-h-[42px] sm:min-h-[36px]"
             >
               <Plus className="w-3.5 h-3.5" />
               Add
@@ -165,6 +166,7 @@ export function AdminModule() {
               loading={busy}
               onClick={() => adjust(-1)}
               data-testid="admin-credit-debit"
+              className="flex-1 sm:flex-initial min-h-[42px] sm:min-h-[36px]"
             >
               <Minus className="w-3.5 h-3.5" />
               Debit
@@ -178,7 +180,8 @@ export function AdminModule() {
         </p>
       </SolidCard>
       <SolidCard padding="p-0" className="overflow-hidden">
-        <table className="w-full text-left text-xs">
+        <div className="overflow-x-auto scrollbar-none touch-pan-x">
+          <table className="w-full text-left text-xs">
           <thead>
             <tr className="border-b border-[#E4E2EB] bg-[#FAF9FD] text-[10px] font-bold text-[#8C879A] uppercase">
               <th className="py-3 px-4">Workspace</th>
@@ -196,6 +199,7 @@ export function AdminModule() {
             ))}
           </tbody>
         </table>
+        </div>
       </SolidCard>
     </div>
   );

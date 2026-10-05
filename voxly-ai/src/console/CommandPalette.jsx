@@ -100,7 +100,7 @@ export function CommandPalette({ isOpen, onClose, onNavigate }) {
     : quickActions;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 p-4 sm:p-6 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-6 sm:pt-20 p-3 sm:p-6 overflow-y-auto">
       {/* Backdrop */}
       <div
         onClick={onClose}
@@ -109,9 +109,14 @@ export function CommandPalette({ isOpen, onClose, onNavigate }) {
       />
 
       {/* Palette Container */}
-      <div className="relative w-full max-w-xl bg-white border border-[#E4E2EB] rounded-2xl shadow-2xl overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-150">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Command palette"
+        className="relative w-full max-w-xl bg-white border border-[#E4E2EB] rounded-2xl shadow-2xl overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-150 my-auto sm:my-0"
+      >
         {/* Search Input Bar */}
-        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-[#E4E2EB]">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-[#E4E2EB]">
           <Search className="w-4 h-4 text-[#524E5E] shrink-0" />
           <input
             autoFocus
@@ -119,11 +124,16 @@ export function CommandPalette({ isOpen, onClose, onNavigate }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Type a command, agent name, or search..."
-            className="flex-1 bg-transparent text-sm text-[#0F0E17] placeholder-[#8C879A] focus:outline-none"
+            className="flex-1 bg-transparent text-base sm:text-sm min-h-[38px] text-[#0F0E17] placeholder-[#8C879A] focus:outline-none"
           />
-          <kbd className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-[#FAF9FD] text-[#524E5E] border border-[#E4E2EB] shadow-2xs">
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close command palette"
+            className="px-2 py-1 rounded text-xs sm:text-[10px] font-mono bg-[#FAF9FD] text-[#524E5E] border border-[#E4E2EB] shadow-2xs hover:bg-[#F0EEF6]"
+          >
             ESC
-          </kbd>
+          </button>
         </div>
 
         {/* Results List */}
@@ -155,7 +165,7 @@ export function CommandPalette({ isOpen, onClose, onNavigate }) {
                     item.action();
                     onClose();
                   }}
-                  className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#FAF9FD] text-left transition-colors group"
+                  className="w-full flex items-center justify-between p-2.5 min-h-[44px] rounded-xl hover:bg-[#FAF9FD] active:bg-[#F0EEF6] text-left transition-colors group"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-8 h-8 rounded-lg bg-[#F0EEF6] border border-[#E4E2EB] flex items-center justify-center text-[#524E5E] group-hover:text-[#0F0E17] group-hover:border-[#D1CFDB] transition-all">

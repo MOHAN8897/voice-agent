@@ -108,6 +108,7 @@ class CallLifecycleService:
         billed_user_id: str | None = None,
         is_test: bool | None = None,
         contact: dict[str, Any] | None = None,
+        voicemail_mode: bool = False,
     ) -> dict[str, Any]:
         settings = get_settings()
         session_id = session_id or "default"
@@ -169,6 +170,47 @@ class CallLifecycleService:
                 language,
                 direction=direction,
             )
+
+            # Dynamically sync recording disclosure setting with agent configuration
+            import re
+            from server.prompts.agent_voice_rules import build_recording_disclosure_instruction
+
+            compiled_text = re.sub(
+                r"\n*### RECORDING DISCLOSURE POLICY[^\n]*\n.*?(?=\n---|\n###|\Z)",
+                "",
+                compiled_text,
+                flags=re.DOTALL,
+            ).strip()
+
+            disc_enabled = bool(agent.get("recording_disclosure_enabled"))
+            if disc_enabled:
+                disc_text = agent.get("recording_disclosure_text")
+                disc_block = build_recording_disclosure_instruction(
+                    disclosure_text=disc_text,
+                    language=language,
+                )
+                safety_idx = compiled_text.find("\n--- SAFETY ---")
+                if safety_idx >= 0:
+                    compiled_text = compiled_text[:safety_idx] + disc_block + "\n" + compiled_text[safety_idx:]
+                else:
+                    compiled_text = compiled_text + disc_block
+
+            if voicemail_mode:
+                voicemail_block = (
+                    "\n\n### AFTER-HOURS VOICEMAIL MODE:\n"
+                    "The business is currently closed. You are operating in voicemail capture mode:\n"
+                    "1. If not already stated in your opening greeting, politely let the caller know the office is closed.\n"
+                    "2. Ask the caller for their name, best contact phone number, and a brief message or reason for calling.\n"
+                    "3. Acknowledge what they share concisely. Confirm that you have noted their details.\n"
+                    "4. Assure them that a team member will follow up promptly during regular business hours.\n"
+                    "5. Thank them politely and conclude the call.\n"
+                )
+                safety_idx = compiled_text.find("\n--- SAFETY ---")
+                if safety_idx >= 0:
+                    compiled_text = compiled_text[:safety_idx] + voicemail_block + "\n" + compiled_text[safety_idx:]
+                else:
+                    compiled_text = compiled_text + voicemail_block
+
             from server.brain.brain_prompt_validate import assert_rendered_brain_valid
 
             assert_rendered_brain_valid(compiled_text, language)
@@ -209,6 +251,7 @@ class CallLifecycleService:
             "billed_user_id": billed_user_id,
             "is_test": is_test,
             "contact": contact or {},
+            "voicemail_mode": voicemail_mode,
         }
         from server.services.transcription_policy import attach_normalized_stack_override
 

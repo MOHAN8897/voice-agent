@@ -4,6 +4,7 @@ import { CallsModule } from '../CallsModule';
 import { LeadsModule } from '../LeadsModule';
 import { AgentInboundPanel } from './AgentInboundPanel';
 import { AgentDialBulkPanel } from './AgentDialBulkPanel';
+import { ErrorBoundary } from '../../ui/ErrorBoundary';
 
 const PANELS = [
   { id: 'inbound', label: 'Inbound', icon: PhoneIncoming },
@@ -79,20 +80,26 @@ export function AgentCallsPanel({
         aria-labelledby={`agent-calls-tab-${panel}`}
         className="animate-in fade-in duration-150"
       >
-        {panel === 'inbound' && (
-          <AgentInboundPanel
-            agentId={agentId}
-            agentName={agentName}
-            onNavigateToSettings={onNavigateToSettings}
-          />
-        )}
-        {panel === 'outbound' && (
-          <AgentDialBulkPanel agentId={agentId} agentName={agentName} />
-        )}
-        {panel === 'history' && (
-          <CallsModule agentId={agentId} agentName={agentName} embedded />
-        )}
-        {panel === 'leads' && <LeadsModule agentId={agentId} />}
+        <ErrorBoundary
+          key={panel}
+          title={`Unable to load ${panel} call section`}
+          description="An unexpected error occurred in this call section. You can retry or switch to another section."
+        >
+          {panel === 'inbound' && (
+            <AgentInboundPanel
+              agentId={agentId}
+              agentName={agentName}
+              onNavigateToSettings={onNavigateToSettings}
+            />
+          )}
+          {panel === 'outbound' && (
+            <AgentDialBulkPanel agentId={agentId} agentName={agentName} />
+          )}
+          {panel === 'history' && (
+            <CallsModule agentId={agentId} agentName={agentName} embedded />
+          )}
+          {panel === 'leads' && <LeadsModule agentId={agentId} />}
+        </ErrorBoundary>
       </div>
     </div>
   );

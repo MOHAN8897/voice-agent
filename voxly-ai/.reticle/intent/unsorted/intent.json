@@ -436,6 +436,32 @@
       "subject": "unsorted",
       "updatedAt": 1790835284474
     },
+    "inline:click-connect-account-for-google-calendar-to-tes-62ceae5e": {
+      "binding": {
+        "kind": "net",
+        "urlContains": "/api/integrations/composio/connect"
+      },
+      "declaredAt": 1791135130667,
+      "id": "inline:click-connect-account-for-google-calendar-to-tes-62ceae5e",
+      "state": "bound",
+      "statement": "Click Connect Account for Google Calendar to test OAuth connect flow initiation",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1791135130710
+    },
+    "inline:connect-google-calendar-integration-in-console-bb4d0c1f": {
+      "binding": {
+        "kind": "net",
+        "urlContains": "/api/integrations/GOOGLECALENDAR/connect"
+      },
+      "declaredAt": 1791135346325,
+      "id": "inline:connect-google-calendar-integration-in-console-bb4d0c1f",
+      "state": "bound",
+      "statement": "Connect Google Calendar integration in console",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1791135346463
+    },
     "inline:console-sync-banner-is-gone-agents-load-from-api-9dc641e8": {
       "binding": {
         "kind": "allOf",
@@ -604,6 +630,37 @@
       "subject": "unsorted",
       "updatedAt": 1790848892875
     },
+    "inline:disconnect-google-calendar-integration-from-work-a22621de": {
+      "binding": {
+        "kind": "net",
+        "urlContains": "/api/integrations/GOOGLECALENDAR"
+      },
+      "declaredAt": 1791135465158,
+      "id": "inline:disconnect-google-calendar-integration-from-work-a22621de",
+      "state": "bound",
+      "statement": "Disconnect Google Calendar integration from workspace",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1791135465238
+    },
+    "inline:enter-password-into-signin-form-7516e62a": {
+      "declaredAt": 1791135105719,
+      "id": "inline:enter-password-into-signin-form-7516e62a",
+      "state": "declared",
+      "statement": "Enter password into signin form",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1791135105734
+    },
+    "inline:enter-test-email-mohansaiteja-99-gmail-com-into-8e72a9b1": {
+      "declaredAt": 1791135100988,
+      "id": "inline:enter-test-email-mohansaiteja-99-gmail-com-into-8e72a9b1",
+      "state": "declared",
+      "statement": "Enter test email mohansaiteja.99@gmail.com into signin form",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1791135101080
+    },
     "inline:every-industry-on-the-landing-page-plays-a-real-982871e2": {
       "binding": {
         "kind": "signal",
@@ -626,6 +683,56 @@
         ]
       },
       "updatedAt": 1791023743803
+    },
+    "inline:google-calendar-card-shows-connect-button-after-8d769aac": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "connect-btn-googlecalendar"
+        }
+      },
+      "declaredAt": 1791135470958,
+      "id": "inline:google-calendar-card-shows-connect-button-after-8d769aac",
+      "provenBy": {
+        "at": 1791135471061,
+        "grade": "presence",
+        "verdictId": "reticle_assert:1791135471061"
+      },
+      "state": "proved",
+      "statement": "Google Calendar card shows Connect button after disconnection",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/console/modules/IntegrationsModule.jsx"
+        ]
+      },
+      "updatedAt": 1791135471106
+    },
+    "inline:google-calendar-shows-active-status-and-disconne-9ac7af4a": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "disconnect-btn-googlecalendar"
+        }
+      },
+      "declaredAt": 1791135440689,
+      "id": "inline:google-calendar-shows-active-status-and-disconne-9ac7af4a",
+      "provenBy": {
+        "at": 1791135440953,
+        "grade": "presence",
+        "verdictId": "reticle_assert:1791135440952"
+      },
+      "state": "proved",
+      "statement": "Google Calendar shows Active status and Disconnect button after OAuth activation",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/console/modules/IntegrationsModule.jsx"
+        ]
+      },
+      "updatedAt": 1791135441002
     },
     "inline:open-test-call-modal-from-agent-workspace-header-2ee9f12c": {
       "binding": {
@@ -851,6 +958,19 @@
       },
       "updatedAt": 1790846732391
     },
+    "inline:re-connect-google-calendar-to-leave-it-active-fo-f38b107b": {
+      "binding": {
+        "kind": "net",
+        "urlContains": "/api/integrations/GOOGLECALENDAR/connect"
+      },
+      "declaredAt": 1791135475231,
+      "id": "inline:re-connect-google-calendar-to-leave-it-active-fo-f38b107b",
+      "state": "bound",
+      "statement": "Re-connect Google Calendar to leave it active for workspace",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1791135475277
+    },
     "inline:redeeming-a-password-reset-link-leaves-the-perso-c75c8cb8": {
       "binding": {
         "kind": "element",
@@ -984,6 +1104,19 @@
       "status": "proposed",
       "subject": "unsorted",
       "updatedAt": 1790834756191
+    },
+    "inline:submit-signin-form-and-authenticate-as-mohansait-32cb9afe": {
+      "binding": {
+        "kind": "net",
+        "urlContains": "/auth/login"
+      },
+      "declaredAt": 1791135114080,
+      "id": "inline:submit-signin-form-and-authenticate-as-mohansait-32cb9afe",
+      "state": "bound",
+      "statement": "Submit signin form and authenticate as mohansaiteja.99@gmail.com",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1791135114139
     },
     "inline:switch-test-call-to-live-number-mode-without-pst-8756a1fb": {
       "binding": {

@@ -581,6 +581,9 @@ class PstnRealtimeVoiceLoop:
         playback: Any | None = None,
         stack_override: dict[str, Any] | None = None,
         adapter: Any | None = None,
+        tenant_id: str | None = None,
+        agent_id: str | None = None,
+        agent_tools: set[str] | list[str] | None = None,
     ) -> None:
         self.session_id = session_id
         self.call_id = call_id
@@ -592,8 +595,11 @@ class PstnRealtimeVoiceLoop:
         self.is_agent_audio_active = is_agent_audio_active
         self.playback = playback
         self.stack_override = stack_override or {}
+        self._tenant_id = tenant_id or (self.stack_override.get("tenant_id") if self.stack_override else None)
+        self._agent_id = agent_id or (self.stack_override.get("agent_id") if self.stack_override else None)
+        self._agent_tools = set(agent_tools) if agent_tools else set()
         self._injected_adapter = adapter
-        self._adapter: Any | None = None
+        self._adapter: Any | None = adapter
         self._hold_inbound = True
         self._pending_inbound: list[bytes] = []
         self._pending_inbound_bytes = 0
@@ -1627,6 +1633,43 @@ class PstnRealtimeVoiceLoop:
             from server.call.audio_archive import audio_archive
 
             audio_archive.set_agent_sample_rate(self.call_id, self.sample_rate)
+
+        # --- TOOL DISCOVERY: fetch tenant's active integrations via registry ---
+        tenant_tool_schemas: list[dict] = []
+        if (not self._tenant_id or not self._agent_id) and self.call_id:
+            try:
+                from server.call.call_ledger import call_ledger
+                meta = call_ledger.read_meta(self.call_id) or {}
+                if not self._tenant_id:
+                    self._tenant_id = meta.get("tenant_id")
+                if not self._agent_id:
+                    self._agent_id = meta.get("agent_id")
+            except Exception:
+                pass
+
+        if self._tenant_id:
+            try:
+                from server.db.connection import get_session_factory as _get_sf
+                from server.services.tenant_tool_cache import get_active_app_names
+                from server.services.tool_schema_registry import (
+                    get_tools_for_tenant,
+                    get_tool_names_for_tenant,
+                )
+                _sf = _get_sf()
+                active_apps = await get_active_app_names(str(self._tenant_id), _sf)
+                if active_apps:
+                    tenant_tool_schemas = get_tools_for_tenant(active_apps)
+                    # Exact tool names from registry — no guesswork suffixes
+                    self._agent_tools = get_tool_names_for_tenant(active_apps)
+                    log_pstn(
+                        "tool_router.tenant_tools_loaded",
+                        call_id=self.call_id,
+                        apps=active_apps,
+                        tools=len(tenant_tool_schemas),
+                    )
+            except Exception as exc:
+                logger.warning("[PSTN_REALTIME] Could not load tenant tool schemas: %s", exc)
+
         language = self._resolve_language()
         direction = self._resolve_direction()
         brain = self._compiled_brain()
@@ -1696,13 +1739,14 @@ class PstnRealtimeVoiceLoop:
                 stack_override=self.stack_override,
                 max_output_tokens=max_output_tokens,
                 wait_ready=True,
+                extra_tools=tenant_tool_schemas,
             )
         else:
             warm = _existing_adapter_instructions(adapter)
-            # Gemini system instructions are immutable after setup. At answer
+            # Gemini system instructions and tools are immutable after setup. At answer
             # there is no caller history yet, so reconnect a stale warm session.
-            if llm_provider == "gemini" and adapter.is_open() and warm != instructions:
-                log_pstn("realtime_voice.prewarm.reconnect", call_id=self.call_id, reason="instructions_changed")
+            if llm_provider == "gemini" and adapter.is_open() and (warm != instructions or tenant_tool_schemas):
+                log_pstn("realtime_voice.prewarm.reconnect", call_id=self.call_id, reason="tools_or_instructions_changed")
                 await adapter.close()
             if not adapter.is_open():
                 connect_kw: dict[str, Any] = {
@@ -1715,6 +1759,7 @@ class PstnRealtimeVoiceLoop:
                     "speed": cfg.get("speed"),
                     "silence_ms": cfg.get("silence_ms"),
                     "max_output_tokens": max_output_tokens,
+                    "extra_tools": tenant_tool_schemas,
                 }
                 import inspect
 
@@ -1725,6 +1770,13 @@ class PstnRealtimeVoiceLoop:
             else:
                 warm = _existing_adapter_instructions(adapter)
                 updater = getattr(adapter, "update_instructions", None)
+                tools_updater = getattr(adapter, "update_tools", None)
+                if callable(tools_updater) and tenant_tool_schemas:
+                    try:
+                        await tools_updater(tenant_tool_schemas)
+                        log_pstn("realtime_voice.prewarm.tools_updated", call_id=self.call_id, count=len(tenant_tool_schemas))
+                    except Exception as e:
+                        logger.warning("[PSTN] Failed to update prewarm tools: %s", e)
                 canon = (opening or "").strip()
                 needs_opening_patch = bool(canon and warm and canon[:48] not in warm)
                 if warm and not needs_opening_patch:
@@ -2907,6 +2959,19 @@ class PstnRealtimeVoiceLoop:
                 self._farewell_response_active = True
                 self._ending_at = time.monotonic()
 
+    async def _stream_acoustic_filler_if_needed(self, tool_name: str) -> None:
+        """Stream an acoustic telephony filler if supported to eliminate dead air during tool routing."""
+        try:
+            log_pstn("tool_router.acoustic_filler", call_id=self.call_id, tool=tool_name)
+            if self.on_agent_wire is not None:
+                frame_samples = int(self.sample_rate * 0.02)
+                filler_bytes = b"\x00" * (frame_samples * 2 if self.tts_output_codec == "linear16" else frame_samples)
+                res = self.on_agent_wire(filler_bytes)
+                if asyncio.iscoroutine(res):
+                    await res
+        except Exception as exc:
+            log_pstn("tool_router.acoustic_filler.failed", call_id=self.call_id, error=str(exc))
+
     async def _handle_event(self, event: dict[str, Any]) -> None:
         kind = str(event.get("type") or "")
         if self._closed or self.controller.state == CallState.ENDED:
@@ -3212,12 +3277,81 @@ class PstnRealtimeVoiceLoop:
             return
         if kind == "function_call":
             tool_name = str(event.get("name") or "")
+            arguments = event.get("arguments") or "{}"
+            parsed_args = json.loads(arguments) if isinstance(arguments, str) else (arguments or {})
+            call_id = str(event.get("call_id") or "")
+
             if tool_name == "call_action":
                 await self._handle_call_action(event)
                 return
             if tool_name == "request_language_callback":
                 await self._handle_language_callback_tool(event)
                 return
+
+            # --- DEDICATED VOXLY TOOL ROUTER DISPATCH ---
+            is_dispatchable_tool = (
+                bool(self._agent_tools and (
+                    tool_name in self._agent_tools
+                    or any(tool_name.lower().startswith(t.lower()) for t in self._agent_tools)
+                ))
+                or tool_name.startswith("nango_")
+                or tool_name.startswith("composio_")
+            )
+            if is_dispatchable_tool and tool_name not in LIVE_HANGUP_TOOL_NAMES:
+                log_pstn("tool_router.dispatch_start", call_id=self.call_id, tool=tool_name)
+
+                # 1. FAIL-CLOSED TENANT CHECK (Fix #2: Zero "default" fallback)
+                if (not self._tenant_id or not self._agent_id) and self.call_id:
+                    try:
+                        from server.call.call_ledger import call_ledger
+                        meta = call_ledger.read_meta(self.call_id) or {}
+                        if not self._tenant_id:
+                            self._tenant_id = meta.get("tenant_id")
+                        if not self._agent_id:
+                            self._agent_id = meta.get("agent_id")
+                    except Exception:
+                        pass
+
+                if not self._tenant_id:
+                    log_pstn("tool_router.rejected_missing_tenant", call_id=self.call_id, tool=tool_name)
+                    if call_id and self._adapter is not None:
+                        try:
+                            await self._adapter.submit_function_output(
+                                call_id=call_id,
+                                output=json.dumps({"error": "Unauthorized: Missing tenant context"}),
+                                name=tool_name,
+                            )
+                        except Exception:
+                            pass
+                    return
+
+                # 2. Trigger acoustic telephony bridge (no dead air)
+                await self._stream_acoustic_filler_if_needed(tool_name)
+
+                # 3. Route through Voxly Tool Router
+                from server.services.tool_router import tool_router
+
+                tool_output = await tool_router.route_and_execute(
+                    tenant_id=str(self._tenant_id),
+                    agent_id=str(self._agent_id) if self._agent_id else None,
+                    call_id=str(self.call_id or ""),
+                    tool_name=tool_name,
+                    arguments=parsed_args,
+                )
+
+                # 4. Submit output back to speech adapter
+                if call_id and self._adapter is not None:
+                    try:
+                        await self._adapter.submit_function_output(
+                            call_id=call_id,
+                            output=json.dumps(tool_output),
+                            name=tool_name,
+                        )
+                    except Exception:
+                        pass
+                log_pstn("tool_router.dispatch_complete", call_id=self.call_id, tool=tool_name)
+                return
+
             if tool_name not in LIVE_HANGUP_TOOL_NAMES:
                 return
             parsed = parse_live_hangup_tool(tool_name, event.get("arguments"))

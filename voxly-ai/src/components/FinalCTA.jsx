@@ -25,7 +25,7 @@ export function FinalCTA({ onGetStarted, onTalkToMe }) {
               </svg>
             </div>
 
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-[1.12] mb-4 text-white">
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-[1.12] mb-4 text-white">
               Build your AI employee today.
             </h2>
 
@@ -34,10 +34,10 @@ export function FinalCTA({ onGetStarted, onTalkToMe }) {
               caller.
             </p>
 
-            <div className="flex flex-wrap items-center justify-center gap-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3">
               <button
                 onClick={onGetStarted}
-                className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl text-sm font-semibold text-[#0F0E17] bg-white hover:bg-[#FAF9FD] active:scale-[0.98] transition-all duration-150 shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6344E7]"
+                className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl text-sm font-semibold text-[#0F0E17] bg-white hover:bg-[#FAF9FD] active:scale-[0.98] transition-all duration-150 shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6344E7]"
               >
                 <span>Build your agent</span>
                 <ArrowRight className="w-4 h-4" />
@@ -45,7 +45,7 @@ export function FinalCTA({ onGetStarted, onTalkToMe }) {
 
               <button
                 onClick={onTalkToMe}
-                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-semibold text-white bg-white/10 hover:bg-white/15 border border-white/20 active:scale-[0.98] transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6344E7]"
+                className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-semibold text-white bg-white/10 hover:bg-white/15 border border-white/20 active:scale-[0.98] transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6344E7]"
               >
                 <Mic className="w-4 h-4" />
                 <span>Hear a sample first</span>

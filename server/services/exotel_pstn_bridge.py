@@ -96,6 +96,35 @@ class ExotelPstnBridge:
         pstn_opts = pstn_call_options(local)
         log_pstn("stream.start", call_sid=self.exotel_call_sid, agent_id=self.agent_id)
 
+        is_voicemail = False
+        profile_greeting = None
+        if "outbound" not in self.direction:
+            from server.services.saas.telephony_profile import (
+                evaluate_inbound_policy,
+                get_profile,
+                profile_for_number,
+            )
+
+            to_num = local.get("exophone") or local.get("to")
+            profile = None
+            if to_num:
+                profile = await profile_for_number(str(to_num))
+            if profile is None and self.agent_id:
+                profile = await get_profile(str(self.agent_id))
+            if profile:
+                decision = evaluate_inbound_policy(profile)
+                if not decision.should_answer:
+                    logger.info("[EXOTEL] inbound declined by policy reason=%s", decision.reason)
+                    await self._provider_hangup()
+                    await self.ws.close()
+                    return
+                profile_greeting = decision.greeting_phrase
+                is_voicemail = (decision.route == "voicemail")
+
+        self._inbound_greeting = profile_greeting
+        self._is_voicemail = is_voicemail
+        self._language = str(pstn_opts.get("language") or "te-IN")
+
         if self.agent_id:
             prewarm = None
             if self.exotel_call_sid:
@@ -116,6 +145,7 @@ class ExotelPstnBridge:
                 stack_override=pstn_opts.get("stack_override"),
                 language=str(pstn_opts.get("language") or "te-IN"),
                 realtime_prewarm_key=prewarm.realtime_key if prewarm else None,
+                voicemail_mode=is_voicemail,
             )
             self.call_id = started["call_id"]
             self.session_id = started["session_id"]
@@ -151,10 +181,21 @@ class ExotelPstnBridge:
             return
         try:
             prewarm = getattr(self, "_prewarm_bundle", None)
+            profile_greeting = getattr(self, "_inbound_greeting", None)
+            is_voicemail = getattr(self, "_is_voicemail", False)
+            if not profile_greeting and is_voicemail:
+                lang = str(getattr(self, "_language", "") or "te-IN").lower()
+                if lang.startswith("te"):
+                    profile_greeting = "నమస్కారం, మా కార్యాలయం ప్రస్తుతం మూసివేయబడింది. దయచేసి మీ పేరు, ఫోన్ నంబర్ మరియు సందేశాన్ని చెప్పండి, మేము త్వరలోనే సంప్రదిస్తాము."
+                else:
+                    profile_greeting = "Hello, thanks for calling. Our offices are currently closed. Please leave your name, phone number, and a brief message, and we will get back to you soon."
+
+            greeting_text = profile_greeting or (prewarm.greeting_text if prewarm else None)
+            greeting_frames = None if profile_greeting else (prewarm.greeting_wire_frames if prewarm else None)
             await self._voice.start_call(
                 play_greeting=bool(self.call_id),
-                greeting_wire_frames=prewarm.greeting_wire_frames if prewarm else None,
-                greeting_text=prewarm.greeting_text if prewarm else None,
+                greeting_wire_frames=greeting_frames,
+                greeting_text=greeting_text,
             )
             from server.services.pstn_prewarm import record_bundle_greeting_usage
 

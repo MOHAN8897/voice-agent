@@ -149,15 +149,15 @@ export function Topbar({
         </button>
 
         <TactileButton onClick={onOpenCreateAgent} size="sm" variant="primary" icon={Plus}>
-          <span className="hidden xs:inline">New agent</span>
-          <span className="xs:hidden">New</span>
+          <span className="hidden sm:inline">New agent</span>
+          <span className="sm:hidden">New</span>
         </TactileButton>
 
         <div className="relative" ref={userMenuRef}>
           <button
             type="button"
             onClick={() => setUserMenuOpen((o) => !o)}
-            className="flex items-center gap-1.5 pl-1 pr-2 py-1 rounded-xl border border-[#E4E2EB] bg-white hover:bg-[#FAF9FD] transition-all"
+            className="flex items-center gap-1.5 pl-1 pr-2 py-1 min-h-[40px] rounded-xl border border-[#E4E2EB] bg-white hover:bg-[#FAF9FD] transition-all"
             aria-expanded={userMenuOpen}
             aria-haspopup="menu"
           >

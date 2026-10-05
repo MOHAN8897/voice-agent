@@ -63,6 +63,7 @@ def build_realtime_voice_session(
     silence_ms: int | None = None,
     max_output_tokens: int | None = None,
     input_transcription_enabled: bool = True,
+    extra_tools: list[dict] | None = None,
 ) -> dict[str, Any]:
     """GA session.update payload — PCM16 @ 24 kHz audio in, audio out (OpenAI Realtime)."""
     vad = normalize_realtime_turn_detection(turn_detection)
@@ -101,19 +102,25 @@ def build_realtime_voice_session(
         "instructions": instructions,
         "output_modalities": ["audio"],
         "max_output_tokens": resolve_realtime_voice_max_output_tokens(max_output_tokens),
-        "tools": [*realtime_hangup_tool_declarations(), REQUEST_LANGUAGE_CALLBACK_TOOL, {
-            **CALL_ACTION_TOOL,
-            "description": (
-                "Report conversational intent in the same turn as your speech. "
-                "Answer ordinary questions directly without calling a tool first. "
-                "For a clear refusal or a confirmed end (bye, hang up, that's all, don't call), "
-                "speak a short farewell, then report END_CALL. "
-                "Use CALLBACK only for an explicitly requested callback; a withdrawal overrides earlier consent. "
-                "Do not end for a bare okay/thanks, a pause, a follow-up question, or unspoken enough-is-known. "
-                "Busy: one callback offer and stay on the line. Hangup is owned by end_call. "
-                "Wait for the tool result before claiming a transfer or callback has been arranged."
-            ),
-        }],
+        "tools": [
+            *realtime_hangup_tool_declarations(),
+            REQUEST_LANGUAGE_CALLBACK_TOOL,
+            {
+                **CALL_ACTION_TOOL,
+                "description": (
+                    "Report conversational intent in the same turn as your speech. "
+                    "Answer ordinary questions directly without calling a tool first. "
+                    "For a clear refusal or a confirmed end (bye, hang up, that's all, don't call), "
+                    "speak a short farewell, then report END_CALL. "
+                    "Use CALLBACK only for an explicitly requested callback; a withdrawal overrides earlier consent. "
+                    "Do not end for a bare okay/thanks, a pause, a follow-up question, or unspoken enough-is-known. "
+                    "Busy: one callback offer and stay on the line. Hangup is owned by end_call. "
+                    "Wait for the tool result before claiming a transfer or callback has been arranged."
+                ),
+            },
+            # Tenant-specific integration tools (dynamic per call session):
+            *(extra_tools or []),
+        ],
         "tool_choice": "auto",
         "audio": {
             "input": audio_in,
@@ -168,6 +175,7 @@ class OpenAIRealtimeVoiceAdapter:
         speed: float | None = None,
         silence_ms: int | None = None,
         input_transcription_enabled: bool = True,
+        extra_tools: list[dict] | None = None,
     ) -> None:
         from openai import AsyncOpenAI
 
@@ -209,6 +217,7 @@ class OpenAIRealtimeVoiceAdapter:
             silence_ms=silence_ms,
             max_output_tokens=max_output_tokens,
             input_transcription_enabled=self._input_transcription_enabled,
+            extra_tools=extra_tools or [],
         )
         self.last_session = session
         await self._conn.send({"type": "session.update", "session": session})
@@ -228,6 +237,30 @@ class OpenAIRealtimeVoiceAdapter:
             )
         else:
             session["instructions"] = instructions
+    async def update_tools(self, extra_tools: list[dict] | None = None) -> None:
+        """Update live tools in an already-connected OpenAI Realtime session."""
+        if self._conn is None or self._closed:
+            return
+        session = copy.deepcopy(self.last_session) if self.last_session else {}
+        base_tools = [
+            *realtime_hangup_tool_declarations(),
+            REQUEST_LANGUAGE_CALLBACK_TOOL,
+            {
+                **CALL_ACTION_TOOL,
+                "description": (
+                    "Report conversational intent in the same turn as your speech. "
+                    "Answer ordinary questions directly without calling a tool first. "
+                    "For a clear refusal or a confirmed end (bye, hang up, that's all, don't call), "
+                    "speak a short farewell, then report END_CALL. "
+                    "Use CALLBACK only for an explicitly requested callback; a withdrawal overrides earlier consent. "
+                    "Do not end for a bare okay/thanks, a pause, a follow-up question, or unspoken enough-is-known. "
+                    "Busy: one callback offer and stay on the line. Hangup is owned by end_call. "
+                    "Wait for the tool result before claiming a transfer or callback has been arranged."
+                ),
+            },
+            *(extra_tools or []),
+        ]
+        session["tools"] = base_tools
         self.last_session = session
         await self._conn.send({"type": "session.update", "session": session})
 

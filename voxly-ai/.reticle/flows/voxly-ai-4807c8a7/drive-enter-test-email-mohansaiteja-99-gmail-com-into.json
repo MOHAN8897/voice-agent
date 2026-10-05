@@ -1,0 +1,142 @@
+{
+  "version": 2,
+  "name": "drive-enter-test-email-mohansaiteja-99-gmail-com-into",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1791135510717,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Continue — sign in"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "textbox",
+        "name": "Work Email"
+      },
+      "args": {
+        "value": "mohansaiteja.99@gmail.com"
+      },
+      "action": "fill",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "textbox",
+        "name": "Password"
+      },
+      "args": {
+        "value": "<redacted: supply at replay>"
+      },
+      "action": "fill",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Sign In"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Connect Account"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "connect-btn-googlecalendar",
+        "source": {
+          "file": "src/console/modules/IntegrationsModule.jsx",
+          "line": 203,
+          "column": 17
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "disconnect-btn-googlecalendar"
+        }
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "disconnect-btn-googlecalendar",
+        "source": {
+          "file": "src/console/modules/IntegrationsModule.jsx",
+          "line": 193,
+          "column": 21
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "connect-btn-googlecalendar"
+        }
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "connect-btn-googlecalendar",
+        "source": {
+          "file": "src/console/modules/IntegrationsModule.jsx",
+          "line": 203,
+          "column": 17
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "intent": "Enter test email mohansaiteja.99@gmail.com into signin form",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "antigravity-client"
+  },
+  "intentId": "flow:drive-enter-test-email-mohansaiteja-99-gmail-com-into"
+}

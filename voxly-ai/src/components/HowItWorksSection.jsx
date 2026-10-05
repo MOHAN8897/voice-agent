@@ -19,7 +19,7 @@ export function HowItWorksSection({ onGetStarted }) {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB] text-[#6344E7] text-xs font-bold tracking-wider uppercase mb-4 shadow-craft-xs">
             <span>Onboarding</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#0F0E17] tracking-tight leading-[1.12] mb-4">
+          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-[#0F0E17] tracking-tight leading-[1.12] mb-4">
             From idea to answering calls in minutes.
           </h2>
           <p className="text-base sm:text-lg text-[#524E5E] leading-relaxed">
@@ -71,16 +71,16 @@ export function HowItWorksSection({ onGetStarted }) {
                 <span className="text-[10px] font-sans font-bold text-[#A19EAD] uppercase tracking-wider block mb-1">
                   {item.label}
                 </span>
-                <span className="text-xl font-bold text-white">{item.value}</span>
+                <span className="text-lg sm:text-xl font-bold text-white">{item.value}</span>
               </div>
             ))}
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-white/10 text-xs">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4 border-t border-white/10 text-xs">
             <span className="text-[#D1CFDB] max-w-xl">{BILLING_USAGE_PREVIEW?.footnote || 'You are billed from the moment the call connects until it ends. Ring-outs, busy signals and voicemail cost nothing.'}</span>
             <button
               onClick={onGetStarted}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold text-[#0F0E17] bg-white hover:bg-[#FAF9FD] active:scale-[0.98] transition-all"
+              className="w-full sm:w-auto min-h-[44px] justify-center inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold text-[#0F0E17] bg-white hover:bg-[#FAF9FD] active:scale-[0.98] transition-all"
             >
               <span>Build your agent</span>
               <ArrowRight className="w-3.5 h-3.5" />

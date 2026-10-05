@@ -15,7 +15,7 @@ export function SectionHeading({
           <span>{badge}</span>
         </div>
       )}
-      <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#0F0E17] tracking-tight leading-[1.15]">
+      <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-[#0F0E17] tracking-tight leading-[1.15]">
         {title}{' '}
         {highlight && (
           <span className="text-[#0F0E17]">

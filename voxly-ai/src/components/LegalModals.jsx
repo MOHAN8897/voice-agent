@@ -33,12 +33,12 @@ export function LegalModals({ isOpen, onClose, defaultTab = 'privacy' }) {
       <div className="relative bg-white rounded-2xl border border-[#E4E2EB] shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-200">
         
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E4E2EB] bg-[#FAF9FD]">
-          <div className="flex items-center gap-3">
-            <div className="flex p-1 rounded-xl bg-[#EFECE6] border border-[#E4E2EB]">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-[#E4E2EB] bg-[#FAF9FD] shrink-0 gap-2">
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-none touch-pan-x">
+            <div className="flex p-1 rounded-xl bg-[#EFECE6] border border-[#E4E2EB] whitespace-nowrap">
               <button
                 onClick={() => setTab('privacy')}
-                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                className={`flex items-center gap-2 px-3 py-1.5 min-h-[38px] rounded-lg text-xs font-semibold transition-all ${
                   tab === 'privacy'
                     ? 'bg-white text-[#0F0E17] shadow-xs'
                     : 'text-[#524E5E] hover:text-[#0F0E17]'
@@ -49,7 +49,7 @@ export function LegalModals({ isOpen, onClose, defaultTab = 'privacy' }) {
               </button>
               <button
                 onClick={() => setTab('terms')}
-                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                className={`flex items-center gap-2 px-3 py-1.5 min-h-[38px] rounded-lg text-xs font-semibold transition-all ${
                   tab === 'terms'
                     ? 'bg-white text-[#0F0E17] shadow-xs'
                     : 'text-[#524E5E] hover:text-[#0F0E17]'
@@ -63,7 +63,7 @@ export function LegalModals({ isOpen, onClose, defaultTab = 'privacy' }) {
 
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-[#524E5E] hover:text-[#0F0E17] hover:bg-[#E4E2EB]/50 transition-colors"
+            className="p-2 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl text-[#524E5E] hover:text-[#0F0E17] hover:bg-[#E4E2EB]/50 transition-colors shrink-0"
             aria-label="Close dialog"
           >
             <X className="w-4 h-4" />
@@ -71,7 +71,7 @@ export function LegalModals({ isOpen, onClose, defaultTab = 'privacy' }) {
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 sm:p-8 overflow-y-auto text-sm text-[#524E5E] leading-relaxed space-y-6 font-normal">
+        <div className="p-4 sm:p-8 overflow-y-auto text-sm text-[#524E5E] leading-relaxed space-y-6 font-normal">
           {tab === 'privacy' ? (
             <div className="space-y-5">
               <div className="pb-4 border-b border-[#E4E2EB]">

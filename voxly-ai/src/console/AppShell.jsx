@@ -28,6 +28,7 @@ import { ImpersonationBanner } from './ui/ImpersonationBanner';
 import { PurchaseProvisioningBanner } from './ui/PurchaseProvisioningBanner';
 import { ToastHost } from './ui/ToastHost';
 import { AddFundsModal } from './ui/AddFundsModal';
+import { ErrorBoundary } from './ui/ErrorBoundary';
 
 export function AppShell({ onBackToLanding, onSignOut }) {
   const { user } = useAuth();
@@ -174,58 +175,64 @@ export function AppShell({ onBackToLanding, onSignOut }) {
           <div className="max-w-7xl mx-auto pb-12">
             <ConsoleSyncBanner />
             <PurchaseProvisioningBanner />
-            {activeTab === 'overview' && (
-              <OverviewModule
-                onNavigate={handleNavigate}
-                onOpenCreateAgent={() => setIsCreateAgentOpen(true)}
-                onOpenBuyNumber={() => {
-                  handleSelectTab('phone-numbers');
-                  setIsBuyNumberOpen(true);
-                }}
-              />
-            )}
+            <ErrorBoundary
+              key={activeTab}
+              title={`Unable to load ${activeTab} module`}
+              description="An unexpected error occurred in this module. You can retry or switch to another section."
+            >
+              {activeTab === 'overview' && (
+                <OverviewModule
+                  onNavigate={handleNavigate}
+                  onOpenCreateAgent={() => setIsCreateAgentOpen(true)}
+                  onOpenBuyNumber={() => {
+                    handleSelectTab('phone-numbers');
+                    setIsBuyNumberOpen(true);
+                  }}
+                />
+              )}
 
-            {activeTab === 'employees' && (
-              <EmployeesModule
-                onNavigate={handleNavigate}
-                employeeFlowStep={employeeFlowStep}
-                onEmployeeFlowStepChange={handleEmployeeFlowStepChange}
-                onBackToFleet={handleBackToFleet}
-                onOpenCreateAgent={() => setIsCreateAgentOpen(true)}
-                onOpenBuyNumber={() => {
-                  handleSelectTab('phone-numbers');
-                  setIsBuyNumberOpen(true);
-                }}
-              />
-            )}
+              {activeTab === 'employees' && (
+                <EmployeesModule
+                  onNavigate={handleNavigate}
+                  employeeFlowStep={employeeFlowStep}
+                  onEmployeeFlowStepChange={handleEmployeeFlowStepChange}
+                  onBackToFleet={handleBackToFleet}
+                  onOpenCreateAgent={() => setIsCreateAgentOpen(true)}
+                  onOpenBuyNumber={() => {
+                    handleSelectTab('phone-numbers');
+                    setIsBuyNumberOpen(true);
+                  }}
+                />
+              )}
 
-            {activeTab === 'phone-numbers' && (
-              <PhoneNumbersModule
-                isBuyModalOpen={isBuyNumberOpen}
-                onCloseBuyModal={() => setIsBuyNumberOpen(false)}
-                onOpenBuyModal={() => {
-                  // Payment wall: buying a number charges the wallet immediately.
-                  if (requireFunds('A phone number costs $4 per month, charged to your wallet.')) {
-                    return;
-                  }
-                  setIsBuyNumberOpen(true);
-                }}
-                onNavigate={handleNavigate}
-              />
-            )}
+              {activeTab === 'phone-numbers' && (
+                <PhoneNumbersModule
+                  isBuyModalOpen={isBuyNumberOpen}
+                  onCloseBuyModal={() => setIsBuyNumberOpen(false)}
+                  onOpenBuyModal={() => {
+                    // Payment wall: buying a number charges the wallet immediately.
+                    if (requireFunds('A phone number costs $4 per month, charged to your wallet.')) {
+                      return;
+                    }
+                    setIsBuyNumberOpen(true);
+                  }}
+                  onNavigate={handleNavigate}
+                />
+              )}
 
-            {activeTab === 'calls' && <CallsModule onRequireFunds={() => openAddFunds('Add credit to your wallet to place a call.')} />}
+              {activeTab === 'calls' && <CallsModule onRequireFunds={() => openAddFunds('Add credit to your wallet to place a call.')} />}
 
-            {activeTab === 'leads' && <LeadsModule />}
+              {activeTab === 'leads' && <LeadsModule />}
 
-            {activeTab === 'campaigns' && <CampaignsModule />}
+              {activeTab === 'campaigns' && <CampaignsModule />}
 
-            {activeTab === 'billing' && <BillingModule />}
+              {activeTab === 'billing' && <BillingModule />}
 
-            {activeTab === 'integrations' && <IntegrationsModule />}
+              {activeTab === 'integrations' && <IntegrationsModule />}
 
-            {activeTab === 'settings' && <SettingsModule />}
-            {activeTab === 'admin' && <AdminModule />}
+              {activeTab === 'settings' && <SettingsModule />}
+              {activeTab === 'admin' && <AdminModule />}
+            </ErrorBoundary>
           </div>
         </main>
       </div>

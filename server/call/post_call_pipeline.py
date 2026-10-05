@@ -184,6 +184,10 @@ async def _run_outcome_locked(call_id: str) -> dict[str, Any]:
     # agent that took the call. Runs last so a lead write can never invalidate the
     # outcome the console reads, and swallows its own errors for the same reason.
     payload["lead"] = await _sync_lead(call_id, payload, meta)
+    try:
+        await reconcile_and_dispatch_post_call(call_id, payload)
+    except Exception as exc:
+        logger.warning("[POST_CALL] reconcile_and_dispatch_post_call failed for %s: %s", call_id, exc)
     return payload
 
 
@@ -364,3 +368,100 @@ async def _mark_outcome(call_id: str, outcome_status: str) -> None:
         else:
             overall = rec.get("finalization_status") or "processing"
         await call_store.update(call_id, {"finalization_status": overall})
+
+
+async def get_agent_post_call_actions(tenant_id: str, agent_id: str) -> list[str]:
+    """Retrieve whitelisted post_call actions for this agent."""
+    import uuid
+    from sqlalchemy import select
+    from server.db.connection import get_session_factory
+    from server.db.models.integration_models import AgentIntegration
+
+    session_factory = get_session_factory()
+    if not session_factory:
+        return []
+    try:
+        async with session_factory() as session:
+            stmt = select(AgentIntegration).where(
+                AgentIntegration.tenant_id == uuid.UUID(str(tenant_id)),
+                AgentIntegration.agent_id == uuid.UUID(str(agent_id)),
+                AgentIntegration.timing_mode == "post_call",
+                AgentIntegration.enabled.is_(True),
+            )
+            res = await session.execute(stmt)
+            integrations = res.scalars().all()
+            actions: list[str] = []
+            for integ in integrations:
+                if integ.action_whitelist:
+                    actions.extend(integ.action_whitelist)
+                elif integ.app_name == "HUBSPOT":
+                    actions.extend(["HUBSPOT_CREATE_CONTACT", "HUBSPOT_LOG_CALL_ENGAGEMENT"])
+                elif integ.app_name == "SLACK":
+                    actions.append("SLACK_SEND_MESSAGE")
+                elif integ.app_name == "GMAIL":
+                    actions.append("GMAIL_SEND_EMAIL")
+            return actions
+    except Exception as exc:
+        logger.warning("[POST_CALL] Failed to fetch agent post call actions: %s", exc)
+        return []
+
+
+async def reconcile_and_dispatch_post_call(call_id: str, outcome: dict[str, Any]) -> None:
+    """Reconciles timed-out write tools and enqueues Tier-2 durable integrations."""
+    from datetime import datetime, timezone
+    from sqlalchemy import select
+    from server.call.call_store import call_store
+    from server.call.durable_job import DurableJob
+    from server.db.connection import get_session_factory
+    from server.db.models.integration_models import ToolExecution
+
+    call_rec = await call_store.get(call_id)
+    if not call_rec:
+        return
+
+    tenant_id = call_rec.get("tenant_id")
+    agent_id = call_rec.get("agent_id")
+    if not tenant_id or not agent_id:
+        return
+
+    # 1. RECONCILE TIMED-OUT WRITE ACTIONS (Split-brain recovery)
+    session_factory = get_session_factory()
+    if session_factory:
+        try:
+            async with session_factory() as session:
+                stmt = select(ToolExecution).where(
+                    ToolExecution.call_id == str(call_id),
+                    ToolExecution.status == "timed_out_pending",
+                )
+                res = await session.execute(stmt)
+                timed_out_items = res.scalars().all()
+                for item in timed_out_items:
+                    item.status = "reconciled"
+                    item.completed_at = datetime.now(timezone.utc)
+                    logger.info("[POST_CALL] Reconciled timed out tool execution %s (%s)", item.id, item.action)
+                if timed_out_items:
+                    await session.commit()
+        except Exception as exc:
+            logger.warning("[POST_CALL] Split-brain reconciliation failed for call %s: %s", call_id, exc)
+
+    # 2. DISPATCH TIER-2 DURABLE JOBS (HubSpot, Salesforce, Slack)
+    post_call_actions = await get_agent_post_call_actions(tenant_id=str(tenant_id), agent_id=str(agent_id))
+    payload = {
+        "call_id": call_id,
+        "caller_phone": call_rec.get("from_number") or call_rec.get("caller_e164") or "Unknown",
+        "duration_sec": call_rec.get("duration_sec", 0),
+        "disposition": outcome.get("disposition", "completed"),
+        "summary": outcome.get("summary_en") or outcome.get("summary_te") or "Call finalized.",
+        "extracted_fields": outcome.get("extracted_fields", {}),
+    }
+
+    for action in post_call_actions:
+        job = DurableJob(
+            call_id=call_id,
+            tenant_id=str(tenant_id),
+            job_type="nango_action",
+            payload={"action_name": action, **payload},
+            idempotency_key=f"nango:{action}:{call_id}",
+        )
+        logger.info("[POST_CALL] Enqueued durable integration %s (%s)", job.job_id, job.idempotency_key)
+

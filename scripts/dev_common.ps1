@@ -12,6 +12,57 @@ $script:NeverKillNames = @(
     "cursor.exe", "code.exe"
 )
 
+function Get-VoiceAgentPython {
+    param(
+        [Parameter(Mandatory = $true)][string]$RepoRoot
+    )
+    $candidates = [System.Collections.Generic.List[string]]::new()
+    if ($env:PYTHON_EXECUTABLE -and (Test-Path $env:PYTHON_EXECUTABLE)) {
+        $candidates.Add($env:PYTHON_EXECUTABLE)
+    }
+    $venvPython = Join-Path $RepoRoot ".venv\Scripts\python.exe"
+    if (Test-Path $venvPython) {
+        $candidates.Add($venvPython)
+    }
+    try {
+        $found = (Get-Command python -All -ErrorAction SilentlyContinue)
+        if ($found) {
+            foreach ($cmd in $found) {
+                if ($cmd.Source) { $candidates.Add($cmd.Source) }
+            }
+        }
+    } catch {}
+
+    $localApp = [System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::LocalApplicationData)
+    if ($localApp) {
+        $candidates.Add((Join-Path $localApp "Programs\Python\Python312\python.exe"))
+        $candidates.Add((Join-Path $localApp "Programs\Python\Python311\python.exe"))
+        $candidates.Add((Join-Path $localApp "Programs\Python\Python310\python.exe"))
+    }
+
+    foreach ($cand in $candidates) {
+        if (-not $cand -or -not (Test-Path $cand)) { continue }
+        if ($cand -like "*WindowsApps*") { continue }
+        $prevEa = $ErrorActionPreference
+        $ErrorActionPreference = "Continue"
+        $works = $false
+        try {
+            $testOut = & $cand -c "import sys; print(sys.version_info[0])" 2>&1 | Out-String
+            if ($null -ne $LASTEXITCODE -and $LASTEXITCODE -eq 0 -and $testOut.Trim() -eq "3") {
+                $works = $true
+            }
+        } catch {
+            $works = $false
+        } finally {
+            $ErrorActionPreference = $prevEa
+        }
+        if ($works) {
+            return $cand
+        }
+    }
+    return (Get-Command python -ErrorAction Stop).Source
+}
+
 function Test-VoiceAgentPythonDeps {
     param(
         [Parameter(Mandatory = $true)][string]$PythonPath,
@@ -36,6 +87,9 @@ import server.app
         Push-Location $RepoRoot
         $out = & $PythonPath -c $check 2>&1 | Out-String
         if ($null -ne $LASTEXITCODE) { $code = [int]$LASTEXITCODE }
+    } catch {
+        $code = 1
+        $out = $_.Exception.Message
     } finally {
         Pop-Location
         $ErrorActionPreference = $prevEa

@@ -223,7 +223,7 @@ export function AgentSettingsPanel({ agent, onOpenBuyNumber }) {
               onChange={(e) => setName(e.target.value)}
               maxLength={255}
               data-testid="agent-settings-name"
-              className="mt-1 w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-3 py-2 text-xs text-[#0F0E17] focus:border-[#6344E7] focus:outline-none"
+              className="mt-1 w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-3 py-2 text-base sm:text-xs min-h-[42px] sm:min-h-[36px] text-[#0F0E17] focus:border-[#6344E7] focus:outline-none"
             />
           </label>
           <label className="block">
@@ -232,7 +232,7 @@ export function AgentSettingsPanel({ agent, onOpenBuyNumber }) {
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
               data-testid="agent-settings-language"
-              className="mt-1 w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-3 py-2 text-xs"
+              className="mt-1 w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-3 py-2 text-base sm:text-xs min-h-[42px] sm:min-h-[36px] text-[#0F0E17]"
             >
               {LANGUAGE_OPTIONS.map((l) => (
                 <option key={l.code} value={l.code}>
@@ -319,7 +319,7 @@ export function AgentSettingsPanel({ agent, onOpenBuyNumber }) {
           disabled={assigning}
           data-testid="agent-settings-number"
           aria-label="Assigned phone number"
-          className="w-full bg-white border border-[#E4E2EB] rounded-xl px-3 py-2 text-sm font-mono disabled:opacity-50"
+          className="w-full bg-white border border-[#E4E2EB] rounded-xl px-3 py-2 text-base sm:text-xs min-h-[42px] sm:min-h-[36px] font-mono text-[#0F0E17] disabled:opacity-50"
         >
           <option value="">No number — browser test calls only</option>
           {phoneNumbers.map((n) => {

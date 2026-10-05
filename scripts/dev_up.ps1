@@ -93,8 +93,7 @@ function Write-DevBanner {
     Write-Host ""
 }
 
-$venvPython = Join-Path $RepoRoot ".venv\Scripts\python.exe"
-$python = if (Test-Path $venvPython) { $venvPython } else { (Get-Command python -ErrorAction Stop).Source }
+$python = Get-VoiceAgentPython -RepoRoot $RepoRoot
 $npm = (Get-Command npm.cmd -ErrorAction SilentlyContinue).Source
 if (-not $npm) {
     $npm = (Get-Command npm -ErrorAction Stop).Source
