@@ -22,13 +22,12 @@ export const CATEGORY_COLORS = {
   Email: { bg: 'bg-[#E11D48]/10', text: 'text-[#E11D48]', border: 'border-[#E11D48]/30', glow: 'rgba(225, 29, 72, 0.12)', hex: '#E11D48' },
   Finance: { bg: 'bg-[#6366F1]/10', text: 'text-[#6366F1]', border: 'border-[#6366F1]/30', glow: 'rgba(99, 102, 241, 0.12)', hex: '#6366F1' },
   Ecommerce: { bg: 'bg-[#84CC16]/10', text: 'text-[#65A30D]', border: 'border-[#84CC16]/30', glow: 'rgba(132, 204, 22, 0.12)', hex: '#84CC16' },
+  'E-Commerce': { bg: 'bg-[#84CC16]/10', text: 'text-[#65A30D]', border: 'border-[#84CC16]/30', glow: 'rgba(132, 204, 22, 0.12)', hex: '#84CC16' },
   Support: { bg: 'bg-[#0D9488]/10', text: 'text-[#0D9488]', border: 'border-[#0D9488]/30', glow: 'rgba(13, 148, 136, 0.12)', hex: '#0D9488' },
   Productivity: { bg: 'bg-[#8B5CF6]/10', text: 'text-[#8B5CF6]', border: 'border-[#8B5CF6]/30', glow: 'rgba(139, 92, 246, 0.12)', hex: '#8B5CF6' },
   Marketing: { bg: 'bg-[#F59E0B]/10', text: 'text-[#D97706]', border: 'border-[#F59E0B]/30', glow: 'rgba(245, 158, 11, 0.12)', hex: '#F59E0B' },
   Developer: { bg: 'bg-[#475569]/10', text: 'text-[#334155]', border: 'border-[#475569]/30', glow: 'rgba(71, 85, 105, 0.12)', hex: '#475569' },
   Database: { bg: 'bg-[#06B6D4]/10', text: 'text-[#0891B2]', border: 'border-[#06B6D4]/30', glow: 'rgba(6, 182, 212, 0.12)', hex: '#06B6D4' },
-  Forms: { bg: 'bg-[#EC4899]/10', text: 'text-[#DB2777]', border: 'border-[#EC4899]/30', glow: 'rgba(236, 72, 153, 0.12)', hex: '#EC4899' },
-  Analytics: { bg: 'bg-[#3B82F6]/10', text: 'text-[#2563EB]', border: 'border-[#3B82F6]/30', glow: 'rgba(59, 130, 246, 0.12)', hex: '#3B82F6' },
 };
 
 // Authentic brand accent colors and glows
@@ -38,21 +37,34 @@ export const BRAND_COLORS = {
   CALENDLY: { bg: 'bg-[#006BFF]/10', text: 'text-[#006BFF]', border: 'border-[#006BFF]/30', glow: 'rgba(0, 107, 255, 0.12)', hex: '#006BFF' },
   HUBSPOT: { bg: 'bg-[#FF7A59]/10', text: 'text-[#FF7A59]', border: 'border-[#FF7A59]/30', glow: 'rgba(255, 122, 89, 0.12)', hex: '#FF7A59' },
   SALESFORCE: { bg: 'bg-[#00A1E0]/10', text: 'text-[#00A1E0]', border: 'border-[#00A1E0]/30', glow: 'rgba(0, 161, 224, 0.12)', hex: '#00A1E0' },
+  PIPEDRIVE: { bg: 'bg-[#121212]/10', text: 'text-[#121212]', border: 'border-[#121212]/30', glow: 'rgba(18, 18, 18, 0.12)', hex: '#121212' },
+  ZOHO_CRM: { bg: 'bg-[#E42528]/10', text: 'text-[#E42528]', border: 'border-[#E42528]/30', glow: 'rgba(228, 37, 40, 0.12)', hex: '#E42528' },
   SLACK: { bg: 'bg-[#4A154B]/10', text: 'text-[#4A154B]', border: 'border-[#4A154B]/30', glow: 'rgba(74, 21, 75, 0.12)', hex: '#4A154B' },
+  MICROSOFTTEAMS: { bg: 'bg-[#464EB8]/10', text: 'text-[#464EB8]', border: 'border-[#464EB8]/30', glow: 'rgba(70, 78, 184, 0.12)', hex: '#464EB8' },
   GMAIL: { bg: 'bg-[#EA4335]/10', text: 'text-[#EA4335]', border: 'border-[#EA4335]/30', glow: 'rgba(234, 67, 53, 0.12)', hex: '#EA4335' },
+  OUTLOOKCALENDAR: { bg: 'bg-[#0078D4]/10', text: 'text-[#0078D4]', border: 'border-[#0078D4]/30', glow: 'rgba(0, 120, 212, 0.12)', hex: '#0078D4' },
+  SENDGRID: { bg: 'bg-[#009DD9]/10', text: 'text-[#009DD9]', border: 'border-[#009DD9]/30', glow: 'rgba(0, 157, 217, 0.12)', hex: '#009DD9' },
   WHATSAPP: { bg: 'bg-[#25D366]/10', text: 'text-[#25D366]', border: 'border-[#25D366]/30', glow: 'rgba(37, 211, 102, 0.12)', hex: '#25D366' },
+  DISCORD: { bg: 'bg-[#5865F2]/10', text: 'text-[#5865F2]', border: 'border-[#5865F2]/30', glow: 'rgba(88, 101, 242, 0.12)', hex: '#5865F2' },
   STRIPE: { bg: 'bg-[#635BFF]/10', text: 'text-[#635BFF]', border: 'border-[#635BFF]/30', glow: 'rgba(99, 91, 255, 0.12)', hex: '#635BFF' },
   SHOPIFY: { bg: 'bg-[#96BF48]/10', text: 'text-[#96BF48]', border: 'border-[#96BF48]/30', glow: 'rgba(150, 191, 72, 0.12)', hex: '#96BF48' },
+  WOOCOMMERCE: { bg: 'bg-[#96588A]/10', text: 'text-[#96588A]', border: 'border-[#96588A]/30', glow: 'rgba(150, 88, 138, 0.12)', hex: '#96588A' },
   ZOOM: { bg: 'bg-[#2D8CFF]/10', text: 'text-[#2D8CFF]', border: 'border-[#2D8CFF]/30', glow: 'rgba(45, 140, 255, 0.12)', hex: '#2D8CFF' },
   NOTION: { bg: 'bg-[#000000]/10', text: 'text-[#000000]', border: 'border-[#000000]/30', glow: 'rgba(0, 0, 0, 0.12)', hex: '#000000' },
   AIRTABLE: { bg: 'bg-[#FCB400]/10', text: 'text-[#FCB400]', border: 'border-[#FCB400]/30', glow: 'rgba(252, 180, 0, 0.12)', hex: '#FCB400' },
+  GOOGLESHEETS: { bg: 'bg-[#0F9D58]/10', text: 'text-[#0F9D58]', border: 'border-[#0F9D58]/30', glow: 'rgba(15, 157, 88, 0.12)', hex: '#0F9D58' },
   LINEAR: { bg: 'bg-[#5E6AD2]/10', text: 'text-[#5E6AD2]', border: 'border-[#5E6AD2]/30', glow: 'rgba(94, 106, 210, 0.12)', hex: '#5E6AD2' },
   GITHUB: { bg: 'bg-[#24292F]/10', text: 'text-[#24292F]', border: 'border-[#24292F]/30', glow: 'rgba(36, 41, 47, 0.12)', hex: '#24292F' },
+  JIRA: { bg: 'bg-[#0052CC]/10', text: 'text-[#0052CC]', border: 'border-[#0052CC]/30', glow: 'rgba(0, 82, 204, 0.12)', hex: '#0052CC' },
   ZENDESK: { bg: 'bg-[#03363D]/10', text: 'text-[#03363D]', border: 'border-[#03363D]/30', glow: 'rgba(3, 54, 61, 0.12)', hex: '#03363D' },
+  FRESHDESK: { bg: 'bg-[#25C9A1]/10', text: 'text-[#25C9A1]', border: 'border-[#25C9A1]/30', glow: 'rgba(37, 201, 161, 0.12)', hex: '#25C9A1' },
   TWILIO_SMS: { bg: 'bg-[#F22F46]/10', text: 'text-[#F22F46]', border: 'border-[#F22F46]/30', glow: 'rgba(242, 47, 70, 0.12)', hex: '#F22F46' },
   SUPABASE: { bg: 'bg-[#3ECF8E]/10', text: 'text-[#3ECF8E]', border: 'border-[#3ECF8E]/30', glow: 'rgba(62, 207, 142, 0.12)', hex: '#3ECF8E' },
   INTERCOM: { bg: 'bg-[#0057FF]/10', text: 'text-[#0057FF]', border: 'border-[#0057FF]/30', glow: 'rgba(0, 87, 255, 0.12)', hex: '#0057FF' },
+  ASANA: { bg: 'bg-[#F06A6A]/10', text: 'text-[#F06A6A]', border: 'border-[#F06A6A]/30', glow: 'rgba(240, 106, 106, 0.12)', hex: '#F06A6A' },
   CLICKUP: { bg: 'bg-[#7B68EE]/10', text: 'text-[#7B68EE]', border: 'border-[#7B68EE]/30', glow: 'rgba(123, 104, 238, 0.12)', hex: '#7B68EE' },
+  MONDAY: { bg: 'bg-[#FF3D57]/10', text: 'text-[#FF3D57]', border: 'border-[#FF3D57]/30', glow: 'rgba(255, 61, 87, 0.12)', hex: '#FF3D57' },
+  TODOIST: { bg: 'bg-[#E44332]/10', text: 'text-[#E44332]', border: 'border-[#E44332]/30', glow: 'rgba(228, 67, 50, 0.12)', hex: '#E44332' },
   MAILCHIMP: { bg: 'bg-[#FFE01B]/20', text: 'text-[#000000]', border: 'border-[#FFE01B]/40', glow: 'rgba(255, 224, 27, 0.12)', hex: '#FFE01B' },
 };
 
@@ -66,6 +78,10 @@ export function normalizeAppKey(key) {
   if (clean === 'TWILIO' || clean === 'TWILIOSMS') return 'TWILIO_SMS';
   if (clean === 'CALCOM') return 'CALCOM';
   if (clean === 'CALENDLY') return 'CALENDLY';
+  if (clean === 'ZOHO' || clean === 'ZOHOCRM') return 'ZOHO_CRM';
+  if (clean === 'GOOGLESHEET' || clean === 'GOOGLESHEETS') return 'GOOGLESHEETS';
+  if (clean === 'OUTLOOK' || clean === 'OUTLOOKCALENDAR') return 'OUTLOOKCALENDAR';
+  if (clean === 'TEAMS' || clean === 'MICROSOFTTEAMS') return 'MICROSOFTTEAMS';
   return clean;
 }
 
@@ -74,11 +90,9 @@ export function IntegrationsModule() {
   const [connections, setConnections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(null);
-  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'connected' | 'not_connected' | 'guide'
+  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'connected' | 'guide'
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [timingFilter, setTimingFilter] = useState('all'); // 'all' | 'in_call' | 'post_call'
-  const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'connected' | 'not_connected'
+  const [filterMode, setFilterMode] = useState('all'); // 'all' | 'in_call' | 'post_call' | 'oauth_ready' | 'api_key'
   const [selectedAppModal, setSelectedAppModal] = useState(null);
   const [connectModalApp, setConnectModalApp] = useState(null);
   const [accountAlias, setAccountAlias] = useState('');
@@ -158,11 +172,77 @@ export function IntegrationsModule() {
     } catch (_) {}
   };
 
+  const getApiKeyInfo = (appId) => {
+    switch (appId) {
+      case 'STRIPE':
+        return {
+          label: 'Stripe Secret Key',
+          placeholder: 'sk_live_... or sk_test_...',
+          help: 'Found in your Stripe Dashboard under Developers > API keys.'
+        };
+      case 'SHOPIFY':
+        return {
+          label: 'Shopify Admin API Access Token',
+          placeholder: 'shpat_...',
+          help: 'Found in Shopify Admin > Settings > Apps > Develop apps.'
+        };
+      case 'WOOCOMMERCE':
+        return {
+          label: 'WooCommerce Consumer Key / Secret',
+          placeholder: 'ck_...:cs_...',
+          help: 'Generated from WooCommerce > Settings > Advanced > REST API.'
+        };
+      case 'TWILIO_SMS':
+        return {
+          label: 'Twilio Auth Token',
+          placeholder: 'Paste Twilio Auth Token...',
+          help: 'Found on your Twilio Console dashboard.'
+        };
+      case 'WHATSAPP':
+        return {
+          label: 'WhatsApp Cloud API Access Token',
+          placeholder: 'EAAB... (System User Token)',
+          help: 'Generated in Meta for Developers under WhatsApp Business.'
+        };
+      case 'DISCORD':
+        return {
+          label: 'Discord Bot Token',
+          placeholder: 'Paste Discord Bot Token...',
+          help: 'Found in Discord Developer Portal > Applications > Bot.'
+        };
+      case 'SENDGRID':
+        return {
+          label: 'SendGrid API Key',
+          placeholder: 'SG.xxxxxxxx...',
+          help: 'Found in SendGrid Settings > API Keys.'
+        };
+      case 'SUPABASE':
+        return {
+          label: 'Supabase Service Role Key',
+          placeholder: 'eyJh... (Service Role Key)',
+          help: 'Found in Supabase Project Settings > API.'
+        };
+      case 'FRESHDESK':
+        return {
+          label: 'Freshdesk API Key',
+          placeholder: 'Paste Freshdesk API Key...',
+          help: 'Found in Freshdesk Profile Settings > Your API Key.'
+        };
+      default:
+        return {
+          label: 'API Key or Access Token',
+          placeholder: 'Paste API Key or Token...',
+          help: 'Encrypted with AES-256 and used exclusively for your agent phone calls.'
+        };
+    }
+  };
+
   // Prompt the Connect configuration modal
   const openConnectDialog = (app) => {
     setConnectModalApp(app);
     setAccountAlias(`workspace-${app.name.toLowerCase().replace(/[^a-z0-9]/g, '')}`);
-    setAuthMode('oauth');
+    const isApiKey = app.auth_type === 'api_key';
+    setAuthMode(isApiKey ? 'apiKey' : 'oauth');
     setManualApiKey('');
   };
 
@@ -206,8 +286,13 @@ export function IntegrationsModule() {
       if (data?.status === 'ERROR' || data?.error) {
         if (popup && !popup.closed) popup.close();
         setConnecting(null);
-        const msg = data?.message || 'Failed to initiate OAuth. Please check your Nango configuration.';
-        setToastMessage(`❌ ${msg}`);
+        if (data?.error === 'nango_credentials_required') {
+          setAuthMode('apiKey');
+          setToastMessage(`ℹ️ OAuth credentials not yet added in Nango. Switched to direct API Key connection.`);
+        } else {
+          const msg = data?.message || 'Failed to initiate OAuth. Please check your Nango configuration.';
+          setToastMessage(`❌ ${msg}`);
+        }
         setTimeout(() => setToastMessage(null), 6000);
         return;
       }
@@ -330,21 +415,6 @@ export function IntegrationsModule() {
     }, 900);
   };
 
-  // Derive categories and counts dynamically
-  const categoriesWithCounts = useMemo(() => {
-    const counts = { All: catalog.length };
-    catalog.forEach(item => {
-      const cat = item.category || 'Other';
-      counts[cat] = (counts[cat] || 0) + 1;
-    });
-    return counts;
-  }, [catalog]);
-
-  const categories = useMemo(() => {
-    const list = Object.keys(categoriesWithCounts).filter(c => c !== 'All');
-    return ['All', ...list.sort()];
-  }, [categoriesWithCounts]);
-
   const connectedAppKeys = useMemo(() => {
     const set = new Set();
     connections.forEach(c => {
@@ -360,20 +430,14 @@ export function IntegrationsModule() {
     return catalog.filter(item => connectedAppKeys.has(normalizeAppKey(item.id))).length;
   }, [catalog, connectedAppKeys]);
 
-  const notConnectedCount = useMemo(() => {
-    return Math.max(0, catalog.length - connectedCount);
-  }, [catalog.length, connectedCount]);
-
   const filteredCatalog = useMemo(() => {
     return catalog.filter(item => {
       const itemKey = normalizeAppKey(item.id);
       const isItemConnected = connectedAppKeys.has(itemKey);
 
-      // 1. Tab Section Filter (All, Connected, Not Connected)
-      if (activeTab === 'connected') {
-        if (!isItemConnected) return false;
-      } else if (activeTab === 'not_connected') {
-        if (isItemConnected) return false;
+      // 1. Tab Selection Filter: connected vs all
+      if (activeTab === 'connected' && !isItemConnected) {
+        return false;
       }
 
       // 2. Text Search
@@ -381,37 +445,26 @@ export function IntegrationsModule() {
         const q = searchQuery.toLowerCase().trim();
         const matchesName = (item.name || '').toLowerCase().includes(q);
         const matchesDesc = (item.description || '').toLowerCase().includes(q);
-        const matchesCat = (item.category || '').toLowerCase().includes(q);
         const matchesActions = (item.actions || []).some(a => (a || '').toLowerCase().includes(q));
-        if (!matchesName && !matchesDesc && !matchesCat && !matchesActions) return false;
+        if (!matchesName && !matchesDesc && !matchesActions) return false;
       }
 
-      // 3. Category Filter
-      if (selectedCategory !== 'All') {
-        if ((item.category || '').toLowerCase() !== selectedCategory.toLowerCase()) return false;
-      }
-
-      // 4. Timing Filter
-      if (timingFilter !== 'all') {
-        if (item.timing !== timingFilter) return false;
-      }
-
-      // 5. Status Filter
-      if (statusFilter === 'connected') {
-        if (!isItemConnected) return false;
-      } else if (statusFilter === 'not_connected') {
-        if (isItemConnected) return false;
+      // 3. Dropdown Filter: Categorisations of tool uses
+      if (filterMode !== 'all') {
+        const itemCat = (item.category || '').toLowerCase().trim();
+        if (filterMode === 'scheduling' && itemCat !== 'scheduling') return false;
+        if (filterMode === 'crm' && itemCat !== 'crm') return false;
+        if (filterMode === 'support' && itemCat !== 'support') return false;
+        if (filterMode === 'ecommerce' && !['e-commerce', 'ecommerce', 'commerce'].includes(itemCat)) return false;
+        if (filterMode === 'communication' && itemCat !== 'communication') return false;
+        if (filterMode === 'email' && itemCat !== 'email') return false;
+        if (filterMode === 'database' && itemCat !== 'database') return false;
+        if (filterMode === 'productivity' && itemCat !== 'productivity') return false;
       }
 
       return true;
     });
-  }, [catalog, searchQuery, selectedCategory, timingFilter, statusFilter, connectedAppKeys, activeTab]);
-
-  // Featured voice apps
-  const featuredApps = useMemo(() => {
-    const ids = ['GOOGLECALENDAR', 'HUBSPOT', 'STRIPE', 'SHOPIFY', 'WHATSAPP'];
-    return catalog.filter(c => ids.includes(c.id));
-  }, [catalog]);
+  }, [catalog, searchQuery, filterMode, connectedAppKeys, activeTab]);
 
   const getIcon = (iconName, className) => {
     switch (iconName) {
@@ -550,20 +603,20 @@ export function IntegrationsModule() {
           </div>
         </div>
 
-        {/* View Mode Navigation Tabs */}
+        {/* View Mode Navigation Tabs: 3 clean tabs */}
         <div className="relative z-10 flex items-center space-x-2 mt-6 pt-5 border-t border-white/10 overflow-x-auto scrollbar-none">
           <button
             onClick={() => setActiveTab('all')}
             data-testid="tab-all-integrations"
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 flex items-center space-x-2 ${
-              activeTab === 'all' || activeTab === 'catalog'
+              activeTab === 'all'
                 ? 'bg-white text-[#0F0E17] shadow-craft-sm scale-[1.02]'
                 : 'text-white/70 hover:text-white hover:bg-white/10'
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
             <span>All Integrations</span>
-            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${activeTab === 'all' || activeTab === 'catalog' ? 'bg-[#0F0E17]/10 text-[#0F0E17]' : 'bg-white/20 text-white'}`}>
+            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${activeTab === 'all' ? 'bg-[#0F0E17]/10 text-[#0F0E17]' : 'bg-white/20 text-white'}`}>
               {catalog.length}
             </span>
           </button>
@@ -577,24 +630,9 @@ export function IntegrationsModule() {
             }`}
           >
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-            <span>Connected</span>
+            <span>Connected Integrations</span>
             <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${activeTab === 'connected' ? 'bg-emerald-100 text-emerald-800' : 'bg-emerald-500/20 text-emerald-300'}`}>
               {connectedCount}
-            </span>
-          </button>
-          <button
-            onClick={() => setActiveTab('not_connected')}
-            data-testid="tab-not-connected"
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 flex items-center space-x-2 ${
-              activeTab === 'not_connected'
-                ? 'bg-white text-[#0F0E17] shadow-craft-sm scale-[1.02]'
-                : 'text-white/70 hover:text-white hover:bg-white/10'
-            }`}
-          >
-            <Plus className="w-3.5 h-3.5 text-brand-accent" />
-            <span>Not Connected</span>
-            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${activeTab === 'not_connected' ? 'bg-brand/10 text-brand' : 'bg-white/20 text-white'}`}>
-              {notConnectedCount}
             </span>
           </button>
           <button
@@ -612,141 +650,66 @@ export function IntegrationsModule() {
         </div>
       </div>
 
-      {/* TAB 1, 2, 3: ALL, CONNECTED, NOT CONNECTED */}
+      {/* TAB 1 & 2: ALL & CONNECTED INTEGRATIONS */}
       {activeTab !== 'guide' && (
         <>
-          {/* Workflow Capability Highlights */}
-          {!searchQuery && selectedCategory === 'All' && (activeTab === 'all' || activeTab === 'not_connected') && (
-            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white border border-[#E4E2EB] shadow-craft-xs">
-              <div className="flex items-center space-x-3 text-xs">
-                <div className="w-8 h-8 rounded-xl bg-brand/10 text-brand flex items-center justify-center flex-shrink-0">
-                  <Zap className="w-4 h-4 text-brand animate-pulse" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-[#0F0E17] text-xs">
-                    {activeTab === 'not_connected' ? 'Available Integrations Ready to Connect' : 'Essential Voice Capabilities'}
-                  </h3>
-                  <p className="text-[11px] text-[#524E5E]">
-                    {activeTab === 'not_connected' 
-                      ? 'Choose from 170+ integrations to link calendars, CRMs, payments, and messaging to your voice agent'
-                      : 'Real-time calendar booking, CRM sync, payments, and messaging ready for telephone agents'}
-                  </p>
-                </div>
-              </div>
-              <div className="hidden sm:flex items-center space-x-2">
+          {/* Unified Search & Dropdown Filter Toolbar */}
+          <div className="bg-white border border-[#E4E2EB] rounded-2xl p-4 shadow-craft-xs flex flex-col md:flex-row md:items-center justify-between gap-3.5">
+            {/* Search Input */}
+            <div className="relative flex-1 max-w-xl group">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#524E5E] group-focus-within:text-brand transition-colors" />
+              <input
+                type="text"
+                data-testid="integration-search-input"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={
+                  activeTab === 'connected'
+                    ? 'Search connected integrations (e.g. Google Calendar, Slack, HubSpot)...'
+                    : 'Search all available integrations and voice tools (e.g. Calendly, Stripe, Shopify)...'
+                }
+                className="w-full pl-10 pr-9 py-2.5 sm:py-2 min-h-[42px] sm:min-h-[36px] text-base sm:text-xs bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl focus:outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 text-[#0F0E17] placeholder:text-[#524E5E] transition-all"
+              />
+              {searchQuery && (
                 <button
-                  onClick={() => setSelectedCategory('Scheduling')}
-                  className="px-2.5 py-1 rounded-lg bg-[#FAF9FD] hover:bg-[#F0EEF6] border border-[#E4E2EB] text-[11px] font-semibold text-[#0F0E17] transition-colors"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#524E5E] hover:text-[#0F0E17] p-1 min-w-[32px] min-h-[32px] flex items-center justify-center rounded-full hover:bg-[#F0EEF6] transition-colors"
                 >
-                  📅 Calendars
+                  <X className="w-3.5 h-3.5" />
                 </button>
-                <button
-                  onClick={() => setSelectedCategory('CRM')}
-                  className="px-2.5 py-1 rounded-lg bg-[#FAF9FD] hover:bg-[#F0EEF6] border border-[#E4E2EB] text-[11px] font-semibold text-[#0F0E17] transition-colors"
-                >
-                  💼 CRMs
-                </button>
-                <button
-                  onClick={() => setSelectedCategory('Finance')}
-                  className="px-2.5 py-1 rounded-lg bg-[#FAF9FD] hover:bg-[#F0EEF6] border border-[#E4E2EB] text-[11px] font-semibold text-[#0F0E17] transition-colors"
-                >
-                  💳 Payments
-                </button>
-                <button
-                  onClick={() => setSelectedCategory('Communication')}
-                  className="px-2.5 py-1 rounded-lg bg-[#FAF9FD] hover:bg-[#F0EEF6] border border-[#E4E2EB] text-[11px] font-semibold text-[#0F0E17] transition-colors"
-                >
-                  💬 Messages
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Search, Filter, and Category Discovery Bar */}
-          <div className="bg-white border border-[#E4E2EB] rounded-2xl p-4 shadow-craft-xs space-y-3">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-              {/* Spotlight Search Box */}
-              <div className="relative flex-1 max-w-lg group">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#524E5E] group-focus-within:text-brand transition-colors" />
-                <input
-                  type="text"
-                  data-testid="integration-search-input"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={
-                    activeTab === 'connected' 
-                      ? 'Search your connected voice tools (e.g., Google Calendar, Slack)...' 
-                      : activeTab === 'not_connected'
-                      ? 'Search available integrations to connect (e.g., Stripe, Shopify, Calendly, HubSpot)...'
-                      : 'Search 170+ integrations, tools, or actions (e.g., calendar, stripe, hubspot)...'
-                  }
-                  className="w-full pl-10 pr-9 py-2.5 sm:py-2 min-h-[42px] sm:min-h-[36px] text-base sm:text-xs bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl focus:outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 text-[#0F0E17] placeholder:text-[#524E5E] transition-all"
-                />
-                {searchQuery && (
-                  <button 
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#524E5E] hover:text-[#0F0E17] p-1 min-w-[32px] min-h-[32px] flex items-center justify-center rounded-full hover:bg-[#F0EEF6] transition-colors"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-
-              {/* Mode Toggles */}
-              <div className="flex items-center space-x-2 flex-wrap">
-                <div className="flex items-center bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl p-1 text-xs overflow-x-auto scrollbar-none touch-pan-x">
-                  <button
-                    onClick={() => setTimingFilter('all')}
-                    className={`px-3 py-1.5 min-h-[36px] flex items-center whitespace-nowrap rounded-lg font-semibold transition-all ${timingFilter === 'all' ? 'bg-white text-brand shadow-craft-xs' : 'text-[#524E5E] hover:text-[#0F0E17]'}`}
-                  >
-                    All Modes
-                  </button>
-                  <button
-                    onClick={() => setTimingFilter('in_call')}
-                    className={`px-3 py-1.5 min-h-[36px] flex items-center whitespace-nowrap rounded-lg font-semibold transition-all flex items-center space-x-1.5 ${timingFilter === 'in_call' ? 'bg-white text-amber-600 shadow-craft-xs' : 'text-[#524E5E] hover:text-[#0F0E17]'}`}
-                  >
-                    <Zap className="w-3 h-3 text-amber-500" />
-                    <span>Live In-Call</span>
-                  </button>
-                  <button
-                    onClick={() => setTimingFilter('post_call')}
-                    className={`px-3 py-1.5 min-h-[36px] flex items-center whitespace-nowrap rounded-lg font-semibold transition-all flex items-center space-x-1.5 ${timingFilter === 'post_call' ? 'bg-white text-indigo-600 shadow-craft-xs' : 'text-[#524E5E] hover:text-[#0F0E17]'}`}
-                  >
-                    <Clock className="w-3 h-3 text-indigo-500" />
-                    <span>Async Post-Call</span>
-                  </button>
-                </div>
-              </div>
+              )}
             </div>
 
-            {/* Dynamic Category Filter Ribbon */}
-            <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 scrollbar-none touch-pan-x pt-1 border-t border-[#E4E2EB]/60">
-              {categories.map(cat => {
-                const count = categoriesWithCounts[cat] || 0;
-                const isSelected = selectedCategory === cat;
-                return (
-                  <button
-                    key={cat}
-                    data-testid={`category-pill-${cat.toLowerCase()}`}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`whitespace-nowrap px-3 py-1.5 min-h-[36px] rounded-xl text-xs font-semibold transition-all duration-200 flex items-center space-x-1.5 flex-shrink-0 ${
-                      isSelected 
-                        ? 'bg-[#0F0E17] text-white shadow-craft-sm scale-[1.02]' 
-                        : 'bg-[#FAF9FD] hover:bg-[#F0EEF6] text-[#524E5E] hover:text-[#0F0E17] border border-[#E4E2EB]'
-                    }`}
-                  >
-                    <span>{cat}</span>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${isSelected ? 'bg-white/20 text-white' : 'bg-[#E4E2EB] text-[#524E5E]'}`}>
-                      {count}
-                    </span>
-                  </button>
-                );
-              })}
+            {/* Controls: Filter Dropdown & Counter */}
+            <div className="flex items-center space-x-3 flex-wrap sm:flex-nowrap">
+              <div className="flex items-center space-x-2 w-full sm:w-auto">
+                <Sliders className="w-3.5 h-3.5 text-[#524E5E] hidden sm:block" />
+                <select
+                  data-testid="integration-filter-select"
+                  value={filterMode}
+                  onChange={(e) => setFilterMode(e.target.value)}
+                  className="bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-3 py-2 text-xs font-semibold text-[#0F0E17] focus:outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 cursor-pointer min-h-[36px]"
+                >
+                  <option value="all">All Tool Uses (All {catalog.length} Integrations)</option>
+                  <option value="scheduling">📅 Calendar & Scheduling (Bookings & Slots)</option>
+                  <option value="crm">💼 CRM & Sales Leads (Contacts & Pipeline)</option>
+                  <option value="support">🎧 Customer Support & Helpdesk (Tickets & SLA)</option>
+                  <option value="ecommerce">🛍️ E-Commerce & Payments (Orders & Billing)</option>
+                  <option value="communication">💬 Team Communication & Messaging (Slack, SMS)</option>
+                  <option value="email">✉️ Email & Follow-Ups (Gmail, Campaigns)</option>
+                  <option value="database">📊 Databases & Spreadsheets (Airtable, Sheets)</option>
+                  <option value="productivity">📋 Task & Project Management (Asana, Monday)</option>
+                </select>
+              </div>
+
+              <div className="text-[11px] font-bold text-[#524E5E] bg-[#FAF9FD] border border-[#E4E2EB] px-3 py-2 rounded-xl whitespace-nowrap min-h-[36px] flex items-center">
+                <span>{filteredCatalog.length} {filteredCatalog.length === 1 ? 'tool' : 'tools'}</span>
+              </div>
             </div>
           </div>
 
-          {/* Catalog Grid — shown only when user has searched or picked a category */}
-          {filteredCatalog.length === 0 && (searchQuery || selectedCategory !== 'All') ? (
+          {/* Full Grid: Displays all available integrations immediately */}
+          {filteredCatalog.length === 0 ? (
             <div className="text-center py-16 border border-dashed border-[#E4E2EB] rounded-3xl bg-white p-8 shadow-craft-xs">
               {activeTab === 'connected' && !searchQuery ? (
                 <div>
@@ -755,42 +718,32 @@ export function IntegrationsModule() {
                   </div>
                   <h3 className="text-base font-extrabold text-[#0F0E17]">No Integrations Connected Yet</h3>
                   <p className="text-xs text-[#524E5E] mt-1.5 max-w-md mx-auto leading-relaxed">
-                    Connect Google Calendar, Slack, HubSpot, or any of our 170+ integrations to equip your AI voice agent with live phone call actions.
+                    Connect Google Calendar, Slack, HubSpot, or any voice tools to equip your AI voice agent with real-time in-call actions.
                   </p>
                   <div className="mt-5 flex items-center justify-center space-x-3">
                     <button
-                      onClick={() => setActiveTab('not_connected')}
+                      onClick={() => setActiveTab('all')}
                       className="px-5 py-2.5 bg-brand hover:bg-brand-hover text-white text-xs font-bold rounded-xl shadow-craft-xs flex items-center space-x-2 transition-all hover:scale-105 active:scale-95"
                     >
-                      <Plus className="w-4 h-4" />
-                      <span>Browse Available Integrations ({notConnectedCount})</span>
+                      <Layers className="w-4 h-4" />
+                      <span>Browse All {catalog.length} Integrations</span>
                     </button>
                   </div>
-                </div>
-              ) : activeTab === 'not_connected' && notConnectedCount === 0 ? (
-                <div>
-                  <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-4">
-                    <CheckCircle2 className="w-7 h-7" />
-                  </div>
-                  <h3 className="text-base font-extrabold text-[#0F0E17]">All Integrations Connected!</h3>
-                  <p className="text-xs text-[#524E5E] mt-1.5 max-w-md mx-auto leading-relaxed">
-                    Every available integration in your catalog is currently active for your workspace.
-                  </p>
                 </div>
               ) : (
                 <div>
                   <div className="w-12 h-12 rounded-2xl bg-[#F0EEF6] flex items-center justify-center mx-auto mb-3 text-brand">
                     <Search className="w-6 h-6 text-[#524E5E]" />
                   </div>
-                  <h3 className="text-sm font-bold text-[#0F0E17]">No integrations found</h3>
+                  <h3 className="text-sm font-bold text-[#0F0E17]">No integrations match criteria</h3>
                   <p className="text-xs text-[#524E5E] mt-1 max-w-sm mx-auto">
-                    {searchQuery 
-                      ? `No tools match "${searchQuery}" in this view. Try adjusting your search term.` 
-                      : 'No tools match the selected category filter.'}
+                    {searchQuery
+                      ? `No voice tools match "${searchQuery}". Try a different keyword.`
+                      : 'No voice tools match the selected filter.'}
                   </p>
                   <div className="flex justify-center space-x-3 mt-4">
                     <button
-                      onClick={() => { setSearchQuery(''); setSelectedCategory('All'); setTimingFilter('all'); setStatusFilter('all'); }}
+                      onClick={() => { setSearchQuery(''); setFilterMode('all'); }}
                       className="px-4 py-2 text-xs font-semibold text-brand hover:underline"
                     >
                       Reset Filters
@@ -804,79 +757,6 @@ export function IntegrationsModule() {
                   </div>
                 </div>
               )}
-            </div>
-          ) : !searchQuery && selectedCategory === 'All' && activeTab === 'all' ? (
-            // Search-First Empty State for first-time users on the All tab
-            <div className="space-y-6">
-              {/* Hero Search Prompt */}
-              <div className="flex flex-col items-center text-center py-12 px-6 bg-white border border-[#E4E2EB] rounded-3xl shadow-craft-xs">
-                <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-brand/20 to-indigo-500/20 flex items-center justify-center mb-5 shadow-craft-sm">
-                  <Search className="w-8 h-8 text-brand" />
-                </div>
-                <h2 className="text-lg font-extrabold text-[#0F0E17] mb-2">Find Your Integration</h2>
-                <p className="text-xs text-[#524E5E] max-w-md leading-relaxed mb-6">
-                  Search from {catalog.length}+ integrations — calendars, CRMs, payments, messaging and more. Or browse by category below.
-                </p>
-
-                {/* Featured quick-access integrations */}
-                <div className="w-full max-w-2xl">
-                  <p className="text-[11px] font-bold text-[#524E5E] uppercase tracking-wider mb-3">⚡ Popular Voice Integrations</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5">
-                    {featuredApps.map(app => {
-                      const isConn = connectedAppKeys.has(normalizeAppKey(app.id));
-                      const bc = BRAND_COLORS[app.id] || CATEGORY_COLORS[app.category] || { bg: 'bg-brand/10', text: 'text-brand', border: 'border-brand/20' };
-                      return (
-                        <button
-                          key={app.id}
-                          onClick={() => isConn ? promptDisconnect(app) : openConnectDialog(app)}
-                          className={`relative flex flex-col items-center gap-2 p-3.5 rounded-2xl border transition-all duration-200 hover:shadow-craft-md hover:-translate-y-0.5 group ${
-                            isConn ? 'border-emerald-400/50 bg-emerald-50/60 ring-1 ring-emerald-400/20' : 'border-[#E4E2EB] bg-[#FAF9FD] hover:bg-white'
-                          }`}
-                        >
-                          {isConn && (
-                            <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-emerald-100 flex items-center justify-center">
-                              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                            </span>
-                          )}
-                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${bc.bg} ${bc.text} group-hover:scale-110 transition-transform`}>
-                            {getIcon(app.iconName, 'w-5 h-5')}
-                          </div>
-                          <span className="text-[11px] font-bold text-[#0F0E17] leading-tight text-center">{app.name}</span>
-                          <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${
-                            isConn ? 'bg-emerald-100 text-emerald-700' : 'bg-[#F0EEF6] text-[#524E5E]'
-                          }`}>{isConn ? 'Connected' : 'Connect'}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              {/* Category Quick-Browse Grid */}
-              <div>
-                <p className="text-xs font-bold text-[#524E5E] uppercase tracking-wider mb-3">Browse by Category</p>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                  {categories.filter(c => c !== 'All').map(cat => {
-                    const count = categoriesWithCounts[cat] || 0;
-                    const cc = CATEGORY_COLORS[cat] || { bg: 'bg-brand/10', text: 'text-brand', border: 'border-brand/20' };
-                    return (
-                      <button
-                        key={cat}
-                        onClick={() => setSelectedCategory(cat)}
-                        className={`flex items-center justify-between p-4 rounded-2xl border border-[#E4E2EB] bg-white hover:shadow-craft-md hover:-translate-y-0.5 transition-all duration-200 group`}
-                      >
-                        <div className="flex items-center space-x-2.5">
-                          <div className={`w-8 h-8 rounded-xl ${cc.bg} ${cc.text} flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform`}>
-                            <Zap className="w-4 h-4" />
-                          </div>
-                          <span className="text-xs font-bold text-[#0F0E17]">{cat}</span>
-                        </div>
-                        <span className="text-[10px] font-semibold text-[#524E5E] bg-[#F0EEF6] px-2 py-0.5 rounded-full">{count}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
@@ -910,11 +790,18 @@ export function IntegrationsModule() {
                                 {app.name}
                               </h3>
                             </div>
-                            <div className="flex items-center space-x-1.5 text-[10px] text-[#524E5E] mt-0.5">
-                              <span className="truncate">{app.category}</span>
-                              {app.badge && (
-                                <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-[#F0EEF6] text-[#0F0E17] border border-[#E4E2EB]">
-                                  {app.badge}
+                            <div className="flex items-center space-x-1.5 text-[10px] text-[#524E5E] mt-0.5 flex-wrap gap-y-1">
+                              <span className="px-1.5 py-0.2 rounded-md font-bold bg-[#F0EEF6] text-[#0F0E17] border border-[#E4E2EB]">
+                                {app.category}
+                              </span>
+                              <span className="truncate font-medium">{app.timing === 'in_call' ? 'Live In-Call' : 'Post-Call'}</span>
+                              {app.auth_type === 'oauth' ? (
+                                <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200" title="1-Click OAuth 2.0 Sign-In (Zero API Key needed)">
+                                  ⚡ 1-Click OAuth
+                                </span>
+                              ) : (
+                                <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-purple-50 text-purple-700 border border-purple-200" title="Direct API Key / Token Authentication">
+                                  🔑 Direct API Key
                                 </span>
                               )}
                             </div>
@@ -1106,57 +993,47 @@ export function IntegrationsModule() {
               </button>
             </div>
 
-            {/* Auth Mode Segmented Control */}
-            <div className="bg-[#FAF9FD] p-1 border border-[#E4E2EB] rounded-2xl flex space-x-1">
-              <button
-                type="button"
-                onClick={() => setAuthMode('oauth')}
-                className={`flex-1 py-2 min-h-[40px] text-xs font-bold rounded-xl transition-all flex items-center justify-center space-x-1.5 ${
-                  authMode === 'oauth' ? 'bg-white text-brand shadow-craft-xs' : 'text-[#524E5E] hover:text-[#0F0E17]'
-                }`}
-              >
-                <Lock className="w-3.5 h-3.5" />
-                <span>OAuth 2.0 Sign-In</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setAuthMode('apiKey')}
-                className={`flex-1 py-2 min-h-[40px] text-xs font-bold rounded-xl transition-all flex items-center justify-center space-x-1.5 ${
-                  authMode === 'apiKey' ? 'bg-white text-brand shadow-craft-xs' : 'text-[#524E5E] hover:text-[#0F0E17]'
-                }`}
-              >
-                <Key className="w-3.5 h-3.5" />
-                <span>API Key</span>
-              </button>
-            </div>
-
-            {/* Description & Permissions Breakdown */}
+            {/* Authorization Module: Dedicated per Integration (No confusing tab switcher or unused API space) */}
             <div className="space-y-3">
-              {authMode === 'oauth' ? (
-                <div className="p-3.5 rounded-2xl bg-[#FAF9FD] border border-[#E4E2EB] space-y-2">
-                  <div className="flex items-center space-x-2 text-xs font-bold text-[#0F0E17]">
-                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                    <span>How this connection works</span>
+              {connectModalApp.auth_type === 'oauth' ? (
+                <div className="space-y-3">
+                  <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 space-y-2">
+                    <div className="flex items-center space-x-2 text-xs font-bold text-emerald-800">
+                      <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                      <span>1-Click OAuth 2.0 Sign-In</span>
+                    </div>
+                    <p className="text-xs text-emerald-950/80 leading-relaxed">
+                      Clicking continue will open <strong>{connectModalApp.name}</strong>'s official sign-in page. You approve permissions with your existing workspace account—zero manual API keys or secrets required.
+                    </p>
                   </div>
-                  <p className="text-xs text-[#524E5E] leading-relaxed">
-                    Clicking continue will open a secure window to <strong>{connectModalApp.name}</strong>'s official sign-in page where you authorize your personal or corporate account. Voxly AI will securely link the authorization token exclusively to your workspace tenant.
-                  </p>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  <label className="block text-xs font-bold text-[#0F0E17]">
-                    API Key or Personal Access Token
-                  </label>
-                  <input
-                    type="password"
-                    value={manualApiKey}
-                    onChange={(e) => setManualApiKey(e.target.value)}
-                    placeholder={`Paste ${connectModalApp.name} API Key or Secret Token...`}
-                    className="w-full px-3.5 py-2.5 min-h-[42px] sm:min-h-[36px] text-base sm:text-xs bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl focus:outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 text-[#0F0E17]"
-                  />
-                  <p className="text-[11px] text-[#524E5E]">
-                    Your API token is encrypted with AES-256 and used exclusively for your agent phone calls.
-                  </p>
+                <div className="space-y-3">
+                  <div className="p-4 rounded-2xl bg-brand/10 border border-brand/20 space-y-2">
+                    <div className="flex items-center space-x-2 text-xs font-bold text-brand">
+                      <Key className="w-4 h-4 text-brand" />
+                      <span>Direct API Key Connection</span>
+                    </div>
+                    <p className="text-xs text-[#524E5E] leading-relaxed">
+                      <strong>{connectModalApp.name}</strong> connects directly via your workspace API credentials. Enter your token below to enable in-call voice actions.
+                    </p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-[#0F0E17]">
+                      {getApiKeyInfo(connectModalApp.id).label}
+                    </label>
+                    <input
+                      type="password"
+                      value={manualApiKey}
+                      onChange={(e) => setManualApiKey(e.target.value)}
+                      placeholder={getApiKeyInfo(connectModalApp.id).placeholder}
+                      className="w-full px-3.5 py-2.5 min-h-[42px] sm:min-h-[36px] text-base sm:text-xs bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl focus:outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 text-[#0F0E17]"
+                    />
+                    <p className="text-[11px] text-[#524E5E]">
+                      {getApiKeyInfo(connectModalApp.id).help}
+                    </p>
+                  </div>
                 </div>
               )}
 
@@ -1242,7 +1119,7 @@ export function IntegrationsModule() {
                 <div>
                   <h3 className="font-extrabold text-[#0F0E17] text-sm">{selectedAppModal.name}</h3>
                   <div className="flex items-center space-x-1.5 text-xs text-[#524E5E]">
-                    <span>{selectedAppModal.category}</span>
+                    <span className="font-semibold text-emerald-600">{selectedAppModal.oauth_ready ? '⚡ 1-Click OAuth' : '🔑 API Key Auth'}</span>
                     <span>•</span>
                     <span className={selectedAppModal.timing === 'in_call' ? 'text-amber-600 font-bold' : 'text-indigo-600 font-bold'}>
                       {selectedAppModal.timing_label || (selectedAppModal.timing === 'in_call' ? 'Live In-Call (<1.5s)' : 'Async Post-Call')}

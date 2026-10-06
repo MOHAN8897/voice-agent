@@ -29,18 +29,20 @@ NANGO_PROVIDER_MAP: dict[str, str] = {
     "NOTION": "notion",
     "AIRTABLE": "airtable",
     "ZENDESK": "zendesk",
-    "STRIPE": "stripe",
+    "STRIPE": "stripe-api-key",
     "CALENDLY": "calendly",
-    "CALCOM": "cal-com",
+    "CALCOM": "cal-com-v2",
     "ZOOM": "zoom",
     "ASANA": "asana",
     "LINEAR": "linear",
+    "TWILIO": "twilio",
+    "TWILIOSMS": "twilio",
     "TWILIO_SMS": "twilio",
-    "SHOPIFY": "shopify",
+    "SHOPIFY": "shopify-api-key",
     "INTERCOM": "intercom",
     "CLICKUP": "clickup",
     "MAILCHIMP": "mailchimp",
-    "DISCORD": "discord",
+    "DISCORD": "discord-bot",
     "TRELLO": "trello",
     "JIRA": "jira",
     "BOX": "box",
@@ -51,6 +53,14 @@ NANGO_PROVIDER_MAP: dict[str, str] = {
     "SUPABASE": "supabase",
     "TYPEFORM": "typeform",
     "PIPEDRIVE": "pipedrive",
+    "WOOCOMMERCE": "woocommerce",
+    "WHATSAPP": "whatsapp-business",
+    "GOOGLESHEETS": "google-sheet",
+    "TODOIST": "todoist",
+    "MONDAY": "monday",
+    "FRESHDESK": "freshdesk",
+    "ZOHOCRM": "zoho-crm",
+    "ZOHO_CRM": "zoho-crm",
 }
 
 REVERSE_NANGO_PROVIDER_MAP: dict[str, str] = {
@@ -60,6 +70,8 @@ REVERSE_NANGO_PROVIDER_MAP.update({
     "google-calendar": "GOOGLECALENDAR",
     "google_calendar": "GOOGLECALENDAR",
     "cal-com": "CALCOM",
+    "cal-com-v1": "CALCOM",
+    "cal-com-v2": "CALCOM",
     "calendly": "CALENDLY",
     "hubspot": "HUBSPOT",
     "salesforce": "SALESFORCE",
@@ -71,7 +83,10 @@ REVERSE_NANGO_PROVIDER_MAP.update({
     "notion": "NOTION",
     "airtable": "AIRTABLE",
     "stripe": "STRIPE",
+    "stripe-api-key": "STRIPE",
     "shopify": "SHOPIFY",
+    "shopify-api-key": "SHOPIFY",
+    "woocommerce": "WOOCOMMERCE",
     "zendesk": "ZENDESK",
     "zoom": "ZOOM",
     "linear": "LINEAR",
@@ -81,6 +96,17 @@ REVERSE_NANGO_PROVIDER_MAP.update({
     "mailchimp": "MAILCHIMP",
     "twilio": "TWILIO_SMS",
     "twilio-sms": "TWILIO_SMS",
+    "whatsapp": "WHATSAPP",
+    "whatsapp-business": "WHATSAPP",
+    "discord": "DISCORD",
+    "discord-bot": "DISCORD",
+    "google-sheet": "GOOGLESHEETS",
+    "google-sheets": "GOOGLESHEETS",
+    "todoist": "TODOIST",
+    "monday": "MONDAY",
+    "freshdesk": "FRESHDESK",
+    "zoho": "ZOHO_CRM",
+    "zoho-crm": "ZOHO_CRM",
 })
 
 
@@ -247,6 +273,45 @@ class NangoService:
             self._cached_env_key = secret
         return secret
 
+    async def get_configured_providers(self) -> set[str]:
+        """Fetch all provider unique keys currently enabled in this Nango environment."""
+        env_key = await self._resolve_environment_key()
+        if not env_key:
+            return set()
+
+        now = datetime.now(timezone.utc)
+        cache = getattr(self, "_configured_providers_cache", None)
+        if cache:
+            cache_time, cached_set = cache
+            if (now - cache_time).total_seconds() < 300:
+                return cached_set
+
+        loop = asyncio.get_running_loop()
+
+        def _fetch_providers():
+            try:
+                req = urllib.request.Request(
+                    f"{self.base_url}/integrations",
+                    headers={"Authorization": f"Bearer {env_key}", "Accept": "application/json"},
+                )
+                with urllib.request.urlopen(req, timeout=5) as resp:
+                    data = json.loads(resp.read().decode())
+                integrations = data.get("data", [])
+                keys = set()
+                for item in integrations:
+                    if item.get("unique_key"):
+                        keys.add(item["unique_key"].lower())
+                    if item.get("provider"):
+                        keys.add(item["provider"].lower())
+                return keys
+            except Exception as e:
+                logger.warning("[NANGO] Failed to fetch configured integrations: %s", e)
+                return set()
+
+        keys = await loop.run_in_executor(None, _fetch_providers)
+        self._configured_providers_cache = (now, keys)
+        return keys
+
     async def initiate_connection(
         self, tenant_id: str, user_id: str, app_name: str, base_redirect_uri: str
     ) -> dict[str, Any] | None:
@@ -356,6 +421,15 @@ class NangoService:
         except urllib.error.HTTPError as exc:
             err_body = exc.read().decode(errors="replace")
             logger.error("[NANGO] Connect session initiation HTTP %s: %s", exc.code, err_body)
+            if "No Nango-provided developer app" in err_body or "does not exist" in err_body or exc.code == 400:
+                return {
+                    "error": "nango_credentials_required",
+                    "message": f"'{app_name}' requires OAuth credentials in your Nango dashboard. You can configure it at app.nango.dev/integrations or connect immediately using an API Key.",
+                    "nango_dashboard_url": "https://app.nango.dev/integrations",
+                    "provider_key": provider_key,
+                    "state": state,
+                    "status": "ERROR",
+                }
             return {
                 "error": "nango_session_failed",
                 "message": f"Failed to initiate OAuth session with Nango (HTTP {exc.code}). Ensure the integration is configured in your Nango dashboard.",
@@ -462,7 +536,10 @@ class NangoService:
 
     def _extract_app_name(self, action_name: str) -> str:
         upper = action_name.upper()
-        for compound in ("TWILIO_SMS", "OUTLOOKCALENDAR", "MICROSOFTTEAMS", "GOOGLECALENDAR", "CALCOM"):
+        for compound in (
+            "TWILIO_SMS", "OUTLOOKCALENDAR", "MICROSOFTTEAMS", "GOOGLECALENDAR", "CALCOM",
+            "GOOGLESHEETS", "ZOHO_CRM"
+        ):
             if upper.startswith(compound):
                 return compound
         return upper.split("_")[0]

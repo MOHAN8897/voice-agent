@@ -14,6 +14,7 @@ import {
   Pause,
   Download,
   CreditCard,
+  Activity,
 } from 'lucide-react';
 import { SolidCard } from '../ui/SolidCard';
 import { StatusBadge } from '../ui/StatusBadge';
@@ -766,6 +767,46 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                   </p>
 
                   <RecordingPlayer call={activeCall} />
+
+                  {/* Session Cost Breakdown (Telnyx + Gemini 3.8 Live API) */}
+                  {(activeCall.costUsd != null || activeCall.costInr != null || activeCall.telnyxUsd != null || activeCall.gemini38LiveCostUsd != null) && (
+                    <div className="p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-[#0F0E17] flex items-center gap-1.5">
+                          <Activity className="w-3.5 h-3.5 text-[#6344E7]" />
+                          <span>Session Cost Breakdown</span>
+                        </span>
+                        <span className="text-xs font-extrabold text-[#0F0E17]">
+                          {activeCall.costUsd != null ? `$${Number(activeCall.costUsd).toFixed(4)}` : '—'}
+                          {activeCall.costInr != null ? ` (₹${Number(activeCall.costInr).toFixed(2)})` : ''}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 pt-1 text-[11px]">
+                        <div className="bg-white p-2 rounded-lg border border-[#E4E2EB]">
+                          <span className="text-[#8C879A] block text-[9px] uppercase tracking-wider font-semibold">
+                            Telnyx Telephony
+                          </span>
+                          <span className="font-bold text-[#0F0E17] block">
+                            {activeCall.telnyxUsd != null ? `$${Number(activeCall.telnyxUsd).toFixed(4)}` : '$0.000'}
+                          </span>
+                          <span className="text-[9px] text-[#524E5E]">
+                            {activeCall.telnyxCostSource === 'live_telnyx_balance_delta' ? '✓ Verified from Telnyx balance' : 'Destination tariff rate'}
+                          </span>
+                        </div>
+                        <div className="bg-white p-2 rounded-lg border border-[#E4E2EB]">
+                          <span className="text-[#8C879A] block text-[9px] uppercase tracking-wider font-semibold">
+                            Gemini 3.8 Live API
+                          </span>
+                          <span className="font-bold text-[#0F0E17] block">
+                            {activeCall.gemini38LiveCostUsd != null ? `$${Number(activeCall.gemini38LiveCostUsd).toFixed(4)}` : (activeCall.costUsd != null ? `$${Number(activeCall.costUsd).toFixed(4)}` : '$0.000')}
+                          </span>
+                          <span className="text-[9px] text-[#524E5E]">
+                            Session audio & text tokens
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Callback: the server dials through the normal outbound path. */}
                   {canCallBack && (

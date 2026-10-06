@@ -81,3 +81,49 @@ async def test_user_turn_records_stt_latency(ledger):
     line = await ledger.append_user_turn(call_id, "hello", stt_latency_ms=120)
     assert line["stt_latency_ms"] == 120
     assert ledger.read_lines(call_id)[0]["stt_latency_ms"] == 120
+
+
+def test_stamp_ended_usage_records_gemini_38_and_telnyx_balance(ledger):
+    call_id = "stamp-gemini-live-telnyx"
+    ledger.write_meta(
+        call_id,
+        {
+            "call_id": call_id,
+            "channel": "pstn",
+            "pipeline": "realtime_voice",
+            "callee_e164": "+12025550123",
+            "direction": "outbound",
+            "telnyx_balance_start": 15.50,
+            "usage": {
+                "llm_model": "gemini-3.8-live",
+                "model_cost_usd": 0.035,
+                "input_tokens": 1000,
+                "output_tokens": 500,
+                "input_audio_tokens": 800,
+                "output_audio_tokens": 400,
+                "cached_tokens": 100,
+            },
+        },
+    )
+    ledger.stamp_ended_usage(call_id, reason="pstn_hangup", duration_sec=60)
+    meta = ledger.read_meta(call_id)
+    usage = meta["usage"]
+
+    assert usage["gemini_38_live_cost_usd"] == 0.035
+    assert usage["gemini_38_live_tokens"]["input"] == 1000
+    assert usage["gemini_38_live_tokens"]["output_audio"] == 400
+    assert usage["telnyx_balance_start"] == 15.50
+
+    # Simulate post-call balance settle from call_lifecycle_service
+    usage["telnyx_balance_end"] = 15.482
+    usage["telnyx_balance_delta_usd"] = 0.018
+    usage["telnyx_cost_source"] = "live_telnyx_balance_delta"
+    ledger.write_meta(call_id, meta)
+
+    review = ledger.review_fields(call_id)
+    assert review["telnyx_balance_delta_usd"] == 0.018
+    assert review["telnyx_cost_source"] == "live_telnyx_balance_delta"
+    assert review["gemini_38_live_cost_usd"] == 0.035
+    assert review["telnyx_balance_start"] == 15.50
+    assert review["telnyx_balance_end"] == 15.482
+

@@ -120,15 +120,22 @@ function devNoCachePlugin() {
   };
 }
 
+const enableReticle =
+  process.env.ENABLE_RETICLE === '1' ||
+  process.env.ENABLE_RETICLE === 'true' ||
+  process.env.VITE_ENABLE_RETICLE === '1';
+
 export default defineConfig({
-  // Tunnel hostname (app-dev.hustlelabs.in) is not localhost — Reticle refuses to
-  // connect unless allowNonLocalhost is on. Pairing token still comes from the daemon.
   plugins: [
     devNoCachePlugin(),
-    reticle({
-      sourceMapping: false,
-      allowNonLocalhost: true,
-    }),
+    ...(enableReticle
+      ? [
+          reticle({
+            sourceMapping: false,
+            allowNonLocalhost: true,
+          }),
+        ]
+      : []),
     react(),
     localOnlyDevPortalPlugin(),
   ],

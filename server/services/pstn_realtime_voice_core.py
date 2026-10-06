@@ -1647,6 +1647,7 @@ class PstnRealtimeVoiceLoop:
             except Exception:
                 pass
 
+        tenant_tool_schemas: list[dict[str, Any]] = []
         if self._tenant_id:
             try:
                 from server.db.connection import get_session_factory as _get_sf

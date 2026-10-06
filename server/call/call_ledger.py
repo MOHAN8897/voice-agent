@@ -236,6 +236,12 @@ class CallLedger:
             out["telnyx_usd"] = usage.get("telnyx_usd")
             out["telnyx_inr"] = usage.get("telnyx_inr")
             out["telnyx_inr_per_min"] = usage.get("telnyx_inr_per_min")
+            out["telnyx_balance_start"] = usage.get("telnyx_balance_start")
+            out["telnyx_balance_end"] = usage.get("telnyx_balance_end")
+            out["telnyx_balance_delta_usd"] = usage.get("telnyx_balance_delta_usd")
+            out["telnyx_cost_source"] = usage.get("telnyx_cost_source")
+            out["gemini_38_live_cost_usd"] = usage.get("gemini_38_live_cost_usd")
+            out["gemini_38_live_cost_inr"] = usage.get("gemini_38_live_cost_inr")
             out["gemini_list_audio_inr_per_min"] = usage.get("gemini_list_audio_inr_per_min")
             out["fx_source"] = usage.get("fx_source")
         if usage and usage.get("duration_sec") is not None:
@@ -357,6 +363,15 @@ class CallLedger:
         )
 
         if is_gemini_live_voice_model(str(usage.get("llm_model") or "")):
+            usage["gemini_38_live_cost_usd"] = model_usd
+            usage["gemini_38_live_cost_inr"] = model_inr
+            usage["gemini_38_live_tokens"] = {
+                "input": int(usage.get("input_tokens") or 0),
+                "output": int(usage.get("output_tokens") or 0),
+                "input_audio": int(usage.get("input_audio_tokens") or 0),
+                "output_audio": int(usage.get("output_audio_tokens") or 0),
+                "cached": int(usage.get("cached_tokens") or 0),
+            }
             usage["gemini_list_audio_input_usd_per_min"] = GEMINI_LIVE_AUDIO_INPUT_USD_PER_MIN
             usage["gemini_list_audio_output_usd_per_min"] = GEMINI_LIVE_AUDIO_OUTPUT_USD_PER_MIN
             usage["gemini_list_audio_inr_per_min"] = (
@@ -367,6 +382,9 @@ class CallLedger:
                 usage.get("gemini_billing_note")
                 or "Model cost uses billed token totals (text+audio+image), not call duration × list audio $/min."
             )
+        if meta.get("telnyx_balance_start") is not None:
+            usage["telnyx_balance_start"] = float(meta["telnyx_balance_start"])
+            usage["telnyx_cost_source"] = usage.get("telnyx_cost_source") or "tariff_rate_deck"
         meta["usage"] = usage
         self.write_meta(call_id, meta)
 

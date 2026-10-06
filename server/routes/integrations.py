@@ -151,9 +151,10 @@ async def get_integrations_catalog(
     category: str | None = Query(None),
     timing: str | None = Query(None),
 ) -> dict[str, Any]:
-    """Search and filter available voice app integrations."""
+    """Search and filter available voice app integrations with live Nango OAuth status."""
+    configured_providers = await nango_service.get_configured_providers()
     items = CATALOG_INTEGRATIONS
-    if q:
+    if q and isinstance(q, str):
         query_lower = q.lower().strip()
         items = [
             item
@@ -163,12 +164,29 @@ async def get_integrations_catalog(
             or query_lower in item["category"].lower()
             or any(query_lower in action.lower() for action in item.get("actions", []))
         ]
-    if category and category.lower() != "all":
+    if category and isinstance(category, str) and category.lower() != "all":
         items = [item for item in items if item["category"].lower() == category.lower()]
-    if timing and timing.lower() != "all":
+    if timing and isinstance(timing, str) and timing.lower() != "all":
         items = [item for item in items if item["timing"].lower() == timing.lower()]
 
-    return {"items": items, "total": len(items)}
+    annotated = []
+    for item in items:
+        p_key = nango_service.get_provider_key(item.get("id", "")).lower()
+        is_ready = (
+            p_key in configured_providers
+            or f"{p_key}-api-key" in configured_providers
+            or f"{p_key}-v2" in configured_providers
+            or f"{p_key}-business" in configured_providers
+            or f"{p_key}-bot" in configured_providers
+        )
+        annotated.append({
+            **item,
+            "oauth_ready": is_ready,
+            "nango_provider_key": p_key,
+        })
+
+    return {"items": annotated, "total": len(annotated)}
+
 
 
 @router.post("/api/integrations/{app_id}/activate")
@@ -217,6 +235,7 @@ async def activate_integration(
                     )
                     session.add(new_integ)
                 await session.commit()
+                invalidate_tenant_tools(str(tenant_id))
         except Exception as exc:
             logger.error("[INTEGRATIONS] Failed to activate integration %s: %s", app_id, exc)
             raise HTTPException(status_code=500, detail="Failed to activate integration")

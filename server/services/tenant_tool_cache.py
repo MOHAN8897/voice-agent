@@ -62,7 +62,7 @@ async def get_connection_id(tenant_id: str, app_name: str, session_factory: Any 
     if not session_factory:
         return None
     try:
-        from sqlalchemy import select, func
+        from sqlalchemy import func, or_, select
         from server.db.models.integration_models import TenantIntegration
 
         canonical = app_name.upper().replace("-", "_")

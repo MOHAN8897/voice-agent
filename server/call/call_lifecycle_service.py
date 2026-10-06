@@ -276,6 +276,16 @@ class CallLifecycleService:
             tag = transcription_billing_tag(policy, gemini_live=gemini)
             usage_seed = {"transcription_billing": tag, "transcription_model": policy.live_model if policy.live_enabled else policy.post_call_model}
             meta["usage"] = usage_seed
+        if channel == "pstn" or pipeline == "realtime_voice":
+            try:
+                from server.services.telnyx_client import TelnyxClient
+                _tc = TelnyxClient()
+                _bal_data = await _tc.get_balance()
+                _val = _bal_data.get("balance") or _bal_data.get("available_credit")
+                if _val is not None:
+                    meta["telnyx_balance_start"] = float(_val)
+            except Exception as _bal_err:
+                logger.debug(f"[TELNYX] start balance check skipped: {_bal_err}")
         await call_ledger.init(call_id, meta)
         audio_archive.init(call_id, record=not is_test)
         from server.call.memory_manager import memory_manager
@@ -559,6 +569,56 @@ class CallLifecycleService:
             dev_telephony_store.sync_internal_call(call_id)
         except Exception:
             pass
+        try:
+            meta = call_ledger.read_meta(call_id)
+            channel = str(meta.get("channel") or "")
+            pipeline = str(meta.get("pipeline") or (meta.get("usage") or {}).get("pipeline") or "")
+            if channel == "pstn" or pipeline == "realtime_voice":
+                from server.services.telnyx_client import TelnyxClient
+                _tc = TelnyxClient()
+                _bal_end_data = await _tc.get_balance()
+                _val_end = _bal_end_data.get("balance") or _bal_end_data.get("available_credit")
+                if _val_end is not None:
+                    bal_end = float(_val_end)
+                    meta["telnyx_balance_end"] = bal_end
+                    usage = meta.get("usage") if isinstance(meta.get("usage"), dict) else {}
+                    bal_start = meta.get("telnyx_balance_start")
+                    if bal_start is not None:
+                        delta = round(max(0.0, float(bal_start) - bal_end), 5)
+                        usage["telnyx_balance_start"] = float(bal_start)
+                        usage["telnyx_balance_end"] = bal_end
+                        usage["telnyx_balance_delta_usd"] = delta
+                        if delta > 0:
+                            fx = float(usage.get("fx_rate_inr") or 95.64)
+                            usage["telnyx_usd"] = delta
+                            usage["telnyx_inr"] = delta * fx
+                            usage["telnyx_cost_is_actual"] = True
+                            usage["telnyx_cost_source"] = "live_telnyx_balance_delta"
+                            model_usd = float(usage.get("model_cost_usd") or 0.0)
+                            model_inr = float(usage.get("model_cost_inr") or (model_usd * fx))
+                            tx_usd = float(usage.get("post_call_transcript_usd") or 0.0) + float(usage.get("live_transcript_usd") or 0.0)
+                            tx_inr = float(usage.get("post_call_transcript_inr") or 0.0) + float(usage.get("live_transcript_inr") or 0.0)
+                            total_usd = model_usd + delta + tx_usd
+                            total_inr = model_inr + (delta * fx) + tx_inr
+                            usage["cost_usd"] = total_usd
+                            usage["cost_inr"] = total_inr
+                            duration_sec = float(usage.get("duration_sec") or meta.get("duration_sec") or 0.0)
+                            minutes = duration_sec / 60.0 if duration_sec > 0 else 0.0
+                            usage["cost_usd_per_min"] = (total_usd / minutes) if minutes > 0 else 0.0
+                            usage["cost_inr_per_min"] = (total_inr / minutes) if minutes > 0 else 0.0
+                            usage["telnyx_usd_per_min"] = (delta / minutes) if minutes > 0 else 0.0
+                            usage["telnyx_inr_per_min"] = ((delta * fx) / minutes) if minutes > 0 else 0.0
+                        else:
+                            usage["telnyx_cost_is_actual"] = False
+                            usage["telnyx_cost_source"] = "tariff_rate_deck"
+                    meta["usage"] = usage
+                    call_ledger.write_meta(call_id, meta)
+                    await call_store.update(call_id, {
+                        "cost_usd": usage.get("cost_usd"),
+                        "cost_inr": usage.get("cost_inr"),
+                    })
+        except Exception as _bal_exc:
+            logger.debug(f"[TELNYX] finalize balance check skipped {call_id}: {_bal_exc}")
         try:
             from server.config.env import get_settings
             from server.services.saas.billing_wallet_service import bill_pstn_call_if_applicable

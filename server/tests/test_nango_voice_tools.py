@@ -483,3 +483,77 @@ async def test_openai_realtime_voice_adapter_update_tools():
     assert "GOOGLECALENDAR_CREATE_EVENT" in tool_names
     assert "end_call" in tool_names
 
+
+# ---------------------------------------------------------------------------
+# Test 13: Tool schema registry covers all catalog integrations
+# ---------------------------------------------------------------------------
+def test_tool_schema_registry_covers_all_catalog_integrations():
+    """Verify all 29 catalog integrations have voice schemas and sanitized response keys."""
+    from server.routes.integrations_catalog import CATALOG_INTEGRATIONS
+    from server.services.tool_schema_registry import get_tools_for_tenant, get_response_keys_for_tool
+
+    catalog_ids = [item["id"] for item in CATALOG_INTEGRATIONS]
+    assert len(catalog_ids) >= 24
+
+    for app_id in catalog_ids:
+        tools = get_tools_for_tenant([app_id])
+        assert len(tools) > 0, f"App {app_id} must have registered voice tools in tool_schema_registry"
+        tool_name = tools[0]["name"]
+        resp_keys = get_response_keys_for_tool(tool_name)
+        assert len(resp_keys) > 0, f"Tool {tool_name} must have sanitized response keys"
+
+
+# ---------------------------------------------------------------------------
+# Test 14: tenant_tool_cache get_connection_id with or_ query
+# ---------------------------------------------------------------------------
+@pytest.mark.asyncio
+async def test_tenant_tool_cache_get_connection_id_query():
+    """Verify get_connection_id executes without NameError on or_."""
+    import uuid
+    from server.services.tenant_tool_cache import get_connection_id
+
+    mock_session = AsyncMock()
+    mock_res = MagicMock()
+    mock_res.scalar_one_or_none.return_value = "conn_12345"
+    mock_session.execute.return_value = mock_res
+
+    mock_factory = MagicMock()
+    mock_factory.return_value.__aenter__.return_value = mock_session
+    mock_factory.return_value.__aexit__.return_value = None
+
+    tenant_id = str(uuid.uuid4())
+    conn_id = await get_connection_id(tenant_id, "GOOGLECALENDAR", mock_factory)
+    assert conn_id == "conn_12345"
+    assert mock_session.execute.called
+
+
+# ---------------------------------------------------------------------------
+# Test 15: Post-call pipeline fallbacks to TenantIntegration
+# ---------------------------------------------------------------------------
+@pytest.mark.asyncio
+async def test_post_call_pipeline_fallbacks_to_tenant_integrations():
+    """Verify get_agent_post_call_actions queries active TenantIntegrations when agent rows are absent."""
+    import uuid
+    from server.call.post_call_pipeline import get_agent_post_call_actions
+
+    mock_session = AsyncMock()
+    mock_res_agent = MagicMock()
+    mock_res_agent.scalars.return_value.all.return_value = []  # No AgentIntegration rows
+
+    mock_res_tenant = MagicMock()
+    mock_res_tenant.scalars.return_value.all.return_value = ["SLACK", "SENDGRID", "HUBSPOT"]
+
+    # First execute is for AgentIntegration, second is for TenantIntegration
+    mock_session.execute.side_effect = [mock_res_agent, mock_res_tenant]
+
+    mock_factory = MagicMock()
+    mock_factory.return_value.__aenter__.return_value = mock_session
+    mock_factory.return_value.__aexit__.return_value = None
+
+    with patch("server.db.connection.get_session_factory", return_value=mock_factory):
+        actions = await get_agent_post_call_actions(str(uuid.uuid4()), str(uuid.uuid4()))
+        assert "SLACK_SEND_MESSAGE" in actions
+        assert "SENDGRID_SEND_EMAIL" in actions
+        assert "HUBSPOT_CREATE_CONTACT" in actions
+
+

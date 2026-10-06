@@ -291,13 +291,25 @@ async def test_api_integrations_endpoints():
     """Verify /api/integrations listing, connect, and disconnect."""
     from httpx import ASGITransport, AsyncClient
     from server.app import app
+    from server.db.connection import get_session_factory
+    from server.db.models import Tenant
+    from sqlalchemy import select
+
+    sf = get_session_factory()
+    tenant_id_str = "00000000-0000-0000-0000-000000000001"
+    if sf:
+        async with sf() as session:
+            t_res = await session.execute(select(Tenant.tenant_id).limit(1))
+            row = t_res.scalar_one_or_none()
+            if row:
+                tenant_id_str = str(row)
 
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         # 1. Connect
         res_connect = await client.post(
             "/api/integrations/GOOGLECALENDAR/connect",
             json={"base_redirect_uri": "http://localhost:5173/console/integrations/callback"},
-            headers={"X-Tenant-Id": "00000000-0000-0000-0000-000000000001"},
+            headers={"X-Tenant-Id": tenant_id_str},
         )
         assert res_connect.status_code == 200
         data = res_connect.json()
@@ -311,7 +323,7 @@ async def test_api_integrations_endpoints():
         # 3. Disconnect
         res_del = await client.delete(
             "/api/integrations/GOOGLECALENDAR",
-            headers={"X-Tenant-Id": "00000000-0000-0000-0000-000000000001"},
+            headers={"X-Tenant-Id": tenant_id_str},
         )
         assert res_del.status_code == 200
         assert res_del.json()["status"] == "disconnected"

@@ -390,16 +390,45 @@ async def get_agent_post_call_actions(tenant_id: str, agent_id: str) -> list[str
             )
             res = await session.execute(stmt)
             integrations = res.scalars().all()
+            DEFAULT_POST_CALL_ACTIONS: dict[str, list[str]] = {
+                "HUBSPOT": ["HUBSPOT_CREATE_CONTACT", "HUBSPOT_LOG_CALL_ENGAGEMENT"],
+                "SALESFORCE": ["SALESFORCE_CREATE_TASK"],
+                "SLACK": ["SLACK_SEND_MESSAGE"],
+                "GMAIL": ["GMAIL_SEND_EMAIL"],
+                "SENDGRID": ["SENDGRID_SEND_EMAIL"],
+                "MAILCHIMP": ["MAILCHIMP_ADD_SUBSCRIBER"],
+                "NOTION": ["NOTION_CREATE_PAGE"],
+                "CLICKUP": ["CLICKUP_CREATE_TASK"],
+                "ASANA": ["ASANA_CREATE_TASK"],
+                "DISCORD": ["DISCORD_SEND_MESSAGE"],
+                "WHATSAPP": ["WHATSAPP_SEND_MESSAGE"],
+                "TODOIST": ["TODOIST_CREATE_TASK"],
+                "MONDAY": ["MONDAY_CREATE_ITEM"],
+                "LINEAR": ["LINEAR_CREATE_ISSUE"],
+                "JIRA": ["JIRA_CREATE_ISSUE"],
+                "GITHUB": ["GITHUB_CREATE_ISSUE"],
+                "TRELLO": ["TRELLO_CREATE_CARD"],
+            }
             actions: list[str] = []
-            for integ in integrations:
-                if integ.action_whitelist:
-                    actions.extend(integ.action_whitelist)
-                elif integ.app_name == "HUBSPOT":
-                    actions.extend(["HUBSPOT_CREATE_CONTACT", "HUBSPOT_LOG_CALL_ENGAGEMENT"])
-                elif integ.app_name == "SLACK":
-                    actions.append("SLACK_SEND_MESSAGE")
-                elif integ.app_name == "GMAIL":
-                    actions.append("GMAIL_SEND_EMAIL")
+            if integrations:
+                for integ in integrations:
+                    if integ.action_whitelist:
+                        actions.extend(integ.action_whitelist)
+                    elif integ.app_name.upper() in DEFAULT_POST_CALL_ACTIONS:
+                        actions.extend(DEFAULT_POST_CALL_ACTIONS[integ.app_name.upper()])
+                return actions
+
+            # Fallback to active TenantIntegration records for tenant-level post-call apps
+            from server.db.models.integration_models import TenantIntegration
+            t_stmt = select(TenantIntegration.app_name).where(
+                TenantIntegration.tenant_id == uuid.UUID(str(tenant_id)),
+                TenantIntegration.status == "ACTIVE",
+            )
+            t_res = await session.execute(t_stmt)
+            for raw_app in t_res.scalars().all():
+                canonical = str(raw_app).upper().replace("-", "_")
+                if canonical in DEFAULT_POST_CALL_ACTIONS:
+                    actions.extend(DEFAULT_POST_CALL_ACTIONS[canonical])
             return actions
     except Exception as exc:
         logger.warning("[POST_CALL] Failed to fetch agent post call actions: %s", exc)

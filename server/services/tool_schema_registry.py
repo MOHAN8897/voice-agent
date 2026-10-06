@@ -602,6 +602,159 @@ _SCHEMAS: dict[str, list[dict]] = {
             },
         },
     ],
+
+    "FRESHDESK": [
+        {
+            "type": "function",
+            "name": "FRESHDESK_LOOKUP_TICKET",
+            "description": "Lookup customer support ticket by ID or email",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "ticket_id": {"type": "string"},
+                    "email":     {"type": "string"},
+                },
+            },
+        },
+        {
+            "type": "function",
+            "name": "FRESHDESK_CREATE_TICKET",
+            "description": "Create a Freshdesk customer support ticket",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "subject":     {"type": "string"},
+                    "description": {"type": "string"},
+                    "email":       {"type": "string"},
+                    "priority":    {"type": "integer", "description": "1=low 2=medium 3=high 4=urgent"},
+                },
+                "required": ["subject", "description"],
+            },
+        },
+    ],
+
+    "WOOCOMMERCE": [
+        {
+            "type": "function",
+            "name": "WOOCOMMERCE_GET_ORDER",
+            "description": "Lookup WooCommerce order by order ID or email",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "order_id": {"type": "string"},
+                    "email":    {"type": "string"},
+                },
+            },
+        },
+        {
+            "type": "function",
+            "name": "WOOCOMMERCE_CHECK_STOCK",
+            "description": "Check product stock inventory by product ID or SKU",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "product_id": {"type": "string"},
+                    "sku":        {"type": "string"},
+                },
+            },
+        },
+    ],
+
+    "WHATSAPP": [
+        {
+            "type": "function",
+            "name": "WHATSAPP_SEND_MESSAGE",
+            "description": "Send a WhatsApp message or confirmation to the caller",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "to":      {"type": "string", "description": "E.164 phone number"},
+                    "message": {"type": "string"},
+                },
+                "required": ["to", "message"],
+            },
+        },
+    ],
+
+    "DISCORD": [
+        {
+            "type": "function",
+            "name": "DISCORD_SEND_MESSAGE",
+            "description": "Post a message or lead summary to a Discord channel",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "channel_id": {"type": "string"},
+                    "content":    {"type": "string"},
+                },
+                "required": ["content"],
+            },
+        },
+    ],
+
+    "SUPABASE": [
+        {
+            "type": "function",
+            "name": "SUPABASE_INSERT_ROW",
+            "description": "Insert a record into a Supabase database table",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "table": {"type": "string"},
+                    "row":   {"type": "object", "description": "Row key-values"},
+                },
+                "required": ["table", "row"],
+            },
+        },
+        {
+            "type": "function",
+            "name": "SUPABASE_QUERY_ROW",
+            "description": "Query a record from a Supabase table by column filter",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "table":         {"type": "string"},
+                    "filter_column": {"type": "string"},
+                    "filter_value":  {"type": "string"},
+                },
+                "required": ["table", "filter_column", "filter_value"],
+            },
+        },
+    ],
+
+    "MONDAY": [
+        {
+            "type": "function",
+            "name": "MONDAY_CREATE_ITEM",
+            "description": "Create an action item or lead on a Monday.com board",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "board_id":       {"type": "string"},
+                    "item_name":      {"type": "string"},
+                    "column_values":  {"type": "object"},
+                },
+                "required": ["item_name"],
+            },
+        },
+    ],
+
+    "TODOIST": [
+        {
+            "type": "function",
+            "name": "TODOIST_CREATE_TASK",
+            "description": "Create a Todoist follow-up task or reminder",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "content":    {"type": "string"},
+                    "due_string": {"type": "string"},
+                    "priority":   {"type": "integer", "description": "1=normal 4=urgent"},
+                },
+                "required": ["content"],
+            },
+        },
+    ],
 }
 
 VOICE_RESPONSE_KEYS: dict[str, tuple] = {
@@ -631,6 +784,13 @@ VOICE_RESPONSE_KEYS: dict[str, tuple] = {
     "TRELLO":           ("status", "card_id", "url", "summary"),
     "SENDGRID":         ("status", "message_id", "summary"),
     "MAILCHIMP":        ("status", "subscriber_id", "summary"),
+    "FRESHDESK":        ("status", "ticket_id", "subject", "priority", "summary"),
+    "WOOCOMMERCE":      ("status", "order_id", "total", "shipping_status", "stock", "summary"),
+    "WHATSAPP":         ("status", "message_id", "summary"),
+    "DISCORD":          ("status", "message_id", "summary"),
+    "SUPABASE":         ("status", "data", "summary"),
+    "MONDAY":           ("status", "item_id", "summary"),
+    "TODOIST":          ("status", "task_id", "content", "summary"),
 }
 
 
