@@ -53,7 +53,7 @@ export const LANGUAGE_LABELS = {
 };
 
 /** Last-resort default so the picker is never empty if the API is unreachable. */
-export const DEFAULT_ENABLED_LANGUAGE_CODES = ['en-US', 'en-IN'];
+export const DEFAULT_ENABLED_LANGUAGE_CODES = ['en-IN', 'en-GB', 'te-IN', 'hi-IN', 'ta-IN', 'kn-IN'];
 
 export function describeLanguage(code) {
   return LANGUAGE_LABELS[code] || { label: code, sub: code };

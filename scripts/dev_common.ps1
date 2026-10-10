@@ -94,6 +94,20 @@ import server.app
         Pop-Location
         $ErrorActionPreference = $prevEa
     }
+    if ($code -ne 0 -and $out -match "Application Control policy" -and $out -match "sqlalchemy") {
+        Write-Host "Windows Application Control blocked SQLAlchemy C-extensions; falling back to pure Python..." -ForegroundColor Yellow
+        Get-ChildItem -Path (Join-Path $RepoRoot ".venv\Lib\site-packages\sqlalchemy") -Recurse -Filter "*.pyd" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+        try {
+            Push-Location $RepoRoot
+            $out = & $PythonPath -c $check 2>&1 | Out-String
+            if ($null -ne $LASTEXITCODE) { $code = [int]$LASTEXITCODE } else { $code = 0 }
+        } catch {
+            $code = 1
+            $out = $_.Exception.Message
+        } finally {
+            Pop-Location
+        }
+    }
     if ($code -ne 0) {
         Write-Host ""
         Write-Host "Python API dependencies are not installed in this environment." -ForegroundColor Red

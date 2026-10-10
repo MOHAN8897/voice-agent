@@ -81,7 +81,7 @@ def test_call_end_policy_section_is_present_and_unembellished():
 
 
 def test_compiled_brain_is_within_the_size_ceiling():
-    for language in ("te-IN", "en-IN", "en-US", "hi-IN"):
+    for language in ("te-IN", "en-IN", "en-US", "en-GB", "hi-IN", "ta-IN", "kn-IN"):
         brain = _brain(language)
         assert estimate_tokens(brain) <= COMPILED_BRAIN_TOKEN_CEILING, (
             f"{language} compiled brain is {estimate_tokens(brain)} tokens"
@@ -136,7 +136,7 @@ def test_core_only_pack_drops_the_requested_rule_blocks():
 def test_core_only_strip_is_case_insensitive():
     """Regression: comparing an uppercased line to a lowercase header silently
     kept NUMBERS and PHONE NUMBERS in the compiled brain."""
-    for locale in ("te-IN", "en-IN", "en-US", "hi-IN"):
+    for locale in ("te-IN", "en-IN", "en-US", "en-GB", "hi-IN", "ta-IN", "kn-IN"):
         core = spoken_pack_for(locale, include_brevity=False, core_only=True)
         assert "rupees fifty lakhs" not in core, locale
         assert "Never read phone, mobile, WhatsApp" not in core, locale
@@ -144,7 +144,7 @@ def test_core_only_strip_is_case_insensitive():
 
 def test_standalone_pack_keeps_every_rule_block():
     """Any caller using a pack on its own must still get the full guardrails."""
-    for locale in ("te-IN", "en-IN", "en-US", "hi-IN"):
+    for locale in ("te-IN", "en-IN", "en-US", "en-GB", "hi-IN", "ta-IN", "kn-IN"):
         pack = spoken_pack_for(locale)
         for kept in ("NUMBERS (speak them", "PHONE NUMBERS", "VOICE EXAMPLES", "PHONE CALL"):
             assert kept in pack, f"{kept} missing from standalone {locale} pack"

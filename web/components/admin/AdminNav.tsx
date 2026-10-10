@@ -47,7 +47,6 @@ const ADMIN_GROUPS: Array<{
         icon: <IconMic className="h-4 w-4" />,
         live: true,
       },
-      { href: "/dev/benchmarks", label: "Benchmarks", icon: <IconBenchmark className="h-4 w-4" /> },
     ],
   },
   {

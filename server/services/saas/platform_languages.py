@@ -26,7 +26,7 @@ _cache: dict[str, Any] | None = None
 
 #: Shipped default. The site is for English-speaking countries, so only English
 #: variants are offered until an operator enables more from the admin panel.
-DEFAULT_ENABLED: tuple[str, ...] = ("en-US", "en-GB", "en-IN")
+DEFAULT_ENABLED: tuple[str, ...] = ("en-IN", "en-GB", "te-IN", "hi-IN", "ta-IN", "kn-IN")
 
 
 def _path() -> Path:

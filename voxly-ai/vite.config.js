@@ -121,9 +121,8 @@ function devNoCachePlugin() {
 }
 
 const enableReticle =
-  process.env.ENABLE_RETICLE === '1' ||
-  process.env.ENABLE_RETICLE === 'true' ||
-  process.env.VITE_ENABLE_RETICLE === '1';
+  process.env.ENABLE_RETICLE !== '0' &&
+  process.env.ENABLE_RETICLE !== 'false';
 
 export default defineConfig({
   plugins: [

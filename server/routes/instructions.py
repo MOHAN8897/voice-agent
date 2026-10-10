@@ -261,141 +261,106 @@ async def save_instructions(body: SaveRequest):
             policy = policy or default_call_end_policy(lang)
             script = sanitize_agent_script(body.agentScript)
             brief = body.agentBrief if body.agentBrief is not None else str(prev_meta.get("agentBrief") or "")
-            if brief.strip() and script_conflicts_with_brief(script, brief, language=lang):
-                prev_compiled = prev_meta.get("brainPrompt") if prev_meta.get("compiledVersion") else None
-                compiled, script, script_result = await regenerate_calling_script_from_brief(
-                    brief,
-                    language=lang,
-                    style=body.responseStyle or prev_meta.get("style"),
-                    budget_tokens=budget,
-                    call_end_policy=policy,
-                    previous_compiled=prev_compiled,
-                )
-                est = estimate_tokens(compiled)
-                if est > budget and est <= BUDGET_MAX_TOKENS:
-                    budget = est
-                compiler_sections = build_compiler_sections(
-                    user_script=script,
-                    platform_call_rules=script_result.platform_call_rules,
-                    compiled_brain=compiled,
-                    language=lang,
-                    style=body.responseStyle,
-                    call_end_policy=policy,
-                )
-                saved = instruction_store.save_agent_script(
-                    body.sessionId,
-                    brief,
-                    script,
-                    script_result.response_style or body.responseStyle,
-                    compiled_brain=compiled,
-                    optimizer_report=script_result.to_dict(),
-                    source_checksum=script_result.source_checksum,
-                    language=lang,
-                    budget_tokens=budget,
-                    raw_token_estimate=int(prev_meta.get("rawTokenEstimate") or est),
-                    call_end_policy=policy,
-                )
+            from server.brain.script_entities import (
+                backfill_entity_tags_in_script,
+                entities_have_values,
+                parse_entity_tags,
+                with_entity_tags_section,
+            )
+            from server.prompts.conversation_policy import infer_call_direction
+
+            script_direction = infer_call_direction(brief or script)
+            entity_tags = parse_entity_tags(script)
+            if entities_have_values(entity_tags):
+                script = with_entity_tags_section(script, entity_tags)
             else:
-                from server.brain.script_entities import (
-                    backfill_entity_tags_in_script,
-                    entities_have_values,
-                    parse_entity_tags,
-                    with_entity_tags_section,
+                script = backfill_entity_tags_in_script(
+                    script,
+                    brief=brief,
+                    language=lang,
+                    direction=script_direction,
                 )
-                from server.prompts.conversation_policy import infer_call_direction
-
-                script_direction = infer_call_direction(brief or script)
                 entity_tags = parse_entity_tags(script)
-                if entities_have_values(entity_tags):
-                    script = with_entity_tags_section(script, entity_tags)
-                else:
-                    script = backfill_entity_tags_in_script(
-                        script,
-                        brief=brief,
-                        language=lang,
-                        direction=script_direction,
-                    )
-                    entity_tags = parse_entity_tags(script)
-                validate_user_section(
-                    "Agent script",
-                    script,
-                    word_limit=MAX_AGENT_SCRIPT_WORDS,
-                    char_limit=MAX_AGENT_SCRIPT_CHARS,
+            validate_user_section(
+                "Agent script",
+                script,
+                word_limit=MAX_AGENT_SCRIPT_WORDS,
+                char_limit=MAX_AGENT_SCRIPT_CHARS,
+            )
+            if not script:
+                raise HTTPException(
+                    status_code=400,
+                    detail={
+                        "error": {
+                            "code": "validation_error",
+                            "message": "Calling script is empty — create an agent script first, then edit it.",
+                        }
+                    },
                 )
-                if not script:
-                    raise HTTPException(
-                        status_code=400,
-                        detail={
-                            "error": {
-                                "code": "validation_error",
-                                "message": "Calling script is empty — create an agent script first, then edit it.",
-                            }
-                        },
-                    )
-                opt = prev_meta.get("optimizerReport") if isinstance(prev_meta.get("optimizerReport"), dict) else {}
-                from server.brain.agent_script_compiler import _platform_call_rules
-                from server.prompts.agent_voice_rules import is_native_english
-                from server.prompts.conversation_policy import infer_agent_role, infer_call_direction
+            opt = prev_meta.get("optimizerReport") if isinstance(prev_meta.get("optimizerReport"), dict) else {}
+            from server.brain.agent_script_compiler import _platform_call_rules
+            from server.prompts.agent_voice_rules import is_native_english
+            from server.prompts.conversation_policy import infer_agent_role, infer_call_direction
 
-                agent_name = (entity_tags.get("agent_name") or "").strip()
-                if not agent_name:
-                    ident_match = re.search(
-                        r"(?is)---\s*AGENT IDENTITY\s*---\s*\n.{0,120}?\bYou are\s+([A-Za-z][A-Za-z'\-]{1,23})\b",
-                        script,
-                    )
-                    agent_name = (ident_match.group(1) if ident_match else "") or str(opt.get("agent_name") or "")
-                role = infer_agent_role(f"{brief}\n{script}", llm_role=str(opt.get("detected_role") or ""))
-                direction = infer_call_direction(brief or script)
-                platform_rules = _platform_call_rules(
-                    agent_name=agent_name or ("Alex" if is_native_english(lang) else "Priya"),
-                    role=role,
-                    direction=direction,
-                    language=lang,
-                )
-                style_val = body.responseStyle or prev_meta.get("style")
-                _script, compiled = reassemble_brain_from_script(
-                    script=script,
-                    language=lang,
-                    style=style_val,
-                    call_end_policy=policy,
-                    platform_call_rules=platform_rules,
-                    agent_name=agent_name,
-                    role=role,
-                )
-                est = estimate_tokens(compiled)
-                if est > budget and est <= BUDGET_MAX_TOKENS:
-                    budget = est
-                warnings = validate_agent_script(script, brief=brief, agent_name=agent_name)
-                report = dict(opt)
-                report["user_edited"] = True
-                report["script_warnings"] = warnings
-                report["agent_name"] = agent_name
-                report["detected_role"] = role
-                report["platform_call_rules"] = platform_rules
-                compiler_sections = build_compiler_sections(
-                    user_script=script,
-                    platform_call_rules=platform_rules,
-                    compiled_brain=compiled,
-                    language=lang,
-                    style=style_val,
-                    call_end_policy=policy,
-                )
-                source_checksum = hashlib.sha256(
-                    f"{brief}\n{script}\n{lang}\n{style_val or ''}".encode("utf-8")
-                ).hexdigest()
-                saved = instruction_store.save_agent_script(
-                    body.sessionId,
-                    brief,
+            agent_name = (entity_tags.get("agent_name") or "").strip()
+            if not agent_name:
+                ident_match = re.search(
+                    r"(?is)---\s*AGENT IDENTITY\s*---\s*\n.{0,120}?\bYou are\s+([A-Za-z][A-Za-z'\-]{1,23})\b",
                     script,
-                    style_val,
-                    compiled_brain=compiled,
-                    optimizer_report=report,
-                    source_checksum=source_checksum,
-                    language=lang,
-                    budget_tokens=budget,
-                    raw_token_estimate=int(prev_meta.get("rawTokenEstimate") or est),
-                    call_end_policy=policy,
                 )
+                agent_name = (ident_match.group(1) if ident_match else "") or str(opt.get("agent_name") or "")
+            role = infer_agent_role(f"{brief}\n{script}", llm_role=str(opt.get("detected_role") or ""))
+            direction = infer_call_direction(brief or script)
+            platform_rules = _platform_call_rules(
+                agent_name=agent_name or ("Alex" if is_native_english(lang) else "Priya"),
+                role=role,
+                direction=direction,
+                language=lang,
+            )
+            style_val = body.responseStyle or prev_meta.get("style")
+            _script, compiled = reassemble_brain_from_script(
+                script=script,
+                language=lang,
+                style=style_val,
+                call_end_policy=policy,
+                platform_call_rules=platform_rules,
+                agent_name=agent_name,
+                role=role,
+            )
+            est = estimate_tokens(compiled)
+            if est > budget and est <= BUDGET_MAX_TOKENS:
+                budget = est
+            warnings = validate_agent_script(script, brief=brief, agent_name=agent_name)
+            report = dict(opt)
+            report["user_edited"] = True
+            report["script_warnings"] = warnings
+            report["agent_name"] = agent_name
+            report["detected_role"] = role
+            report["platform_call_rules"] = platform_rules
+            compiler_sections = build_compiler_sections(
+                user_script=script,
+                platform_call_rules=platform_rules,
+                compiled_brain=compiled,
+                language=lang,
+                style=style_val,
+                call_end_policy=policy,
+            )
+            source_checksum = hashlib.sha256(
+                f"{brief}\n{script}\n{lang}\n{style_val or ''}".encode("utf-8")
+            ).hexdigest()
+            saved = instruction_store.save_agent_script(
+                body.sessionId,
+                brief,
+                script,
+                style_val,
+                compiled_brain=compiled,
+                optimizer_report=report,
+                source_checksum=source_checksum,
+                language=lang,
+                budget_tokens=budget,
+                raw_token_estimate=int(prev_meta.get("rawTokenEstimate") or est),
+                call_end_policy=policy,
+            )
         elif body.brainPrompt is not None:
             if len(body.brainPrompt) > p_max:
                 raise HTTPException(

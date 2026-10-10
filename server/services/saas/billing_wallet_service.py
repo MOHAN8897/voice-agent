@@ -8,6 +8,7 @@ from typing import Any
 
 from fastapi import HTTPException
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 
 from server.config.env import get_settings
 from server.db.connection import get_session_factory
@@ -276,7 +277,7 @@ async def credit_wallet(
             )
             if dup.scalar_one_or_none():
                 return
-        wallet = await session.get(BillingWallet, tenant_id)
+        wallet = await session.get(BillingWallet, tenant_id, with_for_update=True)
         if wallet is None:
             wallet = BillingWallet(tenant_id=tenant_id, balance_cents=0, balance_inr_paise=0, updated_at=_utcnow())
             session.add(wallet)
@@ -299,7 +300,11 @@ async def credit_wallet(
                 created_at=_utcnow(),
             )
         )
-        await session.commit()
+        try:
+            await session.commit()
+        except IntegrityError:
+            await session.rollback()
+            return
 
 
 async def debit_wallet(
@@ -322,7 +327,7 @@ async def debit_wallet(
         )
         if dup.scalar_one_or_none():
             return {"ok": True, "duplicate": True, "amountCents": 0, "amountInrPaise": 0}
-        wallet = await session.get(BillingWallet, tenant_id)
+        wallet = await session.get(BillingWallet, tenant_id, with_for_update=True)
         if wallet is None:
             wallet = BillingWallet(tenant_id=tenant_id, balance_cents=0, balance_inr_paise=0, updated_at=_utcnow())
             session.add(wallet)
@@ -363,7 +368,11 @@ async def debit_wallet(
                 created_at=_utcnow(),
             )
         )
-        await session.commit()
+        try:
+            await session.commit()
+        except IntegrityError:
+            await session.rollback()
+            return {"ok": True, "duplicate": True, "amountCents": 0, "amountInrPaise": 0}
         return {"ok": True, "amountCents": debit_cents, "amountInrPaise": debit_paise}
 
 

@@ -281,14 +281,47 @@ async def subscriber_outbound(
             "code": "dial_in_progress",
         }
     try:
+        res = None
         if provider == "telnyx":
             from server.services.outbound_dial_attempt import execute_dial_attempt
-            return await execute_dial_attempt(
+            res = await execute_dial_attempt(
                 request_id=dial_request_id,
                 scope=f"app:{principal.tenant_id}:{principal.user_id}:{provider}",
                 payload={"agent": agent_id, "from": resolved_from, "to": to_number, "stack": stack},
                 operation=lambda: _outbound_telnyx(body, session_stub),
             )
-        return {"ok": False, "error": f"Provider {provider} not supported for subscriber PSTN yet"}
+        elif provider == "vobiz":
+            from server.routes.dev_telephony import _outbound_vobiz
+            from server.services.outbound_dial_attempt import execute_dial_attempt
+            res = await execute_dial_attempt(
+                request_id=dial_request_id,
+                scope=f"app:{principal.tenant_id}:{principal.user_id}:{provider}",
+                payload={"agent": agent_id, "from": resolved_from, "to": to_number, "stack": stack},
+                operation=lambda: _outbound_vobiz(body, session_stub),
+            )
+        else:
+            return {"ok": False, "error": f"Provider {provider} not supported for subscriber PSTN yet"}
+
+        if res and isinstance(res, dict) and not res.get("ok"):
+            err = str(res.get("error") or "")
+            res["error"] = _sanitize_tenant_dial_error(err)
+        return res
     finally:
         release_outbound_slot(provider, to_number)
+
+
+def _sanitize_tenant_dial_error(raw_err: str) -> str:
+    raw_lower = raw_err.lower()
+    if "balance" in raw_lower or "credit" in raw_lower:
+        return "Telephony service is temporarily unavailable. Please contact support."
+    if "rate limit" in raw_lower or "concurrency" in raw_lower:
+        return "Call limit reached. Please wait a moment and try again."
+    if "invalid" in raw_lower and ("phone" in raw_lower or "number" in raw_lower or "destination" in raw_lower):
+        return "Please verify that the dialed phone number is valid and in standard format."
+    if "timeout" in raw_lower:
+        return "Telephony connection timed out. Please try again shortly."
+    if "unreachable" in raw_lower or "network" in raw_lower:
+        return "The destination carrier is currently unreachable. Please try again later."
+    if "{" in raw_err or "http" in raw_lower or "vobiz api" in raw_lower or "telnyx api" in raw_lower or "exception" in raw_lower:
+        return "Unable to connect call at this moment. Please verify the destination number and try again."
+    return raw_err[:180]

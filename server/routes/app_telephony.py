@@ -102,6 +102,64 @@ async def calls_outbound_alias(body: OutboundCallBody, principal: SubscriberPrin
     return await telephony_outbound(body, principal)
 
 
+@router.get("/api/telephony/provider")
+async def telephony_provider_info(principal: SubscriberPrincipal = Depends(require_subscriber_jwt)):
+    """Return backend-configured active telephony provider details so frontend dynamically aligns."""
+    from server.services.telephony import active_telephony_provider
+    from server.services.telephony_status import all_provider_status
+
+    active = active_telephony_provider()
+    statuses = await all_provider_status()
+    active_details = next((s for s in statuses if s.get("id") == active), {})
+    return {
+        "activeProvider": active,
+        "activeLabel": active_details.get("label") or active.title(),
+        "ready": bool(active_details.get("ready")),
+        "enabled": bool(active_details.get("enabled")),
+        "phoneNumber": active_details.get("phone_number"),
+        "supportedProviders": ["telnyx", "vobiz", "exotel"],
+        "providers": [
+            {
+                "id": s.get("id"),
+                "label": s.get("label"),
+                "enabled": s.get("enabled"),
+                "ready": s.get("ready"),
+                "phoneNumber": s.get("phone_number"),
+                "balance": s.get("balance"),
+                "connectionId": s.get("connection_id"),
+                "webhookUrl": s.get("webhook_url") or s.get("answer_url"),
+                "hangupUrl": s.get("hangup_url"),
+                "fallbackUrl": s.get("fallback_url"),
+                "recordingUrl": s.get("recording_url"),
+                "streamWs": s.get("stream_ws"),
+                "accountInfo": s.get("account_info"),
+                "checklist": s.get("checklist"),
+            }
+            for s in statuses
+        ],
+    }
+
+
+class SwitchTelephonyProviderBody(BaseModel):
+    provider: str = Field(..., pattern="^(telnyx|vobiz|exotel|plivo)$")
+
+
+@router.post("/api/telephony/provider")
+async def telephony_set_provider(
+    body: SwitchTelephonyProviderBody,
+    principal: SubscriberPrincipal = Depends(require_subscriber_jwt),
+):
+    from server.services.dev_secrets_store import dev_secrets_store
+
+    enable_key = f"enable_{body.provider}"
+    dev_secrets_store.update({
+        "telephony_provider": body.provider,
+        enable_key: True,
+    })
+    return {"ok": True, "activeProvider": body.provider}
+
+
+
 @router.get("/api/telephony/voice-options")
 async def telephony_voice_options(principal: SubscriberPrincipal = Depends(require_subscriber_jwt)):
     """Subscriber-safe voice list for the production phone AI stack (no dev stack UI)."""
@@ -184,12 +242,17 @@ async def list_numbers(principal: SubscriberPrincipal = Depends(require_subscrib
         )
         numbers = []
         from server.services.saas.billing_rates import rates_with_derived_inr
+        from server.services.telephony import active_telephony_provider
 
+        active_prov = active_telephony_provider()
         rates = rates_with_derived_inr()
         monthly_usd = round(rates["did_monthly_usd_cents"] / 100.0, 2)
         monthly_inr = round(rates["did_monthly_inr_paise"] / 100.0, 2)
         for n in result.scalars():
             e164 = n.e164 or ""
+            prov = "telnyx" if (n.telnyx_number_id or e164 == "+13526146416") else ("vobiz" if n.plivo_number_id else "vobiz")
+            if prov != active_prov:
+                continue
             if e164.startswith("+1"):
                 country = "US"
             elif e164.startswith("+44"):
@@ -214,14 +277,17 @@ async def list_numbers(principal: SubscriberPrincipal = Depends(require_subscrib
                     "monthlyCost": monthly_usd,
                     "monthlyInr": monthly_inr,
                     "country": country,
+                    "provider": prov,
+                    "telnyxNumberId": n.telnyx_number_id,
+                    "plivoNumberId": n.plivo_number_id,
                 }
             )
-    return {"numbers": numbers}
+    return {"numbers": numbers, "activeProvider": active_prov}
 
 
 @router.get("/api/telephony/numbers/search")
 async def search_numbers(
-    country: str = "US",
+    country: str | None = None,
     principal: SubscriberPrincipal = Depends(require_subscriber_jwt),
 ):
     require_subscriber_permission(principal, "app.telephony.write")
@@ -229,8 +295,11 @@ async def search_numbers(
     from server.services.saas.telephony_countries import normalize_buy_country
     from server.services.saas.billing_rates import rates_with_derived_inr
     from server.services.saas.number_inventory import list_inventory_for_sale
+    from server.services.telephony import active_telephony_provider
 
-    country = normalize_buy_country(country)
+    active_prov = active_telephony_provider()
+    country_default = "IN" if active_prov == "vobiz" else "US"
+    country = normalize_buy_country(country or country_default, default=country_default)
     rates = rates_with_derived_inr()
     # Chargeable platform rate — must match wallet debit and the buy-modal header.
     monthly_usd = round(rates["did_monthly_usd_cents"] / 100.0, 2)
@@ -238,26 +307,66 @@ async def search_numbers(
 
     priced: list[dict] = []
     seen: set[str] = set()
-    # Admin inventory first — already on the account, no Telnyx order required.
-    for item in await list_inventory_for_sale(country=country):
-        e164 = str(item.get("e164") or "")
-        if not e164 or e164 in seen:
-            continue
-        seen.add(e164)
-        priced.append(
-            {
-                **item,
-                "monthlyUsd": monthly_usd,
-                "monthlyInr": monthly_inr,
-                "fee": monthly_usd,
-                "country": country,
-            }
-        )
+
+    # Pre-seed seen with all numbers already assigned or unavailable in the system
+    factory = get_session_factory()
+    if factory is not None:
+        async with factory() as session:
+            from server.services.saas.number_inventory import ensure_platform_inventory_tenant
+            from server.db.models.saas_models import NumberReservation
+            from datetime import datetime, timezone
+            inv_tid = await ensure_platform_inventory_tenant()
+
+            # Numbers assigned to tenants or not available in inventory
+            pn_rows = (
+                await session.execute(
+                    select(PhoneNumber.e164).where(
+                        PhoneNumber.released_at.is_(None),
+                        (PhoneNumber.tenant_id != inv_tid) | (PhoneNumber.status != "available"),
+                    )
+                )
+            ).scalars().all()
+            for n_e164 in pn_rows:
+                if n_e164:
+                    seen.add(str(n_e164).strip())
+
+            # Unexpired reservations
+            now_utc = datetime.now(timezone.utc)
+            res_rows = (
+                await session.execute(
+                    select(NumberReservation.e164).where(NumberReservation.expires_at > now_utc)
+                )
+            ).scalars().all()
+            for r_e164 in res_rows:
+                if r_e164:
+                    seen.add(str(r_e164).strip())
+
+    # Admin inventory: only include inventory when Telnyx is active (since inventory holds Telnyx DIDs)
+    if active_prov != "vobiz":
+        for item in await list_inventory_for_sale(country=country):
+            e164 = str(item.get("e164") or "")
+            if not e164 or e164 in seen:
+                continue
+            seen.add(e164)
+            priced.append(
+                {
+                    **item,
+                    "monthlyUsd": monthly_usd,
+                    "monthlyInr": monthly_inr,
+                    "fee": monthly_usd,
+                    "country": country,
+                    "provider": "telnyx",
+                }
+            )
 
     try:
-        numbers = await TelnyxClient().search_available_numbers(country=country, limit=10)
+        if active_prov == "vobiz":
+            from server.services.vobiz_client import VobizClient
+            numbers = await VobizClient().search_available_numbers(country=country, limit=10)
+        else:
+            numbers = await TelnyxClient().search_available_numbers(country=country, limit=10)
     except Exception as exc:
-        logger.warning("telnyx catalog search failed country=%s: %s", country, exc)
+        logger.warning("%s catalog search failed country=%s: %s", active_prov, country, exc)
         numbers = []
     for row in numbers:
         item = dict(row) if isinstance(row, dict) else {"e164": str(row)}
@@ -270,23 +379,28 @@ async def search_numbers(
         item["monthlyUsd"] = monthly_usd
         item["fee"] = monthly_usd
         item["country"] = country
-        item.setdefault("source", "telnyx")
+        item.setdefault("source", active_prov)
+        item.setdefault("provider", active_prov)
         priced.append(item)
     return {
         "numbers": priced,
         "country": country,
         "didMonthlyInr": monthly_inr,
         "didMonthlyUsd": monthly_usd,
+        "activeProvider": active_prov,
     }
 
 
 @router.get("/api/telephony/countries")
 async def list_buy_countries(principal: SubscriberPrincipal = Depends(require_subscriber_jwt)):
-    """Countries English-speaking SaaS buyers can purchase Telnyx numbers in."""
+    """Countries SaaS buyers can purchase numbers in."""
     require_subscriber_permission(principal, "app.telephony.write")
     from server.services.saas.telephony_countries import buy_country_options
+    from server.services.telephony import active_telephony_provider
 
-    return {"countries": buy_country_options(), "default": "US"}
+    active_prov = active_telephony_provider()
+    default_country = "IN" if active_prov == "vobiz" else "US"
+    return {"countries": buy_country_options(), "default": default_country, "activeProvider": active_prov}
 
 
 @router.get("/api/telephony/compliance")
@@ -452,6 +566,10 @@ async def buy_number(
         elif code == "carrier_balance_exhausted":
             # 503: our carrier account is out of funds, not the customer's problem.
             status = 503
+        elif code == "carrier_not_configured":
+            status = 503
+        elif code == "carrier_order_failed":
+            status = 502
         elif code == "kyc_required":
             status = 403
         else:
@@ -463,6 +581,8 @@ async def buy_number(
             "carrier_balance_exhausted": (
                 "Phone numbers are temporarily unavailable. Your wallet was not charged."
             ),
+            "carrier_not_configured": "Telephony line service is being updated. Please contact support.",
+            "carrier_order_failed": "Unable to complete number order with provider. Your wallet was not charged.",
             "number_reserved": "This number is reserved by another checkout. Try a different number.",
             "number_unavailable": "This number is no longer available.",
             "number_limit": "This workspace has reached its phone number limit.",
@@ -473,6 +593,17 @@ async def buy_number(
         raise HTTPException(
             status_code=status,
             detail={"error": {"code": code, "message": messages.get(code, code)}},
+        )
+    except Exception as exc:
+        logger.exception("Unexpected error in buy_number: %s", exc)
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "error": {
+                    "code": "purchase_temporarily_unavailable",
+                    "message": "Phone line service is momentarily unavailable. Your account was not charged. Please try again shortly.",
+                }
+            },
         )
 
     # Paid and enqueued. Recorded here rather than in the service so the row also
@@ -814,6 +945,7 @@ async def patch_contact(
 async def release_number(number_id: str, principal: SubscriberPrincipal = Depends(require_subscriber_jwt)):
     require_subscriber_permission(principal, "app.telephony.write")
     from server.services.saas.number_inventory import move_to_inventory
+    from server.services.saas.activity_log import record_event
 
     factory = get_session_factory()
     if factory is None:
@@ -821,13 +953,28 @@ async def release_number(number_id: str, principal: SubscriberPrincipal = Depend
     workspace_tid = subscriber_workspace_tenant_id(principal)
     async with factory() as session:
         pn = await session.get(PhoneNumber, uuid.UUID(number_id))
-        if pn is None or pn.tenant_id != workspace_tid:
+        if pn is None or pn.tenant_id != workspace_tid or pn.released_at is not None:
             raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Not found"}})
         e164 = pn.e164
         telnyx_id = pn.telnyx_number_id
+        plivo_id = pn.plivo_number_id
         nid = pn.id
-    # Return the DID to the admin inventory pool — still on Telnyx, available to buy again.
-    moved = await move_to_inventory(number_id=nid, e164=e164, telnyx_number_id=telnyx_id)
+    # Return the DID to the admin inventory pool — available to buy again.
+    moved = await move_to_inventory(
+        number_id=nid,
+        e164=e164,
+        telnyx_number_id=telnyx_id,
+        plivo_number_id=plivo_id,
+    )
+    await record_event(
+        action="number.released",
+        resource_type="phone_number",
+        resource_id=str(nid),
+        actor=principal.email or str(principal.user_id),
+        tenant_id=workspace_tid,
+        payload={"e164": e164, "provider": "vobiz" if plivo_id else "telnyx"},
+        source="subscriber",
+    )
     return {"ok": True, "inventory": moved}
 
 

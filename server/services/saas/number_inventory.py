@@ -56,6 +56,7 @@ async def move_to_inventory(
     e164: str | None = None,
     number_id: uuid.UUID | None = None,
     telnyx_number_id: str | None = None,
+    plivo_number_id: str | None = None,
 ) -> dict:
     """Park a DID in the admin inventory pool (clears agent binding)."""
     inventory_tid = await ensure_platform_inventory_tenant()
@@ -85,6 +86,7 @@ async def move_to_inventory(
                 status="available",
                 billing_source="inventory",
                 telnyx_number_id=telnyx_number_id,
+                plivo_number_id=plivo_number_id,
                 agent_id=None,
                 inbound_enabled=False,
                 outbound_enabled=False,
@@ -101,6 +103,8 @@ async def move_to_inventory(
             pn.outbound_enabled = False
             if telnyx_number_id:
                 pn.telnyx_number_id = telnyx_number_id
+            if plivo_number_id:
+                pn.plivo_number_id = plivo_number_id
         await session.commit()
         await session.refresh(pn)
         return {
@@ -109,6 +113,7 @@ async def move_to_inventory(
             "tenantId": str(pn.tenant_id),
             "status": pn.status,
             "telnyxNumberId": pn.telnyx_number_id,
+            "plivoNumberId": pn.plivo_number_id,
         }
 
 
@@ -123,6 +128,7 @@ async def list_inventory_for_sale(*, country: str | None = None) -> list[dict]:
             await session.execute(
                 select(PhoneNumber).where(
                     PhoneNumber.tenant_id == inventory_tid,
+                    PhoneNumber.status == "available",
                     PhoneNumber.released_at.is_(None),
                 )
             )

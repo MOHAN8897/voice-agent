@@ -1,0 +1,58 @@
+{
+  "version": 2,
+  "name": "drive-car-dealership-test-driv",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1791481632724,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "voice-industry-real-estate",
+        "source": {
+          "file": "src/components/TalkToAiSection.jsx",
+          "line": 226,
+          "column": 19
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "voice-industry-car-dealership",
+        "source": {
+          "file": "src/components/TalkToAiSection.jsx",
+          "line": 226,
+          "column": 19
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "text",
+        "contains": "Car Dealership · Test drive booking"
+      },
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "reticle-cli"
+  }
+}

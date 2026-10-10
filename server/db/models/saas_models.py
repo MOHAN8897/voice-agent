@@ -251,6 +251,14 @@ class RazorpayOrder(Base):
 
 class BillingWalletTransaction(Base):
     __tablename__ = "billing_wallet_transactions"
+    # Enforce idempotency at the DB level: two concurrent webhook retries with the
+    # same reference_id cannot both commit. The IntegrityError catch in
+    # billing_wallet_service.debit_wallet() relies on this constraint existing.
+    # NULLs are intentionally excluded — Postgres treats NULLs as distinct, so
+    # rows without a reference_id (e.g. manual top-ups) do not conflict.
+    __table_args__ = (
+        UniqueConstraint("reference_id", name="uq_billing_wallet_tx_reference_id"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.tenant_id"), nullable=False)
@@ -258,7 +266,7 @@ class BillingWalletTransaction(Base):
     amount_cents: Mapped[int] = mapped_column(Integer, nullable=False)
     amount_inr_paise: Mapped[int] = mapped_column(Integer, default=0)
     kind: Mapped[str] = mapped_column(String(40), nullable=False)
-    reference_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    reference_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
     stripe_session_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 

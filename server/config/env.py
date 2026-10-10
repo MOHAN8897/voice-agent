@@ -155,8 +155,8 @@ class Settings(BaseSettings):
     fx_rate_live_ttl_sec: int = Field(21600, alias="FX_RATE_LIVE_TTL_SEC")
 
     database_url: str | None = Field(None, alias="DATABASE_URL")
-    db_pool_size: int = Field(5, alias="DB_POOL_SIZE")
-    db_max_overflow: int = Field(5, alias="DB_MAX_OVERFLOW")
+    db_pool_size: int = Field(20, alias="DB_POOL_SIZE")
+    db_max_overflow: int = Field(20, alias="DB_MAX_OVERFLOW")
     db_pool_timeout: float = Field(20.0, alias="DB_POOL_TIMEOUT")
     db_pool_recycle: int = Field(1800, alias="DB_POOL_RECYCLE")
 
@@ -233,6 +233,22 @@ class Settings(BaseSettings):
     plivo_auth_id: str | None = Field(None, alias="PLIVO_AUTH_ID")
     plivo_auth_token: str | None = Field(None, alias="PLIVO_AUTH_TOKEN")
     plivo_phone_number: str | None = Field(None, alias="PLIVO_PHONE_NUMBER")
+    enable_vobiz: bool = Field(False, alias="ENABLE_VOBIZ")
+    vobiz_auth_id: str | None = Field(
+        None,
+        validation_alias=AliasChoices("VOBIZ_AUTH_ID", "VOBIZ_ACCOUNT_ID", "Vobiz_Account ID", "Vobiz_Account_ID"),
+    )
+    vobiz_auth_token: str | None = Field(
+        None,
+        validation_alias=AliasChoices("VOBIZ_AUTH_TOKEN", "VOBIZ_AUTH_SECRET", "vobiz_Auth Secret", "VOBIZ_SECRET"),
+    )
+    vobiz_app_id: str | None = Field(
+        None,
+        validation_alias=AliasChoices("VOBIZ_APP_ID", "VOBIZ_APPLICATION_ID"),
+    )
+    vobiz_phone_number: str | None = Field(None, alias="VOBIZ_PHONE_NUMBER")
+    vobiz_webhook_secret: str | None = Field(None, alias="VOBIZ_WEBHOOK_SECRET")
+    vobiz_max_concurrent_calls: int = Field(50, alias="VOBIZ_MAX_CONCURRENT_CALLS")
     campaign_max_concurrency: int = Field(20, alias="CAMPAIGN_MAX_CONCURRENCY")
     campaign_default_retry_attempts: int = Field(3, alias="CAMPAIGN_DEFAULT_RETRY_ATTEMPTS")
     saas_max_concurrent_pstn: int = Field(20, alias="SAAS_MAX_CONCURRENT_PSTN")

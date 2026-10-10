@@ -17,7 +17,6 @@ export const COMPILE_LANGUAGE_OPTIONS: CompileLanguageOption[] = [
   { id: "gu-IN", label: "Gujarati", native: "ગુજરાતી", group: "India" },
   { id: "pa-IN", label: "Punjabi", native: "ਪੰਜਾਬੀ", group: "India" },
   { id: "en-IN", label: "English (India)", native: "Indian English", group: "India" },
-  { id: "en-US", label: "English (US)", native: "English", group: "English (global)" },
   { id: "en-GB", label: "English (UK)", native: "English", group: "English (global)" },
 ];
 

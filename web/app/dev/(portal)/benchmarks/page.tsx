@@ -1,5 +1,5 @@
-import { BenchmarkLaboratory } from "@/components/benchmarks/BenchmarkLaboratory";
+import { redirect } from "next/navigation";
 
 export default function DevBenchmarksPage() {
-  return <BenchmarkLaboratory portal="dev" />;
+  redirect("/dev/saas-phone-stack");
 }

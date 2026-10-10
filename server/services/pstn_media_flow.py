@@ -92,14 +92,30 @@ class PstnMediaFlowStore:
         configured: CallMediaConfig,
         call_id: str | None = None,
     ) -> None:
-        if len(self._calls) >= 30:
-            oldest = min(self._calls, key=lambda item: self._calls[item].get("updated_at") or 0)
-            stale = self._calls.pop(oldest)
-            for alias in (stale.get("call_id"), stale.get("external_id")):
-                if alias:
-                    self._aliases.pop(alias, None)
-        key = call_id or external_id
         now = time.time()
+        # Periodically purge inactive calls older than 3600 seconds to prevent unbounded RAM growth
+        stale_keys = [
+            k for k, v in self._calls.items()
+            if not v.get("active") and (now - float(v.get("updated_at") or 0)) > 3600
+        ]
+        for sk in stale_keys:
+            stale = self._calls.pop(sk, None)
+            if stale:
+                for alias in (stale.get("call_id"), stale.get("external_id")):
+                    if alias:
+                        self._aliases.pop(alias, None)
+
+        # High concurrency ceiling (250 calls): evict oldest inactive call first
+        if len(self._calls) >= 250:
+            inactive = [k for k, v in self._calls.items() if not v.get("active")]
+            evict_pool = inactive if inactive else list(self._calls.keys())
+            oldest = min(evict_pool, key=lambda item: self._calls[item].get("updated_at") or 0)
+            stale = self._calls.pop(oldest, None)
+            if stale:
+                for alias in (stale.get("call_id"), stale.get("external_id")):
+                    if alias:
+                        self._aliases.pop(alias, None)
+        key = call_id or external_id
         self._calls[key] = {
             "call_id": call_id,
             "external_id": external_id,

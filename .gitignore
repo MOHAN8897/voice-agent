@@ -67,3 +67,5 @@ Thumbs.db
 /.test-deps/
 /.uv-cache/
 /.pytest-tmp-*/
+.gemini/
+scratch/

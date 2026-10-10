@@ -6,11 +6,12 @@ export const VOICE_PRESETS = [
 ];
 
 export const LANGUAGE_OPTIONS = [
-  { label: 'English (US)', code: 'en-US' },
   { label: 'English (India)', code: 'en-IN' },
   { label: 'English (UK)', code: 'en-GB' },
-  { label: 'Hindi', code: 'hi-IN' },
   { label: 'Telugu', code: 'te-IN' },
+  { label: 'Hindi', code: 'hi-IN' },
+  { label: 'Tamil', code: 'ta-IN' },
+  { label: 'Kannada', code: 'kn-IN' },
 ];
 
 export function voiceFromPreset(presetId, agentName = '') {

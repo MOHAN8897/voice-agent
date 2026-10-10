@@ -6,8 +6,11 @@ Language-specific spoken style is selected by default_style_for().
 DEFAULT_RESPONSE_STYLES: dict[str, str] = {
     "te-IN": "very brief, 1-2 sentences, spoken Telugu",
     "en-IN": "warm, brief, 1-2 sentences, spoken Indian English like a person on a phone",
+    "en-GB": "warm, brief, 1-2 sentences, spoken British English like a person on a phone",
     "en-US": "warm, brief, 1-2 sentences, natural spoken English like a person on a phone",
     "hi-IN": "very brief, 1-2 sentences, spoken Hinglish",
+    "ta-IN": "very brief, 1-2 sentences, spoken Tamil like a person on a phone",
+    "kn-IN": "very brief, 1-2 sentences, spoken Kannada like a person on a phone",
 }
 
 # Back-compat: factory sessions with no language still Telugu.
@@ -18,14 +21,23 @@ _STYLE_ALIASES = {
     "te-in": "te-IN",
     "en": "en-IN",
     "en-in": "en-IN",
+    "en-gb": "en-GB",
+    "en-uk": "en-GB",
+    "british": "en-GB",
+    "uk-english": "en-GB",
     "en-us": "en-US",
-    "en-gb": "en-US",
-    "en-au": "en-US",
-    "en-ca": "en-US",
+    "en-au": "en-GB",
+    "en-ca": "en-GB",
     "english": "en-IN",
     "hi": "hi-IN",
     "hi-in": "hi-IN",
     "hindi": "hi-IN",
+    "ta": "ta-IN",
+    "ta-in": "ta-IN",
+    "tamil": "ta-IN",
+    "kn": "kn-IN",
+    "kn-in": "kn-IN",
+    "kannada": "kn-IN",
 }
 
 
@@ -36,12 +48,18 @@ def canonical_language(language: str | None) -> str:
     mapped = _STYLE_ALIASES.get(raw.lower())
     if mapped:
         return mapped
-    if raw.lower().startswith("en-us") or raw.lower() in {"en-gb", "en-au", "en-ca", "en-uk"}:
+    if raw.lower().startswith("en-gb") or raw.lower() in {"en-uk", "british", "uk-english"}:
+        return "en-GB"
+    if raw.lower().startswith("en-us"):
         return "en-US"
     if raw.lower().startswith("en"):
         return "en-IN"
     if raw.lower().startswith("hi"):
         return "hi-IN"
+    if raw.lower().startswith("ta"):
+        return "ta-IN"
+    if raw.lower().startswith("kn"):
+        return "kn-IN"
     return "te-IN"
 
 
@@ -52,8 +70,11 @@ def default_style_for(language: str | None) -> str:
 _LANG_STYLE_MARKERS = {
     "te-IN": ("spoken telugu", "tanglish"),
     "en-IN": ("spoken indian english",),
+    "en-GB": ("spoken british english", "uk english", "british"),
     "en-US": ("natural spoken english", "us/uk"),
     "hi-IN": ("spoken hinglish",),
+    "ta-IN": ("spoken tamil",),
+    "kn-IN": ("spoken kannada",),
 }
 
 

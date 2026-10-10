@@ -1,0 +1,268 @@
+{
+  "version": 2,
+  "name": "drive-917965480745",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1791640230084,
+  "steps": [
+    {
+      "tool": "reticle_act_sequence",
+      "anchor": {
+        "kind": "role",
+        "role": "textbox",
+        "name": "Work Email"
+      },
+      "steps": [
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "role",
+            "role": "textbox",
+            "name": "Work Email"
+          },
+          "args": {
+            "value": "mohansairallapalli@gmail.com"
+          },
+          "action": "fill"
+        },
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "role",
+            "role": "textbox",
+            "name": "Password"
+          },
+          "args": {
+            "value": "<redacted: supply at replay>"
+          },
+          "action": "fill"
+        },
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "role",
+            "role": "button",
+            "name": "Sign In"
+          },
+          "args": {},
+          "action": "click"
+        }
+      ],
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act_sequence",
+      "anchor": {
+        "kind": "role",
+        "role": "textbox",
+        "name": "Work Email"
+      },
+      "steps": [
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "role",
+            "role": "textbox",
+            "name": "Work Email"
+          },
+          "args": {
+            "value": "mohansaiteja.99@gmail.com"
+          },
+          "action": "fill"
+        },
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "role",
+            "role": "textbox",
+            "name": "Password"
+          },
+          "args": {
+            "value": "<redacted: supply at replay>"
+          },
+          "action": "fill"
+        },
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "role",
+            "role": "button",
+            "name": "Sign In"
+          },
+          "args": {},
+          "action": "click"
+        }
+      ],
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "nav-phone-numbers",
+        "source": {
+          "file": "src/console/Sidebar.jsx",
+          "line": 301,
+          "column": 19
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Buy Phone Number"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Close dialog"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "nav-employees",
+        "source": {
+          "file": "src/console/Sidebar.jsx",
+          "line": 301,
+          "column": 19
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-open-builder",
+        "source": {
+          "file": "src/console/ui/TactileButton.jsx",
+          "line": 69,
+          "column": 5
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-test-call",
+        "source": {
+          "file": "src/console/ui/TactileButton.jsx",
+          "line": 69,
+          "column": 5
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "test-call-mode-phone",
+        "source": {
+          "file": "src/console/modules/agent-workspace/AgentTestCallPanel.jsx",
+          "line": 294,
+          "column": 11
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "test-call-phone-from-select",
+        "source": {
+          "file": "src/console/modules/agent-workspace/AgentTestCallPanel.jsx",
+          "line": 475,
+          "column": 11
+        }
+      },
+      "args": {
+        "value": "+917965480745"
+      },
+      "action": "select",
+      "expect": {
+        "kind": "text",
+        "contains": "+917965480745"
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Close dialog"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "nav-calls",
+        "source": {
+          "file": "src/console/Sidebar.jsx",
+          "line": 301,
+          "column": 19
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Place outgoing call"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    }
+  ],
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "antigravity-client"
+  }
+}

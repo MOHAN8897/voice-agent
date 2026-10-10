@@ -20,6 +20,7 @@ _SECRET_FIELDS = frozenset(
         "telnyx_api_key",
         "plivo_auth_id",
         "plivo_auth_token",
+        "vobiz_auth_token",
     }
 )
 
@@ -33,6 +34,7 @@ _TOGGLE_FIELDS = frozenset(
         "enable_exotel",
         "enable_telnyx",
         "enable_plivo",
+        "enable_vobiz",
         "enable_benchmarks",
     }
 )
@@ -51,6 +53,9 @@ _STRING_FIELDS = frozenset(
         "telnyx_phone_number",
         "telnyx_outbound_voice_profile_id",
         "plivo_phone_number",
+        "vobiz_auth_id",
+        "vobiz_app_id",
+        "vobiz_phone_number",
     }
 )
 
@@ -295,6 +300,11 @@ class DevSecretsStore:
                 self._secret_row("PLIVO_AUTH_ID", "plivo_auth_id", settings, overlay),
                 self._secret_row("PLIVO_AUTH_TOKEN", "plivo_auth_token", settings, overlay),
                 self._string_row("PLIVO_PHONE_NUMBER", "plivo_phone_number", settings, overlay),
+                self._toggle_row("ENABLE_VOBIZ", "enable_vobiz", settings, overlay),
+                self._string_row("VOBIZ_AUTH_ID", "vobiz_auth_id", settings, overlay),
+                self._secret_row("VOBIZ_AUTH_TOKEN", "vobiz_auth_token", settings, overlay),
+                self._string_row("VOBIZ_APP_ID", "vobiz_app_id", settings, overlay),
+                self._string_row("VOBIZ_PHONE_NUMBER", "vobiz_phone_number", settings, overlay),
             ],
         }
         return {

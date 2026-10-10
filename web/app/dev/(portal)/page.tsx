@@ -31,7 +31,6 @@ const SECTIONS = [
         label: "Test Studio",
         body: "Live browser and PSTN calls, with per-call forensics.",
       },
-      { href: "/dev/benchmarks", label: "Benchmarks", body: "Latency and quality across models." },
     ],
   },
   {

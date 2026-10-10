@@ -827,6 +827,16 @@ export const api = {
   },
 
   telephony: {
+    async getProvider() {
+      return await api.request('GET', '/api/telephony/provider');
+    },
+    async setProvider(provider) {
+      try {
+        return await api.request('POST', '/api/telephony/provider', { provider });
+      } catch (err) {
+        return await api.request('POST', '/api/admin/telephony/provider', { provider });
+      }
+    },
     async getNumbers() {
       const data = await api.request('GET', '/api/telephony/numbers');
       const rows = data.numbers || data;
@@ -1180,8 +1190,45 @@ export const api = {
       const data = await api.request('GET', '/api/admin/tenants');
       return data.tenants || [];
     },
+    async updateTenantStatus(tenantId, status) {
+      return await api.request('PATCH', `/api/admin/tenants/${tenantId}/status`, { status });
+    },
+    async deleteTenant(tenantId) {
+      return await api.request('DELETE', `/api/admin/tenants/${tenantId}`);
+    },
     async grantCredits({ tenantId, amountInrPaise, reason }) {
       return await api.request('POST', '/api/admin/credits', { tenantId, amountInrPaise, reason });
+    },
+    async setTelephonyProvider(provider) {
+      return await api.request('POST', '/api/admin/telephony/provider', { provider });
+    },
+    async listPhoneNumbers() {
+      const data = await api.request('GET', '/api/admin/phone-numbers');
+      return data.phoneNumbers || [];
+    },
+    async searchCarrierNumbers(provider = 'vobiz', country = 'US') {
+      const qs = new URLSearchParams({ provider, country });
+      const data = await api.request('GET', `/api/admin/phone-numbers/search?${qs.toString()}`);
+      return data.numbers || [];
+    },
+    async buyPhoneNumber({ e164, provider = 'vobiz', country = 'US', tenantId = null, assignAgentId = null }) {
+      return await api.request('POST', '/api/admin/phone-numbers/buy', {
+        e164,
+        provider,
+        country,
+        tenantId,
+        assignAgentId,
+      });
+    },
+    async releasePhoneNumber(numberId) {
+      return await api.request('DELETE', `/api/admin/phone-numbers/${numberId}`);
+    },
+    async triggerTestCall({ toE164, fromE164 = null, provider = 'vobiz' }) {
+      return await api.request('POST', '/api/admin/telephony/test-call', {
+        to_e164: toE164,
+        from_e164: fromE164,
+        provider,
+      });
     },
   },
 

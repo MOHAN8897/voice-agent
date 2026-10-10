@@ -106,3 +106,17 @@ def _isolate_request_limits():
     yield
     rate_limiter.reset()
     tts_limiter.reset()
+
+
+@pytest.fixture(autouse=True)
+async def _cleanup_engine_between_tests():
+    yield
+    from server.db import connection
+
+    if connection._engine is not None:
+        try:
+            await connection.close_db()
+        except Exception:
+            connection._engine = None
+            connection._session_factory = None
+

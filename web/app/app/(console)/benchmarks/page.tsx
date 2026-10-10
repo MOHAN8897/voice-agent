@@ -1,5 +1,5 @@
-import { BenchmarkLaboratory } from "@/components/benchmarks/BenchmarkLaboratory";
+import { redirect } from "next/navigation";
 
 export default function BenchmarksPage() {
-  return <BenchmarkLaboratory portal="app" />;
+  redirect("/app");
 }

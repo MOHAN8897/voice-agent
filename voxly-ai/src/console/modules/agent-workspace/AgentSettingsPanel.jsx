@@ -21,7 +21,7 @@ export function AgentSettingsPanel({ agent, onOpenBuyNumber }) {
   const { phoneNumbers, agents, assignNumberToAgent, updateAgent, toggleAgentStatus } = useWorkspace();
   const [name, setName] = useState(agent?.name || '');
   const [language, setLanguage] = useState(
-    (agent?.languages && agent.languages[0]) || agent?.language || 'en-US'
+    (agent?.languages && agent.languages[0]) || agent?.language || 'en-IN'
   );
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -45,7 +45,7 @@ export function AgentSettingsPanel({ agent, onOpenBuyNumber }) {
   if (agentId !== seedFor) {
     setSeedFor(agentId);
     setName(agent?.name || '');
-    setLanguage((agent?.languages && agent.languages[0]) || agent?.language || 'en-US');
+    setLanguage((agent?.languages && agent.languages[0]) || agent?.language || 'en-IN');
     setRecordingDisclosureEnabled(Boolean(agent?.recordingDisclosureEnabled));
     setRecordingDisclosureText(
       agent?.recordingDisclosureText || 'This call may be recorded for quality and training purposes.'

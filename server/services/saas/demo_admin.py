@@ -49,7 +49,7 @@ def _utcnow():
 
 
 def _password_hash(password: str) -> str:
-    from server.auth.password_hash import hash_portal_password
+    from server.auth.passwords import hash_portal_password
 
     return hash_portal_password(password)
 

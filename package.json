@@ -18,6 +18,8 @@
     "dev:cf-tunnel": "powershell -ExecutionPolicy Bypass -File scripts/run_cloudflare_tunnel.ps1",
     "share": "powershell -ExecutionPolicy Bypass -File scripts/dev_stack.ps1 -KillStale -Mode share",
     "share:ngrok": "powershell -ExecutionPolicy Bypass -File scripts/share_with_friend.ps1 -Tunnel ngrok",
-    "share:cf": "powershell -ExecutionPolicy Bypass -File scripts/share_with_friend.ps1 -Tunnel cloudflared"
+    "share:cf": "powershell -ExecutionPolicy Bypass -File scripts/share_with_friend.ps1 -Tunnel cloudflared",
+    "sam": "npx sam-agents",
+    "sam:install": "npx sam-agents --platform all"
   }
 }

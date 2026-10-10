@@ -62,7 +62,7 @@ def effective_rates() -> dict[str, int | float]:
         # admin who has only ever touched the INR field still gets a sane price.
         "did_monthly_usd_cents": int(ov.get("did_monthly_usd_cents") or settings.did_monthly_usd_cents),
         # fx_rate_inr is the rate money is actually converted at.
-        "fx_rate_inr": float(ov.get("fx_rate_inr") or getattr(settings, "fx_rate_inr", 0) or 95.64),
+        "fx_rate_inr": float(ov.get("fx_rate_inr") or getattr(settings, "fx_rate_inr", 0) or 96.78),
     }
 
 

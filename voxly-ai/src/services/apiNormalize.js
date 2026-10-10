@@ -43,9 +43,11 @@ export function normalizePhoneNumber(row, agentsById = {}) {
   const agentId = row.agentId || row.assignedAgentId;
   const agent = agentId ? agentsById[agentId] : null;
   const inferred = countryFromE164(e164);
+  const provider = row.provider || (row.telnyxNumberId ? 'telnyx' : (row.plivoNumberId ? 'vobiz' : 'vobiz'));
   return {
     id,
     number: e164,
+    e164,
     formatted: row.formatted || e164,
     country: row.country || inferred || 'US',
     countryCode: row.countryCode || row.country || inferred || 'US',
@@ -53,7 +55,11 @@ export function normalizePhoneNumber(row, agentsById = {}) {
     assignedAgentId: agentId || null,
     assignedAgentName: agent?.name || (agentId ? 'Assigned' : 'Unassigned (Pool)'),
     // 0 means "price not supplied", which the UI renders as unknown rather than free.
-monthlyCost: row.monthlyCost ?? row.monthlyUsd ?? 0,
+    monthlyCost: row.monthlyCost ?? row.monthlyUsd ?? 0,
+    monthlyInr: row.monthlyInr ?? 0,
+    provider,
+    telnyxNumberId: row.telnyxNumberId || null,
+    plivoNumberId: row.plivoNumberId || null,
     status: row.status || 'active',
     capabilities: row.capabilities || ['Voice'],
     usageMinutesThisMonth: row.usageMinutesThisMonth ?? 0,
@@ -182,6 +188,24 @@ export function normalizeCall(row, agentsById = {}) {
     policyReason: row.policy_reason || row.policyReason || null,
     costInr: row.cost_inr ?? row.costInr,
     costUsd: row.cost_usd ?? row.costUsd,
+    costUsdPerMin: row.cost_usd_per_min ?? row.usage?.cost_usd_per_min,
+    costInrPerMin: row.cost_inr_per_min ?? row.usage?.cost_inr_per_min,
+    telephonyProvider:
+      row.telephony_provider ??
+      row.telephonyProvider ??
+      row.usage?.telephony_provider ??
+      (row.vobiz_call_uuid || row.usage?.vobiz_usd ? 'vobiz' : 'telnyx'),
+    telephonyUsd: row.telephony_usd ?? row.telephonyUsd ?? row.usage?.telephony_usd,
+    telephonyInr: row.telephony_inr ?? row.telephonyInr ?? row.usage?.telephony_inr,
+    telephonyUsdPerMin: row.telephony_usd_per_min ?? row.usage?.telephony_usd_per_min,
+    telephonyInrPerMin: row.telephony_inr_per_min ?? row.usage?.telephony_inr_per_min,
+    vobizUsd: row.vobiz_usd ?? row.vobizUsd ?? row.usage?.vobiz_usd,
+    vobizInr: row.vobiz_inr ?? row.vobizInr ?? row.usage?.vobiz_inr,
+    vobizInrPerMin: row.vobiz_inr_per_min ?? row.usage?.vobiz_inr_per_min,
+    vobizVoiceInr: row.vobiz_voice_inr ?? row.usage?.vobiz_voice_inr,
+    vobizRecordingInr: row.vobiz_recording_inr ?? row.usage?.vobiz_recording_inr,
+    vobizTranscriptionInr: row.vobiz_transcription_inr ?? row.usage?.vobiz_transcription_inr,
+    vobizRateInrPerMin: row.vobiz_rate_inr_per_min ?? row.usage?.vobiz_rate_inr_per_min,
     telnyxUsd: row.telnyx_usd ?? row.telnyxUsd ?? row.usage?.telnyx_usd,
     telnyxInr: row.telnyx_inr ?? row.telnyxInr ?? row.usage?.telnyx_inr,
     telnyxBalanceStart: row.telnyx_balance_start ?? row.usage?.telnyx_balance_start,
@@ -223,16 +247,20 @@ export function normalizeCatalogItem(item) {
   const e164 = item.e164 || item.phone_number || item.number;
   // No invented fallback: a missing price must surface as unknown, not as $5.
   const monthlyUsd = item.monthlyUsd ?? item.fee ?? (item.monthlyCents != null ? item.monthlyCents / 100 : null);
+  const rawType = String(item.type || '').toLowerCase();
+  const normalizedType = rawType.includes('toll') ? 'Toll-Free' : 'Local DID';
   return {
     e164,
     number: e164,
     formatted: item.formatted || e164,
-    country: item.country || item.country_code || 'IN',
-    type: item.type || 'Local DID',
+    country: item.country || item.country_code || 'US',
+    type: normalizedType,
+    provider: item.provider || item.source || 'vobiz',
     areaCode: item.areaCode || '',
     locality: item.locality || '',
     fee: monthlyUsd,
     monthlyUsd,
+    monthlyInr: item.monthlyInr ?? null,
     features: item.features || ['Voice'],
   };
 }

@@ -216,6 +216,37 @@ async def assert_carrier_can_buy(e164: str) -> None:
     provision job fails — then gets an async refund. Checking first turns that
     into an honest, synchronous failure before any money moves.
     """
+    from server.services.telephony import active_telephony_provider, provider_configured
+
+    provider = active_telephony_provider()
+    if provider == "vobiz":
+        if not provider_configured("vobiz"):
+            raise ValueError("carrier_not_configured")
+        from server.services.vobiz_client import VobizClient
+        try:
+            balance = await VobizClient().get_balance()
+        except Exception as exc:
+            logger.warning("vobiz balance check failed, allowing purchase: %s", exc)
+            return
+        remaining = _carrier_remaining(balance)
+        curr = str(balance.get("currency") or "INR").upper()
+        if remaining is not None:
+            if curr == "INR":
+                from server.services.usage_pricing import resolve_fx_rate_inr
+                fx = float(resolve_fx_rate_inr().get("rate") or 96.78)
+                min_bal = CARRIER_MIN_BALANCE_USD * fx
+            else:
+                min_bal = CARRIER_MIN_BALANCE_USD
+            if remaining < min_bal:
+                logger.warning(
+                    "vobiz balance too low for DID order e164=%s remaining=%s %s",
+                    e164,
+                    remaining,
+                    curr,
+                )
+                raise ValueError("carrier_balance_exhausted")
+        return
+
     from server.services.telnyx_client import TelnyxClient
 
     try:

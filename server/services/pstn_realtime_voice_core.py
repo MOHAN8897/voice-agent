@@ -584,9 +584,11 @@ class PstnRealtimeVoiceLoop:
         tenant_id: str | None = None,
         agent_id: str | None = None,
         agent_tools: set[str] | list[str] | None = None,
+        channel: str = "pstn",
     ) -> None:
         self.session_id = session_id
         self.call_id = call_id
+        self.channel = channel
         self.config_session_id = config_session_id
         self.tts_session_id = tts_session_id or session_id
         self.on_agent_wire = on_agent_wire
@@ -1848,7 +1850,9 @@ class PstnRealtimeVoiceLoop:
         if self._deferred_greeting_armed:
             self._arm_pickup_fallback()
         elif play_greeting and opening and (
-            direction == "outbound" or getattr(adapter, "needs_explicit_opening", False)
+            direction == "outbound"
+            or getattr(adapter, "needs_explicit_opening", False)
+            or self.channel == "browser"
         ):
             played_side = await self._play_gemini_inbound_opening_if_needed(
                 adapter=adapter,

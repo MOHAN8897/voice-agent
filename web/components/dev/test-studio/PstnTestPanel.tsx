@@ -39,6 +39,7 @@ type ProviderStatus = {
   status_callback_url?: string | null;
   exophone?: string | null;
   balance?: string | null;
+  account_info?: Record<string, any>;
   checklist?: TelnyxChecklist;
 };
 
@@ -92,6 +93,7 @@ const PROVIDERS = [
   { id: "exotel", label: "Exotel" },
   { id: "telnyx", label: "Telnyx" },
   { id: "plivo", label: "Plivo" },
+  { id: "vobiz", label: "Vobiz" },
 ] as const;
 
 function providerLabel(id: string) {
@@ -163,6 +165,7 @@ export function PstnTestPanel({
   const [message, setMessage] = useState("");
   const [stackPreview, setStackPreview] = useState<string>("");
   const [fromE164, setFromE164] = useState("");
+  const [availableNumbers, setAvailableNumbers] = useState<string[]>([]);
   const [toE164, setToE164] = useState("");
   const [providerDraft, setProviderDraft] = useState("telnyx");
   const [verifyCode, setVerifyCode] = useState("");
@@ -250,9 +253,10 @@ export function PstnTestPanel({
     setLoadError("");
     try {
       await refreshPortalSession("dev");
-      const [stR, callsR] = await Promise.all([
+      const [stR, callsR, poolR] = await Promise.all([
         portalFetch("dev", "/api/dev/telephony/status"),
         portalFetch("dev", "/api/dev/telephony/calls"),
+        portalFetch("dev", "/api/dev/admin/numbers/pool").catch(() => null),
       ]);
       if (!stR.ok) {
         const errBody = await stR.text().catch(() => "");
@@ -267,9 +271,19 @@ export function PstnTestPanel({
       setStatus(j);
       if (j.active_provider) setProviderDraft(j.active_provider);
       const phone = j.providers?.find((p: ProviderStatus) => p.id === j.active_provider)?.phone_number;
-      if (phone && !fromInitRef.current) {
+      if (phone && (!fromInitRef.current || !fromE164)) {
         fromInitRef.current = true;
         setFromE164(phone);
+      }
+      if (poolR && poolR.ok) {
+        const poolJ = await poolR.json();
+        const nums = ensureArray<{ e164: string }>(poolJ.numbers).map((n) => n.e164).filter(Boolean);
+        const setNums = new Set<string>();
+        if (phone) setNums.add(phone);
+        for (const n of nums) setNums.add(n);
+        setAvailableNumbers(Array.from(setNums));
+      } else if (phone) {
+        setAvailableNumbers([phone]);
       }
       if (callsR.ok) {
         const callsJ = await callsR.json();
@@ -282,7 +296,7 @@ export function PstnTestPanel({
     } finally {
       setLoading(false);
     }
-  }, [ingestCallRows]);
+  }, [ingestCallRows, fromE164]);
 
   useEffect(() => {
     load();
@@ -324,6 +338,7 @@ export function PstnTestPanel({
   async function setProvider(next: string) {
     setProviderDraft(next);
     setBusy(true);
+    fromInitRef.current = false;
     setMessage(`Switching provider to ${providerLabel(next)}…`);
     const r = await portalFetch("dev", "/api/dev/telephony/provider", {
       method: "PATCH",
@@ -704,6 +719,38 @@ export function PstnTestPanel({
         </DevCard>
       )}
 
+      {showSetup && active === "vobiz" && (
+        <DevCard title="Vobiz Cloud Telephony Configuration" description="Current active SIP trunk credentials & endpoints">
+          <dl className="grid gap-3 text-xs sm:grid-cols-2 font-mono text-text-muted">
+            <div>
+              <dt className="text-text-subtle font-sans text-xs">Auth ID</dt>
+              <dd className="mt-0.5 text-text">{activeSt?.account_info?.auth_id || "MA_LX2CKOU1"}</dd>
+            </div>
+            <div>
+              <dt className="text-text-subtle font-sans text-xs">App ID</dt>
+              <dd className="mt-0.5 text-text">{activeSt?.account_info?.app_id || "551682"}</dd>
+            </div>
+            <div>
+              <dt className="text-text-subtle font-sans text-xs">Active Phone Line</dt>
+              <dd className="mt-0.5 text-text font-bold text-accent">{activeSt?.phone_number || "+917965480745"}</dd>
+            </div>
+            <div>
+              <dt className="text-text-subtle font-sans text-xs">Answer URL</dt>
+              <dd className="mt-0.5 text-text truncate">{activeSt?.answer_url || "/api/vobiz/answer"}</dd>
+            </div>
+            <div className="sm:col-span-2">
+              <dt className="text-text-subtle font-sans text-xs">Media WebSocket</dt>
+              <dd className="mt-0.5 text-text truncate">{activeSt?.stream_ws || "/ws/vobiz-stream"}</dd>
+            </div>
+          </dl>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button type="button" variant="secondary" onClick={runHandshake} disabled={busy}>
+              Re-test Vobiz Handshake
+            </Button>
+          </div>
+        </DevCard>
+      )}
+
       {showSetup && notReady ? (
         <DevCard title={`PSTN · ${providerLabel(active)}`} description="Provider not ready">
           <div className="rounded-xl border border-dashed border-warning/40 bg-warning/5 p-5">
@@ -852,18 +899,75 @@ export function PstnTestPanel({
       {showLive ? (
       <DevCard title="Outbound test call" description="Full E2E — PSTN dials customer, agent stack streams audio">
         <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-text-muted text-xs">From (caller ID)</span>
+              {availableNumbers.length > 0 && (
+                <span className="text-[11px] text-accent font-medium">
+                  {availableNumbers.length} in pool ({providerLabel(active)})
+                </span>
+              )}
+            </div>
+            {availableNumbers.length > 1 ? (
+              <div className="space-y-2">
+                <select
+                  value={fromE164}
+                  onChange={(e) => setFromE164(e.target.value)}
+                  aria-label="Select caller ID from available numbers"
+                  className="w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2 text-sm font-mono text-text focus:outline-none focus:border-accent"
+                >
+                  <option value="">Select available number…</option>
+                  {availableNumbers.map((num) => (
+                    <option key={num} value={num}>
+                      {num} · {providerLabel(active)}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="text"
+                  value={fromE164}
+                  onChange={(e) => setFromE164(e.target.value)}
+                  placeholder="+91XXXXXXXXXX"
+                  aria-label="Caller ID custom input"
+                  className="w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2 text-sm font-mono text-text"
+                />
+              </div>
+            ) : availableNumbers.length === 1 ? (
+              <div className="space-y-2">
+                <select
+                  value={fromE164}
+                  onChange={(e) => setFromE164(e.target.value)}
+                  aria-label="Select caller ID from available numbers"
+                  className="w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2 text-sm font-mono text-text focus:outline-none focus:border-accent"
+                >
+                  {availableNumbers.map((num) => (
+                    <option key={num} value={num}>
+                      {num} · {providerLabel(active)} (Active)
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="text"
+                  value={fromE164}
+                  onChange={(e) => setFromE164(e.target.value)}
+                  placeholder="+91XXXXXXXXXX"
+                  aria-label="Caller ID custom input"
+                  className="w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2 text-sm font-mono text-text"
+                />
+              </div>
+            ) : (
+              <input
+                type="text"
+                value={fromE164}
+                onChange={(e) => setFromE164(e.target.value)}
+                placeholder="+91XXXXXXXXXX"
+                aria-label="Caller ID custom input"
+                className="w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2 text-sm font-mono text-text"
+              />
+            )}
+          </div>
           <label className="block text-sm">
-            <span className="text-text-muted">From (caller ID)</span>
-            <input
-              type="text"
-              value={fromE164}
-              onChange={(e) => setFromE164(e.target.value)}
-              placeholder="+91XXXXXXXXXX"
-              className="mt-2 w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2 text-sm font-mono"
-            />
-          </label>
-          <label className="block text-sm">
-            <span className="text-text-muted">To (customer)</span>
+            <span className="text-text-muted text-xs">To (customer)</span>
             <input
               type="text"
               value={toE164}
@@ -872,7 +976,7 @@ export function PstnTestPanel({
                 onToChange?.(e.target.value);
               }}
               placeholder="+91XXXXXXXXXX"
-              className="mt-2 w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2 text-sm font-mono"
+              className="mt-1.5 w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2 text-sm font-mono"
             />
           </label>
         </div>

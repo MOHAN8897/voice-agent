@@ -240,6 +240,19 @@ class CallLedger:
             out["telnyx_balance_end"] = usage.get("telnyx_balance_end")
             out["telnyx_balance_delta_usd"] = usage.get("telnyx_balance_delta_usd")
             out["telnyx_cost_source"] = usage.get("telnyx_cost_source")
+            out["vobiz_usd"] = usage.get("vobiz_usd")
+            out["vobiz_inr"] = usage.get("vobiz_inr")
+            out["vobiz_inr_per_min"] = usage.get("vobiz_inr_per_min")
+            out["vobiz_voice_inr"] = usage.get("vobiz_voice_inr")
+            out["vobiz_recording_inr"] = usage.get("vobiz_recording_inr")
+            out["vobiz_transcription_inr"] = usage.get("vobiz_transcription_inr")
+            out["vobiz_rate_inr_per_min"] = usage.get("vobiz_rate_inr_per_min")
+            out["telephony_provider"] = usage.get("telephony_provider") or meta.get("telephony_provider")
+            out["telephony_usd"] = usage.get("telephony_usd")
+            out["telephony_inr"] = usage.get("telephony_inr")
+            out["cost_usd_per_min"] = usage.get("cost_usd_per_min")
+            out["telephony_usd_per_min"] = usage.get("telephony_usd_per_min")
+            out["telephony_inr_per_min"] = usage.get("telephony_inr_per_min")
             out["gemini_38_live_cost_usd"] = usage.get("gemini_38_live_cost_usd")
             out["gemini_38_live_cost_inr"] = usage.get("gemini_38_live_cost_inr")
             out["gemini_list_audio_inr_per_min"] = usage.get("gemini_list_audio_inr_per_min")
@@ -288,30 +301,64 @@ class CallLedger:
         from server.services.usage_pricing import resolve_fx_rate_inr
 
         fx_info = resolve_fx_rate_inr(preferred=usage.get("fx_rate_inr"))
-        fx = float(fx_info["rate"] or 95.64)
+        fx = float(fx_info["rate"] or 96.78)
         model_usd = float(usage.get("model_cost_usd") if usage.get("model_cost_usd") is not None else usage.get("cost_usd") or 0)
         model_inr = model_usd * fx
-        telnyx_usd = 0.0
         channel = str(meta.get("channel") or "")
         pipeline = str(meta.get("pipeline") or usage.get("pipeline") or "")
-        telnyx_breakdown: dict[str, Any] = {}
-        if channel == "pstn" or pipeline == "realtime_voice":
-            from server.services.usage_pricing import (
-                cost_telnyx_call_breakdown,
-                telnyx_destination_country_from_e164,
-                telnyx_estimate_call_recording,
-            )
+        
+        # Determine telephony carrier provider
+        telephony_prov = str(
+            meta.get("telephony_provider")
+            or meta.get("provider")
+            or usage.get("telephony_provider")
+            or ("vobiz" if channel == "vobiz" or meta.get("vobiz_call_uuid") else "telnyx")
+        ).lower().strip()
 
-            dest = telnyx_destination_country_from_e164(str(meta.get("callee_e164") or ""))
-            telnyx_breakdown = cost_telnyx_call_breakdown(
-                duration_sec=duration_sec,
-                direction=str(meta.get("direction") or "outbound"),
-                media_streaming=True,
-                call_recording=telnyx_estimate_call_recording(),
-                destination_country=dest,
-            )
-            telnyx_usd = float(telnyx_breakdown.get("total_usd") or 0)
-        telnyx_inr = telnyx_usd * fx
+        telnyx_usd = 0.0
+        telnyx_inr = 0.0
+        telnyx_breakdown: dict[str, Any] = {}
+        vobiz_usd = 0.0
+        vobiz_inr = 0.0
+        vobiz_breakdown: dict[str, Any] = {}
+        telephony_usd = 0.0
+        telephony_inr = 0.0
+
+        if channel in ("pstn", "vobiz", "telnyx") or pipeline == "realtime_voice":
+            if telephony_prov == "vobiz":
+                from server.services.usage_pricing import cost_vobiz_call_breakdown
+
+                vobiz_breakdown = cost_vobiz_call_breakdown(
+                    duration_sec=duration_sec,
+                    direction=str(meta.get("direction") or "outbound"),
+                    call_recording=bool(meta.get("recording_enabled", False)),
+                    call_transcription=bool(meta.get("transcription_enabled", False)),
+                    fx_rate_inr=fx,
+                )
+                vobiz_usd = float(vobiz_breakdown.get("total_usd") or 0)
+                vobiz_inr = float(vobiz_breakdown.get("total_inr") or 0)
+                telephony_usd = vobiz_usd
+                telephony_inr = vobiz_inr
+            else:
+                from server.services.usage_pricing import (
+                    cost_telnyx_call_breakdown,
+                    telnyx_destination_country_from_e164,
+                    telnyx_estimate_call_recording,
+                )
+
+                dest = telnyx_destination_country_from_e164(str(meta.get("callee_e164") or ""))
+                telnyx_breakdown = cost_telnyx_call_breakdown(
+                    duration_sec=duration_sec,
+                    direction=str(meta.get("direction") or "outbound"),
+                    media_streaming=True,
+                    call_recording=telnyx_estimate_call_recording(),
+                    destination_country=dest,
+                )
+                telnyx_usd = float(telnyx_breakdown.get("total_usd") or 0)
+                telnyx_inr = telnyx_usd * fx
+                telephony_usd = telnyx_usd
+                telephony_inr = telnyx_inr
+
         post_tx_usd, post_tx_inr = _sync_post_call_transcript_usage(
             usage,
             meta,
@@ -326,10 +373,13 @@ class CallLedger:
         )
         transcript_usd = post_tx_usd + live_tx_usd
         transcript_inr = post_tx_inr + live_tx_inr
-        total_usd = model_usd + telnyx_usd + transcript_usd
-        total_inr = model_inr + telnyx_inr + transcript_inr
+        total_usd = model_usd + telephony_usd + transcript_usd
+        total_inr = model_inr + telephony_inr + transcript_inr
         usage["pipeline"] = usage.get("pipeline") or pipeline
         usage["duration_sec"] = float(duration_sec or 0)
+        usage["telephony_provider"] = telephony_prov
+        usage["telephony_usd"] = telephony_usd
+        usage["telephony_inr"] = telephony_inr
         usage["model_cost_usd"] = model_usd
         usage["model_cost_inr"] = model_inr
         usage["telnyx_usd"] = telnyx_usd
@@ -342,6 +392,17 @@ class CallLedger:
             usage["telnyx_destination_country"] = telnyx_breakdown.get("destination_country")
             usage["telnyx_sip_usd_per_min"] = telnyx_breakdown.get("sip_usd_per_min")
             usage["telnyx_cost_is_estimate"] = True
+
+        usage["vobiz_usd"] = vobiz_usd
+        usage["vobiz_inr"] = vobiz_inr
+        if vobiz_breakdown:
+            usage["vobiz_voice_inr"] = vobiz_breakdown.get("voice_inr")
+            usage["vobiz_recording_inr"] = vobiz_breakdown.get("recording_inr")
+            usage["vobiz_transcription_inr"] = vobiz_breakdown.get("transcription_inr")
+            usage["vobiz_rate_inr_per_min"] = vobiz_breakdown.get("rate_inr_per_min")
+            usage["vobiz_breakdown"] = vobiz_breakdown
+            usage["vobiz_cost_is_estimate"] = False
+
         usage["cost_usd"] = total_usd
         usage["cost_inr"] = total_inr
         usage["cost_is_estimate"] = False
@@ -352,10 +413,14 @@ class CallLedger:
         usage["gst_inr"] = 0.0
         usage["cost_usd_per_min"] = (total_usd / minutes) if minutes > 0 else 0.0
         usage["cost_inr_per_min"] = (total_inr / minutes) if minutes > 0 else 0.0
+        usage["telephony_usd_per_min"] = (telephony_usd / minutes) if minutes > 0 else 0.0
+        usage["telephony_inr_per_min"] = (telephony_inr / minutes) if minutes > 0 else 0.0
         usage["model_cost_usd_per_min"] = (model_usd / minutes) if minutes > 0 else 0.0
         usage["model_cost_inr_per_min"] = (model_inr / minutes) if minutes > 0 else 0.0
         usage["telnyx_usd_per_min"] = (telnyx_usd / minutes) if minutes > 0 else 0.0
         usage["telnyx_inr_per_min"] = (telnyx_inr / minutes) if minutes > 0 else 0.0
+        usage["vobiz_usd_per_min"] = (vobiz_usd / minutes) if minutes > 0 else 0.0
+        usage["vobiz_inr_per_min"] = (vobiz_inr / minutes) if minutes > 0 else 0.0
         from server.realtime.models import is_gemini_live_voice_model
         from server.services.usage_pricing import (
             GEMINI_LIVE_AUDIO_INPUT_USD_PER_MIN,

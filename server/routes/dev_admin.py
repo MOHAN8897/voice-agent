@@ -1019,7 +1019,9 @@ async def phone_assignments(session: SessionData = Depends(require_dev_session))
     require_permission(session, "dev.admin.numbers")
     _require_db()
     from server.services.saas.number_inventory import INVENTORY_TENANT_NAME, ensure_platform_inventory_tenant
+    from server.services.telephony import active_telephony_provider
 
+    active_prov = active_telephony_provider()
     inventory_tid = await ensure_platform_inventory_tenant()
     async with get_session_factory()() as db:
         rows = (
@@ -1038,44 +1040,112 @@ async def phone_assignments(session: SessionData = Depends(require_dev_session))
                 .limit(500)
             )
         ).all()
+    assignments = []
+    for pn, t, a, np, w in rows:
+        prov = "telnyx" if (getattr(pn, "telnyx_number_id", None) and getattr(pn, "telnyx_number_id", None) != "carrier_platform") else "vobiz"
+        if getattr(pn, "plivo_number_id", None) or str(pn.e164).startswith("+91"):
+            prov = "vobiz"
+        if prov != active_prov:
+            continue
+        assignments.append({
+            "e164": pn.e164,
+            "numberId": str(pn.id),
+            "tenant": t.name,
+            "tenantId": str(t.tenant_id),
+            "tenantPlan": t.plan,
+            "tenantStatus": t.status,
+            "agent": a.name if a else None,
+            "agentId": str(pn.agent_id) if pn.agent_id else None,
+            "purchaseStatus": np.status if np else None,
+            "stripeSubscriptionId": pn.stripe_subscription_id,
+            "telnyxNumberId": pn.telnyx_number_id,
+            "plivoNumberId": getattr(pn, "plivo_number_id", None),
+            "provider": prov,
+            "status": pn.status,
+            "billingSource": pn.billing_source,
+            "walletBalanceUsd": round((w.balance_cents or 0) / 100.0, 2) if w else 0,
+            "walletBalanceInr": round((w.balance_inr_paise or 0) / 100.0, 2) if w else 0,
+            "walletCurrency": ((w.currency if w else None) or "usd").upper(),
+            "createdAt": pn.created_at.isoformat() if pn.created_at else None,
+        })
     return {
-        "assignments": [
-            {
-                "e164": pn.e164,
-                "numberId": str(pn.id),
-                "tenant": t.name,
-                "tenantId": str(t.tenant_id),
-                "tenantPlan": t.plan,
-                "tenantStatus": t.status,
-                "agent": a.name if a else None,
-                "agentId": str(pn.agent_id) if pn.agent_id else None,
-                "purchaseStatus": np.status if np else None,
-                "stripeSubscriptionId": pn.stripe_subscription_id,
-                "telnyxNumberId": pn.telnyx_number_id,
-                "status": pn.status,
-                "billingSource": pn.billing_source,
-                "walletBalanceUsd": round((w.balance_cents or 0) / 100.0, 2) if w else 0,
-                "walletBalanceInr": round((w.balance_inr_paise or 0) / 100.0, 2) if w else 0,
-                "walletCurrency": ((w.currency if w else None) or "usd").upper(),
-                "createdAt": pn.created_at.isoformat() if pn.created_at else None,
-            }
-            for pn, t, a, np, w in rows
-        ],
+        "assignments": assignments,
         "inventoryTenantName": INVENTORY_TENANT_NAME,
+        "activeProvider": active_prov,
     }
 
 
 @router.get("/api/dev/admin/numbers/pool")
 async def number_pool(session: SessionData = Depends(require_dev_session)):
-    """All account DIDs (Telnyx + DB) with tenant assignment — pick one then assign."""
+    """All account DIDs for the active telephony provider (carrier + DB) — pick one then assign."""
     require_permission(session, "dev.admin.numbers")
     _require_db()
     from server.services.saas.number_inventory import INVENTORY_TENANT_NAME, ensure_platform_inventory_tenant
+    from server.services.telephony import active_telephony_provider
 
+    active_prov = active_telephony_provider()
     inventory_tid = await ensure_platform_inventory_tenant()
     inventory_tid_s = str(inventory_tid)
     by_e164: dict[str, dict[str, Any]] = {}
+    real_carrier_numbers: set[str] = set()
 
+    # 1. Fetch real account numbers directly from the active carrier API
+    if active_prov == "telnyx":
+        try:
+            from server.services.telnyx_client import TelnyxClient
+
+            for row in await TelnyxClient().list_phone_numbers():
+                phone = str(
+                    row.get("phone_number")
+                    or (row.get("attributes") or {}).get("phone_number")
+                    or ""
+                ).strip()
+                if not phone:
+                    continue
+                real_carrier_numbers.add(phone)
+                tid = str(row.get("id") or "")
+                by_e164[phone] = {
+                    "e164": phone,
+                    "numberId": None,
+                    "telnyxNumberId": tid or None,
+                    "plivoNumberId": None,
+                    "provider": "telnyx",
+                    "tenantId": None,
+                    "tenantName": None,
+                    "status": "unassigned",
+                    "source": "telnyx",
+                    "inInventory": False,
+                    "available": True,
+                }
+        except Exception as exc:
+            logger.debug("[ADMIN] telnyx pool list skipped: %s", exc)
+    elif active_prov == "vobiz":
+        try:
+            from server.services.vobiz_client import VobizClient
+
+            v_nums = await VobizClient().list_account_numbers()
+            for row in (v_nums or []):
+                phone = str(row.get("e164") or row.get("phone_number") or "").strip()
+                if not phone:
+                    continue
+                real_carrier_numbers.add(phone)
+                by_e164[phone] = {
+                    "e164": phone,
+                    "numberId": None,
+                    "telnyxNumberId": None,
+                    "plivoNumberId": str(row.get("id") or ""),
+                    "provider": "vobiz",
+                    "tenantId": None,
+                    "tenantName": None,
+                    "status": "unassigned",
+                    "source": "vobiz",
+                    "inInventory": False,
+                    "available": True,
+                }
+        except Exception as exc:
+            logger.debug("[ADMIN] vobiz pool list skipped: %s", exc)
+
+    # 2. Correlate with database records for the active provider
     async with get_session_factory()() as db:
         rows = (
             await db.execute(
@@ -1085,78 +1155,59 @@ async def number_pool(session: SessionData = Depends(require_dev_session)):
             )
         ).all()
         for pn, t in rows:
+            prov = "telnyx" if getattr(pn, "telnyx_number_id", None) and getattr(pn, "telnyx_number_id", None) != "carrier_platform" else "vobiz"
+            if getattr(pn, "plivo_number_id", None) or str(pn.e164).startswith("+91"):
+                prov = "vobiz"
+            # Strict provider isolation: never mix carriers
+            if prov != active_prov:
+                continue
+
             tenant_gone = t is None or t.deleted_at is not None or getattr(t, "status", "active") == "cancelled"
             in_inventory = pn.tenant_id == inventory_tid or (t is not None and t.name == INVENTORY_TENANT_NAME)
-            by_e164[pn.e164] = {
-                "e164": pn.e164,
-                "numberId": str(pn.id),
-                "telnyxNumberId": pn.telnyx_number_id,
-                "tenantId": None
-                if tenant_gone or in_inventory
-                else (str(pn.tenant_id) if pn.tenant_id else None),
-                "tenantName": (
-                    INVENTORY_TENANT_NAME
-                    if in_inventory
-                    else (None if tenant_gone else (t.name if t else None))
-                ),
-                "status": pn.status,
-                "source": "inventory" if in_inventory else "database",
-                "inInventory": in_inventory,
-                # Platform inventory + unassigned + cancelled tenants are allocatable.
-                "available": tenant_gone or in_inventory or not pn.tenant_id,
-            }
 
-    try:
-        from server.services.telnyx_client import TelnyxClient
-
-        for row in await TelnyxClient().list_phone_numbers():
-            phone = str(
-                row.get("phone_number")
-                or (row.get("attributes") or {}).get("phone_number")
-                or ""
-            ).strip()
-            if not phone:
+            # If parked in inventory, only mark available if verified in real carrier account
+            if in_inventory and real_carrier_numbers and pn.e164 not in real_carrier_numbers:
                 continue
-            tid = str(row.get("id") or "")
-            existing = by_e164.get(phone)
+
+            is_avail = (tenant_gone or (in_inventory and pn.status == "available") or not pn.tenant_id)
+            existing = by_e164.get(pn.e164)
             if existing:
-                if tid and not existing.get("telnyxNumberId"):
-                    existing["telnyxNumberId"] = tid
-                existing["source"] = (
-                    "telnyx+inventory" if existing.get("inInventory") else "telnyx+database"
-                )
-            else:
-                by_e164[phone] = {
-                    "e164": phone,
-                    "numberId": None,
-                    "telnyxNumberId": tid or None,
-                    "tenantId": None,
-                    "tenantName": None,
-                    "status": "unassigned",
-                    "source": "telnyx",
-                    "inInventory": False,
-                    "available": True,
+                existing["numberId"] = str(pn.id)
+                existing["status"] = pn.status
+                existing["inInventory"] = in_inventory
+                existing["tenantId"] = None if tenant_gone or in_inventory else (str(pn.tenant_id) if pn.tenant_id else None)
+                existing["tenantName"] = INVENTORY_TENANT_NAME if in_inventory else (None if tenant_gone else (t.name if t else None))
+                existing["source"] = f"{active_prov}+inventory" if in_inventory else f"{active_prov}+database"
+                existing["available"] = is_avail
+            elif pn.e164 in real_carrier_numbers or (pn.tenant_id and not in_inventory):
+                by_e164[pn.e164] = {
+                    "e164": pn.e164,
+                    "numberId": str(pn.id),
+                    "telnyxNumberId": pn.telnyx_number_id,
+                    "plivoNumberId": getattr(pn, "plivo_number_id", None),
+                    "provider": active_prov,
+                    "tenantId": None if tenant_gone or in_inventory else (str(pn.tenant_id) if pn.tenant_id else None),
+                    "tenantName": (INVENTORY_TENANT_NAME if in_inventory else (None if tenant_gone else (t.name if t else None))),
+                    "status": pn.status,
+                    "source": "inventory" if in_inventory else "database",
+                    "inInventory": in_inventory,
+                    "available": is_avail,
                 }
-    except Exception as exc:
-        return {
-            "numbers": sorted(by_e164.values(), key=lambda n: n["e164"]),
-            "inventoryTenantId": inventory_tid_s,
-            "telnyxError": str(exc)[:300],
-        }
 
     for item in by_e164.values():
-        # Never wipe inventory availability — only customer tenantIds block the pool.
         if item.get("inInventory"):
-            item["available"] = True
+            item["available"] = (item.get("status") == "available")
             item["tenantId"] = None
         else:
             item["available"] = not bool(item.get("tenantId"))
+
     return {
         "numbers": sorted(
-            by_e164.values(),
+            [n for n in by_e164.values() if n.get("provider") == active_prov],
             key=lambda n: (0 if n.get("available") else 1, n["e164"]),
         ),
         "inventoryTenantId": inventory_tid_s,
+        "activeProvider": active_prov,
     }
 
 
@@ -1165,6 +1216,8 @@ async def allocate_number(body: AllocateNumberBody, session: SessionData = Depen
     """Assign an existing DID (Telnyx or already in DB) to a tenant. Creates wallet if missing."""
     require_permission(session, "dev.admin.numbers")
     _require_db()
+    from server.services.telephony import active_telephony_provider
+    active_prov = active_telephony_provider()
     e164 = body.e164.strip()
     if not e164.startswith("+"):
         raise HTTPException(status_code=400, detail="E.164 required (e.g. +15551234567)")
@@ -1180,8 +1233,11 @@ async def allocate_number(body: AllocateNumberBody, session: SessionData = Depen
         ).scalar_one_or_none()
         if existing is not None:
             existing.tenant_id = tid
-            if body.telnyxNumberId:
-                existing.telnyx_number_id = body.telnyxNumberId
+            if active_prov == "telnyx":
+                existing.telnyx_number_id = body.telnyxNumberId or getattr(existing, "telnyx_number_id", None) or "carrier_platform"
+            elif active_prov == "vobiz":
+                existing.plivo_number_id = getattr(existing, "plivo_number_id", None) or f"vobiz_{e164.replace('+', '')}"
+                existing.telnyx_number_id = None
             existing.status = "active"
             pn = existing
         else:
@@ -1190,7 +1246,8 @@ async def allocate_number(body: AllocateNumberBody, session: SessionData = Depen
                 e164=e164,
                 status="active",
                 billing_source="manual",
-                telnyx_number_id=body.telnyxNumberId,
+                telnyx_number_id=(body.telnyxNumberId or "carrier_platform") if active_prov == "telnyx" else None,
+                plivo_number_id=f"vobiz_{e164.replace('+', '')}" if active_prov == "vobiz" else None,
                 created_at=datetime.now(timezone.utc),
             )
             db.add(pn)
@@ -1213,9 +1270,9 @@ async def allocate_number(body: AllocateNumberBody, session: SessionData = Depen
         resource_type="phone_number",
         resource_id=str(pn.id),
         tenant_id=tid,
-        payload={"e164": e164, "telnyxNumberId": body.telnyxNumberId},
+        payload={"e164": e164, "provider": active_prov, "telnyxNumberId": body.telnyxNumberId},
     )
-    return {"ok": True, "numberId": str(pn.id), "e164": e164, "tenantId": str(tid)}
+    return {"ok": True, "numberId": str(pn.id), "e164": e164, "tenantId": str(tid), "provider": active_prov}
 
 
 @router.patch("/api/dev/admin/numbers/{number_id}")

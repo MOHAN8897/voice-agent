@@ -79,11 +79,17 @@ async def process_one_job() -> bool:
     if purchase is None:
         return True
     try:
-        from server.services.telnyx_client import TelnyxClient
-        from server.services.telnyx_provisioning import provision_ordered_number
+        from server.services.telephony import active_telephony_provider
+        provider = active_telephony_provider()
+        if provider == "vobiz":
+            from server.services.vobiz_client import VobizClient
+            await VobizClient().provision_ordered_number(purchase.e164)
+        else:
+            from server.services.telnyx_client import TelnyxClient
+            from server.services.telnyx_provisioning import provision_ordered_number
 
-        client = TelnyxClient()
-        await provision_ordered_number(client, purchase.e164)
+            client = TelnyxClient()
+            await provision_ordered_number(client, purchase.e164)
     except Exception as e:
         logger.exception("provision failed purchase=%s", purchase_id)
         refund_tenant = None
@@ -169,6 +175,8 @@ async def process_one_job() -> bool:
             inbound_enabled=True,
             outbound_enabled=True,
             agent_id=purchase.assign_agent_id,
+            plivo_number_id=f"vobiz_{purchase.e164}" if provider == "vobiz" else None,
+            telnyx_number_id=f"telnyx_{purchase.e164}" if provider == "telnyx" else None,
             created_at=_utcnow(),
         )
         session.add(pn)

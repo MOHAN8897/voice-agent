@@ -29,11 +29,19 @@ from typing import Any, Literal
 
 PRICING_UPDATED_AT = "2026-09-27"
 
-DEFAULT_FX_RATE_INR = 95.64
+DEFAULT_FX_RATE_INR = 96.78
 
 SARVAM_STT_INR_PER_HOUR = 30.0
 SARVAM_STT_DIARIZATION_INR_PER_HOUR = 45.0
 SARVAM_TTS_INR_PER_1K_CHARS = 3.0
+
+# Vobiz Voice API rates (official pay-as-you-go list, Sep 2026).
+# Voice API ₹0.65/min (inbound & outbound), Recording ₹0.0012/min, Transcription ₹0.0098/min.
+VOBIZ_VOICE_OUTBOUND_INR_PER_MIN = 0.65
+VOBIZ_VOICE_INBOUND_INR_PER_MIN = 0.65
+VOBIZ_CALL_RECORDING_INR_PER_MIN = 0.0012
+VOBIZ_CALL_TRANSCRIPTION_INR_PER_MIN = 0.0098
+VOBIZ_MEDIA_STREAM_INR_PER_MIN = 0.0
 
 # Cartesia Pro plan default (conservative estimate tier for dev console)
 CARTESIA_PRO_USD_PER_CREDIT = 5.0 / 100_000.0
@@ -531,6 +539,34 @@ def build_pricing_metadata(fx_rate_inr: float) -> dict[str, Any]:
             "billing": "voice_api_plus_sip_inbound_plus_media",
             "updated_at": PRICING_UPDATED_AT,
         },
+        "vobiz:voice_outbound": {
+            "unit": "minute",
+            "inr_per_unit": VOBIZ_VOICE_OUTBOUND_INR_PER_MIN,
+            "usd_per_unit": VOBIZ_VOICE_OUTBOUND_INR_PER_MIN / fx,
+            "billing": "connected_call_prorated",
+            "updated_at": PRICING_UPDATED_AT,
+        },
+        "vobiz:voice_inbound": {
+            "unit": "minute",
+            "inr_per_unit": VOBIZ_VOICE_INBOUND_INR_PER_MIN,
+            "usd_per_unit": VOBIZ_VOICE_INBOUND_INR_PER_MIN / fx,
+            "billing": "connected_call_prorated",
+            "updated_at": PRICING_UPDATED_AT,
+        },
+        "vobiz:call_recording": {
+            "unit": "minute",
+            "inr_per_unit": VOBIZ_CALL_RECORDING_INR_PER_MIN,
+            "usd_per_unit": VOBIZ_CALL_RECORDING_INR_PER_MIN / fx,
+            "billing": "optional",
+            "updated_at": PRICING_UPDATED_AT,
+        },
+        "vobiz:call_transcription": {
+            "unit": "minute",
+            "inr_per_unit": VOBIZ_CALL_TRANSCRIPTION_INR_PER_MIN,
+            "usd_per_unit": VOBIZ_CALL_TRANSCRIPTION_INR_PER_MIN / fx,
+            "billing": "optional",
+            "updated_at": PRICING_UPDATED_AT,
+        },
     }
 
 
@@ -763,6 +799,100 @@ def cost_telnyx_call_usd(
             destination_country=destination_country,
         )["total_usd"]
     )
+
+
+def _vobiz_env_float(name: str, default: float) -> float:
+    raw = os.getenv(name, "").strip()
+    if not raw:
+        return default
+    try:
+        return float(raw)
+    except ValueError:
+        return default
+
+
+def cost_vobiz_call_breakdown(
+    *,
+    duration_sec: float | int | None,
+    direction: str | None = "outbound",
+    call_recording: bool = False,
+    call_transcription: bool = False,
+    fx_rate_inr: float = 96.78,
+) -> dict[str, float | str | None]:
+    """Vobiz Voice API + optional call recording / transcription (prorated wall-clock minutes)."""
+    minutes = max(0.0, float(duration_sec or 0)) / 60.0
+    fx = float(fx_rate_inr or DEFAULT_FX_RATE_INR)
+    if minutes <= 0:
+        return {
+            "minutes": 0.0,
+            "voice_inr": 0.0,
+            "voice_usd": 0.0,
+            "recording_inr": 0.0,
+            "recording_usd": 0.0,
+            "transcription_inr": 0.0,
+            "transcription_usd": 0.0,
+            "total_inr": 0.0,
+            "total_usd": 0.0,
+            "rate_inr_per_min": 0.0,
+            "rate_usd_per_min": 0.0,
+            "direction": direction,
+        }
+    inbound = str(direction or "outbound").strip().lower() == "inbound"
+    base_voice_rate = _vobiz_env_float(
+        "VOBIZ_VOICE_INBOUND_INR_PER_MIN" if inbound else "VOBIZ_VOICE_OUTBOUND_INR_PER_MIN",
+        VOBIZ_VOICE_INBOUND_INR_PER_MIN if inbound else VOBIZ_VOICE_OUTBOUND_INR_PER_MIN,
+    )
+    recording_rate = (
+        _vobiz_env_float("VOBIZ_CALL_RECORDING_INR_PER_MIN", VOBIZ_CALL_RECORDING_INR_PER_MIN)
+        if call_recording
+        else 0.0
+    )
+    transcription_rate = (
+        _vobiz_env_float("VOBIZ_CALL_TRANSCRIPTION_INR_PER_MIN", VOBIZ_CALL_TRANSCRIPTION_INR_PER_MIN)
+        if call_transcription
+        else 0.0
+    )
+    voice_inr = minutes * base_voice_rate
+    recording_inr = minutes * recording_rate
+    transcription_inr = minutes * transcription_rate
+    total_inr = voice_inr + recording_inr + transcription_inr
+    total_usd = total_inr / fx if fx > 0 else 0.0
+    rate_inr_per_min = base_voice_rate + recording_rate + transcription_rate
+    rate_usd_per_min = rate_inr_per_min / fx if fx > 0 else 0.0
+    return {
+        "minutes": minutes,
+        "voice_inr": voice_inr,
+        "voice_usd": voice_inr / fx if fx > 0 else 0.0,
+        "recording_inr": recording_inr,
+        "recording_usd": recording_inr / fx if fx > 0 else 0.0,
+        "transcription_inr": transcription_inr,
+        "transcription_usd": transcription_inr / fx if fx > 0 else 0.0,
+        "total_inr": total_inr,
+        "total_usd": total_usd,
+        "rate_inr_per_min": rate_inr_per_min,
+        "rate_usd_per_min": rate_usd_per_min,
+        "direction": direction,
+    }
+
+
+def cost_vobiz_call_usd(
+    *,
+    duration_sec: float | int | None,
+    direction: str | None = "outbound",
+    call_recording: bool = False,
+    call_transcription: bool = False,
+    fx_rate_inr: float = 96.78,
+) -> float:
+    return float(
+        cost_vobiz_call_breakdown(
+            duration_sec=duration_sec,
+            direction=direction,
+            call_recording=call_recording,
+            call_transcription=call_transcription,
+            fx_rate_inr=fx_rate_inr,
+        )["total_usd"]
+    )
+
 
 
 def estimate_turn_cost(

@@ -32,13 +32,28 @@ def _ws_base(http_base: str) -> str:
 
 
 async def provider_status(provider: TelephonyProviderId) -> dict[str, Any]:
-    if provider == "exotel":
-        return await _exotel_status()
-    if provider == "telnyx":
-        return await _telnyx_status()
-    if provider == "plivo":
-        return await _plivo_status()
-    return {"id": provider, "configured": False, "handshake_ok": False}
+    try:
+        if provider == "exotel":
+            return await _exotel_status()
+        if provider == "telnyx":
+            return await _telnyx_status()
+        if provider == "plivo":
+            return await _plivo_status()
+        if provider == "vobiz":
+            return await _vobiz_status()
+        return {"id": provider, "configured": False, "handshake_ok": False}
+    except Exception as exc:
+        import logging
+        logging.getLogger(__name__).warning("provider_status failed independently for %s: %s", provider, exc)
+        return {
+            "id": provider,
+            "label": provider.title(),
+            "enabled": False,
+            "configured": False,
+            "handshake_ok": False,
+            "handshake_error": str(exc)[:200],
+            "ready": False,
+        }
 
 
 async def all_provider_status() -> list[dict[str, Any]]:
@@ -214,5 +229,47 @@ async def _plivo_status() -> dict[str, Any]:
         "phone_number": plivo_phone,
         "answer_url": f"{base}/api/plivo/answer",
         "stream_ws": f"{_ws_base(base)}/ws/plivo-stream",
+        "ready": enabled and configured and handshake_ok,
+    }
+
+
+async def _vobiz_status() -> dict[str, Any]:
+    from server.services.telephony import provider_configured, provider_enabled
+    from server.services.vobiz_client import VobizClient
+
+    settings = get_settings()
+    enabled = provider_enabled("vobiz")
+    configured = provider_configured("vobiz")
+    vobiz_phone = (
+        dev_secrets_store.effective("vobiz_phone_number", settings.vobiz_phone_number) or None
+    )
+    handshake_ok = False
+    handshake_error: str | None = None
+    account_info: dict[str, Any] = {}
+    try:
+        if configured:
+            client = VobizClient()
+            hs = await client.handshake()
+            handshake_ok = bool(hs.get("ok"))
+            handshake_error = hs.get("error")
+            account_info = hs
+    except Exception as e:
+        handshake_error = str(e)[:300]
+
+    base = webhook_base_url()
+    return {
+        "id": "vobiz",
+        "label": "Vobiz",
+        "enabled": enabled,
+        "configured": configured,
+        "handshake_ok": handshake_ok,
+        "handshake_error": handshake_error,
+        "phone_number": vobiz_phone,
+        "answer_url": f"{base}/api/vobiz/answer",
+        "fallback_url": f"{base}/api/vobiz/fallback",
+        "hangup_url": f"{base}/api/vobiz/hangup",
+        "recording_url": f"{base}/api/vobiz/recording",
+        "stream_ws": f"{_ws_base(base)}/ws/vobiz-stream",
+        "account_info": account_info,
         "ready": enabled and configured and handshake_ok,
     }

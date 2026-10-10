@@ -48,9 +48,18 @@ def _mark_unavailable(exc: BaseException) -> None:
 def _redis():
     global _CLIENT, _RETRY_AFTER
     settings = get_settings()
-    url = settings.redis_url
+    url = (settings.redis_url or "").strip()
     if not url:
         return None
+    if url.startswith(("memory://", "fake://", "fakeredis://")):
+        if _CLIENT is None:
+            try:
+                import fakeredis
+
+                _CLIENT = fakeredis.FakeStrictRedis(decode_responses=True)
+            except Exception:
+                return None
+        return _CLIENT
     if time.monotonic() < _RETRY_AFTER:
         return None
     if _CLIENT is None:
@@ -65,6 +74,19 @@ def _redis():
             )
             _CLIENT.ping()
         except Exception as e:
+            # In development/test mode, if local redis server is unreachable, gracefully fallback to fakeredis
+            if getattr(settings, "app_environment", "development") != "production":
+                try:
+                    import fakeredis
+
+                    logger.info(
+                        "[REDIS] Real Redis at %s unavailable; activating in-memory fakeredis for local dev/testing",
+                        url,
+                    )
+                    _CLIENT = fakeredis.FakeStrictRedis(decode_responses=True)
+                    return _CLIENT
+                except Exception:
+                    pass
             _mark_unavailable(e)
             return None
     return _CLIENT
@@ -116,3 +138,12 @@ def delete_snapshot(call_id: str) -> None:
         client.delete(f"{_PREFIX}{call_id}")
     except Exception:
         pass
+
+
+def reset_client() -> None:
+    """Reset cached client connection (useful for tests and environment changes)."""
+    global _CLIENT, _RETRY_AFTER, _LAST_FAILURE_REASON, _FAILURE_REPORTED
+    _CLIENT = None
+    _RETRY_AFTER = 0.0
+    _LAST_FAILURE_REASON = None
+    _FAILURE_REPORTED = False

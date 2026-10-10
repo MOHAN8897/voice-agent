@@ -20,5 +20,5 @@ COPY alembic.ini ./
 ENV PORT=8000
 EXPOSE 8000
 
-# Launch dedicated voice WebSocket app with tuned WebSocket ping intervals
-CMD ["sh", "-c", "uvicorn server.voice_app:app --host 0.0.0.0 --port ${PORT:-8000} --loop uvloop --ws-ping-interval 15 --ws-ping-timeout 30 --no-access-log"]
+# Launch dedicated voice WebSocket app with tuned WebSocket ping intervals and multi-worker concurrency
+CMD ["sh", "-c", "uvicorn server.voice_app:app --host 0.0.0.0 --port ${PORT:-8000} --workers ${WORKERS:-2} --loop uvloop --ws-ping-interval 15 --ws-ping-timeout 30 --no-access-log"]

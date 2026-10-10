@@ -6,8 +6,8 @@ from typing import Any, Literal
 from server.config.env import get_settings
 from server.services.dev_secrets_store import dev_secrets_store
 
-TelephonyProviderId = Literal["exotel", "telnyx", "plivo"]
-VALID_PROVIDERS: tuple[TelephonyProviderId, ...] = ("exotel", "telnyx", "plivo")
+TelephonyProviderId = Literal["exotel", "telnyx", "plivo", "vobiz"]
+VALID_PROVIDERS: tuple[TelephonyProviderId, ...] = ("exotel", "telnyx", "plivo", "vobiz")
 
 
 def _effective_str(field: str, default: str | None = None) -> str:
@@ -32,6 +32,8 @@ def provider_enabled(provider: TelephonyProviderId) -> bool:
         return bool(dev_secrets_store.effective("enable_telnyx", settings.enable_telnyx))
     if provider == "plivo":
         return bool(dev_secrets_store.effective("enable_plivo", settings.enable_plivo))
+    if provider == "vobiz":
+        return bool(dev_secrets_store.effective("enable_vobiz", settings.enable_vobiz))
     return False
 
 
@@ -50,6 +52,10 @@ def provider_configured(provider: TelephonyProviderId) -> bool:
     if provider == "plivo":
         auth = dev_secrets_store.effective_secret("plivo_auth_id") or settings.plivo_auth_id
         token = dev_secrets_store.effective_secret("plivo_auth_token") or settings.plivo_auth_token
+        return bool(auth and token)
+    if provider == "vobiz":
+        auth = _effective_str("vobiz_auth_id", settings.vobiz_auth_id)
+        token = _effective_str("vobiz_auth_token", settings.vobiz_auth_token)
         return bool(auth and token)
     return False
 

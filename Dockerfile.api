@@ -21,5 +21,9 @@ COPY worker ./worker
 ENV PORT=8000
 EXPOSE 8000
 
-# Run Alembic migrations idempotently prior to launching Uvicorn
-CMD ["sh", "-c", "python -m alembic -c alembic.ini upgrade head && uvicorn server.app:app --host 0.0.0.0 --port ${PORT:-8000} --loop uvloop --no-access-log"]
+# NOTE: DB migrations are intentionally NOT run here.
+# They run once via Railway's releaseCommand BEFORE new replicas start,
+# preventing concurrent DDL races when 2+ replicas boot simultaneously.
+# See railway.json: api.releaseCommand
+CMD ["sh", "-c", "uvicorn server.app:app --host 0.0.0.0 --port ${PORT:-8000} --workers ${WORKERS:-2} --loop uvloop --no-access-log"]
+

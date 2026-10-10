@@ -33,6 +33,44 @@ type Credentials = {
   gemini?: { enabled?: boolean; configured?: boolean; ready?: boolean };
 };
 
+type TelephonyProviderStatus = {
+  id: string;
+  label?: string;
+  enabled?: boolean;
+  configured?: boolean;
+  ready?: boolean;
+  handshake_ok?: boolean;
+  handshake_error?: string | null;
+  phone_number?: string | null;
+  balance?: string | number | null;
+  connection_id?: string | null;
+  webhook_url?: string | null;
+  answer_url?: string | null;
+  fallback_url?: string | null;
+  hangup_url?: string | null;
+  recording_url?: string | null;
+  stream_ws?: string | null;
+  account_info?: {
+    auth_id?: string;
+    app_id?: string;
+    account_name?: string | null;
+  };
+  checklist?: {
+    balance_usd?: number;
+    whitelisted_destinations?: string[];
+    ready_for_us_ca?: boolean;
+    ready_for_india?: boolean;
+  };
+};
+
+type TelephonySummary = {
+  active_provider?: string;
+  active_enabled?: boolean;
+  active_ready?: boolean;
+  providers?: TelephonyProviderStatus[];
+  enabled_providers?: string[];
+};
+
 type Alignment = {
   ok?: boolean;
   liveProvider?: string;
@@ -64,6 +102,9 @@ export function SaasUniversalPhoneStack() {
   const [form, setForm] = useState<StackForm>(defaultForm);
   const [resolved, setResolved] = useState<Record<string, unknown> | null>(null);
   const [credentials, setCredentials] = useState<Credentials | null>(null);
+  const [telephony, setTelephony] = useState<TelephonySummary | null>(null);
+  const [telephonyBusy, setTelephonyBusy] = useState(false);
+  const [telephonyMsg, setTelephonyMsg] = useState("");
   const [alignment, setAlignment] = useState<Alignment | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [adjustments, setAdjustments] = useState<string[]>([]);
@@ -92,13 +133,16 @@ export function SaasUniversalPhoneStack() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const r = await portalFetch("dev", "/api/dev/stack/saas-phone");
-    if (!r.ok) {
-      setStatus(`Could not load SaaS phone stack (${r.status})`);
+    const [stackR, telR] = await Promise.all([
+      portalFetch("dev", "/api/dev/stack/saas-phone"),
+      portalFetch("dev", "/api/dev/telephony/status").catch(() => null),
+    ]);
+    if (!stackR.ok) {
+      setStatus(`Could not load SaaS phone stack (${stackR.status})`);
       setLoading(false);
       return;
     }
-    const j = await r.json();
+    const j = await stackR.json();
     const override = (j.saved?.stack_override || j.resolved) as Record<string, unknown> | undefined;
     if (override) {
       setForm(saasPhoneStackFromOverride(override));
@@ -109,9 +153,59 @@ export function SaasUniversalPhoneStack() {
     setWarnings(Array.isArray(j.warnings) ? j.warnings : []);
     setAdjustments(Array.isArray(j.adjustments) ? j.adjustments : []);
     setJsonEditor(JSON.stringify(override || j.resolved || {}, null, 2));
+
+    if (telR && telR.ok) {
+      const telJ = await telR.json().catch(() => null);
+      if (telJ) setTelephony(telJ);
+    }
+
     setStatus("");
     setLoading(false);
   }, []);
+
+  const switchTelephony = async (providerId: string) => {
+    if (telephonyBusy || telephony?.active_provider === providerId) return;
+    setTelephonyBusy(true);
+    setTelephonyMsg("");
+    try {
+      const r = await portalFetch("dev", "/api/dev/telephony/provider", {
+        method: "PATCH",
+        body: JSON.stringify({ provider: providerId }),
+      });
+      if (!r.ok) {
+        setTelephonyMsg(`Failed to switch provider (${r.status})`);
+        return;
+      }
+      const updatedR = await portalFetch("dev", "/api/dev/telephony/status");
+      if (updatedR.ok) {
+        const updatedJ = await updatedR.json();
+        setTelephony(updatedJ);
+        setTelephonyMsg(`Active telephony trunk switched to ${providerId.toUpperCase()}`);
+      }
+    } catch (e) {
+      setTelephonyMsg(e instanceof Error ? e.message : "Failed to switch provider");
+    } finally {
+      setTelephonyBusy(false);
+    }
+  };
+
+  const testHandshake = async () => {
+    setTelephonyBusy(true);
+    setTelephonyMsg("Testing carrier handshake…");
+    try {
+      const r = await portalFetch("dev", "/api/dev/telephony/handshake", { method: "POST" });
+      const j = await r.json();
+      if (j.ok) {
+        setTelephonyMsg(`✓ Handshake OK (${telephony?.active_provider?.toUpperCase()}): Connected to API`);
+      } else {
+        setTelephonyMsg(`⚠ Handshake warning: ${j.error || JSON.stringify(j)}`);
+      }
+    } catch (e) {
+      setTelephonyMsg(e instanceof Error ? e.message : "Handshake failed");
+    } finally {
+      setTelephonyBusy(false);
+    }
+  };
 
   useEffect(() => {
     load();
@@ -163,6 +257,148 @@ export function SaasUniversalPhoneStack() {
 
   return (
     <div className="space-y-4">
+      {/* Telephony Infrastructure & Carrier Selection */}
+      <DevCard delayMs={0}>
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <h2 className="text-base font-semibold text-text">Telephony Infrastructure & PSTN Calling Trunk</h2>
+              <p className="text-sm text-text-muted mt-1">
+                Configure whether Telnyx or Vobiz powers inbound and outbound carrier calling, number searching,
+                and bidirectional WebSocket audio streaming.
+              </p>
+            </div>
+            {telephony?.active_provider && (
+              <span className="self-start sm:self-auto font-mono text-xs px-2.5 py-1 rounded-full bg-accent/10 text-accent font-semibold border border-accent/20">
+                Active Trunk: {telephony.active_provider.toUpperCase()}
+              </span>
+            )}
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            {/* Telnyx Trunk Card */}
+            {(() => {
+              const telnyxSt = telephony?.providers?.find((p) => p.id === "telnyx");
+              const isTelnyxActive = (telephony?.active_provider || "telnyx") === "telnyx";
+              const isReady = Boolean(telnyxSt?.ready);
+              return (
+                <div
+                  className={`rounded-xl border p-4 text-left transition-all ${
+                    isTelnyxActive
+                      ? "border-accent bg-accent/5 ring-1 ring-accent/30"
+                      : "border-border bg-surface hover:border-accent/40"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold text-text">Telnyx PSTN</p>
+                    <span
+                      className={`text-[10px] font-mono px-2 py-0.5 rounded font-semibold ${
+                        isReady ? "bg-status-success/10 text-status-success" : "bg-status-warning/10 text-status-warning"
+                      }`}
+                    >
+                      {isReady ? "✓ Ready" : "⚠ Incomplete"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-text-muted mt-1">
+                    Call Control v2 · 8 kHz µ-law · Media streaming
+                  </p>
+                  <div className="mt-3 space-y-1 font-mono text-[11px] text-text-subtle">
+                    <div>Caller ID: {telnyxSt?.phone_number || "Auto"}</div>
+                    <div>Connection ID: {telnyxSt?.connection_id || "Configured"}</div>
+                    <div>Webhook: /api/telnyx/webhook</div>
+                    <div>Stream: /ws/telnyx-stream</div>
+                  </div>
+                  <div className="mt-3">
+                    <Button
+                      type="button"
+                      variant={isTelnyxActive ? "primary" : "secondary"}
+                      disabled={isTelnyxActive || telephonyBusy}
+                      onClick={() => switchTelephony("telnyx")}
+                      className="w-full text-xs"
+                    >
+                      {isTelnyxActive ? "Active Trunk" : "Switch to Telnyx"}
+                    </Button>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Vobiz Trunk Card */}
+            {(() => {
+              const vobizSt = telephony?.providers?.find((p) => p.id === "vobiz");
+              const isVobizActive = telephony?.active_provider === "vobiz";
+              const isReady = Boolean(vobizSt?.ready);
+              return (
+                <div
+                  className={`rounded-xl border p-4 text-left transition-all ${
+                    isVobizActive
+                      ? "border-accent bg-accent/5 ring-1 ring-accent/30"
+                      : "border-border bg-surface hover:border-accent/40"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold text-text">Vobiz Telephony</p>
+                    <span
+                      className={`text-[10px] font-mono px-2 py-0.5 rounded font-semibold ${
+                        isReady ? "bg-status-success/10 text-status-success" : "bg-status-warning/10 text-status-warning"
+                      }`}
+                    >
+                      {isReady ? "✓ Ready" : "⚠ Incomplete"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-text-muted mt-1">
+                    Voice XML + Bidirectional L16/µ-law WebSocket stream
+                  </p>
+                  <div className="mt-3 space-y-1 font-mono text-[11px] text-text-subtle">
+                    <div>Auth ID: {vobizSt?.account_info?.auth_id || "MA_LX2CKOU1"}</div>
+                    <div>App ID: {vobizSt?.account_info?.app_id || "551682"}</div>
+                    <div>Answer URL: /api/vobiz/answer</div>
+                    <div>Stream: /ws/vobiz-stream</div>
+                  </div>
+                  <div className="mt-3">
+                    <Button
+                      type="button"
+                      variant={isVobizActive ? "primary" : "secondary"}
+                      disabled={isVobizActive || telephonyBusy}
+                      onClick={() => switchTelephony("vobiz")}
+                      className="w-full text-xs"
+                    >
+                      {isVobizActive ? "Active Trunk" : "Switch to Vobiz"}
+                    </Button>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border">
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={telephonyBusy}
+                onClick={testHandshake}
+                className="text-xs"
+              >
+                Test Live Handshake
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={telephonyBusy}
+                onClick={load}
+                className="text-xs"
+              >
+                Refresh Telephony
+              </Button>
+            </div>
+            {telephonyMsg && (
+              <p className="text-xs font-mono text-accent">{telephonyMsg}</p>
+            )}
+          </div>
+        </div>
+      </DevCard>
+
       <DevCard delayMs={0}>
         <div className="space-y-4">
           <div>

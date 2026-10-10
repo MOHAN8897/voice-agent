@@ -13,6 +13,7 @@ import { TactileButton } from '../../ui/TactileButton';
 import { SolidCard } from '../../ui/SolidCard';
 import { LazyVoxlyScene } from '../../../three/LazyVoxlyScene';
 import { createWebAgentSession } from '../../../services/webAgentClient';
+import { api } from '../../../services/api';
 import { showToast } from '../../ui/ToastHost';
 
 function formatElapsed(ms) {
@@ -46,6 +47,7 @@ export function AgentTestCallPanel({ agent }) {
   const [elapsedMs, setElapsedMs] = useState(0);
   const [audioAmplitude, setAudioAmplitude] = useState(0.06);
   const [statusBusy, setStatusBusy] = useState(false);
+  const [providerInfo, setProviderInfo] = useState(null);
   const sessionRef = useRef(null);
   const endRef = useRef(null);
   const startedAtRef = useRef(null);
@@ -59,11 +61,22 @@ export function AgentTestCallPanel({ agent }) {
     balanceUsd > 0 ? balanceUsd : balanceInr > 0 ? balanceInr / fx : 0;
   const walletEmpty = displayUsd <= 0 && balanceInr <= 0 && balanceUsd <= 0;
   const isActive = agent?.status === 'active';
-  const fromLine =
+  const availableOutboundNumbers = useMemo(() => {
+    return phoneNumbers.filter((n) => n.outboundEnabled !== false);
+  }, [phoneNumbers]);
+
+  const defaultFromLine =
     outboundFromE164 ||
-    phoneNumbers.find((n) => n.outboundEnabled !== false)?.e164 ||
-    phoneNumbers.find((n) => n.outboundEnabled !== false)?.number ||
+    availableOutboundNumbers[0]?.e164 ||
+    availableOutboundNumbers[0]?.number ||
     '';
+
+  const [selectedFromLine, setSelectedFromLine] = useState('');
+  const activeFromLine = selectedFromLine || defaultFromLine;
+
+  useEffect(() => {
+    api.telephony?.getProvider?.().then(setProviderInfo).catch(() => {});
+  }, []);
 
   useEffect(() => () => {
     sessionRef.current?.stop();
@@ -126,6 +139,14 @@ export function AgentTestCallPanel({ agent }) {
   const startBrowser = async () => {
     if (!agent?.id) return;
     if (!requireLive() || !requireWallet()) return;
+    if (sessionRef.current) {
+      try {
+        sessionRef.current.stop();
+      } catch {
+        /* ignore */
+      }
+      sessionRef.current = null;
+    }
     setSessionState('CONNECTING');
     setBotState('THINKING');
     setLines([]);
@@ -173,7 +194,7 @@ export function AgentTestCallPanel({ agent }) {
     try {
       await session.start({
         agentId: agent.id,
-        language: (agent.languages && agent.languages[0]) || agent.language || 'en-US',
+        language: (agent.languages && agent.languages[0]) || agent.language || 'en-IN',
       });
     } catch (error) {
       setSessionState('DISCONNECTED');
@@ -209,7 +230,7 @@ export function AgentTestCallPanel({ agent }) {
       await placeOutboundCall({
         agentId: agent.id,
         toE164: toE164.trim(),
-        fromE164: fromLine || null,
+        fromE164: activeFromLine || null,
       });
       showToast('Live number call started', 'success');
       push(`Dialing ${toE164.trim()}…`);
@@ -406,6 +427,12 @@ export function AgentTestCallPanel({ agent }) {
         </SolidCard>
       ) : (
         <SolidCard className="space-y-3" data-testid="test-call-live-number">
+          <div className="flex items-center justify-between text-[11px] pb-1.5 border-b border-[#E4E2EB]">
+            <span className="text-[#524E5E]">Active Telephony Trunk</span>
+            <span className="font-bold text-[#6344E7] uppercase tracking-wide">
+              {providerInfo?.activeLabel || providerInfo?.activeProvider || 'Network Managed'}
+            </span>
+          </div>
           <p className="text-[11px] text-[#524E5E]">
             Places a real outbound call to a live number using this agent&apos;s published script —
             same path as production phone calls. Billed from your wallet.
@@ -421,9 +448,42 @@ export function AgentTestCallPanel({ agent }) {
               className="mt-1 w-full rounded-xl border border-[#E4E2EB] bg-white px-3 py-2 font-mono text-base sm:text-xs min-h-[42px] sm:min-h-[38px]"
             />
           </label>
-          {fromLine && (
-            <p className="text-[10px] text-[#8C879A]">Caller ID: {fromLine}</p>
-          )}
+          <div>
+            <label className="block text-xs font-bold text-[#0F0E17] mb-1">
+              Caller ID Line (From)
+            </label>
+            {availableOutboundNumbers.length > 0 ? (
+              <select
+                value={activeFromLine}
+                onChange={(e) => setSelectedFromLine(e.target.value)}
+                data-testid="test-call-phone-from-select"
+                className="w-full rounded-xl border border-[#E4E2EB] bg-white px-3 py-2 font-mono text-base sm:text-xs min-h-[42px] sm:min-h-[38px] text-[#0F0E17] focus:outline-none focus:border-[#6344E7]"
+              >
+                {availableOutboundNumbers.map((num) => {
+                  const val = num.e164 || num.number;
+                  const prov = (num.provider || (num.telnyxNumberId ? 'Telnyx' : 'Vobiz')).toUpperCase();
+                  const assigned = num.assignedAgentId === agent?.id ? ' (Assigned to this agent)' : '';
+                  return (
+                    <option key={num.id || val} value={val}>
+                      {val} • {prov}{num.locality ? ` (${num.locality})` : ''}{assigned}
+                    </option>
+                  );
+                })}
+              </select>
+            ) : (
+              <input
+                type="tel"
+                value={activeFromLine}
+                onChange={(e) => setSelectedFromLine(e.target.value)}
+                placeholder="+1555..."
+                data-testid="test-call-phone-from-input"
+                className="w-full rounded-xl border border-[#E4E2EB] bg-white px-3 py-2 font-mono text-base sm:text-xs min-h-[42px] sm:min-h-[38px] text-[#0F0E17]"
+              />
+            )}
+            <p className="text-[10px] text-[#8C879A] mt-1">
+              Select any available carrier number in your inventory to test outbound dialing.
+            </p>
+          </div>
           <TactileButton
             variant="brand"
             size="md"

@@ -758,13 +758,13 @@ _SCHEMAS: dict[str, list[dict]] = {
 }
 
 VOICE_RESPONSE_KEYS: dict[str, tuple] = {
-    "GOOGLECALENDAR":   ("status", "confirmed", "date", "time", "summary", "event_id", "slots", "available"),
+    "GOOGLECALENDAR":   ("status", "confirmed", "date", "time", "summary", "event_id", "slots", "available", "available_slots", "busy_slots", "requested_slot", "error", "available_alternatives", "message"),
     "CALENDLY":         ("status", "booking_url", "start_time", "summary"),
     "CALCOM":           ("status", "uid", "start_time", "summary"),
     "SLACK":            ("status", "message_id", "channel", "summary"),
     "HUBSPOT":          ("status", "id", "contact_id", "deal_id", "summary"),
     "SALESFORCE":       ("status", "id", "lead_id", "task_id", "summary"),
-    "GMAIL":            ("status", "message_id", "summary"),
+    "GMAIL":            ("status", "message_id", "to", "subject", "message", "summary"),
     "OUTLOOKCALENDAR":  ("status", "event_id", "date", "time", "summary"),
     "ZOOM":             ("status", "join_url", "start_time", "topic", "summary"),
     "NOTION":           ("status", "page_id", "url", "summary"),

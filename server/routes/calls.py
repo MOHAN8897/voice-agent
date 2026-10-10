@@ -275,7 +275,34 @@ def _enrich_call_list_item(item: dict) -> dict:
     review = call_ledger.review_fields(cid)
     if review.get("usage"):
         out["usage"] = review["usage"]
-    for key in ("cost_usd", "cost_inr", "cost_inr_per_min", "pipeline"):
+    for key in (
+        "cost_usd",
+        "cost_inr",
+        "cost_usd_per_min",
+        "cost_inr_per_min",
+        "model_cost_usd",
+        "model_cost_inr",
+        "model_cost_inr_per_min",
+        "telnyx_usd",
+        "telnyx_inr",
+        "telnyx_inr_per_min",
+        "telnyx_cost_source",
+        "vobiz_usd",
+        "vobiz_inr",
+        "vobiz_inr_per_min",
+        "vobiz_voice_inr",
+        "vobiz_recording_inr",
+        "vobiz_transcription_inr",
+        "vobiz_rate_inr_per_min",
+        "telephony_provider",
+        "telephony_usd",
+        "telephony_inr",
+        "telephony_usd_per_min",
+        "telephony_inr_per_min",
+        "gemini_38_live_cost_usd",
+        "gemini_38_live_cost_inr",
+        "pipeline",
+    ):
         if review.get(key) is not None:
             out[key] = review[key]
     source = audio_archive.recording_source(cid)

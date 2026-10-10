@@ -91,6 +91,14 @@ export function TalkToAiConsole({ embedded = false }) {
       showToast('Add wallet credits before starting a live test.', 'error');
       return;
     }
+    if (sessionRef.current) {
+      try {
+        sessionRef.current.stop();
+      } catch {
+        /* ignore */
+      }
+      sessionRef.current = null;
+    }
     setSessionState('CONNECTING');
     setTranscript([]);
     setIsMuted(false);

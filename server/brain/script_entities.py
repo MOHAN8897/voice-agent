@@ -248,13 +248,14 @@ def _patch_role_speak_line(script: str, language: str) -> str:
 
 
 def patch_calling_script_language_markers(script: str, language: str) -> str:
-    """Fix stale SPOKEN LANGUAGE headers inside the user script when dial language differs."""
+    """Fix stale SPOKEN LANGUAGE headers and @language tags inside the user script when dial language differs."""
     from server.prompts.agent_voice_rules import normalize_compile_language
 
     lang = normalize_compile_language(language or "te-IN")
     if not script.strip():
         return script
-    return _SPOKEN_LANG_HEADER.sub(f"--- SPOKEN LANGUAGE ({lang}) ---", script, count=1)
+    res = _SPOKEN_LANG_HEADER.sub(f"--- SPOKEN LANGUAGE ({lang}) ---", script, count=1)
+    return re.sub(r"@language:\s*[a-z]{2}(?:-[a-z]{2})?", f"@language: {lang}", res, flags=re.I)
 
 
 def realign_calling_script_for_session(
@@ -286,7 +287,7 @@ def realign_compiled_brain_for_session(
     brief: str = "",
     direction: str | None = None,
 ) -> str:
-    """LANG-1: align the CALLING SCRIPT block inside a locked compiled brain."""
+    """LANG-1: align the CALLING SCRIPT block, spoken pack, and runtime footer inside a locked compiled brain."""
     text = (compiled or "").strip()
     if not text:
         return compiled or ""
@@ -296,7 +297,12 @@ def realign_compiled_brain_for_session(
     body_start = start + len(_CALLING_SCRIPT_MARKER)
     rest = text[body_start:].lstrip("\n")
     end = len(rest)
-    for marker in ("--- PLATFORM CALL RULES ---", "\n--- SAFETY ---"):
+    for marker in (
+        "--- PLATFORM CALL RULES ---",
+        "--- CALL END POLICY",
+        "--- STATIC OUTPUT RULES ---",
+        "\n--- SAFETY ---",
+    ):
         idx = rest.find(marker)
         if idx >= 0:
             end = min(end, idx)
@@ -308,8 +314,50 @@ def realign_compiled_brain_for_session(
         brief=brief,
         direction=direction,
     )
-    prefix = text[:body_start]
-    return f"{prefix}\n{aligned}\n\n{suffix.lstrip()}"
+    prefix = text[:start]
+
+    from server.prompts.agent_voice_rules import (
+        call_end_policy_section,
+        language_runtime_footer,
+        normalize_compile_language,
+        spoken_pack_for,
+    )
+    from server.prompts.voice_defaults import style_for_language
+
+    norm_lang = normalize_compile_language(language)
+
+    # 1. Update the spoken language pack in prefix if a SPOKEN LANGUAGE header is present
+    if re.search(r"---\s*SPOKEN LANGUAGE\s*\([^)]+\)", prefix, re.I):
+        new_pack = spoken_pack_for(norm_lang, include_brevity=False, core_only=True)
+        prefix = re.sub(
+            r"---\s*SPOKEN LANGUAGE\s*\([^)]+\)[\s\S]*?\Z",
+            f"{new_pack}\n\n",
+            prefix,
+            flags=re.I,
+        )
+
+    # 2. Update call end policy in suffix if present
+    if re.search(r"---\s*CALL END POLICY", suffix, re.I):
+        new_call_end = call_end_policy_section(norm_lang)
+        suffix = re.sub(
+            r"---\s*CALL END POLICY[\s\S]*?(?=\n---\s*STATIC OUTPUT RULES|\Z)",
+            f"{new_call_end}\n\n",
+            suffix,
+            flags=re.I,
+        )
+
+    # 3. Update runtime footer at the end of suffix
+    style_val = style_for_language(None, norm_lang)
+    new_footer = language_runtime_footer(norm_lang, style_val, include_language_lock=False)
+    if re.search(r"(?:^|\n)Language:\s*[a-z]{2}(?:-[a-z]{2})?[\s\S]*?\Z", suffix, re.I):
+        suffix = re.sub(
+            r"(?:^|\n)Language:\s*[a-z]{2}(?:-[a-z]{2})?[\s\S]*?\Z",
+            f"\n\n{new_footer}",
+            suffix,
+            flags=re.I,
+        )
+
+    return f"{prefix}--- CALLING SCRIPT ---\n{aligned}\n\n{suffix.lstrip()}"
 
 
 def backfill_entity_tags_in_script(

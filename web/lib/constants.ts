@@ -4,7 +4,6 @@ export const PRIMARY_NAV = [
   { href: "/app/test-studio", label: "Test Studio", icon: "mic" },
   { href: "/app/calls", label: "Calls", icon: "calls" },
   { href: "/app/analytics", label: "Analytics", icon: "chart" },
-  { href: "/app/benchmarks", label: "Benchmarks", icon: "benchmark" },
   { href: "/app/providers", label: "Providers", icon: "rack" },
   { href: "/app/integrations", label: "Integrations", icon: "plug" },
   { href: "/app/settings", label: "Settings", icon: "settings" },

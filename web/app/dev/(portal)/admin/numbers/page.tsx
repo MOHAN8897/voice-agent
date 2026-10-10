@@ -36,6 +36,8 @@ type Assignment = {
   purchaseStatus: string | null;
   stripeSubscriptionId: string | null;
   telnyxNumberId: string | null;
+  plivoNumberId?: string | null;
+  provider?: string | null;
   walletBalanceUsd?: number;
   walletCurrency?: string;
   createdAt: string | null;
@@ -52,6 +54,8 @@ type PoolNumber = {
   e164: string;
   numberId: string | null;
   telnyxNumberId: string | null;
+  plivoNumberId?: string | null;
+  provider?: string | null;
   tenantId: string | null;
   tenantName: string | null;
   status: string;
@@ -72,11 +76,11 @@ const PURCHASE_TONE: Record<string, "success" | "warning" | "danger" | "muted"> 
 export default function AdminNumbersPage() {
   const searchParams = useSearchParams();
   const tenantFocus = searchParams.get("tenantId") || "";
-  const numbers = useAdminResource<{ assignments: Assignment[] }>(
+  const numbers = useAdminResource<{ assignments: Assignment[]; activeProvider?: string }>(
     "/api/dev/admin/phone-assignments"
   );
   const tenants = useAdminResource<{ tenants: Tenant[] }>("/api/dev/admin/tenants");
-  const pool = useAdminResource<{ numbers: PoolNumber[]; telnyxError?: string }>(
+  const pool = useAdminResource<{ numbers: PoolNumber[]; activeProvider?: string; telnyxError?: string }>(
     "/api/dev/admin/numbers/pool"
   );
 
@@ -157,19 +161,30 @@ export default function AdminNumbersPage() {
     });
   }
 
+  const activeProv = pool.data?.activeProvider || numbers.data?.activeProvider || "vobiz";
+  const activeProvUpper = activeProv.toUpperCase();
+
   return (
     <div className="space-y-6 p-6">
-      <AdminPageHeader
-        title="Phone numbers"
-        description="Release returns a DID to Platform inventory (still on Telnyx, for sale again). Assignments exclude inventory — those show in the available pool."
-      />
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <AdminPageHeader
+          title="Phone numbers"
+          description={`Release returns a DID to Platform inventory (still on ${activeProvUpper}, for sale again). Assignments exclude inventory — those show in the available pool.`}
+        />
+        <div className="self-start sm:self-auto">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold bg-accent/10 text-accent border border-accent/20">
+            <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+            Active Carrier: {activeProvUpper}
+          </span>
+        </div>
+      </div>
 
       <AdminError error={error} />
       <AdminError error={numbers.error} />
       <AdminError error={tenants.error} />
       <AdminError error={pool.error} />
       {pool.data?.telnyxError && (
-        <AdminError error={`Telnyx inventory: ${pool.data.telnyxError}`} />
+        <AdminError error={`${activeProvUpper} inventory: ${pool.data.telnyxError}`} />
       )}
 
       <div className="grid gap-4 sm:grid-cols-4">
@@ -177,7 +192,7 @@ export default function AdminNumbersPage() {
         <AdminStat
           label="Available in pool"
           value={availablePool.length}
-          hint="unassigned + platform inventory"
+          hint={`unassigned + platform inventory (${activeProvUpper})`}
         />
         <AdminStat label="In inventory" value={inventoryCount} tone="good" hint="ready for customer buy" />
         <AdminStat
@@ -189,7 +204,7 @@ export default function AdminNumbersPage() {
 
       <DevCard
         title="Assign number to tenant"
-        description="Platform inventory and Telnyx-only DIDs appear here. Prefer inventory for sales so customers are not blocked by carrier prepaid balance."
+        description={`Platform inventory and ${activeProvUpper} carrier DIDs appear here. Only unassigned lines for the active trunk can be allocated.`}
       >
         <div className="flex flex-wrap items-end gap-3">
           <label className="block text-xs">
@@ -234,7 +249,7 @@ export default function AdminNumbersPage() {
         </div>
         {availablePool.length === 0 && !pool.loading && (
           <p className="mt-3 text-xs text-text-muted">
-            No available numbers. Release a tenant DID to inventory, or provision on Telnyx first.
+            No available numbers on {activeProvUpper}. Release a tenant DID to inventory, or purchase a line in the carrier dashboard.
           </p>
         )}
       </DevCard>
@@ -253,6 +268,7 @@ export default function AdminNumbersPage() {
         <SkeuoTable>
           <SkeuoTableHead>
             <SkeuoTh>Number</SkeuoTh>
+            <SkeuoTh>Provider</SkeuoTh>
             <SkeuoTh>Tenant</SkeuoTh>
             <SkeuoTh>Wallet</SkeuoTh>
             <SkeuoTh>Agent</SkeuoTh>
@@ -264,6 +280,11 @@ export default function AdminNumbersPage() {
             {rows.map((a) => (
               <SkeuoTableRow key={a.numberId}>
                 <SkeuoTd className="font-mono">{a.e164}</SkeuoTd>
+                <SkeuoTd>
+                  <SkeuoBadge tone={a.provider === "vobiz" ? "warning" : "info"}>
+                    {(a.provider || activeProv).toUpperCase()}
+                  </SkeuoBadge>
+                </SkeuoTd>
                 <SkeuoTd className="text-sm">
                   <Link
                     href={`/dev/admin/tenants/${a.tenantId}`}
@@ -314,7 +335,7 @@ export default function AdminNumbersPage() {
             ))}
             {rows.length === 0 && !numbers.loading && (
               <SkeuoTableRow>
-                <SkeuoTd className="text-text-muted">No tenant-assigned numbers.</SkeuoTd>
+                <SkeuoTd className="text-text-muted" colSpan={8}>No tenant-assigned numbers for {activeProvUpper}.</SkeuoTd>
               </SkeuoTableRow>
             )}
           </SkeuoTableBody>
@@ -324,7 +345,7 @@ export default function AdminNumbersPage() {
       <AdminConfirmDialog
         open={Boolean(releaseTarget)}
         title={`Release ${releaseTarget?.e164 ?? ""} to inventory`}
-        description="Stops routing for the tenant immediately. The DID stays on Telnyx under Platform inventory and becomes buyable again. Rental is not auto-refunded."
+        description={`Stops routing for the tenant immediately. The DID stays on ${activeProvUpper} under Platform inventory and becomes buyable again. Rental is not auto-refunded.`}
         confirmLabel="Release to inventory"
         tone="danger"
         statementPlaceholder="e.g. Tenant churned; return DID to sales inventory"

@@ -111,9 +111,18 @@ async def web_agent_ws(websocket: WebSocket):
         await websocket.close(code=1008)
         return
 
+    import uuid
+
     stack = await saas_stack_override_for_agent(agent)
-    lang = str(stack.get("language") or (agent.get("languages") or ["te-IN"])[0] or "te-IN")
-    session_id = f"web-agent-{principal.user_id}-{agent_id}"[:100]
+    req_lang = (websocket.query_params.get("language") or "").strip()
+    if req_lang:
+        from server.config.constants import normalize_supported_language
+        norm_req_lang = normalize_supported_language(req_lang)
+        stack["language"] = norm_req_lang
+        lang = norm_req_lang
+    else:
+        lang = str(stack.get("language") or (agent.get("languages") or ["te-IN"])[0] or "te-IN")
+    session_id = f"web-agent-{principal.user_id}-{agent_id}-{uuid.uuid4().hex[:8]}"[:100]
     from server.call.call_lifecycle_service import call_lifecycle_service
     from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
 
@@ -191,6 +200,7 @@ async def web_agent_ws(websocket: WebSocket):
             stack_override=stack,
             tenant_id=workspace_tenant_id,
             agent_id=str(agent_id),
+            channel="browser",
         )
         loop.set_hangup_notice_handler(on_hangup_notice)
         loop.set_hangup_handler(on_provider_hangup)

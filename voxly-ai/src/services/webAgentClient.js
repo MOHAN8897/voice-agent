@@ -113,6 +113,8 @@ export function createWebAgentSession() {
     }
   };
 
+  const earlyAudioQueue = [];
+
   return {
     subscribe(fn) {
       listeners.add(fn);
@@ -122,6 +124,45 @@ export function createWebAgentSession() {
       if (!agentId) throw new Error('Select an agent to test.');
       const token = api.getToken();
       if (!token) throw new Error('Sign in to test live voice.');
+
+      // Clean up any lingering previous session
+      if (socket) {
+        try {
+          socket.close();
+        } catch {
+          /* ignore */
+        }
+        socket = null;
+      }
+      teardownAudio();
+      earlyAudioQueue.length = 0;
+
+      // Check mic permission early
+      const micState = await voiceAgent.getMicrophonePermissionState();
+      if (micState === 'denied') {
+        throw new Error(
+          'Microphone is blocked for this site. Allow the mic in browser settings, then start again.'
+        );
+      }
+      if (micState === 'prompt' || micState === 'unknown') {
+        showToast('Allow the microphone for this call (audio only — no camera).', 'info', 5000);
+      }
+
+      // Initialize audio stream and AudioContext in parallel with WebSocket connection
+      const audioInitPromise = (async () => {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+          video: false,
+        });
+        const ctx = new AudioContext({ sampleRate: SAMPLE_RATE });
+        if (ctx.state === 'suspended') await ctx.resume();
+        return { stream, ctx };
+      })();
+
       const qs = new URLSearchParams({
         token,
         agentId,
@@ -131,7 +172,7 @@ export function createWebAgentSession() {
       socket = new WebSocket(url);
       socket.binaryType = 'arraybuffer';
 
-      await new Promise((resolve, reject) => {
+      const readyPromise = new Promise((resolve, reject) => {
         const timeout = setTimeout(() => reject(new Error('Voice server did not become ready.')), 45000);
         socket.onerror = () => {
           clearTimeout(timeout);
@@ -142,7 +183,10 @@ export function createWebAgentSession() {
           reject(new Error('Voice connection closed before ready.'));
         };
         socket.onmessage = (event) => {
-          if (event.data instanceof ArrayBuffer) return;
+          if (event.data instanceof ArrayBuffer) {
+            earlyAudioQueue.push(event.data);
+            return;
+          }
           try {
             const payload = JSON.parse(event.data);
             if (payload?.type === 'ready') {
@@ -160,28 +204,27 @@ export function createWebAgentSession() {
         };
       });
 
-      audioContext = new AudioContext({ sampleRate: SAMPLE_RATE });
-      if (audioContext.state === 'suspended') await audioContext.resume();
+      // Await both server ready and audio setup concurrently
+      let audioSetup;
+      try {
+        const results = await Promise.all([readyPromise, audioInitPromise]);
+        audioSetup = results[1];
+      } catch (err) {
+        if (socket) {
+          try {
+            socket.close();
+          } catch {
+            /* ignore */
+          }
+          socket = null;
+        }
+        teardownAudio();
+        throw err;
+      }
 
-      // Mic only when the user starts a web-agent session — never on page load.
-      // If already granted, getUserMedia is silent (no second OS prompt).
-      const micState = await voiceAgent.getMicrophonePermissionState();
-      if (micState === 'denied') {
-        throw new Error(
-          'Microphone is blocked for this site. Allow the mic in browser settings, then start again.'
-        );
-      }
-      if (micState === 'prompt' || micState === 'unknown') {
-        showToast('Allow the microphone for this call (audio only — no camera).', 'info', 5000);
-      }
-      mediaStream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
-        video: false,
-      });
+      mediaStream = audioSetup.stream;
+      audioContext = audioSetup.ctx;
+
       source = audioContext.createMediaStreamSource(mediaStream);
       processor = audioContext.createScriptProcessor(2048, 1, 1);
       processor.onaudioprocess = (event) => {
@@ -206,6 +249,14 @@ export function createWebAgentSession() {
         }
         handleMessage(event.data);
       };
+
+      // Immediately play any early buffered audio frames
+      while (earlyAudioQueue.length > 0) {
+        const chunk = earlyAudioQueue.shift();
+        playPcm16(new Uint8Array(chunk));
+        emit('audio');
+      }
+
       socket.onclose = () => {
         teardownAudio();
         emit('closed');
@@ -224,6 +275,7 @@ export function createWebAgentSession() {
         /* ignore */
       }
       socket = null;
+      earlyAudioQueue.length = 0;
       teardownAudio();
     },
   };

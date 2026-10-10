@@ -115,15 +115,18 @@ async def process_now(call_id: str) -> dict[str, Any]:
 async def run_outcome(call_id: str, *, force: bool = False) -> dict[str, Any]:
     lock = _CALL_LOCKS.setdefault(call_id, asyncio.Lock())
     async with lock:
-        existing = read_outcome(call_id)
-        if (
-            existing
-            and existing.get("generation_ok")
-            and existing.get("prompt_version") == "outcome_v3"
-            and not force
-        ):
-            return existing
-        return await _run_outcome_locked(call_id)
+        try:
+            existing = read_outcome(call_id)
+            if (
+                existing
+                and existing.get("generation_ok")
+                and existing.get("prompt_version") == "outcome_v3"
+                and not force
+            ):
+                return existing
+            return await _run_outcome_locked(call_id)
+        finally:
+            _CALL_LOCKS.pop(call_id, None)
 
 
 async def _run_outcome_locked(call_id: str) -> dict[str, Any]:

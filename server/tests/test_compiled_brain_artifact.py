@@ -77,3 +77,34 @@ def test_build_artifact_checksum_stable():
     b = build_artifact(language="hi-IN", script="Role: support.")
     assert a.checksum == b.checksum
     assert a.schema_version == "1"
+
+
+@pytest.mark.parametrize("locale", ["te-IN", "hi-IN", "en-IN", "en-GB", "ta-IN", "kn-IN"])
+def test_assemble_and_validate_all_supported_languages(locale):
+    from server.brain.brain_prompt_validate import assert_rendered_brain_valid
+
+    brain = assemble_unified_brain(
+        language=locale,
+        script=f"--- AGENT IDENTITY ---\nYou are a helpful representative.\n@language: {locale}\n",
+    )
+    assert f"--- SPOKEN LANGUAGE ({locale}) ---" in brain
+    assert_rendered_brain_valid(brain, locale)
+
+
+@pytest.mark.parametrize("target_locale", ["en-IN", "en-GB", "ta-IN", "kn-IN", "hi-IN", "te-IN"])
+def test_realign_compiled_brain_validates_cleanly(target_locale):
+    from server.brain.brain_prompt_validate import assert_rendered_brain_valid
+    from server.brain.script_entities import realign_compiled_brain_for_session
+
+    initial_brain = assemble_unified_brain(
+        language="te-IN",
+        script="--- AGENT IDENTITY ---\nYou are Priya from HDFC.\n@language: te-IN\n",
+    )
+    # Realigning a Telugu compiled brain to any session language must cleanly swap headers and validate
+    realigned = realign_compiled_brain_for_session(
+        initial_brain,
+        target_locale,
+        direction="inbound",
+    )
+    assert f"--- SPOKEN LANGUAGE ({target_locale}) ---" in realigned
+    assert_rendered_brain_valid(realigned, target_locale)

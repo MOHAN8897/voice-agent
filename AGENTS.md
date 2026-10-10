@@ -6,10 +6,13 @@
 | **Chisle** | Always-on efficiency (terse prose + YAGNI code ladder). **Replaces Ponytail.** | `.cursor/rules/chisle.mdc` · install: `npx chisle@latest --only cursor` |
 | **Reticle** | Prove user-facing UI changes in the running **voxly-ai** app (`reticle_*` MCP). | `.reticle.json`, `voxly-ai` vite plugin + `src/reticle-dev.ts`, skill `.agents/skills/install-and-verify`, `RETICLE.md` |
 | **Graft** | Repo context graph before grepping | block below + MCP graft |
+| **SAM** | Autonomous TDD agent system (Red-Green-Refactor pipeline + PRD planning) | `_sam/`, `.cursor/rules/sam-*.mdc`, skills `.agents/skills/sam-*` |
 
 **Do not** load Ponytail (`.ponytail-ref/` is archive only). Prefer Chisle comments (`chisel:`) over `ponytail:` if marking a deliberate ceiling.
 
 **Reticle:** wired for `voxly-ai` (Vite). MCP: user `~/.cursor/mcp.json` → `npx @reticlehq/server mcp`. After UI edits, drive a flow and get a verdict before claiming done. Skip for docs/backend-only (say why in one line).
+
+**SAM:** installed for production flow. Use skills `/sam-orchestrator`, `/sam-plan-n-build`, `/sam-build-tdd` or Cursor rules `@sam`, `@sam-plan-n-build` to execute autonomous TDD workflows against PRDs in `prd/`.
 <!-- agent-memory:end -->
 
 <!-- graft:start -->

@@ -136,7 +136,7 @@ class ContactPatchBody(BaseModel):
 
 
 class SetProviderBody(BaseModel):
-    provider: str = Field(..., pattern="^(exotel|telnyx|plivo)$")
+    provider: str = Field(..., pattern="^(exotel|telnyx|plivo|vobiz)$")
 
 
 class VoiceCheckBody(BaseModel):
@@ -269,15 +269,11 @@ async def dev_set_telephony_provider(
     require_permission(session, "dev.stack.write")
     from server.services.dev_secrets_store import dev_secrets_store
 
-    if not provider_enabled(body.provider):  # type: ignore[arg-type]
-        return {
-            "ok": False,
-            "error": {
-                "code": "provider_disabled",
-                "message": f"{body.provider.title()} is disabled in Environment. Enable it under Telephony toggles.",
-            },
-        }
-    snap = dev_secrets_store.update({"telephony_provider": body.provider})
+    enable_key = f"enable_{body.provider}"
+    snap = dev_secrets_store.update({
+        "telephony_provider": body.provider,
+        enable_key: True,
+    })
     return {"ok": True, "active_provider": body.provider, "applied_keys": snap.get("applied_keys")}
 
 
@@ -301,6 +297,10 @@ async def dev_telephony_handshake(session: SessionData = Depends(require_dev_ses
         from server.services.plivo_client import PlivoClient
 
         return await PlivoClient().handshake()
+    if provider == "vobiz":
+        from server.services.vobiz_client import VobizClient
+
+        return await VobizClient().handshake()
     return {"ok": False, "error": "unknown provider"}
 
 
@@ -342,6 +342,8 @@ async def dev_telephony_outbound(
                 return await _outbound_telnyx(body, session)
             if provider == "plivo":
                 return await _outbound_plivo(body, session)
+            if provider == "vobiz":
+                return await _outbound_vobiz(body, session)
             return {"ok": False, "error": "unknown provider"}
 
         return await execute_dial_attempt(
@@ -704,6 +706,106 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
             await pstn_prewarm_registry.cancel("telnyx", prewarm_external_id)
 
 
+async def _outbound_vobiz(body: OutboundTestBody, session: SessionData) -> dict[str, Any]:
+    import time
+    import uuid
+
+    from server.brain.agent_service import agent_service
+    from server.services.pstn_debug import log_pstn, mark
+    from server.services.vobiz_client import (
+        VobizApiError,
+        VobizClient,
+        vobiz_call_registry,
+        vobiz_stream_tokens,
+    )
+    from server.config.urls import public_api_base
+
+    tier, language, stack_override, stack_adjustments = _outbound_pstn_context(body)
+    source_session_id, inherit_config = _resolve_outbound_source_session(body)
+    billed_user_id = _billed_user_id_from_session(session)
+
+    try:
+        await agent_service.get_agent(body.agent_id)
+    except Exception:
+        return {"ok": False, "error": f"Agent not found: {body.agent_id}"}
+
+    client = VobizClient()
+    base_api = public_api_base()
+    ans_url = f"{base_api}/api/vobiz/answer"
+    hup_url = f"{base_api}/api/vobiz/hangup"
+    fallback_url = f"{base_api}/api/vobiz/fallback"
+
+    try:
+        result = await client.create_outbound_call(
+            to=body.to_e164,
+            from_=body.from_e164,
+            answer_url=ans_url,
+            hangup_url=hup_url,
+            fallback_url=fallback_url,
+        )
+        call_uuid = str(result.get("call_uuid") or result.get("request_uuid") or result.get("id") or uuid.uuid4())
+        token = vobiz_stream_tokens.create(
+            call_uuid=call_uuid,
+            agent_id=body.agent_id,
+            tier=tier,
+            language=language,
+            stack_override=stack_override,
+            direction="outbound",
+            billed_user_id=billed_user_id,
+            tenant_id=session.tenant_id,
+            source_session_id=source_session_id,
+        )
+        stream_url = client.build_stream_ws_url(token=token, call_uuid=call_uuid)
+        vobiz_call_registry.upsert(
+            call_uuid,
+            {
+                "call_uuid": call_uuid,
+                "agent_id": body.agent_id,
+                "to": body.to_e164,
+                "from": body.from_e164,
+                "direction": "outbound",
+                "tier": tier,
+                "language": language,
+                "status": "initiated",
+                "dialed_at": time.time(),
+                "stream_url": stream_url,
+                "billed_user_id": billed_user_id,
+                "tenant_id": session.tenant_id,
+            },
+        )
+        log_pstn(
+            "dial.initiated",
+            timer_key=call_uuid,
+            control=call_uuid,
+            to=body.to_e164,
+            from_e164=body.from_e164,
+            agent_id=body.agent_id,
+            provider="vobiz",
+        )
+        payload: dict[str, Any] = {
+            "ok": True,
+            "provider": "vobiz",
+            "call_control_id": call_uuid,
+            "stream_url": stream_url,
+        }
+        if stack_adjustments:
+            payload["stack_adjustments"] = stack_adjustments
+        payload["history"] = _record_dev_dial(
+            provider="vobiz",
+            external_id=call_uuid,
+            body=body,
+            tier=tier,
+            language=language,
+            stack_override=stack_override,
+            source_session_id=source_session_id,
+        )
+        await _mirror_dev_telephony()
+        return payload
+    except VobizApiError as e:
+        detail = (e.body or str(e))[:400]
+        return {"ok": False, "error": detail, "status": e.status, "vobiz_error": detail}
+
+
 @router.get("/api/dev/telephony/calls")
 async def dev_telephony_calls(session: SessionData = Depends(require_dev_session)):
     import asyncio
@@ -723,6 +825,10 @@ async def dev_telephony_calls(session: SessionData = Depends(require_dev_session
         from server.services.plivo_client import plivo_call_registry
 
         rows = await asyncio.to_thread(plivo_call_registry.list_recent, 30)
+    elif provider == "vobiz":
+        from server.services.vobiz_client import vobiz_call_registry
+
+        rows = await asyncio.to_thread(vobiz_call_registry.list_recent, 30)
     else:
         rows = []
     for row in rows:

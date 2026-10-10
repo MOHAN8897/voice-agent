@@ -4,6 +4,12 @@ import {
   Plus,
   CheckCircle2,
   X,
+  Radio,
+  Sliders,
+  Server,
+  RefreshCw,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { SolidCard } from '../ui/SolidCard';
 import { StatusBadge } from '../ui/StatusBadge';
@@ -28,6 +34,57 @@ const FALLBACK_COUNTRIES = [
   { code: 'IN', name: 'India', dial: '+91' },
 ];
 
+export function TelephonyPlatformBadge({ provider, size = 'sm' }) {
+  const norm = String(provider || '').toLowerCase();
+  const isVobiz = norm.includes('vobiz') || norm.includes('plivo');
+  const isTelnyx = norm.includes('telnyx');
+  const isExotel = norm.includes('exotel');
+
+  const padding = size === 'xs' ? 'px-1.5 py-0.5 text-[9px]' : 'px-2 py-0.5 text-[10px]';
+
+  if (isVobiz) {
+    return (
+      <span
+        className={`inline-flex items-center gap-1.5 font-mono uppercase font-bold rounded-md bg-purple-50 text-purple-700 border border-purple-200 tracking-wide ${padding}`}
+        title="Vobiz Cloud Telephony Platform"
+      >
+        <span className="w-1.5 h-1.5 rounded-full bg-purple-600 shrink-0" />
+        Vobiz Cloud
+      </span>
+    );
+  }
+  if (isTelnyx) {
+    return (
+      <span
+        className={`inline-flex items-center gap-1.5 font-mono uppercase font-bold rounded-md bg-sky-50 text-sky-700 border border-sky-200 tracking-wide ${padding}`}
+        title="Telnyx Telephony Trunk"
+      >
+        <span className="w-1.5 h-1.5 rounded-full bg-sky-600 shrink-0" />
+        Telnyx Trunk
+      </span>
+    );
+  }
+  if (isExotel) {
+    return (
+      <span
+        className={`inline-flex items-center gap-1.5 font-mono uppercase font-bold rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 tracking-wide ${padding}`}
+        title="Exotel Telephony Platform"
+      >
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 shrink-0" />
+        Exotel
+      </span>
+    );
+  }
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 font-mono uppercase font-bold rounded-md bg-slate-100 text-slate-700 border border-slate-200 tracking-wide ${padding}`}
+    >
+      <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
+      {norm || 'Carrier'}
+    </span>
+  );
+}
+
 export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyModal, onNavigate }) {
   const {
     phoneNumbers,
@@ -43,10 +100,11 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
     refreshWallet,
     isLoading,
     openAddFunds,
+    loadWorkspaceData,
   } = useWorkspace();
 
-  // Buy Modal Form State — default US for English-speaking SaaS buyers.
-  const [selectedCountry, setSelectedCountry] = useState('US');
+  // Buy Modal Form State — default based on active carrier
+  const [selectedCountry, setSelectedCountry] = useState('IN');
   const [countries, setCountries] = useState(FALLBACK_COUNTRIES);
   const [selectedType, setSelectedType] = useState('Local DID');
   const [searchAreaCode, setSearchAreaCode] = useState('');
@@ -57,6 +115,63 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
   const [catalogLoading, setCatalogLoading] = useState(false);
   const [catalogError, setCatalogError] = useState(null);
   const [kycApproved, setKycApproved] = useState(false);
+  const [providerInfo, setProviderInfo] = useState(null);
+  const [showTelephonySettings, setShowTelephonySettings] = useState(false);
+  const [providerBusy, setProviderBusy] = useState(false);
+
+  const refreshProviderInfo = async () => {
+    try {
+      const data = await api.telephony?.getProvider?.();
+      if (data) {
+        setProviderInfo(data);
+        if (data.activeProvider === 'vobiz') {
+          setSelectedCountry('IN');
+        } else if (data.activeProvider === 'telnyx') {
+          setSelectedCountry('US');
+        }
+      }
+    } catch {}
+  };
+
+  const handleSwitchProvider = async (providerId) => {
+    if (providerBusy || providerInfo?.activeProvider === providerId) return;
+    setProviderBusy(true);
+    try {
+      await api.telephony.setProvider(providerId);
+      showToast(`Active telephony trunk switched to ${providerId.toUpperCase()}`, 'success');
+      const nextCountry = providerId === 'vobiz' ? 'IN' : 'US';
+      setSelectedCountry(nextCountry);
+      await Promise.all([
+        refreshProviderInfo(),
+        loadWorkspaceData?.(),
+        reloadCatalog?.(nextCountry),
+      ]);
+    } catch (e) {
+      showToast(e.message || 'Failed to switch telephony provider', 'error');
+    } finally {
+      setProviderBusy(false);
+    }
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    api.telephony
+      ?.getProvider?.()
+      .then((data) => {
+        if (!cancelled && data) {
+          setProviderInfo(data);
+          if (data.activeProvider === 'vobiz') {
+            setSelectedCountry('IN');
+          } else if (data.activeProvider === 'telnyx') {
+            setSelectedCountry('US');
+          }
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!isBuyModalOpen) return;
@@ -93,7 +208,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
       .then((data) => {
         if (cancelled) return;
         if (data.countries?.length) setCountries(data.countries);
-        if (data.default) setSelectedCountry((prev) => prev || data.default);
+        if (data.default) setSelectedCountry(data.default);
       })
       .catch(() => {});
     return () => {
@@ -151,7 +266,15 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
   const filteredCatalog = availableCatalog.filter((item) => {
     const cc = (item.country || '').toUpperCase();
     const matchesCountry = cc === selectedCountry.toUpperCase();
-    const matchesType = selectedType === 'All' || !item.type || item.type === selectedType;
+    const normType = (t) => {
+      const s = String(t || '').toLowerCase();
+      if (s.includes('toll')) return 'toll';
+      return 'local';
+    };
+    const matchesType =
+      selectedType === 'All' ||
+      !item.type ||
+      normType(item.type) === normType(selectedType);
     const matchesArea =
       !searchAreaCode ||
       (item.areaCode && item.areaCode.includes(searchAreaCode)) ||
@@ -243,15 +366,200 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
           </p>
         </div>
 
-        <TactileButton
-          onClick={onOpenBuyModal}
-          variant="primary"
-          icon={Plus}
-          size="md"
-        >
-          Buy Phone Number
-        </TactileButton>
+        <div className="flex items-center gap-2.5">
+          <TactileButton
+            onClick={() => setShowTelephonySettings((prev) => !prev)}
+            variant={showTelephonySettings ? "primary" : "secondary"}
+            icon={Sliders}
+            size="md"
+          >
+            Telephony Settings
+          </TactileButton>
+
+          <TactileButton
+            onClick={onOpenBuyModal}
+            variant="primary"
+            icon={Plus}
+            size="md"
+          >
+            Buy Phone Number
+          </TactileButton>
+        </div>
       </div>
+
+      {/* Telephony Infrastructure & Carrier Settings Panel */}
+      {showTelephonySettings ? (
+        <SolidCard className="p-5 border-[#6344E7]/30 bg-[#FAF9FD]" data-testid="numbers-telephony-settings">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 pb-3 border-b border-[#E4E2EB]">
+            <div>
+              <div className="flex items-center gap-2">
+                <Server className="w-4 h-4 text-[#6344E7]" />
+                <h3 className="text-sm font-bold text-[#0F0E17]">Telephony Infrastructure & Calling Trunks</h3>
+              </div>
+              <p className="text-xs text-[#524E5E] mt-0.5">
+                The entire website respects this selection in real-time. Switching carriers changes the live dialer,
+                number search catalog, and async provisioning instantly.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={refreshProviderInfo}
+                disabled={providerBusy}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-lg border border-[#E4E2EB] bg-white text-[#524E5E] hover:text-[#0F0E17] transition-colors"
+              >
+                <RefreshCw className={`w-3 h-3 ${providerBusy ? 'animate-spin' : ''}`} />
+                Refresh
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowTelephonySettings(false)}
+                className="text-xs text-[#524E5E] hover:text-[#0F0E17] p-1"
+                aria-label="Close telephony settings"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            {/* Telnyx Trunk Card */}
+            {(() => {
+              const telnyxSt = providerInfo?.providers?.find((p) => p.id === 'telnyx');
+              const isTelnyxActive = (providerInfo?.activeProvider || 'telnyx') === 'telnyx';
+              const isReady = Boolean(telnyxSt?.ready);
+              return (
+                <div
+                  className={`rounded-xl border p-4 transition-all ${
+                    isTelnyxActive
+                      ? 'border-[#6344E7] bg-white ring-1 ring-[#6344E7] shadow-xs'
+                      : 'border-[#E4E2EB] bg-white hover:border-[#8C879A]'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Radio className="w-4 h-4 text-[#6344E7]" />
+                      <span className="text-sm font-bold text-[#0F0E17]">Telnyx Telephony</span>
+                    </div>
+                    {isTelnyxActive ? (
+                      <span className="text-[10px] uppercase font-bold text-[#6344E7] bg-[#6344E7]/10 px-2 py-0.5 rounded font-mono">
+                        Active Trunk
+                      </span>
+                    ) : (
+                      <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-semibold ${isReady ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+                        {isReady ? 'Ready' : 'Setup Incomplete'}
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-[11px] text-[#524E5E] space-y-1 mb-3 font-mono">
+                    <div>Caller ID: <span className="text-[#0F0E17] font-semibold">{telnyxSt?.phoneNumber || '+13526146416'}</span></div>
+                    <div>Connection ID: <span className="text-[#0F0E17]">{telnyxSt?.connectionId || '3041007474451679060'}</span></div>
+                    <div>Webhook: <span className="text-[#0F0E17]">/api/telnyx/webhook</span></div>
+                    <div>Audio Stream: <span className="text-[#0F0E17]">/ws/telnyx-stream</span></div>
+                    {telnyxSt?.balance !== undefined && (
+                      <div>Prepaid Credit: <span className="text-[#0F0E17] font-semibold">${Number(telnyxSt.balance || 0).toFixed(2)}</span></div>
+                    )}
+                  </div>
+                  <TactileButton
+                    variant={isTelnyxActive ? 'primary' : 'secondary'}
+                    size="sm"
+                    className="w-full text-xs"
+                    disabled={isTelnyxActive || providerBusy}
+                    loading={providerBusy && !isTelnyxActive}
+                    onClick={() => handleSwitchProvider('telnyx')}
+                  >
+                    {isTelnyxActive ? 'Currently Active Trunk' : 'Switch to Telnyx'}
+                  </TactileButton>
+                </div>
+              );
+            })()}
+
+            {/* Vobiz Trunk Card */}
+            {(() => {
+              const vobizSt = providerInfo?.providers?.find((p) => p.id === 'vobiz');
+              const isVobizActive = providerInfo?.activeProvider === 'vobiz';
+              const isReady = Boolean(vobizSt?.ready);
+              return (
+                <div
+                  className={`rounded-xl border p-4 transition-all ${
+                    isVobizActive
+                      ? 'border-[#6344E7] bg-white ring-1 ring-[#6344E7] shadow-xs'
+                      : 'border-[#E4E2EB] bg-white hover:border-[#8C879A]'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Radio className="w-4 h-4 text-[#6344E7]" />
+                      <span className="text-sm font-bold text-[#0F0E17]">Vobiz Telephony</span>
+                    </div>
+                    {isVobizActive ? (
+                      <span className="text-[10px] uppercase font-bold text-[#6344E7] bg-[#6344E7]/10 px-2 py-0.5 rounded font-mono">
+                        Active Trunk
+                      </span>
+                    ) : (
+                      <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-semibold ${isReady ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+                        {isReady ? 'Ready' : 'Setup Incomplete'}
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-[11px] text-[#524E5E] space-y-1 mb-3 font-mono">
+                    <div>Auth ID: <span className="text-[#0F0E17] font-semibold">{vobizSt?.accountInfo?.auth_id || 'MA_LX2CKOU1'}</span></div>
+                    <div>App ID: <span className="text-[#0F0E17] font-semibold">{vobizSt?.accountInfo?.app_id || '551682'}</span></div>
+                    <div>Answer URL: <span className="text-[#0F0E17]">/api/vobiz/answer</span></div>
+                    <div>Hangup URL: <span className="text-[#0F0E17]">/api/vobiz/hangup</span></div>
+                    <div>Fallback URL: <span className="text-[#0F0E17]">/api/vobiz/fallback</span></div>
+                    <div>Audio Stream: <span className="text-[#0F0E17]">/ws/vobiz-stream</span></div>
+                  </div>
+                  <TactileButton
+                    variant={isVobizActive ? 'primary' : 'secondary'}
+                    size="sm"
+                    className="w-full text-xs"
+                    disabled={isVobizActive || providerBusy}
+                    loading={providerBusy && !isVobizActive}
+                    onClick={() => handleSwitchProvider('vobiz')}
+                  >
+                    {isVobizActive ? 'Currently Active Trunk' : 'Switch to Vobiz'}
+                  </TactileButton>
+                </div>
+              );
+            })()}
+          </div>
+        </SolidCard>
+      ) : providerInfo ? (
+        /* Active Telephony Infrastructure Banner with Configure Quick Action */
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]" data-testid="numbers-provider-banner">
+          <div className="flex items-center gap-2.5">
+            <Radio className="w-4 h-4 text-[#6344E7] shrink-0" />
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-[#0F0E17]">
+                  Trunk: {providerInfo.activeLabel || providerInfo.activeProvider}
+                </span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold">
+                  Live Infrastructure
+                </span>
+              </div>
+              <p className="text-[11px] text-[#524E5E] mt-0.5">
+                All numbers are routed and provisioned directly through {providerInfo.activeLabel || providerInfo.activeProvider}.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            {providerInfo.phoneNumber && (
+              <div className="text-left sm:text-right text-[11px] text-[#524E5E] font-mono">
+                Caller ID: <span className="font-bold text-[#0F0E17]">{providerInfo.phoneNumber}</span>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setShowTelephonySettings(true)}
+              className="text-xs font-semibold text-[#6344E7] hover:underline shrink-0"
+            >
+              Configure Trunk →
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <SolidCard className="p-4">
@@ -285,6 +593,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
             <thead>
               <tr className="border-b border-[#E4E2EB] bg-[#FAF9FD] text-[10px] font-bold text-[#8C879A] uppercase tracking-wider">
                 <th className="py-3 px-5">Phone Number</th>
+                <th className="py-3 px-4">Telephony Platform</th>
                 <th className="py-3 px-4">Location / Type</th>
                 <th className="py-3 px-4">Assigned AI Employee</th>
                 <th className="py-3 px-4 font-mono">Monthly Rate</th>
@@ -297,13 +606,13 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
               {/* chisel: layout-stable skeleton while loading; explicit empty state otherwise */}
               {isLoading && phoneNumbers.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-0">
+                  <td colSpan={8} className="p-0">
                     <PhoneNumberRowSkeleton rows={3} />
                   </td>
                 </tr>
               ) : phoneNumbers.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center">
+                  <td colSpan={8} className="py-12 text-center">
                     <div className="max-w-xs mx-auto space-y-2">
                       <div className="w-10 h-10 rounded-2xl bg-[#F0EEF6] flex items-center justify-center text-[#6344E7] mx-auto">
                         <Phone className="w-5 h-5" />
@@ -339,6 +648,13 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                         </span>
                       ))}
                     </div>
+                  </td>
+
+                  {/* Telephony Platform */}
+                  <td className="py-4 px-4">
+                    <TelephonyPlatformBadge
+                      provider={num.provider || (num.telnyxNumberId ? 'telnyx' : num.plivoNumberId ? 'vobiz' : providerInfo?.activeProvider || 'vobiz')}
+                    />
                   </td>
 
                   {/* Locality */}
@@ -523,6 +839,16 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                 )}
               </div>
 
+              {/* Carrier Trunk Indicator */}
+              {providerInfo && (
+                <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-[#6344E7]/5 border border-[#6344E7]/20 text-[11px]">
+                  <span className="text-[#524E5E]">Telephony Infrastructure</span>
+                  <span className="font-bold text-[#6344E7] uppercase tracking-wide">
+                    {providerInfo.activeLabel || providerInfo.activeProvider} (Active)
+                  </span>
+                </div>
+              )}
+
               {/* Search Filters */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
                 {/* Country */}
@@ -616,8 +942,14 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                           <Phone className="w-3.5 h-3.5" />
                         </div>
                         <div>
-                          <div className="font-mono font-bold text-sm text-[#0F0E17]">{item.number}</div>
-                          <div className="text-[10px] text-[#524E5E]">{item.locality} • {item.type}</div>
+                          <div className="font-mono font-bold text-sm text-[#0F0E17] flex items-center gap-2">
+                            <span>{item.number}</span>
+                            <TelephonyPlatformBadge
+                              provider={item.provider || providerInfo?.activeProvider || 'vobiz'}
+                              size="xs"
+                            />
+                          </div>
+                          <div className="text-[10px] text-[#524E5E]">{item.locality || item.region || 'National'} • {item.type}</div>
                         </div>
                       </div>
 

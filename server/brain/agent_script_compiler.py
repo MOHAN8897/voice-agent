@@ -27,6 +27,7 @@ from server.agent.brain_prompt_composer import (
 )
 from server.prompts.conversation_policy import (
     LIVE_CALL_GUIDE_BODY,
+    OPENING_GREETING_AND_CUSTOMER_ID_RULES,
     flow_section,
     infer_agent_role,
     infer_call_direction,
@@ -911,27 +912,28 @@ def work_scope_from_brief(brief: str, company: str) -> str:
         text,
         flags=re.I,
     )
+    _ROLE_WORDS = r"(?:agent|telecaller|caller|counsellor|counselor|representative|rep|assistant|bot|executive)"
     text = re.sub(
-        r"create\s+(?:an?\s+)?(?:\w+\s+){0,4}agent\s+na?m?e?d\s+[^\n.,;]{1,40}?(?=\s+who|\s+that|[.,;]|$)[.,;]?\s*",
+        rf"create\s+(?:an?\s+)?(?:\w+\s+){{0,4}}{_ROLE_WORDS}\s+na?m?e?d\s+[^\n.,;]{{1,40}}?(?=\s+(?:for|who|that)\b|[.,;]|$)[.,;]?\s*",
         "",
         text,
         flags=re.I,
     )
     text = re.sub(
-        r"create\s+an?\s+(?:\w+\s+){0,3}agent\s+(?:na?me?d\s+)?[A-Za-z][A-Za-z]{1,24}\s*(?:for\s+)?",
+        rf"create\s+an?\s+(?:\w+\s+){{0,3}}{_ROLE_WORDS}\s+(?:na?me?d\s+)?[A-Za-z][A-Za-z]{{1,24}}\s*(?:for\s+)?",
         "",
         text,
         flags=re.I,
     )
-    text = re.sub(r"create\s+an?\s+agent\s+(?:na?me?d\s+)?[A-Za-z][A-Za-z]{1,24}\s*", "", text, flags=re.I)
+    text = re.sub(rf"create\s+an?\s+{_ROLE_WORDS}\s+(?:na?me?d\s+)?[A-Za-z][A-Za-z]{{1,24}}\s*", "", text, flags=re.I)
     text = re.sub(
-        r"agent\s+na?m?e?d\s+[^\n.,;]{2,50}?(?=\s+(?:for|where|who)\b|[.,;]|$)[.,;]?\s*",
+        rf"{_ROLE_WORDS}\s+na?m?e?d\s+[^\n.,;]{{2,50}}?(?=\s+(?:for|where|who)\b|[.,;]|$)[.,;]?\s*",
         "",
         text,
         flags=re.I,
     )
     text = re.sub(
-        r"agent\s*name\s*(?:(?:is)\b\s*|:\s*)?[^\n.,;]{2,50}?"
+        rf"{_ROLE_WORDS}\s*name\s*(?:(?:is)\b\s*|:\s*)?[^\n.,;]{{2,50}}?"
         r"(?=\s+(?:from|for|where)\b|[.,;]|$)[.,;]?\s*",
         "",
         text,
@@ -1514,6 +1516,10 @@ def _conversation_plan(
             "They called you, so they already want something. Find out what it is in their first sentence, then help."
         )
     else:
+        outbound_rules = OPENING_GREETING_AND_CUSTOMER_ID_RULES.format(
+            business_name=company_name or "this business"
+        )
+        beats.append(outbound_rules)
         beats.append(
             "You placed this call. Do not launch into a pitch — say who you are, why you are calling, and ask if they have a moment. If they say no, respect it immediately."
         )

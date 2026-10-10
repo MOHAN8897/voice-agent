@@ -7,7 +7,7 @@ export const EMPLOYEE_MODES = [
 
 export const PRIMARY_LANGUAGES = [
   { code: 'en-IN', label: 'English', sub: 'India' },
-  { code: 'en-US', label: 'English', sub: 'US' },
+  { code: 'en-GB', label: 'English', sub: 'UK' },
   { code: 'hi-IN', label: 'हिन्दी', sub: 'Hindi' },
   { code: 'te-IN', label: 'తెలుగు', sub: 'Telugu' },
   { code: 'ta-IN', label: 'தமிழ்', sub: 'Tamil' },
