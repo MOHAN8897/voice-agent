@@ -37,7 +37,7 @@ class CallStartBody(BaseModel):
     tier: Optional[Literal["low", "medium", "premium"]] = None
     stack_override: Optional[dict] = Field(None, alias="stackOverride")
     caller_id: Optional[str] = Field(None, alias="callerId")
-    language: str = "te-IN"
+    language: Optional[str] = None
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -320,30 +320,43 @@ def _enrich_call_list_item(item: dict) -> dict:
     return out
 
 
-@router.get("/api/call/{call_id}/transcript")
-async def get_transcript(call_id: str):
+async def _assert_call_scoped(call_id: str, scope: tuple[str, bool]) -> dict:
     stored = await call_store.get(call_id)
     if stored is None and not call_ledger.meta_path(call_id).exists():
         raise HTTPException(
             status_code=404,
             detail={"error": {"code": "not_found", "message": "Call not found"}},
         )
+    settings = get_settings()
+    if settings.saas_auth_enabled:
+        scoped_tenant, _ = scope
+        tenant = str((stored or {}).get("tenant_id") or "")
+        if not tenant:
+            meta = call_ledger.read_meta(call_id) or {}
+            tenant = str(meta.get("tenant_id") or "")
+        if not tenant or tenant != scoped_tenant:
+            raise HTTPException(
+                status_code=404,
+                detail={"error": {"code": "not_found", "message": "Call not found"}},
+            )
+    return stored or {}
+
+
+@router.get("/api/call/{call_id}/transcript")
+async def get_transcript(call_id: str, scope: tuple[str, bool] = Depends(resolve_calls_scope)):
+    await _assert_call_scoped(call_id, scope)
     return {"call_id": call_id, "lines": call_ledger.read_lines(call_id)}
 
 
 @router.get("/api/call/{call_id}/trace")
-async def get_trace(call_id: str):
-    stored = await call_store.get(call_id)
-    if stored is None and not call_ledger.trace_path(call_id).exists():
-        raise HTTPException(
-            status_code=404,
-            detail={"error": {"code": "not_found", "message": "Call not found"}},
-        )
+async def get_trace(call_id: str, scope: tuple[str, bool] = Depends(resolve_calls_scope)):
+    await _assert_call_scoped(call_id, scope)
     return call_ledger.read_trace(call_id)
 
 
 @router.get("/api/call/{call_id}/audio-status")
-async def get_audio_status(call_id: str):
+async def get_audio_status(call_id: str, scope: tuple[str, bool] = Depends(resolve_calls_scope)):
+    await _assert_call_scoped(call_id, scope)
     await asyncio.to_thread(audio_archive.ensure_telnyx_review, call_id)
     path = audio_archive.file_for(call_id, "mix_clear")
     source = audio_archive.recording_source(call_id)
@@ -361,7 +374,9 @@ async def get_audio(
     call_id: str,
     kind: Literal["mix", "user", "agent", "mix_clear", "user_clear", "agent_clear"],
     download: bool = Query(False, alias="download"),
+    scope: tuple[str, bool] = Depends(resolve_calls_scope),
 ):
+    await _assert_call_scoped(call_id, scope)
     if kind in ("mix", "mix_clear"):
         await asyncio.to_thread(audio_archive.ensure_telnyx_review, call_id)
     if kind.endswith("_clear"):
@@ -415,48 +430,33 @@ async def get_audio(
 
 
 @router.get("/api/call/{call_id}/audio")
-async def get_audio_mix(call_id: str):
-    return await get_audio(call_id, "mix")
+async def get_audio_mix(call_id: str, scope: tuple[str, bool] = Depends(resolve_calls_scope)):
+    return await get_audio(call_id, "mix", scope=scope)
 
 
 @router.get("/api/call/{call_id}/memory")
-async def get_memory(call_id: str):
+async def get_memory(call_id: str, scope: tuple[str, bool] = Depends(resolve_calls_scope)):
     from server.call.memory_manager import memory_manager
 
-    stored = await call_store.get(call_id)
-    if stored is None and not call_ledger.meta_path(call_id).exists():
-        raise HTTPException(
-            status_code=404,
-            detail={"error": {"code": "not_found", "message": "Call not found"}},
-        )
+    await _assert_call_scoped(call_id, scope)
     return {"call_id": call_id, "memory": memory_manager.get_snapshot(call_id)}
 
 
 @router.get("/api/call/{call_id}/memory-events")
 @router.get("/api/call/{call_id}/memory/events")
-async def get_memory_events(call_id: str):
+async def get_memory_events(call_id: str, scope: tuple[str, bool] = Depends(resolve_calls_scope)):
     from server.call.memory_manager import memory_manager
 
-    stored = await call_store.get(call_id)
-    if stored is None and not call_ledger.meta_path(call_id).exists():
-        raise HTTPException(
-            status_code=404,
-            detail={"error": {"code": "not_found", "message": "Call not found"}},
-        )
+    await _assert_call_scoped(call_id, scope)
     return {"call_id": call_id, "events": memory_manager.list_events(call_id)}
 
 
 @router.get("/api/call/{call_id}/memory/projection")
-async def get_memory_projection(call_id: str, turn: int | None = Query(None)):
+async def get_memory_projection(call_id: str, turn: int | None = Query(None), scope: tuple[str, bool] = Depends(resolve_calls_scope)):
     from server.call.memory_manager import memory_manager
     from server.call.memory_projection import build as build_projection
 
-    stored = await call_store.get(call_id)
-    if stored is None and not call_ledger.meta_path(call_id).exists():
-        raise HTTPException(
-            status_code=404,
-            detail={"error": {"code": "not_found", "message": "Call not found"}},
-        )
+    await _assert_call_scoped(call_id, scope)
     if turn is not None:
         recorded = memory_manager.projection_at_turn(call_id, turn)
         snap = memory_manager.snapshot_at_turn(call_id, turn)
@@ -478,15 +478,10 @@ async def get_memory_projection(call_id: str, turn: int | None = Query(None)):
 
 
 @router.post("/api/call/{call_id}/memory/correction")
-async def post_memory_correction(call_id: str, body: MemoryCorrectionBody):
+async def post_memory_correction(call_id: str, body: MemoryCorrectionBody, scope: tuple[str, bool] = Depends(resolve_calls_scope)):
     from server.call.memory_manager import memory_manager
 
-    stored = await call_store.get(call_id)
-    if stored is None and not call_ledger.meta_path(call_id).exists():
-        raise HTTPException(
-            status_code=404,
-            detail={"error": {"code": "not_found", "message": "Call not found"}},
-        )
+    await _assert_call_scoped(call_id, scope)
     result = memory_manager.manual_correction(
         call_id,
         body.operations,
@@ -498,15 +493,10 @@ async def post_memory_correction(call_id: str, body: MemoryCorrectionBody):
 
 
 @router.get("/api/call/{call_id}/outcome")
-async def get_outcome(call_id: str):
+async def get_outcome(call_id: str, scope: tuple[str, bool] = Depends(resolve_calls_scope)):
     from server.call.post_call_pipeline import read_outcome
 
-    stored = await call_store.get(call_id)
-    if stored is None and not call_ledger.meta_path(call_id).exists():
-        raise HTTPException(
-            status_code=404,
-            detail={"error": {"code": "not_found", "message": "Call not found"}},
-        )
+    await _assert_call_scoped(call_id, scope)
     outcome = read_outcome(call_id)
     if outcome is None:
         return JSONResponse(
@@ -517,17 +507,12 @@ async def get_outcome(call_id: str):
 
 
 @router.post("/api/call/{call_id}/outcome/retry", status_code=202)
-async def retry_outcome(call_id: str):
+async def retry_outcome(call_id: str, scope: tuple[str, bool] = Depends(resolve_calls_scope)):
     from server.call.call_context import get as get_ctx
     from server.call.call_lifecycle_service import status_url
     from server.call.post_call_pipeline import enqueue
 
-    stored = await call_store.get(call_id)
-    if stored is None and not call_ledger.meta_path(call_id).exists():
-        raise HTTPException(
-            status_code=404,
-            detail={"error": {"code": "not_found", "message": "Call not found"}},
-        )
+    await _assert_call_scoped(call_id, scope)
     ctx = get_ctx(call_id)
     if ctx:
         ctx.components["outcome"] = "processing"

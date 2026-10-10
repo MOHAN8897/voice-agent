@@ -81,18 +81,18 @@ async def test_prewarm_take_returns_bundle_and_clears_entry():
 @pytest.mark.asyncio
 async def test_prewarm_cancel_removes_entry_and_closes_realtime():
     registry = PstnPrewarmRegistry()
-    rt_key = prewarm_realtime_key("exotel", "sid-9")
+    rt_key = prewarm_realtime_key("vobiz", "sid-9")
     done = asyncio.Event()
 
     async def sleeper():
         await done.wait()
 
     task = asyncio.create_task(sleeper())
-    registry._entries["exotel:sid-9"] = type(
+    registry._entries["vobiz:sid-9"] = type(
         "E",
         (),
         {
-            "provider": "exotel",
+            "provider": "vobiz",
             "external_id": "sid-9",
             "task": task,
             "created_at": 0.0,
@@ -102,9 +102,9 @@ async def test_prewarm_cancel_removes_entry_and_closes_realtime():
     )()
     destroy = AsyncMock()
     with patch("server.services.pstn_prewarm._destroy_realtime", destroy):
-        await registry.cancel("exotel", "sid-9")
+        await registry.cancel("vobiz", "sid-9")
     destroy.assert_awaited_once_with(rt_key)
-    assert "exotel:sid-9" not in registry._entries
+    assert "vobiz:sid-9" not in registry._entries
     done.set()
 
 

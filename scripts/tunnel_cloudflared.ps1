@@ -1,6 +1,6 @@
 # Quick Cloudflare Tunnel → local API (port 8000). No account required.
 # Usage: powershell -ExecutionPolicy Bypass -File scripts/tunnel_cloudflared.ps1
-# Writes public URL to .tunnel-url and updates EXOTEL_WEBHOOK_BASE_URL in .env
+# Writes public URL to .tunnel-url and updates VOBIZ_WEBHOOK_BASE_URL in .env
 
 param(
     [int]$Port = 8000,
@@ -50,7 +50,7 @@ if (Test-Path $EnvFile) {
     $lines = Get-Content $EnvFile
     $map = @{
         "PUBLIC_TUNNEL_URL"         = $publicUrl
-        "EXOTEL_WEBHOOK_BASE_URL"   = $publicUrl
+        "VOBIZ_WEBHOOK_BASE_URL"   = $publicUrl
         "CLIENT_URL"                = "http://localhost:3000"
     }
     foreach ($key in $map.Keys) {
@@ -66,7 +66,7 @@ if (Test-Path $EnvFile) {
         if (-not $found) { $lines += "$key=$val" }
     }
     Set-Content -Path $EnvFile -Value $lines
-    Write-Host "Updated .env webhook vars (PUBLIC_TUNNEL_URL, EXOTEL_WEBHOOK_BASE_URL)."
+    Write-Host "Updated .env webhook vars (PUBLIC_TUNNEL_URL, VOBIZ_WEBHOOK_BASE_URL)."
 }
 
 # Keep dev overlay in sync — it overrides .env for public_api_base()
@@ -74,9 +74,9 @@ $DevSecrets = Join-Path $RepoRoot "data\dev_secrets.json"
 if (Test-Path $DevSecrets) {
     try {
         $secrets = Get-Content $DevSecrets -Raw | ConvertFrom-Json
-        $secrets.exotel_webhook_base_url = $publicUrl
+        $secrets.VOBIZ_WEBHOOK_BASE_URL = $publicUrl
         $secrets | ConvertTo-Json -Depth 10 | Set-Content -Path $DevSecrets
-        Write-Host "Updated data/dev_secrets.json exotel_webhook_base_url."
+        Write-Host "Updated data/dev_secrets.json VOBIZ_WEBHOOK_BASE_URL."
     } catch {
         Write-Warning "Could not update dev_secrets.json: $_"
     }

@@ -38,7 +38,6 @@ export function TelephonyPlatformBadge({ provider, size = 'sm' }) {
   const norm = String(provider || '').toLowerCase();
   const isVobiz = norm.includes('vobiz') || norm.includes('plivo');
   const isTelnyx = norm.includes('telnyx');
-  const isExotel = norm.includes('exotel');
 
   const padding = size === 'xs' ? 'px-1.5 py-0.5 text-[9px]' : 'px-2 py-0.5 text-[10px]';
 
@@ -61,17 +60,6 @@ export function TelephonyPlatformBadge({ provider, size = 'sm' }) {
       >
         <span className="w-1.5 h-1.5 rounded-full bg-sky-600 shrink-0" />
         Telnyx Trunk
-      </span>
-    );
-  }
-  if (isExotel) {
-    return (
-      <span
-        className={`inline-flex items-center gap-1.5 font-mono uppercase font-bold rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 tracking-wide ${padding}`}
-        title="Exotel Telephony Platform"
-      >
-        <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 shrink-0" />
-        Exotel
       </span>
     );
   }

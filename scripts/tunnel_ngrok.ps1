@@ -20,7 +20,7 @@ function Set-TunnelEnv {
     $lines = Get-Content $EnvFile
     $map = @{
         "PUBLIC_TUNNEL_URL"         = $PublicUrl
-        "EXOTEL_WEBHOOK_BASE_URL"   = $PublicUrl
+        "VOBIZ_WEBHOOK_BASE_URL"   = $PublicUrl
         "CLIENT_URL"                = "http://localhost:3000"
     }
     foreach ($key in $map.Keys) {

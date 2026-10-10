@@ -55,7 +55,7 @@ def process_job(job: dict[str, Any]) -> None:
     campaign_id = job.get("campaign_id")
     run_id = job.get("run_id")
     logger.info("processing campaign job campaign_id=%s run_id=%s", campaign_id, run_id)
-    # Exotel outbound dial would be initiated here via ExotelClient.connect_two_numbers
+    # Telnyx or Vobiz outbound dial would be initiated here via carrier bridge
 
 
 def run_loop() -> None:

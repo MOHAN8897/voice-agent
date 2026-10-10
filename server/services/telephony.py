@@ -1,4 +1,4 @@
-"""Active PSTN / SIP trunk provider selection (Exotel, Telnyx, Plivo)."""
+"""Active PSTN / SIP trunk provider selection (Telnyx, Vobiz)."""
 from __future__ import annotations
 
 from typing import Any, Literal
@@ -6,8 +6,8 @@ from typing import Any, Literal
 from server.config.env import get_settings
 from server.services.dev_secrets_store import dev_secrets_store
 
-TelephonyProviderId = Literal["exotel", "telnyx", "plivo", "vobiz"]
-VALID_PROVIDERS: tuple[TelephonyProviderId, ...] = ("exotel", "telnyx", "plivo", "vobiz")
+TelephonyProviderId = Literal["telnyx", "vobiz"]
+VALID_PROVIDERS: tuple[TelephonyProviderId, ...] = ("telnyx", "vobiz")
 
 
 def _effective_str(field: str, default: str | None = None) -> str:
@@ -17,45 +17,36 @@ def _effective_str(field: str, default: str | None = None) -> str:
 
 def active_telephony_provider() -> TelephonyProviderId:
     raw = str(
-        dev_secrets_store.effective("telephony_provider", get_settings().telephony_provider) or "exotel"
+        dev_secrets_store.effective("telephony_provider", get_settings().telephony_provider) or "vobiz"
     ).strip().lower()
+    if raw == "plivo":
+        return "vobiz"
     if raw not in VALID_PROVIDERS:
-        return "exotel"
+        return "vobiz"
     return raw  # type: ignore[return-value]
 
 
 def provider_enabled(provider: TelephonyProviderId) -> bool:
     settings = get_settings()
-    if provider == "exotel":
-        return bool(dev_secrets_store.effective("enable_exotel", settings.enable_exotel))
     if provider == "telnyx":
         return bool(dev_secrets_store.effective("enable_telnyx", settings.enable_telnyx))
-    if provider == "plivo":
-        return bool(dev_secrets_store.effective("enable_plivo", settings.enable_plivo))
-    if provider == "vobiz":
-        return bool(dev_secrets_store.effective("enable_vobiz", settings.enable_vobiz))
+    if provider in ("vobiz", "plivo"):
+        return bool(dev_secrets_store.effective("enable_vobiz", settings.enable_vobiz)) or bool(
+            dev_secrets_store.effective("enable_plivo", getattr(settings, "enable_plivo", False))
+        )
     return False
 
 
 def provider_configured(provider: TelephonyProviderId) -> bool:
     """Keys + required IDs present (overlay-aware). Does not check handshake."""
     settings = get_settings()
-    if provider == "exotel":
-        key = dev_secrets_store.effective_secret("exotel_api_key") or settings.exotel_api_key
-        token = dev_secrets_store.effective_secret("exotel_api_token") or settings.exotel_api_token
-        sid = _effective_str("exotel_account_sid", settings.exotel_account_sid)
-        return bool(key and token and sid)
     if provider == "telnyx":
         key = dev_secrets_store.effective_secret("telnyx_api_key") or settings.telnyx_api_key
         conn = _effective_str("telnyx_connection_id", settings.telnyx_connection_id)
         return bool(key and conn)
-    if provider == "plivo":
-        auth = dev_secrets_store.effective_secret("plivo_auth_id") or settings.plivo_auth_id
-        token = dev_secrets_store.effective_secret("plivo_auth_token") or settings.plivo_auth_token
-        return bool(auth and token)
-    if provider == "vobiz":
-        auth = _effective_str("vobiz_auth_id", settings.vobiz_auth_id)
-        token = _effective_str("vobiz_auth_token", settings.vobiz_auth_token)
+    if provider in ("vobiz", "plivo"):
+        auth = _effective_str("vobiz_auth_id", settings.vobiz_auth_id) or dev_secrets_store.effective_secret("plivo_auth_id") or getattr(settings, "plivo_auth_id", None)
+        token = _effective_str("vobiz_auth_token", settings.vobiz_auth_token) or dev_secrets_store.effective_secret("plivo_auth_token") or getattr(settings, "plivo_auth_token", None)
         return bool(auth and token)
     return False
 

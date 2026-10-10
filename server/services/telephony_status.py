@@ -17,7 +17,7 @@ _TELNYX_CHECKLIST_TTL_SEC = 90.0
 
 def webhook_base_url() -> str:
     settings = get_settings()
-    override = dev_secrets_store.effective("exotel_webhook_base_url", settings.exotel_webhook_base_url)
+    override = dev_secrets_store.effective("vobiz_webhook_base_url", getattr(settings, "vobiz_webhook_base_url", None))
     if override:
         return str(override).rstrip("/")
     return public_api_base()
@@ -33,8 +33,6 @@ def _ws_base(http_base: str) -> str:
 
 async def provider_status(provider: TelephonyProviderId) -> dict[str, Any]:
     try:
-        if provider == "exotel":
-            return await _exotel_status()
         if provider == "telnyx":
             return await _telnyx_status()
         if provider == "plivo":
@@ -72,58 +70,6 @@ async def cached_telnyx_setup_status(client) -> dict[str, Any]:
     _TELNYX_CHECKLIST_CACHE = dict(checklist)
     _TELNYX_CHECKLIST_CACHE_AT = now
     return dict(checklist)
-
-
-async def _exotel_status() -> dict[str, Any]:
-    from server.services.exotel_client import ExotelClient, cached_handshake, exotel_enabled, public_webhook_urls
-    from server.services.telephony import provider_configured
-
-    settings = get_settings()
-    enabled = exotel_enabled()
-    exophone = dev_secrets_store.effective("exotel_exophone", settings.exotel_exophone) or ""
-    configured = provider_configured("exotel")
-    if not enabled:
-        urls = public_webhook_urls()
-        return {
-            "id": "exotel",
-            "label": "Exotel",
-            "enabled": False,
-            "configured": configured,
-            "handshake_ok": False,
-            "handshake_error": None,
-            "balance": None,
-            "phone_number": str(exophone).strip() or None,
-            "exophone": str(exophone).strip() or None,
-            "webhook_base": webhook_base_url(),
-            **urls,
-            "ready": False,
-        }
-    handshake_ok = False
-    handshake_error: str | None = None
-    balance: str | None = None
-    try:
-        if configured:
-            client = ExotelClient()
-            hs = await cached_handshake(client)
-            handshake_ok = bool(hs.get("ok"))
-            balance = hs.get("balance")
-    except Exception as e:
-        handshake_error = str(e)[:300]
-    urls = public_webhook_urls()
-    return {
-        "id": "exotel",
-        "label": "Exotel",
-        "enabled": enabled,
-        "configured": configured,
-        "handshake_ok": handshake_ok,
-        "handshake_error": handshake_error,
-        "balance": balance,
-        "phone_number": str(exophone).strip() or None,
-        "exophone": str(exophone).strip() or None,
-        "webhook_base": webhook_base_url(),
-        **urls,
-        "ready": enabled and configured and handshake_ok,
-    }
 
 
 async def _telnyx_status() -> dict[str, Any]:

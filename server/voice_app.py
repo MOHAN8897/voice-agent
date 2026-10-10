@@ -9,8 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from server.config.env import get_settings
 from server.db.connection import close_db, init_db
-from server.routes.exotel_ws import router as exotel_ws_router
 from server.routes.telnyx_ws import router as telnyx_ws_router
+from server.routes.vobiz_ws import router as vobiz_ws_router
 from server.routes.web_agent_ws import router as web_agent_ws_router
 from server.utils.logger import logger
 
@@ -51,7 +51,7 @@ app.add_middleware(
 
 # Mount Voice WebSocket Routers
 app.include_router(telnyx_ws_router)
-app.include_router(exotel_ws_router)
+app.include_router(vobiz_ws_router)
 app.include_router(web_agent_ws_router)
 
 
@@ -61,5 +61,5 @@ async def voice_health():
     return {
         "ok": True,
         "service": "voice_gateway",
-        "websocket_routes": ["/ws/telnyx-stream", "/ws/exotel", "/ws/web-agent"],
+        "websocket_routes": ["/ws/telnyx-stream", "/ws/vobiz-stream", "/ws/web-agent"],
     }

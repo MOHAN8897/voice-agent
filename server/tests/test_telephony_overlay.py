@@ -11,13 +11,11 @@ from server.services.telephony import (
 
 
 def test_telephony_enable_flags_respect_overlay():
-    dev_secrets_store.update({"enable_telnyx": True, "enable_exotel": False, "enable_plivo": False})
+    dev_secrets_store.update({"enable_telnyx": True, "enable_vobiz": False})
     assert provider_enabled("telnyx") is True
-    assert provider_enabled("exotel") is False
-    assert provider_enabled("plivo") is False
+    assert provider_enabled("vobiz") is False
     dev_secrets_store.remove_overlay_key("enable_telnyx")
-    dev_secrets_store.remove_overlay_key("enable_exotel")
-    dev_secrets_store.remove_overlay_key("enable_plivo")
+    dev_secrets_store.remove_overlay_key("enable_vobiz")
 
 
 def test_telephony_guard_blocks_disabled_active_provider():
@@ -31,14 +29,13 @@ def test_telephony_guard_blocks_disabled_active_provider():
 def test_provider_configured_uses_overlay_strings():
     dev_secrets_store.update(
         {
-            "enable_exotel": True,
-            "exotel_api_key": "key",
-            "exotel_api_token": "token",
-            "exotel_account_sid": "sid123",
+            "enable_telnyx": True,
+            "telnyx_api_key": "key",
+            "telnyx_connection_id": "conn123",
         }
     )
-    assert provider_configured("exotel") is True
-    dev_secrets_store.update({"exotel_account_sid": ""})
-    assert provider_configured("exotel") is False
-    for field in ("exotel_api_key", "exotel_api_token", "exotel_account_sid", "enable_exotel"):
+    assert provider_configured("telnyx") is True
+    dev_secrets_store.update({"telnyx_connection_id": ""})
+    assert provider_configured("telnyx") is False
+    for field in ("telnyx_api_key", "telnyx_connection_id", "enable_telnyx"):
         dev_secrets_store.remove_overlay_key(field)

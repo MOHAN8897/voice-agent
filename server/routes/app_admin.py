@@ -142,7 +142,7 @@ async def admin_tenants(principal: SubscriberPrincipal = Depends(require_subscri
 
 
 class SwitchTelephonyProviderBody(BaseModel):
-    provider: str = Field(..., pattern="^(telnyx|vobiz|exotel|plivo)$")
+    provider: str = Field(..., pattern="^(telnyx|vobiz)$")
 
 
 @router.post("/api/admin/telephony/provider")
@@ -589,6 +589,7 @@ async def admin_buy_phone_number(
             e164=e164,
             status="active",
             telnyx_number_id=carrier_res.get("phone_number_id") if body.provider == "telnyx" else None,
+            plivo_number_id=carrier_res.get("phone_number_id") or f"vobiz_{e164}" if body.provider == "vobiz" else None,
             billing_source="admin",
             inbound_enabled=True,
             outbound_enabled=True,
@@ -658,16 +659,39 @@ async def admin_telephony_test_call(
     from_num = (body.from_e164 or "").strip()
 
     if prov == "vobiz":
-        from server.services.vobiz_client import VobizClient, vobiz_call_registry
+        from server.services.vobiz_client import VobizClient, vobiz_call_registry, vobiz_stream_tokens
         from server.config.urls import public_api_base
         import time
 
         client = VobizClient()
         caller_id = from_num or client.cfg.get("phone_number") or "+917965480745"
         base_api = public_api_base()
-        ans_url = f"{base_api}/api/vobiz/answer"
-        hup_url = f"{base_api}/api/vobiz/hangup"
-        fallback_url = f"{base_api}/api/vobiz/fallback"
+        tracking_id = f"admin-vobiz-{uuid.uuid4()}"
+
+        token = vobiz_stream_tokens.create(
+            call_uuid=tracking_id,
+            direction="outbound",
+            outbound_id=tracking_id,
+        )
+
+        ans_url = f"{base_api}/api/vobiz/answer?token={token}&outbound_id={tracking_id}"
+        hup_url = f"{base_api}/api/vobiz/hangup?token={token}&outbound_id={tracking_id}"
+        fallback_url = f"{base_api}/api/vobiz/fallback?token={token}&outbound_id={tracking_id}"
+
+        vobiz_call_registry.upsert(
+            tracking_id,
+            {
+                "call_uuid": tracking_id,
+                "outbound_id": tracking_id,
+                "to": to_num,
+                "from": caller_id,
+                "direction": "outbound",
+                "status": "initiated",
+                "dialed_at": time.time(),
+                "provider": "vobiz",
+                "token": token,
+            },
+        )
 
         try:
             res = await client.create_outbound_call(
@@ -677,29 +701,34 @@ async def admin_telephony_test_call(
                 hangup_url=hup_url,
                 fallback_url=fallback_url,
             )
-            call_uuid = str(
+            carrier_uuid = str(
                 res.get("call_uuid")
                 or res.get("request_uuid")
                 or res.get("id")
                 or res.get("api_id")
-                or uuid.uuid4()
+                or ""
             )
-            vobiz_call_registry.upsert(
-                call_uuid,
-                {
-                    "call_uuid": call_uuid,
-                    "to": to_num,
-                    "from": caller_id,
-                    "direction": "outbound",
-                    "status": "initiated",
-                    "dialed_at": time.time(),
-                    "provider": "vobiz",
-                },
-            )
+            effective_id = carrier_uuid or tracking_id
+
+            if carrier_uuid and carrier_uuid != tracking_id:
+                vobiz_call_registry.alias(carrier_uuid, tracking_id)
+                vobiz_call_registry.upsert(
+                    carrier_uuid,
+                    {
+                        "call_uuid": carrier_uuid,
+                        "outbound_id": tracking_id,
+                        "to": to_num,
+                        "from": caller_id,
+                        "direction": "outbound",
+                        "status": "initiated",
+                        "token": token,
+                    },
+                )
+
             return {
                 "ok": True,
                 "provider": "vobiz",
-                "call_uuid": call_uuid,
+                "call_uuid": effective_id,
                 "to": to_num,
                 "from": caller_id,
                 "status": "initiated",

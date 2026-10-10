@@ -22,7 +22,7 @@ MAX_PREWARM_ADOPT_TOTAL_SEC = 12.0
 
 _PROVIDER_WIRE: dict[str, dict[str, Any]] = {
     "telnyx": {"sample_rate": 16000, "tts_output_codec": "linear16"},
-    "exotel": {"sample_rate": 8000, "tts_output_codec": "mulaw"},
+    "vobiz": {"sample_rate": 16000, "tts_output_codec": "linear16"},
     "plivo": {"sample_rate": 8000, "tts_output_codec": "mulaw"},
 }
 

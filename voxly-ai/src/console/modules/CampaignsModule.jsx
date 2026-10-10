@@ -681,7 +681,7 @@ export function CampaignsModule() {
       >
         <div className="space-y-6 text-xs">
           {/* Step Progression Bar */}
-          <div className="flex items-center justify-between pb-3 border-b border-[#E4E2EB] overflow-x-auto gap-2">
+          <div className="flex items-center justify-between pb-3 border-b border-[#E4E2EB] overflow-x-auto gap-2 touch-pan-x scrollbar-none">
             {[
               { num: 1, label: 'Campaign' },
               { num: 2, label: 'Contacts' },
@@ -1049,7 +1049,7 @@ export function CampaignsModule() {
               </div>
 
               {/* Mapping Table */}
-              <div className="border border-[#E4E2EB] rounded-xl overflow-hidden max-h-80 overflow-y-auto">
+              <div className="border border-[#E4E2EB] rounded-xl overflow-x-auto overflow-y-auto max-h-80 touch-pan-x">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead className="bg-[#FAF9FD] border-b border-[#E4E2EB] sticky top-0 z-10 text-[#524E5E] font-semibold text-[11px]">
                     <tr>
@@ -1338,7 +1338,7 @@ export function CampaignsModule() {
 
               {/* Tab 1: Valid Contacts Preview */}
               {validationTab === 'valid' && (
-                <div className="border border-[#E4E2EB] rounded-xl overflow-hidden max-h-60 overflow-y-auto">
+                <div className="border border-[#E4E2EB] rounded-xl overflow-x-auto overflow-y-auto max-h-60 touch-pan-x">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead className="bg-[#FAF9FD] border-b border-[#E4E2EB] sticky top-0 z-10 text-[#524E5E] text-[11px]">
                       <tr>
@@ -1374,7 +1374,7 @@ export function CampaignsModule() {
 
               {/* Tab 2: Invalid Rows */}
               {validationTab === 'invalid' && (
-                <div className="border border-[#FCA5A5] rounded-xl overflow-hidden max-h-60 overflow-y-auto">
+                <div className="border border-[#FCA5A5] rounded-xl overflow-x-auto overflow-y-auto max-h-60 touch-pan-x">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead className="bg-[#FEF2F2] border-b border-[#FCA5A5] sticky top-0 z-10 text-[#991B1B] text-[11px]">
                       <tr>

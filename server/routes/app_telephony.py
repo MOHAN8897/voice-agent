@@ -117,7 +117,7 @@ async def telephony_provider_info(principal: SubscriberPrincipal = Depends(requi
         "ready": bool(active_details.get("ready")),
         "enabled": bool(active_details.get("enabled")),
         "phoneNumber": active_details.get("phone_number"),
-        "supportedProviders": ["telnyx", "vobiz", "exotel"],
+        "supportedProviders": ["telnyx", "vobiz"],
         "providers": [
             {
                 "id": s.get("id"),
@@ -141,7 +141,7 @@ async def telephony_provider_info(principal: SubscriberPrincipal = Depends(requi
 
 
 class SwitchTelephonyProviderBody(BaseModel):
-    provider: str = Field(..., pattern="^(telnyx|vobiz|exotel|plivo)$")
+    provider: str = Field(..., pattern="^(telnyx|vobiz)$")
 
 
 @router.post("/api/telephony/provider")

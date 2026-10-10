@@ -32,7 +32,7 @@ def test_realtime_pcm24_to_wire_frames_telnyx_l16():
     assert all(len(f) == 640 for f in frames)
 
 
-def test_realtime_pcm24_to_wire_frames_exotel_mulaw():
+def test_realtime_pcm24_to_wire_frames_8k_mulaw():
     pcm = _make_pcm24(40)
     frames = realtime_pcm24_to_wire_frames(pcm, sample_rate=8000, tts_output_codec="mulaw")
     assert frames

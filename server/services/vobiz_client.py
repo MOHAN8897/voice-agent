@@ -157,12 +157,33 @@ class VobizClient:
         auth_id = self.cfg["auth_id"]
         base_api = public_api_base()
         caller_id = (from_ or self.cfg.get("phone_number") or "+917965480745").strip()
+
+        # Normalize destination and caller ID to E.164
+        dest = to.strip()
+        if not dest.startswith("+"):
+            digits = "".join(c for c in dest if c.isdigit())
+            if len(digits) == 10:
+                dest = f"+91{digits}"
+            elif len(digits) == 12 and digits.startswith("91"):
+                dest = f"+{digits}"
+            else:
+                dest = f"+{digits}" if digits else dest
+
+        if not caller_id.startswith("+"):
+            c_digits = "".join(c for c in caller_id if c.isdigit())
+            if len(c_digits) == 10:
+                caller_id = f"+91{c_digits}"
+            elif len(c_digits) == 12 and c_digits.startswith("91"):
+                caller_id = f"+{c_digits}"
+            else:
+                caller_id = f"+{c_digits}" if c_digits else caller_id
+
         ans_url = answer_url or f"{base_api}/api/vobiz/answer"
         hup_url = hangup_url or f"{base_api}/api/vobiz/hangup"
         app_id = self.cfg.get("app_id") or "19573358086719545"
 
         payload: dict[str, Any] = {
-            "to": to.strip(),
+            "to": dest,
             "from": caller_id,
             "answer_url": ans_url,
             "answer_method": "POST",
@@ -323,6 +344,11 @@ class VobizCallRegistry:
             return None
         row = self._calls.get(call_uuid)
         if row is not None:
+            aliased = row.get("aliased_to")
+            if aliased and aliased != call_uuid:
+                target = self.get(aliased)
+                if target:
+                    return dict(target)
             return dict(row)
         client = self._redis()
         if client is not None:
@@ -334,10 +360,22 @@ class VobizCallRegistry:
                     data = json.loads(raw)
                     if isinstance(data, dict):
                         self._calls[call_uuid] = data
+                        aliased = data.get("aliased_to")
+                        if aliased and aliased != call_uuid:
+                            target = self.get(aliased)
+                            if target:
+                                return dict(target)
                         return dict(data)
             except Exception:
                 pass
         return None
+
+    def alias(self, alias_id: str, target_id: str) -> None:
+        """Map a secondary identifier (like request_uuid) to an authoritative CallUUID."""
+        if not alias_id or not target_id or alias_id == target_id:
+            return
+        target = self.get(target_id) or {}
+        self.upsert(alias_id, {**target, "aliased_to": target_id, "call_uuid": target_id})
 
     def upsert(self, call_uuid: str, updates: dict[str, Any]) -> dict[str, Any]:
         import time
@@ -352,7 +390,7 @@ class VobizCallRegistry:
             try:
                 import json
 
-                client.setex(f"{self._REDIS_PREFIX}{call_uuid}", self._REDIS_TTL_SEC, json.dumps(merged))
+                client.set(f"{self._REDIS_PREFIX}{call_uuid}", json.dumps(merged), ex=self._REDIS_TTL_SEC)
                 client.zadd(self._REDIS_RECENT_KEY, {call_uuid: time.time()})
             except Exception as e:
                 logger.debug("[VOBIZ] call registry redis save failed: %s", e)
@@ -437,7 +475,7 @@ class VobizStreamTokens:
             try:
                 import json
 
-                client.setex(f"{self._REDIS_PREFIX}{token}", self._REDIS_TTL_SEC, json.dumps(meta))
+                client.set(f"{self._REDIS_PREFIX}{token}", json.dumps(meta), ex=self._REDIS_TTL_SEC)
             except Exception:
                 pass
 

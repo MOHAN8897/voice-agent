@@ -1,4 +1,4 @@
-# Sync PUBLIC_TUNNEL_URL, EXOTEL_WEBHOOK_BASE_URL, CLIENT_URL, web/.env.local
+# Sync PUBLIC_TUNNEL_URL, vobiz_webhook_base_url, CLIENT_URL, web/.env.local
 # from cloudflared/config.yml or explicit parameters.
 
 param(
@@ -66,7 +66,7 @@ function Set-EnvKey {
 if (Test-Path $EnvFile) {
     $lines = @(Get-Content $EnvFile)
     $lines = Set-EnvKey $lines "PUBLIC_TUNNEL_URL" $ApiUrl
-    $lines = Set-EnvKey $lines "EXOTEL_WEBHOOK_BASE_URL" $ApiUrl
+    $lines = Set-EnvKey $lines "VOBIZ_WEBHOOK_BASE_URL" $ApiUrl
     $lines = Set-EnvKey $lines "CLIENT_URL" $AppUrl
     $lines = Set-EnvKey $lines "PUBLIC_APP_URL" $AppUrl
     # Public origin of the product UI. The API redirects / here, and it is what
@@ -97,13 +97,13 @@ if (Test-Path $secretsPath) {
     try {
         $secrets = Get-Content $secretsPath -Raw | ConvertFrom-Json
         # PS 5.1 PSCustomObject cannot set missing properties — add then assign.
-        if ($null -eq ($secrets.PSObject.Properties["exotel_webhook_base_url"])) {
-            $secrets | Add-Member -NotePropertyName "exotel_webhook_base_url" -NotePropertyValue $ApiUrl
+        if ($null -eq ($secrets.PSObject.Properties["vobiz_webhook_base_url"])) {
+            $secrets | Add-Member -NotePropertyName "vobiz_webhook_base_url" -NotePropertyValue $ApiUrl
         } else {
-            $secrets.exotel_webhook_base_url = $ApiUrl
+            $secrets.vobiz_webhook_base_url = $ApiUrl
         }
         $secrets | ConvertTo-Json -Depth 20 | Set-Content -Path $secretsPath -Encoding utf8
-        Write-Host "Synced data/dev_secrets.json exotel_webhook_base_url -> $ApiUrl"
+        Write-Host "Synced data/dev_secrets.json vobiz_webhook_base_url -> $ApiUrl"
     } catch {
         Write-Warning "env_sync: could not update dev_secrets.json: $_"
     }

@@ -69,7 +69,7 @@ export function Modal({
           </div>
         )}
 
-        <div className={`${headerless ? 'p-0' : 'p-5 sm:p-6'} max-h-[calc(92vh-24px)] overflow-y-auto`}>
+        <div className={`${headerless ? 'p-0' : 'p-5 sm:p-6'} flex-1 min-h-0 overflow-y-auto overscroll-contain`}>
           {children}
         </div>
       </div>

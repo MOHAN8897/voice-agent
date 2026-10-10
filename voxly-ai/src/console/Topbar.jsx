@@ -122,20 +122,20 @@ export function Topbar({
         </button>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 sm:gap-2">
         <button
           type="button"
           data-testid="topbar-wallet"
           data-tour="topbar-wallet"
           onClick={() => openAddFunds?.(null)}
-          className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white hover:bg-[#FAF9FD] text-[#0F0E17] border border-[#E4E2EB] shadow-2xs transition-all active:scale-[0.98]"
+          className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl text-xs font-semibold bg-white hover:bg-[#FAF9FD] text-[#0F0E17] border border-[#E4E2EB] shadow-2xs transition-all active:scale-[0.98]"
           title="Wallet balance — click to add funds"
         >
-          <CreditCard className="w-3.5 h-3.5 text-[#6344E7]" />
+          <CreditCard className="w-3.5 h-3.5 text-[#6344E7] shrink-0" />
           {isLoading && !wallet ? (
             <TopbarBalanceSkeleton />
           ) : (
-            <span className="font-mono">{walletLabel}</span>
+            <span className="font-mono text-[11px] sm:text-xs">{walletLabel}</span>
           )}
         </button>
 
@@ -178,6 +178,27 @@ export function Topbar({
                   <div className="text-[11px] text-[#524E5E] truncate">{user?.email}</div>
                 </div>
               )}
+
+              {/* Mobile Wallet Quick Top-up Card */}
+              <div className="sm:hidden p-2.5 mb-1.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <span className="text-[11px] text-[#524E5E] flex items-center gap-1">
+                    <CreditCard className="w-3 h-3 text-[#6344E7]" />
+                    Balance:
+                  </span>
+                  <span className="font-mono font-bold text-xs text-[#0F0E17]">{walletLabel}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUserMenuOpen(false);
+                    openAddFunds?.(null);
+                  }}
+                  className="w-full py-1.5 px-2 rounded-lg bg-[#6344E7] text-white text-xs font-bold text-center hover:bg-[#5235D9] transition-colors shadow-2xs active:scale-[0.98]"
+                >
+                  + Add funds
+                </button>
+              </div>
               <button
                 type="button"
                 onClick={() => go('settings')}

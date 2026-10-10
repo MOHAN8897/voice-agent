@@ -1,4 +1,4 @@
-"""Phase 5 tests — auth, transcode, exotel, campaigns."""
+"""Phase 5 tests — auth, transcode, telephony, campaigns."""
 from __future__ import annotations
 
 from server.tests.conftest import DEV_TEST_BASE_URL
@@ -40,32 +40,4 @@ def test_dev_login_and_stack(monkeypatch):
     r2 = c.get("/api/dev/stack/tiers", headers={"X-CSRF-Token": csrf})
     assert r2.status_code == 200
     assert "tiers" in r2.json()
-    get_settings.cache_clear()
-
-
-def test_exotel_passthru(monkeypatch):
-    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
-    monkeypatch.setenv("SARVAM_API_KEY", "sarvam-test")
-    monkeypatch.setenv("APP_ENVIRONMENT", "development")
-    get_settings.cache_clear()
-    import server.app as app_mod
-
-    c = TestClient(app_mod.app, base_url=DEV_TEST_BASE_URL)
-    r = c.post("/api/exotel/passthru?CallSid=test-sid&From=%2B911234567890")
-    assert r.status_code == 200
-    get_settings.cache_clear()
-
-
-def test_exotel_status(monkeypatch):
-    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
-    monkeypatch.setenv("SARVAM_API_KEY", "sarvam-test")
-    get_settings.cache_clear()
-    import server.app as app_mod
-
-    c = TestClient(app_mod.app, base_url=DEV_TEST_BASE_URL)
-    r = c.get("/api/exotel/status")
-    assert r.status_code == 200
-    body = r.json()
-    assert "enabled" in body
-    assert "handshake_ok" in body
     get_settings.cache_clear()

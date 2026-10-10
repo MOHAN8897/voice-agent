@@ -169,6 +169,40 @@ async def assert_wallet_allows_pstn(tenant_id: uuid.UUID) -> None:
 assert_wallet_allows_usage = assert_wallet_allows_pstn
 
 
+async def max_allowed_call_duration_sec(
+    tenant_id: uuid.UUID,
+    channel: str = "pstn",
+    global_cap_sec: int = 900,
+) -> int:
+    """Calculate maximum duration in seconds that the tenant's wallet balance can cover.
+
+    Caps at global_cap_sec (default 900s / 15 mins). If SaaS auth is disabled, returns global_cap_sec.
+    """
+    settings = get_settings()
+    if not settings.saas_auth_enabled:
+        return global_cap_sec
+    try:
+        wallet = await get_or_create_wallet(tenant_id)
+    except Exception:
+        return global_cap_sec
+
+    rate_cents = int(settings.pstn_rate_usd_cents_per_min if channel == "pstn" else settings.web_agent_rate_usd_cents_per_min)
+    rate_cents = max(1, rate_cents)
+    rate_cents_per_sec = rate_cents / 60.0
+
+    fx = float(getattr(settings, "fx_rate_inr", 0) or 95.64) or 95.64
+    rate_paise_per_sec = max(0.01, (rate_cents * fx) / 60.0)
+
+    balance_cents = max(0, int(wallet.balance_cents or 0))
+    balance_paise = max(0, int(wallet.balance_inr_paise or 0))
+
+    dur_usd = int(balance_cents / rate_cents_per_sec) if balance_cents > 0 else 0
+    dur_inr = int(balance_paise / rate_paise_per_sec) if balance_paise > 0 else 0
+    affordable_sec = max(dur_usd, dur_inr)
+
+    return min(global_cap_sec, max(0, affordable_sec))
+
+
 async def assert_wallet_can_afford_did(tenant_id: uuid.UUID) -> None:
     """Fail fast before inventory transfer or Telnyx order when the wallet cannot cover monthly DID rent."""
     from server.services.saas.billing_rates import rates_with_derived_inr

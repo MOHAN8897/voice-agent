@@ -23,7 +23,7 @@ class PlaybackController(Protocol):
 
 
 class EstimatedPlaybackTracker:
-    """For Exotel/Plivo: estimate remaining play time from bytes sent (no local queue)."""
+    """For Vobiz/Plivo: estimate remaining play time from bytes sent (no local queue)."""
 
     def __init__(self, *, frame_ms: float = 20.0, post_send_hold_ms: float = 150.0) -> None:
         self._frame_ms = frame_ms

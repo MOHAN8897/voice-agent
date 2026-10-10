@@ -101,10 +101,15 @@ def test_vobiz_call_registry():
 
 @pytest.mark.asyncio
 async def test_vobiz_answer_webhook_returns_valid_xml():
-    """Verify POST /api/vobiz/answer generates valid VoiceXML with WebSocket stream instructions."""
+    """Verify POST /api/vobiz/answer generates valid VoiceXML with WebSocket stream instructions when agent is known."""
+    token = vobiz_stream_tokens.create(
+        call_uuid="vobiz-call-abc-123",
+        agent_id="test-agent-123",
+        tenant_id="test-tenant-123",
+        direction="inbound",
+    )
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
-        # Simulate incoming Vobiz call answer POST
         res = await client.post(
             "/api/vobiz/answer",
             data={
@@ -113,6 +118,7 @@ async def test_vobiz_answer_webhook_returns_valid_xml():
                 "To": "+15551112222",
                 "Direction": "inbound",
                 "CallStatus": "ringing",
+                "token": token,
             },
         )
         assert res.status_code == 200
@@ -122,6 +128,30 @@ async def test_vobiz_answer_webhook_returns_valid_xml():
         assert "</Response>" in xml_text
         assert '<Stream bidirectional="true"' in xml_text
         assert "ws/vobiz-stream?token=" in xml_text
+
+
+@pytest.mark.asyncio
+async def test_vobiz_answer_webhook_unassigned_number_safely_declined():
+    """Verify POST /api/vobiz/answer for unassigned numbers does NOT leak agents across tenants."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://testserver") as client:
+        res = await client.post(
+            "/api/vobiz/answer",
+            data={
+                "CallUUID": "vobiz-unassigned-999",
+                "From": "+15559998888",
+                "To": "+15550000000",
+                "Direction": "inbound",
+                "CallStatus": "ringing",
+            },
+        )
+        assert res.status_code == 200
+        assert "application/xml" in res.headers["content-type"]
+        xml_text = res.text
+        assert "<Response>" in xml_text
+        assert "This number is not assigned to an active voice assistant" in xml_text
+        assert "<Hangup />" in xml_text
+        assert "<Stream" not in xml_text
 
 
 @pytest.mark.asyncio
@@ -223,4 +253,174 @@ def test_tenant_dial_error_sanitization():
     sanitized_bal = _sanitize_tenant_dial_error(balance_leak)
     assert "Vobiz account" not in sanitized_bal
     assert "support" in sanitized_bal
+
+
+@pytest.mark.asyncio
+async def test_vobiz_answer_webhook_get_method():
+    """Verify GET /api/vobiz/answer returns valid VoiceXML with stream token."""
+    token = vobiz_stream_tokens.create(
+        call_uuid="vobiz-get-test-123",
+        agent_id="test-agent-get",
+        tenant_id="test-tenant-get",
+        direction="inbound",
+    )
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://testserver") as client:
+        res = await client.get(
+            f"/api/vobiz/answer?CallUUID=vobiz-get-test-123&From=%2B919876543210&To=%2B917965480745&Direction=inbound&token={token}"
+        )
+        assert res.status_code == 200
+        assert "application/xml" in res.headers["content-type"]
+        xml_text = res.text
+        assert "<Response>" in xml_text
+        assert '<Stream bidirectional="true"' in xml_text
+        assert 'contentType="audio/x-l16;rate=16000"' in xml_text
+        assert 'keepCallAlive="true"' in xml_text
+        assert "<Hangup" not in xml_text
+
+
+def test_vobiz_call_registry_alias_resolution():
+    """Verify call registry alias resolution links request_uuid, outbound_id, and CallUUID."""
+    registry = VobizCallRegistry()
+    registry.upsert(
+        "vobiz-outbound-uuid-1",
+        {
+            "outbound_id": "vobiz-outbound-uuid-1",
+            "agent_id": "agent-telugu-prod",
+            "tier": "ultra",
+            "status": "initiated",
+        },
+    )
+    # Bridge carrier CallUUID to original outbound ID
+    registry.alias("carrier-call-uuid-999", "vobiz-outbound-uuid-1")
+
+    # Lookup by carrier CallUUID must return original context
+    resolved = registry.get("carrier-call-uuid-999")
+    assert resolved is not None
+    assert resolved.get("agent_id") == "agent-telugu-prod"
+    assert resolved.get("tier") == "ultra"
+    assert resolved.get("outbound_id") == "vobiz-outbound-uuid-1"
+
+
+def test_vobiz_pstn_prewarm_wire_spec():
+    """Verify Vobiz wire specifications for prewarming use 16kHz linear16."""
+    from server.services.pstn_prewarm import _PROVIDER_WIRE
+
+    assert "vobiz" in _PROVIDER_WIRE
+    vobiz_spec = _PROVIDER_WIRE["vobiz"]
+    assert vobiz_spec["sample_rate"] == 16000
+    assert vobiz_spec["tts_output_codec"] == "linear16"
+
+
+@pytest.mark.asyncio
+async def test_vobiz_bridge_playback_tracking_and_pacing():
+    """Verify VobizPstnBridge notes sent frames to EstimatedPlaybackTracker preventing early farewell cut."""
+    from unittest.mock import AsyncMock, MagicMock
+    from server.services.pstn_playback import EstimatedPlaybackTracker
+    from server.services.vobiz_pstn_bridge import VobizPstnBridge
+
+    mock_ws = MagicMock()
+    mock_ws.send_text = AsyncMock()
+
+    bridge = VobizPstnBridge(mock_ws)
+    bridge._playback = EstimatedPlaybackTracker(frame_ms=20.0, post_send_hold_ms=100.0)
+    bridge.stream_id = "test-stream-1"
+    bridge._wire_codec = "linear16"
+    bridge._wire_sample_rate = 16000
+
+    assert bridge._playback.is_active() is False
+
+    # Send 2 frames of 16kHz Linear16 (640 bytes each = 1280 bytes)
+    dummy_wire = b"\x00" * 1280
+    await bridge._send_agent_wire(dummy_wire)
+
+    # Playback tracker MUST be active now
+    assert bridge._playback.is_active() is True
+    assert bridge._media_frames_out == 2
+    assert mock_ws.send_text.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_vobiz_outbound_dial_guard_hangup(monkeypatch):
+    """Verify outbound dial guard detects and hangs up active calls before redialing."""
+    from unittest.mock import AsyncMock
+    from server.services.outbound_dial_guard import hangup_active_vobiz_to
+    from server.services.vobiz_client import VobizClient, vobiz_call_registry
+
+    # Register active call to destination
+    test_dest = "+919999988888"
+    vobiz_call_registry.upsert(
+        "test-active-uuid-123",
+        {
+            "call_uuid": "test-active-uuid-123",
+            "to": test_dest,
+            "status": "in-progress",
+            "ended": False,
+        },
+    )
+
+    hangup_mock = AsyncMock(return_value={"ok": True})
+    monkeypatch.setattr(VobizClient, "hangup_call", hangup_mock)
+
+    cancelled = await hangup_active_vobiz_to(test_dest)
+    assert cancelled == 1
+    hangup_mock.assert_awaited_once_with("test-active-uuid-123")
+    assert vobiz_call_registry.get("test-active-uuid-123")["ended"] is True
+
+
+def test_vobiz_stream_ws_rejects_missing_token():
+    """Verify WebSocket endpoint strictly rejects unauthenticated connections without token."""
+    from starlette.testclient import TestClient
+    from starlette.websockets import WebSocketDisconnect
+
+    client = TestClient(app)
+    with client.websocket_connect("/ws/vobiz-stream") as ws:
+        with pytest.raises(WebSocketDisconnect) as exc:
+            ws.receive_text()
+        assert exc.value.code == 1008
+
+
+def test_vobiz_stream_ws_rejects_mismatched_call_uuid():
+    """Verify WebSocket endpoint rejects attempts to connect with token bound to a different call_uuid."""
+    from starlette.testclient import TestClient
+    from starlette.websockets import WebSocketDisconnect
+
+    token = vobiz_stream_tokens.create(call_uuid="real-call-123", agent_id="agent-1")
+    client = TestClient(app)
+    with client.websocket_connect(f"/ws/vobiz-stream?token={token}&call_uuid=wrong-call-999") as ws:
+        with pytest.raises(WebSocketDisconnect) as exc:
+            ws.receive_text()
+        assert exc.value.code == 1008
+
+
+@pytest.mark.asyncio
+async def test_vobiz_policy_transfer_xml_escaping():
+    """Verify transfer destination number is properly XML-escaped to prevent VoiceXML injection."""
+    from unittest.mock import patch
+    from server.services.saas.telephony_profile import InboundDecision
+
+    mock_decision = InboundDecision(
+        should_answer=False,
+        route="transfer",
+        transfer_number="+919876543210</Number><Hangup/><!--",
+        reason="business_hours_closed",
+    )
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://testserver") as client:
+        with patch("server.services.saas.telephony_profile.profile_for_number", return_value={"agent_id": "test-ag", "tenant_id": "t-1"}):
+            with patch("server.services.saas.telephony_profile.evaluate_inbound_policy", return_value=mock_decision):
+                res = await client.post(
+                    "/api/vobiz/answer",
+                    data={
+                        "CallUUID": "vobiz-xfer-123",
+                        "From": "+15559998888",
+                        "To": "+919876543210",
+                        "Direction": "inbound",
+                    },
+                )
+                assert res.status_code == 200
+                assert "&lt;/Number&gt;&lt;Hangup/&gt;&lt;!--" in res.text
+                assert "</Number><Hangup/><!--" not in res.text
+
 

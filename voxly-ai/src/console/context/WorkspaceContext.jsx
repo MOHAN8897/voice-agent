@@ -551,7 +551,12 @@ export function WorkspaceProvider({ children }) {
   ) => {
     for (let i = 0; i < attempts; i += 1) {
       const purchase = await api.telephony.getPurchase(purchaseId).catch(() => null);
-      if (!purchase) break;
+      if (!purchase) {
+        if (i + 1 < attempts) {
+          await new Promise((r) => setTimeout(r, intervalMs));
+        }
+        continue;
+      }
       const status = String(purchase.status || '').toLowerCase();
       if (status === 'active') {
         await loadWorkspaceData();

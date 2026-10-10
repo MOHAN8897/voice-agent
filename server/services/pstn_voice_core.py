@@ -1,4 +1,4 @@
-"""Shared PSTN voice loop — STT → brain → TTS (used by Exotel/Telnyx/Plivo bridges)."""
+"""Shared PSTN voice loop — STT → brain → TTS (used by Telnyx/Vobiz bridges)."""
 from __future__ import annotations
 
 import asyncio
@@ -76,7 +76,7 @@ PHASE_INTERRUPTING = "interrupting"
 PHASE_CLOSING = "closing"
 PHASE_ENDED = "ended"
 
-# PSTN telephony: 8 kHz (Exotel/Plivo μ-law) or 16 kHz (Telnyx L16).
+# PSTN telephony: 8 kHz (Vobiz/Plivo μ-law) or 16 kHz (Telnyx L16).
 PSTN_SAMPLE_RATE = 8000
 TELNYX_PCM_SAMPLE_RATE = 16000
 _MULAW_FRAME_BYTES = 160  # 20 ms μ-law @ 8 kHz
@@ -1215,7 +1215,20 @@ class PstnVoiceLoop:
         if self.call_id:
             pstn_media_flow.emit(self.call_id, "stt_stream", "inbound", status="failed", detail=detail[:200])
         if self._on_remote_hangup and not self._closed:
-            asyncio.create_task(self._on_remote_hangup())
+            async def _speak_then_hangup() -> None:
+                # Best-effort: speak an apology so the caller isn't silently cut off.
+                try:
+                    from server.prompts.agent_voice_rules import unclear_fallback_for
+                    fallback = unclear_fallback_for(self._resolve_language())
+                    if fallback and not self._closed:
+                        await asyncio.wait_for(self.speak(fallback), timeout=8.0)
+                except Exception as exc:
+                    log_pstn("stt.terminal_fallback.failed", call_id=self.call_id, error=str(exc)[:160])
+                try:
+                    await self._on_remote_hangup()
+                except Exception as exc:
+                    log_pstn("stt.terminal_hangup.failed", call_id=self.call_id, error=str(exc)[:160])
+            asyncio.create_task(_speak_then_hangup())
 
     async def _stt_ping(self) -> None:
         while not self._closed and self._stt:

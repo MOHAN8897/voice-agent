@@ -207,15 +207,7 @@ class Settings(BaseSettings):
     r2_secret_access_key: str | None = Field(None, alias="R2_SECRET_ACCESS_KEY")
     r2_bucket_name: str = Field("voxly-call-archives", alias="R2_BUCKET_NAME")
 
-    enable_exotel: bool = Field(False, alias="ENABLE_EXOTEL")
-    exotel_api_key: str | None = Field(None, alias="EXOTEL_API_KEY")
-    exotel_api_token: str | None = Field(None, alias="EXOTEL_API_TOKEN")
-    exotel_account_sid: str | None = Field(None, alias="EXOTEL_ACCOUNT_SID")
-    exotel_subdomain: str = Field("api.exotel.com", alias="EXOTEL_SUBDOMAIN")
-    exotel_exophone: str | None = Field(None, alias="EXOTEL_EXOPHONE")
-    exotel_webhook_base_url: str | None = Field(None, alias="EXOTEL_WEBHOOK_BASE_URL")
-
-    telephony_provider: str = Field("exotel", alias="TELEPHONY_PROVIDER")
+    telephony_provider: str = Field("telnyx", alias="TELEPHONY_PROVIDER")
     enable_telnyx: bool = Field(False, alias="ENABLE_TELNYX")
     telnyx_api_key: str | None = Field(None, alias="TELNYX_API_KEY")
     telnyx_public_key: str | None = Field(None, alias="TELNYX_PUBLIC_KEY")
@@ -247,6 +239,7 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("VOBIZ_APP_ID", "VOBIZ_APPLICATION_ID"),
     )
     vobiz_phone_number: str | None = Field(None, alias="VOBIZ_PHONE_NUMBER")
+    vobiz_webhook_base_url: str | None = Field(None, alias="VOBIZ_WEBHOOK_BASE_URL")
     vobiz_webhook_secret: str | None = Field(None, alias="VOBIZ_WEBHOOK_SECRET")
     vobiz_max_concurrent_calls: int = Field(50, alias="VOBIZ_MAX_CONCURRENT_CALLS")
     campaign_max_concurrency: int = Field(20, alias="CAMPAIGN_MAX_CONCURRENCY")

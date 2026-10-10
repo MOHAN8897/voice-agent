@@ -15,6 +15,7 @@ import {
   Download,
   CreditCard,
   Activity,
+  X,
 } from 'lucide-react';
 import { SolidCard } from '../ui/SolidCard';
 import { StatusBadge } from '../ui/StatusBadge';
@@ -237,6 +238,13 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
   const [callbacks, setCallbacks] = useState([]);
   const [callbackBusy, setCallbackBusy] = useState(false);
   const [callbackTarget, setCallbackTarget] = useState('');
+  const detailRef = React.useRef(null);
+
+  useEffect(() => {
+    if (selectedCallId && detailRef.current && typeof window !== 'undefined' && window.innerWidth < 1024) {
+      detailRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [selectedCallId]);
 
   useEffect(() => {
     if (lockedAgentId) {
@@ -743,7 +751,7 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
             </div>
 
             {activeCall && (
-              <div className="lg:col-span-5 space-y-4">
+              <div ref={detailRef} className="lg:col-span-5 space-y-4">
                 <SolidCard className="space-y-4">
                   <div className="flex items-start justify-between pb-3 border-b border-[#E4E2EB]">
                     <div>
@@ -756,7 +764,18 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                         {activeCall.callerPhone ? ` (${activeCall.callerPhone})` : ''}
                       </h3>
                     </div>
-                    <StatusPill status={activeCall.status} />
+                    <div className="flex items-center gap-2">
+                      <StatusPill status={activeCall.status} />
+                      <button
+                        type="button"
+                        onClick={() => setSelectedCallId(null)}
+                        className="p-1 rounded-lg text-[#524E5E] hover:text-[#0F0E17] hover:bg-[#FAF9FD] transition-colors"
+                        title="Close details"
+                        aria-label="Close details"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
 
                   {/* Why this call ended up with this status, in plain language. */}

@@ -35,6 +35,17 @@ function SceneFallback({ className = '', eager = false }) {
 function deviceCanRender3D() {
   if (typeof window === 'undefined') return false;
   try {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return false;
+    }
+  } catch {}
+  try {
+    const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (conn && conn.saveData) {
+      return false;
+    }
+  } catch {}
+  try {
     const canvas = document.createElement('canvas');
     const gl =
       canvas.getContext('webgl2') ||

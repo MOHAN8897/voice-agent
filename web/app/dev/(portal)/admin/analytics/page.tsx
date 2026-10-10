@@ -54,7 +54,7 @@ function formatMinutes(seconds: number) {
 function channelLabel(key: string) {
   const k = key.toLowerCase();
   if (k === "browser" || k === "web") return "Web agent";
-  if (k === "pstn" || k === "phone" || k === "telnyx" || k === "exotel") return "Phone (PSTN)";
+  if (k === "pstn" || k === "phone" || k === "telnyx" || k === "vobiz") return "Phone (PSTN)";
   return key;
 }
 

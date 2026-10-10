@@ -90,9 +90,7 @@ type CallRow = {
 };
 
 const PROVIDERS = [
-  { id: "exotel", label: "Exotel" },
   { id: "telnyx", label: "Telnyx" },
-  { id: "plivo", label: "Plivo" },
   { id: "vobiz", label: "Vobiz" },
 ] as const;
 
@@ -602,7 +600,7 @@ export function PstnTestPanel({
       <p className="text-sm text-text-muted">
         Loading telephony status…
         <span className="mt-1 block text-xs text-text-subtle">
-          Checking Exotel, Telnyx, and Plivo handshakes (usually under 10s).
+          Checking Telnyx and Vobiz handshakes (usually under 10s).
         </span>
       </p>
     );
@@ -647,7 +645,7 @@ export function PstnTestPanel({
       <DevCard title="SIP trunk provider" description="Only enabled providers from Environment are shown">
         {enabledProviders.length === 0 ? (
           <p className="rounded-xl border border-dashed border-warning/40 bg-warning/5 px-4 py-3 text-sm text-warning">
-            No PSTN providers enabled. Turn on Exotel, Telnyx, or Plivo in{" "}
+            No PSTN providers enabled. Turn on Telnyx or Vobiz in{" "}
             <Link href="/dev/environment" className="text-accent hover:underline">Environment</Link> and save keys.
           </p>
         ) : (

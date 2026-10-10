@@ -36,6 +36,7 @@ class CallContext:
     barge_in_flight: bool = False
     slow_down_nudged: bool = False
     last_stt_partial_at: float = 0.0
+    max_duration_sec: int = 900
     call_end_policy: dict[str, Any] | None = None
     callback_request_text: str = ""
     callback_close_phase: str = "idle"

@@ -13,6 +13,12 @@ from server.services.outbound_dial_guard import (
     release_outbound_slot,
 )
 
+@pytest.fixture(autouse=True)
+def _isolate_telnyx_registry(monkeypatch):
+    from server.services.telnyx_client import telnyx_call_registry
+
+    monkeypatch.setattr(telnyx_call_registry, "_redis", lambda: None)
+
 
 @pytest.mark.asyncio
 async def test_acquire_blocks_duplicate_destination_until_released():
@@ -49,10 +55,10 @@ async def test_acquire_allows_different_destinations():
 async def test_acquire_is_provider_scoped():
     dest = "+933333333333"
     a = await acquire_outbound_slot("telnyx", dest)
-    b = await acquire_outbound_slot("exotel", dest)
+    b = await acquire_outbound_slot("vobiz", dest)
     assert a and b
     release_outbound_slot("telnyx", dest)
-    release_outbound_slot("exotel", dest)
+    release_outbound_slot("vobiz", dest)
 
 
 def test_dest_digits_uses_last_ten():

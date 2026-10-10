@@ -597,13 +597,17 @@ async def profile_for_number(e164: str | None) -> dict[str, Any] | None:
         pn, agent = row
         agent_id = str(pn.agent_id)
         agent_status = str(agent.status or "active") if agent else "active"
+        tenant_id = str(pn.tenant_id) if pn.tenant_id else (str(agent.tenant_id) if agent and agent.tenant_id else "")
 
     prof = await get_profile(agent_id)
     if prof is not None:
         prof["agent_status"] = agent_status
+        if not prof.get("tenant_id") and tenant_id:
+            prof["tenant_id"] = tenant_id
         return prof
     return {
         "agent_id": agent_id,
+        "tenant_id": tenant_id,
         "agent_status": agent_status,
         "inbound_enabled": True,
         "outbound_enabled": True,

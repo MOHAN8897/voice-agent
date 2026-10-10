@@ -367,7 +367,7 @@ def merge_pstn_tts_config(
     wire_mode: str = "rtp_l16",
     resolved_stack: Any | None = None,
 ) -> dict[str, Any]:
-    """Telephony TTS — L16 RTP @ 16 kHz (Telnyx) or μ-law RTP @ 8 kHz (Exotel/Plivo)."""
+    """Telephony TTS — L16 RTP @ 16 kHz (Telnyx) or μ-law RTP @ 8 kHz (Vobiz/Plivo)."""
     data = dict(client_data or {})
     if wire_mode == "mp3":
         cfg = resolve_tts_config(

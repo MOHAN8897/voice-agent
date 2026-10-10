@@ -15,8 +15,6 @@ _SECRET_FIELDS = frozenset(
         "deepseek_api_key",
         "cartesia_api_key",
         "gemini_api_key",
-        "exotel_api_key",
-        "exotel_api_token",
         "telnyx_api_key",
         "plivo_auth_id",
         "plivo_auth_token",
@@ -31,7 +29,6 @@ _TOGGLE_FIELDS = frozenset(
         "enable_deepseek",
         "enable_gemini",
         "enable_cartesia",
-        "enable_exotel",
         "enable_telnyx",
         "enable_plivo",
         "enable_vobiz",
@@ -45,10 +42,6 @@ _STRING_FIELDS = frozenset(
         "voice_agent_tier",
         "app_environment",
         "telephony_provider",
-        "exotel_account_sid",
-        "exotel_subdomain",
-        "exotel_exophone",
-        "exotel_webhook_base_url",
         "telnyx_connection_id",
         "telnyx_phone_number",
         "telnyx_outbound_voice_profile_id",
@@ -56,6 +49,7 @@ _STRING_FIELDS = frozenset(
         "vobiz_auth_id",
         "vobiz_app_id",
         "vobiz_phone_number",
+        "vobiz_webhook_base_url",
     }
 )
 
@@ -113,7 +107,6 @@ class DevSecretsStore:
             ("deepseek_api_key", "enable_deepseek"),
             ("gemini_api_key", "enable_gemini"),
             ("telnyx_api_key", "enable_telnyx"),
-            ("exotel_api_key", "enable_exotel"),
             ("plivo_auth_id", "enable_plivo"),
         ]
         changed = False
@@ -183,8 +176,6 @@ class DevSecretsStore:
                     clean["enable_gemini"] = True
                 elif key == "telnyx_api_key" and "enable_telnyx" not in patch:
                     clean["enable_telnyx"] = True
-                elif key == "exotel_api_key" and "enable_exotel" not in patch:
-                    clean["enable_exotel"] = True
                 elif key == "plivo_auth_id" and "enable_plivo" not in patch:
                     clean["enable_plivo"] = True
             elif key in _TOGGLE_FIELDS:
@@ -284,13 +275,6 @@ class DevSecretsStore:
             ],
             "telephony": [
                 self._string_row("TELEPHONY_PROVIDER", "telephony_provider", settings, overlay),
-                self._toggle_row("ENABLE_EXOTEL", "enable_exotel", settings, overlay),
-                self._secret_row("EXOTEL_API_KEY", "exotel_api_key", settings, overlay),
-                self._secret_row("EXOTEL_API_TOKEN", "exotel_api_token", settings, overlay),
-                self._string_row("EXOTEL_ACCOUNT_SID", "exotel_account_sid", settings, overlay),
-                self._string_row("EXOTEL_SUBDOMAIN", "exotel_subdomain", settings, overlay),
-                self._string_row("EXOTEL_EXOPHONE", "exotel_exophone", settings, overlay),
-                self._string_row("EXOTEL_WEBHOOK_BASE_URL", "exotel_webhook_base_url", settings, overlay),
                 self._toggle_row("ENABLE_TELNYX", "enable_telnyx", settings, overlay),
                 self._secret_row("TELNYX_API_KEY", "telnyx_api_key", settings, overlay),
                 self._string_row("TELNYX_CONNECTION_ID", "telnyx_connection_id", settings, overlay),
@@ -305,6 +289,7 @@ class DevSecretsStore:
                 self._secret_row("VOBIZ_AUTH_TOKEN", "vobiz_auth_token", settings, overlay),
                 self._string_row("VOBIZ_APP_ID", "vobiz_app_id", settings, overlay),
                 self._string_row("VOBIZ_PHONE_NUMBER", "vobiz_phone_number", settings, overlay),
+                self._string_row("VOBIZ_WEBHOOK_BASE_URL", "vobiz_webhook_base_url", settings, overlay),
             ],
         }
         return {

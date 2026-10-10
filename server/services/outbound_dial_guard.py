@@ -174,28 +174,6 @@ async def hangup_active_telnyx_to(client: Any, to_e164: str) -> None:
             pass
 
 
-async def hangup_active_exotel_to(to_e164: str) -> None:
-    from server.services.exotel_call_registry import exotel_call_registry
-    from server.services.exotel_client import ExotelApiError, ExotelClient
-
-    dest = (to_e164 or "").strip()
-    if not dest:
-        return
-    client = ExotelClient()
-    for row in exotel_call_registry.list_recent(20):
-        if str(row.get("to") or "").strip() != dest:
-            continue
-        if not _is_active_status(str(row.get("status") or "")):
-            continue
-        call_sid = str(row.get("call_sid") or "")
-        if not call_sid:
-            continue
-        try:
-            await client.hangup(call_sid)
-            exotel_call_registry.upsert(call_sid, {"status": "canceled", "last_event": "replaced-by-new-dial"})
-        except ExotelApiError:
-            pass
-
 
 async def hangup_active_plivo_to(to_e164: str) -> None:
     from server.services.plivo_client import PlivoApiError, PlivoClient, plivo_call_registry
@@ -217,3 +195,34 @@ async def hangup_active_plivo_to(to_e164: str) -> None:
             plivo_call_registry.upsert(call_uuid, {"status": "canceled", "last_event": "replaced-by-new-dial"})
         except PlivoApiError:
             pass
+
+
+async def hangup_active_vobiz_to(to_e164: str) -> int:
+    from server.services.vobiz_client import VobizApiError, VobizClient, vobiz_call_registry
+
+    dest = (to_e164 or "").strip()
+    if not dest:
+        return 0
+    client = VobizClient()
+    cancelled_count = 0
+    for row in vobiz_call_registry.list_recent(20):
+        if not _dest_matches(str(row.get("to") or ""), to_e164):
+            continue
+        if row.get("ended"):
+            continue
+        if not _is_active_status(str(row.get("status") or "")):
+            continue
+        call_uuid = str(row.get("call_uuid") or row.get("request_uuid") or "")
+        if not call_uuid:
+            continue
+        try:
+            await client.hangup_call(call_uuid)
+            vobiz_call_registry.upsert(
+                call_uuid,
+                {"status": "canceled", "last_event": "replaced-by-new-dial", "ended": True},
+            )
+            cancelled_count += 1
+        except Exception:
+            pass
+    return cancelled_count
+

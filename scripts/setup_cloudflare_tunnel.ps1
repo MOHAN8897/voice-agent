@@ -106,7 +106,7 @@ if (Test-Path $EnvFile) {
     $lines = Get-Content $EnvFile
     $map = @{
         "PUBLIC_TUNNEL_URL"      = $publicApi
-        "EXOTEL_WEBHOOK_BASE_URL" = $publicApi
+        "VOBIZ_WEBHOOK_BASE_URL" = $publicApi
         "CLIENT_URL"             = "https://$AppHost"
         "PUBLIC_APP_URL"         = "https://$AppHost"
         "VOXLY_FRONTEND_URL"     = "https://$AppHost"
@@ -124,7 +124,7 @@ if (Test-Path $EnvFile) {
         if (-not $found) { $lines += "$key=$val" }
     }
     Set-Content -Path $EnvFile -Value $lines
-    Write-Host "Updated .env (PUBLIC_TUNNEL_URL, EXOTEL_WEBHOOK_BASE_URL, CLIENT_URL, VOXLY_FRONTEND_URL)."
+    Write-Host "Updated .env (PUBLIC_TUNNEL_URL, VOBIZ_WEBHOOK_BASE_URL, CLIENT_URL, VOXLY_FRONTEND_URL)."
 }
 
 # web/.env.local for stable public API when testing from browser
@@ -142,8 +142,8 @@ Write-Host "Stable API:  https://$ApiHost"
 Write-Host "Stable App:  https://$AppHost"
 Write-Host "  product (Voxly)      https://$AppHost"
 Write-Host "  admin panel          https://$AppHost/dev/login"
-Write-Host "Exotel passthru:  https://$ApiHost/api/exotel/passthru"
-Write-Host "Exotel callback: https://$ApiHost/api/exotel/status-callback"
+Write-Host "Vobiz answer:  https://$ApiHost/api/vobiz/answer"
+Write-Host "Vobiz hangup: https://$ApiHost/api/vobiz/hangup"
 Write-Host ""
 Write-Host "Start stack:  npm run dev:up -KillStale"
 Write-Host "Start tunnel: npm run dev:cf-tunnel"

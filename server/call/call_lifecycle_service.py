@@ -61,6 +61,7 @@ def _normalize_end_reason(reason: str) -> str:
     return mapped if mapped in END_REASONS else "user_stop"
 
 _idle_tasks: dict[str, asyncio.Task] = {}
+_max_duration_tasks: dict[str, asyncio.Task] = {}
 
 
 def _utcnow() -> datetime:
@@ -103,7 +104,7 @@ class CallLifecycleService:
         stack_override: dict[str, Any] | None = None,
         config_session_id: str | None = None,
         caller_id: str | None = None,
-        language: str = "te-IN",
+        language: str | None = None,
         realtime_prewarm_key: str | None = None,
         billed_user_id: str | None = None,
         is_test: bool | None = None,
@@ -334,6 +335,16 @@ class CallLifecycleService:
         }
         await call_store.insert(record)
 
+        max_dur = 900
+        if agent.get("tenant_id"):
+            try:
+                from server.services.saas.billing_wallet_service import max_allowed_call_duration_sec
+                tid = uuid.UUID(str(agent["tenant_id"]))
+                max_dur = await max_allowed_call_duration_sec(tid, channel=channel, global_cap_sec=900)
+            except Exception as e:
+                logger.debug(f"[CALL] max duration calc skipped: {e}")
+                max_dur = 900
+
         ctx = CallContext(
             call_id=call_id,
             tenant_id=agent["tenant_id"],
@@ -348,10 +359,12 @@ class CallLifecycleService:
             compiled_brain_text=compiled_text,
             started_at=started,
             storage_path=storage_path,
+            max_duration_sec=max_dur,
             call_end_policy=self._load_call_end_policy(lookup_session, language),
             pipeline=pipeline,
         )
         call_context.put(ctx)
+        self._schedule_max_duration_watchdog(call_id, max_dur)
         realtime_status: dict[str, Any] = {"status": "n/a"}
         if pipeline == "realtime_voice":
             realtime_status = {"status": "voice_loop"}
@@ -464,6 +477,7 @@ class CallLifecycleService:
             ctx.end_reason = reason
             call_context.drop_session_pointer(ctx.session_id, call_id)
         self._cancel_idle(call_id)
+        self._cancel_max_duration_watchdog(call_id)
 
         from server.call.turn_coordinator import drain
 
@@ -756,6 +770,28 @@ class CallLifecycleService:
 
     def _cancel_idle(self, call_id: str) -> None:
         task = _idle_tasks.pop(call_id, None)
+        if task:
+            task.cancel()
+
+    def _schedule_max_duration_watchdog(self, call_id: str, max_sec: int) -> None:
+        self._cancel_max_duration_watchdog(call_id)
+        if max_sec <= 0:
+            return
+
+        async def _fire() -> None:
+            await asyncio.sleep(max_sec)
+            ctx = call_context.get(call_id)
+            if ctx and ctx.status == "active":
+                logger.info("[CALL] max allowed duration reached (%ds) for %s; terminating", max_sec, call_id)
+                await self.end(call_id, reason="max_duration")
+
+        try:
+            _max_duration_tasks[call_id] = asyncio.create_task(_fire())
+        except RuntimeError:
+            pass
+
+    def _cancel_max_duration_watchdog(self, call_id: str) -> None:
+        task = _max_duration_tasks.pop(call_id, None)
         if task:
             task.cancel()
 

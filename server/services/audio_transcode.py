@@ -261,21 +261,6 @@ def chunk_pcm16_frames(
     return frames
 
 
-def chunk_pcm_for_exotel(pcm8k: bytes, frame_bytes: int = 3200) -> list[bytes]:
-    """Split PCM 8k into Exotel-safe chunks (multiples of 320 bytes)."""
-    frame_bytes = max(320, (frame_bytes // 320) * 320)
-    chunks: list[bytes] = []
-    for i in range(0, len(pcm8k), frame_bytes):
-        chunk = pcm8k[i : i + frame_bytes]
-        if len(chunk) < 320:
-            continue
-        rem = len(chunk) % 320
-        if rem:
-            chunk += b"\x00" * (320 - rem)
-        chunks.append(chunk)
-    return chunks
-
-
 def pcm16_to_mulaw_8k(pcm16: bytes, *, source_rate: int = 8000) -> bytes:
     """PCM16 mono → μ-law 8 kHz for Telnyx PCMU RTP (pads odd byte tails)."""
     if not pcm16:

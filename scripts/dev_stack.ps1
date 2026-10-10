@@ -7,9 +7,9 @@
 #   npm run dev:down         # stop everything including tunnel
 #
 # Modes:
-#   auto      - tunnel if ENABLE_EXOTEL=true or cloudflared/config.yml exists
+#   auto      - tunnel if ENABLE_VOBIZ=true or cloudflared/config.yml exists
 #   local     - API + web only (no tunnel)
-#   telephony - API + web + named/quick API tunnel (Exotel PSTN)
+#   telephony - API + web + named/quick API tunnel (Vobiz PSTN)
 #   share     - API + web + tunnel + public app link for friends
 
 param(
@@ -56,7 +56,7 @@ function Should-StartTunnel {
     # auto: tunnel only when explicitly enabled (avoids heavy CF + public URL sync on every dev)
     if (Test-EnvFlag "DEV_ENABLE_TUNNEL") {
         if (Test-NamedTunnelConfig) { return $true }
-        if (Test-EnvFlag "ENABLE_EXOTEL") { return $true }
+        if (Test-EnvFlag "ENABLE_VOBIZ") { return $true }
     }
     return $false
 }
@@ -155,7 +155,7 @@ if (Should-StartTunnel) {
             $tunnelStarted = $true
         }
     } else {
-        Write-Host "No named tunnel config - starting quick API tunnel for Exotel..."
+        Write-Host "No named tunnel config - starting quick API tunnel for Vobiz..."
         & (Join-Path $PSScriptRoot "tunnel_cloudflared.ps1")
         if (Test-Path (Join-Path $RepoRoot ".tunnel-url")) {
             $publicApi = (Get-Content (Join-Path $RepoRoot ".tunnel-url") -Raw).Trim()
@@ -186,8 +186,8 @@ if ($tunnelStarted -and $publicApp -and $publicApp -notmatch "localhost") {
 if ($tunnelStarted -and $publicApi) {
     Write-Host "  CARRIER WEBHOOKS (public, required for PSTN)"
     Write-Host "    Telnyx API       $publicApi/api/telnyx/webhook"
-    Write-Host "    Exotel callback  $publicApi/api/exotel/status-callback"
-    Write-Host "    Exotel WSS       wss://$($publicApi -replace '^https?://','')/ws/exotel-stream"
+    Write-Host "    Vobiz callback  $publicApi/api/vobiz/hangup"
+    Write-Host "    Vobiz WSS       wss://$($publicApi -replace '^https?://','')/ws/vobiz-stream"
     Write-Host ""
 } elseif (-not $tunnelStarted) {
     Write-Host "  Tunnel is DOWN - carrier webhooks and public links will not work."

@@ -565,7 +565,7 @@ async def record_realtime_voice_usage(
 
 
 class PstnRealtimeVoiceLoop:
-    """Drop-in voice-loop surface for Telnyx/Exotel/Plivo without Sarvam STT/TTS."""
+    """Drop-in voice-loop surface for Telnyx/Vobiz without Sarvam STT/TTS."""
 
     def __init__(
         self,
@@ -2053,7 +2053,13 @@ class PstnRealtimeVoiceLoop:
             except Exception as exc:
                 log_pstn("hangup.retry.failed", call_id=self.call_id, error=str(exc)[:160])
             return
-        if self._started_at and now - self._started_at >= 900:
+        max_dur = 900
+        if self.call_id:
+            from server.call.call_context import get as get_call_ctx
+            ctx = get_call_ctx(self.call_id)
+            if ctx and getattr(ctx, "max_duration_sec", 0) > 0:
+                max_dur = ctx.max_duration_sec
+        if self._started_at and now - self._started_at >= max_dur:
             await self._runtime_end("max_duration")
             return
         if self._ending_at and now - self._ending_at >= 30:

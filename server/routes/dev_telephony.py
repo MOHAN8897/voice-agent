@@ -136,7 +136,7 @@ class ContactPatchBody(BaseModel):
 
 
 class SetProviderBody(BaseModel):
-    provider: str = Field(..., pattern="^(exotel|telnyx|plivo|vobiz)$")
+    provider: str = Field(..., pattern="^(telnyx|vobiz)$")
 
 
 class VoiceCheckBody(BaseModel):
@@ -284,11 +284,6 @@ async def dev_telephony_handshake(session: SessionData = Depends(require_dev_ses
     guard = telephony_guard_error(provider)
     if guard:
         return {"ok": False, "error": guard, "provider": provider}
-    if provider == "exotel":
-        from server.services.exotel_client import ExotelClient, cached_handshake
-
-        client = ExotelClient()
-        return await cached_handshake(client)
     if provider == "telnyx":
         from server.services.telnyx_client import TelnyxClient
 
@@ -336,8 +331,6 @@ async def dev_telephony_outbound(
         from server.services.outbound_dial_attempt import execute_dial_attempt
 
         async def dial():
-            if provider == "exotel":
-                return await _outbound_exotel(body)
             if provider == "telnyx":
                 return await _outbound_telnyx(body, session)
             if provider == "plivo":
@@ -409,109 +402,6 @@ async def dev_pstn_stack_validate(
         return result
 
 
-async def _outbound_exotel(body: OutboundTestBody) -> dict[str, Any]:
-    from server.config.env import get_settings
-    from server.services.exotel_call_registry import exotel_call_registry
-    from server.services.exotel_client import (
-        ExotelApiError,
-        ExotelClient,
-        ExotelConfigError,
-        build_stream_ws_url,
-        exotel_enabled,
-        public_webhook_urls,
-    )
-    from server.services.phone_assignments_store import phone_assignments_store
-
-    from server.services.dev_secrets_store import dev_secrets_store
-
-    if not exotel_enabled():
-        return {"ok": False, "error": "Exotel is disabled in Environment"}
-    urls = public_webhook_urls()
-    if not urls.get("status_callback_url"):
-        return {"ok": False, "error": "Set EXOTEL_WEBHOOK_BASE_URL (public tunnel URL)"}
-    settings = get_settings()
-    exophone = dev_secrets_store.effective("exotel_exophone", settings.exotel_exophone) or ""
-    caller_id = (body.from_e164 or exophone or "").strip()
-    to_number = body.to_e164.strip()
-    if not caller_id:
-        return {"ok": False, "error": "Set EXOTEL_EXOPHONE or fromE164"}
-    tier, language, stack_override, stack_adjustments = _outbound_pstn_context(body)
-    source_session_id, inherit_config = _resolve_outbound_source_session(body)
-    from server.services.outbound_dial_guard import hangup_active_exotel_to
-
-    await hangup_active_exotel_to(to_number)
-    phone_assignments_store.assign(caller_id, body.agent_id)
-    custom_field = f"agent:{body.agent_id};tier:{tier or 'medium'}"
-    try:
-        client = ExotelClient()
-        stream_url = build_stream_ws_url(agent_id=body.agent_id, tier=tier)
-        if not stream_url:
-            return {"ok": False, "error": "Cannot build WSS stream URL"}
-        result = await client.connect_voice_ai(
-            to_number=to_number,
-            caller_id=caller_id,
-            stream_url=stream_url,
-            status_callback=urls["status_callback_url"],
-            custom_field=custom_field,
-        )
-        call_sid = result.get("call_sid")
-        if call_sid:
-            exotel_call_registry.upsert(
-                str(call_sid),
-                {
-                    "status": result.get("status") or "queued",
-                    "from": caller_id,
-                    "to": to_number,
-                    "direction": "outbound-api",
-                    "agent_id": body.agent_id,
-                    "tier": tier,
-                    "language": language,
-                    "source_session_id": source_session_id,
-                    "inherit_test_studio_config": inherit_config,
-                    "stack_override": stack_override,
-                    "stream_url": stream_url,
-                    "last_event": "outbound-initiated",
-                },
-            )
-        payload: dict[str, Any] = {
-            "ok": True,
-            "provider": "exotel",
-            "call_sid": call_sid,
-            "status": result.get("status"),
-            "stream_url": stream_url,
-        }
-        if stack_adjustments:
-            payload["stack_adjustments"] = stack_adjustments
-        if call_sid:
-            from server.services.pstn_prewarm import schedule_prewarm
-
-            schedule_prewarm(
-                "exotel",
-                str(call_sid),
-                _outbound_prewarm_meta(
-                    body,
-                    tier=tier or "medium",
-                    language=language,
-                    source_session_id=source_session_id,
-                    inherit_config=inherit_config,
-                    stack_override=stack_override,
-                ),
-            )
-            payload["history"] = _record_dev_dial(
-                provider="exotel",
-                external_id=str(call_sid),
-                body=body,
-                tier=tier,
-                language=language,
-                stack_override=stack_override,
-                source_session_id=source_session_id,
-            )
-            await _mirror_dev_telephony()
-        return payload
-    except ExotelConfigError as e:
-        return {"ok": False, "error": str(e)}
-    except ExotelApiError as e:
-        return {"ok": False, "error": str(e), "status": e.status_code}
 
 
 async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict[str, Any]:
@@ -711,14 +601,16 @@ async def _outbound_vobiz(body: OutboundTestBody, session: SessionData) -> dict[
     import uuid
 
     from server.brain.agent_service import agent_service
+    from server.config.urls import public_api_base
+    from server.services.outbound_dial_guard import hangup_active_vobiz_to
     from server.services.pstn_debug import log_pstn, mark
+    from server.services.pstn_prewarm import schedule_prewarm
     from server.services.vobiz_client import (
         VobizApiError,
         VobizClient,
         vobiz_call_registry,
         vobiz_stream_tokens,
     )
-    from server.config.urls import public_api_base
 
     tier, language, stack_override, stack_adjustments = _outbound_pstn_context(body)
     source_session_id, inherit_config = _resolve_outbound_source_session(body)
@@ -729,11 +621,65 @@ async def _outbound_vobiz(body: OutboundTestBody, session: SessionData) -> dict[
     except Exception:
         return {"ok": False, "error": f"Agent not found: {body.agent_id}"}
 
+    await hangup_active_vobiz_to(body.to_e164)
+
     client = VobizClient()
     base_api = public_api_base()
-    ans_url = f"{base_api}/api/vobiz/answer"
-    hup_url = f"{base_api}/api/vobiz/hangup"
-    fallback_url = f"{base_api}/api/vobiz/fallback"
+    tracking_id = f"vobiz-{uuid.uuid4()}"
+
+    token = vobiz_stream_tokens.create(
+        call_uuid=tracking_id,
+        agent_id=body.agent_id,
+        tier=tier,
+        language=language,
+        stack_override=stack_override,
+        direction="outbound",
+        billed_user_id=billed_user_id,
+        tenant_id=session.tenant_id,
+        source_session_id=source_session_id,
+        outbound_id=tracking_id,
+    )
+
+    schedule_prewarm(
+        "vobiz",
+        tracking_id,
+        _outbound_prewarm_meta(
+            body,
+            tier=tier or "medium",
+            language=language,
+            source_session_id=source_session_id,
+            inherit_config=inherit_config,
+            stack_override=stack_override,
+            billed_user_id=billed_user_id,
+        ),
+    )
+
+    ans_url = f"{base_api}/api/vobiz/answer?token={token}&outbound_id={tracking_id}"
+    hup_url = f"{base_api}/api/vobiz/hangup?token={token}&outbound_id={tracking_id}"
+    fallback_url = f"{base_api}/api/vobiz/fallback?token={token}&outbound_id={tracking_id}"
+    stream_url = client.build_stream_ws_url(token=token, call_uuid=tracking_id)
+
+    vobiz_call_registry.upsert(
+        tracking_id,
+        {
+            "call_uuid": tracking_id,
+            "outbound_id": tracking_id,
+            "agent_id": body.agent_id,
+            "to": body.to_e164,
+            "from": body.from_e164,
+            "direction": "outbound",
+            "tier": tier,
+            "language": language,
+            "stack_override": stack_override,
+            "source_session_id": source_session_id,
+            "status": "initiated",
+            "dialed_at": time.time(),
+            "stream_url": stream_url,
+            "token": token,
+            "billed_user_id": billed_user_id,
+            "tenant_id": session.tenant_id,
+        },
+    )
 
     try:
         result = await client.create_outbound_call(
@@ -743,40 +689,33 @@ async def _outbound_vobiz(body: OutboundTestBody, session: SessionData) -> dict[
             hangup_url=hup_url,
             fallback_url=fallback_url,
         )
-        call_uuid = str(result.get("call_uuid") or result.get("request_uuid") or result.get("id") or uuid.uuid4())
-        token = vobiz_stream_tokens.create(
-            call_uuid=call_uuid,
-            agent_id=body.agent_id,
-            tier=tier,
-            language=language,
-            stack_override=stack_override,
-            direction="outbound",
-            billed_user_id=billed_user_id,
-            tenant_id=session.tenant_id,
-            source_session_id=source_session_id,
-        )
-        stream_url = client.build_stream_ws_url(token=token, call_uuid=call_uuid)
-        vobiz_call_registry.upsert(
-            call_uuid,
-            {
-                "call_uuid": call_uuid,
-                "agent_id": body.agent_id,
-                "to": body.to_e164,
-                "from": body.from_e164,
-                "direction": "outbound",
-                "tier": tier,
-                "language": language,
-                "status": "initiated",
-                "dialed_at": time.time(),
-                "stream_url": stream_url,
-                "billed_user_id": billed_user_id,
-                "tenant_id": session.tenant_id,
-            },
-        )
+        carrier_uuid = str(result.get("request_uuid") or result.get("call_uuid") or result.get("id") or "")
+        effective_id = carrier_uuid or tracking_id
+
+        if carrier_uuid and carrier_uuid != tracking_id:
+            vobiz_call_registry.alias(carrier_uuid, tracking_id)
+            vobiz_call_registry.upsert(
+                carrier_uuid,
+                {
+                    "call_uuid": carrier_uuid,
+                    "outbound_id": tracking_id,
+                    "agent_id": body.agent_id,
+                    "token": token,
+                    "to": body.to_e164,
+                    "from": body.from_e164,
+                    "direction": "outbound",
+                    "tier": tier,
+                    "language": language,
+                    "stack_override": stack_override,
+                    "status": "initiated",
+                },
+            )
+
+        mark(effective_id)
         log_pstn(
             "dial.initiated",
-            timer_key=call_uuid,
-            control=call_uuid,
+            timer_key=effective_id,
+            control=effective_id,
             to=body.to_e164,
             from_e164=body.from_e164,
             agent_id=body.agent_id,
@@ -785,14 +724,14 @@ async def _outbound_vobiz(body: OutboundTestBody, session: SessionData) -> dict[
         payload: dict[str, Any] = {
             "ok": True,
             "provider": "vobiz",
-            "call_control_id": call_uuid,
+            "call_control_id": effective_id,
             "stream_url": stream_url,
         }
         if stack_adjustments:
             payload["stack_adjustments"] = stack_adjustments
         payload["history"] = _record_dev_dial(
             provider="vobiz",
-            external_id=call_uuid,
+            external_id=effective_id,
             body=body,
             tier=tier,
             language=language,
@@ -813,11 +752,7 @@ async def dev_telephony_calls(session: SessionData = Depends(require_dev_session
     from server.services.dev_telephony_store import dev_telephony_store
 
     provider = active_telephony_provider()
-    if provider == "exotel":
-        from server.services.exotel_call_registry import exotel_call_registry
-
-        rows = await asyncio.to_thread(exotel_call_registry.list_recent, 30)
-    elif provider == "telnyx":
+    if provider == "telnyx":
         from server.services.telnyx_client import telnyx_call_registry
 
         rows = await asyncio.to_thread(telnyx_call_registry.list_recent, 30)
