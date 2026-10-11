@@ -138,6 +138,11 @@ class InstructionStore:
         budget_tokens: int = 2500,
         raw_token_estimate: int = 0,
         call_end_policy: dict | None = None,
+        agent_spec: dict | None = None,
+        spec_version: int = 1,
+        template_version: int = 1,
+        prompt_version: int = 1,
+        model_name: str | None = None,
     ) -> dict:
         """Save short agent brief + GPT-expanded calling script as cached brain."""
         brief = sanitize_agent_brief(agent_brief or "")
@@ -157,6 +162,11 @@ class InstructionStore:
                 "business": "",
                 "agentBrief": brief,
                 "agentScript": script,
+                "agentSpec": agent_spec if agent_spec is not None else prev.get("agentSpec"),
+                "specVersion": spec_version or prev.get("specVersion", 1),
+                "templateVersion": template_version or prev.get("templateVersion", 1),
+                "promptVersion": prompt_version or prev.get("promptVersion", 1),
+                "model": model_name or prev.get("model"),
                 "style": style_val,
                 "brainPrompt": compiled_brain,
                 "customBrainPrompt": False,
@@ -247,6 +257,11 @@ class InstructionStore:
             "rawTokenEstimate": e.get("rawTokenEstimate", 0),
             "language": e.get("language") or "te-IN",
             "callEndPolicy": _resolve_policy(e.get("callEndPolicy"), e.get("language") or "te-IN"),
+            "agentSpec": e.get("agentSpec"),
+            "specVersion": e.get("specVersion", 1),
+            "templateVersion": e.get("templateVersion", 1),
+            "promptVersion": e.get("promptVersion", 1),
+            "model": e.get("model"),
         }
 
     def patch_call_end_policy(
@@ -462,6 +477,11 @@ class InstructionStore:
                     "usingDefaults": True,
                     "callEndPolicy": _resolve_policy(None, "te-IN"),
                     "language": "te-IN",
+                    "agentSpec": None,
+                    "specVersion": 1,
+                    "templateVersion": 1,
+                    "promptVersion": 1,
+                    "model": None,
                 }
             using_custom = bool(e.get("customBrainPrompt"))
             has_agent_brief = bool(e.get("agentBrief"))
@@ -492,6 +512,11 @@ class InstructionStore:
                 "rawTokenEstimate": e.get("rawTokenEstimate", 0),
                 "callEndPolicy": _resolve_policy(e.get("callEndPolicy"), e.get("language") or "te-IN"),
                 "language": e.get("language") or "te-IN",
+                "agentSpec": e.get("agentSpec"),
+                "specVersion": e.get("specVersion", 1),
+                "templateVersion": e.get("templateVersion", 1),
+                "promptVersion": e.get("promptVersion", 1),
+                "model": e.get("model"),
             }
 
     def stats(self) -> dict:

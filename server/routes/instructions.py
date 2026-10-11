@@ -8,7 +8,7 @@ import re
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Any, Optional
 
 from server.agent.brain_prompt_composer import (
     BUDGET_MAX_TOKENS,
@@ -108,6 +108,112 @@ class SaveRequest(BaseModel):
         max_length=48,
         description="sales | support | … — hints role when compiling from brief.",
     )
+    agentSpec: dict[str, Any] | None = Field(
+        None,
+        description="Explicit validated AgentSpec to bypass brief extraction.",
+    )
+    forceCreate: bool = Field(
+        False,
+        description="Force creation even if needs_user_input or regex_fallback.",
+    )
+
+
+class ExtractSpecRequest(BaseModel):
+    agentBrief: str
+    language_code: str = Field(..., description="Mandatory: language code for the agent.")
+    tenant_default_agent_name: str | None = None
+    preferred_providers: list[str] | None = None
+
+
+class CompileFromSpecRequest(BaseModel):
+    spec: dict[str, Any]
+    direction: str = "outbound"
+    recording_disclosure_enabled: bool = False
+    recording_disclosure_text: str | None = None
+    force: bool = False
+
+
+@router.post("/api/instructions/extract-spec")
+async def extract_spec_endpoint(body: ExtractSpecRequest):
+    """
+    Stage 4 Confirmation Flow: Preview/extract endpoint that returns
+    the spec without creating or saving the agent.
+    """
+    from server.brain.agent_spec_extractor import extract_agent_spec
+
+    lang = (body.language_code or "").strip()
+    if not lang:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": {"message": "language_code must be provided; no default allowed."}},
+        )
+
+    spec = await extract_agent_spec(
+        body.agentBrief,
+        language_code=lang,
+        tenant_default_agent_name=body.tenant_default_agent_name,
+        preferred_providers=body.preferred_providers,
+    )
+    needs_confirmation = (spec.extraction_source == "regex_fallback") or bool(spec.needs_user_input)
+    return {
+        "ok": True,
+        "agentSpec": spec.model_dump(),
+        "needsConfirmation": needs_confirmation,
+        "extractionSource": spec.extraction_source,
+        "needsUserInput": spec.needs_user_input,
+        "specHash": spec.spec_hash(),
+    }
+
+
+@router.post("/api/instructions/compile-from-spec")
+async def compile_from_spec_endpoint(body: CompileFromSpecRequest):
+    """
+    Stage 4 Confirmation Flow: Edit spec fields and regenerate the script
+    without re-extracting from raw brief text.
+    """
+    from server.brain.agent_spec import AgentSpec
+    from server.brain.agent_spec_script_builder import (
+        generate_deterministic_script_from_spec,
+        lint_agent_script,
+    )
+
+    try:
+        spec_obj = AgentSpec.model_validate(body.spec)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": {"message": f"Invalid AgentSpec: {exc}"}},
+        ) from exc
+
+    if spec_obj.needs_user_input and not body.force:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": {
+                    "message": f"Cannot compile script while needs_user_input is non-empty: {spec_obj.needs_user_input}",
+                    "needs_user_input": spec_obj.needs_user_input,
+                }
+            },
+        )
+
+    script = generate_deterministic_script_from_spec(
+        spec_obj,
+        direction=body.direction,
+        recording_disclosure_enabled=body.recording_disclosure_enabled,
+        recording_disclosure_text=body.recording_disclosure_text,
+    )
+    lint_issues = lint_agent_script(
+        script,
+        spec_obj,
+        recording_disclosure_enabled=body.recording_disclosure_enabled,
+    )
+    return {
+        "ok": True,
+        "agentScript": script,
+        "lintIssues": lint_issues,
+        "specHash": spec_obj.spec_hash(),
+        "extractionSource": spec_obj.extraction_source,
+    }
 
 
 @router.get("/api/instructions/default")
@@ -141,7 +247,118 @@ async def save_instructions(body: SaveRequest):
     compiler_sections = None
 
     try:
-        if body.compileFromBrief and body.agentBrief is not None:
+        if body.agentSpec is not None:
+            from server.brain.agent_spec import AgentSpec
+            from server.brain.agent_spec_script_builder import (
+                generate_deterministic_script_from_spec,
+                lint_agent_script,
+            )
+            from server.brain.agent_script_compiler import (
+                _platform_call_rules,
+                build_compiler_sections,
+                reassemble_brain_from_script,
+            )
+
+            try:
+                spec_obj = AgentSpec.model_validate(body.agentSpec)
+            except Exception as exc:
+                raise HTTPException(
+                    status_code=400,
+                    detail={"error": {"code": "validation_error", "message": f"Invalid agentSpec: {exc}"}},
+                ) from exc
+
+            if spec_obj.needs_user_input and not body.forceCreate:
+                raise HTTPException(
+                    status_code=400,
+                    detail={
+                        "error": {
+                            "code": "needs_user_input",
+                            "message": f"Agent creation blocked: spec requires user input for: {spec_obj.needs_user_input}",
+                            "needs_user_input": spec_obj.needs_user_input,
+                        }
+                    },
+                )
+
+            if spec_obj.extraction_source == "regex_fallback" and not body.forceCreate:
+                raise HTTPException(
+                    status_code=400,
+                    detail={
+                        "error": {
+                            "code": "confirmation_required",
+                            "message": "Confirmation required: agent spec was extracted using regex fallback.",
+                            "extraction_source": "regex_fallback",
+                            "needs_confirmation": True,
+                        }
+                    },
+                )
+
+            compile_direction = _normalize_call_direction(body.callDirection) or "outbound"
+            script = generate_deterministic_script_from_spec(
+                spec_obj,
+                direction=compile_direction,
+            )
+            lint_issues = lint_agent_script(script, spec_obj)
+
+            prev_meta = instruction_store.get_with_meta(body.sessionId)
+            style_val = body.responseStyle or prev_meta.get("style")
+            role = spec_obj.call_objective.value if spec_obj.call_objective else "sales"
+            agent_name_val = spec_obj.agent_name.value if spec_obj.agent_name else "Agent"
+            platform_rules = _platform_call_rules(
+                agent_name=agent_name_val,
+                role=role,
+                direction=compile_direction,
+                language=lang,
+            )
+            _script, compiled = reassemble_brain_from_script(
+                script=script,
+                language=lang,
+                style=style_val,
+                call_end_policy=policy,
+                platform_call_rules=platform_rules,
+                agent_name=agent_name_val,
+                role=role,
+            )
+            est = estimate_tokens(compiled)
+            if est > budget and est <= BUDGET_MAX_TOKENS:
+                budget = est
+
+            compiler_sections = build_compiler_sections(
+                user_script=script,
+                platform_call_rules=platform_rules,
+                compiled_brain=compiled,
+                language=lang,
+                style=style_val,
+                call_end_policy=policy,
+            )
+            source_checksum = spec_obj.spec_hash()
+            optimizer_report = {
+                "agent_name": agent_name_val,
+                "detected_role": role,
+                "platform_call_rules": platform_rules,
+                "script_warnings": lint_issues,
+                "extraction_source": spec_obj.extraction_source,
+                "spec_hash": spec_obj.spec_hash(),
+            }
+            brief_text = body.agentBrief if body.agentBrief is not None else (prev_meta.get("agentBrief") or "")
+            saved = instruction_store.save_agent_script(
+                body.sessionId,
+                brief_text,
+                script,
+                style_val,
+                compiled_brain=compiled,
+                optimizer_report=optimizer_report,
+                source_checksum=source_checksum,
+                language=lang,
+                budget_tokens=budget,
+                raw_token_estimate=est,
+                call_end_policy=policy,
+                agent_spec=spec_obj.model_dump(),
+                spec_version=1,
+                template_version=1,
+                prompt_version=1,
+                model_name=spec_obj.extraction_source,
+            )
+        elif body.compileFromBrief and body.agentBrief is not None:
             from server.brain.agent_script_compiler import (
                 build_compiler_sections,
                 compile_agent_from_brief,
@@ -524,6 +741,11 @@ async def save_instructions(body: SaveRequest):
         "callEndPolicy": saved.get("callEndPolicy"),
         "language": saved.get("language"),
         "persistedToDb": persisted,
+        "agentSpec": saved.get("agentSpec"),
+        "specVersion": saved.get("specVersion", 1),
+        "templateVersion": saved.get("templateVersion", 1),
+        "promptVersion": saved.get("promptVersion", 1),
+        "model": saved.get("model"),
     }
     if compiler_sections is not None:
         payload["compilerSections"] = compiler_sections
