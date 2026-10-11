@@ -99,10 +99,17 @@ def _titlecase_name(name: str) -> str:
     out = []
     for t in tokens:
         tl = t.lower()
-        if tl in {"pvt", "ltd", "llp", "llc", "inc", "corp"}:
-            out.append(t.upper() if len(t) <= 3 else t.capitalize())
+        if tl in {"llp", "llc"}:
+            out.append(t.upper())
+        elif tl == "ltd" or tl == "ltd.":
+            out.append("Ltd." if "." in t else "Ltd")
+        elif tl == "pvt" or tl == "pvt.":
+            out.append("Pvt." if "." in t else "Pvt")
         elif tl in {"and", "&", "of", "the"}:
             out.append(tl)
+        elif any(c.isupper() for c in t[1:]):
+            # Preserve camelCase / PascalCase like SunPower, FedEx, McDonald
+            out.append(t)
         else:
             out.append(t.capitalize())
     return " ".join(out)
