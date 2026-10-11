@@ -6,7 +6,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -121,6 +121,10 @@ class Call(Base):
     #: Browser practice sessions (channel="browser"). Not a real conversation:
     #: excluded from call rollups and never recorded. Live PSTN calls are false.
     is_test: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    #: Snapshotted billing rates when call connected — guarantees calls are never re-priced if admin rates change.
+    applied_rate_usd_cents_per_min: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    applied_fx_rate_inr: Mapped[float | None] = mapped_column(Numeric(10, 4), nullable=True)
+    rate_version: Mapped[int | None] = mapped_column(Integer, nullable=True)
     last_heartbeat_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 

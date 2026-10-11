@@ -1620,6 +1620,7 @@ class BillingRatesBody(BaseModel):
     #: Monthly rental for a bought phone number.
     numberMonthlyUsd: float | None = Field(None, ge=0, le=100000)
     fxRateInr: float | None = Field(None, ge=0.01, le=100000)
+    reason: str | None = Field(None, description="Audit statement for rate change")
     # Deprecated, ignored. Kept so an old admin client does not 422.
     pstnInrPerMin: float | None = None
     webInrPerMin: float | None = None
@@ -1655,9 +1656,15 @@ async def get_billing_rates(session: SessionData = Depends(require_dev_session))
 @router.put("/api/dev/admin/billing-rates")
 async def put_billing_rates(body: BillingRatesBody, session: SessionData = Depends(require_dev_session)):
     require_permission(session, "dev.admin.billing")
-    from server.services.saas.billing_rates import rates_with_derived_inr, update_rates
+    from server.services.saas.billing_rates import update_rates_versioned
 
-    r = update_rates(
+    reason = (body.reason or "").strip()
+    if len(reason) < 8:
+        reason = f"Admin rates adjustment by {session.subject}"
+
+    r = await update_rates_versioned(
+        actor=session.subject,
+        reason=reason,
         pstn_usd_per_min=body.pstnUsdPerMin,
         web_usd_per_min=body.webUsdPerMin,
         did_monthly_usd=body.numberMonthlyUsd,

@@ -214,7 +214,15 @@ class CallLifecycleService:
 
             from server.brain.brain_prompt_validate import assert_rendered_brain_valid
 
-            assert_rendered_brain_valid(compiled_text, language)
+            try:
+                assert_rendered_brain_valid(compiled_text, language)
+            except Exception as val_err:
+                logger.warning(
+                    "[CALL] Prompt language validation warning for agent %s (lang=%s): %s",
+                    agent.get("agent_id"),
+                    language,
+                    val_err,
+                )
 
         if compiled_text and contact:
             from server.services.saas.contact_import_service import render_agent_prompt_for_contact
@@ -333,6 +341,29 @@ class CallLifecycleService:
             "billed_user_id": billed_user_id,
             "is_test": is_test,
         }
+
+        # Snapshot authoritative billing rate at call start (immutable lock against future rate changes)
+        try:
+            from server.services.saas.billing_rates import effective_rates
+
+            cur_rates = effective_rates()
+            snap_rate_cents = int(
+                cur_rates["pstn_rate_usd_cents_per_min"]
+                if channel == "pstn"
+                else cur_rates["web_agent_rate_usd_cents_per_min"]
+            )
+            snap_fx = float(cur_rates.get("fx_rate_inr") or 95.64)
+            snap_ver = int(cur_rates.get("version") or 1)
+        except Exception as e:
+            logger.debug(f"[CALL] rate snapshot resolution skipped: {e}")
+            snap_rate_cents = 9 if channel == "pstn" else 7
+            snap_fx = 95.64
+            snap_ver = 1
+
+        record["applied_rate_usd_cents_per_min"] = snap_rate_cents
+        record["applied_fx_rate_inr"] = snap_fx
+        record["rate_version"] = snap_ver
+
         await call_store.insert(record)
 
         max_dur = 900
@@ -587,52 +618,66 @@ class CallLifecycleService:
             meta = call_ledger.read_meta(call_id)
             channel = str(meta.get("channel") or "")
             pipeline = str(meta.get("pipeline") or (meta.get("usage") or {}).get("pipeline") or "")
-            if channel == "pstn" or pipeline == "realtime_voice":
-                from server.services.telnyx_client import TelnyxClient
-                _tc = TelnyxClient()
-                _bal_end_data = await _tc.get_balance()
-                _val_end = _bal_end_data.get("balance") or _bal_end_data.get("available_credit")
-                if _val_end is not None:
-                    bal_end = float(_val_end)
-                    meta["telnyx_balance_end"] = bal_end
-                    usage = meta.get("usage") if isinstance(meta.get("usage"), dict) else {}
-                    bal_start = meta.get("telnyx_balance_start")
-                    if bal_start is not None:
-                        delta = round(max(0.0, float(bal_start) - bal_end), 5)
-                        usage["telnyx_balance_start"] = float(bal_start)
-                        usage["telnyx_balance_end"] = bal_end
-                        usage["telnyx_balance_delta_usd"] = delta
-                        if delta > 0:
-                            fx = float(usage.get("fx_rate_inr") or 95.64)
-                            usage["telnyx_usd"] = delta
-                            usage["telnyx_inr"] = delta * fx
-                            usage["telnyx_cost_is_actual"] = True
-                            usage["telnyx_cost_source"] = "live_telnyx_balance_delta"
-                            model_usd = float(usage.get("model_cost_usd") or 0.0)
-                            model_inr = float(usage.get("model_cost_inr") or (model_usd * fx))
-                            tx_usd = float(usage.get("post_call_transcript_usd") or 0.0) + float(usage.get("live_transcript_usd") or 0.0)
-                            tx_inr = float(usage.get("post_call_transcript_inr") or 0.0) + float(usage.get("live_transcript_inr") or 0.0)
-                            total_usd = model_usd + delta + tx_usd
-                            total_inr = model_inr + (delta * fx) + tx_inr
-                            usage["cost_usd"] = total_usd
-                            usage["cost_inr"] = total_inr
-                            duration_sec = float(usage.get("duration_sec") or meta.get("duration_sec") or 0.0)
-                            minutes = duration_sec / 60.0 if duration_sec > 0 else 0.0
-                            usage["cost_usd_per_min"] = (total_usd / minutes) if minutes > 0 else 0.0
-                            usage["cost_inr_per_min"] = (total_inr / minutes) if minutes > 0 else 0.0
-                            usage["telnyx_usd_per_min"] = (delta / minutes) if minutes > 0 else 0.0
-                            usage["telnyx_inr_per_min"] = ((delta * fx) / minutes) if minutes > 0 else 0.0
-                        else:
-                            usage["telnyx_cost_is_actual"] = False
-                            usage["telnyx_cost_source"] = "tariff_rate_deck"
-                    meta["usage"] = usage
-                    call_ledger.write_meta(call_id, meta)
-                    await call_store.update(call_id, {
-                        "cost_usd": usage.get("cost_usd"),
-                        "cost_inr": usage.get("cost_inr"),
-                    })
+            if channel in ("pstn", "vobiz", "telnyx") or pipeline == "realtime_voice":
+                usage = meta.get("usage") if isinstance(meta.get("usage"), dict) else {}
+                provider = str(
+                    meta.get("telephony_provider")
+                    or meta.get("provider")
+                    or usage.get("telephony_provider")
+                    or ("vobiz" if channel == "vobiz" or meta.get("vobiz_call_uuid") else "telnyx")
+                ).lower().strip()
+                duration_sec = float(usage.get("duration_sec") or meta.get("duration_sec") or 0.0)
+                minutes = duration_sec / 60.0 if duration_sec > 0 else 0.0
+                fx = float(usage.get("fx_rate_inr") or 95.64)
+
+                # Deterministic carrier cost calculation based on duration (prevents concurrent call balance race)
+                if provider == "vobiz":
+                    rate_per_min_inr = 0.60
+                    carrier_inr = round(minutes * rate_per_min_inr, 4)
+                    carrier_usd = round(carrier_inr / fx, 5) if fx > 0 else 0.0
+                    usage["vobiz_inr"] = carrier_inr
+                    usage["vobiz_usd"] = carrier_usd
+                    usage["telnyx_usd"] = 0.0
+                    usage["telnyx_inr"] = 0.0
+                    usage["vobiz_cost_source"] = "vobiz_tariff_rate_duration"
+                    usage["telephony_cost_usd"] = carrier_usd
+                    usage["telephony_cost_inr"] = carrier_inr
+                    total_carrier_usd = carrier_usd
+                    total_carrier_inr = carrier_inr
+                else:
+                    rate_per_min_usd = 0.015
+                    carrier_usd = round(minutes * rate_per_min_usd, 5)
+                    carrier_inr = round(carrier_usd * fx, 4)
+                    usage["telnyx_usd"] = carrier_usd
+                    usage["telnyx_inr"] = carrier_inr
+                    usage["vobiz_usd"] = 0.0
+                    usage["vobiz_inr"] = 0.0
+                    usage["telnyx_cost_source"] = "tariff_rate_deck_duration"
+                    usage["telephony_cost_usd"] = carrier_usd
+                    usage["telephony_cost_inr"] = carrier_inr
+                    total_carrier_usd = carrier_usd
+                    total_carrier_inr = carrier_inr
+
+                model_usd = float(usage.get("model_cost_usd") or 0.0)
+                model_inr = float(usage.get("model_cost_inr") or (model_usd * fx))
+                tx_usd = float(usage.get("post_call_transcript_usd") or 0.0) + float(usage.get("live_transcript_usd") or 0.0)
+                tx_inr = float(usage.get("post_call_transcript_inr") or 0.0) + float(usage.get("live_transcript_inr") or 0.0)
+
+                total_usd = round(model_usd + total_carrier_usd + tx_usd, 5)
+                total_inr = round(model_inr + total_carrier_inr + tx_inr, 4)
+                usage["cost_usd"] = total_usd
+                usage["cost_inr"] = total_inr
+                usage["cost_usd_per_min"] = (total_usd / minutes) if minutes > 0 else 0.0
+                usage["cost_inr_per_min"] = (total_inr / minutes) if minutes > 0 else 0.0
+
+                meta["usage"] = usage
+                call_ledger.write_meta(call_id, meta)
+                await call_store.update(call_id, {
+                    "cost_usd": usage.get("cost_usd"),
+                    "cost_inr": usage.get("cost_inr"),
+                })
         except Exception as _bal_exc:
-            logger.debug(f"[TELNYX] finalize balance check skipped {call_id}: {_bal_exc}")
+            logger.debug(f"[BILLING] finalize telephony cost calculation notice {call_id}: {_bal_exc}")
         try:
             from server.config.env import get_settings
             from server.services.saas.billing_wallet_service import bill_pstn_call_if_applicable

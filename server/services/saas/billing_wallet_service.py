@@ -420,8 +420,13 @@ def _resolve_call_wallet_debit(
     channel: str,
     duration_sec: int,
     settings: Any,
+    stored_rate_cents: int | None = None,
+    stored_fx: float | None = None,
 ) -> tuple[int, int, str]:
-    """Return (usd_cents, inr_paise, billing_mode) for wallet debit."""
+    """Return (usd_cents, inr_paise, billing_mode) for wallet debit.
+
+    Honours locked call snapshot rates so calls are never re-priced if admin rates change.
+    """
     from server.call.call_ledger import call_ledger
 
     meta = call_ledger.read_meta(call_id) or {}
@@ -440,15 +445,33 @@ def _resolve_call_wallet_debit(
     minutes = max(0.0, float(duration_sec)) / 60.0
     if minutes <= 0:
         minutes = 1.0 / 60.0
-    # USD is authoritative. The INR leg is derived from the USD charge at the
-    # chargeable FX, so the two can never disagree and no rupee rate is read
-    # from a second place.
-    if channel == "pstn":
-        cents = int(round(minutes * int(settings.pstn_rate_usd_cents_per_min)))
+
+    if stored_rate_cents is not None and int(stored_rate_cents) > 0:
+        rate_cents = int(stored_rate_cents)
+        fx = float(stored_fx if stored_fx is not None and float(stored_fx) > 0 else 95.64)
+    elif hasattr(settings, "pstn_rate_usd_cents_per_min"):
+        rate_cents = int(
+            settings.pstn_rate_usd_cents_per_min
+            if channel == "pstn"
+            else getattr(settings, "web_agent_rate_usd_cents_per_min", 7)
+        )
+        fx = float(getattr(settings, "fx_rate_inr", 0) or 95.64) or 95.64
     else:
-        cents = int(round(minutes * int(settings.web_agent_rate_usd_cents_per_min)))
-    cents = max(1, cents)
-    fx = float(getattr(settings, "fx_rate_inr", 0) or 95.64) or 95.64
+        try:
+            from server.services.saas.billing_rates import effective_rates
+
+            cur_rates = effective_rates()
+            rate_cents = int(
+                cur_rates["pstn_rate_usd_cents_per_min"]
+                if channel == "pstn"
+                else cur_rates["web_agent_rate_usd_cents_per_min"]
+            )
+            fx = float(cur_rates.get("fx_rate_inr") or 95.64)
+        except Exception:
+            rate_cents = 9 if channel == "pstn" else 7
+            fx = 95.64
+
+    cents = max(1, int(round(minutes * rate_cents)))
     paise = max(1, int(round(cents * fx)))
     return cents, paise, "catalog_prorated"
 
@@ -496,6 +519,8 @@ async def bill_call_usage_if_applicable(call_id: str) -> None:
         channel=channel,
         duration_sec=duration_sec,
         settings=settings,
+        stored_rate_cents=stored.get("applied_rate_usd_cents_per_min"),
+        stored_fx=stored.get("applied_fx_rate_inr"),
     )
     try:
         await debit_wallet(

@@ -56,6 +56,9 @@ def _row_to_dict(row: Call) -> dict[str, Any]:
         "storage_path": row.storage_path,
         "end_reason": row.end_reason,
         "is_test": bool(row.is_test),
+        "applied_rate_usd_cents_per_min": row.applied_rate_usd_cents_per_min,
+        "applied_fx_rate_inr": float(row.applied_fx_rate_inr) if row.applied_fx_rate_inr is not None else None,
+        "rate_version": row.rate_version,
         "last_heartbeat_at": row.last_heartbeat_at.isoformat() if row.last_heartbeat_at else None,
     }
     # Rows written before the status column keep status=None; derive it so every
@@ -93,6 +96,9 @@ class CallStore:
                 finalization_status=record.get("finalization_status", "pending"),
                 storage_path=record["storage_path"],
                 is_test=bool(record.get("is_test", False)),
+                applied_rate_usd_cents_per_min=record.get("applied_rate_usd_cents_per_min"),
+                applied_fx_rate_inr=record.get("applied_fx_rate_inr"),
+                rate_version=record.get("rate_version"),
                 last_heartbeat_at=record.get("last_heartbeat_at") or _utcnow(),
             )
             if isinstance(row.started_at, str):

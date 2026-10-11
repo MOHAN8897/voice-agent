@@ -4,7 +4,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -326,3 +326,22 @@ class UserOnboardingSurvey(Base):
     acceptable_use_version: Mapped[str] = mapped_column(String(32), default="2026-10-v1", nullable=False)
     terms_accepted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+
+class BillingRateVersion(Base):
+    """Versioned billing rates table. Never overwritten; changes append new versions."""
+
+    __tablename__ = "billing_rate_versions"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, unique=True, index=True)
+    pstn_rate_usd_cents_per_min: Mapped[int] = mapped_column(Integer, nullable=False)
+    web_agent_rate_usd_cents_per_min: Mapped[int] = mapped_column(Integer, nullable=False)
+    did_monthly_usd_cents: Mapped[int] = mapped_column(Integer, nullable=False)
+    fx_rate_inr: Mapped[float] = mapped_column(Numeric(10, 4), nullable=False)
+    effective_from: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, index=True)
+    created_by: Mapped[str] = mapped_column(String(255), nullable=False)
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
