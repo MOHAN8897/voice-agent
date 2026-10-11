@@ -198,14 +198,16 @@ def verify_agent_spec(
             spec.agent_name.value = None
             spec.agent_name.confidence = 0.0
 
-    # 5. Location Leakage Check
-    if spec.location.value and spec.company_name.value:
-        loc_words = set(re.findall(r"\w+", spec.location.value.lower()))
-        comp_words = set(re.findall(r"\w+", spec.company_name.value.lower()))
-        # If company name consists only of location words, reject company name
-        if comp_words.issubset(loc_words):
-            spec.company_name.value = None
-            spec.company_name.confidence = 0.0
+    # 5. Location Leakage Check & Normalization
+    if spec.location.value:
+        spec.location.value = _titlecase_name(normalize_whitespace(spec.location.value))
+        if spec.company_name.value:
+            loc_words = set(re.findall(r"\w+", spec.location.value.lower()))
+            comp_words = set(re.findall(r"\w+", spec.company_name.value.lower()))
+            # If company name consists only of location words, reject company name
+            if comp_words.issubset(loc_words):
+                spec.company_name.value = None
+                spec.company_name.confidence = 0.0
 
     # 6. Apply Missing-Field Policy
     if not spec.company_name.value:

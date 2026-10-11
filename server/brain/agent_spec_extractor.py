@@ -152,11 +152,12 @@ def offline_regex_extract_agent_spec(brief: str, language_code: str) -> AgentSpe
     company_patterns = [
         r"(?:company|business)(?:\s*name)?\s*(?:is|:)\s*([^\n.]{2,80}?)(?=\s+and\s+(?:the\s+)?(?:person|agent|caller|executive)\b|\s+whose\b|\s+who\b|\s+where\b|\s+which\b|[.,;]|$)",
         r"(?:for|from|at)\s+([A-Za-z][A-Za-z0-9&]*(?:\s+[A-Za-z0-9&.']+){0,6}\s+(?:pvt\.?\s*ltd\.?|private\s+limited|ltd\.?|llp|llc|inc\.?))\b",
+        r"(?:we\s+are|we're|company\s+is|business\s+is)\s+([A-Za-z][A-Za-z0-9&]*(?:\s+[A-Za-z0-9&.']+){0,5}?)(?=\s+and\b|\s+sales\b|\s+caller\b|[.,;]|$)",
     ]
     for pat in company_patterns:
         m = re.search(pat, text, re.I)
         if m:
-            company_val = m.group(1).strip()
+            company_val = re.sub(r"[\s.,;]+$", "", m.group(1)).strip()
             company_ev = m.group(0).strip()
             break
 
@@ -164,12 +165,12 @@ def offline_regex_extract_agent_spec(brief: str, language_code: str) -> AgentSpe
     loc_val = None
     loc_ev = None
     loc_match = re.search(
-        r"(?:business\s+)?location\s+(?:is\s+)?(?:in\s+|at\s+)?([^\n;]{2,60}?)(?=\s+and\b|[.;]|$)",
+        r"(?:business\s+)?location\s+(?:is\s+)?(?:in\s+|at\s+)?([^\n;]{2,80}?)(?=\s+and\s+(?:we|the|our)|;\s*|$)",
         text,
         re.I,
     )
     if loc_match:
-        loc_val = loc_match.group(1).strip()
+        loc_val = re.sub(r"[\s.,;]+$", "", loc_match.group(1)).strip()
         loc_ev = loc_match.group(0).strip()
 
     # 4. Offering Extraction
