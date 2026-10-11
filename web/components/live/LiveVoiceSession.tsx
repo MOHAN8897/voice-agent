@@ -1198,6 +1198,17 @@ export const LiveVoiceSession = forwardRef<LiveVoiceSessionHandle, {
         return;
       }
 
+      if (typeof window !== "undefined" && !window.isSecureContext) {
+        setSessionStatus("Microphone blocked: Browsers require HTTPS or localhost (window.isSecureContext is false)");
+        trace("call", "blocked — insecure context (HTTP) prevents microphone access");
+        return;
+      }
+      if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+        setSessionStatus("Microphone API unavailable — check HTTPS connection and device permissions");
+        trace("call", "blocked — navigator.mediaDevices.getUserMedia unavailable");
+        return;
+      }
+
       if (!callIdRef.current) {
         await startCall();
       }

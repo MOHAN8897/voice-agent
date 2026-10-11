@@ -441,6 +441,12 @@ export default function AdminBillingPage() {
             <span className="font-mono text-text-muted">{payments.data.keyId}</span>
           ) : null}
           <span className="text-text-muted">Settles in {payments.data?.settlesIn ?? "INR"}</span>
+          <span
+            className="rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised px-2 py-1 font-medium text-text-subtle"
+            data-testid="admin-payments-intl-badge"
+          >
+            International: Not checkable via API
+          </span>
         </div>
 
         <div className="mt-4 flex flex-wrap items-end gap-4">

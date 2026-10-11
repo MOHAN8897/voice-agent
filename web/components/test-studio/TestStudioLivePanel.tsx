@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   LiveVoiceSession,
   type Bubble,
@@ -44,6 +44,15 @@ export function TestStudioLivePanel({
   const [micLevel, setMicLevel] = useState(0);
   const [lines, setLines] = useState<TranscriptLine[]>([]);
   const [partial, setPartial] = useState("");
+  const [insecureBlocked, setInsecureBlocked] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (!window.isSecureContext || !navigator?.mediaDevices?.getUserMedia) {
+        setInsecureBlocked(true);
+      }
+    }
+  }, []);
 
   const listening =
     status === "listening" ||
@@ -77,6 +86,16 @@ export function TestStudioLivePanel({
       padding="md"
       className="console-page-enter w-full min-w-0"
     >
+      {insecureBlocked && (
+        <div
+          role="alert"
+          className="mb-4 rounded-skeuo-sm border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200"
+        >
+          <strong>Microphone access blocked on HTTP:</strong> Modern browsers disable audio capture
+          on insecure contexts. Please access Test Studio via <code>https://</code> or <code>localhost</code> to
+          use the microphone.
+        </div>
+      )}
       <div className="mb-5 flex flex-col items-center gap-3 border-b border-surface-border-subtle pb-5 lg:flex-row lg:items-start lg:justify-between">
         <VoiceControlOrb
           status={status}

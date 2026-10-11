@@ -279,7 +279,14 @@ export default function AdminNumbersPage() {
           <SkeuoTableBody>
             {rows.map((a) => (
               <SkeuoTableRow key={a.numberId}>
-                <SkeuoTd className="font-mono">{a.e164}</SkeuoTd>
+                <SkeuoTd className="font-mono">
+                  <div>{a.e164}</div>
+                  {(a.telnyxNumberId || a.plivoNumberId) && (
+                    <div className="text-[10px] text-text-subtle font-sans" title="Carrier number ID">
+                      Carrier ID: {a.telnyxNumberId || a.plivoNumberId}
+                    </div>
+                  )}
+                </SkeuoTd>
                 <SkeuoTd>
                   <SkeuoBadge tone={a.provider === "vobiz" ? "warning" : "info"}>
                     {(a.provider || activeProv).toUpperCase()}
