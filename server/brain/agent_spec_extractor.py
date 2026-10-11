@@ -7,6 +7,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import re
+import time
 from typing import Any
 
 from server.brain.agent_spec import AgentSpec, Evidenced, normalize_whitespace, verify_agent_spec
@@ -274,6 +275,7 @@ async def extract_agent_spec(
     if not language_code or not language_code.strip():
         raise ValueError("language_code must be provided to extract_agent_spec; no default allowed.")
 
+    t0 = time.time()
     providers = preferred_providers or ["gemini", "openai", "deepseek"]
     extracted_data: dict[str, Any] | None = None
     chosen_source = "regex_fallback"
@@ -317,5 +319,14 @@ async def extract_agent_spec(
         raw_spec,
         brief,
         tenant_default_agent_name=tenant_default_agent_name,
+    )
+    duration_sec = time.time() - t0
+    from server.brain.agent_spec_metrics import spec_metrics
+
+    spec_metrics.record_extraction(
+        source=verified_spec.extraction_source,
+        duration_sec=duration_sec,
+        verifier_passed=not bool(verified_spec.needs_user_input),
+        needs_user_input=bool(verified_spec.needs_user_input),
     )
     return verified_spec

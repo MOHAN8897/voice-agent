@@ -148,6 +148,8 @@ class Settings(BaseSettings):
 
     use_provider_registry: bool = Field(True, alias="USE_PROVIDER_REGISTRY")
     use_versioned_brains: bool = Field(False, alias="USE_VERSIONED_BRAINS")
+    use_spec_compiler: bool = Field(True, alias="USE_SPEC_COMPILER")
+    spec_compiler_shadow_mode: bool = Field(False, alias="SPEC_COMPILER_SHADOW_MODE")
     allow_publish_during_calls: bool = Field(False, alias="ALLOW_PUBLISH_DURING_CALLS")
     enable_benchmarks: bool = Field(False, alias="ENABLE_BENCHMARKS")
     fx_rate_inr: float = Field(95.64, alias="FX_RATE_INR")
