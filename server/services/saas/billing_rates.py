@@ -75,26 +75,32 @@ def clear_rates_cache() -> None:
 
 
 async def load_rates_from_db_or_seed() -> dict[str, Any]:
-    """Load latest active rate version from database. If table is empty, seeds Version 1."""
+    """Load latest active rate version from database. If table is empty, seeds Version 1.
+
+    Raises BillingConfigurationError if rates cannot be resolved — never silently
+    falls back to hardcoded env defaults so a misconfigured deployment is caught
+    immediately rather than charging the wrong rate.
+    """
     from server.db.connection import get_session_factory
     from server.db.models.saas_models import BillingRateVersion
 
     factory = get_session_factory()
     if factory is None:
+        # No DB available — use disk cache if it was written by a previous run.
         disk = _load_disk_fallback()
         if disk and disk.get("pstn_rate_usd_cents_per_min"):
+            logger.warning(
+                "[BILLING_RATES] DB unavailable — using disk-cached rates (version %s). "
+                "Resolve the DB connection before rates next change.",
+                disk.get("version", "?"),
+            )
             return disk
-        settings = get_settings()
-        return {
-            "version": 1,
-            "pstn_rate_usd_cents_per_min": int(settings.pstn_rate_usd_cents_per_min),
-            "web_agent_rate_usd_cents_per_min": int(settings.web_agent_rate_usd_cents_per_min),
-            "did_monthly_usd_cents": int(settings.did_monthly_usd_cents),
-            "fx_rate_inr": float(getattr(settings, "fx_rate_inr", 0) or 95.64),
-            "effective_from": _utcnow().isoformat(),
-            "created_by": "system_default",
-            "reason": "Cold start default settings",
-        }
+        # No disk cache either: fail loudly. Using hardcoded env values here would
+        # mean calls are billed at whatever the env says, not at the admin-set rate.
+        raise BillingConfigurationError(
+            "[BILLING_RATES] DB session factory is None and no disk cache exists. "
+            "Cannot resolve billing rates — check DATABASE_URL and restart."
+        )
 
     async with factory() as session:
         try:
@@ -311,7 +317,27 @@ def update_rates(
     did_monthly_usd: float | None = None,
     fx_rate_inr: float | None = None,
 ) -> dict[str, int | float]:
-    """Synchronous compatibility wrapper for updating rates."""
+    """Synchronous compatibility wrapper — DEPRECATED.
+
+    This writes only to the disk cache and bypasses the versioned DB table,
+    meaning a restart will lose any change made here and the audit log will have
+    no record of it.  Use ``update_rates_versioned`` (async) instead.
+
+    This function now raises RuntimeError in every context except unit tests
+    (detected by the absence of a live session factory) so callers are forced to
+    migrate.  Tests that need a synchronous shortcut should call
+    ``set_cached_rates`` directly.
+    """
+    from server.db.connection import get_session_factory
+
+    if get_session_factory() is not None:
+        raise RuntimeError(
+            "update_rates() is deprecated and must not be called when a DB is "
+            "configured — use await update_rates_versioned() instead. "
+            "This call would have written only to the disk cache, bypassing "
+            "the billing_rate_versions audit table."
+        )
+    # Allowed path: tests that run without a DB and need a synchronous stub.
     data = dict(_load_disk_fallback())
     if pstn_usd_per_min is not None:
         data["pstn_rate_usd_cents_per_min"] = max(1, int(round(float(pstn_usd_per_min) * 100)))

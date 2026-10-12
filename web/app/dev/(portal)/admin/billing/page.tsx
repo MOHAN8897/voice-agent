@@ -626,7 +626,7 @@ export default function AdminBillingPage() {
                       Retry
                     </SkeuoButton>
                   )}
-                  {p.status === "paid" && (
+                  {(p.status === "paid" || p.status === "failed") && (
                     <SkeuoButton
                       type="button"
                       size="sm"

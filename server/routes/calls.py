@@ -2,11 +2,24 @@
 from __future__ import annotations
 
 import asyncio
+import re
 from typing import Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
+
+_CALL_ID_SAFE = re.compile(r"^[a-zA-Z0-9_\-\.]{1,128}$")
+
+
+def _validate_call_id(call_id: str) -> str:
+    cid = (call_id or "").strip()
+    if not cid or not _CALL_ID_SAFE.match(cid) or ".." in cid:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": {"code": "validation_error", "message": "Invalid call_id format"}},
+        )
+    return cid
 
 from server.call.audio_archive import audio_archive
 from server.call.call_ledger import call_ledger
@@ -21,6 +34,10 @@ from server.auth.calls_tenant import (
 )
 from server.services.saas.call_redaction import redact_call_detail_for_tenant
 from server.auth.tenant_context import tenant_id_from_request
+from server.auth.subscriber_dependencies import (
+    SubscriberPrincipal,
+    require_subscriber_jwt_if_enabled,
+)
 from server.config.env import get_settings
 from server.utils.errors import AppError
 
@@ -63,7 +80,10 @@ def _raise(e: AppError) -> None:
 
 
 @router.post("/api/call/start")
-async def call_start(body: CallStartBody):
+async def call_start(
+    body: CallStartBody,
+    _auth: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled),
+):
     try:
         result = await call_lifecycle_service.start(
             agent_id=body.agent_id,
@@ -83,12 +103,16 @@ async def call_start(body: CallStartBody):
 
 
 @router.post("/api/call/end", status_code=202)
-async def call_end(body: CallEndBody):
+async def call_end(
+    body: CallEndBody,
+    _auth: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled),
+):
     if not body.call_id:
         raise HTTPException(
             status_code=400,
             detail={"error": {"code": "validation_error", "message": "call_id is required"}},
         )
+    _validate_call_id(body.call_id)
     try:
         result = await call_lifecycle_service.end(body.call_id, reason=body.reason)
         return JSONResponse(status_code=202, content=result)
@@ -98,6 +122,7 @@ async def call_end(body: CallEndBody):
 
 @router.get("/api/call/{call_id}/finalization")
 async def call_finalization(call_id: str):
+    _validate_call_id(call_id)
     try:
         return await call_lifecycle_service.finalization(call_id)
     except AppError as e:
@@ -111,6 +136,7 @@ async def call_prompt_preview(
     scoped_tenant: str | None = Depends(resolve_prompt_preview_tenant_id),
 ):
     """Actual model instructions for this call (locked brain + live session rules)."""
+    _validate_call_id(call_id)
     from server.call.call_prompt_preview import get_call_prompt_preview
 
     settings = get_settings()
@@ -321,6 +347,7 @@ def _enrich_call_list_item(item: dict) -> dict:
 
 
 async def _assert_call_scoped(call_id: str, scope: tuple[str, bool]) -> dict:
+    _validate_call_id(call_id)
     stored = await call_store.get(call_id)
     if stored is None and not call_ledger.meta_path(call_id).exists():
         raise HTTPException(

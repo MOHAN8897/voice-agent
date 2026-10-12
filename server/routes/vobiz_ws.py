@@ -57,6 +57,13 @@ async def vobiz_stream_ws(websocket: WebSocket):
             tier=merged_meta.get("tier"),
             token_meta=merged_meta or None,
         )
+    except Exception as exc:
+        logger.exception("[VOBIZ_WS] Unhandled bridge error for call %s: %s", effective_call_uuid, exc)
+        log_pstn("vobiz.ws.error", call_uuid=effective_call_uuid, error=str(exc))
+        try:
+            await websocket.close(code=1011, reason="Internal error")
+        except Exception:
+            pass
     finally:
         if token and (not effective_call_uuid or (vobiz_call_registry.get(str(effective_call_uuid)) or {}).get("ended")):
             vobiz_stream_tokens.consume(token)

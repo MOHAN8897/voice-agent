@@ -117,6 +117,7 @@ async def process_one_job() -> bool:
                     )
                 )
             await session.commit()
+        refunded = False  # initialised before the try so the audit log never hits NameError
         if refund_wallet and refund_tenant is not None:
             try:
                 from server.services.saas.billing_wallet_service import refund_did_purchase

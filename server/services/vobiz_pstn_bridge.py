@@ -394,10 +394,13 @@ class VobizPstnBridge:
                 sample_rate = 16000
             else:
                 # μ-law 8kHz 20ms frames = 160 bytes
-                if len(wire) == 160:
-                    frames = [wire]
-                else:
+                if len(wire) % 160 == 0:
+                    frames = [wire[i : i + 160] for i in range(0, len(wire), 160)]
+                elif len(wire) % 320 == 0:
+                    # Fallback if raw PCM16 was passed
                     frames = list(pcm16_chunk_to_mulaw_frames(wire, sample_rate=8000, frame_ms=20))
+                else:
+                    frames = [wire[i : i + 160] for i in range(0, len(wire), 160)]
                 content_type = "audio/x-mulaw;rate=8000"
                 sample_rate = 8000
 
@@ -406,6 +409,7 @@ class VobizPstnBridge:
                 playback.note_sent_frames(len(frames))
 
             first_out = self._media_frames_out == 0
+            next_frame_time = time.monotonic()
             for i, frame in enumerate(frames):
                 if self._closed:
                     return
@@ -428,7 +432,10 @@ class VobizPstnBridge:
                         await self.ws.send_text(json.dumps(msg))
 
                 if i + 1 < len(frames):
-                    await asyncio.sleep(0.02)
+                    next_frame_time += 0.02
+                    delay = next_frame_time - time.monotonic()
+                    if delay > 0:
+                        await asyncio.sleep(delay)
 
             self._media_frames_out += len(frames)
             if first_out:

@@ -8,9 +8,13 @@ from __future__ import annotations
 
 import base64
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 
+from server.auth.subscriber_dependencies import (
+    SubscriberPrincipal,
+    require_subscriber_jwt_if_enabled,
+)
 from server.config.constants import coerce_supported_language, constants
 from server.services.runtime_settings import runtime_settings
 from server.session.voice_session import VoiceSessionController
@@ -38,6 +42,7 @@ async def voice_turn(
     userInstructions: str = Form(""),
     businessInstructions: str = Form(""),
     ttsSpeaker: str = Form(""),
+    _auth: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled),
 ):
     controller = VoiceSessionController()
     rt = _runtime(sessionId)

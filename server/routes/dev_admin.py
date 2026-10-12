@@ -1,6 +1,7 @@
 """Platform dev admin ? SaaS operations (PRD-06)."""
 from __future__ import annotations
 
+import logging
 import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -11,6 +12,8 @@ from pydantic import BaseModel, Field
 from sqlalchemy import delete, desc, func, select, update
 
 from server.config.env import get_settings
+
+logger = logging.getLogger(__name__)
 
 from server.auth.dependencies import require_dev_session, require_permission
 from server.auth.passwords import hash_portal_password
@@ -1435,23 +1438,40 @@ async def refund_purchase(purchase_id: str, session: SessionData = Depends(requi
     settings = get_settings()
     _require_db()
     pid = uuid.UUID(purchase_id)
+    refund_wallet = False
+    refund_tenant = None
+    refund_user = None
     async with get_session_factory()() as db:
         purchase = await db.get(NumberPurchase, pid)
         if purchase is None:
             raise HTTPException(status_code=404, detail="Not found")
+        refund_tenant = purchase.tenant_id
+        refund_user = purchase.user_id
         if settings.stripe_secret_key and purchase.stripe_payment_intent_id:
             import stripe
 
             stripe.api_key = settings.stripe_secret_key
             stripe.Refund.create(payment_intent=purchase.stripe_payment_intent_id)
+        else:
+            refund_wallet = True
         purchase.status = "refunded"
         await db.commit()
+
+    if refund_wallet and refund_tenant:
+        from server.services.saas.billing_wallet_service import refund_did_purchase
+
+        await refund_did_purchase(
+            refund_tenant,
+            user_id=refund_user,
+            purchase_id=pid,
+        )
+
     await record_admin_action(
         actor=session.subject,
         action="purchase.refund",
         resource_type="purchase",
         resource_id=purchase_id,
-        tenant_id=purchase.tenant_id,
+        tenant_id=refund_tenant,
     )
     return {"ok": True}
 
@@ -1708,7 +1728,7 @@ async def put_payment_settings(
     INR and start being created in the chosen currency.
     """
     require_permission(session, "dev.admin.billing")
-    from server.services.saas.payment_settings import settings_state, update_settings
+    from server.services.saas.payment_settings import update_settings
 
     try:
         state = update_settings(

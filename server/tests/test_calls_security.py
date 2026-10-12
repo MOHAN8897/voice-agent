@@ -96,3 +96,35 @@ async def test_call_endpoints_require_auth_and_tenant_scoping_in_saas_mode(monke
     assert r_a.status_code == 200, f"Expected 200 for owner, got {r_a.status_code}"
     assert "lines" in r_a.json()
     assert len(r_a.json()["lines"]) > 0
+
+
+def test_call_id_path_traversal_blocked():
+    """Verify malicious call_id with directory traversal characters is strictly rejected with 400."""
+    from server.call.paths import validate_call_id_format, call_dir
+
+    # 1. Direct path validator tests
+    for evil_id in ("../../etc/passwd", "../system32", "call/../../secret", "foo\\..\\bar", "foo\x00bar", ""):
+        with pytest.raises(ValueError):
+            validate_call_id_format(evil_id)
+
+    # 2. Endpoint validation tests
+    async def _mock_admin():
+        return "test-tenant", True
+
+    app_mod.app.dependency_overrides[resolve_calls_scope] = _mock_admin
+    try:
+        c = TestClient(app_mod.app)
+        for evil_path in (
+            "/api/call/bad..id/audio",
+            "/api/call/evil..path/transcript",
+            "/api/call/test..123/finalization",
+            "/api/call/bad$id/finalization",
+        ):
+            r = c.get(evil_path)
+            assert r.status_code == 400, f"Expected 400 for path traversal {evil_path}, got {r.status_code}"
+            data = r.json()
+            err = data.get("error") or data.get("detail", {}).get("error")
+            assert err["code"] == "validation_error"
+    finally:
+        app_mod.app.dependency_overrides.pop(resolve_calls_scope, None)
+

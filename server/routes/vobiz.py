@@ -83,11 +83,54 @@ def _normalize_num(num: str) -> str:
     return f"+{digits}"
 
 
+def _verify_vobiz_request(request: Request, payload: dict[str, Any]) -> None:
+    """Validate webhook request authenticity in production or when secret configured."""
+    settings = get_settings()
+    from server.services.dev_secrets_store import dev_secrets_store
+
+    auth_token = str(dev_secrets_store.effective_secret("vobiz_auth_token") or settings.vobiz_auth_token or "").strip()
+    is_prod = str(getattr(settings, "app_environment", "") or "").lower() in ("production", "staging")
+
+    # 1. Single-use token match
+    passed_token = str(request.query_params.get("token") or payload.get("token") or "")
+    if passed_token:
+        if vobiz_stream_tokens.peek(passed_token):
+            return
+        # Explicit invalid token supplied -> reject immediately
+        logger.warning("[VOBIZ] Webhook rejected: invalid or expired stream token")
+        raise HTTPException(status_code=401, detail="Invalid stream token")
+
+    # 2. Known active call in call registry
+    call_uuid = str(payload.get("CallUUID") or payload.get("call_uuid") or payload.get("RequestUUID") or "")
+    if call_uuid and vobiz_call_registry.get(call_uuid):
+        return
+
+    # 3. Header or query param signature/auth token
+    header_token = str(
+        request.headers.get("X-Vobiz-Auth-Token")
+        or request.headers.get("X-Vobiz-Signature")
+        or request.headers.get("Authorization", "").replace("Bearer ", "").replace("Basic ", "")
+        or request.query_params.get("auth_token")
+        or ""
+    ).strip()
+    if header_token:
+        if auth_token and header_token == auth_token:
+            return
+        logger.warning("[VOBIZ] Webhook rejected: invalid carrier authentication token")
+        raise HTTPException(status_code=401, detail="Invalid auth token")
+
+    # 4. In production or staging mode with configured secret, fail closed
+    if is_prod and auth_token:
+        logger.warning("[VOBIZ] Webhook rejected: missing authentication token in production")
+        raise HTTPException(status_code=401, detail="Unauthorized Vobiz webhook")
+
+
 @router.post("/api/vobiz/answer")
 @router.get("/api/vobiz/answer")
 async def vobiz_answer(request: Request):
     """Primary Answer URL — triggered when a call starts on Vobiz."""
     payload = await _parse_vobiz_payload(request)
+    _verify_vobiz_request(request, payload)
     q = request.query_params
 
     # 1. Resolve token and identifiers
@@ -308,6 +351,7 @@ async def vobiz_fallback(request: Request):
 async def vobiz_hangup(request: Request):
     """Hangup URL — notified when the call finishes."""
     payload = await _parse_vobiz_payload(request)
+    _verify_vobiz_request(request, payload)
     call_uuid = str(
         payload.get("CallUUID")
         or payload.get("call_uuid")

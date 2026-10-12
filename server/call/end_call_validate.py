@@ -315,9 +315,19 @@ def parse_end_call_payload(raw: Any) -> dict[str, Any]:
     return {"should_end": should_end, "reason": reason, "farewell": farewell}
 
 
+_COURTEOUS_CLOSING_CONFIRMATION = re.compile(
+    r"^(?:ok(?:ay)?|all\s*right|sure|thanks?|thank\s*you|bye|goodbye|sare(?:na)?|theek\s*hai(?:\s*na)?|alvida|ధన్యవాదాలు|సరే(?:నా)?|ఓకే(?:నా)?|ఉంటానండి|వెళ్లొస్తా)[\s\?,.!]*$",
+    re.I,
+)
+
+
 def looks_like_question(text: str) -> bool:
     t = (text or "").strip()
     if not t:
+        return False
+    # Courteous closing check-ins with question marks (e.g. "సరేనా?", "okay?", "theek hai?")
+    # must not be treated as substantive questions that veto hanging up.
+    if _COURTEOUS_CLOSING_CONFIRMATION.match(t):
         return False
     return bool(_QUESTION_RE.search(t))
 

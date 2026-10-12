@@ -31,6 +31,8 @@ def _isolate_test_database(tmp_path_factory):
     os.environ["DATA_DIR"] = str(tmp_path_factory.mktemp("voice-agent-unit-data"))
     previous_fx_live = os.environ.get("FX_RATE_LIVE")
     os.environ["FX_RATE_LIVE"] = "false"
+    previous_saas_auth = os.environ.get("SAAS_AUTH_ENABLED")
+    os.environ["SAAS_AUTH_ENABLED"] = "false"
     test_secrets = {key: os.environ.get(key) for key in ("OPENAI_API_KEY", "SARVAM_API_KEY")}
     Settings.model_config["env_file"] = None
     for key in test_secrets:
@@ -63,6 +65,10 @@ def _isolate_test_database(tmp_path_factory):
         os.environ["FX_RATE_LIVE"] = previous_fx_live
     if previous_database_url is not None:
         os.environ["DATABASE_URL"] = previous_database_url
+    if previous_saas_auth is None:
+        os.environ.pop("SAAS_AUTH_ENABLED", None)
+    else:
+        os.environ["SAAS_AUTH_ENABLED"] = previous_saas_auth
     for key, value in test_secrets.items():
         if value is None:
             os.environ.pop(key, None)

@@ -33,8 +33,8 @@ def test_normalize_english_aliases():
     assert normalize_supported_language("en-US") == "en-US"
     assert normalize_supported_language("en-us") == "en-US"
     assert normalize_supported_language("en_US") == "en-US"
-    assert normalize_supported_language("en-gb") == "en-US"
-    assert normalize_supported_language("en-GB") == "en-US"
+    assert normalize_supported_language("en-gb") == "en-GB"
+    assert normalize_supported_language("en-GB") == "en-GB"
     assert normalize_supported_language("eng") == "en-IN"
     assert normalize_supported_language("english") == "en-IN"
     assert normalize_supported_language("en") == "en-IN"
@@ -42,6 +42,8 @@ def test_normalize_english_aliases():
     assert normalize_supported_language("hi_in") == "hi-IN"
     assert language_in_supported("en-US")
     assert language_in_supported("en-us")
+    assert language_in_supported("en-GB")
+    assert language_in_supported("en-gb")
     assert not language_in_supported("fr-FR")
     assert coerce_supported_language("fr-FR") == "te-IN"
 
@@ -54,16 +56,18 @@ def test_sarvam_provider_code_maps_en_us_to_en_in():
 
 def test_compile_language_keeps_spoken_packs():
     assert normalize_compile_language("en-US") == "en-US"
-    assert normalize_compile_language("en-gb") == "en-US"
+    assert normalize_compile_language("en-gb") == "en-GB"
     assert normalize_compile_language("eng") == "en-IN"
 
 
 def test_resolver_accepts_en_us_and_aliases(resolver):
     for code in ("en-US", "en-us", "en-GB", "eng"):
         stack = resolver.resolve(mode="env", tier="medium", language=code)
-        assert stack.language in ("en-US", "en-IN")
-        if code.lower() in ("en-us", "en-gb") or code == "en-US":
+        assert stack.language in ("en-US", "en-IN", "en-GB")
+        if code.lower() == "en-us":
             assert stack.language == "en-US"
+        if code.lower() == "en-gb":
+            assert stack.language == "en-GB"
         if code == "eng":
             assert stack.language == "en-IN"
 

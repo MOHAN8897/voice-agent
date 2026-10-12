@@ -248,17 +248,28 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-def _cors_origins_list() -> list[str]:
+def _cors_origins_and_credentials() -> tuple[list[str], bool]:
     raw = (get_settings().cors_origins or "").strip()
     if raw:
-        return [o.strip() for o in raw.split(",") if o.strip()]
-    return ["*"]
+        origins = [o.strip() for o in raw.split(",") if o.strip()]
+        if "*" in origins:
+            return ["*"], False
+        return origins, True
+    return [
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://localhost:8000",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:8000",
+    ], True
 
 
+_cors_origins, _cors_allow_creds = _cors_origins_and_credentials()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_cors_origins_list(),
-    allow_credentials=True,
+    allow_origins=_cors_origins,
+    allow_credentials=_cors_allow_creds,
     allow_methods=["*"],
     allow_headers=["*"],
 )

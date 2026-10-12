@@ -4,8 +4,12 @@ POST /api/stt  multipart file → Sarvam saaras:v3
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 
+from server.auth.subscriber_dependencies import (
+    SubscriberPrincipal,
+    require_subscriber_jwt_if_enabled,
+)
 from server.config.constants import language_in_supported, normalize_supported_language, constants
 from server.services.sarvam_stt_service import transcribe
 from server.utils.audio import is_allowed_audio, validate_audio_size
@@ -20,6 +24,7 @@ async def stt_route(
     file: UploadFile = File(..., description="Audio file WAV/MP3 etc. ≤10MB, ≤30s"),
     language_code: str = Form("te-IN"),
     mode: str = Form("transcribe"),
+    _auth: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled),
 ):
     language_code = normalize_supported_language(language_code)
     if not language_in_supported(language_code, allow_unknown=True):

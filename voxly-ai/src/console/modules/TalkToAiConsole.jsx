@@ -91,6 +91,30 @@ export function TalkToAiConsole({ embedded = false }) {
       showToast('Add wallet credits before starting a live test.', 'error');
       return;
     }
+
+    // Mic access requires a secure context (HTTPS or localhost).
+    // navigator.mediaDevices is undefined on plain HTTP — the browser never
+    // even shows a permission prompt; it just throws a TypeError silently.
+    if (!window.isSecureContext) {
+      setStatusNote(
+        'Microphone access requires HTTPS. Open this page over https:// or use localhost.'
+      );
+      showToast(
+        'Test Studio requires a secure connection (HTTPS). Microphone is unavailable on plain HTTP.',
+        'error'
+      );
+      return;
+    }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setStatusNote(
+        'Microphone access is blocked. Check browser permissions or use a supported browser.'
+      );
+      showToast(
+        'Microphone API is not available. Ensure browser permissions are granted and the page is served over HTTPS.',
+        'error'
+      );
+      return;
+    }
     if (sessionRef.current) {
       try {
         sessionRef.current.stop();

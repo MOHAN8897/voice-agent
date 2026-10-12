@@ -342,3 +342,15 @@ def test_sleeping_with_callback_is_not_forced_goodbye():
     )
     assert d.accepted is True
     assert d.reason == "goal_complete"
+
+
+def test_courteous_closing_with_question_mark_does_not_block_hangup():
+    from server.call.end_call_validate import looks_like_question
+
+    assert not looks_like_question("సరేనా?")
+    assert not looks_like_question("ఓకేనా?")
+    assert not looks_like_question("okay?")
+    assert not looks_like_question("bye?")
+    assert not looks_like_question("theek hai na?")
+    assert looks_like_question("What is the loan interest rate?")
+    assert looks_like_question("మీ పేరు ఏమిటి?")

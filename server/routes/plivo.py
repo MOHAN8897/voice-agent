@@ -29,6 +29,9 @@ async def plivo_stream_ws(websocket: WebSocket):
     q = websocket.query_params
     token = q.get("token")
     token_meta = plivo_stream_tokens.consume(token) if token else None
+    if not token_meta:
+        await websocket.close(code=1008, reason="Invalid or expired stream token")
+        return
     bridge = PlivoPstnBridge(websocket)
     await bridge.run(
         agent_id=q.get("agent_id") or (token_meta or {}).get("agent_id"),

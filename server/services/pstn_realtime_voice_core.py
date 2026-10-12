@@ -1204,6 +1204,7 @@ class PstnRealtimeVoiceLoop:
 
     def _begin_close_listen(self) -> None:
         """Farewell is done — wait for a barge before actually disconnecting."""
+        self._farewell_complete = True
         self._farewell_response_active = False
         if self._caller_speaking:
             log_pstn("hangup.close_listen.deferred", call_id=self.call_id, reason="caller_speaking")
@@ -2976,7 +2977,14 @@ class PstnRealtimeVoiceLoop:
             log_pstn("tool_router.acoustic_filler", call_id=self.call_id, tool=tool_name)
             if self.on_agent_wire is not None:
                 frame_samples = int(self.sample_rate * 0.02)
-                filler_bytes = b"\x00" * (frame_samples * 2 if self.tts_output_codec == "linear16" else frame_samples)
+                if self.tts_output_codec == "linear16":
+                    filler_bytes = b"\x00\x00" * frame_samples
+                elif str(self.tts_output_codec).lower() in ("alaw", "pcma"):
+                    filler_bytes = b"\xd5" * frame_samples
+                else:
+                    # G.711 mu-law (pcmu / mulaw): 0xFF represents digital silence.
+                    # 0x00 in mu-law is peak negative volume (-32124 linear PCM), causing loud clicks.
+                    filler_bytes = b"\xff" * frame_samples
                 res = self.on_agent_wire(filler_bytes)
                 if asyncio.iscoroutine(res):
                     await res
@@ -3112,8 +3120,6 @@ class PstnRealtimeVoiceLoop:
                             await self._ensure_hangup_farewell_audio(
                                 prefer_side_session=is_gemini_live_voice_model(self._live_model or "")
                             )
-                            if not self._farewell_audio_engaged():
-                                return
                         await self._finish_hangup()
                         return
                     self._abort_in_progress_hangup()
@@ -3141,7 +3147,7 @@ class PstnRealtimeVoiceLoop:
                     if self._persist_user_turn_to_ledger():
                         line = await call_ledger.append_user_turn(self.call_id, text)
                     detail_ops = [] if closing else caller_detail_memory_operations(text)
-                    if detail_ops and line:
+                    if detail_ops:
                         try:
                             memory_manager.apply_proposals(
                                 self.call_id,

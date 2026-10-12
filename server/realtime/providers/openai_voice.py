@@ -237,6 +237,8 @@ class OpenAIRealtimeVoiceAdapter:
             )
         else:
             session["instructions"] = instructions
+        self.last_session = session
+        await self._conn.send({"type": "session.update", "session": session})
     async def update_tools(self, extra_tools: list[dict] | None = None) -> None:
         """Update live tools in an already-connected OpenAI Realtime session."""
         if self._conn is None or self._closed:

@@ -79,10 +79,11 @@ CALL_ACTION_TOOL = {
 
 
 class CallLifecycleController:
-    def __init__(self) -> None:
+    def __init__(self, transfer_handler: Any = None) -> None:
         self.state = CallState.ACTIVE
         self.reason = ""
         self.callback_cancelled = False
+        self.transfer_handler = transfer_handler
 
     def request(self, action: AgentAction, *, caller_speaking: bool = False) -> str | None:
         """Return a rejection code or accept. No transcript keyword matching here."""
@@ -99,7 +100,9 @@ class CallLifecycleController:
                 return "caller_still_talking"
             self.state, self.reason = CallState.ENDING, action.reason
         elif action.action in {CallAction.TRANSFER, CallAction.VOICEMAIL}:
-            # No provider handoff implementation is configured in this runtime.
+            if self.transfer_handler is not None:
+                self.state, self.reason = CallState.ENDING, action.action.value
+                return None
             return "action_unavailable"
         elif action.action == CallAction.CALLBACK and self.callback_cancelled:
             return "callback_withdrawn"

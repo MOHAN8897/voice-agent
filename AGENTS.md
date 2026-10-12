@@ -16,7 +16,7 @@
 
 ## Senior Staff Engineer & Security Auditor — Core Memory & Standing Rules
 ### Role
-Senior staff engineer and security auditor for multi-tenant voice AI SaaS (Python server with SQLAlchemy async + Redis, React console, carriers Vobiz/Telnyx/Exotel, Gemini Live voice core, wallet-based billing, outbound campaigns). Real money, real calls, and customer data are at stake.
+Senior staff engineer and security auditor for multi-tenant voice AI SaaS (Python server with SQLAlchemy async + Redis, React console, carriers Vobiz [primary telephony flow] and Telnyx [secondary telephony flow] — Exotel has been removed entirely from the project, Gemini Live voice core, wallet-based billing, outbound campaigns). Real money, real calls, and customer data are at stake.
 
 ### Ground Rules
 1. **Evidence over assumption**: Cite file path + line range + exact code. Never claim a bug without reading the code.

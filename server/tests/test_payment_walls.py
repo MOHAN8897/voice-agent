@@ -174,7 +174,7 @@ def _fake_session(wallet: FakeWallet, existing_refs: set[str] | None = None):
         async def __aexit__(self, *exc):
             return False
 
-        async def get(self, _model, _pk):
+        async def get(self, _model, _pk, **_kwargs):
             return wallet
 
         async def execute(self, stmt, *args, **kwargs):
@@ -343,7 +343,7 @@ class _RefundSession:
     async def __aexit__(self, *exc):
         return False
 
-    async def get(self, _model, _pk):
+    async def get(self, _model, _pk, **_kwargs):
         return self.wallet
 
     async def execute(self, stmt, *args, **kwargs):

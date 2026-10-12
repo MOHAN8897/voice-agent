@@ -265,7 +265,7 @@ async def confirm_wallet_payment(
         raise RuntimeError("database_required")
 
     async with factory() as session:
-        row = await session.get(RazorpayOrder, order_id)
+        row = await session.get(RazorpayOrder, order_id, with_for_update=True)
         if row is None or row.tenant_id != tenant_id:
             raise ValueError("order_not_found")
         if row.status == "paid":
@@ -291,7 +291,7 @@ async def confirm_wallet_payment(
                 # it is the rate actually applied on the payment date.
                 paise = int(settled_inr)
 
-        wallet = await session.get(BillingWallet, tenant_id)
+        wallet = await session.get(BillingWallet, tenant_id, with_for_update=True)
         if wallet is None:
             wallet = BillingWallet(tenant_id=tenant_id, updated_at=_utcnow())
             session.add(wallet)

@@ -140,7 +140,9 @@ function Get-UvicornDevCommand {
     }
     # Reload only server/ so writes under data/, web/.next, and logs do not
     # bounce uvicorn and reset in-flight Next.js proxy connections (ECONNRESET).
-    return "& '$PythonPath' -m uvicorn server.app:app --host 127.0.0.1 --port 8000 --reload --reload-dir server"
+    # Exclude tests, logs, pycache, and sqlite databases from watchfiles so that test runs
+    # and background log writes do not kill/bounce uvicorn and reset Next.js proxy connections.
+    return "& '$PythonPath' -m uvicorn server.app:app --host 127.0.0.1 --port 8000 --reload --reload-dir server --reload-exclude server/tests"
 }
 
 function Test-HttpOk {
@@ -401,10 +403,10 @@ function Test-DevCommandLine {
         ($CommandLine -match $repoPath -or $CommandLine -match '(?i)https?://(localhost|127\.0\.0\.1):(8000|3000|4173|5173)\b')) { return $true }
     if ($CommandLine -match '(?i)dev_window\.ps1') { return $true }
     if ($CommandLine -match '(?i)voice-agent-dev-(runners|jobs)') { return $true }
-    if ($CommandLine -match '(?i)Voice Agent (API|Web|Tunnel)') { return $true }
+    if ($CommandLine -match '(?i)(Voice Agent (API|Web|Tunnel)|Voxly AI)') { return $true }
     if ($CommandLine -match '(?i)voice agent[\\/]+scripts[\\/]+dev_(stack|up|down)\.ps1') { return $true }
-    # Next / npm started from this repo's web folder (space in "voice agent" is required).
-    if ($CommandLine -match '(?i)voice agent[\\/]+web' -and $CommandLine -match '(?i)(next|npm)') { return $true }
+    # Next / Vite / npm started from this repo's web or voxly-ai folder
+    if ($CommandLine -match '(?i)voice agent[\\/]+(web|voxly-ai)' -and $CommandLine -match '(?i)(next|npm|vite|node)') { return $true }
     return $false
 }
 

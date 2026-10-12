@@ -122,6 +122,12 @@ async def _resolve_tenant_and_user(request: Request, authorization: Any = None) 
         if claims and getattr(claims, "tenant_id", None):
             return str(claims.tenant_id), str(getattr(claims, "user_id", None) or uuid.uuid4())
 
+    from server.config.env import get_settings
+    settings = get_settings()
+    is_prod = str(getattr(settings, "app_environment", "") or "").lower() in ("production", "staging")
+    if is_prod:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
     tenant_header = request.headers.get("x-tenant-id")
     user_header = request.headers.get("x-user-id")
     if tenant_header:
@@ -251,8 +257,30 @@ async def activate_integration(
 @router.post("/api/integrations/nango-webhook")
 async def nango_webhook(request: Request) -> dict[str, Any]:
     """Handle incoming Nango webhooks for real-time connection state updates."""
+    secret = nango_service.secret_key
+    raw_body = b""
     try:
-        body = await request.json()
+        b = await request.body()
+        if isinstance(b, (bytes, bytearray)):
+            raw_body = bytes(b)
+        elif isinstance(b, str):
+            raw_body = b.encode("utf-8")
+    except Exception:
+        pass
+    if secret and raw_body:
+        sig = request.headers.get("x-nango-signature") or request.headers.get("x-nango-hmac-sha256")
+        if sig:
+            import hashlib
+            import hmac
+            expected = hmac.new(secret.encode(), raw_body, hashlib.sha256).hexdigest()
+            if not hmac.compare_digest(expected, sig):
+                raise HTTPException(status_code=401, detail="Invalid Nango webhook signature")
+    try:
+        import json
+        if raw_body:
+            body = json.loads(raw_body.decode())
+        else:
+            body = await request.json()
         event_type = str(body.get("operation") or body.get("event") or body.get("type") or "").lower()
         connection_id = body.get("connectionId") or body.get("connection_id")
         provider_key = body.get("providerConfigKey") or body.get("provider_config_key")

@@ -576,7 +576,7 @@ async def debit_did_purchase(
         )
         if dup.scalar_one_or_none():
             return {"ok": True, "duplicate": True, "amountCents": 0, "amountInrPaise": 0}
-        wallet = await session.get(BillingWallet, tenant_id)
+        wallet = await session.get(BillingWallet, tenant_id, with_for_update=True)
         if wallet is None:
             wallet = BillingWallet(tenant_id=tenant_id, balance_cents=0, balance_inr_paise=0, updated_at=_utcnow())
             session.add(wallet)
@@ -670,7 +670,7 @@ async def refund_did_purchase(
         # Reverse the signs of whatever was actually debited.
         back_cents = abs(int(original.amount_cents or 0))
         back_paise = abs(int(original.amount_inr_paise or 0))
-        wallet = await session.get(BillingWallet, tenant_id)
+        wallet = await session.get(BillingWallet, tenant_id, with_for_update=True)
         if wallet is None:
             wallet = BillingWallet(
                 tenant_id=tenant_id, balance_cents=0, balance_inr_paise=0, updated_at=_utcnow()

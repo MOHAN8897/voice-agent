@@ -229,10 +229,14 @@ class VobizClient:
                 bal = float(balances[0].get("balance", 0.0))
                 curr = balances[0].get("currency", "INR")
                 return {"ok": True, "balance": bal, "currency": curr}
-            return {"ok": True, "balance": 525.0, "currency": "INR"}
+            return {"ok": True, "balance": 0.0, "currency": "INR"}
         except Exception as e:
-            logger.debug("[VOBIZ] balance fetch fallback: %s", e)
-            return {"ok": True, "balance": 525.0, "currency": "INR"}
+            logger.warning("[VOBIZ] balance fetch fallback: %s", e)
+            from server.config.env import get_settings
+            env = getattr(get_settings(), "environment", "development")
+            if env in ("development", "test", "staging"):
+                return {"ok": True, "balance": 0.0, "currency": "INR", "fallback": True}
+            return {"ok": False, "balance": 0.0, "currency": "INR", "error": str(e)}
 
     async def list_account_numbers(self) -> list[dict[str, Any]]:
         """List active provisioned phone numbers on Vobiz account."""

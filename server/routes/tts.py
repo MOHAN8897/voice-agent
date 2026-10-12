@@ -5,10 +5,14 @@ POST /api/tts/stream→ proxy binary stream (audio/mpeg)
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel, Field
 
+from server.auth.subscriber_dependencies import (
+    SubscriberPrincipal,
+    require_subscriber_jwt_if_enabled,
+)
 from server.config.constants import coerce_supported_language, constants
 from server.services.registry_tts_service import synthesize_via_registry
 from server.services.sarvam_tts_service import synthesize, synthesize_stream
@@ -30,7 +34,10 @@ class TTSRequest(BaseModel):
 
 
 @router.post("/api/tts")
-async def tts_rest(body: TTSRequest):
+async def tts_rest(
+    body: TTSRequest,
+    _auth: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled),
+):
     # Enforce REST limit strictly
     if len(body.text) > constants.TTS_MAX_CHARS_REST:
         raise HTTPException(
@@ -72,7 +79,10 @@ async def tts_rest(body: TTSRequest):
 
 
 @router.post("/api/tts/stream")
-async def tts_stream(body: TTSRequest):
+async def tts_stream(
+    body: TTSRequest,
+    _auth: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled),
+):
     lang = coerce_supported_language(body.language_code)
     if len(body.text) > constants.TTS_MAX_CHARS_STREAM:
         raise HTTPException(status_code=413, detail={"error": {"code": "validation_error", "message": f"Text too long. Max {constants.TTS_MAX_CHARS_STREAM} chars."}})

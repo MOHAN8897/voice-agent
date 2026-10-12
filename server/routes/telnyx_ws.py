@@ -38,8 +38,16 @@ async def telnyx_stream_ws(websocket: WebSocket):
         token_meta=bool(token_meta),
         registry_meta=bool(registry_meta),
     )
-    await bridge.run(
-        agent_id=merged_meta.get("agent_id"),
-        tier=merged_meta.get("tier"),
-        token_meta=merged_meta or None,
-    )
+    try:
+        await bridge.run(
+            agent_id=merged_meta.get("agent_id"),
+            tier=merged_meta.get("tier"),
+            token_meta=merged_meta or None,
+        )
+    except Exception as exc:
+        logger.exception("[TELNYX_WS] Unhandled bridge error: %s", exc)
+        log_pstn("telnyx.ws.error", error=str(exc))
+        try:
+            await websocket.close(code=1011, reason="Internal error")
+        except Exception:
+            pass

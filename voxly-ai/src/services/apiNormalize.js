@@ -43,7 +43,7 @@ export function normalizePhoneNumber(row, agentsById = {}) {
   const agentId = row.agentId || row.assignedAgentId;
   const agent = agentId ? agentsById[agentId] : null;
   const inferred = countryFromE164(e164);
-  const provider = row.provider || (row.telnyxNumberId ? 'telnyx' : (row.plivoNumberId ? 'vobiz' : 'vobiz'));
+  const provider = row.provider || (row.telnyxNumberId ? 'telnyx' : (row.plivoNumberId || row.carrierNumberId ? 'vobiz' : 'vobiz'));
   return {
     id,
     number: e164,
@@ -59,7 +59,10 @@ export function normalizePhoneNumber(row, agentsById = {}) {
     monthlyInr: row.monthlyInr ?? 0,
     provider,
     telnyxNumberId: row.telnyxNumberId || null,
-    plivoNumberId: row.plivoNumberId || null,
+    // Canonical name for the carrier-assigned number ID (previously "plivoNumberId").
+    // plivoNumberId kept as a read alias so existing code still works during migration.
+    carrierNumberId: row.carrierNumberId || row.plivoNumberId || null,
+    plivoNumberId: row.plivoNumberId || row.carrierNumberId || null, // @deprecated — use carrierNumberId
     status: row.status || 'active',
     capabilities: row.capabilities || ['Voice'],
     usageMinutesThisMonth: row.usageMinutesThisMonth ?? 0,
