@@ -146,14 +146,28 @@ function Get-UvicornDevCommand {
 }
 
 function Test-HttpOk {
-    param([string]$Url, [int]$TimeoutSec = 2)
+    param([string]$Url, [int]$TimeoutSec = 0)
+    if ($TimeoutSec -le 0) {
+        if ($Url -like "https://*") { $TimeoutSec = 6 } else { $TimeoutSec = 3 }
+    }
     # Prefer curl.exe: Windows Invoke-WebRequest often does not honor TimeoutSec when
     # TCP connects (uvicorn reloader) but the worker has not finished startup yet.
+    # Force IPv4 (-4) so Windows curl never hangs waiting for dual-stack IPv6 connect timeout.
     $curl = Get-Command curl.exe -ErrorAction SilentlyContinue
     if ($curl) {
         try {
-            $code = & curl.exe -s -S -o NUL -m $TimeoutSec -w "%{http_code}" $Url 2>$null
-            if ($LASTEXITCODE -ne 0) { return $false }
+            $curlArgs = @("-s", "-S", "-4", "-o", "NUL", "-m", "$TimeoutSec", "-w", "%{http_code}")
+            if ($Url -match "https?://([^/:]+dialtact\.com)") {
+                $hostName = $Matches[1]
+                $curlArgs += @("--resolve", "${hostName}:443:104.21.10.76")
+            }
+            $curlArgs += $Url
+            $code = & curl.exe @curlArgs 2>$null
+            if ($LASTEXITCODE -ne 0) {
+                # Fallback probe without --resolve if custom resolver was rejected
+                $code = & curl.exe -s -S -4 -o NUL -m $TimeoutSec -w "%{http_code}" $Url 2>$null
+                if ($LASTEXITCODE -ne 0) { return $false }
+            }
             $n = 0
             if ([int]::TryParse([string]$code, [ref]$n)) {
                 return ($n -ge 200 -and $n -lt 400)
@@ -173,12 +187,21 @@ function Test-HttpOk {
 
 # Raw status code (0 on transport failure). Used for intentional 404 checks.
 function Get-HttpStatusCode {
-    param([string]$Url, [int]$TimeoutSec = 5)
+    param([string]$Url, [int]$TimeoutSec = 6)
     $curl = Get-Command curl.exe -ErrorAction SilentlyContinue
     if ($curl) {
         try {
-            $code = & curl.exe -s -S -o NUL -m $TimeoutSec -w "%{http_code}" $Url 2>$null
-            if ($LASTEXITCODE -ne 0) { return 0 }
+            $curlArgs = @("-s", "-S", "-4", "-o", "NUL", "-m", "$TimeoutSec", "-w", "%{http_code}")
+            if ($Url -match "https?://([^/:]+dialtact\.com)") {
+                $hostName = $Matches[1]
+                $curlArgs += @("--resolve", "${hostName}:443:104.21.10.76")
+            }
+            $curlArgs += $Url
+            $code = & curl.exe @curlArgs 2>$null
+            if ($LASTEXITCODE -ne 0) {
+                $code = & curl.exe -s -S -4 -o NUL -m $TimeoutSec -w "%{http_code}" $Url 2>$null
+                if ($LASTEXITCODE -ne 0) { return 0 }
+            }
             $n = 0
             if ([int]::TryParse([string]$code, [ref]$n)) { return $n }
             return 0
@@ -201,11 +224,15 @@ function Wait-ForService {
     param(
         [string]$Label,
         [string]$Url,
-        [int]$MaxAttempts = 90
+        [int]$MaxAttempts = 90,
+        [int]$TimeoutSec = 0
     )
+    if ($TimeoutSec -le 0) {
+        if ($Url -like "https://*") { $TimeoutSec = 6 } else { $TimeoutSec = 3 }
+    }
     Write-Host "Waiting for $Label ($Url)..."
     for ($i = 0; $i -lt $MaxAttempts; $i++) {
-        if (Test-HttpOk $Url) {
+        if (Test-HttpOk $Url $TimeoutSec) {
             Write-Host "$Label is ready."
             return $true
         }

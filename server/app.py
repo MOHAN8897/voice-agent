@@ -249,20 +249,35 @@ app = FastAPI(
 )
 
 def _cors_origins_and_credentials() -> tuple[list[str], bool]:
-    raw = (get_settings().cors_origins or "").strip()
-    if raw:
-        origins = [o.strip() for o in raw.split(",") if o.strip()]
-        if "*" in origins:
-            return ["*"], False
-        return origins, True
-    return [
+    settings = get_settings()
+    raw = (settings.cors_origins or "").strip()
+    base_origins = [
         "http://localhost:3000",
         "http://localhost:5173",
         "http://localhost:8000",
         "http://127.0.0.1:3000",
         "http://127.0.0.1:5173",
         "http://127.0.0.1:8000",
-    ], True
+        "https://app-dev.dialtact.com",
+        "https://app.dialtact.com",
+        "https://dialtact.com",
+        "https://www.dialtact.com",
+        "https://api-dev.dialtact.com",
+        "https://api.dialtact.com",
+    ]
+    for url in (settings.client_url, settings.public_app_url, settings.public_tunnel_url):
+        u = (url or "").strip().rstrip("/")
+        if u and u not in base_origins:
+            base_origins.append(u)
+    if raw:
+        origins = [o.strip() for o in raw.split(",") if o.strip()]
+        if "*" in origins:
+            return ["*"], False
+        for o in base_origins:
+            if o not in origins:
+                origins.append(o)
+        return origins, True
+    return base_origins, True
 
 
 _cors_origins, _cors_allow_creds = _cors_origins_and_credentials()

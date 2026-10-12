@@ -123,16 +123,17 @@ if (Should-StartTunnel) {
             Start-DevWindow -Title "Cloudflare Tunnel" -WorkingDir $RepoRoot `
                 -Command $tunnelCmd `
                 -LogFile (Join-Path $LogDir "cloudflared-named.log")
+            Start-Sleep -Seconds 2
             if ($publicApi) {
-                if (-not (Wait-ForService -Label "Public API" -Url "$publicApi/api/health" -MaxAttempts 45)) {
+                if (-not (Wait-ForService -Label "Public API" -Url "$publicApi/api/health" -MaxAttempts 45 -TimeoutSec 6)) {
                     throw "Public API tunnel is not healthy. See data/dev-logs/cloudflared-named.log."
                 }
             }
             if ($publicApp) {
-                if (-not (Wait-ForService -Label "Public Voxly" -Url $publicApp -MaxAttempts 45)) {
+                if (-not (Wait-ForService -Label "Public Voxly" -Url $publicApp -MaxAttempts 45 -TimeoutSec 6)) {
                     throw "Public Voxly tunnel is not healthy. See data/dev-logs/cloudflared-named.log."
                 }
-                if (-not (Wait-ForService -Label "Public Voxly API proxy" -Url "$publicApp/api/health" -MaxAttempts 45)) {
+                if (-not (Wait-ForService -Label "Public Voxly API proxy" -Url "$publicApp/api/health" -MaxAttempts 45 -TimeoutSec 6)) {
                     throw "Public Voxly API proxy is not healthy."
                 }
                 # Admin is localhost-only: public /dev must 404 (not 200).
