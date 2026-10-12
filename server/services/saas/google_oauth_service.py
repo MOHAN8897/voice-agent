@@ -109,6 +109,9 @@ def allowed_frontend_origin(origin: str | None) -> str | None:
         settings.voxly_frontend_url.rstrip("/"),
         "http://localhost:5173",
         "http://127.0.0.1:5173",
+        "https://app-dev.dialtact.com",
+        "https://dialtact.com",
+        "https://app.dialtact.com",
         "https://app-dev.hustlelabs.in",
     }
     if candidate in allowed:

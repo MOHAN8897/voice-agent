@@ -223,7 +223,7 @@ def test_vobiz_xml_escaping_prevents_parse_errors():
     """Verify stream URL query parameters are XML escaped (&amp;) preventing FreeSWITCH parse errors."""
     from server.routes.vobiz import _build_vobiz_xml_response
 
-    test_url = "wss://api-dev.hustlelabs.in/ws/vobiz-stream?token=abc123xyz&call_uuid=uuid-456&agent=ag-1"
+    test_url = "wss://api-dev.dialtact.com/ws/vobiz-stream?token=abc123xyz&call_uuid=uuid-456&agent=ag-1"
     resp = _build_vobiz_xml_response(test_url)
     assert resp.status_code == 200
     xml_str = resp.body.decode("utf-8")

@@ -3,9 +3,9 @@ import react from '@vitejs/plugin-react';
 
 import { reticle } from '@reticlehq/vite-plugin';
 // The public tunnel reaches this dev server with a real hostname (Host header is
-// app-dev.hustlelabs.in), which Vite blocks unless the host is allow-listed.
+// app-dev.dialtact.com / app-dev.hustlelabs.in), which Vite blocks unless the host is allow-listed.
 const allowedHosts = (
-  process.env.VITE_ALLOWED_HOSTS || '.hustlelabs.in,localhost,127.0.0.1'
+  process.env.VITE_ALLOWED_HOSTS || '.dialtact.com,.hustlelabs.in,localhost,127.0.0.1'
 )
   .split(',')
   .map((h) => h.trim())

@@ -1,5 +1,5 @@
-# One-time Cloudflare named tunnel for hustlelabs.in (stable api-dev / app-dev URLs)
-# Prerequisite: hustlelabs.in must be added to your Cloudflare account (DNS on Cloudflare).
+# One-time Cloudflare named tunnel for dialtact.com (stable api-dev / app-dev URLs)
+# Prerequisite: dialtact.com must be added to your Cloudflare account (DNS on Cloudflare).
 #
 # Usage:
 #   powershell -ExecutionPolicy Bypass -File scripts/setup_cloudflare_tunnel.ps1
@@ -9,8 +9,8 @@
 param(
     [switch]$LoginOnly,
     [string]$TunnelName = "voice-agent-dev",
-    [string]$ApiHost = "api-dev.hustlelabs.in",
-    [string]$AppHost = "app-dev.hustlelabs.in",
+    [string]$ApiHost = "api-dev.dialtact.com",
+    [string]$AppHost = "app-dev.dialtact.com",
     [int]$ApiPort = 8000,
     # 5173 is Voxly, the product UI. It proxies /api and /ws to 8000 and /dev to the
     # admin panel on 3000, so one public hostname covers product + back office.
@@ -36,7 +36,7 @@ function Ensure-Login {
     }
     Write-Host ""
     Write-Host "=== Cloudflare login required ==="
-    Write-Host "A browser window will open. Log in and authorize hustlelabs.in."
+    Write-Host "A browser window will open. Log in and authorize dialtact.com."
     Write-Host "If it does not open, copy the URL printed by cloudflared."
     Write-Host ""
     & cloudflared tunnel login

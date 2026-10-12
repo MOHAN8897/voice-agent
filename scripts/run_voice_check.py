@@ -3,7 +3,7 @@
 Usage:
   python scripts/run_voice_check.py
   python scripts/run_voice_check.py --to +918897908470
-  python scripts/run_voice_check.py --base-url https://api-dev.hustlelabs.in
+  python scripts/run_voice_check.py --base-url https://api-dev.dialtact.com
 """
 from __future__ import annotations
 

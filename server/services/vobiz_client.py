@@ -198,8 +198,46 @@ class VobizClient:
         if extra_params:
             payload.update(extra_params)
 
-        res = await self._request("POST", f"/Account/{auth_id}/Call/", json=payload)
-        return res
+        try:
+            res = await self._request("POST", f"/Account/{auth_id}/Call/", json=payload)
+            return res
+        except VobizApiError as exc:
+            # If carrier rejects newly configured domain (e.g. DNS/SSL propagation in flight),
+            # fall back safely so outbound calls do not fail.
+            if "not a valid URL" in str(exc) and "dialtact.com" in ans_url:
+                logger.warning(
+                    "[VOBIZ] dialtact.com webhook not accepted by carrier yet; retrying with secondary fallback URL"
+                )
+                fallback_base = getattr(get_settings(), "vobiz_fallback_webhook_base_url", "https://api-dev.hustlelabs.in")
+                payload["answer_url"] = f"{fallback_base}/api/vobiz/answer"
+                payload["hangup_url"] = f"{fallback_base}/api/vobiz/hangup"
+                return await self._request("POST", f"/Account/{auth_id}/Call/", json=payload)
+            raise
+
+    async def update_application(
+        self,
+        *,
+        app_id: str | None = None,
+        answer_url: str | None = None,
+        hangup_url: str | None = None,
+        fallback_answer_url: str | None = None,
+    ) -> dict[str, Any]:
+        """Update Vobiz voice application callback URLs."""
+        auth_id = self.cfg["auth_id"]
+        target_app_id = (app_id or self.cfg.get("app_id") or "19573358086719545").strip()
+        base_api = public_api_base()
+        ans = answer_url or f"{base_api}/api/vobiz/answer"
+        hup = hangup_url or f"{base_api}/api/vobiz/hangup"
+        fb = fallback_answer_url or f"{base_api}/api/vobiz/fallback"
+        payload: dict[str, Any] = {
+            "answer_url": ans,
+            "answer_method": "POST",
+            "hangup_url": hup,
+            "hangup_method": "POST",
+            "fallback_answer_url": fb,
+            "fallback_method": "POST",
+        }
+        return await self._request("POST", f"/Account/{auth_id}/Application/{target_app_id}/", json=payload)
 
     async def hangup_call(self, call_uuid: str) -> dict[str, Any]:
         """Terminate a live call on Vobiz."""

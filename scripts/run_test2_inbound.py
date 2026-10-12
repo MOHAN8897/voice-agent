@@ -4,9 +4,9 @@ from __future__ import annotations
 import asyncio
 import sys
 
-import httpx
+import os
 
-BASE = "https://api-dev.hustlelabs.in"
+BASE = os.getenv("PUBLIC_TUNNEL_URL") or "https://api-dev.dialtact.com"
 AGENT_ID = "aead8ad2-389b-4482-a9a5-11bfcb37fe0d"
 TO = "+918897908470"
 

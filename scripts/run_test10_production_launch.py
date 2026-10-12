@@ -2,7 +2,7 @@
 
 Usage:
   python scripts/run_test10_production_launch.py
-  python scripts/run_test10_production_launch.py --base-url https://api-dev.hustlelabs.in
+  python scripts/run_test10_production_launch.py --base-url https://api-dev.dialtact.com
   python scripts/run_test10_production_launch.py --skip-pytest
 """
 from __future__ import annotations
@@ -15,7 +15,7 @@ import sys
 
 import httpx
 
-DEFAULT_BASE = os.getenv("PUBLIC_TUNNEL_URL") or os.getenv("CANARY_BASE_URL") or "https://api-dev.hustlelabs.in"
+DEFAULT_BASE = os.getenv("PUBLIC_TUNNEL_URL") or os.getenv("CANARY_BASE_URL") or "https://api-dev.dialtact.com"
 
 
 def _run_test0_pytest() -> bool:

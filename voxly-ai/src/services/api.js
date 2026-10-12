@@ -169,6 +169,9 @@ function preferSameOriginApi() {
   return (
     host === 'localhost' ||
     host === '127.0.0.1' ||
+    host === 'app-dev.dialtact.com' ||
+    host === 'dialtact.com' ||
+    host === 'app.dialtact.com' ||
     host === 'app-dev.hustlelabs.in'
   );
 }
@@ -233,9 +236,9 @@ export const api = {
       (origin === window.location.origin ||
         normalized === `${window.location.origin}/api` ||
         /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin) ||
-        /^https?:\/\/[\w.-]+\.hustlelabs\.in$/i.test(origin));
+        /^https?:\/\/[\w.-]+\.(dialtact\.com|hustlelabs\.in)$/i.test(origin));
     if (!allowed) {
-      throw new Error('Backend URL must be this site origin, localhost, or the hustlelabs API host.');
+      throw new Error('Backend URL must be this site origin, localhost, or the dialtact.com API host.');
     }
     localStorage.setItem('voxly_backend_url', normalized);
   },

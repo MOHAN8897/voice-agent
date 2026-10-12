@@ -3,7 +3,7 @@
 Runs against a remote API base (production or named tunnel).
 
 Usage:
-  python scripts/run_test9_production_canary.py --base-url https://api-dev.hustlelabs.in
+  python scripts/run_test9_production_canary.py --base-url https://api-dev.dialtact.com
   python scripts/run_test9_production_canary.py --base-url https://api.yourdomain.com --smoke-only
   python scripts/run_test9_production_canary.py --base-url https://api.yourdomain.com --score-only
 """
@@ -155,7 +155,7 @@ async def main() -> int:
     parser = argparse.ArgumentParser(description="TEST 9 — production canary")
     parser.add_argument(
         "--base-url",
-        default=os.getenv("PUBLIC_TUNNEL_URL") or os.getenv("CANARY_BASE_URL") or "https://api-dev.hustlelabs.in",
+        default=os.getenv("PUBLIC_TUNNEL_URL") or os.getenv("CANARY_BASE_URL") or "https://api-dev.dialtact.com",
         help="Production or staging API URL (HTTPS)",
     )
     parser.add_argument("--to", default=DEFAULT_TO)
