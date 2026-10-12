@@ -105,12 +105,36 @@ async def calls_outbound_alias(body: OutboundCallBody, principal: SubscriberPrin
 @router.get("/api/telephony/provider")
 async def telephony_provider_info(principal: SubscriberPrincipal = Depends(require_subscriber_jwt)):
     """Return backend-configured active telephony provider details so frontend dynamically aligns."""
+    from server.services.saas.platform_admins import is_platform_admin_email
     from server.services.telephony import active_telephony_provider
     from server.services.telephony_status import all_provider_status
 
     active = active_telephony_provider()
     statuses = await all_provider_status()
     active_details = next((s for s in statuses if s.get("id") == active), {})
+    is_admin = is_platform_admin_email(principal.email)
+
+    if not is_admin:
+        # Tenants and standard subscribers receive generalized, vendor-neutral telemetry
+        return {
+            "activeProvider": "direct_voice",
+            "activeLabel": "Enterprise Voice Network",
+            "ready": bool(active_details.get("ready")),
+            "enabled": bool(active_details.get("enabled")),
+            "phoneNumber": active_details.get("phone_number"),
+            "supportedProviders": ["direct_voice"],
+            "providers": [
+                {
+                    "id": "direct_voice",
+                    "label": "Enterprise Voice Network",
+                    "enabled": bool(active_details.get("enabled")),
+                    "ready": bool(active_details.get("ready")),
+                    "phoneNumber": active_details.get("phone_number"),
+                }
+            ],
+        }
+
+    # Platform administrators see sanitized multi-carrier availability (without exposing raw secret keys or URLs)
     return {
         "activeProvider": active,
         "activeLabel": active_details.get("label") or active.title(),
@@ -126,14 +150,6 @@ async def telephony_provider_info(principal: SubscriberPrincipal = Depends(requi
                 "ready": s.get("ready"),
                 "phoneNumber": s.get("phone_number"),
                 "balance": s.get("balance"),
-                "connectionId": s.get("connection_id"),
-                "webhookUrl": s.get("webhook_url") or s.get("answer_url"),
-                "hangupUrl": s.get("hangup_url"),
-                "fallbackUrl": s.get("fallback_url"),
-                "recordingUrl": s.get("recording_url"),
-                "streamWs": s.get("stream_ws"),
-                "accountInfo": s.get("account_info"),
-                "checklist": s.get("checklist"),
             }
             for s in statuses
         ],
@@ -149,6 +165,9 @@ async def telephony_set_provider(
     body: SwitchTelephonyProviderBody,
     principal: SubscriberPrincipal = Depends(require_subscriber_jwt),
 ):
+    from server.services.saas.platform_admins import require_platform_admin_email
+    require_platform_admin_email(principal.email)
+
     from server.services.dev_secrets_store import dev_secrets_store
 
     enable_key = f"enable_{body.provider}"

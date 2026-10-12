@@ -126,6 +126,18 @@ async def lifespan(app: FastAPI):
                         logger.info(f"[VOICE] Tier cache loaded ({n} rows)")
                 except Exception as e:
                     logger.warning(f"[VOICE] Tier cache load skipped: {e}")
+                try:
+                    from server.services.saas.platform_phone_stack import hydrate_universal_phone_stack_from_db
+
+                    await hydrate_universal_phone_stack_from_db()
+                except Exception as e:
+                    logger.warning(f"[VOICE] Universal phone stack hydrate skipped: {e}")
+                try:
+                    from server.routes.dev_telephony import _ensure_dev_telephony_hydrated
+
+                    await _ensure_dev_telephony_hydrated()
+                except Exception as e:
+                    logger.warning(f"[VOICE] Telephony store hydrate skipped: {e}")
                 logger.info("[VOICE] PostgreSQL connected")
             else:
                 logger.info("[VOICE] PostgreSQL not configured (DATABASE_URL unset)")

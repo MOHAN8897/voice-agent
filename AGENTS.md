@@ -35,6 +35,8 @@ Senior staff engineer and security auditor for multi-tenant voice AI SaaS (Pytho
 - Escape all dynamic XML/VoiceXML values; treat caller transcripts as untrusted input to LLMs.
 - Any UI action calling an API needs loading, error, and rollback handling.
 - Every bug fix ships with a regression test. Every new feature touching sensitive domains ships with failure-path tests.
+- **Strict Vendor & Secret Scrubbing in Tenant Surface**: Tenant-facing frontends (`voxly-ai`, Next.js app/marketing) and subscriber APIs (`/api/telephony/*`, `/api/integrations/*`) must NEVER leak internal wholesale carrier/vendor names (`vobiz`, `telnyx`, `nango`, `exotel`), internal webhook endpoints, Auth IDs, Connection IDs, or carrier account keys. Always present generalized enterprise abstractions ('Enterprise Voice Network', 'Direct Voice Trunk', 'CRM Integration'). Carrier switching controls are strictly privileged to platform infrastructure.
+- **Configuration Persistence Across Server Restarts**: Never wipe or overwrite database-persisted tier assignments, universal phone stacks, or telephony states during server startup/bootstrap. Always respect existing database records (`TierAssignment`, `ConfigVersion`, telephony store snapshots) and hydrate them on lifespan boot before serving traffic.
 - When unsure, flag and ask rather than guess.
 <!-- agent-memory:end -->
 

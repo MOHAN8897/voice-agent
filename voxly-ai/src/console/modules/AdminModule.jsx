@@ -363,10 +363,11 @@ export function AdminModule() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
           {(telephonyInfo?.providers || [
-            { id: 'vobiz', label: 'Vobiz Voice', enabled: true, ready: true },
-            { id: 'telnyx', label: 'Telnyx Voice', enabled: true, ready: false },
+            { id: 'vobiz', label: 'Primary Voice Network', enabled: true, ready: true },
+            { id: 'telnyx', label: 'International Voice Trunk', enabled: true, ready: false },
           ]).map((p) => {
             const isActive = (telephonyInfo?.activeProvider || 'vobiz') === p.id;
+            const displayLabel = p.id === 'vobiz' ? 'Primary Voice Network' : (p.id === 'telnyx' ? 'International Voice Trunk' : p.label);
             return (
               <div
                 key={p.id}
@@ -379,7 +380,7 @@ export function AdminModule() {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <Server className="w-4 h-4 text-[#524E5E]" />
-                    <span className="text-sm font-bold text-[#0F0E17]">{p.label}</span>
+                    <span className="text-sm font-bold text-[#0F0E17]">{displayLabel}</span>
                   </div>
                   {isActive && (
                     <span className="text-[10px] uppercase font-bold text-[#6344E7] bg-[#6344E7]/10 px-2 py-0.5 rounded font-mono">
@@ -395,7 +396,7 @@ export function AdminModule() {
                   <div>
                     Endpoints:{' '}
                     <span className="text-[#0F0E17]">
-                      {p.id === 'vobiz' ? '/api/vobiz/answer' : '/api/telnyx/webhook'}
+                      Direct Voice Gateway
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5">
@@ -429,7 +430,7 @@ export function AdminModule() {
             <h3 className="text-sm font-bold text-[#0F0E17]">Live Telephony Test Call (Canary Probe)</h3>
           </div>
           <span className="text-xs font-mono font-medium text-[#6344E7] bg-[#6344E7]/10 px-2 py-0.5 rounded">
-            Trunk: {telephonyInfo?.activeProvider?.toUpperCase() || 'VOBIZ'}
+            Trunk: Enterprise Voice Line
           </span>
         </div>
         <p className="text-xs text-[#524E5E]">
@@ -463,7 +464,7 @@ export function AdminModule() {
               >
                 {phoneNumbers.map((p) => {
                   const val = p.e164 || p.number;
-                  const prov = (p.provider || 'vobiz').toUpperCase();
+                  const prov = 'DIRECT LINE';
                   return (
                     <option key={p.id || val} value={val}>
                       {val} • {prov} ({p.tenantName || 'Workspace'})
@@ -495,7 +496,7 @@ export function AdminModule() {
                 <AlertCircle className="w-3.5 h-3.5" /> {testCallResult.error}
               </span>
             ) : (
-              <span>Ready to dial destination via {telephonyInfo?.activeProvider || 'vobiz'} trunk</span>
+              <span>Ready to dial destination via enterprise voice trunk</span>
             )}
           </div>
           <TactileButton
@@ -524,20 +525,20 @@ export function AdminModule() {
         </div>
 
         <p className="text-xs text-[#524E5E]">
-          Search live phone numbers directly across carrier inventories (Vobiz or Telnyx) and provision them directly into any workspace.
+          Search live phone numbers directly across global voice inventories and provision them directly into any workspace.
         </p>
 
         {/* Carrier Search Filter Controls */}
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
           <div>
-            <label className="block text-[10px] font-bold text-[#8C879A] uppercase mb-1">Carrier Provider</label>
+            <label className="block text-[10px] font-bold text-[#8C879A] uppercase mb-1">Voice Network</label>
             <select
               value={buyProvider}
               onChange={(e) => setBuyProvider(e.target.value)}
               className="w-full bg-white border border-[#E4E2EB] rounded-lg p-2 text-xs text-[#0F0E17] font-semibold focus:outline-none focus:border-[#6344E7]"
             >
-              <option value="vobiz">Vobiz Voice (Active)</option>
-              <option value="telnyx">Telnyx Voice</option>
+              <option value="vobiz">Primary Network (India & Regional)</option>
+              <option value="telnyx">International Network (Global)</option>
             </select>
           </div>
 
@@ -660,7 +661,7 @@ export function AdminModule() {
                             ? 'bg-purple-50 text-purple-700 border-purple-200'
                             : 'bg-sky-50 text-sky-700 border-sky-200'
                         }`}>
-                          {p.provider || 'vobiz'}
+                          Direct Voice Line
                         </span>
                       </td>
                       <td className="py-2.5 px-3 font-semibold text-[#0F0E17]">{p.tenantName}</td>

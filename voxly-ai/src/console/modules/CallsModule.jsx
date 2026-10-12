@@ -805,7 +805,7 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                           <div className="bg-white p-2 rounded-lg border border-purple-200 shadow-2xs">
                             <div className="flex items-center justify-between">
                               <span className="text-purple-700 block text-[9px] uppercase tracking-wider font-bold">
-                                Vobiz Cloud Telephony
+                                Enterprise Voice Network
                               </span>
                               <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-purple-50 text-purple-700 border border-purple-200 font-semibold">
                                 ₹0.65/min
@@ -816,25 +816,25 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                               {activeCall.vobizInr != null ? ` (₹${Number(activeCall.vobizInr).toFixed(2)})` : ''}
                             </span>
                             <span className="text-[9px] text-[#524E5E] block leading-tight mt-0.5">
-                              Base: ₹0.65/min · Rec: ₹0.0012/min · STT: ₹0.0098/min
+                              Base: ₹0.65/min · Recording: Included · High-fidelity Line
                             </span>
                           </div>
                         ) : (
                           <div className="bg-white p-2 rounded-lg border border-[#E4E2EB]">
                             <span className="text-[#8C879A] block text-[9px] uppercase tracking-wider font-semibold">
-                              Telnyx Telephony
+                              Direct Voice Trunk
                             </span>
                             <span className="font-bold text-[#0F0E17] block">
                               {activeCall.telnyxUsd != null ? `$${Number(activeCall.telnyxUsd).toFixed(4)}` : '$0.000'}
                             </span>
                             <span className="text-[9px] text-[#524E5E]">
-                              {activeCall.telnyxCostSource === 'live_telnyx_balance_delta' ? '✓ Verified from Telnyx balance' : 'Destination tariff rate'}
+                              {activeCall.telnyxCostSource === 'live_telnyx_balance_delta' ? '✓ Verified network delivery' : 'Destination tariff rate'}
                             </span>
                           </div>
                         )}
                         <div className="bg-white p-2 rounded-lg border border-[#E4E2EB]">
                           <span className="text-[#8C879A] block text-[9px] uppercase tracking-wider font-semibold">
-                            Gemini 3.8 Live API
+                            AI Voice Core
                           </span>
                           <span className="font-bold text-[#0F0E17] block">
                             {activeCall.gemini38LiveCostUsd != null ? `$${Number(activeCall.gemini38LiveCostUsd).toFixed(4)}` : (activeCall.costUsd != null ? `$${Number(activeCall.costUsd).toFixed(4)}` : '$0.000')}

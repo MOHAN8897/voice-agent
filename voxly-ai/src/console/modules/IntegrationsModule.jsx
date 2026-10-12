@@ -286,11 +286,11 @@ export function IntegrationsModule() {
       if (data?.status === 'ERROR' || data?.error) {
         if (popup && !popup.closed) popup.close();
         setConnecting(null);
-        if (data?.error === 'nango_credentials_required') {
+        if (data?.error === 'nango_credentials_required' || data?.error === 'oauth_credentials_required') {
           setAuthMode('apiKey');
-          setToastMessage(`ℹ️ OAuth credentials not yet added in Nango. Switched to direct API Key connection.`);
+          setToastMessage(`ℹ️ Direct connection required for this provider. Switched to direct API Key connection.`);
         } else {
-          const msg = data?.message || 'Failed to initiate OAuth. Please check your Nango configuration.';
+          const msg = data?.message || 'Failed to initiate authorization. Please connect using direct API Key or try again later.';
           setToastMessage(`❌ ${msg}`);
         }
         setTimeout(() => setToastMessage(null), 6000);

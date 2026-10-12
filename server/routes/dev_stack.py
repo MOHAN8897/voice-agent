@@ -15,6 +15,7 @@ from server.config.env import get_settings
 from server.db.connection import get_session_factory
 from server.db.models.entities import ConfigVersion
 from server.db.tier_store import (
+    get_cached_tier_stack,
     get_tier_combination_id,
     load_tier_cache,
     promote_tier_assignments,
@@ -93,8 +94,12 @@ async def dev_stack_tiers(session: SessionData = Depends(require_dev_session)):
     tiers: list[dict[str, Any]] = []
     for tier in constants.TIER_NAMES:
         try:
-            resolved = resolve_stack(mode="env", tier=tier, environment=app_env)
+            cached = get_cached_tier_stack(app_env, tier)
             db_combo = await get_tier_combination_id(app_env, tier)
+            if cached is not None:
+                resolved = resolve_stack(mode="frontend", user_selection=cached, tier=tier, environment=app_env)
+            else:
+                resolved = resolve_stack(mode="env", tier=tier, environment=app_env)
             tiers.append(
                 {
                     "tier": tier,
@@ -426,7 +431,10 @@ async def dev_stack_saas_phone_get(session: SessionData = Depends(require_dev_se
 async def dev_stack_saas_phone_put(body: SaasPhoneStackBody, session: SessionData = Depends(require_dev_session)):
     require_permission(session, "dev.stack.write")
     from server.services.pstn_stack import normalize_pstn_stack_override
-    from server.services.saas.platform_phone_stack import save_universal_phone_stack_raw
+    from server.services.saas.platform_phone_stack import (
+        mirror_universal_phone_stack_to_db,
+        save_universal_phone_stack_raw,
+    )
 
     lang = (body.language or "te-IN").strip() or "te-IN"
     raw = body.stack_override or {"pipeline": "realtime_voice", "language": lang}
@@ -443,6 +451,7 @@ async def dev_stack_saas_phone_put(body: SaasPhoneStackBody, session: SessionDat
     if adjustments:
         payload["adjustments"] = adjustments
     save_universal_phone_stack_raw(payload)
+    await mirror_universal_phone_stack_to_db(payload)
     warnings = _saas_phone_stack_warnings(resolved)
     return {
         "ok": True,

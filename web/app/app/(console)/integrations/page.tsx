@@ -20,7 +20,7 @@ export default async function IntegrationsPage() {
       <PageHeader
         eyebrow="Connect"
         title="Integrations"
-        description="PSTN telephony (Telnyx / Vobiz), numbers, and future CRM/webhook connectors."
+        description="Direct PSTN telephony, dedicated enterprise numbers, and CRM/webhook connectors."
       />
       <div className="mt-8 grid gap-4 lg:grid-cols-2">
         <Panel title="PSTN Telephony">

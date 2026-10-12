@@ -426,16 +426,15 @@ class NangoService:
             logger.error("[NANGO] Connect session initiation HTTP %s: %s", exc.code, err_body)
             if "No Nango-provided developer app" in err_body or "does not exist" in err_body or exc.code == 400:
                 return {
-                    "error": "nango_credentials_required",
-                    "message": f"'{app_name}' requires OAuth credentials in your Nango dashboard. You can configure it at app.nango.dev/integrations or connect immediately using an API Key.",
-                    "nango_dashboard_url": "https://app.nango.dev/integrations",
+                    "error": "oauth_credentials_required",
+                    "message": f"'{app_name}' requires direct API Key connection or OAuth setup.",
                     "provider_key": provider_key,
                     "state": state,
                     "status": "ERROR",
                 }
             return {
-                "error": "nango_session_failed",
-                "message": f"Failed to initiate OAuth session with Nango (HTTP {exc.code}). Ensure the integration is configured in your Nango dashboard.",
+                "error": "oauth_session_failed",
+                "message": f"Failed to initiate OAuth authorization session (HTTP {exc.code}). Please connect using direct API Key.",
                 "state": state,
                 "status": "ERROR",
             }

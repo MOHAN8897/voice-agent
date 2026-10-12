@@ -39,6 +39,66 @@ def save_universal_phone_stack_raw(stack: dict[str, Any]) -> dict[str, Any]:
     return stack
 
 
+async def mirror_universal_phone_stack_to_db(stack: dict[str, Any]) -> None:
+    from datetime import datetime, timezone
+    import uuid
+    from server.db.connection import get_session_factory
+    from server.db.models.entities import ConfigVersion
+
+    factory = get_session_factory()
+    if not factory:
+        return
+    try:
+        async with factory() as session:
+            session.add(
+                ConfigVersion(
+                    id=uuid.uuid4(),
+                    resource_type="universal_phone_stack",
+                    resource_id="saas_phone",
+                    version=1,
+                    payload=stack,
+                    created_at=datetime.now(timezone.utc),
+                )
+            )
+            await session.commit()
+    except Exception as e:
+        logger.warning("Could not mirror universal phone stack to DB: %s", e)
+
+
+async def hydrate_universal_phone_stack_from_db() -> bool:
+    """Hydrate universal phone stack from Postgres ConfigVersion if disk file missing."""
+    from sqlalchemy import select
+    from server.db.connection import get_session_factory
+    from server.db.models.entities import ConfigVersion
+
+    path = _stack_path()
+    if path.exists():
+        return True
+
+    factory = get_session_factory()
+    if not factory:
+        return False
+    try:
+        async with factory() as session:
+            result = await session.execute(
+                select(ConfigVersion)
+                .where(
+                    ConfigVersion.resource_type == "universal_phone_stack",
+                    ConfigVersion.resource_id == "saas_phone",
+                )
+                .order_by(ConfigVersion.created_at.desc())
+                .limit(1)
+            )
+            row = result.scalar_one_or_none()
+            if row and isinstance(row.payload, dict):
+                save_universal_phone_stack_raw(row.payload)
+                logger.info("[VOICE] Restored universal phone stack from database")
+                return True
+    except Exception as e:
+        logger.warning("Could not hydrate universal phone stack from DB: %s", e)
+    return False
+
+
 def resolve_platform_phone_stack_sync(language: str = "te-IN") -> dict[str, Any]:
     """Dev-configured stack, else env medium tier realtime_voice defaults (sync)."""
     lang = (language or "te-IN").strip() or "te-IN"

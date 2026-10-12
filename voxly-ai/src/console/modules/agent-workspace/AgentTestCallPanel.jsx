@@ -461,11 +461,11 @@ export function AgentTestCallPanel({ agent }) {
               >
                 {availableOutboundNumbers.map((num) => {
                   const val = num.e164 || num.number;
-                  const prov = (num.provider || (num.telnyxNumberId ? 'Telnyx' : 'Vobiz')).toUpperCase();
+                  const lineLabel = 'DIRECT LINE';
                   const assigned = num.assignedAgentId === agent?.id ? ' (Assigned to this agent)' : '';
                   return (
                     <option key={num.id || val} value={val}>
-                      {val} • {prov}{num.locality ? ` (${num.locality})` : ''}{assigned}
+                      {val} • {lineLabel}{num.locality ? ` (${num.locality})` : ''}{assigned}
                     </option>
                   );
                 })}

@@ -6,7 +6,7 @@ export default function AgentChannelsPage() {
       <Panel title="Browser">
         <p className="text-sm text-text-muted">Test Studio microphone with barge-in. Same call lifecycle as PSTN.</p>
       </Panel>
-      <Panel title="PSTN (Telnyx / Vobiz)">
+      <Panel title="Direct Voice Telephony (PSTN)">
         <p className="text-sm text-text-muted">Inbound and outbound share ledger, memory, and post-call intelligence. Numbers live under Integrations.</p>
       </Panel>
     </div>

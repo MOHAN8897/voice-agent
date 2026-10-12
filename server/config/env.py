@@ -209,7 +209,7 @@ class Settings(BaseSettings):
     r2_secret_access_key: str | None = Field(None, alias="R2_SECRET_ACCESS_KEY")
     r2_bucket_name: str = Field("voxly-call-archives", alias="R2_BUCKET_NAME")
 
-    telephony_provider: str = Field("telnyx", alias="TELEPHONY_PROVIDER")
+    telephony_provider: str = Field("vobiz", alias="TELEPHONY_PROVIDER")
     enable_telnyx: bool = Field(False, alias="ENABLE_TELNYX")
     telnyx_api_key: str | None = Field(None, alias="TELNYX_API_KEY")
     telnyx_public_key: str | None = Field(None, alias="TELNYX_PUBLIC_KEY")

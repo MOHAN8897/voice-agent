@@ -121,8 +121,12 @@ async def upsert_tier_assignment(
     _cache_put(environment, tier, stack_payload)
 
 
-async def sync_tier_assignments_from_env(environment: str | None = None) -> int:
-    """Upsert tier_assignments from env bundles (bootstrap / rollback)."""
+async def sync_tier_assignments_from_env(environment: str | None = None, *, force: bool = False) -> int:
+    """Upsert tier_assignments from env bundles (bootstrap / rollback).
+
+    When force=False (default during server startup), existing tier assignments
+    in the database are preserved and only missing tiers are seeded.
+    """
     factory = get_session_factory()
     if factory is None:
         return 0
@@ -133,7 +137,20 @@ async def sync_tier_assignments_from_env(environment: str | None = None) -> int:
     resolver = StackResolver(settings, registry)
     count = 0
 
+    existing_tiers: set[str] = set()
+    if not force:
+        try:
+            async with factory() as session:
+                result = await session.execute(
+                    select(TierAssignment.tier).where(TierAssignment.environment == env)
+                )
+                existing_tiers = set(result.scalars().all())
+        except Exception:
+            existing_tiers = set()
+
     for tier in constants.TIER_NAMES:
+        if not force and tier in existing_tiers:
+            continue
         resolved = resolver.resolve(mode="env", tier=tier, environment=env)  # type: ignore[arg-type]
         await upsert_tier_assignment(env, tier, resolved.combination_id, resolved.to_safe_dict())
         count += 1
