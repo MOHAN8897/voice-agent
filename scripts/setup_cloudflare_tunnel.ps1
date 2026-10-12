@@ -69,7 +69,7 @@ if ($existing -match "(?m)^[0-9a-f-]{36}\s+$([regex]::Escape($TunnelName))\s") {
     }
 }
 if (-not $tunnelId) {
-    Write-Error "Could not create or find tunnel '$TunnelName'. Is hustlelabs.in on Cloudflare?"
+    Write-Error "Could not create or find tunnel '$TunnelName'. Is dialtact.com on Cloudflare?"
 }
 
 $credFile = Join-Path $CloudflaredDir "$tunnelId.json"

@@ -51,11 +51,12 @@ async def login_or_register_google(id_token: str) -> dict[str, Any]:
     )
 
 
-def google_oauth_authorize_url(state: str) -> str:
+def google_oauth_authorize_url(state: str, redirect_uri: str | None = None) -> str:
     settings = get_settings()
     if not settings.google_oauth_client_id:
         raise ValueError("google_not_configured")
-    redirect = google_oauth_redirect_uri()
+    state_entry = _oauth_states.get(state) or {}
+    redirect = redirect_uri or state_entry.get("redirect_uri") or google_oauth_redirect_uri()
     params = {
         "client_id": settings.google_oauth_client_id,
         "redirect_uri": redirect,
@@ -68,11 +69,11 @@ def google_oauth_authorize_url(state: str) -> str:
     return f"https://accounts.google.com/o/oauth2/v2/auth?{urlencode(params)}"
 
 
-async def exchange_code_for_tokens(code: str) -> str:
+async def exchange_code_for_tokens(code: str, redirect_uri: str | None = None) -> str:
     settings = get_settings()
     if not settings.google_oauth_client_id or not settings.google_oauth_client_secret:
         raise ValueError("google_not_configured")
-    redirect = google_oauth_redirect_uri()
+    redirect = redirect_uri or google_oauth_redirect_uri()
     async with httpx.AsyncClient(timeout=15.0) as client:
         resp = await client.post(
             "https://oauth2.googleapis.com/token",
@@ -111,6 +112,7 @@ def allowed_frontend_origin(origin: str | None) -> str | None:
         "http://127.0.0.1:5173",
         "https://app-dev.dialtact.com",
         "https://dialtact.com",
+        "https://www.dialtact.com",
         "https://app.dialtact.com",
         "https://app-dev.hustlelabs.in",
     }
@@ -128,7 +130,9 @@ def new_oauth_state(return_to: str | None = None) -> str:
     for k in expired:
         _oauth_states.pop(k, None)
     state = secrets.token_urlsafe(24)
-    _oauth_states[state] = {"at": now, "return_to": allowed_frontend_origin(return_to)}
+    origin = allowed_frontend_origin(return_to)
+    redirect = google_oauth_redirect_uri(origin)
+    _oauth_states[state] = {"at": now, "return_to": origin, "redirect_uri": redirect}
     return state
 
 
@@ -179,5 +183,11 @@ def google_signin_config() -> dict[str, Any]:
         "enabled": configured,
         "clientId": settings.google_oauth_client_id or "",
         "redirectUri": redirect,
-        "javascriptOrigins": [settings.voxly_frontend_url.rstrip("/")],
+        "javascriptOrigins": [
+            settings.voxly_frontend_url.rstrip("/"),
+            "https://dialtact.com",
+            "https://www.dialtact.com",
+            "https://app-dev.dialtact.com",
+            "http://localhost:5173",
+        ],
     }

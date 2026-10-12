@@ -171,6 +171,7 @@ function preferSameOriginApi() {
     host === '127.0.0.1' ||
     host === 'app-dev.dialtact.com' ||
     host === 'dialtact.com' ||
+    host === 'www.dialtact.com' ||
     host === 'app.dialtact.com' ||
     host === 'app-dev.hustlelabs.in'
   );

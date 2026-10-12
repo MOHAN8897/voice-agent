@@ -624,13 +624,14 @@ async def auth_google_callback(
     default_front = settings.voxly_frontend_url.rstrip("/")
     state_info = consume_oauth_state(state)
     front = (state_info or {}).get("return_to") or default_front
+    redirect_uri = (state_info or {}).get("redirect_uri")
     if error or not code:
         return RedirectResponse(f"{front}/?auth_error=google")
     if state_info is None:
         return RedirectResponse(f"{front}/?auth_error=google_state")
     _ensure_saas_db()
     try:
-        id_token = await exchange_code_for_tokens(code)
+        id_token = await exchange_code_for_tokens(code, redirect_uri=redirect_uri)
         data = await login_or_register_google(id_token)
         # Do NOT Set-Cookie on this redirect — the API host is often not the SPA
         # origin (api-dev vs app-dev / Vite). SPA redeems handoff via same-origin /api.
