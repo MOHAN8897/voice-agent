@@ -53,15 +53,19 @@ function unstashRoutes() {
   }
 }
 
-function run(cmd, args, env = {}) {
-  const result = spawnSync(cmd, args, {
+function runNextBuild() {
+  const nextCli = path.join(root, "..", "node_modules", "next", "dist", "bin", "next");
+  const result = spawnSync(process.execPath, [nextCli, "build"], {
     cwd: path.join(root, ".."),
     stdio: "inherit",
-    shell: process.platform === "win32",
-    env: { ...process.env, ...env },
+    env: process.env,
+    shell: false,
   });
+  if (result.error) {
+    throw new Error("Next.js build process could not start", { cause: result.error });
+  }
   if (result.status !== 0) {
-    throw new Error(`${cmd} ${args.join(" ")} failed with code ${result.status}`);
+    throw new Error(`Next.js build failed with code ${result.status}`);
   }
 }
 
@@ -78,7 +82,7 @@ try {
 
   try {
     console.log("[landing] Building static export…");
-    run("npx", ["next", "build"]);
+    runNextBuild();
   } finally {
     if (hadConfig && fs.existsSync(backupPath)) {
       fs.copyFileSync(backupPath, configPath);

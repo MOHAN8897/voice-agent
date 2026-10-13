@@ -17,7 +17,7 @@ export function SkeuoTable({
 export function SkeuoTableHead({ children }: { children: React.ReactNode }) {
   return (
     <thead className="border-b border-surface-border-subtle bg-surface-panel-inset text-text-subtle">
-      {children}
+      <tr>{children}</tr>
     </thead>
   );
 }

@@ -15,15 +15,9 @@ import {
   Check,
   Plus,
   Building2,
-  Shield,
   X,
-  Headphones,
-  Radio,
-  Share2,
-  Mail,
 } from 'lucide-react';
 import { useWorkspace } from './context/WorkspaceContext';
-import { useAuth } from '../context/AuthContext';
 
 export function Sidebar({
   activeTab,
@@ -45,8 +39,6 @@ export function Sidebar({
     createWorkspace,
     isLoading
   } = useWorkspace();
-  const { isPlatformAdmin } = useAuth();
-
   // Drives the payment-wall styling on the wallet pill.
   const walletIsEmpty =
     (Number(wallet?.balanceInr) || 0) <= 0 && (Number(wallet?.balanceUsd) || 0) <= 0;
@@ -119,20 +111,6 @@ export function Sidebar({
         { id: 'settings', label: 'Settings', icon: Settings },
       ]
     },
-    ...(isPlatformAdmin
-      ? [
-          {
-            group: 'PLATFORM ADMIN',
-            items: [
-              { id: 'admin', label: 'Workspaces & Accounts', icon: Building2 },
-              { id: 'admin-telephony', label: 'Carriers & Lines', icon: Radio },
-              { id: 'admin-support', label: 'Support Tickets Desk', icon: Headphones },
-              { id: 'admin-social', label: 'Social Media & Channels', icon: Share2 },
-              { id: 'admin-mail', label: 'Mail Gateway & SMTP', icon: Mail },
-            ],
-          },
-        ]
-      : []),
   ];
 
   return (

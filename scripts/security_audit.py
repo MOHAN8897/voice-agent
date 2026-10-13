@@ -17,7 +17,9 @@ import sys
 
 def run_cmd(cmd: list[str], description: str) -> int:
     print(f"\n[+] Running {description}...")
-    print(f"    Command: {' '.join(cmd)}")
+    # Arguments may contain API keys or authenticated target URLs. Keep them out
+    # of terminal logs; the description already identifies the requested scan.
+    print(f"    Executable: {cmd[0]}")
     result = subprocess.run(cmd)
     if result.returncode == 0:
         print(f"[PASS] {description} passed successfully.")
@@ -52,7 +54,7 @@ def run_zap(target: str) -> int:
         "-g", "gen.conf",
         "-r", "zap_report.html",
     ]
-    return run_cmd(cmd, f"OWASP ZAP Dynamic Scan against {target}")
+    return run_cmd(cmd, "OWASP ZAP baseline scan")
 
 
 def run_strix(target: str) -> int:
@@ -60,11 +62,13 @@ def run_strix(target: str) -> int:
         "docker",
         "run",
         "--rm",
-        "-e", f"OPENAI_API_KEY={os.getenv('OPENAI_API_KEY', '')}",
+        # Docker copies the named variable from this process environment. Do not
+        # put its value in argv, where process inspection and logs can expose it.
+        "-e", "OPENAI_API_KEY",
         "ghcr.io/usestrix/strix:latest",
         "--target", target,
     ]
-    return run_cmd(cmd, f"Strix Autonomous Agent Testing against {target}")
+    return run_cmd(cmd, "Strix autonomous security scan")
 
 
 def main() -> None:

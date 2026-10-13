@@ -1468,12 +1468,17 @@ class PstnRealtimeVoiceLoop:
             cleaned = enforce_output_language_script(cleaned, lang)
         return sanitize_live_assistant_transcript(cleaned)
 
-    async def _set_live_auto_response(self, enabled: bool) -> None:
+    async def _set_live_auto_response(
+        self, enabled: bool, *, preserve_current: bool = False
+    ) -> None:
         fn = getattr(self._adapter, "set_auto_response", None) if self._adapter else None
         if not callable(fn):
             return
         try:
-            await fn(bool(enabled))
+            if preserve_current:
+                await fn(bool(enabled), preserve_current=True)
+            else:
+                await fn(bool(enabled))
         except Exception as exc:
             log_pstn(
                 "realtime_voice.auto_response.failed",
@@ -2552,9 +2557,8 @@ class PstnRealtimeVoiceLoop:
         reason = str(accepted.get("reason") or "agent_hangup")
         self._commit_pending_hangup(accepted, source="tool" if tool_sourced else "gate")
         if tool_sourced:
-            # Gemini's disable operation cancels the active response. Keep the
-            # farewell response alive through its audio and response_done.
-            await self._set_live_auto_response(False)
+            # Block another generated turn, but let the accepted farewell finish.
+            await self._set_live_auto_response(False, preserve_current=True)
         await self._notify_hangup("initiated", reason)
 
     async def _handle_language_callback_tool(self, event: dict[str, Any]) -> None:
@@ -3293,7 +3297,22 @@ class PstnRealtimeVoiceLoop:
         if kind == "function_call":
             tool_name = str(event.get("name") or "")
             arguments = event.get("arguments") or "{}"
-            parsed_args = json.loads(arguments) if isinstance(arguments, str) else (arguments or {})
+            try:
+                parsed_args = json.loads(arguments) if isinstance(arguments, str) else arguments
+            except json.JSONDecodeError:
+                log_pstn(
+                    "realtime_voice.tool.arguments.invalid",
+                    call_id=self.call_id,
+                    reason="invalid_json",
+                )
+                return
+            if not isinstance(parsed_args, dict):
+                log_pstn(
+                    "realtime_voice.tool.arguments.invalid",
+                    call_id=self.call_id,
+                    reason="not_object",
+                )
+                return
             call_id = str(event.get("call_id") or "")
 
             if tool_name == "call_action":

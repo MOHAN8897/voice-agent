@@ -330,9 +330,15 @@ class GeminiLiveVoiceAdapter:
         except Exception as exc:
             logger.warning("[GEMINI_LIVE] instruction update failed: %s", str(exc)[:160])
 
-    async def set_auto_response(self, enabled: bool) -> None:
+    async def set_auto_response(
+        self, enabled: bool, *, preserve_current: bool = False
+    ) -> None:
         self._auto_response = bool(enabled)
         if enabled:
+            return
+        if preserve_current and self._active_response_id:
+            # A caller accepted this response as the farewell. Keep receiving its
+            # remaining audio and response_done; _emit_response_done closes it.
             return
         # Drop in-flight model audio so deferred PSTN greeting is not overwritten.
         rid = self._active_response_id

@@ -100,6 +100,54 @@ class MembershipBody(BaseModel):
     role: str
 
 
+class PlatformSupportConfigBody(BaseModel):
+    supportEmail: Optional[str] = Field(None, max_length=320)
+    businessHours: Optional[str] = Field(None, max_length=128)
+    slaResponseTime: Optional[str] = Field(None, max_length=128)
+    autoReplyMessage: Optional[str] = Field(None, max_length=10000)
+    isActive: Optional[bool] = None
+    twitterUrl: Optional[str] = Field(None, max_length=512)
+    linkedinUrl: Optional[str] = Field(None, max_length=512)
+    githubUrl: Optional[str] = Field(None, max_length=512)
+    youtubeUrl: Optional[str] = Field(None, max_length=512)
+    discordUrl: Optional[str] = Field(None, max_length=512)
+    smtpHost: Optional[str] = Field(None, max_length=255)
+    smtpPort: Optional[int] = Field(None, ge=1, le=65535)
+    smtpUsername: Optional[str] = Field(None, max_length=255)
+    smtpPassword: Optional[str] = Field(None, max_length=255)
+    smtpUseTls: Optional[bool] = None
+    senderEmail: Optional[str] = Field(None, max_length=320)
+    senderName: Optional[str] = Field(None, max_length=128)
+    notifyCustomerOnTicket: Optional[bool] = None
+    notifyAdminOnTicket: Optional[bool] = None
+    adminAlertEmail: Optional[str] = Field(None, max_length=320)
+
+
+class PlatformSmtpTestBody(BaseModel):
+    smtpHost: str = Field(..., min_length=1, max_length=255)
+    smtpPort: int = Field(587, ge=1, le=65535)
+    smtpUsername: Optional[str] = Field(None, max_length=255)
+    smtpPassword: Optional[str] = Field(None, max_length=255)
+    smtpUseTls: bool = True
+
+
+class PlatformSupportInquiryPatchBody(BaseModel):
+    status: Optional[str] = Field(None, pattern="^(new|in_progress|waiting_on_customer|resolved|closed)$")
+    assignedTo: Optional[str] = Field(None, max_length=320)
+    adminNotes: Optional[str] = Field(None, max_length=10000)
+    resolutionNotes: Optional[str] = Field(None, max_length=10000)
+    replyMessage: Optional[str] = Field(None, max_length=10000)
+    tags: Optional[list[str]] = Field(None, max_length=30)
+
+
+class DirectCarrierPurchaseBody(BaseModel):
+    e164: str = Field(..., min_length=8, max_length=20)
+    provider: str = Field("vobiz", pattern="^(vobiz|telnyx)$")
+    country: str = Field("US", max_length=8)
+    tenantId: str
+    reason: str = Field(..., min_length=8, max_length=500)
+
+
 class AllocateNumberBody(BaseModel):
     e164: str
     tenantId: str
@@ -1925,3 +1973,318 @@ async def set_kyc_status(
         payload={"status": body.status, "reason": reason, "decision": state.get("decision")},
     )
     return {"ok": True, "verification": state}
+
+
+@router.get("/api/dev/admin/support/config")
+async def platform_support_config(session: SessionData = Depends(require_dev_session)):
+    require_permission(session, "dev.admin.support")
+    from server.services.saas.customer_support_service import get_support_config
+
+    return {"ok": True, "config": await get_support_config(for_admin=True)}
+
+
+@router.put("/api/dev/admin/support/config")
+async def update_platform_support_config(
+    body: PlatformSupportConfigBody,
+    session: SessionData = Depends(require_dev_session),
+):
+    require_permission(session, "dev.admin.support")
+    from server.services.saas.customer_support_service import update_support_config
+
+    updates = body.model_dump(exclude_unset=True)
+    config = await update_support_config(updates)
+    await record_admin_action(
+        actor=session.subject,
+        action="support.config.update",
+        resource_type="support_config",
+        resource_id="global",
+        payload={"fields": sorted(updates.keys())},
+    )
+    return {"ok": True, "config": config}
+
+
+@router.post("/api/dev/admin/support/smtp/test")
+async def test_platform_smtp(
+    body: PlatformSmtpTestBody,
+    session: SessionData = Depends(require_dev_session),
+):
+    require_permission(session, "dev.admin.support")
+    from server.services.saas.customer_support_service import test_smtp_configuration
+
+    result = await test_smtp_configuration(body.model_dump())
+    await record_admin_action(
+        actor=session.subject,
+        action="support.smtp.test",
+        resource_type="support_config",
+        resource_id="global",
+        payload={"success": bool(result.get("success"))},
+    )
+    if not result.get("success"):
+        raise HTTPException(
+            status_code=400,
+            detail={"error": {"code": "smtp_test_failed", "message": result.get("error") or "SMTP test failed"}},
+        )
+    return {"ok": True, "message": result.get("message")}
+
+
+@router.get("/api/dev/admin/support/inquiries")
+async def list_platform_support_inquiries(
+    status: Optional[str] = Query(None, max_length=32),
+    priority: Optional[str] = Query(None, max_length=32),
+    category: Optional[str] = Query(None, max_length=64),
+    search: Optional[str] = Query(None, max_length=200),
+    limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    session: SessionData = Depends(require_dev_session),
+):
+    require_permission(session, "dev.admin.support")
+    from server.services.saas.customer_support_service import list_support_inquiries
+
+    return {
+        "ok": True,
+        "inquiries": await list_support_inquiries(
+            status=status,
+            priority=priority,
+            category=category,
+            search=search,
+            limit=limit,
+            offset=offset,
+        ),
+    }
+
+
+@router.get("/api/dev/admin/support/inquiries/{inquiry_id}")
+async def get_platform_support_inquiry(
+    inquiry_id: str,
+    session: SessionData = Depends(require_dev_session),
+):
+    require_permission(session, "dev.admin.support")
+    from server.services.saas.customer_support_service import get_support_inquiry_detail
+
+    try:
+        inquiry_uuid = uuid.UUID(inquiry_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="invalid_inquiry_id") from exc
+    inquiry = await get_support_inquiry_detail(inquiry_uuid)
+    if not inquiry:
+        raise HTTPException(status_code=404, detail="not_found")
+    return {"ok": True, "inquiry": inquiry}
+
+
+@router.patch("/api/dev/admin/support/inquiries/{inquiry_id}")
+async def update_platform_support_inquiry(
+    inquiry_id: str,
+    body: PlatformSupportInquiryPatchBody,
+    session: SessionData = Depends(require_dev_session),
+):
+    require_permission(session, "dev.admin.support")
+    from server.services.saas.customer_support_service import update_support_inquiry
+
+    try:
+        inquiry_uuid = uuid.UUID(inquiry_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="invalid_inquiry_id") from exc
+    updates = body.model_dump(exclude_unset=True)
+    try:
+        inquiry = await update_support_inquiry(
+            inquiry_id=inquiry_uuid,
+            status=body.status,
+            assigned_to=body.assignedTo,
+            admin_notes=body.adminNotes,
+            resolution_notes=body.resolutionNotes,
+            reply_message=body.replyMessage,
+            reply_author=session.subject,
+            tags=body.tags,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail="not_found") from exc
+    await record_admin_action(
+        actor=session.subject,
+        action="support.inquiry.update",
+        resource_type="support_inquiry",
+        resource_id=inquiry_id,
+        payload={"fields": sorted(updates.keys()), "status": body.status},
+    )
+    return {"ok": True, "inquiry": inquiry}
+
+
+@router.get("/api/dev/admin/numbers/carrier-search")
+async def search_platform_carrier_numbers(
+    provider: str = Query("vobiz", pattern="^(vobiz|telnyx)$"),
+    country: str = Query("US", max_length=8),
+    session: SessionData = Depends(require_dev_session),
+):
+    require_permission(session, "dev.admin.numbers")
+    from server.services.telephony import active_telephony_provider
+
+    provider_id = provider.lower()
+    if provider_id != active_telephony_provider():
+        raise HTTPException(
+            status_code=409,
+            detail={"error": {"code": "inactive_provider", "message": "Switch the active carrier before searching its inventory."}},
+        )
+    _require_db()
+    from server.services.saas.billing_rates import rates_with_derived_inr
+    from server.services.saas.telephony_countries import normalize_buy_country
+
+    default_country = "IN" if provider_id == "vobiz" else "US"
+    country_code = normalize_buy_country(country, default=default_country)
+    try:
+        if provider_id == "vobiz":
+            from server.services.vobiz_client import VobizClient
+
+            available = await VobizClient().search_available_numbers(country=country_code, limit=15)
+        else:
+            from server.services.telnyx_client import TelnyxClient
+
+            available = await TelnyxClient().search_available_numbers(country=country_code, limit=15)
+    except Exception as exc:
+        logger.warning("Platform carrier inventory search failed (%s)", provider_id)
+        raise HTTPException(status_code=502, detail="Carrier inventory is temporarily unavailable") from exc
+
+    async with get_session_factory()() as db:
+        active = (
+            await db.execute(select(PhoneNumber.e164).where(PhoneNumber.released_at.is_(None)))
+        ).scalars().all()
+    unavailable = {str(number).strip() for number in active if number}
+    seen: set[str] = set()
+    rates = rates_with_derived_inr()
+    cleaned = []
+    for item in available or []:
+        row = dict(item) if isinstance(item, dict) else {"e164": str(item)}
+        e164 = str(row.get("e164") or row.get("phone_number") or "").strip()
+        if not e164 or e164 in unavailable or e164 in seen:
+            continue
+        seen.add(e164)
+        cleaned.append({
+            **row,
+            "e164": e164,
+            "provider": provider_id,
+            "country": country_code,
+            "monthlyUsd": round(rates["did_monthly_usd_cents"] / 100.0, 2),
+            "monthlyInr": round(rates["did_monthly_inr_paise"] / 100.0, 2),
+        })
+    return {"numbers": cleaned, "provider": provider_id, "country": country_code}
+
+
+@router.post("/api/dev/admin/numbers/carrier-purchase")
+async def purchase_platform_carrier_number(
+    body: DirectCarrierPurchaseBody,
+    session: SessionData = Depends(require_dev_session),
+):
+    require_permission(session, "dev.admin.numbers")
+    from server.services.telephony import active_telephony_provider
+
+    if body.provider != active_telephony_provider():
+        raise HTTPException(
+            status_code=409,
+            detail={"error": {"code": "inactive_provider", "message": "Switch the active carrier before ordering a number."}},
+        )
+    _require_db()
+    from server.services.saas.number_purchase_service import normalize_e164
+
+    try:
+        e164 = normalize_e164(body.e164)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="invalid_e164") from exc
+    try:
+        tenant_uuid = uuid.UUID(body.tenantId)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="invalid_tenant_id") from exc
+
+    factory = get_session_factory()
+    from sqlalchemy.exc import IntegrityError
+
+    async with factory() as db:
+        tenant = await db.get(Tenant, tenant_uuid)
+        if tenant is None:
+            raise HTTPException(status_code=404, detail="tenant_not_found")
+        existing = (
+            await db.execute(
+                select(PhoneNumber.id).where(
+                    PhoneNumber.e164 == e164,
+                    PhoneNumber.released_at.is_(None),
+                )
+            )
+        ).scalar_one_or_none()
+        if existing:
+            raise HTTPException(status_code=409, detail="number_already_active")
+
+        # Reserve the number before contacting the carrier. The active-number
+        # partial unique index makes concurrent admin requests race-safe.
+        reservation = PhoneNumber(
+            tenant_id=tenant_uuid,
+            e164=e164,
+            status="provisioning",
+            billing_source="admin",
+            inbound_enabled=True,
+            outbound_enabled=True,
+        )
+        db.add(reservation)
+        try:
+            await db.commit()
+        except IntegrityError:
+            await db.rollback()
+            raise HTTPException(status_code=409, detail="number_already_active") from None
+        number_id = reservation.id
+
+    try:
+        if body.provider == "vobiz":
+            from server.services.vobiz_client import VobizClient
+
+            carrier_result = await VobizClient().provision_ordered_number(e164)
+        else:
+            from server.services.telnyx_client import TelnyxClient
+            from server.services.telnyx_provisioning import provision_ordered_number
+
+            carrier_result = await provision_ordered_number(TelnyxClient(), e164)
+    except Exception:
+        logger.warning("Platform carrier number purchase failed (%s)", body.provider)
+        # A timeout may mean the provider accepted the order but its response was
+        # lost. Keep the reservation active so a retry cannot buy the same number
+        # twice; an admin can reconcile this row before releasing it.
+        try:
+            async with factory() as db:
+                reserved = await db.get(PhoneNumber, number_id, with_for_update=True)
+                if reserved is not None and reserved.status == "provisioning":
+                    reserved.status = "provisioning_failed"
+                    await db.commit()
+        except Exception:
+            logger.warning("Platform carrier reservation could not be updated after failure")
+        raise HTTPException(status_code=502, detail="Carrier could not provision this number") from None
+
+    carrier_phone_id = carrier_result.get("phone_number_id")
+    telnyx_number_id = (
+        str(carrier_phone_id)
+        if body.provider == "telnyx" and carrier_phone_id
+        else None
+    )
+    number_status = "active" if body.provider == "vobiz" or telnyx_number_id else "pending"
+    async with factory() as db:
+        number = await db.get(PhoneNumber, number_id, with_for_update=True)
+        if number is None:
+            raise HTTPException(status_code=500, detail="number_reservation_missing")
+        number.status = number_status
+        number.telnyx_number_id = telnyx_number_id
+        number.carrier_number_id = (
+            str(carrier_phone_id or f"vobiz_{e164}") if body.provider == "vobiz" else None
+        )
+        await db.commit()
+        await db.refresh(number)
+        number_id = str(number.id)
+    await record_admin_action(
+        actor=session.subject,
+        action="number.carrier_purchase",
+        resource_type="phone_number",
+        resource_id=number_id,
+        tenant_id=tenant_uuid,
+        payload={"provider": body.provider, "reason": body.reason, "status": number_status},
+    )
+    return {
+        "ok": True,
+        "id": number_id,
+        "provider": body.provider,
+        "tenantId": str(tenant_uuid),
+        "status": number_status,
+        "provisioning": number_status == "pending",
+    }

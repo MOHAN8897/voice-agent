@@ -21,7 +21,6 @@ import { CampaignsModule } from './modules/CampaignsModule';
 import { BillingModule } from './modules/BillingModule';
 import { IntegrationsModule } from './modules/IntegrationsModule';
 import { SettingsModule } from './modules/SettingsModule';
-import { AdminModule } from './modules/AdminModule';
 import { useAuth } from '../context/AuthContext';
 import { ConsoleSyncBanner } from './ui/ConsoleSyncBanner';
 import { ImpersonationBanner } from './ui/ImpersonationBanner';
@@ -56,7 +55,8 @@ export function AppShell({ onBackToLanding, onSignOut }) {
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window !== 'undefined' && window.location.hash.startsWith('#dashboard/')) {
       const { tab } = parseDashboardHash(window.location.hash);
-      return resolveConsoleTab(tab) || 'overview';
+      const resolvedTab = resolveConsoleTab(tab) || 'overview';
+      return resolvedTab === 'admin' || resolvedTab.startsWith('admin-') ? 'overview' : resolvedTab;
     }
     return 'overview';
   });
@@ -66,11 +66,15 @@ export function AppShell({ onBackToLanding, onSignOut }) {
     const { tab, step, agentId } = parseDashboardHash(hash);
     const legacyStep = legacyEmployeeStep(tab);
     const resolvedTab = resolveConsoleTab(tab);
-    if (resolvedTab) setActiveTab(resolvedTab);
-    const flowStep = legacyStep || (resolvedTab === 'employees' ? step : null);
+    const safeTab = resolvedTab === 'admin' || resolvedTab?.startsWith('admin-') ? 'overview' : resolvedTab;
+    if (safeTab) setActiveTab(safeTab);
+    if (safeTab === 'overview' && (resolvedTab === 'admin' || resolvedTab?.startsWith('admin-'))) {
+      window.history.replaceState(null, '', '#dashboard/overview');
+    }
+    const flowStep = legacyStep || (safeTab === 'employees' ? step : null);
     setEmployeeFlowStep(flowStep);
     if (agentId) setSelectedAgentId(agentId);
-    if (legacyStep && resolvedTab === 'employees') {
+    if (legacyStep && safeTab === 'employees') {
       window.history.replaceState(null, '', buildEmployeesHash({ step: legacyStep, agentId }));
     }
   };
@@ -90,12 +94,14 @@ export function AppShell({ onBackToLanding, onSignOut }) {
   }, [loadWorkspaceData]);
 
   const handleSelectTab = (tabId) => {
+    if (tabId === 'admin' || tabId.startsWith('admin-')) return;
     setActiveTab(tabId);
     window.location.hash = `#dashboard/${tabId}`;
     setIsMobileSidebarOpen(false);
   };
 
   const handleNavigate = (tabId, options = {}) => {
+    if (tabId === 'admin' || tabId.startsWith('admin-')) return;
     setIsMobileSidebarOpen(false);
     const legacyStep = legacyEmployeeStep(tabId);
     const tab = legacyStep ? 'employees' : tabId;
@@ -233,34 +239,6 @@ export function AppShell({ onBackToLanding, onSignOut }) {
               {activeTab === 'integrations' && <IntegrationsModule />}
 
               {activeTab === 'settings' && <SettingsModule />}
-              {(activeTab === 'admin' || activeTab.startsWith('admin-')) && (
-                <AdminModule
-                  activeSection={
-                    activeTab === 'admin-telephony'
-                      ? 'telephony'
-                      : activeTab === 'admin-support'
-                      ? 'support'
-                      : activeTab === 'admin-social'
-                      ? 'social'
-                      : activeTab === 'admin-mail'
-                      ? 'mail'
-                      : 'tenants'
-                  }
-                  onSelectSection={(sec) => {
-                    const nextTab =
-                      sec === 'telephony'
-                        ? 'admin-telephony'
-                        : sec === 'support'
-                        ? 'admin-support'
-                        : sec === 'social'
-                        ? 'admin-social'
-                        : sec === 'mail'
-                        ? 'admin-mail'
-                        : 'admin';
-                    handleSelectTab(nextTab);
-                  }}
-                />
-              )}
             </ErrorBoundary>
           </div>
         </main>

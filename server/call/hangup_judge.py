@@ -43,7 +43,7 @@ _USER_SHORT_ACK = re.compile(
     r"^\s*(?:ok|okay|yes|yeah|yep|sure|fine|alright|great|perfect|"
     r"thanks|thank you|thankyou|thanks a lot|thank you so much|thank you very much|"
     r"ja[,.]?\s*danke|danke(?:\s*sch[oö]n)?|"
-    r"sare|సరే|ठीक|हाँ|अच्छा)[.!]?\s*$",
+    r"sare|సరే|ठीक|हाँ|अच्छा|சரி|ஆமாம்|ஆம்|நன்றி)[.!]?\s*$",
     re.I,
 )
 _INTERESTED_CONTINUE = re.compile(
@@ -52,7 +52,10 @@ _INTERESTED_CONTINUE = re.compile(
     r"yes (?:please )?(?:tell|explain|share|continue)|"
     r"sounds interesting|i want (?:to )?(?:know|see|visit|buy|book)|"
     r"please (?:explain|continue|tell)|what (?:else|next)|"
-    r"how (?:much|does|do|can)|can you (?:tell|explain|help)"
+    r"how (?:much|does|do|can)|can you (?:tell|explain|help)|"
+    r"दिलचस्पी\s*है|और\s*जानना|और\s*बताइए|आगे\s*बताइए|"
+    r"ఆసక్తి\s*ఉంది|ఇంకా\s*చెప్పండి|మరింత\s*వివరించండి|"
+    r"ஆர்வமாக\s*இருக்கிறது|ஆர்வம்\s*இருக்கு|மேலும்\s*சொல்லுங்கள்|இன்னும்\s*விவரமாக"
     r")\b",
     re.I,
 )
@@ -70,14 +73,19 @@ _AGENT_STILL_COLLECTING = re.compile(
     r"once i have that|"
     r"best (?:phone |callback )?number|"
     r"good phone number|"
-    r"before i let you go"
+    r"before i let you go|"
+    r"(?:உங்கள்|உங்க).{0,20}(?:பெயர்|நம்பர்|எண்|போன்)|"
+    r"(?:பெயர்|நம்பர்|எண்).{0,20}(?:சொல்லுங்கள்|சொல்லுங்க|தர முடியுமா)|"
+    r"(?:आपका|अपना).{0,12}(?:नाम|फोन|नंबर)|"
+    r"(?:మీ|మీరు).{0,16}(?:పేరు|నంబర్|ఫోన్)"
     r")\b",
     re.I,
 )
 
 
 _INDIC_CLOSING = re.compile(
-    r"ధన్యవాదాలు|సమయం\s*ఇచ్చినందుకు|ఇచ్చినందుకు\s*ధన్యవాదాలు|धन्यवाद|समय\s*देने\s*के\s*लिए",
+    r"ధన్యవాదాలు|సమయం\s*ఇచ్చినందుకు|ఇచ్చినందుకు\s*ధన్యవాదాలు|धन्यवाद|समय\s*देने\s*के\s*लिए|"
+    r"நேரம்\s*ஒதுக்கியதற்கு\s*நன்றி|விடைபெறுகிறேன்|போய்\s*வருகிறேன்",
     re.I,
 )
 
@@ -137,13 +145,15 @@ _CALLBACK_WITHDRAWAL = re.compile(
     r"don'?t (?:have to |need to )?call|"
     r"do not call|don'?t call(?: me)?|"
     r"no callback|cancel (?:the )?callback|"
-    r"stop calling"
+    r"stop calling|"
+    r"இனி.{0,16}(?:அழைக்க|தொடர்பு).{0,16}வேண்டாம்|அழைக்காதீர்கள்|தொடர்பு\s*கொள்ளாதீர்கள்"
     r")\b",
     re.I,
 )
 _DECLINE_MORE_HELP = re.compile(
     r"^(?:no(?:pe)?|nah)(?:[,.]?\s*(?:ma'?am|sir|thanks?|thank you))?[.!?]*\s*$"
-    r"|^(?:nothing else|no thanks|that'?s (?:all|it)|not really)[.!?]*\s*$",
+    r"|^(?:nothing else|no thanks|that'?s (?:all|it)|not really)[.!?]*\s*$"
+    r"|^(?:வேண்டாம்|வேண்டாம்[,.]?\s*நன்றி|அவ்வளவுதான்)[.!?]*\s*$",
     re.I,
 )
 _GENERIC_INBOUND_GREETING = re.compile(
@@ -198,6 +208,7 @@ def callback_farewell_for(language: str | None) -> str:
         "en-US": "Your callback request is noted. Thank you for your time. Goodbye.",
         "te-IN": "మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నోట్ చేసుకున్నాను. ధన్యవాదాలు.",
         "hi-IN": "दोबारा कॉल करने का आपका अनुरोध नोट कर लिया है। धन्यवाद।",
+        "ta-IN": "உங்கள் callback கோரிக்கையை பதிவு செய்துவிட்டேன். நன்றி.",
     }
     return pack.get(lang) or default_farewell_for(lang)
 
@@ -234,6 +245,10 @@ HANG UP (farewell + request_end_call / end_call.should_end true):
 3) goal_complete — the script's required outcome is met, required details are captured, and
    the caller confirmed the next step (callback/visit/handoff where applicable). Confirm it
    in one line, say goodbye (or have a great day), and invoke the tool in that SAME turn.
+Understand refusal, stop, callback, and continue intent from the caller's supported language.
+For Tamil: `விருப்பமில்லை` / `எனக்கு ஆர்வம் இல்லை` means firm refusal; `அழைப்பை முடிக்கவும்`
+means end this call; `நாளை மீண்டும் அழைக்கவும்` requests a callback; `இன்னும் சொல்லுங்கள்`
+or a question means stay on the line. Keep the farewell in the configured agent language.
    After callback is agreed and they thank you, do not start a new topic — farewell + tool.
    An offer alone, unclear audio or an unanswered question is not completion.
 

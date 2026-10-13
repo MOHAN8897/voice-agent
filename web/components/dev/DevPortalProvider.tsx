@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import Link from "next/link";
 import {
   fetchPortalSession,
   portalSessionErrorMessage,
@@ -67,12 +68,7 @@ export function DevPortalProvider({ children }: { children: ReactNode }) {
 
   return (
     <DevPortalContext.Provider value={{ ready, authenticated, subject, error }}>
-      {error && (
-        <div className="border-b border-warning/30 bg-warning/10 px-6 py-3 text-sm text-warning">
-          {error}
-        </div>
-      )}
-      {ready ? children : (
+      {!ready ? (
         <div className="flex min-h-[40vh] flex-col items-center justify-center gap-2 p-8 text-center">
           <p className="text-sm text-text-muted">Loading developer portal…</p>
           <p className="max-w-md text-xs text-text-muted">
@@ -83,6 +79,30 @@ export function DevPortalProvider({ children }: { children: ReactNode }) {
             or restart with <code className="text-text">npm run share</code>.
           </p>
         </div>
+      ) : authenticated ? (
+        <>
+          {error && (
+            <div className="border-b border-warning/30 bg-warning/10 px-6 py-3 text-sm text-warning">
+              {error}
+            </div>
+          )}
+          {children}
+        </>
+      ) : (
+        <main className="flex min-h-screen items-center justify-center bg-surface-chassis p-6">
+          <section className="w-full max-w-md rounded-skeuo-lg border border-surface-border-subtle bg-surface-panel p-6 text-center shadow-lg">
+            <h1 className="text-lg font-semibold text-text">Developer sign-in required</h1>
+            <p className="mt-2 text-sm text-text-muted" role={error ? "alert" : undefined}>
+              {error || "Sign in with an authorized developer account to open this panel."}
+            </p>
+            <Link
+              href="/dev/login"
+              className="mt-5 inline-flex min-h-10 items-center justify-center rounded-skeuo-sm bg-accent-primary px-4 py-2 text-sm font-semibold text-white"
+            >
+              Sign in to developer portal
+            </Link>
+          </section>
+        </main>
       )}
     </DevPortalContext.Provider>
   );

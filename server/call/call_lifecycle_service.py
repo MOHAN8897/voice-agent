@@ -95,6 +95,7 @@ class CallLifecycleService:
         self,
         *,
         agent_id: str | None = None,
+        tenant_id: str | None = None,
         session_id: str | None = None,
         channel: str = "browser",
         direction: str = "inbound",
@@ -128,7 +129,7 @@ class CallLifecycleService:
             stack_override = saved.get("stack_override")
         tier = tier or saved.get("tier")
 
-        agent = await self._resolve_agent(agent_id)
+        agent = await self._resolve_agent(agent_id, tenant_id=tenant_id)
         env = environment or agent.get("environment") or effective_app_environment()
         effective_tier = tier or agent.get("default_tier") or effective_voice_tier()
         from server.config.constants import normalize_supported_language
@@ -858,12 +859,16 @@ class CallLifecycleService:
             logger.info(f"[CALL] recovered {count} stale calls")
         return count
 
-    async def _resolve_agent(self, agent_id: str | None) -> dict[str, Any]:
+    async def _resolve_agent(self, agent_id: str | None, *, tenant_id: str | None = None) -> dict[str, Any]:
         if agent_id:
             try:
-                return await agent_service.get_agent(agent_id)
-            except KeyError:
+                if tenant_id is None:
+                    return await agent_service.get_agent(agent_id)
+                return await agent_service.get_agent(agent_id, tenant_id=tenant_id)
+            except (KeyError, ValueError):
                 raise AppError(ErrorCode.NOT_FOUND, message="Agent not found", status_code=404) from None
+        if tenant_id:
+            raise AppError(ErrorCode.NOT_FOUND, message="Agent not found", status_code=404)
         return await agent_service.ensure_default_agent()
 
     def _resolve_locked_stack(

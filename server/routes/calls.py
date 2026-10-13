@@ -82,11 +82,16 @@ def _raise(e: AppError) -> None:
 @router.post("/api/call/start")
 async def call_start(
     body: CallStartBody,
+    request: Request,
     _auth: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled),
 ):
     try:
+        # The browser call endpoint is tenant-facing. Resolve the workspace from
+        # the verified bearer/session context; never accept it from the request body.
+        tenant_id = tenant_id_from_request(request) if get_settings().saas_auth_enabled else None
         result = await call_lifecycle_service.start(
             agent_id=body.agent_id,
+            tenant_id=tenant_id,
             session_id=body.session_id,
             channel=body.channel,
             direction=body.direction,

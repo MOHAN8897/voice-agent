@@ -23,13 +23,16 @@ HANGUP_REASONS = frozenset(POLICY_REASONS)
 
 _QUESTION_RE = re.compile(
     r"(\?|^(what|why|how|when|where|who|can you|could you|please tell|will you)\b"
-    r"|ఏమిటి|ఎలా|ఎందుకు|కదా\s*\?|क्या|कैसे|क्यों)",
+    r"|ఏమిటి|ఎలా|ఎందుకు|కదా\s*\?|क्या|कैसे|क्यों"
+    r"|என்ன|எப்படி|ஏன்|எப்போது|எங்கே|யார்|எவ்வளவு|வேண்டுமா|தெரியுமா)",
     re.I,
 )
 _GOODBYE = re.compile(
     r"\b(bye|goodbye|good night|hang up|hangup|don't call|do not call|stop calling|"
-    r"keep calling|stop the calls|alvida|call cheyoddu|call cheyaku|call cheyakandi)\b|"
-    r"వద్దు\s*call|కాల్\s*చేయొద్దు|call\s*చేయక|ఇక\s*call|చేయకండి",
+    r"keep calling|stop the calls|alvida|call cheyoddu|call cheyaku|call cheyakandi|"
+    r"குட்\s*பை|விடைபெறுகிறேன்|போய்\s*வருகிறேன்|போகிறேன்)\b|"
+    r"వద్దు\s*call|కాల్\s*చేయొద్దు|call\s*చేయక|இனி.{0,12}(?:அழைக்க|தொடர்பு).{0,12}வேண்டாம்|"
+    r"மீண்டும்\s*அழைக்காதீர்கள்|இனி\s*அழைக்காதீர்கள்|இனிமேல்\s*அழைக்காதீர்கள்|இனி\s*call|చేయకండి",
     re.I,
 )
 # Do not match లేదు inside నచ్చలేదు / కాలేదు, or bare వద్దు in "ఇంకేమీ వద్దు".
@@ -40,7 +43,11 @@ _REFUSAL = re.compile(
     r"\b(vaddu|ledu)\b.{0,48}interest|interest.{0,24}\b(vaddu|ledu)\b|"
     r"interest\s*లేదు|ఇంట్రెస్ట్\s*లేదు|interested\s*nahi|"
     r"లేదు.{0,32}ఇంట్రెస్ట్|ఇంట్రెస్ట్.{0,32}లేదు|"
-    r"(?:వద్దు.{0,48}(?:interest|call|ఇంట్రెస్ట్)|(?:interest|call|ఇంట్రెస్ట్).{0,24}వద్దు)",
+    r"(?:వద్దు.{0,48}(?:interest|call|ఇంట్రెస్ట్)|(?:interest|call|ఇంట్రెస్ట్).{0,24}వద్దు)|"
+    r"दिलचस्पी\s*नहीं|रुचि\s*नहीं|मुझे\s+नहीं\s+चाहिए|नहीं\s*चाहिए|"
+    r"விருப்பமில்லை|ஆர்வம்\s*இல்லை|எனக்கு.{0,16}(?:வேண்டாம்|தேவையில்லை)|"
+    r"(?:அழைப்பு|கால்).{0,20}(?:வேண்டாம்|தேவையில்லை)|(?:வேண்டாம்|தேவையில்லை).{0,20}(?:அழைப்பு|கால்)|"
+    r"இனி.{0,16}(?:அழைக்க|தொடர்பு).{0,16}வேண்டாம்",
     re.I | re.S,
 )
 _ABUSE = re.compile(
@@ -56,14 +63,20 @@ _STAY_ON_LINE = re.compile(
     r"\b(frustrated|frustrating|explained this|taking too long|"
     r"maybe|think about it|not now|busy|in a meeting|email me|text me|"
     r"call (me )?later|i'll decide|will think|don't have time for (a )?pitch|"
-    r"not looking|not in the market|not looking for)\b",
+    r"not looking|not in the market|not looking for|"
+    r"இன்னும்.{0,16}(?:சொல்லு|விளக்கு|தகவல்)|மேலும்.{0,16}(?:சொல்லு|விளக்கு|தகவல்)|"
+    r"தொடர்ந்து.{0,12}சொல்லு|இன்னும்\s*கேட்க|"
+    r"और\s*बताइए|आगे\s*बताइए|थोड़ा\s*और\s*बताइए|"
+    r"ఇంకా\s*చెప్పండి|మరింత\s*వివరించండి)\b",
     re.I,
 )
 _CALLER_DONE = re.compile(
     r"^\s*(?:thanks|thank you)[,.]?\s+that'?s (?:all|it)(?:\s+for now)?\b.*"
     r"(?:\bbye\b|\bgoodbye\b)?\s*[.!]?\s*$|"
     r"^\s*that'?s (?:all|it)(?:\s+for now)?(?:[,.]?\s*(?:thanks|thank you))?"
-    r"(?:[,.]?\s*(?:bye|goodbye))?\s*[.!]?\s*$",
+    r"(?:[,.]?\s*(?:bye|goodbye))?\s*[.!]?\s*$|"
+    r"^\s*(?:அவ்வளவுதான்|அதுவே\s*போதும்|இதுதான்\s*போதும்)"
+    r"(?:\s*[,.]?\s*(?:நன்றி|குட்\s*பை|போகிறேன்|விடைபெறுகிறேன்))?\s*[.!]?\s*$",
     re.I,
 )
 # Backup hangup (Pass 3): golden substrings + tight negation-near-call/need.
@@ -94,7 +107,8 @@ _GOAL_COMPLETE_USER = re.compile(
 _OPT_OUT = re.compile(
     r"don't call|do not call|stop calling|keep calling|stop the calls|never (?:call|contact)|please stop calling|"
     r"\b(?:you\s+)?(?:don['’]?t|do not)\s+(?:have|need)\s+to\s+(?:call|contact)\s+me\b|"
-    r"\b(?:cancel|forget)\s+(?:the |my |that )?callback\b",
+    r"\b(?:cancel|forget)\s+(?:the |my |that )?callback\b|"
+    r"இனி.{0,16}(?:அழைக்க|தொடர்பு).{0,16}வேண்டாம்|மீண்டும்\s*அழைக்காதீர்கள்",
     re.I,
 )
 
@@ -109,7 +123,9 @@ _END_REQUEST = re.compile(
     r"(?:the |this |our )?(?:call|conversation|line)?\b|"
     r"\b(?:call|cut)\s+(?:the |this |our )?call\b|"
     r"\bcall\s+(?:cut|band|end)\s*(?:karo|kar do|chey|cheyyi|cheyandi)?\b|"
-    r"కాల్\s*(?:కట్|ఆపండి|ముగించండి)|कॉल\s*(?:काट|बंद)",
+    r"కాల్\s*(?:కట్|ఆపండి|ముగించండి)|कॉल\s*(?:काट|बंद)|"
+    r"அழைப்பை\s*(?:முடி|முடிக்கவும்|முடியுங்கள்|முடிங்க|நிறுத்து|நிறுத்தவும்|நிறுத்துங்கள்|நிறுத்துங்க|துண்டிக்கவும்)|"
+    r"காலை?\s*(?:கட்\s*பண்ணுங்க|முடி|முடிக்கவும்|நிறுத்து|நிறுத்துங்க)",
     re.I,
 )
 # Caller cannot continue now — close politely (not a callback unless they also asked).
@@ -123,7 +139,13 @@ _UNAVAILABLE_NOW = re.compile(
     r"i(?:'ve| have)\s+got\s+to\s+go)\b",
     re.I,
 )
-_NEGATED_END = re.compile(r"\b(?:don'?t|do not|never)\s+(?:hang\s*up|end|cut|disconnect)\b", re.I)
+_NEGATED_END = re.compile(
+    r"\b(?:don'?t|do not|never)\s+(?:hang\s*up|end|cut|disconnect)\b|"
+    r"அழைப்பை\s*(?:முடிக்காதீங்க|முடிக்காதீர்கள்|நிறுத்தாதீங்க|நிறுத்தாதீர்கள்)|"
+    r"காலை?\s*(?:முடிக்காதீங்க|முடிக்காதீர்கள்|நிறுத்தாதீங்க|நிறுத்தாதீர்கள்)|"
+    r"கட்\s*பண்ணாதீங்க",
+    re.I,
+)
 _CALLBACK_REQUEST = re.compile(
     r"\b(?:call|phone|ring)\s+me\s+(?:(?:back|again)\b(?:\s+(?:later|tomorrow))?|"
     r"later\b|tomorrow\b|after\b|next\b|at\s+\d)|"
@@ -134,7 +156,9 @@ _CALLBACK_REQUEST = re.compile(
     r"|\bcallback\b(?:\s+(?:later|tomorrow|please|me))?"
     r"|\b(?:repu|tarvata|malli)\s+(?:naaku\s+)?call\b|"
     r"(?:రేపు|తర్వాత|మళ్ళీ|మళ్లీ).{0,16}(?:కాల్|call|contact)|"
-    r"(?:कल|बाद में).{0,16}(?:कॉल|फोन|संपर्क)",
+    r"(?:कल|बाद में).{0,16}(?:कॉल|फोन|संपर्क)|"
+    r"(?:நாளை|பிறகு|பின்னர்|அடுத்த\s*(?:வாரம்|மாதம்)|மாலையில்).{0,20}(?:கால்|அழைக்க|தொடர்பு)|"
+    r"(?:கால்|அழைக்க|தொடர்பு).{0,20}(?:நாளை|பிறகு|பின்னர்|அடுத்த\s*(?:வாரம்|மாதம்))",
     re.I,
 )
 _NEGATED_CALLBACK = re.compile(
@@ -143,7 +167,8 @@ _NEGATED_CALLBACK = re.compile(
     r"\bhow\s+(?:can|do|should)\s+i\s+contact\b|"
     r"\bwhat(?:'s| is)\s+(?:your|the)\s+contact\b|"
     r"\b(?:if|whether)\s+you\s+(?:can\s+)?(?:call|contact)\s+me|"
-    r"\b(?:before|first).{0,20}(?:tell|explain|answer)|\b(?:tell|explain|answer).{0,30}\bfirst\b",
+    r"\b(?:before|first).{0,20}(?:tell|explain|answer)|\b(?:tell|explain|answer).{0,30}\bfirst\b|"
+    r"(?:அழைக்க|தொடர்பு\s*கொள்ள).{0,12}வேண்டாம்|அழைக்காதீர்கள்|தொடர்பு\s*கொள்ளாதீர்கள்",
     re.I,
 )
 _RECORD_DETAILS = re.compile(
@@ -151,7 +176,9 @@ _RECORD_DETAILS = re.compile(
     r"(?:down\s+)?(?:my\s+)?(?:name|number|phone|mobile|details|contact|info)\b|"
     r"\b(?:my\s+)?(?:name|phone|number|details)\b.{0,48}\b(?:record|note|save|take|collect)\b|"
     r"(?:పేరు|నంబర్|వివరాలు).{0,24}(?:రాయ|నోట్|తీసుకో)|"
-    r"(?:नाम|नंबर|विवरण).{0,24}(?:लिख|नोट|ले\s*लो)",
+    r"(?:नाम|नंबर|विवरण).{0,24}(?:लिख|नोट|ले\s*लो)|"
+    r"(?:என்|என்னுடைய).{0,16}(?:பெயர்|போன்|நம்பர்|எண்).{0,24}(?:பதிவு|குறித்து|எழுதி|சேமி)|"
+    r"(?:பெயர்|போன்|நம்பர்|எண்).{0,24}(?:பதிவு|குறித்து|எழுதி|சேமி)",
     re.I,
 )
 _BARE_NAME_BLOCKLIST = frozenset(
@@ -316,7 +343,8 @@ def parse_end_call_payload(raw: Any) -> dict[str, Any]:
 
 
 _COURTEOUS_CLOSING_CONFIRMATION = re.compile(
-    r"^(?:ok(?:ay)?|all\s*right|sure|thanks?|thank\s*you|bye|goodbye|sare(?:na)?|theek\s*hai(?:\s*na)?|alvida|ధన్యవాదాలు|సరే(?:నా)?|ఓకే(?:నా)?|ఉంటానండి|వెళ్లొస్తా)[\s\?,.!]*$",
+    r"^(?:ok(?:ay)?|all\s*right|sure|thanks?|thank\s*you|bye|goodbye|sare(?:na)?|theek\s*hai(?:\s*na)?|alvida|"
+    r"ధన్యవాదాలు|సరే(?:నా)?|ఓకే(?:నా)?|ఉంటానండి|వెళ్లొస్తా|சரி|ஆமாம்|ஆம்|நன்றி|விடைபெறுகிறேன்)[\s\?,.!]*$",
     re.I,
 )
 

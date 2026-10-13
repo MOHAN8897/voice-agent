@@ -469,7 +469,9 @@ async def list_support_inquiries(
 
     async with factory() as session:
         query = select(SupportInquiry)
-        if status and status != "all":
+        if status == "open":
+            query = query.where(SupportInquiry.status.notin_(("resolved", "closed")))
+        elif status and status != "all":
             query = query.where(SupportInquiry.status == status)
         if priority and priority != "all":
             query = query.where(SupportInquiry.priority == priority)

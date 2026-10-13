@@ -7,8 +7,6 @@ import { SkeuoNavItem } from "@/components/ui/skeuo";
 import {
   IconActivity,
   IconAgents,
-  IconBenchmark,
-  IconCalls,
   IconChart,
   IconMic,
   IconOverview,
@@ -22,6 +20,15 @@ import {
  * The previous flat list mixed product work with SaaS operations, so "maintain the
  * product" meant scanning seven unrelated rows. Groups keep each job's pages together.
  */
+const ADMIN_WORKSPACE_ROUTES = new Set([
+  "/dev/admin",
+  "/dev/admin/analytics",
+  "/dev/admin/users",
+  "/dev/admin/verification",
+  "/dev/admin/tenants",
+  "/dev/admin/numbers",
+]);
+
 const ADMIN_GROUPS: Array<{
   label: string;
   items: Array<{ href: string; label: string; icon: ReactNode; live?: boolean }>;
@@ -57,30 +64,15 @@ const ADMIN_GROUPS: Array<{
         label: "Overview",
         icon: <IconOverview className="h-4 w-4" />,
       },
+    ],
+  },
+  {
+    label: "More admin tools",
+    items: [
       {
-        href: "/dev/admin/analytics",
-        label: "Web & analytics",
-        icon: <IconChart className="h-4 w-4" />,
-      },
-      {
-        href: "/dev/admin/users",
-        label: "Users",
-        icon: <IconAgents className="h-4 w-4" />,
-      },
-      {
-        href: "/dev/admin/verification",
-        label: "Verification",
-        icon: <IconBenchmark className="h-4 w-4" />,
-      },
-      {
-        href: "/dev/admin/tenants",
-        label: "Tenants",
-        icon: <IconRack className="h-4 w-4" />,
-      },
-      {
-        href: "/dev/admin/numbers",
-        label: "Phone numbers",
-        icon: <IconCalls className="h-4 w-4" />,
+        href: "/dev/admin/support",
+        label: "Support & delivery",
+        icon: <IconActivity className="h-4 w-4" />,
       },
       {
         href: "/dev/admin/billing",
@@ -93,9 +85,6 @@ const ADMIN_GROUPS: Array<{
         icon: <IconSettings className="h-4 w-4" />,
       },
       {
-        // Grouped with the SaaS admin pages rather than under Platform: an
-        // operator debugging a customer issue comes here from the billing and
-        // numbers sections, not from environment configuration.
         href: "/dev/admin/activity",
         label: "Activity log",
         icon: <IconActivity className="h-4 w-4" />,
@@ -125,11 +114,9 @@ export function AdminNav() {
           </p>
           <ul className="space-y-1">
             {group.items.map((item) => {
-              // "/dev/admin" is a prefix of every admin page, so it must not
-              // highlight while a child page is open.
               const active =
                 item.href === "/dev/admin"
-                  ? pathname === "/dev/admin"
+                  ? ADMIN_WORKSPACE_ROUTES.has(pathname)
                   : pathname.startsWith(item.href);
               return (
                 <SkeuoNavItem

@@ -23,15 +23,7 @@ class TenantIntegration(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.tenant_id", ondelete="CASCADE"), nullable=False)
     app_name: Mapped[str] = mapped_column(String(64), nullable=False)
-    connection_id: Mapped[str] = mapped_column("composio_connection_id", String(128), nullable=False)
-
-    @property
-    def composio_connection_id(self) -> str:
-        return self.connection_id
-
-    @composio_connection_id.setter
-    def composio_connection_id(self, val: str) -> None:
-        self.connection_id = val
+    connection_id: Mapped[str] = mapped_column(String(128), nullable=False)
     account_identifier: Mapped[str | None] = mapped_column(String(255), nullable=True)
     status: Mapped[str] = mapped_column(String(32), default="ACTIVE", nullable=False)
     metadata_: Mapped[dict] = mapped_column("metadata", JSONB, default=dict, nullable=False)

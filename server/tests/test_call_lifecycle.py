@@ -54,6 +54,31 @@ def test_call_start_and_end_idempotent_202(monkeypatch, tmp_path):
     get_settings.cache_clear()
 
 
+def test_call_start_passes_authenticated_tenant_to_lifecycle(monkeypatch, tmp_path):
+    from server.auth.subscriber_dependencies import require_subscriber_jwt_if_enabled
+    from server.call import call_lifecycle_service as lifecycle_module
+    from server.routes import calls as calls_module
+
+    c = _client(monkeypatch, tmp_path)
+    monkeypatch.setenv("SAAS_AUTH_ENABLED", "true")
+    get_settings.cache_clear()
+    start = AsyncMock(return_value={"call_id": "tenant-scoped-call"})
+    monkeypatch.setattr(lifecycle_module.call_lifecycle_service, "start", start)
+    monkeypatch.setattr(calls_module, "tenant_id_from_request", lambda _request: "tenant-a")
+    monkeypatch.setitem(app_mod.app.dependency_overrides, require_subscriber_jwt_if_enabled, lambda: None)
+
+    response = c.post(
+        "/api/call/start",
+        json={"agentId": "agent-a", "sessionId": "tenant-test", "channel": "browser"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["call_id"] == "tenant-scoped-call"
+    assert start.await_args.kwargs["tenant_id"] == "tenant-a"
+    assert start.await_args.kwargs["agent_id"] == "agent-a"
+    get_settings.cache_clear()
+
+
 def test_call_end_missing_returns_404(monkeypatch, tmp_path):
     c = _client(monkeypatch, tmp_path)
     r = c.post("/api/call/end", json={"callId": "00000000-0000-0000-0000-000000000001"})

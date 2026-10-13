@@ -12,6 +12,7 @@ rupees.
 """
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import hmac
 import logging
@@ -19,6 +20,7 @@ import uuid
 from datetime import datetime, timezone
 
 import razorpay
+import requests
 from sqlalchemy import select
 
 from server.config.env import get_settings
@@ -31,6 +33,29 @@ from server.db.models.saas_models import (
 )
 
 logger = logging.getLogger(__name__)
+
+RAZORPAY_CONNECT_TIMEOUT_SECONDS = 3.05
+RAZORPAY_READ_TIMEOUT_SECONDS = 8.0
+RAZORPAY_CALL_TIMEOUT_SECONDS = 12.0
+
+
+class _RazorpayTimeoutSession(requests.Session):
+    """Give each synchronous SDK request a bounded connect/read timeout."""
+
+    def request(self, method, url, **kwargs):
+        kwargs.setdefault(
+            "timeout",
+            (RAZORPAY_CONNECT_TIMEOUT_SECONDS, RAZORPAY_READ_TIMEOUT_SECONDS),
+        )
+        return super().request(method, url, **kwargs)
+
+
+async def _run_provider_call(method, *args, **kwargs):
+    """Run the blocking Razorpay SDK off-loop with an overall deadline."""
+    return await asyncio.wait_for(
+        asyncio.to_thread(method, *args, **kwargs),
+        timeout=RAZORPAY_CALL_TIMEOUT_SECONDS,
+    )
 
 #: Currencies Razorpay International Payments accepts, and their subunits.
 #: A zero-decimal currency (JPY, KRW) would otherwise be charged 100x too much.
@@ -83,7 +108,10 @@ def _client() -> razorpay.Client:
     settings = get_settings()
     if not settings.razorpay_api_key or not settings.razorpay_api_secret:
         raise ValueError("razorpay_not_configured")
-    return razorpay.Client(auth=(settings.razorpay_api_key, settings.razorpay_api_secret))
+    return razorpay.Client(
+        auth=(settings.razorpay_api_key, settings.razorpay_api_secret),
+        session=_RazorpayTimeoutSession(),
+    )
 
 
 def normalize_currency(raw: str | None) -> str:
@@ -146,23 +174,31 @@ async def create_wallet_order(
     minor = to_minor(amount, currency_code)
     client = _client()
     try:
-        order = client.order.create(
+        order = await _run_provider_call(
+            client.order.create,
             {
                 "amount": minor,
                 "currency": currency_code,
                 "payment_capture": 1,
                 # Razorpay caps receipt at 40 chars; keep ours short and traceable.
                 "receipt": f"wallet_{uuid.uuid4().hex[:16]}",
-            }
+            },
         )
-    except razorpay.errors.BadRequestError as exc:
-        msg = str(exc)
-        logger.warning("razorpay order create failed: %s", msg)
+    except (
+        razorpay.errors.BadRequestError,
+        razorpay.errors.GatewayError,
+        razorpay.errors.ServerError,
+        requests.exceptions.RequestException,
+        TimeoutError,
+    ) as exc:
+        detail = str(exc).lower()
         failure = (
             "razorpay_auth_failed"
-            if ("Authentication" in msg or "auth" in msg.lower())
+            if isinstance(exc, razorpay.errors.BadRequestError)
+            and ("authentication" in detail or "auth" in detail)
             else "razorpay_order_failed"
         )
+        logger.warning("razorpay order create failed error_type=%s", type(exc).__name__)
         # A checkout that never opens is a support case ("the Add funds button
         # does nothing"). Nothing else records it, because no order row is ever
         # created — and an auth failure is an operator problem, not the user's.
@@ -178,7 +214,6 @@ async def create_wallet_order(
                 "error": failure,
                 "currency": currency_code,
                 "amount": from_minor(minor, currency_code),
-                "detail": msg[:200],
             },
             source="subscriber",
             outcome="error",
@@ -248,8 +283,38 @@ def _fetch_payment(payment_id: str) -> dict | None:
     try:
         return _client().payment.fetch(payment_id)
     except Exception as exc:
-        logger.warning("razorpay payment fetch failed payment=%s err=%s", payment_id, exc)
+        logger.warning("razorpay payment fetch failed error_type=%s", type(exc).__name__)
         return None
+
+
+def _validate_payment_details(
+    payment: dict,
+    *,
+    order_id: str,
+    currency: str,
+    amount_minor: int,
+) -> None:
+    """Reject provider details that contradict the signed checkout order."""
+    provider_order = payment.get("order_id")
+    if provider_order and str(provider_order) != order_id:
+        raise ValueError("payment_order_mismatch")
+
+    status = str(payment.get("status") or "").strip().lower()
+    if status and status != "captured":
+        raise ValueError("payment_not_captured")
+
+    provider_currency = str(payment.get("currency") or "").strip().upper()
+    if provider_currency and provider_currency != currency:
+        raise ValueError("payment_currency_mismatch")
+
+    provider_amount = payment.get("amount")
+    if amount_minor and provider_amount is not None:
+        try:
+            amount_matches = int(provider_amount) == amount_minor
+        except (TypeError, ValueError):
+            amount_matches = False
+        if not amount_matches:
+            raise ValueError("payment_amount_mismatch")
 
 
 async def confirm_wallet_payment(
@@ -263,6 +328,27 @@ async def confirm_wallet_payment(
     factory = get_session_factory()
     if factory is None:
         raise RuntimeError("database_required")
+
+    # Check tenant ownership before asking Razorpay about a caller-supplied ID.
+    # The network request runs before the payment row lock to avoid holding a
+    # transaction open while waiting for the provider.
+    async with factory() as session:
+        row = await session.get(RazorpayOrder, order_id)
+        if row is None or row.tenant_id != tenant_id:
+            raise ValueError("order_not_found")
+        if row.status == "paid":
+            inv = (
+                await session.execute(
+                    select(BillingInvoice).where(BillingInvoice.razorpay_order_id == order_id)
+                )
+            ).scalar_one_or_none()
+            return {"ok": True, "invoiceId": str(inv.invoice_id) if inv else None, "duplicate": True}
+
+    try:
+        payment = await _run_provider_call(_fetch_payment, payment_id)
+    except TimeoutError:
+        logger.warning("razorpay payment fetch timed out")
+        payment = None
 
     async with factory() as session:
         row = await session.get(RazorpayOrder, order_id, with_for_update=True)
@@ -280,10 +366,15 @@ async def confirm_wallet_payment(
         amount_minor = int(getattr(row, "amount_minor", None) or 0)
         paise = int(row.amount_inr_paise)
 
-        payment = _fetch_payment(payment_id)
         settled_inr = None
         international = False
         if payment:
+            _validate_payment_details(
+                payment,
+                order_id=order_id,
+                currency=currency,
+                amount_minor=amount_minor,
+            )
             settled_inr = payment.get("base_amount")
             international = bool(payment.get("international"))
             if settled_inr:

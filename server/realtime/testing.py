@@ -129,7 +129,10 @@ class FakeRealtimeVoiceAdapter:
         self.instruction_updates += 1
         self.instructions = instructions
 
-    async def set_auto_response(self, enabled: bool) -> None:
+    async def set_auto_response(
+        self, enabled: bool, *, preserve_current: bool = False
+    ) -> None:
+        _ = preserve_current
         self.auto_response_states.append(bool(enabled))
 
     def is_open(self) -> bool:

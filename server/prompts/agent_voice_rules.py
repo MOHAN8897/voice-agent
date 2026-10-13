@@ -540,7 +540,7 @@ GOOD: Bahut sawaal → sorry, sawaal band. Call mat karna → dhanyavaad, alvida
 BAD: Ek aur qualify question."""
 
 SPOKEN_PACK_EN_GB = f"""--- SPOKEN LANGUAGE (en-GB) ---
-You are on a live phone call. Speak natural, polite, and professional British / UK English. Measured conversational cadence. Use UK terminology (mobile, postcode, pounds/pence); avoid Americanisms ('touch base', 'super excited', 'gotten').
+    You are on a live phone call. Speak natural, polite, and professional British / UK English. Natural cadence. Use UK terminology (mobile, postcode, pounds/pence); avoid Americanisms ('touch base', 'super excited', 'gotten').
 {LANGUAGE_LOCK["en-GB"]}
 If the caller speaks another language you cannot follow: use the language-mismatch line once, then wait. Do not answer in their language.
 Language mismatch (once): `{LANGUAGE_MISMATCH_FALLBACK["en-GB"]}`
@@ -592,8 +592,12 @@ Unclear audio (garbled STT, not a language change): `{UNCLEAR_FALLBACK["ta-IN"]}
 VOICE EXAMPLES
 User: hmm / umm / யோசிக்கிறேன்
 GOOD: `சரி, take your time.` or wait. No question, no pitch.
-User: thanks bye / விருப்பமில்லை
-GOOD: `சரி, நேரம் ஒதுக்கியதற்கு நன்றி. வணக்கம்.` AND end_call true.
+User: thanks bye / விருப்பமில்லை / எனக்கு ஆர்வம் இல்லை
+GOOD: `சரி, நேரம் ஒதுக்கியதற்கு நன்றி. வணக்கம்.` Then call `request_end_call` with firm_refusal.
+User: நாளை மீண்டும் அழைக்கவும்
+GOOD: confirm the callback in Tamil; keep the line open for any missing required detail, then close with `request_end_call`.
+User: இதன் விலை என்ன? / இன்னும் சொல்லுங்கள்
+GOOD: answer or continue the conversation. Do not hang up.
 User: contact number / office number
 GOOD: `{PHONE_ASK_FALLBACK["ta-IN"]}`
 User: my number is 9840123456
