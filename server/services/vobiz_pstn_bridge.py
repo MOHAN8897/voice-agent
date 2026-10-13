@@ -64,6 +64,9 @@ class VobizPstnBridge:
         self._negotiated_media = self._configured_media
         self._ws_send_lock = asyncio.Lock()
         self._send_wire_lock = asyncio.Lock()
+        self._hangup_lock = asyncio.Lock()
+        self._checkpoint_sequence = 0
+        self._pending_checkpoint: str | None = None
         self._token_meta: dict[str, Any] = {}
         self._start_handled = False
         self._owns_call = False
@@ -136,6 +139,9 @@ class VobizPstnBridge:
                 except Exception:
                     continue
 
+                if not isinstance(data, dict):
+                    continue
+
                 event = str(data.get("event") or data.get("type") or "").lower()
 
                 if event == "start":
@@ -149,12 +155,12 @@ class VobizPstnBridge:
                         raise
                 elif event == "media":
                     await self._on_media(data)
-                elif event in ("checkpoint", "playedstream"):
-                    if self._voice and hasattr(self._voice, "on_playback_drained"):
-                        self._voice.on_playback_drained()
+                elif event == "playedstream":
+                    self._on_played_stream(data)
                 elif event == "clearedaudio":
-                    if self._playback:
-                        self._playback.clear()
+                    # The estimate was cleared when clearAudio was sent. A late
+                    # acknowledgement must not erase a newer response's audio.
+                    pass
                 elif event == "pong":
                     pass
                 elif event in ("stop", "hangup"):
@@ -170,12 +176,12 @@ class VobizPstnBridge:
 
     async def _on_start(self, ev: dict[str, Any]) -> None:
         start = ev.get("start") or ev
-        self.call_uuid = str(start.get("callId") or start.get("call_uuid") or ev.get("call_uuid") or "")
+        started_call = str(start.get("callId") or start.get("call_uuid") or ev.get("call_uuid") or "")
+        bound_call = str(self._token_meta.get("call_uuid") or "")
+        if started_call and bound_call and not bound_call.startswith("vobiz-") and started_call != bound_call:
+            raise ValueError("Media start does not match the authorized call")
+        self.call_uuid = started_call or bound_call or str(uuid.uuid4())
         self.stream_id = str(start.get("streamId") or start.get("stream_id") or "")
-        if not self.call_uuid:
-            self.call_uuid = str(self._token_meta.get("call_uuid") or "")
-        if not self.call_uuid:
-            self.call_uuid = str(uuid.uuid4())
 
         self.caller_id = str(start.get("from") or start.get("caller") or self._token_meta.get("from_number") or self._token_meta.get("from") or "")
         self._called_id = str(start.get("to") or start.get("called") or self._token_meta.get("to_number") or self._token_meta.get("to") or "")
@@ -213,8 +219,9 @@ class VobizPstnBridge:
 
         max_calls = max(1, int(getattr(get_settings(), "vobiz_max_concurrent_calls", 50) or 50))
         async with _vobiz_admission_lock:
-            if len(active_vobiz_bridges) >= max_calls:
-                log_pstn("admission.rejected", provider="vobiz", active=len(active_vobiz_bridges), max=max_calls)
+            active_count = len({id(bridge) for bridge in active_vobiz_bridges.values()})
+            if active_count >= max_calls:
+                log_pstn("admission.rejected", provider="vobiz", active=active_count, max=max_calls)
                 raise RuntimeError(f"Vobiz concurrent call limit reached ({max_calls})")
             active_vobiz_bridges[self.call_uuid or self.ws_id] = self
             if request_uuid:
@@ -385,13 +392,15 @@ class VobizPstnBridge:
             playback = getattr(self, "_playback", None)
             if playback is not None and not playback.is_generation_valid(generation_id):
                 return
+            # An acknowledgement for the previous turn cannot drain this audio.
+            self._pending_checkpoint = None
 
             if self._wire_codec == "linear16":
-                # 20ms frames @ 16kHz Linear16 = 640 bytes (320 samples * 2 bytes)
-                frame_bytes = 640
+                # Match the negotiated rate used by the voice loop's resampler.
+                frame_bytes = self._wire_sample_rate * 2 // 50
                 frames = [wire[i : i + frame_bytes] for i in range(0, len(wire), frame_bytes)]
                 content_type = "audio/x-l16"
-                sample_rate = 16000
+                sample_rate = self._wire_sample_rate
             else:
                 # μ-law 8kHz 20ms frames = 160 bytes
                 if len(wire) % 160 == 0:
@@ -448,20 +457,34 @@ class VobizPstnBridge:
         try:
             async with self._ws_send_lock:
                 if not self._closed:
+                    self._checkpoint_sequence += 1
+                    self._pending_checkpoint = f"turn-{self._checkpoint_sequence}"
                     await self.ws.send_text(
                         json.dumps(
                             {
                                 "event": "checkpoint",
                                 "streamId": self.stream_id,
-                                "name": "turn-end",
+                                "name": self._pending_checkpoint,
                             }
                         )
                     )
         except Exception:
             pass
 
+    def _on_played_stream(self, event: dict[str, Any]) -> None:
+        if not self._pending_checkpoint or event.get("name") != self._pending_checkpoint:
+            return
+        if event.get("streamId") and event["streamId"] != self.stream_id:
+            return
+        self._pending_checkpoint = None
+        if self._playback:
+            self._playback.clear()
+        if self._voice and hasattr(self._voice, "on_playback_drained"):
+            self._voice.on_playback_drained()
+
     async def _barge_in(self) -> None:
         """Interruption detected: clear playback tracker and tell Vobiz to drop buffered audio."""
+        self._pending_checkpoint = None
         generation_id = self._voice.current_generation_id if self._voice else None
         playback = getattr(self, "_playback", None)
         if playback is not None:
@@ -486,37 +509,36 @@ class VobizPstnBridge:
             pass
 
     async def hangup(self, reason: str = "agent_ended") -> None:
-        """Terminate media stream and call via Vobiz REST API, then close stream."""
-        if self._closed:
-            return
-        self._closed = True
-        log_pstn("vobiz.hangup.initiated", call_uuid=self.call_uuid, reason=reason)
-        # 1. Signal the media stream to stop.
-        msg: dict[str, Any] = {"event": "stop"}
-        if self.stream_id:
-            msg["streamId"] = self.stream_id
-        try:
-            async with self._ws_send_lock:
-                await self.ws.send_text(json.dumps(msg))
-        except Exception:
-            pass
-        # 2. Also terminate the call via Vobiz REST API so the carrier actually
-        #    hangs up even if the WS stop event is ignored.
-        target_uuid = self.call_uuid
-        local = vobiz_call_registry.get(self.call_uuid or "") or {}
-        if target_uuid and target_uuid.startswith("vobiz-"):
-            target_uuid = local.get("call_uuid") or local.get("request_uuid") or target_uuid
-        if target_uuid:
+        """Bound carrier teardown; closing the socket also advances XML to Hangup."""
+        async with self._hangup_lock:
+            if self._closed:
+                return
+            self._closed = True
+            disconnected = False
             try:
-                from server.services.vobiz_client import VobizClient, vobiz_enabled
-                if vobiz_enabled():
-                    await asyncio.wait_for(
-                        VobizClient().hangup_call(target_uuid),
-                        timeout=5.0,
-                    )
-                    log_pstn("vobiz.hangup.api_ok", call_uuid=target_uuid)
-            except Exception as exc:
-                log_pstn("vobiz.hangup.api_failed", call_uuid=target_uuid, error=str(exc)[:160])
+                log_pstn("vobiz.hangup.initiated", call_uuid=self.call_uuid, reason=reason)
+                target_uuid = self.call_uuid
+                local = vobiz_call_registry.get(self.call_uuid or "") or {}
+                if target_uuid and target_uuid.startswith("vobiz-"):
+                    target_uuid = local.get("call_uuid") or local.get("request_uuid") or target_uuid
+                try:
+                    from server.services.vobiz_client import VobizClient, vobiz_enabled
+                    if target_uuid and vobiz_enabled():
+                        await asyncio.wait_for(VobizClient().hangup_call(target_uuid), timeout=5.0)
+                        disconnected = True
+                except Exception as exc:
+                    log_pstn("vobiz.hangup.api_failed", call_uuid=target_uuid, error=type(exc).__name__)
+                finally:
+                    try:
+                        await asyncio.wait_for(self.ws.close(), timeout=2.0)
+                        disconnected = True
+                    except Exception as exc:
+                        log_pstn("vobiz.hangup.stream_failed", call_uuid=target_uuid, error=type(exc).__name__)
+                if not disconnected:
+                    raise RuntimeError("Carrier and media disconnect both failed")
+            finally:
+                # The voice-loop watchdog can retry an unsuccessful disconnect.
+                self._closed = disconnected
 
     async def _cleanup(self, reason: str) -> None:
         if self._cleanup_done:
@@ -546,7 +568,8 @@ class VobizPstnBridge:
                 self._token_meta.get("outbound_id"),
             ):
                 if k:
-                    active_vobiz_bridges.pop(str(k), None)
+                    if active_vobiz_bridges.get(str(k)) is self:
+                        active_vobiz_bridges.pop(str(k), None)
 
         vobiz_call_registry.upsert(
             self.call_uuid,

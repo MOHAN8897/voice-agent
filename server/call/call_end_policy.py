@@ -42,10 +42,10 @@ def normalize_call_end_policy(raw: Any, *, language: str | None = None) -> dict[
 
 def allowed_reasons_for(policy: dict[str, Any] | None) -> frozenset[str]:
     if not policy:
-        return frozenset(HANGUP_REASONS)
-    raw = policy.get("allowedReasons") or []
+        return frozenset(DEFAULT_HANGUP_REASONS)
+    raw = policy.get("allowedReasons") or policy.get("allowed_reasons") or []
     reasons = [str(r).strip().lower() for r in raw if str(r).strip().lower() in HANGUP_REASONS]
-    return frozenset(reasons or HANGUP_REASONS)
+    return frozenset(reasons or DEFAULT_HANGUP_REASONS)
 
 
 def format_call_end_section(language: str | None, policy: dict[str, Any] | None = None) -> str:

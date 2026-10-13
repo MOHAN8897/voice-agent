@@ -26,26 +26,38 @@ import { useWorkspace } from '../context/WorkspaceContext';
 const TRANSACTION_LABEL = {
   usage_pstn: 'Phone call usage',
   usage_web: 'Browser test call',
-  did_purchase: 'Phone number',
+  usage_web_test: 'Browser test call',
+  usage_campaign: 'Outbound campaign',
+  did_purchase: 'Phone number rental',
   did_refund: 'Phone number refund',
-  admin_seed: 'Starting balance',
+  admin_seed: 'Welcome balance',
   admin_grant: 'Balance added',
   admin_debit: 'Balance removed',
-  topup: 'Top-up (USD)',
-  razorpay_topup_inr: 'Top-up',
-  razorpay_topup: 'Top-up',
+  topup: 'Wallet top-up',
+  razorpay_topup_inr: 'Wallet top-up',
+  razorpay_topup: 'Wallet top-up',
+  forfeiture: 'Account forfeiture',
 };
 
-function describeTransactionKind(kind) {
-  return TRANSACTION_LABEL[kind] || kind || 'Adjustment';
+function describeTransactionKind(row) {
+  if (typeof row === 'string') {
+    return TRANSACTION_LABEL[row] || row || 'Adjustment';
+  }
+  if (!row) return 'Adjustment';
+  if (row.isCampaign) return 'Outbound campaign';
+  if (row.direction === 'outbound') return 'Outbound call';
+  if (row.direction === 'inbound') return 'Inbound call';
+  return TRANSACTION_LABEL[row.kind] || row.kind || 'Adjustment';
 }
 
 function toCsv(rows) {
-  const header = ['when', 'type', 'reference', 'inr', 'usd'];
+  const header = ['when', 'activity_type', 'description', 'reference', 'duration_sec', 'inr', 'usd'];
   const body = rows.map((r) => [
     r.createdAt || '',
-    describeTransactionKind(r.kind),
+    describeTransactionKind(r),
+    r.description || '',
     r.referenceId || '',
+    r.durationSec ?? '',
     ((Number(r.amountInrPaise) || 0) / 100).toFixed(2),
     ((Number(r.amountCents) || 0) / 100).toFixed(2),
   ]);
@@ -462,8 +474,8 @@ export function BillingModule() {
               <thead>
                 <tr className="border-b border-[#E4E2EB] bg-[#FAF9FD] text-[10px] text-[#524E5E] uppercase tracking-wider font-semibold">
                   <th className="py-2.5 px-4">When</th>
-                  <th className="py-2.5 px-3">Type</th>
-                  <th className="py-2.5 px-3">Reference</th>
+                  <th className="py-2.5 px-3">Activity</th>
+                  <th className="py-2.5 px-3">Description</th>
                   <th className="py-2.5 px-4 text-right">Amount</th>
                 </tr>
               </thead>
@@ -472,25 +484,45 @@ export function BillingModule() {
                   const inr = Number(row.amountInrPaise || 0) / 100;
                   const usd = Number(row.amountCents || 0) / 100;
                   const isCredit = inr > 0 || usd > 0;
+                  const effectiveUsd = usd !== 0 ? usd : inr !== 0 ? inr / (Number(serverWallet?.fxRateInr) || 95.64) : 0;
+                  const absAmount = Math.abs(effectiveUsd).toFixed(2);
+                  const displayAmount = effectiveUsd === 0 ? '$0.00' : `${isCredit ? '+' : '-'}$${absAmount}`;
+                  const activityLabel = describeTransactionKind(row);
+
                   return (
                     <tr key={row.id} className="hover:bg-[#FAF9FD]/80 transition-colors">
-                      <td className="py-2.5 px-4 text-[#524E5E]">
+                      <td className="py-2.5 px-4 text-[#524E5E] whitespace-nowrap">
                         {row.createdAt ? new Date(row.createdAt).toLocaleString() : '—'}
                       </td>
-                      <td className="py-2.5 px-3 text-[#0F0E17]">{describeTransactionKind(row.kind)}</td>
-                      <td className="py-2.5 px-3 text-[#8C879A] truncate max-w-[220px]">
-                        {row.referenceId || '—'}
+                      <td className="py-2.5 px-3 whitespace-nowrap">
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold ${
+                            isCredit
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : row.isCampaign
+                              ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                              : 'bg-slate-50 text-slate-700 border border-slate-200'
+                          }`}
+                        >
+                          {activityLabel}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3 text-[#0F0E17]">
+                        <div className="font-semibold text-xs text-[#0F0E17]">
+                          {row.description || activityLabel}
+                        </div>
+                        {row.referenceId && (
+                          <div className="text-[10px] text-[#8C879A] truncate max-w-[260px]">
+                            {row.referenceId}
+                          </div>
+                        )}
                       </td>
                       <td
-                        className={`py-2.5 px-4 text-right font-bold ${
+                        className={`py-2.5 px-4 text-right font-bold whitespace-nowrap ${
                           isCredit ? 'text-[#15803D]' : 'text-[#0F0E17]'
                         }`}
                       >
-                        {usd !== 0
-                          ? `$${usd.toFixed(2)}`
-                          : inr !== 0
-                            ? `$${(inr / (Number(serverWallet?.fxRateInr) || 95.64)).toFixed(2)}`
-                            : '—'}
+                        {displayAmount}
                       </td>
                     </tr>
                   );

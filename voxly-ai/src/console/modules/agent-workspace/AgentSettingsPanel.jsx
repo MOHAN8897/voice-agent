@@ -51,6 +51,8 @@ function cleanSnapshot(data) {
  */
 export function AgentSettingsPanel({
   agent,
+  agentGreeting,
+  onGreetingChange,
   onOpenBuyNumber,
   onDirtyChange,
   registerSaveHandler,
@@ -78,7 +80,10 @@ export function AgentSettingsPanel({
   const [recordingDisclosureText, setRecordingDisclosureText] = useState(
     agent?.recordingDisclosureText || 'This call may be recorded for quality and training purposes.'
   );
-  const [telephonyProfile, setTelephonyProfile] = useState(DEFAULT_PROFILE);
+  const [telephonyProfile, setTelephonyProfile] = useState(() => ({
+    ...DEFAULT_PROFILE,
+    greetingPhrase: agentGreeting || '',
+  }));
   const [compliance, setCompliance] = useState({});
   const [complianceSummary, setComplianceSummary] = useState(null);
   const [complianceLoading, setComplianceLoading] = useState(false);
@@ -87,6 +92,16 @@ export function AgentSettingsPanel({
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState(null);
+
+  // Keep telephonyProfile.greetingPhrase in sync with universal agentGreeting
+  useEffect(() => {
+    if (agentGreeting !== undefined) {
+      setTelephonyProfile((prev) => {
+        if (prev.greetingPhrase === agentGreeting) return prev;
+        return { ...prev, greetingPhrase: agentGreeting };
+      });
+    }
+  }, [agentGreeting]);
 
   // Snapshot for dirty comparison
   const [initialSnapshot, setInitialSnapshot] = useState(null);
@@ -116,7 +131,12 @@ export function AgentSettingsPanel({
     ]).then(([compData, profData]) => {
       if (cancelled) return;
       const loadedComp = compData?.acknowledged || {};
-      const loadedProf = { ...DEFAULT_PROFILE, ...(profData?.profile || {}) };
+      const rawProf = profData?.profile || {};
+      const loadedProf = {
+        ...DEFAULT_PROFILE,
+        ...rawProf,
+        greetingPhrase: agentGreeting !== undefined && agentGreeting !== '' ? agentGreeting : (rawProf.greetingPhrase || ''),
+      };
 
       setCompliance(loadedComp);
       setComplianceSummary(compData || null);
@@ -443,7 +463,12 @@ export function AgentSettingsPanel({
           <TelephonySettingsCard
             agentId={agentId}
             profile={telephonyProfile}
-            onChange={(patch) => setTelephonyProfile((prev) => ({ ...prev, ...patch }))}
+            onChange={(patch) => {
+              setTelephonyProfile((prev) => ({ ...prev, ...patch }));
+              if (patch.greetingPhrase !== undefined) {
+                onGreetingChange?.(patch.greetingPhrase);
+              }
+            }}
             hideSaveButton={true}
           />
         </div>

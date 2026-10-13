@@ -1,0 +1,209 @@
+{
+  "version": 2,
+  "name": "drive-workspace-deletion-confi",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1791894689332,
+  "steps": [
+    {
+      "tool": "reticle_act_sequence",
+      "anchor": {
+        "kind": "role",
+        "role": "textbox",
+        "name": "Work Email"
+      },
+      "steps": [
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "role",
+            "role": "textbox",
+            "name": "Work Email"
+          },
+          "args": {
+            "value": "saiskm115@gmail.com"
+          },
+          "action": "fill"
+        },
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "role",
+            "role": "textbox",
+            "name": "Password"
+          },
+          "args": {
+            "value": "<redacted: supply at replay>"
+          },
+          "action": "fill"
+        }
+      ],
+      "page": "/login"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Sign In"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/login"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "tour-close-btn"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/login"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "nav-settings",
+        "source": {
+          "file": "src/console/Sidebar.jsx",
+          "line": 301,
+          "column": 19
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/login"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "danger-zone-delete-button",
+        "source": {
+          "file": "src/console/modules/SettingsModule.jsx",
+          "line": 290,
+          "column": 13
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/login"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Download JSON"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/login"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Download JSON"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/login"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "checkbox",
+        "name": "I agree to forfeit my remaining wallet balance of $ 0.00 upon deletion completion."
+      },
+      "args": {},
+      "action": "check",
+      "page": "/login"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Proceed to Confirmation"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "text",
+        "contains": "Workspace Deletion Confirmation"
+      },
+      "page": "/login"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "textbox",
+        "name": "Type the word delete to confirm"
+      },
+      "args": {
+        "value": "delete"
+      },
+      "action": "fill",
+      "page": "/login"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "combobox",
+        "name": "Why are you deleting this workspace?"
+      },
+      "args": {
+        "value": "pricing"
+      },
+      "action": "select",
+      "page": "/login"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Close dialog"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/login"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "nav-billing",
+        "source": {
+          "file": "src/console/Sidebar.jsx",
+          "line": 301,
+          "column": 19
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/login"
+    }
+  ],
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/login"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/login"
+    }
+  ],
+  "author": {
+    "agent": "antigravity-client"
+  }
+}

@@ -277,11 +277,13 @@ def _user_public(user: User, has_completed_onboarding: bool = False) -> dict[str
 
 
 def _tenant_public(tenant: Tenant) -> dict[str, Any]:
+    scheduled = getattr(tenant, "scheduled_purge_at", None)
     return {
         "tenantId": str(tenant.tenant_id),
         "name": tenant.name,
         "plan": tenant.plan,
         "status": tenant.status,
+        "scheduledPurgeAt": scheduled.isoformat() if scheduled else None,
         "limits": tenant.limits or {},
     }
 

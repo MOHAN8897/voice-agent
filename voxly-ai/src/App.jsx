@@ -47,6 +47,7 @@ function AppInner() {
   const [isLegalModalOpen, setIsLegalModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState('signin');
+  const [quarantineNotice, setQuarantineNotice] = useState('');
   const [legalModalTab, setLegalModalTab] = useState('privacy');
   const botControllerRef = useRef(null);
 
@@ -83,6 +84,17 @@ function AppInner() {
       setIsAuthModalOpen(true);
     }
     const params = new URLSearchParams(window.location.search);
+    const notice = params.get('notice');
+    if (notice === 'workspace_quarantined') {
+      setAuthModalMode('signin');
+      setQuarantineNotice(
+        'This workspace is scheduled for permanent deletion. Sign in as the owner during the 14-day grace period to restore access or export data.'
+      );
+      setIsAuthModalOpen(true);
+      window.setTimeout(() => {
+        window.history.replaceState({}, '', window.location.pathname + window.location.hash);
+      }, 0);
+    }
     const authErr = params.get('auth_error');
     if (authErr) {
       setAuthModalMode('signin');
@@ -352,7 +364,7 @@ function AppInner() {
           isOpen={isAuthModalOpen}
           onClose={() => setIsAuthModalOpen(false)}
           initialMode={authModalMode}
-          notice={signOutReason}
+          notice={quarantineNotice || signOutReason}
           onAuthSuccess={() => {
             const tab = consumePostAuthTab();
             setCurrentView('dashboard');

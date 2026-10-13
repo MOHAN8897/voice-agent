@@ -255,3 +255,13 @@ async def send_password_reset_email(to: str, reset_url: str) -> EmailResult:
         cta_url=reset_url,
     )
     return await send_email(to, "Reset your Voxly password", html)
+
+
+async def send_deletion_otp_email(to: str, otp_code: str, workspace_name: str) -> EmailResult:
+    paragraphs = (
+        f"A request was submitted to permanently delete the workspace <strong>{workspace_name}</strong>.",
+        f"Your sudo confirmation code is <b style=\"letter-spacing:4px;font-size:18px;\">{otp_code}</b>.",
+        "This security code expires in 15 minutes. If you did not initiate this request, change your password immediately.",
+    )
+    html = _email_shell(*paragraphs)
+    return await send_email(to, f"Security confirmation code for deleting {workspace_name}", html)

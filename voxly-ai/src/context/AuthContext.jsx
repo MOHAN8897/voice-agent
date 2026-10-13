@@ -34,6 +34,8 @@ function normalizeUser(meOrAuth) {
     email: user.email,
     tenantId: tenant?.tenantId,
     tenantName: tenant?.name,
+    tenantStatus: tenant?.status,
+    scheduledPurgeAt: tenant?.scheduledPurgeAt,
     role: meOrAuth?.role,
     isPlatformAdmin: Boolean(meOrAuth?.isPlatformAdmin),
     isDevTester: Boolean(meOrAuth?.isDevTester),

@@ -314,6 +314,43 @@ class CallStore:
             )
             return [_row_to_dict(r) for r in result.scalars()]
 
+    async def terminate_tenant_calls(self, tenant_id: str) -> int:
+        """Hang up all in-flight calls for a quarantined tenant.
+
+        Updates every open call (ended_at IS NULL) for the tenant with a terminal
+        status of ``tenant_quarantined``. This is a best-effort post-commit side
+        effect; failures are logged but never propagate to the caller.
+
+        Returns the number of calls terminated.
+        """
+        import uuid as _uuid
+
+        now = _utcnow()
+        factory = get_session_factory()
+        if factory is None:
+            count = 0
+            for call_id, rec in list(_MEM.items()):
+                if str(rec.get("tenant_id")) == str(tenant_id) and not rec.get("ended_at"):
+                    rec["ended_at"] = now.isoformat()
+                    rec["end_reason"] = "tenant_quarantined"
+                    rec["status"] = "completed"
+                    count += 1
+            return count
+
+        try:
+            parsed = _uuid.UUID(str(tenant_id))
+        except (ValueError, AttributeError):
+            return 0
+
+        async with factory() as session:
+            result = await session.execute(
+                update(Call)
+                .where(Call.tenant_id == parsed, Call.ended_at.is_(None))
+                .values(ended_at=now, end_reason="tenant_quarantined", status="completed")
+            )
+            await session.commit()
+            return result.rowcount if result.rowcount is not None else 0
+
     def reset_for_tests(self) -> None:
         _MEM.clear()
         _ATTEMPT_MEM.clear()

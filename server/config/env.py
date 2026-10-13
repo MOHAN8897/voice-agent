@@ -327,6 +327,20 @@ class Settings(BaseSettings):
     )
     voxly_frontend_url: str = Field("http://localhost:5173", alias="VOXLY_FRONTEND_URL")
 
+    # --- Tenant account deletion (Danger Zone) ---
+    #: Grace period in days between quarantine and irreversible purge.
+    #: TODO(legal): Confirm this period satisfies jurisdiction right-to-cancel requirements.
+    tenant_deletion_grace_days: int = Field(14, alias="TENANT_DELETION_GRACE_DAYS")
+    #: Secret salt for keyed HMAC-SHA256 anonymization of CDR phone numbers.
+    #: Must be set in production; dev defaults to a deterministic local value.
+    hmac_phone_salt: str = Field("dev-hmac-salt-change-in-production", alias="HMAC_PHONE_SALT")
+    #: Statutory retention window for CDR metadata (telecom regulations).
+    #: TODO(legal): Confirm statutory retention window with jurisdiction counsel (TRAI/FCC/Ofcom).
+    cdr_retention_days: int = Field(730, alias="CDR_RETENTION_DAYS")  # default 2 years
+    #: Statutory retention window for billing invoices (tax compliance).
+    #: TODO(legal): Confirm statutory retention window with jurisdiction counsel (IRS/GST/VAT).
+    invoice_retention_days: int = Field(2555, alias="INVOICE_RETENTION_DAYS")  # default 7 years
+
     razorpay_api_key: str | None = Field(
         None,
         validation_alias=AliasChoices("RAZORPAY_API_KEY", "razorpay_api_key"),

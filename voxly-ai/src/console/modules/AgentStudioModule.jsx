@@ -52,39 +52,78 @@ import { resolveEmployeeStep } from '../employeeFlowHash';
  */
 /** Extract the greeting / opening phrase from a script text if present. */
 export function extractGreetingFromScript(scriptText) {
-  if (!scriptText) return null;
-  const match = scriptText.match(/^(?:Greeting|Opening greeting|Opening line|Greeting the caller hears):\s*([^\n]+)/im);
-  if (match && match[1]) {
-    return match[1].trim();
+  if (!scriptText || !scriptText.trim()) return null;
+
+  // 1. Matches "--- CANONICAL OPENING ---" section
+  const canonicalMatch = scriptText.match(
+    /(?:^|\n)(?:---|##)\s*CANONICAL OPENING\s*(?:---|##)?\s*\n+([\s\S]*?)(?=(?:\n+---|(?:\n+##)|$))/i
+  );
+  if (canonicalMatch && canonicalMatch[1]) {
+    const body = canonicalMatch[1].trim();
+    const leadMatch = body.match(
+      /^(?:After the callee speaks, say once:|When you answer, say once:|Say once:|Say:|Example opening:)\s*\n*([\s\S]+)/i
+    );
+    if (leadMatch && leadMatch[1]) {
+      return leadMatch[1].trim();
+    }
+    return body;
   }
-  const openingLineMatch = scriptText.match(/^OPENING LINE\s*\n\s*([^\n]+)/im);
-  if (openingLineMatch && openingLineMatch[1]) {
-    return openingLineMatch[1].trim();
+
+  // 2. Matches "--- OPENING ---" or "--- OPENING HINT ---"
+  const openingHintMatch = scriptText.match(
+    /(?:^|\n)(?:---|##)\s*OPENING(?: HINT)?\s*(?:---|##)?\s*\n+([\s\S]*?)(?=(?:\n+---|(?:\n+##)|$))/i
+  );
+  if (openingHintMatch && openingHintMatch[1]) {
+    const body = openingHintMatch[1].trim();
+    const leadMatch = body.match(
+      /^(?:After the callee speaks, say once:|When you answer, say once:|Say once:|Say:|Example opening:)\s*\n*([\s\S]+)/i
+    );
+    if (leadMatch && leadMatch[1]) {
+      return leadMatch[1].trim();
+    }
+    return body;
   }
+
   return null;
 }
 
-/** Synchronize greeting into calling script text so both stay connected. */
+/** Synchronize greeting into calling script text so both stay connected without clashes. */
 export function syncGreetingToScript(currentScript, newGreeting) {
   const gTrim = (newGreeting || '').trim();
-  if (!currentScript || !currentScript.trim()) {
-    return gTrim ? `Greeting: ${gTrim}` : '';
+  const rawClean = (currentScript || '').replace(/^OPENING LINE\s*\n[^\n]*\n*/im, '').trim();
+  if (!rawClean) {
+    return gTrim ? `--- CANONICAL OPENING ---\nAfter the callee speaks, say once:\n${gTrim}` : '';
   }
 
-  const markerRegex = /^(?:Greeting|Opening greeting|Opening line|Greeting the caller hears):\s*[^\n]*/im;
-  if (markerRegex.test(currentScript)) {
-    return currentScript.replace(markerRegex, `Greeting: ${gTrim}`);
+  // 1. If "--- CANONICAL OPENING ---" exists, replace its body while preserving or inserting lead instruction
+  const canonicalRegex = /((?:^|\n)(?:---|##)\s*CANONICAL OPENING\s*(?:---|##)?\s*\n+)([\s\S]*?)(?=(?:\n+---|\n+##|$))/i;
+  if (canonicalRegex.test(rawClean)) {
+    return rawClean.replace(canonicalRegex, (_match, header, body) => {
+      const leadMatch = body.match(
+        /^(After the callee speaks, say once:|When you answer, say once:|Say once:|Say:|Example opening:)/im
+      );
+      const lead = leadMatch ? leadMatch[1] : 'After the callee speaks, say once:';
+      return `${header}${lead}\n${gTrim}`;
+    });
   }
 
-  const openingLineRegex = /^OPENING LINE\s*\n\s*[^\n]*/im;
-  if (openingLineRegex.test(currentScript)) {
-    return currentScript.replace(openingLineRegex, `OPENING LINE\n${gTrim}`);
+  // 2. If "--- OPENING ---" or "--- OPENING HINT ---" exists, upgrade it to CANONICAL OPENING
+  const openingHintRegex = /((?:^|\n)(?:---|##)\s*OPENING(?: HINT)?\s*(?:---|##)?\s*\n+)([\s\S]*?)(?=(?:\n+---|\n+##|$))/i;
+  if (openingHintRegex.test(rawClean)) {
+    return rawClean.replace(openingHintRegex, (_match, _header, body) => {
+      const leadMatch = body.match(
+        /^(After the callee speaks, say once:|When you answer, say once:|Say once:|Say:|Example opening:)/im
+      );
+      const lead = leadMatch ? leadMatch[1] : 'After the callee speaks, say once:';
+      return `\n--- CANONICAL OPENING ---\n${lead}\n${gTrim}`;
+    });
   }
 
+  // 3. Prepend CANONICAL OPENING to script cleanly
   if (gTrim) {
-    return `Greeting: ${gTrim}\n\n${currentScript.trim()}`;
+    return `--- CANONICAL OPENING ---\nAfter the callee speaks, say once:\n${gTrim}\n\n${rawClean}`;
   }
-  return currentScript;
+  return rawClean;
 }
 
 const EDITABLE_FIELDS = [
@@ -160,8 +199,8 @@ const EMPTY_FORM = {
   objectionRules: [],
   boundaries: [],
   variableDefinitions: [],
-  voice: { speed: 1, pitch: 0, voiceName: '', provider: 'openai' },
-  language: 'en-US',
+  voice: { speed: 1, pitch: 0, voiceName: 'Marin', voiceId: 'marin', realtimeVoice: 'marin', provider: 'phone_ai' },
+  language: 'en-IN',
   inboundRouting: {
     businessHours: '08:00 - 18:00 (PST)',
     afterHoursAction: 'voicemail',
@@ -171,6 +210,10 @@ const EMPTY_FORM = {
 
 function formFromAgent(agent) {
   if (!agent) return { ...EMPTY_FORM };
+  const rawVoice = agent.voice || {};
+  const voiceId = rawVoice.voiceId || rawVoice.realtimeVoice || 'marin';
+  const realtimeVoice = rawVoice.realtimeVoice || rawVoice.voiceId || 'marin';
+  const lang = (agent.languages && agent.languages[0]) || agent.language || 'en-IN';
   return {
     ...editableSubset({
       name: agent.name || '',
@@ -181,8 +224,15 @@ function formFromAgent(agent) {
       objectionRules: agent.objectionRules || [],
       boundaries: agent.boundaries || [],
       variableDefinitions: agent.variableDefinitions || [],
-      voice: { ...EMPTY_FORM.voice, ...(agent.voice || {}) },
-      language: agent.language || 'en-US',
+      voice: {
+        ...EMPTY_FORM.voice,
+        ...rawVoice,
+        voiceId,
+        realtimeVoice,
+        voiceName: rawVoice.voiceName || 'Marin',
+        speed: rawVoice.speed ?? 1,
+      },
+      language: lang,
       inboundRouting: agent.inboundRouting || {
         businessHours: '08:00 - 18:00 (PST)',
         afterHoursAction: 'voicemail',
@@ -260,22 +310,33 @@ export function AgentStudioModule({
     }));
   };
 
-  // Two-way synchronization between "Greeting the caller hears" and Calling script
+  // Universal synchronization between "Greeting the caller hears" and Calling script & telephony routing
   const handleGreetingChange = (newGreeting) => {
     setFormData((prev) => ({
       ...prev,
       greeting: newGreeting,
       script: syncGreetingToScript(prev.script, newGreeting),
+      inboundRouting: {
+        ...(prev.inboundRouting || {}),
+        greetingPhrase: newGreeting,
+      },
     }));
   };
 
   const handleScriptChange = (newScript) => {
     const extracted = extractGreetingFromScript(newScript);
-    setFormData((prev) => ({
-      ...prev,
-      script: newScript,
-      greeting: extracted !== null ? extracted : prev.greeting,
-    }));
+    setFormData((prev) => {
+      const resolvedGreeting = extracted !== null ? extracted : prev.greeting;
+      return {
+        ...prev,
+        script: newScript,
+        greeting: resolvedGreeting,
+        inboundRouting: {
+          ...(prev.inboundRouting || {}),
+          greetingPhrase: resolvedGreeting,
+        },
+      };
+    });
   };
 
   // The last-loaded (saved) state. Dirty = formData differs from this, or settings tab has unsaved changes.
@@ -309,9 +370,13 @@ export function AgentStudioModule({
 
   const handleSettingsSaved = useCallback((savedData) => {
     setFormData((prev) => {
+      const incomingGreeting =
+        savedData.greeting ??
+        savedData.greetingPhrase ??
+        savedData.telephonyProfile?.greetingPhrase;
       const nextGreeting =
-        savedData.greeting !== undefined && savedData.greeting !== ''
-          ? savedData.greeting
+        incomingGreeting !== undefined && incomingGreeting !== ''
+          ? incomingGreeting
           : prev.greeting;
       const nextLang = savedData.language || prev.language;
       const nextName = savedData.name || prev.name;
@@ -460,6 +525,13 @@ export function AgentStudioModule({
     try {
       if (scriptDirty) {
         await updateAgent(selectedAgent.id, formData);
+        try {
+          await api.agents.saveTelephonyProfile(selectedAgent.id, {
+            greetingPhrase: formData.greeting || '',
+          });
+        } catch {
+          /* optional */
+        }
         // Re-baseline: after a successful publish there is nothing left to guard.
         setSavedSnapshot(snapForm(formData));
       }
@@ -521,22 +593,26 @@ export function AgentStudioModule({
       return;
     }
 
+    // Acoustic preview is strictly synthesized in English, applying and respecting the chosen voice & speed
+    const isEnglishGreeting = formData.greeting && /^[A-Za-z0-9\s.,!?'"()-]+$/.test(formData.greeting.trim());
     const previewText =
-      formData.greeting ||
-      `Hi there! I am ${formData.name}. I am calibrated and ready to take your calls.`;
+      (isEnglishGreeting ? formData.greeting.trim() : null) ||
+      `Hi there! This is ${formData.name || 'Priya'}. Do you have two minutes to speak?`;
     setVoicePreviewError(null);
     setVoiceSpoken({ voice: null, model: null });
     setIsBufferingVoice(true);
 
-    // Speak through the real live model the caller will reach with configured voice, language, and speed.
+    // Speak through the real live model the caller will reach with configured voice and speed in English.
     try {
+      const targetVoice = formData.voice?.voiceId || formData.voice?.realtimeVoice || 'marin';
+      const targetSpeed = formData.voice?.speed ?? 1;
       const { blob, voice, model } = await api.telephony.previewVoice({
         text: previewText,
-        voiceId: formData.voice?.voiceId || formData.voice?.realtimeVoice || null,
-        language: formData.language || 'en-IN',
-        speed: formData.voice?.speed ?? 1,
+        voiceId: targetVoice,
+        language: 'en-US',
+        speed: targetSpeed,
       });
-      setVoiceSpoken({ voice: voice || null, model: model || null });
+      setVoiceSpoken({ voice: voice || targetVoice, model: model || null, language: 'en-US' });
       setIsBufferingVoice(false);
       setIsPlayingVoice(true);
       const played = await voiceAgent.playAudioBuffer(
@@ -1298,6 +1374,8 @@ export function AgentStudioModule({
           <ErrorBoundary title="Unable to load agent settings">
             <AgentSettingsPanel
               agent={selectedAgent}
+              agentGreeting={formData.greeting}
+              onGreetingChange={handleGreetingChange}
               onOpenBuyNumber={onOpenBuyNumber}
               onDirtyChange={setSettingsDirty}
               registerSaveHandler={(saveFn, discardFn) => {

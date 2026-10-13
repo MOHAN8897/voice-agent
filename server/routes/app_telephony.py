@@ -214,7 +214,13 @@ async def voice_preview(
     synthesis is deliberately not used — it is a different engine with different
     voices, and approving against it means approving the wrong thing.
     """
-    require_subscriber_permission(principal, "app.billing.write")
+    from server.auth.rbac import role_has_permission
+    if not (
+        role_has_permission(principal.role, "app.agents.write")
+        or role_has_permission(principal.role, "app.telephony.write")
+        or role_has_permission(principal.role, "app.billing.write")
+    ):
+        raise HTTPException(status_code=403, detail={"error": {"code": "auth_error", "message": "Permission denied"}})
     from server.services.saas.voice_preview import synthesize_preview
 
     try:

@@ -1172,16 +1172,14 @@ class PstnRealtimeVoiceLoop:
             await self._finish_hangup()
             return
         if self._hangup_farewell_inject_tried:
-            if self._response_had_audio:
-                self._farewell_response_active = False
-                self._pending_followup_instruction = None
-                if reason in ("goal_complete", "goodbye", "firm_refusal"):
-                    self._apply_hangup_close_flags(reason)
-                self._farewell_complete = True
-                await self._finish_hangup()
-                return
-            # Inject finished without audio — do not disconnect; allow one more inject.
-            self._hangup_farewell_inject_tried = False
+            # One explicit audio retry has already completed silently. Repeating
+            # it on every response_done strands the caller until the watchdog.
+            log_pstn("hangup.farewell_audio_unavailable", call_id=self.call_id)
+            self._farewell_response_active = False
+            self._pending_followup_instruction = None
+            self._farewell_complete = True
+            await self._finish_hangup()
+            return
         text = (self._pending_farewell_text or self._localized_farewell()).strip()
         if text and self._adapter is not None:
             self._hangup_farewell_inject_tried = True

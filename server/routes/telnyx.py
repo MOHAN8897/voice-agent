@@ -547,8 +547,35 @@ async def _apply_inbound_policy(call_control_id: str, payload: dict) -> bool:
             )
             return False
 
-        # Telephony config says answer; now the payment wall.
+        # Telephony config says answer; now check tenant quarantine and payment wall.
         tenant_id = await _wallet_tenant_for_number(to_number)
+        if tenant_id:
+            from server.db.connection import get_session_factory
+            from server.db.models.entities import Tenant
+
+            factory = get_session_factory()
+            if factory:
+                try:
+                    async with factory() as session:
+                        t_row = await session.get(Tenant, tenant_id)
+                        if t_row and t_row.status != "active":
+                            log_pstn(
+                                "inbound.declined",
+                                control=call_control_id,
+                                to=to_number,
+                                from_=from_number,
+                                reason="tenant_quarantined",
+                            )
+                            asyncio.create_task(
+                                _record_inbound_attempt(
+                                    call_control_id, payload, policy_reason="tenant_quarantined"
+                                ),
+                                name=f"telnyx-attempt-{str(call_control_id)[:24]}",
+                            )
+                            return False
+                except Exception as e:
+                    logger.warning("[TELNYX] tenant quarantine check error: %s", e)
+
         allowed = await _wallet_allows_inbound(tenant_id)
         if not allowed:
             log_pstn(

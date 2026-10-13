@@ -25,11 +25,18 @@ class Tenant(Base):
     tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     plan: Mapped[str] = mapped_column(String(50), default="dev")
+    # status CHECK: active | quarantined | deleting | deleted
     status: Mapped[str] = mapped_column(String(30), default="active")
     stripe_customer_id: Mapped[str | None] = mapped_column(String(255), nullable=True, unique=True)
     limits: Mapped[dict] = mapped_column(JSONB, default=dict)
     default_agent_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("agents.agent_id"), nullable=True)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # --- Deletion lifecycle (migration 033) ---
+    deleted_by_user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    deletion_reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    scheduled_purge_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    restored_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    legal_hold: Mapped[bool] = mapped_column(Boolean, default=False)
     billing_source: Mapped[str] = mapped_column(String(30), default="self_serve")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 

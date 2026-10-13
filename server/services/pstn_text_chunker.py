@@ -101,6 +101,17 @@ _OPENING_SECTION = re.compile(
 )
 
 
+def _limit_spoken_greeting(text: str, limit: int = 280) -> str:
+    text = " ".join(text.split())
+    if len(text) <= limit:
+        return text
+    prefix = text[:limit + 1]
+    endings = list(re.finditer(r"[.!?।](?=\s|$)", prefix))
+    if endings:
+        return prefix[:endings[-1].end()]
+    return prefix.rsplit(" ", 1)[0].rstrip(",;:") if " " in prefix else ""
+
+
 def _spoken_opening_candidate(line: str) -> str | None:
     """Return a single speakable greeting line, or None for policy / junk."""
     raw = (line or "").strip().strip("-").strip()
@@ -147,9 +158,11 @@ def _spoken_opening_candidate(line: str) -> str | None:
         return None
     # One utterance only — cut at a second question if a bad script stacked beats.
     parts = re.split(r"(?<=[.!?])\s+", raw)
-    if len(parts) > 2:
-        raw = " ".join(parts[:2]).strip()
-    return raw[:280]
+    # A short salutation ("Vanakkam!") is not the identity or help question.
+    max_parts = 3 if parts and len(parts[0]) <= 20 and parts[0].endswith("!") else 2
+    if len(parts) > max_parts:
+        raw = " ".join(parts[:max_parts]).strip()
+    return _limit_spoken_greeting(raw) or None
 
 
 def _parse_agent_identity(compiled_brain: str) -> tuple[str, str]:
@@ -198,30 +211,27 @@ def enrich_outbound_spoken_intro(
     name, company = _parse_agent_identity(compiled_brain)
     if not name:
         return spoken or None
+    from server.prompts.agent_voice_rules import opening_line_for
+
+    # Use the same locale-specific identity as agent creation, without adding a
+    # second permission question to a custom opening.
+    template = opening_line_for(language, agent_name=name, company_name=company,
+                                work_scope="", direction="outbound")
+    intro = template.split(". ", 1)[0].rstrip(".") + "."
     # If the line already introduces the agent, prepending a second intro doubles it
     # ("Hi, this is Priya calling from X. Hi, this is Priya. Do you have a moment?").
     # Length was not part of that question: any self-introduction counts.
-    if name.lower() in spoken.lower():
-        if company and company.lower() not in spoken.lower():
+    if re.search(rf"(?<!\w){re.escape(name)}(?!\w)", spoken, re.IGNORECASE):
+        if company and not re.search(rf"(?<!\w){re.escape(company)}(?!\w)", spoken, re.IGNORECASE):
             # Already a self-introduction, only the company is missing. Add just that,
             # rather than a second full intro.
             first, sep, rest = spoken.partition(". ")
             if sep:
-                return f"{first}, calling from {company}. {rest}"[:280]
-        return spoken[:280]
-    lang = (language or "te-IN").lower()
-    if lang.startswith("te"):
-        intro = f"Namaste andi, nenu {name}"
-        intro += f", {company} nundi matladutunnanu." if company else " matladutunnanu."
-    elif lang.startswith("hi"):
-        intro = f"Namaste, main {name}"
-        intro += f", {company} se bol raha hoon." if company else " bol raha hoon."
-    else:
-        intro = f"Hi, this is {name}"
-        intro += f" calling from {company}." if company else "."
+                return _limit_spoken_greeting(f"{intro} {rest}")
+        return _limit_spoken_greeting(spoken)
     if spoken and spoken.lower() not in intro.lower():
-        return f"{intro} {spoken}"[:280]
-    return (spoken or intro)[:280]
+        return _limit_spoken_greeting(f"{intro} {spoken}")
+    return _limit_spoken_greeting(spoken or intro)
 
 
 # Every brain writer on this platform stores the opening as a *labelled* line
@@ -304,10 +314,12 @@ def extract_prewarm_greeting(
     """Outbound prewarm PCM: prefer full canonical intro (name + company), not a bare time check."""
     if not compiled_brain:
         return extract_opening_greeting(compiled_brain, language, direction=direction)
+    if str(direction or "outbound").strip().lower() in ("inbound", "incoming"):
+        return extract_opening_greeting(compiled_brain, language, direction=direction)
     from server.brain.script_entities import parse_entity_tags
 
     tags = parse_entity_tags(compiled_brain)
-    tagged_open = (tags.get("opening_line") or "").strip()
+    tagged_open = _spoken_opening_candidate(tags.get("opening_line") or "")
     if tagged_open and len(tagged_open) >= 20:
         enriched = enrich_outbound_spoken_intro(compiled_brain, tagged_open, language)
         return (enriched or tagged_open)[:280]
@@ -388,7 +400,21 @@ def extract_opening_greeting(
 
 
 def _default_greeting(language: str, *, direction: str | None = None) -> str:
+    from server.prompts.agent_voice_rules import normalize_compile_language
+
+    language = normalize_compile_language(language)
     outbound = str(direction or "outbound").strip().lower() not in ("inbound", "incoming")
+    local = {
+        "ta-IN": ("வணக்கம்! ஒரு நிமிடம் பேசலாமா?", "வணக்கம்! உங்களுக்கு எப்படி உதவலாம்?"),
+        "kn-IN": ("ನಮಸ್ಕಾರ! ಒಂದು ನಿಮಿಷ ಮಾತನಾಡಬಹುದೇ?", "ನಮಸ್ಕಾರ! ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?"),
+        "ml-IN": ("നമസ്കാരം! ഒരു മിനിറ്റ് സംസാരിക്കാമോ?", "നമസ്കാരം! എങ്ങനെ സഹായിക്കാം?"),
+        "mr-IN": ("नमस्कार! एक मिनिट बोलू शकतो का?", "नमस्कार! मी आपली कशी मदत करू?"),
+        "bn-IN": ("নমস্কার! এক মিনিট কথা বলা যাবে?", "নমস্কার! কীভাবে সাহায্য করতে পারি?"),
+        "gu-IN": ("નમસ્તે! એક મિનિટ વાત થઈ શકે?", "નમસ્તે! હું આપને કેવી રીતે મદદ કરી શકું?"),
+        "pa-IN": ("ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ! ਇੱਕ ਮਿੰਟ ਗੱਲ ਹੋ ਸਕਦੀ ਹੈ?", "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ ਤੁਹਾਡੀ ਕੀ ਮਦਦ ਕਰ ਸਕਦਾ ਹਾਂ?"),
+    }.get(language)
+    if local:
+        return local[0 if outbound else 1]
     if language.startswith("te"):
         return (
             "Hi, konchem time unda?"

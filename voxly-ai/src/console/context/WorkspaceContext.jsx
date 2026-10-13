@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { initialWallet, availableNumbersCatalog } from '../data/initialWorkspaceData';
 import { api } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import { normalizeAgent, normalizePhoneNumber, normalizeWallet } from '../../services/apiNormalize';
 import { isUuid } from '../../lib/voiceDisplay';
 import { saveAndPublishAgentBrain } from '../../services/agentBrain';
@@ -13,6 +14,8 @@ function authed() {
 const WorkspaceContext = createContext(null);
 
 export function WorkspaceProvider({ children }) {
+  const auth = useAuth();
+  const tenantStatus = auth?.user?.tenantStatus;
   const [agents, setAgents] = useState([]);
   const [phoneNumbers, setPhoneNumbers] = useState([]);
   const [calls, setCalls] = useState([]);
@@ -151,6 +154,10 @@ export function WorkspaceProvider({ children }) {
   // ----------------------------------------------------------------
   const loadWorkspaceData = useCallback(async () => {
     if (!api.getToken()) {
+      return;
+    }
+    if (tenantStatus === 'quarantined') {
+      setIsLoading(false);
       return;
     }
     // Coalesce overlapping refreshes — StrictMode + auth events must not fan out

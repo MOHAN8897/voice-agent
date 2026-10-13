@@ -120,8 +120,101 @@ async def list_wallet_transactions(tenant_id: uuid.UUID, limit: int = 50, user_i
         if user_id is not None:
             stmt = stmt.where(BillingWalletTransaction.user_id == user_id)
         result = await session.execute(stmt.order_by(BillingWalletTransaction.created_at.desc()).limit(limit))
+        txs = list(result.scalars())
+        if not txs:
+            return []
+
+        # Collect call UUIDs for enriched lookup
+        call_ids: list[uuid.UUID] = []
+        for tx in txs:
+            if tx.reference_id and tx.reference_id.startswith("call:"):
+                raw_cid = tx.reference_id.split(":", 1)[1].strip()
+                try:
+                    call_ids.append(uuid.UUID(raw_cid))
+                except (ValueError, TypeError):
+                    pass
+
+        calls_by_id: dict[uuid.UUID, Any] = {}
+        campaigns_by_id: dict[uuid.UUID, str] = {}
+        agents_by_id: dict[uuid.UUID, str] = {}
+
+        if call_ids:
+            try:
+                from server.db.models.entities import Agent, Call
+                from server.db.models.phase5_models import Campaign
+
+                calls_res = await session.execute(select(Call).where(Call.call_id.in_(call_ids)))
+                for c in calls_res.scalars():
+                    calls_by_id[c.call_id] = c
+
+                camp_ids = [c.campaign_id for c in calls_by_id.values() if c.campaign_id]
+                if camp_ids:
+                    camps_res = await session.execute(select(Campaign).where(Campaign.campaign_id.in_(camp_ids)))
+                    for camp in camps_res.scalars():
+                        campaigns_by_id[camp.campaign_id] = camp.name
+
+                agent_ids = [c.agent_id for c in calls_by_id.values() if c.agent_id]
+                if agent_ids:
+                    agents_res = await session.execute(select(Agent).where(Agent.agent_id.in_(agent_ids)))
+                    for ag in agents_res.scalars():
+                        agents_by_id[ag.agent_id] = ag.name
+            except Exception as exc:
+                logger.debug("list_wallet_transactions: call enrichment failed: %s", exc)
+
         rows = []
-        for tx in result.scalars():
+        for tx in txs:
+            call_obj = None
+            if tx.reference_id and tx.reference_id.startswith("call:"):
+                try:
+                    cid = uuid.UUID(tx.reference_id.split(":", 1)[1].strip())
+                    call_obj = calls_by_id.get(cid)
+                except Exception:
+                    pass
+
+            desc = None
+            duration_sec = None
+            direction = None
+            is_campaign = False
+            campaign_name = None
+            agent_name = None
+
+            if call_obj:
+                duration_sec = call_obj.duration_sec
+                direction = call_obj.direction
+                agent_name = agents_by_id.get(call_obj.agent_id)
+                dur_str = f"{duration_sec}s" if duration_sec is not None else ""
+                if call_obj.campaign_id:
+                    is_campaign = True
+                    campaign_name = campaigns_by_id.get(call_obj.campaign_id)
+                    camp_label = f": {campaign_name}" if campaign_name else ""
+                    desc = f"Outbound Campaign{camp_label} ({dur_str})" if dur_str else f"Outbound Campaign{camp_label}"
+                elif call_obj.direction == "outbound":
+                    desc = f"Outbound Call ({dur_str})" if dur_str else "Outbound Call"
+                elif call_obj.direction == "inbound":
+                    desc = f"Inbound Call ({dur_str})" if dur_str else "Inbound Call"
+                elif call_obj.channel == "browser":
+                    desc = f"Browser Test Call ({dur_str})" if dur_str else "Browser Test Call"
+
+            if not desc:
+                if tx.kind in ("topup", "razorpay_topup_inr", "razorpay_topup"):
+                    desc = "Wallet Recharge / Top-up"
+                elif tx.kind == "admin_seed":
+                    desc = "Welcome credits / Seed balance"
+                elif tx.kind == "did_purchase":
+                    desc = "Phone number provisioning"
+                elif tx.kind == "did_refund":
+                    desc = "Phone number release refund"
+                elif tx.kind in ("admin_grant", "admin_debit"):
+                    desc = "Manual balance adjustment"
+                elif tx.kind == "forfeiture":
+                    desc = "Account deletion forfeiture"
+                elif tx.kind == "usage_pstn":
+                    desc = "Phone call usage"
+                elif tx.kind in ("usage_web", "usage_web_test"):
+                    desc = "Browser test call"
+                else:
+                    desc = tx.kind.replace("_", " ").title()
+
             rows.append(
                 {
                     "id": str(tx.id),
@@ -131,6 +224,12 @@ async def list_wallet_transactions(tenant_id: uuid.UUID, limit: int = 50, user_i
                     "referenceId": tx.reference_id,
                     "userId": str(tx.user_id) if tx.user_id else None,
                     "createdAt": tx.created_at.isoformat() if tx.created_at else None,
+                    "description": desc,
+                    "durationSec": duration_sec,
+                    "direction": direction,
+                    "isCampaign": is_campaign,
+                    "campaignName": campaign_name,
+                    "agentName": agent_name,
                 }
             )
         return rows

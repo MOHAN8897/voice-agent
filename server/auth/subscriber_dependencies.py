@@ -52,10 +52,11 @@ async def require_subscriber_jwt(
             detail={"error": {"code": "auth_error", "message": "Bearer token required"}},
         )
     token = authorization.split(" ", 1)[1].strip()
-    return await principal_from_verified_token(token)
+    return await principal_from_verified_token(token, request_path=request.url.path)
 
 
-async def principal_from_verified_token(token: str) -> SubscriberPrincipal:
+
+async def principal_from_verified_token(token: str, *, request_path: str = "") -> SubscriberPrincipal:
     settings = get_settings()
     claims = decode_access_token(token)
     if claims is None:
@@ -85,6 +86,30 @@ async def principal_from_verified_token(token: str) -> SubscriberPrincipal:
                 status_code=403,
                 detail={"error": {"code": "email_not_verified", "message": "Verify your email first"}},
             )
+
+        # --- Fail-closed quarantine enforcement ---
+        # Quarantined/deleting/deleted tenants are denied access to all endpoints
+        # EXCEPT the cancel and export endpoints which must remain reachable during
+        # the grace period so owners can restore or download their data.
+        _QUARANTINE_EXEMPT = (
+            "/api/tenant/delete/cancel",
+            "/api/tenant/export",
+        )
+        from server.db.models.entities import Tenant as _Tenant
+        tenant = await session.get(_Tenant, tenant_id)
+        if tenant is not None and tenant.status != "active":
+            path_exempt = any(request_path.startswith(p) for p in _QUARANTINE_EXEMPT)
+            if not path_exempt:
+                scheduled_purge_at = getattr(tenant, "scheduled_purge_at", None)
+                raise HTTPException(
+                    status_code=403,
+                    detail={
+                        "error": "tenant_quarantined",
+                        "message": "This workspace is quarantined pending deletion.",
+                        "scheduledPurgeAt": scheduled_purge_at.isoformat() if scheduled_purge_at else None,
+                    },
+                )
+
         role = effective_membership_role(user.email, membership.role)
         return SubscriberPrincipal(
             user_id=user.user_id,
@@ -92,6 +117,7 @@ async def principal_from_verified_token(token: str) -> SubscriberPrincipal:
             role=role,
             email=user.email,
         )
+
 
 
 async def optional_subscriber_context(

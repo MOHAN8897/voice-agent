@@ -50,7 +50,7 @@ from server.prompts.agent_voice_rules import (
 from server.prompts.brain_prompt import SECTION_SAFETY
 from server.prompts.voice_defaults import style_for_language
 
-COMPILER_VERSION = "agent_script_v19"
+COMPILER_VERSION = "agent_script_v20"
 
 # Devanagari + the Dravidian and other Indic blocks. The user-visible script is an
 # English document (the product's writing language), so any of these inside it mean

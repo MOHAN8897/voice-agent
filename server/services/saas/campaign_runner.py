@@ -87,6 +87,18 @@ async def run_campaign(
         return
 
     async with factory() as session:
+        from server.db.models.entities import Tenant
+
+        tenant = await session.get(Tenant, workspace_tenant_id)
+        if tenant is None or tenant.status != "active":
+            logger.warning(
+                "campaign_runner.tenant_not_active campaign=%s tenant=%s status=%s",
+                campaign_id,
+                workspace_tenant_id,
+                getattr(tenant, "status", None),
+            )
+            return
+
         camp = await session.get(Campaign, uuid.UUID(campaign_id))
         if camp is None:
             return
@@ -108,6 +120,9 @@ async def run_campaign(
             limits: dict = {}
             async with factory() as session:
                 tenant = await session.get(Tenant, principal.tenant_id)
+                if tenant is None or tenant.status != "active":
+                    stats["skipped"] += 1
+                    return
                 limits = (tenant.limits or {}) if tenant else {}
             max_pstn = max(1, min(20, int(limits.get("max_concurrent_pstn") or hard_cap)))
             for _ in range(60):

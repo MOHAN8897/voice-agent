@@ -180,13 +180,30 @@ async def _carry_entity_tags_forward(agent_id: str, sections: list[dict[str, Any
 
 async def _preserve_tags(agent_id: str, script: str) -> str:
     """Keep the tags the stored script already has when its body is replaced."""
+    import re
     from server.brain.script_entities import parse_entity_tags, with_entity_tags_section
 
-    if parse_entity_tags(script):
-        return script
     stored = await business_brain_store.get_sections(agent_id)
     previous = next((s for s in stored if s.get("title") == CALLING_SCRIPT_TITLE), None)
-    entities = parse_entity_tags((previous or {}).get("raw_text") or "")
+    entities = parse_entity_tags(script) or parse_entity_tags((previous or {}).get("raw_text") or "") or {}
+
+    # Extract opening line from script's CANONICAL OPENING and update @opening_line
+    canonical_match = re.search(
+        r"(?:^|\n)(?:---|##)\s*CANONICAL OPENING\s*(?:---|##)?\s*\n+([\s\S]*?)(?=(?:\n+---|(?:\n+##)|\Z))",
+        script,
+        re.IGNORECASE,
+    )
+    if canonical_match:
+        body = canonical_match.group(1).strip()
+        lead_match = re.search(
+            r"^(?:After the callee speaks, say once:|When you answer, say once:|Say once:|Say:|Example opening:)\s*\n*([\s\S]+)",
+            body,
+            re.IGNORECASE,
+        )
+        opening_line = (lead_match.group(1).strip() if lead_match else body).split("\n")[0].strip()
+        if opening_line:
+            entities["opening_line"] = opening_line
+
     return with_entity_tags_section(script, entities) if entities else script
 
 

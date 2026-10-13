@@ -486,6 +486,21 @@ export const api = {
     if (!response.ok) {
       const isAuthRoute = path.includes('/auth/');
       const parsed = parseApiError(data, response.status);
+
+      if (
+        data?.error === 'tenant_quarantined' ||
+        data?.detail?.error === 'tenant_quarantined' ||
+        parsed?.code === 'tenant_quarantined'
+      ) {
+        if (
+          typeof window !== 'undefined' &&
+          !path.includes('/tenant/delete/cancel') &&
+          !path.includes('/tenant/export')
+        ) {
+          sessionStorage.removeItem(AUTH_TOKEN_KEY);
+          window.location.href = '/login?notice=workspace_quarantined';
+        }
+      }
       const fail = () => {
         // Logout only when refresh itself failed (cookie dead). A 401 after a
         // successful rotation is authorization/resource-level — do not wipe the session.
@@ -1235,6 +1250,65 @@ export const api = {
         from_e164: fromE164,
         provider,
       });
+    },
+  },
+
+  tenant: {
+    async getDeletePreflight() {
+      return await api.request('GET', '/api/tenant/delete-preflight');
+    },
+    async sendDeleteOtp() {
+      return await api.request('POST', '/api/tenant/delete-otp');
+    },
+    async deleteWorkspace({ currentPassword, otpCode, confirmationName, reason, forfeitBalanceConfirmed }) {
+      return await api.request('POST', '/api/tenant/delete', {
+        current_password: currentPassword || null,
+        otp_code: otpCode || null,
+        confirmation_name: confirmationName,
+        reason: reason || null,
+        forfeit_balance_confirmed: Boolean(forfeitBalanceConfirmed),
+      });
+    },
+    async cancelDelete() {
+      return await api.request('POST', '/api/tenant/delete/cancel');
+    },
+    async createExport() {
+      return await api.request('POST', '/api/tenant/export');
+    },
+    async getExportStatus(jobId) {
+      return await api.request('GET', `/api/tenant/export/${jobId}`);
+    },
+    async exportAgents() {
+      const token = sessionStorage.getItem('voxly_auth_token') || localStorage.getItem('voxly_auth_token');
+      const res = await fetch('/api/tenant/export/agents', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) throw new Error('Could not download agents export');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'workspace_agents_backup.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    },
+    async downloadExportArchive(jobId) {
+      const token = sessionStorage.getItem('voxly_auth_token') || localStorage.getItem('voxly_auth_token');
+      const res = await fetch(`/api/tenant/export/${jobId}/download`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) throw new Error('Could not download archive');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `workspace_export_${jobId}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
     },
   },
 

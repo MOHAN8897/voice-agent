@@ -122,15 +122,54 @@ class AuthEvent(Base):
 
 
 class TenantTeardownJob(Base):
+    """Multi-stage idempotent teardown pipeline record for a quarantined tenant.
+
+    Stages: queued → integrations → subscriptions → carrier_numbers → storage
+            → database → cache → verification → done
+
+    Crash-safe: ``stage`` is checkpointed before each stage executes so a worker
+    crash resumes at the exact stage rather than restarting from scratch.
+    Distributed-lock-safe: ``locked_by`` / ``locked_until`` prevent two workers
+    from processing the same job simultaneously.
+    """
+
     __tablename__ = "tenant_teardown_jobs"
 
     job_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.tenant_id"), nullable=False)
     status: Mapped[str] = mapped_column(String(30), default="queued")
+    # Canonical stage enum (matches migration + worker)
+    stage: Mapped[str] = mapped_column(String(50), default="queued")
     payload: Mapped[dict] = mapped_column(JSONB, default=dict)
     last_error: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    # Distributed lock: worker ID that holds the lock and its expiry
+    locked_by: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    locked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Idempotency key: teardown:{tenant_id}:{epoch_of_deleted_at}
+    idempotency_key: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+
+class TenantExportJob(Base):
+    """Data-takeout (GDPR Art. 20) export job for a tenant workspace.
+
+    Background worker generates an encrypted ZIP with call_logs.csv, contacts.csv,
+    agent_prompts.json, and billing_summary.json; ``download_url`` is a time-limited
+    pre-signed URL valid for 24 hours and audit-logged on access.
+    """
+
+    __tablename__ = "tenant_export_jobs"
+
+    job_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.tenant_id", ondelete="CASCADE"), nullable=False)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.user_id"), nullable=False)
+    status: Mapped[str] = mapped_column(String(30), default="queued")
+    download_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
 
 class NumberCatalog(Base):

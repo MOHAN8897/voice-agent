@@ -2,7 +2,11 @@
 from __future__ import annotations
 
 import asyncio
+import base64
+import hashlib
+import hmac
 import logging
+import math
 import uuid
 from typing import Any
 
@@ -60,7 +64,8 @@ def _build_vobiz_xml_response(stream_ws_url: str) -> Response:
     escaped_url = html.escape(stream_ws_url.strip(), quote=True)
     xml_content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Stream bidirectional="true" keepCallAlive="true" contentType="audio/x-l16;rate=16000">{escaped_url}</Stream>
+    <Stream bidirectional="true" audioTrack="inbound" keepCallAlive="true" contentType="audio/x-l16;rate=16000">{escaped_url}</Stream>
+    <Hangup />
 </Response>"""
     return Response(content=xml_content, media_type="application/xml")
 
@@ -91,19 +96,42 @@ def _verify_vobiz_request(request: Request, payload: dict[str, Any]) -> None:
     auth_token = str(dev_secrets_store.effective_secret("vobiz_auth_token") or settings.vobiz_auth_token or "").strip()
     is_prod = str(getattr(settings, "app_environment", "") or "").lower() in ("production", "staging")
 
-    # 1. Single-use token match
+    # Signed callbacks remain valid after the single-use media token is consumed.
+    # Use the configured public URL; untrusted forwarded headers must not pick it.
+    for version, separator in (("v3", "."), ("v2", "")):
+        signature = request.headers.get(f"x-vobiz-signature-{version}")
+        nonce = request.headers.get(f"x-vobiz-signature-{version}-nonce")
+        if signature or nonce:
+            base_url = public_api_base().rstrip("/") + request.url.path
+            expected = base64.b64encode(hmac.new(
+                auth_token.encode(), f"{base_url}{separator}{nonce or ''}".encode(), hashlib.sha256
+            ).digest())
+            if auth_token and nonce and signature and hmac.compare_digest(signature.encode(), expected):
+                return
+            raise HTTPException(status_code=401, detail="Invalid webhook signature")
+
+    # 1. Single-use token match (answer), or bound callback token (after answer).
     passed_token = str(request.query_params.get("token") or payload.get("token") or "")
     if passed_token:
-        if vobiz_stream_tokens.peek(passed_token):
+        token_meta = vobiz_stream_tokens.peek(passed_token)
+        call_uuid = str(payload.get("CallUUID") or payload.get("call_uuid") or payload.get("CallId") or "")
+        if token_meta:
+            expected_call = str(token_meta.get("call_uuid") or "")
+            # Before answer the token may carry only a local dial tracking ID.
+            # Once bound to a carrier UUID it must not authorize another call.
+            if call_uuid and expected_call and not expected_call.startswith("vobiz-") and call_uuid != expected_call:
+                raise HTTPException(status_code=401, detail="Call token mismatch")
             return
+        if request.url.path in {"/api/vobiz/hangup", "/api/vobiz/recording", "/api/vobiz/fallback"}:
+            key = (payload.get("CallUUID") or payload.get("call_uuid") or payload.get("CallId")
+                   or payload.get("RequestUUID") or payload.get("request_uuid") or payload.get("outbound_id"))
+            record = vobiz_call_registry.get(str(key)) if key else None
+            expected = str((record or {}).get("webhook_token") or (record or {}).get("token") or "")
+            if expected and hmac.compare_digest(passed_token.encode(), expected.encode()):
+                return
         # Explicit invalid token supplied -> reject immediately
         logger.warning("[VOBIZ] Webhook rejected: invalid or expired stream token")
         raise HTTPException(status_code=401, detail="Invalid stream token")
-
-    # 2. Known active call in call registry
-    call_uuid = str(payload.get("CallUUID") or payload.get("call_uuid") or payload.get("RequestUUID") or "")
-    if call_uuid and vobiz_call_registry.get(call_uuid):
-        return
 
     # 3. Header or query param signature/auth token
     header_token = str(
@@ -114,14 +142,15 @@ def _verify_vobiz_request(request: Request, payload: dict[str, Any]) -> None:
         or ""
     ).strip()
     if header_token:
-        if auth_token and header_token == auth_token:
+        if auth_token and hmac.compare_digest(header_token.encode(), auth_token.encode()):
             return
         logger.warning("[VOBIZ] Webhook rejected: invalid carrier authentication token")
         raise HTTPException(status_code=401, detail="Invalid auth token")
 
-    # 4. In production or staging mode with configured secret, fail closed
-    if is_prod and auth_token:
-        logger.warning("[VOBIZ] Webhook rejected: missing authentication token in production")
+    # A public development tunnel with carrier credentials is still a real call
+    # endpoint. Only unconfigured local development may accept unsigned fixtures.
+    if is_prod or auth_token:
+        logger.warning("[VOBIZ] Webhook rejected: missing authentication")
         raise HTTPException(status_code=401, detail="Unauthorized Vobiz webhook")
 
 
@@ -227,6 +256,26 @@ async def vobiz_answer(request: Request):
         except Exception as e:
             logger.warning("[VOBIZ] inbound policy evaluation notice: %s", e)
 
+    # 4b. Fail-closed quarantine enforcement: non-active tenants cannot receive or place calls
+    if tenant_id:
+        try:
+            from server.db.connection import get_session_factory
+            from server.db.models.entities import Tenant
+
+            factory = get_session_factory()
+            if factory:
+                async with factory() as session:
+                    t_row = await session.get(Tenant, uuid.UUID(tenant_id))
+                    if t_row and t_row.status != "active":
+                        log_pstn("vobiz.declined", call_uuid=call_uuid, reason="tenant_quarantined")
+                        xml = """<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Hangup reason="busy" />
+</Response>"""
+                        return Response(content=xml, media_type="application/xml")
+        except Exception as e:
+            logger.warning("[VOBIZ] tenant quarantine check error: %s", e)
+
     # 5. Handle unassigned numbers without cross-tenant agent leakage
     if not agent_id:
         if direction == "inbound":
@@ -317,6 +366,7 @@ async def vobiz_answer(request: Request):
         "source_session_id": source_session_id,
         "status": "in-progress",
         "stream_url": stream_ws_url,
+        "webhook_token": token,
     }
     vobiz_call_registry.upsert(call_uuid, session_data)
     if request_uuid and request_uuid != call_uuid:
@@ -334,8 +384,9 @@ async def vobiz_answer(request: Request):
 async def vobiz_fallback(request: Request):
     """Fallback Answer URL — used if the primary answer URL fails or times out."""
     payload = await _parse_vobiz_payload(request)
+    _verify_vobiz_request(request, payload)
     call_uuid = str(payload.get("CallUUID") or payload.get("call_uuid") or payload.get("RequestUUID") or "")
-    log_pstn("vobiz.fallback_triggered", call_uuid=call_uuid, payload=payload)
+    log_pstn("vobiz.fallback_triggered", call_uuid=call_uuid)
     logger.error("[VOBIZ] Fallback Answer URL reached for call %s", call_uuid)
 
     fallback_xml = """<?xml version="1.0" encoding="UTF-8"?>
@@ -361,7 +412,12 @@ async def vobiz_hangup(request: Request):
         or ""
     )
     request_uuid = str(payload.get("RequestUUID") or payload.get("request_uuid") or "")
-    duration_sec = float(payload.get("Duration") or payload.get("duration") or 0.0)
+    try:
+        duration_sec = float(payload.get("Duration") or payload.get("duration") or 0.0)
+    except (TypeError, ValueError):
+        duration_sec = 0.0
+    if not math.isfinite(duration_sec) or duration_sec < 0:
+        duration_sec = 0.0
     hangup_cause = str(payload.get("HangupCause") or payload.get("hangup_cause") or "normal")
 
     log_pstn("vobiz.hangup", call_uuid=call_uuid, request_uuid=request_uuid, duration=duration_sec, cause=hangup_cause)

@@ -42,20 +42,32 @@ const OPENING_LINE_MARKER = 'OPENING LINE';
 
 /** Pull the opening line back out of a stored script section. */
 export function splitOpeningLine(rawText) {
-  const text = String(rawText || '').replace(/^\s+/, '');
-  if (!text.startsWith(OPENING_LINE_MARKER)) {
-    return { greeting: '', script: text.trim() };
+  const text = String(rawText || '').replace(/^OPENING LINE\s*\n[^\n]*\n*/i, '').trim();
+  const canonicalMatch = text.match(
+    /(?:^|\n)(?:---|##)\s*CANONICAL OPENING\s*(?:---|##)?\s*\n+([\s\S]*?)(?=(?:\n+---|(?:\n+##)|$))/i
+  );
+  if (canonicalMatch && canonicalMatch[1]) {
+    const body = canonicalMatch[1].trim();
+    const leadMatch = body.match(
+      /^(?:After the callee speaks, say once:|When you answer, say once:|Say once:|Say:|Example opening:)\s*\n*([\s\S]+)/i
+    );
+    const greeting = leadMatch && leadMatch[1] ? leadMatch[1].trim() : body;
+    return { greeting, script: text };
   }
-  const afterMarker = text.slice(OPENING_LINE_MARKER.length).replace(/^\s*:?\s*/, '');
-  // The greeting is a single line; everything after the first blank line is script.
-  const breakAt = afterMarker.search(/\n\s*\n/);
-  if (breakAt === -1) {
-    return { greeting: afterMarker.trim(), script: '' };
+
+  if (text.startsWith(OPENING_LINE_MARKER)) {
+    const afterMarker = text.slice(OPENING_LINE_MARKER.length).replace(/^\s*:?\s*/, '');
+    const breakAt = afterMarker.search(/\n\s*\n/);
+    if (breakAt === -1) {
+      return { greeting: afterMarker.trim(), script: '' };
+    }
+    return {
+      greeting: afterMarker.slice(0, breakAt).trim(),
+      script: afterMarker.slice(breakAt).trim(),
+    };
   }
-  return {
-    greeting: afterMarker.slice(0, breakAt).trim(),
-    script: afterMarker.slice(breakAt).trim(),
-  };
+
+  return { greeting: '', script: text };
 }
 
 export function parseStudioFieldsFromSections(sections) {

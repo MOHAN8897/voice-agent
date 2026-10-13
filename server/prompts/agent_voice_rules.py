@@ -277,7 +277,7 @@ def live_realtime_output_rules(language: str | None, *, direction: str | None = 
 - If the caller asks for OUR contact, office, or WhatsApp number: "{phone_ask}" — do not read any digits aloud.
 - If the caller GIVES their phone, name, or email: say it is noted for the team — never refuse to take it, confirm only an uncertain caller-supplied number segment once; do not recite the dialed number.
 - Follow CALL END POLICY already in this session. Do not invent a second hangup policy.
-- Hang up only on confirmed end (bye / hang up / cut the call / that's all / don't call / firm no) or a callback they confirmed. Never hang up on okay/thanks alone. After the final farewell, let playback finish and disconnect promptly.
+- Use only reasons allowed by CALL END POLICY: a confirmed end request, firm refusal, confirmed callback, or completed script objective with the agreed next step confirmed; handle abuse only as that policy permits. Never hang up on okay/thanks alone. After the final farewell, let playback finish and disconnect promptly.
 - {LIVE_REPLY_BREVITY_RULE}
 - {DECISIVE_TURN_DISCIPLINE}
 - Start with the useful answer or acknowledgement immediately. Do not narrate plans such as 'I will clarify' or explain internal capabilities. For a firm refusal: one concise closing line and end_call. For 'call me later/tomorrow', 'contact me tomorrow', or 'record my name and phone': if name or phone is still missing (the dialed outbound number counts as known), ask ONLY that field — no pitch, no goodbye. Once you have it, confirm the callback in one line, farewell, end_call. Never claim a slot is booked unless a scheduling tool succeeded.
@@ -1279,16 +1279,17 @@ def script_writer_system(*, language: str | None, budget_tokens: int) -> str:
         "Never use rupees, lakhs, or WhatsApp unless those words are in the brief."
         if native
         else
-        "VOICE STYLE: natural spoken phone English — short warm lines, human acks ('got it', 'nice'), "
-        "then one clear next beat. For Indian English briefs keep Indian English; "
-        "for US/UK briefs never use rupees, lakhs, Tanglish, or WhatsApp unless those are in the brief."
+        f"VOICE STYLE: natural phone speech in the selected language {lang} — short warm lines, "
+        "idiomatic acknowledgements in that language, then one clear next beat. "
+        "Preserve the brief's currency, products and supported contact channels."
     )
     amount_line = (
         "- In example dialogue, amounts as English cardinal words using the brief's currency "
         "(dollars, pounds); never include phone numbers in spoken lines.\n"
         if native
         else
-        "- In example dialogue, amounts as English cardinal words with rupees/lakhs; never include phone numbers in spoken lines.\n"
+        "- In example dialogue, render amounts naturally in the selected language using the brief's currency; "
+        "never change currencies or include phone numbers in spoken lines.\n"
     )
     return (
         "You write complete voice-agent calling scripts for live phone assistants. "
@@ -1327,7 +1328,8 @@ def script_writer_system(*, language: str | None, budget_tokens: int) -> str:
         "- If the user brief lists a qualify checklist, rewrite it as soft ask-only-if-unknown policy — "
         "never copy numbered Question/Step trees into CONVERSATION FLOW.\n"
         "- Extract agent name and company from the brief when provided. "
-        f"The agent is always a person ({person_ex}) who represents the business — never set AGENT IDENTITY to the company name. "
+        f"Give the assistant a representative name ({person_ex}) — never set AGENT IDENTITY to the company name "
+        "or instruct it to claim it is human. "
         "If no agent name is given, invent a suitable first name. "
         "If no company is given, do NOT invent a brand — describe the work from the brief instead.\n"
         "- Infer inbound vs outbound from the brief. Inbound support must not use outbound wait-then-permission openings. "

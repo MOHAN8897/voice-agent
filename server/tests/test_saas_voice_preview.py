@@ -5,7 +5,7 @@ from server.services.saas.voice_preview import (
     normalize_preview_text,
     pcm16_to_wav,
     resolve_preview_voice,
-    resolve_fallback_tts_speaker,
+    resolve_openai_tts_voice,
     synthesize_preview,
 )
 
@@ -40,12 +40,11 @@ def test_resolve_preview_voice():
     assert label == "default"
 
 
-def test_resolve_fallback_tts_speaker():
-    assert resolve_fallback_tts_speaker("marin") == "priya"
-    assert resolve_fallback_tts_speaker("cedar") == "shubh"
-    # Language based fallback
-    assert resolve_fallback_tts_speaker(None, language="te-IN") is not None
-    assert resolve_fallback_tts_speaker(None, language="en-IN") is not None
+def test_resolve_openai_tts_voice():
+    assert resolve_openai_tts_voice("marin") == "coral"
+    assert resolve_openai_tts_voice("cedar") == "onyx"
+    assert resolve_openai_tts_voice("ash") == "ash"
+    assert resolve_openai_tts_voice(None) == "coral"
 
 
 @pytest.mark.asyncio

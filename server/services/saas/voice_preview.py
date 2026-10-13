@@ -78,20 +78,25 @@ def resolve_preview_voice(voice_id: str | None) -> tuple[str, str]:
     return normalize_gemini_live_voice(None), "default"
 
 
-def resolve_fallback_tts_speaker(voice_id: str | None, language: str | None = None) -> str:
-    """Map a voice id or language to a production TTS speaker."""
-    v = str(voice_id or "").strip().lower()
-    from server.config.constants import constants
+# OpenAI Realtime / catalog voice -> OpenAI TTS voice
+_OPENAI_TTS_VOICE_MAP: dict[str, str] = {
+    "marin": "coral",
+    "cedar": "onyx",
+    "alloy": "alloy",
+    "ash": "ash",
+    "ballad": "fable",
+    "coral": "coral",
+    "echo": "echo",
+    "sage": "sage",
+    "shimmer": "shimmer",
+    "verse": "nova",
+}
 
-    if v in constants.TTS_SPEAKERS_V3:
-        return v
-    # Map common catalog voice IDs to natural gender-matched speakers
-    if v in ("marin", "coral", "shimmer", "kore", "aoede", "leda", "zephyr"):
-        return "priya"
-    if v in ("cedar", "ash", "echo", "charon", "fenrir", "orus", "puck"):
-        return "shubh"
-    from server.agent.language_resolver import get_speaker_for_language
-    return get_speaker_for_language(language or "te-IN")
+
+def resolve_openai_tts_voice(voice_id: str | None) -> str:
+    """Map catalog voice id to valid OpenAI TTS voice."""
+    v = str(voice_id or "").strip().lower()
+    return _OPENAI_TTS_VOICE_MAP.get(v, "coral")
 
 
 async def synthesize_preview(
@@ -102,18 +107,26 @@ async def synthesize_preview(
     speed: float | None = None,
     model: str | None = None,
 ) -> dict[str, Any]:
-    """Return `{"audio": wav_bytes, "voice": name, "model": id, "truncated": bool}`."""
+    """Return `{"audio": wav_bytes, "voice": name, "model": id, "truncated": bool}`.
+    
+    Preview is strictly synthesized in English while applying and respecting the
+    selected voice character and configured speed/pace across Gemini Live and OpenAI.
+    """
+    from server.config.env import get_settings
     from server.realtime.models import DEFAULT_GEMINI_LIVE_MODEL
     from server.realtime.providers.gemini_voice import (
         GEMINI_LIVE_OUTPUT_RATE,
         GeminiLiveVoiceAdapter,
     )
 
+    settings = get_settings()
     line = normalize_preview_text(text)
     voice, label = resolve_preview_voice(voice_id)
     model_id = (model or DEFAULT_GEMINI_LIVE_MODEL).strip()
-    lang = (language or "te-IN").strip()
+    # Preview voice speech is strictly English as required by production stack
+    lang = "en-US"
     pace = float(speed) if speed is not None else 1.0
+    pace = max(0.5, min(2.0, pace))
 
     gemini_succeeded = False
     pcm = bytearray()
@@ -124,9 +137,8 @@ async def synthesize_preview(
         from server.providers.gemini_llm import _api_key
         key = _api_key()
         if key and key != "gem-test" and not key.startswith("gem-test"):
-            lang_prompt = f"Speak naturally in {lang}. " if lang else ""
             custom_instructions = (
-                f"You are a voice preview. {lang_prompt}Speak the single line you are given, verbatim, "
+                "You are an English voice preview. Speak the single line you are given in English, verbatim, "
                 "with no preamble, no greeting, no sign-off and no follow-up question. "
                 "Read it naturally at a friendly pace, then stop."
             )
@@ -140,7 +152,7 @@ async def synthesize_preview(
                     include_tools=False,
                 )
                 await adapter.wait_ready(timeout=6.0)
-                await adapter.start_response(instructions=f'Speak exactly: "{line}"')
+                await adapter.start_response(instructions=f'Speak in English exactly: "{line}"')
 
                 max_bytes = GEMINI_LIVE_OUTPUT_RATE * 2 * MAX_AUDIO_SECONDS
                 deadline = asyncio.get_running_loop().time() + PREVIEW_TIMEOUT_S
@@ -171,7 +183,7 @@ async def synthesize_preview(
                 except Exception:
                     pass
     except Exception as exc:
-        logger.info("[VOICE] Gemini live preview unavailable (%s); falling back to registry TTS", exc)
+        logger.info("[VOICE] Gemini live preview unavailable (%s); checking OpenAI TTS", exc)
 
     if gemini_succeeded and pcm:
         return {
@@ -182,28 +194,31 @@ async def synthesize_preview(
             "truncated": truncated,
         }
 
-    # 2. Resilient Fallback to Registry TTS (Sarvam / Cartesia / OpenAI)
-    tts_speaker = resolve_fallback_tts_speaker(voice_id, language=lang)
-    try:
-        from server.services.registry_tts_service import synthesize_via_registry
-
-        result = await synthesize_via_registry(
-            text=line,
-            language_code=lang,
-            speaker=tts_speaker,
-            pace=pace,
-        )
-        audio_data = result.get("audio_bytes")
-        if audio_data:
-            return {
-                "audio": audio_data,
-                "voice": result.get("speaker") or voice,
-                "label": label or result.get("speaker") or "default",
-                "model": result.get("provider", "tts"),
-                "truncated": False,
-            }
-    except Exception as exc:
-        logger.warning("[VOICE] Registry TTS fallback failed: %s", exc)
+    # 2. OpenAI TTS fallback using configured voice and speed
+    if settings.openai_api_key:
+        try:
+            import openai
+            client = openai.AsyncOpenAI(api_key=settings.openai_api_key)
+            oai_voice = resolve_openai_tts_voice(voice_id)
+            res = await client.audio.speech.create(
+                model="tts-1",
+                voice=oai_voice,
+                input=line,
+                speed=pace,
+                response_format="wav",
+            )
+            audio_bytes = res.content
+            if audio_bytes and len(audio_bytes) > 200:
+                v_name = str(voice_id or oai_voice).title()
+                return {
+                    "audio": audio_bytes,
+                    "voice": v_name,
+                    "label": f"{v_name} (English)",
+                    "model": "openai-tts",
+                    "truncated": False,
+                }
+        except Exception as exc:
+            logger.warning("[VOICE] OpenAI TTS preview fallback failed: %s", exc)
 
     # 3. Emergency synthetic WAV fallback to avoid HTTP 502 completely
     import math
@@ -219,7 +234,7 @@ async def synthesize_preview(
 
     return {
         "audio": pcm16_to_wav(bytes(synthetic_pcm), sample_rate),
-        "voice": voice,
+        "voice": str(voice_id or "default").title(),
         "label": label,
         "model": "fallback",
         "truncated": False,

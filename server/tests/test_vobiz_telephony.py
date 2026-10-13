@@ -137,6 +137,7 @@ async def test_vobiz_answer_webhook_unassigned_number_safely_declined():
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
         res = await client.post(
             "/api/vobiz/answer",
+            params={"token": vobiz_stream_tokens.create(call_uuid="vobiz-unassigned-999")},
             data={
                 "CallUUID": "vobiz-unassigned-999",
                 "From": "+15559998888",
@@ -161,6 +162,7 @@ async def test_vobiz_fallback_webhook():
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
         res = await client.post(
             "/api/vobiz/fallback",
+            params={"token": vobiz_stream_tokens.create(call_uuid="vobiz-call-abc-123")},
             data={
                 "CallUUID": "vobiz-call-abc-123",
                 "From": "+15559998888",
@@ -181,6 +183,7 @@ async def test_vobiz_hangup_webhook():
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
         res = await client.post(
             "/api/vobiz/hangup",
+            params={"token": vobiz_stream_tokens.create(call_uuid="vobiz-call-abc-123")},
             data={
                 "CallUUID": "vobiz-call-abc-123",
                 "Duration": "45",
@@ -276,7 +279,12 @@ async def test_vobiz_answer_webhook_get_method():
         assert '<Stream bidirectional="true"' in xml_text
         assert 'contentType="audio/x-l16;rate=16000"' in xml_text
         assert 'keepCallAlive="true"' in xml_text
-        assert "<Hangup" not in xml_text
+    # keepCallAlive holds the call during Stream; Hangup is the explicit fallback
+    # when the media socket ends, not an instruction to reject the answered call.
+    import xml.etree.ElementTree as ET
+    xml = ET.fromstring(xml_text)
+    assert [element.tag for element in xml] == ["Stream", "Hangup"]
+    assert xml[0].attrib["keepCallAlive"] == "true"
 
 
 def test_vobiz_call_registry_alias_resolution():
@@ -338,6 +346,23 @@ async def test_vobiz_bridge_playback_tracking_and_pacing():
     assert bridge._playback.is_active() is True
     assert bridge._media_frames_out == 2
     assert mock_ws.send_text.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_answer_then_consumed_stream_token_still_accepts_hangup():
+    call_uuid = "carrier-callback-lifecycle-test"
+    token = vobiz_stream_tokens.create(call_uuid=call_uuid, agent_id="test-agent")
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://testserver") as client:
+        answer = await client.post("/api/vobiz/answer", params={"token": token},
+                                   data={"CallUUID": call_uuid, "Direction": "outbound"})
+        assert answer.status_code == 200
+        assert "<Stream" in answer.text
+        assert vobiz_stream_tokens.consume(token) is not None
+        ended = await client.post("/api/vobiz/hangup", params={"token": token},
+                                  data={"CallUUID": call_uuid, "Duration": "12"})
+        assert ended.status_code == 200
+        assert vobiz_call_registry.get(call_uuid)["ended"] is True
 
 
 @pytest.mark.asyncio
@@ -412,6 +437,7 @@ async def test_vobiz_policy_transfer_xml_escaping():
             with patch("server.services.saas.telephony_profile.evaluate_inbound_policy", return_value=mock_decision):
                 res = await client.post(
                     "/api/vobiz/answer",
+                    params={"token": vobiz_stream_tokens.create(call_uuid="vobiz-xfer-123")},
                     data={
                         "CallUUID": "vobiz-xfer-123",
                         "From": "+15559998888",

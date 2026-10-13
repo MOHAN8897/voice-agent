@@ -53,12 +53,17 @@ function sectionsFromStudio({
   const faq = (objectionRules || [])
     .map((o) => `When: ${o.trigger}\nReply: ${o.response}`)
     .join('\n\n');
-  const cleanScript = (script || '')
+  // Strip any legacy OPENING LINE artifact so it never clashes with CANONICAL OPENING
+  let cleanScript = (script || '')
     .replace(/^OPENING LINE\s*\n[^\n]*\n*/i, '')
     .trim();
-  const callingScript = [greeting ? `OPENING LINE\n${greeting.trim()}` : '', cleanScript]
-    .filter(Boolean)
-    .join('\n\n');
+
+  // If greeting is present and script lacks CANONICAL OPENING, add CANONICAL OPENING cleanly once
+  const hasCanonical = /(?:^|\n)(?:---|##)\s*CANONICAL OPENING\s*(?:---|##)?/i.test(cleanScript);
+  if (!hasCanonical && greeting && greeting.trim()) {
+    cleanScript = `--- CANONICAL OPENING ---\nAfter the callee speaks, say once:\n${greeting.trim()}\n\n${cleanScript}`.trim();
+  }
+  const callingScript = cleanScript;
   const langCode =
     typeof language === 'string' && language.includes('-')
       ? language

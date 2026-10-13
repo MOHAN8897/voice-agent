@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, KeyRound, Shield, Users, Wallet } from 'lucide-react';
+import { AlertTriangle, Eye, EyeOff, KeyRound, Shield, Users, Wallet } from 'lucide-react';
 import { SolidCard } from '../ui/SolidCard';
+import { DeleteWorkspaceModal } from '../ui/DeleteWorkspaceModal';
 import { useAuth } from '../../context/AuthContext';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { VerifyIdentityCard } from '../ui/VerifyIdentityCard';
@@ -172,6 +173,7 @@ function SecurityPasswordCard() {
 export function SettingsModule() {
   const { user, isPlatformAdmin, isDevTester, sessionPolicy } = useAuth();
   const { wallet } = useWorkspace();
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -254,6 +256,36 @@ export function SettingsModule() {
           for service accounts.
         </p>
       </SolidCard>
+
+      {(user?.role === 'owner' || user?.role === 'customer_admin' || user?.role === 'platform_admin' || user?.isPlatformAdmin) && (
+        <SolidCard className="space-y-3 border-rose-200 bg-rose-50/40" data-testid="danger-zone-card">
+          <h3 className="text-xs font-bold text-rose-700 flex items-center gap-2">
+            <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
+            Danger Zone
+          </h3>
+          <p className="text-[11px] text-[#524E5E] leading-relaxed">
+            Permanently delete this workspace, including all voice agents, enterprise phone numbers, integrations, and call records.
+            A 14-day grace window applies after quarantine before permanent purging.
+          </p>
+          <div className="pt-1">
+            <button
+              type="button"
+              onClick={() => setIsDeleteModalOpen(true)}
+              data-testid="danger-zone-delete-button"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 active:scale-[0.98] transition-all shadow-sm"
+            >
+              <AlertTriangle className="w-3.5 h-3.5" />
+              Delete workspace
+            </button>
+          </div>
+        </SolidCard>
+      )}
+
+      <DeleteWorkspaceModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        tenantName={user?.tenantName || ''}
+      />
     </div>
   );
 }
