@@ -6,6 +6,7 @@ import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { createVoxlyController } from './BotController';
 
 const GLB_URL = '/models/VoxlyBot_AIEmployee_Interactive.glb?rig=3.1';
+export const clearBotModelCache = () => useGLTF.clear(GLB_URL);
 
 export function VoxlyBot({
   state = 'IDLE',
@@ -17,6 +18,7 @@ export function VoxlyBot({
   pointer = null,
   audioAnalyser = null,
   audioAmplitude = 0,
+  trackPointer = true,
 }) {
   const gltf = useGLTF(GLB_URL);
   const { size } = useThree();
@@ -112,8 +114,8 @@ export function VoxlyBot({
     const rawY = pointerRef?.current?.y !== undefined
       ? pointerRef.current.y
       : (pointer?.y !== undefined ? pointer.y : r3fPointer.y);
-    const pX = Number.isFinite(rawX) ? rawX : 0;
-    const pY = Number.isFinite(rawY) ? rawY : 0;
+    const pX = trackPointer && Number.isFinite(rawX) ? rawX : 0;
+    const pY = trackPointer && Number.isFinite(rawY) ? rawY : 0;
 
     // Desktop: Shift robot slightly left so dialogue has gap.
     // Mobile: Center + slightly smaller so the callout fits.
@@ -180,10 +182,10 @@ export function VoxlyBot({
       scale={[0.42, 0.42, 0.42]}
       onClick={(e) => {
         e.stopPropagation();
-        if (onBotClick) onBotClick();
+        if (onBotClick) onBotClick(e);
       }}
       onPointerOver={() => {
-        document.body.style.cursor = 'pointer';
+        if (trackPointer) document.body.style.cursor = 'pointer';
       }}
       onPointerOut={() => {
         document.body.style.cursor = 'default';

@@ -1,8 +1,4 @@
-import React, { Suspense, useEffect, useState, Component } from 'react';
-
-const LazyScene = React.lazy(() =>
-  import('./VoxlyScene').then((m) => ({ default: m.VoxlyScene }))
-);
+import React, { Suspense, useEffect, useMemo, useState, Component } from 'react';
 
 /**
  * Class-based ErrorBoundary to catch any Three.js / WebGL / Suspense exceptions
@@ -24,7 +20,8 @@ class SceneErrorBoundary extends Component {
 
   render() {
     if (this.state.hasError) {
-      return <SceneFallback className={this.props.className} onBotClick={this.props.onBotClick} />;
+      return <SceneFallback className={this.props.className} onBotClick={this.props.onBotClick}
+        message="3D could not load. Please try again." onRetry={this.props.onRetry} />;
     }
     return this.props.children;
   }
@@ -34,13 +31,13 @@ class SceneErrorBoundary extends Component {
  * The fallback is the real rendered preview image, not a spinner, so the hero never
  * collapses or shifts: the container keeps its height either way.
  */
-function SceneFallback({ className = '', eager = true, onBotClick }) {
+function SceneFallback({ className = '', eager = true, onBotClick, message, onRetry }) {
   return (
-    <div className={`relative w-full h-full flex items-center justify-center ${className}`}>
+    <div data-mascot-state="preview" className={`relative w-full h-full flex flex-col items-center justify-center ${className}`}>
       <button type="button" onClick={onBotClick} disabled={!onBotClick} aria-label="Interact with Dialtact" className="border-0 bg-transparent p-0 disabled:cursor-default">
       <img
-        src="/images/VoxlyBot_preview.png"
-        alt="Dialtact AI voice agent"
+        src="/images/Dialtact_call_assistant_fallback.png"
+        alt="Dialtact AI call assistant"
         width="320"
         height="320"
         loading={eager ? 'eager' : 'lazy'}
@@ -48,52 +45,62 @@ function SceneFallback({ className = '', eager = true, onBotClick }) {
         className="max-h-[320px] object-contain drop-shadow-xl"
       />
       </button>
+      {message && <p role="status" className="absolute bottom-2 text-xs text-[#524E5E] bg-white/90 rounded px-2 py-1">{message}</p>}
+      {onRetry && <button type="button" className="absolute bottom-10 text-sm underline bg-white/90 rounded px-2 py-1"
+        onClick={(event) => { event.stopPropagation(); onRetry(); }}>Retry 3D</button>}
     </div>
   );
 }
 
-function deviceCanRender3D() {
-  if (typeof window === 'undefined') return false;
+function device3DStatus() {
+  if (typeof window === 'undefined') return 'Loading 3D…';
   try {
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      return false;
+      return 'Animation is off in your reduced-motion settings.';
     }
   } catch {}
   try {
     const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
     if (conn && conn.saveData) {
-      return false;
+      return 'Data saver is on. Retry 3D to load the animation.';
     }
   } catch {}
   try {
     const canvas = document.createElement('canvas');
-    // Three r163+ requires WebGL2. Release this probe before Canvas allocates its renderer.
     const gl = canvas.getContext('webgl2');
-    if (!gl) return false;
-    gl.getExtension('WEBGL_lose_context')?.loseContext();
-    return true;
+    if (!gl) return '3D is unavailable in this browser.';
+    return '';
   } catch {
-    return false;
+    return '3D is unavailable in this browser.';
   }
 }
 
 export function LazyVoxlyScene(props = {}) {
   const [shouldLoad, setShouldLoad] = useState(false);
+  const [message, setMessage] = useState('Loading 3D…');
+  const [attempt, setAttempt] = useState(0);
+  const LazyScene = useMemo(() => React.lazy(() => import('./VoxlyScene').then((m) => {
+    if (attempt > 0) m.clearBotModelCache();
+    return { default: m.VoxlyScene };
+  })), [attempt]);
+  const retry = () => { setAttempt(value => value + 1); setShouldLoad(true); };
 
   useEffect(() => {
-    if (!deviceCanRender3D()) return undefined;
-    setShouldLoad(true);
+    const status = device3DStatus();
+    setMessage(status);
+    setShouldLoad(!status);
 
     return undefined;
   }, []);
 
   if (!shouldLoad) {
-    return <SceneFallback className={props.className} onBotClick={props.onBotClick} />;
+    return <SceneFallback className={props.className} onBotClick={props.onBotClick} message={message}
+      onRetry={message.startsWith('Data saver') || message.startsWith('3D is unavailable') ? retry : undefined} />;
   }
 
   return (
-    <SceneErrorBoundary className={props.className} onBotClick={props.onBotClick}>
-      <Suspense fallback={<SceneFallback className={props.className} onBotClick={props.onBotClick} />}>
+    <SceneErrorBoundary key={attempt} className={props.className} onBotClick={props.onBotClick} onRetry={retry}>
+      <Suspense fallback={<SceneFallback className={props.className} onBotClick={props.onBotClick} message="Loading 3D…" />}>
         <div className="w-full h-full transition-opacity duration-500 animate-fade-in">
           <LazyScene {...props} />
         </div>

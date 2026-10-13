@@ -65,6 +65,20 @@ test('rapid gesture changes remain finite and settle back to speaking',async()=>
  c.dispose();
 });
 
+test('a silent suspended audio analyser never stalls gesture playback', async()=>{
+ const {c}=await load();
+ c.attachAnalyser({fftSize:32,context:{state:'suspended'},getFloatTimeDomainData(samples){samples.fill(0)}});
+ c.setState('SPEAKING');
+ c.playGesture('RIGHT_HAND_WAVE');
+ const hand=c.bones.get('RightHand');
+ const start=hand.quaternion.clone();
+ for(let i=0;i<75;i++)c.update(1/60);
+ assert.ok(hand.quaternion.angleTo(start)>.01,'silent audio must not freeze the hand');
+ for(let i=0;i<300;i++)c.update(1/60);
+ assert.equal(c.state,'TALKING','gesture completes independently of audio context');
+ c.dispose();
+});
+
 test('all baked clips have seamless endpoints and single waves raise only the selected hand',async()=>{
  const {gltf,c}=await load();c.dispose();
  const mixer=new AnimationMixer(gltf.scene);

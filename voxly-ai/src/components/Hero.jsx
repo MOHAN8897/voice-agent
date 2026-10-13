@@ -376,7 +376,7 @@ export function Hero({
     resetDismissTimer(3000);
   };
 
-  // Pointer tracking for mouse + touch (mousemove alone leaves phones stationary).
+  // Only a hover-capable mouse drives look-at. Touch scrolls/taps never steer it.
   // Updates heroPointerRef at frame rate without React re-renders.
   useEffect(() => {
     const updateBotRect = () => {
@@ -415,24 +415,29 @@ export function Hero({
     window.addEventListener('resize', updateBotRect, { passive: true });
     window.addEventListener('scroll', updateBotRect, { passive: true });
 
-    const handleMouseMove = (e) => setPointerFromClient(e.clientX, e.clientY);
+    const finePointer = window.matchMedia('(hover: hover) and (pointer: fine) and (any-pointer: fine)');
+    const handleMouseMove = (e) => {
+      if (finePointer.matches && !window.matchMedia('(any-pointer: coarse)').matches) {
+        setPointerFromClient(e.clientX, e.clientY);
+      } else resetPointer();
+    };
+    finePointer.addEventListener('change', resetPointer);
     document.addEventListener('mouseleave', resetPointer);
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
 
-    // Touch: finger over the hero scene drives look-at. No DeviceOrientation —
-    // that would prompt for motion/sensor permission before Live Mic.
+    // Touch only activates gestures; scrolling must never steer the model.
     // Short stationary taps also fire handleBotClick — some Android GPUs miss
     // R3F mesh raycasts, which made the bot "only talk" after a lucky first hit.
     const sceneEl = sceneContainerRef.current;
     const touchOrigin = { x: 0, y: 0, moved: false, active: false };
 
     const handlePointerDown = (e) => {
-      if (e.pointerType === 'mouse') return;
+      if (e.pointerType === 'mouse' || e.target.closest('button, [role="button"]')) return;
       touchOrigin.x = e.clientX;
       touchOrigin.y = e.clientY;
       touchOrigin.moved = false;
       touchOrigin.active = true;
-      setPointerFromClient(e.clientX, e.clientY);
+      resetPointer();
     };
     const handlePointerMove = (e) => {
       if (e.pointerType === 'mouse') return;
@@ -441,13 +446,12 @@ export function Hero({
       const dx = e.clientX - touchOrigin.x;
       const dy = e.clientY - touchOrigin.y;
       if (dx * dx + dy * dy > 100) touchOrigin.moved = true;
-      setPointerFromClient(e.clientX, e.clientY);
     };
     const handlePointerUp = (e) => {
       if (e.pointerType === 'mouse') return;
-      const wasTap = touchOrigin.active && !touchOrigin.moved;
+      const wasTap = e.type !== 'pointercancel' && touchOrigin.active && !touchOrigin.moved;
       touchOrigin.active = false;
-      window.setTimeout(resetPointer, 420);
+      resetPointer();
       if (wasTap) handleBotClickRef.current();
     };
 
@@ -463,6 +467,7 @@ export function Hero({
       window.removeEventListener('scroll', updateBotRect);
       window.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseleave', resetPointer);
+      finePointer.removeEventListener('change', resetPointer);
       if (sceneEl) {
         sceneEl.removeEventListener('pointerdown', handlePointerDown);
         sceneEl.removeEventListener('pointermove', handlePointerMove);
@@ -593,10 +598,16 @@ export function Hero({
             >
               <LazyVoxlyScene
                 state={botState}
-                onBotClick={handleBotClick}
+                onBotClick={(event) => {
+                  // The DOM touch handler owns taps, including missed mesh raycasts.
+                  // Ignore the later compatibility click regardless of browser delay.
+                  const source = event?.sourceEvent || event;
+                  if (event?.object && (source?.pointerType === 'touch' ||
+                    source?.pointerType === 'pen' || source?.sourceCapabilities?.firesTouchEvents)) return;
+                  handleBotClick();
+                }}
                 pointerRef={heroPointerRef}
                 audioAnalyser={voiceAgent.getAnalyser()}
-                isInView={isHeroInView}
                 onControllerReady={(ctrl) => {
                   botControllerRef.current = ctrl;
                 }}
