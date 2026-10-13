@@ -76,7 +76,7 @@ PHASE_INTERRUPTING = "interrupting"
 PHASE_CLOSING = "closing"
 PHASE_ENDED = "ended"
 
-# PSTN telephony: 8 kHz (Vobiz/Plivo μ-law) or 16 kHz (Telnyx L16).
+# PSTN telephony: 8 kHz (Vobiz μ-law) or 16 kHz (Telnyx L16).
 PSTN_SAMPLE_RATE = 8000
 TELNYX_PCM_SAMPLE_RATE = 16000
 _MULAW_FRAME_BYTES = 160  # 20 ms μ-law @ 8 kHz

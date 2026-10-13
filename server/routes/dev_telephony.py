@@ -288,10 +288,6 @@ async def dev_telephony_handshake(session: SessionData = Depends(require_dev_ses
         from server.services.telnyx_client import TelnyxClient
 
         return await TelnyxClient().handshake()
-    if provider == "plivo":
-        from server.services.plivo_client import PlivoClient
-
-        return await PlivoClient().handshake()
     if provider == "vobiz":
         from server.services.vobiz_client import VobizClient
 
@@ -333,8 +329,6 @@ async def dev_telephony_outbound(
         async def dial():
             if provider == "telnyx":
                 return await _outbound_telnyx(body, session)
-            if provider == "plivo":
-                return await _outbound_plivo(body, session)
             if provider == "vobiz":
                 return await _outbound_vobiz(body, session)
             return {"ok": False, "error": "unknown provider"}
@@ -756,10 +750,6 @@ async def dev_telephony_calls(session: SessionData = Depends(require_dev_session
         from server.services.telnyx_client import telnyx_call_registry
 
         rows = await asyncio.to_thread(telnyx_call_registry.list_recent, 30)
-    elif provider == "plivo":
-        from server.services.plivo_client import plivo_call_registry
-
-        rows = await asyncio.to_thread(plivo_call_registry.list_recent, 30)
     elif provider == "vobiz":
         from server.services.vobiz_client import vobiz_call_registry
 
@@ -1402,74 +1392,4 @@ async def dev_telnyx_order_number(
         return {"ok": False, "error": str(e), "status": e.status, "body": e.body}
 
 
-async def _outbound_plivo(body: OutboundTestBody, session: SessionData) -> dict[str, Any]:
-    from server.config.urls import public_api_base
-    from server.services.plivo_client import PlivoApiError, PlivoClient, plivo_call_registry, plivo_stream_tokens
 
-    tier, language, stack_override, stack_adjustments = _outbound_pstn_context(body)
-    source_session_id, inherit_config = _resolve_outbound_source_session(body)
-    client = PlivoClient()
-    from server.services.outbound_dial_guard import hangup_active_plivo_to
-
-    await hangup_active_plivo_to(body.to_e164)
-    token = plivo_stream_tokens.create(agent_id=body.agent_id, tier=tier)
-    base = public_api_base().rstrip("/")
-    answer_url = f"{base}/api/plivo/answer?token={token}"
-    try:
-        result = await client.create_outbound_call(
-            to_e164=body.to_e164,
-            from_e164=body.from_e164,
-            answer_url=answer_url,
-        )
-        request_uuid = str(result.get("request_uuid") or result.get("message") or "")
-        plivo_stream_tokens.put(token, agent_id=body.agent_id, tier=tier, request_uuid=request_uuid)
-        plivo_call_registry.upsert(
-            request_uuid,
-            {
-                "agent_id": body.agent_id,
-                "tier": tier,
-                "to": body.to_e164,
-                "direction": "outbound",
-                "status": "initiated",
-                "language": language,
-                "source_session_id": source_session_id,
-                "inherit_test_studio_config": inherit_config,
-                "stack_override": stack_override,
-            },
-        )
-        payload: dict[str, Any] = {
-            "ok": True,
-            "provider": "plivo",
-            "call_uuid": request_uuid,
-            "answer_url": answer_url,
-        }
-        if stack_adjustments:
-            payload["stack_adjustments"] = stack_adjustments
-        if request_uuid:
-            from server.services.pstn_prewarm import schedule_prewarm
-
-            schedule_prewarm(
-                "plivo",
-                request_uuid,
-                _outbound_prewarm_meta(
-                    body,
-                    tier=tier or "medium",
-                    language=language,
-                    source_session_id=source_session_id,
-                    inherit_config=inherit_config,
-                    stack_override=stack_override,
-                ),
-            )
-            payload["history"] = _record_dev_dial(
-                provider="plivo",
-                external_id=request_uuid,
-                body=body,
-                tier=tier,
-                language=language,
-                stack_override=stack_override,
-                source_session_id=source_session_id,
-            )
-            await _mirror_dev_telephony()
-        return payload
-    except PlivoApiError as e:
-        return {"ok": False, "error": str(e), "status": e.status}

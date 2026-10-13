@@ -1046,7 +1046,7 @@ async def phone_assignments(session: SessionData = Depends(require_dev_session))
     assignments = []
     for pn, t, a, np, w in rows:
         prov = "telnyx" if (getattr(pn, "telnyx_number_id", None) and getattr(pn, "telnyx_number_id", None) != "carrier_platform") else "vobiz"
-        if getattr(pn, "plivo_number_id", None) or str(pn.e164).startswith("+91"):
+        if getattr(pn, "carrier_number_id", None) or str(pn.e164).startswith("+91"):
             prov = "vobiz"
         if prov != active_prov:
             continue
@@ -1062,7 +1062,7 @@ async def phone_assignments(session: SessionData = Depends(require_dev_session))
             "purchaseStatus": np.status if np else None,
             "stripeSubscriptionId": pn.stripe_subscription_id,
             "telnyxNumberId": pn.telnyx_number_id,
-            "plivoNumberId": getattr(pn, "plivo_number_id", None),
+            "carrierNumberId": getattr(pn, "carrier_number_id", None),
             "provider": prov,
             "status": pn.status,
             "billingSource": pn.billing_source,
@@ -1111,7 +1111,7 @@ async def number_pool(session: SessionData = Depends(require_dev_session)):
                     "e164": phone,
                     "numberId": None,
                     "telnyxNumberId": tid or None,
-                    "plivoNumberId": None,
+                    "carrierNumberId": None,
                     "provider": "telnyx",
                     "tenantId": None,
                     "tenantName": None,
@@ -1136,7 +1136,7 @@ async def number_pool(session: SessionData = Depends(require_dev_session)):
                     "e164": phone,
                     "numberId": None,
                     "telnyxNumberId": None,
-                    "plivoNumberId": str(row.get("id") or ""),
+                    "carrierNumberId": str(row.get("id") or ""),
                     "provider": "vobiz",
                     "tenantId": None,
                     "tenantName": None,
@@ -1159,7 +1159,7 @@ async def number_pool(session: SessionData = Depends(require_dev_session)):
         ).all()
         for pn, t in rows:
             prov = "telnyx" if getattr(pn, "telnyx_number_id", None) and getattr(pn, "telnyx_number_id", None) != "carrier_platform" else "vobiz"
-            if getattr(pn, "plivo_number_id", None) or str(pn.e164).startswith("+91"):
+            if getattr(pn, "carrier_number_id", None) or str(pn.e164).startswith("+91"):
                 prov = "vobiz"
             # Strict provider isolation: never mix carriers
             if prov != active_prov:
@@ -1187,7 +1187,7 @@ async def number_pool(session: SessionData = Depends(require_dev_session)):
                     "e164": pn.e164,
                     "numberId": str(pn.id),
                     "telnyxNumberId": pn.telnyx_number_id,
-                    "plivoNumberId": getattr(pn, "plivo_number_id", None),
+                    "carrierNumberId": getattr(pn, "carrier_number_id", None),
                     "provider": active_prov,
                     "tenantId": None if tenant_gone or in_inventory else (str(pn.tenant_id) if pn.tenant_id else None),
                     "tenantName": (INVENTORY_TENANT_NAME if in_inventory else (None if tenant_gone else (t.name if t else None))),
@@ -1239,7 +1239,7 @@ async def allocate_number(body: AllocateNumberBody, session: SessionData = Depen
             if active_prov == "telnyx":
                 existing.telnyx_number_id = body.telnyxNumberId or getattr(existing, "telnyx_number_id", None) or "carrier_platform"
             elif active_prov == "vobiz":
-                existing.plivo_number_id = getattr(existing, "plivo_number_id", None) or f"vobiz_{e164.replace('+', '')}"
+                existing.carrier_number_id = getattr(existing, "carrier_number_id", None) or f"vobiz_{e164.replace('+', '')}"
                 existing.telnyx_number_id = None
             existing.status = "active"
             pn = existing
@@ -1250,7 +1250,7 @@ async def allocate_number(body: AllocateNumberBody, session: SessionData = Depen
                 status="active",
                 billing_source="manual",
                 telnyx_number_id=(body.telnyxNumberId or "carrier_platform") if active_prov == "telnyx" else None,
-                plivo_number_id=f"vobiz_{e164.replace('+', '')}" if active_prov == "vobiz" else None,
+                carrier_number_id=f"vobiz_{e164.replace('+', '')}" if active_prov == "vobiz" else None,
                 created_at=datetime.now(timezone.utc),
             )
             db.add(pn)

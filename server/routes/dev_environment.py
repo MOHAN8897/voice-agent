@@ -24,8 +24,6 @@ class EnvironmentPatch(BaseModel):
     cartesia_api_key: str | None = None
     gemini_api_key: str | None = None
     telnyx_api_key: str | None = None
-    plivo_auth_id: str | None = None
-    plivo_auth_token: str | None = None
     vobiz_auth_token: str | None = None
     enable_sarvam: bool | None = None
     enable_openai: bool | None = None
@@ -33,7 +31,6 @@ class EnvironmentPatch(BaseModel):
     enable_cartesia: bool | None = None
     enable_gemini: bool | None = None
     enable_telnyx: bool | None = None
-    enable_plivo: bool | None = None
     enable_vobiz: bool | None = None
     enable_benchmarks: bool | None = None
     voice_agent_config_mode: str | None = None
@@ -43,7 +40,6 @@ class EnvironmentPatch(BaseModel):
     telnyx_connection_id: str | None = None
     telnyx_phone_number: str | None = None
     telnyx_outbound_voice_profile_id: str | None = None
-    plivo_phone_number: str | None = None
     vobiz_auth_id: str | None = None
     vobiz_app_id: str | None = None
     vobiz_phone_number: str | None = None

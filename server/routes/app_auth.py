@@ -347,7 +347,7 @@ async def auth_forgot_password(body: ForgotPasswordBody, request: Request):
     # A dev deployment with the debug flag set has no working mail by definition, so it
     # skips the gate and hands back the link instead of 503-ing the whole flow.
     if not provider.get("deliverable") and not settings.auth_debug_expose_reset_token:
-        logger.error("forgot-password refused: email delivery unavailable (%s)", provider.get("reason"))
+        logger.error("account-recovery refused: email delivery unavailable (%s)", provider.get("reason"))
         raise HTTPException(
             status_code=503,
             detail={
@@ -371,7 +371,7 @@ async def auth_forgot_password(body: ForgotPasswordBody, request: Request):
             # undeliverable. The operator needs the real reason in the logs, not the
             # person who pressed "reset" finding out how the backend is wired.
             logger.error(
-                "password reset email not delivered to %s: code=%s status=%s detail=%s",
+                "account recovery email not delivered to %s: code=%s status=%s detail=%s",
                 _mask_email(email),
                 result.code,
                 result.provider_status,
@@ -390,7 +390,7 @@ async def auth_forgot_password(body: ForgotPasswordBody, request: Request):
         # operator needs the real reason in the logs, not the person who pressed "reset"
         # finding out how the backend is wired.
         logger.error(
-            "password reset email not delivered to %s: code=%s status=%s detail=%s",
+            "account recovery email not delivered to %s: code=%s status=%s detail=%s",
             _mask_email(email),
             delivery.get("reason"),
             provider.get("reason"),

@@ -52,7 +52,8 @@ class PhoneNumber(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.tenant_id"), nullable=False)
     e164: Mapped[str] = mapped_column(String(20), nullable=False)
-    plivo_number_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    carrier_number_id: Mapped[str | None] = mapped_column("plivo_number_id", String(100), nullable=True)
+
     status: Mapped[str] = mapped_column(String(30), default="pending")
     #: Set NULL on agent deletion: a number must return to the pool rather than
     #: keep pointing at an agent row that no longer exists.
@@ -234,6 +235,6 @@ class DialAttempt(Base):
     contact_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("campaign_contacts.id"), nullable=False)
     call_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     status: Mapped[str] = mapped_column(String(30), default="queued")
-    plivo_call_uuid: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    carrier_call_uuid: Mapped[str | None] = mapped_column("plivo_call_uuid", String(100), nullable=True)
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)

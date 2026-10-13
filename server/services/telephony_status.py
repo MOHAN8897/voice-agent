@@ -35,8 +35,6 @@ async def provider_status(provider: TelephonyProviderId) -> dict[str, Any]:
     try:
         if provider == "telnyx":
             return await _telnyx_status()
-        if provider == "plivo":
-            return await _plivo_status()
         if provider == "vobiz":
             return await _vobiz_status()
         return {"id": provider, "configured": False, "handshake_ok": False}
@@ -133,50 +131,7 @@ async def _telnyx_status() -> dict[str, Any]:
     }
 
 
-async def _plivo_status() -> dict[str, Any]:
-    from server.services.plivo_client import PlivoClient, plivo_enabled
-    from server.services.telephony import provider_configured
 
-    settings = get_settings()
-    enabled = plivo_enabled()
-    plivo_phone = dev_secrets_store.effective("plivo_phone_number", settings.plivo_phone_number) or ""
-    configured = provider_configured("plivo")
-    base = webhook_base_url()
-    if not enabled:
-        return {
-            "id": "plivo",
-            "label": "Plivo",
-            "enabled": False,
-            "configured": configured,
-            "handshake_ok": False,
-            "handshake_error": None,
-            "phone_number": plivo_phone,
-            "answer_url": f"{base}/api/plivo/answer",
-            "stream_ws": f"{_ws_base(base)}/ws/plivo-stream",
-            "ready": False,
-        }
-    handshake_ok = False
-    handshake_error: str | None = None
-    try:
-        if configured:
-            client = PlivoClient()
-            hs = await client.handshake()
-            handshake_ok = bool(hs.get("ok"))
-    except Exception as e:
-        handshake_error = str(e)[:300]
-    base = webhook_base_url()
-    return {
-        "id": "plivo",
-        "label": "Plivo",
-        "enabled": enabled,
-        "configured": configured,
-        "handshake_ok": handshake_ok,
-        "handshake_error": handshake_error,
-        "phone_number": plivo_phone,
-        "answer_url": f"{base}/api/plivo/answer",
-        "stream_ws": f"{_ws_base(base)}/ws/plivo-stream",
-        "ready": enabled and configured and handshake_ok,
-    }
 
 
 async def _vobiz_status() -> dict[str, Any]:

@@ -151,7 +151,7 @@ def mulaw_frame_to_pcm16(frame: bytes) -> bytes:
 
 
 def pcm16_chunk_to_mulaw_frames(pcm16: bytes, sample_rate: int = 16000, frame_ms: int = 20) -> list[bytes]:
-    """Split PCM into 20ms μ-law frames for Plivo playAudio."""
+    """Split PCM into 20ms μ-law frames for PSTN audio."""
     pcm8k = pcm_resample(pcm16, sample_rate, 8000) if sample_rate != 8000 else pcm16
     samples_per_frame = int(8000 * frame_ms / 1000)
     bytes_per_frame = samples_per_frame * 2

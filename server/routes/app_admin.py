@@ -352,25 +352,23 @@ async def admin_delete_tenant(
             text("DELETE FROM agents WHERE tenant_id = :tid"), {"tid": str_tid}
         )
 
-        other_tables = [
-            "oauth_states",
-            "tenant_integrations",
-            "user_onboarding_surveys",
-            "kyc_verifications",
-            "razorpay_orders",
-            "billing_invoices",
-            "leads",
-            "billing_wallet_transactions",
-            "billing_wallets",
-            "telephony_contacts",
-            "tenant_teardown_jobs",
-            "dnc_list",
-            "tenant_memberships",
-        ]
-        for tbl in other_tables:
-            await conn.execute(
-                text(f"DELETE FROM {tbl} WHERE tenant_id = :tid"), {"tid": str_tid}
-            )
+        _TEARDOWN_STATEMENTS = (
+            text("DELETE FROM oauth_states WHERE tenant_id = :tid"),
+            text("DELETE FROM tenant_integrations WHERE tenant_id = :tid"),
+            text("DELETE FROM user_onboarding_surveys WHERE tenant_id = :tid"),
+            text("DELETE FROM kyc_verifications WHERE tenant_id = :tid"),
+            text("DELETE FROM razorpay_orders WHERE tenant_id = :tid"),
+            text("DELETE FROM billing_invoices WHERE tenant_id = :tid"),
+            text("DELETE FROM leads WHERE tenant_id = :tid"),
+            text("DELETE FROM billing_wallet_transactions WHERE tenant_id = :tid"),
+            text("DELETE FROM billing_wallets WHERE tenant_id = :tid"),
+            text("DELETE FROM telephony_contacts WHERE tenant_id = :tid"),
+            text("DELETE FROM tenant_teardown_jobs WHERE tenant_id = :tid"),
+            text("DELETE FROM dnc_list WHERE tenant_id = :tid"),
+            text("DELETE FROM tenant_memberships WHERE tenant_id = :tid"),
+        )
+        for stmt in _TEARDOWN_STATEMENTS:
+            await conn.execute(stmt, {"tid": str_tid})
 
         await conn.execute(
             text("DELETE FROM tenants WHERE tenant_id = :tid"), {"tid": str_tid}
@@ -410,7 +408,7 @@ async def admin_list_phone_numbers(
         out = []
         for p in numbers:
             prov = "telnyx" if (getattr(p, "telnyx_number_id", None) and getattr(p, "telnyx_number_id", None) != "carrier_platform") or p.e164 == "+13526146416" else "vobiz"
-            if getattr(p, "plivo_number_id", None) or str(p.e164).startswith("+91"):
+            if getattr(p, "carrier_number_id", None) or str(p.e164).startswith("+91"):
                 prov = "vobiz"
 
             out.append(
@@ -589,7 +587,7 @@ async def admin_buy_phone_number(
             e164=e164,
             status="active",
             telnyx_number_id=carrier_res.get("phone_number_id") if body.provider == "telnyx" else None,
-            plivo_number_id=carrier_res.get("phone_number_id") or f"vobiz_{e164}" if body.provider == "vobiz" else None,
+            carrier_number_id=carrier_res.get("phone_number_id") or f"vobiz_{e164}" if body.provider == "vobiz" else None,
             billing_source="admin",
             inbound_enabled=True,
             outbound_enabled=True,

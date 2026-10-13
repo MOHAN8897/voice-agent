@@ -19,8 +19,6 @@ def active_telephony_provider() -> TelephonyProviderId:
     raw = str(
         dev_secrets_store.effective("telephony_provider", get_settings().telephony_provider) or "vobiz"
     ).strip().lower()
-    if raw == "plivo":
-        return "vobiz"
     if raw not in VALID_PROVIDERS:
         return "vobiz"
     return raw  # type: ignore[return-value]
@@ -30,10 +28,8 @@ def provider_enabled(provider: TelephonyProviderId) -> bool:
     settings = get_settings()
     if provider == "telnyx":
         return bool(dev_secrets_store.effective("enable_telnyx", settings.enable_telnyx))
-    if provider in ("vobiz", "plivo"):
-        return bool(dev_secrets_store.effective("enable_vobiz", settings.enable_vobiz)) or bool(
-            dev_secrets_store.effective("enable_plivo", getattr(settings, "enable_plivo", False))
-        )
+    if provider == "vobiz":
+        return bool(dev_secrets_store.effective("enable_vobiz", settings.enable_vobiz))
     return False
 
 
@@ -44,9 +40,9 @@ def provider_configured(provider: TelephonyProviderId) -> bool:
         key = dev_secrets_store.effective_secret("telnyx_api_key") or settings.telnyx_api_key
         conn = _effective_str("telnyx_connection_id", settings.telnyx_connection_id)
         return bool(key and conn)
-    if provider in ("vobiz", "plivo"):
-        auth = _effective_str("vobiz_auth_id", settings.vobiz_auth_id) or dev_secrets_store.effective_secret("plivo_auth_id") or getattr(settings, "plivo_auth_id", None)
-        token = _effective_str("vobiz_auth_token", settings.vobiz_auth_token) or dev_secrets_store.effective_secret("plivo_auth_token") or getattr(settings, "plivo_auth_token", None)
+    if provider == "vobiz":
+        auth = _effective_str("vobiz_auth_id", settings.vobiz_auth_id)
+        token = _effective_str("vobiz_auth_token", settings.vobiz_auth_token)
         return bool(auth and token)
     return False
 

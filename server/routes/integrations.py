@@ -397,7 +397,7 @@ async def connect_integration(
                     await session.commit()
                     invalidate_tenant_tools(str(tenant_id))
             except Exception as exc:
-                logger.warning("[INTEGRATIONS] Failed to record API key connection: %s", exc)
+                logger.warning("[INTEGRATIONS] Failed to record connection in database: %s", type(exc).__name__)
 
         return {
             "status": "ACTIVE",

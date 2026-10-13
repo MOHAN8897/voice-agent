@@ -55,9 +55,9 @@ async def _parse_vobiz_payload(request: Request) -> dict[str, Any]:
 
 def _build_vobiz_xml_response(stream_ws_url: str) -> Response:
     """Generate compliant VoiceXML instructing Vobiz to connect bidirectional WebSocket."""
-    from xml.sax.saxutils import escape as xml_escape
+    import html
 
-    escaped_url = xml_escape(stream_ws_url.strip())
+    escaped_url = html.escape(stream_ws_url.strip(), quote=True)
     xml_content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Stream bidirectional="true" keepCallAlive="true" contentType="audio/x-l16;rate=16000">{escaped_url}</Stream>
@@ -210,8 +210,8 @@ async def vobiz_answer(request: Request):
             if not decision.should_answer:
                 log_pstn("vobiz.inbound.declined", call_uuid=call_uuid, reason=decision.reason)
                 if decision.route == "transfer" and decision.transfer_number:
-                    from xml.sax.saxutils import escape as xml_escape
-                    xfer = xml_escape(str(decision.transfer_number).strip())
+                    import html
+                    xfer = html.escape(str(decision.transfer_number).strip(), quote=True)
                     xml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Dial>

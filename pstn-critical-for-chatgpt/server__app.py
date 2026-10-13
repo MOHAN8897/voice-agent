@@ -44,7 +44,6 @@ from server.routes.exotel import router as exotel_router
 from server.routes.exotel_ws import router as exotel_ws_router
 from server.routes.telnyx import router as telnyx_router
 from server.routes.telnyx_ws import router as telnyx_ws_router
-from server.routes.plivo import router as plivo_router
 from server.routes.campaigns import router as campaigns_router
 from server.routes.test_studio import router as test_studio_router
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -282,7 +281,6 @@ app.include_router(exotel_router)
 app.include_router(exotel_ws_router)
 app.include_router(telnyx_router)
 app.include_router(telnyx_ws_router)
-app.include_router(plivo_router)
 app.include_router(campaigns_router)
 app.include_router(test_studio_router)
 app.include_router(ws_router)

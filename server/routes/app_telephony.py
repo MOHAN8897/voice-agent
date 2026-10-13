@@ -276,7 +276,7 @@ async def list_numbers(principal: SubscriberPrincipal = Depends(require_subscrib
         monthly_inr = round(rates["did_monthly_inr_paise"] / 100.0, 2)
         for n in result.scalars():
             e164 = n.e164 or ""
-            prov = "telnyx" if (n.telnyx_number_id or e164 == "+13526146416") else ("vobiz" if n.plivo_number_id else "vobiz")
+            prov = "telnyx" if (n.telnyx_number_id or e164 == "+13526146416") else "vobiz"
             if prov != active_prov:
                 continue
             if e164.startswith("+1"):
@@ -305,7 +305,7 @@ async def list_numbers(principal: SubscriberPrincipal = Depends(require_subscrib
                     "country": country,
                     "provider": prov,
                     "telnyxNumberId": n.telnyx_number_id,
-                    "plivoNumberId": n.plivo_number_id,
+                    "carrierNumberId": getattr(n, "carrier_number_id", None),
                 }
             )
     return {"numbers": numbers, "activeProvider": active_prov}
@@ -983,14 +983,14 @@ async def release_number(number_id: str, principal: SubscriberPrincipal = Depend
             raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Not found"}})
         e164 = pn.e164
         telnyx_id = pn.telnyx_number_id
-        plivo_id = pn.plivo_number_id
+        carrier_id = getattr(pn, "carrier_number_id", None)
         nid = pn.id
     # Return the DID to the admin inventory pool — available to buy again.
     moved = await move_to_inventory(
         number_id=nid,
         e164=e164,
         telnyx_number_id=telnyx_id,
-        plivo_number_id=plivo_id,
+        carrier_number_id=carrier_id,
     )
     await record_event(
         action="number.released",
@@ -998,7 +998,7 @@ async def release_number(number_id: str, principal: SubscriberPrincipal = Depend
         resource_id=str(nid),
         actor=principal.email or str(principal.user_id),
         tenant_id=workspace_tid,
-        payload={"e164": e164, "provider": "vobiz" if plivo_id else "telnyx"},
+        payload={"e164": e164, "provider": "vobiz" if carrier_id else "telnyx"},
         source="subscriber",
     )
     return {"ok": True, "inventory": moved}

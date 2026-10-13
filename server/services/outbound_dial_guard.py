@@ -175,26 +175,6 @@ async def hangup_active_telnyx_to(client: Any, to_e164: str) -> None:
 
 
 
-async def hangup_active_plivo_to(to_e164: str) -> None:
-    from server.services.plivo_client import PlivoApiError, PlivoClient, plivo_call_registry
-
-    dest = (to_e164 or "").strip()
-    if not dest:
-        return
-    client = PlivoClient()
-    for row in plivo_call_registry.list_recent(20):
-        if str(row.get("to") or "").strip() != dest:
-            continue
-        if not _is_active_status(str(row.get("status") or "")):
-            continue
-        call_uuid = str(row.get("call_uuid") or row.get("request_uuid") or "")
-        if not call_uuid:
-            continue
-        try:
-            await client.hangup(call_uuid)
-            plivo_call_registry.upsert(call_uuid, {"status": "canceled", "last_event": "replaced-by-new-dial"})
-        except PlivoApiError:
-            pass
 
 
 async def hangup_active_vobiz_to(to_e164: str) -> int:

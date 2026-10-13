@@ -113,6 +113,55 @@ REVERSE_NANGO_PROVIDER_MAP.update({
 })
 
 
+class _SafeHttpResponse:
+    def __init__(self, response: httpx.Response):
+        self._response = response
+        self.status = response.status_code
+        self.status_code = response.status_code
+        self.headers = response.headers
+
+    def read(self) -> bytes:
+        return self._response.content
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+
+def _safe_urlopen(req_or_url: Any, timeout: float = 5.0) -> _SafeHttpResponse:
+    """Validate that only http/https schemes are permitted and dispatch via httpx (SSRF & file-scheme guard)."""
+    import io
+
+    if hasattr(req_or_url, "full_url"):
+        url = req_or_url.full_url
+        headers = dict(req_or_url.headers)
+        method = req_or_url.get_method() if hasattr(req_or_url, "get_method") else "GET"
+        content = req_or_url.data
+    else:
+        url = str(req_or_url)
+        headers = {}
+        method = "GET"
+        content = None
+
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme.lower() not in ("http", "https"):
+        raise ValueError(f"Insecure URL scheme rejected: {parsed.scheme}")
+
+    with httpx.Client(timeout=timeout) as client:
+        resp = client.request(method=method, url=url, headers=headers, content=content)
+        if resp.status_code >= 400:
+            raise urllib.error.HTTPError(
+                url=url,
+                code=resp.status_code,
+                msg=resp.reason_phrase,
+                hdrs=resp.headers,  # type: ignore[arg-type]
+                fp=io.BytesIO(resp.content),
+            )
+        return _SafeHttpResponse(resp)
+
+
 class NangoService:
     """Enterprise Nango Gateway providing multi-tenant isolation, OAuth vaulting, and SLA-guaranteed tool routing."""
 
@@ -193,7 +242,7 @@ class NangoService:
                     url,
                     headers={"Authorization": f"Bearer {env_key}", "Accept": "application/json"},
                 )
-                with urllib.request.urlopen(req, timeout=4) as resp:
+                with _safe_urlopen(req, timeout=4) as resp:
                     data = json.loads(resp.read().decode())
                 return data.get("connections", [])
             except urllib.error.HTTPError as err:
@@ -242,7 +291,7 @@ class NangoService:
                     f"{self.base_url}/environments",
                     headers={"Authorization": f"Bearer {account_key}", "Accept": "application/json"},
                 )
-                with urllib.request.urlopen(req, timeout=5) as resp:
+                with _safe_urlopen(req, timeout=5) as resp:
                     data = json.loads(resp.read().decode())
                 envs = data.get("data", [])
                 if not envs:
@@ -263,7 +312,7 @@ class NangoService:
                         "Accept": "application/json",
                     },
                 )
-                with urllib.request.urlopen(create_req, timeout=5) as c_resp:
+                with _safe_urlopen(create_req, timeout=5) as c_resp:
                     created_data = json.loads(c_resp.read().decode())
                 secret = created_data.get("data", {}).get("secret")
                 return secret
@@ -297,7 +346,7 @@ class NangoService:
                     f"{self.base_url}/integrations",
                     headers={"Authorization": f"Bearer {env_key}", "Accept": "application/json"},
                 )
-                with urllib.request.urlopen(req, timeout=5) as resp:
+                with _safe_urlopen(req, timeout=5) as resp:
                     data = json.loads(resp.read().decode())
                 integrations = data.get("data", [])
                 keys = set()
@@ -378,7 +427,7 @@ class NangoService:
                 },
             )
             try:
-                with urllib.request.urlopen(req, timeout=5) as resp:
+                with _safe_urlopen(req, timeout=5) as resp:
                     return json.loads(resp.read().decode())
             except urllib.error.HTTPError as exc:
                 err_body = exc.read().decode(errors="replace")
@@ -399,10 +448,10 @@ class NangoService:
                                 "Accept": "application/json",
                             },
                         )
-                        with urllib.request.urlopen(quick_req, timeout=5):
+                        with _safe_urlopen(quick_req, timeout=5):
                             pass
                         # Retry connect session now that provider is provisioned
-                        with urllib.request.urlopen(req, timeout=5) as retry_resp:
+                        with _safe_urlopen(req, timeout=5) as retry_resp:
                             return json.loads(retry_resp.read().decode())
                     except Exception as q_exc:
                         logger.warning("[NANGO] Quickstart auto-provision failed: %s", q_exc)
@@ -460,7 +509,7 @@ class NangoService:
             try:
                 url = f"{self.base_url}/connection/{urllib.parse.quote(connection_id)}?provider_config_key={urllib.parse.quote(provider_key)}"
                 req = urllib.request.Request(url, headers={"Authorization": f"Bearer {env_key}"}, method="DELETE")
-                with urllib.request.urlopen(req, timeout=5) as resp:
+                with _safe_urlopen(req, timeout=5) as resp:
                     return resp.status in (200, 204)
             except urllib.error.HTTPError as e:
                 # 400 unknown_connection or 404 is safe to treat as already deleted

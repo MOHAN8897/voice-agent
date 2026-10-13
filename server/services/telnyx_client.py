@@ -636,8 +636,8 @@ class TelnyxStreamTokens:
                 )
             except Exception as exc:
                 logger.warning(
-                    "[TELNYX] stream token redis mirror failed: %s",
-                    str(exc)[:160],
+                    "[TELNYX] stream session redis mirror failed: %s",
+                    type(exc).__name__,
                 )
 
     def consume(self, token: str) -> dict[str, Any] | None:

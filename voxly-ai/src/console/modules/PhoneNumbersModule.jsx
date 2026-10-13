@@ -438,7 +438,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                   {/* Telephony Platform */}
                   <td className="py-4 px-4">
                     <TelephonyPlatformBadge
-                      provider={num.provider || (num.telnyxNumberId ? 'telnyx' : (num.carrierNumberId || num.plivoNumberId) ? 'vobiz' : providerInfo?.activeProvider || 'vobiz')}
+                      provider={num.provider || (num.telnyxNumberId ? 'telnyx' : num.carrierNumberId ? 'vobiz' : providerInfo?.activeProvider || 'vobiz')}
                     />
                   </td>
 

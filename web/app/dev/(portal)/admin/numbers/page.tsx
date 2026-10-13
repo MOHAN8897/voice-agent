@@ -36,7 +36,7 @@ type Assignment = {
   purchaseStatus: string | null;
   stripeSubscriptionId: string | null;
   telnyxNumberId: string | null;
-  plivoNumberId?: string | null;
+  carrierNumberId?: string | null;
   provider?: string | null;
   walletBalanceUsd?: number;
   walletCurrency?: string;
@@ -54,7 +54,7 @@ type PoolNumber = {
   e164: string;
   numberId: string | null;
   telnyxNumberId: string | null;
-  plivoNumberId?: string | null;
+  carrierNumberId?: string | null;
   provider?: string | null;
   tenantId: string | null;
   tenantName: string | null;
@@ -281,9 +281,9 @@ export default function AdminNumbersPage() {
               <SkeuoTableRow key={a.numberId}>
                 <SkeuoTd className="font-mono">
                   <div>{a.e164}</div>
-                  {(a.telnyxNumberId || a.plivoNumberId) && (
+                  {(a.telnyxNumberId || a.carrierNumberId) && (
                     <div className="text-[10px] text-text-subtle font-sans" title="Carrier number ID">
-                      Carrier ID: {a.telnyxNumberId || a.plivoNumberId}
+                      Carrier ID: {a.telnyxNumberId || a.carrierNumberId}
                     </div>
                   )}
                 </SkeuoTd>

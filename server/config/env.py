@@ -223,10 +223,6 @@ class Settings(BaseSettings):
     # cold provider session; lower it if your first-token latency is faster.
     telnyx_first_audio_grace_sec: float = Field(12.0, alias="TELNYX_FIRST_AUDIO_GRACE_SEC")
     telnyx_max_concurrent_calls: int = Field(50, alias="TELNYX_MAX_CONCURRENT_CALLS")
-    enable_plivo: bool = Field(False, alias="ENABLE_PLIVO")
-    plivo_auth_id: str | None = Field(None, alias="PLIVO_AUTH_ID")
-    plivo_auth_token: str | None = Field(None, alias="PLIVO_AUTH_TOKEN")
-    plivo_phone_number: str | None = Field(None, alias="PLIVO_PHONE_NUMBER")
     enable_vobiz: bool = Field(False, alias="ENABLE_VOBIZ")
     vobiz_auth_id: str | None = Field(
         None,

@@ -39,12 +39,13 @@ app = FastAPI(
     lifespan=voice_lifespan,
 )
 
-# CORS
-settings = get_settings()
+# CORS — hardened origin resolution matching core SaaS server
+from server.app import _cors_origins_and_credentials
+_cors_origins, _cors_allow_creds = _cors_origins_and_credentials()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=_cors_origins,
+    allow_credentials=_cors_allow_creds,
     allow_methods=["*"],
     allow_headers=["*"],
 )

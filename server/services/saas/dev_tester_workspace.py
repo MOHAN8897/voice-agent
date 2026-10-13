@@ -78,8 +78,8 @@ async def ensure_dev_tester_phone_line(tenant_id: uuid.UUID, email: str | None) 
                     if not row.outbound_enabled:
                         row.outbound_enabled = True
                         changed = True
-                    if prov == "vobiz" and not row.plivo_number_id:
-                        row.plivo_number_id = "18d1efff-6654-4b22-b650-ccda743b1789"
+                    if prov == "vobiz" and not getattr(row, "carrier_number_id", None):
+                        row.carrier_number_id = "18d1efff-6654-4b22-b650-ccda743b1789"
                         changed = True
                     if changed:
                         await session.commit()
@@ -93,7 +93,7 @@ async def ensure_dev_tester_phone_line(tenant_id: uuid.UUID, email: str | None) 
                         inbound_enabled=True,
                         outbound_enabled=True,
                         billing_source="platform",
-                        plivo_number_id="18d1efff-6654-4b22-b650-ccda743b1789" if prov == "vobiz" else None,
+                        carrier_number_id="18d1efff-6654-4b22-b650-ccda743b1789" if prov == "vobiz" else None,
                         telnyx_number_id="carrier_platform" if prov == "telnyx" else None,
                     )
                 )

@@ -51,7 +51,6 @@ from server.routes.dev_compiled import router as dev_compiled_router
 from server.routes.dev_telephony import router as dev_telephony_router
 from server.routes.telnyx import router as telnyx_router
 from server.routes.telnyx_ws import router as telnyx_ws_router
-from server.routes.plivo import router as plivo_router
 from server.routes.vobiz import router as vobiz_router
 from server.routes.vobiz_ws import router as vobiz_ws_router
 from server.routes.campaigns import router as campaigns_router
@@ -518,7 +517,6 @@ app.include_router(dev_compiled_router)
 app.include_router(dev_telephony_router)
 app.include_router(telnyx_router)
 app.include_router(telnyx_ws_router)
-app.include_router(plivo_router)
 app.include_router(vobiz_router)
 app.include_router(vobiz_ws_router)
 app.include_router(campaigns_router)

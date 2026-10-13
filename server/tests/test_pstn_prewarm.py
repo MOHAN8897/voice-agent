@@ -112,18 +112,18 @@ async def test_prewarm_cancel_removes_entry_and_closes_realtime():
 async def test_take_prewarm_for_answer_fallback_id():
     registry = PstnPrewarmRegistry()
     bundle = PstnPrewarmBundle(
-        provider="plivo",
+        provider="vobiz",
         external_id="req-1",
-        realtime_key=prewarm_realtime_key("plivo", "req-1"),
+        realtime_key=prewarm_realtime_key("vobiz", "req-1"),
         greeting_text="Hi",
         greeting_wire_frames=[],
     )
     task = asyncio.create_task(asyncio.sleep(60))
-    registry._entries["plivo:req-1"] = type(
+    registry._entries["vobiz:req-1"] = type(
         "E",
         (),
         {
-            "provider": "plivo",
+            "provider": "vobiz",
             "external_id": "req-1",
             "task": task,
             "created_at": 0.0,
@@ -132,7 +132,7 @@ async def test_take_prewarm_for_answer_fallback_id():
         },
     )()
     with patch.object(pstn_prewarm_registry, "take", registry.take):
-        taken = await take_prewarm_for_answer("plivo", "call-uuid-x", fallback_external_id="req-1")
+        taken = await take_prewarm_for_answer("vobiz", "call-uuid-x", fallback_external_id="req-1")
     assert taken is bundle
     task.cancel()
     with pytest.raises(asyncio.CancelledError):

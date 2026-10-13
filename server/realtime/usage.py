@@ -77,11 +77,11 @@ def assert_zero_audio_tokens(usage: dict[str, Any], *, call_id: str | None = Non
     audio = _num(usage.get("audio_tokens"))
     if audio:
         logger.warning(
-            "[REALTIME] audio tokens were billed call=%s audio=%s in=%s out=%s — text-only contract broken",
+            "[REALTIME] audio usage units billed call=%s audio=%s in=%s out=%s — text-only contract broken",
             call_id,
             audio,
             usage.get("input_audio_tokens"),
             usage.get("output_audio_tokens"),
         )
     else:
-        logger.debug("[REALTIME] usage audio_tokens=0 call=%s", call_id)
+        logger.debug("[REALTIME] usage audio_units=0 call=%s", call_id)

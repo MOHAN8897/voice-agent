@@ -73,7 +73,7 @@ async def test_dev_environment_patch_cartesia_with_telnyx_fields(monkeypatch):
                 "enable_cartesia": True,
                 "enable_sarvam": True,
                 "enable_telnyx": True,
-                "enable_plivo": False,
+                "enable_vobiz": True,
                 "telephony_provider": "telnyx",
             },
             headers={"X-CSRF-Token": csrf},
@@ -115,7 +115,7 @@ def test_environment_patch_accepts_telnyx_and_cartesia_toggles():
     body = EnvironmentPatch.model_validate(
         {
             "enable_telnyx": True,
-            "enable_plivo": False,
+            "enable_vobiz": True,
             "enable_cartesia": True,
             "enable_sarvam": True,
             "telephony_provider": "telnyx",

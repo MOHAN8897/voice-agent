@@ -176,7 +176,7 @@ async def process_one_job() -> bool:
             inbound_enabled=True,
             outbound_enabled=True,
             agent_id=purchase.assign_agent_id,
-            plivo_number_id=f"vobiz_{purchase.e164}" if provider == "vobiz" else None,
+            carrier_number_id=f"vobiz_{purchase.e164}" if provider == "vobiz" else None,
             telnyx_number_id=f"telnyx_{purchase.e164}" if provider == "telnyx" else None,
             created_at=_utcnow(),
         )
