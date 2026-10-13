@@ -1,6 +1,6 @@
 {
   "schema": "enigma.vault_bundle.v1",
-  "exported_at": "2026-10-13T13:35:57.728Z",
+  "exported_at": "2026-10-13T16:54:38.074Z",
   "vault": {
     "schema": "enigma.vault.local.v1",
     "vault_id": "vault_36e54300-c622-4154-8073-6bb849c18990",
@@ -9,7 +9,7 @@
     "actor_id": "local-user",
     "policy_id": "local-default",
     "created_at": "2026-10-13T13:35:19.217Z",
-    "updated_at": "2026-10-13T13:35:57.728Z",
+    "updated_at": "2026-10-13T16:54:38.073Z",
     "encryption": "local_aead",
     "key_id": "vault-key-12458a87-788c-43a5-813e-9f53d28e77d0",
     "active_key_epoch": 1,
@@ -23,9 +23,9 @@
     ],
     "old_epoch_read_policy": "retained_keys_allowed",
     "key_erasure_scope": "software_process_and_persisted_bundle_only",
-    "active_set_root": "sha256:d6c69eaa51d5ddbf8658d6c1fb09a31ce99a72e3b9b5e15aebd0db5bfa16307e",
-    "receipt_log_root": "sha256:efd798e4ceec6b7bcb2060940a71cd675a0029d38bcfaa0461f2e869f6b2990f",
-    "sequence": 8
+    "active_set_root": "sha256:8a79f8fbddb38b4792422637caeee5a5ce1dfaef58c79dc3bbb50019657fc11f",
+    "receipt_log_root": "sha256:cdedb4f896b220eb566a8ff61f3aa417c395f1ddd9bbb3f8337ed0f2b3164221",
+    "sequence": 10
   },
   "keyring": {
     "schema": "enigma.vault_keyring.v2",
@@ -53,13 +53,13 @@
       "r": 8,
       "p": 1,
       "maxmem": 67108864,
-      "salt": "LsJiQbcjDIIdNvMG1+Uv0w=="
+      "salt": "HiLFdp7Oh14586Sx9fr11g=="
     },
-    "salt": "LsJiQbcjDIIdNvMG1+Uv0w==",
+    "salt": "HiLFdp7Oh14586Sx9fr11g==",
     "warning": "Keyring is encrypted with AES-256-GCM; passphrase required on import.",
-    "iv": "COXMMbKpLtwnfD7C",
-    "tag": "uekOFVZ2H5KlABRfa5Sbgg==",
-    "ciphertext": "S+kN9u0QjLgdSV2GT6bAFK2ozAGQPC1EbNJz68xhfTOtXattWwVpf3BYmeo1WKlYx1GUbtS1ev2Hkyc0e4llyCNW+r4Bc3vC8xbw0iCrUawnblR8dEOnUJem/6EvgizOVeKg9jesJvy6gH7kb8uW6/4JOk/nXcPAY1gEKQYmcJEI9uLIeFEcjuqLqn1yBThURbs7g3bkvuen4O3TfjK4SlSEIpyv/vurrxrE4IHSBjq1AG0snBSQcs/bSc+K3diLy+znnyhYwzDrwcOXYpilksPpdHaw2Dm3lM/n9cKntR3AKAp+vHR8djSA+9uuuM0nGfg3pCnmLEsmU+L3om5XKI2IxypjgFVITGDzMoMefu0RgzFkvOfXS9sfHsx1wTzW1ZHPOOL8dZ45d53NTkktcHpPqTXZ2iHhOr5QqbuCMkuQsmKQ4SgenKX3yubAyZYJlAiNT6EklfEPDN6tqrtkwVKotLjIdhcw7dlFF6zuchDoCQ1VHHvYB1RAGOZIJxjNlHNCUFKiNM2KUHZjUvsSJlj10p8+JF6Cy+W7lyzARNbfHotN+MAlzkcvmMoRB8X54GA/8/gjEoKcotiMErXVV4O8Jmb5OBg6d0GUhlpsBL3nKHCqYw=="
+    "iv": "tI//6urMh37HsQh6",
+    "tag": "jp6pLgJHAU5w1aKtyEDofg==",
+    "ciphertext": "XsNpV4cXqDdEHvLHnG5plPFPq1PU5BVN9Zmlt78tjUXl4s+muIEc8BcP2f6dNUWXhJG+txZDimbpM2ye0dth+LfB1w8CpXb1SxQvPDJOo+Obmr6XTgbRDWHUDoGMiKMtDB1FSJnFoitLaM+B7k2AYcZR2FI/8yokmXKQ2NPHsh2KN9sNCzydmU1FTkxEd3iMcKfEVuuZ+xsTqyEZopOrx/MBGDOLg3f9ed7nLPHCeL0H43UxEq9fyhbDtkuFXRvrjkGZhcL9ocs/Aq3gifT0qbGNAv7/3FGfx3NihfvRJ5SPPEjnLi4nPHsTIg9GTIJHa79FXhl0UeH3RYWSfmP3r2JiQjTsztBW4AK9WhTBivbJEwkTRVXokM64ey1r520V1hXYHoNkD9lWgsyCKd08zRczOoPMERLjIFPW1i4OPcyvEuuEC6Gb1qq36Vj03emG1I0PfmOupBcl2cf44cRW5hIsyGmI9R/J7vVGFDsGmu05a2yj0m9Tc95IdxOhMKi0ewo4oqROaK92nSpN1CX4Typof/iX366/a/wSS5kxZ2jfzqErtJwB/W84+IA/g9cHqaoMdcU6ulThSPM3udS9czbgSDFZy4+0f9eBzxh90QN62Qtxtg=="
   },
   "memory_objects": [
     {
@@ -117,9 +117,36 @@
       "metadata": {},
       "created_at": "2026-10-13T13:35:48.573Z",
       "updated_at": "2026-10-13T13:35:48.573Z"
+    },
+    {
+      "schema": "enigma.memory_object.v1",
+      "memory_id": "mem_a07a7671-d471-4d56-8a4c-c2c1ea89b3a0",
+      "memory_addr": "mem:29d6366763188072335366b2eeaecb7751f9c579c5e509f84695fab0ad34da9e",
+      "subject_id": "local-user",
+      "kind": "fact",
+      "key_epoch": 1,
+      "key_id": "vault-key-12458a87-788c-43a5-813e-9f53d28e77d0",
+      "content_ciphertext": {
+        "alg": "AES-256-GCM",
+        "iv": "LPL5H81WbTMUU2C0",
+        "aad": "{\"domain\":\"enigma.memory.content_aad.v1\",\"key_epoch\":1,\"key_id\":\"vault-key-12458a87-788c-43a5-813e-9f53d28e77d0\",\"memory_addr\":\"mem:29d6366763188072335366b2eeaecb7751f9c579c5e509f84695fab0ad34da9e\",\"schema\":\"enigma.memory_object.v1\",\"vault_id\":\"vault_36e54300-c622-4154-8073-6bb849c18990\"}",
+        "ciphertext": "X0aR4lBprRS8mnOPOAHxV98bpK3v53fUxLDiczFG+RnIJDCD0l1aNMimrQjAiDHgKYwTv2mP/GNlihKH8cwPyDeYkszxAbfwmStHrj9PpwFN3T2ciis036XkEUT2nRvIWh1gc6NWSJtWV4eH3/NLCmN1kx0bofP4I8e1kx5TYsnZtbzUUjfT9zZPUiEbpMZyyJO9zIs9tWdHsaPMrBIrOJxAkbIjCq9Dks93AJn2ekamjTAtLwLjGMAN5wnRyTonQMa7hyii9fau/dhPG0wAOsqWbPEdKTZrKV12ddg4RVW0DyPwI3wyj2Ox6Ps9mK7415aw3Hktt1VXrYqAkCBViLlR49zIguA+NnbxHQlfYS2z4SIvGb7fDvvOQEs5mWlhlfe8iIsL9uZL8a5IGO79GAN4aIl7L0nCO7FVaGWjdk9ORPLEZcjzTmDMDZbFsCU5+d5221S2/XePW2U2HLz2e4cNB4cLRQg9wWtQGBBgDrs/PaCgsQKFvKducqS6s8WT7oHd7JGrbNEu1fSri+dkAKkOcmUK5DYxsAUj9nokkjnCykC9WFIk8Mzs+QBCgQg1rqqs9Ns9q1CuMEdQz9oCZqaMJ7phpPyuQ9qssX3zBddbjjJhjJTV2fB5c05WVJ3n0SnK6sKHt5iILesQJ6nzUvSCQNqk6gQhmGOeSgojGDWbta+hC1kq6pr+tGIU3A6d3qepseFYCSQIKjZG3ikFk1UE6e/ipm9B777n5QwZ",
+        "tag": "GQv3yn8ObtZnXWF6bN4ooQ=="
+      },
+      "content_commitment": "hmac-sha256:27cbb364197da64be3ddb2acc2372c955d9bc7977a9ff71103f04f9714eb8698",
+      "source_refs": [],
+      "confidence": "user_confirmed",
+      "sensitivity": "normal",
+      "purpose_tag_commitments": [],
+      "retention": "durable",
+      "state": "active",
+      "metadata": {},
+      "created_at": "2026-10-13T16:54:38.070Z",
+      "updated_at": "2026-10-13T16:54:38.070Z"
     }
   ],
   "active_memory_addresses": [
+    "mem:29d6366763188072335366b2eeaecb7751f9c579c5e509f84695fab0ad34da9e",
     "mem:3d124fd4abf02822d67c3447a62b3f781b6f59f7cc9b9b72cfa1060c80dc958e",
     "mem:5a5bb850d4ecb90f37a8b69a8fea244a2d9c8e5f90097f550c0816d35e1c1531"
   ],
@@ -293,6 +320,48 @@
       },
       "canonical": "{\"actor_id\":\"local-user\",\"event_id\":\"evt_bfe8a384-9b3e-41ff-90f4-07f73322881d\",\"metadata\":{\"active_count\":2,\"memory_count\":2,\"tombstone_count\":0},\"operation\":\"export\",\"policy_id\":\"local-default\",\"schema\":\"enigma.memory_event.v1\",\"sequence\":7,\"subject_id\":\"local-user\",\"tenant_id\":\"local\",\"timestamp\":\"2026-10-13T13:35:57.728Z\"}",
       "hash": "sha256:4b1570601ebf8a1a757bbcbe5f25a1ae180d63a03831d88fc18408f83518a454"
+    },
+    {
+      "event": {
+        "schema": "enigma.memory_event.v1",
+        "event_id": "evt_8e434d0f-8176-4b75-bde7-a47d95822604",
+        "operation": "create",
+        "tenant_id": "local",
+        "subject_id": "local-user",
+        "actor_id": "local-user",
+        "memory_addr": "mem:29d6366763188072335366b2eeaecb7751f9c579c5e509f84695fab0ad34da9e",
+        "timestamp": "2026-10-13T16:54:38.071Z",
+        "sequence": 8,
+        "policy_id": "local-default",
+        "metadata": {
+          "memory_id_commitment": "sha256:1605cb11c1c704f97a4bcb07a55dc0af632f29a258a8b88665b2587d64b2fdb7",
+          "kind_commitment": "sha256:a8b88c81f29af414db0ab609d166f773ff3ab407886da44c6f98bc9cb9a05006",
+          "sensitivity_commitment": "sha256:5e20ea74f0acbc7afc9e74241a451300dc4c0e6da5b15715ae2d2f081d00529e",
+          "content_commitment": "hmac-sha256:27cbb364197da64be3ddb2acc2372c955d9bc7977a9ff71103f04f9714eb8698"
+        }
+      },
+      "canonical": "{\"actor_id\":\"local-user\",\"event_id\":\"evt_8e434d0f-8176-4b75-bde7-a47d95822604\",\"memory_addr\":\"mem:29d6366763188072335366b2eeaecb7751f9c579c5e509f84695fab0ad34da9e\",\"metadata\":{\"content_commitment\":\"hmac-sha256:27cbb364197da64be3ddb2acc2372c955d9bc7977a9ff71103f04f9714eb8698\",\"kind_commitment\":\"sha256:a8b88c81f29af414db0ab609d166f773ff3ab407886da44c6f98bc9cb9a05006\",\"memory_id_commitment\":\"sha256:1605cb11c1c704f97a4bcb07a55dc0af632f29a258a8b88665b2587d64b2fdb7\",\"sensitivity_commitment\":\"sha256:5e20ea74f0acbc7afc9e74241a451300dc4c0e6da5b15715ae2d2f081d00529e\"},\"operation\":\"create\",\"policy_id\":\"local-default\",\"schema\":\"enigma.memory_event.v1\",\"sequence\":8,\"subject_id\":\"local-user\",\"tenant_id\":\"local\",\"timestamp\":\"2026-10-13T16:54:38.071Z\"}",
+      "hash": "sha256:14b99abd14357d71238f24a25ce6fd0f9a6b94d9ef29da120604157076904d1e"
+    },
+    {
+      "event": {
+        "schema": "enigma.memory_event.v1",
+        "event_id": "evt_919d94d7-0c00-4202-b98c-53c6382dec49",
+        "operation": "export",
+        "tenant_id": "local",
+        "subject_id": "local-user",
+        "actor_id": "local-user",
+        "timestamp": "2026-10-13T16:54:38.073Z",
+        "sequence": 9,
+        "policy_id": "local-default",
+        "metadata": {
+          "memory_count": 3,
+          "active_count": 3,
+          "tombstone_count": 0
+        }
+      },
+      "canonical": "{\"actor_id\":\"local-user\",\"event_id\":\"evt_919d94d7-0c00-4202-b98c-53c6382dec49\",\"metadata\":{\"active_count\":3,\"memory_count\":3,\"tombstone_count\":0},\"operation\":\"export\",\"policy_id\":\"local-default\",\"schema\":\"enigma.memory_event.v1\",\"sequence\":9,\"subject_id\":\"local-user\",\"tenant_id\":\"local\",\"timestamp\":\"2026-10-13T16:54:38.073Z\"}",
+      "hash": "sha256:fb26cb3cb9f6b9e1243d7c7d9e31c96dae3a1c5b94e31207f510f80bf35042bc"
     }
   ],
   "receipts": [
@@ -476,28 +545,73 @@
         "alg": "Ed25519",
         "value": "mSY38P5TL4aLk6IKyxJ8RuFZm8mPWY8CwYyN_NasVIkjlM_MReF6vl-Y4iLBkuPEcRtiv1O1a_op9dKpOHl_DA"
       }
+    },
+    {
+      "schema": "enigma.receipt.v1",
+      "receipt_id": "rcpt_0fe90c6257a3da4680f4ff5bbc38f164",
+      "event_hash": "sha256:14b99abd14357d71238f24a25ce6fd0f9a6b94d9ef29da120604157076904d1e",
+      "operation": "create",
+      "tenant_id": "local",
+      "subject_id": "local-user",
+      "memory_addr": "mem:29d6366763188072335366b2eeaecb7751f9c579c5e509f84695fab0ad34da9e",
+      "policy_id": "local-default",
+      "sequence": 8,
+      "previous_receipt_hash": "sha256:855a38ee4b543f620c1971b9241e374f711e5ccff24ce8ea0ebca1ca2f53d373",
+      "active_set_root": "sha256:8a79f8fbddb38b4792422637caeee5a5ce1dfaef58c79dc3bbb50019657fc11f",
+      "receipt_log_root": "sha256:efd798e4ceec6b7bcb2060940a71cd675a0029d38bcfaa0461f2e869f6b2990f",
+      "timestamp": "2026-10-13T16:54:38.071Z",
+      "signer": {
+        "key_id": "ed25519:7c10b54c810ddc52c66d6c71da9192a3",
+        "alg": "Ed25519"
+      },
+      "signature": {
+        "alg": "Ed25519",
+        "value": "zvjA7e1vu19XRQZ7k5XsvJvVEEkWm0ZdMSL1wbYvF3XaufFo4fwGNTczQUFedT86JVffd5szDNpXNL29QFxiCg"
+      }
+    },
+    {
+      "schema": "enigma.receipt.v1",
+      "receipt_id": "rcpt_8424e9aab2c503430008955a86d1628d",
+      "event_hash": "sha256:fb26cb3cb9f6b9e1243d7c7d9e31c96dae3a1c5b94e31207f510f80bf35042bc",
+      "operation": "export",
+      "tenant_id": "local",
+      "subject_id": "local-user",
+      "policy_id": "local-default",
+      "sequence": 9,
+      "previous_receipt_hash": "sha256:13c378544a0c258ccc6705e4d63a9e3207bedb5b328e0be976613e6572d6d72c",
+      "active_set_root": "sha256:8a79f8fbddb38b4792422637caeee5a5ce1dfaef58c79dc3bbb50019657fc11f",
+      "receipt_log_root": "sha256:a2657480c6b07501cb90f0fe862cd6aeee07cc6cae74144d2f234ad5ac8e2015",
+      "timestamp": "2026-10-13T16:54:38.073Z",
+      "signer": {
+        "key_id": "ed25519:7c10b54c810ddc52c66d6c71da9192a3",
+        "alg": "Ed25519"
+      },
+      "signature": {
+        "alg": "Ed25519",
+        "value": "GY5Wnq0E4M8oNmZuL2rK8loGktPUiRac7alpWJHW8Fn0iZngroeeOYrpOMZp5OS3C9Ti8M6YKcsSGgbCWMz6CA"
+      }
     }
   ],
   "export_receipt": {
     "schema": "enigma.receipt.v1",
-    "receipt_id": "rcpt_0f914d734b603ad94974d03c537a37b5",
-    "event_hash": "sha256:4b1570601ebf8a1a757bbcbe5f25a1ae180d63a03831d88fc18408f83518a454",
+    "receipt_id": "rcpt_8424e9aab2c503430008955a86d1628d",
+    "event_hash": "sha256:fb26cb3cb9f6b9e1243d7c7d9e31c96dae3a1c5b94e31207f510f80bf35042bc",
     "operation": "export",
     "tenant_id": "local",
     "subject_id": "local-user",
     "policy_id": "local-default",
-    "sequence": 7,
-    "previous_receipt_hash": "sha256:ff4037e1ccd79234d73f1bca336a5c95e69d56980ad2c3b3d7284d1ec910f386",
-    "active_set_root": "sha256:d6c69eaa51d5ddbf8658d6c1fb09a31ce99a72e3b9b5e15aebd0db5bfa16307e",
-    "receipt_log_root": "sha256:9af76ef9ee4ce6f16e0bad665c90f05c83e3a1bc25d84701fa55ec275638e5a7",
-    "timestamp": "2026-10-13T13:35:57.728Z",
+    "sequence": 9,
+    "previous_receipt_hash": "sha256:13c378544a0c258ccc6705e4d63a9e3207bedb5b328e0be976613e6572d6d72c",
+    "active_set_root": "sha256:8a79f8fbddb38b4792422637caeee5a5ce1dfaef58c79dc3bbb50019657fc11f",
+    "receipt_log_root": "sha256:a2657480c6b07501cb90f0fe862cd6aeee07cc6cae74144d2f234ad5ac8e2015",
+    "timestamp": "2026-10-13T16:54:38.073Z",
     "signer": {
       "key_id": "ed25519:7c10b54c810ddc52c66d6c71da9192a3",
       "alg": "Ed25519"
     },
     "signature": {
       "alg": "Ed25519",
-      "value": "mSY38P5TL4aLk6IKyxJ8RuFZm8mPWY8CwYyN_NasVIkjlM_MReF6vl-Y4iLBkuPEcRtiv1O1a_op9dKpOHl_DA"
+      "value": "GY5Wnq0E4M8oNmZuL2rK8loGktPUiRac7alpWJHW8Fn0iZngroeeOYrpOMZp5OS3C9Ti8M6YKcsSGgbCWMz6CA"
     }
   }
 }
