@@ -200,6 +200,8 @@ export function WorkspaceProvider({ children }) {
         return num ? { ...a, assignedNumber: num.number, numberId: num.id } : a;
       });
 
+      if (!api.getToken()) return;
+
       // chisel: live carrier inventory search is deferred to Buy Number modal on-demand
       const [fetchedCalls, fetchedLeads, fetchedCampaigns, fetchedWallet, fetchedCallStats] =
         await Promise.all([

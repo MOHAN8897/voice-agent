@@ -131,8 +131,8 @@ test.describe('Mobile Responsiveness & Viewport Optimization', () => {
   });
 
   test('TalkToMeModal renders properly and closes on mobile', async ({ page }) => {
-    // Click "Hear it first" in Hero
-    const hearBtn = page.locator('button:has-text("Hear it first")').first();
+    // Click "Hear a sample first" in FinalCTA
+    const hearBtn = page.locator('button:has-text("Hear a sample first")').first();
     await expect(hearBtn).toBeVisible();
     await hearBtn.click();
 

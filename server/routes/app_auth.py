@@ -240,6 +240,7 @@ async def auth_refresh(request: Request, response: Response, body: RefreshBody |
     _ensure_saas_db()
     token = refresh_from_request(request, body.refreshToken if body else None)
     if not token:
+        clear_refresh_cookie(response)
         raise HTTPException(status_code=401, detail={"error": {"code": "invalid_refresh", "message": "Invalid refresh token"}})
     try:
         data = await auth_service.refresh(token)
@@ -262,6 +263,7 @@ async def auth_refresh(request: Request, response: Response, body: RefreshBody |
                 status_code=401,
                 detail={"error": {"code": code, "message": "This workspace is no longer active."}},
             )
+        clear_refresh_cookie(response)
         raise HTTPException(status_code=401, detail={"error": {"code": "invalid_refresh", "message": "Invalid refresh token"}})
 
 

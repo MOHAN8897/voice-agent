@@ -560,18 +560,6 @@ export function Hero({
               >
                 <span>{HERO_CONTENT.ctaPrimary}</span>
               </button>
-
-              {/* Secondary CTA: Talk to AI */}
-              <button
-                onClick={onTalkToMe}
-                className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl text-sm font-semibold text-[#0F0E17] bg-white hover:bg-[#F9F8FD] border border-[#E4E2EB] active:scale-[0.98] shadow-xs transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6344E7]"
-              >
-                <div className="w-6 h-6 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB] flex items-center justify-center text-[#6344E7]">
-                  <Mic className="w-3.5 h-3.5" />
-                </div>
-                <span>{HERO_CONTENT.ctaSecondary}</span>
-              </button>
-
             </div>
 
             {/* Value Props / Checkmarks */}

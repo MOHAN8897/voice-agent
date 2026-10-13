@@ -20,7 +20,8 @@ export const NAV_LINKS = [
   { name: 'Capabilities', href: '#capabilities' },
   { name: 'Industries', href: '#industries' },
   { name: 'Pricing', href: '#pricing' },
-  { name: 'FAQ', href: '#faq' },
+  { name: 'Company', href: '#company' },
+  { name: 'Support', href: '#support' },
 ];
 
 export const HERO_CONTENT = {

@@ -21,6 +21,39 @@ export const DEFAULT_WARNING_MS = 2 * 60 * 1000;
 
 /** Set to 0 to turn the client timer off (the server check still applies). */
 const OVERRIDE_KEY = 'voxly_idle_timeout_ms';
+export const LAST_ACTIVITY_KEY = 'voxly_last_activity_at';
+export const SESSION_START_KEY = 'voxly_session_started_at';
+
+export function readStoredActivity() {
+  try {
+    const raw = localStorage.getItem(LAST_ACTIVITY_KEY);
+    if (raw === null) return null;
+    const n = Number(raw);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+export function readStoredSessionStart() {
+  try {
+    const raw = localStorage.getItem(SESSION_START_KEY);
+    if (raw === null) return null;
+    const n = Number(raw);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearStoredActivity() {
+  try {
+    localStorage.removeItem(LAST_ACTIVITY_KEY);
+    localStorage.removeItem(SESSION_START_KEY);
+  } catch {
+    /* storage blocked */
+  }
+}
 
 const ACTIVITY_EVENTS = [
   'pointerdown',
@@ -139,6 +172,7 @@ export function createIdleSessionMonitor(opts = {}) {
   function expire(reason) {
     if (expired || disposed) return;
     expired = true;
+    clearStoredActivity();
     publishIdleWarning(reason);
     emit('expired');
     onExpire(reason);
@@ -175,6 +209,11 @@ export function createIdleSessionMonitor(opts = {}) {
   function noteActivity({ broadcast = true } = {}) {
     const now = Date.now();
     lastActivityAt = now;
+    try {
+      localStorage.setItem(LAST_ACTIVITY_KEY, String(now));
+    } catch {
+      /* storage blocked */
+    }
     if (broadcast && now - lastBroadcastAt > 5000) {
       lastBroadcastAt = now;
       publishActivity();
@@ -192,8 +231,17 @@ export function createIdleSessionMonitor(opts = {}) {
     start() {
       if (enabled || disposed) return;
       enabled = true;
-      lastActivityAt = Date.now();
-      sessionStartedAt = Date.now();
+      const now = Date.now();
+      const storedLast = readStoredActivity();
+      const storedStart = readStoredSessionStart();
+      lastActivityAt = storedLast || now;
+      sessionStartedAt = storedStart || now;
+      try {
+        if (!storedStart) localStorage.setItem(SESSION_START_KEY, String(sessionStartedAt));
+        if (!storedLast) localStorage.setItem(LAST_ACTIVITY_KEY, String(lastActivityAt));
+      } catch {
+        /* storage blocked */
+      }
       expired = false;
       ACTIVITY_EVENTS.forEach((name) => window.addEventListener(name, onActivityEvent, { passive: true }));
       evaluate();
@@ -216,19 +264,39 @@ export function createIdleSessionMonitor(opts = {}) {
     /** Adopt a peer tab's activity timestamp instead of starting idle from zero. */
     syncFromPeer(at) {
       if (!at) return;
-      if (at > lastActivityAt) lastActivityAt = at;
+      if (at > lastActivityAt) {
+        lastActivityAt = at;
+        try {
+          localStorage.setItem(LAST_ACTIVITY_KEY, String(at));
+        } catch {
+          /* storage blocked */
+        }
+      }
       evaluate();
     },
     /** Countdown still running after "Stay signed in": extend the window. */
     extend() {
       expired = false;
-      lastActivityAt = Date.now();
+      const now = Date.now();
+      lastActivityAt = now;
+      try {
+        localStorage.setItem(LAST_ACTIVITY_KEY, String(now));
+      } catch {
+        /* storage blocked */
+      }
       evaluate();
     },
     /** Sign in happened: restart both the idle and the absolute clock. */
     resetSession() {
-      lastActivityAt = Date.now();
-      sessionStartedAt = Date.now();
+      const now = Date.now();
+      lastActivityAt = now;
+      sessionStartedAt = now;
+      try {
+        localStorage.setItem(LAST_ACTIVITY_KEY, String(now));
+        localStorage.setItem(SESSION_START_KEY, String(now));
+      } catch {
+        /* storage blocked */
+      }
       expired = false;
       evaluate();
     },

@@ -60,6 +60,7 @@ from server.routes.web_agent_ws import router as web_agent_ws_router
 from server.routes.app_admin import router as app_admin_router
 from server.routes.integrations import router as integrations_router
 from server.routes.app_tenant_deletion import router as app_tenant_deletion_router
+from server.routes.app_support import router as app_support_router
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from server.utils.errors import AppError
@@ -528,6 +529,7 @@ app.include_router(web_agent_ws_router)
 app.include_router(app_admin_router)
 app.include_router(integrations_router)
 app.include_router(app_tenant_deletion_router)
+app.include_router(app_support_router)
 
 
 @app.get("/api/meta")

@@ -4,7 +4,7 @@ import { Menu, X, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { DEFAULT_CONSOLE_TAB } from '../lib/consoleEntry';
 
-export function Navbar({ onEnterConsole, onWatchDemo, onOpenTour }) {
+export function Navbar({ onEnterConsole, onWatchDemo, onOpenTour, onNavigatePage }) {
   const { isAuthenticated } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -16,6 +16,14 @@ export function Navbar({ onEnterConsole, onWatchDemo, onOpenTour }) {
   }, []);
 
   const openConsole = () => onEnterConsole?.(DEFAULT_CONSOLE_TAB);
+
+  const handleLinkClick = (href) => (e) => {
+    if (onNavigatePage) {
+      e.preventDefault();
+      onNavigatePage(href);
+      setMobileMenuOpen(false);
+    }
+  };
 
   return (
     <header
@@ -30,8 +38,12 @@ export function Navbar({ onEnterConsole, onWatchDemo, onOpenTour }) {
           href="#"
           onClick={(e) => {
             e.preventDefault();
-            window.location.hash = '';
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            if (onNavigatePage) {
+              onNavigatePage('');
+            } else {
+              window.location.hash = '';
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
           }}
           className="flex items-center gap-2.5 group min-h-[44px]"
         >
@@ -58,6 +70,7 @@ export function Navbar({ onEnterConsole, onWatchDemo, onOpenTour }) {
             <a
               key={link.name}
               href={link.href}
+              onClick={handleLinkClick(link.href)}
               className="text-xs font-semibold text-[#524E5E] hover:text-[#0F0E17] transition-colors"
             >
               {link.name}
@@ -99,7 +112,7 @@ export function Navbar({ onEnterConsole, onWatchDemo, onOpenTour }) {
                 key={link.name}
                 href={link.href}
                 data-testid="mobile-nav-link"
-                onClick={() => setMobileMenuOpen(false)}
+                onClick={handleLinkClick(link.href)}
                 className="min-h-[44px] flex items-center px-3 py-2.5 text-sm font-semibold text-[#0F0E17] rounded-xl hover:bg-[#F0EEF6] active:bg-[#E4E2EB] transition-colors"
               >
                 {link.name}

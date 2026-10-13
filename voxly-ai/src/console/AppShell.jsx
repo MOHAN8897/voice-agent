@@ -233,7 +233,34 @@ export function AppShell({ onBackToLanding, onSignOut }) {
               {activeTab === 'integrations' && <IntegrationsModule />}
 
               {activeTab === 'settings' && <SettingsModule />}
-              {activeTab === 'admin' && <AdminModule />}
+              {(activeTab === 'admin' || activeTab.startsWith('admin-')) && (
+                <AdminModule
+                  activeSection={
+                    activeTab === 'admin-telephony'
+                      ? 'telephony'
+                      : activeTab === 'admin-support'
+                      ? 'support'
+                      : activeTab === 'admin-social'
+                      ? 'social'
+                      : activeTab === 'admin-mail'
+                      ? 'mail'
+                      : 'tenants'
+                  }
+                  onSelectSection={(sec) => {
+                    const nextTab =
+                      sec === 'telephony'
+                        ? 'admin-telephony'
+                        : sec === 'support'
+                        ? 'admin-support'
+                        : sec === 'social'
+                        ? 'admin-social'
+                        : sec === 'mail'
+                        ? 'admin-mail'
+                        : 'admin';
+                    handleSelectTab(nextTab);
+                  }}
+                />
+              )}
             </ErrorBoundary>
           </div>
         </main>

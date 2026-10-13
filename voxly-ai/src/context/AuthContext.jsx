@@ -10,9 +10,15 @@ import React, {
 import { authService } from '../services/authService';
 import { api, subscribeSessionPolicy } from '../services/api';
 import { initAuthSessionSync } from '../services/authSessionSync';
-import { createIdleSessionMonitor, DEFAULT_IDLE_TIMEOUT_MS } from '../services/sessionIdle';
+import {
+  createIdleSessionMonitor,
+  DEFAULT_IDLE_TIMEOUT_MS,
+  readStoredActivity,
+  clearStoredActivity,
+} from '../services/sessionIdle';
 import { IdleWarningModal } from '../components/IdleWarningModal';
 import { loadGoogleIdentityScript } from '../utils/loadGoogleIdentity';
+import { syncReticleWithUser } from '../services/reticleGate';
 
 const AuthContext = createContext(null);
 
@@ -83,6 +89,10 @@ export function AuthProvider({ children }) {
   const [idleWarning, setIdleWarning] = useState(null);
   const [signOutReason, setSignOutReason] = useState('');
   const idleRef = useRef(null);
+
+  useEffect(() => {
+    syncReticleWithUser(user);
+  }, [user]);
 
   const adoptSessionPolicy = useCallback((policy) => {
     if (!policy || typeof policy !== 'object') return;
@@ -174,7 +184,21 @@ export function AuthProvider({ children }) {
         }
       }
 
+      const storedLastActivity = readStoredActivity();
       const stored = authService.getSession();
+      const isPrivileged = stored?.isPlatformAdmin;
+      const effectiveIdleLimitMins = isPrivileged ? 15 : (sessionPolicy?.idleTimeoutMinutes || 30);
+      if (storedLastActivity && Date.now() - storedLastActivity >= effectiveIdleLimitMins * 60000) {
+        clearStoredActivity();
+        api.clearToken();
+        authService.clearSession();
+        writeStoredImpersonation(null);
+        setSignOutReason(SIGN_OUT_REASONS.idle);
+        setUser(null);
+        setIsLoading(false);
+        return;
+      }
+
       if (stored && api.getToken()) {
         const withImp = { ...stored, impersonation: stored.impersonation || readStoredImpersonation() };
         setUser(withImp);
@@ -189,7 +213,7 @@ export function AuthProvider({ children }) {
       setIsLoading(false);
     };
     run();
-  }, [refreshSession]);
+  }, [refreshSession, sessionPolicy?.idleTimeoutMinutes]);
 
   // Cross-tab logout / access adoption + proactive refresh on tab focus.
   useEffect(() => {
@@ -242,8 +266,13 @@ export function AuthProvider({ children }) {
       setIdleWarning(null);
       return undefined;
     }
+    const isPlatformAdmin = Boolean(user?.isPlatformAdmin);
+    const configuredIdleMins = sessionPolicy?.idleTimeoutMinutes || DEFAULT_IDLE_TIMEOUT_MS / 60000;
+    // Platform administrators are enforced to maximum 15 minutes of inactivity for SOC2/security hardening
+    const effectiveIdleMins = isPlatformAdmin ? Math.min(configuredIdleMins, 15) : configuredIdleMins;
+
     const monitor = createIdleSessionMonitor({
-      idleTimeoutMinutes: sessionPolicy?.idleTimeoutMinutes || DEFAULT_IDLE_TIMEOUT_MS / 60000,
+      idleTimeoutMinutes: effectiveIdleMins,
       absoluteMaxHours: sessionPolicy?.absoluteMaxHours || 24,
       onState: (state) => {
         if (state.state === 'warning') {
@@ -254,6 +283,7 @@ export function AuthProvider({ children }) {
       },
       onExpire: (reason) => {
         const key = reason === 'session_absolute_max' ? 'absolute_max' : 'idle';
+        clearStoredActivity();
         // Best-effort server logout; the local session is cleared either way because
         // the refresh cookie is dead server-side too.
         authService.signOut().catch(() => {});
@@ -362,8 +392,10 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     try {
+      clearStoredActivity();
       await authService.signOut();
     } finally {
+      clearStoredActivity();
       writeStoredImpersonation(null);
       setSignOutReason('');
       setIdleWarning(null);

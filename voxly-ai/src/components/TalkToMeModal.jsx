@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { X, Mic, Volume2, AlertCircle, ArrowRight, LogIn } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { VOICE_SAMPLES, playVoiceSample, sampleDurationLabel } from '../services/marketingVoice';
@@ -7,40 +7,52 @@ import { voiceAgent } from '../services/voiceAgent';
 /**
  * Live-voice entry point.
  *
- * This modal used to run a fake conversation: the browser's speech recogniser
- * transcribed you, then `voiceAgent.handleUserInput` replied from a hard-coded array
- * with `speechSynthesis` speaking it. Nothing about that was the product, and it asked
- * for microphone permission to do it — a bad trade for a visitor who just arrived.
- *
- * Now: a visitor hears the real voice on real industry lines and can press one button
+ * A visitor hears the real voice on real industry lines and can press one button
  * to start a real live session (which needs an agent, so it asks for a workspace first).
- * The microphone is only requested inside that real session, which already runs the
- * production pipeline.
  */
 export function TalkToMeModal({ isOpen, onClose, onSelectBotState, onStartLive }) {
   const { isAuthenticated } = useAuth();
   const [activeId, setActiveId] = useState(VOICE_SAMPLES[0]?.id ?? null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
-  const [stopRef, setStopRef] = useState(null);
+  const stopPlaybackRef = useRef(null);
+  const wasPlayingRef = useRef(false);
 
   const stop = useCallback(() => {
-    stopRef?.();
-    setStopRef(null);
+    if (stopPlaybackRef.current) {
+      try {
+        stopPlaybackRef.current();
+      } catch {}
+      stopPlaybackRef.current = null;
+    }
     setIsPlaying(false);
     voiceAgent.stopTTS();
-    if (onSelectBotState) onSelectBotState('IDLE');
+    if (wasPlayingRef.current) {
+      wasPlayingRef.current = false;
+      if (onSelectBotState) onSelectBotState('IDLE');
+    }
   }, [onSelectBotState]);
 
   useEffect(() => {
     if (!isOpen) {
-      stop();
+      if (wasPlayingRef.current) {
+        stop();
+      }
       setErrorMessage(null);
     }
-    return undefined;
   }, [isOpen, stop]);
 
-  useEffect(() => () => stop(), [stop]);
+  useEffect(() => {
+    return () => {
+      if (stopPlaybackRef.current) {
+        try {
+          stopPlaybackRef.current();
+        } catch {}
+        stopPlaybackRef.current = null;
+      }
+      voiceAgent.stopTTS();
+    };
+  }, []);
 
   const activeSample = VOICE_SAMPLES.find((s) => s.id === activeId) || VOICE_SAMPLES[0] || null;
 
@@ -51,16 +63,18 @@ export function TalkToMeModal({ isOpen, onClose, onSelectBotState, onStartLive }
     }
     setErrorMessage(null);
     setIsPlaying(true);
+    wasPlayingRef.current = true;
     if (onSelectBotState) onSelectBotState('TALKING');
-    setStopRef(
-      playVoiceSample(activeSample, {
-        onEnd: () => {
-          setStopRef(null);
-          setIsPlaying(false);
+    stopPlaybackRef.current = playVoiceSample(activeSample, {
+      onEnd: () => {
+        stopPlaybackRef.current = null;
+        setIsPlaying(false);
+        if (wasPlayingRef.current) {
+          wasPlayingRef.current = false;
           if (onSelectBotState) onSelectBotState('IDLE');
-        },
-      })
-    );
+        }
+      },
+    });
   }, [activeSample, isPlaying, onSelectBotState, stop]);
 
   const handleStartLive = useCallback(() => {

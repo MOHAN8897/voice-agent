@@ -92,6 +92,10 @@ function RecordingPlayer({ call }) {
   const toggle = async () => {
     const el = audioRef.current;
     if (!el) return;
+    if (!src || !api.getToken()) {
+      showToast('Recording is not available', 'error');
+      return;
+    }
     if (!el.src) {
       setLoading(true);
       el.src = src;
@@ -153,6 +157,10 @@ function RecordingPlayer({ call }) {
         ref={audioRef}
         onTimeUpdate={onTimeUpdate}
         onEnded={() => setPlaying(false)}
+        onError={() => {
+          setLoading(false);
+          setPlaying(false);
+        }}
         preload="none"
         className="hidden"
       />

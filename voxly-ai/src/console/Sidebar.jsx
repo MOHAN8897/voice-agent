@@ -16,7 +16,11 @@ import {
   Plus,
   Building2,
   Shield,
-  X
+  X,
+  Headphones,
+  Radio,
+  Share2,
+  Mail,
 } from 'lucide-react';
 import { useWorkspace } from './context/WorkspaceContext';
 import { useAuth } from '../context/AuthContext';
@@ -113,9 +117,22 @@ export function Sidebar({
         { id: 'billing', label: 'Billing & Usage', icon: CreditCard },
         { id: 'integrations', label: 'Integrations', icon: Blocks },
         { id: 'settings', label: 'Settings', icon: Settings },
-        ...(isPlatformAdmin ? [{ id: 'admin', label: 'Platform admin', icon: Shield }] : []),
       ]
-    }
+    },
+    ...(isPlatformAdmin
+      ? [
+          {
+            group: 'PLATFORM ADMIN',
+            items: [
+              { id: 'admin', label: 'Workspaces & Accounts', icon: Building2 },
+              { id: 'admin-telephony', label: 'Carriers & Lines', icon: Radio },
+              { id: 'admin-support', label: 'Support Tickets Desk', icon: Headphones },
+              { id: 'admin-social', label: 'Social Media & Channels', icon: Share2 },
+              { id: 'admin-mail', label: 'Mail Gateway & SMTP', icon: Mail },
+            ],
+          },
+        ]
+      : []),
   ];
 
   return (

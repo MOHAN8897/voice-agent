@@ -77,7 +77,9 @@ const content = readFileSync(join(SRC, 'data', 'siteContent.js'), 'utf8');
 
 const navMatch = content.match(/export const NAV_LINKS = \[([\s\S]*?)\];/);
 const anchors = navMatch ? [...navMatch[1].matchAll(/href: '#([^']+)'/g)].map((m) => m[1]) : [];
+const STANDALONE_ROUTES = new Set(['company', 'about', 'support', 'contact', 'privacy', 'terms', 'security']);
 for (const anchor of anchors) {
+  if (STANDALONE_ROUTES.has(anchor)) continue;
   const defined = readFileSync(join(SRC, 'App.jsx'), 'utf8').includes(`id="${anchor}"`)
     || componentFiles().some((f) => readFileSync(f, 'utf8').includes(`id="${anchor}"`));
   if (!defined) failures.push(`nav link "#${anchor}" has no matching section id`);

@@ -40,7 +40,7 @@ def test_dynamic_redirect_uri_for_dialtact():
     from server.services.saas.google_oauth_urls import google_oauth_redirect_uri
 
     assert google_oauth_redirect_uri("https://dialtact.com") == "https://dialtact.com/api/auth/google/callback"
-    assert google_oauth_redirect_uri("https://www.dialtact.com") == "https://www.dialtact.com/api/auth/google/callback"
+    assert google_oauth_redirect_uri("https://www.dialtact.com") == "https://dialtact.com/api/auth/google/callback"
     assert google_oauth_redirect_uri("https://app-dev.dialtact.com") == "https://app-dev.dialtact.com/api/auth/google/callback"
     assert google_oauth_redirect_uri("http://localhost:5173") == "http://localhost:5173/api/auth/google/callback"
     # Malicious or untrusted origins fall back safely

@@ -4,7 +4,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, JSON, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -383,4 +383,68 @@ class BillingRateVersion(Base):
     reason: Mapped[str] = mapped_column(Text, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+
+class CustomerSupportConfig(Base):
+    """Global customer support contact channels, social media links, and SLAs, configurable from admin panel."""
+
+    __tablename__ = "customer_support_configs"
+
+    config_key: Mapped[str] = mapped_column(String(64), primary_key=True, default="global")
+    support_email: Mapped[str] = mapped_column(String(320), nullable=False, default="support@dialtact.com")
+    support_phone: Mapped[str | None] = mapped_column(String(32), nullable=True, default=None)
+    business_hours: Mapped[str] = mapped_column(String(128), nullable=False, default="Mon - Fri: 9:00 AM - 6:00 PM EST")
+    sla_response_time: Mapped[str] = mapped_column(String(128), nullable=False, default="Within 2 hours for Priority, 24 hours Standard")
+    emergency_hotline: Mapped[str | None] = mapped_column(String(32), nullable=True, default=None)
+    auto_reply_message: Mapped[str | None] = mapped_column(Text, nullable=True, default="Thank you for contacting Dialtact. A specialist has received your inquiry and will follow up shortly.")
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    # Social Media Links (Configured via backend Admin Panel)
+    twitter_url: Mapped[str | None] = mapped_column(String(512), nullable=True, default="https://x.com/dialtact")
+    linkedin_url: Mapped[str | None] = mapped_column(String(512), nullable=True, default="https://linkedin.com/company/dialtact")
+    github_url: Mapped[str | None] = mapped_column(String(512), nullable=True, default="https://github.com/dialtact")
+    youtube_url: Mapped[str | None] = mapped_column(String(512), nullable=True, default="https://youtube.com/@dialtact")
+    discord_url: Mapped[str | None] = mapped_column(String(512), nullable=True, default="https://discord.gg/dialtact")
+
+    # Mail / SMTP Gateway Settings (Configured via backend Admin Panel)
+    smtp_host: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    smtp_port: Mapped[int | None] = mapped_column(Integer, nullable=True, default=587)
+    smtp_username: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    smtp_password: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    smtp_use_tls: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    sender_email: Mapped[str | None] = mapped_column(String(320), nullable=True, default="support@dialtact.com")
+    sender_name: Mapped[str | None] = mapped_column(String(128), nullable=True, default="Dialtact Support Desk")
+    notify_customer_on_ticket: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    notify_admin_on_ticket: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    admin_alert_email: Mapped[str | None] = mapped_column(String(320), nullable=True, default="support@dialtact.com")
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+
+class SupportInquiry(Base):
+    """Customer support inquiries and tickets submitted via Contact Us page and tenant console."""
+
+    __tablename__ = "support_inquiries"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    ticket_number: Mapped[str] = mapped_column(String(32), nullable=False, unique=True, index=True)
+    tenant_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True, index=True)
+    full_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    email: Mapped[str] = mapped_column(String(320), nullable=False, index=True)
+    phone: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    company: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    category: Mapped[str] = mapped_column(String(64), nullable=False, default="technical_support")
+    priority: Mapped[str] = mapped_column(String(32), nullable=False, default="normal")
+    subject: Mapped[str] = mapped_column(String(255), nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="new", index=True)
+    assigned_to: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    admin_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    resolution_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    customer_replies: Mapped[list | None] = mapped_column(JSON, default=list)
+    tags: Mapped[list | None] = mapped_column(JSON, default=list)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, index=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
 

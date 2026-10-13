@@ -137,7 +137,7 @@ def new_oauth_state(return_to: str | None = None) -> str:
 
 
 def consume_oauth_state(state: str | None) -> dict[str, Any] | None:
-    """Validate + pop OAuth state. Returns {"return_to": origin|None} or None if invalid."""
+    """Validate + pop OAuth state. Returns {"return_to": origin|None, "redirect_uri": uri|None} or None if invalid."""
     if not state:
         return None
     entry = _oauth_states.pop(state, None)
@@ -147,10 +147,13 @@ def consume_oauth_state(state: str | None) -> dict[str, Any] | None:
     if isinstance(entry, (int, float)):
         if time.time() - float(entry) > _OAUTH_STATE_TTL_SEC:
             return None
-        return {"return_to": None}
+        return {"return_to": None, "redirect_uri": None}
     if time.time() - float(entry.get("at", 0)) > _OAUTH_STATE_TTL_SEC:
         return None
-    return {"return_to": entry.get("return_to")}
+    return {
+        "return_to": entry.get("return_to"),
+        "redirect_uri": entry.get("redirect_uri"),
+    }
 
 
 def create_auth_handoff(payload: dict[str, Any]) -> str:

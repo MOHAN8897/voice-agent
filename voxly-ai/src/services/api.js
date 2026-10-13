@@ -281,8 +281,8 @@ export const api = {
   _logoutOn401: true,
   _logoutTimer: null,
 
-  _scheduleSessionLogout() {
-    if (this._logoutOn401 === false) return;
+  _scheduleSessionLogout(force = false) {
+    if (!force && this._logoutOn401 === false) return;
     if (this._logoutTimer) return;
     this._logoutTimer = setTimeout(() => {
       this._logoutTimer = null;
@@ -524,7 +524,7 @@ export const api = {
           refreshOk,
           quietLogout: this._logoutOn401 === false,
         });
-        if (refreshDead) this._scheduleSessionLogout();
+        if (refreshDead) this._scheduleSessionLogout(triedRefresh && !refreshOk);
         throw e;
       };
       if (backendUrl && !allowMock && !isAuthRoute) fail();
@@ -1250,6 +1250,51 @@ export const api = {
         from_e164: fromE164,
         provider,
       });
+    },
+    async getSupportConfig() {
+      const data = await api.request('GET', '/api/admin/support/config');
+      return data.config || {};
+    },
+    async updateSupportConfig(config) {
+      const data = await api.request('PUT', '/api/admin/support/config', config);
+      return data.config || {};
+    },
+    async testSmtpConnection(settings) {
+      return await api.request('POST', '/api/admin/support/smtp/test', settings);
+    },
+    async listSupportInquiries(filters = {}) {
+      const params = new URLSearchParams();
+      if (typeof filters === 'string') {
+        if (filters && filters !== 'all') params.set('status', filters);
+      } else if (filters && typeof filters === 'object') {
+        if (filters.status && filters.status !== 'all') params.set('status', filters.status);
+        if (filters.priority && filters.priority !== 'all') params.set('priority', filters.priority);
+        if (filters.category && filters.category !== 'all') params.set('category', filters.category);
+        if (filters.search) params.set('search', filters.search);
+        if (filters.limit) params.set('limit', String(filters.limit));
+        if (filters.offset) params.set('offset', String(filters.offset));
+      }
+      const qs = params.toString() ? `?${params.toString()}` : '';
+      const data = await api.request('GET', `/api/admin/support/inquiries${qs}`);
+      return data.inquiries || [];
+    },
+    async getSupportInquiry(inquiryId) {
+      const data = await api.request('GET', `/api/admin/support/inquiries/${inquiryId}`);
+      return data.inquiry || null;
+    },
+    async updateSupportInquiry(inquiryId, updates) {
+      const data = await api.request('PATCH', `/api/admin/support/inquiries/${inquiryId}`, updates);
+      return data.inquiry || {};
+    },
+  },
+
+  support: {
+    async getConfig() {
+      const data = await api.request('GET', '/api/support/config');
+      return data.config || {};
+    },
+    async submitInquiry(payload) {
+      return await api.request('POST', '/api/support/contact', payload);
     },
   },
 

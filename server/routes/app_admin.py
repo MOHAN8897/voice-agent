@@ -760,3 +760,144 @@ async def admin_telephony_test_call(
                 detail={"error": {"code": "carrier_call_failed", "message": str(exc)[:300]}},
             )
 
+
+# -----------------------------------------------------------------------------
+# Customer Support Flow & Inquiry Management (Platform Admin)
+# -----------------------------------------------------------------------------
+
+class AdminSupportConfigBody(BaseModel):
+    supportEmail: str | None = None
+    businessHours: str | None = None
+    slaResponseTime: str | None = None
+    autoReplyMessage: str | None = None
+    isActive: bool | None = None
+    twitterUrl: str | None = None
+    linkedinUrl: str | None = None
+    githubUrl: str | None = None
+    youtubeUrl: str | None = None
+    discordUrl: str | None = None
+    smtpHost: str | None = None
+    smtpPort: int | None = None
+    smtpUsername: str | None = None
+    smtpPassword: str | None = None
+    smtpUseTls: bool | None = None
+    senderEmail: str | None = None
+    senderName: str | None = None
+    notifyCustomerOnTicket: bool | None = None
+    notifyAdminOnTicket: bool | None = None
+    adminAlertEmail: str | None = None
+
+
+class AdminTestSmtpBody(BaseModel):
+    smtpHost: str | None = None
+    smtpPort: int | None = 587
+    smtpUsername: str | None = None
+    smtpPassword: str | None = None
+    smtpUseTls: bool | None = True
+
+
+class AdminUpdateInquiryBody(BaseModel):
+    status: str | None = None
+    assignedTo: str | None = None
+    adminNotes: str | None = None
+    resolutionNotes: str | None = None
+    replyMessage: str | None = None
+    tags: list[str] | None = None
+
+
+@router.get("/api/admin/support/config")
+async def admin_get_support_config(principal: SubscriberPrincipal = Depends(require_subscriber_jwt)):
+    _require_admin(principal)
+    from server.services.saas.customer_support_service import get_support_config
+    config = await get_support_config(for_admin=True)
+    return {"ok": True, "config": config}
+
+
+@router.put("/api/admin/support/config")
+async def admin_update_support_config(body: AdminSupportConfigBody, principal: SubscriberPrincipal = Depends(require_subscriber_jwt)):
+    _require_admin(principal)
+    from server.services.saas.customer_support_service import update_support_config
+    updates = body.model_dump(exclude_unset=True)
+    updated = await update_support_config(updates)
+    return {"ok": True, "config": updated}
+
+
+@router.post("/api/admin/support/smtp/test")
+async def admin_test_smtp_connection(body: AdminTestSmtpBody, principal: SubscriberPrincipal = Depends(require_subscriber_jwt)):
+    _require_admin(principal)
+    from server.services.saas.customer_support_service import test_smtp_configuration
+    res = await test_smtp_configuration(body.model_dump(exclude_unset=True))
+    if not res.get("success"):
+        raise HTTPException(status_code=400, detail={"error": {"code": "smtp_test_failed", "message": res.get("error")}})
+    return {"ok": True, "message": res.get("message")}
+
+
+@router.get("/api/admin/support/inquiries")
+async def admin_list_support_inquiries(
+    status: str | None = None,
+    priority: str | None = None,
+    category: str | None = None,
+    search: str | None = None,
+    limit: int = 50,
+    offset: int = 0,
+    principal: SubscriberPrincipal = Depends(require_subscriber_jwt),
+):
+    _require_admin(principal)
+    from server.services.saas.customer_support_service import list_support_inquiries
+    inquiries = await list_support_inquiries(
+        status=status,
+        priority=priority,
+        category=category,
+        search=search,
+        limit=limit,
+        offset=offset,
+    )
+    return {"ok": True, "inquiries": inquiries}
+
+
+@router.get("/api/admin/support/inquiries/{inquiry_id}")
+async def admin_get_support_inquiry(
+    inquiry_id: str,
+    principal: SubscriberPrincipal = Depends(require_subscriber_jwt),
+):
+    _require_admin(principal)
+    from server.services.saas.customer_support_service import get_support_inquiry_detail
+    try:
+        inq_uuid = uuid.UUID(inquiry_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail={"error": {"code": "invalid_id", "message": "Invalid inquiry ID"}})
+    detail = await get_support_inquiry_detail(inq_uuid)
+    if not detail:
+        raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Inquiry not found"}})
+    return {"ok": True, "inquiry": detail}
+
+
+@router.patch("/api/admin/support/inquiries/{inquiry_id}")
+async def admin_update_support_inquiry(
+    inquiry_id: str,
+    body: AdminUpdateInquiryBody,
+    principal: SubscriberPrincipal = Depends(require_subscriber_jwt),
+):
+    _require_admin(principal)
+    from server.services.saas.customer_support_service import update_support_inquiry
+    try:
+        inq_uuid = uuid.UUID(inquiry_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail={"error": {"code": "invalid_id", "message": "Invalid inquiry ID"}})
+    try:
+        updated = await update_support_inquiry(
+            inquiry_id=inq_uuid,
+            status=body.status,
+            assigned_to=body.assignedTo,
+            admin_notes=body.adminNotes,
+            resolution_notes=body.resolutionNotes,
+            reply_message=body.replyMessage,
+            reply_author=principal.email or "Support Desk",
+            tags=body.tags,
+        )
+        return {"ok": True, "inquiry": updated}
+    except ValueError as err:
+        raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": str(err)}})
+
+
+

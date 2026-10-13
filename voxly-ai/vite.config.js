@@ -132,6 +132,7 @@ export default defineConfig({
           reticle({
             sourceMapping: false,
             allowNonLocalhost: true,
+            inject: false,
           }),
         ]
       : []),
