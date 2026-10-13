@@ -13,6 +13,10 @@ import {
   LayoutDashboard,
   History,
   Settings,
+  Eye,
+  EyeOff,
+  Sparkles,
+  ChevronDown,
 } from 'lucide-react';
 import { AgentTestCallPanel } from './agent-workspace/AgentTestCallPanel';
 import { SolidCard } from '../ui/SolidCard';
@@ -29,6 +33,11 @@ import {
   parseStudioFieldsFromSections,
   parseVoiceConfigFromSections,
 } from '../../lib/voiceStack';
+import {
+  OBJECTION_PRESETS,
+  SAMPLE_LEADS,
+  renderScriptPreview,
+} from '../../lib/studioScriptHelpers';
 import { formatPhoneVoiceLabel, groupVoicesByTier } from '../../lib/voiceDisplay';
 import { loadAgentBrain } from '../../services/agentBrain';
 import { api } from '../../services/api';
@@ -242,6 +251,8 @@ function formFromAgent(agent) {
   };
 }
 
+export { OBJECTION_PRESETS, SAMPLE_LEADS, renderScriptPreview };
+
 export function AgentStudioModule({
   onNavigate,
   onOpenBuyNumber,
@@ -295,6 +306,10 @@ export function AgentStudioModule({
   const [brainLoadError, setBrainLoadError] = useState(null);
   const [brainLoading, setBrainLoading] = useState(false);
   const [variablePickerOpen, setVariablePickerOpen] = useState(false);
+  const [useFallbackSyntax, setUseFallbackSyntax] = useState(true);
+  const [scriptPreviewMode, setScriptPreviewMode] = useState(false);
+  const [sampleLeadIdx, setSampleLeadIdx] = useState(0);
+  const scriptTextareaRef = useRef(null);
 
   const [formData, setFormData] = useState(() => formFromAgent(selectedAgent));
 
@@ -304,10 +319,27 @@ export function AgentStudioModule({
   const settingsDiscardRef = useRef(null);
 
   const insertVariable = (token) => {
-    setFormData((prev) => ({
-      ...prev,
-      script: prev.script ? `${prev.script} ${token}` : token,
-    }));
+    const el = scriptTextareaRef.current;
+    if (el) {
+      const start = el.selectionStart ?? el.value.length;
+      const end = el.selectionEnd ?? el.value.length;
+      const current = el.value || '';
+      const nextScript = current.substring(0, start) + token + current.substring(end);
+      handleScriptChange(nextScript);
+      requestAnimationFrame(() => {
+        if (el) {
+          el.focus();
+          const newPos = start + token.length;
+          el.setSelectionRange(newPos, newPos);
+        }
+      });
+    } else {
+      setFormData((prev) => {
+        const next = prev.script ? `${prev.script} ${token}` : token;
+        handleScriptChange(next);
+        return { ...prev, script: next };
+      });
+    }
   };
 
   // Universal synchronization between "Greeting the caller hears" and Calling script & telephony routing
@@ -471,6 +503,9 @@ export function AgentStudioModule({
           ...base,
           script: initialScript,
           greeting: initialGreeting,
+          objectionRules: studio.objectionRules?.length
+            ? studio.objectionRules
+            : base.objectionRules,
           variableDefinitions: studio.variableDefinitions?.length
             ? studio.variableDefinitions
             : base.variableDefinitions,
@@ -560,13 +595,23 @@ export function AgentStudioModule({
     }));
   };
 
-  const handleAddObjection = () => {
+  const handleAddObjection = (preset = null) => {
+    const newRule = preset
+      ? {
+          category: preset.category || 'custom',
+          trigger: preset.trigger || '',
+          response: preset.response || '',
+          action: preset.action || 'continue_script',
+        }
+      : {
+          category: 'custom',
+          trigger: 'Customer concern here...',
+          response: 'AI response script here...',
+          action: 'continue_script',
+        };
     setFormData((prev) => ({
       ...prev,
-      objectionRules: [
-        ...prev.objectionRules,
-        { trigger: 'Customer concern here...', response: 'AI response script here...' }
-      ]
+      objectionRules: [...(prev.objectionRules || []), newRule],
     }));
   };
 
@@ -918,89 +963,215 @@ export function AgentStudioModule({
                 )}
               </div>
 
-              <div className="relative">
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setVariablePickerOpen(!variablePickerOpen)}
-                  className="px-2.5 py-1.5 rounded-lg border border-[#E4E2EB] bg-[#FAF9FD] hover:bg-[#F0EEF6] text-xs font-semibold text-[#6344E7] flex items-center gap-1.5 shadow-2xs transition-colors"
-                  data-testid="insert-variable-btn"
+                  onClick={() => setScriptPreviewMode(!scriptPreviewMode)}
+                  className={`px-2.5 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-colors ${
+                    scriptPreviewMode
+                      ? 'border-[#6344E7] bg-[#EEF2FF] text-[#4338CA]'
+                      : 'border-[#E4E2EB] bg-[#FAF9FD] hover:bg-[#F0EEF6] text-[#524E5E]'
+                  }`}
+                  data-testid="preview-script-toggle"
                 >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Insert variable +</span>
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>{scriptPreviewMode ? 'Edit Script' : 'Preview with Lead'}</span>
                 </button>
 
-                {variablePickerOpen && (
-                  <div className="absolute right-0 top-full mt-1.5 w-64 bg-white border border-[#E4E2EB] rounded-xl shadow-xl z-30 p-2 text-xs space-y-2">
-                    <div>
-                      <span className="text-[10px] font-bold uppercase text-[#8C879A] px-2 block mb-1">
-                        Contact Personalization
-                      </span>
-                      <div className="space-y-0.5">
-                        {[
-                          { label: 'First Name', token: '{{contact.first_name}}' },
-                          { label: 'Last Name', token: '{{contact.last_name}}' },
-                          { label: 'Full Name', token: '{{contact.full_name}}' },
-                          { label: 'Phone', token: '{{contact.phone}}' },
-                          { label: 'Email', token: '{{contact.email}}' },
-                          { label: 'Company', token: '{{contact.company}}' },
-                          { label: 'City', token: '{{contact.city}}' },
-                          { label: 'State', token: '{{contact.state}}' },
-                          { label: 'Country', token: '{{contact.country}}' },
-                          { label: 'Notes', token: '{{contact.notes}}' },
-                        ].map((v) => (
-                          <button
-                            key={v.token}
-                            type="button"
-                            onClick={() => {
-                              insertVariable(v.token);
-                              setVariablePickerOpen(false);
-                            }}
-                            className="w-full text-left px-2 py-1 rounded hover:bg-[#FAF9FD] flex items-center justify-between text-[#0F0E17]"
-                          >
-                            <span>{v.label}</span>
-                            <span className="text-[10px] font-mono text-[#6344E7]">{v.token}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                {!scriptPreviewMode && (
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setVariablePickerOpen(!variablePickerOpen)}
+                      className="px-2.5 py-1.5 rounded-lg border border-[#E4E2EB] bg-[#FAF9FD] hover:bg-[#F0EEF6] text-xs font-semibold text-[#6344E7] flex items-center gap-1.5 shadow-2xs transition-colors"
+                      data-testid="insert-variable-btn"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Insert variable +</span>
+                    </button>
 
-                    <div className="border-t border-[#E4E2EB] pt-1.5">
-                      <span className="text-[10px] font-bold uppercase text-[#8C879A] px-2 block mb-1">
-                        Custom Fields
-                      </span>
-                      <div className="space-y-0.5">
-                        {[
-                          { label: 'Product', token: '{{contact.custom_fields.product}}' },
-                          { label: 'Appointment Date', token: '{{contact.custom_fields.appointment_date}}' },
-                          { label: 'Balance', token: '{{contact.custom_fields.balance}}' },
-                          { label: 'Lead Type', token: '{{contact.custom_fields.lead_type}}' },
-                        ].map((v) => (
-                          <button
-                            key={v.token}
-                            type="button"
-                            onClick={() => {
-                              insertVariable(v.token);
-                              setVariablePickerOpen(false);
-                            }}
-                            className="w-full text-left px-2 py-1 rounded hover:bg-[#FAF9FD] flex items-center justify-between text-[#0F0E17]"
-                          >
-                            <span>{v.label}</span>
-                            <span className="text-[10px] font-mono text-[#6344E7]">{v.token}</span>
-                          </button>
-                        ))}
+                    {variablePickerOpen && (
+                      <div className="absolute right-0 top-full mt-1.5 w-72 bg-white border border-[#E4E2EB] rounded-xl shadow-xl z-30 p-2.5 text-xs space-y-2.5">
+                        {/* Fallback Syntax Toggle */}
+                        <label className="flex items-center justify-between p-2 bg-[#F5F3FF] rounded-lg border border-[#DDD6FE] cursor-pointer select-none">
+                          <div className="flex flex-col">
+                            <span className="text-[10px] font-bold text-[#5B21B6]">Include Fallback Defaults</span>
+                            <span className="text-[9px] text-[#6B7280]">e.g. {'{{contact.first_name | there}}'}</span>
+                          </div>
+                          <input
+                            type="checkbox"
+                            checked={useFallbackSyntax}
+                            onChange={(e) => setUseFallbackSyntax(e.target.checked)}
+                            className="rounded text-[#6344E7] focus:ring-[#6344E7] cursor-pointer"
+                            data-testid="toggle-fallback-syntax"
+                          />
+                        </label>
+
+                        {/* Contact Personalization */}
+                        <div>
+                          <span className="text-[10px] font-bold uppercase text-[#8C879A] px-1 block mb-1">
+                            Contact Personalization
+                          </span>
+                          <div className="space-y-0.5 max-h-40 overflow-y-auto pr-1">
+                            {[
+                              { label: 'First Name', token: useFallbackSyntax ? '{{contact.first_name | there}}' : '{{contact.first_name}}' },
+                              { label: 'Last Name', token: '{{contact.last_name}}' },
+                              { label: 'Full Name', token: useFallbackSyntax ? '{{contact.full_name | customer}}' : '{{contact.full_name}}' },
+                              { label: 'Company', token: useFallbackSyntax ? '{{contact.company | your company}}' : '{{contact.company}}' },
+                              { label: 'City', token: useFallbackSyntax ? '{{contact.city | your area}}' : '{{contact.city}}' },
+                              { label: 'State', token: '{{contact.state}}' },
+                              { label: 'Country', token: '{{contact.country}}' },
+                              { label: 'Phone', token: '{{contact.phone}}' },
+                              { label: 'Email', token: '{{contact.email}}' },
+                              { label: 'Notes', token: '{{contact.notes}}' },
+                            ].map((v) => (
+                              <button
+                                key={v.token + v.label}
+                                type="button"
+                                onClick={() => {
+                                  insertVariable(v.token);
+                                  setVariablePickerOpen(false);
+                                }}
+                                className="w-full text-left px-2 py-1 rounded hover:bg-[#FAF9FD] flex items-center justify-between text-[#0F0E17] group"
+                                data-testid={`insert-token-${v.label.toLowerCase().replace(/\s+/g, '-')}`}
+                              >
+                                <span className="text-[11px]">{v.label}</span>
+                                <span className="text-[9px] font-mono text-[#6344E7] group-hover:underline truncate max-w-[140px] text-right">
+                                  {v.token}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Dynamic Time & System Context */}
+                        <div className="border-t border-[#E4E2EB] pt-1.5">
+                          <span className="text-[10px] font-bold uppercase text-[#8C879A] px-1 block mb-1">
+                            Dynamic Time & System Context
+                          </span>
+                          <div className="space-y-0.5">
+                            {[
+                              { label: 'Time of Day', token: '{{system.time_of_day}}' },
+                              { label: 'Day of Week', token: '{{system.day_of_week}}' },
+                              { label: 'Current Date', token: '{{system.date}}' },
+                            ].map((v) => (
+                              <button
+                                key={v.token}
+                                type="button"
+                                onClick={() => {
+                                  insertVariable(v.token);
+                                  setVariablePickerOpen(false);
+                                }}
+                                className="w-full text-left px-2 py-1 rounded hover:bg-[#FAF9FD] flex items-center justify-between text-[#0F0E17] group"
+                                data-testid={`insert-token-system-${v.label.toLowerCase().replace(/\s+/g, '-')}`}
+                              >
+                                <span className="text-[11px]">{v.label}</span>
+                                <span className="text-[9px] font-mono text-[#6344E7] group-hover:underline">{v.token}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Custom Fields */}
+                        <div className="border-t border-[#E4E2EB] pt-1.5">
+                          <span className="text-[10px] font-bold uppercase text-[#8C879A] px-1 block mb-1">
+                            Custom Fields
+                          </span>
+                          <div className="space-y-0.5">
+                            {[
+                              { label: 'Product', token: useFallbackSyntax ? '{{contact.custom_fields.product | our service}}' : '{{contact.custom_fields.product}}' },
+                              { label: 'Appointment Date', token: useFallbackSyntax ? '{{contact.custom_fields.appointment_date | scheduled time}}' : '{{contact.custom_fields.appointment_date}}' },
+                              { label: 'Balance', token: '{{contact.custom_fields.balance}}' },
+                              { label: 'Lead Type', token: useFallbackSyntax ? '{{contact.custom_fields.lead_type | general}}' : '{{contact.custom_fields.lead_type}}' },
+                            ].map((v) => (
+                              <button
+                                key={v.token + v.label}
+                                type="button"
+                                onClick={() => {
+                                  insertVariable(v.token);
+                                  setVariablePickerOpen(false);
+                                }}
+                                className="w-full text-left px-2 py-1 rounded hover:bg-[#FAF9FD] flex items-center justify-between text-[#0F0E17] group"
+                                data-testid={`insert-token-${v.label.toLowerCase().replace(/\s+/g, '-')}`}
+                              >
+                                <span className="text-[11px]">{v.label}</span>
+                                <span className="text-[9px] font-mono text-[#6344E7] group-hover:underline truncate max-w-[130px] text-right">
+                                  {v.token}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 )}
               </div>
             </div>
 
-            <textarea
-              rows={10}
-              value={formData.script}
-              onChange={(e) => handleScriptChange(e.target.value)}
-              className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl p-4 text-xs text-[#0F0E17] font-mono leading-relaxed focus:outline-none focus:border-[#6344E7] transition-colors"
-            />
+            {scriptPreviewMode ? (
+              <div className="space-y-3" data-testid="script-preview-panel">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-bold text-[#0F0E17]">Sample Lead:</span>
+                    <div className="flex gap-1.5">
+                      {SAMPLE_LEADS.map((lead, idx) => (
+                        <button
+                          key={lead.id}
+                          type="button"
+                          onClick={() => setSampleLeadIdx(idx)}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                            sampleLeadIdx === idx
+                              ? 'bg-[#6344E7] text-white shadow-xs'
+                              : 'bg-white text-[#524E5E] border border-[#E4E2EB] hover:bg-[#F5F3FF]'
+                          }`}
+                          data-testid={`select-sample-lead-${idx}`}
+                        >
+                          <span>{lead.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 self-start sm:self-auto">
+                    {SAMPLE_LEADS[sampleLeadIdx].badge}
+                  </span>
+                </div>
+
+                <div className="relative">
+                  <div className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#EDE9FE] text-[#6344E7]">
+                    Live Telephony Prompt View
+                  </div>
+                  <div className="w-full min-h-[180px] bg-[#0F0E17] text-[#F3F4F6] border border-[#2E2B36] rounded-xl p-4 text-xs font-mono leading-relaxed whitespace-pre-wrap select-text">
+                    {renderScriptPreview(formData.script, SAMPLE_LEADS[sampleLeadIdx].contact) || (
+                      <span className="text-[#6B7280] italic">No script text to preview. Switch back to edit and enter your script.</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-[11px] text-[#524E5E] bg-[#F8FAFC] p-2.5 rounded-lg border border-[#E2E8F0]">
+                  <span className="flex items-center gap-1 text-[#059669] font-medium">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Dynamic lead variable tokens & fallback defaults evaluated in real time</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setScriptPreviewMode(false)}
+                    className="font-semibold text-[#6344E7] hover:underline"
+                  >
+                    Back to script editor
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <textarea
+                ref={scriptTextareaRef}
+                rows={10}
+                value={formData.script}
+                onChange={(e) => handleScriptChange(e.target.value)}
+                className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl p-4 text-xs text-[#0F0E17] font-mono leading-relaxed focus:outline-none focus:border-[#6344E7] transition-colors"
+                data-testid="script-textarea"
+              />
+            )}
 
             {/* Only show what is real. Token counts and latency are internal
                 engineering metrics; the server does not report them here, so
@@ -1023,71 +1194,152 @@ export function AgentStudioModule({
 
           {/* Objection Handling Rules */}
           <SolidCard>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
               <div>
-                <h3 className="text-xs font-bold text-[#0F0E17]">Objection Handling Rules</h3>
-                <p className="text-[11px] text-[#524E5E]">Deterministic responses triggered when customer raises specific hesitations.</p>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xs font-bold text-[#0F0E17]">Objection Handling Rules</h3>
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#FAF5FF] text-[#7E22CE] border border-[#F3E8FF]">
+                    Deterministic Conversational Pivots
+                  </span>
+                </div>
+                <p className="text-[11px] text-[#524E5E] mt-0.5">
+                  Pre-configured objection handling with "Acknowledge & Bridge" responses and behavioral action outcomes.
+                </p>
               </div>
               <button
                 type="button"
-                onClick={handleAddObjection}
-                className="text-xs font-semibold text-[#6344E7] hover:text-[#5034CE] flex items-center gap-1"
+                onClick={() => handleAddObjection()}
+                className="text-xs font-semibold text-[#6344E7] hover:text-[#5034CE] flex items-center gap-1 self-start sm:self-auto shrink-0"
+                data-testid="add-objection-btn"
               >
                 <Plus className="w-3 h-3" />
-                <span>Add Objection Rule</span>
+                <span>Add Custom Rule</span>
               </button>
             </div>
 
-            <div className="space-y-3">
-              {/* Defensive: a malformed form must degrade to an empty list, not
-                  crash the whole agent workspace with an unhandled TypeError. */}
-              {(formData.objectionRules || []).map((rule, idx) => (
-                <div
-                  key={idx}
-                  className="p-3 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] grid grid-cols-1 sm:grid-cols-2 gap-3 relative group"
-                >
-                  <div>
-                    <span className="text-[10px] text-[#8C879A] uppercase font-bold block mb-1">
-                      If Caller Mentions / Asks:
-                    </span>
-                    <input
-                      type="text"
-                      value={rule.trigger}
-                      onChange={(e) => {
-                        const next = [...formData.objectionRules];
-                        next[idx].trigger = e.target.value;
-                        setFormData({ ...formData, objectionRules: next });
-                      }}
-                      className="w-full bg-white border border-[#E4E2EB] rounded-lg px-2.5 py-1 text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
-                    />
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] text-[#8C879A] uppercase font-bold block mb-1">
-                      Agent Response Script:
-                    </span>
-                    <input
-                      type="text"
-                      value={rule.response}
-                      onChange={(e) => {
-                        const next = [...formData.objectionRules];
-                        next[idx].response = e.target.value;
-                        setFormData({ ...formData, objectionRules: next });
-                      }}
-                      className="w-full bg-white border border-[#E4E2EB] rounded-lg px-2.5 py-1 text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
-                    />
-                  </div>
-
+            {/* Quick-add industry standard templates bar */}
+            <div className="mb-4 p-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
+              <span className="text-[10px] font-bold uppercase text-[#8C879A] block mb-1.5">
+                Quick-Add Industry Standard Templates:
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {OBJECTION_PRESETS.map((preset) => (
                   <button
+                    key={preset.id}
                     type="button"
-                    onClick={() => handleRemoveObjection(idx)}
-                    className="absolute top-2 right-2 p-1 text-[#DC2626] opacity-0 group-hover:opacity-100 transition-opacity"
-                    title="Remove rule"
+                    onClick={() => handleAddObjection(preset)}
+                    className="px-2.5 py-1 rounded-lg text-xs font-medium border border-[#E4E2EB] bg-white hover:bg-[#F5F3FF] hover:border-[#DDD6FE] text-[#2E2B36] hover:text-[#6344E7] transition-all flex items-center gap-1 shadow-2xs"
+                    data-testid={`preset-objection-${preset.id}`}
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Plus className="w-3 h-3 text-[#6344E7]" />
+                    <span>{preset.label}</span>
                   </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Rules list */}
+            <div className="space-y-3">
+              {(formData.objectionRules || []).length === 0 ? (
+                <div className="p-4 rounded-xl border border-dashed border-[#D2CEE0] text-center bg-[#FAF9FD]">
+                  <p className="text-xs text-[#524E5E]">No objection rules configured yet.</p>
+                  <p className="text-[11px] text-[#8C879A] mt-1">
+                    Click any quick-add template above or "Add Custom Rule" to train your agent on handling pushback.
+                  </p>
                 </div>
-              ))}
+              ) : (
+                (formData.objectionRules || []).map((rule, idx) => (
+                  <div
+                    key={idx}
+                    className="p-3.5 rounded-xl bg-white border border-[#E4E2EB] shadow-2xs relative group transition-all hover:border-[#D2CEE0]"
+                    data-testid={`objection-rule-${idx}`}
+                  >
+                    <div className="flex items-center justify-between mb-2.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#FAF5FF] text-[#6344E7] border border-[#F3E8FF]">
+                          Rule #{idx + 1}
+                        </span>
+                        {rule.category && rule.category !== 'custom' && (
+                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-[#F3F4F6] text-[#374151]">
+                            {rule.category.toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveObjection(idx)}
+                        className="p-1 text-[#DC2626] hover:bg-red-50 rounded transition-colors"
+                        title="Remove rule"
+                        data-testid={`remove-objection-${idx}`}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                      {/* Trigger */}
+                      <div className="md:col-span-5">
+                        <span className="text-[10px] text-[#8C879A] uppercase font-bold block mb-1">
+                          When Caller Says / Concern:
+                        </span>
+                        <input
+                          type="text"
+                          value={rule.trigger || ''}
+                          placeholder="e.g. Too expensive / Not interested"
+                          onChange={(e) => {
+                            const next = [...formData.objectionRules];
+                            next[idx] = { ...next[idx], trigger: e.target.value };
+                            setFormData({ ...formData, objectionRules: next });
+                          }}
+                          className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-lg px-2.5 py-1.5 text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
+                          data-testid={`objection-trigger-${idx}`}
+                        />
+                      </div>
+
+                      {/* Response */}
+                      <div className="md:col-span-5">
+                        <span className="text-[10px] text-[#8C879A] uppercase font-bold block mb-1">
+                          Agent Response (Acknowledge & Bridge):
+                        </span>
+                        <textarea
+                          rows={2}
+                          value={rule.response || ''}
+                          placeholder="e.g. I understand budget is important... Could I share..."
+                          onChange={(e) => {
+                            const next = [...formData.objectionRules];
+                            next[idx] = { ...next[idx], response: e.target.value };
+                            setFormData({ ...formData, objectionRules: next });
+                          }}
+                          className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-lg px-2.5 py-1.5 text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors resize-none"
+                          data-testid={`objection-response-${idx}`}
+                        />
+                      </div>
+
+                      {/* Action outcome */}
+                      <div className="md:col-span-2">
+                        <span className="text-[10px] text-[#8C879A] uppercase font-bold block mb-1">
+                          Action Outcome:
+                        </span>
+                        <select
+                          value={rule.action || 'continue_script'}
+                          onChange={(e) => {
+                            const next = [...formData.objectionRules];
+                            next[idx] = { ...next[idx], action: e.target.value };
+                            setFormData({ ...formData, objectionRules: next });
+                          }}
+                          className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-lg px-2 py-1.5 text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
+                          data-testid={`objection-action-${idx}`}
+                        >
+                          <option value="continue_script">Continue Script</option>
+                          <option value="offer_callback">Offer Callback</option>
+                          <option value="end_call">End Call</option>
+                          <option value="transfer_human">Transfer Human</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </SolidCard>
         </div>

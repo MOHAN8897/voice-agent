@@ -51,7 +51,11 @@ function sectionsFromStudio({
 }) {
   const guardrails = (boundaries || []).map((b) => `- ${b}`).join('\n');
   const faq = (objectionRules || [])
-    .map((o) => `When: ${o.trigger}\nReply: ${o.response}`)
+    .map((o) => {
+      const intentPart = o.category && o.category !== 'custom' ? `[Intent: ${o.category}]\n` : '';
+      const actionPart = o.action && o.action !== 'continue_script' ? `\nAction: ${o.action}` : '';
+      return `${intentPart}When: ${o.trigger}\nReply: ${o.response}${actionPart}`;
+    })
     .join('\n\n');
   // Strip any legacy OPENING LINE artifact so it never clashes with CANONICAL OPENING
   let cleanScript = (script || '')

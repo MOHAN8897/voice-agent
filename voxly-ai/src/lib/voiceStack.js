@@ -1,4 +1,5 @@
 import { api, stripEntityTags } from '../services/api';
+import { parseObjectionRulesFromSections } from './studioScriptHelpers.js';
 
 let cachedOptions = null;
 
@@ -92,8 +93,11 @@ export function parseStudioFieldsFromSections(sections) {
     script: split.script,
     greeting: identityGreeting || split.greeting,
     variableDefinitions: parseScriptVariablesFromSections(sections),
+    objectionRules: parseObjectionRulesFromSections(sections),
   };
 }
+
+export { parseObjectionRulesFromSections };
 
 export function scriptVariablesSection(variables) {
   if (!variables?.length) return null;

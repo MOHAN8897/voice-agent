@@ -716,9 +716,9 @@ def normalize_and_validate_contacts(
 
 
 def extract_template_variables_from_text(*texts: str) -> list[str]:
-    """Find all {{contact.*}} and {{...}} placeholders in agent prompts."""
+    """Find all {{contact.*}} and {{...}} placeholders in agent prompts (supports fallback {{var | default}})."""
     variables: list[str] = []
-    pattern = re.compile(r"\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}")
+    pattern = re.compile(r"\{\{\s*([a-zA-Z0-9_.]+)(?:\s*(?:\||\|\|)\s*([^}]+?))?\s*\}\}")
     for t in texts:
         if not t:
             continue
@@ -730,8 +730,27 @@ def extract_template_variables_from_text(*texts: str) -> list[str]:
 
 
 def resolve_contact_variables(contact: dict[str, Any]) -> dict[str, str]:
-    """Resolve full runtime variable map for one contact."""
-    out: dict[str, str] = {}
+    """Resolve full runtime variable map for one contact, including system context."""
+    import datetime
+    now = datetime.datetime.now()
+    hour = now.hour
+    if hour < 12:
+        tod = "morning"
+    elif hour < 17:
+        tod = "afternoon"
+    else:
+        tod = "evening"
+    dow = now.strftime("%A")
+    date_str = now.strftime("%Y-%m-%d")
+
+    out: dict[str, str] = {
+        "system.time_of_day": tod,
+        "time_of_day": tod,
+        "system.day_of_week": dow,
+        "day_of_week": dow,
+        "system.date": date_str,
+        "date": date_str,
+    }
     full_name = str(contact.get("full_name") or "").strip()
     first_name = str(contact.get("first_name") or "").strip()
     last_name = str(contact.get("last_name") or "").strip()
@@ -793,8 +812,8 @@ def validate_agent_variables_against_contacts(
     missing_breakdown: dict[str, int] = {}
 
     for var in vars_used:
-        # Ignore system tags like {{business_name}}
-        if var in ("business_name", "date", "time"):
+        # Ignore system tags
+        if var in ("business_name", "date", "time", "system.date", "system.time_of_day", "system.day_of_week"):
             continue
 
         missing_count = 0
@@ -816,13 +835,23 @@ def validate_agent_variables_against_contacts(
 
 
 def render_agent_prompt_for_contact(prompt: str, contact: dict[str, Any]) -> str:
-    """Render agent script replacing {{var}} tags with contact-specific values."""
+    """Render agent script replacing {{var}} or {{var | fallback}} tags with contact-specific values."""
     if not prompt:
         return ""
     resolved = resolve_contact_variables(contact)
+    pattern = re.compile(r"\{\{\s*([a-zA-Z0-9_.]+)(?:\s*(?:\||\|\|)\s*([^}]+?))?\s*\}\}")
 
-    def replacer(match):
+    def replacer(match: re.Match) -> str:
         key = match.group(1).strip()
-        return resolved.get(key, match.group(0))
+        fallback_raw = match.group(2)
+        val = resolved.get(key)
+        if val:
+            return val
+        if fallback_raw is not None:
+            fb = fallback_raw.strip()
+            if (fb.startswith('"') and fb.endswith('"')) or (fb.startswith("'") and fb.endswith("'")):
+                fb = fb[1:-1]
+            return fb
+        return ""
 
-    return re.sub(r"\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}", replacer, prompt)
+    return pattern.sub(replacer, prompt)

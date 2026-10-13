@@ -350,3 +350,42 @@ def test_api_contacts_parse_and_preview():
     finally:
         app.dependency_overrides.pop(require_api_tenant, None)
 
+
+def test_contact_variable_fallback_and_system_tokens():
+    """Verify fallback filter syntax {{var | default}} and dynamic {{system.*}} tokens."""
+    # Lead with missing first_name and company
+    contact_sparse = {
+        "phone": "+919876543210",
+        "first_name": None,
+        "company": "",
+        "city": "Hyderabad",
+    }
+    
+    template = (
+        "Good {{system.time_of_day}}, {{contact.first_name | there}}! "
+        "Calling from {{contact.company | our enterprise team}} in {{contact.city | your city}}. "
+        "Today is {{system.day_of_week}}."
+    )
+    
+    rendered = render_agent_prompt_for_contact(template, contact_sparse)
+    
+    # Assert fallbacks are used
+    assert "there!" in rendered
+    assert "our enterprise team" in rendered
+    assert "Hyderabad." in rendered
+    # Assert system variables resolved
+    assert any(tod in rendered for tod in ["morning", "afternoon", "evening", "day"])
+    assert any(dow in rendered for dow in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
+    
+    # Lead with present fields
+    contact_complete = {
+        "phone": "+919876543210",
+        "first_name": "Kavya",
+        "company": "TechNova",
+        "city": "Bengaluru",
+    }
+    rendered_complete = render_agent_prompt_for_contact(template, contact_complete)
+    assert "Kavya!" in rendered_complete
+    assert "TechNova" in rendered_complete
+    assert "Bengaluru." in rendered_complete
+
