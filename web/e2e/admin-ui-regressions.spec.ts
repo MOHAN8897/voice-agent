@@ -100,3 +100,71 @@ test("support settings render nullable server values without React input warning
   await expect(smtpPort).toHaveValue("");
   expect(inputWarnings).toHaveLength(0);
 });
+
+test("support tickets retain priority, category, and paging controls", async ({ page }) => {
+  await page.route("**/api/dev/admin/support/config", (route) =>
+    route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ config: {} }) })
+  );
+  await page.route("**/api/dev/admin/support/inquiries**", async (route) => {
+    const url = new URL(route.request().url());
+    const offset = Number(url.searchParams.get("offset") || 0);
+    const count = offset === 0 ? 51 : 1;
+    const inquiries = Array.from({ length: count }, (_, index) => ({
+      id: `ticket-${offset + index}`,
+      ticketNumber: `T-${offset + index}`,
+      fullName: "Test Customer",
+      email: "customer@example.test",
+      category: "billing_pricing",
+      priority: "high",
+      subject: "Test inquiry",
+      message: "Test message",
+      status: "new",
+      createdAt: "2026-10-14T00:00:00Z",
+    }));
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ inquiries }) });
+  });
+
+  await page.goto("/dev/admin/support");
+  await expect(page.getByRole("heading", { name: "Support desk & delivery" })).toBeVisible();
+  await expect(page.getByLabel("Filter by priority")).toBeVisible();
+  await expect(page.getByLabel("Filter by category")).toBeVisible();
+  await expect(page.getByLabel("Filter support tickets").locator('option[value="triaged"]')).toHaveCount(1);
+  await page.getByLabel("Search support tickets").fill("invoice");
+
+  const filteredResponse = page.waitForResponse((response) => {
+    const url = new URL(response.url());
+    return url.pathname.endsWith("/api/dev/admin/support/inquiries") &&
+      url.searchParams.get("priority") === "high" &&
+      url.searchParams.get("category") === "billing_pricing" &&
+      url.searchParams.get("search") === "invoice" &&
+      url.searchParams.get("limit") === "51" &&
+      url.searchParams.get("offset") === "0";
+  });
+  await page.getByLabel("Filter by priority").selectOption("high");
+  await page.getByLabel("Filter by category").selectOption("billing_pricing");
+  await filteredResponse;
+
+  await expect(page.locator("tbody tr")).toHaveCount(50);
+  await page.getByRole("button", { name: "Open ticket T-0" }).click();
+  await expect(page.getByText("billing pricing", { exact: true })).toBeVisible();
+  await expect(page.getByText("high", { exact: true })).toBeVisible();
+  await expect(page.getByText("Page 1 of support tickets")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Next page" })).toBeEnabled();
+  const nextResponse = page.waitForResponse((response) => {
+    const url = new URL(response.url());
+    return url.pathname.endsWith("/api/dev/admin/support/inquiries") && url.searchParams.get("offset") === "50";
+  });
+  await page.getByRole("button", { name: "Next page" }).click();
+  await nextResponse;
+  await expect(page.getByText("Page 2 of support tickets")).toBeVisible();
+
+  const resetResponse = page.waitForResponse((response) => {
+    const url = new URL(response.url());
+    return url.pathname.endsWith("/api/dev/admin/support/inquiries") &&
+      url.searchParams.get("status") === "all" &&
+      url.searchParams.get("offset") === "0";
+  });
+  await page.getByLabel("Filter support tickets").selectOption("all");
+  await resetResponse;
+  await expect(page.getByText("Page 1 of support tickets")).toBeVisible();
+});

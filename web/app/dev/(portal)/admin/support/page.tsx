@@ -82,6 +82,7 @@ const TABS = [
   { id: "channels", label: "Public channels" },
   { id: "mail", label: "Mail delivery" },
 ] as const;
+const PAGE_SIZE = 50;
 
 function Field({
   label,
@@ -117,6 +118,9 @@ export default function AdminSupportPage() {
   const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("tickets");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("open");
+  const [priorityFilter, setPriorityFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [offset, setOffset] = useState(0);
   const [selected, setSelected] = useState<Inquiry | null>(null);
   const [reply, setReply] = useState("");
   const [saveState, setSaveState] = useState("");
@@ -130,11 +134,14 @@ export default function AdminSupportPage() {
   const inquiriesPath = useMemo(() => {
     const params = new URLSearchParams();
     if (statusFilter !== "all") params.set("status", statusFilter);
+    if (priorityFilter !== "all") params.set("priority", priorityFilter);
+    if (categoryFilter !== "all") params.set("category", categoryFilter);
     if (search.trim()) params.set("search", search.trim());
-    params.set("limit", "50");
+    params.set("limit", String(PAGE_SIZE + 1));
+    params.set("offset", String(offset));
     const query = params.toString();
     return `/api/dev/admin/support/inquiries${query ? `?${query}` : ""}`;
-  }, [search, statusFilter]);
+  }, [search, statusFilter, priorityFilter, categoryFilter, offset]);
   const inquiryResource = useAdminResource<InquiryResponse>(tab === "tickets" ? inquiriesPath : null, [tab]);
 
   useEffect(() => {
@@ -142,6 +149,9 @@ export default function AdminSupportPage() {
   }, [configResource.data]);
 
   const inquiries = inquiryResource.data?.inquiries ?? [];
+  const visibleInquiries = inquiries.slice(0, PAGE_SIZE);
+  const hasNextPage = inquiries.length > PAGE_SIZE;
+  const pageNumber = Math.floor(offset / PAGE_SIZE) + 1;
 
   function updateConfig<K extends keyof SupportConfig>(key: K, value: SupportConfig[K]) {
     setConfig((current) => ({ ...current, [key]: value }));
@@ -240,24 +250,50 @@ export default function AdminSupportPage() {
             <div className="mb-4 flex flex-wrap gap-2">
               <input
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={(event) => { setSearch(event.target.value); setOffset(0); }}
                 placeholder="Search ticket, name, email, or subject"
                 aria-label="Search support tickets"
                 className="min-w-[220px] flex-1 rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised px-3 py-2 text-sm"
               />
               <select
                 value={statusFilter}
-                onChange={(event) => setStatusFilter(event.target.value)}
+                onChange={(event) => { setStatusFilter(event.target.value); setOffset(0); }}
                 aria-label="Filter support tickets"
                 className="rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised px-3 py-2 text-sm"
               >
                 <option value="open">Open</option>
                 <option value="all">All tickets</option>
                 <option value="new">New</option>
+                <option value="triaged">Triaged</option>
                 <option value="in_progress">In progress</option>
                 <option value="waiting_on_customer">Waiting on customer</option>
                 <option value="resolved">Resolved</option>
                 <option value="closed">Closed</option>
+              </select>
+              <select
+                value={priorityFilter}
+                onChange={(event) => { setPriorityFilter(event.target.value); setOffset(0); }}
+                aria-label="Filter by priority"
+                className="rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised px-3 py-2 text-sm"
+              >
+                <option value="all">All priorities</option>
+                <option value="urgent">Urgent</option>
+                <option value="high">High</option>
+                <option value="normal">Normal</option>
+                <option value="low">Low</option>
+              </select>
+              <select
+                value={categoryFilter}
+                onChange={(event) => { setCategoryFilter(event.target.value); setOffset(0); }}
+                aria-label="Filter by category"
+                className="rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised px-3 py-2 text-sm"
+              >
+                <option value="all">All categories</option>
+                <option value="technical_support">Technical support</option>
+                <option value="enterprise_fleet">Enterprise fleet</option>
+                <option value="telephony_trunk">Voice network</option>
+                <option value="billing_pricing">Billing</option>
+                <option value="general_inquiry">General</option>
               </select>
             </div>
             <AdminLoading loading={inquiryResource.loading} />
@@ -267,7 +303,7 @@ export default function AdminSupportPage() {
                   <tr><th className="p-2">Ticket</th><th className="p-2">Customer</th><th className="p-2">Subject</th><th className="p-2">Status</th></tr>
                 </thead>
                 <tbody>
-                  {inquiries.map((inquiry) => (
+                  {visibleInquiries.map((inquiry) => (
                     <tr key={inquiry.id} className={`border-t border-surface-border-subtle hover:bg-surface-panel-raised ${selected?.id === inquiry.id ? "bg-surface-panel-raised" : ""}`}>
                       <td className="p-2 font-mono text-xs"><button type="button" onClick={() => { setSelected(inquiry); setReply(""); }} aria-label={`Open ticket ${inquiry.ticketNumber}`} className="underline-offset-2 hover:underline">{inquiry.ticketNumber}</button></td>
                       <td className="p-2"><span className="block">{inquiry.fullName}</span><span className="text-xs text-text-muted">{inquiry.email}</span></td>
@@ -275,11 +311,30 @@ export default function AdminSupportPage() {
                       <td className="p-2 capitalize">{inquiry.status.replaceAll("_", " ")}</td>
                     </tr>
                   ))}
-                  {!inquiryResource.loading && inquiries.length === 0 && (
+                  {!inquiryResource.loading && visibleInquiries.length === 0 && (
                     <tr><td className="p-5 text-center text-text-muted" colSpan={4}>No matching inquiries.</td></tr>
                   )}
                 </tbody>
               </table>
+            </div>
+            <div className="mt-3 flex items-center justify-between gap-3 text-sm">
+              <span className="text-text-muted" aria-live="polite">Page {pageNumber} of support tickets</span>
+              <div className="flex gap-2">
+                <SkeuoButton
+                  variant="secondary"
+                  disabled={inquiryResource.loading || offset === 0}
+                  onClick={() => setOffset((current) => Math.max(0, current - PAGE_SIZE))}
+                >
+                  Previous page
+                </SkeuoButton>
+                <SkeuoButton
+                  variant="secondary"
+                  disabled={inquiryResource.loading || !hasNextPage}
+                  onClick={() => setOffset((current) => current + PAGE_SIZE)}
+                >
+                  Next page
+                </SkeuoButton>
+              </div>
             </div>
           </DevCard>
 
@@ -288,14 +343,24 @@ export default function AdminSupportPage() {
               <div className="space-y-4 text-sm">
                 <div className="text-text-muted">{selected.fullName} · {selected.email}{selected.company ? ` · ${selected.company}` : ""}<br />Received {formatWhen(selected.createdAt)}</div>
                 <p className="whitespace-pre-wrap rounded-skeuo-sm bg-surface-panel-raised p-3">{selected.message}</p>
+                <div className="grid grid-cols-2 gap-3 rounded-skeuo-sm bg-surface-panel-raised p-3">
+                  <p><span className="block text-xs text-text-muted">Category</span><span className="capitalize">{selected.category.replaceAll("_", " ")}</span></p>
+                  <p><span className="block text-xs text-text-muted">Priority</span><span className="capitalize">{selected.priority}</span></p>
+                </div>
                 {(selected.customerReplies ?? []).length > 0 && (
                   <div className="max-h-40 space-y-2 overflow-auto">
-                    {selected.customerReplies?.map((entry) => <p key={entry.id} className="rounded-skeuo-sm border border-surface-border-subtle p-2"><span className="font-medium">{entry.author}</span><br />{entry.message}</p>)}
+                    {selected.customerReplies?.map((entry) => (
+                      <p key={entry.id} className="rounded-skeuo-sm border border-surface-border-subtle p-2">
+                        <span className="font-medium">{entry.author}{entry.isStaff ? " · Staff" : ""}</span>
+                        <span className="ml-2 text-xs text-text-muted">{formatWhen(entry.sentAt)}</span>
+                        <br />{entry.message}
+                      </p>
+                    ))}
                   </div>
                 )}
                 <label className="block space-y-1.5 text-sm"><span className="text-text-muted">Status</span>
                   <select value={selected.status} onChange={(event) => setSelected({ ...selected, status: event.target.value })} className="w-full rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised px-3 py-2">
-                    <option value="new">New</option><option value="in_progress">In progress</option><option value="waiting_on_customer">Waiting on customer</option><option value="resolved">Resolved</option><option value="closed">Closed</option>
+                    <option value="new">New</option><option value="triaged">Triaged</option><option value="in_progress">In progress</option><option value="waiting_on_customer">Waiting on customer</option><option value="resolved">Resolved</option><option value="closed">Closed</option>
                   </select>
                 </label>
                 <Field label="Assigned to" value={selected.assignedTo || ""} onChange={(value) => setSelected({ ...selected, assignedTo: value })} />
