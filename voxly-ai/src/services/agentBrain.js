@@ -53,7 +53,10 @@ function sectionsFromStudio({
   const faq = (objectionRules || [])
     .map((o) => `When: ${o.trigger}\nReply: ${o.response}`)
     .join('\n\n');
-  const callingScript = [greeting ? `OPENING LINE\n${greeting.trim()}` : '', (script || '').trim()]
+  const cleanScript = (script || '')
+    .replace(/^OPENING LINE\s*\n[^\n]*\n*/i, '')
+    .trim();
+  const callingScript = [greeting ? `OPENING LINE\n${greeting.trim()}` : '', cleanScript]
     .filter(Boolean)
     .join('\n\n');
   const langCode =

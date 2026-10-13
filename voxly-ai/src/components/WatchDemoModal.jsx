@@ -128,7 +128,7 @@ export function WatchDemoModal({ isOpen, onClose, onSelectBotState, onTryLive })
               </svg>
             </div>
             <div>
-              <h3 className="text-sm font-bold text-[#0F0E17]">How a Voxly call sounds</h3>
+              <h3 className="text-sm font-bold text-[#0F0E17]">How a Dialtact call sounds</h3>
               <p className="text-[11px] text-[#524E5E]">
                 Real audio from the live speech model &mdash; not a scripted voice-over
               </p>

@@ -428,10 +428,12 @@ export function WorkspaceProvider({ children }) {
   const updateAgent = async (agentId, updates) => {
     try {
       if (authed()) {
-        await api.agents.update(agentId, {
+        const updated = await api.agents.update(agentId, {
           name: updates.name,
           status: updates.status,
           languages: updates.languages,
+          recordingDisclosureEnabled: updates.recordingDisclosureEnabled,
+          recordingDisclosureText: updates.recordingDisclosureText,
         });
         if (
           updates.script ||
@@ -443,15 +445,16 @@ export function WorkspaceProvider({ children }) {
         ) {
           await saveAndPublishAgentBrain(agentId, updates);
         }
-        await loadWorkspaceData();
-        return;
+        setAgents((prev) =>
+          prev.map((a) => (a.id === agentId ? { ...a, ...updates, ...(updated || {}) } : a))
+        );
+        return updated;
       }
       setAgents((prev) =>
         prev.map((a) => (a.id === agentId ? { ...a, ...updates, updatedAt: new Date().toISOString() } : a))
       );
     } catch (e) {
       if (authed()) {
-        await loadWorkspaceData();
         throw e;
       }
       console.warn('API updateAgent error:', e);

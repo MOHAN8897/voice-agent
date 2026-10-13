@@ -7,7 +7,7 @@ import 'driver.js/dist/driver.css';
 function getResolvedUserEmail(user) {
   if (user?.email) return user.email;
   try {
-    const raw = localStorage.getItem('voxly_auth_session');
+    const raw = localStorage.getItem('dialtact_auth_session') || localStorage.getItem('voxly_auth_session');
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed?.email) return parsed.email;
@@ -22,10 +22,18 @@ function getResolvedUserEmail(user) {
 export function isTourCompleted(user) {
   try {
     const email = getResolvedUserEmail(user);
-    if (email && localStorage.getItem(`voxly_tour_completed_${email}`) === 'true') {
-      return true;
+    if (email) {
+      if (
+        localStorage.getItem(`dialtact_tour_completed_${email}`) === 'true' ||
+        localStorage.getItem(`voxly_tour_completed_${email}`) === 'true'
+      ) {
+        return true;
+      }
     }
-    return localStorage.getItem('voxly_tour_completed_default') === 'true';
+    return (
+      localStorage.getItem('dialtact_tour_completed_default') === 'true' ||
+      localStorage.getItem('voxly_tour_completed_default') === 'true'
+    );
   } catch {
     return false;
   }
@@ -38,12 +46,27 @@ export function setTourCompleted(user) {
   try {
     const email = getResolvedUserEmail(user);
     if (email) {
-      localStorage.setItem(`voxly_tour_completed_${email}`, 'true');
+      localStorage.setItem(`dialtact_tour_completed_${email}`, 'true');
     }
-    localStorage.setItem('voxly_tour_completed_default', 'true');
+    localStorage.setItem('dialtact_tour_completed_default', 'true');
   } catch {
     // ignore in sandboxed environments
   }
+}
+
+/**
+ * Resets tour completion so users can take the tour again.
+ */
+export function resetTour(user) {
+  try {
+    const email = getResolvedUserEmail(user);
+    if (email) {
+      localStorage.removeItem(`dialtact_tour_completed_${email}`);
+      localStorage.removeItem(`voxly_tour_completed_${email}`);
+    }
+    localStorage.removeItem('dialtact_tour_completed_default');
+    localStorage.removeItem('voxly_tour_completed_default');
+  } catch {}
 }
 
 /**
@@ -152,7 +175,7 @@ export function startTourGuide(user, options = {}) {
     overlayOpacity: 0.78,
     stagePadding: 6,
     stageRadius: 14,
-    popoverClass: 'voxly-tour-popover',
+    popoverClass: 'dialtact-tour-popover voxly-tour-popover',
     nextBtnText: 'Next Step →',
     prevBtnText: '← Back',
     doneBtnText: 'Launch Workspace',
@@ -192,18 +215,24 @@ export function startTourGuide(user, options = {}) {
     }
   };
 
-  // Give React render loop time to mount the overview module and buttons
+  // Robust element detection with polling to allow React rendering of dashboard overview
   if (typeof window !== 'undefined') {
-    window.setTimeout(() => {
+    let retries = 0;
+    const checkAndLaunch = () => {
       const el =
         document.querySelector('[data-tour="create-agent"]') ||
+        document.querySelector('[data-tour="buy-number"]') ||
         document.querySelector('[data-tour="nav-employees"]');
       if (el) {
         launch();
+      } else if (retries < 10) {
+        retries++;
+        window.setTimeout(checkAndLaunch, 250);
       } else {
-        window.setTimeout(launch, 300);
+        launch();
       }
-    }, 180);
+    };
+    window.setTimeout(checkAndLaunch, 180);
   }
 
   return driverObj;

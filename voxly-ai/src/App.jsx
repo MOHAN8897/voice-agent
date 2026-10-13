@@ -69,8 +69,12 @@ function AppInner() {
       const isForce = e?.detail?.force === true;
       launchTour(isForce);
     };
+    window.addEventListener('dialtact:open-tour', handleOpenTour);
     window.addEventListener('voxly:open-tour', handleOpenTour);
-    return () => window.removeEventListener('voxly:open-tour', handleOpenTour);
+    return () => {
+      window.removeEventListener('dialtact:open-tour', handleOpenTour);
+      window.removeEventListener('voxly:open-tour', handleOpenTour);
+    };
   }, [launchTour]);
 
   useEffect(() => {
@@ -101,18 +105,18 @@ function AppInner() {
         const tabMatch = hash.match(/#dashboard\/([a-z0-9_-]+)/i);
         const tab = tabMatch ? tabMatch[1] : '';
         const titles = {
-          overview: 'Workspace Overview — Voxly Console',
-          employees: 'AI Employees & Personas — Voxly Console',
-          calls: 'Call Activity & Transcripts — Voxly Console',
-          integrations: 'Tool Integrations (177+ Tools) — Voxly Console',
-          telephony: 'Phone Numbers & SIP Trunks — Voxly Console',
-          billing: 'Billing & Telephony Credits — Voxly Console',
-          campaigns: 'Outbound Calling Campaigns — Voxly Console',
-          compliance: 'Telephony Compliance & DNC Registry — Voxly Console',
+          overview: 'Workspace Overview — Dialtact Console',
+          employees: 'AI Employees & Personas — Dialtact Console',
+          calls: 'Call Activity & Transcripts — Dialtact Console',
+          integrations: 'Tool Integrations (177+ Tools) — Dialtact Console',
+          telephony: 'Phone Numbers & SIP Trunks — Dialtact Console',
+          billing: 'Billing & Telephony Credits — Dialtact Console',
+          campaigns: 'Outbound Calling Campaigns — Dialtact Console',
+          compliance: 'Telephony Compliance & DNC Registry — Dialtact Console',
         };
-        document.title = titles[tab] || 'Dashboard — Voxly Console';
+        document.title = titles[tab] || 'Dashboard — Dialtact Console';
       } else {
-        document.title = 'Voxly — The AI Employee for Every Conversation';
+        document.title = 'Dialtact — The AI Employee for Every Conversation | Autonomous Voice AI';
       }
     };
 
@@ -189,23 +193,23 @@ function AppInner() {
       const tabMatch = hash.match(/#dashboard\/([a-z0-9_-]+)/i);
       const tab = tabMatch ? tabMatch[1] : '';
       const titles = {
-        overview: 'Workspace Overview — Voxly Console',
-        employees: 'AI Employees & Personas — Voxly Console',
-        calls: 'Call Activity & Transcripts — Voxly Console',
-        integrations: 'Tool Integrations (177+ Tools) — Voxly Console',
-        telephony: 'Phone Numbers & SIP Trunks — Voxly Console',
-        billing: 'Billing & Telephony Credits — Voxly Console',
-        campaigns: 'Outbound Calling Campaigns — Voxly Console',
-        compliance: 'Telephony Compliance & DNC Registry — Voxly Console',
+        overview: 'Workspace Overview — Dialtact Console',
+        employees: 'AI Employees & Personas — Dialtact Console',
+        calls: 'Call Activity & Transcripts — Dialtact Console',
+        integrations: 'Tool Integrations (177+ Tools) — Dialtact Console',
+        telephony: 'Phone Numbers & SIP Trunks — Dialtact Console',
+        billing: 'Billing & Telephony Credits — Dialtact Console',
+        campaigns: 'Outbound Calling Campaigns — Dialtact Console',
+        compliance: 'Telephony Compliance & DNC Registry — Dialtact Console',
       };
-      document.title = titles[tab] || 'Dashboard — Voxly Console';
+      document.title = titles[tab] || 'Dashboard — Dialtact Console';
     } else {
       if (tag) {
         tag.remove();
       }
-      document.title = 'Voxly — The AI Employee for Every Conversation';
+      document.title = 'Dialtact — The AI Employee for Every Conversation | Autonomous Voice AI';
       if (canonical) {
-        canonical.setAttribute('href', 'https://voxly.ai/');
+        canonical.setAttribute('href', 'https://dialtact.ai/');
       }
     }
   }, [currentView]);

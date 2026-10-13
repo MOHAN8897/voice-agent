@@ -73,6 +73,12 @@
       "subject": "drive-signup-completes"
     },
     {
+      "id": "flow:drive-the-loaded-mascot-remains-interactive-after-init",
+      "statement": "The loaded mascot remains interactive after initial loading and opens i…",
+      "status": "proposed",
+      "subject": "drive-the-loaded-mascot-remains-interact"
+    },
+    {
       "id": "flow:drive-the-marketing-page-plays-the-product-s-own-neura",
       "statement": "the marketing page plays the product's own neural voice per industry, d…",
       "status": "proposed",
@@ -357,6 +363,12 @@
     {
       "id": "inline:switch-test-call-to-live-number-mode-without-pst-8756a1fb",
       "statement": "Switch test call to live-number mode without PSTN wording.",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:the-loaded-mascot-remains-interactive-after-init-9a01a3b6",
+      "statement": "The loaded mascot remains interactive after initial loading and opens i…",
       "status": "proved",
       "subject": "unsorted"
     },

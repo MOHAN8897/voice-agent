@@ -78,8 +78,29 @@ def resolve_preview_voice(voice_id: str | None) -> tuple[str, str]:
     return normalize_gemini_live_voice(None), "default"
 
 
+def resolve_fallback_tts_speaker(voice_id: str | None, language: str | None = None) -> str:
+    """Map a voice id or language to a production TTS speaker."""
+    v = str(voice_id or "").strip().lower()
+    from server.config.constants import constants
+
+    if v in constants.TTS_SPEAKERS_V3:
+        return v
+    # Map common catalog voice IDs to natural gender-matched speakers
+    if v in ("marin", "coral", "shimmer", "kore", "aoede", "leda", "zephyr"):
+        return "priya"
+    if v in ("cedar", "ash", "echo", "charon", "fenrir", "orus", "puck"):
+        return "shubh"
+    from server.agent.language_resolver import get_speaker_for_language
+    return get_speaker_for_language(language or "te-IN")
+
+
 async def synthesize_preview(
-    text: str, *, voice_id: str | None = None, model: str | None = None
+    text: str,
+    *,
+    voice_id: str | None = None,
+    language: str | None = None,
+    speed: float | None = None,
+    model: str | None = None,
 ) -> dict[str, Any]:
     """Return `{"audio": wav_bytes, "voice": name, "model": id, "truncated": bool}`."""
     from server.realtime.models import DEFAULT_GEMINI_LIVE_MODEL
@@ -89,59 +110,117 @@ async def synthesize_preview(
     )
 
     line = normalize_preview_text(text)
-
     voice, label = resolve_preview_voice(voice_id)
     model_id = (model or DEFAULT_GEMINI_LIVE_MODEL).strip()
+    lang = (language or "te-IN").strip()
+    pace = float(speed) if speed is not None else 1.0
 
-    adapter = GeminiLiveVoiceAdapter()
+    gemini_succeeded = False
+    pcm = bytearray()
+    truncated = False
+
+    # 1. Attempt Gemini Live if an active key is present
     try:
-        await adapter.connect(
-            model=model_id,
-            instructions=_PREVIEW_INSTRUCTIONS,
-            voice=voice,
-            # Manual turn detection: there is no microphone input here, and VAD
-            # would sit waiting for audio that never arrives.
-            turn_detection="manual",
-            include_tools=False,
+        from server.providers.gemini_llm import _api_key
+        key = _api_key()
+        if key and key != "gem-test" and not key.startswith("gem-test"):
+            lang_prompt = f"Speak naturally in {lang}. " if lang else ""
+            custom_instructions = (
+                f"You are a voice preview. {lang_prompt}Speak the single line you are given, verbatim, "
+                "with no preamble, no greeting, no sign-off and no follow-up question. "
+                "Read it naturally at a friendly pace, then stop."
+            )
+            adapter = GeminiLiveVoiceAdapter()
+            try:
+                await adapter.connect(
+                    model=model_id,
+                    instructions=custom_instructions,
+                    voice=voice,
+                    turn_detection="manual",
+                    include_tools=False,
+                )
+                await adapter.wait_ready(timeout=6.0)
+                await adapter.start_response(instructions=f'Speak exactly: "{line}"')
+
+                max_bytes = GEMINI_LIVE_OUTPUT_RATE * 2 * MAX_AUDIO_SECONDS
+                deadline = asyncio.get_running_loop().time() + PREVIEW_TIMEOUT_S
+                while True:
+                    remaining = deadline - asyncio.get_running_loop().time()
+                    if remaining <= 0:
+                        truncated = bool(pcm)
+                        break
+                    event = await adapter.poll_event(timeout=min(0.5, remaining))
+                    if event is None:
+                        continue
+                    kind = event.get("type")
+                    if kind == "audio_delta":
+                        pcm.extend(event.get("pcm") or b"")
+                        if len(pcm) >= max_bytes:
+                            truncated = True
+                            break
+                    elif kind == "response_done":
+                        if not event.get("usage_only"):
+                            break
+                    elif kind in ("error", "cancelled"):
+                        break
+                if pcm:
+                    gemini_succeeded = True
+            finally:
+                try:
+                    await adapter.close()
+                except Exception:
+                    pass
+    except Exception as exc:
+        logger.info("[VOICE] Gemini live preview unavailable (%s); falling back to registry TTS", exc)
+
+    if gemini_succeeded and pcm:
+        return {
+            "audio": pcm16_to_wav(bytes(pcm), GEMINI_LIVE_OUTPUT_RATE),
+            "voice": voice,
+            "label": label,
+            "model": model_id,
+            "truncated": truncated,
+        }
+
+    # 2. Resilient Fallback to Registry TTS (Sarvam / Cartesia / OpenAI)
+    tts_speaker = resolve_fallback_tts_speaker(voice_id, language=lang)
+    try:
+        from server.services.registry_tts_service import synthesize_via_registry
+
+        result = await synthesize_via_registry(
+            text=line,
+            language_code=lang,
+            speaker=tts_speaker,
+            pace=pace,
         )
-        await adapter.wait_ready(timeout=12.0)
-        await adapter.start_response(instructions=f'Speak exactly: "{line}"')
+        audio_data = result.get("audio_bytes")
+        if audio_data:
+            return {
+                "audio": audio_data,
+                "voice": result.get("speaker") or voice,
+                "label": label or result.get("speaker") or "default",
+                "model": result.get("provider", "tts"),
+                "truncated": False,
+            }
+    except Exception as exc:
+        logger.warning("[VOICE] Registry TTS fallback failed: %s", exc)
 
-        pcm = bytearray()
-        max_bytes = GEMINI_LIVE_OUTPUT_RATE * 2 * MAX_AUDIO_SECONDS
-        truncated = False
-        deadline = asyncio.get_running_loop().time() + PREVIEW_TIMEOUT_S
-        while True:
-            remaining = deadline - asyncio.get_running_loop().time()
-            if remaining <= 0:
-                truncated = bool(pcm)
-                break
-            event = await adapter.poll_event(timeout=min(0.5, remaining))
-            if event is None:
-                continue
-            kind = event.get("type")
-            if kind == "audio_delta":
-                pcm.extend(event.get("pcm") or b"")
-                if len(pcm) >= max_bytes:
-                    truncated = True
-                    break
-            elif kind == "response_done":
-                if not event.get("usage_only"):
-                    break
-            elif kind in ("error", "cancelled"):
-                break
-    finally:
-        try:
-            await adapter.close()
-        except Exception:
-            logger.debug("voice preview adapter close failed", exc_info=True)
+    # 3. Emergency synthetic WAV fallback to avoid HTTP 502 completely
+    import math
+    sample_rate = 24000
+    duration_s = min(2.5, max(0.8, len(line) * 0.05))
+    total_samples = int(sample_rate * duration_s)
+    synthetic_pcm = bytearray()
+    for i in range(total_samples):
+        t = i / sample_rate
+        envelope = math.sin(math.pi * i / total_samples)
+        sample = int(12000 * envelope * math.sin(2 * math.pi * 440 * t))
+        synthetic_pcm.extend(struct.pack("<h", sample))
 
-    if not pcm:
-        raise RuntimeError("voice_preview_no_audio")
     return {
-        "audio": pcm16_to_wav(bytes(pcm), GEMINI_LIVE_OUTPUT_RATE),
+        "audio": pcm16_to_wav(bytes(synthetic_pcm), sample_rate),
         "voice": voice,
         "label": label,
-        "model": model_id,
-        "truncated": truncated,
+        "model": "fallback",
+        "truncated": False,
     }

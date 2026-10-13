@@ -89,8 +89,15 @@ function DecisionNote({ decision, hasProfile }) {
  * live inbound path enforces — so what is shown here is what actually happens on
  * the next call. Deliberately not stored in the Business Brain.
  */
-export function TelephonySettingsCard({ agentId, disabled = false }) {
-  const [profile, setProfile] = useState(DEFAULT_PROFILE);
+export function TelephonySettingsCard({
+  agentId,
+  disabled = false,
+  profile: controlledProfile,
+  onChange: onControlledChange,
+  hideSaveButton = false,
+}) {
+  const [internalProfile, setInternalProfile] = useState(DEFAULT_PROFILE);
+  const profile = controlledProfile !== undefined ? controlledProfile : internalProfile;
   const [decision, setDecision] = useState(null);
   const [hasProfile, setHasProfile] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -107,7 +114,12 @@ export function TelephonySettingsCard({ agentId, disabled = false }) {
         api.agents.getTelephonyProfile(agentId),
         api.agents.getEffectiveTelephony(agentId).catch(() => null),
       ]);
-      setProfile({ ...DEFAULT_PROFILE, ...(data.profile || {}) });
+      const loaded = { ...DEFAULT_PROFILE, ...(data.profile || {}) };
+      if (onControlledChange) {
+        onControlledChange(loaded);
+      } else {
+        setInternalProfile(loaded);
+      }
       setHasProfile(Boolean(data.profile?.hasProfile));
       setDecision(effective?.decision || null);
       setDirty(false);
@@ -116,15 +128,28 @@ export function TelephonySettingsCard({ agentId, disabled = false }) {
     } finally {
       setLoading(false);
     }
-  }, [agentId]);
+  }, [agentId, onControlledChange]);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    if (controlledProfile === undefined) {
+      load();
+    } else if (agentId) {
+      api.agents
+        .getEffectiveTelephony(agentId)
+        .then((eff) => {
+          setDecision(eff?.decision || null);
+        })
+        .catch(() => {});
+    }
+  }, [load, agentId, controlledProfile === undefined]);
 
   const set = (patch) => {
-    setProfile((prev) => ({ ...prev, ...patch }));
-    setDirty(true);
+    if (onControlledChange) {
+      onControlledChange(patch);
+    } else {
+      setInternalProfile((prev) => ({ ...prev, ...patch }));
+      setDirty(true);
+    }
   };
 
   const setHours = (day, windows) => {
@@ -438,29 +463,31 @@ export function TelephonySettingsCard({ agentId, disabled = false }) {
         </div>
       )}
 
-      <div className="flex items-center justify-end gap-2 pt-1 border-t border-[#E4E2EB]">
-        {dirty && <span className="text-[10px] text-[#B45309]">Unsaved changes</span>}
-        <TactileButton
-          variant="secondary"
-          size="sm"
-          icon={RefreshCw}
-          onClick={load}
-          loading={loading}
-          disabled={disabled}
-        >
-          Reset
-        </TactileButton>
-        <TactileButton
-          variant="brand"
-          size="sm"
-          loading={saving}
-          disabled={disabled || !dirty}
-          data-testid="studio-telephony-save"
-          onClick={save}
-        >
-          Save phone settings
-        </TactileButton>
-      </div>
+      {!hideSaveButton && (
+        <div className="flex items-center justify-end gap-2 pt-1 border-t border-[#E4E2EB]">
+          {dirty && <span className="text-[10px] text-[#B45309]">Unsaved changes</span>}
+          <TactileButton
+            variant="secondary"
+            size="sm"
+            icon={RefreshCw}
+            onClick={load}
+            loading={loading}
+            disabled={disabled}
+          >
+            Reset
+          </TactileButton>
+          <TactileButton
+            variant="brand"
+            size="sm"
+            loading={saving}
+            disabled={disabled || !dirty}
+            data-testid="studio-telephony-save"
+            onClick={save}
+          >
+            Save phone settings
+          </TactileButton>
+        </div>
+      )}
     </SolidCard>
   );
 }

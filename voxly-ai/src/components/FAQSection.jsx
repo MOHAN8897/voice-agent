@@ -16,7 +16,7 @@ export function FAQSection() {
         <SectionHeading
           badge="Documentation & FAQ"
           title="Everything You Need to"
-          highlight="Know About Voxly"
+          highlight="Know About Dialtact"
           subtitle="Answers to common technical, telephony, compliance, and deployment questions."
         />
 

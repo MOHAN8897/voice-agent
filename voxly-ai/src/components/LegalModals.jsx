@@ -76,7 +76,7 @@ export function LegalModals({ isOpen, onClose, defaultTab = 'privacy' }) {
             <div className="space-y-5">
               <div className="pb-4 border-b border-[#E4E2EB]">
                 <h3 className="text-xl font-bold text-[#0F0E17] tracking-tight">
-                  Voxly AI Privacy Policy
+                  Dialtact Privacy Policy
                 </h3>
                 <p className="text-xs text-[#524E5E] mt-1">
                   Last Updated: September 17, 2026 • Effective Date: January 1, 2026
@@ -88,7 +88,7 @@ export function LegalModals({ isOpen, onClose, defaultTab = 'privacy' }) {
                   1. Scope & Telephony Voice Data Processing
                 </h4>
                 <p>
-                  Voxly AI Inc. ("Voxly", "we", "us") provides enterprise autonomous AI voice employee infrastructure. This Privacy Policy details how we collect, process, transcribe, and secure audio recordings, synthetic voice outputs, caller telemetry, and contact data transmitted through our web services and telephone connections.
+                  Dialtact Inc. ("Dialtact", "we", "us") provides enterprise autonomous AI voice employee infrastructure. This Privacy Policy details how we collect, process, transcribe, and secure audio recordings, synthetic voice outputs, caller telemetry, and contact data transmitted through our web services and telephone connections.
                 </p>
               </section>
 
@@ -97,7 +97,7 @@ export function LegalModals({ isOpen, onClose, defaultTab = 'privacy' }) {
                   2. Voice Recording, Transcription & Consent
                 </h4>
                 <p>
-                  Inbound and outbound telephone calls processed through Voxly are digitized and transcribed in real-time. Customers deploying Voxly agents are contractually required to configure two-party call recording consent disclosures ("This call may be recorded or monitored by an automated assistant") in compliance with applicable federal, state, and international telecommunication laws.
+                  Inbound and outbound telephone calls processed through Dialtact are digitized and transcribed in real-time. Customers deploying Dialtact agents are contractually required to configure two-party call recording consent disclosures ("This call may be recorded or monitored by an automated assistant") in compliance with applicable federal, state, and international telecommunication laws.
                 </p>
                 <div className="bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl p-3.5 space-y-1.5 text-xs">
                   <div className="flex items-center gap-2 font-semibold text-[#0F0E17]">
@@ -124,7 +124,7 @@ export function LegalModals({ isOpen, onClose, defaultTab = 'privacy' }) {
                   4. GDPR, UK DPA & CCPA/CPRA Rights
                 </h4>
                 <p>
-                  Data subjects maintain rights to request access to call recordings, request transcript corrections, or execute complete data deletion. Data erasure requests can be dispatched directly to <span className="font-mono text-xs text-[#0F0E17]">privacy@voxly.ai</span> and are completed within 30 calendar days.
+                  Data subjects maintain rights to request access to call recordings, request transcript corrections, or execute complete data deletion. Data erasure requests can be dispatched directly to <span className="font-mono text-xs text-[#0F0E17]">privacy@dialtact.ai</span> and are completed within 30 calendar days.
                 </p>
               </section>
             </div>
@@ -132,7 +132,7 @@ export function LegalModals({ isOpen, onClose, defaultTab = 'privacy' }) {
             <div className="space-y-5">
               <div className="pb-4 border-b border-[#E4E2EB]">
                 <h3 className="text-xl font-bold text-[#0F0E17] tracking-tight">
-                  Voxly AI Terms of Service
+                  Dialtact Terms of Service
                 </h3>
                 <p className="text-xs text-[#524E5E] mt-1">
                   Last Updated: September 17, 2026 • Enterprise License Agreement
@@ -144,7 +144,7 @@ export function LegalModals({ isOpen, onClose, defaultTab = 'privacy' }) {
                   1. Acceptance & Service Overview
                 </h4>
                 <p>
-                  By creating an account, connecting a phone number, or deploying an AI voice employee on Voxly, you agree to these Terms of Service. Voxly grants you a commercial license to configure, deploy, and scale autonomous voice employees across telephone and web channels.
+                  By creating an account, connecting a phone number, or deploying an AI voice employee on Dialtact, you agree to these Terms of Service. Dialtact grants you a commercial license to configure, deploy, and scale autonomous voice employees across telephone and web channels.
                 </p>
               </section>
 
@@ -153,7 +153,7 @@ export function LegalModals({ isOpen, onClose, defaultTab = 'privacy' }) {
                   2. Acceptable Telephony Use & TCPA Compliance
                 </h4>
                 <p>
-                  You agree to comply with the Telephone Consumer Protection Act (TCPA), the FTC Telemarketing Sales Rule (TSR), and applicable Do-Not-Call (DNC) registry requirements. You may <strong>not</strong> utilize Voxly for:
+                  You agree to comply with the Telephone Consumer Protection Act (TCPA), the FTC Telemarketing Sales Rule (TSR), and applicable Do-Not-Call (DNC) registry requirements. You may <strong>not</strong> utilize Dialtact for:
                 </p>
                 <ul className="list-disc pl-5 space-y-1 text-xs">
                   <li>Unsolicited commercial robocalls without prior express written consent</li>

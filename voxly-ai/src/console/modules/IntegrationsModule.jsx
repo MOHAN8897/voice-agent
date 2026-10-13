@@ -918,7 +918,7 @@ export function IntegrationsModule() {
                 </p>
                 <div className="text-[11px] text-brand font-semibold flex items-center space-x-1">
                   <Lock className="w-3.5 h-3.5" />
-                  <span>Passwords never touch Voxly</span>
+                  <span>Passwords never touch Dialtact</span>
                 </div>
               </div>
 

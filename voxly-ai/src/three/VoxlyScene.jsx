@@ -1,4 +1,4 @@
-import React, { Suspense, useState, useEffect } from 'react';
+import React, { Suspense, useState, useEffect, useRef, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { VoxlyBot } from './VoxlyBot';
 import { BotLights } from './BotLights';
@@ -31,9 +31,31 @@ export function VoxlyScene({
   className = '',
   isInView = true,
 }) {
-  const [internalPointer, setInternalPointer] = useState({ x: 0, y: 0 });
+  const internalPointer = useRef({ x: 0, y: 0 });
   const [hasWebGLError, setHasWebGLError] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  const [isPageVisible, setIsPageVisible] = useState(() => !document.hidden);
+  const contextCleanup = useRef(null);
+
+  useEffect(() => {
+    const onVisibility = () => setIsPageVisible(!document.hidden);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      contextCleanup.current?.();
+    };
+  }, []);
+
+  const handleCreated = useCallback(({ gl }) => {
+    gl.setClearColor(0x000000, 0);
+    const onContextLost = (event) => {
+      event.preventDefault();
+      setHasWebGLError(true);
+    };
+    contextCleanup.current?.();
+    gl.domElement.addEventListener('webglcontextlost', onContextLost);
+    contextCleanup.current = () => gl.domElement.removeEventListener('webglcontextlost', onContextLost);
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -47,30 +69,34 @@ export function VoxlyScene({
   const handlePointerMove = (e) => {
     if (pointerRef || externalPointer) return;
     const rect = e.currentTarget.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
     const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
     const y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
-    setInternalPointer({ x, y });
+    internalPointer.current = {
+      x: Number.isFinite(x) ? Math.max(-1, Math.min(1, x)) : 0,
+      y: Number.isFinite(y) ? Math.max(-1, Math.min(1, y)) : 0,
+    };
   };
 
   const handlePointerLeave = () => {
     if (pointerRef || externalPointer) return;
-    setInternalPointer({ x: 0, y: 0 });
+    internalPointer.current = { x: 0, y: 0 };
   };
-
-  const activePointer = externalPointer || internalPointer;
 
   if (hasWebGLError) {
     return (
       <div className={`relative flex items-center justify-center p-8 bg-[#FAF9FD] rounded-3xl ${className}`}>
+        <button type="button" onClick={onBotClick} disabled={!onBotClick} aria-label="Interact with Dialtact" className="border-0 bg-transparent p-0 disabled:cursor-default">
         <img
           src="/images/VoxlyBot_preview.png"
-          alt="Voxly AI Employee Preview"
+          alt="Dialtact AI Employee Preview"
           width="320"
           height="320"
           loading="lazy"
           decoding="async"
           className="max-h-[320px] object-contain drop-shadow-xl"
         />
+        </button>
       </div>
     );
   }
@@ -83,22 +109,21 @@ export function VoxlyScene({
     >
       <Suspense fallback={<CanvasLoader />}>
         <Canvas
-          frameloop={isInView ? 'always' : 'never'}
+          frameloop={isInView === false || !isPageVisible ? 'never' : 'always'}
           camera={{
             position: isMobile ? [0, 0.2, 5.2] : [0, 0.35, 4.6],
             fov: isMobile ? 40 : 36,
             near: 0.1,
             far: 100,
           }}
-          dpr={isMobile ? [1, 1.5] : [1, 2]}
+          dpr={[1, 1.5]}
           gl={{
             antialias: true,
             alpha: true,
-            powerPreference: 'high-performance',
+            powerPreference: 'default',
+            failIfMajorPerformanceCaveat: false,
           }}
-          onCreated={({ gl }) => {
-            gl.setClearColor(0x000000, 0);
-          }}
+          onCreated={handleCreated}
           onError={() => setHasWebGLError(true)}
         >
           <BotLights />
@@ -109,8 +134,8 @@ export function VoxlyScene({
             onBotClick={onBotClick}
             onControllerReady={onControllerReady}
             onExpressionChange={onExpressionChange}
-            pointerRef={pointerRef}
-            pointer={activePointer}
+            pointerRef={pointerRef || (externalPointer ? null : internalPointer)}
+            pointer={externalPointer}
             audioAnalyser={audioAnalyser}
             audioAmplitude={audioAmplitude}
           />

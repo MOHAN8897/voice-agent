@@ -889,10 +889,12 @@ export const api = {
      * Speak a line in the agent's real production voice (the live model, not the
      * browser's speech engine) and return the WAV plus which voice spoke it.
      */
-    async previewVoice({ text, voiceId } = {}) {
+    async previewVoice({ text, voiceId, language, speed } = {}) {
       const { blob, headers } = await api.requestBinary('POST', '/api/telephony/voice-preview', {
         text,
         voiceId: voiceId || null,
+        language: language || null,
+        speed: speed != null ? Number(speed) : null,
       });
       return { blob, url: URL.createObjectURL(blob), voice: headers.voice, label: headers.label, model: headers.model };
     },

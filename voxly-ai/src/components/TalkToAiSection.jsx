@@ -279,7 +279,7 @@ export function TalkToAiSection({ onOpenTalkModal, onGetStarted }) {
               {/* A/B: our voice vs the browser's built-in voice, same line */}
               <div className="inline-flex rounded-xl border border-white/10 bg-white/5 p-1 mb-5">
                 {[
-                  { id: 'product', label: 'Voxly voice' },
+                  { id: 'product', label: 'Dialtact voice' },
                   { id: 'browser', label: "Your browser's voice" },
                 ].map((opt) => (
                   <button

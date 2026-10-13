@@ -7,12 +7,22 @@ import { isTourCompleted, setTourCompleted } from '../services/tourGuide';
 export function ConsoleGate({ children, onSignIn, onBackToMarketing }) {
   const { isAuthenticated, isLoading, user, updateUser, refreshSession } = useAuth();
 
+  // Auto-launch guided tour for new users entering the console for the first time
   React.useEffect(() => {
-    // If the authenticated user has completed onboarding, ensure tour is marked completed
-    if (user && user.hasCompletedOnboarding === true) {
-      setTourCompleted(user);
+    if (isAuthenticated && user && user.hasCompletedOnboarding === true && !isTourCompleted(user)) {
+      const timer = setTimeout(() => {
+        if (!isTourCompleted(user)) {
+          window.dispatchEvent(
+            new CustomEvent('dialtact:open-tour', { detail: { source: 'first_time_entry' } })
+          );
+          window.dispatchEvent(
+            new CustomEvent('voxly:open-tour', { detail: { source: 'first_time_entry' } })
+          );
+        }
+      }, 750);
+      return () => clearTimeout(timer);
     }
-  }, [user]);
+  }, [isAuthenticated, user]);
 
   if (isLoading) {
     return (
@@ -40,8 +50,12 @@ export function ConsoleGate({ children, onSignIn, onBackToMarketing }) {
           refreshSession?.().catch(() => {});
         }}
         onStartTour={() => {
-          if (isTourCompleted(user)) return;
-          window.dispatchEvent(new CustomEvent('voxly:open-tour', { detail: { source: 'onboarding' } }));
+          window.dispatchEvent(
+            new CustomEvent('dialtact:open-tour', { detail: { source: 'onboarding', force: true } })
+          );
+          window.dispatchEvent(
+            new CustomEvent('voxly:open-tour', { detail: { source: 'onboarding', force: true } })
+          );
         }}
       />
     );

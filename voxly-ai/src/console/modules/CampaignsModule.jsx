@@ -835,7 +835,7 @@ export function CampaignsModule() {
                   {
                     id: 'upload',
                     title: 'Upload CSV / XLSX',
-                    desc: 'Any spreadsheet format — Voxly automatically detects columns.',
+                    desc: 'Any spreadsheet format — Dialtact automatically detects columns.',
                     icon: UploadCloud,
                   },
                   {
@@ -925,7 +925,7 @@ export function CampaignsModule() {
                   </div>
 
                   <div className="flex items-center justify-between text-[11px] text-[#524E5E] pt-1">
-                    <span>Upload your contacts — Voxly will automatically detect and map your columns.</span>
+                    <span>Upload your contacts — Dialtact will automatically detect and map your columns.</span>
                     <button
                       type="button"
                       onClick={handleDownloadSample}
@@ -1055,7 +1055,7 @@ export function CampaignsModule() {
                     <tr>
                       <th className="p-2.5">Your Column</th>
                       <th className="p-2.5">Sample Values</th>
-                      <th className="p-2.5">Voxly Field</th>
+                      <th className="p-2.5">Dialtact Field</th>
                       <th className="p-2.5 text-right">Confidence</th>
                     </tr>
                   </thead>

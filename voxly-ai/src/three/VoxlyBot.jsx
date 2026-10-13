@@ -98,18 +98,22 @@ export function VoxlyBot({
   // Frame update: body follows pointer (mouse or finger) at display refresh rate
   useFrame(({ clock, pointer: r3fPointer }, delta) => {
     const time = clock.getElapsedTime();
+    const safeDelta = MathUtils.clamp(Number.isFinite(delta) ? delta : 0, 0, 0.1);
+
     // Decorative float/jiggle respects reduced-motion. Look-at still tracks
     // user input so phones with "remove animations" don't look frozen.
     const decor = reducedMotionRef.current ? 0 : 1;
     const lookScale = reducedMotionRef.current ? 0.55 : 1;
 
     // Priority: pointerRef (window/touch tracking) -> pointer prop -> R3F Canvas pointer
-    const pX = pointerRef?.current?.x !== undefined
+    const rawX = pointerRef?.current?.x !== undefined
       ? pointerRef.current.x
       : (pointer?.x !== undefined ? pointer.x : r3fPointer.x);
-    const pY = pointerRef?.current?.y !== undefined
+    const rawY = pointerRef?.current?.y !== undefined
       ? pointerRef.current.y
       : (pointer?.y !== undefined ? pointer.y : r3fPointer.y);
+    const pX = Number.isFinite(rawX) ? rawX : 0;
+    const pY = Number.isFinite(rawY) ? rawY : 0;
 
     // Desktop: Shift robot slightly left so dialogue has gap.
     // Mobile: Center + slightly smaller so the callout fits.
@@ -122,8 +126,18 @@ export function VoxlyBot({
     const targetBodyYaw = lookScale * MathUtils.clamp(pX, -1, 1) * MathUtils.degToRad(18);
     const targetBodyPitch = lookScale * MathUtils.clamp(-pY, -1, 1) * MathUtils.degToRad(7);
 
-    bodyYawRef.current = MathUtils.damp(bodyYawRef.current, targetBodyYaw, 14, delta);
-    bodyPitchRef.current = MathUtils.damp(bodyPitchRef.current, targetBodyPitch, 14, delta);
+    bodyYawRef.current = MathUtils.damp(
+      Number.isFinite(bodyYawRef.current) ? bodyYawRef.current : 0,
+      targetBodyYaw,
+      14,
+      safeDelta
+    );
+    bodyPitchRef.current = MathUtils.damp(
+      Number.isFinite(bodyPitchRef.current) ? bodyPitchRef.current : 0,
+      targetBodyPitch,
+      14,
+      safeDelta
+    );
 
     const rollProg = controller?.rollProgress || 0;
     const isDoubleRoll = (controller?.currentRollDuration || 1.6) > 2;
@@ -134,11 +148,11 @@ export function VoxlyBot({
     const rollTilt = Math.sin(rollProg * Math.PI * 2 * totalSpins) * 0.22;
 
     if (groupRef.current) {
-      groupRef.current.position.x = MathUtils.damp(groupRef.current.position.x, targetX, 10, delta);
+      groupRef.current.position.x = MathUtils.damp(groupRef.current.position.x, targetX, 10, safeDelta);
       groupRef.current.position.y = basePosY + decor * Math.sin(time * 2.4) * 0.06 + rollHop;
       groupRef.current.scale.setScalar(baseScale);
-      groupRef.current.rotation.y = bodyYawRef.current + decor * Math.sin(time * 1.5) * 0.02 + rollAngle;
-      groupRef.current.rotation.x = bodyPitchRef.current;
+      groupRef.current.rotation.y = (bodyYawRef.current || 0) + decor * Math.sin(time * 1.5) * 0.02 + rollAngle;
+      groupRef.current.rotation.x = bodyPitchRef.current || 0;
       groupRef.current.rotation.z =
         decor * (Math.sin(time * 3.0) * 0.012 - MathUtils.clamp(pX, -1, 1) * MathUtils.degToRad(2.4)) +
         rollTilt;
@@ -146,7 +160,7 @@ export function VoxlyBot({
 
     if (controller) {
       controller.setPointer(pX, pY);
-      controller.update(delta);
+      controller.update(safeDelta);
     }
   });
 

@@ -50,6 +50,43 @@ import { resolveEmployeeStep } from '../employeeFlowHash';
  * drift apart again: adding an editor field to `formFromAgent` without adding it
  * here is the only way to reintroduce the bug, and it now fails visibly.
  */
+/** Extract the greeting / opening phrase from a script text if present. */
+export function extractGreetingFromScript(scriptText) {
+  if (!scriptText) return null;
+  const match = scriptText.match(/^(?:Greeting|Opening greeting|Opening line|Greeting the caller hears):\s*([^\n]+)/im);
+  if (match && match[1]) {
+    return match[1].trim();
+  }
+  const openingLineMatch = scriptText.match(/^OPENING LINE\s*\n\s*([^\n]+)/im);
+  if (openingLineMatch && openingLineMatch[1]) {
+    return openingLineMatch[1].trim();
+  }
+  return null;
+}
+
+/** Synchronize greeting into calling script text so both stay connected. */
+export function syncGreetingToScript(currentScript, newGreeting) {
+  const gTrim = (newGreeting || '').trim();
+  if (!currentScript || !currentScript.trim()) {
+    return gTrim ? `Greeting: ${gTrim}` : '';
+  }
+
+  const markerRegex = /^(?:Greeting|Opening greeting|Opening line|Greeting the caller hears):\s*[^\n]*/im;
+  if (markerRegex.test(currentScript)) {
+    return currentScript.replace(markerRegex, `Greeting: ${gTrim}`);
+  }
+
+  const openingLineRegex = /^OPENING LINE\s*\n\s*[^\n]*/im;
+  if (openingLineRegex.test(currentScript)) {
+    return currentScript.replace(openingLineRegex, `OPENING LINE\n${gTrim}`);
+  }
+
+  if (gTrim) {
+    return `Greeting: ${gTrim}\n\n${currentScript.trim()}`;
+  }
+  return currentScript;
+}
+
 const EDITABLE_FIELDS = [
   'name',
   'role',
@@ -211,21 +248,41 @@ export function AgentStudioModule({
 
   const [formData, setFormData] = useState(() => formFromAgent(selectedAgent));
 
+  // Settings panel dirty state & save/discard ref callbacks
+  const [settingsDirty, setSettingsDirty] = useState(false);
+  const settingsSaveRef = useRef(null);
+  const settingsDiscardRef = useRef(null);
+
   const insertVariable = (token) => {
     setFormData((prev) => ({
       ...prev,
       script: prev.script ? `${prev.script} ${token}` : token,
     }));
   };
-  // The last-loaded (saved) state. Dirty = formData differs from this, which is
-  // what the Save/Discard guard compares against.
+
+  // Two-way synchronization between "Greeting the caller hears" and Calling script
+  const handleGreetingChange = (newGreeting) => {
+    setFormData((prev) => ({
+      ...prev,
+      greeting: newGreeting,
+      script: syncGreetingToScript(prev.script, newGreeting),
+    }));
+  };
+
+  const handleScriptChange = (newScript) => {
+    const extracted = extractGreetingFromScript(newScript);
+    setFormData((prev) => ({
+      ...prev,
+      script: newScript,
+      greeting: extracted !== null ? extracted : prev.greeting,
+    }));
+  };
+
+  // The last-loaded (saved) state. Dirty = formData differs from this, or settings tab has unsaved changes.
   const [savedSnapshot, setSavedSnapshot] = useState(() => snapForm(formData));
-  // A published agent must not be swapped out from under unsaved script edits.
-  // Held as a plain value, not a resolver promise: a pending promise silently
-  // drops the state update if the component unmounts or re-keys mid-flight, and
-  // the user then gets no dialog at all and no explanation.
   const [pendingLeave, setPendingLeave] = useState(null);
-  const dirty = snapForm(formData) !== savedSnapshot;
+  const scriptDirty = snapForm(formData) !== savedSnapshot;
+  const dirty = scriptDirty || settingsDirty;
 
   const confirmLeave = useCallback(
     () => (dirty ? new Promise((resolve) => setPendingLeave(() => resolve)) : Promise.resolve(true)),
@@ -240,12 +297,44 @@ export function AgentStudioModule({
   }, []);
 
   const discardChanges = useCallback(() => {
-    // Restore through the same normaliser the snapshot was built with, so a
-    // restored form always has the collections the editor maps over.
-    setFormData(formFromSnapshot(savedSnapshot));
-    setSaveError(null);
-    setIsSaved(false);
-  }, [savedSnapshot]);
+    if (scriptDirty) {
+      setFormData(formFromSnapshot(savedSnapshot));
+      setSaveError(null);
+      setIsSaved(false);
+    }
+    if (settingsDirty && settingsDiscardRef.current) {
+      settingsDiscardRef.current();
+    }
+  }, [scriptDirty, savedSnapshot, settingsDirty]);
+
+  const handleSettingsSaved = useCallback((savedData) => {
+    setFormData((prev) => {
+      const nextGreeting =
+        savedData.greeting !== undefined && savedData.greeting !== ''
+          ? savedData.greeting
+          : prev.greeting;
+      const nextLang = savedData.language || prev.language;
+      const nextName = savedData.name || prev.name;
+      const nextScript =
+        nextGreeting !== prev.greeting
+          ? syncGreetingToScript(prev.script, nextGreeting)
+          : prev.script;
+      const updated = {
+        ...prev,
+        name: nextName,
+        language: nextLang,
+        greeting: nextGreeting,
+        script: nextScript,
+        voice: {
+          ...prev.voice,
+          language: nextLang,
+        },
+      };
+      setSavedSnapshot(snapForm(updated));
+      return updated;
+    });
+    setSettingsDirty(false);
+  }, []);
 
   const guardedAction = useCallback(
     (run) => async (...args) => {
@@ -305,10 +394,18 @@ export function AgentStudioModule({
         const voiceMeta = (phoneVoices.length ? phoneVoices : []).find(
           (v) => v.id === cfg.realtimeVoice
         );
+        let initialGreeting = studio.greeting || base.greeting || '';
+        let initialScript = studio.script || '';
+        const extracted = extractGreetingFromScript(initialScript);
+        if (extracted) {
+          initialGreeting = extracted;
+        } else if (initialGreeting && initialScript && !extractGreetingFromScript(initialScript)) {
+          initialScript = syncGreetingToScript(initialScript, initialGreeting);
+        }
         const loaded = {
           ...base,
-          script: studio.script || '',
-          greeting: studio.greeting || base.greeting,
+          script: initialScript,
+          greeting: initialGreeting,
           variableDefinitions: studio.variableDefinitions?.length
             ? studio.variableDefinitions
             : base.variableDefinitions,
@@ -356,28 +453,38 @@ export function AgentStudioModule({
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
-    if (!selectedAgent?.id) return;
+    if (!selectedAgent?.id || saving) return false;
     setSaveError(null);
     setSaving(true);
+    let success = true;
     try {
-      await updateAgent(selectedAgent.id, formData);
-      // Re-baseline: after a successful publish there is nothing left to guard.
-      setSavedSnapshot(snapForm(formData));
-      setIsSaved(true);
-      setTimeout(() => setIsSaved(false), 2500);
+      if (scriptDirty) {
+        await updateAgent(selectedAgent.id, formData);
+        // Re-baseline: after a successful publish there is nothing left to guard.
+        setSavedSnapshot(snapForm(formData));
+      }
+      if (settingsDirty && settingsSaveRef.current) {
+        const ok = await settingsSaveRef.current();
+        if (!ok) success = false;
+      }
+      if (success) {
+        setIsSaved(true);
+        setTimeout(() => setIsSaved(false), 2500);
+      }
+      return success;
     } catch (e) {
       setSaveError(e.message || 'Could not save agent');
+      return false;
     } finally {
       setSaving(false);
     }
-    return true;
   };
 
   // Variable chip insertion into script cursor
   const handleInsertVariable = (varName) => {
     setFormData((prev) => ({
       ...prev,
-      script: `${prev.script}\n{{${varName}}}`
+      script: prev.script ? `${prev.script}\n{{${varName}}}` : `{{${varName}}}`,
     }));
   };
 
@@ -421,13 +528,13 @@ export function AgentStudioModule({
     setVoiceSpoken({ voice: null, model: null });
     setIsBufferingVoice(true);
 
-    // Speak through the real live model the caller will reach. The previous
-    // implementation used window.speechSynthesis — an unrelated OS voice — so the
-    // preview could be approved while the shipped voice was something else.
+    // Speak through the real live model the caller will reach with configured voice, language, and speed.
     try {
       const { blob, voice, model } = await api.telephony.previewVoice({
         text: previewText,
-        voiceId: formData.voice?.voiceId || formData.voice?.id || null,
+        voiceId: formData.voice?.voiceId || formData.voice?.realtimeVoice || null,
+        language: formData.language || 'en-IN',
+        speed: formData.voice?.speed ?? 1,
       });
       setVoiceSpoken({ voice: voice || null, model: model || null });
       setIsBufferingVoice(false);
@@ -493,13 +600,13 @@ export function AgentStudioModule({
           data-testid="agent-studio-unsaved"
           className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"
         >
-          <span className="font-semibold">Unsaved changes</span>
+          <span className="font-semibold">Unsaved changes {settingsDirty && scriptDirty ? '(Script & Settings)' : settingsDirty ? '(Settings)' : '(Script)'}</span>
           <span className="flex items-center gap-2">
             <button
               type="button"
               onClick={discardChanges}
               data-testid="agent-studio-discard"
-              className="rounded-lg border border-amber-300 px-2.5 py-1 font-semibold"
+              className="rounded-lg border border-amber-300 px-2.5 py-1 font-semibold hover:bg-amber-100"
             >
               Discard
             </button>
@@ -508,9 +615,9 @@ export function AgentStudioModule({
               onClick={handleSave}
               disabled={saving}
               data-testid="agent-studio-save-inline"
-              className="rounded-lg bg-[#0F0E17] px-2.5 py-1 font-semibold text-white disabled:opacity-50"
+              className="rounded-lg bg-[#0F0E17] px-2.5 py-1 font-semibold text-white disabled:opacity-50 hover:bg-[#2A2938]"
             >
-              {saving ? 'Saving…' : 'Save & publish'}
+              {saving ? 'Saving…' : 'Save changes'}
             </button>
           </span>
         </div>
@@ -519,18 +626,21 @@ export function AgentStudioModule({
       <Modal
         isOpen={Boolean(pendingLeave)}
         onClose={() => settleLeave(false)}
-        title="Unsaved script changes"
-        subtitle="Your edits have not been published yet."
+        title="Unsaved changes"
+        subtitle="Your configurations have not been saved yet."
         maxWidth="max-w-md"
       >
         <div className="space-y-4" data-testid="agent-studio-leave-dialog">
           <p className="text-xs text-[#524E5E]">
-            Leaving now discards the script edits you have not saved.
+            Leaving now discards the unsaved changes you have made to this agent.
           </p>
           <div className="flex flex-wrap items-center justify-end gap-2">
             <button
               type="button"
-              onClick={discardChanges}
+              onClick={() => {
+                discardChanges();
+                settleLeave(true);
+              }}
               data-testid="leave-discard"
               className="mr-auto rounded-xl px-3 py-2 text-xs font-semibold text-[#B42318] hover:bg-[#FEF2F2]"
             >
@@ -554,7 +664,7 @@ export function AgentStudioModule({
               }}
               className="rounded-xl bg-[#6344E7] px-3 py-2 text-xs font-bold text-white disabled:opacity-50"
             >
-              {saving ? 'Saving…' : 'Save & publish'}
+              {saving ? 'Saving…' : 'Save & continue'}
             </button>
           </div>
         </div>
@@ -685,6 +795,38 @@ export function AgentStudioModule({
           aria-labelledby="agent-tab-script"
           className="space-y-6 animate-in fade-in duration-150"
         >
+          {/* Greeting the caller hears: synced with calling script and acoustic voice preview */}
+          <SolidCard>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+              <div>
+                <h3 className="text-xs font-bold text-[#0F0E17] flex items-center gap-2">
+                  <Volume2 className="w-3.5 h-3.5 text-[#6344E7]" />
+                  <span>Greeting the caller hears</span>
+                </h3>
+                <p className="text-[11px] text-[#524E5E]">
+                  The opening phrase the caller hears when they connect. Directly connected to the script below and the acoustic voice preview.
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-md border bg-[#F0EEF6] text-[#524E5E] border-[#E4E2EB]">
+                  {LANGUAGE_OPTIONS.find((l) => l.code === formData.language)?.label || formData.language}
+                </span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-md border bg-[#F0EEF6] text-[#524E5E] border-[#E4E2EB]">
+                  {formData.voice?.voiceName || formData.voice?.voiceId || 'Marin'}
+                </span>
+              </div>
+            </div>
+
+            <textarea
+              rows={2}
+              value={formData.greeting}
+              onChange={(e) => handleGreetingChange(e.target.value)}
+              placeholder="Hi there! Thanks for calling. How can I help you today?"
+              data-testid="agent-studio-greeting"
+              className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl p-3 text-xs text-[#0F0E17] font-medium leading-relaxed focus:outline-none focus:border-[#6344E7] transition-colors resize-none"
+            />
+          </SolidCard>
+
           <SolidCard>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
               <div>
@@ -780,7 +922,7 @@ export function AgentStudioModule({
             <textarea
               rows={10}
               value={formData.script}
-              onChange={(e) => setFormData({ ...formData, script: e.target.value })}
+              onChange={(e) => handleScriptChange(e.target.value)}
               className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl p-4 text-xs text-[#0F0E17] font-mono leading-relaxed focus:outline-none focus:border-[#6344E7] transition-colors"
             />
 
@@ -1045,7 +1187,21 @@ export function AgentStudioModule({
             </div>
 
             <div className="p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] space-y-3">
-              <div className="text-xs font-medium text-[#0F0E17] leading-relaxed italic">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[10px] font-bold text-[#8C879A] uppercase tracking-wider">
+                  Greeting the caller hears
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-md border bg-white text-[#524E5E] border-[#E4E2EB]">
+                    {LANGUAGE_OPTIONS.find((l) => l.code === formData.language)?.label || formData.language}
+                  </span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-md border bg-white text-[#524E5E] border-[#E4E2EB]">
+                    {formData.voice?.voiceName || formData.voice?.voiceId || 'Marin'} · {formData.voice?.speed ?? 1}x speed
+                  </span>
+                </div>
+              </div>
+
+              <div className="text-xs font-medium text-[#0F0E17] leading-relaxed italic bg-white p-3 rounded-xl border border-[#E4E2EB]/60">
                 "{formData.greeting || `Hi there! I am ${formData.name}. I am calibrated and ready to take your calls.`}"
               </div>
 
@@ -1140,7 +1296,16 @@ export function AgentStudioModule({
           className="animate-in fade-in duration-150"
         >
           <ErrorBoundary title="Unable to load agent settings">
-            <AgentSettingsPanel agent={selectedAgent} onOpenBuyNumber={onOpenBuyNumber} />
+            <AgentSettingsPanel
+              agent={selectedAgent}
+              onOpenBuyNumber={onOpenBuyNumber}
+              onDirtyChange={setSettingsDirty}
+              registerSaveHandler={(saveFn, discardFn) => {
+                settingsSaveRef.current = saveFn;
+                settingsDiscardRef.current = discardFn;
+              }}
+              onSettingsSaved={handleSettingsSaved}
+            />
           </ErrorBoundary>
         </div>
       )}

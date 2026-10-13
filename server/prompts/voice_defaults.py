@@ -11,6 +11,11 @@ DEFAULT_RESPONSE_STYLES: dict[str, str] = {
     "hi-IN": "very brief, 1-2 sentences, spoken Hinglish",
     "ta-IN": "very brief, 1-2 sentences, spoken Tamil like a person on a phone",
     "kn-IN": "very brief, 1-2 sentences, spoken Kannada like a person on a phone",
+    "ml-IN": "warm, brief, 1-2 sentences, spoken Malayalam",
+    "mr-IN": "warm, brief, 1-2 sentences, spoken Marathi",
+    "bn-IN": "warm, brief, 1-2 sentences, spoken Bengali",
+    "gu-IN": "warm, brief, 1-2 sentences, spoken Gujarati",
+    "pa-IN": "warm, brief, 1-2 sentences, spoken Punjabi",
 }
 
 # Back-compat: factory sessions with no language still Telugu.
@@ -42,7 +47,12 @@ _STYLE_ALIASES = {
 
 
 def canonical_language(language: str | None) -> str:
+    from server.config.constants import normalize_supported_language
+
     raw = (language or "te-IN").strip()
+    normalized = normalize_supported_language(raw)
+    if normalized in DEFAULT_RESPONSE_STYLES:
+        return normalized
     if raw in DEFAULT_RESPONSE_STYLES:
         return raw
     mapped = _STYLE_ALIASES.get(raw.lower())
@@ -75,6 +85,11 @@ _LANG_STYLE_MARKERS = {
     "hi-IN": ("spoken hinglish",),
     "ta-IN": ("spoken tamil",),
     "kn-IN": ("spoken kannada",),
+    "ml-IN": ("spoken malayalam",),
+    "mr-IN": ("spoken marathi",),
+    "bn-IN": ("spoken bengali",),
+    "gu-IN": ("spoken gujarati",),
+    "pa-IN": ("spoken punjabi",),
 }
 
 

@@ -8,7 +8,7 @@ import re
 from typing import Any
 
 from server.brain.agent_spec import AgentSpec, normalize_whitespace
-from server.prompts.agent_voice_rules import is_native_english, normalize_compile_language
+from server.prompts.agent_voice_rules import normalize_compile_language, opening_line_for
 from server.utils.logger import logger
 
 _TEMPLATE_VERSION = "2026.1"
@@ -21,20 +21,8 @@ def _opening_for_spec(spec: AgentSpec, language: str, direction: str = "outbound
     lang = normalize_compile_language(language)
     agent = spec.agent_name.value or "our representative"
     company = spec.company_name.value or "our company"
-    outbound = direction.lower() not in ("inbound", "incoming")
-
-    if lang == "en-IN" or is_native_english(lang):
-        if outbound:
-            return f"Hi, this is {agent} calling from {company}. Do you have a moment?"
-        return f"Hello, thank you for calling {company}. This is {agent}. How can I assist you today?"
-    elif lang == "hi-IN":
-        if outbound:
-            return f"Namaste, main {company} se {agent} baat kar rahi hoon. Kya aapke paas do minute hain?"
-        return f"Namaste, {company} mein aapka swagat hai. Main {agent} hoon. Main aapki kya madad kar sakti hoon?"
-    else:  # te-IN default
-        if outbound:
-            return f"Namaste, nenu {company} nundi {agent} matladutunnanu. Meeku oka moment unda?"
-        return f"Namaste, {company} ki swagatham. Nenu {agent}. Nenu meeku ela sahayam cheyagalanu?"
+    return opening_line_for(lang, agent_name=agent, company_name=company,
+                            work_scope='', direction=direction)
 
 
 def generate_deterministic_script_from_spec(
@@ -105,7 +93,7 @@ def generate_deterministic_script_from_spec(
     if spec.constraints:
         for c in spec.constraints:
             call_go_lines.append(f"- CONSTRAINT: {c}")
-    call_go_lines.append("- Never say you are an AI. You are the person who works for this business.")
+    call_go_lines.append("- Represent the business naturally. If asked whether you are AI, answer honestly and briefly; do not pretend to be human.")
     how_call_goes = "--- HOW THE CALL SHOULD GO ---\n" + "\n".join(call_go_lines)
 
     # Section 6: WHEN YOU DO NOT KNOW

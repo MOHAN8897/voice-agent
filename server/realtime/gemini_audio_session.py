@@ -268,11 +268,20 @@ def prioritize_brain_for_gemini(brain: str, token_budget: int) -> str:
         if title not in seen:
             ordered.append((title, body))
             seen.add(title)
+    # This budget is a target, not permission to erase safety or cut a policy
+    # sentence in half. Reserve complete mandatory sections before optional prose.
+    mandatory = {"SAFETY", "CALL END POLICY", "STATIC OUTPUT RULES", "GUARDRAILS"}
+    ordered = ([item for item in ordered if item[0] in mandatory]
+               + [item for item in ordered if item[0] not in mandatory])
     chunks: list[str] = []
     used = 0
     for title, body in ordered:
         block = f"--- {title} ---\n{body}"
         tok = estimate_tokens(block)
+        if title in mandatory:
+            chunks.append(block)
+            used += tok
+            continue
         if used + tok > token_budget:
             room = max(80, token_budget - used - 12)
             if room < 100:

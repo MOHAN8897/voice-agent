@@ -144,7 +144,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
         }
         authedUser = signupRes;
         analytics.track('auth_signup_success', { userId: authedUser.id });
-        setSuccessMessage(`Account created! Welcome to Voxly, ${authedUser.name}.`);
+        setSuccessMessage(`Account created! Welcome to Dialtact, ${authedUser.name}.`);
       } else if (mode === 'forgot') {
         setLoadingMethod('email');
         const res = await api.auth.forgotPassword(email);
@@ -203,7 +203,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
       await api.auth.verifyEmailOtp(targetEmail, otpCode);
       const authedUser = await refreshSession();
       analytics.track('auth_signup_verified', { userId: authedUser?.id });
-      setSuccessMessage(`Welcome to Voxly, ${authedUser?.name || 'there'}!`);
+      setSuccessMessage(`Welcome to Dialtact, ${authedUser?.name || 'there'}!`);
       setTimeout(() => {
         onClose();
         if (onAuthSuccess) onAuthSuccess(authedUser);
@@ -239,7 +239,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
               <Lock className="w-4 h-4" />
             </div>
             <span className="text-xs font-mono font-semibold text-[#524E5E] uppercase tracking-wider">
-              Voxly account
+              Dialtact account
             </span>
           </div>
           <button
@@ -266,7 +266,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
             {mode === 'verify-otp'
               ? 'Use the same email for password sign-in and Google — one account per email.'
               : mode === 'signup'
-                ? 'Email, Google, and your console share one Voxly account.'
+                ? 'Email, Google, and your console share one Dialtact account.'
                 : mode === 'reset'
                   ? 'This link signed you in once it is used. Pick a password you have not used before.'
                   : 'Sign in with email or Google to open your agent console.'}

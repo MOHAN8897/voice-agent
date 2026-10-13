@@ -50,7 +50,7 @@ from server.prompts.agent_voice_rules import (
 from server.prompts.brain_prompt import SECTION_SAFETY
 from server.prompts.voice_defaults import style_for_language
 
-COMPILER_VERSION = "agent_script_v18"
+COMPILER_VERSION = "agent_script_v19"
 
 # Devanagari + the Dravidian and other Indic blocks. The user-visible script is an
 # English document (the product's writing language), so any of these inside it mean
@@ -239,7 +239,7 @@ _LEFTOVER_TREE = re.compile(
     re.I | re.S,
 )
 _MONEY_AMOUNT = re.compile(
-    r"(?:₹|rs\.?\s*|inr\s*|rupees?\s*)[\d,]+(?:\s*(?:lakh|lakhs|crore|crores))?"
+    r"(?:₹|\brs\.?\s*|\binr\s*|\brupees?\s*)[\d,]+(?:\s*(?:lakh|lakhs|crore|crores))?"
     r"|[\d,]+\s*(?:lakh|lakhs|crore|crores)\b",
     re.I,
 )
@@ -1014,6 +1014,22 @@ def _personal_opening_line(
 ) -> str:
     lang = normalize_compile_language(language)
     outbound = str(direction or "outbound").strip().lower() not in ("inbound", "incoming")
+    if lang not in ("te-IN", "hi-IN", "en-IN", "en-US"):
+        opening = opening_line_for(lang, agent_name=agent_name, company_name='',
+                                   work_scope='', direction=direction)
+        test_notice = {
+            "en-GB": "This is a test call.",
+            "ta-IN": "இது ஒரு சோதனை அழைப்பு.",
+            "kn-IN": "ಇದು ಒಂದು ಪರೀಕ್ಷಾ ಕರೆ.",
+            "ml-IN": "ഇതൊരു പരീക്ഷണ കോളാണ്.",
+            "mr-IN": "हा एक चाचणी कॉल आहे.",
+            "bn-IN": "এটি একটি পরীক্ষামূলক কল।",
+            "gu-IN": "આ એક પરીક્ષણ કૉલ છે.",
+            "pa-IN": "ਇਹ ਇੱਕ ਟੈਸਟ ਕਾਲ ਹੈ।",
+        }
+        prefix = f"{callee_name.strip()}, " if callee_name.strip() else ""
+        notice = f"{test_notice[lang]} " if is_test else ""
+        return f"{prefix}{notice}{opening}"
     english = is_native_english(lang) or lang == "en-IN"
     closer = (
         "Do you have a minute?"
@@ -1546,7 +1562,7 @@ def _conversation_plan(
         "Confirm the next step out loud before you hang up — who does what, and when they will hear from the team."
     )
     beats.append(
-        "Never say you are an AI. You are the person who works for this business."
+        "Represent the business naturally. If asked whether you are AI, answer honestly and briefly; do not pretend to be human."
     )
     return "--- HOW THE CALL SHOULD GO ---\n" + "\n".join(f"- {b}" for b in beats)
 

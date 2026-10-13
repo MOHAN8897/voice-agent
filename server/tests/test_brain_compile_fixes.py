@@ -51,6 +51,19 @@ WrongCo sells courses for ₹99,999.
     assert any("company" in i.lower() or "wrong" in i.lower() for i in issues)
 
 
+def test_company_suffix_is_not_a_currency_amount():
+    script = 'Acme Motors.\n3 service options are available.'
+    assert validate_agent_script(script, brief='Acme Motors offers three service options.',
+                                 agent_name='Sam', company_name='Acme Motors') == []
+
+
+@pytest.mark.parametrize('amount', ['Rs. 999', 'Rs999', 'INR 999', 'rupees 999', '₹999'])
+def test_currency_boundary_fix_still_rejects_ungrounded_amounts(amount):
+    issues = validate_agent_script(f'Acme Motors charges {amount}.', brief='Acme Motors offers servicing.',
+                                  agent_name='Sam', company_name='Acme Motors')
+    assert any('price/amount' in issue for issue in issues)
+
+
 def test_gemini_pins_outbound_workflow_from_compiled_brain():
     brain = (
         "--- AGENT IDENTITY ---\nYou are Priya, calling from Acme.\n\n"

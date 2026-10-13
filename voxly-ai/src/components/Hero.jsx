@@ -9,16 +9,16 @@ import { Check, Mic, X } from 'lucide-react';
 // First click is always a friendly wave greeting. Subsequent clicks cycle through varied responses.
 const CLICK_INTERACTIONS = [
   {
-    title: "Voxly",
-    message: "Hello! Hiii! 👋 I'm Voxly! Nice to meet you!",
-    speech: "Hello! Hiii! I'm Voxly! Nice to meet you!",
+    title: "Dialtact",
+    message: "Hello! Hiii! 👋 I'm Dialtact! Nice to meet you!",
+    speech: "Hello! Hiii! I'm Dialtact! Nice to meet you!",
     audioSrc: "/audio/voxly/hero_step1.mp3",
     expression: "HAPPY",
     gesture: "RIGHT_HAND_WAVE",
     mood: "friendly",
   },
   {
-    title: "Voxly",
+    title: "Dialtact",
     message: "Hiii! Excited to scale your voice workflows! ✨ Ready for 500+ calls.",
     speech: "Hiii! Excited to scale your voice workflows! Ready for 500 plus calls.",
     audioSrc: "/audio/voxly/hero_step2.mp3",
@@ -27,7 +27,7 @@ const CLICK_INTERACTIONS = [
     mood: "excited",
   },
   {
-    title: "Voxly (Acrobatic)",
+    title: "Dialtact (Acrobatic)",
     message: "Whoaaa! Watch this barrel roll! 🎉 360° celebratory spin & wave!",
     speech: "Whoaaa! Watch this barrel roll! 360 degree celebratory spin and wave!",
     audioSrc: "/audio/voxly/hero_step3.mp3",
@@ -36,7 +36,7 @@ const CLICK_INTERACTIONS = [
     mood: "celebration",
   },
   {
-    title: "Voxly • RAG Intelligence",
+    title: "Dialtact • RAG Intelligence",
     message: "Analyzing your knowledge base... 💡 I can resolve 85% of tier-one questions instantly!",
     speech: "Analyzing your knowledge base... I can resolve 85 percent of tier-one questions instantly!",
     audioSrc: "/audio/voxly/hero_think.mp3",
@@ -45,7 +45,7 @@ const CLICK_INTERACTIONS = [
     mood: "smart",
   },
   {
-    title: "Voxly",
+    title: "Dialtact",
     message: "Don't tickle me! Haha! Double hi to you! 👋😄👋",
     speech: "Don't tickle me! Haha! Double high five to you!",
     audioSrc: "/audio/voxly/hero_step4.mp3",
@@ -54,7 +54,7 @@ const CLICK_INTERACTIONS = [
     mood: "playful",
   },
   {
-    title: "Voxly • Pipeline Qualified",
+    title: "Dialtact • Pipeline Qualified",
     message: "Woohoo! 🎉 Another qualified lead booked straight into your calendar!",
     speech: "Woohoo! Another qualified lead booked straight into your calendar!",
     audioSrc: "/audio/voxly/hero_celebrate.mp3",
@@ -63,7 +63,7 @@ const CLICK_INTERACTIONS = [
     mood: "celebration",
   },
   {
-    title: "Voxly • High-Speed Groove",
+    title: "Dialtact • High-Speed Groove",
     message: "Look at these moves! 💃 Grooving through phone queues with zero hold times!",
     speech: "Look at these moves! Grooving through phone queues with zero hold times!",
     audioSrc: "/audio/voxly/hero_dance.mp3",
@@ -72,7 +72,7 @@ const CLICK_INTERACTIONS = [
     mood: "playful",
   },
   {
-    title: "Voxly",
+    title: "Dialtact",
     message: "Double barrel roll & high five! 🚀✨ Let's conquer customer calls!",
     speech: "Double barrel roll and high five! Let's conquer customer calls!",
     audioSrc: "/audio/voxly/hero_step5.mp3",
@@ -81,7 +81,7 @@ const CLICK_INTERACTIONS = [
     mood: "celebration",
   },
   {
-    title: "Voxly • Double High-Five",
+    title: "Dialtact • Double High-Five",
     message: "Double high-five! 🚀✨ Ready to handle 500 simultaneous calls!",
     speech: "Double high-five! Ready to handle 500 simultaneous calls!",
     audioSrc: "/audio/voxly/hero_double_wave.mp3",
@@ -90,7 +90,7 @@ const CLICK_INTERACTIONS = [
     mood: "celebration",
   },
   {
-    title: "Voxly • Answers On The First Ring",
+    title: "Dialtact • Answers On The First Ring",
     message: "No hold music, no voicemail. It picks up and works out what the caller needs. 👋",
     speech: "No hold music, no voicemail. It picks up and works out what the caller needs.",
     audioSrc: "/audio/voxly/hero_surprise.mp3",
@@ -99,7 +99,7 @@ const CLICK_INTERACTIONS = [
     mood: "fast",
   },
   {
-    title: "Voxly • Smart Routing",
+    title: "Dialtact • Smart Routing",
     message: "I route calls to the right team instantly! 🧠 No more phone tag!",
     speech: "I route calls to the right team instantly! No more phone tag!",
     audioSrc: "/audio/voxly/hero_think.mp3",
@@ -108,7 +108,7 @@ const CLICK_INTERACTIONS = [
     mood: "smart",
   },
   {
-    title: "Voxly • Celebration Mode",
+    title: "Dialtact • Celebration Mode",
     message: "Another happy customer! 🎊 That's what I live for!",
     speech: "Another happy customer! That's what I live for!",
     audioSrc: "/audio/voxly/hero_celebrate.mp3",
@@ -117,7 +117,7 @@ const CLICK_INTERACTIONS = [
     mood: "celebration",
   },
   {
-    title: "Voxly • Dance Break",
+    title: "Dialtact • Dance Break",
     message: "Time for a victory dance! 💃🕺 Zero hold times, maximum groove!",
     speech: "Time for a victory dance! Zero hold times, maximum groove!",
     audioSrc: "/audio/voxly/hero_dance.mp3",
@@ -126,7 +126,7 @@ const CLICK_INTERACTIONS = [
     mood: "playful",
   },
   {
-    title: "Voxly • Wave Hello",
+    title: "Dialtact • Wave Hello",
     message: "Hey there! 👋 Still exploring? Ask me anything about voice AI!",
     speech: "Hey there! Still exploring? Ask me anything about voice AI!",
     audioSrc: "/audio/voxly/hero_wave.mp3",
@@ -135,7 +135,7 @@ const CLICK_INTERACTIONS = [
     mood: "friendly",
   },
   {
-    title: "Voxly • Always Listening",
+    title: "Dialtact • Always Listening",
     message: "I’m all ears. 🎧 Tell me what a great customer conversation sounds like, and I’ll help make it repeatable.",
     speech: "I'm all ears. Tell me what a great customer conversation sounds like, and I'll help make it repeatable.",
     audioSrc: "/audio/voxly/hero_wave.mp3",
@@ -144,7 +144,7 @@ const CLICK_INTERACTIONS = [
     mood: "curious",
   },
   {
-    title: "Voxly • Confident Follow-up",
+    title: "Dialtact • Confident Follow-up",
     message: "A warm follow-up, exactly on time. ✨ I keep every promising conversation moving forward.",
     speech: "A warm follow-up, exactly on time. I keep every promising conversation moving forward.",
     audioSrc: "/audio/voxly/hero_step2.mp3",
@@ -153,7 +153,7 @@ const CLICK_INTERACTIONS = [
     mood: "confident",
   },
   {
-    title: "Voxly • Curious Mode",
+    title: "Dialtact • Curious Mode",
     message: "Ooh, a new challenge! 💫 I can learn your playbook, tone, and handoff rules in one place.",
     speech: "Ooh, a new challenge. I can learn your playbook, tone, and handoff rules in one place.",
     audioSrc: "/audio/voxly/hero_surprise.mp3",
@@ -162,7 +162,7 @@ const CLICK_INTERACTIONS = [
     mood: "curious",
   },
   {
-    title: "Voxly • Team Win",
+    title: "Dialtact • Team Win",
     message: "That’s a win for your team! 🌟 I’ll celebrate the booked meeting and tee up the next best action.",
     speech: "That's a win for your team. I'll celebrate the booked meeting and tee up the next best action.",
     audioSrc: "/audio/voxly/hero_celebrate.mp3",
@@ -500,7 +500,7 @@ export function Hero({
     } else {
       // Excess clicks: Pouty / angry expression
       stepData = {
-        title: "Voxly (Pouty)",
+        title: "Dialtact (Pouty)",
         message: "Hey! Don't poke me, I have calls to make! 😤 Click 'Live Mic Chat' instead!",
         speech: "Hey! Don't poke me, I have calls to make! Click live mic chat instead!",
         audioSrc: "/audio/voxly/hero_pouty.mp3",
@@ -589,7 +589,7 @@ export function Hero({
             <div
               ref={sceneContainerRef}
               className="relative w-full h-[320px] sm:h-[420px] lg:h-[500px] flex items-center justify-center cursor-pointer select-none"
-              style={{ touchAction: 'none' }}
+              style={{ touchAction: 'pan-y' }}
             >
               <LazyVoxlyScene
                 state={botState}
@@ -606,7 +606,7 @@ export function Hero({
                   click flow discoverable without competing with its dialogue. */}
               {!activePopup && (
                 <div className="absolute top-3 left-1/2 -translate-x-1/2 rounded-full border border-[#DCD5FF] bg-white/85 px-3 py-1.5 text-[10px] font-bold tracking-wide text-[#6344E7] shadow-sm backdrop-blur-sm pointer-events-none animate-pulse">
-                  Tap Voxly for a surprise ✨
+                  Tap Dialtact for a surprise ✨
                 </div>
               )}
 

@@ -60,7 +60,7 @@ export function CampaignComplianceModal({
             &ldquo;I confirm that I have the necessary authorization/consent to contact the phone numbers used in this campaign and that my campaign complies with applicable laws and regulations.&rdquo;
           </p>
           <p>
-            &ldquo;I understand that I am responsible for the contacts, purpose, content, and legality of the calls made through Voxly.&rdquo;
+            &ldquo;I understand that I am responsible for the contacts, purpose, content, and legality of the calls made through Dialtact.&rdquo;
           </p>
         </div>
 
@@ -68,7 +68,7 @@ export function CampaignComplianceModal({
         <div className="flex items-start gap-2.5 text-xs text-[#645D73] bg-amber-500/5 p-3 rounded-xl border border-amber-500/20">
           <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
           <p>
-            <strong className="text-[#0F0E17]">Notice:</strong> Voxly provides automated telephony infrastructure and does not verify or guarantee the legal validity of your contact lists. You are making this representation as the operating tenant.
+            <strong className="text-[#0F0E17]">Notice:</strong> Dialtact provides automated telephony infrastructure and does not verify or guarantee the legal validity of your contact lists. You are making this representation as the operating tenant.
           </p>
         </div>
 

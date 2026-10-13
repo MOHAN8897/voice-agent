@@ -116,9 +116,9 @@ export function OnboardingSurveyModal({ user, onComplete, onStartTour }) {
 
     try {
       await api.auth.submitOnboardingSurvey(payload);
-      showToast('Welcome to Voxly! Your workspace is ready.', 'success');
-      onComplete?.(payload);
-      onStartTour?.();
+      showToast('Welcome to Dialtact! Your workspace is ready.', 'success');
+      setCompletedData(payload);
+      setStep(4);
     } catch (err) {
       setError(err?.message || 'Could not save onboarding survey.');
       showToast(err?.message || 'Could not save onboarding survey.', 'error');
@@ -133,7 +133,9 @@ export function OnboardingSurveyModal({ user, onComplete, onStartTour }) {
 
   const handleFinishWithTour = () => {
     onComplete?.(completedData);
-    onStartTour?.();
+    setTimeout(() => {
+      onStartTour?.();
+    }, 200);
   };
 
   return (
@@ -157,7 +159,7 @@ export function OnboardingSurveyModal({ user, onComplete, onStartTour }) {
             </div>
             <div>
               <h2 id="onboarding-survey-title" className="text-base sm:text-lg font-bold text-[#0F0E17]">
-                Welcome to Voxly
+                Welcome to Dialtact
               </h2>
               <p className="text-xs text-[#524E5E]">Configure your autonomous voice workspace</p>
             </div>

@@ -37,7 +37,7 @@ export async function openRazorpayWalletCheckout({
     key: order.keyId || keyId,
     amount: order.amountMinor,
     currency,
-    name: 'Voxly AI',
+    name: 'Dialtact AI',
     description: 'Wallet top-up',
     order_id: order.orderId,
     prefill: {

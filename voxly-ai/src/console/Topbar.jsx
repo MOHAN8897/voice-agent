@@ -10,6 +10,7 @@ import {
   CreditCard,
   LogOut,
   ExternalLink,
+  Compass,
 } from 'lucide-react';
 import { TactileButton } from './ui/TactileButton';
 import { TopbarBalanceSkeleton } from './ui/Skeleton';
@@ -214,6 +215,22 @@ export function Topbar({
               >
                 <CreditCard className="w-3.5 h-3.5 text-[#524E5E]" />
                 Billing & usage
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setUserMenuOpen(false);
+                  window.dispatchEvent(
+                    new CustomEvent('dialtact:open-tour', { detail: { force: true } })
+                  );
+                  window.dispatchEvent(
+                    new CustomEvent('voxly:open-tour', { detail: { force: true } })
+                  );
+                }}
+                className="w-full flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-[#FAF9FD] text-left font-medium text-[#0F0E17]"
+              >
+                <Compass className="w-3.5 h-3.5 text-[#6344E7]" />
+                Guided tour
               </button>
               {onBackToLanding && (
                 <button

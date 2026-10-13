@@ -199,6 +199,8 @@ async def telephony_voice_options(principal: SubscriberPrincipal = Depends(requi
 class VoicePreviewBody(BaseModel):
     text: str = Field(..., min_length=1, max_length=400)
     voiceId: str | None = Field(None, max_length=64)
+    language: str | None = Field(None, max_length=32)
+    speed: float | None = Field(None, ge=0.5, le=2.0)
 
 
 @router.post("/api/telephony/voice-preview")
@@ -216,7 +218,12 @@ async def voice_preview(
     from server.services.saas.voice_preview import synthesize_preview
 
     try:
-        result = await synthesize_preview(body.text, voice_id=body.voiceId)
+        result = await synthesize_preview(
+            body.text,
+            voice_id=body.voiceId,
+            language=body.language,
+            speed=body.speed,
+        )
     except ValueError as exc:
         raise HTTPException(
             status_code=400,

@@ -30,7 +30,7 @@ Language mismatch (once): `{mismatch}`
 {SOFT_BREVITY}
 Filler bans: {filler_ban}
 Slow-down (once): `{slow_down}`
-Unclear audio (garbled STT, not a language change): `{unclear}` then continue. Road noise is not a new intent.
+Unclear audio (garbled STT, not a language change): `{unclear}` then wait for clarification; do not restart the conversation. Road noise is not a new intent.
 {NUMBER_RULES}
 {PHONE_SPEAK_BAN}
 {CALLER_DETAIL_CAPTURE}

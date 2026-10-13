@@ -50,7 +50,7 @@ export function Navbar({ onEnterConsole, onWatchDemo, onOpenTour }) {
               <line x1="6" y1="20" x2="6" y2="14" />
             </svg>
           </div>
-          <span className="text-xl font-bold tracking-tight text-[#0F0E17]">Voxly</span>
+          <span className="text-xl font-bold tracking-tight text-[#0F0E17]">Dialtact</span>
         </a>
 
         <nav className="hidden md:flex items-center gap-8">

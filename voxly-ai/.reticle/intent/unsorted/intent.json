@@ -1144,6 +1144,29 @@
       },
       "updatedAt": 1790851216301
     },
+    "inline:the-loaded-mascot-remains-interactive-after-init-9a01a3b6": {
+      "binding": {
+        "contains": "Hello! Hiii! 👋 I'm Dialtact! Nice to meet you!",
+        "kind": "text"
+      },
+      "declaredAt": 1791875404743,
+      "id": "inline:the-loaded-mascot-remains-interactive-after-init-9a01a3b6",
+      "provenBy": {
+        "at": 1791875552502,
+        "grade": "presence",
+        "verdictId": "reticle_act_and_wait:1791875552502"
+      },
+      "state": "proved",
+      "statement": "The loaded mascot remains interactive after initial loading and opens its greeting when tapped.",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/three/VoxlyScene.jsx"
+        ]
+      },
+      "updatedAt": 1791875552532
+    },
     "inline:the-marketing-page-plays-the-product-s-own-neura-275c6600": {
       "binding": {
         "kind": "signal",

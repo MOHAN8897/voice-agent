@@ -110,9 +110,9 @@ export function PhoneChannelsSection({ onGetStarted }) {
                 {/* Caller Screen */}
                 <div className="text-center mb-5">
                   <div className="w-12 h-12 rounded-xl bg-white/10 mx-auto flex items-center justify-center text-white text-base font-mono font-bold mb-3 border border-white/10">
-                    VX
+                    DT
                   </div>
-                  <h4 className="text-sm font-bold text-white">Voxly Voice Employee</h4>
+                  <h4 className="text-sm font-bold text-white">Dialtact Voice Employee</h4>
                   <p className="text-xs text-[#10B981] font-medium flex items-center justify-center gap-1.5 mt-0.5 font-mono">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" />
                     Call in Progress • 01:24

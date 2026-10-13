@@ -15,7 +15,7 @@ class VoiceAgentAdapter {
     this.currentAudioElement = null;
     this.listeners = new Set();
     this.mockResponses = [
-      "Hello! I am Voxly, your autonomous voice employee. I can qualify incoming leads, book appointments directly into your calendar, and answer complex customer questions 24/7.",
+      "Hello! I am Dialtact, your autonomous voice employee. I can qualify incoming leads, book appointments directly into your calendar, and answer complex customer questions 24/7.",
       "Yes, absolutely! I integrate directly with Salesforce, HubSpot, and your phone lines. Setup takes under 5 minutes without writing a single line of code.",
       "I handle over 500 concurrent conversations with natural human turn-taking, sub-400 millisecond response times, and sentiment tracking.",
       "Would you like me to start a live inbound qualification demo or schedule a workflow test for your team?",
@@ -138,8 +138,8 @@ class VoiceAgentAdapter {
 
         recognition.onerror = () => {
           this.stopListening();
-          if (onSpeechResult) onSpeechResult('Can you tell me how Voxly handles voice calls?');
-          this.handleUserInput('Can you tell me how Voxly handles voice calls?');
+          if (onSpeechResult) onSpeechResult('Can you tell me how Dialtact handles voice calls?');
+          this.handleUserInput('Can you tell me how Dialtact handles voice calls?');
         };
 
         recognition.start();
@@ -147,7 +147,7 @@ class VoiceAgentAdapter {
       } else {
         setTimeout(() => {
           this.stopListening();
-          const fallback = 'Can you tell me how Voxly handles voice calls?';
+          const fallback = 'Can you tell me how Dialtact handles voice calls?';
           if (onSpeechResult) onSpeechResult(fallback);
           this.handleUserInput(fallback);
         }, 2200);

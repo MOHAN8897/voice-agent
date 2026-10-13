@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { Phone, Save, CheckCircle2 } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Phone, Save, CheckCircle2, RotateCcw } from 'lucide-react';
 import { SolidCard } from '../../ui/SolidCard';
 import { StatusBadge } from '../../ui/StatusBadge';
 import { TactileButton } from '../../ui/TactileButton';
@@ -9,128 +9,229 @@ import { LANGUAGE_OPTIONS } from '../../../lib/voicePresets';
 import { api } from '../../../services/api';
 import { TelephonySettingsCard } from '../TelephonySettingsCard';
 
+const DEFAULT_PROFILE = {
+  greetingPhrase: '',
+  businessHours: {},
+  closedDates: [],
+  timezone: 'America/New_York',
+  afterHoursAction: 'voicemail',
+  transferNumber: '',
+  inboundEnabled: true,
+  outboundEnabled: true,
+};
+
+function cleanSnapshot(data) {
+  return {
+    name: (data?.name || '').trim(),
+    language: data?.language || 'en-IN',
+    status: data?.status || 'active',
+    numberId: data?.numberId || '',
+    recordingDisclosureEnabled: Boolean(data?.recordingDisclosureEnabled),
+    recordingDisclosureText: (data?.recordingDisclosureText || '').trim(),
+    telephonyProfile: {
+      greetingPhrase: (data?.telephonyProfile?.greetingPhrase || '').trim(),
+      businessHours: data?.telephonyProfile?.businessHours || {},
+      closedDates: Array.isArray(data?.telephonyProfile?.closedDates) ? data.telephonyProfile.closedDates : [],
+      timezone: data?.telephonyProfile?.timezone || 'America/New_York',
+      afterHoursAction: data?.telephonyProfile?.afterHoursAction || 'voicemail',
+      transferNumber: (data?.telephonyProfile?.transferNumber || '').trim(),
+      inboundEnabled: data?.telephonyProfile?.inboundEnabled !== false,
+      outboundEnabled: data?.telephonyProfile?.outboundEnabled !== false,
+    },
+    compliance: data?.compliance || {},
+  };
+}
+
 /**
- * Agent identity and number assignment.
+ * Unified Agent Settings Panel.
  *
- * Every control maps to a call the console already makes: `updateAgent` for
- * name/status/language and `assignNumberToAgent` for the number. There is no
- * website, support-email or retention field here because `api.agents.update` does
- * not accept one — those belong in the script text until the API grows them.
+ * Holds all configuration sections (Identity, Status, Number, Operating Schedule & Greeting,
+ * Call Recording & Disclosure, Compliance) in memory with ZERO database writes until
+ * the single primary "Save Agent Settings" button is clicked.
  */
-export function AgentSettingsPanel({ agent, onOpenBuyNumber }) {
-  const { phoneNumbers, agents, assignNumberToAgent, updateAgent, toggleAgentStatus } = useWorkspace();
+export function AgentSettingsPanel({
+  agent,
+  onOpenBuyNumber,
+  onDirtyChange,
+  registerSaveHandler,
+  onSettingsSaved,
+}) {
+  const { phoneNumbers, agents, assignNumberToAgent, updateAgent } = useWorkspace();
+  const agentId = agent?.id;
+
+  const assigned = useMemo(
+    () => phoneNumbers.find((n) => n.assignedAgentId === agentId),
+    [phoneNumbers, agentId]
+  );
+  const currentNumberId = assigned?.id || agent?.numberId || '';
+
+  // In-memory state for the entire agent settings stack
   const [name, setName] = useState(agent?.name || '');
   const [language, setLanguage] = useState(
     (agent?.languages && agent.languages[0]) || agent?.language || 'en-IN'
   );
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [assigning, setAssigning] = useState(false);
-  const [error, setError] = useState(null);
-  const [compliance, setCompliance] = useState(null);
-  const [complianceLoading, setComplianceLoading] = useState(false);
-  const [complianceError, setComplianceError] = useState(null);
+  const [status, setStatus] = useState(agent?.status || 'active');
+  const [numberId, setNumberId] = useState(currentNumberId);
   const [recordingDisclosureEnabled, setRecordingDisclosureEnabled] = useState(
     Boolean(agent?.recordingDisclosureEnabled)
   );
   const [recordingDisclosureText, setRecordingDisclosureText] = useState(
     agent?.recordingDisclosureText || 'This call may be recorded for quality and training purposes.'
   );
-  const [disclosureSaving, setDisclosureSaving] = useState(false);
-  const [disclosureSaved, setDisclosureSaved] = useState(false);
+  const [telephonyProfile, setTelephonyProfile] = useState(DEFAULT_PROFILE);
+  const [compliance, setCompliance] = useState({});
+  const [complianceSummary, setComplianceSummary] = useState(null);
+  const [complianceLoading, setComplianceLoading] = useState(false);
+  const [complianceError, setComplianceError] = useState(null);
 
-  // Re-seed when the header switcher moves to a different agent.
-  const agentId = agent?.id;
-  const [seedFor, setSeedFor] = useState(agentId);
-  if (agentId !== seedFor) {
-    setSeedFor(agentId);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Snapshot for dirty comparison
+  const [initialSnapshot, setInitialSnapshot] = useState(null);
+
+  // Seed on agent selection or change
+  useEffect(() => {
+    if (!agentId) return;
+
     setName(agent?.name || '');
     setLanguage((agent?.languages && agent.languages[0]) || agent?.language || 'en-IN');
+    setStatus(agent?.status || 'active');
+    setNumberId(currentNumberId);
     setRecordingDisclosureEnabled(Boolean(agent?.recordingDisclosureEnabled));
     setRecordingDisclosureText(
       agent?.recordingDisclosureText || 'This call may be recorded for quality and training purposes.'
     );
-  }
 
-  // Compliance is per agent, so it is fetched on selection rather than held in
-  // the workspace. A failure here must not blank the rest of the settings panel.
-  React.useEffect(() => {
-    if (!agentId) {
-      setCompliance(null);
-      return undefined;
-    }
     let cancelled = false;
     setComplianceLoading(true);
-    setComplianceError(null);
-    api.telephony
-      .getAgentCompliance(agentId)
-      .then((row) => {
-        if (!cancelled) setCompliance(row);
-      })
-      .catch((e) => {
-        if (cancelled) return;
-        setComplianceError(e?.message || 'Could not load compliance obligations');
-      })
-      .finally(() => {
-        if (!cancelled) setComplianceLoading(false);
+
+    Promise.all([
+      api.telephony.getAgentCompliance(agentId).catch((e) => {
+        if (!cancelled) setComplianceError(e?.message || 'Could not load compliance obligations');
+        return null;
+      }),
+      api.agents.getTelephonyProfile(agentId).catch(() => ({ profile: {} })),
+    ]).then(([compData, profData]) => {
+      if (cancelled) return;
+      const loadedComp = compData?.acknowledged || {};
+      const loadedProf = { ...DEFAULT_PROFILE, ...(profData?.profile || {}) };
+
+      setCompliance(loadedComp);
+      setComplianceSummary(compData || null);
+      setTelephonyProfile(loadedProf);
+      setComplianceLoading(false);
+
+      const snap = cleanSnapshot({
+        name: agent?.name || '',
+        language: (agent?.languages && agent.languages[0]) || agent?.language || 'en-IN',
+        status: agent?.status || 'active',
+        numberId: currentNumberId,
+        recordingDisclosureEnabled: Boolean(agent?.recordingDisclosureEnabled),
+        recordingDisclosureText:
+          agent?.recordingDisclosureText || 'This call may be recorded for quality and training purposes.',
+        telephonyProfile: loadedProf,
+        compliance: loadedComp,
       });
+      setInitialSnapshot(JSON.stringify(snap));
+    });
+
     return () => {
       cancelled = true;
     };
-  }, [agentId]);
+  }, [agentId, agent?.name, agent?.status, agent?.language, agent?.recordingDisclosureEnabled, agent?.recordingDisclosureText, currentNumberId]);
 
-  const toggleCompliance = async (key, next) => {
-    if (!agentId) return;
-    const previous = compliance;
-    // Optimistic: a checkbox that waits on the network feels broken.
-    setCompliance((prev) =>
-      prev ? { ...prev, acknowledged: { ...prev.acknowledged, [key]: next } } : prev
-    );
+  // Current state snapshot
+  const currentSnapshot = useMemo(() => {
+    return cleanSnapshot({
+      name,
+      language,
+      status,
+      numberId,
+      recordingDisclosureEnabled,
+      recordingDisclosureText,
+      telephonyProfile,
+      compliance,
+    });
+  }, [name, language, status, numberId, recordingDisclosureEnabled, recordingDisclosureText, telephonyProfile, compliance]);
+
+  const isDirty = useMemo(() => {
+    if (!initialSnapshot) return false;
+    return JSON.stringify(currentSnapshot) !== initialSnapshot;
+  }, [currentSnapshot, initialSnapshot]);
+
+  // Propagate dirty state to parent for tab/page leave guards
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
+
+  const handleDiscardAll = useCallback(() => {
+    if (!initialSnapshot) return;
     try {
-      const saved = await api.telephony.saveAgentCompliance(agentId, {
-        acknowledged: { ...(previous?.acknowledged || {}), [key]: next },
-      });
-      setCompliance(saved);
-    } catch (e) {
-      setCompliance(previous);
-      showToast(e?.message || 'Could not save compliance setting', 'error');
+      const restored = JSON.parse(initialSnapshot);
+      setName(restored.name);
+      setLanguage(restored.language);
+      setStatus(restored.status);
+      setNumberId(restored.numberId);
+      setRecordingDisclosureEnabled(restored.recordingDisclosureEnabled);
+      setRecordingDisclosureText(restored.recordingDisclosureText);
+      setTelephonyProfile(restored.telephonyProfile);
+      setCompliance(restored.compliance);
+      setError(null);
+      showToast('Settings changes discarded', 'info');
+    } catch {
+      /* ignore */
     }
-  };
+  }, [initialSnapshot]);
 
-  const assigned = phoneNumbers.find((n) => n.assignedAgentId === agentId);
-  const currentNumberId = assigned?.id || agent?.numberId || '';
-  const isActive = agent?.status === 'active';
-
-  /**
-   * A number is only genuinely taken if its owner is an agent that still exists.
-   *
-   * `assignedAgentId` could survive the owner being deleted (the row is archived,
-   * not removed, when call history blocks a hard delete), which made freed numbers
-   * render as "(assigned elsewhere)" and — worse — be disabled, so the pool looked
-   * empty. Treating an unknown owner as unassigned keeps the pool truthful even if
-   * the server ever regresses; the real fix is in delete_agent and the FK.
-   */
-  const knownAgentIds = useMemo(() => new Set((agents || []).map((a) => a.id)), [agents]);
-  const ownerOf = (n) =>
-    n.assignedAgentId && knownAgentIds.has(n.assignedAgentId) ? n.assignedAgentId : null;
-  const isTakenByOther = (n) => {
-    const owner = ownerOf(n);
-    return Boolean(owner && owner !== agentId);
-  };
-
-  const saveIdentity = async () => {
-    if (!agentId || saving) return;
+  const handleSaveAll = useCallback(async () => {
+    if (!agentId || saving) return false;
     setSaving(true);
     setError(null);
+
     try {
+      const baseSnapshot = initialSnapshot ? JSON.parse(initialSnapshot) : {};
+
+      // 1. Update Agent identity, status, and recording disclosures in a single call
       await updateAgent(agentId, {
         name: name.trim(),
-        status: agent.status,
+        status,
         languages: [language],
         recordingDisclosureEnabled,
         recordingDisclosureText: recordingDisclosureText.trim(),
       });
-      // Keep voice-section language in sync so web + phone stacks both pick it up.
+
+      // 2. Assign or unassign phone number if changed
+      if (numberId !== baseSnapshot.numberId) {
+        if (assigned && assigned.id !== numberId) {
+          await assignNumberToAgent(assigned.id, '');
+        }
+        if (numberId) {
+          await assignNumberToAgent(numberId, agentId, name.trim());
+        }
+      }
+
+      // 3. Save telephony profile (operating hours, transfer, greeting)
+      await api.agents.saveTelephonyProfile(agentId, {
+        greetingPhrase: telephonyProfile.greetingPhrase || '',
+        businessHours: telephonyProfile.businessHours || {},
+        closedDates: Array.isArray(telephonyProfile.closedDates) ? telephonyProfile.closedDates : [],
+        timezone: telephonyProfile.timezone || DEFAULT_PROFILE.timezone,
+        afterHoursAction: telephonyProfile.afterHoursAction || 'voicemail',
+        transferNumber: telephonyProfile.transferNumber || '',
+        inboundEnabled: telephonyProfile.inboundEnabled !== false,
+        outboundEnabled: telephonyProfile.outboundEnabled !== false,
+      });
+
+      // 4. Save compliance obligations if changed
+      if (JSON.stringify(compliance) !== JSON.stringify(baseSnapshot.compliance || {})) {
+        await api.telephony.saveAgentCompliance(agentId, {
+          acknowledged: compliance,
+        });
+      }
+
+      // 5. Keep voice-section language in sync
       try {
         const brain = await api.agents.getBusinessBrain(agentId);
         const voice = brain?.voice || {};
@@ -140,69 +241,82 @@ export function AgentSettingsPanel({ agent, onOpenBuyNumber }) {
           language,
         });
       } catch {
-        /* language on agent row still applies via saas_stack preference */
+        /* Language still applies via agent row */
       }
+
+      // Update baseline snapshot
+      const updatedSnapshot = JSON.stringify(currentSnapshot);
+      setInitialSnapshot(updatedSnapshot);
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
-      showToast('Language and identity saved for web and phone calls', 'success');
-    } catch (e) {
-      setError(e.message || 'Could not save agent');
-    } finally {
-      setSaving(false);
-    }
-  };
+      showToast('All agent configurations saved successfully', 'success');
 
-  const toggleStatus = async () => {
-    if (!agentId || saving) return;
-    setSaving(true);
-    setError(null);
-    try {
-      await toggleAgentStatus(agentId, isActive ? 'paused' : 'active');
-      showToast(isActive ? 'Agent paused' : 'Agent activated', 'success');
-    } catch (e) {
-      setError(e.message || 'Could not change status');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const onAssign = async (nextId) => {
-    if (!agentId || assigning) return;
-    setAssigning(true);
-    setError(null);
-    try {
-      if (assigned && assigned.id !== nextId) await assignNumberToAgent(assigned.id, '');
-      if (nextId) await assignNumberToAgent(nextId, agentId, agent.name);
-    } catch (e) {
-      setError(e.message || 'Could not assign number');
-    } finally {
-      setAssigning(false);
-    }
-  };
-
-  const saveDisclosureSettings = async () => {
-    if (!agentId || disclosureSaving) return;
-    setDisclosureSaving(true);
-    setError(null);
-    try {
-      await updateAgent(agentId, {
+      onSettingsSaved?.({
+        id: agentId,
+        name: name.trim(),
+        status,
+        language,
+        languages: [language],
         recordingDisclosureEnabled,
-        recordingDisclosureText:
-          recordingDisclosureText.trim() || 'This call may be recorded for quality and training purposes.',
+        recordingDisclosureText: recordingDisclosureText.trim(),
+        greeting: telephonyProfile.greetingPhrase || '',
       });
-      setDisclosureSaved(true);
-      setTimeout(() => setDisclosureSaved(false), 2500);
-      showToast('Recording disclosure saved', 'success');
+
+      return true;
     } catch (e) {
-      setError(e.message || 'Could not save recording disclosure');
-      showToast(e.message || 'Could not save recording disclosure', 'error');
+      setError(e.message || 'Could not save agent configurations');
+      showToast(e.message || 'Could not save agent configurations', 'error');
+      return false;
     } finally {
-      setDisclosureSaving(false);
+      setSaving(false);
     }
+  }, [
+    agentId,
+    saving,
+    initialSnapshot,
+    name,
+    status,
+    language,
+    recordingDisclosureEnabled,
+    recordingDisclosureText,
+    numberId,
+    assigned,
+    telephonyProfile,
+    compliance,
+    currentSnapshot,
+    updateAgent,
+    assignNumberToAgent,
+    onSettingsSaved,
+  ]);
+
+  // Register handlers so parent modal or navigation can trigger atomic save or discard
+  useEffect(() => {
+    registerSaveHandler?.(handleSaveAll, handleDiscardAll);
+  }, [registerSaveHandler, handleSaveAll, handleDiscardAll]);
+
+  // Prevent accidental browser reload/close with unsaved changes
+  useEffect(() => {
+    const onBeforeUnload = (e) => {
+      if (!isDirty) return;
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [isDirty]);
+
+  const knownAgentIds = useMemo(() => new Set((agents || []).map((a) => a.id)), [agents]);
+  const ownerOf = (n) =>
+    n.assignedAgentId && knownAgentIds.has(n.assignedAgentId) ? n.assignedAgentId : null;
+  const isTakenByOther = (n) => {
+    const owner = ownerOf(n);
+    return Boolean(owner && owner !== agentId);
   };
+
+  const isActive = status === 'active';
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 pb-6">
       {error && (
         <div
           role="alert"
@@ -213,6 +327,7 @@ export function AgentSettingsPanel({ agent, onOpenBuyNumber }) {
         </div>
       )}
 
+      {/* Card 1: Identity */}
       <SolidCard>
         <h3 className="text-xs font-bold text-[#0F0E17] mb-4">Identity</h3>
         <div className="grid sm:grid-cols-2 gap-4">
@@ -245,22 +360,9 @@ export function AgentSettingsPanel({ agent, onOpenBuyNumber }) {
             </span>
           </label>
         </div>
-        <div className="flex items-center justify-between gap-3 mt-4">
-          <StatusBadge status={isActive ? 'Active' : 'Paused'} size="xs" />
-          <TactileButton
-            variant="primary"
-            size="sm"
-            icon={saved ? CheckCircle2 : Save}
-            onClick={saveIdentity}
-            loading={saving}
-            disabled={!name.trim()}
-            data-testid="agent-settings-save"
-          >
-            {saved ? 'Saved' : 'Save identity'}
-          </TactileButton>
-        </div>
       </SolidCard>
 
+      {/* Card 2: Live / Pause Switch */}
       <SolidCard>
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -274,9 +376,8 @@ export function AgentSettingsPanel({ agent, onOpenBuyNumber }) {
             role="switch"
             aria-checked={isActive}
             data-testid="agent-settings-toggle-status"
-            onClick={toggleStatus}
-            disabled={saving}
-            className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors disabled:opacity-50 ${
+            onClick={() => setStatus(isActive ? 'paused' : 'active')}
+            className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors ${
               isActive
                 ? 'bg-emerald-500 border-emerald-600'
                 : 'bg-[#D1CFDB] border-[#C4C0D0]'
@@ -295,6 +396,7 @@ export function AgentSettingsPanel({ agent, onOpenBuyNumber }) {
         </p>
       </SolidCard>
 
+      {/* Card 3: Phone number selection */}
       <SolidCard>
         <div className="flex items-center justify-between gap-3 mb-4">
           <div>
@@ -314,12 +416,11 @@ export function AgentSettingsPanel({ agent, onOpenBuyNumber }) {
           </TactileButton>
         </div>
         <select
-          value={currentNumberId}
-          onChange={(e) => onAssign(e.target.value)}
-          disabled={assigning}
+          value={numberId}
+          onChange={(e) => setNumberId(e.target.value)}
           data-testid="agent-settings-number"
           aria-label="Assigned phone number"
-          className="w-full bg-white border border-[#E4E2EB] rounded-xl px-3 py-2 text-base sm:text-xs min-h-[42px] sm:min-h-[36px] font-mono text-[#0F0E17] disabled:opacity-50"
+          className="w-full bg-white border border-[#E4E2EB] rounded-xl px-3 py-2 text-base sm:text-xs min-h-[42px] sm:min-h-[36px] font-mono text-[#0F0E17]"
         >
           <option value="">No number — browser test calls only</option>
           {phoneNumbers.map((n) => {
@@ -336,14 +437,19 @@ export function AgentSettingsPanel({ agent, onOpenBuyNumber }) {
         </select>
       </SolidCard>
 
-      {/* Call Settings & Operating Schedule */}
+      {/* Card 4: Operating Schedule & Inbound Routing (Single Controlled Telephony Card) */}
       {agentId && (
         <div className="space-y-2">
-          <TelephonySettingsCard agentId={agentId} />
+          <TelephonySettingsCard
+            agentId={agentId}
+            profile={telephonyProfile}
+            onChange={(patch) => setTelephonyProfile((prev) => ({ ...prev, ...patch }))}
+            hideSaveButton={true}
+          />
         </div>
       )}
 
-      {/* Call Recording & Disclosure */}
+      {/* Card 5: Call Recording & Disclosure */}
       <SolidCard className="space-y-4">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -358,8 +464,7 @@ export function AgentSettingsPanel({ agent, onOpenBuyNumber }) {
             aria-checked={recordingDisclosureEnabled}
             data-testid="agent-recording-disclosure-toggle"
             onClick={() => setRecordingDisclosureEnabled(!recordingDisclosureEnabled)}
-            disabled={disclosureSaving}
-            className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors disabled:opacity-50 ${
+            className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors ${
               recordingDisclosureEnabled
                 ? 'bg-[#FF5C35] border-[#FF5C35]'
                 : 'bg-[#D1CFDB] border-[#C4C0D0]'
@@ -392,23 +497,9 @@ export function AgentSettingsPanel({ agent, onOpenBuyNumber }) {
             </p>
           </div>
         )}
-
-        <div className="flex justify-end pt-1">
-          <TactileButton
-            variant="secondary"
-            size="sm"
-            icon={disclosureSaved ? CheckCircle2 : Save}
-            onClick={saveDisclosureSettings}
-            loading={disclosureSaving}
-            data-testid="agent-recording-disclosure-save"
-          >
-            {disclosureSaved ? 'Saved' : 'Save disclosure'}
-          </TactileButton>
-        </div>
       </SolidCard>
 
-      {/* Compliance. Advisory only — these toggles record what the operator has
-          confirmed and never change how a call is placed. */}
+      {/* Card 6: Compliance Obligations */}
       <SolidCard>
         <div className="flex items-start justify-between gap-3 mb-4">
           <div>
@@ -417,12 +508,12 @@ export function AgentSettingsPanel({ agent, onOpenBuyNumber }) {
               Obligations for the market this agent numbers in. Confirm each one you meet.
             </p>
           </div>
-          {compliance && (
+          {complianceSummary && (
             <span
               data-testid="agent-compliance-regulation"
               className="shrink-0 rounded-full bg-[#F0EEF6] border border-[#E4E2EB] px-2.5 py-1 text-[10px] font-semibold text-[#524E5E]"
             >
-              {compliance.country} · {compliance.regulation}
+              {complianceSummary.country} · {complianceSummary.regulation}
             </span>
           )}
         </div>
@@ -436,26 +527,29 @@ export function AgentSettingsPanel({ agent, onOpenBuyNumber }) {
           </p>
         )}
 
-        {compliance && (
+        {complianceSummary && (
           <>
-            <p className="text-[11px] text-[#524E5E] mb-3">{compliance.summary}</p>
+            <p className="text-[11px] text-[#524E5E] mb-3">{complianceSummary.summary}</p>
             <ul className="space-y-2">
-              {(compliance.acknowledged ? Object.entries(compliance.acknowledged) : []).map(
-                ([key, on]) => (
+              {Object.keys(complianceSummary.acknowledged || compliance).map((key) => {
+                const on = Boolean(compliance[key]);
+                return (
                   <li key={key} className="flex items-start justify-between gap-3">
-                    <label className="flex items-start gap-2 text-[12px] text-[#0F0E17] capitalize">
+                    <label className="flex items-start gap-2 text-[12px] text-[#0F0E17] capitalize cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={Boolean(on)}
-                        onChange={(e) => toggleCompliance(key, e.target.checked)}
+                        checked={on}
+                        onChange={(e) =>
+                          setCompliance((prev) => ({ ...prev, [key]: e.target.checked }))
+                        }
                         data-testid={`agent-compliance-${key}`}
-                        className="mt-0.5 h-4 w-4 shrink-0"
+                        className="mt-0.5 h-4 w-4 shrink-0 rounded border-[#E4E2EB]"
                       />
                       <span>{key.replace(/_/g, ' ')}</span>
                     </label>
                   </li>
-                )
-              )}
+                );
+              })}
             </ul>
             <p className="text-[10px] text-[#8C879A] mt-3">
               Recorded against this agent. These are notes for your compliance review — they do
@@ -464,6 +558,49 @@ export function AgentSettingsPanel({ agent, onOpenBuyNumber }) {
           </>
         )}
       </SolidCard>
+
+      {/* SINGLE UNIFIED SAVE BAR FOR ENTIRE SETTINGS PAGE */}
+      <div className="sticky bottom-3 z-20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-white/95 backdrop-blur-md border border-[#E4E2EB] shadow-lg">
+        <div className="flex items-center gap-3">
+          <StatusBadge status={isActive ? 'Active' : 'Paused'} size="xs" />
+          {isDirty ? (
+            <span className="text-xs font-semibold text-[#B45309] flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[#B45309] animate-pulse" />
+              Unsaved changes in agent settings
+            </span>
+          ) : (
+            <span className="text-xs text-[#8C879A]">All configurations saved</span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2.5 ml-auto">
+          {isDirty && (
+            <TactileButton
+              variant="secondary"
+              size="sm"
+              icon={RotateCcw}
+              onClick={handleDiscardAll}
+              disabled={saving}
+              data-testid="agent-settings-discard"
+            >
+              Discard changes
+            </TactileButton>
+          )}
+
+          <TactileButton
+            variant="primary"
+            size="sm"
+            icon={saved ? CheckCircle2 : Save}
+            onClick={handleSaveAll}
+            loading={saving}
+            disabled={saving || !isDirty}
+            data-testid="agent-settings-save"
+            className="min-h-[38px] px-5"
+          >
+            {saved ? 'Saved!' : saving ? 'Saving…' : 'Save Agent Settings'}
+          </TactileButton>
+        </div>
+      </div>
     </div>
   );
 }

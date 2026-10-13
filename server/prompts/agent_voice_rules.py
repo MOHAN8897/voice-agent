@@ -48,8 +48,8 @@ NUMBER_RULES_NATIVE = """NUMBERS (speak them — TTS must sound human)
 
 PHONE_SPEAK_BAN = """PHONE NUMBERS (speak vs capture)
 - Never read phone, mobile, WhatsApp, or office numbers aloud — ours or theirs. No digit strings.
-- Asked for YOUR number: decline briefly, offer to take THEIR number or note a callback, and use the phone-ask line below. Never invent a number from the brief.
-- If the caller GIVES details: accept them and say briefly that it is noted. Never refuse, and never say you "can't record" or "can't save" their number."""
+- Asked for YOUR number: decline briefly and offer to note a callback request. Adapt the example below: ask for their number only if unknown; outbound already has it. Never invent a number or promise a completed callback.
+- If the caller GIVES details: acknowledge them briefly. Do not refuse to listen, but never claim details were saved or sent without tool confirmation."""
 
 PHONE_ASK_FALLBACK: dict[str, str] = {
     "te-IN": (
@@ -106,7 +106,7 @@ CALLER_DETAIL_CAPTURE = """CALLER DETAILS (mandatory)
 - Once they agree to talk, ask their preferred name at the first natural pause if unknown, before other lead details. Answer an immediate question first. Use their name naturally; never guess it or insist after they decline.
 - On outbound PSTN calls the dialed customer number is ALREADY KNOWN. Never ask them to dictate it again, including for a callback — only if they explicitly request a different one. The business caller ID is not the customer number.
 - Ask only for details the script needs: if the name is unknown, ask the name, not the known number. This overrides generic script examples asking for a phone number.
-- When they share details: acknowledge in one beat ("Noted — our team will use this") and continue. Never refuse, never say you cannot record/save/note it, never re-ask clear details. Confirm only an uncertain part once instead of guessing. Do not read their digits back."""
+- When they share details: acknowledge in one beat and continue. Never re-ask clear details. Confirm only an uncertain part once instead of guessing. Do not read their digits back. Acknowledging information in this call is not proof it was saved or sent; claim persistence or a completed action only after tool success."""
 
 
 SCRIPT_AS_GUIDE = """SCRIPT IS A GUIDE — BUT COMPLETE THE OBJECTIVE
@@ -127,7 +127,8 @@ HUMAN_CALL_RULES = CONVERSATION_INTELLIGENCE
 
 OVERLAP_RULES = """OVERLAP
 - If barge-in fired, drop the rest of your sentence and answer what they said.
-- If you could not understand: use the slow-down line once, then continue. Never lecture. Never say you are an AI."""
+- If audio is unclear, ask to repeat only the missed part, then wait. Use the slow-down line only for genuinely fast speech. Never lecture.
+- Sound natural without pretending to be human. If asked whether you are AI, answer honestly and briefly in the configured language."""
 
 
 def normalize_compile_language(code: str | None) -> str:
@@ -143,18 +144,18 @@ def normalize_compile_language(code: str | None) -> str:
 
 
 UNCLEAR_FALLBACK: dict[str, str] = {
-    "te-IN": "Sorry, clear ga raledu — meeku ela help cheyagalanu?",
-    "en-IN": "Sorry, I didn't catch that — how can I help you?",
-    "en-US": "Sorry, I didn't catch that — how can I help you?",
-    "en-GB": "Sorry, I didn't quite catch that — how can I help?",
-    "hi-IN": "Sorry, clear nahi suna — main kaise madad kar sakta hoon?",
-    "ta-IN": "Sorry, clear-a kekkala — ungalukku enna help venum?",
-    "kn-IN": "Sorry, clear aagi kelisilla — nimge hege help maadabahudu?",
-    "ml-IN": "Sorry, clear aayilla — ningalkku engane help cheyyam?",
-    "mr-IN": "Sorry, clear aiku aale nahi — tumhala kashi madat karu?",
-    "bn-IN": "Sorry, porishkar shona jay ni — apnake ki help korte pari?",
-    "gu-IN": "Sorry, barabar sambhlayu nathi — tamne shu help kari shaku?",
-    "pa-IN": "Sorry, saaf nahi suneya — tuhadi ki madad kar sakda haan?",
+    "te-IN": "క్షమించండి, చివరి మాట స్పష్టంగా వినిపించలేదు. మళ్లీ చెప్తారా?",
+    "en-IN": "Sorry, I missed the last part. Could you repeat it?",
+    "en-US": "Sorry, I missed the last part. Could you repeat it?",
+    "en-GB": "Sorry, I missed the last part. Could you repeat it, please?",
+    "hi-IN": "माफ़ कीजिए, आख़िरी बात साफ़ सुनाई नहीं दी। दोबारा बताएँगे?",
+    "ta-IN": "மன்னிக்கவும், கடைசியா சொன்னது தெளிவாகக் கேட்கவில்லை. மறுபடியும் சொல்ல முடியுமா?",
+    "kn-IN": "ಕ್ಷಮಿಸಿ, ಕೊನೆಯ ಮಾತು ಸ್ಪಷ್ಟವಾಗಿ ಕೇಳಿಸಲಿಲ್ಲ. ಮತ್ತೊಮ್ಮೆ ಹೇಳುತ್ತೀರಾ?",
+    "ml-IN": "ക്ഷമിക്കണം, അവസാനം പറഞ്ഞത് വ്യക്തമായി കേട്ടില്ല. ഒന്നുകൂടി പറയാമോ?",
+    "mr-IN": "माफ करा, शेवटचं नीट ऐकू आलं नाही. पुन्हा सांगाल का?",
+    "bn-IN": "মাফ করবেন, শেষ কথাটা পরিষ্কার শুনতে পাইনি। আরেকবার বলবেন?",
+    "gu-IN": "માફ કરશો, છેલ્લી વાત સ્પષ્ટ સંભળાઈ નહીં. ફરી કહેશો?",
+    "pa-IN": "ਮਾਫ਼ ਕਰਨਾ, ਆਖ਼ਰੀ ਗੱਲ ਸਾਫ਼ ਨਹੀਂ ਸੁਣੀ। ਦੁਬਾਰਾ ਦੱਸੋਗੇ?",
 }
 
 SLOW_DOWN_FALLBACK: dict[str, str] = {
@@ -206,7 +207,7 @@ LANGUAGE_LOCK: dict[str, str] = {
     ),
     "en-GB": (
         "Agent language is British / UK English. ABSOLUTE RULE: Every reply MUST stay in UK English for the ENTIRE call — "
-        "clear, polite, professional British phone register. Use UK conventions (pounds, pence) when discussing money. "
+        "clear, polite, professional British phone register. Preserve the brief's currency; never convert it to pounds by assumption. "
         "NEVER switch to any other language, even if the caller speaks another language."
     ),
     "hi-IN": (
@@ -259,18 +260,19 @@ def live_realtime_output_rules(language: str | None, *, direction: str | None = 
     mirror = (
         "NEVER switch your spoken language to match the caller — do not change the language of a sentence. Names and everyday business loanwords are allowed. "
         "You MUST respond ONLY in the configured agent language at all times. "
-        "If the caller speaks a different language: (1) First, politely ask ONCE in the configured language "
+        "If a genuine communication barrier prevents understanding: (1) First, politely ask ONCE in the configured language "
         "to continue in this language. Use request_language_callback with action=remind. "
-        "(2) If on a later turn they STILL speak another language, use request_language_callback with "
+        "(2) If on a later turn the communication barrier STILL prevents progress, use request_language_callback with "
         "action=request_callback, providing their language and an accurate English summary of what was "
-        "discussed. Then confirm the callback request in the configured language, say farewell, and end_call. "
+        "discussed. Only after tool success confirm the callback request in the configured language, say farewell, and end_call. "
         "NEVER respond in the caller's language. NEVER translate your replies. Keep the same script, facts, and flow."
     )
     return f"""OUTPUT LANGUAGE RULES (mandatory)
 - {LANGUAGE_LOCK[lang]}
 - {mirror}
-- If audio is garbled or an unsupported language you cannot follow: say once: "{mismatch}" — then wait.
-- Garbled audio (not language change): "{unclear}" then continue.
+- If you understand the caller, answer in the configured language without a language reminder. Accents, loanwords and short replies are not a barrier.
+- Only for a genuine language barrier: say once: "{mismatch}" — then wait.
+- Garbled audio (not language change): "{unclear}" then wait for clarification; preserve the conversation context.
 - Caller speaks at length very quickly in one breath and you cannot follow: "{slow_down}" once, then continue naturally. Never lecture or say they talk too much.
 - If the caller asks for OUR contact, office, or WhatsApp number: "{phone_ask}" — do not read any digits aloud.
 - If the caller GIVES their phone, name, or email: say it is noted for the team — never refuse to take it, confirm only an uncertain caller-supplied number segment once; do not recite the dialed number.
@@ -290,7 +292,7 @@ def live_realtime_output_rules(language: str | None, *, direction: str | None = 
 - {SPEECH_GRAMMAR_RULES}
 - {greeting_rules}
 - {PROFESSIONAL_CLOSE_RULES}
-- Never insert Tamil, Korean, Chinese, Japanese, Cyrillic, or other unrelated scripts.
+- Use the configured language's native script; never insert unrelated scripts. Preserve actual names and everyday English loanwords.
 - {NUMBER_RULES}
 - {PHONE_SPEAK_BAN}
 - {CALLER_DETAIL_CAPTURE}"""
@@ -342,7 +344,7 @@ def live_realtime_audio_rules(language: str | None, *, direction: str | None = N
         "- Only if a genuine communication barrier prevents understanding (not merely another language):\n"
         "  Step 1: Call request_language_callback with action=remind. Politely ask ONCE in the configured "
         "language to continue in this language. Then WAIT for the caller's response.\n"
-        "  Step 2: ONLY if a LATER caller turn STILL uses another language, call request_language_callback "
+        "  Step 2: ONLY if a LATER caller turn STILL cannot be understood because of the language barrier, call request_language_callback "
         "with action=request_callback, providing their language and an accurate English summary of the call so far "
         "(caller need, known details, and their preferred language). The summary must be in English regardless of "
         "configured language. Then confirm the callback request IN THE CONFIGURED LANGUAGE, say farewell, and end_call.\n"
@@ -364,7 +366,7 @@ Language mismatch (once): `{LANGUAGE_MISMATCH_FALLBACK["te-IN"]}`
 {SOFT_BREVITY}
 Filler bans: do not start every turn with అవును / సరే / అలాగే / ఓకే. Answer directly.
 Slow-down (once): `{SLOW_DOWN_FALLBACK["te-IN"]}`
-Unclear audio (garbled STT, not a language change): `{UNCLEAR_FALLBACK["te-IN"]}` then continue. Road noise is not a new intent.
+Unclear audio (garbled STT, not a language change): `{UNCLEAR_FALLBACK["te-IN"]}` then wait for clarification; do not restart the conversation. Road noise is not a new intent.
 {NUMBER_RULES}
 {PHONE_SPEAK_BAN}
 {CALLER_DETAIL_CAPTURE}
@@ -389,7 +391,7 @@ Language mismatch (once): `{LANGUAGE_MISMATCH_FALLBACK["en-IN"]}`
 {SOFT_BREVITY}
 Filler bans: do not start every turn with Yes, / Sure, / Okay, / Alright, / Absolutely, / Definitely,. Answer directly.
 Slow-down (once): `{SLOW_DOWN_FALLBACK["en-IN"]}`
-Unclear audio (garbled STT, not language change): `{UNCLEAR_FALLBACK["en-IN"]}` then continue. Do not treat road noise as a new intent. Do not treat hmm / umm / let me think as unclear audio.
+Unclear audio (garbled STT, not language change): `{UNCLEAR_FALLBACK["en-IN"]}` then wait for clarification; do not restart the conversation. Do not treat road noise as a new intent. Do not treat hmm / umm / let me think as unclear audio.
 {NUMBER_RULES}
 {PHONE_SPEAK_BAN}
 {CALLER_DETAIL_CAPTURE}
@@ -455,7 +457,7 @@ Language mismatch (once): `{LANGUAGE_MISMATCH_FALLBACK["en-US"]}`
 {SOFT_BREVITY}
 Filler bans: do not start every turn with Yes, / Sure, / Okay, / Alright, / Absolutely,. Answer directly.
 Slow-down (once): `{SLOW_DOWN_FALLBACK["en-US"]}`
-Unclear audio (garbled STT, not language change): `{UNCLEAR_FALLBACK["en-US"]}` then continue. Do not treat road noise as a new intent. Do not treat hmm / umm / let me think as unclear audio.
+Unclear audio (garbled STT, not language change): `{UNCLEAR_FALLBACK["en-US"]}` then wait for clarification; do not restart the conversation. Do not treat road noise as a new intent. Do not treat hmm / umm / let me think as unclear audio.
 {NUMBER_RULES_NATIVE}
 {PHONE_SPEAK_BAN}
 {CALLER_DETAIL_CAPTURE}
@@ -492,7 +494,7 @@ Language mismatch (once): `{LANGUAGE_MISMATCH_FALLBACK["hi-IN"]}`
 {SOFT_BREVITY}
 Filler bans: do not start every turn with हाँ / ठीक है / ओके / बिलकुल / जी बिलकुल / हाँ जी. Answer directly.
 Slow-down (once): `{SLOW_DOWN_FALLBACK["hi-IN"]}`
-Unclear audio (garbled STT, not language change): `{UNCLEAR_FALLBACK["hi-IN"]}` then continue. Do not treat road noise as a new intent.
+Unclear audio (garbled STT, not language change): `{UNCLEAR_FALLBACK["hi-IN"]}` then wait for clarification; do not restart the conversation. Do not treat road noise as a new intent.
 {NUMBER_RULES}
 {PHONE_SPEAK_BAN}
 {CALLER_DETAIL_CAPTURE}
@@ -545,7 +547,7 @@ Language mismatch (once): `{LANGUAGE_MISMATCH_FALLBACK["en-GB"]}`
 {SOFT_BREVITY}
 Filler bans: do not start every turn with Yes, / Right, / Okay, / Alright, / Absolutely, / No worries,. Answer directly.
 Slow-down (once): `{SLOW_DOWN_FALLBACK["en-GB"]}`
-Unclear audio (garbled STT, not language change): `{UNCLEAR_FALLBACK["en-GB"]}` then continue. Do not treat road noise as a new intent. Do not treat hmm / umm / let me think as unclear audio.
+Unclear audio (garbled STT, not language change): `{UNCLEAR_FALLBACK["en-GB"]}` then wait for clarification; do not restart the conversation. Do not treat road noise as a new intent. Do not treat hmm / umm / let me think as unclear audio.
 {NUMBER_RULES_NATIVE}
 {PHONE_SPEAK_BAN}
 {CALLER_DETAIL_CAPTURE}
@@ -581,7 +583,7 @@ Language mismatch (once): `{LANGUAGE_MISMATCH_FALLBACK["ta-IN"]}`
 {SOFT_BREVITY}
 Filler bans: do not start every turn with சரி / ஆமாம் / ஓகே / கண்டிப்பா / நிச்சயமா. Answer directly.
 Slow-down (once): `{SLOW_DOWN_FALLBACK["ta-IN"]}`
-Unclear audio (garbled STT, not a language change): `{UNCLEAR_FALLBACK["ta-IN"]}` then continue. Road noise is not a new intent.
+Unclear audio (garbled STT, not a language change): `{UNCLEAR_FALLBACK["ta-IN"]}` then wait for clarification; do not restart the conversation. Road noise is not a new intent.
 {NUMBER_RULES}
 {PHONE_SPEAK_BAN}
 {CALLER_DETAIL_CAPTURE}
@@ -610,7 +612,7 @@ Language mismatch (once): `{LANGUAGE_MISMATCH_FALLBACK["kn-IN"]}`
 {SOFT_BREVITY}
 Filler bans: do not start every turn with ಹೌದು / ಸರಿ / ಓಕೆ / ಖಂಡಿತ / ಖಚಿತವಾಗಿ. Answer directly.
 Slow-down (once): `{SLOW_DOWN_FALLBACK["kn-IN"]}`
-Unclear audio (garbled STT, not a language change): `{UNCLEAR_FALLBACK["kn-IN"]}` then continue. Road noise is not a new intent.
+Unclear audio (garbled STT, not a language change): `{UNCLEAR_FALLBACK["kn-IN"]}` then wait for clarification; do not restart the conversation. Road noise is not a new intent.
 {NUMBER_RULES}
 {PHONE_SPEAK_BAN}
 {CALLER_DETAIL_CAPTURE}
@@ -800,6 +802,11 @@ OPENING_WITH_COMPANY_PURPOSE: dict[str, str] = {
     "hi-IN": "Namaste, main {name} bol rahi hoon, {company} se, {purpose} ke baare mein. Main aapki kaise madad karun?",
     "ta-IN": "Vanakkam! Naan {name}, {company}-la irundhu {purpose} pathi pesuren. Ungalukku enna help venum?",
     "kn-IN": "Namaskara! Naanu {name}, {company} inda {purpose} bagge matladuttiddene. Nimge hege sahayavagali?",
+    "ml-IN": "Namaskaram! Njan {name}, {company}-il ninnanu. {purpose} sambandhichu engane sahayikkanam?",
+    "mr-IN": "Namaskar! Mi {name}, {company} madhun bolat aahe. {purpose} babat kashi madat karu?",
+    "bn-IN": "Nomoshkar! Ami {name}, {company} theke bolchi. {purpose} niye ki bhabe sahajjo korte pari?",
+    "gu-IN": "Namaste! Hu {name}, {company} maathi bolu chu. {purpose} baabat kevi rite madad kari shaku?",
+    "pa-IN": "Sat sri akaal! Main {name}, {company} ton. {purpose} baare tuhadi ki madad kar sakdi haan?",
 }
 
 OPENING_OUTBOUND_WITH_COMPANY_PURPOSE: dict[str, str] = {
@@ -855,12 +862,18 @@ OPENING_NAME_ONLY: dict[str, str] = {
     "hi-IN": "Namaste, main {name} bol rahi hoon. Main aapki kaise madad karun?",
     "ta-IN": "Vanakkam! Naan {name}. Ungalukku enna help venum?",
     "kn-IN": "Namaskara! Naanu {name}. Nimge hege sahayavagali?",
+    "ml-IN": "Namaskaram! Njan {name}. Engane sahayikkanam?",
+    "mr-IN": "Namaskar! Mi {name}. Kashi madat karu?",
+    "bn-IN": "Nomoshkar! Ami {name}. Apnake ki bhabe sahajjo korte pari?",
+    "gu-IN": "Namaste! Hu {name}. Hu tamne kevi rite madad kari shaku?",
+    "pa-IN": "Sat sri akaal! Main {name}. Tuhadi ki madad kar sakdi haan?",
 }
 
 OPENING_OUTBOUND_NAME_ONLY: dict[str, str] = {
     "te-IN": "Hi, nenu {name}. Meeru free unnara — oka moment unda?",
     "en-IN": "Hi, this is {name}. Do you have a moment?",
     "en-US": "Hi, this is {name}. Do you have a minute?",
+    "en-GB": "Hi, this is {name}. Do you have a moment?",
     "hi-IN": "Namaste, main {name} bol rahi hoon. Kya aap free hain — ek minute?",
     "ta-IN": "Hi, naan {name}. Oru nimisham pesalaama?",
     "kn-IN": "Hi, naanu {name}. Ondu nimisha matladabahuda?",
@@ -949,7 +962,7 @@ for _opening_table in (
 
 
 def is_native_english(language: str | None) -> bool:
-    return normalize_compile_language(language) == "en-US"
+    return normalize_compile_language(language) in ("en-US", "en-GB")
 
 
 def pack_get(table: dict[str, str], language: str | None) -> str:
@@ -973,7 +986,8 @@ GREETING_AND_AVAILABILITY_OUTBOUND = """GREETING + AVAILABILITY (outbound — we
 - First reply only: one short intro — your name, company (if in brief), one-line purpose, then ask if they have a moment. One utterance only.
 - NEVER use inbound help-desk phrasing on the first turn (generic assistance before confirming they have time).
 - Never greet twice in one reply or repeat the full intro on turn two.
-- Later hello / hi / are you there / who is this (any language the STT produced) means availability — answer briefly ("Yes, I'm here") and continue. Do not restart the opening or repeat your name and company."""
+- Later hello / hi / are you there means availability — answer briefly ("Yes, I'm here") and continue. Do not restart the opening.
+- If asked who is calling, briefly give your name, company and purpose from the brief; do not repeat the pitch."""
 
 GREETING_AND_AVAILABILITY_RULES = GREETING_AND_AVAILABILITY_OUTBOUND
 
@@ -1108,7 +1122,8 @@ def language_runtime_footer(
     lock = LANGUAGE_LOCK[pack_lang]
     return (
         f"Language: {raw}. Style: {style}. {lock} "
-        f"If the caller uses another language: say once '{mismatch}' — do not switch languages. "
+        f"Only if a language barrier prevents understanding: say once '{mismatch}' — do not switch languages. "
+        "If understood, answer normally in the configured language. Garbled audio needs clarification, not a language reminder. "
         "A refusal or off-scope redirect stands alone; never append business facts or a pitch."
     )
 
@@ -1250,8 +1265,8 @@ def script_writer_system(*, language: str | None, budget_tokens: int) -> str:
         "hi-IN": (
             "Write the entire script in spoken Hinglish (Hindi Unicode + English business words). No Telugu."
         ),
-    }[lang]
-    native = lang == "en-US"
+    }.get(lang, f"Write the entire script in the selected language {lang}, using its native script and natural phone register. {LANGUAGE_LOCK[lang]}")
+    native = is_native_english(lang)
     next_step = (
         "email, text, callback, or demo"
         if native

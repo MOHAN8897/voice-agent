@@ -53,7 +53,7 @@ export function Footer({ onOpenLegal }) {
                 </svg>
               </div>
               <span className="text-xl font-bold tracking-tight text-[#0F0E17]">
-                Voxly
+                Dialtact
               </span>
             </a>
             <p className="text-xs sm:text-sm text-[#524E5E] leading-relaxed max-w-sm">
@@ -186,7 +186,7 @@ export function Footer({ onOpenLegal }) {
         {/* Bottom Bar */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#524E5E] text-center sm:text-left">
           <div>
-            © {new Date().getFullYear()} Voxly AI Inc. All rights reserved.
+            © {new Date().getFullYear()} Dialtact Inc. All rights reserved.
           </div>
           <div className="flex flex-wrap items-center justify-center sm:justify-end gap-x-6 gap-y-2">
             <button

@@ -161,7 +161,7 @@ export function Sidebar({
           ) : (
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="w-7 h-7 rounded-lg bg-[#0F0E17] flex items-center justify-center text-white font-bold text-xs shadow-xs shrink-0">
-                {currentWorkspace?.avatar || 'V'}
+                {currentWorkspace?.avatar || 'D'}
               </div>
               <div className="min-w-0">
                 <div className="text-xs font-bold text-[#0F0E17] truncate">

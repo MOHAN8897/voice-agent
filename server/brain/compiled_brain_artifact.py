@@ -23,7 +23,7 @@ from server.prompts.voice_defaults import style_for_language
 
 SCHEMA_VERSION = "1"
 CORE_VERSION = "section_safety_v1"
-LANGUAGE_PACK_VERSION = "spoken_packs_v2"
+LANGUAGE_PACK_VERSION = "spoken_packs_v3"
 TOOL_CONTRACT_VERSION = "realtime_voice_v1"
 
 _SPOKEN_HEADER = re.compile(r"---\s*SPOKEN LANGUAGE\s*\(", re.I)

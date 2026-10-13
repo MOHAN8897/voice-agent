@@ -1,5 +1,5 @@
 /**
- * Voxly AI — Initial Workspace Data Store
+ * Dialtact AI — Initial Workspace Data Store
  * Provides realistic enterprise data for Agents, Phone Numbers, Calls, Leads, Campaigns, Wallet, and Settings.
  */
 
@@ -68,8 +68,8 @@ Objectives:
       stability: 0.72,
     },
     language: 'English (US)',
-    greeting: "Hi {{contact_name}}, this is David calling from Voxly AI. I noticed your team requested our enterprise voice fleet benchmark report. Did I catch you with two minutes?",
-    script: `You are David, outbound sales development specialist for Voxly AI.
+    greeting: "Hi {{contact_name}}, this is David calling from Dialtact AI. I noticed your team requested our enterprise voice fleet benchmark report. Did I catch you with two minutes?",
+    script: `You are David, outbound sales development specialist for Dialtact AI.
 Tone: Energetic, consultative, concise, respectful of prospect time.
 Objectives:
 1. Confirm interest in autonomous AI voice employees for customer support or outbound campaigns.
@@ -78,14 +78,14 @@ Objectives:
 4. Secure agreement for a 15-minute technical architecture demonstration with our engineering leads.`,
     dynamicVariables: ['contact_name', 'company_name', 'call_volume', 'current_crm'],
     objectionRules: [
-      { trigger: 'We already use a chat bot', response: 'Chatbots work well for text, but 65% of high-intent customers still prefer calling. Voxly handles real voice conversations on the phone with sub-500ms latency.' },
+      { trigger: 'We already use a chat bot', response: 'Chatbots work well for text, but 65% of high-intent customers still prefer calling. Dialtact handles real voice conversations on the phone with sub-500ms latency.' },
       { trigger: 'Not interested right now', response: 'Understood! Would it make sense if I sent a 2-minute audio sample to your email so you have it on file for next quarter?' }
     ],
     boundaries: [
       'Do not quote custom enterprise contract terms without supervisor approval.',
       'Respect Do-Not-Call (DNC) requests immediately without arguing.'
     ],
-    knowledgeSources: ['Voxly Telephony Benchmark 2026.pdf', 'Competitor Comparison Battlecard.pdf'],
+    knowledgeSources: ['Dialtact Telephony Benchmark 2026.pdf', 'Competitor Comparison Battlecard.pdf'],
     stats: {
       totalCalls: 890,
       totalMinutes: 2150,
@@ -112,7 +112,7 @@ Objectives:
       stability: 0.85,
     },
     language: 'English, Telugu & Hindi',
-    greeting: "Hello, thank you for reaching Voxly Technical Support. I am Elena. What technical issue or API endpoint can I assist you with today?",
+    greeting: "Hello, thank you for reaching Dialtact Technical Support. I am Elena. What technical issue or API endpoint can I assist you with today?",
     script: `You are Elena, Tier-1 technical support engineer for cloud developers.
 Tone: Calm, analytical, patient, solution-oriented.
 Objectives:
@@ -128,7 +128,7 @@ Objectives:
       'Never request customer passwords or raw private API keys.',
       'Always log support ticket ID in CRM.'
     ],
-    knowledgeSources: ['Voxly API Documentation v2.pdf', 'WebRTC Troubleshooting Guide.docx'],
+    knowledgeSources: ['Dialtact API Documentation v2.pdf', 'WebRTC Troubleshooting Guide.docx'],
     stats: {
       totalCalls: 1120,
       totalMinutes: 4210,
@@ -225,7 +225,7 @@ export const initialPhoneNumbers = [
     emergencyAddress: '350 5th Ave, New York, NY 10118',
     inboundRouting: {
       action: 'ai_agent',
-      greetingPhrase: 'Voxly Sales Development line. Connecting with David...',
+      greetingPhrase: 'Dialtact Sales Development line. Connecting with David...',
       businessHours: '09:00 - 19:00 (EST)',
       afterHoursAction: 'voicemail',
       recordingEnabled: true
@@ -347,11 +347,11 @@ export const initialCalls = [
       actionTaken: 'HubSpot Deal Created: $4,500/mo'
     },
     transcript: [
-      { speaker: 'David', time: '00:02', text: 'Hi Sarah, this is David from Voxly AI. I noticed you downloaded our enterprise voice fleet whitepaper. Did I catch you with a quick minute?' },
+      { speaker: 'David', time: '00:02', text: 'Hi Sarah, this is David from Dialtact AI. I noticed you downloaded our enterprise voice fleet whitepaper. Did I catch you with a quick minute?' },
       { speaker: 'Caller', time: '00:09', text: 'Hi David. Yes, we are actually looking at replacing our IVR system for driver dispatch.' },
       { speaker: 'David', time: '00:16', text: 'That is right in our wheelhouse. How many monthly inbound calls does your dispatch desk manage currently?' },
       { speaker: 'Caller', time: '00:24', text: 'Around twelve thousand calls each month across 40 logistics hubs.' },
-      { speaker: 'David', time: '00:31', text: 'Got it. Voxly can handle that volume autonomously with sub-500ms voice response. Let us set up a live 15-minute engineering demo with our solutions architect. Would tomorrow morning work?' },
+      { speaker: 'David', time: '00:31', text: 'Got it. Dialtact can handle that volume autonomously with sub-500ms voice response. Let us set up a live 15-minute engineering demo with our solutions architect. Would tomorrow morning work?' },
       { speaker: 'Caller', time: '00:44', text: 'Yes, 10:00 AM EST works for our VP of Operations.' }
     ]
   },
@@ -381,7 +381,7 @@ export const initialCalls = [
       actionTaken: 'Increased burst limit to 50 TPS'
     },
     transcript: [
-      { speaker: 'Elena', time: '00:02', text: 'Hello, thank you for reaching Voxly Technical Support. I am Elena. What technical issue or API endpoint can I assist you with today?' },
+      { speaker: 'Elena', time: '00:02', text: 'Hello, thank you for reaching Dialtact Technical Support. I am Elena. What technical issue or API endpoint can I assist you with today?' },
       { speaker: 'Caller', time: '00:10', text: 'Hi Elena, our campaign API is throwing 429 errors when initiating batch calls.' },
       { speaker: 'Elena', time: '00:18', text: 'I understand. Let me check your workspace concurrency allocation. May I have your workspace ID?' },
       { speaker: 'Caller', time: '00:26', text: 'It is ws-cloudvoice-08.' },
@@ -415,7 +415,7 @@ export const initialCalls = [
       { speaker: 'System', time: '00:01', text: '[Carrier 200 OK connected]' },
       { speaker: 'System', time: '00:03', text: '[AMD: Answering Machine Detected - 98% confidence]' },
       { speaker: 'Voicemail', time: '00:08', text: 'Please leave a message after the tone. [BEEP]' },
-      { speaker: 'David', time: '00:11', text: 'Hi, this is David from Voxly AI calling regarding your team inquiry. You can reach us back directly at 212-555-0144. Have a wonderful day.' }
+      { speaker: 'David', time: '00:11', text: 'Hi, this is David from Dialtact AI calling regarding your team inquiry. You can reach us back directly at 212-555-0144. Have a wonderful day.' }
     ]
   }
 ];
