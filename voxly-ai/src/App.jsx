@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { WorkspaceProvider } from './console/context/WorkspaceContext';
-import { AppShell } from './console/AppShell';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { TalkToAiSection } from './components/TalkToAiSection';
@@ -22,7 +21,6 @@ import { LegalModals } from './components/LegalModals';
 import { AuthModal } from './components/AuthModal';
 import { startTourGuide, isTourCompleted } from './services/tourGuide';
 import { VerifyEmailBanner } from './components/VerifyEmailBanner';
-import { ConsoleGate } from './components/ConsoleGate';
 import { useAuth } from './context/AuthContext';
 import {
   consoleHash,
@@ -37,6 +35,8 @@ import { PrivacyPage } from './pages/PrivacyPage';
 import { TermsPage } from './pages/TermsPage';
 import { SecurityPage } from './pages/SecurityPage';
 import { applyPageMetadata } from './lib/siteMetadata';
+
+const ConsoleEntry = React.lazy(() => import('./console/ConsoleEntry'));
 
 function AppInner() {
   const { isAuthenticated, logout: authLogout, signOutReason, user } = useAuth();
@@ -266,15 +266,16 @@ function AppInner() {
   return (
     <>
       {currentView === 'dashboard' ? (
-        <ConsoleGate
-          onSignIn={() => openAuthModal('signin', parseDashboardTabFromHash(window.location.hash))}
-          onBackToMarketing={() => {
-            setCurrentView('landing');
-            window.location.hash = '';
-          }}
-        >
-          <AppShell onBackToLanding={goToLanding} onSignOut={handleSignOut} />
-        </ConsoleGate>
+        <React.Suspense fallback={<div role="status" className="min-h-screen flex items-center justify-center bg-[#FAF9FD] text-sm text-[#524E5E]">Loading workspace…</div>}>
+          <ConsoleEntry
+            onSignIn={() => openAuthModal('signin', parseDashboardTabFromHash(window.location.hash))}
+            onBackToLanding={() => {
+              setCurrentView('landing');
+              window.location.hash = '';
+            }}
+            onSignOut={handleSignOut}
+          />
+        </React.Suspense>
       ) : currentView === 'support' ? (
         <SupportPage
           onBackToLanding={goToLanding}

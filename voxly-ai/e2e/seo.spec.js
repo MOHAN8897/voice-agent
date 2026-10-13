@@ -67,6 +67,7 @@ test.describe('SEO and search indexing', () => {
     await page.goto('/#dashboard/overview');
     await expect(page).toHaveTitle('Workspace Overview — Dialtact Console');
     await expect(page.locator('meta[name="robots"][data-voxly-console]')).toHaveAttribute('content', 'noindex, nofollow');
+    await expect(page.getByRole('heading', { name: 'Sign in to build your agent' })).toBeVisible();
 
     await page.goto('/#dashboard/integrations');
     await expect(page).toHaveTitle('Integrations — Dialtact Console');
