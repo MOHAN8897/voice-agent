@@ -31,7 +31,7 @@ from server.call.post_call_pipeline import reconcile_and_dispatch_post_call
 from server.db.connection import get_session_factory, init_db
 from server.db.models.integration_models import AgentIntegration, TenantIntegration, ToolExecution
 from server.realtime.testing import FakeRealtimeVoiceAdapter
-from server.services.composio_service import composio_service
+from server.services.nango_service import nango_service
 from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
 from server.services.tool_router import tool_router
 
@@ -75,7 +75,7 @@ async def test_agentic_telnyx_call_multi_turn_flow():
                     id=uuid.uuid4(),
                     tenant_id=tenant_uuid,
                     app_name=app,
-                    composio_connection_id=f"conn_{app}_123",
+                    connection_id=f"conn_{app}_123",
                     status="ACTIVE",
                     account_identifier="test_user@example.com",
                     metadata_={"scopes": ["read", "write"]},
@@ -198,7 +198,7 @@ async def test_agentic_telnyx_call_multi_turn_flow():
         },
     }
 
-    with patch.object(composio_service, "execute_in_call_tool", AsyncMock(return_value=mock_slots_response)):
+    with patch.object(nango_service, "execute_in_call_tool", AsyncMock(return_value=mock_slots_response)):
         await loop._handle_event(
             {
                 "type": "function_call",
@@ -237,7 +237,7 @@ async def test_agentic_telnyx_call_multi_turn_flow():
         },
     }
 
-    with patch.object(composio_service, "execute_in_call_tool", AsyncMock(return_value=mock_booking_response)):
+    with patch.object(nango_service, "execute_in_call_tool", AsyncMock(return_value=mock_booking_response)):
         await loop._handle_event(
             {
                 "type": "function_call",

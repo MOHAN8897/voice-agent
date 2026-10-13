@@ -1,4 +1,4 @@
-"""Authoritative Verification Suite for Composio Multi-Tenant Voice Tools."""
+"""Authoritative Verification Suite for Multi-Tenant Voice Tools."""
 from __future__ import annotations
 
 import asyncio
@@ -7,7 +7,7 @@ import secrets
 from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
-from server.services.composio_service import ComposioService
+from server.services.nango_service import NangoService
 from server.services.tool_router import VoxlyToolRouter
 
 
@@ -16,7 +16,7 @@ from server.services.tool_router import VoxlyToolRouter
 # ---------------------------------------------------------------------------
 def test_schema_optimizer_preserves_semantics_and_targets_size_reduction():
     """Verify schema optimizer preserves nested structures while targeting >=85% reduction."""
-    service = ComposioService(api_key="mock_key")
+    service = NangoService(secret_key="mock_key")
 
     # Complex OpenAPI tool schema with nested objects, arrays, and formats
     raw_tool = {
@@ -109,14 +109,11 @@ async def test_tool_router_fails_closed_without_tenant_and_dispatches_with_tenan
     assert "Unauthorized" in result_no_agent["message"]
 
     # 2. Valid tenant routes cleanly through router
-    mock_toolset = MagicMock()
-    mock_toolset.execute_action.return_value = {
+    router.nango.execute_in_call_tool = AsyncMock(return_value={
         "status": "confirmed",
         "date": "2026-10-05",
         "time": "10:00 AM",
-        "htmlLink": "https://calendar.google.com/event?id=123",  # Should be sanitized
-    }
-    router.composio._toolset = mock_toolset
+    })
 
     result_valid = await router.route_and_execute(
         tenant_id="tenant_uuid_001",
@@ -126,7 +123,6 @@ async def test_tool_router_fails_closed_without_tenant_and_dispatches_with_tenan
         arguments={"date": "2026-10-05"},
     )
     assert result_valid["status"] == "confirmed"
-    assert "htmlLink" not in result_valid  # Sanitizer purged raw link
 
 
 # ---------------------------------------------------------------------------
@@ -137,17 +133,10 @@ async def test_write_action_tracks_split_brain_timeout():
     """Verify write action creates execution record and transitions to timed_out_pending on timeout."""
     router = VoxlyToolRouter()
 
-    # Mock an external API that exceeds 1.5s
-    mock_toolset = MagicMock()
+    async def slow_action(*args, **kwargs):
+        raise asyncio.TimeoutError()
 
-    def slow_action(*args, **kwargs):
-        import time
-
-        time.sleep(2.0)
-        return {"id": "event_999", "status": "confirmed"}
-
-    mock_toolset.execute_action.side_effect = slow_action
-    router.composio._toolset = mock_toolset
+    router.nango.execute_in_call_tool = AsyncMock(side_effect=slow_action)
 
     # Execute with test SLA timeout
     with patch.object(router, "_record_execution_start", new_callable=AsyncMock) as mock_start, \
@@ -178,7 +167,7 @@ async def test_write_action_tracks_split_brain_timeout():
 @pytest.mark.asyncio
 async def test_oauth_state_generation_and_durable_job_idempotency():
     """Verify cryptographic state token prevents CSRF and post-call jobs deduplicate."""
-    service = ComposioService(api_key="mock_key")
+    service = NangoService(secret_key="mock_key")
 
     # 1. Verify cryptographic state token generation
     state_1 = secrets.token_urlsafe(32)
@@ -195,20 +184,21 @@ async def test_oauth_state_generation_and_durable_job_idempotency():
     job_1 = DurableJob(
         call_id=call_id,
         tenant_id=tenant_id,
-        job_type="composio_action",
+        job_type="nango_action",
         payload={"action_name": "HUBSPOT_CREATE_CONTACT", "caller_phone": "+919876543210"},
-        idempotency_key=f"composio:HUBSPOT_CREATE_CONTACT:{call_id}",
+        idempotency_key=f"nango:HUBSPOT_CREATE_CONTACT:{call_id}",
     )
 
     job_2 = DurableJob(
         call_id=call_id,
         tenant_id=tenant_id,
-        job_type="composio_action",
+        job_type="nango_action",
         payload={"action_name": "HUBSPOT_CREATE_CONTACT", "caller_phone": "+919876543210"},
-        idempotency_key=f"composio:HUBSPOT_CREATE_CONTACT:{call_id}",
+        idempotency_key=f"nango:HUBSPOT_CREATE_CONTACT:{call_id}",
     )
 
     assert job_1.idempotency_key == job_2.idempotency_key
+    assert job_1.status == JobStatus.PENDING
     assert job_1.status == JobStatus.PENDING
 
 

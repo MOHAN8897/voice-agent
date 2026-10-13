@@ -1,4 +1,4 @@
-"""API routes for Composio multi-tenant integrations and OAuth flows."""
+"""API routes for enterprise multi-tenant integrations and OAuth flows."""
 from __future__ import annotations
 
 import secrets
@@ -68,13 +68,13 @@ async def list_integrations(
                             existing = chk.scalar_one_or_none()
                             if existing:
                                 existing.status = "ACTIVE"
-                                existing.composio_connection_id = c_id
+                                existing.connection_id = c_id
                             else:
                                 session.add(
                                     TenantIntegration(
                                         tenant_id=uuid.UUID(tenant_id),
                                         app_name=app_name.upper(),
-                                        composio_connection_id=c_id,
+                                        connection_id=c_id,
                                         account_identifier=f"workspace-{app_name.lower()}",
                                         status="ACTIVE",
                                     )
@@ -227,7 +227,7 @@ async def activate_integration(
                 if existing:
                     existing.app_name = resolved_app
                     existing.status = "ACTIVE"
-                    existing.composio_connection_id = conn_id
+                    existing.connection_id = conn_id
                     if body.account_identifier:
                         existing.account_identifier = body.account_identifier
                     existing.updated_at = datetime.now(timezone.utc)
@@ -235,7 +235,7 @@ async def activate_integration(
                     new_integ = TenantIntegration(
                         tenant_id=uuid.UUID(tenant_id),
                         app_name=resolved_app,
-                        composio_connection_id=conn_id,
+                        connection_id=conn_id,
                         account_identifier=body.account_identifier or f"workspace-{resolved_app.lower()}",
                         status="ACTIVE",
                     )
@@ -328,14 +328,14 @@ async def nango_webhook(request: Request) -> dict[str, Any]:
                     if existing:
                         existing.status = "ACTIVE"
                         if connection_id:
-                            existing.composio_connection_id = str(connection_id)
+                            existing.connection_id = str(connection_id)
                         existing.updated_at = datetime.now(timezone.utc)
                     else:
                         session.add(
                             TenantIntegration(
                                 tenant_id=tenant_uuid,
                                 app_name=app_name.upper(),
-                                composio_connection_id=str(connection_id or f"nango_{uuid.uuid4().hex[:12]}"),
+                                connection_id=str(connection_id or f"nango_{uuid.uuid4().hex[:12]}"),
                                 account_identifier=f"workspace-{app_name.lower()}",
                                 status="ACTIVE",
                             )
@@ -380,7 +380,7 @@ async def connect_integration(
                     existing = chk.scalar_one_or_none()
                     if existing:
                         existing.status = "ACTIVE"
-                        existing.composio_connection_id = conn_id
+                        existing.connection_id = conn_id
                         if body.account_identifier:
                             existing.account_identifier = body.account_identifier
                         existing.updated_at = datetime.now(timezone.utc)
@@ -389,7 +389,7 @@ async def connect_integration(
                             TenantIntegration(
                                 tenant_id=uuid.UUID(tenant_id),
                                 app_name=resolved_app,
-                                composio_connection_id=conn_id,
+                                connection_id=conn_id,
                                 account_identifier=body.account_identifier or f"workspace-{resolved_app.lower()}",
                                 status="ACTIVE",
                             )
@@ -710,7 +710,7 @@ async def oauth_callback(
                     new_integ = TenantIntegration(
                         tenant_id=uuid.UUID(tenant_id),
                         app_name=resolved_app,
-                        composio_connection_id=f"conn_{state[:16]}",
+                        connection_id=f"conn_{state[:16]}",
                         account_identifier=f"workspace-{resolved_app.lower()}",
                         status="ACTIVE",
                     )
@@ -831,7 +831,7 @@ async def disconnect_integration(
                 rec_res = await session.execute(rec_stmt)
                 records = rec_res.scalars().all()
                 for rec in records:
-                    conn_id = rec.composio_connection_id or str(tenant_id)
+                    conn_id = rec.connection_id or str(tenant_id)
                     await nango_service.delete_connection(connection_id=conn_id, app_name=rec.app_name)
 
                 await session.execute(

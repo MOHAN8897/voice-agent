@@ -33,7 +33,7 @@ rules:
   - id: prohibited-carrier-tenant-surface-leak
     languages: [python]
     severity: ERROR
-    message: "Strict Vendor & Secret Scrubbing Violation: Legacy wholesale carriers (such as plivo or exotel) must never be referenced or exposed on customer/tenant-facing surfaces."
+    message: "Strict Vendor & Secret Scrubbing Violation: Internal vendors and wholesale carriers (plivo, exotel, composio) must never be referenced or exposed on customer/tenant-facing surfaces."
     metadata:
       cwe: "CWE-200: Exposure of Sensitive Information to an Unauthorized Actor"
       owasp: "A01:2021 - Broken Access Control"
@@ -44,7 +44,7 @@ rules:
         - "**/server/routes/integrations.py"
         - "**/voxly-ai/src/**"
     patterns:
-      - pattern-regex: "(?i)\\b(plivo|exotel)\\b"
+      - pattern-regex: "(?i)\\b(plivo|exotel|composio)\\b"
 
   - id: unsafe-urllib-file-ssrf
     languages: [python]

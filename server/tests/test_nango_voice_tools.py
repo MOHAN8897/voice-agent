@@ -173,8 +173,9 @@ async def test_nango_service_provider_mapping_and_connect_initiation():
         }
     }
     with patch.object(service, "_resolve_environment_key", AsyncMock(return_value="mock_secret")):
-        with patch("urllib.request.urlopen") as mock_url:
+        with patch("server.services.nango_service._safe_urlopen") as mock_url:
             mock_cm = MagicMock()
+            mock_cm.status = 200
             mock_cm.read.return_value = json.dumps(mock_connect_resp).encode()
             mock_cm.__enter__.return_value = mock_cm
             mock_url.return_value = mock_cm
@@ -234,8 +235,9 @@ async def test_nango_get_tenant_connections_and_reverse_mapping():
         ]
     }
     with patch.object(service, "_resolve_environment_key", AsyncMock(return_value="mock_secret")):
-        with patch("urllib.request.urlopen") as mock_url:
+        with patch("server.services.nango_service._safe_urlopen") as mock_url:
             mock_cm = MagicMock()
+            mock_cm.status = 200
             mock_cm.read.return_value = json.dumps(mock_conns_resp).encode()
             mock_cm.__enter__.return_value = mock_cm
             mock_url.return_value = mock_cm
@@ -448,7 +450,7 @@ async def test_nango_webhook_prefixed_uuid_and_deletion():
         added = mock_session.add.call_args[0][0]
         import uuid
         assert added.tenant_id == uuid.UUID(raw_uuid)
-        assert added.composio_connection_id == "conn_real_456"
+        assert added.connection_id == "conn_real_456"
         assert added.app_name == "GOOGLECALENDAR"
 
 

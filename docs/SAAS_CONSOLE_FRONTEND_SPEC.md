@@ -118,7 +118,7 @@ e164               string(20)
 status             string(30)  default "pending"
 agent_id           uuid | null
 purchase_id        uuid | null
-plivo_number_id    string(100) | null
+carrier_number_id  string(100) | null
 telnyx_number_id   string(100) | null
 billing_source     string(30)  default "manual"
 inbound_enabled    bool default true

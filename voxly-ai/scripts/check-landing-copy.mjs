@@ -59,7 +59,7 @@ const FORBIDDEN = [
   ['zero hallucination guarantee', /zero[- ]hallucination|100%\s*(grounded|field accuracy|compliance|combinatorial)/i],
   ['guaranteed outcome', /guarantee[sd]?\b/i],
   ['unsourced performance figure', /\+?3[0-9]%|94% inquiry|\$140k|26\.4%|12,482|4\.9\/5|4\.8\/5/],
-  ['carrier name in customer copy', /\bTelnyx\b|\bTwilio\b|\bPlivo\b/],
+  ['vendor or carrier name in customer copy', /\bTelnyx\b|\bTwilio\b|\bPlivo\b|\bExotel\b|\bComposio\b/i],
   ['fake live-telemetry signal', /updated \d+s ago/i],
 ];
 

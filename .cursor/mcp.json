@@ -1,9 +1,5 @@
 {
   "mcpServers": {
-    "composio": {
-      "type": "http",
-      "url": "https://connect.composio.dev/mcp"
-    },
     "graft": {
       "command": "graft",
       "args": ["mcp"]

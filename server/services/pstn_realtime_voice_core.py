@@ -3312,7 +3312,6 @@ class PstnRealtimeVoiceLoop:
                     or any(tool_name.lower().startswith(t.lower()) for t in self._agent_tools)
                 ))
                 or tool_name.startswith("nango_")
-                or tool_name.startswith("composio_")
             )
             if is_dispatchable_tool and tool_name not in LIVE_HANGUP_TOOL_NAMES:
                 log_pstn("tool_router.dispatch_start", call_id=self.call_id, tool=tool_name)

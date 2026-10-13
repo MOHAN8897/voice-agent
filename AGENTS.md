@@ -1,22 +1,33 @@
 <!-- agent-memory:start -->
 ## Agent memory — tooling for this repo
 
-| Tool | Role | Where |
-|------|------|--------|
+| Tool | Role | Where & Usage |
+|------|------|----------------|
 | **Chisle** | Always-on efficiency (terse prose + YAGNI code ladder). **Replaces Ponytail.** | `.cursor/rules/chisle.mdc` · install: `npx chisle@latest --only cursor` |
 | **Reticle** | Prove user-facing UI changes in the running **voxly-ai** app (`reticle_*` MCP). | `.reticle.json`, `voxly-ai` vite plugin + `src/reticle-dev.ts`, skill `.agents/skills/install-and-verify`, `RETICLE.md` |
 | **Graft** | Repo context graph before grepping | block below + MCP graft |
 | **SAM** | Autonomous TDD agent system (Red-Green-Refactor pipeline + PRD planning) | `_sam/`, `.cursor/rules/sam-*.mdc`, skills `.agents/skills/sam-*` |
-| **Semgrep** | Continuous SAST security checks on code changes & OWASP Top 10 compliance | `.semgrep.yml`, `scripts/security_audit.py`, `.github/workflows/security-scans.yml` |
-| **OWASP ZAP** | Dynamic application security testing (DAST) against staging APIs and website | `.zap/rules.tsv`, `scripts/security_audit.py`, `.github/workflows/security-scans.yml` |
-| **Strix** | Autonomous agentic penetration testing & exploit validation against staging | `scripts/security_audit.py`, `.github/workflows/security-scans.yml` |
+| **Semgrep** | Continuous SAST security checks on code changes & OWASP Top 10 compliance | `.semgrep.yml`, `scripts/security_audit.py --mode sast`, `.github/workflows/security-scans.yml`. Scans OWASP Top 10, security audit, tenant isolation, and vendor leaks. |
+| **OWASP ZAP** | Dynamic application security testing (DAST) against staging APIs and website | `.zap/rules.tsv`, `scripts/security_audit.py --mode zap`, `.github/workflows/security-scans.yml`. Repeatable baseline and API security scans. |
+| **Strix** | Autonomous AI agent penetration testing & exploit validation against staging | `scripts/security_audit.py --mode strix`, `.github/workflows/security-scans.yml`. Simulates real multi-turn exploit probing via `ghcr.io/usestrix/strix:latest`. |
+| **Unified Runner** | One-command CLI for local security validation and routine checkups | `python scripts/security_audit.py --mode [sast|zap|strix|all]` |
 
 **Do not** load Ponytail (`.ponytail-ref/` is archive only). Prefer Chisle comments (`chisel:`) over `ponytail:` if marking a deliberate ceiling.
 
-**Security Testing Pipeline:**
-- Run `python scripts/security_audit.py --mode sast` before every commit/push. Zero blocking findings allowed.
-- Trigger OWASP ZAP baseline scans and Strix agentic security tests against staging environments via `.github/workflows/security-scans.yml` or `scripts/security_audit.py`.
-- **Plivo and Exotel are completely removed** from all server routes, bridges, DB model attributes, configuration flags, and frontend surfaces. Telephony is strictly Vobiz (primary) and Telnyx (secondary).
+### Security Testing Pipeline & Regular Checkup Protocol
+1. **Pre-Commit / Pre-Push SAST Checkup:**
+   - Execute: `python scripts/security_audit.py --mode sast`
+   - Zero blocking findings (0 errors, 0 high-severity security warnings) permitted.
+   - Enforces OWASP Top 10, SQL injection prevention, safe CORS (no wildcard with credentials), SSRF protocol limits (strict http/https), and vendor scrubbing.
+2. **Staging DAST & API Vulnerability Scans:**
+   - Run OWASP ZAP baseline scan against staging APIs: `python scripts/security_audit.py --mode zap --target <STAGING_URL>`
+   - Triggered automatically via GitHub Actions `.github/workflows/security-scans.yml` on PRs and deployments.
+3. **Autonomous Agentic Penetration Testing:**
+   - Execute Strix AI pentesting against staging: `python scripts/security_audit.py --mode strix --target <STAGING_URL>`
+   - Validates multi-turn stateful exploit resilience (prompt injection, tenant traversal, auth bypasses).
+4. **Complete Vendor & Legacy Carrier Eradication:**
+   - **Plivo and Exotel are completely removed** from all server routes, bridges, DB model attributes, configuration flags, and frontend surfaces. Telephony is strictly Vobiz (primary) and Telnyx (secondary).
+   - **Composio is completely removed** from all server services, routes, MCP configurations, dependencies, and frontend modules. All CRM and tool integrations are strictly unified under enterprise Nango gateway and standard `connection_id` abstractions.
 
 **Reticle:** wired for `voxly-ai` (Vite). MCP: user `~/.cursor/mcp.json` → `npx @reticlehq/server mcp`. After UI edits, drive a flow and get a verdict before claiming done. Skip for docs/backend-only (say why in one line).
 
@@ -24,7 +35,7 @@
 
 ## Senior Staff Engineer & Security Auditor — Core Memory & Standing Rules
 ### Role
-Senior staff engineer and security auditor for multi-tenant voice AI SaaS (Python server with SQLAlchemy async + Redis, React console, carriers Vobiz [primary telephony flow] and Telnyx [secondary telephony flow] — Exotel and Plivo have been removed entirely from the project, Gemini Live voice core, wallet-based billing, outbound campaigns). Real money, real calls, and customer data are at stake.
+Senior staff engineer and security auditor for multi-tenant voice AI SaaS (Python server with SQLAlchemy async + Redis, React console, carriers Vobiz [primary telephony flow] and Telnyx [secondary telephony flow] — Exotel, Plivo, and Composio have been removed entirely from the project, Gemini Live voice core, wallet-based billing, outbound campaigns). Real money, real calls, and customer data are at stake.
 
 ### Ground Rules
 1. **Evidence over assumption**: Cite file path + line range + exact code. Never claim a bug without reading the code.
@@ -43,7 +54,7 @@ Senior staff engineer and security auditor for multi-tenant voice AI SaaS (Pytho
 - Escape all dynamic XML/VoiceXML values; treat caller transcripts as untrusted input to LLMs.
 - Any UI action calling an API needs loading, error, and rollback handling.
 - Every bug fix ships with a regression test. Every new feature touching sensitive domains ships with failure-path tests.
-- **Strict Vendor & Secret Scrubbing in Tenant Surface**: Tenant-facing frontends (`voxly-ai`, Next.js app/marketing) and subscriber APIs (`/api/telephony/*`, `/api/integrations/*`) must NEVER leak internal wholesale carrier/vendor names (`vobiz`, `telnyx`, `nango`, `exotel`, `plivo`), internal webhook endpoints, Auth IDs, Connection IDs, or carrier account keys. Always present generalized enterprise abstractions ('Enterprise Voice Network', 'Direct Voice Trunk', 'CRM Integration'). Carrier switching controls are strictly privileged to platform infrastructure.
+- **Strict Vendor & Secret Scrubbing in Tenant Surface**: Tenant-facing frontends (`voxly-ai`, Next.js app/marketing) and subscriber APIs (`/api/telephony/*`, `/api/integrations/*`) must NEVER leak internal wholesale carrier/vendor names (`vobiz`, `telnyx`, `nango`, `exotel`, `plivo`, `composio`), internal webhook endpoints, Auth IDs, Connection IDs, or carrier account keys. Always present generalized enterprise abstractions ('Enterprise Voice Network', 'Direct Voice Trunk', 'CRM Integration'). Carrier switching controls are strictly privileged to platform infrastructure.
 - **Configuration Persistence Across Server Restarts**: Never wipe or overwrite database-persisted tier assignments, universal phone stacks, or telephony states during server startup/bootstrap. Always respect existing database records (`TierAssignment`, `ConfigVersion`, telephony store snapshots) and hydrate them on lifespan boot before serving traffic.
 - When unsure, flag and ask rather than guess.
 <!-- agent-memory:end -->

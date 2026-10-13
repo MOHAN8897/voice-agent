@@ -245,7 +245,7 @@ class Settings(BaseSettings):
     saas_max_concurrent_pstn: int = Field(20, alias="SAAS_MAX_CONCURRENT_PSTN")
     recording_consent_required: bool = Field(False, alias="RECORDING_CONSENT_REQUIRED")
 
-    # --- Nango & Composio multi-tenant voice tools & integrations ---
+    # --- Nango multi-tenant voice tools & integrations ---
     nango_api_key: str | None = Field(
         None,
         validation_alias=AliasChoices("NANGO_API_KEY", "nango_api_key"),
@@ -261,10 +261,6 @@ class Settings(BaseSettings):
     nango_base_url: str = Field(
         "https://api.nango.dev",
         validation_alias=AliasChoices("NANGO_BASE_URL", "nango_base_url"),
-    )
-    composio_api_key: str | None = Field(
-        None,
-        validation_alias=AliasChoices("COMPOSIO_API_KEY", "composio_api_key"),
     )
 
     # --- SaaS subscriber auth & billing ---

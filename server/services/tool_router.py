@@ -21,7 +21,6 @@ class VoxlyToolRouter:
 
     def __init__(self) -> None:
         self.nango = nango_service
-        self.composio = nango_service
 
     async def route_and_execute(
         self,
@@ -65,7 +64,7 @@ class VoxlyToolRouter:
 
         # 6. EXECUTE WITH STRICT 1.5s VOICE SLA & SPLIT-BRAIN TIMEOUT HANDLING
         try:
-            result = await self.composio.execute_in_call_tool(
+            result = await self.nango.execute_in_call_tool(
                 tenant_id=tenant_id,
                 action_name=tool_name,
                 params=arguments,

@@ -20,10 +20,10 @@ def test_durable_job_idempotency_with_action():
     job = DurableJob(
         call_id="call-abc",
         tenant_id="tenant-123",
-        job_type="composio_action",
+        job_type="nango_action",
         payload={"action_name": "hubspot_sync"},
     )
-    assert job.idempotency_key == "composio_action:call-abc:hubspot_sync"
+    assert job.idempotency_key == "nango_action:call-abc:hubspot_sync"
 
 
 def test_durable_job_serialization_roundtrip():
@@ -46,7 +46,7 @@ def test_durable_job_retry_backoff_and_dead_letter():
     job = DurableJob(
         call_id="call-abc",
         tenant_id="tenant-123",
-        job_type="composio_action",
+        job_type="nango_action",
         max_attempts=3,
     )
 

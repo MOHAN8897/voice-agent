@@ -1391,6 +1391,5 @@ class NangoService:
         return sanitized or {"status": "success"}
 
 
-# Singleton instance and compatibility alias
+# Singleton instance
 nango_service = NangoService()
-composio_service = nango_service

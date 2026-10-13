@@ -69,7 +69,7 @@ async def get_connection_id(tenant_id: str, app_name: str, session_factory: Any 
         stripped = canonical.replace("_", "")
         async with session_factory() as session:
             res = await session.execute(
-                select(TenantIntegration.composio_connection_id).where(
+                select(TenantIntegration.connection_id).where(
                     TenantIntegration.tenant_id == _uuid.UUID(str(tenant_id)),
                     or_(
                         func.upper(TenantIntegration.app_name) == canonical,
