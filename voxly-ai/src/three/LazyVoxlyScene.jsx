@@ -1,4 +1,6 @@
-import React, { Suspense, useEffect, useMemo, useState, Component } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo, useState, Component } from 'react';
+
+const LOAD_RECOVERY_TIMEOUT_MS = 15_000;
 
 /**
  * Class-based ErrorBoundary to catch any Three.js / WebGL / Suspense exceptions
@@ -15,6 +17,7 @@ class SceneErrorBoundary extends Component {
   }
 
   componentDidCatch(error) {
+    this.props.onError?.(error);
     console.warn('3D Scene WebGL error, gracefully falling back to preview:', error);
   }
 
@@ -55,11 +58,6 @@ function SceneFallback({ className = '', eager = true, onBotClick, message, onRe
 function device3DStatus() {
   if (typeof window === 'undefined') return 'Loading 3D…';
   try {
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      return 'Animation is off in your reduced-motion settings.';
-    }
-  } catch {}
-  try {
     const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
     if (conn && conn.saveData) {
       return 'Data saver is on. Retry 3D to load the animation.';
@@ -69,6 +67,9 @@ function device3DStatus() {
     const canvas = document.createElement('canvas');
     const gl = canvas.getContext('webgl2');
     if (!gl) return '3D is unavailable in this browser.';
+    // The capability probe is separate from the visible R3F canvas. Release it
+    // immediately so low-end devices do not waste one of their limited GPU contexts.
+    gl.getExtension('WEBGL_lose_context')?.loseContext();
     return '';
   } catch {
     return '3D is unavailable in this browser.';
@@ -79,11 +80,33 @@ export function LazyVoxlyScene(props = {}) {
   const [shouldLoad, setShouldLoad] = useState(false);
   const [message, setMessage] = useState('Loading 3D…');
   const [attempt, setAttempt] = useState(0);
+  const [modelReady, setModelReady] = useState(false);
+  const [loadTimedOut, setLoadTimedOut] = useState(false);
   const LazyScene = useMemo(() => React.lazy(() => import('./VoxlyScene').then((m) => {
     if (attempt > 0) m.clearBotModelCache();
     return { default: m.VoxlyScene };
   })), [attempt]);
-  const retry = () => { setAttempt(value => value + 1); setShouldLoad(true); };
+  const retry = () => {
+    setModelReady(false);
+    setLoadTimedOut(false);
+    setAttempt(value => value + 1);
+    setShouldLoad(true);
+  };
+  const handleModelReady = useCallback((controller) => {
+    setModelReady(true);
+    setLoadTimedOut(false);
+    props.onControllerReady?.(controller);
+  }, [props.onControllerReady]);
+  const handleLoadError = useCallback(() => {
+    setModelReady(true);
+    setLoadTimedOut(false);
+  }, []);
+
+  useEffect(() => {
+    if (!shouldLoad || modelReady) return undefined;
+    const timeout = window.setTimeout(() => setLoadTimedOut(true), LOAD_RECOVERY_TIMEOUT_MS);
+    return () => window.clearTimeout(timeout);
+  }, [attempt, modelReady, shouldLoad]);
 
   useEffect(() => {
     const status = device3DStatus();
@@ -99,13 +122,23 @@ export function LazyVoxlyScene(props = {}) {
   }
 
   return (
-    <SceneErrorBoundary key={attempt} className={props.className} onBotClick={props.onBotClick} onRetry={retry}>
-      <Suspense fallback={<SceneFallback className={props.className} onBotClick={props.onBotClick} message="Loading 3D…" />}>
-        <div className="w-full h-full transition-opacity duration-500 animate-fade-in">
-          <LazyScene {...props} />
+    <div className="relative w-full h-full">
+      <SceneErrorBoundary key={attempt} className={props.className} onBotClick={props.onBotClick}
+        onRetry={retry} onError={handleLoadError}>
+        <Suspense fallback={<SceneFallback className={props.className} onBotClick={props.onBotClick} message="Loading 3D…" />}>
+          <div className="w-full h-full transition-opacity duration-500 animate-fade-in">
+            <LazyScene {...props} onControllerReady={handleModelReady} />
+          </div>
+        </Suspense>
+      </SceneErrorBoundary>
+      {loadTimedOut && !modelReady && (
+        <div className="absolute inset-0 z-30 rounded-3xl bg-[#FAF9FD]">
+          <SceneFallback className={props.className} onBotClick={props.onBotClick}
+            message="3D is taking longer than usual. You can keep waiting or retry."
+            onRetry={retry} />
         </div>
-      </Suspense>
-    </SceneErrorBoundary>
+      )}
+    </div>
   );
 }
 

@@ -177,7 +177,71 @@ test('a model taking over seven seconds still loads successfully', async ({ page
   await expect(page.getByText("Hello! Hiii! 👋 I'm Dialtact! Nice to meet you!", { exact: true })).toBeVisible();
 });
 
-for (const mode of ['no-webgl', 'reduced-motion', 'model-failure', 'context-loss']) {
+test('a model that finishes after the recovery preview appears automatically replaces it', async ({ page }) => {
+  await trackRendering(page);
+  let releaseRequest;
+  let onRequestStarted;
+  const requestStarted = new Promise(resolve => { onRequestStarted = resolve; });
+  const requestGate = new Promise(resolve => { releaseRequest = resolve; });
+  await page.route('**/models/*.glb*', async route => {
+    onRequestStarted();
+    await requestGate;
+    await route.continue();
+  });
+  await page.goto('/');
+  await requestStarted;
+  await expect(page.getByText('3D is taking longer than usual.', { exact: false })).toBeVisible({ timeout: 20000 });
+  const preview = page.getByRole('button', { name: 'Interact with Dialtact' }).first();
+  await expect(preview.locator('img')).toBeVisible();
+  expect(await preview.locator('img').evaluate(image => image.naturalWidth)).toBeGreaterThan(0);
+
+  releaseRequest();
+  await expect(page.locator('[data-mascot-state="active"]')).toBeVisible({ timeout: 30000 });
+  await expect(page.getByText('3D is taking longer than usual.', { exact: false })).toHaveCount(0);
+});
+
+test('a stalled model can be retried without reloading the page', async ({ page }) => {
+  await trackRendering(page);
+  let releaseRequest;
+  let requestCount = 0;
+  let onFirstRequest;
+  const firstRequest = new Promise(resolve => { onFirstRequest = resolve; });
+  const requestGate = new Promise(resolve => { releaseRequest = resolve; });
+  await page.route('**/models/*.glb*', async route => {
+    requestCount += 1;
+    if (requestCount === 1) {
+      onFirstRequest();
+      await requestGate;
+      await route.abort();
+      return;
+    }
+    await route.continue();
+  });
+  await page.goto('/');
+  await firstRequest;
+  await expect(page.getByText('3D is taking longer than usual.', { exact: false })).toBeVisible({ timeout: 20000 });
+
+  releaseRequest();
+  const retry = page.getByRole('button', { name: 'Retry 3D' }).first();
+  await expect(retry).toBeVisible();
+  await page.unroute('**/models/*.glb*');
+  await retry.click();
+  await expect.poll(() => page.evaluate(() => window.__mascotDraws), { timeout: 30000 }).toBeGreaterThan(0);
+});
+
+test('reduced-motion preference keeps the 3D model available in its low-motion mode', async ({ page }) => {
+  await trackRendering(page);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  const canvas = page.locator('canvas').first();
+  await expect(canvas).toBeVisible({ timeout: 30000 });
+  await canvas.scrollIntoViewIfNeeded();
+  await expect.poll(() => page.evaluate(() => window.__mascotDraws), { timeout: 15000 }).toBeGreaterThan(0);
+  await expect(page.locator('[data-mascot-state="active"]')).toBeVisible();
+  await expect(page.getByText('Animation is off in your reduced-motion settings.')).toHaveCount(0);
+});
+
+for (const mode of ['no-webgl', 'model-failure', 'context-loss']) {
   test(`${mode}: preview remains interactive`, async ({ page }) => {
     if (mode === 'no-webgl') {
       await page.addInitScript(() => {
