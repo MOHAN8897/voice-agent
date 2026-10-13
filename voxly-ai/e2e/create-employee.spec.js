@@ -128,6 +128,28 @@ test.describe('Create AI employee', () => {
     expect(script).not.toMatch(/[\u0900-\u097F\u0C00-\u0C7F]/);
   });
 
+  test('typing @ in the calling script offers and inserts a supported variable', async ({ page }) => {
+    test.skip(!E2E_EMAIL || !E2E_PASSWORD, 'Set E2E_EMAIL and E2E_PASSWORD');
+
+    await signInFromMarketing(page);
+    await openWizard(page);
+    await page.getByTestId('employee-brief-input').fill(
+      'E2E variable suggestions clinic. Answer questions and collect the caller name.'
+    );
+    await page.getByTestId('employee-language-select').selectOption('en-IN');
+    await page.getByTestId('create-next').click();
+    await expect(page.getByTestId('create-employee-modal')).toBeHidden({ timeout: 60000 });
+
+    const editor = page.getByTestId('script-textarea');
+    await expect(editor).toBeVisible({ timeout: 20000 });
+    await editor.fill('Hello @contact.first_name');
+    const suggestions = page.getByTestId('script-variable-suggestions');
+    await expect(suggestions.getByRole('option', { name: /First Name/ })).toBeVisible();
+    await editor.press('Enter');
+    await expect(editor).toHaveValue('Hello {{contact.first_name | there}}');
+    await expect(suggestions).toHaveCount(0);
+  });
+
   test('call history uses the server status vocabulary', async ({ page }) => {
     test.skip(!E2E_EMAIL || !E2E_PASSWORD, 'Set E2E_EMAIL and E2E_PASSWORD');
 

@@ -1,30 +1,7 @@
-# Robots.txt for Voxly AI (https://voxly.ai)
 User-agent: *
 Allow: /
 Disallow: /api/
-Disallow: /#dashboard/
-Disallow: /#reset-password
 Disallow: /*?auth_error=*
 Disallow: /*?auth_code=*
 
-# Google Search Crawler
-User-agent: Googlebot
-Allow: /
-Disallow: /api/
-Disallow: /#dashboard/
-
-# Bing Search Crawler
-User-agent: Bingbot
-Allow: /
-Disallow: /api/
-Disallow: /#dashboard/
-
-# Apple Search Crawler
-User-agent: Applebot
-Allow: /
-Disallow: /api/
-Disallow: /#dashboard/
-
-# Host and Sitemap directives
-Host: https://voxly.ai
-Sitemap: https://voxly.ai/sitemap.xml
+Sitemap: https://www.dialtact.com/sitemap.xml

@@ -14,10 +14,14 @@ async function trackRendering(page) {
   });
 }
 
+function mascotCanvas(page) {
+  return page.locator('[data-mascot-state] canvas').first();
+}
+
 test('a real lost WebGL context restores the same canvas and resumes rendering', async ({ page }) => {
   await trackRendering(page);
   await page.goto('/');
-  const canvas = page.locator('canvas').first();
+  const canvas = mascotCanvas(page);
   await canvas.scrollIntoViewIfNeeded();
   await expect.poll(() => page.evaluate(() => window.__mascotDraws)).toBeGreaterThan(0);
   await canvas.evaluate(element => {
@@ -40,14 +44,14 @@ test('failed model requests can be retried without reloading the page', async ({
   await expect(page.getByText('3D could not load. Please try again.')).toBeVisible();
   await page.unroute('**/models/*.glb*');
   await page.getByRole('button', { name: 'Retry 3D' }).click();
-  await page.locator('canvas').first().scrollIntoViewIfNeeded();
+  await mascotCanvas(page).scrollIntoViewIfNeeded();
   await expect.poll(() => page.evaluate(() => window.__mascotDraws), { timeout: 15000 }).toBeGreaterThan(0);
 });
 
 test('scrolling and page visibility resume rendering after a pause', async ({ page }) => {
   await trackRendering(page);
   await page.goto('/');
-  const canvas = page.locator('canvas').first();
+  const canvas = mascotCanvas(page);
   await canvas.scrollIntoViewIfNeeded();
   await expect.poll(() => page.evaluate(() => window.__mascotDraws)).toBeGreaterThan(0);
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
@@ -81,7 +85,7 @@ test('touch devices never steer the model and canceled scroll gestures never act
       await route.fulfill({ response, body });
     });
     await page.goto('/');
-    const canvas = page.locator('canvas').first();
+    const canvas = mascotCanvas(page);
     await canvas.scrollIntoViewIfNeeded();
     await expect.poll(() => page.evaluate(() => window.__pointerValues.length)).toBeGreaterThan(5);
     await canvas.dispatchEvent('pointerdown', { pointerType: 'touch', clientX: 100, clientY: 100 });
@@ -112,7 +116,7 @@ test('data saver explains the preview and allows an explicit 3D retry', async ({
   await expect(page.getByText('Data saver is on. Retry 3D to load the animation.')).toBeVisible();
   await expect(page.locator('canvas')).toHaveCount(0);
   await page.getByRole('button', { name: 'Retry 3D' }).click();
-  await page.locator('canvas').first().scrollIntoViewIfNeeded();
+  await mascotCanvas(page).scrollIntoViewIfNeeded();
   await expect.poll(() => page.evaluate(() => window.__mascotDraws), { timeout: 15000 }).toBeGreaterThan(0);
 });
 
@@ -126,7 +130,7 @@ test('StrictMode never updates an animation controller after disposal', async ({
     await route.fulfill({ response, body });
   });
   await page.goto('/');
-  await page.locator('canvas').first().scrollIntoViewIfNeeded();
+  await mascotCanvas(page).scrollIntoViewIfNeeded();
   await expect.poll(() => page.evaluate(() => window.__controllerUpdates)).toBeGreaterThan(10);
   expect(await page.evaluate(() => window.__disposedControllerUpdates)).toBe(0);
 });
@@ -144,7 +148,7 @@ for (const [name, viewport, hasTouch] of [
       const errors = [];
       page.on('pageerror', error => errors.push(error.message));
       await page.goto('/');
-      const canvas = page.locator('canvas').first();
+      const canvas = mascotCanvas(page);
       await expect(canvas).toBeVisible({ timeout: 30000 });
       await canvas.scrollIntoViewIfNeeded();
       await expect.poll(() => page.evaluate(() => window.__mascotDraws)).toBeGreaterThan(0);
@@ -169,7 +173,7 @@ test('a model taking over seven seconds still loads successfully', async ({ page
     await route.continue();
   });
   await page.goto('/');
-  const canvas = page.locator('canvas').first();
+  const canvas = mascotCanvas(page);
   await canvas.scrollIntoViewIfNeeded();
   await expect.poll(() => page.evaluate(() => window.__mascotDraws), { timeout: 30000 }).toBeGreaterThan(0);
   await expect(canvas).toBeVisible();
@@ -233,7 +237,7 @@ test('reduced-motion preference keeps the 3D model available in its low-motion m
   await trackRendering(page);
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
-  const canvas = page.locator('canvas').first();
+  const canvas = mascotCanvas(page);
   await expect(canvas).toBeVisible({ timeout: 30000 });
   await canvas.scrollIntoViewIfNeeded();
   await expect.poll(() => page.evaluate(() => window.__mascotDraws), { timeout: 15000 }).toBeGreaterThan(0);
@@ -253,11 +257,19 @@ for (const mode of ['no-webgl', 'model-failure', 'context-loss']) {
     }
     if (mode === 'reduced-motion') await page.emulateMedia({ reducedMotion: 'reduce' });
     if (mode === 'model-failure') await page.route('**/models/*.glb*', route => route.abort());
+    if (mode === 'context-loss') await trackRendering(page);
     await page.goto('/');
     if (mode === 'context-loss') {
-      const canvas = page.locator('canvas').first();
+      const canvas = mascotCanvas(page);
       await expect(canvas).toBeVisible();
-      await canvas.evaluate(element => element.dispatchEvent(new Event('webglcontextlost', { cancelable: true })));
+      await expect.poll(() => page.evaluate(() => window.__mascotDraws)).toBeGreaterThan(0);
+      const handled = await canvas.evaluate(element => {
+        const event = new Event('webglcontextlost', { cancelable: true });
+        element.dispatchEvent(event);
+        return event.defaultPrevented;
+      });
+      expect(handled).toBe(true);
+      await expect(page.locator('[data-mascot-state="recovering"]')).toBeVisible();
     }
     const preview = page.getByRole('button', { name: 'Interact with Dialtact' }).first();
     await expect(preview).toBeVisible({ timeout: 30000 });

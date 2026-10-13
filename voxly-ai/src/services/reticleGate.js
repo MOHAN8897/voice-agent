@@ -1,32 +1,28 @@
-/**
- * Reticle DevTools Gatekeeper.
- *
- * Restricts Reticle connection exclusively to the designated test account:
- * mohansaiteja.99@gmail.com
- *
- * For all other public users and tenants, Reticle is completely dormant:
- * no websocket connections to localhost:4400, no dev tooling in the console,
- * and zero DOM/network side-effects.
- */
-
-const TEST_ACCOUNT_EMAILS = new Set([
-  'mohansaiteja.99@gmail.com',
-  'mohanssaiteja.99@gmail.com',
-]);
+/** Reticle is available only to authenticated developers on a local Vite server. */
 
 let isReticleConnected = false;
 
-export function isReticleTestUser(user) {
-  if (!user || !user.email) return false;
-  const email = String(user.email).trim().toLowerCase();
-  return TEST_ACCOUNT_EMAILS.has(email);
+export function isLocalReticleHost(hostname) {
+  const host = String(hostname || '').trim().toLowerCase().replace(/^\[|\]$/g, '');
+  return host === 'localhost' || host === '127.0.0.1' || host === '::1' || host.endsWith('.localhost');
+}
+
+export function isReticleAllowed({ isDevelopment, hostname, authenticated }) {
+  return Boolean(isDevelopment && authenticated && isLocalReticleHost(hostname));
 }
 
 export async function syncReticleWithUser(user) {
-  const allowed = isReticleTestUser(user);
+  // Keep this as a direct build-time guard so Vite can remove the SDK import
+  // and its client chunk from production bundles entirely.
+  if (!import.meta.env.DEV) return;
 
-  if (!allowed) {
-    // If not the authorized test account, do not connect Reticle
+  if (
+    !isReticleAllowed({
+      isDevelopment: true,
+      hostname: typeof window === 'undefined' ? '' : window.location.hostname,
+      authenticated: Boolean(user),
+    })
+  ) {
     return;
   }
 
@@ -35,7 +31,6 @@ export async function syncReticleWithUser(user) {
   }
 
   try {
-    // Dynamically connect Reticle only for the authorized test account
     const { reticle, install } = await import('@reticlehq/react');
     if (typeof install === 'function') {
       try {
@@ -45,9 +40,9 @@ export async function syncReticleWithUser(user) {
       }
     }
     if (reticle && typeof reticle.connect === 'function') {
-      reticle.connect({ allowNonLocalhost: true });
+      reticle.connect();
       isReticleConnected = true;
-      console.info('[Reticle] Connected for test account:', user?.email);
+      console.info('[Reticle] Connected for local development');
       // Load capabilities
       try {
         await import('../reticle-dev');
@@ -56,7 +51,7 @@ export async function syncReticleWithUser(user) {
       }
     }
   } catch (err) {
-    // In production builds or offline, fail gracefully without throwing
-    console.debug('[Reticle] Dev kit load bypassed:', err?.message || err);
+    // The local app must remain usable when the developer bridge is unavailable.
+    console.debug('[Reticle] Local development bridge unavailable');
   }
 }

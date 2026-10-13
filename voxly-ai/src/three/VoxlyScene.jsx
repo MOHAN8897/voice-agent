@@ -138,7 +138,7 @@ export function VoxlyScene({
           alt="Dialtact AI call assistant"
           width="320"
           height="320"
-          loading="lazy"
+          loading="eager"
           decoding="async"
           className="max-h-[240px] sm:max-h-[320px] object-contain drop-shadow-xl"
         />
@@ -164,7 +164,9 @@ export function VoxlyScene({
           }}
           dpr={lightweight ? 1 : [1, 1.5]}
           gl={{
-            antialias: true,
+            // The model already renders at DPR 1 on touch/low-pointer devices;
+            // disabling multisample AA there avoids extra GPU memory and fill cost.
+            antialias: !lightweight,
             alpha: true,
             powerPreference: 'default',
             failIfMajorPerformanceCaveat: false,

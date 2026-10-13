@@ -1,128 +1,78 @@
 import { test, expect } from '@playwright/test';
-import fs from 'fs';
-import path from 'path';
 
-test.describe('SEO & Search Indexing Requirements Verification', () => {
-  test.beforeEach(async ({ page }) => {
+test.describe('SEO and search indexing', () => {
+  test('landing page exposes consistent, factual metadata', async ({ page }) => {
     await page.goto('/');
-  });
+    await expect(page).toHaveTitle('Dialtact — AI Voice Agents for Customer Calls');
 
-  test('page has proper title, meta description, and canonical tags', async ({ page }) => {
-    // 1. Title tag
-    await expect(page).toHaveTitle(/Voxly — The AI Employee for Every Conversation/i);
+    const description = await page.locator('meta[name="description"]').getAttribute('content');
+    expect(description).toContain('AI voice agents');
+    expect(description.length).toBeGreaterThan(50);
+    expect(await page.locator('meta[name="keywords"]').count()).toBe(0);
+    expect(await page.locator('link[rel="canonical"]').getAttribute('href')).toBe('https://www.dialtact.com/');
+    expect(await page.locator('meta[name="robots"]').getAttribute('content')).toContain('index');
 
-    // 2. Meta description
-    const desc = await page.locator('meta[name="description"]').getAttribute('content');
-    expect(desc).toBeTruthy();
-    expect(desc.length).toBeGreaterThan(50);
-    expect(desc.toLowerCase()).toContain('ai voice');
-
-    // 3. Keywords
-    const keywords = await page.locator('meta[name="keywords"]').getAttribute('content');
-    expect(keywords).toBeTruthy();
-    expect(keywords).toContain('voice');
-
-    // 4. Canonical URL
-    const canonical = await page.locator('link[rel="canonical"]').getAttribute('href');
-    expect(canonical).toBe('https://voxly.ai/');
-
-    // 5. Robots directives
-    const robots = await page.locator('meta[name="robots"]').getAttribute('content');
-    expect(robots).toContain('index');
-    expect(robots).toContain('follow');
-
-    const googlebot = await page.locator('meta[name="googlebot"]').getAttribute('content');
-    expect(googlebot).toContain('index');
-  });
-
-  test('page satisfies single H1 requirement and semantic heading hierarchy', async ({ page }) => {
-    const h1Elements = page.locator('h1');
-    const h1Count = await h1Elements.count();
-    expect(h1Count).toBe(1);
-
-    const h1Text = await h1Elements.first().textContent();
-    expect(h1Text).toMatch(/your ai employee/i);
-
-    // Verify main tag exists
-    const mainCount = await page.locator('main').count();
-    expect(mainCount).toBe(1);
-  });
-
-  test('OpenGraph and Twitter card metadata are properly configured', async ({ page }) => {
     expect(await page.locator('meta[property="og:type"]').getAttribute('content')).toBe('website');
-    expect(await page.locator('meta[property="og:url"]').getAttribute('content')).toBe('https://voxly.ai/');
-    expect(await page.locator('meta[property="og:site_name"]').getAttribute('content')).toBe('Voxly AI');
-    expect(await page.locator('meta[property="og:locale"]').getAttribute('content')).toBe('en_US');
-    expect(await page.locator('meta[property="og:title"]').getAttribute('content')).toBeTruthy();
-    expect(await page.locator('meta[property="og:description"]').getAttribute('content')).toBeTruthy();
+    expect(await page.locator('meta[property="og:url"]').getAttribute('content')).toBe('https://www.dialtact.com/');
+    expect(await page.locator('meta[property="og:site_name"]').getAttribute('content')).toBe('Dialtact');
     expect(await page.locator('meta[property="og:image"]').getAttribute('content')).toContain('VoxlyBot_preview.png');
-
     expect(await page.locator('meta[name="twitter:card"]').getAttribute('content')).toBe('summary_large_image');
-    expect(await page.locator('meta[name="twitter:title"]').getAttribute('content')).toBeTruthy();
-    expect(await page.locator('meta[name="twitter:image"]').getAttribute('content')).toContain('VoxlyBot_preview.png');
   });
 
-  test('JSON-LD structured data contains Organization, WebSite, SoftwareApplication, Breadcrumbs, and FAQPage', async ({ page }) => {
-    const jsonLdScript = await page.locator('script[type="application/ld+json"]').textContent();
-    expect(jsonLdScript).toBeTruthy();
-
-    const parsed = JSON.parse(jsonLdScript);
-    expect(parsed['@context']).toBe('https://schema.org');
-    expect(Array.isArray(parsed['@graph'])).toBeTruthy();
-
-    const types = parsed['@graph'].map(item => item['@type']);
-    expect(types).toContain('Organization');
-    expect(types).toContain('WebSite');
-    expect(types).toContain('SoftwareApplication');
-    expect(types).toContain('BreadcrumbList');
-    expect(types).toContain('FAQPage');
-
-    // Verify FAQ schema matches page FAQ
-    const faqNode = parsed['@graph'].find(item => item['@type'] === 'FAQPage');
-    expect(faqNode.mainEntity.length).toBeGreaterThanOrEqual(5);
-    expect(faqNode.mainEntity[0].name).toContain('Voxly');
-  });
-
-  test('robots.txt and sitemap.xml files are accessible and valid', async ({ request }) => {
-    // 1. Robots.txt
-    const robotsRes = await request.get('/robots.txt');
-    expect(robotsRes.status()).toBe(200);
-    const robotsText = await robotsRes.text();
-    expect(robotsText).toContain('User-agent: *');
-    expect(robotsText).toContain('Allow: /');
-    expect(robotsText).toContain('Disallow: /api/');
-    expect(robotsText).toContain('Sitemap: https://voxly.ai/sitemap.xml');
-
-    // 2. Sitemap.xml
-    const sitemapRes = await request.get('/sitemap.xml');
-    expect(sitemapRes.status()).toBe(200);
-    const sitemapText = await sitemapRes.text();
-    expect(sitemapText).toContain('<loc>https://voxly.ai/</loc>');
-    expect(sitemapText).toContain('<changefreq>');
-    expect(sitemapText).toContain('<priority>');
-  });
-
-  test('dynamic document.title updates when entering dashboard tabs and resets on landing', async ({ page }) => {
-    await page.goto('/#dashboard/overview');
-    await page.waitForTimeout(300);
-    expect(await page.title()).toBe('Workspace Overview — Voxly Console');
-
-    // Check noindex tag added on dashboard
-    const robotsConsole = await page.locator('meta[name="robots"][data-voxly-console]').getAttribute('content');
-    expect(robotsConsole).toBe('noindex, nofollow');
-
-    // Navigate to integrations tab
-    await page.goto('/#dashboard/integrations');
-    await page.waitForTimeout(300);
-    expect(await page.title()).toBe('Tool Integrations (177+ Tools) — Voxly Console');
-
-    // Return to landing page
+  test('structured data contains only supported, substantiated entities', async ({ page }) => {
     await page.goto('/');
-    await page.waitForTimeout(300);
-    expect(await page.title()).toBe('Voxly — The AI Employee for Every Conversation');
+    const script = await page.locator('script[type="application/ld+json"]').textContent();
+    const parsed = JSON.parse(script);
+    expect(parsed['@context']).toBe('https://schema.org');
+    const graph = parsed['@graph'];
+    expect(graph.map((item) => item['@type'])).toEqual(['Organization', 'WebSite', 'SoftwareApplication']);
+    expect(graph.every((item) => item.url === 'https://www.dialtact.com/')).toBe(true);
+    expect(JSON.stringify(graph)).not.toMatch(/AggregateRating|ratingCount|priceValidUntil/);
+  });
 
-    // Check noindex tag removed
-    const noindexExists = await page.locator('meta[name="robots"][data-voxly-console]').count();
-    expect(noindexExists).toBe(0);
+  test('page views update their title and description while keeping the single-page canonical', async ({ page }) => {
+    const routes = [
+      ['support', 'Customer Support & Contact — Dialtact', 'Contact Dialtact'],
+      ['company', 'About Dialtact — AI Voice Agent Platform', 'Learn about Dialtact'],
+      ['privacy', 'Privacy Policy — Dialtact', 'Read how Dialtact handles'],
+      ['terms', 'Terms of Service — Dialtact', 'Review the terms'],
+      ['security', 'Security — Dialtact', 'Learn about Dialtact security'],
+    ];
+    for (const [route, title, description] of routes) {
+      await page.goto(`/#${route}`);
+      await expect(page).toHaveTitle(title);
+      await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', new RegExp(description));
+      await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://www.dialtact.com/');
+    }
+  });
+
+  test('robots and sitemap point to the canonical public domain', async ({ request }) => {
+    const robotsResponse = await request.get('/robots.txt');
+    expect(robotsResponse.status()).toBe(200);
+    const robots = await robotsResponse.text();
+    expect(robots).toContain('User-agent: *');
+    expect(robots).toContain('Disallow: /api/');
+    expect(robots).toContain('Sitemap: https://www.dialtact.com/sitemap.xml');
+    expect(robots).not.toContain('voxly.ai');
+
+    const sitemapResponse = await request.get('/sitemap.xml');
+    expect(sitemapResponse.status()).toBe(200);
+    const sitemap = await sitemapResponse.text();
+    expect(sitemap).toContain('<loc>https://www.dialtact.com/</loc>');
+    expect(sitemap).not.toContain('voxly.ai');
+    expect(sitemap).not.toContain('<changefreq>');
+  });
+
+  test('dashboard views remain noindex and landing removes the private-view directive', async ({ page }) => {
+    await page.goto('/#dashboard/overview');
+    await expect(page).toHaveTitle('Workspace Overview — Dialtact Console');
+    await expect(page.locator('meta[name="robots"][data-voxly-console]')).toHaveAttribute('content', 'noindex, nofollow');
+
+    await page.goto('/#dashboard/integrations');
+    await expect(page).toHaveTitle('Integrations — Dialtact Console');
+
+    await page.goto('/');
+    await expect(page).toHaveTitle('Dialtact — AI Voice Agents for Customer Calls');
+    await expect(page.locator('meta[name="robots"][data-voxly-console]')).toHaveCount(0);
   });
 });

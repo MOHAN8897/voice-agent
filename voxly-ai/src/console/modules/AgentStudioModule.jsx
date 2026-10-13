@@ -36,6 +36,10 @@ import {
 import {
   OBJECTION_PRESETS,
   SAMPLE_LEADS,
+  filterScriptVariables,
+  findScriptVariableTrigger,
+  getScriptVariableGroups,
+  replaceScriptVariableTrigger,
   renderScriptPreview,
 } from '../../lib/studioScriptHelpers';
 import { formatPhoneVoiceLabel, groupVoicesByTier } from '../../lib/voiceDisplay';
@@ -307,9 +311,18 @@ export function AgentStudioModule({
   const [brainLoading, setBrainLoading] = useState(false);
   const [variablePickerOpen, setVariablePickerOpen] = useState(false);
   const [useFallbackSyntax, setUseFallbackSyntax] = useState(true);
+  const [variableSuggestionTrigger, setVariableSuggestionTrigger] = useState(null);
+  const [selectedVariableSuggestion, setSelectedVariableSuggestion] = useState(0);
   const [scriptPreviewMode, setScriptPreviewMode] = useState(false);
   const [sampleLeadIdx, setSampleLeadIdx] = useState(0);
   const scriptTextareaRef = useRef(null);
+  const scriptVariableGroups = useMemo(() => getScriptVariableGroups(useFallbackSyntax), [useFallbackSyntax]);
+  const variableSuggestions = useMemo(
+    () => variableSuggestionTrigger
+      ? filterScriptVariables(scriptVariableGroups, variableSuggestionTrigger.query)
+      : [],
+    [scriptVariableGroups, variableSuggestionTrigger],
+  );
 
   const [formData, setFormData] = useState(() => formFromAgent(selectedAgent));
 
@@ -319,6 +332,7 @@ export function AgentStudioModule({
   const settingsDiscardRef = useRef(null);
 
   const insertVariable = (token) => {
+    setVariableSuggestionTrigger(null);
     const el = scriptTextareaRef.current;
     if (el) {
       const start = el.selectionStart ?? el.value.length;
@@ -339,6 +353,48 @@ export function AgentStudioModule({
         handleScriptChange(next);
         return { ...prev, script: next };
       });
+    }
+  };
+
+  const updateVariableSuggestion = (element) => {
+    if (!element) return;
+    const trigger = findScriptVariableTrigger(element.value, element.selectionStart);
+    setVariableSuggestionTrigger(trigger);
+    setSelectedVariableSuggestion(0);
+  };
+
+  const selectVariableSuggestion = (variable) => {
+    const element = scriptTextareaRef.current;
+    const trigger = variableSuggestionTrigger;
+    if (!element || !trigger || !variable) return;
+    const next = replaceScriptVariableTrigger(element.value, trigger, variable);
+    handleScriptChange(next.text);
+    setVariableSuggestionTrigger(null);
+    requestAnimationFrame(() => {
+      element.focus();
+      element.setSelectionRange(next.cursor, next.cursor);
+    });
+  };
+
+  const handleScriptEditorKeyDown = (event) => {
+    if (!variableSuggestionTrigger) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      setVariableSuggestionTrigger(null);
+      return;
+    }
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      if (!variableSuggestions.length) return;
+      event.preventDefault();
+      const direction = event.key === 'ArrowDown' ? 1 : -1;
+      setSelectedVariableSuggestion((index) =>
+        (index + direction + variableSuggestions.length) % variableSuggestions.length,
+      );
+      return;
+    }
+    if ((event.key === 'Enter' || event.key === 'Tab') && variableSuggestions.length) {
+      event.preventDefault();
+      selectVariableSuggestion(variableSuggestions[selectedVariableSuggestion]);
     }
   };
 
@@ -1007,101 +1063,36 @@ export function AgentStudioModule({
                           />
                         </label>
 
-                        {/* Contact Personalization */}
-                        <div>
-                          <span className="text-[10px] font-bold uppercase text-[#8C879A] px-1 block mb-1">
-                            Contact Personalization
-                          </span>
-                          <div className="space-y-0.5 max-h-40 overflow-y-auto pr-1">
-                            {[
-                              { label: 'First Name', token: useFallbackSyntax ? '{{contact.first_name | there}}' : '{{contact.first_name}}' },
-                              { label: 'Last Name', token: '{{contact.last_name}}' },
-                              { label: 'Full Name', token: useFallbackSyntax ? '{{contact.full_name | customer}}' : '{{contact.full_name}}' },
-                              { label: 'Company', token: useFallbackSyntax ? '{{contact.company | your company}}' : '{{contact.company}}' },
-                              { label: 'City', token: useFallbackSyntax ? '{{contact.city | your area}}' : '{{contact.city}}' },
-                              { label: 'State', token: '{{contact.state}}' },
-                              { label: 'Country', token: '{{contact.country}}' },
-                              { label: 'Phone', token: '{{contact.phone}}' },
-                              { label: 'Email', token: '{{contact.email}}' },
-                              { label: 'Notes', token: '{{contact.notes}}' },
-                            ].map((v) => (
-                              <button
-                                key={v.token + v.label}
-                                type="button"
-                                onClick={() => {
-                                  insertVariable(v.token);
-                                  setVariablePickerOpen(false);
-                                }}
-                                className="w-full text-left px-2 py-1 rounded hover:bg-[#FAF9FD] flex items-center justify-between text-[#0F0E17] group"
-                                data-testid={`insert-token-${v.label.toLowerCase().replace(/\s+/g, '-')}`}
-                              >
-                                <span className="text-[11px]">{v.label}</span>
-                                <span className="text-[9px] font-mono text-[#6344E7] group-hover:underline truncate max-w-[140px] text-right">
-                                  {v.token}
-                                </span>
-                              </button>
-                            ))}
+                        {scriptVariableGroups.map((group, groupIndex) => (
+                          <div key={group.id} className={groupIndex > 0 ? 'border-t border-[#E4E2EB] pt-1.5' : ''}>
+                            <span className="text-[10px] font-bold uppercase text-[#8C879A] px-1 block mb-1">
+                              {group.title}
+                            </span>
+                            <div className="space-y-0.5 max-h-40 overflow-y-auto pr-1">
+                              {group.variables.map((variable) => {
+                                const slug = variable.label.toLowerCase().replace(/\s+/g, '-');
+                                const testId = group.id === 'system' ? `insert-token-system-${slug}` : `insert-token-${slug}`;
+                                return (
+                                  <button
+                                    key={variable.key}
+                                    type="button"
+                                    onClick={() => {
+                                      insertVariable(variable.token);
+                                      setVariablePickerOpen(false);
+                                    }}
+                                    className="w-full text-left px-2 py-1 rounded hover:bg-[#FAF9FD] flex items-center justify-between text-[#0F0E17] group"
+                                    data-testid={testId}
+                                  >
+                                    <span className="text-[11px]">{variable.label}</span>
+                                    <span className="text-[9px] font-mono text-[#6344E7] group-hover:underline truncate max-w-[140px] text-right">
+                                      {variable.token}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
                           </div>
-                        </div>
-
-                        {/* Dynamic Time & System Context */}
-                        <div className="border-t border-[#E4E2EB] pt-1.5">
-                          <span className="text-[10px] font-bold uppercase text-[#8C879A] px-1 block mb-1">
-                            Dynamic Time & System Context
-                          </span>
-                          <div className="space-y-0.5">
-                            {[
-                              { label: 'Time of Day', token: '{{system.time_of_day}}' },
-                              { label: 'Day of Week', token: '{{system.day_of_week}}' },
-                              { label: 'Current Date', token: '{{system.date}}' },
-                            ].map((v) => (
-                              <button
-                                key={v.token}
-                                type="button"
-                                onClick={() => {
-                                  insertVariable(v.token);
-                                  setVariablePickerOpen(false);
-                                }}
-                                className="w-full text-left px-2 py-1 rounded hover:bg-[#FAF9FD] flex items-center justify-between text-[#0F0E17] group"
-                                data-testid={`insert-token-system-${v.label.toLowerCase().replace(/\s+/g, '-')}`}
-                              >
-                                <span className="text-[11px]">{v.label}</span>
-                                <span className="text-[9px] font-mono text-[#6344E7] group-hover:underline">{v.token}</span>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Custom Fields */}
-                        <div className="border-t border-[#E4E2EB] pt-1.5">
-                          <span className="text-[10px] font-bold uppercase text-[#8C879A] px-1 block mb-1">
-                            Custom Fields
-                          </span>
-                          <div className="space-y-0.5">
-                            {[
-                              { label: 'Product', token: useFallbackSyntax ? '{{contact.custom_fields.product | our service}}' : '{{contact.custom_fields.product}}' },
-                              { label: 'Appointment Date', token: useFallbackSyntax ? '{{contact.custom_fields.appointment_date | scheduled time}}' : '{{contact.custom_fields.appointment_date}}' },
-                              { label: 'Balance', token: '{{contact.custom_fields.balance}}' },
-                              { label: 'Lead Type', token: useFallbackSyntax ? '{{contact.custom_fields.lead_type | general}}' : '{{contact.custom_fields.lead_type}}' },
-                            ].map((v) => (
-                              <button
-                                key={v.token + v.label}
-                                type="button"
-                                onClick={() => {
-                                  insertVariable(v.token);
-                                  setVariablePickerOpen(false);
-                                }}
-                                className="w-full text-left px-2 py-1 rounded hover:bg-[#FAF9FD] flex items-center justify-between text-[#0F0E17] group"
-                                data-testid={`insert-token-${v.label.toLowerCase().replace(/\s+/g, '-')}`}
-                              >
-                                <span className="text-[11px]">{v.label}</span>
-                                <span className="text-[9px] font-mono text-[#6344E7] group-hover:underline truncate max-w-[130px] text-right">
-                                  {v.token}
-                                </span>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
+                        ))}
                       </div>
                     )}
                   </div>
@@ -1163,14 +1154,70 @@ export function AgentStudioModule({
                 </div>
               </div>
             ) : (
-              <textarea
-                ref={scriptTextareaRef}
-                rows={10}
-                value={formData.script}
-                onChange={(e) => handleScriptChange(e.target.value)}
-                className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl p-4 text-xs text-[#0F0E17] font-mono leading-relaxed focus:outline-none focus:border-[#6344E7] transition-colors"
-                data-testid="script-textarea"
-              />
+              <div className="relative">
+                <textarea
+                  ref={scriptTextareaRef}
+                  rows={10}
+                  value={formData.script}
+                  onChange={(event) => {
+                    handleScriptChange(event.target.value);
+                    updateVariableSuggestion(event.target);
+                  }}
+                  onClick={(event) => updateVariableSuggestion(event.currentTarget)}
+                  onKeyUp={(event) => {
+                    if (!['ArrowDown', 'ArrowUp', 'Enter', 'Tab', 'Escape'].includes(event.key)) {
+                      updateVariableSuggestion(event.currentTarget);
+                    }
+                  }}
+                  onKeyDown={handleScriptEditorKeyDown}
+                  role="combobox"
+                  aria-label="Calling script"
+                  aria-autocomplete="list"
+                  aria-expanded={variableSuggestionTrigger !== null}
+                  aria-controls="script-variable-suggestions"
+                  aria-activedescendant={variableSuggestions.length
+                    ? `script-variable-option-${selectedVariableSuggestion}`
+                    : undefined}
+                  className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl p-4 text-xs text-[#0F0E17] font-mono leading-relaxed focus:outline-none focus:border-[#6344E7] transition-colors"
+                  data-testid="script-textarea"
+                />
+                {variableSuggestionTrigger && (
+                  <div
+                    id="script-variable-suggestions"
+                    role="listbox"
+                    aria-label="Available script variables"
+                    className="absolute left-0 right-0 top-full z-40 mt-1 max-h-56 overflow-y-auto rounded-xl border border-[#E4E2EB] bg-white p-2 shadow-xl"
+                    data-testid="script-variable-suggestions"
+                  >
+                    <p className="px-2 py-1 text-[10px] text-[#8C879A]">
+                      Insert a variable · use ↑/↓ and Enter
+                    </p>
+                    {variableSuggestions.length ? variableSuggestions.map((variable, index) => (
+                      <button
+                        key={variable.key}
+                        id={`script-variable-option-${index}`}
+                        type="button"
+                        role="option"
+                        aria-selected={selectedVariableSuggestion === index}
+                        onMouseDown={(event) => event.preventDefault()}
+                        onMouseEnter={() => setSelectedVariableSuggestion(index)}
+                        onClick={() => selectVariableSuggestion(variable)}
+                        className={`flex w-full items-center justify-between gap-3 rounded-lg px-2.5 py-2 text-left ${
+                          selectedVariableSuggestion === index ? 'bg-[#F5F3FF]' : 'hover:bg-[#FAF9FD]'
+                        }`}
+                      >
+                        <span className="min-w-0">
+                          <span className="block text-[11px] font-semibold text-[#0F0E17]">{variable.label}</span>
+                          <span className="block text-[9px] text-[#8C879A]">{variable.groupTitle}</span>
+                        </span>
+                        <span className="shrink-0 truncate font-mono text-[10px] text-[#6344E7]">{variable.token}</span>
+                      </button>
+                    )) : (
+                      <p className="px-2.5 py-2 text-[11px] text-[#524E5E]">No matching variables.</p>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
 
             {/* Only show what is real. Token counts and latency are internal

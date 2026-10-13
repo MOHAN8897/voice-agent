@@ -17,7 +17,7 @@ import {
   clearStoredActivity,
 } from '../services/sessionIdle';
 import { IdleWarningModal } from '../components/IdleWarningModal';
-import { loadGoogleIdentityScript } from '../utils/loadGoogleIdentity';
+import { initializeGoogleIdentityOnce, loadGoogleIdentityScript } from '../utils/loadGoogleIdentity';
 import { syncReticleWithUser } from '../services/reticleGate';
 
 const AuthContext = createContext(null);
@@ -89,6 +89,7 @@ export function AuthProvider({ children }) {
   const [idleWarning, setIdleWarning] = useState(null);
   const [signOutReason, setSignOutReason] = useState('');
   const idleRef = useRef(null);
+  const googleLoginInFlightRef = useRef(null);
 
   useEffect(() => {
     syncReticleWithUser(user);
@@ -313,24 +314,25 @@ export function AuthProvider({ children }) {
   }, []);
 
   const loginWithGoogle = async () => {
-    let clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
-    try {
-      const cfg = await api.auth.googleConfig();
-      if (!cfg?.enabled) {
-        throw new Error('Google sign-in is not available. Please try email sign-in or contact support.');
+    if (googleLoginInFlightRef.current) return googleLoginInFlightRef.current;
+
+    const attempt = (async () => {
+      let clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+      try {
+        const cfg = await api.auth.googleConfig();
+        if (!cfg?.enabled) {
+          throw new Error('Google sign-in is not available. Please try email sign-in or contact support.');
+        }
+        if (!clientId && cfg.clientId) clientId = cfg.clientId;
+      } catch (e) {
+        if (!clientId) throw e;
       }
-      if (!clientId && cfg.clientId) clientId = cfg.clientId;
-    } catch (e) {
-      if (!clientId) throw e;
-    }
 
-    await loadGoogleIdentityScript();
+      await loadGoogleIdentityScript();
 
-    if (clientId && window.google?.accounts?.id) {
-      return new Promise((resolve, reject) => {
-        window.google.accounts.id.initialize({
-          client_id: clientId,
-          callback: async (response) => {
+      if (clientId && window.google?.accounts?.id) {
+        return new Promise((resolve, reject) => {
+          const initialized = initializeGoogleIdentityOnce(clientId, async (response) => {
             try {
               const data = await api.auth.googleLogin(response.credential);
               const normalized = normalizeUser(data);
@@ -341,19 +343,31 @@ export function AuthProvider({ children }) {
             } catch (err) {
               reject(err);
             }
-          },
-        });
-        window.google.accounts.id.prompt((notification) => {
-          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          });
+          if (!initialized) {
             api.auth.googleRedirectLogin();
             resolve(null);
+            return;
           }
+          window.google.accounts.id.prompt((notification) => {
+            if (notification?.isNotDisplayed?.() || notification?.isSkippedMoment?.()) {
+              api.auth.googleRedirectLogin();
+              resolve(null);
+            }
+          });
         });
-      });
-    }
+      }
 
-    api.auth.googleRedirectLogin();
-    return null;
+      api.auth.googleRedirectLogin();
+      return null;
+    })();
+
+    googleLoginInFlightRef.current = attempt;
+    try {
+      return await attempt;
+    } finally {
+      if (googleLoginInFlightRef.current === attempt) googleLoginInFlightRef.current = null;
+    }
   };
 
   const loginWithGithub = async () => {

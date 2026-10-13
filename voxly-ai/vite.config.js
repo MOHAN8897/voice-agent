@@ -114,6 +114,10 @@ function devNoCachePlugin() {
         res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
         res.setHeader('Pragma', 'no-cache');
         res.setHeader('Expires', '0');
+        res.setHeader(
+          'Permissions-Policy',
+          'camera=(), microphone=(self), geolocation=(), accelerometer=(), gyroscope=(), magnetometer=(), usb=(), serial=(), bluetooth=(), hid=(), midi=(), xr-spatial-tracking=()',
+        );
         next();
       });
     },
@@ -131,7 +135,7 @@ export default defineConfig({
       ? [
           reticle({
             sourceMapping: false,
-            allowNonLocalhost: true,
+            allowNonLocalhost: false,
             inject: false,
           }),
         ]

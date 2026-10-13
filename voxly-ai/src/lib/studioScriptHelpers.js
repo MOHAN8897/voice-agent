@@ -3,6 +3,90 @@
  * dynamic system tokens, sample leads catalog, and objection presets.
  */
 
+const SCRIPT_VARIABLE_GROUPS = [
+  {
+    id: 'contact',
+    title: 'Contact Personalization',
+    variables: [
+      { label: 'First Name', key: 'contact.first_name', token: '{{contact.first_name}}', fallbackToken: '{{contact.first_name | there}}' },
+      { label: 'Last Name', key: 'contact.last_name', token: '{{contact.last_name}}' },
+      { label: 'Full Name', key: 'contact.full_name', token: '{{contact.full_name}}', fallbackToken: '{{contact.full_name | customer}}' },
+      { label: 'Company', key: 'contact.company', token: '{{contact.company}}', fallbackToken: '{{contact.company | your company}}' },
+      { label: 'Job Title', key: 'contact.job_title', token: '{{contact.job_title}}' },
+      { label: 'City', key: 'contact.city', token: '{{contact.city}}', fallbackToken: '{{contact.city | your area}}' },
+      { label: 'State', key: 'contact.state', token: '{{contact.state}}' },
+      { label: 'Country', key: 'contact.country', token: '{{contact.country}}' },
+      { label: 'Phone', key: 'contact.phone', token: '{{contact.phone}}' },
+      { label: 'Email', key: 'contact.email', token: '{{contact.email}}' },
+      { label: 'Notes', key: 'contact.notes', token: '{{contact.notes}}' },
+    ],
+  },
+  {
+    id: 'system',
+    title: 'Dynamic Time & System Context',
+    variables: [
+      { label: 'Time of Day', key: 'system.time_of_day', token: '{{system.time_of_day}}' },
+      { label: 'Day of Week', key: 'system.day_of_week', token: '{{system.day_of_week}}' },
+      { label: 'Current Date', key: 'system.date', token: '{{system.date}}' },
+    ],
+  },
+  {
+    id: 'custom',
+    title: 'Custom Fields',
+    variables: [
+      { label: 'Product', key: 'contact.custom_fields.product', token: '{{contact.custom_fields.product}}', fallbackToken: '{{contact.custom_fields.product | our service}}' },
+      { label: 'Appointment Date', key: 'contact.custom_fields.appointment_date', token: '{{contact.custom_fields.appointment_date}}', fallbackToken: '{{contact.custom_fields.appointment_date | scheduled time}}' },
+      { label: 'Balance', key: 'contact.custom_fields.balance', token: '{{contact.custom_fields.balance}}' },
+      { label: 'Lead Type', key: 'contact.custom_fields.lead_type', token: '{{contact.custom_fields.lead_type}}', fallbackToken: '{{contact.custom_fields.lead_type | general}}' },
+    ],
+  },
+];
+
+export function getScriptVariableGroups(useFallbackSyntax = true) {
+  return SCRIPT_VARIABLE_GROUPS.map((group) => ({
+    ...group,
+    variables: group.variables.map((variable) => ({
+      ...variable,
+      token: useFallbackSyntax && variable.fallbackToken ? variable.fallbackToken : variable.token,
+    })),
+  }));
+}
+
+export function findScriptVariableTrigger(value, cursor) {
+  const text = String(value || '');
+  const position = Math.max(0, Math.min(Number(cursor) || 0, text.length));
+  const beforeCursor = text.slice(0, position);
+  const atIndex = beforeCursor.lastIndexOf('@');
+  if (atIndex < 0) return null;
+
+  const previous = atIndex > 0 ? beforeCursor[atIndex - 1] : '';
+  const query = beforeCursor.slice(atIndex + 1);
+  if ((previous && !/[\s([{"'`]/.test(previous)) || !/^[a-zA-Z0-9_.-]*$/.test(query)) return null;
+
+  return { start: atIndex, end: position, query };
+}
+
+export function filterScriptVariables(groups, query = '') {
+  const needle = String(query).trim().toLowerCase();
+  return (groups || []).flatMap((group) => (group.variables || []).map((variable) => ({
+    ...variable,
+    groupTitle: group.title,
+  }))).filter((variable) => !needle ||
+    variable.label.toLowerCase().includes(needle) ||
+    variable.key.toLowerCase().includes(needle) ||
+    variable.token.toLowerCase().includes(needle));
+}
+
+export function replaceScriptVariableTrigger(text, trigger, variable) {
+  const current = String(text || '');
+  const start = Math.max(0, Math.min(trigger?.start ?? current.length, current.length));
+  const end = Math.max(start, Math.min(trigger?.end ?? start, current.length));
+  const token = String(variable?.token || '');
+  const nextText = current.slice(0, start) + token + current.slice(end);
+  const cursor = start + token.length;
+  return { text: nextText, cursor };
+}
+
 export const OBJECTION_PRESETS = [
   {
     id: 'price',

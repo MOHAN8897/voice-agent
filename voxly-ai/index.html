@@ -1,198 +1,72 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" class="scroll-smooth">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230F0E17'/%3E%3Cpath d='M9 16c0-3.866 3.134-7 7-7s7 3.134 7 7-3.134 7-7 7' stroke='%236344E7' stroke-width='2.5' stroke-linecap='round' fill='none'/%3E%3Ccircle cx='16' cy='16' r='3' fill='white'/%3E%3C/svg%3E" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
-    <title>Dialtact — The AI Employee for Every Conversation | Autonomous Voice AI</title>
-    <meta name="description" content="Deploy autonomous AI voice employees with Dialtact. Sub-500ms voice intelligence for inbound customer support, outbound sales qualification, and automated 24/7 telephony workflows." />
-    <meta name="keywords" content="Dialtact, Dialtact AI, AI voice employee, AI voice agent, autonomous voice bot, AI phone agent, inbound customer support AI, outbound sales AI, AI receptionist, telephony AI, sub-500ms voice, conversational AI, Telugu voice agent, India telephony AI, automated phone calls" />
+    <title>Dialtact — AI Voice Agents for Customer Calls</title>
+    <meta name="description" content="Create AI voice agents that answer customer calls, handle common requests, and guide callers to the next step for your business." />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
-    <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
-    <meta name="bingbot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
-    <meta name="author" content="Dialtact Inc." />
-    <meta name="publisher" content="Dialtact Inc." />
+    <meta name="theme-color" content="#0F0E17" />
     <meta name="application-name" content="Dialtact" />
     <meta name="apple-mobile-web-app-title" content="Dialtact" />
-    <meta name="theme-color" content="#0F0E17" />
-    <!-- Block sensors/camera on load so browsers never ask for vague “other apps”
-         access. Microphone is NOT requested here — getUserMedia runs only when the
-         user starts Live Mic / web-agent test (and is skipped if already granted). -->
-    <meta http-equiv="Permissions-Policy" content="camera=(), geolocation=(), accelerometer=(), gyroscope=(), magnetometer=(), interest-cohort=(), usb=(), serial=(), bluetooth=(), hid=(), midi=(), xr-spatial-tracking=()" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <link rel="canonical" href="https://dialtact.ai/" />
+    <link rel="canonical" href="https://www.dialtact.com/" />
 
-    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://dialtact.ai/" />
+    <meta property="og:url" content="https://www.dialtact.com/" />
     <meta property="og:site_name" content="Dialtact" />
     <meta property="og:locale" content="en_US" />
-    <meta property="og:title" content="Dialtact — The AI Employee for Every Conversation" />
-    <meta property="og:description" content="Autonomous AI voice employees for high-growth revenue, support, and dispatch teams. Sub-500ms voice latency, zero hold times." />
-    <meta property="og:image" content="https://dialtact.ai/images/VoxlyBot_preview.png" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Dialtact AI Autonomous Voice Employee" />
+    <meta property="og:title" content="Dialtact — AI Voice Agents for Customer Calls" />
+    <meta property="og:description" content="Create AI voice agents that answer customer calls, handle common requests, and guide callers to the next step for your business." />
+    <meta property="og:image" content="https://www.dialtact.com/images/VoxlyBot_preview.png" />
+    <meta property="og:image:alt" content="Dialtact AI voice assistant" />
 
-    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:url" content="https://dialtact.ai/" />
-    <meta name="twitter:site" content="@dialtactai" />
-    <meta name="twitter:creator" content="@dialtactai" />
-    <meta name="twitter:title" content="Dialtact — The AI Employee for Every Conversation" />
-    <meta name="twitter:description" content="Autonomous AI voice employees that handle inbound support, place outbound qualification calls, and book meetings 24/7." />
-    <meta name="twitter:image" content="https://dialtact.ai/images/VoxlyBot_preview.png" />
-    <meta name="twitter:image:alt" content="Dialtact AI Autonomous Voice Employee" />
+    <meta name="twitter:url" content="https://www.dialtact.com/" />
+    <meta name="twitter:title" content="Dialtact — AI Voice Agents for Customer Calls" />
+    <meta name="twitter:description" content="Create AI voice agents that answer customer calls and help callers reach the next step." />
+    <meta name="twitter:image" content="https://www.dialtact.com/images/VoxlyBot_preview.png" />
+    <meta name="twitter:image:alt" content="Dialtact AI voice assistant" />
 
-    <!-- Structured Data (JSON-LD): Organization, SoftwareApplication, WebSite, Breadcrumbs, FAQPage -->
     <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@graph": [
-        {
-          "@type": "Organization",
-          "@id": "https://dialtact.ai/#organization",
-          "name": "Dialtact Inc.",
-          "url": "https://dialtact.ai",
-          "logo": "https://dialtact.ai/images/VoxlyBot_preview.png",
-          "sameAs": ["https://twitter.com/dialtactai", "https://linkedin.com/company/dialtactai"]
-        },
-        {
-          "@type": "WebSite",
-          "@id": "https://dialtact.ai/#website",
-          "url": "https://dialtact.ai",
-          "name": "Dialtact — The AI Employee for Every Conversation",
-          "publisher": {
-            "@id": "https://dialtact.ai/#organization"
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://www.dialtact.com/#organization",
+            "name": "Dialtact",
+            "url": "https://www.dialtact.com/",
+            "logo": "https://www.dialtact.com/images/VoxlyBot_preview.png"
           },
-          "potentialAction": {
-            "@type": "SearchAction",
-            "target": "https://dialtact.ai/?q={search_term_string}",
-            "query-input": "required name=search_term_string"
+          {
+            "@type": "WebSite",
+            "@id": "https://www.dialtact.com/#website",
+            "url": "https://www.dialtact.com/",
+            "name": "Dialtact",
+            "publisher": { "@id": "https://www.dialtact.com/#organization" },
+            "inLanguage": "en"
+          },
+          {
+            "@type": "SoftwareApplication",
+            "@id": "https://www.dialtact.com/#application",
+            "name": "Dialtact Voice AI",
+            "applicationCategory": "BusinessApplication",
+            "operatingSystem": "Web",
+            "url": "https://www.dialtact.com/",
+            "description": "Configure AI voice agents to answer inbound calls, handle common requests, and place outbound calls."
           }
-        },
-        {
-          "@type": "SoftwareApplication",
-          "@id": "https://dialtact.ai/#application",
-          "name": "Dialtact Voice Employee Platform",
-          "applicationCategory": "BusinessApplication",
-          "operatingSystem": "Web, SIP, Telephony",
-          "offers": {
-            "@type": "Offer",
-            "price": "39.00",
-            "priceCurrency": "USD",
-            "priceValidUntil": "2027-12-31"
-          },
-          "aggregateRating": {
-            "@type": "AggregateRating",
-            "ratingValue": "4.9",
-            "ratingCount": "128",
-            "bestRating": "5",
-            "worstRating": "1"
-          },
-          "description": "Enterprise autonomous AI voice employee platform for inbound customer support, outbound revenue calls, and sub-500ms real-time conversational telephony."
-        },
-        {
-          "@type": "BreadcrumbList",
-          "@id": "https://dialtact.ai/#breadcrumbs",
-          "itemListElement": [
-            {
-              "@type": "ListItem",
-              "position": 1,
-              "name": "Home",
-              "item": "https://dialtact.ai/"
-            },
-            {
-              "@type": "ListItem",
-              "position": 2,
-              "name": "AI Capabilities",
-              "item": "https://dialtact.ai/#capabilities"
-            },
-            {
-              "@type": "ListItem",
-              "position": 3,
-              "name": "Industries",
-              "item": "https://dialtact.ai/#industries"
-            },
-            {
-              "@type": "ListItem",
-              "position": 4,
-              "name": "Pricing",
-              "item": "https://dialtact.ai/#pricing"
-            },
-            {
-              "@type": "ListItem",
-              "position": 5,
-              "name": "FAQ",
-              "item": "https://dialtact.ai/#faq"
-            }
-          ]
-        },
-        {
-          "@type": "FAQPage",
-          "@id": "https://dialtact.ai/#faq",
-          "mainEntity": [
-            {
-              "@type": "Question",
-              "name": "How does Dialtact sound so natural?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "The same neural voice model that answers your customer calls renders every word with natural turn-taking, so a caller can interrupt mid-sentence and be heard. You can hear it on this page — pick an industry above and press play."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "Do I need engineers to deploy this?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "No. You set the role, connect a website or upload documents, choose a voice, and attach a number. There is no code to write and no telephony hardware to install."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "Can it use our own phone numbers and CRM?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Yes. Claim a local or toll-free number in over a hundred countries, port a number you already own, or bring your own SIP trunk. Qualified calls and transcripts are written into your CRM."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "What happens when it does not know something?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "It says so and offers a callback rather than inventing an answer. Every reply is grounded in the material you gave it, and anything outside that is escalated to a person with the transcript attached."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "What does it cost?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "A monthly plan that includes call minutes, then a per-minute overage rate. Unanswered rings, busy signals and voicemail are free. See the pricing section for current rates."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "Is this compliant with calling rules?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Call recording and consent requirements vary by country. Compliance tooling is built in and Do-Not-Call scrubbing is available on the Professional plan and above; your counsel should confirm the obligations for the markets you call."
-              }
-            }
-          ]
-        }
-      ]
-    }
+        ]
+      }
     </script>
 
-    <!-- Typography & DNS Preconnect: Plus Jakarta Sans & Inter -->
-    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
-    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
   </head>
   <body class="bg-[#FAF9FD] text-[#0F0E17] font-sans antialiased selection:bg-[#F0EEF6] selection:text-[#6344E7] overflow-x-hidden">
     <div id="root"></div>

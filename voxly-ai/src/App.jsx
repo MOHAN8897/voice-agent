@@ -36,6 +36,7 @@ import { CompanyPage } from './pages/CompanyPage';
 import { PrivacyPage } from './pages/PrivacyPage';
 import { TermsPage } from './pages/TermsPage';
 import { SecurityPage } from './pages/SecurityPage';
+import { applyPageMetadata } from './lib/siteMetadata';
 
 function AppInner() {
   const { isAuthenticated, logout: authLogout, signOutReason, user } = useAuth();
@@ -126,31 +127,13 @@ function AppInner() {
       const hash = window.location.hash || '';
       if (hash.startsWith('#dashboard')) {
         const tabMatch = hash.match(/#dashboard\/([a-z0-9_-]+)/i);
-        const tab = tabMatch ? tabMatch[1] : '';
-        const titles = {
-          overview: 'Workspace Overview — Dialtact Console',
-          employees: 'AI Employees & Personas — Dialtact Console',
-          calls: 'Call Activity & Transcripts — Dialtact Console',
-          integrations: 'Tool Integrations (177+ Tools) — Dialtact Console',
-          telephony: 'Phone Numbers & SIP Trunks — Dialtact Console',
-          billing: 'Billing & Telephony Credits — Dialtact Console',
-          campaigns: 'Outbound Calling Campaigns — Dialtact Console',
-          compliance: 'Telephony Compliance & DNC Registry — Dialtact Console',
-        };
-        document.title = titles[tab] || 'Dashboard — Dialtact Console';
-      } else if (hash === '#contact' || hash === '#support') {
-        document.title = 'Customer Support Desk & Ticket Portal — Dialtact';
-      } else if (hash === '#company' || hash === '#about') {
-        document.title = 'About Dialtact & Enterprise Architecture — Dialtact';
-      } else if (hash === '#privacy') {
-        document.title = 'Privacy Policy — Dialtact';
-      } else if (hash === '#terms') {
-        document.title = 'Terms of Service — Dialtact';
-      } else if (hash === '#security') {
-        document.title = 'Security & Compliance Architecture — Dialtact';
-      } else {
-        document.title = 'Dialtact — The AI Employee for Every Conversation | Autonomous Voice AI';
-      }
+        applyPageMetadata('dashboard', tabMatch ? tabMatch[1] : '');
+      } else if (hash === '#contact' || hash === '#support') applyPageMetadata('support');
+      else if (hash === '#company' || hash === '#about') applyPageMetadata('company');
+      else if (hash === '#privacy') applyPageMetadata('privacy');
+      else if (hash === '#terms') applyPageMetadata('terms');
+      else if (hash === '#security') applyPageMetadata('security');
+      else applyPageMetadata('landing');
     };
 
     const handleHashChange = () => {
@@ -256,54 +239,8 @@ function AppInner() {
 
   useEffect(() => {
     const isConsole = currentView === 'dashboard';
-    let tag = document.querySelector('meta[name="robots"][data-voxly-console]');
-    let canonical = document.querySelector('link[rel="canonical"]');
-
-    if (isConsole) {
-      if (!tag) {
-        tag = document.createElement('meta');
-        tag.setAttribute('name', 'robots');
-        tag.setAttribute('data-voxly-console', '1');
-        tag.setAttribute('content', 'noindex, nofollow');
-        document.head.appendChild(tag);
-      }
-
-      // Update dynamic document title for dashboard tabs
-      const hash = window.location.hash || '';
-      const tabMatch = hash.match(/#dashboard\/([a-z0-9_-]+)/i);
-      const tab = tabMatch ? tabMatch[1] : '';
-      const titles = {
-        overview: 'Workspace Overview — Dialtact Console',
-        employees: 'AI Employees & Personas — Dialtact Console',
-        calls: 'Call Activity & Transcripts — Dialtact Console',
-        integrations: 'Tool Integrations (177+ Tools) — Dialtact Console',
-        telephony: 'Phone Numbers & SIP Trunks — Dialtact Console',
-        billing: 'Billing & Telephony Credits — Dialtact Console',
-        campaigns: 'Outbound Calling Campaigns — Dialtact Console',
-        compliance: 'Telephony Compliance & DNC Registry — Dialtact Console',
-      };
-      document.title = titles[tab] || 'Dashboard — Dialtact Console';
-    } else {
-      if (tag) {
-        tag.remove();
-      }
-      if (currentView === 'support') {
-        document.title = 'Customer Support Desk & Ticket Portal — Dialtact';
-      } else if (currentView === 'company') {
-        document.title = 'About Dialtact & Enterprise Architecture — Dialtact';
-      } else if (currentView === 'privacy') {
-        document.title = 'Privacy Policy — Dialtact';
-      } else if (currentView === 'terms') {
-        document.title = 'Terms of Service — Dialtact';
-      } else if (currentView === 'security') {
-        document.title = 'Security & Compliance Architecture — Dialtact';
-      } else {
-        document.title = 'Dialtact — The AI Employee for Every Conversation | Autonomous Voice AI';
-      }
-      if (canonical) {
-        canonical.setAttribute('href', 'https://dialtact.ai/');
-      }
-    }
+    const tabMatch = (window.location.hash || '').match(/#dashboard\/([a-z0-9_-]+)/i);
+    applyPageMetadata(currentView, tabMatch ? tabMatch[1] : '');
   }, [currentView]);
 
 

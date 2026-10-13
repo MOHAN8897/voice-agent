@@ -64,12 +64,12 @@ function device3DStatus() {
     }
   } catch {}
   try {
-    const canvas = document.createElement('canvas');
-    const gl = canvas.getContext('webgl2');
-    if (!gl) return '3D is unavailable in this browser.';
-    // The capability probe is separate from the visible R3F canvas. Release it
-    // immediately so low-end devices do not waste one of their limited GPU contexts.
-    gl.getExtension('WEBGL_lose_context')?.loseContext();
+    // Let React Three Fiber create the one real renderer context. A throwaway
+    // WebGL probe can consume a scarce mobile GPU context and its forced release
+    // produces the same context-loss signal as a real renderer failure.
+    if (typeof WebGL2RenderingContext === 'undefined') {
+      return '3D is unavailable in this browser.';
+    }
     return '';
   } catch {
     return '3D is unavailable in this browser.';

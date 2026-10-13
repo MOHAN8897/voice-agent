@@ -1,4 +1,5 @@
 let gsiLoadPromise = null;
+const GOOGLE_IDENTITY_STATE_KEY = Symbol.for('voxly.googleIdentityState');
 
 /** Load Google Identity Services (One Tap / button) once per page. */
 export function loadGoogleIdentityScript() {
@@ -24,4 +25,31 @@ export function loadGoogleIdentityScript() {
   });
 
   return gsiLoadPromise;
+}
+
+/** Google Identity Services supports one initialize call per page. Keep the
+ * callback current while reusing that single initialization across login tries. */
+export function initializeGoogleIdentityOnce(clientId, onCredential) {
+  const googleId = typeof window === 'undefined' ? null : window.google?.accounts?.id;
+  if (!clientId || typeof googleId?.initialize !== 'function') return false;
+
+  let state = window[GOOGLE_IDENTITY_STATE_KEY];
+  if (state) {
+    if (state.clientId !== clientId) return false;
+    state.onCredential = onCredential;
+    return true;
+  }
+
+  state = { clientId, onCredential };
+  window[GOOGLE_IDENTITY_STATE_KEY] = state;
+  try {
+    googleId.initialize({
+      client_id: clientId,
+      callback: (response) => state.onCredential?.(response),
+    });
+    return true;
+  } catch (error) {
+    delete window[GOOGLE_IDENTITY_STATE_KEY];
+    throw error;
+  }
 }
