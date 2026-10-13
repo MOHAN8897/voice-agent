@@ -10,6 +10,13 @@
     "chrome-devtools": {
       "command": "cmd",
       "args": ["/c", "npx", "-y", "chrome-devtools-mcp@latest"]
+    },
+    "enigma": {
+      "command": "cmd",
+      "args": ["/c", "npx", "enigma-mcp"],
+      "env": {
+        "ENIGMA_BUNDLE": ".enigma/bundle.json"
+      }
     }
   }
 }

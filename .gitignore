@@ -69,3 +69,8 @@ Thumbs.db
 /.pytest-tmp-*/
 .gemini/
 scratch/
+
+# Enigma Memory Vault secrets & ephemeral state
+.enigma/passphrase
+.enigma/*.tmp
+.enigma/*.head

@@ -1,0 +1,39 @@
+{
+  "schema": "enigma.context_pack.v1",
+  "context_pack_ref": "enigma://context-pack/ctx_cc998a20-1b7b-49d2-ba4a-7f3e63674312",
+  "context_pack_id": "ctx_cc998a20-1b7b-49d2-ba4a-7f3e63674312",
+  "context_pack_digest": "sha256:1483bfbd542c5d032e9842a0da3abd5269ea8a9522de13c946719c7f480b6294",
+  "provider": "local",
+  "model": "local",
+  "purpose": "quickstart_local_context",
+  "memory_addresses": [
+    "mem:5a5bb850d4ecb90f37a8b69a8fea244a2d9c8e5f90097f550c0816d35e1c1531"
+  ],
+  "memory_count": 1,
+  "receipt_count": 2,
+  "receipt_hashes": [
+    "sha256:f16de230c078e71db6c7b5523188c46b4056dd6fbb420d3364188d264141b243",
+    "sha256:917c73013942a4e05200ced5a8a5737750727068185a9b6d30bcbf46c39fa7ce"
+  ],
+  "receipts": [
+    {
+      "receipt_id": "rcpt_7d0270ae465844506a4b7dee834cd916",
+      "operation": "retrieve",
+      "memory_addr": "mem:5a5bb850d4ecb90f37a8b69a8fea244a2d9c8e5f90097f550c0816d35e1c1531",
+      "event_hash": "sha256:ad96735c79453415b94239a152b0638da227fce2fe7633b92e52bead554999b4",
+      "receipt_log_root": "sha256:0bfea60d8b6fe6ec1e8f62749c1e79b09bf73fc32b7818e13ebfdd4ba932a65b",
+      "timestamp": "2026-10-13T13:35:19.288Z"
+    },
+    {
+      "receipt_id": "rcpt_2da691533db8cc6182eee6ceda1b0da2",
+      "operation": "inject",
+      "memory_addr": "mem:5a5bb850d4ecb90f37a8b69a8fea244a2d9c8e5f90097f550c0816d35e1c1531",
+      "event_hash": "sha256:c63b6fe200d09cc29b65291c50496c332217b0d6604d22cf4061d62744d14387",
+      "receipt_log_root": "sha256:cda2f72b5e9638c24005d46dafe155015a0885cbfed8c418c9201798b44ef8c5",
+      "timestamp": "2026-10-13T13:35:19.289Z"
+    }
+  ],
+  "active_set_root": "sha256:2bc459293688bd19051b998639487fc548f791c68407990011b8545e5b81f975",
+  "receipt_log_root": "sha256:e73a4dadfdcd65e8456882a1e073396b6dd1fb9f7c92d600db787ea80c989700",
+  "content_redacted": true
+}

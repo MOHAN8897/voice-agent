@@ -17,5 +17,8 @@ Instrumented app: `voxly-ai/` · skill: `.agents/skills/install-and-verify` · d
 No verdict from `reticle_act_and_wait` / `reticle_assert` → do not claim the UI change is done. Skip Reticle for docs/backend-only with one-line reason.
 
 ## Code navigation — Graft
-
+ 
 Prefer `graft ask` / MCP graft tools before broad greps (see `AGENTS.md` graft block).
+
+## Persistent context & agent memory — Enigma
+Use **Enigma Memory** for cross-session decisions, verifiable episodic memory, and context packs (`.enigma/bundle.json`, `.cursor/rules/enigma.mdc`, skill `.agents/skills/enigma-memory`).

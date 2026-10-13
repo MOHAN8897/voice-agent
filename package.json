@@ -20,6 +20,13 @@
     "share:ngrok": "powershell -ExecutionPolicy Bypass -File scripts/share_with_friend.ps1 -Tunnel ngrok",
     "share:cf": "powershell -ExecutionPolicy Bypass -File scripts/share_with_friend.ps1 -Tunnel cloudflared",
     "sam": "npx sam-agents",
-    "sam:install": "npx sam-agents --platform all"
+    "sam:install": "npx sam-agents --platform all",
+    "enigma": "enigma",
+    "enigma:mcp": "enigma-mcp",
+    "enigma:status": "enigma passport status --bundle .enigma/bundle.json --passphrase-file .enigma/passphrase",
+    "enigma:verify": "enigma verify --export .enigma/export.json"
+  },
+  "devDependencies": {
+    "enigma-memory": "^0.1.22"
   }
 }
