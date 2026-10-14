@@ -35,6 +35,7 @@ type TenantDetail = {
     limits?: Record<string, unknown>;
     billingSource?: string | null;
     createdAt?: string | null;
+    deletedAt?: string | null;
   };
   wallet?: {
     balanceUsd?: number;
@@ -339,7 +340,7 @@ export default function TenantCockpitPage() {
             >
               Open as customer
             </SkeuoButton>
-            {t?.status === "cancelled" ? (
+            {t?.status === "cancelled" || t?.status === "deleted" || Boolean(t?.deletedAt) ? (
               <SkeuoButton
                 variant="ghost"
                 className="border-status-success/40 text-status-success hover:bg-status-success/10"

@@ -36,13 +36,15 @@ export type Tenant = {
   isInventory?: boolean;
 };
 
-const STATUSES = ["", "active", "suspended", "past_due", "cancelled"];
+const STATUSES = ["", "active", "suspended", "quarantined", "past_due", "cancelled", "deleted"];
 const PLANS = ["", "starter", "growth", "enterprise", "default", "dev", "platform"];
 const STATUS_TONE: Record<string, "success" | "warning" | "danger" | "muted"> = {
   active: "success",
   suspended: "danger",
+  quarantined: "danger",
   past_due: "warning",
   cancelled: "muted",
+  deleted: "muted",
 };
 const PAGE_SIZE = 50;
 
@@ -523,7 +525,7 @@ export function AdminTenantsPage() {
           </SkeuoTableHead>
           <SkeuoTableBody>
             {rows.map((t) => {
-              const isDeleted = Boolean(t.deletedAt) || t.status === "cancelled";
+              const isDeleted = Boolean(t.deletedAt) || t.status === "cancelled" || t.status === "deleted";
               const isSelected = selectedIds.has(t.tenantId);
 
               return (

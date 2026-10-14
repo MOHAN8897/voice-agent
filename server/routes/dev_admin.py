@@ -74,7 +74,7 @@ class TenantCreateBody(BaseModel):
     limits: Optional[dict[str, Any]] = None
 
 
-_TENANT_STATUS_VALUES = frozenset({"active", "suspended", "past_due", "cancelled"})
+_TENANT_STATUS_VALUES = frozenset({"active", "quarantined", "suspended", "past_due", "cancelled", "deleted"})
 _TENANT_PLAN_VALUES = frozenset({"starter", "growth", "enterprise", "default", "platform", "dev"})
 
 
@@ -488,6 +488,24 @@ async def create_tenant(body: TenantCreateBody, session: SessionData = Depends(r
     return {"ok": True, "tenantId": str(tid)}
 
 
+def _clean_query_bool(val: Any, default: bool = False) -> bool:
+    if isinstance(val, bool):
+        return val
+    if hasattr(val, "default"):
+        return bool(val.default)
+    if isinstance(val, str):
+        return val.strip().lower() in ("true", "1", "yes")
+    return bool(val) if val is not None else default
+
+
+def _clean_query_str(val: Any, default: str = "") -> str:
+    if isinstance(val, str):
+        return val
+    if hasattr(val, "default"):
+        return str(val.default) if val.default is not None else default
+    return str(val) if val is not None else default
+
+
 @router.delete("/api/dev/admin/tenants/{tenant_id}")
 async def delete_tenant(
     tenant_id: str,
@@ -502,11 +520,11 @@ async def delete_tenant(
     require_permission(session, "dev.admin.tenants")
     _require_db()
     tid = uuid.UUID(tenant_id)
-    eff_force = body.force if body and body.force is not None else force
-    eff_release = body.releaseNumbers if body and body.releaseNumbers is not None else release_numbers
-    eff_revoke = body.revokeSessions if body and body.revokeSessions is not None else revoke_sessions
-    eff_hard = body.hard if body and body.hard is not None else hard
-    eff_note = (body.note if body and body.note else note).strip()
+    eff_force = _clean_query_bool(body.force if body and body.force is not None else force, False)
+    eff_release = _clean_query_bool(body.releaseNumbers if body and body.releaseNumbers is not None else release_numbers, True)
+    eff_revoke = _clean_query_bool(body.revokeSessions if body and body.revokeSessions is not None else revoke_sessions, True)
+    eff_hard = _clean_query_bool(body.hard if body and body.hard is not None else hard, False)
+    eff_note = _clean_query_str(body.note if body and body.note is not None else note, "").strip()
 
     released_numbers: list[str] = []
     revoked_sessions: int = 0
@@ -571,7 +589,7 @@ async def delete_tenant(
                 )
                 revoked_sessions = int(result.rowcount or 0)
 
-        tenant.status = "cancelled"
+        tenant.status = "deleted"
         tenant.deleted_at = datetime.now(timezone.utc)
         await db.commit()
 
@@ -621,7 +639,7 @@ async def restore_tenant(
         resource_type="tenant",
         resource_id=tenant_id,
         tenant_id=tid,
-        payload={"note": note.strip() or None},
+        payload={"note": _clean_query_str(note).strip() or None},
     )
     return {"ok": True}
 
@@ -698,7 +716,7 @@ async def bulk_tenant_actions(
                                 )
                                 .values(revoked_at=datetime.now(timezone.utc))
                             )
-                    tenant.status = "cancelled"
+                    tenant.status = "deleted"
                     tenant.deleted_at = datetime.now(timezone.utc)
 
                 elif action == "restore":

@@ -101,7 +101,7 @@ async def test_delete_tenant_with_release_and_revoke(dev_admin_session):
         )
 
         assert res["ok"] is True
-        assert mock_tenant.status == "cancelled"
+        assert mock_tenant.status == "deleted"
         assert mock_tenant.deleted_at is not None
         mock_db.commit.assert_awaited()
         mock_audit.assert_awaited_once()
