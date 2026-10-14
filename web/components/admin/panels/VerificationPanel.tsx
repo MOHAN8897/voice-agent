@@ -66,25 +66,39 @@ export function AdminVerificationPage() {
   const kyc = useAdminResource<KycList>("/api/dev/admin/kyc");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [gateFilter, setGateFilter] = useState("all");
   const [busy, setBusy] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<{ v: Verification; status: string } | null>(null);
 
+  const allVerifications = kyc.data?.verifications ?? [];
   const rows = useMemo(() => {
-    const all = kyc.data?.verifications ?? [];
-    return all.filter((v) => {
+    return allVerifications.filter((v) => {
       if (statusFilter && v.status !== statusFilter) return false;
+      if (gateFilter === "passed" && !v.approved) return false;
+      if (gateFilter === "pending" && (v.approved || v.status === "Declined")) return false;
+      if (gateFilter === "declined" && v.status !== "Declined") return false;
+
       if (!query.trim()) return true;
       const q = query.trim().toLowerCase();
-      return `${v.email ?? ""} ${v.fullName ?? ""} ${v.userId} ${v.status}`.toLowerCase().includes(q);
+      const target = `${v.email ?? ""} ${v.fullName ?? ""} ${v.userId} ${v.tenantId ?? ""} ${v.status} ${v.sessionId ?? ""} ${v.decision?.reason ?? ""}`.toLowerCase();
+      return target.includes(q);
     });
-  }, [kyc.data, query, statusFilter]);
+  }, [allVerifications, query, statusFilter, gateFilter]);
 
   const approved = (kyc.data?.verifications ?? []).filter((v) => v.approved).length;
   const inReview = (kyc.data?.verifications ?? []).filter((v) =>
     ["In Review", "In Progress", "Awaiting User"].includes(v.status)
   ).length;
   const declined = (kyc.data?.verifications ?? []).filter((v) => v.status === "Declined").length;
+
+  const hasFilters = Boolean(query.trim() || statusFilter || gateFilter !== "all");
+
+  function resetFilters() {
+    setQuery("");
+    setStatusFilter("");
+    setGateFilter("all");
+  }
 
   async function run(key: string, fn: () => Promise<void>) {
     setBusy(key);
@@ -155,42 +169,89 @@ export function AdminVerificationPage() {
           </DevCard>
 
           <DevCard title="Verifications">
-            <div className="mb-4 flex flex-wrap gap-2">
-              <SkeuoInput
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search email, name, user id…"
-                className="min-w-[220px] flex-1"
-                data-testid="kyc-search"
-              />
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="rounded-skeuo-sm border border-surface-border bg-surface-panel px-3 py-2 text-sm"
-                data-testid="kyc-status-filter"
-              >
-                <option value="">All statuses</option>
-                {[
-                  "Approved",
-                  "Declined",
-                  "In Review",
-                  "In Progress",
-                  "Awaiting User",
-                  "Not Started",
-                  "Abandoned",
-                  "Expired",
-                  "Kyc Expired",
-                ].map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
+            <div className="mb-4 space-y-3">
+              <div className="grid gap-3 sm:grid-cols-3">
+                <SkeuoInput
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search email, name, user ID, tenant ID…"
+                  data-testid="kyc-search"
+                />
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="rounded-skeuo-sm border border-surface-border bg-surface-panel px-3 py-2 text-sm text-text"
+                  data-testid="kyc-status-filter"
+                >
+                  <option value="">All statuses</option>
+                  {[
+                    "Approved",
+                    "Declined",
+                    "In Review",
+                    "In Progress",
+                    "Awaiting User",
+                    "Not Started",
+                    "Abandoned",
+                    "Expired",
+                    "Kyc Expired",
+                  ].map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={gateFilter}
+                  onChange={(e) => setGateFilter(e.target.value)}
+                  className="rounded-skeuo-sm border border-surface-border bg-surface-panel px-3 py-2 text-sm text-text"
+                >
+                  <option value="all">All gate outcomes</option>
+                  <option value="passed">Gate Pass Active (Approved)</option>
+                  <option value="pending">Review / In Progress</option>
+                  <option value="declined">Gate Blocked (Declined)</option>
+                </select>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-surface-border-subtle pt-2 text-xs text-text-muted">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="mr-1">Quick:</span>
+                  {["", "Approved", "In Review", "Declined", "In Progress"].map((s) => (
+                    <button
+                      key={s || "all"}
+                      type="button"
+                      onClick={() => setStatusFilter(s)}
+                      className={`rounded px-2 py-0.5 text-xs transition-colors ${
+                        statusFilter === s
+                          ? "bg-accent-primary text-white"
+                          : "bg-surface-panel-raised text-text-muted hover:text-text"
+                      }`}
+                    >
+                      {s || "All"}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span>
+                    Showing <strong className="text-text">{rows.length}</strong> of{" "}
+                    <strong className="text-text">{allVerifications.length}</strong> verifications
+                  </span>
+                  {hasFilters && (
+                    <button
+                      type="button"
+                      onClick={resetFilters}
+                      className="text-accent-primary hover:underline"
+                    >
+                      Clear filters
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
 
             {rows.length === 0 ? (
               <p className="py-8 text-center text-sm text-text-muted" data-testid="kyc-empty">
-                No verification sessions yet. A row appears when a customer starts Didit from Phone numbers or Settings.
+                No verification sessions match the current filters.
               </p>
             ) : (
               <SkeuoTable>

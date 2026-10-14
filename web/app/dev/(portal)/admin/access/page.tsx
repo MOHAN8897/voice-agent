@@ -1,8 +1,9 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { DevCard } from "@/components/dev/DevCard";
 import { AdminError, AdminLoading, AdminPageHeader } from "@/components/admin/AdminNav";
-import { SkeuoBadge } from "@/components/ui/skeuo";
+import { SkeuoBadge, SkeuoInput } from "@/components/ui/skeuo";
 import { useAdminResource } from "@/lib/useAdminResource";
 
 type Access = {
@@ -21,8 +22,31 @@ type Access = {
 export default function AdminAccessPage() {
   const { data, error, loading } = useAdminResource<Access>("/api/dev/admin/access");
 
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [scopeFilter, setScopeFilter] = useState("all");
+
   const roles = data?.roles ?? [];
   const permissions = data?.permissions ?? [];
+
+  const filteredPermissions = useMemo(() => {
+    return permissions.filter((p) => {
+      if (roleFilter !== "all" && !p.roles.includes(roleFilter)) return false;
+      if (scopeFilter === "dev_only" && !p.devOnly) return false;
+      if (scopeFilter === "standard" && p.devOnly) return false;
+      if (!search.trim()) return true;
+      const q = search.trim().toLowerCase();
+      return p.name.toLowerCase().includes(q);
+    });
+  }, [permissions, roleFilter, scopeFilter, search]);
+
+  const hasFilters = Boolean(search.trim() || roleFilter !== "all" || scopeFilter !== "all");
+
+  function resetFilters() {
+    setSearch("");
+    setRoleFilter("all");
+    setScopeFilter("all");
+  }
 
   return (
     <div className="space-y-6 p-6">
@@ -50,6 +74,64 @@ export default function AdminAccessPage() {
             title="Permission matrix"
             description="Rows are enforced server-side. A missing tick is a 403, not a hidden button."
           >
+            {/* Search and Filters */}
+            <div className="mb-4 space-y-3">
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-text-muted">Search permission</label>
+                  <SkeuoInput
+                    placeholder="Filter by name (e.g. dev.admin, voice)…"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    aria-label="Filter permissions"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-text-muted">Granted to role</label>
+                  <select
+                    value={roleFilter}
+                    onChange={(e) => setRoleFilter(e.target.value)}
+                    className="w-full rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised px-3 py-2 text-sm text-text"
+                  >
+                    <option value="all">All roles</option>
+                    {roles.map((r) => (
+                      <option key={r} value={r}>
+                        {r}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-text-muted">Scope</label>
+                  <select
+                    value={scopeFilter}
+                    onChange={(e) => setScopeFilter(e.target.value)}
+                    className="w-full rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised px-3 py-2 text-sm text-text"
+                  >
+                    <option value="all">All scopes</option>
+                    <option value="dev_only">Dev Platform Only</option>
+                    <option value="standard">Tenant Facing</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between border-t border-surface-border-subtle pt-2 text-xs text-text-muted">
+                <span>
+                  Showing <strong className="text-text">{filteredPermissions.length}</strong> of{" "}
+                  <strong className="text-text">{permissions.length}</strong> permissions
+                </span>
+                {hasFilters && (
+                  <button
+                    type="button"
+                    onClick={resetFilters}
+                    className="text-accent-primary hover:underline"
+                  >
+                    Clear filters
+                  </button>
+                )}
+              </div>
+            </div>
+
             <div className="overflow-x-auto">
               <table className="w-full min-w-[640px] border-collapse text-sm">
                 <thead>
@@ -68,7 +150,7 @@ export default function AdminAccessPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {permissions.map((p) => (
+                  {filteredPermissions.map((p) => (
                     <tr key={p.name} className="border-t border-surface-border-subtle">
                       <td className="sticky left-0 bg-surface-panel px-3 py-2">
                         <span className="font-mono text-xs text-text">{p.name}</span>
@@ -98,6 +180,13 @@ export default function AdminAccessPage() {
                       })}
                     </tr>
                   ))}
+                  {filteredPermissions.length === 0 && (
+                    <tr>
+                      <td colSpan={roles.length + 1} className="py-6 text-center text-sm text-text-muted">
+                        No permissions match the current filters.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>

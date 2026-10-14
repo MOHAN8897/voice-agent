@@ -947,30 +947,102 @@ async def impersonate_tenant(
 @router.get("/api/dev/admin/users")
 async def list_users(
     tenantId: str | None = None,
+    q: str = "",
+    status: str | None = None,
+    role: str | None = None,
+    limit: int = 50,
+    offset: int = 0,
+    include_deleted: bool = False,
     session: SessionData = Depends(require_dev_session),
 ):
     require_permission(session, "dev.admin.users")
     _require_db()
+
+    clean_tenant_id = _clean_query_str(tenantId).strip()
+    clean_q = _clean_query_str(q).strip()
+    clean_status = _clean_query_str(status).strip()
+    clean_role = _clean_query_str(role).strip()
+    eff_limit = max(1, min(int(limit or 50), 200))
+    eff_offset = max(0, int(offset or 0))
+
     async with get_session_factory()() as db:
-        if tenantId:
-            tid = uuid.UUID(tenantId)
-            rows = (
-                await db.execute(
-                    select(User, TenantMembership)
-                    .join(TenantMembership, TenantMembership.user_id == User.user_id)
-                    .where(TenantMembership.tenant_id == tid)
-                )
-            ).all()
-            users = [
-                {"userId": str(u.user_id), "email": u.email, "status": u.status, "role": m.role}
-                for u, m in rows
-            ]
-        else:
-            users = [
-                {"userId": str(u.user_id), "email": u.email, "status": u.status, "fullName": u.full_name}
-                for u in (await db.execute(select(User).where(User.deleted_at.is_(None)).limit(500))).scalars()
-            ]
-    return {"users": users}
+        stmt = select(User)
+        count_stmt = select(func.count(User.user_id))
+
+        if not include_deleted:
+            stmt = stmt.where(User.deleted_at.is_(None))
+            count_stmt = count_stmt.where(User.deleted_at.is_(None))
+
+        tid: uuid.UUID | None = None
+        if clean_tenant_id:
+            try:
+                tid = uuid.UUID(clean_tenant_id)
+                subq = select(TenantMembership.user_id).where(TenantMembership.tenant_id == tid)
+                stmt = stmt.where(User.user_id.in_(subq))
+                count_stmt = count_stmt.where(User.user_id.in_(subq))
+            except ValueError:
+                return {"users": [], "total": 0, "limit": eff_limit, "offset": eff_offset}
+
+        if clean_role and clean_role != "all":
+            role_subq = select(TenantMembership.user_id).where(TenantMembership.role == clean_role)
+            if tid:
+                role_subq = role_subq.where(TenantMembership.tenant_id == tid)
+            stmt = stmt.where(User.user_id.in_(role_subq))
+            count_stmt = count_stmt.where(User.user_id.in_(role_subq))
+
+        if clean_status and clean_status != "all":
+            stmt = stmt.where(User.status == clean_status)
+            count_stmt = count_stmt.where(User.status == clean_status)
+
+        if clean_q:
+            from sqlalchemy import cast, or_, String
+            pattern = f"%{clean_q}%"
+            filter_q = or_(
+                User.email.ilike(pattern),
+                User.full_name.ilike(pattern),
+                cast(User.user_id, String).ilike(pattern),
+            )
+            stmt = stmt.where(filter_q)
+            count_stmt = count_stmt.where(filter_q)
+
+        total = (await db.execute(count_stmt)).scalar() or 0
+
+        stmt = stmt.order_by(desc(User.created_at)).limit(eff_limit).offset(eff_offset)
+        user_rows = (await db.execute(stmt)).scalars().all()
+
+        user_ids = [u.user_id for u in user_rows]
+        memberships: dict[uuid.UUID, dict[str, Any]] = {}
+        if user_ids:
+            mem_stmt = (
+                select(TenantMembership, Tenant.name.label("tenant_name"))
+                .outerjoin(Tenant, Tenant.tenant_id == TenantMembership.tenant_id)
+                .where(TenantMembership.user_id.in_(user_ids))
+            )
+            if tid:
+                mem_stmt = mem_stmt.where(TenantMembership.tenant_id == tid)
+            for m, t_name in (await db.execute(mem_stmt)).all():
+                if m.user_id not in memberships or (tid and m.tenant_id == tid):
+                    memberships[m.user_id] = {
+                        "role": m.role,
+                        "tenantId": str(m.tenant_id),
+                        "tenantName": t_name or str(m.tenant_id),
+                    }
+
+        users = []
+        for u in user_rows:
+            mem = memberships.get(u.user_id, {})
+            users.append({
+                "userId": str(u.user_id),
+                "email": u.email,
+                "fullName": u.full_name or "",
+                "status": u.status,
+                "role": mem.get("role") or "—",
+                "tenantId": mem.get("tenantId"),
+                "tenantName": mem.get("tenantName"),
+                "createdAt": u.created_at.isoformat() if u.created_at else None,
+            })
+
+    return {"users": users, "total": total, "limit": eff_limit, "offset": eff_offset}
 
 
 @router.get("/api/dev/admin/users/{user_id}")

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { DevCard } from "@/components/dev/DevCard";
@@ -134,7 +134,19 @@ export default function AdminBillingPage() {
   const [fxRate, setFxRate] = useState("95.64");
   const [busy, setBusy] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  // Wallets filter state
   const [query, setQuery] = useState("");
+  const [walletStatusFilter, setWalletStatusFilter] = useState("all");
+  const [walletBalanceFilter, setWalletBalanceFilter] = useState("all");
+
+  // Orders filter state
+  const [orderQuery, setOrderQuery] = useState("");
+  const [orderStatus, setOrderStatus] = useState("all");
+  const [orderCurrency, setOrderCurrency] = useState("all");
+
+  // Purchases filter state
+  const [purchaseQuery, setPurchaseQuery] = useState("");
 
   useEffect(() => {
     if (tenantFromUrl) setTenantId(tenantFromUrl);
@@ -169,12 +181,39 @@ export default function AdminBillingPage() {
     });
   }
 
-  const rows = (wallets.data?.wallets ?? []).filter((w) =>
-    query.trim()
-      ? `${w.name} ${w.tenantId}`.toLowerCase().includes(query.trim().toLowerCase())
-      : true
-  );
-  const purchaseRows = purchases.data?.purchases ?? [];
+  const allWallets = wallets.data?.wallets ?? [];
+  const rows = useMemo(() => {
+    return allWallets.filter((w) => {
+      if (walletStatusFilter !== "all" && (w.status || "").toLowerCase() !== walletStatusFilter.toLowerCase()) return false;
+      const bal = w.balanceUsd || 0;
+      if (walletBalanceFilter === "funded" && bal <= 0) return false;
+      if (walletBalanceFilter === "low" && (bal <= 0 || bal >= 5)) return false;
+      if (walletBalanceFilter === "depleted" && bal > 0) return false;
+      if (!query.trim()) return true;
+      return `${w.name} ${w.tenantId}`.toLowerCase().includes(query.trim().toLowerCase());
+    });
+  }, [allWallets, walletStatusFilter, walletBalanceFilter, query]);
+
+  const allOrders = payOrders.data?.orders ?? [];
+  const filteredOrders = useMemo(() => {
+    return allOrders.filter((o) => {
+      if (orderStatus !== "all" && (o.status || "").toLowerCase() !== orderStatus.toLowerCase()) return false;
+      if (orderCurrency !== "all" && (o.currency || "").toUpperCase() !== orderCurrency.toUpperCase()) return false;
+      if (!orderQuery.trim()) return true;
+      const q = orderQuery.trim().toLowerCase();
+      return `${o.tenantName ?? ""} ${o.orderId}`.toLowerCase().includes(q);
+    });
+  }, [allOrders, orderStatus, orderCurrency, orderQuery]);
+
+  const allPurchases = purchases.data?.purchases ?? [];
+  const purchaseRows = useMemo(() => {
+    return allPurchases.filter((p) => {
+      if (!purchaseQuery.trim()) return true;
+      const q = purchaseQuery.trim().toLowerCase();
+      return `${p.e164} ${p.tenantId} ${p.purchaseId}`.toLowerCase().includes(q);
+    });
+  }, [allPurchases, purchaseQuery]);
+
   const failed = purchaseRows.filter((p) => p.status === "failed").length;
   const totalUsdCents = rows.reduce(
     (sum, w) => sum + Math.round((w.balanceUsd || 0) * 100),
@@ -508,6 +547,67 @@ export default function AdminBillingPage() {
       </DevCard>
 
       <DevCard title="Payment orders">
+        <div className="mb-4 space-y-3">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-text-muted">Search orders</label>
+              <SkeuoInput
+                placeholder="Tenant or order ID…"
+                value={orderQuery}
+                onChange={(e) => setOrderQuery(e.target.value)}
+                aria-label="Search orders"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-text-muted">Status</label>
+              <select
+                value={orderStatus}
+                onChange={(e) => setOrderStatus(e.target.value)}
+                className="w-full rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised px-3 py-2 text-sm text-text"
+              >
+                <option value="all">All statuses</option>
+                <option value="captured">Captured / Paid</option>
+                <option value="paid">Paid</option>
+                <option value="created">Created</option>
+                <option value="attempted">Attempted</option>
+                <option value="failed">Failed</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-text-muted">Currency</label>
+              <select
+                value={orderCurrency}
+                onChange={(e) => setOrderCurrency(e.target.value)}
+                className="w-full rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised px-3 py-2 text-sm text-text"
+              >
+                <option value="all">All currencies</option>
+                <option value="USD">USD</option>
+                <option value="INR">INR</option>
+                <option value="EUR">EUR</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex items-center justify-between border-t border-surface-border-subtle pt-2 text-xs text-text-muted">
+            <span>
+              Showing <strong className="text-text">{filteredOrders.length}</strong> of{" "}
+              <strong className="text-text">{allOrders.length}</strong> orders
+            </span>
+            {(orderQuery.trim() || orderStatus !== "all" || orderCurrency !== "all") && (
+              <button
+                type="button"
+                onClick={() => {
+                  setOrderQuery("");
+                  setOrderStatus("all");
+                  setOrderCurrency("all");
+                }}
+                className="text-accent-primary hover:underline"
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
+        </div>
+
         <AdminLoading loading={payOrders.loading} />
         <AdminError error={payOrders.error} />
         <SkeuoTable>
@@ -519,31 +619,104 @@ export default function AdminBillingPage() {
             <SkeuoTh>When</SkeuoTh>
           </SkeuoTableHead>
           <SkeuoTableBody>
-            {(payOrders.data?.orders ?? []).map((o) => (
+            {filteredOrders.map((o) => (
               <SkeuoTableRow key={o.orderId}>
-                <SkeuoTd>{o.tenantName || o.orderId}</SkeuoTd>
-                <SkeuoTd className="font-mono">
+                <SkeuoTd>
+                  <div className="font-medium text-text">{o.tenantName || "Unassigned"}</div>
+                  <div className="font-mono text-[10px] text-text-muted">{o.orderId}</div>
+                </SkeuoTd>
+                <SkeuoTd className="font-mono font-medium">
                   {o.currency} {o.amount.toFixed(2)}
                 </SkeuoTd>
                 <SkeuoTd className="font-mono">{formatInr(Math.round(o.amountInr * 100))}</SkeuoTd>
-                <SkeuoTd>{o.status}</SkeuoTd>
-                <SkeuoTd>{formatWhen(o.createdAt)}</SkeuoTd>
+                <SkeuoTd>
+                  <SkeuoBadge
+                    tone={
+                      o.status === "captured" || o.status === "paid"
+                        ? "success"
+                        : o.status === "failed"
+                        ? "danger"
+                        : "warning"
+                    }
+                  >
+                    {o.status}
+                  </SkeuoBadge>
+                </SkeuoTd>
+                <SkeuoTd className="text-xs text-text-muted">{formatWhen(o.createdAt)}</SkeuoTd>
               </SkeuoTableRow>
             ))}
+            {filteredOrders.length === 0 && !payOrders.loading && (
+              <SkeuoTableRow>
+                <SkeuoTd className="text-center py-6 text-text-muted" colSpan={5}>
+                  No payment orders found matching current filters.
+                </SkeuoTd>
+              </SkeuoTableRow>
+            )}
           </SkeuoTableBody>
         </SkeuoTable>
       </DevCard>
 
       <DevCard title="Tenant wallets">
-        <div className="mb-3">
-          <SkeuoInput
-            placeholder="Search by tenant name or id"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            aria-label="Search wallets"
-            className="max-w-sm"
-          />
+        <div className="mb-4 space-y-3">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-text-muted">Search wallet</label>
+              <SkeuoInput
+                placeholder="Search tenant name or id…"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                aria-label="Search wallets"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-text-muted">Balance level</label>
+              <select
+                value={walletBalanceFilter}
+                onChange={(e) => setWalletBalanceFilter(e.target.value)}
+                className="w-full rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised px-3 py-2 text-sm text-text"
+              >
+                <option value="all">All balances</option>
+                <option value="funded">Funded (&gt; $0)</option>
+                <option value="low">Low balance (&lt; $5)</option>
+                <option value="depleted">Zero / Depleted ($0)</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-text-muted">Workspace status</label>
+              <select
+                value={walletStatusFilter}
+                onChange={(e) => setWalletStatusFilter(e.target.value)}
+                className="w-full rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised px-3 py-2 text-sm text-text"
+              >
+                <option value="all">All statuses</option>
+                <option value="active">Active</option>
+                <option value="suspended">Suspended</option>
+                <option value="past_due">Past Due</option>
+                <option value="deleted">Deleted</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex items-center justify-between border-t border-surface-border-subtle pt-2 text-xs text-text-muted">
+            <span>
+              Showing <strong className="text-text">{rows.length}</strong> of{" "}
+              <strong className="text-text">{allWallets.length}</strong> workspaces
+            </span>
+            {(query.trim() || walletBalanceFilter !== "all" || walletStatusFilter !== "all") && (
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery("");
+                  setWalletBalanceFilter("all");
+                  setWalletStatusFilter("all");
+                }}
+                className="text-accent-primary hover:underline"
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
         </div>
+
         <AdminLoading loading={wallets.loading} />
         <SkeuoTable>
           <SkeuoTableHead>
@@ -557,18 +730,20 @@ export default function AdminBillingPage() {
             {rows.map((w) => (
               <SkeuoTableRow key={w.tenantId}>
                 <SkeuoTd>
-                  <Link href={`/dev/admin/tenants/${w.tenantId}?tab=wallet`} className="font-medium hover:underline">
+                  <Link href={`/dev/admin/tenants/${w.tenantId}?tab=wallet`} className="font-medium text-accent-primary hover:underline">
                     {w.name}
                   </Link>
                   <p className="font-mono text-[10px] text-text-subtle">{w.tenantId}</p>
                 </SkeuoTd>
-                <SkeuoTd>{w.status || "—"}</SkeuoTd>
-                {/* A Razorpay top-up credits the INR leg only, so the server sends
-                    the converted dollar figure; cents would read as empty. */}
-                <SkeuoTd className="font-mono" data-testid="admin-wallet-usd-cell">
+                <SkeuoTd>
+                  <SkeuoBadge tone={w.status === "active" ? "success" : w.status === "deleted" ? "danger" : "warning"}>
+                    {w.status || "active"}
+                  </SkeuoBadge>
+                </SkeuoTd>
+                <SkeuoTd className="font-mono font-medium" data-testid="admin-wallet-usd-cell">
                   {formatUsd(Math.round((w.balanceUsd || 0) * 100))}
                 </SkeuoTd>
-                <SkeuoTd>{formatWhen(w.updatedAt)}</SkeuoTd>
+                <SkeuoTd className="text-xs text-text-muted">{formatWhen(w.updatedAt)}</SkeuoTd>
                 <SkeuoTd className="text-right">
                   <SkeuoButton type="button" size="sm" onClick={() => setTenantId(w.tenantId)}>
                     Use
@@ -576,27 +751,67 @@ export default function AdminBillingPage() {
                 </SkeuoTd>
               </SkeuoTableRow>
             ))}
+            {rows.length === 0 && !wallets.loading && (
+              <SkeuoTableRow>
+                <SkeuoTd className="text-center py-6 text-text-muted" colSpan={5}>
+                  No workspaces found matching current filters.
+                </SkeuoTd>
+              </SkeuoTableRow>
+            )}
           </SkeuoTableBody>
         </SkeuoTable>
       </DevCard>
 
       <DevCard title="Number purchases">
-        <div className="mb-3 flex flex-wrap gap-1">
-          {STATUSES.map((s) => (
-            <button
-              key={s || "all"}
-              type="button"
-              onClick={() => setStatus(s)}
-              className={`rounded-skeuo-sm px-3 py-1 text-xs font-medium transition-colors ${
-                status === s
-                  ? "bg-accent-primary text-white"
-                  : "bg-surface-panel-raised text-text-muted hover:text-text"
-              }`}
-            >
-              {s || "all"}
-            </button>
-          ))}
+        <div className="mb-4 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap gap-1">
+              {STATUSES.map((s) => (
+                <button
+                  key={s || "all"}
+                  type="button"
+                  onClick={() => setStatus(s)}
+                  className={`rounded-skeuo-sm px-3 py-1 text-xs font-medium transition-colors ${
+                    status === s
+                      ? "bg-accent-primary text-white"
+                      : "bg-surface-panel-raised text-text-muted hover:text-text"
+                  }`}
+                >
+                  {s || "all"}
+                </button>
+              ))}
+            </div>
+
+            <div className="min-w-[220px]">
+              <SkeuoInput
+                placeholder="Search number, tenant, ID…"
+                value={purchaseQuery}
+                onChange={(e) => setPurchaseQuery(e.target.value)}
+                aria-label="Search purchases"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between border-t border-surface-border-subtle pt-2 text-xs text-text-muted">
+            <span>
+              Showing <strong className="text-text">{purchaseRows.length}</strong> of{" "}
+              <strong className="text-text">{allPurchases.length}</strong> purchases
+            </span>
+            {(status || purchaseQuery.trim()) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setStatus("");
+                  setPurchaseQuery("");
+                }}
+                className="text-accent-primary hover:underline"
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
         </div>
+
         <AdminLoading loading={purchases.loading} />
         <SkeuoTable>
           <SkeuoTableHead>
@@ -609,12 +824,12 @@ export default function AdminBillingPage() {
           <SkeuoTableBody>
             {purchaseRows.map((p) => (
               <SkeuoTableRow key={p.purchaseId}>
-                <SkeuoTd className="font-mono">{p.e164}</SkeuoTd>
-                <SkeuoTd className="font-mono text-[10px]">{p.tenantId}</SkeuoTd>
+                <SkeuoTd className="font-mono font-medium">{p.e164}</SkeuoTd>
+                <SkeuoTd className="font-mono text-xs text-text-muted">{p.tenantId}</SkeuoTd>
                 <SkeuoTd>
                   <SkeuoBadge tone={TONE[p.status] || "muted"}>{p.status}</SkeuoBadge>
                 </SkeuoTd>
-                <SkeuoTd>{formatWhen(p.createdAt)}</SkeuoTd>
+                <SkeuoTd className="text-xs text-text-muted">{formatWhen(p.createdAt)}</SkeuoTd>
                 <SkeuoTd className="space-x-2 text-right">
                   {p.status === "failed" && (
                     <SkeuoButton
@@ -640,6 +855,13 @@ export default function AdminBillingPage() {
                 </SkeuoTd>
               </SkeuoTableRow>
             ))}
+            {purchaseRows.length === 0 && !purchases.loading && (
+              <SkeuoTableRow>
+                <SkeuoTd className="text-center py-6 text-text-muted" colSpan={5}>
+                  No number purchases found matching current filters.
+                </SkeuoTd>
+              </SkeuoTableRow>
+            )}
           </SkeuoTableBody>
         </SkeuoTable>
       </DevCard>

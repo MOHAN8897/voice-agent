@@ -160,6 +160,22 @@ export default function AdminActivityPage() {
   const errors = byOutcome.error ?? 0;
   const warnings = bySeverity.warning ?? 0;
 
+  const hasActiveFilters = Boolean(
+    source || outcome || severity || action || actor || tenantId.trim() || search.trim() || range !== "24"
+  );
+
+  function resetAllFilters() {
+    setSource("");
+    setOutcome("");
+    setSeverity("");
+    setAction("");
+    setActor("");
+    setTenantId("");
+    setSearch("");
+    setRange("24");
+    setOffset(0);
+  }
+
   async function saveNote() {
     if (!note.trim()) return;
     setNoteState("saving");
@@ -354,6 +370,88 @@ export default function AdminActivityPage() {
             data-testid="activity-search"
             className="min-w-[180px]"
           />
+        </div>
+
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-t border-surface-border-subtle pt-2 text-xs text-text-muted">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="mr-1">Quick:</span>
+            <button
+              type="button"
+              onClick={() => {
+                setOutcome("error");
+                setSeverity("");
+                setSource("");
+              }}
+              className={`rounded px-2 py-0.5 text-xs transition-colors ${
+                outcome === "error"
+                  ? "bg-status-danger text-white"
+                  : "bg-surface-panel-raised text-text-muted hover:text-text"
+              }`}
+            >
+              Errors only
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setOutcome("");
+                setSeverity("warning");
+                setSource("");
+              }}
+              className={`rounded px-2 py-0.5 text-xs transition-colors ${
+                severity === "warning"
+                  ? "bg-status-warning text-white"
+                  : "bg-surface-panel-raised text-text-muted hover:text-text"
+              }`}
+            >
+              Warnings
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSource("admin");
+                setOutcome("");
+                setSeverity("");
+              }}
+              className={`rounded px-2 py-0.5 text-xs transition-colors ${
+                source === "admin"
+                  ? "bg-accent-primary text-white"
+                  : "bg-surface-panel-raised text-text-muted hover:text-text"
+              }`}
+            >
+              Admin actions
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSource("webhook");
+                setOutcome("");
+                setSeverity("");
+              }}
+              className={`rounded px-2 py-0.5 text-xs transition-colors ${
+                source === "webhook"
+                  ? "bg-accent-primary text-white"
+                  : "bg-surface-panel-raised text-text-muted hover:text-text"
+              }`}
+            >
+              Webhooks
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span>
+              Showing <strong className="text-text">{entries.length}</strong> of{" "}
+              <strong className="text-text">{total}</strong> events
+            </span>
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={resetAllFilters}
+                className="text-accent-primary hover:underline"
+              >
+                Clear all filters
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Row placeholders, not a spinner: the table's shape is known, so an
