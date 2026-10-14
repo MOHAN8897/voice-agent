@@ -10,6 +10,7 @@ import {
   IconChart,
   IconMic,
   IconOverview,
+  IconPhone,
   IconRack,
   IconSettings,
 } from "@/components/ui/skeuo/icons";
@@ -64,6 +65,26 @@ const ADMIN_GROUPS: Array<{
         label: "Overview",
         icon: <IconOverview className="h-4 w-4" />,
       },
+      {
+        href: "/dev/admin/numbers",
+        label: "Phone numbers",
+        icon: <IconPhone className="h-4 w-4" />,
+      },
+      {
+        href: "/dev/admin/tenants",
+        label: "Tenants",
+        icon: <IconAgents className="h-4 w-4" />,
+      },
+      {
+        href: "/dev/admin/users",
+        label: "Users",
+        icon: <IconAgents className="h-4 w-4" />,
+      },
+      {
+        href: "/dev/admin/verification",
+        label: "Verification",
+        icon: <IconActivity className="h-4 w-4" />,
+      },
     ],
   },
   {
@@ -116,7 +137,7 @@ export function AdminNav() {
             {group.items.map((item) => {
               const active =
                 item.href === "/dev/admin"
-                  ? ADMIN_WORKSPACE_ROUTES.has(pathname)
+                  ? pathname === "/dev/admin"
                   : pathname.startsWith(item.href);
               return (
                 <SkeuoNavItem

@@ -395,13 +395,11 @@ export default function AdminActivityPage() {
           ) : (
             <SkeuoTable>
               <SkeuoTableHead>
-                <SkeuoTableRow>
-                  <SkeuoTh>When</SkeuoTh>
-                  <SkeuoTh>Action</SkeuoTh>
-                  <SkeuoTh>Actor</SkeuoTh>
-                  <SkeuoTh>Resource</SkeuoTh>
-                  <SkeuoTh>Outcome</SkeuoTh>
-                </SkeuoTableRow>
+                <SkeuoTh>When</SkeuoTh>
+                <SkeuoTh>Action</SkeuoTh>
+                <SkeuoTh>Actor</SkeuoTh>
+                <SkeuoTh>Resource</SkeuoTh>
+                <SkeuoTh>Outcome</SkeuoTh>
               </SkeuoTableHead>
               <SkeuoTableBody>
                 {entries.map((e) => (

@@ -1,15 +1,14 @@
 """Rename legacy vendor-named columns to neutral integration fields.
 
 Revision ID: 036_unvendor_legacy_columns
-Revises: 035_support_social_mail_and_ticket_management
+Revises: 035_support_mail_ticket
 Create Date: 2026-10-14
 """
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 revision = "036_unvendor_legacy_columns"
-down_revision = "035_support_social_mail_and_ticket_management"
+down_revision = "035_support_mail_ticket"
 branch_labels = None
 depends_on = None
 

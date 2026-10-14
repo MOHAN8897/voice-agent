@@ -20,6 +20,16 @@ from server.db.connection import get_session_factory
 from server.db.models.integration_models import OAuthState
 from server.utils.logger import logger
 
+def _safe_uuid(raw_id: str | None, prefix: str = "id") -> uuid.UUID:
+    """Safely convert any identifier to a deterministic UUIDv5 if not already a UUID."""
+    if not raw_id:
+        return uuid.NAMESPACE_DNS
+    try:
+        return uuid.UUID(str(raw_id))
+    except (ValueError, TypeError, AttributeError):
+        return uuid.uuid5(uuid.NAMESPACE_DNS, f"{prefix}:{raw_id}")
+
+
 # Canonical mapping from voice agent catalog IDs to Nango provider config keys
 NANGO_PROVIDER_MAP: dict[str, str] = {
     "GOOGLECALENDAR": "google-calendar",
@@ -32,7 +42,6 @@ NANGO_PROVIDER_MAP: dict[str, str] = {
     "NOTION": "notion",
     "AIRTABLE": "airtable",
     "ZENDESK": "zendesk",
-    "STRIPE": "stripe-api-key",
     "CALENDLY": "calendly",
     "CALCOM": "cal-com-v2",
     "ZOOM": "zoom",
@@ -305,7 +314,7 @@ class NangoService:
                 # 2. Check existing keys or create a key
                 create_req = urllib.request.Request(
                     f"{self.base_url}/environments/{env_uuid}/api-keys",
-                    data=json.dumps({"display_name": "Voxly Voice Agent"}).encode(),
+                    data=json.dumps({"display_name": "DialTact Voice Agent"}).encode(),
                     headers={
                         "Authorization": f"Bearer {account_key}",
                         "Content-Type": "application/json",
@@ -379,8 +388,8 @@ class NangoService:
                 async with session_factory() as session:
                     oauth_record = OAuthState(
                         state=state,
-                        tenant_id=uuid.UUID(str(tenant_id)),
-                        user_id=uuid.UUID(str(user_id)),
+                        tenant_id=_safe_uuid(tenant_id, "tenant"),
+                        user_id=_safe_uuid(user_id, "user"),
                         app_name=app_name.upper(),
                         redirect_uri=base_redirect_uri,
                         expires_at=expires_at,
@@ -393,13 +402,13 @@ class NangoService:
         # 2. Check if Nango is configured
         env_key = await self._resolve_environment_key()
         if not env_key:
-            logger.error(
-                "[NANGO] No Nango environment secret key configured. "
-                "Set NANGO_SECRET_KEY (or NANGO_API_KEY) in your .env to enable OAuth."
+            logger.warning(
+                "[INTEGRATIONS] No integration environment secret key configured. "
+                "Set NANGO_SECRET_KEY in your environment to enable live OAuth."
             )
             return {
-                "error": "nango_not_configured",
-                "message": "Nango is not configured. Please set NANGO_SECRET_KEY in your environment to enable OAuth integrations.",
+                "error": "integration_not_configured",
+                "message": "Integration service is not configured. Direct API Key or sandbox authorization is required.",
                 "state": state,
                 "status": "ERROR",
             }
@@ -464,7 +473,7 @@ class NangoService:
             token = session_data.get("token")
             if connect_link:
                 return {
-                    "connection_id": f"nango_conn_{state[:16]}",
+                    "connection_id": f"conn_{state[:16]}",
                     "redirect_url": connect_link,
                     "session_token": token,
                     "state": state,
@@ -472,12 +481,11 @@ class NangoService:
                 }
         except urllib.error.HTTPError as exc:
             err_body = exc.read().decode(errors="replace")
-            logger.error("[NANGO] Connect session initiation HTTP %s: %s", exc.code, err_body)
+            logger.error("[INTEGRATIONS] Connect session initiation HTTP %s: %s", exc.code, err_body)
             if "No Nango-provided developer app" in err_body or "does not exist" in err_body or exc.code == 400:
                 return {
                     "error": "oauth_credentials_required",
                     "message": f"'{app_name}' requires direct API Key connection or OAuth setup.",
-                    "provider_key": provider_key,
                     "state": state,
                     "status": "ERROR",
                 }
@@ -488,10 +496,10 @@ class NangoService:
                 "status": "ERROR",
             }
         except Exception as exc:
-            logger.error("[NANGO] Provider initiation failed: %s", exc)
+            logger.warning("[INTEGRATIONS] Provider initiation failed: %s", exc)
             return {
-                "error": "nango_session_failed",
-                "message": f"Failed to initiate OAuth session: {exc}",
+                "error": "session_failed",
+                "message": f"Failed to initiate authorization session: {exc}",
                 "state": state,
                 "status": "ERROR",
             }
@@ -641,7 +649,10 @@ class NangoService:
         proxy_prefixes = (
             "GOOGLECALENDAR_", "GMAIL_", "SLACK_", "HUBSPOT_", "CALCOM_", "CALENDLY_",
             "GITHUB_", "NOTION_", "ZOOM_", "OUTLOOKCALENDAR_", "SALESFORCE_", "ZENDESK_",
-            "ASANA_", "TODOIST_", "DISCORD_", "AIRTABLE_", "MICROSOFTTEAMS_"
+            "ASANA_", "TODOIST_", "DISCORD_", "AIRTABLE_", "MICROSOFTTEAMS_",
+            "SHOPIFY_", "TWILIO_SMS_", "WOOCOMMERCE_", "JIRA_", "LINEAR_", "INTERCOM_",
+            "FRESHDESK_", "SENDGRID_", "MAILCHIMP_", "SUPABASE_", "CLICKUP_", "MONDAY_",
+            "WHATSAPP_", "PIPEDRIVE_"
         )
         if any(norm_action.startswith(p) for p in proxy_prefixes):
             try:
@@ -908,6 +919,90 @@ class NangoService:
                         "message": f"Found {len(items)} events on {date_val}.",
                     }
                 return {"status": "error", "message": "Failed to list events."}
+
+            elif action_name in ("GOOGLECALENDAR_CANCEL_EVENT", "GOOGLECALENDAR_DELETE_EVENT"):
+                event_id = str(params.get("event_id") or params.get("eventId") or "").strip()
+                calendar_id = str(params.get("calendar_id") or "primary").strip()
+                if not event_id:
+                    return {"status": "error", "error": "missing_event_id", "message": "Event ID is required to cancel an appointment."}
+                resp = await client.delete(
+                    f"{self.base_url}/proxy/calendar/v3/calendars/{urllib.parse.quote(calendar_id)}/events/{urllib.parse.quote(event_id)}",
+                    headers=headers,
+                )
+                if resp.status_code in (200, 204):
+                    return {
+                        "status": "cancelled",
+                        "event_id": event_id,
+                        "summary": f"Event {event_id} was successfully cancelled.",
+                        "message": "Your calendar appointment has been cancelled.",
+                    }
+                elif resp.status_code == 404:
+                    return {
+                        "status": "error",
+                        "error": "not_found",
+                        "message": f"Calendar event {event_id} was not found or already cancelled.",
+                    }
+                else:
+                    logger.error("[NANGO_PROXY] Cancel event failed HTTP %s: %s", resp.status_code, resp.text[:150])
+                    return {"status": "error", "message": f"Failed to cancel event (HTTP {resp.status_code})."}
+
+            elif action_name in ("GOOGLECALENDAR_RESCHEDULE_EVENT", "GOOGLECALENDAR_UPDATE_EVENT"):
+                event_id = str(params.get("event_id") or params.get("eventId") or "").strip()
+                calendar_id = str(params.get("calendar_id") or "primary").strip()
+                if not event_id:
+                    return {"status": "error", "error": "missing_event_id", "message": "Event ID is required to reschedule an appointment."}
+                start_val = params.get("start") or params.get("start_time") or params.get("dateTime")
+                end_val = params.get("end") or params.get("end_time")
+                if not start_val:
+                    return {"status": "error", "error": "missing_start_time", "message": "New start time is required to reschedule."}
+
+                start_str = str(start_val).strip()
+                if "T" in start_str and not (start_str.endswith("Z") or "+" in start_str[10:] or "-" in start_str[10:]):
+                    start_iso = f"{start_str}+05:30"
+                elif "T" not in start_str and len(start_str) == 10:
+                    start_iso = f"{start_str}T10:00:00+05:30"
+                else:
+                    start_iso = start_str
+
+                if not end_val:
+                    try:
+                        clean_iso = start_iso.replace("Z", "+00:00")
+                        st_dt = datetime.fromisoformat(clean_iso)
+                        end_iso = (st_dt + timedelta(minutes=30)).isoformat()
+                    except Exception:
+                        end_iso = start_iso
+                else:
+                    end_iso = str(end_val).strip()
+                    if "T" in end_iso and not (end_iso.endswith("Z") or "+" in end_iso[10:] or "-" in end_iso[10:]):
+                        end_iso = f"{end_iso}+05:30"
+
+                patch_payload: dict[str, Any] = {
+                    "start": {"dateTime": start_iso, "timeZone": "Asia/Kolkata"},
+                    "end": {"dateTime": end_iso, "timeZone": "Asia/Kolkata"},
+                }
+                if params.get("summary"):
+                    patch_payload["summary"] = str(params["summary"])
+                if params.get("description"):
+                    patch_payload["description"] = str(params["description"])
+
+                resp = await client.patch(
+                    f"{self.base_url}/proxy/calendar/v3/calendars/{urllib.parse.quote(calendar_id)}/events/{urllib.parse.quote(event_id)}",
+                    headers=headers,
+                    json=patch_payload,
+                )
+                if resp.status_code in (200, 204):
+                    ev = resp.json() if resp.text else {}
+                    return {
+                        "status": "confirmed",
+                        "rescheduled": True,
+                        "event_id": event_id,
+                        "start": ev.get("start", {}).get("dateTime", start_iso),
+                        "summary": ev.get("summary", f"Appointment rescheduled to {start_iso}"),
+                        "message": f"Appointment successfully rescheduled to {start_iso}.",
+                    }
+                else:
+                    logger.error("[NANGO_PROXY] Reschedule event failed HTTP %s: %s", resp.status_code, resp.text[:150])
+                    return {"status": "error", "message": f"Failed to reschedule event (HTTP {resp.status_code})."}
 
             elif action_name == "GMAIL_SEND_EMAIL":
                 to_addr = params.get("to") or params.get("recipient")
@@ -1298,6 +1393,847 @@ class NangoService:
                         "message": "Discord message posted.",
                     }
                 return {"status": "error", "message": f"Failed to post Discord message (HTTP {resp.status_code})."}
+
+            elif action_name == "CALENDLY_CANCEL_EVENT":
+                event_uuid = str(params.get("event_uuid") or params.get("event_id") or "").strip()
+                reason = str(params.get("reason") or "Caller requested cancellation").strip()
+                if not event_uuid:
+                    return {"status": "error", "message": "Event UUID is required to cancel a Calendly event."}
+                clean_uuid = event_uuid.split("/")[-1]
+                resp = await client.post(
+                    f"{self.base_url}/proxy/scheduled_events/{urllib.parse.quote(clean_uuid)}/cancellation",
+                    headers=headers,
+                    json={"reason": reason},
+                )
+                if resp.status_code in (200, 201):
+                    return {
+                        "status": "cancelled",
+                        "event_uuid": clean_uuid,
+                        "summary": f"Calendly appointment {clean_uuid} has been cancelled.",
+                        "message": "Appointment cancelled.",
+                    }
+                return {"status": "error", "message": f"Failed to cancel Calendly event (HTTP {resp.status_code})."}
+
+            elif action_name == "CALENDLY_LIST_EVENT_TYPES":
+                get_params = {}
+                if params.get("user"):
+                    get_params["user"] = str(params["user"])
+                resp = await client.get(
+                    f"{self.base_url}/proxy/event_types",
+                    headers=headers,
+                    params=get_params,
+                )
+                if resp.status_code == 200:
+                    collection = resp.json().get("collection", [])
+                    event_types = [{"name": et.get("name"), "duration": et.get("duration"), "uri": et.get("uri")} for et in collection[:5]]
+                    return {
+                        "status": "success",
+                        "event_types": event_types,
+                        "summary": f"Found {len(collection)} event types.",
+                        "message": f"Found {len(collection)} booking types.",
+                    }
+                return {"status": "error", "message": f"Failed to list Calendly event types (HTTP {resp.status_code})."}
+
+            elif action_name == "CALCOM_CANCEL_BOOKING":
+                uid = str(params.get("booking_uid") or params.get("uid") or "").strip()
+                reason = str(params.get("reason") or "Caller requested cancellation").strip()
+                if not uid:
+                    return {"status": "error", "message": "Booking UID is required."}
+                resp = await client.post(
+                    f"{self.base_url}/proxy/v2/bookings/{urllib.parse.quote(uid)}/cancel",
+                    headers=headers,
+                    json={"cancellationReason": reason},
+                )
+                if resp.status_code in (200, 201):
+                    return {
+                        "status": "cancelled",
+                        "uid": uid,
+                        "summary": f"Cal.com booking {uid} has been cancelled.",
+                        "message": "Booking cancelled.",
+                    }
+                return {"status": "error", "message": f"Failed to cancel Cal.com booking (HTTP {resp.status_code})."}
+
+            elif action_name == "CALCOM_RESCHEDULE_BOOKING":
+                uid = str(params.get("booking_uid") or params.get("uid") or "").strip()
+                start_time = str(params.get("start") or params.get("start_time") or "").strip()
+                reason = str(params.get("reason") or "Caller requested reschedule").strip()
+                if not (uid and start_time):
+                    return {"status": "error", "message": "Booking UID and new start time are required."}
+                resp = await client.post(
+                    f"{self.base_url}/proxy/v2/bookings/{urllib.parse.quote(uid)}/reschedule",
+                    headers=headers,
+                    json={"start": start_time, "reschedulingReason": reason},
+                )
+                if resp.status_code in (200, 201):
+                    return {
+                        "status": "rescheduled",
+                        "uid": uid,
+                        "start_time": start_time,
+                        "summary": f"Cal.com booking {uid} rescheduled to {start_time}.",
+                        "message": f"Booking rescheduled to {start_time}.",
+                    }
+                return {"status": "error", "message": f"Failed to reschedule Cal.com booking (HTTP {resp.status_code})."}
+
+            elif action_name == "SHOPIFY_GET_ORDER":
+                order_id = str(params.get("order_id") or "").strip()
+                email = str(params.get("email") or "").strip()
+                if order_id:
+                    clean_id = order_id.replace("#", "")
+                    resp = await client.get(
+                        f"{self.base_url}/proxy/admin/api/2024-01/orders/{urllib.parse.quote(clean_id)}.json",
+                        headers=headers,
+                    )
+                    if resp.status_code == 404:
+                        resp = await client.get(
+                            f"{self.base_url}/proxy/admin/api/2024-01/orders.json",
+                            headers=headers,
+                            params={"name": f"#{clean_id}" if not clean_id.startswith("#") else clean_id, "status": "any"},
+                        )
+                elif email:
+                    resp = await client.get(
+                        f"{self.base_url}/proxy/admin/api/2024-01/orders.json",
+                        headers=headers,
+                        params={"email": email, "status": "any"},
+                    )
+                else:
+                    return {"status": "error", "message": "Order ID or customer email is required."}
+
+                if resp.status_code == 200:
+                    data = resp.json()
+                    order = data.get("order") or (data.get("orders", [{}])[0] if data.get("orders") else {})
+                    if not order:
+                        return {"status": "error", "message": "No matching order found."}
+                    return {
+                        "status": "success",
+                        "order_id": str(order.get("id")),
+                        "name": order.get("name"),
+                        "financial_status": order.get("financial_status"),
+                        "fulfillment_status": order.get("fulfillment_status") or "unfulfilled",
+                        "summary": f"Order {order.get('name')} is {order.get('financial_status')} and {order.get('fulfillment_status') or 'unfulfilled'}.",
+                        "message": f"Order {order.get('name')} found.",
+                    }
+                return {"status": "error", "message": f"Failed to retrieve Shopify order (HTTP {resp.status_code})."}
+
+            elif action_name == "SHOPIFY_CANCEL_ORDER":
+                order_id = str(params.get("order_id") or "").strip().replace("#", "")
+                reason = str(params.get("reason") or "customer").strip().lower()
+                if reason not in ("customer", "inventory", "fraud", "declined", "other"):
+                    reason = "customer"
+                if not order_id:
+                    return {"status": "error", "message": "Order ID is required to cancel a Shopify order."}
+                resp = await client.post(
+                    f"{self.base_url}/proxy/admin/api/2024-01/orders/{urllib.parse.quote(order_id)}/cancel.json",
+                    headers=headers,
+                    json={"reason": reason, "email": True},
+                )
+                if resp.status_code in (200, 201):
+                    data = resp.json().get("order", {})
+                    return {
+                        "status": "cancelled",
+                        "order_id": str(data.get("id") or order_id),
+                        "name": data.get("name", order_id),
+                        "financial_status": data.get("financial_status", "refunded"),
+                        "summary": f"Shopify order {data.get('name', order_id)} has been cancelled.",
+                        "message": f"Order {data.get('name', order_id)} cancelled.",
+                    }
+                return {"status": "error", "message": f"Failed to cancel Shopify order (HTTP {resp.status_code})."}
+
+            elif action_name == "SHOPIFY_GET_FULFILLMENTS":
+                order_id = str(params.get("order_id") or "").strip().replace("#", "")
+                if not order_id:
+                    return {"status": "error", "message": "Order ID is required."}
+                resp = await client.get(
+                    f"{self.base_url}/proxy/admin/api/2024-01/orders/{urllib.parse.quote(order_id)}/fulfillments.json",
+                    headers=headers,
+                )
+                if resp.status_code == 200:
+                    fulfillments = resp.json().get("fulfillments", [])
+                    tracking = [f.get("tracking_number") for f in fulfillments if f.get("tracking_number")]
+                    status_str = fulfillments[0].get("status") if fulfillments else "unfulfilled"
+                    return {
+                        "status": "success",
+                        "order_id": order_id,
+                        "fulfillment_status": status_str,
+                        "tracking_number": tracking[0] if tracking else None,
+                        "summary": f"Order fulfillment status is {status_str}." + (f" Tracking: {tracking[0]}" if tracking else ""),
+                        "message": f"Order is {status_str}.",
+                    }
+                return {"status": "error", "message": f"Failed to retrieve fulfillments (HTTP {resp.status_code})."}
+
+            elif action_name == "SHOPIFY_SEARCH_CUSTOMER":
+                query = str(params.get("query") or params.get("email") or params.get("phone") or "").strip()
+                if not query:
+                    return {"status": "error", "message": "Search query or customer email is required."}
+                resp = await client.get(
+                    f"{self.base_url}/proxy/admin/api/2024-01/customers/search.json",
+                    headers=headers,
+                    params={"query": query},
+                )
+                if resp.status_code == 200:
+                    customers = resp.json().get("customers", [])
+                    cust = customers[0] if customers else {}
+                    cname = f"{cust.get('first_name', '')} {cust.get('last_name', '')}".strip() or None
+                    return {
+                        "status": "success",
+                        "customer": cname,
+                        "summary": f"Found matching customer: {cname}." if cname else "No matching customer found.",
+                        "message": "Customer record retrieved.",
+                    }
+                return {"status": "error", "message": f"Failed to search Shopify customers (HTTP {resp.status_code})."}
+
+            elif action_name == "TWILIO_SMS_SEND_MESSAGE":
+                to_num = str(params.get("to") or params.get("recipient") or "").strip()
+                body_txt = str(params.get("body") or params.get("message") or "").strip()
+                if not (to_num and body_txt):
+                    return {"status": "error", "message": "Recipient phone number and message body are required."}
+                post_data = {"To": to_num, "Body": body_txt}
+                if params.get("from"):
+                    post_data["From"] = str(params["from"])
+                resp = await client.post(
+                    f"{self.base_url}/proxy/Messages.json",
+                    headers=headers,
+                    data=post_data,
+                )
+                if resp.status_code in (200, 201):
+                    data = resp.json()
+                    sid = data.get("sid")
+                    return {
+                        "status": "sent",
+                        "message_sid": sid,
+                        "summary": f"SMS sent via Twilio (SID {sid}).",
+                        "message": "Confirmation SMS sent.",
+                    }
+                return {"status": "error", "message": f"Failed to send SMS (HTTP {resp.status_code})."}
+
+            elif action_name == "TWILIO_SMS_GET_STATUS":
+                msid = str(params.get("message_sid") or params.get("sid") or "").strip()
+                if not msid:
+                    return {"status": "error", "message": "Message SID is required."}
+                resp = await client.get(
+                    f"{self.base_url}/proxy/Messages/{urllib.parse.quote(msid)}.json",
+                    headers=headers,
+                )
+                if resp.status_code == 200:
+                    data = resp.json()
+                    sms_status = data.get("status")
+                    return {
+                        "status": "success",
+                        "message_sid": msid,
+                        "delivery_status": sms_status,
+                        "summary": f"SMS {msid} status is {sms_status}.",
+                        "message": f"SMS delivery status: {sms_status}.",
+                    }
+                return {"status": "error", "message": f"Failed to check message status (HTTP {resp.status_code})."}
+
+            elif action_name == "HUBSPOT_LOOKUP_CONTACT":
+                email = str(params.get("email") or "").strip()
+                phone = str(params.get("phone") or "").strip()
+                search_filter = []
+                if email:
+                    search_filter.append({"propertyName": "email", "operator": "EQ", "value": email})
+                elif phone:
+                    search_filter.append({"propertyName": "phone", "operator": "EQ", "value": phone})
+                else:
+                    return {"status": "error", "message": "Email or phone number is required to lookup HubSpot contact."}
+                resp = await client.post(
+                    f"{self.base_url}/proxy/crm/v3/objects/contacts/search",
+                    headers=headers,
+                    json={"filterGroups": [{"filters": search_filter}]},
+                )
+                if resp.status_code == 200:
+                    results = resp.json().get("results", [])
+                    if results:
+                        contact = results[0]
+                        props = contact.get("properties", {})
+                        cname = f"{props.get('firstname', '')} {props.get('lastname', '')}".strip()
+                        return {
+                            "status": "success",
+                            "contact_id": contact.get("id"),
+                            "id": contact.get("id"),
+                            "summary": f"Found contact {cname} (ID {contact.get('id')}).",
+                            "message": "Contact found in HubSpot.",
+                        }
+                    return {"status": "not_found", "message": "No matching contact found in HubSpot."}
+                return {"status": "error", "message": f"Failed to lookup HubSpot contact (HTTP {resp.status_code})."}
+
+            elif action_name == "HUBSPOT_UPDATE_DEAL_STAGE":
+                deal_id = str(params.get("deal_id") or "").strip()
+                dealstage = str(params.get("dealstage") or "").strip()
+                if not (deal_id and dealstage):
+                    return {"status": "error", "message": "Deal ID and dealstage are required."}
+                resp = await client.patch(
+                    f"{self.base_url}/proxy/crm/v3/objects/deals/{urllib.parse.quote(deal_id)}",
+                    headers=headers,
+                    json={"properties": {"dealstage": dealstage}},
+                )
+                if resp.status_code in (200, 201):
+                    return {
+                        "status": "success",
+                        "deal_id": deal_id,
+                        "dealstage": dealstage,
+                        "summary": f"HubSpot deal {deal_id} updated to stage {dealstage}.",
+                        "message": f"Deal stage updated to {dealstage}.",
+                    }
+                return {"status": "error", "message": f"Failed to update HubSpot deal (HTTP {resp.status_code})."}
+
+            elif action_name == "SALESFORCE_LOOKUP_LEAD":
+                email = str(params.get("email") or "").strip()
+                phone = str(params.get("phone") or "").strip()
+                if email:
+                    q = f"SELECT Id, FirstName, LastName, Email, Company, Status FROM Lead WHERE Email = '{email}' LIMIT 1"
+                elif phone:
+                    q = f"SELECT Id, FirstName, LastName, Phone, Company, Status FROM Lead WHERE Phone = '{phone}' LIMIT 1"
+                else:
+                    return {"status": "error", "message": "Email or phone number required to lookup Salesforce lead."}
+                resp = await client.get(
+                    f"{self.base_url}/proxy/services/data/v57.0/query",
+                    headers=headers,
+                    params={"q": q},
+                )
+                if resp.status_code == 200:
+                    records = resp.json().get("records", [])
+                    if records:
+                        rec = records[0]
+                        return {
+                            "status": "success",
+                            "lead_id": rec.get("Id"),
+                            "id": rec.get("Id"),
+                            "summary": f"Found lead {rec.get('FirstName', '')} {rec.get('LastName', '')} at {rec.get('Company', '')}.",
+                            "message": "Lead found in Salesforce.",
+                        }
+                    return {"status": "not_found", "message": "No matching lead found in Salesforce."}
+                return {"status": "error", "message": f"Failed to query Salesforce lead (HTTP {resp.status_code})."}
+
+            elif action_name == "ZENDESK_SEARCH_TICKETS":
+                query = str(params.get("query") or params.get("email") or "").strip()
+                if not query:
+                    return {"status": "error", "message": "Search query or email required."}
+                resp = await client.get(
+                    f"{self.base_url}/proxy/api/v2/search.json",
+                    headers=headers,
+                    params={"query": f"type:ticket {query}"},
+                )
+                if resp.status_code == 200:
+                    results = resp.json().get("results", [])
+                    tickets = [{"id": t.get("id"), "subject": t.get("subject"), "status": t.get("status")} for t in results[:5]]
+                    return {
+                        "status": "success",
+                        "tickets": tickets,
+                        "summary": f"Found {len(results)} Zendesk tickets.",
+                        "message": f"Found {len(results)} tickets in Zendesk.",
+                    }
+                return {"status": "error", "message": f"Failed to search Zendesk tickets (HTTP {resp.status_code})."}
+
+            elif action_name == "ZENDESK_UPDATE_TICKET":
+                tid = str(params.get("ticket_id") or "").strip()
+                if not tid:
+                    return {"status": "error", "message": "Ticket ID is required."}
+                patch_ticket: dict[str, Any] = {}
+                if params.get("comment"):
+                    patch_ticket["comment"] = {"body": str(params["comment"])}
+                if params.get("status"):
+                    patch_ticket["status"] = str(params["status"])
+                resp = await client.put(
+                    f"{self.base_url}/proxy/api/v2/tickets/{urllib.parse.quote(tid)}.json",
+                    headers=headers,
+                    json={"ticket": patch_ticket},
+                )
+                if resp.status_code in (200, 201):
+                    return {
+                        "status": "success",
+                        "ticket_id": tid,
+                        "summary": f"Zendesk ticket #{tid} updated successfully.",
+                        "message": f"Ticket #{tid} updated.",
+                    }
+                return {"status": "error", "message": f"Failed to update Zendesk ticket (HTTP {resp.status_code})."}
+
+            elif action_name == "WOOCOMMERCE_GET_ORDER":
+                order_id = str(params.get("order_id") or "").strip().replace("#", "")
+                if not order_id:
+                    return {"status": "error", "message": "Order ID is required."}
+                resp = await client.get(
+                    f"{self.base_url}/proxy/wp-json/wc/v3/orders/{urllib.parse.quote(order_id)}",
+                    headers=headers,
+                )
+                if resp.status_code == 200:
+                    data = resp.json()
+                    return {
+                        "status": "success",
+                        "order_id": str(data.get("id")),
+                        "total": str(data.get("total")),
+                        "shipping_status": data.get("status"),
+                        "summary": f"WooCommerce order #{order_id} total is {data.get('total')} and status is {data.get('status')}.",
+                        "message": f"Order #{order_id} is {data.get('status')}.",
+                    }
+                return {"status": "error", "message": f"Failed to retrieve WooCommerce order (HTTP {resp.status_code})."}
+
+            elif action_name == "WOOCOMMERCE_CHECK_STOCK":
+                pid = str(params.get("product_id") or params.get("sku") or "").strip()
+                if not pid:
+                    return {"status": "error", "message": "Product ID or SKU is required."}
+                resp = await client.get(
+                    f"{self.base_url}/proxy/wp-json/wc/v3/products/{urllib.parse.quote(pid)}",
+                    headers=headers,
+                )
+                if resp.status_code == 200:
+                    data = resp.json()
+                    stock_qty = data.get("stock_quantity")
+                    stock_status = data.get("stock_status", "instock")
+                    return {
+                        "status": "success",
+                        "stock": stock_qty if stock_qty is not None else stock_status,
+                        "summary": f"Product {data.get('name', pid)} stock status: {stock_status}.",
+                        "message": f"Stock status is {stock_status}.",
+                    }
+                return {"status": "error", "message": f"Failed to check product stock (HTTP {resp.status_code})."}
+
+            elif action_name == "WOOCOMMERCE_UPDATE_ORDER_STATUS":
+                order_id = str(params.get("order_id") or "").strip().replace("#", "")
+                status_val = str(params.get("status") or "").strip().lower()
+                if not (order_id and status_val):
+                    return {"status": "error", "message": "Order ID and new status are required."}
+                resp = await client.put(
+                    f"{self.base_url}/proxy/wp-json/wc/v3/orders/{urllib.parse.quote(order_id)}",
+                    headers=headers,
+                    json={"status": status_val},
+                )
+                if resp.status_code in (200, 201):
+                    return {
+                        "status": "success",
+                        "order_id": order_id,
+                        "shipping_status": status_val,
+                        "summary": f"WooCommerce order #{order_id} status updated to {status_val}.",
+                        "message": f"Order #{order_id} updated to {status_val}.",
+                    }
+                return {"status": "error", "message": f"Failed to update WooCommerce order (HTTP {resp.status_code})."}
+
+            elif action_name == "JIRA_GET_ISSUE":
+                ikey = str(params.get("issue_key") or params.get("issue_id") or "").strip()
+                if not ikey:
+                    return {"status": "error", "message": "Issue key is required."}
+                resp = await client.get(
+                    f"{self.base_url}/proxy/rest/api/3/issue/{urllib.parse.quote(ikey)}",
+                    headers=headers,
+                )
+                if resp.status_code == 200:
+                    fields = resp.json().get("fields", {})
+                    st_name = fields.get("status", {}).get("name", "Open")
+                    return {
+                        "status": "success",
+                        "key": ikey,
+                        "issue_status": st_name,
+                        "summary": f"Jira issue {ikey} is currently {st_name}.",
+                        "message": f"Issue {ikey} is {st_name}.",
+                    }
+                return {"status": "error", "message": f"Failed to get Jira issue (HTTP {resp.status_code})."}
+
+            elif action_name == "JIRA_ADD_COMMENT":
+                ikey = str(params.get("issue_key") or params.get("issue_id") or "").strip()
+                comment_txt = str(params.get("comment") or "").strip()
+                if not (ikey and comment_txt):
+                    return {"status": "error", "message": "Issue key and comment are required."}
+                doc_body = {
+                    "body": {
+                        "type": "doc",
+                        "version": 1,
+                        "content": [{"type": "paragraph", "content": [{"type": "text", "text": comment_txt}]}],
+                    }
+                }
+                resp = await client.post(
+                    f"{self.base_url}/proxy/rest/api/3/issue/{urllib.parse.quote(ikey)}/comment",
+                    headers=headers,
+                    json=doc_body,
+                )
+                if resp.status_code in (200, 201):
+                    return {
+                        "status": "success",
+                        "key": ikey,
+                        "summary": f"Comment added to Jira issue {ikey}.",
+                        "message": f"Comment logged on {ikey}.",
+                    }
+                return {"status": "error", "message": f"Failed to add comment to Jira issue (HTTP {resp.status_code})."}
+
+            elif action_name == "LINEAR_SEARCH_ISSUES":
+                q = str(params.get("query") or "").strip()
+                gql = {
+                    "query": "query Search($q: String!) { issueSearch(query: $q, first: 5) { nodes { id identifier title state { name } } } }",
+                    "variables": {"q": q},
+                }
+                resp = await client.post(
+                    f"{self.base_url}/proxy/graphql",
+                    headers=headers,
+                    json=gql,
+                )
+                if resp.status_code == 200:
+                    nodes = resp.json().get("data", {}).get("issueSearch", {}).get("nodes", [])
+                    issues = [{"identifier": n.get("identifier"), "title": n.get("title")} for n in nodes]
+                    return {
+                        "status": "success",
+                        "issues": issues,
+                        "summary": f"Found {len(nodes)} issues in Linear.",
+                        "message": f"Found {len(nodes)} issues.",
+                    }
+                return {"status": "error", "message": f"Failed to search Linear issues (HTTP {resp.status_code})."}
+
+            elif action_name == "ZOOM_GET_MEETING":
+                mid = str(params.get("meeting_id") or "").strip()
+                if not mid:
+                    return {"status": "error", "message": "Meeting ID is required."}
+                resp = await client.get(
+                    f"{self.base_url}/proxy/v2/meetings/{urllib.parse.quote(mid)}",
+                    headers=headers,
+                )
+                if resp.status_code == 200:
+                    data = resp.json()
+                    return {
+                        "status": "success",
+                        "meeting_id": str(data.get("id")),
+                        "join_url": data.get("join_url"),
+                        "start_time": data.get("start_time"),
+                        "topic": data.get("topic"),
+                        "summary": f"Zoom meeting '{data.get('topic')}' at {data.get('start_time')}.",
+                        "message": f"Meeting link: {data.get('join_url')}",
+                    }
+                return {"status": "error", "message": f"Failed to get Zoom meeting (HTTP {resp.status_code})."}
+
+            elif action_name == "GMAIL_CREATE_DRAFT":
+                to_addr = params.get("to") or params.get("recipient")
+                subject = params.get("subject") or "Follow-Up - Call Summary"
+                body = params.get("body") or "Draft notes from our recent phone call."
+                if not to_addr:
+                    return {"status": "error", "message": "Recipient email address is required."}
+                msg = EmailMessage()
+                msg["To"] = str(to_addr)
+                msg["Subject"] = str(subject)
+                msg["From"] = "me"
+                msg.set_content(str(body))
+                raw_b64 = base64.urlsafe_b64encode(msg.as_bytes()).decode().rstrip("=")
+                resp = await client.post(
+                    f"{self.base_url}/proxy/gmail/v1/users/me/drafts",
+                    headers=headers,
+                    json={"message": {"raw": raw_b64}},
+                )
+                if resp.status_code in (200, 201):
+                    did = resp.json().get("id")
+                    return {
+                        "status": "draft_created",
+                        "draft_id": did,
+                        "to": str(to_addr),
+                        "subject": str(subject),
+                        "summary": f"Email draft created in Gmail for {to_addr}.",
+                        "message": f"Draft saved in Gmail.",
+                    }
+                return {"status": "error", "message": f"Failed to create Gmail draft (HTTP {resp.status_code})."}
+
+            elif action_name == "ASANA_ADD_COMMENT":
+                tid = str(params.get("task_id") or "").strip()
+                comment = str(params.get("comment") or "").strip()
+                if not (tid and comment):
+                    return {"status": "error", "message": "Task ID and comment are required."}
+                resp = await client.post(
+                    f"{self.base_url}/proxy/api/1.0/tasks/{urllib.parse.quote(tid)}/stories",
+                    headers=headers,
+                    json={"data": {"text": comment}},
+                )
+                if resp.status_code in (200, 201):
+                    cid = resp.json().get("data", {}).get("gid")
+                    return {
+                        "status": "success",
+                        "task_id": tid,
+                        "comment_id": str(cid),
+                        "summary": f"Comment added to Asana task {tid}.",
+                        "message": "Task comment added.",
+                    }
+                return {"status": "error", "message": f"Failed to add Asana comment (HTTP {resp.status_code})."}
+
+            elif action_name == "NOTION_SEARCH_PAGES":
+                q = str(params.get("query") or "").strip()
+                notion_headers = {**headers, "Notion-Version": "2022-06-28"}
+                resp = await client.post(
+                    f"{self.base_url}/proxy/v1/search",
+                    headers=notion_headers,
+                    json={"query": q, "page_size": 5},
+                )
+                if resp.status_code == 200:
+                    results = resp.json().get("results", [])
+                    return {
+                        "status": "success",
+                        "results": len(results),
+                        "summary": f"Found {len(results)} pages in Notion.",
+                        "message": f"Found {len(results)} Notion pages.",
+                    }
+                return {"status": "error", "message": f"Failed to search Notion (HTTP {resp.status_code})."}
+
+            elif action_name == "AIRTABLE_SEARCH_RECORDS":
+                base_id = str(params.get("base_id") or "").strip()
+                table_name = str(params.get("table_name") or "").strip()
+                flt = str(params.get("filter") or "").strip()
+                if not (base_id and table_name):
+                    return {"status": "error", "message": "Base ID and table name are required."}
+                req_params: dict[str, Any] = {"maxRecords": 5}
+                if flt:
+                    req_params["filterByFormula"] = flt
+                resp = await client.get(
+                    f"{self.base_url}/proxy/v0/{urllib.parse.quote(base_id)}/{urllib.parse.quote(table_name)}",
+                    headers=headers,
+                    params=req_params,
+                )
+                if resp.status_code == 200:
+                    recs = resp.json().get("records", [])
+                    return {
+                        "status": "success",
+                        "records": len(recs),
+                        "summary": f"Found {len(recs)} records in Airtable table {table_name}.",
+                        "message": f"Found {len(recs)} Airtable records.",
+                    }
+                return {"status": "error", "message": f"Failed to query Airtable (HTTP {resp.status_code})."}
+
+            elif action_name == "INTERCOM_SEARCH_CONTACT":
+                email = str(params.get("email") or "").strip()
+                if not email:
+                    return {"status": "error", "message": "Email is required."}
+                resp = await client.post(
+                    f"{self.base_url}/proxy/contacts/search",
+                    headers=headers,
+                    json={"query": {"field": "email", "operator": "=", "value": email}},
+                )
+                if resp.status_code == 200:
+                    data = resp.json().get("data", [])
+                    cid = data[0].get("id") if data else None
+                    return {
+                        "status": "success" if cid else "not_found",
+                        "contact_id": cid,
+                        "summary": f"Found Intercom contact {cid}." if cid else "No matching contact in Intercom.",
+                        "message": "Contact found in Intercom." if cid else "Contact not found.",
+                    }
+                return {"status": "error", "message": f"Failed to search Intercom contact (HTTP {resp.status_code})."}
+
+            elif action_name == "GITHUB_SEARCH_ISSUES":
+                owner = str(params.get("owner") or "").strip()
+                repo = str(params.get("repo") or "").strip()
+                q = str(params.get("query") or "").strip()
+                full_q = f"{q} repo:{owner}/{repo}" if (owner and repo) else q
+                resp = await client.get(
+                    f"{self.base_url}/proxy/search/issues",
+                    headers=headers,
+                    params={"q": full_q, "per_page": 5},
+                )
+                if resp.status_code == 200:
+                    items = resp.json().get("items", [])
+                    issues = [{"number": it.get("number"), "title": it.get("title")} for it in items]
+                    return {
+                        "status": "success",
+                        "issues": issues,
+                        "summary": f"Found {len(items)} GitHub issues.",
+                        "message": f"Found {len(items)} issues.",
+                    }
+                return {"status": "error", "message": f"Failed to search GitHub issues (HTTP {resp.status_code})."}
+
+            elif action_name == "FRESHDESK_CREATE_TICKET":
+                subject = str(params.get("subject") or "Support Request").strip()
+                description = str(params.get("description") or "").strip()
+                email = str(params.get("email") or "").strip()
+                priority = int(params.get("priority") or 1)
+                resp = await client.post(
+                    f"{self.base_url}/proxy/api/v2/tickets",
+                    headers=headers,
+                    json={"subject": subject, "description": description, "email": email, "priority": priority, "status": 2},
+                )
+                if resp.status_code in (200, 201):
+                    tid = resp.json().get("id")
+                    return {
+                        "status": "success",
+                        "ticket_id": str(tid),
+                        "summary": f"Freshdesk ticket #{tid} created.",
+                        "message": f"Ticket #{tid} logged.",
+                    }
+                return {"status": "error", "message": f"Failed to create Freshdesk ticket (HTTP {resp.status_code})."}
+
+            elif action_name == "FRESHDESK_LOOKUP_TICKET":
+                tid = str(params.get("ticket_id") or "").strip()
+                email = str(params.get("email") or "").strip()
+                if tid:
+                    resp = await client.get(
+                        f"{self.base_url}/proxy/api/v2/tickets/{urllib.parse.quote(tid)}",
+                        headers=headers,
+                    )
+                elif email:
+                    resp = await client.get(
+                        f"{self.base_url}/proxy/api/v2/tickets",
+                        headers=headers,
+                        params={"email": email},
+                    )
+                else:
+                    return {"status": "error", "message": "Ticket ID or email is required."}
+                if resp.status_code == 200:
+                    data = resp.json()
+                    ticket = data if isinstance(data, dict) else (data[0] if data else {})
+                    return {
+                        "status": "success",
+                        "ticket_id": str(ticket.get("id")),
+                        "subject": ticket.get("subject"),
+                        "summary": f"Freshdesk ticket #{ticket.get('id')}: {ticket.get('subject')}.",
+                        "message": "Ticket found in Freshdesk.",
+                    }
+                return {"status": "error", "message": f"Failed to lookup Freshdesk ticket (HTTP {resp.status_code})."}
+
+            elif action_name == "SENDGRID_SEND_EMAIL":
+                to_email = str(params.get("to") or params.get("recipient") or "").strip()
+                subject = str(params.get("subject") or "Notification").strip()
+                body = str(params.get("body") or "").strip()
+                from_email = str(params.get("from_email") or "noreply@dialtact.ai").strip()
+                if not (to_email and body):
+                    return {"status": "error", "message": "Recipient email and body are required."}
+                send_payload = {
+                    "personalizations": [{"to": [{"email": to_email}]}],
+                    "from": {"email": from_email},
+                    "subject": subject,
+                    "content": [{"type": "text/plain", "value": body}],
+                }
+                resp = await client.post(
+                    f"{self.base_url}/proxy/v3/mail/send",
+                    headers=headers,
+                    json=send_payload,
+                )
+                if resp.status_code in (200, 202):
+                    return {
+                        "status": "sent",
+                        "summary": f"Email sent via SendGrid to {to_email}.",
+                        "message": f"Email sent to {to_email}.",
+                    }
+                return {"status": "error", "message": f"Failed to send email via SendGrid (HTTP {resp.status_code})."}
+
+            elif action_name == "MAILCHIMP_ADD_SUBSCRIBER":
+                lid = str(params.get("list_id") or "").strip()
+                em = str(params.get("email") or "").strip()
+                if not (lid and em):
+                    return {"status": "error", "message": "Audience list ID and email are required."}
+                m_payload = {
+                    "email_address": em,
+                    "status": "subscribed",
+                    "merge_fields": {
+                        "FNAME": str(params.get("first_name") or ""),
+                        "LNAME": str(params.get("last_name") or ""),
+                    },
+                }
+                resp = await client.post(
+                    f"{self.base_url}/proxy/3.0/lists/{urllib.parse.quote(lid)}/members",
+                    headers=headers,
+                    json=m_payload,
+                )
+                if resp.status_code in (200, 201):
+                    sub_id = resp.json().get("id")
+                    return {
+                        "status": "subscribed",
+                        "subscriber_id": str(sub_id),
+                        "summary": f"Subscriber {em} added to Mailchimp audience list.",
+                        "message": "Added to audience list.",
+                    }
+                return {"status": "error", "message": f"Failed to add subscriber to Mailchimp (HTTP {resp.status_code})."}
+
+            elif action_name == "CLICKUP_CREATE_TASK":
+                lid = str(params.get("list_id") or "").strip()
+                name = str(params.get("name") or "New Call Task").strip()
+                desc = str(params.get("description") or "").strip()
+                priority = int(params.get("priority") or 3)
+                if not lid:
+                    return {"status": "error", "message": "List ID is required."}
+                resp = await client.post(
+                    f"{self.base_url}/proxy/api/v2/list/{urllib.parse.quote(lid)}/task",
+                    headers=headers,
+                    json={"name": name, "description": desc, "priority": priority},
+                )
+                if resp.status_code in (200, 201):
+                    data = resp.json()
+                    return {
+                        "status": "success",
+                        "task_id": str(data.get("id")),
+                        "url": data.get("url"),
+                        "summary": f"ClickUp task created: {name}.",
+                        "message": "ClickUp task created.",
+                    }
+                return {"status": "error", "message": f"Failed to create ClickUp task (HTTP {resp.status_code})."}
+
+            elif action_name == "MONDAY_CREATE_ITEM":
+                bid = str(params.get("board_id") or "").strip()
+                iname = str(params.get("item_name") or "New Call Item").strip()
+                gql = {
+                    "query": "mutation ($boardId: ID!, $itemName: String!) { create_item (board_id: $boardId, item_name: $itemName) { id } }",
+                    "variables": {"boardId": bid, "itemName": iname},
+                }
+                resp = await client.post(
+                    f"{self.base_url}/proxy/v2",
+                    headers=headers,
+                    json=gql,
+                )
+                if resp.status_code == 200:
+                    iid = resp.json().get("data", {}).get("create_item", {}).get("id")
+                    return {
+                        "status": "success",
+                        "item_id": str(iid),
+                        "summary": f"Monday.com item '{iname}' created (ID {iid}).",
+                        "message": "Monday board item created.",
+                    }
+                return {"status": "error", "message": f"Failed to create Monday item (HTTP {resp.status_code})."}
+
+            elif action_name == "WHATSAPP_SEND_MESSAGE":
+                to_num = str(params.get("to") or params.get("recipient") or "").strip()
+                msg_text = str(params.get("message") or params.get("text") or "").strip()
+                if not (to_num and msg_text):
+                    return {"status": "error", "message": "Recipient phone number and message are required."}
+                resp = await client.post(
+                    f"{self.base_url}/proxy/messages",
+                    headers=headers,
+                    json={"messaging_product": "whatsapp", "to": to_num, "type": "text", "text": {"body": msg_text}},
+                )
+                if resp.status_code in (200, 201):
+                    mid = resp.json().get("messages", [{}])[0].get("id")
+                    return {
+                        "status": "sent",
+                        "message_id": str(mid),
+                        "summary": f"WhatsApp message delivered to {to_num}.",
+                        "message": "WhatsApp confirmation sent.",
+                    }
+                return {"status": "error", "message": f"Failed to send WhatsApp message (HTTP {resp.status_code})."}
+
+            elif action_name == "SUPABASE_INSERT_ROW":
+                table = str(params.get("table") or "").strip()
+                row_data = params.get("row") or {}
+                if not (table and row_data):
+                    return {"status": "error", "message": "Table name and row data are required."}
+                resp = await client.post(
+                    f"{self.base_url}/proxy/rest/v1/{urllib.parse.quote(table)}",
+                    headers=headers,
+                    json=row_data,
+                )
+                if resp.status_code in (200, 201):
+                    return {
+                        "status": "success",
+                        "summary": f"Row inserted into Supabase table {table}.",
+                        "message": "Record inserted into Supabase.",
+                    }
+                return {"status": "error", "message": f"Failed to insert row into Supabase (HTTP {resp.status_code})."}
+
+            elif action_name == "SUPABASE_QUERY_ROW":
+                table = str(params.get("table") or "").strip()
+                col = str(params.get("filter_column") or "").strip()
+                val = str(params.get("filter_value") or "").strip()
+                if not (table and col and val):
+                    return {"status": "error", "message": "Table, filter column, and filter value are required."}
+                resp = await client.get(
+                    f"{self.base_url}/proxy/rest/v1/{urllib.parse.quote(table)}",
+                    headers=headers,
+                    params={col: f"eq.{val}", "limit": "1"},
+                )
+                if resp.status_code == 200:
+                    data = resp.json()
+                    return {
+                        "status": "success",
+                        "data": data[0] if data else None,
+                        "summary": f"Queried Supabase table {table}.",
+                        "message": "Supabase query completed.",
+                    }
+                return {"status": "error", "message": f"Failed to query Supabase (HTTP {resp.status_code})."}
 
             return {"status": "error", "message": f"Unsupported proxy action {action_name}"}
 

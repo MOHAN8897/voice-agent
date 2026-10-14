@@ -64,9 +64,7 @@ async function login() {
 }
 
 async function main() {
-  const health = await call('GET', '/../health');
-  void health;
-  const ready = await fetch(`${API}/health`).then((r) => r.ok).catch(() => false);
+  const ready = await fetch(`${API}/api/health`).then((r) => r.ok).catch(() => false);
   if (!ready) {
     console.log(`SKIP  backend not reachable at ${API}`);
     process.exit(0);

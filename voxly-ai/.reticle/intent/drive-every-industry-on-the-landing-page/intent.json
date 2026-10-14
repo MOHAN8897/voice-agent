@@ -6,14 +6,19 @@
       },
       "declaredAt": 1791023789010,
       "id": "flow:drive-every-industry-on-the-landing-page-plays-a-real",
-      "state": "bound",
+      "provenBy": {
+        "at": 1791946809530,
+        "grade": "asserted",
+        "verdictId": "flow_replay:drive-every-industry-on-the-landing-page-plays-a-real:1791946809530"
+      },
+      "state": "proved",
       "statement": "every industry on the landing page plays a real clip rendered by the live speech model, not the browser's built-in voice",
-      "status": "proposed",
+      "status": "proved",
       "subject": "drive-every-industry-on-the-landing-page",
       "surface": {
         "flow": "drive-every-industry-on-the-landing-page-plays-a-real"
       },
-      "updatedAt": 1791023789071
+      "updatedAt": 1791946809545
     }
   },
   "subject": "drive-every-industry-on-the-landing-page",

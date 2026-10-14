@@ -181,8 +181,11 @@ def _fake_session(wallet: FakeWallet, existing_refs: set[str] | None = None):
             # The duplicate check is a bound-parameter equality, so read the value
             # the same way SQLAlchemy would rather than guessing from the kwargs.
             bound = list(stmt.compile().params.values())
-            ref = bound[0] if bound else None
-            return _Result("dup" if ref in refs else None)
+            duplicate = next(
+                (value for value in bound if isinstance(value, str) and value in refs),
+                None,
+            )
+            return _Result("dup" if duplicate else None)
 
         def add(self, row):
             added.append(row)

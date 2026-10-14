@@ -3,14 +3,15 @@
     "flow:drive-open-the-test-call-modal-so-operators-get-call-c": {
       "declaredAt": 1790851324655,
       "id": "flow:drive-open-the-test-call-modal-so-operators-get-call-c",
+      "source": "decided on the dashboard",
       "state": "declared",
       "statement": "Open the test call modal so operators get call chrome with timer and 3D avatar.",
-      "status": "proposed",
+      "status": "proved",
       "subject": "drive-open-the-test-call-modal-so-operat",
       "surface": {
         "flow": "drive-open-the-test-call-modal-so-operators-get-call-c"
       },
-      "updatedAt": 1790851324678
+      "updatedAt": 1791972280904
     }
   },
   "subject": "drive-open-the-test-call-modal-so-operat",

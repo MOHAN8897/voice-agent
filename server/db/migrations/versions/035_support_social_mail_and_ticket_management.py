@@ -1,6 +1,6 @@
 """Social media links, mail/SMTP configuration, tenant tracking, and ticket maintenance.
 
-Revision ID: 035_support_social_mail_and_ticket_management
+Revision ID: 035_support_mail_ticket
 Revises: 034_customer_support_flow
 Create Date: 2026-10-13 20:45:00.000000
 """
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects import postgresql
 
-revision = "035_support_social_mail_and_ticket_management"
+revision = "035_support_mail_ticket"
 down_revision = "034_customer_support_flow"
 branch_labels = None
 depends_on = None

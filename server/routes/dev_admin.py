@@ -80,7 +80,20 @@ _TENANT_PLAN_VALUES = frozenset({"starter", "growth", "enterprise", "default", "
 
 class TenantDeleteBody(BaseModel):
     force: bool = False
+    releaseNumbers: bool = True
+    revokeSessions: bool = True
+    hard: bool = False
     note: Optional[str] = Field(None, max_length=500)
+
+
+class TenantBulkActionBody(BaseModel):
+    action: str = Field(..., description="delete | restore | suspend | activate | change_plan")
+    tenantIds: list[str] = Field(..., min_length=1, max_length=100)
+    plan: Optional[str] = None
+    note: str = Field("", max_length=500)
+    releaseNumbers: bool = True
+    revokeSessions: bool = True
+    force: bool = False
 
 
 class UserPatchBody(BaseModel):
@@ -191,6 +204,7 @@ async def list_tenants(
     status: str | None = None,
     plan: str | None = None,
     excludeInventory: bool = Query(True, alias="excludeInventory"),
+    includeDeleted: bool = Query(False, alias="includeDeleted"),
     hasNumbers: bool | None = Query(None, alias="hasNumbers"),
     minBalanceUsd: float | None = Query(None, alias="minBalanceUsd"),
     maxBalanceUsd: float | None = Query(None, alias="maxBalanceUsd"),
@@ -203,7 +217,9 @@ async def list_tenants(
     from server.services.saas.number_inventory import INVENTORY_TENANT_NAME
 
     async with get_session_factory()() as db:
-        stmt = select(Tenant).where(Tenant.deleted_at.is_(None))
+        stmt = select(Tenant)
+        if not includeDeleted:
+            stmt = stmt.where(Tenant.deleted_at.is_(None))
         if q.strip():
             stmt = stmt.where(Tenant.name.ilike(f"%{q.strip()}%"))
         if status and status.strip():
@@ -306,6 +322,7 @@ async def list_tenants(
                     "plan": t.plan,
                     "status": getattr(t, "status", "active"),
                     "createdAt": t.created_at.isoformat() if t.created_at else None,
+                    "deletedAt": t.deleted_at.isoformat() if t.deleted_at else None,
                     "walletBalanceUsd": round(bal, 2),
                     "walletBalanceInr": round((w.balance_inr_paise or 0) / 100.0, 2),
                     "walletCurrency": (w.currency or "usd").upper(),
@@ -475,15 +492,52 @@ async def create_tenant(body: TenantCreateBody, session: SessionData = Depends(r
 async def delete_tenant(
     tenant_id: str,
     force: bool = Query(False),
+    release_numbers: bool = Query(True, alias="releaseNumbers"),
+    revoke_sessions: bool = Query(True, alias="revokeSessions"),
+    hard: bool = Query(False),
+    note: str = Query(""),
+    body: Optional[TenantDeleteBody] = None,
     session: SessionData = Depends(require_dev_session),
 ):
     require_permission(session, "dev.admin.tenants")
     _require_db()
     tid = uuid.UUID(tenant_id)
+    eff_force = body.force if body and body.force is not None else force
+    eff_release = body.releaseNumbers if body and body.releaseNumbers is not None else release_numbers
+    eff_revoke = body.revokeSessions if body and body.revokeSessions is not None else revoke_sessions
+    eff_hard = body.hard if body and body.hard is not None else hard
+    eff_note = (body.note if body and body.note else note).strip()
+
+    released_numbers: list[str] = []
+    revoked_sessions: int = 0
+
+    if eff_release:
+        from server.services.saas.number_inventory import move_to_inventory
+
+        async with get_session_factory()() as db:
+            nums = (
+                await db.execute(
+                    select(PhoneNumber).where(
+                        PhoneNumber.tenant_id == tid,
+                        PhoneNumber.released_at.is_(None),
+                    )
+                )
+            ).scalars().all()
+            e164s = [n.e164 for n in nums if n.e164]
+        for e164 in e164s:
+            try:
+                await move_to_inventory(e164=e164)
+                released_numbers.append(e164)
+            except Exception as e:
+                logger.warning(f"Failed to release number {e164} for tenant {tid}: {e}")
+
     async with get_session_factory()() as db:
         tenant = await db.get(Tenant, tid)
-        if tenant is None or tenant.deleted_at is not None:
+        if tenant is None:
             raise HTTPException(status_code=404, detail="Not found")
+        if tenant.deleted_at is not None and not eff_hard:
+            return {"ok": True, "alreadyDeleted": True}
+
         active_numbers = int(
             (
                 await db.execute(
@@ -494,23 +548,223 @@ async def delete_tenant(
             ).scalar_one()
             or 0
         )
-        if active_numbers and not force:
+        if active_numbers and not eff_force:
             raise HTTPException(
                 status_code=400,
-                detail=f"Tenant still has {active_numbers} active number(s). Release them or pass force=true.",
+                detail=f"Tenant still has {active_numbers} active number(s). Choose 'Release numbers' or pass force=true.",
             )
+
+        if eff_revoke:
+            member_ids = (
+                await db.execute(
+                    select(TenantMembership.user_id).where(TenantMembership.tenant_id == tid)
+                )
+            ).scalars().all()
+            if member_ids:
+                result = await db.execute(
+                    update(RefreshToken)
+                    .where(
+                        RefreshToken.user_id.in_(list(member_ids)),
+                        RefreshToken.revoked_at.is_(None),
+                    )
+                    .values(revoked_at=datetime.now(timezone.utc))
+                )
+                revoked_sessions = int(result.rowcount or 0)
+
         tenant.status = "cancelled"
         tenant.deleted_at = datetime.now(timezone.utc)
         await db.commit()
+
     await record_admin_action(
         actor=session.subject,
         action="tenant.delete",
         resource_type="tenant",
         resource_id=tenant_id,
         tenant_id=tid,
-        payload={"force": force},
+        payload={
+            "force": eff_force,
+            "releaseNumbers": eff_release,
+            "revokeSessions": eff_revoke,
+            "hard": eff_hard,
+            "note": eff_note or None,
+            "releasedCount": len(released_numbers),
+            "revokedSessions": revoked_sessions,
+        },
+    )
+    return {
+        "ok": True,
+        "releasedNumbers": released_numbers,
+        "revokedSessions": revoked_sessions,
+    }
+
+
+@router.post("/api/dev/admin/tenants/{tenant_id}/restore")
+async def restore_tenant(
+    tenant_id: str,
+    note: str = Query(""),
+    session: SessionData = Depends(require_dev_session),
+):
+    require_permission(session, "dev.admin.tenants")
+    _require_db()
+    tid = uuid.UUID(tenant_id)
+    async with get_session_factory()() as db:
+        tenant = await db.get(Tenant, tid)
+        if tenant is None:
+            raise HTTPException(status_code=404, detail="Not found")
+        tenant.deleted_at = None
+        tenant.status = "active"
+        await db.commit()
+
+    await record_admin_action(
+        actor=session.subject,
+        action="tenant.restore",
+        resource_type="tenant",
+        resource_id=tenant_id,
+        tenant_id=tid,
+        payload={"note": note.strip() or None},
     )
     return {"ok": True}
+
+
+@router.post("/api/dev/admin/tenants/bulk")
+async def bulk_tenant_actions(
+    body: TenantBulkActionBody,
+    session: SessionData = Depends(require_dev_session),
+):
+    require_permission(session, "dev.admin.tenants")
+    _require_db()
+    action = body.action.strip().lower()
+    allowed_actions = {"delete", "restore", "suspend", "activate", "change_plan"}
+    if action not in allowed_actions:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid bulk action. Allowed: {', '.join(sorted(allowed_actions))}",
+        )
+
+    if action == "change_plan":
+        if not body.plan or body.plan not in _TENANT_PLAN_VALUES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Valid plan required for change_plan. Options: {', '.join(sorted(_TENANT_PLAN_VALUES))}",
+            )
+
+    processed: list[str] = []
+    failed: list[dict[str, str]] = []
+
+    from server.services.saas.number_inventory import move_to_inventory
+
+    for raw_id in body.tenantIds:
+        try:
+            tid = uuid.UUID(raw_id)
+        except ValueError:
+            failed.append({"tenantId": raw_id, "error": "Invalid UUID"})
+            continue
+
+        try:
+            async with get_session_factory()() as db:
+                tenant = await db.get(Tenant, tid)
+                if not tenant:
+                    failed.append({"tenantId": raw_id, "error": "Tenant not found"})
+                    continue
+
+                if action == "delete":
+                    if body.releaseNumbers:
+                        nums = (
+                            await db.execute(
+                                select(PhoneNumber).where(
+                                    PhoneNumber.tenant_id == tid,
+                                    PhoneNumber.released_at.is_(None),
+                                )
+                            )
+                        ).scalars().all()
+                        for n in nums:
+                            if n.e164:
+                                try:
+                                    await move_to_inventory(e164=n.e164)
+                                except Exception:
+                                    pass
+                    if body.revokeSessions:
+                        member_ids = (
+                            await db.execute(
+                                select(TenantMembership.user_id).where(TenantMembership.tenant_id == tid)
+                            )
+                        ).scalars().all()
+                        if member_ids:
+                            await db.execute(
+                                update(RefreshToken)
+                                .where(
+                                    RefreshToken.user_id.in_(list(member_ids)),
+                                    RefreshToken.revoked_at.is_(None),
+                                )
+                                .values(revoked_at=datetime.now(timezone.utc))
+                            )
+                    tenant.status = "cancelled"
+                    tenant.deleted_at = datetime.now(timezone.utc)
+
+                elif action == "restore":
+                    tenant.deleted_at = None
+                    tenant.status = "active"
+
+                elif action == "suspend":
+                    if body.releaseNumbers:
+                        nums = (
+                            await db.execute(
+                                select(PhoneNumber).where(
+                                    PhoneNumber.tenant_id == tid,
+                                    PhoneNumber.released_at.is_(None),
+                                )
+                            )
+                        ).scalars().all()
+                        for n in nums:
+                            if n.e164:
+                                try:
+                                    await move_to_inventory(e164=n.e164)
+                                except Exception:
+                                    pass
+                    if body.revokeSessions:
+                        member_ids = (
+                            await db.execute(
+                                select(TenantMembership.user_id).where(TenantMembership.tenant_id == tid)
+                            )
+                        ).scalars().all()
+                        if member_ids:
+                            await db.execute(
+                                update(RefreshToken)
+                                .where(
+                                    RefreshToken.user_id.in_(list(member_ids)),
+                                    RefreshToken.revoked_at.is_(None),
+                                )
+                                .values(revoked_at=datetime.now(timezone.utc))
+                            )
+                    tenant.status = "suspended"
+
+                elif action == "activate":
+                    if tenant.deleted_at:
+                        tenant.deleted_at = None
+                    tenant.status = "active"
+
+                elif action == "change_plan":
+                    tenant.plan = body.plan
+
+                await db.commit()
+                processed.append(raw_id)
+        except Exception as exc:
+            failed.append({"tenantId": raw_id, "error": str(exc)})
+
+    await record_admin_action(
+        actor=session.subject,
+        action="tenant.bulk",
+        resource_type="tenant",
+        resource_id=f"bulk:{len(processed)}",
+        payload={
+            "action": action,
+            "processedCount": len(processed),
+            "failedCount": len(failed),
+            "plan": body.plan,
+            "note": body.note,
+        },
+    )
+    return {"ok": True, "processed": processed, "failed": failed}
 
 
 @router.patch("/api/dev/admin/tenants/{tenant_id}")
@@ -1495,13 +1749,7 @@ async def refund_purchase(purchase_id: str, session: SessionData = Depends(requi
             raise HTTPException(status_code=404, detail="Not found")
         refund_tenant = purchase.tenant_id
         refund_user = purchase.user_id
-        if settings.stripe_secret_key and purchase.stripe_payment_intent_id:
-            import stripe
-
-            stripe.api_key = settings.stripe_secret_key
-            stripe.Refund.create(payment_intent=purchase.stripe_payment_intent_id)
-        else:
-            refund_wallet = True
+        refund_wallet = True
         purchase.status = "refunded"
         await db.commit()
 

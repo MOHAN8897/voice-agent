@@ -83,7 +83,7 @@ async def lifespan(app: FastAPI):
         conversation_manager.max_assistant_chars = settings.max_history_assistant_chars
         conversation_manager.max_user_chars = settings.max_history_user_chars
         logger.info(
-            f"[VOICE] Server starting — version {constants.APP_VERSION}, "
+            f"[VOICE] DialTact Server starting — version {constants.APP_VERSION}, "
             f"model {settings.openai_model}, stt {settings.sarvam_stt_model}"
         )
         from server.providers import init_provider_registry
@@ -255,9 +255,9 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 CLIENT_DIR = PROJECT_ROOT / "client"
 
 app = FastAPI(
-    title="Telugu Voice Agent",
+    title="DialTact Voice Agent",
     version=constants.APP_VERSION,
-    description="Telugu-first Voice AI — Phase 1–5: STT (saaras:v3) + Brain (Responses API) + TTS (bulbul:v3) + Custom Instructions + Hardening",
+    description="DialTact Voice AI — Phase 1–5: STT (saaras:v3) + Brain (Responses API) + TTS (bulbul:v3) + Custom Instructions + Hardening",
     lifespan=lifespan,
 )
 
@@ -578,14 +578,19 @@ async def root():
     from fastapi.responses import RedirectResponse
 
     try:
-        product = (get_settings().voxly_frontend_url or "").strip().rstrip("/")
+        settings = get_settings()
+        product = (
+            getattr(settings, "dialtact_frontend_url", None)
+            or getattr(settings, "voxly_frontend_url", None)
+            or ""
+        ).strip().rstrip("/")
     except Exception:
         product = ""
     if product:
         return RedirectResponse(url=f"{product}/", status_code=307)
     return JSONResponse(
         {
-            "service": "voxly-api",
+            "service": "dialtact-api",
             "message": "This host serves the API. The product UI is on a separate URL.",
             "health": "/api/health",
         }

@@ -26,7 +26,7 @@ function friendlyReason(reason) {
   if (reason == null || reason === '') return null;
   if (typeof reason !== 'string') return null;
   if (Object.prototype.hasOwnProperty.call(REASON_COPY, reason)) return REASON_COPY[reason];
-  if (/RAZORPAY|API_KEY|API_SECRET|\.env|Didit|STRIPE|secret/i.test(reason)) {
+  if (/RAZORPAY|API_KEY|API_SECRET|\.env|Didit|secret/i.test(reason)) {
     return 'Add credit to continue.';
   }
   return reason;
@@ -34,11 +34,15 @@ function friendlyReason(reason) {
 
 function customerPaymentError(raw) {
   const msg = String(raw || '');
+  if (/payment_cancelled|payment cancelled/i.test(msg)) {
+    return null;
+  }
   if (/RAZORPAY|API_KEY|API_SECRET|\.env|not configured|not enabled/i.test(msg)) {
     return 'Card payments are temporarily unavailable. Please try again later or contact support.';
   }
   return msg || 'Payment failed';
 }
+
 
 /**
  * Wallet top-up via Razorpay.
@@ -132,13 +136,18 @@ export function AddFundsModal({ isOpen, onClose, reason = null }) {
             setDone(`${charged} added to your wallet.`);
             showToast('Payment received', 'success');
           } catch (e) {
-            setError(customerPaymentError(e.message));
+            const err = customerPaymentError(e.message);
+            if (err) setError(err);
           }
         },
-        onError: (e) => setError(customerPaymentError(e.message || 'Payment cancelled')),
+        onError: (e) => {
+          const err = customerPaymentError(e.message || 'Payment cancelled');
+          if (err) setError(err);
+        },
       });
     } catch (e) {
-      setError(customerPaymentError(e.message));
+      const err = customerPaymentError(e.message);
+      if (err) setError(err);
     } finally {
       setBusy(false);
     }

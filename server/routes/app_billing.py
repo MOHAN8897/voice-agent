@@ -1,4 +1,4 @@
-"""Subscriber billing — wallet, Stripe + Razorpay (INR)."""
+"""Subscriber billing — wallet and Razorpay (INR)."""
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -34,9 +34,9 @@ class RazorpayOrderBody(BaseModel):
 
 
 class RazorpayVerifyBody(BaseModel):
-    razorpay_order_id: str
-    razorpay_payment_id: str
-    razorpay_signature: str
+    razorpay_order_id: str = Field(..., min_length=4, max_length=128)
+    razorpay_payment_id: str = Field(..., min_length=4, max_length=128)
+    razorpay_signature: str = Field(..., min_length=16, max_length=256)
 
 
 @router.get("/api/billing/catalog")
@@ -146,6 +146,9 @@ async def razorpay_create_order(
 @router.post("/api/billing/razorpay/verify")
 async def razorpay_verify(body: RazorpayVerifyBody, principal: SubscriberPrincipal = Depends(require_subscriber_jwt)):
     require_subscriber_permission(principal, "app.billing.write")
+    allowed, retry = _billing_limiter.allow(f"rzp_verify:{principal.user_id}")
+    if not allowed:
+        raise_rate_limited(retry, "Payment verification rate limit reached.")
     try:
         return await confirm_wallet_payment(
             principal.tenant_id,
@@ -153,8 +156,22 @@ async def razorpay_verify(body: RazorpayVerifyBody, principal: SubscriberPrincip
             body.razorpay_payment_id,
             body.razorpay_signature,
         )
+    except RuntimeError:
+        raise HTTPException(status_code=503, detail={"error": {"code": "database_unavailable", "message": "Database required"}})
     except ValueError as e:
-        raise HTTPException(status_code=400, detail={"error": {"code": str(e), "message": str(e)}})
+        code = str(e)
+        status_code = 400
+        if code == "order_not_found":
+            status_code = 404
+        elif code == "payment_verification_unavailable":
+            status_code = 503
+        messages = {
+            "payment_verification_unavailable": "Payment status could not be confirmed. Please retry.",
+        }
+        raise HTTPException(
+            status_code=status_code,
+            detail={"error": {"code": code, "message": messages.get(code, code)}},
+        )
 
 
 @router.get("/api/billing/invoices")

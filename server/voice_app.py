@@ -34,7 +34,7 @@ async def voice_lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 
 app = FastAPI(
-    title="Voxly Voice Gateway",
+    title="DialTact Voice Gateway",
     description="Dedicated real-time audio WebSocket gateway",
     lifespan=voice_lifespan,
 )

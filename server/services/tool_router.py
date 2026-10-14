@@ -64,11 +64,14 @@ class VoxlyToolRouter:
 
         # 6. EXECUTE WITH STRICT 1.5s VOICE SLA & SPLIT-BRAIN TIMEOUT HANDLING
         try:
-            result = await self.nango.execute_in_call_tool(
-                tenant_id=tenant_id,
-                action_name=tool_name,
-                params=arguments,
-                timeout_sec=1.5,
+            result = await asyncio.wait_for(
+                self.nango.execute_in_call_tool(
+                    tenant_id=tenant_id,
+                    action_name=tool_name,
+                    params=arguments,
+                    timeout_sec=1.5,
+                ),
+                timeout=1.5,
             )
 
             if execution_id:
@@ -112,7 +115,7 @@ class VoxlyToolRouter:
 
     def _get_action_metadata(self, action_name: str) -> dict[str, str]:
         """Categorize actions into read vs. mutating write actions."""
-        write_prefixes = ("CREATE", "UPDATE", "DELETE", "SEND", "BOOK", "INSERT")
+        write_prefixes = ("CREATE", "UPDATE", "DELETE", "CANCEL", "RESCHEDULE", "SEND", "BOOK", "INSERT", "ADD")
         normalized = action_name.upper()
         for p in write_prefixes:
             if p in normalized:

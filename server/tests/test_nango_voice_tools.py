@@ -349,11 +349,12 @@ async def test_nango_webhook_updates_tenant_integrations():
 @pytest.mark.asyncio
 async def test_realtime_voice_loop_auto_discovers_tenant_tools():
     """Verify PstnRealtimeVoiceLoop automatically loads active tenant tools on call start."""
+    from server.realtime.testing import FakeRealtimeVoiceAdapter
     from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
 
     loop = PstnRealtimeVoiceLoop(
         session_id="test_sess",
-        call_id="call_auto_tool",
+        call_id=None,
         tenant_id="11111111-1111-1111-1111-111111111111",
         agent_id="22222222-2222-2222-2222-222222222222",
         agent_tools=None,  # Not provided upfront
@@ -375,11 +376,13 @@ async def test_realtime_voice_loop_auto_discovers_tenant_tools():
 
         with patch.object(loop, "_start_caller_stt_sidecar", MagicMock()):
             with patch("server.realtime.voice_factory.realtime_voice_llm_provider", return_value=("gemini", {})):
-                mock_adapter = AsyncMock()
-                mock_adapter.is_open.return_value = True
+                mock_adapter = FakeRealtimeVoiceAdapter()
                 loop._injected_adapter = mock_adapter
 
-                await loop.start_call(play_greeting=False)
+                try:
+                    await loop.start_call(play_greeting=False)
+                finally:
+                    await loop.close()
 
     assert "GOOGLECALENDAR" in loop._agent_tools
     assert "googlecalendar_find_slots" in loop._agent_tools
@@ -437,6 +440,7 @@ async def test_nango_webhook_prefixed_uuid_and_deletion():
 
     with patch("server.routes.integrations.get_session_factory") as mock_sf:
         mock_session = AsyncMock()
+        mock_session.add = MagicMock()
         mock_chk = MagicMock()
         mock_chk.scalar_one_or_none.return_value = None
         mock_session.execute = AsyncMock(return_value=mock_chk)

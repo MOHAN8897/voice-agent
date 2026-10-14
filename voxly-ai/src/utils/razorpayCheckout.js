@@ -33,40 +33,62 @@ export async function openRazorpayWalletCheckout({
   // Razorpay validates checkout against the order, so these two must match it
   // exactly or the payment is rejected after the customer has entered details.
   const currency = order.currency || 'INR';
-  const options = {
-    key: order.keyId || keyId,
-    amount: order.amountMinor,
-    currency,
-    name: 'Dialtact AI',
-    description: 'Wallet top-up',
-    order_id: order.orderId,
-    prefill: {
-      email: user?.email || '',
-      name: user?.name || '',
-    },
-    theme: { color: '#6344E7' },
-    handler: (response) => {
-      onSuccess?.(response);
-    },
-    modal: {
-      ondismiss: () => onError?.(new Error('Payment cancelled')),
-    },
-  };
-  if (hideUpi) {
-    // UPI and netbanking settle domestically, so neither can fund a
-    // foreign-currency order. Cards are the international rail.
-    options.config = {
-      display: {
-        hide: [{ method: 'upi' }, { method: 'netbanking' }],
+
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const options = {
+      key: order.keyId || keyId,
+      amount: order.amountMinor,
+      currency,
+      name: 'Dialtact AI',
+      description: 'Wallet top-up',
+      order_id: order.orderId,
+      prefill: {
+        email: user?.email || '',
+        name: user?.name || '',
+      },
+      theme: { color: '#6344E7' },
+      handler: async (response) => {
+        if (settled) return;
+        settled = true;
+        try {
+          if (onSuccess) await onSuccess(response);
+          resolve(response);
+        } catch (err) {
+          if (onError) onError(err);
+          reject(err);
+        }
+      },
+      modal: {
+        ondismiss: () => {
+          if (settled) return;
+          settled = true;
+          if (onError) onError(new Error('payment_cancelled'));
+          resolve(null);
+        },
       },
     };
-    options.method = currency === 'INR'
-      ? { upi: false, card: true, netbanking: true, wallet: false }
-      : { card: true, upi: false, netbanking: false, wallet: false };
-  }
-  const rzp = new Razorpay(options);
-  rzp.on('payment.failed', (response) => {
-    onError?.(new Error(response.error?.description || 'Payment failed'));
+    if (hideUpi) {
+      // UPI and netbanking settle domestically, so neither can fund a
+      // foreign-currency order. Cards are the international rail.
+      options.config = {
+        display: {
+          hide: [{ method: 'upi' }, { method: 'netbanking' }],
+        },
+      };
+      options.method = currency === 'INR'
+        ? { upi: false, card: true, netbanking: true, wallet: false }
+        : { card: true, upi: false, netbanking: false, wallet: false };
+    }
+    const rzp = new Razorpay(options);
+    rzp.on('payment.failed', (response) => {
+      if (settled) return;
+      settled = true;
+      const err = new Error(response.error?.description || 'Payment failed');
+      if (onError) onError(err);
+      reject(err);
+    });
+    rzp.open();
   });
-  rzp.open();
 }
+

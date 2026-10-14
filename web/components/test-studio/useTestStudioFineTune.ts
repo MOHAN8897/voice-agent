@@ -16,6 +16,20 @@ import { persistAgentCallLanguage } from "@/lib/bootstrap-test-studio-agent";
 import { invalidateTtsConfigCache } from "@/lib/voice/tts-config";
 import { notifyTestStudioVoiceSaved } from "@/lib/voice/voice-runtime-events";
 import { isGeminiLiveVoiceModel } from "@/lib/realtime-voice";
+import {
+  DEFAULT_CALL_END_FAREWELL,
+  defaultCallEndPolicy,
+  normalizeCallEndPolicyState,
+  type CallEndPolicyState,
+} from "@/lib/call-end-policy";
+
+export {
+  CALL_END_REASONS,
+  DEFAULT_CALL_END_FAREWELL,
+  defaultCallEndPolicy,
+  normalizeCallEndPolicyState,
+} from "@/lib/call-end-policy";
+export type { CallEndPolicyState } from "@/lib/call-end-policy";
 
 /** Keys that must be changed via voicePresetId, not individually. */
 const VOICE_BUNDLED_KEYS = new Set([
@@ -47,48 +61,6 @@ const RUNTIME_SAVE_KEYS = new Set([
   "brainPromptBudgetTokens",
   ...VOICE_BUNDLED_KEYS,
 ]);
-
-export type CallEndPolicyState = {
-  allowedReasons: string[];
-  farewell: string;
-};
-
-export const CALL_END_REASONS: { id: string; label: string }[] = [
-  { id: "goodbye", label: "Goodbye / hang up / don't call" },
-  { id: "firm_refusal", label: "Firm refusal after you stopped pushing" },
-  { id: "goal_complete", label: "Goal complete, nothing else" },
-  { id: "abuse", label: "Abuse" },
-  { id: "out_of_scope", label: "Still off-scope after one redirect" },
-];
-
-export const DEFAULT_CALL_END_FAREWELL: Record<string, string> = {
-  "te-IN": "Sare, time ichinanduku thanks. Good day.",
-  "en-IN": "Thank you for your time. Goodbye.",
-  "en-US": "Thank you for your time. Goodbye.",
-  "hi-IN": "Time dene ke liye dhanyavaad. Alvida.",
-};
-
-export function defaultCallEndPolicy(language: string): CallEndPolicyState {
-  return {
-    allowedReasons: CALL_END_REASONS.map((r) => r.id),
-    farewell: DEFAULT_CALL_END_FAREWELL[language] || DEFAULT_CALL_END_FAREWELL["en-IN"],
-  };
-}
-
-export function normalizeCallEndPolicyState(raw: unknown, language: string): CallEndPolicyState {
-  const fallback = defaultCallEndPolicy(language);
-  if (!raw || typeof raw !== "object") return fallback;
-  const o = raw as Record<string, unknown>;
-  const reasons = Array.isArray(o.allowedReasons)
-    ? (o.allowedReasons as unknown[]).map((id) => String(id)).filter(Boolean)
-    : fallback.allowedReasons;
-  const farewell = String(o.farewell || "").trim();
-  const isStock = !farewell || Object.values(DEFAULT_CALL_END_FAREWELL).includes(farewell);
-  return {
-    allowedReasons: reasons.length ? reasons : fallback.allowedReasons,
-    farewell: isStock ? fallback.farewell : farewell,
-  };
-}
 
 export type CompilerSectionsPayload = {
   sections: {

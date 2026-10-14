@@ -1,12 +1,12 @@
 @echo off
 setlocal enabledelayedexpansion
-title Voxly AI - Setup and Server Launcher
+title DialTact AI - Setup and Server Launcher
 
 :: Navigate to the directory of this batch script
 cd /d "%~dp0"
 
 echo =====================================================================
-echo                VOXLY AI - SERVER SETUP AND LAUNCHER
+echo               DIALTACT AI - SERVER SETUP AND LAUNCHER
 echo =====================================================================
 echo.
 
@@ -57,7 +57,7 @@ if exist "public\models\VoxlyBot_AIEmployee_Interactive.glb" (
 echo.
 
 :: 4. Launch development server and open browser
-echo [3/3] Starting Voxly AI Server (npm run server)...
+echo [3/3] Starting DialTact AI Server (npm run server)...
 echo.
 echo =====================================================================
 echo   Local Address: http://localhost:5173

@@ -104,15 +104,20 @@ def verify_signature(raw: str | bytes, signature: str, timestamp: str | None) ->
         ts = int(timestamp)
     except (TypeError, ValueError):
         raise KycSignatureError("bad_timestamp") from None
-    # 1. Freshness. Anything older/newer is a replay or a stale retry.
-    if abs(int(_utcnow().timestamp()) - ts) > SIGNATURE_MAX_AGE_SEC:
+    # 1. Freshness. Max 300s into past and max 60s clock skew into future.
+    now = int(_utcnow().timestamp())
+    if ts < now - SIGNATURE_MAX_AGE_SEC or ts > now + 60:
         raise KycSignatureError("stale")
     secret = get_settings().didit_webhook_secret
     if not secret:
         raise KycSignatureError("secret_not_configured")
+    try:
+        body_to_sign = canonical_body(raw).encode("utf-8")
+    except Exception as exc:
+        raise KycSignatureError("invalid_json_body") from exc
     expected = hmac.new(
         secret.encode("utf-8"),
-        canonical_body(raw).encode("utf-8"),
+        body_to_sign,
         hashlib.sha256,
     ).hexdigest()
     # 2. Constant-time compare; length mismatch must not short-circuit a compare.
@@ -171,8 +176,8 @@ async def create_session(
     body: dict[str, Any] = {
         # workflow_id is per-session config, never an env var.
         "workflow_id": settings.didit_workflow_id,
-        # Our stable internal user id — this is what the webhook reports back.
-        "vendor_data": str(user_id),
+        # Our stable internal user id + tenant id — this is what the webhook reports back.
+        "vendor_data": f"{user_id}:{tenant_id}",
         # Set explicitly rather than inheriting the workflow's region. The
         # account was configured for India, so an unset value produced an
         # Indian flow for a customer buying a US number.
@@ -249,18 +254,31 @@ async def _upsert(
     if factory is None:
         raise RuntimeError("database_required")
     async with factory() as session:
-        row = await session.get(KycVerification, user_id)
+        # Row-level lock to prevent race conditions during concurrent webhook delivery / admin action
+        stmt = select(KycVerification).where(KycVerification.user_id == user_id).with_for_update()
+        row = (await session.execute(stmt)).scalar_one_or_none()
         if row is None:
-            row = KycVerification(user_id=user_id, tenant_id=tenant_id, created_at=_utcnow())
-            session.add(row)
+            try:
+                row = KycVerification(user_id=user_id, tenant_id=tenant_id, created_at=_utcnow())
+                session.add(row)
+                await session.flush()
+            except Exception:
+                await session.rollback()
+                stmt = select(KycVerification).where(KycVerification.user_id == user_id).with_for_update()
+                row = (await session.execute(stmt)).scalar_one_or_none()
+                if row is None:
+                    raise
+
         row.tenant_id = tenant_id
         row.status = status
         if session_id:
             row.didit_session_id = session_id
         if decision is not None:
             row.decision = decision
-        if verified_at is not None:
-            row.verified_at = verified_at
+        if status == STATUS_APPROVED:
+            row.verified_at = verified_at or _utcnow()
+        else:
+            row.verified_at = None
         if decided_at is not None:
             row.decided_at = decided_at
         row.updated_at = _utcnow()
@@ -299,20 +317,61 @@ async def get_status(user_id: uuid.UUID) -> dict[str, Any]:
 
 
 def already_applied(event_id: str) -> bool:
-    return bool(event_id) and event_id in _applied_events
+    if not event_id:
+        return False
+    try:
+        from server.call.redis_memory_cache import _redis
+        client = _redis()
+        if client is not None and client.exists(f"didit:event:{event_id}"):
+            return True
+    except Exception:
+        pass
+    return event_id in _applied_events
 
 
 def mark_applied(event_id: str) -> None:
-    if event_id:
-        # Bounded: a long-lived process must not grow this without limit.
-        if len(_applied_events) > 5000:
-            _applied_events.clear()
-        _applied_events.add(event_id)
+    if not event_id:
+        return
+    try:
+        from server.call.redis_memory_cache import _redis
+        client = _redis()
+        if client is not None:
+            client.set(f"didit:event:{event_id}", "1", ex=86400)
+    except Exception:
+        pass
+    if len(_applied_events) > 5000:
+        for _ in range(2500):
+            try:
+                _applied_events.pop()
+            except KeyError:
+                break
+    _applied_events.add(event_id)
+
+
+async def try_claim_event(event_id: str) -> bool:
+    """Atomic check and claim. Returns True if claimed, False if duplicate."""
+    if not event_id:
+        return True
+    try:
+        from server.call.redis_memory_cache import _redis
+        client = _redis()
+        if client is not None:
+            claimed = client.set(f"didit:event:{event_id}", "1", ex=86400, nx=True)
+            if not claimed:
+                return False
+    except Exception:
+        pass
+
+    if event_id in _applied_events:
+        return False
+    mark_applied(event_id)
+    return True
 
 
 async def _log_decision(
     *,
     user_id: uuid.UUID,
+    tenant_id: uuid.UUID | None = None,
     status: str,
     decision: Any,
     event_id: str,
@@ -331,6 +390,7 @@ async def _log_decision(
         resource_type="kyc",
         resource_id=str(user_id),
         actor="didit",
+        tenant_id=tenant_id,
         payload={"status": status, "eventId": event_id, "decision": decision},
         source="webhook",
         outcome="ok",
@@ -340,7 +400,13 @@ async def _log_decision(
 
 
 def _log_decision_sync_soon(
-    user_id: uuid.UUID, status: str, decision: Any, event_id: str, *, severity: str
+    user_id: uuid.UUID,
+    status: str,
+    decision: Any,
+    event_id: str,
+    *,
+    tenant_id: uuid.UUID | None = None,
+    severity: str,
 ) -> None:
     """Fire-and-forget the log write from a sync-looking call site."""
     import asyncio
@@ -351,59 +417,93 @@ def _log_decision_sync_soon(
         return
     loop.create_task(
         _log_decision(
-            user_id=user_id, status=status, decision=decision, event_id=event_id, severity=severity
+            user_id=user_id,
+            tenant_id=tenant_id,
+            status=status,
+            decision=decision,
+            event_id=event_id,
+            severity=severity,
         )
     )
 
 
 async def apply_webhook(payload: dict[str, Any]) -> dict[str, Any]:
-    event_id = str(payload.get("event_id") or "")
-    if already_applied(event_id):
-        return {"ok": True, "duplicate": True}
-    mark_applied(event_id)
-
+    event_id = str(payload.get("event_id") or payload.get("id") or "")
+    session_id = str(payload.get("session_id") or payload.get("sessionId") or "")
     vendor_data = str(payload.get("vendor_data") or "")
+
+    # Fallback deterministic fingerprint if Didit omits event_id
+    if not event_id and (session_id or vendor_data):
+        raw_key = f"{session_id}:{vendor_data}:{payload.get('status')}:{payload.get('created_at')}"
+        event_id = hashlib.sha256(raw_key.encode("utf-8")).hexdigest()[:32]
+
+    if not await try_claim_event(event_id):
+        return {"ok": True, "duplicate": True}
+
     if not vendor_data:
         logger.warning("[KYC] webhook without vendor_data event=%s", event_id)
         return {"ok": True, "ignored": "no_vendor_data"}
-    try:
-        user_id = uuid.UUID(vendor_data)
-    except ValueError:
-        logger.warning("[KYC] webhook vendor_data is not a uuid: %r", vendor_data)
-        return {"ok": True, "ignored": "bad_vendor_data"}
+
+    user_id: uuid.UUID | None = None
+    vendor_tenant_id: uuid.UUID | None = None
+    if ":" in vendor_data:
+        parts = vendor_data.split(":", 1)
+        try:
+            user_id = uuid.UUID(parts[0])
+            vendor_tenant_id = uuid.UUID(parts[1])
+        except ValueError:
+            pass
+    if user_id is None:
+        try:
+            user_id = uuid.UUID(vendor_data)
+        except ValueError:
+            logger.warning("[KYC] webhook vendor_data is not a uuid: %r", vendor_data)
+            return {"ok": True, "ignored": "bad_vendor_data"}
 
     status = str(payload.get("status") or "")
     decision = payload.get("decision") if isinstance(payload.get("decision"), dict) else None
     now = _utcnow()
+    tenant_id = await _tenant_for(user_id, vendor_tenant_id)
 
     if status == STATUS_APPROVED:
-        return {"ok": True, "status": status, "state": await _upsert(
+        state = await _upsert(
             user_id=user_id,
-            tenant_id=await _tenant_for(user_id),
-            session_id=str(payload.get("session_id") or ""),
+            tenant_id=tenant_id,
+            session_id=session_id,
             status=status,
             decision=decision,
             verified_at=now,
             decided_at=now,
-        ), "logged": await _log_decision(
-            user_id=user_id, status=status, decision=decision, event_id=event_id
-        )}
+        )
+        logged = await _log_decision(
+            user_id=user_id,
+            tenant_id=tenant_id,
+            status=status,
+            decision=decision,
+            event_id=event_id,
+            severity="info",
+        )
+        return {"ok": True, "status": status, "state": state, "logged": logged}
 
     if status == STATUS_KYC_EXPIRED:
-        # A previously verified user has aged out: clear the approval so the gate
-        # reopens rather than letting a stale pass keep working.
-        # A lapsed approval blocks a paying customer's next purchase, so it is
-        # recorded as a warning rather than routine info.
-        _log_decision_sync_soon(user_id, status, decision, event_id, severity="warning")
-        return {"ok": True, "status": status, "state": await _upsert(
+        state = await _upsert(
             user_id=user_id,
-            tenant_id=await _tenant_for(user_id),
-            session_id=str(payload.get("session_id") or ""),
+            tenant_id=tenant_id,
+            session_id=session_id,
             status=status,
             decision=decision,
             verified_at=None,
             decided_at=now,
-        )}
+        )
+        logged = await _log_decision(
+            user_id=user_id,
+            tenant_id=tenant_id,
+            status=status,
+            decision=decision,
+            event_id=event_id,
+            severity="warning",
+        )
+        return {"ok": True, "status": status, "state": state, "logged": logged}
 
     if status in {
         STATUS_DECLINED,
@@ -414,39 +514,85 @@ async def apply_webhook(payload: dict[str, Any]) -> dict[str, Any]:
         STATUS_ABANDONED,
         STATUS_EXPIRED,
     }:
-        # Every non-terminal status that reached a reviewer clears approval;
-        # NOT_STARTED and the pure-progress statuses keep the current value
-        # because they carry no decision.
-        return {"ok": True, "status": status, "state": await _upsert(
+        state = await _upsert(
             user_id=user_id,
-            tenant_id=await _tenant_for(user_id),
-            session_id=str(payload.get("session_id") or ""),
+            tenant_id=tenant_id,
+            session_id=session_id,
             status=status,
             decision=decision,
-            verified_at=None if status != STATUS_NOT_STARTED else None,
+            verified_at=None,
             decided_at=now if status in {STATUS_DECLINED, STATUS_IN_REVIEW} else None,
-        )}
+        )
+        logged = await _log_decision(
+            user_id=user_id,
+            tenant_id=tenant_id,
+            status=status,
+            decision=decision,
+            event_id=event_id,
+            severity="warning" if status in {STATUS_DECLINED, STATUS_EXPIRED, STATUS_ABANDONED} else "info",
+        )
+        return {"ok": True, "status": status, "state": state, "logged": logged}
 
     # "Not Started" and anything unknown: recorded, never treated as a decision.
     logger.info("[KYC] webhook status=%s event=%s (no decision applied)", status, event_id)
     return {"ok": True, "status": status, "ignored": "no_decision"}
 
 
-async def _tenant_for(user_id: uuid.UUID) -> uuid.UUID:
+async def _tenant_for(user_id: uuid.UUID, candidate_tenant_id: uuid.UUID | None = None) -> uuid.UUID:
+    from server.db.models.entities import Tenant
     from server.db.models.saas_models import TenantMembership
 
     factory = get_session_factory()
     if factory is None:
-        return user_id
+        return candidate_tenant_id or user_id
     async with factory() as session:
-        row = (
+        # 0. If candidate_tenant_id provided, verify it exists in tenants
+        if candidate_tenant_id is not None:
+            exists = (
+                await session.execute(
+                    select(Tenant.tenant_id).where(Tenant.tenant_id == candidate_tenant_id).limit(1)
+                )
+            ).scalar_one_or_none()
+            if exists is not None:
+                return exists
+
+        # 1. Existing KYC row tenant_id
+        kyc_tenant = (
             await session.execute(
-                select(TenantMembership).where(TenantMembership.user_id == user_id).limit(1)
+                select(KycVerification.tenant_id).where(KycVerification.user_id == user_id).limit(1)
             )
         ).scalar_one_or_none()
-    if row is None:
-        return user_id
-    return row.tenant_id
+        if kyc_tenant is not None:
+            return kyc_tenant
+
+        # 2. Tenant membership for user
+        membership = (
+            await session.execute(
+                select(TenantMembership.tenant_id).where(TenantMembership.user_id == user_id).limit(1)
+            )
+        ).scalar_one_or_none()
+        if membership is not None:
+            return membership
+
+        # 3. Direct match if user_id happens to be a valid tenant_id
+        tenant_match = (
+            await session.execute(
+                select(Tenant.tenant_id).where(Tenant.tenant_id == user_id).limit(1)
+            )
+        ).scalar_one_or_none()
+        if tenant_match is not None:
+            return tenant_match
+
+        # 4. Fallback to first available tenant to avoid FK violations
+        first_tenant = (
+            await session.execute(
+                select(Tenant.tenant_id).limit(1)
+            )
+        ).scalar_one_or_none()
+        if first_tenant is not None:
+            return first_tenant
+
+        return candidate_tenant_id or user_id
 
 
 async def is_approved(user_id: uuid.UUID | None) -> bool:

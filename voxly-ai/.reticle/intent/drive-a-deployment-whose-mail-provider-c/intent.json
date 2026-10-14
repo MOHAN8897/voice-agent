@@ -3,14 +3,15 @@
     "flow:drive-a-deployment-whose-mail-provider-cannot-deliver": {
       "declaredAt": 1791021755697,
       "id": "flow:drive-a-deployment-whose-mail-provider-cannot-deliver",
+      "source": "decided on the dashboard",
       "state": "declared",
       "statement": "a deployment whose mail provider cannot deliver says so, and hands back the reset link, instead of showing a silent 'check your inbox'",
-      "status": "proposed",
+      "status": "proved",
       "subject": "drive-a-deployment-whose-mail-provider-c",
       "surface": {
         "flow": "drive-a-deployment-whose-mail-provider-cannot-deliver"
       },
-      "updatedAt": 1791021755752
+      "updatedAt": 1791972280940
     }
   },
   "subject": "drive-a-deployment-whose-mail-provider-c",

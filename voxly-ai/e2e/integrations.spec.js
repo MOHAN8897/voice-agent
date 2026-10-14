@@ -59,7 +59,7 @@ test.describe('Integrations & Voice Tools Marketplace', () => {
     const financePill = page.getByTestId('category-pill-finance');
     await expect(financePill).toBeVisible();
     await financePill.click();
-    await expect(page.getByText('Stripe')).toBeVisible();
+    await expect(page.getByText('Shopify')).toBeVisible();
     await expect(page.getByText('HubSpot CRM')).not.toBeVisible();
 
     // Reset to All

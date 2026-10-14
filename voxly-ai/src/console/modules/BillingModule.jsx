@@ -87,6 +87,9 @@ export function BillingModule() {
 
   const customerPayError = (raw) => {
     const msg = String(raw || '');
+    if (/payment_cancelled|payment cancelled/i.test(msg)) {
+      return null;
+    }
     if (/RAZORPAY|API_KEY|API_SECRET|\.env|not configured|not enabled/i.test(msg)) {
       return 'Card payments are temporarily unavailable. Please try again later or contact support.';
     }
@@ -149,10 +152,14 @@ export function BillingModule() {
           );
           setTimeout(() => setTopupSuccess(null), 5000);
         },
-        onError: (err) => setTopupError(customerPayError(err.message)),
+        onError: (err) => {
+          const msg = customerPayError(err.message);
+          if (msg) setTopupError(msg);
+        },
       });
     } catch (err) {
-      setTopupError(customerPayError(err.message));
+      const msg = customerPayError(err.message);
+      if (msg) setTopupError(msg);
     } finally {
       setPayBusy(false);
     }

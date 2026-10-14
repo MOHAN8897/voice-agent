@@ -236,18 +236,19 @@ export default function TenantCockpitPage() {
 
   function confirmTeardown(statement: string) {
     return run("teardown", async () => {
-      await adminAction(`/api/dev/admin/tenants/${tenantId}`, {
-        method: "PATCH",
-        body: {
-          status: "cancelled",
-          note: statement,
-          releaseNumbers: true,
-          revokeSessions: true,
-        },
-      });
-      await adminAction(`/api/dev/admin/tenants/${tenantId}?force=true`, { method: "DELETE" });
+      await adminAction(
+        `/api/dev/admin/tenants/${tenantId}?force=true&releaseNumbers=true&revokeSessions=true&note=${encodeURIComponent(statement)}`,
+        { method: "DELETE" }
+      );
       setTeardownOpen(false);
       router.push("/dev/admin/tenants");
+    });
+  }
+
+  function restoreTenant() {
+    return run("restore", async () => {
+      await adminAction(`/api/dev/admin/tenants/${tenantId}/restore`, { method: "POST" });
+      await detail.reload();
     });
   }
 
@@ -338,6 +339,25 @@ export default function TenantCockpitPage() {
             >
               Open as customer
             </SkeuoButton>
+            {t?.status === "cancelled" ? (
+              <SkeuoButton
+                variant="ghost"
+                className="border-status-success/40 text-status-success hover:bg-status-success/10"
+                disabled={Boolean(busy)}
+                onClick={() => restoreTenant()}
+              >
+                Restore tenant
+              </SkeuoButton>
+            ) : (
+              <SkeuoButton
+                variant="ghost"
+                className="border-status-error/40 text-status-error hover:bg-status-error/10"
+                disabled={Boolean(busy)}
+                onClick={() => setTeardownOpen(true)}
+              >
+                Delete tenant
+              </SkeuoButton>
+            )}
             <Link href={`/dev/admin/users?tenantId=${tenantId}`}>
               <SkeuoButton variant="ghost">Users</SkeuoButton>
             </Link>

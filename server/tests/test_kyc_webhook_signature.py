@@ -125,3 +125,97 @@ def test_event_id_dedupes_a_redelivery():
     assert kyc_service.already_applied(event_id) is False
     kyc_service.mark_applied(event_id)
     assert kyc_service.already_applied(event_id) is True
+
+
+def test_future_timestamp_is_rejected():
+    """Future timestamps beyond reasonable clock skew (60s) must be rejected."""
+    payload = {"event_id": "future-1", "status": "Approved"}
+    sig, _ = _sign(payload, "test-secret")
+    future = str(int(time.time()) + 120)
+    with pytest.raises(kyc_service.KycSignatureError):
+        kyc_service.verify_signature(json.dumps(payload), sig, future)
+
+
+@pytest.mark.asyncio
+async def test_try_claim_event_deduplication():
+    kyc_service._applied_events.clear()
+    event_id = str(uuid.uuid4())
+    assert await kyc_service.try_claim_event(event_id) is True
+    assert await kyc_service.try_claim_event(event_id) is False
+
+
+@pytest.mark.asyncio
+async def test_apply_webhook_with_compound_vendor_data(monkeypatch):
+    from unittest.mock import AsyncMock
+    mock_upsert = AsyncMock(return_value={"approved": True})
+    mock_log = AsyncMock(return_value=True)
+    monkeypatch.setattr(kyc_service, "_upsert", mock_upsert)
+    monkeypatch.setattr(kyc_service, "_log_decision", mock_log)
+
+    uid = uuid.uuid4()
+    tid = uuid.uuid4()
+    event_id = str(uuid.uuid4())
+    payload = {
+        "event_id": event_id,
+        "status": "Approved",
+        "vendor_data": f"{uid}:{tid}",
+        "session_id": "session-123",
+    }
+    result = await kyc_service.apply_webhook(payload)
+    assert result.get("ok") is True
+    assert result.get("status") == "Approved"
+    mock_upsert.assert_awaited_once()
+    assert mock_upsert.call_args.kwargs["user_id"] == uid
+    assert mock_upsert.call_args.kwargs["tenant_id"] == tid
+
+
+@pytest.mark.asyncio
+async def test_apply_webhook_without_event_id_deterministic_dedup(monkeypatch):
+    from unittest.mock import AsyncMock
+    mock_upsert = AsyncMock(return_value={"approved": True})
+    mock_log = AsyncMock(return_value=True)
+    monkeypatch.setattr(kyc_service, "_upsert", mock_upsert)
+    monkeypatch.setattr(kyc_service, "_log_decision", mock_log)
+
+    uid = uuid.uuid4()
+    payload = {
+        "status": "Approved",
+        "vendor_data": str(uid),
+        "session_id": "session-no-event-id-999",
+        "created_at": 1728282828,
+    }
+    # First delivery
+    res1 = await kyc_service.apply_webhook(payload)
+    assert res1.get("ok") is True
+    assert res1.get("status") == "Approved"
+
+    # Second delivery with identical content must be detected as duplicate
+    res2 = await kyc_service.apply_webhook(payload)
+    assert res2.get("ok") is True
+    assert res2.get("duplicate") is True
+
+
+@pytest.mark.asyncio
+async def test_apply_webhook_declined_logs_warning_and_clears_verified(monkeypatch):
+    from unittest.mock import AsyncMock
+    mock_upsert = AsyncMock(return_value={"approved": False, "verifiedAt": None})
+    mock_log = AsyncMock(return_value=True)
+    monkeypatch.setattr(kyc_service, "_upsert", mock_upsert)
+    monkeypatch.setattr(kyc_service, "_log_decision", mock_log)
+
+    uid = uuid.uuid4()
+    payload = {
+        "event_id": str(uuid.uuid4()),
+        "status": "Declined",
+        "vendor_data": str(uid),
+        "session_id": "session-declined-123",
+        "decision": {"reason": "Document invalid"},
+    }
+    res = await kyc_service.apply_webhook(payload)
+    assert res.get("ok") is True
+    assert res.get("status") == "Declined"
+    mock_upsert.assert_awaited_once()
+    assert mock_upsert.call_args.kwargs["verified_at"] is None
+    assert mock_upsert.call_args.kwargs["status"] == "Declined"
+    mock_log.assert_awaited_once()
+    assert mock_log.call_args.kwargs["severity"] == "warning"

@@ -53,13 +53,12 @@ def test_number_costs_four_dollars():
     assert get_settings().did_monthly_usd_cents == 400
 
 
-def test_stripe_checkout_uses_the_same_price():
-    """The card path and the wallet path must not disagree about the amount."""
-    import inspect
-
+@pytest.mark.asyncio
+async def test_stripe_checkout_is_permanently_removed():
+    """Card checkout via Stripe is decommissioned; users must use wallet balance."""
+    from unittest.mock import MagicMock
     from server.services.saas import number_purchase_service as svc
 
-    source = inspect.getsource(svc.create_purchase_checkout)
-    # A hard-coded 500 would silently charge $5 while the console says $4.
-    assert "unit_amount\": 500" not in source
-    assert "settings.did_monthly_usd_cents" in source
+    principal = MagicMock()
+    with pytest.raises(ValueError, match="stripe_removed"):
+        await svc.create_purchase_checkout(principal, e164="+14155552671")

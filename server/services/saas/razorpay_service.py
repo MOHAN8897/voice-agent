@@ -272,49 +272,52 @@ async def create_wallet_order(
 
 
 def _fetch_payment(payment_id: str) -> dict | None:
-    """Razorpay's own view of the payment, when the API is reachable.
-
-    Used for the settled INR figure and the international flag. A failure here is
-    not fatal: we fall back to our own charge rate rather than refuse to credit a
-    payment the customer already completed. Note that read endpoints can return a
-    throttling "Authentication failed" even on a healthy key, so this is treated
-    as best-effort enrichment and never as the basis for accepting a payment.
-    """
+    """Fetch the provider's payment record before any wallet credit is applied."""
     try:
         return _client().payment.fetch(payment_id)
-    except Exception as exc:
+    except (
+        razorpay.errors.BadRequestError,
+        razorpay.errors.GatewayError,
+        razorpay.errors.ServerError,
+        requests.exceptions.RequestException,
+    ) as exc:
         logger.warning("razorpay payment fetch failed error_type=%s", type(exc).__name__)
-        return None
+        raise ValueError("payment_verification_unavailable") from None
 
 
 def _validate_payment_details(
     payment: dict,
     *,
+    payment_id: str,
     order_id: str,
     currency: str,
     amount_minor: int,
 ) -> None:
-    """Reject provider details that contradict the signed checkout order."""
+    """Fail closed unless Razorpay confirms the exact signed payment and order."""
+    provider_payment_id = payment.get("id")
+    if not provider_payment_id or str(provider_payment_id) != payment_id:
+        raise ValueError("payment_id_mismatch")
+
     provider_order = payment.get("order_id")
-    if provider_order and str(provider_order) != order_id:
+    if not provider_order or str(provider_order) != order_id:
         raise ValueError("payment_order_mismatch")
 
     status = str(payment.get("status") or "").strip().lower()
-    if status and status != "captured":
+    if status != "captured":
         raise ValueError("payment_not_captured")
 
     provider_currency = str(payment.get("currency") or "").strip().upper()
-    if provider_currency and provider_currency != currency:
+    if not provider_currency or provider_currency != currency:
         raise ValueError("payment_currency_mismatch")
 
     provider_amount = payment.get("amount")
-    if amount_minor and provider_amount is not None:
-        try:
-            amount_matches = int(provider_amount) == amount_minor
-        except (TypeError, ValueError):
-            amount_matches = False
-        if not amount_matches:
-            raise ValueError("payment_amount_mismatch")
+    if (
+        isinstance(provider_amount, bool)
+        or not isinstance(provider_amount, int)
+        or amount_minor <= 0
+        or provider_amount != amount_minor
+    ):
+        raise ValueError("payment_amount_mismatch")
 
 
 async def confirm_wallet_payment(
@@ -339,55 +342,95 @@ async def confirm_wallet_payment(
         if row.status == "paid":
             inv = (
                 await session.execute(
-                    select(BillingInvoice).where(BillingInvoice.razorpay_order_id == order_id)
+                    select(BillingInvoice).where(
+                        BillingInvoice.tenant_id == tenant_id,
+                        BillingInvoice.razorpay_order_id == order_id,
+                    )
                 )
             ).scalar_one_or_none()
             return {"ok": True, "invoiceId": str(inv.invoice_id) if inv else None, "duplicate": True}
+        currency = getattr(row, "currency", None) or "INR"
+        amount_minor = int(getattr(row, "amount_minor", None) or 0)
+        paise = int(row.amount_inr_paise)
 
     try:
         payment = await _run_provider_call(_fetch_payment, payment_id)
     except TimeoutError:
         logger.warning("razorpay payment fetch timed out")
-        payment = None
+        # A signed checkout callback is not enough to credit the wallet when we
+        # cannot confirm that Razorpay captured the payment. The client can retry
+        # verification with the same order and payment IDs.
+        raise ValueError("payment_verification_unavailable") from None
+    if not isinstance(payment, dict) or not payment:
+        logger.warning("razorpay payment fetch returned no details")
+        raise ValueError("payment_verification_unavailable")
 
+    _validate_payment_details(
+        payment,
+        payment_id=payment_id,
+        order_id=order_id,
+        currency=currency,
+        amount_minor=amount_minor,
+    )
+    settled_inr = payment.get("base_amount")
+    international = bool(payment.get("international"))
+    if settled_inr:
+        # Razorpay's own conversion is authoritative for what we receive;
+        # it is the rate actually applied on the payment date.
+        paise = int(settled_inr)
+    elif currency.strip().upper() == "INR":
+        # Domestic INR payments do not have base_amount in Razorpay captured response;
+        # payment amount is already in paise.
+        provider_amount = payment.get("amount")
+        paise = int(provider_amount) if provider_amount is not None else int(amount_minor or paise)
+    else:
+        paise = inr_credit_for(currency, amount_minor)
+
+    from sqlalchemy.exc import IntegrityError
+
+    ref_id = f"razorpay:{payment_id}"
     async with factory() as session:
+        # 1. Check idempotency key before attempting to insert duplicate credit
+        existing_tx = (
+            await session.execute(
+                select(BillingWalletTransaction).where(
+                    BillingWalletTransaction.tenant_id == tenant_id,
+                    BillingWalletTransaction.reference_id == ref_id
+                )
+            )
+        ).scalar_one_or_none()
+        if existing_tx:
+            inv = (
+                await session.execute(
+                    select(BillingInvoice).where(
+                        BillingInvoice.tenant_id == tenant_id,
+                        (BillingInvoice.razorpay_payment_id == payment_id)
+                        | (BillingInvoice.razorpay_order_id == order_id)
+                    )
+                )
+            ).scalar_one_or_none()
+            return {"ok": True, "invoiceId": str(inv.invoice_id) if inv else None, "duplicate": True}
+
         row = await session.get(RazorpayOrder, order_id, with_for_update=True)
         if row is None or row.tenant_id != tenant_id:
             raise ValueError("order_not_found")
         if row.status == "paid":
             inv = (
                 await session.execute(
-                    select(BillingInvoice).where(BillingInvoice.razorpay_order_id == order_id)
+                    select(BillingInvoice).where(
+                        BillingInvoice.tenant_id == tenant_id,
+                        BillingInvoice.razorpay_order_id == order_id,
+                    )
                 )
             ).scalar_one_or_none()
             return {"ok": True, "invoiceId": str(inv.invoice_id) if inv else None, "duplicate": True}
 
-        currency = getattr(row, "currency", None) or "INR"
-        amount_minor = int(getattr(row, "amount_minor", None) or 0)
-        paise = int(row.amount_inr_paise)
-
-        settled_inr = None
-        international = False
-        if payment:
-            _validate_payment_details(
-                payment,
-                order_id=order_id,
-                currency=currency,
-                amount_minor=amount_minor,
-            )
-            settled_inr = payment.get("base_amount")
-            international = bool(payment.get("international"))
-            if settled_inr:
-                # Razorpay's own conversion is authoritative for what we receive;
-                # it is the rate actually applied on the payment date.
-                paise = int(settled_inr)
-
         wallet = await session.get(BillingWallet, tenant_id, with_for_update=True)
         if wallet is None:
-            wallet = BillingWallet(tenant_id=tenant_id, updated_at=_utcnow())
+            wallet = BillingWallet(tenant_id=tenant_id, balance_cents=0, balance_inr_paise=0, updated_at=_utcnow())
             session.add(wallet)
             await session.flush()
-        wallet.balance_inr_paise += paise
+        wallet.balance_inr_paise = int(wallet.balance_inr_paise or 0) + paise
         wallet.currency = "inr"
         wallet.updated_at = _utcnow()
         row.status = "paid"
@@ -422,11 +465,23 @@ async def confirm_wallet_payment(
                 amount_cents=0,
                 amount_inr_paise=paise,
                 kind="razorpay_topup_inr",
-                stripe_session_id=payment_id,
+                reference_id=ref_id,
                 created_at=_utcnow(),
             )
         )
-        await session.commit()
+        try:
+            await session.commit()
+        except IntegrityError:
+            await session.rollback()
+            inv = (
+                await session.execute(
+                    select(BillingInvoice).where(
+                        (BillingInvoice.razorpay_payment_id == payment_id)
+                        | (BillingInvoice.razorpay_order_id == order_id)
+                    )
+                )
+            ).scalar_one_or_none()
+            return {"ok": True, "invoiceId": str(inv.invoice_id) if inv else None, "duplicate": True}
 
         from server.services.saas.activity_log import record_event
 

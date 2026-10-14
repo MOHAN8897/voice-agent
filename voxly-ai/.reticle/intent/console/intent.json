@@ -1,0 +1,30 @@
+{
+  "intents": {
+    "inline:a-workspace-can-open-billing-and-review-wallet-a-03c2ac0b": {
+      "binding": {
+        "contains": "#dashboard/billing",
+        "kind": "route"
+      },
+      "declaredAt": 1791984828649,
+      "id": "inline:a-workspace-can-open-billing-and-review-wallet-a-03c2ac0b",
+      "provenBy": {
+        "at": 1791984829806,
+        "grade": "presence",
+        "runId": "drive-s411bee4b-e536-4dc1-b595-73cfebd7ab5f",
+        "verdictId": "reticle_act_and_wait:1791984829806"
+      },
+      "state": "proved",
+      "statement": "A workspace can open billing and review wallet and payment activity.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/Sidebar.jsx"
+        ]
+      },
+      "updatedAt": 1791984829861
+    }
+  },
+  "subject": "console",
+  "version": 1
+}

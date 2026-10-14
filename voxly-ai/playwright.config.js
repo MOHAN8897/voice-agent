@@ -10,6 +10,8 @@ const apiURL = process.env.VOXLY_API_URL || 'http://127.0.0.1:8000';
 
 export default defineConfig({
   testDir: './e2e',
+  // This file is a standalone contract runner with process.exit(), not a Playwright spec.
+  testIgnore: ['**/backend-contract.spec.js'],
   timeout: 60_000,
   retries: 0,
   use: {

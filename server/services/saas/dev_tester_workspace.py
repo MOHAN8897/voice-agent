@@ -16,14 +16,23 @@ logger = logging.getLogger(__name__)
 
 
 def workspace_tenant_id_for_subscriber(tenant_id: uuid.UUID, email: str | None) -> uuid.UUID:
-    """Agents and phone lines resolve on the shared platform tenant for dev testers."""
+    """Agents and phone lines resolve on the subscriber's workspace tenant.
+
+    Falls back to the platform default tenant only when the subscriber has no tenant assigned
+    or is explicitly operating on the platform default.
+    """
+    settings = get_settings()
+    default_tid = None
+    try:
+        default_tid = uuid.UUID(str(settings.default_tenant_id))
+    except (ValueError, TypeError):
+        pass
+
+    if tenant_id and (default_tid is None or tenant_id != default_tid):
+        return tenant_id
     if not is_dev_tester_email(email):
         return tenant_id
-    settings = get_settings()
-    try:
-        return uuid.UUID(str(settings.default_tenant_id))
-    except (ValueError, TypeError):
-        return tenant_id
+    return default_tid or tenant_id
 
 
 async def ensure_dev_tester_phone_line(tenant_id: uuid.UUID, email: str | None) -> None:
@@ -35,6 +44,12 @@ async def ensure_dev_tester_phone_line(tenant_id: uuid.UUID, email: str | None) 
     if not is_dev_tester_email(email):
         return
     settings = get_settings()
+    try:
+        default_tid = uuid.UUID(str(settings.default_tenant_id))
+    except (ValueError, TypeError):
+        default_tid = None
+    if default_tid and tenant_id != default_tid:
+        return
     factory = get_session_factory()
     if factory is None:
         return
@@ -99,6 +114,10 @@ async def ensure_dev_tester_phone_line(tenant_id: uuid.UUID, email: str | None) 
                 )
                 await session.commit()
         except IntegrityError:
-            logger.info("dev_tester_phone_line.race e164=%s tenant=%s", e164, tenant_id)
+            logger.info("dev_tester_phone_line.race provider=%s", prov)
         except Exception as exc:
-            logger.warning("dev_tester_phone_line.failed e164=%s err=%s", e164, str(exc)[:160])
+            logger.warning(
+                "dev_tester_phone_line.failed provider=%s error=%s",
+                prov,
+                type(exc).__name__,
+            )

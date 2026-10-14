@@ -143,19 +143,34 @@ async def list_wallet_transactions(tenant_id: uuid.UUID, limit: int = 50, user_i
                 from server.db.models.entities import Agent, Call
                 from server.db.models.phase5_models import Campaign
 
-                calls_res = await session.execute(select(Call).where(Call.call_id.in_(call_ids)))
+                calls_res = await session.execute(
+                    select(Call).where(
+                        Call.tenant_id == tenant_id,
+                        Call.call_id.in_(call_ids),
+                    )
+                )
                 for c in calls_res.scalars():
                     calls_by_id[c.call_id] = c
 
                 camp_ids = [c.campaign_id for c in calls_by_id.values() if c.campaign_id]
                 if camp_ids:
-                    camps_res = await session.execute(select(Campaign).where(Campaign.campaign_id.in_(camp_ids)))
+                    camps_res = await session.execute(
+                        select(Campaign).where(
+                            Campaign.tenant_id == tenant_id,
+                            Campaign.campaign_id.in_(camp_ids),
+                        )
+                    )
                     for camp in camps_res.scalars():
                         campaigns_by_id[camp.campaign_id] = camp.name
 
                 agent_ids = [c.agent_id for c in calls_by_id.values() if c.agent_id]
                 if agent_ids:
-                    agents_res = await session.execute(select(Agent).where(Agent.agent_id.in_(agent_ids)))
+                    agents_res = await session.execute(
+                        select(Agent).where(
+                            Agent.tenant_id == tenant_id,
+                            Agent.agent_id.in_(agent_ids),
+                        )
+                    )
                     for ag in agents_res.scalars():
                         agents_by_id[ag.agent_id] = ag.name
             except Exception as exc:
@@ -398,7 +413,6 @@ async def credit_wallet(
     kind: str,
     reference_id: str | None = None,
     user_id: uuid.UUID | None = None,
-    stripe_session_id: str | None = None,
 ) -> None:
     factory = get_session_factory()
     if factory is None:
@@ -429,7 +443,6 @@ async def credit_wallet(
                 amount_inr_paise=int(amount_inr_paise),
                 kind=kind,
                 reference_id=reference_id,
-                stripe_session_id=stripe_session_id,
                 created_at=_utcnow(),
             )
         )
@@ -644,18 +657,19 @@ async def bill_call_usage_if_applicable(call_id: str) -> None:
     )
 
 
-async def debit_did_purchase(
+async def debit_did_purchase_in_session(
+    session,
     tenant_id: uuid.UUID,
     *,
     user_id: uuid.UUID,
-    e164: str,
     purchase_id: uuid.UUID,
 ) -> dict:
     """Charge the monthly number rental.
 
     A number is bought either from the USD credit or the INR credit, whichever the
     workspace actually holds — the price is the same in both, so a tenant funded in
-    one currency is never locked out by the other's empty balance.
+    one currency is never locked out by the other's empty balance. The caller owns
+    the transaction so the purchase/reservation and debit can commit atomically.
     """
     from server.services.saas.billing_rates import rates_with_derived_inr
 
@@ -664,67 +678,86 @@ async def debit_did_purchase(
     rates = rates_with_derived_inr()
     want_cents = int(rates["did_monthly_usd_cents"])
     want_paise = int(rates["did_monthly_inr_paise"])
+    ref = f"did:{purchase_id}"
+    dup = await session.execute(
+        select(BillingWalletTransaction).where(
+            BillingWalletTransaction.tenant_id == tenant_id,
+            BillingWalletTransaction.reference_id == ref,
+        )
+    )
+    if dup.scalar_one_or_none():
+        return {"ok": True, "duplicate": True, "amountCents": 0, "amountInrPaise": 0}
+    wallet = await session.get(BillingWallet, tenant_id, with_for_update=True)
+    if wallet is None:
+        wallet = BillingWallet(tenant_id=tenant_id, balance_cents=0, balance_inr_paise=0, updated_at=_utcnow())
+        session.add(wallet)
+        await session.flush()
+
+    have_cents = int(wallet.balance_cents or 0)
+    have_paise = int(wallet.balance_inr_paise or 0)
+    # Prefer the wallet's own primary currency, then whichever leg can cover it.
+    primary = (wallet.currency or "usd").lower()
+    if primary == "inr" and have_paise >= want_paise:
+        take_cents, take_paise = 0, want_paise
+    elif have_cents >= want_cents:
+        take_cents, take_paise = want_cents, 0
+    elif have_paise >= want_paise:
+        take_cents, take_paise = 0, want_paise
+    else:
+        raise HTTPException(
+            status_code=402,
+            detail={
+                "error": {
+                    "code": "insufficient_balance",
+                    "message": (
+                        "Add funds to your wallet before buying a phone number. "
+                        f"A number costs ${want_cents / 100:.2f} per month."
+                    ),
+                }
+            },
+        )
+
+    wallet.balance_cents = have_cents - take_cents
+    wallet.balance_inr_paise = have_paise - take_paise
+    if take_paise and not take_cents:
+        wallet.currency = "inr"
+    elif take_cents and not take_paise:
+        wallet.currency = "usd"
+    wallet.updated_at = _utcnow()
+    session.add(
+        BillingWalletTransaction(
+            tenant_id=tenant_id,
+            user_id=user_id,
+            amount_cents=-take_cents,
+            amount_inr_paise=-take_paise,
+            kind="did_purchase",
+            reference_id=ref,
+            created_at=_utcnow(),
+        )
+    )
+    return {"ok": True, "amountCents": take_cents, "amountInrPaise": take_paise}
+
+
+async def debit_did_purchase(
+    tenant_id: uuid.UUID,
+    *,
+    user_id: uuid.UUID,
+    e164: str,
+    purchase_id: uuid.UUID,
+) -> dict:
+    """Charge a DID in its own transaction for callers outside purchase creation."""
     factory = get_session_factory()
     if factory is None:
         raise RuntimeError("database_required")
-
     async with factory() as session:
-        ref = f"did:{purchase_id}"
-        dup = await session.execute(
-            select(BillingWalletTransaction).where(BillingWalletTransaction.reference_id == ref)
-        )
-        if dup.scalar_one_or_none():
-            return {"ok": True, "duplicate": True, "amountCents": 0, "amountInrPaise": 0}
-        wallet = await session.get(BillingWallet, tenant_id, with_for_update=True)
-        if wallet is None:
-            wallet = BillingWallet(tenant_id=tenant_id, balance_cents=0, balance_inr_paise=0, updated_at=_utcnow())
-            session.add(wallet)
-            await session.flush()
-
-        have_cents = int(wallet.balance_cents or 0)
-        have_paise = int(wallet.balance_inr_paise or 0)
-        # Prefer the wallet's own primary currency, then whichever leg can cover it.
-        primary = (wallet.currency or "usd").lower()
-        if primary == "inr" and have_paise >= want_paise:
-            take_cents, take_paise = 0, want_paise
-        elif have_cents >= want_cents:
-            take_cents, take_paise = want_cents, 0
-        elif have_paise >= want_paise:
-            take_cents, take_paise = 0, want_paise
-        else:
-            raise HTTPException(
-                status_code=402,
-                detail={
-                    "error": {
-                        "code": "insufficient_balance",
-                        "message": (
-                            "Add funds to your wallet before buying a phone number. "
-                            f"A number costs ${want_cents / 100:.2f} per month."
-                        ),
-                    }
-                },
-            )
-
-        wallet.balance_cents = have_cents - take_cents
-        wallet.balance_inr_paise = have_paise - take_paise
-        if take_paise and not take_cents:
-            wallet.currency = "inr"
-        elif take_cents and not take_paise:
-            wallet.currency = "usd"
-        wallet.updated_at = _utcnow()
-        session.add(
-            BillingWalletTransaction(
-                tenant_id=tenant_id,
-                user_id=user_id,
-                amount_cents=-take_cents,
-                amount_inr_paise=-take_paise,
-                kind="did_purchase",
-                reference_id=ref,
-                created_at=_utcnow(),
-            )
+        result = await debit_did_purchase_in_session(
+            session,
+            tenant_id,
+            user_id=user_id,
+            purchase_id=purchase_id,
         )
         await session.commit()
-        return {"ok": True, "amountCents": take_cents, "amountInrPaise": take_paise}
+        return result
 
 
 async def refund_did_purchase(
@@ -801,44 +834,10 @@ async def refund_did_purchase(
 
 
 async def create_topup_checkout(tenant_id: uuid.UUID, amount_usd: float, email: str) -> dict:
-    settings = get_settings()
-    if not settings.stripe_secret_key:
-        raise ValueError("stripe_not_configured")
-    if amount_usd < settings.topup_min_usd or amount_usd > settings.topup_max_usd:
-        raise ValueError("amount_out_of_range")
-    cents = int(round(amount_usd * 100))
-    import stripe
-
-    stripe.api_key = settings.stripe_secret_key
-    session = stripe.checkout.Session.create(
-        mode="payment",
-        success_url=settings.stripe_checkout_success_url.replace("numbers", "billing") + "&topup=1",
-        cancel_url=settings.stripe_checkout_cancel_url,
-        metadata={
-            "type": "wallet_topup",
-            "tenant_id": str(tenant_id),
-            "amount_cents": str(cents),
-        },
-        line_items=[
-            {
-                "price_data": {
-                    "currency": "usd",
-                    "product_data": {"name": "Voxly wallet top-up"},
-                    "unit_amount": cents,
-                },
-                "quantity": 1,
-            }
-        ],
-        customer_email=email or None,
-    )
-    return {"checkoutUrl": session.url, "sessionId": session.id}
+    """Card checkout via Stripe has been permanently removed. Use Razorpay order creation instead."""
+    raise ValueError("stripe_removed")
 
 
 async def credit_topup_from_session(tenant_id: uuid.UUID, session_id: str, amount_cents: int) -> None:
-    await credit_wallet(
-        tenant_id,
-        amount_cents=amount_cents,
-        kind="topup",
-        reference_id=f"stripe:{session_id}",
-        stripe_session_id=session_id,
-    )
+    """Stripe webhook credit has been permanently removed."""
+    raise ValueError("stripe_removed")

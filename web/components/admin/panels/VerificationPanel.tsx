@@ -195,13 +195,11 @@ export function AdminVerificationPage() {
             ) : (
               <SkeuoTable>
                 <SkeuoTableHead>
-                  <SkeuoTableRow>
-                    <SkeuoTh>User</SkeuoTh>
-                    <SkeuoTh>Status</SkeuoTh>
-                    <SkeuoTh>Last decision</SkeuoTh>
-                    <SkeuoTh>Updated</SkeuoTh>
-                    <SkeuoTh>Actions</SkeuoTh>
-                  </SkeuoTableRow>
+                  <SkeuoTh>User</SkeuoTh>
+                  <SkeuoTh>Status</SkeuoTh>
+                  <SkeuoTh>Last decision</SkeuoTh>
+                  <SkeuoTh>Updated</SkeuoTh>
+                  <SkeuoTh>Actions</SkeuoTh>
                 </SkeuoTableHead>
                 <SkeuoTableBody>
                   {rows.map((v) => (

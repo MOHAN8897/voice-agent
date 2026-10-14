@@ -1,0 +1,19 @@
+{
+  "intents": {
+    "flow:drive-open-sign-in-dialog-by-clicking-continue-sign-in": {
+      "declaredAt": 1791947808987,
+      "id": "flow:drive-open-sign-in-dialog-by-clicking-continue-sign-in",
+      "source": "decided on the dashboard",
+      "state": "declared",
+      "statement": "Open sign-in dialog by clicking Continue - sign in",
+      "status": "proved",
+      "subject": "drive-open-sign-in-dialog-by-clicking-co",
+      "surface": {
+        "flow": "drive-open-sign-in-dialog-by-clicking-continue-sign-in"
+      },
+      "updatedAt": 1791972280979
+    }
+  },
+  "subject": "drive-open-sign-in-dialog-by-clicking-co",
+  "version": 1
+}

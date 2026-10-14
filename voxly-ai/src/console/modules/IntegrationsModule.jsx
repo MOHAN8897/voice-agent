@@ -46,7 +46,6 @@ export const BRAND_COLORS = {
   SENDGRID: { bg: 'bg-[#009DD9]/10', text: 'text-[#009DD9]', border: 'border-[#009DD9]/30', glow: 'rgba(0, 157, 217, 0.12)', hex: '#009DD9' },
   WHATSAPP: { bg: 'bg-[#25D366]/10', text: 'text-[#25D366]', border: 'border-[#25D366]/30', glow: 'rgba(37, 211, 102, 0.12)', hex: '#25D366' },
   DISCORD: { bg: 'bg-[#5865F2]/10', text: 'text-[#5865F2]', border: 'border-[#5865F2]/30', glow: 'rgba(88, 101, 242, 0.12)', hex: '#5865F2' },
-  STRIPE: { bg: 'bg-[#635BFF]/10', text: 'text-[#635BFF]', border: 'border-[#635BFF]/30', glow: 'rgba(99, 91, 255, 0.12)', hex: '#635BFF' },
   SHOPIFY: { bg: 'bg-[#96BF48]/10', text: 'text-[#96BF48]', border: 'border-[#96BF48]/30', glow: 'rgba(150, 191, 72, 0.12)', hex: '#96BF48' },
   WOOCOMMERCE: { bg: 'bg-[#96588A]/10', text: 'text-[#96588A]', border: 'border-[#96588A]/30', glow: 'rgba(150, 88, 138, 0.12)', hex: '#96588A' },
   ZOOM: { bg: 'bg-[#2D8CFF]/10', text: 'text-[#2D8CFF]', border: 'border-[#2D8CFF]/30', glow: 'rgba(45, 140, 255, 0.12)', hex: '#2D8CFF' },
@@ -174,12 +173,6 @@ export function IntegrationsModule() {
 
   const getApiKeyInfo = (appId) => {
     switch (appId) {
-      case 'STRIPE':
-        return {
-          label: 'Stripe Secret Key',
-          placeholder: 'sk_live_... or sk_test_...',
-          help: 'Found in your Stripe Dashboard under Developers > API keys.'
-        };
       case 'SHOPIFY':
         return {
           label: 'Shopify Admin API Access Token',
@@ -666,7 +659,7 @@ export function IntegrationsModule() {
                 placeholder={
                   activeTab === 'connected'
                     ? 'Search connected integrations (e.g. Google Calendar, Slack, HubSpot)...'
-                    : 'Search all available integrations and voice tools (e.g. Calendly, Stripe, Shopify)...'
+                    : 'Search all available integrations and voice tools (e.g. Calendly, Shopify, Slack)...'
                 }
                 className="w-full pl-10 pr-9 py-2.5 sm:py-2 min-h-[42px] sm:min-h-[36px] text-base sm:text-xs bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl focus:outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 text-[#0F0E17] placeholder:text-[#524E5E] transition-all"
               />

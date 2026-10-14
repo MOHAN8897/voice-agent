@@ -6,7 +6,7 @@ import re
 import uuid
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
 
 from server.config.env import get_settings
@@ -45,6 +45,55 @@ async def _tenant_agent_id(session, tenant_id: uuid.UUID, agent_id: uuid.UUID | 
     return agent.agent_id
 
 
+async def _assert_number_purchase_eligibility(
+    session,
+    *,
+    tenant_id: uuid.UUID,
+    user_id: uuid.UUID,
+    workspace_tenant_id: uuid.UUID,
+    settings,
+) -> None:
+    """Apply the same verified-email and serialized number-cap checks to every buy path."""
+    from server.db.models.saas_models import User
+
+    user = await session.get(User, user_id)
+    if settings.saas_require_email_verification_for_buy and (
+        user is None or user.email_verified_at is None
+    ):
+        raise ValueError("verification_required")
+
+    # Lock the tenant row while counting. Concurrent buys for different DIDs then
+    # serialize here, so they cannot both pass the same last available slot.
+    tenant = await session.get(Tenant, tenant_id, with_for_update=True)
+    if tenant is None:
+        raise ValueError("tenant_not_found")
+    limits = tenant.limits if isinstance(tenant.limits, dict) else {}
+    raw_limit = limits.get("max_numbers")
+    try:
+        max_numbers = int(raw_limit) if raw_limit is not None else 20
+    except (TypeError, ValueError):
+        max_numbers = 0
+    max_numbers = max(0, max_numbers)
+    active_count = await session.scalar(
+        select(func.count(PhoneNumber.id)).where(
+            PhoneNumber.tenant_id == workspace_tenant_id,
+            PhoneNumber.released_at.is_(None),
+        )
+    )
+    pending_count = await session.scalar(
+        select(func.count(NumberPurchase.id)).where(
+            NumberPurchase.tenant_id == tenant_id,
+            NumberPurchase.status.in_(("paid", "provisioning")),
+            NumberPurchase.phone_number_id.is_(None),
+        )
+    )
+    # A carrier purchase is charged and queued before a PhoneNumber row exists.
+    # Count those durable pending purchases too, or a tenant can exceed its cap
+    # by submitting requests while the carrier worker is still provisioning.
+    if int(active_count or 0) + int(pending_count or 0) >= max_numbers:
+        raise ValueError("number_limit")
+
+
 async def _active_reservation_conflict(e164: str) -> bool:
     factory = get_session_factory()
     if factory is None:
@@ -66,93 +115,8 @@ async def create_purchase_checkout(
     country_code: str = "IN",
     assign_agent_id: str | None = None,
 ) -> dict:
-    settings = get_settings()
-    if not settings.stripe_secret_key:
-        raise ValueError("stripe_not_configured")
-    from server.db.models.saas_models import User
-
-    factory = get_session_factory()
-    if factory is None:
-        raise RuntimeError("database_required")
-    e164 = normalize_e164(e164)
-    if await _active_reservation_conflict(e164):
-        raise ValueError("number_reserved")
-    async with factory() as session:
-        owned = await session.execute(select(PhoneNumber).where(PhoneNumber.e164 == e164))
-        if owned.scalar_one_or_none():
-            raise ValueError("number_unavailable")
-        user = await session.get(User, principal.user_id)
-        if user and user.email_verified_at is None and settings.saas_require_email_verification_for_buy:
-            raise ValueError("verification_required")
-        workspace_tid = subscriber_workspace_tenant_id(principal)
-        bind_agent = await _tenant_agent_id(session, workspace_tid, parse_assign_agent_id(assign_agent_id))
-        purchase = NumberPurchase(
-            tenant_id=principal.tenant_id,
-            user_id=principal.user_id,
-            e164=e164,
-            country_code=country_code,
-            status="checkout_created",
-            assign_agent_id=bind_agent,
-            created_at=_utcnow(),
-            updated_at=_utcnow(),
-        )
-        session.add(purchase)
-        await session.flush()
-        ttl = settings.number_reservation_ttl_minutes
-        session.add(
-            NumberReservation(
-                e164=e164,
-                tenant_id=principal.tenant_id,
-                purchase_id=purchase.id,
-                expires_at=_utcnow() + timedelta(minutes=ttl),
-                created_at=_utcnow(),
-            )
-        )
-        tenant = await session.get(Tenant, principal.tenant_id)
-        import stripe
-
-        stripe.api_key = settings.stripe_secret_key
-        customer_id = tenant.stripe_customer_id if tenant else None
-        if not customer_id:
-            cust = stripe.Customer.create(
-                email=principal.email,
-                metadata={"tenant_id": str(principal.tenant_id)},
-            )
-            customer_id = cust.id
-            if tenant:
-                tenant.stripe_customer_id = customer_id
-        session_params: dict = {
-            "mode": "payment",
-            "customer": customer_id,
-            "success_url": settings.stripe_checkout_success_url,
-            "cancel_url": settings.stripe_checkout_cancel_url,
-            "metadata": {
-                "purchase_id": str(purchase.id),
-                "tenant_id": str(principal.tenant_id),
-                "e164": e164,
-                "user_id": str(principal.user_id),
-            },
-            "line_items": [
-            {
-                "price_data": {
-                    "currency": "usd",
-                    "product_data": {"name": f"Phone {e164} (monthly)"},
-                    # Same price the wallet path charges, from one place.
-                    "unit_amount": int(settings.did_monthly_usd_cents),
-                },
-                "quantity": 1,
-            }
-        ],
-        }
-        checkout = stripe.checkout.Session.create(**session_params)
-        purchase.stripe_checkout_session_id = checkout.id
-        purchase.status = "payment_pending"
-        await session.commit()
-        return {
-            "purchaseId": str(purchase.id),
-            "checkoutUrl": checkout.url,
-            "status": purchase.status,
-        }
+    """Card checkout via Stripe has been permanently removed. Use purchase_with_wallet instead."""
+    raise ValueError("stripe_removed")
 
 
 async def get_purchase(purchase_id: uuid.UUID, tenant_id: uuid.UUID) -> dict | None:
@@ -226,7 +190,10 @@ async def assert_carrier_can_buy(e164: str) -> None:
         try:
             balance = await VobizClient().get_balance()
         except Exception as exc:
-            logger.warning("vobiz balance check failed, allowing purchase: %s", exc)
+            logger.warning(
+                "vobiz balance check failed, allowing purchase error_type=%s",
+                type(exc).__name__,
+            )
             return
         remaining = _carrier_remaining(balance)
         curr = str(balance.get("currency") or "INR").upper()
@@ -239,8 +206,7 @@ async def assert_carrier_can_buy(e164: str) -> None:
                 min_bal = CARRIER_MIN_BALANCE_USD
             if remaining < min_bal:
                 logger.warning(
-                    "vobiz balance too low for DID order e164=%s remaining=%s %s",
-                    e164,
+                    "vobiz balance too low for DID order remaining=%s %s",
                     remaining,
                     curr,
                 )
@@ -255,15 +221,17 @@ async def assert_carrier_can_buy(e164: str) -> None:
         # Carrier unreachable is not proof of no balance — let the purchase through
         # and let provisioning decide, rather than blocking every buyer on a
         # transient API error.
-        logger.warning("telnyx balance check failed, allowing purchase: %s", exc)
+        logger.warning(
+            "telnyx balance check failed, allowing purchase error_type=%s",
+            type(exc).__name__,
+        )
         return
     remaining = _carrier_remaining(balance)
     # Telnyx returns balance as a string ("0.56"); treat low prepaid credit as
     # exhausted before we debit a customer and place an order that will 402.
     if remaining is not None and remaining < CARRIER_MIN_BALANCE_USD:
         logger.warning(
-            "telnyx balance too low for DID order e164=%s remaining=%s",
-            e164,
+            "telnyx balance too low for DID order remaining=%s",
             remaining,
         )
         raise ValueError("carrier_balance_exhausted")
@@ -299,7 +267,7 @@ async def _purchase_from_inventory(
     assign_agent_id: str | None,
 ) -> dict | None:
     """Transfer an admin-pool DID to the buyer. Returns None if not in inventory."""
-    from server.services.saas.billing_wallet_service import debit_did_purchase
+    from server.services.saas.billing_wallet_service import debit_did_purchase_in_session
     from server.services.saas.billing_rates import rates_with_derived_inr
     from server.services.saas.number_inventory import (
         ensure_platform_inventory_tenant,
@@ -316,7 +284,14 @@ async def _purchase_from_inventory(
     inventory_tid = await ensure_platform_inventory_tenant()
 
     async with factory() as session:
-        pn = await session.get(PhoneNumber, inv.id)
+        await _assert_number_purchase_eligibility(
+            session,
+            tenant_id=principal.tenant_id,
+            user_id=principal.user_id,
+            workspace_tenant_id=workspace_tid,
+            settings=get_settings(),
+        )
+        pn = await session.get(PhoneNumber, inv.id, with_for_update=True)
         if pn is None or pn.tenant_id != inventory_tid or pn.released_at is not None:
             return None
         bind_agent = await _tenant_agent_id(
@@ -327,7 +302,7 @@ async def _purchase_from_inventory(
             user_id=principal.user_id,
             e164=e164,
             country_code=country_code,
-            status="paid",
+            status="provisioned",
             assign_agent_id=bind_agent,
             created_at=_utcnow(),
             updated_at=_utcnow(),
@@ -343,42 +318,15 @@ async def _purchase_from_inventory(
         pn.purchase_id = purchase_id
         pn.inbound_enabled = True
         pn.outbound_enabled = True
-        await session.commit()
-        phone_number_id = pn.id
-        telnyx_number_id = pn.telnyx_number_id
-
-    try:
-        await debit_did_purchase(
+        await debit_did_purchase_in_session(
+            session,
             principal.tenant_id,
             user_id=principal.user_id,
-            e164=e164,
             purchase_id=purchase_id,
         )
-    except Exception:
-        # Roll ownership back to inventory if the wallet debit fails.
-        async with factory() as session:
-            pn = await session.get(PhoneNumber, phone_number_id)
-            row = await session.get(NumberPurchase, purchase_id)
-            if pn is not None:
-                pn.tenant_id = inventory_tid
-                pn.status = "available"
-                pn.billing_source = "inventory"
-                pn.agent_id = None
-                pn.purchase_id = None
-                pn.inbound_enabled = False
-                pn.outbound_enabled = False
-            if row is not None:
-                row.status = "failed"
-                row.updated_at = _utcnow()
-            await session.commit()
-        raise
-
-    async with factory() as session:
-        row = await session.get(NumberPurchase, purchase_id)
-        if row is not None:
-            row.status = "provisioned"
-            row.updated_at = _utcnow()
-            await session.commit()
+        phone_number_id = pn.id
+        telnyx_number_id = pn.telnyx_number_id
+        await session.commit()
 
     rates = rates_with_derived_inr()
     return {
@@ -408,13 +356,11 @@ async def purchase_with_wallet(
     Prefer admin inventory transfer (no carrier order) when the DID already sits
     in the Platform inventory pool.
     """
-    from server.db.models.saas_models import User
     from server.services.saas.billing_wallet_service import (
         assert_wallet_can_afford_did,
-        debit_did_purchase,
+        debit_did_purchase_in_session,
     )
     from server.services.saas.number_inventory import ensure_platform_inventory_tenant
-    from server.services.saas.provision_worker import enqueue_provision
 
     settings = get_settings()
     factory = get_session_factory()
@@ -448,21 +394,14 @@ async def purchase_with_wallet(
         # Already on another tenant (not inventory) → unavailable.
         if owned is not None and owned.tenant_id != inventory_tid:
             raise ValueError("number_unavailable")
-        user = await session.get(User, principal.user_id)
-        if user and user.email_verified_at is None and settings.saas_require_email_verification_for_buy:
-            raise ValueError("verification_required")
-        tenant = await session.get(Tenant, principal.tenant_id)
-        limits = (tenant.limits or {}) if tenant else {}
-        max_numbers = int(limits.get("max_numbers") or 20)
         workspace_tid = subscriber_workspace_tenant_id(principal)
-        active = await session.execute(
-            select(PhoneNumber).where(
-                PhoneNumber.tenant_id == workspace_tid,
-                PhoneNumber.released_at.is_(None),
-            )
+        await _assert_number_purchase_eligibility(
+            session,
+            tenant_id=principal.tenant_id,
+            user_id=principal.user_id,
+            workspace_tenant_id=workspace_tid,
+            settings=settings,
         )
-        if len(list(active.scalars())) >= max_numbers:
-            raise ValueError("number_limit")
         bind_agent = await _tenant_agent_id(session, workspace_tid, parse_assign_agent_id(assign_agent_id))
         purchase = NumberPurchase(
             tenant_id=principal.tenant_id,
@@ -495,6 +434,21 @@ async def purchase_with_wallet(
             )
         )
         purchase_id = purchase.id
+        session.add(
+            ProvisionJob(
+                purchase_id=purchase_id,
+                status="queued",
+                attempts=0,
+                created_at=_utcnow(),
+                updated_at=_utcnow(),
+            )
+        )
+        await debit_did_purchase_in_session(
+            session,
+            principal.tenant_id,
+            user_id=principal.user_id,
+            purchase_id=purchase_id,
+        )
         try:
             await session.commit()
         except IntegrityError:
@@ -502,28 +456,8 @@ async def purchase_with_wallet(
             await session.rollback()
             raise ValueError("number_reserved") from None
 
-    # The DID is bound to the agent only once the carrier actually provisions it —
-    # process_one_job owns that write, so a failed purchase never leaves an
-    # agent pointing at a number nobody owns.
-    try:
-        await debit_did_purchase(
-            principal.tenant_id,
-            user_id=principal.user_id,
-            e164=e164,
-            purchase_id=purchase_id,
-        )
-    except Exception:
-        async with factory() as session:
-            row = await session.get(NumberPurchase, purchase_id)
-            if row:
-                row.status = "failed"
-                row.updated_at = _utcnow()
-            await session.execute(
-                delete(NumberReservation).where(NumberReservation.purchase_id == purchase_id)
-            )
-            await session.commit()
-        raise
-    await enqueue_provision(purchase_id)
+    # The reservation, purchase, wallet debit, transaction and durable provision
+    # job were committed together. The worker can now claim the queued row.
     # The admin-configured rate, not the env default, so the quoted price and the
     # charged price are the same number.
     from server.services.saas.billing_rates import rates_with_derived_inr

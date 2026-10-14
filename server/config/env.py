@@ -325,7 +325,14 @@ class Settings(BaseSettings):
         20.0,
         validation_alias=AliasChoices("PSTN_SILENCE_HANGUP_SEC", "SILENCE_HANGUP_SEC"),
     )
-    voxly_frontend_url: str = Field("http://localhost:5173", alias="VOXLY_FRONTEND_URL")
+    voxly_frontend_url: str = Field(
+        "http://localhost:5173",
+        validation_alias=AliasChoices("DIALTACT_FRONTEND_URL", "VOXLY_FRONTEND_URL"),
+    )
+
+    @property
+    def dialtact_frontend_url(self) -> str:
+        return self.voxly_frontend_url
 
     # --- Tenant account deletion (Danger Zone) ---
     #: Grace period in days between quarantine and irreversible purge.

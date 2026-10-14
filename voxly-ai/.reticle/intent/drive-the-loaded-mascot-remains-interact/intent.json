@@ -3,14 +3,15 @@
     "flow:drive-the-loaded-mascot-remains-interactive-after-init": {
       "declaredAt": 1791875844401,
       "id": "flow:drive-the-loaded-mascot-remains-interactive-after-init",
+      "source": "decided on the dashboard",
       "state": "declared",
       "statement": "The loaded mascot remains interactive after initial loading and opens its greeting when tapped.",
-      "status": "proposed",
+      "status": "proved",
       "subject": "drive-the-loaded-mascot-remains-interact",
       "surface": {
         "flow": "drive-the-loaded-mascot-remains-interactive-after-init"
       },
-      "updatedAt": 1791875844419
+      "updatedAt": 1791972280960
     }
   },
   "subject": "drive-the-loaded-mascot-remains-interact",

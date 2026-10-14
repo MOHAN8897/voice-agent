@@ -123,7 +123,7 @@ async def provision_ordered_number(client: TelnyxClient, phone_number: str) -> d
     order = await client.place_number_order(phone_number)
     phone_id = None
     for row in (order.get("phone_numbers") or []):
-        if row.get("phone_number") == phone_number or row.get("id"):
+        if row.get("phone_number") == phone_number:
             phone_id = row.get("id")
             break
     if not phone_id:

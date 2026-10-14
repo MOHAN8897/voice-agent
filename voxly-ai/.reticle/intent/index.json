@@ -1,15 +1,27 @@
 {
   "entries": [
     {
+      "id": "inline:a-workspace-can-open-billing-and-review-wallet-a-03c2ac0b",
+      "statement": "A workspace can open billing and review wallet and payment activity.",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
       "id": "flow:drive-a-deployment-whose-mail-provider-cannot-deliver",
       "statement": "a deployment whose mail provider cannot deliver says so, and hands back…",
-      "status": "proposed",
+      "status": "proved",
       "subject": "drive-a-deployment-whose-mail-provider-c"
+    },
+    {
+      "id": "flow:drive-a-workspace-can-open-billing-and-review-wallet-a",
+      "statement": "A workspace can open billing and review wallet and payment activity.",
+      "status": "proved",
+      "subject": "drive-a-workspace-can-open-billing-and-r"
     },
     {
       "id": "flow:drive-billing-page-shows-wallet-only-no-subscription-p",
       "statement": "Billing page shows wallet only, no subscription plans",
-      "status": "proposed",
+      "status": "proved",
       "subject": "drive-billing-page-shows-wallet-only-no"
     },
     {
@@ -27,13 +39,13 @@
     {
       "id": "flow:drive-creating-an-agent-lands-the-operator-on-the-agen",
       "statement": "Creating an agent lands the operator on the agent workspace Overview ta…",
-      "status": "proposed",
+      "status": "proved",
       "subject": "drive-creating-an-agent-lands-the-operat"
     },
     {
       "id": "flow:drive-creating-an-ai-employee-lands-the-operator-in-th",
       "statement": "Creating an AI employee lands the operator in the agent workspace with…",
-      "status": "proposed",
+      "status": "proved",
       "subject": "drive-creating-an-ai-employee-lands-the"
     },
     {
@@ -45,19 +57,25 @@
     {
       "id": "flow:drive-every-industry-on-the-landing-page-plays-a-real",
       "statement": "every industry on the landing page plays a real clip rendered by the li…",
-      "status": "proposed",
+      "status": "proved",
       "subject": "drive-every-industry-on-the-landing-page"
+    },
+    {
+      "id": "flow:drive-open-sign-in-dialog-by-clicking-continue-sign-in",
+      "statement": "Open sign-in dialog by clicking Continue - sign in",
+      "status": "proved",
+      "subject": "drive-open-sign-in-dialog-by-clicking-co"
     },
     {
       "id": "flow:drive-open-the-test-call-modal-so-operators-get-call-c",
       "statement": "Open the test call modal so operators get call chrome with timer and 3D…",
-      "status": "proposed",
+      "status": "proved",
       "subject": "drive-open-the-test-call-modal-so-operat"
     },
     {
       "id": "flow:drive-operator-confirms-bulk-campaign-create-returned",
       "statement": "Operator confirms bulk campaign create returned success and dialer star…",
-      "status": "proposed",
+      "status": "proved",
       "subject": "drive-operator-confirms-bulk-campaign-cr"
     },
     {
@@ -75,13 +93,13 @@
     {
       "id": "flow:drive-the-loaded-mascot-remains-interactive-after-init",
       "statement": "The loaded mascot remains interactive after initial loading and opens i…",
-      "status": "proposed",
+      "status": "proved",
       "subject": "drive-the-loaded-mascot-remains-interact"
     },
     {
       "id": "flow:drive-the-marketing-page-plays-the-product-s-own-neura",
       "statement": "the marketing page plays the product's own neural voice per industry, d…",
-      "status": "proposed",
+      "status": "proved",
       "subject": "drive-the-marketing-page-plays-the-produ"
     },
     {
@@ -181,6 +199,12 @@
       "subject": "unsorted"
     },
     {
+      "id": "inline:click-continue-sign-in-to-open-sign-in-modal-3180a56d",
+      "statement": "Click Continue - sign in to open sign-in modal",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
       "id": "inline:connect-google-calendar-integration-in-console-bb4d0c1f",
       "statement": "Connect Google Calendar integration in console",
       "status": "proposed",
@@ -255,6 +279,24 @@
     {
       "id": "inline:google-calendar-shows-active-status-and-disconne-9ac7af4a",
       "statement": "Google Calendar shows Active status and Disconnect button after OAuth a…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:google-sign-in-returns-the-user-to-the-dialtact-c73bf1fb",
+      "statement": "Google sign-in returns the user to the Dialtact console with an authent…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:open-sign-in-dialog-b1476163",
+      "statement": "Open sign-in dialog",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:open-sign-in-dialog-by-clicking-continue-sign-in-f80d4c52",
+      "statement": "Open sign-in dialog by clicking Continue - sign in",
       "status": "proved",
       "subject": "unsorted"
     },
@@ -355,6 +397,12 @@
       "subject": "unsorted"
     },
     {
+      "id": "inline:submit-sign-in-form-ca9989d4",
+      "statement": "Submit sign in form",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
       "id": "inline:submit-signin-form-and-authenticate-as-mohansait-32cb9afe",
       "statement": "Submit signin form and authenticate as mohansaiteja.99@gmail.com",
       "status": "proposed",
@@ -382,6 +430,18 @@
       "id": "inline:the-open-builder-action-on-an-agent-card-enters-dab944d9",
       "statement": "The Open builder action on an agent card enters the workspace with Over…",
       "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:verify-login-error-is-displayed-7fdafc32",
+      "statement": "Verify login error is displayed",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:verify-reticle-connects-to-the-running-voxly-con-2de77407",
+      "statement": "Verify Reticle connects to the running Voxly console and reads live DOM…",
+      "status": "proved",
       "subject": "unsorted"
     },
     {

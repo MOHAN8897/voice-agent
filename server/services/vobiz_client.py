@@ -74,7 +74,7 @@ class VobizClient:
             "X-Auth-Token": self.cfg["auth_token"],
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "User-Agent": "Voxly-Voice-Agent/1.0",
+            "User-Agent": "DialTact-Voice-Agent/1.0",
         }
 
     async def _request(self, method: str, path: str, **kwargs: Any) -> dict[str, Any]:
@@ -269,12 +269,20 @@ class VobizClient:
                 return {"ok": True, "balance": bal, "currency": curr}
             return {"ok": True, "balance": 0.0, "currency": "INR"}
         except Exception as e:
-            logger.warning("[VOBIZ] balance fetch fallback: %s", e)
+            logger.warning(
+                "[VOBIZ] balance fetch fallback error_type=%s",
+                type(e).__name__,
+            )
             from server.config.env import get_settings
             env = getattr(get_settings(), "environment", "development")
             if env in ("development", "test", "staging"):
                 return {"ok": True, "balance": 0.0, "currency": "INR", "fallback": True}
-            return {"ok": False, "balance": 0.0, "currency": "INR", "error": str(e)}
+            return {
+                "ok": False,
+                "balance": 0.0,
+                "currency": "INR",
+                "error": type(e).__name__,
+            }
 
     async def list_account_numbers(self) -> list[dict[str, Any]]:
         """List active provisioned phone numbers on Vobiz account."""
@@ -299,7 +307,10 @@ class VobizClient:
                     })
             return results
         except Exception as exc:
-            logger.debug("[VOBIZ] list_account_numbers notice: %s", exc)
+            logger.debug(
+                "[VOBIZ] list_account_numbers notice error_type=%s",
+                type(exc).__name__,
+            )
             return []
 
     async def search_available_numbers(
@@ -352,11 +363,15 @@ class VobizClient:
                 auth_id = self.cfg["auth_id"]
                 await self._request("POST", f"/Account/{auth_id}/Number/{clean}/", json={"app_id": app_id})
             except Exception as e:
-                logger.debug("[VOBIZ] app linking notice: %s", e)
+                logger.debug(
+                    "[VOBIZ] app linking notice error_type=%s",
+                    type(e).__name__,
+                )
+        phone_number_id = order.get("id") if isinstance(order, dict) else None
         return {
             "ok": True,
             "order": order,
-            "phone_number_id": clean,
+            "phone_number_id": str(phone_number_id or clean),
             "e164": phone_number,
             "provider": "vobiz",
         }

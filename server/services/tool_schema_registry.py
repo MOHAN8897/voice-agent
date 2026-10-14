@@ -60,6 +60,34 @@ _SCHEMAS: dict[str, list[dict]] = {
                 "required": ["date"],
             },
         },
+        {
+            "type": "function",
+            "name": "GOOGLECALENDAR_CANCEL_EVENT",
+            "description": "Cancel or delete an existing calendar appointment",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "event_id": {"type": "string", "description": "The Google Calendar event ID to cancel"},
+                    "calendar_id": {"type": "string", "description": "Calendar identifier (default: primary)"},
+                },
+                "required": ["event_id"],
+            },
+        },
+        {
+            "type": "function",
+            "name": "GOOGLECALENDAR_RESCHEDULE_EVENT",
+            "description": "Reschedule an existing calendar appointment to a new date and time",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "event_id": {"type": "string", "description": "The Google Calendar event ID to reschedule"},
+                    "start":    {"type": "string", "description": "New start datetime ISO 8601"},
+                    "end":      {"type": "string", "description": "Optional new end datetime ISO 8601"},
+                    "summary":  {"type": "string", "description": "Optional updated event title"},
+                },
+                "required": ["event_id", "start"],
+            },
+        },
     ],
 
     "CALENDLY": [
@@ -92,6 +120,30 @@ _SCHEMAS: dict[str, list[dict]] = {
                 "required": ["event_type_uri", "start_date", "end_date"],
             },
         },
+        {
+            "type": "function",
+            "name": "CALENDLY_CANCEL_EVENT",
+            "description": "Cancel a scheduled Calendly event appointment",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "event_uuid": {"type": "string", "description": "Calendly scheduled event UUID"},
+                    "reason":     {"type": "string", "description": "Reason for cancellation"},
+                },
+                "required": ["event_uuid"],
+            },
+        },
+        {
+            "type": "function",
+            "name": "CALENDLY_LIST_EVENT_TYPES",
+            "description": "List available Calendly event types and durations for booking",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "user": {"type": "string", "description": "Optional Calendly user URI"},
+                },
+            },
+        },
     ],
 
     "CALCOM": [
@@ -122,6 +174,33 @@ _SCHEMAS: dict[str, list[dict]] = {
                     "date":          {"type": "string", "description": "YYYY-MM-DD"},
                 },
                 "required": ["event_type_id", "date"],
+            },
+        },
+        {
+            "type": "function",
+            "name": "CALCOM_CANCEL_BOOKING",
+            "description": "Cancel an existing Cal.com appointment booking",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "booking_uid": {"type": "string", "description": "Cal.com booking UID"},
+                    "reason":      {"type": "string", "description": "Reason for cancellation"},
+                },
+                "required": ["booking_uid"],
+            },
+        },
+        {
+            "type": "function",
+            "name": "CALCOM_RESCHEDULE_BOOKING",
+            "description": "Reschedule an existing Cal.com booking to a new start time",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "booking_uid": {"type": "string", "description": "Cal.com booking UID"},
+                    "start":       {"type": "string", "description": "New start datetime ISO 8601"},
+                    "reason":      {"type": "string", "description": "Reason for rescheduling"},
+                },
+                "required": ["booking_uid", "start"],
             },
         },
     ],
@@ -161,6 +240,18 @@ _SCHEMAS: dict[str, list[dict]] = {
         },
         {
             "type": "function",
+            "name": "HUBSPOT_LOOKUP_CONTACT",
+            "description": "Look up an existing contact in HubSpot CRM by email or phone",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "email": {"type": "string", "description": "Caller email address"},
+                    "phone": {"type": "string", "description": "Caller phone number"},
+                },
+            },
+        },
+        {
+            "type": "function",
             "name": "HUBSPOT_CREATE_DEAL",
             "description": "Create a new deal in HubSpot CRM",
             "parameters": {
@@ -172,6 +263,19 @@ _SCHEMAS: dict[str, list[dict]] = {
                     "dealstage": {"type": "string"},
                 },
                 "required": ["dealname"],
+            },
+        },
+        {
+            "type": "function",
+            "name": "HUBSPOT_UPDATE_DEAL_STAGE",
+            "description": "Update the pipeline stage of an existing HubSpot deal",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "deal_id":   {"type": "string", "description": "HubSpot deal ID"},
+                    "dealstage": {"type": "string", "description": "New pipeline stage"},
+                },
+                "required": ["deal_id", "dealstage"],
             },
         },
         {
@@ -209,6 +313,18 @@ _SCHEMAS: dict[str, list[dict]] = {
         },
         {
             "type": "function",
+            "name": "SALESFORCE_LOOKUP_LEAD",
+            "description": "Lookup an existing lead in Salesforce by email or phone",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "email": {"type": "string", "description": "Lead email address"},
+                    "phone": {"type": "string", "description": "Lead phone number"},
+                },
+            },
+        },
+        {
+            "type": "function",
             "name": "SALESFORCE_CREATE_TASK",
             "description": "Log a Salesforce follow-up task",
             "parameters": {
@@ -235,6 +351,20 @@ _SCHEMAS: dict[str, list[dict]] = {
                     "to":      {"type": "string"},
                     "subject": {"type": "string"},
                     "body":    {"type": "string"},
+                },
+                "required": ["to", "subject", "body"],
+            },
+        },
+        {
+            "type": "function",
+            "name": "GMAIL_CREATE_DRAFT",
+            "description": "Create a draft email in Gmail for post-call review",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "to":      {"type": "string", "description": "Recipient email"},
+                    "subject": {"type": "string", "description": "Subject line"},
+                    "body":    {"type": "string", "description": "Email body content"},
                 },
                 "required": ["to", "subject", "body"],
             },
@@ -275,6 +405,18 @@ _SCHEMAS: dict[str, list[dict]] = {
                 "required": ["topic", "start_time"],
             },
         },
+        {
+            "type": "function",
+            "name": "ZOOM_GET_MEETING",
+            "description": "Retrieve details and join link for a scheduled Zoom meeting",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "meeting_id": {"type": "string", "description": "Zoom meeting ID"},
+                },
+                "required": ["meeting_id"],
+            },
+        },
     ],
 
     "NOTION": [
@@ -290,6 +432,18 @@ _SCHEMAS: dict[str, list[dict]] = {
                     "content":   {"type": "string"},
                 },
                 "required": ["parent_id", "title"],
+            },
+        },
+        {
+            "type": "function",
+            "name": "NOTION_SEARCH_PAGES",
+            "description": "Search workspace pages or databases in Notion",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "Search keyword or page title"},
+                },
+                "required": ["query"],
             },
         },
     ],
@@ -309,6 +463,20 @@ _SCHEMAS: dict[str, list[dict]] = {
                 "required": ["base_id", "table_name", "fields"],
             },
         },
+        {
+            "type": "function",
+            "name": "AIRTABLE_SEARCH_RECORDS",
+            "description": "Search records in an Airtable table by formula or keyword",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "base_id":    {"type": "string", "description": "Airtable base ID"},
+                    "table_name": {"type": "string", "description": "Table name"},
+                    "filter":     {"type": "string", "description": "Optional search term or filter formula"},
+                },
+                "required": ["base_id", "table_name"],
+            },
+        },
     ],
 
     "ZENDESK": [
@@ -325,6 +493,32 @@ _SCHEMAS: dict[str, list[dict]] = {
                     "priority":         {"type": "string", "description": "low/normal/high/urgent"},
                 },
                 "required": ["subject", "comment"],
+            },
+        },
+        {
+            "type": "function",
+            "name": "ZENDESK_SEARCH_TICKETS",
+            "description": "Search open or existing Zendesk tickets for a customer",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "Search query, email, or ticket ID"},
+                },
+                "required": ["query"],
+            },
+        },
+        {
+            "type": "function",
+            "name": "ZENDESK_UPDATE_TICKET",
+            "description": "Update status or append a comment to an existing Zendesk ticket",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "ticket_id": {"type": "string", "description": "Zendesk ticket ID"},
+                    "comment":   {"type": "string", "description": "Comment or note to add"},
+                    "status":    {"type": "string", "description": "Ticket status: open, pending, solved, closed"},
+                },
+                "required": ["ticket_id"],
             },
         },
     ],
@@ -346,6 +540,19 @@ _SCHEMAS: dict[str, list[dict]] = {
                 "required": ["name"],
             },
         },
+        {
+            "type": "function",
+            "name": "ASANA_ADD_COMMENT",
+            "description": "Add a note or call update to an existing Asana task",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "task_id": {"type": "string", "description": "Asana task GID"},
+                    "comment": {"type": "string", "description": "Comment text to post"},
+                },
+                "required": ["task_id", "comment"],
+            },
+        },
     ],
 
     "LINEAR": [
@@ -364,6 +571,18 @@ _SCHEMAS: dict[str, list[dict]] = {
                 "required": ["title", "team_id"],
             },
         },
+        {
+            "type": "function",
+            "name": "LINEAR_SEARCH_ISSUES",
+            "description": "Search Linear issues by title or keyword",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "Search term or keyword"},
+                },
+                "required": ["query"],
+            },
+        },
     ],
 
     "JIRA": [
@@ -380,6 +599,31 @@ _SCHEMAS: dict[str, list[dict]] = {
                     "issue_type":  {"type": "string", "description": "Bug/Task/Story"},
                 },
                 "required": ["project_key", "summary"],
+            },
+        },
+        {
+            "type": "function",
+            "name": "JIRA_GET_ISSUE",
+            "description": "Retrieve status and details of an existing Jira issue",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "issue_key": {"type": "string", "description": "Jira issue key (e.g. PROJ-123)"},
+                },
+                "required": ["issue_key"],
+            },
+        },
+        {
+            "type": "function",
+            "name": "JIRA_ADD_COMMENT",
+            "description": "Add a customer note or call comment to an existing Jira issue",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "issue_key": {"type": "string", "description": "Jira issue key (e.g. PROJ-123)"},
+                    "comment":   {"type": "string", "description": "Comment text"},
+                },
+                "required": ["issue_key", "comment"],
             },
         },
     ],
@@ -401,6 +645,20 @@ _SCHEMAS: dict[str, list[dict]] = {
                 "required": ["owner", "repo", "title"],
             },
         },
+        {
+            "type": "function",
+            "name": "GITHUB_SEARCH_ISSUES",
+            "description": "Search issues in a GitHub repository",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "owner": {"type": "string"},
+                    "repo":  {"type": "string"},
+                    "query": {"type": "string", "description": "Search keyword"},
+                },
+                "required": ["owner", "repo", "query"],
+            },
+        },
     ],
 
     "INTERCOM": [
@@ -415,6 +673,18 @@ _SCHEMAS: dict[str, list[dict]] = {
                     "message": {"type": "string"},
                 },
                 "required": ["message"],
+            },
+        },
+        {
+            "type": "function",
+            "name": "INTERCOM_SEARCH_CONTACT",
+            "description": "Search customer profile in Intercom by email",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "email": {"type": "string", "description": "Customer email"},
+                },
+                "required": ["email"],
             },
         },
     ],
@@ -459,26 +729,46 @@ _SCHEMAS: dict[str, list[dict]] = {
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "order_id": {"type": "string"},
-                    "email":    {"type": "string"},
+                    "order_id": {"type": "string", "description": "Shopify order ID or order number"},
+                    "email":    {"type": "string", "description": "Customer email address"},
                 },
             },
         },
-    ],
-
-    "STRIPE": [
         {
             "type": "function",
-            "name": "STRIPE_CREATE_PAYMENT_LINK",
-            "description": "Generate a Stripe payment link for the caller",
+            "name": "SHOPIFY_CANCEL_ORDER",
+            "description": "Cancel an unfulfilled order in Shopify",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "price_id": {"type": "string"},
-                    "quantity": {"type": "integer"},
-                    "email":    {"type": "string"},
+                    "order_id": {"type": "string", "description": "Shopify order ID"},
+                    "reason":   {"type": "string", "description": "Cancellation reason: customer, inventory, fraud, declined, other"},
                 },
-                "required": ["price_id"],
+                "required": ["order_id"],
+            },
+        },
+        {
+            "type": "function",
+            "name": "SHOPIFY_GET_FULFILLMENTS",
+            "description": "Get shipment tracking and fulfillment status for a Shopify order",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "order_id": {"type": "string", "description": "Shopify order ID"},
+                },
+                "required": ["order_id"],
+            },
+        },
+        {
+            "type": "function",
+            "name": "SHOPIFY_SEARCH_CUSTOMER",
+            "description": "Search Shopify customer records by email, phone, or name",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "Email, phone number, or customer name"},
+                },
+                "required": ["query"],
             },
         },
     ],
@@ -495,6 +785,18 @@ _SCHEMAS: dict[str, list[dict]] = {
                     "body": {"type": "string"},
                 },
                 "required": ["to", "body"],
+            },
+        },
+        {
+            "type": "function",
+            "name": "TWILIO_SMS_GET_STATUS",
+            "description": "Check delivery status of an SMS sent via Twilio",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "message_sid": {"type": "string", "description": "Twilio Message SID (SM...)"},
+                },
+                "required": ["message_sid"],
             },
         },
     ],
@@ -529,22 +831,6 @@ _SCHEMAS: dict[str, list[dict]] = {
                     "priority":    {"type": "integer", "description": "1=urgent 2=high 3=normal 4=low"},
                 },
                 "required": ["list_id", "name"],
-            },
-        },
-    ],
-
-    "TWILIO_SMS": [
-        {
-            "type": "function",
-            "name": "TWILIO_SMS_SEND_MESSAGE",
-            "description": "Send an SMS to the caller's phone",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "to":   {"type": "string", "description": "E.164 phone number"},
-                    "body": {"type": "string"},
-                },
-                "required": ["to", "body"],
             },
         },
     ],
@@ -658,6 +944,19 @@ _SCHEMAS: dict[str, list[dict]] = {
                 },
             },
         },
+        {
+            "type": "function",
+            "name": "WOOCOMMERCE_UPDATE_ORDER_STATUS",
+            "description": "Update the fulfillment or processing status of a WooCommerce order",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "order_id": {"type": "string", "description": "WooCommerce order ID"},
+                    "status":   {"type": "string", "description": "New status: processing, on-hold, completed, cancelled, refunded"},
+                },
+                "required": ["order_id", "status"],
+            },
+        },
     ],
 
     "WHATSAPP": [
@@ -758,33 +1057,32 @@ _SCHEMAS: dict[str, list[dict]] = {
 }
 
 VOICE_RESPONSE_KEYS: dict[str, tuple] = {
-    "GOOGLECALENDAR":   ("status", "confirmed", "date", "time", "summary", "event_id", "slots", "available", "available_slots", "busy_slots", "requested_slot", "error", "available_alternatives", "message"),
-    "CALENDLY":         ("status", "booking_url", "start_time", "summary"),
-    "CALCOM":           ("status", "uid", "start_time", "summary"),
+    "GOOGLECALENDAR":   ("status", "confirmed", "rescheduled", "date", "time", "summary", "event_id", "slots", "available", "available_slots", "busy_slots", "requested_slot", "error", "available_alternatives", "message"),
+    "CALENDLY":         ("status", "booking_url", "start_time", "event_types", "event_uuid", "summary"),
+    "CALCOM":           ("status", "uid", "start_time", "slots", "summary"),
     "SLACK":            ("status", "message_id", "channel", "summary"),
-    "HUBSPOT":          ("status", "id", "contact_id", "deal_id", "summary"),
-    "SALESFORCE":       ("status", "id", "lead_id", "task_id", "summary"),
-    "GMAIL":            ("status", "message_id", "to", "subject", "message", "summary"),
+    "HUBSPOT":          ("status", "id", "contact_id", "deal_id", "dealstage", "contacts", "summary"),
+    "SALESFORCE":       ("status", "id", "lead_id", "task_id", "leads", "summary"),
+    "GMAIL":            ("status", "message_id", "draft_id", "to", "subject", "message", "summary"),
     "OUTLOOKCALENDAR":  ("status", "event_id", "date", "time", "summary"),
-    "ZOOM":             ("status", "join_url", "start_time", "topic", "summary"),
-    "NOTION":           ("status", "page_id", "url", "summary"),
-    "AIRTABLE":         ("status", "record_id", "summary"),
-    "ZENDESK":          ("status", "ticket_id", "ticket_url", "summary"),
-    "ASANA":            ("status", "task_id", "due_on", "summary"),
-    "LINEAR":           ("status", "issue_id", "identifier", "summary"),
-    "JIRA":             ("status", "issue_id", "key", "summary"),
-    "GITHUB":           ("status", "issue_number", "html_url", "summary"),
-    "INTERCOM":         ("status", "conversation_id", "summary"),
+    "ZOOM":             ("status", "join_url", "start_time", "topic", "meeting_id", "summary"),
+    "NOTION":           ("status", "page_id", "url", "results", "summary"),
+    "AIRTABLE":         ("status", "record_id", "records", "summary"),
+    "ZENDESK":          ("status", "ticket_id", "ticket_url", "tickets", "priority", "summary"),
+    "ASANA":            ("status", "task_id", "due_on", "comment_id", "summary"),
+    "LINEAR":           ("status", "issue_id", "identifier", "issues", "summary"),
+    "JIRA":             ("status", "issue_id", "key", "issue_status", "summary"),
+    "GITHUB":           ("status", "issue_number", "html_url", "issues", "summary"),
+    "INTERCOM":         ("status", "conversation_id", "contact_id", "summary"),
     "PIPEDRIVE":        ("status", "id", "summary"),
-    "SHOPIFY":          ("status", "order_id", "name", "financial_status", "summary"),
-    "STRIPE":           ("status", "url", "payment_link_id", "summary"),
-    "TWILIO_SMS":       ("status", "message_sid", "summary"),
+    "SHOPIFY":          ("status", "order_id", "name", "financial_status", "fulfillment_status", "fulfillments", "customer", "tracking_number", "summary"),
+    "TWILIO_SMS":       ("status", "message_sid", "delivery_status", "summary"),
     "MICROSOFTTEAMS":   ("status", "message_id", "summary"),
     "CLICKUP":          ("status", "task_id", "url", "summary"),
     "TRELLO":           ("status", "card_id", "url", "summary"),
     "SENDGRID":         ("status", "message_id", "summary"),
     "MAILCHIMP":        ("status", "subscriber_id", "summary"),
-    "FRESHDESK":        ("status", "ticket_id", "subject", "priority", "summary"),
+    "FRESHDESK":        ("status", "ticket_id", "subject", "priority", "tickets", "summary"),
     "WOOCOMMERCE":      ("status", "order_id", "total", "shipping_status", "stock", "summary"),
     "WHATSAPP":         ("status", "message_id", "summary"),
     "DISCORD":          ("status", "message_id", "summary"),
@@ -831,7 +1129,12 @@ def get_tool_names_for_tenant(active_app_names: list[str]) -> set[str]:
         # Add common action suffixes for dispatch filter compatibility
         for suffix in (
             "create_event", "find_slots", "find_free_slots", "list_events",
-            "send_message", "search", "create_lead", "create_contact", "action"
+            "cancel_event", "reschedule_event", "delete_event", "update_event",
+            "send_message", "search", "create_lead", "create_contact", "action",
+            "cancel_order", "cancel_booking", "reschedule_booking", "get_status",
+            "check_status", "get_order", "lookup_contact", "search_tickets",
+            "update_ticket", "search_issues", "get_issue", "add_comment",
+            "check_stock", "update_order_status", "get_meeting", "create_draft"
         ):
             names.add(f"{clean}_{suffix}")
             names.add(f"{key}_{suffix.upper()}")

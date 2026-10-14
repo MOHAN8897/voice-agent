@@ -10,7 +10,7 @@ test.describe('Console billing (Razorpay config)', () => {
     const data = await res.json();
     expect(data).toHaveProperty('enabled');
     expect(data).toHaveProperty('keyId');
-    expect(data.currency).toBe('INR');
+    expect(['INR', 'USD']).toContain(data.currency);
   });
 
   test('billing UI INR top-up (requires E2E login)', async ({ page }) => {

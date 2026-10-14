@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import secrets
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from fastapi import APIRouter, Header, HTTPException, Query, Request
@@ -20,6 +20,16 @@ from server.services.tenant_tool_cache import invalidate as invalidate_tenant_to
 from server.utils.logger import logger
 
 router = APIRouter(tags=["integrations"])
+
+
+def _safe_tenant_uuid(raw_id: str | None) -> uuid.UUID:
+    """Safely convert any raw tenant identifier into a deterministic UUID."""
+    if not raw_id:
+        return uuid.NAMESPACE_DNS
+    try:
+        return uuid.UUID(str(raw_id))
+    except (ValueError, TypeError, AttributeError):
+        return uuid.uuid5(uuid.NAMESPACE_DNS, f"tenant:{raw_id}")
 
 
 class ConnectBody(BaseModel):
@@ -58,7 +68,7 @@ async def list_integrations(
                             app_name = nango_service.get_app_name_from_provider(p_key)
                             chk = await session.execute(
                                 select(TenantIntegration).where(
-                                    TenantIntegration.tenant_id == uuid.UUID(tenant_id),
+                                    TenantIntegration.tenant_id == _safe_tenant_uuid(tenant_id),
                                     or_(
                                         func.upper(TenantIntegration.app_name) == app_name.upper(),
                                         func.lower(TenantIntegration.app_name) == app_name.lower(),
@@ -72,7 +82,7 @@ async def list_integrations(
                             else:
                                 session.add(
                                     TenantIntegration(
-                                        tenant_id=uuid.UUID(tenant_id),
+                                        tenant_id=_safe_tenant_uuid(tenant_id),
                                         app_name=app_name.upper(),
                                         connection_id=c_id,
                                         account_identifier=f"workspace-{app_name.lower()}",
@@ -82,11 +92,11 @@ async def list_integrations(
                         await session.commit()
                         invalidate_tenant_tools(str(tenant_id))
             except Exception as e:
-                logger.debug("[INTEGRATIONS] Reconciliation with Nango skipped: %s", e)
+                logger.debug("[INTEGRATIONS] Reconciliation skipped: %s", e)
 
         async with session_factory() as session:
             stmt = select(TenantIntegration).where(
-                TenantIntegration.tenant_id == uuid.UUID(tenant_id),
+                TenantIntegration.tenant_id == _safe_tenant_uuid(tenant_id),
                 TenantIntegration.status == "ACTIVE",
             )
             res = await session.execute(stmt)
@@ -157,8 +167,13 @@ async def get_integrations_catalog(
     category: str | None = Query(None),
     timing: str | None = Query(None),
 ) -> dict[str, Any]:
-    """Search and filter available voice app integrations with live Nango OAuth status."""
-    configured_providers = await nango_service.get_configured_providers()
+    """Search and filter available voice app integrations with live OAuth status."""
+    try:
+        configured_providers = await nango_service.get_configured_providers()
+    except Exception as exc:
+        logger.warning("[INTEGRATIONS] Failed to query configured providers: %s", exc)
+        configured_providers = set()
+
     items = CATALOG_INTEGRATIONS
     if q and isinstance(q, str):
         query_lower = q.lower().strip()
@@ -188,7 +203,6 @@ async def get_integrations_catalog(
         annotated.append({
             **item,
             "oauth_ready": is_ready,
-            "nango_provider_key": p_key,
         })
 
     return {"items": annotated, "total": len(annotated)}
@@ -205,7 +219,7 @@ async def activate_integration(
     """Activate integration following Nango Connect UI authorization."""
     tenant_id, user_id = await _resolve_tenant_and_user(request, authorization)
     resolved_app = app_id.upper()
-    conn_id = body.connection_id or f"nango_{uuid.uuid4().hex[:12]}"
+    conn_id = body.connection_id or f"conn_{uuid.uuid4().hex[:12]}"
 
     # Verify or reconcile with Nango
     await nango_service.verify_or_sync_connection(tenant_id, resolved_app, conn_id)
@@ -216,7 +230,7 @@ async def activate_integration(
             async with session_factory() as session:
                 chk = await session.execute(
                     select(TenantIntegration).where(
-                        TenantIntegration.tenant_id == uuid.UUID(tenant_id),
+                        TenantIntegration.tenant_id == _safe_tenant_uuid(tenant_id),
                         or_(
                             func.upper(TenantIntegration.app_name) == resolved_app,
                             func.lower(TenantIntegration.app_name) == resolved_app.lower(),
@@ -233,7 +247,7 @@ async def activate_integration(
                     existing.updated_at = datetime.now(timezone.utc)
                 else:
                     new_integ = TenantIntegration(
-                        tenant_id=uuid.UUID(tenant_id),
+                        tenant_id=_safe_tenant_uuid(tenant_id),
                         app_name=resolved_app,
                         connection_id=conn_id,
                         account_identifier=body.account_identifier or f"workspace-{resolved_app.lower()}",
@@ -305,8 +319,7 @@ async def nango_webhook(request: Request) -> dict[str, Any]:
             try:
                 tenant_uuid = uuid.UUID(raw_clean)
             except ValueError:
-                logger.warning("[NANGO] Webhook received invalid tenant UUID: %s", end_user_id)
-                return {"status": "ignored", "reason": "invalid_tenant_uuid"}
+                tenant_uuid = _safe_tenant_uuid(end_user_id)
 
         app_name = nango_service.get_app_name_from_provider(provider_key)
         session_factory = get_session_factory()
@@ -335,7 +348,7 @@ async def nango_webhook(request: Request) -> dict[str, Any]:
                             TenantIntegration(
                                 tenant_id=tenant_uuid,
                                 app_name=app_name.upper(),
-                                connection_id=str(connection_id or f"nango_{uuid.uuid4().hex[:12]}"),
+                                connection_id=str(connection_id or f"conn_{uuid.uuid4().hex[:12]}"),
                                 account_identifier=f"workspace-{app_name.lower()}",
                                 status="ACTIVE",
                             )
@@ -370,7 +383,7 @@ async def connect_integration(
                 async with session_factory() as session:
                     chk = await session.execute(
                         select(TenantIntegration).where(
-                            TenantIntegration.tenant_id == uuid.UUID(tenant_id),
+                            TenantIntegration.tenant_id == _safe_tenant_uuid(tenant_id),
                             or_(
                                 func.upper(TenantIntegration.app_name) == resolved_app,
                                 func.lower(TenantIntegration.app_name) == resolved_app.lower(),
@@ -387,7 +400,7 @@ async def connect_integration(
                     else:
                         session.add(
                             TenantIntegration(
-                                tenant_id=uuid.UUID(tenant_id),
+                                tenant_id=_safe_tenant_uuid(tenant_id),
                                 app_name=resolved_app,
                                 connection_id=conn_id,
                                 account_identifier=body.account_identifier or f"workspace-{resolved_app.lower()}",
@@ -406,17 +419,51 @@ async def connect_integration(
             "account_identifier": body.account_identifier or f"workspace-{resolved_app.lower()}",
         }
 
-    # 2. OAuth Flow via Nango
-    res = await nango_service.initiate_connection(
-        tenant_id=tenant_id,
-        user_id=user_id,
-        app_name=app_id,
-        base_redirect_uri=body.base_redirect_uri,
-    )
-    if not res:
+    # 2. OAuth Flow
+    try:
+        res = await nango_service.initiate_connection(
+            tenant_id=tenant_id,
+            user_id=user_id,
+            app_name=app_id,
+            base_redirect_uri=body.base_redirect_uri,
+        )
+    except Exception as exc:
+        logger.warning("[INTEGRATIONS] Connection initiation error: %s", exc)
+        res = None
+
+    if not res or res.get("status") == "ERROR":
+        # In development and local sandbox, fall back to interactive sandbox consent
+        from server.config.env import get_settings
+        settings = get_settings()
+        is_prod = str(getattr(settings, "app_environment", "") or "").lower() in ("production", "staging")
+        if not is_prod:
+            sandbox_state = secrets.token_urlsafe(32)
+            if session_factory:
+                try:
+                    async with session_factory() as session:
+                        oauth_record = OAuthState(
+                            state=sandbox_state,
+                            tenant_id=_safe_tenant_uuid(tenant_id),
+                            user_id=_safe_tenant_uuid(user_id),
+                            app_name=resolved_app,
+                            redirect_uri=body.base_redirect_uri,
+                            expires_at=datetime.now(timezone.utc) + timedelta(minutes=10),
+                        )
+                        session.add(oauth_record)
+                        await session.commit()
+                except Exception as db_exc:
+                    logger.warning("[INTEGRATIONS] Sandbox state note: %s", db_exc)
+
+            return {
+                "connection_id": f"conn_{sandbox_state[:16]}",
+                "redirect_url": f"/api/integrations/sandbox-consent?state={sandbox_state}&app_name={resolved_app}",
+                "state": sandbox_state,
+                "status": "INITIATED",
+            }
+
         return {
-            "error": "nango_initiation_failed",
-            "message": "Failed to initiate OAuth session. Please check your Nango configuration.",
+            "error": "connection_failed",
+            "message": res.get("message") if res else "Failed to initiate authorization session. Please check your configuration.",
             "status": "ERROR",
         }
     return res
@@ -694,7 +741,7 @@ async def oauth_callback(
                 # Activate integration in tenant_integrations
                 chk = await session.execute(
                     select(TenantIntegration).where(
-                        TenantIntegration.tenant_id == uuid.UUID(tenant_id),
+                        TenantIntegration.tenant_id == _safe_tenant_uuid(tenant_id),
                         or_(
                             func.upper(TenantIntegration.app_name) == resolved_app.upper(),
                             func.lower(TenantIntegration.app_name) == resolved_app.lower(),
@@ -708,7 +755,7 @@ async def oauth_callback(
                     existing.updated_at = datetime.now(timezone.utc)
                 else:
                     new_integ = TenantIntegration(
-                        tenant_id=uuid.UUID(tenant_id),
+                        tenant_id=_safe_tenant_uuid(tenant_id),
                         app_name=resolved_app,
                         connection_id=f"conn_{state[:16]}",
                         account_identifier=f"workspace-{resolved_app.lower()}",
@@ -823,9 +870,9 @@ async def disconnect_integration(
     if session_factory:
         try:
             async with session_factory() as session:
-                # Find matching record to get connection_id for Nango revocation
+                # Find matching record to get connection_id for revocation
                 rec_stmt = select(TenantIntegration).where(
-                    TenantIntegration.tenant_id == uuid.UUID(tenant_id),
+                    TenantIntegration.tenant_id == _safe_tenant_uuid(tenant_id),
                     or_(*conditions),
                 )
                 rec_res = await session.execute(rec_stmt)
@@ -836,7 +883,7 @@ async def disconnect_integration(
 
                 await session.execute(
                     delete(TenantIntegration).where(
-                        TenantIntegration.tenant_id == uuid.UUID(tenant_id),
+                        TenantIntegration.tenant_id == _safe_tenant_uuid(tenant_id),
                         or_(*conditions),
                     )
                 )

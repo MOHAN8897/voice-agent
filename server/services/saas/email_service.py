@@ -25,7 +25,7 @@ RESEND_BASE = "https://api.resend.com"
 
 # Resend's own sandbox sender. It only delivers to the account owner's address, so
 # it is a last-resort fallback for a single mailbox — never a platform default.
-RESEND_SANDBOX_SENDER = "Voxly <onboarding@resend.dev>"
+RESEND_SANDBOX_SENDER = "DialTact <onboarding@resend.dev>"
 
 
 @dataclass(frozen=True)
@@ -226,9 +226,9 @@ def _email_shell(*paragraphs: str, cta_label: str | None = None, cta_url: str | 
     return (
         '<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;'
         'max-width:520px;margin:0 auto;color:#1a1726;">'
-        f"<h2 style=\"font-size:20px;margin:0 0 12px;\">Voxly</h2>{body}{button}"
+        f"<h2 style=\"font-size:20px;margin:0 0 12px;\">DialTact</h2>{body}{button}"
         '<p style="color:#6b6880;font-size:12px;margin-top:28px;">'
-        "You are receiving this because someone used your Voxly account email.</p>"
+        "You are receiving this because someone used your DialTact account email.</p>"
         "</div>"
     )
 
@@ -236,25 +236,25 @@ def _email_shell(*paragraphs: str, cta_label: str | None = None, cta_url: str | 
 async def send_verification_email(to: str, verify_url: str, otp_code: str | None = None) -> EmailResult:
     if otp_code:
         paragraphs = (
-            "Welcome to Voxly.",
+            "Welcome to DialTact.",
             f"Your sign-in code is <b style=\"letter-spacing:4px;\">{otp_code}</b>. "
             "It expires in 15 minutes.",
         )
     else:
-        paragraphs = ("Welcome to Voxly.", "Confirm your email to finish setting up your account.")
+        paragraphs = ("Welcome to DialTact.", "Confirm your email to finish setting up your account.")
     html = _email_shell(*paragraphs, cta_label="Verify email", cta_url=verify_url)
-    return await send_email(to, "Your Voxly verification code", html)
+    return await send_email(to, "Your DialTact verification code", html)
 
 
 async def send_password_reset_email(to: str, reset_url: str) -> EmailResult:
     html = _email_shell(
-        "We received a request to reset your Voxly password.",
+        "We received a request to reset your DialTact password.",
         "This link expires in 1 hour and can be used once.",
         "If you did not request this, you can ignore this email — nothing has changed.",
         cta_label="Reset password",
         cta_url=reset_url,
     )
-    return await send_email(to, "Reset your Voxly password", html)
+    return await send_email(to, "Reset your DialTact password", html)
 
 
 async def send_deletion_otp_email(to: str, otp_code: str, workspace_name: str) -> EmailResult:

@@ -41,5 +41,12 @@
   "author": {
     "agent": "desktop"
   },
-  "intentId": "flow:drive-the-marketing-page-plays-the-product-s-own-neura"
+  "intentId": "flow:drive-the-marketing-page-plays-the-product-s-own-neura",
+  "learned": [
+    {
+      "kind": "request-never-settled",
+      "step": 0,
+      "state": "open"
+    }
+  ]
 }

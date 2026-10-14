@@ -274,8 +274,10 @@ async def list_numbers(principal: SubscriberPrincipal = Depends(require_subscrib
         )
         numbers = []
         from server.services.saas.billing_rates import rates_with_derived_inr
+        from server.services.saas.platform_admins import is_platform_admin_email
         from server.services.telephony import active_telephony_provider
 
+        is_admin = is_platform_admin_email(principal.email)
         active_prov = active_telephony_provider()
         rates = rates_with_derived_inr()
         monthly_usd = round(rates["did_monthly_usd_cents"] / 100.0, 2)
@@ -283,8 +285,6 @@ async def list_numbers(principal: SubscriberPrincipal = Depends(require_subscrib
         for n in result.scalars():
             e164 = n.e164 or ""
             prov = "telnyx" if (n.telnyx_number_id or e164 == "+13526146416") else "vobiz"
-            if prov != active_prov:
-                continue
             if e164.startswith("+1"):
                 country = "US"
             elif e164.startswith("+44"):
@@ -309,12 +309,12 @@ async def list_numbers(principal: SubscriberPrincipal = Depends(require_subscrib
                     "monthlyCost": monthly_usd,
                     "monthlyInr": monthly_inr,
                     "country": country,
-                    "provider": prov,
-                    "telnyxNumberId": n.telnyx_number_id,
-                    "carrierNumberId": getattr(n, "carrier_number_id", None),
+                    "provider": prov if is_admin else "direct_voice",
+                    "telnyxNumberId": n.telnyx_number_id if is_admin else None,
+                    "carrierNumberId": getattr(n, "carrier_number_id", None) if is_admin else None,
                 }
             )
-    return {"numbers": numbers, "activeProvider": active_prov}
+    return {"numbers": numbers, "activeProvider": active_prov if is_admin else "direct_voice"}
 
 
 @router.get("/api/telephony/numbers/search")
@@ -327,8 +327,10 @@ async def search_numbers(
     from server.services.saas.telephony_countries import normalize_buy_country
     from server.services.saas.billing_rates import rates_with_derived_inr
     from server.services.saas.number_inventory import list_inventory_for_sale
+    from server.services.saas.platform_admins import is_platform_admin_email
     from server.services.telephony import active_telephony_provider
 
+    is_admin = is_platform_admin_email(principal.email)
     active_prov = active_telephony_provider()
     country_default = "IN" if active_prov == "vobiz" else "US"
     country = normalize_buy_country(country or country_default, default=country_default)
@@ -373,23 +375,23 @@ async def search_numbers(
                 if r_e164:
                     seen.add(str(r_e164).strip())
 
-    # Admin inventory: only include inventory when Telnyx is active (since inventory holds Telnyx DIDs)
-    if active_prov != "vobiz":
-        for item in await list_inventory_for_sale(country=country):
-            e164 = str(item.get("e164") or "")
-            if not e164 or e164 in seen:
-                continue
-            seen.add(e164)
-            priced.append(
-                {
-                    **item,
-                    "monthlyUsd": monthly_usd,
-                    "monthlyInr": monthly_inr,
-                    "fee": monthly_usd,
-                    "country": country,
-                    "provider": "telnyx",
-                }
-            )
+    # Admin pool inventory: available across providers for immediate purchase from wallet credits
+    for item in await list_inventory_for_sale(country=country):
+        e164 = str(item.get("e164") or "")
+        if not e164 or e164 in seen:
+            continue
+        seen.add(e164)
+        priced.append(
+            {
+                **item,
+                "monthlyUsd": monthly_usd,
+                "monthlyInr": monthly_inr,
+                "fee": monthly_usd,
+                "country": country,
+                "provider": "direct_voice" if not is_admin else item.get("source", active_prov),
+                "telnyxNumberId": item.get("telnyxNumberId") if is_admin else None,
+            }
+        )
 
     try:
         if active_prov == "vobiz":
@@ -412,14 +414,16 @@ async def search_numbers(
         item["fee"] = monthly_usd
         item["country"] = country
         item.setdefault("source", active_prov)
-        item.setdefault("provider", active_prov)
+        item["provider"] = active_prov if is_admin else "direct_voice"
+        if not is_admin and "telnyxNumberId" in item:
+            item["telnyxNumberId"] = None
         priced.append(item)
     return {
         "numbers": priced,
         "country": country,
         "didMonthlyInr": monthly_inr,
         "didMonthlyUsd": monthly_usd,
-        "activeProvider": active_prov,
+        "activeProvider": active_prov if is_admin else "direct_voice",
     }
 
 
@@ -565,12 +569,15 @@ async def buy_number(
     # the purchase service — so logging only there would hide every refusal.
     try:
         await assert_kyc_approved(principal, action="buy a phone number")
-        if pay == "stripe":
-            result = await create_purchase_checkout(
-                principal,
-                e164=body.e164,
-                country_code=body.country,
-                assign_agent_id=body.assignAgentId,
+        if pay == "stripe":  # stripe payment removed
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "error": {
+                        "code": "stripe_removed",
+                        "message": "Card checkout via Stripe has been removed. Please use wallet credits to buy a number.",
+                    }
+                },
             )
         else:
             result = await purchase_with_wallet(
@@ -591,8 +598,8 @@ async def buy_number(
         )
         if code == "verification_required":
             status = 403
-        elif code == "stripe_not_configured":
-            status = 503
+        elif code in ("stripe_not_configured", "stripe_removed"):
+            status = 400
         elif code == "insufficient_balance":
             status = 402
         elif code == "carrier_balance_exhausted":
@@ -602,12 +609,15 @@ async def buy_number(
             status = 503
         elif code == "carrier_order_failed":
             status = 502
+        elif code == "tenant_not_found":
+            status = 404
         elif code == "kyc_required":
             status = 403
         else:
             status = 400
         messages = {
-            "stripe_not_configured": "Card checkout is not configured. Use wallet credits to buy a number.",
+            "stripe_removed": "Card checkout is no longer supported. Use wallet credits to buy a number.",
+            "stripe_not_configured": "Card checkout is not supported. Use wallet credits to buy a number.",
             "verification_required": "Verify your email before buying a number.",
             "kyc_required": "Verify your identity before buying a phone number.",
             "carrier_balance_exhausted": (
@@ -618,6 +628,7 @@ async def buy_number(
             "number_reserved": "This number is reserved by another checkout. Try a different number.",
             "number_unavailable": "This number is no longer available.",
             "number_limit": "This workspace has reached its phone number limit.",
+            "tenant_not_found": "Workspace not found.",
             "invalid_e164": "Enter a valid E.164 number.",
             "invalid_agent": "Choose a valid agent to assign this number to.",
             "insufficient_balance": "Add funds to your wallet before buying a number.",
@@ -677,8 +688,8 @@ _REFUSAL_HINTS = {
 def _purchase_error_status(code: str) -> int:
     if code in ("verification_required", "kyc_required"):
         return 403
-    if code == "stripe_not_configured":
-        return 503
+    if code in ("stripe_not_configured", "stripe_removed"):
+        return 400
     if code == "insufficient_balance":
         return 402
     if code == "carrier_balance_exhausted":

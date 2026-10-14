@@ -449,6 +449,29 @@
       "subject": "unsorted",
       "updatedAt": 1791135130710
     },
+    "inline:click-continue-sign-in-to-open-sign-in-modal-3180a56d": {
+      "binding": {
+        "contains": "Sign in to your console",
+        "kind": "text"
+      },
+      "declaredAt": 1791948192541,
+      "id": "inline:click-continue-sign-in-to-open-sign-in-modal-3180a56d",
+      "provenBy": {
+        "at": 1791948193028,
+        "grade": "presence",
+        "verdictId": "reticle_act_and_wait:1791948193028"
+      },
+      "state": "proved",
+      "statement": "Click Continue - sign in to open sign-in modal",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/components/ConsoleSignInRequired.jsx"
+        ]
+      },
+      "updatedAt": 1791948193255
+    },
     "inline:connect-google-calendar-integration-in-console-bb4d0c1f": {
       "binding": {
         "kind": "net",
@@ -733,6 +756,57 @@
         ]
       },
       "updatedAt": 1791135441002
+    },
+    "inline:google-sign-in-returns-the-user-to-the-dialtact-c73bf1fb": {
+      "binding": {
+        "contains": "#dashboard/employees",
+        "kind": "route"
+      },
+      "declaredAt": 1791984701026,
+      "id": "inline:google-sign-in-returns-the-user-to-the-dialtact-c73bf1fb",
+      "provenBy": {
+        "at": 1791984715626,
+        "grade": "presence",
+        "runId": "drive-s411bee4b-e536-4dc1-b595-73cfebd7ab5f",
+        "verdictId": "reticle_assert:1791984715626"
+      },
+      "state": "proved",
+      "statement": "Google sign-in returns the user to the Dialtact console with an authenticated workspace.",
+      "status": "proved",
+      "subject": "unsorted",
+      "updatedAt": 1791984715641
+    },
+    "inline:open-sign-in-dialog-b1476163": {
+      "declaredAt": 1791970894252,
+      "id": "inline:open-sign-in-dialog-b1476163",
+      "state": "declared",
+      "statement": "Open sign-in dialog",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1791970894280
+    },
+    "inline:open-sign-in-dialog-by-clicking-continue-sign-in-f80d4c52": {
+      "binding": {
+        "contains": "Sign in to your console",
+        "kind": "text"
+      },
+      "declaredAt": 1791947494601,
+      "id": "inline:open-sign-in-dialog-by-clicking-continue-sign-in-f80d4c52",
+      "provenBy": {
+        "at": 1791947494808,
+        "grade": "presence",
+        "verdictId": "reticle_act_and_wait:1791947494808"
+      },
+      "state": "proved",
+      "statement": "Open sign-in dialog by clicking Continue - sign in",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/components/ConsoleSignInRequired.jsx"
+        ]
+      },
+      "updatedAt": 1791947494848
     },
     "inline:open-test-call-modal-from-agent-workspace-header-2ee9f12c": {
       "binding": {
@@ -1105,6 +1179,15 @@
       "subject": "unsorted",
       "updatedAt": 1790834756191
     },
+    "inline:submit-sign-in-form-ca9989d4": {
+      "declaredAt": 1791970928713,
+      "id": "inline:submit-sign-in-form-ca9989d4",
+      "state": "declared",
+      "statement": "Submit sign in form",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1791970928723
+    },
     "inline:submit-signin-form-and-authenticate-as-mohansait-32cb9afe": {
       "binding": {
         "kind": "net",
@@ -1204,6 +1287,37 @@
       "status": "proposed",
       "subject": "unsorted",
       "updatedAt": 1790836534820
+    },
+    "inline:verify-login-error-is-displayed-7fdafc32": {
+      "binding": {
+        "contains": "Invalid email or password",
+        "kind": "text"
+      },
+      "declaredAt": 1791970961018,
+      "id": "inline:verify-login-error-is-displayed-7fdafc32",
+      "state": "bound",
+      "statement": "Verify login error is displayed",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1791970961054
+    },
+    "inline:verify-reticle-connects-to-the-running-voxly-con-2de77407": {
+      "binding": {
+        "contains": "Sign in to build your agent",
+        "kind": "text"
+      },
+      "declaredAt": 1791947475272,
+      "id": "inline:verify-reticle-connects-to-the-running-voxly-con-2de77407",
+      "provenBy": {
+        "at": 1791947475342,
+        "grade": "presence",
+        "verdictId": "reticle_assert:1791947475342"
+      },
+      "state": "proved",
+      "statement": "Verify Reticle connects to the running Voxly console and reads live DOM predicates",
+      "status": "proved",
+      "subject": "unsorted",
+      "updatedAt": 1791947475357
     },
     "inline:voxly-ai-landing-instrumented-after-reticle-init-7b0c610e": {
       "binding": {

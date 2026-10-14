@@ -10,8 +10,9 @@ export default async function AgentLayout({
   params,
 }: {
   children: React.ReactNode;
-  params: { id: string };
+  params: Promise<{ id: string }> | { id: string };
 }) {
+  const resolvedParams = await Promise.resolve(params);
   let agent: {
     name?: string;
     status?: string;
@@ -21,13 +22,13 @@ export default async function AgentLayout({
     active_compiled_brain_version?: string | null;
   } = {};
   try {
-    const data = await apiGet<{ agent?: typeof agent }>(`/api/agents/${params.id}`);
+    const data = await apiGet<{ agent?: typeof agent }>(`/api/agents/${resolvedParams.id}`);
     agent = data.agent || {};
   } catch {
     /* use id */
   }
 
-  const agentName = agent.name || params.id;
+  const agentName = agent.name || resolvedParams.id;
   const status = agent.status || "";
   const env = agent.environment || "development";
   const tier = agent.default_tier || "medium";
@@ -52,12 +53,12 @@ export default async function AgentLayout({
           <SkeuoBadge tone="info">{langLabel}</SkeuoBadge>
           <SkeuoBadge tone="muted">v{version}</SkeuoBadge>
         </div>
-        <p className="mt-2 font-mono text-[10px] text-text-subtle">{params.id}</p>
-        <SetupProgressStrip agentId={params.id} portal="app" />
+        <p className="mt-2 font-mono text-[10px] text-text-subtle">{resolvedParams.id}</p>
+        <SetupProgressStrip agentId={resolvedParams.id} portal="app" />
       </div>
 
       <div className="mt-6">
-        <SkeuoWorkspaceNav agentId={params.id} portal="app" />
+        <SkeuoWorkspaceNav agentId={resolvedParams.id} portal="app" />
       </div>
       {children}
     </ConsolePage>
