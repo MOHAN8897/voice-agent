@@ -978,6 +978,7 @@ class PstnRealtimeVoiceLoop:
             sample_rate=self.sample_rate,
             tts_output_codec=self.tts_output_codec,
             model=model,
+            language=self._resolve_language(),
             voice=str(cfg.get("voice") or ""),
             turn_detection=str(cfg.get("turn_detection") or ""),
             max_output_tokens=max_output_tokens,
@@ -1797,6 +1798,11 @@ class PstnRealtimeVoiceLoop:
                 elif hasattr(adapter, "instructions"):
                     adapter.instructions = instructions
         self._adapter = adapter
+        if getattr(adapter, "__class__", None) and adapter.__class__.__name__ == "OpenAIRealtimeVoiceAdapter":
+            llm_provider = "openai"
+        elif getattr(adapter, "__class__", None) and adapter.__class__.__name__ == "GeminiLiveVoiceAdapter":
+            llm_provider = "gemini"
+        self._llm_provider = llm_provider
         self._start_caller_stt_sidecar(language, llm_provider)
         if play_greeting and direction == "outbound" and deferred_frames and deferred_text:
             self._deferred_greeting_frames = list(deferred_frames)

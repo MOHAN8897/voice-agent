@@ -89,7 +89,7 @@ _OPENAI_TTS_VOICE_MAP: dict[str, str] = {
     "echo": "echo",
     "sage": "sage",
     "shimmer": "shimmer",
-    "verse": "nova",
+    "verse": "fable",
 }
 
 
@@ -109,8 +109,7 @@ async def synthesize_preview(
 ) -> dict[str, Any]:
     """Return `{"audio": wav_bytes, "voice": name, "model": id, "truncated": bool}`.
     
-    Preview is strictly synthesized in English while applying and respecting the
-    selected voice character and configured speed/pace across Gemini Live and OpenAI.
+    Preview uses the selected spoken language and the voice configured for the live stack.
     """
     from server.config.env import get_settings
     from server.realtime.models import DEFAULT_GEMINI_LIVE_MODEL
@@ -122,9 +121,17 @@ async def synthesize_preview(
     settings = get_settings()
     line = normalize_preview_text(text)
     voice, label = resolve_preview_voice(voice_id)
+    from server.realtime.models import GEMINI_LIVE_LIBRARY_VOICES, GEMINI_LIVE_VOICES
+
+    requested_voice = str(voice_id or "").strip().lower()
+    is_direct_gemini_voice = requested_voice in {
+        name.lower() for name in (*GEMINI_LIVE_VOICES, *GEMINI_LIVE_LIBRARY_VOICES)
+    }
     model_id = (model or DEFAULT_GEMINI_LIVE_MODEL).strip()
-    # Preview voice speech is strictly English as required by production stack
-    lang = "en-US"
+    from server.prompts.agent_voice_rules import LANGUAGE_LOCK, normalize_compile_language
+
+    lang = normalize_compile_language(language or "en-IN")
+    language_lock = LANGUAGE_LOCK.get(lang, LANGUAGE_LOCK["te-IN"])
     pace = float(speed) if speed is not None else 1.0
     pace = max(0.5, min(2.0, pace))
 
@@ -138,9 +145,10 @@ async def synthesize_preview(
         key = _api_key()
         if key and key != "gem-test" and not key.startswith("gem-test"):
             custom_instructions = (
-                "You are an English voice preview. Speak the single line you are given in English, verbatim, "
-                "with no preamble, no greeting, no sign-off and no follow-up question. "
-                "Read it naturally at a friendly pace, then stop."
+                f"You are a voice preview. {language_lock} "
+                f"Speak once in {lang} with natural pronunciation. If the supplied line is in another language, "
+                f"translate it faithfully into {lang} before speaking. Preserve names, numbers, and facts. "
+                "Do not add a preamble, sign-off, or follow-up question. Read it naturally at a friendly pace, then stop."
             )
             adapter = GeminiLiveVoiceAdapter()
             try:
@@ -152,7 +160,11 @@ async def synthesize_preview(
                     include_tools=False,
                 )
                 await adapter.wait_ready(timeout=6.0)
-                await adapter.start_response(instructions=f'Speak in English exactly: "{line}"')
+                await adapter.start_response(
+                    instructions=(
+                        f'Speak once in {lang}; translate the supplied line faithfully into {lang} if needed: "{line}"'
+                    )
+                )
 
                 max_bytes = GEMINI_LIVE_OUTPUT_RATE * 2 * MAX_AUDIO_SECONDS
                 deadline = asyncio.get_running_loop().time() + PREVIEW_TIMEOUT_S
@@ -194,6 +206,11 @@ async def synthesize_preview(
             "truncated": truncated,
         }
 
+    # A direct Gemini voice selection must never silently play an unrelated
+    # OpenAI voice or a generated tone. Fail visibly so the user can retry.
+    if is_direct_gemini_voice:
+        raise RuntimeError("Gemini Live voice preview is unavailable for the selected voice.")
+
     # 2. OpenAI TTS fallback using configured voice and speed
     if settings.openai_api_key:
         try:
@@ -209,11 +226,22 @@ async def synthesize_preview(
             )
             audio_bytes = res.content
             if audio_bytes and len(audio_bytes) > 200:
+                try:
+                    ba = bytearray(audio_bytes)
+                    data_idx = ba.find(b"data")
+                    if data_idx != -1 and len(ba) > data_idx + 8:
+                        correct_data_size = len(ba) - (data_idx + 8)
+                        correct_riff_size = len(ba) - 8
+                        struct.pack_into("<I", ba, 4, correct_riff_size)
+                        struct.pack_into("<I", ba, data_idx + 4, correct_data_size)
+                        audio_bytes = bytes(ba)
+                except Exception:
+                    pass
                 v_name = str(voice_id or oai_voice).title()
                 return {
                     "audio": audio_bytes,
                     "voice": v_name,
-                    "label": f"{v_name} (English)",
+                    "label": f"{v_name} ({lang})",
                     "model": "openai-tts",
                     "truncated": False,
                 }

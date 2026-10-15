@@ -660,7 +660,8 @@ class VoiceAgentAdapter {
         el.onplay = null;
         el.pause();
         el.currentTime = 0;
-        el.src = '';
+        el.removeAttribute('src');
+        el.load();
       } catch (e) {}
     }
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {

@@ -38,9 +38,20 @@ export function CallDetailInspector({ call }: { call: CallListItem | null }) {
       padding="md"
       className="min-h-[420px]"
       headerAction={
-        <Link href={`/app/calls/${call.call_id}`}>
-          <SkeuoButton variant="secondary" size="sm">Full workspace</SkeuoButton>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/api/call/${encodeURIComponent(call.call_id)}/crm-export?format=vcf`}
+            target="_blank"
+            rel="noopener"
+          >
+            <SkeuoButton variant="secondary" size="sm" title="Export caller contact card (vCard)">
+              Export vCard
+            </SkeuoButton>
+          </Link>
+          <Link href={`/app/calls/${call.call_id}`}>
+            <SkeuoButton variant="primary" size="sm">Full workspace</SkeuoButton>
+          </Link>
+        </div>
       }
     >
       <header className="skeuo-inset rounded-skeuo-md border border-surface-border-subtle p-4">

@@ -5,7 +5,7 @@ from server.prompts.agent_voice_rules import (
     CALLER_DETAIL_CAPTURE,
     LANGUAGE_LOCK,
     LANGUAGE_MISMATCH_FALLBACK,
-    NUMBER_RULES,
+    NUMBER_RULES_INDIC,
     OVERLAP_RULES,
     PHONE_ASK_FALLBACK,
     PHONE_CALL_POLICY_PTR,
@@ -31,7 +31,7 @@ Language mismatch (once): `{mismatch}`
 Filler bans: {filler_ban}
 Slow-down (once): `{slow_down}`
 Unclear audio (garbled STT, not a language change): `{unclear}` then wait for clarification; do not restart the conversation. Road noise is not a new intent.
-{NUMBER_RULES}
+{NUMBER_RULES_INDIC}
 {PHONE_SPEAK_BAN}
 {CALLER_DETAIL_CAPTURE}
 {OVERLAP_RULES}
@@ -52,32 +52,32 @@ INDIC_SPOKEN_PACKS: dict[str, str] = {
     "ml-IN": _pack(
         "ml-IN",
         "Speak natural Malayalam: conversational Malayalam script with everyday English business loanwords (`budget`, `order`, `booking`, `office`). Warm phone register, avoiding overly formal literary phrasing.",
-        "do not start every turn with ശരി / അതെ / ഓക്കേ / തീർച്ചയായും. Answer directly.",
-        "Sari, samayathinu nandi. Namaskaram.",
+        "do not repeat the exact same acknowledgment every turn (vary naturally with ശരി / അതെ / തീർച്ചയായും). Answer directly and politely.",
+        "ശരി, സമയത്തിന് നന്ദി. നമസ്കാരം.",
     ),
     "mr-IN": _pack(
         "mr-IN",
         "Speak natural Marathi: conversational Marathi in Devanagari with everyday English business loanwords (`budget`, `order`, `booking`, `office`). Polite respectful phone register (`aapan`), avoiding overly bookish formal Marathi.",
-        "do not start every turn with हो / ठीक आहे / ओके / नक्कीच / बरं. Answer directly.",
-        "Ho, tumchya velebaddal dhanyavaad. Namaskar.",
+        "do not repeat the exact same acknowledgment every turn (vary naturally with हो / ठीक आहे / नक्कीच / बरं). Answer directly and politely.",
+        "हो, तुमच्या वेळेबद्दल धन्यवाद. नमस्कार.",
     ),
     "bn-IN": _pack(
         "bn-IN",
         "Speak natural Bengali: conversational Bengali script with everyday English business loanwords (`budget`, `order`, `booking`, `office`). Polite warm phone register (`aapni`), avoiding archaic literary Sadhu bhasha.",
-        "do not start every turn with হ্যাঁ / ঠিক আছে / আচ্ছা / নিশ্চয়ই. Answer directly.",
-        "Thik ache, shomoyer jonno dhonnobad. Nomoshkar.",
+        "do not repeat the exact same acknowledgment every turn (vary naturally with হ্যাঁ / ঠিক আছে / আচ্ছা / নিশ্চয়ই). Answer directly and politely.",
+        "ঠিক আছে, সময়ের জন্য ধন্যবাদ। নমস্কার।",
     ),
     "gu-IN": _pack(
         "gu-IN",
         "Speak natural Gujarati: conversational Gujarati script with everyday English business loanwords (`budget`, `order`, `booking`, `office`). Courteous respectful phone register (`tame`), avoiding formal textbook Gujarati.",
-        "do not start every turn with હા / બરાબર / ઓકે / ચોક્કસ / સારું. Answer directly.",
-        "Saras, tamara samay mate aabhar. Aavjo.",
+        "do not repeat the exact same acknowledgment every turn (vary naturally with હા / બરાબર / ચોક્કસ / સારું). Answer directly and politely.",
+        "સારું, તમારા સમય માટે આભાર. આવજો.",
     ),
     "pa-IN": _pack(
         "pa-IN",
         "Speak natural Punjabi: conversational Punjabi in Gurmukhi with everyday English business loanwords (`budget`, `order`, `booking`, `office`). Respectful warm phone register (`tusi`), avoiding overly formal written Punjabi.",
-        "do not start every turn with ਹਾਂਜੀ / ਠੀਕ ਹੈ / ਓਕੇ / ਬਿਲਕੁਲ / ਅੱਛਾ. Answer directly.",
-        "Haanji, tuhade samay layi dhanwaad. Sat sri akaal.",
+        "do not repeat the exact same acknowledgment every turn (vary naturally with ਹਾਂਜੀ / ਠੀਕ ਹੈ / ਬਿਲਕੁਲ / ਅੱਛਾ). Answer directly and politely.",
+        "ਹਾਂਜੀ, ਤੁਹਾਡੇ ਸਮੇਂ ਲਈ ਧੰਨਵਾਦ। ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ।",
     ),
 }
 

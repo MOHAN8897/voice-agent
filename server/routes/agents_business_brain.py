@@ -297,6 +297,11 @@ async def save_voice_config(
         enabled=False,
         order=2,
     )
+    try:
+        from server.brain.agent_service import agent_service
+        await agent_service.patch_agent(agent_id, {"voice_settings": payload})
+    except Exception as exc:
+        logger.debug("Failed to sync voice_settings to agent record: %s", exc)
     return {"ok": True, "voice": payload, "compiled_version": await _active_version(agent_id)}
 
 

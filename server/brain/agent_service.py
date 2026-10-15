@@ -182,6 +182,12 @@ class AgentService:
             if "languages" in patch and patch["languages"] is not None:
                 row.languages = list(patch["languages"])
                 flag_modified(row, "languages")
+            if "voice_settings" in patch and patch["voice_settings"] is not None:
+                current = dict(row.voice_settings or {})
+                if isinstance(patch["voice_settings"], dict):
+                    current.update(patch["voice_settings"])
+                row.voice_settings = current
+                flag_modified(row, "voice_settings")
             await session.commit()
             await session.refresh(row)
             return self._row_to_dict(row)
@@ -285,6 +291,7 @@ class AgentService:
             "environment": "development",
             "recording_disclosure_enabled": False,
             "recording_disclosure_text": None,
+            "voice_settings": {},
         }
 
     @staticmethod
@@ -301,6 +308,7 @@ class AgentService:
             "environment": getattr(row, "environment", None) or "development",
             "recording_disclosure_enabled": bool(getattr(row, "recording_disclosure_enabled", False)),
             "recording_disclosure_text": getattr(row, "recording_disclosure_text", None),
+            "voice_settings": getattr(row, "voice_settings", None) or {},
         }
 
 

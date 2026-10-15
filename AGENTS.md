@@ -12,6 +12,9 @@
 | **Strix** | Autonomous AI agent penetration testing & exploit validation against staging | `scripts/security_audit.py --mode strix`, `.github/workflows/security-scans.yml`. Simulates real multi-turn exploit probing via `ghcr.io/usestrix/strix:latest`. |
 | **Enigma** | Sovereign local-first verifiable AI memory passport & context memory (`enigma_*` MCP) | `.enigma/`, `.cursor/mcp.json`, `.cursor/rules/enigma.mdc`, skill `.agents/skills/enigma-memory` |
 | **Unified Runner** | One-command CLI for local security validation and routine checkups | `python scripts/security_audit.py --mode [sast|zap|strix|all]` |
+| **Gravitas** | Engineering reliability runtime (reconnaissance, scoped edits, evidence-backed verification). **Active for every task.** | `skills/gravitas`, `.agents/skills/gravitas/` · doctor: `python .agents/skills/gravitas/scripts/doctor.py` |
+
+**Gravitas:** installed and active for every task. Enforce the 6 invariants: ground before mutating, stay in declared scope, completion needs evidence, never exact-retry a failure, satisfy the contract, say what you can't verify. Report what actually happened, not what you intended. Evidence over assumption.
 
 **Do not** load Ponytail (`.ponytail-ref/` is archive only). Prefer Chisle comments (`chisel:`) over `ponytail:` if marking a deliberate ceiling.
 

@@ -130,30 +130,30 @@ export function VoxlyScene({
     <div ref={containerRef} data-mascot-state={hasWebGLError ? 'recovering' : active ? 'active' : 'paused'}
       className={`relative w-full h-full select-none ${className}`}
       onPointerMove={handlePointerMove} onPointerLeave={handlePointerLeave}>
-      {hasWebGLError && (
-      <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-[#FAF9FD] rounded-3xl">
-        <button type="button" onClick={onBotClick} disabled={!onBotClick} aria-label="Interact with Dialtact" className="border-0 bg-transparent p-0 disabled:cursor-default">
-        <img
-          src="/images/Dialtact_call_assistant_fallback.png"
-          alt="Dialtact AI call assistant"
-          width="320"
-          height="320"
-          loading="eager"
-          decoding="async"
-          className="max-h-[240px] sm:max-h-[320px] object-contain drop-shadow-xl"
-        />
-        </button>
-        <p role="status" className="text-xs text-[#524E5E]">Restoring 3D animation…</p>
-        <button type="button" className="mt-2 text-sm underline" onClick={(event) => {
-          event.stopPropagation();
-          contextCleanup.current?.();
-          setHasWebGLError(false);
-          setRendererKey(key => key + 1);
-        }}>Retry 3D</button>
-      </div>
-      )}
-      <Suspense fallback={<CanvasLoader />}>
-        <Canvas
+      {hasWebGLError ? (
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-transparent rounded-2xl p-4">
+          <button type="button" onClick={onBotClick} disabled={!onBotClick} aria-label="Interact with Dialtact" className="border-0 bg-transparent p-0 disabled:cursor-default">
+            <img
+              src="/images/Dialtact_call_assistant_fallback.png"
+              alt="Dialtact AI call assistant"
+              width="320"
+              height="320"
+              loading="eager"
+              decoding="async"
+              className="max-h-[180px] sm:max-h-[220px] object-contain drop-shadow-xl"
+            />
+          </button>
+          <p role="status" className="text-xs text-[#8C879A] mt-1 font-medium">3D animation standby</p>
+          <button type="button" className="mt-2 text-xs font-semibold text-[#6344E7] bg-white/10 hover:bg-white/20 px-3 py-1 rounded-lg border border-[#6344E7]/30 transition-all cursor-pointer" onClick={(event) => {
+            event.stopPropagation();
+            contextCleanup.current?.();
+            setHasWebGLError(false);
+            setRendererKey(key => key + 1);
+          }}>Retry 3D</button>
+        </div>
+      ) : (
+        <Suspense fallback={<CanvasLoader />}>
+          <Canvas
           key={rendererKey}
           frameloop={active ? 'always' : 'never'}
           camera={{
@@ -190,6 +190,7 @@ export function VoxlyScene({
           />
         </Canvas>
       </Suspense>
+      )}
     </div>
   );
 }

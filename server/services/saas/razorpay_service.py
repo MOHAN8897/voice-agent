@@ -133,7 +133,12 @@ def from_minor(amount_minor: int, currency: str) -> float:
     return round(int(amount_minor) / CURRENCY_SUBUNITS[currency], 2)
 
 
-def inr_credit_for(currency: str, amount_minor: int) -> int:
+def inr_credit_for(
+    currency: str,
+    amount_minor: int,
+    *,
+    fx_rate_inr: float | None = None,
+) -> int:
     """INR paise to credit the wallet for a payment made in `currency`.
 
     Prefers the charge rate the admin configured over a live quote, so a top-up
@@ -144,7 +149,7 @@ def inr_credit_for(currency: str, amount_minor: int) -> int:
     if currency == "INR":
         return int(amount_minor)
     major = from_minor(amount_minor, currency)
-    fx = float(effective_rates()["fx_rate_inr"]) or 95.64
+    fx = float(fx_rate_inr or effective_rates()["fx_rate_inr"]) or 95.64
     return int(round(major * fx * 100))
 
 
@@ -172,6 +177,16 @@ async def create_wallet_order(
         raise ValueError("maximum_amount")
 
     minor = to_minor(amount, currency_code)
+    from server.services.saas.billing_rates import load_current_rates
+
+    rates = await load_current_rates()
+    # Snapshot the configured conversion with the order so later rate changes
+    # cannot alter the amount credited for an already-created checkout.
+    paise = inr_credit_for(
+        currency_code,
+        minor,
+        fx_rate_inr=float(rates["fx_rate_inr"]),
+    )
     client = _client()
     try:
         order = await _run_provider_call(
@@ -221,7 +236,6 @@ async def create_wallet_order(
         )
         raise ValueError(failure) from exc
     order_id = order["id"]
-    paise = inr_credit_for(currency_code, minor)
 
     # An abandoned order is a real support case ("I paid and nothing happened"),
     # and it is only diagnosable from the log because the order never completes.
@@ -383,8 +397,8 @@ async def confirm_wallet_payment(
         # payment amount is already in paise.
         provider_amount = payment.get("amount")
         paise = int(provider_amount) if provider_amount is not None else int(amount_minor or paise)
-    else:
-        paise = inr_credit_for(currency, amount_minor)
+    # The order row already stores the credited paise at checkout creation.
+    # Keep that snapshot if the provider omits its settlement conversion.
 
     from sqlalchemy.exc import IntegrityError
 

@@ -1874,6 +1874,7 @@ def _platform_call_rules(
         f"Respect refusal, opt-out, and requested stop before optional discovery — do not close prematurely, "
         f"but do not checklist every optional field when the caller is done.\n"
         f"Adapt your delivery naturally, but do not abandon the script's structure or skip required steps.\n"
+        f"Script is a guide — adapt delivery naturally, but complete every objective. Never numbered Question/Step trees.\n"
         f"If the caller answers a script question without being asked, mark it as done and advance.\n"
         f"Act like a skilled human telecaller: systematic but natural, persistent but respectful.\n\n"
         f"--- TURN DISCIPLINE ---\n"

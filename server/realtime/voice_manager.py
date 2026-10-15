@@ -83,7 +83,65 @@ class RealtimeVoiceManager:
             if wait_ready and hasattr(session, "wait_ready"):
                 await session.wait_ready()
             logger.info("[REALTIME_VOICE] session started call=%s model=%s", call_id, live_model)
-        except Exception:
+        except Exception as primary_err:
+            can_fallback_to_openai = _provider == "gemini" and adapter is None
+            if can_fallback_to_openai:
+                from server.realtime.models import (
+                    GEMINI_LIVE_LIBRARY_VOICES,
+                    GEMINI_LIVE_VOICES,
+                    REALTIME_VOICES,
+                    normalize_realtime_voice,
+                )
+
+                requested_voice = str(voice or cfg["voice"] or "").strip().lower()
+                is_direct_gemini_voice = requested_voice in {
+                    name.lower() for name in (*GEMINI_LIVE_VOICES, *GEMINI_LIVE_LIBRARY_VOICES)
+                }
+                selected_voice = normalize_realtime_voice(voice or cfg["voice"])
+                # A selected Gemini prebuilt voice has no OpenAI equivalent. Do not
+                # retry with a different provider while claiming that voice is active.
+                can_fallback_to_openai = not is_direct_gemini_voice and selected_voice in REALTIME_VOICES
+            if can_fallback_to_openai:
+                logger.warning(
+                    "[REALTIME_VOICE] Gemini Live session failed to start for call=%s (%s); attempting fallback to OpenAI Realtime",
+                    call_id,
+                    primary_err,
+                )
+                try:
+                    if hasattr(session, "close"):
+                        await session.close()
+                except Exception:
+                    pass
+                from server.realtime.models import DEFAULT_REALTIME_MODEL, normalize_realtime_voice
+                from server.realtime.providers.openai_voice import OpenAIRealtimeVoiceAdapter
+
+                fallback_session = OpenAIRealtimeVoiceAdapter()
+                self._sessions[call_id] = fallback_session
+                try:
+                    fb_voice = normalize_realtime_voice(voice or cfg["voice"])
+                    fb_kwargs = dict(connect_kwargs)
+                    fb_kwargs["model"] = DEFAULT_REALTIME_MODEL
+                    fb_kwargs["voice"] = fb_voice
+                    if "input_transcription_enabled" not in fb_kwargs:
+                        fb_kwargs["input_transcription_enabled"] = tx_policy.openai_session_input_transcription()
+                    await fallback_session.connect(**fb_kwargs)
+                    if wait_ready and hasattr(fallback_session, "wait_ready"):
+                        await fallback_session.wait_ready()
+                    logger.info(
+                        "[REALTIME_VOICE] Fallback to OpenAI Realtime succeeded for call=%s model=%s",
+                        call_id,
+                        DEFAULT_REALTIME_MODEL,
+                    )
+                    return fallback_session
+                except Exception as fb_err:
+                    logger.error(
+                        "[REALTIME_VOICE] Fallback to OpenAI Realtime also failed for call=%s: %s",
+                        call_id,
+                        fb_err,
+                    )
+                    self._sessions.pop(call_id, None)
+                    self._meta.pop(call_id, None)
+                    raise primary_err
             self._sessions.pop(call_id, None)
             self._meta.pop(call_id, None)
             raise

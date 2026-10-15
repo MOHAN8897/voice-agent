@@ -185,13 +185,24 @@ async def telephony_voice_options(principal: SubscriberPrincipal = Depends(requi
     # Only languages the platform offers at creation, so the settings tab cannot
     # be used to sidestep the admin enablement list.
     from server.services.saas.platform_languages import language_options
+    from server.services.saas.platform_phone_stack import resolve_platform_phone_stack
 
     languages = language_options()
+    phone_stack = await resolve_platform_phone_stack("te-IN")
+    llm = phone_stack.get("llm") if isinstance(phone_stack.get("llm"), dict) else {}
+    from server.realtime.models import is_gemini_live_voice_model
+
+    active_voice_provider = str(llm.get("provider") or "openai").strip().lower()
+    if is_gemini_live_voice_model(str(llm.get("model") or "")):
+        active_voice_provider = "gemini"
+    voices = phone_voice_catalog()
+    if active_voice_provider != "gemini":
+        voices = [voice for voice in voices if voice.get("provider") != "gemini"]
     return {
         "stackLabel": "Live phone AI",
         "stackDescription": "Same voice engine for incoming calls, outgoing calls, and browser practice calls.",
         "defaultVoiceId": "marin",
-        "voices": phone_voice_catalog(),
+        "voices": voices,
         "languages": languages,
     }
 
@@ -237,12 +248,19 @@ async def voice_preview(
         ) from None
     except Exception as exc:
         logger.warning("[VOICE] preview failed: %s", exc)
+        error_text = str(exc).casefold()
+        message = "Could not reach the voice service. Check the voice configuration."
+        if "denied access" in error_text and ("project" in error_text or "1008" in error_text):
+            message = (
+                "Google denied this project access to the configured Gemini Live model. "
+                "Check the project's Live model access or contact Google support."
+            )
         raise HTTPException(
             status_code=502,
             detail={
                 "error": {
                     "code": "voice_preview_unavailable",
-                    "message": "Could not reach the voice service. Check the voice configuration.",
+                    "message": message,
                 }
             },
         ) from None
@@ -273,13 +291,13 @@ async def list_numbers(principal: SubscriberPrincipal = Depends(require_subscrib
             )
         )
         numbers = []
-        from server.services.saas.billing_rates import rates_with_derived_inr
+        from server.services.saas.billing_rates import load_current_rates
         from server.services.saas.platform_admins import is_platform_admin_email
         from server.services.telephony import active_telephony_provider
 
         is_admin = is_platform_admin_email(principal.email)
         active_prov = active_telephony_provider()
-        rates = rates_with_derived_inr()
+        rates = await load_current_rates()
         monthly_usd = round(rates["did_monthly_usd_cents"] / 100.0, 2)
         monthly_inr = round(rates["did_monthly_inr_paise"] / 100.0, 2)
         for n in result.scalars():
@@ -325,7 +343,7 @@ async def search_numbers(
     require_subscriber_permission(principal, "app.telephony.write")
     from server.services.telnyx_client import TelnyxClient
     from server.services.saas.telephony_countries import normalize_buy_country
-    from server.services.saas.billing_rates import rates_with_derived_inr
+    from server.services.saas.billing_rates import load_current_rates
     from server.services.saas.number_inventory import list_inventory_for_sale
     from server.services.saas.platform_admins import is_platform_admin_email
     from server.services.telephony import active_telephony_provider
@@ -334,7 +352,7 @@ async def search_numbers(
     active_prov = active_telephony_provider()
     country_default = "IN" if active_prov == "vobiz" else "US"
     country = normalize_buy_country(country or country_default, default=country_default)
-    rates = rates_with_derived_inr()
+    rates = await load_current_rates()
     # Chargeable platform rate — must match wallet debit and the buy-modal header.
     monthly_usd = round(rates["did_monthly_usd_cents"] / 100.0, 2)
     monthly_inr = round(rates["did_monthly_inr_paise"] / 100.0, 2)

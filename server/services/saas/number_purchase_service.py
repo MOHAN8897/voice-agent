@@ -268,7 +268,7 @@ async def _purchase_from_inventory(
 ) -> dict | None:
     """Transfer an admin-pool DID to the buyer. Returns None if not in inventory."""
     from server.services.saas.billing_wallet_service import debit_did_purchase_in_session
-    from server.services.saas.billing_rates import rates_with_derived_inr
+    from server.services.saas.billing_rates import load_current_rates
     from server.services.saas.number_inventory import (
         ensure_platform_inventory_tenant,
         get_inventory_number,
@@ -328,7 +328,7 @@ async def _purchase_from_inventory(
         telnyx_number_id = pn.telnyx_number_id
         await session.commit()
 
-    rates = rates_with_derived_inr()
+    rates = await load_current_rates()
     return {
         "purchaseId": str(purchase_id),
         "e164": e164,
@@ -460,9 +460,9 @@ async def purchase_with_wallet(
     # job were committed together. The worker can now claim the queued row.
     # The admin-configured rate, not the env default, so the quoted price and the
     # charged price are the same number.
-    from server.services.saas.billing_rates import rates_with_derived_inr
+    from server.services.saas.billing_rates import load_current_rates
 
-    rates = rates_with_derived_inr()
+    rates = await load_current_rates()
     return {
         "purchaseId": str(purchase_id),
         "e164": e164,

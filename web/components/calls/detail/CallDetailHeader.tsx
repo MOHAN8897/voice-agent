@@ -34,7 +34,7 @@ export function CallDetailHeader({
         <span>{pipelineLabel(meta.pipeline, meta.channel)}</span>
         <span>{meta.environment || "—"}</span>
         {modelInr != null && <span>model {formatInr(Number(modelInr))}</span>}
-        {telnyxInr != null && <span>telnyx {formatInr(Number(telnyxInr))}</span>}
+        {telnyxInr != null && <span>telephony {formatInr(Number(telnyxInr))}</span>}
         {costInr != null && <span>total {formatInr(Number(costInr))}</span>}
         {costUsd != null && <span>{formatUsd(Number(costUsd))}</span>}
       </div>

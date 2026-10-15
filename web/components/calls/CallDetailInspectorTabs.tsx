@@ -54,7 +54,7 @@ export function CallDetailInspectorTabs({ callId }: { callId: string }) {
               tab === name ? "skeuo-btn-primary text-white" : "skeuo-btn-secondary text-text-muted"
             )}
           >
-            {name}
+            {name === "outcome" ? "analytics & crm" : name}
           </button>
         ))}
       </div>
@@ -98,11 +98,7 @@ export function CallDetailInspectorTabs({ callId }: { callId: string }) {
 
       {tab === "outcome" && (
         <div className="mt-4">
-          {outcome ? (
-            <CallOutcomePanel outcome={outcome} />
-          ) : (
-            <p className="text-sm text-text-muted">Outcome pending or not generated yet.</p>
-          )}
+          <CallOutcomePanel outcome={outcome} callId={callId} />
         </div>
       )}
     </div>

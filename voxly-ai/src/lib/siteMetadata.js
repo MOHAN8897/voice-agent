@@ -39,6 +39,7 @@ const CONSOLE_TITLES = {
 };
 
 function setMeta(attribute, name, content) {
+  if (typeof document === 'undefined' || !document.head) return;
   let element = document.head.querySelector(`meta[${attribute}="${name}"]`);
   if (!element) {
     element = document.createElement('meta');
@@ -50,7 +51,7 @@ function setMeta(attribute, name, content) {
 
 /** Keep the browser title and share metadata in sync with the current app view. */
 export function applyPageMetadata(view = 'landing', tab = '') {
-  if (typeof document === 'undefined') return;
+  if (typeof document === 'undefined' || !document.head) return;
 
   const isConsole = view === 'dashboard';
   const page = PUBLIC_PAGES[view] || PUBLIC_PAGES.landing;

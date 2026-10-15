@@ -5,9 +5,15 @@ import asyncio
 import re
 from typing import Literal, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+import csv
+import io
+import uuid
+from datetime import datetime, timezone
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
+from sqlalchemy import func, select
 
 _CALL_ID_SAFE = re.compile(r"^[a-zA-Z0-9_\-\.]{1,128}$")
 
@@ -39,9 +45,23 @@ from server.auth.subscriber_dependencies import (
     require_subscriber_jwt_if_enabled,
 )
 from server.config.env import get_settings
+from server.db.connection import get_session_factory
+from server.db.models.integration_models import TenantIntegration
+from server.services.nango_service import nango_service
 from server.utils.errors import AppError
+from server.utils.logger import logger
 
 router = APIRouter()
+
+
+def _safe_tenant_uuid(raw_id: str | None) -> uuid.UUID:
+    """Safely convert any raw tenant identifier into a deterministic UUID."""
+    if not raw_id:
+        return uuid.NAMESPACE_DNS
+    try:
+        return uuid.UUID(str(raw_id))
+    except (ValueError, TypeError, AttributeError):
+        return uuid.uuid5(uuid.NAMESPACE_DNS, f"tenant:{raw_id}")
 
 
 class CallStartBody(BaseModel):
@@ -71,6 +91,14 @@ class MemoryCorrectionBody(BaseModel):
     reason: str = Field(..., min_length=3, max_length=200)
     actor: str = Field("operator", min_length=1, max_length=100)
     turn_seq: int = Field(0, ge=0)
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class CrmSyncBody(BaseModel):
+    destination: Optional[str] = None
+    notes: Optional[str] = None
+    override_contact: Optional[dict[str, str]] = None
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -557,3 +585,358 @@ async def retry_outcome(call_id: str, scope: tuple[str, bool] = Depends(resolve_
             "status_url": status_url(call_id),
         },
     )
+
+
+def _compute_call_analytics_payload(call_id: str, stored: dict) -> dict[str, Any]:
+    from server.call.post_call_pipeline import read_outcome
+    outcome = read_outcome(call_id) or {}
+    lines = call_ledger.read_lines(call_id) or []
+    meta = call_ledger.read_meta(call_id) or {}
+
+    facts = dict(outcome.get("facts") or outcome.get("extracted_fields") or {})
+    raw_name = str(
+        facts.get("name")
+        or facts.get("caller_name")
+        or facts.get("customer_name")
+        or facts.get("customer")
+        or stored.get("customer")
+        or ""
+    ).strip()
+    name_parts = raw_name.split(None, 1)
+    first_name = name_parts[0] if name_parts else "Caller"
+    last_name = name_parts[1] if len(name_parts) > 1 else ""
+
+    phone = str(
+        facts.get("phone")
+        or facts.get("mobile")
+        or facts.get("callback_phone")
+        or facts.get("contact")
+        or stored.get("caller_id")
+        or meta.get("caller_id")
+        or ""
+    ).strip()
+    email = str(facts.get("email") or facts.get("mail") or "").strip()
+    company = str(facts.get("company") or facts.get("organization") or facts.get("business") or "").strip()
+
+    disposition = outcome.get("disposition") or stored.get("disposition") or "no_outcome"
+    disposition_confidence = float(outcome.get("disposition_confidence") or 0.0)
+    summary_en = str(outcome.get("summary_en") or stored.get("summary") or "").strip()
+    summary_te = str(outcome.get("summary_te") or "").strip()
+    next_action = outcome.get("next_action") or None
+    objections = [str(o) for o in (outcome.get("objections") or [])]
+    status_tags = [str(t) for t in (outcome.get("status_tags") or [])]
+
+    # Turns & talk time
+    user_turns = sum(1 for line in lines if line.get("role") == "user")
+    agent_turns = sum(1 for line in lines if line.get("role") in ("assistant", "agent"))
+    user_words = sum(len(str(line.get("text") or "").split()) for line in lines if line.get("role") == "user")
+    agent_words = sum(len(str(line.get("text") or "").split()) for line in lines if line.get("role") in ("assistant", "agent"))
+    total_words = user_words + agent_words
+    user_ratio = round(user_words / total_words, 2) if total_words > 0 else 0.50
+
+    # Sentiment analysis
+    positive_dispositions = {"converted", "site_visit_planned", "qualified", "interested"}
+    negative_dispositions = {"not_interested", "wrong_number"}
+    if disposition in positive_dispositions:
+        sentiment = "positive"
+        sentiment_score = 0.88 if not objections else 0.72
+        sentiment_label = "Positive (High Intent)"
+    elif disposition in negative_dispositions:
+        sentiment = "negative"
+        sentiment_score = 0.20
+        sentiment_label = "Challenging / Negative"
+    elif objections:
+        sentiment = "neutral"
+        sentiment_score = 0.48
+        sentiment_label = "Neutral (Objections Raised)"
+    elif disposition == "callback_required":
+        sentiment = "neutral"
+        sentiment_score = 0.65
+        sentiment_label = "Neutral / Callback Scheduled"
+    else:
+        sentiment = "neutral"
+        sentiment_score = 0.50
+        sentiment_label = "Neutral / General Inquiry"
+
+    # Resolution status
+    if disposition in ("converted", "site_visit_planned", "qualified"):
+        resolution_status = "resolved"
+    elif disposition == "callback_required" or next_action:
+        resolution_status = "action_required"
+    elif disposition == "not_interested":
+        resolution_status = "closed_lost"
+    elif disposition == "wrong_number":
+        resolution_status = "invalid"
+    else:
+        resolution_status = "inconclusive"
+
+    source = audio_archive.recording_source(call_id)
+    duration_sec = int(stored.get("duration_sec") or meta.get("duration_sec") or 0)
+    started_at = stored.get("started_at") or meta.get("started_at")
+
+    contact = {
+        "name": raw_name or "Caller",
+        "first_name": first_name,
+        "last_name": last_name,
+        "phone": phone,
+        "email": email,
+        "company": company,
+        "disposition": disposition,
+        "summary": summary_en,
+        "next_action": next_action,
+        "call_id": call_id,
+        "duration_sec": duration_sec,
+        "started_at": started_at,
+    }
+
+    return {
+        "call_id": call_id,
+        "sentiment": sentiment,
+        "sentiment_score": sentiment_score,
+        "sentiment_label": sentiment_label,
+        "resolution_status": resolution_status,
+        "disposition": disposition,
+        "disposition_confidence": disposition_confidence,
+        "summary_en": summary_en,
+        "summary_te": summary_te,
+        "next_action": next_action,
+        "objections": objections,
+        "status_tags": status_tags,
+        "facts": facts,
+        "duration_sec": duration_sec,
+        "started_at": started_at,
+        "has_recording": source != "none",
+        "recording_source": source,
+        "talk_time": {
+            "user_turns": user_turns,
+            "agent_turns": agent_turns,
+            "user_words": user_words,
+            "agent_words": agent_words,
+            "total_words": total_words,
+            "user_ratio": user_ratio,
+            "agent_ratio": round(1.0 - user_ratio, 2),
+        },
+        "contact": contact,
+        "crm_sync_ready": bool(phone or email or raw_name),
+    }
+
+
+@router.get("/api/call/{call_id}/analytics")
+async def get_call_analytics(call_id: str, scope: tuple[str, bool] = Depends(resolve_calls_scope)):
+    """Retrieve comprehensive post-call analytics: sentiment, talk-time, resolution, and CRM contact facts."""
+    stored = await _assert_call_scoped(call_id, scope)
+    analytics = _compute_call_analytics_payload(call_id, stored)
+    return {"call_id": call_id, "analytics": analytics}
+
+
+@router.post("/api/call/{call_id}/crm-sync")
+async def sync_call_to_crm(
+    call_id: str,
+    body: Optional[CrmSyncBody] = None,
+    scope: tuple[str, bool] = Depends(resolve_calls_scope),
+):
+    """Synchronize caller contact info, conversation summary, and disposition to tenant's CRM."""
+    stored = await _assert_call_scoped(call_id, scope)
+    scoped_tenant, _ = scope
+    analytics = _compute_call_analytics_payload(call_id, stored)
+    contact = dict(analytics["contact"])
+    if body and body.override_contact:
+        contact.update({k: v for k, v in body.override_contact.items() if v})
+
+    first_name = contact.get("first_name") or "Caller"
+    last_name = contact.get("last_name") or ""
+    phone = contact.get("phone") or ""
+    email = contact.get("email") or ""
+    company = contact.get("company") or ""
+    summary = contact.get("summary") or "Voice call completed."
+    disposition = contact.get("disposition") or "no_outcome"
+    next_action = contact.get("next_action") or ""
+    additional_notes = (body.notes or "").strip() if body else ""
+
+    # Look up active CRM integrations for this tenant
+    session_factory = get_session_factory()
+    active_crms: list[TenantIntegration] = []
+    if session_factory:
+        try:
+            async with session_factory() as session:
+                stmt = select(TenantIntegration).where(
+                    TenantIntegration.tenant_id == _safe_tenant_uuid(scoped_tenant),
+                    TenantIntegration.status == "ACTIVE",
+                )
+                res = await session.execute(stmt)
+                all_integrations = list(res.scalars().all())
+                active_crms = [
+                    i for i in all_integrations
+                    if i.app_name.upper() in ("HUBSPOT", "SALESFORCE", "ZOHOCRM", "ZOHO_CRM", "PIPEDRIVE", "ZENDESK")
+                ]
+        except Exception as exc:
+            logger.warning("[CRM_SYNC] Failed to query tenant integrations: %s", exc)
+
+    if body and body.destination:
+        dest_upper = body.destination.upper().replace("-", "_")
+        active_crms = [i for i in active_crms if i.app_name.upper().replace("-", "_") == dest_upper]
+
+    sync_results: list[dict[str, Any]] = []
+
+    for crm in active_crms:
+        app_name = crm.app_name.upper()
+        if app_name == "HUBSPOT":
+            contact_res = await nango_service.execute_in_call_tool(
+                scoped_tenant,
+                "HUBSPOT_CREATE_CONTACT",
+                {
+                    "firstname": first_name,
+                    "lastname": last_name,
+                    "email": email,
+                    "phone": phone,
+                    "company": company,
+                },
+            )
+            note_content = (
+                f"Automated Voice Call Activity\n"
+                f"Call ID: {call_id}\n"
+                f"Disposition: {disposition}\n"
+                f"Next Action: {next_action or 'None'}\n"
+                f"Summary: {summary}\n"
+            )
+            if additional_notes:
+                note_content += f"\nOperator Notes: {additional_notes}"
+            await nango_service.execute_in_call_tool(
+                scoped_tenant,
+                "HUBSPOT_CREATE_NOTE",
+                {"body": note_content},
+            )
+            sync_results.append({
+                "app": "HubSpot",
+                "status": contact_res.get("status") or "success",
+                "contact_id": contact_res.get("contact_id") or contact_res.get("id"),
+                "details": contact_res.get("message") or contact_res.get("summary") or "Contact created/updated in HubSpot.",
+            })
+
+        elif app_name == "SALESFORCE":
+            lead_res = await nango_service.execute_in_call_tool(
+                scoped_tenant,
+                "SALESFORCE_CREATE_LEAD",
+                {
+                    "FirstName": first_name,
+                    "LastName": last_name or "Contact",
+                    "Phone": phone,
+                    "Email": email,
+                    "Company": company or "Individual",
+                    "Description": f"Call Summary ({call_id}): {summary}\nDisposition: {disposition}\nNext Action: {next_action}" + (f"\nNotes: {additional_notes}" if additional_notes else ""),
+                },
+            )
+            sync_results.append({
+                "app": "Salesforce",
+                "status": lead_res.get("status") or "success",
+                "lead_id": lead_res.get("lead_id") or lead_res.get("id"),
+                "details": lead_res.get("message") or "Lead record pushed to Salesforce.",
+            })
+
+        elif app_name in ("ZOHOCRM", "ZOHO_CRM"):
+            zoho_res = await nango_service.execute_in_call_tool(
+                scoped_tenant,
+                "ZOHO_CRM_CREATE_LEAD",
+                {
+                    "First_Name": first_name,
+                    "Last_Name": last_name or "Lead",
+                    "Phone": phone,
+                    "Email": email,
+                    "Company": company or "Individual",
+                    "Description": f"Call Summary: {summary}",
+                },
+            )
+            sync_results.append({
+                "app": "Zoho CRM",
+                "status": zoho_res.get("status") or "success",
+                "details": zoho_res.get("message") or "Lead exported to Zoho CRM.",
+            })
+
+    if sync_results:
+        return {
+            "ok": True,
+            "synced": True,
+            "destinations": sync_results,
+            "contact": contact,
+            "message": f"Successfully synchronized contact to {len(sync_results)} CRM destination(s).",
+        }
+
+    return {
+        "ok": True,
+        "synced": False,
+        "destinations": [],
+        "contact": contact,
+        "message": "No active CRM connection configured for this workspace. Connect your CRM under Integrations, or export directly as CSV, vCard, or JSON.",
+    }
+
+
+@router.get("/api/call/{call_id}/crm-export")
+async def export_call_crm_contact(
+    call_id: str,
+    format: Literal["json", "csv", "vcf"] = Query("json"),
+    scope: tuple[str, bool] = Depends(resolve_calls_scope),
+):
+    """Export caller contact card and post-call analytics in standard formats (vCard, CSV, JSON)."""
+    stored = await _assert_call_scoped(call_id, scope)
+    analytics = _compute_call_analytics_payload(call_id, stored)
+    contact = analytics["contact"]
+
+    if format == "vcf":
+        vcf_lines = [
+            "BEGIN:VCARD",
+            "VERSION:3.0",
+            f"FN:{contact.get('name') or 'Voice Contact'}",
+            f"N:{contact.get('last_name') or ''};{contact.get('first_name') or 'Caller'};;;",
+        ]
+        if contact.get("phone"):
+            vcf_lines.append(f"TEL;TYPE=CELL,VOICE:{contact['phone']}")
+        if contact.get("email"):
+            vcf_lines.append(f"EMAIL;TYPE=PREF,INTERNET:{contact['email']}")
+        if contact.get("company"):
+            vcf_lines.append(f"ORG:{contact['company']}")
+        note_str = (
+            f"Voice Call Summary (ID: {call_id})\\n"
+            f"Disposition: {contact.get('disposition')}\\n"
+            f"Next Action: {contact.get('next_action') or 'None'}\\n"
+            f"Summary: {contact.get('summary') or 'Completed'}"
+        ).replace("\n", "\\n")
+        vcf_lines.append(f"NOTE:{note_str}")
+        vcf_lines.append(f"REV:{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}")
+        vcf_lines.append("END:VCARD\n")
+        return Response(
+            content="\r\n".join(vcf_lines),
+            media_type="text/vcard",
+            headers={"Content-Disposition": f'attachment; filename="contact-{call_id}.vcf"'},
+        )
+
+    elif format == "csv":
+        out = io.StringIO()
+        writer = csv.writer(out)
+        writer.writerow([
+            "Call ID", "Full Name", "First Name", "Last Name",
+            "Phone", "Email", "Company", "Disposition",
+            "Sentiment", "Summary", "Next Action", "Duration (sec)", "Started At"
+        ])
+        writer.writerow([
+            call_id,
+            contact.get("name") or "",
+            contact.get("first_name") or "",
+            contact.get("last_name") or "",
+            contact.get("phone") or "",
+            contact.get("email") or "",
+            contact.get("company") or "",
+            contact.get("disposition") or "",
+            analytics.get("sentiment_label") or "",
+            contact.get("summary") or "",
+            contact.get("next_action") or "",
+            contact.get("duration_sec") or 0,
+            contact.get("started_at") or "",
+        ])
+        return Response(
+            content=out.getvalue(),
+            media_type="text/csv",
+            headers={"Content-Disposition": f'attachment; filename="call-{call_id}-crm-contact.csv"'},
+        )
+
+    return JSONResponse(content={"ok": True, "call_id": call_id, "contact": contact, "analytics": analytics})
+

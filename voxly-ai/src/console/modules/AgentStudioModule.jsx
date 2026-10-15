@@ -48,6 +48,7 @@ import { api } from '../../services/api';
 import { AgentOverview } from './agent-workspace/AgentOverview';
 import { AgentCallsPanel } from './agent-workspace/AgentCallsPanel';
 import { AgentSettingsPanel } from './agent-workspace/AgentSettingsPanel';
+import { AgentVoicePanel } from './agent-workspace/AgentVoicePanel';
 import { ErrorBoundary } from '../ui/ErrorBoundary';
 import { resolveEmployeeStep } from '../employeeFlowHash';
 
@@ -223,10 +224,10 @@ const EMPTY_FORM = {
 
 function formFromAgent(agent) {
   if (!agent) return { ...EMPTY_FORM };
-  const rawVoice = agent.voice || {};
+  const rawVoice = agent.voice || agent.voice_settings || agent.voiceSettings || {};
   const voiceId = rawVoice.voiceId || rawVoice.realtimeVoice || 'marin';
   const realtimeVoice = rawVoice.realtimeVoice || rawVoice.voiceId || 'marin';
-  const lang = (agent.languages && agent.languages[0]) || agent.language || 'en-IN';
+  const lang = (agent.languages && agent.languages[0]) || agent.language || rawVoice.language || 'en-IN';
   return {
     ...editableSubset({
       name: agent.name || '',
@@ -280,12 +281,14 @@ export function AgentStudioModule({
   // button that opened it rather than dropping the user back at the top of the page.
   const testCallButtonRef = useRef(null);
   const [phoneVoices, setPhoneVoices] = useState([]);
+  const [activeVoiceProvider, setActiveVoiceProvider] = useState('openai');
   const [stackLabel, setStackLabel] = useState(PHONE_STACK_LABEL);
 
   useEffect(() => {
     fetchPhoneVoiceOptions()
       .then((o) => {
         setPhoneVoices(o.voices || []);
+        setActiveVoiceProvider((o.voices || []).some((voice) => voice.provider === 'gemini') ? 'gemini' : 'openai');
         setStackLabel(o.stackLabel || PHONE_STACK_LABEL);
       })
       .catch(() => {});
@@ -544,8 +547,9 @@ export function AgentStudioModule({
         if (cancelled) return;
         const studio = parseStudioFieldsFromSections(data?.draft?.sections);
         const cfg = parseVoiceConfigFromSections(data?.draft?.sections);
+        const chosenVoice = cfg.realtimeVoice || base.voice?.realtimeVoice || 'marin';
         const voiceMeta = (phoneVoices.length ? phoneVoices : []).find(
-          (v) => v.id === cfg.realtimeVoice
+          (v) => v.id === chosenVoice
         );
         let initialGreeting = studio.greeting || base.greeting || '';
         let initialScript = studio.script || '';
@@ -568,10 +572,12 @@ export function AgentStudioModule({
           language: cfg.language || base.language,
           voice: {
             ...base.voice,
-            realtimeVoice: cfg.realtimeVoice || base.voice?.realtimeVoice,
-            voiceId: cfg.realtimeVoice || base.voice?.voiceId || 'marin',
-            voiceName: voiceMeta?.label || base.voice?.voiceName || cfg.realtimeVoice,
+            realtimeVoice: chosenVoice,
+            voiceId: chosenVoice,
+            voiceName: voiceMeta?.label || base.voice?.voiceName || chosenVoice,
             speed: cfg.speed ?? base.voice?.speed ?? 1,
+            pitch: cfg.pitch ?? base.voice?.pitch ?? 0,
+            stability: cfg.stability ?? base.voice?.stability ?? 0.75,
           },
         };
         setFormData(loaded);
@@ -707,7 +713,7 @@ export function AgentStudioModule({
     try {
       const targetVoice = formData.voice?.voiceId || formData.voice?.realtimeVoice || 'marin';
       const targetSpeed = formData.voice?.speed ?? 1;
-      const { blob, voice, model } = await api.telephony.previewVoice({
+      const { blob, url, voice, model } = await api.telephony.previewVoice({
         text: previewText,
         voiceId: targetVoice,
         language: 'en-US',
@@ -716,11 +722,22 @@ export function AgentStudioModule({
       setVoiceSpoken({ voice: voice || targetVoice, model: model || null, language: 'en-US' });
       setIsBufferingVoice(false);
       setIsPlayingVoice(true);
-      const played = await voiceAgent.playAudioBuffer(
-        blob,
-        () => setIsPlayingVoice(false),
-        () => setIsPlayingVoice(true)
-      );
+      let played = false;
+      if (blob) {
+        played = await voiceAgent.playAudioBuffer(
+          blob,
+          () => setIsPlayingVoice(false),
+          () => setIsPlayingVoice(true)
+        );
+      }
+      if (!played && url) {
+        voiceAgent.playAudioClip(
+          url,
+          () => setIsPlayingVoice(false),
+          () => setIsPlayingVoice(true)
+        );
+        played = true;
+      }
       if (!played) {
         setIsPlayingVoice(false);
         setVoicePreviewError('The preview audio could not be played. Check your sound output.');
@@ -1392,250 +1409,25 @@ export function AgentStudioModule({
         </div>
       )}
 
-      {/* TAB: VOICE & ACOUSTIC TUNING */}
+      {/* TAB: VOICE & LANGUAGE STUDIO */}
       {activeTab === 'voice' && (
         <div
           role="tabpanel"
           id="agent-panel-voice"
           aria-labelledby="agent-tab-voice"
+          data-testid="agent-panel-voice"
           className="space-y-6 animate-in fade-in duration-150"
         >
-          <SolidCard>
-            <p className="text-[11px] text-[#524E5E] mb-3">
-              {stackLabel} — these voices apply to incoming calls, outgoing calls, and browser practice
-              calls after you save & publish.
-            </p>
-            <h3 className="text-xs font-bold text-[#0F0E17] mb-4">Speaking voice</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-[#0F0E17] mb-1">Voice</label>
-                <select
-                  value={formData.voice?.realtimeVoice || formData.voice?.voiceId || 'marin'}
-                  onChange={(e) => {
-                    const id = e.target.value;
-                    const meta = phoneVoices.find((v) => v.id === id);
-                    setFormData({
-                      ...formData,
-                      voice: {
-                        ...formData.voice,
-                        provider: 'phone_ai',
-                        realtimeVoice: id,
-                        voiceId: id,
-                        voiceName: formatPhoneVoiceLabel(meta),
-                      },
-                    });
-                  }}
-                  className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl p-2.5 text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
-                >
-                  {(() => {
-                    // Grouped by how the voice sounds, not by which vendor serves it.
-                    // Naming the suppliers invited tenants to compare our rate against
-                    // their own API bill; the choice they are making is tone and fit.
-                    const fallback = [{ id: 'marin', label: 'Marin', gender: 'female', tone: 'Warm & clear' }];
-                    const groups = groupVoicesByTier(
-                      phoneVoices.length ? phoneVoices : fallback
-                    );
-                    return groups.map((group) => (
-                      <optgroup key={group.label} label={group.label}>
-                        {group.voices.map((p) => (
-                          <option key={p.id} value={p.id}>{formatPhoneVoiceLabel(p)}</option>
-                        ))}
-                      </optgroup>
-                    ));
-                  })()}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[#0F0E17] mb-1">Language</label>
-                <select
-                  value={formData.language}
-                  onChange={(e) => setFormData({ ...formData, language: e.target.value })}
-                  className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl p-2.5 text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
-                >
-                  {LANGUAGE_OPTIONS.map((l) => (
-                    <option key={l.code} value={l.code}>{l.label}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </SolidCard>
-
-          <SolidCard>
-            <h3 className="text-xs font-bold text-[#0F0E17] mb-4">Acoustic Calibration Sliders</h3>
-            <div className="space-y-5">
-              <div>
-                <div className="flex justify-between text-xs mb-1.5">
-                  <span className="font-semibold text-[#0F0E17]">Speaking Speed</span>
-                  <span className="font-mono text-[#6344E7] font-bold">{formData.voice.speed}x</span>
-                </div>
-                <input
-                  type="range"
-                  min="0.8"
-                  max="1.3"
-                  step="0.02"
-                  value={formData.voice.speed}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      voice: { ...formData.voice, speed: parseFloat(e.target.value) }
-                    })
-                  }
-                  className="w-full accent-[#6344E7]"
-                />
-              </div>
-
-              <div>
-                <div className="flex justify-between text-xs mb-1.5">
-                  <span className="font-semibold text-[#0F0E17]">Pitch Modulation</span>
-                  <span className="font-mono text-[#6344E7] font-bold">{formData.voice.pitch > 0 ? `+${formData.voice.pitch}` : formData.voice.pitch}</span>
-                </div>
-                <input
-                  type="range"
-                  min="-0.15"
-                  max="0.15"
-                  step="0.01"
-                  value={formData.voice.pitch}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      voice: { ...formData.voice, pitch: parseFloat(e.target.value) }
-                    })
-                  }
-                  className="w-full accent-[#6344E7]"
-                />
-              </div>
-
-              <div>
-                <div className="flex justify-between text-xs mb-1.5">
-                  <span className="font-semibold text-[#0F0E17]">Stability & Consistency</span>
-                  <span className="font-mono text-[#6344E7] font-bold">{formData.voice?.stability || 0.75}</span>
-                </div>
-                <input
-                  type="range"
-                  min="0.3"
-                  max="1.0"
-                  step="0.05"
-                  value={formData.voice?.stability || 0.75}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      voice: { ...formData.voice, stability: parseFloat(e.target.value) }
-                    })
-                  }
-                  className="w-full accent-[#6344E7]"
-                />
-              </div>
-            </div>
-          </SolidCard>
-
-          {/* Interactive Voice Test & Preview Card */}
-          <SolidCard className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-xs font-bold text-[#0F0E17] flex items-center gap-2">
-                  <Radio className="w-3.5 h-3.5 text-[#6344E7]" />
-                  <span>Acoustic Voice Preview & Live Test</span>
-                </h3>
-                <p className="text-[11px] text-[#524E5E]">
-                  Hear the greeting in the exact live voice a caller will reach — same model, same voice.
-                </p>
-              </div>
-
-              <span className={`text-[10px] font-mono px-2 py-0.5 rounded-md border font-semibold ${
-                isPlayingVoice
-                  ? 'bg-[#22C55E]/15 text-[#15803D] border-[#22C55E]/30 animate-pulse'
-                  : isBufferingVoice
-                    ? 'bg-[#6344E7]/10 text-[#6344E7] border-[#6344E7]/30 animate-pulse'
-                    : 'bg-[#F0EEF6] text-[#524E5E] border-[#E4E2EB]'
-              }`}>
-                {isPlayingVoice ? '● Audio Playing' : isBufferingVoice ? 'Synthesizing…' : 'Ready'}
-              </span>
-              {voiceSpoken.voice && (
-                <span
-                  data-testid="voice-preview-spoke"
-                  className="text-[10px] font-mono px-2 py-0.5 rounded-md border bg-[#F0EEF6] text-[#524E5E] border-[#E4E2EB]"
-                >
-                  spoke {voiceSpoken.voice} · {voiceSpoken.model}
-                </span>
-              )}
-            </div>
-
-            <div className="p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] space-y-3">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[10px] font-bold text-[#8C879A] uppercase tracking-wider">
-                  Greeting the caller hears
-                </span>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-md border bg-white text-[#524E5E] border-[#E4E2EB]">
-                    {LANGUAGE_OPTIONS.find((l) => l.code === formData.language)?.label || formData.language}
-                  </span>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-md border bg-white text-[#524E5E] border-[#E4E2EB]">
-                    {formData.voice?.voiceName || formData.voice?.voiceId || 'Marin'} · {formData.voice?.speed ?? 1}x speed
-                  </span>
-                </div>
-              </div>
-
-              <div className="text-xs font-medium text-[#0F0E17] leading-relaxed italic bg-white p-3 rounded-xl border border-[#E4E2EB]/60">
-                "{formData.greeting || `Hi there! I am ${formData.name}. I am calibrated and ready to take your calls.`}"
-              </div>
-
-              {/* chisel: Waveform shimmer while neural voice audio buffers */}
-              {isBufferingVoice && (
-                <div className="flex items-center gap-2 p-2 rounded-lg bg-white border border-[#E4E2EB]">
-                  <WaveformSkeleton />
-                  <span className="text-[10px] font-mono text-[#6344E7] animate-pulse">
-                    Synthesizing neural voice stream…
-                  </span>
-                </div>
-              )}
-
-              {/* Sound visualizer animation when playing */}
-              {isPlayingVoice && (
-                <div className="flex items-center gap-1 h-5 px-3 py-1 rounded-lg bg-white border border-[#E4E2EB]">
-                  {[12, 22, 16, 26, 14, 20, 10, 24, 18, 14, 22, 16].map((h, i) => (
-                    <span
-                      key={i}
-                      className="w-1 bg-[#6344E7] rounded-full animate-pulse"
-                      style={{ height: `${h}px`, animationDelay: `${i * 70}ms` }}
-                    />
-                  ))}
-                  <span className="text-[10px] font-mono text-[#524E5E] ml-auto">Playing live voice…</span>
-                </div>
-              )}
-
-              {voicePreviewError && (
-                <p
-                  role="alert"
-                  data-testid="voice-preview-error"
-                  className="text-[11px] text-[#B91C1C]"
-                >
-                  {voicePreviewError}
-                </p>
-              )}
-            </div>
-
-            <div className="flex items-center gap-3 pt-1">
-              <TactileButton
-                variant={isPlayingVoice ? 'danger' : 'primary'}
-                size="sm"
-                icon={isPlayingVoice ? Square : Play}
-                loading={isBufferingVoice}
-                onClick={handlePlayVoicePreview}
-              >
-                {isPlayingVoice ? 'Stop Audio' : isBufferingVoice ? 'Buffering…' : 'Preview Voice'}
-              </TactileButton>
-
-              <TactileButton
-                variant="secondary"
-                size="sm"
-                icon={Radio}
-                onClick={() => setTestCallOpen(true)}
-              >
-                Test call
-              </TactileButton>
-            </div>
-          </SolidCard>
+          <ErrorBoundary title="Unable to load voice studio">
+            <AgentVoicePanel
+              formData={formData}
+              setFormData={setFormData}
+              phoneVoices={phoneVoices}
+              activeVoiceProvider={activeVoiceProvider}
+              stackLabel={stackLabel}
+              onOpenTestCall={() => setTestCallOpen(true)}
+            />
+          </ErrorBoundary>
         </div>
       )}
 
@@ -1695,13 +1487,16 @@ export function AgentStudioModule({
             setTestCallOpen(false);
             requestAnimationFrame(() => testCallButtonRef.current?.focus());
           }}
-          title={`Test call — ${selectedAgent.name}`}
+          title={`Test call — ${selectedAgent?.name || 'Agent'}`}
           subtitle="Browser mic or live-number dial (wallet-billed). Empty wallet prompts a Razorpay top-up."
           maxWidth="max-w-lg"
         >
           <div data-testid="agent-test-call-panel">
             <ErrorBoundary title="Unable to initialize test call">
-              <AgentTestCallPanel agent={selectedAgent} />
+                <AgentTestCallPanel
+                  agent={selectedAgent}
+                  language={formData.language || formData.languages?.[0] || selectedAgent?.languages?.[0] || selectedAgent?.language || 'en-IN'}
+                />
             </ErrorBoundary>
           </div>
         </Modal>

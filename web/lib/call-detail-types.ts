@@ -162,3 +162,50 @@ export type UnifiedTimelineEvent = {
   ms?: number;
   ts?: string;
 };
+
+export type CrmContact = {
+  name?: string;
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+  email?: string;
+  company?: string;
+  disposition?: string;
+  summary?: string;
+  next_action?: string | null;
+  call_id?: string;
+  duration_sec?: number;
+  started_at?: string;
+};
+
+export type CallAnalyticsData = {
+  call_id: string;
+  sentiment: "positive" | "neutral" | "negative";
+  sentiment_score: number;
+  sentiment_label: string;
+  resolution_status: "resolved" | "action_required" | "closed_lost" | "invalid" | "inconclusive";
+  disposition: string;
+  disposition_confidence: number;
+  summary_en: string;
+  summary_te?: string;
+  next_action?: string | null;
+  objections?: string[];
+  status_tags?: string[];
+  facts?: Record<string, string>;
+  duration_sec: number;
+  started_at?: string;
+  has_recording: boolean;
+  recording_source: string;
+  talk_time: {
+    user_turns: number;
+    agent_turns: number;
+    user_words: number;
+    agent_words: number;
+    total_words: number;
+    user_ratio: number;
+    agent_ratio: number;
+  };
+  contact: CrmContact;
+  crm_sync_ready: boolean;
+};
+

@@ -5,14 +5,120 @@ from types import SimpleNamespace
 
 import pytest
 
-from server.realtime.models import normalize_realtime_voice
-from server.realtime.providers.gemini_voice import GeminiLiveVoiceAdapter
+from server.realtime.models import GEMINI_LIVE_LIBRARY_VOICES, GEMINI_LIVE_VOICES, normalize_realtime_voice
+from server.realtime.providers.gemini_voice import GeminiLiveVoiceAdapter, normalize_gemini_live_voice
+from server.realtime.voice_manager import RealtimeVoiceManager
 
 
 def test_normalize_realtime_voice_keeps_gemini_prebuilt():
     assert normalize_realtime_voice("Puck") == "Puck"
     assert normalize_realtime_voice("aoede") == "Aoede"
     assert normalize_realtime_voice("marin") == "marin"
+
+
+@pytest.mark.parametrize("voice", GEMINI_LIVE_VOICES)
+def test_all_gemini_live_voices_normalize_case_insensitively(voice):
+    assert normalize_realtime_voice(voice.lower()) == voice
+    assert normalize_gemini_live_voice(voice.lower()) == voice
+
+
+@pytest.mark.parametrize("voice", GEMINI_LIVE_LIBRARY_VOICES)
+def test_indic_gemini_library_voices_normalize_case_insensitively(voice):
+    assert normalize_gemini_live_voice(voice.upper()) == voice
+
+
+@pytest.mark.asyncio
+async def test_voice_manager_passes_direct_gemini_voice_to_live_adapter():
+    class CapturingAdapter:
+        def __init__(self):
+            self.connect_kwargs = None
+
+        async def connect(self, **kwargs):
+            self.connect_kwargs = kwargs
+
+    adapter = CapturingAdapter()
+    manager = RealtimeVoiceManager()
+    stack = {
+        "pipeline": "realtime_voice",
+        "language": "hi-IN",
+        "llm": {"provider": "gemini", "model": "gemini-3.8-live"},
+        "realtime_voice": {"voice": "alnilam"},
+    }
+
+    await manager.create(
+        "gemini-direct-voice-test",
+        instructions="Speak only in Hindi.",
+        language="hi-IN",
+        stack_override=stack,
+        adapter=adapter,
+    )
+
+    assert adapter.connect_kwargs["model"] == "gemini-3.8-live"
+    assert adapter.connect_kwargs["voice"] == "Alnilam"
+
+
+@pytest.mark.asyncio
+async def test_voice_manager_does_not_fallback_direct_gemini_voice_to_openai():
+    attempts = []
+
+    class FailedAdapter:
+        async def connect(self, **kwargs):
+            attempts.append(kwargs)
+            raise RuntimeError("Gemini Live unavailable")
+
+        async def close(self):
+            return None
+
+    manager = RealtimeVoiceManager(adapter_factory=lambda **_kwargs: FailedAdapter())
+    stack = {
+        "pipeline": "realtime_voice",
+        "language": "hi-IN",
+        "llm": {"provider": "gemini", "model": "gemini-3.8-live"},
+        "realtime_voice": {"voice": "alnilam"},
+    }
+
+    with pytest.raises(RuntimeError, match="Gemini Live unavailable"):
+        await manager.create(
+            "gemini-direct-voice-no-fallback-test",
+            instructions="Speak only in Hindi.",
+            language="hi-IN",
+            stack_override=stack,
+        )
+
+    assert len(attempts) == 1
+    assert attempts[0]["voice"] == "Alnilam"
+
+
+@pytest.mark.asyncio
+async def test_voice_manager_does_not_fallback_direct_indic_voice_to_openai():
+    attempts = []
+
+    class FailedAdapter:
+        async def connect(self, **kwargs):
+            attempts.append(kwargs)
+            raise RuntimeError("Gemini Live unavailable")
+
+        async def close(self):
+            return None
+
+    manager = RealtimeVoiceManager(adapter_factory=lambda **_kwargs: FailedAdapter())
+    stack = {
+        "pipeline": "realtime_voice",
+        "language": "te-IN",
+        "llm": {"provider": "gemini", "model": "gemini-3.8-live"},
+        "realtime_voice": {"voice": "te-in-csagent-5"},
+    }
+
+    with pytest.raises(RuntimeError, match="Gemini Live unavailable"):
+        await manager.create(
+            "gemini-indic-voice-no-fallback-test",
+            instructions="Speak only in Telugu.",
+            language="te-IN",
+            stack_override=stack,
+        )
+
+    assert len(attempts) == 1
+    assert attempts[0]["voice"] == "te-in-csagent-5"
 
 
 def test_gemini_normalize_keeps_tool_call_and_audio_together():

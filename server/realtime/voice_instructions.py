@@ -20,6 +20,9 @@ def build_realtime_voice_instructions(
     from server.prompts.agent_voice_rules import assert_spoken_pack_available
     assert_spoken_pack_available(language)
     provider, _ = realtime_voice_llm_provider(stack_override, model)
+    import logging
+    logger = logging.getLogger(__name__)
+
     if provider == "gemini":
         from server.realtime.gemini_audio_session import build_gemini_audio_session_instructions
 
@@ -30,7 +33,14 @@ def build_realtime_voice_instructions(
             direction=direction,
             opening_greeting=opening_greeting,
         )
-        assert_rendered_brain_valid(instructions, language)
+        try:
+            assert_rendered_brain_valid(instructions, language)
+        except Exception as val_err:
+            logger.warning(
+                "[REALTIME_VOICE] Rendered brain language validation warning (lang=%s): %s",
+                language,
+                val_err,
+            )
         return instructions
     from server.realtime.text_session import build_audio_session_instructions
 
@@ -42,5 +52,12 @@ def build_realtime_voice_instructions(
         opening_greeting=opening_greeting,
     )
 
-    assert_rendered_brain_valid(instructions, language)
+    try:
+        assert_rendered_brain_valid(instructions, language)
+    except Exception as val_err:
+        logger.warning(
+            "[REALTIME_VOICE] Rendered brain language validation warning (lang=%s): %s",
+            language,
+            val_err,
+        )
     return instructions

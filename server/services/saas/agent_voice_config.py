@@ -34,9 +34,20 @@ def parse_voice_config_from_sections(sections: list[dict[str, Any]] | None) -> d
 async def load_agent_voice_config(agent_id: str) -> dict[str, Any]:
     if not agent_id:
         return {}
+    cfg: dict[str, Any] = {}
     try:
         sections = await business_brain_store.get_sections(agent_id)
-        return parse_voice_config_from_sections(sections)
+        cfg = parse_voice_config_from_sections(sections)
     except Exception:
         logger.debug("voice config load failed agent=%s", agent_id, exc_info=True)
-        return {}
+    if not cfg:
+        try:
+            from server.brain.agent_service import agent_service
+            agent_dict = await agent_service.get_agent(agent_id)
+            if agent_dict and agent_dict.get("voice_settings"):
+                vs = agent_dict["voice_settings"]
+                if isinstance(vs, dict) and (vs.get("realtimeVoice") or vs.get("voiceId")):
+                    return vs
+        except Exception:
+            pass
+    return cfg

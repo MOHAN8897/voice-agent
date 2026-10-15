@@ -122,7 +122,7 @@ export function CallInvestigationConsole({ callId }: { callId: string }) {
       <CallDetailHeader meta={data.meta} outcome={data.outcome} />
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <CallOutcomePanel outcome={data.outcome} />
+        <CallOutcomePanel outcome={data.outcome} callId={callId} />
         <CallAudioPanel callId={callId} preferClearAudio />
       </div>
 

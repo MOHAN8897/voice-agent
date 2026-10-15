@@ -43,13 +43,13 @@ class RazorpayVerifyBody(BaseModel):
 async def billing_catalog():
     """Prices the console displays. The server is the only source of truth for these.
 
-    Every price is USD. The INR figures are derived mirrors at the chargeable FX
-    rate, exposed for admin reference only — the customer-facing surface quotes USD.
+    USD and INR values come from the same versioned price configuration. The
+    configured INR rate is preserved when it was entered directly in rupees.
     """
-    from server.services.saas.billing_rates import rates_with_derived_inr
+    from server.services.saas.billing_rates import load_current_rates
 
     settings = get_settings()
-    rates = rates_with_derived_inr()
+    rates = await load_current_rates()
     return {
         "currency": "USD",
         "plans": [
@@ -71,11 +71,11 @@ async def billing_catalog():
         "topupMaxInr": 500000,
         "paymentProvider": "razorpay",
         "rates": {
-            "pstnUsdPerMin": round(rates["pstn_rate_usd_cents_per_min"] / 100.0, 3),
+            "pstnUsdPerMin": round(rates["pstn_rate_usd_micros_per_min"] / 1_000_000.0, 6),
             "pstnInrPerMin": round(rates["pstn_rate_inr_paise_per_min"] / 100.0, 2),
             "webInrPerMin": round(rates["web_agent_rate_inr_paise_per_min"] / 100.0, 2),
-            "webUsdPerMin": round(rates["web_agent_rate_usd_cents_per_min"] / 100.0, 3),
-            "numberMonthlyUsd": round(rates["did_monthly_usd_cents"] / 100.0, 2),
+            "webUsdPerMin": round(rates["web_agent_rate_usd_micros_per_min"] / 1_000_000.0, 6),
+            "numberMonthlyUsd": round(rates["did_monthly_usd_micros"] / 1_000_000.0, 6),
             "numberMonthlyInr": round(rates["did_monthly_inr_paise"] / 100.0, 2),
             "minBalanceUsd": round(settings.pstn_min_balance_usd_cents / 100.0, 2),
             "minBalanceInr": round(settings.pstn_min_balance_inr_paise / 100.0, 2),
@@ -100,11 +100,12 @@ async def billing_topup(body: TopupBody, principal: SubscriberPrincipal = Depend
     allowed, retry = _billing_limiter.allow(f"topup:{principal.user_id}")
     if not allowed:
         raise_rate_limited(retry, "Top-up rate limit reached.")
-    from server.services.saas.billing_rates import effective_rates
+    from server.services.saas.billing_rates import load_current_rates
 
     # Charge at the admin-configured rate, not the live market rate, so a
     # top-up cannot change price between quote and payment.
-    fx = float(effective_rates().get("fx_rate_inr") or 95.64)
+    rates = await load_current_rates()
+    fx = float(rates.get("fx_rate_inr") or 95.64)
     amount_inr = max(100.0, round(float(body.amountUsd) * fx, 2))
     try:
         order = await create_wallet_order(principal.tenant_id, amount_inr)

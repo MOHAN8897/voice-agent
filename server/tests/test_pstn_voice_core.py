@@ -192,6 +192,45 @@ def test_extract_prewarm_greeting_prefers_long_canonical_opening():
 
 
 @pytest.mark.asyncio
+async def test_gemini_inbound_opening_prewarm_receives_selected_language(monkeypatch):
+    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+    from server.services import pstn_realtime_greeting_prewarm
+
+    captured = {}
+
+    async def fake_synthesize(**kwargs):
+        captured.update(kwargs)
+        return [], "", None
+
+    monkeypatch.setattr(
+        pstn_realtime_greeting_prewarm,
+        "synthesize_gemini_greeting_on_side_session",
+        fake_synthesize,
+        raising=False,
+    )
+    loop = PstnRealtimeVoiceLoop(
+        session_id="browser-hi-test",
+        call_id=None,
+        on_agent_wire=AsyncMock(),
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        stack_override={"language": "hi-IN", "direction": "inbound"},
+    )
+
+    started = await loop._play_gemini_inbound_opening_if_needed(
+        adapter=SimpleNamespace(),
+        opening="Hello, how can I help you?",
+        model="gemini-3.8-live",
+        cfg={},
+        max_output_tokens=None,
+        llm_provider="gemini",
+    )
+
+    assert started is False
+    assert captured["language"] == "hi-IN"
+
+
+@pytest.mark.asyncio
 async def test_flush_stale_outbound_playback_invalidates_prior_generation():
     from server.services.pstn_voice_core import PstnVoiceLoop
 

@@ -437,10 +437,19 @@ export function WorkspaceProvider({ children }) {
   const updateAgent = async (agentId, updates) => {
     try {
       if (authed()) {
+        const languages = updates.languages || (updates.language ? [updates.language] : undefined);
+        const voiceSettings = updates.voice ? {
+          realtimeVoice: updates.voice.realtimeVoice || updates.voice.voiceId,
+          speed: updates.voice.speed,
+          pitch: updates.voice.pitch,
+          stability: updates.voice.stability,
+          language: updates.language || (languages ? languages[0] : undefined),
+        } : undefined;
         const updated = await api.agents.update(agentId, {
           name: updates.name,
           status: updates.status,
-          languages: updates.languages,
+          languages,
+          voiceSettings,
           recordingDisclosureEnabled: updates.recordingDisclosureEnabled,
           recordingDisclosureText: updates.recordingDisclosureText,
         });

@@ -116,6 +116,14 @@ def _normalize_realtime_voice_override(
         out["realtime_voice"] = rv
     raw_voice = str(rv.get("voice") or "").strip()
     voice = normalize_realtime_voice(raw_voice)
+    if llm.get("provider") == "gemini" and raw_voice:
+        from server.realtime.models import GEMINI_LIVE_LIBRARY_VOICES, GEMINI_LIVE_VOICES
+
+        known_gemini_voices = {item.lower() for item in (*GEMINI_LIVE_VOICES, *GEMINI_LIVE_LIBRARY_VOICES)}
+        if raw_voice.lower() in known_gemini_voices:
+            from server.realtime.providers.gemini_voice import normalize_gemini_live_voice
+
+            voice = normalize_gemini_live_voice(raw_voice)
     if raw_voice and raw_voice != voice and raw_voice.lower() != str(voice).lower():
         adjustments.append(f"realtime voice replaced with {voice}")
     rv["voice"] = voice or DEFAULT_REALTIME_VOICE

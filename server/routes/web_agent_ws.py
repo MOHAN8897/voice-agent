@@ -14,9 +14,18 @@ from server.utils.rate_limiter import RateLimiter
 logger = logging.getLogger(__name__)
 router = APIRouter()
 _web_agent_limiter = RateLimiter(max_requests=20, window_s=60)
+_WEB_AGENT_SUBPROTOCOL = "voxly-web-agent"
+_WEB_AGENT_AUTH_PROTOCOL_PREFIX = "voxly-auth."
 
 
 def _ws_token(ws: WebSocket) -> str:
+    offered_protocols = ws.scope.get("subprotocols") or []
+    for protocol in offered_protocols:
+        candidate = str(protocol or "").strip()
+        if candidate.startswith(_WEB_AGENT_AUTH_PROTOCOL_PREFIX):
+            token = candidate[len(_WEB_AGENT_AUTH_PROTOCOL_PREFIX):].strip()
+            if token:
+                return token
     q = ws.query_params.get("token") or ""
     if q.strip():
         return q.strip()
@@ -28,7 +37,9 @@ def _ws_token(ws: WebSocket) -> str:
 
 @router.websocket("/ws/web-agent")
 async def web_agent_ws(websocket: WebSocket):
-    await websocket.accept()
+    offered_protocols = websocket.scope.get("subprotocols") or []
+    selected_protocol = _WEB_AGENT_SUBPROTOCOL if _WEB_AGENT_SUBPROTOCOL in offered_protocols else None
+    await websocket.accept(subprotocol=selected_protocol)
     token = _ws_token(websocket)
     agent_id = (websocket.query_params.get("agentId") or websocket.query_params.get("agent_id") or "").strip()
     if not token or not agent_id:
@@ -66,13 +77,13 @@ async def web_agent_ws(websocket: WebSocket):
         await websocket.close(code=1008)
         return
     status = str(agent.get("status") or "").strip().lower()
-    if status in {"paused", "inactive", "disabled"}:
+    if status in {"disabled"}:
         from server.services.saas.session_failure_log import record_session_failure
 
         record_session_failure(
             channel="web_agent",
-            code="agent_paused",
-            message="Agent is paused",
+            code="agent_disabled",
+            message="Agent is disabled",
             agent_id=agent_id,
             tenant_id=str(principal.tenant_id),
         )
@@ -80,23 +91,32 @@ async def web_agent_ws(websocket: WebSocket):
             websocket,
             {
                 "type": "error",
-                "code": "agent_paused",
-                "message": "This agent is paused. Switch it to Live in Settings before testing.",
+                "code": "agent_disabled",
+                "message": "This agent is disabled.",
             },
         )
         await websocket.close(code=1008)
         return
+
+    # If the compiled brain has not been published yet, auto-compile on first access
     if not agent.get("active_compiled_brain_version"):
-        await _send(
-            websocket,
-            {
-                "type": "error",
-                "code": "brain_not_published",
-                "message": "Publish this agent's script before testing live voice.",
-            },
-        )
-        await websocket.close(code=1008)
-        return
+        from server.brain.compiled_brain_service import compiled_brain_service
+        try:
+            active_snap = await compiled_brain_service.get_active_for_agent(agent_id)
+            if active_snap and active_snap.get("compiled_version"):
+                agent["active_compiled_brain_version"] = active_snap["compiled_version"]
+        except Exception as brain_err:
+            logger.warning("[WEB_AGENT] Could not auto-compile brain for agent %s: %s", agent_id, brain_err)
+            await _send(
+                websocket,
+                {
+                    "type": "error",
+                    "code": "brain_not_published",
+                    "message": "Publish this agent's script before testing live voice.",
+                },
+            )
+            await websocket.close(code=1008)
+            return
     try:
         await assert_wallet_allows_usage(principal.tenant_id)
     except Exception as exc:
@@ -206,14 +226,21 @@ async def web_agent_ws(websocket: WebSocket):
         loop.set_hangup_handler(on_provider_hangup)
         await loop.start_call(play_greeting=True)
         llm = stack.get("llm") if isinstance(stack.get("llm"), dict) else {}
+        connected_adapter = getattr(loop, "_adapter", None)
+        active_provider = getattr(loop, "_llm_provider", None) or (
+            "gemini"
+            if connected_adapter and connected_adapter.__class__.__name__ == "GeminiLiveVoiceAdapter"
+            else "openai"
+        )
+        active_model = getattr(connected_adapter, "model", None) or str(llm.get("model") or "")
         await send_event(
             {
                 "type": "ready",
                 "callId": call_id,
                 "pipeline": started.get("pipeline"),
                 "sampleRate": 16000,
-                "voiceProvider": str(llm.get("provider") or "openai"),
-                "voiceModel": str(llm.get("model") or ""),
+                "voiceProvider": active_provider,
+                "voiceModel": active_model,
             }
         )
 
@@ -242,13 +269,20 @@ async def web_agent_ws(websocket: WebSocket):
         pass
     except Exception as exc:
         logger.exception("[WEB_AGENT] session failed call=%s", call_id)
+        raw_msg = str(exc)
+        if "API key" in raw_msg or "denied access" in raw_msg or "quota" in raw_msg.lower():
+            user_msg = "Voice provider connection failed. Please verify API configuration or try again."
+        elif "timeout" in raw_msg.lower():
+            user_msg = "Voice provider connection timed out. Please try again."
+        else:
+            user_msg = "Voice session could not be established. Please try again."
         try:
             from server.services.saas.session_failure_log import record_session_failure
 
             record_session_failure(
                 channel="web_agent",
                 code="session_failed",
-                message="Voice session failed.",
+                message=user_msg,
                 agent_id=agent_id,
                 tenant_id=str(getattr(principal, "tenant_id", "") or ""),
                 call_id=call_id,
@@ -256,7 +290,7 @@ async def web_agent_ws(websocket: WebSocket):
             )
         except Exception:
             pass
-        await send_event({"type": "error", "code": "session_failed", "message": "Voice session failed."})
+        await send_event({"type": "error", "code": "session_failed", "message": user_msg})
     finally:
         closed = True
         if loop is not None:

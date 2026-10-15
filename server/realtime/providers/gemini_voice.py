@@ -19,6 +19,8 @@ logger = logging.getLogger(__name__)
 
 from server.realtime.models import (
     DEFAULT_REALTIME_TURN_DETECTION,
+    GEMINI_LIVE_VOICES,
+    GEMINI_LIVE_LIBRARY_VOICES,
     REALTIME_PCM_RATE,
     normalize_realtime_silence_ms,
     normalize_realtime_turn_detection,
@@ -34,16 +36,19 @@ GEMINI_LIVE_OUTPUT_RATE = 24000
 
 # OpenAI Realtime voice slugs → Gemini prebuilt speech voices (Live API).
 _OPENAI_TO_GEMINI_VOICE: dict[str, str] = {
-    "ash": "Aoede",
-    "marin": "Puck",
+    "marin": "Aoede",
     "cedar": "Charon",
     "alloy": "Kore",
-    "echo": "Fenrir",
-    "shimmer": "Leda",
-    "sage": "Orus",
-    "ballad": "Zephyr",
+    "ash": "Orus",
+    "ballad": "Puck",
     "coral": "Aoede",
+    "echo": "Fenrir",
+    "sage": "Kore",
+    "shimmer": "Leda",
     "verse": "Puck",
+}
+_GEMINI_VOICE_BY_LOWER = {
+    name.lower(): name for name in (*GEMINI_LIVE_VOICES, *GEMINI_LIVE_LIBRARY_VOICES)
 }
 
 _EAGERNESS_TO_START: dict[str, str] = {
@@ -56,10 +61,11 @@ _EAGERNESS_TO_START: dict[str, str] = {
 
 def normalize_gemini_live_voice(voice: str | None) -> str:
     slug = str(voice or "").strip()
-    if slug in _OPENAI_TO_GEMINI_VOICE.values():
-        return slug
+    direct = _GEMINI_VOICE_BY_LOWER.get(slug.lower())
+    if direct:
+        return direct
     mapped = _OPENAI_TO_GEMINI_VOICE.get(normalize_realtime_voice(voice), "Puck")
-    return mapped
+    return _GEMINI_VOICE_BY_LOWER.get(mapped.lower(), "Puck")
 
 
 def _gemini_tools(extra_tools: list[dict] | None = None) -> list[types.Tool]:

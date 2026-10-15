@@ -5,6 +5,8 @@ import { showToast } from '../console/ui/ToastHost';
 import { voiceAgent } from './voiceAgent';
 
 const SAMPLE_RATE = 16000;
+const WEB_AGENT_SUBPROTOCOL = 'voxly-web-agent';
+const WEB_AGENT_AUTH_PREFIX = 'voxly-auth.';
 
 function downsampleToInt16(float32, fromRate) {
   const ratio = fromRate / SAMPLE_RATE;
@@ -35,6 +37,7 @@ export function createWebAgentSession() {
   let playTime = 0;
   let listeners = new Set();
   let muted = false;
+  let audioUnlock = Promise.resolve();
 
   const emit = (event, data) => {
     listeners.forEach((fn) => {
@@ -46,7 +49,7 @@ export function createWebAgentSession() {
     });
   };
 
-  const teardownAudio = () => {
+  const teardownAudio = ({ keepContext = false } = {}) => {
     try {
       processor?.disconnect();
     } catch {
@@ -61,11 +64,34 @@ export function createWebAgentSession() {
     source = null;
     mediaStream?.getTracks().forEach((t) => t.stop());
     mediaStream = null;
-    if (audioContext) {
+    if (audioContext && !keepContext) {
       audioContext.close().catch(() => {});
       audioContext = null;
     }
     playTime = 0;
+  };
+
+  const prepareAudio = () => {
+    // Invoke from the Start click before permission or activation requests await.
+    const AudioCtx = typeof window !== 'undefined' ? (window.AudioContext || window.webkitAudioContext) : null;
+    if (!AudioCtx) throw new Error('Audio playback is unavailable in this browser.');
+    try {
+      if (!audioContext || audioContext.state === 'closed') {
+        try {
+          audioContext = new AudioCtx({ sampleRate: SAMPLE_RATE });
+        } catch {
+          audioContext = new AudioCtx();
+        }
+      }
+      if (audioContext.state === 'suspended') {
+        audioUnlock = audioContext.resume().catch(() => {});
+      } else {
+        audioUnlock = Promise.resolve();
+      }
+      return audioUnlock;
+    } catch {
+      throw new Error('Could not initialize browser audio playback.');
+    }
   };
 
   const playPcm16 = (bytes) => {
@@ -116,6 +142,7 @@ export function createWebAgentSession() {
   const earlyAudioQueue = [];
 
   return {
+    prepareAudio,
     subscribe(fn) {
       listeners.add(fn);
       return () => listeners.delete(fn);
@@ -134,49 +161,72 @@ export function createWebAgentSession() {
         }
         socket = null;
       }
-      teardownAudio();
+      teardownAudio({ keepContext: Boolean(audioContext && audioContext.state !== 'closed') });
       earlyAudioQueue.length = 0;
 
+      // Unlock speaker playback synchronously from the user's Start click. If we
+      // wait for the asynchronous microphone permission query first, browsers can
+      // discard transient activation and leave the incoming voice context suspended.
+      prepareAudio();
+
       // Check mic permission early
-      const micState = await voiceAgent.getMicrophonePermissionState();
-      if (micState === 'denied') {
-        throw new Error(
-          'Microphone is blocked for this site. Allow the mic in browser settings, then start again.'
-        );
+      let isListenOnly = false;
+      let micState = 'unknown';
+      try {
+        micState = await voiceAgent.getMicrophonePermissionState();
+      } catch {
+        // Mic status must not block listen-only playback.
       }
-      if (micState === 'prompt' || micState === 'unknown') {
-        showToast('Allow the microphone for this call (audio only — no camera).', 'info', 5000);
+      if (micState === 'denied') {
+        isListenOnly = true;
+        showToast('Microphone access is blocked. Starting in listen-only mode so you can hear the agent.', 'info', 6000);
+      } else if (micState === 'prompt' || micState === 'unknown') {
+        showToast('Allow microphone access when prompted to speak with the agent.', 'info', 4000);
       }
 
       // Initialize audio stream and AudioContext in parallel with WebSocket connection
       const audioInitPromise = (async () => {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true,
-          },
-          video: false,
-        });
-        const ctx = new AudioContext({ sampleRate: SAMPLE_RATE });
-        if (ctx.state === 'suspended') await ctx.resume();
-        return { stream, ctx };
+        let stream = null;
+        if (!isListenOnly && typeof navigator !== 'undefined' && navigator.mediaDevices?.getUserMedia) {
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({
+              audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true,
+              },
+              video: false,
+            });
+          } catch (mediaErr) {
+            console.warn('Microphone capture not available, falling back to listen-only:', mediaErr);
+            if (mediaErr.name === 'NotAllowedError' || mediaErr.name === 'PermissionDeniedError') {
+              showToast('Microphone access denied. Connected in listen-only mode.', 'info', 5000);
+            } else if (mediaErr.name === 'NotFoundError' || mediaErr.name === 'DevicesNotFoundError') {
+              showToast('No microphone detected. Connected in listen-only mode so you can hear the agent.', 'info', 5000);
+            }
+            stream = null;
+          }
+        }
+
+        return { stream, ctx: audioContext };
       })();
 
       const qs = new URLSearchParams({
-        token,
         agentId,
         language: language || 'en-IN',
       });
       const url = `${api.getWsOrigin()}/ws/web-agent?${qs.toString()}`;
-      socket = new WebSocket(url);
+      // Browsers cannot attach Authorization headers to WebSocket upgrades. Send
+      // the bearer token as a private subprotocol instead of a URL query value,
+      // which would be copied into proxy and access logs.
+      socket = new WebSocket(url, [WEB_AGENT_SUBPROTOCOL, `${WEB_AGENT_AUTH_PREFIX}${token}`]);
       socket.binaryType = 'arraybuffer';
 
       const readyPromise = new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error('Voice server did not become ready.')), 45000);
+        const timeout = setTimeout(() => reject(new Error('Voice server did not become ready in time.')), 45000);
         socket.onerror = () => {
           clearTimeout(timeout);
-          reject(new Error('Could not connect to the voice server.'));
+          reject(new Error('Could not connect to the voice server. Please check backend status.'));
         };
         socket.onclose = () => {
           clearTimeout(timeout);
@@ -209,6 +259,17 @@ export function createWebAgentSession() {
       try {
         const results = await Promise.all([readyPromise, audioInitPromise]);
         audioSetup = results[1];
+        await audioUnlock;
+        if (audioContext?.state === 'suspended') {
+          try {
+            await audioContext.resume();
+          } catch {
+            /* The following state check reports a useful startup error. */
+          }
+        }
+        if (!audioContext || audioContext.state !== 'running') {
+          throw new Error('Browser audio is blocked. Allow audio playback and start the session again.');
+        }
       } catch (err) {
         if (socket) {
           try {
@@ -225,21 +286,23 @@ export function createWebAgentSession() {
       mediaStream = audioSetup.stream;
       audioContext = audioSetup.ctx;
 
-      source = audioContext.createMediaStreamSource(mediaStream);
-      processor = audioContext.createScriptProcessor(2048, 1, 1);
-      processor.onaudioprocess = (event) => {
-        if (!socket || socket.readyState !== WebSocket.OPEN) return;
-        const input = event.inputBuffer.getChannelData(0);
-        const pcm = muted
-          ? new Int16Array(Math.max(1, Math.floor(input.length * (SAMPLE_RATE / (audioContext.sampleRate || SAMPLE_RATE)))))
-          : downsampleToInt16(input, audioContext.sampleRate || SAMPLE_RATE);
-        socket.send(pcm.buffer);
-      };
-      source.connect(processor);
-      const mute = audioContext.createGain();
-      mute.gain.value = 0;
-      processor.connect(mute);
-      mute.connect(audioContext.destination);
+      if (mediaStream && audioContext) {
+        source = audioContext.createMediaStreamSource(mediaStream);
+        processor = audioContext.createScriptProcessor(2048, 1, 1);
+        processor.onaudioprocess = (event) => {
+          if (!socket || socket.readyState !== WebSocket.OPEN) return;
+          const input = event.inputBuffer.getChannelData(0);
+          const pcm = muted
+            ? new Int16Array(Math.max(1, Math.floor(input.length * (SAMPLE_RATE / (audioContext.sampleRate || SAMPLE_RATE)))))
+            : downsampleToInt16(input, audioContext.sampleRate || SAMPLE_RATE);
+          socket.send(pcm.buffer);
+        };
+        source.connect(processor);
+        const mute = audioContext.createGain();
+        mute.gain.value = 0;
+        processor.connect(mute);
+        mute.connect(audioContext.destination);
+      }
 
       socket.onmessage = (event) => {
         if (event.data instanceof ArrayBuffer) {

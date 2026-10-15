@@ -193,6 +193,7 @@ async def test_gemini_side_session_greeting_closes_throwaway_adapter():
         sample_rate=16000,
         tts_output_codec="linear16",
         model="gemini-3.8-live",
+        language="hi-IN",
         adapter_factory=lambda: side,
     )
     assert frames
@@ -201,4 +202,7 @@ async def test_gemini_side_session_greeting_closes_throwaway_adapter():
     assert side.closed
     assert side.include_tools is False
     assert GEMINI_GREETING_SIDE_SESSION_INSTRUCTIONS in side.instructions
+    assert "Hindi" in side.instructions
+    assert "hi-IN" in side.started
+    assert "translate it faithfully into the configured language" in side.started
     assert usage is None or isinstance(usage, dict)

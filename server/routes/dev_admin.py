@@ -5,7 +5,8 @@ import logging
 import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Any, Optional
+from decimal import Decimal
+from typing import Any, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -282,9 +283,9 @@ async def list_tenants(
             ).all()
             member_counts = {tid: int(c or 0) for tid, c in mem_rows}
 
-        from server.services.saas.billing_rates import effective_rates
+        from server.services.saas.billing_rates import load_current_rates
 
-        fx = float(effective_rates()["fx_rate_inr"]) or 95.64
+        fx = float((await load_current_rates())["fx_rate_inr"]) or 95.64
 
         def _usd_balance(tid: uuid.UUID) -> float:
             w = wallets.get(tid)
@@ -359,7 +360,9 @@ async def tenant_detail(tenant_id: str, session: SessionData = Depends(require_d
         )
     from server.services.saas.billing_wallet_service import list_wallet_transactions
     from server.services.saas import kyc_service
+    from server.services.saas.billing_rates import load_current_rates
 
+    fx_rate_inr = float((await load_current_rates())["fx_rate_inr"]) or 95.64
     transactions = await list_wallet_transactions(tid, limit=50)
     verifications = []
     for _m, u in mems:
@@ -409,6 +412,7 @@ async def tenant_detail(tenant_id: str, session: SessionData = Depends(require_d
         },
         "wallet": wallet_payload,
         "walletTransactions": transactions,
+        "fxRateInr": fx_rate_inr,
         "verifications": verifications,
         "counts": {
             "agents": len(agents),
@@ -1912,9 +1916,9 @@ async def list_wallets(session: SessionData = Depends(require_dev_session)):
                 if wallet is not None:
                     await db.refresh(wallet)
         rows = synced
-    from server.services.saas.billing_rates import effective_rates
+    from server.services.saas.billing_rates import load_current_rates
 
-    fx = float(effective_rates()["fx_rate_inr"]) or 95.64
+    fx = float((await load_current_rates())["fx_rate_inr"]) or 95.64
     wallets = []
     for tenant, wallet in rows:
         paise = int(wallet.balance_inr_paise or 0) if wallet else 0
@@ -1943,7 +1947,7 @@ async def list_wallets(session: SessionData = Depends(require_dev_session)):
 async def adjust_wallet(body: WalletAdjustBody, session: SessionData = Depends(require_dev_session)):
     require_permission(session, "dev.admin.billing")
     _require_db()
-    from server.services.saas.billing_rates import usd_to_inr_cents
+    from server.services.saas.billing_rates import load_current_rates, usd_to_inr_cents
     from server.services.saas.billing_wallet_service import (
         credit_wallet,
         debit_wallet,
@@ -1951,12 +1955,11 @@ async def adjust_wallet(body: WalletAdjustBody, session: SessionData = Depends(r
         wallet_summary,
     )
 
+    rates = await load_current_rates()
+    fx = float(rates["fx_rate_inr"]) or 95.64
     cents = body.amountUsdCents
     if cents is None and body.amountInrPaise is not None:
         # Legacy clients send INR; convert so the rest of the path stays USD-authored.
-        from server.services.saas.billing_rates import effective_rates
-
-        fx = float(effective_rates()["fx_rate_inr"]) or 95.64
         cents = int(round((int(body.amountInrPaise) / 100.0) / fx * 100))
     if not cents:
         raise HTTPException(status_code=400, detail="Amount cannot be zero")
@@ -1972,7 +1975,7 @@ async def adjust_wallet(body: WalletAdjustBody, session: SessionData = Depends(r
         raise HTTPException(status_code=400, detail="Invalid tenant")
 
     ref_tail = uuid.uuid4().hex[:12]
-    paise = usd_to_inr_cents(abs(cents))
+    paise = usd_to_inr_cents(abs(cents), fx=fx)
     wallet = await get_or_create_wallet(tenant_id)
     # Credit/debit ONE leg only — writing both doubles purchasing power.
     use_inr = (wallet.currency or "usd").lower() == "inr" or (
@@ -2014,32 +2017,42 @@ async def adjust_wallet(body: WalletAdjustBody, session: SessionData = Depends(r
 
 
 class BillingRatesBody(BaseModel):
-    """USD prices plus the chargeable FX rate.
+    """Prices in the selected input currency plus the chargeable FX rate."""
 
-    INR fields are accepted for backwards compatibility but ignored: prices are
-    authored in USD and the INR figure is derived, so a stored rupee price could
-    drift away from the dollar price it is supposed to mirror.
-    """
-
-    pstnUsdPerMin: float | None = Field(None, ge=0.001, le=100)
-    webUsdPerMin: float | None = Field(None, ge=0.001, le=100)
+    rateCurrency: Literal["USD", "INR"] = "USD"
+    pstnUsdPerMin: Decimal | None = Field(
+        None, ge=Decimal("0.001"), le=Decimal("100"), max_digits=12, decimal_places=6
+    )
+    webUsdPerMin: Decimal | None = Field(
+        None, ge=Decimal("0.001"), le=Decimal("100"), max_digits=12, decimal_places=6
+    )
     #: Monthly rental for a bought phone number.
-    numberMonthlyUsd: float | None = Field(None, ge=0, le=100000)
-    fxRateInr: float | None = Field(None, ge=0.01, le=100000)
+    numberMonthlyUsd: Decimal | None = Field(
+        None, ge=0, le=100000, max_digits=12, decimal_places=6
+    )
+    fxRateInr: Decimal | None = Field(
+        None, ge=Decimal("0.01"), le=Decimal("100000"), max_digits=10, decimal_places=4
+    )
     reason: str | None = Field(None, description="Audit statement for rate change")
-    # Deprecated, ignored. Kept so an old admin client does not 422.
-    pstnInrPerMin: float | None = None
-    webInrPerMin: float | None = None
-    didMonthlyInr: float | None = None
+    # INR values are accepted alongside the older USD fields for older clients.
+    pstnInrPerMin: Decimal | None = Field(
+        None, ge=Decimal("0.01"), le=Decimal("100000"), max_digits=10, decimal_places=2
+    )
+    webInrPerMin: Decimal | None = Field(
+        None, ge=Decimal("0.01"), le=Decimal("100000"), max_digits=10, decimal_places=2
+    )
+    didMonthlyInr: Decimal | None = Field(
+        None, ge=0, le=10000000, max_digits=12, decimal_places=2
+    )
 
 
 def _rates_payload(r: dict[str, int | float]) -> dict[str, float]:
     return {
-        "pstnUsdPerMin": round(r["pstn_rate_usd_cents_per_min"] / 100.0, 3),
-        "webUsdPerMin": round(r["web_agent_rate_usd_cents_per_min"] / 100.0, 3),
-        "numberMonthlyUsd": round(r["did_monthly_usd_cents"] / 100.0, 2),
+        "pstnUsdPerMin": round(r["pstn_rate_usd_micros_per_min"] / 1_000_000.0, 6),
+        "webUsdPerMin": round(r["web_agent_rate_usd_micros_per_min"] / 1_000_000.0, 6),
+        "numberMonthlyUsd": round(r["did_monthly_usd_micros"] / 1_000_000.0, 6),
         "fxRateInr": round(float(r["fx_rate_inr"]), 4),
-        # Derived mirrors — display only, never charged.
+        # Both currencies are stored per rate version and used by the matching wallet leg.
         "pstnInrPerMin": round(r["pstn_rate_inr_paise_per_min"] / 100.0, 2),
         "webInrPerMin": round(r["web_agent_rate_inr_paise_per_min"] / 100.0, 2),
         "numberMonthlyInr": round(r["did_monthly_inr_paise"] / 100.0, 2),
@@ -2049,11 +2062,12 @@ def _rates_payload(r: dict[str, int | float]) -> dict[str, float]:
 @router.get("/api/dev/admin/billing-rates")
 async def get_billing_rates(session: SessionData = Depends(require_dev_session)):
     require_permission(session, "dev.admin.billing")
-    from server.services.saas.billing_rates import live_fx, rates_with_derived_inr
+    from server.services.saas.billing_rates import live_fx, load_current_rates
 
+    rates = await load_current_rates()
     return {
         "currency": "USD",
-        "rates": _rates_payload(rates_with_derived_inr()),
+        "rates": _rates_payload(rates),
         # Market rate for reference in the converter; charging uses fxRateInr.
         "fx": live_fx(),
     }
@@ -2068,20 +2082,27 @@ async def put_billing_rates(body: BillingRatesBody, session: SessionData = Depen
     if len(reason) < 8:
         reason = f"Admin rates adjustment by {session.subject}"
 
-    r = await update_rates_versioned(
-        actor=session.subject,
-        reason=reason,
-        pstn_usd_per_min=body.pstnUsdPerMin,
-        web_usd_per_min=body.webUsdPerMin,
-        did_monthly_usd=body.numberMonthlyUsd,
-        fx_rate_inr=body.fxRateInr,
-    )
+    try:
+        r = await update_rates_versioned(
+            actor=session.subject,
+            reason=reason,
+            rate_currency=body.rateCurrency,
+            pstn_usd_per_min=body.pstnUsdPerMin,
+            web_usd_per_min=body.webUsdPerMin,
+            did_monthly_usd=body.numberMonthlyUsd,
+            pstn_inr_per_min=body.pstnInrPerMin,
+            web_inr_per_min=body.webInrPerMin,
+            did_monthly_inr=body.didMonthlyInr,
+            fx_rate_inr=body.fxRateInr,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     await record_admin_action(
         actor=session.subject,
         action="billing.rates",
         resource_type="platform",
         resource_id="rates",
-        payload=body.model_dump(exclude_none=True),
+        payload=body.model_dump(exclude_none=True, mode="json"),
     )
     return {"ok": True, "currency": "USD", "rates": _rates_payload(r)}
 
@@ -2462,7 +2483,7 @@ async def search_platform_carrier_numbers(
             detail={"error": {"code": "inactive_provider", "message": "Switch the active carrier before searching its inventory."}},
         )
     _require_db()
-    from server.services.saas.billing_rates import rates_with_derived_inr
+    from server.services.saas.billing_rates import load_current_rates
     from server.services.saas.telephony_countries import normalize_buy_country
 
     default_country = "IN" if provider_id == "vobiz" else "US"
@@ -2486,7 +2507,7 @@ async def search_platform_carrier_numbers(
         ).scalars().all()
     unavailable = {str(number).strip() for number in active if number}
     seen: set[str] = set()
-    rates = rates_with_derived_inr()
+    rates = await load_current_rates()
     cleaned = []
     for item in available or []:
         row = dict(item) if isinstance(item, dict) else {"e164": str(item)}

@@ -32,14 +32,49 @@ GEMINI_LIVE_MODEL_IDS: tuple[str, ...] = (
 )
 
 GEMINI_LIVE_VOICES: tuple[str, ...] = (
-    "Puck",
-    "Charon",
+    "Zephyr",
     "Kore",
+    "Orus",
+    "Autonoe",
+    "Umbriel",
+    "Erinome",
+    "Laomedeia",
+    "Schedar",
+    "Achird",
+    "Sadachbia",
+    "Puck",
     "Fenrir",
     "Aoede",
+    "Enceladus",
+    "Algieba",
+    "Algenib",
+    "Achernar",
+    "Gacrux",
+    "Zubenelgenubi",
+    "Sadaltager",
+    "Charon",
     "Leda",
-    "Orus",
-    "Zephyr",
+    "Callirrhoe",
+    "Iapetus",
+    "Despina",
+    "Rasalgethi",
+    "Alnilam",
+    "Pulcherrima",
+    "Vindemiatrix",
+    "Sulafat",
+)
+# Curated regional voices from the Gemini Voice Library. These IDs are passed
+# directly to Gemini Live; they are intentionally separate from the base voice
+# names so callers can distinguish locale-specific voices from multilingual ones.
+GEMINI_LIVE_LIBRARY_VOICES: tuple[str, ...] = (
+    "hi-in-csagent-1",
+    "hi-in-csagent-2",
+    "ta-in-csagent-2",
+    "ta-in-csagent-3",
+    "te-in-csagent-4",
+    "te-in-csagent-5",
+    "en-in-csagent-1",
+    "en-in-csagent-3",
 )
 _GEMINI_VOICE_BY_LOWER = {name.lower(): name for name in GEMINI_LIVE_VOICES}
 REALTIME_VOICES: tuple[str, ...] = (
@@ -297,8 +332,19 @@ def realtime_voice_config(stack_override: dict[str, Any] | None = None) -> dict[
         raw = stack_override.get("realtime_voice")
         if isinstance(raw, dict):
             block = raw
+    llm = stack_override.get("llm") if isinstance(stack_override, dict) else None
+    model = str(llm.get("model") or "") if isinstance(llm, dict) else ""
+    if not model and isinstance(stack_override, dict):
+        model = str(stack_override.get("model") or "")
+    provider = str(llm.get("provider") or "").strip().lower() if isinstance(llm, dict) else ""
+    if provider == "gemini" or is_gemini_live_voice_model(model):
+        from server.realtime.providers.gemini_voice import normalize_gemini_live_voice
+
+        voice = normalize_gemini_live_voice(block.get("voice"))
+    else:
+        voice = normalize_realtime_voice(block.get("voice"))
     return {
-        "voice": normalize_realtime_voice(block.get("voice")),
+        "voice": voice,
         "turn_detection": normalize_realtime_turn_detection(block.get("turn_detection")),
         "vad_eagerness": normalize_realtime_vad_eagerness(block.get("vad_eagerness")),
         "noise_reduction": normalize_realtime_noise_reduction(

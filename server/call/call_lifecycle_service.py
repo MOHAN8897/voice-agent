@@ -345,23 +345,37 @@ class CallLifecycleService:
 
         # Snapshot authoritative billing rate at call start (immutable lock against future rate changes)
         try:
-            from server.services.saas.billing_rates import effective_rates
+            from server.services.saas.billing_rates import load_current_rates
 
-            cur_rates = effective_rates()
+            cur_rates = await load_current_rates()
             snap_rate_cents = int(
                 cur_rates["pstn_rate_usd_cents_per_min"]
                 if channel == "pstn"
                 else cur_rates["web_agent_rate_usd_cents_per_min"]
+            )
+            snap_rate_micros = int(
+                cur_rates["pstn_rate_usd_micros_per_min"]
+                if channel == "pstn"
+                else cur_rates["web_agent_rate_usd_micros_per_min"]
+            )
+            snap_rate_inr_paise = int(
+                cur_rates["pstn_rate_inr_paise_per_min"]
+                if channel == "pstn"
+                else cur_rates["web_agent_rate_inr_paise_per_min"]
             )
             snap_fx = float(cur_rates.get("fx_rate_inr") or 95.64)
             snap_ver = int(cur_rates.get("version") or 1)
         except Exception as e:
             logger.debug(f"[CALL] rate snapshot resolution skipped: {e}")
             snap_rate_cents = 9 if channel == "pstn" else 7
+            snap_rate_micros = snap_rate_cents * 10_000
+            snap_rate_inr_paise = int(round(snap_rate_cents * 95.64))
             snap_fx = 95.64
             snap_ver = 1
 
         record["applied_rate_usd_cents_per_min"] = snap_rate_cents
+        record["applied_rate_usd_micros_per_min"] = snap_rate_micros
+        record["applied_rate_inr_paise_per_min"] = snap_rate_inr_paise
         record["applied_fx_rate_inr"] = snap_fx
         record["rate_version"] = snap_ver
 
@@ -619,7 +633,7 @@ class CallLifecycleService:
             meta = call_ledger.read_meta(call_id)
             channel = str(meta.get("channel") or "")
             pipeline = str(meta.get("pipeline") or (meta.get("usage") or {}).get("pipeline") or "")
-            if channel in ("pstn", "vobiz", "telnyx") or pipeline == "realtime_voice":
+            if (channel in ("pstn", "vobiz", "telnyx") or pipeline == "realtime_voice") and channel != "browser":
                 usage = meta.get("usage") if isinstance(meta.get("usage"), dict) else {}
                 provider = str(
                     meta.get("telephony_provider")

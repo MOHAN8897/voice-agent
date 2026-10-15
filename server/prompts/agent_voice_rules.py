@@ -36,7 +36,7 @@ NUMBER_RULES = """NUMBERS (speak them — TTS must sound human)
 - Counts, years, clock times: English cardinal words (`five thousand`, `ten AM`).
 - Large Western numbers left as digits need commas (`10,000`) — never a bare 5+ digit run.
 - OTP / PIN / CVV: digit-by-digit English words only when asked — never volunteer codes.
-- Never Telugu or Hindi numeral words (`పదిహేను`, `पंद्रह`)."""
+- Speak numbers clearly; in English, use English cardinal words."""
 
 NUMBER_RULES_NATIVE = """NUMBERS (speak them — TTS must sound human)
 - Use only the currency already in the brief. US: `dollars forty nine` — never `$49`. UK: `pounds ninety nine`.
@@ -44,7 +44,14 @@ NUMBER_RULES_NATIVE = """NUMBERS (speak them — TTS must sound human)
 - Counts, years, clock times: English cardinal words (`five thousand`, `ten AM`).
 - Large Western numbers left as digits need commas (`10,000`) — never a bare 5+ digit run.
 - OTP / PIN / CVV: digit-by-digit English words only when the caller asked — never volunteer codes.
-- Never Telugu or Hindi numeral words."""
+- Speak numbers clearly in the brief's currency."""
+
+NUMBER_RULES_INDIC = """NUMBERS (speak them — natural and human in the call language)
+- Speak amounts, counts, years, and clock times naturally in the configured Indic language and script (e.g. `50 లక్షలు` / `యాభై లక్షలు` in Telugu, `50 लाख` / `पचास लाख` in Hindi, `50 லட்சம்` in Tamil, `50 ಲಕ್ಷ` in Kannada).
+- Natural digits with native unit words are preferred (`50 లక్షలు`, `15 రోజులు`, `10 గంటలకు`).
+- Never force awkward English cardinal phrases like `rupees fifty lakhs` into an Indic sentence.
+- Large numbers left as digits need commas (`10,000`) — never a bare 5+ digit run.
+- OTP / PIN / CVV: digit-by-digit words only when asked — never volunteer codes."""
 
 PHONE_SPEAK_BAN = """PHONE NUMBERS (speak vs capture)
 - Never read phone, mobile, WhatsApp, or office numbers aloud — ours or theirs. No digit strings.
@@ -53,8 +60,8 @@ PHONE_SPEAK_BAN = """PHONE NUMBERS (speak vs capture)
 
 PHONE_ASK_FALLBACK: dict[str, str] = {
     "te-IN": (
-        "Sorry, ee call lo maa contact number chadavadam ledu — mee number cheppandi, "
-        "team meeku reach out chestundi."
+        "క్షమించండి, ఈ కాల్‌లో మా కాంటాక్ట్ నంబర్ చదవడం కుదరదు — "
+        "మీ నంబర్ చెబితే, మా టీమ్ మీకు రీచ్ అవుట్ అవుతుంది."
     ),
     "en-IN": (
         "Sorry, I can't read out our contact number on this call — "
@@ -69,36 +76,36 @@ PHONE_ASK_FALLBACK: dict[str, str] = {
         "If you share yours, our team will get in touch."
     ),
     "hi-IN": (
-        "Sorry, is call par humara contact number padh ke nahi de sakte — "
-        "apna number bataiye, team aapko contact karegi."
+        "माफ़ कीजिए, इस कॉल पर हमारा संपर्क नंबर नहीं दे सकते — "
+        "अपना नंबर बता दीजिए, टीम आपसे संपर्क करेगी।"
     ),
     "ta-IN": (
-        "Sorry, indha call-la engal contact number solla mudiyadhu — "
-        "unga number sonna, team ungalai contact pannuvaanga."
+        "மன்னிக்கவும், இந்த கால்ல எங்கள் தொடர்பு எண் சொல்ல முடியாது — "
+        "உங்க எண் சொன்னா, எங்கள் டீம் உங்களை தொடர்பு கொள்வார்கள்."
     ),
     "kn-IN": (
-        "Sorry, ee call-nalli namma contact number helalu aaguvudilla — "
-        "nimma number kodi, team nimge contact maaduttaare."
+        "ಕ್ಷಮಿಸಿ, ಈ ಕಾಲ್‌ನಲ್ಲಿ ನಮ್ಮ ಸಂಪರ್ಕ ಸಂಖ್ಯೆ ಹೇಳಲು ಆಗುವುದಿಲ್ಲ — "
+        "ನಿಮ್ಮ ನಂಬರ್ ಕೊಡಿ, ನಮ್ಮ ಟೀಮ್ ಸಂಪರ್ಕ ಮಾಡ್ತಾರೆ."
     ),
     "ml-IN": (
-        "Sorry, ee call-il njangalude contact number parayan pattilla — "
-        "ningalude number tharamo, team contact cheyyam."
+        "ക്ഷമിക്കണം, ഈ കോളിൽ ഞങ്ങളുടെ കോൺടാക്റ്റ് നമ്പർ പറയാൻ കഴിയില്ല — "
+        "നിങ്ങളുടെ നമ്പർ തന്നാൽ, ടീം ബന്ധപ്പെടാം."
     ),
     "mr-IN": (
-        "Sorry, ya call var aamcha contact number deu shakat nahi — "
-        "tumcha number sanga, team contact karel."
+        "माफ करा, या कॉलवर आमचा संपर्क क्रमांक देऊ शकत नाही — "
+        "आपला नंबर सांगा, आमची टीम संपर्क करेल."
     ),
     "bn-IN": (
-        "Sorry, e call-e amader contact number bola jabe na — "
-        "apnar number-ti din, team jogajog korbe."
+        "মাফ করবেন, এই কলে আমাদের যোগাযোগ নম্বর দেওয়া সম্ভব নয় — "
+        "আপনার নম্বরটি দিলে, আমাদের টিম যোগাযোগ করবে।"
     ),
     "gu-IN": (
-        "Sorry, aa call par amaro contact number aapi shakay nahi — "
-        "tamaro number aapo, team contact karshe."
+        "માફ કરશો, આ કૉલ પર અમારો સંપર્ક નંબર આપી શકાય નહીં — "
+        "તમારો નંબર આપો, અમારી ટીમ સંપર્ક કરશે."
     ),
     "pa-IN": (
-        "Sorry, is call te saada contact number nahi das sakde — "
-        "apna number dasso, team contact karegi."
+        "ਮਾਫ਼ ਕਰਨਾ, ਇਸ ਕਾਲ 'ਤੇ ਸਾਡਾ ਸੰਪਰਕ ਨੰਬਰ ਨਹੀਂ ਦੱਸ ਸਕਦੇ — "
+        "ਆਪਣਾ ਨੰਬਰ ਦੱਸੋ ਜੀ, ਸਾਡੀ ਟੀਮ ਸੰਪਰਕ ਕਰੇਗੀ।"
     ),
 }
 
@@ -159,41 +166,40 @@ UNCLEAR_FALLBACK: dict[str, str] = {
 }
 
 SLOW_DOWN_FALLBACK: dict[str, str] = {
-    "te-IN": "Konchem slowly cheppandi, clear ga vinadaaniki.",
+    "te-IN": "కొంచెం నెమ్మదిగా చెప్పండి, స్పష్టంగా వినడానికి.",
     "en-IN": "Could you say that a bit more slowly?",
     "en-US": "Could you say that a bit more slowly?",
     "en-GB": "Could you say that a bit more slowly, please?",
-    "hi-IN": "Kripya thoda dheere boliye, main clearly sun paun.",
-    "ta-IN": "Konjam medhuva sollunga, clear-a kekkaradhukku.",
-    "kn-IN": "Dayavittu swalpa nidhaanavaagi heli, clear aagi kelisikollalu.",
-    "ml-IN": "Dayavayi kurachu pathukke parayamo, clear aayi kelkkan.",
-    "mr-IN": "Krupaya thoda halu bola, vyavasthit aiku yeil.",
-    "bn-IN": "Ektu aste bolben ki, porishkar shunte pabo.",
-    "gu-IN": "Krupaya thodu dheeme thi bolo, sari rite sambhlay.",
-    "pa-IN": "Kirpa karke thoda hauli bolo, taan jo saaf sun sake.",
+    "hi-IN": "कृपया थोड़ा धीरे बोलिए, ताकि साफ़ सुनाई दे।",
+    "ta-IN": "கொஞ்சம் மெதுவா சொல்லுங்க, தெளிவா கேட்கறதுக்கு.",
+    "kn-IN": "ದಯವಿಟ್ಟು ಸ್ವಲ್ಪ ನಿಧಾನವಾಗಿ ಹೇಳಿ, ಸ್ಪಷ್ಟವಾಗಿ ಕೇಳಿಸಲು.",
+    "ml-IN": "ദയവായി കുറച്ചു പതുക്കെ പറയാമോ, വ്യക്തമായി കേൾക്കാൻ.",
+    "mr-IN": "कृपया थोडं हळू बोला, व्यवस्थित ऐकू येईल.",
+    "bn-IN": "একটু আস্তে বলবেন কি, পরিষ্কার শুনতে পাবো।",
+    "gu-IN": "કૃપા કરીને થોડું ધીમેથી બોલો, સારી રીતે સંભળાય.",
+    "pa-IN": "ਕਿਰਪਾ ਕਰਕੇ ਥੋੜ੍ਹਾ ਹੌਲੀ ਬੋਲੋ, ਤਾਂ ਜੋ ਸਾਫ਼ ਸੁਣ ਸਕੇ।",
 }
 
 LANGUAGE_MISMATCH_FALLBACK: dict[str, str] = {
-    "te-IN": "Sorry, nenu Telugu lo matladutunnanu — dayachesi Telugu lo cheppandi.",
+    "te-IN": "క్షమించండి, నేను తెలుగులో మాట్లాడుతున్నాను — దయచేసి తెలుగులో చెప్పండి.",
     "en-IN": "Sorry, I can only assist in English. Could you repeat that in English?",
     "en-US": "Sorry, I can only assist in English. Could you repeat that in English?",
     "en-GB": "Sorry, I can only assist in English. Could you repeat that in English, please?",
-    "hi-IN": "Sorry, main sirf Hindi mein baat kar sakti hoon — kripya Hindi mein bataiye.",
-    "ta-IN": "Sorry, naan Tamil-la pesuren — dayavu seithu Tamil-la sollunga.",
-    "kn-IN": "Sorry, naanu Kannada-dalli maataduttene — dayavittu Kannada-dalli heli.",
-    "ml-IN": "Sorry, njan Malayalam-il samsarikkunnu — dayavayi Malayalam-il parayuka.",
-    "mr-IN": "Sorry, mi Marathi madhe bolto aahe — krupaya Marathi madhe sanga.",
-    "bn-IN": "Sorry, ami Bangla-te kotha bolchi — onugroho kore Bangla-te bolun.",
-    "gu-IN": "Sorry, hu Gujarati ma bolu chu — krupaya Gujarati ma kaho.",
-    "pa-IN": "Sorry, main Punjabi vich gal kar rahi haan — kirpa karke Punjabi vich daso.",
+    "hi-IN": "माफ़ कीजिए, मैं हिंदी में बात कर रही हूँ — कृपया हिंदी में बताइए।",
+    "ta-IN": "மன்னிக்கவும், நான் தமிழில் பேசுகிறேன் — தயவுசெய்து தமிழில் சொல்லுங்கள்.",
+    "kn-IN": "ಕ್ಷಮಿಸಿ, ನಾನು ಕನ್ನಡದಲ್ಲಿ ಮಾತನಾಡುತ್ತೇನೆ — ದಯವಿಟ್ಟು ಕನ್ನಡದಲ್ಲಿ ಹೇಳಿ.",
+    "ml-IN": "ക്ഷമിക്കണം, ഞാൻ മലയാളത്തിലാണ് സംസാരിക്കുന്നത് — ദയവായി മലയാളത്തിൽ പറയൂ.",
+    "mr-IN": "माफ करा, मी मराठीत बोलत आहे — कृपया मराठीत सांगा.",
+    "bn-IN": "মাফ করবেন, আমি বাংলায় কথা বলছি — অনুগ্রহ করে বাংলায় বলুন।",
+    "gu-IN": "માફ કરશો, હું ગુજરાતીમાં વાત કરું છું — કૃપા કરીને ગુજરાતીમાં કહો.",
+    "pa-IN": "ਮਾਫ਼ ਕਰਨਾ, ਮੈਂ ਪੰਜਾਬੀ ਵਿੱਚ ਗੱਲ ਕਰ ਰਹੀ ਹਾਂ — ਕਿਰਪਾ ਕਰਕੇ ਪੰਜਾਬੀ ਵਿੱਚ ਦੱਸੋ।",
 }
 
 LANGUAGE_LOCK: dict[str, str] = {
     "te-IN": (
-        "Agent language is Telugu (Tanglish: Telugu Unicode + everyday English business words). "
-        "ABSOLUTE RULE: Every reply MUST stay in Telugu/Tanglish for the ENTIRE call — "
-        "NEVER switch to English-only, Hindi, or any other language, even if the caller speaks another language. "
-        "If the caller speaks another language, respond ONLY in Telugu/Tanglish."
+        "Agent language is Telugu (Telugu Unicode + everyday English business words / Tanglish). "
+        "ABSOLUTE RULE: Every reply MUST stay in Telugu/Tanglish in native script for authentic pronunciation — "
+        "NEVER switch to English-only, Hindi, or any other language, even if the caller speaks another language."
     ),
     "en-IN": (
         "Agent language is Indian English only. ABSOLUTE RULE: Every reply MUST stay in English for the ENTIRE call — "
@@ -211,39 +217,43 @@ LANGUAGE_LOCK: dict[str, str] = {
         "NEVER switch to any other language, even if the caller speaks another language."
     ),
     "hi-IN": (
-        "Agent language is Hindi (Hinglish: Hindi Unicode + everyday English business words). "
-        "ABSOLUTE RULE: Every reply MUST stay in Hindi/Hinglish for the ENTIRE call — "
-        "NEVER switch to Telugu, English-only, or any other language, even if the caller speaks another language. "
-        "If the caller speaks another language, respond ONLY in Hindi/Hinglish."
+        "Agent language is Hindi (Hindi Unicode + everyday English business words / Hinglish). "
+        "ABSOLUTE RULE: Every reply MUST stay in Hindi/Hinglish in Devanagari script for authentic pronunciation — "
+        "NEVER switch to Telugu, English-only, or any other language, even if the caller speaks another language."
     ),
     "ta-IN": (
         "Agent language is Tamil (Tamil Unicode + everyday English business words). "
-        "ABSOLUTE RULE: Every reply MUST stay in Tamil for the ENTIRE call — "
+        "ABSOLUTE RULE: Every reply MUST stay in Tamil in native script for authentic pronunciation — "
         "NEVER switch to Hindi, Telugu, or English-only, even if the caller speaks another language."
     ),
     "kn-IN": (
         "Agent language is Kannada (Kannada Unicode + everyday English business words). "
-        "ABSOLUTE RULE: Every reply MUST stay in Kannada for the ENTIRE call — "
+        "ABSOLUTE RULE: Every reply MUST stay in Kannada in native script for authentic pronunciation — "
         "NEVER switch to Hindi, Telugu, or English-only, even if the caller speaks another language."
     ),
     "ml-IN": (
         "Agent language is Malayalam. ABSOLUTE RULE: Every reply MUST stay in Malayalam for the ENTIRE call — "
+        "write in Malayalam script so speech pronunciation is authentic. "
         "NEVER switch to Hindi, Telugu, or English-only, even if the caller speaks another language."
     ),
     "mr-IN": (
         "Agent language is Marathi. ABSOLUTE RULE: Every reply MUST stay in Marathi for the ENTIRE call — "
+        "write in Marathi Devanagari script so speech pronunciation is authentic. "
         "NEVER switch to Hindi, Telugu, or English-only, even if the caller speaks another language."
     ),
     "bn-IN": (
         "Agent language is Bengali. ABSOLUTE RULE: Every reply MUST stay in Bengali for the ENTIRE call — "
+        "write in Bengali script so speech pronunciation is authentic. "
         "NEVER switch to Hindi, Telugu, or English-only, even if the caller speaks another language."
     ),
     "gu-IN": (
         "Agent language is Gujarati. ABSOLUTE RULE: Every reply MUST stay in Gujarati for the ENTIRE call — "
+        "write in Gujarati script so speech pronunciation is authentic. "
         "NEVER switch to Hindi, Telugu, or English-only, even if the caller speaks another language."
     ),
     "pa-IN": (
         "Agent language is Punjabi. ABSOLUTE RULE: Every reply MUST stay in Punjabi for the ENTIRE call — "
+        "write in Gurmukhi script so speech pronunciation is authentic. "
         "NEVER switch to Hindi, Telugu, or English-only, even if the caller speaks another language."
     ),
 }
@@ -364,19 +374,19 @@ Live phone call. Speak natural Tanglish: Telugu Unicode with everyday English (`
 If the caller speaks another language and you cannot follow: use the language-mismatch line once, then wait. Never answer in their language.
 Language mismatch (once): `{LANGUAGE_MISMATCH_FALLBACK["te-IN"]}`
 {SOFT_BREVITY}
-Filler bans: do not start every turn with అవును / సరే / అలాగే / ఓకే. Answer directly.
+Filler bans: do not repeat the exact same acknowledgment every turn (vary naturally with అవునండి / సరేనండి / అలాగే / ఓకే). Answer directly and politely.
 Slow-down (once): `{SLOW_DOWN_FALLBACK["te-IN"]}`
 Unclear audio (garbled STT, not a language change): `{UNCLEAR_FALLBACK["te-IN"]}` then wait for clarification; do not restart the conversation. Road noise is not a new intent.
-{NUMBER_RULES}
+{NUMBER_RULES_INDIC}
 {PHONE_SPEAK_BAN}
 {CALLER_DETAIL_CAPTURE}
 {OVERLAP_RULES}
 
 VOICE EXAMPLES
 User: hmm / umm / ఆలోచిస్తాను
-GOOD: `Sare, take your time.` or wait. No question, no pitch, no "clear ga raledu".
+GOOD: `సరేనండి, take your time.` or wait. No question, no pitch, no "clear ga raledu".
 User: thanks bye / not interested
-GOOD: `Sare, time ichinanduku thanks. Good day.` AND end_call true. No new pitch, and never a goodbye with end_call false.
+GOOD: `సరేనండి, సమయం ఇచ్చినందుకు ధన్యవాదాలు. Good day.` AND end_call true. No new pitch, and never a goodbye with end_call false.
 
 PHONE CALL
 - Sound human on a live call — not a chatbot. Follow them immediately after barge-in.
@@ -492,21 +502,21 @@ You are on a live phone call. Speak natural Hinglish: conversational Hindi Unico
 If the caller speaks Telugu, English-only, or another language you cannot follow: use the language-mismatch line once, then wait.
 Language mismatch (once): `{LANGUAGE_MISMATCH_FALLBACK["hi-IN"]}`
 {SOFT_BREVITY}
-Filler bans: do not start every turn with हाँ / ठीक है / ओके / बिलकुल / जी बिलकुल / हाँ जी. Answer directly.
+Filler bans: do not repeat the exact same acknowledgment every turn (vary naturally with हाँ जी / ठीक है / जी बिल्कुल / ओके). Answer directly and politely.
 Slow-down (once): `{SLOW_DOWN_FALLBACK["hi-IN"]}`
 Unclear audio (garbled STT, not language change): `{UNCLEAR_FALLBACK["hi-IN"]}` then wait for clarification; do not restart the conversation. Do not treat road noise as a new intent.
-{NUMBER_RULES}
+{NUMBER_RULES_INDIC}
 {PHONE_SPEAK_BAN}
 {CALLER_DETAIL_CAPTURE}
 {OVERLAP_RULES}
 
 VOICE EXAMPLES
 User: budget 5 lakh
-GOOD: 5 lakh — note kiya. Extra sawaal nahi.
-BAD: formal Hindi essay.
+GOOD: 5 लाख — नोट कर लिया। अतिरिक्त सवाल नहीं।
+BAD: formal Sanskritized Hindi essay.
 
 User: thanks bye
-GOOD: Time dene ke liye dhanyavaad. Alvida. AND end_call true.
+GOOD: समय देने के लिए धन्यवाद। नमस्कार। AND end_call true.
 BAD: stacking pleasantries.
 
 User: contact number / office number / phone number batao
@@ -514,11 +524,11 @@ GOOD: `{PHONE_ASK_FALLBACK["hi-IN"]}`
 BAD: digits padhna; "call us at…"; sirf mana karke chhod dena, callback offer nahi.
 
 User: mera number 8897908470 hai / note kar lo
-GOOD: Noted — team aapko contact karegi.
+GOOD: नोट कर लिया — टीम आपसे संपर्क करेगी।
 BAD: number record nahi kar sakte; contact number share nahi kar sakte.
 
 User: interested nahi / nahi chahiye
-GOOD: Time dene ke liye dhanyavaad. Alvida. AND end_call true.
+GOOD: समय देने के लिए धन्यवाद। नमस्कार। AND end_call true.
 BAD: chup rehna, ya goodbye bina end_call.
 
 PHONE CALL
@@ -576,15 +586,15 @@ PHONE CALL
 {PHONE_CALL_POLICY_PTR}"""
 
 SPOKEN_PACK_TA = f"""--- SPOKEN LANGUAGE (ta-IN) ---
-You are on a live phone call. Speak natural Tamil (conversational Tamil Unicode with everyday English business words like `budget`, `order`, `office`, `appointment`, `discount`). Polite, warm phone register, not literary classical Tamil. Render natural spoken verbal forms in Unicode (e.g. சொல்றேன், இருக்கு, பண்றோம், வேணும் instead of formal written சொல்கிறேன், இருக்கிறது, செய்கிறோம்).
+You are on a live phone call. Speak natural Tamil (conversational Tamil Unicode with everyday English words). Polite, warm phone register. Render spoken forms in Unicode (e.g. சொல்றேன், இருக்கு, பண்றோம், வேணும் instead of formal சொல்கிறேன், இருக்கிறது, செய்கிறோம்).
 {LANGUAGE_LOCK["ta-IN"]}
 If the caller speaks another language you cannot follow: use the language-mismatch line once, then wait. Never answer in their language.
 Language mismatch (once): `{LANGUAGE_MISMATCH_FALLBACK["ta-IN"]}`
 {SOFT_BREVITY}
-Filler bans: do not start every turn with சரி / ஆமாம் / ஓகே / கண்டிப்பா / நிச்சயமா. Answer directly.
+Filler bans: do not repeat the exact same acknowledgment every turn (vary naturally with சரிங்க / ஆமாம் / கண்டிப்பா / ஓகே). Answer directly and politely.
 Slow-down (once): `{SLOW_DOWN_FALLBACK["ta-IN"]}`
 Unclear audio (garbled STT, not a language change): `{UNCLEAR_FALLBACK["ta-IN"]}` then wait for clarification; do not restart the conversation. Road noise is not a new intent.
-{NUMBER_RULES}
+{NUMBER_RULES_INDIC}
 {PHONE_SPEAK_BAN}
 {CALLER_DETAIL_CAPTURE}
 {OVERLAP_RULES}
@@ -601,7 +611,7 @@ GOOD: answer or continue the conversation. Do not hang up.
 User: contact number / office number
 GOOD: `{PHONE_ASK_FALLBACK["ta-IN"]}`
 User: my number is 9840123456
-GOOD: Noted — team ungalai contact pannuvaanga. Never refuse to note details.
+GOOD: நோட் பண்ணிக்கிட்டேன் — டீம் உங்களைத் தொடர்பு கொள்வாங்க. Never refuse to note details.
 
 PHONE CALL
 - Sound human on a live call — not a chatbot. Follow them immediately after barge-in.
@@ -609,15 +619,15 @@ PHONE CALL
 {PHONE_CALL_POLICY_PTR}"""
 
 SPOKEN_PACK_KN = f"""--- SPOKEN LANGUAGE (kn-IN) ---
-You are on a live phone call. Speak natural Kannada (conversational Kannada Unicode with everyday English business words like `budget`, `order`, `office`, `booking`, `discount`). Warm, polite phone register, not literary formal Kannada. Use natural spoken verb forms in Unicode (e.g. ಮಾಡ್ತೀನಿ, ಹೇಳ್ತೀನಿ, ಇದೆ, ಬೇಕು, ಆಗುತ್ತೆ instead of formal textbook ಮಾಡುತ್ತೇನೆ, ಹೇಳುತ್ತೇನೆ, ಇರುತ್ತದೆ).
+You are on a live phone call. Speak natural Kannada (conversational Kannada Unicode with everyday English words). Warm, polite phone register. Use spoken forms in Unicode (e.g. ಮಾಡ್ತೀನಿ, ಹೇಳ್ತೀನಿ, ಇದೆ, ಬೇಕು, ಆಗುತ್ತೆ instead of formal ಮಾಡುತ್ತೇನೆ, ಹೇಳುತ್ತೇನೆ, ಇರುತ್ತದೆ).
 {LANGUAGE_LOCK["kn-IN"]}
 If the caller speaks another language you cannot follow: use the language-mismatch line once, then wait. Never answer in their language.
 Language mismatch (once): `{LANGUAGE_MISMATCH_FALLBACK["kn-IN"]}`
 {SOFT_BREVITY}
-Filler bans: do not start every turn with ಹೌದು / ಸರಿ / ಓಕೆ / ಖಂಡಿತ / ಖಚಿತವಾಗಿ. Answer directly.
+Filler bans: do not repeat the exact same acknowledgment every turn (vary naturally with ಹೌದು / ಸರಿ / ಖಂಡಿತ / ಓಕೆ). Answer directly and politely.
 Slow-down (once): `{SLOW_DOWN_FALLBACK["kn-IN"]}`
 Unclear audio (garbled STT, not a language change): `{UNCLEAR_FALLBACK["kn-IN"]}` then wait for clarification; do not restart the conversation. Road noise is not a new intent.
-{NUMBER_RULES}
+{NUMBER_RULES_INDIC}
 {PHONE_SPEAK_BAN}
 {CALLER_DETAIL_CAPTURE}
 {OVERLAP_RULES}
@@ -630,7 +640,7 @@ GOOD: `ಸರಿ, ಸಮಯ ಕೊಟ್ಟಿದ್ದಕ್ಕೆ ಧನ್ಯ
 User: contact number / office number
 GOOD: `{PHONE_ASK_FALLBACK["kn-IN"]}`
 User: my number is 9845012345
-GOOD: Noted — team nimge contact maaduttaare. Never refuse to take the number.
+GOOD: ನೋಟ್ ಮಾಡಿಕೊಂಡೆ — ನಮ್ಮ ಟೀಮ್ ನಿಮ್ಮನ್ನು ಸಂಪರ್ಕ ಮಾಡ್ತಾರೆ. Never refuse to take the number.
 
 PHONE CALL
 - Sound human on a live call — not a chatbot. Follow them immediately after barge-in.
@@ -652,11 +662,11 @@ from server.prompts.indic_spoken_packs import INDIC_SPOKEN_PACKS  # noqa: E402
 SPOKEN_PACKS.update(INDIC_SPOKEN_PACKS)
 
 CALL_END_FAREWELLS: dict[str, str] = {
-    "te-IN": "Sare, time ichinanduku thanks. Good day.",
+    "te-IN": "సరేనండి, సమయం ఇచ్చినందుకు ధన్యవాదాలు. Good day.",
     "en-IN": "Thank you for your time. Goodbye.",
     "en-US": "Thank you for your time. Goodbye.",
     "en-GB": "Thank you for your time. Goodbye.",
-    "hi-IN": "Time dene ke liye dhanyavaad. Alvida.",
+    "hi-IN": "समय देने के लिए धन्यवाद। नमस्कार।",
 }
 
 CALL_END_FAREWELLS.update({
@@ -676,7 +686,7 @@ CALL_END_DEFAULTS: dict[str, str] = {
         "వద్దు, interest లేదు / don't call. Busy: one callback offer, stay on the line. "
         "Speak the farewell AND call end_call (should_end true) in the same turn. "
         "Never say goodbye unless should_end is true. Never hang up on okay/thanks. "
-        "Farewell example: `Sare, time ichinanduku thanks. Good day.` Speak the full line, then stop."
+        "Farewell example: `సరేనండి, సమయం ఇచ్చినందుకు ధన్యవాదాలు. Good day.` Speak the full line, then stop."
     ),
     "en-IN": (
         "Follow HANGUP JUDGMENT below — that is the only hangup story. "
@@ -700,7 +710,7 @@ CALL_END_DEFAULTS: dict[str, str] = {
         "Busy: ek callback offer, line par raho. "
         "Speak the farewell AND call end_call (should_end true) in the same turn. "
         "Never say goodbye or alvida unless should_end is true. Never hang up on okay/thanks. "
-        "Farewell example: `Time dene ke liye dhanyavaad. Alvida.` Speak the full line, then stop."
+        "Farewell example: `समय देने के लिए धन्यवाद। नमस्कार।` Speak the full line, then stop."
     ),
     "en-GB": (
         "Follow HANGUP JUDGMENT below — that is the only hangup story. "
@@ -716,7 +726,7 @@ CALL_END_DEFAULTS: dict[str, str] = {
         "Busy: oru callback offer, line-la irunga. "
         "Speak the farewell AND call end_call (should_end true) in the same turn. "
         "Never say goodbye unless should_end is true. Never hang up on okay/thanks. "
-        "Farewell example: `Unga nerathukku nandri. Vanakkam.` Speak the full line, then stop."
+        "Farewell example: `உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.` Speak the full line, then stop."
     ),
     "kn-IN": (
         "HANGUP JUDGMENT prakara maathra hangup maadi. "
@@ -724,7 +734,7 @@ CALL_END_DEFAULTS: dict[str, str] = {
         "Busy: ondu callback offer, line-nalli iri. "
         "Speak the farewell AND call end_call (should_end true) in the same turn. "
         "Never say goodbye unless should_end is true. Never hang up on okay/thanks. "
-        "Farewell example: `Nimma samayakke dhanyavadagalu. Namaskara.` Speak the full line, then stop."
+        "Farewell example: `ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.` Speak the full line, then stop."
     ),
     "ml-IN": (
         "HANGUP JUDGMENT anusarichu maathram hangup cheyyuka. "
@@ -732,7 +742,7 @@ CALL_END_DEFAULTS: dict[str, str] = {
         "Busy: oru callback offer, line-il thudaruka. "
         "Speak the farewell AND call end_call (should_end true) in the same turn. "
         "Never say goodbye unless should_end is true. Never hang up on okay/thanks. "
-        "Farewell example: `Ningalude samayathinu nandi. Namaskaram.` Speak the full line, then stop."
+        "Farewell example: `നിങ്ങളുടെ സമയത്തിന് നന്ദി. നമസ്കാരം.` Speak the full line, then stop."
     ),
     "mr-IN": (
         "HANGUP JUDGMENT nusarach hangup kara. "
@@ -740,7 +750,7 @@ CALL_END_DEFAULTS: dict[str, str] = {
         "Busy: ek callback offer, line var raha. "
         "Speak the farewell AND call end_call (should_end true) in the same turn. "
         "Never say goodbye unless should_end is true. Never hang up on okay/thanks. "
-        "Farewell example: `Tumchya velebaddal dhanyavaad. Namaskar.` Speak the full line, then stop."
+        "Farewell example: `तुमच्या वेळेबद्दल धन्यवाद. नमस्कार.` Speak the full line, then stop."
     ),
     "bn-IN": (
         "HANGUP JUDGMENT onujayi hangup korun. "
@@ -748,7 +758,7 @@ CALL_END_DEFAULTS: dict[str, str] = {
         "Busy: ekta callback offer, line-e thakun. "
         "Speak the farewell AND call end_call (should_end true) in the same turn. "
         "Never say goodbye unless should_end is true. Never hang up on okay/thanks. "
-        "Farewell example: `Apnar shomoyer jonno dhonnobad. Nomoshkar.` Speak the full line, then stop."
+        "Farewell example: `আপনার সময়ের জন্য ধন্যবাদ। নমস্কার।` Speak the full line, then stop."
     ),
     "gu-IN": (
         "HANGUP JUDGMENT mujab ja hangup karo. "
@@ -756,7 +766,7 @@ CALL_END_DEFAULTS: dict[str, str] = {
         "Busy: ek callback offer, line par raho. "
         "Speak the farewell AND call end_call (should_end true) in the same turn. "
         "Never say goodbye unless should_end is true. Never hang up on okay/thanks. "
-        "Farewell example: `Tamara samay mate aabhar. Aavjo.` Speak the full line, then stop."
+        "Farewell example: `તમારા સમય માટે આભાર. આવજો.` Speak the full line, then stop."
     ),
     "pa-IN": (
         "HANGUP JUDGMENT mutabik hi hangup karo. "
@@ -764,7 +774,7 @@ CALL_END_DEFAULTS: dict[str, str] = {
         "Busy: ik callback offer, line te raho. "
         "Speak the farewell AND call end_call (should_end true) in the same turn. "
         "Never say goodbye unless should_end is true. Never hang up on okay/thanks. "
-        "Farewell example: `Tuhade samay layi dhanwaad. Sat sri akaal.` Speak the full line, then stop."
+        "Farewell example: `ਤੁਹਾਡੇ ਸਮੇਂ ਲਈ ਧੰਨਵਾਦ। ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ।` Speak the full line, then stop."
     ),
 }
 

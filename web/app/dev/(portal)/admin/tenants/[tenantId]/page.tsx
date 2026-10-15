@@ -22,7 +22,8 @@ import {
   SkeuoTd,
   SkeuoTh,
 } from "@/components/ui/skeuo";
-import { adminAction, formatWhen, useAdminResource } from "@/lib/useAdminResource";
+import { adminAction, formatInr, formatUsd, formatWhen, useAdminResource } from "@/lib/useAdminResource";
+import { isWalletCurrencyDisplay, useWalletCurrencyDisplay } from "@/lib/useWalletCurrencyDisplay";
 
 type TabId = "overview" | "members" | "wallet" | "numbers" | "compliance" | "usage" | "audit";
 
@@ -40,9 +41,12 @@ type TenantDetail = {
   wallet?: {
     balanceUsd?: number;
     balanceInr?: number;
+    balanceCents?: number;
+    balanceInrPaise?: number;
     currency?: string;
     updatedAt?: string | null;
   } | null;
+  fxRateInr?: number;
   walletTransactions?: Array<{
     id: string;
     kind: string;
@@ -124,6 +128,8 @@ export default function TenantCockpitPage() {
       : null,
     [tenantId, tab]
   );
+  const chargeFx = Number(detail.data?.fxRateInr) || 95.64;
+  const { display: walletCurrencyDisplay, setDisplay: setWalletCurrencyDisplay } = useWalletCurrencyDisplay();
 
   const [busy, setBusy] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -142,8 +148,40 @@ export default function TenantCockpitPage() {
   const [impersonateOpen, setImpersonateOpen] = useState(false);
   const [teardownOpen, setTeardownOpen] = useState(false);
   const [walletUsd, setWalletUsd] = useState("10");
+  const [walletAmountDraft, setWalletAmountDraft] = useState<string | null>(null);
   const [walletNote, setWalletNote] = useState("");
   const [allocateE164, setAllocateE164] = useState("");
+
+  function walletAmounts() {
+    const wallet = detail.data?.wallet;
+    const usdCents = Number(wallet?.balanceCents ?? (Number(wallet?.balanceUsd ?? 0) * 100));
+    const inrPaise = Number(wallet?.balanceInrPaise ?? (Number(wallet?.balanceInr ?? 0) * 100));
+    return {
+      usdCents: Math.round(usdCents + inrPaise / chargeFx),
+      inrPaise: Math.round(inrPaise + usdCents * chargeFx),
+    };
+  }
+
+  function transactionAmounts(tx: NonNullable<TenantDetail["walletTransactions"]>[number]) {
+    const usdCents = Number(tx.amountCents || 0);
+    const inrPaise = Number(tx.amountInrPaise || 0);
+    return {
+      usdCents: Math.round(usdCents + inrPaise / chargeFx),
+      inrPaise: Math.round(inrPaise + usdCents * chargeFx),
+    };
+  }
+
+  function renderWalletAmount(usdCents: number, inrPaise: number) {
+    if (walletCurrencyDisplay === "USD") return formatUsd(usdCents);
+    if (walletCurrencyDisplay === "INR") return formatInr(inrPaise);
+    return (
+      <span className="inline-flex flex-col items-end leading-5">
+        <span>{formatUsd(usdCents)}</span>
+        <span className="text-[11px] font-normal text-text-muted">≈ {formatInr(inrPaise)}</span>
+      </span>
+    );
+  }
+  const currentWalletAmounts = walletAmounts();
 
   useEffect(() => {
     const t = detail.data?.tenant;
@@ -254,9 +292,10 @@ export default function TenantCockpitPage() {
   }
 
   function adjustWallet(sign: 1 | -1) {
-    const dollars = Number(walletUsd);
-    if (!Number.isFinite(dollars) || dollars <= 0) {
-      setError("Enter a positive USD amount");
+    const fallbackAmount = walletCurrencyDisplay === "INR" ? Number(walletUsd) * chargeFx : Number(walletUsd);
+    const amount = walletAmountDraft === null ? fallbackAmount : Number(walletAmountDraft);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setError(`Enter a positive ${walletCurrencyDisplay === "INR" ? "INR" : "USD"} amount`);
       return;
     }
     if (walletNote.trim().length < 8) {
@@ -268,14 +307,33 @@ export default function TenantCockpitPage() {
         method: "POST",
         body: {
           tenantId,
-          amountUsdCents: Math.round(dollars * 100) * sign,
+          ...(walletCurrencyDisplay === "INR"
+            ? { amountInrPaise: Math.round(amount * 100) * sign }
+            : { amountUsdCents: Math.round(amount * 100) * sign }),
           reason: sign > 0 ? "admin_credit" : "admin_debit",
           note: walletNote.trim(),
         },
       });
       setWalletNote("");
+      setWalletAmountDraft(null);
       await detail.reload();
     });
+  }
+
+  function updateWalletAmount(value: string) {
+    setWalletAmountDraft(value);
+    const amount = Number(value);
+    if (value.trim() === "") {
+      setWalletUsd("");
+    } else if (Number.isFinite(amount)) {
+      setWalletUsd(String(walletCurrencyDisplay === "INR" ? amount / chargeFx : amount));
+    }
+  }
+
+  function changeWalletCurrency(value: string) {
+    if (!isWalletCurrencyDisplay(value)) return;
+    setWalletAmountDraft(null);
+    setWalletCurrencyDisplay(value);
   }
 
   function allocateNumber() {
@@ -378,8 +436,9 @@ export default function TenantCockpitPage() {
             <AdminStat label="Status" value={t.status} tone={statusTone} />
             <AdminStat label="Plan" value={t.plan || "—"} />
             <AdminStat
-              label="Wallet USD"
-              value={`$${Number(detail.data.wallet?.balanceUsd ?? 0).toFixed(2)}`}
+              label={`Wallet ${walletCurrencyDisplay === "both" ? "(USD / INR)" : `(${walletCurrencyDisplay})`}`}
+              value={renderWalletAmount(currentWalletAmounts.usdCents, currentWalletAmounts.inrPaise)}
+              hint={walletCurrencyDisplay === "both" ? `INR equivalent at ₹${chargeFx.toFixed(2)} per USD` : undefined}
             />
             <AdminStat label="Numbers" value={counts?.numbers ?? detail.data.numbers.length} />
             <AdminStat label="Members" value={counts?.members ?? members.length} />
@@ -566,76 +625,113 @@ export default function TenantCockpitPage() {
           )}
 
           {tab === "wallet" && (
-            <div className="grid gap-4 lg:grid-cols-2">
-              <DevCard title="Adjust wallet (USD)">
-                <p className="mb-2 text-xs text-text-muted">
-                  Balance ${Number(detail.data.wallet?.balanceUsd ?? 0).toFixed(2)} USD
-                  {detail.data.wallet?.balanceInr
-                    ? ` · ≈ ₹${Number(detail.data.wallet.balanceInr).toFixed(2)} settled`
-                    : ''}
-                </p>
-                <label className="block text-xs">
-                  <span className="text-text-muted">Amount (USD)</span>
-                  <SkeuoInput
-                    className="mt-1 w-full"
-                    value={walletUsd}
-                    onChange={(e) => setWalletUsd(e.target.value)}
-                  />
-                </label>
-                <label className="mt-2 block text-xs">
-                  <span className="text-text-muted">Admin statement</span>
-                  <SkeuoInput
-                    className="mt-1 w-full"
-                    value={walletNote}
-                    onChange={(e) => setWalletNote(e.target.value)}
-                    placeholder="Why credit/debit?"
-                  />
-                </label>
-                <div className="mt-3 flex gap-2">
-                  <SkeuoButton
-                    variant="primary"
-                    disabled={busy === "credit"}
-                    onClick={() => adjustWallet(1)}
-                  >
-                    Credit
-                  </SkeuoButton>
-                  <SkeuoButton
-                    variant="ghost"
-                    disabled={busy === "debit"}
-                    onClick={() => adjustWallet(-1)}
-                  >
-                    Debit
-                  </SkeuoButton>
+            <>
+              <div className="mb-4 flex flex-col gap-3 rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel p-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-medium text-text">Wallet currency display</p>
+                  <p className="text-xs text-text-muted">
+                    Choose how wallet balances, ledger amounts and adjustments appear. INR uses the charge rate of ₹{chargeFx.toFixed(2)} per USD.
+                  </p>
                 </div>
-              </DevCard>
-              <DevCard title="Ledger">
-                <SkeuoTable>
-                  <SkeuoTableHead>
-                    <SkeuoTh>When</SkeuoTh>
-                    <SkeuoTh>Kind</SkeuoTh>
-                    <SkeuoTh className="text-right">USD</SkeuoTh>
-                  </SkeuoTableHead>
-                  <SkeuoTableBody>
-                    {(detail.data.walletTransactions ?? []).map((tx) => (
-                      <SkeuoTableRow key={tx.id}>
-                        <SkeuoTd className="text-xs">{formatWhen(tx.createdAt ?? null)}</SkeuoTd>
-                        <SkeuoTd>
-                          <SkeuoBadge>{tx.kind}</SkeuoBadge>
-                        </SkeuoTd>
-                        <SkeuoTd className="text-right font-mono text-xs">
-                          {(tx.amountCents / 100).toFixed(2)}
-                        </SkeuoTd>
-                      </SkeuoTableRow>
-                    ))}
-                    {!(detail.data.walletTransactions ?? []).length && (
-                      <SkeuoTableRow>
-                        <SkeuoTd className="text-text-muted">No transactions yet.</SkeuoTd>
-                      </SkeuoTableRow>
+                <label className="block text-xs sm:w-48">
+                  <span className="sr-only">Wallet balance display currency</span>
+                  <select
+                    value={walletCurrencyDisplay}
+                    onChange={(e) => changeWalletCurrency(e.currentTarget.value)}
+                    className="w-full rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised px-3 py-2 text-sm text-text"
+                    aria-label="Wallet balance display currency"
+                    data-testid="tenant-wallet-currency-display"
+                  >
+                    <option value="both">USD and INR</option>
+                    <option value="USD">USD only</option>
+                    <option value="INR">INR only</option>
+                  </select>
+                </label>
+              </div>
+              <div className="grid gap-4 lg:grid-cols-2">
+                <DevCard title={`Adjust wallet (${walletCurrencyDisplay === "both" ? "USD" : walletCurrencyDisplay})`}>
+                  <p className="mb-2 text-xs text-text-muted">
+                    Balance {renderWalletAmount(currentWalletAmounts.usdCents, currentWalletAmounts.inrPaise)}
+                  </p>
+                  <label className="block text-xs">
+                    <span className="text-text-muted">Amount ({walletCurrencyDisplay === "INR" ? "INR" : "USD"})</span>
+                    <SkeuoInput
+                      className="mt-1 w-full"
+                      value={walletAmountDraft ?? (
+                        walletCurrencyDisplay === "INR"
+                          ? walletUsd.trim() === "" ? "" : (Number(walletUsd) * chargeFx).toFixed(2)
+                          : walletUsd
+                      )}
+                      onChange={(e) => updateWalletAmount(e.target.value)}
+                      inputMode="decimal"
+                      aria-label={`${walletCurrencyDisplay === "INR" ? "INR" : "USD"} wallet adjustment amount`}
+                    />
+                    {walletCurrencyDisplay === "both" && (
+                      <span className="mt-1 block font-mono text-[11px] text-text-muted">
+                        ≈ {formatInr(Math.round((Number(walletUsd) || 0) * chargeFx * 100))}
+                      </span>
                     )}
-                  </SkeuoTableBody>
-                </SkeuoTable>
-              </DevCard>
-            </div>
+                  </label>
+                  <label className="mt-2 block text-xs">
+                    <span className="text-text-muted">Admin statement</span>
+                    <SkeuoInput
+                      className="mt-1 w-full"
+                      value={walletNote}
+                      onChange={(e) => setWalletNote(e.target.value)}
+                      placeholder="Why credit/debit?"
+                    />
+                  </label>
+                  <div className="mt-3 flex gap-2">
+                    <SkeuoButton
+                      variant="primary"
+                      disabled={busy === "credit"}
+                      onClick={() => adjustWallet(1)}
+                    >
+                      Credit
+                    </SkeuoButton>
+                    <SkeuoButton
+                      variant="ghost"
+                      disabled={busy === "debit"}
+                      onClick={() => adjustWallet(-1)}
+                    >
+                      Debit
+                    </SkeuoButton>
+                  </div>
+                </DevCard>
+                <DevCard title="Ledger">
+                  <SkeuoTable>
+                    <SkeuoTableHead>
+                      <SkeuoTh>When</SkeuoTh>
+                      <SkeuoTh>Kind</SkeuoTh>
+                      <SkeuoTh className="text-right">
+                        {walletCurrencyDisplay === "both" ? "Amount (USD / INR)" : `Amount (${walletCurrencyDisplay})`}
+                      </SkeuoTh>
+                    </SkeuoTableHead>
+                    <SkeuoTableBody>
+                      {(detail.data.walletTransactions ?? []).map((tx) => {
+                        const amount = transactionAmounts(tx);
+                        return (
+                          <SkeuoTableRow key={tx.id}>
+                            <SkeuoTd className="text-xs">{formatWhen(tx.createdAt ?? null)}</SkeuoTd>
+                            <SkeuoTd>
+                              <SkeuoBadge>{tx.kind}</SkeuoBadge>
+                            </SkeuoTd>
+                            <SkeuoTd className="text-right font-mono text-xs">
+                              {renderWalletAmount(amount.usdCents, amount.inrPaise)}
+                            </SkeuoTd>
+                          </SkeuoTableRow>
+                        );
+                      })}
+                      {!(detail.data.walletTransactions ?? []).length && (
+                        <SkeuoTableRow>
+                          <SkeuoTd className="text-text-muted">No transactions yet.</SkeuoTd>
+                        </SkeuoTableRow>
+                      )}
+                    </SkeuoTableBody>
+                  </SkeuoTable>
+                </DevCard>
+              </div>
+            </>
           )}
 
           {tab === "numbers" && (

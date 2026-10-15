@@ -80,3 +80,47 @@ async def test_wallet_call_enrichment_queries_stay_in_tenant(monkeypatch):
         if entity in (Call, Campaign, Agent):
             where = str(statement).split("WHERE", 1)[1].lower()
             assert "tenant_id" in where
+
+
+@pytest.mark.asyncio
+async def test_browser_test_call_enrichment_description(monkeypatch):
+    tenant_id = uuid.uuid4()
+    call_id = uuid.uuid4()
+    agent_id = uuid.uuid4()
+    tx = SimpleNamespace(
+        id=uuid.uuid4(),
+        tenant_id=tenant_id,
+        user_id=None,
+        amount_cents=-7,
+        amount_inr_paise=-669,
+        kind="usage_web_test",
+        reference_id=f"call:{call_id}",
+        created_at=None,
+    )
+    call = SimpleNamespace(
+        call_id=call_id,
+        campaign_id=None,
+        agent_id=agent_id,
+        duration_sec=24,
+        direction="inbound",  # Browser calls set direction="inbound"
+        channel="browser",
+        is_test=True,
+    )
+    agent = SimpleNamespace(agent_id=agent_id, name="Sales Assistant")
+    session = _Session(
+        {
+            BillingWalletTransaction: [tx],
+            Call: [call],
+            Agent: [agent],
+        }
+    )
+    monkeypatch.setattr(billing_wallet_service, "get_session_factory", lambda: lambda: session)
+
+    rows = await billing_wallet_service.list_wallet_transactions(tenant_id)
+
+    assert len(rows) == 1
+    assert rows[0]["description"] == "Browser Voice Test: Sales Assistant (24s)"
+    assert rows[0]["durationSec"] == 24
+    assert rows[0]["agentName"] == "Sales Assistant"
+    assert rows[0]["kind"] == "usage_web_test"
+

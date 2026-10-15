@@ -36,6 +36,8 @@ class PatchAgentBody(BaseModel):
     defaultTier: Optional[str] = None
     languages: Optional[list[str]] = None
     memorySchema: Optional[str] = None
+    voiceSettings: Optional[dict[str, Any]] = None
+    voice_settings: Optional[dict[str, Any]] = None
     recordingDisclosureEnabled: Optional[bool] = None
     recordingDisclosureText: Optional[str] = None
 
@@ -110,6 +112,9 @@ async def patch_agent(
         patch["languages"] = body.languages
     if body.memorySchema is not None:
         patch["memory_schema"] = body.memorySchema
+    vs = body.voiceSettings if body.voiceSettings is not None else body.voice_settings
+    if vs is not None:
+        patch["voice_settings"] = vs
     if body.recordingDisclosureEnabled is not None:
         patch["recording_disclosure_enabled"] = body.recordingDisclosureEnabled
     if body.recordingDisclosureText is not None:

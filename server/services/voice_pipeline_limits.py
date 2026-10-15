@@ -67,8 +67,7 @@ def is_incomplete_spoken_crumb(text: str) -> bool:
 
 LIVE_REPLY_BREVITY_RULE = (
     "LENGTH (natural phone speech):\n"
-    "- Primary rule: 1–2 concise spoken sentences, normally 8–25 words in English, "
-    "or an equally concise equivalent in the call language. Answer the immediate question first.\n"
+    "- Primary rule: 1–2 concise spoken sentences (8–25 words or natural Indic phrasing with polite markers; never truncate words to hit targets). Answer first.\n"
     f"- Simple (yes / ack / thanks / wait): {LIVE_REPLY_MIN_CHARS}–{LIVE_REPLY_SIMPLE_MAX} characters.\n"
     f"- Normal fact or answer: 30–{LIVE_REPLY_NORMAL_MAX} characters.\n"
     f"- Objection: 30–{LIVE_REPLY_OBJECTION_MAX} characters.\n"

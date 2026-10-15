@@ -27,9 +27,10 @@ function formatElapsed(ms) {
  * Live test call: browser mic or live-number dial.
  * Same AI path as production phone. Call chrome + 3D speaking avatar + timer.
  */
-export function AgentTestCallPanel({ agent }) {
+export function AgentTestCallPanel({ agent, language }) {
   const {
     wallet,
+    refreshWallet,
     openAddFunds,
     placeOutboundCall,
     phoneNumbers,
@@ -147,6 +148,18 @@ export function AgentTestCallPanel({ agent }) {
       }
       sessionRef.current = null;
     }
+    const session = createWebAgentSession();
+    try {
+      // Unlock speaker output during the original click, before agent activation
+      // or microphone permission checks can await and expire browser activation.
+      session.prepareAudio();
+    } catch (error) {
+      setStatusNote(error.message || 'Browser audio is unavailable.');
+      showToast(error.message || 'Browser audio is unavailable.', 'error');
+      session.stop();
+      return;
+    }
+    sessionRef.current = session;
     setSessionState('CONNECTING');
     setBotState('THINKING');
     setLines([]);
@@ -156,14 +169,11 @@ export function AgentTestCallPanel({ agent }) {
     // live), not here — time spent handshaking is not billed time.
     startedAtRef.current = null;
     setStatusNote('Connecting to agent…');
-    const session = createWebAgentSession();
-    sessionRef.current = session;
     session.subscribe((event, data) => {
       if (event === 'ready') {
         setSessionState('CONNECTED');
-        setBotState('SPEAKING');
         startedAtRef.current = Date.now();
-        speakingUntilRef.current = Date.now() + 2500;
+        speakingUntilRef.current = Date.now();
         setStatusNote('Connected — agent is live');
         push('Live session started. Agent follows your published script.');
       }
@@ -180,6 +190,8 @@ export function AgentTestCallPanel({ agent }) {
         setBotState('IDLE');
         startedAtRef.current = null;
         setStatusNote('Call ended — usage deducted from wallet');
+        refreshWallet?.();
+        setTimeout(() => refreshWallet?.(), 1500);
       }
       if (event === 'error') {
         setSessionState('DISCONNECTED');
@@ -194,7 +206,7 @@ export function AgentTestCallPanel({ agent }) {
     try {
       await session.start({
         agentId: agent.id,
-        language: (agent.languages && agent.languages[0]) || agent.language || 'en-IN',
+        language: language || (agent.languages && agent.languages[0]) || agent.language || 'en-IN',
       });
     } catch (error) {
       setSessionState('DISCONNECTED');
@@ -216,6 +228,8 @@ export function AgentTestCallPanel({ agent }) {
     setIsMuted(false);
     startedAtRef.current = null;
     setStatusNote('You ended the session.');
+    refreshWallet?.();
+    setTimeout(() => refreshWallet?.(), 1500);
   };
 
   const dialPhone = async () => {
@@ -391,7 +405,7 @@ export function AgentTestCallPanel({ agent }) {
                 onClick={startBrowser}
                 data-testid="test-call-start-browser"
                 className="w-full justify-center"
-                disabled={!isActive}
+                disabled={!isActive || statusBusy}
               >
                 Start call
               </TactileButton>

@@ -4,7 +4,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, JSON, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Integer, JSON, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -377,6 +377,12 @@ class BillingRateVersion(Base):
     pstn_rate_usd_cents_per_min: Mapped[int] = mapped_column(Integer, nullable=False)
     web_agent_rate_usd_cents_per_min: Mapped[int] = mapped_column(Integer, nullable=False)
     did_monthly_usd_cents: Mapped[int] = mapped_column(Integer, nullable=False)
+    pstn_rate_usd_micros_per_min: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    web_agent_rate_usd_micros_per_min: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    did_monthly_usd_micros: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    pstn_rate_inr_paise_per_min: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    web_agent_rate_inr_paise_per_min: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    did_monthly_inr_paise: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     fx_rate_inr: Mapped[float] = mapped_column(Numeric(10, 4), nullable=False)
     effective_from: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, index=True)
     created_by: Mapped[str] = mapped_column(String(255), nullable=False)

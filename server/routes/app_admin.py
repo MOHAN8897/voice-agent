@@ -110,9 +110,9 @@ async def admin_tenants(principal: SubscriberPrincipal = Depends(require_subscri
     # The console shows dollars, but a wallet funded in INR has to be converted.
     # Sending the admin-configured rate means the number on screen is the same
     # one the billing engine charges with, rather than a constant in the UI.
-    from server.services.saas.billing_rates import effective_rates
+    from server.services.saas.billing_rates import load_current_rates
 
-    fx_rate_inr = float(effective_rates()["fx_rate_inr"])
+    fx_rate_inr = float((await load_current_rates())["fx_rate_inr"])
     async with factory() as session:
         rows = (await session.execute(select(Tenant).order_by(Tenant.created_at.desc()).limit(100))).scalars()
         wallets = {
@@ -459,9 +459,9 @@ async def admin_search_phone_numbers(
         logger.warning("Admin carrier search failed prov=%s country=%s: %s", prov, country_norm, exc)
         numbers = []
 
-    from server.services.saas.billing_rates import rates_with_derived_inr
+    from server.services.saas.billing_rates import load_current_rates
 
-    rates = rates_with_derived_inr()
+    rates = await load_current_rates()
     monthly_usd = round(rates["did_monthly_usd_cents"] / 100.0, 2)
     monthly_inr = round(rates["did_monthly_inr_paise"] / 100.0, 2)
 

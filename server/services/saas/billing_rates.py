@@ -1,9 +1,9 @@
 """Runtime billing rate management with database versioning.
 
-USD is the authoritative source of truth for everything a customer is quoted and charged.
-The INR leg is derived from it at the configured rate, never from the live market rate.
-All rate changes are versioned in `billing_rate_versions` (who, when, old/new, reason).
-Calls lock their rate snapshot at initiation so past calls are never re-priced.
+USD and INR rates are retained at their native billing precision (microdollars and
+paise). The other currency is derived at the configured FX rate, never the live
+market rate. Rates are versioned, and calls snapshot both legs at initiation so
+past calls are never re-priced.
 """
 from __future__ import annotations
 
@@ -11,6 +11,7 @@ import json
 import logging
 import threading
 from datetime import datetime, timezone
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from pathlib import Path
 from typing import Any
 
@@ -23,6 +24,8 @@ logger = logging.getLogger(__name__)
 _LOCK = threading.Lock()
 _PATH = Path(__file__).resolve().parents[3] / "data" / "billing_rates.json"
 _cache: dict[str, Any] | None = None
+_USD_MICRODOLLARS_PER_DOLLAR = 1_000_000
+_USD_MICRODOLLARS_PER_CENT = 10_000
 
 
 class BillingConfigurationError(RuntimeError):
@@ -32,6 +35,59 @@ class BillingConfigurationError(RuntimeError):
 
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
+
+
+def _decimal(value: Any) -> Decimal:
+    try:
+        result = Decimal(str(value))
+    except (InvalidOperation, TypeError, ValueError) as exc:
+        raise ValueError("Billing rates must be valid decimal values.") from exc
+    if not result.is_finite():
+        raise ValueError("Billing rates must be finite decimal values.")
+    return result
+
+
+def _round_half_up(value: Decimal) -> int:
+    return int(value.quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+
+
+def _to_scaled_int(value: Any, scale: int, *, label: str) -> int:
+    amount = _decimal(value)
+    scaled = amount * scale
+    if scaled != scaled.to_integral_value():
+        decimals = 2 if scale == 100 else 6
+        raise ValueError(f"{label} supports at most {decimals} decimal places.")
+    return int(scaled)
+
+
+def _expand_rate_data(data: dict[str, Any]) -> dict[str, int | float]:
+    """Add exact/minor-unit rate fields while preserving legacy rate rows."""
+    fx = _decimal(data.get("fx_rate_inr") or 95.64)
+    expanded: dict[str, int | float] = {
+        "version": int(data.get("version") or 1),
+        "fx_rate_inr": float(fx),
+    }
+    fields = (
+        ("pstn_rate_usd_cents_per_min", "pstn_rate_usd_micros_per_min", "pstn_rate_inr_paise_per_min"),
+        ("web_agent_rate_usd_cents_per_min", "web_agent_rate_usd_micros_per_min", "web_agent_rate_inr_paise_per_min"),
+        ("did_monthly_usd_cents", "did_monthly_usd_micros", "did_monthly_inr_paise"),
+    )
+    for cents_key, micros_key, paise_key in fields:
+        cents = int(data.get(cents_key) or 0)
+        micros_value = data.get(micros_key)
+        paise_value = data.get(paise_key)
+        expanded[cents_key] = cents
+        expanded[micros_key] = (
+            int(micros_value)
+            if micros_value is not None
+            else cents * _USD_MICRODOLLARS_PER_CENT
+        )
+        expanded[paise_key] = (
+            int(paise_value)
+            if paise_value is not None
+            else _round_half_up(Decimal(cents) * fx)
+        )
+    return expanded
 
 
 def _load_disk_fallback() -> dict[str, Any]:
@@ -119,22 +175,42 @@ async def load_rates_from_db_or_seed() -> dict[str, Any]:
                     "pstn_rate_usd_cents_per_min": latest.pstn_rate_usd_cents_per_min,
                     "web_agent_rate_usd_cents_per_min": latest.web_agent_rate_usd_cents_per_min,
                     "did_monthly_usd_cents": latest.did_monthly_usd_cents,
+                    "pstn_rate_usd_micros_per_min": latest.pstn_rate_usd_micros_per_min,
+                    "web_agent_rate_usd_micros_per_min": latest.web_agent_rate_usd_micros_per_min,
+                    "did_monthly_usd_micros": latest.did_monthly_usd_micros,
+                    "pstn_rate_inr_paise_per_min": latest.pstn_rate_inr_paise_per_min,
+                    "web_agent_rate_inr_paise_per_min": latest.web_agent_rate_inr_paise_per_min,
+                    "did_monthly_inr_paise": latest.did_monthly_inr_paise,
                     "fx_rate_inr": float(latest.fx_rate_inr),
                     "effective_from": latest.effective_from.isoformat() if latest.effective_from else _utcnow().isoformat(),
                     "created_by": latest.created_by,
                     "reason": latest.reason,
                 }
-                _save_disk_backup(data)
-                return data
+                # Old versions legitimately have NULL in the native-rate
+                # columns. Normalize those from the original cents and FX,
+                # while preserving any values entered directly in INR.
+                normalized = {**data, **_expand_rate_data(data)}
+                set_cached_rates(normalized)
+                return normalized
 
             # Table is empty: seed Version 1 explicitly into database
             settings = get_settings()
+            fx = _decimal(getattr(settings, "fx_rate_inr", 0) or 95.64)
+            pstn_cents = int(settings.pstn_rate_usd_cents_per_min)
+            web_cents = int(settings.web_agent_rate_usd_cents_per_min)
+            did_cents = int(settings.did_monthly_usd_cents)
             v1 = BillingRateVersion(
                 version=1,
-                pstn_rate_usd_cents_per_min=int(settings.pstn_rate_usd_cents_per_min),
-                web_agent_rate_usd_cents_per_min=int(settings.web_agent_rate_usd_cents_per_min),
-                did_monthly_usd_cents=int(settings.did_monthly_usd_cents),
-                fx_rate_inr=float(getattr(settings, "fx_rate_inr", 0) or 95.64),
+                pstn_rate_usd_cents_per_min=pstn_cents,
+                web_agent_rate_usd_cents_per_min=web_cents,
+                did_monthly_usd_cents=did_cents,
+                pstn_rate_usd_micros_per_min=pstn_cents * _USD_MICRODOLLARS_PER_CENT,
+                web_agent_rate_usd_micros_per_min=web_cents * _USD_MICRODOLLARS_PER_CENT,
+                did_monthly_usd_micros=did_cents * _USD_MICRODOLLARS_PER_CENT,
+                pstn_rate_inr_paise_per_min=_round_half_up(Decimal(pstn_cents) * fx),
+                web_agent_rate_inr_paise_per_min=_round_half_up(Decimal(web_cents) * fx),
+                did_monthly_inr_paise=_round_half_up(Decimal(did_cents) * fx),
+                fx_rate_inr=float(fx),
                 effective_from=_utcnow(),
                 created_by="system_initial_migration",
                 reason="Initial baseline rates from settings",
@@ -147,6 +223,12 @@ async def load_rates_from_db_or_seed() -> dict[str, Any]:
                 "pstn_rate_usd_cents_per_min": v1.pstn_rate_usd_cents_per_min,
                 "web_agent_rate_usd_cents_per_min": v1.web_agent_rate_usd_cents_per_min,
                 "did_monthly_usd_cents": v1.did_monthly_usd_cents,
+                "pstn_rate_usd_micros_per_min": v1.pstn_rate_usd_micros_per_min,
+                "web_agent_rate_usd_micros_per_min": v1.web_agent_rate_usd_micros_per_min,
+                "did_monthly_usd_micros": v1.did_monthly_usd_micros,
+                "pstn_rate_inr_paise_per_min": v1.pstn_rate_inr_paise_per_min,
+                "web_agent_rate_inr_paise_per_min": v1.web_agent_rate_inr_paise_per_min,
+                "did_monthly_inr_paise": v1.did_monthly_inr_paise,
                 "fx_rate_inr": float(v1.fx_rate_inr),
                 "effective_from": v1.effective_from.isoformat(),
                 "created_by": v1.created_by,
@@ -156,9 +238,9 @@ async def load_rates_from_db_or_seed() -> dict[str, Any]:
             return data
         except Exception as e:
             logger.error("[BILLING_RATES] DB load failed: %s", e)
-            disk = _load_disk_fallback()
-            if disk and disk.get("pstn_rate_usd_cents_per_min"):
-                return disk
+            # A stale disk copy can silently re-price calls after another
+            # worker has saved a new version. When the database is configured,
+            # a failed read must not masquerade as the current rate version.
             raise BillingConfigurationError(f"Billing rates cannot be resolved: {e}") from e
 
 
@@ -167,13 +249,7 @@ def effective_rates() -> dict[str, int | float]:
     global _cache
     with _LOCK:
         if _cache and _cache.get("pstn_rate_usd_cents_per_min"):
-            return {
-                "version": _cache.get("version", 1),
-                "pstn_rate_usd_cents_per_min": int(_cache["pstn_rate_usd_cents_per_min"]),
-                "web_agent_rate_usd_cents_per_min": int(_cache["web_agent_rate_usd_cents_per_min"]),
-                "did_monthly_usd_cents": int(_cache["did_monthly_usd_cents"]),
-                "fx_rate_inr": float(_cache["fx_rate_inr"]),
-            }
+            return _expand_rate_data(_cache)
 
     settings = get_settings()
     ov = _load_disk_fallback()
@@ -189,8 +265,19 @@ def effective_rates() -> dict[str, int | float]:
         "did_monthly_usd_cents": int(ov.get("did_monthly_usd_cents") or settings.did_monthly_usd_cents),
         "fx_rate_inr": float(ov.get("fx_rate_inr") or getattr(settings, "fx_rate_inr", 0) or 95.64),
     }
-    _save_disk_backup(res)
-    return res
+    for key in (
+        "pstn_rate_usd_micros_per_min",
+        "web_agent_rate_usd_micros_per_min",
+        "did_monthly_usd_micros",
+        "pstn_rate_inr_paise_per_min",
+        "web_agent_rate_inr_paise_per_min",
+        "did_monthly_inr_paise",
+    ):
+        if ov.get(key) is not None:
+            res[key] = int(ov[key])
+    expanded = _expand_rate_data(res)
+    _save_disk_backup(expanded)
+    return expanded
 
 
 def usd_to_inr_cents(usd_cents: int, *, fx: float | None = None) -> int:
@@ -200,17 +287,17 @@ def usd_to_inr_cents(usd_cents: int, *, fx: float | None = None) -> int:
 
 
 def rates_with_derived_inr() -> dict[str, int | float]:
-    """`effective_rates` plus the INR mirror of every USD price."""
-    rates = dict(effective_rates())
-    fx = float(rates["fx_rate_inr"])
-    rates["pstn_rate_inr_paise_per_min"] = usd_to_inr_cents(
-        int(rates["pstn_rate_usd_cents_per_min"]), fx=fx
-    )
-    rates["web_agent_rate_inr_paise_per_min"] = usd_to_inr_cents(
-        int(rates["web_agent_rate_usd_cents_per_min"]), fx=fx
-    )
-    rates["did_monthly_inr_paise"] = usd_to_inr_cents(int(rates["did_monthly_usd_cents"]), fx=fx)
-    return rates
+    """Return configured INR rates and legacy-derived fallbacks."""
+    return effective_rates()
+
+
+async def load_current_rates() -> dict[str, int | float]:
+    """Read current rates from the database, retaining local-only dev fallback."""
+    from server.db.connection import get_session_factory
+
+    if get_session_factory() is None:
+        return _expand_rate_data(rates_with_derived_inr())
+    return await load_rates_from_db_or_seed()
 
 
 def live_fx() -> dict[str, Any]:
@@ -231,10 +318,14 @@ async def update_rates_versioned(
     *,
     actor: str,
     reason: str,
-    pstn_usd_per_min: float | None = None,
-    web_usd_per_min: float | None = None,
-    did_monthly_usd: float | None = None,
-    fx_rate_inr: float | None = None,
+    rate_currency: str = "USD",
+    pstn_usd_per_min: Decimal | float | str | None = None,
+    web_usd_per_min: Decimal | float | str | None = None,
+    did_monthly_usd: Decimal | float | str | None = None,
+    pstn_inr_per_min: Decimal | float | str | None = None,
+    web_inr_per_min: Decimal | float | str | None = None,
+    did_monthly_inr: Decimal | float | str | None = None,
+    fx_rate_inr: Decimal | float | str | None = None,
 ) -> dict[str, Any]:
     """Persist new version of billing rates to the database.
 
@@ -248,11 +339,88 @@ async def update_rates_versioned(
     if len(clean_reason) < 8:
         raise ValueError("Admin statement (minimum 8 characters) required to change billing rates.")
 
-    curr = rates_with_derived_inr()
-    new_pstn = max(1, int(round(float(pstn_usd_per_min) * 100))) if pstn_usd_per_min is not None else int(curr["pstn_rate_usd_cents_per_min"])
-    new_web = max(1, int(round(float(web_usd_per_min) * 100))) if web_usd_per_min is not None else int(curr["web_agent_rate_usd_cents_per_min"])
-    new_did = max(0, int(round(float(did_monthly_usd) * 100))) if did_monthly_usd is not None else int(curr["did_monthly_usd_cents"])
-    new_fx = max(0.01, float(fx_rate_inr)) if fx_rate_inr is not None else float(curr["fx_rate_inr"])
+    currency = str(rate_currency or "USD").upper()
+    if currency not in {"USD", "INR"}:
+        raise ValueError("Rate currency must be USD or INR.")
+
+    # Never build a new version from this worker's possibly stale process cache.
+    curr = await load_current_rates()
+    new_fx_decimal = (
+        max(Decimal("0.01"), _decimal(fx_rate_inr))
+        if fx_rate_inr is not None
+        else _decimal(curr["fx_rate_inr"])
+    ).quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
+    new_fx = float(new_fx_decimal)
+
+    def resolve_rate(
+        *,
+        usd_value: Decimal | float | str | None,
+        inr_value: Decimal | float | str | None,
+        current_cents: int,
+        current_micros: int,
+        current_paise: int,
+        allow_zero: bool,
+        label: str,
+    ) -> tuple[int, int, int]:
+        value = inr_value if currency == "INR" else usd_value
+        if value is None:
+            return current_cents, current_micros, current_paise
+
+        amount = _decimal(value)
+        if amount < 0 or (amount == 0 and not allow_zero):
+            raise ValueError(f"{label} must be {'non-negative' if allow_zero else 'positive'}.")
+
+        if currency == "INR":
+            paise = _to_scaled_int(amount, 100, label=label)
+            micros = _round_half_up(
+                (Decimal(paise) / Decimal(100) / new_fx_decimal)
+                * _USD_MICRODOLLARS_PER_DOLLAR
+            )
+        else:
+            micros = _to_scaled_int(amount, _USD_MICRODOLLARS_PER_DOLLAR, label=label)
+            paise = _round_half_up(
+                (Decimal(micros) / _USD_MICRODOLLARS_PER_DOLLAR)
+                * new_fx_decimal
+                * 100
+            )
+
+        if amount == 0:
+            cents = 0
+            micros = 0
+            paise = 0
+        else:
+            cents = max(1, _round_half_up(Decimal(micros) / _USD_MICRODOLLARS_PER_CENT))
+            if micros <= 0 or paise <= 0:
+                raise ValueError(f"{label} is too small to represent at the configured precision.")
+        return cents, micros, paise
+
+    new_pstn, pstn_micros, pstn_paise = resolve_rate(
+        usd_value=pstn_usd_per_min,
+        inr_value=pstn_inr_per_min,
+        current_cents=int(curr["pstn_rate_usd_cents_per_min"]),
+        current_micros=int(curr["pstn_rate_usd_micros_per_min"]),
+        current_paise=int(curr["pstn_rate_inr_paise_per_min"]),
+        allow_zero=False,
+        label="PSTN rate",
+    )
+    new_web, web_micros, web_paise = resolve_rate(
+        usd_value=web_usd_per_min,
+        inr_value=web_inr_per_min,
+        current_cents=int(curr["web_agent_rate_usd_cents_per_min"]),
+        current_micros=int(curr["web_agent_rate_usd_micros_per_min"]),
+        current_paise=int(curr["web_agent_rate_inr_paise_per_min"]),
+        allow_zero=False,
+        label="Browser agent rate",
+    )
+    new_did, did_micros, did_paise = resolve_rate(
+        usd_value=did_monthly_usd,
+        inr_value=did_monthly_inr,
+        current_cents=int(curr["did_monthly_usd_cents"]),
+        current_micros=int(curr["did_monthly_usd_micros"]),
+        current_paise=int(curr["did_monthly_inr_paise"]),
+        allow_zero=True,
+        label="Phone number rental rate",
+    )
 
     from server.db.connection import get_session_factory
     from server.db.models.saas_models import BillingRateVersion
@@ -262,7 +430,15 @@ async def update_rates_versioned(
 
     if factory is not None:
         async with factory() as session:
-            # Get latest version number
+            # Lock the latest version so concurrent admin saves serialize.
+            res = await session.execute(
+                select(BillingRateVersion.id)
+                .order_by(desc(BillingRateVersion.version))
+                .limit(1)
+                .with_for_update()
+            )
+            res.scalar_one_or_none()
+            # Read the version in a fresh statement after any lock wait.
             res = await session.execute(
                 select(BillingRateVersion.version)
                 .order_by(desc(BillingRateVersion.version))
@@ -284,6 +460,12 @@ async def update_rates_versioned(
                 pstn_rate_usd_cents_per_min=new_pstn,
                 web_agent_rate_usd_cents_per_min=new_web,
                 did_monthly_usd_cents=new_did,
+                pstn_rate_usd_micros_per_min=pstn_micros,
+                web_agent_rate_usd_micros_per_min=web_micros,
+                did_monthly_usd_micros=did_micros,
+                pstn_rate_inr_paise_per_min=pstn_paise,
+                web_agent_rate_inr_paise_per_min=web_paise,
+                did_monthly_inr_paise=did_paise,
                 fx_rate_inr=new_fx,
                 effective_from=now,
                 created_by=actor,
@@ -301,13 +483,19 @@ async def update_rates_versioned(
         "pstn_rate_usd_cents_per_min": new_pstn,
         "web_agent_rate_usd_cents_per_min": new_web,
         "did_monthly_usd_cents": new_did,
+        "pstn_rate_usd_micros_per_min": pstn_micros,
+        "web_agent_rate_usd_micros_per_min": web_micros,
+        "did_monthly_usd_micros": did_micros,
+        "pstn_rate_inr_paise_per_min": pstn_paise,
+        "web_agent_rate_inr_paise_per_min": web_paise,
+        "did_monthly_inr_paise": did_paise,
         "fx_rate_inr": new_fx,
         "effective_from": now.isoformat(),
         "created_by": actor,
         "reason": clean_reason,
     }
     _save_disk_backup(updated_data)
-    return rates_with_derived_inr()
+    return _expand_rate_data(updated_data)
 
 
 def update_rates(
@@ -339,13 +527,42 @@ def update_rates(
         )
     # Allowed path: tests that run without a DB and need a synchronous stub.
     data = dict(_load_disk_fallback())
-    if pstn_usd_per_min is not None:
-        data["pstn_rate_usd_cents_per_min"] = max(1, int(round(float(pstn_usd_per_min) * 100)))
-    if web_usd_per_min is not None:
-        data["web_agent_rate_usd_cents_per_min"] = max(1, int(round(float(web_usd_per_min) * 100)))
-    if did_monthly_usd is not None:
-        data["did_monthly_usd_cents"] = max(0, int(round(float(did_monthly_usd) * 100)))
     if fx_rate_inr is not None:
         data["fx_rate_inr"] = max(0.01, float(fx_rate_inr))
+    fx = _decimal(data.get("fx_rate_inr") or 95.64)
+    for usd_value, cents_key, micros_key, paise_key in (
+        (
+            pstn_usd_per_min,
+            "pstn_rate_usd_cents_per_min",
+            "pstn_rate_usd_micros_per_min",
+            "pstn_rate_inr_paise_per_min",
+        ),
+        (
+            web_usd_per_min,
+            "web_agent_rate_usd_cents_per_min",
+            "web_agent_rate_usd_micros_per_min",
+            "web_agent_rate_inr_paise_per_min",
+        ),
+        (
+            did_monthly_usd,
+            "did_monthly_usd_cents",
+            "did_monthly_usd_micros",
+            "did_monthly_inr_paise",
+        ),
+    ):
+        micros = (
+            _to_scaled_int(usd_value, _USD_MICRODOLLARS_PER_DOLLAR, label="USD rate")
+            if usd_value is not None
+            else int(data.get(micros_key) or int(data.get(cents_key) or 0) * _USD_MICRODOLLARS_PER_CENT)
+        )
+        data[micros_key] = micros
+        data[cents_key] = (
+            max(1, _round_half_up(Decimal(micros) / _USD_MICRODOLLARS_PER_CENT))
+            if micros > 0
+            else 0
+        )
+        data[paise_key] = _round_half_up(
+            (Decimal(micros) / _USD_MICRODOLLARS_PER_DOLLAR) * fx * 100
+        )
     _save_disk_backup(data)
     return rates_with_derived_inr()

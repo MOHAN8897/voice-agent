@@ -52,6 +52,19 @@ _STRING_FIELDS = frozenset(
 ALLOWED_PATCH_KEYS = _SECRET_FIELDS | _TOGGLE_FIELDS | _STRING_FIELDS
 
 
+_MOCK_TEST_SECRETS = frozenset(
+    {
+        "gem-test",
+        "gem-overlay",
+        "sk-overlay",
+        "ds-overlay",
+        "sk-test",
+        "test-key",
+        "unit-test-placeholder",
+    }
+)
+
+
 def _mask_secret(value: str) -> str:
     if not value:
         return ""
@@ -140,11 +153,18 @@ class DevSecretsStore:
         return getattr(settings, field, default)
 
     def effective_secret(self, field: str) -> str | None:
+        settings = get_settings()
         val = self.effective(field)
         if val is None:
             return None
         text = str(val).strip()
-        return text or None
+        if not text:
+            return None
+        if text in _MOCK_TEST_SECRETS:
+            env_val = getattr(settings, field, None)
+            if env_val and str(env_val).strip() and str(env_val).strip() not in _MOCK_TEST_SECRETS:
+                return str(env_val).strip()
+        return text
 
     def update(self, patch: dict[str, Any]) -> dict[str, Any]:
         applied: list[str] = []

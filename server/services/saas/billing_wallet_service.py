@@ -43,45 +43,47 @@ async def get_or_create_wallet(tenant_id: uuid.UUID) -> BillingWallet:
 
 
 async def wallet_summary(tenant_id: uuid.UUID, user_id: uuid.UUID | None = None) -> dict:
-    from server.services.saas.billing_rates import rates_with_derived_inr
+    from server.services.saas.billing_rates import load_current_rates
 
     settings = get_settings()
-    rates = rates_with_derived_inr()
+    rates = await load_current_rates()
     wallet = await get_or_create_wallet(tenant_id)
     inr_paise = int(getattr(wallet, "balance_inr_paise", 0) or 0)
     cents = int(wallet.balance_cents or 0)
     primary = (wallet.currency or "usd").lower()
     fx = float(rates.get("fx_rate_inr") or 95.64) or 95.64
-    usd_from_cents = round(cents / 100.0, 2)
-    usd_from_inr = round((inr_paise / 100.0) / fx, 2) if fx else 0.0
-    # Razorpay credits INR; show FX-converted USD when cents are empty so the console matches.
-    if primary == "inr" or (inr_paise > 0 and cents <= 0):
-        balance_usd = usd_from_inr
-    else:
-        balance_usd = usd_from_cents if usd_from_cents > 0 else usd_from_inr
+    usd_from_cents = cents / 100.0
+    usd_from_inr = (inr_paise / 100.0) / fx if fx else 0.0
+    # Combined purchasing power so no balance is omitted or hidden
+    balance_usd = round(usd_from_cents + usd_from_inr, 2)
+    inr_from_paise = inr_paise / 100.0
+    inr_from_cents = (cents / 100.0) * fx if fx else 0.0
+    balance_inr = round(inr_from_paise + inr_from_cents, 2)
+
     rate_inr = rates["pstn_rate_inr_paise_per_min"] or 900
-    rate_usd = max(1, rates["pstn_rate_usd_cents_per_min"])
-    if inr_paise > 0:
-        remaining_min = int(inr_paise // rate_inr)
-    else:
-        remaining_min = int(cents // rate_usd)
+    rate_usd_micros = max(1, rates["pstn_rate_usd_micros_per_min"])
+    min_from_cents = int((cents * 10_000) // rate_usd_micros) if rate_usd_micros > 0 else 0
+    min_from_paise = int(inr_paise // rate_inr) if rate_inr > 0 else 0
+    remaining_min = min_from_cents + min_from_paise
     summary = {
         # USD everywhere: the console quotes and displays one currency only.
         "currency": "USD",
         "balanceUsd": balance_usd,
+        "balance_usd": balance_usd,
         "balanceCents": cents,
-        "balanceInr": round(inr_paise / 100.0, 2),
+        "balanceInr": balance_inr,
+        "balance_inr": balance_inr,
         "balanceInrPaise": inr_paise,
         "walletCurrency": (wallet.currency or "usd").upper(),
         "primaryCurrency": primary,
         "tenantId": str(tenant_id),
-        "minBalanceUsd": round(settings.pstn_min_balance_usd_cents / 100.0, 2),
-        "minBalanceInr": round(settings.pstn_min_balance_inr_paise / 100.0, 2),
-        "rateUsdPerMin": round(rates["pstn_rate_usd_cents_per_min"] / 100.0, 3),
+        "minBalanceUsd": round(getattr(settings, "pstn_min_balance_usd_cents", 100) / 100.0, 2),
+        "minBalanceInr": round(getattr(settings, "pstn_min_balance_inr_paise", 5000) / 100.0, 2),
+        "rateUsdPerMin": round(rates["pstn_rate_usd_micros_per_min"] / 1_000_000.0, 6),
         "rateInrPerMin": round(rates["pstn_rate_inr_paise_per_min"] / 100.0, 2),
-        "webRateUsdPerMin": round(rates["web_agent_rate_usd_cents_per_min"] / 100.0, 3),
+        "webRateUsdPerMin": round(rates["web_agent_rate_usd_micros_per_min"] / 1_000_000.0, 6),
         "webRateInrPerMin": round(rates["web_agent_rate_inr_paise_per_min"] / 100.0, 2),
-        "didMonthlyUsd": round(rates["did_monthly_usd_cents"] / 100.0, 2),
+        "didMonthlyUsd": round(rates["did_monthly_usd_micros"] / 1_000_000.0, 6),
         "didMonthlyInr": round(rates["did_monthly_inr_paise"] / 100.0, 2),
         "fxRateInr": fx,
         "remainingMinutes": remaining_min,
@@ -93,7 +95,7 @@ async def wallet_summary(tenant_id: uuid.UUID, user_id: uuid.UUID | None = None)
         factory = get_session_factory()
         if factory is not None:
             async with factory() as session:
-                spent = (
+                spent_paise = (
                     await session.execute(
                         select(func.coalesce(func.sum(BillingWalletTransaction.amount_inr_paise), 0)).where(
                             BillingWalletTransaction.tenant_id == tenant_id,
@@ -102,11 +104,21 @@ async def wallet_summary(tenant_id: uuid.UUID, user_id: uuid.UUID | None = None)
                         )
                     )
                 ).scalar_one()
-                paise = abs(int(spent or 0))
+                spent_cents = (
+                    await session.execute(
+                        select(func.coalesce(func.sum(BillingWalletTransaction.amount_cents), 0)).where(
+                            BillingWalletTransaction.tenant_id == tenant_id,
+                            BillingWalletTransaction.user_id == user_id,
+                            BillingWalletTransaction.amount_cents < 0,
+                        )
+                    )
+                ).scalar_one()
+                paise = abs(int(spent_paise or 0))
+                cents = abs(int(spent_cents or 0))
                 summary["myUsagePaise"] = paise
-                summary["myUsageInr"] = round(paise / 100.0, 2)
-                fx = float(rates.get("fx_rate_inr") or 95.64)
-                summary["myUsageUsd"] = round((paise / 100.0) / fx, 2) if fx else 0.0
+                summary["myUsageCents"] = cents
+                summary["myUsageInr"] = round(paise / 100.0 + ((cents / 100.0) * fx if fx else 0.0), 2)
+                summary["myUsageUsd"] = round(cents / 100.0 + ((paise / 100.0) / fx if fx else 0.0), 2)
     return summary
 
 
@@ -198,19 +210,54 @@ async def list_wallet_transactions(tenant_id: uuid.UUID, limit: int = 50, user_i
                 direction = call_obj.direction
                 agent_name = agents_by_id.get(call_obj.agent_id)
                 dur_str = f"{duration_sec}s" if duration_sec is not None else ""
-                if call_obj.campaign_id:
+                if call_obj.channel == "browser" or getattr(call_obj, "is_test", False) or tx.kind in ("usage_web", "usage_web_test"):
+                    ag_label = f": {agent_name}" if agent_name else ""
+                    desc = f"Browser Voice Test{ag_label} ({dur_str})" if dur_str else f"Browser Voice Test{ag_label}"
+                elif call_obj.campaign_id:
                     is_campaign = True
                     campaign_name = campaigns_by_id.get(call_obj.campaign_id)
                     camp_label = f": {campaign_name}" if campaign_name else ""
                     desc = f"Outbound Campaign{camp_label} ({dur_str})" if dur_str else f"Outbound Campaign{camp_label}"
                 elif call_obj.direction == "outbound":
-                    desc = f"Outbound Call ({dur_str})" if dur_str else "Outbound Call"
+                    ag_label = f": {agent_name}" if agent_name else ""
+                    desc = f"Outbound Call{ag_label} ({dur_str})" if dur_str else f"Outbound Call{ag_label}"
                 elif call_obj.direction == "inbound":
-                    desc = f"Inbound Call ({dur_str})" if dur_str else "Inbound Call"
-                elif call_obj.channel == "browser":
-                    desc = f"Browser Test Call ({dur_str})" if dur_str else "Browser Test Call"
+                    ag_label = f": {agent_name}" if agent_name else ""
+                    desc = f"Inbound Call{ag_label} ({dur_str})" if dur_str else f"Inbound Call{ag_label}"
+                else:
+                    desc = f"Voice Call ({dur_str})" if dur_str else "Voice Call"
+
+            if (not call_obj or duration_sec is None) and tx.reference_id and tx.reference_id.startswith("call:"):
+                raw_cid = tx.reference_id.split(":", 1)[1].strip()
+                try:
+                    from server.call.call_ledger import call_ledger
+                    meta = call_ledger.read_meta(raw_cid)
+                    if meta:
+                        usage = meta.get("usage") if isinstance(meta.get("usage"), dict) else {}
+                        dur = usage.get("duration_sec") if usage.get("duration_sec") is not None else meta.get("duration_sec")
+                        if dur is not None and duration_sec is None:
+                            duration_sec = int(dur)
+                        if not agent_name and meta.get("agent_id"):
+                            try:
+                                ag_uuid = uuid.UUID(str(meta.get("agent_id")))
+                                agent_name = agents_by_id.get(ag_uuid)
+                            except Exception:
+                                pass
+                        if not direction and meta.get("direction"):
+                            direction = str(meta.get("direction"))
+                        ch = str(meta.get("channel") or ("browser" if tx.kind in ("usage_web", "usage_web_test") else ""))
+                        dur_str = f"{duration_sec}s" if duration_sec is not None else ""
+                        if ch == "browser" or tx.kind in ("usage_web", "usage_web_test"):
+                            ag_label = f": {agent_name}" if agent_name else ""
+                            desc = f"Browser Voice Test{ag_label} ({dur_str})" if dur_str else f"Browser Voice Test{ag_label}"
+                        elif direction:
+                            ag_label = f": {agent_name}" if agent_name else ""
+                            desc = f"{direction.title()} Call{ag_label} ({dur_str})" if dur_str else f"{direction.title()} Call{ag_label}"
+                except Exception:
+                    pass
 
             if not desc:
+                dur_str = f"{duration_sec}s" if duration_sec is not None else ""
                 if tx.kind in ("topup", "razorpay_topup_inr", "razorpay_topup"):
                     desc = "Wallet Recharge / Top-up"
                 elif tx.kind == "admin_seed":
@@ -224,9 +271,11 @@ async def list_wallet_transactions(tenant_id: uuid.UUID, limit: int = 50, user_i
                 elif tx.kind == "forfeiture":
                     desc = "Account deletion forfeiture"
                 elif tx.kind == "usage_pstn":
-                    desc = "Phone call usage"
+                    ag_label = f": {agent_name}" if agent_name else ""
+                    desc = f"Phone Call{ag_label} ({dur_str})" if dur_str else "Phone call usage"
                 elif tx.kind in ("usage_web", "usage_web_test"):
-                    desc = "Browser test call"
+                    ag_label = f": {agent_name}" if agent_name else ""
+                    desc = f"Browser Voice Test{ag_label} ({dur_str})" if dur_str else "Browser Voice Test"
                 else:
                     desc = tx.kind.replace("_", " ").title()
 
@@ -251,15 +300,24 @@ async def list_wallet_transactions(tenant_id: uuid.UUID, limit: int = 50, user_i
 
 
 def _wallet_has_minimum(wallet: BillingWallet) -> bool:
-    """True if either INR or USD balance clears the configured floor.
+    """True if either INR or USD balance clears the configured floor, or combined equivalent clears it.
 
     Razorpay top-ups credit INR only; wallets often still have currency='usd'.
     Checking both sides avoids blocking paid tenants after an INR top-up.
     """
     settings = get_settings()
-    inr_ok = int(wallet.balance_inr_paise or 0) >= settings.pstn_min_balance_inr_paise
-    usd_ok = int(wallet.balance_cents or 0) >= settings.pstn_min_balance_usd_cents
-    return inr_ok or usd_ok
+    fx = float(getattr(settings, "fx_rate_inr", 0) or 95.64) or 95.64
+    inr_paise = int(wallet.balance_inr_paise or 0)
+    usd_cents = int(wallet.balance_cents or 0)
+    if inr_paise >= settings.pstn_min_balance_inr_paise or usd_cents >= settings.pstn_min_balance_usd_cents:
+        return True
+    combined_cents = usd_cents + (inr_paise / fx if fx > 0 else 0)
+    if combined_cents >= settings.pstn_min_balance_usd_cents:
+        return True
+    combined_paise = inr_paise + (usd_cents * fx)
+    if combined_paise >= settings.pstn_min_balance_inr_paise:
+        return True
+    return False
 
 
 async def assert_wallet_allows_pstn(tenant_id: uuid.UUID) -> None:
@@ -312,16 +370,16 @@ async def max_allowed_call_duration_sec(
 
     dur_usd = int(balance_cents / rate_cents_per_sec) if balance_cents > 0 else 0
     dur_inr = int(balance_paise / rate_paise_per_sec) if balance_paise > 0 else 0
-    affordable_sec = max(dur_usd, dur_inr)
+    affordable_sec = dur_usd + dur_inr
 
     return min(global_cap_sec, max(0, affordable_sec))
 
 
 async def assert_wallet_can_afford_did(tenant_id: uuid.UUID) -> None:
     """Fail fast before inventory transfer or Telnyx order when the wallet cannot cover monthly DID rent."""
-    from server.services.saas.billing_rates import rates_with_derived_inr
+    from server.services.saas.billing_rates import load_current_rates
 
-    rates = rates_with_derived_inr()
+    rates = await load_current_rates()
     want_cents = int(rates["did_monthly_usd_cents"])
     want_paise = int(rates["did_monthly_inr_paise"])
     wallet = await get_or_create_wallet(tenant_id)
@@ -478,30 +536,59 @@ async def debit_wallet(
             wallet = BillingWallet(tenant_id=tenant_id, balance_cents=0, balance_inr_paise=0, updated_at=_utcnow())
             session.add(wallet)
             await session.flush()
+        have_cents = int(wallet.balance_cents or 0)
+        have_paise = int(wallet.balance_inr_paise or 0)
         primary = (wallet.currency or "usd").lower()
+        fx = float(getattr(get_settings(), "fx_rate_inr", 0) or 95.64) or 95.64
+
+        want_cents = abs(int(amount_cents))
+        want_paise = abs(int(amount_inr_paise))
+
+        if want_cents == 0 and want_paise > 0 and fx > 0:
+            want_cents = max(1, int(round(want_paise / fx)))
+        elif want_paise == 0 and want_cents > 0 and fx > 0:
+            want_paise = max(1, int(round(want_cents * fx)))
+
         debit_cents = 0
         debit_paise = 0
-        if primary == "inr" or amount_inr_paise:
-            want = abs(int(amount_inr_paise))
-            have = int(wallet.balance_inr_paise or 0)
-            if have < want and not allow_partial:
-                raise HTTPException(
-                    status_code=402,
-                    detail={"error": {"code": "insufficient_balance", "message": "Not enough wallet credits."}},
-                )
-            debit_paise = min(have, want) if allow_partial else want
-            wallet.balance_inr_paise = have - debit_paise
-            wallet.currency = "inr"
+
+        if primary == "inr":
+            if have_paise >= want_paise:
+                debit_paise = want_paise
+            elif have_cents >= want_cents:
+                debit_cents = want_cents
+            else:
+                total_avail_paise = have_paise + int(round(have_cents * fx))
+                if total_avail_paise < want_paise and not allow_partial:
+                    raise HTTPException(
+                        status_code=402,
+                        detail={"error": {"code": "insufficient_balance", "message": "Not enough wallet credits."}},
+                    )
+                debit_paise = min(have_paise, want_paise)
+                rem_paise = want_paise - debit_paise
+                if rem_paise > 0 and have_cents > 0:
+                    needed_cents = max(1, int(round(rem_paise / fx)))
+                    debit_cents = min(have_cents, needed_cents)
         else:
-            want = abs(int(amount_cents))
-            have = int(wallet.balance_cents or 0)
-            if have < want and not allow_partial:
-                raise HTTPException(
-                    status_code=402,
-                    detail={"error": {"code": "insufficient_balance", "message": "Not enough wallet credits."}},
-                )
-            debit_cents = min(have, want) if allow_partial else want
-            wallet.balance_cents = have - debit_cents
+            if have_cents >= want_cents:
+                debit_cents = want_cents
+            elif have_paise >= want_paise:
+                debit_paise = want_paise
+            else:
+                total_avail_cents = have_cents + int(round(have_paise / fx))
+                if total_avail_cents < want_cents and not allow_partial:
+                    raise HTTPException(
+                        status_code=402,
+                        detail={"error": {"code": "insufficient_balance", "message": "Not enough wallet credits."}},
+                    )
+                debit_cents = min(have_cents, want_cents)
+                rem_cents = want_cents - debit_cents
+                if rem_cents > 0 and have_paise > 0:
+                    needed_paise = max(1, int(round(rem_cents * fx)))
+                    debit_paise = min(have_paise, needed_paise)
+
+        wallet.balance_cents = max(0, have_cents - debit_cents)
+        wallet.balance_inr_paise = max(0, have_paise - debit_paise)
         wallet.updated_at = _utcnow()
         session.add(
             BillingWalletTransaction(
@@ -533,6 +620,8 @@ def _resolve_call_wallet_debit(
     duration_sec: int,
     settings: Any,
     stored_rate_cents: int | None = None,
+    stored_rate_micros: int | None = None,
+    stored_rate_inr_paise: int | None = None,
     stored_fx: float | None = None,
 ) -> tuple[int, int, str]:
     """Return (usd_cents, inr_paise, billing_mode) for wallet debit.
@@ -541,19 +630,63 @@ def _resolve_call_wallet_debit(
     """
     from server.call.call_ledger import call_ledger
 
-    meta = call_ledger.read_meta(call_id) or {}
-    usage = meta.get("usage") if isinstance(meta.get("usage"), dict) else {}
-    cost_inr = usage.get("cost_inr")
-    cost_usd = usage.get("cost_usd")
-    if cost_inr is not None and float(cost_inr) > 0:
-        paise = max(1, int(round(float(cost_inr) * 100)))
-        usd = float(cost_usd or 0)
-        if usd > 0:
-            cents = max(1, int(round(usd * 100)))
-        else:
-            fx = float(usage.get("fx_rate_inr") or getattr(settings, "fx_rate_inr", 0) or 95.64)
-            cents = max(1, int(round(paise / fx))) if fx > 0 else 1
-        return cents, paise, "ledger_usage"
+    if channel != "browser":
+        meta = call_ledger.read_meta(call_id) or {}
+        usage = meta.get("usage") if isinstance(meta.get("usage"), dict) else {}
+        cost_inr = usage.get("cost_inr")
+        cost_usd = usage.get("cost_usd")
+        if cost_inr is not None and float(cost_inr) > 0:
+            paise = max(1, int(round(float(cost_inr) * 100)))
+            usd = float(cost_usd or 0)
+            if usd > 0:
+                cents = max(1, int(round(usd * 100)))
+            else:
+                fx = float(usage.get("fx_rate_inr") or getattr(settings, "fx_rate_inr", 0) or 95.64)
+                cents = max(1, int(round(paise / fx))) if fx > 0 else 1
+            return cents, paise, "ledger_usage"
+
+    # New call snapshots preserve both currencies. Charge from the native rate
+    # in paise for INR wallets and only round USD at the wallet-cent boundary.
+    if (
+        (stored_rate_micros is not None and int(stored_rate_micros) > 0)
+        or (stored_rate_inr_paise is not None and int(stored_rate_inr_paise) > 0)
+    ):
+        from decimal import Decimal, ROUND_HALF_UP
+
+        duration = max(1, int(duration_sec))
+        fx = Decimal(str(stored_fx if stored_fx is not None and float(stored_fx) > 0 else 95.64))
+        micros = (
+            int(stored_rate_micros)
+            if stored_rate_micros is not None and int(stored_rate_micros) > 0
+            else int(stored_rate_cents or 0) * 10_000
+        )
+        inr_rate_paise = (
+            int(stored_rate_inr_paise)
+            if stored_rate_inr_paise is not None and int(stored_rate_inr_paise) > 0
+            else int(
+                (Decimal(micros) * fx / Decimal(10_000)).quantize(
+                    Decimal("1"), rounding=ROUND_HALF_UP
+                )
+            )
+        )
+        cents = max(
+            1,
+            int(
+                (Decimal(duration) * Decimal(micros) / Decimal(600_000)).quantize(
+                    Decimal("1"), rounding=ROUND_HALF_UP
+                )
+            ),
+        )
+        paise = max(
+            1,
+            int(
+                (Decimal(duration) * Decimal(inr_rate_paise) / Decimal(60)).quantize(
+                    Decimal("1"), rounding=ROUND_HALF_UP
+                )
+            ),
+        )
+        return cents, paise, "catalog_prorated"
+
     minutes = max(0.0, float(duration_sec)) / 60.0
     if minutes <= 0:
         minutes = 1.0 / 60.0
@@ -616,11 +749,17 @@ async def bill_call_usage_if_applicable(call_id: str) -> None:
         billed_user = _parse_user_id(meta.get("billed_user_id") or stored.get("billed_user_id"))
     except Exception:
         billed_user = _parse_user_id(stored.get("billed_user_id"))
-    if channel == "browser" and billed_user is None:
-        return
+
+    if billed_user is None and stored.get("session_id", "").startswith("web-agent-"):
+        import re
+        m = re.search(r"web-agent-([0-9a-fA-F-]{36})-", stored.get("session_id", ""))
+        if m:
+            billed_user = _parse_user_id(m.group(1))
+
     duration_sec = int(stored.get("duration_sec") or 0)
     if duration_sec <= 0:
-        duration_sec = 60
+        logger.info("[WALLET] skipping 0-duration voice session debit call=%s channel=%s", call_id, channel)
+        return
     # A browser practice run is still billable when it is attributed to a user —
     # that is the existing contract — but it is not a real conversation, so it is
     # tagged distinctly in the ledger and never mixed into PSTN usage reporting.
@@ -632,6 +771,8 @@ async def bill_call_usage_if_applicable(call_id: str) -> None:
         duration_sec=duration_sec,
         settings=settings,
         stored_rate_cents=stored.get("applied_rate_usd_cents_per_min"),
+        stored_rate_micros=stored.get("applied_rate_usd_micros_per_min"),
+        stored_rate_inr_paise=stored.get("applied_rate_inr_paise_per_min"),
         stored_fx=stored.get("applied_fx_rate_inr"),
     )
     try:
@@ -671,11 +812,11 @@ async def debit_did_purchase_in_session(
     one currency is never locked out by the other's empty balance. The caller owns
     the transaction so the purchase/reservation and debit can commit atomically.
     """
-    from server.services.saas.billing_rates import rates_with_derived_inr
+    from server.services.saas.billing_rates import load_current_rates
 
     # The admin-configured rate, not the env default — otherwise a price change
     # in the admin panel changes what the console quotes but not what it charges.
-    rates = rates_with_derived_inr()
+    rates = await load_current_rates()
     want_cents = int(rates["did_monthly_usd_cents"])
     want_paise = int(rates["did_monthly_inr_paise"])
     ref = f"did:{purchase_id}"

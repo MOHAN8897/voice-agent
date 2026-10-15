@@ -63,6 +63,24 @@ def test_realtime_voice_stack_keeps_gemini_live():
     assert out["language"] == "en-US"
 
 
+def test_realtime_voice_stack_preserves_indic_gemini_library_voice():
+    from server.realtime.models import realtime_voice_config
+
+    raw = {
+        "pipeline": "realtime_voice",
+        "voice_flow": "realtime_e2e",
+        "language": "te-IN",
+        "llm": {"provider": "gemini", "model": "gemini-3.8-live"},
+        "realtime_voice": {"voice": "te-in-csagent-5"},
+    }
+
+    normalized, adjustments = normalize_pstn_stack_override(raw, language="te-IN")
+
+    assert not adjustments
+    assert normalized["realtime_voice"]["voice"] == "te-in-csagent-5"
+    assert realtime_voice_config(normalized)["voice"] == "te-in-csagent-5"
+
+
 def test_realtime_voice_stack_keeps_mini_and_voice():
     raw = {
         "pipeline": "realtime_voice",

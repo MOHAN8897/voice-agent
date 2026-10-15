@@ -28,6 +28,7 @@ import {
   formatWhen,
   useAdminResource,
 } from "@/lib/useAdminResource";
+import { isWalletCurrencyDisplay, useWalletCurrencyDisplay } from "@/lib/useWalletCurrencyDisplay";
 
 type Purchase = {
   purchaseId: string;
@@ -61,6 +62,9 @@ type Rates = {
   webInrPerMin: number;
   numberMonthlyInr: number;
 };
+
+type RateField = "pstn" | "web" | "number";
+type RateCurrency = "USD" | "INR";
 
 /** Market rate, shown for reference only — charging uses rates.fxRateInr. */
 type FxInfo = {
@@ -125,12 +129,19 @@ export default function AdminBillingPage() {
   const searchParams = useSearchParams();
   const tenantFromUrl = searchParams.get("tenantId") || "";
   const [tenantId, setTenantId] = useState(tenantFromUrl);
-  // USD is the currency admins author prices in; the INR mirror is read-only.
+  // Wallet adjustments are kept in USD; price inputs retain their entered currency.
   const [dollars, setDollars] = useState("25");
+  const [walletAmountDraft, setWalletAmountDraft] = useState<string | null>(null);
   const [adjustNote, setAdjustNote] = useState("");
   const [pstnUsd, setPstnUsd] = useState("0.09");
   const [webUsd, setWebUsd] = useState("0.07");
   const [numberUsd, setNumberUsd] = useState("4");
+  const [pstnInr, setPstnInr] = useState("0");
+  const [webInr, setWebInr] = useState("0");
+  const [numberInr, setNumberInr] = useState("0");
+  const [rateDrafts, setRateDrafts] = useState<
+    Partial<Record<RateField, Partial<Record<RateCurrency, string>>>>
+  >({});
   const [fxRate, setFxRate] = useState("95.64");
   const [busy, setBusy] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -139,6 +150,7 @@ export default function AdminBillingPage() {
   const [query, setQuery] = useState("");
   const [walletStatusFilter, setWalletStatusFilter] = useState("all");
   const [walletBalanceFilter, setWalletBalanceFilter] = useState("all");
+  const { display: walletCurrencyDisplay, setDisplay: setWalletCurrencyPreference } = useWalletCurrencyDisplay();
 
   // Orders filter state
   const [orderQuery, setOrderQuery] = useState("");
@@ -158,11 +170,118 @@ export default function AdminBillingPage() {
     setPstnUsd(String(r.pstnUsdPerMin ?? 0.09));
     setWebUsd(String(r.webUsdPerMin ?? 0.07));
     setNumberUsd(String(r.numberMonthlyUsd ?? 4));
+    setPstnInr(String(r.pstnInrPerMin ?? 0));
+    setWebInr(String(r.webInrPerMin ?? 0));
+    setNumberInr(String(r.numberMonthlyInr ?? 0));
     setFxRate(String(r.fxRateInr ?? 95.64));
   }, [ratesRes.data]);
 
   const chargeFx = Number(ratesRes.data?.rates?.fxRateInr) || 95.64;
   const liveFx = Number(ratesRes.data?.fx?.liveRateInr) || 0;
+  const priceInputCurrency: RateCurrency = walletCurrencyDisplay === "INR" ? "INR" : "USD";
+  const proposedFx = Number(fxRate);
+  const priceInputFx = Number.isFinite(proposedFx) && proposedFx > 0 ? proposedFx : chargeFx;
+
+  function usdPriceInput(usdAmount: string, fx: number) {
+    if (usdAmount.trim() === "") return "";
+    const amount = Number(usdAmount);
+    if (!Number.isFinite(amount)) return usdAmount;
+    return walletCurrencyDisplay === "INR" ? (amount * fx).toFixed(2) : usdAmount;
+  }
+
+  function rateInputValue(field: RateField, currency: RateCurrency = priceInputCurrency) {
+    const draft = rateDrafts[field];
+    const direct = draft?.[currency];
+    if (direct !== undefined) return direct;
+
+    const otherCurrency: RateCurrency = currency === "INR" ? "USD" : "INR";
+    const otherDraft = draft?.[otherCurrency];
+    if (otherDraft !== undefined) {
+      if (otherDraft.trim() === "") return "";
+      const amount = Number(otherDraft);
+      if (!Number.isFinite(amount)) return otherDraft;
+      return currency === "INR"
+        ? (amount * priceInputFx).toFixed(2)
+        : (amount / priceInputFx).toFixed(6).replace(/\.?0+$/, "");
+    }
+
+    const currentValues =
+      currency === "INR"
+        ? { pstn: pstnInr, web: webInr, number: numberInr }
+        : { pstn: pstnUsd, web: webUsd, number: numberUsd };
+    return currentValues[field];
+  }
+
+  function updateRateInput(field: RateField, value: string) {
+    setRateDrafts((current) => ({
+      ...current,
+      [field]: { ...current[field], [priceInputCurrency]: value },
+    }));
+  }
+
+  function rateForSave(field: RateField) {
+    return rateInputValue(field);
+  }
+
+  function updateWalletAmount(value: string) {
+    setWalletAmountDraft(value);
+    const amount = Number(value);
+    if (value.trim() === "") {
+      setDollars("");
+    } else if (Number.isFinite(amount)) {
+      setDollars(String(walletCurrencyDisplay === "INR" ? amount / chargeFx : amount));
+    }
+  }
+
+  function changeWalletCurrency(value: string) {
+    if (!isWalletCurrencyDisplay(value)) return;
+    setWalletAmountDraft(null);
+    setWalletCurrencyPreference(value);
+  }
+
+  function displayedRate(usdValue: number | string, inrValue: number | string) {
+    const usdAmount = Number(usdValue);
+    const inrAmount = Number(inrValue);
+    if (!Number.isFinite(usdAmount) || !Number.isFinite(inrAmount)) return "—";
+    const usd = "$" + usdAmount.toFixed(6).replace(/0+$/, "").replace(/\.$/, "");
+    const inr = "₹" + inrAmount.toFixed(2);
+    if (walletCurrencyDisplay === "USD") return usd;
+    if (walletCurrencyDisplay === "INR") return inr;
+    return (
+      <span className="block leading-5">
+        <span className="block">{usd}</span>
+        <span className="block text-[11px] font-normal text-text-muted">≈ {inr}</span>
+      </span>
+    );
+  }
+
+  function paymentOrderAmount(order: PayOrder, settlement: boolean) {
+    const inrPaise = Math.round(Number(order.amountInr || 0) * 100);
+    const usdCents = Math.round((Number(order.amountInr || 0) / chargeFx) * 100);
+    const actualCharge = `${order.currency} ${order.amount.toFixed(2)}`;
+
+    if (walletCurrencyDisplay === "both") {
+      if (settlement) return formatInr(inrPaise);
+      return (
+        <span className="flex flex-col">
+          <span>{actualCharge}</span>
+          <span className="text-[10px] font-normal text-text-muted">
+            ≈ {formatUsd(usdCents)} / {formatInr(inrPaise)}
+          </span>
+        </span>
+      );
+    }
+
+    const selectedAmount = walletCurrencyDisplay === "INR" ? formatInr(inrPaise) : formatUsd(usdCents);
+    if (settlement && walletCurrencyDisplay === "INR") return selectedAmount;
+    const sourceAmount = settlement ? `Settled ${formatInr(inrPaise)}` : `Charged ${actualCharge}`;
+    return (
+      <span className="flex flex-col">
+        <span>{selectedAmount}</span>
+        <span className="text-[10px] font-normal text-text-muted">{sourceAmount}</span>
+      </span>
+    );
+  }
 
   useEffect(() => {
     const p = payments.data;
@@ -182,6 +301,12 @@ export default function AdminBillingPage() {
   }
 
   const allWallets = wallets.data?.wallets ?? [];
+  const zeroBalanceLabel = walletCurrencyDisplay === "INR" ? "₹0" : walletCurrencyDisplay === "both" ? "$0 / ₹0" : "$0";
+  const lowBalanceLabel = walletCurrencyDisplay === "INR"
+    ? `₹${(5 * chargeFx).toFixed(2)}`
+    : walletCurrencyDisplay === "both"
+    ? `$5 / ₹${(5 * chargeFx).toFixed(2)}`
+    : "$5";
   const rows = useMemo(() => {
     return allWallets.filter((w) => {
       if (walletStatusFilter !== "all" && (w.status || "").toLowerCase() !== walletStatusFilter.toLowerCase()) return false;
@@ -192,7 +317,7 @@ export default function AdminBillingPage() {
       if (!query.trim()) return true;
       return `${w.name} ${w.tenantId}`.toLowerCase().includes(query.trim().toLowerCase());
     });
-  }, [allWallets, walletStatusFilter, walletBalanceFilter, query]);
+  }, [allWallets, walletStatusFilter, walletBalanceFilter, query, walletCurrencyDisplay, chargeFx]);
 
   const allOrders = payOrders.data?.orders ?? [];
   const filteredOrders = useMemo(() => {
@@ -215,10 +340,45 @@ export default function AdminBillingPage() {
   }, [allPurchases, purchaseQuery]);
 
   const failed = purchaseRows.filter((p) => p.status === "failed").length;
+  function walletUsdCents(wallet: WalletRow) {
+    const cents = Math.round(wallet.balanceCents || 0);
+    const paise = Math.round(wallet.balanceInrPaise || 0);
+    return Math.round(cents + paise / chargeFx);
+  }
+
+  function walletInrPaise(wallet: WalletRow) {
+    const cents = Math.round(wallet.balanceCents || 0);
+    const paise = Math.round(wallet.balanceInrPaise || 0);
+    return Math.round(paise + cents * chargeFx);
+  }
+
+  function walletBalanceLabel(wallet: WalletRow) {
+    const usd = formatUsd(walletUsdCents(wallet));
+    const inr = formatInr(walletInrPaise(wallet));
+    if (walletCurrencyDisplay === "USD") return usd;
+    if (walletCurrencyDisplay === "INR") return inr;
+    return `${usd} / ${inr}`;
+  }
+
+  function renderWalletBalance(wallet: WalletRow) {
+    const usd = formatUsd(walletUsdCents(wallet));
+    const inr = formatInr(walletInrPaise(wallet));
+
+    if (walletCurrencyDisplay === "USD") return usd;
+    if (walletCurrencyDisplay === "INR") return inr;
+    return (
+      <span className="block leading-5">
+        <span className="block">{usd}</span>
+        <span className="block text-[11px] font-normal text-text-muted">≈ {inr}</span>
+      </span>
+    );
+  }
+
   const totalUsdCents = rows.reduce(
-    (sum, w) => sum + Math.round((w.balanceUsd || 0) * 100),
+    (sum, w) => sum + walletUsdCents(w),
     0
   );
+  const totalInrPaise = rows.reduce((sum, w) => sum + walletInrPaise(w), 0);
 
   async function run(key: string, fn: () => Promise<void>) {
     setBusy(key);
@@ -233,10 +393,11 @@ export default function AdminBillingPage() {
   }
 
   function adjust(sign: 1 | -1) {
-    const amount = Math.abs(Number(dollars));
+    const fallbackAmount = walletCurrencyDisplay === "INR" ? Number(dollars) * chargeFx : Number(dollars);
+    const amount = Math.abs(walletAmountDraft === null ? fallbackAmount : Number(walletAmountDraft));
     const note = adjustNote.trim();
     if (!tenantId || !Number.isFinite(amount) || amount <= 0) {
-      setError("Pick a tenant and enter a positive USD amount.");
+      setError(`Pick a tenant and enter a positive ${priceInputCurrency} amount.`);
       return;
     }
     if (note.length < 8) {
@@ -248,28 +409,49 @@ export default function AdminBillingPage() {
         method: "POST",
         body: {
           tenantId,
-          amountUsdCents: Math.round(amount * 100) * sign,
+          ...(walletCurrencyDisplay === "INR"
+            ? { amountInrPaise: Math.round(amount * 100) * sign }
+            : { amountUsdCents: Math.round(amount * 100) * sign }),
           reason: sign > 0 ? "admin_grant" : "admin_debit",
           note,
         },
       });
       setAdjustNote("");
+      setWalletAmountDraft(null);
       await wallets.reload();
     });
   }
 
   function saveRates() {
+    const pstnRate = rateForSave("pstn");
+    const webRate = rateForSave("web");
+    const numberRate = rateForSave("number");
+    const enteredRates = [Number(pstnRate), Number(webRate), Number(numberRate)];
+    const nextRates = {
+      rateCurrency: priceInputCurrency,
+      pstnUsdPerMin: priceInputCurrency === "USD" && rateDrafts.pstn ? pstnRate : undefined,
+      webUsdPerMin: priceInputCurrency === "USD" && rateDrafts.web ? webRate : undefined,
+      numberMonthlyUsd: priceInputCurrency === "USD" && rateDrafts.number ? numberRate : undefined,
+      pstnInrPerMin: priceInputCurrency === "INR" && rateDrafts.pstn ? pstnRate : undefined,
+      webInrPerMin: priceInputCurrency === "INR" && rateDrafts.web ? webRate : undefined,
+      didMonthlyInr: priceInputCurrency === "INR" && rateDrafts.number ? numberRate : undefined,
+      fxRateInr: Number(fxRate),
+    };
+    if (
+      [pstnRate, webRate, numberRate].some((value) => value.trim() === "") ||
+      enteredRates.some((value, index) => !Number.isFinite(value) || (index < 2 ? value <= 0 : value < 0)) ||
+      !Number.isFinite(nextRates.fxRateInr) || nextRates.fxRateInr <= 0
+    ) {
+      setError("Enter valid positive prices and a positive INR per USD charge rate.");
+      return;
+    }
     return run("rates", async () => {
       await adminAction("/api/dev/admin/billing-rates", {
         method: "PUT",
-        body: {
-          pstnUsdPerMin: Number(pstnUsd),
-          webUsdPerMin: Number(webUsd),
-          numberMonthlyUsd: Number(numberUsd),
-          fxRateInr: Number(fxRate),
-        },
+        body: nextRates,
       });
       await ratesRes.reload();
+      setRateDrafts({});
     });
   }
 
@@ -294,13 +476,29 @@ export default function AdminBillingPage() {
     <div className="space-y-6 p-6" data-testid="admin-billing-wallets-page">
       <AdminPageHeader
         title="Wallet & rates"
-        description="Prices are set in USD. The INR figures shown are derived at the charge rate. Customer payments run through Razorpay."
+        description={`Wallets and prices display in ${walletCurrencyDisplay === "both" ? "USD and INR" : walletCurrencyDisplay}. Rates preserve their entered currency precision, including exact INR paise.`}
         actions={
-          tenantId ? (
-            <Link href={`/dev/admin/tenants/${tenantId}?tab=wallet`}>
-              <SkeuoButton variant="ghost">Tenant wallet cockpit</SkeuoButton>
-            </Link>
-          ) : undefined
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="block text-xs">
+              <span className="mb-1 block text-text-muted">Display currency</span>
+              <select
+                value={walletCurrencyDisplay}
+                onChange={(e) => changeWalletCurrency(e.currentTarget.value)}
+                className="rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised px-3 py-2 text-sm text-text"
+                aria-label="Billing display currency"
+                data-testid="admin-wallet-currency-display"
+              >
+                <option value="both">USD and INR</option>
+                <option value="USD">USD</option>
+                <option value="INR">INR</option>
+              </select>
+            </label>
+            {tenantId ? (
+              <Link href={`/dev/admin/tenants/${tenantId}?tab=wallet`}>
+                <SkeuoButton variant="ghost">Tenant wallet cockpit</SkeuoButton>
+              </Link>
+            ) : null}
+          </div>
         }
       />
 
@@ -310,14 +508,26 @@ export default function AdminBillingPage() {
       <AdminError error={ratesRes.error} />
 
       <div className="grid gap-4 sm:grid-cols-4">
-        <AdminStat label="Wallet USD total" value={formatUsd(totalUsdCents)} />
         <AdminStat
-          label="PSTN $/min"
-          value={`$${ratesRes.data?.rates?.pstnUsdPerMin ?? "—"}`}
+          label={`Wallet total${walletCurrencyDisplay === "both" ? " (USD / INR)" : ` (${walletCurrencyDisplay})`}`}
+          value={
+            walletCurrencyDisplay === "USD" ? formatUsd(totalUsdCents) :
+            walletCurrencyDisplay === "INR" ? formatInr(totalInrPaise) : (
+              <>
+                <span className="block">{formatUsd(totalUsdCents)}</span>
+                <span className="block text-sm text-text-muted">≈ {formatInr(totalInrPaise)}</span>
+              </>
+            )
+          }
+          hint={walletCurrencyDisplay === "both" ? `INR equivalent at ₹${chargeFx.toFixed(2)} per USD` : undefined}
         />
         <AdminStat
-          label="Number rental $/mo"
-          value={`$${ratesRes.data?.rates?.numberMonthlyUsd ?? "—"}`}
+          label={`PSTN ${walletCurrencyDisplay === "INR" ? "₹" : "$"}/min`}
+          value={displayedRate(ratesRes.data?.rates?.pstnUsdPerMin ?? Number.NaN, ratesRes.data?.rates?.pstnInrPerMin ?? Number.NaN)}
+        />
+        <AdminStat
+          label={`Number rental ${walletCurrencyDisplay === "INR" ? "₹" : "$"}/mo`}
+          value={displayedRate(ratesRes.data?.rates?.numberMonthlyUsd ?? Number.NaN, ratesRes.data?.rates?.numberMonthlyInr ?? Number.NaN)}
         />
         <AdminStat label="Failed purchases" value={failed} tone={failed > 0 ? "warn" : "good"} />
       </div>
@@ -335,7 +545,7 @@ export default function AdminBillingPage() {
               data-testid="admin-fx-charge-rate"
             />
             <span className="mt-1 block text-[11px] text-text-muted">
-              Prices are multiplied by this. Saving it reprices everything.
+              Used for currency equivalents; directly entered INR rates keep their paise value.
             </span>
           </div>
           <div
@@ -355,38 +565,43 @@ export default function AdminBillingPage() {
         </div>
       </DevCard>
 
-      <DevCard title="Prices (USD)">
+      <DevCard title={`Prices (${walletCurrencyDisplay === "both" ? "USD + INR" : walletCurrencyDisplay})`}>
+        <p className="mb-3 text-xs text-text-muted">
+          {walletCurrencyDisplay === "both"
+            ? "Enter rates in USD. Both configured USD and INR prices are shown."
+            : `Enter rates in ${walletCurrencyDisplay}; saved prices keep the entered currency precision.`}
+        </p>
         <div className="flex flex-wrap items-end gap-3">
           <label className="block text-xs">
-            <span className="mb-1 block text-text-muted">Phone (PSTN) $/min</span>
+            <span className="mb-1 block text-text-muted">Phone (PSTN) {priceInputCurrency === "INR" ? "₹" : "$"}/min</span>
             <SkeuoInput
-              value={pstnUsd}
-              onChange={(e) => setPstnUsd(e.target.value)}
+              value={rateInputValue("pstn")}
+              onChange={(e) => updateRateInput("pstn", e.target.value)}
               inputMode="decimal"
               className="w-28"
-              aria-label="PSTN USD per minute"
+              aria-label={`PSTN ${priceInputCurrency} per minute`}
               data-testid="admin-rate-pstn-usd"
             />
           </label>
           <label className="block text-xs">
-            <span className="mb-1 block text-text-muted">Browser test $/min</span>
+            <span className="mb-1 block text-text-muted">Browser agent {priceInputCurrency === "INR" ? "₹" : "$"}/min</span>
             <SkeuoInput
-              value={webUsd}
-              onChange={(e) => setWebUsd(e.target.value)}
+              value={rateInputValue("web")}
+              onChange={(e) => updateRateInput("web", e.target.value)}
               inputMode="decimal"
               className="w-28"
-              aria-label="Web agent USD per minute"
+              aria-label={`Web agent ${priceInputCurrency} per minute`}
               data-testid="admin-rate-web-usd"
             />
           </label>
           <label className="block text-xs">
-            <span className="mb-1 block text-text-muted">Phone number rental $/mo</span>
+            <span className="mb-1 block text-text-muted">Phone number rental {priceInputCurrency === "INR" ? "₹" : "$"}/mo</span>
             <SkeuoInput
-              value={numberUsd}
-              onChange={(e) => setNumberUsd(e.target.value)}
+              value={rateInputValue("number")}
+              onChange={(e) => updateRateInput("number", e.target.value)}
               inputMode="decimal"
               className="w-28"
-              aria-label="Number rental USD per month"
+              aria-label={`Number rental ${priceInputCurrency} per month`}
               data-testid="admin-rate-number-usd"
             />
           </label>
@@ -394,19 +609,19 @@ export default function AdminBillingPage() {
             {busy === "rates" ? "Saving…" : "Save rates"}
           </SkeuoButton>
         </div>
-        {/* Derived mirrors: shown so an admin can see the rupee consequence of
-            the dollar price they just typed, without a second source of truth. */}
-        <div
-          className="mt-3 flex flex-wrap gap-4 font-mono text-[11px] text-text-muted"
-          data-testid="admin-rate-inr-mirror"
-        >
-          <span>PSTN ≈ ₹{((Number(pstnUsd) || 0) * chargeFx).toFixed(2)}/min</span>
-          <span>Browser ≈ ₹{((Number(webUsd) || 0) * chargeFx).toFixed(2)}/min</span>
-          <span>Number ≈ ₹{((Number(numberUsd) || 0) * chargeFx).toFixed(2)}/mo</span>
-        </div>
+        {walletCurrencyDisplay === "both" && (
+          <div
+            className="mt-3 flex flex-wrap gap-4 font-mono text-[11px] text-text-muted"
+            data-testid="admin-rate-inr-mirror"
+          >
+            <span>PSTN ₹{Number(rateInputValue("pstn", "INR") || 0).toFixed(2)}/min</span>
+            <span>Browser ₹{Number(rateInputValue("web", "INR") || 0).toFixed(2)}/min</span>
+            <span>Number ₹{Number(rateInputValue("number", "INR") || 0).toFixed(2)}/mo</span>
+          </div>
+        )}
       </DevCard>
 
-      <DevCard title="Manual wallet top-up / debit (USD)">
+      <DevCard title={`Manual wallet top-up / debit (${walletCurrencyDisplay === "both" ? "USD" : walletCurrencyDisplay})`}>
         <p className="mb-3 text-xs text-text-muted">
           Credits or debits one wallet leg (USD or INR, matching the tenant&apos;s primary currency).
           Every change requires a statement for the audit trail.
@@ -423,24 +638,26 @@ export default function AdminBillingPage() {
               <option value="">Select tenant…</option>
               {(wallets.data?.wallets ?? []).map((w) => (
                 <option key={w.tenantId} value={w.tenantId}>
-                  {w.name} — {formatUsd(Math.round((w.balanceUsd || 0) * 100))}
+                    {w.name} — {walletBalanceLabel(w)}
                 </option>
               ))}
             </select>
           </label>
           <label className="block text-xs">
-            <span className="mb-1 block text-text-muted">Amount ($)</span>
+            <span className="mb-1 block text-text-muted">Amount ({priceInputCurrency})</span>
             <SkeuoInput
-              value={dollars}
-              onChange={(e) => setDollars(e.target.value)}
+              value={walletAmountDraft ?? usdPriceInput(dollars, chargeFx)}
+              onChange={(e) => updateWalletAmount(e.target.value)}
               inputMode="decimal"
-              aria-label="USD amount"
+              aria-label={`${priceInputCurrency} amount`}
               className="w-28"
               data-testid="admin-wallet-usd-amount"
             />
-            <span className="mt-1 block font-mono text-[11px] text-text-muted">
-              ≈ ₹{((Number(dollars) || 0) * chargeFx).toFixed(2)}
-            </span>
+            {walletCurrencyDisplay === "both" && (
+              <span className="mt-1 block font-mono text-[11px] text-text-muted">
+                ≈ ₹{((Number(dollars) || 0) * chargeFx).toFixed(2)}
+              </span>
+            )}
           </label>
           <label className="block min-w-[240px] flex-1 text-xs">
             <span className="mb-1 block text-text-muted">Admin statement</span>
@@ -610,11 +827,14 @@ export default function AdminBillingPage() {
 
         <AdminLoading loading={payOrders.loading} />
         <AdminError error={payOrders.error} />
+        <p className="mb-2 text-[11px] text-text-muted">
+          Order equivalents use the display currency above and current charge FX. The smaller line preserves each order&apos;s actual charge or settlement amount.
+        </p>
         <SkeuoTable>
           <SkeuoTableHead>
             <SkeuoTh>Tenant</SkeuoTh>
-            <SkeuoTh>Charged</SkeuoTh>
-            <SkeuoTh>Settled (INR)</SkeuoTh>
+            <SkeuoTh>{walletCurrencyDisplay === "both" ? "Charged" : `Charged (${walletCurrencyDisplay} equiv.)`}</SkeuoTh>
+            <SkeuoTh>{walletCurrencyDisplay === "both" ? "Settled (INR)" : `Settled (${walletCurrencyDisplay} equiv.)`}</SkeuoTh>
             <SkeuoTh>Status</SkeuoTh>
             <SkeuoTh>When</SkeuoTh>
           </SkeuoTableHead>
@@ -625,10 +845,8 @@ export default function AdminBillingPage() {
                   <div className="font-medium text-text">{o.tenantName || "Unassigned"}</div>
                   <div className="font-mono text-[10px] text-text-muted">{o.orderId}</div>
                 </SkeuoTd>
-                <SkeuoTd className="font-mono font-medium">
-                  {o.currency} {o.amount.toFixed(2)}
-                </SkeuoTd>
-                <SkeuoTd className="font-mono">{formatInr(Math.round(o.amountInr * 100))}</SkeuoTd>
+                <SkeuoTd className="font-mono font-medium">{paymentOrderAmount(o, false)}</SkeuoTd>
+                <SkeuoTd className="font-mono">{paymentOrderAmount(o, true)}</SkeuoTd>
                 <SkeuoTd>
                   <SkeuoBadge
                     tone={
@@ -658,7 +876,7 @@ export default function AdminBillingPage() {
 
       <DevCard title="Tenant wallets">
         <div className="mb-4 space-y-3">
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <div>
               <label className="mb-1 block text-xs font-medium text-text-muted">Search wallet</label>
               <SkeuoInput
@@ -676,9 +894,9 @@ export default function AdminBillingPage() {
                 className="w-full rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised px-3 py-2 text-sm text-text"
               >
                 <option value="all">All balances</option>
-                <option value="funded">Funded (&gt; $0)</option>
-                <option value="low">Low balance (&lt; $5)</option>
-                <option value="depleted">Zero / Depleted ($0)</option>
+                <option value="funded">Funded (&gt; {zeroBalanceLabel})</option>
+                <option value="low">Low balance (&lt; {lowBalanceLabel})</option>
+                <option value="depleted">Zero / Depleted ({zeroBalanceLabel})</option>
               </select>
             </div>
             <div>
@@ -722,7 +940,9 @@ export default function AdminBillingPage() {
           <SkeuoTableHead>
             <SkeuoTh>Tenant</SkeuoTh>
             <SkeuoTh>Status</SkeuoTh>
-            <SkeuoTh>USD</SkeuoTh>
+            <SkeuoTh>
+              {walletCurrencyDisplay === "both" ? "Balance (USD / INR)" : `Balance (${walletCurrencyDisplay})`}
+            </SkeuoTh>
             <SkeuoTh>Updated</SkeuoTh>
             <SkeuoTh className="text-right">Select</SkeuoTh>
           </SkeuoTableHead>
@@ -740,8 +960,8 @@ export default function AdminBillingPage() {
                     {w.status || "active"}
                   </SkeuoBadge>
                 </SkeuoTd>
-                <SkeuoTd className="font-mono font-medium" data-testid="admin-wallet-usd-cell">
-                  {formatUsd(Math.round((w.balanceUsd || 0) * 100))}
+                <SkeuoTd className="font-mono font-medium" data-testid="admin-wallet-balance-cell">
+                  {renderWalletBalance(w)}
                 </SkeuoTd>
                 <SkeuoTd className="text-xs text-text-muted">{formatWhen(w.updatedAt)}</SkeuoTd>
                 <SkeuoTd className="text-right">

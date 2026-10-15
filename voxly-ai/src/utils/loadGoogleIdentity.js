@@ -21,7 +21,7 @@ export function loadGoogleIdentityScript() {
     script.dataset.voxlyGsi = '1';
     script.onload = () => resolve(Boolean(window.google?.accounts?.id));
     script.onerror = () => resolve(false);
-    document.head.appendChild(script);
+    (document.head || document.documentElement).appendChild(script);
   });
 
   return gsiLoadPromise;

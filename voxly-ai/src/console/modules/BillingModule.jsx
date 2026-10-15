@@ -44,23 +44,71 @@ function describeTransactionKind(row) {
     return TRANSACTION_LABEL[row] || row || 'Adjustment';
   }
   if (!row) return 'Adjustment';
+  if (row.kind === 'usage_web_test' || row.kind === 'usage_web') return 'Browser test call';
   if (row.isCampaign) return 'Outbound campaign';
   if (row.direction === 'outbound') return 'Outbound call';
   if (row.direction === 'inbound') return 'Inbound call';
   return TRANSACTION_LABEL[row.kind] || row.kind || 'Adjustment';
 }
 
-function toCsv(rows) {
+function formatRowAmount(row, serverWallet) {
+  const inrPaise = Number(row.amountInrPaise || 0);
+  const cents = Number(row.amountCents || 0);
+  const fx = Number(serverWallet?.fxRateInr) || 95.64;
+  const isCredit = inrPaise > 0 || cents > 0;
+  const isDebit = inrPaise < 0 || cents < 0;
+
+  if (!isCredit && !isDebit) {
+    return { primary: '$0.00', secondary: null, isCredit: false };
+  }
+
+  const sign = isCredit ? '+' : '-';
+  const isTenantInr =
+    (serverWallet?.walletCurrency || serverWallet?.primaryCurrency || '').toUpperCase() === 'INR' ||
+    (inrPaise !== 0 && cents === 0);
+
+  if (isTenantInr && inrPaise !== 0) {
+    const absInr = Math.abs(inrPaise) / 100;
+    const inrStr = absInr < 0.01 && absInr > 0 ? absInr.toFixed(3) : absInr.toFixed(2);
+    const equivUsd = absInr / fx;
+    const usdStr = equivUsd < 0.01 && equivUsd > 0 ? equivUsd.toFixed(3) : equivUsd.toFixed(2);
+    return {
+      primary: `${sign}₹${inrStr}`,
+      secondary: `(${sign}$${usdStr})`,
+      isCredit,
+    };
+  }
+
+  const effectiveUsd = cents !== 0 ? Math.abs(cents) / 100 : inrPaise !== 0 ? (Math.abs(inrPaise) / 100) / fx : 0;
+  const usdStr = effectiveUsd < 0.01 && effectiveUsd > 0 ? effectiveUsd.toFixed(3) : effectiveUsd.toFixed(2);
+  const equivInr = effectiveUsd * fx;
+  const inrStr = equivInr < 0.01 && equivInr > 0 ? equivInr.toFixed(3) : equivInr.toFixed(2);
+
+  return {
+    primary: `${sign}$${usdStr}`,
+    secondary: `(${sign}₹${inrStr})`,
+    isCredit,
+  };
+}
+
+function toCsv(rows, serverWallet) {
   const header = ['when', 'activity_type', 'description', 'reference', 'duration_sec', 'inr', 'usd'];
-  const body = rows.map((r) => [
-    r.createdAt || '',
-    describeTransactionKind(r),
-    r.description || '',
-    r.referenceId || '',
-    r.durationSec ?? '',
-    ((Number(r.amountInrPaise) || 0) / 100).toFixed(2),
-    ((Number(r.amountCents) || 0) / 100).toFixed(2),
-  ]);
+  const fx = Number(serverWallet?.fxRateInr) || 95.64;
+  const body = rows.map((r) => {
+    const inrPaise = Number(r.amountInrPaise) || 0;
+    const cents = Number(r.amountCents) || 0;
+    const inrVal = inrPaise !== 0 ? (inrPaise / 100).toFixed(2) : cents !== 0 ? ((cents / 100) * fx).toFixed(2) : '0.00';
+    const usdVal = cents !== 0 ? (cents / 100).toFixed(2) : inrPaise !== 0 ? ((inrPaise / 100) / fx).toFixed(2) : '0.00';
+    return [
+      r.createdAt || '',
+      describeTransactionKind(r),
+      r.description || '',
+      r.referenceId || '',
+      r.durationSec ?? '',
+      inrVal,
+      usdVal,
+    ];
+  });
   const escape = (cell) => `"${String(cell).replace(/"/g, '""')}"`;
   return [header, ...body].map((line) => line.map(escape).join(',')).join('\n');
 }
@@ -167,7 +215,7 @@ export function BillingModule() {
 
   const exportTransactionsCsv = useCallback(() => {
     if (typeof window === 'undefined' || !transactions.length) return;
-    const blob = new Blob([toCsv(transactions)], { type: 'text/csv;charset=utf-8' });
+    const blob = new Blob([toCsv(transactions, serverWallet)], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -176,7 +224,7 @@ export function BillingModule() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-  }, [transactions]);
+  }, [transactions, serverWallet]);
 
   return (
     <div className="space-y-6">
@@ -488,13 +536,12 @@ export function BillingModule() {
               </thead>
               <tbody className="divide-y divide-[#E4E2EB]">
                 {transactions.map((row) => {
-                  const inr = Number(row.amountInrPaise || 0) / 100;
-                  const usd = Number(row.amountCents || 0) / 100;
-                  const isCredit = inr > 0 || usd > 0;
-                  const effectiveUsd = usd !== 0 ? usd : inr !== 0 ? inr / (Number(serverWallet?.fxRateInr) || 95.64) : 0;
-                  const absAmount = Math.abs(effectiveUsd).toFixed(2);
-                  const displayAmount = effectiveUsd === 0 ? '$0.00' : `${isCredit ? '+' : '-'}$${absAmount}`;
+                  const amt = formatRowAmount(row, serverWallet);
+                  const isCredit = amt.isCredit;
+                  const displayAmount = amt.primary;
+                  const secondaryAmount = amt.secondary;
                   const activityLabel = describeTransactionKind(row);
+                  const isWebTest = row.kind === 'usage_web_test' || row.kind === 'usage_web';
 
                   return (
                     <tr key={row.id} className="hover:bg-[#FAF9FD]/80 transition-colors">
@@ -508,6 +555,8 @@ export function BillingModule() {
                               ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                               : row.isCampaign
                               ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                              : isWebTest
+                              ? 'bg-blue-50 text-blue-700 border border-blue-200'
                               : 'bg-slate-50 text-slate-700 border border-slate-200'
                           }`}
                         >
@@ -515,8 +564,13 @@ export function BillingModule() {
                         </span>
                       </td>
                       <td className="py-2.5 px-3 text-[#0F0E17]">
-                        <div className="font-semibold text-xs text-[#0F0E17]">
-                          {row.description || activityLabel}
+                        <div className="font-semibold text-xs text-[#0F0E17] flex items-center gap-1.5 flex-wrap">
+                          <span>{row.description || activityLabel}</span>
+                          {row.durationSec != null && row.durationSec > 0 && !row.description?.includes(`${row.durationSec}s`) && (
+                            <span className="text-[10px] text-[#524E5E] bg-[#FAF9FD] border border-[#E4E2EB] px-1.5 py-0.5 rounded font-mono">
+                              {row.durationSec}s
+                            </span>
+                          )}
                         </div>
                         {row.referenceId && (
                           <div className="text-[10px] text-[#8C879A] truncate max-w-[260px]">
@@ -529,7 +583,12 @@ export function BillingModule() {
                           isCredit ? 'text-[#15803D]' : 'text-[#0F0E17]'
                         }`}
                       >
-                        {displayAmount}
+                        <div>{displayAmount}</div>
+                        {secondaryAmount && (
+                          <div className="text-[10px] font-normal text-[#8C879A] mt-0.5">
+                            {secondaryAmount}
+                          </div>
+                        )}
                       </td>
                     </tr>
                   );
