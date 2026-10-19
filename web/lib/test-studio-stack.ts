@@ -174,13 +174,26 @@ export function buildPstnRealtimeStackOverride(form: StackForm): Record<string, 
   const model = isRealtimeSpeechToSpeechModel(form.llmModel) ? form.llmModel : live.model;
   const provider = isGeminiLiveVoiceModel(model) ? "gemini" : "openai";
   const language = String(form.language || "te-IN").trim() || "te-IN";
+  const locale = language.replaceAll("_", "-").toLowerCase();
+  const defaultGeminiVoice = locale.startsWith("te")
+    ? "te-in-csagent-5"
+    : locale.startsWith("hi")
+      ? "hi-in-csagent-1"
+      : locale.startsWith("ta")
+        ? "ta-in-csagent-3"
+        : locale === "en-in"
+          ? "en-in-csagent-3"
+          : "Puck";
+  const voice = provider === "gemini"
+    ? String(form.realtimeVoice || defaultGeminiVoice).trim() || defaultGeminiVoice
+    : normalizeRealtimeVoice(form.realtimeVoice);
   return {
     pipeline: "realtime_voice",
     voice_flow: "realtime_e2e",
     language,
     llm: { provider, model },
     realtime_voice: {
-      voice: normalizeRealtimeVoice(form.realtimeVoice),
+      voice,
       turn_detection: normalizeRealtimeTurnDetection(form.realtimeTurnDetection),
       vad_eagerness: normalizeRealtimeVadEagerness(form.realtimeVadEagerness),
       noise_reduction: normalizeRealtimeNoiseReduction(form.realtimeNoiseReduction),

@@ -412,6 +412,7 @@ async def dev_stack_saas_phone_get(session: SessionData = Depends(require_dev_se
         load_universal_phone_stack_raw,
         resolve_platform_phone_stack,
     )
+    from server.services.saas.voice_catalog import phone_voice_catalog
 
     saved = load_universal_phone_stack_raw()
     lang = str((saved or {}).get("language") or "te-IN")
@@ -424,6 +425,7 @@ async def dev_stack_saas_phone_get(session: SessionData = Depends(require_dev_se
         "warnings": _saas_phone_stack_warnings(resolved),
         "alignment": _saas_phone_stack_alignment(resolved),
         "adjustments": (saved or {}).get("adjustments") or [],
+        "voices": phone_voice_catalog(),
     }
 
 
@@ -440,7 +442,9 @@ async def dev_stack_saas_phone_put(body: SaasPhoneStackBody, session: SessionDat
     raw = body.stack_override or {"pipeline": "realtime_voice", "language": lang}
     raw.setdefault("pipeline", "realtime_voice")
     raw.setdefault("language", lang)
-    normalized, adjustments = normalize_pstn_stack_override(raw, language=lang, tier="medium")
+    normalized, adjustments = normalize_pstn_stack_override(
+        raw, language=lang, tier="medium", default_provider="gemini"
+    )
     resolved = normalized or raw
     payload = {
         "stack_override": resolved,
@@ -450,8 +454,8 @@ async def dev_stack_saas_phone_put(body: SaasPhoneStackBody, session: SessionDat
     }
     if adjustments:
         payload["adjustments"] = adjustments
+    database_persisted = await mirror_universal_phone_stack_to_db(payload)
     save_universal_phone_stack_raw(payload)
-    await mirror_universal_phone_stack_to_db(payload)
     warnings = _saas_phone_stack_warnings(resolved)
     return {
         "ok": True,
@@ -461,4 +465,5 @@ async def dev_stack_saas_phone_put(body: SaasPhoneStackBody, session: SessionDat
         "warnings": warnings,
         "alignment": _saas_phone_stack_alignment(resolved),
         "credentials": _saas_phone_stack_credentials(),
+        "databasePersisted": database_persisted,
     }

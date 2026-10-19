@@ -17,6 +17,7 @@ import {
   normalizeRealtimeSpeed,
 } from "@/lib/realtime-voice";
 import {
+  defaultGeminiLiveVoice,
   geminiMappedVoice,
   saasPhoneStackFromOverride,
   saasPhoneStackToOverride,
@@ -31,6 +32,19 @@ import {
 type Credentials = {
   openai?: { configured?: boolean };
   gemini?: { enabled?: boolean; configured?: boolean; ready?: boolean };
+};
+
+type StackVoice = {
+  id: string;
+  label?: string;
+  geminiVoice?: string;
+  provider?: string;
+  gender?: string;
+  accent?: string;
+  tone?: string;
+  category?: string;
+  useCase?: string;
+  languageCode?: string;
 };
 
 type TelephonyProviderStatus = {
@@ -84,9 +98,9 @@ function defaultForm(): StackForm {
   const f = saasPhoneStackFromOverride({
     pipeline: "realtime_voice",
     language: "te-IN",
-    llm: { provider: "openai", model: "gpt-realtime-2.1-mini" },
+    llm: { provider: "gemini", model: "gemini-3.8-live" },
     realtime_voice: {
-      voice: DEFAULT_REALTIME_VOICE,
+      voice: "te-in-csagent-5",
       turn_detection: "semantic_vad",
       vad_eagerness: "high",
       noise_reduction: "far_field",
@@ -100,6 +114,7 @@ function defaultForm(): StackForm {
 export function SaasUniversalPhoneStack() {
   const { providers, loading: catalogLoading, error: catalogError } = useStackCatalog("dev");
   const [form, setForm] = useState<StackForm>(defaultForm);
+  const [voiceCatalog, setVoiceCatalog] = useState<StackVoice[]>([]);
   const [resolved, setResolved] = useState<Record<string, unknown> | null>(null);
   const [credentials, setCredentials] = useState<Credentials | null>(null);
   const [telephony, setTelephony] = useState<TelephonySummary | null>(null);
@@ -122,12 +137,17 @@ export function SaasUniversalPhoneStack() {
   const selectProvider = (provider: "openai" | "gemini") => {
     const row = speechModels.find((m) => m.provider === provider);
     if (row) {
-      patch({ llmProvider: provider, llmModel: row.id });
+      patch({
+        llmProvider: provider,
+        llmModel: row.id,
+        realtimeVoice: provider === "gemini" ? defaultGeminiLiveVoice(form.language) : DEFAULT_REALTIME_VOICE,
+      });
       return;
     }
     patch({
       llmProvider: provider,
       llmModel: provider === "gemini" ? "gemini-3.8-live" : "gpt-realtime-2.1-mini",
+      realtimeVoice: provider === "gemini" ? defaultGeminiLiveVoice(form.language) : DEFAULT_REALTIME_VOICE,
     });
   };
 
@@ -143,6 +163,7 @@ export function SaasUniversalPhoneStack() {
       return;
     }
     const j = await stackR.json();
+    setVoiceCatalog(Array.isArray(j.voices) ? j.voices : []);
     const override = (j.saved?.stack_override || j.resolved) as Record<string, unknown> | undefined;
     if (override) {
       setForm(saasPhoneStackFromOverride(override));
@@ -436,7 +457,7 @@ export function SaasUniversalPhoneStack() {
               }`}
             >
               <p className="text-sm font-semibold text-text">Gemini Live</p>
-              <p className="text-xs text-text-muted mt-1">gemini-*-live · 16 kHz in / 24 kHz out · mapped voices</p>
+              <p className="text-xs text-text-muted mt-1">gemini-3.8-live · native multilingual audio · Gemini voice catalog</p>
               <p className="mt-2 text-[11px] font-mono">
                 {geminiReady
                   ? "✓ ENABLE_GEMINI + API key"
@@ -459,8 +480,14 @@ export function SaasUniversalPhoneStack() {
                 }
                 onChange={(e) => {
                   const llmModel = e.target.value;
-                  const row = speechModels.find((m) => m.id === llmModel);
-                  patch({ llmModel, llmProvider: row?.provider || "openai" });
+                  const provider = speechModels.find((m) => m.id === llmModel)?.provider || "openai";
+                  patch({
+                    llmModel,
+                    llmProvider: provider,
+                    ...(provider !== (isGemini ? "gemini" : "openai")
+                      ? { realtimeVoice: provider === "gemini" ? defaultGeminiLiveVoice(form.language) : DEFAULT_REALTIME_VOICE }
+                      : {}),
+                  });
                 }}
                 disabled={catalogLoading}
               >
@@ -477,7 +504,13 @@ export function SaasUniversalPhoneStack() {
               <select
                 className="mt-2 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm"
                 value={form.language}
-                onChange={(e) => patch({ language: e.target.value })}
+                onChange={(e) => {
+                  const language = e.target.value;
+                  patch({
+                    language,
+                    ...(isGemini ? { realtimeVoice: defaultGeminiLiveVoice(language) } : {}),
+                  });
+                }}
               >
                 {SAAS_PHONE_LANGUAGES.map((l) => (
                   <option key={l.id} value={l.id}>
@@ -488,21 +521,45 @@ export function SaasUniversalPhoneStack() {
             </label>
 
             <label className="block text-sm">
-              <span className="text-text-muted">Realtime voice (console slug)</span>
+              <span className="text-text-muted">Realtime voice</span>
               <select
                 className="mt-2 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm"
-                value={form.realtimeVoice || DEFAULT_REALTIME_VOICE}
+                value={form.realtimeVoice || (isGemini ? defaultGeminiLiveVoice(form.language) : DEFAULT_REALTIME_VOICE)}
                 onChange={(e) => patch({ realtimeVoice: e.target.value })}
               >
-                {REALTIME_VOICE_OPTIONS.map((v) => (
+                {isGemini ? (
+                  <>
+                    <optgroup label="Telugu (India)">
+                      {voiceCatalog.filter((v) => v.provider === "gemini" && v.languageCode === "te-IN").map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.label || v.id} · {v.gender || "voice"} · {v.category || "support"}{v.tone ? ` · ${v.tone}` : ""}
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Other Indian language voices">
+                      {voiceCatalog.filter((v) => v.provider === "gemini" && v.languageCode && v.languageCode !== "te-IN").map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.label || v.id} · {v.languageCode} · {v.gender || "voice"} · {v.category || "support"}
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Gemini Live prebuilt voices">
+                      {voiceCatalog.filter((v) => v.provider === "gemini" && !v.languageCode).map((v) => (
+                        <option key={v.id} value={v.geminiVoice || v.id}>
+                          {v.label || v.id} · {v.accent || "multilingual"} · {v.gender || "voice"} · {v.category || "support"}
+                        </option>
+                      ))}
+                    </optgroup>
+                  </>
+                ) : REALTIME_VOICE_OPTIONS.map((v) => (
                   <option key={v.id} value={v.id}>
-                    {realtimeVoiceOptionLabel(v.id, { geminiLive: isGemini })}
+                    {realtimeVoiceOptionLabel(v.id)}
                   </option>
                 ))}
               </select>
               {isGemini && (
                 <p className="mt-1 text-[11px] text-text-subtle">
-                  PSTN maps to Gemini voice{" "}
+                  Gemini Live uses voice{" "}
                   <span className="font-mono">{geminiMappedVoice(form.realtimeVoice)}</span> on connect.
                 </p>
               )}

@@ -174,7 +174,9 @@ export function AgentTestCallPanel({ agent, language }) {
         setSessionState('CONNECTED');
         startedAtRef.current = Date.now();
         speakingUntilRef.current = Date.now();
-        setStatusNote('Connected — agent is live');
+        setStatusNote(data?.microphoneMode === 'listen-only'
+          ? 'Connected in listen-only mode — allow microphone access to speak.'
+          : 'Connected — microphone and agent are live');
         push('Live session started. Agent follows your published script.');
       }
       if (event === 'audio') {

@@ -1,8 +1,10 @@
 """Browser web-agent WebSocket — same realtime_voice loop as PSTN."""
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
+from collections.abc import Awaitable, Callable
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
@@ -151,6 +153,10 @@ async def web_agent_ws(websocket: WebSocket):
     closed = False
     end_reason = "user_stop"
     hangup_complete_sent = False
+    from server.services.pstn_playback import EstimatedPlaybackTracker
+
+    playback = EstimatedPlaybackTracker(frame_ms=20.0)
+    sent_audio = False
 
     async def send_event(payload: dict) -> None:
         if closed:
@@ -158,12 +164,14 @@ async def web_agent_ws(websocket: WebSocket):
         await _send(websocket, payload)
 
     async def on_agent_wire(pcm: bytes) -> None:
+        nonlocal sent_audio
         if closed or not pcm:
             return
-        try:
-            await websocket.send_bytes(pcm)
-        except Exception:
-            pass
+        playback.note_sent_frames((len(pcm) + 639) // 640)
+        await websocket.send_bytes(pcm)
+        if not sent_audio:
+            sent_audio = True
+            logger.info("[WEB_AGENT] first speaker frame call=%s bytes=%s", call_id, len(pcm))
 
     async def on_hangup_notice(stage: str, reason: str) -> None:
         nonlocal end_reason, hangup_complete_sent
@@ -221,50 +229,31 @@ async def web_agent_ws(websocket: WebSocket):
             tenant_id=workspace_tenant_id,
             agent_id=str(agent_id),
             channel="browser",
+            playback=playback,
+            is_agent_audio_active=playback.is_active,
         )
         loop.set_hangup_notice_handler(on_hangup_notice)
         loop.set_hangup_handler(on_provider_hangup)
-        await loop.start_call(play_greeting=True)
-        llm = stack.get("llm") if isinstance(stack.get("llm"), dict) else {}
-        connected_adapter = getattr(loop, "_adapter", None)
-        active_provider = getattr(loop, "_llm_provider", None) or (
-            "gemini"
-            if connected_adapter and connected_adapter.__class__.__name__ == "GeminiLiveVoiceAdapter"
-            else "openai"
-        )
-        active_model = getattr(connected_adapter, "model", None) or str(llm.get("model") or "")
-        await send_event(
-            {
+        async def clear_browser_audio() -> None:
+            playback.clear()
+            await send_event({"type": "clear_audio"})
+
+        loop.set_barge_handler(clear_browser_audio)
+        async def notify_ready() -> None:
+            llm = stack.get("llm") if isinstance(stack.get("llm"), dict) else {}
+            connected_adapter = getattr(loop, "_adapter", None)
+            active_provider = getattr(loop, "_llm_provider", None) or str(llm.get("provider") or "gemini")
+            active_model = getattr(connected_adapter, "model", None) or str(llm.get("model") or "")
+            await send_event({
                 "type": "ready",
                 "callId": call_id,
                 "pipeline": started.get("pipeline"),
                 "sampleRate": 16000,
                 "voiceProvider": active_provider,
                 "voiceModel": active_model,
-            }
-        )
+            })
 
-        while True:
-            message = await websocket.receive()
-            if message.get("type") == "websocket.disconnect":
-                break
-            data = message.get("bytes")
-            if data:
-                await loop.feed_user_pcm16(data)
-                continue
-            text = message.get("text")
-            if not text:
-                continue
-            try:
-                payload = json.loads(text)
-            except json.JSONDecodeError:
-                continue
-            kind = str(payload.get("type") or "")
-            if kind in {"end", "hangup", "stop"}:
-                end_reason = "user_stop"
-                if loop:
-                    await loop.close()
-                break
+        await _drive_browser_voice(websocket, loop, notify_ready)
     except WebSocketDisconnect:
         pass
     except Exception as exc:
@@ -310,3 +299,47 @@ async def _send(ws: WebSocket, payload: dict) -> None:
         await ws.send_json(payload)
     except Exception:
         return
+
+
+async def _drive_browser_voice(
+    websocket: WebSocket, loop, notify_ready: Callable[[], Awaitable[None]],
+    *, startup_timeout: float = 60.0,
+) -> None:
+    """Receive mic/stop/disconnect while the provider and opening are starting."""
+    startup = asyncio.create_task(asyncio.wait_for(loop.start_call(play_greeting=True), startup_timeout))
+    receiving = asyncio.create_task(websocket.receive())
+    first_microphone_frame = True
+    try:
+        while True:
+            pending = {receiving}
+            if startup is not None:
+                pending.add(startup)
+            done, _ = await asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED)
+            if receiving in done:
+                message = receiving.result()
+                if message.get("type") == "websocket.disconnect":
+                    return
+                data = message.get("bytes")
+                if data:
+                    if first_microphone_frame:
+                        first_microphone_frame = False
+                        logger.info("[WEB_AGENT] first microphone frame bytes=%s", len(data))
+                    await loop.feed_user_pcm16(data)
+                elif message.get("text"):
+                    try:
+                        payload = json.loads(message["text"])
+                    except (TypeError, json.JSONDecodeError):
+                        payload = {}
+                    if isinstance(payload, dict) and payload.get("type") in {"end", "hangup", "stop"}:
+                        return
+                receiving = asyncio.create_task(websocket.receive())
+            if startup is not None and startup in done:
+                startup.result()
+                startup = None
+                await notify_ready()
+    finally:
+        tasks = [task for task in (startup, receiving) if task is not None]
+        for task in tasks:
+            if not task.done():
+                task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)

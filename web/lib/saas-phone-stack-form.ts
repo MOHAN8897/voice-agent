@@ -33,7 +33,45 @@ export const OPENAI_TO_GEMINI_VOICE_MAP: Record<string, string> = {
   verse: "Puck",
 };
 
+const GEMINI_INDIC_VOICE_IDS = new Set([
+  "hi-in-csagent-1", "hi-in-csagent-2", "ta-in-csagent-2", "ta-in-csagent-3",
+  "te-in-csagent-1", "te-in-csagent-4", "te-in-csagent-5", "te-in-csagent-7",
+  "te-in-concierge-2", "te-in-concierge-7", "te-in-techagent-1",
+  "en-in-csagent-1", "en-in-csagent-3",
+]);
+const GEMINI_PREBUILT_VOICES = new Set([
+  "zephyr", "kore", "orus", "autonoe", "umbriel", "erinome", "laomedeia", "schedar",
+  "achird", "sadachbia", "puck", "fenrir", "aoede", "enceladus", "algieba", "algenib",
+  "achernar", "gacrux", "zubenelgenubi", "sadaltager", "charon", "leda", "callirrhoe",
+  "iapetus", "despina", "rasalgethi", "alnilam", "pulcherrima", "vindemiatrix", "sulafat",
+]);
+
+export function defaultGeminiLiveVoice(language: string | undefined): string {
+  const locale = String(language || "").replaceAll("_", "-").toLowerCase();
+  if (locale.startsWith("te")) return "te-in-csagent-5";
+  if (locale.startsWith("hi")) return "hi-in-csagent-1";
+  if (locale.startsWith("ta")) return "ta-in-csagent-3";
+  if (locale === "en-in") return "en-in-csagent-3";
+  return "Puck";
+}
+
+function normalizeGeminiVoice(value: string | undefined, language: string): string {
+  const raw = String(value || "").trim();
+  if (GEMINI_INDIC_VOICE_IDS.has(raw.toLowerCase())) return raw.toLowerCase();
+  if (GEMINI_PREBUILT_VOICES.has(raw.toLowerCase())) {
+    return raw[0].toUpperCase() + raw.slice(1).toLowerCase();
+  }
+  if (Object.prototype.hasOwnProperty.call(OPENAI_TO_GEMINI_VOICE_MAP, raw.toLowerCase())) {
+    return defaultGeminiLiveVoice(language);
+  }
+  return defaultGeminiLiveVoice(language);
+}
+
 export function geminiMappedVoice(openAiSlug: string | undefined): string {
+  const raw = String(openAiSlug || "").trim();
+  if (GEMINI_INDIC_VOICE_IDS.has(raw.toLowerCase()) || GEMINI_PREBUILT_VOICES.has(raw.toLowerCase())) {
+    return raw;
+  }
   const slug = normalizeRealtimeVoice(openAiSlug);
   return OPENAI_TO_GEMINI_VOICE_MAP[slug] || "Puck";
 }
@@ -81,7 +119,10 @@ export function saasPhoneStackFromOverride(override: Record<string, unknown> | n
     language: String(override.language || base.language).trim() || base.language,
     llmProvider,
     llmModel: model || base.llmModel,
-    realtimeVoice: normalizeRealtimeVoice(String(rv.voice || base.realtimeVoice)),
+    realtimeVoice:
+      llmProvider === "gemini"
+        ? normalizeGeminiVoice(String(rv.voice || ""), String(override.language || base.language))
+        : normalizeRealtimeVoice(String(rv.voice || base.realtimeVoice)),
     realtimeTurnDetection: normalizeRealtimeTurnDetection(
       String(rv.turn_detection || base.realtimeTurnDetection)
     ),

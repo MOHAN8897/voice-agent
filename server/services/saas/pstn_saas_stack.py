@@ -3,7 +3,14 @@ from __future__ import annotations
 
 from typing import Any
 
-from server.realtime.models import DEFAULT_REALTIME_MODEL, DEFAULT_REALTIME_VOICE
+from server.realtime.models import (
+    DEFAULT_GEMINI_LIVE_MODEL,
+    DEFAULT_REALTIME_VOICE,
+    GEMINI_LIVE_LIBRARY_VOICES,
+    GEMINI_LIVE_VOICES,
+    REALTIME_VOICES,
+    default_gemini_live_voice,
+)
 from server.services.pstn_stack import normalize_pstn_stack_override
 from server.services.saas.agent_voice_config import load_agent_voice_config
 from server.services.saas.platform_phone_stack import resolve_platform_phone_stack
@@ -38,12 +45,27 @@ async def saas_stack_override_for_agent(agent: dict[str, Any]) -> dict[str, Any]
     stack = await resolve_platform_phone_stack(lang)
     rv = dict(stack.get("realtime_voice") or {})
     realtime_voice = str(voice_cfg.get("realtimeVoice") or voice_cfg.get("voiceId") or rv.get("voice") or DEFAULT_REALTIME_VOICE)
+    llm = stack.get("llm") if isinstance(stack.get("llm"), dict) else {}
+    if str(llm.get("provider") or "").lower() == "gemini":
+        gemini_ids = {item.lower() for item in (*GEMINI_LIVE_VOICES, *GEMINI_LIVE_LIBRARY_VOICES)}
+        if realtime_voice.lower() in {item.lower() for item in REALTIME_VOICES}:
+            realtime_voice = default_gemini_live_voice(lang)
+        elif realtime_voice.lower() not in gemini_ids:
+            from server.realtime.providers.gemini_voice import normalize_gemini_live_voice
+
+            realtime_voice = normalize_gemini_live_voice(realtime_voice)
+    elif realtime_voice.lower() in {
+        item.lower() for item in (*GEMINI_LIVE_VOICES, *GEMINI_LIVE_LIBRARY_VOICES)
+    }:
+        realtime_voice = DEFAULT_REALTIME_VOICE
     rv["voice"] = realtime_voice
     if voice_cfg.get("speed") is not None:
         rv["speed"] = voice_cfg.get("speed")
     stack["language"] = lang
     stack["realtime_voice"] = rv
-    normalized, _ = normalize_pstn_stack_override(stack, language=lang, tier="medium")
+    normalized, _ = normalize_pstn_stack_override(
+        stack, language=lang, tier="medium", default_provider="gemini"
+    )
     return normalized or stack
 
 
@@ -52,8 +74,10 @@ def saas_stack_override(language: str) -> dict[str, Any]:
     raw: dict[str, Any] = {
         "pipeline": "realtime_voice",
         "language": language,
-        "llm": {"provider": "openai", "model": DEFAULT_REALTIME_MODEL},
-        "realtime_voice": {"voice": DEFAULT_REALTIME_VOICE},
+        "llm": {"provider": "gemini", "model": DEFAULT_GEMINI_LIVE_MODEL},
+        "realtime_voice": {"voice": default_gemini_live_voice(language)},
     }
-    normalized, _ = normalize_pstn_stack_override(raw, language=language, tier="medium")
+    normalized, _ = normalize_pstn_stack_override(
+        raw, language=language, tier="medium", default_provider="gemini"
+    )
     return normalized or raw

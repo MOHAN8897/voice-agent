@@ -75,13 +75,17 @@ def _normalize_realtime_voice_override(
     adjustments: list[str],
     *,
     language: str = "te-IN",
+    default_provider: str = "openai",
 ) -> tuple[dict[str, Any], list[str]]:
-    """Audio-to-audio Realtime PSTN — no Sarvam STT/TTS; keep OpenAI mini + voice."""
+    """Audio-to-audio Realtime PSTN — no Sarvam STT/TTS; preserve the chosen provider."""
     from server.realtime.models import (
         DEFAULT_GEMINI_LIVE_MODEL,
         DEFAULT_REALTIME_MODEL,
         DEFAULT_REALTIME_TURN_DETECTION,
         DEFAULT_REALTIME_VOICE,
+        GEMINI_LIVE_LIBRARY_VOICES,
+        GEMINI_LIVE_VOICES,
+        REALTIME_VOICES,
         is_gemini_live_voice_model,
         is_realtime_llm_model,
         normalize_realtime_noise_reduction,
@@ -98,9 +102,28 @@ def _normalize_realtime_voice_override(
     if not isinstance(llm, dict):
         llm = {}
         out["llm"] = llm
-    provider = str(llm.get("provider") or "openai").strip().lower()
+    provider = str(llm.get("provider") or "").strip().lower()
     model = str(llm.get("model") or "").strip()
-    if provider == "gemini" or is_gemini_live_voice_model(model):
+    rv = out.get("realtime_voice")
+    if not isinstance(rv, dict):
+        rv = {}
+        out["realtime_voice"] = rv
+    raw_voice = str(rv.get("voice") or "").strip()
+    voice_language = coerce_supported_language(str(out.get("language") or language or "te-IN"))
+    gemini_voice_ids = {name.lower() for name in (*GEMINI_LIVE_VOICES, *GEMINI_LIVE_LIBRARY_VOICES)}
+    explicit_provider = provider in {"openai", "gemini"}
+    inferred_provider = (
+        "gemini"
+        if is_gemini_live_voice_model(model) or raw_voice.lower() in gemini_voice_ids
+        else "openai"
+        if model.lower().startswith("gpt-realtime") or provider == "openai"
+        else default_provider
+    )
+    if not explicit_provider:
+        provider = inferred_provider
+    elif is_gemini_live_voice_model(model):
+        provider = "gemini"
+    if provider == "gemini":
         llm["provider"] = "gemini"
         if not is_gemini_live_voice_model(model):
             llm["model"] = DEFAULT_GEMINI_LIVE_MODEL
@@ -110,20 +133,18 @@ def _normalize_realtime_voice_override(
         if not is_realtime_llm_model(model):
             llm["model"] = DEFAULT_REALTIME_MODEL
             adjustments.append("llm.model set to gpt-realtime-2.1-mini for Realtime PSTN")
-    rv = out.get("realtime_voice")
-    if not isinstance(rv, dict):
-        rv = {}
-        out["realtime_voice"] = rv
-    raw_voice = str(rv.get("voice") or "").strip()
-    voice = normalize_realtime_voice(raw_voice)
-    if llm.get("provider") == "gemini" and raw_voice:
-        from server.realtime.models import GEMINI_LIVE_LIBRARY_VOICES, GEMINI_LIVE_VOICES
+    if llm.get("provider") == "gemini":
+        from server.realtime.models import default_gemini_live_voice
+        from server.realtime.providers.gemini_voice import normalize_gemini_live_voice
 
-        known_gemini_voices = {item.lower() for item in (*GEMINI_LIVE_VOICES, *GEMINI_LIVE_LIBRARY_VOICES)}
-        if raw_voice.lower() in known_gemini_voices:
-            from server.realtime.providers.gemini_voice import normalize_gemini_live_voice
-
+        # A stale OpenAI slug cannot describe a Gemini selection. Resolve it to
+        # the language's regional Gemini default instead of mapping to Puck/Aoede.
+        if not raw_voice or raw_voice.lower() in {item.lower() for item in REALTIME_VOICES}:
+            voice = default_gemini_live_voice(voice_language)
+        else:
             voice = normalize_gemini_live_voice(raw_voice)
+    else:
+        voice = normalize_realtime_voice(raw_voice)
     if raw_voice and raw_voice != voice and raw_voice.lower() != str(voice).lower():
         adjustments.append(f"realtime voice replaced with {voice}")
     rv["voice"] = voice or DEFAULT_REALTIME_VOICE
@@ -137,7 +158,7 @@ def _normalize_realtime_voice_override(
     rv["silence_ms"] = normalize_realtime_silence_ms(rv.get("silence_ms"))
     out.pop("stt", None)
     out.pop("tts", None)
-    lang = coerce_supported_language(str(out.get("language") or language or "te-IN"))
+    lang = voice_language
     if str(out.get("language") or "").strip() != lang:
         adjustments.append(f"language set to {lang} for PSTN realtime")
     out["language"] = lang
@@ -153,6 +174,7 @@ def normalize_pstn_stack_override(
     *,
     language: str = "te-IN",
     tier: str = "medium",
+    default_provider: str = "openai",
 ) -> tuple[dict[str, Any] | None, list[str]]:
     """
     Return (sanitized_override, adjustments).
@@ -166,7 +188,9 @@ def normalize_pstn_stack_override(
     adjustments: list[str] = []
 
     if _is_realtime_voice_override(out):
-        return _normalize_realtime_voice_override(out, adjustments, language=language)
+        return _normalize_realtime_voice_override(
+            out, adjustments, language=language, default_provider=default_provider
+        )
 
     stt_provider = str(_deep_get(out, "stt", "provider") or "").strip().lower()
     stt_model = str(_deep_get(out, "stt", "model") or "").strip()
@@ -273,10 +297,13 @@ def _finalize_pstn_live_override(
     adjustments: list[str],
     *,
     language: str = "te-IN",
+    default_provider: str = "openai",
 ) -> tuple[dict[str, Any], list[str]]:
     """PSTN realtime_text uses session fine-tune LLM; realtime_voice keeps dial-stack llm + voice."""
     if _is_realtime_voice_override(out):
-        return _normalize_realtime_voice_override(out, adjustments, language=language)
+        return _normalize_realtime_voice_override(
+            out, adjustments, language=language, default_provider=default_provider
+        )
     if out.get("llm"):
         out.pop("llm", None)
         adjustments.append(

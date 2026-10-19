@@ -1,84 +1,65 @@
-"""Speak a sample line in the agent's *real* production voice.
-
-The studio's preview button used `window.speechSynthesis`, i.e. whatever
-Windows/macOS voice the browser happened to have, pitch-shifted to 1.3. That is
-not the voice a caller hears: real calls run `gemini-3.8-live` with one of the
-Gemini prebuilt voices. Previewing the wrong engine is worse than no preview,
-because it lets someone approve a voice they will never ship.
-
-So this module runs the actual model — same adapter, same model id, same voice
-mapping the PSTN stack resolves — collects the PCM it produces, and wraps it in
-a WAV. The bytes are the ones the caller would have heard.
-
-Deliberately not free: it opens a billable live session, so text is capped, the
-turn is bounded by a timeout, and the model is told to speak only what it is
-given rather than improvise a greeting.
-"""
+"""Speech previews using the provider and voice selected by the SaaS stack."""
 from __future__ import annotations
 
-import asyncio
+import base64
 import io
 import logging
-import struct
 import wave
 from typing import Any
 
 logger = logging.getLogger(__name__)
 
-#: A preview is a sentence, not a monologue. Longer text costs a live session for
-#: no extra value and risks the model rambling.
 MAX_PREVIEW_CHARS = 400
-#: Hard ceiling on one preview. Exceeded, we return what we have rather than hang.
 PREVIEW_TIMEOUT_S = 25.0
-#: Ceiling on returned audio, so one runaway turn cannot exhaust memory.
-MAX_AUDIO_SECONDS = 45
+GEMINI_TTS_MODEL = "gemini-3.8-flash-tts"
 
-#: The model speaks only this line — no greeting, no sign-off, no questions.
-_PREVIEW_INSTRUCTIONS = (
-    "You are a voice preview. Speak the single line you are given, verbatim, "
-    "with no preamble, no greeting, no sign-off and no follow-up question. "
-    "Read it naturally at a friendly pace, then stop."
-)
+
+class VoicePreviewRateLimited(RuntimeError):
+    def __init__(self, retry_after: int = 60):
+        super().__init__("Gemini voice generation is rate limited (HTTP 429)")
+        self.retry_after = retry_after
+
+
+def pcm16_to_wav(pcm: bytes, sample_rate: int) -> bytes:
+    """Keep the small PCM wrapping helper available for internal callers/tests."""
+    buffer = io.BytesIO()
+    with wave.open(buffer, "wb") as output:
+        output.setnchannels(1)
+        output.setsampwidth(2)
+        output.setframerate(sample_rate)
+        output.writeframes(pcm)
+    return buffer.getvalue()
 
 
 def normalize_preview_text(raw: str) -> str:
-    """Collapse whitespace and cap the length, or reject an empty line."""
     line = " ".join(str(raw or "").split())[:MAX_PREVIEW_CHARS]
     if not line:
         raise ValueError("empty_preview_text")
     return line
 
 
-def pcm16_to_wav(pcm: bytes, sample_rate: int) -> bytes:
-    """Wrap raw signed 16-bit little-endian mono PCM in a WAV container."""
-    buf = io.BytesIO()
-    with wave.open(buf, "wb") as wf:
-        wf.setnchannels(1)
-        wf.setsampwidth(2)
-        wf.setframerate(sample_rate)
-        wf.writeframes(pcm)
-    return buf.getvalue()
-
-
-def resolve_preview_voice(voice_id: str | None) -> tuple[str, str]:
-    """Map a catalog voice id to (gemini voice name, human label).
-
-    Goes through the same catalog the settings screen renders, so the preview is
-    for the voice the user actually picked rather than a parallel guess.
-    """
-    from server.realtime.providers.gemini_voice import normalize_gemini_live_voice
+def resolve_preview_voice(
+    voice_id: str | None,
+    *,
+    provider: str = "gemini",
+    language: str | None = None,
+) -> tuple[str, str]:
+    """Resolve an exact catalog voice for the active provider; reject stale IDs."""
+    from server.realtime.models import default_gemini_live_voice
     from server.services.saas.voice_catalog import phone_voice_catalog
 
+    active_provider = str(provider or "gemini").strip().lower()
     wanted = str(voice_id or "").strip()
+    if not wanted:
+        wanted = default_gemini_live_voice(language) if active_provider == "gemini" else "marin"
     for row in phone_voice_catalog():
-        if str(row.get("id", "")).lower() == wanted.lower():
-            gemini = row.get("geminiVoice") if row.get("provider") == "openai" else row.get("id")
-            return normalize_gemini_live_voice(gemini or row.get("id")), str(row.get("label") or row.get("id"))
-    # Unknown id: still preview the platform default rather than failing outright.
-    return normalize_gemini_live_voice(None), "default"
+        if row.get("provider") != active_provider or str(row.get("id", "")).casefold() != wanted.casefold():
+            continue
+        voice = row.get("geminiVoice") if active_provider == "gemini" else row.get("id")
+        return str(voice or wanted), str(row.get("label") or wanted)
+    raise ValueError("voice_not_in_active_catalog")
 
 
-# OpenAI Realtime / catalog voice -> OpenAI TTS voice
 _OPENAI_TTS_VOICE_MAP: dict[str, str] = {
     "marin": "coral",
     "cedar": "onyx",
@@ -94,9 +75,111 @@ _OPENAI_TTS_VOICE_MAP: dict[str, str] = {
 
 
 def resolve_openai_tts_voice(voice_id: str | None) -> str:
-    """Map catalog voice id to valid OpenAI TTS voice."""
-    v = str(voice_id or "").strip().lower()
-    return _OPENAI_TTS_VOICE_MAP.get(v, "coral")
+    try:
+        return _OPENAI_TTS_VOICE_MAP[str(voice_id or "marin").casefold()]
+    except KeyError:
+        raise ValueError("voice_not_in_active_catalog") from None
+
+
+def _gemini_audio_from_response(payload: dict[str, Any]) -> bytes:
+    audio = payload.get("output_audio")
+    encoded = audio.get("data") if isinstance(audio, dict) else None
+    if not encoded:
+        for step in payload.get("steps") or []:
+            if not isinstance(step, dict):
+                continue
+            for content in step.get("content") or []:
+                if isinstance(content, dict) and content.get("type") == "audio" and content.get("data"):
+                    encoded = content["data"]
+    if not isinstance(encoded, str) or not encoded:
+        raise RuntimeError("Gemini voice generation returned no audio")
+    try:
+        audio_bytes = base64.b64decode(encoded, validate=True)
+    except (ValueError, base64.binascii.Error):
+        raise RuntimeError("Gemini voice generation returned invalid audio data") from None
+    if len(audio_bytes) < 44 or not audio_bytes.startswith(b"RIFF") or audio_bytes[8:12] != b"WAVE":
+        raise RuntimeError("Gemini voice generation returned an invalid WAV file")
+    return audio_bytes
+
+
+async def _synthesize_gemini(line: str, voice: str, speed: float) -> bytes:
+    import httpx
+
+    from server.providers.gemini_llm import _api_key
+
+    key = _api_key()
+    if not key or key.startswith("gem-test"):
+        raise RuntimeError("Gemini API key is not configured")
+    pace = "normal pace" if abs(speed - 1.0) < 0.01 else ("slower pace" if speed < 1 else "brisker pace")
+    payload = {
+        "model": GEMINI_TTS_MODEL,
+        "input": [{
+            "type": "user_input",
+            "content": [{
+                "type": "text",
+                "text": line,
+                "annotations": [{
+                    "type": "speech_metadata",
+                    "style": f"Speak clearly and professionally at a {pace}.",
+                }],
+            }],
+        }],
+        "response_format": {"type": "audio"},
+        "generation_config": {"speech_config": [{"voice": voice}]},
+    }
+    async with httpx.AsyncClient(timeout=PREVIEW_TIMEOUT_S) as client:
+        response = await client.post(
+            "https://generativelanguage.googleapis.com/v1beta/interactions",
+            headers={"x-goog-api-key": key},
+            json=payload,
+        )
+    if not response.is_success:
+        if response.status_code == 429:
+            headers = getattr(response, "headers", {})
+            try:
+                retry_after = max(1, min(3600, int(headers.get("Retry-After", "60"))))
+            except (TypeError, ValueError):
+                retry_after = 60
+            raise VoicePreviewRateLimited(retry_after)
+        error = {}
+        try:
+            error = response.json().get("error") or {}
+        except (ValueError, AttributeError):
+            pass
+        code = str(error.get("status") or "").strip().casefold()
+        if response.status_code == 403 or code == "permission_denied":
+            raise RuntimeError("Gemini voice generation permission_denied")
+        raise RuntimeError(f"Gemini voice generation failed (HTTP {response.status_code})")
+    try:
+        body = response.json()
+    except ValueError:
+        raise RuntimeError("Gemini voice generation returned invalid response data") from None
+    return _gemini_audio_from_response(body)
+
+
+async def _synthesize_openai(line: str, voice: str, speed: float) -> bytes:
+    from server.config.env import get_settings
+
+    api_key = get_settings().openai_api_key
+    if not api_key:
+        raise RuntimeError("OpenAI API key is not configured")
+    import openai
+
+    client = openai.AsyncOpenAI(api_key=api_key, timeout=PREVIEW_TIMEOUT_S)
+    try:
+        result = await client.audio.speech.create(
+            model="tts-1",
+            voice=resolve_openai_tts_voice(voice),
+            input=line,
+            speed=max(0.5, min(2.0, speed)),
+            response_format="wav",
+        )
+        audio = result.content
+    finally:
+        await client.close()
+    if len(audio) < 44 or not audio.startswith(b"RIFF") or audio[8:12] != b"WAVE":
+        raise RuntimeError("OpenAI voice generation returned an invalid WAV file")
+    return audio
 
 
 async def synthesize_preview(
@@ -105,165 +188,46 @@ async def synthesize_preview(
     voice_id: str | None = None,
     language: str | None = None,
     speed: float | None = None,
+    provider: str = "gemini",
     model: str | None = None,
 ) -> dict[str, Any]:
-    """Return `{"audio": wav_bytes, "voice": name, "model": id, "truncated": bool}`.
-    
-    Preview uses the selected spoken language and the voice configured for the live stack.
-    """
-    from server.config.env import get_settings
-    from server.realtime.models import DEFAULT_GEMINI_LIVE_MODEL
-    from server.realtime.providers.gemini_voice import (
-        GEMINI_LIVE_OUTPUT_RATE,
-        GeminiLiveVoiceAdapter,
+    """Synthesize a WAV with the currently selected provider; never cross-fallback."""
+    line = normalize_preview_text(text)
+    active_provider = str(provider or "gemini").strip().lower()
+    if active_provider not in {"gemini", "openai"}:
+        raise ValueError("unsupported_voice_provider")
+    voice, label = resolve_preview_voice(voice_id, provider=active_provider, language=language)
+    pace = max(0.5, min(2.0, float(speed) if speed is not None else 1.0))
+    preview_model = GEMINI_TTS_MODEL if active_provider == "gemini" else "tts-1"
+    from server.services.saas.voice_catalog import phone_voice_catalog
+
+    # Only built-in samples are public. A tenant's custom greeting stays private
+    # and is never written into this shared sample directory.
+    cacheable = any(
+        row.get("provider") == active_provider and row.get("id") == voice
+        and normalize_preview_text(row.get("sampleText") or " ") == line
+        for row in phone_voice_catalog()
+        if row.get("sampleText")
     )
 
-    settings = get_settings()
-    line = normalize_preview_text(text)
-    voice, label = resolve_preview_voice(voice_id)
-    from server.realtime.models import GEMINI_LIVE_LIBRARY_VOICES, GEMINI_LIVE_VOICES
+    async def generate():
+        if active_provider == "gemini":
+            return await _synthesize_gemini(line, voice, pace)
+        return await _synthesize_openai(line, voice, pace)
 
-    requested_voice = str(voice_id or "").strip().lower()
-    is_direct_gemini_voice = requested_voice in {
-        name.lower() for name in (*GEMINI_LIVE_VOICES, *GEMINI_LIVE_LIBRARY_VOICES)
-    }
-    model_id = (model or DEFAULT_GEMINI_LIVE_MODEL).strip()
-    from server.prompts.agent_voice_rules import LANGUAGE_LOCK, normalize_compile_language
-
-    lang = normalize_compile_language(language or "en-IN")
-    language_lock = LANGUAGE_LOCK.get(lang, LANGUAGE_LOCK["te-IN"])
-    pace = float(speed) if speed is not None else 1.0
-    pace = max(0.5, min(2.0, pace))
-
-    gemini_succeeded = False
-    pcm = bytearray()
-    truncated = False
-
-    # 1. Attempt Gemini Live if an active key is present
-    try:
-        from server.providers.gemini_llm import _api_key
-        key = _api_key()
-        if key and key != "gem-test" and not key.startswith("gem-test"):
-            custom_instructions = (
-                f"You are a voice preview. {language_lock} "
-                f"Speak once in {lang} with natural pronunciation. If the supplied line is in another language, "
-                f"translate it faithfully into {lang} before speaking. Preserve names, numbers, and facts. "
-                "Do not add a preamble, sign-off, or follow-up question. Read it naturally at a friendly pace, then stop."
-            )
-            adapter = GeminiLiveVoiceAdapter()
-            try:
-                await adapter.connect(
-                    model=model_id,
-                    instructions=custom_instructions,
-                    voice=voice,
-                    turn_detection="manual",
-                    include_tools=False,
-                )
-                await adapter.wait_ready(timeout=6.0)
-                await adapter.start_response(
-                    instructions=(
-                        f'Speak once in {lang}; translate the supplied line faithfully into {lang} if needed: "{line}"'
-                    )
-                )
-
-                max_bytes = GEMINI_LIVE_OUTPUT_RATE * 2 * MAX_AUDIO_SECONDS
-                deadline = asyncio.get_running_loop().time() + PREVIEW_TIMEOUT_S
-                while True:
-                    remaining = deadline - asyncio.get_running_loop().time()
-                    if remaining <= 0:
-                        truncated = bool(pcm)
-                        break
-                    event = await adapter.poll_event(timeout=min(0.5, remaining))
-                    if event is None:
-                        continue
-                    kind = event.get("type")
-                    if kind == "audio_delta":
-                        pcm.extend(event.get("pcm") or b"")
-                        if len(pcm) >= max_bytes:
-                            truncated = True
-                            break
-                    elif kind == "response_done":
-                        if not event.get("usage_only"):
-                            break
-                    elif kind in ("error", "cancelled"):
-                        break
-                if pcm:
-                    gemini_succeeded = True
-            finally:
-                try:
-                    await adapter.close()
-                except Exception:
-                    pass
-    except Exception as exc:
-        logger.info("[VOICE] Gemini live preview unavailable (%s); checking OpenAI TTS", exc)
-
-    if gemini_succeeded and pcm:
-        return {
-            "audio": pcm16_to_wav(bytes(pcm), GEMINI_LIVE_OUTPUT_RATE),
-            "voice": voice,
-            "label": label,
-            "model": model_id,
-            "truncated": truncated,
-        }
-
-    # A direct Gemini voice selection must never silently play an unrelated
-    # OpenAI voice or a generated tone. Fail visibly so the user can retry.
-    if is_direct_gemini_voice:
-        raise RuntimeError("Gemini Live voice preview is unavailable for the selected voice.")
-
-    # 2. OpenAI TTS fallback using configured voice and speed
-    if settings.openai_api_key:
-        try:
-            import openai
-            client = openai.AsyncOpenAI(api_key=settings.openai_api_key)
-            oai_voice = resolve_openai_tts_voice(voice_id)
-            res = await client.audio.speech.create(
-                model="tts-1",
-                voice=oai_voice,
-                input=line,
-                speed=pace,
-                response_format="wav",
-            )
-            audio_bytes = res.content
-            if audio_bytes and len(audio_bytes) > 200:
-                try:
-                    ba = bytearray(audio_bytes)
-                    data_idx = ba.find(b"data")
-                    if data_idx != -1 and len(ba) > data_idx + 8:
-                        correct_data_size = len(ba) - (data_idx + 8)
-                        correct_riff_size = len(ba) - 8
-                        struct.pack_into("<I", ba, 4, correct_riff_size)
-                        struct.pack_into("<I", ba, data_idx + 4, correct_data_size)
-                        audio_bytes = bytes(ba)
-                except Exception:
-                    pass
-                v_name = str(voice_id or oai_voice).title()
-                return {
-                    "audio": audio_bytes,
-                    "voice": v_name,
-                    "label": f"{v_name} ({lang})",
-                    "model": "openai-tts",
-                    "truncated": False,
-                }
-        except Exception as exc:
-            logger.warning("[VOICE] OpenAI TTS preview fallback failed: %s", exc)
-
-    # 3. Emergency synthetic WAV fallback to avoid HTTP 502 completely
-    import math
-    sample_rate = 24000
-    duration_s = min(2.5, max(0.8, len(line) * 0.05))
-    total_samples = int(sample_rate * duration_s)
-    synthetic_pcm = bytearray()
-    for i in range(total_samples):
-        t = i / sample_rate
-        envelope = math.sin(math.pi * i / total_samples)
-        sample = int(12000 * envelope * math.sin(2 * math.pi * 440 * t))
-        synthetic_pcm.extend(struct.pack("<h", sample))
-
+    cache_hit = False
+    if cacheable:
+        from server.services.saas.voice_sample_cache import get_or_create
+        audio, cache_hit = await get_or_create([active_provider, preview_model, voice, language, pace, line], generate)
+    else:
+        audio = await generate()
     return {
-        "audio": pcm16_to_wav(bytes(synthetic_pcm), sample_rate),
-        "voice": str(voice_id or "default").title(),
+        "audio": audio,
+        "voice": voice,
         "label": label,
-        "model": "fallback",
+        "model": preview_model,
+        "stackModel": str(model or ""),
         "truncated": False,
+        "cacheable": cacheable,
+        "cacheHit": cache_hit,
     }

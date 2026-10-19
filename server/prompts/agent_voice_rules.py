@@ -196,66 +196,18 @@ LANGUAGE_MISMATCH_FALLBACK: dict[str, str] = {
 }
 
 LANGUAGE_LOCK: dict[str, str] = {
-    "te-IN": (
-        "Agent language is Telugu (Telugu Unicode + everyday English business words / Tanglish). "
-        "ABSOLUTE RULE: Every reply MUST stay in Telugu/Tanglish in native script for authentic pronunciation — "
-        "NEVER switch to English-only, Hindi, or any other language, even if the caller speaks another language."
-    ),
-    "en-IN": (
-        "Agent language is Indian English only. ABSOLUTE RULE: Every reply MUST stay in English for the ENTIRE call — "
-        "NEVER switch to Telugu, Hindi, Tanglish, or any other language, even if the caller speaks another language. "
-        "If the caller speaks another language, respond ONLY in English."
-    ),
-    "en-US": (
-        "Agent language is natural spoken English for US and UK callers. ABSOLUTE RULE: Every reply MUST stay in English — "
-        "NEVER switch to any other language, even if the caller speaks another language. "
-        "No Telugu script, no Hindi script, and no rupees or lakhs unless those words are in the brief."
-    ),
-    "en-GB": (
-        "Agent language is British / UK English. ABSOLUTE RULE: Every reply MUST stay in UK English for the ENTIRE call — "
-        "clear, polite, professional British phone register. Preserve the brief's currency; never convert it to pounds by assumption. "
-        "NEVER switch to any other language, even if the caller speaks another language."
-    ),
-    "hi-IN": (
-        "Agent language is Hindi (Hindi Unicode + everyday English business words / Hinglish). "
-        "ABSOLUTE RULE: Every reply MUST stay in Hindi/Hinglish in Devanagari script for authentic pronunciation — "
-        "NEVER switch to Telugu, English-only, or any other language, even if the caller speaks another language."
-    ),
-    "ta-IN": (
-        "Agent language is Tamil (Tamil Unicode + everyday English business words). "
-        "ABSOLUTE RULE: Every reply MUST stay in Tamil in native script for authentic pronunciation — "
-        "NEVER switch to Hindi, Telugu, or English-only, even if the caller speaks another language."
-    ),
-    "kn-IN": (
-        "Agent language is Kannada (Kannada Unicode + everyday English business words). "
-        "ABSOLUTE RULE: Every reply MUST stay in Kannada in native script for authentic pronunciation — "
-        "NEVER switch to Hindi, Telugu, or English-only, even if the caller speaks another language."
-    ),
-    "ml-IN": (
-        "Agent language is Malayalam. ABSOLUTE RULE: Every reply MUST stay in Malayalam for the ENTIRE call — "
-        "write in Malayalam script so speech pronunciation is authentic. "
-        "NEVER switch to Hindi, Telugu, or English-only, even if the caller speaks another language."
-    ),
-    "mr-IN": (
-        "Agent language is Marathi. ABSOLUTE RULE: Every reply MUST stay in Marathi for the ENTIRE call — "
-        "write in Marathi Devanagari script so speech pronunciation is authentic. "
-        "NEVER switch to Hindi, Telugu, or English-only, even if the caller speaks another language."
-    ),
-    "bn-IN": (
-        "Agent language is Bengali. ABSOLUTE RULE: Every reply MUST stay in Bengali for the ENTIRE call — "
-        "write in Bengali script so speech pronunciation is authentic. "
-        "NEVER switch to Hindi, Telugu, or English-only, even if the caller speaks another language."
-    ),
-    "gu-IN": (
-        "Agent language is Gujarati. ABSOLUTE RULE: Every reply MUST stay in Gujarati for the ENTIRE call — "
-        "write in Gujarati script so speech pronunciation is authentic. "
-        "NEVER switch to Hindi, Telugu, or English-only, even if the caller speaks another language."
-    ),
-    "pa-IN": (
-        "Agent language is Punjabi. ABSOLUTE RULE: Every reply MUST stay in Punjabi for the ENTIRE call — "
-        "write in Gurmukhi script so speech pronunciation is authentic. "
-        "NEVER switch to Hindi, Telugu, or English-only, even if the caller speaks another language."
-    ),
+    "te-IN": "Primary language: Telugu (te-IN). Speak professionally in natural Telugu mixed with everyday English words and phrases. Use Telugu script for Telugu words and English script for English words. Keep this selected language style throughout the call.",
+    "hi-IN": "Primary language: Hindi (hi-IN). Speak professionally in natural Hindi mixed with everyday English words and phrases. Use Devanagari script for Hindi words and English script for English words. Keep this selected language style throughout the call.",
+    "ta-IN": "Primary language: Tamil (ta-IN). Speak professionally in natural Tamil mixed with everyday English words and phrases. Use Tamil script for Tamil words and English script for English words. Keep this selected language style throughout the call.",
+    "kn-IN": "Primary language: Kannada (kn-IN). Speak professionally in natural Kannada mixed with everyday English words and phrases. Use Kannada script for Kannada words and English script for English words. Keep this selected language style throughout the call.",
+    "ml-IN": "Primary language: Malayalam (ml-IN). Speak professionally in natural Malayalam mixed with everyday English words and phrases. Use Malayalam script for Malayalam words and English script for English words. Keep this selected language style throughout the call.",
+    "mr-IN": "Primary language: Marathi (mr-IN). Speak professionally in natural Marathi mixed with everyday English words and phrases. Use Devanagari script for Marathi words and English script for English words. Keep this selected language style throughout the call.",
+    "bn-IN": "Primary language: Bengali (bn-IN). Speak professionally in natural Bengali mixed with everyday English words and phrases. Use Bengali script for Bengali words and English script for English words. Keep this selected language style throughout the call.",
+    "gu-IN": "Primary language: Gujarati (gu-IN). Speak professionally in natural Gujarati mixed with everyday English words and phrases. Use Gujarati script for Gujarati words and English script for English words. Keep this selected language style throughout the call.",
+    "pa-IN": "Primary language: Punjabi (pa-IN). Speak professionally in natural Punjabi mixed with everyday English words and phrases. Use Gurmukhi script for Punjabi words and English script for English words. Keep this selected language style throughout the call.",
+    "en-IN": "Primary language: Indian English (en-IN). Speak clear, natural, professional English in this regional style. Preserve real local names and the business currency supplied in the script.",
+    "en-US": "Primary language: American English (en-US). Speak clear, natural, professional English in this regional style. Preserve real local names and the business currency supplied in the script.",
+    "en-GB": "Primary language: British English (en-GB). Speak clear, natural, professional English in this regional style. Preserve real local names and the business currency supplied in the script.",
 }
 
 
@@ -268,14 +220,9 @@ def live_realtime_output_rules(language: str | None, *, direction: str | None = 
     phone_ask = pack_get(PHONE_ASK_FALLBACK, lang)
     greeting_rules = greeting_and_availability_rules(direction)
     mirror = (
-        "NEVER switch your spoken language to match the caller — do not change the language of a sentence. Names and everyday business loanwords are allowed. "
-        "You MUST respond ONLY in the configured agent language at all times. "
-        "If a genuine communication barrier prevents understanding: (1) First, politely ask ONCE in the configured language "
-        "to continue in this language. Use request_language_callback with action=remind. "
-        "(2) If on a later turn the communication barrier STILL prevents progress, use request_language_callback with "
-        "action=request_callback, providing their language and an accurate English summary of what was "
-        "discussed. Only after tool success confirm the callback request in the configured language, say farewell, and end_call. "
-        "NEVER respond in the caller's language. NEVER translate your replies. Keep the same script, facts, and flow."
+        "Use the selected primary language with natural English mixing. "
+        "Understand mixed-language callers normally; ask one clarification only when meaning is unclear. "
+        "Use request_language_callback only when a genuine communication barrier remains."
     )
     return f"""OUTPUT LANGUAGE RULES (mandatory)
 - {LANGUAGE_LOCK[lang]}
@@ -309,38 +256,17 @@ def live_realtime_output_rules(language: str | None, *, direction: str | None = 
 
 
 def live_audio_modality_rules() -> str:
-    """Audio/output shape only — language policy lives in the compiled brain pack."""
+    """Shared spoken behavior, without repeating the business or language packs."""
     return (
-        "OUTPUT MODALITY RULES (audio Realtime — mandatory)\n"
-        "- You are on a live phone call. Speak the reply as natural speech.\n"
-        "- Language policy applies to YOUR output, not to what the caller is allowed to say. "
-        "If you understand their meaning, answer in the configured language without requesting a language change. "
-        "A foreign-looking transcript, accent, name, loanword or short reply is not a language barrier. "
-        "For unclear audio ask one neutral clarification; never guess a name, vehicle or intent. "
-        "Use the language callback tool only when a genuine communication barrier prevents progress.\n"
-        "- Represent the business using we/our after the introduction. Repeat its name only when asked "
-        "or needed to resolve confusion; do not restart the introduction or repeat the caller's name every turn.\n"
-        "- Use idiomatic speech in the configured language, with complete syllables, clear word endings "
-        "and gentle pauses between phrases. Keep brevity by choosing fewer words, never by rushing or swallowing sounds. "
-        "Render local-language sentences in their native script, preserving actual brand/model names.\n"
-        "- An agreed callback needs one concise confirmation and farewell with end_call. "
-        "A subsequent okay/thank you does not restart confirmation or trigger a presence check. "
-        "A new question or correction does need an answer. Clarify ambiguous morning/evening times; "
-        "describe a requested callback as requested, never guarantee a booking without tool confirmation.\n"
-        "- Objective completion: use the script's actual required outcome, not a fixed number of turns. "
-        "After required details and the caller's next step are confirmed, summarize once, say farewell "
-        "in the configured language and invoke end_call with goal_complete in that same turn. "
-        "Do not wait for a separate goodbye or invent extra qualification questions. "
-        "An unanswered question, unclear speech or merely offering a callback is not completion. "
-        "Never announce that the call has ended while still connected.\n"
-        "- Wait until the caller finishes, then begin the actual answer promptly. "
-        "No fillers such as hmm or yeah, backchannels, listening sounds, or talking over the caller.\n"
-        "- Each reply: 1–2 short sentences, then stop at a natural pause. Do not run on or talk continuously.\n"
-        "- After asking a question, end the turn and wait — never keep pitching.\n"
-        "- Never emit JSON, XML, markdown fences, or field names such as spoken_response or memory_update.\n"
-        "- Never read stage directions, tool names, or internal labels aloud.\n"
-        "- Use the end_call tool in the SAME turn as your spoken farewell when the call should end.\n"
-        "- Keep replies inside the LENGTH bands. One next question at most."
+        "OUTPUT MODALITY RULES (audio Realtime)\n"
+        "- Speak professionally and naturally. Answer the caller's latest point, then listen.\n"
+        "- Use the selected primary language with natural English mixing. Understand callers who mix languages; ask for clarification only when needed.\n"
+        "- Follow the supplied business facts and relevant script objectives. Do not repeat answered questions or the introduction.\n"
+        "- Keep answers concise but complete. Usually one or two short sentences; use more when the question needs it. Ask one question at a time.\n"
+        "- Do not invent facts, customer details, or completed actions. Claim a booking, message, callback or transfer is confirmed only after a successful tool result.\n"
+        "- On a clear goodbye, refusal or an agreed completed next step, say a brief farewell and invoke end_call in the same turn. An isolated okay/thanks or an unanswered question is not an ending.\n"
+        "- Speak only caller-facing words. Never read JSON, markup, internal labels, tool names or stage directions aloud.\n"
+        "- Wait when the caller is speaking and allow interruptions. Do not manufacture listening sounds or force an accent from a different locale."
     )
 
 
@@ -349,8 +275,8 @@ def live_realtime_audio_rules(language: str | None, *, direction: str | None = N
     return (
         live_audio_modality_rules() + "\n\n"
         + live_realtime_output_rules(language, direction=direction)
-        + "\nLANGUAGE HANDOFF (MANDATORY — NEVER SWITCH LANGUAGES):\n"
-        "- ABSOLUTE RULE: You MUST NEVER switch your spoken language. Every reply stays in the configured language.\n"
+        + "\nLANGUAGE HANDOFF:\n"
+        "- Keep the selected primary language with natural English mixing.\n"
         "- Only if a genuine communication barrier prevents understanding (not merely another language):\n"
         "  Step 1: Call request_language_callback with action=remind. Politely ask ONCE in the configured "
         "language to continue in this language. Then WAIT for the caller's response.\n"
@@ -369,9 +295,9 @@ def live_realtime_audio_rules(language: str | None, *, direction: str | None = N
 
 
 SPOKEN_PACK_TE = f"""--- SPOKEN LANGUAGE (te-IN) ---
-Live phone call. Speak natural Tanglish: Telugu Unicode with everyday English (`budget`, `order`, `details`, `booking`). Hyderabad phone register with polite `-andi` markers, avoiding archaic literary Telugu (`చేయుచున్నాను`).
+Live phone call. Speak natural Telugu mixed with English: Telugu Unicode with everyday English (`budget`, `order`, `details`, `booking`). Hyderabad phone register with polite `-andi` markers, avoiding archaic literary Telugu (`చేయుచున్నాను`).
 {LANGUAGE_LOCK["te-IN"]}
-If the caller speaks another language and you cannot follow: use the language-mismatch line once, then wait. Never answer in their language.
+If the caller speaks another language and you cannot follow: use the language-mismatch line once, then wait. Ordinary English mixing does not require a language reminder.
 Language mismatch (once): `{LANGUAGE_MISMATCH_FALLBACK["te-IN"]}`
 {SOFT_BREVITY}
 Filler bans: do not repeat the exact same acknowledgment every turn (vary naturally with అవునండి / సరేనండి / అలాగే / ఓకే). Answer directly and politely.
@@ -396,7 +322,7 @@ PHONE CALL
 SPOKEN_PACK_EN = f"""--- SPOKEN LANGUAGE (en-IN) ---
 You are on a live phone call. Speak natural Indian English: clear, warm, professional telephone register. Avoid archaic bureaucratic phrasing (no "do the needful", "myself [name]", "revert back") and avoid excessive apologies. Direct and helpful.
 {LANGUAGE_LOCK["en-IN"]}
-If the caller speaks Telugu, Hindi, or another language you cannot follow: use the language-mismatch line once, then wait. Do not answer in their language.
+If the caller speaks Telugu, Hindi, or another language you cannot follow: use the language-mismatch line once, then wait. Ordinary English mixing does not require a language reminder.
 Language mismatch (once): `{LANGUAGE_MISMATCH_FALLBACK["en-IN"]}`
 {SOFT_BREVITY}
 Filler bans: do not start every turn with Yes, / Sure, / Okay, / Alright, / Absolutely, / Definitely,. Answer directly.
@@ -460,9 +386,9 @@ GOOD: Answer the interrupt. Stop asking if they complain. Don't-call → thanks,
 BAD: Finish the old sentence or ask one more qualify question."""
 
 SPOKEN_PACK_EN_US = f"""--- SPOKEN LANGUAGE (en-US) ---
-You are on a live phone call. Speak natural everyday English for US and UK callers — clear, warm, professional. Not a newsreader, not slang-heavy.
+You are on a live phone call. Speak natural American English for US callers — clear, warm, professional.
 {LANGUAGE_LOCK["en-US"]}
-If the caller speaks another language you cannot follow: use the language-mismatch line once, then wait. Do not answer in their language.
+If the caller speaks another language you cannot follow: use the language-mismatch line once, then wait. Ordinary English mixing does not require a language reminder.
 Language mismatch (once): `{LANGUAGE_MISMATCH_FALLBACK["en-US"]}`
 {SOFT_BREVITY}
 Filler bans: do not start every turn with Yes, / Sure, / Okay, / Alright, / Absolutely,. Answer directly.
@@ -550,9 +476,9 @@ GOOD: Bahut sawaal → sorry, sawaal band. Call mat karna → dhanyavaad, alvida
 BAD: Ek aur qualify question."""
 
 SPOKEN_PACK_EN_GB = f"""--- SPOKEN LANGUAGE (en-GB) ---
-    You are on a live phone call. Speak natural, polite, and professional British / UK English. Natural cadence. Use UK terminology (mobile, postcode, pounds/pence); avoid Americanisms ('touch base', 'super excited', 'gotten').
+You are on a live phone call. Speak natural, polite, and professional British English. Use regional terminology where appropriate and preserve the business currency supplied in the script.
 {LANGUAGE_LOCK["en-GB"]}
-If the caller speaks another language you cannot follow: use the language-mismatch line once, then wait. Do not answer in their language.
+If the caller speaks another language you cannot follow: use the language-mismatch line once, then wait. Ordinary English mixing does not require a language reminder.
 Language mismatch (once): `{LANGUAGE_MISMATCH_FALLBACK["en-GB"]}`
 {SOFT_BREVITY}
 Filler bans: do not start every turn with Yes, / Right, / Okay, / Alright, / Absolutely, / No worries,. Answer directly.
@@ -588,7 +514,7 @@ PHONE CALL
 SPOKEN_PACK_TA = f"""--- SPOKEN LANGUAGE (ta-IN) ---
 You are on a live phone call. Speak natural Tamil (conversational Tamil Unicode with everyday English words). Polite, warm phone register. Render spoken forms in Unicode (e.g. சொல்றேன், இருக்கு, பண்றோம், வேணும் instead of formal சொல்கிறேன், இருக்கிறது, செய்கிறோம்).
 {LANGUAGE_LOCK["ta-IN"]}
-If the caller speaks another language you cannot follow: use the language-mismatch line once, then wait. Never answer in their language.
+If the caller speaks another language you cannot follow: use the language-mismatch line once, then wait. Ordinary English mixing does not require a language reminder.
 Language mismatch (once): `{LANGUAGE_MISMATCH_FALLBACK["ta-IN"]}`
 {SOFT_BREVITY}
 Filler bans: do not repeat the exact same acknowledgment every turn (vary naturally with சரிங்க / ஆமாம் / கண்டிப்பா / ஓகே). Answer directly and politely.
@@ -621,7 +547,7 @@ PHONE CALL
 SPOKEN_PACK_KN = f"""--- SPOKEN LANGUAGE (kn-IN) ---
 You are on a live phone call. Speak natural Kannada (conversational Kannada Unicode with everyday English words). Warm, polite phone register. Use spoken forms in Unicode (e.g. ಮಾಡ್ತೀನಿ, ಹೇಳ್ತೀನಿ, ಇದೆ, ಬೇಕು, ಆಗುತ್ತೆ instead of formal ಮಾಡುತ್ತೇನೆ, ಹೇಳುತ್ತೇನೆ, ಇರುತ್ತದೆ).
 {LANGUAGE_LOCK["kn-IN"]}
-If the caller speaks another language you cannot follow: use the language-mismatch line once, then wait. Never answer in their language.
+If the caller speaks another language you cannot follow: use the language-mismatch line once, then wait. Ordinary English mixing does not require a language reminder.
 Language mismatch (once): `{LANGUAGE_MISMATCH_FALLBACK["kn-IN"]}`
 {SOFT_BREVITY}
 Filler bans: do not repeat the exact same acknowledgment every turn (vary naturally with ಹೌದು / ಸರಿ / ಖಂಡಿತ / ಓಕೆ). Answer directly and politely.
@@ -906,7 +832,7 @@ _WORK_SENTENCE_START = re.compile(
 
 IDENTITY_SPEAK: dict[str, str] = {
     "te-IN": (
-        "Speak natural Tanglish. You are this business's phone representative — warm, helpful, on-brand. "
+        "Speak natural Telugu mixed with English. You are this business's phone representative — warm, helpful, on-brand. "
         "Introduce yourself only on the first turn of each call — never re-introduce mid-call."
     ),
     "en-IN": (
@@ -1264,15 +1190,15 @@ def script_writer_system(*, language: str | None, budget_tokens: int) -> str:
     _ = budget_tokens
     lang_line = {
         "te-IN": (
-            "Write the entire script in spoken Tanglish (Telugu Unicode + everyday English). "
-            "Example dialogue must be Tanglish — not literary Telugu, not English-only."
+            "Write the script in professional spoken Telugu mixed naturally with English. "
+            "Use Telugu script for Telugu words and English script for English words."
         ),
         "en-IN": (
             "Write the entire script in spoken Indian English. "
             "Example dialogue must be English only — no Telugu script, no Tanglish, no Hindi."
         ),
         "en-US": (
-            "Write the entire script in natural spoken English for US and UK callers. "
+            "Write the entire script in natural American English for US callers. "
             "Example dialogue must be English only — no Telugu, no Hindi, "
             "and no rupees or lakhs unless those words are in the brief."
         ),
@@ -1288,7 +1214,7 @@ def script_writer_system(*, language: str | None, budget_tokens: int) -> str:
     )
     person_ex = "Alex, Sarah" if native else "Priya, Ravi"
     voice_locale = (
-        "VOICE STYLE: natural spoken phone English for US/UK callers — short warm lines, "
+        "VOICE STYLE: natural spoken phone English for the selected English locale — short warm lines, "
         "human acks ('got it', 'nice'), then one clear next beat. "
         "Never use rupees, lakhs, or WhatsApp unless those words are in the brief."
         if native
@@ -1381,7 +1307,7 @@ def script_writer_system(*, language: str | None, budget_tokens: int) -> str:
 
 # Back-compat aliases (tests / older imports). These are Telugu-pack excerpts, not global MUSTS.
 AGENT_TANGLISH_LANGUAGE_RULE = (
-    "Speak natural Tanglish: Telugu sentence flow with everyday English words mixed in "
+    "Speak natural Telugu mixed with English: Telugu sentence flow with everyday English words mixed in "
     "(budget, order, delivery, confirm, site visit, pickup, price, flat, loan, OK)."
 )
 

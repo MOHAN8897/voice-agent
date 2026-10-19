@@ -1,5 +1,29 @@
 {
   "intents": {
+    "inline:a-browser-test-call-reaches-a-connected-listen-o-2133b570": {
+      "binding": {
+        "contains": "Connected in listen-only mode",
+        "kind": "text"
+      },
+      "declaredAt": 1792416371645,
+      "id": "inline:a-browser-test-call-reaches-a-connected-listen-o-2133b570",
+      "provenBy": {
+        "at": 1792416372243,
+        "grade": "presence",
+        "runId": "drive-s816a6710-3fcc-4272-8138-4f576f89c455",
+        "verdictId": "reticle_act_and_wait:1792416372243"
+      },
+      "state": "proved",
+      "statement": "A browser test call reaches a connected listen-only state when microphone access is denied, and explains how to enable speaking.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/ui/TactileButton.jsx"
+        ]
+      },
+      "updatedAt": 1792416372314
+    },
     "inline:a-workspace-can-open-billing-and-review-wallet-a-03c2ac0b": {
       "binding": {
         "contains": "#dashboard/billing",

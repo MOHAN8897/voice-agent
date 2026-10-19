@@ -1,10 +1,22 @@
 {
   "entries": [
     {
+      "id": "inline:a-browser-test-call-reaches-a-connected-listen-o-2133b570",
+      "statement": "A browser test call reaches a connected listen-only state when micropho…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
       "id": "inline:a-workspace-can-open-billing-and-review-wallet-a-03c2ac0b",
       "statement": "A workspace can open billing and review wallet and payment activity.",
       "status": "proved",
       "subject": "console"
+    },
+    {
+      "id": "flow:drive-a-browser-test-call-reaches-a-connected-listen-o",
+      "statement": "A browser test call reaches a connected listen-only state when micropho…",
+      "status": "proved",
+      "subject": "drive-a-browser-test-call-reaches-a-conn"
     },
     {
       "id": "flow:drive-a-deployment-whose-mail-provider-cannot-deliver",

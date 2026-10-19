@@ -206,6 +206,8 @@ export function AgentVoicePanel({
   setFormData,
   phoneVoices = [],
   activeVoiceProvider = 'openai',
+  defaultVoiceId = 'te-in-csagent-5',
+  voiceCatalogError = null,
   stackLabel = 'Enterprise Voice Network',
   onOpenTestCall,
 }) {
@@ -216,8 +218,8 @@ export function AgentVoicePanel({
     activeVoiceProvider === 'gemini'
       ? String(
           phoneVoices.find(
-            (voice) => voice.provider === 'openai' && voice.id?.toLowerCase() === storedVoiceId
-          )?.geminiVoice || storedVoiceId
+            (voice) => voice.provider === 'gemini' && voice.id?.toLowerCase() === storedVoiceId
+          )?.id || defaultVoiceId || 'te-in-csagent-5'
         ).toLowerCase()
       : storedVoiceId;
   const currentLanguage =
@@ -347,6 +349,7 @@ export function AgentVoicePanel({
       setPlayingVoiceId(voice.id);
       setPlayingType('sample');
 
+      let previewUrl = null;
       try {
         if (voice.provider === 'gemini') {
           const preview = await api.telephony.previewVoice({
@@ -355,6 +358,7 @@ export function AgentVoicePanel({
             language: currentLanguage,
             speed: currentSpeed,
           });
+          previewUrl = preview?.url || null;
           if (preview?.blob) {
             const played = await voiceAgent.playAudioBuffer(
               preview.blob,
@@ -367,12 +371,16 @@ export function AgentVoicePanel({
                 setPlayingType('sample');
               }
             );
-            if (played) return;
+            if (played) {
+              if (previewUrl) URL.revokeObjectURL(previewUrl);
+              return;
+            }
           }
           if (preview?.url) {
             voiceAgent.playAudioClip(
               preview.url,
               () => {
+                if (previewUrl) URL.revokeObjectURL(previewUrl);
                 setPlayingVoiceId((curr) => (curr === voice.id ? null : curr));
                 setPlayingType((curr) => (curr === 'sample' ? null : curr));
               },
@@ -403,6 +411,7 @@ export function AgentVoicePanel({
           }
         );
       } catch (e) {
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
         setPlayingVoiceId(null);
         setPlayingType(null);
         setAudioError(
@@ -497,6 +506,7 @@ export function AgentVoicePanel({
       formData?.greeting?.trim() ||
       "Hello! Thank you for calling. How can I assist you today?";
 
+    let previewUrl = null;
     try {
       const resp = await api.telephony.previewVoice({
         voiceId: currentVoiceId,
@@ -504,32 +514,54 @@ export function AgentVoicePanel({
         language: currentLanguage,
         speed: currentSpeed,
       });
+      previewUrl = resp?.url || null;
 
       if (resp?.url || resp?.blob) {
         setPlayingType('greeting');
         setPlayingVoiceId(currentVoiceId);
         setIsBufferingGreeting(false);
 
-        voiceAgent.playAudioClip(
-          resp.url,
-          () => handleStopAudio(),
-          () => {
-            setPlayingType('greeting');
-            setPlayingVoiceId(currentVoiceId);
-          }
-        );
+        const played = resp.blob
+          ? await voiceAgent.playAudioBuffer(
+              resp.blob,
+              () => {
+                if (previewUrl) URL.revokeObjectURL(previewUrl);
+                previewUrl = null;
+                handleStopAudio();
+              },
+              () => {
+                setPlayingType('greeting');
+                setPlayingVoiceId(currentVoiceId);
+              }
+            )
+          : false;
+        if (played) {
+          if (previewUrl) URL.revokeObjectURL(previewUrl);
+          return;
+        }
+        if (previewUrl) {
+          voiceAgent.playAudioClip(
+            previewUrl,
+            () => {
+              if (previewUrl) URL.revokeObjectURL(previewUrl);
+              previewUrl = null;
+              handleStopAudio();
+            },
+            () => {
+              setPlayingType('greeting');
+              setPlayingVoiceId(currentVoiceId);
+            }
+          );
+        } else {
+          throw new Error('Preview audio could not be decoded.');
+        }
       } else {
         throw new Error('No audio returned');
       }
-    } catch {
+    } catch (error) {
+      if (typeof previewUrl === 'string') URL.revokeObjectURL(previewUrl);
       setIsBufferingGreeting(false);
-      // Fallback to preconfigured sample
-      const activeVoiceObj = displayVoices.find((v) => v.id === currentVoiceId);
-      if (activeVoiceObj?.sampleUrl) {
-        handlePlayVoiceSample(activeVoiceObj);
-      } else {
-        setAudioError('Live greeting synthesis preview unavailable.');
-      }
+      setAudioError(error?.message || 'Live greeting synthesis preview unavailable.');
     }
   }, [
     playingType,
@@ -538,8 +570,6 @@ export function AgentVoicePanel({
     currentVoiceId,
     currentLanguage,
     currentSpeed,
-    displayVoices,
-    handlePlayVoiceSample,
   ]);
 
   // Clean up audio on unmount
@@ -681,12 +711,17 @@ export function AgentVoicePanel({
         className="p-3.5 rounded-xl bg-white border border-[#E4E2EB] shadow-xs space-y-3"
         data-testid="speaking-voice-showcase"
       >
-        {activeVoiceProvider === 'gemini' && currentLanguage === 'hi-IN' && (
+        {voiceCatalogError && (
+          <p className="text-[11px] text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2" role="alert">
+            {voiceCatalogError}
+          </p>
+        )}
+        {activeVoiceProvider === 'gemini' && ['hi-IN', 'te-IN'].includes(currentLanguage) && (
           <p
             className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2"
             data-testid="voice-localization-note"
           >
-            Hindi-specific choices are regional dialects. Each voice is labeled with its accent; preview it before selecting.
+            {currentLanguage === 'te-IN' ? 'Telugu (India) choices include regional support, concierge, and technical voices.' : 'Hindi-specific choices are regional voices.'} Each voice is labeled with its accent; preview it before selecting.
           </p>
         )}
         {activeVoiceProvider === 'gemini' &&
@@ -836,7 +871,7 @@ export function AgentVoicePanel({
                     </div>
                     <p className="text-[11px] text-[#716C7F] truncate max-w-xs md:max-w-md">
                       {voice.accent
-                        ? `${voice.accent} · ${voice.languageCode}`
+                        ? `${voice.accent}${voice.languageCode ? ` · ${voice.languageCode}` : ''}`
                         : voice.useCase}
                     </p>
                   </div>

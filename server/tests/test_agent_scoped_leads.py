@@ -242,16 +242,16 @@ def test_pcm_is_wrapped_in_a_playable_wav():
         assert wf.readframes(wf.getnframes()) == pcm
 
 
-def test_an_openai_catalog_voice_previews_as_its_gemini_counterpart():
-    """The preview must speak the voice the call will use, not the OpenAI one."""
-    voice, label = voice_preview.resolve_preview_voice("marin")
-    assert voice == "Puck"
+def test_openai_catalog_voice_preview_stays_on_openai():
+    """Preview voice resolution must respect the selected provider."""
+    voice, label = voice_preview.resolve_preview_voice("marin", provider="openai")
+    assert voice == "marin"
     assert label == "Marin"
 
 
-def test_an_unknown_voice_falls_back_rather_than_failing():
-    voice, _ = voice_preview.resolve_preview_voice("does-not-exist")
-    assert voice
+def test_an_unknown_voice_is_rejected_instead_of_playing_an_unrelated_voice():
+    with pytest.raises(ValueError, match="voice_not_in_active_catalog"):
+        voice_preview.resolve_preview_voice("does-not-exist", provider="gemini")
 
 
 def test_preview_text_is_whitespace_collapsed_and_capped():

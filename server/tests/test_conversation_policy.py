@@ -445,8 +445,9 @@ def test_language_contract_is_last_in_compiled_brain():
     from server.brain.agent_script_compiler import _assemble_brain
 
     te = _assemble_brain(script="x", language="te-IN", style=None)
-    assert "Telugu Unicode" in te or "Tanglish" in te
-    assert "Every reply must stay in Telugu" in te or "Telugu/Tanglish" in te
+    from server.prompts.agent_voice_rules import LANGUAGE_LOCK
+    assert LANGUAGE_LOCK["te-IN"] in te
+    assert "natural English mixing" in te
     assert te.rstrip().endswith(
         "A refusal or off-scope redirect stands alone; never append business facts or a pitch."
     )

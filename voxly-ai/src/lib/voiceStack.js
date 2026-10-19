@@ -1,19 +1,18 @@
 import { api, stripEntityTags } from '../services/api';
 import { parseObjectionRulesFromSections } from './studioScriptHelpers.js';
 
-let cachedOptions = null;
-
-export async function fetchPhoneVoiceOptions() {
-  if (cachedOptions) return cachedOptions;
-  const data = await api.request('GET', '/api/telephony/voice-options');
-  cachedOptions = {
+export async function fetchPhoneVoiceOptions(language = 'te-IN') {
+  const query = new URLSearchParams({ language: String(language || 'te-IN') });
+  const data = await api.request('GET', `/api/telephony/voice-options?${query}`);
+  return {
     stackLabel: data.stackLabel || 'Live phone AI',
     stackDescription: data.stackDescription || '',
-    defaultVoiceId: data.defaultVoiceId || 'marin',
+    activeVoiceProvider: data.activeVoiceProvider || 'gemini',
+    activeModel: data.activeModel || '',
+    defaultVoiceId: data.defaultVoiceId || 'te-in-csagent-5',
     voices: Array.isArray(data.voices) ? data.voices : [],
     languages: Array.isArray(data.languages) ? data.languages : [],
   };
-  return cachedOptions;
 }
 
 export function parseVoiceConfigFromSections(sections) {

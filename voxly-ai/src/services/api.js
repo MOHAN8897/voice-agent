@@ -402,6 +402,7 @@ export const api = {
       method,
       headers: {
         'Content-Type': 'application/json',
+        Accept: 'audio/wav, application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...customHeaders,
       },
@@ -419,12 +420,22 @@ export const api = {
       e.status = response.status;
       throw e;
     }
+    const blob = await response.blob();
+    const header = new Uint8Array(await blob.slice(0, 12).arrayBuffer());
+    const isWav =
+      header.length >= 12 &&
+      String.fromCharCode(...header.slice(0, 4)) === 'RIFF' &&
+      String.fromCharCode(...header.slice(8, 12)) === 'WAVE';
+    if (blob.size < 44 || !isWav) {
+      throw new Error('The voice service returned audio that could not be played.');
+    }
     return {
-      blob: await response.blob(),
+      blob,
       headers: {
         voice: response.headers.get('X-Voice-Name'),
         label: response.headers.get('X-Voice-Label'),
         model: response.headers.get('X-Voice-Model'),
+        stackModel: response.headers.get('X-Voice-Stack-Model'),
       },
     };
   },
@@ -904,7 +915,14 @@ export const api = {
         language: language || null,
         speed: speed != null ? Number(speed) : null,
       });
-      return { blob, url: URL.createObjectURL(blob), voice: headers.voice, label: headers.label, model: headers.model };
+      return {
+        blob,
+        url: URL.createObjectURL(blob),
+        voice: headers.voice,
+        label: headers.label,
+        model: headers.model,
+        stackModel: headers.stackModel,
+      };
     },
 
     /** Per-country compliance obligations for an agent. */

@@ -273,6 +273,10 @@ export function AgentStudioModule({
     selectedAgent,
     updateAgent,
   } = useWorkspace();
+  const voiceLanguage =
+    (Array.isArray(selectedAgent?.languages) ? selectedAgent.languages[0] : null) ||
+    selectedAgent?.language ||
+    'te-IN';
 
   const [activeTab, setActiveTab] = useState(() => resolveEmployeeStep(flowStep).step);
   const [callPanel, setCallPanel] = useState(() => resolveEmployeeStep(flowStep).callPanel || 'history');
@@ -281,18 +285,37 @@ export function AgentStudioModule({
   // button that opened it rather than dropping the user back at the top of the page.
   const testCallButtonRef = useRef(null);
   const [phoneVoices, setPhoneVoices] = useState([]);
-  const [activeVoiceProvider, setActiveVoiceProvider] = useState('openai');
+  const [activeVoiceProvider, setActiveVoiceProvider] = useState('gemini');
+  const [defaultVoiceId, setDefaultVoiceId] = useState('te-in-csagent-5');
+  const [voiceCatalogError, setVoiceCatalogError] = useState(null);
   const [stackLabel, setStackLabel] = useState(PHONE_STACK_LABEL);
 
   useEffect(() => {
-    fetchPhoneVoiceOptions()
-      .then((o) => {
-        setPhoneVoices(o.voices || []);
-        setActiveVoiceProvider((o.voices || []).some((voice) => voice.provider === 'gemini') ? 'gemini' : 'openai');
-        setStackLabel(o.stackLabel || PHONE_STACK_LABEL);
-      })
-      .catch(() => {});
-  }, []);
+    let mounted = true;
+    const refreshVoiceCatalog = () => {
+      fetchPhoneVoiceOptions(voiceLanguage)
+        .then((o) => {
+          if (!mounted) return;
+          setPhoneVoices(o.voices || []);
+          setActiveVoiceProvider(o.activeVoiceProvider || 'gemini');
+          setDefaultVoiceId(o.defaultVoiceId || 'te-in-csagent-5');
+          setStackLabel(o.stackLabel || PHONE_STACK_LABEL);
+          setVoiceCatalogError(null);
+        })
+        .catch((error) => {
+          if (!mounted) return;
+          setVoiceCatalogError(error?.message || 'Could not load the active voice catalog.');
+        });
+    };
+    refreshVoiceCatalog();
+    const interval = window.setInterval(refreshVoiceCatalog, 60_000);
+    window.addEventListener('focus', refreshVoiceCatalog);
+    return () => {
+      mounted = false;
+      window.clearInterval(interval);
+      window.removeEventListener('focus', refreshVoiceCatalog);
+    };
+  }, [selectedAgentId, voiceLanguage]);
 
   // A legacy ?step=telephony or ?step=test link resolves here on first mount and on
   // every later hash change, so old bookmarks still land somewhere useful.
@@ -700,49 +723,70 @@ export function AgentStudioModule({
       return;
     }
 
-    // Acoustic preview is strictly synthesized in English, applying and respecting the chosen voice & speed
+    const previewLanguage = formData.language || formData.languages?.[0] || 'te-IN';
+    const storedVoice = String(formData.voice?.voiceId || formData.voice?.realtimeVoice || 'marin').toLowerCase();
+    const targetVoice = activeVoiceProvider === 'gemini'
+      ? phoneVoices.find((voice) => voice.provider === 'gemini' && voice.id?.toLowerCase() === storedVoice)?.id || defaultVoiceId
+      : storedVoice;
+    const selectedVoice = phoneVoices.find((voice) => voice.id?.toLowerCase() === String(targetVoice).toLowerCase());
     const isEnglishGreeting = formData.greeting && /^[A-Za-z0-9\s.,!?'"()-]+$/.test(formData.greeting.trim());
-    const previewText =
+    const previewText = selectedVoice?.sampleText ||
       (isEnglishGreeting ? formData.greeting.trim() : null) ||
       `Hi there! This is ${formData.name || 'Priya'}. Do you have two minutes to speak?`;
     setVoicePreviewError(null);
     setVoiceSpoken({ voice: null, model: null });
     setIsBufferingVoice(true);
 
-    // Speak through the real live model the caller will reach with configured voice and speed in English.
+    // Use the selected provider and the active voice for the agent's language.
+    let previewUrl = null;
     try {
-      const targetVoice = formData.voice?.voiceId || formData.voice?.realtimeVoice || 'marin';
       const targetSpeed = formData.voice?.speed ?? 1;
       const { blob, url, voice, model } = await api.telephony.previewVoice({
         text: previewText,
         voiceId: targetVoice,
-        language: 'en-US',
+        language: previewLanguage,
         speed: targetSpeed,
       });
-      setVoiceSpoken({ voice: voice || targetVoice, model: model || null, language: 'en-US' });
+      previewUrl = url || null;
+      setVoiceSpoken({ voice: voice || targetVoice, model: model || null, language: previewLanguage });
       setIsBufferingVoice(false);
       setIsPlayingVoice(true);
       let played = false;
       if (blob) {
         played = await voiceAgent.playAudioBuffer(
           blob,
-          () => setIsPlayingVoice(false),
+          () => {
+            if (previewUrl) URL.revokeObjectURL(previewUrl);
+            previewUrl = null;
+            setIsPlayingVoice(false);
+          },
           () => setIsPlayingVoice(true)
         );
+        if (played && previewUrl) {
+          URL.revokeObjectURL(previewUrl);
+          previewUrl = null;
+        }
       }
       if (!played && url) {
         voiceAgent.playAudioClip(
           url,
-          () => setIsPlayingVoice(false),
+          () => {
+            if (previewUrl) URL.revokeObjectURL(previewUrl);
+            previewUrl = null;
+            setIsPlayingVoice(false);
+          },
           () => setIsPlayingVoice(true)
         );
         played = true;
       }
       if (!played) {
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        previewUrl = null;
         setIsPlayingVoice(false);
         setVoicePreviewError('The preview audio could not be played. Check your sound output.');
       }
     } catch (e) {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
       setIsBufferingVoice(false);
       setIsPlayingVoice(false);
       setVoicePreviewError(
@@ -1424,6 +1468,8 @@ export function AgentStudioModule({
               setFormData={setFormData}
               phoneVoices={phoneVoices}
               activeVoiceProvider={activeVoiceProvider}
+              defaultVoiceId={defaultVoiceId}
+              voiceCatalogError={voiceCatalogError}
               stackLabel={stackLabel}
               onOpenTestCall={() => setTestCallOpen(true)}
             />

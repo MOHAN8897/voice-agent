@@ -76,6 +76,7 @@ class VobizPstnBridge:
 
     async def run(self, *, agent_id: str | None, tier: str | None, token_meta: dict[str, Any] | None) -> None:
         self._token_meta = dict(token_meta or {})
+        self._start_voice_task: asyncio.Task | None = None
         self.agent_id = agent_id or self._token_meta.get("agent_id")
         self.tier = tier or self._token_meta.get("tier")
         exit_reason = "media_disconnected"
@@ -176,12 +177,15 @@ class VobizPstnBridge:
 
     async def _on_start(self, ev: dict[str, Any]) -> None:
         start = ev.get("start") or ev
-        started_call = str(start.get("callId") or start.get("call_uuid") or ev.get("call_uuid") or "")
+        started_call = str(
+            start.get("callId") or start.get("callUUID") or start.get("call_uuid")
+            or ev.get("callId") or ev.get("callUUID") or ev.get("call_uuid") or ""
+        )
         bound_call = str(self._token_meta.get("call_uuid") or "")
         if started_call and bound_call and not bound_call.startswith("vobiz-") and started_call != bound_call:
             raise ValueError("Media start does not match the authorized call")
         self.call_uuid = started_call or bound_call or str(uuid.uuid4())
-        self.stream_id = str(start.get("streamId") or start.get("stream_id") or "")
+        self.stream_id = str(start.get("streamId") or start.get("stream_id") or ev.get("streamId") or ev.get("stream_id") or "")
 
         self.caller_id = str(start.get("from") or start.get("caller") or self._token_meta.get("from_number") or self._token_meta.get("from") or "")
         self._called_id = str(start.get("to") or start.get("called") or self._token_meta.get("to_number") or self._token_meta.get("to") or "")
@@ -324,7 +328,7 @@ class VobizPstnBridge:
         self._voice.set_hangup_handler(self.hangup)
         if hasattr(self._voice, "set_turn_audio_done_handler"):
             self._voice.set_turn_audio_done_handler(self._mark_turn_end)
-        asyncio.create_task(self._start_voice_loop())
+        self._start_voice_task = asyncio.create_task(self._start_voice_loop())
 
         logger.info(
             "[VOBIZ] Bridge connected call_uuid=%s call_id=%s codec=%s rate=%s prewarm=%s",
@@ -343,17 +347,19 @@ class VobizPstnBridge:
             inbound_greeting = getattr(self, "_inbound_greeting", None)
             greeting_text = inbound_greeting or (prewarm.greeting_text if prewarm else None)
             greeting_frames = None if inbound_greeting else (prewarm.greeting_wire_frames if prewarm else None)
-            await self._voice.start_call(
+            await asyncio.wait_for(self._voice.start_call(
                 play_greeting=bool(self.call_id or self.agent_id),
                 greeting_wire_frames=greeting_frames,
                 greeting_text=greeting_text,
-            )
+            ), timeout=60.0)
             if prewarm and self.call_id:
                 from server.services.pstn_prewarm import record_bundle_greeting_usage
 
                 await record_bundle_greeting_usage(self.call_id, prewarm)
         except Exception as exc:
             logger.exception("[VOBIZ] Voice loop greeting start failed: %s", exc)
+            # A failed startup must not leave a billable, silent connected call.
+            await self.hangup(reason="voice_start_failed")
 
     async def _on_media(self, ev: dict[str, Any]) -> None:
         if not self._voice or self._closed:
@@ -545,6 +551,11 @@ class VobizPstnBridge:
             return
         self._cleanup_done = True
         self._closed = True
+
+        startup = getattr(self, "_start_voice_task", None)
+        if startup and startup is not asyncio.current_task() and not startup.done():
+            startup.cancel()
+            await asyncio.gather(startup, return_exceptions=True)
 
         if self._voice:
             try:

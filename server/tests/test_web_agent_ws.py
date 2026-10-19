@@ -1,6 +1,7 @@
 """Regression tests for the browser voice WebSocket."""
 
 from importlib import import_module
+import asyncio
 from types import SimpleNamespace
 
 import pytest
@@ -22,17 +23,21 @@ async def test_web_agent_ready_uses_stack_model_when_adapter_has_no_model(monkey
             self.scope = {"subprotocols": ["voxly-web-agent", "voxly-auth.test-token"]}
             self.events = []
             self.accepted_subprotocol = None
+            self.ready = asyncio.Event()
 
         async def accept(self, subprotocol=None):
             self.accepted_subprotocol = subprotocol
 
         async def send_json(self, payload):
             self.events.append(payload)
+            if payload.get("type") == "ready":
+                self.ready.set()
 
         async def close(self, code=1000):
             self.close_code = code
 
         async def receive(self):
+            await self.ready.wait()
             return {"type": "websocket.disconnect"}
 
     class FakeVoiceLoop:
@@ -45,6 +50,9 @@ async def test_web_agent_ready_uses_stack_model_when_adapter_has_no_model(monkey
             pass
 
         def set_hangup_handler(self, _handler):
+            pass
+
+        def set_barge_handler(self, _handler):
             pass
 
         async def start_call(self, *, play_greeting):

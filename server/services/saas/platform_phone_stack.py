@@ -3,12 +3,14 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from server.config.env import get_settings
-from server.realtime.models import DEFAULT_REALTIME_MODEL, DEFAULT_REALTIME_VOICE
-from server.services.dev_runtime import effective_app_environment
+from server.realtime.models import DEFAULT_GEMINI_LIVE_MODEL, default_gemini_live_voice
 from server.services.pstn_stack import normalize_pstn_stack_override
 
 logger = logging.getLogger(__name__)
@@ -35,19 +37,35 @@ def load_universal_phone_stack_raw() -> dict[str, Any] | None:
 def save_universal_phone_stack_raw(stack: dict[str, Any]) -> dict[str, Any]:
     path = _stack_path()
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(stack, indent=2), encoding="utf-8")
+    temp_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=path.parent,
+            prefix=f"{path.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as temp_file:
+            temp_path = Path(temp_file.name)
+            json.dump(stack, temp_file, indent=2)
+            temp_file.flush()
+            os.fsync(temp_file.fileno())
+        os.replace(temp_path, path)
+    finally:
+        if temp_path and temp_path.exists():
+            temp_path.unlink()
     return stack
 
 
-async def mirror_universal_phone_stack_to_db(stack: dict[str, Any]) -> None:
-    from datetime import datetime, timezone
+async def mirror_universal_phone_stack_to_db(stack: dict[str, Any]) -> bool:
     import uuid
     from server.db.connection import get_session_factory
     from server.db.models.entities import ConfigVersion
 
     factory = get_session_factory()
     if not factory:
-        return
+        return False
     try:
         async with factory() as session:
             session.add(
@@ -61,23 +79,24 @@ async def mirror_universal_phone_stack_to_db(stack: dict[str, Any]) -> None:
                 )
             )
             await session.commit()
-    except Exception as e:
-        logger.warning("Could not mirror universal phone stack to DB: %s", e)
+        return True
+    except Exception as exc:
+        logger.warning("Could not persist universal phone stack to DB (%s)", type(exc).__name__)
+        raise RuntimeError("Could not persist the universal phone stack to the database") from None
 
 
 async def hydrate_universal_phone_stack_from_db() -> bool:
-    """Hydrate universal phone stack from Postgres ConfigVersion if disk file missing."""
+    """Restore the newest stack from Postgres, while keeping a newer disk-only save."""
     from sqlalchemy import select
     from server.db.connection import get_session_factory
     from server.db.models.entities import ConfigVersion
 
     path = _stack_path()
-    if path.exists():
-        return True
+    disk = load_universal_phone_stack_raw()
 
     factory = get_session_factory()
     if not factory:
-        return False
+        return disk is not None
     try:
         async with factory() as session:
             result = await session.execute(
@@ -91,37 +110,62 @@ async def hydrate_universal_phone_stack_from_db() -> bool:
             )
             row = result.scalar_one_or_none()
             if row and isinstance(row.payload, dict):
+                disk_updated = _stack_updated_at(disk)
+                db_updated = _stack_updated_at(row.payload) or _as_utc(row.created_at)
+                if disk is not None and disk_updated and db_updated and disk_updated > db_updated:
+                    return True
                 save_universal_phone_stack_raw(row.payload)
                 logger.info("[VOICE] Restored universal phone stack from database")
                 return True
     except Exception as e:
-        logger.warning("Could not hydrate universal phone stack from DB: %s", e)
-    return False
+        logger.warning("Could not hydrate universal phone stack from DB (%s)", type(e).__name__)
+    return disk is not None
+
+
+def _as_utc(value: Any) -> datetime | None:
+    if not isinstance(value, datetime):
+        return None
+    return value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value.astimezone(timezone.utc)
+
+
+def _stack_updated_at(stack: dict[str, Any] | None) -> datetime | None:
+    raw = str((stack or {}).get("updated_at") or "").strip()
+    if not raw:
+        return None
+    try:
+        return _as_utc(datetime.fromisoformat(raw.replace("Z", "+00:00")))
+    except ValueError:
+        return None
 
 
 def resolve_platform_phone_stack_sync(language: str = "te-IN") -> dict[str, Any]:
-    """Dev-configured stack, else env medium tier realtime_voice defaults (sync)."""
+    """Resolve the admin-saved stack, defaulting to Gemini Live until changed by admin."""
     lang = (language or "te-IN").strip() or "te-IN"
     stored = load_universal_phone_stack_raw()
     if stored and stored.get("stack_override"):
         base = dict(stored["stack_override"])
         # Provider/voice defaults are global; spoken language belongs to this agent.
         base["language"] = lang
-        normalized, _ = normalize_pstn_stack_override(base, language=lang, tier="medium")
+        normalized, _ = normalize_pstn_stack_override(
+            base, language=lang, tier="medium", default_provider="gemini"
+        )
         return normalized or base
 
     if stored and stored.get("pipeline") == "realtime_voice":
-        normalized, _ = normalize_pstn_stack_override({**stored, "language": lang}, language=lang, tier="medium")
+        normalized, _ = normalize_pstn_stack_override(
+            {**stored, "language": lang}, language=lang, tier="medium", default_provider="gemini"
+        )
         return normalized or stored
 
-    # Fallback: production realtime_voice defaults (no per-agent tier).
+    # No admin selection exists yet; use Gemini Live rather than inheriting an
+    # environment tier that may silently choose OpenAI.
     raw: dict[str, Any] = {
         "pipeline": "realtime_voice",
         "voice_flow": "realtime_e2e",
         "language": lang,
-        "llm": {"provider": "openai", "model": DEFAULT_REALTIME_MODEL},
+        "llm": {"provider": "gemini", "model": DEFAULT_GEMINI_LIVE_MODEL},
         "realtime_voice": {
-            "voice": DEFAULT_REALTIME_VOICE,
+            "voice": default_gemini_live_voice(lang),
             "turn_detection": "semantic_vad",
             "vad_eagerness": "high",
             "noise_reduction": "far_field",
@@ -129,21 +173,9 @@ def resolve_platform_phone_stack_sync(language: str = "te-IN") -> dict[str, Any]
             "silence_ms": 250,
         },
     }
-    try:
-        from server.providers import resolve_stack
-        from server.services.dev_runtime import effective_config_mode, effective_voice_tier
-
-        app_env = effective_app_environment()
-        tier = effective_voice_tier()
-        resolved = resolve_stack(mode="env", tier=tier, environment=app_env)
-        preview = resolved.to_safe_dict()
-        llm = preview.get("llm") or {}
-        if llm.get("model"):
-            raw["llm"] = {"provider": llm.get("provider") or "openai", "model": llm["model"]}
-    except Exception:
-        pass
-
-    normalized, _ = normalize_pstn_stack_override(raw, language=lang, tier="medium")
+    normalized, _ = normalize_pstn_stack_override(
+        raw, language=lang, tier="medium", default_provider="gemini"
+    )
     return normalized or raw
 
 

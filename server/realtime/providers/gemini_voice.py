@@ -71,10 +71,20 @@ def normalize_gemini_live_voice(voice: str | None) -> str:
 def _gemini_tools(extra_tools: list[dict] | None = None) -> list[types.Tool]:
     decls: list[types.FunctionDeclaration] = []
     for tool in (*realtime_hangup_tool_declarations(), REQUEST_LANGUAGE_CALLBACK_TOOL, CALL_ACTION_TOOL):
+        description = tool.get("description")
+        if tool["name"] == "call_action":
+            description = (
+                "Report a real call-control intent alongside spoken audio. "
+                "Answer ordinary questions directly as speech; do not call CONTINUE before every answer. "
+                "The response field is metadata and is NOT played by the application. "
+                "Speak the caller-facing answer aloud yourself. "
+                "Use END_CALL only for a clear goodbye, refusal or confirmed completed next step; "
+                "use CALLBACK only when requested. Never claim an action completed before its tool result."
+            )
         decls.append(
             types.FunctionDeclaration(
                 name=tool["name"],
-                description=tool.get("description"),
+                description=description,
                 parameters_json_schema=tool.get("parameters"),
             )
         )

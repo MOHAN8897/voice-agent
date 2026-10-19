@@ -180,7 +180,11 @@ async def telephony_set_provider(
 
 
 @router.get("/api/telephony/voice-options")
-async def telephony_voice_options(principal: SubscriberPrincipal = Depends(require_subscriber_jwt)):
+async def telephony_voice_options(
+    response: Response,
+    language: str = "te-IN",
+    principal: SubscriberPrincipal = Depends(require_subscriber_jwt),
+):
     """Subscriber-safe voice list for the production phone AI stack (no dev stack UI)."""
     # Only languages the platform offers at creation, so the settings tab cannot
     # be used to sidestep the admin enablement list.
@@ -188,20 +192,26 @@ async def telephony_voice_options(principal: SubscriberPrincipal = Depends(requi
     from server.services.saas.platform_phone_stack import resolve_platform_phone_stack
 
     languages = language_options()
-    phone_stack = await resolve_platform_phone_stack("te-IN")
+    phone_stack = await resolve_platform_phone_stack(language)
     llm = phone_stack.get("llm") if isinstance(phone_stack.get("llm"), dict) else {}
     from server.realtime.models import is_gemini_live_voice_model
 
-    active_voice_provider = str(llm.get("provider") or "openai").strip().lower()
+    active_voice_provider = str(llm.get("provider") or "gemini").strip().lower()
     if is_gemini_live_voice_model(str(llm.get("model") or "")):
+        active_voice_provider = "gemini"
+    if active_voice_provider not in {"openai", "gemini"}:
         active_voice_provider = "gemini"
     voices = phone_voice_catalog()
     if active_voice_provider != "gemini":
         voices = [voice for voice in voices if voice.get("provider") != "gemini"]
+    response.headers["Cache-Control"] = "private, no-store, max-age=0"
+    rv = phone_stack.get("realtime_voice") if isinstance(phone_stack.get("realtime_voice"), dict) else {}
     return {
         "stackLabel": "Live phone AI",
         "stackDescription": "Same voice engine for incoming calls, outgoing calls, and browser practice calls.",
-        "defaultVoiceId": "marin",
+        "activeVoiceProvider": active_voice_provider,
+        "activeModel": str(llm.get("model") or ""),
+        "defaultVoiceId": str(rv.get("voice") or "te-in-csagent-5"),
         "voices": voices,
         "languages": languages,
     }
@@ -232,29 +242,44 @@ async def voice_preview(
         or role_has_permission(principal.role, "app.billing.write")
     ):
         raise HTTPException(status_code=403, detail={"error": {"code": "auth_error", "message": "Permission denied"}})
-    from server.services.saas.voice_preview import synthesize_preview
+    from server.services.saas.voice_preview import VoicePreviewRateLimited, synthesize_preview
 
     try:
+        from server.services.saas.platform_phone_stack import resolve_platform_phone_stack
+
+        phone_stack = await resolve_platform_phone_stack(body.language or "te-IN")
+        llm = phone_stack.get("llm") if isinstance(phone_stack.get("llm"), dict) else {}
+        realtime_voice = phone_stack.get("realtime_voice") if isinstance(phone_stack.get("realtime_voice"), dict) else {}
         result = await synthesize_preview(
             body.text,
-            voice_id=body.voiceId,
+            voice_id=body.voiceId or realtime_voice.get("voice"),
             language=body.language,
             speed=body.speed,
+            provider=str(llm.get("provider") or "gemini"),
+            model=str(llm.get("model") or ""),
         )
+    except VoicePreviewRateLimited as exc:
+        raise HTTPException(status_code=429, headers={"Retry-After": str(exc.retry_after)}, detail={
+            "error": {"code": "voice_preview_rate_limited", "message": "Voice generation is temporarily rate limited. Stored voice samples remain available; try this uncached sample again later."}
+        }) from None
     except ValueError as exc:
+        code = str(exc)
+        message = "Nothing to preview." if code == "empty_preview_text" else "The selected voice is not available in the active provider catalog."
         raise HTTPException(
             status_code=400,
-            detail={"error": {"code": str(exc), "message": "Nothing to preview."}},
+            detail={"error": {"code": code, "message": message}},
         ) from None
     except Exception as exc:
-        logger.warning("[VOICE] preview failed: %s", exc)
+        logger.warning("[VOICE] preview failed provider=%s error=%s", str(locals().get("llm", {}).get("provider") or "gemini"), type(exc).__name__)
         error_text = str(exc).casefold()
         message = "Could not reach the voice service. Check the voice configuration."
-        if "denied access" in error_text and ("project" in error_text or "1008" in error_text):
+        if ("denied access" in error_text and ("project" in error_text or "1008" in error_text)) or "permission_denied" in error_text:
             message = (
-                "Google denied this project access to the configured Gemini Live model. "
-                "Check the project's Live model access or contact Google support."
+                "Google denied this project access to Gemini voice generation. "
+                "Check Gemini API access for this Google project or contact Google support."
             )
+        elif "api key is not configured" in error_text:
+            message = "Gemini is the active phone voice stack, but the platform has not configured its API access."
         raise HTTPException(
             status_code=502,
             detail={
@@ -271,7 +296,9 @@ async def voice_preview(
             "X-Voice-Name": result["voice"],
             "X-Voice-Label": result["label"],
             "X-Voice-Model": result["model"],
-            "Cache-Control": "no-store",
+            "X-Voice-Stack-Model": result.get("stackModel", ""),
+            "X-Voice-Cache": "hit" if result.get("cacheHit") else "miss",
+            "Cache-Control": "private, max-age=86400" if result.get("cacheable") else "no-store",
         },
     )
 

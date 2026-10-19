@@ -2,10 +2,16 @@ import { test, expect } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { buildEmployee } from './helpers/api.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const sessionPath = path.resolve(__dirname, '../../data/e2e_session.json');
+const testAgent = {
+  id: 'voice-playwright-agent',
+  name: 'Playwright voice test agent',
+  status: 'active',
+  language: 'te-IN',
+  languages: ['te-IN'],
+  sections: [],
+};
 
 test.describe('Voice and Language Configuration in Agent Console', () => {
   let consoleErrors = [];
@@ -16,25 +22,61 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
       console.log('BROWSER PAGE ERROR:', err.message);
       consoleErrors.push(err.message);
     });
+    // This suite uses a synthetic tenant; never send its token to the real API.
+    await page.route('**/api/**', (route) => route.fulfill({
+      status: 200, contentType: 'application/json', body: '{}',
+    }));
 
-    // Keep this authenticated UI check read-only and avoid spending live TTS
-    // credits: reads use the local test account, while writes and audio previews
-    // are fulfilled by Playwright.
+    // Use an isolated UI session and mock reads/writes so this flow does not
+    // depend on an expiring local account or spend live voice credits.
+    const base64url = (value) => Buffer.from(value).toString('base64url');
+    const token = `${base64url(JSON.stringify({ alg: 'none', typ: 'JWT' }))}.${base64url(
+      JSON.stringify({ sub: 'voice-playwright-user', exp: Math.floor(Date.now() / 1000) + 3600 })
+    )}.test`;
+    const sessionUser = {
+      id: 'voice-playwright-user',
+      name: 'Playwright Voice Tester',
+      email: 'voice-test@example.invalid',
+      tenantId: 'voice-playwright-tenant',
+      role: 'subscriber',
+      hasCompletedOnboarding: true,
+    };
+    await page.route('**/api/auth/me', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          user: { userId: sessionUser.id, email: sessionUser.email, hasCompletedOnboarding: true },
+          tenant: { tenantId: sessionUser.tenantId },
+          role: sessionUser.role,
+        }),
+      })
+    );
+    await page.route('**/api/agents', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ agents: [testAgent] }) })
+    );
     const previewSample = path.resolve(__dirname, '../public/audio/voxly/samples/marin.wav');
-    await page.route('**/api/telephony/voice-preview', (route) =>
+    await page.route('**/api/telephony/voice-preview*', (route) =>
       route.fulfill({ status: 200, contentType: 'audio/wav', body: fs.readFileSync(previewSample) })
     );
-    await page.route('**/api/telephony/voice-options', (route) =>
+    await page.route('**/api/telephony/voice-options*', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
           stackLabel: 'Gemini Live',
-          defaultVoiceId: 'puck',
+          activeVoiceProvider: 'gemini',
+          activeModel: 'gemini-3.8-live',
+          defaultVoiceId: 'te-in-csagent-5',
           voices: [
             { id: 'puck', label: 'Puck', provider: 'gemini', geminiVoice: 'Puck', category: 'sales', gender: 'male' },
-            { id: 'te-in-csagent-4', label: 'Telugu · Male', provider: 'gemini', geminiVoice: 'te-in-csagent-4', languageCode: 'te-IN', accent: 'Telugu', category: 'support', gender: 'male' },
-            { id: 'te-in-csagent-5', label: 'Telugu · Female', provider: 'gemini', geminiVoice: 'te-in-csagent-5', languageCode: 'te-IN', accent: 'Telugu', category: 'support', gender: 'female', defaultForLanguage: true, sampleText: 'నమస్కారం. మీకు ఎలా సహాయం చేయగలను?' },
+            { id: 'te-in-csagent-1', label: 'Telugu Support · Female 1', provider: 'gemini', languageCode: 'te-IN', accent: 'Telugu (India)', category: 'support', gender: 'female', sampleText: 'నమస్కారం. మీకు ఎలా సహాయం చేయగలను?' },
+            { id: 'te-in-csagent-4', label: 'Telugu Support · Male', provider: 'gemini', languageCode: 'te-IN', accent: 'Telugu (India)', category: 'support', gender: 'male', sampleText: 'నమస్కారం. మీకు ఎలా సహాయం చేయగలను?' },
+            { id: 'te-in-csagent-5', label: 'Telugu Support · Female', provider: 'gemini', languageCode: 'te-IN', accent: 'Telugu (India)', category: 'support', gender: 'female', defaultForLanguage: true, sampleText: 'నమస్కారం. మీకు ఎలా సహాయం చేయగలను?' },
+            { id: 'te-in-csagent-7', label: 'Telugu Support · Neutral', provider: 'gemini', languageCode: 'te-IN', accent: 'Telugu (India)', category: 'support', gender: 'neutral', sampleText: 'నమస్కారం. మీకు ఎలా సహాయం చేయగలను?' },
+            { id: 'te-in-concierge-2', label: 'Telugu Concierge · Male', provider: 'gemini', languageCode: 'te-IN', accent: 'Telugu (India)', category: 'support', gender: 'male', sampleText: 'నమస్కారం. మీకు ఎలా సహాయం చేయగలను?' },
+            { id: 'te-in-concierge-7', label: 'Telugu Concierge · Female', provider: 'gemini', languageCode: 'te-IN', accent: 'Telugu (India)', category: 'support', gender: 'female', sampleText: 'నమస్కారం. మీకు ఎలా సహాయం చేయగలను?' },
+            { id: 'te-in-techagent-1', label: 'Telugu Tech Support · Female', provider: 'gemini', languageCode: 'te-IN', accent: 'Telugu (India)', category: 'operations', gender: 'female', sampleText: 'నమస్కారం. మీ సాంకేతిక సమస్యకు సహాయం చేస్తాను.' },
           ],
           languages: [{ code: 'te-IN', label: 'Telugu' }],
         }),
@@ -49,8 +91,14 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
     );
     await page.route('**/api/agents/**', async (route) => {
       const method = route.request().method().toUpperCase();
-      if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
-        await route.continue();
+      const pathname = new URL(route.request().url()).pathname;
+      if (method === 'GET') {
+        const data = pathname.endsWith('/telephony-profile')
+          ? { profile: {}, afterHoursActions: [] }
+          : pathname.endsWith('/telephony-profile/effective')
+            ? { ok: true }
+            : { ok: true, agent: testAgent, sections: [] };
+        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(data) });
         return;
       }
       const agentId = route.request().url().match(/\/api\/agents\/([^/?]+)/)?.[1] || 'playwright-agent';
@@ -64,49 +112,33 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
       });
     });
 
-    if (fs.existsSync(sessionPath)) {
-      const sess = JSON.parse(fs.readFileSync(sessionPath, 'utf8'));
-      const u = sess.user;
-      const sessionUser = {
-        id: u.userId,
-        name: u.fullName || u.email,
-        email: u.email,
-        tenantId: sess.tenant?.tenantId,
-        hasCompletedOnboarding: true,
-      };
+    await page.addInitScript(
+      ({ accessToken, sessionUser }) => {
+        sessionStorage.setItem('voxly_auth_token', accessToken);
+        sessionStorage.setItem('dialtact_auth_token', accessToken);
+        localStorage.setItem('voxly_auth_session', JSON.stringify(sessionUser));
+        localStorage.setItem('dialtact_auth_session', JSON.stringify(sessionUser));
+        localStorage.setItem('voxly_tour_completed', 'true');
+        localStorage.setItem('voxly_tour_completed_default', 'true');
+        localStorage.setItem('voxly_tour_completed_voice-test@example.invalid', 'true');
+        localStorage.setItem('dialtact_tour_completed_default', 'true');
 
-      await page.addInitScript(
-        ({ token, sessionUser, email }) => {
-          sessionStorage.setItem('voxly_auth_token', token);
-          sessionStorage.setItem('dialtact_auth_token', token);
-          localStorage.setItem('voxly_auth_session', JSON.stringify(sessionUser));
-          localStorage.setItem('dialtact_auth_session', JSON.stringify(sessionUser));
-          localStorage.setItem('voxly_tour_completed', 'true');
-          localStorage.setItem('voxly_tour_completed_default', 'true');
-          localStorage.setItem(`voxly_tour_completed_${email}`, 'true');
-          localStorage.setItem('dialtact_tour_completed_default', 'true');
-          localStorage.setItem(`dialtact_tour_completed_${email}`, 'true');
-
-          const style = document.createElement('style');
-          style.innerHTML = '.driver-overlay, .driver-popover { display: none !important; pointer-events: none !important; }';
-          const installTourStyle = () => {
-            const root = document.head || document.documentElement;
-            if (root) root.appendChild(style);
-          };
-          if (document.head || document.documentElement) installTourStyle();
-          else document.addEventListener('DOMContentLoaded', installTourStyle, { once: true });
-        },
-        { token: sess.token, sessionUser, email: u.email }
-      );
-    }
+        const style = document.createElement('style');
+        style.innerHTML = '.driver-overlay, .driver-popover { display: none !important; pointer-events: none !important; }';
+        const installTourStyle = () => {
+          const root = document.head || document.documentElement;
+          if (root) root.appendChild(style);
+        };
+        if (document.head || document.documentElement) installTourStyle();
+        else document.addEventListener('DOMContentLoaded', installTourStyle, { once: true });
+      },
+      { accessToken: token, sessionUser }
+    );
   });
 
   test('Voice and Language studio renders cards, plays preconfigured sample playback, and changes voice/language', async ({
     page,
   }, testInfo) => {
-    test.skip(!fs.existsSync(sessionPath), 'Missing data/e2e_session.json');
-    const sess = JSON.parse(fs.readFileSync(sessionPath, 'utf8'));
-
     // 1. Navigate to overview first to ensure session bootstrap
     await page.goto('/#dashboard/overview');
     await page.waitForTimeout(1000);
@@ -116,8 +148,8 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
       document.querySelectorAll('.driver-overlay, .driver-popover').forEach((el) => el.remove());
     });
 
-    // 2. Navigate directly to employee workbench if agentId is known
-    const targetAgentId = sess.agentId || '832dd86c-bbd5-4bcc-8466-469b3411c99f';
+    // 2. Navigate directly to the mocked employee workbench.
+    const targetAgentId = testAgent.id;
     await page.goto(`/#dashboard/employees?step=overview&agent=${targetAgentId}`);
     await page.waitForTimeout(2000);
 
@@ -164,12 +196,15 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
 
     const voiceOptions = await page.evaluate(async () => {
       const { fetchPhoneVoiceOptions } = await import('/src/lib/voiceStack.js');
-      return fetchPhoneVoiceOptions();
+      return fetchPhoneVoiceOptions('te-IN');
     });
-    const activeVoiceProvider = voiceOptions.voices.some((voice) => voice.provider === 'gemini') ? 'gemini' : 'openai';
+    const activeVoiceProvider = voiceOptions.activeVoiceProvider;
+    expect(activeVoiceProvider).toBe('gemini');
+    expect(voiceOptions.defaultVoiceId).toBe('te-in-csagent-5');
     const visibleVoiceRows = voiceOptions.voices.filter(
       (voice) => voice.provider === activeVoiceProvider && voice.languageCode === 'te-IN'
     );
+    expect(visibleVoiceRows.length).toBeGreaterThanOrEqual(5);
 
     // 7. Test Voice Filtering and category counts
     console.log('Testing voice filtering by category...');
@@ -210,7 +245,7 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
     let previewRequest = null;
     if (activeVoiceProvider === 'gemini') {
       const samplePath = path.resolve(__dirname, '../public/audio/voxly/samples/marin.wav');
-      await page.route('**/api/telephony/voice-preview', async (route) => {
+      await page.route('**/api/telephony/voice-preview*', async (route) => {
         previewRequest = route.request().postDataJSON();
         await route.fulfill({ status: 200, contentType: 'audio/wav', body: fs.readFileSync(samplePath) });
       });
@@ -237,7 +272,7 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
 
     if (activeVoiceProvider === 'gemini') {
       const accessMessage = 'Google denied this project access to the configured Gemini Live model.';
-      await page.route('**/api/telephony/voice-preview', (route) =>
+      await page.route('**/api/telephony/voice-preview*', (route) =>
         route.fulfill({
           status: 502,
           contentType: 'application/json',
@@ -307,6 +342,7 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
     await expect(startCallBtn).toBeEnabled();
 
     await page.evaluate(() => {
+      navigator.mediaDevices.getUserMedia = async () => { throw new DOMException('Permission denied', 'NotAllowedError'); };
       Object.defineProperty(navigator.permissions, 'query', {
         configurable: true,
         value: async () => ({ state: 'denied' }),
@@ -340,6 +376,7 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
     await startCallBtn.click();
     const endCallBtn = page.locator('[data-testid="test-call-end-browser"]');
     await expect(endCallBtn).toBeVisible({ timeout: 10000 });
+    await expect(testCallPanel).toContainText('Connected in listen-only mode');
     const browserCallRequest = await page.evaluate(() =>
       window.__webAgentSocketRequests.find(({ url }) => new URL(url).pathname === '/ws/web-agent') || null
     );

@@ -25,7 +25,7 @@ def _pack(locale: str, intro: str, filler_ban: str, goodbye_good: str) -> str:
     return f"""--- SPOKEN LANGUAGE ({locale}) ---
 You are on a live phone call. {intro}
 {lock}
-If the caller speaks another language you cannot follow: use the language-mismatch line once, then wait. Never answer in their language.
+If the caller speaks another language you cannot follow: use the language-mismatch line once, then wait. Ordinary English mixing does not require a language reminder.
 Language mismatch (once): `{mismatch}`
 {SOFT_BREVITY}
 Filler bans: {filler_ban}

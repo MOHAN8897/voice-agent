@@ -121,6 +121,38 @@ async def test_voice_manager_does_not_fallback_direct_indic_voice_to_openai():
     assert attempts[0]["voice"] == "te-in-csagent-5"
 
 
+@pytest.mark.asyncio
+async def test_voice_manager_does_not_fallback_legacy_voice_slug_to_openai():
+    attempts = []
+
+    class FailedAdapter:
+        async def connect(self, **kwargs):
+            attempts.append(kwargs)
+            raise RuntimeError("Gemini Live unavailable")
+
+        async def close(self):
+            return None
+
+    manager = RealtimeVoiceManager(adapter_factory=lambda **_kwargs: FailedAdapter())
+    stack = {
+        "pipeline": "realtime_voice",
+        "language": "te-IN",
+        "llm": {"provider": "gemini", "model": "gemini-3.8-live"},
+        "realtime_voice": {"voice": "marin"},
+    }
+
+    with pytest.raises(RuntimeError, match="Gemini Live unavailable"):
+        await manager.create(
+            "gemini-legacy-voice-no-fallback-test",
+            instructions="Speak only in Telugu.",
+            language="te-IN",
+            stack_override=stack,
+        )
+
+    assert len(attempts) == 1
+    assert manager.get("gemini-legacy-voice-no-fallback-test") is None
+
+
 def test_gemini_normalize_keeps_tool_call_and_audio_together():
     adapter = GeminiLiveVoiceAdapter()
     pcm = b"\x00\x01" * 80

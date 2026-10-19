@@ -26,6 +26,7 @@ REALTIME_MODEL_IDS: tuple[str, ...] = (
 )
 
 DEFAULT_GEMINI_LIVE_MODEL = "gemini-3.8-live"
+DEFAULT_GEMINI_LIVE_VOICE = "Puck"
 GEMINI_LIVE_MODEL_IDS: tuple[str, ...] = (
     "gemini-3.8-live",
     "gemini-2.5-flash-native-audio-latest",
@@ -71,11 +72,22 @@ GEMINI_LIVE_LIBRARY_VOICES: tuple[str, ...] = (
     "hi-in-csagent-2",
     "ta-in-csagent-2",
     "ta-in-csagent-3",
+    "te-in-csagent-1",
     "te-in-csagent-4",
     "te-in-csagent-5",
+    "te-in-csagent-7",
+    "te-in-concierge-2",
+    "te-in-concierge-7",
+    "te-in-techagent-1",
     "en-in-csagent-1",
     "en-in-csagent-3",
 )
+GEMINI_LIVE_DEFAULT_VOICE_BY_LANGUAGE: dict[str, str] = {
+    "te-in": "te-in-csagent-5",
+    "hi-in": "hi-in-csagent-1",
+    "ta-in": "ta-in-csagent-3",
+    "en-in": "en-in-csagent-3",
+}
 _GEMINI_VOICE_BY_LOWER = {name.lower(): name for name in GEMINI_LIVE_VOICES}
 REALTIME_VOICES: tuple[str, ...] = (
     "alloy",
@@ -153,6 +165,12 @@ def is_gemini_live_voice_model(model: str | None) -> bool:
     if slug.endswith("-live") and slug.startswith("gemini-"):
         return True
     return "native-audio" in slug and slug.startswith("gemini-")
+
+
+def default_gemini_live_voice(language: str | None = None) -> str:
+    """Choose a verified India voice for supported Indian locales, else Puck."""
+    lang = str(language or "").strip().replace("_", "-").lower()
+    return GEMINI_LIVE_DEFAULT_VOICE_BY_LANGUAGE.get(lang, DEFAULT_GEMINI_LIVE_VOICE)
 
 
 def is_realtime_llm_model(model: str | None) -> bool:

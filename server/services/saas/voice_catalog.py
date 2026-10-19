@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from server.config.env import get_settings
 from server.realtime.models import GEMINI_LIVE_LIBRARY_VOICES, GEMINI_LIVE_VOICES, REALTIME_VOICES
 
 # OpenAI Realtime GA voices — display metadata for SaaS UI.
@@ -34,36 +33,36 @@ _GEMINI_BY_OPENAI: dict[str, str] = {
 }
 
 _GEMINI_VOICE_META: dict[str, dict[str, str]] = {
-    "Zephyr": {"label": "Zephyr", "gender": "female", "tone": "Bright", "category": "support", "useCase": "Reception & Booking"},
-    "Kore": {"label": "Kore", "gender": "female", "tone": "Firm", "category": "operations", "useCase": "Executive & Systems Advisory"},
-    "Orus": {"label": "Orus", "gender": "male", "tone": "Firm", "category": "operations", "useCase": "Operations & Technical Dispatch"},
-    "Autonoe": {"label": "Autonoe", "tone": "Bright", "category": "support", "useCase": "Reception & Booking"},
-    "Umbriel": {"label": "Umbriel", "tone": "Easy-going", "category": "support", "useCase": "Customer Care & Hospitality"},
-    "Erinome": {"label": "Erinome", "tone": "Clear", "category": "operations", "useCase": "Instructions & Helpdesk"},
-    "Laomedeia": {"label": "Laomedeia", "tone": "Upbeat", "category": "sales", "useCase": "Sales & Reservations"},
-    "Schedar": {"label": "Schedar", "tone": "Even", "category": "operations", "useCase": "Operations & Scheduling"},
-    "Achird": {"label": "Achird", "tone": "Friendly", "category": "support", "useCase": "Customer Care & Hospitality"},
-    "Sadachbia": {"label": "Sadachbia", "tone": "Lively", "category": "sales", "useCase": "Sales & Reservations"},
-    "Puck": {"label": "Puck", "gender": "male", "tone": "Upbeat", "category": "sales", "useCase": "Sales & Retail"},
-    "Fenrir": {"label": "Fenrir", "gender": "male", "tone": "Excitable", "category": "sales", "useCase": "High Energy Outreach"},
-    "Aoede": {"label": "Aoede", "gender": "female", "tone": "Breezy", "category": "support", "useCase": "Customer Care & Hospitality"},
-    "Enceladus": {"label": "Enceladus", "tone": "Breathy", "category": "support", "useCase": "Warm Customer Care"},
-    "Algieba": {"label": "Algieba", "tone": "Smooth", "category": "operations", "useCase": "Professional Services"},
-    "Algenib": {"label": "Algenib", "tone": "Gravelly", "category": "sales", "useCase": "Sales & Outreach"},
-    "Achernar": {"label": "Achernar", "tone": "Soft", "category": "support", "useCase": "Customer Care & Hospitality"},
-    "Gacrux": {"label": "Gacrux", "tone": "Mature", "category": "operations", "useCase": "Professional Services"},
-    "Zubenelgenubi": {"label": "Zubenelgenubi", "tone": "Casual", "category": "support", "useCase": "Customer Care & Hospitality"},
-    "Sadaltager": {"label": "Sadaltager", "tone": "Lively", "category": "sales", "useCase": "Sales & Reservations"},
-    "Charon": {"label": "Charon", "gender": "male", "tone": "Informative", "category": "operations", "useCase": "Technical & Diagnostics"},
-    "Leda": {"label": "Leda", "gender": "female", "tone": "Youthful", "category": "support", "useCase": "Friendly Support & Admissions"},
-    "Callirrhoe": {"label": "Callirrhoe", "tone": "Easy-going", "category": "support", "useCase": "Customer Care & Hospitality"},
-    "Iapetus": {"label": "Iapetus", "tone": "Clear", "category": "operations", "useCase": "Instructions & Helpdesk"},
-    "Despina": {"label": "Despina", "tone": "Smooth", "category": "support", "useCase": "Professional Customer Care"},
-    "Rasalgethi": {"label": "Rasalgethi", "tone": "Informative", "category": "operations", "useCase": "Technical & Diagnostics"},
-    "Alnilam": {"label": "Alnilam", "tone": "Firm", "category": "operations", "useCase": "Executive & Systems Advisory"},
-    "Pulcherrima": {"label": "Pulcherrima", "tone": "Forward", "category": "sales", "useCase": "Sales & Outreach"},
-    "Vindemiatrix": {"label": "Vindemiatrix", "tone": "Gentle", "category": "support", "useCase": "Customer Care & Hospitality"},
-    "Sulafat": {"label": "Sulafat", "tone": "Warm", "category": "support", "useCase": "Customer Care & Hospitality"},
+    "Zephyr": {"label": "Zephyr", "gender": "female", "accent": "General American", "tone": "Bright", "category": "sales", "useCase": "Advertising & Commerce"},
+    "Kore": {"label": "Kore", "gender": "female", "accent": "General American", "tone": "Firm", "category": "operations", "useCase": "News & Podcast"},
+    "Orus": {"label": "Orus", "gender": "male", "accent": "General American", "tone": "Firm", "category": "operations", "useCase": "High-Trust Advisor"},
+    "Autonoe": {"label": "Autonoe", "gender": "female", "accent": "General American", "tone": "Bright", "category": "sales", "useCase": "Advertising & Commerce"},
+    "Umbriel": {"label": "Umbriel", "gender": "male", "accent": "General American", "tone": "Easy-going", "category": "support", "useCase": "Companion & Peer"},
+    "Erinome": {"label": "Erinome", "gender": "female", "accent": "General American", "tone": "Clear", "category": "operations", "useCase": "Educational Tutor"},
+    "Laomedeia": {"label": "Laomedeia", "gender": "female", "accent": "General American", "tone": "Upbeat", "category": "sales", "useCase": "Advertising & Commerce"},
+    "Schedar": {"label": "Schedar", "gender": "male", "accent": "General American", "tone": "Even", "category": "operations", "useCase": "Tech Support"},
+    "Achird": {"label": "Achird", "gender": "male", "accent": "General American", "tone": "Friendly", "category": "support", "useCase": "Companion & Peer"},
+    "Sadachbia": {"label": "Sadachbia", "gender": "male", "accent": "General American", "tone": "Lively", "category": "operations", "useCase": "News & Podcast"},
+    "Puck": {"label": "Puck", "gender": "male", "accent": "General American", "tone": "Upbeat", "category": "sales", "useCase": "Advertising & Commerce"},
+    "Fenrir": {"label": "Fenrir", "gender": "male", "accent": "General American", "tone": "Excitable", "category": "sales", "useCase": "Advertising & Commerce"},
+    "Aoede": {"label": "Aoede", "gender": "female", "accent": "General American", "tone": "Breezy", "category": "sales", "useCase": "Video Voiceover & Hosting"},
+    "Enceladus": {"label": "Enceladus", "gender": "male", "accent": "General American", "tone": "Breathy", "category": "support", "useCase": "Storyteller & Narrator"},
+    "Algieba": {"label": "Algieba", "gender": "male", "accent": "General American", "tone": "Smooth", "category": "operations", "useCase": "High-Trust Advisor"},
+    "Algenib": {"label": "Algenib", "gender": "male", "accent": "General American", "tone": "Gravelly", "category": "support", "useCase": "Storyteller & Narrator"},
+    "Achernar": {"label": "Achernar", "gender": "female", "accent": "General American", "tone": "Soft", "category": "support", "useCase": "Storyteller & Narrator"},
+    "Gacrux": {"label": "Gacrux", "gender": "female", "accent": "General American", "tone": "Mature", "category": "operations", "useCase": "High-Trust Advisor"},
+    "Zubenelgenubi": {"label": "Zubenelgenubi", "gender": "male", "accent": "General American", "tone": "Casual", "category": "support", "useCase": "Companion & Peer"},
+    "Sadaltager": {"label": "Sadaltager", "gender": "male", "accent": "General American", "tone": "Lively", "category": "operations", "useCase": "Educational Tutor"},
+    "Charon": {"label": "Charon", "gender": "male", "accent": "General American", "tone": "Informative", "category": "operations", "useCase": "Educational Tutor"},
+    "Leda": {"label": "Leda", "gender": "female", "accent": "General American", "tone": "Youthful", "category": "sales", "useCase": "Advertising & Commerce"},
+    "Callirrhoe": {"label": "Callirrhoe", "gender": "female", "accent": "General American", "tone": "Easy-going", "category": "support", "useCase": "Companion & Peer"},
+    "Iapetus": {"label": "Iapetus", "gender": "male", "accent": "General American", "tone": "Clear", "category": "operations", "useCase": "Tech Support"},
+    "Despina": {"label": "Despina", "gender": "female", "accent": "General American", "tone": "Smooth", "category": "operations", "useCase": "Educational Tutor"},
+    "Rasalgethi": {"label": "Rasalgethi", "gender": "male", "accent": "General American", "tone": "Informative", "category": "operations", "useCase": "Educational Tutor"},
+    "Alnilam": {"label": "Alnilam", "gender": "male", "accent": "General American", "tone": "Firm", "category": "operations", "useCase": "High-Trust Advisor"},
+    "Pulcherrima": {"label": "Pulcherrima", "gender": "neutral", "accent": "General American", "tone": "Forward", "category": "support", "useCase": "Customer Support"},
+    "Vindemiatrix": {"label": "Vindemiatrix", "gender": "female", "accent": "General American", "tone": "Gentle", "category": "support", "useCase": "Coach & Motivational Guide"},
+    "Sulafat": {"label": "Sulafat", "gender": "female", "accent": "General American", "tone": "Warm", "category": "support", "useCase": "Customer Support"},
 }
 
 # These entries come from Google's language-filtered Gemini Voice Library.
@@ -95,17 +94,48 @@ _GEMINI_INDIC_VOICE_META: tuple[dict[str, Any], ...] = (
         "defaultForLanguage": True,
     },
     {
-        "id": "te-in-csagent-4", "label": "Telugu · Male", "languageCode": "te-IN",
-        "accent": "Telugu", "gender": "male", "tone": "Steady & soothing",
-        "useCase": "Native Telugu accent · Customer support", "category": "support",
+        "id": "te-in-csagent-1", "label": "Telugu Support · Female 1", "languageCode": "te-IN",
+        "accent": "Telugu (India)", "gender": "female", "tone": "Steady & warm",
+        "useCase": "Customer support agent · low pitch", "category": "support",
         "sampleText": "నమస్కారం. మీకు ఎలా సహాయం చేయగలను?", "description": "Native Telugu customer support voice.",
     },
     {
-        "id": "te-in-csagent-5", "label": "Telugu · Female", "languageCode": "te-IN",
-        "accent": "Telugu", "gender": "female", "tone": "Warm & engaging",
-        "useCase": "Native Telugu accent · Customer support", "category": "support",
+        "id": "te-in-csagent-4", "label": "Telugu Support · Male", "languageCode": "te-IN",
+        "accent": "Telugu (India)", "gender": "male", "tone": "Steady & clear",
+        "useCase": "Customer support agent · low pitch", "category": "support",
+        "sampleText": "నమస్కారం. మీకు ఎలా సహాయం చేయగలను?", "description": "Native Telugu customer support voice.",
+    },
+    {
+        "id": "te-in-csagent-5", "label": "Telugu Support · Female", "languageCode": "te-IN",
+        "accent": "Telugu (India)", "gender": "female", "tone": "Warm & engaging",
+        "useCase": "Customer support agent · high pitch", "category": "support",
         "sampleText": "నమస్కారం. మీకు ఎలా సహాయం చేయగలను?", "description": "Native Telugu customer support voice.",
         "defaultForLanguage": True,
+    },
+    {
+        "id": "te-in-csagent-7", "label": "Telugu Support · Neutral", "languageCode": "te-IN",
+        "accent": "Telugu (India)", "gender": "neutral", "tone": "Balanced & natural",
+        "useCase": "Customer support agent · medium pitch", "category": "support",
+        "sampleText": "నమస్కారం. మీకు ఎలా సహాయం చేయగలను?", "description": "Native Telugu customer support voice.",
+    },
+    {
+        "id": "te-in-concierge-2", "label": "Telugu Concierge · Male", "languageCode": "te-IN",
+        "accent": "Telugu (India)", "gender": "male", "tone": "Calm & attentive",
+        "useCase": "Concierge and executive assistant · low pitch", "category": "support",
+        "sampleText": "నమస్కారం. మీకు ఎలా సహాయం చేయగలను?", "description": "Native Telugu concierge voice.",
+    },
+    {
+        "id": "te-in-concierge-7", "label": "Telugu Concierge · Female", "languageCode": "te-IN",
+        "accent": "Telugu (India)", "gender": "female", "tone": "Warm & composed",
+        "useCase": "Concierge and executive assistant · medium pitch", "category": "support",
+        "sampleText": "నమస్కారం. మీకు ఎలా సహాయం చేయగలను?", "description": "Native Telugu concierge voice.",
+    },
+    {
+        "id": "te-in-techagent-1", "label": "Telugu Tech Support · Female", "languageCode": "te-IN",
+        "accent": "Telugu (India)", "gender": "female", "tone": "Clear & knowledgeable",
+        "useCase": "Technical support and advice · low pitch", "category": "operations",
+        "sampleText": "నమస్కారం. మీ సాంకేతిక సమస్యను పరిష్కరించడంలో సహాయం చేస్తాను.",
+        "description": "Native Telugu technical support voice.",
     },
     {
         "id": "en-in-csagent-1", "label": "Indian English · Male", "languageCode": "en-IN",
@@ -124,9 +154,7 @@ _GEMINI_INDIC_VOICE_META: tuple[dict[str, Any], ...] = (
 
 
 def phone_voice_catalog() -> list[dict[str, Any]]:
-    settings = get_settings()
-    gemini_on = bool(settings.gemini_api_key or getattr(settings, "enable_gemini", False))
-    rows: list[dict[str, str]] = []
+    rows: list[dict[str, Any]] = []
     for vid in REALTIME_VOICES:
         meta = _OPENAI_VOICE_META.get(vid, {})
         gemini_name = _GEMINI_BY_OPENAI.get(vid, "Aoede")
@@ -140,42 +168,42 @@ def phone_voice_catalog() -> list[dict[str, Any]]:
                 "category": meta.get("category") or "support",
                 "useCase": meta.get("useCase") or "",
                 "provider": "openai",
-                "providerLabel": "OpenAI (default phone AI)",
+                "providerLabel": "OpenAI Realtime",
                 "geminiVoice": gemini_name,
                 "geminiLabel": gmeta.get("label") or gemini_name,
                 "geminiGender": gmeta.get("gender") or "",
             }
         )
-    if gemini_on:
-        for gid in GEMINI_LIVE_VOICES:
-            gmeta = _GEMINI_VOICE_META[gid]
-            rows.append(
-                {
-                    "id": gid.lower(),
-                    "label": gmeta.get("label") or gid,
-                    "gender": gmeta.get("gender") or "neutral",
-                    "tone": gmeta.get("tone") or "",
-                    "category": gmeta.get("category") or "support",
-                    "useCase": gmeta.get("useCase") or "",
-                    "provider": "gemini",
-                    "providerLabel": "Gemini Live",
-                    "geminiVoice": gid,
-                    "geminiLabel": gmeta.get("label") or gid,
-                    "geminiGender": gmeta.get("gender") or "",
-                }
-            )
-        for meta in _GEMINI_INDIC_VOICE_META:
-            gid = str(meta["id"])
-            if gid not in GEMINI_LIVE_LIBRARY_VOICES:
-                continue
-            rows.append(
-                {
-                    **meta,
-                    "provider": "gemini",
-                    "providerLabel": "Gemini Live · Indic",
-                    "geminiVoice": gid,
-                    "geminiLabel": meta["label"],
-                    "geminiGender": meta["gender"],
-                }
-            )
+    for gid in GEMINI_LIVE_VOICES:
+        gmeta = _GEMINI_VOICE_META[gid]
+        rows.append(
+            {
+                "id": gid.lower(),
+                "label": gmeta.get("label") or gid,
+                "gender": gmeta.get("gender") or "",
+                "accent": gmeta.get("accent") or "General American",
+                "tone": gmeta.get("tone") or "",
+                "category": gmeta.get("category") or "support",
+                "useCase": gmeta.get("useCase") or "",
+                "provider": "gemini",
+                "providerLabel": "Gemini Live",
+                "geminiVoice": gid,
+                "geminiLabel": gmeta.get("label") or gid,
+                "geminiGender": gmeta.get("gender") or "",
+            }
+        )
+    for meta in _GEMINI_INDIC_VOICE_META:
+        gid = str(meta["id"])
+        if gid not in GEMINI_LIVE_LIBRARY_VOICES:
+            continue
+        rows.append(
+            {
+                **meta,
+                "provider": "gemini",
+                "providerLabel": "Gemini Live · India",
+                "geminiVoice": gid,
+                "geminiLabel": meta["label"],
+                "geminiGender": meta["gender"],
+            }
+        )
     return rows

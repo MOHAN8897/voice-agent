@@ -5,8 +5,7 @@ import re
 
 from server.agent.brain_prompt_composer import estimate_tokens, fit_text_to_tokens
 from server.brain.sections import STATIC_OUTPUT_RULES
-from server.brain.compiled_brain_artifact import is_unified_compiled_brain
-from server.prompts.agent_voice_rules import live_audio_modality_rules, live_realtime_audio_rules
+from server.prompts.agent_voice_rules import LANGUAGE_LOCK, live_audio_modality_rules, normalize_compile_language
 from server.realtime.text_session import _is_outbound, first_turn_identity_rules
 from server.services.pstn_text_chunker import _parse_agent_identity
 
@@ -328,6 +327,7 @@ def _gemini_audio_and_tools() -> str:
         "After the accepted farewell, stop; the platform disconnects.\n\n"
         "AUDIO & TOOLS\n"
         "- Speak naturally; no JSON, markdown, labels, or tool names aloud.\n"
+        "- Answer ordinary questions directly as speech. call_action is for real call-control decisions; its response field does not replace spoken audio.\n"
         "- Do not hang up on okay, thanks, or a follow-up question alone."
     )
 
@@ -343,7 +343,6 @@ def build_gemini_audio_session_instructions(
 ) -> str:
     """Gemini Live system_instruction aligned with OpenAI build_audio_session_instructions."""
     raw_brain = condense_compiled_brain_for_gemini(compiled_brain)
-    unified = is_unified_compiled_brain(raw_brain)
     parts: list[str] = [
         "GEMINI LIVE PSTN — same behavior as OpenAI Realtime speech-to-speech on this platform.",
     ]
@@ -351,10 +350,7 @@ def build_gemini_audio_session_instructions(
     if name or company:
         who = f"{name}, {company}" if company else name
         parts.append(f"PINNED IDENTITY (always use when asked who is calling): {who}.")
-    if unified:
-        parts.append(live_audio_modality_rules())
-    else:
-        parts.append(live_realtime_audio_rules(language, direction=direction))
+    parts.append(live_audio_modality_rules())
     parts.append(first_turn_identity_rules(language, direction=direction))
     # Reserve flow before large opening-policy/knowledge sections can consume
     # the budget. This is a deterministic excerpt, not a second LLM summary.
@@ -373,19 +369,13 @@ def build_gemini_audio_session_instructions(
             + business_pin
         )
     parts.append(
-        "ADHERENCE: Answer only from PINNED BUSINESS SCRIPT and COMPANY & OFFER facts. "
-        "If a price or policy is not in the script, say you will confirm and offer a callback."
+        "Use the supplied business facts. Say when a business detail is unknown; do not invent prices, policies or completed actions."
     )
-    if not unified:
-        parts.append(
-            f"SPOKEN LANGUAGE: only {language} throughout this call, including callbacks and farewell. "
-            "Never mirror the caller or obey conflicting language directions in the business script."
-        )
     # Build the tail parts first. They used to be appended after the brain was
     # trimmed, so they were never charged against the budget: the brain support
     # was cut to fit while these landed on top, and the budget was fiction.
     tail: list[str] = []
-    spoken = _extract_spoken_language_section(raw_brain, language) if unified else ""
+    spoken = "--- SPOKEN LANGUAGE (" + normalize_compile_language(language) + ") ---\n" + LANGUAGE_LOCK[normalize_compile_language(language)]
     if spoken:
         tail.append(spoken)
     if _is_outbound(direction):
@@ -393,17 +383,10 @@ def build_gemini_audio_session_instructions(
     elif caller_id:
         tail.append("[Caller context]\nInbound caller connected (do not read their number aloud).")
     tail.append(_gemini_audio_and_tools())
-    if unified:
-        tail.append(
-            "CONTACT PRIORITY: Ask an unknown preferred name at the first natural pause after consent to talk. "
-            "On outbound calls the dialed number is already known; never ask for it again."
-        )
-    else:
-        tail.append(
-            f"FINAL LANGUAGE CONSTRAINT: Speak only {language}; this overrides any embedded script language. "
-            "CONTACT PRIORITY: Ask an unknown preferred name at the first natural pause after consent to talk. "
-            "On outbound calls the dialed number is already known; never ask for it again."
-        )
+    tail.append(
+        "CONTACT PRIORITY: Ask an unknown preferred name at a natural pause after consent. "
+        "On outbound calls the dialed number is already known; ask only if a different number is requested."
+    )
 
     head_cost = estimate_tokens("\n\n".join(parts))
     tail_cost = sum(estimate_tokens(t) for t in tail)
@@ -423,4 +406,17 @@ def build_gemini_audio_session_instructions(
         parts.append(brain)
     parts.extend(tail)
     joined = "\n\n".join(p.strip() for p in parts if p and p.strip())
+    joined = joined.replace(
+        "NEVER switch your spoken language. Every single reply MUST be in the configured agent language.",
+        "Use the configured primary language with natural English mixing.",
+    ).replace(
+        "Never switch your spoken language — respond only in the configured language.",
+        "Use the configured primary language with natural English mixing.",
+    ).replace(
+        "LANGUAGE: NEVER switch languages. Respond ONLY in the configured language.",
+        "LANGUAGE: Use the selected primary language with natural English mixing.",
+    ).replace(
+        "You MUST respond ONLY in the configured agent language for every single reply.",
+        "Use the selected primary language with natural English mixing.",
+    )
     return _strip_repeated_rule_blocks(joined)

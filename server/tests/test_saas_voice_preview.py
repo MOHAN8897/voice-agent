@@ -2,6 +2,7 @@ import pytest
 import wave
 import io
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 from server.services.saas.voice_preview import (
     normalize_preview_text,
     pcm16_to_wav,
@@ -29,16 +30,13 @@ def test_pcm16_to_wav():
 
 
 def test_resolve_preview_voice():
-    voice, label = resolve_preview_voice("marin")
-    assert voice is not None
-    assert label is not None
-
-    voice, label = resolve_preview_voice("cedar")
-    assert voice is not None
-
-    voice, label = resolve_preview_voice("unknown_voice_123")
-    assert voice is not None
-    assert label == "default"
+    voice, label = resolve_preview_voice("marin", provider="openai")
+    assert (voice, label) == ("marin", "Marin")
+    voice, label = resolve_preview_voice("te-in-csagent-5", provider="gemini")
+    assert voice == "te-in-csagent-5"
+    assert "Telugu" in label
+    with pytest.raises(ValueError, match="voice_not_in_active_catalog"):
+        resolve_preview_voice("unknown_voice_123", provider="gemini")
 
 
 def test_resolve_openai_tts_voice():
@@ -49,118 +47,124 @@ def test_resolve_openai_tts_voice():
 
 
 @pytest.mark.asyncio
-async def test_synthesize_preview_returns_valid_wav():
+async def test_synthesize_preview_returns_valid_gemini_wav(monkeypatch):
+    from server.services.saas import voice_preview
+
+    audio = pcm16_to_wav(b"\x01\x00" * 240, 24000)
+
+    async def synthesize(_line, _voice, _speed):
+        return audio
+
+    monkeypatch.setattr(voice_preview, "_synthesize_gemini", synthesize)
     res = await synthesize_preview(
         text="నమస్కారం, మీరు ఎలా ఉన్నారు?",
-        voice_id="marin",
+        voice_id="te-in-csagent-5",
         language="te-IN",
         speed=1.05,
+        provider="gemini",
+        model="gemini-3.8-live",
     )
     assert "audio" in res
     audio = res["audio"]
     assert audio.startswith(b"RIFF")
     assert b"WAVE" in audio[:16]
-    assert len(audio) > 1000
+    assert len(audio) > 44
     assert res["voice"] is not None
-    assert res["model"] is not None
+    assert res["model"] == "gemini-3.8-flash-tts"
+    assert res["stackModel"] == "gemini-3.8-live"
 
 
 @pytest.mark.asyncio
-async def test_synthesize_preview_passes_selected_language_to_gemini(monkeypatch):
+async def test_synthesize_preview_sends_the_selected_gemini_voice_to_tts(monkeypatch):
+    import base64
+    import httpx
+
     from server.services.saas import voice_preview
-    from server.services.saas import voice_catalog
-
-    settings = SimpleNamespace(openai_api_key=None)
-    monkeypatch.setattr("server.config.env.get_settings", lambda: settings)
-    monkeypatch.setattr(
-        voice_catalog,
-        "get_settings",
-        lambda: SimpleNamespace(gemini_api_key="configured", enable_gemini=True),
-    )
     monkeypatch.setattr("server.providers.gemini_llm._api_key", lambda: "configured")
+    audio = pcm16_to_wav(b"\x01\x00" * 240, 24000)
+    captured = {}
 
-    class FakeAdapter:
-        def __init__(self):
-            self.connect_kwargs = None
-            self.response_instructions = None
-            self.events = [
-                {"type": "audio_delta", "pcm": b"\x01\x00" * 240},
-                {"type": "response_done"},
-            ]
+    class FakeResponse:
+        status_code = 200
+        is_success = True
 
-        async def connect(self, **kwargs):
-            self.connect_kwargs = kwargs
+        @staticmethod
+        def json():
+            return {"output_audio": {"data": base64.b64encode(audio).decode("ascii")}}
 
-        async def wait_ready(self, timeout=6.0):
+    class FakeClient:
+        def __init__(self, *, timeout):
+            captured["timeout"] = timeout
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *_args):
             return None
 
-        async def start_response(self, *, instructions):
-            self.response_instructions = instructions
+        async def post(self, url, *, headers, json):
+            captured.update({"url": url, "headers": headers, "body": json})
+            return FakeResponse()
 
-        async def poll_event(self, timeout=0.5):
-            return self.events.pop(0) if self.events else None
-
-        async def close(self):
-            return None
-
-    adapter = FakeAdapter()
-    monkeypatch.setattr(
-        "server.realtime.providers.gemini_voice.GeminiLiveVoiceAdapter",
-        lambda: adapter,
-    )
+    monkeypatch.setattr(httpx, "AsyncClient", FakeClient)
 
     result = await voice_preview.synthesize_preview(
-        "Hello, how can I help you?",
-        voice_id="zephyr",
-        language="hi-IN",
+        "నమస్కారం. మీకు ఎలా సహాయం చేయగలను?",
+        voice_id="te-in-csagent-5",
+        language="te-IN",
+        provider="gemini",
+        model="gemini-3.8-live",
     )
 
-    assert result["voice"] == "Zephyr"
-    assert "hi-IN" in adapter.connect_kwargs["instructions"]
-    assert "Hindi" in adapter.connect_kwargs["instructions"]
-    assert "translate it faithfully" in adapter.connect_kwargs["instructions"]
-    assert "hi-IN" in adapter.response_instructions
+    assert result["voice"] == "te-in-csagent-5"
+    assert result["audio"] == audio
+    assert captured["url"].endswith("/v1beta/interactions")
+    assert captured["headers"] == {"x-goog-api-key": "configured"}
+    assert captured["body"]["model"] == "gemini-3.8-flash-tts"
+    assert captured["body"]["generation_config"]["speech_config"] == [{"voice": "te-in-csagent-5"}]
+    assert "నమస్కారం" in captured["body"]["input"][0]["content"][0]["text"]
 
 
 @pytest.mark.asyncio
-async def test_direct_gemini_voice_does_not_fall_back_to_openai(monkeypatch):
-    from server.services.saas import voice_catalog, voice_preview
+async def test_gemini_preview_does_not_fall_back_to_openai_on_permission_error(monkeypatch):
+    import httpx
+    from server.services.saas import voice_preview
 
+    monkeypatch.setattr("server.providers.gemini_llm._api_key", lambda: "configured")
     monkeypatch.setattr(
         "server.config.env.get_settings",
-        lambda: SimpleNamespace(openai_api_key="configured-openai-key"),
+        lambda: (_ for _ in ()).throw(AssertionError("OpenAI must not be consulted")),
     )
-    monkeypatch.setattr(
-        voice_catalog,
-        "get_settings",
-        lambda: SimpleNamespace(gemini_api_key="configured", enable_gemini=True),
-    )
-    monkeypatch.setattr("server.providers.gemini_llm._api_key", lambda: "configured")
 
-    class FailedGeminiAdapter:
-        async def connect(self, **_kwargs):
-            raise RuntimeError("test Gemini outage")
+    class FakeResponse:
+        status_code = 403
+        is_success = False
 
-        async def close(self):
+        @staticmethod
+        def json():
+            return {"error": {"status": "PERMISSION_DENIED"}}
+
+    class FakeClient:
+        def __init__(self, *, timeout):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *_args):
             return None
 
-    monkeypatch.setattr(
-        "server.realtime.providers.gemini_voice.GeminiLiveVoiceAdapter",
-        FailedGeminiAdapter,
-    )
+        async def post(self, *_args, **_kwargs):
+            return FakeResponse()
 
-    with pytest.raises(RuntimeError, match="Gemini Live voice preview is unavailable"):
+    monkeypatch.setattr(httpx, "AsyncClient", FakeClient)
+
+    with pytest.raises(RuntimeError, match="permission_denied"):
         await voice_preview.synthesize_preview(
             "नमस्ते",
-            voice_id="zephyr",
-            language="hi-IN",
-        )
-
-    with pytest.raises(RuntimeError, match="Gemini Live voice preview is unavailable"):
-        await voice_preview.synthesize_preview(
-            "నమస్కారం",
             voice_id="te-in-csagent-5",
-            language="te-IN",
+            language="hi-IN",
+            provider="gemini",
         )
 
 
@@ -191,3 +195,21 @@ async def test_voice_preview_route_explains_gemini_project_access_denial(monkeyp
     assert caught.value.status_code == 502
     assert caught.value.detail["error"]["code"] == "voice_preview_unavailable"
     assert "Google denied this project access" in caught.value.detail["error"]["message"]
+
+
+@pytest.mark.asyncio
+async def test_voice_preview_route_reports_quota_without_provider_fallback(monkeypatch):
+    from fastapi import HTTPException
+    from server.routes import app_telephony
+    from server.services.saas import voice_preview
+
+    monkeypatch.setattr("server.auth.rbac.role_has_permission", lambda *_args: True)
+    monkeypatch.setattr(voice_preview, "synthesize_preview", AsyncMock(side_effect=voice_preview.VoicePreviewRateLimited(120)))
+    with pytest.raises(HTTPException) as caught:
+        await app_telephony.voice_preview(
+            SimpleNamespace(text="Public sample", voiceId="te-in-csagent-5", language="te-IN", speed=None),
+            SimpleNamespace(role="subscriber"),
+        )
+    assert caught.value.status_code == 429
+    assert caught.value.headers["Retry-After"] == "120"
+    assert caught.value.detail["error"]["code"] == "voice_preview_rate_limited"

@@ -46,7 +46,8 @@
     {
       "kind": "request-never-settled",
       "step": 0,
-      "state": "open"
+      "state": "open",
+      "cleanRuns": 1
     }
   ]
 }

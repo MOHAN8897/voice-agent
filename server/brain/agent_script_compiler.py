@@ -1041,9 +1041,9 @@ def _personal_opening_line(
         else "Kya aap free hain — ek minute mil sakta hai?"
     )
     if not outbound:
-        closer = "How can I help?" if english else "Nenu ela sahayam cheyagalanu?"
+        closer = "How can I help?" if english else ("Nenu ela sahayam cheyagalanu?" if lang == "te-IN" else "Main aapki kaise madad kar sakti hoon?")
     who = callee_name.strip()
-    test_bit = " This is a test call." if is_test and english else (" Idi oka test call." if is_test else "")
+    test_bit = " This is a test call." if is_test and english else ((" Idi oka test call." if lang == "te-IN" else " Yeh ek test call hai.") if is_test else "")
     if english:
         greet = f"Hi {who}," if who else "Hi,"
         return f"{greet} this is {agent_name}.{test_bit} {closer}".replace("  ", " ").strip()
@@ -1893,7 +1893,7 @@ def _platform_call_rules(
         f"Never invent prices, availability, or policies.\n"
         f"Never greet twice in one call.\n"
         f"Never claim to be anyone except {agent_name}.\n"
-        f"Never switch your spoken language — respond only in the configured language.\n"
+        f"Follow the selected primary language with natural English mixing.\n"
         f"{first_turn_guard}"
         f"{disclosure_block}"
     )

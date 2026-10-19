@@ -7,13 +7,7 @@ from server.realtime.models import GEMINI_LIVE_LIBRARY_VOICES, GEMINI_LIVE_VOICE
 from server.services.saas.voice_preview import resolve_preview_voice
 
 
-def test_catalog_exposes_all_gemini_live_voices_when_configured(monkeypatch):
-    monkeypatch.setattr(
-        voice_catalog,
-        "get_settings",
-        lambda: SimpleNamespace(gemini_api_key="configured", enable_gemini=False),
-    )
-
+def test_catalog_always_exposes_gemini_voices_and_seven_telugu_choices():
     rows = voice_catalog.phone_voice_catalog()
     gemini_rows = [row for row in rows if row.get("provider") == "gemini"]
 
@@ -25,23 +19,22 @@ def test_catalog_exposes_all_gemini_live_voices_when_configured(monkeypatch):
         row["id"] for row in gemini_rows if row.get("languageCode")
     } == set(GEMINI_LIVE_LIBRARY_VOICES)
     assert all(row.get("accent") and row.get("sampleText") for row in gemini_rows if row.get("languageCode"))
+    telugu_rows = [row for row in gemini_rows if row.get("languageCode") == "te-IN"]
+    assert len(telugu_rows) == 7
+    assert {row["gender"] for row in telugu_rows} == {"female", "male", "neutral"}
+    assert {row["category"] for row in telugu_rows} == {"support", "operations"}
+    assert all(row["accent"] == "Telugu (India)" for row in telugu_rows)
 
 
-def test_direct_gemini_voice_id_resolves_to_the_selected_live_voice(monkeypatch):
-    monkeypatch.setattr(
-        voice_catalog,
-        "get_settings",
-        lambda: SimpleNamespace(gemini_api_key="configured", enable_gemini=False),
-    )
-
-    voice, label = resolve_preview_voice("alnilam")
+def test_direct_gemini_voice_id_resolves_to_the_selected_voice():
+    voice, label = resolve_preview_voice("alnilam", provider="gemini")
 
     assert voice == "Alnilam"
     assert label == "Alnilam"
 
-    voice, label = resolve_preview_voice("te-in-csagent-5")
+    voice, label = resolve_preview_voice("te-in-csagent-5", provider="gemini")
     assert voice == "te-in-csagent-5"
-    assert label == "Telugu · Female"
+    assert label == "Telugu Support · Female"
 
 
 @pytest.mark.asyncio
@@ -70,9 +63,12 @@ async def test_voice_options_expose_direct_gemini_voices_and_hide_them_for_opena
     monkeypatch.setattr(platform_phone_stack, "resolve_platform_phone_stack", resolve_stack)
     monkeypatch.setattr(app_telephony, "phone_voice_catalog", lambda: rows)
 
-    result = await app_telephony.telephony_voice_options(SimpleNamespace())
+    response = SimpleNamespace(headers={})
+    result = await app_telephony.telephony_voice_options(response, principal=SimpleNamespace())
 
     providers = {voice["provider"] for voice in result["voices"]}
+    assert result["activeVoiceProvider"] == expected_voice_provider
+    assert response.headers["Cache-Control"] == "private, no-store, max-age=0"
     assert expected_voice_provider in providers
     if expected_voice_provider == "gemini":
         # Keep the OpenAI catalog aliases in the response: existing saved agent

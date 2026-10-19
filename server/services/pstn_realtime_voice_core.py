@@ -634,6 +634,7 @@ class PstnRealtimeVoiceLoop:
         self._response_had_audio = False
         self._pending_end_call: dict[str, Any] | None = None
         self._pending_followup_instruction: str | None = None
+        self._pending_followup_only_if_silent = False
         self._pending_farewell_text: str | None = None
         self._farewell_response_active = False
         self._caller_requested_close = False
@@ -1314,11 +1315,17 @@ class PstnRealtimeVoiceLoop:
         self._assistant_text = ""
         # OpenAI response instructions replace the session instructions for this turn.
         # Keep the business script and language lock during injected recovery replies.
-        base = _existing_adapter_instructions(self._adapter)
+        from server.prompts.agent_voice_rules import LANGUAGE_LOCK, normalize_compile_language
+        from server.realtime.models import is_gemini_live_voice_model
+
+        self._pending_followup_only_if_silent = False
+        # Gemini receives a new user turn here and retains system instructions.
+        # Replaying the brain as caller speech can cause tool loops and re-greetings.
+        base = "" if is_gemini_live_voice_model(self._live_model) else _existing_adapter_instructions(self._adapter)
         instruction = (
             f"{base}\n\nCURRENT TURN TASK\n{instruction}\n\n"
-            f"FINAL LANGUAGE CONSTRAINT: Speak only {self._resolve_language()}. "
-            "Keep the business facts and required script steps. Do not translate into the caller's language."
+            f"{LANGUAGE_LOCK[normalize_compile_language(self._resolve_language())]} "
+            "Keep the business facts and required script steps."
         )
         await self._adapter.start_response(instructions=instruction)
         self._set_phase(PHASE_SPEAKING)
@@ -2310,7 +2317,11 @@ class PstnRealtimeVoiceLoop:
                     "Do not claim it is confirmed until details and consent are clear."
                 )
             elif action.action == CallAction.CONTINUE:
-                self._pending_followup_instruction = "Continue with the caller's current request."
+                self._pending_followup_only_if_silent = True
+                self._pending_followup_instruction = (
+                    "Answer the caller directly as spoken audio. Do not call call_action for CONTINUE again. "
+                    + (f"Use this caller-facing answer if it fits the question: {json.dumps(action.response)}" if action.response else "Answer their current question.")
+                )
         elif error == "action_unavailable":
             self._pending_followup_instruction = (
                 "Explain briefly that this action is unavailable and ask how else you can help. "
@@ -3512,6 +3523,9 @@ class PstnRealtimeVoiceLoop:
                             call_id=self.call_id,
                             error=str(exc)[:160],
                         )
+            if kind == "response_done" and self._pending_followup_only_if_silent and self._response_had_audio:
+                self._pending_followup_instruction = None
+                self._pending_followup_only_if_silent = False
             if kind == "response_done" and self._pending_followup_instruction and self._adapter is not None:
                 if self._hangup_flow_active():
                     self._pending_followup_instruction = None
@@ -3675,14 +3689,14 @@ class PstnRealtimeVoiceLoop:
                 queued_ms = float(self.playback.queued_ms())
             except Exception:
                 queued_ms = 0.0
-        hold_s = min(0.5, max(0.0, queued_ms / 1000.0 + 0.04 if queued_ms else 0.0))
+        # Browser/WebSocket transports can enqueue an entire greeting at once.
+        # A fixed half-second cap reopened listening while several seconds of
+        # greeting audio were still playing, which caused echo and false barge-in.
+        hold_s = min(30.0, max(0.0, queued_ms / 1000.0 + 0.04 if queued_ms else 0.0))
         if hold_s <= 0:
             return
         self._greeting_protect_until = time.monotonic() + hold_s
-        try:
-            await asyncio.sleep(hold_s)
-        except asyncio.CancelledError:
-            return
+        await asyncio.sleep(hold_s)
 
     async def _play_deferred_greeting(self) -> None:
         frames = self._deferred_greeting_frames or []
