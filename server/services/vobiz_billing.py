@@ -49,13 +49,18 @@ def cdr_billing_fields(payload: dict, call_uuid: str) -> dict:
 
 async def reconcile_vobiz_call(call_id: str) -> bool:
     from server.call.call_ledger import call_ledger
-    from server.services.vobiz_client import VobizClient
+    from server.services.vobiz_client import vobiz_call_registry
 
     meta = call_ledger.read_meta(call_id)
     call_uuid = str(meta.get("vobiz_call_uuid") or "")
     if meta.get("channel") != "pstn" or not call_uuid:
         return False
-    client = VobizClient()
+    from server.services.saas.voice_kyc_service import vobiz_client_for_call
+    try:
+        client = await vobiz_client_for_call({**(vobiz_call_registry.get(call_uuid) or {}), **meta})
+    except Exception as exc:
+        logger.info("[BILLING] tenant carrier client unavailable call=%s kind=%s", call_id, type(exc).__name__)
+        return False
     if not client.configured:
         return False
     for attempt in range(2):

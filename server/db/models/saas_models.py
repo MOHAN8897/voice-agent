@@ -54,6 +54,39 @@ class KycVerification(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
 
+class VobizSubaccount(Base):
+    """Tenant-owned Vobiz customer_use account and carrier KYC state."""
+
+    __tablename__ = "vobiz_subaccounts"
+    __table_args__ = (UniqueConstraint("auth_id", name="uq_vobiz_subaccounts_auth_id"),)
+
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("tenants.tenant_id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    auth_id: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    encrypted_auth_token: Mapped[str | None] = mapped_column(Text, nullable=True)
+    parent_auth_id: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    account_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    application_id: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    kyc_session_id: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    encrypted_kyc_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    kyc_session_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    kyc_session_status: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    business_type: Mapped[str] = mapped_column(String(40), nullable=False)
+    account_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    account_email: Mapped[str] = mapped_column(String(320), nullable=False)
+    provisioning_status: Mapped[str] = mapped_column(String(32), nullable=False, default="creating")
+    kyc_status: Mapped[str] = mapped_column(String(32), nullable=False, default="not_started")
+    kyc_calls_blocked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    verifications: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    last_status_sync_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_error_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+
 class TenantMembership(Base):
     __tablename__ = "tenant_memberships"
     __table_args__ = (UniqueConstraint("user_id", "tenant_id", name="uq_tenant_membership"),)
@@ -193,6 +226,8 @@ class NumberPurchase(Base):
     e164: Mapped[str] = mapped_column(String(20), nullable=False)
     country_code: Mapped[str] = mapped_column(String(8), default="IN")
     status: Mapped[str] = mapped_column(String(40), nullable=False)
+    provider: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    carrier_number_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     stripe_checkout_session_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     stripe_payment_intent_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     stripe_subscription_id: Mapped[str | None] = mapped_column(String(255), nullable=True)

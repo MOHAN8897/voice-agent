@@ -593,6 +593,9 @@ export function WorkspaceProvider({ children }) {
         await onFailed?.();
         return { ...purchase, ok: false, failureReason: purchase.lastError?.message || 'provision_failed' };
       }
+      if (status === 'needs_attention') {
+        return { ...purchase, ok: false, failureReason: 'Phone service confirmation needs support. Your purchase is reserved; please do not buy it again.' };
+      }
       await new Promise((r) => setTimeout(r, intervalMs));
     }
     return { purchaseId, status: 'pending', ok: false, failureReason: 'pending' };

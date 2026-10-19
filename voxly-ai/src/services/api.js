@@ -973,6 +973,12 @@ export const api = {
     async createSession(email = null) {
       return await api.request('POST', '/api/kyc/session', email ? { email } : {});
     },
+    async getVoiceStatus() {
+      return await api.request('GET', '/api/kyc/voice/status');
+    },
+    async startVoiceSession(details) {
+      return await api.request('POST', '/api/kyc/voice/session', details);
+    },
   },
 
   calls: {

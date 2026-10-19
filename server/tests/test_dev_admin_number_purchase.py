@@ -1,5 +1,6 @@
 import asyncio
 import uuid
+from types import SimpleNamespace
 from contextlib import asynccontextmanager
 
 import pytest
@@ -30,7 +31,7 @@ class _Database:
 
     async def get(self, model, identity, **_kwargs):
         if model is dev_admin.Tenant:
-            return object()
+            return SimpleNamespace(name="Platform inventory", plan="platform")
         if model is dev_admin.PhoneNumber and self.reservation and self.reservation.id == identity:
             return self.reservation
         return None

@@ -41,28 +41,31 @@ def request(path="/api/vobiz/hangup", query="", headers=None):
                     "headers": [(k.lower().encode(), v.encode()) for k, v in (headers or {}).items()]})
 
 
-def test_known_call_id_is_not_authentication(isolated):
+@pytest.mark.asyncio
+async def test_known_call_id_is_not_authentication(isolated):
     registry, _ = isolated
     registry.upsert("call-a", {"status": "streaming"})
     with pytest.raises(HTTPException) as error:
-        routes._verify_vobiz_request(request(), {"CallUUID": "call-a"})
+        await routes._verify_vobiz_request(request(), {"CallUUID": "call-a"})
     assert error.value.status_code == 401
 
 
 @pytest.mark.parametrize("environment,secret", [("development", "configured"), ("production", ""), ("staging", "")])
-def test_unsigned_callbacks_fail_closed_for_real_carrier_configuration(isolated, monkeypatch, environment, secret):
+@pytest.mark.asyncio
+async def test_unsigned_callbacks_fail_closed_for_real_carrier_configuration(isolated, monkeypatch, environment, secret):
     monkeypatch.setattr(routes, "get_settings", lambda: SimpleNamespace(
         app_environment=environment, vobiz_auth_token=secret))
     with pytest.raises(HTTPException) as error:
-        routes._verify_vobiz_request(request(), {})
+        await routes._verify_vobiz_request(request(), {})
     assert error.value.status_code == 401
 
 
-def test_unconsumed_token_cannot_authorize_another_carrier_call(isolated):
+@pytest.mark.asyncio
+async def test_unconsumed_token_cannot_authorize_another_carrier_call(isolated):
     _, tokens = isolated
     token = tokens.create(call_uuid="call-a")
     with pytest.raises(HTTPException, match="Call token mismatch"):
-        routes._verify_vobiz_request(request(query=f"token={token}"), {"CallUUID": "call-b"})
+        await routes._verify_vobiz_request(request(query=f"token={token}"), {"CallUUID": "call-b"})
 
 
 @pytest.mark.asyncio
@@ -77,27 +80,62 @@ async def test_media_start_cannot_override_authorized_call(isolated):
     assert registry.get("call-b") is None
 
 
-def test_consumed_media_token_authenticates_bound_hangup_only(isolated):
+@pytest.mark.asyncio
+async def test_consumed_media_token_authenticates_bound_hangup_only(isolated):
     registry, tokens = isolated
     token = tokens.create(call_uuid="call-a")
     registry.upsert("call-a", {"webhook_token": token})
     tokens.consume(token)
-    routes._verify_vobiz_request(request(query=f"token={token}"), {"CallUUID": "call-a"})
+    await routes._verify_vobiz_request(request(query=f"token={token}"), {"CallUUID": "call-a"})
     for path, call in [("/api/vobiz/answer", "call-a"), ("/api/vobiz/hangup", "call-b")]:
         with pytest.raises(HTTPException):
-            routes._verify_vobiz_request(request(path, f"token={token}"), {"CallUUID": call, "outbound_id": "call-a"})
+            await routes._verify_vobiz_request(request(path, f"token={token}"), {"CallUUID": call, "outbound_id": "call-a"})
 
 
 @pytest.mark.parametrize("version,joiner", [("v3", "."), ("v2", "")])
-def test_signature_uses_public_url_and_survives_consumed_token(isolated, version, joiner):
+@pytest.mark.asyncio
+async def test_signature_uses_public_url_and_survives_consumed_token(isolated, version, joiner):
     nonce = "test-nonce"
     digest = base64.b64encode(hmac.new(b"test-secret",
         f"https://voice.example/api/vobiz/hangup{joiner}{nonce}".encode(), hashlib.sha256).digest()).decode()
     headers = {f"X-Vobiz-Signature-{version}": digest, f"X-Vobiz-Signature-{version}-Nonce": nonce}
-    routes._verify_vobiz_request(request(query="token=already-consumed", headers=headers), {})
+    await routes._verify_vobiz_request(request(query="token=already-consumed", headers=headers), {})
     headers[f"X-Vobiz-Signature-{version}"] = "forged"
     with pytest.raises(HTTPException):
-        routes._verify_vobiz_request(request(headers=headers), {})
+        await routes._verify_vobiz_request(request(headers=headers), {})
+
+
+@pytest.mark.asyncio
+async def test_tenant_child_signature_authenticates_callback_for_mapped_call(isolated, monkeypatch):
+    registry, _ = isolated
+    tenant_id = "b76a5ce7-b412-44c2-a59d-cad174d7c12d"
+    registry.upsert("call-a", {"tenant_id": tenant_id})
+    from server.services.saas import voice_kyc_service
+
+    monkeypatch.setattr(
+        voice_kyc_service,
+        "vobiz_client_for_tenant",
+        AsyncMock(return_value=SimpleNamespace(cfg={"auth_token": "child-secret"})),
+    )
+    nonce = "child-nonce"
+    digest = base64.b64encode(hmac.new(
+        b"child-secret",
+        f"https://voice.example/api/vobiz/hangup.{nonce}".encode(),
+        hashlib.sha256,
+    ).digest()).decode()
+    headers = {
+        "X-Vobiz-Signature-v3": digest,
+        "X-Vobiz-Signature-v3-Nonce": nonce,
+    }
+    await routes._verify_vobiz_request(request(headers=headers), {"CallUUID": "call-a"})
+
+
+@pytest.mark.asyncio
+async def test_recording_callback_rejects_missing_authentication(isolated, monkeypatch):
+    monkeypatch.setattr(routes, "_parse_vobiz_payload", AsyncMock(return_value={"CallUUID": "call-a"}))
+    with pytest.raises(HTTPException) as error:
+        await routes.vobiz_recording(request())
+    assert error.value.status_code == 401
 
 
 @pytest.mark.parametrize("duration", ["bad", "NaN", "Infinity", "-5", ""])

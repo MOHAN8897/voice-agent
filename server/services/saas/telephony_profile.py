@@ -602,12 +602,16 @@ async def profile_for_number(e164: str | None) -> dict[str, Any] | None:
     prof = await get_profile(agent_id)
     if prof is not None:
         prof["agent_status"] = agent_status
+        prof["vobiz_account_scope"] = pn.vobiz_account_scope or "platform"
+        prof["vobiz_account_tenant_id"] = str(pn.vobiz_account_tenant_id or pn.tenant_id)
         if not prof.get("tenant_id") and tenant_id:
             prof["tenant_id"] = tenant_id
         return prof
     return {
         "agent_id": agent_id,
         "tenant_id": tenant_id,
+        "vobiz_account_scope": pn.vobiz_account_scope or "platform",
+        "vobiz_account_tenant_id": str(pn.vobiz_account_tenant_id or pn.tenant_id),
         "agent_status": agent_status,
         "inbound_enabled": True,
         "outbound_enabled": True,

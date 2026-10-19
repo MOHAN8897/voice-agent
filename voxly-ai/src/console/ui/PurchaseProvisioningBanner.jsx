@@ -53,6 +53,13 @@ export function PurchaseProvisioningBanner() {
           setMessage('Number provisioning failed. Check billing and try again, or contact support.');
           return;
         }
+        if (status === 'needs_attention') {
+          sessionStorage.removeItem(STORAGE_PURCHASE);
+          sessionStorage.removeItem(STORAGE_ASSIGN_AGENT);
+          setVariant('error');
+          setMessage('Number activation needs support. Contact support before placing another order.');
+          return;
+        }
         setVariant('info');
         setMessage(`Provisioning your number… (${status || 'paid'})`);
         if (attempts < maxAttempts) {

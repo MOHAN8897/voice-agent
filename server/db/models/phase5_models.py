@@ -62,6 +62,10 @@ class PhoneNumber(Base):
     tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.tenant_id"), nullable=False)
     e164: Mapped[str] = mapped_column(String(20), nullable=False)
     carrier_number_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    # "tenant" only for DIDs assigned to a tenant carrier subaccount. NULL is
+    # the legacy platform account and is deliberately not backfilled.
+    vobiz_account_scope: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    vobiz_account_tenant_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
 
     status: Mapped[str] = mapped_column(String(30), default="pending")
     #: Set NULL on agent deletion: a number must return to the pool rather than

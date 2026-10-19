@@ -269,7 +269,7 @@ export function VerifyIdentityCard({ compact = false, variant = 'default', onApp
             <p className="text-[11px] text-[#524E5E] leading-relaxed mt-0.5">
               {approved
                 ? 'You can buy phone numbers and place live calls.'
-                : 'Required before buying a phone number or placing live calls. ID check takes about a minute.'}
+                : status?.required ? 'Required by the current platform identity policy.' : 'Optional platform identity check, separate from phone service verification.'}
             </p>
             <p className="text-[10px] text-[#8C879A] mt-1 flex items-center gap-1">
               {approved ? <Check className="w-3 h-3 text-emerald-600" /> : null}

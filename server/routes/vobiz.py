@@ -88,37 +88,83 @@ def _normalize_num(num: str) -> str:
     return f"+{digits}"
 
 
-def _verify_vobiz_request(request: Request, payload: dict[str, Any]) -> None:
-    """Validate webhook request authenticity in production or when secret configured."""
+async def _vobiz_callback_tenant_id(payload: dict[str, Any]) -> str | None:
+    keys = (
+        payload.get("CallUUID"), payload.get("call_uuid"), payload.get("CallId"),
+        payload.get("RequestUUID"), payload.get("request_uuid"), payload.get("outbound_id"),
+    )
+    for key in keys:
+        row = vobiz_call_registry.get(str(key or "")) if key else None
+        tenant_id = str((row or {}).get("vobiz_account_tenant_id") or (row or {}).get("tenant_id") or "").strip()
+        if tenant_id:
+            return tenant_id
+    called = str(payload.get("To") or payload.get("called") or "").strip()
+    if not called:
+        return None
+    from server.services.saas.telephony_profile import profile_for_number
+
+    profile = await profile_for_number(called)
+    if not profile:
+        normalized = _normalize_num(called)
+        if normalized and normalized != called:
+            profile = await profile_for_number(normalized)
+    tenant_id = str((profile or {}).get("vobiz_account_tenant_id") or (profile or {}).get("tenant_id") or "").strip()
+    return tenant_id or None
+
+
+def _signature_matches(auth_token: str, request: Request) -> bool:
+    if not auth_token:
+        return False
+    base_url = public_api_base().rstrip("/") + request.url.path
+    for version, separator in (("v3", "."), ("v2", "")):
+        signature = request.headers.get(f"x-vobiz-signature-{version}")
+        nonce = request.headers.get(f"x-vobiz-signature-{version}-nonce")
+        if not signature or not nonce:
+            continue
+        message = f"{base_url}{separator}{nonce}".encode()
+        expected = base64.b64encode(hmac.new(auth_token.encode(), message, hashlib.sha256).digest())
+        if hmac.compare_digest(signature.encode(), expected):
+            return True
+    return False
+
+
+async def _verify_vobiz_request(request: Request, payload: dict[str, Any]) -> None:
+    """Accept parent or mapped tenant credentials, or a call-scoped bearer token."""
     settings = get_settings()
     from server.services.dev_secrets_store import dev_secrets_store
 
     auth_token = str(dev_secrets_store.effective_secret("vobiz_auth_token") or settings.vobiz_auth_token or "").strip()
     is_prod = str(getattr(settings, "app_environment", "") or "").lower() in ("production", "staging")
+    signature_present = any(
+        request.headers.get(f"x-vobiz-signature-{version}")
+        or request.headers.get(f"x-vobiz-signature-{version}-nonce")
+        for version in ("v2", "v3")
+    )
+    if _signature_matches(auth_token, request):
+        return
 
-    # Signed callbacks remain valid after the single-use media token is consumed.
-    # Use the configured public URL; untrusted forwarded headers must not pick it.
-    for version, separator in (("v3", "."), ("v2", "")):
-        signature = request.headers.get(f"x-vobiz-signature-{version}")
-        nonce = request.headers.get(f"x-vobiz-signature-{version}-nonce")
-        if signature or nonce:
-            base_url = public_api_base().rstrip("/") + request.url.path
-            expected = base64.b64encode(hmac.new(
-                auth_token.encode(), f"{base_url}{separator}{nonce or ''}".encode(), hashlib.sha256
-            ).digest())
-            if auth_token and nonce and signature and hmac.compare_digest(signature.encode(), expected):
-                return
-            raise HTTPException(status_code=401, detail="Invalid webhook signature")
+    tenant_id = await _vobiz_callback_tenant_id(payload)
+    child_token = ""
+    if tenant_id:
+        try:
+            import uuid
 
-    # 1. Single-use token match (answer), or bound callback token (after answer).
+            from server.services.saas.voice_kyc_service import vobiz_client_for_tenant
+
+            child_client = await vobiz_client_for_tenant(uuid.UUID(tenant_id))
+            child_token = str(child_client.cfg.get("auth_token") or "")
+        except Exception as exc:
+            logger.info("[VOBIZ] tenant callback lookup unavailable error_type=%s", type(exc).__name__)
+    if child_token and _signature_matches(child_token, request):
+        return
+
+    # The signed media token is a separate, high-entropy call-scoped authenticator.
     passed_token = str(request.query_params.get("token") or payload.get("token") or "")
     if passed_token:
         token_meta = vobiz_stream_tokens.peek(passed_token)
         call_uuid = str(payload.get("CallUUID") or payload.get("call_uuid") or payload.get("CallId") or "")
         if token_meta:
             expected_call = str(token_meta.get("call_uuid") or "")
-            # Before answer the token may carry only a local dial tracking ID.
-            # Once bound to a carrier UUID it must not authorize another call.
             if call_uuid and expected_call and not expected_call.startswith("vobiz-") and call_uuid != expected_call:
                 raise HTTPException(status_code=401, detail="Call token mismatch")
             return
@@ -129,11 +175,8 @@ def _verify_vobiz_request(request: Request, payload: dict[str, Any]) -> None:
             expected = str((record or {}).get("webhook_token") or (record or {}).get("token") or "")
             if expected and hmac.compare_digest(passed_token.encode(), expected.encode()):
                 return
-        # Explicit invalid token supplied -> reject immediately
-        logger.warning("[VOBIZ] Webhook rejected: invalid or expired stream token")
         raise HTTPException(status_code=401, detail="Invalid stream token")
 
-    # 3. Header or query param signature/auth token
     header_token = str(
         request.headers.get("X-Vobiz-Auth-Token")
         or request.headers.get("X-Vobiz-Signature")
@@ -144,14 +187,15 @@ def _verify_vobiz_request(request: Request, payload: dict[str, Any]) -> None:
     if header_token:
         if auth_token and hmac.compare_digest(header_token.encode(), auth_token.encode()):
             return
-        logger.warning("[VOBIZ] Webhook rejected: invalid carrier authentication token")
+        if child_token and hmac.compare_digest(header_token.encode(), child_token.encode()):
+            return
         raise HTTPException(status_code=401, detail="Invalid auth token")
 
-    # A public development tunnel with carrier credentials is still a real call
-    # endpoint. Only unconfigured local development may accept unsigned fixtures.
+    if signature_present:
+        raise HTTPException(status_code=401, detail="Invalid webhook signature")
     if is_prod or auth_token:
         logger.warning("[VOBIZ] Webhook rejected: missing authentication")
-        raise HTTPException(status_code=401, detail="Unauthorized Vobiz webhook")
+        raise HTTPException(status_code=401, detail="Unauthorized carrier webhook")
 
 
 @router.post("/api/vobiz/answer")
@@ -159,7 +203,7 @@ def _verify_vobiz_request(request: Request, payload: dict[str, Any]) -> None:
 async def vobiz_answer(request: Request):
     """Primary Answer URL — triggered when a call starts on Vobiz."""
     payload = await _parse_vobiz_payload(request)
-    _verify_vobiz_request(request, payload)
+    await _verify_vobiz_request(request, payload)
     q = request.query_params
 
     # 1. Resolve token and identifiers
@@ -229,6 +273,29 @@ async def vobiz_answer(request: Request):
                 tenant_id = str(profile.get("tenant_id") or "")
         except Exception as e:
             logger.warning("[VOBIZ] agent lookup via profile failed: %s", e)
+
+    account_scope = (token_meta or {}).get("vobiz_account_scope") or local_reg.get("vobiz_account_scope") or (profile or {}).get("vobiz_account_scope") or "platform"
+    account_tenant_id = (token_meta or {}).get("vobiz_account_tenant_id") or local_reg.get("vobiz_account_tenant_id") or (profile or {}).get("vobiz_account_tenant_id") or tenant_id
+    # This must precede transfers as well as media streaming. Browser redirects
+    # and submitted documents never authorize a call.
+    if account_scope == "tenant":
+        try:
+            from server.services.saas.voice_kyc_service import assert_voice_kyc_approved
+            if not account_tenant_id:
+                raise ValueError("Missing account owner")
+            from server.db.connection import get_session_factory
+            from server.db.models.entities import Tenant
+            factory = get_session_factory()
+            if factory is None:
+                raise ValueError("Account database unavailable")
+            async with factory() as session:
+                tenant = await session.get(Tenant, uuid.UUID(str(account_tenant_id)))
+                if tenant is None or tenant.status != "active":
+                    raise ValueError("Account inactive")
+            await assert_voice_kyc_approved(uuid.UUID(str(account_tenant_id)), action="receive a phone call")
+        except Exception as exc:
+            logger.warning("Phone call denied at verification gate error_type=%s", type(exc).__name__)
+            return Response(content='<Response><Hangup /></Response>', media_type="application/xml")
 
     # 4. Inbound policy check (business hours, voicemail, transfer, decline)
     if direction == "inbound" and profile:
@@ -325,6 +392,8 @@ async def vobiz_answer(request: Request):
             "to_number": to_number,
             "agent_id": agent_id,
             "tenant_id": tenant_id,
+            "vobiz_account_scope": account_scope,
+            "vobiz_account_tenant_id": account_tenant_id,
             "tier": tier,
             "language": language,
             "stack_override": stack_override,
@@ -342,6 +411,8 @@ async def vobiz_answer(request: Request):
             to_number=to_number,
             agent_id=agent_id,
             tenant_id=tenant_id,
+            vobiz_account_scope=account_scope,
+            vobiz_account_tenant_id=account_tenant_id,
             tier=tier,
             language=language,
             stack_override=stack_override,
@@ -364,6 +435,8 @@ async def vobiz_answer(request: Request):
         "direction": direction,
         "agent_id": agent_id,
         "tenant_id": tenant_id,
+        "vobiz_account_scope": account_scope,
+        "vobiz_account_tenant_id": account_tenant_id,
         "tier": tier,
         "language": language,
         "stack_override": stack_override,
@@ -389,7 +462,7 @@ async def vobiz_answer(request: Request):
 async def vobiz_fallback(request: Request):
     """Fallback Answer URL — used if the primary answer URL fails or times out."""
     payload = await _parse_vobiz_payload(request)
-    _verify_vobiz_request(request, payload)
+    await _verify_vobiz_request(request, payload)
     call_uuid = str(payload.get("CallUUID") or payload.get("call_uuid") or payload.get("RequestUUID") or "")
     log_pstn("vobiz.fallback_triggered", call_uuid=call_uuid)
     logger.error("[VOBIZ] Fallback Answer URL reached for call %s", call_uuid)
@@ -407,7 +480,7 @@ async def vobiz_fallback(request: Request):
 async def vobiz_hangup(request: Request):
     """Hangup URL — notified when the call finishes."""
     payload = await _parse_vobiz_payload(request)
-    _verify_vobiz_request(request, payload)
+    await _verify_vobiz_request(request, payload)
     call_uuid = str(
         payload.get("CallUUID")
         or payload.get("call_uuid")
@@ -487,9 +560,10 @@ async def vobiz_hangup(request: Request):
 async def vobiz_recording(request: Request):
     """Recording URL — receives audio recording file upon call completion."""
     payload = await _parse_vobiz_payload(request)
+    await _verify_vobiz_request(request, payload)
     call_uuid = str(payload.get("CallUUID") or payload.get("call_uuid") or "")
     record_url = str(payload.get("RecordUrl") or payload.get("recording_url") or "")
-    logger.info("[VOBIZ] recording saved call=%s url=%s", call_uuid, record_url)
+    logger.info("[VOBIZ] recording callback call=%s has_recording=%s", call_uuid, bool(record_url))
 
     if call_uuid and record_url:
         vobiz_call_registry.upsert(call_uuid, {"recording_url": record_url})

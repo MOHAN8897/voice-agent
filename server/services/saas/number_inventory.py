@@ -21,6 +21,10 @@ from server.db.models.phase5_models import PhoneNumber
 INVENTORY_TENANT_NAME = "Platform inventory"
 
 
+def is_platform_inventory_tenant(tenant: Tenant) -> bool:
+    return tenant.name == INVENTORY_TENANT_NAME and tenant.plan == "platform"
+
+
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
@@ -32,7 +36,7 @@ async def ensure_platform_inventory_tenant() -> uuid.UUID:
         raise RuntimeError("database_required")
     async with factory() as session:
         row = (
-            await session.execute(select(Tenant).where(Tenant.name == INVENTORY_TENANT_NAME).limit(1))
+            await session.execute(select(Tenant).where(Tenant.name == INVENTORY_TENANT_NAME, Tenant.plan == "platform").limit(1))
         ).scalar_one_or_none()
         if row is not None:
             return row.tenant_id
@@ -57,6 +61,7 @@ async def move_to_inventory(
     number_id: uuid.UUID | None = None,
     telnyx_number_id: str | None = None,
     carrier_number_id: str | None = None,
+    expected_tenant_id: uuid.UUID | None = None,
 ) -> dict:
     """Park a DID in the admin inventory pool (clears agent binding)."""
     carrier_nid = carrier_number_id
@@ -67,17 +72,47 @@ async def move_to_inventory(
     e164_n = (e164 or "").strip()
     async with factory() as session:
         pn: PhoneNumber | None = None
-        if number_id is not None:
-            pn = await session.get(PhoneNumber, number_id)
+        if expected_tenant_id is not None:
+            from fastapi import HTTPException
+            pn = (await session.execute(select(PhoneNumber).where(
+                PhoneNumber.tenant_id == expected_tenant_id,
+                PhoneNumber.released_at.is_(None),
+                PhoneNumber.id == number_id if number_id else PhoneNumber.e164 == e164_n,
+            ).with_for_update())).scalar_one_or_none()
+            if pn is None:
+                raise HTTPException(status_code=404, detail="number_not_found")
+        elif number_id is not None:
+            pn = await session.get(PhoneNumber, number_id, with_for_update=True)
         elif e164_n:
             pn = (
                 await session.execute(
                     select(PhoneNumber).where(
                         PhoneNumber.e164 == e164_n,
                         PhoneNumber.released_at.is_(None),
-                    )
+                    ).with_for_update()
                 )
             ).scalar_one_or_none()
+        if pn is not None and pn.vobiz_account_scope == "tenant":
+            # A customer-owned DID must never be advertised in our parent pool.
+            # The provider enforces commitment/cool-off rules on release.
+            from server.services.saas.voice_kyc_service import vobiz_client_for_tenant
+            from server.services.vobiz_client import VobizApiError
+
+            client = await vobiz_client_for_tenant(pn.vobiz_account_tenant_id or pn.tenant_id)
+            try:
+                await client.release_owned_number(pn.e164)
+            except VobizApiError as exc:
+                if exc.status != 404:
+                    raise
+            numbers = await client.list_account_numbers(search=pn.e164, limit=100)
+            still_owned = any(n.get("e164") == pn.e164 for n in numbers)
+            pn.status = "release_pending" if still_owned else "released"
+            pn.inbound_enabled = pn.outbound_enabled = False
+            pn.agent_id = None
+            if not still_owned:
+                pn.released_at = _utcnow()
+            await session.commit()
+            return {"numberId": str(pn.id), "status": pn.status, "available": False}
         if pn is None:
             if not e164_n:
                 raise ValueError("number_not_found")

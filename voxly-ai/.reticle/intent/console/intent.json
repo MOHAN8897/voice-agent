@@ -47,6 +47,32 @@
         ]
       },
       "updatedAt": 1791984829861
+    },
+    "inline:tenant-settings-exposes-phone-service-kyc-with-p-a3a16e03": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "voice-service-kyc-card"
+        }
+      },
+      "declaredAt": 1792433459490,
+      "id": "inline:tenant-settings-exposes-phone-service-kyc-with-p-a3a16e03",
+      "provenBy": {
+        "at": 1792433459691,
+        "grade": "presence",
+        "runId": "drive-lease-a7c5705c-2e5b-423c-8f26-7d791b169930",
+        "verdictId": "reticle_act_and_wait:1792433459691"
+      },
+      "state": "proved",
+      "statement": "Tenant settings exposes phone-service KYC with persisted business identity and current document verification status.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/Sidebar.jsx"
+        ]
+      },
+      "updatedAt": 1792433459726
     }
   },
   "subject": "console",

@@ -5,6 +5,7 @@ import { DeleteWorkspaceModal } from '../ui/DeleteWorkspaceModal';
 import { useAuth } from '../../context/AuthContext';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { VerifyIdentityCard } from '../ui/VerifyIdentityCard';
+import { VoiceServiceKycCard } from '../ui/VoiceServiceKycCard';
 import { api } from '../../services/api';
 import { analytics } from '../../services/analytics';
 
@@ -188,13 +189,16 @@ export function SettingsModule() {
       <SolidCard className="space-y-3">
         <h3 className="text-xs font-bold text-[#0F0E17] flex items-center gap-2">
           <Shield className="w-3.5 h-3.5 text-[#6344E7]" />
-          Identity verification
+          Phone service verification
         </h3>
         <p className="text-[11px] text-[#524E5E] leading-relaxed">
-          Complete KYC once. Buying phone numbers and placing live phone calls require an approved
-          identity check.
+          Complete the verification required for your phone service before buying numbers or placing live phone calls.
         </p>
-        <VerifyIdentityCard />
+        <VoiceServiceKycCard />
+        <details>
+          <summary className="cursor-pointer text-xs text-[#524E5E]">Platform identity verification (when required)</summary>
+          <div className="mt-3"><VerifyIdentityCard /></div>
+        </details>
       </SolidCard>
 
       <SecurityPasswordCard />

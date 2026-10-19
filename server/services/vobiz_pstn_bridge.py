@@ -311,6 +311,8 @@ class VobizPstnBridge:
             mark_call_connected(self.call_id, self._token_meta.get("answered_at") or local.get("answered_at"))
             billing_meta = call_ledger.read_meta(self.call_id)
             billing_meta.update({"telephony_provider": "vobiz", "vobiz_call_uuid": self.call_uuid})
+            for key in ("tenant_id", "vobiz_account_scope", "vobiz_account_tenant_id"):
+                billing_meta[key] = self._token_meta.get(key) or local.get(key)
             call_ledger.write_meta(self.call_id, billing_meta)
             vobiz_call_registry.upsert(
                 self.call_uuid,
@@ -535,9 +537,12 @@ class VobizPstnBridge:
                 if target_uuid and target_uuid.startswith("vobiz-"):
                     target_uuid = local.get("call_uuid") or local.get("request_uuid") or target_uuid
                 try:
-                    from server.services.vobiz_client import VobizClient, vobiz_enabled
-                    if target_uuid and vobiz_enabled():
-                        await asyncio.wait_for(VobizClient().hangup_call(target_uuid), timeout=5.0)
+                    from server.services.saas.voice_kyc_service import vobiz_client_for_call
+                    from server.services.vobiz_client import vobiz_enabled
+                    meta = {**local, **self._token_meta}
+                    client = await vobiz_client_for_call(meta) if meta.get("vobiz_account_scope") == "tenant" or vobiz_enabled() else None
+                    if target_uuid and client:
+                        await asyncio.wait_for(client.hangup_call(target_uuid), timeout=5.0)
                         disconnected = True
                 except Exception as exc:
                     log_pstn("vobiz.hangup.api_failed", call_uuid=target_uuid, error=type(exc).__name__)

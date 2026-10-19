@@ -311,6 +311,12 @@ async def dev_telephony_outbound(
     guard = telephony_guard_error(provider)
     if guard:
         return {"ok": False, "error": guard, "provider": provider}
+    if provider == "vobiz" and session.kind == "app":
+        import uuid
+
+        from server.services.saas.voice_kyc_service import assert_voice_kyc_approved
+
+        await assert_voice_kyc_approved(uuid.UUID(str(session.tenant_id)), action="place a phone call")
     to_number = body.to_e164.strip()
     if not to_number:
         return {"ok": False, "error": "Destination number required"}
@@ -590,7 +596,12 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
             await pstn_prewarm_registry.cancel("telnyx", prewarm_external_id)
 
 
-async def _outbound_vobiz(body: OutboundTestBody, session: SessionData) -> dict[str, Any]:
+async def _outbound_vobiz(
+    body: OutboundTestBody,
+    session: SessionData,
+    *,
+    number_tenant_id: uuid.UUID | None = None,
+) -> dict[str, Any]:
     import time
     import uuid
 
@@ -615,9 +626,36 @@ async def _outbound_vobiz(body: OutboundTestBody, session: SessionData) -> dict[
     except Exception:
         return {"ok": False, "error": f"Agent not found: {body.agent_id}"}
 
-    await hangup_active_vobiz_to(body.to_e164)
+    tenant_uuid = None
+    carrier_account_scope = "platform"
+    if session.kind == "app":
+        try:
+            tenant_uuid = uuid.UUID(str(session.tenant_id))
+            scope_tenant_id = number_tenant_id or tenant_uuid
+            from server.services.saas.voice_kyc_service import vobiz_client_for_number
 
-    client = VobizClient()
+            client, carrier_account_scope = await vobiz_client_for_number(
+                scope_tenant_id,
+                body.from_e164 or "",
+            )
+        except Exception as exc:
+            log_pstn(
+                "vobiz.tenant_credentials_unavailable",
+                tenant_id=session.tenant_id,
+                error_type=type(exc).__name__,
+            )
+            return {
+                "ok": False,
+                "error": "Phone service account is not ready. Complete verification or contact support.",
+            }
+    else:
+        client = VobizClient()
+
+    await hangup_active_vobiz_to(
+        body.to_e164,
+        tenant_id=str(tenant_uuid) if tenant_uuid else None,
+    )
+
     base_api = public_api_base()
     tracking_id = f"vobiz-{uuid.uuid4()}"
 
@@ -630,6 +668,8 @@ async def _outbound_vobiz(body: OutboundTestBody, session: SessionData) -> dict[
         direction="outbound",
         billed_user_id=billed_user_id,
         tenant_id=session.tenant_id,
+        vobiz_account_scope=carrier_account_scope,
+        vobiz_account_tenant_id=getattr(client, "account_tenant_id", None),
         source_session_id=source_session_id,
         outbound_id=tracking_id,
     )
@@ -672,6 +712,8 @@ async def _outbound_vobiz(body: OutboundTestBody, session: SessionData) -> dict[
             "token": token,
             "billed_user_id": billed_user_id,
             "tenant_id": session.tenant_id,
+            "vobiz_account_scope": carrier_account_scope,
+            "vobiz_account_tenant_id": getattr(client, "account_tenant_id", None),
         },
     )
 
@@ -702,6 +744,9 @@ async def _outbound_vobiz(body: OutboundTestBody, session: SessionData) -> dict[
                     "language": language,
                     "stack_override": stack_override,
                     "status": "initiated",
+                    "tenant_id": session.tenant_id,
+                    "vobiz_account_scope": carrier_account_scope,
+                    "vobiz_account_tenant_id": getattr(client, "account_tenant_id", None),
                 },
             )
 
@@ -715,12 +760,9 @@ async def _outbound_vobiz(body: OutboundTestBody, session: SessionData) -> dict[
             agent_id=body.agent_id,
             provider="vobiz",
         )
-        payload: dict[str, Any] = {
-            "ok": True,
-            "provider": "vobiz",
-            "call_control_id": effective_id,
-            "stream_url": stream_url,
-        }
+        payload: dict[str, Any] = {"ok": True, "call_control_id": effective_id, "stream_url": stream_url}
+        if session.kind != "app":
+            payload["provider"] = "vobiz"
         if stack_adjustments:
             payload["stack_adjustments"] = stack_adjustments
         payload["history"] = _record_dev_dial(

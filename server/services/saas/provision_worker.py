@@ -1,9 +1,9 @@
-"""Async Telnyx provision after Stripe payment."""
+"""Durable carrier provisioning after a committed purchase."""
 from __future__ import annotations
 
 import logging
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import delete, select
 
@@ -25,7 +25,7 @@ def _utcnow() -> datetime:
 def _queued_job_statement():
     return (
         select(ProvisionJob)
-        .where(ProvisionJob.status == "queued")
+        .where(ProvisionJob.status == "queued", ProvisionJob.updated_at <= _utcnow())
         .order_by(ProvisionJob.created_at, ProvisionJob.job_id)
         .limit(1)
         .with_for_update(skip_locked=True)
@@ -76,6 +76,16 @@ async def process_one_job() -> bool:
     if factory is None:
         return False
     async with factory() as session:
+        stale = (await session.execute(select(ProvisionJob).where(
+            ProvisionJob.status == "running", ProvisionJob.updated_at < _utcnow() - timedelta(minutes=10),
+        ).with_for_update(skip_locked=True).limit(20))).scalars().all()
+        for abandoned in stale:
+            abandoned.status = "queued" if abandoned.attempts < 5 else "needs_attention"
+            abandoned.updated_at = _utcnow()
+            purchase = await session.get(NumberPurchase, abandoned.purchase_id, with_for_update=True)
+            if purchase and abandoned.status == "needs_attention":
+                purchase.status = "needs_attention"
+        await session.commit()
         result = await session.execute(
             _queued_job_statement()
         )
@@ -97,6 +107,18 @@ async def process_one_job() -> bool:
             job_row.last_error = {"message": "purchase_missing"}
             await session.commit()
             return True
+        # Never interpret a paid job using the currently selected provider.
+        provider = str(purchase.provider or "")
+        if provider not in {"vobiz", "telnyx"}:
+            job_row.status = purchase.status = "needs_attention"
+            job_row.last_error = {"code": "purchase_provider_unknown"}
+            await session.commit()
+            return True
+        if purchase.status == "active" and purchase.phone_number_id:
+            job_row.status = "done"
+            await session.commit()
+            return True
+        provider_number_id = purchase.carrier_number_id
         purchase.status = "provisioning"
         await session.commit()
 
@@ -104,20 +126,30 @@ async def process_one_job() -> bool:
         purchase = await session.get(NumberPurchase, purchase_id)
     if purchase is None:
         return True
-    provider_number_id: str | None = None
     phone_number_status = "pending"
     try:
-        from server.services.telephony import active_telephony_provider
-        provider = active_telephony_provider()
         if provider == "vobiz":
-            from server.services.vobiz_client import VobizClient
-            result = await VobizClient().provision_ordered_number(purchase.e164)
-        else:
+            from server.services.saas.voice_kyc_service import provision_tenant_number
+
+            # The child reconciles its own numbers before POSTing. A crash after
+            # purchase is recovered with the same tenant credentials and DID.
+            result = await provision_tenant_number(purchase.tenant_id, purchase.e164)
+            confirmed_id = _provider_number_id(result)
+            if provider_number_id and confirmed_id != provider_number_id:
+                raise RuntimeError("provider_number_id_conflict")
+            provider_number_id = confirmed_id
+            async with factory() as session:
+                checkpoint = await session.get(NumberPurchase, purchase_id, with_for_update=True)
+                checkpoint.carrier_number_id = provider_number_id
+                await session.commit()
+        elif provider == "telnyx":
             from server.services.telnyx_client import TelnyxClient
             from server.services.telnyx_provisioning import provision_ordered_number
 
             client = TelnyxClient()
             result = await provision_ordered_number(client, purchase.e164)
+        else:
+            raise RuntimeError("purchase_provider_not_supported")
         provider_number_id = _provider_number_id(result)
         phone_number_status = _phone_number_status(provider_number_id)
     except Exception as e:
@@ -126,6 +158,56 @@ async def process_one_job() -> bool:
             purchase_id,
             type(e).__name__,
         )
+        provider_status = getattr(e, "status", None)
+        vobiz_result_may_exist = provider == "vobiz" and (
+            provider_number_id is not None
+            or provider_status is None
+            or provider_status >= 500
+            or provider_status in {408, 409, 429}
+        )
+        if vobiz_result_may_exist:
+            async with factory() as session:
+                purchase = await session.get(NumberPurchase, purchase_id, with_for_update=True)
+                job = (
+                    await session.execute(
+                        select(ProvisionJob).where(ProvisionJob.purchase_id == purchase_id)
+                    )
+                ).scalar_one()
+                retry = job.attempts < 5
+                job.status = "queued" if retry else "needs_attention"
+                job.last_error = {
+                    "code": "provider_confirmation_pending"
+                    if provider_number_id is None
+                    else "provider_activation_pending",
+                    "error_type": type(e).__name__,
+                }
+                job.updated_at = (
+                    _utcnow() + timedelta(seconds=min(300, 10 * (2 ** max(0, job.attempts - 1))))
+                    if retry
+                    else _utcnow()
+                )
+                if purchase is not None:
+                    purchase.status = "provisioning" if retry else "needs_attention"
+                    if provider_number_id:
+                        purchase.carrier_number_id = provider_number_id
+                    purchase.updated_at = _utcnow()
+                await session.commit()
+            if not retry and purchase is not None:
+                from server.services.saas.activity_log import record_event
+
+                await record_event(
+                    action="number.provision.needs_attention",
+                    resource_type="number_purchase",
+                    resource_id=str(purchase_id),
+                    actor="system",
+                    tenant_id=purchase.tenant_id,
+                    payload={"errorType": type(e).__name__, "provider": "vobiz"},
+                    source="system",
+                    outcome="warning",
+                    severity="warning",
+                )
+            return True
+
         refund_tenant = None
         refund_user = None
         refund_wallet = False
@@ -187,11 +269,15 @@ async def process_one_job() -> bool:
         return True
 
     async with factory() as session:
-        purchase = await session.get(NumberPurchase, purchase_id)
+        purchase = await session.get(NumberPurchase, purchase_id, with_for_update=True)
         job = (
             await session.execute(select(ProvisionJob).where(ProvisionJob.purchase_id == purchase_id))
         ).scalar_one()
         if purchase is None:
+            return True
+        if purchase.phone_number_id:
+            job.status = "done"
+            await session.commit()
             return True
         phone_tenant_id = purchase.tenant_id
         if purchase.user_id:
@@ -211,6 +297,8 @@ async def process_one_job() -> bool:
             outbound_enabled=True,
             agent_id=purchase.assign_agent_id,
             carrier_number_id=provider_number_id if provider == "vobiz" else None,
+            vobiz_account_scope="tenant" if provider == "vobiz" else None,
+            vobiz_account_tenant_id=purchase.tenant_id if provider == "vobiz" else None,
             telnyx_number_id=provider_number_id if provider == "telnyx" else None,
             created_at=_utcnow(),
         )

@@ -239,6 +239,11 @@ class Settings(BaseSettings):
     vobiz_phone_number: str | None = Field(None, alias="VOBIZ_PHONE_NUMBER")
     vobiz_webhook_base_url: str | None = Field(None, alias="VOBIZ_WEBHOOK_BASE_URL")
     vobiz_webhook_secret: str | None = Field(None, alias="VOBIZ_WEBHOOK_SECRET")
+    # Fernet URL-safe base64 key used only to encrypt tenant subaccount tokens at rest.
+    # Configure a dedicated production key; never derive it from a Vobiz credential.
+    vobiz_subaccount_encryption_key: str | None = Field(
+        None, alias="VOBIZ_SUBACCOUNT_ENCRYPTION_KEY"
+    )
     vobiz_max_concurrent_calls: int = Field(50, alias="VOBIZ_MAX_CONCURRENT_CALLS")
     campaign_max_concurrency: int = Field(20, alias="CAMPAIGN_MAX_CONCURRENCY")
     campaign_default_retry_attempts: int = Field(3, alias="CAMPAIGN_DEFAULT_RETRY_ATTEMPTS")

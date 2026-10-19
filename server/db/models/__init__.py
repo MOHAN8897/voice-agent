@@ -8,7 +8,7 @@ from server.db.models.integration_models import (
     ToolExecution,
 )
 from server.db.models.phase5_models import Campaign, DncEntry
-from server.db.models.saas_models import User, UserOnboardingSurvey
+from server.db.models.saas_models import User, UserOnboardingSurvey, VobizSubaccount
 
 __all__ = [
     "Tenant",
@@ -20,6 +20,7 @@ __all__ = [
     "DncEntry",
     "User",
     "UserOnboardingSurvey",
+    "VobizSubaccount",
     "TenantIntegration",
     "AgentIntegration",
     "ToolExecution",

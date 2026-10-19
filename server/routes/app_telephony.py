@@ -5,7 +5,7 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from pydantic import BaseModel, Field, model_validator
-from sqlalchemy import select
+from sqlalchemy import or_, select
 
 from server.utils.logger import logger
 
@@ -413,11 +413,17 @@ async def search_numbers(
             if n_e164:
                 seen.add(str(n_e164).strip())
 
-        # Unexpired reservations
+        from server.db.models.saas_models import NumberPurchase
+        # Paid/unconfirmed orders remain reserved even after the checkout TTL.
         now_utc = datetime.now(timezone.utc)
         res_rows = (
             await session.execute(
-                select(NumberReservation.e164).where(NumberReservation.expires_at > now_utc)
+                select(NumberReservation.e164).where(or_(
+                    NumberReservation.expires_at > now_utc,
+                    NumberReservation.purchase_id.in_(select(NumberPurchase.id).where(
+                        NumberPurchase.status.in_(["paid", "provisioning", "needs_attention"]),
+                    )),
+                ))
             )
         ).scalars().all()
         for r_e164 in res_rows:
@@ -640,9 +646,11 @@ async def buy_number(
     principal: SubscriberPrincipal = Depends(require_subscriber_jwt),
 ):
     require_subscriber_permission(principal, "app.billing.write")
-    # Buying a number is a compliance-gated action (see server/services/saas/kyc_gate.py).
+    from server.services.telephony import active_telephony_provider
+    if active_telephony_provider() != "vobiz":
+        from server.services.saas.kyc_gate import assert_kyc_approved
+        await assert_kyc_approved(principal, action="buy a phone number")
     from server.services.saas.activity_log import record_event
-    from server.services.saas.kyc_gate import assert_kyc_approved
 
     allowed, retry = _buy_limiter.allow(f"buy:{principal.tenant_id}")
     if not allowed:
@@ -652,7 +660,6 @@ async def buy_number(
     # refused purchase is the thing an operator needs to see, and it never reaches
     # the purchase service — so logging only there would hide every refusal.
     try:
-        await assert_kyc_approved(principal, action="buy a phone number")
         if pay == "stripe":  # stripe payment removed
             raise HTTPException(
                 status_code=400,
@@ -699,6 +706,8 @@ async def buy_number(
             status = 404
         elif code == "kyc_required":
             status = 403
+        elif code == "voice_kyc_required":
+            status = 403
         else:
             status = 400
         messages = {
@@ -706,6 +715,7 @@ async def buy_number(
             "stripe_not_configured": "Card checkout is not supported. Use wallet credits to buy a number.",
             "verification_required": "Verify your email before buying a number.",
             "kyc_required": "Verify your identity before buying a phone number.",
+            "voice_kyc_required": "Complete phone service verification before buying a number.",
             "carrier_balance_exhausted": (
                 "Phone numbers are temporarily unavailable. Your wallet was not charged."
             ),
@@ -761,6 +771,7 @@ async def buy_number(
 #: explanation here is the case they cannot diagnose from the log.
 _REFUSAL_HINTS = {
     "kyc_required": "identity verification not approved",
+    "voice_kyc_required": "phone service verification not approved",
     "verification_required": "email not verified",
     "insufficient_balance": "wallet could not cover the number",
     "carrier_balance_exhausted": "carrier account out of funds — operator action",
@@ -1092,6 +1103,7 @@ async def release_number(number_id: str, principal: SubscriberPrincipal = Depend
     # Return the DID to the admin inventory pool — available to buy again.
     moved = await move_to_inventory(
         number_id=nid,
+        expected_tenant_id=workspace_tid,
         e164=e164,
         telnyx_number_id=telnyx_id,
         carrier_number_id=carrier_id,

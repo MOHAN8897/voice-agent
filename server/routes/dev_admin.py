@@ -1593,6 +1593,11 @@ async def number_pool(session: SessionData = Depends(require_dev_session)):
                     "available": is_avail,
                 }
 
+            if pn.vobiz_account_scope == "tenant" and pn.e164 in by_e164:
+                # Closing a tenant never returns its provider-owned resources to
+                # our master pool. Keep ownership visible until real release.
+                by_e164[pn.e164].update(tenantId=str(pn.tenant_id), inInventory=False, available=False)
+
     for item in by_e164.values():
         if item.get("inInventory"):
             item["available"] = (item.get("status") == "available")
@@ -1621,6 +1626,17 @@ async def allocate_number(body: AllocateNumberBody, session: SessionData = Depen
     if not e164.startswith("+"):
         raise HTTPException(status_code=400, detail="E.164 required (e.g. +15551234567)")
     tid = uuid.UUID(body.tenantId)
+    confirmed_carrier_id = None
+    if active_prov == "vobiz":
+        from server.services.saas.voice_kyc_service import assert_voice_kyc_approved, vobiz_client_for_tenant
+        await assert_voice_kyc_approved(tid, action="assign a phone number")
+        child = await vobiz_client_for_tenant(tid)
+        owned = await child.list_account_numbers(search=e164, limit=100)
+        confirmed_carrier_id = next((str(n["id"]) for n in owned if n.get("e164") == e164
+                                    and n.get("account_id") == child.auth_id and n.get("id")
+                                    and n.get("status") == "active"), None)
+        if not confirmed_carrier_id:
+            raise HTTPException(status_code=409, detail="number_not_owned_by_customer_account")
     async with get_session_factory()() as db:
         tenant = await db.get(Tenant, tid)
         if tenant is None or tenant.deleted_at is not None:
@@ -1631,11 +1647,15 @@ async def allocate_number(body: AllocateNumberBody, session: SessionData = Depen
             )
         ).scalar_one_or_none()
         if existing is not None:
+            if active_prov == "vobiz" and existing.tenant_id != tid:
+                raise HTTPException(status_code=409, detail="number_already_assigned")
             existing.tenant_id = tid
             if active_prov == "telnyx":
                 existing.telnyx_number_id = body.telnyxNumberId or getattr(existing, "telnyx_number_id", None) or "carrier_platform"
             elif active_prov == "vobiz":
-                existing.carrier_number_id = getattr(existing, "carrier_number_id", None) or f"vobiz_{e164.replace('+', '')}"
+                existing.carrier_number_id = confirmed_carrier_id
+                existing.vobiz_account_scope = "tenant"
+                existing.vobiz_account_tenant_id = tid
                 existing.telnyx_number_id = None
             existing.status = "active"
             pn = existing
@@ -1646,7 +1666,9 @@ async def allocate_number(body: AllocateNumberBody, session: SessionData = Depen
                 status="active",
                 billing_source="manual",
                 telnyx_number_id=(body.telnyxNumberId or "carrier_platform") if active_prov == "telnyx" else None,
-                carrier_number_id=f"vobiz_{e164.replace('+', '')}" if active_prov == "vobiz" else None,
+                carrier_number_id=confirmed_carrier_id if active_prov == "vobiz" else None,
+                vobiz_account_scope="tenant" if active_prov == "vobiz" else None,
+                vobiz_account_tenant_id=tid if active_prov == "vobiz" else None,
                 created_at=datetime.now(timezone.utc),
             )
             db.add(pn)
@@ -1684,6 +1706,8 @@ async def patch_number(number_id: str, body: NumberPatchBody, session: SessionDa
         if pn is None:
             raise HTTPException(status_code=404, detail="Not found")
         if body.tenantId is not None:
+            if pn.vobiz_account_scope == "tenant" and pn.tenant_id != uuid.UUID(body.tenantId):
+                raise HTTPException(status_code=409, detail="Customer-owned numbers require carrier reconciliation before reassignment")
             pn.tenant_id = uuid.UUID(body.tenantId)
             wallet = await db.get(BillingWallet, pn.tenant_id)
             if wallet is None:
@@ -1697,6 +1721,10 @@ async def patch_number(number_id: str, body: NumberPatchBody, session: SessionDa
                     )
                 )
         if body.agentId is not None:
+            if body.agentId:
+                agent = await db.get(Agent, uuid.UUID(body.agentId))
+                if agent is None or agent.tenant_id != pn.tenant_id:
+                    raise HTTPException(status_code=404, detail="agent_not_found")
             pn.agent_id = uuid.UUID(body.agentId) if body.agentId else None
         await db.commit()
     await record_admin_action(
@@ -2566,6 +2594,11 @@ async def purchase_platform_carrier_number(
         tenant = await db.get(Tenant, tenant_uuid)
         if tenant is None:
             raise HTTPException(status_code=404, detail="tenant_not_found")
+        from server.services.saas.number_inventory import is_platform_inventory_tenant
+        customer_account = body.provider == "vobiz" and not is_platform_inventory_tenant(tenant)
+        if customer_account:
+            from server.services.saas.voice_kyc_service import assert_voice_kyc_approved
+            await assert_voice_kyc_approved(tenant_uuid, action="activate a phone number")
         existing = (
             await db.execute(
                 select(PhoneNumber.id).where(
@@ -2586,6 +2619,8 @@ async def purchase_platform_carrier_number(
             billing_source="admin",
             inbound_enabled=True,
             outbound_enabled=True,
+            vobiz_account_scope="tenant" if customer_account else None,
+            vobiz_account_tenant_id=tenant_uuid if customer_account else None,
         )
         db.add(reservation)
         try:
@@ -2598,8 +2633,11 @@ async def purchase_platform_carrier_number(
     try:
         if body.provider == "vobiz":
             from server.services.vobiz_client import VobizClient
-
-            carrier_result = await VobizClient().provision_ordered_number(e164)
+            if customer_account:
+                from server.services.saas.voice_kyc_service import provision_tenant_number
+                carrier_result = await provision_tenant_number(tenant_uuid, e164)
+            else:
+                carrier_result = await VobizClient().provision_ordered_number(e164)
         else:
             from server.services.telnyx_client import TelnyxClient
             from server.services.telnyx_provisioning import provision_ordered_number
@@ -2626,7 +2664,7 @@ async def purchase_platform_carrier_number(
         if body.provider == "telnyx" and carrier_phone_id
         else None
     )
-    number_status = "active" if body.provider == "vobiz" or telnyx_number_id else "pending"
+    number_status = "active" if carrier_phone_id else "pending"
     async with factory() as db:
         number = await db.get(PhoneNumber, number_id, with_for_update=True)
         if number is None:
@@ -2634,7 +2672,7 @@ async def purchase_platform_carrier_number(
         number.status = number_status
         number.telnyx_number_id = telnyx_number_id
         number.carrier_number_id = (
-            str(carrier_phone_id or f"vobiz_{e164}") if body.provider == "vobiz" else None
+            str(carrier_phone_id) if body.provider == "vobiz" and carrier_phone_id else None
         )
         await db.commit()
         await db.refresh(number)

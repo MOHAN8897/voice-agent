@@ -312,11 +312,21 @@ async def _stage_carrier_numbers(factory, tenant_id: _uuid_mod.UUID) -> None:
 
     for number in numbers:
         try:
+            if number.vobiz_account_scope == "tenant":
+                from server.services.saas.number_inventory import move_to_inventory
+                result = await move_to_inventory(number_id=number.id)
+                if result.get("status") != "released":
+                    raise RuntimeError("Customer number release is still pending")
+                continue
             # Release from carrier (idempotent, handles 404s)
             from server.services.saas.platform_phone_stack import release_number_from_carrier
 
             await release_number_from_carrier(number)
         except Exception:
+            if number.vobiz_account_scope == "tenant":
+                # Retain tenant credentials and ownership until carrier release
+                # is confirmed; never advance to deleting tenant data.
+                raise
             logger.warning(
                 "teardown: carrier release failed number_id=%s (non-fatal)",
                 getattr(number, "id", None) or getattr(number, "phone_number_id", None),

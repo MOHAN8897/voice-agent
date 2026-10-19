@@ -511,7 +511,6 @@ async def admin_buy_phone_number(
 ):
     """Admin route to purchase and provision a phone number directly for a workspace."""
     _require_admin(principal)
-    from datetime import datetime, timezone
     from server.services.saas.number_purchase_service import normalize_e164
 
     factory = get_session_factory()
@@ -555,12 +554,39 @@ async def admin_buy_phone_number(
                 pass
 
     # Order through carrier
+    from server.services.telephony import active_telephony_provider
+    if body.provider != active_telephony_provider():
+        raise HTTPException(status_code=409, detail="inactive_provider")
+    from server.services.saas.number_inventory import is_platform_inventory_tenant
+    customer_account = body.provider == "vobiz" and not is_platform_inventory_tenant(t)
+    if customer_account:
+        from server.services.saas.voice_kyc_service import assert_voice_kyc_approved
+        await assert_voice_kyc_approved(target_tenant_id, action="activate a phone number")
+    async with factory() as session:
+        from sqlalchemy.exc import IntegrityError
+        reservation = PhoneNumber(
+            tenant_id=target_tenant_id, e164=e164, status="provisioning", billing_source="admin",
+            inbound_enabled=False, outbound_enabled=False, agent_id=bind_agent_id,
+            vobiz_account_scope="tenant" if customer_account else None,
+            vobiz_account_tenant_id=target_tenant_id if customer_account else None,
+        )
+        session.add(reservation)
+        try:
+            await session.commit()
+        except IntegrityError:
+            await session.rollback()
+            raise HTTPException(status_code=409, detail="number_already_active") from None
+        reservation_id = reservation.id
     carrier_res = {}
     try:
         if body.provider == "vobiz":
             from server.services.vobiz_client import VobizClient
 
-            carrier_res = await VobizClient().provision_ordered_number(e164)
+            if customer_account:
+                from server.services.saas.voice_kyc_service import provision_tenant_number
+                carrier_res = await provision_tenant_number(target_tenant_id, e164)
+            else:
+                carrier_res = await VobizClient().provision_ordered_number(e164)
         else:
             from server.services.telnyx_client import TelnyxClient
             from server.services.telnyx_provisioning import provision_ordered_number
@@ -568,33 +594,25 @@ async def admin_buy_phone_number(
             client = TelnyxClient()
             carrier_res = await provision_ordered_number(client, e164)
     except Exception as exc:
-        logger.exception("Carrier order failed in admin buy: %s", exc)
+        logger.warning("Admin carrier order requires reconciliation error_type=%s", type(exc).__name__)
         raise HTTPException(
             status_code=502,
             detail={
                 "error": {
                     "code": "carrier_order_failed",
-                    "message": f"Carrier order failed: {str(exc)[:200]}",
+                    "message": "Carrier confirmation is pending. Reconcile the reserved number before retrying.",
                 }
             },
         )
 
     # Persist in DB
-    now = datetime.now(timezone.utc)
     async with factory() as session:
-        pn = PhoneNumber(
-            tenant_id=target_tenant_id,
-            e164=e164,
-            status="active",
-            telnyx_number_id=carrier_res.get("phone_number_id") if body.provider == "telnyx" else None,
-            carrier_number_id=carrier_res.get("phone_number_id") or f"vobiz_{e164}" if body.provider == "vobiz" else None,
-            billing_source="admin",
-            inbound_enabled=True,
-            outbound_enabled=True,
-            agent_id=bind_agent_id,
-            created_at=now,
-        )
-        session.add(pn)
+        pn = await session.get(PhoneNumber, reservation_id, with_for_update=True)
+        real_id = carrier_res.get("phone_number_id")
+        pn.status = "active" if real_id else "pending"
+        pn.telnyx_number_id = real_id if body.provider == "telnyx" else None
+        pn.carrier_number_id = real_id if body.provider == "vobiz" else None
+        pn.inbound_enabled = pn.outbound_enabled = bool(real_id)
         await session.commit()
         await session.refresh(pn)
         pn_id = str(pn.id)
@@ -631,6 +649,10 @@ async def admin_delete_phone_number(
         pn = await session.get(PhoneNumber, nid)
         if not pn:
             raise HTTPException(status_code=404, detail="Phone number not found")
+        if pn.vobiz_account_scope == "tenant":
+            from server.services.saas.number_inventory import move_to_inventory
+            result = await move_to_inventory(number_id=nid)
+            return {"ok": True, "released": number_id, "status": result["status"]}
         pn.released_at = datetime.now(timezone.utc)
         pn.status = "released"
         pn.agent_id = None
@@ -662,7 +684,22 @@ async def admin_telephony_test_call(
         import time
 
         client = VobizClient()
-        caller_id = from_num or client.cfg.get("phone_number") or "+917965480745"
+        caller_id = from_num or client.cfg.get("phone_number")
+        if not caller_id:
+            raise HTTPException(status_code=400, detail="caller_id_required")
+        account_scope = "platform"
+        account_tenant_id = None
+        factory = get_session_factory()
+        if factory:
+            async with factory() as db:
+                number = (await db.execute(select(PhoneNumber).where(
+                    PhoneNumber.e164 == caller_id, PhoneNumber.released_at.is_(None),
+                ))).scalar_one_or_none()
+            if number and number.vobiz_account_scope == "tenant":
+                from server.services.saas.voice_kyc_service import assert_voice_kyc_approved, vobiz_client_for_number
+                account_tenant_id = str(number.vobiz_account_tenant_id or number.tenant_id)
+                await assert_voice_kyc_approved(uuid.UUID(account_tenant_id), action="place a phone call")
+                client, account_scope = await vobiz_client_for_number(number.tenant_id, caller_id)
         base_api = public_api_base()
         tracking_id = f"admin-vobiz-{uuid.uuid4()}"
 
@@ -670,6 +707,8 @@ async def admin_telephony_test_call(
             call_uuid=tracking_id,
             direction="outbound",
             outbound_id=tracking_id,
+            vobiz_account_scope=account_scope,
+            vobiz_account_tenant_id=account_tenant_id,
         )
 
         ans_url = f"{base_api}/api/vobiz/answer?token={token}&outbound_id={tracking_id}"
@@ -687,6 +726,8 @@ async def admin_telephony_test_call(
                 "status": "initiated",
                 "dialed_at": time.time(),
                 "provider": "vobiz",
+                "vobiz_account_scope": account_scope,
+                "vobiz_account_tenant_id": account_tenant_id,
                 "token": token,
             },
         )

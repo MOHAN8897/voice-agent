@@ -152,11 +152,8 @@ async def subscriber_outbound(
     from server.services.telephony import active_telephony_provider, telephony_guard_error
 
     workspace_tid = subscriber_workspace_tenant_id(principal)
-    # Placing a real PSTN call is a compliance-gated action: it uses a customer
-    # number and can reach anyone. Browser practice calls stay ungated.
-    from server.services.saas.kyc_gate import assert_kyc_approved
-
-    await assert_kyc_approved(principal, action="place a phone call")
+    # Vobiz owns telecom KYC; retain the configured platform gate for other carriers.
+    provider = active_telephony_provider()
     # An unknown or foreign agent must be a clean 404, never a leaked 500.
     agent = await resolve_workspace_agent(agent_id, str(workspace_tid))
     status = str(agent.get("status") or "").strip().lower()
@@ -190,6 +187,12 @@ async def subscriber_outbound(
         )
     from server.services.saas.billing_wallet_service import assert_wallet_allows_pstn
 
+    if provider == "vobiz":
+        from server.services.saas.voice_kyc_service import assert_voice_kyc_approved
+        await assert_voice_kyc_approved(principal.tenant_id, action="place a phone call")
+    else:
+        from server.services.saas.kyc_gate import assert_kyc_approved
+        await assert_kyc_approved(principal, action="place a phone call")
     await assert_wallet_allows_pstn(principal.tenant_id)
     resolved_from = await resolve_outbound_from_e164(
         workspace_tid,
@@ -207,7 +210,6 @@ async def subscriber_outbound(
             limits = (tenant.limits or {}) if tenant else {}
     await assert_concurrent_limit(principal.tenant_id, limits)
 
-    provider = active_telephony_provider()
     guard = telephony_guard_error(provider)
     if guard:
         return {"ok": False, "error": guard, "provider": provider}
@@ -297,7 +299,11 @@ async def subscriber_outbound(
                 request_id=dial_request_id,
                 scope=f"app:{principal.tenant_id}:{principal.user_id}:{provider}",
                 payload={"agent": agent_id, "from": resolved_from, "to": to_number, "stack": stack},
-                operation=lambda: _outbound_vobiz(body, session_stub),
+                operation=lambda: _outbound_vobiz(
+                    body,
+                    session_stub,
+                    number_tenant_id=workspace_tid,
+                ),
             )
         else:
             return {"ok": False, "error": f"Provider {provider} not supported for subscriber PSTN yet"}

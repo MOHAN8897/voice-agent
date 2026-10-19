@@ -9,20 +9,29 @@ import logging
 from typing import Any
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from server.auth.subscriber_dependencies import require_subscriber_jwt
 from server.services.saas.tenant_guard import (
     SubscriberPrincipal,
     require_subscriber_permission,
 )
+from server.config.env import get_settings
+from server.utils.rate_limiter import RateLimiter
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+_voice_session_limiter = RateLimiter(max_requests=12, window_s=3600)
 
 
 class KycSessionBody(BaseModel):
     email: str | None = None
+
+
+class VoiceKycSessionBody(BaseModel):
+    legal_name: str = Field(min_length=2, max_length=255)
+    business_type: str = Field(min_length=1, max_length=40)
+    return_url: str | None = Field(default=None, max_length=2048)
 
 
 @router.post("/api/kyc/session")
@@ -63,7 +72,139 @@ async def kyc_status(principal: SubscriberPrincipal = Depends(require_subscriber
     return {
         **await kyc_service.get_status(principal.user_id),
         "configured": kyc_service.is_configured(),
+        "required": get_settings().kyc_gate_purchases and kyc_service.is_configured(),
     }
+
+
+@router.get("/api/kyc/voice/status")
+async def voice_kyc_status(principal: SubscriberPrincipal = Depends(require_subscriber_jwt)):
+    """Tenant-scoped carrier verification status without exposing carrier credentials."""
+    from server.services.telephony import active_telephony_provider
+
+    if active_telephony_provider() != "vobiz":
+        return {
+            "required": False,
+            "configured": True,
+            "approved": True,
+            "status": "not_required",
+            "callsBlocked": False,
+            "verifications": {},
+        }
+
+    from server.services.saas import voice_kyc_service
+
+    try:
+        return await voice_kyc_service.refresh_kyc_status(principal.tenant_id)
+    except voice_kyc_service.VoiceKycError as exc:
+        raise HTTPException(
+            status_code=exc.status_code,
+            detail={
+                "error": {
+                    "code": exc.code,
+                    "message": "Phone service verification status is temporarily unavailable.",
+                }
+            },
+        ) from exc
+
+
+@router.post("/api/kyc/voice/session")
+async def create_voice_kyc_session(
+    body: VoiceKycSessionBody,
+    principal: SubscriberPrincipal = Depends(require_subscriber_jwt),
+):
+    """Create/reuse the tenant carrier account and return its hosted KYC URL."""
+    require_subscriber_permission(principal, "app.billing.write")
+    from server.db.connection import get_session_factory
+    from server.db.models.saas_models import User
+    from server.utils.rate_limiter import raise_rate_limited
+
+    allowed, retry = _voice_session_limiter.allow(str(principal.tenant_id))
+    if not allowed:
+        raise_rate_limited(retry, "Verification request limit reached. Please retry later.")
+    factory = get_session_factory()
+    if factory is None:
+        raise HTTPException(status_code=503, detail="database_required")
+    async with factory() as session:
+        user = await session.get(User, principal.user_id)
+        if not user or not user.email_verified_at or user.email.lower() != principal.email.lower():
+            raise HTTPException(status_code=403, detail={"error": {
+                "code": "email_not_verified", "message": "Verify your account email before starting phone service verification.",
+            }})
+    from server.services.telephony import active_telephony_provider
+
+    if active_telephony_provider() != "vobiz":
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "error": {
+                    "code": "voice_verification_not_required",
+                    "message": "Phone service verification is not required for the current setup.",
+                }
+            },
+        )
+    from server.services.saas import voice_kyc_service
+
+    try:
+        return await voice_kyc_service.start_kyc_session(
+            tenant_id=principal.tenant_id,
+            email=principal.email,
+            legal_name=body.legal_name,
+            business_type=body.business_type,
+            return_url=body.return_url,
+        )
+    except voice_kyc_service.VoiceKycError as exc:
+        messages = {
+            "voice_service_not_configured": "Phone service onboarding is not configured yet. Contact support.",
+            "voice_kyc_encryption_not_configured": "Phone service onboarding is not configured yet. Contact support.",
+            "voice_kyc_encryption_invalid": "Phone service onboarding is not configured yet. Contact support.",
+            "voice_account_needs_review": "Phone service setup needs support. Contact support before retrying.",
+            "voice_account_create_failed": "Could not create phone service verification. Check your details and try again.",
+            "voice_identity_locked": "These business details are already registered. Contact support to change them.",
+            "business_type_invalid": "Select a valid legal entity type.",
+            "legal_name_required": "Enter the legal name for this account.",
+            "account_email_required": "A verified account email is required.",
+            "invalid_voice_kyc_return_url": "Could not return to the console after verification. Refresh and try again.",
+            "voice_kyc_session_failed": "Could not start verification. Please try again.",
+        }
+        raise HTTPException(
+            status_code=exc.status_code,
+            detail={
+                "error": {
+                    "code": exc.code,
+                    "message": messages.get(
+                        exc.code,
+                        "Phone service verification is temporarily unavailable. Please try again.",
+                    ),
+                }
+            },
+        ) from exc
+
+
+@router.post("/api/webhooks/voice-kyc")
+async def voice_kyc_webhook(request: Request):
+    """No JWT: authenticate the exact raw body with the parent's HMAC instead."""
+    import json
+    from server.services.saas import voice_kyc_service
+
+    raw = bytearray()
+    async for chunk in request.stream():
+        raw.extend(chunk)
+        if len(raw) > 65536:
+            raise HTTPException(status_code=413, detail="payload_too_large")
+    try:
+        voice_kyc_service.verify_voice_webhook(bytes(raw), request.headers.get("X-Vobiz-Signature", ""))
+        payload = json.loads(raw)
+        if not isinstance(payload, dict):
+            raise ValueError("Expected object")
+    except voice_kyc_service.VoiceKycError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.code) from exc
+    except (ValueError, UnicodeDecodeError):
+        raise HTTPException(status_code=400, detail="bad_json") from None
+    try:
+        return await voice_kyc_service.apply_voice_webhook(payload)
+    except Exception as exc:
+        logger.warning("Phone verification callback failed error_type=%s", type(exc).__name__)
+        raise HTTPException(status_code=503, detail="verification_refresh_pending") from None
 
 
 @router.post("/api/webhooks/didit")

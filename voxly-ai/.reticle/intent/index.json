@@ -1,6 +1,18 @@
 {
   "entries": [
     {
+      "id": "inline:a-fresh-provider-approved-kyc-status-replaces-th-5ee18213",
+      "statement": "A fresh provider-approved KYC status replaces the verification form wit…",
+      "status": "proved",
+      "subject": "api"
+    },
+    {
+      "id": "inline:failed-hosted-verification-preserves-the-tenant-939df19d",
+      "statement": "Failed hosted verification preserves the tenant's locked business ident…",
+      "status": "proved",
+      "subject": "api"
+    },
+    {
       "id": "inline:a-browser-test-call-reaches-a-connected-listen-o-2133b570",
       "statement": "A browser test call reaches a connected listen-only state when micropho…",
       "status": "proved",
@@ -9,6 +21,12 @@
     {
       "id": "inline:a-workspace-can-open-billing-and-review-wallet-a-03c2ac0b",
       "statement": "A workspace can open billing and review wallet and payment activity.",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:tenant-settings-exposes-phone-service-kyc-with-p-a3a16e03",
+      "statement": "Tenant settings exposes phone-service KYC with persisted business ident…",
       "status": "proved",
       "subject": "console"
     },

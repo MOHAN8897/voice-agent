@@ -18,6 +18,7 @@ import { Modal } from '../ui/Modal';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { showToast } from '../ui/ToastHost';
 import { api } from '../../services/api';
+import { VoiceServiceKycCard } from '../ui/VoiceServiceKycCard';
 import { VerifyIdentityCard } from '../ui/VerifyIdentityCard';
 import { CatalogSkeleton, PhoneNumberRowSkeleton } from '../ui/Skeleton';
 
@@ -78,6 +79,9 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
   const [catalogLoading, setCatalogLoading] = useState(false);
   const [catalogError, setCatalogError] = useState(null);
   const [kycApproved, setKycApproved] = useState(false);
+  const [kycMode, setKycMode] = useState('checking');
+  const [kycLoading, setKycLoading] = useState(false);
+  const [kycStatusError, setKycStatusError] = useState('');
   const [providerInfo, setProviderInfo] = useState(null);
 
   const refreshProviderInfo = async () => {
@@ -124,19 +128,36 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
       .finally(() => setCatalogLoading(false));
   }, [isBuyModalOpen, selectedCountry, reloadCatalog]);
 
-  // Refresh KYC every time the buy modal opens — status can change outside this tab.
+  // The active carrier owns its gate. Didit remains a separate optional identity flow.
   useEffect(() => {
     if (!isBuyModalOpen) return undefined;
     let cancelled = false;
-    api.kyc
-      .getStatus()
-      .then((st) => {
+    setKycLoading(true);
+    setKycMode('checking');
+    setKycStatusError('');
+    (async () => {
+      try {
+        const voiceStatus = await api.kyc.getVoiceStatus();
         if (cancelled) return;
-        setKycApproved(Boolean(st?.approved));
-      })
-      .catch(() => {
-        if (!cancelled) setKycApproved(false);
-      });
+        if (voiceStatus?.required) {
+          setKycMode('voice');
+          setKycApproved(Boolean(voiceStatus.approved));
+          return;
+        }
+        const platformStatus = await api.kyc.getStatus();
+        if (cancelled) return;
+        setKycMode(platformStatus?.required ? 'platform' : 'none');
+        setKycApproved(!platformStatus?.required || Boolean(platformStatus.approved));
+      } catch (e) {
+        if (!cancelled) {
+          setKycMode('error');
+          setKycApproved(false);
+          setKycStatusError(e.message || 'Could not load verification status. Close and reopen this window to retry.');
+        }
+      } finally {
+        if (!cancelled) setKycLoading(false);
+      }
+    })();
     return () => {
       cancelled = true;
     };
@@ -225,12 +246,16 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
 
   const handleBuyNumber = async (catalogItem) => {
     setBuyError(null);
-    if (!kycApproved) {
+    if (!kycApproved && kycMode === 'voice') {
       try {
-        const st = await api.kyc.getStatus();
+        const st = await api.kyc.getVoiceStatus();
         if (!st?.approved) {
           setKycApproved(false);
-          showToast('Complete identity verification before buying a number', 'error', 5000);
+          showToast(
+            'Complete phone service verification before buying a number',
+            'error',
+            5000
+          );
           return;
         }
         setKycApproved(true);
@@ -277,9 +302,18 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
           : e.message;
         setBuyError(msg);
         await refreshWallet?.();
-      } else if (e.status === 403 || e.code === 'kyc_required') {
+      } else if (e.status === 403 || e.code === 'kyc_required' || e.code === 'voice_kyc_required') {
         setKycApproved(false);
-        setBuyError('Verify your identity to buy a phone number.');
+        const message = e.code === 'voice_kyc_required'
+          ? 'Complete phone service verification to buy a number.'
+          : 'Your account needs an additional verification step before buying a number.';
+        if (e.code === 'voice_kyc_required') {
+          setKycMode('voice');
+        } else {
+          setKycMode('error');
+          setKycStatusError(message);
+        }
+        setBuyError(message);
       } else if (e.code === 'carrier_balance_exhausted' || e.status === 503) {
         setBuyError(
           e.message ||
@@ -552,14 +586,14 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
           purchasedSuccess
             ? 'Number ready'
             : !kycApproved
-              ? 'Verify identity'
+              ? 'Verify phone service'
               : 'Buy Virtual Telephone Number'
         }
         subtitle={
           purchasedSuccess
             ? undefined
             : !kycApproved
-              ? 'One quick ID check unlocks phone numbers and live calls.'
+              ? 'Complete the carrier verification to unlock phone numbers and live calls.'
               : 'Only numbers currently available in your selected country are shown.'
         }
         maxWidth="max-w-2xl"
@@ -573,12 +607,19 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
               <p className="text-xs text-[#524E5E]">Inbound calls will now route directly to your selected AI agent.</p>
             </div>
           ) : !kycApproved ? (
-            <VerifyIdentityCard
-              variant="gate"
-              onApproved={() => {
-                setKycApproved(true);
-              }}
-            />
+            kycLoading || kycMode === 'checking' ? (
+              <div className="rounded-2xl border border-[#E4E2EB] bg-[#FAF9FD] p-6 text-sm text-[#524E5E]" role="status" aria-busy="true">
+                Checking verification status…
+              </div>
+            ) : kycMode === 'voice' ? (
+              <VoiceServiceKycCard onApproved={() => setKycApproved(true)} />
+            ) : kycMode === 'platform' ? (
+              <VerifyIdentityCard variant="gate" onApproved={() => setKycApproved(true)} />
+            ) : kycMode === 'error' ? (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950" role="alert">
+                {kycStatusError || 'Could not load verification status. Close and reopen this window to retry.'}
+              </div>
+            ) : null
           ) : (
             <>
               {buyError && (

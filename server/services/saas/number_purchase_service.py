@@ -6,7 +6,7 @@ import re
 import uuid
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.exc import IntegrityError
 
 from server.config.env import get_settings
@@ -83,7 +83,7 @@ async def _assert_number_purchase_eligibility(
     pending_count = await session.scalar(
         select(func.count(NumberPurchase.id)).where(
             NumberPurchase.tenant_id == tenant_id,
-            NumberPurchase.status.in_(("paid", "provisioning")),
+            NumberPurchase.status.in_(("paid", "provisioning", "needs_attention")),
             NumberPurchase.phone_number_id.is_(None),
         )
     )
@@ -102,7 +102,9 @@ async def _active_reservation_conflict(e164: str) -> bool:
         result = await session.execute(
             select(NumberReservation).where(
                 NumberReservation.e164 == e164,
-                NumberReservation.expires_at > _utcnow(),
+                or_(NumberReservation.expires_at > _utcnow(), NumberReservation.purchase_id.in_(
+                    select(NumberPurchase.id).where(NumberPurchase.status.in_(["paid", "provisioning", "needs_attention"])),
+                )),
             )
         )
         return result.scalar_one_or_none() is not None
@@ -321,6 +323,7 @@ async def _purchase_from_inventory(
             e164=e164,
             country_code=country_code,
             status="provisioned",
+            provider="telnyx",
             assign_agent_id=bind_agent,
             created_at=_utcnow(),
             updated_at=_utcnow(),
@@ -396,6 +399,9 @@ async def purchase_with_wallet(
 
     active_provider = active_telephony_provider()
     if active_provider == "vobiz":
+        from server.services.saas.voice_kyc_service import assert_voice_kyc_approved
+
+        await assert_voice_kyc_approved(principal.tenant_id, action="buy a phone number")
         # The account-owned-number endpoint is not an availability check. Only
         # an exact match in unassigned provider inventory can proceed to debit.
         await _assert_vobiz_inventory_number_available(e164, country_code)
@@ -436,6 +442,7 @@ async def purchase_with_wallet(
             e164=e164,
             country_code=country_code,
             status="paid",
+            provider=active_provider,
             assign_agent_id=bind_agent,
             created_at=_utcnow(),
             updated_at=_utcnow(),
@@ -449,6 +456,9 @@ async def purchase_with_wallet(
             delete(NumberReservation).where(
                 NumberReservation.e164 == e164,
                 NumberReservation.expires_at <= _utcnow(),
+                NumberReservation.purchase_id.in_(select(NumberPurchase.id).where(
+                    NumberPurchase.status.in_(["failed", "expired", "cancelled"]),
+                )),
             )
         )
         session.add(

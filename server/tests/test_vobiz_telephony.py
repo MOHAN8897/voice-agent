@@ -281,7 +281,7 @@ async def test_vobiz_number_order_uses_documented_inventory_purchase_endpoint(mo
         (
             "POST",
             "/Account/MA_TEST/numbers/purchase-from-inventory",
-            {"json": {"e164": "+919876543210"}},
+            {"json": {"e164": "+919876543210"}, "retry": False},
         )
     ]
 

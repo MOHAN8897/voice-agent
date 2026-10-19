@@ -6,7 +6,7 @@ import logging
 import re
 import uuid
 from typing import Any
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 
 import httpx
 
@@ -138,10 +138,11 @@ class VobizClient:
     async def _request(self, method: str, path: str, **kwargs: Any) -> dict[str, Any]:
         url = f"{VOBIZ_API_BASE}{path}"
         timeout = kwargs.pop("timeout", None)
+        retry = kwargs.pop("retry", True)
         if timeout is None:
             timeout = httpx.Timeout(connect=15.0, read=25.0, write=15.0, pool=15.0)
 
-        max_attempts = 1 if method.upper() == "POST" and "/Call" in path else 2
+        max_attempts = 1 if not retry or (method.upper() == "POST" and "/Call" in path) else 2
         for attempt in range(max_attempts):
             try:
                 async with httpx.AsyncClient(timeout=timeout) as client:
@@ -173,6 +174,96 @@ class VobizClient:
                     status=None,
                     body=str(exc)[:400],
                 ) from exc
+
+    async def create_customer_subaccount(
+        self, *, name: str, email: str, business_type: str, description: str
+    ) -> dict[str, Any]:
+        """Create a KYC-gated tenant subaccount; a lost response is not retried."""
+        parent_auth_id = quote(self.cfg["auth_id"], safe="")
+        return await self._request(
+            "POST",
+            f"/accounts/{parent_auth_id}/sub-accounts/",
+            json={
+                "name": name,
+                "email": email,
+                "description": description,
+                "kyc_mode": "customer_use",
+                "business_type": business_type,
+            },
+            retry=False,
+            timeout=httpx.Timeout(connect=3.0, read=8.0, write=5.0, pool=3.0),
+        )
+
+    async def create_customer_kyc_session(
+        self, *, sub_auth_id: str, redirect_url: str, webhook_url: str | None = None
+    ) -> dict[str, Any]:
+        raw_sub_auth_id = sub_auth_id
+        sub_auth_id = quote(raw_sub_auth_id, safe="")
+        return await self._request(
+            "POST",
+            f"/sub-accounts/{sub_auth_id}/kyc-sessions",
+            json={
+                "account_auth_id": raw_sub_auth_id,
+                "flow_type": "redirect",
+                "redirect_url": redirect_url,
+                **({"webhook_url": webhook_url} if webhook_url else {}),
+            },
+            retry=False,
+            timeout=httpx.Timeout(connect=3.0, read=8.0, write=5.0, pool=3.0),
+        )
+
+    async def get_customer_kyc_status(self, sub_auth_id: str) -> dict[str, Any]:
+        sub_auth_id = quote(sub_auth_id, safe="")
+        return await self._request(
+            "GET",
+            f"/sub-accounts/{sub_auth_id}/kyc/status",
+            timeout=httpx.Timeout(connect=3.0, read=8.0, write=5.0, pool=3.0),
+        )
+
+    async def get_customer_subaccount(self, sub_auth_id: str) -> dict[str, Any]:
+        return await self._request(
+            "GET", f"/accounts/{quote(self.auth_id, safe='')}/sub-accounts/{quote(sub_auth_id, safe='')}",
+            timeout=httpx.Timeout(connect=3.0, read=8.0, write=5.0, pool=3.0),
+        )
+
+    async def ensure_default_application(self, *, name: str, app_id: str | None = None) -> str:
+        """Use the account's default app for inbound DIDs; never a parent's app ID."""
+        path = f"/Account/{quote(self.auth_id, safe='')}/Application/"
+        if not app_id:
+            data = await self._request("GET", path)
+            apps = data.get("objects", data.get("applications", data.get("items", [])))
+            matches = [a for a in apps if a.get("app_name") == name] if isinstance(apps, list) else []
+            if len(matches) > 1:
+                raise VobizConfigError("Duplicate voice applications require reconciliation")
+            if matches:
+                app_id = str(matches[0].get("app_id") or "")
+            else:
+                data = await self._request(
+                    "POST", path, json={"app_name": name, "answer_url": f"{public_api_base()}/api/vobiz/answer",
+                                       "answer_method": "POST"}, retry=False,
+                )
+                app_id = str(data.get("app_id") or "")
+        if not app_id:
+            raise VobizConfigError("Voice application confirmation unavailable")
+        await self.update_application(app_id=app_id, app_name=name, default_number_app=True)
+        return app_id
+
+    async def release_owned_number(self, e164: str) -> dict[str, Any]:
+        return await self._request(
+            "DELETE", f"/Account/{quote(self.auth_id, safe='')}/numbers/{quote(e164, safe='')}", retry=False,
+        )
+
+    async def assign_number_to_subaccount(self, *, e164: str, sub_auth_id: str) -> dict[str, Any]:
+        """Assign a newly purchased parent-pool DID using the documented endpoint."""
+        parent_auth_id = quote(self.cfg["auth_id"], safe="")
+        encoded_number = quote(e164, safe="")
+        return await self._request(
+            "POST",
+            f"/account/{parent_auth_id}/numbers/{encoded_number}/assign-subaccount",
+            json={"sub_account_id": sub_auth_id},
+            retry=False,
+            timeout=httpx.Timeout(connect=3.0, read=8.0, write=5.0, pool=3.0),
+        )
 
     async def handshake(self) -> dict[str, Any]:
         """Test API credentials with Vobiz account lookup."""
@@ -238,7 +329,9 @@ class VobizClient:
 
         ans_url = answer_url or f"{base_api}/api/vobiz/answer"
         hup_url = hangup_url or f"{base_api}/api/vobiz/hangup"
-        app_id = self.cfg.get("app_id") or "19573358086719545"
+        app_id = None if self.cfg.get("disable_app_id") == "true" else (
+            self.cfg.get("app_id") or "19573358086719545"
+        )
 
         payload: dict[str, Any] = {
             "to": dest,
@@ -262,7 +355,8 @@ class VobizClient:
         except VobizApiError as exc:
             # If carrier rejects newly configured domain (e.g. DNS/SSL propagation in flight),
             # fall back safely so outbound calls do not fail.
-            if "not a valid URL" in str(exc) and "dialtact.com" in ans_url:
+            if (self.cfg.get("disable_app_id") != "true"
+                    and "not a valid URL" in str(exc) and "dialtact.com" in ans_url):
                 logger.warning(
                     "[VOBIZ] dialtact.com webhook not accepted by carrier yet; retrying with secondary fallback URL"
                 )
@@ -279,6 +373,8 @@ class VobizClient:
         answer_url: str | None = None,
         hangup_url: str | None = None,
         fallback_answer_url: str | None = None,
+        app_name: str | None = None,
+        default_number_app: bool | None = None,
     ) -> dict[str, Any]:
         """Update Vobiz voice application callback URLs."""
         auth_id = self.cfg["auth_id"]
@@ -295,6 +391,10 @@ class VobizClient:
             "fallback_answer_url": fb,
             "fallback_method": "POST",
         }
+        if app_name is not None:
+            payload["app_name"] = app_name
+        if default_number_app is not None:
+            payload["default_number_app"] = default_number_app
         return await self._request("POST", f"/Account/{auth_id}/Application/{target_app_id}/", json=payload)
 
     async def hangup_call(self, call_uuid: str) -> dict[str, Any]:
@@ -489,6 +589,7 @@ class VobizClient:
                 "POST",
                 f"/Account/{auth_id}/numbers/purchase-from-inventory",
                 json={"e164": e164},
+                retry=False,
             )
         except Exception:
             # A timeout can happen after Vobiz accepted the purchase. Reconcile

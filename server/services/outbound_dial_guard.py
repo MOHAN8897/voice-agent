@@ -177,15 +177,19 @@ async def hangup_active_telnyx_to(client: Any, to_e164: str) -> None:
 
 
 
-async def hangup_active_vobiz_to(to_e164: str) -> int:
-    from server.services.vobiz_client import VobizApiError, VobizClient, vobiz_call_registry
+async def hangup_active_vobiz_to(to_e164: str, *, tenant_id: str | None = None) -> int:
+    from server.services.vobiz_client import vobiz_call_registry
 
     dest = (to_e164 or "").strip()
     if not dest:
         return 0
-    client = VobizClient()
+    from server.services.saas.voice_kyc_service import vobiz_client_for_call
     cancelled_count = 0
     for row in vobiz_call_registry.list_recent(20):
+        if tenant_id is None and (row.get("tenant_id") or row.get("vobiz_account_scope") == "tenant"):
+            continue
+        if tenant_id and str(row.get("tenant_id") or "") != tenant_id:
+            continue
         if not _dest_matches(str(row.get("to") or ""), to_e164):
             continue
         if row.get("ended"):
@@ -196,6 +200,7 @@ async def hangup_active_vobiz_to(to_e164: str) -> int:
         if not call_uuid:
             continue
         try:
+            client = await vobiz_client_for_call(row)
             await client.hangup_call(call_uuid)
             vobiz_call_registry.upsert(
                 call_uuid,

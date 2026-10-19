@@ -214,35 +214,31 @@ async def test_outbound_route_also_returns_404_for_an_unknown_agent(principal, m
     assert exc.value.status_code == 404
 
 
-async def test_an_unverified_caller_is_stopped_before_the_agent_lookup(principal, monkeypatch):
-    """With Didit configured, the compliance gate refuses before anything is dialled.
-
-    Kept next to the 404 test on purpose: the two gates sit on the same path, and
-    it is the interaction between them that is easy to break silently.
-    """
+@pytest.mark.parametrize("provider", ["vobiz", "telnyx"])
+async def test_outbound_uses_only_the_active_carriers_kyc_gate(principal, monkeypatch, provider):
+    """Vobiz owns telecom KYC; other carriers retain the platform identity policy."""
     from fastapi import HTTPException
+    from unittest.mock import AsyncMock
 
-    from server.services.saas import kyc_service
+    from server.services.saas import kyc_gate
     from server.services.saas.telephony_orchestrator import subscriber_outbound
 
-    async def _not_approved(_user_id):
-        return False
-
-    async def _never_looked_up(*_a, **_kw):
-        raise AssertionError("the agent must not be resolved before the gate")
-
-    # Stub Didit's own answers, not the gate: the gate under test here is the real
-    # one, and it reads both of these at call time.
-    monkeypatch.setattr(kyc_service, "is_configured", lambda: True)
-    monkeypatch.setattr(kyc_service, "is_approved", _not_approved)
-    monkeypatch.setattr("server.brain.agent_service.agent_service.get_agent", _never_looked_up)
+    platform_gate = AsyncMock()
+    voice_gate = AsyncMock()
+    monkeypatch.setattr("server.services.telephony.active_telephony_provider", lambda: provider)
+    monkeypatch.setattr(kyc_gate, "assert_kyc_approved", platform_gate)
+    monkeypatch.setattr("server.services.saas.voice_kyc_service.assert_voice_kyc_approved", voice_gate)
+    monkeypatch.setattr("server.services.saas.call_callback_service.resolve_workspace_agent", AsyncMock(return_value={"status": "active", "active_compiled_brain_version": "test-version"}))
+    monkeypatch.setattr("server.services.saas.telephony_profile.get_profile", AsyncMock(return_value=None))
+    monkeypatch.setattr("server.services.saas.billing_wallet_service.assert_wallet_allows_pstn", AsyncMock(side_effect=HTTPException(status_code=402)))
 
     with pytest.raises(HTTPException) as exc:
         await subscriber_outbound(
-            principal, agent_id="ghost-agent", from_e164=None, to_e164="+919999999999"
+            principal, agent_id="test-agent", from_e164=None, to_e164="+919999999999"
         )
-    assert exc.value.status_code == 403
-    assert exc.value.detail["error"]["code"] == "kyc_required"
+    assert exc.value.status_code == 402
+    assert voice_gate.await_count == (1 if provider == "vobiz" else 0)
+    assert platform_gate.await_count == (1 if provider == "telnyx" else 0)
 
 
 async def test_callback_authorises_the_chosen_agent(principal, monkeypatch):
