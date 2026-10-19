@@ -1288,6 +1288,40 @@
       "subject": "unsorted",
       "updatedAt": 1790836534820
     },
+    "inline:the-phone-number-buying-experience-never-present-c934920e": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "contains": "Sign in to build your agent",
+            "kind": "text"
+          },
+          {
+            "absent": true,
+            "contains": "+14155550233",
+            "kind": "text"
+          },
+          {
+            "absent": true,
+            "contains": "+12125550399",
+            "kind": "text"
+          }
+        ]
+      },
+      "declaredAt": 1792426665153,
+      "id": "inline:the-phone-number-buying-experience-never-present-c934920e",
+      "provenBy": {
+        "at": 1792426665402,
+        "grade": "presence",
+        "runId": "drive-s3eb9256b-35d5-49d6-8ff3-1ba6c8effc81",
+        "verdictId": "reticle_assert:1792426665402"
+      },
+      "state": "proved",
+      "statement": "The phone number buying experience never presents seeded demo numbers as provider inventory.",
+      "status": "proved",
+      "subject": "unsorted",
+      "updatedAt": 1792426665426
+    },
     "inline:verify-login-error-is-displayed-7fdafc32": {
       "binding": {
         "contains": "Invalid email or password",

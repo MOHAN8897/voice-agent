@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import { initialWallet, availableNumbersCatalog } from '../data/initialWorkspaceData';
+import { initialWallet } from '../data/initialWorkspaceData';
 import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { normalizeAgent, normalizePhoneNumber, normalizeWallet } from '../../services/apiNormalize';
@@ -32,7 +32,7 @@ export function WorkspaceProvider({ children }) {
   const [agentLeadsId, setAgentLeadsId] = useState(null);
   const [campaigns, setCampaigns] = useState([]);
   const [wallet, setWallet] = useState(initialWallet);
-  const [availableCatalog, setAvailableCatalog] = useState(availableNumbersCatalog);
+  const [availableCatalog, setAvailableCatalog] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [syncError, setSyncError] = useState(null);
   const [syncPartialErrors, setSyncPartialErrors] = useState([]);
@@ -241,12 +241,16 @@ export function WorkspaceProvider({ children }) {
 
   const reloadCatalog = useCallback(
     async (country = catalogCountry) => {
-      if (!api.getToken()) return;
+      setAvailableCatalog([]);
+      setCatalogCountry(country);
+      if (!api.getToken()) {
+        throw new Error('Sign in to view live phone number availability.');
+      }
       try {
         const fetched = await api.telephony.getCatalog(country);
         setAvailableCatalog(fetched?.length ? fetched : []);
-        setCatalogCountry(country);
       } catch (e) {
+        setAvailableCatalog([]);
         setSyncPartialErrors((prev) => [...prev, `Number catalog: ${e.message || e}`]);
         throw e;
       }
@@ -595,78 +599,39 @@ export function WorkspaceProvider({ children }) {
   };
 
   const buyPhoneNumber = async (catalogItem, assignToAgentId = null) => {
-    try {
-      const provisioned = await api.telephony.buyNumber(catalogItem, assignToAgentId);
-      // Only poll for carrier async provision. Inventory transfers already return a
-      // phoneNumberId — stashing them leaves a forever "Provisioning…" banner.
-      if (provisioned?.purchaseId && provisioned?.provisioning && !provisioned?.phoneNumberId) {
-        stashPurchaseForRedirect(provisioned.purchaseId, assignToAgentId || null);
-      }
-      if (provisioned?.checkoutUrl || provisioned?.url) {
-        window.location.href = provisioned.checkoutUrl || provisioned.url;
-        return provisioned;
-      }
-      // Telnyx provisioning is async: the buy response is a paid purchase, not a
-      // phone line. Only add to the pool once the server hands back a real
-      // number id — otherwise a failed provision leaves a phantom line in the UI
-      // and the agent gets bound to a number that does not exist.
-      const phoneId = provisioned?.phoneNumberId || provisioned?.id;
-      if (phoneId) {
-        // Only a provisioned number is a line. Nothing else may enter the pool.
-        setPhoneNumbers((prev) => [normalizePhoneNumber(provisioned, {}), ...prev]);
-        setAvailableCatalog((prev) =>
-          prev.filter((n) => n.formatted !== catalogItem.formatted)
-        );
-        if (assignToAgentId) {
-          await assignNumberToAgent(phoneId, assignToAgentId);
-        }
-        return provisioned;
-      }
-      if (provisioned?.provisioning && provisioned?.purchaseId) {
-        // The carrier order is async and can still fail (out of carrier credit, a
-        // number that vanished). Poll for the terminal status so the caller can
-        // report the real outcome instead of a hopeful success.
-        const settled = await waitForPurchase(provisioned.purchaseId, {
-          onFailed: refreshWallet,
-        });
-        return settled;
+    if (!api.getToken()) {
+      throw new Error('Sign in before buying a phone number.');
+    }
+    const provisioned = await api.telephony.buyNumber(catalogItem, assignToAgentId);
+    // Only poll for carrier async provision. Inventory transfers already return a
+    // phoneNumberId — stashing them leaves a forever "Provisioning…" banner.
+    if (provisioned?.purchaseId && provisioned?.provisioning && !provisioned?.phoneNumberId) {
+      stashPurchaseForRedirect(provisioned.purchaseId, assignToAgentId || null);
+    }
+    if (provisioned?.checkoutUrl || provisioned?.url) {
+      window.location.href = provisioned.checkoutUrl || provisioned.url;
+      return provisioned;
+    }
+    // Only a provider-confirmed number ID may enter the tenant's number list.
+    const phoneId = provisioned?.phoneNumberId || provisioned?.id;
+    if (phoneId) {
+      setPhoneNumbers((prev) => [normalizePhoneNumber(provisioned, {}), ...prev]);
+      setAvailableCatalog((prev) =>
+        prev.filter((n) => n.formatted !== catalogItem.formatted)
+      );
+      if (assignToAgentId) {
+        await assignNumberToAgent(phoneId, assignToAgentId);
       }
       return provisioned;
-    } catch (e) {
-      if (api.getToken()) throw e;
-      console.warn('API buyPhoneNumber error, falling back locally:', e);
-      const id = `num-${Date.now()}`;
-      const agent = assignToAgentId ? agents.find((a) => a.id === assignToAgentId) : null;
-      const localNumber = {
-        id,
-        number: catalogItem.number,
-        formatted: catalogItem.formatted,
-        country: catalogItem.country === 'US' ? 'United States' : catalogItem.country,
-        countryCode: catalogItem.country,
-        type: catalogItem.type,
-        areaCode: catalogItem.areaCode,
-        locality: catalogItem.locality,
-        assignedAgentId: agent ? agent.id : null,
-        assignedAgentName: agent ? agent.name : 'Unassigned (Pool)',
-        monthlyCost: catalogItem.fee,
-        status: 'active',
-        capabilities: catalogItem.features || ['Voice'],
-        usageMinutesThisMonth: 0,
-        inboundRouting: {
-          action: agent ? 'ai_agent' : 'voicemail',
-          greetingPhrase: agent ? `Connecting you with ${agent.name}...` : 'Please leave a message.',
-          businessHours: '08:00 - 18:00 (Local Time)',
-          afterHoursAction: 'voicemail',
-          recordingEnabled: true
-        }
-      };
-      setPhoneNumbers((prev) => [localNumber, ...prev]);
-      setAvailableCatalog((prev) => prev.filter((n) => n.formatted !== catalogItem.formatted));
-      if (agent) {
-        updateAgent(agent.id, { assignedNumber: catalogItem.number, numberId: id });
-      }
-      return localNumber;
     }
+    if (provisioned?.provisioning && provisioned?.purchaseId) {
+      // The provider order is async; poll until the server confirms the number
+      // exists or reports the failure and wallet refund.
+      return await waitForPurchase(provisioned.purchaseId, {
+        onFailed: refreshWallet,
+      });
+    }
+    return provisioned;
   };
 
   const assignNumberToAgent = async (numberId, agentId, agentName = '') => {

@@ -384,6 +384,7 @@ async def test_carrier_purchase_persists_debit_and_job_in_one_transaction(monkey
     monkeypatch.setattr(number_purchase_service, "get_session_factory", lambda: lambda: session)
     monkeypatch.setattr(number_purchase_service, "get_settings", lambda: _settings())
     monkeypatch.setattr(number_purchase_service, "_active_reservation_conflict", no_op)
+    monkeypatch.setattr("server.services.telephony.active_telephony_provider", lambda: "telnyx")
     monkeypatch.setattr(number_purchase_service, "_purchase_from_inventory", no_inventory)
     monkeypatch.setattr(number_purchase_service, "assert_carrier_can_buy", no_op)
     monkeypatch.setattr(
@@ -424,6 +425,62 @@ async def test_carrier_purchase_persists_debit_and_job_in_one_transaction(monkey
     assert purchase.status == "paid"
     assert debit_calls == [(principal.user_id, purchase.id)]
     assert session.commits == 1
+
+
+@pytest.mark.asyncio
+async def test_vobiz_unavailable_number_is_rejected_before_wallet_debit(monkeypatch):
+    tenant_id = uuid.uuid4()
+    principal = SubscriberPrincipal(uuid.uuid4(), tenant_id, "owner", "buyer@example.test")
+    debit_calls = []
+    carrier_order_checks = []
+
+    async def no_reservation_conflict(_e164):
+        return False
+
+    async def wallet_affordable(_tenant_id):
+        return None
+
+    async def debit(*_args, **_kwargs):
+        debit_calls.append(True)
+        raise AssertionError("wallet must not be debited for unavailable provider inventory")
+
+    async def inventory_unavailable(_e164, _country):
+        raise ValueError("number_unavailable")
+
+    async def carrier_check(_e164):
+        carrier_order_checks.append(True)
+
+    monkeypatch.setattr(number_purchase_service, "get_settings", lambda: _settings())
+    monkeypatch.setattr(number_purchase_service, "get_session_factory", lambda: lambda: None)
+    monkeypatch.setattr(number_purchase_service, "_active_reservation_conflict", no_reservation_conflict)
+    monkeypatch.setattr(
+        "server.services.telephony.active_telephony_provider",
+        lambda: "vobiz",
+    )
+    monkeypatch.setattr(
+        "server.services.saas.billing_wallet_service.assert_wallet_can_afford_did",
+        wallet_affordable,
+    )
+    monkeypatch.setattr(
+        "server.services.saas.billing_wallet_service.debit_did_purchase_in_session",
+        debit,
+    )
+    monkeypatch.setattr(
+        number_purchase_service,
+        "_assert_vobiz_inventory_number_available",
+        inventory_unavailable,
+    )
+    monkeypatch.setattr(number_purchase_service, "assert_carrier_can_buy", carrier_check)
+
+    with pytest.raises(ValueError, match="number_unavailable"):
+        await number_purchase_service.purchase_with_wallet(
+            principal,
+            e164="+919876543210",
+            country_code="IN",
+        )
+
+    assert debit_calls == []
+    assert carrier_order_checks == []
 
 
 def test_provision_worker_claim_uses_skip_locked():

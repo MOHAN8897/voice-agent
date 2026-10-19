@@ -389,80 +389,119 @@ async def search_numbers(
 
     # Pre-seed seen with all numbers already assigned or unavailable in the system
     factory = get_session_factory()
-    if factory is not None:
-        async with factory() as session:
-            from server.services.saas.number_inventory import ensure_platform_inventory_tenant
-            from server.db.models.saas_models import NumberReservation
-            from datetime import datetime, timezone
-            inv_tid = await ensure_platform_inventory_tenant()
-
-            # Numbers assigned to tenants or not available in inventory
-            pn_rows = (
-                await session.execute(
-                    select(PhoneNumber.e164).where(
-                        PhoneNumber.released_at.is_(None),
-                        (PhoneNumber.tenant_id != inv_tid) | (PhoneNumber.status != "available"),
-                    )
-                )
-            ).scalars().all()
-            for n_e164 in pn_rows:
-                if n_e164:
-                    seen.add(str(n_e164).strip())
-
-            # Unexpired reservations
-            now_utc = datetime.now(timezone.utc)
-            res_rows = (
-                await session.execute(
-                    select(NumberReservation.e164).where(NumberReservation.expires_at > now_utc)
-                )
-            ).scalars().all()
-            for r_e164 in res_rows:
-                if r_e164:
-                    seen.add(str(r_e164).strip())
-
-    # Admin pool inventory: available across providers for immediate purchase from wallet credits
-    for item in await list_inventory_for_sale(country=country):
-        e164 = str(item.get("e164") or "")
-        if not e164 or e164 in seen:
-            continue
-        seen.add(e164)
-        priced.append(
-            {
-                **item,
-                "monthlyUsd": monthly_usd,
-                "monthlyInr": monthly_inr,
-                "fee": monthly_usd,
-                "country": country,
-                "provider": "direct_voice" if not is_admin else item.get("source", active_prov),
-                "telnyxNumberId": item.get("telnyxNumberId") if is_admin else None,
-            }
+    if factory is None:
+        raise HTTPException(
+            status_code=503,
+            detail={"error": {"code": "number_inventory_unavailable", "message": "Phone number inventory is temporarily unavailable."}},
         )
+    async with factory() as session:
+        from server.services.saas.number_inventory import ensure_platform_inventory_tenant
+        from server.db.models.saas_models import NumberReservation
+        from datetime import datetime, timezone
+        inv_tid = await ensure_platform_inventory_tenant()
+
+        # Numbers assigned to tenants or not available in inventory
+        pn_rows = (
+            await session.execute(
+                select(PhoneNumber.e164).where(
+                    PhoneNumber.released_at.is_(None),
+                    (PhoneNumber.tenant_id != inv_tid) | (PhoneNumber.status != "available"),
+                )
+            )
+        ).scalars().all()
+        for n_e164 in pn_rows:
+            if n_e164:
+                seen.add(str(n_e164).strip())
+
+        # Unexpired reservations
+        now_utc = datetime.now(timezone.utc)
+        res_rows = (
+            await session.execute(
+                select(NumberReservation.e164).where(NumberReservation.expires_at > now_utc)
+            )
+        ).scalars().all()
+        for r_e164 in res_rows:
+            if r_e164:
+                seen.add(str(r_e164).strip())
+
+    # Telnyx keeps the platform-owned pool path. Vobiz inventory is sourced
+    # directly from its unassigned inventory endpoint below; local/demo rows are
+    # never used as a fallback for Vobiz availability.
+    if active_prov != "vobiz":
+        for item in await list_inventory_for_sale(country=country):
+            e164 = str(item.get("e164") or "")
+            if not e164 or e164 in seen:
+                continue
+            seen.add(e164)
+            priced.append(
+                {
+                    **item,
+                    "monthlyUsd": monthly_usd,
+                    "monthlyInr": monthly_inr,
+                    "fee": monthly_usd,
+                    "country": country,
+                    "provider": "direct_voice" if not is_admin else item.get("source", active_prov),
+                    "telnyxNumberId": item.get("telnyxNumberId") if is_admin else None,
+                }
+            )
 
     try:
         if active_prov == "vobiz":
             from server.services.vobiz_client import VobizClient
-            numbers = await VobizClient().search_available_numbers(country=country, limit=10)
+            # Fetch a wider page so assigned numbers/reservations filtered below
+            # do not make the tenant catalog look empty prematurely.
+            numbers = await VobizClient().search_available_numbers(country=country, limit=100)
         else:
             numbers = await TelnyxClient().search_available_numbers(country=country, limit=10)
     except Exception as exc:
-        logger.warning("%s catalog search failed country=%s: %s", active_prov, country, exc)
+        logger.warning(
+            "%s catalog search failed country=%s error_type=%s",
+            active_prov,
+            country,
+            type(exc).__name__,
+        )
+        if active_prov == "vobiz":
+            raise HTTPException(
+                status_code=502,
+                detail={
+                    "error": {
+                        "code": "provider_inventory_unavailable",
+                        "message": "Phone number inventory is temporarily unavailable.",
+                    }
+                },
+            ) from None
         numbers = []
     for row in numbers:
         item = dict(row) if isinstance(row, dict) else {"e164": str(row)}
         e164 = str(item.get("e164") or item.get("phone_number") or "")
         if e164 and e164 in seen:
             continue
+        if active_prov == "vobiz":
+            if (
+                str(item.get("status") or "").strip().lower() != "active"
+                or any(
+                    str(item.get(flag) or "").strip().lower() in {"1", "true", "yes", "on"}
+                    for flag in ("is_trial_number", "is_test_number", "test_mode", "mock")
+                )
+                or item.get("auth_id") not in (None, "")
+            ):
+                continue
         if e164:
             seen.add(e164)
         item["monthlyInr"] = monthly_inr
         item["monthlyUsd"] = monthly_usd
         item["fee"] = monthly_usd
         item["country"] = country
-        item.setdefault("source", active_prov)
+        item["source"] = active_prov if is_admin else "direct_voice"
         item["provider"] = active_prov if is_admin else "direct_voice"
         if not is_admin and "telnyxNumberId" in item:
             item["telnyxNumberId"] = None
+        if not is_admin:
+            for internal_key in ("id", "account_id", "auth_id", "carrierNumberId", "providerNumberId"):
+                item.pop(internal_key, None)
         priced.append(item)
+        if len(priced) >= 10:
+            break
     return {
         "numbers": priced,
         "country": country,
@@ -652,6 +691,8 @@ async def buy_number(
             status = 503
         elif code == "carrier_not_configured":
             status = 503
+        elif code == "carrier_inventory_unavailable":
+            status = 503
         elif code == "carrier_order_failed":
             status = 502
         elif code == "tenant_not_found":
@@ -669,6 +710,7 @@ async def buy_number(
                 "Phone numbers are temporarily unavailable. Your wallet was not charged."
             ),
             "carrier_not_configured": "Telephony line service is being updated. Please contact support.",
+            "carrier_inventory_unavailable": "Phone number inventory is temporarily unavailable. Your wallet was not charged.",
             "carrier_order_failed": "Unable to complete number order with provider. Your wallet was not charged.",
             "number_reserved": "This number is reserved by another checkout. Try a different number.",
             "number_unavailable": "This number is no longer available.",

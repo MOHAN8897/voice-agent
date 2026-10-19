@@ -14,6 +14,7 @@ from server.services.telephony import (
 )
 from server.services.vobiz_client import (
     VobizCallRegistry,
+    VobizApiError,
     VobizClient,
     vobiz_call_registry,
     vobiz_stream_tokens,
@@ -206,20 +207,100 @@ async def test_vobiz_client_balance():
 
 
 @pytest.mark.asyncio
-async def test_vobiz_numbers_search_and_provision():
-    """Verify VobizClient number search and ordering flows."""
-    client = VobizClient()
-    numbers = await client.search_available_numbers(country="IN", limit=3)
-    assert len(numbers) > 0
-    first = numbers[0]
-    assert first["country"] == "IN"
-    assert first["provider"] == "vobiz"
-    assert first["e164"].startswith("+")
+async def test_vobiz_inventory_uses_documented_endpoint_and_rejects_test_or_owned_numbers(monkeypatch):
+    """Only active, unassigned, voice-capable provider inventory is purchasable."""
+    client = VobizClient(cfg={"auth_id": "MA_TEST", "auth_token": "unit-test-token"})
+    calls = []
 
-    prov = await client.provision_ordered_number(first["e164"])
-    assert prov.get("ok") is True
-    assert prov.get("provider") == "vobiz"
-    assert prov.get("e164") == first["e164"]
+    async def inventory_request(method, path, **kwargs):
+        calls.append((method, path, kwargs))
+        return {
+            "items": [
+                {
+                    "id": "inventory-1",
+                    "e164": "+919876543210",
+                    "country": "IN",
+                    "status": "active",
+                    "auth_id": None,
+                    "capabilities": {"voice": True, "sms": False},
+                },
+                {"e164": "+919876543211", "country": "IN", "status": "active", "is_trial_number": True},
+                {"e164": "+919876543212", "country": "IN", "status": "active", "source": "test_number"},
+                {"e164": "+919876543213", "country": "IN", "status": "active", "auth_id": "SA_OTHER"},
+                {"e164": "+919876543214", "country": "IN", "status": "reserved", "auth_id": None},
+                {
+                    "e164": "+919876543215",
+                    "country": "IN",
+                    "status": "active",
+                    "auth_id": None,
+                    "capabilities": {"voice": "false"},
+                },
+            ],
+            "page": 1,
+            "per_page": 25,
+            "total": 6,
+        }
+
+    monkeypatch.setattr(client, "_request", inventory_request)
+    numbers = await client.search_available_numbers(country="IN", limit=3)
+    assert [row["e164"] for row in numbers] == ["+919876543210"]
+    assert numbers[0]["country"] == "IN"
+    assert numbers[0]["provider"] == "vobiz"
+    assert calls[0][0:2] == ("GET", "/Account/MA_TEST/inventory/numbers")
+    assert calls[0][2]["params"]["country"] == "IN"
+
+
+@pytest.mark.asyncio
+async def test_vobiz_number_order_uses_documented_inventory_purchase_endpoint(monkeypatch):
+    client = VobizClient(cfg={"auth_id": "MA_TEST", "auth_token": "unit-test-token"})
+    requests = []
+
+    async def not_owned(**_kwargs):
+        return []
+
+    async def purchase_request(method, path, **kwargs):
+        requests.append((method, path, kwargs))
+        return {
+            "number": {
+                "id": "provider-number-id",
+                "account_id": "MA_TEST",
+                "e164": "+919876543210",
+                "status": "active",
+                "is_trial_number": False,
+            }
+        }
+
+    monkeypatch.setattr(client, "list_account_numbers", not_owned)
+    monkeypatch.setattr(client, "_request", purchase_request)
+
+    result = await client.place_number_order("+919876543210")
+
+    assert result["id"] == "provider-number-id"
+    assert result["phone_number"] == "+919876543210"
+    assert requests == [
+        (
+            "POST",
+            "/Account/MA_TEST/numbers/purchase-from-inventory",
+            {"json": {"e164": "+919876543210"}},
+        )
+    ]
+
+
+@pytest.mark.asyncio
+async def test_vobiz_number_order_does_not_synthesize_provider_id_from_phone_number(monkeypatch):
+    client = VobizClient(cfg={"auth_id": "MA_TEST", "auth_token": "unit-test-token"})
+
+    async def not_owned(**_kwargs):
+        return []
+
+    async def incomplete_purchase(_method, _path, **_kwargs):
+        return {"message": "accepted", "number": {"e164": "+919876543210"}}
+
+    monkeypatch.setattr(client, "list_account_numbers", not_owned)
+    monkeypatch.setattr(client, "_request", incomplete_purchase)
+
+    with pytest.raises(VobizApiError, match="did not confirm"):
+        await client.place_number_order("+919876543210")
 
 
 def test_vobiz_xml_escaping_prevents_parse_errors():

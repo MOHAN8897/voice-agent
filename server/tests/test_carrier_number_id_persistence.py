@@ -78,7 +78,8 @@ async def test_vobiz_number_search_and_balance_do_not_log_provider_errors(monkey
     )
 
     with caplog.at_level(logging.DEBUG, logger="server.services.vobiz_client"):
-        assert await client.list_account_numbers() == []
+        with pytest.raises(RuntimeError):
+            await client.list_account_numbers()
         balance = await client.get_balance()
 
     assert balance["error"] == "RuntimeError"

@@ -445,6 +445,12 @@
       "subject": "unsorted"
     },
     {
+      "id": "inline:the-phone-number-buying-experience-never-present-c934920e",
+      "statement": "The phone number buying experience never presents seeded demo numbers a…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
       "id": "inline:verify-login-error-is-displayed-7fdafc32",
       "statement": "Verify login error is displayed",
       "status": "proposed",

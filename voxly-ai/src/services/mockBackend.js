@@ -19,8 +19,7 @@ import {
   initialCalls,
   initialLeads,
   initialCampaigns,
-  initialWallet,
-  availableNumbersCatalog
+  initialWallet
 } from '../console/data/initialWorkspaceData';
 
 const DB_KEY = 'voxly_mock_db_v1';
@@ -44,7 +43,7 @@ function getDb() {
     leads: initialLeads,
     campaigns: initialCampaigns,
     wallet: initialWallet,
-    catalog: availableNumbersCatalog,
+    catalog: [],
     integrations: [
       { id: 'hubspot', name: 'HubSpot CRM', type: 'CRM', connected: true, lastSync: '10m ago' },
       { id: 'salesforce', name: 'Salesforce Sales Cloud', type: 'CRM', connected: false, lastSync: 'Never' },
@@ -391,52 +390,21 @@ export const mockBackend = {
       return { status: 200, data: db.phoneNumbers };
     }
 
+    if (cleanEndpoint === '/api/telephony/numbers/search' && method === 'GET') {
+      // Demo data has no provider-backed inventory and must never present
+      // example numbers as available to buy.
+      return { status: 200, data: { numbers: [] } };
+    }
+
     if (cleanEndpoint === '/api/telephony/catalog' && method === 'GET') {
-      return { status: 200, data: db.catalog };
+      return { status: 200, data: [] };
     }
 
     if (cleanEndpoint === '/api/telephony/buy' && method === 'POST') {
-      const { catalogItem, assignToAgentId } = body || {};
-      if (!catalogItem) return { status: 400, data: { error: 'catalogItem is required' } };
-
-      const agent = assignToAgentId ? db.agents.find((a) => a.id === assignToAgentId) : null;
-      const id = `num-${Date.now()}`;
-
-      const newNumber = {
-        id,
-        number: catalogItem.number,
-        formatted: catalogItem.formatted,
-        country: catalogItem.country === 'US' ? 'United States' : catalogItem.country,
-        countryCode: catalogItem.country,
-        type: catalogItem.type,
-        areaCode: catalogItem.areaCode,
-        locality: catalogItem.locality,
-        assignedAgentId: agent ? agent.id : null,
-        assignedAgentName: agent ? agent.name : 'Unassigned (Pool)',
-        monthlyCost: catalogItem.fee,
-        status: 'active',
-        capabilities: catalogItem.features || ['Voice'],
-        usageMinutesThisMonth: 0,
-        emergencyAddress: '100 Montgomery St, Suite 400, San Francisco, CA 94104',
-        inboundRouting: {
-          action: agent ? 'ai_agent' : 'voicemail',
-          greetingPhrase: agent ? `Connecting you with ${agent.name}...` : 'Please leave a message.',
-          businessHours: '08:00 - 18:00 (Local Time)',
-          afterHoursAction: 'voicemail',
-          recordingEnabled: true
-        }
+      return {
+        status: 503,
+        data: { error: 'Live provider inventory is unavailable in demo mode.' },
       };
-
-      db.phoneNumbers.unshift(newNumber);
-      db.catalog = db.catalog.filter((c) => c.formatted !== catalogItem.formatted);
-
-      if (agent) {
-        agent.assignedNumber = catalogItem.number;
-        agent.numberId = id;
-      }
-
-      saveDb(db);
-      return { status: 201, data: newNumber };
     }
 
     const numberRoutingMatch = cleanEndpoint.match(/^\/api\/telephony\/numbers\/([a-zA-Z0-9_-]+)\/routing$/);

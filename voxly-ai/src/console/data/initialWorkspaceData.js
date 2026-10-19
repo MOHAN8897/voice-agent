@@ -569,11 +569,6 @@ export const initialWallet = {
   ]
 };
 
-export const availableNumbersCatalog = [
-  { number: '+1 (415) 555-0233', formatted: '+14155550233', locality: 'San Francisco, CA', areaCode: '415', country: 'US', type: 'Local DID', fee: 2.50, features: ['Voice', 'SMS'] },
-  { number: '+1 (415) 555-0481', formatted: '+14155550481', locality: 'San Francisco, CA', areaCode: '415', country: 'US', type: 'Local DID', fee: 2.50, features: ['Voice', 'SMS'] },
-  { number: '+1 (212) 555-0399', formatted: '+12125550399', locality: 'New York, NY', areaCode: '212', country: 'US', type: 'Local DID', fee: 2.50, features: ['Voice'] },
-  { number: '+1 (312) 555-0711', formatted: '+13125550711', locality: 'Chicago, IL', areaCode: '312', country: 'US', type: 'Local DID', fee: 2.50, features: ['Voice', 'SMS'] },
-  { number: '+1 (800) 555-0344', formatted: '+18005550344', locality: 'Nationwide (Toll-Free)', areaCode: '800', country: 'US', type: 'Toll-Free', fee: 4.50, features: ['Voice', 'SMS'] },
-  { number: '+1 (888) 555-0919', formatted: '+18885550919', locality: 'Nationwide (Toll-Free)', areaCode: '888', country: 'US', type: 'Toll-Free', fee: 4.50, features: ['Voice'] }
-];
+// Number availability must come from the live provider API. Keep demo workspaces
+// from presenting reserved example numbers as purchasable inventory.
+export const availableNumbersCatalog = [];

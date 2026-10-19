@@ -237,6 +237,24 @@ async def assert_carrier_can_buy(e164: str) -> None:
         raise ValueError("carrier_balance_exhausted")
 
 
+async def _assert_vobiz_inventory_number_available(e164: str, country_code: str) -> None:
+    """Require a fresh match from Vobiz's unassigned inventory before wallet debit."""
+    from server.services.vobiz_client import VobizClient, VobizConfigError
+
+    try:
+        rows = await VobizClient().search_available_numbers(country=country_code, limit=100)
+    except VobizConfigError as exc:
+        raise ValueError("carrier_not_configured") from exc
+    except Exception as exc:
+        logger.warning(
+            "vobiz number availability check failed error_type=%s",
+            type(exc).__name__,
+        )
+        raise ValueError("carrier_inventory_unavailable") from exc
+    if not any(str(row.get("e164") or "") == e164 for row in rows):
+        raise ValueError("number_unavailable")
+
+
 #: Typical local DID order needs ~$1 prepaid; $0.56 still 402s at Telnyx.
 CARRIER_MIN_BALANCE_USD = 1.0
 
@@ -351,10 +369,11 @@ async def purchase_with_wallet(
     country_code: str = "IN",
     assign_agent_id: str | None = None,
 ) -> dict:
-    """Reserve → debit wallet → enqueue Telnyx provision (prepaid DID).
+    """Validate provider inventory → reserve/debit → enqueue provider purchase.
 
-    Prefer admin inventory transfer (no carrier order) when the DID already sits
-    in the Platform inventory pool.
+    Telnyx may transfer an already-owned platform inventory DID. Vobiz numbers
+    must be present in the provider's live, unassigned inventory and are purchased
+    through its inventory API.
     """
     from server.services.saas.billing_wallet_service import (
         assert_wallet_can_afford_did,
@@ -373,16 +392,24 @@ async def purchase_with_wallet(
     # Customer wallet first — same gate for inventory transfer and Telnyx order.
     await assert_wallet_can_afford_did(principal.tenant_id)
 
-    transferred = await _purchase_from_inventory(
-        principal,
-        e164=e164,
-        country_code=country_code,
-        assign_agent_id=assign_agent_id,
-    )
-    if transferred is not None:
-        return transferred
+    from server.services.telephony import active_telephony_provider
 
-    # Platform Telnyx prepaid next: never debit a buyer for a DID we cannot order.
+    active_provider = active_telephony_provider()
+    if active_provider == "vobiz":
+        # The account-owned-number endpoint is not an availability check. Only
+        # an exact match in unassigned provider inventory can proceed to debit.
+        await _assert_vobiz_inventory_number_available(e164, country_code)
+    else:
+        transferred = await _purchase_from_inventory(
+            principal,
+            e164=e164,
+            country_code=country_code,
+            assign_agent_id=assign_agent_id,
+        )
+        if transferred is not None:
+            return transferred
+
+    # Never debit a buyer for a DID the active provider cannot order.
     await assert_carrier_can_buy(e164)
     inventory_tid = await ensure_platform_inventory_tenant()
     async with factory() as session:

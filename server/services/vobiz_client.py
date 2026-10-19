@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 import uuid
 from typing import Any
 from urllib.parse import urlencode
@@ -20,6 +21,63 @@ VOBIZ_API_BASE = "https://api.vobiz.ai/api/v1"
 # Standard Vobiz audio stream settings
 VOBIZ_DEFAULT_SAMPLE_RATE = 16000
 VOBIZ_DEFAULT_CODEC = "L16"  # PCMU or L16
+_E164_RE = re.compile(r"^\+[1-9]\d{7,14}$")
+_TRUE_VALUES = {"1", "true", "yes", "on"}
+_TEST_NUMBER_MARKER_RE = re.compile(
+    r"(^|[^a-z0-9])(test|trial|demo|mock|sandbox)([^a-z0-9]|$)", re.IGNORECASE
+)
+
+
+def _is_true(value: Any) -> bool:
+    if isinstance(value, str):
+        return value.strip().lower() in _TRUE_VALUES
+    if isinstance(value, bool):
+        return value
+    return value == 1 if isinstance(value, int) else False
+
+
+def _is_test_number(row: dict[str, Any]) -> bool:
+    if any(
+        _is_true(row.get(field))
+        for field in ("is_trial_number", "is_test_number", "test_mode", "is_mock", "mock")
+    ):
+        return True
+    tags = row.get("tags") or []
+    if isinstance(tags, str):
+        tags = [tags]
+    marker_text = " ".join(
+        str(value)
+        for value in [*tags, row.get("source"), row.get("number_type"), row.get("type")]
+        if value
+    )
+    return bool(_TEST_NUMBER_MARKER_RE.search(marker_text))
+
+
+def _normalize_vobiz_number(row: dict[str, Any]) -> dict[str, Any] | None:
+    e164 = str(row.get("e164") or row.get("phone_number") or "").strip()
+    if not _E164_RE.fullmatch(e164) or _is_test_number(row):
+        return None
+    capabilities = row.get("capabilities")
+    voice_capability = (
+        capabilities.get("voice")
+        if isinstance(capabilities, dict) and "voice" in capabilities
+        else row.get("voice_enabled")
+    )
+    if voice_capability is not None and not _is_true(voice_capability):
+        return None
+    return {
+        **row,
+        "e164": e164,
+        "phone_number": e164,
+        "country": str(row.get("country") or "").upper(),
+        "status": str(row.get("status") or "").lower(),
+        "provider": "vobiz",
+        "features": [
+            label
+            for key, label in (("voice", "Voice"), ("sms", "SMS"))
+            if not isinstance(capabilities, dict) or _is_true(capabilities.get(key))
+        ],
+    }
 
 
 class VobizConfigError(Exception):
@@ -289,34 +347,56 @@ class VobizClient:
                 "error": type(e).__name__,
             }
 
-    async def list_account_numbers(self) -> list[dict[str, Any]]:
-        """List active provisioned phone numbers on Vobiz account."""
+    async def list_account_numbers(
+        self,
+        *,
+        search: str | None = None,
+        limit: int = 100,
+    ) -> list[dict[str, Any]]:
+        """List numbers already assigned to this account (not numbers for sale)."""
         auth_id = self.cfg["auth_id"]
-        try:
-            data = await self._request("GET", f"/account/{auth_id}/numbers")
-            items = data.get("items") or []
-            results = []
-            for item in items:
-                e164 = str(item.get("e164") or "")
-                if e164:
-                    results.append({
-                        "id": item.get("id"),
-                        "phone_number": e164,
-                        "e164": e164,
-                        "country": item.get("country", "IN"),
-                        "region": item.get("region", "National"),
-                        "status": item.get("status", "active"),
-                        "provider": "vobiz",
-                        "monthly_fee": item.get("monthly_fee", 600),
-                        "currency": item.get("currency", "INR"),
-                    })
-            return results
-        except Exception as exc:
-            logger.debug(
-                "[VOBIZ] list_account_numbers notice error_type=%s",
-                type(exc).__name__,
-            )
+        requested = max(0, min(int(limit), 1000))
+        if requested == 0:
             return []
+        per_page = min(100, requested)
+        results: list[dict[str, Any]] = []
+        page = 1
+        total: int | None = None
+        while len(results) < requested:
+            params: dict[str, Any] = {"page": page, "per_page": per_page}
+            if search:
+                params["search"] = search
+            data = await self._request(
+                "GET", f"/Account/{auth_id}/numbers", params=params
+            )
+            items = data.get("items") or []
+            if not isinstance(items, list):
+                raise VobizApiError("Vobiz account number list returned an invalid response")
+            for raw in items:
+                if not isinstance(raw, dict):
+                    continue
+                item = _normalize_vobiz_number(raw)
+                if item is None:
+                    # Keep test/trial numbers out of all account-number consumers.
+                    continue
+                item["account_id"] = str(raw.get("account_id") or raw.get("auth_id") or "")
+                item["id"] = raw.get("id")
+                item["region"] = raw.get("region")
+                item["monthly_fee"] = raw.get("monthly_fee")
+                item["setup_fee"] = raw.get("setup_fee")
+                item["currency"] = raw.get("currency")
+                item["is_trial_number"] = _is_true(raw.get("is_trial_number"))
+                results.append(item)
+                if len(results) >= requested:
+                    break
+            try:
+                total = int(data.get("total")) if data.get("total") is not None else total
+            except (TypeError, ValueError):
+                pass
+            if not items or (total is not None and page * per_page >= total):
+                break
+            page += 1
+        return results
 
     async def search_available_numbers(
         self,
@@ -324,39 +404,134 @@ class VobizClient:
         limit: int = 10,
         number_type: str = "Local DID",
     ) -> list[dict[str, Any]]:
-        """List real unassigned phone numbers provisioned on Vobiz account."""
-        country_norm = country.upper()
+        """List live, unassigned Vobiz inventory numbers eligible for purchase."""
+        country_norm = country.strip().upper()
+        requested = max(0, min(int(limit), 1000))
+        if requested == 0:
+            return []
+        auth_id = self.cfg["auth_id"]
+        per_page = min(100, max(25, requested))
         results: list[dict[str, Any]] = []
         seen: set[str] = set()
-
-        acct_nums = await self.list_account_numbers()
-        for row in (acct_nums or []):
-            e164 = str(row.get("e164") or row.get("phone_number") or "").strip()
-            c_code = str(row.get("country") or "IN").upper()
-            if country_norm and c_code != country_norm and country_norm != "ALL":
-                continue
-            if e164 and e164 not in seen:
-                seen.add(e164)
+        page = 1
+        total: int | None = None
+        while len(results) < requested:
+            params: dict[str, Any] = {"page": page, "per_page": per_page}
+            if country_norm and country_norm != "ALL":
+                params["country"] = country_norm
+            data = await self._request(
+                "GET", f"/Account/{auth_id}/inventory/numbers", params=params
+            )
+            items = data.get("items") or []
+            if not isinstance(items, list):
+                raise VobizApiError("Vobiz inventory returned an invalid response")
+            for raw in items:
+                if not isinstance(raw, dict):
+                    continue
+                row = _normalize_vobiz_number(raw)
+                if row is None or row["status"] != "active":
+                    continue
+                # Inventory must be unassigned. The API guarantees auth_id=NULL;
+                # keep the guard here in case an upstream response is malformed.
+                if raw.get("auth_id") not in (None, ""):
+                    continue
+                if country_norm and country_norm != "ALL" and row["country"] != country_norm:
+                    continue
+                if row["e164"] in seen:
+                    continue
+                seen.add(row["e164"])
                 results.append(row)
-        return results[:limit]
+                if len(results) >= requested:
+                    break
+            try:
+                total = int(data.get("total")) if data.get("total") is not None else total
+            except (TypeError, ValueError):
+                pass
+            if not items or (total is not None and page * per_page >= total):
+                break
+            page += 1
+        return results
 
     async def place_number_order(self, phone_number: str) -> dict[str, Any]:
-        """Verify or order a phone number on Vobiz."""
-        clean = phone_number.strip().lstrip("+")
-        # Check if already in account
-        acct_nums = await self.list_account_numbers()
-        for row in (acct_nums or []):
-            row_clean = str(row.get("e164") or row.get("phone_number") or "").strip().lstrip("+")
-            if row_clean == clean:
-                return {"ok": True, "phone_number": phone_number, "id": str(row.get("id") or clean), "status": "active"}
-
+        """Purchase an exact number from Vobiz inventory, idempotently."""
+        e164 = str(phone_number or "").strip()
+        if not _E164_RE.fullmatch(e164):
+            raise ValueError("invalid_e164")
         auth_id = self.cfg["auth_id"]
-        payload = {
-            "number": clean,
-            "app_id": self.cfg.get("app_id") or "",
-        }
-        res = await self._request("POST", f"/Account/{auth_id}/PhoneNumber/{clean}/", json=payload)
-        return {"ok": True, "phone_number": phone_number, "id": clean, "details": res}
+
+        async def find_owned_active_number() -> dict[str, Any] | None:
+            owned_rows = await self.list_account_numbers(search=e164, limit=25)
+            for row in owned_rows:
+                if row["e164"] != e164:
+                    continue
+                if row.get("account_id") != auth_id or row.get("is_trial_number"):
+                    raise VobizApiError("Vobiz number is not owned by the purchasing account")
+                if row.get("status") != "active":
+                    raise VobizApiError("Vobiz number is not active")
+                number_id = str(row.get("id") or "").strip()
+                if not number_id:
+                    raise VobizApiError("Vobiz did not return a provider number ID")
+                return {
+                    "ok": True,
+                    "phone_number": e164,
+                    "id": number_id,
+                    "status": "active",
+                    "already_owned": True,
+                }
+            return None
+
+        already_owned = await find_owned_active_number()
+        if already_owned is not None:
+            return already_owned
+
+        try:
+            response = await self._request(
+                "POST",
+                f"/Account/{auth_id}/numbers/purchase-from-inventory",
+                json={"e164": e164},
+            )
+        except Exception:
+            # A timeout can happen after Vobiz accepted the purchase. Reconcile
+            # against the owned-number endpoint before the durable job retries.
+            try:
+                owned = await find_owned_active_number()
+            except Exception:
+                raise
+            if owned is not None:
+                return owned
+            raise
+
+        purchased = response.get("number") if isinstance(response, dict) else None
+        if isinstance(purchased, dict):
+            returned_e164 = str(purchased.get("e164") or "").strip()
+            returned_account = str(purchased.get("account_id") or "").strip()
+            number_id = str(purchased.get("id") or "").strip()
+            status = str(purchased.get("status") or "").strip().lower()
+            if (
+                returned_e164 == e164
+                and returned_account == auth_id
+                and number_id
+                and status == "active"
+                and not _is_test_number(purchased)
+            ):
+                return {
+                    "ok": True,
+                    "phone_number": e164,
+                    "id": number_id,
+                    "status": "active",
+                    "details": response,
+                }
+
+        # Do not invent an ID or mark the line provisioned when the documented
+        # provider purchase response is incomplete. Reconcile first in case the
+        # number was bought but the response body was lost or malformed.
+        try:
+            owned = await find_owned_active_number()
+        except Exception:
+            raise
+        if owned is not None:
+            return owned
+        raise VobizApiError("Vobiz did not confirm the purchased number")
 
     async def provision_ordered_number(self, phone_number: str) -> dict[str, Any]:
         """Order number + link to Vobiz voice application for inbound calls."""
@@ -373,10 +548,12 @@ class VobizClient:
                     type(e).__name__,
                 )
         phone_number_id = order.get("id") if isinstance(order, dict) else None
+        if not phone_number_id:
+            raise VobizApiError("Vobiz did not confirm a provider number ID")
         return {
             "ok": True,
             "order": order,
-            "phone_number_id": str(phone_number_id or clean),
+            "phone_number_id": str(phone_number_id),
             "e164": phone_number,
             "provider": "vobiz",
         }
