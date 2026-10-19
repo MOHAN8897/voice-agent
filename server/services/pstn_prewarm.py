@@ -59,6 +59,7 @@ class PstnPrewarmBundle:
     config_session_id: str | None = None
     language: str = "te-IN"
     agent_id: str | None = None
+    cost_record_key: str | None = None
 
 
 class _PrewarmVoiceStub:
@@ -176,6 +177,12 @@ class PstnPrewarmRegistry:
         bundle: PstnPrewarmBundle | None = None
         try:
             bundle = await _build_prewarm_bundle(provider, external_id, dial_meta, rt_key)
+            if bundle.greeting_usage and bundle.greeting_model:
+                from server.services.saas.prewarm_cost_records import record_prepared
+                try:
+                    bundle.cost_record_key = await record_prepared(rt_key, tenant_id=str(dial_meta.get("tenant_id") or ""), usage=bundle.greeting_usage, model=bundle.greeting_model)
+                except Exception as exc:
+                    logger.warning("[BILLING] prewarm cost record failed kind=%s", type(exc).__name__)
             async with self._lock:
                 entry = self._entries.get(key)
                 if entry is not None and entry.task is asyncio.current_task():
@@ -286,6 +293,9 @@ class PstnPrewarmRegistry:
             except Exception:
                 pass
         if entry.bundle and entry.bundle.realtime_key:
+            if entry.bundle.cost_record_key:
+                from server.services.saas.prewarm_cost_records import mark_usage
+                await mark_usage(entry.bundle.cost_record_key)
             await _destroy_realtime(entry.bundle.realtime_key)
         else:
             await _destroy_realtime(getattr(entry, "realtime_key", "") or prewarm_realtime_key(provider, external_id))
@@ -299,6 +309,9 @@ class PstnPrewarmRegistry:
                 return
             self._entries.pop(key, None)
         if entry is not None:
+            if entry.bundle and entry.bundle.cost_record_key:
+                from server.services.saas.prewarm_cost_records import mark_usage
+                await mark_usage(entry.bundle.cost_record_key)
             await _destroy_realtime(rt_key)
             log_pstn("prewarm.expired", control=entry.external_id, provider=entry.provider)
 
@@ -373,6 +386,9 @@ async def record_bundle_greeting_usage(call_id: str | None, bundle: PstnPrewarmB
         assistant_text=bundle.greeting_text or "",
         prewarm=True,
     )
+    if bundle.cost_record_key:
+        from server.services.saas.prewarm_cost_records import mark_usage
+        await mark_usage(bundle.cost_record_key, call_id=call_id)
 
 
 pstn_prewarm_registry = PstnPrewarmRegistry()

@@ -171,6 +171,8 @@ async def web_agent_ws(websocket: WebSocket):
         await websocket.send_bytes(pcm)
         if not sent_audio:
             sent_audio = True
+            from server.call.billing_timing import mark_call_connected
+            mark_call_connected(call_id)
             logger.info("[WEB_AGENT] first speaker frame call=%s bytes=%s", call_id, len(pcm))
 
     async def on_hangup_notice(stage: str, reason: str) -> None:
@@ -240,6 +242,8 @@ async def web_agent_ws(websocket: WebSocket):
 
         loop.set_barge_handler(clear_browser_audio)
         async def notify_ready() -> None:
+            from server.call.billing_timing import mark_call_connected
+            mark_call_connected(call_id)
             llm = stack.get("llm") if isinstance(stack.get("llm"), dict) else {}
             connected_adapter = getattr(loop, "_adapter", None)
             active_provider = getattr(loop, "_llm_provider", None) or str(llm.get("provider") or "gemini")
@@ -282,6 +286,8 @@ async def web_agent_ws(websocket: WebSocket):
         await send_event({"type": "error", "code": "session_failed", "message": user_msg})
     finally:
         closed = True
+        from server.call.billing_timing import mark_call_disconnected
+        mark_call_disconnected(call_id)
         if loop is not None:
             try:
                 await loop.close()

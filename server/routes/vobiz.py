@@ -314,6 +314,8 @@ async def vobiz_answer(request: Request):
             logger.warning("[VOBIZ] wallet balance check fallback: %s", e)
 
     # 7. Create or update single-use stream token
+    from server.call.billing_timing import utc_timestamp
+    answered_at = utc_timestamp(payload.get("AnswerTime") or payload.get("answer_time"))
     if passed_token and token_meta:
         token = passed_token
         token_meta.update({
@@ -329,6 +331,7 @@ async def vobiz_answer(request: Request):
             "direction": direction,
             "source_session_id": source_session_id,
             "provider": "vobiz",
+            "answered_at": answered_at,
         })
         vobiz_stream_tokens.put(token, **token_meta)
     else:
@@ -345,6 +348,7 @@ async def vobiz_answer(request: Request):
             direction=direction,
             source_session_id=source_session_id,
             provider="vobiz",
+            answered_at=answered_at,
         )
 
     # 8. Construct secure WebSocket URL
@@ -365,6 +369,7 @@ async def vobiz_answer(request: Request):
         "stack_override": stack_override,
         "source_session_id": source_session_id,
         "status": "in-progress",
+        "answered_at": answered_at,
         "stream_url": stream_ws_url,
         "webhook_token": token,
     }
@@ -456,16 +461,23 @@ async def vobiz_hangup(request: Request):
     if bridge:
         asyncio.create_task(bridge._cleanup("call_hangup_notified"))
 
-    # Update call ledger if available
-    if call_uuid:
-        try:
-            from server.call.call_ledger import call_ledger
+    # Callback Duration may include ringing. Only an explicit billsec field is
+    # a billing clock; the CDR reconciler supplies authoritative talk time/cost.
+    local = vobiz_call_registry.get(call_uuid) or vobiz_call_registry.get(request_uuid) or {}
+    internal_id = (bridge.call_id if bridge else None) or local.get("internal_call_id")
+    if internal_id:
+        from server.call.billing_timing import mark_call_disconnected
+        from server.call.call_ledger import call_ledger
+        from server.services.vobiz_billing import nonnegative
 
-            call_ledger.update_meta(call_uuid, {"duration_sec": duration_sec, "hangup_cause": hangup_cause})
-            if bridge and bridge.call_id:
-                call_ledger.update_meta(bridge.call_id, {"duration_sec": duration_sec, "hangup_cause": hangup_cause})
-        except Exception:
-            pass
+        mark_call_disconnected(internal_id, payload.get("EndTime") or payload.get("end_time"))
+        meta = call_ledger.read_meta(internal_id)
+        meta["hangup_cause"] = hangup_cause
+        billsec = nonnegative(payload.get("billsec", payload.get("BillDuration")))
+        if billsec is not None:
+            meta["carrier_billable_duration_sec"] = int(billsec)
+            meta["carrier_duration_source"] = "vobiz_callback"
+        call_ledger.write_meta(internal_id, meta)
 
     return {"ok": True, "call_uuid": call_uuid}
 

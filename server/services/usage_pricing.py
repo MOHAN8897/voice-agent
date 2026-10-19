@@ -17,8 +17,8 @@ Sources (verified 2026-09-03):
             (destination-specific — use rate deck / TELNYX_SIP_OUTBOUND_INDIA_USD_PER_MIN for IN),
             Media streaming WebSockets $0.0035/min, call recording $0.002/min when enabled.
   Gemini  — https://ai.google.dev/gemini-api/docs/pricing (Live API)
-            Billed on actual text/audio/image tokens; usage_metadata is session-cumulative and
-            prior context can be re-billed each turn — not wall-clock × list $/audio-minute.
+            Billed on each response's text/audio/image tokens, including re-billed prior
+            context — not wall-clock × list $/audio-minute.
 """
 from __future__ import annotations
 
@@ -35,8 +35,9 @@ SARVAM_STT_INR_PER_HOUR = 30.0
 SARVAM_STT_DIARIZATION_INR_PER_HOUR = 45.0
 SARVAM_TTS_INR_PER_1K_CHARS = 3.0
 
-# Vobiz Voice API rates (official pay-as-you-go list, Sep 2026).
-# Voice API ₹0.65/min (inbound & outbound), Recording ₹0.0012/min, Transcription ₹0.0098/min.
+# Deployment reference tariffs used only when no per-call CDR is available.
+# Account contracts, destinations, streaming and billing increments may differ.
+# Vobiz CDR billsec/total_cost are authoritative; these are estimates.
 VOBIZ_VOICE_OUTBOUND_INR_PER_MIN = 0.65
 VOBIZ_VOICE_INBOUND_INR_PER_MIN = 0.65
 VOBIZ_CALL_RECORDING_INR_PER_MIN = 0.0012
@@ -118,14 +119,19 @@ OPENAI_USD_PER_M: dict[str, dict[str, float]] = {
 GEMINI_LIVE_AUDIO_TOKENS_PER_SEC = 25
 GEMINI_LIVE_AUDIO_INPUT_USD_PER_MIN = 0.005
 GEMINI_LIVE_AUDIO_OUTPUT_USD_PER_MIN = 0.018
-# gemini-3.5-transcribe batch (post-call); list ≈ $0.009/min blended (preview).
-GEMINI_35_TRANSCRIBE_USD_PER_MIN = 0.009
+# gemini-3.5-transcribe batch (post-call); list ≈ $0.005/min blended (preview).
+GEMINI_35_TRANSCRIBE_USD_PER_MIN = 0.005
 
 
-def cost_gemini_post_call_transcribe(*, duration_sec: float, model: str) -> dict[str, float]:
+def cost_gemini_post_call_transcribe(*, duration_sec: float, model: str,
+                                   input_tokens: int | None = None, output_tokens: int | None = None) -> dict[str, Any]:
     minutes = max(0.0, float(duration_sec or 0)) / 60.0
     rate = GEMINI_35_TRANSCRIBE_USD_PER_MIN
-    return {"usd": minutes * rate, "minutes": minutes, "usd_per_min": rate, "model": (model or "gemini-3.5-transcribe")}
+    reported = (model == "gemini-3.5-transcribe" and input_tokens is not None and output_tokens is not None
+                and input_tokens >= 0 and output_tokens >= 0)
+    usd = (input_tokens * 2.0 + output_tokens * 12.0) / 1_000_000 if reported else minutes * rate
+    return {"usd": usd, "minutes": minutes, "usd_per_min": usd / minutes if minutes else 0,
+            "model": (model or "gemini-3.5-transcribe"), "source": "reported_tokens" if reported else "duration_estimate"}
 
 
 OPENAI_MINI_TRANSCRIBE_USD_PER_MIN = 0.003

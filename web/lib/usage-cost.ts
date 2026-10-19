@@ -11,8 +11,8 @@ import { isGeminiLiveVoiceModel } from "@/lib/realtime-voice";
  * Cartesia STT — ink-whisper 1 credit/sec; ink-2 3 credits/sec (Pro $5/100K credits).
  * Telnyx PSTN (wall-clock, component sum): Voice API $0.002/min + SIP (dest-specific, IN default
  *   $0.009/min) + media WebSocket $0.0035/min + optional recording $0.002/min.
- * Gemini 3.8 Live — billed on actual text/audio/image tokens; session usage_metadata is cumulative
- *   (context re-billed per turn). List $0.005/$0.018 audio-min is reference only, not × call duration.
+ * Gemini 3.8 Live — sum actual text/audio/image tokens per response, including re-billed context.
+ *   List $0.005/$0.018 audio-min is reference only, not × call duration.
  * Per-call total after hangup: model_cost_usd (tokens) + telnyx_usd (components).
  */
 
@@ -61,7 +61,7 @@ export const PRICING = {
     geminiLiveAudioInputUsdPerMin: 0.005,
     geminiLiveAudioOutputUsdPerMin: 0.018,
     /** gemini-3.5-transcribe post-call (batch), aligned with server usage_pricing.py */
-    gemini35TranscribeUsdPerMin: 0.009,
+    gemini35TranscribeUsdPerMin: 0.005,
 } as const;
 
 export function costGeminiPostCallTranscribeUsd(durationSec: number): number {

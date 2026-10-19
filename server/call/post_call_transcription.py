@@ -242,8 +242,12 @@ async def _apply_transcript_billing(
     duration_sec = float(usage.get("duration_sec") or 0)
     if duration_sec <= 0 and path.is_file():
         duration_sec = max(1.0, path.stat().st_size / 32000.0)
-    cost = cost_gemini_post_call_transcribe(duration_sec=duration_sec, model=model)
-    fx_info = resolve_fx_rate_inr(preferred=usage.get("fx_rate_inr"))
+    cost = cost_gemini_post_call_transcribe(duration_sec=duration_sec, model=model,
+        input_tokens=usage_meta.get("input_tokens"), output_tokens=usage_meta.get("output_tokens"))
+    fx_info = await asyncio.to_thread(resolve_fx_rate_inr, preferred=usage.get("fx_rate_inr"))
+    # Retain final carrier/usage metadata written while resolving FX.
+    meta = call_ledger.read_meta(call_id) or meta
+    usage = meta.get("usage") if isinstance(meta.get("usage"), dict) else usage
     fx = float(fx_info["rate"] or 95.64)
     transcript_usd = float(cost.get("usd") or 0)
     transcript_inr = transcript_usd * fx
@@ -251,6 +255,7 @@ async def _apply_transcript_billing(
     usage["post_call_transcript_usd"] = transcript_usd
     usage["post_call_transcript_inr"] = transcript_inr
     usage["post_call_transcript_seconds"] = duration_sec
+    usage["post_call_transcript_cost_source"] = cost["source"]
     usage["transcription_model"] = model
     usage["transcription_billing"] = "post_call_gemini_transcribe"
     if usage_meta.get("input_tokens") is not None:
@@ -258,8 +263,10 @@ async def _apply_transcript_billing(
     if usage_meta.get("output_tokens") is not None:
         usage["post_call_transcript_output_tokens"] = usage_meta.get("output_tokens")
     model_usd = float(usage.get("model_cost_usd") if usage.get("model_cost_usd") is not None else usage.get("cost_usd") or 0)
-    telnyx_usd = float(usage.get("telnyx_usd") or 0)
-    total_usd = model_usd + telnyx_usd + transcript_usd
+    carrier_usd = float(usage.get("telephony_usd") if usage.get("telephony_usd") is not None
+                        else float(usage.get("telnyx_usd") or 0) + float(usage.get("vobiz_usd") or 0))
+    total_usd = (model_usd + carrier_usd + transcript_usd + float(usage.get("live_transcript_usd") or 0)
+                 + float(usage.get("post_call_analysis_usd") or 0))
     total_inr = total_usd * fx
     usage["cost_usd"] = total_usd
     usage["cost_inr"] = total_inr

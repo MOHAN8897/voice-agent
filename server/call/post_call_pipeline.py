@@ -136,7 +136,9 @@ async def _run_outcome_locked(call_id: str) -> dict[str, Any]:
     transcript = call_ledger.read_lines(call_id)
     snapshot = memory_manager.get_snapshot(call_id)
     meta = call_ledger.read_meta(call_id)
-    payload, error = await _generate_outcome(transcript, snapshot, meta, model=model)
+    from server.services.saas.post_call_costs import capture_post_call_cost
+    with capture_post_call_cost(call_id):
+        payload, error = await _generate_outcome(transcript, snapshot, meta, model=model)
     attempt = {
         "ts": _utcnow(),
         "model": model,

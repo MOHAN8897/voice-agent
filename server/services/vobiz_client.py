@@ -257,6 +257,11 @@ class VobizClient:
             query["call_uuid"] = call_uuid
         return f"{base}/ws/vobiz-stream?{urlencode(query)}"
 
+    async def get_call_cdr(self, call_uuid: str) -> dict[str, Any]:
+        """Retrieve authoritative talk seconds and per-call cost, excluding ringing."""
+        parsed = str(uuid.UUID(str(call_uuid)))
+        return await self._request("GET", f"/Account/{self.auth_id}/cdr/{parsed}", timeout=httpx.Timeout(2.5))
+
     async def get_balance(self) -> dict[str, Any]:
         """Fetch account balance from Vobiz."""
         auth_id = self.cfg["auth_id"]

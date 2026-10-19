@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { DevCard } from "@/components/dev/DevCard";
+import { CostInsightsPanel } from "@/components/admin/CostInsightsPanel";
 import {
   AdminError,
   AdminLoading,
@@ -531,6 +532,10 @@ export default function AdminBillingPage() {
         />
         <AdminStat label="Failed purchases" value={failed} tone={failed > 0 ? "warn" : "good"} />
       </div>
+
+      <CostInsightsPanel display={walletCurrencyDisplay} onUsePrice={(field, usd, inr) => {
+        updateRateInput(field, priceInputCurrency === "INR" ? inr.toFixed(2) : usd.toFixed(6));
+      }} />
 
       <DevCard title="USD → INR reference">
         <div className="flex flex-wrap items-end gap-4">

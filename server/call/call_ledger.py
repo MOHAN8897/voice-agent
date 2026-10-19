@@ -49,13 +49,15 @@ def _sync_post_call_transcript_usage(
     from server.services.usage_pricing import cost_gemini_post_call_transcribe
 
     model = str(usage.get("post_call_transcript_model") or policy.post_call_model or "gemini-3.5-transcribe")
-    cost = cost_gemini_post_call_transcribe(duration_sec=max(0.0, float(duration_sec or 0)), model=model)
+    cost = cost_gemini_post_call_transcribe(duration_sec=max(0.0, float(duration_sec or 0)), model=model,
+        input_tokens=usage.get("post_call_transcript_input_tokens"), output_tokens=usage.get("post_call_transcript_output_tokens"))
     usd = float(cost.get("usd") or 0)
     inr = usd * fx
     usage["post_call_transcript_model"] = model
     usage["post_call_transcript_usd"] = usd
     usage["post_call_transcript_inr"] = inr
     usage["post_call_transcript_seconds"] = float(duration_sec or 0)
+    usage["post_call_transcript_cost_source"] = cost["source"]
     if status == "complete":
         usage["transcription_billing"] = usage.get("transcription_billing") or "post_call_gemini_transcribe"
     return usd, inr
@@ -291,7 +293,7 @@ class CallLedger:
         meta = self.read_meta(call_id)
         if not meta:
             return
-        meta["ended_at"] = _utcnow()
+        meta["ended_at"] = meta.get("disconnected_at") or meta.get("ended_at") or _utcnow()
         meta["end_reason"] = reason
         if duration_sec is not None:
             meta["duration_sec"] = float(duration_sec)
@@ -324,7 +326,7 @@ class CallLedger:
         telephony_usd = 0.0
         telephony_inr = 0.0
 
-        if channel in ("pstn", "vobiz", "telnyx") or pipeline == "realtime_voice":
+        if channel in ("pstn", "vobiz", "telnyx"):
             if telephony_prov == "vobiz":
                 from server.services.usage_pricing import cost_vobiz_call_breakdown
 
@@ -359,6 +361,14 @@ class CallLedger:
                 telephony_usd = telnyx_usd
                 telephony_inr = telnyx_inr
 
+        carrier_billing = meta.get("carrier_billing") or {}
+        carrier_actual = bool(channel == "pstn" and carrier_billing.get("source") == "vobiz_cdr")
+        if carrier_actual:
+            amount = float(carrier_billing["amount"])
+            vobiz_inr = amount if carrier_billing["currency"] == "INR" else amount * fx
+            vobiz_usd = amount if carrier_billing["currency"] == "USD" else amount / fx
+            telephony_usd, telephony_inr = vobiz_usd, vobiz_inr
+
         post_tx_usd, post_tx_inr = _sync_post_call_transcript_usage(
             usage,
             meta,
@@ -373,8 +383,9 @@ class CallLedger:
         )
         transcript_usd = post_tx_usd + live_tx_usd
         transcript_inr = post_tx_inr + live_tx_inr
-        total_usd = model_usd + telephony_usd + transcript_usd
-        total_inr = model_inr + telephony_inr + transcript_inr
+        analysis_usd = float(usage.get("post_call_analysis_usd") or 0)
+        total_usd = model_usd + telephony_usd + transcript_usd + analysis_usd
+        total_inr = model_inr + telephony_inr + transcript_inr + analysis_usd * fx
         usage["pipeline"] = usage.get("pipeline") or pipeline
         usage["duration_sec"] = float(duration_sec or 0)
         usage["telephony_provider"] = telephony_prov
@@ -401,11 +412,12 @@ class CallLedger:
             usage["vobiz_transcription_inr"] = vobiz_breakdown.get("transcription_inr")
             usage["vobiz_rate_inr_per_min"] = vobiz_breakdown.get("rate_inr_per_min")
             usage["vobiz_breakdown"] = vobiz_breakdown
-            usage["vobiz_cost_is_estimate"] = False
+            usage["vobiz_cost_is_estimate"] = not carrier_actual
+        usage["carrier_cost_source"] = "vobiz_cdr" if carrier_actual else ("tariff_estimate" if channel == "pstn" else "not_applicable")
 
         usage["cost_usd"] = total_usd
         usage["cost_inr"] = total_inr
-        usage["cost_is_estimate"] = False
+        usage["cost_is_estimate"] = True  # Model tokens are priced at published rates, not a reconciled invoice.
         usage["fx_rate_inr"] = fx
         usage["fx_source"] = fx_info.get("source")
         if fx_info.get("as_of"):
@@ -442,7 +454,7 @@ class CallLedger:
             usage["gemini_list_audio_inr_per_min"] = (
                 GEMINI_LIVE_AUDIO_INPUT_USD_PER_MIN + GEMINI_LIVE_AUDIO_OUTPUT_USD_PER_MIN
             ) * fx
-            usage["gemini_billing"] = usage.get("gemini_billing") or "session_cumulative_tokens"
+            usage["gemini_billing"] = usage.get("gemini_billing") or "per_response_tokens"
             usage["gemini_billing_note"] = (
                 usage.get("gemini_billing_note")
                 or "Model cost uses billed token totals (text+audio+image), not call duration × list audio $/min."

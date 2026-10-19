@@ -205,6 +205,8 @@ class OpenAILLMAdapter:
             voice_optimized=True,
         )
         response = await client.responses.create(**create_kwargs)
+        from server.services.saas.post_call_costs import record_post_call_response
+        await record_post_call_response(response, model)
         text = extract_responses_text(response).strip()
         if not text:
             return {}

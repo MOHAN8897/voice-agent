@@ -1943,6 +1943,14 @@ async def list_wallets(session: SessionData = Depends(require_dev_session)):
     return {"wallets": wallets, "currency": "USD", "fxRateInr": fx}
 
 
+@router.get("/api/dev/admin/billing/cost-insights")
+async def billing_cost_insights(days: int = Query(30, ge=1, le=90), session: SessionData = Depends(require_dev_session)):
+    require_permission(session, "dev.admin.billing")
+    _require_db()
+    from server.services.saas.cost_insights import load_cost_insights
+    return await load_cost_insights(days)
+
+
 @router.post("/api/dev/admin/wallets/adjust")
 async def adjust_wallet(body: WalletAdjustBody, session: SessionData = Depends(require_dev_session)):
     require_permission(session, "dev.admin.billing")

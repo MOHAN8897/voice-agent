@@ -628,22 +628,10 @@ def _resolve_call_wallet_debit(
 
     Honours locked call snapshot rates so calls are never re-priced if admin rates change.
     """
-    from server.call.call_ledger import call_ledger
-
-    if channel != "browser":
-        meta = call_ledger.read_meta(call_id) or {}
-        usage = meta.get("usage") if isinstance(meta.get("usage"), dict) else {}
-        cost_inr = usage.get("cost_inr")
-        cost_usd = usage.get("cost_usd")
-        if cost_inr is not None and float(cost_inr) > 0:
-            paise = max(1, int(round(float(cost_inr) * 100)))
-            usd = float(cost_usd or 0)
-            if usd > 0:
-                cents = max(1, int(round(usd * 100)))
-            else:
-                fx = float(usage.get("fx_rate_inr") or getattr(settings, "fx_rate_inr", 0) or 95.64)
-                cents = max(1, int(round(paise / fx))) if fx > 0 else 1
-            return cents, paise, "ledger_usage"
+    # Supplier costs describe platform expenditure. Customer debits always use
+    # the selling rate locked when this call started, independently of usage.
+    if int(duration_sec) <= 0:
+        return 0, 0, "catalog_prorated"
 
     # New call snapshots preserve both currencies. Charge from the native rate
     # in paise for INR wallets and only round USD at the wallet-cent boundary.

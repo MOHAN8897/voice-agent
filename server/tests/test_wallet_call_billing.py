@@ -1,4 +1,4 @@
-"""Wallet debit aligns with stamped call ledger usage when available."""
+"""Customer charges use the channel selling rate independently of supplier spend."""
 from __future__ import annotations
 
 from types import SimpleNamespace
@@ -9,7 +9,7 @@ import pytest
 from server.services.saas.billing_wallet_service import _resolve_call_wallet_debit
 
 
-def test_wallet_debit_uses_stamped_ledger_cost():
+def test_wallet_debit_uses_selling_rate_even_when_supplier_cost_is_present():
     settings = SimpleNamespace(
         pstn_rate_usd_cents_per_min=12,
         pstn_rate_inr_paise_per_min=900,
@@ -37,9 +37,9 @@ def test_wallet_debit_uses_stamped_ledger_cost():
             settings=settings,
         )
 
-    assert mode == "ledger_usage"
-    assert paise == 348
-    assert cents == 4
+    assert mode == "catalog_prorated"
+    assert cents == 25  # 124 seconds at 12 cents/minute, rounded at the wallet boundary.
+    assert paise == int(round(cents * settings.fx_rate_inr))
 
 
 def test_wallet_debit_prorates_catalog_when_no_ledger():

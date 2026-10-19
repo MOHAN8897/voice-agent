@@ -346,17 +346,17 @@ async def record_realtime_voice_usage(
     usage_id = str(usage.get("usage_id") or "")
     response_snapshot = usage.get("usage_scope") == "response" and bool(usage_id)
     gemini_live = is_gemini_live_voice_model(llm_model)
-    # Gemini Live usage_metadata is session-cumulative; usage_id only dedupes retries.
-    session_snapshot = gemini_live and not prewarm
     snapshots = dict(prev.get("response_usage") or {})
     prior_snapshot = snapshots.get(usage_id, {}) if response_snapshot else {}
     if response_snapshot and prior_snapshot.get("fingerprint") == fingerprint:
         return None
-    # Gemini Live may emit the same session-cumulative fingerprint on usage_only trailers
-    # and on response_done — dedupe globally, not only per usage_id.
-    if gemini_live and not prewarm and str(prev.get("usage_fingerprint") or "") == fingerprint:
+    if response_snapshot and prior_snapshot and (
+        input_tokens < int(prior_snapshot.get("input_tokens", 0))
+        or output_tokens < int(prior_snapshot.get("output_tokens", 0))
+    ):
+        # A delayed partial trailer must not lower the response high-water mark.
         return None
-    fx_info = resolve_fx_rate_inr(preferred=prev.get("fx_rate_inr") if prev else None)
+    fx_info = await asyncio.to_thread(resolve_fx_rate_inr, preferred=prev.get("fx_rate_inr") if prev else None)
     fx = float(fx_info["rate"])
     cost = estimate_turn_cost(
         stt_audio_sec=0,
@@ -387,81 +387,40 @@ async def record_realtime_voice_usage(
     prewarm_image = int(prev.get("prewarm_input_image_tokens") or 0)
     prewarm_usd = float(prev.get("prewarm_cost_usd") or 0)
     prewarm_inr = float(prev.get("prewarm_cost_inr") or 0)
-    if response_snapshot and not session_snapshot:
+    if response_snapshot:
         # Live metadata describes a generation request, not the entire call.
         # Deduplicate trailers by response identity, never by token counts alone.
         values = {"input_tokens": input_tokens, "output_tokens": output_tokens,
                   "input_audio_tokens": input_audio, "output_audio_tokens": output_audio,
                   "cached_tokens": cached_tokens, "cached_audio_tokens": cached_audio,
                   "input_image_tokens": input_image, "cache_write_tokens": cache_write}
-        snapshots[usage_id] = {**values, "fingerprint": fingerprint,
+        snapshots[usage_id] = {**values, "fingerprint": fingerprint, "prewarm": prewarm,
                                "cost_usd": float(cost["total_usd"]), "cost_inr": float(cost["total_inr"]),
                                "cost_breakdown_usd": cost["llm"]}
         input_tokens = max(0, input_tokens - int(prior_snapshot.get("input_tokens", 0)))
         output_tokens = max(0, output_tokens - int(prior_snapshot.get("output_tokens", 0)))
-        input_audio = max(0, input_audio - int(prior_snapshot.get("input_audio_tokens", 0)))
-        output_audio = max(0, output_audio - int(prior_snapshot.get("output_audio_tokens", 0)))
-        cached_tokens = max(0, cached_tokens - int(prior_snapshot.get("cached_tokens", 0)))
-        cached_audio = max(0, cached_audio - int(prior_snapshot.get("cached_audio_tokens", 0)))
-        input_image = max(0, input_image - int(prior_snapshot.get("input_image_tokens", 0)))
-        cache_write = max(0, cache_write - int(prior_snapshot.get("cache_write_tokens", 0)))
-        cost["total_usd"] = max(0.0, float(cost["total_usd"]) - float(prior_snapshot.get("cost_usd", 0)))
-        cost["total_inr"] = max(0.0, float(cost["total_inr"]) - float(prior_snapshot.get("cost_inr", 0)))
-    elif response_snapshot and session_snapshot:
-        snapshots[usage_id] = {
-            "input_tokens": input_tokens,
-            "output_tokens": output_tokens,
-            "input_audio_tokens": input_audio,
-            "output_audio_tokens": output_audio,
-            "cached_tokens": cached_tokens,
-            "cached_audio_tokens": cached_audio,
-            "input_image_tokens": input_image,
-            "cache_write_tokens": cache_write,
-            "fingerprint": fingerprint,
-            "cost_usd": float(cost["total_usd"]),
-            "cost_inr": float(cost["total_inr"]),
-        }
-    if session_snapshot:
-        tot_in = input_tokens + prewarm_in
-        tot_out = output_tokens + prewarm_out
-        tot_audio_in = input_audio + prewarm_audio_in
-        tot_audio_out = output_audio + prewarm_audio_out
-        tot_cached = cached_tokens
-        tot_cached_audio = cached_audio
-        tot_image = input_image + prewarm_image
-        total_usd = float(cost["total_usd"]) + prewarm_usd
-        total_inr = float(cost["total_inr"]) + prewarm_inr
-        prev_model_usd = float(
-            prev.get("model_cost_usd")
-            if prev.get("model_cost_usd") is not None
-            else prev.get("cost_usd") or 0
-        )
-        prev_model_inr = float(
-            prev.get("model_cost_inr")
-            if prev.get("model_cost_inr") is not None
-            else prev.get("cost_inr") or 0
-        )
-        delta_usd = max(0.0, total_usd - prev_model_usd)
-        delta_inr = max(0.0, total_inr - prev_model_inr)
-        if (
-            delta_usd < 1e-12
-            and delta_inr < 1e-12
-            and tot_in == int(prev.get("input_tokens") or 0)
-            and tot_out == int(prev.get("output_tokens") or 0)
-        ):
-            return None
-    else:
-        tot_in = int(prev.get("input_tokens") or 0) + input_tokens
-        tot_out = int(prev.get("output_tokens") or 0) + output_tokens
-        tot_audio_in = int(prev.get("input_audio_tokens") or 0) + input_audio
-        tot_audio_out = int(prev.get("output_audio_tokens") or 0) + output_audio
-        tot_cached = int(prev.get("cached_tokens") or 0) + cached_tokens
-        tot_cached_audio = int(prev.get("cached_audio_tokens") or 0) + cached_audio
-        tot_image = int(prev.get("input_image_tokens") or 0) + input_image
-        total_usd = float(prev.get("cost_usd") or 0) + float(cost["total_usd"])
-        total_inr = float(prev.get("cost_inr") or 0) + float(cost["total_inr"])
-        delta_usd = float(cost["total_usd"])
-        delta_inr = float(cost["total_inr"])
+        input_audio -= int(prior_snapshot.get("input_audio_tokens", 0))
+        output_audio -= int(prior_snapshot.get("output_audio_tokens", 0))
+        cached_tokens -= int(prior_snapshot.get("cached_tokens", 0))
+        cached_audio -= int(prior_snapshot.get("cached_audio_tokens", 0))
+        input_image -= int(prior_snapshot.get("input_image_tokens", 0))
+        cache_write -= int(prior_snapshot.get("cache_write_tokens", 0))
+        # Final metadata can reclassify text/audio/cache tokens at a lower rate.
+        cost["total_usd"] = float(cost["total_usd"]) - float(prior_snapshot.get("cost_usd", 0))
+        cost["total_inr"] = float(cost["total_inr"]) - float(prior_snapshot.get("cost_inr", 0))
+    # Every generation re-bills its retained context. Add different response IDs;
+    # updates/trailers for the same response contribute only their difference.
+    tot_in = int(prev.get("input_tokens") or 0) + input_tokens
+    tot_out = int(prev.get("output_tokens") or 0) + output_tokens
+    tot_audio_in = int(prev.get("input_audio_tokens") or 0) + input_audio
+    tot_audio_out = int(prev.get("output_audio_tokens") or 0) + output_audio
+    tot_cached = int(prev.get("cached_tokens") or 0) + cached_tokens
+    tot_cached_audio = int(prev.get("cached_audio_tokens") or 0) + cached_audio
+    tot_image = int(prev.get("input_image_tokens") or 0) + input_image
+    total_usd = float(prev.get("model_cost_usd", prev.get("cost_usd")) or 0) + float(cost["total_usd"])
+    total_inr = float(prev.get("model_cost_inr", prev.get("cost_inr")) or 0) + float(cost["total_inr"])
+    delta_usd = float(cost["total_usd"])
+    delta_inr = float(cost["total_inr"])
     if prewarm:
         prewarm_in += input_tokens
         prewarm_out += output_tokens
@@ -470,15 +429,14 @@ async def record_realtime_voice_usage(
         prewarm_image += input_image
         prewarm_usd += float(cost["total_usd"])
         prewarm_inr += float(cost["total_inr"])
-    if session_snapshot:
-        cost_parts = {k: float(cost["llm"].get(k, 0)) + float(prewarm_parts.get(k, 0)) for k in component_keys}
-    elif response_snapshot:
+    if response_snapshot:
         cost_parts = {k: float(previous_parts.get(k, 0)) + float(cost["llm"].get(k, 0))
                       - float(prior_snapshot.get("cost_breakdown_usd", {}).get(k, 0)) for k in component_keys}
     else:
         cost_parts = {k: float(previous_parts.get(k, 0)) + float(cost["llm"].get(k, 0)) for k in component_keys}
     if prewarm:
-        prewarm_parts = {k: float(prewarm_parts.get(k, 0)) + float(cost["llm"].get(k, 0)) for k in component_keys}
+        prewarm_parts = {k: float(prewarm_parts.get(k, 0)) + float(cost["llm"].get(k, 0))
+                         - float(prior_snapshot.get("cost_breakdown_usd", {}).get(k, 0)) for k in component_keys}
     model_per_min_usd = (total_usd / minutes) if minutes > 0 else 0.0
     model_per_min_inr = (total_inr / minutes) if minutes > 0 else 0.0
     turn = {
@@ -506,14 +464,14 @@ async def record_realtime_voice_usage(
         "usage_event": seq,
         "token_scope": "delta",
     }
-    if session_snapshot:
-        for key, total in (("input_tokens", tot_in), ("output_tokens", tot_out),
-                           ("input_audio_tokens", tot_audio_in), ("output_audio_tokens", tot_audio_out),
-                           ("cached_tokens", tot_cached), ("cached_audio_tokens", tot_cached_audio),
-                           ("input_image_tokens", tot_image)):
-            turn[key] = max(0, total - int(prev.get(key) or 0))
     await call_ledger.append_trace_turn(call_id, turn)
+    # FX/trace I/O yielded control; retain any hangup or transcription updates.
+    latest = call_ledger.read_meta(call_id)
+    meta.update(latest)
     meta["usage"] = {
+        **prev,
+        **(latest.get("usage") or {}),
+        "cost_accounting_version": 2,
         "pipeline": "realtime_voice",
         "llm_model": llm_model,
         "input_tokens": tot_in,
@@ -555,12 +513,16 @@ async def record_realtime_voice_usage(
         "prewarm_cost_inr": prewarm_inr,
     }
     if gemini_live:
-        meta["usage"]["gemini_billing"] = "session_cumulative_tokens"
+        meta["usage"]["gemini_billing"] = "per_response_tokens"
         meta["usage"]["gemini_billing_note"] = (
-            "Live API usage_metadata is session-cumulative; each event bills text+audio+image "
-            "tokens (including re-billed context), not wall-clock minutes of speech."
+            "Sum each generation's billed text, audio and image tokens, including its retained context. "
+            "Repeated usage trailers for the same response are idempotent."
         )
     call_ledger.write_meta(call_id, meta)
+    if meta.get("ended_at"):
+        # A provider's final usage trailer may arrive after the hangup stamp.
+        call_ledger.stamp_ended_usage(call_id, reason=meta.get("end_reason") or "ended",
+                                    duration_sec=meta.get("duration_sec", 0))
     return turn
 
 

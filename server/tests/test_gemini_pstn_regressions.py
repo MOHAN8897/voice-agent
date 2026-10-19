@@ -121,7 +121,7 @@ async def test_active_caller_not_disconnected_for_stuck_response():
 
 
 @pytest.mark.asyncio
-async def test_gemini_response_usage_bills_session_cumulative_not_per_id(monkeypatch, tmp_path):
+async def test_gemini_response_usage_bills_each_turn_including_retained_context(monkeypatch, tmp_path):
     from server.call.call_ledger import call_ledger
     from server.config.env import get_settings
     from server.services.pstn_realtime_voice_core import record_realtime_voice_usage
@@ -155,14 +155,14 @@ async def test_gemini_response_usage_bills_session_cumulative_not_per_id(monkeyp
         },
     )
     meta = call_ledger.read_meta(cid)["usage"]
-    assert meta["input_tokens"] == 10000
-    assert meta["output_tokens"] == 180
+    assert meta["input_tokens"] == 15000
+    assert meta["output_tokens"] == 260
     assert meta["cost_usd"] > 0
     get_settings.cache_clear()
 
 
 @pytest.mark.asyncio
-async def test_gemini_duplicate_trailer_same_fingerprint_different_usage_id(monkeypatch, tmp_path):
+async def test_gemini_identical_token_counts_in_distinct_responses_are_both_billed(monkeypatch, tmp_path):
     from server.call.call_ledger import call_ledger
     from server.config.env import get_settings
 
@@ -186,9 +186,9 @@ async def test_gemini_duplicate_trailer_same_fingerprint_different_usage_id(monk
         usage={**usage, "usage_id": "turn-a-trailer"},
     )
     assert first is not None
-    assert dup is None
+    assert dup is not None
     meta = call_ledger.read_meta(cid)["usage"]
-    assert meta["turns"] == 1
+    assert meta["turns"] == 2
     get_settings.cache_clear()
 
 
@@ -218,8 +218,8 @@ async def test_response_usage_counts_identical_distinct_turns_once(monkeypatch, 
             },
         )
         totals = call_ledger.read_meta("usage-regression")["usage"]
-        assert totals["input_tokens"] == 200
-        assert totals["output_tokens"] == 40
+        assert totals["input_tokens"] == 300
+        assert totals["output_tokens"] == 60
         assert totals["usage_events"] == 2
     finally:
         get_settings.cache_clear()

@@ -68,7 +68,7 @@ def test_stamp_ended_usage_refreshes_post_call_transcript_cost(ledger):
     )
     ledger.stamp_ended_usage(call_id, reason="pstn_hangup", duration_sec=120)
     usage = ledger.read_meta(call_id)["usage"]
-    expected_tx = 120 / 60.0 * 0.009
+    expected_tx = 120 / 60.0 * 0.005
     assert abs(float(usage["post_call_transcript_usd"]) - expected_tx) < 1e-9
     total = float(usage["model_cost_usd"]) + float(usage["telnyx_usd"]) + expected_tx
     assert abs(float(usage["cost_usd"]) - total) < 1e-9

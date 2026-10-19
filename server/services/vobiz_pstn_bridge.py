@@ -305,6 +305,13 @@ class VobizPstnBridge:
             )
             self.call_id = started["call_id"]
             self.session_id = started["session_id"]
+            from server.call.billing_timing import mark_call_connected
+            from server.call.call_ledger import call_ledger
+
+            mark_call_connected(self.call_id, self._token_meta.get("answered_at") or local.get("answered_at"))
+            billing_meta = call_ledger.read_meta(self.call_id)
+            billing_meta.update({"telephony_provider": "vobiz", "vobiz_call_uuid": self.call_uuid})
+            call_ledger.write_meta(self.call_id, billing_meta)
             vobiz_call_registry.upsert(
                 self.call_uuid,
                 {"internal_call_id": self.call_id, "agent_id": self.agent_id, "status": "streaming"},
@@ -551,6 +558,8 @@ class VobizPstnBridge:
             return
         self._cleanup_done = True
         self._closed = True
+        from server.call.billing_timing import mark_call_disconnected
+        mark_call_disconnected(self.call_id)
 
         startup = getattr(self, "_start_voice_task", None)
         if startup and startup is not asyncio.current_task() and not startup.done():

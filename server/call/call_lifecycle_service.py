@@ -71,16 +71,24 @@ def _utcnow() -> datetime:
 def _billable_duration_sec(call_id: str, ended: datetime, fallback: int | None) -> int | None:
     """PSTN/realtime_voice: bill from media connect (answer), not dial/ring."""
     meta = call_ledger.read_meta(call_id) or {}
+    # A verified CDR reports talk time; its total duration includes ringing.
+    if meta.get("carrier_billable_duration_sec") is not None:
+        return max(0, int(meta["carrier_billable_duration_sec"]))
     conn = meta.get("connected_at")
     channel = str(meta.get("channel") or "")
     pipeline = str(meta.get("pipeline") or "")
-    if not conn or not (channel == "pstn" or pipeline == "realtime_voice"):
+    if not conn and meta.get("billing_timing_version") == 2:
+        return 0
+    if not conn or not (channel in {"pstn", "browser"} or pipeline == "realtime_voice"):
         return fallback
     try:
         st = datetime.fromisoformat(str(conn).replace("Z", "+00:00"))
         if st.tzinfo is None:
             st = st.replace(tzinfo=timezone.utc)
         end = ended if ended.tzinfo else ended.replace(tzinfo=timezone.utc)
+        if meta.get("disconnected_at"):
+            stop = datetime.fromisoformat(str(meta["disconnected_at"]).replace("Z", "+00:00"))
+            end = min(end, stop if stop.tzinfo else stop.replace(tzinfo=timezone.utc))
         return max(0, int((end - st).total_seconds()))
     except (ValueError, TypeError):
         return fallback
@@ -262,6 +270,7 @@ class CallLifecycleService:
             "is_test": is_test,
             "contact": contact or {},
             "voicemail_mode": voicemail_mode,
+            "billing_timing_version": 2,
         }
         from server.services.transcription_policy import attach_normalized_stack_override
 
@@ -286,16 +295,6 @@ class CallLifecycleService:
             tag = transcription_billing_tag(policy, gemini_live=gemini)
             usage_seed = {"transcription_billing": tag, "transcription_model": policy.live_model if policy.live_enabled else policy.post_call_model}
             meta["usage"] = usage_seed
-        if channel == "pstn" or pipeline == "realtime_voice":
-            try:
-                from server.services.telnyx_client import TelnyxClient
-                _tc = TelnyxClient()
-                _bal_data = await _tc.get_balance()
-                _val = _bal_data.get("balance") or _bal_data.get("available_credit")
-                if _val is not None:
-                    meta["telnyx_balance_start"] = float(_val)
-            except Exception as _bal_err:
-                logger.debug(f"[TELNYX] start balance check skipped: {_bal_err}")
         await call_ledger.init(call_id, meta)
         audio_archive.init(call_id, record=not is_test)
         from server.call.memory_manager import memory_manager
@@ -503,6 +502,7 @@ class CallLifecycleService:
         }
 
     async def end(self, call_id: str, *, reason: str = "user_stop") -> dict[str, Any]:
+        ended = _utcnow()
         reason = _normalize_end_reason(reason)
         ctx = call_context.get(call_id)
         stored = await call_store.get(call_id)
@@ -517,6 +517,9 @@ class CallLifecycleService:
             "processing",
         ):
             return self._accepted_payload(call_id, stored.get("finalization_status") or "processing")
+
+        from server.call.billing_timing import mark_call_disconnected
+        mark_call_disconnected(call_id, ended.isoformat())
 
         if ctx:
             ctx.status = "finalizing"
@@ -540,7 +543,6 @@ class CallLifecycleService:
         if ctx:
             ctx.components["ledger"] = "complete"
 
-        ended = _utcnow()
         started = ctx.started_at if ctx else None
         duration = None
         if started:
@@ -630,69 +632,17 @@ class CallLifecycleService:
         except Exception:
             pass
         try:
+            from server.services.vobiz_billing import reconcile_vobiz_call
+
+            await reconcile_vobiz_call(call_id)
             meta = call_ledger.read_meta(call_id)
-            channel = str(meta.get("channel") or "")
-            pipeline = str(meta.get("pipeline") or (meta.get("usage") or {}).get("pipeline") or "")
-            if (channel in ("pstn", "vobiz", "telnyx") or pipeline == "realtime_voice") and channel != "browser":
-                usage = meta.get("usage") if isinstance(meta.get("usage"), dict) else {}
-                provider = str(
-                    meta.get("telephony_provider")
-                    or meta.get("provider")
-                    or usage.get("telephony_provider")
-                    or ("vobiz" if channel == "vobiz" or meta.get("vobiz_call_uuid") else "telnyx")
-                ).lower().strip()
-                duration_sec = float(usage.get("duration_sec") or meta.get("duration_sec") or 0.0)
-                minutes = duration_sec / 60.0 if duration_sec > 0 else 0.0
-                fx = float(usage.get("fx_rate_inr") or 95.64)
-
-                # Deterministic carrier cost calculation based on duration (prevents concurrent call balance race)
-                if provider == "vobiz":
-                    rate_per_min_inr = 0.60
-                    carrier_inr = round(minutes * rate_per_min_inr, 4)
-                    carrier_usd = round(carrier_inr / fx, 5) if fx > 0 else 0.0
-                    usage["vobiz_inr"] = carrier_inr
-                    usage["vobiz_usd"] = carrier_usd
-                    usage["telnyx_usd"] = 0.0
-                    usage["telnyx_inr"] = 0.0
-                    usage["vobiz_cost_source"] = "vobiz_tariff_rate_duration"
-                    usage["telephony_cost_usd"] = carrier_usd
-                    usage["telephony_cost_inr"] = carrier_inr
-                    total_carrier_usd = carrier_usd
-                    total_carrier_inr = carrier_inr
-                else:
-                    rate_per_min_usd = 0.015
-                    carrier_usd = round(minutes * rate_per_min_usd, 5)
-                    carrier_inr = round(carrier_usd * fx, 4)
-                    usage["telnyx_usd"] = carrier_usd
-                    usage["telnyx_inr"] = carrier_inr
-                    usage["vobiz_usd"] = 0.0
-                    usage["vobiz_inr"] = 0.0
-                    usage["telnyx_cost_source"] = "tariff_rate_deck_duration"
-                    usage["telephony_cost_usd"] = carrier_usd
-                    usage["telephony_cost_inr"] = carrier_inr
-                    total_carrier_usd = carrier_usd
-                    total_carrier_inr = carrier_inr
-
-                model_usd = float(usage.get("model_cost_usd") or 0.0)
-                model_inr = float(usage.get("model_cost_inr") or (model_usd * fx))
-                tx_usd = float(usage.get("post_call_transcript_usd") or 0.0) + float(usage.get("live_transcript_usd") or 0.0)
-                tx_inr = float(usage.get("post_call_transcript_inr") or 0.0) + float(usage.get("live_transcript_inr") or 0.0)
-
-                total_usd = round(model_usd + total_carrier_usd + tx_usd, 5)
-                total_inr = round(model_inr + total_carrier_inr + tx_inr, 4)
-                usage["cost_usd"] = total_usd
-                usage["cost_inr"] = total_inr
-                usage["cost_usd_per_min"] = (total_usd / minutes) if minutes > 0 else 0.0
-                usage["cost_inr_per_min"] = (total_inr / minutes) if minutes > 0 else 0.0
-
-                meta["usage"] = usage
-                call_ledger.write_meta(call_id, meta)
-                await call_store.update(call_id, {
-                    "cost_usd": usage.get("cost_usd"),
-                    "cost_inr": usage.get("cost_inr"),
-                })
-        except Exception as _bal_exc:
-            logger.debug(f"[BILLING] finalize telephony cost calculation notice {call_id}: {_bal_exc}")
+            stored_row = await call_store.get(call_id)
+            duration = _billable_duration_sec(call_id, _utcnow(), (stored_row or {}).get("duration_sec"))
+            call_ledger.stamp_ended_usage(call_id, reason=meta.get("end_reason") or "ended", duration_sec=duration)
+            if duration is not None:
+                await call_store.update(call_id, {"duration_sec": duration})
+        except Exception as exc:
+            logger.warning("[BILLING] supplier cost finalization failed call=%s kind=%s", call_id, type(exc).__name__)
         try:
             from server.config.env import get_settings
             from server.services.saas.billing_wallet_service import bill_pstn_call_if_applicable
