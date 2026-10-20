@@ -57,7 +57,7 @@ number order was created during development.
   parent inventory. A pending release retains ownership; teardown cannot move
   past carrier release until confirmation is available.
 
-## Didit
+## Didit and Admin Dev Portal Integration
 
 Vobiz's documented telecom onboarding does not require a Didit account or a
 second Didit verification. This integration uses Vobiz KYC for Vobiz phone
@@ -65,6 +65,21 @@ service. Didit remains a separate, optional platform identity workflow.
 Other carriers retain the existing `KYC_GATE_PURCHASES` policy when Didit is
 configured. Keeping/removing that separate policy is a product decision; a
 Vobiz KYC result is not an assertion of compliance for every other platform use.
+
+### Admin Verification Queue & Cockpit Shift
+Platform administrators inspect and manage tenant verification via `/api/dev/admin/kyc`
+and the Dev Portal's Compliance panel (`web/components/admin/panels/VerificationPanel.tsx`).
+1. **Unified Ingestion**: The queue unifies both `list_voice_verifications()` (Vobiz
+   child subaccounts) and `kyc_service.list_verifications()` (Didit sessions), placing
+   active carrier voice KYC records at the top of the queue with explicit provider badges.
+2. **Normalized Status Transitions**: The admin override endpoint (`admin_set_voice_kyc_status`)
+   accepts standard statuses (`"Approved"`, `"Declined"`, `"In Review"`), automatically
+   normalizing them to internal database tokens (`"verified"`, `"failed"`, `"pending"`).
+3. **Audit Trails**: All status overrides enforce a minimum 8-character justification statement
+   and are persisted to admin audit logs.
+4. **Tenant Detail Cockpit**: The tenant compliance view (`web/app/dev/(portal)/admin/tenants/[tenantId]/page.tsx`)
+   provides a dedicated Voice KYC card showing real-time calling gate pass state (`ENABLED` vs `BLOCKED`),
+   entity type, subaccount Auth ID, and verified document status (PAN, Aadhaar, GST).
 
 ## Deployment
 
