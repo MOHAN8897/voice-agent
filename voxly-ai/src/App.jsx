@@ -34,7 +34,7 @@ import { CompanyPage } from './pages/CompanyPage';
 import { PrivacyPage } from './pages/PrivacyPage';
 import { TermsPage } from './pages/TermsPage';
 import { SecurityPage } from './pages/SecurityPage';
-import { applyPageMetadata } from './lib/siteMetadata';
+import { applyPageMetadata, PUBLIC_PATHS, viewFromLocation } from './lib/siteMetadata';
 
 const ConsoleEntry = React.lazy(() => import('./console/ConsoleEntry'));
 
@@ -42,15 +42,7 @@ function AppInner() {
   const { isAuthenticated, logout: authLogout, signOutReason, user } = useAuth();
 
   const [currentView, setCurrentView] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const hash = window.location.hash || '';
-      if (hash.startsWith('#dashboard')) return 'dashboard';
-      if (hash === '#contact' || hash === '#support') return 'support';
-      if (hash === '#company' || hash === '#about') return 'company';
-      if (hash === '#privacy') return 'privacy';
-      if (hash === '#terms') return 'terms';
-      if (hash === '#security') return 'security';
-    }
+    if (typeof window !== 'undefined') return viewFromLocation(window.location);
     return 'landing';
   });
 
@@ -123,45 +115,22 @@ function AppInner() {
   }, []);
 
   useEffect(() => {
-    const updateTitle = () => {
-      const hash = window.location.hash || '';
-      if (hash.startsWith('#dashboard')) {
-        const tabMatch = hash.match(/#dashboard\/([a-z0-9_-]+)/i);
-        applyPageMetadata('dashboard', tabMatch ? tabMatch[1] : '');
-      } else if (hash === '#contact' || hash === '#support') applyPageMetadata('support');
-      else if (hash === '#company' || hash === '#about') applyPageMetadata('company');
-      else if (hash === '#privacy') applyPageMetadata('privacy');
-      else if (hash === '#terms') applyPageMetadata('terms');
-      else if (hash === '#security') applyPageMetadata('security');
-      else applyPageMetadata('landing');
-    };
-
-    const handleHashChange = () => {
+    const handleRouteChange = () => {
       if (window.location.hash.includes('reset-password')) {
-        setAuthModalMode('reset');
-        setIsAuthModalOpen(true);
-        return;
+        setAuthModalMode('reset'); setIsAuthModalOpen(true); return;
       }
-      const hash = window.location.hash || '';
-      if (hash.startsWith('#dashboard')) {
-        setCurrentView('dashboard');
-      } else if (hash === '#contact' || hash === '#support') {
-        setCurrentView('support');
-      } else if (hash === '#company' || hash === '#about') {
-        setCurrentView('company');
-      } else if (hash === '#privacy') {
-        setCurrentView('privacy');
-      } else if (hash === '#terms') {
-        setCurrentView('terms');
-      } else if (hash === '#security') {
-        setCurrentView('security');
-      } else if (!hash || hash === '#' || !hash.includes('dashboard')) {
-        setCurrentView('landing');
-      }
-      updateTitle();
+      const view = viewFromLocation(window.location);
+      setCurrentView(view);
+      const tab = window.location.hash.match(/#dashboard\/([a-z0-9_-]+)/i)?.[1] || '';
+      applyPageMetadata(view, tab);
     };
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    handleRouteChange();
+    window.addEventListener('hashchange', handleRouteChange);
+    window.addEventListener('popstate', handleRouteChange);
+    return () => {
+      window.removeEventListener('hashchange', handleRouteChange);
+      window.removeEventListener('popstate', handleRouteChange);
+    };
   }, []);
 
 
@@ -175,7 +144,9 @@ function AppInner() {
   const enterConsole = (tab = DEFAULT_CONSOLE_TAB) => {
     const targetTab = tab || DEFAULT_CONSOLE_TAB;
     setCurrentView('dashboard');
-    window.location.hash = consoleHash(targetTab);
+    window.history.pushState({}, '', '/' + consoleHash(targetTab));
+    applyPageMetadata('dashboard', targetTab);
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
     if (!isAuthenticated) {
       openAuthModal('signin', targetTab);
     }
@@ -185,7 +156,8 @@ function AppInner() {
 
   const goToLanding = () => {
     setCurrentView('landing');
-    window.location.hash = '';
+    window.history.pushState({}, '', '/');
+    applyPageMetadata('landing');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -220,7 +192,8 @@ function AppInner() {
           ? 'company'
           : cleanTarget;
       setCurrentView(targetView);
-      window.location.hash = `#${cleanTarget}`;
+      window.history.pushState({}, '', PUBLIC_PATHS[targetView]);
+      applyPageMetadata(targetView);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
@@ -228,7 +201,8 @@ function AppInner() {
     if (currentView !== 'landing') {
       setCurrentView('landing');
     }
-    window.location.hash = `#${cleanTarget}`;
+    window.history.pushState({}, '', `/#${cleanTarget}`);
+    applyPageMetadata('landing');
     window.setTimeout(() => {
       const elem = document.getElementById(cleanTarget);
       if (elem) {

@@ -9,7 +9,7 @@ export async function fetchPhoneVoiceOptions(language = 'te-IN') {
     stackDescription: data.stackDescription || '',
     activeVoiceProvider: data.activeVoiceProvider || 'gemini',
     activeModel: data.activeModel || '',
-    defaultVoiceId: data.defaultVoiceId || 'te-in-csagent-5',
+    defaultVoiceId: data.defaultVoiceId || 'Puck',
     voices: Array.isArray(data.voices) ? data.voices : [],
     languages: Array.isArray(data.languages) ? data.languages : [],
   };
@@ -72,7 +72,7 @@ export function splitOpeningLine(rawText) {
 
 export function parseStudioFieldsFromSections(sections) {
   if (!Array.isArray(sections)) return { script: '', greeting: '', variableDefinitions: [] };
-  const scriptRow = sections.find(
+  const scriptRow = sections.find((s) => s.enabled !== false && s.type === 'facts' && s.title === SAAS_CALLING_SCRIPT_TITLE) || sections.find(
     (s) =>
       s.enabled !== false &&
       s.type === 'facts' &&
@@ -88,11 +88,13 @@ export function parseStudioFieldsFromSections(sections) {
   const gm = idText.match(/Opening greeting:\s*(.+)/i);
   const identityGreeting = gm ? gm[1].split('\n')[0].trim() : '';
   const split = splitOpeningLine(stored);
+  const guardrails = sections.find((s) => s.enabled !== false && s.title === 'Guardrails' && s.type === 'guardrails');
   return {
     script: split.script,
     greeting: identityGreeting || split.greeting,
     variableDefinitions: parseScriptVariablesFromSections(sections),
     objectionRules: parseObjectionRulesFromSections(sections),
+    boundaries: guardrails ? String(guardrails.raw_text || '').split('\n').map((line) => line.replace(/^\s*-\s*/, '')).filter(Boolean) : undefined,
   };
 }
 
@@ -122,7 +124,7 @@ export function parseScriptVariablesFromSections(sections) {
 }
 
 export function voiceConfigSection(voice, languageCode) {
-  const realtimeVoice = voice?.realtimeVoice || voice?.voiceId || 'marin';
+  const realtimeVoice = voice?.realtimeVoice || voice?.voiceId || 'Puck';
   return {
     type: 'custom',
     title: 'saas_voice_config',

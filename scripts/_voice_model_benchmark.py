@@ -8,6 +8,11 @@ Usage:
 """
 from __future__ import annotations
 
+try:
+    from scripts.http_transport import safe_urlopen
+except ModuleNotFoundError:
+    from http_transport import safe_urlopen
+
 import json
 import re
 import sys
@@ -112,7 +117,7 @@ def _req(method: str, path: str, payload: dict | None = None, timeout: float = 9
     headers = {"Content-Type": "application/json", "Accept": "text/event-stream, application/json"}
     r = urllib.request.Request(BASE + path, data=data, headers=headers, method=method)
     try:
-        with urllib.request.urlopen(r, timeout=timeout) as resp:
+        with safe_urlopen(r, timeout=timeout) as resp:
             return resp.status, resp.read().decode("utf-8", errors="replace")
     except urllib.error.HTTPError as e:
         return e.code, e.read().decode("utf-8", errors="replace")
@@ -138,7 +143,7 @@ def stream_brain(call_id: str, session: str, user: str, language: str, timeout: 
     ttft_ms: int | None = None
     t0 = time.perf_counter()
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        with safe_urlopen(req, timeout=timeout) as resp:
             for raw_line in resp:
                 line = raw_line.decode("utf-8", errors="replace").rstrip("\n")
                 if not line.startswith("data: ") or line.strip() == "data: [DONE]":

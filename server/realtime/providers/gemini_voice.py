@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import time
 import uuid
 from collections import deque
 from collections.abc import AsyncIterator
@@ -15,6 +16,7 @@ from google.genai import types
 from server.call.call_controller import CALL_ACTION_TOOL
 from server.providers.gemini_llm import _api_key, gemini_usage_from_metadata
 from server.realtime.hangup_tools import REQUEST_LANGUAGE_CALLBACK_TOOL, realtime_hangup_tool_declarations
+from server.realtime.audio_activity import InputAudioActivity
 logger = logging.getLogger(__name__)
 
 from server.realtime.models import (
@@ -114,6 +116,7 @@ def _vad_config(
         return types.RealtimeInputConfig(
             automatic_activity_detection=types.AutomaticActivityDetection(
                 disabled=False,
+                prefix_padding_ms=200,
                 silence_duration_ms=normalize_realtime_silence_ms(silence_ms),
             )
         )
@@ -122,6 +125,7 @@ def _vad_config(
     return types.RealtimeInputConfig(
         automatic_activity_detection=types.AutomaticActivityDetection(
             disabled=False,
+            prefix_padding_ms=200,
             start_of_speech_sensitivity=start,
             silence_duration_ms=silence_ms,
         )
@@ -200,6 +204,10 @@ class GeminiLiveVoiceAdapter:
         self._drop_until_turn_complete = False
         self._input_transcript = ""
         self._input_transcript_final = False
+        self._input_activity = InputAudioActivity()
+        self._input_lock = asyncio.Lock()
+        self._cancelled_tool_ids: deque[str] = deque(maxlen=128)
+        self._input_finalize_retry_at = 0.0
 
     async def connect(
         self,
@@ -239,6 +247,11 @@ class GeminiLiveVoiceAdapter:
         self._drop_until_turn_complete = False
         self._input_transcript = ""
         self._input_transcript_final = False
+        self._input_activity = InputAudioActivity(
+            quiet_seconds=max(1.8, normalize_realtime_silence_ms(silence_ms) / 1000 + 0.6)
+        )
+        self._cancelled_tool_ids.clear()
+        self._input_finalize_retry_at = 0.0
         self._ready = asyncio.Event()
         self._configuration_error = None
         self._configured = False
@@ -350,6 +363,8 @@ class GeminiLiveVoiceAdapter:
         self, enabled: bool, *, preserve_current: bool = False
     ) -> None:
         self._auto_response = bool(enabled)
+        if not enabled:
+            self._input_activity.reset()
         if enabled:
             return
         if preserve_current and self._active_response_id:
@@ -392,10 +407,33 @@ class GeminiLiveVoiceAdapter:
         pcm_in = self._in_resampler.feed(pcm16)
         if not pcm_in:
             return
-        self._sent_realtime_audio = True
-        await self._session.send_realtime_input(
-            audio=types.Blob(data=pcm_in, mime_type=f"audio/pcm;rate={GEMINI_LIVE_INPUT_RATE}")
-        )
+        async with self._input_lock:
+            await self._session.send_realtime_input(
+                audio=types.Blob(data=pcm_in, mime_type=f"audio/pcm;rate={GEMINI_LIVE_INPUT_RATE}")
+            )
+            self._sent_realtime_audio = True
+            started = self._input_activity.feed(
+                pcm_in, sample_rate=GEMINI_LIVE_INPUT_RATE, now=time.monotonic()
+            )
+            if started and self._auto_response:
+                self._input_finalize_retry_at = 0.0
+                await self._events.put({"type": "speech_started", "source": "local_audio"})
+
+    async def maybe_finalize_input(self, now: float) -> bool:
+        """Flush a missed provider turn boundary once, without synthetic user text."""
+        async with self._input_lock:
+            if (
+                self._session is None or self._closed or not self._auto_response or self._accepting
+                or now < self._input_finalize_retry_at
+                or not self._sent_realtime_audio or not self._input_activity.should_finalize(now)
+            ):
+                return False
+            self._input_finalize_retry_at = now + 5.0
+            await asyncio.wait_for(self._session.send_realtime_input(audio_stream_end=True), timeout=2.0)
+            self._sent_realtime_audio = False
+            self._input_activity.reset()
+            await self._events.put({"type": "speech_stopped", "source": "local_audio_recovery"})
+            return True
 
     async def start_response(self, *, instructions: str | None = None) -> None:
         if self._session is None:
@@ -430,15 +468,16 @@ class GeminiLiveVoiceAdapter:
 
     async def _activity_end_if_audio(self) -> None:
         """Close a previously sent audio segment using the automatic-VAD protocol."""
-        if self._session is None or not self._sent_realtime_audio:
-            return
-        self._sent_realtime_audio = False
-        try:
-            # This adapter always enables server VAD. activity_end is only
-            # valid with manual VAD and can make the provider close the socket.
-            await self._session.send_realtime_input(audio_stream_end=True)
-        except Exception as exc:
-            logger.warning("[GEMINI_LIVE] activity_end failed: %s", str(exc)[:160])
+        async with self._input_lock:
+            if self._session is None or not self._sent_realtime_audio:
+                return
+            try:
+                # Automatic VAD uses audioStreamEnd, never manual activityEnd.
+                await asyncio.wait_for(self._session.send_realtime_input(audio_stream_end=True), timeout=2.0)
+                self._sent_realtime_audio = False
+                self._input_activity.reset()
+            except Exception as exc:
+                logger.warning("[GEMINI_LIVE] activity_end failed: %s", type(exc).__name__)
 
     async def clear_output_audio(self) -> None:
         return
@@ -449,6 +488,8 @@ class GeminiLiveVoiceAdapter:
     async def submit_function_output(
         self, *, call_id: str, output: str, name: str | None = None
     ) -> None:
+        if call_id in self._cancelled_tool_ids:
+            return
         if self._session is None or not call_id:
             return
         tool_name = str(name or "call_action").strip() or "call_action"
@@ -604,6 +645,9 @@ class GeminiLiveVoiceAdapter:
 
     def _normalize(self, message: types.LiveServerMessage) -> list[dict[str, Any]]:
         events: list[dict[str, Any]] = []
+        cancelled_tools = getattr(message, "tool_call_cancellation", None)
+        if cancelled_tools is not None:
+            self._cancelled_tool_ids.extend(str(call_id) for call_id in (cancelled_tools.ids or []))
 
         if message.setup_complete is not None:
             self._configured = True
@@ -628,6 +672,7 @@ class GeminiLiveVoiceAdapter:
                 events.append({"type": "speech_stopped"})
 
         if message.tool_call and message.tool_call.function_calls:
+            self._input_activity.reset()
             rid = self._ensure_response_id()
             if (self._auto_response or self._accepting) and not self._accepting:
                 self._accepting = True
@@ -700,6 +745,8 @@ class GeminiLiveVoiceAdapter:
                                "usage_scope": "response", "usage_id": rid}})
             return events
         has_output = bool(content.output_transcription or content.model_turn)
+        if has_output:
+            self._input_activity.reset()
         if has_output and not self._accepting and self._auto_response:
             if self._input_transcript and not self._input_transcript_final:
                 events.append({"type": "user_transcript", "text": self._input_transcript, "final": True})

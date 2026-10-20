@@ -1,71 +1,42 @@
-"""Campaign dialer worker — Redis queue consumer scaffold."""
+"""Campaign recovery worker. Database leases are the authoritative queue.
+
+API instances also recover jobs, so a lost Redis wake-up cannot lose a campaign.
+The normal application lifespan hydrates the persisted voice stack and shared
+carrier context before any campaign can dial.
+"""
 from __future__ import annotations
 
-import json
-import logging
-import os
-import time
-from typing import Any
-
-logger = logging.getLogger(__name__)
-
-_QUEUE_KEY = "voice_agent:campaign_jobs"
-_redis_client: Any = None
-
-
-def _redis():
-    global _redis_client
-    if _redis_client is not None:
-        return _redis_client
-    url = os.getenv("REDIS_URL")
-    if not url:
-        return None
-    try:
-        import redis
-
-        _redis_client = redis.from_url(url, decode_responses=True)
-        return _redis_client
-    except Exception as e:
-        logger.warning("redis unavailable: %s", e)
-        return None
+import asyncio
 
 
 def enqueue_campaign_run(campaign_id: str, run_id: str) -> bool:
-    r = _redis()
-    if r is None:
-        logger.info("campaign run queued (no redis): %s %s", campaign_id, run_id)
-        return False
-    payload = json.dumps({"campaign_id": campaign_id, "run_id": run_id, "ts": time.time()})
-    r.lpush(_QUEUE_KEY, payload)
+    # Compatibility hook: the committed campaign_run row is already durable.
     return True
 
 
-def pop_job(timeout: int = 5) -> dict[str, Any] | None:
-    r = _redis()
-    if r is None:
-        return None
-    item = r.brpop(_QUEUE_KEY, timeout=timeout)
-    if not item:
-        return None
-    _, raw = item
-    return json.loads(raw)
+async def process_job(job: dict) -> None:
+    import uuid
+    from sqlalchemy import select
+    from server.db.connection import get_session_factory
+    from server.db.models.phase5_models import Campaign, CampaignRun
+    from server.services.saas.campaign_runner import run_campaign
+    factory = get_session_factory()
+    if factory is None:
+        raise RuntimeError("Campaign database is unavailable")
+    cid, rid = uuid.UUID(str(job["campaign_id"])), uuid.UUID(str(job["run_id"]))
+    async with factory() as db:
+        tenant_id = (await db.execute(select(Campaign.tenant_id).join(CampaignRun).where(
+            Campaign.campaign_id == cid, CampaignRun.run_id == rid,
+            Campaign.status == "running", CampaignRun.status == "running"))).scalar_one_or_none()
+    if tenant_id:
+        await run_campaign(str(cid), str(rid), workspace_tenant_id=tenant_id)
 
 
-def process_job(job: dict[str, Any]) -> None:
-    campaign_id = job.get("campaign_id")
-    run_id = job.get("run_id")
-    logger.info("processing campaign job campaign_id=%s run_id=%s", campaign_id, run_id)
-    # Telnyx or Vobiz outbound dial would be initiated here via carrier bridge
+async def _serve():
+    from server.app import app
+    async with app.router.lifespan_context(app):
+        await asyncio.Event().wait()
 
 
 def run_loop() -> None:
-    logger.info("worker dialer started")
-    while True:
-        job = pop_job(timeout=10)
-        if job:
-            try:
-                process_job(job)
-            except Exception as e:
-                logger.exception("job failed: %s", e)
-        else:
-            time.sleep(1)
+    asyncio.run(_serve())

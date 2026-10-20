@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import re
 import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Any
@@ -19,6 +20,7 @@ from server.config.env import get_settings
 from server.db.connection import get_session_factory
 from server.db.models.integration_models import OAuthState
 from server.utils.logger import logger
+from server.services.integration_safety import path_segment, bounded_tool_data, soql_literal
 
 def _safe_uuid(raw_id: str | None, prefix: str = "id") -> uuid.UUID:
     """Safely convert any identifier to a deterministic UUIDv5 if not already a UUID."""
@@ -218,8 +220,8 @@ class NangoService:
         return getattr(get_settings(), "nango_base_url", None) or self._base_url
 
     def is_configured(self) -> bool:
-        """Returns True if either environment secret key or account key is configured."""
-        return bool(self.secret_key or self.api_key)
+        """Tenant traffic requires an explicitly configured environment key."""
+        return bool(self.secret_key)
 
     def get_provider_key(self, app_name: str) -> str:
         """Normalize app name to Nango provider_config_key."""
@@ -236,103 +238,62 @@ class NangoService:
         return REVERSE_NANGO_PROVIDER_MAP.get(clean, provider_key.upper().replace("-", ""))
 
     async def get_tenant_connections(self, tenant_id: str) -> list[dict[str, Any]]:
-        """Query Nango for all active connections belonging to this tenant with multi-tenant isolation."""
+        """List scoped connection metadata; never return gateway credentials."""
         env_key = await self._resolve_environment_key()
         if not env_key:
             return []
 
-        loop = asyncio.get_running_loop()
-
-        def _fetch():
-            try:
-                # Query Nango using camelCase endUserId as specified by Nango OpenAPI contract
-                url = f"{self.base_url}/connection?endUserId={urllib.parse.quote(str(tenant_id))}"
-                req = urllib.request.Request(
-                    url,
+        connections: list[dict[str, Any]] = []
+        async with httpx.AsyncClient(timeout=4.0) as client:
+            for page in range(1, 11):
+                response = await client.get(
+                    f"{self.base_url}/connections",
                     headers={"Authorization": f"Bearer {env_key}", "Accept": "application/json"},
+                    params={"tags[end_user_id]": str(tenant_id), "limit": 100, "page": page},
                 )
-                with _safe_urlopen(req, timeout=4) as resp:
-                    data = json.loads(resp.read().decode())
-                return data.get("connections", [])
-            except urllib.error.HTTPError as err:
-                logger.warning("[NANGO] List connections HTTP %s: %s", err.code, err.read().decode(errors="replace"))
-                return []
-            except Exception as exc:
-                logger.warning("[NANGO] List connections failed: %s", exc)
-                return []
+                response.raise_for_status()
+                batch = response.json().get("connections")
+                if not isinstance(batch, list):
+                    raise ValueError("Invalid integration connection response")
+                connections.extend(c for c in batch if isinstance(c, dict) and self.connection_belongs_to_tenant(c, tenant_id))
+                if len(batch) < 100:
+                    return connections
+        # A partial list cannot authorize an arbitrary connection by omission.
+        raise ValueError("Integration connection pagination exceeded limit")
 
-        return await loop.run_in_executor(None, _fetch)
+    @staticmethod
+    def connection_belongs_to_tenant(connection: dict[str, Any], tenant_id: str) -> bool:
+        tags = connection.get("tags") or {}
+        end_user = connection.get("end_user") or connection.get("endUser") or {}
+        if not isinstance(tags, dict) or not isinstance(end_user, dict):
+            return False
+        owner = tags.get("end_user_id") or end_user.get("id") or end_user.get("endUserId") or connection.get("end_user_id") or connection.get("endUserId")
+        organization = tags.get("organization_id") or end_user.get("organizationId")
+        return (
+            str(owner or "") == str(tenant_id)
+            and (not organization or str(organization) == str(tenant_id))
+            and not connection.get("errors")
+        )
 
     async def verify_or_sync_connection(self, tenant_id: str, app_name: str, connection_id: str | None = None) -> bool:
-        """Verify that a connection exists in Nango for this tenant, or accept in sandbox mode."""
-        env_key = await self._resolve_environment_key()
-        if not env_key:
-            return True
-
+        """Require the exact provider AND connection AND verified tenant ownership."""
+        if not connection_id or not self.is_configured():
+            return False
         provider_key = self.get_provider_key(app_name)
-        conns = await self.get_tenant_connections(tenant_id)
-        if not conns:
-            return True  # Safe fallback for sandbox or pending sync
-
-        for c in conns:
-            p_key = (c.get("provider_config_key") or c.get("provider") or "").lower()
-            c_id = c.get("connection_id") or str(c.get("id") or "")
-            if p_key == provider_key.lower() or (connection_id and c_id == connection_id):
-                return True
-        return True
+        try:
+            conns = await self.get_tenant_connections(tenant_id)
+        except (httpx.HTTPError, ValueError):
+            return False
+        return any(
+            c.get("provider_config_key") == provider_key
+            and c.get("connection_id") == connection_id
+            and self.connection_belongs_to_tenant(c, tenant_id)
+            for c in conns
+        )
 
     async def _resolve_environment_key(self) -> str | None:
-        """Resolve or dynamically provision an Environment Secret Key if only Account Key is provided."""
-        if self.secret_key:
-            return self.secret_key
-
-        account_key = self.api_key
-        if not account_key:
-            return None
-
-        # Call Nango Account API to discover environment or provision key
-        loop = asyncio.get_running_loop()
-
-        def _fetch_or_create():
-            try:
-                # 1. List environments
-                req = urllib.request.Request(
-                    f"{self.base_url}/environments",
-                    headers={"Authorization": f"Bearer {account_key}", "Accept": "application/json"},
-                )
-                with _safe_urlopen(req, timeout=5) as resp:
-                    data = json.loads(resp.read().decode())
-                envs = data.get("data", [])
-                if not envs:
-                    return None
-                # Prefer 'dev' environment or first available
-                selected_env = next((e for e in envs if e.get("name") == "dev"), envs[0])
-                env_uuid = selected_env.get("uuid")
-                if not env_uuid:
-                    return None
-
-                # 2. Check existing keys or create a key
-                create_req = urllib.request.Request(
-                    f"{self.base_url}/environments/{env_uuid}/api-keys",
-                    data=json.dumps({"display_name": "DialTact Voice Agent"}).encode(),
-                    headers={
-                        "Authorization": f"Bearer {account_key}",
-                        "Content-Type": "application/json",
-                        "Accept": "application/json",
-                    },
-                )
-                with _safe_urlopen(create_req, timeout=5) as c_resp:
-                    created_data = json.loads(c_resp.read().decode())
-                secret = created_data.get("data", {}).get("secret")
-                return secret
-            except Exception as exc:
-                logger.warning("[NANGO] Failed to auto-resolve environment key: %s", exc)
-                return None
-
-        secret = await loop.run_in_executor(None, _fetch_or_create)
-        if secret:
-            self._cached_env_key = secret
-        return secret
+        """Respect the configured environment; tenant requests cannot create API keys."""
+        return self.secret_key
 
     async def get_configured_providers(self) -> set[str]:
         """Fetch all provider unique keys currently enabled in this Nango environment."""
@@ -418,12 +379,7 @@ class NangoService:
 
         def _create_connect_session():
             payload = {
-                "end_user": {
-                    "id": str(tenant_id),
-                },
-                "organization": {
-                    "id": str(tenant_id),
-                },
+                "tags": {"end_user_id": str(tenant_id), "organization_id": str(tenant_id)},
                 "allowed_integrations": [provider_key],
             }
             req = urllib.request.Request(
@@ -438,32 +394,7 @@ class NangoService:
             try:
                 with _safe_urlopen(req, timeout=5) as resp:
                     return json.loads(resp.read().decode())
-            except urllib.error.HTTPError as exc:
-                err_body = exc.read().decode(errors="replace")
-                if "Integration does not exist" in err_body:
-                    logger.info("[NANGO] Provider %s missing from environment; auto-provisioning via quickstart...", provider_key)
-                    try:
-                        quick_payload = {
-                            "provider": provider_key,
-                            "unique_key": provider_key,
-                            "display_name": app_name.replace("_", " ").title(),
-                        }
-                        quick_req = urllib.request.Request(
-                            f"{self.base_url}/integrations/quickstart",
-                            data=json.dumps(quick_payload).encode("utf-8"),
-                            headers={
-                                "Authorization": f"Bearer {env_key}",
-                                "Content-Type": "application/json",
-                                "Accept": "application/json",
-                            },
-                        )
-                        with _safe_urlopen(quick_req, timeout=5):
-                            pass
-                        # Retry connect session now that provider is provisioned
-                        with _safe_urlopen(req, timeout=5) as retry_resp:
-                            return json.loads(retry_resp.read().decode())
-                    except Exception as q_exc:
-                        logger.warning("[NANGO] Quickstart auto-provision failed: %s", q_exc)
+            except urllib.error.HTTPError:
                 raise
 
         try:
@@ -471,9 +402,8 @@ class NangoService:
             session_data = data.get("data", {})
             connect_link = session_data.get("connect_link")
             token = session_data.get("token")
-            if connect_link:
+            if token:
                 return {
-                    "connection_id": f"conn_{state[:16]}",
                     "redirect_url": connect_link,
                     "session_token": token,
                     "state": state,
@@ -481,7 +411,7 @@ class NangoService:
                 }
         except urllib.error.HTTPError as exc:
             err_body = exc.read().decode(errors="replace")
-            logger.error("[INTEGRATIONS] Connect session initiation HTTP %s: %s", exc.code, err_body)
+            logger.error("[INTEGRATIONS] Connect session initiation HTTP %s", exc.code)
             if "No Nango-provided developer app" in err_body or "does not exist" in err_body or exc.code == 400:
                 return {
                     "error": "oauth_credentials_required",
@@ -496,10 +426,10 @@ class NangoService:
                 "status": "ERROR",
             }
         except Exception as exc:
-            logger.warning("[INTEGRATIONS] Provider initiation failed: %s", exc)
+            logger.warning("[INTEGRATIONS] Provider initiation failed: %s", type(exc).__name__)
             return {
                 "error": "session_failed",
-                "message": f"Failed to initiate authorization session: {exc}",
+                "message": "Could not start the secure connection form. Please try again later.",
                 "state": state,
                 "status": "ERROR",
             }
@@ -508,25 +438,25 @@ class NangoService:
         """Revoke and delete a connection from Nango."""
         env_key = await self._resolve_environment_key()
         if not env_key:
-            return True
+            return False
 
         provider_key = self.get_provider_key(app_name)
         loop = asyncio.get_running_loop()
 
         def _do_delete():
             try:
-                url = f"{self.base_url}/connection/{urllib.parse.quote(connection_id)}?provider_config_key={urllib.parse.quote(provider_key)}"
+                url = f"{self.base_url}/connection/{path_segment(connection_id)}?provider_config_key={path_segment(provider_key)}"
                 req = urllib.request.Request(url, headers={"Authorization": f"Bearer {env_key}"}, method="DELETE")
                 with _safe_urlopen(req, timeout=5) as resp:
                     return resp.status in (200, 204)
             except urllib.error.HTTPError as e:
                 # 400 unknown_connection or 404 is safe to treat as already deleted
-                if e.code in (400, 404):
+                if e.code == 404:
                     return True
-                logger.warning("[NANGO] Delete connection HTTP %s: %s", e.code, e.read().decode(errors="replace"))
+                logger.warning("[NANGO] Delete connection HTTP %s", e.code)
                 return False
             except Exception as e:
-                logger.warning("[NANGO] Delete connection error: %s", e)
+                logger.warning("[NANGO] Delete connection error: %s", type(e).__name__)
                 return False
 
         return await loop.run_in_executor(None, _do_delete)
@@ -604,7 +534,7 @@ class NangoService:
         return upper.split("_")[0]
 
     async def execute_in_call_tool(
-        self, tenant_id: str, action_name: str, params: dict[str, Any], timeout_sec: float = 1.5
+        self, tenant_id: str, action_name: str, params: dict[str, Any], timeout_sec: float = 8.0
     ) -> dict[str, Any]:
         """Execute an integration tool during a live call via Nango Action Trigger.
 
@@ -626,6 +556,10 @@ class NangoService:
             )
             return self.sanitize_voice_response(raw_result, action_name=action_name)
 
+        from server.services.tool_schema_registry import validate_tool_arguments
+        validation_error = validate_tool_arguments(action_name, params)
+        if validation_error:
+            return {"status": "error", "message": validation_error}
         env_key = self.secret_key
         if not env_key:
             logger.error("[NANGO] execute_in_call_tool called but NANGO_SECRET_KEY not set")
@@ -652,7 +586,7 @@ class NangoService:
             "ASANA_", "TODOIST_", "DISCORD_", "AIRTABLE_", "MICROSOFTTEAMS_",
             "SHOPIFY_", "TWILIO_SMS_", "WOOCOMMERCE_", "JIRA_", "LINEAR_", "INTERCOM_",
             "FRESHDESK_", "SENDGRID_", "MAILCHIMP_", "SUPABASE_", "CLICKUP_", "MONDAY_",
-            "WHATSAPP_", "PIPEDRIVE_"
+            "WHATSAPP_", "PIPEDRIVE_", "TRELLO_",
         )
         if any(norm_action.startswith(p) for p in proxy_prefixes):
             try:
@@ -664,9 +598,13 @@ class NangoService:
                     timeout_sec=max(timeout_sec, 3.0),
                 )
                 return self.sanitize_voice_response(proxy_res, action_name=action_name)
+            except (httpx.TimeoutException, httpx.NetworkError):
+                return {"status": "unknown", "message": "The result could not be confirmed. Check the existing action before trying again."}
+            except httpx.HTTPStatusError as exc:
+                return {"status": "unknown" if exc.response.status_code >= 500 else "error", "message": "The external service did not confirm the action. Check the connection and required permissions."}
             except Exception as exc:
-                logger.error("[NANGO_PROXY] Execution failed for %s: %s", action_name, exc)
-                return {"status": "error", "message": "Could not complete that action right now."}
+                logger.error("[NANGO_PROXY] Execution failed for %s: %s", action_name, type(exc).__name__)
+                return {"status": "unknown", "message": "The action result could not be verified. Check it before trying again."}
 
         payload = {
             "action_name": action_name,
@@ -727,289 +665,19 @@ class NangoService:
         }
         client_timeout = httpx.Timeout(timeout_sec, connect=min(timeout_sec, 2.0))
         async with httpx.AsyncClient(timeout=client_timeout) as client:
-            if action_name in ("GOOGLECALENDAR_FIND_FREE_SLOTS", "GOOGLECALENDAR_FIND_SLOTS"):
-                date_val = str(params.get("date") or "").strip().lower()
-                requested_time = str(params.get("time") or params.get("preferred_time") or params.get("requested_slot") or "").strip()
-                now = datetime.now(timezone.utc)
-                if not date_val or "tomorrow" in date_val:
-                    target_date = (now + timedelta(days=1)).strftime("%Y-%m-%d")
-                elif "today" in date_val:
-                    target_date = now.strftime("%Y-%m-%d")
-                else:
-                    target_date = date_val[:10]
+            from server.services.integration_calendar import execute_calendar_action
+            from server.services.integration_proxy_actions import EXTENDED_ACTIONS, execute_extended_action
+            if action_name.startswith("GOOGLECALENDAR_"):
+                return await execute_calendar_action(client, self.base_url, headers, action_name, params)
+            if action_name in EXTENDED_ACTIONS:
+                return await execute_extended_action(client, self.base_url, headers, action_name, params)
 
-                time_min = f"{target_date}T00:00:00+05:30"
-                time_max = f"{target_date}T23:59:59+05:30"
-                fb_payload = {
-                    "timeMin": time_min,
-                    "timeMax": time_max,
-                    "items": [{"id": "primary"}],
-                }
-                standard_slots = ["10:00 AM", "11:00 AM", "11:30 AM", "02:00 PM", "03:30 PM", "04:30 PM"]
-                busy_spans = []
-                try:
-                    resp = await client.post(
-                        f"{self.base_url}/proxy/calendar/v3/freeBusy",
-                        headers=headers,
-                        json=fb_payload,
-                    )
-                    if resp.status_code == 200:
-                        busy_spans = (
-                            resp.json().get("calendars", {}).get("primary", {}).get("busy", [])
-                        )
-                except Exception as exc:
-                    logger.warning("[NANGO_PROXY] FreeBusy check fallback: %s", exc)
-
-                available, busy_list = self._filter_available_slots(target_date, standard_slots, busy_spans)
-
-                # If caller requested a specific slot that is busy, report it clearly
-                if requested_time:
-                    matched_busy = None
-                    for b in busy_list:
-                        # Match 2:00 PM, 14:00, 3:30 PM, 15:30, 11:00 AM, etc.
-                        b_clean = b.lower().replace(" ", "").replace(":00", "")
-                        req_clean = requested_time.lower().replace(" ", "").replace(":00", "")
-                        if (
-                            req_clean in b_clean
-                            or ("14" in requested_time and "02" in b)
-                            or ("15" in requested_time and "03" in b)
-                            or ("11" in requested_time and "11" in b)
-                        ):
-                            matched_busy = b
-                            break
-
-                    if matched_busy:
-                        return {
-                            "status": "unavailable",
-                            "requested_slot": matched_busy,
-                            "available_slots": available,
-                            "busy_slots": busy_list,
-                            "message": f"I checked our schedule, and unfortunately {matched_busy} on {target_date} is already booked. Open appointment slots on that day are: {', '.join(available)}. Would one of those work for you?",
-                            "summary": f"{matched_busy} is booked. Open: {', '.join(available)}",
-                        }
-
-                return {
-                    "status": "available" if available else "all_slots_booked",
-                    "date": target_date,
-                    "available_slots": available,
-                    "busy_slots": busy_list,
-                    "message": (
-                        f"On {target_date}, we have open appointments at: {', '.join(available)}. (Note: {', '.join(busy_list)} are already booked)."
-                        if available
-                        else f"All slots on {target_date} are currently fully booked. Would you like to check another day?"
-                    ),
-                    "summary": f"{len(available)} slots available on {target_date}",
-                }
-
-            elif action_name in ("GOOGLECALENDAR_CREATE_EVENT", "GOOGLECALENDAR_BOOK_EVENT"):
-                summary = params.get("summary") or "Dental Clinic Free Consultation"
-                description = params.get("description") or "Complimentary Dental Health Checkup and Consultation"
-                start_val = params.get("start") or params.get("start_time") or params.get("dateTime")
-                end_val = params.get("end") or params.get("end_time")
-                attendee = params.get("attendee_email") or params.get("email")
-
-                now = datetime.now(timezone.utc)
-                if not start_val:
-                    tomorrow = now + timedelta(days=1)
-                    start_iso = tomorrow.replace(hour=10, minute=0, second=0, microsecond=0).strftime("%Y-%m-%dT%H:%M:%S+05:30")
-                    end_iso = tomorrow.replace(hour=10, minute=30, second=0, microsecond=0).strftime("%Y-%m-%dT%H:%M:%S+05:30")
-                else:
-                    start_str = str(start_val).strip()
-                    if "T" in start_str and not (start_str.endswith("Z") or "+" in start_str[10:] or "-" in start_str[10:]):
-                        start_iso = f"{start_str}+05:30"
-                    elif "T" not in start_str and len(start_str) == 10:
-                        start_iso = f"{start_str}T10:00:00+05:30"
-                    else:
-                        start_iso = start_str
-
-                    if not end_val:
-                        try:
-                            clean_iso = start_iso.replace("Z", "+00:00")
-                            st_dt = datetime.fromisoformat(clean_iso)
-                            end_iso = (st_dt + timedelta(minutes=30)).isoformat()
-                        except Exception:
-                            end_iso = start_iso
-                    else:
-                        end_iso = str(end_val).strip()
-                        if "T" in end_iso and not (end_iso.endswith("Z") or "+" in end_iso[10:] or "-" in end_iso[10:]):
-                            end_iso = f"{end_iso}+05:30"
-
-                # Check conflict before creating event
-                try:
-                    target_d = start_iso[:10]
-                    chk_resp = await client.post(
-                        f"{self.base_url}/proxy/calendar/v3/freeBusy",
-                        headers=headers,
-                        json={
-                            "timeMin": f"{target_d}T00:00:00+05:30",
-                            "timeMax": f"{target_d}T23:59:59+05:30",
-                            "items": [{"id": "primary"}],
-                        },
-                    )
-                    if chk_resp.status_code == 200:
-                        b_spans = chk_resp.json().get("calendars", {}).get("primary", {}).get("busy", [])
-                        st_check = datetime.fromisoformat(start_iso.replace("Z", "+00:00"))
-                        en_check = datetime.fromisoformat(end_iso.replace("Z", "+00:00"))
-                        for bs in b_spans:
-                            bs_st = datetime.fromisoformat(bs["start"].replace("Z", "+00:00"))
-                            bs_en = datetime.fromisoformat(bs["end"].replace("Z", "+00:00"))
-                            if st_check < bs_en and en_check > bs_st:
-                                av_slots, b_slots = self._filter_available_slots(
-                                    target_d,
-                                    ["10:00 AM", "11:00 AM", "11:30 AM", "02:00 PM", "03:30 PM", "04:30 PM"],
-                                    b_spans,
-                                )
-                                return {
-                                    "status": "conflict",
-                                    "confirmed": False,
-                                    "error": "slot_already_booked",
-                                    "message": f"Conflict detected: The time slot at {start_iso} is already booked by another patient. Alternative open slots on {target_d} are: {', '.join(av_slots)}.",
-                                    "available_alternatives": av_slots,
-                                    "summary": f"Slot conflict at {start_iso} - already booked",
-                                }
-                except Exception as exc:
-                    logger.warning("[NANGO_PROXY] Pre-booking conflict check error: %s", exc)
-
-                event_payload = {
-                    "summary": summary,
-                    "description": description,
-                    "start": {"dateTime": start_iso, "timeZone": "Asia/Kolkata"},
-                    "end": {"dateTime": end_iso, "timeZone": "Asia/Kolkata"},
-                }
-                if attendee:
-                    event_payload["attendees"] = [{"email": str(attendee)}]
-
-                resp = await client.post(
-                    f"{self.base_url}/proxy/calendar/v3/calendars/primary/events",
-                    headers=headers,
-                    json=event_payload,
-                )
-                if resp.status_code in (200, 201):
-                    ev = resp.json()
-                    return {
-                        "status": "confirmed",
-                        "confirmed": True,
-                        "event_id": ev.get("id"),
-                        "summary": ev.get("summary", summary),
-                        "start": ev.get("start", {}).get("dateTime", start_iso),
-                        "htmlLink": ev.get("htmlLink", ""),
-                        "message": f"Appointment booked: {ev.get('summary', summary)} at {ev.get('start', {}).get('dateTime', start_iso)}.",
-                    }
-                else:
-                    logger.error("[NANGO_PROXY] Create event failed HTTP %s: %s", resp.status_code, resp.text[:150])
-                    return {"status": "error", "message": f"Failed to book event on calendar (HTTP {resp.status_code})."}
-
-            elif action_name == "GOOGLECALENDAR_LIST_EVENTS":
-                date_val = str(params.get("date") or "").strip()[:10]
-                if not date_val:
-                    date_val = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-                time_min = f"{date_val}T00:00:00Z"
-                time_max = f"{date_val}T23:59:59Z"
-                resp = await client.get(
-                    f"{self.base_url}/proxy/calendar/v3/calendars/primary/events",
-                    headers=headers,
-                    params={"timeMin": time_min, "timeMax": time_max, "singleEvents": "true", "orderBy": "startTime"},
-                )
-                if resp.status_code == 200:
-                    items = resp.json().get("items", [])
-                    return {
-                        "status": "success",
-                        "date": date_val,
-                        "events": [{"summary": i.get("summary"), "start": i.get("start")} for i in items[:5]],
-                        "message": f"Found {len(items)} events on {date_val}.",
-                    }
-                return {"status": "error", "message": "Failed to list events."}
-
-            elif action_name in ("GOOGLECALENDAR_CANCEL_EVENT", "GOOGLECALENDAR_DELETE_EVENT"):
-                event_id = str(params.get("event_id") or params.get("eventId") or "").strip()
-                calendar_id = str(params.get("calendar_id") or "primary").strip()
-                if not event_id:
-                    return {"status": "error", "error": "missing_event_id", "message": "Event ID is required to cancel an appointment."}
-                resp = await client.delete(
-                    f"{self.base_url}/proxy/calendar/v3/calendars/{urllib.parse.quote(calendar_id)}/events/{urllib.parse.quote(event_id)}",
-                    headers=headers,
-                )
-                if resp.status_code in (200, 204):
-                    return {
-                        "status": "cancelled",
-                        "event_id": event_id,
-                        "summary": f"Event {event_id} was successfully cancelled.",
-                        "message": "Your calendar appointment has been cancelled.",
-                    }
-                elif resp.status_code == 404:
-                    return {
-                        "status": "error",
-                        "error": "not_found",
-                        "message": f"Calendar event {event_id} was not found or already cancelled.",
-                    }
-                else:
-                    logger.error("[NANGO_PROXY] Cancel event failed HTTP %s: %s", resp.status_code, resp.text[:150])
-                    return {"status": "error", "message": f"Failed to cancel event (HTTP {resp.status_code})."}
-
-            elif action_name in ("GOOGLECALENDAR_RESCHEDULE_EVENT", "GOOGLECALENDAR_UPDATE_EVENT"):
-                event_id = str(params.get("event_id") or params.get("eventId") or "").strip()
-                calendar_id = str(params.get("calendar_id") or "primary").strip()
-                if not event_id:
-                    return {"status": "error", "error": "missing_event_id", "message": "Event ID is required to reschedule an appointment."}
-                start_val = params.get("start") or params.get("start_time") or params.get("dateTime")
-                end_val = params.get("end") or params.get("end_time")
-                if not start_val:
-                    return {"status": "error", "error": "missing_start_time", "message": "New start time is required to reschedule."}
-
-                start_str = str(start_val).strip()
-                if "T" in start_str and not (start_str.endswith("Z") or "+" in start_str[10:] or "-" in start_str[10:]):
-                    start_iso = f"{start_str}+05:30"
-                elif "T" not in start_str and len(start_str) == 10:
-                    start_iso = f"{start_str}T10:00:00+05:30"
-                else:
-                    start_iso = start_str
-
-                if not end_val:
-                    try:
-                        clean_iso = start_iso.replace("Z", "+00:00")
-                        st_dt = datetime.fromisoformat(clean_iso)
-                        end_iso = (st_dt + timedelta(minutes=30)).isoformat()
-                    except Exception:
-                        end_iso = start_iso
-                else:
-                    end_iso = str(end_val).strip()
-                    if "T" in end_iso and not (end_iso.endswith("Z") or "+" in end_iso[10:] or "-" in end_iso[10:]):
-                        end_iso = f"{end_iso}+05:30"
-
-                patch_payload: dict[str, Any] = {
-                    "start": {"dateTime": start_iso, "timeZone": "Asia/Kolkata"},
-                    "end": {"dateTime": end_iso, "timeZone": "Asia/Kolkata"},
-                }
-                if params.get("summary"):
-                    patch_payload["summary"] = str(params["summary"])
-                if params.get("description"):
-                    patch_payload["description"] = str(params["description"])
-
-                resp = await client.patch(
-                    f"{self.base_url}/proxy/calendar/v3/calendars/{urllib.parse.quote(calendar_id)}/events/{urllib.parse.quote(event_id)}",
-                    headers=headers,
-                    json=patch_payload,
-                )
-                if resp.status_code in (200, 204):
-                    ev = resp.json() if resp.text else {}
-                    return {
-                        "status": "confirmed",
-                        "rescheduled": True,
-                        "event_id": event_id,
-                        "start": ev.get("start", {}).get("dateTime", start_iso),
-                        "summary": ev.get("summary", f"Appointment rescheduled to {start_iso}"),
-                        "message": f"Appointment successfully rescheduled to {start_iso}.",
-                    }
-                else:
-                    logger.error("[NANGO_PROXY] Reschedule event failed HTTP %s: %s", resp.status_code, resp.text[:150])
-                    return {"status": "error", "message": f"Failed to reschedule event (HTTP {resp.status_code})."}
-
-            elif action_name == "GMAIL_SEND_EMAIL":
+            if action_name == "GMAIL_SEND_EMAIL":
                 to_addr = params.get("to") or params.get("recipient")
-                subject = params.get("subject") or "Appointment Confirmation - Dental Clinic"
-                body = params.get("body") or params.get("content") or "Your appointment has been confirmed."
-                if not to_addr:
-                    return {"status": "error", "message": "Recipient email address is required."}
+                subject = params.get("subject")
+                body = params.get("body") or params.get("content")
+                if not to_addr or not subject or not body:
+                    return {"status": "error", "message": "Recipient, subject and message are required."}
 
                 msg = EmailMessage()
                 msg["To"] = str(to_addr)
@@ -1081,11 +749,12 @@ class NangoService:
 
             elif action_name == "HUBSPOT_CREATE_DEAL":
                 props = {
-                    "dealname": str(params.get("dealname") or "New Deal"),
-                    "amount": str(params.get("amount") or "0"),
-                    "pipeline": str(params.get("pipeline") or "default"),
-                    "dealstage": str(params.get("dealstage") or "appointmentscheduled"),
+                    "dealname": str(params["dealname"]),
+                    "pipeline": str(params["pipeline"]),
+                    "dealstage": str(params["dealstage"]),
                 }
+                if params.get("amount") is not None:
+                    props["amount"] = str(params["amount"])
                 resp = await client.post(
                     f"{self.base_url}/proxy/crm/v3/objects/deals",
                     headers=headers,
@@ -1133,7 +802,7 @@ class NangoService:
                 if not (owner and repo and title):
                     return {"status": "error", "message": "Owner, repo, and title are required for GitHub issue."}
                 resp = await client.post(
-                    f"{self.base_url}/proxy/repos/{owner}/{repo}/issues",
+                    f"{self.base_url}/proxy/repos/{path_segment(owner)}/{path_segment(repo)}/issues",
                     headers=headers,
                     json={"title": title, "body": body, "labels": labels},
                 )
@@ -1144,7 +813,7 @@ class NangoService:
                         "status": "success",
                         "issue_number": num,
                         "html_url": data.get("html_url"),
-                        "summary": f"GitHub issue #{num} created in {owner}/{repo}.",
+                        "summary": f"GitHub issue #{num} created in {path_segment(owner)}/{path_segment(repo)}.",
                         "message": f"Created GitHub issue #{num}.",
                     }
                 return {"status": "error", "message": f"Failed to create GitHub issue (HTTP {resp.status_code})."}
@@ -1357,8 +1026,9 @@ class NangoService:
             elif action_name == "TODOIST_CREATE_TASK":
                 task_body = {
                     "content": str(params.get("content") or "Call follow-up"),
-                    "due_string": str(params.get("due_string") or "tomorrow"),
                 }
+                if params.get("due_string"):
+                    task_body["due_string"] = str(params["due_string"])
                 resp = await client.post(
                     f"{self.base_url}/proxy/rest/v2/tasks",
                     headers=headers,
@@ -1380,7 +1050,7 @@ class NangoService:
                 ch_id = str(params.get("channel_id") or "")
                 content = str(params.get("content") or "")
                 resp = await client.post(
-                    f"{self.base_url}/proxy/channels/{ch_id}/messages",
+                    f"{self.base_url}/proxy/channels/{path_segment(ch_id)}/messages",
                     headers=headers,
                     json={"content": content},
                 )
@@ -1401,7 +1071,7 @@ class NangoService:
                     return {"status": "error", "message": "Event UUID is required to cancel a Calendly event."}
                 clean_uuid = event_uuid.split("/")[-1]
                 resp = await client.post(
-                    f"{self.base_url}/proxy/scheduled_events/{urllib.parse.quote(clean_uuid)}/cancellation",
+                    f"{self.base_url}/proxy/scheduled_events/{path_segment(clean_uuid)}/cancellation",
                     headers=headers,
                     json={"reason": reason},
                 )
@@ -1440,7 +1110,7 @@ class NangoService:
                 if not uid:
                     return {"status": "error", "message": "Booking UID is required."}
                 resp = await client.post(
-                    f"{self.base_url}/proxy/v2/bookings/{urllib.parse.quote(uid)}/cancel",
+                    f"{self.base_url}/proxy/v2/bookings/{path_segment(uid)}/cancel",
                     headers=headers,
                     json={"cancellationReason": reason},
                 )
@@ -1460,7 +1130,7 @@ class NangoService:
                 if not (uid and start_time):
                     return {"status": "error", "message": "Booking UID and new start time are required."}
                 resp = await client.post(
-                    f"{self.base_url}/proxy/v2/bookings/{urllib.parse.quote(uid)}/reschedule",
+                    f"{self.base_url}/proxy/v2/bookings/{path_segment(uid)}/reschedule",
                     headers=headers,
                     json={"start": start_time, "reschedulingReason": reason},
                 )
@@ -1480,7 +1150,7 @@ class NangoService:
                 if order_id:
                     clean_id = order_id.replace("#", "")
                     resp = await client.get(
-                        f"{self.base_url}/proxy/admin/api/2024-01/orders/{urllib.parse.quote(clean_id)}.json",
+                        f"{self.base_url}/proxy/admin/api/2024-01/orders/{path_segment(clean_id)}.json",
                         headers=headers,
                     )
                     if resp.status_code == 404:
@@ -1521,18 +1191,31 @@ class NangoService:
                     reason = "customer"
                 if not order_id:
                     return {"status": "error", "message": "Order ID is required to cancel a Shopify order."}
+                current = await client.get(
+                    f"{self.base_url}/proxy/admin/api/2024-01/orders/{path_segment(order_id)}.json", headers=headers,
+                )
+                current.raise_for_status()
+                order = current.json().get("order") or {}
+                if str(order.get("id")) != order_id or "fulfillment_status" not in order:
+                    return {"status": "error", "message": "Order fulfillment could not be verified. No cancellation started."}
+                if order["fulfillment_status"] not in {None, "unfulfilled"}:
+                    return {"status": "error", "message": "Only unfulfilled orders can be cancelled by this agent."}
+                if order.get("cancelled_at"):
+                    return {"status": "cancelled", "order_id": order_id, "summary": "Order is already cancelled."}
                 resp = await client.post(
-                    f"{self.base_url}/proxy/admin/api/2024-01/orders/{urllib.parse.quote(order_id)}/cancel.json",
+                    f"{self.base_url}/proxy/admin/api/2024-01/orders/{path_segment(order_id)}/cancel.json",
                     headers=headers,
                     json={"reason": reason, "email": True},
                 )
                 if resp.status_code in (200, 201):
                     data = resp.json().get("order", {})
+                    if str(data.get("id")) != order_id or not data.get("cancelled_at"):
+                        return {"status": "unknown", "message": "Check the order to confirm whether cancellation completed."}
                     return {
                         "status": "cancelled",
                         "order_id": str(data.get("id") or order_id),
                         "name": data.get("name", order_id),
-                        "financial_status": data.get("financial_status", "refunded"),
+                        "financial_status": data.get("financial_status"),
                         "summary": f"Shopify order {data.get('name', order_id)} has been cancelled.",
                         "message": f"Order {data.get('name', order_id)} cancelled.",
                     }
@@ -1543,7 +1226,7 @@ class NangoService:
                 if not order_id:
                     return {"status": "error", "message": "Order ID is required."}
                 resp = await client.get(
-                    f"{self.base_url}/proxy/admin/api/2024-01/orders/{urllib.parse.quote(order_id)}/fulfillments.json",
+                    f"{self.base_url}/proxy/admin/api/2024-01/orders/{path_segment(order_id)}/fulfillments.json",
                     headers=headers,
                 )
                 if resp.status_code == 200:
@@ -1610,7 +1293,7 @@ class NangoService:
                 if not msid:
                     return {"status": "error", "message": "Message SID is required."}
                 resp = await client.get(
-                    f"{self.base_url}/proxy/Messages/{urllib.parse.quote(msid)}.json",
+                    f"{self.base_url}/proxy/Messages/{path_segment(msid)}.json",
                     headers=headers,
                 )
                 if resp.status_code == 200:
@@ -1662,7 +1345,7 @@ class NangoService:
                 if not (deal_id and dealstage):
                     return {"status": "error", "message": "Deal ID and dealstage are required."}
                 resp = await client.patch(
-                    f"{self.base_url}/proxy/crm/v3/objects/deals/{urllib.parse.quote(deal_id)}",
+                    f"{self.base_url}/proxy/crm/v3/objects/deals/{path_segment(deal_id)}",
                     headers=headers,
                     json={"properties": {"dealstage": dealstage}},
                 )
@@ -1680,9 +1363,9 @@ class NangoService:
                 email = str(params.get("email") or "").strip()
                 phone = str(params.get("phone") or "").strip()
                 if email:
-                    q = f"SELECT Id, FirstName, LastName, Email, Company, Status FROM Lead WHERE Email = '{email}' LIMIT 1"
+                    q = f"SELECT Id, FirstName, LastName, Email, Company, Status FROM Lead WHERE Email = '{soql_literal(email)}' LIMIT 1"
                 elif phone:
-                    q = f"SELECT Id, FirstName, LastName, Phone, Company, Status FROM Lead WHERE Phone = '{phone}' LIMIT 1"
+                    q = f"SELECT Id, FirstName, LastName, Phone, Company, Status FROM Lead WHERE Phone = '{soql_literal(phone)}' LIMIT 1"
                 else:
                     return {"status": "error", "message": "Email or phone number required to lookup Salesforce lead."}
                 resp = await client.get(
@@ -1734,7 +1417,7 @@ class NangoService:
                 if params.get("status"):
                     patch_ticket["status"] = str(params["status"])
                 resp = await client.put(
-                    f"{self.base_url}/proxy/api/v2/tickets/{urllib.parse.quote(tid)}.json",
+                    f"{self.base_url}/proxy/api/v2/tickets/{path_segment(tid)}.json",
                     headers=headers,
                     json={"ticket": patch_ticket},
                 )
@@ -1752,7 +1435,7 @@ class NangoService:
                 if not order_id:
                     return {"status": "error", "message": "Order ID is required."}
                 resp = await client.get(
-                    f"{self.base_url}/proxy/wp-json/wc/v3/orders/{urllib.parse.quote(order_id)}",
+                    f"{self.base_url}/proxy/wp-json/wc/v3/orders/{path_segment(order_id)}",
                     headers=headers,
                 )
                 if resp.status_code == 200:
@@ -1772,7 +1455,7 @@ class NangoService:
                 if not pid:
                     return {"status": "error", "message": "Product ID or SKU is required."}
                 resp = await client.get(
-                    f"{self.base_url}/proxy/wp-json/wc/v3/products/{urllib.parse.quote(pid)}",
+                    f"{self.base_url}/proxy/wp-json/wc/v3/products/{path_segment(pid)}",
                     headers=headers,
                 )
                 if resp.status_code == 200:
@@ -1793,7 +1476,7 @@ class NangoService:
                 if not (order_id and status_val):
                     return {"status": "error", "message": "Order ID and new status are required."}
                 resp = await client.put(
-                    f"{self.base_url}/proxy/wp-json/wc/v3/orders/{urllib.parse.quote(order_id)}",
+                    f"{self.base_url}/proxy/wp-json/wc/v3/orders/{path_segment(order_id)}",
                     headers=headers,
                     json={"status": status_val},
                 )
@@ -1812,7 +1495,7 @@ class NangoService:
                 if not ikey:
                     return {"status": "error", "message": "Issue key is required."}
                 resp = await client.get(
-                    f"{self.base_url}/proxy/rest/api/3/issue/{urllib.parse.quote(ikey)}",
+                    f"{self.base_url}/proxy/rest/api/3/issue/{path_segment(ikey)}",
                     headers=headers,
                 )
                 if resp.status_code == 200:
@@ -1840,7 +1523,7 @@ class NangoService:
                     }
                 }
                 resp = await client.post(
-                    f"{self.base_url}/proxy/rest/api/3/issue/{urllib.parse.quote(ikey)}/comment",
+                    f"{self.base_url}/proxy/rest/api/3/issue/{path_segment(ikey)}/comment",
                     headers=headers,
                     json=doc_body,
                 )
@@ -1880,7 +1563,7 @@ class NangoService:
                 if not mid:
                     return {"status": "error", "message": "Meeting ID is required."}
                 resp = await client.get(
-                    f"{self.base_url}/proxy/v2/meetings/{urllib.parse.quote(mid)}",
+                    f"{self.base_url}/proxy/v2/meetings/{path_segment(mid)}",
                     headers=headers,
                 )
                 if resp.status_code == 200:
@@ -1931,7 +1614,7 @@ class NangoService:
                 if not (tid and comment):
                     return {"status": "error", "message": "Task ID and comment are required."}
                 resp = await client.post(
-                    f"{self.base_url}/proxy/api/1.0/tasks/{urllib.parse.quote(tid)}/stories",
+                    f"{self.base_url}/proxy/api/1.0/tasks/{path_segment(tid)}/stories",
                     headers=headers,
                     json={"data": {"text": comment}},
                 )
@@ -1974,7 +1657,7 @@ class NangoService:
                 if flt:
                     req_params["filterByFormula"] = flt
                 resp = await client.get(
-                    f"{self.base_url}/proxy/v0/{urllib.parse.quote(base_id)}/{urllib.parse.quote(table_name)}",
+                    f"{self.base_url}/proxy/v0/{path_segment(base_id)}/{path_segment(table_name)}",
                     headers=headers,
                     params=req_params,
                 )
@@ -2012,7 +1695,7 @@ class NangoService:
                 owner = str(params.get("owner") or "").strip()
                 repo = str(params.get("repo") or "").strip()
                 q = str(params.get("query") or "").strip()
-                full_q = f"{q} repo:{owner}/{repo}" if (owner and repo) else q
+                full_q = f"{q} repo:{path_segment(owner)}/{path_segment(repo)}" if (owner and repo) else q
                 resp = await client.get(
                     f"{self.base_url}/proxy/search/issues",
                     headers=headers,
@@ -2054,7 +1737,7 @@ class NangoService:
                 email = str(params.get("email") or "").strip()
                 if tid:
                     resp = await client.get(
-                        f"{self.base_url}/proxy/api/v2/tickets/{urllib.parse.quote(tid)}",
+                        f"{self.base_url}/proxy/api/v2/tickets/{path_segment(tid)}",
                         headers=headers,
                     )
                 elif email:
@@ -2117,7 +1800,7 @@ class NangoService:
                     },
                 }
                 resp = await client.post(
-                    f"{self.base_url}/proxy/3.0/lists/{urllib.parse.quote(lid)}/members",
+                    f"{self.base_url}/proxy/3.0/lists/{path_segment(lid)}/members",
                     headers=headers,
                     json=m_payload,
                 )
@@ -2139,7 +1822,7 @@ class NangoService:
                 if not lid:
                     return {"status": "error", "message": "List ID is required."}
                 resp = await client.post(
-                    f"{self.base_url}/proxy/api/v2/list/{urllib.parse.quote(lid)}/task",
+                    f"{self.base_url}/proxy/api/v2/list/{path_segment(lid)}/task",
                     headers=headers,
                     json={"name": name, "description": desc, "priority": priority},
                 )
@@ -2167,7 +1850,10 @@ class NangoService:
                     json=gql,
                 )
                 if resp.status_code == 200:
-                    iid = resp.json().get("data", {}).get("create_item", {}).get("id")
+                    data = resp.json()
+                    iid = (data.get("data") or {}).get("create_item", {}).get("id")
+                    if data.get("errors") or not iid:
+                        return {"status": "unknown", "message": "Item creation could not be confirmed. Check the board before retrying."}
                     return {
                         "status": "success",
                         "item_id": str(iid),
@@ -2202,7 +1888,7 @@ class NangoService:
                 if not (table and row_data):
                     return {"status": "error", "message": "Table name and row data are required."}
                 resp = await client.post(
-                    f"{self.base_url}/proxy/rest/v1/{urllib.parse.quote(table)}",
+                    f"{self.base_url}/proxy/rest/v1/{path_segment(table)}",
                     headers=headers,
                     json=row_data,
                 )
@@ -2220,8 +1906,10 @@ class NangoService:
                 val = str(params.get("filter_value") or "").strip()
                 if not (table and col and val):
                     return {"status": "error", "message": "Table, filter column, and filter value are required."}
+                if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", col) or col.lower() in {"select", "limit", "offset", "order", "or", "and", "on_conflict"}:
+                    return {"status": "error", "message": "Choose a valid data column for this filter."}
                 resp = await client.get(
-                    f"{self.base_url}/proxy/rest/v1/{urllib.parse.quote(table)}",
+                    f"{self.base_url}/proxy/rest/v1/{path_segment(table)}",
                     headers=headers,
                     params={col: f"eq.{val}", "limit": "1"},
                 )
@@ -2286,45 +1974,19 @@ class NangoService:
             return None
 
     def sanitize_voice_response(self, raw: Any, action_name: str = "") -> dict[str, Any]:
-        """Trim raw Nango API response to only voice-relevant fields for TTS.
-
-        Uses the tool_schema_registry whitelist keyed per integration so that
-        CRM, task, and messaging tools each preserve their own meaningful keys.
-        """
+        """Bound untrusted results and preserve errors; never invent success."""
         if not isinstance(raw, dict):
-            return {"result": str(raw)[:120]}
-
-        # Resolve whitelist from registry (falls back to generic keys)
-        try:
-            from server.services.tool_schema_registry import get_response_keys_for_tool
-            keep_keys: tuple = get_response_keys_for_tool(action_name) if action_name else (
-                "status", "confirmed", "date", "time", "summary", "available", "slots"
-            )
-        except Exception:
-            keep_keys = ("status", "confirmed", "date", "time", "summary", "available", "slots")
-
-        sanitized: dict[str, Any] = {}
-        for key in keep_keys:
-            if key in raw:
-                sanitized[key] = raw[key]
-
-        # Also pull from nested data/response_data/output/result if top-level is sparse
-        data = raw.get("data") or raw.get("response_data") or raw.get("output") or raw.get("result") or raw.get("response") or raw
-        if isinstance(data, dict):
-            for k, v in data.items():
-                if k not in sanitized and k in keep_keys:
-                    sanitized[k] = v
-                elif (
-                    k not in sanitized
-                    and isinstance(v, (str, int, float, bool))
-                    and len(str(v)) < 80
-                    and not str(v).startswith("http")
-                    and not (isinstance(v, str) and len(v) > 32 and "-" in v)
-                ):
-                    # Allow short, non-URL scalar values that look human-readable
-                    sanitized[k] = v
-
-        return sanitized or {"status": "success"}
+            return {"status": "error", "message": "The action result could not be verified."}
+        from server.services.tool_schema_registry import get_response_keys_for_tool
+        keep = set(get_response_keys_for_tool(action_name)) | {"status", "message", "error", "summary"}
+        sanitized = {key: bounded_tool_data(value) for key, value in raw.items() if key in keep}
+        for field in ("data", "response_data", "output", "result", "response"):
+            nested = raw.get(field)
+            if isinstance(nested, dict):
+                for key, value in nested.items():
+                    if key in keep and key not in sanitized:
+                        sanitized[key] = bounded_tool_data(value)
+        return sanitized or {"status": "error", "message": "The action result could not be verified."}
 
 
 # Singleton instance

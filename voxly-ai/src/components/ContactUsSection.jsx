@@ -33,8 +33,8 @@ const PRIORITY_LEVELS = [
 export function ContactUsSection() {
   const [supportConfig, setSupportConfig] = useState({
     supportEmail: 'support@dialtact.com',
-    businessHours: 'Mon - Fri: 9:00 AM - 6:00 PM EST',
-    slaResponseTime: 'Within 2 hours for Priority, 24 hours Standard',
+    businessHours: 'Contact support for current availability.',
+    slaResponseTime: 'See your support agreement for response targets.',
     autoReplyMessage: 'Thank you for reaching out. Our support engineering desk will review your inquiry promptly.',
   });
 
@@ -197,7 +197,7 @@ export function ContactUsSection() {
                 </div>
                 <div>
                   <h3 className="text-xs font-bold text-[#34D399] uppercase tracking-wider">Direct Ticket Tracking</h3>
-                  <p className="text-sm font-semibold text-white mt-0.5">Automated Dispatch & SLA Timers</p>
+                  <p className="text-sm font-semibold text-white mt-0.5">Support request reference</p>
                 </div>
               </div>
               <p className="text-xs text-[#9B97AA] mt-3">
@@ -228,8 +228,8 @@ export function ContactUsSection() {
               <div className="pt-3 border-t border-[#27253D] flex items-center gap-3">
                 <Server className="w-5 h-5 text-[#10B981] shrink-0" />
                 <div className="text-xs">
-                  <span className="font-semibold text-white">Platform Health: </span>
-                  <span className="text-[#34D399]">All Trunks & Core Systems Active</span>
+                  <span className="font-semibold text-white">Reporting an issue: </span>
+                  <span className="text-[#9B97AA]">Include the affected call reference and time.</span>
                 </div>
               </div>
             </div>

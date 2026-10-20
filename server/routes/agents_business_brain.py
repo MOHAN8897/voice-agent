@@ -22,6 +22,7 @@ from server.brain.business_prompt_optimizer import optimize_business_prompt
 from server.brain.compiled_brain_service import compiled_brain_service
 from server.brain.semantic_validation import validate_sections
 from server.utils.errors import AppError
+from server.utils.logger import logger
 
 router = APIRouter()
 
@@ -57,6 +58,42 @@ async def _guard_agent(
 
 class DraftSectionsBody(BaseModel):
     sections: list[dict[str, Any]]
+
+
+class PreviewSectionsBody(BaseModel):
+    sections: list[dict[str, Any]] = Field(..., max_length=64)
+
+
+@router.post("/api/agents/{agent_id}/business-brain/preview")
+async def preview_business_brain(
+    agent_id: str,
+    body: PreviewSectionsBody,
+    principal: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled),
+):
+    """Review the submitted draft without saving, publishing or calling an LLM."""
+    await _guard_agent(agent_id, principal)
+    from server.agent.brain_prompt_composer import estimate_tokens
+    from server.brain.agent_script_compiler import _opening_line_is_language_compatible
+    import re
+
+    if sum(len(str(row.get("raw_text") or "")) for row in body.sections) > 100000:
+        raise HTTPException(status_code=413, detail="Draft is too large to review")
+    result = validate_sections(body.sections).to_dict()
+    from server.services.saas.agent_voice_config import parse_voice_config_from_sections
+    from server.prompts.agent_voice_rules import normalize_compile_language
+    config = parse_voice_config_from_sections(body.sections)
+    language = normalize_compile_language(config.get("language") or await compiled_brain_service._primary_language(agent_id))
+    raw, checksum = assemble_raw_business_prompt(body.sections)
+    script = "\n".join(str(row.get("raw_text") or "") for row in body.sections
+                       if row.get("enabled", True) and row.get("title") == CALLING_SCRIPT_TITLE)
+    for match in re.finditer(r"(?im)^---\s*CANONICAL OPENING\s*---\s*\n([\s\S]*?)(?=\n---|\Z)", script):
+        if not _opening_line_is_language_compatible(match.group(1), language):
+            result["issues"].append({"severity": "warning", "code": "opening_language_mismatch",
+                                     "message": "The opening contains a different language script. Check it against the selected call language.", "section_ids": []})
+    result["ok"] = not any(issue["severity"] == "blocking" for issue in result["issues"])
+    return {**result, "language": language, "raw_checksum": checksum,
+            "token_estimate": estimate_tokens(raw), "script_characters": len(script),
+            "section_count": sum(row.get("enabled", True) for row in body.sections)}
 
 
 @router.get("/api/agents/{agent_id}/business-brain")
@@ -181,11 +218,22 @@ async def _carry_entity_tags_forward(agent_id: str, sections: list[dict[str, Any
 async def _preserve_tags(agent_id: str, script: str) -> str:
     """Keep the tags the stored script already has when its body is replaced."""
     import re
-    from server.brain.script_entities import parse_entity_tags, with_entity_tags_section
+    from server.brain.script_entities import parse_entity_tags, strip_entity_tags_section, with_entity_tags_section
+    from server.services.pstn_text_chunker import _parse_agent_identity
 
     stored = await business_brain_store.get_sections(agent_id)
     previous = next((s for s in stored if s.get("title") == CALLING_SCRIPT_TITLE), None)
-    entities = parse_entity_tags(script) or parse_entity_tags((previous or {}).get("raw_text") or "") or {}
+    explicit_entities = parse_entity_tags(script)
+    entities = explicit_entities or parse_entity_tags((previous or {}).get("raw_text") or "") or {}
+    # The console hides machine tags. A visible identity edit must update the
+    # hidden identity used by prewarm and Gemini instead of pinning the old name.
+    if not explicit_entities:
+        name, company = _parse_agent_identity(strip_entity_tags_section(script))
+        if name:
+            entities["agent_name"] = name
+            entities["company_name"] = company
+    if entities:
+        entities["language"] = await compiled_brain_service._primary_language(agent_id)
 
     # Extract opening line from script's CANONICAL OPENING and update @opening_line
     canonical_match = re.search(
@@ -301,7 +349,7 @@ async def save_voice_config(
         from server.brain.agent_service import agent_service
         await agent_service.patch_agent(agent_id, {"voice_settings": payload})
     except Exception as exc:
-        logger.debug("Failed to sync voice_settings to agent record: %s", exc)
+        logger.debug("Failed to sync voice_settings to agent record: %s", type(exc).__name__)
     return {"ok": True, "voice": payload, "compiled_version": await _active_version(agent_id)}
 
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 import pytest
 from httpx import ASGITransport, AsyncClient
 
+from server.tests.test_campaign_execution_safety import db as campaign_db
 from server.app import app
 from server.services.dev_secrets_store import dev_secrets_store
 from server.services.telephony import (
@@ -101,12 +102,14 @@ def test_vobiz_call_registry():
 
 
 @pytest.mark.asyncio
-async def test_vobiz_answer_webhook_returns_valid_xml():
+async def test_vobiz_answer_webhook_returns_valid_xml(campaign_db, monkeypatch):
     """Verify POST /api/vobiz/answer generates valid VoiceXML with WebSocket stream instructions when agent is known."""
+    from server.tests.test_campaign_execution_safety import TID
+    monkeypatch.setattr("server.db.connection.get_session_factory", lambda: campaign_db)
     token = vobiz_stream_tokens.create(
         call_uuid="vobiz-call-abc-123",
         agent_id="test-agent-123",
-        tenant_id="test-tenant-123",
+        tenant_id=str(TID),
         direction="inbound",
     )
     transport = ASGITransport(app=app)
@@ -340,12 +343,14 @@ def test_tenant_dial_error_sanitization():
 
 
 @pytest.mark.asyncio
-async def test_vobiz_answer_webhook_get_method():
+async def test_vobiz_answer_webhook_get_method(campaign_db, monkeypatch):
+    from server.tests.test_campaign_execution_safety import TID
+    monkeypatch.setattr("server.db.connection.get_session_factory", lambda: campaign_db)
     """Verify GET /api/vobiz/answer returns valid VoiceXML with stream token."""
     token = vobiz_stream_tokens.create(
         call_uuid="vobiz-get-test-123",
         agent_id="test-agent-get",
-        tenant_id="test-tenant-get",
+        tenant_id=str(TID),
         direction="inbound",
     )
     transport = ASGITransport(app=app)
@@ -480,10 +485,10 @@ def test_vobiz_stream_ws_rejects_missing_token():
     from starlette.websockets import WebSocketDisconnect
 
     client = TestClient(app)
-    with client.websocket_connect("/ws/vobiz-stream") as ws:
-        with pytest.raises(WebSocketDisconnect) as exc:
-            ws.receive_text()
-        assert exc.value.code == 1008
+    with pytest.raises(WebSocketDisconnect) as exc:
+        with client.websocket_connect("/ws/vobiz-stream"):
+            pytest.fail("Unauthenticated media connection was accepted")
+    assert exc.value.code == 1008
 
 
 def test_vobiz_stream_ws_rejects_mismatched_call_uuid():
@@ -493,17 +498,20 @@ def test_vobiz_stream_ws_rejects_mismatched_call_uuid():
 
     token = vobiz_stream_tokens.create(call_uuid="real-call-123", agent_id="agent-1")
     client = TestClient(app)
-    with client.websocket_connect(f"/ws/vobiz-stream?token={token}&call_uuid=wrong-call-999") as ws:
-        with pytest.raises(WebSocketDisconnect) as exc:
-            ws.receive_text()
-        assert exc.value.code == 1008
+    with pytest.raises(WebSocketDisconnect) as exc:
+        with client.websocket_connect(f"/ws/vobiz-stream?token={token}&call_uuid=wrong-call-999"):
+            pytest.fail("Mismatched media connection was accepted")
+    assert exc.value.code == 1008
+
 
 
 @pytest.mark.asyncio
-async def test_vobiz_policy_transfer_xml_escaping():
+async def test_vobiz_policy_transfer_xml_escaping(campaign_db, monkeypatch):
     """Verify transfer destination number is properly XML-escaped to prevent VoiceXML injection."""
     from unittest.mock import patch
     from server.services.saas.telephony_profile import InboundDecision
+    from server.tests.test_campaign_execution_safety import TID
+    monkeypatch.setattr("server.db.connection.get_session_factory", lambda: campaign_db)
 
     mock_decision = InboundDecision(
         should_answer=False,
@@ -514,7 +522,7 @@ async def test_vobiz_policy_transfer_xml_escaping():
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
-        with patch("server.services.saas.telephony_profile.profile_for_number", return_value={"agent_id": "test-ag", "tenant_id": "t-1"}):
+        with patch("server.services.saas.telephony_profile.profile_for_number", return_value={"agent_id": "test-ag", "tenant_id": str(TID)}):
             with patch("server.services.saas.telephony_profile.evaluate_inbound_policy", return_value=mock_decision):
                 res = await client.post(
                     "/api/vobiz/answer",

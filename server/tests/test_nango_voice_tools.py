@@ -4,6 +4,9 @@ from __future__ import annotations
 import asyncio
 import json
 import secrets
+import httpx
+from types import SimpleNamespace
+from server.tests.test_integration_security_hardening import db, client, TID, AID, signed
 from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
@@ -113,7 +116,7 @@ async def test_tool_router_fails_closed_without_tenant_and_dispatches_with_tenan
         "slots": ["10:00 AM", "2:00 PM"],
         "summary": "Found 2 available slots for tomorrow",
     }
-    with patch.object(router.nango, "execute_in_call_tool", AsyncMock(return_value=mock_response)):
+    with patch.object(router, "authorized", AsyncMock(return_value=True)), patch.object(router.nango, "execute_in_call_tool", AsyncMock(return_value=mock_response)):
         res = await router.route_and_execute(
             tenant_id="11111111-1111-1111-1111-111111111111",
             agent_id="22222222-2222-2222-2222-222222222222",
@@ -137,18 +140,17 @@ async def test_tool_router_handles_1_5s_sla_timeout_gracefully():
     async def _sim_slow_tool(*args, **kwargs):
         raise asyncio.TimeoutError()
 
-    with patch.object(router.nango, "execute_in_call_tool", side_effect=_sim_slow_tool):
+    with patch.object(router, "authorized", AsyncMock(return_value=True)), patch.object(router, "_record_execution_start", AsyncMock(return_value={"execute": True, "execution_id": "test-execution"})), patch.object(router, "_record_execution_complete", AsyncMock()), patch.object(router.nango, "execute_in_call_tool", side_effect=_sim_slow_tool):
         res = await router.route_and_execute(
             tenant_id="11111111-1111-1111-1111-111111111111",
             agent_id="22222222-2222-2222-2222-222222222222",
             call_id="call_timeout_test",
             tool_name="GOOGLECALENDAR_CREATE_EVENT",
-            arguments={"summary": "Sales Consultation", "time": "3:00 PM"},
+            arguments={"summary": "Sales Consultation", "start": "2030-10-20T15:00:00+05:30", "end": "2030-10-20T15:30:00+05:30"},
         )
 
-        assert res["status"] == "timeout"
-        assert res["action_type"] == "write"
-        assert "taking a moment longer" in res["message"]
+        assert res["status"] == "unknown"
+        assert "confirmed" in res["message"]
 
 
 # ---------------------------------------------------------------------------
@@ -216,178 +218,71 @@ def test_durable_job_nango_action_contract():
 # Test 6: Nango Connection Retrieval & Reverse Mapping
 # ---------------------------------------------------------------------------
 @pytest.mark.asyncio
-async def test_nango_get_tenant_connections_and_reverse_mapping():
-    """Verify Nango connection retrieval and reverse provider mapping."""
-    service = NangoService(secret_key="mock_secret", base_url="https://api.nango.dev")
-
+async def test_nango_get_tenant_connections_and_reverse_mapping(monkeypatch):
+    service = NangoService(secret_key="test-secret")
     assert service.get_app_name_from_provider("google-calendar") == "GOOGLECALENDAR"
-    assert service.get_app_name_from_provider("hubspot") == "HUBSPOT"
-    assert service.get_app_name_from_provider("slack") == "SLACK"
-
-    mock_conns_resp = {
-        "connections": [
-            {
-                "id": "conn_123",
-                "connection_id": "google_conn_1",
-                "provider_config_key": "google-calendar",
-                "provider": "google-calendar",
-            }
-        ]
-    }
-    with patch.object(service, "_resolve_environment_key", AsyncMock(return_value="mock_secret")):
-        with patch("server.services.nango_service._safe_urlopen") as mock_url:
-            mock_cm = MagicMock()
-            mock_cm.status = 200
-            mock_cm.read.return_value = json.dumps(mock_conns_resp).encode()
-            mock_cm.__enter__.return_value = mock_cm
-            mock_url.return_value = mock_cm
-
-            conns = await service.get_tenant_connections("11111111-1111-1111-1111-111111111111")
-            assert len(conns) == 1
-            assert conns[0]["provider_config_key"] == "google-calendar"
-
-            verified = await service.verify_or_sync_connection(
-                tenant_id="11111111-1111-1111-1111-111111111111",
-                app_name="GOOGLECALENDAR",
-                connection_id="google_conn_1",
-            )
-            assert verified is True
+    response = httpx.Response(200, json={"connections": [
+        {"connection_id": "ours", "provider_config_key": "google-calendar", "tags": {"end_user_id": str(TID)}},
+        {"connection_id": "foreign", "provider_config_key": "google-calendar", "tags": {"end_user_id": "another-tenant"}},
+    ]}, request=httpx.Request("GET", "https://gateway.example.test/connections"))
+    monkeypatch.setattr(httpx.AsyncClient, "get", AsyncMock(return_value=response))
+    assert len(await service.get_tenant_connections(str(TID))) == 1
+    assert await service.verify_or_sync_connection(str(TID), "GOOGLECALENDAR", "ours")
+    assert not await service.verify_or_sync_connection(str(TID), "GOOGLECALENDAR", "foreign")
 
 
 # ---------------------------------------------------------------------------
 # Test 7: Integration Endpoints (Activate, List, and Disconnect)
 # ---------------------------------------------------------------------------
 @pytest.mark.asyncio
-async def test_api_integrations_activate_and_reconcile():
-    """Verify POST /api/integrations/{app_id}/activate and DELETE."""
-    from starlette.requests import Request
-    from server.routes.integrations import activate_integration, disconnect_integration, list_integrations, ActivateBody
-
-    req = Request(
-        scope={
-            "type": "http",
-            "method": "POST",
-            "path": "/api/integrations/GOOGLECALENDAR/activate",
-            "headers": [(b"x-tenant-id", b"11111111-1111-1111-1111-111111111111")],
-        }
-    )
-
-    with patch("server.services.nango_service.nango_service.verify_or_sync_connection", AsyncMock(return_value=True)):
-        with patch("server.services.nango_service.nango_service.delete_connection", AsyncMock(return_value=True)):
-            # 1. Activate
-            body = ActivateBody(connection_id="conn_abc_123", account_identifier="my-workspace")
-            res_act = await activate_integration(
-                app_id="GOOGLECALENDAR",
-                body=body,
-                request=req,
-            )
-            assert res_act["status"] == "ACTIVE"
-            assert res_act["app_name"] == "GOOGLECALENDAR"
-
-            # 2. List
-            get_req = Request(
-                scope={
-                    "type": "http",
-                    "method": "GET",
-                    "path": "/api/integrations",
-                    "headers": [(b"x-tenant-id", b"11111111-1111-1111-1111-111111111111")],
-                }
-            )
-            with patch("server.services.nango_service.nango_service.get_tenant_connections", AsyncMock(return_value=[])):
-                list_res = await list_integrations(request=get_req)
-                assert "items" in list_res
-
-            # 3. Disconnect
-            del_req = Request(
-                scope={
-                    "type": "http",
-                    "method": "DELETE",
-                    "path": "/api/integrations/GOOGLECALENDAR",
-                    "headers": [(b"x-tenant-id", b"11111111-1111-1111-1111-111111111111")],
-                }
-            )
-            del_res = await disconnect_integration(app_id="GOOGLECALENDAR", request=del_req)
-            assert del_res["status"] == "disconnected"
+async def test_api_integrations_activate_and_reconcile(client, monkeypatch):
+    from server.routes import integrations as routes
+    monkeypatch.setattr(routes.nango_service, "verify_or_sync_connection", AsyncMock(return_value=True))
+    headers = {"authorization": "Bearer test-session"}
+    response = await client.post("/api/integrations/GOOGLECALENDAR/activate", headers=headers, json={"connection_id": "verified-calendar"})
+    assert response.status_code == 200 and response.json()["status"] == "ACTIVE"
+    assert "connection_id" not in response.json()
+    response = await client.get("/api/integrations", headers=headers)
+    assert {r["app_name"] for r in response.json()["items"]} == {"SLACK", "GOOGLECALENDAR"}
+    monkeypatch.setattr(routes.nango_service, "get_tenant_connections", AsyncMock(return_value=[]))
+    assert (await client.delete("/api/integrations/GOOGLECALENDAR", headers=headers)).status_code == 200
+    response = await client.get("/api/integrations", headers=headers)
+    assert [r["app_name"] for r in response.json()["items"]] == ["SLACK"]
 
 
 # ---------------------------------------------------------------------------
 # Test 8: Nango Webhook Event Processing
 # ---------------------------------------------------------------------------
 @pytest.mark.asyncio
-async def test_nango_webhook_updates_tenant_integrations():
-    """Verify POST /api/integrations/nango-webhook updates DB on connection:created."""
-    from starlette.requests import Request
-    from server.routes.integrations import nango_webhook
-
-    payload = {
-        "operation": "connection:created",
-        "connectionId": "wh_conn_999",
-        "providerConfigKey": "slack",
-        "endUserId": "11111111-1111-1111-1111-111111111111",
-    }
-
-    async def _receive():
-        return {"type": "http.request", "body": json.dumps(payload).encode()}
-
-    req = Request(
-        scope={
-            "type": "http",
-            "method": "POST",
-            "path": "/api/integrations/nango-webhook",
-            "headers": [(b"content-type", b"application/json")],
-        },
-        receive=_receive,
-    )
-
-    res = await nango_webhook(request=req)
-    assert res["status"] == "ok"
+async def test_nango_webhook_updates_tenant_integrations(client, monkeypatch):
+    from server.routes import integrations as routes
+    monkeypatch.setattr(routes.nango_service, "verify_or_sync_connection", AsyncMock(return_value=True))
+    raw, headers = signed({"type": "auth", "operation": "creation", "success": True,
+                           "connectionId": "owned", "providerConfigKey": "slack", "tags": {"end_user_id": str(TID)}})
+    response = await client.post("/api/integrations/nango-webhook", content=raw, headers=headers)
+    assert response.status_code == 200 and response.json()["status"] == "ok"
 
 
 # ---------------------------------------------------------------------------
 # Test 9: Voice Loop Auto-Discovers Active Tenant Tools
 # ---------------------------------------------------------------------------
 @pytest.mark.asyncio
-async def test_realtime_voice_loop_auto_discovers_tenant_tools():
-    """Verify PstnRealtimeVoiceLoop automatically loads active tenant tools on call start."""
+async def test_realtime_voice_loop_auto_discovers_tenant_tools(db, monkeypatch):
     from server.realtime.testing import FakeRealtimeVoiceAdapter
     from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
-
-    loop = PstnRealtimeVoiceLoop(
-        session_id="test_sess",
-        call_id=None,
-        tenant_id="11111111-1111-1111-1111-111111111111",
-        agent_id="22222222-2222-2222-2222-222222222222",
-        agent_tools=None,  # Not provided upfront
-        on_agent_wire=AsyncMock(),
-    )
-
-    assert len(loop._agent_tools) == 0
-
-    # Simulate active integrations in DB
-    mock_db_res = MagicMock()
-    mock_db_res.scalars.return_value.all.return_value = ["GOOGLECALENDAR", "SLACK"]
-
-    with patch("server.db.connection.get_session_factory") as mock_sf:
-        mock_session = AsyncMock()
-        mock_session.execute = AsyncMock(return_value=mock_db_res)
-        mock_cm = AsyncMock()
-        mock_cm.__aenter__.return_value = mock_session
-        mock_sf.return_value = MagicMock(return_value=mock_cm)
-
-        with patch.object(loop, "_start_caller_stt_sidecar", MagicMock()):
-            with patch("server.realtime.voice_factory.realtime_voice_llm_provider", return_value=("gemini", {})):
-                mock_adapter = FakeRealtimeVoiceAdapter()
-                loop._injected_adapter = mock_adapter
-
-                try:
-                    await loop.start_call(play_greeting=False)
-                finally:
-                    await loop.close()
-
-    assert "GOOGLECALENDAR" in loop._agent_tools
-    assert "googlecalendar_find_slots" in loop._agent_tools
-    assert "SLACK" in loop._agent_tools
-    assert "slack_send_message" in loop._agent_tools
+    from server.services import tenant_tool_cache
+    monkeypatch.setattr("server.db.connection.get_session_factory", lambda: db)
+    tenant_tool_cache.invalidate(str(TID))
+    loop = PstnRealtimeVoiceLoop(session_id="test-discovery", call_id=None, tenant_id=str(TID), agent_id=str(AID),
+                                 agent_tools=None, on_agent_wire=AsyncMock())
+    loop._injected_adapter = FakeRealtimeVoiceAdapter()
+    try:
+        await loop.start_call(play_greeting=False)
+        assert "SLACK_SEND_MESSAGE" in loop._agent_tools
+        assert "SLACK" not in loop._agent_tools
+        assert "googlecalendar_create_event" not in loop._agent_tools
+    finally:
+        await loop.close()
 
 
 # ---------------------------------------------------------------------------
@@ -410,8 +305,8 @@ def test_compound_app_normalization_and_schema_discovery():
     assert "CALCOM_CREATE_BOOKING" in tool_names
 
     dispatch_names = get_tool_names_for_tenant(["google-calendar", "twilio-sms"])
-    assert "GOOGLECALENDAR" in dispatch_names
-    assert "TWILIO_SMS" in dispatch_names
+    assert "GOOGLECALENDAR" not in dispatch_names
+    assert "TWILIO_SMS" not in dispatch_names
     assert "googlecalendar_create_event" in dispatch_names
     assert "twilio_sms_send_message" in dispatch_names
 
@@ -420,42 +315,15 @@ def test_compound_app_normalization_and_schema_discovery():
 # Test 11: Webhook Resilience with Prefixed UUIDs and Dual Payload Formats
 # ---------------------------------------------------------------------------
 @pytest.mark.asyncio
-async def test_nango_webhook_prefixed_uuid_and_deletion():
-    """Verify nango_webhook handles tenant_ prefixed UUIDs and deletion events."""
-    from server.routes.integrations import nango_webhook
-    from fastapi import Request
-
-    raw_uuid = "11111111-2222-3333-4444-555555555555"
-    prefixed_user = f"tenant_{raw_uuid}"
-
-    payload = {
-        "operation": "creation",
-        "connectionId": "conn_real_456",
-        "providerConfigKey": "google-calendar",
-        "endUserId": prefixed_user,
-    }
-
-    mock_req = MagicMock(spec=Request)
-    mock_req.json = AsyncMock(return_value=payload)
-
-    with patch("server.routes.integrations.get_session_factory") as mock_sf:
-        mock_session = AsyncMock()
-        mock_session.add = MagicMock()
-        mock_chk = MagicMock()
-        mock_chk.scalar_one_or_none.return_value = None
-        mock_session.execute = AsyncMock(return_value=mock_chk)
-        mock_cm = AsyncMock()
-        mock_cm.__aenter__.return_value = mock_session
-        mock_sf.return_value = MagicMock(return_value=mock_cm)
-
-        res = await nango_webhook(mock_req)
-        assert res["status"] == "ok"
-        # Verify TenantIntegration was created with parsed UUID
-        added = mock_session.add.call_args[0][0]
-        import uuid
-        assert added.tenant_id == uuid.UUID(raw_uuid)
-        assert added.connection_id == "conn_real_456"
-        assert added.app_name == "GOOGLECALENDAR"
+async def test_nango_webhook_prefixed_uuid_and_deletion(client):
+    raw, headers = signed({"type": "auth", "operation": "creation", "success": True,
+                           "connectionId": "owned", "providerConfigKey": "slack", "tags": {"end_user_id": f"tenant_{TID}"}})
+    assert (await client.post("/api/integrations/nango-webhook", content=raw, headers=headers)).json()["status"] == "ignored"
+    raw, headers = signed({"type": "auth", "operation": "deletion", "success": True,
+                           "connectionId": "owned", "providerConfigKey": "slack", "tags": {"end_user_id": str(TID)}})
+    assert (await client.post("/api/integrations/nango-webhook", content=raw, headers=headers)).status_code == 200
+    response = await client.get("/api/integrations", headers={"authorization": "Bearer test-session"})
+    assert response.json()["items"] == []
 
 
 # ---------------------------------------------------------------------------
@@ -520,7 +388,7 @@ async def test_tenant_tool_cache_get_connection_id_query():
 
     mock_session = AsyncMock()
     mock_res = MagicMock()
-    mock_res.scalar_one_or_none.return_value = "conn_12345"
+    mock_res.scalar_one_or_none.return_value = SimpleNamespace(connection_id="conn_12345", metadata_={"gateway_verified": True})
     mock_session.execute.return_value = mock_res
 
     mock_factory = MagicMock()
@@ -558,8 +426,6 @@ async def test_post_call_pipeline_fallbacks_to_tenant_integrations():
 
     with patch("server.db.connection.get_session_factory", return_value=mock_factory):
         actions = await get_agent_post_call_actions(str(uuid.uuid4()), str(uuid.uuid4()))
-        assert "SLACK_SEND_MESSAGE" in actions
-        assert "SENDGRID_SEND_EMAIL" in actions
-        assert "HUBSPOT_CREATE_CONTACT" in actions
+        assert actions == []  # Connecting an app does not authorize automatic messages.
 
 

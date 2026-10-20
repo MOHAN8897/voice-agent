@@ -24,6 +24,31 @@
       },
       "updatedAt": 1792416372314
     },
+    "inline:a-tenant-must-complete-a-new-objection-concern-a-d840d1e5": {
+      "binding": {
+        "contains": "Complete the concern and response in objection rule 1",
+        "kind": "text",
+        "visible": true
+      },
+      "declaredAt": 1792472361149,
+      "id": "inline:a-tenant-must-complete-a-new-objection-concern-a-d840d1e5",
+      "provenBy": {
+        "at": 1792472361437,
+        "grade": "presence",
+        "runId": "drive-lease-dae744a3-4846-422e-8846-9d9a1f77d5d0",
+        "verdictId": "reticle_act_and_wait:1792472361437"
+      },
+      "state": "proved",
+      "statement": "A tenant must complete a new objection concern and reply before the draft can be published.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/modules/AgentStudioModule.jsx"
+        ]
+      },
+      "updatedAt": 1792472361463
+    },
     "inline:a-workspace-can-open-billing-and-review-wallet-a-03c2ac0b": {
       "binding": {
         "contains": "#dashboard/billing",
@@ -47,6 +72,56 @@
         ]
       },
       "updatedAt": 1791984829861
+    },
+    "inline:an-integration-requires-the-secure-connection-fo-11a61bb9": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "confirm-connect-btn"
+        }
+      },
+      "declaredAt": 1792469810194,
+      "id": "inline:an-integration-requires-the-secure-connection-fo-11a61bb9",
+      "provenBy": {
+        "at": 1792469810373,
+        "grade": "presence",
+        "runId": "drive-lease-e80a22b4-32b2-4ca0-b28d-22f449b7f800",
+        "verdictId": "reticle_act_and_wait:1792469810373"
+      },
+      "state": "proved",
+      "statement": "An integration requires the secure connection form before it can become connected.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/modules/IntegrationsModule.jsx"
+        ]
+      },
+      "updatedAt": 1792469810408
+    },
+    "inline:campaign-setup-validates-the-complete-contact-im-7e146ff7": {
+      "binding": {
+        "contains": "1 ready · 0 invalid · 0 duplicates",
+        "kind": "text"
+      },
+      "declaredAt": 1792502265269,
+      "id": "inline:campaign-setup-validates-the-complete-contact-im-7e146ff7",
+      "provenBy": {
+        "at": 1792502265544,
+        "grade": "presence",
+        "runId": "drive-sc0aa5f4d-7be4-456f-bf84-bb214c67b29b",
+        "verdictId": "reticle_act_and_wait:1792502265544"
+      },
+      "state": "proved",
+      "statement": "Campaign setup validates the complete contact import before launch. This run uses isolated synthetic API responses.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/ui/TactileButton.jsx"
+        ]
+      },
+      "updatedAt": 1792502265585
     },
     "inline:tenant-settings-exposes-phone-service-kyc-with-p-a3a16e03": {
       "binding": {
@@ -73,6 +148,44 @@
         ]
       },
       "updatedAt": 1792433459726
+    },
+    "inline:the-launched-synthetic-campaign-is-visible-in-th-9fa77178": {
+      "binding": {
+        "contains": "Isolated UI audit",
+        "kind": "text"
+      },
+      "declaredAt": 1792502330616,
+      "id": "inline:the-launched-synthetic-campaign-is-visible-in-th-9fa77178",
+      "provenBy": {
+        "at": 1792502330696,
+        "grade": "presence",
+        "runId": "drive-sc0aa5f4d-7be4-456f-bf84-bb214c67b29b",
+        "verdictId": "reticle_assert:1792502330696"
+      },
+      "state": "proved",
+      "statement": "The launched synthetic campaign is visible in the campaign list after the setup closes.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/ui/TactileButton.jsx"
+        ]
+      },
+      "updatedAt": 1792502330737
+    },
+    "primary-script-review": {
+      "declaredAt": 1792471243539,
+      "id": "primary-script-review",
+      "state": "declared",
+      "statement": "Tenants can review an unsaved calling script without saving it; publish failures retain their draft and show an error.",
+      "status": "proposed",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/modules/AgentStudioModule.jsx"
+        ]
+      },
+      "updatedAt": 1792471362441
     }
   },
   "subject": "console",

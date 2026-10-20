@@ -1,0 +1,47 @@
+{
+  "intents": {
+    "inline:campaigns-that-the-server-marks-completed-no-lon-0c4dd1d9": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "by": "text",
+              "value": "completed"
+            },
+            "state": "visible"
+          },
+          {
+            "absent": true,
+            "kind": "element",
+            "query": {
+              "name": "Pause campaign",
+              "role": "button"
+            }
+          },
+          {
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/analytics"
+          }
+        ]
+      },
+      "declaredAt": 1792518161515,
+      "id": "inline:campaigns-that-the-server-marks-completed-no-lon-0c4dd1d9",
+      "provenBy": {
+        "at": 1792518161643,
+        "grade": "net",
+        "runId": "drive-s31bbf201-9ed8-4de6-8f8e-8d90c7ed87b1",
+        "verdictId": "reticle_assert:1792518161643"
+      },
+      "state": "proved",
+      "statement": "Campaigns that the server marks completed no longer show a pause action.",
+      "status": "proved",
+      "subject": "analytics",
+      "updatedAt": 1792518161658
+    }
+  },
+  "subject": "analytics",
+  "version": 1
+}

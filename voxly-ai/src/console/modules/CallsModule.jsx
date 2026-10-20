@@ -848,7 +848,7 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                             {activeCall.gemini38LiveCostUsd != null ? `$${Number(activeCall.gemini38LiveCostUsd).toFixed(4)}` : (activeCall.costUsd != null ? `$${Number(activeCall.costUsd).toFixed(4)}` : '$0.000')}
                           </span>
                           <span className="text-[9px] text-[#524E5E]">
-                            Session audio & text tokens
+                            Session audio &amp; text tokens
                           </span>
                         </div>
                       </div>
@@ -923,7 +923,7 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                         <div className="flex items-center gap-2 py-1">
                           <WaveformSkeleton />
                           <span className="text-[11px] font-mono text-[#6344E7] animate-pulse">
-                            Analyzing audio transcript & outcomes…
+                            Analyzing audio transcript &amp; outcomes…
                           </span>
                         </div>
                       ) : activeCall.connected ? (

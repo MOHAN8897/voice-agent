@@ -9,12 +9,12 @@ export function StatusBadge({ status, size = 'sm', className = '' }) {
 
   let styles = 'bg-[#F0EEF6] text-[#524E5E] border-[#E4E2EB]';
   let dotColor = 'bg-[#524E5E]';
-  let label = status;
+  let label = String(status || 'Unknown').replaceAll('_', ' ');
 
   if (norm === 'active' || norm === 'qualified' || norm === 'meeting booked' || norm === 'resolved') {
     styles = 'bg-[#ECFDF5] text-[#047857] border-[#A7F3D0]';
     dotColor = 'bg-[#10B981]';
-  } else if (norm === 'paused' || norm === 'draft' || norm === 'idle' || norm === 'new') {
+  } else if (norm === 'paused' || norm === 'draft' || norm === 'idle' || norm === 'new' || norm === 'requires_review' || norm === 'blocked') {
     styles = 'bg-[#FFFBEB] text-[#92400E] border-[#FDE68A]';
     dotColor = 'bg-[#F59E0B]';
   } else if (norm === 'inbound') {

@@ -2,8 +2,24 @@
   "framework": "vite",
   "rewrites": [
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "source": "/support",
+      "destination": "/support/index.html"
+    },
+    {
+      "source": "/company",
+      "destination": "/company/index.html"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/privacy/index.html"
+    },
+    {
+      "source": "/terms",
+      "destination": "/terms/index.html"
+    },
+    {
+      "source": "/security",
+      "destination": "/security/index.html"
     }
   ],
   "headers": [
@@ -13,8 +29,36 @@
         {
           "key": "Permissions-Policy",
           "value": "camera=(), microphone=(self), geolocation=(), accelerometer=(), gyroscope=(), magnetometer=(), usb=(), serial=(), bluetooth=(), hid=(), midi=(), xr-spatial-tracking=()"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "frame-ancestors 'none'; object-src 'none'; base-uri 'self'"
         }
       ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/contact",
+      "destination": "/support",
+      "permanent": true
+    },
+    {
+      "source": "/about",
+      "destination": "/company",
+      "permanent": true
     }
   ]
 }

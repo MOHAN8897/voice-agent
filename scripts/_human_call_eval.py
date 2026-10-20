@@ -1,6 +1,11 @@
 """One-shot Test Studio brain eval — 25 human-call utterances."""
 from __future__ import annotations
 
+try:
+    from scripts.http_transport import safe_urlopen
+except ModuleNotFoundError:
+    from http_transport import safe_urlopen
+
 import json
 import sys
 import time
@@ -53,7 +58,7 @@ def _req(method: str, path: str, payload: dict | None = None, timeout: float = 9
     headers = {"Content-Type": "application/json", "Accept": "text/event-stream, application/json"}
     r = urllib.request.Request(BASE + path, data=data, headers=headers, method=method)
     try:
-        with urllib.request.urlopen(r, timeout=timeout) as resp:
+        with safe_urlopen(r, timeout=timeout) as resp:
             return resp.status, resp.read().decode("utf-8", errors="replace")
     except urllib.error.HTTPError as e:
         return e.code, e.read().decode("utf-8", errors="replace")

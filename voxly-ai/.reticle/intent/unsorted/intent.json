@@ -273,6 +273,22 @@
       },
       "updatedAt": 1790856351338
     },
+    "inline:a-tenant-can-launch-a-validated-campaign-once-an-cfab10fc": {
+      "binding": {
+        "absent": true,
+        "kind": "element",
+        "query": {
+          "testid": "campaign-setup"
+        }
+      },
+      "declaredAt": 1792502329341,
+      "id": "inline:a-tenant-can-launch-a-validated-campaign-once-an-cfab10fc",
+      "state": "bound",
+      "statement": "A tenant can launch a validated campaign once and return to the campaign list. Synthetic API fixtures prevent real calls.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1792502329383
+    },
     "inline:after-de-duplicating-the-landing-copy-the-voice-ebe61ed7": {
       "binding": {
         "kind": "signal",

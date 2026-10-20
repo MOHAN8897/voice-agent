@@ -17,7 +17,7 @@ export function TermsPage({ onBackToLanding, onEnterConsole, onNavigatePage }) {
           <div className="border-b border-[#E4E2EB] pb-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FAF9FD] border border-[#E4E2EB] text-xs font-semibold text-[#6344E7] mb-3">
               <Scale className="w-3.5 h-3.5" />
-              <span>Subscriber Agreement & Master Terms</span>
+              <span>Subscriber Agreement &amp; Master Terms</span>
             </div>
             <h1 className="text-3xl sm:text-4xl font-extrabold text-[#0F0E17] tracking-tight">
               Dialtact Terms of Service
@@ -38,7 +38,7 @@ export function TermsPage({ onBackToLanding, onEnterConsole, onNavigatePage }) {
 
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-[#0F0E17]">
-              2. Acceptable Use & Telecommunication Regulations
+              2. Acceptable Use &amp; Telecommunication Regulations
             </h2>
             <p className="text-sm text-[#524E5E] leading-relaxed">
               Subscribers agree not to use Dialtact telephony services to transmit unlawful robocalls, deceptive caller ID spoofing, unauthorized political or telemarketing spam, or harassment. Outbound calling campaigns must strictly honor National Do-Not-Call (DNC) registries, TCPA regulations, and STIR/SHAKEN caller verification standards.
@@ -47,7 +47,7 @@ export function TermsPage({ onBackToLanding, onEnterConsole, onNavigatePage }) {
 
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-[#0F0E17]">
-              3. Telephony Wallet, Credits & Billing Metering
+              3. Telephony Wallet, Credits &amp; Billing Metering
             </h2>
             <p className="text-sm text-[#524E5E] leading-relaxed">
               Telephony usage (including per-minute audio transport, LLM cognitive tokens, and telephone number leases) is billed against your prepaid workspace balance in integer minor units. Subscriptions renew monthly unless cancelled prior to the billing cycle expiration date.
@@ -65,7 +65,7 @@ export function TermsPage({ onBackToLanding, onEnterConsole, onNavigatePage }) {
 
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-[#0F0E17]">
-              5. Intellectual Property & Voice Customizations
+              5. Intellectual Property &amp; Voice Customizations
             </h2>
             <p className="text-sm text-[#524E5E] leading-relaxed">
               You retain all ownership rights in your proprietary prompts, business knowledge documents, and synthetic voice profile customizations. Dialtact retains all intellectual property rights in the underlying agentic execution runtime, speech synthesizer orchestration, and platform software.
@@ -74,7 +74,7 @@ export function TermsPage({ onBackToLanding, onEnterConsole, onNavigatePage }) {
 
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-[#0F0E17]">
-              6. Dispute Resolution & Contact
+              6. Dispute Resolution &amp; Contact
             </h2>
             <p className="text-sm text-[#524E5E] leading-relaxed">
               These terms are governed by the laws of the State of Delaware. For legal inquiries or contractual enterprise amendments, contact{' '}

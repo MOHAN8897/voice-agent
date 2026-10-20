@@ -1,10 +1,11 @@
-"""Post-call pipeline — outcome LLM after hang-up. Never blocks call/end."""
+"""Post-call pipeline â€” outcome LLM after hang-up. Never blocks call/end."""
 from __future__ import annotations
 
 import asyncio
 import json
 from datetime import datetime, timezone
 from typing import Any
+from weakref import WeakValueDictionary
 
 from server.call.call_context import get as get_ctx
 from server.call.call_ledger import call_ledger
@@ -25,9 +26,10 @@ from server.realtime.language_guard import filter_unrelated_scripts
 from server.realtime.models import http_openai_model, is_realtime_llm_model
 from server.utils.logger import logger
 
-_QUEUE: asyncio.Queue[tuple[str, bool]] = asyncio.Queue()
+_QUEUE: asyncio.Queue[tuple[str, bool]] = asyncio.Queue(maxsize=1024)
 _WORKER: asyncio.Task | None = None
-_CALL_LOCKS: dict[str, asyncio.Lock] = {}
+_CALL_LOCKS: WeakValueDictionary[str, asyncio.Lock] = WeakValueDictionary()
+_PENDING: dict[str, bool] = {}
 
 
 def _utcnow() -> str:
@@ -62,8 +64,16 @@ async def enqueue(call_id: str, *, force: bool = False) -> None:
         await call_store.update(call_id, {"finalization_status": "pending"})
     except Exception as exc:
         logger.warning(f"[CALL] failed to set pending finalization_status for {call_id}: {exc}")
-    await _QUEUE.put((call_id, force))
     _ensure_worker()
+    if call_id in _PENDING:
+        _PENDING[call_id] = _PENDING[call_id] or force
+        return
+    _PENDING[call_id] = force
+    try:
+        await _QUEUE.put((call_id, force))
+    except BaseException:
+        _PENDING.pop(call_id, None)
+        raise
 
 
 async def recover_pending_post_calls() -> int:
@@ -98,6 +108,7 @@ def _ensure_worker() -> None:
 async def _drain() -> None:
     while True:
         call_id, force = await _QUEUE.get()
+        force = _PENDING.pop(call_id, force) or force
         try:
             await run_outcome(call_id, force=force)
         except Exception as e:
@@ -115,18 +126,19 @@ async def process_now(call_id: str) -> dict[str, Any]:
 async def run_outcome(call_id: str, *, force: bool = False) -> dict[str, Any]:
     lock = _CALL_LOCKS.setdefault(call_id, asyncio.Lock())
     async with lock:
-        try:
-            existing = read_outcome(call_id)
-            if (
-                existing
-                and existing.get("generation_ok")
-                and existing.get("prompt_version") == "outcome_v3"
-                and not force
-            ):
-                return existing
-            return await _run_outcome_locked(call_id)
-        finally:
-            _CALL_LOCKS.pop(call_id, None)
+        existing = read_outcome(call_id)
+        if (
+            existing
+            and existing.get("generation_ok")
+            and existing.get("prompt_version") == "outcome_v3"
+            and not force
+        ):
+            if not existing.get("integration_dispatch_complete"):
+                await reconcile_and_dispatch_post_call(call_id, existing)
+                outcome_path(call_id).write_text(json.dumps(existing, ensure_ascii=False, indent=2), encoding="utf-8")
+                await _mark_outcome(call_id, "complete")
+            return existing
+        return await _run_outcome_locked(call_id)
 
 
 async def _run_outcome_locked(call_id: str) -> dict[str, Any]:
@@ -184,7 +196,6 @@ async def _run_outcome_locked(call_id: str) -> dict[str, Any]:
     _write_call_summary(call_id, payload)
     status = "complete" if error is None else "failed"
     await call_store.update(call_id, {"disposition": payload["disposition"]})
-    await _mark_outcome(call_id, status)
     # The judgement above is only useful if it lands in the CRM, attributed to the
     # agent that took the call. Runs last so a lead write can never invalidate the
     # outcome the console reads, and swallows its own errors for the same reason.
@@ -192,7 +203,10 @@ async def _run_outcome_locked(call_id: str) -> dict[str, Any]:
     try:
         await reconcile_and_dispatch_post_call(call_id, payload)
     except Exception as exc:
-        logger.warning("[POST_CALL] reconcile_and_dispatch_post_call failed for %s: %s", call_id, exc)
+        logger.warning("[POST_CALL] Integration dispatch interrupted: %s", type(exc).__name__)
+        raise
+    outcome_path(call_id).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    await _mark_outcome(call_id, status)
     return payload
 
 
@@ -395,107 +409,60 @@ async def get_agent_post_call_actions(tenant_id: str, agent_id: str) -> list[str
             )
             res = await session.execute(stmt)
             integrations = res.scalars().all()
-            DEFAULT_POST_CALL_ACTIONS: dict[str, list[str]] = {
-                "HUBSPOT": ["HUBSPOT_CREATE_CONTACT", "HUBSPOT_LOG_CALL_ENGAGEMENT"],
-                "SALESFORCE": ["SALESFORCE_CREATE_TASK"],
-                "SLACK": ["SLACK_SEND_MESSAGE"],
-                "GMAIL": ["GMAIL_SEND_EMAIL"],
-                "SENDGRID": ["SENDGRID_SEND_EMAIL"],
-                "MAILCHIMP": ["MAILCHIMP_ADD_SUBSCRIBER"],
-                "NOTION": ["NOTION_CREATE_PAGE"],
-                "CLICKUP": ["CLICKUP_CREATE_TASK"],
-                "ASANA": ["ASANA_CREATE_TASK"],
-                "DISCORD": ["DISCORD_SEND_MESSAGE"],
-                "WHATSAPP": ["WHATSAPP_SEND_MESSAGE"],
-                "TODOIST": ["TODOIST_CREATE_TASK"],
-                "MONDAY": ["MONDAY_CREATE_ITEM"],
-                "LINEAR": ["LINEAR_CREATE_ISSUE"],
-                "JIRA": ["JIRA_CREATE_ISSUE"],
-                "GITHUB": ["GITHUB_CREATE_ISSUE"],
-                "TRELLO": ["TRELLO_CREATE_CARD"],
-            }
-            actions: list[str] = []
-            if integrations:
-                for integ in integrations:
-                    if integ.action_whitelist:
-                        actions.extend(integ.action_whitelist)
-                    elif integ.app_name.upper() in DEFAULT_POST_CALL_ACTIONS:
-                        actions.extend(DEFAULT_POST_CALL_ACTIONS[integ.app_name.upper()])
-                return actions
-
-            # Fallback to active TenantIntegration records for tenant-level post-call apps
-            from server.db.models.integration_models import TenantIntegration
-            t_stmt = select(TenantIntegration.app_name).where(
-                TenantIntegration.tenant_id == uuid.UUID(str(tenant_id)),
-                TenantIntegration.status == "ACTIVE",
-            )
-            t_res = await session.execute(t_stmt)
-            for raw_app in t_res.scalars().all():
-                canonical = str(raw_app).upper().replace("-", "_")
-                if canonical in DEFAULT_POST_CALL_ACTIONS:
-                    actions.extend(DEFAULT_POST_CALL_ACTIONS[canonical])
-            return actions
+            from server.services.tool_schema_registry import _normalize, tool_definition
+            actions = set()
+            for integration in integrations:
+                # Connecting an app is not consent to automatic outbound messages.
+                for action in integration.action_whitelist or []:
+                    definition = tool_definition(action)
+                    if definition and definition[0] == _normalize(integration.app_name):
+                        actions.add(action.upper())
+            return sorted(actions)
     except Exception as exc:
         logger.warning("[POST_CALL] Failed to fetch agent post call actions: %s", exc)
         return []
 
 
 async def reconcile_and_dispatch_post_call(call_id: str, outcome: dict[str, Any]) -> None:
-    """Reconciles timed-out write tools and enqueues Tier-2 durable integrations."""
-    from datetime import datetime, timezone
+    """Execute explicitly configured actions using the durable write claim.
+
+    Unknown in-call results stay unknown. They require provider verification,
+    never a local status change or an automatic repeat of the external write.
+    """
+    import uuid
     from sqlalchemy import select
-    from server.call.call_store import call_store
-    from server.call.durable_job import DurableJob
     from server.db.connection import get_session_factory
     from server.db.models.integration_models import ToolExecution
+    from server.services.tool_router import tool_router
+    from server.services.tool_schema_registry import tool_definition
 
-    call_rec = await call_store.get(call_id)
-    if not call_rec:
+    record = await call_store.get(call_id)
+    if not record or not record.get("tenant_id") or not record.get("agent_id"):
         return
-
-    tenant_id = call_rec.get("tenant_id")
-    agent_id = call_rec.get("agent_id")
-    if not tenant_id or not agent_id:
-        return
-
-    # 1. RECONCILE TIMED-OUT WRITE ACTIONS (Split-brain recovery)
-    session_factory = get_session_factory()
-    if session_factory:
-        try:
-            async with session_factory() as session:
-                stmt = select(ToolExecution).where(
-                    ToolExecution.call_id == str(call_id),
-                    ToolExecution.status == "timed_out_pending",
-                )
-                res = await session.execute(stmt)
-                timed_out_items = res.scalars().all()
-                for item in timed_out_items:
-                    item.status = "reconciled"
-                    item.completed_at = datetime.now(timezone.utc)
-                    logger.info("[POST_CALL] Reconciled timed out tool execution %s (%s)", item.id, item.action)
-                if timed_out_items:
-                    await session.commit()
-        except Exception as exc:
-            logger.warning("[POST_CALL] Split-brain reconciliation failed for call %s: %s", call_id, exc)
-
-    # 2. DISPATCH TIER-2 DURABLE JOBS (HubSpot, Salesforce, Slack)
-    post_call_actions = await get_agent_post_call_actions(tenant_id=str(tenant_id), agent_id=str(agent_id))
-    payload = {
-        "call_id": call_id,
-        "caller_phone": call_rec.get("from_number") or call_rec.get("caller_e164") or "Unknown",
-        "duration_sec": call_rec.get("duration_sec", 0),
-        "disposition": outcome.get("disposition", "completed"),
-        "summary": outcome.get("summary_en") or outcome.get("summary_te") or "Call finalized.",
-        "extracted_fields": outcome.get("extracted_fields", {}),
-    }
-
-    for action in post_call_actions:
-        job = DurableJob(
-            call_id=call_id,
-            tenant_id=str(tenant_id),
-            job_type="nango_action",
-            payload={"action_name": action, **payload},
-            idempotency_key=f"nango:{action}:{call_id}",
+    tenant_id, agent_id = str(record["tenant_id"]), str(record["agent_id"])
+    factory = get_session_factory()
+    if factory is None:
+        raise RuntimeError("Integration tracking unavailable")
+    async with factory() as session:
+        pending = (await session.execute(select(ToolExecution).where(
+            ToolExecution.tenant_id == uuid.UUID(tenant_id), ToolExecution.call_id == str(call_id),
+            ToolExecution.status.in_(["initiated", "timed_out_pending"]),
+        ))).scalars().all()
+        outcome["integration_review_required"] = len(pending)
+    actions = await get_agent_post_call_actions(tenant_id, agent_id)
+    facts = outcome.get("extracted_fields") or {}
+    if not isinstance(facts, dict):
+        facts = {}
+    results = []
+    for action in actions:
+        definition = tool_definition(action)
+        properties = definition[1]["parameters"].get("properties", {})
+        # Only actual extracted values are used. Missing resource IDs, recipients
+        # or other required setup are rejected by the action schema.
+        arguments = {key: facts[key] for key in properties if key in facts}
+        result = await tool_router.route_and_execute(
+            tenant_id, agent_id, str(call_id), action, arguments, timing="post_call",
         )
-        logger.info("[POST_CALL] Enqueued durable integration %s (%s)", job.job_id, job.idempotency_key)
-
+        results.append({"action": action, "result": result})
+    outcome["integration_results"] = results
+    outcome["integration_dispatch_complete"] = True

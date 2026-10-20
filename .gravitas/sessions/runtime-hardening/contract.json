@@ -1,0 +1,73 @@
+{
+  "mode": "implement",
+  "objective": "Harden the Gemini Live and primary Vobiz PSTN script generation, language prompts, compiler and tenant script editor",
+  "policy": {
+    "planning": "deep",
+    "context_depth": "dependency",
+    "verification_depth": "impact",
+    "delegation": "none",
+    "reason_codes": [
+      "shared-runtime",
+      "tenant-isolation",
+      "security",
+      "multiple-subsystems"
+    ]
+  },
+  "allowed_write_scope": [
+    "server/prompts/",
+    "server/brain/",
+    "server/agent/",
+    "server/realtime/",
+    "server/services/",
+    "server/routes/",
+    "server/tests/",
+    "server/auth/",
+    "server/config/",
+    "server/db/connection.py",
+    "server/app.py",
+    "scripts/security_audit.py",
+    "docs/",
+    "pyproject.toml",
+    ".env.example",
+    "voxly-ai/src/services/voiceAgent.js",
+    "voxly-ai/src/console/modules/IntegrationsModule.jsx",
+    "voxly-ai/e2e/",
+    ".gravitas/sessions/runtime-hardening/",
+    "server/call/post_call_pipeline.py",
+    "server/utils/rate_limiter.py",
+    "voxly-ai/package.json",
+    "voxly-ai/package-lock.json",
+    "web/package.json",
+    "web/package-lock.json",
+    ".github/workflows/security-scans.yml",
+    "scripts/",
+    "voxly-ai/src/services/agentBrain.js",
+    "voxly-ai/src/console/modules/AgentStudioModule.jsx",
+    "voxly-ai/src/console/context/WorkspaceContext.jsx",
+    "voxly-ai/src/lib/",
+    "voxly-ai/src/console/modules/agent-workspace/",
+    "voxly-ai/scripts/",
+    "server/call/call_lifecycle_service.py",
+    ".gitignore"
+  ],
+  "acceptance_criteria": [
+    "All supported language packs and generation/runtime overlays are inspected; confirmed contradictions are removed with regression coverage",
+    "Long-speech and missing-turn-completion recovery is exercised without interrupting ongoing caller speech or duplicating a response",
+    "Integration activation and webhook processing fail closed; tools resolve tenant-owned connections and validated catalog actions",
+    "Advertised integration actions are mapped to implementation; provider errors do not fabricate success or availability",
+    "Confirmed scaling faults in the audited request/runtime paths are corrected and remaining infrastructure limits documented",
+    "SAST and targeted security regressions run; ZAP and Strix are attempted against an isolated authorized target or their exact blockers reported",
+    "Gemini selected for primary script generation never falls back to a secondary LLM",
+    "Editor preserves extra sections and unsaved edits across voice refreshes, reports publish errors, validates drafts and shows saved publication state"
+  ],
+  "boundaries": [
+    "No production config or data migrations",
+    "No live customer integration writes or paid PSTN calls; bounded synthetic Gemini API checks are authorized",
+    "No billing rate changes",
+    "No destructive remote actions",
+    "Do not claim all vulnerabilities eliminated or capacity proven without evidence",
+    "Latest steering: audit primary Gemini Live and new Vobiz PSTN only; do not inspect or test secondary provider/carrier flows",
+    "Preserve previously authorized hardening work; do not change production stacks or credentials"
+  ],
+  "verification": "targeted and affected regressions, static scan, isolated runtime checks"
+}

@@ -68,26 +68,19 @@ def is_incomplete_spoken_crumb(text: str) -> bool:
 LIVE_REPLY_BREVITY_RULE = (
     "LENGTH (natural phone speech):\n"
     "- Primary rule: 1–2 concise spoken sentences (8–25 words or natural Indic phrasing with polite markers; never truncate words to hit targets). Answer first.\n"
-    f"- Simple (yes / ack / thanks / wait): {LIVE_REPLY_MIN_CHARS}–{LIVE_REPLY_SIMPLE_MAX} characters.\n"
-    f"- Normal fact or answer: 30–{LIVE_REPLY_NORMAL_MAX} characters.\n"
-    f"- Objection: 30–{LIVE_REPLY_OBJECTION_MAX} characters.\n"
-    f"- Complex (ack + option + next step, or ack + one lead question): 70–{LIVE_REPLY_COMPLEX_MAX} characters.\n"
+    "- A short yes, acknowledgement or thanks is enough when it answers the caller; never pad it to a minimum length.\n"
     f"- Soft target {LIVE_REPLY_SOFT_MAX_CHARS}, hard ceiling {LIVE_REPLY_MAX_CHARS} characters; "
     "never cut a sentence merely to hit the soft target.\n"
     "- Sound human: a warm acknowledgment plus ONE next question — never two questions. Answer, then stop. "
-    "No monologues, brochure dumps, padding, or trailing extras after the question. "
+    "Use the caller's language naturally; do not count characters while speaking. No monologues, brochure dumps, padding, or trailing extras after the question. "
     "After you ask something, end the turn and wait. Finish the thought. "
     "Never paste a greeting then restart with a second greeting in the same reply."
 )
 
 # One-line form for LIVE CALL GUIDE / compact pointers (same numbers as above).
 LIVE_REPLY_BREVITY_COMPACT = (
-    "1–2 concise spoken sentences; normally 8–25 English words, or a concise Telugu/Hindi equivalent. "
-    "Answer first. Secondary character safety bands: "
-    f"LENGTH: simple {LIVE_REPLY_MIN_CHARS}–{LIVE_REPLY_SIMPLE_MAX}; "
-    f"normal 30–{LIVE_REPLY_NORMAL_MAX}; "
-    f"objection 30–{LIVE_REPLY_OBJECTION_MAX}; "
-    f"complex 70–{LIVE_REPLY_COMPLEX_MAX}; "
+    "1–2 concise spoken sentences, using natural phrasing in the configured language. "
+    "Answer first. A short acknowledgement needs no minimum length or padding. "
     f"soft target {LIVE_REPLY_SOFT_MAX_CHARS}, hard ceiling {LIVE_REPLY_MAX_CHARS}. "
     "Finish the sentence. Human phone speech — warm ack + at most one question."
 )

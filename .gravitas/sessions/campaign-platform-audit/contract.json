@@ -1,0 +1,60 @@
+{
+  "mode": "implement",
+  "objective": "Audit and fix primary concurrent Gemini/Vobiz calls, bulk campaigns, campaign UX, responsive UI, backend/website security and technical SEO",
+  "policy": {
+    "planning": "deep",
+    "context_depth": "dependency",
+    "verification_depth": "impact",
+    "delegation": "none",
+    "reason_codes": [
+      "money-and-customer-data",
+      "concurrency",
+      "multi-tenant-security",
+      "public-SEO",
+      "responsive-redesign"
+    ]
+  },
+  "allowed_write_scope": [
+    "server/",
+    "worker/",
+    "voxly-ai/src/",
+    "voxly-ai/e2e/",
+    "voxly-ai/scripts/",
+    "voxly-ai/public/",
+    "voxly-ai/index.html",
+    "voxly-ai/vite.config.js",
+    "voxly-ai/package.json",
+    "voxly-ai/package-lock.json",
+    "web/app/",
+    "web/lib/",
+    "web/components/",
+    "web/middleware.ts",
+    "web/next.config.mjs",
+    "web/package.json",
+    "web/package-lock.json",
+    "scripts/",
+    ".github/workflows/",
+    "docs/",
+    ".gitignore",
+    ".gravitas/sessions/campaign-platform-audit/",
+    "pyproject.toml",
+    "voxly-ai/vercel.json"
+  ],
+  "acceptance_criteria": [
+    "Primary campaign create/start/pause/resume/call execution traced through auth, tenant scopes, contact claims, concurrency capacity and completion",
+    "Confirmed duplicate-dial/concurrency/retry/cancellation faults fixed with isolated race/failure tests",
+    "Campaign setup uses fewer steps and preserves consent, validation and clear launch errors",
+    "Campaign flow and main website/console layouts verified at mobile/tablet/desktop sizes with keyboard and overflow checks",
+    "Auth, tenant access, uploads, URL fetching, rendering, webhooks, headers and dependency/secret surfaces reviewed and confirmed findings fixed",
+    "Public pages have consistent crawlable routing, canonical metadata, robots and sitemap; authenticated pages excluded from indexing",
+    "SAST/security regressions and available isolated DAST tools run with incomplete coverage reported explicitly"
+  ],
+  "boundaries": [
+    "Preserve prior uncommitted work",
+    "No production changes, data migrations, destructive data changes or billing-rate changes",
+    "No real customer calls, campaign launches or integration writes",
+    "Use primary Gemini/Vobiz flow; secondary provider flows are outside functional call audit",
+    "No claim of unlimited scale, legal compliance, guaranteed rankings or zero vulnerabilities",
+    "New external-URL scans require an explicitly authorized staging target; otherwise use isolated localhost"
+  ]
+}

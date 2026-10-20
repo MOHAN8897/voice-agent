@@ -32,6 +32,6 @@ CARTESIA_SPEECH_HINT = (
 # Sarvam Bulbul: native script + punctuated sentences; avoid bare long digit strings.
 SARVAM_SPEECH_HINT = (
     "Sarvam Bulbul needs punctuated sentences and native-script Indic words. "
-    "Write Indian amounts as English cardinal words (`rupees fifty lakhs`), not bare digits. "
+    "Speak amounts naturally in the selected language, preserving the supplied currency and units. "
     "Pace/temperature are API knobs only — there is no TTS system prompt."
 )

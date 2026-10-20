@@ -94,7 +94,7 @@ async def _vobiz_callback_tenant_id(payload: dict[str, Any]) -> str | None:
         payload.get("RequestUUID"), payload.get("request_uuid"), payload.get("outbound_id"),
     )
     for key in keys:
-        row = vobiz_call_registry.get(str(key or "")) if key else None
+        row = await asyncio.to_thread(vobiz_call_registry.get, str(key or "")) if key else None
         tenant_id = str((row or {}).get("vobiz_account_tenant_id") or (row or {}).get("tenant_id") or "").strip()
         if tenant_id:
             return tenant_id
@@ -161,7 +161,7 @@ async def _verify_vobiz_request(request: Request, payload: dict[str, Any]) -> No
     # The signed media token is a separate, high-entropy call-scoped authenticator.
     passed_token = str(request.query_params.get("token") or payload.get("token") or "")
     if passed_token:
-        token_meta = vobiz_stream_tokens.peek(passed_token)
+        token_meta = await asyncio.to_thread(vobiz_stream_tokens.peek, passed_token)
         call_uuid = str(payload.get("CallUUID") or payload.get("call_uuid") or payload.get("CallId") or "")
         if token_meta:
             expected_call = str(token_meta.get("call_uuid") or "")
@@ -171,7 +171,7 @@ async def _verify_vobiz_request(request: Request, payload: dict[str, Any]) -> No
         if request.url.path in {"/api/vobiz/hangup", "/api/vobiz/recording", "/api/vobiz/fallback"}:
             key = (payload.get("CallUUID") or payload.get("call_uuid") or payload.get("CallId")
                    or payload.get("RequestUUID") or payload.get("request_uuid") or payload.get("outbound_id"))
-            record = vobiz_call_registry.get(str(key)) if key else None
+            record = await asyncio.to_thread(vobiz_call_registry.get, str(key)) if key else None
             expected = str((record or {}).get("webhook_token") or (record or {}).get("token") or "")
             if expected and hmac.compare_digest(passed_token.encode(), expected.encode()):
                 return
@@ -208,7 +208,7 @@ async def vobiz_answer(request: Request):
 
     # 1. Resolve token and identifiers
     passed_token = str(q.get("token") or payload.get("token") or "")
-    token_meta = vobiz_stream_tokens.peek(passed_token) if passed_token else None
+    token_meta = await asyncio.to_thread(vobiz_stream_tokens.peek, passed_token) if passed_token else None
 
     outbound_id = str(q.get("outbound_id") or payload.get("outbound_id") or "")
     request_uuid = str(
@@ -245,11 +245,11 @@ async def vobiz_answer(request: Request):
     # 2. Retrieve existing call context from registry or token
     local_reg: dict[str, Any] = {}
     if call_uuid:
-        local_reg = vobiz_call_registry.get(call_uuid) or {}
+        local_reg = await asyncio.to_thread(vobiz_call_registry.get, call_uuid) or {}
     if not local_reg and request_uuid:
-        local_reg = vobiz_call_registry.get(request_uuid) or {}
+        local_reg = await asyncio.to_thread(vobiz_call_registry.get, request_uuid) or {}
     if not local_reg and outbound_id:
-        local_reg = vobiz_call_registry.get(outbound_id) or {}
+        local_reg = await asyncio.to_thread(vobiz_call_registry.get, outbound_id) or {}
 
     agent_id: str | None = (token_meta or {}).get("agent_id") or local_reg.get("agent_id")
     tenant_id: str | None = (token_meta or {}).get("tenant_id") or local_reg.get("tenant_id")
@@ -297,6 +297,48 @@ async def vobiz_answer(request: Request):
             logger.warning("Phone call denied at verification gate error_type=%s", type(exc).__name__)
             return Response(content='<Response><Hangup /></Response>', media_type="application/xml")
 
+    # 4b. Fail-closed quarantine enforcement: non-active tenants cannot receive or place calls
+    if tenant_id:
+        try:
+            from server.db.connection import get_session_factory
+            from server.db.models.entities import Tenant
+
+            factory = get_session_factory()
+            if factory is None:
+                raise RuntimeError("Tenant storage unavailable")
+            if factory:
+                async with factory() as session:
+                    t_row = await session.get(Tenant, uuid.UUID(tenant_id))
+                    if t_row is None or t_row.status != "active" or t_row.deleted_at is not None:
+                        log_pstn("vobiz.declined", call_uuid=call_uuid, reason="tenant_quarantined")
+                        xml = """<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Hangup reason="busy" />
+</Response>"""
+                        return Response(content=xml, media_type="application/xml")
+        except Exception as e:
+            logger.warning("Phone tenant check failed error_type=%s", type(e).__name__)
+            return Response(content='<Response><Hangup /></Response>', media_type="application/xml")
+
+    # 6. Check wallet balance if inbound payment wall is enabled
+    settings = get_settings()
+    if settings.pstn_enforce_wallet_on_inbound and tenant_id:
+        try:
+            from server.services.saas.billing_wallet_service import wallet_allows_inbound
+
+            allowed = await wallet_allows_inbound(uuid.UUID(tenant_id))
+            if not allowed:
+                log_pstn("vobiz.declined", call_uuid=call_uuid, reason="insufficient_balance")
+                xml = """<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Speak>The service account has an insufficient wallet balance. Please top up your account.</Speak>
+    <Hangup />
+</Response>"""
+                return Response(content=xml, media_type="application/xml")
+        except Exception as e:
+            logger.warning("Phone wallet check failed error_type=%s", type(e).__name__)
+            return Response(content='<Response><Hangup /></Response>', media_type="application/xml")
+
     # 4. Inbound policy check (business hours, voicemail, transfer, decline)
     if direction == "inbound" and profile:
         try:
@@ -321,27 +363,8 @@ async def vobiz_answer(request: Request):
 </Response>"""
                 return Response(content=xml, media_type="application/xml")
         except Exception as e:
-            logger.warning("[VOBIZ] inbound policy evaluation notice: %s", e)
-
-    # 4b. Fail-closed quarantine enforcement: non-active tenants cannot receive or place calls
-    if tenant_id:
-        try:
-            from server.db.connection import get_session_factory
-            from server.db.models.entities import Tenant
-
-            factory = get_session_factory()
-            if factory:
-                async with factory() as session:
-                    t_row = await session.get(Tenant, uuid.UUID(tenant_id))
-                    if t_row and t_row.status != "active":
-                        log_pstn("vobiz.declined", call_uuid=call_uuid, reason="tenant_quarantined")
-                        xml = """<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-    <Hangup reason="busy" />
-</Response>"""
-                        return Response(content=xml, media_type="application/xml")
-        except Exception as e:
-            logger.warning("[VOBIZ] tenant quarantine check error: %s", e)
+            logger.warning("Phone policy check failed error_type=%s", type(e).__name__)
+            return Response(content='<Response><Hangup /></Response>', media_type="application/xml")
 
     # 5. Handle unassigned numbers without cross-tenant agent leakage
     if not agent_id:
@@ -362,27 +385,20 @@ async def vobiz_answer(request: Request):
 </Response>"""
             return Response(content=xml, media_type="application/xml")
 
-    # 6. Check wallet balance if inbound payment wall is enabled
-    settings = get_settings()
-    if settings.pstn_enforce_wallet_on_inbound and tenant_id:
-        try:
-            from server.services.saas.billing_wallet_service import wallet_allows_inbound
-
-            allowed = await wallet_allows_inbound(uuid.UUID(tenant_id))
-            if not allowed:
-                log_pstn("vobiz.declined", call_uuid=call_uuid, reason="insufficient_balance")
-                xml = """<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-    <Speak>The service account has an insufficient wallet balance. Please top up your account.</Speak>
-    <Hangup />
-</Response>"""
-                return Response(content=xml, media_type="application/xml")
-        except Exception as e:
-            logger.warning("[VOBIZ] wallet balance check fallback: %s", e)
-
     # 7. Create or update single-use stream token
     from server.call.billing_timing import utc_timestamp
     answered_at = utc_timestamp(payload.get("AnswerTime") or payload.get("answer_time"))
+    admission_key = (token_meta or {}).get("admission_key") or local_reg.get("admission_key")
+    admission_tenant_id = (token_meta or {}).get("admission_tenant_id") or local_reg.get("admission_tenant_id") or tenant_id
+    if direction == "inbound" and tenant_id and not admission_key:
+        from server.services.saas.call_admission import reserve, finish
+        try:
+            admission_key, _ = await reserve(uuid.UUID(str(tenant_id)), f"inbound:{call_uuid}",
+                provider="vobiz", payload={"direction": "inbound", "agent": agent_id, "call": call_uuid})
+            await finish(admission_key, uuid.UUID(str(tenant_id)), result={"ok": True, "call_control_id": call_uuid})
+        except Exception as exc:
+            logger.warning("Inbound call admission denied error_type=%s", type(exc).__name__)
+            return Response(content='<Response><Hangup /></Response>', media_type="application/xml")
     if passed_token and token_meta:
         token = passed_token
         token_meta.update({
@@ -401,10 +417,12 @@ async def vobiz_answer(request: Request):
             "source_session_id": source_session_id,
             "provider": "vobiz",
             "answered_at": answered_at,
+            "admission_key": admission_key,
+            "admission_tenant_id": admission_tenant_id,
         })
-        vobiz_stream_tokens.put(token, **token_meta)
+        await asyncio.to_thread(vobiz_stream_tokens.put, token, **token_meta)
     else:
-        token = vobiz_stream_tokens.create(
+        token = await asyncio.to_thread(vobiz_stream_tokens.create,
             call_uuid=call_uuid,
             request_uuid=request_uuid,
             from_number=from_number,
@@ -420,6 +438,9 @@ async def vobiz_answer(request: Request):
             source_session_id=source_session_id,
             provider="vobiz",
             answered_at=answered_at,
+            contact=(token_meta or {}).get("contact") or local_reg.get("contact"),
+            admission_key=admission_key,
+            admission_tenant_id=admission_tenant_id,
         )
 
     # 8. Construct secure WebSocket URL
@@ -445,14 +466,22 @@ async def vobiz_answer(request: Request):
         "answered_at": answered_at,
         "stream_url": stream_ws_url,
         "webhook_token": token,
+        "contact": (token_meta or {}).get("contact") or local_reg.get("contact"),
+        "admission_key": admission_key,
+        "admission_tenant_id": admission_tenant_id,
     }
-    vobiz_call_registry.upsert(call_uuid, session_data)
+    await asyncio.to_thread(vobiz_call_registry.upsert, call_uuid, session_data)
     if request_uuid and request_uuid != call_uuid:
-        vobiz_call_registry.upsert(request_uuid, session_data)
-        vobiz_call_registry.alias(request_uuid, call_uuid)
+        await asyncio.to_thread(vobiz_call_registry.upsert, request_uuid, session_data)
+        await asyncio.to_thread(vobiz_call_registry.alias, request_uuid, call_uuid)
     if outbound_id and outbound_id not in (call_uuid, request_uuid):
-        vobiz_call_registry.upsert(outbound_id, session_data)
-        vobiz_call_registry.alias(outbound_id, call_uuid)
+        await asyncio.to_thread(vobiz_call_registry.upsert, outbound_id, session_data)
+        await asyncio.to_thread(vobiz_call_registry.alias, outbound_id, call_uuid)
+
+    if admission_key and admission_tenant_id:
+        from server.services.saas.call_admission import provider_event
+        await provider_event(tenant_id=uuid.UUID(str(admission_tenant_id)), key=admission_key,
+                             carrier_ids=(call_uuid, request_uuid), status="answered")
 
     return _build_vobiz_xml_response(stream_ws_url)
 
@@ -500,7 +529,7 @@ async def vobiz_hangup(request: Request):
 
     log_pstn("vobiz.hangup", call_uuid=call_uuid, request_uuid=request_uuid, duration=duration_sec, cause=hangup_cause)
     if call_uuid:
-        vobiz_call_registry.upsert(
+        await asyncio.to_thread(vobiz_call_registry.upsert,
             call_uuid,
             {
                 "ended": True,
@@ -510,7 +539,7 @@ async def vobiz_hangup(request: Request):
             },
         )
     if request_uuid and request_uuid != call_uuid:
-        vobiz_call_registry.upsert(
+        await asyncio.to_thread(vobiz_call_registry.upsert,
             request_uuid,
             {
                 "ended": True,
@@ -525,7 +554,7 @@ async def vobiz_hangup(request: Request):
 
     bridge = active_vobiz_bridges.get(call_uuid) or (active_vobiz_bridges.get(request_uuid) if request_uuid else None)
     if not bridge and call_uuid:
-        reg = vobiz_call_registry.get(call_uuid)
+        reg = await asyncio.to_thread(vobiz_call_registry.get, call_uuid)
         if reg:
             for k in (reg.get("aliased_to"), reg.get("outbound_id"), reg.get("call_uuid")):
                 if k and str(k) in active_vobiz_bridges:
@@ -536,7 +565,15 @@ async def vobiz_hangup(request: Request):
 
     # Callback Duration may include ringing. Only an explicit billsec field is
     # a billing clock; the CDR reconciler supplies authoritative talk time/cost.
-    local = vobiz_call_registry.get(call_uuid) or vobiz_call_registry.get(request_uuid) or {}
+    local = await asyncio.to_thread(vobiz_call_registry.get, call_uuid) or await asyncio.to_thread(vobiz_call_registry.get, request_uuid) or {}
+    token_meta = await asyncio.to_thread(vobiz_stream_tokens.peek, str(request.query_params.get("token") or "")) or {}
+    admission_tenant_id = (local.get("admission_tenant_id") or token_meta.get("admission_tenant_id")
+        or local.get("tenant_id") or await _vobiz_callback_tenant_id(payload))
+    if admission_tenant_id:
+        from server.services.saas.call_admission import provider_event
+        await provider_event(tenant_id=uuid.UUID(str(admission_tenant_id)),
+            key=local.get("admission_key") or token_meta.get("admission_key"),
+            carrier_ids=(call_uuid, request_uuid), status="ended")
     internal_id = (bridge.call_id if bridge else None) or local.get("internal_call_id")
     if internal_id:
         from server.call.billing_timing import mark_call_disconnected
@@ -566,7 +603,7 @@ async def vobiz_recording(request: Request):
     logger.info("[VOBIZ] recording callback call=%s has_recording=%s", call_uuid, bool(record_url))
 
     if call_uuid and record_url:
-        vobiz_call_registry.upsert(call_uuid, {"recording_url": record_url})
+        await asyncio.to_thread(vobiz_call_registry.upsert, call_uuid, {"recording_url": record_url})
         try:
             from server.call.call_ledger import call_ledger
 

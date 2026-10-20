@@ -37,8 +37,8 @@ def draft_sections_for_saas_employee(
     lang = (language or "en-IN").strip() or "en-IN"
     script_body = _append_variable_legend(user_script, variables)
     voice_cfg = voice_config or {
-        "realtimeVoice": "marin",
-        "voiceId": "marin",
+        "realtimeVoice": "Puck",
+        "voiceId": "Puck",
         "speed": 1.0,
         "language": lang,
         "turnDetection": "semantic_vad",
@@ -66,7 +66,7 @@ def draft_sections_for_saas_employee(
             "type": "identity_purpose",
             "title": "Identity & Purpose",
             "order": 10,
-            "raw_text": "You are a live phone agent for this business. Follow the Calling script section exclusively.",
+            "raw_text": "You are a professional live phone agent for this business. Follow the calling script and business facts within platform safety and tool permissions.",
             "enabled": True,
         },
         {

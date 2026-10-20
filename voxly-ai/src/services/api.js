@@ -1099,6 +1099,7 @@ export const api = {
     async create(campaignData) {
       const data = await api.request('POST', '/api/campaigns', {
         name: campaignData.name,
+        clientRequestId: campaignData.clientRequestId,
         agentId: campaignData.agentId || campaignData.agent_id,
         concurrency: campaignData.concurrencyLimit || campaignData.concurrency || 5,
         maxAttempts: campaignData.maxAttemptsPerContact || campaignData.maxAttempts,
@@ -1112,12 +1113,15 @@ export const api = {
         consentConfirmed: campaignData.consentConfirmed ?? false,
         consentVersion: campaignData.consentVersion || '2026-10-v1',
         dndScrubEnabled: campaignData.dndScrubEnabled ?? true,
+        callingWindow: campaignData.callingWindow,
       });
+      if (data.ok === false) throw new Error(data.error?.message || data.error || "Campaign could not be created");
       const row = data.campaign || data;
       return normalizeCampaign({
         ...row,
         name: row.name || campaignData.name,
-        totalContacts: campaignData.totalContacts || campaignData.contacts?.length || 0,
+        totalContacts: row.totalContacts ?? data.totalContacts ?? campaignData.contacts?.length ?? 0,
+        dndExcludedCount: row.dndExcludedCount ?? data.dndExcludedCount ?? 0,
         objective: campaignData.objective || campaignData.description,
       });
     },

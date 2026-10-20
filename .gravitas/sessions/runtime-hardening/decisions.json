@@ -1,0 +1,26 @@
+[
+  {
+    "action": "Correct integration setup and execution",
+    "reason": "Unsigned callbacks, arbitrary connection IDs, fake key activation and unclaimed writes were traced",
+    "risk": "security behavior change; legacy connections require verification",
+    "production_mutation": false
+  },
+  {
+    "action": "Harden post-call queue and dispatch",
+    "reason": "Queue is unbounded, lock is removed while waiters may exist, durable jobs only constructed and logged without execution",
+    "risk": "reversible runtime fixes; unknown external writes must never be replayed",
+    "production_mutation": false
+  },
+  {
+    "action": "Bound rate limiter state",
+    "reason": "Sliding windows never evict inactive keys",
+    "risk": "in-memory only; shared limit enforcement still requires an external edge limiter",
+    "production_mutation": false
+  },
+  {
+    "action": "Complete primary Gemini script generation, publish and editor fixes",
+    "reason": "Traced provider-changing retries, lossy brief summaries, published-draft promotion, stale locale footer, dropped editor sections and fabricated objection templates",
+    "risk": "Reversible code changes; no production configuration or customer mutations",
+    "production_mutation": false
+  }
+]

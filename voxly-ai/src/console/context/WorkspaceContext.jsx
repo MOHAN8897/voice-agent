@@ -457,6 +457,7 @@ export function WorkspaceProvider({ children }) {
           recordingDisclosureEnabled: updates.recordingDisclosureEnabled,
           recordingDisclosureText: updates.recordingDisclosureText,
         });
+        let publication = null;
         if (
           updates.script ||
           updates.greeting ||
@@ -465,12 +466,12 @@ export function WorkspaceProvider({ children }) {
           updates.boundaries?.length ||
           updates.variableDefinitions?.length
         ) {
-          await saveAndPublishAgentBrain(agentId, updates);
+          publication = await saveAndPublishAgentBrain(agentId, updates);
         }
         setAgents((prev) =>
           prev.map((a) => (a.id === agentId ? { ...a, ...updates, ...(updated || {}) } : a))
         );
-        return updated;
+        return { ...updated, publication };
       }
       setAgents((prev) =>
         prev.map((a) => (a.id === agentId ? { ...a, ...updates, updatedAt: new Date().toISOString() } : a))
@@ -789,17 +790,6 @@ export function WorkspaceProvider({ children }) {
   // ----------------------------------------------------------------
   const createCampaign = async (campaignData) => {
     const created = await api.campaigns.create(campaignData);
-    // If backend did not handle contacts or legacy caller passed contacts without backend support:
-    if (campaignData.contacts?.length && !created.totalContacts) {
-      await api.campaigns.importContacts(created.id, campaignData.contacts);
-    }
-    if (campaignData.autoStart && created.status !== 'running') {
-      try {
-        await api.campaigns.start(created.id);
-      } catch {
-        /* already started or starting */
-      }
-    }
     await loadWorkspaceData();
     return created;
   };
@@ -814,7 +804,15 @@ export function WorkspaceProvider({ children }) {
     await loadWorkspaceData();
   };
 
-  const fetchCampaignAnalytics = async (campaignId) => api.campaigns.analytics(campaignId);
+  const fetchCampaignAnalytics = async (campaignId) => {
+    const result = await api.campaigns.analytics(campaignId);
+    if (['draft', 'running', 'paused', 'cancelled', 'completed', 'requires_review'].includes(result?.status)) {
+      setCampaigns((previous) => previous.some((campaign) => campaign.id === campaignId && campaign.status !== result.status)
+        ? previous.map((campaign) => campaign.id === campaignId ? { ...campaign, status: result.status } : campaign)
+        : previous);
+    }
+    return result;
+  };
 
   const toggleCampaignStatus = async (campaignId) => {
     const current = campaigns.find((c) => c.id === campaignId);

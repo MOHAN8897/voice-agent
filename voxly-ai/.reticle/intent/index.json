@@ -1,6 +1,18 @@
 {
   "entries": [
     {
+      "id": "inline:campaigns-that-the-server-marks-completed-no-lon-0c4dd1d9",
+      "statement": "Campaigns that the server marks completed no longer show a pause action.",
+      "status": "proved",
+      "subject": "analytics"
+    },
+    {
+      "id": "inline:a-failed-integration-authorization-leaves-it-dis-7ed7502f",
+      "statement": "A failed integration authorization leaves it disconnected, shows an err…",
+      "status": "proved",
+      "subject": "api"
+    },
+    {
       "id": "inline:a-fresh-provider-approved-kyc-status-replaces-th-5ee18213",
       "statement": "A fresh provider-approved KYC status replaces the verification form wit…",
       "status": "proved",
@@ -13,8 +25,20 @@
       "subject": "api"
     },
     {
+      "id": "inline:a-failed-script-publication-must-show-an-error-a-93b77cb5",
+      "statement": "A failed script publication must show an error and leave the tenant's e…",
+      "status": "proposed",
+      "subject": "business-brain"
+    },
+    {
       "id": "inline:a-browser-test-call-reaches-a-connected-listen-o-2133b570",
       "statement": "A browser test call reaches a connected listen-only state when micropho…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:a-tenant-must-complete-a-new-objection-concern-a-d840d1e5",
+      "statement": "A tenant must complete a new objection concern and reply before the dra…",
       "status": "proved",
       "subject": "console"
     },
@@ -25,9 +49,33 @@
       "subject": "console"
     },
     {
+      "id": "inline:an-integration-requires-the-secure-connection-fo-11a61bb9",
+      "statement": "An integration requires the secure connection form before it can become…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:campaign-setup-validates-the-complete-contact-im-7e146ff7",
+      "statement": "Campaign setup validates the complete contact import before launch. Thi…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
       "id": "inline:tenant-settings-exposes-phone-service-kyc-with-p-a3a16e03",
       "statement": "Tenant settings exposes phone-service KYC with persisted business ident…",
       "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:the-launched-synthetic-campaign-is-visible-in-th-9fa77178",
+      "statement": "The launched synthetic campaign is visible in the campaign list after t…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "primary-script-review",
+      "statement": "Tenants can review an unsaved calling script without saving it; publish…",
+      "status": "proposed",
       "subject": "console"
     },
     {
@@ -59,6 +107,12 @@
       "statement": "Business hours and timezone saved from the agent workspace reach the sa…",
       "status": "proposed",
       "subject": "drive-business-hours-and-timezone-saved"
+    },
+    {
+      "id": "flow:drive-campaign-setup-validates-the-complete-contact-im",
+      "statement": "Campaign setup validates the complete contact import before launch. Thi…",
+      "status": "proved",
+      "subject": "drive-campaign-setup-validates-the-compl"
     },
     {
       "id": "flow:drive-changing-a-lead-s-pipeline-stage-from-the-agent",
@@ -139,6 +193,24 @@
       "subject": "drive-the-open-builder-action-on-an-agen"
     },
     {
+      "id": "inline:public-footer-links-open-the-privacy-page-at-a-c-ade9b80b",
+      "statement": "Public footer links open the privacy page at a crawlable URL.",
+      "status": "proved",
+      "subject": "privacy"
+    },
+    {
+      "id": "inline:visitors-can-read-a-main-heading-on-the-public-s-c83ab695",
+      "statement": "Visitors can read a main heading on the public support URL.",
+      "status": "proposed",
+      "subject": "support"
+    },
+    {
+      "id": "inline:visitors-can-read-the-main-support-heading-at-th-a7155303",
+      "statement": "Visitors can read the main support heading at the public support URL.",
+      "status": "proved",
+      "subject": "support"
+    },
+    {
       "id": "inline:a-deployment-whose-mail-provider-cannot-deliver-4c2a706c",
       "statement": "a deployment whose mail provider cannot deliver says so, and hands back…",
       "status": "proved",
@@ -178,6 +250,12 @@
       "id": "inline:a-subscriber-whose-session-token-pointed-at-a-de-26a03115",
       "statement": "A subscriber whose session token pointed at a deleted workspace ends up…",
       "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:a-tenant-can-launch-a-validated-campaign-once-an-cfab10fc",
+      "statement": "A tenant can launch a validated campaign once and return to the campaig…",
+      "status": "proposed",
       "subject": "unsorted"
     },
     {

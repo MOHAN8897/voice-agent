@@ -230,7 +230,7 @@ export function BillingModule() {
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-bold text-[#0F0E17] tracking-tight">
-          Wallet & per-second billing
+          Wallet &amp; per-second billing
         </h2>
         <p className="text-xs text-[#524E5E] mt-0.5">
           Pay-as-you-go wallet. Phone and browser calls meter by the second; unanswered carrier legs are free.

@@ -1,0 +1,31 @@
+{
+  "intents": {
+    "inline:public-footer-links-open-the-privacy-page-at-a-c-ade9b80b": {
+      "binding": {
+        "kind": "route",
+        "pathname": "/privacy"
+      },
+      "declaredAt": 1792505872020,
+      "id": "inline:public-footer-links-open-the-privacy-page-at-a-c-ade9b80b",
+      "provenBy": {
+        "at": 1792505879329,
+        "grade": "presence",
+        "runId": "drive-sccc68f9d-b50d-4aa5-9897-05472d6cc3f6",
+        "verdictId": "reticle_act_and_wait:1792505879329"
+      },
+      "state": "proved",
+      "statement": "Public footer links open the privacy page at a crawlable URL.",
+      "status": "proved",
+      "subject": "privacy",
+      "surface": {
+        "files": [
+          "src/components/Footer.jsx"
+        ],
+        "route": "/privacy"
+      },
+      "updatedAt": 1792505879580
+    }
+  },
+  "subject": "privacy",
+  "version": 1
+}

@@ -208,11 +208,12 @@ async def subscriber_outbound(
         async with factory() as session:
             tenant = await session.get(Tenant, principal.tenant_id)
             limits = (tenant.limits or {}) if tenant else {}
-    await assert_concurrent_limit(principal.tenant_id, limits)
+    if provider != "vobiz":
+        await assert_concurrent_limit(principal.tenant_id, limits)
 
     guard = telephony_guard_error(provider)
     if guard:
-        return {"ok": False, "error": guard, "provider": provider}
+        return {"ok": False, "error": "Phone service is temporarily unavailable. Please contact support.", "code": "phone_service_unavailable"}
 
     stack = await saas_stack_override_for_agent(agent)
     lang = str(stack.get("language") or (agent.get("languages") or ["te-IN"])[0])
@@ -276,6 +277,23 @@ async def subscriber_outbound(
                 },
             )
 
+    if provider == "vobiz":
+        from server.routes.dev_telephony import _outbound_vobiz
+        from server.services.saas.call_admission import execute
+
+        async def dial(admission_key):
+            body.admission_key = admission_key
+            result = await _outbound_vobiz(body, session_stub, number_tenant_id=workspace_tid)
+            if isinstance(result, dict) and not result.get("ok"):
+                result["error"] = _sanitize_tenant_dial_error(str(result.get("error") or ""))
+            return result
+
+        return await execute(
+            tenant_id=principal.tenant_id, request_id=dial_request_id, provider=provider,
+            payload={"agent": agent_id, "from": resolved_from, "to": to_number, "stack": stack, "contact": contact},
+            operation=dial,
+        )
+
     if not await acquire_outbound_slot(provider, to_number):
         return {
             "ok": False,
@@ -291,19 +309,6 @@ async def subscriber_outbound(
                 scope=f"app:{principal.tenant_id}:{principal.user_id}:{provider}",
                 payload={"agent": agent_id, "from": resolved_from, "to": to_number, "stack": stack},
                 operation=lambda: _outbound_telnyx(body, session_stub),
-            )
-        elif provider == "vobiz":
-            from server.routes.dev_telephony import _outbound_vobiz
-            from server.services.outbound_dial_attempt import execute_dial_attempt
-            res = await execute_dial_attempt(
-                request_id=dial_request_id,
-                scope=f"app:{principal.tenant_id}:{principal.user_id}:{provider}",
-                payload={"agent": agent_id, "from": resolved_from, "to": to_number, "stack": stack},
-                operation=lambda: _outbound_vobiz(
-                    body,
-                    session_stub,
-                    number_tenant_id=workspace_tid,
-                ),
             )
         else:
             return {"ok": False, "error": f"Provider {provider} not supported for subscriber PSTN yet"}

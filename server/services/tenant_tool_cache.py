@@ -9,13 +9,18 @@ from __future__ import annotations
 import asyncio
 import time
 import uuid as _uuid
+from collections import OrderedDict
 from typing import Any
+from weakref import WeakValueDictionary
 
 from server.utils.logger import logger
 
 _TTL_SECONDS = 60
-_cache: dict[str, tuple[list[str], float]] = {}
+_MAX_CACHED_TENANTS = 2048
+_cache: OrderedDict[str, tuple[list[str], float]] = OrderedDict()
 _lock = asyncio.Lock()
+_flights: WeakValueDictionary[str, asyncio.Lock] = WeakValueDictionary()
+_epoch = 0
 
 
 async def get_active_app_names(tenant_id: str, session_factory: Any | None) -> list[str]:
@@ -23,15 +28,23 @@ async def get_active_app_names(tenant_id: str, session_factory: Any | None) -> l
     Return app_names of ACTIVE integrations for a tenant.
     Results are cached for TTL_SECONDS per tenant_id.
     """
-    async with _lock:
-        cached_apps, cached_at = _cache.get(tenant_id, (None, 0.0))
-        if cached_apps is not None and (time.monotonic() - cached_at) < _TTL_SECONDS:
-            return cached_apps
-
-    apps = await _query_db(tenant_id, session_factory)
-    async with _lock:
-        _cache[tenant_id] = (apps, time.monotonic())
-    return apps
+    flight = _flights.setdefault(tenant_id, asyncio.Lock())
+    async with flight:
+        async with _lock:
+            cached_apps, cached_at = _cache.get(tenant_id, (None, 0.0))
+            if cached_apps is not None and (time.monotonic() - cached_at) < _TTL_SECONDS:
+                _cache.move_to_end(tenant_id)
+                return list(cached_apps)
+            _cache.pop(tenant_id, None)
+            epoch = _epoch
+        apps = await _query_db(tenant_id, session_factory)
+        async with _lock:
+            if epoch == _epoch:
+                _cache[tenant_id] = (list(apps), time.monotonic())
+                _cache.move_to_end(tenant_id)
+                while len(_cache) > _MAX_CACHED_TENANTS:
+                    _cache.popitem(last=False)
+        return list(apps)
 
 
 async def _query_db(tenant_id: str, session_factory: Any | None) -> list[str]:
@@ -43,14 +56,14 @@ async def _query_db(tenant_id: str, session_factory: Any | None) -> list[str]:
 
         async with session_factory() as session:
             res = await session.execute(
-                select(TenantIntegration.app_name).where(
+                select(TenantIntegration).where(
                     TenantIntegration.tenant_id == _uuid.UUID(str(tenant_id)),
                     TenantIntegration.status == "ACTIVE",
                 )
             )
-            return list(res.scalars().all())
+            return [i.app_name for i in res.scalars().all() if (i.metadata_ or {}).get("gateway_verified") is True]
     except Exception as exc:
-        logger.warning("[TENANT_TOOL_CACHE] DB query failed for tenant %s: %s", tenant_id, exc)
+        logger.warning("[TENANT_TOOL_CACHE] DB query failed: %s", type(exc).__name__)
         return []
 
 
@@ -69,7 +82,7 @@ async def get_connection_id(tenant_id: str, app_name: str, session_factory: Any 
         stripped = canonical.replace("_", "")
         async with session_factory() as session:
             res = await session.execute(
-                select(TenantIntegration.connection_id).where(
+                select(TenantIntegration).where(
                     TenantIntegration.tenant_id == _uuid.UUID(str(tenant_id)),
                     or_(
                         func.upper(TenantIntegration.app_name) == canonical,
@@ -80,12 +93,15 @@ async def get_connection_id(tenant_id: str, app_name: str, session_factory: Any 
                     TenantIntegration.status == "ACTIVE",
                 )
             )
-            return res.scalar_one_or_none()
+            record = res.scalar_one_or_none()
+            return record.connection_id if record and (record.metadata_ or {}).get("gateway_verified") is True else None
     except Exception as exc:
-        logger.warning("[TENANT_TOOL_CACHE] connection_id lookup failed: %s", exc)
+        logger.warning("[TENANT_TOOL_CACHE] connection lookup failed: %s", type(exc).__name__)
         return None
 
 
 def invalidate(tenant_id: str) -> None:
     """Invalidate a tenant's cache entry (call after integration connect/disconnect)."""
+    global _epoch
+    _epoch += 1
     _cache.pop(tenant_id, None)

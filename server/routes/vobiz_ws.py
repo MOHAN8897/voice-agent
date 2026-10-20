@@ -1,7 +1,9 @@
 """Vobiz Media Stream WebSocket endpoint — handles real-time bidirectional audio."""
 from __future__ import annotations
 
+import asyncio
 import logging
+import uuid
 
 from fastapi import APIRouter, WebSocket
 
@@ -15,10 +17,9 @@ router = APIRouter()
 
 @router.websocket("/ws/vobiz-stream")
 async def vobiz_stream_ws(websocket: WebSocket):
-    await websocket.accept()
     q = websocket.query_params
     token = q.get("token")
-    token_meta = vobiz_stream_tokens.peek(token) if token else None
+    token_meta = await asyncio.to_thread(vobiz_stream_tokens.consume, token) if token else None
 
     if not token_meta:
         # A public media socket must prove possession of a valid server-issued token.
@@ -30,7 +31,7 @@ async def vobiz_stream_ws(websocket: WebSocket):
     expected_call_uuid = str(token_meta.get("call_uuid") or "")
     param_call_uuid = q.get("call_uuid")
     call_uuid = param_call_uuid or expected_call_uuid
-    registry_meta = vobiz_call_registry.get(str(call_uuid)) if call_uuid else None
+    registry_meta = await asyncio.to_thread(vobiz_call_registry.get, str(call_uuid)) if call_uuid else None
 
     if param_call_uuid and expected_call_uuid and param_call_uuid != expected_call_uuid:
         aliased = (registry_meta or {}).get("aliased_to")
@@ -43,6 +44,20 @@ async def vobiz_stream_ws(websocket: WebSocket):
     effective_call_uuid = expected_call_uuid or call_uuid
     merged_meta = {**(registry_meta or {}), **token_meta}
 
+    if merged_meta.get("admission_key"):
+        from server.services.saas.call_admission import claim_media
+        try:
+            permitted = await claim_media(uuid.UUID(str(merged_meta.get("admission_tenant_id"))), str(merged_meta["admission_key"]))
+        except Exception:
+            permitted = False
+        if not permitted:
+            await websocket.close(code=1008, reason="Call stream is no longer available")
+            return
+
+    if not effective_call_uuid or (registry_meta or {}).get("ended") or not await vobiz_call_registry.atomic_check_and_set(effective_call_uuid, "media_stream_claimed"):
+        await websocket.close(code=1008, reason="Call stream is already connected or ended")
+        return
+    await websocket.accept()
     bridge = VobizPstnBridge(websocket)
     log_pstn(
         "vobiz.ws.accept",
@@ -58,12 +73,9 @@ async def vobiz_stream_ws(websocket: WebSocket):
             token_meta=merged_meta or None,
         )
     except Exception as exc:
-        logger.exception("[VOBIZ_WS] Unhandled bridge error for call %s: %s", effective_call_uuid, exc)
-        log_pstn("vobiz.ws.error", call_uuid=effective_call_uuid, error=str(exc))
+        logger.error("Phone media stream failed call=%s error_type=%s", effective_call_uuid, type(exc).__name__)
+        log_pstn("vobiz.ws.error", call_uuid=effective_call_uuid, error_type=type(exc).__name__)
         try:
             await websocket.close(code=1011, reason="Internal error")
         except Exception:
             pass
-    finally:
-        if token and (not effective_call_uuid or (vobiz_call_registry.get(str(effective_call_uuid)) or {}).get("ended")):
-            vobiz_stream_tokens.consume(token)

@@ -23,7 +23,7 @@ function voiceSection(voice, language) {
     title: 'Voice profile (console)',
     order: 15,
     raw_text: lines.join('\n'),
-    enabled: true,
+    enabled: false,
   };
 }
 
@@ -34,7 +34,7 @@ function routingSection(inboundRouting) {
     title: 'Inbound routing prefs (console)',
     order: 55,
     raw_text: JSON.stringify(inboundRouting, null, 2),
-    enabled: true,
+    enabled: false,
   };
 }
 
@@ -51,7 +51,10 @@ function sectionsFromStudio({
 }) {
   const guardrails = (boundaries || []).map((b) => `- ${b}`).join('\n');
   const faq = (objectionRules || [])
-    .map((o) => {
+    .map((o, index) => {
+      if (!String(o.trigger || '').trim() || !String(o.response || '').trim()) {
+        throw new Error(`Complete the concern and response in objection rule ${index + 1}, or remove that rule.`);
+      }
       const intentPart = o.category && o.category !== 'custom' ? `[Intent: ${o.category}]\n` : '';
       const actionPart = o.action && o.action !== 'continue_script' ? `\nAction: ${o.action}` : '';
       return `${intentPart}When: ${o.trigger}\nReply: ${o.response}${actionPart}`;
@@ -86,7 +89,7 @@ function sectionsFromStudio({
       // the loader looks for this exact line, and without it the greeting was
       // absorbed into the script body and duplicated on every save.
       raw_text: [
-        'You are a live phone agent for this business. Follow the Calling script section exclusively.',
+        'You are a professional live phone agent for this business. Follow the calling script and supplied business facts within platform safety and tool permissions.',
         greeting ? `Opening greeting: ${String(greeting).split('\n')[0].trim()}` : '',
       ]
         .filter(Boolean)
@@ -107,7 +110,7 @@ function sectionsFromStudio({
       raw_text: guardrails || 'Do not invent prices or policies not in the script.',
       enabled: true,
     },
-    { type: 'faq', title: 'FAQ & Objections', order: 40, raw_text: faq || '', enabled: !!faq },
+    { type: 'faq', title: 'FAQ & Objections', order: 40, raw_text: faq ? `Adapt these replies naturally to the selected call language with everyday English mixing. Respect refusals; these suggestions do not override safety or tool permissions. Actions need an available tool and successful result; never claim a transfer or callback booking without confirmation.\n\n${faq}` : '', enabled: !!faq },
   ];
   const v = voiceSection(voice, language);
   if (v) sections.push(v);
@@ -121,24 +124,50 @@ export async function loadAgentBrain(agentId) {
   return data;
 }
 
-export async function saveAndPublishAgentBrain(agentId, studioFields) {
-  const existing = await loadAgentBrain(agentId).catch(() => null);
-  const base = existing?.draft?.sections?.length
-    ? existing.draft.sections
-    : sectionsFromStudio(studioFields);
-  const byType = {};
-  for (const s of base) {
-    byType[s.type] = s;
-  }
+export function mergeStudioSections(existingSections, studioFields) {
+  const base = Array.isArray(existingSections) ? existingSections : [];
   const seeds = sectionsFromStudio(studioFields);
+  const metadataTitles = new Set(['saas_voice_config', 'saas_script_variables', 'Voice profile (console)', 'Inbound routing prefs (console)']);
+  const replaced = new Set();
   const merged = seeds.map((seed) => {
-    const prev = existing?.draft?.sections?.find(
-      (s) => s.type === seed.type && s.title === seed.title
-    );
+    let prev = base.find((s) => s.type === seed.type && s.title === seed.title);
+    if (!prev && seed.title === SAAS_CALLING_SCRIPT_TITLE) {
+      prev = base.find((s) => s.enabled !== false && s.type === 'facts' && ['Agent script', 'Business Facts'].includes(s.title));
+    }
+    if (prev) replaced.add(prev);
+    // Identity notes are not exposed in this editor. Only replace its greeting.
+    if (prev?.raw_text && seed.type === 'identity_purpose') {
+      const body = String(prev.raw_text).replace(/^Opening greeting:.*(?:\n|$)/gim, '').trim()
+        .replace('You are a live phone agent for this business. Follow the Calling script section exclusively.', 'You are a professional live phone agent for this business. Follow the calling script and supplied business facts within platform safety and tool permissions.');
+      seed.raw_text = [body, studioFields.greeting ? `Opening greeting: ${String(studioFields.greeting).split('\n')[0].trim()}` : ''].filter(Boolean).join('\n');
+    }
+    if (prev?.raw_text && seed.type === 'faq') {
+      // Preserve free-form FAQ notes which the concern/response controls cannot edit.
+      const reference = String(prev.raw_text).split(/\n\s*\n/).filter((block) =>
+        !/(?:^|\n)(?:When(?: caller says)?|Reply|Response):/i.test(block) &&
+        !block.startsWith('Adapt these replies naturally to the selected call language')).join('\n\n');
+      if (reference.trim()) {
+        seed.raw_text = [reference.trim(), seed.raw_text].filter(Boolean).join('\n\n');
+        seed.enabled = true;
+      }
+    }
     return prev
-      ? { ...prev, raw_text: seed.raw_text, enabled: seed.enabled }
+      ? { ...prev, title: seed.title, raw_text: seed.raw_text, enabled: seed.enabled }
       : { ...seed, section_id: seed.section_id || crypto.randomUUID() };
   });
+  return [...merged, ...base.filter((section) => !replaced.has(section) && !metadataTitles.has(section.title))];
+}
+
+export async function reviewAgentBrain(agentId, studioFields) {
+  const existing = await loadAgentBrain(agentId);
+  const sections = mergeStudioSections(existing?.draft?.sections, studioFields);
+  return api.request('POST', `/api/agents/${agentId}/business-brain/preview`, { sections });
+}
+
+export async function saveAndPublishAgentBrain(agentId, studioFields) {
+  // A failed read must not turn an update into replacement of an unknown draft.
+  const existing = await loadAgentBrain(agentId);
+  const merged = mergeStudioSections(existing?.draft?.sections, studioFields);
   await api.request('PUT', `/api/agents/${agentId}/business-brain/draft`, { sections: merged });
   return await api.request('POST', `/api/agents/${agentId}/business-brain/publish`);
 }

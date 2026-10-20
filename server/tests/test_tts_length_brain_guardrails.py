@@ -16,11 +16,11 @@ from server.services.voice_pipeline_limits import (
 
 
 def _assert_tiers(blob: str) -> None:
-    assert f"{LIVE_REPLY_MIN_CHARS}–{LIVE_REPLY_SIMPLE_MAX}" in blob or f"{LIVE_REPLY_MIN_CHARS}-{LIVE_REPLY_SIMPLE_MAX}" in blob
-    assert f"30–{LIVE_REPLY_NORMAL_MAX}" in blob or f"30-{LIVE_REPLY_NORMAL_MAX}" in blob
-    assert f"30–{LIVE_REPLY_OBJECTION_MAX}" in blob or f"30-{LIVE_REPLY_OBJECTION_MAX}" in blob
-    assert f"70–{LIVE_REPLY_COMPLEX_MAX}" in blob or f"70-{LIVE_REPLY_COMPLEX_MAX}" in blob
+    # Natural short answers are valid; fixed minimum tiers caused padded speech.
     assert str(LIVE_REPLY_MAX_CHARS) in blob
+    assert 'minimum length' in blob or 'no minimum' in blob
+    assert 'sentence' in blob.lower()
+    assert f"{LIVE_REPLY_MIN_CHARS}–{LIVE_REPLY_SIMPLE_MAX}" not in blob
 
 
 def test_canonical_brevity_rule_has_all_tiers():
@@ -35,7 +35,7 @@ def test_canonical_brevity_rule_has_all_tiers():
 
 
 def test_static_rules_embed_full_length_guardrail():
-    assert STATIC_OUTPUT_RULES_VERSION in ("sr_v30", "sr_v33")
+    assert STATIC_OUTPUT_RULES_VERSION == "sr_v35"
     assert LIVE_REPLY_BREVITY_RULE in STATIC_OUTPUT_RULES
     _assert_tiers(STATIC_OUTPUT_RULES)
 

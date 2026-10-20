@@ -5,6 +5,11 @@ every route the frontend calls. Safe to run against any environment.
 """
 from __future__ import annotations
 
+try:
+    from scripts.http_transport import safe_urlopen
+except ModuleNotFoundError:
+    from http_transport import safe_urlopen
+
 import json
 import os
 import sys
@@ -65,7 +70,7 @@ REQUIRED: list[tuple[str, str]] = [
 
 def main() -> int:
     try:
-        with urllib.request.urlopen(f"{API}/openapi.json", timeout=20) as res:
+        with safe_urlopen(f"{API}/openapi.json", timeout=20) as res:
             doc = json.load(res)
     except (urllib.error.URLError, OSError, TimeoutError) as exc:
         print(f"SKIP  backend not reachable at {API} ({exc})")

@@ -231,7 +231,19 @@ async def lifespan(app: FastAPI):
             logger.warning(f"[VOICE] SaaS provision worker not started: {e}")
     except ConfigError as e:
         logger.warning(f"[VOICE] Config invalid at startup: {e}. /api/health will report. Set .env and restart.")
+    from server.db.connection import get_session_factory as get_campaign_factory
+    if get_campaign_factory():
+        import asyncio
+        from server.services.saas.campaign_runner import recovery_loop
+        app.state.campaign_recovery_task = asyncio.create_task(recovery_loop())
     yield
+    import asyncio
+    from server.services.saas.campaign_runner import stop_campaign_runners
+    campaign_task = getattr(app.state, "campaign_recovery_task", None)
+    if campaign_task:
+        campaign_task.cancel()
+        await asyncio.gather(campaign_task, return_exceptions=True)
+    await stop_campaign_runners()
     try:
         task = getattr(app.state, "saas_provision_task", None)
         if task:
@@ -309,12 +321,21 @@ class AuthNoStoreMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         response = await call_next(request)
         path = request.url.path or ""
-        if path.startswith("/api/auth"):
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("X-Frame-Options", "DENY")
+        response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+        response.headers.setdefault("Content-Security-Policy", "frame-ancestors 'none'; object-src 'none'; base-uri 'self'")
+        if path.startswith("/api"):
+            response.headers.setdefault("X-Robots-Tag", "noindex, nofollow")
+        if "json" in response.headers.get("content-type", "") or response.status_code >= 400:
             response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, private"
             response.headers["Pragma"] = "no-cache"
+            response.headers.setdefault("Cross-Origin-Resource-Policy", "same-origin")
         return response
 
 
+from server.middleware.request_limits import JsonBodyLimitMiddleware
+app.add_middleware(JsonBodyLimitMiddleware)
 app.add_middleware(AuthNoStoreMiddleware)
 
 

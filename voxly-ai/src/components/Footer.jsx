@@ -229,7 +229,7 @@ export function Footer({ onNavigatePage }) {
             <ul className="space-y-2 text-xs">
               <li>
                 <a
-                  href="#support"
+                  href="/support"
                   onClick={handleLinkClick('support')}
                   className="hover:text-[#0F0E17] font-semibold text-[#6344E7] transition-colors"
                 >
@@ -238,7 +238,7 @@ export function Footer({ onNavigatePage }) {
               </li>
               <li>
                 <a
-                  href="#contact"
+                  href="/support"
                   onClick={handleLinkClick('contact')}
                   className="hover:text-[#0F0E17] transition-colors"
                 >
@@ -247,7 +247,7 @@ export function Footer({ onNavigatePage }) {
               </li>
               <li>
                 <a
-                  href="#support"
+                  href="/support"
                   onClick={handleLinkClick('support')}
                   className="hover:text-[#0F0E17] transition-colors"
                 >
@@ -265,7 +265,7 @@ export function Footer({ onNavigatePage }) {
             <ul className="space-y-2 text-xs">
               <li>
                 <a
-                  href="#company"
+                  href="/company"
                   onClick={handleLinkClick('company')}
                   className="hover:text-[#0F0E17] font-semibold text-[#0F0E17] transition-colors block text-left"
                 >
@@ -274,7 +274,7 @@ export function Footer({ onNavigatePage }) {
               </li>
               <li>
                 <a
-                  href="#security"
+                  href="/security"
                   onClick={handleLinkClick('security')}
                   className="hover:text-[#0F0E17] transition-colors block text-left"
                 >
@@ -283,7 +283,7 @@ export function Footer({ onNavigatePage }) {
               </li>
               <li>
                 <a
-                  href="#privacy"
+                  href="/privacy"
                   onClick={handleLinkClick('privacy')}
                   className="hover:text-[#0F0E17] transition-colors block text-left"
                 >
@@ -292,7 +292,7 @@ export function Footer({ onNavigatePage }) {
               </li>
               <li>
                 <a
-                  href="#terms"
+                  href="/terms"
                   onClick={handleLinkClick('terms')}
                   className="hover:text-[#0F0E17] transition-colors block text-left"
                 >
@@ -366,21 +366,21 @@ export function Footer({ onNavigatePage }) {
           </div>
           <div className="flex flex-wrap items-center justify-center sm:justify-end gap-x-6 gap-y-2">
             <a
-              href="#terms"
+              href="/terms"
               onClick={handleLinkClick('terms')}
               className="hover:text-[#0F0E17] transition-colors py-1 min-h-[36px] flex items-center"
             >
               Terms of Service
             </a>
             <a
-              href="#privacy"
+              href="/privacy"
               onClick={handleLinkClick('privacy')}
               className="hover:text-[#0F0E17] transition-colors py-1 min-h-[36px] flex items-center"
             >
               Privacy Policy
             </a>
             <a
-              href="#security"
+              href="/security"
               onClick={handleLinkClick('security')}
               className="hover:text-[#0F0E17] transition-colors py-1 min-h-[36px] flex items-center"
             >
@@ -388,7 +388,7 @@ export function Footer({ onNavigatePage }) {
             </a>
             <span className="flex items-center gap-1 text-[#524E5E] py-1">
               <ShieldCheck className="w-3.5 h-3.5 text-[#10B981]" />
-              <span>TLS 1.3 / SRTP Encrypted</span>
+              <a href="/security" onClick={handleLinkClick('security')}>Account and data security</a>
             </span>
           </div>
         </div>

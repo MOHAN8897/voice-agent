@@ -453,6 +453,9 @@ async def _build_prewarm_bundle(
             language,
             direction="outbound",
         )
+    if provider == "vobiz" and compiled:
+        from server.services.saas.contact_import_service import render_agent_prompt_for_contact
+        compiled = render_agent_prompt_for_contact(compiled, dial_meta.get("contact") or {})
     wire = _PROVIDER_WIRE.get(provider, _PROVIDER_WIRE["telnyx"])
     sample_rate = int(wire["sample_rate"])
     tts_codec = str(wire["tts_output_codec"])

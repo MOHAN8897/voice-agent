@@ -1,0 +1,43 @@
+{
+  "mode": "implementation verification",
+  "backend_regression_run": {
+    "passed": 162,
+    "failed": 0,
+    "scope": "12 affected test modules; preceding later targeted edge-case additions"
+  },
+  "final_lifecycle_run": {
+    "passed": 35,
+    "failed": 0,
+    "scope": "test_vobiz_subaccount_lifecycle.py; isolated SQLite persistence, fake provider"
+  },
+  "carrier_followup_run": {
+    "passed": 54,
+    "failed": 0,
+    "scope": "subaccount request contract, Vobiz telephony and callback safety"
+  },
+  "browser": {
+    "passed": 3,
+    "failed": 0,
+    "scope": "voice-service-kyc.spec.js, isolated synthetic session and provider responses"
+  },
+  "reticle": {
+    "error_retry": "yes",
+    "approved_refresh": "yes",
+    "scope": "isolated lease, mocked provider HTTP; network and DOM verdicts; no subscribable store"
+  },
+  "frontend_build": "PASS: vite production build",
+  "sast_repository": {
+    "findings": 0,
+    "blocking": 0,
+    "scanned_files": 482,
+    "limitation": "one security rule timed out in unrelated agent_script_compiler.py"
+  },
+  "sast_final_changed_paths": {
+    "findings": 0,
+    "blocking": 0,
+    "scanned_files": 6
+  },
+  "migration": "PASS: offline PostgreSQL upgrade SQL from 039 to 040; no live database connection or migration",
+  "live_acceptance": "UNVERIFIED: real subaccount creation, authorized customer documents, real number purchase/calls and parent invoice confirmation were not performed",
+  "deployment": "Requires stable Fernet key, HTTPS URLs, approved migration/deployment process, provider acceptance on staging"
+}

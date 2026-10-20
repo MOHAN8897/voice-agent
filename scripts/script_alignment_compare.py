@@ -7,6 +7,11 @@ Run: python scripts/script_alignment_compare.py
 """
 from __future__ import annotations
 
+try:
+    from scripts.http_transport import safe_urlopen
+except ModuleNotFoundError:
+    from http_transport import safe_urlopen
+
 import asyncio
 import json
 import re
@@ -74,7 +79,7 @@ async def _compile_via_http(budget: int = 6000) -> dict:
         method="POST",
     )
     try:
-        with urllib.request.urlopen(req, timeout=120) as resp:
+        with safe_urlopen(req, timeout=120) as resp:
             return json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
         body = e.read().decode("utf-8", errors="replace")
@@ -87,7 +92,7 @@ async def _get_instructions(*, include_compiled: bool = True) -> dict:
     q = f"sessionId={SESSION}"
     if include_compiled:
         q += "&includeCompiled=true"
-    with urllib.request.urlopen(f"{API}/api/instructions?{q}", timeout=30) as resp:
+    with safe_urlopen(f"{API}/api/instructions?{q}", timeout=30) as resp:
         return json.loads(resp.read().decode("utf-8"))
 
 

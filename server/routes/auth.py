@@ -1,6 +1,8 @@
 """Auth routes — Dev Portal and Business Console login."""
 from __future__ import annotations
 
+import asyncio
+
 from fastapi import APIRouter, HTTPException, Request, Response
 from pydantic import BaseModel, Field
 
@@ -15,8 +17,8 @@ _login_limiter = RateLimiter(max_requests=10, window_s=300)
 
 
 class LoginBody(BaseModel):
-    username: str = Field(..., min_length=1)
-    password: str = Field(..., min_length=1)
+    username: str = Field(..., min_length=1, max_length=320)
+    password: str = Field(..., min_length=1, max_length=200)
 
 
 def _portal_username_matches(expected: str | None, provided: str) -> bool:
@@ -74,8 +76,8 @@ async def dev_login(body: LoginBody, request: Request, response: Response):
             "ok": False,
             "error": {"code": "rate_limit", "message": "Too many login attempts", "retry_after": retry},
         }
-    if not _portal_username_matches(settings.dev_portal_username, body.username) or not verify_portal_password(
-        settings.dev_portal_password, body.password
+    if not _portal_username_matches(settings.dev_portal_username, body.username) or not await asyncio.to_thread(
+        verify_portal_password, settings.dev_portal_password, body.password
     ):
         return {"ok": False, "error": {"code": "auth_error", "message": "Invalid credentials"}}
     csrf = create_csrf_token()
@@ -117,8 +119,8 @@ async def app_login(body: LoginBody, response: Response):
             "ok": False,
             "error": {"code": "rate_limit", "message": "Too many login attempts", "retry_after": retry},
         }
-    if not _portal_username_matches(settings.app_console_username, body.username) or not verify_portal_password(
-        settings.app_console_password, body.password
+    if not _portal_username_matches(settings.app_console_username, body.username) or not await asyncio.to_thread(
+        verify_portal_password, settings.app_console_password, body.password
     ):
         return {"ok": False, "error": {"code": "auth_error", "message": "Invalid credentials"}}
     csrf = create_csrf_token()

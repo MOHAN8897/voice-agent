@@ -1,92 +1,126 @@
 #!/usr/bin/env python3
-"""Unified security testing runner for Semgrep, OWASP ZAP, and Strix.
-
-Usage:
-    python scripts/security_audit.py --mode sast
-    python scripts/security_audit.py --mode zap --target http://localhost:8000
-    python scripts/security_audit.py --mode strix --target http://localhost:8000
-    python scripts/security_audit.py --all
-"""
+"""Repeatable local SAST and explicitly targeted non-production security scans."""
 from __future__ import annotations
 
 import argparse
 import os
+from pathlib import Path
+import shutil
 import subprocess
 import sys
+from urllib.parse import urlsplit, urlunsplit
+
+ROOT = Path(__file__).resolve().parents[1]
+BLOCKED = 3
 
 
-def run_cmd(cmd: list[str], description: str) -> int:
-    print(f"\n[+] Running {description}...")
-    # Arguments may contain API keys or authenticated target URLs. Keep them out
-    # of terminal logs; the description already identifies the requested scan.
-    print(f"    Executable: {cmd[0]}")
-    result = subprocess.run(cmd)
-    if result.returncode == 0:
-        print(f"[PASS] {description} passed successfully.")
-    else:
-        print(f"[FAIL] {description} exited with status code {result.returncode}.")
+def run_cmd(cmd: list[str], description: str, *, timeout: int = 900) -> int:
+    print(f"[+] {description}", flush=True)
+    try:
+        result = subprocess.run(cmd, cwd=ROOT, timeout=timeout, check=False)
+    except FileNotFoundError:
+        print(f"[BLOCKED] Required executable is unavailable: {cmd[0]}", flush=True)
+        return BLOCKED
+    except subprocess.TimeoutExpired:
+        print(f"[INCOMPLETE] {description} exceeded its time limit.", flush=True)
+        return BLOCKED
+    print(f"[{'PASS' if result.returncode == 0 else 'FAIL'}] {description}: exit {result.returncode}", flush=True)
     return result.returncode
 
 
+def validate_target(target: str) -> str:
+    parsed = urlsplit(target)
+    if parsed.scheme not in {'http', 'https'} or not parsed.hostname or parsed.username or parsed.password or parsed.fragment:
+        raise ValueError('Use an http(s) URL without credentials or fragments for an authorized non-production target.')
+    _ = parsed.port  # Validate malformed/out-of-range ports as well.
+    return target
+
+
+def docker_target(target: str) -> str:
+    parsed = urlsplit(validate_target(target))
+    if parsed.hostname in {'localhost', '127.0.0.1', '::1'}:
+        authority = 'host.docker.internal' + (f':{parsed.port}' if parsed.port else '')
+        return urlunsplit((parsed.scheme, authority, parsed.path, parsed.query, ''))
+    return target
+
+
+def docker_ready() -> bool:
+    if not shutil.which('docker'):
+        print('[BLOCKED] Docker is not installed or not on PATH. ZAP and local Strix require Docker.', flush=True)
+        return False
+    try:
+        ready = subprocess.run(['docker', 'info', '--format', '{{.ServerVersion}}'], stdout=subprocess.DEVNULL,
+                               stderr=subprocess.DEVNULL, timeout=15, check=False).returncode == 0
+    except (OSError, subprocess.TimeoutExpired):
+        ready = False
+    if not ready:
+        print('[BLOCKED] Docker daemon is unavailable.', flush=True)
+    return ready
+
+
 def run_semgrep() -> int:
-    cmd = [
-        "semgrep",
-        "scan",
-        "--error",
-        "--config", "p/owasp-top-ten",
-        "--config", "p/security-audit",
-        "--config", ".semgrep.yml",
-        "server/",
-        "voxly-ai/src/",
-    ]
-    return run_cmd(cmd, "Semgrep SAST Security Analysis")
+    reports = ROOT / '.gravitas' / 'security-reports'
+    reports.mkdir(parents=True, exist_ok=True)
+    return run_cmd([
+        'semgrep', 'scan', '--error', '--no-git-ignore', '--timeout', '20', '--config', 'p/owasp-top-ten', '--config', 'p/security-audit',
+        '--config', '.semgrep.yml', '--json-output', str(reports / 'semgrep.json'),
+        'server/', 'worker/', 'scripts/', 'voxly-ai/src/', 'web/app/', 'web/lib/', 'web/components/',
+    ], 'Semgrep SAST')
 
 
 def run_zap(target: str) -> int:
-    cmd = [
-        "docker",
-        "run",
-        "--rm",
-        "-t",
-        "zaproxy/zap-stable",
-        "zap-baseline.py",
-        "-t", target,
-        "-g", "gen.conf",
-        "-r", "zap_report.html",
-    ]
-    return run_cmd(cmd, "OWASP ZAP baseline scan")
+    target = docker_target(target)
+    if not docker_ready():
+        return BLOCKED
+    reports = ROOT / '.gravitas' / 'security-reports' / 'zap'
+    reports.mkdir(parents=True, exist_ok=True)
+    return run_cmd([
+        'docker', 'run', '--rm', '--add-host=host.docker.internal:host-gateway',
+        '-v', f'{reports}:/zap/wrk:rw', '-v', f'{ROOT / ".zap"}:/zap/config:ro',
+        'ghcr.io/zaproxy/zaproxy:stable', 'zap-baseline.py', '-t', target,
+        '-c', '/zap/config/rules.tsv', '-r', 'report.html', '-J', 'report.json',
+    ], 'OWASP ZAP baseline')
 
 
-def run_strix(target: str) -> int:
-    cmd = [
-        "docker",
-        "run",
-        "--rm",
-        # Docker copies the named variable from this process environment. Do not
-        # put its value in argv, where process inspection and logs can expose it.
-        "-e", "OPENAI_API_KEY",
-        "ghcr.io/usestrix/strix:latest",
-        "--target", target,
-    ]
-    return run_cmd(cmd, "Strix autonomous security scan")
+def run_strix(target: str, budget: float = 5.0) -> int:
+    validate_target(target)
+    if not docker_ready():
+        return BLOCKED
+    if not shutil.which('strix'):
+        print('[BLOCKED] Install the official strix-agent CLI (for example: pipx install strix-agent).', flush=True)
+        return BLOCKED
+    if not os.environ.get('STRIX_LLM') or not os.environ.get('LLM_API_KEY'):
+        print('[BLOCKED] Configure STRIX_LLM and LLM_API_KEY for the local scanner.', flush=True)
+        return BLOCKED
+    # Official CLI creates strix_runs/ reports. Credentials stay in the environment.
+    return run_cmd(['strix', '-n', '-t', target, '--scan-mode', 'quick', '--max-budget', str(budget)],
+                   'Strix autonomous security scan', timeout=1800)
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Multi-Tool Security Testing Suite")
-    parser.add_argument("--mode", choices=["sast", "zap", "strix", "all"], default="sast", help="Security scan mode")
-    parser.add_argument("--target", default="http://localhost:8000", help="Target URL for active scans (ZAP/Strix)")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--mode', choices=['sast', 'zap', 'strix', 'all'], default='sast')
+    parser.add_argument('--target', help='Explicitly authorized non-production http(s) URL for ZAP/Strix')
+    parser.add_argument('--budget', type=float, default=5.0, help='Maximum Strix model cost in USD (default: 5)')
     args = parser.parse_args()
+    if args.mode != 'sast':
+        if not args.target:
+            parser.error('--target is required for active scans; use a non-production target you are authorized to test')
+        try:
+            validate_target(args.target)
+        except ValueError as exc:
+            parser.error(str(exc))
+    if not 0 < args.budget <= 100:
+        parser.error('--budget must be greater than zero and at most 100 USD')
+    results = []
+    if args.mode in {'sast', 'all'}:
+        results.append(run_semgrep())
+    if args.mode in {'zap', 'all'}:
+        results.append(run_zap(args.target))
+    if args.mode in {'strix', 'all'}:
+        results.append(run_strix(args.target, args.budget))
+    sys.exit(max(results, default=0))
 
-    rc = 0
-    if args.mode in ("sast", "all"):
-        rc |= run_semgrep()
-    if args.mode in ("zap", "all"):
-        rc |= run_zap(args.target)
-    if args.mode in ("strix", "all"):
-        rc |= run_strix(args.target)
 
-    sys.exit(rc)
-
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

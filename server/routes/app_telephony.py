@@ -121,7 +121,7 @@ async def telephony_provider_info(principal: SubscriberPrincipal = Depends(requi
             "activeLabel": "Enterprise Voice Network",
             "ready": bool(active_details.get("ready")),
             "enabled": bool(active_details.get("enabled")),
-            "phoneNumber": active_details.get("phone_number"),
+            "phoneNumber": None,
             "supportedProviders": ["direct_voice"],
             "providers": [
                 {
@@ -129,7 +129,7 @@ async def telephony_provider_info(principal: SubscriberPrincipal = Depends(requi
                     "label": "Enterprise Voice Network",
                     "enabled": bool(active_details.get("enabled")),
                     "ready": bool(active_details.get("ready")),
-                    "phoneNumber": active_details.get("phone_number"),
+                    "phoneNumber": None,
                 }
             ],
         }

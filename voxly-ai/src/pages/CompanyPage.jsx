@@ -98,7 +98,7 @@ export function CompanyPage({ onBackToLanding, onEnterConsole, onNavigatePage })
               <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
                 <ShieldCheck className="w-5 h-5" />
               </div>
-              <h4 className="text-sm font-bold text-[#0F0E17]">Automated DNC & Compliance</h4>
+              <h4 className="text-sm font-bold text-[#0F0E17]">Automated DNC &amp; Compliance</h4>
               <p className="text-xs text-[#524E5E] leading-relaxed">
                 Built-in TCPA scrubbing, calling window enforcement, and real-time consent verification safeguard outbound campaigns.
               </p>

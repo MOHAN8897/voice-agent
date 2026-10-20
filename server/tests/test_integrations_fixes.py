@@ -6,6 +6,7 @@
 5. No internal technical details or vendor provider keys leaked to tenants
 """
 import pytest
+from server.tests.test_integration_security_hardening import db, client
 from httpx import ASGITransport, AsyncClient
 from unittest.mock import AsyncMock, patch
 
@@ -161,53 +162,25 @@ def test_problem_2_capabilities_match_backend_schemas():
 
 
 @pytest.mark.asyncio
-async def test_problem_4_and_5_catalog_endpoint_no_leaks_and_no_500():
-    """Verify GET /api/integrations/catalog returns 28 items and no nango_provider_key."""
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
-        resp = await client.get("/api/integrations/catalog")
-        assert resp.status_code == 200, f"Expected 200, got {resp.status_code}"
-        data = resp.json()
-        assert data.get("total") == 28
-        items = data.get("items", [])
-        assert len(items) == 28
-
-        # Problem 5: verify nango_provider_key is NOT leaked
-        for item in items:
-            assert "nango_provider_key" not in item, f"Internal provider key leaked in {item.get('id')}"
+async def test_problem_4_and_5_catalog_endpoint_no_leaks_and_no_500(client):
+    response = await client.get('/api/integrations/catalog', headers={'authorization': 'Bearer test-session'})
+    assert response.status_code == 200
+    assert response.json()['total'] == 28
+    assert all('nango_provider_key' not in item for item in response.json()['items'])
 
 
 @pytest.mark.asyncio
 async def test_problem_4_connect_with_non_uuid_tenant_no_500():
-    """Verify POST /api/integrations/{app_id}/connect handles non-UUID strings without HTTP 500."""
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
-        headers = {
-            "x-tenant-id": "demo-tenant-string-id",
-            "x-user-id": "demo-user-string-id",
-        }
-        body = {
-            "base_redirect_uri": "http://localhost:5173/console/integrations",
-        }
-        # It should return 200 with redirect_url, not 500
-        resp = await client.post("/api/integrations/GOOGLECALENDAR/connect", json=body, headers=headers)
-        assert resp.status_code == 200
-        data = resp.json()
-        assert "redirect_url" in data
-        assert data.get("status") == "INITIATED"
-        assert "connect.nango.dev" in data["redirect_url"] or "sandbox-consent" in data["redirect_url"]
+    async with AsyncClient(transport=ASGITransport(app=app), base_url='http://test') as client:
+        response = await client.post('/api/integrations/GOOGLECALENDAR/connect',
+            headers={'x-tenant-id': 'spoofed-tenant'}, json={'base_redirect_uri': 'http://localhost:5173/callback'})
+    assert response.status_code == 401
 
 
 @pytest.mark.asyncio
 async def test_problem_4_activate_and_disconnect_with_non_uuid_tenant_no_500():
-    """Verify activate and disconnect handle non-UUID tenant IDs gracefully."""
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
-        headers = {
-            "x-tenant-id": "string-tenant-999",
-            "x-user-id": "string-user-999",
-        }
-        # Disconnect non-existent or newly created
-        resp = await client.delete("/api/integrations/GOOGLECALENDAR", headers=headers)
-        assert resp.status_code == 200
-        assert resp.json().get("status") == "disconnected"
+    async with AsyncClient(transport=ASGITransport(app=app), base_url='http://test') as client:
+        for method, path, body in [('POST', '/api/integrations/GOOGLECALENDAR/activate', {'connection_id': 'fake'}),
+                                    ('DELETE', '/api/integrations/GOOGLECALENDAR', None)]:
+            response = await client.request(method, path, headers={'x-tenant-id': 'spoofed-tenant'}, json=body)
+            assert response.status_code == 401

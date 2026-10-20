@@ -22,8 +22,8 @@ from server.prompts.brain_prompt import SECTION_SAFETY
 from server.prompts.voice_defaults import style_for_language
 
 SCHEMA_VERSION = "1"
-CORE_VERSION = "section_safety_v1"
-LANGUAGE_PACK_VERSION = "spoken_packs_v3"
+CORE_VERSION = "section_safety_v2"
+LANGUAGE_PACK_VERSION = "spoken_packs_v5"
 TOOL_CONTRACT_VERSION = "realtime_voice_v1"
 
 _SPOKEN_HEADER = re.compile(r"---\s*SPOKEN LANGUAGE\s*\(", re.I)
@@ -62,6 +62,47 @@ def is_unified_compiled_brain(text: str | None) -> bool:
     return has_spoken and has_static
 
 
+def refresh_platform_sections(text: str | None, language: str) -> str:
+    """Refresh platform-owned blocks at render time without changing saved business scripts."""
+    raw = (text or "").strip()
+    if not is_unified_compiled_brain(raw):
+        return raw
+    header = re.compile(r"(?m)^---\s*(.+?)\s*---[ \t]*\n")
+    sections = list(header.finditer(raw))
+    chunks = [raw[:sections[0].start()]] if sections else [raw]
+    for index, match in enumerate(sections):
+        end = sections[index + 1].start() if index + 1 < len(sections) else len(raw)
+        title = match.group(1).strip().upper()
+        if title == "SAFETY":
+            block = SECTION_SAFETY
+        elif title == "STATIC OUTPUT RULES":
+            old = raw[match.start():end]
+            footer = re.search(r"(?m)^Language:\s*", old)
+            suffix = old[footer.start():] if footer else ""
+            previous_language = re.match(r"Language:\s*([^\s.]+)", suffix)
+            if previous_language and normalize_compile_language(previous_language.group(1)) != normalize_compile_language(language):
+                suffix = re.sub(r"^Language:[^\n]*", lambda _: language_runtime_footer(
+                    language, style_for_language(None, language), include_language_lock=False,
+                ), suffix, count=1)
+            block = STATIC_OUTPUT_RULES + ("\n\n" + suffix if suffix else "")
+        elif title.startswith("SPOKEN LANGUAGE ("):
+            block = spoken_pack_for(language, include_brevity=False, core_only=True)
+        else:
+            block = raw[match.start():end]
+        chunks.append(block.strip())
+    return "\n\n".join(chunk for chunk in chunks if chunk.strip())
+
+
+def business_from_unified_brain(text: str) -> str:
+    """Unwrap the approved business body of legacy full-assembly publications."""
+    start = re.search(r"(?m)^--- CALLING SCRIPT ---\s*\n", text)
+    if not start:
+        raise ValueError("Legacy publication is missing its calling script")
+    body = text[start.end():]
+    end = re.search(r"(?m)^--- (?:CALL END POLICY|STATIC OUTPUT RULES) ---", body)
+    return body[:end.start()].strip() if end else body.strip()
+
+
 def strip_section_markers(script: str | None) -> str:
     """Drop `<!-- section:type:uuid -->` bookkeeping from the compiled artifact.
 
@@ -94,9 +135,9 @@ def assemble_unified_brain(
     core = (core_safety or SECTION_SAFETY).strip()
     # The brevity bands and the language lock each already ship in full inside
     # STATIC_OUTPUT_RULES and the spoken pack, so the pack and footer are asked
-    # for their lean forms here. `core_only` additionally drops the number/phone
-    # TTS blocks and the worked examples, which restate rules the static rules
-    # already carry. Without this the same guidance was sent two or three times
+    # for their lean forms here. `core_only` drops the phone block and worked
+    # examples while preserving locale-specific number phrasing.
+    # Without this the same guidance was sent two or three times
     # in every compiled brain.
     body = (
         f"{core}\n\n"

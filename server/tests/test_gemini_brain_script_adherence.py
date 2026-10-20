@@ -43,9 +43,9 @@ async def test_gemini_live_prompt_retains_compiled_business_script(
     assert "company & offer" in low or company_needle.lower() in low
     assert "canonical opening" in low or "example opening" in low
     assert "your role on this call" in low or "role on this call" in low
-    assert fact_needle.lower() in low or fact_needle.lower() in (result.agent_script or "").lower()
+    assert fact_needle.lower() in low
     assert result.agent_name.lower() in low
-    assert "adherence" in low
+    assert "follow" in low
     assert "--- calling script ---" not in low
     assert low.count("pinned company & offer") == 1
 

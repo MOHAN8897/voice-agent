@@ -1,6 +1,6 @@
-const SITE_URL = 'https://www.dialtact.com/';
+export const SITE_URL = 'https://www.dialtact.com/';
 
-const PUBLIC_PAGES = {
+export const PUBLIC_PAGES = {
   landing: {
     title: 'Dialtact — AI Voice Agents for Customer Calls',
     description: 'Create AI voice agents that answer customer calls, handle common requests, and guide callers to the next step for your business.',
@@ -26,6 +26,17 @@ const PUBLIC_PAGES = {
     description: 'Learn about Dialtact security practices for accounts, voice traffic, customer data, and call records.',
   },
 };
+
+export const PUBLIC_PATHS = { landing: '/', support: '/support', company: '/company', privacy: '/privacy', terms: '/terms', security: '/security' };
+const ALIASES = { contact: 'support', about: 'company' };
+export function viewFromLocation(location) {
+  const hash = (location.hash || '').slice(1);
+  if (hash.startsWith('dashboard')) return 'dashboard';
+  const aliased = ALIASES[hash] || hash;
+  if (PUBLIC_PATHS[aliased]) return aliased;
+  const path = (location.pathname || '/').replace(/\/$/, '') || '/';
+  return Object.keys(PUBLIC_PATHS).find((view) => PUBLIC_PATHS[view] === path) || 'landing';
+}
 
 const CONSOLE_TITLES = {
   overview: 'Workspace Overview — Dialtact Console',
@@ -60,14 +71,15 @@ export function applyPageMetadata(view = 'landing', tab = '') {
     ? 'Sign in to manage your Dialtact workspace.'
     : page.description;
 
+  const canonicalUrl = new URL(PUBLIC_PATHS[view] || "/", SITE_URL).href;
   document.title = title;
   setMeta('name', 'description', description);
   setMeta('property', 'og:title', title);
   setMeta('property', 'og:description', description);
-  setMeta('property', 'og:url', SITE_URL);
+  setMeta('property', 'og:url', canonicalUrl);
   setMeta('name', 'twitter:title', title);
   setMeta('name', 'twitter:description', description);
-  setMeta('name', 'twitter:url', SITE_URL);
+  setMeta('name', 'twitter:url', canonicalUrl);
 
   let canonical = document.head.querySelector('link[rel="canonical"]');
   if (!canonical) {
@@ -75,15 +87,7 @@ export function applyPageMetadata(view = 'landing', tab = '') {
     canonical.setAttribute('rel', 'canonical');
     document.head.appendChild(canonical);
   }
-  canonical.setAttribute('href', SITE_URL);
+  canonical.setAttribute('href', canonicalUrl);
 
-  let consoleRobots = document.head.querySelector('meta[name="robots"][data-voxly-console]');
-  if (isConsole && !consoleRobots) {
-    consoleRobots = document.createElement('meta');
-    consoleRobots.setAttribute('name', 'robots');
-    consoleRobots.setAttribute('data-voxly-console', '1');
-    document.head.appendChild(consoleRobots);
-  }
-  if (isConsole) consoleRobots.setAttribute('content', 'noindex, nofollow');
-  else consoleRobots?.remove();
+  setMeta('name', 'robots', isConsole ? 'noindex, nofollow' : 'index, follow, max-image-preview:large');
 }

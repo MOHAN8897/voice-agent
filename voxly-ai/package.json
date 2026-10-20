@@ -7,7 +7,7 @@
     "dev": "vite",
     "server": "vite",
     "start": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/prerender.mjs",
     "check:copy": "node scripts/check-landing-copy.mjs",
     "test:rig": "node --test scripts/bot-rig.test.mjs && node scripts/check-hand-clearance.mjs",
     "test:editor-variables": "node --test scripts/editor-variables.test.mjs",
@@ -43,5 +43,8 @@
     "postcss": "^8.5.2",
     "tailwindcss": "^3.4.17",
     "vite": "^6.1.0"
+  },
+  "overrides": {
+    "jsondiffpatch": "^0.7.6"
   }
 }

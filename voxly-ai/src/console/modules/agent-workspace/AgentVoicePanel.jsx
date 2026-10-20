@@ -590,7 +590,7 @@ export function AgentVoicePanel({
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold text-[#0F0E17]">
-                Voice & Language Configuration
+                Voice &amp; Language Configuration
               </span>
               <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#FAF9FD] text-[#6344E7] border border-[#6344E7]/20">
                 {stackLabel}
@@ -663,7 +663,7 @@ export function AgentVoicePanel({
           <div className="flex items-center gap-2">
             <Languages className="w-4 h-4 text-[#6344E7]" />
             <span className="text-xs font-bold text-[#0F0E17]">
-              Primary Spoken Language & Accent
+              Primary Spoken Language &amp; Accent
             </span>
           </div>
           <span className="text-[11px] font-medium text-[#6344E7]">
@@ -921,7 +921,7 @@ export function AgentVoicePanel({
           <div className="flex items-center gap-2">
             <Sliders className="w-4 h-4 text-[#6344E7]" />
             <span className="text-xs font-bold text-[#0F0E17]">
-              Acoustic Calibration & Speech Dynamics
+              Acoustic Calibration &amp; Speech Dynamics
             </span>
           </div>
 

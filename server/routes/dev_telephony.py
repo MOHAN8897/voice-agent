@@ -1,6 +1,8 @@
 """Unified dev telephony routes — provider selection + handshake."""
 from __future__ import annotations
 
+import asyncio
+
 import hashlib
 import json
 import time
@@ -155,6 +157,7 @@ class LiveSpeakTestBody(BaseModel):
 
 
 class OutboundTestBody(BaseModel):
+    admission_key: str | None = Field(None, exclude=True)
     to_e164: str = Field(..., alias="toE164")
     from_e164: str | None = Field(None, alias="fromE164")
     agent_id: str = Field(..., alias="agentId")
@@ -238,6 +241,8 @@ def _outbound_prewarm_meta(
     }
     if billed_user_id:
         meta["billed_user_id"] = billed_user_id
+    if body.contact:
+        meta["contact"] = body.contact
     return meta
 
 
@@ -624,7 +629,7 @@ async def _outbound_vobiz(
     try:
         await agent_service.get_agent(body.agent_id)
     except Exception:
-        return {"ok": False, "error": f"Agent not found: {body.agent_id}"}
+        return {"ok": False, "error": "Agent not found", "status": 404}
 
     tenant_uuid = None
     carrier_account_scope = "platform"
@@ -647,19 +652,18 @@ async def _outbound_vobiz(
             return {
                 "ok": False,
                 "error": "Phone service account is not ready. Complete verification or contact support.",
+                "status": 409,
             }
     else:
         client = VobizClient()
 
-    await hangup_active_vobiz_to(
-        body.to_e164,
-        tenant_id=str(tenant_uuid) if tenant_uuid else None,
-    )
+    if session.kind != "app":
+        await hangup_active_vobiz_to(body.to_e164, tenant_id=str(tenant_uuid) if tenant_uuid else None)
 
     base_api = public_api_base()
     tracking_id = f"vobiz-{uuid.uuid4()}"
 
-    token = vobiz_stream_tokens.create(
+    token = await asyncio.to_thread(vobiz_stream_tokens.create,
         call_uuid=tracking_id,
         agent_id=body.agent_id,
         tier=tier,
@@ -672,6 +676,9 @@ async def _outbound_vobiz(
         vobiz_account_tenant_id=getattr(client, "account_tenant_id", None),
         source_session_id=source_session_id,
         outbound_id=tracking_id,
+        contact=body.contact,
+        admission_key=body.admission_key,
+        admission_tenant_id=session.tenant_id,
     )
 
     schedule_prewarm(
@@ -693,7 +700,7 @@ async def _outbound_vobiz(
     fallback_url = f"{base_api}/api/vobiz/fallback?token={token}&outbound_id={tracking_id}"
     stream_url = client.build_stream_ws_url(token=token, call_uuid=tracking_id)
 
-    vobiz_call_registry.upsert(
+    await asyncio.to_thread(vobiz_call_registry.upsert,
         tracking_id,
         {
             "call_uuid": tracking_id,
@@ -712,6 +719,9 @@ async def _outbound_vobiz(
             "token": token,
             "billed_user_id": billed_user_id,
             "tenant_id": session.tenant_id,
+            "contact": body.contact,
+            "admission_key": body.admission_key,
+            "admission_tenant_id": session.tenant_id,
             "vobiz_account_scope": carrier_account_scope,
             "vobiz_account_tenant_id": getattr(client, "account_tenant_id", None),
         },
@@ -729,8 +739,8 @@ async def _outbound_vobiz(
         effective_id = carrier_uuid or tracking_id
 
         if carrier_uuid and carrier_uuid != tracking_id:
-            vobiz_call_registry.alias(carrier_uuid, tracking_id)
-            vobiz_call_registry.upsert(
+            await asyncio.to_thread(vobiz_call_registry.alias, carrier_uuid, tracking_id)
+            await asyncio.to_thread(vobiz_call_registry.upsert,
                 carrier_uuid,
                 {
                     "call_uuid": carrier_uuid,

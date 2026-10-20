@@ -23,6 +23,7 @@ from server.realtime.gemini_audio_session import (
     build_gemini_audio_session_instructions,
 )
 from server.services.voice_pipeline_limits import LIVE_REPLY_BREVITY_RULE
+from server.prompts.agent_voice_rules import LANGUAGE_LOCK
 
 SPOKEN_HEADER = re.compile(r"---\s*SPOKEN LANGUAGE \(([^)]+)\)\s*---")
 
@@ -73,7 +74,8 @@ def test_language_pack_ships_exactly_once_and_matches_the_call():
     instruction = build_gemini_audio_session_instructions(
         _brain(), language="en-IN", direction="outbound", opening_greeting="Hi, this is Alex."
     )
-    assert instruction.count("PRIMARY PACK MARKER en-IN ONLY") == 1
+    assert instruction.count(LANGUAGE_LOCK["en-IN"]) == 1
+    assert "PRIMARY PACK MARKER" not in instruction
     # A brain can carry several configured packs; the wrong one must not ship.
     assert "OTHER PACK MARKER te-IN ONLY" not in instruction
 
@@ -126,5 +128,5 @@ def test_compiled_brain_without_spoken_pack_still_builds():
     instruction = build_gemini_audio_session_instructions(
         brain, language="te-IN", direction="outbound", opening_greeting="Hi, this is Alex."
     )
-    assert "te-IN ONLY" in instruction
+    assert instruction.count(LANGUAGE_LOCK["te-IN"]) == 1
     assert estimate_tokens(instruction) <= GEMINI_LIVE_INSTRUCTION_TOKEN_BUDGET

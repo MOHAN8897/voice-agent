@@ -6,28 +6,28 @@ import { ShieldCheck, Lock, Key, Server, Cpu, CheckCircle2 } from 'lucide-react'
 export function SecurityPage({ onBackToLanding, onEnterConsole, onNavigatePage }) {
   const securityPillars = [
     {
-      title: 'SRTP & TLS 1.3 Encryption',
-      desc: 'All real-time audio media payload is secured with Secure Real-Time Transport Protocol (SRTP). All client, console, and REST API network packets require TLS 1.3 ciphers.',
+      title: 'Secure connections',
+      desc: 'Use HTTPS for the console and secure WebSocket connections for browser audio. Telephone network protection also depends on the voice network and call route.',
       icon: Lock,
     },
     {
-      title: 'Strict Multi-Tenant Isolation',
-      desc: 'Workspace databases enforce kernel and row-level tenant filtering. Customer data, call transcripts, and voice models are cryptographically compartmentalized.',
+      title: 'Workspace access controls',
+      desc: 'Account permissions and workspace ownership checks control access to agents, call records, contact lists and integrations.',
       icon: Server,
     },
     {
-      title: 'Zero Training on Customer Data',
-      desc: 'Your voice recordings, private business brain records, and caller transcripts are never used to train generalized foundation language models.',
+      title: 'Data handling',
+      desc: 'Review our privacy policy and your selected service configuration for information about recordings, transcripts and external processing. Contact support with specific data handling requirements.',
       icon: Cpu,
     },
     {
-      title: 'Automated DAST & SAST Scans',
-      desc: 'Continuous Semgrep static security audits, OWASP Top 10 compliance rules, and automated dynamic penetration suites execute on every deployment.',
+      title: 'Security checks',
+      desc: 'Our development workflow includes source scanning and isolated security tests. These checks help identify issues; they do not certify that a deployment is free of vulnerabilities.',
       icon: ShieldCheck,
     },
     {
-      title: 'Hardware Security Modules (HSM)',
-      desc: 'SIP trunk keys, API secrets, and OAuth connection tokens are encrypted at rest using industry-grade HSM key management infrastructure.',
+      title: 'Integration credentials',
+      desc: 'Integration and phone-service credentials are managed by the server. They should never be shared in contact lists, agent scripts or support messages.',
       icon: Key,
     },
     {
@@ -52,10 +52,10 @@ export function SecurityPage({ onBackToLanding, onEnterConsole, onNavigatePage }
             <span>Enterprise Security Posture</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-[#0F0E17] tracking-tight">
-            Security Architecture & Voice Trust
+            Security Architecture &amp; Voice Trust
           </h1>
           <p className="text-sm text-[#524E5E] leading-relaxed">
-            Dialtact is designed from the bare metal up to handle high-concurrency telephony, confidential business workflows, and sensitive customer conversations.
+            Account controls, careful credential handling and ongoing verification help protect customer conversations.
           </p>
         </div>
 
@@ -75,14 +75,14 @@ export function SecurityPage({ onBackToLanding, onEnterConsole, onNavigatePage }
         </div>
 
         <div className="bg-white rounded-2xl border border-[#E4E2EB] p-8 shadow-xs space-y-4">
-          <h2 className="text-lg font-bold text-[#0F0E17]">Security Incident Response & Reporting</h2>
+          <h2 className="text-lg font-bold text-[#0F0E17]">Security Incident Response &amp; Reporting</h2>
           <p className="text-xs text-[#524E5E] leading-relaxed">
             If you believe you have discovered a security vulnerability or anomalous behavior within Dialtact infrastructure, please submit a responsible disclosure report directly to{' '}
             <a href="mailto:security@dialtact.com" className="font-semibold text-[#6344E7] hover:underline">
               security@dialtact.com
             </a>{' '}
             or open a priority ticket via our{' '}
-            <a href="#contact" onClick={(e) => { e.preventDefault(); onNavigatePage?.('contact'); }} className="font-semibold text-[#6344E7] hover:underline">
+            <a href="/support" onClick={(e) => { e.preventDefault(); onNavigatePage?.('contact'); }} className="font-semibold text-[#6344E7] hover:underline">
               Customer Support Desk
             </a>.
           </p>

@@ -16,19 +16,19 @@ import {
 const SUPPORT_FAQS = [
   {
     q: 'How are support tickets prioritized by the Dialtact team?',
-    a: 'Tickets marked Critical Incident receive immediate automated paging to our on-call voice engineering team with a sub-2 hour SLA. High Priority tickets (telephony routing, trunk degradation) are addressed within 4 hours. General product and billing queries are processed within standard 24-hour business windows.',
+    a: 'Include the affected workspace, approximate call time, impact and any error message. Mark an active outage as critical. Response times depend on the issue and your support agreement.',
   },
   {
     q: 'What should I do during an active voice trunk or telephony outage?',
-    a: 'Submit a ticket with Priority set to "Critical Incident" and select "SIP Voice Network Routing". Our direct voice monitoring pipeline will immediately cross-reference carrier trunk logs and trigger automatic carrier failover if needed.',
+    a: 'Submit a support request with the affected call identifiers and times. Pause affected campaigns if calls cannot complete. Contact support for guidance before changing the configured calling stack.',
   },
   {
     q: 'Can I bring my own existing telephone numbers or SIP trunks?',
-    a: 'Yes! Dialtact provides Bring-Your-Own-Carrier (BYOC) SIP URI trunking as well as direct number provisioning across 100+ countries directly within your workspace console.',
+    a: 'Number availability and supported routes depend on your region, verification status and workspace configuration. Check the phone-number catalog or contact support before planning a migration.',
   },
   {
     q: 'Where do I find my workspace tenant ID for a support ticket?',
-    a: 'Your workspace tenant ID is visible in the console URL (`#dashboard/overview`) and under Settings > Workspace Profile. If you are already signed in, your ticket will automatically link to your workspace.',
+    a: 'Include your workspace name and the email used to sign in. Support can help identify the workspace; do not send passwords, API keys or private call recordings.',
   },
 ];
 
@@ -43,12 +43,13 @@ export function SupportPage({ onBackToLanding, onEnterConsole, onNavigatePage })
     <div className="min-h-screen flex flex-col bg-[#FAF9FD] text-[#0F0E17]">
       <PageHeader
         title="Customer Support Desk & Ticket Portal"
-        subtitle="Direct technical engineering support, voice trunk operations, and enterprise SLAs."
+        subtitle="Help with agents, calling setup, workspace access and billing."
         onBackToLanding={onBackToLanding}
         onEnterConsole={onEnterConsole}
       />
 
       <main className="flex-1 max-w-6xl w-full mx-auto px-6 py-10 space-y-12">
+        <div className="space-y-2"><h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Customer support</h1><p className="max-w-2xl text-sm text-[#524E5E]">Get help with your workspace, agents, calling setup or billing.</p></div>
         {/* Main Support & Ticket Desk Form Section */}
         <section>
           <ContactUsSection />

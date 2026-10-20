@@ -96,7 +96,7 @@ export function AgentVoiceModelsPanel({
         title="Voice & Models"
         description={
           readOnly
-            ? "Resolved STT, LLM, and TTS stacks per tier — configured in Dev → Stack & tiers."
+            ? "Resolved STT, LLM, and TTS stacks per tier — configured in Dev → Stack &amp; tiers."
             : "Customer-facing tier and resolved provider stack. Provider matrix is managed by your platform administrator."
         }
         actions={
@@ -183,7 +183,7 @@ export function AgentVoiceModelsPanel({
         {readOnly && (
           <p className="mt-4 text-sm text-text-muted">
             To change STT / LLM / TTS assignments, use{" "}
-            <span className="font-mono text-accent-primary">Dev → Stack & tiers</span> and promote to this environment.
+            <span className="font-mono text-accent-primary">Dev → Stack &amp; tiers</span> and promote to this environment.
           </p>
         )}
       </SkeuoPanel>

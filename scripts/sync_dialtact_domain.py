@@ -11,6 +11,11 @@ Usage:
 """
 from __future__ import annotations
 
+try:
+    from scripts.http_transport import safe_urlopen
+except ModuleNotFoundError:
+    from http_transport import safe_urlopen
+
 import argparse
 import asyncio
 import json
@@ -52,7 +57,7 @@ def godaddy_request(
     }
     req = urllib.request.Request(url, data=payload, headers=headers, method=method)
     try:
-        with urllib.request.urlopen(req) as resp:
+        with safe_urlopen(req) as resp:
             raw = resp.read().decode("utf-8")
             return json.loads(raw) if raw.strip() else {}
     except urllib.error.HTTPError as exc:

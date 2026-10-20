@@ -364,7 +364,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                   Voice Network: Enterprise High-Capacity Line
                 </span>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold">
-                  Live & Operational
+                  Live &amp; Operational
                 </span>
               </div>
               <p className="text-[11px] text-[#524E5E] mt-0.5">

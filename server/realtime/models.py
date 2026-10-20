@@ -233,7 +233,7 @@ def realtime_voice_llm_provider(
         if isinstance(llm, dict):
             provider = str(llm.get("provider") or "").strip().lower()
             model = str(llm.get("model") or "").strip()
-            if provider == "gemini" and is_gemini_live_voice_model(model):
+            if provider == "gemini":
                 return "gemini", live_gemini_model(model, settings)
             if is_gemini_live_voice_model(model):
                 return "gemini", live_gemini_model(model, settings)
@@ -250,7 +250,7 @@ def realtime_voice_llm_provider(
         return "gemini", live_gemini_model(runtime_model, settings)
     if is_realtime_llm_model(runtime_model):
         return "openai", live_openai_model(runtime_model, settings)
-    return "openai", live_openai_model(runtime_model, settings)
+    return "gemini", live_gemini_model(runtime_model, settings)
 
 
 def resolve_realtime_voice_model(

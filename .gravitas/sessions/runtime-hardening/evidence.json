@@ -1,0 +1,67 @@
+{
+  "scope": "Primary Gemini Live script generation, language packs, compiled script publication, primary web/Vobiz call prompt preparation and tenant editor",
+  "backend": {
+    "passed": 131,
+    "deselected_secondary": 1,
+    "runner": "Gravitas verify.py wrapping targeted pytest",
+    "warning": "audioop deprecated in Python 3.13"
+  },
+  "frontend": {
+    "playwright_passed": 6,
+    "node_passed": 7,
+    "build": "2415 modules; built in 12.68s",
+    "api_mocks": true
+  },
+  "live_gemini": {
+    "provider": "gemini",
+    "model": "gemini-3.8-live",
+    "generation_mode": "brief_interpret_v1",
+    "turns": [
+      {
+        "audio_frames": 19,
+        "turn_complete": true,
+        "elapsed_ms": 7765
+      },
+      {
+        "audio_frames": 12,
+        "turn_complete": true,
+        "elapsed_ms": 3891
+      }
+    ],
+    "connected": true,
+    "passed": true
+  },
+  "semgrep": {
+    "files": 70,
+    "findings": 0,
+    "scanner_errors": [
+      "PartialParsing"
+    ]
+  },
+  "strix": {
+    "status": "incomplete",
+    "reason": "Gemini scanner model repeatedly refused the audit; zero validated coverage. Owned sandbox stopped. No secondary model used."
+  },
+  "zap": {
+    "status": "incomplete",
+    "reason": "Earlier Docker image pull/run interrupted; no completed scan report. No production target scanned."
+  },
+  "limits": [
+    "No real microphone or carrier call tested",
+    "No production deployment or customer data mutations",
+    "Locale/audible accent quality needs native-speaker review",
+    "Concurrent multi-user draft editing does not have optimistic version checks"
+  ],
+  "verdict": "PASS for targeted primary script/editor regressions and synthetic Gemini audio; not a full penetration-test certification",
+  "reticle": {
+    "verdict": "yes",
+    "coverage": "API-mocked DOM/network; component state not subscribed",
+    "flows": [
+      "Draft review without saving",
+      "503 publish preserves edited script and unsaved indicator",
+      "Incomplete objection rule is rejected"
+    ],
+    "latest_proof": "reticle_act_and_wait verified yes: incomplete objection rule shows actionable validation error",
+    "session": "lease-dae744a3-4846-422e-8846-9d9a1f77d5d0"
+  }
+}

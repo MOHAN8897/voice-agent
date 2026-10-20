@@ -17,6 +17,7 @@ from server.brain.compiled_brain_artifact import (
     assemble_unified_brain,
     checksum_instructions,
     platform_body_for_agent_language,
+    is_unified_compiled_brain,
 )
 from server.brain.sections import STATIC_OUTPUT_RULES_VERSION
 from server.prompts.agent_voice_rules import normalize_compile_language
@@ -35,7 +36,10 @@ class CompiledBrainService:
     async def _agent_info(self, agent_id: str) -> tuple[str, bool, str | None]:
         factory = get_session_factory()
         if factory is None:
-            return "te-IN", False, None
+            from server.brain.agent_service import agent_service
+            row = await agent_service.get_agent(agent_id)
+            languages = row.get("languages") or ["te-IN"]
+            return normalize_compile_language(languages[0]), bool(row.get("recording_disclosure_enabled")), row.get("recording_disclosure_text")
         async with factory() as session:
             try:
                 row = await session.get(Agent, uuid.UUID(agent_id))
@@ -62,12 +66,11 @@ class CompiledBrainService:
         if (
             latest
             and business_version_id is None
-            and latest.get("source_checksum") == source_checksum
         ):
             optimized_text = latest["optimized_prompt"]
             business_version = latest["version_id"]
         else:
-            opt = await optimize_business_prompt(raw_prompt, source_checksum=source_checksum)
+            opt = await optimize_business_prompt(raw_prompt, source_checksum=source_checksum, preserve_source=True)
             published = await business_brain_store.save_published_version(
                 agent_id,
                 optimized_prompt=opt.optimized_business_prompt,
@@ -76,6 +79,22 @@ class CompiledBrainService:
             )
             optimized_text = published["optimized_prompt"]
             business_version = published["version_id"]
+
+        # The create flow historically stored a full platform assembly as the
+        # published business text. Rewrapping it duplicates packs and policies.
+        if is_unified_compiled_brain(optimized_text):
+            if latest and latest.get("source_checksum") == source_checksum:
+                optimized_text = raw_prompt
+            else:
+                # A restart/recompile must not publish newer, unapproved draft
+                # edits. Legacy versions saved their approved script in the report.
+                report = (latest or {}).get("optimizer_report") or {}
+                approved_script = report.get("agent_script")
+                if approved_script:
+                    optimized_text = approved_script
+                else:
+                    from server.brain.compiled_brain_artifact import business_from_unified_brain
+                    optimized_text = business_from_unified_brain(optimized_text)
 
         platform_rules = platform_body_for_agent_language(platform["body"], lang)
         if disclosure_enabled:
@@ -161,6 +180,7 @@ class CompiledBrainService:
             raw_prompt,
             source_checksum=source_checksum,
             previous_optimized=previous["optimized_prompt"] if previous else None,
+            preserve_source=True,
         )
         blocking = [c for c in opt.conflicts if c.get("severity") == "blocking"]
         if blocking:

@@ -17,7 +17,7 @@ export function TactileButton({
   ...props
 }) {
   const baseStyles =
-    'inline-flex items-center justify-center gap-2 font-semibold transition-all duration-150 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6344E7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF9FD] disabled:opacity-45 disabled:pointer-events-none active:scale-[0.98]';
+    'inline-flex min-h-[44px] sm:min-h-0 items-center justify-center gap-2 font-semibold transition-all duration-150 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6344E7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF9FD] disabled:opacity-45 disabled:pointer-events-none active:scale-[0.98]';
 
   const sizeStyles = {
     xs: 'px-2.5 py-1 text-[11px] rounded-lg',

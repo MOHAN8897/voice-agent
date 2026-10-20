@@ -1,0 +1,142 @@
+{
+  "intents": {
+    "inline:a-failed-integration-authorization-leaves-it-dis-7ed7502f": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "POST",
+            "status": 503,
+            "urlContains": "/api/integrations/SLACK/connect"
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "connection-error"
+            }
+          },
+          {
+            "contains": "Connected Integrations",
+            "kind": "text",
+            "visible": true
+          },
+          {
+            "kind": "not",
+            "predicate": {
+              "contains": "Connected Slack successfully!",
+              "kind": "text",
+              "visible": true
+            }
+          }
+        ]
+      },
+      "declaredAt": 1792469823812,
+      "id": "inline:a-failed-integration-authorization-leaves-it-dis-7ed7502f",
+      "provenBy": {
+        "at": 1792469826107,
+        "grade": "net",
+        "runId": "drive-lease-e80a22b4-32b2-4ca0-b28d-22f449b7f800",
+        "verdictId": "reticle_act_and_wait:1792469826107"
+      },
+      "state": "proved",
+      "statement": "A failed integration authorization leaves it disconnected, shows an error and allows retry.",
+      "status": "proved",
+      "subject": "api",
+      "surface": {
+        "files": [
+          "src/console/modules/IntegrationsModule.jsx"
+        ]
+      },
+      "updatedAt": 1792469826136
+    },
+    "inline:a-fresh-provider-approved-kyc-status-replaces-th-5ee18213": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/kyc/voice/status"
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "voice-service-kyc-approved"
+            }
+          },
+          {
+            "absent": true,
+            "kind": "element",
+            "query": {
+              "testid": "voice-service-kyc-card"
+            }
+          }
+        ]
+      },
+      "declaredAt": 1792433920841,
+      "id": "inline:a-fresh-provider-approved-kyc-status-replaces-th-5ee18213",
+      "provenBy": {
+        "at": 1792433922089,
+        "grade": "net",
+        "runId": "drive-lease-a7c5705c-2e5b-423c-8f26-7d791b169930",
+        "verdictId": "reticle_act_and_wait:1792433922089"
+      },
+      "state": "proved",
+      "statement": "A fresh provider-approved KYC status replaces the verification form with the verified phone-service state.",
+      "status": "proved",
+      "subject": "api",
+      "surface": {
+        "files": [
+          "src/console/ui/VoiceServiceKycCard.jsx"
+        ]
+      },
+      "updatedAt": 1792433922116
+    },
+    "inline:failed-hosted-verification-preserves-the-tenant-939df19d": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "status": 503,
+            "urlContains": "/api/kyc/voice/session"
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "voice-service-kyc-error"
+            }
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "voice-service-legal-name"
+            },
+            "state": "disabled"
+          }
+        ]
+      },
+      "declaredAt": 1792433529251,
+      "id": "inline:failed-hosted-verification-preserves-the-tenant-939df19d",
+      "provenBy": {
+        "at": 1792433529461,
+        "grade": "net",
+        "runId": "drive-lease-a7c5705c-2e5b-423c-8f26-7d791b169930",
+        "verdictId": "reticle_act_and_wait:1792433529461"
+      },
+      "state": "proved",
+      "statement": "Failed hosted verification preserves the tenant's locked business identity and displays a recoverable error without granting phone access.",
+      "status": "proved",
+      "subject": "api",
+      "surface": {
+        "files": [
+          "src/console/ui/TactileButton.jsx"
+        ]
+      },
+      "updatedAt": 1792433529517
+    }
+  },
+  "subject": "api",
+  "version": 1
+}

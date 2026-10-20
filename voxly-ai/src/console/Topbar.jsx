@@ -214,7 +214,7 @@ export function Topbar({
                 className="w-full flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-[#FAF9FD] text-left font-medium text-[#0F0E17]"
               >
                 <CreditCard className="w-3.5 h-3.5 text-[#524E5E]" />
-                Billing & usage
+                Billing &amp; usage
               </button>
               <button
                 type="button"

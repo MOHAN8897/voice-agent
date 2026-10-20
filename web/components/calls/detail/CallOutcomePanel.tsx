@@ -268,7 +268,7 @@ export function CallOutcomePanel({
             <div className="mt-5 pt-4 border-t border-surface-border-subtle space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-mono text-[10px] uppercase tracking-wider text-text-subtle font-semibold">
-                  CRM Integration & Lead Export
+                  CRM Integration &amp; Lead Export
                 </span>
                 {copyFeedback && (
                   <span className="font-mono text-[10px] text-emerald-600 font-medium animate-pulse">

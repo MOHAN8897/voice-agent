@@ -191,6 +191,9 @@ class ContactImportTemplate(Base):
 
 class Campaign(Base):
     __tablename__ = "campaigns"
+    __table_args__ = (UniqueConstraint("tenant_id", "client_request_id", name="uq_campaign_creation_request"),)
+    client_request_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    request_fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
     campaign_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.tenant_id"), nullable=False)
@@ -215,6 +218,7 @@ class Campaign(Base):
 
 class CampaignContact(Base):
     __tablename__ = "campaign_contacts"
+    __table_args__ = (Index("ix_campaign_contacts_ready", "campaign_id", "status", "next_attempt_at"),)
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     campaign_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("campaigns.campaign_id"), nullable=False)
@@ -231,6 +235,7 @@ class CampaignContact(Base):
 
 class CampaignRun(Base):
     __tablename__ = "campaign_runs"
+    __table_args__ = (Index("ix_campaign_runs_recovery", "status", "lease_expires_at"),)
 
     run_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     campaign_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("campaigns.campaign_id"), nullable=False)
@@ -238,6 +243,8 @@ class CampaignRun(Base):
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     stats: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    lease_owner: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    lease_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class DialAttempt(Base):
@@ -251,3 +258,25 @@ class DialAttempt(Base):
     carrier_call_uuid: Mapped[str | None] = mapped_column(String(100), nullable=True)
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+
+class PstnDialRequest(Base):
+    """Shared admission/idempotency ledger; no phone numbers or access tokens."""
+    __tablename__ = "pstn_dial_requests"
+    __table_args__ = (
+        Index("ix_pstn_dial_requests_active", "tenant_id", "status"),
+        Index("ix_pstn_dial_requests_carrier", "provider", "carrier_id"),
+    )
+    request_key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.tenant_id"), nullable=False)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    destination_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    provider: Mapped[str] = mapped_column(String(24), nullable=False)
+    status: Mapped[str] = mapped_column(String(24), nullable=False, default="reserved")
+    carrier_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    call_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    response: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    answered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    media_claimed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, nullable=False)

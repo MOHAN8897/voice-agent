@@ -123,29 +123,16 @@ async def test_proxy_google_calendar_cancel_event():
 
 @pytest.mark.asyncio
 async def test_proxy_google_calendar_reschedule_event():
-    fake_resp = MagicMock()
-    fake_resp.status_code = 200
-    fake_resp.text = '{"id": "event_abc_123", "start": {"dateTime": "2026-10-15T14:00:00+05:30"}, "summary": "Consultation"}'
-    fake_resp.json.return_value = {
-        "id": "event_abc_123",
-        "start": {"dateTime": "2026-10-15T14:00:00+05:30"},
-        "summary": "Consultation",
-    }
-
-    with patch("httpx.AsyncClient.patch", new_callable=AsyncMock, return_value=fake_resp) as mock_patch:
-        res = await nango_service._execute_proxy_tool(
-            provider_key="google-calendar",
-            connection_id="conn-123",
-            action_name="GOOGLECALENDAR_RESCHEDULE_EVENT",
-            params={"event_id": "event_abc_123", "start": "2026-10-15T14:00:00"},
-        )
-        assert res["status"] == "confirmed"
-        assert res["rescheduled"] is True
-        assert res["event_id"] == "event_abc_123"
-        assert "2026-10-15T14:00:00+05:30" in res["start"]
-        mock_patch.assert_called_once()
-        call_url = mock_patch.call_args[0][0]
-        assert "/proxy/calendar/v3/calendars/primary/events/event_abc_123" in call_url
+    fake_resp = MagicMock(status_code=200)
+    fake_resp.json.return_value = {"id": "event_abc_123"}
+    listing = MagicMock(status_code=200)
+    listing.json.return_value = {"items": []}
+    with patch("httpx.AsyncClient.get", AsyncMock(return_value=listing)), patch("httpx.AsyncClient.patch", AsyncMock(return_value=fake_resp)) as mock_patch:
+        result = await nango_service._execute_proxy_tool(provider_key="google-calendar", connection_id="conn-test",
+            action_name="GOOGLECALENDAR_RESCHEDULE_EVENT", params={"event_id": "event_abc_123", "start": "2030-10-20T14:00:00+05:30", "end": "2030-10-20T14:30:00+05:30"})
+    assert result["status"] == "success" and result["confirmed"] and result["rescheduled"]
+    assert result["event_id"] == "event_abc_123"
+    mock_patch.assert_awaited_once()
 
 
 @pytest.mark.asyncio
@@ -161,7 +148,9 @@ async def test_proxy_shopify_cancel_order():
         }
     }
 
-    with patch("httpx.AsyncClient.post", new_callable=AsyncMock, return_value=fake_resp) as mock_post:
+    current = MagicMock(status_code=200)
+    current.json.return_value = {"order": {"id": 123456, "fulfillment_status": None, "cancelled_at": None}}
+    with patch("httpx.AsyncClient.get", AsyncMock(return_value=current)), patch("httpx.AsyncClient.post", new_callable=AsyncMock, return_value=fake_resp) as mock_post:
         res = await nango_service._execute_proxy_tool(
             provider_key="shopify",
             connection_id="conn-123",

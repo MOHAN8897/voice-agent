@@ -277,7 +277,8 @@ async def extract_agent_spec(
         raise ValueError("language_code must be provided to extract_agent_spec; no default allowed.")
 
     t0 = time.time()
-    providers = preferred_providers or ["gemini", "openai", "deepseek"]
+    from server.brain.generation_runtime import generation_provider
+    providers = preferred_providers if preferred_providers is not None else [generation_provider()]
     extracted_data: dict[str, Any] | None = None
     chosen_source = "regex_fallback"
 

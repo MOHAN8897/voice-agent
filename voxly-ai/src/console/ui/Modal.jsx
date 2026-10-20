@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useId, useRef } from 'react';
 import { X } from 'lucide-react';
 
 /**
@@ -16,19 +16,35 @@ export function Modal({
   headerless = false,
   panelClassName = '',
 }) {
+  const panel = useRef(null);
+  const close = useRef(onClose);
+  close.current = onClose;
+  const titleId = useId();
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') onClose();
-    };
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-      window.addEventListener('keydown', handleKeyDown);
+    if (!isOpen) return;
+    const previousFocus = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const focusable = () => [...(panel.current?.querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href], summary, [tabindex="0"]') || [])].filter((node) => node.getClientRects().length);
+    const frame = requestAnimationFrame(() => (focusable()[0] || panel.current)?.focus());
+    function onKey(event) {
+      if (event.key === 'Escape') { event.stopPropagation(); close.current?.(); }
+      if (event.key === 'Tab') {
+        const nodes = focusable();
+        const first = nodes[0], last = nodes[nodes.length - 1];
+        if (!first) { event.preventDefault(); panel.current?.focus(); }
+        else if (event.shiftKey && (document.activeElement === first || !panel.current?.contains(document.activeElement))) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && (document.activeElement === last || !panel.current?.contains(document.activeElement))) { event.preventDefault(); first.focus(); }
+      }
     }
+    document.addEventListener('keydown', onKey);
     return () => {
-      document.body.style.overflow = 'unset';
-      window.removeEventListener('keydown', handleKeyDown);
+      cancelAnimationFrame(frame);
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', onKey);
+      if (previousFocus?.isConnected) previousFocus.focus();
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -43,15 +59,17 @@ export function Modal({
 
       {/* Modal Dialog Card */}
       <div
+        ref={panel}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="modal-title"
+        aria-labelledby={headerless ? undefined : titleId}
         className={`relative w-full ${maxWidth} bg-white border border-[#E4E2EB] rounded-2xl shadow-2xl z-10 overflow-hidden my-auto max-h-[calc(100dvh-2rem)] flex flex-col ${panelClassName} ${className}`}
       >
         {!headerless && (
           <div className="flex items-start justify-between gap-4 p-5 sm:p-6 border-b border-[#E4E2EB] shrink-0">
             <div>
-              <h2 id="modal-title" className="text-base sm:text-lg font-bold text-[#0F0E17] tracking-tight">
+              <h2 id={titleId} className="text-base sm:text-lg font-bold text-[#0F0E17] tracking-tight">
                 {title}
               </h2>
               {subtitle && (

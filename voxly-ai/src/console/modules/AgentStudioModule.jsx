@@ -43,7 +43,7 @@ import {
   renderScriptPreview,
 } from '../../lib/studioScriptHelpers';
 import { formatPhoneVoiceLabel, groupVoicesByTier } from '../../lib/voiceDisplay';
-import { loadAgentBrain } from '../../services/agentBrain';
+import { loadAgentBrain, reviewAgentBrain } from '../../services/agentBrain';
 import { api } from '../../services/api';
 import { AgentOverview } from './agent-workspace/AgentOverview';
 import { AgentCallsPanel } from './agent-workspace/AgentCallsPanel';
@@ -213,10 +213,10 @@ const EMPTY_FORM = {
   objectionRules: [],
   boundaries: [],
   variableDefinitions: [],
-  voice: { speed: 1, pitch: 0, voiceName: 'Marin', voiceId: 'marin', realtimeVoice: 'marin', provider: 'phone_ai' },
+  voice: { speed: 1, pitch: 0, voiceName: 'Puck', voiceId: 'Puck', realtimeVoice: 'Puck', provider: 'gemini' },
   language: 'en-IN',
   inboundRouting: {
-    businessHours: '08:00 - 18:00 (PST)',
+    businessHours: '',
     afterHoursAction: 'voicemail',
     greetingPhrase: '',
   },
@@ -225,8 +225,8 @@ const EMPTY_FORM = {
 function formFromAgent(agent) {
   if (!agent) return { ...EMPTY_FORM };
   const rawVoice = agent.voice || agent.voice_settings || agent.voiceSettings || {};
-  const voiceId = rawVoice.voiceId || rawVoice.realtimeVoice || 'marin';
-  const realtimeVoice = rawVoice.realtimeVoice || rawVoice.voiceId || 'marin';
+  const voiceId = rawVoice.voiceId || rawVoice.realtimeVoice || 'Puck';
+  const realtimeVoice = rawVoice.realtimeVoice || rawVoice.voiceId || 'Puck';
   const lang = (agent.languages && agent.languages[0]) || agent.language || rawVoice.language || 'en-IN';
   return {
     ...editableSubset({
@@ -243,12 +243,12 @@ function formFromAgent(agent) {
         ...rawVoice,
         voiceId,
         realtimeVoice,
-        voiceName: rawVoice.voiceName || 'Marin',
+        voiceName: rawVoice.voiceName || 'Puck',
         speed: rawVoice.speed ?? 1,
       },
       language: lang,
       inboundRouting: agent.inboundRouting || {
-        businessHours: '08:00 - 18:00 (PST)',
+        businessHours: '',
         afterHoursAction: 'voicemail',
         greetingPhrase: agent.greeting || '',
       },
@@ -286,7 +286,7 @@ export function AgentStudioModule({
   const testCallButtonRef = useRef(null);
   const [phoneVoices, setPhoneVoices] = useState([]);
   const [activeVoiceProvider, setActiveVoiceProvider] = useState('gemini');
-  const [defaultVoiceId, setDefaultVoiceId] = useState('te-in-csagent-5');
+  const [defaultVoiceId, setDefaultVoiceId] = useState('Puck');
   const [voiceCatalogError, setVoiceCatalogError] = useState(null);
   const [stackLabel, setStackLabel] = useState(PHONE_STACK_LABEL);
 
@@ -335,6 +335,8 @@ export function AgentStudioModule({
   const [voiceSpoken, setVoiceSpoken] = useState({ voice: null, model: null });
   const [brainLoadError, setBrainLoadError] = useState(null);
   const [brainLoading, setBrainLoading] = useState(false);
+  const [brainLoadAttempt, setBrainLoadAttempt] = useState(0);
+  const [publishedVersion, setPublishedVersion] = useState(null);
   const [variablePickerOpen, setVariablePickerOpen] = useState(false);
   const [useFallbackSyntax, setUseFallbackSyntax] = useState(true);
   const [variableSuggestionTrigger, setVariableSuggestionTrigger] = useState(null);
@@ -558,6 +560,9 @@ export function AgentStudioModule({
     let cancelled = false;
     setBrainLoading(true);
     setBrainLoadError(null);
+    setPublishedVersion(null);
+    setVariablePickerOpen(false);
+    setVariableSuggestionTrigger(null);
 
     const agent =
       selectedAgent?.id === agentId
@@ -568,9 +573,10 @@ export function AgentStudioModule({
     loadAgentBrain(agentId)
       .then((data) => {
         if (cancelled) return;
+        setPublishedVersion(data?.published?.version_id || null);
         const studio = parseStudioFieldsFromSections(data?.draft?.sections);
         const cfg = parseVoiceConfigFromSections(data?.draft?.sections);
-        const chosenVoice = cfg.realtimeVoice || base.voice?.realtimeVoice || 'marin';
+        const chosenVoice = cfg.realtimeVoice || base.voice?.realtimeVoice || 'Puck';
         const voiceMeta = (phoneVoices.length ? phoneVoices : []).find(
           (v) => v.id === chosenVoice
         );
@@ -586,6 +592,7 @@ export function AgentStudioModule({
           ...base,
           script: initialScript,
           greeting: initialGreeting,
+          boundaries: studio.boundaries ?? base.boundaries,
           objectionRules: studio.objectionRules?.length
             ? studio.objectionRules
             : base.objectionRules,
@@ -597,7 +604,7 @@ export function AgentStudioModule({
             ...base.voice,
             realtimeVoice: chosenVoice,
             voiceId: chosenVoice,
-            voiceName: voiceMeta?.label || base.voice?.voiceName || chosenVoice,
+            voiceName: voiceMeta?.label || chosenVoice,
             speed: cfg.speed ?? base.voice?.speed ?? 1,
             pitch: cfg.pitch ?? base.voice?.pitch ?? 0,
             stability: cfg.stability ?? base.voice?.stability ?? 0.75,
@@ -622,7 +629,8 @@ export function AgentStudioModule({
     return () => {
       cancelled = true;
     };
-  }, [selectedAgentId, phoneVoices]);
+  }, [selectedAgentId, brainLoadAttempt]);
+
 
   useEffect(() => {
     if (!selectedAgent) return;
@@ -636,21 +644,44 @@ export function AgentStudioModule({
   // Handle Save
   const [saveError, setSaveError] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [scriptReview, setScriptReview] = useState(null);
+  const [reviewing, setReviewing] = useState(false);
+
+  const handleReview = async () => {
+    if (!selectedAgent?.id || reviewing || brainLoading || brainLoadError) return;
+    const snapshot = snapForm(formData);
+    setReviewing(true);
+    try {
+      const result = await reviewAgentBrain(selectedAgent.id, formData);
+      setScriptReview({ snapshot, agentId: selectedAgent.id, ...result });
+    } catch (error) {
+      setScriptReview({ snapshot, agentId: selectedAgent.id, error: error.message || 'Could not review this draft. Your edits are still here; retry when the service is available.' });
+    } finally {
+      setReviewing(false);
+    }
+  };
 
   const handleSave = async () => {
-    if (!selectedAgent?.id || saving) return false;
+    if (!selectedAgent?.id || saving || brainLoading || brainLoadError) return false;
     setSaveError(null);
     setSaving(true);
     let success = true;
     try {
       if (scriptDirty) {
-        await updateAgent(selectedAgent.id, formData);
+        const review = await reviewAgentBrain(selectedAgent.id, formData);
+        setScriptReview({ snapshot: snapForm(formData), agentId: selectedAgent.id, ...review });
+        if (!review.ok) {
+          setSaveError('Review the blocking issues below before publishing. Your edits have been kept.');
+          return false;
+        }
+        const updated = await updateAgent(selectedAgent.id, formData);
+        setPublishedVersion(updated?.publication?.compiled_version || null);
         try {
           await api.agents.saveTelephonyProfile(selectedAgent.id, {
             greetingPhrase: formData.greeting || '',
           });
         } catch {
-          /* optional */
+          throw new Error('The script was published, but the opening greeting could not be confirmed. Your edits have been kept; retry Save.');
         }
         // Re-baseline: after a successful publish there is nothing left to guard.
         setSavedSnapshot(snapForm(formData));
@@ -690,8 +721,8 @@ export function AgentStudioModule({
         }
       : {
           category: 'custom',
-          trigger: 'Customer concern here...',
-          response: 'AI response script here...',
+          trigger: '',
+          response: '',
           action: 'continue_script',
         };
     setFormData((prev) => ({
@@ -829,7 +860,7 @@ export function AgentStudioModule({
   return (
     <div className="space-y-6">
       {saveError && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-900">{saveError}</div>
+        <div role="alert" data-testid="agent-save-error" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-900">{saveError}</div>
       )}
       {/* Unsaved-changes guard. Every leave path (tab, agent switch, back, unload)
           funnels through confirmLeave, so nothing silently discards a script. */}
@@ -955,6 +986,8 @@ export function AgentStudioModule({
             variant="secondary"
             size="sm"
             icon={Radio}
+            disabled={dirty || saving || brainLoading || !!brainLoadError}
+            title={dirty ? 'Publish your changes before testing the agent.' : 'Test the published script'}
             onClick={(e) => {
               testCallButtonRef.current = e.currentTarget;
               setTestCallOpen(true);
@@ -970,7 +1003,7 @@ export function AgentStudioModule({
             size="sm"
             icon={isSaved ? CheckCircle2 : Save}
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || brainLoading || !!brainLoadError || !dirty}
             data-testid="agent-save"
             className="min-h-[38px]"
           >
@@ -1050,13 +1083,15 @@ export function AgentStudioModule({
                   {LANGUAGE_OPTIONS.find((l) => l.code === formData.language)?.label || formData.language}
                 </span>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-md border bg-[#F0EEF6] text-[#524E5E] border-[#E4E2EB]">
-                  {formData.voice?.voiceName || formData.voice?.voiceId || 'Marin'}
+                  {phoneVoices.find((voice) => voice.id === formData.voice?.voiceId)?.label || formData.voice?.voiceName || formData.voice?.voiceId || 'Puck'}
                 </span>
               </div>
             </div>
 
             <textarea
               rows={2}
+              aria-label="Opening greeting"
+              disabled={brainLoading || !!brainLoadError || saving}
               value={formData.greeting}
               onChange={(e) => handleGreetingChange(e.target.value)}
               placeholder="Hi there! Thanks for calling. How can I help you today?"
@@ -1076,11 +1111,24 @@ export function AgentStudioModule({
                   <p className="text-[11px] text-[#6344E7] mt-1">Loading script from your agent brain…</p>
                 )}
                 {brainLoadError && (
-                  <p className="text-[11px] text-red-600 mt-1">{brainLoadError}</p>
+                  <div role="alert" className="text-[11px] text-red-600 mt-1">
+                    {brainLoadError}
+                    <button type="button" onClick={() => setBrainLoadAttempt((n) => n + 1)} className="ml-2 underline" data-testid="retry-script-load">Retry loading</button>
+                  </div>
                 )}
+                {!brainLoading && !brainLoadError && <p data-testid="script-published-version" className="text-[11px] text-[#524E5E] mt-1">{publishedVersion ? `Published version: ${publishedVersion}` : 'No published version loaded'}{scriptDirty ? ' · Unsaved draft' : ''}</p>}
               </div>
 
               <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleReview}
+                  disabled={reviewing || saving || brainLoading || !!brainLoadError}
+                  data-testid="review-script-btn"
+                  className="px-2.5 py-1.5 rounded-lg border border-[#E4E2EB] bg-[#FAF9FD] text-xs font-semibold text-[#524E5E] disabled:opacity-50"
+                >
+                  {reviewing ? 'Reviewing…' : 'Review draft'}
+                </button>
                 <button
                   type="button"
                   onClick={() => setScriptPreviewMode(!scriptPreviewMode)}
@@ -1100,6 +1148,7 @@ export function AgentStudioModule({
                     <button
                       type="button"
                       onClick={() => setVariablePickerOpen(!variablePickerOpen)}
+                      disabled={brainLoading || !!brainLoadError || saving}
                       className="px-2.5 py-1.5 rounded-lg border border-[#E4E2EB] bg-[#FAF9FD] hover:bg-[#F0EEF6] text-xs font-semibold text-[#6344E7] flex items-center gap-1.5 shadow-2xs transition-colors"
                       data-testid="insert-variable-btn"
                     >
@@ -1161,6 +1210,13 @@ export function AgentStudioModule({
               </div>
             </div>
 
+            {scriptReview?.agentId === selectedAgent?.id && scriptReview?.snapshot === snapForm(formData) && (
+              <div role={scriptReview.error || !scriptReview.ok ? 'alert' : 'status'} data-testid="script-review-result" className="mb-3 rounded-xl border border-[#E4E2EB] bg-[#FAF9FD] p-3 text-xs space-y-2">
+                <p className="font-semibold text-[#0F0E17]">{scriptReview.error || (scriptReview.ok ? 'Draft checks passed' : 'Changes needed before publishing')}</p>
+                {!scriptReview.error && <p className="text-[#524E5E]">Language: {scriptReview.language} · {scriptReview.script_characters} characters · about {scriptReview.token_estimate} instruction tokens. Review does not save or publish.</p>}
+                {!!scriptReview.issues?.length && <ul className="list-disc pl-4 space-y-1">{scriptReview.issues.map((issue, index) => <li key={`${issue.code}-${index}`}>{issue.severity === 'blocking' ? 'Required: ' : 'Check: '}{issue.message}</li>)}</ul>}
+              </div>
+            )}
             {scriptPreviewMode ? (
               <div className="space-y-3" data-testid="script-preview-panel">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
@@ -1191,7 +1247,7 @@ export function AgentStudioModule({
 
                 <div className="relative">
                   <div className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#EDE9FE] text-[#6344E7]">
-                    Live Telephony Prompt View
+                    Sample lead preview
                   </div>
                   <div className="w-full min-h-[180px] bg-[#0F0E17] text-[#F3F4F6] border border-[#2E2B36] rounded-xl p-4 text-xs font-mono leading-relaxed whitespace-pre-wrap select-text">
                     {renderScriptPreview(formData.script, SAMPLE_LEADS[sampleLeadIdx].contact) || (
@@ -1203,7 +1259,7 @@ export function AgentStudioModule({
                 <div className="flex items-center justify-between text-[11px] text-[#524E5E] bg-[#F8FAFC] p-2.5 rounded-lg border border-[#E2E8F0]">
                   <span className="flex items-center gap-1 text-[#059669] font-medium">
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Dynamic lead variable tokens & fallback defaults evaluated in real time</span>
+                    <span>Dynamic lead variable tokens &amp; fallback defaults evaluated in real time</span>
                   </span>
                   <button
                     type="button"
@@ -1218,6 +1274,7 @@ export function AgentStudioModule({
               <div className="relative">
                 <textarea
                   ref={scriptTextareaRef}
+                  disabled={brainLoading || !!brainLoadError || saving}
                   rows={10}
                   value={formData.script}
                   onChange={(event) => {
@@ -1292,26 +1349,29 @@ export function AgentStudioModule({
               </span>
               <button
                 type="button"
-                onClick={() => void selectTab('test')}
+                onClick={() => setTestCallOpen(true)}
+                disabled={dirty || saving || brainLoading || !!brainLoadError}
+                title={dirty ? 'Publish your changes before testing the agent.' : 'Test the published script'}
                 className="font-semibold text-[#5034CE] hover:underline"
               >
-                Test this script
+                Test published script
               </button>
             </div>
           </SolidCard>
 
           {/* Objection Handling Rules */}
           <SolidCard>
+            <fieldset disabled={brainLoading || !!brainLoadError || saving} className="contents" aria-label="Objection rules">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="text-xs font-bold text-[#0F0E17]">Objection Handling Rules</h3>
                   <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#FAF5FF] text-[#7E22CE] border border-[#F3E8FF]">
-                    Deterministic Conversational Pivots
+                    Responses to common concerns
                   </span>
                 </div>
                 <p className="text-[11px] text-[#524E5E] mt-0.5">
-                  Pre-configured objection handling with "Acknowledge & Bridge" responses and behavioral action outcomes.
+                  Suggested replies adapt to the selected language. Actions require an available tool and confirmation.
                 </p>
               </div>
               <button
@@ -1328,7 +1388,7 @@ export function AgentStudioModule({
             {/* Quick-add industry standard templates bar */}
             <div className="mb-4 p-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
               <span className="text-[10px] font-bold uppercase text-[#8C879A] block mb-1.5">
-                Quick-Add Industry Standard Templates:
+                Quick-add templates to review:
               </span>
               <div className="flex flex-wrap gap-1.5">
                 {OBJECTION_PRESETS.map((preset) => (
@@ -1407,7 +1467,7 @@ export function AgentStudioModule({
                       {/* Response */}
                       <div className="md:col-span-5">
                         <span className="text-[10px] text-[#8C879A] uppercase font-bold block mb-1">
-                          Agent Response (Acknowledge & Bridge):
+                          Agent Response (Acknowledge &amp; Bridge):
                         </span>
                         <textarea
                           rows={2}
@@ -1449,6 +1509,7 @@ export function AgentStudioModule({
                 ))
               )}
             </div>
+            </fieldset>
           </SolidCard>
         </div>
       )}

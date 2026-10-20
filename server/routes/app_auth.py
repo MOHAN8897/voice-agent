@@ -44,8 +44,8 @@ class SignupBody(BaseModel):
 
 
 class LoginBody(BaseModel):
-    email: str
-    password: str
+    email: str = Field(max_length=320)
+    password: str = Field(max_length=200)
 
 
 class RefreshBody(BaseModel):
@@ -61,8 +61,8 @@ class LogoutBody(BaseModel):
 
 
 class ChangePasswordBody(BaseModel):
-    currentPassword: str
-    newPassword: str = Field(..., min_length=8)
+    currentPassword: str = Field(max_length=200)
+    newPassword: str = Field(..., min_length=8, max_length=200)
 
 
 class ForgotPasswordBody(BaseModel):
@@ -71,7 +71,7 @@ class ForgotPasswordBody(BaseModel):
 
 class ResetPasswordBody(BaseModel):
     token: str
-    newPassword: str = Field(..., min_length=8)
+    newPassword: str = Field(..., min_length=8, max_length=200)
 
 
 class SwitchTenantBody(BaseModel):

@@ -1,8 +1,11 @@
 """Contacts, file parsing, mapping templates, and list management APIs."""
 from __future__ import annotations
 
+import asyncio
+import json
 import base64
 import uuid
+from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
@@ -34,7 +37,7 @@ class ParseJsonBody(BaseModel):
 class NormalizePreviewBody(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    rows: list[dict[str, Any]] = Field(default_factory=list)
+    rows: list[dict[str, Any]] = Field(default_factory=list, max_length=10000)
     mapping: dict[str, str] = Field(default_factory=dict)
     default_country: str = Field("US", validation_alias=AliasChoices("defaultCountry", "default_country"))
     duplicate_strategy: str = Field("keep_first", validation_alias=AliasChoices("duplicateStrategy", "duplicate_strategy"))
@@ -55,7 +58,7 @@ class CreateListBody(BaseModel):
 
     name: str
     description: str | None = None
-    contacts: list[dict[str, Any]] = Field(default_factory=list)
+    contacts: list[dict[str, Any]] = Field(default_factory=list, max_length=10000)
 
 
 @router.post("/api/contacts/parse")
@@ -67,19 +70,33 @@ async def parse_contacts_file(
     file_bytes: bytes = b""
     file_name: str = "contacts.csv"
 
+    raw_body = bytearray()
+    async for chunk in request.stream():
+        raw_body.extend(chunk)
+        if len(raw_body) > 8 * 1024 * 1024:
+            raise HTTPException(413, "Contact upload is too large (maximum file size 5 MB)")
     content_type = request.headers.get("content-type", "")
     if "multipart/form-data" in content_type:
-        form = await request.form()
+        async def receive_body():
+            return {"type": "http.request", "body": bytes(raw_body), "more_body": False}
+        form_request = Request(request.scope, receive_body)
+        form = await form_request.form(max_files=1, max_fields=4, max_part_size=5 * 1024 * 1024)
         uploaded_file = form.get("file")
         if uploaded_file and hasattr(uploaded_file, "read"):
             file_name = getattr(uploaded_file, "filename", "uploaded_file") or "uploaded_file"
-            file_bytes = await uploaded_file.read()
+            file_bytes = await uploaded_file.read(5 * 1024 * 1024 + 1)
+        await form.close()
     else:
         try:
-            body_dict = await request.json()
+            body_dict = json.loads(raw_body)
         except Exception:
             body_dict = {}
 
+        if not isinstance(body_dict, dict):
+            raise HTTPException(400, "Contact upload must be a JSON object")
+        if any(value is not None and not isinstance(value, str) for key, value in body_dict.items()
+               if key in {"fileName", "file_name", "contentBase64", "content_base64", "rawText", "raw_text", "text"}):
+            raise HTTPException(400, "Contact upload fields must be strings")
         file_name = body_dict.get("fileName") or body_dict.get("file_name") or "contacts.csv"
         raw_b64 = body_dict.get("contentBase64") or body_dict.get("content_base64")
         raw_text = body_dict.get("rawText") or body_dict.get("raw_text") or body_dict.get("text")
@@ -88,7 +105,7 @@ async def parse_contacts_file(
             try:
                 if "," in raw_b64:
                     raw_b64 = raw_b64.split(",", 1)[1]
-                file_bytes = base64.b64decode(raw_b64)
+                file_bytes = base64.b64decode(raw_b64, validate=True)
             except Exception as e:
                 raise HTTPException(status_code=400, detail={"error": {"code": "bad_base64", "message": str(e)}})
         elif raw_text:
@@ -102,7 +119,8 @@ async def parse_contacts_file(
 
     # 1. Parse file
     try:
-        headers, preview_rows, total_rows, warnings = parse_file_to_rows(file_bytes, file_name, max_preview_rows=50)
+        headers, all_rows, total_rows, warnings = await asyncio.to_thread(parse_file_to_rows, file_bytes, file_name, max_preview_rows=10000)
+        preview_rows = all_rows[:50]
     except Exception as exc:
         raise HTTPException(status_code=400, detail={"error": {"code": "parse_error", "message": str(exc)}})
 
@@ -140,6 +158,7 @@ async def parse_contacts_file(
         "totalRows": total_rows,
         "headers": headers,
         "previewRows": preview_rows,
+        "rows": all_rows,
         "detectedMappings": detected,
         "recognizedTemplate": saved_template,
         "warnings": warnings,
@@ -168,7 +187,7 @@ async def preview_normalized_contacts(
             "duplicateContacts": [],
         }
 
-    res = normalize_and_validate_contacts(
+    res = await asyncio.to_thread(normalize_and_validate_contacts,
         rows=body.rows,
         mapping=body.mapping,
         default_country=body.default_country,
@@ -181,7 +200,8 @@ async def preview_normalized_contacts(
         "validCount": res["valid_count"],
         "invalidCount": res["invalid_count"],
         "duplicateCount": res["duplicate_count"],
-        "validContacts": res["valid_contacts"][:50],  # preview up to 50
+        "validContacts": res["valid_contacts"],
+        "previewContacts": res["valid_contacts"][:50],
         "invalidContacts": res["invalid_contacts"][:50],
         "duplicateContacts": res["duplicate_contacts"][:50],
     }
@@ -302,6 +322,7 @@ async def create_contact_list(
             total_contacts=len(body.contacts),
         )
         session.add(cl)
+        await session.flush()
 
         for c in body.contacts:
             phone = str(c.get("phone") or c.get("phone_e164") or "").strip()
@@ -358,9 +379,12 @@ async def get_list_contacts(
             select(Contact).where(
                 Contact.contact_list_id == uuid.UUID(list_id),
                 Contact.tenant_id == ctx.workspace_tenant_id,
-            ).limit(200)
+            ).order_by(Contact.id).limit(10001)
         )
+        rows = list(result.scalars().all())
         return {
+            "totalContacts": len(rows),
+            "truncated": len(rows) > 10000,
             "contacts": [
                 {
                     "id": str(r.id),
@@ -371,7 +395,13 @@ async def get_list_contacts(
                     "email": r.email,
                     "company": r.company,
                     "customFields": r.custom_fields,
+                    "timezone": r.timezone,
+                    "job_title": r.job_title,
+                    "country": r.country,
+                    "city": r.city,
+                    "state": r.state,
+                    "notes": r.notes,
                 }
-                for r in result.scalars().all()
+                for r in rows[:10000]
             ]
         }

@@ -233,9 +233,11 @@ class CallLifecycleService:
                     val_err,
                 )
 
-        if compiled_text and contact:
+        if compiled_text:
             from server.services.saas.contact_import_service import render_agent_prompt_for_contact
-            compiled_text = render_agent_prompt_for_contact(compiled_text, contact)
+            # Web tests have no imported lead. Resolve fallbacks and system tags
+            # there too, so neither prewarm nor Gemini reads raw template braces.
+            compiled_text = render_agent_prompt_for_contact(compiled_text, contact or {})
 
         if config_session_id and lookup_session != session_id and not compiled_text:
             logger.warning(

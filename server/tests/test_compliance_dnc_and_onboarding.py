@@ -1,10 +1,11 @@
+from server.tests.test_campaign_execution_safety import db as campaign_db
 import uuid
 from datetime import datetime, timezone
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from server.db.models.entities import Agent, Tenant
-from server.db.models.phase5_models import Campaign, DncEntry
+from server.db.models.phase5_models import Campaign, CampaignContact, DialAttempt, DncEntry
 from server.db.models.saas_models import UserOnboardingSurvey, User
 from server.prompts.agent_voice_rules import build_recording_disclosure_instruction
 from server.brain.agent_script_compiler import _platform_call_rules, compile_agent_from_brief
@@ -85,91 +86,24 @@ from server.db.models.phase5_models import CampaignContact, CampaignRun, DialAtt
 
 
 @pytest.mark.asyncio
-async def test_phase2_authoritative_predial_dnd_in_campaign_runner():
-    """Verify campaign runner checks DND immediately before dial and skips blocked numbers."""
-    tenant_id = uuid.uuid4()
-    campaign_id = uuid.uuid4()
-    run_id = uuid.uuid4()
-    contact_id = uuid.uuid4()
-    phone = "+15551234567"
-
-    mock_campaign = MagicMock(campaign_id=campaign_id, tenant_id=tenant_id, concurrency=1, retry_rules={}, agent_id=uuid.uuid4(), schedule={})
-    mock_run = MagicMock(id=run_id, status="running")
-    mock_contact = MagicMock(id=contact_id, campaign_id=campaign_id, phone_e164=phone, status="queued", attempts=0, metadata_={}, resolved_variables={})
-    mock_attempt = MagicMock(id=uuid.uuid4(), status="queued")
-
-    mock_session = AsyncMock()
-
-    async def mock_get(model, ident):
-        if model is Campaign:
-            return mock_campaign
-        if model is CampaignRun:
-            return mock_run
-        if model is CampaignContact:
-            return mock_contact
-        if model is DialAttempt:
-            return mock_attempt
-        return None
-
-    mock_session.get = mock_get
-
-    # For session.execute calls:
-    # 1. First execute is for pending contacts query
-    # 2. Inside `one`: DncEntry query returns a hit!
-    # 3. Subsequent calls (update stats, etc.)
-    mock_contacts_result = MagicMock()
-    mock_contacts_result.scalars.return_value.all.return_value = [mock_contact]
-
-    mock_dnc_result = MagicMock()
-    mock_dnc_result.scalar_one_or_none.return_value = uuid.uuid4()  # DNC HIT!
-
-    execute_call_count = 0
-    async def mock_execute(stmt, *args, **kwargs):
-        nonlocal execute_call_count
-        execute_call_count += 1
-        if "campaign_contacts" in str(stmt).lower():
-            return mock_contacts_result
-        if "dnc_list" in str(stmt).lower():
-            return mock_dnc_result
-        res = MagicMock()
-        res.scalars.return_value.all.return_value = []
-        res.scalar_one_or_none.return_value = None
-        return res
-
-    mock_session.execute = mock_execute
-
-    dial_called = False
-    async def fake_dial(*args, **kwargs):
-        nonlocal dial_called
-        dial_called = True
-        return {"ok": True}
-
-    principal = MagicMock(tenant_id=tenant_id)
-
-    class MockContextManager:
-        async def __aenter__(self):
-            return mock_session
-        async def __aexit__(self, *args):
-            pass
-
-    def mock_factory():
-        return MockContextManager()
-
-    with patch("server.services.saas.campaign_runner.get_session_factory", return_value=mock_factory), \
-         patch("server.services.saas.campaign_runner._dial_one", fake_dial), \
-         patch("server.services.saas.campaign_runner.count_active_pstn", return_value=0):
-        await run_campaign(
-            str(campaign_id),
-            str(run_id),
-            principal=principal,
-            workspace_tenant_id=tenant_id,
-        )
-
-    # Dial must NOT have been called
-    assert dial_called is False
-    # Attempt marked dnc_skipped and contact marked dnc_excluded
-    assert mock_attempt.status == "dnc_skipped"
-    assert mock_contact.status == "dnc_excluded"
+async def test_phase2_authoritative_predial_dnd_in_campaign_runner(campaign_db, monkeypatch):
+    from sqlalchemy import select
+    from server.tests.test_campaign_execution_safety import TID, seeded_campaign
+    from server.services.saas import campaign_runner as runner
+    cid, rid = await seeded_campaign(campaign_db, 1)
+    async with campaign_db() as session:
+        contact = (await session.execute(select(CampaignContact).where(CampaignContact.campaign_id == cid))).scalar_one()
+        session.add(DncEntry(tenant_id=TID, phone_e164=contact.phone_e164, active=True))
+        await session.commit()
+    dial = AsyncMock()
+    monkeypatch.setattr("server.services.saas.telephony_orchestrator.subscriber_outbound", dial)
+    await runner.campaign_tick(cid, rid, workspace_tenant_id=TID, owner=uuid.uuid4())
+    dial.assert_not_awaited()
+    async with campaign_db() as session:
+        contact = (await session.execute(select(CampaignContact).where(CampaignContact.campaign_id == cid))).scalar_one()
+        attempt = (await session.execute(select(DialAttempt).where(DialAttempt.campaign_id == cid))).scalar_one()
+        assert contact.status == "dnc_excluded"
+        assert attempt.status == "dnc_skipped"
 
 
 @pytest.mark.asyncio
@@ -224,11 +158,12 @@ def test_phase3_recording_disclosure_instruction_prompt():
     assert "RECORDING DISCLOSURE POLICY (FIRST RESPONSE TURN ONLY)" in en_rule
     assert "This call may be recorded for quality and training purposes." in en_rule
     assert "FIRST RESPONSE TURN ONLY" in en_rule
-    assert "Do NOT repeat this statement in any subsequent turns." in en_rule
+    assert "include this disclosure once" in en_rule
+    assert "repeat it later" in en_rule
 
     # Telugu default
     te_rule = build_recording_disclosure_instruction(language="te-IN")
-    assert "నాణ్యత మరియు శిక్షణ ప్రయోజనాల కోసం ఈ కాల్ రికార్డ్ చేయబడవచ్చు." in te_rule
+    assert "క్వాలిటీ, ట్రైనింగ్ కోసం ఈ కాల్ రికార్డ్ చేయవచ్చు." in te_rule
 
     # Custom text
     custom_rule = build_recording_disclosure_instruction(
@@ -292,7 +227,7 @@ async def test_dynamic_recording_disclosure_sync_in_call_lifecycle(monkeypatch):
         "Speak English only."
     )
 
-    async def _mock_resolve_agent(aid):
+    async def _mock_resolve_agent(aid, *, tenant_id=None):
         return {
             "agent_id": aid,
             "tenant_id": "tenant-1",
@@ -303,7 +238,7 @@ async def test_dynamic_recording_disclosure_sync_in_call_lifecycle(monkeypatch):
             "recording_disclosure_text": "Custom compliance disclosure notice.",
         }
 
-    async def _mock_lock_compiled_brain(aid, session_id=None):
+    async def _mock_lock_compiled_brain(aid, session_id=None, **_kwargs):
         return "v1", base_brain, "published"
 
     monkeypatch.setattr(call_lifecycle_service, "_resolve_agent", _mock_resolve_agent)
@@ -324,7 +259,7 @@ async def test_dynamic_recording_disclosure_sync_in_call_lifecycle(monkeypatch):
     assert "Custom compliance disclosure notice." in prompt
 
     # Test dynamic disabling
-    async def _mock_resolve_agent_disabled(aid):
+    async def _mock_resolve_agent_disabled(aid, *, tenant_id=None):
         return {
             "agent_id": aid,
             "tenant_id": "tenant-1",
@@ -360,7 +295,7 @@ async def test_voicemail_mode_injection_in_call_lifecycle(monkeypatch):
         "Speak English only."
     )
 
-    async def _mock_resolve_agent(aid):
+    async def _mock_resolve_agent(aid, *, tenant_id=None):
         return {
             "agent_id": aid,
             "tenant_id": "tenant-1",
@@ -370,7 +305,7 @@ async def test_voicemail_mode_injection_in_call_lifecycle(monkeypatch):
             "recording_disclosure_enabled": False,
         }
 
-    async def _mock_lock_compiled_brain(aid, session_id=None):
+    async def _mock_lock_compiled_brain(aid, session_id=None, **_kwargs):
         return "v1", base_brain, "published"
 
     monkeypatch.setattr(call_lifecycle_service, "_resolve_agent", _mock_resolve_agent)
@@ -446,79 +381,25 @@ async def test_onboarding_survey_updates_canonical_profiles_and_requires_terms()
 
 
 @pytest.mark.asyncio
-async def test_create_campaign_endpoint_scrubs_dnd_and_persists_audit():
-    """Verify create_campaign scrubs active DND numbers and records client IP and consent version."""
+async def test_create_campaign_endpoint_scrubs_dnd_and_persists_audit(campaign_db, monkeypatch):
+    from sqlalchemy import select
+    from server.tests.test_campaign_execution_safety import TID, UID, AID
     from server.routes.campaigns import create_campaign
-    from fastapi import Request
-
-    tenant_id = uuid.uuid4()
-    agent_id = uuid.uuid4()
-    mock_agent = MagicMock(agent_id=agent_id, tenant_id=tenant_id)
-    blacklisted_phone = "+15559990000"
-    clean_phone = "+15559991111"
-
-    body = CampaignCreate(
-        name="Quarterly Compliance Outreach",
-        agentId=str(agent_id),
-        consentConfirmed=True,
-        consentVersion="2026-10-v1",
-        defaultCountry="US",
-        dndScrubEnabled=True,
-        contacts=[
-            {"phone": blacklisted_phone, "first_name": "Blocked"},
-            {"phone": clean_phone, "first_name": "Allowed"},
-        ],
-    )
-
-    mock_session = AsyncMock()
-    mock_session.get.return_value = mock_agent
-
-    # Query 1: DNC active rows returns blacklisted_phone
-    dnc_res = MagicMock()
-    dnc_res.scalars.return_value.all.return_value = [blacklisted_phone]
-    mock_session.execute.return_value = dnc_res
-
-    class MockContextManager:
-        async def __aenter__(self):
-            return mock_session
-        async def __aexit__(self, *args):
-            pass
-
-    mock_request = MagicMock(spec=Request)
-    mock_request.client.host = "192.168.1.100"
-    headers_dict = {"user-agent": "Mozilla/5.0 TestBrowser"}
-    mock_request.headers.get.side_effect = lambda k, default=None: headers_dict.get(k.lower(), default)
-
-    ctx = MagicMock(
-        role="owner",
-        workspace_tenant_id=tenant_id,
-        tenant_id=tenant_id,
-        subscriber=True,
-        subject=str(uuid.uuid4()),
-        email="test@example.com",
-    )
-
-    with patch("server.routes.campaigns.get_session_factory", return_value=lambda: MockContextManager()), \
-         patch("server.routes.campaigns.require_role_permission", return_value=None):
-        res = await create_campaign(mock_request, body, ctx)
-
-        assert res["ok"] is True
-        assert res["totalContacts"] == 2
-        assert res["dndExcludedCount"] == 1
-        assert res["campaign"]["dndExcludedCount"] == 1
-
-        # Check Campaign ORM additions
-        added_objs = [call.args[0] for call in mock_session.add.call_args_list]
-        campaign_obj = next(o for o in added_objs if isinstance(o, Campaign))
-        assert campaign_obj.consent_confirmed is True
-        assert campaign_obj.consent_attestation_version == "2026-10-v1"
-        assert campaign_obj.attested_ip == "192.168.1.100"
-
-        # Check contact statuses
-        contact_objs = [o for o in added_objs if isinstance(o, CampaignContact)]
-        assert len(contact_objs) == 2
-        blocked_c = next(c for c in contact_objs if c.phone_e164 == blacklisted_phone)
-        allowed_c = next(c for c in contact_objs if c.phone_e164 == clean_phone)
-        assert blocked_c.status == "dnc_excluded"
-        assert allowed_c.status == "pending"
-
+    from server.auth.api_tenant import ApiTenantContext
+    from starlette.requests import Request
+    async with campaign_db() as db:
+        db.add(DncEntry(tenant_id=TID, phone_e164="+12025550101", active=True))
+        await db.commit()
+    request = Request({"type": "http", "method": "POST", "path": "/api/campaigns", "headers": [(b'user-agent', b'Isolated audit'), (b'x-forwarded-for', b'198.51.100.99')], "client": ("127.0.0.1", 1234)})
+    body = CampaignCreate(name="Audit consent", agentId=str(AID), contacts=[{"phone": "+12025550101"}, {"phone": "+12025550102"}], consentConfirmed=True, dndScrubEnabled=False)
+    ctx = ApiTenantContext(tenant_id=TID, role="customer_admin", subject=str(UID), subscriber=False)
+    result = await create_campaign(request, body, ctx)
+    assert result["ok"] and result["totalContacts"] == 2 and result["dndExcludedCount"] == 1
+    async with campaign_db() as db:
+        campaign = await db.get(Campaign, uuid.UUID(result["id"]))
+        assert campaign.consent_confirmed is True
+        assert campaign.consent_attestation_version == "2026-10-v1"
+        assert campaign.attested_ip == "127.0.0.1"  # untrusted forwarded headers cannot forge the audit
+        contacts = (await db.execute(select(CampaignContact).where(CampaignContact.campaign_id == campaign.campaign_id))).scalars().all()
+        assert len(contacts) == 2
+        assert {c.phone_e164: c.status for c in contacts} == {"+12025550101": "dnc_excluded", "+12025550102": "pending"}

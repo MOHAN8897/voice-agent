@@ -43,10 +43,10 @@ def build_session_instructions(
     language: str = "te-IN",
     direction: str | None = None,
 ) -> str:
-    from server.brain.compiled_brain_artifact import is_unified_compiled_brain
+    from server.brain.compiled_brain_artifact import is_unified_compiled_brain, refresh_platform_sections
     from server.prompts.agent_voice_rules import live_realtime_output_rules
 
-    brain = (compiled_brain or "").strip()
+    brain = refresh_platform_sections(compiled_brain, language)
     parts = [
         brain or f"You are a helpful live voice agent. {LIVE_REPLY_BREVITY_RULE}"
     ]
@@ -90,10 +90,10 @@ def build_audio_session_instructions(
     opening_greeting: str | None = None,
 ) -> str:
     """Same compiled brain as the text PSTN path, with audio-output rules."""
-    from server.brain.compiled_brain_artifact import is_unified_compiled_brain
+    from server.brain.compiled_brain_artifact import is_unified_compiled_brain, refresh_platform_sections
     from server.prompts.agent_voice_rules import live_audio_modality_rules, live_realtime_audio_rules
 
-    brain = (compiled_brain or "").strip()
+    brain = refresh_platform_sections(compiled_brain, language)
     unified = is_unified_compiled_brain(brain)
     parts = [
         brain or f"You are a helpful live voice agent. {LIVE_REPLY_BREVITY_RULE}"

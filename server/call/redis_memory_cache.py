@@ -24,7 +24,7 @@ def _mark_unavailable(exc: BaseException) -> None:
     global _CLIENT, _RETRY_AFTER, _LAST_FAILURE_REASON, _FAILURE_REPORTED
     _CLIENT = None
     _RETRY_AFTER = time.monotonic() + _RETRY_AFTER_SEC
-    reason = f"{type(exc).__name__}: {str(exc)[:120]}"
+    reason = type(exc).__name__
     if reason != _LAST_FAILURE_REASON:
         _LAST_FAILURE_REASON = reason
         _FAILURE_REPORTED = False
@@ -37,7 +37,7 @@ def _mark_unavailable(exc: BaseException) -> None:
             "read pays a %.1fs connect timeout. Start Redis or unset REDIS_URL. "
             "Further identical failures are suppressed for %ds.",
             reason,
-            url or "(unset)",
+            "(configured)" if url else "(unset)",
             1.0,
             int(_RETRY_AFTER_SEC),
         )
@@ -75,13 +75,12 @@ def _redis():
             _CLIENT.ping()
         except Exception as e:
             # In development/test mode, if local redis server is unreachable, gracefully fallback to fakeredis
-            if getattr(settings, "app_environment", "development") != "production":
+            if str(getattr(settings, "app_environment", "development")).lower() not in ("production", "staging"):
                 try:
                     import fakeredis
 
                     logger.info(
-                        "[REDIS] Real Redis at %s unavailable; activating in-memory fakeredis for local dev/testing",
-                        url,
+                        "[REDIS] Shared cache unavailable; using in-memory fakeredis for local dev/testing",
                     )
                     _CLIENT = fakeredis.FakeStrictRedis(decode_responses=True)
                     return _CLIENT

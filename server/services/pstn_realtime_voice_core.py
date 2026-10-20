@@ -562,6 +562,8 @@ class PstnRealtimeVoiceLoop:
         self._tenant_id = tenant_id or (self.stack_override.get("tenant_id") if self.stack_override else None)
         self._agent_id = agent_id or (self.stack_override.get("agent_id") if self.stack_override else None)
         self._agent_tools = set(agent_tools) if agent_tools else set()
+        self._configured_agent_tools = set(agent_tools) if agent_tools is not None else None
+        self._integration_tool_tasks: set[asyncio.Task] = set()
         self._injected_adapter = adapter
         self._adapter: Any | None = adapter
         self._hold_inbound = True
@@ -1629,15 +1631,16 @@ class PstnRealtimeVoiceLoop:
                 from server.db.connection import get_session_factory as _get_sf
                 from server.services.tenant_tool_cache import get_active_app_names
                 from server.services.tool_schema_registry import (
-                    get_tools_for_tenant,
-                    get_tool_names_for_tenant,
+                    get_tools_for_agent,
                 )
                 _sf = _get_sf()
                 active_apps = await get_active_app_names(str(self._tenant_id), _sf)
                 if active_apps:
-                    tenant_tool_schemas = get_tools_for_tenant(active_apps)
+                    tenant_tool_schemas = await get_tools_for_agent(
+                        active_apps, str(self._tenant_id), self._agent_id, _sf, self._configured_agent_tools
+                    )
                     # Exact tool names from registry — no guesswork suffixes
-                    self._agent_tools = get_tool_names_for_tenant(active_apps)
+                    self._agent_tools = {tool["name"] for tool in tenant_tool_schemas}
                     log_pstn(
                         "tool_router.tenant_tools_loaded",
                         call_id=self.call_id,
@@ -2066,6 +2069,21 @@ class PstnRealtimeVoiceLoop:
             return
         if self._hangup_started:
             return
+        if (
+            not self._pending_end_call and not self._deferred_greeting_armed
+            and not self._greeting_protected() and not self._agent_audio_playing()
+            and not self._response_open and not self._followup_inflight
+            and self._adapter is not None
+            and hasattr(self._adapter, "maybe_finalize_input")
+        ):
+            try:
+                if await self._adapter.maybe_finalize_input(now):
+                    self._caller_speaking = False
+                    self._last_activity_at = now
+                    log_pstn("realtime_voice.input_turn_recovered", call_id=self.call_id)
+                    return
+            except Exception as exc:
+                log_pstn("realtime_voice.input_finalize_failed", call_id=self.call_id, error_type=type(exc).__name__)
         if self._pending_end_call:
             if self._tts_active or self._agent_audio_playing() or self._response_open:
                 self._last_activity_at = now
@@ -2972,6 +2990,31 @@ class PstnRealtimeVoiceLoop:
         except Exception as exc:
             log_pstn("tool_router.acoustic_filler.failed", call_id=self.call_id, error=str(exc))
 
+    async def _submit_integration_result(self, event: dict[str, Any], result: dict[str, Any]) -> None:
+        call_id = str(event.get("call_id") or "")
+        if call_id and self._adapter is not None and not self._closed:
+            try:
+                await asyncio.wait_for(self._adapter.submit_function_output(
+                    call_id=call_id, output=json.dumps(result), name=str(event.get("name") or ""),
+                ), timeout=3.0)
+            except Exception as exc:
+                log_pstn("tool_router.output_failed", call_id=self.call_id, error_type=type(exc).__name__)
+
+    async def _execute_integration_tool(self, event: dict[str, Any], arguments: dict[str, Any]) -> None:
+        from server.services.tool_router import tool_router
+        try:
+            result = await tool_router.route_and_execute(
+                tenant_id=self._tenant_id, agent_id=self._agent_id, call_id=str(self.call_id or ""),
+                tool_name=str(event.get("name") or ""), arguments=arguments,
+            )
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            log_pstn("tool_router.failed", call_id=self.call_id, error_type=type(exc).__name__)
+            result = {"status": "error", "message": "The action result could not be verified."}
+        self._response_activity_at = time.monotonic()
+        await self._submit_integration_result(event, result)
+
     async def _handle_event(self, event: dict[str, Any]) -> None:
         kind = str(event.get("type") or "")
         if self._closed or self.controller.state == CallState.ENDED:
@@ -3214,6 +3257,7 @@ class PstnRealtimeVoiceLoop:
             if self._openai_response_id:
                 self._ignored_response_ids.append(self._openai_response_id)
             self._followup_inflight = False
+            self._caller_speaking = False
             self._suppress_until_user = False
             self._response_open = True
             self._barge_generation = None
@@ -3284,6 +3328,7 @@ class PstnRealtimeVoiceLoop:
                     call_id=self.call_id,
                     reason="invalid_json",
                 )
+                await self._submit_integration_result(event, {"status": "error", "message": "Action arguments were not valid JSON."})
                 return
             if not isinstance(parsed_args, dict):
                 log_pstn(
@@ -3291,6 +3336,7 @@ class PstnRealtimeVoiceLoop:
                     call_id=self.call_id,
                     reason="not_object",
                 )
+                await self._submit_integration_result(event, {"status": "error", "message": "Action arguments must be an object."})
                 return
             call_id = str(event.get("call_id") or "")
 
@@ -3302,69 +3348,20 @@ class PstnRealtimeVoiceLoop:
                 return
 
             # --- DEDICATED VOXLY TOOL ROUTER DISPATCH ---
-            is_dispatchable_tool = (
-                bool(self._agent_tools and (
-                    tool_name in self._agent_tools
-                    or any(tool_name.lower().startswith(t.lower()) for t in self._agent_tools)
-                ))
-                or tool_name.startswith("nango_")
-            )
+            is_dispatchable_tool = tool_name.upper() in {t.upper() for t in self._agent_tools}
             if is_dispatchable_tool and tool_name not in LIVE_HANGUP_TOOL_NAMES:
-                log_pstn("tool_router.dispatch_start", call_id=self.call_id, tool=tool_name)
-
-                # 1. FAIL-CLOSED TENANT CHECK (Fix #2: Zero "default" fallback)
-                if (not self._tenant_id or not self._agent_id) and self.call_id:
-                    try:
-                        from server.call.call_ledger import call_ledger
-                        meta = call_ledger.read_meta(self.call_id) or {}
-                        if not self._tenant_id:
-                            self._tenant_id = meta.get("tenant_id")
-                        if not self._agent_id:
-                            self._agent_id = meta.get("agent_id")
-                    except Exception:
-                        pass
-
-                if not self._tenant_id:
-                    log_pstn("tool_router.rejected_missing_tenant", call_id=self.call_id, tool=tool_name)
-                    if call_id and self._adapter is not None:
-                        try:
-                            await self._adapter.submit_function_output(
-                                call_id=call_id,
-                                output=json.dumps({"error": "Unauthorized: Missing tenant context"}),
-                                name=tool_name,
-                            )
-                        except Exception:
-                            pass
-                    return
-
-                # 2. Trigger acoustic telephony bridge (no dead air)
-                await self._stream_acoustic_filler_if_needed(tool_name)
-
-                # 3. Route through Voxly Tool Router
-                from server.services.tool_router import tool_router
-
-                tool_output = await tool_router.route_and_execute(
-                    tenant_id=str(self._tenant_id),
-                    agent_id=str(self._agent_id) if self._agent_id else None,
-                    call_id=str(self.call_id or ""),
-                    tool_name=tool_name,
-                    arguments=parsed_args,
-                )
-
-                # 4. Submit output back to speech adapter
-                if call_id and self._adapter is not None:
-                    try:
-                        await self._adapter.submit_function_output(
-                            call_id=call_id,
-                            output=json.dumps(tool_output),
-                            name=tool_name,
-                        )
-                    except Exception:
-                        pass
-                log_pstn("tool_router.dispatch_complete", call_id=self.call_id, tool=tool_name)
+                if len(self._integration_tool_tasks) >= 4:
+                    await self._submit_integration_result(event, {"status": "error", "message": "Please wait for the current actions to finish."})
+                else:
+                    # Keep receiving audio/VAD events while an external API is
+                    # working. Awaiting here used to freeze barge-in detection.
+                    task = asyncio.create_task(self._execute_integration_tool(event, parsed_args))
+                    self._integration_tool_tasks.add(task)
+                    task.add_done_callback(self._integration_tool_tasks.discard)
                 return
 
             if tool_name not in LIVE_HANGUP_TOOL_NAMES:
+                await self._submit_integration_result(event, {"status": "error", "message": "This action is not enabled for this agent."})
                 return
             parsed = parse_live_hangup_tool(tool_name, event.get("arguments"))
             accepted: dict[str, Any] | None = None
@@ -4061,6 +4058,11 @@ class PstnRealtimeVoiceLoop:
             return
         self._closed = True
         self.controller.end()
+        tools = list(self._integration_tool_tasks)
+        for task in tools:
+            task.cancel()
+        if tools:
+            await asyncio.gather(*tools, return_exceptions=True)
         for task in (self._runtime_task, self._deferred_greeting_task, self._pickup_finish_task, self._pickup_fallback_task):
             if task and task is not asyncio.current_task() and not task.done():
                 task.cancel()

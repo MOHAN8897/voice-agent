@@ -1,11 +1,11 @@
-"""Gemini Live PSTN instructions — OpenAI Realtime audio parity, no prompt-cache padding."""
+"""Gemini Live instructions for primary web and PSTN sessions."""
 from __future__ import annotations
 
 import re
 
-from server.agent.brain_prompt_composer import estimate_tokens, fit_text_to_tokens
+from server.agent.brain_prompt_composer import estimate_tokens
 from server.brain.sections import STATIC_OUTPUT_RULES
-from server.prompts.agent_voice_rules import LANGUAGE_LOCK, live_audio_modality_rules, normalize_compile_language
+from server.prompts.agent_voice_rules import live_audio_modality_rules, spoken_pack_for
 from server.realtime.text_session import _is_outbound, first_turn_identity_rules
 from server.services.pstn_text_chunker import _parse_agent_identity
 
@@ -18,6 +18,12 @@ GEMINI_LIVE_INSTRUCTION_TOKEN_BUDGET = 2_500
 # call safe to end and safe to run. They are never the thing that gets trimmed to
 # reach the budget, so the brain support keeps at least this much.
 GEMINI_MIN_BRAIN_SUPPORT_TOKENS = 900
+
+GEMINI_TURN_STYLE = (
+    "Keep spoken turns to one or two concise, complete sentences. Answer first. "
+    "Acknowledge only when useful; ask at most one relevant question, then wait. "
+    "A brief answer is enough when no follow-up is needed. Never cut words or add filler."
+)
 
 _SECTION_HEADER = re.compile(r"(?:^|\n)---\s*(.+?)\s*---\s*\n", re.IGNORECASE)
 
@@ -69,6 +75,7 @@ _PINNED_BUSINESS_TITLES = (
     "BUSINESS KNOWLEDGE",
     "COMPANY",
     "CALLING SCRIPT",
+    "OPENING",
 )
 
 _PRIORITY_SECTIONS = (
@@ -101,9 +108,6 @@ _GEMINI_TAIL_EXCLUDE_TITLES = frozenset(
         "ROLE & OBJECTIVE",
         "BUSINESS KNOWLEDGE",
         "COMPANY",
-        "PHONE CALL",
-        "VOICE EXAMPLES",
-        "OVERLAP",
     }
 )
 
@@ -122,6 +126,9 @@ def condense_compiled_brain_for_gemini(compiled_brain: str | None) -> str:
             tail = tail[:idx] + tail[idx + len(static) :]
         raw = f"{raw[:first]}{static}{tail}"
     raw = _strip_repeated_rule_blocks(raw)
+    from server.services.voice_pipeline_limits import LIVE_REPLY_BREVITY_RULE
+    # Character budgets belong to text/TTS plumbing, not native spoken output.
+    raw = raw.replace(LIVE_REPLY_BREVITY_RULE, GEMINI_TURN_STYLE)
     raw = re.sub(r"\n{4,}", "\n\n", raw)
     return raw.strip()
 
@@ -133,7 +140,8 @@ def _split_brain_sections(brain: str) -> list[tuple[str, str]]:
     matches = list(_SECTION_HEADER.finditer(brain))
     if not matches:
         return [("BODY", brain.strip())]
-    raw: list[tuple[str, str]] = []
+    preamble = brain[:matches[0].start()].strip()
+    raw: list[tuple[str, str]] = [("PREAMBLE", preamble)] if preamble else []
     for idx, match in enumerate(matches):
         title = match.group(1).strip().upper()
         start = match.end()
@@ -158,8 +166,8 @@ def _extract_pinned_business(brain: str) -> str:
     for title, body in _split_brain_sections(brain):
         upper = title.upper()
         for needle in _PINNED_BUSINESS_TITLES:
-            if needle in upper and body.strip():
-                blocks.append(f"PINNED {needle}\n{fit_text_to_tokens(body.strip(), 1400)}")
+            if needle == upper and body.strip():
+                blocks.append(f"PINNED {needle}\n{body.strip()}")
                 break
     return "\n\n".join(blocks)
 
@@ -223,39 +231,21 @@ def _extract_spoken_language_section(brain: str, language: str | None = None) ->
 
 def _extract_pinned_flow(brain: str) -> str:
     sections = _split_brain_sections(brain)
-    for needle in _FLOW_PIN_TITLES:
-        for title, body in sections:
-            upper = title.upper()
-            if needle in upper and body.strip():
-                return body
-    for needle in _FLOW_PIN_TITLES:
-        pat = re.compile(
-            rf"(?:^|\n)---\s*{re.escape(needle)}\s*---\s*\n(.*?)(?=\n---\s*[^-\n]+\s*---|\Z)",
-            re.S | re.I,
-        )
-        match = pat.search(brain or "")
-        if match and match.group(1).strip():
-            return match.group(1).strip()
-    return ""
+    return "\n\n".join(f"{title}\n{body}" for title, body in sections
+                        if title in _FLOW_PIN_TITLES and body.strip())
 
 
 def prioritize_brain_for_gemini(brain: str, token_budget: int) -> str:
-    """Keep identity, opening, and flow when trimming — same facts OpenAI path retains."""
+    """Order complete sections; the budget never authorizes deleting business policy."""
     brain = brain.strip()
     if not brain or token_budget <= 0:
         return brain
     if estimate_tokens(brain) <= token_budget:
         return brain
-    preamble = ""
-    matches = list(_SECTION_HEADER.finditer(brain))
-    if matches and matches[0].start() > 0:
-        preamble = brain[: matches[0].start()].strip()
     sections = _split_brain_sections(brain)
     if not sections:
-        return fit_text_to_tokens(brain, token_budget)
+        return brain
     ordered: list[tuple[str, str]] = []
-    if preamble:
-        ordered.append(("PREAMBLE", preamble))
     seen: set[str] = set()
     for want in _PRIORITY_SECTIONS:
         for title, body in sections:
@@ -272,26 +262,7 @@ def prioritize_brain_for_gemini(brain: str, token_budget: int) -> str:
     mandatory = {"SAFETY", "CALL END POLICY", "STATIC OUTPUT RULES", "GUARDRAILS"}
     ordered = ([item for item in ordered if item[0] in mandatory]
                + [item for item in ordered if item[0] not in mandatory])
-    chunks: list[str] = []
-    used = 0
-    for title, body in ordered:
-        block = f"--- {title} ---\n{body}"
-        tok = estimate_tokens(block)
-        if title in mandatory:
-            chunks.append(block)
-            used += tok
-            continue
-        if used + tok > token_budget:
-            room = max(80, token_budget - used - 12)
-            if room < 100:
-                break
-            block = f"--- {title} ---\n{fit_text_to_tokens(body, room)}"
-            tok = estimate_tokens(block)
-        chunks.append(block)
-        used += tok
-        if used >= token_budget:
-            break
-    return "\n\n".join(chunks).strip() or fit_text_to_tokens(brain, token_budget)
+    return "\n\n".join(f"--- {title} ---\n{body}" for title, body in ordered).strip()
 
 
 def _gemini_outbound_block(
@@ -300,10 +271,11 @@ def _gemini_outbound_block(
 ) -> str:
     line = (opening_greeting or "").strip()
     parts = [
-        "CALL DIRECTION (outbound — mandatory; same as OpenAI Realtime PSTN)",
+        "CALL DIRECTION (outbound)",
         "- You placed this call. VAD is on — do not speak first while the line is silent.",
         "- The platform plays your scripted opening as audio after the callee speaks (hello / yes).",
         "- If that opening was already spoken, never repeat it verbatim; answer their actual question.",
+        "- If opening delivery has not been confirmed, use CANONICAL OPENING once, then wait for their reply.",
         "- If they ask who is calling: one beat with agent name + company + purpose from AGENT IDENTITY.",
         "- After intro, follow CONVERSATION FLOW / OUTBOUND or INBOUND WORKFLOW in order; "
         "skip steps they already answered.",
@@ -341,17 +313,19 @@ def build_gemini_audio_session_instructions(
     opening_greeting: str | None = None,
     token_budget: int = GEMINI_LIVE_INSTRUCTION_TOKEN_BUDGET,
 ) -> str:
-    """Gemini Live system_instruction aligned with OpenAI build_audio_session_instructions."""
-    raw_brain = condense_compiled_brain_for_gemini(compiled_brain)
+    """Build one selected-language instruction without dropping authored business content."""
+    from server.brain.compiled_brain_artifact import refresh_platform_sections
+    raw_brain = condense_compiled_brain_for_gemini(refresh_platform_sections(compiled_brain, language))
     parts: list[str] = [
-        "GEMINI LIVE PSTN — same behavior as OpenAI Realtime speech-to-speech on this platform.",
+        "You are a professional live phone agent. Use the business script and the selected language naturally.",
     ]
     name, company = _parse_agent_identity(compiled_brain or "")
     if name or company:
         who = f"{name}, {company}" if company else name
         parts.append(f"PINNED IDENTITY (always use when asked who is calling): {who}.")
     parts.append(live_audio_modality_rules())
-    parts.append(first_turn_identity_rules(language, direction=direction))
+    if not _is_outbound(direction):
+        parts.append(first_turn_identity_rules(language, direction=direction))
     # Reserve flow before large opening-policy/knowledge sections can consume
     # the budget. This is a deterministic excerpt, not a second LLM summary.
     flow = _extract_pinned_flow(raw_brain)
@@ -360,7 +334,7 @@ def build_gemini_audio_session_instructions(
             "PINNED CONVERSATION FLOW\n"
             "After the platform confirms opening delivery, treat the greeting as done. "
             "Continue at the first unanswered step; do not repeat questions already answered.\n"
-            + fit_text_to_tokens(flow, 1600)
+            + flow
         )
     business_pin = _extract_pinned_business(raw_brain)
     if business_pin:
@@ -375,7 +349,7 @@ def build_gemini_audio_session_instructions(
     # trimmed, so they were never charged against the budget: the brain support
     # was cut to fit while these landed on top, and the budget was fiction.
     tail: list[str] = []
-    spoken = "--- SPOKEN LANGUAGE (" + normalize_compile_language(language) + ") ---\n" + LANGUAGE_LOCK[normalize_compile_language(language)]
+    spoken = spoken_pack_for(language, include_brevity=False, core_only=True)
     if spoken:
         tail.append(spoken)
     if _is_outbound(direction):
@@ -390,9 +364,8 @@ def build_gemini_audio_session_instructions(
 
     head_cost = estimate_tokens("\n\n".join(parts))
     tail_cost = sum(estimate_tokens(t) for t in tail)
-    # The brain support is the only elastic part: it is already priority-ordered
-    # and truncatable, so it absorbs the whole shortfall rather than the pinned
-    # identity, the language configuration or the hangup policy.
+    # The target orders sections and measures overhead. Long authored scripts
+    # are allowed to exceed it; no facts, FAQ or policy may be cut to fit.
     brain_budget = max(GEMINI_MIN_BRAIN_SUPPORT_TOKENS, token_budget - head_cost - tail_cost) if token_budget > 0 else 0
     # The spoken pack is appended explicitly above, so drop it from the brain
     # support; otherwise the same register rules are paid for twice.

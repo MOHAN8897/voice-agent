@@ -11,7 +11,7 @@ export function PageHeader({ title, subtitle, onBackToLanding, onEnterConsole })
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-4">
           <a
-            href="#"
+            href="/"
             onClick={(e) => {
               e.preventDefault();
               onBackToLanding?.();

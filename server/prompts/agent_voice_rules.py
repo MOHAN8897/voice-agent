@@ -32,26 +32,26 @@ PHONE_CALL_POLICY_PTR = (
 
 
 NUMBER_RULES = """NUMBERS (speak them — TTS must sound human)
-- Indian amounts: English cardinal words + unit — `rupees fifty lakhs`, `fifteen paisa`. Never `Rs.100`, `₹500`, or bare `5000`. US: `dollars one hundred` — never `$100`. Lakhs/crores: `fifty lakhs`, `two crore`.
+- Speak Indian amounts naturally: `fifty lakh rupees`, `five hundred rupees`, `fifteen paise`. Use the exact amount and currency in the business facts; never invent a currency or convert it.
 - Counts, years, clock times: English cardinal words (`five thousand`, `ten AM`).
 - Large Western numbers left as digits need commas (`10,000`) — never a bare 5+ digit run.
-- OTP / PIN / CVV: digit-by-digit English words only when asked — never volunteer codes.
+- Never ask for or repeat passwords, OTPs, PINs or CVVs.
 - Speak numbers clearly; in English, use English cardinal words."""
 
 NUMBER_RULES_NATIVE = """NUMBERS (speak them — TTS must sound human)
-- Use only the currency already in the brief. US: `dollars forty nine` — never `$49`. UK: `pounds ninety nine`.
+- Use only the currency already in the brief. Say `forty-nine dollars` or `ninety-nine pounds` naturally; preserve the exact amount.
 - Never say rupees, lakhs, or crores unless those words are in the brief.
 - Counts, years, clock times: English cardinal words (`five thousand`, `ten AM`).
 - Large Western numbers left as digits need commas (`10,000`) — never a bare 5+ digit run.
-- OTP / PIN / CVV: digit-by-digit English words only when the caller asked — never volunteer codes.
+- Never ask for or repeat passwords, OTPs, PINs or CVVs.
 - Speak numbers clearly in the brief's currency."""
 
 NUMBER_RULES_INDIC = """NUMBERS (speak them — natural and human in the call language)
-- Speak amounts, counts, years, and clock times naturally in the configured Indic language and script (e.g. `50 లక్షలు` / `యాభై లక్షలు` in Telugu, `50 लाख` / `पचास लाख` in Hindi, `50 லட்சம்` in Tamil, `50 ಲಕ್ಷ` in Kannada).
-- Natural digits with native unit words are preferred (`50 లక్షలు`, `15 రోజులు`, `10 గంటలకు`).
-- Never force awkward English cardinal phrases like `rupees fifty lakhs` into an Indic sentence.
+- Speak amounts, counts, years and clock times naturally in the selected language. Familiar English number words are fine when natural in a mixed-language sentence.
+- Preserve the exact amount, units and currency in the supplied business facts. Never convert or invent currency.
+- Use natural local number phrasing; never force English numeral grammar into an Indic sentence.
 - Large numbers left as digits need commas (`10,000`) — never a bare 5+ digit run.
-- OTP / PIN / CVV: digit-by-digit words only when asked — never volunteer codes."""
+- Never ask for or repeat passwords, OTPs, PINs or CVVs."""
 
 PHONE_SPEAK_BAN = """PHONE NUMBERS (speak vs capture)
 - Never read phone, mobile, WhatsApp, or office numbers aloud — ours or theirs. No digit strings.
@@ -128,7 +128,7 @@ SCRIPT_AS_GUIDE = """SCRIPT IS A GUIDE — BUT COMPLETE THE OBJECTIVE
 
 SOFT_BREVITY = f"""{LIVE_REPLY_BREVITY_RULE}
 {SPEECH_GRAMMAR_RULES}
-Stay brief like a colleague on a phone. Match their energy — busy or frustrated stays shorter. If they asked for an answer, answer and stop. Missing fact: "I'll check and get back to you." """
+Stay brief like a colleague on a phone. Match their energy — busy or frustrated stays shorter. If they asked for an answer, answer and stop. If a fact is missing, say you do not know; offer follow-up only when that workflow exists."""
 
 HUMAN_CALL_RULES = CONVERSATION_INTELLIGENCE
 
@@ -185,14 +185,14 @@ LANGUAGE_MISMATCH_FALLBACK: dict[str, str] = {
     "en-IN": "Sorry, I can only assist in English. Could you repeat that in English?",
     "en-US": "Sorry, I can only assist in English. Could you repeat that in English?",
     "en-GB": "Sorry, I can only assist in English. Could you repeat that in English, please?",
-    "hi-IN": "माफ़ कीजिए, मैं हिंदी में बात कर रही हूँ — कृपया हिंदी में बताइए।",
+    "hi-IN": "माफ़ कीजिए, कृपया हिंदी में बताइए।",
     "ta-IN": "மன்னிக்கவும், நான் தமிழில் பேசுகிறேன் — தயவுசெய்து தமிழில் சொல்லுங்கள்.",
     "kn-IN": "ಕ್ಷಮಿಸಿ, ನಾನು ಕನ್ನಡದಲ್ಲಿ ಮಾತನಾಡುತ್ತೇನೆ — ದಯವಿಟ್ಟು ಕನ್ನಡದಲ್ಲಿ ಹೇಳಿ.",
     "ml-IN": "ക്ഷമിക്കണം, ഞാൻ മലയാളത്തിലാണ് സംസാരിക്കുന്നത് — ദയവായി മലയാളത്തിൽ പറയൂ.",
     "mr-IN": "माफ करा, मी मराठीत बोलत आहे — कृपया मराठीत सांगा.",
     "bn-IN": "মাফ করবেন, আমি বাংলায় কথা বলছি — অনুগ্রহ করে বাংলায় বলুন।",
     "gu-IN": "માફ કરશો, હું ગુજરાતીમાં વાત કરું છું — કૃપા કરીને ગુજરાતીમાં કહો.",
-    "pa-IN": "ਮਾਫ਼ ਕਰਨਾ, ਮੈਂ ਪੰਜਾਬੀ ਵਿੱਚ ਗੱਲ ਕਰ ਰਹੀ ਹਾਂ — ਕਿਰਪਾ ਕਰਕੇ ਪੰਜਾਬੀ ਵਿੱਚ ਦੱਸੋ।",
+    "pa-IN": "ਮਾਫ਼ ਕਰਨਾ, ਕਿਰਪਾ ਕਰਕੇ ਪੰਜਾਬੀ ਵਿੱਚ ਦੱਸੋ।",
 }
 
 LANGUAGE_LOCK: dict[str, str] = {
@@ -218,6 +218,9 @@ def live_realtime_output_rules(language: str | None, *, direction: str | None = 
     unclear = pack_get(UNCLEAR_FALLBACK, lang)
     slow_down = pack_get(SLOW_DOWN_FALLBACK, lang)
     phone_ask = pack_get(PHONE_ASK_FALLBACK, lang)
+    number_rules = NUMBER_RULES_NATIVE if lang in ("en-US", "en-GB") else (
+        NUMBER_RULES if lang == "en-IN" else NUMBER_RULES_INDIC
+    )
     greeting_rules = greeting_and_availability_rules(direction)
     mirror = (
         "Use the selected primary language with natural English mixing. "
@@ -232,25 +235,25 @@ def live_realtime_output_rules(language: str | None, *, direction: str | None = 
 - Garbled audio (not language change): "{unclear}" then wait for clarification; preserve the conversation context.
 - Caller speaks at length very quickly in one breath and you cannot follow: "{slow_down}" once, then continue naturally. Never lecture or say they talk too much.
 - If the caller asks for OUR contact, office, or WhatsApp number: "{phone_ask}" — do not read any digits aloud.
-- If the caller GIVES their phone, name, or email: say it is noted for the team — never refuse to take it, confirm only an uncertain caller-supplied number segment once; do not recite the dialed number.
+- If the caller gives details, acknowledge them naturally. Claim they were saved or sent only after tool confirmation. Confirm only the uncertain part once; do not recite the dialed number.
 - Follow CALL END POLICY already in this session. Do not invent a second hangup policy.
 - Use only reasons allowed by CALL END POLICY: a confirmed end request, firm refusal, confirmed callback, or completed script objective with the agreed next step confirmed; handle abuse only as that policy permits. Never hang up on okay/thanks alone. After the final farewell, let playback finish and disconnect promptly.
 - {LIVE_REPLY_BREVITY_RULE}
 - {DECISIVE_TURN_DISCIPLINE}
 - Start with the useful answer or acknowledgement immediately. Do not narrate plans such as 'I will clarify' or explain internal capabilities. For a firm refusal: one concise closing line and end_call. For 'call me later/tomorrow', 'contact me tomorrow', or 'record my name and phone': if name or phone is still missing (the dialed outbound number counts as known), ask ONLY that field — no pitch, no goodbye. Once you have it, confirm the callback in one line, farewell, end_call. Never claim a slot is booked unless a scheduling tool succeeded.
-- Sound like a natural phone salesperson: warm ack + at most ONE next question. Never two questions. Never re-ask a fact already given.
+- Follow the configured role: support, scheduling and information agents must not adopt a sales pitch. Answer naturally, with at most one next question; never re-ask a known fact.
 - Sales loop when role allows: Understand → Answer first → Discover one useful field → Recommend → Next step. After need is clear, never re-ask interest. Dense fact dumps: use all facts; do not checklist. Frustration ("I already told you"): own it and move forward.
-- Follow the supplied business script like a professional telecaller — it defines your call objectives, required questions, and key facts. Work through EVERY objective systematically: opening once → understand need → relevant offer/answer → required qualification fields → agreed next action → close. Track which objectives are complete and which are still open. After handling an interruption or objection, resume at the next unanswered script step — never restart from the beginning. Do not close while required details remain unresolved, unless the caller declines, requests a stop, or needs a language handoff.
+- Follow the relevant script objectives and required disclosures. Skip answered questions and inapplicable branches. After an interruption, address the caller's latest need before the next useful step. Respect refusal and stop requests; never insist on optional qualification after the caller is done.
 - Use the business-specific required questions, eligibility criteria, objection handling, and disclosures from the script. Preserve required wording; otherwise paraphrase naturally. Ask each required question once; clarify only if its answer was unclear. If the caller already provided the answer, mark it done and advance. Offer a relevant next step to interested callers, without pressure after refusal. Never substitute a generic pitch for the supplied script.
 - Treat the script as a branching workflow: follow only applicable qualification and objection branches. Preserve mandatory disclosures and exact wording only when required; translate their meaning into the configured language when script wording conflicts with it. Never invent a missing qualification field.
 - Build leads through relevant questions and a useful next step, not pressure. Acknowledge naturally, answer first, ask one question, then listen. Do not pretend to be human.
 - Distinguish interest, a requested appointment, and a confirmed booking. Only a successful action tool confirms a booking, message, or transfer. If no such tool is available, record a request for the team. Never invent a date from an ambiguous phrase such as morning appointment; ask the missing day once.
-- Prefer clear human speech inside each LENGTH band.
+- Prefer complete natural phrases; a short acknowledgement needs no padding.
 - {SPEECH_GRAMMAR_RULES}
 - {greeting_rules}
 - {PROFESSIONAL_CLOSE_RULES}
 - Use the configured language's native script; never insert unrelated scripts. Preserve actual names and everyday English loanwords.
-- {NUMBER_RULES}
+- {number_rules}
 - {PHONE_SPEAK_BAN}
 - {CALLER_DETAIL_CAPTURE}"""
 
@@ -331,7 +334,7 @@ Unclear audio (garbled STT, not language change): `{UNCLEAR_FALLBACK["en-IN"]}` 
 {NUMBER_RULES}
 {PHONE_SPEAK_BAN}
 {CALLER_DETAIL_CAPTURE}
-Write amounts fully in English: `That comes to rupees fifty lakhs.` not `Rs.50 lakhs` or bare digits.
+Write amounts fully in English: `That comes to fifty lakh rupees.` not `Rs.50 lakhs` or bare digits.
 {OVERLAP_RULES}
 
 VOICE EXAMPLES
@@ -397,7 +400,7 @@ Unclear audio (garbled STT, not language change): `{UNCLEAR_FALLBACK["en-US"]}` 
 {NUMBER_RULES_NATIVE}
 {PHONE_SPEAK_BAN}
 {CALLER_DETAIL_CAPTURE}
-Write amounts fully in English using the brief's currency: `That comes to dollars forty nine a month.` not `$49`.
+Write amounts fully in English using the brief's currency: `That comes to forty-nine dollars a month.` not `$49`.
 Do not assume WhatsApp. Prefer email, text, or a callback unless the brief mentions WhatsApp.
 {OVERLAP_RULES}
 
@@ -980,11 +983,11 @@ _PACK_BLOCK_HEADERS = (
 # rather than a rule the model has to follow. The standalone pack keeps them, so
 # any path that uses a pack on its own is unaffected.
 _CORE_ONLY_DROPPED_HEADERS = (
-    "NUMBERS (speak them",
-    "Write amounts fully in English",
     "PHONE NUMBERS (speak vs capture)",
     "VOICE EXAMPLES",
     "PHONE CALL",
+    "CALLER DETAILS (mandatory)",
+    "OVERLAP",
 )
 
 
@@ -1011,8 +1014,8 @@ def spoken_pack_for(
     """Language pack for a locale.
 
     `core_only=True` returns the compiled-brain form: no length bands (STATIC
-    OUTPUT RULES carries them), and no number/phone TTS blocks or worked
-    examples. `include_brevity=False` only drops the bands. The defaults leave
+    OUTPUT RULES carries them), phone TTS block or worked examples. Locale
+    number rules remain because they differ between languages. The defaults leave
     the full pack intact, so a caller using a pack on its own still gets every
     guardrail.
     """
@@ -1349,21 +1352,24 @@ def build_recording_disclosure_instruction(
     Zero disclosure in the sub-500ms prewarm opening greeting. This is delivered
     exclusively on the agent's first response turn after the caller speaks.
     """
-    clean_text = (disclosure_text or "").strip()
-    if not clean_text:
-        lang = (language or "").strip().lower()
-        if lang.startswith("te"):
-            clean_text = "నాణ్యత మరియు శిక్షణ ప్రయోజనాల కోసం ఈ కాల్ రికార్డ్ చేయబడవచ్చు."
-        else:
-            clean_text = "This call may be recorded for quality and training purposes."
-
-    return (
-        f"\n\n### RECORDING DISCLOSURE POLICY (FIRST RESPONSE TURN ONLY):\n"
-        f"Recording disclosure is ENABLED.\n"
-        f"In your very first response turn after the caller speaks in response to your greeting, "
-        f"you must naturally state the recording disclosure along with your answer or acknowledgment:\n"
-        f'"{clean_text}"\n'
-        f"- Deliver it smoothly and conversationally (e.g., 'Got it! Just so you know, this call may be recorded for quality and training. Regarding your consultation...').\n"
-        f"- Do NOT repeat this statement in any subsequent turns.\n"
+    defaults = {
+        "te-IN": "క్వాలిటీ, ట్రైనింగ్ కోసం ఈ కాల్ రికార్డ్ చేయవచ్చు.",
+        "hi-IN": "क्वालिटी और ट्रेनिंग के लिए यह कॉल रिकॉर्ड की जा सकती है।",
+        "ta-IN": "குவாலிட்டி மற்றும் டிரெயினிங்குக்காக இந்த கால் ரெக்கார்ட் செய்யப்படலாம்.",
+        "kn-IN": "ಕ್ವಾಲಿಟಿ ಮತ್ತು ಟ್ರೈನಿಂಗ್‌ಗಾಗಿ ಈ ಕಾಲ್ ರೆಕಾರ್ಡ್ ಮಾಡಬಹುದು.",
+        "ml-IN": "ക്വാളിറ്റിക്കും ട്രെയിനിങ്ങിനുമായി ഈ കോൾ റെക്കോർഡ് ചെയ്തേക്കാം.",
+        "mr-IN": "क्वालिटी आणि ट्रेनिंगसाठी हा कॉल रेकॉर्ड केला जाऊ शकतो.",
+        "bn-IN": "কোয়ালিটি ও ট্রেনিংয়ের জন্য এই কল রেকর্ড করা হতে পারে।",
+        "gu-IN": "ક્વોલિટી અને ટ્રેનિંગ માટે આ કૉલ રેકોર્ડ કરવામાં આવી શકે છે.",
+        "pa-IN": "ਕੁਆਲਿਟੀ ਅਤੇ ਟ੍ਰੇਨਿੰਗ ਲਈ ਇਹ ਕਾਲ ਰਿਕਾਰਡ ਕੀਤੀ ਜਾ ਸਕਦੀ ਹੈ।",
+    }
+    clean_text = (disclosure_text or "").strip() or defaults.get(
+        normalize_compile_language(language),
+        "This call may be recorded for quality and training purposes.",
     )
-
+    return (
+        "\n\n### RECORDING DISCLOSURE POLICY (FIRST RESPONSE TURN ONLY):\n"
+        "After the opening, include this disclosure once in your first response to the caller, "
+        "along with a relevant answer. Do not put it in the prewarm greeting or repeat it later.\n"
+        f'"{clean_text}"\n'
+    )

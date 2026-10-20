@@ -85,7 +85,7 @@ export function normalizeAppKey(key) {
 }
 
 export function IntegrationsModule() {
-  const [catalog, setCatalog] = useState(FULL_INTEGRATIONS_CATALOG);
+  const [catalog, setCatalog] = useState([]);
   const [connections, setConnections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(null);
@@ -95,21 +95,21 @@ export function IntegrationsModule() {
   const [selectedAppModal, setSelectedAppModal] = useState(null);
   const [connectModalApp, setConnectModalApp] = useState(null);
   const [accountAlias, setAccountAlias] = useState('');
-  const [authMode, setAuthMode] = useState('oauth'); // 'oauth' | 'apiKey'
-  const [manualApiKey, setManualApiKey] = useState('');
+  const [connectionError, setConnectionError] = useState(null);
+  const [loadError, setLoadError] = useState(null);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [requestedAppName, setRequestedAppName] = useState('');
   const [requestSubmitted, setRequestSubmitted] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
-  const [popupBlockedUrl, setPopupBlockedUrl] = useState(null);
   const [disconnectApp, setDisconnectApp] = useState(null);
 
   const fetchIntegrations = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const [connData, catData] = await Promise.all([
-        api.request('GET', '/api/integrations').catch(() => ({ items: [] })),
-        api.request('GET', '/api/integrations/catalog').catch(() => null)
+        api.request('GET', '/api/integrations'),
+        api.request('GET', '/api/integrations/catalog')
       ]);
       setConnections(connData?.items || []);
       if (catData?.items && Array.isArray(catData.items) && catData.items.length > 0) {
@@ -128,7 +128,7 @@ export function IntegrationsModule() {
         setCatalog(merged);
       }
     } catch (err) {
-      console.error('Failed to load integrations:', err);
+      setLoadError('Could not load integrations. Please retry.');
     } finally {
       setLoading(false);
     }
@@ -136,29 +136,7 @@ export function IntegrationsModule() {
 
   useEffect(() => {
     fetchIntegrations();
-
-    // Listen for OAuth completion message from popup window or Nango Connect UI
-    const handleMessage = async (e) => {
-      const type = e.data?.type || e.data?.event;
-      if (
-        type === 'INTEGRATION_CONNECTED' ||
-        type === 'connect' ||
-        type === 'nango:auth:success' ||
-        type === 'nango:connect:success'
-      ) {
-        const app = (e.data?.app || e.data?.provider || e.data?.payload?.providerConfigKey || connectModalApp?.name || '').toUpperCase();
-        triggerConfetti();
-        setToastMessage(`Connected ${app || 'integration'} workspace account successfully!`);
-        setTimeout(() => setToastMessage(null), 4000);
-        setConnecting(null);
-        setPopupBlockedUrl(null);
-        setConnectModalApp(null);
-        await fetchIntegrations();
-      }
-    };
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [connectModalApp]);
+  }, []);
 
   const triggerConfetti = () => {
     try {
@@ -171,200 +149,60 @@ export function IntegrationsModule() {
     } catch (_) {}
   };
 
-  const getApiKeyInfo = (appId) => {
-    switch (appId) {
-      case 'SHOPIFY':
-        return {
-          label: 'Shopify Admin API Access Token',
-          placeholder: 'shpat_...',
-          help: 'Found in Shopify Admin > Settings > Apps > Develop apps.'
-        };
-      case 'WOOCOMMERCE':
-        return {
-          label: 'WooCommerce Consumer Key / Secret',
-          placeholder: 'ck_...:cs_...',
-          help: 'Generated from WooCommerce > Settings > Advanced > REST API.'
-        };
-      case 'TWILIO_SMS':
-        return {
-          label: 'Twilio Auth Token',
-          placeholder: 'Paste Twilio Auth Token...',
-          help: 'Found on your Twilio Console dashboard.'
-        };
-      case 'WHATSAPP':
-        return {
-          label: 'WhatsApp Cloud API Access Token',
-          placeholder: 'EAAB... (System User Token)',
-          help: 'Generated in Meta for Developers under WhatsApp Business.'
-        };
-      case 'DISCORD':
-        return {
-          label: 'Discord Bot Token',
-          placeholder: 'Paste Discord Bot Token...',
-          help: 'Found in Discord Developer Portal > Applications > Bot.'
-        };
-      case 'SENDGRID':
-        return {
-          label: 'SendGrid API Key',
-          placeholder: 'SG.xxxxxxxx...',
-          help: 'Found in SendGrid Settings > API Keys.'
-        };
-      case 'SUPABASE':
-        return {
-          label: 'Supabase Service Role Key',
-          placeholder: 'eyJh... (Service Role Key)',
-          help: 'Found in Supabase Project Settings > API.'
-        };
-      case 'FRESHDESK':
-        return {
-          label: 'Freshdesk API Key',
-          placeholder: 'Paste Freshdesk API Key...',
-          help: 'Found in Freshdesk Profile Settings > Your API Key.'
-        };
-      default:
-        return {
-          label: 'API Key or Access Token',
-          placeholder: 'Paste API Key or Token...',
-          help: 'Encrypted with AES-256 and used exclusively for your agent phone calls.'
-        };
-    }
-  };
-
-  // Prompt the Connect configuration modal
   const openConnectDialog = (app) => {
+    setConnectionError(null);
     setConnectModalApp(app);
     setAccountAlias(`workspace-${app.name.toLowerCase().replace(/[^a-z0-9]/g, '')}`);
-    const isApiKey = app.auth_type === 'api_key';
-    setAuthMode(isApiKey ? 'apiKey' : 'oauth');
-    setManualApiKey('');
   };
 
   const handleExecuteConnect = async (appId) => {
-    if (authMode === 'apiKey' && !manualApiKey.trim()) {
-      alert('Please enter an API Key or Token to connect.');
-      return;
-    }
-
-    // 1. Pre-open window during synchronous user gesture to bypass browser popup blockers
-    let popup = null;
-    if (authMode === 'oauth') {
-      try {
-        popup = window.open('about:blank', 'app_oauth', 'width=620,height=720,menubar=no,toolbar=no');
-        if (popup && popup.document) {
-          popup.document.write(`
-            <!DOCTYPE html>
-            <html><head><title>Connecting to ${appId}...</title>
-            <style>
-              body{font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#0c0a1a;color:#f8fafc;}
-              .loader{width:38px;height:38px;border:3px solid #1e293b;border-top-color:#8369F5;border-radius:50%;animation:s 1s linear infinite;margin:0 auto 16px;}
-              @keyframes s{to{transform:rotate(360deg)}}
-            </style>
-            </head><body><div style="text-align:center"><div class="loader"></div><p style="font-size:14px;color:#cbd5e1;font-weight:600;">Redirecting to ${appId} sign-in...</p><p style="font-size:12px;color:#94a3b8;">Authorize your account to enable voice agent actions</p></div></body></html>
-          `);
-        }
-      } catch (e) {
-        console.warn('Popup pre-open notice:', e);
-      }
-    }
-
+    if (connecting) return;
+    setConnecting(appId);
+    setConnectionError(null);
+    const alias = accountAlias.trim();
+    const name = connectModalApp?.name || appId;
     try {
-      setConnecting(appId);
       const data = await api.request('POST', `/api/integrations/${appId}/connect`, {
         base_redirect_uri: `${window.location.origin}/api/integrations/callback`,
-        account_identifier: accountAlias.trim() || undefined,
-        api_key: authMode === 'apiKey' ? manualApiKey.trim() : undefined,
+        account_identifier: alias || undefined,
       });
-
-      // Surface Nango configuration/auth errors clearly to the user
-      if (data?.status === 'ERROR' || data?.error) {
-        if (popup && !popup.closed) popup.close();
-        setConnecting(null);
-        if (data?.error === 'nango_credentials_required' || data?.error === 'oauth_credentials_required') {
-          setAuthMode('apiKey');
-          setToastMessage(`ℹ️ Direct connection required for this provider. Switched to direct API Key connection.`);
-        } else {
-          const msg = data?.message || 'Failed to initiate authorization. Please connect using direct API Key or try again later.';
-          setToastMessage(`❌ ${msg}`);
-        }
-        setTimeout(() => setToastMessage(null), 6000);
-        return;
+      if (data?.status !== 'INITIATED' || !data?.session_token) {
+        throw new Error('Secure connection form unavailable. Please contact your administrator.');
       }
-
-      if (authMode === 'oauth' && data?.redirect_url) {
-        if (popup && !popup.closed) {
-          // Direct popup window to real Nango Connect OAuth flow
-          popup.location.href = data.redirect_url;
-          const timer = setInterval(() => {
-            if (popup && popup.closed) {
-              clearInterval(timer);
-              setConnecting(null);
-              setConnectModalApp(null);
+      let activating = false;
+      let completed = false;
+      const nango = new Nango({ connectSessionToken: data.session_token });
+      nango.openConnectUI({
+        sessionToken: data.session_token,
+        onEvent: async (event) => {
+          if (event.type === 'connect' && !activating && !completed) {
+            activating = true;
+            try {
+              const connectionId = event.payload?.connectionId;
+              if (!connectionId) throw new Error('Authorization returned no connection. Please retry.');
+              await api.request('POST', `/api/integrations/${appId}/activate`, {
+                connection_id: connectionId,
+                account_identifier: alias || undefined,
+              });
+              completed = true;
               triggerConfetti();
-              fetchIntegrations();
+              setToastMessage(`Connected ${name} successfully!`);
+              setTimeout(() => setToastMessage(null), 4000);
+              setConnectModalApp(null);
+              await fetchIntegrations();
+            } catch {
+              setConnectionError('Connection could not be verified. Please retry or contact your administrator.');
+            } finally {
+              activating = false;
+              setConnecting(null);
             }
-          }, 1200);
-        } else if (data?.session_token) {
-          // Popup blocked - fall back to Nango Connect UI in-page modal
-          try {
-            const nango = new Nango({ connectSessionToken: data.session_token });
-            nango.openConnectUI({
-              sessionToken: data.session_token,
-              onEvent: async (event) => {
-                if (event.type === 'connect') {
-                  const connId = event.payload?.connectionId || data.connection_id;
-                  try {
-                    await api.request('POST', `/api/integrations/${appId}/activate`, {
-                      connection_id: connId,
-                      session_token: data.session_token,
-                      account_identifier: accountAlias.trim() || undefined,
-                    });
-                  } catch (actErr) {
-                    console.warn('Backend activation notice:', actErr);
-                  }
-                  triggerConfetti();
-                  setToastMessage(`Connected ${connectModalApp?.name || appId} successfully!`);
-                  setTimeout(() => setToastMessage(null), 4000);
-                  setConnecting(null);
-                  setConnectModalApp(null);
-                  fetchIntegrations();
-                } else if (event.type === 'close') {
-                  setConnecting(null);
-                  setConnectModalApp(null);
-                  fetchIntegrations();
-                }
-              },
-            });
-          } catch (nangoErr) {
-            setPopupBlockedUrl({ appId, url: data.redirect_url });
+          } else if (event.type === 'close' && !activating) {
             setConnecting(null);
-            setConnectModalApp(null);
           }
-        } else {
-          // Popup blocked and no session token
-          setPopupBlockedUrl({ appId, url: data.redirect_url });
-          setConnecting(null);
-          setConnectModalApp(null);
-        }
-      } else {
-        // Manual key or direct activation
-        if (popup && !popup.closed) popup.close();
-        try {
-          await api.request('POST', `/api/integrations/${appId}/activate`, {
-            connection_id: data?.connection_id || `key_${Date.now()}`,
-            account_identifier: accountAlias.trim() || undefined,
-          });
-        } catch (_) {}
-        triggerConfetti();
-        setToastMessage(`Successfully authorized ${appId}!`);
-        setTimeout(() => setToastMessage(null), 4000);
-        setConnecting(null);
-        setConnectModalApp(null);
-        fetchIntegrations();
-      }
-    } catch (err) {
-      console.error('Failed to initiate secure connection:', err);
-      if (popup && !popup.closed) popup.close();
-      alert('Failed to initiate secure connection. Please try again.');
+        },
+      });
+    } catch {
+      setConnectionError('Could not open the secure connection form. Please retry or contact your administrator.');
       setConnecting(null);
     }
   };
@@ -489,48 +327,10 @@ export function IntegrationsModule() {
         </div>
       )}
 
-      {/* Popup Blocked Fallback Modal */}
-      {popupBlockedUrl && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="bg-white border border-[#E4E2EB] rounded-3xl p-6 max-w-md w-full shadow-craft-lg space-y-4 animate-in zoom-in-95 duration-200">
-            <div className="flex items-center space-x-3 text-amber-500">
-              <div className="w-10 h-10 rounded-2xl bg-amber-50 flex items-center justify-center flex-shrink-0">
-                <AlertCircle className="w-5 h-5 text-amber-600" />
-              </div>
-              <div>
-                <h3 className="font-extrabold text-[#0F0E17] text-sm">Action Required: Authorize Account</h3>
-                <p className="text-[11px] text-[#524E5E]">Browser popup blocker intercepted authorization</p>
-              </div>
-            </div>
-            <p className="text-xs text-[#524E5E] leading-relaxed">
-              Your browser prevented the automatic sign-in window. Click below to open <strong>{popupBlockedUrl.appId}</strong>'s sign-in screen securely:
-            </p>
-            <div className="flex justify-end space-x-2.5 pt-2 border-t border-[#E4E2EB]">
-              <button 
-                onClick={() => setPopupBlockedUrl(null)}
-                className="px-3.5 py-2 text-xs text-[#524E5E] hover:text-[#0F0E17] font-semibold transition-colors"
-              >
-                Cancel
-              </button>
-              <a 
-                href={popupBlockedUrl.url} 
-                target="_blank" 
-                rel="noreferrer"
-                data-testid="authorize-popup-btn"
-                onClick={() => {
-                  setTimeout(() => {
-                    setPopupBlockedUrl(null);
-                    triggerConfetti();
-                    fetchIntegrations();
-                  }, 1500);
-                }}
-                className="px-4 py-2 bg-brand hover:bg-brand-hover text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-craft-xs transition-all hover:scale-105 active:scale-95"
-              >
-                <span>Authorize & Sign In</span>
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-            </div>
-          </div>
+      {loadError && (
+        <div role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
+          {loadError}
+          <button type="button" onClick={fetchIntegrations} className="ml-3 underline">Retry</button>
         </div>
       )}
 
@@ -794,7 +594,7 @@ export function IntegrationsModule() {
                                 </span>
                               ) : (
                                 <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-purple-50 text-purple-700 border border-purple-200" title="Direct API Key / Token Authentication">
-                                  🔑 Direct API Key
+                                  🔑 Secure API Key
                                 </span>
                               )}
                             </div>
@@ -921,7 +721,7 @@ export function IntegrationsModule() {
                 </div>
                 <h3 className="font-bold text-sm text-[#0F0E17]">Encrypted Tenant Vault</h3>
                 <p className="text-xs text-[#524E5E] leading-relaxed">
-                  Once authorized, the OAuth token is bound exclusively to your unique tenant ID and encrypted at rest with <strong>AES-256 GCM</strong>. No other tenant or agent can access your account.
+                  Once authorized, the OAuth token is bound exclusively to your unique tenant ID and stored in the secure credential vault. Agent actions are checked against your workspace and configuration.
                 </p>
                 <div className="text-[11px] text-emerald-600 font-semibold flex items-center space-x-1">
                   <ShieldCheck className="w-3.5 h-3.5" />
@@ -933,13 +733,13 @@ export function IntegrationsModule() {
                 <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 font-bold text-xs flex items-center justify-center">
                   3
                 </div>
-                <h3 className="font-bold text-sm text-[#0F0E17]">Sub-Second In-Call Dispatch</h3>
+                <h3 className="font-bold text-sm text-[#0F0E17]">Verified In-Call Actions</h3>
                 <p className="text-xs text-[#524E5E] leading-relaxed">
-                  When a caller asks to schedule an appointment during a phone call, the voice AI securely queries your calendar and reserves the slot in <strong>&lt;1.5 seconds</strong> without human intervention.
+                  When a caller asks to schedule an appointment during a phone call, the voice AI checks the connected calendar and confirms a booking only after the provider returns a verified result. Response time depends on the provider.
                 </p>
                 <div className="text-[11px] text-amber-600 font-semibold flex items-center space-x-1">
                   <Zap className="w-3.5 h-3.5" />
-                  <span>Real-time voice SLA</span>
+                  <span>Provider-confirmed results</span>
                 </div>
               </div>
             </div>
@@ -948,10 +748,10 @@ export function IntegrationsModule() {
             <div className="p-5 rounded-2xl bg-[#0c0a1a] text-white border border-white/10 space-y-3">
               <div className="flex items-center space-x-2 text-amber-400 font-bold text-xs">
                 <Info className="w-4 h-4" />
-                <span>Notice on Development Sandbox vs. Production Mode</span>
+                <span>Verified connections</span>
               </div>
               <p className="text-xs text-[#D1CFDB] leading-relaxed">
-                In this local development sandbox environment, instant connection simulation is active when third-party provider keys are in test mode. This enables testing full voice call agentic loops without requiring 170+ paid SaaS enterprise accounts. In live production environments, clicking Connect will always direct the tenant to sign into their official SaaS provider login.
+                A connection is enabled only after authorization is verified for your workspace. If authorization is cancelled or unavailable, the integration stays disconnected.
               </p>
             </div>
           </div>
@@ -1005,38 +805,25 @@ export function IntegrationsModule() {
                   <div className="p-4 rounded-2xl bg-brand/10 border border-brand/20 space-y-2">
                     <div className="flex items-center space-x-2 text-xs font-bold text-brand">
                       <Key className="w-4 h-4 text-brand" />
-                      <span>Direct API Key Connection</span>
+                      <span>Secure API Key Connection</span>
                     </div>
                     <p className="text-xs text-[#524E5E] leading-relaxed">
-                      <strong>{connectModalApp.name}</strong> connects directly via your workspace API credentials. Enter your token below to enable in-call voice actions.
+                      <strong>{connectModalApp.name}</strong> uses workspace API credentials. Continue to the secure connection form to enter the fields required by this provider.
                     </p>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-[#0F0E17]">
-                      {getApiKeyInfo(connectModalApp.id).label}
-                    </label>
-                    <input
-                      type="password"
-                      value={manualApiKey}
-                      onChange={(e) => setManualApiKey(e.target.value)}
-                      placeholder={getApiKeyInfo(connectModalApp.id).placeholder}
-                      className="w-full px-3.5 py-2.5 min-h-[42px] sm:min-h-[36px] text-base sm:text-xs bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl focus:outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 text-[#0F0E17]"
-                    />
-                    <p className="text-[11px] text-[#524E5E]">
-                      {getApiKeyInfo(connectModalApp.id).help}
-                    </p>
-                  </div>
                 </div>
               )}
 
               {/* Account Alias Input */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-[#0F0E17]">
+                <label htmlFor="integration-account-alias" className="block text-xs font-bold text-[#0F0E17]">
                   Account Label / Alias
                 </label>
                 <input
                   type="text"
+                  id="integration-account-alias"
+                  maxLength={255}
                   value={accountAlias}
                   onChange={(e) => setAccountAlias(e.target.value)}
                   placeholder="e.g. sales-team@company.com or Primary CRM"
@@ -1047,7 +834,7 @@ export function IntegrationsModule() {
               {/* Scopes Preview */}
               <div className="space-y-1.5">
                 <span className="text-[11px] font-bold text-[#0F0E17] uppercase tracking-wider">
-                  Granted Voice Permissions:
+                  Available Agent Actions:
                 </span>
                 <div className="space-y-1">
                   {(connectModalApp.actions || ['Check Status', 'Execute Action']).map((action, i) => (
@@ -1059,6 +846,10 @@ export function IntegrationsModule() {
                 </div>
               </div>
             </div>
+
+            {connectionError && (
+              <p role="alert" data-testid="connection-error" className="text-sm text-red-700 bg-red-50 rounded-xl p-3">{connectionError}</p>
+            )}
 
             {/* Modal Actions */}
             <div className="pt-3 border-t border-[#E4E2EB] flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3">
@@ -1085,11 +876,11 @@ export function IntegrationsModule() {
                   {connecting === connectModalApp.id ? (
                     <>
                       <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                      <span>Opening Sign-In...</span>
+                      <span>Opening secure form...</span>
                     </>
                   ) : (
                     <>
-                      <span>{authMode === 'oauth' ? `Sign In to ${connectModalApp.name}` : 'Save & Connect'}</span>
+                      <span>Continue securely</span>
                       <ArrowUpRight className="w-4 h-4" />
                     </>
                   )}

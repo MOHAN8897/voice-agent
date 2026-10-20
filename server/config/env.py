@@ -248,6 +248,7 @@ class Settings(BaseSettings):
     campaign_max_concurrency: int = Field(20, alias="CAMPAIGN_MAX_CONCURRENCY")
     campaign_default_retry_attempts: int = Field(3, alias="CAMPAIGN_DEFAULT_RETRY_ATTEMPTS")
     saas_max_concurrent_pstn: int = Field(20, alias="SAAS_MAX_CONCURRENT_PSTN")
+    saas_max_outbound_cps: int = Field(1, ge=1, le=100, alias="SAAS_MAX_OUTBOUND_CPS")
     recording_consent_required: bool = Field(False, alias="RECORDING_CONSENT_REQUIRED")
 
     # --- Nango multi-tenant voice tools & integrations ---
@@ -262,6 +263,10 @@ class Settings(BaseSettings):
     nango_environment_uuid: str | None = Field(
         None,
         validation_alias=AliasChoices("NANGO_ENVIRONMENT_UUID", "nango_environment_uuid"),
+    )
+    nango_webhook_signing_key: str | None = Field(
+        None,
+        validation_alias=AliasChoices("NANGO_WEBHOOK_SIGNING_KEY", "nango_webhook_signing_key"),
     )
     nango_base_url: str = Field(
         "https://api.nango.dev",

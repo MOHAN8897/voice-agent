@@ -293,7 +293,7 @@ export function BenchmarkLaboratory({ portal = "app" }: { portal?: "app" | "dev"
             </div>
 
             <SkeuoButton variant="primary" disabled={!enabled || estimatedRuns === 0} onClick={createAndRun}>
-              Create & record session
+              Create &amp; record session
             </SkeuoButton>
           </div>
         </SkeuoPanel>

@@ -1,6 +1,7 @@
 """Subscriber signup, login, refresh, password, account lifecycle."""
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import logging
 import secrets
@@ -12,7 +13,7 @@ from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from server.auth.jwt_tokens import AccessTokenClaims, create_access_token
-from server.auth.passwords import hash_portal_password, verify_portal_password
+from server.auth.passwords import hash_portal_password, password_hash_needs_upgrade, verify_portal_password
 from server.auth.rbac import ROLE_CUSTOMER_ADMIN, ROLE_PLATFORM_ADMIN
 from server.config.env import get_settings
 from server.services.saas.platform_admins import (
@@ -59,6 +60,8 @@ def _normalize_email(email: str) -> str:
 def _validate_password(password: str) -> None:
     if len(password) < 8:
         raise ValueError("password_too_short")
+    if len(password) > 200:
+        raise ValueError("password_too_long")
 
 
 async def _log_event(
@@ -335,7 +338,7 @@ async def login_or_create_oauth_user(
         if user is None:
             user = User(
                 email=norm,
-                password_hash=hash_portal_password(secrets.token_urlsafe(32)),
+                password_hash=await asyncio.to_thread(hash_portal_password, secrets.token_urlsafe(32)),
                 full_name=full_name,
                 status="active",
                 email_verified_at=_utcnow(),
@@ -456,7 +459,7 @@ async def signup(
             raise ValueError("email_taken")
         user = User(
             email=norm,
-            password_hash=hash_portal_password(password),
+            password_hash=await asyncio.to_thread(hash_portal_password, password),
             full_name=full_name.strip(),
             status="pending_verification",
             created_at=_utcnow(),
@@ -528,7 +531,11 @@ async def login(*, email: str, password: str, ip: str | None = None) -> dict[str
             select(User).where(func.lower(User.email) == norm, User.deleted_at.is_(None))
         )
         user = result.scalar_one_or_none()
-        if user is None or not verify_portal_password(user.password_hash, password):
+        # Missing users pay the same KDF work as a current stored hash, so a
+        # nonexistent account does not immediately return from the login check.
+        stored_hash = user.password_hash if user else "pbkdf2-sha256$600000$" + "00" * 16 + "$" + "00" * 32
+        verified = await asyncio.to_thread(verify_portal_password, stored_hash, password)
+        if user is None or not verified:
             if user:
                 await _log_event(session, "login_failed", user_id=user.user_id, ip=ip)
                 await session.commit()
@@ -540,6 +547,8 @@ async def login(*, email: str, password: str, ip: str | None = None) -> dict[str
             raise ValueError("account_disabled")
         if user.status == "pending_verification" and user.email_verified_at is None:
             raise ValueError("email_unverified")
+        if password_hash_needs_upgrade(user.password_hash):
+            user.password_hash = await asyncio.to_thread(hash_portal_password, password)
         picked = await resolve_usable_tenant(session, user.user_id)
         if picked is None:
             # Distinguish "no workspace at all" from "every workspace is closed" so the
@@ -772,9 +781,9 @@ async def change_password(user_id: uuid.UUID, current: str, new: str) -> dict[st
         raise RuntimeError("database_required")
     async with factory() as session:
         user = await session.get(User, user_id)
-        if user is None or not verify_portal_password(user.password_hash, current):
+        if user is None or not await asyncio.to_thread(verify_portal_password, user.password_hash, current):
             raise ValueError("invalid_credentials")
-        user.password_hash = hash_portal_password(new)
+        user.password_hash = await asyncio.to_thread(hash_portal_password, new)
         user.updated_at = _utcnow()
         await session.execute(
             update(RefreshToken)
@@ -847,7 +856,7 @@ async def reset_password(token: str, new_password: str) -> dict[str, Any]:
         user = await session.get(User, row.user_id)
         if user is None:
             raise ValueError("invalid_token")
-        user.password_hash = hash_portal_password(new_password)
+        user.password_hash = await asyncio.to_thread(hash_portal_password, new_password)
         user.updated_at = _utcnow()
         await session.delete(row)
         # Everything else on the account is signed out — the reset link may have been
@@ -907,7 +916,7 @@ async def delete_account(user_id: uuid.UUID, password: str, confirm: str) -> Non
         raise RuntimeError("database_required")
     async with factory() as session:
         user = await session.get(User, user_id)
-        if user is None or not verify_portal_password(user.password_hash, password):
+        if user is None or not await asyncio.to_thread(verify_portal_password, user.password_hash, password):
             raise ValueError("invalid_credentials")
         admin_rows = await session.execute(
             select(TenantMembership).where(
@@ -994,7 +1003,7 @@ async def invite_member(
         if user is None:
             user = User(
                 email=norm,
-                password_hash=hash_portal_password(secrets.token_urlsafe(16)),
+                password_hash=await asyncio.to_thread(hash_portal_password, secrets.token_urlsafe(16)),
                 full_name="",
                 status="pending_invite",
                 created_at=_utcnow(),

@@ -283,7 +283,7 @@ export function SaasUniversalPhoneStack() {
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>
-              <h2 className="text-base font-semibold text-text">Telephony Infrastructure & PSTN Calling Trunk</h2>
+              <h2 className="text-base font-semibold text-text">Telephony Infrastructure &amp; PSTN Calling Trunk</h2>
               <p className="text-sm text-text-muted mt-1">
                 Configure whether Telnyx or Vobiz powers inbound and outbound carrier calling, number searching,
                 and bidirectional WebSocket audio streaming.

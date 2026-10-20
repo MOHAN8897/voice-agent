@@ -276,15 +276,15 @@ class VobizClient:
                 "provider": "vobiz",
                 "auth_id": auth_id,
                 "account_id": data.get("id"),
-                "phone_number": self.cfg.get("phone_number") or "+917965480745",
-                "app_id": self.cfg.get("app_id") or "19573358086719545",
-                "account_name": data.get("name") or data.get("company") or "Sadhu Sai Kiran",
+                "phone_number": self.cfg.get("phone_number") or None,
+                "app_id": self.cfg.get("app_id") or None,
+                "account_name": data.get("name") or data.get("company") or None,
                 "email": data.get("email"),
                 "verified": data.get("is_verified", True),
                 "pricing_tier": data.get("pricing_tier", {}).get("name"),
             }
         except Exception as e:
-            logger.warning("[VOBIZ] handshake failed: %s", e)
+            logger.warning("Phone account check failed error_type=%s", type(e).__name__)
             return {
                 "ok": False,
                 "provider": "vobiz",
@@ -668,8 +668,24 @@ class VobizCallRegistry:
     _REDIS_TTL_SEC = 7200
 
     def __init__(self) -> None:
-        self._calls: dict[str, dict[str, Any]] = {}
+        from collections import OrderedDict
+        from threading import RLock
+        self._calls = OrderedDict()
+        self._cache_lock = RLock()
         self._lock = asyncio.Lock()
+        self._max_local_calls = 2048
+
+    def _remember(self, call_uuid, row):
+        import time
+        with self._cache_lock:
+            self._calls[call_uuid] = dict(row)
+            self._calls.move_to_end(call_uuid)
+            cutoff = time.time() - self._REDIS_TTL_SEC
+            while self._calls:
+                oldest = next(iter(self._calls.values()))
+                if len(self._calls) <= self._max_local_calls and float(oldest.get("updated_at") or 0) > cutoff:
+                    break
+                self._calls.popitem(last=False)
 
     def _redis(self):
         try:
@@ -680,34 +696,33 @@ class VobizCallRegistry:
             return None
 
     def get(self, call_uuid: str) -> dict[str, Any] | None:
+        import json, time
         if not call_uuid:
             return None
-        row = self._calls.get(call_uuid)
-        if row is not None:
-            aliased = row.get("aliased_to")
-            if aliased and aliased != call_uuid:
-                target = self.get(aliased)
-                if target:
-                    return dict(target)
-            return dict(row)
         client = self._redis()
-        if client is not None:
-            try:
-                import json
-
-                raw = client.get(f"{self._REDIS_PREFIX}{call_uuid}")
-                if raw:
-                    data = json.loads(raw)
-                    if isinstance(data, dict):
-                        self._calls[call_uuid] = data
-                        aliased = data.get("aliased_to")
-                        if aliased and aliased != call_uuid:
-                            target = self.get(aliased)
-                            if target:
-                                return dict(target)
-                        return dict(data)
-            except Exception:
-                pass
+        shared = str(getattr(get_settings(), "app_environment", "development")).lower() in ("production", "staging")
+        seen = set()
+        for _ in range(8):
+            if call_uuid in seen:
+                return None
+            seen.add(call_uuid)
+            if client is not None:
+                try:
+                    raw = client.get(f"{self._REDIS_PREFIX}{call_uuid}")
+                    row = json.loads(raw) if raw else None
+                except Exception:
+                    return None
+            elif shared:
+                return None
+            else:
+                with self._cache_lock:
+                    row = self._calls.get(call_uuid)
+            if not isinstance(row, dict) or float(row.get("updated_at") or 0) <= time.time() - self._REDIS_TTL_SEC:
+                return None
+            target = row.get("aliased_to")
+            if not target or target == call_uuid:
+                return dict(row)
+            call_uuid = str(target)
         return None
 
     def alias(self, alias_id: str, target_id: str) -> None:
@@ -718,25 +733,61 @@ class VobizCallRegistry:
         self.upsert(alias_id, {**target, "aliased_to": target_id, "call_uuid": target_id})
 
     def upsert(self, call_uuid: str, updates: dict[str, Any]) -> dict[str, Any]:
-        import time
-
+        import json, time
+        from redis.exceptions import WatchError
         if not call_uuid:
             return {}
-        existing = self.get(call_uuid) or {}
-        merged = {**existing, **updates, "call_uuid": call_uuid, "updated_at": int(time.time())}
-        self._calls[call_uuid] = merged
         client = self._redis()
         if client is not None:
-            try:
-                import json
-
-                client.set(f"{self._REDIS_PREFIX}{call_uuid}", json.dumps(merged), ex=self._REDIS_TTL_SEC)
-                client.zadd(self._REDIS_RECENT_KEY, {call_uuid: time.time()})
-            except Exception as e:
-                logger.debug("[VOBIZ] call registry redis save failed: %s", e)
+            key = f"{self._REDIS_PREFIX}{call_uuid}"
+            for attempt in range(8):
+                try:
+                    with client.pipeline() as pipe:
+                        pipe.watch(key)
+                        raw = pipe.get(key)
+                        existing = json.loads(raw) if raw else {}
+                        merged = {**existing, **updates, "call_uuid": call_uuid, "updated_at": int(time.time())}
+                        if existing.get("ended"):
+                            merged["ended"] = True
+                        pipe.multi()
+                        pipe.set(key, json.dumps(merged), ex=self._REDIS_TTL_SEC)
+                        pipe.zadd(self._REDIS_RECENT_KEY, {call_uuid: time.time()})
+                        pipe.zremrangebyscore(self._REDIS_RECENT_KEY, "-inf", time.time() - self._REDIS_TTL_SEC)
+                        pipe.execute()
+                    self._remember(call_uuid, merged)
+                    return dict(merged)
+                except WatchError:
+                    if attempt < 7:
+                        time.sleep(min(0.025, 0.001 * (2 ** attempt)))
+                        continue
+                    raise VobizConfigError("Concurrent call metadata update needs retry")
+                except Exception as exc:
+                    raise VobizConfigError("Shared call metadata storage is unavailable") from exc
+        if str(getattr(get_settings(), "app_environment", "development")).lower() in ("production", "staging"):
+            raise VobizConfigError("Shared call metadata storage is unavailable")
+        with self._cache_lock:
+            existing = self._calls.get(call_uuid) or {}
+            merged = {**existing, **updates, "call_uuid": call_uuid, "updated_at": int(time.time())}
+            if existing.get("ended"):
+                merged["ended"] = True
+            self._remember(call_uuid, merged)
         return dict(merged)
 
     async def atomic_check_and_set(self, call_uuid: str, key: str, value: Any = True) -> bool:
+        import hashlib
+        client = await asyncio.to_thread(self._redis)
+        if client is not None:
+            claim = hashlib.sha256(f"{call_uuid}:{key}".encode()).hexdigest()
+            try:
+                won = await asyncio.to_thread(client.set, f"{self._REDIS_PREFIX}claim:{claim}", "1", nx=True, ex=self._REDIS_TTL_SEC)
+                if not won:
+                    return False
+                await asyncio.to_thread(self.upsert, call_uuid, {key: value})
+                return True
+            except Exception:
+                return False
+        if str(getattr(get_settings(), "app_environment", "development")).lower() in ("production", "staging"):
+            return False
         async with self._lock:
             row = self.get(call_uuid) or {}
             if row.get(key):
@@ -745,10 +796,13 @@ class VobizCallRegistry:
             return True
 
     def list_recent(self, limit: int | None = 20) -> list[dict[str, Any]]:
+        import time
         by_id: dict[str, dict[str, Any]] = {}
-        for row in list(self._calls.values()):
+        with self._cache_lock:
+            local_rows = list(self._calls.values())
+        for row in local_rows:
             cid = str(row.get("call_uuid") or "")
-            if cid:
+            if cid and float(row.get("updated_at") or 0) > time.time() - self._REDIS_TTL_SEC:
                 by_id[cid] = row
         client = self._redis()
         if client is not None:
@@ -758,8 +812,6 @@ class VobizCallRegistry:
                 for cid in client.zrevrange(self._REDIS_RECENT_KEY, 0, -1 if limit is None else max(limit * 3, 40) - 1):
                     if isinstance(cid, bytes):
                         cid = cid.decode("utf-8")
-                    if cid in by_id:
-                        continue
                     raw = client.get(f"{self._REDIS_PREFIX}{cid}")
                     if not raw:
                         continue
@@ -773,88 +825,107 @@ class VobizCallRegistry:
             key=lambda r: float(r.get("updated_at") or r.get("dialed_at") or 0),
             reverse=True,
         )
-        if limit is None:
-            return ordered
-        return ordered[:limit]
+        selected = ordered if limit is None else ordered[:limit]
+        return [{key: value for key, value in row.items() if key not in {"token", "webhook_token", "stream_url"}} for row in selected]
 
 
 vobiz_call_registry = VobizCallRegistry()
 
 
 class VobizStreamTokens:
-    """Cryptographic single-use token store for authorizing Vobiz WebSocket audio streams."""
-
+    """Call-scoped media credentials, consumed once across all shared workers."""
     _REDIS_PREFIX = "voice:vobiz:stream_token:"
     _REDIS_TTL_SEC = 7200
 
-    def __init__(self) -> None:
-        self._tokens: dict[str, dict[str, Any]] = {}
+    def __init__(self):
+        import threading
+        self._tokens = {}
+        self._used = {}
+        self._lock = threading.Lock()
 
     def _redis(self):
-        try:
-            from server.call.redis_memory_cache import _redis
+        from server.call.redis_memory_cache import _redis
+        return _redis()
 
-            return _redis()
-        except Exception:
-            return None
+    def _shared_required(self):
+        return str(getattr(get_settings(), "app_environment", "development")).lower() in ("production", "staging")
 
-    def create(self, **meta: Any) -> str:
+    def _client(self):
+        client = self._redis()
+        if self._shared_required() and (client is None or type(client).__module__.startswith("fakeredis")):
+            raise VobizConfigError("Shared call authentication storage is unavailable")
+        return client
+
+    def create(self, **meta):
         import secrets
-
         token = secrets.token_urlsafe(32)
         self.put(token, **meta)
         return token
 
-    def put(self, token: str, **meta: Any) -> None:
-        import time
-
+    def put(self, token, **meta):
+        import json, time
         meta["_expires_at"] = time.time() + self._REDIS_TTL_SEC
-        self._tokens[token] = meta
-        client = self._redis()
+        client = self._client()
         if client is not None:
-            try:
-                import json
+            # Retain the used-token marker when callbacks update metadata.
+            if client.get(f"{self._REDIS_PREFIX}{token}:used"):
+                return
+            client.set(f"{self._REDIS_PREFIX}{token}", json.dumps(meta), ex=self._REDIS_TTL_SEC)
+            return
+        with self._lock:
+            if self._used.get(token, 0) > time.time():
+                return
+            self._tokens = {key: value for key, value in self._tokens.items() if float(value.get("_expires_at") or 0) > time.time()}
+            self._used = {key: expiry for key, expiry in self._used.items() if expiry > time.time()}
+            self._tokens[token] = dict(meta)
 
-                client.set(f"{self._REDIS_PREFIX}{token}", json.dumps(meta), ex=self._REDIS_TTL_SEC)
-            except Exception:
-                pass
-
-    def peek(self, token: str) -> dict[str, Any] | None:
-        import time
-
+    def peek(self, token):
+        import json, time
         if not token:
             return None
-        meta = self._tokens.get(token)
-        if meta:
-            if float(meta.get("_expires_at") or 0) > time.time():
-                return dict(meta)
-            self._tokens.pop(token, None)
-            return None
-        client = self._redis()
-        if client is not None:
-            try:
-                import json
-
-                raw = client.get(f"{self._REDIS_PREFIX}{token}")
-                if raw:
-                    data = json.loads(raw)
-                    if isinstance(data, dict):
-                        return data
-            except Exception:
-                pass
-        return None
-
-    def consume(self, token: str) -> dict[str, Any] | None:
-        meta = self.peek(token)
-        if meta:
-            self._tokens.pop(token, None)
-            client = self._redis()
+        try:
+            client = self._client()
             if client is not None:
-                try:
-                    client.delete(f"{self._REDIS_PREFIX}{token}")
-                except Exception:
-                    pass
-        return meta
+                raw = client.get(f"{self._REDIS_PREFIX}{token}")
+                meta = json.loads(raw) if raw else None
+            else:
+                with self._lock:
+                    meta = self._tokens.get(token)
+            return dict(meta) if isinstance(meta, dict) and float(meta.get("_expires_at") or 0) > time.time() else None
+        except Exception:
+            return None
+
+    def consume(self, token):
+        import json, time
+        if not token:
+            return None
+        try:
+            client = self._client()
+            if client is not None:
+                key = f"{self._REDIS_PREFIX}{token}"
+                # Do not allocate claim keys for arbitrary unauthenticated input.
+                if not client.get(key):
+                    return None
+                if not client.set(f"{key}:used", "1", nx=True, ex=self._REDIS_TTL_SEC):
+                    return None
+                raw = client.getdel(key)
+                meta = json.loads(raw) if raw else None
+                with self._lock:
+                    self._tokens.pop(token, None)
+            else:
+                with self._lock:
+                    if self._used.get(token, 0) > time.time():
+                        return None
+                    meta = self._tokens.pop(token, None)
+                    if meta:
+                        self._used[token] = float(meta.get("_expires_at") or 0)
+            if isinstance(meta, dict) and float(meta.get("_expires_at") or 0) > time.time():
+                return dict(meta)
+        except Exception:
+            # No process-local fallback after a shared-store failure: another
+            # worker may already have consumed this credential.
+            return None
+        return None
 
 
 vobiz_stream_tokens = VobizStreamTokens()

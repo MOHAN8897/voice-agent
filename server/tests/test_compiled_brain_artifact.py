@@ -58,7 +58,7 @@ def test_legacy_brain_keeps_language_overlay():
         language="te-IN",
         direction="outbound",
     )
-    assert "FINAL LANGUAGE CONSTRAINT" in gemini
+    assert spoken_pack_for("te-IN", include_brevity=False, core_only=True) in gemini
 
 
 def test_unified_openai_audio_skips_final_language_constraint():

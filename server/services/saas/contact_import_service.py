@@ -154,7 +154,16 @@ def parse_file_to_rows(
     """Parse CSV or Excel file.
     Returns: (headers, preview_rows, total_row_count, warning_messages)
     """
+    if len(file_bytes) > 5 * 1024 * 1024:
+        raise ValueError("Contact files must be at most 5 MB")
     file_name_lower = (file_name or "").lower()
+    if not file_name_lower.endswith((".csv", ".xlsx")):
+        raise ValueError("Use a CSV or .xlsx spreadsheet")
+    if file_name_lower.endswith(".xlsx"):
+        import zipfile
+        with zipfile.ZipFile(io.BytesIO(file_bytes)) as archive:
+            if len(archive.infolist()) > 1000 or sum(item.file_size for item in archive.infolist()) > 25 * 1024 * 1024:
+                raise ValueError("Spreadsheet expands beyond the safe import limit")
     headers: list[str] = []
     rows: list[dict[str, Any]] = []
     warnings: list[str] = []
@@ -175,6 +184,8 @@ def parse_file_to_rows(
             except StopIteration:
                 return [], [], 0, ["The uploaded spreadsheet is empty."]
 
+            if len(first_row) > 100:
+                raise ValueError("Use at most 100 columns")
             raw_headers = [str(col).strip() if col is not None else "" for col in first_row]
             # Clean and deduplicate headers
             seen_headers: set[str] = set()
@@ -199,6 +210,9 @@ def parse_file_to_rows(
                 if not any(row_vals):
                     continue
                 total_count += 1
+                if total_count > 10000:
+                    wb.close()
+                    raise ValueError("A contact import supports at most 10,000 rows")
                 if len(rows) < max_preview_rows:
                     row_dict: dict[str, Any] = {}
                     for col_idx, header_name in zip(col_indices, headers):
@@ -244,6 +258,8 @@ def parse_file_to_rows(
         except StopIteration:
             return [], [], 0, ["The uploaded CSV file is empty."]
 
+        if len(first_row) > 100:
+            raise ValueError("Use at most 100 columns")
         raw_headers = [str(col).strip() for col in first_row]
         seen_headers = set()
         for idx, h in enumerate(raw_headers):
@@ -263,6 +279,8 @@ def parse_file_to_rows(
             if not any(row_vals):
                 continue
             total_count += 1
+            if total_count > 10000:
+                raise ValueError("A contact import supports at most 10,000 rows")
             if len(rows) < max_preview_rows:
                 row_dict = {}
                 for idx, h in enumerate(headers):
@@ -602,6 +620,9 @@ def normalize_and_validate_contacts(
 
             if target_field == "phone":
                 raw_phone_val = val
+            elif target_field.startswith("custom_field:"):
+                custom_key = target_field.split(":", 1)[1]
+                canonical["custom_fields"][custom_key] = val
             elif target_field.startswith("custom_fields."):
                 custom_key = target_field.split(".", 1)[1]
                 canonical["custom_fields"][custom_key] = val
@@ -613,7 +634,7 @@ def normalize_and_validate_contacts(
 
         # Preserve unmapped columns in custom_fields so AI voice agent never loses CSV columns
         for src_col, val in raw_row.items():
-            if src_col not in mapping or mapping[src_col] == "ignore":
+            if src_col not in mapping:
                 norm_col = re.sub(r"[^a-z0-9_]", "", src_col.lower().replace(" ", "_"))
                 if norm_col and norm_col not in canonical["custom_fields"]:
                     canonical["custom_fields"][norm_col] = str(val).strip()
@@ -704,6 +725,8 @@ def normalize_and_validate_contacts(
                         "kept": False,
                     })
 
+    for contact in valid_contacts:
+        contact["resolved_variables"] = resolve_contact_variables(contact)
     return {
         "total_rows": len(rows),
         "valid_count": len(valid_contacts),
@@ -792,7 +815,7 @@ def resolve_contact_variables(contact: dict[str, Any]) -> dict[str, str]:
         val_str = str(v).strip()
         out[f"contact.custom_fields.{k}"] = val_str
         out[f"custom_fields.{k}"] = val_str
-        out[k] = val_str
+        out.setdefault(k, val_str)
 
     return out
 
@@ -810,6 +833,7 @@ def validate_agent_variables_against_contacts(
     """
     vars_used = extract_template_variables_from_text(*agent_texts)
     missing_breakdown: dict[str, int] = {}
+    missing_indices: set[int] = set()
 
     for var in vars_used:
         # Ignore system tags
@@ -817,11 +841,12 @@ def validate_agent_variables_against_contacts(
             continue
 
         missing_count = 0
-        for c in contacts:
+        for index, c in enumerate(contacts):
             resolved = resolve_contact_variables(c)
             val = resolved.get(var)
             if not val:
                 missing_count += 1
+                missing_indices.add(index)
 
         if missing_count > 0:
             missing_breakdown[var] = missing_count
@@ -830,6 +855,7 @@ def validate_agent_variables_against_contacts(
         "valid": len(missing_breakdown) == 0,
         "variables_used": vars_used,
         "missing_breakdown": missing_breakdown,
+        "missing_contact_indices": sorted(missing_indices),
         "total_contacts": len(contacts),
     }
 
@@ -846,7 +872,10 @@ def render_agent_prompt_for_contact(prompt: str, contact: dict[str, Any]) -> str
         fallback_raw = match.group(2)
         val = resolved.get(key)
         if val:
-            return val
+            # Imported cells stay bounded, single-line reference values. They
+            # cannot insert new prompt sections or recursive template tags.
+            value = re.sub(r"[\x00-\x1f\x7f]+", " ", str(val))[:500]
+            return value.replace("---", "—").replace("{{", "(").replace("}}", ")")
         if fallback_raw is not None:
             fb = fallback_raw.strip()
             if (fb.startswith('"') and fb.endswith('"')) or (fb.startswith("'") and fb.endswith("'")):

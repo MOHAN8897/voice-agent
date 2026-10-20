@@ -235,14 +235,14 @@ class VobizPstnBridge:
             active_vobiz_bridges[self.ws_id] = self
             self._owns_call = True
 
-        vobiz_call_registry.upsert(
+        await asyncio.to_thread(vobiz_call_registry.upsert,
             self.call_uuid,
             {"stream_connected": True, "stream_failed": False, "stream_state": "connected"},
         )
         if request_uuid and request_uuid != self.call_uuid:
-            vobiz_call_registry.alias(request_uuid, self.call_uuid)
+            await asyncio.to_thread(vobiz_call_registry.alias, request_uuid, self.call_uuid)
         if outbound_id and outbound_id != self.call_uuid:
-            vobiz_call_registry.alias(outbound_id, self.call_uuid)
+            await asyncio.to_thread(vobiz_call_registry.alias, outbound_id, self.call_uuid)
 
         pstn_media_flow.start(
             external_id=self.call_uuid or self.ws_id,
@@ -252,11 +252,11 @@ class VobizPstnBridge:
         pstn_media_flow.negotiate(self.call_uuid or self.ws_id, self._negotiated_media)
 
         # 1. Resolve local metadata and options from registry / tokens
-        local = vobiz_call_registry.get(self.call_uuid or "") or {}
+        local = await asyncio.to_thread(vobiz_call_registry.get, self.call_uuid or "") or {}
         if not local and request_uuid:
-            local = vobiz_call_registry.get(request_uuid) or {}
+            local = await asyncio.to_thread(vobiz_call_registry.get, request_uuid) or {}
         if not local and outbound_id:
-            local = vobiz_call_registry.get(outbound_id) or {}
+            local = await asyncio.to_thread(vobiz_call_registry.get, outbound_id) or {}
 
         self.agent_id = self.agent_id or local.get("agent_id") or self._token_meta.get("agent_id")
         self.tier = self.tier or local.get("tier") or self._token_meta.get("tier")
@@ -293,6 +293,8 @@ class VobizPstnBridge:
             agent_lang = pstn_opts.get("language")
             started = await call_lifecycle_service.start(
                 agent_id=self.agent_id,
+                contact=self._token_meta.get("contact") or local.get("contact"),
+                campaign_id=(self._token_meta.get("contact") or local.get("contact") or {}).get("campaign_id"),
                 session_id=f"pstn-vobiz-{self.call_uuid}",
                 config_session_id=pstn_opts.get("config_session_id"),
                 channel="pstn",
@@ -305,6 +307,12 @@ class VobizPstnBridge:
             )
             self.call_id = started["call_id"]
             self.session_id = started["session_id"]
+            admission_key = self._token_meta.get("admission_key") or local.get("admission_key")
+            admission_tenant_id = self._token_meta.get("admission_tenant_id") or local.get("admission_tenant_id")
+            if admission_key and admission_tenant_id:
+                from server.services.saas.call_admission import provider_event
+                await provider_event(tenant_id=uuid.UUID(str(admission_tenant_id)), key=admission_key,
+                                     status="answered", call_id=self.call_id)
             from server.call.billing_timing import mark_call_connected
             from server.call.call_ledger import call_ledger
 
@@ -314,7 +322,7 @@ class VobizPstnBridge:
             for key in ("tenant_id", "vobiz_account_scope", "vobiz_account_tenant_id"):
                 billing_meta[key] = self._token_meta.get(key) or local.get(key)
             call_ledger.write_meta(self.call_id, billing_meta)
-            vobiz_call_registry.upsert(
+            await asyncio.to_thread(vobiz_call_registry.upsert,
                 self.call_uuid,
                 {"internal_call_id": self.call_id, "agent_id": self.agent_id, "status": "streaming"},
             )
@@ -533,7 +541,7 @@ class VobizPstnBridge:
             try:
                 log_pstn("vobiz.hangup.initiated", call_uuid=self.call_uuid, reason=reason)
                 target_uuid = self.call_uuid
-                local = vobiz_call_registry.get(self.call_uuid or "") or {}
+                local = await asyncio.to_thread(vobiz_call_registry.get, self.call_uuid or "") or {}
                 if target_uuid and target_uuid.startswith("vobiz-"):
                     target_uuid = local.get("call_uuid") or local.get("request_uuid") or target_uuid
                 try:
@@ -596,7 +604,7 @@ class VobizPstnBridge:
                     if active_vobiz_bridges.get(str(k)) is self:
                         active_vobiz_bridges.pop(str(k), None)
 
-        vobiz_call_registry.upsert(
+        await asyncio.to_thread(vobiz_call_registry.upsert,
             self.call_uuid,
             {
                 "ended": True,

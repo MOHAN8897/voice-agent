@@ -14,7 +14,7 @@ const mono = JetBrains_Mono({
   display: "swap",
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || "https://voxly.ai";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || "https://www.dialtact.com";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -47,11 +47,11 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   robots: {
-    index: true,
-    follow: true,
+    index: false,
+    follow: false,
     googleBot: {
-      index: true,
-      follow: true,
+      index: false,
+      follow: false,
       "max-image-preview": "large",
       "max-snippet": -1,
       "max-video-preview": -1,

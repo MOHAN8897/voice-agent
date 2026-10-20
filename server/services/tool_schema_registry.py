@@ -3,6 +3,12 @@ Tool Schema Registry - voice-pruned JSON schemas for each supported Nango integr
 """
 from __future__ import annotations
 
+import copy
+import json
+from functools import lru_cache
+
+from jsonschema import Draft202012Validator, FormatChecker
+
 _SCHEMAS: dict[str, list[dict]] = {
 
     "GOOGLECALENDAR": [
@@ -1056,6 +1062,40 @@ _SCHEMAS: dict[str, list[dict]] = {
     ],
 }
 
+# Provider-required fields must agree with what the model can supply.
+for _tool in _SCHEMAS["GOOGLECALENDAR"]:
+    if _tool["name"] == "GOOGLECALENDAR_RESCHEDULE_EVENT":
+        _tool["parameters"]["required"] = ["event_id", "start", "end"]
+        _tool["parameters"]["properties"]["end"]["description"] = "New end datetime ISO 8601 with timezone"
+for _tool in _SCHEMAS["CALENDLY"]:
+    if _tool["name"] == "CALENDLY_CREATE_INVITEE":
+        _tool["parameters"]["properties"]["time_zone"] = {"type": "string", "description": "Invitee IANA timezone, for example Asia/Kolkata"}
+        _tool["parameters"]["required"] = ["event_type_uri", "invitee_email", "start_time", "time_zone"]
+for _tool in _SCHEMAS["MICROSOFTTEAMS"]:
+    _tool["parameters"]["properties"]["team_id"] = {"type": "string"}
+    _tool["parameters"]["required"] = ["team_id", "channel_id", "message"]
+for _tool in _SCHEMAS["INTERCOM"]:
+    if _tool["name"] == "INTERCOM_CREATE_CONVERSATION":
+        _tool["parameters"]["properties"]["contact_id"] = {"type": "string"}
+        _tool["parameters"]["anyOf"] = [{"required": ["contact_id"]}, {"required": ["email"]}]
+for _tool in _SCHEMAS["PIPEDRIVE"]:
+    if _tool["name"] == "PIPEDRIVE_CREATE_DEAL":
+        _tool["parameters"]["properties"]["currency"] = {"type": "string", "pattern": "^[A-Z]{3}$"}
+for _tool in _SCHEMAS["HUBSPOT"]:
+    if _tool["name"] == "HUBSPOT_CREATE_DEAL":
+        _tool["parameters"]["required"] = ["dealname", "pipeline", "dealstage"]
+for _tool in _SCHEMAS["SENDGRID"]:
+    _tool["parameters"]["required"] = ["to", "subject", "body", "from_email"]
+for _tools in _SCHEMAS.values():
+    for _tool in _tools:
+        for _name, _prop in _tool["parameters"].get("properties", {}).items():
+            if _prop.get("type") == "string" and _name in {"start", "end", "start_time", "end_time"}:
+                _prop["format"] = "date-time"
+            if _prop.get("type") == "string" and _name in {"date", "start_date", "end_date", "ActivityDate"}:
+                _prop["format"] = "date"
+            if _name == "duration" and _prop.get("type") == "integer":
+                _prop.update(minimum=5, maximum=480)
+
 VOICE_RESPONSE_KEYS: dict[str, tuple] = {
     "GOOGLECALENDAR":   ("status", "confirmed", "rescheduled", "date", "time", "summary", "event_id", "slots", "available", "available_slots", "busy_slots", "requested_slot", "error", "available_alternatives", "message"),
     "CALENDLY":         ("status", "booking_url", "start_time", "event_types", "event_uuid", "summary"),
@@ -1091,6 +1131,9 @@ VOICE_RESPONSE_KEYS: dict[str, tuple] = {
     "TODOIST":          ("status", "task_id", "content", "summary"),
 }
 
+VOICE_RESPONSE_KEYS["GOOGLECALENDAR"] += ("events", "time_zone")
+VOICE_RESPONSE_KEYS["CALENDLY"] += ("slots", "confirmed", "event_uri", "invitee_uri")
+
 
 def _normalize(app_name: str) -> str:
     clean = app_name.strip().upper().replace("-", "_").replace(" ", "_")
@@ -1117,33 +1160,81 @@ def get_tools_for_tenant(active_app_names: list[str]) -> list[dict]:
 
 
 def get_tool_names_for_tenant(active_app_names: list[str]) -> set[str]:
-    """Return exact tool name strings, canonical app keys, and common action suffixes for dispatch filtering."""
-    names: set[str] = set()
-    for raw_name in active_app_names:
-        key = _normalize(raw_name)
-        clean = key.lower().replace("-", "_")
-        names.add(key)
-        names.add(clean)
-        names.add(raw_name)
-        names.add(raw_name.lower())
-        # Add common action suffixes for dispatch filter compatibility
-        for suffix in (
-            "create_event", "find_slots", "find_free_slots", "list_events",
-            "cancel_event", "reschedule_event", "delete_event", "update_event",
-            "send_message", "search", "create_lead", "create_contact", "action",
-            "cancel_order", "cancel_booking", "reschedule_booking", "get_status",
-            "check_status", "get_order", "lookup_contact", "search_tickets",
-            "update_ticket", "search_issues", "get_issue", "add_comment",
-            "check_stock", "update_order_status", "get_meeting", "create_draft"
-        ):
-            names.add(f"{clean}_{suffix}")
-            names.add(f"{key}_{suffix.upper()}")
-        for schema in _SCHEMAS.get(key, []):
-            tool_name = schema.get("name", "")
-            if tool_name:
-                names.add(tool_name)
-                names.add(tool_name.lower())
-    return names
+    """Only names that have a declared schema may reach the tool router."""
+    return {name for tool in get_tools_for_tenant(active_app_names) for name in (tool["name"], tool["name"].lower())}
+
+
+async def get_tools_for_agent(active_apps: list[str], tenant_id: str, agent_id: str | None, factory, configured_tools: set[str] | None = None) -> list[dict]:
+    """Apply agent-specific disable, timing and action rules before discovery."""
+    if factory is None or not agent_id:
+        return []
+    import uuid
+    from sqlalchemy import select
+    from server.db.models.entities import Agent
+    from server.db.models.integration_models import AgentIntegration
+    async with factory() as session:
+        owned = (await session.execute(select(Agent.agent_id).where(
+            Agent.tenant_id == uuid.UUID(tenant_id), Agent.agent_id == uuid.UUID(agent_id), Agent.status == "active",
+        ))).scalar_one_or_none()
+        if owned is None:
+            return []
+        rules = (await session.execute(select(AgentIntegration).where(
+            AgentIntegration.tenant_id == uuid.UUID(tenant_id), AgentIntegration.agent_id == uuid.UUID(agent_id),
+        ))).scalars().all()
+    configured = {_normalize(t) for t in configured_tools} if configured_tools is not None else None
+    allowed = []
+    for tool in get_tools_for_tenant(active_apps):
+        app = tool_definition(tool["name"])[0]
+        if configured is not None and tool["name"] not in configured and app not in configured:
+            continue
+        matching = [r for r in rules if _normalize(r.app_name) == app]
+        if matching and not any(r.enabled and r.timing_mode == "in_call" and
+                                (not r.action_whitelist or tool["name"] in {a.upper() for a in r.action_whitelist}) for r in matching):
+            continue
+        allowed.append(tool)
+    return allowed
+
+
+def tool_definition(tool_name: str) -> tuple[str, dict] | None:
+    name = tool_name.upper()
+    return next(((app, tool) for app, tools in _SCHEMAS.items() for tool in tools if tool["name"] == name), None)
+
+
+@lru_cache(maxsize=128)
+def _validator(tool_name: str) -> Draft202012Validator:
+    definition = tool_definition(tool_name)
+    if definition is None:
+        raise ValueError("Unsupported integration action")
+    schema = copy.deepcopy(definition[1]["parameters"])
+    schema["additionalProperties"] = False
+    for name, prop in schema.get("properties", {}).items():
+        if prop.get("type") == "string":
+            prop.setdefault("maxLength", 8000 if name.lower() in {"body", "description", "message", "content", "text"} else 2048)
+            if name in schema.get("required", []):
+                prop.setdefault("minLength", 1)
+        if prop.get("type") == "array":
+            prop.setdefault("maxItems", 25)
+    Draft202012Validator.check_schema(schema)
+    return Draft202012Validator(schema, format_checker=FormatChecker())
+
+
+def validate_tool_arguments(tool_name: str, arguments: dict) -> str | None:
+    """Return a caller-safe validation error without echoing customer values."""
+    if tool_definition(tool_name) is None:
+        return "This integration action is not supported."
+    if not isinstance(arguments, dict):
+        return "Action arguments must be an object."
+    try:
+        if len(json.dumps(arguments, allow_nan=False).encode("utf-8")) > 16384:
+            return "Action arguments are too large."
+        definition = tool_definition(tool_name)[1]
+        if any(isinstance(arguments.get(key), str) and not arguments[key].strip() for key in definition["parameters"].get("required", [])):
+            return "Required action details are missing or invalid; ask for clarification."
+        if next(_validator(tool_name).iter_errors(arguments), None) is not None:
+            return "Required action details are missing or invalid; ask for clarification."
+    except (TypeError, ValueError, RecursionError):
+        return "Action arguments are invalid."
+    return None
 
 
 def get_response_keys_for_tool(tool_name: str) -> tuple:

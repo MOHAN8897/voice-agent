@@ -93,7 +93,7 @@ export const OBJECTION_PRESETS = [
     label: '💰 Price / Budget',
     category: 'price',
     trigger: 'Too expensive / We do not have the budget right now',
-    response: 'I completely understand that budget is critical. Many clients felt the same initially until seeing a significant ROI within the first month. Could I share a quick 1-minute case study?',
+    response: 'I understand. I can explain the approved pricing and what it covers. Which part would you like to clarify?',
     action: 'continue_script',
   },
   {
@@ -101,15 +101,15 @@ export const OBJECTION_PRESETS = [
     label: '⏰ Busy / Bad Time',
     category: 'timing',
     trigger: 'I am busy right now / In a meeting / Call me later',
-    response: 'No problem at all, I caught you in the middle of your day. Would tomorrow morning or later in the afternoon work better for a brief 2-minute catch-up?',
+    response: 'No problem. What time would suit you for a callback?',
     action: 'offer_callback',
   },
   {
     id: 'trust',
     label: '🤝 Trust / AI Query',
     category: 'trust',
-    trigger: 'Are you an AI? / How did you get my contact information?',
-    response: "Yes, I am Voxly's AI assistant calling on behalf of our team to quickly connect without keeping you on hold. You recently engaged with our platform. Do you have a brief moment?",
+    trigger: 'Are you an AI?',
+    response: 'Yes, I am an AI assistant representing this business. What would you like to know?',
     action: 'continue_script',
   },
   {
@@ -117,7 +117,7 @@ export const OBJECTION_PRESETS = [
     label: '🏢 Competitor / Vendor',
     category: 'competitor',
     trigger: 'We are already using another vendor / Happy with current provider',
-    response: 'That is great to hear—most of our enterprise clients previously used legacy systems before moving to our zero-latency stack. What feature do you like most about your current setup?',
+    response: 'Understood. If you are happy with your current provider, I respect that.',
     action: 'continue_script',
   },
   {
@@ -125,7 +125,7 @@ export const OBJECTION_PRESETS = [
     label: '🛑 Not Interested',
     category: 'not_interested',
     trigger: 'Not interested / Please remove me from your list',
-    response: 'Understood, thank you for letting me know. I will mark your number as do-not-contact right away. Have a wonderful rest of your day!',
+    response: 'Understood. Thank you for your time. Goodbye.',
     action: 'end_call',
   },
 ];

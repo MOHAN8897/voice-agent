@@ -77,7 +77,10 @@ def log_pstn(phase: str, *, timer_key: str | None = None, **kv: Any) -> None:
     key = timer_key or str(kv.get("control") or kv.get("call_sid") or kv.get("call_id") or "")
     ms = elapsed_ms(key) if key else None
     msg = f"{phase} +{ms}ms" if ms is not None else phase
-    _log(msg, **kv)
+    from server.services.pstn_diagnostics import SAFE_FIELDS
+    identifiers = {"call_uuid", "request_uuid", "call_id", "agent_id", "tenant_id", "ws_id", "control", "call_sid", "outbound_id"}
+    safe = {name: value for name, value in kv.items() if name in SAFE_FIELDS or name in identifiers}
+    _log(msg, **safe)
 
 
 def log_pstn_summary(

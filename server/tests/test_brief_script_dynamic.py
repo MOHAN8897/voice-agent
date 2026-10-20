@@ -177,7 +177,8 @@ async def test_llm_interpret_fills_standard_four_sections(monkeypatch) -> None:
         "explain eveything in simple words and make them buy insurance policies"
     )
 
-    async def fake_interpret(_brief: str, *, language: str = "en-IN"):
+    async def fake_interpret(_brief: str, *, language: str = "en-IN", direction: str = "outbound"):
+        assert direction == "outbound"
         return {
             "agent_name": "Kailash",
             "company_name": "Aditya Birla Insurance Private Limited",
@@ -208,7 +209,7 @@ async def test_llm_interpret_fills_standard_four_sections(monkeypatch) -> None:
     assert "--- CANONICAL OPENING ---" in script
     assert "--- YOUR ROLE ON THIS CALL ---" in script
     assert "u are bank person" not in script.lower()
-    assert "Explain policies in simple words" in script
+    assert "simple words" in script
     assert "site visit" not in script.lower()
     assert result.optimizer_model == "brief_interpret_v1"
 
