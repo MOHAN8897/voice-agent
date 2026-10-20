@@ -63,6 +63,17 @@ type TenantDetail = {
     approved: boolean;
     updatedAt?: string | null;
   }>;
+  voiceKyc?: {
+    required?: boolean;
+    configured?: boolean;
+    approved?: boolean;
+    status?: string;
+    callsBlocked?: boolean;
+    verifications?: Record<string, string>;
+    businessType?: string | null;
+    legalName?: string | null;
+    accountEnabled?: boolean;
+  } | null;
   counts?: { agents?: number; numbers?: number; members?: number; calls?: number };
   agents: Array<{ agentId?: string; name: string; status?: string }>;
   numbers: Array<{ id?: string; e164: string; agentId?: string | null; status?: string }>;
@@ -787,45 +798,103 @@ export default function TenantCockpitPage() {
           )}
 
           {tab === "compliance" && (
-            <DevCard
-              title="KYC / compliance"
-              description="Identity verification for members of this workspace."
-              actions={
-                <Link href="/dev/admin/verification">
-                  <SkeuoButton variant="ghost">Verification queue</SkeuoButton>
-                </Link>
-              }
-            >
-              <SkeuoTable>
-                <SkeuoTableHead>
-                  <SkeuoTh>User</SkeuoTh>
-                  <SkeuoTh>Status</SkeuoTh>
-                  <SkeuoTh>Updated</SkeuoTh>
-                </SkeuoTableHead>
-                <SkeuoTableBody>
-                  {(detail.data.verifications ?? []).map((v) => (
-                    <SkeuoTableRow key={v.userId}>
-                      <SkeuoTd>
-                        <div className="text-sm">{v.email || v.userId}</div>
-                        <div className="text-xs text-text-muted">{v.fullName || "—"}</div>
-                      </SkeuoTd>
-                      <SkeuoTd>
-                        <SkeuoBadge>{v.status}</SkeuoBadge>
-                        {v.approved ? (
-                          <span className="ml-2 text-[10px] uppercase text-status-success">gate pass</span>
-                        ) : null}
-                      </SkeuoTd>
-                      <SkeuoTd className="text-xs">{formatWhen(v.updatedAt ?? null)}</SkeuoTd>
-                    </SkeuoTableRow>
-                  ))}
-                  {!(detail.data.verifications ?? []).length && (
-                    <SkeuoTableRow>
-                      <SkeuoTd className="text-text-muted">No members to show KYC for.</SkeuoTd>
-                    </SkeuoTableRow>
-                  )}
-                </SkeuoTableBody>
-              </SkeuoTable>
-            </DevCard>
+            <div className="space-y-4">
+              <DevCard
+                title="Telephony Voice KYC (Vobiz Subaccount)"
+                description="Regulatory verification for outbound/inbound phone numbers and carrier calls."
+                actions={
+                  <Link href="/dev/admin/verification">
+                    <SkeuoButton variant="ghost">Verification queue</SkeuoButton>
+                  </Link>
+                }
+              >
+                {detail.data.voiceKyc ? (
+                  <div className="space-y-3">
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel p-3 text-xs">
+                      <div>
+                        <div className="text-[10px] uppercase text-text-muted">Legal Name</div>
+                        <div className="font-semibold text-text mt-0.5">{detail.data.voiceKyc.legalName || "—"}</div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase text-text-muted">Entity Type</div>
+                        <div className="font-semibold text-text mt-0.5 capitalize">{detail.data.voiceKyc.businessType?.replace(/_/g, " ") || "—"}</div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase text-text-muted">KYC Status</div>
+                        <div className="mt-0.5 flex items-center gap-1.5">
+                          <SkeuoBadge tone={detail.data.voiceKyc.approved ? "success" : (detail.data.voiceKyc.status === "failed" ? "danger" : "warning")}>
+                            {detail.data.voiceKyc.status || "not_started"}
+                          </SkeuoBadge>
+                          {detail.data.voiceKyc.callsBlocked && (
+                            <span className="text-[10px] uppercase text-status-danger font-medium">calls blocked</span>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase text-text-muted">Calling Gate</div>
+                        <div className="mt-0.5">
+                          {detail.data.voiceKyc.approved ? (
+                            <span className="font-semibold text-status-success">✓ Gate Pass Active</span>
+                          ) : (
+                            <span className="font-semibold text-status-danger">✕ Calls Blocked (Pending KYC)</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {detail.data.voiceKyc.verifications && Object.keys(detail.data.voiceKyc.verifications).length > 0 && (
+                      <div className="flex flex-wrap items-center gap-2 pt-1">
+                        <span className="text-[11px] text-text-muted">Verified documents:</span>
+                        {Object.entries(detail.data.voiceKyc.verifications).map(([doc, st]) => (
+                          <span key={doc} className="rounded border border-surface-border px-2 py-0.5 text-[10px] font-mono uppercase bg-surface-panel-raised text-text">
+                            {doc}: {st}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-xs text-text-muted py-2">
+                    No voice service account created yet. Account is initialized when tenant starts verification or buys a phone number.
+                  </p>
+                )}
+              </DevCard>
+
+              <DevCard
+                title="Member Identity Verification"
+                description="Individual user verification records."
+              >
+                <SkeuoTable>
+                  <SkeuoTableHead>
+                    <SkeuoTh>User</SkeuoTh>
+                    <SkeuoTh>Status</SkeuoTh>
+                    <SkeuoTh>Updated</SkeuoTh>
+                  </SkeuoTableHead>
+                  <SkeuoTableBody>
+                    {(detail.data.verifications ?? []).map((v) => (
+                      <SkeuoTableRow key={v.userId}>
+                        <SkeuoTd>
+                          <div className="text-sm">{v.email || v.userId}</div>
+                          <div className="text-xs text-text-muted">{v.fullName || "—"}</div>
+                        </SkeuoTd>
+                        <SkeuoTd>
+                          <SkeuoBadge>{v.status}</SkeuoBadge>
+                          {v.approved ? (
+                            <span className="ml-2 text-[10px] uppercase text-status-success">gate pass</span>
+                          ) : null}
+                        </SkeuoTd>
+                        <SkeuoTd className="text-xs">{formatWhen(v.updatedAt ?? null)}</SkeuoTd>
+                      </SkeuoTableRow>
+                    ))}
+                    {!(detail.data.verifications ?? []).length && (
+                      <SkeuoTableRow>
+                        <SkeuoTd className="text-text-muted">No members to show KYC for.</SkeuoTd>
+                      </SkeuoTableRow>
+                    )}
+                  </SkeuoTableBody>
+                </SkeuoTable>
+              </DevCard>
+            </div>
           )}
 
           {tab === "usage" && (

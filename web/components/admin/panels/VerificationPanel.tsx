@@ -28,8 +28,13 @@ type Verification = {
   email?: string | null;
   fullName?: string | null;
   tenantId?: string;
+  tenantName?: string;
   status: string;
   approved: boolean;
+  callsBlocked?: boolean;
+  kycType?: "voice" | "identity";
+  provider?: string;
+  verifications?: Record<string, string>;
   verifiedAt?: string | null;
   decidedAt?: string | null;
   sessionId?: string | null;
@@ -46,7 +51,10 @@ type KycList = {
   configured: boolean;
   workflowId?: string | null;
   gatePurchases: boolean;
+  activeProvider?: string;
   verifications: Verification[];
+  voiceVerifications?: unknown[];
+  diditVerifications?: unknown[];
 };
 
 const STATUS_TONE: Record<string, "success" | "warning" | "danger" | "muted" | "info"> = {
@@ -132,8 +140,8 @@ export function AdminVerificationPage() {
   return (
     <div className="space-y-6 p-6" data-testid="admin-verification-page">
       <AdminPageHeader
-        title="Identity verification"
-        description="Didit KYC for English-market buyers. Manual Approve / Decline requires a written statement and is stored on the verification decision + admin audit log."
+        title="Identity & Telephony verification"
+        description="Tenant carrier subaccounts (Vobiz Voice KYC) and buyer identity verifications. Manual Approve / Decline requires a written statement and is recorded in the admin audit log."
         actions={
           <SkeuoButton type="button" onClick={() => kyc.reload()} disabled={Boolean(busy)}>
             Refresh
@@ -148,10 +156,10 @@ export function AdminVerificationPage() {
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <AdminStat
-              label="Didit"
+              label={kyc.data.activeProvider === "vobiz" ? "Telephony KYC (Vobiz)" : "Identity Verification"}
               value={kyc.data.configured ? "Configured" : "Missing keys"}
               tone={kyc.data.configured ? "good" : "warn"}
-              hint={kyc.data.workflowId ? `workflow ${kyc.data.workflowId.slice(0, 8)}…` : "no workflow"}
+              hint={kyc.data.activeProvider === "vobiz" ? "Carrier subaccount KYC" : (kyc.data.workflowId ? `workflow ${kyc.data.workflowId.slice(0, 8)}…` : "no workflow")}
             />
             <AdminStat label="Approved" value={approved} tone="good" />
             <AdminStat label="Pending / in review" value={inReview} tone={inReview ? "warn" : "default"} />
@@ -160,7 +168,7 @@ export function AdminVerificationPage() {
 
           <DevCard
             title="Manual overrides"
-            description="Pending reviews that stall (missed webhook, false decline) must be resolved with an explicit admin statement. Didit remains source of truth until you override."
+            description="Pending reviews that stall (carrier delay, false decline) can be resolved with an explicit admin statement. Provider remains source of truth until you override."
           >
             <p className="text-xs text-text-muted">
               Purchase gate: {kyc.data.gatePurchases ? "on" : "off"} · Click Approve / Decline on a row to
@@ -266,8 +274,17 @@ export function AdminVerificationPage() {
                   {rows.map((v) => (
                     <SkeuoTableRow key={v.userId} data-testid={`kyc-row-${v.userId}`}>
                       <SkeuoTd>
-                        <div className="font-medium text-text">{v.email || v.userId}</div>
-                        <div className="text-xs text-text-muted">{v.fullName || "—"}</div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-medium text-text">{v.email || v.userId}</span>
+                          {v.kycType === "voice" && (
+                            <span className="rounded bg-indigo-50 px-1.5 py-0.5 text-[9px] font-semibold text-indigo-700 border border-indigo-200">
+                              Voice KYC
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-text-muted">
+                          {v.fullName || "—"} {v.tenantName && !v.fullName?.includes(v.tenantName) ? `· ${v.tenantName}` : ""}
+                        </div>
                         {v.tenantId ? (
                           <Link
                             href={`/dev/admin/tenants/${v.tenantId}`}
@@ -282,6 +299,11 @@ export function AdminVerificationPage() {
                         {v.approved && (
                           <span className="ml-2 text-[10px] uppercase tracking-wide text-status-success">
                             gate pass
+                          </span>
+                        )}
+                        {v.callsBlocked && (
+                          <span className="ml-1 text-[10px] uppercase tracking-wide text-status-danger font-medium">
+                            calls blocked
                           </span>
                         )}
                       </SkeuoTd>

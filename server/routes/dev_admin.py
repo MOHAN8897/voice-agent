@@ -399,6 +399,14 @@ async def tenant_detail(tenant_id: str, session: SessionData = Depends(require_d
             "currency": (wallet.currency or "usd").upper(),
             "updatedAt": wallet.updated_at.isoformat() if wallet.updated_at else None,
         }
+    from server.services.saas import voice_kyc_service
+    voice_kyc = None
+    try:
+        voice_kyc = await voice_kyc_service.refresh_kyc_status(tid)
+    except Exception as exc:
+        logger.warning("Tenant voice KYC status lookup failed: %s", exc)
+        voice_kyc = None
+
     return {
         "tenant": {
             "tenantId": str(tenant.tenant_id),
@@ -414,6 +422,7 @@ async def tenant_detail(tenant_id: str, session: SessionData = Depends(require_d
         "walletTransactions": transactions,
         "fxRateInr": fx_rate_inr,
         "verifications": verifications,
+        "voiceKyc": voice_kyc,
         "counts": {
             "agents": len(agents),
             "numbers": len(numbers),
@@ -2304,18 +2313,55 @@ async def list_kyc(
     status: str | None = None,
     session: SessionData = Depends(require_dev_session),
 ):
-    """Identity verification queue for ops — Didit webhook state + manual overrides."""
+    """Identity verification queue for ops — Vobiz Voice KYC tenant subaccounts + Didit."""
     require_permission(session, "dev.admin.users")
     _require_db()
     from server.config.env import get_settings
     from server.services.saas import kyc_service
+    from server.services.saas import voice_kyc_service
+    from server.services.telephony import active_telephony_provider
 
     settings = get_settings()
+    active_prov = active_telephony_provider()
+    voice_list = await voice_kyc_service.list_voice_verifications(status=status)
+    didit_list = await kyc_service.list_verifications(status=status)
+
+    voice_rows = []
+    for v in voice_list:
+        voice_rows.append({
+            "userId": v["tenantId"],
+            "tenantId": v["tenantId"],
+            "tenantName": v["tenantName"],
+            "email": v["accountEmail"],
+            "fullName": f"{v['legalName']} ({v['businessType'].replace('_', ' ').title()})",
+            "status": v["status"],
+            "approved": v["approved"],
+            "callsBlocked": v["callsBlocked"],
+            "updatedAt": v["updatedAt"],
+            "verifiedAt": v["updatedAt"] if v["approved"] else None,
+            "kycType": "voice",
+            "provider": "vobiz",
+            "verifications": v["verifications"],
+            "sessionId": v.get("subaccountAuthId"),
+            "decision": {
+                "source": "vobiz_subaccount",
+                "actor": "carrier_hosted_kyc",
+                "reason": f"Carrier KYC {v['rawKycStatus']} (Calls blocked: {v['callsBlocked']})",
+                "at": v["updatedAt"],
+            },
+        })
+
+    # Prioritize active provider's voice KYC records at top of queue
+    merged = voice_rows + didit_list
+
     return {
-        "configured": kyc_service.is_configured(),
+        "configured": kyc_service.is_configured() or voice_kyc_service._carrier_setup_configured(),
         "workflowId": settings.didit_workflow_id or None,
         "gatePurchases": bool(settings.kyc_gate_purchases),
-        "verifications": await kyc_service.list_verifications(status=status),
+        "activeProvider": active_prov,
+        "verifications": merged,
+        "voiceVerifications": voice_list,
+        "diditVerifications": didit_list,
     }
 
 
@@ -2325,10 +2371,11 @@ async def set_kyc_status(
     body: KycStatusBody,
     session: SessionData = Depends(require_dev_session),
 ):
-    """Manual Approve / Decline / reset when Didit stalls or a webhook is missed."""
+    """Manual Approve / Decline / reset for Vobiz Voice KYC subaccounts and Didit."""
     require_permission(session, "dev.admin.users")
     _require_db()
     from server.services.saas import kyc_service
+    from server.services.saas import voice_kyc_service
 
     reason = (body.reason or "").strip()
     if len(reason) < 8:
@@ -2346,6 +2393,32 @@ async def set_kyc_status(
         uid = uuid.UUID(user_id)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail="invalid_user_id") from exc
+
+    # Check if this ID belongs to a tenant Voice KYC subaccount
+    account = await voice_kyc_service._get_account(uid)
+    if account is not None:
+        try:
+            state = await voice_kyc_service.admin_set_voice_kyc_status(
+                tenant_id=uid,
+                status=body.status,
+                actor=session.subject,
+                reason=reason,
+            )
+        except voice_kyc_service.VoiceKycError as exc:
+            raise HTTPException(
+                status_code=exc.status_code,
+                detail={"error": {"code": exc.code, "message": str(exc)}},
+            ) from exc
+
+        await record_admin_action(
+            actor=session.subject,
+            action="voice_kyc.status",
+            resource_type="voice_kyc",
+            resource_id=user_id,
+            tenant_id=uid,
+            payload={"status": body.status, "reason": reason, "decision": state.get("status")},
+        )
+        return {"ok": True, "verification": state}
 
     try:
         state = await kyc_service.admin_set_status(
@@ -2405,7 +2478,17 @@ async def set_tenant_voice_kyc(
         tid = uuid.UUID(tenant_id)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail="invalid_tenant_id") from exc
-    reason = (body.reason or "Admin manual update").strip()
+    reason = (body.reason or "").strip()
+    if len(reason) < 8:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": {
+                    "code": "statement_required",
+                    "message": "Write a short statement (8+ chars) before changing verification status.",
+                }
+            },
+        )
     try:
         updated = await voice_kyc_service.admin_set_voice_kyc_status(
             tenant_id=tid,

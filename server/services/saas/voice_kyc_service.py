@@ -13,7 +13,7 @@ from urllib.parse import urlsplit
 from uuid import UUID
 
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import desc, select
 
 from server.config.env import get_settings
 from server.db.connection import get_session_factory
@@ -529,6 +529,10 @@ def _encryption_configured() -> bool:
 
 
 async def assert_voice_kyc_approved(tenant_id: UUID, *, action: str) -> None:
+    from server.services.telephony import active_telephony_provider
+
+    if active_telephony_provider() != "vobiz":
+        return
     try:
         status = await refresh_kyc_status(tenant_id, force=True)
     except VoiceKycError as exc:
@@ -708,8 +712,17 @@ async def admin_set_voice_kyc_status(
 ) -> dict:
     """Manual ops / dev override for voice KYC verification status."""
     status = str(status or "").strip().lower()
+    if status == "approved":
+        status = "verified"
+    elif status in {"declined", "rejected"}:
+        status = "failed"
+    elif status in {"in_review", "in review"}:
+        status = "pending"
     if status not in {"verified", "pending", "failed", "not_started"}:
         raise VoiceKycError("invalid_status", status_code=400)
+    reason = str(reason or "").strip()
+    if len(reason) < 8:
+        raise VoiceKycError("statement_required", status_code=400)
     factory = get_session_factory()
     if factory is None:
         raise VoiceKycError("database_required")
@@ -738,4 +751,64 @@ async def admin_set_voice_kyc_status(
         row.updated_at = _utcnow()
         await session.commit()
         return _public_status(row)
+
+
+async def list_voice_verifications(status: str | None = None) -> list[dict]:
+    """List tenant carrier subaccount KYC records for platform ops / admin panel."""
+    factory = get_session_factory()
+    if factory is None:
+        return []
+    async with factory() as session:
+        query = (
+            select(VobizSubaccount, Tenant)
+            .join(Tenant, Tenant.tenant_id == VobizSubaccount.tenant_id)
+            .where(Tenant.deleted_at.is_(None))
+            .order_by(desc(VobizSubaccount.updated_at))
+        )
+        if status:
+            status_clean = str(status).strip().lower()
+            if status_clean in {"approved", "verified"}:
+                query = query.where(
+                    VobizSubaccount.kyc_status == "verified",
+                    VobizSubaccount.kyc_calls_blocked.is_(False),
+                )
+            elif status_clean in {"pending", "in review", "in_review"}:
+                query = query.where(VobizSubaccount.kyc_status.in_(["pending", "link_ready"]))
+            elif status_clean in {"failed", "declined"}:
+                query = query.where(VobizSubaccount.kyc_status.in_(["failed", "revoked", "expired"]))
+        rows = (await session.execute(query.limit(200))).all()
+
+    verifications = []
+    for sub, t in rows:
+        is_approved = (
+            sub.kyc_status == "verified" and not sub.kyc_calls_blocked and sub.account_enabled
+        )
+        is_in_review = sub.kyc_status in ("pending", "link_ready") or (
+            sub.kyc_status == "verified" and sub.kyc_calls_blocked
+        )
+        is_declined = sub.kyc_status in ("failed", "revoked", "expired")
+        status_label = (
+            "Approved"
+            if is_approved
+            else ("In Review" if is_in_review else ("Declined" if is_declined else "Not Started"))
+        )
+
+        verifications.append({
+            "tenantId": str(sub.tenant_id),
+            "tenantName": t.name,
+            "legalName": sub.account_name,
+            "accountEmail": sub.account_email,
+            "businessType": sub.business_type,
+            "status": status_label,
+            "rawKycStatus": sub.kyc_status,
+            "approved": is_approved,
+            "callsBlocked": sub.kyc_calls_blocked,
+            "provisioningStatus": sub.provisioning_status,
+            "verifications": sub.verifications or {},
+            "subaccountAuthId": sub.auth_id,
+            "updatedAt": sub.updated_at.isoformat() if sub.updated_at else None,
+            "createdAt": sub.created_at.isoformat() if sub.created_at else None,
+        })
+    return verifications
+
 
