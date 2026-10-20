@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Phone,
   Plus,
@@ -18,6 +18,7 @@ import { Modal } from '../ui/Modal';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { showToast } from '../ui/ToastHost';
 import { api } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import { VoiceServiceKycCard } from '../ui/VoiceServiceKycCard';
 import { VerifyIdentityCard } from '../ui/VerifyIdentityCard';
 import { CatalogSkeleton, PhoneNumberRowSkeleton } from '../ui/Skeleton';
@@ -50,6 +51,12 @@ export function TelephonyPlatformBadge({ provider, size = 'sm' }) {
 }
 
 export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyModal, onNavigate }) {
+  const { user } = useAuth();
+  const purchaseIntentKey = user?.tenantId && user?.id ? `voxly_number_intent:${user.tenantId}:${user.id}` : null;
+  const resumedIntent = useRef(null);
+  const restoredCountry = useRef(false);
+  const purchaseLock = useRef(false);
+  const [pendingNumber, setPendingNumber] = useState(null);
   const {
     phoneNumbers,
     agents,
@@ -84,14 +91,40 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
   const [kycStatusError, setKycStatusError] = useState('');
   const [providerInfo, setProviderInfo] = useState(null);
 
+  const rememberNumber = (item) => {
+    const intent = { number: item.number || item.e164, country: item.country || selectedCountry, agentId: targetAgentId, savedAt: Date.now() };
+    setPendingNumber(intent);
+    if (purchaseIntentKey) {
+      try { sessionStorage.setItem(purchaseIntentKey, JSON.stringify(intent)); } catch { /* Selection remains in this open dialog. */ }
+    }
+  };
+  const forgetNumber = () => {
+    setPendingNumber(null);
+    if (purchaseIntentKey) {
+      try { sessionStorage.removeItem(purchaseIntentKey); } catch { /* No stored selection. */ }
+    }
+  };
+  useEffect(() => {
+    if (!purchaseIntentKey || resumedIntent.current === purchaseIntentKey) return;
+    resumedIntent.current = purchaseIntentKey;
+    setPendingNumber(null);
+    try {
+      const intent = JSON.parse(sessionStorage.getItem(purchaseIntentKey) || 'null');
+      if (!intent || !/^\+[1-9]\d{7,14}$/.test(intent.number) || !/^[A-Z]{2}$/.test(intent.country) || !Number.isFinite(intent.savedAt) || Date.now() - intent.savedAt > 86400000) return;
+      restoredCountry.current = true;
+      setPendingNumber(intent); setSelectedCountry(intent.country); setTargetAgentId(intent.agentId || '');
+      onOpenBuyModal?.();
+    } catch { /* Invalid saved data cannot start a purchase. */ }
+  }, [purchaseIntentKey, onOpenBuyModal]);
+
   const refreshProviderInfo = async () => {
     try {
       const data = await api.telephony?.getProvider?.();
       if (data) {
         setProviderInfo(data);
-        if (data.phoneNumber?.startsWith('+91')) {
+        if (!restoredCountry.current && data.phoneNumber?.startsWith('+91')) {
           setSelectedCountry('IN');
-        } else if (data.phoneNumber?.startsWith('+1')) {
+        } else if (!restoredCountry.current && data.phoneNumber?.startsWith('+1')) {
           setSelectedCountry('US');
         }
       }
@@ -105,9 +138,9 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
       .then((data) => {
         if (!cancelled && data) {
           setProviderInfo(data);
-          if (data.phoneNumber?.startsWith('+91')) {
+          if (!restoredCountry.current && data.phoneNumber?.startsWith('+91')) {
             setSelectedCountry('IN');
-          } else if (data.phoneNumber?.startsWith('+1')) {
+          } else if (!restoredCountry.current && data.phoneNumber?.startsWith('+1')) {
             setSelectedCountry('US');
           }
         }
@@ -170,7 +203,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
       .then((data) => {
         if (cancelled) return;
         if (data.countries?.length) setCountries(data.countries);
-        if (data.default) setSelectedCountry(data.default);
+        if (data.default && !restoredCountry.current) setSelectedCountry(data.default);
       })
       .catch(() => {});
     return () => {
@@ -244,24 +277,24 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
     return matchesCountry && matchesType && matchesArea;
   });
 
-  const handleBuyNumber = async (catalogItem) => {
+  const completeNumberPurchase = async (catalogItem) => {
     setBuyError(null);
-    if (!kycApproved && kycMode === 'voice') {
+    if (!priceKnown) { setBuyError('The number price could not be loaded. Please reopen this window and retry.'); return; }
+    if (kycMode === 'voice') {
       try {
-        const st = await api.kyc.getVoiceStatus();
+        const st = await api.kyc.getVoiceStatus({ refresh: true });
         if (!st?.approved) {
           setKycApproved(false);
-          showToast(
-            'Complete phone service verification before buying a number',
-            'error',
-            5000
-          );
+          rememberNumber(catalogItem);
           return;
         }
         setKycApproved(true);
-      } catch {
-        /* server still enforces KYC on /buy */
+      } catch (error) {
+        setBuyError(error.message || 'Could not check phone service verification. Retry before buying.');
+        return;
       }
+    } else if (!kycApproved) {
+      rememberNumber(catalogItem); return;
     }
     if (priceKnown && balanceUsd < numberPriceUsd) {
       const msg = `A phone number costs $${numberPriceUsd.toFixed(
@@ -289,6 +322,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
         return;
       }
       setPurchasedSuccess(catalogItem.formatted || catalogItem.number);
+      forgetNumber();
       showToast('Number purchased — provisioning to your workspace', 'success', 5000);
       await refreshWallet?.();
       setTimeout(() => {
@@ -325,6 +359,14 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
     } finally {
       setBuying(false);
     }
+  };
+
+  const handleBuyNumber = async (catalogItem) => {
+    if (purchaseLock.current) return;
+    purchaseLock.current = true;
+    setBuying(true);
+    try { await completeNumberPurchase(catalogItem); }
+    finally { purchaseLock.current = false; setBuying(false); }
   };
 
   return (
@@ -581,24 +623,34 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
       {/* BUY VIRTUAL NUMBER MODAL */}
       <Modal
         isOpen={isBuyModalOpen}
-        onClose={onCloseBuyModal}
+        onClose={() => { forgetNumber(); onCloseBuyModal(); }}
         title={
           purchasedSuccess
             ? 'Number ready'
-            : !kycApproved
+            : pendingNumber && !kycApproved
               ? 'Verify phone service'
               : 'Buy Virtual Telephone Number'
         }
         subtitle={
           purchasedSuccess
             ? undefined
-            : !kycApproved
-              ? 'Complete the carrier verification to unlock phone numbers and live calls.'
-              : 'Only numbers currently available in your selected country are shown.'
+            : pendingNumber && !kycApproved
+              ? 'Complete verification, then return to confirm your number purchase.'
+              : 'Choose an available number, verify your phone service, and confirm your purchase.'
         }
         maxWidth="max-w-2xl"
       >
         <div className="space-y-5">
+          {pendingNumber && !purchasedSuccess && <div className="rounded-xl border border-[#DCD7EE] bg-[#FAF9FD] p-4 space-y-2" data-testid="selected-number-review">
+            <p className="text-sm font-semibold">Selected number: <span className="font-mono">{pendingNumber.number}</span></p>
+            <p className="text-sm">{priceKnown ? `$${numberPriceUsd.toFixed(2)} / month` : 'Price unavailable — reload before buying.'}</p>
+            <p className="text-xs leading-relaxed text-[#524E5E]">Monthly rental is charged to your wallet only when you confirm the purchase. Call usage is billed separately. The number is not reserved during verification; availability and pricing are checked again before purchase.</p>
+            <div className="flex flex-wrap items-center gap-3">
+              <button type="button" className="min-h-11 text-sm font-semibold text-[#6344E7]" onClick={forgetNumber}>Choose a different number</button>
+              {kycApproved && <TactileButton variant="primary" disabled={buying || catalogLoading || !priceKnown || !canAffordNumber || !availableCatalog.some((item) => item.number === pendingNumber.number)} onClick={() => handleBuyNumber(availableCatalog.find((item) => item.number === pendingNumber.number))} data-testid="confirm-selected-number">{buying ? 'Buying…' : 'Confirm number purchase'}</TactileButton>}
+            </div>
+            {kycApproved && !catalogLoading && !catalogError && !availableCatalog.some((item) => item.number === pendingNumber.number) && <p className="text-xs text-amber-800" role="status">This number is no longer available. Choose another number below.</p>}
+          </div>}
           {purchasedSuccess ? (
             <div className="p-8 text-center space-y-2">
               <CheckCircle2 className="w-10 h-10 text-[#047857] mx-auto animate-bounce" />
@@ -606,7 +658,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
               <p className="font-mono text-sm text-[#6344E7]">{purchasedSuccess}</p>
               <p className="text-xs text-[#524E5E]">Inbound calls will now route directly to your selected AI agent.</p>
             </div>
-          ) : !kycApproved ? (
+          ) : pendingNumber && !kycApproved ? (
             kycLoading || kycMode === 'checking' ? (
               <div className="rounded-2xl border border-[#E4E2EB] bg-[#FAF9FD] p-6 text-sm text-[#524E5E]" role="status" aria-busy="true">
                 Checking verification status…
@@ -644,11 +696,11 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
                 <div className="text-[11px] text-[#524E5E]">
                   <span className="font-semibold text-[#0F0E17]">
-                    {priceKnown ? `$${numberPriceUsd.toFixed(2)}` : 'Loading price…'} / month
+                    {priceKnown ? `$${numberPriceUsd.toFixed(2)} / month` : 'Price unavailable'}
                   </span>
                   {', charged to your wallet when you buy.'}
                   <span className="block mt-0.5 text-[10px] text-[#8C879A]">
-                    Same rate on every number below — monthly rental.
+                    Monthly rental. Call usage is billed separately. Verification is required before purchase.
                   </span>
                   <span className="block mt-0.0">
                     Wallet: ${balanceUsd.toFixed(2)}
@@ -665,15 +717,8 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                 )}
               </div>
 
-              {/* Carrier Trunk Indicator */}
-              {providerInfo && (
-                <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-[#6344E7]/5 border border-[#6344E7]/20 text-[11px]">
-                  <span className="text-[#524E5E]">Telephony Infrastructure</span>
-                  <span className="font-bold text-[#6344E7] uppercase tracking-wide">
-                    {providerInfo.activeLabel || providerInfo.activeProvider} (Active)
-                  </span>
-                </div>
-              )}
+              {kycLoading && <p role="status" className="text-sm text-[#524E5E]">Checking phone service verification…</p>}
+              {kycStatusError && <p role="alert" className="text-sm text-red-800">{kycStatusError}</p>}
 
               {/* Search Filters */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
@@ -781,9 +826,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
 
                       <div className="flex items-center gap-3">
                         <span className="text-xs font-mono font-semibold text-[#524E5E]">
-                          ${Number(
-                            numberPriceUsd || item.monthlyUsd || item.fee || 0
-                          ).toFixed(2)}/mo
+                          {priceKnown ? `$${numberPriceUsd.toFixed(2)}/mo` : 'Price unavailable'}
                           {item.source === 'inventory' ? (
                             <span className="ml-1 text-[10px] text-[#047857]">In stock</span>
                           ) : null}
@@ -791,12 +834,12 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                         <TactileButton
                           size="xs"
                           variant="primary"
-                          disabled={buying || (priceKnown && !canAffordNumber)}
+                          disabled={buying || !priceKnown || kycLoading || kycMode === 'error' || (kycApproved && !canAffordNumber)}
                           loading={buying}
                           onClick={() => handleBuyNumber(item)}
                           data-testid="buy-number-submit"
                         >
-                          {buying ? 'Buying…' : 'Buy & Bind'}
+                          {buying ? 'Please wait…' : kycApproved ? 'Buy number' : 'Choose number'}
                         </TactileButton>
                       </div>
                     </div>

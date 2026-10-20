@@ -49,6 +49,7 @@ async def db(monkeypatch):
     monkeypatch.setattr(svc, "get_session_factory", lambda: factory)
     monkeypatch.setattr(svc, "get_settings", lambda: SimpleNamespace(
         vobiz_subaccount_encryption_key=key, voxly_frontend_url="https://console.example.test",
+        app_environment="development",
     ))
     key = Fernet.generate_key().decode()
     async with factory() as session:
@@ -130,6 +131,26 @@ async def test_ambiguous_creation_does_not_create_another_account(db, carrier, s
         assert (await session.get(VobizSubaccount, TID)).provisioning_status == "provisioning_unknown"
 
 
+async def test_subaccount_creation_recovers_from_email_conflict_via_alias(db, carrier):
+    parent, _ = carrier
+    calls = []
+    async def create_sub(**kwargs):
+        calls.append(kwargs)
+        if len(calls) == 1:
+            raise VobizApiError("Email is already in use", status=409, body="Email 'owner@example.test' is already in use")
+        return {
+            "sub_account": {"auth_id": "SA_test"},
+            "auth_credentials": {"auth_id": "SA_test", "auth_token": "test-child-secret"},
+        }
+    parent.create_customer_subaccount.side_effect = create_sub
+    row = await onboard()
+    assert row.auth_id == "SA_test"
+    assert len(calls) == 2
+    assert calls[0]["email"] == "owner@example.test"
+    assert "+voice-" in calls[1]["email"]
+
+
+
 async def test_masked_credentials_are_never_accepted_or_recreated(db, carrier):
     parent, _ = carrier
     parent.create_customer_subaccount.return_value["auth_credentials"]["auth_token"] = "<redacted>"
@@ -181,6 +202,58 @@ async def test_hosted_session_resumes_and_webhook_is_only_a_refresh_hint(db, car
 @pytest.mark.parametrize("url", ["https://evil.example/", "https://console.example.test.evil/", "https://x@console.example.test/", "http://console.example.test/"])
 async def test_redirects_are_bound_to_console(db, url):
     with pytest.raises(svc.VoiceKycError):
+        svc._trusted_return_url(url)
+
+
+@pytest.mark.parametrize("url", [
+    "http://127.0.0.1:5173/#dashboard/phone-numbers",
+    "http://localhost:5173/#dashboard/phone-numbers",
+    "http://localhost:3000/#dashboard/settings",
+])
+async def test_development_console_allows_loopback_kyc_return(db, url):
+    assert svc._trusted_return_url(url) == url
+
+
+@pytest.mark.parametrize("url", [
+    "http://127.0.0.1:8000/",
+    "http://localhost:5174/",
+    "http://localhost.evil:5173/",
+])
+async def test_development_console_rejects_untrusted_loopback_redirects(db, url):
+    with pytest.raises(svc.VoiceKycError, match="invalid_voice_kyc_return_url"):
+        svc._trusted_return_url(url)
+
+
+async def test_production_console_rejects_loopback_kyc_return(db, monkeypatch):
+    monkeypatch.setattr(svc, "get_settings", lambda: SimpleNamespace(
+        voxly_frontend_url="https://console.example.test", app_environment="production",
+    ))
+    with pytest.raises(svc.VoiceKycError, match="invalid_voice_kyc_return_url"):
+        svc._trusted_return_url("http://127.0.0.1:5173/#dashboard/settings")
+
+
+@pytest.mark.parametrize("url", [
+    "https://www.dialtact.com/#dashboard/phone-numbers",
+    "https://dialtact.com/#dashboard/phone-numbers",
+    "https://app.dialtact.com/#dashboard/phone-numbers",
+])
+async def test_production_console_accepts_trusted_dialtact_origins(db, monkeypatch, url):
+    monkeypatch.setattr(svc, "get_settings", lambda: SimpleNamespace(
+        voxly_frontend_url="https://app-dev.dialtact.com", app_environment="production",
+    ))
+    assert svc._trusted_return_url(url) == url
+
+
+@pytest.mark.parametrize("url", [
+    "https://dialtact.com.attacker.example/#dashboard/phone-numbers",
+    "https://dialtact.attacker.example/#dashboard/phone-numbers",
+    "https://www.dialtact.com:444/#dashboard/phone-numbers",
+])
+async def test_production_console_rejects_untrusted_dialtact_like_origins(db, monkeypatch, url):
+    monkeypatch.setattr(svc, "get_settings", lambda: SimpleNamespace(
+        voxly_frontend_url="https://app-dev.dialtact.com", app_environment="production",
+    ))
+    with pytest.raises(svc.VoiceKycError, match="invalid_voice_kyc_return_url"):
         svc._trusted_return_url(url)
 
 
@@ -372,6 +445,37 @@ async def test_kyc_session_rejects_unverified_email_before_creating_provider_sta
     carrier[0].create_customer_subaccount.assert_not_awaited()
 
 
+async def test_kyc_session_endpoint_uses_local_development_console_return(db, carrier, monkeypatch):
+    from server.routes import app_kyc
+    from server.services.saas.tenant_guard import SubscriberPrincipal
+
+    parent, _ = carrier
+    uid = uuid4()
+    async with db() as session:
+        session.add(User(
+            user_id=uid, email="owner@example.test", password_hash="test-only",
+            email_verified_at=datetime.now(timezone.utc),
+        ))
+        await session.commit()
+    monkeypatch.setattr("server.db.connection.get_session_factory", lambda: db)
+    monkeypatch.setattr("server.services.telephony.active_telephony_provider", lambda: "vobiz")
+    monkeypatch.setattr("server.config.urls.public_api_base", lambda: "https://api.example.test")
+    app_kyc._voice_session_limiter.reset()
+    principal = SubscriberPrincipal(uid, TID, "customer_admin", "owner@example.test")
+    return_url = "http://127.0.0.1:5173/#dashboard/phone-numbers"
+
+    result = await app_kyc.create_voice_kyc_session(
+        app_kyc.VoiceKycSessionBody(
+            legal_name="Example LLP", business_type="llp", return_url=return_url,
+        ),
+        principal,
+    )
+
+    assert result["sessionUrl"].startswith("https://kyc.vobiz.ai/")
+    assert parent.create_customer_kyc_session.await_args.kwargs["redirect_url"] == return_url
+    assert result["approved"] is False and result["callsBlocked"] is True
+
+
 @pytest.mark.parametrize("provider,expected_calls,error_code", [(None, 0, "purchase_provider_unknown"), ("vobiz", 1, "provider_confirmation_pending")])
 async def test_unknown_provider_or_ambiguous_purchase_never_uses_another_carrier_or_refunds(db, monkeypatch, provider, expected_calls, error_code):
     from server.services.saas import activity_log, billing_wallet_service, provision_worker
@@ -416,8 +520,19 @@ async def test_number_release_rechecks_tenant_ownership_inside_lock(db, monkeypa
     assert exc.value.status_code == 404
 
 
-async def test_insecure_webhook_configuration_does_not_create_a_carrier_account(db, carrier, monkeypatch):
+async def test_hosted_kyc_uses_polling_without_submitting_an_insecure_callback(db, carrier, monkeypatch):
     monkeypatch.setattr("server.config.urls.public_api_base", lambda: "http://localhost:8000")
-    with pytest.raises(svc.VoiceKycError, match="voice_kyc_webhook_not_configured"):
-        await svc.start_kyc_session(tenant_id=TID, email="owner@example.test", legal_name="Example LLP", business_type="llp", return_url=None)
-    carrier[0].create_customer_subaccount.assert_not_awaited()
+    result = await svc.start_kyc_session(tenant_id=TID, email="owner@example.test", legal_name="Example LLP", business_type="llp", return_url=None)
+    assert result["sessionUrl"].startswith("https://kyc.vobiz.ai/")
+    assert carrier[0].create_customer_kyc_session.await_args.kwargs["webhook_url"] is None
+    assert result["approved"] is False and result["callsBlocked"] is True
+
+
+async def test_failed_document_creates_a_new_session_instead_of_reusing_old_link(db, carrier):
+    parent, _ = carrier
+    args = dict(tenant_id=TID, email="owner@example.test", legal_name="Example LLP", business_type="llp", return_url=None)
+    await svc.start_kyc_session(**args)
+    parent.get_customer_kyc_status.return_value.update(overall_status="failed", kyc_calls_blocked=True)
+    await svc.start_kyc_session(**args)
+    assert parent.create_customer_subaccount.await_count == 1
+    assert parent.create_customer_kyc_session.await_count == 2

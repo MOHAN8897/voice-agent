@@ -1,0 +1,45 @@
+{
+  "version": 2,
+  "name": "drive-public-footer-links-open-the-privacy-page-at-a-c",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1792519049763,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "link",
+        "name": "Privacy Policy",
+        "nth": 0,
+        "of": 2
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "route",
+        "pathname": "/privacy"
+      },
+      "page": "/support",
+      "endPage": "/privacy"
+    }
+  ],
+  "startPath": "/support",
+  "intent": "Public footer links open the privacy page at a crawlable URL.",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/support"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/privacy"
+    }
+  ],
+  "author": {
+    "agent": "codex-mcp-client",
+    "person": "mohansaiteja.99@gmail.com"
+  },
+  "intentId": "flow:drive-public-footer-links-open-the-privacy-page-at-a-c"
+}

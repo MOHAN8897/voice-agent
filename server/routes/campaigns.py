@@ -61,6 +61,7 @@ class CampaignCreate(BaseModel):
     contact_list_id: str | None = Field(None, validation_alias=AliasChoices("contactListId", "contact_list_id"))
     auto_start: bool = Field(False, validation_alias=AliasChoices("autoStart", "auto_start"))
     calling_window: CallingWindow | None = Field(None, validation_alias=AliasChoices("callingWindow", "calling_window"))
+    expected_script_version: str | None = Field(None, max_length=100, validation_alias=AliasChoices("expectedScriptVersion", "expected_script_version"))
     # Compliance Attestation
     consent_confirmed: bool = Field(..., validation_alias=AliasChoices("consentConfirmed", "consent_confirmed"))
     consent_version: str = Field("2026-10-v1", validation_alias=AliasChoices("consentVersion", "consent_version"))
@@ -232,16 +233,23 @@ async def validate_variables(
     if len(contacts_to_check) > 10000:
         raise HTTPException(422, "Split this campaign into batches of at most 10,000 contacts")
 
-    if agent.get("active_compiled_brain_version"):
-        from server.brain.compiled_brain_service import compiled_brain_service
-        try:
-            snapshot = await compiled_brain_service.get_snapshot(str(agent["active_compiled_brain_version"]))
-            texts = [str(snapshot.get("compiled_text") or "")]
-        except KeyError:
-            raise HTTPException(409, "The published script is unavailable. Publish the agent before validating contacts.")
+    from server.services.saas.campaign_script import published_campaign_script
+    version, script = await published_campaign_script(agent.get("active_compiled_brain_version"))
+    texts = [script]
     import asyncio
     report = await asyncio.to_thread(validate_agent_variables_against_contacts, texts, contacts_to_check)
-    return {"ok": True, **report}
+    from server.brain.compiled_brain_artifact import business_from_unified_brain
+    from server.services.saas.contact_import_service import render_agent_prompt_for_contact
+    try:
+        preview_script = business_from_unified_brain(script)
+    except ValueError:
+        from server.realtime.gemini_audio_session import _split_brain_sections, _FLOW_PIN_TITLES, _PINNED_BUSINESS_TITLES
+        allowed_titles = {*_FLOW_PIN_TITLES, *_PINNED_BUSINESS_TITLES, "BODY"} - {"ENTITY TAGS"}
+        preview_script = "\n\n".join(body for title, body in _split_brain_sections(script) if title in allowed_titles)
+    preview_script = re.sub(r"<!--\s*section:[^>]*-->", "", preview_script).strip()
+    for preview in report["previews"]:
+        preview["renderedText"] = render_agent_prompt_for_contact(preview_script, contacts_to_check[preview["contactIndex"]])[:6000]
+    return {"ok": True, **report, "scriptVersion": version}
 
 
 @router.post("/api/campaigns")
@@ -369,6 +377,13 @@ async def create_campaign(
 
         if len(raw_contact_list) > 10000:
             raise HTTPException(422, "Split this campaign into batches of at most 10,000 contacts")
+        from server.services.saas.campaign_script import published_campaign_script, require_campaign_variables
+        import asyncio
+        version, script = await published_campaign_script(agent.active_compiled_brain_version)
+        if body.expected_script_version and body.expected_script_version != version:
+            raise HTTPException(409, "The agent script changed. Recheck contacts before launching.")
+        await asyncio.to_thread(require_campaign_variables, script, raw_contact_list)
+        camp.schedule = {**schedule, "script_version": version}
         # Process and snapshot contacts
         active_dnc_set: set[str] = set()
         if True:  # DNC exclusion cannot be disabled by a client.
@@ -515,6 +530,15 @@ async def import_contacts(
             DncEntry.active.is_(True)))).scalars())
         if len(existing) + len(body.contacts) > 10000:
             raise HTTPException(422, "A campaign supports at most 10,000 contacts")
+        from server.services.saas.campaign_script import published_campaign_script, require_campaign_variables
+        import asyncio
+        agent = (await db.execute(select(Agent).where(Agent.agent_id == camp.agent_id,
+            Agent.tenant_id == ctx.workspace_tenant_id))).scalar_one_or_none()
+        if agent is None:
+            raise HTTPException(404, "Agent not found")
+        version, script = await published_campaign_script((camp.schedule or {}).get("script_version") or agent.active_compiled_brain_version)
+        await asyncio.to_thread(require_campaign_variables, script, body.contacts)
+        camp.schedule = {**(camp.schedule or {}), "script_version": version}
         for c in body.contacts:
             phone, error = normalize_e164_phone(str(c.get("phone_e164") or c.get("phoneE164") or c.get("phone") or ""), camp.default_country)
             if error or not phone or phone in existing:
@@ -557,6 +581,17 @@ async def start_campaign(campaign_id: str, ctx: ApiTenantContext = Depends(requi
                 (CampaignContact.attempts < max(1, int((camp.retry_rules or {}).get("max_attempts") or 3))))))).scalar_one()
         if not eligible:
             raise HTTPException(409, "No eligible contacts remain. Review blocked or uncertain calls before retrying.")
+        from server.services.saas.campaign_script import published_campaign_script, require_campaign_variables
+        import asyncio
+        agent = (await db.execute(select(Agent).where(Agent.agent_id == camp.agent_id,
+            Agent.tenant_id == ctx.workspace_tenant_id))).scalar_one_or_none()
+        if agent is None:
+            raise HTTPException(404, "Agent not found")
+        version, script = await published_campaign_script((camp.schedule or {}).get("script_version") or agent.active_compiled_brain_version)
+        contacts = (await db.execute(select(CampaignContact).where(CampaignContact.campaign_id == cid,
+            CampaignContact.status.in_(("pending", "queued", "failed"))))).scalars().all()
+        await asyncio.to_thread(require_campaign_variables, script, [row.metadata_ or {} for row in contacts])
+        camp.schedule = {**(camp.schedule or {}), "script_version": version}
         if run is None:
             run = CampaignRun(run_id=uuid.uuid4(), campaign_id=cid, status="running", started_at=datetime.now(timezone.utc))
             db.add(run)

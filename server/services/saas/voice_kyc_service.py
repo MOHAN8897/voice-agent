@@ -38,6 +38,13 @@ BUSINESS_TYPES = frozenset(
 )
 _STATUS_CACHE_SECONDS = 30
 _VERIFICATION_VALUES = frozenset({"not_started", "pending", "verified", "failed"})
+_TRUSTED_PRODUCTION_CONSOLE_ORIGINS = frozenset({
+    "https://www.dialtact.com",
+    "https://dialtact.com",
+    "https://app.dialtact.com",
+    "https://app-dev.dialtact.com",
+    "https://app-dev.hustlelabs.in",
+})
 
 
 class VoiceKycError(RuntimeError):
@@ -92,21 +99,57 @@ def _safe_name(value: str) -> str:
 
 def _trusted_return_url(candidate: str | None) -> str:
     settings = get_settings()
-    configured = urlsplit(str(settings.voxly_frontend_url or "").strip())
-    if configured.scheme not in {"http", "https"} or not configured.netloc:
+    try:
+        configured = urlsplit(str(settings.voxly_frontend_url or "").strip())
+        configured_port = configured.port
+    except ValueError as exc:
+        raise VoiceKycError("voice_kyc_redirect_not_configured") from exc
+    if configured.scheme not in {"http", "https"} or not configured.hostname:
         raise VoiceKycError("voice_kyc_redirect_not_configured")
     fallback = settings.voxly_frontend_url.rstrip("/") + "/"
     if not candidate:
         return fallback
-    provided = urlsplit(str(candidate).strip())
-    if (
-        provided.scheme != configured.scheme
-        or provided.netloc.lower() != configured.netloc.lower()
-        or provided.username
-        or provided.password
-    ):
+    candidate = str(candidate).strip()
+    try:
+        provided = urlsplit(candidate)
+        provided_port = provided.port
+    except ValueError as exc:
+        raise VoiceKycError("invalid_voice_kyc_return_url", status_code=400) from exc
+    if provided.username or provided.password:
         raise VoiceKycError("invalid_voice_kyc_return_url", status_code=400)
-    return str(candidate).strip()
+    default_ports = {"http": 80, "https": 443}
+    configured_scheme = configured.scheme.lower()
+    provided_scheme = provided.scheme.lower()
+    configured_effective_port = (
+        configured_port if configured_port is not None else default_ports.get(configured_scheme)
+    )
+    provided_effective_port = (
+        provided_port if provided_port is not None else default_ports.get(provided_scheme)
+    )
+    configured_origin = (configured_scheme, configured.hostname.lower(), configured_effective_port)
+    provided_origin = (provided_scheme, (provided.hostname or "").lower(), provided_effective_port)
+    if provided_origin == configured_origin:
+        return candidate
+
+    # The Vite console runs on loopback during local development while the
+    # configured canonical console URL may point at app-dev. Permit only the
+    # known local console ports in development; never widen production redirects.
+    if (
+        settings.app_environment == "development"
+        and provided_scheme == "http"
+        and provided.hostname in {"localhost", "127.0.0.1"}
+        and provided_port in {None, 3000, 5173}
+    ):
+        return candidate
+    provided_host = (provided.hostname or "").lower()
+    provided_host_origin = f"{provided_scheme}://{provided_host}"
+    if (
+        provided_scheme == "https"
+        and provided_port in {None, 443}
+        and provided_host_origin in _TRUSTED_PRODUCTION_CONSOLE_ORIGINS
+    ):
+        return candidate
+    raise VoiceKycError("invalid_voice_kyc_return_url", status_code=400)
 
 
 async def _get_account(tenant_id: UUID) -> VobizSubaccount | None:
@@ -126,6 +169,13 @@ def _carrier_setup_configured() -> bool:
         return VobizClient().configured
     except Exception:
         return False
+
+
+def _alias_email(email: str, tenant_id: UUID) -> str:
+    parts = email.split("@", 1)
+    local = parts[0].split("+", 1)[0]
+    domain = parts[1] if len(parts) > 1 else "dialtact.com"
+    return f"{local}+voice-{str(tenant_id)[:8]}@{domain}"
 
 
 async def ensure_customer_subaccount(
@@ -163,7 +213,7 @@ async def ensure_customer_subaccount(
             if row.provisioning_status in {"creating", "provisioning_unknown", "credentials_lost"}:
                 raise VoiceKycError("voice_account_needs_review")
             if row.provisioning_status == "active":
-                if row.business_type != business_type or row.account_name != name or row.account_email != email:
+                if row.business_type != business_type or row.account_name != name:
                     raise VoiceKycError("voice_identity_locked", status_code=409)
                 return row
             # Only a definitive provider 4xx failure can be retried automatically.
@@ -190,12 +240,40 @@ async def ensure_customer_subaccount(
         await session.commit()
 
     try:
-        result = await parent.create_customer_subaccount(
-            name=name,
-            email=email,
-            business_type=business_type,
-            description=f"Tenant voice account {tenant_id}",
-        )
+        try:
+            result = await parent.create_customer_subaccount(
+                name=name,
+                email=email,
+                business_type=business_type,
+                description=f"Tenant voice account {tenant_id}",
+            )
+        except Exception as exc:
+            status = getattr(exc, "status", None)
+            body = getattr(exc, "body", "")
+            is_email_conflict = (
+                isinstance(status, int)
+                and status == 409
+                and ("already in use" in str(body).lower() or "already in use" in str(exc).lower())
+            )
+            if is_email_conflict:
+                aliased = _alias_email(email, tenant_id)
+                if aliased.lower() != email.lower():
+                    logger.info(
+                        "Subaccount email conflict tenant=%s, retrying with aliased email=%s",
+                        tenant_id,
+                        aliased,
+                    )
+                    email = aliased
+                    result = await parent.create_customer_subaccount(
+                        name=name,
+                        email=email,
+                        business_type=business_type,
+                        description=f"Tenant voice account {tenant_id}",
+                    )
+                else:
+                    raise
+            else:
+                raise
     except Exception as exc:
         status = getattr(exc, "status", None)
         definitive = isinstance(status, int) and 400 <= status < 500 and status not in {408, 409, 429}
@@ -260,7 +338,8 @@ async def start_kyc_session(
     trusted_return_url = _trusted_return_url(return_url)
     webhook_url = public_api_base().rstrip("/") + "/api/webhooks/voice-kyc"
     if urlsplit(webhook_url).scheme != "https":
-        raise VoiceKycError("voice_kyc_webhook_not_configured")
+        # Hosted KYC supports polling without callbacks. Never send an insecure webhook URL.
+        webhook_url = None
     account = await ensure_customer_subaccount(
         tenant_id=tenant_id,
         email=email,
@@ -277,7 +356,7 @@ async def start_kyc_session(
     async with factory() as session:
         row = await session.get(VobizSubaccount, tenant_id, with_for_update=True)
         expires = _aware(row.kyc_session_expires_at)
-        if (row.encrypted_kyc_url and expires and expires > _utcnow()
+        if (status["status"] != "failed" and row.encrypted_kyc_url and expires and expires > _utcnow()
                 and row.kyc_session_status not in {"failed", "expired", "revoked", "completed"}):
             return {**status, "sessionUrl": decrypt_subaccount_token(tenant_id, row.encrypted_kyc_url)}
         try:
@@ -324,16 +403,23 @@ async def refresh_kyc_status(tenant_id: UUID, *, force: bool = False) -> dict:
             "legalName": "",
         }
     if account.provisioning_status != "active" or not account.auth_id or not account.encrypted_auth_token:
+        carrier_ready = _carrier_setup_configured()
+        is_sub_active = account.provisioning_status == "active" and bool(account.auth_id)
+        computed_status = (
+            "not_started"
+            if account.auth_id is None and account.provisioning_status not in {"creating", "failed"}
+            else account.provisioning_status
+        )
         return {
             "required": True,
-            "configured": False,
+            "configured": carrier_ready,
             "approved": False,
-            "status": account.provisioning_status,
+            "status": computed_status,
             "callsBlocked": True,
             "verifications": {},
             "businessType": account.business_type,
             "legalName": account.account_name,
-            "identityLocked": True,
+            "identityLocked": is_sub_active,
         }
 
     now = _utcnow()
@@ -355,25 +441,54 @@ async def refresh_kyc_status(tenant_id: UUID, *, force: bool = False) -> dict:
     except Exception as exc:
         logger.warning("Tenant voice KYC status unavailable tenant=%s error_type=%s", tenant_id, type(exc).__name__)
         raise VoiceKycError("voice_kyc_status_unavailable") from exc
-    blocked = data.get("kyc_calls_blocked") if isinstance(data, dict) else None
-    mode = str(data.get("kyc_mode") or "").strip().lower() if isinstance(data, dict) else ""
-    returned_id = str(data.get("sub_account_id") or "").strip() if isinstance(data, dict) else ""
+
+    # Vobiz live API returns kyc_calls_blocked and kyc_mode in subaccount (identity),
+    # while test fixtures / mocks may supply them in data (get_customer_kyc_status). Support both.
+    if isinstance(data, dict) and "kyc_calls_blocked" in data:
+        blocked = data["kyc_calls_blocked"]
+    elif isinstance(identity, dict) and "kyc_calls_blocked" in identity:
+        blocked = identity["kyc_calls_blocked"]
+    else:
+        blocked = None
+
+    mode = str(data.get("kyc_mode") or (identity.get("kyc_mode") if isinstance(identity, dict) else "") or "").strip().lower()
+    returned_id = str(data.get("sub_account_id") or data.get("auth_id") or (identity.get("auth_id") if isinstance(identity, dict) else "") or "").strip()
+    raw_status = str(data.get("overall_status") or data.get("kyc_status") or (identity.get("kyc_status") if isinstance(identity, dict) else "") or "pending").strip().lower()
+    b_type = data.get("business_type") or (identity.get("business_type") if isinstance(identity, dict) else None)
+
     if (
         not isinstance(blocked, bool)
         or mode != "customer_use"
         or returned_id != account.auth_id
-        or str(data.get("overall_status") or "").lower() not in _VERIFICATION_VALUES
-        or data.get("business_type") != account.business_type
+        or (raw_status not in _VERIFICATION_VALUES and raw_status not in {"in_review", "approved"})
+        or (b_type and b_type != account.business_type)
     ):
+        logger.warning(
+            "Voice KYC status validation failed tenant=%s blocked=%s mode=%s returned_id=%s raw_status=%s b_type=%s",
+            tenant_id, blocked, mode, returned_id, raw_status, b_type,
+        )
         raise VoiceKycError("voice_kyc_status_unavailable")
-    status = str(data.get("overall_status") or "unknown").strip().lower()
-    raw_verifications = data.get("verifications")
-    verifications = {
-        str(key).lower(): str(value).lower()
-        for key, value in raw_verifications.items()
-        if str(key).lower() in {"pan", "gst", "cin", "aadhaar"}
-        and str(value).lower() in _VERIFICATION_VALUES
-    } if isinstance(raw_verifications, dict) else {}
+
+    status = "verified" if raw_status in {"verified", "approved"} else raw_status
+    if status not in _VERIFICATION_VALUES:
+        status = "pending"
+
+    raw_verifications = data.get("verifications") if isinstance(data, dict) else None
+    if isinstance(raw_verifications, dict):
+        verifications = {
+            str(key).lower(): str(value).lower()
+            for key, value in raw_verifications.items()
+            if str(key).lower() in {"pan", "gst", "cin", "aadhaar"}
+            and str(value).lower() in _VERIFICATION_VALUES
+        }
+    else:
+        verifications = {}
+        if isinstance(data, dict):
+            for doc in ("pan", "gst", "cin", "aadhaar"):
+                val = data.get(f"{doc}_status")
+                if val and str(val).lower() in _VERIFICATION_VALUES:
+                    verifications[doc] = str(val).lower()
+
     factory = get_session_factory()
     async with factory() as session:
         row = await session.get(VobizSubaccount, tenant_id, with_for_update=True)
@@ -393,7 +508,7 @@ async def refresh_kyc_status(tenant_id: UUID, *, force: bool = False) -> dict:
 def _public_status(account: VobizSubaccount) -> dict:
     return {
         "required": True,
-        "configured": True,
+        "configured": _carrier_setup_configured(),
         "approved": account.account_enabled is True and account.kyc_calls_blocked is False,
         "status": account.kyc_status if account.account_enabled else "account_disabled",
         "callsBlocked": not account.account_enabled or account.kyc_calls_blocked,
@@ -582,3 +697,45 @@ async def apply_voice_webhook(payload: dict) -> dict:
         await session.commit()
     await refresh_kyc_status(tenant_id, force=True)
     return {"ok": True}
+
+
+async def admin_set_voice_kyc_status(
+    tenant_id: UUID,
+    *,
+    status: str,
+    actor: str,
+    reason: str,
+) -> dict:
+    """Manual ops / dev override for voice KYC verification status."""
+    status = str(status or "").strip().lower()
+    if status not in {"verified", "pending", "failed", "not_started"}:
+        raise VoiceKycError("invalid_status", status_code=400)
+    factory = get_session_factory()
+    if factory is None:
+        raise VoiceKycError("database_required")
+    async with factory() as session:
+        row = await session.get(VobizSubaccount, tenant_id, with_for_update=True)
+        if row is None:
+            raise VoiceKycError("voice_account_not_found", status_code=404)
+        if status == "verified":
+            row.kyc_status = "verified"
+            row.kyc_calls_blocked = False
+            row.account_enabled = True
+            row.provisioning_status = "active"
+            row.verifications = {"pan": "verified", "aadhaar": "verified"}
+        elif status == "failed":
+            row.kyc_status = "failed"
+            row.kyc_calls_blocked = True
+            row.verifications = {}
+        elif status == "pending":
+            row.kyc_status = "pending"
+            row.kyc_calls_blocked = True
+        elif status == "not_started":
+            row.kyc_status = "not_started"
+            row.kyc_calls_blocked = True
+            row.verifications = {}
+        row.last_status_sync_at = _utcnow()
+        row.updated_at = _utcnow()
+        await session.commit()
+        return _public_status(row)
+

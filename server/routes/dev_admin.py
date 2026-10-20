@@ -2370,6 +2370,62 @@ async def set_kyc_status(
     return {"ok": True, "verification": state}
 
 
+class VoiceKycAdminStatusBody(BaseModel):
+    status: str
+    reason: str | None = None
+
+
+@router.get("/api/dev/admin/kyc/voice/{tenant_id}/status")
+async def get_tenant_voice_kyc(
+    tenant_id: str,
+    session: SessionData = Depends(require_dev_session),
+):
+    require_permission(session, "dev.admin.users")
+    _require_db()
+    from server.services.saas import voice_kyc_service
+
+    try:
+        tid = uuid.UUID(tenant_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="invalid_tenant_id") from exc
+    return await voice_kyc_service.refresh_kyc_status(tid)
+
+
+@router.post("/api/dev/admin/kyc/voice/{tenant_id}/status")
+async def set_tenant_voice_kyc(
+    tenant_id: str,
+    body: VoiceKycAdminStatusBody,
+    session: SessionData = Depends(require_dev_session),
+):
+    require_permission(session, "dev.admin.users")
+    _require_db()
+    from server.services.saas import voice_kyc_service
+
+    try:
+        tid = uuid.UUID(tenant_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="invalid_tenant_id") from exc
+    reason = (body.reason or "Admin manual update").strip()
+    try:
+        updated = await voice_kyc_service.admin_set_voice_kyc_status(
+            tenant_id=tid,
+            status=body.status,
+            actor=session.subject,
+            reason=reason,
+        )
+    except voice_kyc_service.VoiceKycError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.code) from exc
+    await record_admin_action(
+        actor=session.subject,
+        action="voice_kyc.status",
+        resource_type="voice_kyc",
+        resource_id=tenant_id,
+        payload={"status": body.status, "reason": reason},
+    )
+    return {"ok": True, "status": updated}
+
+
+
 @router.get("/api/dev/admin/support/config")
 async def platform_support_config(session: SessionData = Depends(require_dev_session)):
     require_permission(session, "dev.admin.support")

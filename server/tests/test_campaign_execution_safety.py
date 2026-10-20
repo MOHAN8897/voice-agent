@@ -4,6 +4,7 @@ import os
 import uuid
 from datetime import timedelta
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 
 import pytest
 from fastapi import HTTPException, Request
@@ -62,8 +63,13 @@ async def db(tmp_path, monkeypatch):
         ])
         await session.flush()
         session.add_all([TenantMembership(user_id=UID, tenant_id=TID, role="customer_admin"),
-                         Agent(agent_id=AID, tenant_id=TID, name="Audit agent")])
+                         Agent(agent_id=AID, tenant_id=TID, name="Audit agent", active_compiled_brain_version="cb_campaign_test")])
         await session.commit()
+    from server.services.saas.campaign_script import compiled_brain_service
+    monkeypatch.setattr("server.services.saas.campaign_script.get_session_factory", lambda: factory)
+    monkeypatch.setattr(compiled_brain_service, "get_snapshot", AsyncMock(return_value={
+        "compiled_text": "Hello {{contact.full_name | there}}", "compiled_version": "cb_campaign_test",
+    }))
     yield factory
     await engine.dispose()
     if admin_engine:
@@ -333,9 +339,41 @@ async def test_create_request_is_idempotent_and_never_links_foreign_contacts(db)
     async with db() as session:
         row = (await session.execute(select(CampaignContact).where(CampaignContact.campaign_id == uuid.UUID(results[0]["id"])))).scalar_one()
         assert row.contact_id is None
+        assert (await session.get(Campaign, row.campaign_id)).schedule["script_version"] == "cb_campaign_test"
     with pytest.raises(HTTPException) as error:
         await routes.create_campaign(request, body.model_copy(update={"name": "Changed"}), ctx)
     assert error.value.status_code == 409
+
+
+async def test_campaign_snapshot_is_bound_to_owned_campaign_and_survives_agent_republish(db, monkeypatch):
+    from server.services.saas.campaign_script import campaign_call_script, compiled_brain_service
+    cid = uuid.uuid4()
+    async with db() as session:
+        session.add(Campaign(campaign_id=cid, tenant_id=TID, agent_id=AID, name="Pinned", schedule={"script_version": "cb_approved"}))
+        await session.commit()
+    lookup = AsyncMock(return_value={"compiled_text": "Approved script", "compiled_version": "cb_approved"})
+    monkeypatch.setattr(compiled_brain_service, "get_snapshot", lookup)
+    agent = {"agent_id": str(AID), "tenant_id": str(TID), "active_compiled_brain_version": "cb_newer"}
+    result = await campaign_call_script(agent, {"campaign_id": str(cid), "script_version": "untrusted"})
+    assert result == ("cb_approved", "Approved script")
+    lookup.assert_awaited_once_with("cb_approved")
+    with pytest.raises(HTTPException) as error:
+        await campaign_call_script({**agent, "tenant_id": str(OTHER)}, {"campaign_id": str(cid)})
+    assert error.value.status_code == 404
+
+
+async def test_campaign_create_revalidates_required_values_on_server(db, monkeypatch):
+    from server.auth.api_tenant import ApiTenantContext
+    from server.services.saas.campaign_script import compiled_brain_service
+    monkeypatch.setattr(compiled_brain_service, "get_snapshot", AsyncMock(return_value={"compiled_text": "Hello {{contact.full_name}}"}))
+    ctx = ApiTenantContext(tenant_id=TID, role="customer_admin", subject=str(UID), subscriber=False)
+    request = Request({"type": "http", "method": "POST", "headers": [], "client": ("127.0.0.1", 1234)})
+    body = routes.CampaignCreate(name="Missing name", agentId=str(AID), consentConfirmed=True, contacts=[{"phone": "+12025550101"}])
+    with pytest.raises(HTTPException) as error:
+        await routes.create_campaign(request, body, ctx)
+    assert error.value.status_code == 422
+    async with db() as session:
+        assert (await session.execute(select(Campaign).where(Campaign.tenant_id == TID))).scalars().all() == []
 
 
 async def test_outbound_cps_is_shared_and_distinct_from_concurrency(db, monkeypatch):

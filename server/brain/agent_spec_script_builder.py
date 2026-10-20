@@ -112,13 +112,6 @@ def generate_deterministic_script_from_spec(
         "- A way to reach them, only if they want to be contacted. Never read a number back out loud."
     )
 
-    # Section 8: RUNTIME TAGS
-    runtime_tags = (
-        "--- RUNTIME TAGS (fill when known; never read empty tags aloud) ---\n"
-        "{{caller_name}}: Name the caller gives on the call\n"
-        "{{callback_phone}}: Phone number to call or text back"
-    )
-
     full_script = "\n\n".join([
         identity_section,
         offer_section,
@@ -127,7 +120,6 @@ def generate_deterministic_script_from_spec(
         how_call_goes,
         dont_know,
         remember,
-        runtime_tags,
     ])
     return full_script
 
@@ -169,9 +161,10 @@ def lint_agent_script(script: str, spec: AgentSpec, *, recording_disclosure_enab
             issues.append(f"Introductory speaker '{spoken_name}' does not match spec agent name '{agent}'.")
 
     # 4. Check for unrendered template placeholders
-    placeholders = re.findall(r"\{\{([a-zA-Z0-9_]+)\}\}", text)
-    for ph in placeholders:
-        if ph not in _ALLOWED_RUNTIME_TAGS:
+    from server.services.saas.script_variables import TEMPLATE_TAG_RE
+    for match in TEMPLATE_TAG_RE.finditer(text):
+        ph = match.group(1)
+        if ph not in _ALLOWED_RUNTIME_TAGS | {"name", "full_name", "first_name", "last_name", "phone", "email", "company"} and not ph.startswith(("contact.", "system.")):
             issues.append(f"Unresolved template placeholder '{{{{{ph}}}}}' found in script.")
 
     # 5. Core facts presence

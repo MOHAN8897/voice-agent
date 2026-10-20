@@ -4,7 +4,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-_TAG_RE = re.compile(r"\{\{\s*([a-z][a-z0-9_]{1,48})\s*\}\}", re.IGNORECASE)
+TEMPLATE_TAG_RE = re.compile(r"\{\{\s*([a-zA-Z0-9_.]+)(?:\s*\|{1,2}\s*([^}]+?))?\s*\}\}")
 
 STANDARD_VARIABLES: list[dict[str, str]] = [
     {
@@ -35,12 +35,12 @@ SAAS_SCRIPT_VARIABLES_TITLE = "saas_script_variables"
 
 def normalize_variable_key(raw: str) -> str:
     key = (raw or "").strip().lower().replace("-", "_").replace(" ", "_")
-    key = re.sub(r"[^a-z0-9_]", "", key)
+    key = re.sub(r"[^a-z0-9_.]", "", key)
     if not key:
         return "field_value"
     if key[0].isdigit():
         key = f"v_{key}"
-    return key[:50]
+    return key[:100]
 
 
 def normalize_variables(rows: list[dict[str, Any]] | None) -> list[dict[str, str]]:
@@ -68,7 +68,7 @@ def normalize_variables(rows: list[dict[str, Any]] | None) -> list[dict[str, str
 def variables_from_text(greeting: str, script: str) -> list[dict[str, str]]:
     keys: list[str] = []
     for text in (greeting, script):
-        for m in _TAG_RE.finditer(text or ""):
+        for m in TEMPLATE_TAG_RE.finditer(text or ""):
             k = normalize_variable_key(m.group(1))
             if k not in keys:
                 keys.append(k)
@@ -81,14 +81,12 @@ def variables_from_text(greeting: str, script: str) -> list[dict[str, str]]:
             out.append(
                 {
                     "key": k,
-                    "label": k.replace("_", " ").title(),
+                    "label": k.replace(".", " ").replace("_", " ").title(),
                     "description": f"Value for {{{{{k}}}}}",
                     "source": "runtime",
                     "example": "",
                 }
             )
-    if not out:
-        return [dict(v) for v in STANDARD_VARIABLES[:2]]
     return out
 
 
@@ -101,5 +99,6 @@ def merge_variables(
     normalized = normalize_variables(llm_vars)
     by_key = {v["key"]: v for v in from_text}
     for v in normalized:
-        by_key[v["key"]] = {**by_key.get(v["key"], {}), **v}
+        if v["key"] in by_key:
+            by_key[v["key"]] = {**by_key[v["key"]], **v}
     return list(by_key.values())

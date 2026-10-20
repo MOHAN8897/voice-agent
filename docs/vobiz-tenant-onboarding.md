@@ -1,24 +1,30 @@
 # Tenant phone-service onboarding
 
 Implemented against Vobiz's published subaccount and hosted KYC documentation,
-reviewed on 2026-10-19. No live subaccount, real document verification, or paid
+reviewed on 2026-10-21. No live subaccount, real document verification, or paid
 number order was created during development.
 
 ## Flow
 
 1. A signed-in workspace billing administrator with a verified email opens
    **Settings → Phone service verification**, or begins a number purchase.
+   Number purchase first shows current provider inventory and the admin's
+   retail monthly price. Selecting a number retains the country, number and
+   target agent in session storage scoped to the signed-in tenant and user.
 2. The server creates one `customer_use` subaccount for that tenant using the
    parent's credentials. Entity type and legal name are locked after creation.
 3. The one-time child token is encrypted with a dedicated Fernet key and bound
    to the tenant UUID. No child credentials are sent to the browser.
 4. The server creates a redirect session for Vobiz's hosted KYC widget. Vobiz
    collects the entity-specific documents. The hosted URL is encrypted in the
-   database and reused while the current session remains valid.
+   database and reused while the current session remains valid. A failed
+   verification gets a fresh session so documents can be submitted again.
 5. The callback at `/api/webhooks/voice-kyc` verifies `X-Vobiz-Signature` as
    HMAC-SHA256 over the exact raw body with the parent's auth token. Its account
    and session must match persisted state. A callback only triggers a fresh
    status lookup; it never approves a tenant from callback/redirect fields.
+   Callbacks are optional: local deployments without a public HTTPS callback
+   poll status instead. The server never submits an insecure callback URL.
 6. Purchases and PSTN calls require Vobiz's current `kyc_calls_blocked=false`
    and an enabled, active subaccount belonging to the configured parent.
    Provider outages deny access temporarily. Browser practice remains ungated.
@@ -28,6 +34,10 @@ number order was created during development.
 8. Number ownership, carrier selection and carrier resource IDs are persisted.
    Calls, hangups, signed callbacks and CDR reconciliation use that owning
    account. New tenant calls never fall back to parent credentials.
+9. Returning from hosted verification restores the selected-number review.
+   The user must explicitly confirm the purchase after approval. Inventory,
+   the admin price and funds are checked again; verification does not reserve
+   a number or trigger a charge. Closing the dialog clears the saved choice.
 
 ## Restart and failure handling
 
@@ -67,7 +77,8 @@ it to a live database or alter production settings.
    a recoverable backup. Do not regenerate it at startup or rotate without
    re-encrypting the existing rows.
 2. Configure the parent's Vobiz credentials, the exact `VOXLY_FRONTEND_URL`,
-   and a public HTTPS API base. The KYC callback must be reachable over HTTPS.
+   and a public HTTPS API base for live callbacks. If a callback is configured,
+   it must be reachable over HTTPS. Status polling works without a callback.
 3. Apply `alembic -c alembic.ini upgrade head` through the normal deployment
    process, then deploy API and workers together. The upgrade is additive.
    Downgrading removes encrypted credentials/session state; a code rollback

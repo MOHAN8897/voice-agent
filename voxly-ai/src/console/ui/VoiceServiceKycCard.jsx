@@ -39,12 +39,12 @@ export function VoiceServiceKycCard({ onApproved }) {
     onApprovedRef.current = onApproved;
   }, [onApproved]);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (force = false) => {
     const current = ++requestId.current;
     setLoading(true);
     setError('');
     try {
-      const next = await api.kyc.getVoiceStatus();
+      const next = await api.kyc.getVoiceStatus({ refresh: force === true });
       if (current !== requestId.current) return;
       setStatus(next);
       if (next?.businessType) setBusinessType(next.businessType);
@@ -60,7 +60,7 @@ export function VoiceServiceKycCard({ onApproved }) {
 
   useEffect(() => {
     refresh();
-    const onResume = () => refresh();
+    const onResume = () => refresh(true);
     const timer = window.setInterval(() => {
       if (document.visibilityState === 'visible') refresh();
     }, 30000);
@@ -74,9 +74,19 @@ export function VoiceServiceKycCard({ onApproved }) {
     };
   }, [refresh]);
 
+  const [openedUrl, setOpenedUrl] = useState('');
+
   const start = async () => {
     setStarting(true);
     setError('');
+    // Open a blank tab synchronously on click to prevent popup blockers from intercepting it
+    let newTab = null;
+    try {
+      newTab = window.open('about:blank', '_blank');
+    } catch {
+      newTab = null;
+    }
+
     try {
       const result = await api.kyc.startVoiceSession({
         legal_name: legalName.trim(),
@@ -85,12 +95,22 @@ export function VoiceServiceKycCard({ onApproved }) {
       });
       setStatus(result);
       if (result?.approved) {
+        if (newTab && !newTab.closed) newTab.close();
         onApprovedRef.current?.(result);
         return;
       }
-      if (!result?.sessionUrl) throw new Error('Verification could not start. Please try again.');
-      window.location.assign(result.sessionUrl);
+      if (!result?.sessionUrl) {
+        if (newTab && !newTab.closed) newTab.close();
+        throw new Error('Verification could not start. Please try again.');
+      }
+      setOpenedUrl(result.sessionUrl);
+      if (newTab && !newTab.closed) {
+        newTab.location.href = result.sessionUrl;
+      } else {
+        window.open(result.sessionUrl, '_blank', 'noopener,noreferrer');
+      }
     } catch (e) {
+      if (newTab && !newTab.closed) newTab.close();
       setError(e.message || 'Could not start phone service verification.');
     } finally {
       setStarting(false);
@@ -120,7 +140,10 @@ export function VoiceServiceKycCard({ onApproved }) {
     );
   }
 
-  const canStart = status?.configured === true && !error && !loading && !['creating', 'provisioning_unknown', 'credentials_lost'].includes(status?.status);
+  const canStart = status?.configured === true && !loading && !['creating', 'provisioning_unknown', 'credentials_lost'].includes(status?.status);
+  const documents = ['individual', 'proprietorship', 'huf'].includes(businessType)
+    ? 'Have your PAN and Aadhaar ready. Aadhaar verification uses DigiLocker with your consent.'
+    : businessType ? 'Have the entity PAN and GST or CIN / registration details ready. The secure verification page will confirm the documents required for your entity.' : 'Choose the legal entity that will own the phone number.';
 
   return (
     <div className="rounded-2xl border border-[#E4E2EB] bg-gradient-to-b from-white to-[#FAF9FD] p-5 sm:p-6 space-y-5" data-testid="voice-service-kyc-card">
@@ -133,6 +156,7 @@ export function VoiceServiceKycCard({ onApproved }) {
           <p className="mt-1 text-xs text-[#524E5E] leading-relaxed">
             Complete the secure identity check to activate phone numbers and live calls. The required documents depend on your legal entity type.
           </p>
+          <p className="mt-2 text-xs text-[#524E5E]">Use the legal name on your documents. Once this account is created, changing these legal details requires support.</p>
           <p className="mt-2 text-[11px] font-semibold text-[#6344E7]">Status: {statusLabel(status?.status)}</p>
         </div>
       </div>
@@ -166,6 +190,8 @@ export function VoiceServiceKycCard({ onApproved }) {
         </label>
       </div>
 
+      <p className="rounded-xl bg-[#F7F6FA] p-3 text-xs leading-relaxed text-[#524E5E]">{documents} A separate phone service account is created for your workspace. Complete verification on the secure hosted page, then return here to confirm your number purchase.</p>
+
       {status?.verifications && Object.keys(status.verifications).length > 0 && (
         <div className="flex flex-wrap gap-2" aria-label="Verification document status">
           {Object.entries(status.verifications).map(([key, value]) => (
@@ -180,6 +206,27 @@ export function VoiceServiceKycCard({ onApproved }) {
         <p className="text-xs text-amber-800" role="status">Phone service verification is not available yet. Contact support to continue.</p>
       )}
       {error && <p className="text-xs text-red-800" role="alert" data-testid="voice-service-kyc-error">{error}</p>}
+      {openedUrl && (
+        <div className="rounded-xl border border-indigo-200 bg-indigo-50/70 p-3.5 space-y-1.5 text-xs" data-testid="voice-service-kyc-tab-banner">
+          <p className="font-semibold text-indigo-950">
+            Verification opened in a new tab
+          </p>
+          <p className="text-indigo-900 text-[11px] leading-relaxed">
+            Complete your verification in the opened tab, then return here and click &ldquo;I finished — refresh status&rdquo;.
+          </p>
+          <div className="pt-1">
+            <a
+              href={openedUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#6344E7] hover:underline"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              Reopen verification page in new tab
+            </a>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-2">
         <TactileButton
@@ -196,7 +243,7 @@ export function VoiceServiceKycCard({ onApproved }) {
         </TactileButton>
         <button
           type="button"
-          onClick={refresh}
+          onClick={() => refresh(true)}
           disabled={loading}
           className="w-full inline-flex items-center justify-center gap-1.5 text-[11px] font-semibold text-[#6344E7] hover:underline py-1 disabled:opacity-60"
           data-testid="voice-service-kyc-refresh"

@@ -123,6 +123,54 @@
       },
       "updatedAt": 1792502265585
     },
+    "inline:choosing-a-number-opens-hosted-kyc-preparation-w-1035a4be": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "testid": "voice-service-kyc-card"
+            }
+          },
+          {
+            "contains": "Selected number:",
+            "kind": "text",
+            "visible": true
+          },
+          {
+            "absent": true,
+            "contains": "PAN and Aadhaar",
+            "kind": "text"
+          },
+          {
+            "absent": true,
+            "kind": "element",
+            "query": {
+              "testid": "confirm-selected-number"
+            }
+          }
+        ]
+      },
+      "declaredAt": 1792523782116,
+      "id": "inline:choosing-a-number-opens-hosted-kyc-preparation-w-1035a4be",
+      "provenBy": {
+        "at": 1792523784115,
+        "grade": "presence",
+        "runId": "drive-s2403848c-1aca-4abd-8762-13932f565c03",
+        "verdictId": "reticle_act_and_wait:1792523784115"
+      },
+      "state": "proved",
+      "statement": "Choosing a number opens hosted KYC preparation with the selection and price retained, and no purchase before approval.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/ui/TactileButton.jsx"
+        ]
+      },
+      "updatedAt": 1792523784158
+    },
     "inline:tenant-settings-exposes-phone-service-kyc-with-p-a3a16e03": {
       "binding": {
         "kind": "element",
@@ -148,6 +196,100 @@
         ]
       },
       "updatedAt": 1792433459726
+    },
+    "inline:tenants-prepare-recipients-and-review-a-campaign-f3bd2f6f": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "campaign-setup"
+        }
+      },
+      "declaredAt": 1792523495947,
+      "id": "inline:tenants-prepare-recipients-and-review-a-campaign-f3bd2f6f",
+      "provenBy": {
+        "at": 1792523496120,
+        "grade": "presence",
+        "runId": "drive-s2403848c-1aca-4abd-8762-13932f565c03",
+        "verdictId": "reticle_act_and_wait:1792523496120"
+      },
+      "state": "proved",
+      "statement": "Tenants prepare recipients and review a campaign on one setup page.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/ui/TactileButton.jsx"
+        ]
+      },
+      "updatedAt": 1792523496171
+    },
+    "inline:tenants-preview-the-personalized-script-for-an-a-b7deabdc": {
+      "binding": {
+        "contains": "Hello Example Contact. Is this a convenient time to speak?",
+        "kind": "text",
+        "visible": true
+      },
+      "declaredAt": 1792523556917,
+      "id": "inline:tenants-preview-the-personalized-script-for-an-a-b7deabdc",
+      "provenBy": {
+        "at": 1792523557122,
+        "grade": "presence",
+        "runId": "drive-s2403848c-1aca-4abd-8762-13932f565c03",
+        "verdictId": "reticle_act_and_wait:1792523557122"
+      },
+      "state": "proved",
+      "statement": "Tenants preview the personalized script for an actual selected campaign contact before launching.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/modules/CampaignSetup.jsx"
+        ]
+      },
+      "updatedAt": 1792523557166
+    },
+    "inline:tenants-see-available-number-inventory-and-the-a-b7143605": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "testid": "buy-number-submit"
+            }
+          },
+          {
+            "contains": "$4.00 / month",
+            "kind": "text",
+            "visible": true
+          },
+          {
+            "absent": true,
+            "kind": "element",
+            "query": {
+              "testid": "voice-service-kyc-card"
+            }
+          }
+        ]
+      },
+      "declaredAt": 1792523780561,
+      "id": "inline:tenants-see-available-number-inventory-and-the-a-b7143605",
+      "provenBy": {
+        "at": 1792523781930,
+        "grade": "presence",
+        "runId": "drive-s2403848c-1aca-4abd-8762-13932f565c03",
+        "verdictId": "reticle_act_and_wait:1792523781930"
+      },
+      "state": "proved",
+      "statement": "Tenants see available number inventory and the admin monthly price before starting phone verification.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/ui/TactileButton.jsx"
+        ]
+      },
+      "updatedAt": 1792523781980
     },
     "inline:the-launched-synthetic-campaign-is-visible-in-th-9fa77178": {
       "binding": {

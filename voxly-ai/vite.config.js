@@ -135,8 +135,10 @@ export default defineConfig({
       ? [
           reticle({
             sourceMapping: false,
-            allowNonLocalhost: true,
-            inject: true,
+            // Let the app's local-host + authenticated-user gate control the
+            // optional connector instead of auto-injecting it on public hosts.
+            allowNonLocalhost: false,
+            inject: false,
           }),
         ]
       : []),
@@ -164,7 +166,7 @@ export default defineConfig({
     },
   },
   preview: {
-    port: 4173,
+    port: Number(process.env.PORT) || 4173,
     host: true,
     allowedHosts,
   },

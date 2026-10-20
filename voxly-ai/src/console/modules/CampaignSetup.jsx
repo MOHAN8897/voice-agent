@@ -9,7 +9,7 @@ const input = 'mt-1 w-full min-h-11 min-w-0 rounded-xl border border-[#D1CFDB] b
 const fields = ['phone', 'full_name', 'first_name', 'last_name', 'email', 'company', 'job_title', 'country', 'city', 'state', 'timezone', 'notes', 'ignore'];
 const countries = ['IN', 'US', 'GB', 'CA', 'AU', 'SG', 'AE', 'DE', 'FR', 'ZA', 'PH', 'NZ'];
 const fileLimit = 5 * 1024 * 1024;
-const pretty = (value) => value.replaceAll('_', ' ');
+const pretty = (value) => value === 'ignore' ? 'Skip column' : `${value.replaceAll('_', ' ')} · {{contact.${value}}}`;
 
 function fileData(file) {
   return new Promise((resolve, reject) => {
@@ -39,8 +39,7 @@ export function CampaignSetup({ initialAgentId = '', onComplete, onBusyChange })
   const [pacing, setPacing] = useState({ concurrency: 3, maxAttempts: 2, retryDelayMinutes: 30 });
   const [windowEnabled, setWindowEnabled] = useState(true);
   const [callingWindow, setCallingWindow] = useState({ start: '09:00', end: '18:00', timezone: 'Asia/Kolkata' });
-  const [templateName, setTemplateName] = useState('');
-  const [listName, setListName] = useState('');
+  const [previewIndex, setPreviewIndex] = useState(0);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState('');
   const lock = useRef(false);
@@ -62,6 +61,7 @@ export function CampaignSetup({ initialAgentId = '', onComplete, onBusyChange })
 
   function invalidate() {
     setValidation(null); setVariables(null); setConsent(false); lastValidated.current = null;
+    setVariablePolicy('review'); setPreviewIndex(0);
   }
   function changeSource(value) {
     setSource(value); setParsed(null); setMapping({}); setError(''); invalidate();
@@ -109,7 +109,7 @@ export function CampaignSetup({ initialAgentId = '', onComplete, onBusyChange })
           if (source === 'paste' && !text.trim()) throw new Error('Paste a CSV with a phone column and at least one contact.');
           data = await api.contacts.parse(source === 'upload' ? { fileName: file.name, contentBase64: await fileData(file) } : { fileName: 'pasted.csv', rawText: text });
           if (!data.rows || data.rows.length !== data.totalRows) throw new Error('The server returned an incomplete import. No campaign was created. Refresh after updating the server.');
-          selectedMapping = Object.fromEntries(Object.entries(data.detectedMappings || {}).map(([key, value]) => [key, value.targetField || 'ignore']));
+          selectedMapping = Object.fromEntries(Object.entries(data.detectedMappings || {}).map(([key, value]) => [key, (value.field || value.targetField || 'ignore').replace(/^custom_fields\./, 'custom_field:')]));
         }
         if (!data.rows?.length) throw new Error('No contact rows were found. Include column headers in your file.');
         if (data.rows.length > 10000) throw new Error('Split this import into batches of 10,000 contacts or fewer.');
@@ -132,9 +132,7 @@ export function CampaignSetup({ initialAgentId = '', onComplete, onBusyChange })
         contacts = contacts.filter((_contact, index) => !excluded.has(index));
       }
       if (!contacts.length) throw new Error('No contacts remain after applying the variable policy.');
-      if (templateName.trim() && parsed) await api.contacts.saveTemplate({ templateName: templateName.trim(), sourceHeaders: parsed.headers, mapping, defaultCountry: config.defaultCountry });
-      if (listName.trim()) await api.contacts.createList({ name: listName.trim(), contacts });
-      const created = await createCampaign({ clientRequestId: creationId.current, ...config, agentId: currentAgent, ...pacing, contacts, autoStart,
+      const created = await createCampaign({ clientRequestId: creationId.current, ...config, agentId: currentAgent, expectedScriptVersion: variables?.scriptVersion, ...pacing, contacts, autoStart,
         callingWindow: windowEnabled ? callingWindow : undefined, consentConfirmed: consent, dndScrubEnabled: true });
       const excluded = created.dndExcludedCount || 0;
       showToast(created.status === 'running' ? `Campaign queued: ${Math.max(0, created.totalContacts - excluded)} eligible contacts.` : 'Campaign saved as a draft.', 'success');
@@ -143,7 +141,9 @@ export function CampaignSetup({ initialAgentId = '', onComplete, onBusyChange })
   }
 
   const missing = Object.keys(variables?.missing_breakdown || {});
-  const ready = Boolean(config.name.trim() && currentAgent && validation?.validCount && consent && (!missing.length || variablePolicy !== 'review'));
+  const contactsReady = Math.max(0, (validation?.validCount || 0) - (variablePolicy === 'skip' ? variables?.missing_contact_indices?.length || 0 : 0));
+  const ready = Boolean(config.name.trim() && currentAgent && contactsReady && consent && !variables?.invalid_placeholders?.length && (!missing.length || variablePolicy !== 'review'));
+  const preview = variables?.previews?.[previewIndex] || variables?.previews?.[0];
   return (
     <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_19rem]" data-testid="campaign-setup">
       <fieldset disabled={Boolean(busy)} className="min-w-0 space-y-6">
@@ -165,7 +165,8 @@ export function CampaignSetup({ initialAgentId = '', onComplete, onBusyChange })
           {parsed && <details className="rounded-xl border border-[#E4E2EB] p-3"><summary className="min-h-8 cursor-pointer text-sm font-semibold">Column mapping · {parsed.totalRows.toLocaleString()} {parsed.totalRows === 1 ? 'row' : 'rows'} loaded</summary><div className="mt-3 space-y-3">{parsed.warnings?.map((warning, i) => <p key={i} className="break-words text-xs text-amber-800">{warning}</p>)}{parsed.headers.map((header) => <label key={header} className="grid min-w-0 items-center gap-1 text-sm sm:grid-cols-2"><span className="break-words">{header}</span><select className={input} aria-label={`Map ${header}`} value={mapping[header] || 'ignore'} onChange={(e) => { setMapping((prev) => ({ ...prev, [header]: e.target.value })); invalidate(); }}>{fields.map((key) => <option key={key} value={key}>{pretty(key)}</option>)}<option value={`custom_field:${header.toLowerCase().replace(/[^a-z0-9_]/g, '_')}`}>Custom field: {header}</option>{mapping[header]?.startsWith('custom_field:') && <option value={mapping[header]}>{mapping[header]}</option>}</select></label>)}</div></details>}
           <TactileButton variant="secondary" onClick={prepare} disabled={Boolean(busy)} icon={FileSpreadsheet}>{busy === 'Checking contacts' ? 'Checking contacts…' : validation ? 'Recheck contacts' : 'Validate contacts'}</TactileButton>
           {validation && <div role="status" className="space-y-3 rounded-xl border border-[#C5E7D7] bg-[#F1FBF5] p-4"><p className="flex items-center gap-2 text-sm font-semibold text-[#166534]"><CheckCircle2 className="h-4 w-4" />{validation.validCount.toLocaleString()} ready · {validation.invalidCount} invalid · {validation.duplicateCount} duplicates</p><p className="text-xs text-[#365A45]">Checked {validation.totalRows.toLocaleString()} contact {validation.totalRows === 1 ? 'row' : 'rows'}. Do Not Call exclusions are checked again before dialing.</p><details className="text-sm"><summary className="cursor-pointer">Contact preview and excluded rows</summary><div className="mt-2 overflow-x-auto"><table className="w-full min-w-[18rem] text-left text-xs"><caption className="sr-only">First five validated contacts</caption><thead><tr><th className="p-2">Name</th><th className="p-2">Phone</th></tr></thead><tbody>{validation.validContacts?.slice(0, 5).map((c, i) => <tr key={i}><td className="p-2">{c.full_name || c.first_name || '—'}</td><td className="p-2 font-mono">{c.phone}</td></tr>)}</tbody></table></div>{validation.invalidContacts?.slice(0, 10).map((c, i) => <p key={i} className="mt-1 break-words">Row {c.source_row ?? c.row_index ?? i + 1}: {c.error || c.reason || 'Invalid phone number'}</p>)}</details></div>}
-          {missing.length > 0 && <div className="space-y-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm"><p className="break-words">Some contacts are missing script variables: {missing.join(', ')}.</p><label className="block font-medium">Missing variable policy<select className={input} value={variablePolicy} onChange={(e) => setVariablePolicy(e.target.value)}><option value="review">Review before launch</option><option value="skip">Skip contacts missing these fields</option><option value="proceed">Use the script’s configured fallbacks</option></select></label></div>}
+          {Boolean(variables?.invalid_placeholders?.length) && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">The published script has an unsupported or unclosed placeholder. Insert variables from the script editor, publish the script, and recheck these contacts.</p>}
+          {missing.length > 0 && <div className="space-y-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm"><p className="break-words">Required script fields are missing: {missing.map((key) => `${key} (${variables.missing_breakdown[key]} contacts)`).join(', ')}. Fields with script fallbacks are already handled.</p><label className="block font-medium">Handle missing fields<select className={input} value={variablePolicy} onChange={(e) => setVariablePolicy(e.target.value)}><option value="review">Fix the mapping or script first</option><option value="skip">Skip contacts missing required fields</option></select></label></div>}
         </section>
         <details className="rounded-xl border border-[#E4E2EB] p-4"><summary className="cursor-pointer text-sm font-semibold">Advanced settings · pacing, calling hours and import options</summary><div className="mt-4 space-y-4">
           <label className="block text-sm font-medium">Description<textarea className={input} maxLength={4000} value={config.description} onChange={(e) => changeConfig('description', e.target.value)} /></label>
@@ -173,13 +174,17 @@ export function CampaignSetup({ initialAgentId = '', onComplete, onBusyChange })
           <p className="text-xs text-[#645D73]">Your plan limit also applies. Retries wait for a confirmed non-connection; uncertain requests need review.</p>
           <label className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" checked={windowEnabled} onChange={(e) => setWindowEnabled(e.target.checked)} className="h-4 w-4" />Limit calls to a daily calling window</label>
           {windowEnabled && <div className="grid gap-3 sm:grid-cols-2"><label className="text-sm font-medium">Start time<input type="time" className={input} value={callingWindow.start} onChange={(e) => setCallingWindow((prev) => ({ ...prev, start: e.target.value }))} /></label><label className="text-sm font-medium">End time<input type="time" className={input} value={callingWindow.end} onChange={(e) => setCallingWindow((prev) => ({ ...prev, end: e.target.value }))} /></label><label className="text-sm font-medium sm:col-span-2">Fallback timezone<input className={input} value={callingWindow.timezone} onChange={(e) => setCallingWindow((prev) => ({ ...prev, timezone: e.target.value }))} /><span className="mt-1 block text-xs font-normal text-[#645D73]">Uses each contact’s timezone when supplied; otherwise this IANA timezone (for example, Asia/Kolkata).</span></label></div>}
-          <label className="block text-sm font-medium">Save column mapping as template (optional)<input className={input} value={templateName} maxLength={255} onChange={(e) => setTemplateName(e.target.value)} /></label>
-          <label className="block text-sm font-medium">Save contacts as a list (optional)<input className={input} value={listName} maxLength={255} onChange={(e) => setListName(e.target.value)} /></label>
         </div></details>
       </fieldset>
       <aside className="min-w-0 self-start rounded-2xl border border-[#DCD7EE] bg-[#FAF9FD] p-5 lg:sticky lg:top-0" aria-label="Campaign review">
         <h3 className="text-base font-bold">Review campaign</h3><p className="mt-1 text-sm text-[#645D73]">Everything in one place before you launch.</p>
-        <dl className="my-5 space-y-3 text-sm"><div><dt className="text-[#645D73]">Agent</dt><dd className="break-words font-semibold">{agent?.name || 'Choose an agent'}</dd></div><div><dt className="text-[#645D73]">Contacts ready</dt><dd className="text-2xl font-bold tabular-nums">{validation?.validCount?.toLocaleString() ?? '—'}</dd></div><div><dt className="text-[#645D73]">Concurrent calls</dt><dd className="font-semibold">Up to {pacing.concurrency}, within your plan</dd></div><div><dt className="text-[#645D73]">Calling window</dt><dd className="break-words font-semibold">{windowEnabled ? `${callingWindow.start}–${callingWindow.end} · ${callingWindow.timezone}` : 'No daily time restriction'}</dd></div></dl>
+        {preview && <section className="mt-4 space-y-3 border-b border-[#DCD7EE] pb-4" aria-label="Script personalization">
+          <label className="block text-sm font-medium">Preview contact<select className={input} value={previewIndex} onChange={(event) => setPreviewIndex(Number(event.target.value))}>{variables.previews.map((item, index) => <option key={index} value={index}>{item.name || `Contact ${index + 1}`}</option>)}</select></label>
+          <dl className="space-y-2 text-xs">{Object.entries(preview.values || {}).map(([key, value]) => <div key={key} className="min-w-0"><dt className="break-all font-mono text-[#645D73]">{`{{${key}}}`}</dt><dd className="break-words font-semibold">{value || (preview.missingVariables?.includes(key) ? 'Missing — action required' : 'Using script fallback')}</dd></div>)}</dl>
+          <details><summary className="cursor-pointer text-sm font-semibold">Preview personalized script</summary><pre className="mt-2 max-h-72 overflow-y-auto whitespace-pre-wrap break-words rounded-lg bg-white p-3 font-sans text-xs leading-relaxed" data-testid="campaign-personalized-preview">{preview.renderedText}</pre></details>
+          <p className="text-xs text-[#645D73]">Each call uses its own contact values and this published script version.</p>
+        </section>}
+        <dl className="my-5 space-y-3 text-sm"><div><dt className="text-[#645D73]">Agent</dt><dd className="break-words font-semibold">{agent?.name || 'Choose an agent'}</dd></div><div><dt className="text-[#645D73]">Contacts ready</dt><dd className="text-2xl font-bold tabular-nums">{validation ? contactsReady.toLocaleString() : '—'}</dd></div><div><dt className="text-[#645D73]">Concurrent calls</dt><dd className="font-semibold">Up to {pacing.concurrency}, within your plan</dd></div><div><dt className="text-[#645D73]">Calling window</dt><dd className="break-words font-semibold">{windowEnabled ? `${callingWindow.start}–${callingWindow.end} · ${callingWindow.timezone}` : 'No daily time restriction'}</dd></div></dl>
         <div className="flex gap-2 rounded-xl bg-white p-3 text-xs text-[#365A45]"><ShieldCheck className="h-4 w-4 shrink-0" /><p>Do Not Call checks stay enabled. Pausing stops new work; calls already in progress may continue.</p></div>
         <label className="mt-4 flex cursor-pointer items-start gap-3 text-sm leading-relaxed"><input type="checkbox" checked={consent} disabled={!validation?.validCount || Boolean(busy)} onChange={(e) => setConsent(e.target.checked)} className="mt-1 h-4 w-4 shrink-0" /><span>I confirm I have authorization and required consent to call these contacts, and accept responsibility for the campaign’s purpose, content and legality.</span></label>
         {error && <div ref={errorRef} tabIndex={-1} role="alert" className="mt-4 flex gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800"><AlertCircle className="h-4 w-4 shrink-0" /><p className="break-words">{error}</p></div>}

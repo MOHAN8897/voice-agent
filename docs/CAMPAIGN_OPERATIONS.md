@@ -9,8 +9,9 @@ account, billing rate or deployment was changed during this work.
 1. Back up the database and apply Alembic revision
    `041_campaign_execution_safety`, after revision `040_vobiz_tenant_subaccounts`,
    through the normal deployment procedure. Apply the additive schema before
-   starting the updated API or worker. This migration has only been exercised
-   in generated schemas on an isolated PostgreSQL container.
+   starting the updated API or worker. Migration tests exercised generated
+   schemas on an isolated PostgreSQL container; each deployed database must
+   still be upgraded and checked separately.
 2. API and campaign workers must share PostgreSQL and a real Redis 6.2 or newer
    instance. Stream-token consumption uses `GETDEL`, and metadata updates use
    Redis transactions. Redis failure rejects media authentication in staging
@@ -25,6 +26,13 @@ account, billing rate or deployment was changed during this work.
    process count times (`DB_POOL_SIZE` + `DB_MAX_OVERFLOW`) must fit the database
    connection budget. Add worker instances only with measured database and
    upstream capacity. There was no production load benchmark in this audit.
+
+After applying migrations, run `python -m scripts.verify_postgres` before
+serving the new release. This read-only command compares the database revision
+with the code's required Alembic heads and exits with an error on a mismatch.
+It does not seed records. Database connectivity alone does not prove the schema
+is current: revision 039 is missing the phone number fields added by 040 and
+the campaign fields added by 041, causing both console list requests to fail.
 
 ## Admission and pacing
 
@@ -86,6 +94,28 @@ expanded content is also bounded. Only 50 rows are previewed, while all accepted
 rows are validated and sent. Saved lists and legacy oversized lists cannot
 bypass the campaign batch limit. Missing script variables must be reviewed,
 skipped or given explicit fallback values before launch.
+
+Map the CSV name column to `full_name` and use `{{contact.full_name}}` in the
+script. First and last names are optional. Existing `{{name}}`,
+`{{customer_name}}`, `{{lead_name}}` and legacy caller-name tags remain
+supported. Additional columns map to `custom_fields.<key>` and are available
+as `{{contact.custom_fields.<key>}}`. Map each destination field once; duplicate
+destinations are rejected rather than overwriting a recipient's data.
+
+Only placeholders present in the script become script variables. Details
+collected during a call are plain instructions, not required CSV fields.
+`{{contact.full_name | there}}` supplies an explicit fallback. Unsupported or
+unclosed placeholders block launch. The review shows sample recipients and
+their rendered business script, without platform instructions. Upload, paste
+and saved-list inputs use the same server validation. Saving separate mapping
+templates and contact lists is no longer part of campaign setup.
+
+Create, import and start all validate required fields on the server. Campaigns
+retain their published script version in `schedule.script_version`; primary
+call preparation and prewarm look it up through the tenant-owned campaign.
+Publishing a newer agent script does not silently change a campaign already
+prepared with an older version. A republish between preflight and creation
+requires the user to check contacts again.
 
 ## Security and verification limits
 

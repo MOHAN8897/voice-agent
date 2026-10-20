@@ -1,6 +1,6 @@
 import { expect } from '@playwright/test';
 
-export async function setupCampaign(page, { failCreate = false, initialCampaigns = [], analyticsStatus, analyticsDelay = 0 } = {}) {
+export async function setupCampaign(page, { failCreate = false, initialCampaigns = [], analyticsStatus, analyticsDelay = 0, variableReport, lists = [], listContacts = [] } = {}) {
   const state = { campaigns: [...initialCampaigns], creates: [], validations: [], variableChecks: [], analyticsRequests: 0, analyticsActive: 0, analyticsPeak: 0 };
   const user = { id: 'campaign-audit-user', userId: 'campaign-audit-user', name: 'Campaign Tester', fullName: 'Campaign Tester', email: 'campaign-audit@example.invalid', hasCompletedOnboarding: true, role: 'subscriber', tenantId: 'campaign-audit-tenant' };
   const b64 = (value) => Buffer.from(JSON.stringify(value)).toString('base64url');
@@ -26,18 +26,20 @@ export async function setupCampaign(page, { failCreate = false, initialCampaigns
       state.analyticsActive -= 1;
       return;
     }
-    else if (path === '/api/contacts/lists') data = { lists: [] };
+    else if (path === '/api/contacts/lists') data = { lists };
+    else if (path.startsWith('/api/contacts/lists/') && path.endsWith('/contacts')) data = { contacts: listContacts, totalContacts: listContacts.length };
     else if (path === '/api/contacts/parse') {
       const body = request.postDataJSON();
-      const [header, ...lines] = body.rawText.trim().split('\n');
+      const rawText = body.rawText || Buffer.from(body.contentBase64.split(',').at(-1), 'base64').toString('utf8');
+      const [header, ...lines] = rawText.trim().split('\n');
       const headers = header.split(',');
       const rows = lines.map((line) => Object.fromEntries(line.split(',').map((value, i) => [headers[i], value])));
-      data = { ok: true, fileName: 'pasted.csv', totalRows: rows.length, rows, previewRows: rows.slice(0, 50), headers, detectedMappings: Object.fromEntries(headers.map((key) => [key, { targetField: key }])), warnings: [] };
+      data = { ok: true, fileName: 'pasted.csv', totalRows: rows.length, rows, previewRows: rows.slice(0, 50), headers, detectedMappings: Object.fromEntries(headers.map((key) => [key, { field: key }])), warnings: [] };
     } else if (path === '/api/contacts/normalize-preview') {
       const body = request.postDataJSON(); state.validations.push(body);
       data = { ok: true, totalRows: body.rows.length, validCount: body.rows.length, invalidCount: 0, duplicateCount: 0, validContacts: body.rows, invalidContacts: [] };
     } else if (path === '/api/campaigns/validate-variables') {
-      state.variableChecks.push(request.postDataJSON()); data = { ok: true, valid: true, missing_breakdown: {} };
+      state.variableChecks.push(request.postDataJSON()); data = { ok: true, valid: true, missing_breakdown: {}, scriptVersion: 'cb_campaign_ui', ...variableReport };
     } else if (path.endsWith('/billing/wallet')) data = { balanceUsd: 100 };
     await route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(data) });
   });

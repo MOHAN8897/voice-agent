@@ -1,0 +1,19 @@
+{
+  "intents": {
+    "flow:drive-tenants-prepare-recipients-and-review-a-campaign": {
+      "declaredAt": 1792524173891,
+      "id": "flow:drive-tenants-prepare-recipients-and-review-a-campaign",
+      "source": "decided on the dashboard",
+      "state": "declared",
+      "statement": "Tenants prepare recipients and review a campaign on one setup page.",
+      "status": "proved",
+      "subject": "drive-tenants-prepare-recipients-and-rev",
+      "surface": {
+        "flow": "drive-tenants-prepare-recipients-and-review-a-campaign"
+      },
+      "updatedAt": 1792524176607
+    }
+  },
+  "subject": "drive-tenants-prepare-recipients-and-rev",
+  "version": 1
+}

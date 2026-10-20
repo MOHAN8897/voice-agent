@@ -8,7 +8,7 @@ from server.services.saas.script_variables import SAAS_SCRIPT_VARIABLES_TITLE
 
 DEFAULT_BOUNDARIES = [
     "Do not invent prices, policies, or appointments not in the script.",
-    "Use {{tag}} placeholders only when the value is known; never read empty tags aloud.",
+    "Use supplied contact details naturally. Ask for unknown details only when needed for the call's purpose.",
 ]
 
 
@@ -23,16 +23,11 @@ def studio_brain_sections(
     voice_config: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     lang = language or "te-IN"
-    tag_line = ", ".join(f"{{{{{v['key']}}}}}" for v in variables[:12])
     identity = "\n\n".join(
         [
             f"Role: {role or 'Voice agent'}",
             f"Opening greeting: {greeting}",
             "Speak naturally on a live phone call. Keep replies concise.",
-            (
-                "Runtime tags: substitute real values when known. "
-                f"Tags in this agent: {tag_line or '{{caller_name}}'}."
-            ),
         ]
     )
     guard = "\n".join(f"- {b}" for b in (boundaries or DEFAULT_BOUNDARIES))
@@ -57,7 +52,7 @@ def studio_brain_sections(
             "title": SAAS_SCRIPT_VARIABLES_TITLE,
             "order": 8,
             "raw_text": json.dumps({"version": 1, "variables": variables}, indent=2),
-            "enabled": True,
+            "enabled": False,
         },
         {
             "type": "identity_purpose",

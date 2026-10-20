@@ -218,10 +218,6 @@ export function AppShell({ onBackToLanding, onSignOut }) {
                   isBuyModalOpen={isBuyNumberOpen}
                   onCloseBuyModal={() => setIsBuyNumberOpen(false)}
                   onOpenBuyModal={() => {
-                    // Payment wall: buying a number charges the wallet immediately.
-                    if (requireFunds('A phone number costs $4 per month, charged to your wallet.')) {
-                      return;
-                    }
                     setIsBuyNumberOpen(true);
                   }}
                   onNavigate={handleNavigate}

@@ -22,6 +22,7 @@ from server.utils.rate_limiter import RateLimiter
 logger = logging.getLogger(__name__)
 router = APIRouter()
 _voice_session_limiter = RateLimiter(max_requests=12, window_s=3600)
+_voice_refresh_limiter = RateLimiter(max_requests=12, window_s=60)
 
 
 class KycSessionBody(BaseModel):
@@ -77,7 +78,7 @@ async def kyc_status(principal: SubscriberPrincipal = Depends(require_subscriber
 
 
 @router.get("/api/kyc/voice/status")
-async def voice_kyc_status(principal: SubscriberPrincipal = Depends(require_subscriber_jwt)):
+async def voice_kyc_status(principal: SubscriberPrincipal = Depends(require_subscriber_jwt), refresh: bool = False):
     """Tenant-scoped carrier verification status without exposing carrier credentials."""
     from server.services.telephony import active_telephony_provider
 
@@ -93,8 +94,13 @@ async def voice_kyc_status(principal: SubscriberPrincipal = Depends(require_subs
 
     from server.services.saas import voice_kyc_service
 
+    if refresh:
+        allowed, retry = _voice_refresh_limiter.allow(str(principal.tenant_id))
+        if not allowed:
+            from server.utils.rate_limiter import raise_rate_limited
+            raise_rate_limited(retry, "Verification status was checked too often. Please retry shortly.")
     try:
-        return await voice_kyc_service.refresh_kyc_status(principal.tenant_id)
+        return await voice_kyc_service.refresh_kyc_status(principal.tenant_id, force=refresh)
     except voice_kyc_service.VoiceKycError as exc:
         raise HTTPException(
             status_code=exc.status_code,

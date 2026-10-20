@@ -13,8 +13,20 @@
       "subject": "api"
     },
     {
+      "id": "inline:a-failed-verification-request-preserves-the-sele-28e5ed7c",
+      "statement": "A failed verification request preserves the selected number and legal d…",
+      "status": "proved",
+      "subject": "api"
+    },
+    {
       "id": "inline:a-fresh-provider-approved-kyc-status-replaces-th-5ee18213",
       "statement": "A fresh provider-approved KYC status replaces the verification form wit…",
+      "status": "proved",
+      "subject": "api"
+    },
+    {
+      "id": "inline:csv-column-mapping-and-published-script-placehol-7eb73f09",
+      "statement": "CSV column mapping and published script placeholders resolve to the sel…",
       "status": "proved",
       "subject": "api"
     },
@@ -61,8 +73,32 @@
       "subject": "console"
     },
     {
+      "id": "inline:choosing-a-number-opens-hosted-kyc-preparation-w-1035a4be",
+      "statement": "Choosing a number opens hosted KYC preparation with the selection and p…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
       "id": "inline:tenant-settings-exposes-phone-service-kyc-with-p-a3a16e03",
       "statement": "Tenant settings exposes phone-service KYC with persisted business ident…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:tenants-prepare-recipients-and-review-a-campaign-f3bd2f6f",
+      "statement": "Tenants prepare recipients and review a campaign on one setup page.",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:tenants-preview-the-personalized-script-for-an-a-b7deabdc",
+      "statement": "Tenants preview the personalized script for an actual selected campaign…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:tenants-see-available-number-inventory-and-the-a-b7143605",
+      "statement": "Tenants see available number inventory and the admin monthly price befo…",
       "status": "proved",
       "subject": "console"
     },
@@ -133,6 +169,12 @@
       "subject": "drive-creating-an-ai-employee-lands-the"
     },
     {
+      "id": "flow:drive-csv-column-mapping-and-published-script-placehol",
+      "statement": "CSV column mapping and published script placeholders resolve to the sel…",
+      "status": "proved",
+      "subject": "drive-csv-column-mapping-and-published-s"
+    },
+    {
       "id": "flow:drive-enter-test-email-mohansaiteja-99-gmail-com-into",
       "statement": "Enter test email mohansaiteja.99@gmail.com into signin form",
       "status": "proposed",
@@ -163,6 +205,12 @@
       "subject": "drive-operator-confirms-bulk-campaign-cr"
     },
     {
+      "id": "flow:drive-public-footer-links-open-the-privacy-page-at-a-c",
+      "statement": "Public footer links open the privacy page at a crawlable URL.",
+      "status": "proved",
+      "subject": "drive-public-footer-links-open-the-priva"
+    },
+    {
       "id": "flow:drive-refreshing-call-history-keeps-tenant-data-loaded",
       "statement": "Refreshing call history keeps tenant data loaded without session-expire…",
       "status": "proposed",
@@ -173,6 +221,12 @@
       "statement": "signup-completes",
       "status": "proposed",
       "subject": "drive-signup-completes"
+    },
+    {
+      "id": "flow:drive-tenants-prepare-recipients-and-review-a-campaign",
+      "statement": "Tenants prepare recipients and review a campaign on one setup page.",
+      "status": "proved",
+      "subject": "drive-tenants-prepare-recipients-and-rev"
     },
     {
       "id": "flow:drive-the-loaded-mascot-remains-interactive-after-init",

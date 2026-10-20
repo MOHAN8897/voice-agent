@@ -30,6 +30,7 @@ for (const [name, width, height] of [['mobile', 390, 844], ['tablet', 820, 1180]
     expect(state.creates).toHaveLength(1);
     expect(state.creates[0].contacts).toHaveLength(121);
     expect(state.creates[0].consentConfirmed).toBe(true);
+    expect(state.creates[0].expectedScriptVersion).toBe('cb_campaign_ui');
     expect(state.creates[0].callingWindow).toEqual({ start: '09:00', end: '18:00', timezone: 'Asia/Kolkata' });
     expect(errors).toEqual([]);
   });
@@ -51,6 +52,38 @@ test('failed create preserves input and keyboard focus stays inside modal', asyn
   await page.keyboard.press('Escape');
   await expect(dialog).not.toBeVisible();
   await expect(page.getByRole('button', { name: 'New campaign', exact: true })).toBeFocused();
+});
+
+test('upload uses real API field mappings and submits every uploaded recipient', async ({ page }) => {
+  const state = await setupCampaign(page);
+  await page.getByRole('button', { name: 'New campaign', exact: true }).click();
+  await page.getByLabel('Campaign name', { exact: true }).fill('Uploaded contacts');
+  await page.getByLabel('Contact spreadsheet').setInputFiles({ name: 'contacts.csv', mimeType: 'text/csv', buffer: Buffer.from('phone,full_name\n+12025550101,Example Contact') });
+  await page.getByRole('button', { name: 'Validate contacts', exact: true }).click();
+  await expect(page.getByText('1 ready · 0 invalid · 0 duplicates')).toBeVisible();
+  expect(state.validations[0].mapping).toEqual({ phone: 'phone', full_name: 'full_name' });
+});
+
+test('saved lists keep custom fields and required-field policy cannot silently erase data', async ({ page }) => {
+  const report = { valid: false, missing_breakdown: { 'contact.custom_fields.product': 1 }, missing_contact_indices: [1], previews: [{ name: 'First Contact', values: { 'contact.full_name': 'First Contact', 'contact.custom_fields.product': 'Service' }, missingVariables: [], renderedText: 'Hello First Contact, calling about Service.' }] };
+  const state = await setupCampaign(page, { variableReport: report, lists: [{ id: 'saved', name: 'Saved leads', totalContacts: 2 }], listContacts: [
+    { phone: '+12025550101', full_name: 'First Contact', custom_fields: { product: 'Service' } },
+    { phone: '+12025550102', full_name: 'Second Contact', custom_fields: {} },
+  ] });
+  await page.getByRole('button', { name: 'New campaign', exact: true }).click();
+  await page.getByLabel('Campaign name', { exact: true }).fill('Saved contacts');
+  await page.getByRole('button', { name: 'Saved list', exact: true }).click();
+  await page.getByRole('combobox', { name: 'Contact list', exact: true }).selectOption('saved');
+  await page.getByRole('button', { name: 'Validate contacts', exact: true }).click();
+  await expect(page.getByText('2 ready · 0 invalid · 0 duplicates')).toBeVisible();
+  expect(state.validations[0].mapping['custom_field:product']).toBe('custom_field:product');
+  await page.getByRole('checkbox', { name: /I confirm I have authorization/ }).check();
+  await expect(page.getByTestId('campaign-launch')).toBeDisabled();
+  await page.getByLabel('Handle missing fields').selectOption('skip');
+  await page.getByText('Preview personalized script', { exact: true }).click();
+  await expect(page.getByTestId('campaign-personalized-preview')).toHaveText('Hello First Contact, calling about Service.');
+  await page.getByTestId('campaign-launch').click();
+  expect(state.creates[0].contacts).toHaveLength(1);
 });
 
 test('changing import country invalidates prior validation and consent', async ({ page }) => {

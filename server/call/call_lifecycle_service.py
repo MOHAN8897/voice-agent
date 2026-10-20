@@ -168,10 +168,15 @@ class CallLifecycleService:
             stack_override=stack_override,
         )
         pipeline = pipeline_mode(settings=settings, stack_override=stack_override)
-        compiled_version, compiled_text, brain_source = await self._lock_compiled_brain(
-            agent["agent_id"],
-            session_id=lookup_session,
-        )
+        from server.services.saas.campaign_script import campaign_call_script
+        campaign_script = await campaign_call_script(agent, contact)
+        if campaign_script:
+            compiled_version, compiled_text = campaign_script
+            brain_source = "campaign_snapshot"
+        else:
+            compiled_version, compiled_text, brain_source = await self._lock_compiled_brain(
+                agent["agent_id"], session_id=lookup_session,
+            )
         if compiled_text:
             from server.brain.script_entities import realign_compiled_brain_for_session
 

@@ -45,25 +45,28 @@ def _fallback_greeting(
     direction: str = "inbound",
 ) -> str:
     who = (name or "our team").strip()
+    from server.brain.agent_script_compiler import resolve_script_identity
+    _, company, _, _ = resolve_script_identity(business, language=language, direction=direction)
+    company = company or (business.strip() if re.fullmatch(r"\w[\w&.-]{1,79}", business.strip()) else "our team")
     outbound = direction == "outbound"
     lang = (language or "en-IN").strip().lower()
     if lang.startswith("te"):
         if outbound:
             return (
-                f"Namaskaram, nenu {{{{business_name}}}} nunchi {who}. "
+                f"Namaskaram, nenu {company} nunchi {who}. "
                 "Konchem time unda?"
             )
         return (
-            f"Namaskaram, {{{{business_name}}}} ki call chesaru. Nenu {who}. "
+            f"Namaskaram, {company} ki call chesaru. Nenu {who}. "
             "Ela help cheyagalanu?"
         )
     if outbound:
         return (
-            f"Hello, this is {who} from {{{{business_name}}}}. "
+            f"Hello, this is {who} from {company}. "
             "Do you have a moment?"
         )
     return (
-        f"Hello, thanks for calling {{{{business_name}}}}. "
+        f"Hello, thanks for calling {company}. "
         f"You're speaking with {who}. How can I help you today?"
     )
 
@@ -80,7 +83,7 @@ def _fallback_script(
     biz = (business or brief or "this business").strip()
     goal = (goals or "help callers clearly").strip()
     agent = (name or "the voice agent").strip()
-    return f"""You are {agent}, an AI phone agent ({role}) for {{business_name}}.
+    return f"""You are {agent}, an AI phone agent ({role}) for this business.
 
 Business context:
 {biz[:1500]}
@@ -89,18 +92,18 @@ Goals:
 - {goal}
 
 Language:
-- Primary: {language}. Stay in this language unless the caller explicitly asks to switch.
+- Primary: {language}. Use natural professional speech with familiar English terms where appropriate.
 
 Call flow:
-1. Greet and confirm you represent {{business_name}}.
-2. Ask {{caller_name}} how you can help.
-3. Collect {{callback_phone}} if a follow-up is needed.
+1. Greet and introduce the business using the supplied context.
+2. Use the supplied contact name when available. Ask how you can help.
+3. For follow-up, use the known dialed number. Ask for a different number only if requested.
 4. Confirm next steps before ending the call.
 
 Rules:
 - Do not invent prices, policies, or appointments.
 - If unsure, offer a callback.
-- Confirm names, numbers, and times by repeating them back."""
+- Clarify uncertain names or times. Do not read phone numbers aloud."""
 
 
 def _infer_name_from_brief(brief: str) -> str:
@@ -159,11 +162,14 @@ async def compose_agent_onboarding(
                 "From the user's brief, produce:\n"
                 "1) greeting — one short spoken opening line\n"
                 "2) script — numbered call flow + rules for the live phone agent\n"
-                "3) variables — tags the agent will fill on calls\n\n"
-                "Use double-brace tags {{key}} in greeting and script for any value that is NOT fixed "
-                "in the brief (caller name, budget, appointment time, configuration, etc.). "
-                "Use snake_case keys (caller_name, budget_inr, site_visit_date). "
-                "Include business_name as a business-sourced tag when a company name appears. "
+                "3) variables — only placeholders actually used by this script\n\n"
+                "Use campaign contact data with {{contact.full_name}}, {{contact.phone}}, or "
+                "{{contact.custom_fields.field_name}}. CSV columns are mapped to these exact fields before calls. "
+                "Prefer the complete contact name; use {{contact.first_name}} only when supplied explicitly. "
+                "Optional fields need a natural fallback, such as {{contact.full_name | there}}. "
+                "Write known business names and facts literally. For details collected during a conversation, "
+                "write a plain instruction to ask; do not create a pre-call placeholder for unknown answers. "
+                "Do not add a variable legend or duplicate name variables. "
                 "source must be one of: caller, business, runtime.\n"
                 "Do not invent prices unless stated. Never instruct the agent to read phone numbers aloud."
                 f"{style_note}"

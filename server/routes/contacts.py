@@ -187,13 +187,16 @@ async def preview_normalized_contacts(
             "duplicateContacts": [],
         }
 
-    res = await asyncio.to_thread(normalize_and_validate_contacts,
-        rows=body.rows,
-        mapping=body.mapping,
-        default_country=body.default_country,
-        duplicate_strategy=body.duplicate_strategy,
-        source_file_name=body.source_file_name,
-    )
+    try:
+        res = await asyncio.to_thread(normalize_and_validate_contacts,
+            rows=body.rows,
+            mapping=body.mapping,
+            default_country=body.default_country,
+            duplicate_strategy=body.duplicate_strategy,
+            source_file_name=body.source_file_name,
+        )
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
     return {
         "ok": True,
         "totalRows": res["total_rows"],

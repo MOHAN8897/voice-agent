@@ -94,8 +94,7 @@ def test_mandatory_business_facts_survive_offer_shortening():
         company_name="Acme Insurance",
         work_scope="term insurance",
     )
-    assert "refund" in offer.lower() or "enrollment" in offer.lower()
-    assert "MANDATORY BUSINESS FACTS" in offer
+    assert "Refunds are not available after enrollment date is confirmed." in offer
 
 
 def test_infer_call_direction_prefers_outbound_when_mixed():
@@ -106,7 +105,7 @@ def test_infer_call_direction_prefers_outbound_when_mixed():
     assert infer_call_direction(brief) == "outbound"
 
 
-def test_onboarding_fallback_outbound_telugu_uses_double_brace_tags():
+def test_onboarding_fallback_resolves_fixed_business_name_before_calls():
     greeting = _fallback_greeting(
         "Priya",
         "sales",
@@ -114,11 +113,12 @@ def test_onboarding_fallback_outbound_telugu_uses_double_brace_tags():
         language="te-IN",
         direction="outbound",
     )
-    assert "{{business_name}}" in greeting
+    assert "Broski" in greeting
+    assert "{{business_name}}" not in greeting
     assert "thanks for calling" not in greeting.lower()
     vars_ = merge_variables(None, greeting, "")
     keys = {v["key"] for v in vars_}
-    assert "business_name" in keys
+    assert not keys
 
 
 @pytest.mark.asyncio

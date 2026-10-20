@@ -8,9 +8,9 @@ const SCRIPT_VARIABLE_GROUPS = [
     id: 'contact',
     title: 'Contact Personalization',
     variables: [
-      { label: 'First Name', key: 'contact.first_name', token: '{{contact.first_name}}', fallbackToken: '{{contact.first_name | there}}' },
-      { label: 'Last Name', key: 'contact.last_name', token: '{{contact.last_name}}' },
-      { label: 'Full Name', key: 'contact.full_name', token: '{{contact.full_name}}', fallbackToken: '{{contact.full_name | customer}}' },
+      { label: 'Contact Name', key: 'contact.full_name', token: '{{contact.full_name}}', fallbackToken: '{{contact.full_name | there}}' },
+      { label: 'First Name (optional)', key: 'contact.first_name', token: '{{contact.first_name}}', fallbackToken: '{{contact.first_name | there}}' },
+      { label: 'Last Name (optional)', key: 'contact.last_name', token: '{{contact.last_name}}' },
       { label: 'Company', key: 'contact.company', token: '{{contact.company}}', fallbackToken: '{{contact.company | your company}}' },
       { label: 'Job Title', key: 'contact.job_title', token: '{{contact.job_title}}' },
       { label: 'City', key: 'contact.city', token: '{{contact.city}}', fallbackToken: '{{contact.city | your area}}' },
@@ -202,6 +202,12 @@ export function renderScriptPreview(template, contact) {
       } else {
         val = contact?.[sub];
       }
+    } else if (['name', 'customer_name', 'lead_name', 'contact_name', 'client_name', 'full_name'].includes(path)) {
+      val = contact?.full_name || [contact?.first_name, contact?.last_name].filter(Boolean).join(' ');
+    } else if (path === 'caller_name') {
+      val = contact?.first_name || contact?.full_name;
+    } else if (path === 'callback_phone') {
+      val = contact?.phone;
     } else if (contact && path in contact) {
       val = contact[path];
     }

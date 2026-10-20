@@ -1,4 +1,4 @@
-"""Gemini Live instruction path — OpenAI Realtime PSTN parity."""
+"""Primary Gemini Live instruction assembly and provider routing."""
 from __future__ import annotations
 
 from server.agent.brain_prompt_composer import estimate_tokens
@@ -16,7 +16,11 @@ def test_condense_strips_duplicate_static_rules():
     static = STATIC_OUTPUT_RULES.strip()
     padded = f"AGENT IDENTITY\n\n{static}\n\nFLOW\n\n{static}\n\n{static}"
     out = condense_compiled_brain_for_gemini(padded)
-    assert out.count(static) == 1
+    from server.realtime.gemini_audio_session import GEMINI_TURN_STYLE
+    from server.services.voice_pipeline_limits import LIVE_REPLY_BREVITY_RULE
+    normalized_static = static.replace(LIVE_REPLY_BREVITY_RULE, GEMINI_TURN_STYLE)
+    assert out.count(normalized_static) == 1
+    assert out.count("--- STATIC OUTPUT RULES ---") == 1
     assert "FLOW" in out
 
 
@@ -83,7 +87,7 @@ def test_gemini_instructions_no_duplicate_business_blocks():
     assert gemini.count("Auto Cars Private Limited. Hyderabad servicing.") == 1
 
 
-def test_gemini_instructions_include_openai_parity_rules():
+def test_gemini_outbound_instructions_pin_identity_and_delivered_opening():
     brain = (
         "--- AGENT IDENTITY ---\nYou are Priya, calling from Acme.\n\n"
         "--- CONVERSATION FLOW ---\nStep 1: greet\n"
@@ -94,7 +98,7 @@ def test_gemini_instructions_include_openai_parity_rules():
         direction="outbound",
         opening_greeting="Namaste, nenu Priya, Acme nundi.",
     )
-    assert "FIRST TURN / IDENTITY" in gemini
+    assert "PINNED IDENTITY" in gemini
     assert "OUTPUT MODALITY RULES" in gemini
     assert "CALL DIRECTION" in gemini
     assert "Priya" in gemini
@@ -115,7 +119,10 @@ def test_router_keeps_openai_path():
     assert "GEMINI LIVE PSTN" not in openai
 
 
-def test_router_uses_gemini_path():
+def test_router_uses_gemini_path(monkeypatch):
+    from unittest.mock import Mock
+    builder = Mock(return_value="primary-gemini-session")
+    monkeypatch.setattr("server.realtime.gemini_audio_session.build_gemini_audio_session_instructions", builder)
     brain = "COMPANY & OFFER\nAcme plots."
     gemini = build_realtime_voice_instructions(
         brain,
@@ -125,5 +132,5 @@ def test_router_uses_gemini_path():
         direction="outbound",
         opening_greeting="time unda?",
     )
-    assert "GEMINI LIVE PSTN" in gemini
-    assert "OUTPUT MODALITY RULES" in gemini
+    assert gemini == "primary-gemini-session"
+    builder.assert_called_once()

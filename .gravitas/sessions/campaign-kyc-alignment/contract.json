@@ -1,0 +1,21 @@
+{
+  "mode": "implement",
+  "objective": "Align campaign CSV, script variables, generation and call handoff; simplify campaign setup; repair tenant number selection, retail pricing and hosted customer-use KYC",
+  "planning": "deep",
+  "context_depth": "dependency",
+  "verification_depth": "impact",
+  "delegation": "none",
+  "reason_codes": ["multiple-files", "shared-variable-contract", "tenant-number-onboarding"],
+  "risk": "high",
+  "budget": "balanced",
+  "allowed_write_scope": ["server/brain", "server/realtime/gemini_audio_session.py", "server/services", "server/routes", "server/call", "server/tests", "voxly-ai/src", "voxly-ai/scripts", "voxly-ai/e2e", "voxly-ai/.reticle", ".gravitas/sessions/campaign-kyc-alignment", "docs", "graft", ".env", ".env.example"],
+  "non_goals": ["No production config or schema mutations", "No real number purchases, outbound calls or provider subaccount creation during verification", "Preserve existing unrelated changes", "Do not audit secondary OpenAI or secondary PSTN flows"],
+  "acceptance_criteria": [
+    "Canonical and legacy name tokens resolve consistently; dotted and fallback variables are preserved in script metadata and generation",
+    "Campaign preflight respects defaults, previews actual recipient script text, and prevents unresolved required fields from dialing",
+    "Upload, paste and saved-list campaign paths retain mapped fields with a compact review flow",
+    "Local verification setup diagnoses prerequisites and can create or resume isolated customer-use hosted KYC securely",
+    "Phone purchase shows provider inventory and admin retail price before KYC, retains selection across verification, and requires approval before purchase",
+    "Targeted server and UI regressions, production build, SAST and Reticle produce observed evidence; provider-dependent limitations are stated"
+  ]
+}

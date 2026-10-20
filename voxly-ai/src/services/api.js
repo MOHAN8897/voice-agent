@@ -973,8 +973,8 @@ export const api = {
     async createSession(email = null) {
       return await api.request('POST', '/api/kyc/session', email ? { email } : {});
     },
-    async getVoiceStatus() {
-      return await api.request('GET', '/api/kyc/voice/status');
+    async getVoiceStatus({ refresh = false } = {}) {
+      return await api.request('GET', `/api/kyc/voice/status${refresh ? '?refresh=true' : ''}`);
     },
     async startVoiceSession(details) {
       return await api.request('POST', '/api/kyc/voice/session', details);
@@ -1101,6 +1101,7 @@ export const api = {
         name: campaignData.name,
         clientRequestId: campaignData.clientRequestId,
         agentId: campaignData.agentId || campaignData.agent_id,
+        expectedScriptVersion: campaignData.expectedScriptVersion,
         concurrency: campaignData.concurrencyLimit || campaignData.concurrency || 5,
         maxAttempts: campaignData.maxAttemptsPerContact || campaignData.maxAttempts,
         retryDelayMinutes: campaignData.retryDelayMinutes,

@@ -13,19 +13,6 @@ from server.services.saas.script_variables import SAAS_SCRIPT_VARIABLES_TITLE, m
 CALLING_SCRIPT_TITLE = "Calling script"
 
 
-def _append_variable_legend(script: str, variables: list[dict[str, str]]) -> str:
-    if not variables:
-        return script
-    lines = ["", "--- RUNTIME TAGS (fill when known; never read empty tags aloud) ---"]
-    for v in variables:
-        key = v.get("key", "")
-        if not key:
-            continue
-        desc = v.get("description") or v.get("label") or key
-        lines.append(f"{{{{{key}}}}}: {desc}")
-    return (script.rstrip() + "\n" + "\n".join(lines)).strip()
-
-
 def draft_sections_for_saas_employee(
     *,
     user_script: str,
@@ -35,7 +22,7 @@ def draft_sections_for_saas_employee(
     voice_config: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     lang = (language or "en-IN").strip() or "en-IN"
-    script_body = _append_variable_legend(user_script, variables)
+    script_body = user_script
     voice_cfg = voice_config or {
         "realtimeVoice": "Puck",
         "voiceId": "Puck",

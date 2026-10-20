@@ -1,0 +1,35 @@
+{
+  "mode": "migration",
+  "objective": "Restore phone number and campaign reads after code/database migration mismatch, and make database verification reject an outdated schema.",
+  "policy": {
+    "planning": "compact",
+    "context_depth": "dependency",
+    "verification_depth": "impact",
+    "delegation": "none",
+    "reason_codes": ["confirmed-schema-mismatch", "existing-local-database", "two-api-paths"]
+  },
+  "allowed_write_scope": [
+    ".gravitas/sessions/console-schema-repair/",
+    ".gravitas/security-reports/console-schema-repair/",
+    "scripts/verify_postgres.py",
+    "server/tests/test_verify_postgres.py",
+    "docs/CAMPAIGN_OPERATIONS.md"
+  ],
+  "acceptance_criteria": [
+    "A read-only database check rejects the observed revision 039 when code requires revision 041.",
+    "Database verification never seeds or changes customer records and does not print connection secrets.",
+    "Only after explicit approval, apply existing additive migrations 040 and 041 to configured loopback PostgreSQL.",
+    "Verify current schema and both affected query paths after migration; report browser/API verification limits."
+  ],
+  "boundaries": [
+    "Preserve unrelated Reticle working tree changes.",
+    "No customer record deletion, carrier calls, provider changes, billing changes, deployment, or push.",
+    "User explicitly approved applying existing migrations 040 and 041 to configured local PostgreSQL and verifying the result."
+  ],
+  "decision": {
+    "action": "Repair the schema using existing reviewed migrations and tighten the existing database diagnostic.",
+    "reason": "PostgreSQL reports revision 039 and lacks exactly the ORM columns selected by both failing list routes; the existing verification script would still print integration OK and seed data.",
+    "risk": "Additive schema DDL can acquire locks; offline SQL reviewed, back up first, bound the migration process duration, and verify the approved loopback target and exact revision range."
+  },
+  "approval": "Apply both migrations and verify"
+}

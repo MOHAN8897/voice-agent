@@ -80,3 +80,6 @@ scratch/
 # Local scanner snapshots and generated verification outputs
 /.gravitas/security-reports/
 /.gravitas/sessions/runtime-hardening/*-result.json
+
+/.gravitas/sessions/*/*.png
+/.gravitas/sessions/*/*.txt

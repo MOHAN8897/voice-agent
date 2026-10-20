@@ -25,7 +25,7 @@ GEMINI_TURN_STYLE = (
     "A brief answer is enough when no follow-up is needed. Never cut words or add filler."
 )
 
-_SECTION_HEADER = re.compile(r"(?:^|\n)---\s*(.+?)\s*---\s*\n", re.IGNORECASE)
+_SECTION_HEADER = re.compile(r"^---[ \t]*(.+?)[ \t]*---[ \t]*\r?(?:\n|$)", re.IGNORECASE | re.MULTILINE)
 
 # Blocks that appear verbatim more than once in the assembled instruction. Keeping
 # the first copy and dropping the rest changes no rule the model is asked to follow;

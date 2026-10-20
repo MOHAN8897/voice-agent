@@ -50,6 +50,55 @@
       },
       "updatedAt": 1792469826136
     },
+    "inline:a-failed-verification-request-preserves-the-sele-28e5ed7c": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "POST",
+            "status": 503,
+            "urlContains": "/api/kyc/voice/session"
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "voice-service-kyc-error"
+            }
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "voice-service-kyc-start"
+            },
+            "state": "enabled"
+          },
+          {
+            "contains": "PAN and Aadhaar",
+            "kind": "text",
+            "visible": true
+          }
+        ]
+      },
+      "declaredAt": 1792523784322,
+      "id": "inline:a-failed-verification-request-preserves-the-sele-28e5ed7c",
+      "provenBy": {
+        "at": 1792523784496,
+        "grade": "net",
+        "runId": "drive-s2403848c-1aca-4abd-8762-13932f565c03",
+        "verdictId": "reticle_act_and_wait:1792523784496"
+      },
+      "state": "proved",
+      "statement": "A failed verification request preserves the selected number and legal details and permits retry.",
+      "status": "proved",
+      "subject": "api",
+      "surface": {
+        "files": [
+          "src/console/ui/TactileButton.jsx"
+        ]
+      },
+      "updatedAt": 1792523784538
+    },
     "inline:a-fresh-provider-approved-kyc-status-replaces-th-5ee18213": {
       "binding": {
         "kind": "allOf",
@@ -92,6 +141,53 @@
         ]
       },
       "updatedAt": 1792433922116
+    },
+    "inline:csv-column-mapping-and-published-script-placehol-7eb73f09": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "POST",
+            "status": 200,
+            "urlContains": "/api/contacts/normalize-preview"
+          },
+          {
+            "kind": "net",
+            "method": "POST",
+            "status": 200,
+            "urlContains": "/api/campaigns/validate-variables"
+          },
+          {
+            "contains": "Example Contact",
+            "kind": "text"
+          },
+          {
+            "kind": "element",
+            "query": {
+              "label": "Preview contact"
+            }
+          }
+        ]
+      },
+      "declaredAt": 1792523556500,
+      "id": "inline:csv-column-mapping-and-published-script-placehol-7eb73f09",
+      "provenBy": {
+        "at": 1792523556724,
+        "grade": "net",
+        "runId": "drive-s2403848c-1aca-4abd-8762-13932f565c03",
+        "verdictId": "reticle_act_and_wait:1792523556724"
+      },
+      "state": "proved",
+      "statement": "CSV column mapping and published script placeholders resolve to the selected recipient before campaign launch.",
+      "status": "proved",
+      "subject": "api",
+      "surface": {
+        "files": [
+          "src/console/ui/TactileButton.jsx"
+        ]
+      },
+      "updatedAt": 1792523556766
     },
     "inline:failed-hosted-verification-preserves-the-tenant-939df19d": {
       "binding": {

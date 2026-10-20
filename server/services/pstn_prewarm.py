@@ -441,10 +441,14 @@ async def _build_prewarm_bundle(
         ),
         stack_override=pstn_opts.get("stack_override"),
     )
-    _version, compiled, _brain_src = await call_lifecycle_service._lock_compiled_brain(
-        agent["agent_id"],
-        session_id=config_session,
-    )
+    from server.services.saas.campaign_script import campaign_call_script
+    campaign_script = await campaign_call_script(agent, dial_meta.get("contact")) if provider == "vobiz" else None
+    if campaign_script:
+        _version, compiled = campaign_script
+    else:
+        _version, compiled, _brain_src = await call_lifecycle_service._lock_compiled_brain(
+            agent["agent_id"], session_id=config_session,
+        )
     if compiled:
         from server.brain.script_entities import realign_compiled_brain_for_session
 

@@ -595,6 +595,10 @@ def normalize_and_validate_contacts(
     """Transform uploaded raw rows through the tenant's chosen mapping.
     Handles phone validation, deduplication, custom fields preservation, and raw data capture.
     """
+    targets = [target for target in mapping.values() if target and target != "ignore"]
+    normalized_targets = [target.replace("custom_field:", "custom_fields.", 1) for target in targets]
+    if len(normalized_targets) != len(set(normalized_targets)):
+        raise ValueError("Map each contact field to only one column. Keep additional columns as custom fields.")
     valid_contacts: list[dict[str, Any]] = []
     invalid_contacts: list[dict[str, Any]] = []
     duplicate_contacts: list[dict[str, Any]] = []
@@ -741,8 +745,10 @@ def normalize_and_validate_contacts(
 def extract_template_variables_from_text(*texts: str) -> list[str]:
     """Find all {{contact.*}} and {{...}} placeholders in agent prompts (supports fallback {{var | default}})."""
     variables: list[str] = []
-    pattern = re.compile(r"\{\{\s*([a-zA-Z0-9_.]+)(?:\s*(?:\||\|\|)\s*([^}]+?))?\s*\}\}")
+    from server.services.saas.script_variables import TEMPLATE_TAG_RE
+    pattern = TEMPLATE_TAG_RE
     for t in texts:
+        t = _without_variable_legend(t or "")
         if not t:
             continue
         for m in pattern.finditer(t):
@@ -805,6 +811,8 @@ def resolve_contact_variables(contact: dict[str, Any]) -> dict[str, str]:
     out["first_name"] = first_name or full_name
     out["last_name"] = last_name
     out["full_name"] = full_name
+    for alias in ("name", "customer_name", "lead_name", "contact_name", "client_name"):
+        out[alias] = full_name or first_name
     out["phone"] = phone
     out["email"] = email
     out["company"] = company
@@ -831,41 +839,64 @@ def validate_agent_variables_against_contacts(
         "missing_breakdown": { var_name: missing_count }
     }
     """
+    from server.services.saas.script_variables import TEMPLATE_TAG_RE
+    agent_texts = [_without_variable_legend(text or "") for text in agent_texts]
+    invalid_placeholders: list[str] = []
+    for text in agent_texts:
+        remaining = TEMPLATE_TAG_RE.sub("", text)
+        if "{{" in remaining or "}}" in remaining:
+            invalid_placeholders.extend(re.findall(r"\{\{[^\n]*?(?:\}\}|$)", remaining) or ["Unclosed placeholder"])
     vars_used = extract_template_variables_from_text(*agent_texts)
+    required = {
+        match.group(1).strip()
+        for text in agent_texts
+        for match in TEMPLATE_TAG_RE.finditer(text or "")
+        if match.group(2) is None
+    }
     missing_breakdown: dict[str, int] = {}
     missing_indices: set[int] = set()
 
-    for var in vars_used:
-        # Ignore system tags
-        if var in ("business_name", "date", "time", "system.date", "system.time_of_day", "system.day_of_week"):
-            continue
-
-        missing_count = 0
-        for index, c in enumerate(contacts):
-            resolved = resolve_contact_variables(c)
-            val = resolved.get(var)
-            if not val:
-                missing_count += 1
-                missing_indices.add(index)
-
-        if missing_count > 0:
-            missing_breakdown[var] = missing_count
+    required -= {"business_name", "date", "time", "system.date", "system.time_of_day", "system.day_of_week"}
+    previews: list[dict[str, Any]] = []
+    for index, contact in enumerate(contacts):
+        resolved = resolve_contact_variables(contact)
+        missing = sorted(var for var in required if not resolved.get(var))
+        for var in missing:
+            missing_breakdown[var] = missing_breakdown.get(var, 0) + 1
+        if missing:
+            missing_indices.add(index)
+        if index < 3:
+            previews.append({
+                "contactIndex": index,
+                "name": resolved.get("contact.full_name") or resolved.get("first_name") or "Contact",
+                "values": {var: resolved.get(var, "") for var in vars_used},
+                "missingVariables": missing,
+                "renderedText": render_agent_prompt_for_contact(agent_texts[0] if agent_texts else "", contact)[:6000],
+            })
 
     return {
-        "valid": len(missing_breakdown) == 0,
+        "valid": len(missing_breakdown) == 0 and not invalid_placeholders,
         "variables_used": vars_used,
         "missing_breakdown": missing_breakdown,
         "missing_contact_indices": sorted(missing_indices),
         "total_contacts": len(contacts),
+        "previews": previews,
+        "invalid_placeholders": list(dict.fromkeys(invalid_placeholders)),
     }
+
+
+def _without_variable_legend(text: str) -> str:
+    return re.sub(r"(?ms)^\s*--- RUNTIME TAGS[^\n]*\n.*?(?=^\s*--- |\Z)", "", text)
 
 
 def render_agent_prompt_for_contact(prompt: str, contact: dict[str, Any]) -> str:
     """Render agent script replacing {{var}} or {{var | fallback}} tags with contact-specific values."""
     if not prompt:
         return ""
+    prompt = _without_variable_legend(prompt)
     resolved = resolve_contact_variables(contact)
-    pattern = re.compile(r"\{\{\s*([a-zA-Z0-9_.]+)(?:\s*(?:\||\|\|)\s*([^}]+?))?\s*\}\}")
+    from server.services.saas.script_variables import TEMPLATE_TAG_RE
+    pattern = TEMPLATE_TAG_RE
 
     def replacer(match: re.Match) -> str:
         key = match.group(1).strip()
