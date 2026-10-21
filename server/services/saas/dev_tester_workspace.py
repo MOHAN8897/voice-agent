@@ -44,8 +44,11 @@ async def ensure_dev_tester_phone_line(tenant_id: uuid.UUID, email: str | None) 
     if not is_dev_tester_email(email):
         return
     settings = get_settings()
+    default_tid = None
     try:
-        default_tid = uuid.UUID(str(settings.default_tenant_id))
+        raw_tid = getattr(settings, "default_tenant_id", None)
+        if raw_tid:
+            default_tid = uuid.UUID(str(raw_tid))
     except (ValueError, TypeError):
         default_tid = None
     if default_tid and tenant_id != default_tid:

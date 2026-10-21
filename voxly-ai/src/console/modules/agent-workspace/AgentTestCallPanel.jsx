@@ -1,11 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  AlertCircle,
   Mic,
   MicOff,
   Pause,
   PhoneCall,
   PhoneOff,
   Play,
+  Radio,
   Wallet,
 } from 'lucide-react';
 import { useWorkspace } from '../../context/WorkspaceContext';
@@ -62,18 +64,76 @@ export function AgentTestCallPanel({ agent, language }) {
     balanceUsd > 0 ? balanceUsd : balanceInr > 0 ? balanceInr / fx : 0;
   const walletEmpty = displayUsd <= 0 && balanceInr <= 0 && balanceUsd <= 0;
   const isActive = agent?.status === 'active';
-  const availableOutboundNumbers = useMemo(() => {
-    return phoneNumbers.filter((n) => n.outboundEnabled !== false);
-  }, [phoneNumbers]);
 
-  const defaultFromLine =
-    outboundFromE164 ||
-    availableOutboundNumbers[0]?.e164 ||
-    availableOutboundNumbers[0]?.number ||
-    '';
+  // Find the agent's assigned phone line
+  const assignedLine = useMemo(() => {
+    const fromList = phoneNumbers.find(
+      (n) => (agent?.id && n.assignedAgentId === agent.id) || (agent?.numberId && n.id === agent.numberId)
+    );
+    if (fromList) return fromList;
+    const directNum = agent?.assignedNumber || agent?.phoneNumber;
+    if (directNum) {
+      return {
+        id: agent?.numberId || 'assigned-line',
+        e164: directNum,
+        number: directNum,
+        assignedAgentId: agent?.id,
+        outboundEnabled: true,
+      };
+    }
+    return null;
+  }, [phoneNumbers, agent]);
+
+  // All valid outbound numbers available to this agent/workspace
+  const availableOutboundNumbers = useMemo(() => {
+    // 1. Gather all tenant numbers that are not released or failed
+    const valid = phoneNumbers.filter(
+      (n) => !['released', 'failed'].includes(n.status) && (n.e164 || n.number)
+    );
+
+    // 2. Ensure assignedLine is included even if phoneNumbers list hasn't finished syncing
+    const list = [...valid];
+    if (assignedLine) {
+      const assignedVal = assignedLine.e164 || assignedLine.number;
+      if (!list.some((n) => (n.e164 || n.number) === assignedVal)) {
+        list.unshift(assignedLine);
+      }
+    }
+
+    // 3. Sort assigned line directly to the top (index 0)
+    if (assignedLine) {
+      const assignedVal = assignedLine.e164 || assignedLine.number;
+      list.sort((a, b) => {
+        const aVal = a.e164 || a.number;
+        const bVal = b.e164 || b.number;
+        if (aVal === assignedVal) return -1;
+        if (bVal === assignedVal) return 1;
+        return 0;
+      });
+    }
+
+    return list;
+  }, [phoneNumbers, assignedLine]);
+
+  // Default to the agent's dedicated assigned line first, then workspace outboundFromE164, then first available
+  const defaultFromLine = useMemo(() => {
+    if (assignedLine) return assignedLine.e164 || assignedLine.number || '';
+    if (outboundFromE164) return outboundFromE164;
+    return availableOutboundNumbers[0]?.e164 || availableOutboundNumbers[0]?.number || '';
+  }, [assignedLine, outboundFromE164, availableOutboundNumbers]);
 
   const [selectedFromLine, setSelectedFromLine] = useState('');
   const activeFromLine = selectedFromLine || defaultFromLine;
+
+  const displayTrunkLabel = useMemo(() => {
+    const raw = providerInfo?.activeLabel || providerInfo?.activeProvider || '';
+    if (!raw) return 'Enterprise Voice Network';
+    const low = raw.toLowerCase();
+    if (low.includes('vobiz') || low.includes('telnyx')) {
+      return 'Enterprise Voice Network';
+    }
+    return raw;
+  }, [providerInfo]);
 
   useEffect(() => {
     api.telephony?.getProvider?.().then(setProviderInfo).catch(() => {});
@@ -237,23 +297,40 @@ export function AgentTestCallPanel({ agent, language }) {
   const dialPhone = async () => {
     if (!agent?.id) return;
     if (!requireLive() || !requireWallet()) return;
-    if (!toE164.trim()) {
-      showToast('Enter a destination number in E.164 (+1…).', 'error');
+    const rawDest = toE164.trim();
+    if (!rawDest) {
+      showToast('Enter a phone number with country code (e.g. +91 98765 43210).', 'error');
+      return;
+    }
+    // Clean spaces, hyphens, and parentheses
+    let cleanDest = rawDest.replace(/[\s()-]/g, '');
+    if (cleanDest.startsWith('00')) cleanDest = '+' + cleanDest.slice(2);
+    if (!cleanDest.startsWith('+')) {
+      const digits = cleanDest.replace(/\D/g, '');
+      if (digits.length === 10) {
+        cleanDest = `+91${digits}`; // Default to +91 for standard 10-digit Indian input
+      } else {
+        cleanDest = `+${digits}`;
+      }
+    }
+    if (cleanDest.length < 8) {
+      showToast('Please enter a valid phone number with country code (e.g. +91 98765 43210).', 'error');
       return;
     }
     setDialBusy(true);
     try {
       await placeOutboundCall({
         agentId: agent.id,
-        toE164: toE164.trim(),
+        toE164: cleanDest,
         fromE164: activeFromLine || null,
       });
-      showToast('Live number call started', 'success');
-      push(`Dialing ${toE164.trim()}…`);
-      setStatusNote(`Dialing ${toE164.trim()} — same agent script as browser test`);
+      showToast('Live call initiated', 'success');
+      push(`Dialing ${cleanDest}…`);
+      setStatusNote(`Calling ${cleanDest} — agent is speaking from its published script`);
     } catch (e) {
       const msg = e.message || 'Could not place call';
       showToast(msg, 'error');
+      push(`Call attempt failed: ${msg}`, 'system');
       if (/wallet|balance|funds|402/i.test(msg)) openAddFunds?.(msg);
     } finally {
       setDialBusy(false);
@@ -442,64 +519,101 @@ export function AgentTestCallPanel({ agent, language }) {
           </div>
         </SolidCard>
       ) : (
-        <SolidCard className="space-y-3" data-testid="test-call-live-number">
-          <div className="flex items-center justify-between text-[11px] pb-1.5 border-b border-[#E4E2EB]">
-            <span className="text-[#524E5E]">Active Telephony Trunk</span>
-            <span className="font-bold text-[#6344E7] uppercase tracking-wide">
-              {providerInfo?.activeLabel || providerInfo?.activeProvider || 'Network Managed'}
+        <SolidCard className="space-y-3.5" data-testid="test-call-live-number">
+          <div className="flex items-center justify-between text-xs pb-2 border-b border-[#E4E2EB]">
+            <span className="text-[#524E5E] font-medium">Voice Network</span>
+            <span className="inline-flex items-center gap-1.5 font-semibold text-[#10B981] bg-[#ECFDF5] px-2.5 py-0.5 rounded-full text-[11px]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" />
+              {displayTrunkLabel}
             </span>
           </div>
-          <p className="text-[11px] text-[#524E5E]">
-            Places a real outbound call to a live number using this agent&apos;s published script —
-            same path as production phone calls. Billed from your wallet.
+          <p className="text-xs text-[#524E5E] leading-relaxed">
+            Dials a real phone number to test this agent on a mobile or landline. The agent uses its published prompt and speech voice. Call minutes are billed from your wallet.
           </p>
-          <label className="block text-xs font-bold text-[#0F0E17]">
-            Destination (E.164)
+
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-bold text-[#0F0E17]">
+                Phone Number to Call
+              </label>
+              <span className="text-[10px] text-[#8C879A]">e.g. +91 98765 43210</span>
+            </div>
             <input
               type="tel"
               value={toE164}
               onChange={(e) => setToE164(e.target.value)}
-              placeholder="+1555…"
+              placeholder="+91 98765 43210"
               data-testid="test-call-phone-to"
-              className="mt-1 w-full rounded-xl border border-[#E4E2EB] bg-white px-3 py-2 font-mono text-base sm:text-xs min-h-[42px] sm:min-h-[38px]"
+              className="w-full rounded-xl border border-[#E4E2EB] bg-white px-3 py-2 font-mono text-sm min-h-[42px] sm:min-h-[38px] text-[#0F0E17] focus:outline-none focus:border-[#6344E7] focus:ring-1 focus:ring-[#6344E7]"
             />
-          </label>
+            <p className="text-[10px] text-[#8C879A] mt-1">
+              Enter your mobile or test phone number including the country code (+91 for India, +1 for US).
+            </p>
+          </div>
+
           <div>
             <label className="block text-xs font-bold text-[#0F0E17] mb-1">
               Caller ID Line (From)
             </label>
             {availableOutboundNumbers.length > 0 ? (
-              <select
-                value={activeFromLine}
-                onChange={(e) => setSelectedFromLine(e.target.value)}
-                data-testid="test-call-phone-from-select"
-                className="w-full rounded-xl border border-[#E4E2EB] bg-white px-3 py-2 font-mono text-base sm:text-xs min-h-[42px] sm:min-h-[38px] text-[#0F0E17] focus:outline-none focus:border-[#6344E7]"
-              >
-                {availableOutboundNumbers.map((num) => {
-                  const val = num.e164 || num.number;
-                  const lineLabel = 'DIRECT LINE';
-                  const assigned = num.assignedAgentId === agent?.id ? ' (Assigned to this agent)' : '';
-                  return (
-                    <option key={num.id || val} value={val}>
-                      {val} • {lineLabel}{num.locality ? ` (${num.locality})` : ''}{assigned}
-                    </option>
-                  );
-                })}
-              </select>
+              <>
+                <select
+                  value={activeFromLine}
+                  onChange={(e) => setSelectedFromLine(e.target.value)}
+                  data-testid="test-call-phone-from-select"
+                  className="w-full rounded-xl border border-[#E4E2EB] bg-white px-3 py-2 font-mono text-sm min-h-[42px] sm:min-h-[38px] text-[#0F0E17] focus:outline-none focus:border-[#6344E7]"
+                >
+                  {availableOutboundNumbers.map((num) => {
+                    const val = num.e164 || num.number;
+                    const isAgentAssigned =
+                      num.assignedAgentId === agent?.id ||
+                      (assignedLine && val === (assignedLine.e164 || assignedLine.number));
+                    const assigned = isAgentAssigned ? ' (Assigned to this agent)' : '';
+                    return (
+                      <option key={num.id || val} value={val}>
+                        {val} • {assigned || (num.locality ? num.locality : 'Direct Line')}
+                      </option>
+                    );
+                  })}
+                </select>
+                <p className="text-[10px] text-[#8C879A] mt-1">
+                  The caller ID that will display on the recipient&apos;s phone screen.
+                </p>
+              </>
             ) : (
-              <input
-                type="tel"
-                value={activeFromLine}
-                onChange={(e) => setSelectedFromLine(e.target.value)}
-                placeholder="+1555..."
-                data-testid="test-call-phone-from-input"
-                className="w-full rounded-xl border border-[#E4E2EB] bg-white px-3 py-2 font-mono text-base sm:text-xs min-h-[42px] sm:min-h-[38px] text-[#0F0E17]"
-              />
+              <div className="space-y-1.5">
+                <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3 text-xs text-amber-900 space-y-1">
+                  <div className="flex items-center gap-1.5 font-semibold text-amber-900">
+                    <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>No dedicated phone line in workspace</span>
+                  </div>
+                  <p className="text-[11px] text-amber-800 leading-normal">
+                    Outbound calls require an active phone number as Caller ID. You can test your agent immediately using the <strong>Browser mic</strong> tab above with zero setup, or buy a dedicated phone line in <strong>Phone lines</strong>.
+                  </p>
+                </div>
+                <input
+                  type="hidden"
+                  value={activeFromLine}
+                  data-testid="test-call-phone-from-input"
+                />
+              </div>
             )}
-            <p className="text-[10px] text-[#8C879A] mt-1">
-              Select any available carrier number in your inventory to test outbound dialing.
-            </p>
           </div>
+
+          {!isActive && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-800 flex items-center justify-between">
+              <span>Agent is currently paused. Activate it to place live calls.</span>
+              <button
+                type="button"
+                onClick={toggleLive}
+                disabled={statusBusy}
+                className="font-bold text-[#6344E7] hover:underline ml-2 shrink-0"
+              >
+                Make Live
+              </button>
+            </div>
+          )}
+
           <TactileButton
             variant="brand"
             size="md"
@@ -515,9 +629,9 @@ export function AgentTestCallPanel({ agent, language }) {
         </SolidCard>
       )}
 
-      <div className="max-h-32 overflow-y-auto rounded-xl border border-[#E4E2EB] bg-[#FAF9FD] p-2 space-y-1 text-[11px]">
+      <div className="max-h-32 overflow-y-auto rounded-xl border border-[#E4E2EB] bg-[#FAF9FD] p-2.5 space-y-1 text-[11px]">
         {lines.length === 0 && (
-          <p className="text-[#8C879A]">Session notes appear here. Failure details stay on the API.</p>
+          <p className="text-[#8C879A]">Live call events and status updates will appear here.</p>
         )}
         {lines.map((l) => (
           <p key={l.id} className={l.role === 'system' ? 'text-[#524E5E]' : 'text-[#0F0E17]'}>

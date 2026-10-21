@@ -359,6 +359,28 @@ async def list_numbers(principal: SubscriberPrincipal = Depends(require_subscrib
                     "carrierNumberId": getattr(n, "carrier_number_id", None) if is_admin else None,
                 }
             )
+
+        from server.services.saas.platform_admins import is_dev_tester_email
+        from server.services.saas.telephony_orchestrator import dev_sandbox_e164
+
+        if not numbers and is_dev_tester_email(principal.email):
+            sandbox = dev_sandbox_e164()
+            if sandbox:
+                numbers.append(
+                    {
+                        "id": "platform-test-line",
+                        "e164": sandbox,
+                        "status": "active",
+                        "agentId": None,
+                        "inboundEnabled": True,
+                        "outboundEnabled": True,
+                        "billingSource": "platform",
+                        "monthlyCost": 0.0,
+                        "monthlyInr": 0.0,
+                        "country": "IN" if sandbox.startswith("+91") else ("US" if sandbox.startswith("+1") else None),
+                        "provider": "direct_voice",
+                    }
+                )
     return {"numbers": numbers, "activeProvider": active_prov if is_admin else "direct_voice"}
 
 
@@ -892,6 +914,8 @@ async def assign_number(
         if agent is None or agent.tenant_id != workspace_tid:
             raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Agent not found"}})
         pn.agent_id = agent.agent_id
+        pn.outbound_enabled = True
+        pn.inbound_enabled = True
         await session.commit()
     return {"ok": True, "agentId": str(agent.agent_id)}
 

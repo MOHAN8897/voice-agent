@@ -24,7 +24,7 @@ export function AgentDialBulkPanel({ agentId, agentName }) {
   } = useWorkspace();
 
   const assigned = useMemo(
-    () => phoneNumbers.filter((n) => n.assignedAgentId === agentId && n.outboundEnabled !== false),
+    () => phoneNumbers.filter((n) => n.assignedAgentId === agentId && n.status !== 'released'),
     [phoneNumbers, agentId]
   );
   const agentCampaigns = useMemo(

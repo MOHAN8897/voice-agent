@@ -1667,6 +1667,8 @@ async def allocate_number(body: AllocateNumberBody, session: SessionData = Depen
                 existing.vobiz_account_tenant_id = tid
                 existing.telnyx_number_id = None
             existing.status = "active"
+            existing.inbound_enabled = True
+            existing.outbound_enabled = True
             pn = existing
         else:
             pn = PhoneNumber(
@@ -1678,6 +1680,8 @@ async def allocate_number(body: AllocateNumberBody, session: SessionData = Depen
                 carrier_number_id=confirmed_carrier_id if active_prov == "vobiz" else None,
                 vobiz_account_scope="tenant" if active_prov == "vobiz" else None,
                 vobiz_account_tenant_id=tid if active_prov == "vobiz" else None,
+                inbound_enabled=True,
+                outbound_enabled=True,
                 created_at=datetime.now(timezone.utc),
             )
             db.add(pn)

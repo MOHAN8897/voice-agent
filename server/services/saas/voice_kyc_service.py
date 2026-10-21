@@ -615,7 +615,15 @@ async def vobiz_account_scope_for_number(tenant_id: UUID, e164: str) -> str:
 async def vobiz_client_for_number(tenant_id: UUID, e164: str):
     from server.services.vobiz_client import VobizClient
 
-    number = await _number_account(tenant_id, e164)
+    try:
+        number = await _number_account(tenant_id, e164)
+    except VoiceKycError:
+        from server.services.saas.telephony_orchestrator import dev_sandbox_e164
+        sandbox = dev_sandbox_e164()
+        if sandbox and str(e164 or "").strip() == sandbox:
+            return VobizClient(), "platform"
+        raise
+
     scope = number.vobiz_account_scope or "platform"
     if scope == "tenant":
         owner = number.vobiz_account_tenant_id or number.tenant_id
