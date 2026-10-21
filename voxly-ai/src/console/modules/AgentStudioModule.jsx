@@ -1546,7 +1546,7 @@ export function AgentStudioModule({
           aria-labelledby="agent-tab-calls"
           className="space-y-4 animate-in fade-in duration-150"
         >
-          <div className="rounded-xl border border-[#E4E2EB] bg-[#F0EEF6]/50 px-3 py-2.5 text-xs text-[#524E5E]">
+          <div className="rounded-xl border border-[#E4E2EB] bg-[#F0EEF6]/70 px-3.5 py-2.5 text-xs font-semibold text-[#1F1D2B]">
             Phone calls use your published script and wallet credits. Incoming and outgoing calls use the
             same {stackLabel} engine as the browser practice call.
           </div>

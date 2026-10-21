@@ -107,23 +107,37 @@ export function Topbar({
         )}
       </div>
 
-      <div className="flex-1 max-w-md hidden md:block mx-4">
+      {/* Workspace Quick Search Trigger */}
+      <div className="flex-1 max-w-md hidden md:block mx-3 lg:mx-4">
         <button
           type="button"
           onClick={onOpenCommandPalette}
-          className="w-full flex items-center justify-between px-3 py-1.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] hover:border-[#D1CFDB] text-[#524E5E] transition-all text-xs group"
+          className="w-full flex items-center justify-between px-3.5 py-1.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] hover:border-[#6344E7]/40 hover:bg-white text-[#0F0E17] transition-all text-xs group shadow-2xs"
+          aria-label={`Search workspace (${typeof window !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.userAgent || '') ? '⌘K' : 'Ctrl K'})`}
         >
-          <div className="flex items-center gap-2">
-            <Search className="w-3.5 h-3.5 text-[#524E5E] group-hover:text-[#0F0E17]" />
-            <span>Search workspace…</span>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <Search className="w-4 h-4 text-[#6344E7] shrink-0 transition-transform group-hover:scale-110" />
+            <span className="font-medium text-[#4A4658] group-hover:text-[#0F0E17] truncate">
+              Search workspace…
+            </span>
           </div>
-          <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-white text-[#524E5E] border border-[#E4E2EB] shadow-2xs">
-            ⌘K
+          <kbd className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-white text-[#4A4658] border border-[#D5D3DE] shadow-2xs shrink-0">
+            {typeof window !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.userAgent || '') ? '⌘K' : 'Ctrl K'}
           </kbd>
         </button>
       </div>
 
       <div className="flex items-center gap-1.5 sm:gap-2">
+        {/* Mobile Search Button */}
+        <button
+          type="button"
+          onClick={onOpenCommandPalette}
+          className="md:hidden p-2 rounded-xl text-[#0F0E17] hover:bg-[#FAF9FD] border border-transparent hover:border-[#E4E2EB] flex items-center justify-center transition-colors"
+          aria-label="Search workspace"
+          title="Search workspace"
+        >
+          <Search className="w-4 h-4 text-[#6344E7]" />
+        </button>
         <button
           type="button"
           data-testid="topbar-wallet"
