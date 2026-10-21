@@ -105,11 +105,11 @@ REALTIME_VOICES: tuple[str, ...] = (
 REALTIME_TURN_DETECTION: tuple[str, ...] = ("semantic_vad", "server_vad")
 REALTIME_VAD_EAGERNESS: tuple[str, ...] = ("low", "medium", "high", "auto")
 REALTIME_NOISE_REDUCTION: tuple[str, ...] = ("near_field", "far_field", "off")
-DEFAULT_REALTIME_VAD_EAGERNESS = "high"
+DEFAULT_REALTIME_VAD_EAGERNESS = "low"
 DEFAULT_REALTIME_NOISE_REDUCTION = "far_field"
 DEFAULT_REALTIME_SPEED = 1.0
 DEFAULT_REALTIME_SILENCE_MS = 250
-PIPELINE_MODES: tuple[str, ...] = ("classic", "realtime_text", "realtime_voice")
+PIPELINE_MODES: tuple[str, ...] = ("classic", "realtime_text", "realtime_voice", "composed_voice")
 
 END_CALL_REASONS: tuple[str, ...] = (
     "goodbye",

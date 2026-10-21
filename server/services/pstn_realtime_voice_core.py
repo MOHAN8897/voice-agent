@@ -53,11 +53,15 @@ from server.services.pstn_voice_core import (
     TELNYX_PCM_SAMPLE_RATE,
 )
 
-# Telnyx already separates inbound/outbound tracks; this gate only filters
-# residual handset acoustic echo. Echo of our own greeting sits ~500–1400 RMS
-# on some handsets — that must not PROVIDER_CLEAR live audio.
+# Telnyx and Vobiz separate inbound/outbound tracks; this gate filters residual
+# handset acoustic echo and transient noise (clicks, breathing, background rustle).
+# Measuring speech duration in ms alongside energy prevents brief transients from cutting the agent.
+# Tier 1 crest factor (<= 4.5) rejects impulsive transients (crackers, mic thumps, clatter).
+# Tier 2 syllabic duration (>= 240ms) rejects coughs and throat clears.
 REALTIME_AEC_ENERGY_MIN = 1600
-REALTIME_AEC_LOUD_OPEN_FRAMES = 2
+REALTIME_AEC_MIN_SPEECH_MS = 240.0
+REALTIME_AEC_LOUD_OPEN_FRAMES = 12
+REALTIME_AEC_MAX_CREST_FACTOR = 4.5
 # Callee "hello" is quieter than barge. Keep pickup detection below the echo floor
 # so listen-first still starts the cached greeting without waiting for remote VAD.
 REALTIME_PICKUP_ENERGY_MIN = 500
@@ -627,6 +631,8 @@ class PstnRealtimeVoiceLoop:
         self._aec_quiet_streak = 0
         self._aec_barge_open = False
         self._agent_audio_out_since = 0.0
+        self._barge_speech_ms = 0.0
+        self._barge_pre_buffer: deque[bytes] = deque(maxlen=30)
         self._ignored_response_ids: deque[str] = deque(maxlen=128)
         self._response_open = False
         self._suppress_until_user = False
@@ -1956,6 +1962,7 @@ class PstnRealtimeVoiceLoop:
         self._hold_inbound = False
         await self._flush_pending_inbound()
 
+
     async def feed_user_pcm16(self, pcm16: bytes) -> None:
         if not pcm16 or self._closed or self._farewell_complete:
             return
@@ -1970,11 +1977,12 @@ class PstnRealtimeVoiceLoop:
         if self._deferred_greeting_armed:
             # Pickup is local energy only. Do not append to OpenAI — the first
             # utterance must not become an LLM turn.
-            from server.services.audio_transcode import pcm16_rms
+            from server.services.audio_transcode import pcm16_crest_factor, pcm16_rms
 
             frame_ms = len(raw) * 1000 / (2 * self.sample_rate)
             rms = pcm16_rms(raw)
-            if rms >= REALTIME_PICKUP_ENERGY_MIN:
+            crest = pcm16_crest_factor(raw, rms)
+            if rms >= REALTIME_PICKUP_ENERGY_MIN and crest <= REALTIME_AEC_MAX_CREST_FACTOR:
                 self._pickup_speech_ms += frame_ms
                 self._pickup_quiet_ms = 0.0
                 self._pickup_dip_ms = 0.0
@@ -2002,9 +2010,11 @@ class PstnRealtimeVoiceLoop:
         # speech_stopped and spawn an overlapping response) until the level is a barge.
         if self._agent_audio_playing():
             try:
-                from server.services.audio_transcode import pcm16_rms
+                from server.services.audio_transcode import pcm16_crest_factor, pcm16_rms
 
                 rms = pcm16_rms(raw)
+                crest = pcm16_crest_factor(raw, rms)
+                frame_ms = len(raw) * 1000.0 / (2.0 * max(8000, self.sample_rate))
                 # ponytail: echo tail ~550ms after agent audio starts — stricter RMS/frame gate (A2).
                 echo_tail = (
                     self._agent_audio_out_since > 0
@@ -2016,24 +2026,44 @@ class PstnRealtimeVoiceLoop:
                 spoken = (self._assistant_text or "").strip()
                 if partial and spoken and is_likely_echo(partial, spoken):
                     self._aec_loud_streak = 0
+                    self._barge_speech_ms = 0.0
+                    self._barge_pre_buffer.clear()
                     return
-                if rms >= need_rms:
+                # Tier 1 Crest Factor Filter: impulsive noise (crackers, clicks, pops) has C > 4.5.
+                # Tier 2 Syllabic Duration: must sustain energy for >= 240ms (12 frames).
+                if rms >= need_rms and crest <= REALTIME_AEC_MAX_CREST_FACTOR:
                     self._aec_loud_streak += 1
+                    self._barge_speech_ms += frame_ms
+                    self._barge_pre_buffer.append(raw)
                     self._aec_quiet_streak = 0
-                    if self._aec_loud_streak >= need_frames:
+                    if self._aec_loud_streak >= need_frames and self._barge_speech_ms >= REALTIME_AEC_MIN_SPEECH_MS:
                         if not self._aec_barge_open:
                             log_pstn(
                                 "realtime_voice.barge_open",
                                 call_id=self.call_id,
                                 rms=round(rms, 1),
+                                speech_ms=round(self._barge_speech_ms, 1),
                             )
                             self._aec_barge_open = True
                             await self._commit_local_barge()
+                            # Preserve and forward held onset audio so caller's first syllables are not lost
+                            while self._barge_pre_buffer:
+                                pre_chunk = self._barge_pre_buffer.popleft()
+                                pre_pcm24 = self._in_resampler.feed(pre_chunk)
+                                if pre_pcm24:
+                                    if self._caller_stt is not None and not hasattr(self._caller_stt, "input_rate"):
+                                        self._caller_stt.feed_pcm16(pre_pcm24)
+                                    try:
+                                        await self._adapter.append_pcm16(pre_pcm24)
+                                    except Exception as exc:
+                                        log_pstn("realtime_voice.append_pre.failed", call_id=self.call_id, error=str(exc)[:160])
                         else:
                             self._aec_barge_open = True
                 else:
                     self._aec_quiet_streak += 1
                     self._aec_loud_streak = 0
+                    self._barge_speech_ms = 0.0
+                    self._barge_pre_buffer.clear()
                     if self._aec_quiet_streak >= PSTN_AEC_QUIET_CLOSE_FRAMES:
                         self._aec_barge_open = False
                 if not self._aec_barge_open:
@@ -2044,6 +2074,8 @@ class PstnRealtimeVoiceLoop:
             self._aec_loud_streak = 0
             self._aec_quiet_streak = 0
             self._aec_barge_open = False
+            self._barge_speech_ms = 0.0
+            self._barge_pre_buffer.clear()
             self._agent_audio_out_since = 0.0
         pcm24 = self._in_resampler.feed(pcm16)
         if not pcm24:
@@ -3506,8 +3538,11 @@ class PstnRealtimeVoiceLoop:
                 # Preserve the final partial frame of ordinary answers too.
                 await self._flush_agent_pcm_to_wire()
             if event.get("provider_interrupted"):
+                gen = self.current_generation_id
+                already_cleared = bool(gen and self._barge_generation == gen)
+                self._barge_generation = gen
                 await self.interrupt_tts(cancel_provider=False)
-                if self._on_barge:
+                if self._on_barge and not already_cleared:
                     try:
                         await asyncio.wait_for(self._on_barge(), timeout=1.0)
                     except Exception as exc:

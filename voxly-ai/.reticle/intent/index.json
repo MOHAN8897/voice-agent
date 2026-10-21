@@ -265,6 +265,12 @@
       "subject": "drive-tenants-prepare-recipients-and-rev"
     },
     {
+      "id": "flow:drive-tenants-should-see-only-approved-voice-stack-cho",
+      "statement": "Tenants should see only approved voice stack choices for the language t…",
+      "status": "proposed",
+      "subject": "drive-tenants-should-see-only-approved-v"
+    },
+    {
       "id": "flow:drive-the-loaded-mascot-remains-interactive-after-init",
       "statement": "The loaded mascot remains interactive after initial loading and opens i…",
       "status": "proved",
@@ -281,6 +287,12 @@
       "statement": "The Open builder action on an agent card enters the workspace with Over…",
       "status": "proposed",
       "subject": "drive-the-open-builder-action-on-an-agen"
+    },
+    {
+      "id": "flow:drive-the-tenant-voice-editor-only-offers-administrato",
+      "statement": "The tenant voice editor only offers administrator-approved, ready low o…",
+      "status": "proved",
+      "subject": "drive-the-tenant-voice-editor-only-offer"
     },
     {
       "id": "inline:public-footer-links-open-the-privacy-page-at-a-c-ade9b80b",
@@ -349,6 +361,18 @@
       "subject": "unsorted"
     },
     {
+      "id": "inline:a-tenant-can-open-the-sign-in-form-before-select-23141429",
+      "statement": "A tenant can open the sign-in form before selecting an approved voice p…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:a-tenant-can-sign-in-before-opening-the-voice-ed-cd853617",
+      "statement": "A tenant can sign in before opening the voice editor.",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
       "id": "inline:after-de-duplicating-the-landing-copy-the-voice-ebe61ed7",
       "statement": "after de-duplicating the landing copy, the voice showcase still plays r…",
       "status": "proved",
@@ -358,6 +382,12 @@
       "id": "inline:after-login-console-sync-completes-without-sessi-2b4953d2",
       "statement": "After login, console sync completes without session-expired banner; Cal…",
       "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:an-authenticated-tenant-can-open-the-agent-works-d0f0b8ab",
+      "statement": "An authenticated tenant can open the agent workspace and view only voic…",
+      "status": "proposed",
       "subject": "unsorted"
     },
     {
@@ -619,6 +649,18 @@
       "subject": "unsorted"
     },
     {
+      "id": "inline:tenants-can-choose-a-ready-tier-and-then-select-efb3a926",
+      "statement": "Tenants can choose a ready tier and then select its supported engine, m…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:tenants-should-see-only-approved-voice-stack-cho-6967d6aa",
+      "statement": "Tenants should see only approved voice stack choices for the language t…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
       "id": "inline:the-loaded-mascot-remains-interactive-after-init-9a01a3b6",
       "statement": "The loaded mascot remains interactive after initial loading and opens i…",
       "status": "proved",
@@ -639,6 +681,18 @@
     {
       "id": "inline:the-phone-number-buying-experience-never-present-c934920e",
       "statement": "The phone number buying experience never presents seeded demo numbers a…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:the-tenant-can-open-an-agent-voice-editor-and-se-3aefa5f9",
+      "statement": "The tenant can open an agent voice editor and sees only administrator-a…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:the-tenant-voice-editor-only-offers-administrato-299bbc15",
+      "statement": "The tenant voice editor only offers administrator-approved, ready low o…",
       "status": "proved",
       "subject": "unsorted"
     },

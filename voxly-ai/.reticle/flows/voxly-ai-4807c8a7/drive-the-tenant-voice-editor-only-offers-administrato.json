@@ -1,0 +1,93 @@
+{
+  "version": 2,
+  "name": "drive-the-tenant-voice-editor-only-offers-administrato",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1792611277263,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "nav-employees"
+      },
+      "args": {},
+      "action": "click",
+      "timeoutMs": 10000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-tab-voice"
+      },
+      "args": {},
+      "action": "click",
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-open-builder"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "route",
+        "contains": "agent=voice-reticle-agent"
+      },
+      "timeoutMs": 10000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-tab-voice"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "route",
+            "contains": "step=voice"
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "voice-stack-empty"
+            }
+          },
+          {
+            "kind": "settled"
+          }
+        ]
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "intent": "The tenant voice editor only offers administrator-approved, ready low or standard profiles, and keeps the existing voice setup unchanged when none are ready.",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "codex-mcp-client",
+    "person": "mohansaiteja.99@gmail.com"
+  },
+  "intentId": "flow:drive-the-tenant-voice-editor-only-offers-administrato"
+}

@@ -1,0 +1,41 @@
+{
+  "date": "2026-10-21",
+  "verdict": "VERDICT: PASS",
+  "scope": "Prepared primary Gemini/Vobiz opening handoff, immediate cached audio, same-session continuation and no repeated intro",
+  "confirmed_runtime_findings": [
+    "The observed greeting was ready at 17:32:11, before answer at 17:32:18, under the outbound tracking ID.",
+    "Answer startup looked under the answered call ID and a single request-ID fallback, missing the tracking-ID bundle. Cold greeting recovery then ran from 17:32:20 until 17:32:28.",
+    "The same call logged greeting playback at 17:32:28 and 17:32:36. Immediate playback had not cleared the pickup-armed flag."
+  ],
+  "changes": [
+    "Bind prepared tracking ID to returned carrier request ID and search all authorized answer/request/tracking IDs, including fast-answer races.",
+    "Send cached audio on authenticated/admitted media readiness before post-answer registry and lifecycle work; preserve the playback tracker across handoff.",
+    "Adopt the original connected Gemini adapter and record the externally delivered greeting without sending its audio twice.",
+    "Consume the greeting buffer atomically; clear pickup arming before playback and send one bounded silent opening-delivered note.",
+    "Prompt: continue after the opening; re-identify briefly only when asked who is calling, never replay the cached opening.",
+    "Reject missing/dead required prepared sessions instead of silently creating a cold replacement; cancel early playback and clean up unadopted sessions.",
+    "Record the prewarm/session-owner architecture in AGENTS.md."
+  ],
+  "verification": {
+    "impact_suite": {"passed": 215, "exit_code": 0},
+    "last_targeted_run_after_final_provider_flag_change": {"passed": 27, "exit_code": 0},
+    "first_audio_regression": "First audio observed within the one-second test deadline while registry writes and lifecycle completion were deliberately blocked. This is an isolated backend test, not real carrier latency.",
+    "live_gemini_probe": {"passed": true, "cached_frames": 144, "prepared_in_seconds": 4.94, "same_live_session": true, "reply_audio_bytes": 208322, "full_opening_repeated": false, "phone_call_placed": false},
+    "compiled_current_agent_prompt": {"old_callee_wait_rule_present": false, "new_cached_opening_contract_present": true, "new_no_repeat_rule_present": true},
+    "targeted_repository_semgrep_rules": {"findings": 0, "blocking": 0},
+    "new_and_changed_test_ruff": "passed",
+    "backend_undefined_name_lint": "passed",
+    "scoped_diff_whitespace": "passed",
+    "graft": "refreshed",
+    "reticle": "Skipped: backend PSTN/audio change without UI edits; isolated media tests and live Gemini probe used instead.",
+    "real_pstn_call_after_changes": "not run",
+    "deployed": false
+  },
+  "existing_test_failures": {
+    "current_selected_legacy_tests": "12 passed, 2 failed",
+    "unchanged_HEAD_comparison": "Both failing assertions reproduce on an isolated archive of HEAD e734418. Assertions were not changed or weakened.",
+    "tests": ["test_start_call_outbound_natural_vad_no_forced_greeting", "test_start_call_keeps_prewarm_instructions"]
+  },
+  "deployment_constraint": "Prepared live sockets are process-owned. Media must reach the owner of the prepared socket. No production routing/configuration was changed.",
+  "preserved": "Concurrent billing work and other pending changes were left intact. Auth, KYC, tenant admission and billing rates were not modified."
+}

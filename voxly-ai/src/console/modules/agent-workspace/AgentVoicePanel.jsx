@@ -26,6 +26,94 @@ import { showToast } from '../../ui/ToastHost';
  */
 export const VOICE_CATALOG = [
   {
+    id: 'zephyr',
+    name: 'Zephyr',
+    gender: 'female',
+    tone: 'Bright & clear',
+    category: 'sales',
+    useCase: 'Advertising, Direct Outreach & Sales Inquiries',
+    sampleText: 'Hello, this is Zephyr. I can assist you with bookings, orders, and inquiries. How can I help you today?',
+    sampleUrl: '/audio/voxly/samples/zephyr.wav',
+    duration: '8.5s',
+  },
+  {
+    id: 'aoede',
+    name: 'Aoede',
+    gender: 'female',
+    tone: 'Breezy & engaging',
+    category: 'sales',
+    useCase: 'Video Voiceover, Commercial Outreach & Hosting',
+    sampleText: 'Welcome! I am Aoede, your virtual assistant. How can I assist you today?',
+    sampleUrl: '/audio/voxly/samples/aoede.wav',
+    duration: '8.3s',
+  },
+  {
+    id: 'kore',
+    name: 'Kore',
+    gender: 'female',
+    tone: 'Firm & authoritative',
+    category: 'operations',
+    useCase: 'Healthcare Clinics, Patient Triage & Intake',
+    sampleText: 'Thank you for calling. I can help you schedule appointments, verify records, and answer questions. What can I do for you today?',
+    sampleUrl: '/audio/voxly/samples/kore.wav',
+    duration: '8.4s',
+  },
+  {
+    id: 'leda',
+    name: 'Leda',
+    gender: 'female',
+    tone: 'Youthful & pleasant',
+    category: 'support',
+    useCase: 'Customer Care, Hospitality & Concierge',
+    sampleText: 'Thank you for calling. I am here to assist with your bookings, questions, and customer care. How may I help you?',
+    sampleUrl: '/audio/voxly/samples/leda.wav',
+    duration: '8.2s',
+  },
+  {
+    id: 'puck',
+    name: 'Puck',
+    gender: 'male',
+    tone: 'Upbeat & proactive',
+    category: 'sales',
+    useCase: 'Automotive Sales, Direct Outreach & Inquiries',
+    sampleText: 'Hello! I am Puck. I can help explore our latest inventory, book appointments, or answer questions. What can I get started for you?',
+    sampleUrl: '/audio/voxly/samples/puck.wav',
+    duration: '8.6s',
+  },
+  {
+    id: 'charon',
+    name: 'Charon',
+    gender: 'male',
+    tone: 'Informative & calm',
+    category: 'operations',
+    useCase: 'Field Operations, Home Services & Dispatch',
+    sampleText: 'You have reached Dispatch Services. I can schedule emergency maintenance, technician visits, or system inspections. What can I do for you?',
+    sampleUrl: '/audio/voxly/samples/charon.wav',
+    duration: '8.9s',
+  },
+  {
+    id: 'fenrir',
+    name: 'Fenrir',
+    gender: 'male',
+    tone: 'Confident & excitable',
+    category: 'sales',
+    useCase: 'Sales Inquiries, Real Estate & Outbound',
+    sampleText: 'Thanks for calling! We have exclusive viewings and consultations available this week. What area interests you?',
+    sampleUrl: '/audio/voxly/samples/fenrir.wav',
+    duration: '8.8s',
+  },
+  {
+    id: 'orus',
+    name: 'Orus',
+    gender: 'male',
+    tone: 'Grounded & thoughtful',
+    category: 'operations',
+    useCase: 'Technical Operations, Diagnostics & Advisory',
+    sampleText: 'Hello, this is Technical Operations. I can help resolve systems access, diagnostic alerts, or service tickets. Please describe your issue.',
+    sampleUrl: '/audio/voxly/samples/orus.wav',
+    duration: '9.0s',
+  },
+  {
     id: 'marin',
     name: 'Marin',
     gender: 'female',
@@ -50,7 +138,7 @@ export const VOICE_CATALOG = [
   {
     id: 'alloy',
     name: 'Alloy',
-    gender: 'neutral',
+    gender: 'female',
     tone: 'Balanced & empathetic',
     category: 'support',
     useCase: 'Healthcare Clinics, Patient Triage & Intake',
@@ -137,6 +225,94 @@ export const VOICE_CATALOG = [
   },
 ];
 
+const STACK_TIER_LABELS = {
+  low: 'Economical Tier',
+  medium: 'Standard Regional Tier',
+  premium: 'Flagship Live Tier',
+};
+const BLOCKED_TENANT_TERMS = /\b(vobiz|telnyx|nango|exotel|plivo|composio|sarvam|gemini|openai|elevenlabs|deepgram|playht|murf|azure)\b/i;
+
+function publicChoice(value) {
+  return typeof value === 'string' && value.trim() && !BLOCKED_TENANT_TERMS.test(value);
+}
+
+function hasApprovedRetailRate(rate) {
+  return Boolean(
+    rate &&
+      Number.isFinite(Number(rate.amount)) &&
+      Number(rate.amount) >= 0 &&
+      typeof rate.currency === 'string' &&
+      /^[A-Z]{3}$/.test(rate.currency)
+  );
+}
+
+function formatRetailRate(rate) {
+  if (!hasApprovedRetailRate(rate)) return null;
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency: rate.currency,
+      maximumFractionDigits: 2,
+    }).format(Number(rate.amount));
+  } catch {
+    return `${rate.currency} ${Number(rate.amount).toFixed(2)}`;
+  }
+}
+
+function publicEngines(profile, language) {
+  if (!Array.isArray(profile?.engines)) return [];
+  return profile.engines
+    .filter((engine) => publicChoice(engine?.id) && publicChoice(engine?.label))
+    .map((engine) => ({
+      ...engine,
+      models: (Array.isArray(engine.models) ? engine.models : [])
+        .filter((model) => publicChoice(model?.id) && publicChoice(model?.label))
+        .map((model) => ({
+          ...model,
+          voices: (Array.isArray(model.voices) ? model.voices : []).filter(
+            (voice) =>
+              publicChoice(voice?.id) &&
+              publicChoice(voice?.label) &&
+              Array.isArray(voice.languages) &&
+              voice.languages.includes(language)
+          ),
+        }))
+        .filter((model) => model.voices.length > 0),
+    }))
+    .filter((engine) => engine.models.length > 0);
+}
+
+function isSelectableProfile(profile, language) {
+  if (
+    !profile ||
+    profile.ready !== true ||
+    !['low', 'medium', 'premium'].includes(profile.tier) ||
+    !Number.isSafeInteger(profile.profileRevision) ||
+    profile.profileRevision < 0 ||
+    !hasApprovedRetailRate(profile.retailRate)
+  ) {
+    return false;
+  }
+  return profile.tier === 'premium' || publicEngines(profile, language).length > 0;
+}
+
+function selectionFromAgent(agent) {
+  const settings = agent?.voiceSettings;
+  if (settings?.stackSelectionVersion !== 1 || !STACK_TIER_LABELS[agent?.defaultTier]) {
+    return { tier: '', engineId: '', modelId: '', voiceId: '' };
+  }
+  return {
+    tier: agent.defaultTier,
+    engineId: settings.engineId || '',
+    modelId: settings.modelId || '',
+    voiceId: settings.voiceId || '',
+  };
+}
+
+function selectionKey(selection) {
+  return [selection.tier, selection.engineId, selection.modelId, selection.voiceId].join('|');
+}
+
 /**
  * Regional Indian and International spoken languages.
  */
@@ -204,6 +380,15 @@ export const EXTENDED_LANGUAGES = [
 export function AgentVoicePanel({
   formData,
   setFormData,
+  agent = null,
+  voiceStackProfiles = [],
+  voiceStackCatalogLoading = false,
+  voiceStackCatalogError = null,
+  voiceCatalogLoading = false,
+  onRetryVoiceStackCatalog,
+  onRetryVoiceCatalog,
+  onSaveVoiceStackSelection,
+  onReloadVoiceStackSettings,
   phoneVoices = [],
   activeVoiceProvider = 'openai',
   defaultVoiceId = 'te-in-csagent-5',
@@ -226,6 +411,181 @@ export function AgentVoicePanel({
     formData?.language ||
     (Array.isArray(formData?.languages) && formData.languages[0]) ||
     'te-IN';
+  const [draftSelection, setDraftSelection] = useState(() => selectionFromAgent(agent));
+  const [isSavingStackSelection, setIsSavingStackSelection] = useState(false);
+  const [stackSelectionError, setStackSelectionError] = useState(null);
+  const [stackSelectionNotice, setStackSelectionNotice] = useState(null);
+  const [stackSelectionConflict, setStackSelectionConflict] = useState(false);
+  const [previewRetry, setPreviewRetry] = useState(0);
+  const [previewError, setPreviewError] = useState(false);
+  const agentIdRef = useRef(agent?.id);
+  const savedSelection = useMemo(() => selectionFromAgent(agent), [
+    agent?.id,
+    agent?.defaultTier,
+    agent?.voiceSettings?.stackSelectionVersion,
+    agent?.voiceSettings?.engineId,
+    agent?.voiceSettings?.modelId,
+    agent?.voiceSettings?.voiceId,
+  ]);
+  const savedSelectionRevision = Number.isSafeInteger(agent?.voiceRevision) ? agent.voiceRevision : 0;
+  const savedSelectionStateKey = `${selectionKey(savedSelection)}|${savedSelectionRevision}`;
+  const isStackOptedIn = agent?.voiceSettings?.stackSelectionVersion === 1;
+  const selectableStackProfiles = useMemo(
+    () =>
+      voiceStackProfiles
+        .filter((profile) => isSelectableProfile(profile, currentLanguage))
+        .filter((profile) => profile.tier === 'low' || profile.tier === 'medium'),
+    [voiceStackProfiles, currentLanguage]
+  );
+  const currentStackProfile = selectableStackProfiles.find(
+    (profile) => profile.tier === draftSelection?.tier
+  );
+  const currentStackEngines = useMemo(
+    () => publicEngines(currentStackProfile, currentLanguage),
+    [currentStackProfile, currentLanguage]
+  );
+  const currentStackEngine = currentStackEngines.find(
+    (engine) => engine.id === draftSelection?.engineId
+  );
+  const currentStackModel = currentStackEngine?.models.find(
+    (model) => model.id === draftSelection?.modelId
+  );
+  const currentStackVoice = currentStackModel?.voices.find(
+    (voice) => voice.id === draftSelection?.voiceId
+  );
+  const savedProfile = selectableStackProfiles.find((profile) => profile.tier === savedSelection.tier);
+  const savedEngine = publicEngines(savedProfile, currentLanguage)
+    .find((engine) => engine.id === savedSelection.engineId);
+  const savedModel = savedEngine?.models.find((model) => model.id === savedSelection.modelId);
+  const savedVoice = savedModel?.voices.find((voice) => voice.id === savedSelection.voiceId);
+  const hasUnsavedStackSelection = selectionKey(savedSelection) !== selectionKey(draftSelection || {});
+  const persistedLanguage =
+    (Array.isArray(agent?.languages) ? agent.languages[0] : null) ||
+    agent?.language ||
+    currentLanguage;
+  const stackLanguageNeedsSave = currentLanguage !== persistedLanguage;
+  const canSaveStackSelection = Boolean(
+    onSaveVoiceStackSelection &&
+      hasUnsavedStackSelection &&
+      currentStackProfile &&
+      formatRetailRate(currentStackProfile.retailRate) &&
+      currentStackVoice &&
+      !stackLanguageNeedsSave &&
+      !voiceStackCatalogLoading
+  );
+  const showExistingLiveVoiceControls =
+    draftSelection?.tier === 'premium' ||
+    (!isStackOptedIn && !draftSelection?.tier);
+
+  useEffect(() => {
+    setDraftSelection(savedSelection);
+    if (agentIdRef.current !== agent?.id) {
+      setStackSelectionError(null);
+      setStackSelectionNotice(null);
+      setStackSelectionConflict(false);
+      setPreviewError(false);
+      agentIdRef.current = agent?.id;
+    }
+  }, [agent?.id, savedSelectionStateKey]);
+
+  const handleStackTierChange = (tier) => {
+    setStackSelectionError(null);
+    setStackSelectionNotice(null);
+    setDraftSelection(
+      tier === savedSelection.tier
+        ? savedSelection
+        : { tier, engineId: '', modelId: '', voiceId: '' }
+    );
+  };
+
+  const handleStackEngineChange = (engineId) => {
+    setStackSelectionError(null);
+    setStackSelectionNotice(null);
+    setDraftSelection((current) => ({ ...current, engineId, modelId: '', voiceId: '' }));
+  };
+
+  const handleStackModelChange = (modelId) => {
+    setStackSelectionError(null);
+    setStackSelectionNotice(null);
+    setDraftSelection((current) => ({ ...current, modelId, voiceId: '' }));
+  };
+
+  const handleStackLanguageChange = (language) => {
+    if (language === currentLanguage) return;
+    setFormData((current) => ({
+      ...current,
+      language,
+      languages: [language],
+      voice: { ...current.voice, language },
+    }));
+    setDraftSelection((current) => ({ ...current, engineId: '', modelId: '', voiceId: '' }));
+    setStackSelectionError(null);
+    setStackSelectionNotice(null);
+  };
+
+  const handleSaveStackSelection = async () => {
+    if (!canSaveStackSelection || isSavingStackSelection) return;
+    setIsSavingStackSelection(true);
+    setStackSelectionError(null);
+    setStackSelectionNotice(null);
+    try {
+      const result = await onSaveVoiceStackSelection({
+        tier: draftSelection.tier,
+        ...(draftSelection.tier === 'premium'
+          ? {}
+          : {
+              profileRevision: currentStackProfile?.profileRevision,
+              engineId: draftSelection.engineId,
+              modelId: draftSelection.modelId,
+              voiceId: draftSelection.voiceId,
+            }),
+      });
+      if (result?.conflict) {
+        if (result.agent) setDraftSelection(selectionFromAgent(result.agent));
+        setStackSelectionConflict(true);
+        setStackSelectionError(
+          result.agent
+            ? 'Another editor saved newer voice settings. The current saved settings have been loaded.'
+            : 'Another editor saved newer voice settings. Reload the saved settings before continuing.'
+        );
+        return;
+      }
+      if (result?.languageNeedsSave) {
+        setStackSelectionError('Save the language change before applying this voice setup.');
+        return;
+      }
+      if (result?.savedButUnconfirmed) {
+        setStackSelectionConflict(true);
+        setStackSelectionError('The save could not be confirmed. Reload the saved settings before trying again.');
+        return;
+      }
+      if (result?.error || !result?.agent) {
+        setStackSelectionError('Voice setup could not be saved. Your saved choice is unchanged. Try again.');
+        return;
+      }
+      setDraftSelection(selectionFromAgent(result.agent));
+      setStackSelectionNotice('Voice setup saved. New calls will use this setting.');
+    } catch {
+      setStackSelectionError('Voice setup could not be saved. Your saved choice is unchanged. Try again.');
+    } finally {
+      setIsSavingStackSelection(false);
+    }
+  };
+
+  const handleReloadStackSettings = async () => {
+    if (!onReloadVoiceStackSettings) return;
+    setIsSavingStackSelection(true);
+    const latest = await onReloadVoiceStackSettings();
+    setIsSavingStackSelection(false);
+    if (!latest) {
+      setStackSelectionError('Saved settings could not be reloaded. Try again.');
+      return;
+    }
+    setDraftSelection(selectionFromAgent(latest));
+    setStackSelectionError(null);
+    setStackSelectionConflict(false);
+    setStackSelectionNotice('Saved voice settings reloaded.');
+  };
   const currentSpeed = formData?.voice?.speed ?? 1.0;
   const currentPitch = formData?.voice?.pitch ?? 0.0;
   const currentStability = formData?.voice?.stability ?? 0.75;
@@ -240,29 +600,78 @@ export function AgentVoicePanel({
 
   // Merge server phone voices with catalog
   const displayVoices = useMemo(() => {
+    const langPrefix = String(currentLanguage || 'te-IN').split('-')[0].toLowerCase();
+
+    const localizeVoice = (v) => {
+      const vid = String(v.id || '').toLowerCase();
+      const localizedSampleUrl = `/audio/voxly/samples/${vid}_${langPrefix}.wav`;
+      const baseSampleUrl = v.sampleUrl || `/audio/voxly/samples/${vid}.wav`;
+      const localizedSampleText =
+        v.sampleText ||
+        EXTENDED_LANGUAGES.find((language) => language.code === currentLanguage)?.sampleText ||
+        'Hello. Thank you for calling. How can I help you today?';
+      const cleanGender = v.gender === 'neutral' ? 'female' : (v.gender || 'female');
+      return {
+        ...v,
+        gender: cleanGender,
+        sampleUrl: localizedSampleUrl,
+        fallbackUrl: baseSampleUrl,
+        sampleText: localizedSampleText,
+      };
+    };
+
     if (activeVoiceProvider === 'gemini') {
       const liveVoices = phoneVoices
         .filter((voice) => voice.provider === 'gemini')
         .map((voice) => ({
           ...voice,
           name: voice.label || voice.geminiVoice || voice.id,
+          gender: voice.gender === 'neutral' ? 'female' : (voice.gender || 'female'),
+          sampleUrl: voice.sampleUrl || `/audio/voxly/samples/${voice.id?.toLowerCase()}.wav`,
           sampleText:
             voice.sampleText ||
             EXTENDED_LANGUAGES.find((language) => language.code === currentLanguage)?.sampleText ||
             'Hello. Thank you for calling. How can I help you today?',
         }));
-      const localeVoices = liveVoices.filter((voice) => voice.languageCode === currentLanguage);
-      if (localeVoices.length) {
-        const selectedMultilingualVoice = liveVoices.find(
-          (voice) => voice.id?.toLowerCase() === currentVoiceId && !voice.languageCode
-        );
-        return selectedMultilingualVoice
-          ? [...localeVoices, selectedMultilingualVoice]
-          : localeVoices;
-      }
+
+      // Multilingual Gemini Live voices (Zephyr, Aoede, Kore, Leda, Puck, Charon, Fenrir, Orus, etc.)
       const multilingualVoices = liveVoices.filter((voice) => !voice.languageCode);
-      if (multilingualVoices.length) return multilingualVoices;
-      if (liveVoices.length) return liveVoices;
+      // Regional dialect voices matching current language (e.g. te-in-csagent-5 for te-IN)
+      const localeVoices = liveVoices.filter((voice) => voice.languageCode === currentLanguage);
+
+      if (multilingualVoices.length || localeVoices.length) {
+        // Core Gemini 3.8 Live voices: Zephyr first, followed by the rest of the core roster
+        const CORE_ORDER = ['zephyr', 'aoede', 'kore', 'leda', 'puck', 'charon', 'fenrir', 'orus'];
+        const combined = [...multilingualVoices, ...localeVoices];
+        const seen = new Set();
+        const deduped = [];
+        // First add core voices in order
+        for (const cid of CORE_ORDER) {
+          const match = combined.find((v) => String(v.id).toLowerCase() === cid);
+          if (match && !seen.has(String(match.id).toLowerCase())) {
+            seen.add(String(match.id).toLowerCase());
+            deduped.push(match);
+          }
+        }
+        // Then add locale-specific presets for current language
+        for (const v of localeVoices) {
+          const idKey = String(v.id).toLowerCase();
+          if (!seen.has(idKey)) {
+            seen.add(idKey);
+            deduped.push(v);
+          }
+        }
+        // Then add any remaining voices
+        for (const v of combined) {
+          const idKey = String(v.id).toLowerCase();
+          if (!seen.has(idKey)) {
+            seen.add(idKey);
+            deduped.push(v);
+          }
+        }
+        return deduped.map(localizeVoice);
+      }
+      if (liveVoices.length) return liveVoices.map(localizeVoice);
     }
     return VOICE_CATALOG.map((catVoice) => {
       const match = phoneVoices.find(
@@ -271,16 +680,17 @@ export function AgentVoicePanel({
           pv.name?.toLowerCase() === catVoice.name.toLowerCase()
       );
       if (match) {
-        return {
+        return localizeVoice({
           ...catVoice,
           name: match.name || match.label || catVoice.name,
           label: match.label || match.name || catVoice.name,
           category: match.category || catVoice.category,
           useCase: match.useCase || catVoice.useCase,
           tone: match.tone || catVoice.tone,
-        };
+          gender: match.gender && match.gender !== 'neutral' ? match.gender : catVoice.gender,
+        });
       }
-      return catVoice;
+      return localizeVoice(catVoice);
     });
   }, [phoneVoices, activeVoiceProvider, currentLanguage, currentVoiceId]);
 
@@ -349,19 +759,26 @@ export function AgentVoicePanel({
       setPlayingVoiceId(voice.id);
       setPlayingType('sample');
 
-      let previewUrl = null;
-      try {
-        if (voice.provider === 'gemini') {
-          const preview = await api.telephony.previewVoice({
+      const langPrefix = String(currentLanguage || 'te-IN').split('-')[0].toLowerCase();
+      const vid = String(voice.id || '').toLowerCase();
+      const audioUrl = voice.sampleUrl || `/audio/voxly/samples/${vid}_${langPrefix}.wav`;
+      const fallbackUrl = voice.fallbackUrl || `/audio/voxly/samples/${vid}.wav`;
+      const previewText =
+        voice.sampleText ||
+        EXTENDED_LANGUAGES.find((language) => language.code === currentLanguage)?.sampleText ||
+        'Hello. Thank you for calling. How can I help you today?';
+
+      if (activeVoiceProvider === 'gemini') {
+        try {
+          const result = await api.telephony.previewVoice({
+            text: previewText,
             voiceId: voice.id,
-            text: voice.sampleText || `Hello. This is ${voice.name}. How can I help you today?`,
             language: currentLanguage,
             speed: currentSpeed,
           });
-          previewUrl = preview?.url || null;
-          if (preview?.blob) {
+          if (result?.blob) {
             const played = await voiceAgent.playAudioBuffer(
-              preview.blob,
+              result.blob,
               () => {
                 setPlayingVoiceId((curr) => (curr === voice.id ? null : curr));
                 setPlayingType((curr) => (curr === 'sample' ? null : curr));
@@ -371,56 +788,45 @@ export function AgentVoicePanel({
                 setPlayingType('sample');
               }
             );
-            if (played) {
-              if (previewUrl) URL.revokeObjectURL(previewUrl);
-              return;
-            }
+            if (played) return;
           }
-          if (preview?.url) {
-            voiceAgent.playAudioClip(
-              preview.url,
-              () => {
-                if (previewUrl) URL.revokeObjectURL(previewUrl);
-                setPlayingVoiceId((curr) => (curr === voice.id ? null : curr));
-                setPlayingType((curr) => (curr === 'sample' ? null : curr));
-              },
-              () => {
-                setPlayingVoiceId(voice.id);
-                setPlayingType('sample');
-              }
-            );
+        } catch (e) {
+          const msg = String(e?.message || '').trim();
+          if (msg && !msg.includes('Failed to fetch')) {
+            setPlayingVoiceId(null);
+            setPlayingType(null);
+            setAudioError(msg);
             return;
           }
-          throw new Error('No synthesized audio returned');
         }
-        const audioUrl = voice.sampleUrl;
+      }
+
+      try {
         voiceAgent.playAudioClip(
           audioUrl,
           () => {
-            // onEnd callback
             setPlayingVoiceId((curr) => (curr === voice.id ? null : curr));
             setPlayingType((curr) => (curr === 'sample' ? null : curr));
           },
           () => {
-            // onStart callback
             setPlayingVoiceId(voice.id);
             setPlayingType('sample');
           },
           {
-            fallbackText: voice.sampleText || voice.useCase || `Hello, this is ${voice.name}.`,
+            fallbackUrl,
+            fallbackText: previewText,
           }
         );
       } catch (e) {
-        if (previewUrl) URL.revokeObjectURL(previewUrl);
         setPlayingVoiceId(null);
         setPlayingType(null);
         setAudioError(
           String(e?.message || '').trim() ||
-            'Could not reach the voice service. Check the voice configuration and audio output.'
+            'Could not play the voice sample. Check the audio output device.'
         );
       }
     },
-    [playingVoiceId, playingType, currentLanguage, currentSpeed]
+    [playingVoiceId, playingType, currentLanguage, currentSpeed, activeVoiceProvider]
   );
 
   const handleStopAudio = useCallback(() => {
@@ -460,9 +866,13 @@ export function AgentVoicePanel({
           voice.languageCode === langCode &&
           voice.defaultForLanguage === true
       );
-      const multilingualDefault = phoneVoices.find(
-        (voice) => voice.provider === 'gemini' && voice.id?.toLowerCase() === 'puck'
-      );
+      const multilingualDefault =
+        phoneVoices.find(
+          (voice) => voice.provider === 'gemini' && voice.id?.toLowerCase() === 'zephyr'
+        ) ||
+        phoneVoices.find(
+          (voice) => voice.provider === 'gemini' && voice.id?.toLowerCase() === 'puck'
+        );
       const voiceAlreadyMatches = currentGeminiVoice?.languageCode === langCode;
       const nextGeminiVoice =
         activeVoiceProvider === 'gemini' && !voiceAlreadyMatches
@@ -561,6 +971,18 @@ export function AgentVoicePanel({
     } catch (error) {
       if (typeof previewUrl === 'string') URL.revokeObjectURL(previewUrl);
       setIsBufferingGreeting(false);
+      const langPrefix = String(currentLanguage || 'te-IN').split('-')[0].toLowerCase();
+      const localizedGreetingUrl = `/audio/voxly/samples/${currentVoiceId?.toLowerCase()}_${langPrefix}.wav`;
+      const fallbackUrl = `/audio/voxly/samples/${currentVoiceId?.toLowerCase()}.wav`;
+      voiceAgent.playAudioClip(
+        localizedGreetingUrl,
+        () => handleStopAudio(),
+        () => {
+          setPlayingType('greeting');
+          setPlayingVoiceId(currentVoiceId);
+        },
+        { fallbackUrl, fallbackText: greetingText }
+      );
       setAudioError(error?.message || 'Live greeting synthesis preview unavailable.');
     }
   }, [
@@ -581,6 +1003,287 @@ export function AgentVoicePanel({
 
   return (
     <div className="space-y-4" data-testid="agent-voice-panel">
+      <section
+        className="rounded-xl border border-[#E4E2EB] bg-white p-4 shadow-xs space-y-4"
+        data-testid="voice-stack-selector"
+        aria-busy={voiceStackCatalogLoading}
+      >
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="text-sm font-bold text-[#0F0E17]">Voice setup</h2>
+            <p className="mt-1 text-xs text-[#524E5E]">
+              Saved setup:{' '}
+              <strong className="text-[#0F0E17]">
+                {isStackOptedIn && STACK_TIER_LABELS[agent?.defaultTier]
+                  ? STACK_TIER_LABELS[agent.defaultTier]
+                  : 'Current voice configuration'}
+              </strong>
+              {isStackOptedIn && savedVoice ? ` · ${savedVoice.label}` : ''}
+            </p>
+            <p className="mt-1 text-[11px] text-[#716C7F]">
+              Saved changes apply to new calls. Calls already in progress keep their current setup.
+            </p>
+          </div>
+          {isStackOptedIn && agent?.defaultTier === 'premium' && (
+            <span className="rounded-full border border-[#6344E7]/20 bg-[#6344E7]/5 px-2.5 py-1 text-[11px] font-semibold text-[#5233D6]">
+              Live voice controls below
+            </span>
+          )}
+        </div>
+
+        {draftSelection?.tier && ['low', 'medium'].includes(draftSelection.tier) && (
+          <div className="max-w-sm space-y-1.5">
+            <label htmlFor="voice-stack-language" className="block text-xs font-semibold text-[#0F0E17]">
+              Voice language
+            </label>
+            <select
+              id="voice-stack-language"
+              value={currentLanguage}
+              onChange={(event) => handleStackLanguageChange(event.target.value)}
+              disabled={isSavingStackSelection}
+              className="w-full rounded-lg border border-[#D8D5E1] bg-white px-3 py-2 text-sm text-[#0F0E17] focus:border-[#6344E7] focus:outline-none focus:ring-2 focus:ring-[#6344E7]/20"
+              data-testid="voice-stack-language"
+            >
+              {!EXTENDED_LANGUAGES.some((language) => language.code === currentLanguage) && (
+                <option value={currentLanguage}>{currentLanguage}</option>
+              )}
+              {EXTENDED_LANGUAGES.map((language) => (
+                <option key={language.code} value={language.code}>
+                  {language.nativeName} · {language.code}
+                </option>
+              ))}
+            </select>
+            {stackLanguageNeedsSave && (
+              <p className="text-[11px] text-amber-800" data-testid="voice-stack-language-unsaved">
+                Save the language change with the agent before applying this voice setup.
+              </p>
+            )}
+          </div>
+        )}
+
+        {voiceStackCatalogLoading && (
+          <p className="text-xs text-[#716C7F]" role="status" data-testid="voice-stack-loading">
+            Loading approved voice options…
+          </p>
+        )}
+        {voiceStackCatalogError && (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800" role="alert">
+            <span>{voiceStackCatalogError}</span>
+            <button
+              type="button"
+              onClick={onRetryVoiceStackCatalog}
+              disabled={voiceStackCatalogLoading}
+              className="rounded-md border border-red-300 px-2.5 py-1 font-semibold hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-400 disabled:opacity-50"
+              data-testid="voice-stack-catalog-retry"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+        {!voiceStackCatalogLoading && !voiceStackCatalogError && !voiceCatalogLoading && selectableStackProfiles.length === 0 && (
+          <p className="rounded-lg border border-[#E4E2EB] bg-[#FAF9FD] px-3 py-2.5 text-xs text-[#524E5E]" data-testid="voice-stack-empty">
+            No approved voice setup is available for this language yet. Your current saved setup is unchanged.
+          </p>
+        )}
+
+        {selectableStackProfiles.length > 0 && (
+          <fieldset className="space-y-2" disabled={isSavingStackSelection || voiceStackCatalogLoading}>
+            <legend className="mb-2 text-xs font-semibold text-[#0F0E17]">Choose a ready voice tier</legend>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              {selectableStackProfiles.map((profile) => {
+                const selected = draftSelection?.tier === profile.tier;
+                return (
+                  <label
+                    key={profile.tier}
+                    className={`flex min-h-14 cursor-pointer items-start gap-2.5 rounded-lg border px-3 py-2.5 transition-colors focus-within:ring-2 focus-within:ring-[#6344E7]/30 ${
+                      selected
+                        ? 'border-[#6344E7] bg-[#6344E7]/5'
+                        : 'border-[#E4E2EB] bg-white hover:border-[#B9B4C8]'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name={`voice-stack-tier-${agent?.id || 'agent'}`}
+                      value={profile.tier}
+                      checked={selected}
+                      onChange={() => handleStackTierChange(profile.tier)}
+                      className="mt-0.5 accent-[#6344E7]"
+                      data-testid={`voice-stack-tier-${profile.tier}`}
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-xs font-bold text-[#0F0E17]">
+                        {STACK_TIER_LABELS[profile.tier]}
+                      </span>
+                      <span className="mt-0.5 block text-[11px] text-[#716C7F]">
+                        Approved retail rate: {formatRetailRate(profile.retailRate)}
+                      </span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
+        )}
+
+        {draftSelection?.tier && ['low', 'medium'].includes(draftSelection.tier) && currentStackProfile && (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3" data-testid="voice-stack-options">
+            <label className="space-y-1.5 text-xs font-semibold text-[#0F0E17]">
+              <span>Engine</span>
+              <select
+                value={draftSelection.engineId}
+                onChange={(event) => handleStackEngineChange(event.target.value)}
+                disabled={isSavingStackSelection || currentStackEngines.length === 0}
+                className="w-full rounded-lg border border-[#D8D5E1] bg-white px-3 py-2 text-sm font-normal focus:border-[#6344E7] focus:outline-none focus:ring-2 focus:ring-[#6344E7]/20"
+                data-testid="voice-stack-engine"
+              >
+                <option value="">Select an engine</option>
+                {currentStackEngines.map((engine) => (
+                  <option key={engine.id} value={engine.id}>{engine.label}</option>
+                ))}
+              </select>
+            </label>
+            <label className="space-y-1.5 text-xs font-semibold text-[#0F0E17]">
+              <span>Model</span>
+              <select
+                value={draftSelection.modelId}
+                onChange={(event) => handleStackModelChange(event.target.value)}
+                disabled={isSavingStackSelection || !currentStackEngine}
+                className="w-full rounded-lg border border-[#D8D5E1] bg-white px-3 py-2 text-sm font-normal focus:border-[#6344E7] focus:outline-none focus:ring-2 focus:ring-[#6344E7]/20"
+                data-testid="voice-stack-model"
+              >
+                <option value="">Select a model</option>
+                {(currentStackEngine?.models || []).map((model) => (
+                  <option key={model.id} value={model.id}>{model.label}</option>
+                ))}
+              </select>
+            </label>
+            <label className="space-y-1.5 text-xs font-semibold text-[#0F0E17]">
+              <span>Voice</span>
+              <select
+                value={draftSelection.voiceId}
+                onChange={(event) => {
+                  setDraftSelection((current) => ({ ...current, voiceId: event.target.value }));
+                  setPreviewError(false);
+                  setStackSelectionError(null);
+                  setStackSelectionNotice(null);
+                }}
+                disabled={isSavingStackSelection || !currentStackModel}
+                className="w-full rounded-lg border border-[#D8D5E1] bg-white px-3 py-2 text-sm font-normal focus:border-[#6344E7] focus:outline-none focus:ring-2 focus:ring-[#6344E7]/20"
+                data-testid="voice-stack-voice"
+              >
+                <option value="">Select a voice</option>
+                {(currentStackModel?.voices || []).map((voice) => (
+                  <option key={voice.id} value={voice.id}>{voice.label}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+        )}
+
+        {draftSelection?.tier && ['low', 'medium'].includes(draftSelection.tier) && currentStackVoice && (
+          <div className="rounded-lg border border-[#E4E2EB] bg-[#FAF9FD] p-3" data-testid="voice-stack-preview">
+            <p className="text-xs font-semibold text-[#0F0E17]">{currentStackVoice.label}</p>
+            {typeof currentStackVoice.previewUrl === 'string' && currentStackVoice.previewUrl.trim() ? (
+              <div className="mt-2 space-y-1.5">
+                <audio
+                  key={`${currentStackVoice.id}-${previewRetry}`}
+                  controls
+                  preload="none"
+                  src={currentStackVoice.previewUrl}
+                  onError={() => setPreviewError(true)}
+                  aria-label={`Approved voice sample for ${currentStackVoice.label}`}
+                  className="w-full"
+                  data-testid="voice-stack-audio-preview"
+                />
+                {previewError && (
+                  <div className="flex items-center justify-between gap-2 text-[11px] text-red-700" role="alert">
+                    <span>That approved sample could not be played.</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPreviewError(false);
+                        setPreviewRetry((current) => current + 1);
+                      }}
+                      className="rounded-md border border-red-300 px-2 py-1 font-semibold hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-400"
+                      data-testid="voice-stack-preview-retry"
+                    >
+                      Retry sample
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="mt-1 text-[11px] text-[#716C7F]">No approved audio sample is available for this voice.</p>
+            )}
+          </div>
+        )}
+
+        {draftSelection?.tier === 'premium' && (
+          <p className="rounded-lg border border-[#E4E2EB] bg-[#FAF9FD] px-3 py-2.5 text-xs text-[#524E5E]">
+            This tier keeps the existing Live voice path. Choose or review its voice in the controls below.
+          </p>
+        )}
+
+        {stackSelectionError && (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800" role="alert" data-testid="voice-stack-save-error">
+            <span>{stackSelectionError}</span>
+            {stackSelectionConflict && onReloadVoiceStackSettings && (
+              <button
+                type="button"
+                onClick={handleReloadStackSettings}
+                disabled={isSavingStackSelection}
+                className="rounded-md border border-red-300 px-2.5 py-1 font-semibold hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-400 disabled:opacity-50"
+                data-testid="voice-stack-conflict-reload"
+              >
+                Reload saved settings
+              </button>
+            )}
+          </div>
+        )}
+        {stackSelectionNotice && (
+          <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800" role="status" data-testid="voice-stack-save-status">
+            {stackSelectionNotice}
+          </p>
+        )}
+
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#F0EEF6] pt-3">
+          <p className="text-[11px] text-[#716C7F]">
+            {isStackOptedIn && savedSelection.tier && STACK_TIER_LABELS[savedSelection.tier]
+              ? `Saved configuration: ${STACK_TIER_LABELS[savedSelection.tier]}${savedVoice ? ` · ${savedVoice.label}` : ''}`
+              : 'Your current voice configuration remains active until a ready tier is saved.'}
+          </p>
+          <div className="flex items-center gap-2">
+            {hasUnsavedStackSelection && (
+              <button
+                type="button"
+                onClick={() => {
+                  setDraftSelection(savedSelection);
+                  setStackSelectionError(null);
+                  setStackSelectionNotice(null);
+                  setStackSelectionConflict(false);
+                }}
+                disabled={isSavingStackSelection}
+                className="rounded-lg px-3 py-2 text-xs font-semibold text-[#524E5E] hover:bg-[#FAF9FD] focus:outline-none focus:ring-2 focus:ring-[#6344E7]/30 disabled:opacity-50"
+                data-testid="voice-stack-reset"
+              >
+                Restore saved choice
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={handleSaveStackSelection}
+              disabled={!canSaveStackSelection || isSavingStackSelection || stackSelectionConflict}
+              className="rounded-lg bg-[#0F0E17] px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-[#232130] focus:outline-none focus:ring-2 focus:ring-[#6344E7]/40 disabled:cursor-not-allowed disabled:opacity-45"
+              data-testid="voice-stack-save"
+            >
+              {isSavingStackSelection ? 'Saving…' : 'Save voice setup'}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {showExistingLiveVoiceControls && (
+        <>
       {/* 1. Header Bar: Compact Active Summary */}
       <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-white border border-[#E4E2EB] shadow-xs">
         <div className="flex items-center gap-3">
@@ -593,7 +1296,7 @@ export function AgentVoicePanel({
                 Voice &amp; Language Configuration
               </span>
               <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#FAF9FD] text-[#6344E7] border border-[#6344E7]/20">
-                {stackLabel}
+                {draftSelection?.tier === 'premium' ? STACK_TIER_LABELS.premium : 'Current voice setup'}
               </span>
             </div>
             <p className="text-[11px] text-[#524E5E]">
@@ -1126,6 +1829,8 @@ export function AgentVoicePanel({
           )}
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 }

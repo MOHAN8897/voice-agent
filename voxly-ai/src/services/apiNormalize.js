@@ -5,6 +5,45 @@ import { callStatus } from '../lib/callStatus';
 export function normalizeAgent(row) {
   if (!row) return null;
   const id = row.agent_id || row.id || row.agentId;
+  const rawVoiceSettings = row.voiceSettings ?? row.voice_settings;
+  const rawLegacyVoice =
+    row.voice && typeof row.voice === 'object'
+      ? row.voice
+      : rawVoiceSettings &&
+          typeof rawVoiceSettings === 'object' &&
+          rawVoiceSettings.stackSelectionVersion == null &&
+          rawVoiceSettings.stack_selection_version == null
+        ? rawVoiceSettings
+        : null;
+  const voice = rawLegacyVoice
+    ? Object.fromEntries(
+        ['realtimeVoice', 'voiceId', 'voiceName', 'speed', 'pitch', 'stability', 'language']
+          .filter((key) => rawLegacyVoice[key] !== undefined)
+          .map((key) => [key, rawLegacyVoice[key]])
+      )
+    : null;
+  const voiceSettings =
+    rawVoiceSettings && typeof rawVoiceSettings === 'object' && !Array.isArray(rawVoiceSettings)
+      ? {
+          ...(Number.isFinite(Number(rawVoiceSettings.stackSelectionVersion ?? rawVoiceSettings.stack_selection_version))
+            ? { stackSelectionVersion: Number(rawVoiceSettings.stackSelectionVersion ?? rawVoiceSettings.stack_selection_version) }
+            : {}),
+          ...(typeof (rawVoiceSettings.engineId ?? rawVoiceSettings.engine_id) === 'string'
+            ? { engineId: rawVoiceSettings.engineId ?? rawVoiceSettings.engine_id }
+            : {}),
+          ...(typeof (rawVoiceSettings.modelId ?? rawVoiceSettings.model_id) === 'string'
+            ? { modelId: rawVoiceSettings.modelId ?? rawVoiceSettings.model_id }
+            : {}),
+          ...(typeof (rawVoiceSettings.voiceId ?? rawVoiceSettings.voice_id) === 'string'
+            ? { voiceId: rawVoiceSettings.voiceId ?? rawVoiceSettings.voice_id }
+            : {}),
+          ...(Number.isSafeInteger(Number(rawVoiceSettings.profileRevision ?? rawVoiceSettings.profile_revision))
+            ? { profileRevision: Number(rawVoiceSettings.profileRevision ?? rawVoiceSettings.profile_revision) }
+            : {}),
+        }
+      : null;
+  const rawVoiceRevision = row.voiceRevision ?? row.voice_revision ?? 0;
+  const voiceRevision = Number(rawVoiceRevision);
   return {
     id,
     agent_id: id,
@@ -13,6 +52,10 @@ export function normalizeAgent(row) {
     role: row.role || 'Voice Agent',
     department: row.department || 'Operations',
     languages: row.languages || ['en-IN'],
+    voice,
+    defaultTier: row.defaultTier ?? row.default_tier ?? null,
+    voiceSettings,
+    voiceRevision: Number.isSafeInteger(voiceRevision) && voiceRevision >= 0 ? voiceRevision : 0,
     assignedNumber: row.assignedNumber || null,
     numberId: row.numberId || null,
     stats: row.stats || { totalCalls: 0, totalMinutes: 0, successRate: 100, avgDuration: '0m 00s' },

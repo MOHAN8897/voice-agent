@@ -69,6 +69,8 @@ async def resolve_inbound_route(to_e164: str | None) -> InboundRoute | None:
         agent_dict = {
             "agent_id": str(agent.agent_id),
             "languages": agent.languages or ["te-IN"],
+            "default_tier": agent.default_tier or "medium",
+            "voice_settings": agent.voice_settings or {},
         }
         stack_override = await saas_stack_override_for_agent(agent_dict)
         lang = str(stack_override.get("language") or (agent.languages or ["te-IN"])[0])

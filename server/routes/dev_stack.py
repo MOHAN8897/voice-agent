@@ -69,6 +69,25 @@ class ValidateSelectionBody(BaseModel):
     language: str = "te-IN"
 
 
+class ComposedVoiceProfileBody(BaseModel):
+    expected_revision: int = Field(..., alias="expectedRevision", ge=0)
+    composed_profile: dict[str, Any] = Field(..., alias="composedProfile")
+
+    model_config = {"populate_by_name": True}
+
+
+class ComposedVoiceActivationBody(BaseModel):
+    expected_revision: int = Field(..., alias="expectedRevision", ge=0)
+    enabled: bool
+
+    model_config = {"populate_by_name": True}
+
+
+def _voice_profile_http_error(exc) -> HTTPException:
+    detail = {"error": {"code": exc.code, "message": str(exc), **(exc.details or {})}}
+    return HTTPException(status_code=exc.status_code, detail=detail)
+
+
 @router.get("/api/dev/stack/catalog")
 async def dev_stack_catalog(session: SessionData = Depends(require_dev_session)):
     require_permission(session, "dev.stack.read")
@@ -84,6 +103,70 @@ async def dev_stack_catalog(session: SessionData = Depends(require_dev_session))
         "enabled_providers": telephony.get("enabled_providers") or [],
     }
     return catalog
+
+
+@router.get("/api/dev/stack/voice-profiles")
+async def dev_composed_voice_profiles(session: SessionData = Depends(require_dev_session)):
+    """Admin-only view of durable composed profile revisions and release blockers."""
+    require_permission(session, "dev.stack.read")
+    from server.services.saas.voice_stack_profiles import profile_view
+
+    app_env = effective_app_environment()
+    profiles = [await profile_view(tier, app_env, include_internal=True) for tier in ("low", "medium")]
+    profiles.append(
+        {
+            "tier": "premium",
+            "label": "Flagship Live",
+            "profileRevision": None,
+            "composedProfile": None,
+            "readiness": {"ready": True, "enabled": True, "blockers": []},
+            "retailRate": None,
+            "readOnly": True,
+        }
+    )
+    return {"environment": app_env, "profiles": profiles}
+
+
+@router.put("/api/dev/stack/voice-profiles/{tier}")
+async def dev_composed_voice_profile_update(
+    tier: str,
+    body: ComposedVoiceProfileBody,
+    session: SessionData = Depends(require_dev_session),
+):
+    require_permission(session, "dev.stack.write")
+    from server.services.saas.voice_stack_profiles import VoiceProfileError, save_composed_profile
+
+    try:
+        return await save_composed_profile(
+            environment=effective_app_environment(),
+            tier=tier,
+            expected_revision=body.expected_revision,
+            payload=body.composed_profile,
+            actor=session.subject,
+        )
+    except VoiceProfileError as exc:
+        raise _voice_profile_http_error(exc) from exc
+
+
+@router.put("/api/dev/stack/voice-profiles/{tier}/activation")
+async def dev_composed_voice_profile_activation(
+    tier: str,
+    body: ComposedVoiceActivationBody,
+    session: SessionData = Depends(require_dev_session),
+):
+    require_permission(session, "dev.stack.write")
+    from server.services.saas.voice_stack_profiles import VoiceProfileError, set_profile_enabled
+
+    try:
+        return await set_profile_enabled(
+            environment=effective_app_environment(),
+            tier=tier,
+            expected_revision=body.expected_revision,
+            enabled=body.enabled,
+            actor=session.subject,
+        )
+    except VoiceProfileError as exc:
+        raise _voice_profile_http_error(exc) from exc
 
 
 @router.get("/api/dev/stack/tiers")

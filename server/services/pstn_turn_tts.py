@@ -78,6 +78,9 @@ class PstnTurnTtsSession:
         self._done = asyncio.Event()
         self._merged: dict[str, Any] = {}
         self._model = ""
+        self._composed = False
+        self._unary_adapter = None
+        self._unary_config = None
         self._use_mp3 = False
         self._use_mulaw_wire = False
         self._use_l16_wire = False
@@ -87,6 +90,11 @@ class PstnTurnTtsSession:
         self._pcm_resampler: StreamingPcmResampler | None = None
         self._first_chunk = True
         self._tts_audio_bytes = 0
+        self._tts_audio_seconds = 0.0
+        self._tts_pcm_samples = 0
+        self._tts_pcm_byte_remainder = 0
+        self._tts_native_usage: dict[str, int] = {}
+        self._usage_recorded = False
         self._tts_ws_msgs = 0
         self._chars_sent = 0
         self._interrupted = False
@@ -128,13 +136,39 @@ class PstnTurnTtsSession:
         speaker: str | None = None,
         language_code: str | None = None,
         resolved_stack: Any | None = None,
+        pipeline: str | None = None,
     ) -> None:
         if self._opened or self._closed:
             return
+        from server.call.call_context import get as get_call_ctx
+
+        voice = self._voice
+        ctx = get_call_ctx(voice.call_id) if voice.call_id else None
+        resolved_stack = resolved_stack or (ctx.resolved_stack if ctx else None)
+        context_pipeline = str(getattr(ctx, "pipeline", "") or "").strip().lower() if ctx else ""
+        override_pipeline = str(
+            (getattr(voice, "stack_override", None) or {}).get("pipeline") or ""
+        ).strip().lower()
+        requested_pipeline = str(pipeline or "").strip().lower()
+        if override_pipeline == "composed_voice" and context_pipeline != "composed_voice":
+            raise RuntimeError("Composed PSTN call has no matching pinned call context")
+        if context_pipeline == "composed_voice" and requested_pipeline not in ("", "composed_voice"):
+            raise RuntimeError("Composed PSTN TTS pipeline does not match the admitted call")
+        if override_pipeline == "composed_voice" and requested_pipeline not in ("", "composed_voice"):
+            raise RuntimeError("Composed PSTN TTS pipeline does not match its pinned stack")
+        pipeline = requested_pipeline or context_pipeline or None
+        if pipeline == "composed_voice":
+            if resolved_stack is None:
+                raise RuntimeError("Composed PSTN call has no pinned TTS selection")
+            await self._open_composed(
+                resolved_stack=resolved_stack,
+                language_code=language_code or voice._resolve_language(),
+            )
+            return
+
         from server.routes.ws import _connect_tts_upstream
         from server.services.tts_config import merge_pstn_tts_config
 
-        voice = self._voice
         self._bound_generation = voice.current_generation_id
         wire_mode = pstn_wire_mode(voice.tts_output_codec, voice.sample_rate)
         self._use_mp3 = voice.tts_output_codec == "mp3"
@@ -252,8 +286,132 @@ class PstnTurnTtsSession:
         self._reader_task = asyncio.create_task(self._reader_loop())
         self._opened = True
 
+    async def _open_composed(self, *, resolved_stack: Any, language_code: str) -> None:
+        """Open only the exact TTS adapter pinned by a composed PSTN stack."""
+        from server.providers import get_provider_registry
+        from server.providers.base import TTSConfig
+
+        voice = self._voice
+        selection = getattr(resolved_stack, "tts", None)
+        provider = str(getattr(selection, "provider", "") or "").strip().lower()
+        model = str(getattr(selection, "model", "") or "").strip()
+        config = getattr(selection, "config", None)
+        if not provider or not model or not isinstance(config, dict):
+            raise RuntimeError("The selected composed speech model is unavailable")
+        if str(getattr(resolved_stack, "language", "") or "") != language_code:
+            raise RuntimeError("Composed PSTN speech language does not match the pinned profile")
+
+        api_mode = str(config.get("api_mode") or "").strip().lower()
+        speaker = str(config.get("speaker") or "").strip()
+        if not speaker:
+            raise RuntimeError("The selected composed speech voice is unavailable")
+        registry = get_provider_registry()
+        if (
+            not registry.is_provider_enabled(provider, "tts")
+            or not registry.is_model_allowed(provider, "tts", model)
+        ):
+            raise RuntimeError("The selected composed speech model is unavailable")
+        adapter = registry.get_tts(provider)
+        if getattr(adapter, "provider_id", None) != provider:
+            raise RuntimeError("The selected composed speech model is unavailable")
+
+        wire_mode = pstn_wire_mode(voice.tts_output_codec, voice.sample_rate)
+        if wire_mode == "mp3":
+            raise RuntimeError("Composed PSTN speech requires a PCM or μ-law carrier format")
+        self._composed = True
+        self._bound_generation = voice.current_generation_id
+        self._use_mp3 = False
+        self._use_mulaw_wire = wire_mode == "rtp_mulaw"
+        self._use_l16_wire = wire_mode == "rtp_l16"
+        self._frame_bytes = pstn_frame_bytes(wire_mode, voice.sample_rate)
+        self._model = model
+        self._tts_rate = 24000 if provider == "gemini" else (8000 if wire_mode == "rtp_mulaw" else 16000)
+        self._pcm_resampler = None
+        self._merged = {
+            "provider": provider,
+            "model": model,
+            "speaker": speaker,
+            "language_code": language_code,
+            "output_audio_codec": "linear16",
+            "speech_sample_rate": str(self._tts_rate),
+        }
+        pace_value = config.get("pace")
+        try:
+            pace = float(pace_value) if pace_value is not None else None
+        except (TypeError, ValueError):
+            pace = None
+        temperature_value = config.get("temperature")
+        try:
+            temperature = float(temperature_value) if temperature_value is not None else None
+        except (TypeError, ValueError):
+            temperature = None
+        tts_config = TTSConfig(
+            provider=provider,
+            model=model,
+            language=language_code,
+            speaker=speaker,
+            pace=pace,
+            temperature=temperature,
+        )
+
+        if provider == "gemini" and api_mode == "unary_rest":
+            if not hasattr(adapter, "synthesize_with_metadata"):
+                raise RuntimeError("The selected composed speech transport is unavailable")
+            self._unary_adapter = adapter
+            self._unary_config = tts_config
+        elif provider == "sarvam" and api_mode == "websocket":
+            self._merged.update(
+                {
+                    "pace": pace if pace is not None else 1.0,
+                    "min_buffer_size": 30,
+                    "max_chunk_length": 80,
+                }
+            )
+            if wire_mode == "rtp_mulaw":
+                self._merged["speech_sample_rate"] = "8000"
+            else:
+                self._merged["speech_sample_rate"] = "16000"
+            self._tts_cm = adapter.connect_stream(tts_config)
+            try:
+                self._tts = await asyncio.wait_for(self._tts_cm.__aenter__(), timeout=8.0)
+            except Exception as exc:
+                try:
+                    await self._tts_cm.__aexit__(None, None, None)
+                except Exception:
+                    pass
+                self._tts_cm = None
+                if isinstance(exc, asyncio.TimeoutError):
+                    raise TimeoutError("TTS upstream connect timed out after 8s") from exc
+                raise
+            self._ping_task = asyncio.create_task(self._tts_ping())
+        else:
+            raise RuntimeError("The selected composed speech transport is unavailable")
+
+        if self._use_l16_wire:
+            voice.current_output_codec = "L16"
+        elif self._use_mulaw_wire:
+            voice.current_output_codec = "PCMU"
+        else:
+            raise RuntimeError("Composed PSTN carrier media format is unsupported")
+        self._opened = True
+
+        if self._tts is not None:
+            await self._tts.send(
+                json.dumps(
+                    {
+                        "type": "config",
+                        "data": {
+                            key: value
+                            for key, value in self._merged.items()
+                            if key not in {"provider", "model"}
+                        },
+                    }
+                )
+            )
+            self._reader_task = asyncio.create_task(self._reader_loop())
+
     async def send_text(self, text: str) -> None:
-        if not text or self._closed or self._interrupted or not self._tts:
+        if not text or self._closed or self._interrupted or (not self._tts and not self._unary_adapter):
             return
         if not self._opened:
             await self.open()
@@ -289,7 +447,34 @@ class PstnTurnTtsSession:
                     status="processing",
                     detail=text[:200],
                 )
-        await self._tts.send(json.dumps({"type": "text", "data": {"text": text}}))
+        if self._unary_adapter is not None:
+            from server.providers.audio_media import decode_pcm16_wav
+
+            try:
+                result = await self._unary_adapter.synthesize_with_metadata(text, self._unary_config)
+                pcm, media = decode_pcm16_wav(result.audio_bytes)
+                self._tts_rate = media.sample_rate
+                self._merged["speech_sample_rate"] = str(media.sample_rate)
+                self._tts_audio_bytes += len(result.audio_bytes)
+                samples, self._tts_pcm_byte_remainder = divmod(
+                    self._tts_pcm_byte_remainder + len(pcm), 2
+                )
+                self._tts_pcm_samples += samples
+                self._tts_audio_seconds += (len(pcm) // 2) / media.sample_rate
+                usage = getattr(result, "usage", None)
+                if isinstance(usage, dict):
+                    for key, value in usage.items():
+                        if isinstance(key, str) and isinstance(value, int) and not isinstance(value, bool):
+                            self._tts_native_usage[key] = int(self._tts_native_usage.get(key, 0) or 0) + value
+                await self._emit_audio_chunk(pcm)
+            except Exception:
+                self._had_error = True
+                raise
+            finally:
+                self._awaiting_audio = False
+                self._done.set()
+        else:
+            await self._tts.send(json.dumps({"type": "text", "data": {"text": text}}))
         self._chars_sent += len(text)
 
     async def prepare_for_turn(self) -> None:
@@ -310,6 +495,11 @@ class PstnTurnTtsSession:
         self._done.clear()
         self._chars_sent = 0
         self._tts_audio_bytes = 0
+        self._tts_audio_seconds = 0.0
+        self._tts_pcm_samples = 0
+        self._tts_pcm_byte_remainder = 0
+        self._tts_native_usage = {}
+        self._usage_recorded = False
         self._tts_ws_msgs = 0
         self._first_chunk = True
         self._audio_buf.clear()
@@ -321,7 +511,7 @@ class PstnTurnTtsSession:
         self._collected_frames = []
         self._pcm_resampler = None
         self._bound_generation = self._voice.current_generation_id
-        self._reader_task = asyncio.create_task(self._reader_loop())
+        self._reader_task = None if self._unary_adapter is not None else asyncio.create_task(self._reader_loop())
 
     async def synthesize_to_frames(self, text: str) -> list[bytes]:
         """One send_text + flush; collect wire frames without live Telnyx playout."""
@@ -342,9 +532,17 @@ class PstnTurnTtsSession:
             self._collecting_frames = False
 
     async def finish(self) -> None:
-        if self._closed or self._flushed or not self._tts:
+        if self._closed or self._flushed or (not self._tts and not self._unary_adapter):
             return
         self._flushed = True
+        if self._unary_adapter is not None:
+            self._awaiting_audio = True
+            if not self._stale_generation():
+                await self._flush_audio_tail()
+            self._awaiting_audio = False
+            self._done.set()
+            self._record_composed_usage()
+            return
         self._awaiting_audio = True
         await self._tts.send(json.dumps({"type": "flush"}))
         try:
@@ -359,6 +557,7 @@ class PstnTurnTtsSession:
             self._done.set()
         finally:
             self._awaiting_audio = False
+            self._record_composed_usage()
 
     async def end_turn(self) -> None:
         """Finish a turn without tearing down the upstream socket."""
@@ -375,6 +574,46 @@ class PstnTurnTtsSession:
             tts_ws_msgs=self._tts_ws_msgs,
         )
         voice.current_output_codec = "L16" if voice.sample_rate >= 16000 else "PCMU"
+
+    def _record_composed_usage(self) -> None:
+        if not self._composed or self._usage_recorded or not self._voice.call_id:
+            return
+        if not (self._chars_sent or self._tts_pcm_samples or self._tts_native_usage):
+            self._usage_recorded = True
+            return
+        from server.call.call_ledger import call_ledger
+
+        self._usage_recorded = True
+        try:
+            meta = call_ledger.read_meta(self._voice.call_id)
+            stage_usage = meta.get("stage_usage") if isinstance(meta.get("stage_usage"), dict) else {}
+            current = stage_usage.get("tts") if isinstance(stage_usage.get("tts"), dict) else {}
+            native_usage = (
+                current.get("native_usage")
+                if isinstance(current.get("native_usage"), dict)
+                else {}
+            )
+            for key, value in self._tts_native_usage.items():
+                native_usage[key] = int(native_usage.get(key, 0) or 0) + value
+            current.update(
+                input_characters=int(current.get("input_characters", 0) or 0) + self._chars_sent,
+                output_audio_seconds=round(
+                    float(current.get("output_audio_seconds", 0) or 0) + self._tts_audio_seconds,
+                    6,
+                ),
+                output_audio_samples=int(current.get("output_audio_samples", 0) or 0)
+                + self._tts_pcm_samples,
+                native_usage=native_usage,
+            )
+            stage_usage["tts"] = current
+            meta["stage_usage"] = stage_usage
+            call_ledger.write_meta(self._voice.call_id, meta)
+        except Exception as exc:
+            log_error(
+                "Composed TTS usage could not be persisted",
+                call_id=self._voice.call_id,
+                detail=type(exc).__name__,
+            )
 
     async def close(self) -> None:
         if self._closed:
@@ -399,6 +638,7 @@ class PstnTurnTtsSession:
                 await self._tts_cm.__aexit__(None, None, None)
             except Exception:
                 pass
+        self._record_composed_usage()
         await self.end_turn()
 
     async def interrupt(self) -> None:
@@ -477,6 +717,12 @@ class PstnTurnTtsSession:
                     break
                 audio = base64.b64decode(audio_b64)
                 self._tts_audio_bytes += len(audio)
+                samples, self._tts_pcm_byte_remainder = divmod(
+                    self._tts_pcm_byte_remainder + len(audio), 2
+                )
+                self._tts_pcm_samples += samples
+                if self._tts_rate > 0:
+                    self._tts_audio_seconds += len(audio) / (2 * self._tts_rate)
                 await self._emit_audio_chunk(audio)
                 self._awaiting_audio = True
         except asyncio.CancelledError:

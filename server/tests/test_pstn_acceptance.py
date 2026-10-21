@@ -10,8 +10,8 @@ from unittest.mock import AsyncMock
 import pytest
 from starlette.requests import Request
 
-from server.services.pstn_voice_core import PstnVoiceLoop, PHASE_SPEAKING, PHASE_INTRO
-from server.services.telnyx_client import TelnyxClient, TelnyxCallRegistry
+from server.services.pstn_voice_core import PHASE_INTRO, PHASE_SPEAKING, PstnVoiceLoop
+from server.services.telnyx_client import TelnyxCallRegistry, TelnyxClient
 
 
 @pytest.fixture
@@ -19,7 +19,8 @@ def failing_cartesia(monkeypatch):
     """Reproduce the production handshake failure while exercising real TTS framing."""
     import base64
     from unittest.mock import Mock
-    from server.services import tts_config, sarvam_ws
+
+    from server.services import sarvam_ws, tts_config
     from server.services.dev_fallback_store import dev_fallback_store
     from server.services.dev_secrets_store import dev_secrets_store
 
@@ -128,14 +129,15 @@ async def test_pstn_does_not_use_unconfigured_fallback(failing_cartesia, monkeyp
 async def test_prewarm_greeting_recovers_from_cartesia_402(failing_cartesia):
     from server.services.pstn_prewarm import _synthesize_greeting_frames
 
-    frames = await _synthesize_greeting_frames(greeting="Hello", session_id="fallback", pseudo_call_id="prewarm",
-                                               sample_rate=16000, tts_output_codec="linear16", language="te-IN")
+    frames, _usage = await _synthesize_greeting_frames(greeting="Hello", session_id="fallback", pseudo_call_id="prewarm",
+                                                       sample_rate=16000, tts_output_codec="linear16", language="te-IN")
     assert frames and all(len(frame) == 640 for frame in frames)
 
 
 def test_fallback_config_ignores_locked_cartesia_stack(monkeypatch):
-    from server.services import tts_config
     from unittest.mock import Mock
+
+    from server.services import tts_config
 
     stack = Mock(side_effect=AssertionError("must not resolve the failed locked stack"))
     monkeypatch.setattr(tts_config, "_stack_for_session", stack)
@@ -198,10 +200,14 @@ async def test_prewarm_greeting_uses_the_same_locked_stack_as_call_turns(monkeyp
 
     def factory(voice):
         voice.frames.append(b"\x00" * 640)
+        fake._chars_sent = 5
+        fake._tts_audio_seconds = 0.02
+        fake._tts_pcm_samples = 320
+        fake._tts_native_usage = {"audio_tokens": 1}
         return fake
 
     monkeypatch.setattr("server.services.pstn_turn_tts.PstnTurnTtsSession", factory)
-    frames = await _synthesize_greeting_frames(
+    frames, usage = await _synthesize_greeting_frames(
         greeting="Hello",
         session_id="locked-greeting",
         pseudo_call_id="prewarm",
@@ -212,7 +218,9 @@ async def test_prewarm_greeting_uses_the_same_locked_stack_as_call_turns(monkeyp
     )
 
     assert frames
-    fake.open.assert_awaited_once_with(language_code="en-IN", resolved_stack=locked_stack)
+    assert usage["input_characters"] == 5
+    assert usage["native_usage"] == {"audio_tokens": 1}
+    fake.open.assert_awaited_once_with(language_code="en-IN", resolved_stack=locked_stack, pipeline=None)
 
 
 @pytest.mark.asyncio
@@ -282,8 +290,9 @@ async def test_intro_waits_for_last_rtp_send_before_releasing_caller(monkeypatch
 @pytest.mark.asyncio
 @pytest.mark.parametrize("finish", ["hangup", "barge"])
 async def test_intro_playback_wait_does_not_reopen_ended_or_interrupted_call(monkeypatch, finish):
-    from server.services.pstn_voice_core import PHASE_ENDED, PHASE_INTERRUPTING
     from unittest.mock import Mock
+
+    from server.services.pstn_voice_core import PHASE_ENDED, PHASE_INTERRUPTING
 
     voice = PstnVoiceLoop(session_id="intro-stop", call_id=None, on_agent_wire=AsyncMock(),
                           is_agent_audio_active=lambda: True)
@@ -342,9 +351,9 @@ async def test_initiated_answers_inbound_once_without_waiting(monkeypatch, direc
 
 @pytest.mark.asyncio
 async def test_inbound_bridge_resolves_agent_and_creates_call(monkeypatch):
-    from server.services import telnyx_pstn_bridge as mod
     from server.brain.agent_service import agent_service
     from server.call.call_lifecycle_service import call_lifecycle_service
+    from server.services import telnyx_pstn_bridge as mod
     from server.services.pstn_prewarm import take_prewarm_for_answer
     monkeypatch.setattr(agent_service, "resolve_default_agent_id", AsyncMock(return_value="default-agent"))
     start = AsyncMock(return_value={"call_id": "internal", "session_id": "isolated"})
@@ -408,7 +417,7 @@ def test_question_repetition_is_not_echo():
 
 @pytest.mark.asyncio
 async def test_wire_rechecks_generation_after_send_lock():
-    from server.services.telnyx_pstn_bridge import TelnyxPstnBridge, OutboundFrame
+    from server.services.telnyx_pstn_bridge import OutboundFrame, TelnyxPstnBridge
     ws = SimpleNamespace(send_text=AsyncMock())
     bridge = TelnyxPstnBridge(ws)
     await bridge._ws_send_lock.acquire()
@@ -461,8 +470,9 @@ async def test_reconnect_restores_opening_and_conversation():
 
 def test_downsample_rejects_alias_and_preserves_packet_continuity():
     import audioop
-    from server.tests.test_pstn_tts_resample import _tone
+
     from server.services.audio_transcode import StreamingPcmResampler
+    from server.tests.test_pstn_tts_resample import _tone
     low = StreamingPcmResampler(24000, 8000).feed(_tone(24000, ms=300, freq=1000))
     high = StreamingPcmResampler(24000, 8000).feed(_tone(24000, ms=300, freq=6000))
     assert audioop.rms(high[800:], 2) < audioop.rms(low[800:], 2) * 0.03

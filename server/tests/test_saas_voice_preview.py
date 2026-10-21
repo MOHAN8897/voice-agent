@@ -213,3 +213,26 @@ async def test_voice_preview_route_reports_quota_without_provider_fallback(monke
     assert caught.value.status_code == 429
     assert caught.value.headers["Retry-After"] == "120"
     assert caught.value.detail["error"]["code"] == "voice_preview_rate_limited"
+
+
+@pytest.mark.asyncio
+async def test_synthesize_preview_supports_sarvam(monkeypatch):
+    from server.services.saas import voice_preview
+
+    audio = voice_preview.pcm16_to_wav(b"\x02\x00" * 300, 24000)
+
+    async def mock_sarvam(line, voice, speed, language=None):
+        assert voice == "shubh"
+        assert speed == 1.0
+        return audio
+
+    monkeypatch.setattr(voice_preview, "_synthesize_sarvam", mock_sarvam)
+    result = await voice_preview.synthesize_preview(
+        "నమస్కారం",
+        voice_id="shubh",
+        language="te-IN",
+        provider="sarvam",
+    )
+    assert result["voice"] == "shubh"
+    assert result["audio"] == audio
+    assert result["model"] == "bulbul:v3"

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import copy
 import hashlib
 import json
 import uuid
@@ -24,7 +25,11 @@ from server.providers.session_stack import resolve_stack_for_session
 from server.realtime.manager import realtime_text_manager
 from server.realtime.models import coerce_live_llm_selection, pipeline_mode
 from server.realtime.text_session import build_session_instructions
-from server.services.dev_runtime import effective_app_environment, effective_config_mode, effective_voice_tier
+from server.services.dev_runtime import (
+    effective_app_environment,
+    effective_config_mode,
+    effective_voice_tier,
+)
 from server.utils.errors import AppError, ErrorCode
 from server.utils.logger import log_pstn, logger
 
@@ -193,13 +198,39 @@ class CallLifecycleService:
             stack_override=stack_override,
         )
         pipeline = pipeline_mode(settings=settings, stack_override=stack_override)
+        composed_snapshot = (
+            copy.deepcopy(stack_override.get("_voice_stack_snapshot"))
+            if pipeline == "composed_voice" and isinstance(stack_override, dict)
+            and isinstance(stack_override.get("_voice_stack_snapshot"), dict)
+            else None
+        )
+        if pipeline == "composed_voice" and (
+            channel != "pstn" or effective_tier not in {"low", "medium"} or composed_snapshot is None
+        ):
+            raise AppError(
+                ErrorCode.VALIDATION_ERROR,
+                message="The composed voice profile is not valid for this call.",
+                status_code=409,
+            )
+        if pipeline == "composed_voice":
+            locked_rate = composed_snapshot.get("retailRate") if composed_snapshot else None
+            if (
+                not isinstance(locked_rate, dict)
+                or locked_rate.get("complete") is not True
+                or not locked_rate.get("fxRateInr")
+            ):
+                raise AppError(
+                    ErrorCode.VALIDATION_ERROR,
+                    message="The selected voice tier has no complete approved retail rate snapshot.",
+                    status_code=409,
+                )
         from server.services.saas.campaign_script import campaign_call_script
         # The outbound greeting already belongs to this exact script/session.
         # Recompiling at answer can replace personalized text or recording rules
         # and force Gemini to discard the socket that generated the greeting.
         using_prepared_brain = bool(
             prepared_brain and realtime_prewarm_key and channel == "pstn"
-            and direction == "outbound" and pipeline == "realtime_voice"
+            and direction == "outbound" and pipeline in {"realtime_voice", "composed_voice"}
         )
         campaign_script = None if using_prepared_brain else await campaign_call_script(agent, contact)
         if using_prepared_brain:
@@ -286,6 +317,7 @@ class CallLifecycleService:
             "environment": env,
             "resolved_stack": stack.to_safe_dict(),
             "pipeline": pipeline,
+            "voice_stack_snapshot": composed_snapshot,
             "billed_user_id": billed_user_id,
             "is_test": is_test,
             "contact": contact or {},
@@ -315,33 +347,6 @@ class CallLifecycleService:
             tag = transcription_billing_tag(policy, gemini_live=gemini)
             usage_seed = {"transcription_billing": tag, "transcription_model": policy.live_model if policy.live_enabled else policy.post_call_model}
             meta["usage"] = usage_seed
-        await call_ledger.init(call_id, meta)
-        audio_archive.init(call_id, record=not is_test)
-        from server.call.memory_manager import memory_manager
-
-        memory_manager.init(call_id)
-        from server.agent.conversation_manager import conversation_manager
-        from server.agent.session_memory import session_memory
-
-        # New call = new dialogue. Compiled brain stays on the config session.
-        conversation_manager.clear(session_id)
-        session_memory.clear(session_id)
-        # lookup_session owns shared Test Studio configuration, not this call's
-        # conversation. Clearing it here could erase another active browser call.
-        if caller_id:
-            inbound = str(direction or "").strip().lower() not in (
-                "outbound",
-                "outgoing",
-                "outbound-api",
-            )
-            if inbound:
-                memory_manager.apply_proposals(
-                    call_id,
-                    [{"op": "set_fact", "key": "phone", "value": str(caller_id)[:200]}],
-                    turn_seq=0,
-                    source="telephony",
-                )
-
         record = {
             "call_id": call_id,
             "tenant_id": agent["tenant_id"],
@@ -363,34 +368,42 @@ class CallLifecycleService:
         }
 
         # Snapshot authoritative billing rate at call start (immutable lock against future rate changes)
-        try:
-            from server.services.saas.billing_rates import load_current_rates
+        if composed_snapshot is not None:
+            native_rate = composed_snapshot["retailRate"]
+            snap_rate_micros = int(native_rate["usdMicrosPerMin"])
+            snap_rate_cents = (snap_rate_micros + 5_000) // 10_000
+            snap_rate_inr_paise = int(native_rate["inrPaisePerMin"])
+            snap_fx = float(native_rate["fxRateInr"])
+            snap_ver = int(native_rate["version"])
+        else:
+            try:
+                from server.services.saas.billing_rates import load_current_rates
 
-            cur_rates = await load_current_rates()
-            snap_rate_cents = int(
-                cur_rates["pstn_rate_usd_cents_per_min"]
-                if channel == "pstn"
-                else cur_rates["web_agent_rate_usd_cents_per_min"]
-            )
-            snap_rate_micros = int(
-                cur_rates["pstn_rate_usd_micros_per_min"]
-                if channel == "pstn"
-                else cur_rates["web_agent_rate_usd_micros_per_min"]
-            )
-            snap_rate_inr_paise = int(
-                cur_rates["pstn_rate_inr_paise_per_min"]
-                if channel == "pstn"
-                else cur_rates["web_agent_rate_inr_paise_per_min"]
-            )
-            snap_fx = float(cur_rates.get("fx_rate_inr") or 95.64)
-            snap_ver = int(cur_rates.get("version") or 1)
-        except Exception as e:
-            logger.debug(f"[CALL] rate snapshot resolution skipped: {e}")
-            snap_rate_cents = 9 if channel == "pstn" else 7
-            snap_rate_micros = snap_rate_cents * 10_000
-            snap_rate_inr_paise = int(round(snap_rate_cents * 95.64))
-            snap_fx = 95.64
-            snap_ver = 1
+                cur_rates = await load_current_rates()
+                snap_rate_cents = int(
+                    cur_rates["pstn_rate_usd_cents_per_min"]
+                    if channel == "pstn"
+                    else cur_rates["web_agent_rate_usd_cents_per_min"]
+                )
+                snap_rate_micros = int(
+                    cur_rates["pstn_rate_usd_micros_per_min"]
+                    if channel == "pstn"
+                    else cur_rates["web_agent_rate_usd_micros_per_min"]
+                )
+                snap_rate_inr_paise = int(
+                    cur_rates["pstn_rate_inr_paise_per_min"]
+                    if channel == "pstn"
+                    else cur_rates["web_agent_rate_inr_paise_per_min"]
+                )
+                snap_fx = float(cur_rates.get("fx_rate_inr") or 95.64)
+                snap_ver = int(cur_rates.get("version") or 1)
+            except Exception as e:
+                logger.debug(f"[CALL] rate snapshot resolution skipped: {e}")
+                snap_rate_cents = 9 if channel == "pstn" else 7
+                snap_rate_micros = snap_rate_cents * 10_000
+                snap_rate_inr_paise = int(round(snap_rate_cents * 95.64))
+                snap_fx = 95.64
+                snap_ver = 1
 
         record["applied_rate_usd_cents_per_min"] = snap_rate_cents
         record["applied_rate_usd_micros_per_min"] = snap_rate_micros
@@ -398,12 +411,40 @@ class CallLifecycleService:
         record["applied_fx_rate_inr"] = snap_fx
         record["rate_version"] = snap_ver
 
+        meta["rate_snapshot"] = {
+            "usdCentsPerMin": snap_rate_cents,
+            "usdMicrosPerMin": snap_rate_micros,
+            "inrPaisePerMin": snap_rate_inr_paise,
+            "fxRateInr": snap_fx,
+            "version": snap_ver,
+        }
+        await call_ledger.init(call_id, meta)
+        audio_archive.init(call_id, record=not is_test)
+        from server.call.memory_manager import memory_manager
+
+        memory_manager.init(call_id)
+        from server.agent.conversation_manager import conversation_manager
+        from server.agent.session_memory import session_memory
+
+        # New call = new dialogue. Compiled brain stays on the config session.
+        conversation_manager.clear(session_id)
+        session_memory.clear(session_id)
+        if caller_id and str(direction or "").strip().lower() not in ("outbound", "outgoing", "outbound-api"):
+            memory_manager.apply_proposals(
+                call_id,
+                [{"op": "set_fact", "key": "phone", "value": str(caller_id)[:200]}],
+                turn_seq=0,
+                source="telephony",
+            )
+
         await call_store.insert(record)
 
         max_dur = 900
         if agent.get("tenant_id"):
             try:
-                from server.services.saas.billing_wallet_service import max_allowed_call_duration_sec
+                from server.services.saas.billing_wallet_service import (
+                    max_allowed_call_duration_sec,
+                )
                 tid = uuid.UUID(str(agent["tenant_id"]))
                 max_dur = await max_allowed_call_duration_sec(tid, channel=channel, global_cap_sec=900)
             except Exception as e:
@@ -636,8 +677,8 @@ class CallLifecycleService:
             logger.warning(f"[CALL] post-call outcome failed {call_id}: {str(e)[:200]}")
             await enqueue_post_call(call_id)
         try:
-            from server.services.r2_storage import r2_storage
             from server.call.post_call_pipeline import read_outcome
+            from server.services.r2_storage import r2_storage
 
             if r2_storage.is_configured():
                 outcome_data = read_outcome(call_id)
@@ -882,6 +923,7 @@ class CallLifecycleService:
                 language=language,
                 environment=environment,
                 stack_override=stack_override,
+                allow_composed_override=self._is_server_composed_override(stack_override, tier),
             )
         return resolve_stack(
             mode="env",
@@ -889,6 +931,18 @@ class CallLifecycleService:
             language=language,
             environment=environment,
             stack_override=stack_override,
+            allow_composed_override=self._is_server_composed_override(stack_override, tier),
+        )
+
+    @staticmethod
+    def _is_server_composed_override(stack_override: dict[str, Any] | None, tier: str) -> bool:
+        snapshot = stack_override.get("_voice_stack_snapshot") if isinstance(stack_override, dict) else None
+        return bool(
+            isinstance(stack_override, dict)
+            and stack_override.get("pipeline") == "composed_voice"
+            and stack_override.get("voice_flow") == "composed_stages"
+            and isinstance(snapshot, dict)
+            and snapshot.get("tier") == tier
         )
 
     def _coerce_pipeline_stack(

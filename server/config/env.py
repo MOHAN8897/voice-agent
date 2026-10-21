@@ -122,6 +122,8 @@ class Settings(BaseSettings):
         "gpt-realtime-2.1-mini,gpt-realtime-2.1,gpt-realtime-2,gpt-5.5,gpt-5.4,gpt-5,gpt-5.6-luna",
         alias="OPENAI_ALLOWED_MODELS",
     )
+    sarvam_llm_models_csv: str = Field("", alias="SARVAM_LLM_ALLOWED_MODELS")
+    gemini_tts_models_csv: str = Field("", alias="GEMINI_TTS_ALLOWED_MODELS")
 
     # --- App ---
     debug: bool = Field(False, alias="DEBUG")
@@ -483,6 +485,14 @@ class Settings(BaseSettings):
             if extra and extra not in models:
                 models.append(extra)
         return models
+
+    @property
+    def allowed_sarvam_llm_models(self) -> list[str]:
+        return list(dict.fromkeys(model.strip() for model in self.sarvam_llm_models_csv.split(",") if model.strip()))
+
+    @property
+    def allowed_gemini_tts_models(self) -> list[str]:
+        return list(dict.fromkeys(model.strip() for model in self.gemini_tts_models_csv.split(",") if model.strip()))
 
     @property
     def working_memory_enabled(self) -> bool:

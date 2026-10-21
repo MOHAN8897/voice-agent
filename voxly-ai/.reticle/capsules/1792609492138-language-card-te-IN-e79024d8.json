@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "origin": "failed-assert",
+  "expected": "text \"Active: Telugu (te-IN)\" AND text \"No approved voice setup is available for this language yet.\" AND settled",
+  "observed": "no element matched {\"text\":\"No approved voice setup is available for this language yet.\",\"matchCase\":true} (the present-testid list shows the first 12 of 77 in document order — absence from it proves nothing)",
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "language-card-te-IN"
+      },
+      "action": "click"
+    }
+  ],
+  "id": "1792609492138-language-card-te-IN-e79024d8",
+  "createdAt": 1792609492139,
+  "seen": 1,
+  "lastSeenAt": 1792609492139
+}

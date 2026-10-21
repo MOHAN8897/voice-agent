@@ -1,0 +1,7 @@
+{
+  "planning": "deep",
+  "context_depth": "dependency",
+  "verification_depth": "impact",
+  "delegation": "parallel_decomposition",
+  "reason_codes": ["multiple-files", "shared-module", "public-api", "high-blast-radius", "user-requested-multi-agent"]
+}

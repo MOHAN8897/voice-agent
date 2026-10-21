@@ -20,6 +20,14 @@ if (import.meta.env.DEV) {
       // Agent card play/pause, and the unsaved-script guard on the studio.
       'agent-studio-unsaved', 'agent-studio-discard', 'agent-studio-save-inline',
       'agent-studio-back', 'agent-studio-switcher', 'agent-studio-leave-dialog',
+      // Tenant voice-stack selection, including the approval-gated empty state.
+      'nav-employees', 'agent-tab-voice', 'agent-open-builder', 'agent-voice-panel',
+      'voice-stack-selector', 'voice-stack-language', 'voice-stack-language-unsaved',
+      'voice-stack-loading', 'voice-stack-catalog-retry', 'voice-stack-empty',
+      'voice-stack-tier-low', 'voice-stack-tier-medium', 'voice-stack-options',
+      'voice-stack-engine', 'voice-stack-model', 'voice-stack-voice', 'voice-stack-preview',
+      'voice-stack-audio-preview', 'voice-stack-preview-retry', 'voice-stack-conflict-reload',
+      'voice-stack-save-status', 'voice-stack-reset', 'voice-stack-save',
       'leave-save', 'leave-cancel', 'leave-discard',
       'kyc-required-prompt', 'kyc-verify-now',
       'test-call-timer', 'test-call-start-browser', 'test-call-end-browser',

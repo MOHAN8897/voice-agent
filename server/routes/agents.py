@@ -4,11 +4,11 @@ from __future__ import annotations
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from server.auth.subscriber_dependencies import require_subscriber_jwt_if_enabled
 from server.auth.tenant_context import tenant_id_from_request
-from server.brain.agent_service import agent_service
+from server.brain.agent_service import AgentVoiceRevisionConflict, agent_service
 from server.services.saas.tenant_guard import (
     SubscriberPrincipal,
     require_subscriber_permission,
@@ -34,6 +34,7 @@ class PatchAgentBody(BaseModel):
     name: Optional[str] = None
     status: Optional[str] = None
     defaultTier: Optional[str] = None
+    expectedVoiceRevision: Optional[int] = Field(default=None, ge=0)
     languages: Optional[list[str]] = None
     memorySchema: Optional[str] = None
     voiceSettings: Optional[dict[str, Any]] = None
@@ -107,7 +108,18 @@ async def patch_agent(
     if body.status is not None:
         patch["status"] = body.status
     if body.defaultTier is not None:
-        patch["default_tier"] = body.defaultTier
+        from server.services.saas.voice_stack_profiles import (
+            VoiceProfileError,
+            canonical_voice_tier,
+        )
+
+        try:
+            patch["default_tier"] = canonical_voice_tier(body.defaultTier)
+        except VoiceProfileError as exc:
+            raise HTTPException(
+                status_code=exc.status_code,
+                detail={"error": {"code": exc.code, "message": str(exc)}},
+            ) from exc
     if body.languages is not None:
         patch["languages"] = body.languages
     if body.memorySchema is not None:
@@ -120,9 +132,19 @@ async def patch_agent(
     if body.recordingDisclosureText is not None:
         patch["recording_disclosure_text"] = body.recordingDisclosureText
     try:
-        agent = await agent_service.patch_agent(agent_id, patch, tenant_id=_tenant_id(request, principal))
+        agent = await agent_service.patch_agent(
+            agent_id,
+            patch,
+            tenant_id=_tenant_id(request, principal),
+            expected_voice_revision=body.expectedVoiceRevision,
+        )
     except KeyError:
         raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Agent not found"}})
+    except AgentVoiceRevisionConflict as exc:
+        raise HTTPException(
+            status_code=exc.status_code,
+            detail={"error": {"code": exc.code, "message": str(exc), **exc.details}},
+        ) from exc
     return {"ok": True, "agent": agent}
 
 

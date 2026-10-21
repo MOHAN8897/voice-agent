@@ -187,6 +187,27 @@ def normalize_pstn_stack_override(
     out = copy.deepcopy(stack_override)
     adjustments: list[str] = []
 
+    # Versioned composed profiles already contain an exact, server-resolved
+    # stage tuple. Preserve it intact: the legacy normalizer intentionally
+    # removes LLM overrides and rewrites classic PSTN stacks to realtime_text.
+    if str(out.get("pipeline") or "").strip().lower() == "composed_voice":
+        if tier not in {"low", "medium"} or out.get("voice_flow") != "composed_stages":
+            raise PstnStackValidationError("Invalid composed PSTN profile selection")
+        snapshot = out.get("_voice_stack_snapshot")
+        if not isinstance(snapshot, dict) or snapshot.get("tier") != tier:
+            raise PstnStackValidationError("Composed PSTN profile snapshot is missing or inconsistent")
+        for stage in ("stt", "llm", "tts"):
+            selection = out.get(stage)
+            if not isinstance(selection, dict):
+                raise PstnStackValidationError(f"Composed PSTN {stage.upper()} selection is missing")
+            if not str(selection.get("provider") or "").strip() or not str(selection.get("model") or "").strip():
+                raise PstnStackValidationError(f"Composed PSTN {stage.upper()} provider/model must be explicit")
+            if not isinstance(selection.get("config"), dict):
+                raise PstnStackValidationError(f"Composed PSTN {stage.upper()} configuration is invalid")
+        if str(out.get("language") or "").strip() != language:
+            raise PstnStackValidationError("Composed PSTN language must match the admitted agent language")
+        return out, adjustments
+
     if _is_realtime_voice_override(out):
         return _normalize_realtime_voice_override(
             out, adjustments, language=language, default_provider=default_provider

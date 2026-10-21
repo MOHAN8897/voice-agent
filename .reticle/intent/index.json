@@ -1,6 +1,12 @@
 {
   "entries": [
     {
+      "id": "inline:platform-admins-can-inspect-each-pstn-tier-s-sav-26368601",
+      "statement": "Platform admins can inspect each PSTN tier’s saved profile and readines…",
+      "status": "proved",
+      "subject": "dev"
+    },
+    {
       "id": "flow:drive-buy-modal-quotes-the-same-4-00-month-platform-di",
       "statement": "Buy modal quotes the same $4.00/month platform DID rate as list rows an…",
       "status": "proposed",
@@ -29,6 +35,12 @@
       "statement": "Opening Talk to AI shows Live Mic modal without requesting microphone u…",
       "status": "proposed",
       "subject": "drive-opening-talk-to-ai-shows-live-mic"
+    },
+    {
+      "id": "flow:drive-platform-admins-can-inspect-each-pstn-tier-s-sav",
+      "statement": "Platform admins can inspect each PSTN tier’s saved profile and readines…",
+      "status": "proposed",
+      "subject": "drive-platform-admins-can-inspect-each-p"
     },
     {
       "id": "flow:drive-settings-page-shows-identity-verification-card-f",

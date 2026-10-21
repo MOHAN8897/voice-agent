@@ -60,6 +60,9 @@ class PstnPrewarmBundle:
     language: str = "te-IN"
     agent_id: str | None = None
     cost_record_key: str | None = None
+    greeting_sample_rate: int = 16000
+    greeting_codec: str = "linear16"
+    greeting_tts_usage: dict[str, Any] | None = None
 
 
 class _PrewarmVoiceStub:
@@ -69,7 +72,7 @@ class _PrewarmVoiceStub:
         self,
         *,
         session_id: str,
-        call_id: str,
+        call_id: str | None,
         sample_rate: int,
         tts_output_codec: str,
         language: str,
@@ -380,23 +383,64 @@ async def record_bundle_greeting_usage(call_id: str | None, bundle: PstnPrewarmB
     if not call_id or bundle is None:
         return
     usage = bundle.greeting_usage
-    if not isinstance(usage, dict) or not usage:
+    if isinstance(usage, dict) and usage:
+        from server.services.pstn_realtime_voice_core import record_realtime_voice_usage
+
+        await record_realtime_voice_usage(
+            call_id=call_id,
+            usage=usage,
+            llm_model=bundle.greeting_model or "gpt-realtime-2.1-mini",
+            assistant_text=bundle.greeting_text or "",
+            prewarm=True,
+        )
+        if bundle.cost_record_key:
+            from server.services.saas.prewarm_cost_records import mark_usage
+
+            await mark_usage(bundle.cost_record_key, call_id=call_id)
+    else:
         model = getattr(bundle, "greeting_model", None)
         if model:
             log_pstn("prewarm.usage.unavailable", call_id=call_id, model=model)
-        return
-    from server.services.pstn_realtime_voice_core import record_realtime_voice_usage
 
-    await record_realtime_voice_usage(
-        call_id=call_id,
-        usage=usage,
-        llm_model=bundle.greeting_model or "gpt-realtime-2.1-mini",
-        assistant_text=bundle.greeting_text or "",
-        prewarm=True,
-    )
-    if bundle.cost_record_key:
-        from server.services.saas.prewarm_cost_records import mark_usage
-        await mark_usage(bundle.cost_record_key, call_id=call_id)
+    tts_usage = getattr(bundle, "greeting_tts_usage", None)
+    if isinstance(tts_usage, dict) and tts_usage:
+        from server.call.call_ledger import call_ledger
+
+        try:
+            meta = call_ledger.read_meta(call_id) or {"call_id": call_id}
+            stage_usage = meta.get("stage_usage") if isinstance(meta.get("stage_usage"), dict) else {}
+            current = stage_usage.get("tts") if isinstance(stage_usage.get("tts"), dict) else {}
+            native_usage = (
+                current.get("prewarm_native_usage")
+                if isinstance(current.get("prewarm_native_usage"), dict)
+                else {}
+            )
+            incoming_native = tts_usage.get("native_usage")
+            if isinstance(incoming_native, dict):
+                for key, value in incoming_native.items():
+                    if isinstance(key, str) and isinstance(value, int) and not isinstance(value, bool):
+                        native_usage[key] = int(native_usage.get(key, 0) or 0) + value
+            current.update(
+                prewarm_input_characters=int(current.get("prewarm_input_characters", 0) or 0)
+                + int(tts_usage.get("input_characters", 0) or 0),
+                prewarm_output_audio_seconds=round(
+                    float(current.get("prewarm_output_audio_seconds", 0) or 0)
+                    + float(tts_usage.get("output_audio_seconds", 0) or 0),
+                    6,
+                ),
+                prewarm_output_audio_samples=int(current.get("prewarm_output_audio_samples", 0) or 0)
+                + int(tts_usage.get("output_audio_samples", 0) or 0),
+                prewarm_native_usage=native_usage,
+            )
+            stage_usage["tts"] = current
+            meta["stage_usage"] = stage_usage
+            call_ledger.write_meta(call_id, meta)
+        except Exception as exc:
+            log_pstn(
+                "prewarm.tts_usage.persist_failed",
+                call_id=call_id,
+                error_type=type(exc).__name__,
+            )
 
 
 pstn_prewarm_registry = PstnPrewarmRegistry()
@@ -540,6 +584,7 @@ async def _build_prewarm_bundle(
     frames: list[bytes] = []
     greeting_source: str | None = None
     greeting_usage: dict[str, Any] | None = None
+    greeting_tts_usage: dict[str, Any] | None = None
     if greeting and mode == "realtime_voice":
         adapter = realtime_voice_manager.get(rt_key)
         if adapter is not None:
@@ -631,7 +676,7 @@ async def _build_prewarm_bundle(
                 )
                 frames = []
     elif greeting and mode != "realtime_voice":
-        frames = await _synthesize_greeting_frames(
+        frames, greeting_tts_usage = await _synthesize_greeting_frames(
             greeting=greeting,
             session_id=config_session,
             pseudo_call_id=rt_key,
@@ -639,6 +684,7 @@ async def _build_prewarm_bundle(
             tts_output_codec=tts_codec,
             language=language,
             resolved_stack=stack,
+            pipeline=mode,
         )
         if frames:
             greeting_source = "tts"
@@ -673,6 +719,9 @@ async def _build_prewarm_bundle(
         config_session_id=config_session,
         language=language,
         agent_id=agent_id or None,
+        greeting_sample_rate=sample_rate,
+        greeting_codec=tts_codec,
+        greeting_tts_usage=greeting_tts_usage if greeting_source == "tts" else None,
     )
 
 
@@ -685,30 +734,38 @@ async def _synthesize_greeting_frames(
     tts_output_codec: str,
     language: str,
     resolved_stack: Any | None = None,
-) -> list[bytes]:
+    pipeline: str | None = None,
+) -> tuple[list[bytes], dict[str, Any]]:
     from server.services.pstn_turn_tts import PstnTurnTtsSession
     from server.services.spoken_numbers import prepare_spoken_reply
 
     text = prepare_spoken_reply(greeting or "").strip()
     if not text:
-        return []
+        return [], {}
     stub = _PrewarmVoiceStub(
         session_id=session_id,
-        call_id=pseudo_call_id,
+        # A prewarm has no real call ID. Keep usage in the bundle so it can be
+        # attached after answer instead of creating a pseudo-call ledger entry.
+        call_id=None,
         sample_rate=sample_rate,
         tts_output_codec=tts_output_codec,
         language=language,
     )
     session = PstnTurnTtsSession(stub)
     try:
-        await session.open(language_code=language, resolved_stack=resolved_stack)
+        await session.open(language_code=language, resolved_stack=resolved_stack, pipeline=pipeline)
         await session.send_text(text)
         await session.finish()
         if session.had_error or not stub.frames:
             raise RuntimeError("PSTN greeting prewarm produced no usable audio")
     finally:
         await session.close()
-    return list(stub.frames)
+    return list(stub.frames), {
+        "input_characters": int(getattr(session, "_chars_sent", 0) or 0),
+        "output_audio_seconds": round(float(getattr(session, "_tts_audio_seconds", 0) or 0), 6),
+        "output_audio_samples": int(getattr(session, "_tts_pcm_samples", 0) or 0),
+        "native_usage": dict(getattr(session, "_tts_native_usage", {}) or {}),
+    }
 
 
 def schedule_prewarm(provider: str, external_id: str, dial_meta: dict[str, Any]) -> None:

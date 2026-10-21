@@ -289,6 +289,44 @@
       "subject": "unsorted",
       "updatedAt": 1792502329383
     },
+    "inline:a-tenant-can-open-the-sign-in-form-before-select-23141429": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "by": "role",
+          "value": "textbox"
+        }
+      },
+      "declaredAt": 1792612358035,
+      "id": "inline:a-tenant-can-open-the-sign-in-form-before-select-23141429",
+      "provenBy": {
+        "at": 1792612358259,
+        "grade": "presence",
+        "runId": "drive-lease-c0bae5a4-d605-4714-a1d4-fcef0e297694",
+        "verdictId": "reticle_act_and_wait:1792612358259"
+      },
+      "state": "proved",
+      "statement": "A tenant can open the sign-in form before selecting an approved voice profile.",
+      "status": "proved",
+      "subject": "unsorted",
+      "updatedAt": 1792612358280
+    },
+    "inline:a-tenant-can-sign-in-before-opening-the-voice-ed-cd853617": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "by": "role",
+          "value": "textbox"
+        }
+      },
+      "declaredAt": 1792612575099,
+      "id": "inline:a-tenant-can-sign-in-before-opening-the-voice-ed-cd853617",
+      "state": "bound",
+      "statement": "A tenant can sign in before opening the voice editor.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1792612575162
+    },
     "inline:after-de-duplicating-the-landing-copy-the-voice-ebe61ed7": {
       "binding": {
         "kind": "signal",
@@ -352,6 +390,35 @@
       "status": "proved",
       "subject": "unsorted",
       "updatedAt": 1790859525673
+    },
+    "inline:an-authenticated-tenant-can-open-the-agent-works-d0f0b8ab": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "contains": "Voice Test Agent",
+            "kind": "text"
+          },
+          {
+            "kind": "not",
+            "predicate": {
+              "kind": "element",
+              "query": {
+                "by": "role",
+                "name": "Sign in to your console",
+                "value": "dialog"
+              }
+            }
+          }
+        ]
+      },
+      "declaredAt": 1792612384325,
+      "id": "inline:an-authenticated-tenant-can-open-the-agent-works-d0f0b8ab",
+      "state": "bound",
+      "statement": "An authenticated tenant can open the agent workspace and view only voice profiles that passed the approval gates.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1792612384378
     },
     "inline:billing-has-no-fleet-subscription-plan-section-7e3ebf3f": {
       "binding": {
@@ -1274,6 +1341,64 @@
       },
       "updatedAt": 1790851216301
     },
+    "inline:tenants-can-choose-a-ready-tier-and-then-select-efb3a926": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "by": "role",
+              "scope": "[data-testid='voice-stack-selector']",
+              "value": "combobox"
+            }
+          },
+          {
+            "kind": "settled",
+            "quietMs": 500
+          }
+        ]
+      },
+      "declaredAt": 1792609525162,
+      "id": "inline:tenants-can-choose-a-ready-tier-and-then-select-efb3a926",
+      "provenBy": {
+        "at": 1792609525883,
+        "grade": "presence",
+        "runId": "drive-lease-9605dc8b-861d-4b5a-b378-d8914e39b0f3",
+        "verdictId": "reticle_act_and_wait:1792609525883"
+      },
+      "state": "proved",
+      "statement": "Tenants can choose a ready tier and then select its supported engine, model, and voice before saving.",
+      "status": "proved",
+      "subject": "unsorted",
+      "updatedAt": 1792609525907
+    },
+    "inline:tenants-should-see-only-approved-voice-stack-cho-6967d6aa": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "contains": "Active: Telugu (te-IN)",
+            "kind": "text"
+          },
+          {
+            "contains": "No approved voice setup is available for this language yet.",
+            "kind": "text"
+          },
+          {
+            "kind": "settled",
+            "quietMs": 500
+          }
+        ]
+      },
+      "declaredAt": 1792609479275,
+      "id": "inline:tenants-should-see-only-approved-voice-stack-cho-6967d6aa",
+      "state": "bound",
+      "statement": "Tenants should see only approved voice stack choices for the language they select, and keep their existing voice active when no stack is ready.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1792609479345
+    },
     "inline:the-loaded-mascot-remains-interactive-after-init-9a01a3b6": {
       "binding": {
         "contains": "Hello! Hiii! 👋 I'm Dialtact! Nice to meet you!",
@@ -1368,6 +1493,58 @@
       "status": "proved",
       "subject": "unsorted",
       "updatedAt": 1792426665426
+    },
+    "inline:the-tenant-can-open-an-agent-voice-editor-and-se-3aefa5f9": {
+      "binding": {
+        "contains": "agent=voice-reticle-agent",
+        "kind": "route"
+      },
+      "declaredAt": 1792610933482,
+      "id": "inline:the-tenant-can-open-an-agent-voice-editor-and-se-3aefa5f9",
+      "provenBy": {
+        "at": 1792610933609,
+        "grade": "presence",
+        "runId": "drive-lease-b2a54494-dcf6-4871-b05f-919f97991ca4",
+        "verdictId": "reticle_act_and_wait:1792610933609"
+      },
+      "state": "proved",
+      "statement": "The tenant can open an agent voice editor and sees only administrator-approved, ready low or standard voice profiles.",
+      "status": "proved",
+      "subject": "unsorted",
+      "updatedAt": 1792610933630
+    },
+    "inline:the-tenant-voice-editor-only-offers-administrato-299bbc15": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "contains": "step=voice",
+            "kind": "route"
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "voice-stack-empty"
+            }
+          },
+          {
+            "kind": "settled"
+          }
+        ]
+      },
+      "declaredAt": 1792610901174,
+      "id": "inline:the-tenant-voice-editor-only-offers-administrato-299bbc15",
+      "provenBy": {
+        "at": 1792610939369,
+        "grade": "presence",
+        "runId": "drive-lease-b2a54494-dcf6-4871-b05f-919f97991ca4",
+        "verdictId": "reticle_act_and_wait:1792610939369"
+      },
+      "state": "proved",
+      "statement": "The tenant voice editor only offers administrator-approved, ready low or standard profiles, and keeps the existing voice setup unchanged when none are ready.",
+      "status": "proved",
+      "subject": "unsorted",
+      "updatedAt": 1792610939392
     },
     "inline:verify-login-error-is-displayed-7fdafc32": {
       "binding": {

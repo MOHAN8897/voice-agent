@@ -28,6 +28,7 @@ from server.routes.voice import router as voice_router
 from server.routes.instructions import router as instructions_router
 from server.routes.providers import router as providers_router
 from server.routes.agents import router as agents_router
+from server.routes.voice_stacks import router as voice_stacks_router
 from server.routes.platform_brain import router as platform_brain_router
 from server.routes.agents_business_brain import router as agents_business_brain_router
 from server.routes.benchmarks import router as benchmarks_router
@@ -518,6 +519,7 @@ app.include_router(session_router)
 app.include_router(settings_router)
 app.include_router(providers_router)
 app.include_router(agents_router)
+app.include_router(voice_stacks_router)
 app.include_router(platform_brain_router)
 app.include_router(agents_business_brain_router)
 app.include_router(benchmarks_router)

@@ -1,0 +1,37 @@
+{
+  "intents": {
+    "inline:platform-admins-can-inspect-each-pstn-tier-s-sav-26368601": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "contains": "Saved · revision 3",
+            "kind": "text"
+          },
+          {
+            "contains": "An approved native retail rate for this tier has not been configured.",
+            "kind": "text"
+          }
+        ]
+      },
+      "declaredAt": 1792609336473,
+      "id": "inline:platform-admins-can-inspect-each-pstn-tier-s-sav-26368601",
+      "provenBy": {
+        "at": 1792609336935,
+        "grade": "presence",
+        "runId": "drive-lease-95336eb5-d9e8-4ed4-a5f7-a2de877922c4",
+        "verdictId": "reticle_act_and_wait:1792609336935"
+      },
+      "state": "proved",
+      "statement": "Platform admins can inspect each PSTN tier’s saved profile and readiness while native tier prices are incomplete.",
+      "status": "proved",
+      "subject": "dev",
+      "surface": {
+        "route": "/dev/stack"
+      },
+      "updatedAt": 1792609337019
+    }
+  },
+  "subject": "dev",
+  "version": 1
+}

@@ -65,8 +65,8 @@ class StreamingPcmResampler:
         if not self._filters:
             return data
         import struct
-        from array import array
         import sys
+        from array import array
 
         result = array("h")
         for (sample,) in struct.iter_unpack("<h", data):
@@ -166,6 +166,22 @@ def pcm16_rms(pcm16: bytes) -> int:
     return int(audioop.rms(pcm16, 2))
 
 
+def pcm16_crest_factor(pcm16: bytes, rms: float | None = None) -> float:
+    """Crest factor = peak_amplitude / RMS.
+
+    Used by PSTN acoustic echo & transient gating:
+    - Impulsive transients (cracker sounds, clatter, clicks, mic pops) have high crest factor (C > 4.5, often 8.0-15.0).
+    - Sustained voiced human speech has lower crest factor (C in [1.5, 3.5]).
+    """
+    if len(pcm16) < 2:
+        return 0.0
+    r = float(rms) if rms is not None else float(audioop.rms(pcm16, 2))
+    if r <= 0.0:
+        return 0.0
+    peak = float(audioop.max(pcm16, 2))
+    return peak / r
+
+
 def pcm16_dbfs(pcm16: bytes) -> float | None:
     """Approximate mono PCM16 RMS level in dBFS."""
     if len(pcm16) < 2:
@@ -217,6 +233,75 @@ def pcm_resample(pcm16: bytes, from_rate: int, to_rate: int) -> bytes:
         pcm16 = pcm16 + b"\x00"
     out, _ = audioop.ratecv(pcm16, 2, 1, from_rate, to_rate, None)
     return out
+
+
+def transcode_audio_frames(
+    frames: list[bytes],
+    *,
+    source_codec: str,
+    source_rate: int,
+    target_codec: str,
+    target_rate: int,
+    frame_ms: int = 20,
+) -> list[bytes]:
+    """Convert cached mono speech frames to the media format a voice loop emits."""
+    if not frames:
+        return []
+    if source_rate <= 0 or target_rate <= 0 or frame_ms <= 0:
+        raise ValueError("Audio rates and frame duration must be positive")
+
+    source = source_codec.strip().lower()
+    target = target_codec.strip().lower()
+    payload = b"".join(frames)
+    if source in {"linear16", "l16", "pcm16"}:
+        pcm16 = payload
+        pcm_rate = source_rate
+    elif source in {"mulaw", "ulaw", "pcmu"}:
+        if source_rate != 8000:
+            raise ValueError("G.711 source audio must be 8 kHz")
+        pcm16 = mulaw_to_pcm16(payload, target_rate=8000)
+        pcm_rate = 8000
+    elif source in {"alaw", "pcma"}:
+        if source_rate != 8000:
+            raise ValueError("G.711 source audio must be 8 kHz")
+        pcm16 = alaw_to_pcm16(payload, target_rate=8000)
+        pcm_rate = 8000
+    else:
+        raise ValueError(f"Unsupported source audio codec: {source_codec}")
+
+    if len(pcm16) % 2:
+        pcm16 += b"\x00"
+    if pcm_rate != target_rate:
+        pcm16 = pcm_resample(pcm16, pcm_rate, target_rate)
+
+    frame_samples = int(target_rate * frame_ms / 1000)
+    if frame_samples <= 0:
+        raise ValueError("Target frame duration is too short for the sample rate")
+    if target in {"linear16", "l16", "pcm16"}:
+        encoded = pcm16
+        frame_bytes = frame_samples * 2
+        silence = b"\x00"
+    elif target in {"mulaw", "ulaw", "pcmu"}:
+        if target_rate != 8000:
+            raise ValueError("G.711 target audio must be 8 kHz")
+        encoded = pcm16_to_mulaw(pcm16, sample_rate=target_rate)
+        frame_bytes = frame_samples
+        silence = b"\xff"
+    elif target in {"alaw", "pcma"}:
+        if target_rate != 8000:
+            raise ValueError("G.711 target audio must be 8 kHz")
+        encoded = pcm16_to_alaw(pcm16, sample_rate=target_rate)
+        frame_bytes = frame_samples
+        silence = b"\xd5"
+    else:
+        raise ValueError(f"Unsupported target audio codec: {target_codec}")
+
+    output: list[bytes] = []
+    for offset in range(0, len(encoded), frame_bytes):
+        chunk = encoded[offset : offset + frame_bytes]
+        if chunk:
+            output.append(chunk.ljust(frame_bytes, silence))
+    return output
 
 
 def pcm8k_to_pcm16k(pcm8k: bytes) -> bytes:

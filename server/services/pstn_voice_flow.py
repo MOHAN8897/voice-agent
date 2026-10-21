@@ -22,4 +22,4 @@ def create_pstn_voice_loop(
 
         kwargs["stack_override"] = stack_override
         return PstnRealtimeVoiceLoop(**kwargs)
-    return PstnVoiceLoop(**kwargs)
+    return PstnVoiceLoop(stack_override=stack_override, **kwargs)

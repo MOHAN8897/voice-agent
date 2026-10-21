@@ -41,6 +41,52 @@ async def saas_stack_override_for_agent(agent: dict[str, Any]) -> dict[str, Any]
     """Platform stack from dev panel; agent only overrides spoken voice, speed, and language."""
     agent_id = str(agent.get("agent_id") or agent.get("id") or "")
     voice_cfg = await load_agent_voice_config(agent_id) if agent_id else {}
+    saved_voice_settings = agent.get("voice_settings")
+    if not isinstance(saved_voice_settings, dict):
+        saved_voice_settings = voice_cfg
+    if saved_voice_settings.get("stackSelectionVersion") == 1:
+        from server.services.saas.voice_stack_profiles import (
+            VoiceProfileError,
+            canonical_voice_tier,
+            resolve_agent_selection,
+        )
+
+        try:
+            tier = canonical_voice_tier(agent.get("default_tier"))
+            if tier not in {"low", "medium"}:
+                raise VoiceProfileError(
+                    "invalid_composed_tier",
+                    "Flagship Live does not support composed voice settings.",
+                    status_code=409,
+                )
+            raw_languages = agent.get("languages")
+            lang = str(raw_languages[0]).strip() if isinstance(raw_languages, list) and raw_languages else "te-IN"
+            environment = str(agent.get("environment") or "").strip()
+            if not environment:
+                from server.services.dev_runtime import effective_app_environment
+
+                environment = effective_app_environment()
+            stack, _snapshot = await resolve_agent_selection(
+                environment=environment,
+                tier=tier,
+                voice_settings=saved_voice_settings,
+                language=lang,
+            )
+            from server.services.pstn_stack import (
+                normalize_pstn_stack_override as normalize_composed_stack_override,
+            )
+
+            normalized, _ = normalize_composed_stack_override(stack, language=lang, tier=tier)
+            if not normalized:
+                raise VoiceProfileError("profile_unavailable", "The selected voice profile is unavailable.", status_code=409)
+            return normalized
+        except VoiceProfileError as exc:
+            from fastapi import HTTPException
+
+            raise HTTPException(
+                status_code=exc.status_code,
+                detail={"error": {"code": exc.code, "message": str(exc)}},
+            ) from exc
     lang = _agent_spoken_language(agent, voice_cfg)
     stack = await resolve_platform_phone_stack(lang)
     rv = dict(stack.get("realtime_voice") or {})

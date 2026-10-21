@@ -159,6 +159,7 @@ class PstnVoiceLoop:
         tts_output_codec: str = "mulaw",
         is_agent_audio_active: Callable[[], bool] | None = None,
         playback: Any | None = None,
+        stack_override: dict[str, Any] | None = None,
     ) -> None:
         self.session_id = session_id
         self.call_id = call_id
@@ -169,6 +170,7 @@ class PstnVoiceLoop:
         self.tts_output_codec = tts_output_codec
         self.is_agent_audio_active = is_agent_audio_active
         self.playback = playback
+        self.stack_override = dict(stack_override or {})
         self._stt_cm = None
         self._stt = None
         self._stt_task: asyncio.Task | None = None
@@ -515,7 +517,11 @@ class PstnVoiceLoop:
             return
 
     def _should_commit_barge(self, text: str) -> bool:
-        from server.services.echo_guard import echo_overlap_ratio, is_barge_echo, window_assistant_text
+        from server.services.echo_guard import (
+            echo_overlap_ratio,
+            is_barge_echo,
+            window_assistant_text,
+        )
         from server.services.transcript_gate import effective_word_count, is_substantive_transcript
 
         now = time.monotonic()
@@ -792,10 +798,21 @@ class PstnVoiceLoop:
         A deliberate barge-in changes phase and retains its own handoff logic.
         """
         deadline = time.monotonic() + max(10.0, frames * 0.02 + 5.0)
-        while not self._closed and self._intro_phase and self._agent_audio_playing():
-            if time.monotonic() >= deadline:
+        idle_since: float | None = None
+        while not self._closed and self._intro_phase:
+            now = time.monotonic()
+            if self._agent_audio_playing():
+                idle_since = None
+            elif idle_since is None:
+                # A carrier worker can briefly empty its queue between frames.
+                # Require a short quiet window so the final frame is not mistaken
+                # for completed playback while it is moving into the send path.
+                idle_since = now
+            elif now - idle_since >= 0.04:
+                return
+            if now >= deadline:
                 raise TimeoutError("PSTN greeting playback did not drain")
-            await asyncio.sleep(0.02)
+            await asyncio.sleep(0.005)
 
     def _cancel_backchannel(self) -> None:
         task = self._backchannel_task
@@ -1114,9 +1131,12 @@ class PstnVoiceLoop:
         mode = effective_stt_mode(str(rt.get("sttMode") or "transcribe"))
         silence_ms = effective_stt_silence_ms(rt)
         threshold_val = rt.get("sttThreshold")
+        expected_pipeline, pinned_stack = self._stt_pipeline_options()
         self._stt_cm = _connect_stt_upstream(
             session_id=self.config_session_id or self.session_id,
             call_id=self.call_id,
+            expected_pipeline=expected_pipeline,
+            pinned_stack=pinned_stack,
             language_code=lang,
             sample_rate=self.sample_rate,
             stream_type=stream_type,
@@ -1130,6 +1150,21 @@ class PstnVoiceLoop:
         log_pstn("stt.open", call_id=self.call_id, language=lang, sample_rate=self.sample_rate)
         if self.call_id:
             pstn_media_flow.emit(self.call_id, "stt_stream", "inbound", detail="streaming")
+
+    def _stt_pipeline_options(self) -> tuple[str | None, dict[str, Any] | None]:
+        """Carry composed intent through connect/reconnect so STT cannot re-resolve."""
+        override_pipeline = str(self.stack_override.get("pipeline") or "").strip().lower()
+        context_pipeline = None
+        if self.call_id:
+            from server.call.call_context import get as get_call_ctx
+
+            ctx = get_call_ctx(self.call_id)
+            context_pipeline = str(getattr(ctx, "pipeline", "") or "").strip().lower() or None
+        if override_pipeline == "composed_voice" and context_pipeline not in (None, "composed_voice"):
+            raise RuntimeError("Composed PSTN call context does not match its pinned stack")
+        if override_pipeline == "composed_voice" or context_pipeline == "composed_voice":
+            return "composed_voice", self.stack_override if override_pipeline == "composed_voice" else None
+        return None, None
 
     async def _reopen_stt_socket(self) -> bool:
         """Close and reopen the STT upstream without spawning a nested supervisor."""
@@ -1154,9 +1189,12 @@ class PstnVoiceLoop:
 
             lang = self._resolve_language()
             rt = runtime_settings.get(self.config_session_id or self.session_id)
+            expected_pipeline, pinned_stack = self._stt_pipeline_options()
             self._stt_cm = _connect_stt_upstream(
                 session_id=self.config_session_id or self.session_id,
                 call_id=self.call_id,
+                expected_pipeline=expected_pipeline,
+                pinned_stack=pinned_stack,
                 language_code=lang,
                 sample_rate=self.sample_rate,
                 stream_type=effective_stt_stream_type(str(rt.get("sttStreamType") or "fast")),

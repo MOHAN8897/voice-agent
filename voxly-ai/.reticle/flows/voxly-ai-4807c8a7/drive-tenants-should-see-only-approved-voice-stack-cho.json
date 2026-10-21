@@ -1,0 +1,66 @@
+{
+  "version": 2,
+  "name": "drive-tenants-should-see-only-approved-voice-stack-cho",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1792610136980,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "language-card-te-IN"
+      },
+      "args": {},
+      "action": "click",
+      "timeoutMs": 12000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "voice-stack-tier-low"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "by": "role",
+              "value": "combobox",
+              "scope": "[data-testid='voice-stack-selector']"
+            }
+          },
+          {
+            "kind": "settled",
+            "quietMs": 500
+          }
+        ]
+      },
+      "timeoutMs": 10000,
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "intent": "Tenants should see only approved voice stack choices for the language they select, and keep their existing voice active when no stack is ready.",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "codex-mcp-client",
+    "person": "mohansaiteja.99@gmail.com"
+  },
+  "intentId": "flow:drive-tenants-should-see-only-approved-voice-stack-cho"
+}

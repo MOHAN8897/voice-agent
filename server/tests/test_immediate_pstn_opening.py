@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import json
 import threading
 import time
@@ -79,7 +80,17 @@ async def test_distinct_tracking_request_and_answer_ids_reuse_one_prepared_sessi
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("block_registry", [False, True])
-async def test_first_audio_precedes_slow_lifecycle_and_same_adapter_handles_conversation(prepared, monkeypatch, block_registry):
+@pytest.mark.parametrize(
+    ("encoding", "sample_rate", "content_type", "frame_bytes"),
+    [
+        ("audio/x-l16", 16000, "audio/x-l16", 640),
+        ("audio/x-mulaw", 8000, "audio/x-mulaw;rate=8000", 160),
+        ("audio/x-alaw", 8000, "audio/x-alaw;rate=8000", 160),
+    ],
+)
+async def test_first_audio_precedes_slow_lifecycle_and_same_adapter_handles_conversation(
+    prepared, monkeypatch, block_registry, encoding, sample_rate, content_type, frame_bytes
+):
     from server.call.call_lifecycle_service import call_lifecycle_service
     from server.services.runtime_settings import runtime_settings
 
@@ -126,7 +137,7 @@ async def test_first_audio_precedes_slow_lifecycle_and_same_adapter_handles_conv
         return voice
     monkeypatch.setattr(vobiz_pstn_bridge, "create_pstn_voice_loop", voice_factory)
     event = {"start": {"callId": "answered-call", "streamId": "stream-test",
-                       "mediaFormat": {"encoding": "audio/x-l16", "sampleRate": 16000}}}
+                       "mediaFormat": {"encoding": encoding, "sampleRate": sample_rate}}}
     start_task = asyncio.create_task(bridge._on_start(event))
     try:
         await asyncio.wait_for(first_audio.wait(), timeout=1)
@@ -136,7 +147,11 @@ async def test_first_audio_precedes_slow_lifecycle_and_same_adapter_handles_conv
         await asyncio.wait_for(lifecycle_entered.wait(), timeout=1)
         assert not start_task.done()
         assert not voices
-        assert len([m for m in messages if m["event"] == "playAudio"]) == 3
+        audio_messages = [m for m in messages if m["event"] == "playAudio"]
+        assert len(audio_messages) == 3
+        for message in audio_messages:
+            assert message["media"]["contentType"] == content_type
+            assert len(base64.b64decode(message["media"]["payload"])) == frame_bytes
         finish_lifecycle.set()
         await asyncio.wait_for(start_task, timeout=2)
         await asyncio.wait_for(bridge._start_voice_task, timeout=2)

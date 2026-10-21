@@ -51,7 +51,12 @@ def resolve_preview_voice(
     active_provider = str(provider or "gemini").strip().lower()
     wanted = str(voice_id or "").strip()
     if not wanted:
-        wanted = default_gemini_live_voice(language) if active_provider == "gemini" else "marin"
+        if active_provider == "gemini":
+            wanted = default_gemini_live_voice(language)
+        elif active_provider == "sarvam":
+            wanted = "shubh"
+        else:
+            wanted = "marin"
     for row in phone_voice_catalog():
         if row.get("provider") != active_provider or str(row.get("id", "")).casefold() != wanted.casefold():
             continue
@@ -182,6 +187,21 @@ async def _synthesize_openai(line: str, voice: str, speed: float) -> bytes:
     return audio
 
 
+async def _synthesize_sarvam(line: str, voice: str, speed: float, language: str | None = None) -> bytes:
+    from server.services.sarvam_tts_service import synthesize
+
+    result = await synthesize(
+        text=line,
+        language_code=language or "te-IN",
+        speaker=voice,
+        pace=speed,
+    )
+    audio = result.get("audio_bytes")
+    if not isinstance(audio, bytes) or len(audio) < 44 or not audio.startswith(b"RIFF") or audio[8:12] != b"WAVE":
+        raise RuntimeError("Sarvam voice generation returned an invalid WAV file")
+    return audio
+
+
 async def synthesize_preview(
     text: str,
     *,
@@ -194,11 +214,16 @@ async def synthesize_preview(
     """Synthesize a WAV with the currently selected provider; never cross-fallback."""
     line = normalize_preview_text(text)
     active_provider = str(provider or "gemini").strip().lower()
-    if active_provider not in {"gemini", "openai"}:
+    if active_provider not in {"gemini", "openai", "sarvam"}:
         raise ValueError("unsupported_voice_provider")
     voice, label = resolve_preview_voice(voice_id, provider=active_provider, language=language)
     pace = max(0.5, min(2.0, float(speed) if speed is not None else 1.0))
-    preview_model = GEMINI_TTS_MODEL if active_provider == "gemini" else "tts-1"
+    if active_provider == "gemini":
+        preview_model = GEMINI_TTS_MODEL
+    elif active_provider == "sarvam":
+        preview_model = "bulbul:v3"
+    else:
+        preview_model = "tts-1"
     from server.services.saas.voice_catalog import phone_voice_catalog
 
     # Only built-in samples are public. A tenant's custom greeting stays private
@@ -213,6 +238,8 @@ async def synthesize_preview(
     async def generate():
         if active_provider == "gemini":
             return await _synthesize_gemini(line, voice, pace)
+        elif active_provider == "sarvam":
+            return await _synthesize_sarvam(line, voice, pace, language)
         return await _synthesize_openai(line, voice, pace)
 
     cache_hit = False

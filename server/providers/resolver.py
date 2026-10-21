@@ -30,6 +30,7 @@ class StackResolver:
         language: str = "te-IN",
         stack_override: dict[str, Any] | None = None,
         environment: str = "development",
+        allow_composed_override: bool = False,
     ) -> ResolvedStack:
         effective_mode: ConfigMode = mode or dev_secrets_store.effective(
             "voice_agent_config_mode", self._settings.voice_agent_config_mode
@@ -40,7 +41,13 @@ class StackResolver:
 
         language = normalize_supported_language(language)
 
-        if stack_override and environment == "production":
+        is_composed_override = bool(
+            allow_composed_override
+            and isinstance(stack_override, dict)
+            and stack_override.get("pipeline") == "composed_voice"
+            and isinstance(stack_override.get("_voice_stack_snapshot"), dict)
+        )
+        if stack_override and environment == "production" and not is_composed_override:
             raise AppError(
                 ErrorCode.VALIDATION_ERROR,
                 message="stack_override is not allowed in production",
@@ -58,7 +65,8 @@ class StackResolver:
         if stack_override:
             stack = self._apply_override(stack, stack_override)
 
-        stack = self._apply_stage_fallbacks(stack)
+        if not is_composed_override:
+            stack = self._apply_stage_fallbacks(stack)
         self._validate_stack(stack, language)
         combination_id = self._combination_id(stack)
         return ResolvedStack(

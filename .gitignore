@@ -83,3 +83,12 @@ scratch/
 
 /.gravitas/sessions/*/*.png
 /.gravitas/sessions/*/*.txt
+
+# Local Next.js work directories and browser verification output
+/web/.next-*/
+/web/test-results-*/
+
+# Local provider audit output and scratch prompts
+/final_audit_results.json
+/scratch_audit_results.json
+/scratch_hima_prompt.txt

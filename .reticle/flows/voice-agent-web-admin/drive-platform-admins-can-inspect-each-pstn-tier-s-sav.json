@@ -1,0 +1,51 @@
+{
+  "version": 2,
+  "name": "drive-platform-admins-can-inspect-each-pstn-tier-s-sav",
+  "projectId": "voice-agent-web-admin",
+  "createdAt": 1792609365790,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Standard (medium)"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "text",
+            "contains": "Saved · revision 3"
+          },
+          {
+            "kind": "text",
+            "contains": "An approved native retail rate for this tier has not been configured."
+          }
+        ]
+      },
+      "page": "/dev/stack"
+    }
+  ],
+  "startPath": "/dev/stack",
+  "intent": "Platform admins can inspect each PSTN tier’s saved profile and readiness while native tier prices are incomplete.",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/dev/stack"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/dev/stack"
+    }
+  ],
+  "author": {
+    "agent": "codex-mcp-client",
+    "person": "mohansaiteja.99@gmail.com"
+  },
+  "intentId": "flow:drive-platform-admins-can-inspect-each-pstn-tier-s-sav"
+}

@@ -9,7 +9,7 @@ from server.realtime.models import GEMINI_LIVE_LIBRARY_VOICES, GEMINI_LIVE_VOICE
 _OPENAI_VOICE_META: dict[str, dict[str, str]] = {
     "marin": {"label": "Marin", "gender": "female", "tone": "Warm & conversational", "category": "support", "useCase": "Customer Care, Hospitality & Appointments"},
     "cedar": {"label": "Cedar", "gender": "male", "tone": "Calm & steady", "category": "operations", "useCase": "Field Operations, Home Services & Dispatch"},
-    "alloy": {"label": "Alloy", "gender": "neutral", "tone": "Balanced & empathetic", "category": "support", "useCase": "Healthcare Clinics, Patient Triage & Intake"},
+    "alloy": {"label": "Alloy", "gender": "female", "tone": "Balanced & empathetic", "category": "support", "useCase": "Healthcare Clinics, Patient Triage & Intake"},
     "ash": {"label": "Ash", "gender": "male", "tone": "Grounded & thoughtful", "category": "operations", "useCase": "Technical Operations, Diagnostics & Advisory"},
     "ballad": {"label": "Ballad", "gender": "male", "tone": "Proactive & direct", "category": "sales", "useCase": "Automotive Sales, Direct Outreach & Inquiries"},
     "coral": {"label": "Coral", "gender": "female", "tone": "Friendly & trustworthy", "category": "support", "useCase": "Banking Verification, Fintech & Onboarding"},
@@ -153,6 +153,20 @@ _GEMINI_INDIC_VOICE_META: tuple[dict[str, Any], ...] = (
 )
 
 
+_SARVAM_VOICE_META: tuple[dict[str, Any], ...] = (
+    {"id": "shubh", "label": "Shubh · Male", "gender": "male", "languageCode": "te-IN", "accent": "Telugu (India)", "tone": "Conversational & crisp", "category": "support", "useCase": "Customer support & outreach", "sampleText": "నమస్కారం, నేను మీకు ఎలా సహాయం చేయగలను?"},
+    {"id": "priya", "label": "Priya · Female", "gender": "female", "languageCode": "te-IN", "accent": "Telugu (India)", "tone": "Warm & empathetic", "category": "support", "useCase": "Customer care & appointments", "sampleText": "నమస్కారం, నేను మీకు ఎలా సహాయం చేయగలను?", "defaultForLanguage": True},
+    {"id": "kavitha", "label": "Kavitha · Female", "gender": "female", "languageCode": "te-IN", "accent": "Telugu (India)", "tone": "Traditional & pleasant", "category": "support", "useCase": "Concierge & hospitality", "sampleText": "నమస్కారం, మీ ప్రశ్నలకు సమాధానాలు అందించడానికి నేను సిద్ధంగా ఉన్నాను."},
+    {"id": "neha", "label": "Neha · Female", "gender": "female", "languageCode": "te-IN", "accent": "Telugu (India)", "tone": "Friendly & bright", "category": "sales", "useCase": "Sales & direct outreach", "sampleText": "నమస్కారం, మా ఆఫర్ల గురించి మీకు వివరించడానికి సిద్ధంగా ఉన్నాను."},
+    {"id": "rahul", "label": "Rahul · Male", "gender": "male", "languageCode": "te-IN", "accent": "Telugu (India)", "tone": "Energetic & dynamic", "category": "sales", "useCase": "Commercial outreach & booking", "sampleText": "నమస్కారం, మీ అపాయింట్‌మెంట్ బుకింగ్ కోసం నేను సహాయం చేయగలను."},
+    {"id": "pooja", "label": "Pooja · Female", "gender": "female", "languageCode": "te-IN", "accent": "Telugu (India)", "tone": "Polite & gentle", "category": "support", "useCase": "Inbound intake & triage", "sampleText": "నమస్కారం, మీ వివరాలను సరిచూసేందుకు సహాయపడతాను."},
+    {"id": "sumit", "label": "Sumit · Male", "gender": "male", "languageCode": "te-IN", "accent": "Telugu (India)", "tone": "Professional & steady", "category": "operations", "useCase": "Technical support & IT helpdesk", "sampleText": "నమస్కారం, మీ సమస్యను పరిష్కరించడంలో సహాయం చేస్తాను."},
+    {"id": "ishita", "label": "Ishita · Female", "gender": "female", "languageCode": "te-IN", "accent": "Telugu (India)", "tone": "Expressive & articulate", "category": "operations", "useCase": "Advisory & diagnostics", "sampleText": "నమస్కారం, మీ విచారణను పరిశీలించి వెంటనే సమాధానం ఇస్తాను."},
+    {"id": "aditya", "label": "Aditya · Male", "gender": "male", "languageCode": "te-IN", "accent": "Telugu (India)", "tone": "Clear & assertive", "category": "sales", "useCase": "Lead qualification & finance", "sampleText": "నమస్కారం, మీ ఖాతా వివరాల గురించి మాట్లాడటానికి సిద్ధంగా ఉన్నాను."},
+    {"id": "simran", "label": "Simran · Female", "gender": "female", "languageCode": "te-IN", "accent": "Telugu (India)", "tone": "Cheerful & welcoming", "category": "support", "useCase": "Reception & guest intake", "sampleText": "నమస్కారం, స్వాగతం! మీకు ఎలా సహాయపడగలను?"},
+)
+
+
 def phone_voice_catalog() -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for vid in REALTIME_VOICES:
@@ -172,6 +186,7 @@ def phone_voice_catalog() -> list[dict[str, Any]]:
                 "geminiVoice": gemini_name,
                 "geminiLabel": gmeta.get("label") or gemini_name,
                 "geminiGender": gmeta.get("gender") or "",
+                "sampleUrl": f"/audio/voxly/samples/{vid.lower()}.wav",
             }
         )
     for gid in GEMINI_LIVE_VOICES:
@@ -190,6 +205,7 @@ def phone_voice_catalog() -> list[dict[str, Any]]:
                 "geminiVoice": gid,
                 "geminiLabel": gmeta.get("label") or gid,
                 "geminiGender": gmeta.get("gender") or "",
+                "sampleUrl": f"/audio/voxly/samples/{gid.lower()}.wav",
             }
         )
     for meta in _GEMINI_INDIC_VOICE_META:
@@ -204,6 +220,20 @@ def phone_voice_catalog() -> list[dict[str, Any]]:
                 "geminiVoice": gid,
                 "geminiLabel": meta["label"],
                 "geminiGender": meta["gender"],
+                "sampleUrl": f"/audio/voxly/samples/{gid.lower()}.wav",
+            }
+        )
+    for meta in _SARVAM_VOICE_META:
+        sid = str(meta["id"])
+        rows.append(
+            {
+                **meta,
+                "provider": "sarvam",
+                "providerLabel": "Sarvam Bulbul",
+                "geminiVoice": sid,
+                "geminiLabel": meta["label"],
+                "geminiGender": meta["gender"],
+                "sampleUrl": f"/audio/voxly/samples/{sid.lower()}.wav",
             }
         )
     return rows

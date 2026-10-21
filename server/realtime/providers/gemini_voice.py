@@ -55,9 +55,9 @@ _GEMINI_VOICE_BY_LOWER = {
 
 _EAGERNESS_TO_START: dict[str, str] = {
     "low": "START_SENSITIVITY_LOW",
-    "medium": "START_SENSITIVITY_MEDIUM",
+    "medium": "START_SENSITIVITY_LOW",
     "high": "START_SENSITIVITY_HIGH",
-    "auto": "START_SENSITIVITY_HIGH",
+    "auto": "START_SENSITIVITY_LOW",
 }
 
 
@@ -120,7 +120,7 @@ def _vad_config(
                 silence_duration_ms=normalize_realtime_silence_ms(silence_ms),
             )
         )
-    start = _EAGERNESS_TO_START.get(normalize_realtime_vad_eagerness(vad_eagerness), "START_SENSITIVITY_HIGH")
+    start = _EAGERNESS_TO_START.get(normalize_realtime_vad_eagerness(vad_eagerness), "START_SENSITIVITY_LOW")
     silence_ms = normalize_realtime_silence_ms(silence_ms) if silence_ms else 650
     return types.RealtimeInputConfig(
         automatic_activity_detection=types.AutomaticActivityDetection(

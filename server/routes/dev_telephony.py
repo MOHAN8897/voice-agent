@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import asyncio
-
 import hashlib
 import json
 import time
@@ -194,7 +193,6 @@ def _resolve_outbound_source_session(body: OutboundTestBody) -> tuple[str | None
 def _outbound_pstn_context(body: OutboundTestBody) -> tuple[str, str, dict[str, Any] | None, list[str]]:
     """Validate/sanitize custom PSTN stack before dial. Tier-only → no override."""
     from server.services.pstn_stack import PstnStackValidationError, prepare_pstn_dial_stack
-
     from server.services.test_studio_config import merge_stack, saved_call_config
 
     source, inherit = _resolve_outbound_source_session(body)
@@ -415,10 +413,10 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
     from server.brain.agent_service import agent_service
     from server.services.pstn_debug import log_pstn, mark
     from server.services.telnyx_client import (
-        TelnyxApiError,
-        TelnyxClient,
         TELNYX_RTP_CODEC,
         TELNYX_RTP_SAMPLE_RATE,
+        TelnyxApiError,
+        TelnyxClient,
         telnyx_call_registry,
         telnyx_stream_tokens,
     )
@@ -671,6 +669,11 @@ async def _outbound_vobiz(
     tracking_id = f"vobiz-{uuid.uuid4()}"
     from server.realtime.models import is_gemini_live_voice_model
     live_llm = stack_override.get("llm") or {}
+    prepared_voice_opening_required = (
+        str(stack_override.get("pipeline") or "").strip().lower() == "composed_voice"
+        or str(live_llm.get("provider") or "").lower() == "gemini"
+        or is_gemini_live_voice_model(str(live_llm.get("model") or ""))
+    )
 
     token = await asyncio.to_thread(vobiz_stream_tokens.create,
         call_uuid=tracking_id,
@@ -688,8 +691,7 @@ async def _outbound_vobiz(
         contact=body.contact,
         admission_key=body.admission_key,
         admission_tenant_id=session.tenant_id,
-        prewarm_required=(str(live_llm.get("provider") or "").lower() == "gemini"
-                          or is_gemini_live_voice_model(str(live_llm.get("model") or ""))),
+        prewarm_required=prepared_voice_opening_required,
     )
 
     try:
@@ -989,11 +991,11 @@ def dev_telephony_media_flow(
 
     flow = pstn_media_flow.snapshot(call_id)
     if flow:
-        from server.services.telnyx_pstn_bridge import active_telnyx_bridges
-        from server.services.telnyx_client import telnyx_call_registry
         from server.realtime.manager import realtime_text_manager
         from server.realtime.voice_manager import realtime_voice_manager
         from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+        from server.services.telnyx_client import telnyx_call_registry
+        from server.services.telnyx_pstn_bridge import active_telnyx_bridges
 
         external_id = str(flow.get("external_id") or "")
         bridge = active_telnyx_bridges.get(external_id)

@@ -224,6 +224,9 @@ class VobizPstnBridge:
             self._wire_sample_rate = int(sr) if sr else VOBIZ_DEFAULT_SAMPLE_RATE
             flow_codec = "L16" if self._wire_codec == "linear16" else "PCMU"
 
+        if self._wire_codec in {"mulaw", "alaw"} and self._wire_sample_rate != 8000:
+            raise ValueError("Vobiz G.711 media must use an 8 kHz sample rate")
+
         self._negotiated_media = CallMediaConfig(
             codec=flow_codec,
             sample_rate=self._wire_sample_rate,
@@ -252,12 +255,30 @@ class VobizPstnBridge:
         if self.agent_id and self._token_meta.get("direction") == "outbound":
             prewarm = await self._claim_prepared_opening((outbound_id, request_uuid))
             if prewarm:
+                if prewarm.greeting_wire_frames:
+                    from server.services.audio_transcode import transcode_audio_frames
+
+                    # Voice loops emit L16 for linear media and PCMU for G.711.
+                    # Convert the cached greeting to that exact source format;
+                    # _send_agent_wire handles any PCMU→PCMA carrier conversion.
+                    target_codec = "linear16" if self._wire_codec == "linear16" else "mulaw"
+                    target_rate = self._wire_sample_rate if target_codec == "linear16" else 8000
+                    prewarm.greeting_wire_frames = transcode_audio_frames(
+                        prewarm.greeting_wire_frames,
+                        source_codec=prewarm.greeting_codec,
+                        source_rate=prewarm.greeting_sample_rate,
+                        target_codec=target_codec,
+                        target_rate=target_rate,
+                    )
+                    if not prewarm.greeting_wire_frames:
+                        raise RuntimeError("Prepared opening audio could not be adapted to negotiated media")
+                    prewarm.greeting_codec = target_codec
+                    prewarm.greeting_sample_rate = target_rate
                 from server.realtime.models import is_gemini_live_voice_model
                 from server.realtime.voice_manager import realtime_voice_manager
 
                 adapter = realtime_voice_manager.get(prewarm.realtime_key)
                 if (is_gemini_live_voice_model(prewarm.greeting_model or "")
-                        and self._wire_codec == "linear16" and self._wire_sample_rate == 16000
                         and prewarm.greeting_wire_frames and adapter is not None
                         and adapter.is_open() and getattr(adapter, "opening_generated_on_session", False)):
                     self._playback = EstimatedPlaybackTracker(frame_ms=20.0)
@@ -490,15 +511,16 @@ class VobizPstnBridge:
                 content_type = "audio/x-l16"
                 sample_rate = self._wire_sample_rate
             else:
-                # μ-law 8kHz 20ms frames = 160 bytes
-                if len(wire) % 160 == 0:
-                    frames = [wire[i : i + 160] for i in range(0, len(wire), 160)]
-                elif len(wire) % 320 == 0:
-                    # Fallback if raw PCM16 was passed
-                    frames = list(pcm16_chunk_to_mulaw_frames(wire, sample_rate=8000, frame_ms=20))
+                # Voice loops emit PCMU for both G.711 carrier formats; encode
+                # the carrier's requested A-law explicitly instead of relabeling.
+                frames = [wire[i : i + 160] for i in range(0, len(wire), 160) if wire[i : i + 160]]
+                if self._wire_codec == "alaw":
+                    from server.services.audio_transcode import convert_g711
+
+                    frames = [convert_g711(frame, "PCMU", "PCMA") for frame in frames]
+                    content_type = "audio/x-alaw;rate=8000"
                 else:
-                    frames = [wire[i : i + 160] for i in range(0, len(wire), 160)]
-                content_type = "audio/x-mulaw;rate=8000"
+                    content_type = "audio/x-mulaw;rate=8000"
                 sample_rate = 8000
 
             # Register queued frames in playback tracker so farewell / hangup logic knows audio is playing

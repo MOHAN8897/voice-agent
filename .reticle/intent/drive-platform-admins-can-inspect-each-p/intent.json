@@ -1,0 +1,18 @@
+{
+  "intents": {
+    "flow:drive-platform-admins-can-inspect-each-pstn-tier-s-sav": {
+      "declaredAt": 1792609365801,
+      "id": "flow:drive-platform-admins-can-inspect-each-pstn-tier-s-sav",
+      "state": "declared",
+      "statement": "Platform admins can inspect each PSTN tier’s saved profile and readiness while native tier prices are incomplete.",
+      "status": "proposed",
+      "subject": "drive-platform-admins-can-inspect-each-p",
+      "surface": {
+        "flow": "drive-platform-admins-can-inspect-each-pstn-tier-s-sav"
+      },
+      "updatedAt": 1792609365811
+    }
+  },
+  "subject": "drive-platform-admins-can-inspect-each-p",
+  "version": 1
+}

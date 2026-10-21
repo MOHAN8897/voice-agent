@@ -1,0 +1,28 @@
+{
+  "date": "2026-10-21",
+  "result": "VERDICT: PASS",
+  "scope": "Primary Gemini PSTN agent-initiated terminal farewell handling",
+  "behavior": [
+    "Completed spoken closing can end the call without a caller goodbye or model end_call tool",
+    "Carrier hangup waits for farewell playback to drain and occurs once",
+    "Inferred agent closing is cancelled when the caller barges in before disconnect",
+    "Configured language-pack farewells and explicit English/Indic closings are recognized",
+    "Quoted examples, plain thanks, questions, no-audio and interrupted responses do not trigger this fallback",
+    "Default validator behavior, browser calls, and admin allowed-reason policy are preserved"
+  ],
+  "verification": {
+    "hangup_validation_primary_regression_suite": {"passed": 205, "exit_code": 0},
+    "realtime_voice_hangup_callback_selection": {"passed": 13, "deselected": 56, "exit_code": 0},
+    "targeted_semgrep": {"findings": 0, "blocking": 0, "rules": 3},
+    "new_test_file_ruff": "passed",
+    "changed_backend_undefined_name_lint": "passed",
+    "full_file_lint": "Existing style findings remain in shared source files; no blanket lint pass claimed",
+    "diff_whitespace_check": "passed",
+    "graft": "refreshed",
+    "reticle": "Skipped: backend-only PSTN lifecycle change, no UI change to exercise",
+    "real_phone_call": "not run",
+    "deployed": false
+  },
+  "failure_recovery": "Initial barge-in regression failed because the existing fast-close path preserved the hangup. Added a distinct inferred-agent-farewell source; confirmed barge-in now aborts only that inferred close. Original assertion retained and passes.",
+  "preserved": "Other pending code and concurrent billing work were left intact."
+}

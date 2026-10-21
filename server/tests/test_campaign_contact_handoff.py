@@ -1,7 +1,10 @@
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
-from server.services.saas.contact_import_service import render_agent_prompt_for_contact, resolve_contact_variables
+from server.services.saas.contact_import_service import (
+    render_agent_prompt_for_contact,
+    resolve_contact_variables,
+)
 
 
 def test_imported_values_cannot_insert_prompt_sections_or_override_system_fields():
@@ -16,10 +19,11 @@ def test_imported_values_cannot_insert_prompt_sections_or_override_system_fields
 
 async def test_primary_dial_keeps_contact_in_prewarm_and_authorized_media_context(monkeypatch):
     import uuid
+
     from server.auth.session import SessionData
+    from server.brain.agent_service import agent_service
     from server.routes import dev_telephony as route
     from server.services import vobiz_client as carrier
-    from server.brain.agent_service import agent_service
     tenant = str(uuid.uuid4())
     contact = {"first_name": "Example", "campaign_id": str(uuid.uuid4())}
     body = route.OutboundTestBody(agentId=str(uuid.uuid4()), toE164="+12025550101", fromE164="+12025550102", contact=contact)
@@ -37,26 +41,32 @@ async def test_primary_dial_keeps_contact_in_prewarm_and_authorized_media_contex
     monkeypatch.setattr(route, "_resolve_outbound_source_session", lambda _body: (None, False))
     monkeypatch.setattr(route, "_record_dev_dial", lambda **_kw: {})
     monkeypatch.setattr(route, "_mirror_dev_telephony", AsyncMock())
-    scheduled = []
-    monkeypatch.setattr("server.services.pstn_prewarm.schedule_prewarm", lambda _provider, _id, meta: scheduled.append(meta))
+    prepared = []
+
+    async def prepare(_registry, provider, external_id, meta):
+        prepared.append((provider, external_id, meta))
+
+    from server.services.pstn_prewarm import PstnPrewarmRegistry
+
+    monkeypatch.setattr(PstnPrewarmRegistry, "prepare", prepare)
     result = await route._outbound_vobiz(body, SessionData(kind="app", subject=str(uuid.uuid4()), tenant_id=tenant, role="customer_admin", issued_at=0))
     assert result["ok"]
-    assert scheduled[0]["contact"] == contact
+    assert prepared[0][2]["contact"] == contact
     record = registry.get("isolated-carrier-call")
     assert record["contact"] == contact
     assert tokens.peek(record["token"])["contact"] == contact
 
 
 async def test_primary_prewarm_resolves_contact_before_building_opening(monkeypatch):
-    from server.services import pstn_prewarm as module
     from server.call.call_lifecycle_service import call_lifecycle_service as lifecycle
+    from server.services import pstn_prewarm as module
     compiled = "--- CANONICAL OPENING ---\nSay once:\nHello {{first_name | friend}}.\n--- COMPANY & OFFER ---\nHelp the customer."
     monkeypatch.setattr(lifecycle, "_resolve_agent", AsyncMock(return_value={"agent_id": "isolated", "languages": ["en-IN"], "environment": "development"}))
     monkeypatch.setattr(lifecycle, "_resolve_locked_stack", lambda **_kw: SimpleNamespace(llm=SimpleNamespace(model="gemini-3.8-live")))
     monkeypatch.setattr(lifecycle, "_coerce_pipeline_stack", lambda stack, **_kw: stack)
     monkeypatch.setattr(lifecycle, "_lock_compiled_brain", AsyncMock(return_value=("version", compiled, "published")))
     monkeypatch.setattr("server.realtime.models.pipeline_mode", lambda **_kw: "classic")
-    synthesize = AsyncMock(return_value=[])
+    synthesize = AsyncMock(return_value=([], {}))
     monkeypatch.setattr(module, "_synthesize_greeting_frames", synthesize)
     bundle = await module._build_prewarm_bundle("vobiz", "isolated", {"agent_id": "isolated", "language": "en-IN", "contact": {"first_name": "Meera"}}, "isolated-prewarm")
     assert "Meera" in bundle.compiled_brain_text and "{{" not in bundle.compiled_brain_text

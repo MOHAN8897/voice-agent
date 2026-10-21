@@ -1,0 +1,9 @@
+{
+  "phone_call_placed": false,
+  "cached_frames": 144,
+  "prepared_in_seconds": 4.94,
+  "same_live_session": true,
+  "reply_audio_bytes": 208322,
+  "full_opening_repeated": false,
+  "passed": true
+}

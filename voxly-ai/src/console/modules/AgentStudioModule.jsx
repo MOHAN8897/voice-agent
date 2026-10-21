@@ -45,6 +45,7 @@ import {
 import { formatPhoneVoiceLabel, groupVoicesByTier } from '../../lib/voiceDisplay';
 import { loadAgentBrain, reviewAgentBrain } from '../../services/agentBrain';
 import { api } from '../../services/api';
+import { normalizeAgent } from '../../services/apiNormalize';
 import { AgentOverview } from './agent-workspace/AgentOverview';
 import { AgentCallsPanel } from './agent-workspace/AgentCallsPanel';
 import { AgentSettingsPanel } from './agent-workspace/AgentSettingsPanel';
@@ -288,11 +289,19 @@ export function AgentStudioModule({
   const [activeVoiceProvider, setActiveVoiceProvider] = useState('gemini');
   const [defaultVoiceId, setDefaultVoiceId] = useState('Puck');
   const [voiceCatalogError, setVoiceCatalogError] = useState(null);
+  const [voiceCatalogLoading, setVoiceCatalogLoading] = useState(true);
   const [stackLabel, setStackLabel] = useState(PHONE_STACK_LABEL);
+  const voiceCatalogRefreshRef = useRef(null);
+  const [voiceStackProfiles, setVoiceStackProfiles] = useState([]);
+  const [voiceStackCatalogLoading, setVoiceStackCatalogLoading] = useState(false);
+  const [voiceStackCatalogError, setVoiceStackCatalogError] = useState(null);
+  const [voiceStackSavedAgents, setVoiceStackSavedAgents] = useState({});
+  const voiceStackCatalogRequestRef = useRef(0);
 
   useEffect(() => {
     let mounted = true;
     const refreshVoiceCatalog = () => {
+      setVoiceCatalogLoading(true);
       fetchPhoneVoiceOptions(voiceLanguage)
         .then((o) => {
           if (!mounted) return;
@@ -304,18 +313,29 @@ export function AgentStudioModule({
         })
         .catch((error) => {
           if (!mounted) return;
-          setVoiceCatalogError(error?.message || 'Could not load the active voice catalog.');
+          setVoiceCatalogError('Current voice options could not be loaded. Try again.');
+        })
+        .finally(() => {
+          if (mounted) setVoiceCatalogLoading(false);
         });
     };
+    voiceCatalogRefreshRef.current = refreshVoiceCatalog;
     refreshVoiceCatalog();
     const interval = window.setInterval(refreshVoiceCatalog, 60_000);
     window.addEventListener('focus', refreshVoiceCatalog);
     return () => {
       mounted = false;
+      if (voiceCatalogRefreshRef.current === refreshVoiceCatalog) {
+        voiceCatalogRefreshRef.current = null;
+      }
       window.clearInterval(interval);
       window.removeEventListener('focus', refreshVoiceCatalog);
     };
   }, [selectedAgentId, voiceLanguage]);
+
+  const retryVoiceCatalog = useCallback(() => {
+    voiceCatalogRefreshRef.current?.();
+  }, []);
 
   // A legacy ?step=telephony or ?step=test link resolves here on first mount and on
   // every later hash change, so old bookmarks still land somewhere useful.
@@ -353,6 +373,132 @@ export function AgentStudioModule({
   );
 
   const [formData, setFormData] = useState(() => formFromAgent(selectedAgent));
+  const voiceStackAgent = selectedAgent?.id
+    ? voiceStackSavedAgents[selectedAgent.id] || selectedAgent
+    : selectedAgent;
+
+  const voiceStackLanguage =
+    formData?.language ||
+    (Array.isArray(formData?.languages) ? formData.languages[0] : null) ||
+    voiceLanguage;
+
+  const refreshVoiceStackCatalog = useCallback(async () => {
+    const requestId = ++voiceStackCatalogRequestRef.current;
+    setVoiceStackCatalogLoading(true);
+    setVoiceStackCatalogError(null);
+    setVoiceStackProfiles([]);
+    try {
+      const result = await api.request(
+        'GET',
+        `/api/voice-stacks/catalog?language=${encodeURIComponent(voiceStackLanguage)}`
+      );
+      if (requestId !== voiceStackCatalogRequestRef.current) return;
+      setVoiceStackProfiles(Array.isArray(result?.profiles) ? result.profiles : []);
+    } catch {
+      if (requestId === voiceStackCatalogRequestRef.current) {
+        setVoiceStackProfiles([]);
+        setVoiceStackCatalogError('Approved voice options could not be loaded. Try again.');
+      }
+    } finally {
+      if (requestId === voiceStackCatalogRequestRef.current) {
+        setVoiceStackCatalogLoading(false);
+      }
+    }
+  }, [voiceStackLanguage]);
+
+  useEffect(() => {
+    refreshVoiceStackCatalog();
+  }, [refreshVoiceStackCatalog, selectedAgentId]);
+
+  const saveVoiceStackSelection = useCallback(async (selection) => {
+    if (!voiceStackAgent?.id) return { error: true };
+
+    const persistedLanguage =
+      (Array.isArray(voiceStackAgent.languages) ? voiceStackAgent.languages[0] : null) ||
+      voiceStackAgent.language ||
+      'en-IN';
+    if (voiceStackLanguage !== persistedLanguage) {
+      return { languageNeedsSave: true };
+    }
+
+    const expectedVoiceRevision = Number.isSafeInteger(voiceStackAgent.voiceRevision)
+      ? voiceStackAgent.voiceRevision
+      : 0;
+    const voiceSettings = { stackSelectionVersion: 1 };
+    if (selection.tier !== 'premium') {
+      voiceSettings.profileRevision = selection.profileRevision;
+      voiceSettings.engineId = selection.engineId;
+      voiceSettings.modelId = selection.modelId;
+      voiceSettings.voiceId = selection.voiceId;
+    }
+
+    try {
+      const response = await api.request('PATCH', `/api/agents/${voiceStackAgent.id}`, {
+        defaultTier: selection.tier,
+        expectedVoiceRevision,
+        voiceSettings,
+      });
+      const responseAgent = response?.agent || response;
+      const normalizedResponse = normalizeAgent(responseAgent);
+      const responseIsComplete =
+        normalizedResponse?.defaultTier === selection.tier &&
+        normalizedResponse?.voiceSettings?.stackSelectionVersion === 1 &&
+        normalizedResponse?.voiceSettings?.engineId === selection.engineId &&
+        normalizedResponse?.voiceSettings?.modelId === selection.modelId &&
+        normalizedResponse?.voiceSettings?.voiceId === selection.voiceId &&
+        normalizedResponse?.voiceSettings?.profileRevision === selection.profileRevision &&
+        Number.isSafeInteger(normalizedResponse?.voiceRevision) &&
+        normalizedResponse.voiceRevision > expectedVoiceRevision;
+      const savedAgent = responseIsComplete
+        ? {
+            ...voiceStackAgent,
+            ...(Array.isArray(responseAgent?.languages)
+              ? { languages: normalizedResponse.languages }
+              : {}),
+            defaultTier: normalizedResponse.defaultTier,
+            voiceSettings: normalizedResponse.voiceSettings,
+            voiceRevision: normalizedResponse.voiceRevision,
+          }
+        : await api.agents.get(voiceStackAgent.id);
+      if (
+        !savedAgent ||
+        savedAgent.defaultTier !== selection.tier ||
+        savedAgent.voiceSettings?.stackSelectionVersion !== 1 ||
+        savedAgent.voiceSettings?.engineId !== selection.engineId ||
+        savedAgent.voiceSettings?.modelId !== selection.modelId ||
+        savedAgent.voiceSettings?.voiceId !== selection.voiceId ||
+        savedAgent.voiceSettings?.profileRevision !== selection.profileRevision ||
+        !Number.isSafeInteger(savedAgent.voiceRevision) ||
+        savedAgent.voiceRevision <= expectedVoiceRevision
+      ) {
+        return { savedButUnconfirmed: true };
+      }
+      setVoiceStackSavedAgents((current) => ({ ...current, [voiceStackAgent.id]: savedAgent }));
+      return { agent: savedAgent };
+    } catch (error) {
+      if (error?.status === 409) {
+        try {
+          const latest = await api.agents.get(voiceStackAgent.id);
+          setVoiceStackSavedAgents((current) => ({ ...current, [voiceStackAgent.id]: latest }));
+          return { conflict: true, agent: latest };
+        } catch {
+          return { conflict: true };
+        }
+      }
+      return { error: true };
+    }
+  }, [voiceStackAgent, voiceStackLanguage]);
+
+  const reloadVoiceStackSettings = useCallback(async () => {
+    if (!selectedAgent?.id) return null;
+    try {
+      const latest = await api.agents.get(selectedAgent.id);
+      setVoiceStackSavedAgents((current) => ({ ...current, [selectedAgent.id]: latest }));
+      return latest;
+    } catch {
+      return null;
+    }
+  }, [selectedAgent?.id]);
 
   // Settings panel dirty state & save/discard ref callbacks
   const [settingsDirty, setSettingsDirty] = useState(false);
@@ -1531,7 +1677,15 @@ export function AgentStudioModule({
               activeVoiceProvider={activeVoiceProvider}
               defaultVoiceId={defaultVoiceId}
               voiceCatalogError={voiceCatalogError}
-              stackLabel={stackLabel}
+              voiceCatalogLoading={voiceCatalogLoading}
+              onRetryVoiceCatalog={retryVoiceCatalog}
+              agent={voiceStackAgent}
+              voiceStackProfiles={voiceStackProfiles}
+              voiceStackCatalogLoading={voiceStackCatalogLoading}
+              voiceStackCatalogError={voiceStackCatalogError}
+              onRetryVoiceStackCatalog={refreshVoiceStackCatalog}
+              onSaveVoiceStackSelection={saveVoiceStackSelection}
+              onReloadVoiceStackSettings={reloadVoiceStackSettings}
               onOpenTestCall={() => setTestCallOpen(true)}
             />
           </ErrorBoundary>
@@ -1547,8 +1701,8 @@ export function AgentStudioModule({
           className="space-y-4 animate-in fade-in duration-150"
         >
           <div className="rounded-xl border border-[#E4E2EB] bg-[#F0EEF6]/70 px-3.5 py-2.5 text-xs font-semibold text-[#1F1D2B]">
-            Phone calls use your published script and wallet credits. Incoming and outgoing calls use the
-            same {stackLabel} engine as the browser practice call.
+            Phone calls use your published script and wallet credits. Your saved voice setup applies to
+            incoming and outgoing calls.
           </div>
           <ErrorBoundary title="Unable to load agent calls panel">
             <AgentCallsPanel

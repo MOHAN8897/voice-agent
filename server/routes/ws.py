@@ -69,6 +69,61 @@ def _stack_for_ws(call_id: str | None, session_id: str, language: str = "te-IN")
 def _connect_stt_upstream(session_id: str = "default", call_id: str | None = None, **kwargs):
     """Resolve STT upstream via locked call stack or provider registry."""
     settings = get_settings()
+    expected_pipeline = str(kwargs.pop("expected_pipeline", "") or "").strip().lower()
+    pinned_stack = kwargs.pop("pinned_stack", None)
+    call_context = None
+    if call_id:
+        from server.call.call_context import get as get_call_ctx
+
+        call_context = get_call_ctx(call_id)
+    composed = expected_pipeline == "composed_voice" or bool(
+        call_context and getattr(call_context, "pipeline", None) == "composed_voice"
+    )
+    if composed:
+        if not settings.use_provider_registry:
+            raise RuntimeError("Composed PSTN speech recognition requires the provider registry")
+        if not call_context or getattr(call_context, "pipeline", None) != "composed_voice":
+            raise RuntimeError("Composed PSTN call has no matching pinned call context")
+        stack = getattr(call_context, "resolved_stack", None)
+        if stack is None:
+            raise RuntimeError("Composed PSTN call has no pinned speech-recognition selection")
+        selection = getattr(stack, "stt", None)
+        provider_id = str(getattr(selection, "provider", "") or "").strip().lower()
+        model_id = str(getattr(selection, "model", "") or "").strip()
+        if not provider_id or not model_id:
+            raise RuntimeError("Composed PSTN call has an incomplete speech-recognition selection")
+        if isinstance(pinned_stack, dict):
+            pinned_stt = pinned_stack.get("stt")
+            if isinstance(pinned_stt, dict) and (
+                str(pinned_stt.get("provider") or "").strip().lower() != provider_id
+                or str(pinned_stt.get("model") or "").strip() != model_id
+            ):
+                raise RuntimeError("Composed PSTN speech-recognition selection does not match admission")
+        registry = get_provider_registry()
+        if (
+            not registry.is_provider_enabled(provider_id, "stt")
+            or not registry.is_model_allowed(provider_id, "stt", model_id)
+        ):
+            raise RuntimeError("The pinned composed speech-recognition model is unavailable")
+        stage_config = getattr(selection, "config", {})
+        stage_config = stage_config if isinstance(stage_config, dict) else {}
+        mode = str(stage_config.get("mode") or "realtime").strip().lower()
+        if mode != "realtime":
+            raise RuntimeError("The pinned composed speech-recognition mode is unavailable")
+        stt = registry.get_stt(provider_id)
+        config = STTConfig(
+            provider=provider_id,
+            model=model_id,
+            language=kwargs.get("language_code", stack.language),
+            mode=mode,
+            stream_type=stage_config.get("stream_type", "fast"),
+            sample_rate=kwargs.get("sample_rate", 16000),
+            vad_config={
+                "silence_duration_ms": kwargs.get("silence_duration_ms"),
+                "threshold": kwargs.get("threshold"),
+            },
+        )
+        return stt.connect_realtime(config)
     if settings.use_provider_registry:
         stack = _stack_for_ws(call_id, session_id, language=kwargs.get("language_code", "te-IN"))
         registry = get_provider_registry()
@@ -86,6 +141,8 @@ def _connect_stt_upstream(session_id: str = "default", call_id: str | None = Non
             },
         )
         return stt.connect_realtime(config)
+    from server.services.sarvam_ws import connect_stt_realtime
+
     return connect_stt_realtime(**kwargs)
 
 

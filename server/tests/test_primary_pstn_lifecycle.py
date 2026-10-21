@@ -181,7 +181,8 @@ async def test_recording_download_uses_owned_account_and_sniffs_actual_container
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("preparation_fails", [False, True])
-async def test_dial_prepares_opening_before_contacting_carrier(monkeypatch, preparation_fails):
+@pytest.mark.parametrize("composed", [False, True])
+async def test_dial_prepares_opening_before_contacting_carrier(monkeypatch, preparation_fails, composed):
     from types import SimpleNamespace
 
     from server.brain.agent_service import agent_service
@@ -210,7 +211,17 @@ async def test_dial_prepares_opening_before_contacting_carrier(monkeypatch, prep
     monkeypatch.setattr(vobiz_call_registry, "alias", Mock())
     token_create = Mock(return_value="unit-test-token")
     monkeypatch.setattr(vobiz_stream_tokens, "create", token_create)
-    monkeypatch.setattr(dev_telephony, "_outbound_pstn_context", lambda _: ("medium", "te-IN", {"llm": {"model": "gemini-3.8-live"}}, []))
+    stack_override = (
+        {
+            "pipeline": "composed_voice",
+            "voice_flow": "composed_stages",
+            "language": "te-IN",
+            "llm": {"provider": "sarvam", "model": "test-model"},
+        }
+        if composed
+        else {"llm": {"provider": "gemini", "model": "gemini-3.8-live"}}
+    )
+    monkeypatch.setattr(dev_telephony, "_outbound_pstn_context", lambda _: ("medium", "te-IN", stack_override, []))
     monkeypatch.setattr(dev_telephony, "_resolve_outbound_source_session", lambda _: ("isolated", False))
     monkeypatch.setattr(dev_telephony, "_billed_user_id_from_session", lambda _: None)
     monkeypatch.setattr(dev_telephony, "_record_dev_dial", Mock(return_value={}))
@@ -219,6 +230,8 @@ async def test_dial_prepares_opening_before_contacting_carrier(monkeypatch, prep
     session = SimpleNamespace(kind="app", tenant_id="00000000-0000-4000-8000-000000000001")
     result = await dev_telephony._outbound_vobiz(body, session)
     assert token_create.call_args.kwargs["prewarm_required"] is True
+    if composed:
+        assert token_create.call_args.kwargs["stack_override"]["pipeline"] == "composed_voice"
     if preparation_fails:
         assert result["ok"] is False
         assert result["code"] == "voice_preparation_failed"
@@ -252,7 +265,8 @@ async def test_vobiz_prepared_contact_snapshot_is_not_invalidated_at_answer(monk
 
 
 @pytest.mark.asyncio
-async def test_connected_call_keeps_exact_prepared_brain_and_session(native_call, monkeypatch):
+@pytest.mark.parametrize("pipeline", ["realtime_voice", "composed_voice"])
+async def test_connected_call_keeps_exact_prepared_brain_and_session(native_call, monkeypatch, pipeline):
     from types import SimpleNamespace
 
     from server.call import call_context
@@ -264,7 +278,27 @@ async def test_connected_call_keeps_exact_prepared_brain_and_session(native_call
 
     service = CallLifecycleService()
     agent = {"agent_id": "prepared-agent", "tenant_id": "00000000-0000-4000-8000-000000000001", "languages": ["te-IN"]}
-    stack = SimpleNamespace(tier="medium", combination_id="gemini-test", llm=SimpleNamespace(model="gemini-3.8-live"), to_safe_dict=lambda: native_call.stack_override)
+    stack_override = native_call.stack_override
+    if pipeline == "composed_voice":
+        stack_override = {
+            "pipeline": "composed_voice",
+            "voice_flow": "composed_stages",
+            "language": "te-IN",
+            "stt": {"provider": "sarvam", "model": "test-stt", "config": {}},
+            "llm": {"provider": "sarvam", "model": "test-llm", "config": {}},
+            "tts": {"provider": "sarvam", "model": "test-tts", "config": {}},
+            "_voice_stack_snapshot": {
+                "tier": "medium",
+                "retailRate": {
+                    "complete": True,
+                    "usdMicrosPerMin": 10000,
+                    "inrPaisePerMin": 955,
+                    "fxRateInr": 95.5,
+                    "version": 1,
+                },
+            },
+        }
+    stack = SimpleNamespace(tier="medium", combination_id="profile-test", llm=SimpleNamespace(model="gemini-3.8-live"), to_safe_dict=lambda: stack_override)
     monkeypatch.setattr(service, "_resolve_agent", AsyncMock(return_value=agent))
     monkeypatch.setattr(service, "_resolve_locked_stack", Mock(return_value=stack))
     monkeypatch.setattr(service, "_coerce_pipeline_stack", Mock(return_value=stack))
@@ -280,15 +314,18 @@ async def test_connected_call_keeps_exact_prepared_brain_and_session(native_call
     adopt = Mock(return_value=object())
     monkeypatch.setattr(realtime_voice_manager, "adopt_session", adopt)
     brain = "Exact Telugu prepared opening. Contact: Sam."
-    result = await service.start(agent_id="prepared-agent", session_id="snapshot-regression",
-                                 channel="pstn", direction="outbound", stack_override=native_call.stack_override,
+    result = await service.start(agent_id="prepared-agent", session_id=f"snapshot-regression-{pipeline}",
+                                 channel="pstn", direction="outbound", stack_override=stack_override,
                                  realtime_prewarm_key="original-gemini-session", prepared_brain=("snapshot-v1", brain))
     try:
         meta = call_ledger.read_meta(result["call_id"])
         assert meta["compiled_brain_text"] == brain
         assert meta["brain_source"] == "dial_snapshot"
         assert call_context.get(result["call_id"]).compiled_brain_text == brain
-        adopt.assert_called_once_with("original-gemini-session", result["call_id"])
+        if pipeline == "realtime_voice":
+            adopt.assert_called_once_with("original-gemini-session", result["call_id"])
+        else:
+            adopt.assert_not_called()
         lock.assert_not_awaited()
         campaign.assert_not_awaited()
     finally:

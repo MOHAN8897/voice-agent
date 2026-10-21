@@ -1,0 +1,40 @@
+{
+  "phone_call_placed": false,
+  "audio": "locally generated generic appointment speech",
+  "results": [
+    {
+      "model": "gpt-transcribe",
+      "states": [
+        "connecting",
+        "streaming",
+        "complete"
+      ],
+      "finals": [
+        "Hello.",
+        "I would like to book an appointment tomorrow at ten in the morning.",
+        "Thank you."
+      ],
+      "sent_seconds": 8.27,
+      "billed_seconds": 8.27,
+      "failure_code": "",
+      "passed": true
+    },
+    {
+      "model": "saaras:v3-realtime",
+      "states": [
+        "connecting",
+        "streaming",
+        "complete"
+      ],
+      "finals": [
+        "Hello",
+        "I would like to book an appointment tomorrow at 10:00 in the morning.",
+        "Thank you."
+      ],
+      "sent_seconds": 8.27,
+      "billed_seconds": 8.27,
+      "failure_code": "",
+      "passed": true
+    }
+  ]
+}

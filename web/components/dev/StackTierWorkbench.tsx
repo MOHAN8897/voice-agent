@@ -205,15 +205,15 @@ export function StackTierWorkbench() {
 
       <DevCard delayMs={0}>
         <p className="text-sm text-text-muted">
-          Subscriber PSTN and browser practice use the{" "}
+          These are legacy stage assignments. Low and Standard PSTN admissions use the composed profile above when enabled; Premium keeps the existing universal Live configuration. The separate legacy universal settings remain available in the{" "}
           <Link href="/dev/saas-phone-stack" className="font-semibold text-accent underline-offset-2 hover:underline">
-            universal SaaS phone AI stack
+            universal phone stack
           </Link>
-          , not per-agent tier assignments.
+          .
         </p>
       </DevCard>
 
-      <DevCard delayMs={0}>
+      <DevCard title="Legacy stage assignments" delayMs={0}>
         <p className="text-sm text-text-muted">
           Resolution mode: <span className="font-mono text-accent">{configMode}</span> · Environment:{" "}
           <span className="font-mono text-accent">{environment}</span> · Assign stacks per tier before promotion.

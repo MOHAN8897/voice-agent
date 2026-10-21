@@ -12,12 +12,16 @@ const testAgent = {
   languages: ['te-IN'],
   sections: [],
 };
+let voiceStackPatchBody = null;
+let persistedTestAgent = null;
 
 test.describe('Voice and Language Configuration in Agent Console', () => {
   let consoleErrors = [];
 
   test.beforeEach(async ({ page }) => {
     consoleErrors = [];
+    voiceStackPatchBody = null;
+    persistedTestAgent = { ...testAgent };
     page.on('pageerror', (err) => {
       console.log('BROWSER PAGE ERROR:', err.message);
       consoleErrors.push(err.message);
@@ -53,7 +57,7 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
       })
     );
     await page.route('**/api/agents', (route) =>
-      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ agents: [testAgent] }) })
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ agents: [persistedTestAgent] }) })
     );
     const previewSample = path.resolve(__dirname, '../public/audio/voxly/samples/marin.wav');
     await page.route('**/api/telephony/voice-preview*', (route) =>
@@ -89,6 +93,69 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
         body: JSON.stringify({ balanceUsd: 100, balanceInr: 0, fxRateInr: 94 }),
       })
     );
+    await page.route('**/api/voice-stacks/catalog*', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          profiles: [
+            {
+              tier: 'low',
+              label: 'Economical Tier',
+              ready: true,
+              profileRevision: 2,
+              retailRate: { amount: 0.7, currency: 'INR' },
+              engines: [
+                {
+                  id: 'turbo-natural',
+                  label: 'Turbo Natural Engine',
+                  models: [{
+                    id: 'turbo-regional',
+                    label: 'Turbo Regional',
+                    voices: [{ id: 'voice-economical-te', label: 'Telugu Assistant', languages: ['te-IN'] }],
+                  }],
+                },
+              ],
+            },
+            {
+              tier: 'medium',
+              label: 'Standard Regional Tier',
+              ready: true,
+              profileRevision: 5,
+              retailRate: { amount: 1.4, currency: 'INR' },
+              engines: [
+                {
+                  id: 'regional-expressive',
+                  label: 'Regional Expressive Engine',
+                  models: [{
+                    id: 'regional-fast',
+                    label: 'Regional Fast',
+                    voices: [{ id: 'voice-regional-te', label: 'Telugu Support', languages: ['te-IN'] }],
+                  }],
+                },
+                {
+                  id: 'turbo-natural',
+                  label: 'Turbo Natural Engine',
+                  models: [{
+                    id: 'turbo-standard',
+                    label: 'Turbo Standard',
+                    voices: [{ id: 'voice-standard-te', label: 'Telugu Assistant', languages: ['te-IN'] }],
+                  }],
+                },
+              ],
+            },
+            {
+              tier: 'premium',
+              label: 'Internal Live Provider',
+              ready: true,
+              profileRevision: 8,
+              retailRate: { amount: 4.2, currency: 'INR' },
+              engines: [],
+            },
+          ],
+        }),
+      })
+    );
     await page.route('**/api/agents/**', async (route) => {
       const method = route.request().method().toUpperCase();
       const pathname = new URL(route.request().url()).pathname;
@@ -97,9 +164,32 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
           ? { profile: {}, afterHoursActions: [] }
           : pathname.endsWith('/telephony-profile/effective')
             ? { ok: true }
-            : { ok: true, agent: testAgent, sections: [] };
+            : { ok: true, agent: persistedTestAgent, sections: [] };
         await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(data) });
         return;
+      }
+      if (method === 'PATCH') {
+        const body = route.request().postDataJSON();
+        if (body?.voiceSettings?.stackSelectionVersion === 1) {
+          voiceStackPatchBody = body;
+          persistedTestAgent = {
+            ...persistedTestAgent,
+            defaultTier: body.defaultTier,
+            voiceSettings: body.voiceSettings,
+            voiceRevision: body.expectedVoiceRevision + 1,
+          };
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              ok: true,
+              agent: {
+                ...persistedTestAgent,
+              },
+            }),
+          });
+          return;
+        }
       }
       const agentId = route.request().url().match(/\/api\/agents\/([^/?]+)/)?.[1] || 'playwright-agent';
       await route.fulfill({
@@ -202,7 +292,7 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
     expect(activeVoiceProvider).toBe('gemini');
     expect(voiceOptions.defaultVoiceId).toBe('te-in-csagent-5');
     const visibleVoiceRows = voiceOptions.voices.filter(
-      (voice) => voice.provider === activeVoiceProvider && voice.languageCode === 'te-IN'
+      (voice) => voice.provider === activeVoiceProvider && (!voice.languageCode || voice.languageCode === 'te-IN')
     );
     expect(visibleVoiceRows.length).toBeGreaterThanOrEqual(5);
 
@@ -419,5 +509,84 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
     );
     expect(fatalErrors).toHaveLength(0);
     console.log('Voice and Language studio verified successfully with Playwright!');
+  });
+
+  test('tenant voice tiers hide unready profiles, clear dependent choices, and save only approved aliases', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/#dashboard/overview');
+    await page.waitForTimeout(1000);
+    await page.goto(`/#dashboard/employees?step=overview&agent=${testAgent.id}`);
+    await page.waitForTimeout(2000);
+
+    const voiceTab = page.locator('#agent-tab-voice');
+    if (!(await voiceTab.isVisible())) {
+      await page.goto('/#dashboard/employees');
+      await page.waitForTimeout(1500);
+      const agentCard = page.locator('[data-testid="agent-card"]').first();
+      await expect(agentCard).toBeVisible();
+      await agentCard.click({ force: true });
+      await page.waitForTimeout(2000);
+    }
+    await expect(voiceTab).toBeVisible({ timeout: 15000 });
+    await voiceTab.click();
+
+    const selector = page.locator('[data-testid="voice-stack-selector"]');
+    await expect(selector).toBeVisible();
+    await expect(selector).not.toContainText('Internal Live Provider');
+    await expect(page.locator('[data-testid="voice-stack-tier-premium"]')).toHaveCount(0);
+
+    const standardTier = page.locator('[data-testid="voice-stack-tier-medium"]');
+    await standardTier.focus();
+    await page.keyboard.press('Space');
+    await expect(standardTier).toBeChecked();
+
+    const engine = page.locator('[data-testid="voice-stack-engine"]');
+    const model = page.locator('[data-testid="voice-stack-model"]');
+    const voice = page.locator('[data-testid="voice-stack-voice"]');
+    await engine.selectOption('regional-expressive');
+    await model.selectOption('regional-fast');
+    await voice.selectOption('voice-regional-te');
+
+    await engine.selectOption('turbo-natural');
+    await expect(model).toHaveValue('');
+    await expect(voice).toHaveValue('');
+    await engine.selectOption('regional-expressive');
+    await model.selectOption('regional-fast');
+    await voice.selectOption('voice-regional-te');
+    await expect(page.locator('[data-testid="voice-stack-preview"]')).toContainText('No approved audio sample');
+
+    const save = page.locator('[data-testid="voice-stack-save"]');
+    await expect(save).toBeEnabled();
+    await save.click();
+    await expect(page.locator('[data-testid="voice-stack-save-status"]')).toContainText('Voice setup saved.');
+    expect(voiceStackPatchBody).toEqual({
+      defaultTier: 'medium',
+      expectedVoiceRevision: 0,
+      voiceSettings: {
+        stackSelectionVersion: 1,
+        profileRevision: 5,
+        engineId: 'regional-expressive',
+        modelId: 'regional-fast',
+        voiceId: 'voice-regional-te',
+      },
+    });
+    await expect(selector).not.toContainText(/voice-regional-te|regional-fast|regional-expressive/i);
+
+    await page.reload();
+    await page.waitForTimeout(1000);
+    await page.goto(`/#dashboard/employees?step=overview&agent=${testAgent.id}`);
+    await page.waitForTimeout(2000);
+    const reloadedVoiceTab = page.locator('#agent-tab-voice');
+    if (!(await reloadedVoiceTab.isVisible())) {
+      await page.goto('/#dashboard/employees');
+      await page.waitForTimeout(1500);
+      const agentCard = page.locator('[data-testid="agent-card"]').first();
+      await expect(agentCard).toBeVisible();
+      await agentCard.click({ force: true });
+      await page.waitForTimeout(2000);
+    }
+    await expect(reloadedVoiceTab).toBeVisible({ timeout: 15000 });
+    await reloadedVoiceTab.click();
+    await expect(page.locator('[data-testid="voice-stack-selector"]')).toContainText('Saved configuration: Standard Regional Tier');
   });
 });

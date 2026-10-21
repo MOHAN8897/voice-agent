@@ -48,9 +48,14 @@ class ProviderRegistry:
         if enable_sarvam:
             self._stt["sarvam"] = SarvamSTTAdapter()
             self._tts["sarvam"] = SarvamTTSAdapter()
+            if sarvam_key and s.allowed_sarvam_llm_models:
+                from server.providers.sarvam_llm import SarvamLLMAdapter
+
+                self._llm["sarvam"] = SarvamLLMAdapter()
             entry = self._sarvam_provider_entry(s)
             entry["enabled"] = enable_sarvam
             entry["configured"] = bool(sarvam_key)
+            entry["adapter_available"] = bool(sarvam_key and s.allowed_sarvam_llm_models)
             providers.append(entry)
 
         if enable_openai:
@@ -66,10 +71,14 @@ class ProviderRegistry:
                 from server.providers.gemini_llm import GeminiLLMAdapter
 
                 self._llm["gemini"] = GeminiLLMAdapter()
+                if s.allowed_gemini_tts_models:
+                    from server.providers.gemini_tts import GeminiTTSAdapter
+
+                    self._tts["gemini"] = GeminiTTSAdapter()
             entry = self._gemini_provider_entry(s)
             entry["enabled"] = enable_gemini
             entry["configured"] = bool(gemini_key)
-            entry["adapter_available"] = bool(gemini_key)
+            entry["adapter_available"] = bool(gemini_key and (self._llm.get("gemini") or self._tts.get("gemini")))
             providers.append(entry)
 
         if enable_deepseek:
@@ -123,13 +132,17 @@ class ProviderRegistry:
         return {
             "id": "sarvam",
             "label": "Sarvam AI",
-            "stages": ["stt", "tts"],
+            "stages": ["stt", "tts", "llm"],
             "enabled": True,
             "configured": bool(s.sarvam_api_key),
             "healthy": True,
             "languages": list(constants.SUPPORTED_LANGUAGES.keys()),
             "models": {
                 "stt": stt_models,
+                "llm": [
+                    {"id": model, "label": model, "api_mode": "chat_completions_v2"}
+                    for model in s.allowed_sarvam_llm_models
+                ],
                 "tts": [
                     {"id": m, "label": meta["label"], "pricing_key": f"sarvam:{m}"}
                     for m, meta in constants.TTS_MODELS.items()
@@ -143,13 +156,19 @@ class ProviderRegistry:
         return {
             "id": "gemini",
             "label": "Google Gemini",
-            "stages": ["llm"],
+            "stages": ["llm", "tts"],
             "enabled": s.enable_gemini,
             "configured": bool(s.gemini_api_key),
             "healthy": bool(s.gemini_api_key),
             "adapter_available": bool(s.gemini_api_key),
             "languages": ["multilingual"],
-            "models": {"llm": models},
+            "models": {
+                "llm": models,
+                "tts": [
+                    {"id": model, "label": model, "api_mode": "unary_rest"}
+                    for model in s.allowed_gemini_tts_models
+                ],
+            },
             "capabilities": {
                 "streaming": True,
                 "structured_output": True,

@@ -7,7 +7,6 @@ import uuid
 from typing import Any
 
 from sqlalchemy import select
-
 from sqlalchemy.orm.attributes import flag_modified
 
 from server.config.env import get_settings
@@ -16,6 +15,21 @@ from server.db.models.entities import Agent, Tenant
 
 _MEM_AGENTS: dict[str, dict[str, Any]] = {}
 _DEFAULT_AGENT_ID: str | None = None
+
+
+class AgentVoiceRevisionConflict(ValueError):
+    def __init__(
+        self,
+        message: str,
+        *,
+        code: str = "voice_revision_conflict",
+        status_code: int = 409,
+        details: dict[str, Any] | None = None,
+    ):
+        super().__init__(message)
+        self.code = code
+        self.status_code = status_code
+        self.details = details or {}
 
 
 class AgentService:
@@ -148,7 +162,14 @@ class AgentService:
             await session.commit()
             return self._row_to_dict(agent)
 
-    async def patch_agent(self, agent_id: str, patch: dict[str, Any], tenant_id: str | None = None) -> dict[str, Any]:
+    async def patch_agent(
+        self,
+        agent_id: str,
+        patch: dict[str, Any],
+        tenant_id: str | None = None,
+        *,
+        expected_voice_revision: int | None = None,
+    ) -> dict[str, Any]:
         from server.prompts.agent_voice_rules import normalize_compile_language
 
         factory = get_session_factory()
@@ -156,18 +177,92 @@ class AgentService:
             cleaned = [str(x).strip() for x in patch["languages"] if str(x).strip()]
             patch["languages"] = [normalize_compile_language(cleaned[0])] if cleaned else ["te-IN"]
         if factory is None:
+            incoming_voice = patch.get("voice_settings")
+            if expected_voice_revision is not None or (
+                isinstance(incoming_voice, dict) and incoming_voice.get("stackSelectionVersion") == 1
+            ):
+                raise AgentVoiceRevisionConflict(
+                    "Voice-stack settings require durable database storage.",
+                    code="durable_store_unavailable",
+                    status_code=503,
+                )
             agent = await self.get_agent(agent_id, tenant_id=tenant_id)
             agent.update({k: v for k, v in patch.items() if v is not None})
             _MEM_AGENTS[agent_id] = agent
             return agent
 
         async with factory() as session:
-            result = await session.execute(select(Agent).where(Agent.agent_id == uuid.UUID(agent_id)))
+            statement = select(Agent).where(Agent.agent_id == uuid.UUID(agent_id))
+            if expected_voice_revision is not None:
+                statement = statement.with_for_update()
+            result = await session.execute(statement)
             row = result.scalar_one_or_none()
             if not row:
                 raise KeyError(agent_id)
             if tenant_id and str(row.tenant_id) != tenant_id:
                 raise KeyError(agent_id)
+            current_voice = dict(row.voice_settings or {})
+            try:
+                current_revision = max(0, int(current_voice.get("_voice_revision") or 0))
+            except (TypeError, ValueError):
+                current_revision = 0
+            incoming_voice = patch.get("voice_settings")
+            effective_voice = dict(current_voice)
+            if isinstance(incoming_voice, dict):
+                if "tier" in incoming_voice or "_voice_revision" in incoming_voice or "voiceRevision" in incoming_voice:
+                    raise AgentVoiceRevisionConflict(
+                        "Voice tier and revision are server-owned fields.",
+                        code="server_owned_voice_field",
+                        status_code=422,
+                    )
+                effective_voice.update(incoming_voice)
+            voice_selection_changed = isinstance(incoming_voice, dict) or "default_tier" in patch
+            opted_in = effective_voice.get("stackSelectionVersion") == 1
+            has_versioned_voice = opted_in or current_voice.get("stackSelectionVersion") == 1
+            if has_versioned_voice and voice_selection_changed and expected_voice_revision is None:
+                raise AgentVoiceRevisionConflict(
+                    "expectedVoiceRevision is required when changing a composed voice selection.",
+                    code="voice_revision_required",
+                    status_code=428,
+                )
+            if expected_voice_revision is not None and expected_voice_revision != current_revision:
+                raise AgentVoiceRevisionConflict(
+                    "Voice settings changed in another session. Reload before saving.",
+                    details={"currentRevision": current_revision},
+                )
+            if opted_in and voice_selection_changed:
+                effective_tier = str(patch.get("default_tier") or row.default_tier or "medium")
+                if effective_tier == "premium":
+                    raise AgentVoiceRevisionConflict(
+                        "Flagship Live uses the existing voice configuration and does not accept composed voice settings.",
+                        code="premium_composed_settings_forbidden",
+                        status_code=409,
+                    )
+                required = ("profileRevision", "engineId", "modelId", "voiceId")
+                if any(not str(effective_voice.get(key) or "").strip() for key in required):
+                    raise AgentVoiceRevisionConflict(
+                        "Select a current profile, engine, model, and voice before saving.",
+                        code="voice_selection_incomplete",
+                        status_code=422,
+                    )
+                language_values = patch.get("languages") if patch.get("languages") is not None else row.languages
+                language = str((language_values or ["en-US"])[0])
+                from server.services.saas.voice_stack_profiles import (
+                    VoiceProfileError,
+                    validate_agent_voice_selection_async,
+                )
+
+                try:
+                    await validate_agent_voice_selection_async(
+                        effective_tier,
+                        effective_voice,
+                        environment=str(row.environment or "development"),
+                        language=language,
+                    )
+                except VoiceProfileError as exc:
+                    raise AgentVoiceRevisionConflict(
+                        str(exc), code=exc.code, status_code=exc.status_code
+                    ) from exc
             for key in (
                 "name",
                 "status",
@@ -183,10 +278,16 @@ class AgentService:
                 row.languages = list(patch["languages"])
                 flag_modified(row, "languages")
             if "voice_settings" in patch and patch["voice_settings"] is not None:
-                current = dict(row.voice_settings or {})
+                updated_voice = dict(current_voice)
                 if isinstance(patch["voice_settings"], dict):
-                    current.update(patch["voice_settings"])
-                row.voice_settings = current
+                    updated_voice.update(patch["voice_settings"])
+                if expected_voice_revision is not None:
+                    updated_voice["_voice_revision"] = current_revision + 1
+                row.voice_settings = updated_voice
+                flag_modified(row, "voice_settings")
+            elif expected_voice_revision is not None and "default_tier" in patch:
+                current_voice["_voice_revision"] = current_revision + 1
+                row.voice_settings = current_voice
                 flag_modified(row, "voice_settings")
             await session.commit()
             await session.refresh(row)
@@ -296,6 +397,12 @@ class AgentService:
 
     @staticmethod
     def _row_to_dict(row: Agent) -> dict[str, Any]:
+        raw_voice_settings = getattr(row, "voice_settings", None) or {}
+        voice_settings = {
+            key: value
+            for key, value in raw_voice_settings.items()
+            if key not in {"_voice_revision", "voiceRevision"}
+        }
         return {
             "agent_id": str(row.agent_id),
             "tenant_id": str(row.tenant_id),
@@ -308,7 +415,8 @@ class AgentService:
             "environment": getattr(row, "environment", None) or "development",
             "recording_disclosure_enabled": bool(getattr(row, "recording_disclosure_enabled", False)),
             "recording_disclosure_text": getattr(row, "recording_disclosure_text", None),
-            "voice_settings": getattr(row, "voice_settings", None) or {},
+            "voice_settings": voice_settings,
+            "voice_revision": int(raw_voice_settings.get("_voice_revision") or 0),
         }
 
 

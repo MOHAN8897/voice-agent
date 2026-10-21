@@ -618,6 +618,20 @@ class VoiceAgentAdapter {
 
       audio.onerror = (e) => {
         if (this.playbackToken !== currentToken) return;
+        if (options.fallbackUrl && audio.src !== options.fallbackUrl && !audio._triedFallback) {
+          audio._triedFallback = true;
+          console.warn(`Audio clip error on ${audioUrl}, trying fallback:`, options.fallbackUrl);
+          audio.src = options.fallbackUrl;
+          const retry = audio.play();
+          if (retry !== undefined) {
+            retry.catch((err2) => {
+              if (this.playbackToken !== currentToken || err2.name === 'AbortError') return;
+              cleanup();
+              if (fallbackText) this.playTTS(fallbackText, onEnd, onStart, options);
+            });
+          }
+          return;
+        }
         console.warn('Audio element error, falling back to speech synthesis:', e);
         cleanup();
         if (fallbackText) {
@@ -629,6 +643,20 @@ class VoiceAgentAdapter {
       if (playPromise !== undefined) {
         playPromise.catch((err) => {
           if (this.playbackToken !== currentToken || err.name === 'AbortError') return;
+          if (options.fallbackUrl && audio.src !== options.fallbackUrl && !audio._triedFallback) {
+            audio._triedFallback = true;
+            console.warn(`Audio play() failed for ${audioUrl}, trying fallback:`, options.fallbackUrl);
+            audio.src = options.fallbackUrl;
+            const retry = audio.play();
+            if (retry !== undefined) {
+              retry.catch((err2) => {
+                if (this.playbackToken !== currentToken || err2.name === 'AbortError') return;
+                cleanup();
+                if (fallbackText) this.playTTS(fallbackText, onEnd, onStart, options);
+              });
+            }
+            return;
+          }
           console.warn('Audio play() promise failed, falling back to speech synthesis:', err);
           cleanup();
           if (fallbackText) {

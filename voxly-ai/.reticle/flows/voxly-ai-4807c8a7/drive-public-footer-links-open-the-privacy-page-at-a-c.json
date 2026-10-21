@@ -41,5 +41,12 @@
     "agent": "codex-mcp-client",
     "person": "mohansaiteja.99@gmail.com"
   },
-  "intentId": "flow:drive-public-footer-links-open-the-privacy-page-at-a-c"
+  "intentId": "flow:drive-public-footer-links-open-the-privacy-page-at-a-c",
+  "learned": [
+    {
+      "kind": "request-never-settled",
+      "step": 0,
+      "state": "open"
+    }
+  ]
 }
