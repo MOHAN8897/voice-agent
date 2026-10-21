@@ -1,6 +1,7 @@
 """Outbound playback control — provider-agnostic is_active / clear / generation."""
 from __future__ import annotations
 
+import math
 import time
 from collections.abc import Callable
 from typing import Any, Protocol
@@ -28,8 +29,9 @@ class EstimatedPlaybackTracker:
     def __init__(self, *, frame_ms: float = 20.0, post_send_hold_ms: float = 150.0) -> None:
         self._frame_ms = frame_ms
         self._post_send_hold_ms = post_send_hold_ms
-        self._queued_frames = 0
+        self._queued_frames = 0.0
         self._last_send_at = 0.0
+        self._last_decay_at = 0.0
         self._current_generation: str | None = None
         self._invalid: set[str] = set()
 
@@ -37,13 +39,10 @@ class EstimatedPlaybackTracker:
         if n <= 0:
             return
         now = time.monotonic()
-        # Drain estimate for time elapsed since last send.
-        if self._last_send_at > 0 and self._queued_frames > 0:
-            elapsed_ms = (now - self._last_send_at) * 1000.0
-            drained = int(elapsed_ms / self._frame_ms)
-            self._queued_frames = max(0, self._queued_frames - drained)
+        self._decay(now)
         self._queued_frames += n
         self._last_send_at = now
+        self._last_decay_at = now
 
     def is_active(self) -> bool:
         self._decay()
@@ -65,9 +64,10 @@ class EstimatedPlaybackTracker:
         return base
 
     def clear(self) -> int:
-        n = self._queued_frames
+        n = math.ceil(self._queued_frames)
         self._queued_frames = 0
         self._last_send_at = 0.0
+        self._last_decay_at = 0.0
         return n
 
     def invalidate_generation(self, generation_id: str | None) -> None:
@@ -88,14 +88,15 @@ class EstimatedPlaybackTracker:
     def set_current_generation(self, generation_id: str | None) -> None:
         self._current_generation = generation_id
 
-    def _decay(self) -> None:
-        if self._last_send_at <= 0 or self._queued_frames <= 0:
+    def _decay(self, now: float | None = None) -> None:
+        if self._last_decay_at <= 0 or self._queued_frames <= 0:
             return
-        elapsed_ms = (time.monotonic() - self._last_send_at) * 1000.0
-        drained = int(elapsed_ms / self._frame_ms)
-        if drained > 0:
-            self._queued_frames = max(0, self._queued_frames - drained)
-            self._last_send_at = time.monotonic()
+        now = time.monotonic() if now is None else now
+        # Keep fractional frames: dropping a fraction at every 20 ms media read
+        # accumulates a fictitious backlog over a long conversation.
+        drained = max(0.0, now - self._last_decay_at) * 1000.0 / self._frame_ms
+        self._queued_frames = max(0.0, self._queued_frames - drained)
+        self._last_decay_at = now
 
 
 class TelnyxQueuePlayback:

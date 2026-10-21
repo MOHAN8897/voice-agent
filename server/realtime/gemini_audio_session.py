@@ -303,6 +303,8 @@ def _gemini_audio_and_tools() -> str:
         "AUDIO & TOOLS\n"
         "- Speak naturally; no JSON, markdown, labels, or tool names aloud.\n"
         "- Answer ordinary questions directly as speech. call_action is for real call-control decisions; its response field does not replace spoken audio.\n"
+        "- ASR text may mistranscribe the caller's language. Understand their audio and meaning; never tell them to speak the selected language based on transcript spelling. "
+        "If unclear, ask one neutral clarification in the selected language and retain the current topic.\n"
         "- Do not hang up on okay, thanks, or a follow-up question alone."
     )
 

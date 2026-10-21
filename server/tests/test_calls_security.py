@@ -133,3 +133,71 @@ def test_call_id_path_traversal_blocked():
     finally:
         app_mod.app.dependency_overrides.pop(resolve_calls_scope, None)
 
+
+@pytest.mark.asyncio
+async def test_tenant_call_rows_use_scoped_wallet_charge_and_hide_supplier_costs(monkeypatch):
+    from types import SimpleNamespace
+
+    from server.routes import calls as calls_route
+
+    tenant_id = uuid.uuid4()
+    call_id = str(uuid.uuid4())
+    transaction = SimpleNamespace(
+        reference_id=f"call:{call_id}", amount_cents=-14, amount_inr_paise=0
+    )
+    statements = []
+
+    class _Result:
+        def scalars(self):
+            return self
+
+        def all(self):
+            return [transaction]
+
+    class _Session:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *_args):
+            return None
+
+        async def get(self, _model, _key):
+            return SimpleNamespace(currency="usd")
+
+        async def execute(self, statement):
+            statements.append(statement)
+            return _Result()
+
+    monkeypatch.setattr(calls_route, "get_session_factory", lambda: lambda: _Session())
+    items = [{"call_id": call_id, "connected": True}]
+    await calls_route._attach_tenant_wallet_charges(items, str(tenant_id))
+
+    params = statements[0].compile().params
+    assert tenant_id in params.values()
+    assert [f"call:{call_id}"] in params.values()
+    assert items[0]["tenant_charge"] == {"amount": 0.14, "currency": "USD"}
+
+    monkeypatch.setattr(calls_route, "_enrich_call_list_item", lambda _item: {
+        "summary": "Call summary",
+        "usage": {"cost_usd": 4.2},
+        "cost_usd": 4.2,
+        "telephony_provider": "vobiz",
+        "vobiz_usd": 1.0,
+        "recording_source": "telnyx",
+    })
+    row = calls_route._enrich_timeline_item({
+        "call_id": call_id, "connected": True, "usage": {"model_cost_usd": 2.0},
+        "cost_usd": 4.2, "telephony_provider": "vobiz", "recording_source": "telnyx",
+    })
+    assert row["summary"] == "Call summary"
+    assert not {"usage", "cost_usd", "telephony_provider", "vobiz_usd", "recording_source"}.intersection(row)
+
+
+def test_partial_live_transcription_is_returned_as_saved_text_state():
+    from server.services.saas.call_redaction import tenant_live_transcription
+
+    result = tenant_live_transcription({
+        "live_transcription": {"mode": "live", "status": "partial", "segments": 6}
+    })
+    assert result == {"mode": "live", "status": "partial", "segments": 6}
+

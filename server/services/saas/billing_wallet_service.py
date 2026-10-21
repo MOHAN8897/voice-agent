@@ -136,6 +136,10 @@ async def list_wallet_transactions(tenant_id: uuid.UUID, limit: int = 50, user_i
         if not txs:
             return []
 
+        from server.db.models.saas_models import BillingWallet
+        wallet = await session.get(BillingWallet, tenant_id)
+        wallet_currency = getattr(wallet, "currency", "usd")
+
         # Collect call UUIDs for enriched lookup
         call_ids: list[uuid.UUID] = []
         for tx in txs:
@@ -279,12 +283,21 @@ async def list_wallet_transactions(tenant_id: uuid.UUID, limit: int = 50, user_i
                 else:
                     desc = tx.kind.replace("_", " ").title()
 
+            call_fx = getattr(call_obj, "applied_fx_rate_inr", None) if call_obj else None
+            display_charge = wallet_debit_display(
+                amount_cents=tx.amount_cents,
+                amount_inr_paise=tx.amount_inr_paise,
+                wallet_currency=wallet_currency,
+                fx_rate_inr=call_fx or get_settings().fx_rate_inr,
+            )
             rows.append(
                 {
                     "id": str(tx.id),
                     "kind": tx.kind,
                     "amountCents": tx.amount_cents,
                     "amountInrPaise": int(tx.amount_inr_paise or 0),
+                    "displayAmount": display_charge["amount"],
+                    "displayCurrency": display_charge["currency"],
                     "referenceId": tx.reference_id,
                     "userId": str(tx.user_id) if tx.user_id else None,
                     "createdAt": tx.created_at.isoformat() if tx.created_at else None,
@@ -519,6 +532,7 @@ async def debit_wallet(
     user_id: uuid.UUID | None = None,
     amount_cents: int = 0,
     amount_inr_paise: int = 0,
+    fx_rate_inr_override: float | None = None,
     allow_partial: bool = True,
 ) -> dict:
     """Atomic debit. Raises 402 if empty and not allow_partial."""
@@ -539,7 +553,12 @@ async def debit_wallet(
         have_cents = int(wallet.balance_cents or 0)
         have_paise = int(wallet.balance_inr_paise or 0)
         primary = (wallet.currency or "usd").lower()
-        fx = float(getattr(get_settings(), "fx_rate_inr", 0) or 95.64) or 95.64
+        try:
+            fx = float(fx_rate_inr_override or getattr(get_settings(), "fx_rate_inr", 0) or 95.64)
+        except (TypeError, ValueError):
+            fx = 95.64
+        if fx <= 0:
+            fx = 95.64
 
         want_cents = abs(int(amount_cents))
         want_paise = abs(int(amount_inr_paise))
@@ -709,6 +728,36 @@ def _resolve_call_wallet_debit(
     return cents, paise, "catalog_prorated"
 
 
+def wallet_debit_display(
+    *,
+    amount_cents: int | None,
+    amount_inr_paise: int | None,
+    wallet_currency: str | None,
+    fx_rate_inr: float | int | None,
+) -> dict[str, int | float | str]:
+    """Roll both recorded debit legs into the wallet's primary currency for display."""
+    from decimal import Decimal, ROUND_HALF_UP
+
+    cents = abs(int(amount_cents or 0))
+    paise = abs(int(amount_inr_paise or 0))
+    try:
+        fx = Decimal(str(fx_rate_inr))
+    except Exception:
+        fx = Decimal("0")
+    if not fx.is_finite() or fx <= 0:
+        fx = Decimal("95.64")
+
+    if str(wallet_currency or "usd").strip().lower() == "inr":
+        converted_paise = int((Decimal(cents) * fx).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+        total_minor = paise + converted_paise
+        currency = "INR"
+    else:
+        converted_cents = int((Decimal(paise) / fx).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+        total_minor = cents + converted_cents
+        currency = "USD"
+    return {"amount": total_minor / 100.0, "currency": currency}
+
+
 async def bill_call_usage_if_applicable(call_id: str) -> None:
     """Idempotent usage debit after any billed voice session ends."""
     settings = get_settings()
@@ -771,6 +820,7 @@ async def bill_call_usage_if_applicable(call_id: str) -> None:
             user_id=billed_user,
             amount_cents=cents,
             amount_inr_paise=paise,
+            fx_rate_inr_override=stored.get("applied_fx_rate_inr"),
             allow_partial=True,
         )
     except Exception as exc:

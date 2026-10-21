@@ -247,6 +247,7 @@ async def list_calls(
         include_tests=include_tests,
     )
     enriched = [_enrich_timeline_item(item) for item in items]
+    await _attach_tenant_wallet_charges(enriched, scoped_tenant)
     return {
         "calls": enriched,
         "total": total,
@@ -254,6 +255,86 @@ async def list_calls(
         "offset": offset,
         "statuses": list(CALL_STATUSES),
     }
+
+
+async def _attach_tenant_wallet_charges(items: list[dict[str, Any]], tenant_id: str) -> None:
+    """Attach the tenant's actual wallet debits, scoped to the authenticated tenant."""
+    call_ids = [
+        str(item.get("call_id"))
+        for item in items
+        if item.get("connected") and item.get("call_id")
+    ]
+    if not call_ids:
+        return
+    try:
+        tenant_uuid = uuid.UUID(str(tenant_id))
+    except (ValueError, TypeError, AttributeError):
+        return
+    factory = get_session_factory()
+    if factory is None:
+        return
+    from server.db.models.saas_models import BillingWallet, BillingWalletTransaction
+    from server.services.saas.billing_wallet_service import wallet_debit_display
+
+    try:
+        fx_by_call: dict[str, float] = {}
+        async with factory() as session:
+            result = await session.execute(
+                select(BillingWalletTransaction).where(
+                    BillingWalletTransaction.tenant_id == tenant_uuid,
+                    BillingWalletTransaction.reference_id.in_([f"call:{cid}" for cid in call_ids]),
+                )
+            )
+            transactions = result.scalars().all()
+            wallet = await session.get(BillingWallet, tenant_uuid)
+            mixed_call_ids = {
+                str(tx.reference_id)[len("call:"):]
+                for tx in transactions
+                if str(tx.reference_id or "").startswith("call:")
+                and int(tx.amount_cents or 0) != 0
+                and int(tx.amount_inr_paise or 0) != 0
+            }
+            call_uuids = []
+            for call_id in mixed_call_ids:
+                try:
+                    call_uuids.append(uuid.UUID(call_id))
+                except (ValueError, TypeError, AttributeError):
+                    continue
+            if call_uuids:
+                from server.db.models.entities import Call
+
+                calls_result = await session.execute(
+                    select(Call).where(
+                        Call.tenant_id == tenant_uuid,
+                        Call.call_id.in_(call_uuids),
+                    )
+                )
+                fx_by_call = {
+                    str(call.call_id): float(call.applied_fx_rate_inr)
+                    for call in calls_result.scalars().all()
+                    if call.applied_fx_rate_inr is not None
+                    and float(call.applied_fx_rate_inr) > 0
+                }
+    except Exception as exc:
+        logger.warning("[CALLS] Could not load tenant call charges (%s)", type(exc).__name__)
+        return
+
+    by_call = {
+        str(tx.reference_id)[len("call:"):]: tx
+        for tx in transactions
+        if str(tx.reference_id or "").startswith("call:")
+    }
+    for item in items:
+        tx = by_call.get(str(item.get("call_id") or ""))
+        if tx is None:
+            item["tenant_charge"] = None
+            continue
+        item["tenant_charge"] = wallet_debit_display(
+            amount_cents=tx.amount_cents,
+            amount_inr_paise=tx.amount_inr_paise,
+            wallet_currency=getattr(wallet, "currency", "usd"),
+            fx_rate_inr=fx_by_call.get(str(item.get("call_id"))) or get_settings().fx_rate_inr,
+        )
 
 
 @router.get("/api/calls/stats")
@@ -294,9 +375,22 @@ def _enrich_timeline_item(item: dict) -> dict:
         }
     )
     out = dict(item)
-    for key in ("summary", "customer", "usage", "cost_usd", "cost_inr", "cost_inr_per_min", "pipeline", "has_recording", "recording_source", "has_telnyx_recording"):
+    for key in ("summary", "customer", "pipeline", "has_recording"):
         if key in enriched:
             out[key] = enriched[key]
+    # Wholesale supplier and model costs stay in the admin reporting surfaces.
+    # A tenant call row only receives its exact wallet charge from the ledger.
+    for key in (
+        "usage", "cost_usd", "cost_inr", "cost_usd_per_min", "cost_inr_per_min",
+        "model_cost_usd", "model_cost_inr", "model_cost_inr_per_min",
+        "telnyx_usd", "telnyx_inr", "telnyx_inr_per_min", "telnyx_cost_source",
+        "vobiz_usd", "vobiz_inr", "vobiz_inr_per_min", "vobiz_voice_inr",
+        "vobiz_recording_inr", "vobiz_transcription_inr", "vobiz_rate_inr_per_min",
+        "telephony_provider", "telephony_usd", "telephony_inr", "telephony_usd_per_min",
+        "telephony_inr_per_min", "gemini_38_live_cost_usd", "gemini_38_live_cost_inr",
+        "recording_source", "has_telnyx_recording",
+    ):
+        out.pop(key, None)
     if out.get("summary"):
         out["has_transcript"] = True
     return out

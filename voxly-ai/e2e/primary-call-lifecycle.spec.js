@@ -3,6 +3,8 @@ import { setupPrimaryCall } from './fixtures/primary-call.js';
 
 test('live caller transcript displays partial speech, final text and recognizer status', async ({ page }) => {
   const state = await setupPrimaryCall(page);
+  await expect(page.getByText('Session Cost Breakdown', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('$0.14', { exact: true })).toBeVisible();
   state.transcription = { mode: 'live', status: 'streaming', partial_text: 'రేపు appointment', segments: 0 };
   await expect(page.getByText('Live transcription: Listening', { exact: true })).toBeVisible({ timeout: 10000 });
   await expect(page.getByLabel('Caller speech in progress')).toContainText('రేపు appointment');
@@ -12,13 +14,30 @@ test('live caller transcript displays partial speech, final text and recognizer 
   await expect(page.getByText('Live transcription: Complete', { exact: true })).toBeVisible();
   await expect(page.getByLabel('Caller speech in progress')).toHaveCount(0);
   state.transcription = { mode: 'live', status: 'failed', partial_text: '', segments: 1 };
-  await expect(page.getByText('Live transcription: Unavailable — contact support', { exact: true })).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText('Live transcription: Partial — saved transcript available', { exact: true })).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText('Live transcription: Unavailable — contact support', { exact: true })).toHaveCount(0);
   await expect(page.getByText(/saaras|gpt-transcribe|api\.sarvam|vobiz/i)).toHaveCount(0);
   await page.screenshot({ path: '../artifacts/pstn-live-transcription.png', fullPage: true });
   if (process.env.RETICLE_TRANSCRIPTION_HOLD === '1') {
     test.setTimeout(90000);
     await page.waitForTimeout(55000);
   }
+});
+
+test('workspace search has no keyboard shortcut hint', async ({ page }) => {
+  await setupPrimaryCall(page);
+  await expect(page.getByRole('button', { name: 'Search workspace', exact: true })).toBeVisible();
+  await expect(page.getByText('Ctrl K', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('⌘K', { exact: true })).toHaveCount(0);
+});
+
+test('billing shows one wallet charge for the call without supplier cost details', async ({ page }) => {
+  await setupPrimaryCall(page);
+  await page.goto('/#dashboard/billing');
+  await expect(page.getByText('Last Call Session (1m 20s)', { exact: true })).toBeVisible();
+  await expect(page.getByText('$0.14 billed', { exact: true })).toBeVisible();
+  await expect(page.getByText(/Gemini Live AI Voice|Total Supplier Cost|Session Cost Breakdown/)).toHaveCount(0);
+  await expect(page.getByText('-$0.14', { exact: true })).toBeVisible();
 });
 
 test('compact call status filter uses server statuses and refreshes live transcript and recording', async ({ page }) => {

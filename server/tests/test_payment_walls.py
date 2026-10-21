@@ -495,8 +495,14 @@ async def test_billing_last_session_no_calls(monkeypatch):
     assert "No calls found" in res["message"]
 
 
-async def test_billing_last_session_with_pstn_call(monkeypatch):
-    """Authoritative breakdown of duration, wallet deduction, and supplier costs."""
+@pytest.mark.parametrize(
+    "amount_cents,amount_inr_paise,expected_amount,expected_currency",
+    [(0, -667, 6.67, "INR"), (-15, 0, 0.15, "USD")],
+)
+async def test_billing_last_session_with_pstn_call(
+    monkeypatch, amount_cents, amount_inr_paise, expected_amount, expected_currency
+):
+    """Billing reports the charged wallet amount only, in the debited currency."""
     from server.routes import app_billing
     from server.services.saas.tenant_guard import SubscriberPrincipal
     from datetime import datetime, timezone
@@ -522,44 +528,21 @@ async def test_billing_last_session_with_pstn_call(monkeypatch):
         ended_at=datetime(2026, 10, 21, 8, 49, 11, tzinfo=timezone.utc),
     )
 
-    fake_tx = SimpleNamespace(
-        amount_inr_paise=-667,
-    )
-
-    fake_meta = {
-        "carrier_billing": {"source": "vobiz_cdr", "billable_seconds": 80, "amount": 0.88},
-        "usage": {
-            "cost_inr": 6.6472,
-            "cost_usd": 0.07002,
-            "cost_inr_per_min": 4.98538,
-            "cost_usd_per_min": 0.05252,
-            "telephony_inr": 0.88,
-            "telephony_usd": 0.00927,
-            "telephony_inr_per_min": 0.66,
-            "model_cost_inr": 5.3808,
-            "model_cost_usd": 0.05668,
-            "model_cost_inr_per_min": 4.0356,
-            "input_tokens": 41589,
-            "output_tokens": 1044,
-            "input_audio_tokens": 6274,
-            "output_audio_tokens": 890,
-            "cached_tokens": 0,
-            "live_transcript_inr": 0.3512,
-            "live_transcript_usd": 0.0037,
-            "live_transcript_model": "gpt-4o-mini-transcribe",
-            "post_call_analysis_inr": 0.0352,
-            "post_call_analysis_usd": 0.00037,
-        },
-    }
+    fake_tx = SimpleNamespace(amount_inr_paise=amount_inr_paise, amount_cents=amount_cents)
+    fake_wallet = SimpleNamespace(currency=expected_currency.lower())
 
     call_executed = [False]
+    statements = []
 
     class _Session:
         async def __aenter__(self):
             return self
         async def __aexit__(self, *args):
             pass
+        async def get(self, model, key):
+            return fake_wallet
         async def execute(self, *args, **kwargs):
+            statements.append(args[0])
             if not call_executed[0]:
                 call_executed[0] = True
                 return SimpleNamespace(scalars=lambda: SimpleNamespace(first=lambda: fake_call))
@@ -567,17 +550,17 @@ async def test_billing_last_session_with_pstn_call(monkeypatch):
 
     monkeypatch.setattr("server.db.connection.get_session_factory", lambda: lambda: _Session())
     monkeypatch.setattr(app_billing, "require_subscriber_permission", lambda *args: None)
-    monkeypatch.setattr("server.call.call_ledger.call_ledger.read_meta", lambda _cid: fake_meta)
-
     res = await app_billing.billing_last_session(principal)
     assert res["has_call"] is True
     assert res["call_id"] == cid
     assert res["duration_sec"] == 80.0
     assert res["duration_formatted"] == "1m 20s"
-    assert res["tenant_wallet_deduction"]["amount_inr"] == 6.67
-    assert res["tenant_wallet_deduction"]["applied_rate_inr_per_min"] == 5.0
-    assert res["supplier_costs"]["cost_inr_per_min"] == 4.98538
-    assert res["supplier_costs"]["breakdown"]["telephony_carrier"]["cost_inr"] == 0.88
-    assert res["supplier_costs"]["breakdown"]["telephony_carrier"]["source"] == "carrier_cdr"
-    assert res["supplier_costs"]["breakdown"]["gemini_live_voice"]["cost_inr"] == 5.3808
-    assert res["supplier_costs"]["breakdown"]["gemini_live_voice"]["input_tokens"] == 41589
+    charge = res["tenant_wallet_deduction"]
+    assert charge["amount"] == expected_amount
+    assert charge["currency"] == expected_currency
+    assert "amount_cents" not in charge
+    assert "amount_paise" not in charge
+    assert "supplier_costs" not in res
+    tx_params = statements[1].compile().params
+    assert tid in tx_params.values()
+    assert f"call:{cid}" in tx_params.values()

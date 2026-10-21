@@ -30,6 +30,9 @@ class _Session:
     async def __aexit__(self, *_args):
         return False
 
+    async def get(self, _model, _pk):
+        return SimpleNamespace(currency="usd")
+
     async def execute(self, statement):
         entity = statement.column_descriptions[0]["entity"]
         self.statements.append((entity, statement))
@@ -123,4 +126,6 @@ async def test_browser_test_call_enrichment_description(monkeypatch):
     assert rows[0]["durationSec"] == 24
     assert rows[0]["agentName"] == "Sales Assistant"
     assert rows[0]["kind"] == "usage_web_test"
+    assert rows[0]["displayAmount"] == 0.14
+    assert rows[0]["displayCurrency"] == "USD"
 

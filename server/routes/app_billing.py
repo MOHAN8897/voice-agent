@@ -95,16 +95,12 @@ async def billing_wallet(principal: SubscriberPrincipal = Depends(require_subscr
 
 @router.get("/api/billing/last-session")
 async def billing_last_session(principal: SubscriberPrincipal = Depends(require_subscriber_jwt)):
-    """Authoritative breakdown of the tenant's most recent call billing session.
-
-    Reports duration, tenant wallet deduction, and full supplier cost breakdown
-    (telephony carrier via authoritative CDR, Gemini Live tokens, and transcription).
-    """
+    """Return the latest call and its actual tenant wallet charge."""
     require_subscriber_permission(principal, "app.billing.read")
-    from server.call.call_ledger import call_ledger
     from server.db.connection import get_session_factory
     from server.db.models.entities import Call
-    from server.db.models.saas_models import BillingWalletTransaction
+    from server.db.models.saas_models import BillingWallet, BillingWalletTransaction
+    from server.services.saas.billing_wallet_service import wallet_debit_display
     from sqlalchemy import select
 
     factory = get_session_factory()
@@ -123,23 +119,27 @@ async def billing_last_session(principal: SubscriberPrincipal = Depends(require_
             return {"has_call": False, "message": "No calls found for this workspace."}
 
         cid = str(c.call_id)
-        meta = call_ledger.read_meta(cid) or {}
-        usage = meta.get("usage") or {}
-        carrier_billing = meta.get("carrier_billing") or {}
-
         tx_res = await session.execute(
             select(BillingWalletTransaction).where(
+                BillingWalletTransaction.tenant_id == principal.tenant_id,
                 BillingWalletTransaction.reference_id == f"call:{cid}"
             )
         )
         tx = tx_res.scalars().first()
+        wallet = await session.get(BillingWallet, principal.tenant_id)
 
         dur_sec = float(c.duration_sec or 0)
         dur_min = dur_sec / 60.0 if dur_sec > 0 else 0.0
-
-        carrier_src = carrier_billing.get("source") or "tariff_deck"
-        if carrier_src == "vobiz_cdr":
-            carrier_src = "carrier_cdr"
+        charge = (
+            wallet_debit_display(
+                amount_cents=tx.amount_cents,
+                amount_inr_paise=tx.amount_inr_paise,
+                wallet_currency=getattr(wallet, "currency", "usd"),
+                fx_rate_inr=getattr(c, "applied_fx_rate_inr", None) or get_settings().fx_rate_inr,
+            )
+            if tx
+            else {"amount": None, "currency": None}
+        )
 
         return {
             "has_call": True,
@@ -152,43 +152,8 @@ async def billing_last_session(principal: SubscriberPrincipal = Depends(require_
             "duration_minutes": round(dur_min, 2),
             "duration_formatted": f"{int(dur_sec // 60)}m {int(dur_sec % 60)}s",
             "tenant_wallet_deduction": {
-                "amount_inr": round(abs(tx.amount_inr_paise) / 100.0, 2) if tx and tx.amount_inr_paise else 0.0,
-                "amount_paise": abs(tx.amount_inr_paise) if tx and tx.amount_inr_paise else 0,
-                "applied_rate_inr_per_min": float(c.applied_rate_inr_paise_per_min or 500) / 100.0,
-            },
-            "supplier_costs": {
-                "total_cost_inr": round(float(usage.get("cost_inr") or 0), 4),
-                "total_cost_usd": round(float(usage.get("cost_usd") or 0), 6),
-                "cost_inr_per_min": round(float(usage.get("cost_inr_per_min") or 0), 5),
-                "cost_usd_per_min": round(float(usage.get("cost_usd_per_min") or 0), 6),
-                "breakdown": {
-                    "telephony_carrier": {
-                        "cost_inr": round(float(usage.get("telephony_inr") or 0), 4),
-                        "cost_usd": round(float(usage.get("telephony_usd") or 0), 6),
-                        "cost_inr_per_min": round(float(usage.get("telephony_inr_per_min") or 0), 4),
-                        "source": carrier_src,
-                        "billable_seconds": carrier_billing.get("billable_seconds") or dur_sec,
-                    },
-                    "gemini_live_voice": {
-                        "cost_inr": round(float(usage.get("model_cost_inr") or 0), 4),
-                        "cost_usd": round(float(usage.get("model_cost_usd") or 0), 6),
-                        "cost_inr_per_min": round(float(usage.get("model_cost_inr_per_min") or 0), 4),
-                        "input_tokens": usage.get("input_tokens") or 0,
-                        "output_tokens": usage.get("output_tokens") or 0,
-                        "input_audio_tokens": usage.get("input_audio_tokens") or 0,
-                        "output_audio_tokens": usage.get("output_audio_tokens") or 0,
-                        "cached_tokens": usage.get("cached_tokens") or 0,
-                    },
-                    "transcription": {
-                        "cost_inr": round(float(usage.get("live_transcript_inr") or 0), 4),
-                        "cost_usd": round(float(usage.get("live_transcript_usd") or 0), 6),
-                        "model": usage.get("live_transcript_model") or "gpt-4o-mini-transcribe",
-                    },
-                    "post_call_analysis": {
-                        "cost_inr": round(float(usage.get("post_call_analysis_inr") or 0), 4),
-                        "cost_usd": round(float(usage.get("post_call_analysis_usd") or 0), 6),
-                    },
-                },
+                "amount": round(charge["amount"], 2) if charge["amount"] is not None else None,
+                "currency": charge["currency"],
             },
         }
 

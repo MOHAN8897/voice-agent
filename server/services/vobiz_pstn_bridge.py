@@ -173,6 +173,11 @@ class VobizPstnBridge:
                     logger.info("[VOBIZ] stream stop received")
                     exit_reason = "provider_stop"
                     break
+        except Exception as exc:
+            # A failed media leg must be cleaned up and diagnosed per call.
+            # Provider payloads/URLs and exception text can contain secrets.
+            exit_reason = "media_error"
+            log_pstn("vobiz.media_failed", call_id=self.call_id, error_type=type(exc).__name__)
         finally:
             try:
                 await asyncio.shield(self._cleanup(exit_reason))
@@ -643,6 +648,18 @@ class VobizPstnBridge:
         self._closed = True
         from server.call.billing_timing import mark_call_disconnected
         mark_call_disconnected(self.call_id)
+        if self.call_id:
+            from server.call.call_ledger import call_ledger
+            try:
+                meta = call_ledger.read_meta(self.call_id) or {}
+                meta["media_disconnect"] = {
+                    "reason": reason,
+                    "frames_in": self._media_frames_in,
+                    "frames_out": self._media_frames_out,
+                }
+                call_ledger.write_meta(self.call_id, meta)
+            except Exception as exc:
+                log_pstn("vobiz.disconnect_diagnostics_failed", error_type=type(exc).__name__)
 
         startup = getattr(self, "_start_voice_task", None)
         if startup and startup is not asyncio.current_task() and not startup.done():
@@ -667,7 +684,14 @@ class VobizPstnBridge:
             from server.call.call_lifecycle_service import call_lifecycle_service
 
             try:
-                await call_lifecycle_service.end(self.call_id, reason=f"vobiz_{reason}")
+                # An unknown reason is normalized to user_stop, which previously
+                # made broken media connections look like deliberate hangups.
+                lifecycle_reason = {
+                    "provider_stop": "pstn_hangup", "media_error": "provider_failure",
+                    "call_hangup_notified": "pstn_hangup",
+                    "session_timeout": "timeout", "start_timeout": "timeout",
+                }.get(reason, "ws_disconnect")
+                await call_lifecycle_service.end(self.call_id, reason=lifecycle_reason)
             except Exception:
                 pass
 

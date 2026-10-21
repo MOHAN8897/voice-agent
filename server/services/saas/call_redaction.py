@@ -88,7 +88,7 @@ def _strip_finalization(finalization: dict[str, Any]) -> dict[str, Any]:
 
 def tenant_live_transcription(meta: dict[str, Any]) -> dict[str, Any] | None:
     tx = meta.get("live_transcription")
-    if not isinstance(tx, dict) or tx.get("status") not in {"connecting", "streaming", "complete", "failed"}:
+    if not isinstance(tx, dict) or tx.get("status") not in {"connecting", "streaming", "complete", "partial", "failed"}:
         return None
     return {key: tx[key] for key in ("mode", "status", "updated_at", "segments", "partial_text") if key in tx}
 

@@ -766,7 +766,7 @@ class PstnRealtimeVoiceLoop:
         model = self._live_model if policy.live_model == "gemini-native" else policy.live_model
         tx.update(mode="live", status=status, model=model, provider=policy.live_provider,
                   partial_text=partial_text, updated_at=datetime.now(timezone.utc).isoformat())
-        if status == "failed" and self._caller_stt is not None:
+        if status in {"failed", "partial"} and self._caller_stt is not None:
             tx["error_code"] = getattr(self._caller_stt, "_failure", "unavailable")
         meta["live_transcription"] = tx
         meta["transcript_source"] = "gemini_live_native" if policy.live_model == "gemini-native" else f"live:{policy.live_model}"
@@ -1287,6 +1287,10 @@ class PstnRealtimeVoiceLoop:
             return
         if self._greeting_protected():
             log_pstn("realtime_voice.barge_ignored_greeting", call_id=self.call_id)
+            return
+        if self.current_generation_id and self._barge_generation == self.current_generation_id:
+            # Local energy detection and provider VAD describe the same barge.
+            # A second cancel can discard the caller's new input turn.
             return
         self._barge_generation = self.current_generation_id
         self._suppress_until_user = False
@@ -2085,6 +2089,14 @@ class PstnRealtimeVoiceLoop:
         """Disconnect the caller before archive/accounting, also on failures."""
         if self._closed or self.controller.state == CallState.ENDED:
             return
+        if self.call_id:
+            from server.call.call_ledger import call_ledger
+            try:
+                meta = call_ledger.read_meta(self.call_id) or {}
+                meta["runtime_disconnect_reason"] = reason
+                call_ledger.write_meta(self.call_id, meta)
+            except Exception as exc:
+                log_pstn("runtime.disconnect_diagnostics_failed", error_type=type(exc).__name__)
         await self._fast_disconnect_after_farewell(reason, self._response_had_audio)
 
     async def _watch_runtime(self) -> None:
@@ -2632,10 +2644,14 @@ class PstnRealtimeVoiceLoop:
 
     async def _handle_language_callback_tool(self, event: dict[str, Any]) -> None:
         from server.call.call_context import get as get_ctx
-        from server.prompts.agent_voice_rules import language_mismatch_fallback_for
+        from server.prompts.agent_voice_rules import UNCLEAR_FALLBACK, language_mismatch_fallback_for, pack_get
+        from server.realtime.models import is_gemini_live_voice_model
 
         lang = self._resolve_language()
-        line = language_mismatch_fallback_for(lang)
+        # Native ASR can render Telugu as Hindi/English. Ask for meaning
+        # without insisting that the caller change the language they used.
+        line = (pack_get(UNCLEAR_FALLBACK, lang) if is_gemini_live_voice_model(self._live_model)
+                else language_mismatch_fallback_for(lang))
         ctx = get_ctx(self.call_id) if self.call_id else None
 
         raw_args = event.get("arguments")
@@ -4185,8 +4201,11 @@ class PstnRealtimeVoiceLoop:
                 await self._pump_task
             except (asyncio.CancelledError, Exception):
                 pass
-        from server.realtime.voice_manager import realtime_voice_manager
-
-        await realtime_voice_manager.destroy(self.call_id)
-        self._adapter = None
+        # Carrier disconnects also need the same bounded STT drain as agent
+        # hangups. Otherwise the socket survives until event-loop cancellation.
+        await self._stop_live_media_session()
+        if self._post_turn_tasks:
+            # The bridge seals the ledger next. Keep the last completed agent
+            # turn and its usage from racing with that seal.
+            await asyncio.gather(*tuple(self._post_turn_tasks), return_exceptions=True)
         log_pstn("CLEANUP", call_id=self.call_id, wire_frames_out=self._wire_frames_out, pipeline="realtime_voice")

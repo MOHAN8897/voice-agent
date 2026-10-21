@@ -14,7 +14,6 @@ import {
   Pause,
   Download,
   CreditCard,
-  Activity,
   X,
 } from 'lucide-react';
 import { SolidCard } from '../ui/SolidCard';
@@ -259,12 +258,7 @@ function RecordingPlayer({ call }) {
       </div>
 
       <span className="text-[10px] text-[#524E5E]">
-        {call.costUsd != null
-          ? `$${Number(call.costUsd).toFixed(3)}`
-          : call.costInr != null
-            ? `$${(Number(call.costInr) / 85).toFixed(3)}`
-            : 'Billed after the call'}
-        {reasonLabel ? ` · ${reasonLabel}` : ''}
+        {reasonLabel ? `${reasonLabel}` : ''}
         {voiceLabel ? ` · ${voiceLabel}` : ''}
       </span>
     </div>
@@ -842,71 +836,14 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
 
                   <RecordingPlayer call={activeCall} />
 
-                  {/* Session Cost Breakdown (Vobiz / Telnyx + Gemini 3.8 Live API) */}
-                  {(activeCall.costUsd != null || activeCall.costInr != null || activeCall.telnyxUsd != null || activeCall.vobizUsd != null || activeCall.gemini38LiveCostUsd != null) && (
-                    <div className="p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-[#0F0E17] flex items-center gap-1.5">
-                          <Activity className="w-3.5 h-3.5 text-[#6344E7]" />
-                          <span>Session Cost Breakdown</span>
-                        </span>
-                        <span className="text-xs font-extrabold text-[#0F0E17]">
-                          {activeCall.costUsd != null ? `$${Number(activeCall.costUsd).toFixed(4)}` : '—'}
-                          {activeCall.costInr != null ? ` (₹${Number(activeCall.costInr).toFixed(2)})` : ''}
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 pt-1 text-[11px]">
-                        {activeCall.telephonyProvider === 'vobiz' || activeCall.vobizUsd != null ? (
-                          <div className="bg-white p-2 rounded-lg border border-purple-200 shadow-2xs">
-                            <div className="flex items-center justify-between">
-                              <span className="text-purple-700 block text-[9px] uppercase tracking-wider font-bold">
-                                Enterprise Voice Network
-                              </span>
-                              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-purple-50 text-purple-700 border border-purple-200 font-semibold">
-                                ₹0.65/min
-                              </span>
-                            </div>
-                            <span className="font-bold text-[#0F0E17] block mt-0.5">
-                              {activeCall.vobizUsd != null ? `$${Number(activeCall.vobizUsd).toFixed(4)}` : '$0.0000'}
-                              {activeCall.vobizInr != null ? ` (₹${Number(activeCall.vobizInr).toFixed(2)})` : ''}
-                            </span>
-                            <span className="text-[9px] text-[#524E5E] block leading-tight mt-0.5">
-                              Base: ₹0.65/min · Recording: Included · High-fidelity Line
-                            </span>
-                          </div>
-                        ) : (
-                          <div className="bg-white p-2 rounded-lg border border-[#E4E2EB]">
-                            <span className="text-[#8C879A] block text-[9px] uppercase tracking-wider font-semibold">
-                              Direct Voice Trunk
-                            </span>
-                            <span className="font-bold text-[#0F0E17] block">
-                              {activeCall.telnyxUsd != null ? `$${Number(activeCall.telnyxUsd).toFixed(4)}` : '$0.000'}
-                            </span>
-                            <span className="text-[9px] text-[#524E5E]">
-                              {activeCall.telnyxCostSource === 'live_telnyx_balance_delta' ? '✓ Verified network delivery' : 'Destination tariff rate'}
-                            </span>
-                          </div>
-                        )}
-                        <div className="bg-white p-2 rounded-lg border border-[#E4E2EB]">
-                          <span className="text-[#8C879A] block text-[9px] uppercase tracking-wider font-semibold">
-                            AI Voice Core
-                          </span>
-                          <span className="font-bold text-[#0F0E17] block">
-                            {activeCall.gemini38LiveCostUsd != null ? `$${Number(activeCall.gemini38LiveCostUsd).toFixed(4)}` : (activeCall.costUsd != null ? `$${Number(activeCall.costUsd).toFixed(4)}` : '$0.000')}
-                          </span>
-                          <span className="text-[9px] text-[#524E5E]">
-                            Session audio &amp; text tokens
-                          </span>
-                        </div>
-                      </div>
-                      {(activeCall.costUsdPerMin != null || activeCall.costInrPerMin != null) && (
-                        <div className="pt-1.5 border-t border-[#E4E2EB] flex items-center justify-between text-[10px] text-[#524E5E] font-mono">
-                          <span>Usage session rate:</span>
-                          <span className="font-bold text-[#0F0E17]">
-                            ${Number(activeCall.costUsdPerMin || 0).toFixed(4)}/min · ₹{Number(activeCall.costInrPerMin || 0).toFixed(2)}/min
-                          </span>
-                        </div>
-                      )}
+                  {activeCall.connected && (
+                    <div className="p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] flex items-center justify-between text-xs">
+                      <span className="font-semibold text-[#524E5E]">Call cost</span>
+                      <span className="font-mono font-bold text-[#0F0E17]">
+                        {activeCall.billedAmount != null
+                          ? `${activeCall.billedCurrency === 'INR' ? '₹' : '$'}${Number(activeCall.billedAmount).toFixed(2)}`
+                          : activeCall.inProgress ? 'Finalized after the call' : 'Charge not available'}
+                      </span>
                     </div>
                   )}
 
@@ -1018,11 +955,14 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                       <FileText className="w-3.5 h-3.5 text-[#524E5E]" />
                       <span>Transcript ({transcriptLines.length} turns)</span>
                     </h4>
-                    {liveTranscription && (
-                      <p className={`mb-2 text-xs ${liveTranscription.status === 'failed' ? 'text-[#B91C1C]' : 'text-[#524E5E]'}`} role="status">
-                        Live transcription: {({ connecting: 'Connecting…', streaming: 'Listening', complete: 'Complete', failed: 'Unavailable — contact support' })[liveTranscription.status] || liveTranscription.status}
-                      </p>
-                    )}
+                    {liveTranscription && (() => {
+                      const hasSavedText = transcriptLines.length > 0 || Number(liveTranscription.segments || 0) > 0;
+                      const partial = liveTranscription.status === 'partial' || (liveTranscription.status === 'failed' && hasSavedText);
+                      const label = partial
+                        ? 'Partial — saved transcript available'
+                        : ({ connecting: 'Connecting…', streaming: 'Listening', complete: 'Complete', failed: 'Could not transcribe this call' })[liveTranscription.status] || 'Status unavailable';
+                      return <p className={`mb-2 text-xs ${liveTranscription.status === 'failed' && !hasSavedText ? 'text-[#B91C1C]' : 'text-[#524E5E]'}`} role="status">Live transcription: {label}</p>;
+                    })()}
 
                     <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
                       {/* chisel: conversational turn bubble skeletons while transcript is resolving */}

@@ -84,6 +84,7 @@ class LiveCallerTranscriber:
         self._finals: dict[str, str] = {}
         self._partials: dict[str, str] = {}
         self._seen: deque[str] = deque(maxlen=1024)
+        self._final_count = 0
         self._last_partial_at = 0.0
         self._end_sent = False
         self._needs_tail = True
@@ -120,7 +121,7 @@ class LiveCallerTranscriber:
         try:
             if not self._task.done():
                 await asyncio.wait_for(self._queue.put(None), timeout=1)
-            await asyncio.wait_for(asyncio.shield(self._task), timeout=5)
+            await asyncio.wait_for(asyncio.shield(self._task), timeout=10)
         except (TimeoutError, asyncio.CancelledError):
             self._failure = self._failure or "finalization_timeout"
             self._task.cancel()
@@ -186,9 +187,13 @@ class LiveCallerTranscriber:
                 if reader in done and not self._end_sent:
                     raise RuntimeError("transcription_stream_closed")
                 if writer in done and self._sent_seconds and self._needs_tail:
-                    await asyncio.wait_for(asyncio.shield(reader), timeout=3)
+                    await asyncio.wait_for(asyncio.shield(reader), timeout=8)
         except asyncio.CancelledError:
-            self._failure = self._failure or "stream_cancelled"
+            # Teardown may cancel the media task after all committed turns have
+            # been delivered. Keep that completed transcript out of the failed
+            # state; outstanding audio or turns still make cancellation partial.
+            if not self._closing or self._queued_bytes or self._uncommitted_bytes or self._pending:
+                self._failure = self._failure or "stream_cancelled"
         except Exception as exc:  # noqa: BLE001 -- supervised provider boundary records safe failure status
             # Never persist provider errors containing URLs, IDs, credentials or audio.
             self._failure = self._failure or type(exc).__name__
@@ -200,7 +205,8 @@ class LiveCallerTranscriber:
             while not self._queue.empty():
                 self._queue.get_nowait()
             self._queued_bytes = 0
-            await self._on_state("failed" if self._failure else "complete", "")
+            status = "complete" if not self._failure else ("partial" if self._final_count else "failed")
+            await self._on_state(status, "")
 
     async def _send(self, ws: Any) -> None:
         while True:
@@ -285,6 +291,7 @@ class LiveCallerTranscriber:
     async def _deliver(self, text: str) -> None:
         if text.strip():
             await self._on_final(text.strip())
+            self._final_count += 1
         await self._on_state("streaming", "")
 
     def _record_error(self, event: dict[str, Any]) -> None:

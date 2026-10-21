@@ -6,7 +6,20 @@ from unittest.mock import patch
 import uuid
 import pytest
 
-from server.services.saas.billing_wallet_service import _resolve_call_wallet_debit
+from server.services.saas.billing_wallet_service import _resolve_call_wallet_debit, wallet_debit_display
+
+
+@pytest.mark.parametrize(
+    "wallet_currency,expected",
+    [("usd", {"amount": 0.6, "currency": "USD"}), ("inr", {"amount": 60.0, "currency": "INR"})],
+)
+def test_wallet_debit_display_includes_both_currency_legs(wallet_currency, expected):
+    assert wallet_debit_display(
+        amount_cents=-50,
+        amount_inr_paise=-1000,
+        wallet_currency=wallet_currency,
+        fx_rate_inr=100,
+    ) == expected
 
 
 def test_wallet_debit_uses_selling_rate_even_when_supplier_cost_is_present():
@@ -105,6 +118,44 @@ def test_wallet_debit_browser_call_uses_web_rate_not_pstn():
     assert mode == "catalog_prorated"
     assert cents == int(round(0.5 * 7))  # 4 cents
     assert paise == int(round(cents * fx))
+
+
+@pytest.mark.asyncio
+async def test_call_usage_debit_uses_locked_fx_snapshot(monkeypatch):
+    from server.services.saas import billing_wallet_service as service
+
+    tenant_id = uuid.uuid4()
+    captured = {}
+    captured_args = []
+    stored = {
+        "channel": "pstn",
+        "tenant_id": str(tenant_id),
+        "duration_sec": 90,
+        "applied_rate_usd_micros_per_min": 120_000,
+        "applied_rate_inr_paise_per_min": 1146,
+        "applied_fx_rate_inr": 95.5,
+    }
+
+    class _CallStore:
+        @staticmethod
+        async def get(_call_id):
+            return stored
+
+    async def _capture_debit(*args, **kwargs):
+        captured_args.extend(args)
+        captured.update(kwargs)
+
+    monkeypatch.setattr(service, "get_settings", lambda: SimpleNamespace(saas_auth_enabled=True, fx_rate_inr=100))
+    monkeypatch.setattr("server.call.call_store.call_store", _CallStore())
+    monkeypatch.setattr("server.call.call_ledger.call_ledger.review_fields", lambda _call_id: {})
+    monkeypatch.setattr(service, "debit_wallet", _capture_debit)
+
+    await service.bill_call_usage_if_applicable("locked-fx-call")
+
+    assert captured_args[0] == tenant_id
+    assert captured["fx_rate_inr_override"] == 95.5
+    assert captured["amount_cents"] == 18
+    assert captured["amount_inr_paise"] == 1719
 
 
 @pytest.mark.asyncio
@@ -315,6 +366,68 @@ async def test_debit_wallet_inr_tenant_deducts_paise(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_mixed_wallet_call_debit_uses_locked_fx_snapshot(monkeypatch):
+    from server.services.saas.billing_wallet_service import debit_wallet
+    from server.db.models.saas_models import BillingWallet
+
+    tenant_id = uuid.uuid4()
+    wallet = BillingWallet(
+        tenant_id=tenant_id,
+        currency="inr",
+        balance_cents=6,
+        balance_inr_paise=400,
+    )
+    added = []
+
+    class _Result:
+        def scalar_one_or_none(self):
+            return None
+
+    class _Session:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return False
+
+        async def get(self, _model, _pk, **_kw):
+            return wallet
+
+        async def execute(self, _stmt):
+            return _Result()
+
+        def add(self, obj):
+            added.append(obj)
+
+        async def commit(self):
+            pass
+
+    monkeypatch.setattr(
+        "server.services.saas.billing_wallet_service.get_session_factory",
+        lambda: lambda: _Session(),
+    )
+    monkeypatch.setattr(
+        "server.services.saas.billing_wallet_service.get_settings",
+        lambda: SimpleNamespace(fx_rate_inr=200),
+    )
+
+    result = await debit_wallet(
+        tenant_id,
+        kind="usage_pstn",
+        reference_id="call:mixed-fx-test",
+        amount_cents=10,
+        amount_inr_paise=1000,
+        fx_rate_inr_override=100,
+        allow_partial=False,
+    )
+
+    assert result["amountCents"] == 6
+    assert result["amountInrPaise"] == 400
+    assert added[0].amount_cents == -6
+    assert added[0].amount_inr_paise == -400
+
+
+@pytest.mark.asyncio
 async def test_list_wallet_transactions_enriches_duration_from_call_ledger(monkeypatch):
     """Transaction rows without SQL Call row must fallback to call_ledger for duration and agent name."""
     from server.services.saas.billing_wallet_service import list_wallet_transactions
@@ -346,6 +459,9 @@ async def test_list_wallet_transactions_enriches_duration_from_call_ledger(monke
 
         async def __aexit__(self, *args):
             return False
+
+        async def get(self, _model, _key):
+            return SimpleNamespace(currency="usd")
 
         async def execute(self, stmt):
             entity = stmt.column_descriptions[0]["entity"]

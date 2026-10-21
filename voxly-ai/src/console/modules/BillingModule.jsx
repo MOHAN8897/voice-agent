@@ -63,32 +63,25 @@ function formatRowAmount(row, serverWallet) {
   }
 
   const sign = isCredit ? '+' : '-';
+  if (row.displayAmount != null && row.displayCurrency) {
+    const symbol = String(row.displayCurrency).toUpperCase() === 'INR' ? '₹' : '$';
+    return { primary: `${sign}${symbol}${Number(row.displayAmount).toFixed(2)}`, isCredit };
+  }
   const isTenantInr =
     (serverWallet?.walletCurrency || serverWallet?.primaryCurrency || '').toUpperCase() === 'INR' ||
     (inrPaise !== 0 && cents === 0);
 
-  if (isTenantInr && inrPaise !== 0) {
-    const absInr = Math.abs(inrPaise) / 100;
-    const inrStr = absInr < 0.01 && absInr > 0 ? absInr.toFixed(3) : absInr.toFixed(2);
-    const equivUsd = absInr / fx;
-    const usdStr = equivUsd < 0.01 && equivUsd > 0 ? equivUsd.toFixed(3) : equivUsd.toFixed(2);
-    return {
-      primary: `${sign}₹${inrStr}`,
-      secondary: `(${sign}$${usdStr})`,
-      isCredit,
-    };
+  if (isTenantInr) {
+    const totalPaise = Math.abs(inrPaise) + Math.round(Math.abs(cents) * fx);
+    const amount = totalPaise / 100;
+    const inrStr = amount < 0.01 && amount > 0 ? amount.toFixed(3) : amount.toFixed(2);
+    return { primary: `${sign}₹${inrStr}`, isCredit };
   }
 
-  const effectiveUsd = cents !== 0 ? Math.abs(cents) / 100 : inrPaise !== 0 ? (Math.abs(inrPaise) / 100) / fx : 0;
+  const totalCents = Math.abs(cents) + Math.round(Math.abs(inrPaise) / fx);
+  const effectiveUsd = totalCents / 100;
   const usdStr = effectiveUsd < 0.01 && effectiveUsd > 0 ? effectiveUsd.toFixed(3) : effectiveUsd.toFixed(2);
-  const equivInr = effectiveUsd * fx;
-  const inrStr = equivInr < 0.01 && equivInr > 0 ? equivInr.toFixed(3) : equivInr.toFixed(2);
-
-  return {
-    primary: `${sign}$${usdStr}`,
-    secondary: `(${sign}₹${inrStr})`,
-    isCredit,
-  };
+  return { primary: `${sign}$${usdStr}`, isCredit };
 }
 
 function toCsv(rows, serverWallet) {
@@ -97,8 +90,8 @@ function toCsv(rows, serverWallet) {
   const body = rows.map((r) => {
     const inrPaise = Number(r.amountInrPaise) || 0;
     const cents = Number(r.amountCents) || 0;
-    const inrVal = inrPaise !== 0 ? (inrPaise / 100).toFixed(2) : cents !== 0 ? ((cents / 100) * fx).toFixed(2) : '0.00';
-    const usdVal = cents !== 0 ? (cents / 100).toFixed(2) : inrPaise !== 0 ? ((inrPaise / 100) / fx).toFixed(2) : '0.00';
+    const inrVal = ((inrPaise + cents * fx) / 100).toFixed(2);
+    const usdVal = ((cents + inrPaise / fx) / 100).toFixed(2);
     return [
       r.createdAt || '',
       describeTransactionKind(r),
@@ -482,43 +475,10 @@ export function BillingModule() {
                   Last Call Session ({lastSession.duration_formatted})
                 </span>
                 <span className="font-mono font-bold text-[#0F0E17]">
-                  ₹{Number(lastSession.tenant_wallet_deduction?.amount_inr || 0).toFixed(2)} billed
+                  {lastSession.tenant_wallet_deduction?.amount != null
+                    ? `${lastSession.tenant_wallet_deduction.currency === 'INR' ? '₹' : '$'}${Number(lastSession.tenant_wallet_deduction.amount).toFixed(2)} billed`
+                    : 'Charge pending'}
                 </span>
-              </div>
-              <div className="p-2.5 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB] space-y-1.5 text-[11px] font-mono text-[#524E5E]">
-                <div className="flex justify-between">
-                  <span>Gemini Live AI Voice:</span>
-                  <span className="text-[#0F0E17] font-semibold">
-                    ₹{Number(lastSession.supplier_costs?.breakdown?.gemini_live_voice?.cost_inr || 0).toFixed(2)}
-                    <span className="text-[10px] text-[#8C879A] ml-1">
-                      ({Number(lastSession.supplier_costs?.breakdown?.gemini_live_voice?.input_tokens || 0).toLocaleString()} in tok)
-                    </span>
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Direct Voice Trunk:</span>
-                  <span className="text-[#0F0E17] font-semibold">
-                    ₹{Number(lastSession.supplier_costs?.breakdown?.telephony_carrier?.cost_inr || 0).toFixed(2)}
-                    <span className="text-[10px] text-[#8C879A] ml-1">
-                      ({lastSession.supplier_costs?.breakdown?.telephony_carrier?.billable_seconds}s CDR)
-                    </span>
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Live Transcription:</span>
-                  <span className="text-[#0F0E17] font-semibold">
-                    ₹{Number(lastSession.supplier_costs?.breakdown?.transcription?.cost_inr || 0).toFixed(2)}
-                  </span>
-                </div>
-                <div className="pt-1 border-t border-[#E4E2EB] flex justify-between font-bold text-[#0F0E17]">
-                  <span>Total Supplier Cost:</span>
-                  <span>
-                    ₹{Number(lastSession.supplier_costs?.total_cost_inr || 0).toFixed(2)}
-                    <span className="text-[10px] font-normal text-[#8C879A] ml-1">
-                      (~₹{Number(lastSession.supplier_costs?.cost_inr_per_min || 0).toFixed(2)}/min)
-                    </span>
-                  </span>
-                </div>
               </div>
             </div>
           )}
@@ -613,7 +573,6 @@ export function BillingModule() {
                   const amt = formatRowAmount(row, serverWallet);
                   const isCredit = amt.isCredit;
                   const displayAmount = amt.primary;
-                  const secondaryAmount = amt.secondary;
                   const activityLabel = describeTransactionKind(row);
                   const isWebTest = row.kind === 'usage_web_test' || row.kind === 'usage_web';
 
@@ -658,11 +617,6 @@ export function BillingModule() {
                         }`}
                       >
                         <div>{displayAmount}</div>
-                        {secondaryAmount && (
-                          <div className="text-[10px] font-normal text-[#8C879A] mt-0.5">
-                            {secondaryAmount}
-                          </div>
-                        )}
                       </td>
                     </tr>
                   );

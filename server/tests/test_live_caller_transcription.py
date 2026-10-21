@@ -104,6 +104,30 @@ async def test_openai_completions_retain_turn_order_and_deduplicate(monkeypatch)
     await stream.close()
 
 
+@pytest.mark.parametrize("closing,expected", [(True, "complete"), (False, "partial")])
+async def test_cancellation_status_preserves_saved_caller_turns(monkeypatch, closing, expected):
+    finals, states = [], []
+    stream = LiveCallerTranscriber(
+        model="gpt-4o-mini-transcribe", language="te-IN", input_rate=24000,
+        on_final=AsyncMock(side_effect=finals.append),
+        on_state=AsyncMock(side_effect=lambda status, text: states.append((status, text))),
+    )
+    socket = Socket("openai")
+    monkeypatch.setattr(stream, "_connect", lambda: socket)
+    stream.start()
+    await eventually(lambda: ("streaming", "") in states)
+    socket.push({"type": "input_audio_buffer.committed", "item_id": "saved-turn"})
+    socket.push({
+        "type": "conversation.item.input_audio_transcription.completed",
+        "item_id": "saved-turn", "transcript": "రేపు మాట్లాడదాం",
+    })
+    await eventually(lambda: finals == ["రేపు మాట్లాడదాం"])
+    stream._closing = closing
+    stream._task.cancel()
+    await asyncio.gather(stream._task, return_exceptions=True)
+    assert states[-1] == (expected, "")
+
+
 async def test_connection_rejection_is_visible_and_does_not_bill_unsent_audio(monkeypatch):
     states = []
     stream = LiveCallerTranscriber(model="gpt-transcribe", language="hi-IN", input_rate=16000,

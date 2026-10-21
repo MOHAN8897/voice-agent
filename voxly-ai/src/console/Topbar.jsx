@@ -113,7 +113,7 @@ export function Topbar({
           type="button"
           onClick={onOpenCommandPalette}
           className="w-full flex items-center justify-between px-3.5 py-1.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] hover:border-[#6344E7]/40 hover:bg-white text-[#0F0E17] transition-all text-xs group shadow-2xs"
-          aria-label={`Search workspace (${typeof window !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.userAgent || '') ? '⌘K' : 'Ctrl K'})`}
+          aria-label="Search workspace"
         >
           <div className="flex items-center gap-2.5 min-w-0">
             <Search className="w-4 h-4 text-[#6344E7] shrink-0 transition-transform group-hover:scale-110" />
@@ -121,9 +121,6 @@ export function Topbar({
               Search workspace…
             </span>
           </div>
-          <kbd className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-white text-[#4A4658] border border-[#D5D3DE] shadow-2xs shrink-0">
-            {typeof window !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.userAgent || '') ? '⌘K' : 'Ctrl K'}
-          </kbd>
         </button>
       </div>
 
