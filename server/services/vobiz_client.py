@@ -404,7 +404,7 @@ class VobizClient:
             return await self._request("DELETE", f"/Account/{auth_id}/Call/{call_uuid}/")
         except VobizApiError as exc:
             if exc.status in (404, 422):
-                return {"ok": True, "already_ended": True}
+                return {"ok": True, "already_ended": True, "status": exc.status}
             raise
 
     def build_stream_ws_url(self, token: str, call_uuid: str | None = None) -> str:

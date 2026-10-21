@@ -152,6 +152,8 @@ def build_insights(rows: list[dict], rates: dict, *, since: datetime, now: datet
             "transcriptionUsd": number(sum((r["transcriptUsd"] for r in records), Decimal(0))),
             "transcriptionInr": number(sum((r["transcriptInr"] for r in records), Decimal(0))),
             "unconnectedPrewarmUsd": number(setup_usd), "unconnectedPrewarmInr": number(setup_inr),
+            "prewarmPerMinUsd": number(setup_usd / minutes) if minutes else 0.0,
+            "prewarmPerMinInr": number(setup_inr / minutes) if minutes else 0.0,
             "unconnectedPrewarmRecords": len(overhead) if channel == "pstn" else 0,
             "carrierCdrCalls": sum(r["carrierSource"] == "vobiz_cdr" for r in records),
             "carrierEstimatedCalls": sum(r["carrierSource"] == "tariff_estimate" for r in records),

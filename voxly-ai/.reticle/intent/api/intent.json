@@ -142,6 +142,52 @@
       },
       "updatedAt": 1792433922116
     },
+    "inline:admin-saves-the-selected-live-recognizer-while-t-69812cf9": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "PUT",
+            "status": 200,
+            "urlContains": "/api/dev/stack/saas-phone"
+          },
+          {
+            "kind": "element",
+            "query": {
+              "name": "Live transcription model",
+              "role": "combobox",
+              "value": "gpt-transcribe"
+            },
+            "state": "present"
+          },
+          {
+            "kind": "element",
+            "query": {
+              "role": "combobox",
+              "value": "gemini-3.8-live"
+            },
+            "state": "present"
+          }
+        ]
+      },
+      "declaredAt": 1792591918281,
+      "id": "inline:admin-saves-the-selected-live-recognizer-while-t-69812cf9",
+      "provenBy": {
+        "at": 1792591918547,
+        "grade": "net",
+        "runId": "drive-lease-5a636bc2-ba93-4eee-bb0f-9d717ec741e2",
+        "verdictId": "reticle_act_and_wait:1792591918546"
+      },
+      "state": "proved",
+      "statement": "Admin saves the selected live recognizer while the Gemini conversation model remains selected.",
+      "status": "proved",
+      "subject": "api",
+      "surface": {
+        "route": "/dev/saas-phone-stack"
+      },
+      "updatedAt": 1792591918661
+    },
     "inline:csv-column-mapping-and-published-script-placehol-7eb73f09": {
       "binding": {
         "kind": "allOf",
@@ -231,6 +277,50 @@
         ]
       },
       "updatedAt": 1792433529517
+    },
+    "inline:sign-in-with-the-isolated-test-backend-to-inspec-14c0e319": {
+      "binding": {
+        "kind": "net",
+        "method": "POST",
+        "status": 200,
+        "urlContains": "/api/auth/login"
+      },
+      "declaredAt": 1792578006202,
+      "id": "inline:sign-in-with-the-isolated-test-backend-to-inspec-14c0e319",
+      "state": "bound",
+      "statement": "Sign in with the isolated test backend to inspect the call history.",
+      "status": "proposed",
+      "subject": "api",
+      "updatedAt": 1792578006275
+    },
+    "inline:the-administrator-s-chosen-live-transcription-mo-299a097d": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "PUT",
+            "status": 200,
+            "urlContains": "/api/dev/stack/saas-phone"
+          },
+          {
+            "kind": "element",
+            "query": {
+              "name": "Live transcription model",
+              "role": "combobox",
+              "value": "saaras:v3-realtime"
+            },
+            "state": "present"
+          }
+        ]
+      },
+      "declaredAt": 1792591687013,
+      "id": "inline:the-administrator-s-chosen-live-transcription-mo-299a097d",
+      "state": "bound",
+      "statement": "The administrator's chosen live transcription model persists across save and reload.",
+      "status": "proposed",
+      "subject": "api",
+      "updatedAt": 1792591687102
     }
   },
   "subject": "api",

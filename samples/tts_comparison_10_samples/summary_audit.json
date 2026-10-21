@@ -1,0 +1,332 @@
+[
+  {
+    "id": "te_sample_01",
+    "lang": "telugu",
+    "title": "Project Overview & RERA Approvals",
+    "character_count": 1496,
+    "sarvam": {
+      "model": "bulbul:v4-flash",
+      "file": "d:\\voice agent\\samples\\tts_comparison_10_samples\\sarvam_bulbul_v4\\te_sample_01_sarvam_v4_flash.wav",
+      "speaker": "kavitha_te_conversation",
+      "duration_sec": 123.46,
+      "cost_inr": 2.992,
+      "cost_usd": 0.031518
+    },
+    "gemini": {
+      "model": "gemini-3.1-flash-tts-preview",
+      "file": "d:\\voice agent\\samples\\tts_comparison_10_samples\\gemini_31_flash\\te_sample_01_gemini_31_flash.wav",
+      "file_exists": true,
+      "estimated_audio_tokens": 2509,
+      "duration_sec": 100.36,
+      "cost_usd": 0.010036,
+      "cost_inr": 0.9527
+    },
+    "google_neural2": {
+      "rate": "$16.00 / 1M chars",
+      "cost_usd": 0.023936,
+      "cost_inr": 2.2722
+    },
+    "chirp_3_hd": {
+      "rate": "$30.00 / 1M chars",
+      "cost_usd": 0.04488,
+      "cost_inr": 4.2605
+    }
+  },
+  {
+    "id": "te_sample_02",
+    "lang": "telugu",
+    "title": "Amenities & Gated Community Lifestyle",
+    "character_count": 1336,
+    "sarvam": {
+      "model": "bulbul:v4-flash",
+      "file": "d:\\voice agent\\samples\\tts_comparison_10_samples\\sarvam_bulbul_v4\\te_sample_02_sarvam_v4_flash.wav",
+      "speaker": "kavitha_te_conversation",
+      "duration_sec": 112.16,
+      "cost_inr": 2.672,
+      "cost_usd": 0.028147
+    },
+    "gemini": {
+      "model": "gemini-3.1-flash-tts-preview",
+      "file": "rate_limited_daily_free_tier (10 reqs/day)",
+      "file_exists": false,
+      "estimated_audio_tokens": 2237,
+      "duration_sec": 89.51,
+      "cost_usd": 0.008948,
+      "cost_inr": 0.8494
+    },
+    "google_neural2": {
+      "rate": "$16.00 / 1M chars",
+      "cost_usd": 0.021376,
+      "cost_inr": 2.0292
+    },
+    "chirp_3_hd": {
+      "rate": "$30.00 / 1M chars",
+      "cost_usd": 0.04008,
+      "cost_inr": 3.8048
+    }
+  },
+  {
+    "id": "te_sample_03",
+    "lang": "telugu",
+    "title": "Home Loan Processing & Documentation",
+    "character_count": 1274,
+    "sarvam": {
+      "model": "bulbul:v4-flash",
+      "file": "d:\\voice agent\\samples\\tts_comparison_10_samples\\sarvam_bulbul_v4\\te_sample_03_sarvam_v4_flash.wav",
+      "speaker": "kavitha_te_conversation",
+      "duration_sec": 97.28,
+      "cost_inr": 2.548,
+      "cost_usd": 0.026841
+    },
+    "gemini": {
+      "model": "gemini-3.1-flash-tts-preview",
+      "file": "rate_limited_daily_free_tier (10 reqs/day)",
+      "file_exists": false,
+      "estimated_audio_tokens": 2134,
+      "duration_sec": 85.36,
+      "cost_usd": 0.008536,
+      "cost_inr": 0.8103
+    },
+    "google_neural2": {
+      "rate": "$16.00 / 1M chars",
+      "cost_usd": 0.020384,
+      "cost_inr": 1.9351
+    },
+    "chirp_3_hd": {
+      "rate": "$30.00 / 1M chars",
+      "cost_usd": 0.03822,
+      "cost_inr": 3.6282
+    }
+  },
+  {
+    "id": "te_sample_04",
+    "lang": "telugu",
+    "title": "Pricing Structure & Festive Offers",
+    "character_count": 1106,
+    "sarvam": {
+      "model": "bulbul:v4-flash",
+      "file": "d:\\voice agent\\samples\\tts_comparison_10_samples\\sarvam_bulbul_v4\\te_sample_04_sarvam_v4_flash.wav",
+      "speaker": "kavitha_te_conversation",
+      "duration_sec": 98.48,
+      "cost_inr": 2.212,
+      "cost_usd": 0.023301
+    },
+    "gemini": {
+      "model": "gemini-3.1-flash-tts-preview",
+      "file": "rate_limited_daily_free_tier (10 reqs/day)",
+      "file_exists": false,
+      "estimated_audio_tokens": 1852,
+      "duration_sec": 74.1,
+      "cost_usd": 0.007408,
+      "cost_inr": 0.7032
+    },
+    "google_neural2": {
+      "rate": "$16.00 / 1M chars",
+      "cost_usd": 0.017696,
+      "cost_inr": 1.6799
+    },
+    "chirp_3_hd": {
+      "rate": "$30.00 / 1M chars",
+      "cost_usd": 0.03318,
+      "cost_inr": 3.1498
+    }
+  },
+  {
+    "id": "te_sample_05",
+    "lang": "telugu",
+    "title": "Site Visit Booking & VIP Guidance",
+    "character_count": 1145,
+    "sarvam": {
+      "model": "bulbul:v4-flash",
+      "file": "d:\\voice agent\\samples\\tts_comparison_10_samples\\sarvam_bulbul_v4\\te_sample_05_sarvam_v4_flash.wav",
+      "speaker": "kavitha_te_conversation",
+      "duration_sec": 91.46,
+      "cost_inr": 2.29,
+      "cost_usd": 0.024123
+    },
+    "gemini": {
+      "model": "gemini-3.1-flash-tts-preview",
+      "file": "rate_limited_daily_free_tier (10 reqs/day)",
+      "file_exists": false,
+      "estimated_audio_tokens": 1918,
+      "duration_sec": 76.72,
+      "cost_usd": 0.007672,
+      "cost_inr": 0.7283
+    },
+    "google_neural2": {
+      "rate": "$16.00 / 1M chars",
+      "cost_usd": 0.01832,
+      "cost_inr": 1.7391
+    },
+    "chirp_3_hd": {
+      "rate": "$30.00 / 1M chars",
+      "cost_usd": 0.03435,
+      "cost_inr": 3.2608
+    }
+  },
+  {
+    "id": "hi_sample_01",
+    "lang": "hindi",
+    "title": "Project Introduction & Prime Locations",
+    "character_count": 1190,
+    "sarvam": {
+      "model": "bulbul:v4-flash",
+      "file": "d:\\voice agent\\samples\\tts_comparison_10_samples\\sarvam_bulbul_v4\\hi_sample_01_sarvam_v4_flash.wav",
+      "speaker": "ritu_hi_conversation",
+      "duration_sec": 93.18,
+      "cost_inr": 2.38,
+      "cost_usd": 0.025071
+    },
+    "gemini": {
+      "model": "gemini-3.1-flash-tts-preview",
+      "file": "rate_limited_daily_free_tier (10 reqs/day)",
+      "file_exists": false,
+      "estimated_audio_tokens": 1993,
+      "duration_sec": 79.73,
+      "cost_usd": 0.007972,
+      "cost_inr": 0.7568
+    },
+    "google_neural2": {
+      "rate": "$16.00 / 1M chars",
+      "cost_usd": 0.01904,
+      "cost_inr": 1.8075
+    },
+    "chirp_3_hd": {
+      "rate": "$30.00 / 1M chars",
+      "cost_usd": 0.0357,
+      "cost_inr": 3.389
+    }
+  },
+  {
+    "id": "hi_sample_02",
+    "lang": "hindi",
+    "title": "World-Class Amenities & Security",
+    "character_count": 1118,
+    "sarvam": {
+      "model": "bulbul:v4-flash",
+      "file": "d:\\voice agent\\samples\\tts_comparison_10_samples\\sarvam_bulbul_v4\\hi_sample_02_sarvam_v4_flash.wav",
+      "speaker": "ritu_hi_conversation",
+      "duration_sec": 89.5,
+      "cost_inr": 2.236,
+      "cost_usd": 0.023554
+    },
+    "gemini": {
+      "model": "gemini-3.1-flash-tts-preview",
+      "file": "rate_limited_daily_free_tier (10 reqs/day)",
+      "file_exists": false,
+      "estimated_audio_tokens": 1872,
+      "duration_sec": 74.91,
+      "cost_usd": 0.007488,
+      "cost_inr": 0.7108
+    },
+    "google_neural2": {
+      "rate": "$16.00 / 1M chars",
+      "cost_usd": 0.017888,
+      "cost_inr": 1.6981
+    },
+    "chirp_3_hd": {
+      "rate": "$30.00 / 1M chars",
+      "cost_usd": 0.03354,
+      "cost_inr": 3.184
+    }
+  },
+  {
+    "id": "hi_sample_03",
+    "lang": "hindi",
+    "title": "Bank Financing & Fast Disbursal",
+    "character_count": 1142,
+    "sarvam": {
+      "model": "bulbul:v4-flash",
+      "file": "d:\\voice agent\\samples\\tts_comparison_10_samples\\sarvam_bulbul_v4\\hi_sample_03_sarvam_v4_flash.wav",
+      "speaker": "ritu_hi_conversation",
+      "duration_sec": 87.74,
+      "cost_inr": 2.284,
+      "cost_usd": 0.02406
+    },
+    "gemini": {
+      "model": "gemini-3.1-flash-tts-preview",
+      "file": "rate_limited_daily_free_tier (10 reqs/day)",
+      "file_exists": false,
+      "estimated_audio_tokens": 1912,
+      "duration_sec": 76.51,
+      "cost_usd": 0.007648,
+      "cost_inr": 0.726
+    },
+    "google_neural2": {
+      "rate": "$16.00 / 1M chars",
+      "cost_usd": 0.018272,
+      "cost_inr": 1.7346
+    },
+    "chirp_3_hd": {
+      "rate": "$30.00 / 1M chars",
+      "cost_usd": 0.03426,
+      "cost_inr": 3.2523
+    }
+  },
+  {
+    "id": "hi_sample_04",
+    "lang": "hindi",
+    "title": "Transparent Pricing & Festive Offers",
+    "character_count": 1115,
+    "sarvam": {
+      "model": "bulbul:v4-flash",
+      "file": "d:\\voice agent\\samples\\tts_comparison_10_samples\\sarvam_bulbul_v4\\hi_sample_04_sarvam_v4_flash.wav",
+      "speaker": "ritu_hi_conversation",
+      "duration_sec": 86.64,
+      "cost_inr": 2.23,
+      "cost_usd": 0.023491
+    },
+    "gemini": {
+      "model": "gemini-3.1-flash-tts-preview",
+      "file": "rate_limited_daily_free_tier (10 reqs/day)",
+      "file_exists": false,
+      "estimated_audio_tokens": 1867,
+      "duration_sec": 74.7,
+      "cost_usd": 0.007468,
+      "cost_inr": 0.7089
+    },
+    "google_neural2": {
+      "rate": "$16.00 / 1M chars",
+      "cost_usd": 0.01784,
+      "cost_inr": 1.6936
+    },
+    "chirp_3_hd": {
+      "rate": "$30.00 / 1M chars",
+      "cost_usd": 0.03345,
+      "cost_inr": 3.1754
+    }
+  },
+  {
+    "id": "hi_sample_05",
+    "lang": "hindi",
+    "title": "VIP Site Visit Invitation & Booking",
+    "character_count": 1066,
+    "sarvam": {
+      "model": "bulbul:v4-flash",
+      "file": "d:\\voice agent\\samples\\tts_comparison_10_samples\\sarvam_bulbul_v4\\hi_sample_05_sarvam_v4_flash.wav",
+      "speaker": "ritu_hi_conversation",
+      "duration_sec": 80.88,
+      "cost_inr": 2.132,
+      "cost_usd": 0.022459
+    },
+    "gemini": {
+      "model": "gemini-3.1-flash-tts-preview",
+      "file": "rate_limited_daily_free_tier (10 reqs/day)",
+      "file_exists": false,
+      "estimated_audio_tokens": 1785,
+      "duration_sec": 71.42,
+      "cost_usd": 0.00714,
+      "cost_inr": 0.6778
+    },
+    "google_neural2": {
+      "rate": "$16.00 / 1M chars",
+      "cost_usd": 0.017056,
+      "cost_inr": 1.6191
+    },
+    "chirp_3_hd": {
+      "rate": "$30.00 / 1M chars",
+      "cost_usd": 0.03198,
+      "cost_inr": 3.0359
+    }
+  }
+]

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import re
-from typing import Literal, Optional
+from typing import Any, Literal, Optional
 
 import csv
 import io
@@ -312,6 +312,11 @@ def _enrich_call_list_item(item: dict) -> dict:
     if not is_in_progress and cid in _ENRICH_CALL_CACHE:
         cached = dict(_ENRICH_CALL_CACHE[cid])
         cached.update({k: v for k, v in item.items() if v is not None})
+        # Carrier recordings arrive after finalization. Cached call summaries
+        # must not hide a recording that became available in the meantime.
+        source = audio_archive.recording_source(cid)
+        cached.update(has_recording=source != "none", recording_source=source,
+                      has_telnyx_recording=source == "telnyx")
         return cached
 
     out = dict(item)
@@ -405,7 +410,9 @@ async def _assert_call_scoped(call_id: str, scope: tuple[str, bool]) -> dict:
 @router.get("/api/call/{call_id}/transcript")
 async def get_transcript(call_id: str, scope: tuple[str, bool] = Depends(resolve_calls_scope)):
     await _assert_call_scoped(call_id, scope)
-    return {"call_id": call_id, "lines": call_ledger.read_lines(call_id)}
+    from server.services.saas.call_redaction import tenant_live_transcription
+    return {"call_id": call_id, "lines": call_ledger.read_lines(call_id),
+            "transcription": tenant_live_transcription(call_ledger.read_meta(call_id) or {})}
 
 
 @router.get("/api/call/{call_id}/trace")
@@ -417,6 +424,10 @@ async def get_trace(call_id: str, scope: tuple[str, bool] = Depends(resolve_call
 @router.get("/api/call/{call_id}/audio-status")
 async def get_audio_status(call_id: str, scope: tuple[str, bool] = Depends(resolve_calls_scope)):
     await _assert_call_scoped(call_id, scope)
+    meta = call_ledger.read_meta(call_id)
+    if meta.get("vobiz_call_uuid") and meta.get("ended_at"):
+        from server.services.vobiz_recordings import schedule_recording_retrieval
+        schedule_recording_retrieval(call_id)
     await asyncio.to_thread(audio_archive.ensure_telnyx_review, call_id)
     path = audio_archive.file_for(call_id, "mix_clear")
     source = audio_archive.recording_source(call_id)
@@ -470,7 +481,7 @@ async def get_audio(
         ".wav": "audio/wav",
         ".mp3": "audio/mpeg",
     }.get(suffix, "application/octet-stream")
-    source = "telnyx" if path.name.startswith("telnyx") else "local"
+    source = "vobiz" if path.name.startswith("vobiz_recording") else "telnyx" if path.name.startswith("telnyx") else "local"
     headers: dict[str, str] = {
         "Accept-Ranges": "bytes",
         "Cache-Control": "no-store",

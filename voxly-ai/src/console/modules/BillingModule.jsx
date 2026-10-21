@@ -128,6 +128,7 @@ export function BillingModule() {
   const [serverWallet, setServerWallet] = useState(null);
   const [invoices, setInvoices] = useState([]);
   const [transactions, setTransactions] = useState([]);
+  const [lastSession, setLastSession] = useState(null);
   const [razorpayEnabled, setRazorpayEnabled] = useState(false);
   const [razorpayCurrency, setRazorpayCurrency] = useState('USD');
   const [payBusy, setPayBusy] = useState(false);
@@ -146,17 +147,19 @@ export function BillingModule() {
 
   const refreshBilling = useCallback(async () => {
     try {
-      const [w, inv, cfg, tx] = await Promise.all([
+      const [w, inv, cfg, tx, lastSess] = await Promise.all([
         api.billing.getWallet(),
         api.billing.listInvoices(),
         api.billing.razorpayConfig(),
         api.billing.listTransactions(40),
+        api.billing.getLastSession().catch(() => null),
       ]);
       setServerWallet(w);
       setInvoices(inv || []);
       setRazorpayEnabled(!!cfg?.enabled);
       setRazorpayCurrency(cfg?.currency || 'USD');
       setTransactions(tx || []);
+      setLastSession(lastSess || null);
     } catch {
       /* demo wallet fallback */
     } finally {
@@ -276,7 +279,18 @@ export function BillingModule() {
                 {Number(wallet?.remainingMinutes || 0).toLocaleString()} min
                 </span>
                 <span className="text-sm font-mono text-[#524E5E]">
-                  (${Number(serverWallet?.balanceUsd ?? wallet.usdEquivalent ?? 0).toFixed(2)} USD)
+                  {Number(serverWallet?.balanceInr ?? wallet?.balanceInr ?? 0) > 0 ? (
+                    <>
+                      <strong className="font-semibold text-[#0F0E17]">
+                        ₹{Number(serverWallet?.balanceInr ?? wallet?.balanceInr ?? 0).toFixed(2)}
+                      </strong>{' '}
+                      <span className="text-xs text-[#8C879A]">
+                        (${Number(serverWallet?.balanceUsd ?? wallet.usdEquivalent ?? 0).toFixed(2)} USD)
+                      </span>
+                    </>
+                  ) : (
+                    `($${Number(serverWallet?.balanceUsd ?? wallet.usdEquivalent ?? 0).toFixed(2)} USD)`
+                  )}
                 </span>
               </div>
             )}
@@ -284,10 +298,12 @@ export function BillingModule() {
             <p className="text-xs text-[#524E5E]">
               Phone calls billed at{' '}
               <strong className="text-[#0F0E17] font-semibold">
-                ${Number(serverWallet?.rateUsdPerMin ?? wallet.rateUsdPerMin ?? 0.12).toFixed(3)}/min
+                ₹{Number(serverWallet?.rateInrPerMin ?? wallet.rateInrPerMin ?? 5.00).toFixed(2)}/min ($
+                {Number(serverWallet?.rateUsdPerMin ?? wallet.rateUsdPerMin ?? 0.053).toFixed(3)}/min)
               </strong>
-              . Web tests billed at $
-              {Number(serverWallet?.webRateUsdPerMin ?? wallet.webRateUsdPerMin ?? 0.09).toFixed(3)}/min.
+              . Web tests billed at ₹
+              {Number(serverWallet?.webRateInrPerMin ?? wallet.webRateInrPerMin ?? 4.50).toFixed(2)}/min ($
+              {Number(serverWallet?.webRateUsdPerMin ?? wallet.webRateUsdPerMin ?? 0.048).toFixed(3)}/min).
               Your usage this workspace: $
               {Number(serverWallet?.myUsageUsd ?? wallet.myUsageUsd ?? 0).toFixed(2)}.
               Unanswered carrier legs are not billed.
@@ -429,25 +445,83 @@ export function BillingModule() {
           </p>
 
           <div className="space-y-2 text-xs font-mono">
-            <div className="p-2.5 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB] flex justify-between">
-              <span className="text-[#524E5E]">Phone call (per minute)</span>
+            <div className="p-2.5 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB] flex justify-between items-center">
+              <span className="text-[#524E5E]">Phone call (PSTN voice)</span>
               <span className="text-[#0F0E17] font-semibold">
-                ${Number(serverWallet?.rateUsdPerMin ?? 0).toFixed(3)}
+                ₹{Number(serverWallet?.rateInrPerMin ?? 5.00).toFixed(2)}/min
+                <span className="text-[10px] text-[#8C879A] ml-1 font-normal">
+                  (${Number(serverWallet?.rateUsdPerMin ?? 0.053).toFixed(3)})
+                </span>
               </span>
             </div>
-            <div className="p-2.5 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB] flex justify-between">
-              <span className="text-[#524E5E]">Browser test call (per minute)</span>
+            <div className="p-2.5 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB] flex justify-between items-center">
+              <span className="text-[#524E5E]">Browser test call</span>
               <span className="text-[#0F0E17] font-semibold">
-                ${Number(serverWallet?.webRateUsdPerMin ?? 0).toFixed(3)}
+                ₹{Number(serverWallet?.webRateInrPerMin ?? 4.50).toFixed(2)}/min
+                <span className="text-[10px] text-[#8C879A] ml-1 font-normal">
+                  (${Number(serverWallet?.webRateUsdPerMin ?? 0.048).toFixed(3)})
+                </span>
               </span>
             </div>
-            <div className="p-2.5 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB] flex justify-between">
-              <span className="text-[#524E5E]">Phone number rental (per month)</span>
+            <div className="p-2.5 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB] flex justify-between items-center">
+              <span className="text-[#524E5E]">Phone number rental</span>
               <span className="text-[#0F0E17] font-semibold">
-                ${Number(serverWallet?.didMonthlyUsd ?? 0).toFixed(2)}
+                ₹{Number(serverWallet?.didMonthlyInr ?? 564.00).toFixed(2)}/mo
+                <span className="text-[10px] text-[#8C879A] ml-1 font-normal">
+                  (${Number(serverWallet?.didMonthlyUsd ?? 6.00).toFixed(2)})
+                </span>
               </span>
             </div>
           </div>
+
+          {lastSession?.has_call && (
+            <div className="pt-3 border-t border-[#E4E2EB] space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-[#0F0E17] flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  Last Call Session ({lastSession.duration_formatted})
+                </span>
+                <span className="font-mono font-bold text-[#0F0E17]">
+                  ₹{Number(lastSession.tenant_wallet_deduction?.amount_inr || 0).toFixed(2)} billed
+                </span>
+              </div>
+              <div className="p-2.5 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB] space-y-1.5 text-[11px] font-mono text-[#524E5E]">
+                <div className="flex justify-between">
+                  <span>Gemini Live AI Voice:</span>
+                  <span className="text-[#0F0E17] font-semibold">
+                    ₹{Number(lastSession.supplier_costs?.breakdown?.gemini_live_voice?.cost_inr || 0).toFixed(2)}
+                    <span className="text-[10px] text-[#8C879A] ml-1">
+                      ({Number(lastSession.supplier_costs?.breakdown?.gemini_live_voice?.input_tokens || 0).toLocaleString()} in tok)
+                    </span>
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Direct Voice Trunk:</span>
+                  <span className="text-[#0F0E17] font-semibold">
+                    ₹{Number(lastSession.supplier_costs?.breakdown?.telephony_carrier?.cost_inr || 0).toFixed(2)}
+                    <span className="text-[10px] text-[#8C879A] ml-1">
+                      ({lastSession.supplier_costs?.breakdown?.telephony_carrier?.billable_seconds}s CDR)
+                    </span>
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Live Transcription:</span>
+                  <span className="text-[#0F0E17] font-semibold">
+                    ₹{Number(lastSession.supplier_costs?.breakdown?.transcription?.cost_inr || 0).toFixed(2)}
+                  </span>
+                </div>
+                <div className="pt-1 border-t border-[#E4E2EB] flex justify-between font-bold text-[#0F0E17]">
+                  <span>Total Supplier Cost:</span>
+                  <span>
+                    ₹{Number(lastSession.supplier_costs?.total_cost_inr || 0).toFixed(2)}
+                    <span className="text-[10px] font-normal text-[#8C879A] ml-1">
+                      (~₹{Number(lastSession.supplier_costs?.cost_inr_per_min || 0).toFixed(2)}/min)
+                    </span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
         </SolidCard>
       </div>
 

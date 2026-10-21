@@ -9,13 +9,13 @@ import {
   Play,
   Radio,
   Wallet,
+  Zap,
 } from 'lucide-react';
 import { useWorkspace } from '../../context/WorkspaceContext';
 import { TactileButton } from '../../ui/TactileButton';
 import { SolidCard } from '../../ui/SolidCard';
 import { LazyVoxlyScene } from '../../../three/LazyVoxlyScene';
 import { createWebAgentSession } from '../../../services/webAgentClient';
-import { api } from '../../../services/api';
 import { showToast } from '../../ui/ToastHost';
 
 function formatElapsed(ms) {
@@ -50,11 +50,11 @@ export function AgentTestCallPanel({ agent, language }) {
   const [elapsedMs, setElapsedMs] = useState(0);
   const [audioAmplitude, setAudioAmplitude] = useState(0.06);
   const [statusBusy, setStatusBusy] = useState(false);
-  const [providerInfo, setProviderInfo] = useState(null);
   const sessionRef = useRef(null);
   const endRef = useRef(null);
   const startedAtRef = useRef(null);
   const speakingUntilRef = useRef(0);
+  const dialRef = useRef(false);
 
   const isLive = sessionState === 'CONNECTED' || sessionState === 'CONNECTING';
   const balanceUsd = Number(wallet?.balanceUsd) || 0;
@@ -71,16 +71,6 @@ export function AgentTestCallPanel({ agent, language }) {
       (n) => (agent?.id && n.assignedAgentId === agent.id) || (agent?.numberId && n.id === agent.numberId)
     );
     if (fromList) return fromList;
-    const directNum = agent?.assignedNumber || agent?.phoneNumber;
-    if (directNum) {
-      return {
-        id: agent?.numberId || 'assigned-line',
-        e164: directNum,
-        number: directNum,
-        assignedAgentId: agent?.id,
-        outboundEnabled: true,
-      };
-    }
     return null;
   }, [phoneNumbers, agent]);
 
@@ -88,12 +78,12 @@ export function AgentTestCallPanel({ agent, language }) {
   const availableOutboundNumbers = useMemo(() => {
     // 1. Gather all tenant numbers that are not released or failed
     const valid = phoneNumbers.filter(
-      (n) => !['released', 'failed'].includes(n.status) && (n.e164 || n.number)
+      (n) => ['active', 'provisioned'].includes(n.status || 'active') && n.outboundEnabled !== false && (n.e164 || n.number)
     );
 
     // 2. Ensure assignedLine is included even if phoneNumbers list hasn't finished syncing
     const list = [...valid];
-    if (assignedLine) {
+    if (assignedLine && valid.includes(assignedLine)) {
       const assignedVal = assignedLine.e164 || assignedLine.number;
       if (!list.some((n) => (n.e164 || n.number) === assignedVal)) {
         list.unshift(assignedLine);
@@ -117,27 +107,13 @@ export function AgentTestCallPanel({ agent, language }) {
 
   // Default to the agent's dedicated assigned line first, then workspace outboundFromE164, then first available
   const defaultFromLine = useMemo(() => {
-    if (assignedLine) return assignedLine.e164 || assignedLine.number || '';
-    if (outboundFromE164) return outboundFromE164;
+    if (assignedLine && availableOutboundNumbers.includes(assignedLine)) return assignedLine.e164 || assignedLine.number || '';
+    if (availableOutboundNumbers.some((n) => (n.e164 || n.number) === outboundFromE164)) return outboundFromE164;
     return availableOutboundNumbers[0]?.e164 || availableOutboundNumbers[0]?.number || '';
   }, [assignedLine, outboundFromE164, availableOutboundNumbers]);
 
   const [selectedFromLine, setSelectedFromLine] = useState('');
-  const activeFromLine = selectedFromLine || defaultFromLine;
-
-  const displayTrunkLabel = useMemo(() => {
-    const raw = providerInfo?.activeLabel || providerInfo?.activeProvider || '';
-    if (!raw) return 'Enterprise Voice Network';
-    const low = raw.toLowerCase();
-    if (low.includes('vobiz') || low.includes('telnyx')) {
-      return 'Enterprise Voice Network';
-    }
-    return raw;
-  }, [providerInfo]);
-
-  useEffect(() => {
-    api.telephony?.getProvider?.().then(setProviderInfo).catch(() => {});
-  }, []);
+  const activeFromLine = availableOutboundNumbers.some((n) => (n.e164 || n.number) === selectedFromLine) ? selectedFromLine : defaultFromLine;
 
   useEffect(() => () => {
     sessionRef.current?.stop();
@@ -295,8 +271,12 @@ export function AgentTestCallPanel({ agent, language }) {
   };
 
   const dialPhone = async () => {
-    if (!agent?.id) return;
+    if (!agent?.id || dialRef.current) return;
     if (!requireLive() || !requireWallet()) return;
+    if (!activeFromLine) {
+      showToast('Enable outgoing calls on a phone line in Phone lines before calling.', 'error');
+      return;
+    }
     const rawDest = toE164.trim();
     if (!rawDest) {
       showToast('Enter a phone number with country code (e.g. +91 98765 43210).', 'error');
@@ -304,6 +284,10 @@ export function AgentTestCallPanel({ agent, language }) {
     }
     // Clean spaces, hyphens, and parentheses
     let cleanDest = rawDest.replace(/[\s()-]/g, '');
+    if (!/^(?:\+|00)?\d+$/.test(cleanDest)) {
+      showToast('Use digits and a country code, such as +91.', 'error');
+      return;
+    }
     if (cleanDest.startsWith('00')) cleanDest = '+' + cleanDest.slice(2);
     if (!cleanDest.startsWith('+')) {
       const digits = cleanDest.replace(/\D/g, '');
@@ -313,10 +297,11 @@ export function AgentTestCallPanel({ agent, language }) {
         cleanDest = `+${digits}`;
       }
     }
-    if (cleanDest.length < 8) {
+    if (!/^\+[1-9]\d{7,14}$/.test(cleanDest)) {
       showToast('Please enter a valid phone number with country code (e.g. +91 98765 43210).', 'error');
       return;
     }
+    dialRef.current = true;
     setDialBusy(true);
     try {
       await placeOutboundCall({
@@ -334,6 +319,7 @@ export function AgentTestCallPanel({ agent, language }) {
       if (/wallet|balance|funds|402/i.test(msg)) openAddFunds?.(msg);
     } finally {
       setDialBusy(false);
+      dialRef.current = false;
     }
   };
 
@@ -362,8 +348,8 @@ export function AgentTestCallPanel({ agent, language }) {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="inline-flex p-1 rounded-xl bg-[#F0EEF6] border border-[#E4E2EB]">
           {[
-            { id: 'browser', label: 'Browser mic' },
-            { id: 'phone', label: 'Live number' },
+            { id: 'browser', label: 'In browser' },
+            { id: 'phone', label: 'Phone call' },
           ].map((m) => (
             <button
               key={m.id}
@@ -390,14 +376,25 @@ export function AgentTestCallPanel({ agent, language }) {
           }`}
         >
           {isActive ? <Play className="w-3 h-3" /> : <Pause className="w-3 h-3" />}
-          {isActive ? 'Live' : 'Paused'}
+          {isActive ? 'Agent active' : 'Agent paused'}
         </button>
       </div>
 
       <div className="flex items-center justify-between text-[11px] text-[#524E5E] px-0.5">
         <span className="flex items-center gap-1">
-          <Wallet className="w-3.5 h-3.5" />
-          Wallet ${displayUsd.toFixed(2)} · ~{Number(wallet?.remainingMinutes || 0)} min
+          <Wallet className="w-3.5 h-3.5 text-[#524E5E]" />
+          <span>
+            Wallet{' '}
+            {Number(wallet?.balanceInr || 0) > 0 ? (
+              <>
+                <strong className="text-[#0F0E17] font-semibold font-mono">₹{Number(wallet.balanceInr).toFixed(2)}</strong>
+                <span className="text-[#8C879A] text-[10px] ml-1 font-mono">(${displayUsd.toFixed(2)})</span>
+              </>
+            ) : (
+              <strong className="text-[#0F0E17] font-semibold font-mono">${displayUsd.toFixed(2)}</strong>
+            )}{' '}
+            · ~{Number(wallet?.remainingMinutes || 0)} min
+          </span>
         </span>
         {walletEmpty && (
           <button
@@ -520,15 +517,21 @@ export function AgentTestCallPanel({ agent, language }) {
         </SolidCard>
       ) : (
         <SolidCard className="space-y-3.5" data-testid="test-call-live-number">
-          <div className="flex items-center justify-between text-xs pb-2 border-b border-[#E4E2EB]">
-            <span className="text-[#524E5E] font-medium">Voice Network</span>
-            <span className="inline-flex items-center gap-1.5 font-semibold text-[#10B981] bg-[#ECFDF5] px-2.5 py-0.5 rounded-full text-[11px]">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" />
-              {displayTrunkLabel}
+          <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] text-xs">
+            <div className="flex items-center gap-1.5 text-[#524E5E]">
+              <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+              <span className="font-medium">Phone call rate</span>
+            </div>
+            <span className="font-mono font-semibold text-[#0F0E17]">
+              ₹{Number(wallet?.rateInrPerMin ?? 5.00).toFixed(2)}/min
+              <span className="text-[10px] font-normal text-[#8C879A] ml-1">
+                (${Number(wallet?.rateUsdPerMin ?? 0.053).toFixed(3)}/min)
+              </span>
             </span>
           </div>
+
           <p className="text-xs text-[#524E5E] leading-relaxed">
-            Dials a real phone number to test this agent on a mobile or landline. The agent uses its published prompt and speech voice. Call minutes are billed from your wallet.
+            Your phone will ring. Answer to speak with this agent using its published script.
           </p>
 
           <div>
@@ -540,6 +543,7 @@ export function AgentTestCallPanel({ agent, language }) {
             </div>
             <input
               type="tel"
+              aria-label="Phone number to call"
               value={toE164}
               onChange={(e) => setToE164(e.target.value)}
               placeholder="+91 98765 43210"
@@ -553,11 +557,12 @@ export function AgentTestCallPanel({ agent, language }) {
 
           <div>
             <label className="block text-xs font-bold text-[#0F0E17] mb-1">
-              Caller ID Line (From)
+              Call from
             </label>
             {availableOutboundNumbers.length > 0 ? (
               <>
                 <select
+                  aria-label="Call from"
                   value={activeFromLine}
                   onChange={(e) => setSelectedFromLine(e.target.value)}
                   data-testid="test-call-phone-from-select"
@@ -585,10 +590,10 @@ export function AgentTestCallPanel({ agent, language }) {
                 <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3 text-xs text-amber-900 space-y-1">
                   <div className="flex items-center gap-1.5 font-semibold text-amber-900">
                     <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
-                    <span>No dedicated phone line in workspace</span>
+                    <span>No phone line is ready for outgoing calls</span>
                   </div>
                   <p className="text-[11px] text-amber-800 leading-normal">
-                    Outbound calls require an active phone number as Caller ID. You can test your agent immediately using the <strong>Browser mic</strong> tab above with zero setup, or buy a dedicated phone line in <strong>Phone lines</strong>.
+                    Enable outgoing calls on an active line in <strong>Phone lines</strong>, or test with your microphone in the <strong>In browser</strong> tab.
                   </p>
                 </div>
                 <input
@@ -622,9 +627,9 @@ export function AgentTestCallPanel({ agent, language }) {
             onClick={dialPhone}
             data-testid="test-call-start-phone"
             className="w-full justify-center min-h-[44px]"
-            disabled={!isActive}
+            disabled={!isActive || !activeFromLine || statusBusy}
           >
-            Call live number
+            {dialBusy ? 'Preparing your agent…' : 'Call phone'}
           </TactileButton>
         </SolidCard>
       )}

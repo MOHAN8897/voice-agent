@@ -171,6 +171,68 @@
       },
       "updatedAt": 1792523784158
     },
+    "inline:operators-can-open-call-history-and-choose-a-sta-f4acfc37": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "calls-status-filter"
+        }
+      },
+      "declaredAt": 1792578207321,
+      "id": "inline:operators-can-open-call-history-and-choose-a-sta-f4acfc37",
+      "provenBy": {
+        "at": 1792578207518,
+        "grade": "presence",
+        "runId": "drive-lease-da1ed5cc-6f7e-4d55-b30b-8911c12d5073",
+        "verdictId": "reticle_act_and_wait:1792578207518"
+      },
+      "state": "proved",
+      "statement": "Operators can open call history and choose a status from a compact dropdown.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/Sidebar.jsx"
+        ]
+      },
+      "updatedAt": 1792578207579
+    },
+    "inline:selecting-a-call-status-filters-call-history-thr-20932975": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "GET",
+            "status": 200,
+            "urlContains": "status=missed"
+          },
+          {
+            "absent": true,
+            "kind": "console",
+            "level": "error"
+          }
+        ]
+      },
+      "declaredAt": 1792578207691,
+      "id": "inline:selecting-a-call-status-filters-call-history-thr-20932975",
+      "provenBy": {
+        "at": 1792578208839,
+        "grade": "net",
+        "runId": "drive-lease-da1ed5cc-6f7e-4d55-b30b-8911c12d5073",
+        "verdictId": "reticle_act_and_wait:1792578208839"
+      },
+      "state": "proved",
+      "statement": "Selecting a call status filters call history through the API without displaying misleading call-count badges.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/modules/CallsModule.jsx"
+        ]
+      },
+      "updatedAt": 1792578208894
+    },
     "inline:tenant-settings-exposes-phone-service-kyc-with-p-a3a16e03": {
       "binding": {
         "kind": "element",

@@ -259,6 +259,8 @@ class AudioArchive:
         _write_pcm16_stereo_wav(dest, stereo.tobytes(), rate)
 
     def recording_source(self, call_id: str) -> str:
+        if any(self._nonempty(call_dir(call_id) / f"vobiz_recording.{ext}") for ext in ("wav", "mp3")):
+            return "vobiz"
         if self._nonempty(self.telnyx_wav_path(call_id)) or self._nonempty(self.telnyx_mp3_path(call_id)):
             return "telnyx"
         if self._nonempty(self.mix_path(call_id)) or self._nonempty(self.mix_clear_path(call_id)):
@@ -506,6 +508,8 @@ class AudioArchive:
             path = self.agent_path(call_id)
         elif kind in ("mix", "mix_clear"):
             for candidate in (
+                call_dir(call_id) / "vobiz_recording.wav",
+                call_dir(call_id) / "vobiz_recording.mp3",
                 self.telnyx_review_path(call_id),
                 self.telnyx_wav_path(call_id),
                 self.telnyx_mp3_path(call_id),

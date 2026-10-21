@@ -134,11 +134,11 @@ def _vad_config(
 
 OPENING_ALREADY_DELIVERED_NOTE = (
     "Silent control note. Do not read this aloud. "
-    "The opening greeting was already spoken to the caller. "
-    "Ignore any earlier request to speak that opening line. "
-    "Wait for the caller, then answer their actual words "
-    "(who is calling, company, purpose). Never repeat the opening. "
-    "Do not hang up unless they clearly end the conversation."
+    "The prepared opening has been played once to the caller on this same session. "
+    "Its preparation request is finished. Wait for the caller, then continue the next unanswered script step. "
+    "Do not restart the greeting for hello, yes, silence or another turn. "
+    "Reintroduce agent name, company and purpose briefly only if the caller asks who is calling "
+    "or asks to repeat your identity. Do not replay the full opening. Follow the configured call-end policy."
 )
 
 
@@ -265,6 +265,8 @@ class GeminiLiveVoiceAdapter:
         )
         connect_kwargs: dict[str, Any] = {
             "response_modalities": ["AUDIO"],
+            "input_audio_transcription": types.AudioTranscriptionConfig(),
+            "output_audio_transcription": types.AudioTranscriptionConfig(),
             "max_output_tokens": resolve_realtime_voice_max_output_tokens(max_output_tokens),
             "speech_config": speech,
             "system_instruction": types.Content(parts=[types.Part(text=instructions)]),
@@ -521,7 +523,8 @@ class GeminiLiveVoiceAdapter:
             note = (
                 "Silent control note. Do not read aloud. "
                 f"The opening greeting was already spoken to the caller exactly as: «{line}». "
-                "Do not repeat that opening verbatim. If they ask who is calling, answer with "
+                "Do not repeat that opening or restart it after hello, yes or silence. Only if they ask who is calling "
+                "or ask to repeat your identity, answer with "
                 "agent name, company, and purpose from AGENT IDENTITY in one short beat. "
                 "Then continue CONVERSATION FLOW from the next step they have not answered. "
                 "Follow OUTPUT LANGUAGE RULES in your instructions."

@@ -135,11 +135,27 @@ def cost_gemini_post_call_transcribe(*, duration_sec: float, model: str,
 
 
 OPENAI_MINI_TRANSCRIBE_USD_PER_MIN = 0.003
+OPENAI_TRANSCRIBE_USD_PER_MIN = 0.0045
+
+
+def cost_live_transcribe(*, duration_sec: float, model: str, fx_rate_inr: float) -> dict[str, Any]:
+    """External STT only; native Gemini transcript tokens stay in Live usage."""
+    minutes = max(0.0, float(duration_sec or 0)) / 60
+    if model == "gemini-native":
+        usd = inr = 0.0
+    elif model == "saaras:v3-realtime":
+        inr = minutes * SARVAM_STT_INR_PER_HOUR / 60
+        usd = inr / fx_rate_inr
+    else:
+        rate = OPENAI_TRANSCRIBE_USD_PER_MIN if model == "gpt-transcribe" else OPENAI_MINI_TRANSCRIBE_USD_PER_MIN
+        usd = minutes * rate
+        inr = usd * fx_rate_inr
+    return {"usd": usd, "inr": inr, "minutes": minutes, "model": model}
 
 
 def cost_openai_live_transcribe(*, duration_sec: float, model: str = "gpt-4o-mini-transcribe") -> dict[str, float]:
     minutes = max(0.0, float(duration_sec or 0)) / 60.0
-    rate = OPENAI_MINI_TRANSCRIBE_USD_PER_MIN
+    rate = OPENAI_TRANSCRIBE_USD_PER_MIN if model == "gpt-transcribe" else OPENAI_MINI_TRANSCRIBE_USD_PER_MIN
     return {"usd": minutes * rate, "minutes": minutes, "usd_per_min": rate, "model": model or "gpt-4o-mini-transcribe"}
 
 GEMINI_LIVE_USD_PER_M: dict[str, dict[str, float]] = {

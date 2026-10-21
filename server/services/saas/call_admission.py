@@ -8,9 +8,9 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import logging
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Any
 
 from fastapi import HTTPException
 from sqlalchemy import func, select, text
@@ -21,6 +21,8 @@ from server.db.models.entities import Call, Tenant
 from server.db.models.phase5_models import PstnDialRequest
 
 ACTIVE = ("reserved", "accepted", "answered", "uncertain")
+logger = logging.getLogger(__name__)
+NO_DIAL_CODES = frozenset({"voice_preparation_failed", "live_transcription_unavailable"})
 
 
 def _now():
@@ -60,6 +62,11 @@ async def reserve(tenant_id: uuid.UUID, request_id: str, *, provider: str, paylo
     key = request_key(tenant_id, request_id)
     fingerprint = hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()
     destination_hash = hashlib.sha256(f"{tenant_id}:{payload['to']}".encode()).hexdigest() if payload.get("to") else None
+    if destination_hash and provider == "vobiz":
+        try:
+            await asyncio.wait_for(reconcile_ended_destination(tenant_id, destination_hash), timeout=6)
+        except TimeoutError:
+            logger.info("Call admission reconciliation deferred; retaining unconfirmed reservations")
     async with factory() as db:
         tenant = await lock_tenant(db, tenant_id)
         previous = await db.get(PstnDialRequest, key)
@@ -70,6 +77,18 @@ async def reserve(tenant_id: uuid.UUID, request_id: str, *, provider: str, paylo
                 return key, dict(previous.response)
             return key, {"ok": False, "code": "dial_pending", "error": "The existing call request is pending or uncertain; review it before redialing."}
         settings = get_settings()
+        if destination_hash:
+            candidates = (await db.execute(select(PstnDialRequest).where(
+                PstnDialRequest.tenant_id == tenant_id, PstnDialRequest.destination_hash == destination_hash,
+                PstnDialRequest.status.in_(ACTIVE)).with_for_update())).scalars().all()
+            for row in candidates:
+                # These server-produced results are emitted before carrier dispatch.
+                # Repair older reservations that recorded preparation failure as uncertain.
+                if ((row.response or {}).get("code") in NO_DIAL_CODES and not row.carrier_id
+                        and row.media_claimed_at is None and row.answered_at is None):
+                    row.status = "failed"
+                    row.updated_at = _now()
+            await db.flush()
         if destination_hash and (await db.execute(select(PstnDialRequest.request_key).where(
             PstnDialRequest.tenant_id == tenant_id, PstnDialRequest.destination_hash == destination_hash,
             PstnDialRequest.status.in_(ACTIVE)).limit(1))).scalar_one_or_none():
@@ -96,7 +115,9 @@ def safe_response(result: dict) -> dict:
     # Carrier bridge responses contain internal stream URLs/tokens and history.
     response = {key: result[key] for key in ("ok", "call_id", "callId", "call_control_id", "code", "error", "status") if key in result}
     if not response.get("ok"):
-        response["error"] = "The call could not be confirmed. Check the call status before retrying."
+        response["error"] = ("The agent could not get ready. No call was placed. Contact your administrator or try again."
+                             if response.get("code") in NO_DIAL_CODES else
+                             "The call could not be confirmed. Check the call status before retrying.")
     return response
 
 
@@ -123,7 +144,7 @@ async def finish(key: str, tenant_id: uuid.UUID, *, result: dict | None = None, 
                 # Only a definitive client rejection proves the POST did not
                 # place a call. A malformed success or an HTTP timeout can
                 # still leave a live carrier call and must retain its slot.
-                definitive_rejection = 400 <= status < 500 and status != 408
+                definitive_rejection = (400 <= status < 500 and status != 408) or result.get("code") in NO_DIAL_CODES
                 ambiguous = not result.get("ok") and not definitive_rejection
                 row.status = "accepted" if result.get("ok") else "uncertain" if ambiguous else "failed"
         row.updated_at = _now()
@@ -143,9 +164,62 @@ async def execute(*, tenant_id: uuid.UUID, request_id: str, provider: str, paylo
         # Preserve ambiguity even when the caller disconnects during the request.
         try:
             await asyncio.shield(finish(key, tenant_id, uncertain=True))
-        except Exception:
-            pass
+        except Exception as exc:  # noqa: BLE001 -- retain ambiguity after cancellation
+            logger.warning("Call admission finalization unavailable: %s", type(exc).__name__)
         raise
+
+
+async def reconcile_ended_destination(tenant_id: uuid.UUID, destination_hash: str) -> int:
+    """Release missed callbacks only after an exact, tenant-owned terminal CDR.
+
+    An old timestamp, a closed media socket, a local ended flag, or a 404 is not
+    enough: any of those can coexist with an actual live carrier call.
+    """
+    factory = get_session_factory()
+    if factory is None:
+        return 0
+    async with factory() as db:
+        rows = (await db.execute(select(PstnDialRequest).where(
+            PstnDialRequest.tenant_id == tenant_id, PstnDialRequest.provider == "vobiz",
+            PstnDialRequest.destination_hash == destination_hash, PstnDialRequest.status.in_(ACTIVE),
+            PstnDialRequest.call_id.is_not(None)).limit(20))).scalars().all()
+    from server.call.call_ledger import call_ledger
+    from server.services.saas.voice_kyc_service import vobiz_client_for_call
+    from server.services.vobiz_client import vobiz_call_registry
+
+    released = 0
+    for row in rows:
+        meta = call_ledger.read_meta(str(row.call_id)) or {}
+        if str(meta.get("tenant_id") or "") != str(tenant_id) or not meta.get("ended_at"):
+            continue
+        call_uuid = str(meta.get("vobiz_call_uuid") or "")
+        if not call_uuid:
+            continue
+        try:
+            local = await asyncio.to_thread(vobiz_call_registry.get, call_uuid) or {}
+            client = await vobiz_client_for_call({**local, **meta})
+            payload = await asyncio.wait_for(client.get_call_cdr(call_uuid), timeout=4)
+            data = payload.get("data", payload)
+            if not isinstance(data, dict) or str(data.get("uuid") or "") != call_uuid:
+                continue
+            end = datetime.fromisoformat(str(data.get("end_time") or "").replace("Z", "+00:00"))
+            if end.tzinfo is None:
+                end = end.replace(tzinfo=timezone.utc)
+            if end > _now() + timedelta(minutes=1):
+                continue
+            if meta.get("started_at"):
+                started = datetime.fromisoformat(str(meta["started_at"]).replace("Z", "+00:00"))
+                if started.tzinfo is None:
+                    started = started.replace(tzinfo=timezone.utc)
+                if end < started - timedelta(minutes=1):
+                    continue
+            await provider_event(tenant_id=tenant_id, key=row.request_key, status="ended")
+            released += 1
+        except Exception as exc:  # noqa: BLE001 -- any provider/storage error retains the reservation
+            # Missing/ambiguous carrier evidence must continue to retain capacity.
+            logger.info("Call admission carrier reconciliation unavailable: %s", type(exc).__name__)
+            continue
+    return released
 
 
 async def provider_event(*, tenant_id: uuid.UUID, key: str | None = None, carrier_ids=(), status: str, call_id: str | None = None):

@@ -98,6 +98,30 @@ def status_url(call_id: str) -> str:
     return f"/api/call/{call_id}/finalization"
 
 
+def apply_recording_disclosure(compiled_text: str, agent: dict[str, Any], language: str) -> str:
+    """Use the same disclosure in the dial-time and connected-call snapshots."""
+    import re
+
+    from server.prompts.agent_voice_rules import build_recording_disclosure_instruction
+
+    compiled_text = re.sub(
+        r"\n*### RECORDING DISCLOSURE POLICY[^\n]*\n.*?(?=\n---|\n###|\Z)",
+        "",
+        compiled_text,
+        flags=re.DOTALL,
+    ).strip()
+    if agent.get("recording_disclosure_enabled"):
+        block = build_recording_disclosure_instruction(
+            disclosure_text=agent.get("recording_disclosure_text"), language=language,
+        )
+        safety_idx = compiled_text.find("\n--- SAFETY ---")
+        if safety_idx >= 0:
+            compiled_text = compiled_text[:safety_idx] + block + "\n" + compiled_text[safety_idx:]
+        else:
+            compiled_text += block
+    return compiled_text
+
+
 class CallLifecycleService:
     async def start(
         self,
@@ -115,6 +139,7 @@ class CallLifecycleService:
         caller_id: str | None = None,
         language: str | None = None,
         realtime_prewarm_key: str | None = None,
+        prepared_brain: tuple[str | None, str] | None = None,
         billed_user_id: str | None = None,
         is_test: bool | None = None,
         contact: dict[str, Any] | None = None,
@@ -169,15 +194,25 @@ class CallLifecycleService:
         )
         pipeline = pipeline_mode(settings=settings, stack_override=stack_override)
         from server.services.saas.campaign_script import campaign_call_script
-        campaign_script = await campaign_call_script(agent, contact)
-        if campaign_script:
+        # The outbound greeting already belongs to this exact script/session.
+        # Recompiling at answer can replace personalized text or recording rules
+        # and force Gemini to discard the socket that generated the greeting.
+        using_prepared_brain = bool(
+            prepared_brain and realtime_prewarm_key and channel == "pstn"
+            and direction == "outbound" and pipeline == "realtime_voice"
+        )
+        campaign_script = None if using_prepared_brain else await campaign_call_script(agent, contact)
+        if using_prepared_brain:
+            compiled_version, compiled_text = prepared_brain
+            brain_source = "dial_snapshot"
+        elif campaign_script:
             compiled_version, compiled_text = campaign_script
             brain_source = "campaign_snapshot"
         else:
             compiled_version, compiled_text, brain_source = await self._lock_compiled_brain(
                 agent["agent_id"], session_id=lookup_session,
             )
-        if compiled_text:
+        if compiled_text and not using_prepared_brain:
             from server.brain.script_entities import realign_compiled_brain_for_session
 
             compiled_text = realign_compiled_brain_for_session(
@@ -186,29 +221,7 @@ class CallLifecycleService:
                 direction=direction,
             )
 
-            # Dynamically sync recording disclosure setting with agent configuration
-            import re
-            from server.prompts.agent_voice_rules import build_recording_disclosure_instruction
-
-            compiled_text = re.sub(
-                r"\n*### RECORDING DISCLOSURE POLICY[^\n]*\n.*?(?=\n---|\n###|\Z)",
-                "",
-                compiled_text,
-                flags=re.DOTALL,
-            ).strip()
-
-            disc_enabled = bool(agent.get("recording_disclosure_enabled"))
-            if disc_enabled:
-                disc_text = agent.get("recording_disclosure_text")
-                disc_block = build_recording_disclosure_instruction(
-                    disclosure_text=disc_text,
-                    language=language,
-                )
-                safety_idx = compiled_text.find("\n--- SAFETY ---")
-                if safety_idx >= 0:
-                    compiled_text = compiled_text[:safety_idx] + disc_block + "\n" + compiled_text[safety_idx:]
-                else:
-                    compiled_text = compiled_text + disc_block
+            compiled_text = apply_recording_disclosure(compiled_text, agent, language)
 
             if voicemail_mode:
                 voicemail_block = (
@@ -238,7 +251,7 @@ class CallLifecycleService:
                     val_err,
                 )
 
-        if compiled_text:
+        if compiled_text and not using_prepared_brain:
             from server.services.saas.contact_import_service import render_agent_prompt_for_contact
             # Web tests have no imported lead. Resolve fallbacks and system tags
             # there too, so neither prewarm nor Gemini reads raw template braces.
@@ -642,6 +655,9 @@ class CallLifecycleService:
             from server.services.vobiz_billing import reconcile_vobiz_call
 
             await reconcile_vobiz_call(call_id)
+            if call_ledger.read_meta(call_id).get("vobiz_call_uuid"):
+                from server.services.vobiz_recordings import schedule_recording_retrieval
+                schedule_recording_retrieval(call_id)
             meta = call_ledger.read_meta(call_id)
             stored_row = await call_store.get(call_id)
             duration = _billable_duration_sec(call_id, _utcnow(), (stored_row or {}).get("duration_sec"))

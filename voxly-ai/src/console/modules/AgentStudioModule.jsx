@@ -1595,7 +1595,7 @@ export function AgentStudioModule({
             requestAnimationFrame(() => testCallButtonRef.current?.focus());
           }}
           title={`Test call — ${selectedAgent?.name || 'Agent'}`}
-          subtitle="Browser mic or live-number dial (wallet-billed). Empty wallet prompts a Razorpay top-up."
+          subtitle="Talk to your agent in this browser or receive a phone call. Usage is billed from your wallet."
           maxWidth="max-w-lg"
         >
           <div data-testid="agent-test-call-panel">

@@ -57,13 +57,16 @@ async def _parse_vobiz_payload(request: Request) -> dict[str, Any]:
     return payload
 
 
-def _build_vobiz_xml_response(stream_ws_url: str) -> Response:
+def _build_vobiz_xml_response(stream_ws_url: str, recording_callback_url: str = "") -> Response:
     """Generate compliant VoiceXML instructing Vobiz to connect bidirectional WebSocket."""
     import html
 
     escaped_url = html.escape(stream_ws_url.strip(), quote=True)
+    record = (f'<Record recordSession="true" fileFormat="wav" maxLength="14400" timeout="14400" playBeep="false" redirect="false" '
+              f'callbackUrl="{html.escape(recording_callback_url, quote=True)}" callbackMethod="POST" />') if recording_callback_url else ""
     xml_content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
+    {record}
     <Stream bidirectional="true" audioTrack="inbound" keepCallAlive="true" contentType="audio/x-l16;rate=16000">{escaped_url}</Stream>
     <Hangup />
 </Response>"""
@@ -483,7 +486,9 @@ async def vobiz_answer(request: Request):
         await provider_event(tenant_id=uuid.UUID(str(admission_tenant_id)), key=admission_key,
                              carrier_ids=(call_uuid, request_uuid), status="answered")
 
-    return _build_vobiz_xml_response(stream_ws_url)
+    from urllib.parse import urlencode
+    recording_callback = f"{public_api_base()}/api/vobiz/recording?{urlencode({'token': token, 'outbound_id': outbound_id})}"
+    return _build_vobiz_xml_response(stream_ws_url, recording_callback)
 
 
 @router.post("/api/vobiz/fallback")
@@ -565,7 +570,14 @@ async def vobiz_hangup(request: Request):
 
     # Callback Duration may include ringing. Only an explicit billsec field is
     # a billing clock; the CDR reconciler supplies authoritative talk time/cost.
-    local = await asyncio.to_thread(vobiz_call_registry.get, call_uuid) or await asyncio.to_thread(vobiz_call_registry.get, request_uuid) or {}
+    local = (await asyncio.to_thread(vobiz_call_registry.get, call_uuid)
+        or await asyncio.to_thread(vobiz_call_registry.get, request_uuid) or {})
+    # A final CallUUID can differ from the create-call RequestUUID. Preserve the
+    # signed outbound tracking link when tokens have already been consumed.
+    outbound_id = str(request.query_params.get("outbound_id") or "")
+    if not local.get("admission_key") and outbound_id:
+        tracked = await asyncio.to_thread(vobiz_call_registry.get, outbound_id) or {}
+        local = {**tracked, **local}
     token_meta = await asyncio.to_thread(vobiz_stream_tokens.peek, str(request.query_params.get("token") or "")) or {}
     admission_tenant_id = (local.get("admission_tenant_id") or token_meta.get("admission_tenant_id")
         or local.get("tenant_id") or await _vobiz_callback_tenant_id(payload))
@@ -588,6 +600,8 @@ async def vobiz_hangup(request: Request):
             meta["carrier_billable_duration_sec"] = int(billsec)
             meta["carrier_duration_source"] = "vobiz_callback"
         call_ledger.write_meta(internal_id, meta)
+        from server.services.vobiz_recordings import schedule_recording_retrieval
+        schedule_recording_retrieval(internal_id)
 
     return {"ok": True, "call_uuid": call_uuid}
 
@@ -599,17 +613,23 @@ async def vobiz_recording(request: Request):
     payload = await _parse_vobiz_payload(request)
     await _verify_vobiz_request(request, payload)
     call_uuid = str(payload.get("CallUUID") or payload.get("call_uuid") or "")
-    record_url = str(payload.get("RecordUrl") or payload.get("recording_url") or "")
+    record_url = str(payload.get("RecordUrl") or payload.get("RecordFile") or payload.get("recording_url") or "")
+    recording_id = str(payload.get("RecordingID") or payload.get("recording_id") or "")
     logger.info("[VOBIZ] recording callback call=%s has_recording=%s", call_uuid, bool(record_url))
 
-    if call_uuid and record_url:
-        await asyncio.to_thread(vobiz_call_registry.upsert, call_uuid, {"recording_url": record_url})
-        try:
+    if call_uuid:
+        local = await asyncio.to_thread(vobiz_call_registry.get, call_uuid) or {}
+        if not local and payload.get("outbound_id"):
+            local = await asyncio.to_thread(vobiz_call_registry.get, str(payload["outbound_id"])) or {}
+        await asyncio.to_thread(vobiz_call_registry.upsert, call_uuid, {"recording_url": record_url, "recording_id": recording_id})
+        internal_id = local.get("internal_call_id")
+        if internal_id:
             from server.call.call_ledger import call_ledger
-
-            call_ledger.update_meta(call_uuid, {"recording_url": record_url, "recording_source": "vobiz"})
-        except Exception:
-            pass
+            from server.services.vobiz_recordings import schedule_recording_retrieval
+            meta = call_ledger.read_meta(internal_id)
+            meta["vobiz_recording_id"] = recording_id
+            call_ledger.write_meta(internal_id, meta)
+            schedule_recording_retrieval(internal_id)
 
     return {"ok": True}
 

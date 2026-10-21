@@ -37,7 +37,17 @@ export type StackForm = {
   realtimeSilenceMs?: number;
   /** Mutually exclusive with post-call — only one transcription mode on the stack. */
   transcriptionMode?: "off" | "live" | "post_call";
+  transcriptionLiveModel?: LiveTranscriptionModel;
 };
+
+export type LiveTranscriptionModel = "gpt-4o-mini-transcribe" | "gpt-transcribe" | "saaras:v3-realtime" | "gemini-native";
+
+export function normalizeLiveTranscriptionModel(value: unknown): LiveTranscriptionModel {
+  switch (value) {
+    case "gpt-transcribe": case "saaras:v3-realtime": case "gemini-native": return value;
+    default: return "gpt-4o-mini-transcribe";
+  }
+}
 
 export type StackMode = "tier" | "custom";
 
@@ -77,6 +87,7 @@ export function defaultStackForm(row?: TierResolved): StackForm {
     realtimeSpeed: DEFAULT_REALTIME_SPEED,
     realtimeSilenceMs: DEFAULT_REALTIME_SILENCE_MS,
     transcriptionMode: "post_call",
+    transcriptionLiveModel: "gpt-4o-mini-transcribe",
   };
 }
 
@@ -203,7 +214,7 @@ export function buildPstnRealtimeStackOverride(form: StackForm): Record<string, 
     transcription: {
       live_enabled: form.transcriptionMode === "live",
       post_call_enabled: form.transcriptionMode === "post_call",
-      live_model: "gpt-4o-mini-transcribe",
+      live_model: form.transcriptionLiveModel || "gpt-4o-mini-transcribe",
       post_call_model: "gemini-3.5-transcribe",
     },
   };

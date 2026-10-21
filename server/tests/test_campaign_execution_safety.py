@@ -145,6 +145,65 @@ async def test_unconfirmed_carrier_response_keeps_capacity_and_never_redials(db,
         assert await admission.active_capacity(session, TID) == 1
 
 
+async def test_preparation_failure_does_not_strand_destination_or_capacity(db):
+    payload = {"to": "+12025550123"}
+    result = await admission.execute(tenant_id=TID, request_id="prepare-failed", provider="vobiz", payload=payload,
+        operation=AsyncMock(return_value={"ok": False, "code": "voice_preparation_failed"}))
+    assert "No call was placed" in result["error"]
+    async with db() as session:
+        row = await session.get(PstnDialRequest, admission.request_key(TID, "prepare-failed"))
+        assert row.status == "failed"
+        # Reproduce an older version that left exactly this result uncertain.
+        row.status = "uncertain"
+        await session.commit()
+    _, previous = await admission.reserve(TID, "new-attempt", provider="vobiz", payload=payload)
+    assert previous is None
+    async with db() as session:
+        assert (await session.get(PstnDialRequest, admission.request_key(TID, "prepare-failed"))).status == "failed"
+        assert await admission.active_capacity(session, TID) == 1
+
+
+@pytest.mark.parametrize("evidence", ["ended", "wrong_uuid", "missing_end", "provider_unavailable", "wrong_tenant", "still_live"])
+async def test_stale_destination_requires_exact_tenant_owned_terminal_carrier_evidence(db, monkeypatch, evidence):
+    from server.call.call_ledger import call_ledger
+    cid, carrier = uuid.uuid4(), str(uuid.uuid4())
+    payload = {"to": "+12025550123"}
+    key, _ = await admission.reserve(TID, "previous", provider="vobiz", payload=payload)
+    async with db() as session:
+        session.add(Call(call_id=cid, tenant_id=TID, agent_id=AID, combination_id="isolated", storage_path="isolated", channel="pstn"))
+        await session.flush()
+        row = await session.get(PstnDialRequest, key)
+        row.status, row.carrier_id, row.call_id = "answered", carrier, cid
+        await session.commit()
+    meta = {"tenant_id": str(OTHER if evidence == "wrong_tenant" else TID), "vobiz_call_uuid": carrier,
+            "ended_at": None if evidence == "still_live" else admission._now().isoformat()}
+    monkeypatch.setattr(call_ledger, "read_meta", lambda _: meta)
+    cdr = {"data": {"uuid": str(uuid.uuid4()) if evidence == "wrong_uuid" else carrier,
+                    "end_time": None if evidence == "missing_end" else admission._now().isoformat()}}
+    client = SimpleNamespace(get_call_cdr=AsyncMock(side_effect=TimeoutError() if evidence == "provider_unavailable" else None,
+                                                   return_value=cdr))
+    monkeypatch.setattr("server.services.vobiz_client.vobiz_call_registry.get", lambda _: {})
+    monkeypatch.setattr("server.services.saas.voice_kyc_service.vobiz_client_for_call", AsyncMock(return_value=client))
+    if evidence == "ended":
+        await admission.reserve(TID, "redial", provider="vobiz", payload=payload)
+        async with db() as session:
+            assert (await session.get(PstnDialRequest, key)).status == "ended"
+    else:
+        with pytest.raises(HTTPException) as error:
+            await admission.reserve(TID, "redial", provider="vobiz", payload=payload)
+        assert error.value.status_code == 409
+        async with db() as session:
+            assert (await session.get(PstnDialRequest, key)).status == "answered"
+
+
+async def test_exception_without_dispatch_evidence_retains_reservation(db):
+    with pytest.raises(HTTPException):
+        await admission.execute(tenant_id=TID, request_id="invalid", provider="vobiz", payload={},
+            operation=AsyncMock(side_effect=HTTPException(422, "invalid")))
+    async with db() as session:
+        assert (await session.get(PstnDialRequest, admission.request_key(TID, "invalid"))).status == "uncertain"
+
+
 async def seeded_campaign(db, count=3):
     cid, rid = uuid.uuid4(), uuid.uuid4()
     async with db() as session:

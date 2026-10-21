@@ -26,6 +26,8 @@ type Channel = {
   transcriptionInr: number;
   unconnectedPrewarmUsd: number;
   unconnectedPrewarmInr: number;
+  prewarmPerMinUsd?: number;
+  prewarmPerMinInr?: number;
   unconnectedPrewarmRecords: number;
   carrierCdrCalls: number;
   carrierEstimatedCalls: number;
@@ -106,8 +108,10 @@ export function CostInsightsPanel({ display }: {
               const apiPerMinInr = mins > 0 ? channel.apiInr / mins : 0;
               const txPerMinUsd = mins > 0 ? channel.transcriptionUsd / mins : 0;
               const txPerMinInr = mins > 0 ? channel.transcriptionInr / mins : 0;
-              const totalPerMinUsd = channel.averageUsdPerMin ?? (carrierPerMinUsd + apiPerMinUsd + txPerMinUsd);
-              const totalPerMinInr = channel.averageInrPerMin ?? (carrierPerMinInr + apiPerMinInr + txPerMinInr);
+              const prewarmPerMinUsd = channel.prewarmPerMinUsd ?? (mins > 0 ? (channel.unconnectedPrewarmUsd || 0) / mins : 0);
+              const prewarmPerMinInr = channel.prewarmPerMinInr ?? (mins > 0 ? (channel.unconnectedPrewarmInr || 0) / mins : 0);
+              const totalPerMinUsd = channel.averageUsdPerMin ?? (carrierPerMinUsd + apiPerMinUsd + txPerMinUsd + (channel.channel === "pstn" ? prewarmPerMinUsd : 0));
+              const totalPerMinInr = channel.averageInrPerMin ?? (carrierPerMinInr + apiPerMinInr + txPerMinInr + (channel.channel === "pstn" ? prewarmPerMinInr : 0));
 
               return <article key={channel.channel} data-testid={`cost-channel-${channel.channel}`} className="rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-inset p-4">
                 <div className="flex items-center justify-between">
@@ -130,10 +134,21 @@ export function CostInsightsPanel({ display }: {
                     Admin Per-Minute Supplier Cost (1 min normalized)
                   </h5>
                   <dl className="mt-2.5 grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-                    <dt className="text-text-muted font-medium">Carrier (Telephony & Recording) / min</dt>
-                    <dd className="text-right font-mono font-semibold text-text">
-                      {mins > 0 ? currency(carrierPerMinUsd, carrierPerMinInr) : "—"} <span className="text-[10px] font-normal text-text-muted">{mins > 0 ? "/ min" : ""}</span>
-                    </dd>
+                    {channel.channel === "pstn" ? (
+                      <>
+                        <dt className="text-text-muted font-medium">Carrier (Telephony & Recording) / min</dt>
+                        <dd className="text-right font-mono font-semibold text-text">
+                          {mins > 0 ? currency(carrierPerMinUsd, carrierPerMinInr) : "—"} <span className="text-[10px] font-normal text-text-muted">{mins > 0 ? "/ min" : ""}</span>
+                        </dd>
+                      </>
+                    ) : (
+                      <>
+                        <dt className="text-text-muted font-medium">Carrier (Telephony & Recording)</dt>
+                        <dd className="text-right font-mono text-text-muted italic">
+                          Not applicable (Web session)
+                        </dd>
+                      </>
+                    )}
 
                     <dt className="text-text-muted font-medium">Agent AI Core (Gemini Live) / min</dt>
                     <dd className="text-right font-mono font-semibold text-text">
@@ -144,6 +159,15 @@ export function CostInsightsPanel({ display }: {
                     <dd className="text-right font-mono font-semibold text-text">
                       {mins > 0 ? currency(txPerMinUsd, txPerMinInr) : "—"} <span className="text-[10px] font-normal text-text-muted">{mins > 0 ? "/ min" : ""}</span>
                     </dd>
+
+                    {channel.channel === "pstn" && ((channel.unconnectedPrewarmRecords ?? 0) > 0 || prewarmPerMinInr > 0) && (
+                      <>
+                        <dt className="text-text-muted font-medium">Unused Prewarm Overhead / min</dt>
+                        <dd className="text-right font-mono font-semibold text-text">
+                          {mins > 0 ? currency(prewarmPerMinUsd, prewarmPerMinInr) : "—"} <span className="text-[10px] font-normal text-text-muted">{mins > 0 ? "/ min" : ""}</span>
+                        </dd>
+                      </>
+                    )}
 
                     <dt className="pt-2 border-t border-surface-border-subtle font-bold text-text">
                       Total Admin Supplier Cost / min

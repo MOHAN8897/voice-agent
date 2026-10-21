@@ -7,7 +7,7 @@ import json
 import logging
 import time
 import uuid
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from fastapi import WebSocket, WebSocketDisconnect
 
@@ -30,6 +30,9 @@ from server.services.vobiz_client import (
     VOBIZ_DEFAULT_SAMPLE_RATE,
     vobiz_call_registry,
 )
+
+if TYPE_CHECKING:
+    from server.services.pstn_prewarm import PstnPrewarmBundle
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +75,8 @@ class VobizPstnBridge:
         self._owns_call = False
         self._cleanup_done = False
         self._prewarm_bundle = None
+        self._early_greeting_task: asyncio.Task | None = None
+        self._stream_started_at: float | None = None
         self._inbound_greeting: str | None = None
 
     async def run(self, *, agent_id: str | None, tier: str | None, token_meta: dict[str, Any] | None) -> None:
@@ -176,6 +181,7 @@ class VobizPstnBridge:
                 raise
 
     async def _on_start(self, ev: dict[str, Any]) -> None:
+        self._stream_started_at = time.monotonic()
         start = ev.get("start") or ev
         started_call = str(
             start.get("callId") or start.get("callUUID") or start.get("call_uuid")
@@ -235,6 +241,26 @@ class VobizPstnBridge:
             active_vobiz_bridges[self.ws_id] = self
             self._owns_call = True
 
+        # The socket token and distributed admission were already checked by
+        # vobiz_stream_ws. Send cached audio before post-answer DB/registry work.
+        prewarm = None
+        if self.agent_id and self._token_meta.get("direction") == "outbound":
+            prewarm = await self._claim_prepared_opening((outbound_id, request_uuid))
+            if prewarm:
+                from server.realtime.models import is_gemini_live_voice_model
+                from server.realtime.voice_manager import realtime_voice_manager
+
+                adapter = realtime_voice_manager.get(prewarm.realtime_key)
+                if (is_gemini_live_voice_model(prewarm.greeting_model or "")
+                        and self._wire_codec == "linear16" and self._wire_sample_rate == 16000
+                        and prewarm.greeting_wire_frames and adapter is not None
+                        and adapter.is_open() and getattr(adapter, "opening_generated_on_session", False)):
+                    self._playback = EstimatedPlaybackTracker(frame_ms=20.0)
+                    self._early_greeting_task = asyncio.create_task(
+                        self._send_prepared_opening(prewarm.greeting_wire_frames),
+                        name=f"vobiz-opening-{self.call_uuid}",
+                    )
+
         await asyncio.to_thread(vobiz_call_registry.upsert,
             self.call_uuid,
             {"stream_connected": True, "stream_failed": False, "stream_state": "connected"},
@@ -275,16 +301,14 @@ class VobizPstnBridge:
         pstn_opts = pstn_call_options(call_opts_dict)
 
         # 2. Prewarm adoption
-        from server.services.pstn_prewarm import take_prewarm_for_answer
-
-        prewarm = None
-        if self.call_uuid:
-            prewarm = await take_prewarm_for_answer(
-                "vobiz",
-                self.call_uuid,
-                fallback_external_id=request_uuid or outbound_id or local.get("outbound_id") or local.get("request_uuid"),
+        if prewarm is None:
+            prewarm = await self._claim_prepared_opening(
+                (outbound_id, request_uuid, local.get("outbound_id"), local.get("request_uuid")),
             )
-        self._prewarm_bundle = prewarm
+        if prewarm is None and self._token_meta.get("prewarm_required"):
+            # A lost/misrouted prepared session must not silently become a
+            # second cold Gemini request on an already billable answered call.
+            raise RuntimeError("Prepared phone session is unavailable")
 
         # 3. Start agent session in lifecycle service
         if self.agent_id:
@@ -304,6 +328,8 @@ class VobizPstnBridge:
                 stack_override=pstn_opts.get("stack_override"),
                 language=str(agent_lang) if agent_lang else None,
                 realtime_prewarm_key=prewarm.realtime_key if prewarm else None,
+                prepared_brain=(prewarm.compiled_brain_version, prewarm.compiled_brain_text)
+                if prewarm and prewarm.compiled_brain_text else None,
             )
             self.call_id = started["call_id"]
             self.session_id = started["session_id"]
@@ -328,7 +354,7 @@ class VobizPstnBridge:
             )
 
         # 4. Create playback tracker and voice loop
-        self._playback = EstimatedPlaybackTracker(frame_ms=20.0)
+        self._playback = self._playback or EstimatedPlaybackTracker(frame_ms=20.0)
         self._voice = create_pstn_voice_loop(
             stack_override=pstn_opts.get("stack_override"),
             session_id=self.session_id,
@@ -356,19 +382,53 @@ class VobizPstnBridge:
             bool(prewarm),
         )
 
+    async def _claim_prepared_opening(self, fallback_ids: tuple[str | None, ...]) -> PstnPrewarmBundle | None:
+        from server.services.pstn_prewarm import _destroy_realtime, take_prewarm_for_answer
+
+        bundle = await take_prewarm_for_answer(
+            "vobiz", self.call_uuid or "", fallback_external_ids=fallback_ids,
+        )
+        if bundle and bundle.agent_id != self.agent_id:
+            await _destroy_realtime(bundle.realtime_key)
+            raise RuntimeError("Prepared agent does not match the connected call")
+        self._prewarm_bundle = bundle
+        if bundle and self._token_meta.get("prewarm_required"):
+            from server.realtime.models import is_gemini_live_voice_model
+            from server.realtime.voice_manager import realtime_voice_manager
+
+            if is_gemini_live_voice_model(bundle.greeting_model or ""):
+                adapter = realtime_voice_manager.get(bundle.realtime_key)
+                if adapter is None or not adapter.is_open():
+                    raise RuntimeError("Prepared Gemini session is no longer connected")
+        return bundle
+
+    async def _send_prepared_opening(self, frames: list[bytes]) -> None:
+        for frame in frames:
+            if self._closed:
+                return
+            await self._send_agent_wire(frame)
+
     async def _start_voice_loop(self) -> None:
         if not self._voice:
             return
         try:
             prewarm = getattr(self, "_prewarm_bundle", None)
             inbound_greeting = getattr(self, "_inbound_greeting", None)
-            greeting_text = inbound_greeting or (prewarm.greeting_text if prewarm else None)
+            greeting_text = inbound_greeting or ((prewarm.greeting_transcript or prewarm.greeting_text) if prewarm else None)
             greeting_frames = None if inbound_greeting else (prewarm.greeting_wire_frames if prewarm else None)
-            await asyncio.wait_for(self._voice.start_call(
-                play_greeting=bool(self.call_id or self.agent_id),
-                greeting_wire_frames=greeting_frames,
-                greeting_text=greeting_text,
-            ), timeout=60.0)
+            from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+            greeting_options = {"play_greeting": bool(self.call_id or self.agent_id),
+                                "greeting_wire_frames": greeting_frames, "greeting_text": greeting_text}
+            if isinstance(self._voice, PstnRealtimeVoiceLoop):
+                greeting_options["immediate_greeting"] = True
+                if self._early_greeting_task is not None:
+                    await asyncio.wait_for(asyncio.shield(self._early_greeting_task), timeout=15.0)
+                    from server.realtime.voice_manager import realtime_voice_manager
+                    adopted = realtime_voice_manager.get(self.call_id)
+                    if adopted is None or not adopted.is_open() or not getattr(adopted, "opening_generated_on_session", False):
+                        raise RuntimeError("Prepared Gemini session was not adopted")
+                    greeting_options["greeting_already_sent"] = True
+            await asyncio.wait_for(self._voice.start_call(**greeting_options), timeout=60.0)
             if prewarm and self.call_id:
                 from server.services.pstn_prewarm import record_bundle_greeting_usage
 
@@ -471,7 +531,9 @@ class VobizPstnBridge:
 
             self._media_frames_out += len(frames)
             if first_out:
-                log_pstn("media.out.first", provider="vobiz", call_uuid=self.call_uuid, frames=len(frames))
+                log_pstn("media.out.first", provider="vobiz", call_uuid=self.call_uuid, frames=len(frames),
+                         stream_to_audio_ms=int((time.monotonic() - self._stream_started_at) * 1000)
+                         if self._stream_started_at is not None else None)
 
     async def _mark_turn_end(self) -> None:
         """Mark completion of an agent turn with checkpoint event."""
@@ -550,8 +612,16 @@ class VobizPstnBridge:
                     meta = {**local, **self._token_meta}
                     client = await vobiz_client_for_call(meta) if meta.get("vobiz_account_scope") == "tenant" or vobiz_enabled() else None
                     if target_uuid and client:
-                        await asyncio.wait_for(client.hangup_call(target_uuid), timeout=5.0)
+                        result = await asyncio.wait_for(client.hangup_call(target_uuid), timeout=5.0)
                         disconnected = True
+                        # A successful carrier disconnect must release the durable
+                        # admission even if its HTTP callback never reaches us.
+                        from server.services.saas.call_admission import provider_event
+                        tenant_id = self._token_meta.get("admission_tenant_id") or local.get("admission_tenant_id")
+                        if tenant_id and (not result.get("already_ended") or result.get("status") == 404):
+                            await asyncio.wait_for(provider_event(tenant_id=uuid.UUID(str(tenant_id)),
+                                key=self._token_meta.get("admission_key") or local.get("admission_key"),
+                                carrier_ids=(target_uuid, self.call_uuid), status="ended"), timeout=2)
                 except Exception as exc:
                     log_pstn("vobiz.hangup.api_failed", call_uuid=target_uuid, error=type(exc).__name__)
                 finally:
@@ -578,6 +648,14 @@ class VobizPstnBridge:
         if startup and startup is not asyncio.current_task() and not startup.done():
             startup.cancel()
             await asyncio.gather(startup, return_exceptions=True)
+        opening = self._early_greeting_task
+        if opening:
+            if not opening.done():
+                opening.cancel()
+            await asyncio.gather(opening, return_exceptions=True)
+        if self._prewarm_bundle:
+            from server.services.pstn_prewarm import _destroy_realtime
+            await _destroy_realtime(self._prewarm_bundle.realtime_key)
 
         if self._voice:
             try:

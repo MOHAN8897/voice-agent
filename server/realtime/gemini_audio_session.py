@@ -272,11 +272,14 @@ def _gemini_outbound_block(
     line = (opening_greeting or "").strip()
     parts = [
         "CALL DIRECTION (outbound)",
-        "- You placed this call. VAD is on — do not speak first while the line is silent.",
-        "- The platform plays your scripted opening as audio after the callee speaks (hello / yes).",
-        "- If that opening was already spoken, never repeat it verbatim; answer their actual question.",
-        "- If opening delivery has not been confirmed, use CANONICAL OPENING once, then wait for their reply.",
-        "- If they ask who is calling: one beat with agent name + company + purpose from AGENT IDENTITY.",
+        "- You placed this call. The platform prepares your opening on this Live session before dialing "
+        "and plays its cached audio once when the answered call's media stream is ready.",
+        "- Speak CANONICAL OPENING only when the platform explicitly requests its preparation. "
+        "Do not generate another opening while the cached audio is playing.",
+        "- After the opening-delivered note, wait for the caller and continue from their actual reply. "
+        "Hello, yes, silence or a new turn never restart the greeting or script.",
+        "- Introduce yourself again only if the caller asks who is calling or asks you to repeat your identity: "
+        "briefly give agent name + company + purpose from AGENT IDENTITY, without replaying the full opening.",
         "- After intro, follow CONVERSATION FLOW / OUTBOUND or INBOUND WORKFLOW in order; "
         "skip steps they already answered.",
         "- Turn discipline: 1–2 short sentences, then stop. At most one question per turn.",

@@ -16,6 +16,7 @@ import {
 import {
   buildPstnRealtimeStackOverride,
   defaultStackForm,
+  normalizeLiveTranscriptionModel,
   type StackForm,
 } from "@/lib/test-studio-stack";
 
@@ -132,6 +133,7 @@ export function saasPhoneStackFromOverride(override: Record<string, unknown> | n
     ),
     realtimeSpeed: normalizeRealtimeSpeed(rv.speed as number | string | undefined),
     realtimeSilenceMs: normalizeRealtimeSilenceMs(rv.silence_ms as number | string | undefined),
+    transcriptionLiveModel: normalizeLiveTranscriptionModel(tx.live_model),
     transcriptionMode: tx.live_enabled
       ? "live"
       : tx.post_call_enabled !== undefined

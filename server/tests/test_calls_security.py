@@ -55,7 +55,9 @@ async def test_call_endpoints_require_auth_and_tenant_scoping_in_saas_mode(monke
             "direction": "inbound",
         }
     )
-    await call_ledger.init(call_id, {"call_id": call_id, "tenant_id": tenant_a})
+    await call_ledger.init(call_id, {"call_id": call_id, "tenant_id": tenant_a,
+        "live_transcription": {"mode": "live", "status": "streaming", "model": "saaras:v3-realtime",
+                               "provider": "sarvam", "error_code": "private", "partial_text": "hello", "segments": 1}})
     await call_ledger.append_user_turn(call_id, "hello sensitive transcript")
 
     c = TestClient(app_mod.app)
@@ -96,6 +98,9 @@ async def test_call_endpoints_require_auth_and_tenant_scoping_in_saas_mode(monke
     assert r_a.status_code == 200, f"Expected 200 for owner, got {r_a.status_code}"
     assert "lines" in r_a.json()
     assert len(r_a.json()["lines"]) > 0
+    assert r_a.json()["transcription"]["status"] == "streaming"
+    assert r_a.json()["transcription"]["partial_text"] == "hello"
+    assert not {"model", "provider", "error_code"}.intersection(r_a.json()["transcription"])
 
 
 def test_call_id_path_traversal_blocked():

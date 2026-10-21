@@ -437,6 +437,37 @@
       "subject": "unsorted",
       "updatedAt": 1790835441404
     },
+    "inline:call-history-uses-one-status-dropdown-and-reques-09b1a6be": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "GET",
+            "status": 200,
+            "urlContains": "status=missed"
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "calls-status-filter"
+            }
+          },
+          {
+            "absent": true,
+            "kind": "console",
+            "level": "error"
+          }
+        ]
+      },
+      "declaredAt": 1792578032638,
+      "id": "inline:call-history-uses-one-status-dropdown-and-reques-09b1a6be",
+      "state": "bound",
+      "statement": "Call history uses one status dropdown and requests the selected status from the server without local call-count badges.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1792578032696
+    },
     "inline:changing-a-lead-s-pipeline-stage-from-the-agent-8213a879": {
       "binding": {
         "kind": "net",
@@ -1405,6 +1436,15 @@
         "route": "/console"
       },
       "updatedAt": 1790851233621
+    },
+    "primary-call-status-filter": {
+      "declaredAt": 1792578005996,
+      "id": "primary-call-status-filter",
+      "state": "declared",
+      "statement": "Call history uses a compact status dropdown without misleading call counts and requests the selected status from the server.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1792578006021
     },
     "signup-completes": {
       "declaredAt": 1791031620509,

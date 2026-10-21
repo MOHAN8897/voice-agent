@@ -83,6 +83,7 @@ async def synthesize_realtime_greeting_frames(
     language: str = "te-IN",
     timeout_sec: float = 12.0,
     control_id: str = "",
+    preserve_history: bool = False,
 ) -> tuple[list[bytes], str, dict[str, Any] | None]:
     """Generate opening audio on a live Realtime session; returns wire frames, transcript, usage."""
     spoken = prepare_spoken_reply(greeting_text or "").strip()
@@ -205,7 +206,7 @@ async def synthesize_realtime_greeting_frames(
         return [], "", greeting_usage
 
     deleter = getattr(adapter, "delete_synthetic_response_items", None)
-    if callable(deleter):
+    if callable(deleter) and not preserve_history:
         try:
             await deleter()
         except Exception as exc:
@@ -215,6 +216,11 @@ async def synthesize_realtime_greeting_frames(
     discard = getattr(adapter, "discard_queued", None)
     if callable(discard):
         discard()
+
+    if preserve_history:
+        # The same Live connection continues after this buffered opening plays.
+        adapter.opening_generated_on_session = True
+        adapter.opening_history_clean = False
 
     return frames, transcript, greeting_usage
 

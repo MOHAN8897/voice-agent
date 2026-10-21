@@ -1,13 +1,18 @@
 {
-  "request": "ok implement the recommended vobiz specified subaccount flow properly andalso check after implementing subaccount flow properly support the kyc flow of vobiz properly and after that check is our platform need didit account flow after implementing vobiz sub account flor for tenants",
+  "request": "the section in image is showing numbers whcih arre not updating please fixthat show avaible popup only not shownumbers",
   "statements": [
     {
-      "text": "ok implement the recommended vobiz specified subaccount flow properly andalso check after implementing subaccount flow properly support the kyc flow of vobiz properly and after that check is our platform need didit account flow after implementing vobiz sub account flor for tenants",
+      "text": "the section in image is showing numbers whcih arre not updating please fixthat show avaible popup only not shownumbers",
       "source": "user",
-      "kind": "coding-intent"
+      "kind": "acceptance-criterion"
+    },
+    {
+      "text": "Call history uses a compact status dropdown without misleading call counts and requests the selected status from the server.",
+      "source": "agent",
+      "kind": "technical-constraint"
     }
   ],
-  "at": 1792433252936,
+  "at": 1792578005994,
   "shared": true,
-  "answeredByRun": "drive-lease-a7c5705c-2e5b-423c-8f26-7d791b169930"
+  "answeredByRun": "drive-lease-da1ed5cc-6f7e-4d55-b30b-8911c12d5073"
 }

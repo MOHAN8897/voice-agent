@@ -1,8 +1,9 @@
 """Hangup judgment helpers — when the model should close the call.
 
-The Realtime model owns the decision via the end_call tool. These helpers:
+The Realtime model normally decides via the end_call tool. These helpers:
 1) give the model a clear decision tree in prompts, and
-2) repair missed tool calls when speech + user evidence already close the call.
+2) repair missed tool calls, including explicit terminal agent farewells on
+   primary Gemini PSTN calls.
 """
 from __future__ import annotations
 
@@ -88,6 +89,48 @@ _INDIC_CLOSING = re.compile(
     r"நேரம்\s*ஒதுக்கியதற்கு\s*நன்றி|விடைபெறுகிறேன்|போய்\s*வருகிறேன்",
     re.I,
 )
+
+
+_TERMINAL_FAREWELL = re.compile(
+    r"(?<!\w)(?:"
+    r"good[ -]?bye|bye(?:[ -]bye| for now)?|good (?:day|night)|take care|have a good one|"
+    r"have a (?:very )?(?:nice|good|great|wonderful|lovely) (?:day|evening|night|weekend)|"
+    r"(?:talk|speak) to you (?:later|soon)|see you (?:later|soon)|"
+    r"alvida|అల్విదా|ఉంటానండి|మళ్లీ మాట్లాడుకుందాం|మళ్ళీ మాట్లాడుకుందాం|"
+    r"(?:మీకు )?శుభ\s*దినం|మీ రోజు శుభంగా ఉండాలి|"
+    r"अलविदा|आपका दिन शुभ हो|फिर मिलेंगे|"
+    r"விடைபெறுகிறேன்|போய்\s*வருகிறேன்|உங்கள் நாள் இனிதாக அமையட்டும்|"
+    r"நல்ல நாளாக அமையட்டும்|"
+    r"ವಿದಾಯ|ನಿಮ್ಮ ದಿನ ಶುಭವಾಗಲಿ|ಶುಭ ದಿನವಾಗಲಿ|ಮತ್ತೆ ಮಾತನಾಡೋಣ"
+    r")(?:[,!.।\s]*(?:sir|ma'am|madam|సార్|మేడమ్|అండి|जी|सर|मैडम|சார்|மேடம்|ಸರ್|ಮೇಡಂ|"
+    r"thank you|thanks|take care|bye|goodbye)){0,2}"
+    r"[.!।…\s]*$",
+    re.IGNORECASE,
+)
+_FAREWELL_MENTION = re.compile(
+    r"\b(?:say|saying|said|says|word|phrase|means|called|translate(?:d)?(?: as| to)?|"
+    r"(?:do not|don't|never|won't|will not|not)(?: say)?)\s*$", re.IGNORECASE,
+)
+
+
+def agent_spoke_terminal_farewell(spoken_text: str) -> bool:
+    """An explicit final goodbye, excluding thanks, questions and quoted examples."""
+    spoken = (spoken_text or "").strip()
+    if "?" in spoken or agent_still_collecting_lead(spoken):
+        return False
+    match = _TERMINAL_FAREWELL.search(spoken)
+    if match:
+        return not bool(_FAREWELL_MENTION.search(spoken[:match.start()]))
+    # Some language packs end with a greeting word (e.g. namaskar). Require
+    # their entire authored farewell, so an ordinary opening cannot end a call.
+    from server.prompts.agent_voice_rules import CALL_END_FAREWELLS
+
+    normalized = re.sub(r"\s+", " ", spoken).casefold().rstrip(" .!।…")
+    for farewell in CALL_END_FAREWELLS.values():
+        ending = re.sub(r"\s+", " ", farewell).casefold().rstrip(" .!।…")
+        if normalized.endswith(ending) and not _FAREWELL_MENTION.search(normalized[:-len(ending)]):
+            return True
+    return False
 
 
 def agent_spoke_closing(spoken_text: str) -> bool:

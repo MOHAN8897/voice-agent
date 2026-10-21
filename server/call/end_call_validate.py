@@ -6,10 +6,12 @@ import time
 from dataclasses import dataclass
 from typing import Any
 
-from server.call.call_end_policy import HANGUP_REASONS as POLICY_REASONS, allowed_reasons_for
+from server.call.call_end_policy import HANGUP_REASONS as POLICY_REASONS
+from server.call.call_end_policy import allowed_reasons_for
 from server.call.hangup_judge import (
     agent_spoke_closing,
     agent_spoke_disqualification_close,
+    agent_spoke_terminal_farewell,
     agent_still_collecting_lead,
     caller_wants_to_continue,
     default_farewell_for,
@@ -155,7 +157,9 @@ _CALLBACK_REQUEST = re.compile(
     r"\bfollow\s+up\b(?:\s+with\s+me)?(?:\s+(?:later|tomorrow|next|please))?"
     r"|\bcallback\b(?:\s+(?:later|tomorrow|please|me))?"
     r"|\b(?:repu|tarvata|malli)\s+(?:naaku\s+)?call\b|"
-    r"(?:రేపు|తర్వాత|మళ్ళీ|మళ్లీ).{0,16}(?:కాల్|call|contact)|"
+    r"(?:రేపు|తర్వాత|మళ్ళీ|మళ్లీ|సాయంత్రం|ఉదయం|మధ్యాహ్నం|రాత్రి).{0,24}(?:కాల్|call|contact)|"
+    r"(?:కాల్|call).{0,24}(?:సాయంత్రం|ఉదయం|మధ్యాహ్నం|రాత్రి)|"
+    r"\b(?:saayantram|sayantram|evening|tonight)\s+(?:call|phone)\b|"
     r"(?:कल|बाद में).{0,16}(?:कॉल|फोन|संपर्क)|"
     r"(?:நாளை|பிறகு|பின்னர்|அடுத்த\s*(?:வாரம்|மாதம்)|மாலையில்).{0,20}(?:கால்|அழைக்க|தொடர்பு)|"
     r"(?:கால்|அழைக்க|தொடர்பு).{0,20}(?:நாளை|பிறகு|பின்னர்|அடுத்த\s*(?:வாரம்|மாதம்))",
@@ -557,11 +561,17 @@ def validate_end_call(
     spoken_text: str = "",
     callback_close_phase: str | None = None,
     tool_sourced: bool = False,
+    agent_farewell_ends_call: bool = False,
 ) -> EndCallDecision:
     parsed = parse_end_call_payload(raw)
     user = user_text or ""
     spoken = spoken_text or ""
     lang = normalize_compile_language(language)
+    agent_concluded = bool(
+        agent_farewell_ends_call and parsed.get("should_end")
+        and parsed.get("reason") in {"goal_complete", "goodbye"}
+        and agent_spoke_terminal_farewell(spoken)
+    )
 
     # Don't-call / goodbye always wins over a wrong model reason (e.g. goal_complete).
     if _user_wants_hangup(user):
@@ -607,6 +617,7 @@ def validate_end_call(
         and not caller_firm_refusal(user)
         and not caller_confirmed_goal_complete(user)
         and not _user_wants_hangup(user)
+        and not agent_concluded
         and not (
             tool_sourced
             and parsed.get("reason") in {"goal_complete", "firm_refusal", "goodbye"}
@@ -660,9 +671,8 @@ def validate_end_call(
         return _reject("empty_user_turn")
     if user.strip() and looks_like_question(user) and reason != "abuse" and not _user_wants_hangup(user):
         skip_question = (
-            tool_sourced
-            and reason == "goal_complete"
-            and agent_spoke_disqualification_close(spoken)
+            agent_concluded
+            or (tool_sourced and reason == "goal_complete" and agent_spoke_disqualification_close(spoken))
         )
         if not skip_question and not (_OPT_OUT.search(user) or _CALLER_DONE.search(user)
                 or caller_explicit_end_request(user) or caller_requested_callback(user)
@@ -675,7 +685,7 @@ def validate_end_call(
         and not caller_firm_refusal(user)
     ):
         return _reject("open_question")
-    evidence_ok = (
+    evidence_ok = agent_concluded or (
         _trust_live_tool_evidence(
             reason,
             user,

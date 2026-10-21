@@ -159,9 +159,9 @@ test.describe('Create AI employee', () => {
 
     // Missed must be a real, selectable bucket — it is derived server-side now.
     for (const bucket of ['all', 'answered', 'missed', 'voicemail', 'outbound']) {
-      await expect(page.getByTestId(`calls-status-${bucket}`)).toBeVisible();
+      await expect(page.getByTestId('calls-status-filter').locator(`option[value="${bucket}"]`)).toHaveCount(1);
     }
-    await page.getByTestId('calls-status-missed').click();
-    await expect(page.getByTestId('calls-status-missed')).toBeVisible();
+    await page.getByTestId('calls-status-filter').selectOption('missed');
+    await expect(page.getByTestId('calls-status-filter')).toHaveValue('missed');
   });
 });

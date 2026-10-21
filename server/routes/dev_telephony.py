@@ -614,7 +614,7 @@ async def _outbound_vobiz(
     from server.config.urls import public_api_base
     from server.services.outbound_dial_guard import hangup_active_vobiz_to
     from server.services.pstn_debug import log_pstn, mark
-    from server.services.pstn_prewarm import schedule_prewarm
+    from server.services.pstn_prewarm import pstn_prewarm_registry
     from server.services.vobiz_client import (
         VobizApiError,
         VobizClient,
@@ -657,11 +657,20 @@ async def _outbound_vobiz(
     else:
         client = VobizClient()
 
+    from server.services.live_caller_transcription import validate_live_transcription
+    try:
+        validate_live_transcription(stack_override)
+    except ValueError:
+        return {"ok": False, "code": "live_transcription_unavailable", "status": 503,
+                "error": "Live transcription is not configured. Contact your administrator. No call was placed."}
+
     if session.kind != "app":
         await hangup_active_vobiz_to(body.to_e164, tenant_id=str(tenant_uuid) if tenant_uuid else None)
 
     base_api = public_api_base()
     tracking_id = f"vobiz-{uuid.uuid4()}"
+    from server.realtime.models import is_gemini_live_voice_model
+    live_llm = stack_override.get("llm") or {}
 
     token = await asyncio.to_thread(vobiz_stream_tokens.create,
         call_uuid=tracking_id,
@@ -679,21 +688,22 @@ async def _outbound_vobiz(
         contact=body.contact,
         admission_key=body.admission_key,
         admission_tenant_id=session.tenant_id,
+        prewarm_required=(str(live_llm.get("provider") or "").lower() == "gemini"
+                          or is_gemini_live_voice_model(str(live_llm.get("model") or ""))),
     )
 
-    schedule_prewarm(
-        "vobiz",
-        tracking_id,
-        _outbound_prewarm_meta(
-            body,
-            tier=tier or "medium",
-            language=language,
-            source_session_id=source_session_id,
-            inherit_config=inherit_config,
-            stack_override=stack_override,
-            billed_user_id=billed_user_id,
-        ),
-    )
+    try:
+        await pstn_prewarm_registry.prepare(
+            "vobiz", tracking_id,
+            {**_outbound_prewarm_meta(
+                body, tier=tier or "medium", language=language,
+                source_session_id=source_session_id, inherit_config=inherit_config,
+                stack_override=stack_override, billed_user_id=billed_user_id,
+            ), "tenant_id": session.tenant_id},
+        )
+    except Exception as exc:
+        log_pstn("vobiz.prewarm_failed", control=tracking_id, error_type=type(exc).__name__)
+        return {"ok": False, "error": "The agent could not get ready. No phone call was placed. Please try again.", "code": "voice_preparation_failed"}
 
     ans_url = f"{base_api}/api/vobiz/answer?token={token}&outbound_id={tracking_id}"
     hup_url = f"{base_api}/api/vobiz/hangup?token={token}&outbound_id={tracking_id}"
@@ -737,6 +747,8 @@ async def _outbound_vobiz(
         )
         carrier_uuid = str(result.get("request_uuid") or result.get("call_uuid") or result.get("id") or "")
         effective_id = carrier_uuid or tracking_id
+        if carrier_uuid:
+            await pstn_prewarm_registry.bind("vobiz", tracking_id, carrier_uuid)
 
         if carrier_uuid and carrier_uuid != tracking_id:
             await asyncio.to_thread(vobiz_call_registry.alias, carrier_uuid, tracking_id)
@@ -787,6 +799,7 @@ async def _outbound_vobiz(
         await _mirror_dev_telephony()
         return payload
     except VobizApiError as e:
+        await pstn_prewarm_registry.cancel("vobiz", tracking_id)
         detail = (e.body or str(e))[:400]
         return {"ok": False, "error": detail, "status": e.status, "vobiz_error": detail}
 

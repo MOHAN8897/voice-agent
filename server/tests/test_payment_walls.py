@@ -458,3 +458,126 @@ async def test_refund_is_idempotent(monkeypatch):
     )
     assert result["duplicate"] is True
     assert wallet.balance_inr_paise == 50000  # unchanged
+
+
+async def test_billing_last_session_no_calls(monkeypatch):
+    """When tenant has no calls, return has_call=False gracefully."""
+    from server.routes import app_billing
+    from server.services.saas.tenant_guard import SubscriberPrincipal
+
+    principal = SubscriberPrincipal(
+        user_id=uuid.uuid4(),
+        tenant_id=uuid.uuid4(),
+        role="owner",
+        email="owner@test.com",
+    )
+
+    class _EmptyResult:
+        def scalars(self):
+            class _Scalars:
+                def first(self):
+                    return None
+            return _Scalars()
+
+    class _Session:
+        async def __aenter__(self):
+            return self
+        async def __aexit__(self, *args):
+            pass
+        async def execute(self, *args, **kwargs):
+            return _EmptyResult()
+
+    monkeypatch.setattr("server.db.connection.get_session_factory", lambda: lambda: _Session())
+    monkeypatch.setattr(app_billing, "require_subscriber_permission", lambda *args: None)
+
+    res = await app_billing.billing_last_session(principal)
+    assert res["has_call"] is False
+    assert "No calls found" in res["message"]
+
+
+async def test_billing_last_session_with_pstn_call(monkeypatch):
+    """Authoritative breakdown of duration, wallet deduction, and supplier costs."""
+    from server.routes import app_billing
+    from server.services.saas.tenant_guard import SubscriberPrincipal
+    from datetime import datetime, timezone
+    from types import SimpleNamespace
+
+    tid = uuid.uuid4()
+    cid = str(uuid.uuid4())
+    principal = SubscriberPrincipal(
+        user_id=uuid.uuid4(),
+        tenant_id=tid,
+        role="owner",
+        email="owner@test.com",
+    )
+
+    fake_call = SimpleNamespace(
+        call_id=cid,
+        tenant_id=tid,
+        channel="pstn",
+        direction="outbound",
+        duration_sec=80,
+        applied_rate_inr_paise_per_min=500,
+        started_at=datetime(2026, 10, 21, 8, 47, 51, tzinfo=timezone.utc),
+        ended_at=datetime(2026, 10, 21, 8, 49, 11, tzinfo=timezone.utc),
+    )
+
+    fake_tx = SimpleNamespace(
+        amount_inr_paise=-667,
+    )
+
+    fake_meta = {
+        "carrier_billing": {"source": "vobiz_cdr", "billable_seconds": 80, "amount": 0.88},
+        "usage": {
+            "cost_inr": 6.6472,
+            "cost_usd": 0.07002,
+            "cost_inr_per_min": 4.98538,
+            "cost_usd_per_min": 0.05252,
+            "telephony_inr": 0.88,
+            "telephony_usd": 0.00927,
+            "telephony_inr_per_min": 0.66,
+            "model_cost_inr": 5.3808,
+            "model_cost_usd": 0.05668,
+            "model_cost_inr_per_min": 4.0356,
+            "input_tokens": 41589,
+            "output_tokens": 1044,
+            "input_audio_tokens": 6274,
+            "output_audio_tokens": 890,
+            "cached_tokens": 0,
+            "live_transcript_inr": 0.3512,
+            "live_transcript_usd": 0.0037,
+            "live_transcript_model": "gpt-4o-mini-transcribe",
+            "post_call_analysis_inr": 0.0352,
+            "post_call_analysis_usd": 0.00037,
+        },
+    }
+
+    call_executed = [False]
+
+    class _Session:
+        async def __aenter__(self):
+            return self
+        async def __aexit__(self, *args):
+            pass
+        async def execute(self, *args, **kwargs):
+            if not call_executed[0]:
+                call_executed[0] = True
+                return SimpleNamespace(scalars=lambda: SimpleNamespace(first=lambda: fake_call))
+            return SimpleNamespace(scalars=lambda: SimpleNamespace(first=lambda: fake_tx))
+
+    monkeypatch.setattr("server.db.connection.get_session_factory", lambda: lambda: _Session())
+    monkeypatch.setattr(app_billing, "require_subscriber_permission", lambda *args: None)
+    monkeypatch.setattr("server.call.call_ledger.call_ledger.read_meta", lambda _cid: fake_meta)
+
+    res = await app_billing.billing_last_session(principal)
+    assert res["has_call"] is True
+    assert res["call_id"] == cid
+    assert res["duration_sec"] == 80.0
+    assert res["duration_formatted"] == "1m 20s"
+    assert res["tenant_wallet_deduction"]["amount_inr"] == 6.67
+    assert res["tenant_wallet_deduction"]["applied_rate_inr_per_min"] == 5.0
+    assert res["supplier_costs"]["cost_inr_per_min"] == 4.98538
+    assert res["supplier_costs"]["breakdown"]["telephony_carrier"]["cost_inr"] == 0.88
+    assert res["supplier_costs"]["breakdown"]["telephony_carrier"]["source"] == "carrier_cdr"
+    assert res["supplier_costs"]["breakdown"]["gemini_live_voice"]["cost_inr"] == 5.3808
+    assert res["supplier_costs"]["breakdown"]["gemini_live_voice"]["input_tokens"] == 41589

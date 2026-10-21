@@ -321,12 +321,20 @@ async def take_prewarm_for_answer(
     external_id: str,
     *,
     fallback_external_id: str | None = None,
+    fallback_external_ids: tuple[str, ...] = (),
 ) -> PstnPrewarmBundle | None:
-    bundle = await pstn_prewarm_registry.take(provider, external_id)
-    if bundle is None and fallback_external_id:
-        bundle = await pstn_prewarm_registry.take(provider, fallback_external_id)
+    bundle = None
+    for candidate in dict.fromkeys((external_id, fallback_external_id, *fallback_external_ids)):
+        if candidate:
+            bundle = await pstn_prewarm_registry.take(provider, candidate)
+            if bundle is not None:
+                break
     if bundle is None:
         return None
+    if provider == "vobiz":
+        # Keep the immutable, contact-personalized script that produced this
+        # opening. Published edits apply to the next dial, not midway through it.
+        return bundle
     # Compare against the same effective brain source used during prewarm. A
     # Test Studio session version (session-vN) is not comparable to the
     # agent's published version (cb_vN); comparing their labels destroyed
@@ -458,7 +466,9 @@ async def _build_prewarm_bundle(
             direction="outbound",
         )
     if provider == "vobiz" and compiled:
+        from server.call.call_lifecycle_service import apply_recording_disclosure
         from server.services.saas.contact_import_service import render_agent_prompt_for_contact
+        compiled = apply_recording_disclosure(compiled, agent, language)
         compiled = render_agent_prompt_for_contact(compiled, dial_meta.get("contact") or {})
     wire = _PROVIDER_WIRE.get(provider, _PROVIDER_WIRE["telnyx"])
     sample_rate = int(wire["sample_rate"])
@@ -485,6 +495,17 @@ async def _build_prewarm_bundle(
         from server.realtime.voice_instructions import build_realtime_voice_instructions
         from server.realtime.voice_manager import realtime_voice_manager
 
+        tenant_tools = []
+        tenant_id = (dial_meta.get("tenant_id") or agent.get("tenant_id")) if provider == "vobiz" else None
+        if tenant_id:
+            from server.db.connection import get_session_factory
+            from server.services.tenant_tool_cache import get_active_app_names
+            from server.services.tool_schema_registry import get_tools_for_agent
+            factory = get_session_factory()
+            active_apps = await get_active_app_names(str(tenant_id), factory)
+            if active_apps:
+                tenant_tools = await get_tools_for_agent(active_apps, str(tenant_id), agent_id, factory, None)
+
         await realtime_voice_manager.create(
             rt_key,
             compiled_brain=compiled,
@@ -503,7 +524,12 @@ async def _build_prewarm_bundle(
                 _runtime_max_output_tokens(config_session)
             ),
             wait_ready=True,
+            extra_tools=tenant_tools,
         )
+        warm_adapter = realtime_voice_manager.get(rt_key)
+        if warm_adapter is not None:
+            warm_adapter.pstn_prewarm_brain = compiled
+            warm_adapter.pstn_prewarm_tools = tenant_tools
         log_pstn(
             "prewarm.realtime_voice.ready",
             control=external_id,
@@ -524,7 +550,13 @@ async def _build_prewarm_bundle(
             )
 
             try:
-                if is_gemini_live_voice_model(stack.llm.model):
+                if is_gemini_live_voice_model(stack.llm.model) and provider == "vobiz":
+                    frames, greeting_transcript, greeting_usage = await synthesize_realtime_greeting_frames(
+                        adapter, greeting_text=greeting, sample_rate=sample_rate,
+                        tts_output_codec=tts_codec, language=language,
+                        control_id=external_id, preserve_history=True,
+                    )
+                elif is_gemini_live_voice_model(stack.llm.model):
                     # Gemini cannot delete conversation items. Speak the opening
                     # on a throwaway Live session so the adopted PSTN session
                     # stays history-clean, matching OpenAI's item.delete flow.

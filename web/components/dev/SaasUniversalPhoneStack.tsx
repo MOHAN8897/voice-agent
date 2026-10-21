@@ -31,6 +31,7 @@ import {
 
 type Credentials = {
   openai?: { configured?: boolean };
+  sarvam?: { configured?: boolean };
   gemini?: { enabled?: boolean; configured?: boolean; ready?: boolean };
 };
 
@@ -125,6 +126,7 @@ export function SaasUniversalPhoneStack() {
   const [adjustments, setAdjustments] = useState<string[]>([]);
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [showJson, setShowJson] = useState(false);
   const [jsonEditor, setJsonEditor] = useState("");
 
@@ -135,6 +137,7 @@ export function SaasUniversalPhoneStack() {
   const patch = (patch: Partial<StackForm>) => setForm((prev) => ({ ...prev, ...patch }));
 
   const selectProvider = (provider: "openai" | "gemini") => {
+    if (provider === "openai") patch({ transcriptionLiveModel: "gpt-4o-mini-transcribe" });
     const row = speechModels.find((m) => m.provider === provider);
     if (row) {
       patch({
@@ -237,36 +240,44 @@ export function SaasUniversalPhoneStack() {
   }, [previewOverride]);
 
   async function save() {
+    if (saving) return;
+    setSaving(true);
     setStatus("Saving…");
-    let stackOverride: Record<string, unknown>;
-    if (showJson) {
-      try {
-        stackOverride = JSON.parse(jsonEditor);
-      } catch {
-        setStatus("Invalid JSON in advanced editor");
+    try {
+      let stackOverride: Record<string, unknown>;
+      if (showJson) {
+        try {
+          stackOverride = JSON.parse(jsonEditor);
+        } catch {
+          setStatus("Invalid JSON in advanced editor");
+          return;
+        }
+      } else {
+        stackOverride = saasPhoneStackToOverride(form);
+      }
+      const r = await portalFetch("dev", "/api/dev/stack/saas-phone", {
+        method: "PUT",
+        body: JSON.stringify({ stackOverride, language: form.language }),
+      });
+      if (!r.ok) {
+        setStatus(`Save failed (${r.status})`);
         return;
       }
-    } else {
-      stackOverride = saasPhoneStackToOverride(form);
+      const j = await r.json();
+      if (j.resolved) {
+        setResolved(j.resolved as Record<string, unknown>);
+        setForm(saasPhoneStackFromOverride(j.resolved as Record<string, unknown>));
+      }
+      setCredentials(j.credentials as Credentials);
+      setAlignment(j.alignment as Alignment);
+      setWarnings(Array.isArray(j.warnings) ? j.warnings : []);
+      setAdjustments(Array.isArray(j.adjustments) ? j.adjustments : []);
+      setStatus("Saved — applies to all subscriber PSTN and web practice calls.");
+    } catch {
+      setStatus("Could not confirm save. Refresh to check the saved configuration.");
+    } finally {
+      setSaving(false);
     }
-    const r = await portalFetch("dev", "/api/dev/stack/saas-phone", {
-      method: "PUT",
-      body: JSON.stringify({ stackOverride, language: form.language }),
-    });
-    if (!r.ok) {
-      setStatus(`Save failed (${r.status})`);
-      return;
-    }
-    const j = await r.json();
-    if (j.resolved) {
-      setResolved(j.resolved as Record<string, unknown>);
-      setForm(saasPhoneStackFromOverride(j.resolved as Record<string, unknown>));
-    }
-    setCredentials(j.credentials as Credentials);
-    setAlignment(j.alignment as Alignment);
-    setWarnings(Array.isArray(j.warnings) ? j.warnings : []);
-    setAdjustments(Array.isArray(j.adjustments) ? j.adjustments : []);
-    setStatus("Saved — applies to all subscriber PSTN and web practice calls.");
   }
 
   if (loading) {
@@ -641,8 +652,8 @@ export function SaasUniversalPhoneStack() {
             <div>
               <p className="text-sm font-semibold text-text">Transcription (one mode)</p>
               <p className="text-xs text-text-muted mt-1">
-                Pick live or post-call — not both. Usage per turn bills only the selected mode. Off = voice-only, no
-                transcript add-on line items.
+                Choose when caller transcripts are saved. Live uses the recognizer selected below;
+                post-call processes the recording after hangup.
               </p>
             </div>
             {(
@@ -650,17 +661,17 @@ export function SaasUniversalPhoneStack() {
                 {
                   id: "off" as const,
                   title: "Off",
-                  detail: "No transcript add-on; live model tokens only.",
+                  detail: "No saved caller transcript. Internal Gemini turn transcripts may still be billed within Live token usage.",
                 },
                 {
                   id: "live" as const,
-                  title: "Live — gpt-4o-mini-transcribe",
-                  detail: "~$0.003/min. OpenAI Realtime: session STT. Gemini PSTN: parallel caller STT on inbound audio.",
+                  title: "Live transcription",
+                  detail: "Caller speech is transcribed during the call. Select the recognizer below for Gemini phone calls.",
                 },
                 {
                   id: "post_call" as const,
                   title: "Post-call — Gemini 3.5 Transcribe",
-                  detail: "~$0.009/min after hangup (Telnyx recording). History modal when complete. Gemini PSTN only.",
+                  detail: "~$0.005/min after hangup. Gemini PSTN only; live transcripts are disabled in this mode.",
                 },
               ] as const
             ).map((opt) => (
@@ -678,6 +689,40 @@ export function SaasUniversalPhoneStack() {
                 </span>
               </label>
             ))}
+            {form.transcriptionMode === "live" && isGemini && (
+              <label className="block text-sm">
+                <span className="font-medium text-text">Live transcription model</span>
+                <select
+                  aria-label="Live transcription model"
+                  aria-describedby="live-transcription-help"
+                  data-testid="live-transcription-model"
+                  className="mt-2 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm"
+                  value={form.transcriptionLiveModel || "gpt-4o-mini-transcribe"}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === "gpt-transcribe" || value === "saaras:v3-realtime" || value === "gemini-native" || value === "gpt-4o-mini-transcribe") {
+                      patch({ transcriptionLiveModel: value });
+                    }
+                  }}
+                >
+                  <option value="gpt-4o-mini-transcribe">GPT-4o Mini Transcribe — ~$0.003/min</option>
+                  <option value="gpt-transcribe">GPT-Transcribe — ~$0.0045/min</option>
+                  <option value="saaras:v3-realtime">Sarvam Saaras Realtime — ~₹0.50/min</option>
+                  <option value="gemini-native">Gemini native — transcription text tokens billed with Live usage</option>
+                </select>
+                <span id="live-transcription-help" className="mt-2 block text-xs text-text-muted">
+                  Applies to new calls after saving. The selected service receives caller audio and writes live transcripts;
+                  Gemini continues the conversation on its existing session. API credentials must be configured.
+                  External transcription costs are additional to Gemini Live usage.
+                  Prices are provider estimates; tenant call rates are configured separately.
+                </span>
+                <span className="mt-1 block text-xs text-text-muted">
+                  {(form.transcriptionLiveModel === "saaras:v3-realtime" ? credentials?.sarvam?.configured
+                    : form.transcriptionLiveModel === "gemini-native" ? credentials?.gemini?.ready
+                    : credentials?.openai?.configured) ? "API credentials configured" : "API credentials missing — configure them before placing calls"}
+                </span>
+              </label>
+            )}
           </div>
 
           {(warnings.length > 0 || adjustments.length > 0) && (
@@ -732,7 +777,7 @@ export function SaasUniversalPhoneStack() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <Button type="button" onClick={save}>Save universal stack</Button>
+            <Button type="button" onClick={save} disabled={saving}>{saving ? "Saving…" : "Save universal stack"}</Button>
             <Button type="button" variant="secondary" onClick={load}>Reload</Button>
             {status && <span className="text-xs text-text-muted">{status}</span>}
           </div>

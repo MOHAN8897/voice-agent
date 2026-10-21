@@ -71,26 +71,30 @@ def _sync_live_transcript_usage(
     fx: float,
 ) -> tuple[float, float]:
     from server.services.transcription_policy import transcription_policy_from_meta
-    from server.services.usage_pricing import cost_openai_live_transcribe
+    from server.services.usage_pricing import cost_live_transcribe
 
     policy = transcription_policy_from_meta(meta)
+    if usage.get("transcription_billing") == "native_live_included":
+        usage["live_transcript_usd"] = 0.0
+        usage["live_transcript_inr"] = 0.0
+        return 0.0, 0.0
     billed_sec = float(usage.get("live_transcript_seconds") or 0)
-    if billed_sec <= 0 and policy.live_enabled:
+    if billed_sec <= 0 and policy.live_enabled and not usage.get("live_transcript_metered"):
         billed_sec = max(0.0, float(duration_sec or 0))
     if not policy.live_enabled or billed_sec <= 0:
         usage["live_transcript_usd"] = 0.0
         usage["live_transcript_inr"] = 0.0
         return 0.0, 0.0
     model = str(usage.get("live_transcript_model") or policy.live_model or "gpt-4o-mini-transcribe")
-    cost = cost_openai_live_transcribe(duration_sec=billed_sec, model=model)
+    cost = cost_live_transcribe(duration_sec=billed_sec, model=model, fx_rate_inr=fx)
     usd = float(cost.get("usd") or 0)
-    inr = usd * fx
+    inr = float(cost["inr"])
     usage["live_transcript_model"] = model
     usage["live_transcript_usd"] = usd
     usage["live_transcript_inr"] = inr
     usage["live_transcript_seconds"] = billed_sec
     if not usage.get("transcription_billing"):
-        usage["transcription_billing"] = "live_openai_transcribe"
+        usage["transcription_billing"] = f"live_{policy.live_provider}_transcribe"
     return usd, inr
 
 
@@ -286,6 +290,8 @@ class CallLedger:
             out["post_call_transcript"] = tx
         if meta.get("transcript_source"):
             out["transcript_source"] = meta.get("transcript_source")
+        if isinstance(meta.get("live_transcription"), dict):
+            out["live_transcription"] = meta["live_transcription"]
         return out
 
     def stamp_ended_usage(self, call_id: str, *, reason: str, duration_sec: float | int | None) -> None:

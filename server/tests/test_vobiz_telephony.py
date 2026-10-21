@@ -369,8 +369,12 @@ async def test_vobiz_answer_webhook_get_method(campaign_db, monkeypatch):
     # when the media socket ends, not an instruction to reject the answered call.
     import xml.etree.ElementTree as ET
     xml = ET.fromstring(xml_text)
-    assert [element.tag for element in xml] == ["Stream", "Hangup"]
-    assert xml[0].attrib["keepCallAlive"] == "true"
+    assert [element.tag for element in xml] == ["Record", "Stream", "Hangup"]
+    record = xml.find("Record")
+    assert record.attrib["recordSession"] == "true"
+    assert record.attrib["fileFormat"] == "wav"
+    assert "/api/vobiz/recording?token=" in record.attrib["callbackUrl"]
+    assert xml.find("Stream").attrib["keepCallAlive"] == "true"
 
 
 def test_vobiz_call_registry_alias_resolution():

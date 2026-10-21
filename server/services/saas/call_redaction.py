@@ -86,6 +86,13 @@ def _strip_finalization(finalization: dict[str, Any]) -> dict[str, Any]:
     return {k: v for k, v in finalization.items() if k in keep and v not in (None, "")}
 
 
+def tenant_live_transcription(meta: dict[str, Any]) -> dict[str, Any] | None:
+    tx = meta.get("live_transcription")
+    if not isinstance(tx, dict) or tx.get("status") not in {"connecting", "streaming", "complete", "failed"}:
+        return None
+    return {key: tx[key] for key in ("mode", "status", "updated_at", "segments", "partial_text") if key in tx}
+
+
 def redact_call_detail_for_tenant(payload: dict[str, Any]) -> dict[str, Any]:
     """Return the customer-facing subset of a call detail payload."""
     out: dict[str, Any] = {}
@@ -112,6 +119,9 @@ def redact_call_detail_for_tenant(payload: dict[str, Any]) -> dict[str, Any]:
         safe_transcript = {k: transcript.get(k) for k in ("status", "chars", "language") if transcript.get(k) is not None}
         if safe_transcript:
             out["post_call_transcript"] = safe_transcript
+    live = tenant_live_transcription(payload)
+    if live:
+        out["live_transcription"] = live
 
     # Tell the UI this is the redacted view so it can label the panel honestly
     # instead of rendering an empty field and looking broken.

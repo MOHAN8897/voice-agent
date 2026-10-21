@@ -73,6 +73,11 @@ function RecordingPlayer({ call }) {
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [ready, setReady] = useState(Boolean(call?.hasRecording));
+  const blobRef = React.useRef(null);
+  const fetchRef = React.useRef(null);
+  const activeIdRef = React.useRef(call?.id);
+  activeIdRef.current = call?.id;
   // Internal carrier reasons and pipeline names are translated, never shown raw.
   const reasonLabel = endReasonLabel(call?.endReason);
   const voiceLabel = pipelineLabel(call?.pipeline);
@@ -85,12 +90,54 @@ function RecordingPlayer({ call }) {
   }, [call?.id, call?.connected]);
 
   useEffect(() => {
+    activeIdRef.current = call?.id;
     setPlaying(false);
     setProgress(0);
+    setReady(Boolean(call?.hasRecording));
+    return () => {
+      activeIdRef.current = null;
+      if (blobRef.current) URL.revokeObjectURL(blobRef.current);
+      blobRef.current = null;
+      fetchRef.current = null;
+    };
   }, [call?.id]);
+
+  useEffect(() => {
+    if (call?.hasRecording) setReady(true);
+    if (!call?.id || !call.connected) return undefined;
+    let cancelled = false;
+    let timer;
+    const started = Date.now();
+    const check = async () => {
+      try {
+        const status = await api.request('GET', `/api/call/${encodeURIComponent(call.id)}/audio-status`);
+        if (!cancelled && status.ready === true) setReady(true);
+        if (status.source === 'vobiz') return;
+      } catch { /* Local audio may still be ready while the carrier finalizes. */ }
+      if (!cancelled && Date.now() - started < 120000) timer = setTimeout(check, 5000);
+    };
+    check();
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [call?.id, call?.connected, call?.hasRecording]);
+
+  const loadRecording = () => {
+    if (blobRef.current) return Promise.resolve(blobRef.current);
+    if (!fetchRef.current) {
+      const id = call.id;
+      const promise = api.calls.recording(id).then(({ blob }) => {
+        if (activeIdRef.current !== id) throw new Error('Recording selection changed.');
+        const url = URL.createObjectURL(blob);
+        blobRef.current = url;
+        return url;
+      }).finally(() => { if (fetchRef.current === promise) fetchRef.current = null; });
+      fetchRef.current = promise;
+    }
+    return fetchRef.current;
+  };
 
   const toggle = async () => {
     const el = audioRef.current;
+    const id = call?.id;
     if (!el) return;
     if (!src || !api.getToken()) {
       showToast('Recording is not available', 'error');
@@ -98,14 +145,16 @@ function RecordingPlayer({ call }) {
     }
     if (!el.src) {
       setLoading(true);
-      el.src = src;
       try {
+        const url = await loadRecording();
+        if (activeIdRef.current !== id || audioRef.current !== el) return;
+        el.src = url;
         await el.play();
-        setPlaying(true);
+        if (activeIdRef.current === id) setPlaying(true);
       } catch {
-        showToast('Recording is not available yet', 'error');
+        if (activeIdRef.current === id) showToast('Recording is not available yet', 'error');
       } finally {
-        setLoading(false);
+        if (activeIdRef.current === id) setLoading(false);
       }
       return;
     }
@@ -127,7 +176,7 @@ function RecordingPlayer({ call }) {
     if (el && el.duration) setProgress((el.currentTime / el.duration) * 100);
   };
 
-  if (!call || !call.hasRecording) {
+  if (!call || !ready) {
     return (
       <div className="p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] space-y-1.5">
         <div className="flex items-center gap-1.5 text-xs font-semibold text-[#0F0E17]">
@@ -136,7 +185,7 @@ function RecordingPlayer({ call }) {
         </div>
         <p className="text-[11px] text-[#8C879A]">
           {call?.connected
-            ? 'No recording for this call.'
+            ? 'Recording is being prepared. This section updates automatically.'
             : 'Never connected, so there is no recording.'}
         </p>
       </div>
@@ -188,14 +237,25 @@ function RecordingPlayer({ call }) {
             />
           </div>
         )}
-        <a
-          href={`${src}?download=true`}
-          download
+        <button
+          type="button"
+          disabled={loading}
+          onClick={async () => {
+            setLoading(true);
+            try {
+              const url = await loadRecording();
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = `${call.id}-recording`;
+              link.click();
+            } catch (error) { showToast(error.message || 'Could not download recording', 'error'); }
+            finally { setLoading(false); }
+          }}
           aria-label="Download recording"
           className="p-2 rounded-lg border border-[#E4E2EB] bg-white text-[#524E5E] hover:text-[#0F0E17]"
         >
           <Download className="w-3.5 h-3.5" />
-        </a>
+        </button>
       </div>
 
       <span className="text-[10px] text-[#524E5E]">
@@ -239,6 +299,7 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
   const [dialBusy, setDialBusy] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [transcriptLines, setTranscriptLines] = useState([]);
+  const [liveTranscription, setLiveTranscription] = useState(null);
   const [mainTab, setMainTab] = useState('history');
   const [historyBucket, setHistoryBucket] = useState('all');
   const [outcome, setOutcome] = useState(null);
@@ -278,30 +339,35 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
   // Keeping the full list in context means the other tabs stay instant.
   const [statusCalls, setStatusCalls] = useState(null);
   const [statusLoading, setStatusLoading] = useState(false);
+  const statusRequest = React.useRef(0);
+  const agentsById = useMemo(() => Object.fromEntries(agents.map(agent => [agent.id, agent])), [agents]);
 
   const loadByStatus = useCallback(
-    async (bucket) => {
+    async (bucket, quiet = false) => {
+      const request = ++statusRequest.current;
       const status = bucketToApiStatus(bucket);
-      if (!status) {
-        setStatusCalls(null);
-        return;
-      }
-      setStatusLoading(true);
+      if (!quiet) setStatusLoading(true);
       try {
-        const rows = await api.calls.list({ statuses: [status], agentId: lockedAgentId, limit: 100 });
-        setStatusCalls(rows);
+        const rows = await api.calls.list({ statuses: status ? [status] : undefined, agentId: lockedAgentId, limit: 100, agentMap: agentsById });
+        if (request === statusRequest.current) setStatusCalls(rows);
       } catch (e) {
-        showToast(e.message || 'Could not load calls', 'error');
-        setStatusCalls(null);
+        if (request === statusRequest.current && !quiet) showToast(e.message || 'Could not load calls', 'error');
       } finally {
-        setStatusLoading(false);
+        if (request === statusRequest.current) setStatusLoading(false);
       }
     },
-    [lockedAgentId]
+    [lockedAgentId, agentsById]
   );
 
   useEffect(() => {
-    loadByStatus(historyBucket);
+    let disposed = false;
+    let timer;
+    const poll = async (quiet = false) => {
+      if (!quiet || document.visibilityState === 'visible') await loadByStatus(historyBucket, quiet);
+      if (!disposed) timer = setTimeout(() => poll(true), 5000);
+    };
+    poll();
+    return () => { disposed = true; statusRequest.current += 1; clearTimeout(timer); };
   }, [historyBucket, loadByStatus]);
 
   const refreshCalls = useCallback(async () => {
@@ -322,19 +388,6 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
     () => (lockedAgentId ? calls.filter((c) => c.agentId === lockedAgentId) : calls),
     [calls, lockedAgentId]
   );
-
-  const bucketCounts = useMemo(() => {
-    const acc = { all: 0 };
-    for (const status of CALL_STATUS_TABS) {
-      if (status.id !== 'all') acc[status.id] = 0;
-    }
-    for (const c of bucketCalls) {
-      acc.all += 1;
-      const status = callStatus(c);
-      if (acc[status] != null) acc[status] += 1;
-    }
-    return acc;
-  }, [bucketCalls]);
 
   const scopedCalls = statusCalls ?? bucketCalls;
 
@@ -371,25 +424,34 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
   useEffect(() => {
     if (!activeCall?.id) {
       setTranscriptLines([]);
+      setLiveTranscription(null);
       return;
     }
     let cancelled = false;
     if (!activeCall.connected) {
       setTranscriptLines([]);
+      setLiveTranscription(null);
       return;
     }
-    api.calls
-      .transcript(activeCall.id)
-      .then((data) => {
-        if (!cancelled) setTranscriptLines(data.lines || []);
-      })
-      .catch(() => {
-        if (!cancelled) setTranscriptLines([]);
-      });
+    setTranscriptLines([]);
+    setLiveTranscription(null);
+    let timer;
+    const poll = async () => {
+      try {
+        const data = await api.calls.transcript(activeCall.id);
+        if (!cancelled) {
+          setTranscriptLines(data.lines || []);
+          setLiveTranscription(data.transcription || null);
+        }
+      } catch { /* Preserve already loaded lines during a transient outage. */ }
+      if (!cancelled && callStatus(activeCall) === 'in_progress') timer = setTimeout(poll, 3000);
+    };
+    poll();
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
-  }, [activeCall?.id, activeCall?.connected]);
+  }, [activeCall?.id, activeCall?.connected, activeCall?.status, activeCall?.endReason]);
 
   // Structured post-call outcome: disposition, AI summary, extracted fields.
   useEffect(() => {
@@ -507,7 +569,7 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-[#0F0E17] tracking-tight">
-            {embedded ? `${agentName || 'Agent'} calls (${bucketCounts.all})` : `Calls (${bucketCounts.all})`}
+            {embedded ? `${agentName || 'Agent'} calls` : 'Calls'}
           </h2>
           <p className="text-xs text-[#524E5E] mt-0.5 max-w-2xl">
             {PHONE_STACK_LABEL}: transcripts, recordings, and wallet usage for real phone conversations.
@@ -615,32 +677,17 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
       {(embedded || mainTab === 'history') && (
         <>
           {/* Canonical status tabs, driven by the server's status vocabulary. */}
-          <div className="flex flex-wrap items-center gap-1 p-1 rounded-xl bg-[#F0EEF6] border border-[#E4E2EB]">
-            {CALL_STATUS_TABS.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                data-testid={`calls-status-${tab.id}`}
-                onClick={() => setHistoryBucket(tab.id)}
-                className={`px-3 py-1.5 min-h-[34px] rounded-lg text-xs font-semibold ${
-                  historyBucket === tab.id
-                    ? 'bg-white text-[#0F0E17] shadow-xs'
-                    : 'text-[#524E5E]'
-                }`}
-              >
-                {/* chisel: subtle pulse shimmer until callStats settles */}
-                {tab.label}{' '}
-                {isLoading && !callStats ? (
-                  <span className="inline-block w-4 h-3 bg-[#E4E2EB] rounded animate-pulse align-middle" />
-                ) : (
-                  `(${bucketCounts[tab.id] ?? 0})`
-                )}
-              </button>
-            ))}
-          </div>
-
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-2.5 rounded-2xl bg-white border border-[#E4E2EB] shadow-craft-xs">
             <div className="flex flex-wrap items-center gap-2">
+              <select
+                aria-label="Call status"
+                data-testid="calls-status-filter"
+                value={historyBucket}
+                onChange={(event) => setHistoryBucket(event.target.value)}
+                className="rounded-xl border border-[#E4E2EB] bg-white px-3 py-2 text-sm min-h-[44px]"
+              >
+                {CALL_STATUS_TABS.map((tab) => <option key={tab.id} value={tab.id}>{tab.label}</option>)}
+              </select>
               <div className="flex items-center p-1 rounded-xl bg-[#F0EEF6] border border-[#E4E2EB]">
                 {['All', 'Inbound', 'Outbound'].map((tab) => (
                   <button
@@ -971,6 +1018,11 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                       <FileText className="w-3.5 h-3.5 text-[#524E5E]" />
                       <span>Transcript ({transcriptLines.length} turns)</span>
                     </h4>
+                    {liveTranscription && (
+                      <p className={`mb-2 text-xs ${liveTranscription.status === 'failed' ? 'text-[#B91C1C]' : 'text-[#524E5E]'}`} role="status">
+                        Live transcription: {({ connecting: 'Connecting…', streaming: 'Listening', complete: 'Complete', failed: 'Unavailable — contact support' })[liveTranscription.status] || liveTranscription.status}
+                      </p>
+                    )}
 
                     <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
                       {/* chisel: conversational turn bubble skeletons while transcript is resolving */}
@@ -1015,6 +1067,12 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                           </div>
                         );
                       })}
+                      {liveTranscription?.partial_text && (
+                        <div className="p-3 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] mr-3 text-sm" aria-label="Caller speech in progress">
+                          <p className="mb-1 text-[10px] text-[#8C879A]">Caller · speaking</p>
+                          <p className="text-[#524E5E]">{liveTranscription.partial_text}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </SolidCard>

@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from server.auth.dependencies import require_dev_session, require_permission
@@ -337,8 +337,10 @@ def _gemini_api_key_configured() -> bool:
 def _saas_phone_stack_credentials() -> dict[str, Any]:
     settings = get_settings()
     gemini_key = _gemini_api_key_configured()
+    from server.services.live_caller_transcription import live_api_key
     return {
-        "openai": {"configured": bool((settings.openai_api_key or "").strip())},
+        "openai": {"configured": bool(live_api_key("gpt-transcribe"))},
+        "sarvam": {"configured": bool(live_api_key("saaras:v3-realtime"))},
         "gemini": {
             "enabled": bool(settings.enable_gemini),
             "configured": gemini_key,
@@ -354,6 +356,11 @@ def _saas_phone_stack_warnings(resolved: dict[str, Any] | None) -> list[str]:
     provider = str(llm.get("provider") or "").strip().lower()
     creds = _saas_phone_stack_credentials()
     warnings: list[str] = []
+    from server.services.live_caller_transcription import validate_live_transcription
+    try:
+        validate_live_transcription(resolved)
+    except ValueError:
+        warnings.append("Selected live transcription credentials are missing. Configure them before placing calls.")
     if provider == "gemini":
         if not creds["gemini"]["enabled"]:
             warnings.append("ENABLE_GEMINI is false — Gemini Live PSTN will not connect.")
@@ -442,9 +449,12 @@ async def dev_stack_saas_phone_put(body: SaasPhoneStackBody, session: SessionDat
     raw = body.stack_override or {"pipeline": "realtime_voice", "language": lang}
     raw.setdefault("pipeline", "realtime_voice")
     raw.setdefault("language", lang)
-    normalized, adjustments = normalize_pstn_stack_override(
-        raw, language=lang, tier="medium", default_provider="gemini"
-    )
+    try:
+        normalized, adjustments = normalize_pstn_stack_override(
+            raw, language=lang, tier="medium", default_provider="gemini"
+        )
+    except ValueError as exc:
+        raise HTTPException(422, detail={"error": {"code": "invalid_phone_stack", "message": str(exc)}}) from exc
     resolved = normalized or raw
     payload = {
         "stack_override": resolved,

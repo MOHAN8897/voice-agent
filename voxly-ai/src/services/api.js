@@ -393,7 +393,7 @@ export const api = {
    * WAV body would throw it away. Shares the auth header and backend-URL fixups
    * so binary and JSON calls cannot drift apart on auth.
    */
-  async requestBinary(method, endpoint, body = null, customHeaders = {}) {
+  async requestBinary(method, endpoint, body = null, customHeaders = {}, { allowMp3 = false } = {}) {
     const backendUrl = this.getBackendUrl().replace(/\/$/, '');
     const token = this.getToken();
     const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
@@ -407,6 +407,7 @@ export const api = {
         ...customHeaders,
       },
       body: body != null ? JSON.stringify(body) : undefined,
+      signal: AbortSignal.timeout(30000),
     });
     if (!response.ok) {
       let message = `HTTP ${response.status}`;
@@ -426,7 +427,8 @@ export const api = {
       header.length >= 12 &&
       String.fromCharCode(...header.slice(0, 4)) === 'RIFF' &&
       String.fromCharCode(...header.slice(8, 12)) === 'WAVE';
-    if (blob.size < 44 || !isWav) {
+    const isMp3 = header.length >= 3 && (String.fromCharCode(...header.slice(0, 3)) === 'ID3' || (header[0] === 0xff && (header[1] & 0xe0) === 0xe0));
+    if (blob.size < 44 || (!isWav && !(allowMp3 && isMp3))) {
       throw new Error('The voice service returned audio that could not be played.');
     }
     return {
@@ -1022,6 +1024,10 @@ export const api = {
     async transcript(id) {
       return await api.request('GET', `/api/call/${id}/transcript`);
     },
+    async recording(id) {
+      return api.requestBinary('GET', `/api/call/${encodeURIComponent(id)}/audio/mix`, null,
+        { Accept: 'audio/wav, audio/mpeg' }, { allowMp3: true });
+    },
     /** Structured post-call outcome: disposition, summary, extracted fields. */
     async outcome(id) {
       return await api.request('GET', `/api/call/${id}/outcome`);
@@ -1030,7 +1036,14 @@ export const api = {
       const body = { agentId, toE164 };
       if (fromE164) body.fromE164 = fromE164;
       if (dialRequestId) body.dialRequestId = dialRequestId;
-      return await api.request('POST', '/api/calls/outbound', body);
+      const result = await api.request('POST', '/api/calls/outbound', body);
+      if (result?.ok === false) {
+        const error = new Error(result.error?.message || result.error || 'The call could not be placed. Please try again.');
+        error.code = result.code;
+        error.status = result.status;
+        throw error;
+      }
+      return result;
     },
     /**
      * Call a missed caller back. Goes through the same outbound path as a manual
@@ -1222,6 +1235,9 @@ export const api = {
       if (mine) qs.set('mine', 'true');
       const data = await api.request('GET', `/api/billing/transactions?${qs.toString()}`);
       return data.transactions || [];
+    },
+    async getLastSession() {
+      return await api.request('GET', '/api/billing/last-session');
     },
   },
 

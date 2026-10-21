@@ -21,6 +21,11 @@ class TranscriptionPolicy:
     def gemini_use_openai_live_stt(self, llm_model: str) -> bool:
         return self.live_enabled and is_gemini_live_voice_model(llm_model or "")
 
+    @property
+    def live_provider(self) -> str:
+        from server.services.live_caller_transcription import live_provider
+        return live_provider(self.live_model)
+
     def openai_session_input_transcription(self) -> bool:
         return self.live_enabled
 
@@ -109,7 +114,9 @@ def transcription_policy_from_meta(meta: dict[str, Any] | None) -> Transcription
 
 def transcription_billing_tag(policy: TranscriptionPolicy, *, gemini_live: bool) -> str:
     if policy.live_enabled:
-        return "live_openai_transcribe"
+        if policy.live_model == "gemini-native":
+            return "native_live_included"
+        return f"live_{policy.live_provider}_transcribe"
     if policy.post_call_enabled and gemini_live:
         return "post_call_gemini_transcribe"
     return "none"
@@ -135,9 +142,10 @@ def normalize_transcription_block(
         "live_enabled": live,
     }
     live_model = str(src.get("live_model") or "gpt-4o-mini-transcribe").strip()
-    if live_model != "gpt-4o-mini-transcribe":
-        live_model = "gpt-4o-mini-transcribe"
-        adj.append("transcription.live_model set to gpt-4o-mini-transcribe")
+    from server.services.live_caller_transcription import LIVE_MODELS
+    if live_model not in LIVE_MODELS:
+        from server.services.pstn_stack import PstnStackValidationError
+        raise PstnStackValidationError("Unsupported live transcription model")
     out["live_model"] = live_model
     post_model = str(
         src.get("post_call_model") or settings.post_call_transcript_model or "gemini-3.5-transcribe"
