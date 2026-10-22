@@ -205,46 +205,118 @@ Understanding why background speakers and ambient noise trip VAD requires examin
 
 The production solution unifies 8 architectural pillars into a cohesive turn-taking engine for the Economical and Standard PSTN voice stacks:
 
-### Pillar 1: Robust Indic & English Lexicon Separation
-Replace the monolithic `_SHORT_INTERRUPT` with two distinct regex engines supporting Indic scripts, honorific compounds, and Romanized phonetics:
+### Pillar 1: Pan-Indic 10-Language Lexicon Separation & Dialectal Robustness
+
+Our platform officially supports **10 languages** ([server/config/constants.py:95-108](file:///d:/voice%20agent/server/config/constants.py#L95-L108)):
+`te-IN` (Telugu), `hi-IN` (Hindi), `ta-IN` (Tamil), `kn-IN` (Kannada), `ml-IN` (Malayalam), `mr-IN` (Marathi), `bn-IN` (Bengali), `gu-IN` (Gujarati), `pa-IN` (Punjabi), and `en-IN` / `en-US` / `en-GB` (English).
+
+To ensure zero turn-taking failure regardless of which language pack a tenant selects, the turn-taking engine must support:
+1. **Native Indic Scripts** with `\S+` matching to preserve complex Unicode combining diacritics (virama `్` / halant `्`, anusvara `ం` / `ं`, matras).
+2. **Romanized / Transliterated Phonetics** (Hinglish, Tanglish, Kanglish, Tenglish, Benglish) because Indian callers code-mix English alphabet phonetics and streaming STTs often output Romanized text.
+3. **Turn-Claiming Exclusion**: Explicitly banning "invitation-to-speak" tokens (`చెప్పండి`, `சொல்லுங்க`, `ಹೇಳಿ`, `പറയൂ`, `सांगा`, `বলুন`, `કહો`, `ਦੱਸੋ`, `बोलिए`) from being misclassified as passive nods.
 
 ```python
-# 1. EMERGENCY HALT COMMANDS: ONLY these words may interrupt with 1 word.
-#    v2.1: Restored "no", "nope", "actually", "sorry", "కాదు", "లేదు", "లేదండి", "అది కాదు", "नहीं"
-#    which were in v1 _SHORT_INTERRUPT but dropped in v2.0 halt list.
-#    v2.1: Uses \S+ instead of \w+ — \w splits Telugu/Hindi combining marks (virama, halant, matras).
+# 1. EMERGENCY HALT COMMANDS (ALL 10 PLATFORM LANGUAGES):
+# Immediate 1-word barge-in without hold timer. Covers stops, negations, pauses, and listening demands.
+# Uses \S+ instead of \w+ to preserve Indic combining characters across all scripts.
 _HALT_COMMANDS_RE = re.compile(
     r"^(?:"
-    r"stop|wait|hold on|one second|pause|shut up|quiet|cancel|listen|"
-    r"no|nope|actually|sorry|"
-    r"ఆగండి|ఆగు|వద్దు|వద్దండి|వద్దండీ|ఆపండి|వినండి|కాదు|లేదు|లేదండి|అది కాదు|"
-    r"रुको|रुकिए|बंद करो|चुप|मत बोलो|सुनो|सुनिए|नहीं"
+    # English (en-IN, en-US, en-GB)
+    r"stop|wait|hold on|one second|pause|shut up|quiet|cancel|listen|no|nope|actually|sorry|wrong|enough|"
+    # Telugu (te-IN)
+    r"ఆగండి|ఆగు|వద్దు|వద్దండి|వద్దండీ|ఆపండి|వినండి|కాదు|లేదు|లేదండి|అది కాదు|చాలు|"
+    r"aagandi|aagu|vaddu|vaddandi|aapandi|vinandi|kaadu|ledu|ledandi|adi kaadu|chaalu|"
+    # Hindi (hi-IN)
+    r"रुको|रुकिए|बंद करो|चुप|मत बोलो|सुनो|सुनिए|नहीं|ना|बस|रहने दो|गलत|"
+    r"ruko|rukiye|band karo|chup|mat bolo|suno|suniye|nahin|nahi|na|bas|rehne do|galat|"
+    # Tamil (ta-IN)
+    r"நில்லுங்கள்|நில்லு|பொறுங்கள்|பொறு|வேண்டாம்|வேண்டாங்க|இல்லை|இல்ல|இல்லீங்க|அது இல்லை|கேளுங்கள்|போதும்|தவறு|"
+    r"nillungal|nillu|porungal|poru|vendaam|vendanga|illai|illa|illenga|podhum|kelungal|thavaru|"
+    # Kannada (kn-IN)
+    r"ನಿಲ್ಲಿಸಿ|ನಿಲ್ಲು|ತಾಳಿ|ಇರಿ|ಬೇಡ|ಬೇಡಿ|ಇಲ್ಲ|ಇಲ್ಲರೀ|ಅದಲ್ಲ|ಕೇಳಿ|ಸಾಕು|ತಪ್ಪು|"
+    r"nillisi|nillu|thali|iri|beda|bedi|illa|illari|adalla|keli|saaku|thappu|"
+    # Malayalam (ml-IN)
+    r"നിൽക്കൂ|നിൽക്ക്|കാക്കൂ|കാക്ക്|വേണ്ട|വേണ്ടതില്ല|അല്ല|ഇല്ല|കേൾക്കൂ|മതി|തെറ്റാണ്|"
+    r"nilkkoo|nilkku|kaakkoo|kaakku|venda|vendathilla|alla|illa|kelkkoo|mathi|thettanu|"
+    # Marathi (mr-IN)
+    r"थांबा|थांब|नको|नकोस|नाही|ते नाही|ऐका|ऐक|चूप|पुरे|चूक|"
+    r"thamba|thamb|nako|nakos|nahi|te nahi|aika|aik|choop|pure|chook|"
+    # Bengali (bn-IN)
+    r"থামুন|থামো|দাঁড়ান|দাঁড়াও|না|একটু শুনুন|শুনুন|শোনো|থাক|চুপ|ভুল|"
+    r"thamun|thamo|daran|darao|na|shunun|shono|thak|chup|bhul|"
+    # Gujarati (gu-IN)
+    r"ઊભા રહો|થોભો|થોભ|ના|નહીં|નથી|સાંભળો|સાંભળ|રહેવા દો|શાંત રહો|ખોટું|"
+    r"ubha raho|thobho|thobh|na|nahin|nathi|sambhalo|rehwa do|khotu|"
+    # Punjabi (pa-IN)
+    r"ਰੁਕੋ|ਰੁਕ|ਖਲੋਵੋ|ਨਾ|ਨਹੀਂ|ਰਹਿਣ ਦਿਓ|ਸੁਣੋ|ਚੁੱਪ|ਗ਼ਲਤ|"
+    r"ruko|ruk|khalovo|na|nahin|rehn do|suno|chup|galat"
     r")(?:\s+\S+){0,2}[.!?,]*$",
     re.I,
 )
 
-# 2. CONVERSATIONAL BACKCHANNEL NODS: NEVER interrupt active agent speech.
-#    v2.1: Removed "చెప్పండి" (cheppandi) — it means "tell me / go ahead" (an invitation to speak),
-#    which is a turn-claiming invitation, NOT a passive acknowledgment nod!
-#    v2.1: Uses \S+ for Indic diacritic compatibility and covers Romanized Hinglish/Tenglish.
+# 2. CONVERSATIONAL BACKCHANNEL NODS (ALL 10 PLATFORM LANGUAGES):
+# Passive acknowledgment nods that NEVER interrupt active agent playout.
+# EXCLUSIONS ENFORCED: Words meaning "tell me / speak / go ahead" (e.g., చెప్పండి, சொல்லுங்க,
+# ಹೇಳಿ, പറയൂ, सांगा, বলুন, કહો, ਦੱਸੋ, बोलिए) are TURN-CLAIMING invitations and are STRICTLY EXCLUDED!
 _BACKCHANNEL_NODS_RE = re.compile(
     r"^(?:"
     # English nods
     r"yes|yeah|yep|yup|ok|okay|sure|hmm|mm|mhm|uh huh|right|correct|got it|i see|alright|"
-    # Telugu nods (Script + Romanized) — NOTE: చెప్పండి strictly excluded
+    # Telugu (te-IN) nods (Script + Romanized) — చెప్పండి excluded
     r"అవును|అవునండి|అవునండీ|సరే|సరేనండి|అలాగే|అలాగేనండి|బాగుంది|హాం|"
     r"avunu|avunandi|sare|sarenandi|alage|alagenandi|bagundi|"
-    # Hindi nods (Script + Romanized)
+    # Hindi (hi-IN) nods (Script + Romanized) — बोलिए/बताइए excluded
     r"हाँ|हां|हाँजी|हाँ जी|जी|जी हाँ|जी हां|ठीक|ठीक है|अच्छा|अच्छा जी|सही बात|"
-    r"haan|haanji|haan ji|ji|ji haan|theek|theek hai|achha|achha ji"
+    r"haan|haanji|haan ji|ji|ji haan|theek|theek hai|achha|achha ji|sahi baat|"
+    # Tamil (ta-IN) nods (Script + Romanized) — சொல்லுங்க excluded
+    r"ஆம்|ஆமாம்|ஆமாங்க|ஆமா|சரி|சரிங்க|நன்று|ஓம்|அப்படியா|"
+    r"aam|aamaam|aamanga|aama|sari|saringa|nandru|om|appadiya|"
+    # Kannada (kn-IN) nods (Script + Romanized) — ಹೇಳಿ excluded
+    r"ಹೌದು|ಹೌದೌದು|ಹೌದಾ|ಹೌದುರೀ|ಸರಿ|ಸರೀ|ಆಯಿತು|ಆಯ್ತು|ಚೆನ್ನಾಗಿದೆ|"
+    r"haudu|haudaudu|hauda|hauduri|sari|aayithu|aaytu|chennagide|"
+    # Malayalam (ml-IN) nods (Script + Romanized) — പറയൂ excluded
+    r"അതെ|അതെ അതെ|ശരി|ശരിയാണ്|ശരിയായി|നന്ന്|കൊള്ളാം|"
+    r"athe|athe athe|shari|shariyaanu|shariyayi|nannu|kollam|"
+    # Marathi (mr-IN) nods (Script + Romanized) — सांगा excluded
+    r"हो|होय|हो ना|बरे|बरं|ठीक|ठीक आहे|छान|समजले|"
+    r"ho|hoy|ho na|bare|baram|theek|theek aahe|chhan|samajle|"
+    # Bengali (bn-IN) nods (Script + Romanized) — বলুন excluded
+    r"হ্যাঁ|হাঁ|হ্যাঁ হ্যাঁ|ঠিক|ঠিক আছে|আচ্ছা|আচ্ছা আচ্ছা|বেশ|বুঝেছি|"
+    r"haan|hya|hyan|theek|theek ache|achha|achha achha|besh|bujhechi|"
+    # Gujarati (gu-IN) nods (Script + Romanized) — કહો excluded
+    r"હા|હાજી|હા હા|બરાબર|બરાબર છે|સારું|ઠીક|સમજાયું|"
+    r"haa|haaji|haa haa|barabar|barabar che|saaru|theek|samjayu|"
+    # Punjabi (pa-IN) nods (Script + Romanized) — ਦੱਸੋ excluded
+    r"ਹਾਂ|ਹਾਂਜੀ|ਹਾਂ ਹਾਂ|ਠੀਕ|ਠੀਕ ਹੈ|ਚੰਗਾ|ਸਮਝ ਗਿਆ|"
+    r"haan|haanji|haa haa|theek|theek hai|changa|samajh gaya"
     r")(?:\s+(?:"
-    r"yes|yeah|ok|okay|sure|hmm|haan|avunu|sare|theek|alage|ji|right"
+    r"yes|yeah|ok|okay|sure|hmm|haan|avunu|sare|theek|alage|ji|right|aam|haudu|athe|ho|haa|changa"
     r"))*[.!,]*$",
     re.I,
 )
 ```
 
 ---
+
+### 5.1 Master 10-Language Lexicon & Language Pack Matrix
+
+The following authoritative matrix defines the acoustic and lexical behavior across all 10 platform language packs:
+
+| Language & Locale | Emergency Halt Commands (Immediate 1-Word Barge) | Conversational Nods (Playout Protected) | Turn-Claiming Words (Excluded from Nods!) | Question / Confirmation Markers |
+| :--- | :--- | :--- | :--- | :--- |
+| **Telugu (`te-IN`)** | `ఆగండి`, `ఆగు`, `వద్దు`, `కాదు`, `లేదు`, `చాలు`, `aagandi`, `vaddu`, `kaadu` | `అవును`, `అవునండి`, `సరే`, `అలాగే`, `avunu`, `sare`, `alage` | `చెప్పండి` (*cheppandi*), `చెప్పు` (*cheppu*) | `చెప్పండి`, `చెప్తారా`, `కావాలా`, `సరేనా`, `అవునా`, `ముందుకు వెళ్దామా` |
+| **Hindi (`hi-IN`)** | `रुको`, `रुकिए`, `बंद करो`, `चुप`, `नहीं`, `ना`, `गलत`, `ruko`, `nahin`, `galat` | `हाँ`, `हाँजी`, `जी`, `ठीक`, `अच्छा`, `haan`, `theek`, `achha` | `बोलिए` (*boliye*), `बताइए` (*bataiye*) | `बताइए`, `चाहिए`, `ठीक है ना`, `करूं`, `पुष्टि`, `आगे बढ़ें` |
+| **Tamil (`ta-IN`)** | `நில்லுங்கள்`, `பொறுங்கள்`, `வேண்டாம்`, `இல்லை`, `போதும்`, `nillungal`, `illai` | `ஆம்`, `ஆமாம்`, `சரி`, `சரிங்க`, `நன்று`, `aamaam`, `sari` | `சொல்லுங்க` (*sollunga*), `பேசுங்க` (*pesunga*) | `சொல்லுங்க`, `வேண்டுமா`, `சரியா`, `தொடரலாமா`, `உறுதிப்படுத்தவா` |
+| **Kannada (`kn-IN`)** | `ನಿಲ್ಲಿಸಿ`, `ತಾಳಿ`, `ಬೇಡ`, `ಇಲ್ಲ`, `ಸಾಕು`, `ತಪ್ಪು`, `nillisi`, `beda`, `illa` | `ಹೌದು`, `ಸರಿ`, `ಆಯಿತು`, `ಚೆನ್ನಾಗಿದೆ`, `haudu`, `sari`, `aayithu` | `ಹೇಳಿ` (*heli*), `ಮಾತನಾಡಿ` (*maathanaadi*) | `ಹೇಳಿ`, `ಬೇಕಾ`, `ಸರಿನಾ`, `ಮುಂದುವರಿಯಲೇ`, `ದೃಢೀಕರಿಸಿ` |
+| **Malayalam (`ml-IN`)** | `നിൽക്കൂ`, `കാക്കൂ`, `വേണ്ട`, `അല്ല`, `ഇല്ല`, `മതി`, `nilkkoo`, `venda`, `alla` | `അതെ`, `ശരി`, `ശരിയാണ്`, `നന്ന്`, `athe`, `shari`, `kollam` | `പറയൂ` (*parayoo*), `സംസാരിക്കൂ` (*samsarikkoo*) | `പറയൂ`, `വേണമോ`, `ശരിയാണോ`, `തുടരണമോ`, `ഉറപ്പാക്കണോ` |
+| **Marathi (`mr-IN`)** | `थांबा`, `नको`, `नाही`, `ऐका`, `चूप`, `पुरे`, `thamba`, `nako`, `nahi` | `हो`, `होय`, `बरे`, `ठीक`, `छान`, `ho`, `bare`, `theek` | `सांगा` (*saanga*), `बोला` (*bola*) | `सांगा`, `हवे का`, `बरोबर का`, `पुढे जाऊ का`, `खात्री करा` |
+| **Bengali (`bn-IN`)** | `থামুন`, `দাঁড়ান`, `না`, `শুনুন`, `থাক`, `ভুল`, `thamun`, `daran`, `na` | `হ্যাঁ`, `ঠিক`, `আচ্ছা`, `বেশ`, `বুঝেছি`, `haan`, `theek`, `achha` | `বলুন` (*bolun*), `কথা বলুন` (*kotha bolun*) | `বলুন`, `চাই কি`, `ঠিক আছে তো`, `এগিয়ে যাব কি`, `নিশ্চিত করবেন` |
+| **Gujarati (`gu-IN`)** | `ઊભા રહો`, `થોભો`, `ના`, `નહીં`, `સાંભળો`, `ખોટું`, `thobho`, `nahin` | `હા`, `હાજી`, `બરાબર`, `સારું`, `ઠીક`, `haa`, `barabar`, `saaru` | `કહો` (*kaho*), `બોલો` (*bolo*) | `કહો`, `જોઈએ છે`, `બરાબર ને`, `આગળ વધું`, `પુષ્ટિ કરો` |
+| **Punjabi (`pa-IN`)** | `ਰੁਕੋ`, `ਖਲੋਵੋ`, `ਨਾ`, `ਨਹੀਂ`, `ਰਹਿਣ ਦਿਓ`, `ਗ਼ਲਤ`, `ruko`, `nahin` | `ਹਾਂ`, `ਹਾਂਜੀ`, `ਠੀਕ`, `ਚੰਗਾ`, `ਸਮਝ ਗਿਆ`, `haan`, `theek`, `changa` | `ਦੱਸੋ` (*dasso*), `ਬੋਲੋ` (*bolo*) | `ਦੱਸੋ`, `ਚਾਹੀਦਾ`, `ਠੀਕ ਹੈ నా`, `ਅੱਗੇ ਵਧਾਂ`, `ਪੁਸ਼ਟੀ ਕਰੋ` |
+| **English (`en-IN/US/GB`)**| `stop`, `wait`, `hold on`, `pause`, `no`, `nope`, `actually`, `sorry`, `wrong` | `yes`, `yeah`, `yep`, `ok`, `okay`, `sure`, `hmm`, `right`, `got it` | `tell me`, `go ahead`, `speak` | `shall i`, `do you want`, `would you like`, `is that ok`, `proceed`, `confirm` |
+
+---
+
 
 ### Pillar 2: Unambiguous Barge-In Commit Logic with Latched AEC Gate & Strict `bool` Return Type
 
@@ -381,13 +453,29 @@ In [`server/services/pstn_voice_core.py:_run_turn`](file:///d:/voice%20agent/ser
                 clean_pending = (pending or "").strip()
                 last_tts = (self._last_tts_text or "").strip()
                 
-                # Context Check: Did the agent just ask a question or confirmation?
+                # Context Check: Did the agent just ask a question or confirmation across all 10 platform languages?
                 agent_asked_question = last_tts.rstrip().endswith("?") or any(
                     kw in last_tts.lower() for kw in (
-                        "shall i", "do you want", "would you like", "is that ok",
-                        "proceed", "confirm", "correct", "can we",
-                        "చెప్పండి", "చెప్తారా", "కావాలా", "సరేనా", "అవునా",  # Telugu markers
-                        "बताइए", "चाहिए", "ठीक है ना", "करूं", "पुष्टि",      # Hindi markers
+                        # English (en-IN, en-US, en-GB)
+                        "shall i", "do you want", "would you like", "is that ok", "proceed", "confirm", "correct", "can we",
+                        # Telugu (te-IN)
+                        "చెప్పండి", "చెప్తారా", "కావాలా", "సరేనా", "అవునా", "వెళ్దామా",
+                        # Hindi (hi-IN)
+                        "बताइए", "चाहिए", "ठीक है ना", "करूं", "पुष्टि", "आगे बढ़ें",
+                        # Tamil (ta-IN)
+                        "சொல்லுங்க", "வேண்டுமா", "சரியா", "தொடரலாமா", "உறுதிப்படுத்தவா", "தெரியுமா",
+                        # Kannada (kn-IN)
+                        "ಹೇಳಿ", "ಬೇಕಾ", "ಸರಿನಾ", "ಮುಂದುವರಿಯಲೇ", "ದೃಢೀಕರಿಸಿ", "ಗೊತ್ತಾ", "ಹೌದಾ",
+                        # Malayalam (ml-IN)
+                        "പറയൂ", "വേണമോ", "ശരിയാണോ", "തുടരണമോ", "ഉറപ്പാക്കണോ", "അറിയാമോ",
+                        # Marathi (mr-IN)
+                        "सांगा", "हवे का", "बरोबर का", "पुढे जाऊ का", "खात्री करा", "माहित आहे का",
+                        # Bengali (bn-IN)
+                        "বলুন", "চাই কি", "ঠিক আছে তো", "এগিয়ে যাব কি", "নিশ্চিত করবেন", "জানেন কি",
+                        # Gujarati (gu-IN)
+                        "કહો", "જોઈએ છે", "બરાબર ને", "આગળ વધું", "પુષ્ટિ કરો", "ખબર છે",
+                        # Punjabi (pa-IN)
+                        "ਦੱਸੋ", "ਚਾਹੀਦਾ", "ਠੀਕ ਹੈ ਨਾ", "ਅੱਗੇ ਵਧਾਂ", "ਪੁਸ਼ਟੀ ਕਰੋ", "ਪਤਾ ਹੈ",
                     )
                 )
 
@@ -632,28 +720,80 @@ elif ev == "transcript.partial":
 -    r"(?:\s+\w+){0,3}[.!,]*$",
 -    re.I,
 -)
-+# 1. EMERGENCY HALT COMMANDS: 1-word instant interruption ("stop", "wait", "no", "ఆగండి", "नहीं")
-+# Uses \S+ instead of \w+ for Indic combining diacritics
++# 1. EMERGENCY HALT COMMANDS (ALL 10 PLATFORM LANGUAGES):
++# Immediate 1-word barge-in without hold timer. Covers stops, negations, pauses, and listening demands.
++# Uses \S+ instead of \w+ to preserve Indic combining characters across all scripts.
 +_HALT_COMMANDS_RE = re.compile(
 +    r"^(?:"
-+    r"stop|wait|hold on|one second|pause|shut up|quiet|cancel|listen|"
-+    r"no|nope|actually|sorry|"
-+    r"ఆగండి|ఆగు|వద్దు|వద్దండి|వద్దండీ|ఆపండి|వినండి|కాదు|లేదు|లేదండి|అది కాదు|"
-+    r"रुको|रुकिए|बंद करो|चुप|मत बोलो|सुनो|सुनिए|नहीं"
++    # English (en-IN, en-US, en-GB)
++    r"stop|wait|hold on|one second|pause|shut up|quiet|cancel|listen|no|nope|actually|sorry|wrong|enough|"
++    # Telugu (te-IN)
++    r"ఆగండి|ఆగు|వద్దు|వద్దండి|వద్దండీ|ఆపండి|వినండి|కాదు|లేదు|లేదండి|అది కాదు|చాలు|"
++    r"aagandi|aagu|vaddu|vaddandi|aapandi|vinandi|kaadu|ledu|ledandi|adi kaadu|chaalu|"
++    # Hindi (hi-IN)
++    r"रुको|रुकिए|बंद करो|चुप|मत बोलो|सुनो|सुनिए|नहीं|ना|बस|रहने दो|गलत|"
++    r"ruko|rukiye|band karo|chup|mat bolo|suno|suniye|nahin|nahi|na|bas|rehne do|galat|"
++    # Tamil (ta-IN)
++    r"நில்லுங்கள்|நில்லு|பொறுங்கள்|பொறு|வேண்டாம்|வேண்டாங்க|இல்லை|இல்ல|இல்லீங்க|அது இல்லை|கேளுங்கள்|போதும்|தவறு|"
++    r"nillungal|nillu|porungal|poru|vendaam|vendanga|illai|illa|illenga|podhum|kelungal|thavaru|"
++    # Kannada (kn-IN)
++    r"ನಿಲ್ಲಿಸಿ|ನಿಲ್ಲು|ತಾಳಿ|ಇರಿ|ಬೇಡ|ಬೇಡಿ|ಇಲ್ಲ|ಇಲ್ಲರೀ|ಅದಲ್ಲ|ಕೇಳಿ|ಸಾಕು|ತಪ್ಪು|"
++    r"nillisi|nillu|thali|iri|beda|bedi|illa|illari|adalla|keli|saaku|thappu|"
++    # Malayalam (ml-IN)
++    r"നിൽക്കൂ|നിൽക്ക്|കാക്കൂ|കാക്ക്|വേണ്ട|വേണ്ടതില്ല|അല്ല|ഇല്ല|കേൾക്കൂ|മതി|തെറ്റാണ്|"
++    r"nilkkoo|nilkku|kaakkoo|kaakku|venda|vendathilla|alla|illa|kelkkoo|mathi|thettanu|"
++    # Marathi (mr-IN)
++    r"थांबा|थांब|नको|नकोस|नाही|ते नाही|ऐका|ऐक|चूप|पुरे|चूक|"
++    r"thamba|thamb|nako|nakos|nahi|te nahi|aika|aik|choop|pure|chook|"
++    # Bengali (bn-IN)
++    r"থামুন|থামো|দাঁড়ান|দাঁড়াও|না|একটু শুনুন|শুনুন|শোনো|থাক|চুপ|ভুল|"
++    r"thamun|thamo|daran|darao|na|shunun|shono|thak|chup|bhul|"
++    # Gujarati (gu-IN)
++    r"ઊભા રહો|થોભો|થોભ|ના|નહીં|નથી|સાંભળો|સાંભળ|રહેવા દો|શાંત રહો|ખોટું|"
++    r"ubha raho|thobho|thobh|na|nahin|nathi|sambhalo|rehwa do|khotu|"
++    # Punjabi (pa-IN)
++    r"ਰੁਕੋ|ਰੁਕ|ਖਲੋਵੋ|ਨਾ|ਨਹੀਂ|ਰਹਿਣ ਦਿਓ|ਸੁਣੋ|ਚੁੱਪ|ਗ਼ਲਤ|"
++    r"ruko|ruk|khalovo|na|nahin|rehn do|suno|chup|galat"
 +    r")(?:\s+\S+){0,2}[.!?,]*$",
 +    re.I,
 +)
-+# 2. CONVERSATIONAL BACKCHANNEL NODS: NEVER interrupt active agent speech
-+# "చెప్పండి" (cheppandi) strictly excluded — it is "tell me / go ahead", an invitation to speak!
++# 2. CONVERSATIONAL BACKCHANNEL NODS (ALL 10 PLATFORM LANGUAGES):
++# Passive acknowledgment nods that NEVER interrupt active agent playout.
++# EXCLUSIONS ENFORCED: Words meaning "tell me / speak / go ahead" (e.g., చెప్పండి, சொல்லுங்க,
++# ಹೇಳಿ, പറയൂ, सांगा, বলুন, કહો, ਦੱਸੋ, बोलिए) are TURN-CLAIMING invitations and are STRICTLY EXCLUDED!
 +_BACKCHANNEL_NODS_RE = re.compile(
 +    r"^(?:"
++    # English nods
 +    r"yes|yeah|yep|yup|ok|okay|sure|hmm|mm|mhm|uh huh|right|correct|got it|i see|alright|"
++    # Telugu (te-IN) nods (Script + Romanized) — చెప్పండి excluded
 +    r"అవును|అవునండి|అవునండీ|సరే|సరేనండి|అలాగే|అలాగేనండి|బాగుంది|హాం|"
 +    r"avunu|avunandi|sare|sarenandi|alage|alagenandi|bagundi|"
++    # Hindi (hi-IN) nods (Script + Romanized) — बोलिए/बताइए excluded
 +    r"हाँ|हां|हाँजी|हाँ जी|जी|जी हाँ|जी हां|ठीक|ठीक है|अच्छा|अच्छा जी|सही बात|"
-+    r"haan|haanji|haan ji|ji|ji haan|theek|theek hai|achha|achha ji"
++    r"haan|haanji|haan ji|ji|ji haan|theek|theek hai|achha|achha ji|sahi baat|"
++    # Tamil (ta-IN) nods (Script + Romanized) — சொல்லுங்க excluded
++    r"ஆம்|ஆமாம்|ஆமாங்க|ஆமா|சரி|சரிங்க|நன்று|ஓம்|அப்படியா|"
++    r"aam|aamaam|aamanga|aama|sari|saringa|nandru|om|appadiya|"
++    # Kannada (kn-IN) nods (Script + Romanized) — ಹೇಳಿ excluded
++    r"ಹೌದು|ಹೌದೌದು|ಹೌದಾ|ಹೌದುರೀ|ಸರಿ|ಸರೀ|ಆಯಿತು|ಆಯ್ತು|ಚೆನ್ನಾಗಿದೆ|"
++    r"haudu|haudaudu|hauda|hauduri|sari|aayithu|aaytu|chennagide|"
++    # Malayalam (ml-IN) nods (Script + Romanized) — പറയൂ excluded
++    r"അതെ|അതെ അതെ|ശരി|ശരിയാണ്|ശരിയായി|നന്ന്|കൊള്ളാം|"
++    r"athe|athe athe|shari|shariyaanu|shariyayi|nannu|kollam|"
++    # Marathi (mr-IN) nods (Script + Romanized) — सांगा excluded
++    r"हो|होय|हो ना|बरे|बरं|ठीक|ठीक आहे|छान|समजले|"
++    r"ho|hoy|ho na|bare|baram|theek|theek aahe|chhan|samajle|"
++    # Bengali (bn-IN) nods (Script + Romanized) — বলুন excluded
++    r"হ্যাঁ|হাঁ|হ্যাঁ হ্যাঁ|ঠিক|ঠিক আছে|আচ্ছা|अच्छा আচ্ছা|বেশ|বুঝেছি|"
++    r"haan|hya|hyan|theek|theek ache|achha|achha achha|besh|bujhechi|"
++    # Gujarati (gu-IN) nods (Script + Romanized) — કહો excluded
++    r"હા|હાજી|હા હા|બરાબર|બરાબર છે|સારું|ઠીક|સમજાયું|"
++    r"haa|haaji|haa haa|barabar|barabar che|saaru|theek|samjayu|"
++    # Punjabi (pa-IN) nods (Script + Romanized) — ਦੱਸੋ excluded
++    r"ਹਾਂ|ਹਾਂਜੀ|ਹਾਂ ਹਾਂ|ਠੀਕ|ਠੀਕ ਹੈ|ਚੰਗਾ|ਸਮਝ ਗਿਆ|"
++    r"haan|haanji|haa haa|theek|theek hai|changa|samajh gaya"
 +    r")(?:\s+(?:"
-+    r"yes|yeah|ok|okay|sure|hmm|haan|avunu|sare|theek|alage|ji|right"
++    r"yes|yeah|ok|okay|sure|hmm|haan|avunu|sare|theek|alage|ji|right|aam|haudu|athe|ho|haa|changa"
 +    r"))*[.!,]*$",
 +    re.I,
 +)
@@ -744,10 +884,26 @@ elif ev == "transcript.partial":
 +                last_tts = (self._last_tts_text or "").strip()
 +                agent_asked_question = last_tts.rstrip().endswith("?") or any(
 +                    kw in last_tts.lower() for kw in (
-+                        "shall i", "do you want", "would you like", "is that ok",
-+                        "proceed", "confirm", "correct", "can we",
-+                        "చెప్పండి", "చెప్తారా", "కావాలా", "సరేనా", "అవునా",
-+                        "बताइए", "चाहिए", "ठीक है ना", "करूं", "पुष्टि",
++                        # English (en-IN, en-US, en-GB)
++                        "shall i", "do you want", "would you like", "is that ok", "proceed", "confirm", "correct", "can we",
++                        # Telugu (te-IN)
++                        "చెప్పండి", "చెప్తారా", "కావాలా", "సరేనా", "అవునా", "వెళ్దామా",
++                        # Hindi (hi-IN)
++                        "बताइए", "चाहिए", "ठीक है ना", "करूं", "पुष्टि", "आगे बढ़ें",
++                        # Tamil (ta-IN)
++                        "சொல்லுங்க", "வேண்டுமா", "சரியா", "தொடரலாமா", "உறுதிப்படுத்தவா", "தெரியுமா",
++                        # Kannada (kn-IN)
++                        "ಹೇಳಿ", "ಬೇಕಾ", "ಸರಿನಾ", "ಮುಂದುವರಿಯಲೇ", "ದೃಢೀಕರಿಸಿ", "ಗೊತ್ತಾ", "ಹೌದಾ",
++                        # Malayalam (ml-IN)
++                        "പറയൂ", "വേണമോ", "ശരിയാണോ", "തുടരണമോ", "ഉറപ്പാക്കണോ", "അറിയാമോ",
++                        # Marathi (mr-IN)
++                        "सांगा", "हवे का", "बरोबर का", "पुढे जाऊ का", "खात्री करा", "माहित आहे का",
++                        # Bengali (bn-IN)
++                        "বলুন", "চাই কি", "ঠিক আছে তো", "এগিয়ে যাব কি", "নিশ্চিত করবেন", "জানেন কি",
++                        # Gujarati (gu-IN)
++                        "કહો", "જોઈએ છે", "બરાબર ને", "આગળ વધું", "પુષ્ટિ કરો", "ખબર છે",
++                        # Punjabi (pa-IN)
++                        "ਦੱਸੋ", "ਚਾਹੀਦਾ", "ਠੀਕ ਹੈ ਨਾ", "ਅੱਗੇ ਵਧਾਂ", "ਪੁਸ਼ਟੀ ਕਰੋ", "ਪਤਾ ਹੈ",
 +                    )
 +                )
 +                if _BACKCHANNEL_NODS_RE.match(clean_pending) and not agent_asked_question:
@@ -840,6 +996,34 @@ Removing `_SHORT_INTERRUPT` and `_THINK_CANCEL_ACK_ONLY` requires updating all 9
 
 ---
 
+### Diff 5: [`server/services/pstn_backchannel.py`](file:///d:/voice%20agent/server/services/pstn_backchannel.py)
+
+> **CRITICAL FIX**: `pstn_backchannel.py` previously only had pools for `en-IN`, `te-IN`, and `hi-IN`. When a caller was speaking Tamil (`ta-IN`), Kannada (`kn-IN`), Malayalam (`ml-IN`), Marathi (`mr-IN`), Bengali (`bn-IN`), Gujarati (`gu-IN`), or Punjabi (`pa-IN`), `BACKCHANNEL_PHRASES.get(lang)` returned `None` and silently defaulted to `BACKCHANNEL_PHRASES["en-IN"]`. A Tamil or Bengali caller pausing mid-sentence suddenly heard the agent say *"Right. I see."* in English!
+>
+> **Fix**: Expand `BACKCHANNEL_PHRASES` with curated native out-of-band continuers for all 10 platform languages.
+
+```diff
+--- a/server/services/pstn_backchannel.py
++++ b/server/services/pstn_backchannel.py
+@@ -26,5 +26,16 @@
+ BACKCHANNEL_PHRASES: dict[str, list[str]] = {
+     "en-IN": ["Hmm.", "Mhm.", "Right.", "I see.", "Okay."],
++    "en-US": ["Hmm.", "Mhm.", "Right.", "Got it.", "Okay."],
++    "en-GB": ["Hmm.", "Mhm.", "Right.", "I see.", "Indeed."],
+     "te-IN": ["Hmm.", "Mhm.", "Aha.", "Sare.", "Avunu."],
+     "hi-IN": ["Hmm.", "Haan.", "Achha.", "Theek hai."],
++    "ta-IN": ["ஆம்.", "சரி.", "சரிங்க.", "நன்று.", "அப்படியா."],
++    "kn-IN": ["ಹೌದು.", "ಸರಿ.", "ಆಯಿತು.", "ಚೆನ್ನಾಗಿದೆ.", "ಹೌದಾ."],
++    "ml-IN": ["അതെ.", "ശരി.", "ശരിയാണ്.", "നന്ന്.", "കൊള്ളാം."],
++    "mr-IN": ["हो.", "होय.", "बरे.", "ठीक आहे.", "समजले."],
++    "bn-IN": ["হ্যাঁ.", "ঠিক আছে.", "अच्छा.", "বেশ.", "বুঝেছি."],
++    "gu-IN": ["હા.", "હાજી.", "બરાબર છે.", "સારું.", "સમજાયું."],
++    "pa-IN": ["ਹਾਂ.", "ਹਾਂਜੀ.", "ਠੀਕ ਹੈ.", "ਚੰਗਾ.", "ਸਮਝ ਗਿਆ."],
+ }
+```
+
+---
+
 ## 7. Verification & Telephony Field Test Matrix
 
 | # | Test Scenario | Caller Action During Call | Expected Result | Pass Criteria |
@@ -847,18 +1031,22 @@ Removing `_SHORT_INTERRUPT` and `_THINK_CANCEL_ACK_ONLY` requires updating all 9
 | **1** | **Conversational Nod (English)** | While agent explains an offer, say *"Yeah"* or *"Okay"*. | Agent continues speaking uninterrupted. | Playout continues smoothly; no buffer flush. |
 | **2** | **Conversational Nod (Telugu)** | While agent explains an offer, say *"అవునండి"* (*avunandi*) or *"సరే"*. | Agent continues speaking uninterrupted. | Playout continues smoothly; no buffer flush. |
 | **3** | **Conversational Nod (Hindi)** | While agent explains an offer, say *"हाँ जी"* (*haan ji*) or *"ठीक है"*. | Agent continues speaking uninterrupted. | Playout continues smoothly; no buffer flush. |
+| **3b**| **Conversational Nods (7 Other Indic Languages)** | While agent explains in Ta/Kn/Ml/Mr/Bn/Gu/Pa, say *"ஆம்"* (*aam*), *"ಹೌದು"* (*haudu*), *"അതെ"* (*athe*), *"हो"* (*ho*), *"হ্যাঁ"* (*haan*), *"હા"* (*haa*), or *"ਹਾਂ"* (*haan*). | Agent continues speaking uninterrupted in each language pack. | No barge-in triggered across any of the 10 language packs. |
 | **4a** | **No Ghost Turn (Statement)** | Agent says *"I'll send you the details."* Caller says *"Avunu"* during speech, then stays silent. | Agent finishes, transitions to `listening`, waits silently. | Does NOT respond to *"Avunu"*; pending is purged. |
-| **4b** | **Answer to Question Kept** | Agent asks *"Shall I proceed?"* Caller says *"Haan"* slightly before TTS ends. | Agent finishes, then processes *"Haan"* as a real answer. | LLM turn launches with *"Haan"*; NO dead air! |
+| **4b** | **Answer to Question Kept (En/Hi/Te)** | Agent asks *"Shall I proceed?"* Caller says *"Haan"* slightly before TTS ends. | Agent finishes, then processes *"Haan"* as a real answer. | LLM turn launches with *"Haan"*; NO dead air! |
+| **4c** | **Answer to Question Kept (Ta/Kn/Ml/Mr/Bn/Gu/Pa)** | Agent asks *"தொடரலாமா?"* (Ta) or *"ಮುಂದುವರಿಯಲೇ?"* (Kn). Caller nods affirmative (*"ஆம்"* / *"ಹೌದು"*). | Agent finishes TTS, immediately processes affirmative answer. | Question detected by language keyword; NO dead air! |
 | **5** | **Emergency Halt Command (En/Te/Hi)** | While agent is speaking, say *"Wait!"*, *"Stop!"*, *"No"*, *"ఆగండి"*, or *"नहीं"*. | Agent halts speech within 150ms. | Immediate playback clear and cancel. |
+| **5b** | **Emergency Halt Command (7 Other Indic Languages)** | While agent is speaking, say *"நில்லுங்கள்"* (Ta), *"ನಿಲ್ಲಿಸಿ"* (Kn), *"നിൽക്കൂ"* (Ml), *"थांबा"* (Mr), *"থামুন"* (Bn), *"ઊભા રહો"* (Gu), or *"ਰੁਕੋ"* (Pa). | Agent halts speech within 150ms in all 7 languages. | Immediate playback clear and cancel without hold delay. |
 | **6** | **Substantive Question Barge-In** | While agent is speaking, say *"Actually what is the fee?"* ($\ge 3$ words). | Agent halts cleanly after 300ms hold and answers the question. | Smooth transition to new LLM turn. |
 | **7** | **AEC Gate Time Latching** | Caller says *"Hello?"* loudly (RMS > 320), then pauses. Sarvam transcript arrives 550ms later. | Gate remains latched (`PSTN_AEC_VOICE_LATCH_S = 0.8s`). | `energy_below_floor` NOT tripped; barge evaluated. |
 | **8** | **High Ambient Fan Noise** | Hold phone near a running ceiling fan or road traffic. | Agent plays speech to completion without clipping. | Sarvam STT threshold `0.55` ignores steady noise. |
 | **9** | **Speakerphone Echo Shield** | Put call on loud speakerphone in an echoic room. | Agent does not cut itself off during first word. | `min_after_speak` 350ms absorbs reflection. |
-| **10**| **Thinking Phase Immunity** | Ask a question, and say *"అవును"* while the bot is generating. | Bot completes thinking and speaks the answer normally. | Generation is NOT cancelled. |
-| **11**| **Negative Correction Halt** | While agent explains wrong info, caller says *"No"* or *"కాదు"*. | Agent halts speech; caller can correct immediately. | "No" matches halt list; 1-word immediate barge. |
-| **12**| **Invitation to Speak ("చెప్పండి")** | Caller says *"చెప్పండి"* while agent pauses or speaks. | Evaluated as invitation, NOT suppressed as a backchannel nod. | Yields turn appropriately. |
+| **10**| **Thinking Phase Immunity** | Ask a question, and say *"అవును"* or *"ശരി"* while the bot is generating. | Bot completes thinking and speaks the answer normally. | Generation is NOT cancelled across any language. |
+| **11**| **Negative Correction Halt** | While agent explains wrong info, caller says *"No"*, *"కాదు"*, *"இல்லை"*, *"ಬೇಡ"*, or *"नाही"*. | Agent halts speech; caller can correct immediately. | Negation matches halt list; 1-word immediate barge. |
+| **12**| **Invitation to Speak ("చెప్పండి", "சொல்லுங்க", "ಹೇಳಿ")** | Caller says *"చెప్పండి"* or *"சொல்லுங்க"* while agent pauses or speaks. | Evaluated as invitation to speak, NOT suppressed as a backchannel nod. | Yields turn appropriately; never silenced. |
 | **13**| **Partial Self-Echo Rejection** | Agent says *"Your OTP is four three two one"*. Mic reflects text. | Incoming partial matches heard assistant text ($\ge 50\%$). | Partial dropped; zero state change or barge fire. |
 | **14**| **Soft Ducking & Unducking** | Background door closes loudly during playout; no speech follows. | Agent volume drops to 20%, then smoothly restores to 100% in 700ms. | Playout uninterrupted; no false barge. |
+| **15**| **Native Backchannel Synthesis (`pstn_backchannel.py`)** | Tamil caller pauses mid-sentence for 300ms. | Agent murmurs *"சரி."* or *"ஆம்."* in Tamil. | Never speaks English *"Right. I see."* to Indic callers! |
 
 ---
 
@@ -910,6 +1098,29 @@ Removing `_SHORT_INTERRUPT` and `_THINK_CANCEL_ACK_ONLY` requires updating all 9
 ### 8.10 Soft Pause & Resume (TTS Ducking) & Partial Self-Echo Suppression — [HIGH]
 - **Value**: Soft ducking (Pillar 7) and partial self-echo filtering (Pillar 8) transform turn-taking from a fragile binary switch into an adaptive, resilient conversational runtime matching industry state-of-the-art (LiveKit, Retell, Vapi).
 
+### 8.11 Pan-Indic 10-Language Parity & Language Pack Eradication of Blind Spots — [CRITICAL]
+- **The Blind Spot**: Previous v1.0 and v2.0 drafts only considered English, Telugu (`te-IN`), and Hindi (`hi-IN`). The platform officially supports 10 languages ([server/config/constants.py:95-108](file:///d:/voice%20agent/server/config/constants.py#L95-L108) & [server/prompts/agent_voice_rules.py:153-180](file:///d:/voice%20agent/server/prompts/agent_voice_rules.py#L153-L180)):
+  1. `te-IN` (Telugu)
+  2. `hi-IN` (Hindi)
+  3. `ta-IN` (Tamil)
+  4. `kn-IN` (Kannada)
+  5. `ml-IN` (Malayalam)
+  6. `mr-IN` (Marathi)
+  7. `bn-IN` (Bengali)
+  8. `gu-IN` (Gujarati)
+  9. `pa-IN` (Punjabi)
+  10. `en-IN` / `en-US` / `en-GB` (English)
+- **The Blast Radius**:
+  1. **Halt Failures**: Callers speaking Tamil (`நில்லுங்கள்`, `வேண்டாம்`, `இல்லை`), Kannada (`ನಿಲ್ಲಿಸಿ`, `ಬೇಡ`), Malayalam (`നിൽക്കൂ`, `വേണ്ട`), Marathi (`थांबा`, `नको`), Bengali (`থামুন`, `না`), Gujarati (`ઊભા રહો`, `ના`), or Punjabi (`ਰੁਕੋ`, `ਨਾ`) were forced to speak $\ge 2$ words and hold for 300ms. Urgent corrections like *"இல்லை"* (*illai* / No) or *"नाહી"* (*nahi*) failed to halt the agent!
+  2. **Dead Air on Questions**: When the bot asked a question in Tamil (*"தொடரலாமா?"*) or Kannada (*"ಮುಂದುವರಿಯಲೇ?"*) and the caller said *"ஆம்"* (*aam*) or *"ಹೌದು"* (*haudu*), `agent_asked_question` evaluated to `False` due to missing language keywords. The system purged the affirmative nod as an in-speech interruption, creating indefinite dead air!
+  3. **Broken Backchannel Synthesis**: In `server/services/pstn_backchannel.py`, `BACKCHANNEL_PHRASES` only contained `en-IN`, `te-IN`, and `hi-IN`. When a Tamil or Bengali caller paused mid-sentence, `BACKCHANNEL_PHRASES.get(lang)` defaulted to English (`"Right. I see."`), ruining the local persona.
+  4. **Code-Switching & Romanized Transliteration**: Indian callers frequently speak mixed English phonetics (Tanglish, Hinglish, Tenglish, Kanglish, Benglish) and Sarvam STT regularly outputs Romanized text (`nillungal`, `haudu`, `aamaam`, `theek`, `vendaam`). Regexes that only matched native scripts failed completely on Romanized transcripts.
+- **The Fix**:
+  1. **Master 10-Language Lexicons**: Unified `_HALT_COMMANDS_RE` and `_BACKCHANNEL_NODS_RE` in Pillar 1 and Diff 1 with native script and Romanized phonetics for all 10 platform languages.
+  2. **10-Language Question Keyword Detection**: Expanded `agent_asked_question` across all 10 languages so questions ending without explicit question marks retain caller affirmations.
+  3. **10-Language Backchannel Pools (Diff 5)**: Added native out-of-band continuers for all 10 languages in `pstn_backchannel.py`.
+  4. **Turn-Claiming Exclusion**: Explicitly banned invitations to speak (`చెప్పండి`, `சொல்லுங்க`, `ಹೇಳಿ`, `പറയൂ`, `सांगा`, `বলুন`, `કહો`, `ਦੱਸੋ`, `बोलिए`) from nod suppression.
+
 ---
 
 ## 9. Pre-Flight Verification Checklist & Production Sign-Off Protocol
@@ -918,12 +1129,14 @@ Before deploying these changes to staging and production PSTN trunks, the engine
 
 - [ ] **Invariant 1 (Strict Bool Return)**: `_should_commit_barge` returns only `bool` instances. Verify with `assert isinstance(self._should_commit_barge(text), bool)`.
 - [ ] **Invariant 2 (Zero NameErrors)**: Run static analysis / pytest on `pstn_voice_core.py` to confirm zero references to `_SHORT_INTERRUPT`, `_THINK_CANCEL_ACK_ONLY`, or uninitialized `short_ok`.
-- [ ] **Invariant 3 (Question Retention)**: Simulate a turn ending with `"Shall I proceed?"` followed by a pending transcript of `"Haan"`. Confirm `PENDING_KEPT_ANSWER_TO_QUESTION` is logged and the turn launches.
-- [ ] **Invariant 4 (Statement Purge)**: Simulate a turn ending with `"Our hours are 9 to 5."` followed by a pending transcript of `"Avunu"`. Confirm `PENDING_PURGED_BACKCHANNEL` is logged and `pending` is set to `None`.
+- [ ] **Invariant 3 (Question Retention across 10 Languages)**: Simulate a turn ending with question keywords in Telugu (`"సరేనా"`), Hindi (`"बताइए"`), Tamil (`"தொடரலாமா"`), Kannada (`"ಮುಂದುವರಿಯಲೇ"`), Bengali (`"বলুন"`), etc., followed by an affirmative nod. Confirm `PENDING_KEPT_ANSWER_TO_QUESTION` is logged and the turn launches.
+- [ ] **Invariant 4 (Statement Purge)**: Simulate a turn ending with `"Our hours are 9 to 5."` followed by a pending transcript of `"Avunu"` or `"ஆம்"`. Confirm `PENDING_PURGED_BACKCHANNEL` is logged and `pending` is set to `None`.
 - [ ] **Invariant 5 (AEC Latch Window)**: Simulate loud audio frame at $t=0$, quiet frames until $t=500\text{ms}$, and partial transcript arriving at $t=550\text{ms}$. Confirm barge check evaluates with `energy_below_floor` NOT tripped.
-- [ ] **Invariant 6 (Emergency Halt Words)**: Test single-word utterances: `"Wait"`, `"Stop"`, `"No"`, `"ఆగండి"`, `"కాదు"`, `"नहीं"`. Confirm immediate barge commit with `reason="halt_command"`.
-- [ ] **Invariant 7 (Telugu Diacritics)**: Test Telugu words with complex combining marks (`అవునండి`, `సరేనండి`, `వద్దండీ`). Confirm regex matches cleanly without splitting graphemes.
+- [ ] **Invariant 6 (Emergency Halt Words across 10 Languages)**: Test single-word utterances in both native script and Romanized phonetics: `"Wait"`, `"Stop"`, `"No"`, `"ఆగండి"`, `"కాదు"`, `"नहीं"`, `"நில்லுங்கள்"`, `"இல்லை"`, `"ನಿಲ್ಲಿಸಿ"`, `"ಬೇಡ"`, `"थांबा"`, `"থামুন"`, `"ઊભા રહો"`, `"ਰੁਕੋ"`. Confirm immediate barge commit with `reason="halt_command"`.
+- [ ] **Invariant 7 (Indic Diacritics Safety)**: Test words with complex combining marks (`అవునండి`, `సరేనండి`, `வద్దండీ`, `நில்லுங்கள்`, `ನಿಲ್ಲಿಸಿ`). Confirm regex `(?:\s+\S+){0,2}` matches cleanly without splitting graphemes.
 - [ ] **Invariant 8 (Audio Continuity)**: Confirm raw PCM frames are NEVER dropped in `feed_user_pcm16`. STT WebSocket stream remains 100% continuous.
+- [ ] **Invariant 9 (Turn-Claiming Phrases Excluded from Nods)**: Verify that `"చెప్పండి"`, `"சொல்லுங்க"`, `"ಹೇಳಿ"`, `"പറയൂ"`, `"सांगा"`, `"বলুন"`, `"કહો"`, `"ਦੱਸੋ"`, `"बोलिए"` are NEVER matched by `_BACKCHANNEL_NODS_RE`.
+- [ ] **Invariant 10 (Native Backchannel Synthesis)**: Call `pick_backchannel_phrase(lang)` for each of the 10 language codes. Verify that each returns a native phrase and none returns English unless language is English.
 
 ---
 
@@ -934,12 +1147,17 @@ Before deploying these changes to staging and production PSTN trunks, the engine
 | **`_should_commit_barge` Return Type** | `bool` | `(False, reason)` tuple (**Fatal Truthy Bug**) | **Strict `bool`** (safe for all callers) |
 | **AEC Energy Gate Timing** | Unconnected (ignored in commit) | 160ms quiet close (**Timing Race**) | **800ms Latched Window** via `_last_vad_voice_at` |
 | **Ghost Turn Handling** | Unconditional Launch (Hallucination) | Unconditional Purge (**Dead Air Bug**) | **Question-Aware**: Purges statements, keeps answers |
-| **Negative Halt Commands** | Had `no`, `కాదు`, `नहीं` | Dropped `no`, `కాదు`, `नहीं` (**UX Regression**) | **Restored**: Immediate 1-word halt for all negations |
+| **Platform Language Coverage** | English, Telugu, Hindi only | English, Telugu, Hindi only | **All 10 Platform Languages** (En, Te, Hi, Ta, Kn, Ml, Mr, Bn, Gu, Pa) |
+| **Romanized Code-Switching** | English only | Incomplete fragments | **Comprehensive Romanized Lexicons** (Tanglish, Hinglish, Tenglish, etc.) |
+| **Negative Halt Commands** | Had `no`, `కాదు`, `नहीं` | Dropped `no`, `కాదు`, `नहीं` (**UX Regression**) | **Restored across all 10 languages**: Immediate 1-word halt |
 | **Indic Script Regex** | `(?:\s+\w+){0,3}` (grapheme split) | `(?:\s+\w+){0,2}` (grapheme split) | **`(?:\s+\S+){0,2}`** (safe for all Indic diacritics) |
-| **"చెప్పండి" Classification** | Unhandled | Listed as backchannel nod (**Erroneous**) | **Excluded from nods** (invitation to speak) |
+| **"చెప్పండి" Classification** | Unhandled | Listed as backchannel nod (**Erroneous**) | **Excluded from nods** (turn-claiming invitation to speak) |
+| **Backchannel Synthesis (`pstn_backchannel.py`)** | En/Te/Hi only (English fallback) | Ignored / Not addressed | **Diff 5: Native pools for all 10 language packs** |
+| **Question Detection (`agent_asked_question`)**| None | En/Te/Hi only (Dead air in 7 languages) | **Pillar 3 & Diff 1: Complete 10-language keyword detection** |
 | **Symbol Migration** | Referenced `_SHORT_INTERRUPT` | Only 1 of 9 sites shown (**NameError Hazard**) | **Complete 9-Site Migration** across all methods |
 | **Sarvam STT VAD Sensitivity** | Threshold 0.3 / Min Speech 250ms | Inaccurate claim of universal None | **Threshold 0.55 / Min 300ms / Silence 600ms** calibrated |
 | **Provider Adapter (`sarvam_stt.py`)** | Passed `None` (uncalibrated fallback) | Not addressed | **Explicit Calibrated Fallback Defaults** matching `ws.py` |
 | **Soft Ducking (Pause & Resume)** | Not implemented (binary cut) | Not addressed | **Pillar 7**: Ducks TTS to 20% on VAD; restores in 700ms |
 | **Partial-Level Self-Echo** | Evaluated only at barge commit | Evaluated only at barge commit | **Pillar 8**: Early drop at partial ingress ($\ge 50\%$ overlap) |
+
 
