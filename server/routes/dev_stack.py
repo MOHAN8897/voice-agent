@@ -83,6 +83,14 @@ class ComposedVoiceActivationBody(BaseModel):
     model_config = {"populate_by_name": True}
 
 
+class ComposedVoiceDuplicateBody(BaseModel):
+    source_tier: str = Field(..., alias="sourceTier")
+    target_label: str | None = Field(None, alias="targetLabel")
+    target_tier: str | None = Field(None, alias="targetTier")
+
+    model_config = {"populate_by_name": True}
+
+
 class DevVoicePreviewBody(BaseModel):
     provider: str
     model: str | None = None
@@ -104,8 +112,18 @@ async def dev_stack_catalog(session: SessionData = Depends(require_dev_session))
     require_permission(session, "dev.stack.read")
     from server.providers.catalog_refresh import get_fresh_catalog
 
-    catalog = get_fresh_catalog()
-    telephony = await telephony_summary_async()
+    try:
+        catalog = get_fresh_catalog()
+    except Exception as exc:
+        logger.warning(f"[VOICE] Catalog fetch failed: {exc}")
+        catalog = {"providers": [], "fx_rate_inr": 94.0}
+
+    try:
+        telephony = await telephony_summary_async()
+    except Exception as exc:
+        logger.warning(f"[VOICE] Telephony summary failed: {exc}")
+        telephony = {"active_provider": "vobiz", "active_enabled": True, "active_ready": False, "providers": []}
+
     catalog["telephony"] = {
         "active_provider": telephony.get("active_provider"),
         "active_enabled": telephony.get("active_enabled"),
@@ -120,11 +138,117 @@ async def dev_stack_catalog(session: SessionData = Depends(require_dev_session))
 async def dev_composed_voice_profiles(session: SessionData = Depends(require_dev_session)):
     """Admin-only view of durable composed profile revisions and release blockers."""
     require_permission(session, "dev.stack.read")
-    from server.services.saas.voice_stack_profiles import profile_view
+    from server.services.saas.voice_stack_profiles import TIER_LABELS, profile_view
+    from server.db.connection import get_session_factory
+    from server.db.models.entities import TierAssignment
+    from sqlalchemy import select
 
     app_env = effective_app_environment()
-    profiles = [await profile_view(tier, app_env, include_internal=True) for tier in ("low", "medium", "premium")]
+    base_tiers = ["low", "medium", "premium"]
+    all_tiers: list[str] = list(base_tiers)
+
+    factory = get_session_factory()
+    if factory:
+        try:
+            async with factory() as db_session:
+                rows = await db_session.execute(
+                    select(TierAssignment.tier).where(TierAssignment.environment == app_env)
+                )
+                db_tiers = [str(r[0]) for r in rows.all()]
+                for t in db_tiers:
+                    if t not in all_tiers:
+                        all_tiers.append(t)
+        except Exception as exc:
+            logger.warning("[VOICE] Could not query db tiers: %s", exc)
+
+    profiles = []
+    for tier in all_tiers:
+        try:
+            profiles.append(await profile_view(tier, app_env, include_internal=True))
+        except Exception as exc:
+            logger.warning("[VOICE] Error loading profile for tier %s: %s", tier, exc)
+            profiles.append({
+                "tier": tier,
+                "label": TIER_LABELS.get(tier, tier.replace("_", " ").title()),
+                "profileRevision": 0,
+                "composedProfile": None,
+                "readiness": {"ready": False, "enabled": False, "blockers": [{"code": "tier_load_error", "message": str(exc)}]},
+                "retailRate": None,
+                "readOnly": False,
+            })
     return {"environment": app_env, "profiles": profiles}
+
+
+@router.post("/api/dev/stack/voice-profiles/duplicate")
+async def dev_composed_voice_profile_duplicate(
+    body: ComposedVoiceDuplicateBody,
+    session: SessionData = Depends(require_dev_session),
+):
+    require_permission(session, "dev.stack.write")
+    from server.services.saas.voice_stack_profiles import (
+        VoiceProfileError,
+        canonical_voice_tier,
+        load_profile_records,
+        profile_view,
+        save_composed_profile,
+    )
+    from server.services.saas.voice_stack_defaults import recommended_composed_profile
+    from server.db.connection import get_session_factory
+    from server.db.models.entities import TierAssignment
+    from sqlalchemy import select
+    import copy
+    import re
+
+    app_env = effective_app_environment()
+    try:
+        source_tier = canonical_voice_tier(body.source_tier)
+    except VoiceProfileError:
+        source_tier = str(body.source_tier).strip().lower()
+
+    existing_tiers: set[str] = set()
+    factory = get_session_factory()
+    if factory:
+        try:
+            async with factory() as db_session:
+                rows = await db_session.execute(
+                    select(TierAssignment.tier).where(TierAssignment.environment == app_env)
+                )
+                existing_tiers = {str(r[0]).lower() for r in rows.all()}
+        except Exception:
+            pass
+
+    target_tier = (body.target_tier or "").strip().lower()
+    if not target_tier or target_tier in existing_tiers or not re.match(r"^[a-z0-9_]{1,20}$", target_tier):
+        base_prefix = source_tier[:10].replace("-", "_")
+        idx = 1
+        candidate = f"{base_prefix}_copy_{idx}"[:20]
+        while candidate in existing_tiers:
+            idx += 1
+            candidate = f"{base_prefix}_copy_{idx}"[:20]
+        target_tier = candidate
+
+    source_record = (await load_profile_records(app_env, (source_tier,))).get(source_tier)
+    if source_record and isinstance(source_record.get("profile"), dict):
+        cloned_profile = copy.deepcopy(source_record["profile"])
+    else:
+        cloned_profile = recommended_composed_profile(source_tier)
+
+    source_label = cloned_profile.get("label") or source_tier.replace("_", " ").title()
+    target_label = (body.target_label or "").strip() or f"{source_label} (Copy)"
+    cloned_profile["label"] = target_label[:100]
+    cloned_profile["enabled"] = False
+
+    try:
+        return await save_composed_profile(
+            environment=app_env,
+            tier=target_tier,
+            expected_revision=0,
+            payload=cloned_profile,
+            actor=session.subject,
+            allow_premium=True,
+        )
+    except VoiceProfileError as exc:
+        raise _voice_profile_http_error(exc) from exc
 
 
 @router.get("/api/dev/stack/voice-profiles/{tier}/template")

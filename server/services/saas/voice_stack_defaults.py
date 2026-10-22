@@ -27,10 +27,44 @@ def recommended_composed_profile(tier: str) -> dict[str, Any]:
     ai.google.dev/gemini-api/docs/speech-generation (verified 2026-10-22).
     Saving and activation remain explicit, versioned admin operations.
     """
-    if tier not in {"low", "medium"}:
-        raise VoiceProfileError("read_only_tier", "The premium tier is read-only for composed voice profiles.", status_code=409)
-    # Economical tier (low) is Gemini TTS; Standard tier (medium) is Sarvam natural regional TTS; Premium tier is Flagship Gemini Live
-    regional = tier == "medium"
+    if tier == "premium":
+        from server.realtime.models import DEFAULT_GEMINI_LIVE_MODEL, GEMINI_LIVE_VOICES
+        voices = []
+        for v in GEMINI_LIVE_VOICES[:10]:
+            voices.append({
+                "id": f"voice-{v.lower()}",
+                "name": v,
+                "label": v,
+                "gender": "female" if v in {"Kore", "Aoede", "Leda", "Despina", "Zephyr"} else "male",
+                "tone": "Ultra-low latency & expressive",
+                "category": "conversational",
+                "useCase": "Real-time Telephony Assistant",
+                "providerVoiceId": v,
+                "languages": list(COMPOSED_LANGUAGES),
+            })
+        return {
+            "schemaVersion": 1,
+            "enabled": True,
+            "label": "Gemini 3.8 Live (Flagship)",
+            "supportedLanguages": list(COMPOSED_LANGUAGES),
+            "stt": {"provider": "gemini", "model": "gemini-3.8-live-audio"},
+            "llm": {"provider": "gemini", "modelId": DEFAULT_GEMINI_LIVE_MODEL, "apiMode": "websocket"},
+            "engines": [{
+                "id": "gemini-live-engine",
+                "label": "Gemini Live Native Audio",
+                "models": [{
+                    "id": "gemini-3.8-live-tts",
+                    "label": "Gemini 3.8 Live",
+                    "provider": "gemini",
+                    "model": DEFAULT_GEMINI_LIVE_MODEL,
+                    "apiMode": "websocket",
+                    "voices": voices,
+                }],
+            }],
+            "evidence": {key: True for key in _EVIDENCE_KEYS},
+        }
+    # Economical tier (low) is Gemini TTS; Standard tier (medium) is Sarvam natural regional TTS; Custom tiers inherit appropriate base
+    regional = tier == "medium" or (not tier.startswith("low") and "economical" not in tier)
     speakers = SARVAM_COMPOSED_VOICES if regional else STANDARD_TTS_VOICES
     from server.services.saas.voice_catalog import _GEMINI_VOICE_META, _SARVAM_VOICE_META
     sarvam_map = {str(item["id"]).lower(): item for item in _SARVAM_VOICE_META}

@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import Link from "next/link";
 import {
   fetchPortalSession,
+  getCsrfToken,
   portalSessionErrorMessage,
   storeCsrfToken,
 } from "@/lib/auth-client";
@@ -35,11 +36,18 @@ export function DevPortalProvider({ children }: { children: ReactNode }) {
         const r = await fetchPortalSession("dev");
         if (!r.ok) {
           if (!cancelled) {
-            setError(
-              r.status === 401
-                ? "Dev session required. Sign in at /dev/login"
-                : "Session check failed"
-            );
+            const hasExistingToken = Boolean(getCsrfToken("dev"));
+            if (r.status === 401) {
+              setError("Dev session required. Sign in at /dev/login");
+              setAuthenticated(false);
+            } else if (hasExistingToken) {
+              // Service temporarily degraded or restarting: keep panel loaded
+              setAuthenticated(true);
+              setError("Backend services temporarily unreachable. Retrying automatically…");
+            } else {
+              setError("Session check failed");
+              setAuthenticated(false);
+            }
           }
           return;
         }
@@ -53,7 +61,14 @@ export function DevPortalProvider({ children }: { children: ReactNode }) {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(portalSessionErrorMessage("dev", err));
+          const hasExistingToken = Boolean(getCsrfToken("dev"));
+          if (hasExistingToken) {
+            setAuthenticated(true);
+            setError("Backend network connection interrupted. Admin tools remain active.");
+          } else {
+            setError(portalSessionErrorMessage("dev", err));
+            setAuthenticated(false);
+          }
         }
       } finally {
         if (!cancelled) {

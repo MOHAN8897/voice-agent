@@ -56,7 +56,7 @@ async def saas_stack_override_for_agent(agent: dict[str, Any]) -> dict[str, Any]
     )
 
     tier = canonical_voice_tier(raw_tier)
-    if tier in {"low", "medium"}:
+    if tier != "premium":
         try:
             lang = _agent_spoken_language(agent, voice_cfg)
             environment = str(agent.get("environment") or "").strip()

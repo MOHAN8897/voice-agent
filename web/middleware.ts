@@ -43,6 +43,11 @@ async function requireSession(
   loginPath: string
 ): Promise<NextResponse | null> {
   const endpoint = "/api/auth/dev-me";
+  const hasCookie = Boolean(
+    request.cookies.get("vani_dev_session")?.value ||
+    request.headers.get("cookie")?.includes("vani_dev_session")
+  );
+
   try {
     const res = await fetch(`${API_URL}${endpoint}`, {
       headers: { cookie: request.headers.get("cookie") || "" },
@@ -54,12 +59,16 @@ async function requireSession(
       login.searchParams.set("next", request.nextUrl.pathname);
       return NextResponse.redirect(login);
     }
+    // If backend reports 5xx or server-side error but user has cookie, do not kick them out
     if (!res.ok) {
+      if (hasCookie) return null;
       const login = new URL(loginPath, request.url);
       login.searchParams.set("error", "auth_check_failed");
       return NextResponse.redirect(login);
     }
   } catch {
+    // If backend is restarting or under load but user already has session cookie, preserve session
+    if (hasCookie) return null;
     const login = new URL(loginPath, request.url);
     login.searchParams.set("error", "api_unavailable");
     return NextResponse.redirect(login);

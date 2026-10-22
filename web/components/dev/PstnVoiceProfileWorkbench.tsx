@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { DevCard } from "@/components/dev/DevCard";
 import { portalFetch, refreshPortalSession } from "@/lib/auth-client";
 
-const PROFILE_TIERS = ["low", "medium", "premium"] as const;
-type ProfileTier = (typeof PROFILE_TIERS)[number];
+type ProfileTier = string;
 
 type StageProfile = { provider: string; model: string };
 type LlmProfile = { provider: string; modelId: string; apiMode: string };
@@ -61,15 +60,32 @@ type CatalogModel = { id: string; label?: string; realtime?: boolean; api_mode?:
 type CatalogProvider = { id: string; label?: string; enabled?: boolean; configured?: boolean; models?: { stt?: CatalogModel[]; llm?: CatalogModel[]; tts?: CatalogModel[] } };
 type CatalogResponse = { providers?: CatalogProvider[] };
 
-const DEFAULT_TIER_LABELS: Record<ProfileTier, string> = {
+type TelephonyProvider = {
+  id: string;
+  name?: string;
+  enabled?: boolean;
+  ready?: boolean;
+  phone_number?: string;
+  connection_id?: string;
+  account_info?: { auth_id?: string; app_id?: string };
+};
+type TelephonyStatus = {
+  active_provider?: string;
+  active_enabled?: boolean;
+  active_ready?: boolean;
+  providers?: TelephonyProvider[];
+  enabled_providers?: string[];
+};
+
+const DEFAULT_TIER_LABELS: Record<string, string> = {
   low: "Economical Tier",
   medium: "Standard Regional Tier",
-  premium: "Premium Flagship Tier",
+  premium: "Gemini 3.8 Live (Flagship)",
 };
 
 const STT_PROVIDERS = [
   { id: "sarvam", label: "Sarvam AI (Saaras Realtime)" },
-  { id: "gemini", label: "Google Gemini (Gemini Live)" },
+  { id: "gemini", label: "Google Gemini (Gemini Live Native)" },
   { id: "deepgram", label: "Deepgram (Nova-2 Realtime)" },
   { id: "cartesia", label: "Cartesia (Ink Whisper)" },
 ];
@@ -80,6 +96,7 @@ const STT_MODELS_BY_PROVIDER: Record<string, { id: string; label: string }[]> = 
     { id: "saaras:v1", label: "saaras:v1 · Fast Streaming" },
   ],
   gemini: [
+    { id: "gemini-3.8-live-audio", label: "gemini-3.8-live-audio · Native Multimodal Realtime" },
     { id: "gemini-live", label: "gemini-live · Multimodal Bidirectional" },
     { id: "default", label: "default · Universal Speech" },
   ],
@@ -102,7 +119,8 @@ const LLM_PROVIDERS = [
 
 const LLM_MODELS_BY_PROVIDER: Record<string, { id: string; label: string; apiMode: string }[]> = {
   gemini: [
-    { id: "gemini-2.0-flash", label: "gemini-2.0-flash · Fast Reasoning (Recommended)", apiMode: "chat_completions_v1" },
+    { id: "gemini-3.8-live", label: "gemini-3.8-live · Gemini Live Multimodal WebSocket (Flagship)", apiMode: "websocket" },
+    { id: "gemini-2.0-flash", label: "gemini-2.0-flash · Fast Generative Reasoning", apiMode: "chat_completions_v1" },
     { id: "gemini-1.5-flash", label: "gemini-1.5-flash · High Throughput", apiMode: "chat_completions_v1" },
     { id: "gemini-1.5-pro", label: "gemini-1.5-pro · Deep Context", apiMode: "chat_completions_v1" },
   ],
@@ -133,6 +151,7 @@ const TTS_PROVIDERS = [
 
 const TTS_MODELS_BY_PROVIDER: Record<string, { id: string; label: string; apiMode: string }[]> = {
   gemini: [
+    { id: "gemini-3.8-live", label: "gemini-3.8-live · Gemini Live Native Audio WebSocket (Flagship)", apiMode: "websocket" },
     { id: "gemini-3.8-flash-tts", label: "gemini-3.8-flash-tts · Realtime Low-Latency WebSocket (Recommended)", apiMode: "websocket" },
     { id: "gemini-3.8-flash-lite-tts", label: "gemini-3.8-flash-lite-tts · High-Speed Streaming WebSocket", apiMode: "websocket" },
     { id: "gemini-3.1-flash-tts-preview", label: "gemini-3.1-flash-tts-preview · Preview Model WebSocket", apiMode: "websocket" },
@@ -201,12 +220,12 @@ const EMPTY_EVIDENCE: ProfileEvidence = {
 function defaultProfileForTier(tier: ProfileTier): ComposedProfile {
   const isMedium = tier === "medium";
   const isPremium = tier === "premium";
-  const sttProv = isMedium ? "sarvam" : isPremium ? "deepgram" : "sarvam";
-  const sttMdl = isMedium ? "saaras:v2" : isPremium ? "nova-2" : "saaras:v2";
+  const sttProv = isPremium ? "gemini" : "sarvam";
+  const sttMdl = isPremium ? "gemini-3.8-live-audio" : "saaras:v2";
   const llmProv = isMedium ? "sarvam" : "gemini";
-  const llmMdl = isMedium ? "sarvam-2b" : "gemini-2.0-flash";
+  const llmMdl = isMedium ? "sarvam-2b" : isPremium ? "gemini-3.8-live" : "gemini-2.0-flash";
   const ttsProv = isMedium ? "sarvam" : "gemini";
-  const ttsMdl = isMedium ? "bulbul:v3" : "gemini-3.8-flash-tts";
+  const ttsMdl = isMedium ? "bulbul:v3" : isPremium ? "gemini-3.8-live" : "gemini-3.8-flash-tts";
   const ttsApi = "websocket";
   const languages = ["te-IN", "hi-IN", "en-IN", "ta-IN", "kn-IN", "ml-IN", "mr-IN", "bn-IN", "gu-IN", "pa-IN"];
   const voices = getVoicesForTtsProvider(ttsProv, languages);
@@ -214,14 +233,14 @@ function defaultProfileForTier(tier: ProfileTier): ComposedProfile {
   return {
     schemaVersion: 1,
     enabled: true,
-    label: DEFAULT_TIER_LABELS[tier],
+    label: DEFAULT_TIER_LABELS[tier] || tier.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
     supportedLanguages: languages,
     stt: { provider: sttProv, model: sttMdl },
-    llm: { provider: llmProv, modelId: llmMdl, apiMode: "chat_completions_v1" },
+    llm: { provider: llmProv, modelId: llmMdl, apiMode: isPremium ? "websocket" : "chat_completions_v1" },
     engines: [
       {
         id: ttsProv,
-        label: ttsProv === "sarvam" ? "Sarvam Bulbul" : "Gemini TTS",
+        label: ttsProv === "sarvam" ? "Sarvam Bulbul" : isPremium ? "Gemini 3.8 Live Native Audio" : "Gemini TTS",
         models: [
           {
             id: ttsMdl,
@@ -244,7 +263,7 @@ function normalizeProfile(profile: ComposedProfile | null | undefined, tier: Pro
   return {
     schemaVersion: 1,
     enabled: profile.enabled === true,
-    label: profile.label || DEFAULT_TIER_LABELS[tier],
+    label: profile.label || DEFAULT_TIER_LABELS[tier] || tier.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
     supportedLanguages: Array.isArray(profile.supportedLanguages) && profile.supportedLanguages.length > 0
       ? [...profile.supportedLanguages]
       : fallback.supportedLanguages,
@@ -306,12 +325,48 @@ export function PstnVoiceProfileWorkbench() {
 
   // Stack duplication state
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
-  const [duplicateTargetTier, setDuplicateTargetTier] = useState<ProfileTier>("medium");
+  const [duplicateNewSlug, setDuplicateNewSlug] = useState("");
   const [duplicateLabel, setDuplicateLabel] = useState("");
+
+  // Platform & Channel Prices (INR) state
+  const [pricesSaving, setPricesSaving] = useState(false);
+  const [pricesStatus, setPricesStatus] = useState("");
+  const [pricesError, setPricesError] = useState("");
+  const [pstnLowInr, setPstnLowInr] = useState("0");
+  const [pstnMediumInr, setPstnMediumInr] = useState("0");
+  const [pstnPremiumInr, setPstnPremiumInr] = useState("0");
+  const [webInr, setWebInr] = useState("0");
+  const [numberInr, setNumberInr] = useState("0");
+  const [fxRate, setFxRate] = useState("95.64");
+  const [liveFx, setLiveFx] = useState<number | null>(null);
+
+  // Telephony Trunk State
+  const [telephony, setTelephony] = useState<TelephonyStatus | null>(null);
+  const [telephonyBusy, setTelephonyBusy] = useState(false);
+  const [telephonyMsg, setTelephonyMsg] = useState("");
+  const [telephonyError, setTelephonyError] = useState("");
+
+  // Transcription Configuration State
+  const [transcriptionMode, setTranscriptionMode] = useState<"off" | "live" | "post_call">("off");
+  const [transcriptionLiveModel, setTranscriptionLiveModel] = useState("gpt-4o-mini-transcribe");
+  const [saasPhoneRaw, setSaasPhoneRaw] = useState<Record<string, unknown> | null>(null);
+  const [transcriptionSaving, setTranscriptionSaving] = useState(false);
+  const [transcriptionStatus, setTranscriptionStatus] = useState("");
+  const [transcriptionError, setTranscriptionError] = useState("");
 
   const selectedRow = rows.find((r) => r.tier === selected);
   const isEnabled = selectedRow?.readiness.enabled === true;
   const blockers = selectedRow?.readiness.blockers ?? [];
+
+  const allDisplayTiers = useMemo(() => {
+    const list: string[] = ["low", "medium", "premium"];
+    rows.forEach((r) => {
+      if (!list.includes(r.tier)) {
+        list.push(r.tier);
+      }
+    });
+    return list;
+  }, [rows]);
 
   const loadCatalog = useCallback(async () => {
     try {
@@ -322,7 +377,7 @@ export function PstnVoiceProfileWorkbench() {
         setProviders(payload.providers);
       }
     } catch {
-      // Catalog fallback options are always statically available
+      // Non-blocking catalog fetch
     }
   }, []);
 
@@ -344,16 +399,78 @@ export function PstnVoiceProfileWorkbench() {
     }
   }, []);
 
+  const loadPrices = useCallback(async () => {
+    try {
+      const res = await portalFetch("dev", "/api/dev/admin/billing-rates");
+      if (!res.ok) return;
+      const data = await res.json();
+      const r = data.rates;
+      if (r) {
+        setPstnLowInr(String(r.pstnLowInrPerMin ?? (r.pstnLowUsdPerMin ? (r.pstnLowUsdPerMin * (r.fxRateInr || 95.64)).toFixed(2) : "0")));
+        setPstnMediumInr(String(r.pstnMediumInrPerMin ?? (r.pstnMediumUsdPerMin ? (r.pstnMediumUsdPerMin * (r.fxRateInr || 95.64)).toFixed(2) : "0")));
+        setPstnPremiumInr(String(r.pstnPremiumInrPerMin ?? (r.pstnPremiumUsdPerMin ? (r.pstnPremiumUsdPerMin * (r.fxRateInr || 95.64)).toFixed(2) : "0")));
+        setWebInr(String(r.webInrPerMin ?? (r.webUsdPerMin ? (r.webUsdPerMin * (r.fxRateInr || 95.64)).toFixed(2) : "0")));
+        setNumberInr(String(r.numberMonthlyInr ?? (r.numberMonthlyUsd ? (r.numberMonthlyUsd * (r.fxRateInr || 95.64)).toFixed(2) : "0")));
+        setFxRate(String(r.fxRateInr ?? "95.64"));
+      }
+      if (data.fx?.liveRateInr) {
+        setLiveFx(data.fx.liveRateInr);
+      }
+    } catch {
+      // Non-blocking prices fetch
+    }
+  }, []);
+
+  const loadTelephony = useCallback(async () => {
+    try {
+      const res = await portalFetch("dev", "/api/dev/telephony/status");
+      if (!res.ok) return;
+      const data = await res.json();
+      setTelephony(data);
+    } catch {
+      // Non-blocking telephony fetch
+    }
+  }, []);
+
+  const loadTranscription = useCallback(async () => {
+    try {
+      const res = await portalFetch("dev", "/api/dev/stack/saas-phone");
+      if (!res.ok) return;
+      const data = await res.json();
+      const saved = (data.saved?.stack_override || data.resolved) as Record<string, unknown> | undefined;
+      if (saved) {
+        setSaasPhoneRaw(saved);
+        if (typeof saved.transcription_mode === "string") {
+          setTranscriptionMode(saved.transcription_mode as "off" | "live" | "post_call");
+        }
+        if (typeof saved.transcription_live_model === "string") {
+          setTranscriptionLiveModel(saved.transcription_live_model);
+        }
+      }
+    } catch {
+      // Non-blocking transcription fetch
+    }
+  }, []);
+
   useEffect(() => {
     void loadProfiles();
     void loadCatalog();
-  }, [loadProfiles, loadCatalog]);
+    void loadPrices();
+    void loadTelephony();
+    void loadTranscription();
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, [loadProfiles, loadCatalog, loadPrices, loadTelephony, loadTranscription]);
 
   useEffect(() => {
     const row = rows.find((r) => r.tier === selected);
     const norm = normalizeProfile(row?.composedProfile, selected);
     setDraft(norm);
-    setTierLabelInput(row?.label || norm.label || DEFAULT_TIER_LABELS[selected]);
+    setTierLabelInput(row?.label || norm.label || DEFAULT_TIER_LABELS[selected] || selected);
     setDirty(false);
   }, [rows, selected]);
 
@@ -521,28 +638,28 @@ export function PstnVoiceProfileWorkbench() {
       const payload: ComposedProfile = {
         schemaVersion: 1,
         enabled: isEnabled,
-        label: tierLabelInput.trim() || DEFAULT_TIER_LABELS[selected],
+        label: tierLabelInput.trim() || DEFAULT_TIER_LABELS[selected] || selected,
         supportedLanguages: languages,
         stt: {
-          provider: draft.stt.provider || "sarvam",
-          model: draft.stt.model || "saaras:v2",
+          provider: draft.stt.provider || (selected === "premium" ? "gemini" : "sarvam"),
+          model: draft.stt.model || (selected === "premium" ? "gemini-3.8-live-audio" : "saaras:v2"),
         },
         llm: {
           provider: draft.llm.provider || "gemini",
-          modelId: draft.llm.modelId || "gemini-2.0-flash",
-          apiMode: draft.llm.apiMode || "chat_completions_v1",
+          modelId: draft.llm.modelId || (selected === "premium" ? "gemini-3.8-live" : "gemini-2.0-flash"),
+          apiMode: draft.llm.apiMode || (selected === "premium" ? "websocket" : "chat_completions_v1"),
         },
         engines: [
           {
             id: currentTtsProvider,
-            label: currentTtsProvider === "sarvam" ? "Sarvam Bulbul" : currentTtsProvider === "gemini" ? "Gemini TTS" : currentTtsProvider === "cartesia" ? "Cartesia Sonic" : "ElevenLabs",
+            label: currentTtsProvider === "sarvam" ? "Sarvam Bulbul" : currentTtsProvider === "gemini" ? "Gemini TTS" : currentTtsProvider === "cartesia" ? "Cartesia Sonic" : "Gnani.ai Timbre",
             models: [
               {
                 id: currentTtsModel,
                 label: currentTtsModel,
                 provider: currentTtsProvider,
                 model: currentTtsModel,
-                apiMode: currentTtsModelObj?.apiMode || (currentTtsProvider === "sarvam" ? "websocket" : "streaming_rest"),
+                apiMode: currentTtsModelObj?.apiMode || "websocket",
                 voices,
               },
             ],
@@ -566,7 +683,7 @@ export function PstnVoiceProfileWorkbench() {
       if (!response.ok) throw new Error(await responseError(response));
       await response.json().catch(() => null);
       await loadProfiles(false);
-      setStatus(`Configuration saved for ${tierLabelInput || DEFAULT_TIER_LABELS[selected]}. Applied globally.`);
+      setStatus(`Configuration saved for ${tierLabelInput || DEFAULT_TIER_LABELS[selected] || selected}. Applied globally.`);
       setDirty(false);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not save tier configuration.");
@@ -598,8 +715,8 @@ export function PstnVoiceProfileWorkbench() {
       await loadProfiles(false);
       setStatus(
         newEnabledState
-          ? `${tierLabelInput || DEFAULT_TIER_LABELS[selected]} is now ENABLED for all tenants.`
-          : `${tierLabelInput || DEFAULT_TIER_LABELS[selected]} is now DISABLED and hidden from tenants.`
+          ? `${tierLabelInput || DEFAULT_TIER_LABELS[selected] || selected} is now ENABLED for all tenants.`
+          : `${tierLabelInput || DEFAULT_TIER_LABELS[selected] || selected} is now DISABLED and hidden from tenants.`
       );
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not update tier activation.");
@@ -662,46 +779,149 @@ export function PstnVoiceProfileWorkbench() {
   }, [currentTtsProvider, currentTtsModel, draft.supportedLanguages, playingVoiceId]);
 
   function handleOpenDuplicateModal() {
-    const nextTarget = selected === "low" ? "medium" : "low";
-    setDuplicateTargetTier(nextTarget);
-    setDuplicateLabel(`${tierLabelInput || DEFAULT_TIER_LABELS[selected]} (Duplicated Stack)`);
+    const basePrefix = selected.slice(0, 10).replace(/[^a-z0-9_]/g, "_");
+    const existingTiers = new Set(rows.map((r) => r.tier));
+    let idx = 1;
+    while (existingTiers.has(`${basePrefix}_copy_${idx}`)) {
+      idx++;
+    }
+    const defaultSlug = `${basePrefix}_copy_${idx}`.slice(0, 20);
+    const sourceName = tierLabelInput || DEFAULT_TIER_LABELS[selected] || selected;
+    setDuplicateNewSlug(defaultSlug);
+    setDuplicateLabel(`${sourceName} (Copy ${idx})`);
     setShowDuplicateModal(true);
   }
 
   async function handleConfirmDuplicate() {
     if (busy) return;
+    const slug = duplicateNewSlug.trim().toLowerCase().replace(/[^a-z0-9_]/g, "_").slice(0, 20);
+    if (!slug) {
+      setError("Please enter a valid identifier for the duplicated stack (lowercase letters, numbers, and underscores).");
+      return;
+    }
     setBusy(true);
     setError("");
     setStatus("");
     try {
-      const targetRow = rows.find((r) => r.tier === duplicateTargetTier);
-      const expectedRev = targetRow?.profileRevision !== null && targetRow?.profileRevision !== undefined
-        ? targetRow.profileRevision
-        : 0;
-
-      const duplicatedPayload = {
-        ...JSON.parse(JSON.stringify(draft)),
-        label: duplicateLabel.trim() || `${tierLabelInput} (Duplicated Stack)`,
-      };
-
-      const response = await portalFetch("dev", `/api/dev/stack/voice-profiles/${duplicateTargetTier}`, {
-        method: "PUT",
+      const response = await portalFetch("dev", "/api/dev/stack/voice-profiles/duplicate", {
+        method: "POST",
         body: JSON.stringify({
-          expectedRevision: expectedRev,
-          composedProfile: duplicatedPayload,
+          sourceTier: selected,
+          targetTier: slug,
+          targetLabel: duplicateLabel.trim() || undefined,
         }),
       });
 
       if (!response.ok) throw new Error(await responseError(response));
-      await response.json().catch(() => null);
+      const data = await response.json();
+      const createdTier = data.tier || slug;
       await loadProfiles(false);
-      setSelected(duplicateTargetTier);
+      setSelected(createdTier);
       setShowDuplicateModal(false);
-      setStatus(`Successfully duplicated stack to ${duplicateLabel}! Switched to ${DEFAULT_TIER_LABELS[duplicateTargetTier]}.`);
+      setStatus(`Successfully created new duplicated stack "${duplicateLabel || createdTier}" (${createdTier})! Selected and ready for configuration.`);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not duplicate tier stack.");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handleSavePrices() {
+    if (pricesSaving) return;
+    setPricesSaving(true);
+    setPricesError("");
+    setPricesStatus("");
+    try {
+      const payload = {
+        rateCurrency: "INR",
+        pstnLowInrPerMin: Number(pstnLowInr) || 0,
+        pstnMediumInrPerMin: Number(pstnMediumInr) || 0,
+        pstnPremiumInrPerMin: Number(pstnPremiumInr) || 0,
+        webInrPerMin: Number(webInr) || 0,
+        didMonthlyInr: Number(numberInr) || 0,
+        fxRateInr: Number(fxRate) || 95.64,
+        reason: "Updated Platform & Channel Prices (INR) from Stacks & Tiers workbench",
+      };
+      const res = await portalFetch("dev", "/api/dev/admin/billing-rates", {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error(await responseError(res));
+      setPricesStatus("Platform & Channel Prices (INR) saved successfully. Applied globally across all tenants and billing calculations.");
+      await loadProfiles(false);
+    } catch (err) {
+      setPricesError(err instanceof Error ? err.message : "Failed to save prices.");
+    } finally {
+      setPricesSaving(false);
+    }
+  }
+
+  const switchTelephony = async (providerId: string) => {
+    if (telephonyBusy || telephony?.active_provider === providerId) return;
+    setTelephonyBusy(true);
+    setTelephonyMsg("");
+    setTelephonyError("");
+    try {
+      const r = await portalFetch("dev", "/api/dev/telephony/provider", {
+        method: "PATCH",
+        body: JSON.stringify({ provider: providerId }),
+      });
+      if (!r.ok) {
+        setTelephonyError(`Failed to switch provider (${r.status})`);
+        return;
+      }
+      await loadTelephony();
+      setTelephonyMsg(`Active telephony trunk switched to ${providerId.toUpperCase()}. Direct routing updated.`);
+    } catch (e) {
+      setTelephonyError(e instanceof Error ? e.message : "Failed to switch provider");
+    } finally {
+      setTelephonyBusy(false);
+    }
+  };
+
+  const testHandshake = async () => {
+    setTelephonyBusy(true);
+    setTelephonyMsg("Testing carrier handshake…");
+    setTelephonyError("");
+    try {
+      const r = await portalFetch("dev", "/api/dev/telephony/handshake", { method: "POST" });
+      const j = await r.json();
+      if (j.ok) {
+        setTelephonyMsg(`✓ Handshake OK (${telephony?.active_provider?.toUpperCase()}): Connected to carrier trunk`);
+      } else {
+        setTelephonyError(`⚠ Handshake warning: ${j.error || JSON.stringify(j)}`);
+      }
+    } catch (e) {
+      setTelephonyError(e instanceof Error ? e.message : "Handshake failed");
+    } finally {
+      setTelephonyBusy(false);
+    }
+  };
+
+  async function handleSaveTranscription() {
+    if (transcriptionSaving) return;
+    setTranscriptionSaving(true);
+    setTranscriptionStatus("");
+    setTranscriptionError("");
+    try {
+      const currentOverride: Record<string, unknown> = saasPhoneRaw ? { ...saasPhoneRaw } : { pipeline: "realtime_voice", language: "te-IN" };
+      currentOverride.transcription_mode = transcriptionMode;
+      currentOverride.transcription_live_model = transcriptionLiveModel;
+
+      const res = await portalFetch("dev", "/api/dev/stack/saas-phone", {
+        method: "PUT",
+        body: JSON.stringify({
+          language: String(currentOverride.language || "te-IN"),
+          stack_override: currentOverride,
+        }),
+      });
+      if (!res.ok) throw new Error(await responseError(res));
+      setTranscriptionStatus("Transcription configuration saved and applied globally.");
+      await loadTranscription();
+    } catch (err) {
+      setTranscriptionError(err instanceof Error ? err.message : "Failed to save transcription.");
+    } finally {
+      setTranscriptionSaving(false);
     }
   }
 
@@ -718,7 +938,7 @@ export function PstnVoiceProfileWorkbench() {
           </h2>
           <p className="mt-1 max-w-3xl text-sm text-text-muted">
             Configure providers for Speech-to-Text (STT), Intelligence (LLM), and Speech Synthesis (TTS) for each tier.
-            Enable or disable tiers and customize their display names. Configurations apply globally to all tenants.
+            Manage platform prices in INR, configure telephony trunks, and caller transcription settings in one unified workbench.
           </p>
         </div>
         <span className="rounded-full border border-surface-border-subtle bg-surface-raised px-3 py-1.5 font-mono text-xs text-text-muted">
@@ -743,11 +963,11 @@ export function PstnVoiceProfileWorkbench() {
 
       {/* Tier Selector Tabs */}
       <div className="flex flex-wrap gap-3" role="group" aria-label="Select voice stack tier">
-        {PROFILE_TIERS.map((tier) => {
+        {allDisplayTiers.map((tier) => {
           const row = rows.find((r) => r.tier === tier);
           const active = selected === tier;
           const tierEnabled = row?.readiness?.enabled === true;
-          const label = row?.label || DEFAULT_TIER_LABELS[tier];
+          const label = row?.label || DEFAULT_TIER_LABELS[tier] || tier.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
           return (
             <button
@@ -778,11 +998,11 @@ export function PstnVoiceProfileWorkbench() {
                 <span className={`text-[11px] font-medium ${tierEnabled ? "text-emerald-400" : "text-text-muted"}`}>
                   {tierEnabled ? "Active / Enabled" : "Disabled"}
                 </span>
-                {row?.retailRate?.inrPaisePerMin && (
+                {row?.retailRate?.inrPaisePerMin ? (
                   <span className="font-mono text-[11px] text-text-subtle">
                     · ₹{(row.retailRate.inrPaisePerMin / 100).toFixed(2)}/min
                   </span>
-                )}
+                ) : null}
               </div>
             </button>
           );
@@ -791,10 +1011,10 @@ export function PstnVoiceProfileWorkbench() {
 
       {/* Selected Tier Management Panel */}
       <DevCard
-        title={`${tierLabelInput || DEFAULT_TIER_LABELS[selected]} Configuration`}
+        title={`${tierLabelInput || DEFAULT_TIER_LABELS[selected] || selected} Configuration`}
         description="Select the provider and model for STT, LLM, and TTS. Changes apply to all new tenant calls in this tier."
       >
-        {/* Tier Controls Bar (Name + Enable/Disable Toggle + Rate Info) */}
+        {/* Tier Controls Bar (Name + Enable/Disable Toggle + Duplicate Stack) */}
         <div className="rounded-xl border border-surface-border bg-surface-raised/50 p-4 mb-6">
           <div className="grid gap-4 md:grid-cols-3 items-center">
             {/* Custom Name */}
@@ -806,7 +1026,7 @@ export function PstnVoiceProfileWorkbench() {
                 type="text"
                 value={tierLabelInput}
                 onChange={(e) => handleTierLabelChange(e.target.value)}
-                placeholder={DEFAULT_TIER_LABELS[selected]}
+                placeholder={DEFAULT_TIER_LABELS[selected] || selected}
                 className="w-full rounded-xl border border-surface-border bg-surface-panel px-3 py-2 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
               />
             </div>
@@ -833,7 +1053,7 @@ export function PstnVoiceProfileWorkbench() {
               </div>
             </div>
 
-            {/* Duplicate Stack Button & Action */}
+            {/* Duplicate Stack Button */}
             <div className="flex flex-col gap-1.5 md:items-end">
               <span className="text-xs font-medium text-text-muted">Stack Replication</span>
               <button
@@ -842,11 +1062,38 @@ export function PstnVoiceProfileWorkbench() {
                 onClick={handleOpenDuplicateModal}
                 className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-surface-border bg-surface-card px-3 py-1.5 text-xs font-semibold text-text hover:border-surface-border-subtle hover:bg-surface-raised transition-colors shadow-sm"
               >
-                <span>📋 Duplicate Stack</span>
+                <span>📋 Duplicate Stack as New Tier</span>
               </button>
             </div>
           </div>
         </div>
+
+        {/* Gemini 3.8 Live (Flagship) Native Architecture Callout */}
+        {selected === "premium" && (
+          <div className="rounded-xl border border-indigo-500/30 bg-indigo-500/10 p-4 mb-6 text-sm text-indigo-100">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-lg">⚡</span>
+              <h4 className="font-semibold text-indigo-200">Gemini 3.8 Live (Flagship) Native Realtime Architecture</h4>
+            </div>
+            <p className="text-xs text-indigo-200/90 leading-relaxed mb-3">
+              Gemini 3.8 Live is our flagship unified bidirectional multimodal speech agent. Unlike modular composed tiers, Speech-to-Text (STT), reasoning intelligence (LLM), and speech generation (TTS) operate end-to-end within a single ultra-low-latency WebSocket connection (<code className="font-mono bg-indigo-950/60 px-1 py-0.5 rounded text-indigo-300">server/realtime/</code>).
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2 text-xs">
+              <div className="rounded-lg bg-indigo-950/50 border border-indigo-500/20 p-3">
+                <span className="font-semibold text-indigo-300 block mb-1">🧠 Direct In-Session Context (No Dynamic Caching)</span>
+                <p className="text-indigo-200/80 text-[11px] leading-relaxed">
+                  The 3.8 Live session retains dialogue memory organically inside the open carrier stream. Server-side dynamic memory caching—which is utilized to bridge intermediate STT and LLM turns in the Economical and Standard composed tiers—is completely bypassed, minimizing turn latency and eliminating token re-injection overhead.
+                </p>
+              </div>
+              <div className="rounded-lg bg-indigo-950/50 border border-indigo-500/20 p-3">
+                <span className="font-semibold text-indigo-300 block mb-1">📞 Zero-Hangup PSTN Trunk Alignment</span>
+                <p className="text-indigo-200/80 text-[11px] leading-relaxed">
+                  Pre-buffers audio greetings upon carrier media readiness before database call record finalization to eliminate answer-race hangups. Bidirectional turn-taking is guarded with acoustic echo suppression and a 350ms speech onset threshold.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* 3 Pipeline Component Dropdowns */}
         <div className="grid gap-6 md:grid-cols-3">
@@ -870,8 +1117,8 @@ export function PstnVoiceProfileWorkbench() {
                 <select
                   value={draft.stt.provider}
                   onChange={(e) => handleSttProviderChange(e.target.value)}
-                  disabled={busy}
-                  className="w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
+                  disabled={busy || selected === "premium"}
+                  className="w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent-primary/40 disabled:opacity-75"
                 >
                   {availableSttProviders.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -888,8 +1135,8 @@ export function PstnVoiceProfileWorkbench() {
                 <select
                   value={draft.stt.model}
                   onChange={(e) => handleSttModelChange(e.target.value)}
-                  disabled={busy}
-                  className="w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent-primary/40 font-mono text-xs"
+                  disabled={busy || selected === "premium"}
+                  className="w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent-primary/40 font-mono text-xs disabled:opacity-75"
                 >
                   {currentSttModels.map((m) => (
                     <option key={m.id} value={m.id}>
@@ -901,11 +1148,11 @@ export function PstnVoiceProfileWorkbench() {
             </div>
 
             <p className="text-[11px] text-text-subtle">
-              Low-latency streaming speech recognition configured for real-time PSTN telephony.
+              Streaming audio chunk recognition over low-latency WebSockets. Default fallback routes to Sarvam Saaras Indian Multilingual.
             </p>
           </div>
 
-          {/* 2. Reasoning & Intelligence (LLM) */}
+          {/* 2. Intelligence / LLM */}
           <div className="rounded-xl border border-surface-border bg-surface-card p-4 space-y-4">
             <div className="flex items-center justify-between border-b border-surface-border-subtle pb-3">
               <div className="flex items-center gap-2">
@@ -914,7 +1161,7 @@ export function PstnVoiceProfileWorkbench() {
                 </span>
                 <h3 className="text-sm font-semibold text-text">Intelligence (LLM)</h3>
               </div>
-              <span className="text-[10px] font-mono text-text-subtle uppercase">Generation</span>
+              <span className="text-[10px] font-mono text-text-subtle uppercase">Reasoning</span>
             </div>
 
             <div className="space-y-3">
@@ -925,8 +1172,8 @@ export function PstnVoiceProfileWorkbench() {
                 <select
                   value={draft.llm.provider}
                   onChange={(e) => handleLlmProviderChange(e.target.value)}
-                  disabled={busy}
-                  className="w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
+                  disabled={busy || selected === "premium"}
+                  className="w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent-primary/40 disabled:opacity-75"
                 >
                   {availableLlmProviders.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -943,8 +1190,8 @@ export function PstnVoiceProfileWorkbench() {
                 <select
                   value={draft.llm.modelId}
                   onChange={(e) => handleLlmModelChange(e.target.value)}
-                  disabled={busy}
-                  className="w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent-primary/40 font-mono text-xs"
+                  disabled={busy || selected === "premium"}
+                  className="w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent-primary/40 font-mono text-xs disabled:opacity-75"
                 >
                   {currentLlmModels.map((m) => (
                     <option key={m.id} value={m.id}>
@@ -956,7 +1203,7 @@ export function PstnVoiceProfileWorkbench() {
             </div>
 
             <p className="text-[11px] text-text-subtle">
-              Powers conversational reasoning, system instructions, and tool calling with streaming tokens.
+              System instructions, dynamic persona rules, and dialogue turns are executed on this model.
             </p>
           </div>
 
@@ -980,8 +1227,8 @@ export function PstnVoiceProfileWorkbench() {
                 <select
                   value={currentTtsProvider}
                   onChange={(e) => handleTtsProviderChange(e.target.value)}
-                  disabled={busy}
-                  className="w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
+                  disabled={busy || selected === "premium"}
+                  className="w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent-primary/40 disabled:opacity-75"
                 >
                   {availableTtsProviders.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -998,8 +1245,8 @@ export function PstnVoiceProfileWorkbench() {
                 <select
                   value={currentTtsModel}
                   onChange={(e) => handleTtsModelChange(e.target.value)}
-                  disabled={busy}
-                  className="w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent-primary/40 font-mono text-xs"
+                  disabled={busy || selected === "premium"}
+                  className="w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent-primary/40 font-mono text-xs disabled:opacity-75"
                 >
                   {currentTtsModels.map((m) => (
                     <option key={m.id} value={m.id}>
@@ -1031,7 +1278,7 @@ export function PstnVoiceProfileWorkbench() {
             })()}
 
             <p className="text-[11px] text-text-subtle">
-              Curated voice personas (Conversational & Promotional) are automatically bound to this speech engine. All speech options stream over low-latency WebSockets.
+              Curated voice personas are automatically bound to this speech engine. All speech options stream over low-latency WebSockets.
             </p>
           </div>
         </div>
@@ -1158,7 +1405,7 @@ export function PstnVoiceProfileWorkbench() {
               onClick={() => {
                 const def = defaultProfileForTier(selected);
                 setDraft(def);
-                setTierLabelInput(DEFAULT_TIER_LABELS[selected]);
+                setTierLabelInput(DEFAULT_TIER_LABELS[selected] || selected);
                 setDirty(true);
               }}
             >
@@ -1168,41 +1415,441 @@ export function PstnVoiceProfileWorkbench() {
         </div>
       </DevCard>
 
+      {/* Platform & Channel Prices (INR) Card */}
+      <DevCard
+        title="Platform & Channel Prices (INR)"
+        description="Centralized pricing management for call minutes, channels, and number DID rental in Indian Rupees (INR). Applied globally to tenant balance deduction and billing calculations."
+      >
+        {pricesError && (
+          <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-200">
+            {pricesError}
+          </div>
+        )}
+        {pricesStatus && (
+          <div className="mb-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-300">
+            {pricesStatus}
+          </div>
+        )}
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Low Tier Rate */}
+          <div className="rounded-xl border border-surface-border bg-surface-card p-4 space-y-1.5">
+            <label className="block text-xs font-semibold text-text">
+              Economical Tier (Low) Rate
+            </label>
+            <p className="text-[11px] text-text-muted">Direct PSTN calling per minute in ₹ (paise)</p>
+            <div className="relative mt-1">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-xs text-text-muted">₹</span>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={pstnLowInr}
+                onChange={(e) => setPstnLowInr(e.target.value)}
+                className="w-full rounded-lg border border-surface-border bg-surface-raised pl-8 pr-3 py-2 text-sm text-text font-mono focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
+              />
+            </div>
+          </div>
+
+          {/* Medium Tier Rate */}
+          <div className="rounded-xl border border-surface-border bg-surface-card p-4 space-y-1.5">
+            <label className="block text-xs font-semibold text-text">
+              Standard Regional Tier (Medium) Rate
+            </label>
+            <p className="text-[11px] text-text-muted">Direct PSTN calling per minute in ₹ (paise)</p>
+            <div className="relative mt-1">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-xs text-text-muted">₹</span>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={pstnMediumInr}
+                onChange={(e) => setPstnMediumInr(e.target.value)}
+                className="w-full rounded-lg border border-surface-border bg-surface-raised pl-8 pr-3 py-2 text-sm text-text font-mono focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
+              />
+            </div>
+          </div>
+
+          {/* Premium Tier Rate */}
+          <div className="rounded-xl border border-surface-border bg-surface-card p-4 space-y-1.5">
+            <label className="block text-xs font-semibold text-text">
+              Gemini 3.8 Live (Premium) Rate
+            </label>
+            <p className="text-[11px] text-text-muted">Flagship native live calling per minute in ₹</p>
+            <div className="relative mt-1">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-xs text-text-muted">₹</span>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={pstnPremiumInr}
+                onChange={(e) => setPstnPremiumInr(e.target.value)}
+                className="w-full rounded-lg border border-surface-border bg-surface-raised pl-8 pr-3 py-2 text-sm text-text font-mono focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
+              />
+            </div>
+          </div>
+
+          {/* Web Calling Rate */}
+          <div className="rounded-xl border border-surface-border bg-surface-card p-4 space-y-1.5">
+            <label className="block text-xs font-semibold text-text">
+              Web Agent Calling Rate
+            </label>
+            <p className="text-[11px] text-text-muted">Browser microphone agent calling per minute in ₹</p>
+            <div className="relative mt-1">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-xs text-text-muted">₹</span>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={webInr}
+                onChange={(e) => setWebInr(e.target.value)}
+                className="w-full rounded-lg border border-surface-border bg-surface-raised pl-8 pr-3 py-2 text-sm text-text font-mono focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
+              />
+            </div>
+          </div>
+
+          {/* Phone DID Rental Rate */}
+          <div className="rounded-xl border border-surface-border bg-surface-card p-4 space-y-1.5">
+            <label className="block text-xs font-semibold text-text">
+              DID Phone Number Rental
+            </label>
+            <p className="text-[11px] text-text-muted">Monthly leased virtual carrier phone number in ₹</p>
+            <div className="relative mt-1">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-xs text-text-muted">₹</span>
+              <input
+                type="number"
+                step="1"
+                min="0"
+                value={numberInr}
+                onChange={(e) => setNumberInr(e.target.value)}
+                className="w-full rounded-lg border border-surface-border bg-surface-raised pl-8 pr-3 py-2 text-sm text-text font-mono focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
+              />
+            </div>
+          </div>
+
+          {/* FX Exchange Rate */}
+          <div className="rounded-xl border border-surface-border bg-surface-card p-4 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-semibold text-text">USD → INR FX Rate</label>
+              {liveFx ? (
+                <span className="text-[10px] font-mono text-emerald-400">
+                  Live: ₹{liveFx.toFixed(2)}
+                </span>
+              ) : null}
+            </div>
+            <p className="text-[11px] text-text-muted">Platform charge FX rate (rupees per USD)</p>
+            <div className="relative mt-1">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-xs text-text-muted">₹</span>
+              <input
+                type="number"
+                step="0.01"
+                min="50"
+                value={fxRate}
+                onChange={(e) => setFxRate(e.target.value)}
+                className="w-full rounded-lg border border-surface-border bg-surface-raised pl-8 pr-3 py-2 text-sm text-text font-mono focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 pt-4 border-t border-border flex items-center justify-between">
+          <p className="text-xs text-text-subtle">
+            All entered rates apply immediately to platform calls and wallet balance calculations.
+          </p>
+          <Button
+            type="button"
+            disabled={pricesSaving}
+            onClick={() => void handleSavePrices()}
+            className="px-5 py-2.5"
+          >
+            {pricesSaving ? "Saving Prices…" : "Save Platform Prices"}
+          </Button>
+        </div>
+      </DevCard>
+
+      {/* Telephony Infrastructure & PSTN Calling Trunk Card */}
+      <DevCard
+        title="Telephony Infrastructure & PSTN Calling Trunk"
+        description="Select and manage wholesale carrier trunks for inbound and outbound calls, DID provisioning, and bidirectional audio streaming."
+      >
+        {telephonyError && (
+          <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-200">
+            {telephonyError}
+          </div>
+        )}
+        {telephonyMsg && (
+          <div className="mb-4 rounded-xl border border-accent/30 bg-accent/10 p-3 text-xs font-mono text-accent">
+            {telephonyMsg}
+          </div>
+        )}
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          {/* Telnyx Trunk Card */}
+          {(() => {
+            const telnyxSt = telephony?.providers?.find((p) => p.id === "telnyx");
+            const isTelnyxActive = (telephony?.active_provider || "vobiz") === "telnyx";
+            const isReady = Boolean(telnyxSt?.ready);
+            return (
+              <div
+                className={`rounded-xl border p-4 text-left transition-all ${
+                  isTelnyxActive
+                    ? "border-accent bg-accent/5 ring-1 ring-accent/30"
+                    : "border-border bg-surface-card hover:border-accent/40"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-text">Telnyx PSTN Trunk</p>
+                  <span
+                    className={`text-[10px] font-mono px-2 py-0.5 rounded font-semibold ${
+                      isReady ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-400"
+                    }`}
+                  >
+                    {isReady ? "✓ Ready" : "⚠ Incomplete"}
+                  </span>
+                </div>
+                <p className="text-xs text-text-muted mt-1">
+                  Call Control v2 · 8 kHz µ-law · WebSocket media streaming
+                </p>
+                <div className="mt-3 space-y-1 font-mono text-[11px] text-text-subtle">
+                  <div>Caller ID: {telnyxSt?.phone_number || "Auto"}</div>
+                  <div>Connection ID: {telnyxSt?.connection_id || "Configured"}</div>
+                  <div>Webhook: /api/telnyx/webhook</div>
+                  <div>Stream: /ws/telnyx-stream</div>
+                </div>
+                <div className="mt-4">
+                  <Button
+                    type="button"
+                    variant={isTelnyxActive ? "primary" : "secondary"}
+                    disabled={isTelnyxActive || telephonyBusy}
+                    onClick={() => void switchTelephony("telnyx")}
+                    className="w-full text-xs"
+                  >
+                    {isTelnyxActive ? "Active Trunk" : "Switch to Telnyx"}
+                  </Button>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Vobiz Trunk Card */}
+          {(() => {
+            const vobizSt = telephony?.providers?.find((p) => p.id === "vobiz");
+            const isVobizActive = (telephony?.active_provider || "vobiz") === "vobiz";
+            const isReady = Boolean(vobizSt?.ready);
+            return (
+              <div
+                className={`rounded-xl border p-4 text-left transition-all ${
+                  isVobizActive
+                    ? "border-accent bg-accent/5 ring-1 ring-accent/30"
+                    : "border-border bg-surface-card hover:border-accent/40"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-text">Vobiz Telephony (Primary Trunk)</p>
+                  <span
+                    className={`text-[10px] font-mono px-2 py-0.5 rounded font-semibold ${
+                      isReady ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-400"
+                    }`}
+                  >
+                    {isReady ? "✓ Ready" : "⚠ Incomplete"}
+                  </span>
+                </div>
+                <p className="text-xs text-text-muted mt-1">
+                  Voice XML + Bidirectional L16/µ-law WebSocket stream
+                </p>
+                <div className="mt-3 space-y-1 font-mono text-[11px] text-text-subtle">
+                  <div>Auth ID: {vobizSt?.account_info?.auth_id || "MA_LX2CKOU1"}</div>
+                  <div>App ID: {vobizSt?.account_info?.app_id || "551682"}</div>
+                  <div>Answer URL: /api/vobiz/answer</div>
+                  <div>Stream: /ws/vobiz-stream</div>
+                </div>
+                <div className="mt-4">
+                  <Button
+                    type="button"
+                    variant={isVobizActive ? "primary" : "secondary"}
+                    disabled={isVobizActive || telephonyBusy}
+                    onClick={() => void switchTelephony("vobiz")}
+                    className="w-full text-xs"
+                  >
+                    {isVobizActive ? "Active Trunk" : "Switch to Vobiz"}
+                  </Button>
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+
+        <div className="mt-6 pt-4 border-t border-border flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={telephonyBusy}
+              onClick={() => void testHandshake()}
+              className="text-xs"
+            >
+              Test Live Handshake
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={telephonyBusy}
+              onClick={() => void loadTelephony()}
+              className="text-xs"
+            >
+              Refresh Trunk Status
+            </Button>
+          </div>
+          <span className="font-mono text-xs text-text-subtle">
+            Trunk controls are isolated to platform infrastructure.
+          </span>
+        </div>
+      </DevCard>
+
+      {/* Transcription Mode & Caller Transcripts Card */}
+      <DevCard
+        title="Transcription Mode & Caller Transcripts"
+        description="Choose when and how caller speech is transcribed into text records during PSTN telephone conversations."
+      >
+        {transcriptionError && (
+          <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-200">
+            {transcriptionError}
+          </div>
+        )}
+        {transcriptionStatus && (
+          <div className="mb-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-300">
+            {transcriptionStatus}
+          </div>
+        )}
+
+        <div className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-3">
+            {[
+              {
+                id: "off" as const,
+                title: "Off",
+                detail: "No caller transcripts recorded. Reduces processing overhead for high-throughput calls.",
+              },
+              {
+                id: "live" as const,
+                title: "Live transcription",
+                detail: "Caller speech transcribed in real time during the call using the selected recognizer below.",
+              },
+              {
+                id: "post_call" as const,
+                title: "Post-call — Gemini 3.5 Transcribe",
+                detail: "~$0.005/min batch processed from recording after call hangs up.",
+              },
+            ].map((opt) => (
+              <label
+                key={opt.id}
+                className={`flex flex-col rounded-xl border p-4 cursor-pointer transition-all ${
+                  transcriptionMode === opt.id
+                    ? "border-accent-primary bg-accent-dim shadow-sm"
+                    : "border-surface-border bg-surface-card hover:bg-surface-raised/40"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="workbenchTranscriptionMode"
+                    checked={transcriptionMode === opt.id}
+                    onChange={() => setTranscriptionMode(opt.id)}
+                    className="accent-accent-primary"
+                  />
+                  <span className="font-semibold text-xs text-text">{opt.title}</span>
+                </div>
+                <p className="mt-2 text-xs text-text-muted leading-relaxed">{opt.detail}</p>
+              </label>
+            ))}
+          </div>
+
+          {transcriptionMode === "live" && (
+            <div className="mt-4 rounded-xl border border-surface-border bg-surface-raised/40 p-4 space-y-2">
+              <label className="block text-xs font-semibold text-text">
+                Live Transcription Recognizer Model
+              </label>
+              <select
+                value={transcriptionLiveModel}
+                onChange={(e) => setTranscriptionLiveModel(e.target.value)}
+                className="w-full sm:max-w-md rounded-xl border border-surface-border bg-surface-panel px-3 py-2 text-xs text-text font-mono focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
+              >
+                <option value="gpt-4o-mini-transcribe">GPT-4o Mini Transcribe · ~$0.003/min</option>
+                <option value="gpt-transcribe">GPT-Transcribe · ~$0.0045/min</option>
+                <option value="saaras:v3-realtime">Sarvam Saaras Realtime · ~₹0.50/min</option>
+                <option value="gemini-native">Gemini Native · In-session tokens</option>
+              </select>
+              <p className="text-[11px] text-text-subtle">
+                The recognizer receives the inbound caller audio stream and writes live speech transcripts to the database.
+              </p>
+            </div>
+          )}
+
+          <div className="mt-6 pt-4 border-t border-border flex items-center justify-between">
+            <span className="text-xs text-text-subtle">
+              Applies globally to new inbound and outbound PSTN calls.
+            </span>
+            <Button
+              type="button"
+              disabled={transcriptionSaving}
+              onClick={() => void handleSaveTranscription()}
+              className="px-5 py-2.5"
+            >
+              {transcriptionSaving ? "Saving…" : "Save Transcription Settings"}
+            </Button>
+          </div>
+        </div>
+      </DevCard>
+
       {/* Duplicate Stack Modal */}
       {showDuplicateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="w-full max-w-md rounded-2xl border border-surface-border bg-surface-card p-6 shadow-2xl space-y-4">
-            <h3 className="text-base font-semibold text-text">Duplicate Voice Stack</h3>
+            <h3 className="text-base font-semibold text-text">Duplicate Stack as Brand New Tier</h3>
             <p className="text-xs text-text-muted">
-              Duplicate all STT, LLM, and TTS models, WebSocket options, and voice configurations from{" "}
-              <strong>{tierLabelInput || DEFAULT_TIER_LABELS[selected]}</strong> into a target tier.
+              Creates a <strong>completely new, independent voice stack</strong> cloning all STT, LLM, TTS models,
+              WebSocket options, and voice configurations from <strong>{tierLabelInput || DEFAULT_TIER_LABELS[selected] || selected}</strong>.
+              The existing stack will NOT be overwritten.
             </p>
 
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-text-muted mb-1">Target Tier</label>
-                <select
-                  value={duplicateTargetTier}
-                  onChange={(e) => setDuplicateTargetTier(e.target.value as ProfileTier)}
-                  className="w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
-                >
-                  {PROFILE_TIERS.map((t) => (
-                    <option key={t} value={t}>
-                      {DEFAULT_TIER_LABELS[t]} ({t.toUpperCase()})
-                    </option>
-                  ))}
-                </select>
+                <label className="block text-xs font-medium text-text-muted mb-1">
+                  Source Stack (Selected)
+                </label>
+                <div className="rounded-xl border border-surface-border bg-surface-raised px-3 py-2 text-xs font-mono text-text-subtle">
+                  {tierLabelInput || DEFAULT_TIER_LABELS[selected] || selected} ({selected})
+                </div>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-text-muted mb-1">Duplicated Stack Label</label>
+                <label className="block text-xs font-medium text-text-muted mb-1">
+                  New Stack Name (Display Label)
+                </label>
                 <input
                   type="text"
                   value={duplicateLabel}
                   onChange={(e) => setDuplicateLabel(e.target.value)}
-                  placeholder="Custom Stack Name"
+                  placeholder="e.g. Economical Tier (Copy 1)"
                   className="w-full rounded-xl border border-surface-border bg-surface-panel px-3 py-2 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-text-muted mb-1">
+                  New Tier Identifier / Slug (Max 20 chars, lowercase alphanumeric &amp; underscore)
+                </label>
+                <input
+                  type="text"
+                  maxLength={20}
+                  value={duplicateNewSlug}
+                  onChange={(e) => setDuplicateNewSlug(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "_").slice(0, 20))}
+                  placeholder="e.g. low_copy_1"
+                  className="w-full rounded-xl border border-surface-border bg-surface-panel px-3 py-2 text-sm font-mono text-text focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
+                />
+                <span className="mt-1 block text-[11px] text-text-subtle">
+                  Slug: <code className="font-mono text-text">{duplicateNewSlug || "none"}</code>
+                </span>
               </div>
             </div>
 
@@ -1220,7 +1867,7 @@ export function PstnVoiceProfileWorkbench() {
                 disabled={busy}
                 onClick={() => void handleConfirmDuplicate()}
               >
-                {busy ? "Duplicating…" : "Confirm Duplicate"}
+                {busy ? "Duplicating…" : "Create Duplicated Stack"}
               </Button>
             </div>
           </div>

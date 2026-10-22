@@ -600,184 +600,20 @@ export default function AdminBillingPage() {
       </DevCard>
 
       <DevCard title={`Platform & Channel Prices (${walletCurrencyDisplay === "both" ? "USD + INR" : walletCurrencyDisplay})`}>
-        <p className="mb-4 text-xs text-text-muted">
-          Configure retail per-minute prices charged to tenants for each PSTN Voice Stack tier and channel.
-          Values are entered in {priceInputCurrency} and saved accurately in integer minor units (INR paise / USD micros).
-        </p>
-
-        {/* 1. Phone Calling Tiers (PSTN) */}
-        <div>
-          <h4 className="text-xs font-semibold uppercase tracking-wider text-text-subtle mb-3">
-            PSTN Voice Call Pricing (Tenant Retail per minute)
-          </h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Economical Tier (Low) */}
-            <div className="rounded-xl border border-surface-border bg-surface-raised/40 p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-text">Economical Tier (Low)</span>
-                <span className="rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 px-2 py-0.5 text-[10px] font-semibold">
-                  Low Cost
-                </span>
-              </div>
-              <p className="text-[11px] text-text-muted">
-                High-throughput economical tier using fast STT and cost-effective voice synthesis.
-              </p>
-              <label className="block text-xs">
-                <span className="mb-1 block text-text-muted">Calling Rate ({priceInputCurrency === "INR" ? "₹" : "$"}/min)</span>
-                <SkeuoInput
-                  value={rateInputValue("pstnLow")}
-                  onChange={(e) => updateRateInput("pstnLow", e.target.value)}
-                  inputMode="decimal"
-                  className="w-full"
-                  aria-label={`Economical PSTN ${priceInputCurrency} per minute`}
-                  data-testid="admin-rate-pstn-low-usd"
-                />
-              </label>
-              <div className="font-mono text-[11px] text-text-muted flex justify-between pt-1 border-t border-surface-border-subtle">
-                <span>{priceInputCurrency === "INR" ? `$${(Number(rateInputValue("pstnLow", "USD") || 0)).toFixed(4)}/min` : `₹${(Number(rateInputValue("pstnLow", "INR") || 0)).toFixed(2)}/min`}</span>
-                <span className="text-text-subtle">Target: ~$0.05 / ₹4.70</span>
-              </div>
-            </div>
-
-            {/* Standard Regional (Medium) */}
-            <div className="rounded-xl border border-surface-border bg-surface-raised/40 p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-text">Standard Tier (Medium)</span>
-                <span className="rounded-full bg-blue-500/10 text-blue-600 border border-blue-500/20 px-2 py-0.5 text-[10px] font-semibold">
-                  Standard
-                </span>
-              </div>
-              <p className="text-[11px] text-text-muted">
-                Expressive regional natural voices for Indian languages and balanced workloads.
-              </p>
-              <label className="block text-xs">
-                <span className="mb-1 block text-text-muted">Calling Rate ({priceInputCurrency === "INR" ? "₹" : "$"}/min)</span>
-                <SkeuoInput
-                  value={rateInputValue("pstnMedium")}
-                  onChange={(e) => updateRateInput("pstnMedium", e.target.value)}
-                  inputMode="decimal"
-                  className="w-full"
-                  aria-label={`Standard Regional PSTN ${priceInputCurrency} per minute`}
-                  data-testid="admin-rate-pstn-medium-usd"
-                />
-              </label>
-              <div className="font-mono text-[11px] text-text-muted flex justify-between pt-1 border-t border-surface-border-subtle">
-                <span>{priceInputCurrency === "INR" ? `$${(Number(rateInputValue("pstnMedium", "USD") || 0)).toFixed(4)}/min` : `₹${(Number(rateInputValue("pstnMedium", "INR") || 0)).toFixed(2)}/min`}</span>
-                <span className="text-text-subtle">Target: ~$0.09 / ₹8.46</span>
-              </div>
-            </div>
-
-            {/* Premium Tier */}
-            <div className="rounded-xl border border-surface-border bg-surface-raised/40 p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-text">Premium Tier (Flagship)</span>
-                <span className="rounded-full bg-purple-500/10 text-purple-600 border border-purple-500/20 px-2 py-0.5 text-[10px] font-semibold">
-                  Premium
-                </span>
-              </div>
-              <p className="text-[11px] text-text-muted">
-                Ultra-low-latency bidirectional speech-to-speech flagship experience over direct carrier trunk.
-              </p>
-              <label className="block text-xs">
-                <span className="mb-1 block text-text-muted">Calling Rate ({priceInputCurrency === "INR" ? "₹" : "$"}/min)</span>
-                <SkeuoInput
-                  value={rateInputValue("pstnPremium")}
-                  onChange={(e) => {
-                    updateRateInput("pstnPremium", e.target.value);
-                    updateRateInput("pstn", e.target.value);
-                  }}
-                  inputMode="decimal"
-                  className="w-full"
-                  aria-label={`Flagship Live PSTN ${priceInputCurrency} per minute`}
-                  data-testid="admin-rate-pstn-premium-usd"
-                />
-              </label>
-              <div className="font-mono text-[11px] text-text-muted flex justify-between pt-1 border-t border-surface-border-subtle">
-                <span>{priceInputCurrency === "INR" ? `$${(Number(rateInputValue("pstnPremium", "USD") || 0)).toFixed(4)}/min` : `₹${(Number(rateInputValue("pstnPremium", "INR") || 0)).toFixed(2)}/min`}</span>
-                <span className="text-text-subtle">Target: ~$0.15 / ₹14.10</span>
-              </div>
-            </div>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-2">
+          <div>
+            <h4 className="text-sm font-semibold text-text">Platform &amp; Channel Calling Prices Centralized</h4>
+            <p className="mt-1 text-xs text-text-muted max-w-2xl">
+              All PSTN Voice Call Pricing (Economical, Standard, and Gemini 3.8 Live Premium tiers), Web Agent calling rates,
+              and Phone Number DID rental pricing have been consolidated into the unified <strong>Stacks &amp; Tiers</strong> management workbench.
+            </p>
           </div>
-        </div>
-
-        {/* 2. Channel & Addon Pricing */}
-        <div className="mt-6 pt-4 border-t border-border">
-          <h4 className="text-xs font-semibold uppercase tracking-wider text-text-subtle mb-3">
-            Channel & Addon Rates
-          </h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="rounded-xl border border-surface-border bg-surface-raised/40 p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-text">Agentic Web Test / Browser Agent</span>
-                <span className="rounded-full bg-cyan-500/10 text-cyan-600 border border-cyan-500/20 px-2 py-0.5 text-[10px] font-semibold">
-                  Web Calling
-                </span>
-              </div>
-              <p className="text-[11px] text-text-muted">
-                Per-minute rate charged when testing agents or conducting WebRTC browser conversations.
-              </p>
-              <label className="block text-xs">
-                <span className="mb-1 block text-text-muted">Browser Agent Rate ({priceInputCurrency === "INR" ? "₹" : "$"}/min)</span>
-                <SkeuoInput
-                  value={rateInputValue("web")}
-                  onChange={(e) => updateRateInput("web", e.target.value)}
-                  inputMode="decimal"
-                  className="w-full"
-                  aria-label={`Web agent ${priceInputCurrency} per minute`}
-                  data-testid="admin-rate-web-usd"
-                />
-              </label>
-              <div className="font-mono text-[11px] text-text-muted flex justify-between pt-1 border-t border-surface-border-subtle">
-                <span>{priceInputCurrency === "INR" ? `$${(Number(rateInputValue("web", "USD") || 0)).toFixed(4)}/min` : `₹${(Number(rateInputValue("web", "INR") || 0)).toFixed(2)}/min`}</span>
-                <span className="text-text-subtle">Target: ~$0.07 / ₹6.50</span>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-surface-border bg-surface-raised/40 p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-text">Phone Number Rental (DID)</span>
-                <span className="rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20 px-2 py-0.5 text-[10px] font-semibold">
-                  Monthly DID
-                </span>
-              </div>
-              <p className="text-[11px] text-text-muted">
-                Fixed monthly lease fee for dedicated carrier telephone numbers allocated to tenants.
-              </p>
-              <label className="block text-xs">
-                <span className="mb-1 block text-text-muted">Phone Number Rental ({priceInputCurrency === "INR" ? "₹" : "$"}/mo)</span>
-                <SkeuoInput
-                  value={rateInputValue("number")}
-                  onChange={(e) => updateRateInput("number", e.target.value)}
-                  inputMode="decimal"
-                  className="w-full"
-                  aria-label={`Number rental ${priceInputCurrency} per month`}
-                  data-testid="admin-rate-number-usd"
-                />
-              </label>
-              <div className="font-mono text-[11px] text-text-muted flex justify-between pt-1 border-t border-surface-border-subtle">
-                <span>{priceInputCurrency === "INR" ? `$${(Number(rateInputValue("number", "USD") || 0)).toFixed(2)}/mo` : `₹${(Number(rateInputValue("number", "INR") || 0)).toFixed(2)}/mo`}</span>
-                <span className="text-text-subtle">Target: ~$4.00 / ₹380.00</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Live Mirror & Save */}
-        <div className="mt-6 pt-4 border-t border-border flex flex-wrap items-center justify-between gap-3">
-          <div
-            className="flex flex-wrap gap-4 font-mono text-[11px] text-text-muted"
-            data-testid="admin-rate-inr-mirror"
+          <Link
+            href="/dev/stack"
+            className="inline-flex items-center gap-2 rounded-xl bg-accent-primary px-4 py-2.5 text-xs font-semibold text-white shadow-sm hover:opacity-95 transition-opacity shrink-0"
           >
-            <span>Economical: ₹{Number(rateInputValue("pstnLow", "INR") || 0).toFixed(2)}/min</span>
-            <span>Standard: ₹{Number(rateInputValue("pstnMedium", "INR") || 0).toFixed(2)}/min</span>
-            <span>Premium: ₹{Number(rateInputValue("pstnPremium", "INR") || 0).toFixed(2)}/min</span>
-            <span>Web: ₹{Number(rateInputValue("web", "INR") || 0).toFixed(2)}/min</span>
-            <span>Number: ₹{Number(rateInputValue("number", "INR") || 0).toFixed(2)}/mo</span>
-          </div>
-
-          <SkeuoButton type="button" disabled={!!busy} onClick={() => void saveRates()}>
-            {busy === "rates" ? "Saving platform rates…" : "Save Platform & Channel Prices"}
-          </SkeuoButton>
+            <span>⚙️ Manage Prices in Stacks &amp; Tiers</span>
+          </Link>
         </div>
       </DevCard>
 

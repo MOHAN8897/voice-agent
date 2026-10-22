@@ -67,9 +67,11 @@ def canonical_voice_tier(value: Any) -> str:
         "high": "premium",
         "premium": "premium",
     }
-    if tier not in aliases:
-        raise VoiceProfileError("invalid_tier", "Choose Economical, Standard, or Flagship.")
-    return aliases[tier]
+    if tier in aliases:
+        return aliases[tier]
+    if re.match(r"^[a-z0-9_]{1,20}$", tier):
+        return tier
+    raise VoiceProfileError("invalid_tier", f"Invalid tier identifier '{tier}'. Choose Economical, Standard, Flagship, or an alphanumeric tier slug.")
 
 
 def _reject_secrets(value: Any, path: str = "profile") -> None:
@@ -91,10 +93,11 @@ def _identifier(value: Any, label: str, *, allow_empty: bool = False) -> str:
     raise VoiceProfileError("invalid_profile", f"{label} must be a stable identifier.")
 
 
-def validate_composed_profile(payload: Any, *, tier: str, allow_premium: bool = False) -> dict[str, Any]:
+def validate_composed_profile(payload: Any, *, tier: str, allow_premium: bool = True) -> dict[str, Any]:
     """Validate the admin-owned executable profile; values are never defaulted."""
-    if tier not in COMPOSED_TIERS and not (allow_premium and tier == "premium"):
-        raise VoiceProfileError("read_only_tier", "The Flagship Live profile is managed by the existing voice configuration.", status_code=409)
+    tier_norm = str(tier or "").strip().lower()
+    if not (tier_norm in COMPOSED_TIERS or (allow_premium and tier_norm == "premium") or re.match(r"^[a-z0-9_]{1,20}$", tier_norm)):
+        raise VoiceProfileError("read_only_tier", f"Tier '{tier}' cannot be managed here.", status_code=409)
     if not isinstance(payload, dict):
         raise VoiceProfileError("invalid_profile", "composedProfile must be an object.")
     _reject_secrets(payload)
@@ -329,17 +332,15 @@ async def resolve_voice_alias(alias_id: str, environment: str | None = None) -> 
     return _REVERSE_ALIAS_CACHE.get(wanted)
 
 
-async def load_profile_records(environment: str, tiers: tuple[str, ...] = COMPOSED_TIERS) -> dict[str, dict[str, Any]]:
+async def load_profile_records(environment: str, tiers: tuple[str, ...] | list[str] | None = None) -> dict[str, dict[str, Any]]:
     factory = get_session_factory()
     if factory is None:
         return {}
     async with factory() as session:
-        result = await session.execute(
-            select(TierAssignment).where(
-                TierAssignment.environment == environment,
-                TierAssignment.tier.in_(tiers),
-            )
-        )
+        query = select(TierAssignment).where(TierAssignment.environment == environment)
+        if tiers is not None:
+            query = query.where(TierAssignment.tier.in_(tiers))
+        result = await session.execute(query)
         loaded = {}
         for row in result.scalars().all():
             rec = _profile_record(row)
@@ -350,16 +351,25 @@ async def load_profile_records(environment: str, tiers: tuple[str, ...] = COMPOS
 
 
 def _native_tier_retail_rate(rates: dict[str, Any] | None, tier: str) -> dict[str, Any] | None:
-    """Read only explicit tier-native prices; the shared PSTN rate is not a substitute except for premium fallback."""
+    """Read explicit tier-native prices or fallback gracefully to parent tier rates."""
     if not isinstance(rates, dict):
         return None
     usd = rates.get(f"pstn_{tier}_rate_usd_micros_per_min")
     inr = rates.get(f"pstn_{tier}_rate_inr_paise_per_min")
     version = rates.get(f"{tier}_rate_version")
-    if tier == "premium" and (usd is None or inr is None or version is None):
-        usd = rates.get("pstn_premium_rate_usd_micros_per_min") or rates.get("pstn_rate_usd_micros_per_min")
-        inr = rates.get("pstn_premium_rate_inr_paise_per_min") or rates.get("pstn_rate_inr_paise_per_min")
-        version = rates.get("premium_rate_version") or rates.get("version")
+    if usd is None or inr is None or version is None:
+        if tier == "premium":
+            usd = rates.get("pstn_premium_rate_usd_micros_per_min") or rates.get("pstn_rate_usd_micros_per_min")
+            inr = rates.get("pstn_premium_rate_inr_paise_per_min") or rates.get("pstn_rate_inr_paise_per_min")
+            version = rates.get("premium_rate_version") or rates.get("version")
+        elif tier.startswith("low") or "economical" in tier:
+            usd = rates.get("pstn_low_rate_usd_micros_per_min")
+            inr = rates.get("pstn_low_rate_inr_paise_per_min")
+            version = rates.get("low_rate_version") or rates.get("version")
+        else:
+            usd = rates.get("pstn_medium_rate_usd_micros_per_min")
+            inr = rates.get("pstn_medium_rate_inr_paise_per_min")
+            version = rates.get("medium_rate_version") or rates.get("version")
     if not isinstance(usd, int) or usd <= 0 or not isinstance(inr, int) or inr <= 0 or not isinstance(version, int) or version <= 0:
         return None
     fx = rates.get("fx_rate_inr")
@@ -577,8 +587,9 @@ async def profile_view(tier: str, environment: str, *, include_internal: bool = 
 async def save_composed_profile(
     *, environment: str, tier: str, expected_revision: int, payload: Any, actor: str, allow_premium: bool = True,
 ) -> dict[str, Any]:
-    if tier not in COMPOSED_TIERS and not (allow_premium and tier == "premium"):
-        raise VoiceProfileError("read_only_tier", "The Flagship Live profile is read-only here.", status_code=409)
+    tier_norm = str(tier or "").strip().lower()
+    if not (tier_norm in COMPOSED_TIERS or (allow_premium and tier_norm == "premium") or re.match(r"^[a-z0-9_]{1,20}$", tier_norm)):
+        raise VoiceProfileError("read_only_tier", f"Tier '{tier}' cannot be managed here.", status_code=409)
     profile = validate_composed_profile(payload, tier=tier, allow_premium=allow_premium)
     factory = get_session_factory()
     if factory is None:
@@ -621,8 +632,13 @@ async def save_composed_profile(
         if row is None:
             from server.providers import resolve_stack
 
-            base = resolve_stack(mode="env", tier=tier, environment=environment)
-            payload_to_store = base.to_safe_dict()
+            try:
+                base = resolve_stack(mode="env", tier=tier, environment=environment)
+                payload_to_store = base.to_safe_dict()
+                combo_id = base.combination_id
+            except Exception:
+                combo_id = uuid.uuid4().hex[:16]
+                payload_to_store = {}
             payload_to_store["stt"] = {"provider": stt_spec.get("provider", "sarvam"), "model": stt_spec.get("model", "saaras:v2"), "config": {"mode": "realtime"}}
             payload_to_store["llm"] = {"provider": llm_spec.get("provider", "gemini"), "model": llm_spec.get("modelId", "gemini-2.0-flash"), "config": {"api_mode": llm_spec.get("apiMode", "chat_completions_v1")}}
             payload_to_store["tts"] = tts_payload
@@ -630,7 +646,7 @@ async def save_composed_profile(
                 id=uuid.uuid4(),
                 environment=environment,
                 tier=tier,
-                combination_id=base.combination_id,
+                combination_id=combo_id,
                 stack_payload={**payload_to_store, "composed_voice_profile": record},
             )
             session.add(row)
@@ -667,8 +683,9 @@ async def save_composed_profile(
 
 
 async def set_profile_enabled(*, environment: str, tier: str, expected_revision: int, enabled: bool, actor: str, allow_premium: bool = True) -> dict[str, Any]:
-    if tier not in COMPOSED_TIERS and not (allow_premium and tier == "premium"):
-        raise VoiceProfileError("read_only_tier", "The Flagship Live profile is read-only here.", status_code=409)
+    tier_norm = str(tier or "").strip().lower()
+    if not (tier_norm in COMPOSED_TIERS or (allow_premium and tier_norm == "premium") or re.match(r"^[a-z0-9_]{1,20}$", tier_norm)):
+        raise VoiceProfileError("read_only_tier", f"Tier '{tier}' cannot be managed here.", status_code=409)
     factory = get_session_factory()
     if factory is None:
         raise VoiceProfileError("durable_store_unavailable", "Voice profiles require the database-backed configuration store.", status_code=503)
