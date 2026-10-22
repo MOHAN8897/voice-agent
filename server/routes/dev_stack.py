@@ -112,18 +112,7 @@ async def dev_composed_voice_profiles(session: SessionData = Depends(require_dev
     from server.services.saas.voice_stack_profiles import profile_view
 
     app_env = effective_app_environment()
-    profiles = [await profile_view(tier, app_env, include_internal=True) for tier in ("low", "medium")]
-    profiles.append(
-        {
-            "tier": "premium",
-            "label": "Flagship Live",
-            "profileRevision": None,
-            "composedProfile": None,
-            "readiness": {"ready": True, "enabled": True, "blockers": []},
-            "retailRate": None,
-            "readOnly": True,
-        }
-    )
+    profiles = [await profile_view(tier, app_env, include_internal=True) for tier in ("low", "medium", "premium")]
     return {"environment": app_env, "profiles": profiles}
 
 
@@ -155,6 +144,7 @@ async def dev_composed_voice_profile_update(
             expected_revision=body.expected_revision,
             payload=body.composed_profile,
             actor=session.subject,
+            allow_premium=True,
         )
     except VoiceProfileError as exc:
         raise _voice_profile_http_error(exc) from exc
@@ -176,6 +166,7 @@ async def dev_composed_voice_profile_activation(
             expected_revision=body.expected_revision,
             enabled=body.enabled,
             actor=session.subject,
+            allow_premium=True,
         )
     except VoiceProfileError as exc:
         raise _voice_profile_http_error(exc) from exc

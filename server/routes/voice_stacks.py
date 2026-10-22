@@ -34,24 +34,12 @@ async def voice_stack_catalog(
     from server.services.dev_runtime import effective_app_environment
 
     environment = effective_app_environment()
-    records = await load_profile_records(environment, COMPOSED_TIERS)
+    records = await load_profile_records(environment, ("low", "medium", "premium"))
     rates = await _load_rates_without_fallback()
     profiles = [
         public_catalog_profile(tier, records.get(tier), rates)
-        for tier in COMPOSED_TIERS
+        for tier in ("low", "medium")
     ]
-    for profile in profiles:
-        for engine in profile["engines"]:
-            for model in engine["models"]:
-                model["voices"] = [
-                    voice for voice in model["voices"]
-                    if normalized_language in voice.get("languages", [])
-                ]
-            engine["models"] = [model for model in engine["models"] if model["voices"]]
-        profile["engines"] = [engine for engine in profile["engines"] if engine["models"]]
-        if not profile["engines"] and profile["ready"]:
-            profile["ready"] = False
-            profile["blockers"].append({"code": "language_voice_unavailable", "message": "No approved voice is available for this language."})
 
     premium_rate = _native_tier_retail_rate(rates, "premium")
     if not premium_rate and rates:
@@ -67,16 +55,41 @@ async def voice_stack_catalog(
                 "complete": True,
             }
 
-    premium_profile = {
-        "tier": "premium",
-        "label": "Flagship Live",
-        "ready": bool(premium_rate and premium_rate.get("complete")),
-        "profileRevision": 1,
-        "retailRate": premium_rate,
-        "engines": [],
-        "blockers": [] if (premium_rate and premium_rate.get("complete")) else [
-            {"code": "tier_native_rate_missing", "message": "An approved native retail rate for Flagship Live has not been configured."}
-        ],
-    }
+    premium_record = records.get("premium")
+    if premium_record and isinstance(premium_record.get("profile"), dict) and premium_record["profile"].get("engines"):
+        premium_profile = public_catalog_profile("premium", premium_record, rates)
+    else:
+        prem_p = (premium_record or {}).get("profile") if premium_record else None
+        prem_enabled = prem_p.get("enabled", True) if isinstance(prem_p, dict) else True
+        prem_label = (prem_p.get("label") if isinstance(prem_p, dict) else None) or "Flagship Live"
+        ready_flag = bool(prem_enabled and premium_rate and premium_rate.get("complete"))
+        blockers = []
+        if not (premium_rate and premium_rate.get("complete")):
+            blockers.append({"code": "tier_native_rate_missing", "message": "An approved native retail rate for Flagship Live has not been configured."})
+        if not prem_enabled:
+            blockers.append({"code": "profile_not_available", "message": "This voice option is not currently available."})
+        premium_profile = {
+            "tier": "premium",
+            "label": prem_label,
+            "ready": ready_flag,
+            "profileRevision": int((premium_record or {}).get("revision") or 1),
+            "retailRate": premium_rate,
+            "engines": [],
+            "blockers": blockers,
+        }
     profiles.append(premium_profile)
+
+    for profile in profiles:
+        for engine in profile.get("engines", []):
+            for model in engine.get("models", []):
+                model["voices"] = [
+                    voice for voice in model.get("voices", [])
+                    if normalized_language in voice.get("languages", [])
+                ]
+            engine["models"] = [model for model in engine.get("models", []) if model.get("voices")]
+        profile["engines"] = [engine for engine in profile.get("engines", []) if engine.get("models")]
+        if not profile["engines"] and profile.get("ready") and profile.get("tier") != "premium":
+            profile["ready"] = False
+            profile["blockers"].append({"code": "language_voice_unavailable", "message": "No approved voice is available for this language."})
+
     return {"language": normalized_language, "profiles": profiles}

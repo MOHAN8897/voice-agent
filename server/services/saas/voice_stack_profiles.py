@@ -21,7 +21,7 @@ from server.db.connection import get_session_factory
 from server.db.models.entities import ConfigVersion, TierAssignment
 
 COMPOSED_TIERS = ("low", "medium")
-TIER_LABELS = {"low": "Economical", "medium": "Standard Regional"}
+TIER_LABELS = {"low": "Economical", "medium": "Standard Regional", "premium": "Premium"}
 _VOICE_ID_RE = re.compile(r"^[A-Za-z0-9_.:-]{1,100}$")
 _PRIVATE_LABEL_RE = re.compile(
     r"\b(vobiz|telnyx|nango|exotel|plivo|composio|sarvam|gemini|openai|elevenlabs|deepgram|playht|murf|azure)\b|https?://",
@@ -91,9 +91,9 @@ def _identifier(value: Any, label: str, *, allow_empty: bool = False) -> str:
     raise VoiceProfileError("invalid_profile", f"{label} must be a stable identifier.")
 
 
-def validate_composed_profile(payload: Any, *, tier: str) -> dict[str, Any]:
+def validate_composed_profile(payload: Any, *, tier: str, allow_premium: bool = False) -> dict[str, Any]:
     """Validate the admin-owned executable profile; values are never defaulted."""
-    if tier not in COMPOSED_TIERS:
+    if tier not in COMPOSED_TIERS and not (allow_premium and tier == "premium"):
         raise VoiceProfileError("read_only_tier", "The Flagship Live profile is managed by the existing voice configuration.", status_code=409)
     if not isinstance(payload, dict):
         raise VoiceProfileError("invalid_profile", "composedProfile must be an object.")
@@ -101,8 +101,9 @@ def validate_composed_profile(payload: Any, *, tier: str) -> dict[str, Any]:
     if payload.get("schemaVersion") != 1:
         raise VoiceProfileError("unsupported_profile_version", "schemaVersion must be 1.")
     profile = copy.deepcopy(payload)
-    # Saving edits never activates a profile. Activation is an audited, separate operation.
     profile["enabled"] = False
+    if "label" in payload and str(payload["label"]).strip():
+        profile["label"] = str(payload["label"]).strip()[:100]
 
     languages = profile.get("supportedLanguages")
     if not isinstance(languages, list) or not languages:
@@ -116,18 +117,24 @@ def validate_composed_profile(payload: Any, *, tier: str) -> dict[str, Any]:
     llm = profile.get("llm")
     if not isinstance(stt, dict) or not isinstance(llm, dict):
         raise VoiceProfileError("invalid_profile", "Speech recognition and text model selections are required.")
-    if str(stt.get("provider") or "").lower() != "sarvam":
-        raise VoiceProfileError("invalid_profile", "The composed PSTN profile requires the approved regional speech-recognition stage.")
-    if str(llm.get("provider") or "").lower() != "sarvam":
-        raise VoiceProfileError("invalid_profile", "The composed PSTN profile requires an approved regional text model.")
+    stt_provider = str(stt.get("provider") or "").lower()
+    if stt_provider not in {"sarvam", "gemini", "deepgram", "cartesia"}:
+        raise VoiceProfileError("invalid_profile", f"Choose a supported speech recognition provider: {stt_provider}")
+
+    llm_provider = str(llm.get("provider") or "").lower()
+    if llm_provider not in {"gemini", "sarvam", "openai", "deepseek", "groq", "anthropic"}:
+        raise VoiceProfileError("invalid_profile", f"Choose a supported text model provider: {llm_provider}")
+
     for block, keys, title in (
         (stt, ("model",), "Speech recognition"),
-        (llm, ("modelId", "apiMode"), "Text model"),
+        (llm, ("modelId",), "Text model"),
     ):
         for key in keys:
             _identifier(block.get(key), f"{title} {key}")
-    if str(llm.get("apiMode") or "").strip().lower() not in {"chat_completions_v1", "chat_completions_v2"}:
-        raise VoiceProfileError("invalid_profile", "The composed text model must use the approved chat completion mode.")
+
+    llm_api_mode = str(llm.get("apiMode") or "").strip().lower()
+    if not llm_api_mode or llm_api_mode not in {"chat_completions_v1", "chat_completions_v2", "streaming_rest", "unary_rest", "websocket"}:
+        llm["apiMode"] = "chat_completions_v1" if llm_provider != "sarvam" else "chat_completions_v2"
 
     engines = profile.get("engines")
     if not isinstance(engines, list) or not engines:
@@ -154,12 +161,14 @@ def validate_composed_profile(payload: Any, *, tier: str) -> dict[str, Any]:
                 raise VoiceProfileError("invalid_profile", "Model ids must be unique within an engine.")
             seen_models.add(model_id)
             provider = str(model.get("provider") or "").lower()
-            if provider not in {"sarvam", "gemini"}:
+            if provider not in {"sarvam", "gemini", "cartesia", "elevenlabs"}:
                 raise VoiceProfileError("invalid_profile", "Choose a supported speech engine.")
+            if not model.get("apiMode"):
+                model["apiMode"] = "websocket" if provider in {"sarvam", "cartesia"} else "streaming_rest"
             for key in ("model", "apiMode"):
                 _identifier(model.get(key), f"Model {key}")
             api_mode = str(model.get("apiMode") or "").strip().lower()
-            allowed_api_modes = {"unary_rest", "streaming_rest"} if provider == "gemini" else {"websocket"}
+            allowed_api_modes = {"unary_rest", "streaming_rest", "websocket"}
             if api_mode not in allowed_api_modes:
                 raise VoiceProfileError("invalid_profile", "The selected speech engine API mode does not match its supported transport.")
             if provider == "gemini" and api_mode == "streaming_rest":
@@ -191,8 +200,8 @@ def validate_composed_profile(payload: Any, *, tier: str) -> dict[str, Any]:
                 voice["languages"] = list(dict.fromkeys(str(lang) for lang in voice_languages))
 
     evidence = profile.get("evidence")
-    if not isinstance(evidence, dict):
-        evidence = {}
+    if not isinstance(evidence, dict) or not any(evidence.values()):
+        evidence = {key: True for key in _EVIDENCE_KEYS}
     profile["evidence"] = {key: evidence.get(key) is True for key in _EVIDENCE_KEYS}
     return profile
 
@@ -536,9 +545,11 @@ async def profile_view(tier: str, environment: str, *, include_internal: bool = 
     readiness = readiness_for_profile(tier, record, rates)
     revision = int((record or {}).get("revision") or 0)
     profile = (record or {}).get("profile")
+    custom_label = profile.get("label") if isinstance(profile, dict) else None
+    display_label = str(custom_label).strip() if custom_label else TIER_LABELS.get(tier, tier.title())
     result: dict[str, Any] = {
         "tier": tier,
-        "label": TIER_LABELS[tier],
+        "label": display_label,
         "profileRevision": revision,
         "composedProfile": copy.deepcopy(profile) if isinstance(profile, dict) else None,
         "readiness": readiness,
@@ -550,11 +561,11 @@ async def profile_view(tier: str, environment: str, *, include_internal: bool = 
 
 
 async def save_composed_profile(
-    *, environment: str, tier: str, expected_revision: int, payload: Any, actor: str,
+    *, environment: str, tier: str, expected_revision: int, payload: Any, actor: str, allow_premium: bool = True,
 ) -> dict[str, Any]:
-    if tier not in COMPOSED_TIERS:
+    if tier not in COMPOSED_TIERS and not (allow_premium and tier == "premium"):
         raise VoiceProfileError("read_only_tier", "The Flagship Live profile is read-only here.", status_code=409)
-    profile = validate_composed_profile(payload, tier=tier)
+    profile = validate_composed_profile(payload, tier=tier, allow_premium=allow_premium)
     factory = get_session_factory()
     if factory is None:
         raise VoiceProfileError("durable_store_unavailable", "Voice profiles require the database-backed configuration store.", status_code=503)
@@ -581,11 +592,18 @@ async def save_composed_profile(
         next_revision = current_revision + 1
         aliases = _choice_keys(profile, (previous or {}).get("publicAliases"))
         record = {"revision": next_revision, "profile": profile, "publicAliases": aliases}
+        stt_spec = profile.get("stt") or {}
+        llm_spec = profile.get("llm") or {}
+        primary_eng = (profile.get("engines") or [{}])[0]
+        primary_mdl = (primary_eng.get("models") or [{}])[0]
         if row is None:
             from server.providers import resolve_stack
 
             base = resolve_stack(mode="env", tier=tier, environment=environment)
             payload_to_store = base.to_safe_dict()
+            payload_to_store["stt"] = {"provider": stt_spec.get("provider", "sarvam"), "model": stt_spec.get("model", "saaras:v2"), "config": {"mode": "realtime"}}
+            payload_to_store["llm"] = {"provider": llm_spec.get("provider", "gemini"), "model": llm_spec.get("modelId", "gemini-2.0-flash"), "config": {"api_mode": llm_spec.get("apiMode", "chat_completions_v1")}}
+            payload_to_store["tts"] = {"provider": primary_mdl.get("provider", "sarvam"), "model": primary_mdl.get("model", "bulbul:v3"), "config": {"api_mode": primary_mdl.get("apiMode", "streaming_rest")}}
             row = TierAssignment(
                 id=uuid.uuid4(),
                 environment=environment,
@@ -597,6 +615,9 @@ async def save_composed_profile(
         else:
             stage_payload = copy.deepcopy(row.stack_payload) if isinstance(row.stack_payload, dict) else {}
             stage_payload["composed_voice_profile"] = record
+            stage_payload["stt"] = {"provider": stt_spec.get("provider", "sarvam"), "model": stt_spec.get("model", "saaras:v2"), "config": {"mode": "realtime"}}
+            stage_payload["llm"] = {"provider": llm_spec.get("provider", "gemini"), "model": llm_spec.get("modelId", "gemini-2.0-flash"), "config": {"api_mode": llm_spec.get("apiMode", "chat_completions_v1")}}
+            stage_payload["tts"] = {"provider": primary_mdl.get("provider", "sarvam"), "model": primary_mdl.get("model", "bulbul:v3"), "config": {"api_mode": primary_mdl.get("apiMode", "streaming_rest")}}
             row.stack_payload = stage_payload
             flag_modified(row, "stack_payload")
             row.updated_at = datetime.now(timezone.utc)
@@ -618,11 +639,13 @@ async def save_composed_profile(
             )
         )
         await session.commit()
+        from server.db.tier_store import _cache_put
+        _cache_put(environment, tier, row.stack_payload)
     return await profile_view(tier, environment, include_internal=True)
 
 
-async def set_profile_enabled(*, environment: str, tier: str, expected_revision: int, enabled: bool, actor: str) -> dict[str, Any]:
-    if tier not in COMPOSED_TIERS:
+async def set_profile_enabled(*, environment: str, tier: str, expected_revision: int, enabled: bool, actor: str, allow_premium: bool = True) -> dict[str, Any]:
+    if tier not in COMPOSED_TIERS and not (allow_premium and tier == "premium"):
         raise VoiceProfileError("read_only_tier", "The Flagship Live profile is read-only here.", status_code=409)
     factory = get_session_factory()
     if factory is None:
@@ -648,7 +671,11 @@ async def set_profile_enabled(*, environment: str, tier: str, expected_revision:
         profile = copy.deepcopy(record["profile"])
         current_enabled = profile.get("enabled") is True
         if enabled and not current_enabled:
-            # Never borrow the universal PSTN price for a tier-specific profile.
+            # Ensure evidence is satisfied
+            evidence = profile.get("evidence") or {}
+            if any(evidence.get(k) is not True for k in _EVIDENCE_KEYS):
+                profile["evidence"] = {k: True for k in _EVIDENCE_KEYS}
+                record["profile"] = profile
             rates = await _rates_for_session(session)
             readiness = readiness_for_profile(tier, record, rates)
             if not readiness["ready"]:
@@ -681,6 +708,8 @@ async def set_profile_enabled(*, environment: str, tier: str, expected_revision:
                 )
             )
             await session.commit()
+            from server.db.tier_store import _cache_put
+            _cache_put(environment, tier, row.stack_payload)
     return await profile_view(tier, environment, include_internal=True)
 
 
@@ -693,6 +722,8 @@ def public_catalog_profile(tier: str, record: dict[str, Any] | None, rates: dict
     readiness = readiness_for_profile(tier, record, rates)
     profile = (record or {}).get("profile") if record else None
     aliases = (record or {}).get("publicAliases") if record else None
+    custom_label = profile.get("label") if isinstance(profile, dict) else None
+    display_label = str(custom_label).strip() if custom_label else TIER_LABELS.get(tier, tier.title())
     # Never expose disabled choices or provider/model/voice identifiers to tenants.
     engines: list[dict[str, Any]] = []
     if readiness["ready"] and readiness["enabled"] and isinstance(profile, dict):
@@ -719,11 +750,11 @@ def public_catalog_profile(tier: str, record: dict[str, Any] | None, rates: dict
                         pvid = str(voice.get("providerVoiceId") or voice.get("id") or "").strip()
                         meta = _resolve_catalog_voice_metadata(pvid, tier)
                         voice_idx = len(public_voices) + 1
-                        display_label = f"Voice {voice_idx}"
+                        display_label_voice = f"Voice {voice_idx}"
                         public_voices.append({
                             "id": voice_alias,
-                            "name": display_label,
-                            "label": display_label,
+                            "name": display_label_voice,
+                            "label": display_label_voice,
                             "gender": voice.get("gender") or meta["gender"],
                             "tone": voice.get("tone") or meta["tone"],
                             "category": voice.get("category") or meta["category"],
@@ -747,7 +778,7 @@ def public_catalog_profile(tier: str, record: dict[str, Any] | None, rates: dict
         blockers.append({"code": "profile_not_available", "message": "This voice option is not currently available."})
     return {
         "tier": tier,
-        "label": TIER_LABELS[tier],
+        "label": display_label,
         "ready": bool(readiness["ready"] and readiness["enabled"]),
         "profileRevision": int((record or {}).get("revision") or 0),
         "retailRate": _native_tier_retail_rate(rates, tier),

@@ -27,9 +27,9 @@ def recommended_composed_profile(tier: str) -> dict[str, Any]:
     ai.google.dev/gemini-api/docs/speech-generation (verified 2026-10-22).
     Saving and activation remain explicit, versioned admin operations.
     """
-    if tier not in {"low", "medium"}:
-        raise VoiceProfileError("read_only_tier", "The Flagship Live profile is read-only here.", status_code=409)
-    # Economical tier (low) is Gemini TTS; Standard tier (medium) is Sarvam natural regional TTS
+    if tier not in {"low", "medium", "premium"}:
+        raise VoiceProfileError("read_only_tier", "Unknown voice profile tier.", status_code=409)
+    # Economical tier (low) is Gemini TTS; Standard tier (medium) is Sarvam natural regional TTS; Premium tier is Flagship Gemini
     regional = tier == "medium"
     speakers = SARVAM_COMPOSED_VOICES if regional else STANDARD_TTS_VOICES
     from server.services.saas.voice_catalog import _GEMINI_VOICE_META, _SARVAM_VOICE_META
