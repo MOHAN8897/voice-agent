@@ -192,28 +192,18 @@ class PstnTurnTtsSession:
             wire_mode=wire_mode,
             resolved_stack=resolved_stack,
         )
-        using_fallback = False
-        if self._merged.get("provider") == "cartesia" and getattr(voice, "_tts_fallback_provider", None) == "sarvam":
-            fallback = _sarvam_fallback_config(lang, wire_mode)
-            if fallback:
-                self._merged = fallback
-                using_fallback = True
+        prov = str(self._merged.get("provider") or "sarvam")
         # Trust TTS config rate — never assume wire rate (Cartesia μ-law path is 16k→8k).
         self._tts_rate = _tts_config_sample_rate(self._merged, fallback=voice.sample_rate)
         self._pcm_resampler = None
         self._model = str(self._merged.get("model") or "bulbul:v3")
-        # Resolve the fallback connector directly: the normal connector re-resolves
-        # the locked call stack and would select the failing Cartesia service again.
-        from server.services.sarvam_ws import connect_tts_ws
+        from server.routes.ws import _connect_tts_upstream
 
-        self._tts_cm = (
-            connect_tts_ws(model=self._model) if using_fallback else
-            _connect_tts_upstream(
-                self._model,
-                session_id=voice.tts_session_id,
-                call_id=voice.call_id,
-                resolved=self._merged,
-            )
+        self._tts_cm = _connect_tts_upstream(
+            self._model,
+            session_id=voice.tts_session_id,
+            call_id=voice.call_id,
+            resolved=self._merged,
         )
         try:
             self._tts = await asyncio.wait_for(self._tts_cm.__aenter__(), timeout=8.0)
@@ -223,22 +213,17 @@ class PstnTurnTtsSession:
             except Exception:
                 pass
             self._tts_cm = None
-            fallback = _sarvam_fallback_config(lang, wire_mode) if self._merged.get("provider") == "cartesia" else None
-            if fallback is None:
-                if isinstance(exc, asyncio.TimeoutError):
-                    log_pstn("tts.connect.timeout", call_id=voice.call_id, timeout_s=8.0)
-                    raise TimeoutError("TTS upstream connect timed out after 8s") from exc
-                raise
-            log_pstn(
-                "tts.fallback", call_id=voice.call_id, failed_provider="cartesia",
-                provider="sarvam", error=str(exc)[:200],
-            )
-            self._merged = fallback
-            self._model = str(fallback["model"])
-            self._tts_rate = _tts_config_sample_rate(fallback, fallback=voice.sample_rate)
-            self._tts_cm = connect_tts_ws(model=self._model)
-            self._tts = await asyncio.wait_for(self._tts_cm.__aenter__(), timeout=8.0)
-            voice._tts_fallback_provider = "sarvam"
+            self._had_error = True
+            log_error("TTS connection failed without fallback", call_id=voice.call_id, provider=prov, detail=str(exc)[:300])
+            log_pstn("tts.connect.failed", call_id=voice.call_id, provider=prov, error=str(exc)[:200])
+            if "credit" in str(exc).lower() or "quota" in str(exc).lower() or "402" in str(exc) or "429" in str(exc):
+                log_pstn("tts.credits_exhausted", call_id=voice.call_id, provider=prov, detail=str(exc)[:200])
+                setattr(voice, "_tts_credits_exhausted", True)
+                setattr(voice, "_tts_exhausted_provider", prov)
+            if isinstance(exc, asyncio.TimeoutError):
+                log_pstn("tts.connect.timeout", call_id=voice.call_id, timeout_s=8.0)
+                raise TimeoutError(f"TTS upstream connect timed out after 8s for provider '{prov}'") from exc
+            raise RuntimeError(f"TTS provider '{prov}' failed to connect (credits or service unavailable): {exc}") from exc
         self._ping_task = asyncio.create_task(self._tts_ping())
 
         if self._merged.get("provider") == "cartesia":
@@ -372,18 +357,25 @@ class PstnTurnTtsSession:
                 raise RuntimeError("The selected composed speech transport is unavailable")
             self._stream_adapter = adapter
             self._stream_config = tts_config
-        elif provider == "sarvam" and api_mode == "websocket":
-            self._merged.update(
-                {
-                    "pace": pace if pace is not None else 1.0,
-                    "min_buffer_size": 30,
-                    "max_chunk_length": 80,
-                }
-            )
-            if wire_mode == "rtp_mulaw":
-                self._merged["speech_sample_rate"] = "8000"
-            else:
-                self._merged["speech_sample_rate"] = "16000"
+        elif provider in {"sarvam", "cartesia", "gemini"} and api_mode == "websocket":
+            if provider == "sarvam":
+                self._merged.update(
+                    {
+                        "pace": pace if pace is not None else 1.0,
+                        "min_buffer_size": 30,
+                        "max_chunk_length": 80,
+                    }
+                )
+                self._tts_rate = 8000 if wire_mode == "rtp_mulaw" else 16000
+            elif provider == "cartesia":
+                self._tts_rate = 8000 if wire_mode == "rtp_mulaw" else 16000
+            elif provider == "gemini":
+                from server.providers.gemini_tts import supports_gemini_tts_streaming
+
+                if not supports_gemini_tts_streaming(model):
+                    raise RuntimeError("The selected Gemini TTS model does not support streaming WebSocket")
+                self._tts_rate = 24000
+            self._merged["speech_sample_rate"] = str(self._tts_rate)
             self._tts_cm = adapter.connect_stream(tts_config)
             try:
                 self._tts = await asyncio.wait_for(self._tts_cm.__aenter__(), timeout=8.0)
@@ -393,9 +385,14 @@ class PstnTurnTtsSession:
                 except Exception:
                     pass
                 self._tts_cm = None
+                self._had_error = True
+                if "credit" in str(exc).lower() or "quota" in str(exc).lower() or "402" in str(exc) or "429" in str(exc):
+                    log_pstn("tts.credits_exhausted", call_id=voice.call_id, provider=provider, detail=str(exc)[:200])
+                    setattr(voice, "_tts_credits_exhausted", True)
+                    setattr(voice, "_tts_exhausted_provider", provider)
                 if isinstance(exc, asyncio.TimeoutError):
-                    raise TimeoutError("TTS upstream connect timed out after 8s") from exc
-                raise
+                    raise TimeoutError(f"TTS upstream connect timed out after 8s for provider '{provider}'") from exc
+                raise RuntimeError(f"TTS provider '{provider}' failed to connect (credits or service unavailable): {exc}") from exc
             self._ping_task = asyncio.create_task(self._tts_ping())
         else:
             raise RuntimeError("The selected composed speech transport is unavailable")
@@ -752,6 +749,20 @@ class PstnTurnTtsSession:
                     log_error("PSTN TTS error", call_id=voice.call_id, detail=str(obj)[:300])
                     log_pstn("tts.error", call_id=voice.call_id, detail=str(obj)[:200])
                     self._had_error = True
+                    err_code = str(obj.get("code") or "")
+                    err_msg = str(obj.get("message") or "")
+                    prov = str(self._merged.get("provider") or "tts")
+                    if (
+                        "credit" in err_code.lower()
+                        or "credit" in err_msg.lower()
+                        or "quota" in err_msg.lower()
+                        or "429" in err_msg
+                        or "402" in err_msg
+                        or "balance" in err_msg.lower()
+                    ):
+                        log_pstn("tts.credits_exhausted", call_id=voice.call_id, provider=prov, detail=err_msg[:200])
+                        setattr(voice, "_tts_credits_exhausted", True)
+                        setattr(voice, "_tts_exhausted_provider", prov)
                     break
                 data = obj.get("data")
                 if self._tts_is_completion(msg_type, data):

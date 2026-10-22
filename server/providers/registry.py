@@ -92,14 +92,14 @@ class ProviderRegistry:
             entry["adapter_available"] = bool(deepseek_key)
             providers.append(entry)
 
-        if enable_cartesia or cartesia_key:
-            if enable_cartesia and cartesia_key:
-                from server.providers.cartesia_stt import CartesiaSTTAdapter
-                from server.providers.cartesia_tts import CartesiaTTSAdapter
+        # Cartesia is a primary low-latency STT and TTS option
+        from server.providers.cartesia_stt import CartesiaSTTAdapter
+        from server.providers.cartesia_tts import CartesiaTTSAdapter
 
-                self._stt["cartesia"] = CartesiaSTTAdapter()
-                self._tts["cartesia"] = CartesiaTTSAdapter()
-            providers.append(self._cartesia_provider_entry(s, bool(cartesia_key), enable_cartesia))
+        self._stt["cartesia"] = CartesiaSTTAdapter()
+        self._tts["cartesia"] = CartesiaTTSAdapter()
+        providers.append(self._cartesia_provider_entry(s, bool(cartesia_key), bool(enable_cartesia or cartesia_key)))
+
 
         config_mode = dev_secrets_store.effective("voice_agent_config_mode", s.voice_agent_config_mode)
         active_tier = dev_secrets_store.effective("voice_agent_tier", s.voice_agent_tier)
@@ -152,7 +152,13 @@ class ProviderRegistry:
                     for model in _allowed_models(s, "sarvam_llm_models_csv", "allowed_sarvam_llm_models")
                 ],
                 "tts": [
-                    {"id": m, "label": meta["label"], "pricing_key": f"sarvam:{m}"}
+                    {
+                        "id": m,
+                        "label": meta["label"],
+                        "pricing_key": f"sarvam:{m}",
+                        "api_mode": "websocket",
+                        "api_modes": ["websocket"],
+                    }
                     for m, meta in constants.TTS_MODELS.items()
                 ],
             },
@@ -178,8 +184,8 @@ class ProviderRegistry:
                     {
                         "id": model,
                         "label": model,
-                        "api_mode": "unary_rest",
-                        "api_modes": ["unary_rest", "streaming_rest"]
+                        "api_mode": "websocket" if supports_gemini_tts_streaming(model) else "unary_rest",
+                        "api_modes": ["websocket", "streaming_rest", "unary_rest"]
                         if supports_gemini_tts_streaming(model) else ["unary_rest"],
                         "streaming": supports_gemini_tts_streaming(model),
                     }
@@ -257,7 +263,13 @@ class ProviderRegistry:
             "models": {
                 "stt": stt_models,
                 "tts": [
-                    {"id": m, "label": meta["label"], "pricing_key": f"cartesia:{m}"}
+                    {
+                        "id": m,
+                        "label": meta["label"],
+                        "pricing_key": f"cartesia:{m}",
+                        "api_mode": "websocket",
+                        "api_modes": ["websocket"],
+                    }
                     for m, meta in constants.CARTESIA_TTS_MODELS.items()
                 ],
             },

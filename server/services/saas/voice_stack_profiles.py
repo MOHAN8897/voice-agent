@@ -164,14 +164,14 @@ def validate_composed_profile(payload: Any, *, tier: str, allow_premium: bool = 
             if provider not in {"sarvam", "gemini", "cartesia", "elevenlabs"}:
                 raise VoiceProfileError("invalid_profile", "Choose a supported speech engine.")
             if not model.get("apiMode"):
-                model["apiMode"] = "websocket" if provider in {"sarvam", "cartesia"} else "streaming_rest"
+                model["apiMode"] = "websocket" if provider in {"sarvam", "cartesia", "gemini"} else "streaming_rest"
             for key in ("model", "apiMode"):
                 _identifier(model.get(key), f"Model {key}")
             api_mode = str(model.get("apiMode") or "").strip().lower()
             allowed_api_modes = {"unary_rest", "streaming_rest", "websocket"}
             if api_mode not in allowed_api_modes:
                 raise VoiceProfileError("invalid_profile", "The selected speech engine API mode does not match its supported transport.")
-            if provider == "gemini" and api_mode == "streaming_rest":
+            if provider == "gemini" and api_mode in {"streaming_rest", "websocket"}:
                 from server.providers.gemini_tts import supports_gemini_tts_streaming
 
                 if not supports_gemini_tts_streaming(str(model.get("model") or "")):
@@ -256,12 +256,17 @@ def _resolve_catalog_voice_metadata(pvid: str, tier: str) -> dict[str, str]:
     from server.services.saas.voice_catalog import _GEMINI_VOICE_META, _SARVAM_VOICE_META
     sarvam_map = {str(item["id"]).lower(): item for item in _SARVAM_VOICE_META}
     clean_speaker = pvid.removeprefix("voice-").strip()
-    if tier == "medium":
+    if clean_speaker.lower() in sarvam_map or (tier == "medium" and clean_speaker.lower() in {"shubh", "priya", "pooja", "simran", "neha", "rahul"}):
         meta = sarvam_map.get(clean_speaker.lower(), {})
         gender = meta.get("gender") if meta else ("female" if clean_speaker.lower() in {"ritu", "pooja", "neha", "priya", "kavitha", "ishita", "simran", "kavya", "shreya", "roopa", "tanya", "shruti", "suhani", "rupali"} else "male")
         tone = meta.get("tone") if meta else "Warm & natural"
         category = meta.get("category") if meta else "support"
         use_case = meta.get("useCase") if meta else "Regional Customer Support"
+    elif "sonic" in clean_speaker.lower() or len(clean_speaker) > 20:
+        gender = "female" if "female" in clean_speaker.lower() or "skylar" in clean_speaker.lower() else "male"
+        tone = "Ultra-low-latency & clear"
+        category = "conversational"
+        use_case = "Sub-100ms Multilingual Outreach"
     else:
         meta = _GEMINI_VOICE_META.get(clean_speaker, {}) or _GEMINI_VOICE_META.get(clean_speaker.title(), {})
         gender = meta.get("gender") if meta else "female"
@@ -596,6 +601,14 @@ async def save_composed_profile(
         llm_spec = profile.get("llm") or {}
         primary_eng = (profile.get("engines") or [{}])[0]
         primary_mdl = (primary_eng.get("models") or [{}])[0]
+        first_voice = (primary_mdl.get("voices") or [{}])[0]
+        tts_speaker = first_voice.get("providerVoiceId") or first_voice.get("id") or "Zephyr"
+        tts_api = primary_mdl.get("apiMode") or ("websocket" if primary_mdl.get("provider") in {"sarvam", "cartesia", "gemini"} else "streaming_rest")
+        tts_payload = {
+            "provider": primary_mdl.get("provider", "sarvam"),
+            "model": primary_mdl.get("model", "bulbul:v3"),
+            "config": {"speaker": tts_speaker, "api_mode": tts_api},
+        }
         if row is None:
             from server.providers import resolve_stack
 
@@ -603,7 +616,7 @@ async def save_composed_profile(
             payload_to_store = base.to_safe_dict()
             payload_to_store["stt"] = {"provider": stt_spec.get("provider", "sarvam"), "model": stt_spec.get("model", "saaras:v2"), "config": {"mode": "realtime"}}
             payload_to_store["llm"] = {"provider": llm_spec.get("provider", "gemini"), "model": llm_spec.get("modelId", "gemini-2.0-flash"), "config": {"api_mode": llm_spec.get("apiMode", "chat_completions_v1")}}
-            payload_to_store["tts"] = {"provider": primary_mdl.get("provider", "sarvam"), "model": primary_mdl.get("model", "bulbul:v3"), "config": {"api_mode": primary_mdl.get("apiMode", "streaming_rest")}}
+            payload_to_store["tts"] = tts_payload
             row = TierAssignment(
                 id=uuid.uuid4(),
                 environment=environment,
@@ -617,7 +630,7 @@ async def save_composed_profile(
             stage_payload["composed_voice_profile"] = record
             stage_payload["stt"] = {"provider": stt_spec.get("provider", "sarvam"), "model": stt_spec.get("model", "saaras:v2"), "config": {"mode": "realtime"}}
             stage_payload["llm"] = {"provider": llm_spec.get("provider", "gemini"), "model": llm_spec.get("modelId", "gemini-2.0-flash"), "config": {"api_mode": llm_spec.get("apiMode", "chat_completions_v1")}}
-            stage_payload["tts"] = {"provider": primary_mdl.get("provider", "sarvam"), "model": primary_mdl.get("model", "bulbul:v3"), "config": {"api_mode": primary_mdl.get("apiMode", "streaming_rest")}}
+            stage_payload["tts"] = tts_payload
             row.stack_payload = stage_payload
             flag_modified(row, "stack_payload")
             row.updated_at = datetime.now(timezone.utc)

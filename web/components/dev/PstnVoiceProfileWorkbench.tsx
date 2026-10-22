@@ -125,28 +125,24 @@ const LLM_MODELS_BY_PROVIDER: Record<string, { id: string; label: string; apiMod
 };
 
 const TTS_PROVIDERS = [
-  { id: "sarvam", label: "Sarvam AI (Bulbul Regional Natural)" },
-  { id: "gemini", label: "Google Gemini (Gemini TTS / Live Voices)" },
-  { id: "cartesia", label: "Cartesia (Sonic Low-Latency)" },
-  { id: "elevenlabs", label: "ElevenLabs (Multilingual Expressive)" },
+  { id: "gemini", label: "Google Gemini (Gemini TTS Low-Latency WebSocket)" },
+  { id: "sarvam", label: "Sarvam AI (Bulbul Regional Natural WebSocket)" },
+  { id: "cartesia", label: "Cartesia (Sonic Sub-100ms WebSocket)" },
 ];
 
 const TTS_MODELS_BY_PROVIDER: Record<string, { id: string; label: string; apiMode: string }[]> = {
-  sarvam: [
-    { id: "bulbul:v3", label: "bulbul:v3 · Expressive Indian Regional (Recommended)", apiMode: "websocket" },
-    { id: "bulbul:v2", label: "bulbul:v2 · Standard Regional", apiMode: "websocket" },
-  ],
   gemini: [
-    { id: "gemini-2.0-flash", label: "gemini-2.0-flash · Realtime Streaming REST", apiMode: "streaming_rest" },
-    { id: "gemini-tts", label: "gemini-tts · Standard Synthesis", apiMode: "unary_rest" },
+    { id: "gemini-3.8-flash-tts", label: "gemini-3.8-flash-tts · Realtime Low-Latency WebSocket (Recommended)", apiMode: "websocket" },
+    { id: "gemini-3.8-flash-lite-tts", label: "gemini-3.8-flash-lite-tts · High-Speed Streaming WebSocket", apiMode: "websocket" },
+    { id: "gemini-3.1-flash-tts-preview", label: "gemini-3.1-flash-tts-preview · Preview Model WebSocket", apiMode: "websocket" },
+  ],
+  sarvam: [
+    { id: "bulbul:v3", label: "bulbul:v3 · Expressive Indian Regional WebSocket (Recommended)", apiMode: "websocket" },
+    { id: "bulbul:v2", label: "bulbul:v2 · Standard Regional WebSocket", apiMode: "websocket" },
   ],
   cartesia: [
-    { id: "sonic-multilingual", label: "sonic-multilingual · Sub-100ms Streaming", apiMode: "websocket" },
-    { id: "sonic-english", label: "sonic-english · High Naturalness", apiMode: "websocket" },
-  ],
-  elevenlabs: [
-    { id: "eleven_multilingual_v2", label: "eleven_multilingual_v2 · Conversational Expressive", apiMode: "streaming_rest" },
-    { id: "eleven_turbo_v2", label: "eleven_turbo_v2 · Low Latency", apiMode: "streaming_rest" },
+    { id: "sonic-3.5", label: "sonic-3.5 · Sub-100ms Ultra Fast WebSocket (Recommended)", apiMode: "websocket" },
+    { id: "sonic-3.5-2026-05-04", label: "sonic-3.5-2026-05-04 · Snapshot Model WebSocket", apiMode: "websocket" },
   ],
 };
 
@@ -164,14 +160,8 @@ function getVoicesForTtsProvider(provider: string, languages: string[]): VoicePr
   }
   if (provider === "cartesia") {
     return [
-      { id: "voice-sonic-female", label: "Sonic Natural (Female)", providerVoiceId: "sonic-female", languages: langs },
-      { id: "voice-sonic-male", label: "Sonic Natural (Male)", providerVoiceId: "sonic-male", languages: langs },
-    ];
-  }
-  if (provider === "elevenlabs") {
-    return [
-      { id: "voice-rachel", label: "Rachel (Conversational Calm)", providerVoiceId: "21m00Tcm4TlvDq8ikWAM", languages: langs },
-      { id: "voice-adam", label: "Adam (Deep & Confident)", providerVoiceId: "pNInz6obpgDQGcFmaJgB", languages: langs },
+      { id: "voice-sonic-female", label: "Sonic Natural (Female - Skylar)", providerVoiceId: "db6b0ed5-d5d3-463d-ae85-518a07d3c2b4", languages: langs },
+      { id: "voice-sonic-male", label: "Sonic Natural (Male - Caleb)", providerVoiceId: "a0e99841-438c-4a64-b679-ae501e7d6091", languages: langs },
     ];
   }
   // gemini
@@ -182,6 +172,7 @@ function getVoicesForTtsProvider(provider: string, languages: string[]): VoicePr
     { id: "voice-leda", label: "Leda (Female · Warm & Pleasant)", providerVoiceId: "Leda", languages: langs },
     { id: "voice-kore", label: "Kore (Female · Calm & Informative)", providerVoiceId: "Kore", languages: langs },
     { id: "voice-fenrir", label: "Fenrir (Male · Authoritative)", providerVoiceId: "Fenrir", languages: langs },
+    { id: "voice-charon", label: "Charon (Male · Deep & Resonant)", providerVoiceId: "Charon", languages: langs },
   ];
 }
 
@@ -203,8 +194,8 @@ function defaultProfileForTier(tier: ProfileTier): ComposedProfile {
   const llmProv = isMedium ? "sarvam" : "gemini";
   const llmMdl = isMedium ? "sarvam-2b" : "gemini-2.0-flash";
   const ttsProv = isMedium ? "sarvam" : "gemini";
-  const ttsMdl = isMedium ? "bulbul:v3" : "gemini-2.0-flash";
-  const ttsApi = ttsProv === "sarvam" ? "websocket" : "streaming_rest";
+  const ttsMdl = isMedium ? "bulbul:v3" : "gemini-3.8-flash-tts";
+  const ttsApi = "websocket";
   const languages = ["te-IN", "hi-IN", "en-IN", "ta-IN", "kn-IN", "ml-IN", "mr-IN", "bn-IN", "gu-IN", "pa-IN"];
   const voices = getVoicesForTtsProvider(ttsProv, languages);
 
@@ -386,17 +377,18 @@ export function PstnVoiceProfileWorkbench() {
   const availableTtsProviders = useMemo(() => {
     return TTS_PROVIDERS.map((p) => {
       const cat = providers.find((cp) => cp.id === p.id);
-      const suffix = cat && (!cat.enabled || !cat.configured) ? " · setup required" : "";
-      return { id: p.id, label: `${p.label}${suffix}` };
+      const isConfigured = cat ? cat.enabled && cat.configured : true;
+      const suffix = !isConfigured ? " ⚠️ (setup/credits required)" : "";
+      return { id: p.id, label: `${p.label}${suffix}`, hasWarning: !isConfigured };
     });
   }, [providers]);
 
   const currentTtsModels = useMemo(() => {
     const catModels = providers.find((p) => p.id === currentTtsProvider)?.models?.tts;
     if (catModels && catModels.length > 0) {
-      return catModels.map((m) => ({ id: m.id, label: m.label || m.id, apiMode: m.api_mode || (currentTtsProvider === "sarvam" ? "websocket" : "streaming_rest") }));
+      return catModels.map((m) => ({ id: m.id, label: m.label || m.id, apiMode: m.api_mode || "websocket" }));
     }
-    return TTS_MODELS_BY_PROVIDER[currentTtsProvider] || [{ id: "default", label: "Default Speech Model", apiMode: "streaming_rest" }];
+    return TTS_MODELS_BY_PROVIDER[currentTtsProvider] || [{ id: "default", label: "Default Speech Model", apiMode: "websocket" }];
   }, [providers, currentTtsProvider]);
 
   function handleSttProviderChange(provider: string) {
@@ -438,7 +430,7 @@ export function PstnVoiceProfileWorkbench() {
 
   function handleTtsProviderChange(provider: string) {
     const models = TTS_MODELS_BY_PROVIDER[provider] || [];
-    const first = models[0] || { id: "default", apiMode: provider === "sarvam" ? "websocket" : "streaming_rest" };
+    const first = models[0] || { id: "default", apiMode: "websocket" };
     const languages = draft.supportedLanguages.length > 0 ? draft.supportedLanguages : ["te-IN", "hi-IN", "en-IN"];
     const voices = getVoicesForTtsProvider(provider, languages);
 
@@ -447,14 +439,14 @@ export function PstnVoiceProfileWorkbench() {
       engines: [
         {
           id: provider,
-          label: provider === "sarvam" ? "Sarvam Bulbul" : provider === "gemini" ? "Gemini TTS" : provider === "cartesia" ? "Cartesia Sonic" : "ElevenLabs",
+          label: provider === "sarvam" ? "Sarvam Bulbul" : provider === "gemini" ? "Gemini TTS" : "Cartesia Sonic",
           models: [
             {
               id: first.id,
               label: first.id,
               provider,
               model: first.id,
-              apiMode: first.apiMode,
+              apiMode: first.apiMode || "websocket",
               voices,
             },
           ],
@@ -478,7 +470,7 @@ export function PstnVoiceProfileWorkbench() {
           label: model,
           provider: currentTtsProvider,
           model,
-          apiMode: matched?.apiMode || (currentTtsProvider === "sarvam" ? "websocket" : "streaming_rest"),
+          apiMode: matched?.apiMode || "websocket",
           voices,
         },
       ];
@@ -898,8 +890,28 @@ export function PstnVoiceProfileWorkbench() {
               </div>
             </div>
 
+            {/* Warning when chosen provider is missing setup/credits */}
+            {(() => {
+              const cat = providers.find((cp) => cp.id === currentTtsProvider);
+              const hasWarning = cat && (!cat.enabled || !cat.configured);
+              if (!hasWarning) return null;
+              return (
+                <div className="flex items-start gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200">
+                  <span className="text-base leading-none">⚠️</span>
+                  <div className="space-y-0.5">
+                    <p className="font-semibold text-amber-100">
+                      Warning: {currentTtsProvider.toUpperCase()} credits or API credentials not configured/active
+                    </p>
+                    <p className="text-[11px] text-amber-200/80">
+                      The chosen stack will <strong>never silently fall back to any default provider</strong>. If credits or quota are exhausted, call synthesis will report an error for this provider. Ensure account balance is active.
+                    </p>
+                  </div>
+                </div>
+              );
+            })()}
+
             <p className="text-[11px] text-text-subtle">
-              Curated voice personas (Conversational & Promotional) are automatically bound to this speech engine.
+              Curated voice personas (Conversational & Promotional) are automatically bound to this speech engine. All speech options stream over low-latency WebSockets.
             </p>
           </div>
         </div>
@@ -916,9 +928,7 @@ export function PstnVoiceProfileWorkbench() {
                   ? "Curated Indian Regional personas enabled: Shubh, Priya, Pooja, Simran, Neha, Rahul."
                   : currentTtsProvider === "cartesia"
                   ? "Sonic ultra-low-latency multilingual voices enabled: Sonic Natural (Female & Male)."
-                  : currentTtsProvider === "elevenlabs"
-                  ? "Expressive conversational voices enabled: Rachel, Adam."
-                  : "Gemini conversational voices enabled: Zephyr, Puck, Aoede, Leda, Kore, Fenrir."}
+                  : "Gemini conversational voices enabled: Zephyr, Puck, Aoede, Leda, Kore, Fenrir, Charon."}
               </p>
             </div>
             <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-300">

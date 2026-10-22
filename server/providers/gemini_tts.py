@@ -175,11 +175,10 @@ class GeminiTTSAdapter:
         )
 
     def connect_stream(self, config: TTSConfig):
-        _ = config
-        raise NotImplementedError(
-            "Gemini TTS WebSocket is not exposed by this unary adapter interface; "
-            "use stream_with_metadata for SSE"
-        )
+        from server.services.gemini_tts_ws import connect_gemini_tts_ws
+
+        return connect_gemini_tts_ws(model=config.model, tts_config=config)
+
 
     async def stream_with_metadata(
         self, text: str, config: TTSConfig,

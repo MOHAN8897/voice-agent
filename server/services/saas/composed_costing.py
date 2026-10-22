@@ -64,11 +64,13 @@ def default_provider_rates() -> list[dict[str, Any]]:
             "provider": provider, "model": model, "currency": currency,
             "unit": unit, "price": price, "effectiveFrom": start, "effectiveUntil": end,
             "sourceUrl": "https://www.sarvam.ai/api-pricing" if provider == "sarvam"
-            else "https://ai.google.dev/gemini-api/docs/pricing",
+            else ("https://cartesia.ai/pricing" if provider == "cartesia" else "https://ai.google.dev/gemini-api/docs/pricing"),
         })
 
     add("stt", "sarvam", "saaras:v3-realtime", "audio_minute", "0.49", "INR", "2026-10-10")
     add("tts", "sarvam", "bulbul:v3", "characters_1000", "3", "INR", "2026-10-10")
+    add("tts", "cartesia", "sonic-3.5", "characters_1000", "0.075", "USD", "2026-10-10")
+    add("tts", "cartesia", "sonic-3.5-2026-05-04", "characters_1000", "0.075", "USD", "2026-10-10")
     for unit, price in (("input_tokens_million", "15"), ("cached_input_tokens_million", "5"), ("output_tokens_million", "60")):
         add("llm", "sarvam", "sarvam-105b-conversations", unit, price, "INR", "2026-10-10")
     for model, output in (("gemini-3.8-flash-lite-tts", "6"), ("gemini-3.8-flash-tts", "9")):
@@ -99,7 +101,7 @@ def validate_provider_rates(value: Any) -> list[dict[str, Any]]:
             if row["currency"] not in {"INR", "USD"}:
                 raise ValueError("Supplier currency must be INR or USD.")
             allowed = ((stage in {"stt", "llm"} and row["provider"] == "sarvam")
-                       or (stage == "tts" and row["provider"] in {"sarvam", "gemini"}))
+                       or (stage == "tts" and row["provider"] in {"sarvam", "gemini", "cartesia"}))
             if not allowed or "live" in row["model"].lower():
                 raise ValueError("This tariff editor supports composed suppliers only.")
             price = _decimal(row["price"])
@@ -360,7 +362,7 @@ def price_composed_usage(snapshot: Any, stage_usage: Any) -> dict[str, Any]:
                 quantities = {"input_tokens_million": (input_tokens - cached) / 1_000_000,
                               "cached_input_tokens_million": cached / 1_000_000,
                               "output_tokens_million": _decimal(native.get("output_tokens")) / 1_000_000}
-            elif selection.get("provider") == "sarvam":
+            elif selection.get("provider") in {"sarvam", "cartesia"}:
                 chars = data.get("input_characters", data.get("prewarm_input_characters"))
                 if "input_characters" in data:
                     chars = _decimal(chars) + _decimal(data.get("prewarm_input_characters", 0))
