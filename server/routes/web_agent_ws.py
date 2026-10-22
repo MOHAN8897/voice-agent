@@ -5,6 +5,7 @@ import asyncio
 import json
 import logging
 from collections.abc import Awaitable, Callable
+from typing import Any
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
@@ -135,21 +136,21 @@ async def web_agent_ws(websocket: WebSocket):
 
     import uuid
 
-    stack = await saas_stack_override_for_agent(agent)
     req_lang = (websocket.query_params.get("language") or "").strip()
     if req_lang:
         from server.config.constants import normalize_supported_language
         norm_req_lang = normalize_supported_language(req_lang)
-        stack["language"] = norm_req_lang
-        lang = norm_req_lang
+        # Resolve the entire profile for the requested language so recognition,
+        # speech and catalog validation agree before any provider is opened.
+        agent_for_voice = {**agent, "languages": [norm_req_lang]}
     else:
-        lang = str(stack.get("language") or (agent.get("languages") or ["te-IN"])[0] or "te-IN")
+        agent_for_voice = agent
     session_id = f"web-agent-{principal.user_id}-{agent_id}-{uuid.uuid4().hex[:8]}"[:100]
     from server.call.call_lifecycle_service import call_lifecycle_service
-    from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+    from server.services.pstn_voice_flow import create_pstn_voice_loop, is_realtime_e2e_stack
 
     call_id: str | None = None
-    loop: PstnRealtimeVoiceLoop | None = None
+    loop: Any = None
     closed = False
     end_reason = "user_stop"
     hangup_complete_sent = False
@@ -167,7 +168,10 @@ async def web_agent_ws(websocket: WebSocket):
         nonlocal sent_audio
         if closed or not pcm:
             return
-        playback.note_sent_frames((len(pcm) + 639) // 640)
+        # The composed loop tracks its own 20 ms frames. The realtime loop
+        # delegates transport accounting to this callback.
+        if realtime_voice:
+            playback.note_sent_frames((len(pcm) + 639) // 640)
         await websocket.send_bytes(pcm)
         if not sent_audio:
             sent_audio = True
@@ -208,8 +212,15 @@ async def web_agent_ws(websocket: WebSocket):
             pass
 
     try:
+        stack = await saas_stack_override_for_agent(agent_for_voice)
+        if req_lang:
+            stack["language"] = norm_req_lang
+        lang = str(stack.get("language") or (agent_for_voice.get("languages") or ["te-IN"])[0] or "te-IN")
+        realtime_voice = is_realtime_e2e_stack(stack)
+        resolved_tier = (stack.get("_voice_stack_snapshot") or {}).get("tier") or agent_for_voice.get("default_tier")
         started = await call_lifecycle_service.start(
             agent_id=agent_id,
+            tenant_id=workspace_tenant_id,
             session_id=session_id,
             channel="browser",
             direction="inbound",
@@ -217,44 +228,57 @@ async def web_agent_ws(websocket: WebSocket):
             # rollups and never archived to disk.
             is_test=True,
             language=str(lang),
+            tier=str(resolved_tier) if resolved_tier else None,
             stack_override=stack,
             billed_user_id=str(principal.user_id),
         )
         call_id = started["call_id"]
-        loop = PstnRealtimeVoiceLoop(
+        loop_kwargs = dict(
             session_id=started["session_id"],
             call_id=call_id,
             on_agent_wire=on_agent_wire,
             sample_rate=16000,
             tts_output_codec="linear16",
             stack_override=stack,
-            tenant_id=workspace_tenant_id,
-            agent_id=str(agent_id),
-            channel="browser",
             playback=playback,
             is_agent_audio_active=playback.is_active,
         )
-        loop.set_hangup_notice_handler(on_hangup_notice)
-        loop.set_hangup_handler(on_provider_hangup)
+        if realtime_voice:
+            loop_kwargs.update(tenant_id=workspace_tenant_id, agent_id=str(agent_id), channel="browser")
+        loop = create_pstn_voice_loop(**loop_kwargs)
+        if hasattr(loop, "set_hangup_notice_handler"):
+            loop.set_hangup_notice_handler(on_hangup_notice)
+        if hasattr(loop, "set_hangup_handler"):
+            loop.set_hangup_handler(on_provider_hangup)
         async def clear_browser_audio() -> None:
             playback.clear()
             await send_event({"type": "clear_audio"})
 
-        loop.set_barge_handler(clear_browser_audio)
+        if hasattr(loop, "set_barge_handler"):
+            loop.set_barge_handler(clear_browser_audio)
+        if hasattr(loop, "set_error_handler"):
+            async def notify_voice_error(message: str) -> None:
+                nonlocal end_reason
+                end_reason = "voice_turn_failed"
+                await send_event({"type": "error", "code": "voice_turn_failed", "message": message})
+
+            loop.set_error_handler(notify_voice_error)
         async def notify_ready() -> None:
             from server.call.billing_timing import mark_call_connected
             mark_call_connected(call_id)
-            llm = stack.get("llm") if isinstance(stack.get("llm"), dict) else {}
-            connected_adapter = getattr(loop, "_adapter", None)
-            active_provider = getattr(loop, "_llm_provider", None) or str(llm.get("provider") or "gemini")
-            active_model = getattr(connected_adapter, "model", None) or str(llm.get("model") or "")
+            voice_label = "Live voice"
+            if started.get("pipeline") == "composed_voice":
+                snapshot = stack.get("_voice_stack_snapshot") or {}
+                voice_label = {"low": "Economical", "medium": "Standard"}.get(
+                    str(snapshot.get("tier") or agent.get("default_tier") or ""), "Selected voice"
+                )
             await send_event({
                 "type": "ready",
                 "callId": call_id,
                 "pipeline": started.get("pipeline"),
                 "sampleRate": 16000,
-                "voiceProvider": active_provider,
-                "voiceModel": active_model,
+                "voiceProvider": "Enterprise Voice Network",
+                "voiceModel": voice_label,
             })
 
         await _drive_browser_voice(websocket, loop, notify_ready)

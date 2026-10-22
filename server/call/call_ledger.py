@@ -308,10 +308,26 @@ class CallLedger:
         minutes = max(0.0, float(duration_sec or 0)) / 60.0
         from server.services.usage_pricing import resolve_fx_rate_inr
 
-        fx_info = resolve_fx_rate_inr(preferred=usage.get("fx_rate_inr"))
+        composed = str(meta.get("pipeline") or usage.get("pipeline") or "") == "composed_voice"
+        supplier_snapshot = meta.get("provider_cost_snapshot") if composed else None
+        pinned_fx = supplier_snapshot.get("fxRateInr") if isinstance(supplier_snapshot, dict) else None
+        fx_info = resolve_fx_rate_inr(preferred=pinned_fx or usage.get("fx_rate_inr"))
         fx = float(fx_info["rate"] or 96.78)
         model_usd = float(usage.get("model_cost_usd") if usage.get("model_cost_usd") is not None else usage.get("cost_usd") or 0)
         model_inr = model_usd * fx
+        supplier_result = None
+        if composed:
+            from server.services.saas.composed_costing import price_composed_usage
+
+            try:
+                supplier_result = price_composed_usage(supplier_snapshot, meta.get("stage_usage"))
+            except (ValueError, KeyError, TypeError, ArithmeticError):
+                supplier_result = {"status": "incomplete", "missing": ["invalid_cost_snapshot"], "stages": {}, "totalUsd": None, "totalInr": None}
+            meta["provider_cost_result"] = supplier_result
+            usage["cost_accounting_version"] = 3
+            usage["supplier_cost_status"] = supplier_result["status"]
+            model_usd = float(supplier_result["totalUsd"] or 0)
+            model_inr = float(supplier_result["totalInr"] or 0)
         channel = str(meta.get("channel") or "")
         pipeline = str(meta.get("pipeline") or usage.get("pipeline") or "")
         
@@ -468,6 +484,11 @@ class CallLedger:
         if meta.get("telnyx_balance_start") is not None:
             usage["telnyx_balance_start"] = float(meta["telnyx_balance_start"])
             usage["telnyx_cost_source"] = usage.get("telnyx_cost_source") or "tariff_rate_deck"
+        if composed and supplier_result and supplier_result["status"] != "ready":
+            # Unknown stage spend must not inherit another supplier's generic estimate.
+            for key in ("model_cost_usd", "model_cost_inr", "model_cost_usd_per_min", "model_cost_inr_per_min",
+                        "cost_usd", "cost_inr", "cost_usd_per_min", "cost_inr_per_min"):
+                usage[key] = None
         meta["usage"] = usage
         self.write_meta(call_id, meta)
 

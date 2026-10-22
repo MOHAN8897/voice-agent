@@ -7,7 +7,7 @@ import { SkeuoButton, SkeuoInput, SkeuoTable, SkeuoTableBody, SkeuoTableHead, Sk
 import { devFetch } from "@/lib/useAdminResource";
 
 type Channel = {
-  channel: "pstn" | "browser";
+  channel: string;
   label: string;
   costUsd: number;
   costInr: number;
@@ -43,7 +43,7 @@ type Insights = {
   windowCapped: boolean;
   channels: Channel[];
   notes: string[];
-  samples: { callId: string; tenant: string; channel: string; durationSec: number; costUsd: number; costInr: number; model: string; carrierSource: string }[];
+  samples: { callId: string; tenant: string; channel: string; tier?: string; durationSec: number; costUsd: number; costInr: number; model: string; carrierSource: string }[];
 };
 
 function money(value: number | null, currency: "USD" | "INR") {
@@ -134,7 +134,7 @@ export function CostInsightsPanel({ display }: {
                     Admin Per-Minute Supplier Cost (1 min normalized)
                   </h5>
                   <dl className="mt-2.5 grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-                    {channel.channel === "pstn" ? (
+                    {channel.channel.startsWith("pstn") ? (
                       <>
                         <dt className="text-text-muted font-medium">Carrier (Telephony & Recording) / min</dt>
                         <dd className="text-right font-mono font-semibold text-text">
@@ -150,7 +150,7 @@ export function CostInsightsPanel({ display }: {
                       </>
                     )}
 
-                    <dt className="text-text-muted font-medium">Agent AI Core (Gemini Live) / min</dt>
+                    <dt className="text-text-muted font-medium">Agent AI Core (LLM & TTS) / min</dt>
                     <dd className="text-right font-mono font-semibold text-text">
                       {mins > 0 ? currency(apiPerMinUsd, apiPerMinInr) : "—"} <span className="text-[10px] font-normal text-text-muted">{mins > 0 ? "/ min" : ""}</span>
                     </dd>
@@ -160,7 +160,7 @@ export function CostInsightsPanel({ display }: {
                       {mins > 0 ? currency(txPerMinUsd, txPerMinInr) : "—"} <span className="text-[10px] font-normal text-text-muted">{mins > 0 ? "/ min" : ""}</span>
                     </dd>
 
-                    {channel.channel === "pstn" && ((channel.unconnectedPrewarmRecords ?? 0) > 0 || prewarmPerMinInr > 0) && (
+                    {channel.channel.startsWith("pstn") && ((channel.unconnectedPrewarmRecords ?? 0) > 0 || prewarmPerMinInr > 0) && (
                       <>
                         <dt className="text-text-muted font-medium">Unused Prewarm Overhead / min</dt>
                         <dd className="text-right font-mono font-semibold text-text">
@@ -178,7 +178,7 @@ export function CostInsightsPanel({ display }: {
                   </dl>
                 </div>
 
-                <p className="mt-3 text-xs text-text-muted">{channel.channel === "pstn" ? `${channel.carrierCdrCalls} carrier CDRs · ${channel.carrierEstimatedCalls} tariff estimates · ${channel.unconnectedPrewarmRecords} unused prewarm records` : "Web sessions have no carrier charge."}</p>
+                <p className="mt-3 text-xs text-text-muted">{channel.channel.startsWith("pstn") ? `${channel.carrierCdrCalls} carrier CDRs · ${channel.carrierEstimatedCalls} tariff estimates · ${channel.unconnectedPrewarmRecords} unused prewarm records` : "Web sessions have no carrier charge."}</p>
                 {channel.reconstructedCalls > 0 && <p className="mt-1 text-xs text-text-muted">{channel.reconstructedCalls} historical calls reconstructed from saved response usage.</p>}
                 {channel.models.length > 0 && <p className="mt-1 break-words text-xs text-text-muted">Models: {channel.models.join(", ")}</p>}
               </article>;
@@ -190,7 +190,7 @@ export function CostInsightsPanel({ display }: {
               <SkeuoTable><SkeuoTableHead><SkeuoTh>Call / tenant</SkeuoTh><SkeuoTh>Channel</SkeuoTh><SkeuoTh>Connected seconds</SkeuoTh><SkeuoTh>Supplier cost</SkeuoTh><SkeuoTh>Carrier source</SkeuoTh></SkeuoTableHead>
                 <SkeuoTableBody>{report.data.samples.map((sample) => <SkeuoTableRow key={sample.callId}>
                   <SkeuoTd><span className="block font-mono text-xs">{sample.callId.slice(0, 8)}</span><span className="text-xs text-text-muted">{sample.tenant}</span></SkeuoTd>
-                  <SkeuoTd>{sample.channel === "pstn" ? "PSTN" : "Web"}</SkeuoTd><SkeuoTd>{sample.durationSec}</SkeuoTd>
+                  <SkeuoTd>{sample.channel === "pstn" ? (sample.tier ? `${sample.tier.toUpperCase()} PSTN` : "PSTN") : "Web"}</SkeuoTd><SkeuoTd>{sample.durationSec}</SkeuoTd>
                   <SkeuoTd>{currency(sample.costUsd, sample.costInr)}</SkeuoTd><SkeuoTd>{sample.carrierSource === "vobiz_cdr" ? "CDR" : sample.carrierSource === "tariff_estimate" ? "Estimate" : "No carrier"}</SkeuoTd>
                 </SkeuoTableRow>)}</SkeuoTableBody></SkeuoTable>
             </div>

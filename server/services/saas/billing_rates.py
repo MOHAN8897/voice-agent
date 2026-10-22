@@ -87,6 +87,17 @@ def _expand_rate_data(data: dict[str, Any]) -> dict[str, int | float]:
             if paise_value is not None
             else _round_half_up(Decimal(cents) * fx)
         )
+    for tier in ("low", "medium", "premium"):
+        usd_key = f"pstn_{tier}_rate_usd_micros_per_min"
+        inr_key = f"pstn_{tier}_rate_inr_paise_per_min"
+        if data.get(usd_key) is not None:
+            expanded[usd_key] = int(data[usd_key])
+        elif tier == "premium" and expanded.get("pstn_rate_usd_micros_per_min") is not None:
+            expanded[usd_key] = int(expanded["pstn_rate_usd_micros_per_min"])
+        if data.get(inr_key) is not None:
+            expanded[inr_key] = int(data[inr_key])
+        elif tier == "premium" and expanded.get("pstn_rate_inr_paise_per_min") is not None:
+            expanded[inr_key] = int(expanded["pstn_rate_inr_paise_per_min"])
     return expanded
 
 
@@ -181,6 +192,12 @@ async def load_rates_from_db_or_seed() -> dict[str, Any]:
                     "pstn_rate_inr_paise_per_min": latest.pstn_rate_inr_paise_per_min,
                     "web_agent_rate_inr_paise_per_min": latest.web_agent_rate_inr_paise_per_min,
                     "did_monthly_inr_paise": latest.did_monthly_inr_paise,
+                    "pstn_low_rate_usd_micros_per_min": getattr(latest, "pstn_low_rate_usd_micros_per_min", None),
+                    "pstn_low_rate_inr_paise_per_min": getattr(latest, "pstn_low_rate_inr_paise_per_min", None),
+                    "pstn_medium_rate_usd_micros_per_min": getattr(latest, "pstn_medium_rate_usd_micros_per_min", None),
+                    "pstn_medium_rate_inr_paise_per_min": getattr(latest, "pstn_medium_rate_inr_paise_per_min", None),
+                    "pstn_premium_rate_usd_micros_per_min": getattr(latest, "pstn_premium_rate_usd_micros_per_min", None),
+                    "pstn_premium_rate_inr_paise_per_min": getattr(latest, "pstn_premium_rate_inr_paise_per_min", None),
                     "fx_rate_inr": float(latest.fx_rate_inr),
                     "effective_from": latest.effective_from.isoformat() if latest.effective_from else _utcnow().isoformat(),
                     "created_by": latest.created_by,
@@ -272,6 +289,12 @@ def effective_rates() -> dict[str, int | float]:
         "pstn_rate_inr_paise_per_min",
         "web_agent_rate_inr_paise_per_min",
         "did_monthly_inr_paise",
+        "pstn_low_rate_usd_micros_per_min",
+        "pstn_low_rate_inr_paise_per_min",
+        "pstn_medium_rate_usd_micros_per_min",
+        "pstn_medium_rate_inr_paise_per_min",
+        "pstn_premium_rate_usd_micros_per_min",
+        "pstn_premium_rate_inr_paise_per_min",
     ):
         if ov.get(key) is not None:
             res[key] = int(ov[key])
@@ -325,6 +348,12 @@ async def update_rates_versioned(
     pstn_inr_per_min: Decimal | float | str | None = None,
     web_inr_per_min: Decimal | float | str | None = None,
     did_monthly_inr: Decimal | float | str | None = None,
+    pstn_low_usd_per_min: Decimal | float | str | None = None,
+    pstn_low_inr_per_min: Decimal | float | str | None = None,
+    pstn_medium_usd_per_min: Decimal | float | str | None = None,
+    pstn_medium_inr_per_min: Decimal | float | str | None = None,
+    pstn_premium_usd_per_min: Decimal | float | str | None = None,
+    pstn_premium_inr_per_min: Decimal | float | str | None = None,
     fx_rate_inr: Decimal | float | str | None = None,
 ) -> dict[str, Any]:
     """Persist new version of billing rates to the database.
@@ -394,6 +423,40 @@ async def update_rates_versioned(
                 raise ValueError(f"{label} is too small to represent at the configured precision.")
         return cents, micros, paise
 
+    def resolve_tier_rate(
+        *,
+        usd_value: Decimal | float | str | None,
+        inr_value: Decimal | float | str | None,
+        current_micros: int | None,
+        current_paise: int | None,
+        label: str,
+    ) -> tuple[int | None, int | None]:
+        value = inr_value if currency == "INR" else usd_value
+        if value is None:
+            return current_micros, current_paise
+
+        amount = _decimal(value)
+        if amount <= 0:
+            raise ValueError(f"{label} must be positive.")
+
+        if currency == "INR":
+            paise = _to_scaled_int(amount, 100, label=label)
+            micros = _round_half_up(
+                (Decimal(paise) / Decimal(100) / new_fx_decimal)
+                * _USD_MICRODOLLARS_PER_DOLLAR
+            )
+        else:
+            micros = _to_scaled_int(amount, _USD_MICRODOLLARS_PER_DOLLAR, label=label)
+            paise = _round_half_up(
+                (Decimal(micros) / _USD_MICRODOLLARS_PER_DOLLAR)
+                * new_fx_decimal
+                * 100
+            )
+
+        if micros <= 0 or paise <= 0:
+            raise ValueError(f"{label} is too small to represent at the configured precision.")
+        return micros, paise
+
     new_pstn, pstn_micros, pstn_paise = resolve_rate(
         usd_value=pstn_usd_per_min,
         inr_value=pstn_inr_per_min,
@@ -420,6 +483,28 @@ async def update_rates_versioned(
         current_paise=int(curr["did_monthly_inr_paise"]),
         allow_zero=True,
         label="Phone number rental rate",
+    )
+
+    low_micros, low_paise = resolve_tier_rate(
+        usd_value=pstn_low_usd_per_min,
+        inr_value=pstn_low_inr_per_min,
+        current_micros=curr.get("pstn_low_rate_usd_micros_per_min"),
+        current_paise=curr.get("pstn_low_rate_inr_paise_per_min"),
+        label="Economical (low) PSTN rate",
+    )
+    medium_micros, medium_paise = resolve_tier_rate(
+        usd_value=pstn_medium_usd_per_min,
+        inr_value=pstn_medium_inr_per_min,
+        current_micros=curr.get("pstn_medium_rate_usd_micros_per_min"),
+        current_paise=curr.get("pstn_medium_rate_inr_paise_per_min"),
+        label="Standard Regional (medium) PSTN rate",
+    )
+    premium_micros, premium_paise = resolve_tier_rate(
+        usd_value=pstn_premium_usd_per_min,
+        inr_value=pstn_premium_inr_per_min,
+        current_micros=curr.get("pstn_premium_rate_usd_micros_per_min"),
+        current_paise=curr.get("pstn_premium_rate_inr_paise_per_min"),
+        label="Flagship Live (premium) PSTN rate",
     )
 
     from server.db.connection import get_session_factory
@@ -466,6 +551,12 @@ async def update_rates_versioned(
                 pstn_rate_inr_paise_per_min=pstn_paise,
                 web_agent_rate_inr_paise_per_min=web_paise,
                 did_monthly_inr_paise=did_paise,
+                pstn_low_rate_usd_micros_per_min=low_micros,
+                pstn_low_rate_inr_paise_per_min=low_paise,
+                pstn_medium_rate_usd_micros_per_min=medium_micros,
+                pstn_medium_rate_inr_paise_per_min=medium_paise,
+                pstn_premium_rate_usd_micros_per_min=premium_micros,
+                pstn_premium_rate_inr_paise_per_min=premium_paise,
                 fx_rate_inr=new_fx,
                 effective_from=now,
                 created_by=actor,
@@ -489,6 +580,12 @@ async def update_rates_versioned(
         "pstn_rate_inr_paise_per_min": pstn_paise,
         "web_agent_rate_inr_paise_per_min": web_paise,
         "did_monthly_inr_paise": did_paise,
+        "pstn_low_rate_usd_micros_per_min": low_micros,
+        "pstn_low_rate_inr_paise_per_min": low_paise,
+        "pstn_medium_rate_usd_micros_per_min": medium_micros,
+        "pstn_medium_rate_inr_paise_per_min": medium_paise,
+        "pstn_premium_rate_usd_micros_per_min": premium_micros,
+        "pstn_premium_rate_inr_paise_per_min": premium_paise,
         "fx_rate_inr": new_fx,
         "effective_from": now.isoformat(),
         "created_by": actor,

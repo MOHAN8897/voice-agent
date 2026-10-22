@@ -44,6 +44,8 @@ class EnvironmentPatch(BaseModel):
     vobiz_app_id: str | None = None
     vobiz_phone_number: str | None = None
     vobiz_webhook_base_url: str | None = None
+    sarvam_llm_models_csv: str | None = Field(None, max_length=2000)
+    gemini_tts_models_csv: str | None = Field(None, max_length=2000)
 
 
 def _patch_dict(body: EnvironmentPatch) -> dict[str, Any]:

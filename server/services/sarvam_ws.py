@@ -22,6 +22,7 @@ TTS WS: wss://api.sarvam.ai/text-to-speech/ws?model=bulbul:v3&send_completion_ev
 """
 from __future__ import annotations
 
+import inspect
 from typing import Any
 
 import websockets  # provided by uvicorn[standard]
@@ -32,11 +33,10 @@ from server.services.dev_secrets_store import dev_secrets_store
 
 
 def _connect(url: str, headers: dict[str, str], **kw: Any):
-    """websockets v13+: additional_headers; older: extra_headers."""
-    try:
-        return websockets.connect(url, additional_headers=headers, max_size=None, **kw)
-    except TypeError:  # pragma: no cover - older lib
-        return websockets.connect(url, extra_headers=headers, max_size=None, **kw)
+    """Select the installed client API before connect defers work until await."""
+    parameters = inspect.signature(websockets.connect).parameters
+    header_name = "additional_headers" if "additional_headers" in parameters else "extra_headers"
+    return websockets.connect(url, **{header_name: headers}, max_size=None, **kw)
 
 
 def _resolve_realtime_stt_model(model: str | None = None) -> str:
@@ -60,6 +60,7 @@ def connect_stt_realtime(
     silence_duration_ms: int | None = None,
     threshold: float | None = None,
     min_speech_duration_ms: int | None = None,
+    prefix_padding_ms: int | None = None,
     high_vad_sensitivity: bool = True,
     model: str | None = None,
 ):
@@ -79,7 +80,9 @@ def connect_stt_realtime(
         params["threshold"] = str(threshold)
     if min_speech_duration_ms is not None:
         params["min_speech_duration_ms"] = str(min_speech_duration_ms)
-    if high_vad_sensitivity:
+    if prefix_padding_ms is not None:
+        params["prefix_padding_ms"] = str(prefix_padding_ms)
+    if high_vad_sensitivity and min_speech_duration_ms is None and prefix_padding_ms is None:
         params["high_vad_sensitivity"] = "true"
     qs = "&".join(f"{k}={v}" for k, v in params.items())
     url = f"{constants.SARVAM_STT_REALTIME_WS}?{qs}"

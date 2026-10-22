@@ -111,6 +111,7 @@ async def test_vobiz_answer_webhook_returns_valid_xml(campaign_db, monkeypatch):
         agent_id="test-agent-123",
         tenant_id=str(TID),
         direction="inbound",
+        stack_override={"pipeline": "realtime_voice", "language": "en-IN"},
     )
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
@@ -352,6 +353,7 @@ async def test_vobiz_answer_webhook_get_method(campaign_db, monkeypatch):
         agent_id="test-agent-get",
         tenant_id=str(TID),
         direction="inbound",
+        stack_override={"pipeline": "realtime_voice", "language": "en-IN"},
     )
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:

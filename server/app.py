@@ -140,6 +140,15 @@ async def lifespan(app: FastAPI):
                     await _ensure_dev_telephony_hydrated()
                 except Exception as e:
                     logger.warning(f"[VOICE] Telephony store hydrate skipped: {e}")
+                try:
+                    from server.services.saas.voice_stack_profiles import (
+                        hydrate_composed_voice_stacks_and_rates,
+                    )
+
+                    res = await hydrate_composed_voice_stacks_and_rates()
+                    logger.info(f"[VOICE] Composed voice stacks and rates hydrated: {res}")
+                except Exception as e:
+                    logger.warning(f"[VOICE] Composed voice stacks hydrate skipped: {e}")
                 logger.info("[VOICE] PostgreSQL connected")
             else:
                 logger.info("[VOICE] PostgreSQL not configured (DATABASE_URL unset)")

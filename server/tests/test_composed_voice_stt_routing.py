@@ -1,12 +1,45 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
-from unittest.mock import Mock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 
 from server.routes.ws import _connect_stt_upstream
 from server.services.pstn_voice_flow import create_pstn_voice_loop
+
+
+@pytest.mark.asyncio
+async def test_composed_stt_cost_uses_only_successfully_forwarded_audio(monkeypatch):
+    from server.services.pstn_voice_core import PstnVoiceLoop
+    from server.services.saas import composed_costing
+
+    recorded = Mock()
+    monkeypatch.setattr(composed_costing, "record_composed_stage_usage", recorded)
+    loop = PstnVoiceLoop(
+        session_id="stage-usage-test", call_id=None, on_agent_wire=AsyncMock(),
+        sample_rate=16000, tts_output_codec="linear16",
+        stack_override={"pipeline": "composed_voice"},
+    )
+    loop._stt = SimpleNamespace(send=AsyncMock(), close=AsyncMock())
+    await loop.feed_user_pcm16(b"\x00\x00" * 320)
+    loop._stt.send.side_effect = RuntimeError("connection closed")
+    await loop.feed_user_pcm16(b"\x00\x00" * 320)
+    loop.call_id = "stage-usage-test"
+    await loop.close()
+    recorded.assert_called_once_with("stage-usage-test", "stt", {"audio_seconds": 0.02}, accumulate=False)
+
+
+@pytest.mark.asyncio
+async def test_classic_voice_loop_does_not_record_composed_costs(monkeypatch):
+    from server.services.pstn_voice_core import PstnVoiceLoop
+    from server.services.saas import composed_costing
+
+    recorded = Mock()
+    monkeypatch.setattr(composed_costing, "record_composed_stage_usage", recorded)
+    loop = PstnVoiceLoop(session_id="legacy-cost-test", call_id=None, on_agent_wire=AsyncMock())
+    await loop.close()
+    recorded.assert_not_called()
 
 
 def _stack(*, provider: str = "sarvam", model: str = "saaras:v3-realtime"):

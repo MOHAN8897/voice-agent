@@ -119,8 +119,11 @@ def _connect_stt_upstream(session_id: str = "default", call_id: str | None = Non
             stream_type=stage_config.get("stream_type", "fast"),
             sample_rate=kwargs.get("sample_rate", 16000),
             vad_config={
-                "silence_duration_ms": kwargs.get("silence_duration_ms"),
-                "threshold": kwargs.get("threshold"),
+                # Explicit endpointing/onset padding for composed voice.
+                "silence_duration_ms": kwargs.get("silence_duration_ms") or 500,
+                "threshold": kwargs.get("threshold") if kwargs.get("threshold") is not None else 0.3,
+                "min_speech_duration_ms": 250,
+                "prefix_padding_ms": 300,
             },
         )
         return stt.connect_realtime(config)

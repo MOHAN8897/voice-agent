@@ -193,6 +193,7 @@ class PstnVoiceLoop:
         self._turn_busy = False
         self._closed = False
         self._on_barge: Callable[[], Awaitable[None]] | None = None
+        self._on_session_error: Callable[[str], Awaitable[None]] | None = None
         self._speak_lock = asyncio.Lock()
         self._wire_frames_out = 0
         self._wire_bytes_out = 0
@@ -239,6 +240,7 @@ class PstnVoiceLoop:
         self._aec_loud_streak = 0
         self._aec_quiet_streak = 0
         self._aec_barge_open = False
+        self._composed_stt_bytes_sent = 0
         from server.services.runtime_settings import runtime_settings
 
         self._barge_runtime = runtime_settings.get(config_session_id or session_id)
@@ -376,6 +378,9 @@ class PstnVoiceLoop:
 
     def set_barge_handler(self, fn: Callable[[], Awaitable[None]]) -> None:
         self._on_barge = fn
+
+    def set_error_handler(self, fn: Callable[[str], Awaitable[None]]) -> None:
+        self._on_session_error = fn
 
     def set_hangup_handler(self, fn: Callable[[], Awaitable[None]]) -> None:
         self._on_remote_hangup = fn
@@ -1043,15 +1048,35 @@ class PstnVoiceLoop:
             log_pstn("greeting.start", call_id=self.call_id, chars=len(greeting))
             log_tts("PSTN greeting", call_id=self.call_id, chars=len(greeting))
             # Speak first; note_spoken after so Realtime history matches what the caller heard.
-            jobs.append(asyncio.create_task(self.speak(greeting)))
+            async def speak_opening() -> None:
+                nonlocal greeting
+                if self.stack_override.get("pipeline") == "composed_voice":
+                    from server.call.call_context import get as get_ctx
+                    from server.services.composed_voice_session import localize_composed_opening
+                    from server.services.saas.composed_costing import composed_llm_usage, record_composed_stage_usage
+
+                    ctx = get_ctx(self.call_id) if self.call_id else None
+                    if ctx is None:
+                        raise RuntimeError("The selected opening has no admitted voice session")
+                    greeting, usage = await localize_composed_opening(
+                        greeting, language=self._resolve_language(), llm=ctx.resolved_stack.llm,
+                    )
+                    if usage:
+                        record_composed_stage_usage(self.call_id, "llm", composed_llm_usage(usage))
+                    self._tts_generated_text = greeting
+                await self.speak(greeting)
+
+            jobs.append(asyncio.create_task(speak_opening()))
 
         before_frames = self._wire_frames_out
         results = await asyncio.gather(*jobs, return_exceptions=True)
         stt_err = results[0] if isinstance(results[0], BaseException) else None
         if greeting:
-            greet_err = results[1] if len(results) > 1 and isinstance(results[1], BaseException) else None
+            greet_err = results[2] if len(results) > 2 and isinstance(results[2], BaseException) else None
             if greet_err and not isinstance(greet_err, asyncio.CancelledError):
                 log_pstn("greeting.failed", call_id=self.call_id, error=str(greet_err)[:200])
+                if self.stack_override.get("pipeline") == "composed_voice":
+                    raise greet_err
                 if self._wire_frames_out == before_frames and not self._closed:
                     # Retry a cold greeting once; another failure reaches bridge cleanup.
                     await self.speak(greeting)
@@ -1096,6 +1121,11 @@ class PstnVoiceLoop:
             f"{greeting.strip()}\n"
             "[Opening already spoken aloud — do not greet or introduce yourself again.]"
         )
+        if self.stack_override.get("pipeline") == "composed_voice":
+            from server.agent.conversation_manager import conversation_manager
+
+            conversation_manager.add_turn(self.session_id, "", spoken_note)
+            return
         last_err = ""
         for attempt in range(5):
             try:
@@ -1324,6 +1354,10 @@ class PstnVoiceLoop:
                 if ev == "error":
                     log_pstn("stt.error", call_id=self.call_id, detail=str(msg)[:200])
                     log_error("PSTN STT error", call_id=self.call_id, detail=str(msg)[:300])
+                elif ev == "vad.speech_start":
+                    # Provider-confirmed speech also satisfies the optional VAD
+                    # barge gate for quiet callers; energy alone is insufficient.
+                    self._last_vad_voice_at = time.monotonic()
                 elif ev == "transcript.partial":
                     text = (msg.get("text") or (msg.get("data") or {}).get("text") or "").strip()
                     if text:
@@ -1618,6 +1652,8 @@ class PstnVoiceLoop:
         b64 = base64.b64encode(pcm16).decode()
         try:
             await self._stt.send(json.dumps({"event": "audio_input", "audio": b64}))
+            if self.stack_override.get("pipeline") == "composed_voice":
+                self._composed_stt_bytes_sent += len(pcm16)
         except Exception as exc:
             log_pstn("stt.send.failed", call_id=self.call_id, error=str(exc)[:200])
             dropped = True
@@ -1884,6 +1920,8 @@ class PstnVoiceLoop:
                     self._active_tts_session = None
                     self._active_speak_task = None
             if needs_tts_fallback and not turn_cancelled and not self.emission_blocked():
+                if self.stack_override.get("pipeline") == "composed_voice":
+                    raise RuntimeError("The selected speech service returned no usable audio")
                 from server.prompts.agent_voice_rules import unclear_fallback_for
 
                 log_pstn("tts.fallback_speech", call_id=self.call_id)
@@ -1894,7 +1932,21 @@ class PstnVoiceLoop:
         except Exception as e:
             logger.warning("[PSTN] turn error: %s", str(e)[:300])
             log_pstn("turn.error", call_id=self.call_id, error=str(e)[:200])
-            if not needs_tts_fallback and not spoke_from_stream and self._phase != PHASE_ENDED and not self._closed:
+            if self.stack_override.get("pipeline") == "composed_voice":
+                from server.services.saas.session_failure_log import record_session_failure
+
+                record_session_failure(
+                    channel="voice", code="voice_turn_failed",
+                    message="The selected voice service could not complete the reply.",
+                    call_id=self.call_id, detail=type(e).__name__,
+                )
+                self._pending_transcript = None
+                self._set_phase(PHASE_ENDED)
+                if self._on_session_error:
+                    await self._on_session_error("The voice service could not complete the reply. Please start a new test.")
+                if self._on_remote_hangup:
+                    await self._on_remote_hangup()
+            elif not needs_tts_fallback and not spoke_from_stream and self._phase != PHASE_ENDED and not self._closed:
                 try:
                     from server.prompts.agent_voice_rules import unclear_fallback_for
 
@@ -2082,3 +2134,14 @@ class PstnVoiceLoop:
             except Exception:
                 pass
             self._call_tts_session = None
+        if self.call_id and self.stack_override.get("pipeline") == "composed_voice":
+            from server.services.saas.composed_costing import record_composed_stage_usage
+
+            # Persist once after the media loop closes, outside the frame path.
+            await asyncio.to_thread(
+                record_composed_stage_usage,
+                self.call_id,
+                "stt",
+                {"audio_seconds": self._composed_stt_bytes_sent / (self.sample_rate * 2)},
+                accumulate=False,
+            )

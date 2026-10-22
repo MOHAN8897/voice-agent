@@ -45,7 +45,7 @@ type ComposedProfile = {
   evidence: ProfileEvidence;
 };
 type ReadinessBlocker = { code: string; message: string };
-type RetailRate = { complete?: boolean } | null;
+type RetailRate = { complete?: boolean; usdMicrosPerMin?: number; inrPaisePerMin?: number; fxRateInr?: number; version?: number } | null;
 type TierProfileRow = {
   tier: ProfileTier;
   profileRevision: number | null;
@@ -54,6 +54,39 @@ type TierProfileRow = {
   retailRate: RetailRate;
 };
 type ProfilesResponse = { environment: string; profiles: TierProfileRow[] };
+type CatalogModel = { id: string; label?: string; realtime?: boolean; api_mode?: string; api_modes?: string[] };
+type CatalogProvider = { id: string; label?: string; enabled?: boolean; configured?: boolean; models?: { stt?: CatalogModel[]; llm?: CatalogModel[]; tts?: CatalogModel[] } };
+type CatalogResponse = { providers?: CatalogProvider[] };
+
+const TRANSPORT_LABELS: Record<string, string> = {
+  websocket: "WebSocket · streamed audio",
+  streaming_rest: "Streaming REST · streamed audio",
+  unary_rest: "REST · complete audio per text chunk",
+  chat_completions_v1: "Chat completions v1 · streamed text",
+  chat_completions_v2: "Chat completions v2 · streamed text",
+};
+
+function transportOptions(provider: string, model?: CatalogModel): string[] {
+  if (provider === "sarvam") return ["websocket"];
+  if (provider === "gemini") return model?.api_modes?.length ? model.api_modes : ["unary_rest"];
+  return [];
+}
+
+function CatalogSelect({ label, value, options, disabled, onChange }: {
+  label: string; value: string; options: { id: string; label?: string }[]; disabled: boolean; onChange: (value: string) => void;
+}) {
+  return (
+    <label className="block min-w-0 text-sm">
+      <span className="mb-1.5 block text-xs font-medium text-text-muted">{label}</span>
+      <select value={value} disabled={disabled} onChange={(event) => onChange(event.target.value)}
+        className="min-h-11 w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2.5 text-sm text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary/40 disabled:cursor-not-allowed disabled:opacity-60">
+        <option value="">Choose a catalog option</option>
+        {value && !options.some((option) => option.id === value) && <option value={value}>{value} · saved, unavailable in catalog</option>}
+        {options.map((option) => <option key={option.id} value={option.id}>{option.label || option.id}</option>)}
+      </select>
+    </label>
+  );
+}
 
 const EMPTY_EVIDENCE: ProfileEvidence = {
   sarvamModelAccess: false,
@@ -221,6 +254,31 @@ export function PstnVoiceProfileWorkbench() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
+  const [providers, setProviders] = useState<CatalogProvider[]>([]);
+  const [catalogError, setCatalogError] = useState("");
+  const [loadingTemplate, setLoadingTemplate] = useState(false);
+
+  const modelsFor = (provider: string, stage: "stt" | "llm" | "tts") => providers.find((item) => item.id === provider)?.models?.[stage] || [];
+  const selectedLlmModel = modelsFor(draft.llm.provider, "llm").find((model) => model.id === draft.llm.modelId);
+  const llmModes = selectedLlmModel?.api_modes?.length ? selectedLlmModel.api_modes : selectedLlmModel?.api_mode ? [selectedLlmModel.api_mode] : [];
+  const providerOptions = (allowed: string[]) => providers.filter((provider) => allowed.includes(provider.id)).map((provider) => ({
+    id: provider.id, label: `${provider.label || provider.id}${provider.enabled === false || provider.configured === false ? " · setup required" : ""}`,
+  }));
+  const primaryEngine = draft.engines[0];
+  const primaryModel = primaryEngine?.models?.[0];
+
+  const loadCatalog = useCallback(async () => {
+    setCatalogError("");
+    try {
+      const response = await portalFetch("dev", "/api/dev/stack/catalog");
+      if (!response.ok) throw new Error(await responseError(response));
+      const payload: CatalogResponse = await response.json();
+      if (!Array.isArray(payload.providers)) throw new Error("The provider catalog is incomplete.");
+      setProviders(payload.providers);
+    } catch (caught) {
+      setCatalogError(caught instanceof Error ? caught.message : "Could not load approved model choices.");
+    }
+  }, []);
 
   const selectedRow = rows.find((row) => row.tier === selected);
   const isPremium = selected === "premium";
@@ -259,7 +317,8 @@ export function PstnVoiceProfileWorkbench() {
 
   useEffect(() => {
     void loadProfiles();
-  }, [loadProfiles]);
+    void loadCatalog();
+  }, [loadProfiles, loadCatalog]);
 
   useEffect(() => {
     const row = rows.find((profileRow) => profileRow.tier === selected);
@@ -272,34 +331,57 @@ export function PstnVoiceProfileWorkbench() {
     setDirty(true);
   }
 
-  function updateEngine(engineIndex: number, patch: Partial<EngineProfile>) {
-    updateDraft((current) => ({
-      ...current,
-      engines: current.engines.map((engine, index) => index === engineIndex ? { ...engine, ...patch } : engine),
-    }));
+  function updateTtsStage(patch: { provider?: string; model?: string; apiMode?: string }) {
+    updateDraft((current) => {
+      const engines = current.engines.length > 0 ? [...current.engines] : [{ id: "sarvam", label: "Sarvam Bulbul", models: [] }];
+      const engine = { ...engines[0] };
+      const models = engine.models && engine.models.length > 0
+        ? [...engine.models]
+        : [{ id: "default", label: "Default Model", provider: "sarvam", model: "bulbul:v3", apiMode: "streaming_rest", voices: [] }];
+      const currentModel = { ...models[0] };
+
+      if (patch.provider !== undefined) {
+        currentModel.provider = patch.provider;
+        engine.id = patch.provider;
+        engine.label = patch.provider === "gemini" ? "Gemini TTS" : "Sarvam Bulbul";
+      }
+      if (patch.model !== undefined) {
+        currentModel.model = patch.model;
+        currentModel.id = patch.model;
+        currentModel.label = patch.model;
+      }
+      if (patch.apiMode !== undefined) {
+        currentModel.apiMode = patch.apiMode;
+      }
+
+      engine.models = [currentModel, ...models.slice(1)];
+      return {
+        ...current,
+        engines: [engine, ...engines.slice(1)],
+      };
+    });
   }
 
-  function updateModel(engineIndex: number, modelIndex: number, patch: Partial<ModelProfile>) {
-    updateDraft((current) => ({
-      ...current,
-      engines: current.engines.map((engine, index) => index === engineIndex
-        ? { ...engine, models: engine.models.map((model, itemIndex) => itemIndex === modelIndex ? { ...model, ...patch } : model) }
-        : engine),
-    }));
-  }
-
-  function updateVoice(engineIndex: number, modelIndex: number, voiceIndex: number, patch: Partial<VoiceProfile>) {
-    updateDraft((current) => ({
-      ...current,
-      engines: current.engines.map((engine, index) => index === engineIndex
-        ? {
-            ...engine,
-            models: engine.models.map((model, itemIndex) => itemIndex === modelIndex
-              ? { ...model, voices: model.voices.map((voice, itemVoiceIndex) => itemVoiceIndex === voiceIndex ? { ...voice, ...patch } : voice) }
-              : model),
-          }
-        : engine),
-    }));
+  async function loadRecommendedMapping() {
+    if (isPremium || isEnabled || dirty || busy) return;
+    setBusy(true);
+    setLoadingTemplate(true);
+    setError("");
+    setStatus("");
+    try {
+      const response = await portalFetch("dev", `/api/dev/stack/voice-profiles/${selected}/template`);
+      if (!response.ok) throw new Error(await responseError(response));
+      const payload: { composedProfile?: ComposedProfile } = await response.json();
+      if (!payload.composedProfile) throw new Error("No recommended mapping was returned.");
+      setDraft(normalizeProfile(payload.composedProfile));
+      setDirty(true);
+      setStatus("Recommended mapping loaded. Review its models and voices, then save the disabled draft.");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not load the recommended mapping.");
+    } finally {
+      setBusy(false);
+      setLoadingTemplate(false);
+    }
   }
 
   async function saveProfile() {
@@ -363,7 +445,7 @@ export function PstnVoiceProfileWorkbench() {
         <div>
           <h2 id="pstn-profile-heading" className="text-xl font-semibold text-text">PSTN voice profiles</h2>
           <p className="mt-1 max-w-3xl text-sm text-text-muted">
-            Configure Low and Standard composed profiles for future PSTN admissions. Premium remains on its existing Live configuration.
+            Configure Low and Standard recognition, streamed text, and speech for phone and browser calls. Premium remains on its existing Live configuration.
           </p>
         </div>
         <span className="rounded-full border border-surface-border-subtle bg-surface-raised px-3 py-1.5 font-mono text-xs text-text-muted">
@@ -421,7 +503,16 @@ export function PstnVoiceProfileWorkbench() {
                   </div>
                   <div data-testid="pstn-profile-retail-rate" className="rounded-xl border border-surface-border-subtle bg-surface-raised/60 p-3">
                     <p className="text-xs text-text-subtle">Retail rate</p>
-                    <p className="mt-1"><StatusPill tone={rateComplete ? "good" : "warn"}>{isPremium ? "Legacy rate preserved" : rateComplete ? "Native rate complete" : "Not configured"}</StatusPill></p>
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <StatusPill tone={rateComplete ? "good" : "warn"}>
+                        {isPremium ? "Flagship rate configured" : rateComplete ? "Tier rate configured" : "Not configured"}
+                      </StatusPill>
+                      {rateComplete && selectedRow.retailRate?.usdMicrosPerMin && selectedRow.retailRate?.inrPaisePerMin && (
+                        <span className="font-mono text-xs font-semibold text-text">
+                          ${(selectedRow.retailRate.usdMicrosPerMin / 1_000_000).toFixed(4)} / ₹{(selectedRow.retailRate.inrPaisePerMin / 100).toFixed(2)}/min
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -432,97 +523,171 @@ export function PstnVoiceProfileWorkbench() {
                 ) : (
                   <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(280px,0.9fr)]">
                     <section className="space-y-4" aria-label="Profile definition">
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        <TextField label="STT provider ID" value={draft.stt.provider} disabled={!canEdit} mono onChange={(value) => updateDraft((current) => ({ ...current, stt: { ...current.stt, provider: value } }))} />
-                        <TextField label="STT exact model ID" value={draft.stt.model} disabled={!canEdit} mono onChange={(value) => updateDraft((current) => ({ ...current, stt: { ...current.stt, model: value } }))} />
-                        <TextField label="LLM provider ID" value={draft.llm.provider} disabled={!canEdit} mono onChange={(value) => updateDraft((current) => ({ ...current, llm: { ...current.llm, provider: value } }))} />
-                        <TextField label="LLM exact model ID" value={draft.llm.modelId} disabled={!canEdit} mono onChange={(value) => updateDraft((current) => ({ ...current, llm: { ...current.llm, modelId: value } }))} />
-                        <TextField label="LLM API mode" value={draft.llm.apiMode} disabled={!canEdit} mono onChange={(value) => updateDraft((current) => ({ ...current, llm: { ...current.llm, apiMode: value } }))} />
-                        <TextField label="Supported languages" value={draft.supportedLanguages.join(", ")} disabled={!canEdit} placeholder="Comma-separated verified locale IDs" mono onChange={(value) => updateDraft((current) => ({ ...current, supportedLanguages: splitList(value) }))} />
+                      {catalogError && (
+                        <div role="alert" className="text-sm text-warning">
+                          {catalogError}{" "}
+                          <button type="button" className="underline" onClick={() => void loadCatalog()}>
+                            Retry catalog
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Stage 1: STT */}
+                      <div className="rounded-xl border border-surface-border-subtle bg-surface-card p-4">
+                        <div className="flex items-center justify-between border-b border-surface-border-subtle pb-3">
+                          <div className="flex items-center gap-2.5">
+                            <span className="flex size-6 items-center justify-center rounded-full bg-accent-primary/20 text-xs font-semibold text-accent-primary">
+                              1
+                            </span>
+                            <h3 className="text-sm font-semibold text-text">Speech-to-Text (STT) Stage</h3>
+                          </div>
+                          <span className="rounded bg-surface-raised px-2 py-0.5 font-mono text-[11px] text-text-muted">
+                            Realtime Recognition
+                          </span>
+                        </div>
+                        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                          <CatalogSelect
+                            label="STT Provider"
+                            value={draft.stt.provider}
+                            options={providerOptions(["sarvam"])}
+                            disabled={!canEdit}
+                            onChange={(value) => updateDraft((current) => ({ ...current, stt: { provider: value, model: "" } }))}
+                          />
+                          <CatalogSelect
+                            label="STT Model · Realtime Streamable"
+                            value={draft.stt.model}
+                            options={modelsFor(draft.stt.provider, "stt").filter((model) => model.realtime || model.id.endsWith("-realtime"))}
+                            disabled={!canEdit}
+                            onChange={(value) => updateDraft((current) => ({ ...current, stt: { ...current.stt, model: value } }))}
+                          />
+                        </div>
                       </div>
 
-                      <div className="rounded-xl border border-surface-border-subtle p-4">
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div>
-                            <h3 className="font-medium text-text">TTS engines and model-specific voices</h3>
-                            <p className="mt-1 text-xs text-text-muted">Add only verified combinations. Each voice belongs to the exact model listed above it.</p>
+                      {/* Stage 2: LLM */}
+                      <div className="rounded-xl border border-surface-border-subtle bg-surface-card p-4">
+                        <div className="flex items-center justify-between border-b border-surface-border-subtle pb-3">
+                          <div className="flex items-center gap-2.5">
+                            <span className="flex size-6 items-center justify-center rounded-full bg-accent-primary/20 text-xs font-semibold text-accent-primary">
+                              2
+                            </span>
+                            <h3 className="text-sm font-semibold text-text">Reasoning & Intelligence (LLM) Stage</h3>
                           </div>
-                          <Button
-                            type="button"
-                            variant="secondary"
+                          <span className="rounded bg-surface-raised px-2 py-0.5 font-mono text-[11px] text-text-muted">
+                            Streamed Generation
+                          </span>
+                        </div>
+                        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                          <CatalogSelect
+                            label="LLM Provider"
+                            value={draft.llm.provider}
+                            options={providerOptions(["sarvam"])}
                             disabled={!canEdit}
-                            onClick={() => updateDraft((current) => ({ ...current, engines: [...current.engines, { id: "", label: "", models: [] }] }))}
-                          >
-                            Add engine
-                          </Button>
+                            onChange={(value) => updateDraft((current) => ({ ...current, llm: { provider: value, modelId: "", apiMode: "" } }))}
+                          />
+                          <CatalogSelect
+                            label="LLM Model"
+                            value={draft.llm.modelId}
+                            options={modelsFor(draft.llm.provider, "llm")}
+                            disabled={!canEdit}
+                            onChange={(value) => {
+                              const option = modelsFor(draft.llm.provider, "llm").find((model) => model.id === value);
+                              updateDraft((current) => ({ ...current, llm: { ...current.llm, modelId: value, apiMode: option?.api_mode || option?.api_modes?.[0] || "" } }));
+                            }}
+                          />
+                          <CatalogSelect
+                            label="Transport Protocol"
+                            value={draft.llm.apiMode}
+                            options={llmModes.map((mode) => ({ id: mode, label: TRANSPORT_LABELS[mode] || mode }))}
+                            disabled={!canEdit || !draft.llm.modelId}
+                            onChange={(value) => updateDraft((current) => ({ ...current, llm: { ...current.llm, apiMode: value } }))}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Stage 3: TTS & Voice Personas */}
+                      <div className="rounded-xl border border-surface-border-subtle bg-surface-card p-4">
+                        <div className="flex items-center justify-between border-b border-surface-border-subtle pb-3">
+                          <div className="flex items-center gap-2.5">
+                            <span className="flex size-6 items-center justify-center rounded-full bg-accent-primary/20 text-xs font-semibold text-accent-primary">
+                              3
+                            </span>
+                            <h3 className="text-sm font-semibold text-text">Speech Synthesis (TTS) Stage</h3>
+                          </div>
+                          <span className="rounded bg-surface-raised px-2 py-0.5 font-mono text-[11px] text-text-muted">
+                            Low-Latency Synthesis
+                          </span>
+                        </div>
+                        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                          <CatalogSelect
+                            label="Speech Provider"
+                            value={primaryModel?.provider || primaryEngine?.id || "sarvam"}
+                            options={providerOptions(["sarvam", "gemini"])}
+                            disabled={!canEdit}
+                            onChange={(value) => updateTtsStage({ provider: value, model: "", apiMode: "" })}
+                          />
+                          <CatalogSelect
+                            label="Speech Model"
+                            value={primaryModel?.model || ""}
+                            options={modelsFor(primaryModel?.provider || primaryEngine?.id || "sarvam", "tts")}
+                            disabled={!canEdit}
+                            onChange={(value) => {
+                              const prov = primaryModel?.provider || primaryEngine?.id || "sarvam";
+                              const modes = transportOptions(prov, modelsFor(prov, "tts").find((opt) => opt.id === value));
+                              updateTtsStage({ model: value, apiMode: modes.includes("streaming_rest") ? "streaming_rest" : modes[0] || "" });
+                            }}
+                          />
+                          <CatalogSelect
+                            label="Speech Transport"
+                            value={primaryModel?.apiMode || ""}
+                            options={transportOptions(primaryModel?.provider || primaryEngine?.id || "sarvam", modelsFor(primaryModel?.provider || primaryEngine?.id || "sarvam", "tts").find((option) => option.id === primaryModel?.model)).map((mode) => ({ id: mode, label: TRANSPORT_LABELS[mode] || mode }))}
+                            disabled={!canEdit || !primaryModel?.model}
+                            onChange={(value) => updateTtsStage({ apiMode: value })}
+                          />
                         </div>
 
-                        {draft.engines.length === 0 ? (
-                          <p className="mt-4 rounded-lg bg-surface-raised/50 p-3 text-sm text-text-muted">No TTS engines configured. Add an engine only after its account, model, language, voice, and media evidence is available.</p>
-                        ) : (
-                          <div className="mt-4 space-y-4">
-                            {draft.engines.map((engine, engineIndex) => (
-                              <fieldset key={`engine-${engineIndex}`} className="space-y-3 rounded-xl border border-surface-border-subtle bg-surface-raised/30 p-4">
-                                <legend className="px-1 text-sm font-semibold text-text">Engine {engineIndex + 1}</legend>
-                                <div className="flex flex-wrap items-end gap-3">
-                                  <div className="grid min-w-0 flex-1 gap-3 sm:grid-cols-2">
-                                    <TextField label="Engine ID" value={engine.id} disabled={!canEdit} mono onChange={(value) => updateEngine(engineIndex, { id: value })} />
-                                    <TextField label="Display label" value={engine.label} disabled={!canEdit} onChange={(value) => updateEngine(engineIndex, { label: value })} />
-                                  </div>
-                                  <Button type="button" variant="secondary" disabled={!canEdit} onClick={() => updateDraft((current) => ({ ...current, engines: current.engines.filter((_, index) => index !== engineIndex) }))}>
-                                    Remove engine
-                                  </Button>
-                                </div>
-
-                                <div className="space-y-3 border-l border-surface-border pl-3">
-                                  {engine.models.map((model, modelIndex) => (
-                                    <div key={`model-${engineIndex}-${modelIndex}`} className="space-y-3 rounded-lg border border-surface-border-subtle bg-surface-card p-3">
-                                      <div className="flex items-end gap-3">
-                                        <div className="grid min-w-0 flex-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                                          <TextField label="Model alias ID" value={model.id} disabled={!canEdit} mono onChange={(value) => updateModel(engineIndex, modelIndex, { id: value })} />
-                                          <TextField label="Display label" value={model.label} disabled={!canEdit} onChange={(value) => updateModel(engineIndex, modelIndex, { label: value })} />
-                                          <TextField label="Provider ID" value={model.provider} disabled={!canEdit} mono onChange={(value) => updateModel(engineIndex, modelIndex, { provider: value })} />
-                                          <TextField label="Exact model ID" value={model.model} disabled={!canEdit} mono onChange={(value) => updateModel(engineIndex, modelIndex, { model: value })} />
-                                          <TextField label="API mode" value={model.apiMode} disabled={!canEdit} mono onChange={(value) => updateModel(engineIndex, modelIndex, { apiMode: value })} />
-                                        </div>
-                                        <Button type="button" variant="secondary" disabled={!canEdit} onClick={() => updateEngine(engineIndex, { models: engine.models.filter((_, index) => index !== modelIndex) })}>
-                                          Remove model
-                                        </Button>
-                                      </div>
-
-                                      <div className="space-y-2">
-                                        <div className="flex flex-wrap items-center justify-between gap-2">
-                                          <p className="text-xs font-medium text-text-muted">Voices for this exact model</p>
-                                          <Button type="button" variant="secondary" disabled={!canEdit} onClick={() => updateEngine(engineIndex, { models: engine.models.map((item, index) => index === modelIndex ? { ...item, voices: [...item.voices, { id: "", label: "", providerVoiceId: "", languages: [] }] } : item) })}>
-                                            Add voice
-                                          </Button>
-                                        </div>
-                                        {model.voices.length === 0 ? <p className="text-xs text-text-subtle">No voice verified for this model.</p> : model.voices.map((voice, voiceIndex) => (
-                                          <div key={`voice-${engineIndex}-${modelIndex}-${voiceIndex}`} className="grid gap-3 rounded-lg border border-surface-border-subtle p-3 sm:grid-cols-2 xl:grid-cols-4">
-                                            <TextField label="Public voice ID" value={voice.id} disabled={!canEdit} mono onChange={(value) => updateVoice(engineIndex, modelIndex, voiceIndex, { id: value })} />
-                                            <TextField label="Display label" value={voice.label} disabled={!canEdit} onChange={(value) => updateVoice(engineIndex, modelIndex, voiceIndex, { label: value })} />
-                                            <TextField label="Provider voice ID" value={voice.providerVoiceId} disabled={!canEdit} mono onChange={(value) => updateVoice(engineIndex, modelIndex, voiceIndex, { providerVoiceId: value })} />
-                                            <div className="flex items-end gap-2">
-                                              <div className="min-w-0 flex-1">
-                                                <TextField label="Verified languages" value={voice.languages.join(", ")} disabled={!canEdit} placeholder="Comma-separated locale IDs" mono onChange={(value) => updateVoice(engineIndex, modelIndex, voiceIndex, { languages: splitList(value) })} />
-                                              </div>
-                                              <Button type="button" variant="secondary" disabled={!canEdit} onClick={() => updateModel(engineIndex, modelIndex, { voices: model.voices.filter((_, index) => index !== voiceIndex) })}>
-                                                Remove
-                                              </Button>
-                                            </div>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  ))}
-                                  <Button type="button" variant="secondary" disabled={!canEdit} onClick={() => updateEngine(engineIndex, { models: [...engine.models, { id: "", label: "", provider: "", model: "", apiMode: "", voices: [] }] })}>
-                                    Add model
-                                  </Button>
-                                </div>
-                              </fieldset>
-                            ))}
+                        {/* Curated Voice Personas Status Card */}
+                        <div className="mt-4 rounded-xl border border-surface-border-subtle bg-surface-raised/40 p-3.5">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div>
+                              <p className="text-xs font-semibold text-text">Voice Personas (Managed by Platform Core)</p>
+                              <p className="mt-0.5 text-[11px] text-text-muted">
+                                Individual voice IDs are automatically managed by the platform registry and curated for Conversational & Promotional personas. Manual voice editing is disabled.
+                              </p>
+                            </div>
+                            <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-medium text-emerald-300">
+                              Curated Catalog Active
+                            </span>
                           </div>
-                        )}
+                          <div className="mt-2.5 flex flex-wrap gap-2 text-[11px] text-text-subtle">
+                            <span className="rounded-md border border-surface-border bg-surface-card px-2 py-0.5">
+                              Standard: 6 Sarvam Voices (Shubh, Priya, Pooja, Simran, Neha, Rahul)
+                            </span>
+                            <span className="rounded-md border border-surface-border bg-surface-card px-2 py-0.5">
+                              Flagship: 9 Gemini Live Personas
+                            </span>
+                            <span className="rounded-md border border-surface-border bg-surface-card px-2 py-0.5">
+                              Categories: Conversational & Commercial/Promotional
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Locales */}
+                      <div className="rounded-xl border border-surface-border-subtle bg-surface-card p-4">
+                        <h3 className="text-sm font-semibold text-text">Supported Locales</h3>
+                        <p className="mt-0.5 text-xs text-text-muted">
+                          Locales verified for end-to-end recognition, streaming LLM, and speech output.
+                        </p>
+                        <div className="mt-3">
+                          <TextField
+                            label="Verified locale IDs (comma-separated)"
+                            value={draft.supportedLanguages.join(", ")}
+                            disabled={!canEdit}
+                            placeholder="e.g. te-IN, hi-IN, en-IN"
+                            mono
+                            onChange={(value) => updateDraft((current) => ({ ...current, supportedLanguages: splitList(value) }))}
+                          />
+                        </div>
                       </div>
                     </section>
 
@@ -570,6 +735,11 @@ export function PstnVoiceProfileWorkbench() {
                             : "No native per-tier PSTN price is configured. Activation stays blocked until both native prices are approved and saved."}
                         </p>
                         <p className="mt-2 text-xs text-text-subtle">Legacy Premium billing values are not edited from this profile screen.</p>
+                        {rateComplete && <p className="mt-2 font-mono text-sm text-text" data-testid="pstn-profile-native-amounts">
+                          {typeof selectedRow.retailRate?.usdMicrosPerMin === "number" ? `$${(selectedRow.retailRate.usdMicrosPerMin / 1_000_000).toFixed(6)}/min` : "USD amount unavailable"}
+                          {" · "}
+                          {typeof selectedRow.retailRate?.inrPaisePerMin === "number" ? `₹${(selectedRow.retailRate.inrPaisePerMin / 100).toFixed(2)}/min` : "INR amount unavailable"}
+                        </p>}
                       </div>
                     </aside>
                   </div>
@@ -578,6 +748,9 @@ export function PstnVoiceProfileWorkbench() {
 
               {!isPremium && (
                 <div className="flex flex-wrap items-center gap-3">
+                  <Button type="button" variant="secondary" disabled={isEnabled || dirty || busy} onClick={() => void loadRecommendedMapping()}>
+                    {loadingTemplate ? "Loading mapping…" : "Load recommended mapping"}
+                  </Button>
                   {isEnabled ? (
                     <Button type="button" variant="secondary" disabled={busy} onClick={() => void setProfileEnabled(false)}>
                       {busy ? "Saving…" : "Disable for new calls"}

@@ -2093,9 +2093,28 @@ class BillingRatesBody(BaseModel):
     didMonthlyInr: Decimal | None = Field(
         None, ge=0, le=10000000, max_digits=12, decimal_places=2
     )
+    # Per-tier PSTN rates (Economical/low, Standard Regional/medium, Flagship Live/premium)
+    pstnLowUsdPerMin: Decimal | None = Field(
+        None, ge=Decimal("0.001"), le=Decimal("100"), max_digits=12, decimal_places=6
+    )
+    pstnLowInrPerMin: Decimal | None = Field(
+        None, ge=Decimal("0.01"), le=Decimal("100000"), max_digits=10, decimal_places=2
+    )
+    pstnMediumUsdPerMin: Decimal | None = Field(
+        None, ge=Decimal("0.001"), le=Decimal("100"), max_digits=12, decimal_places=6
+    )
+    pstnMediumInrPerMin: Decimal | None = Field(
+        None, ge=Decimal("0.01"), le=Decimal("100000"), max_digits=10, decimal_places=2
+    )
+    pstnPremiumUsdPerMin: Decimal | None = Field(
+        None, ge=Decimal("0.001"), le=Decimal("100"), max_digits=12, decimal_places=6
+    )
+    pstnPremiumInrPerMin: Decimal | None = Field(
+        None, ge=Decimal("0.01"), le=Decimal("100000"), max_digits=10, decimal_places=2
+    )
 
 
-def _rates_payload(r: dict[str, int | float]) -> dict[str, float]:
+def _rates_payload(r: dict[str, int | float]) -> dict[str, float | None]:
     return {
         "pstnUsdPerMin": round(r["pstn_rate_usd_micros_per_min"] / 1_000_000.0, 6),
         "webUsdPerMin": round(r["web_agent_rate_usd_micros_per_min"] / 1_000_000.0, 6),
@@ -2105,6 +2124,13 @@ def _rates_payload(r: dict[str, int | float]) -> dict[str, float]:
         "pstnInrPerMin": round(r["pstn_rate_inr_paise_per_min"] / 100.0, 2),
         "webInrPerMin": round(r["web_agent_rate_inr_paise_per_min"] / 100.0, 2),
         "numberMonthlyInr": round(r["did_monthly_inr_paise"] / 100.0, 2),
+        # Per-tier native PSTN rates
+        "pstnLowUsdPerMin": round(r["pstn_low_rate_usd_micros_per_min"] / 1_000_000.0, 6) if r.get("pstn_low_rate_usd_micros_per_min") is not None else None,
+        "pstnLowInrPerMin": round(r["pstn_low_rate_inr_paise_per_min"] / 100.0, 2) if r.get("pstn_low_rate_inr_paise_per_min") is not None else None,
+        "pstnMediumUsdPerMin": round(r["pstn_medium_rate_usd_micros_per_min"] / 1_000_000.0, 6) if r.get("pstn_medium_rate_usd_micros_per_min") is not None else None,
+        "pstnMediumInrPerMin": round(r["pstn_medium_rate_inr_paise_per_min"] / 100.0, 2) if r.get("pstn_medium_rate_inr_paise_per_min") is not None else None,
+        "pstnPremiumUsdPerMin": round(r["pstn_premium_rate_usd_micros_per_min"] / 1_000_000.0, 6) if r.get("pstn_premium_rate_usd_micros_per_min") is not None else None,
+        "pstnPremiumInrPerMin": round(r["pstn_premium_rate_inr_paise_per_min"] / 100.0, 2) if r.get("pstn_premium_rate_inr_paise_per_min") is not None else None,
     }
 
 
@@ -2142,6 +2168,12 @@ async def put_billing_rates(body: BillingRatesBody, session: SessionData = Depen
             pstn_inr_per_min=body.pstnInrPerMin,
             web_inr_per_min=body.webInrPerMin,
             did_monthly_inr=body.didMonthlyInr,
+            pstn_low_usd_per_min=body.pstnLowUsdPerMin,
+            pstn_low_inr_per_min=body.pstnLowInrPerMin,
+            pstn_medium_usd_per_min=body.pstnMediumUsdPerMin,
+            pstn_medium_inr_per_min=body.pstnMediumInrPerMin,
+            pstn_premium_usd_per_min=body.pstnPremiumUsdPerMin,
+            pstn_premium_inr_per_min=body.pstnPremiumInrPerMin,
             fx_rate_inr=body.fxRateInr,
         )
     except ValueError as exc:
@@ -2154,6 +2186,40 @@ async def put_billing_rates(body: BillingRatesBody, session: SessionData = Depen
         payload=body.model_dump(exclude_none=True, mode="json"),
     )
     return {"ok": True, "currency": "USD", "rates": _rates_payload(r)}
+
+class ProviderCostsBody(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    expectedVersion: int = Field(ge=0, strict=True)
+    reason: str = Field(min_length=8, max_length=500)
+    rates: list[dict[str, Any]] = Field(min_length=1, max_length=100)
+
+
+@router.get("/api/dev/admin/billing/provider-costs")
+async def get_provider_costs(session: SessionData = Depends(require_dev_session)):
+    require_permission(session, "dev.admin.billing")
+    from server.services.saas.composed_costing import ProviderCostError, load_provider_costs
+
+    try:
+        return await load_provider_costs()
+    except ProviderCostError as exc:
+        raise HTTPException(status_code=exc.status_code, detail={"error": {"code": exc.code, "message": str(exc)}}) from exc
+
+
+@router.put("/api/dev/admin/billing/provider-costs")
+async def put_provider_costs(body: ProviderCostsBody, session: SessionData = Depends(require_dev_session)):
+    require_permission(session, "dev.admin.billing")
+    from server.services.saas.composed_costing import ProviderCostError, save_provider_costs
+
+    try:
+        result = await save_provider_costs(expected_version=body.expectedVersion, rates=body.rates,
+                                           actor=session.subject, reason=body.reason)
+    except ProviderCostError as exc:
+        raise HTTPException(status_code=exc.status_code, detail={"error": {"code": exc.code, "message": str(exc)}}) from exc
+    await record_admin_action(actor=session.subject, action="billing.provider_costs", resource_type="platform",
+                              resource_id="composed_provider_costs", payload={"version": result["version"], "reason": body.reason})
+    return result
+
 
 class PlatformLanguagesBody(BaseModel):
     enabled: list[str] = Field(..., min_length=1, max_length=64)

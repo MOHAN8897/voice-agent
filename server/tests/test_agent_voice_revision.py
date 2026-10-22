@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -142,3 +143,43 @@ async def test_versioned_voice_patch_refuses_premium_and_requires_durable_store(
         )
     assert unavailable.value.status_code == 503
     assert unavailable.value.code == "durable_store_unavailable"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("voice_patch", [{"stackSelectionVersion": 1, "realtimeVoice": "te-in-csagent-5"}, None])
+async def test_switch_to_premium_persists_validated_voice_without_old_composed_aliases(monkeypatch, voice_patch):
+    row = _agent()
+    row.voice_settings.update(_selection())
+    session = _Session(row)
+    monkeypatch.setattr("server.brain.agent_service.get_session_factory", lambda: lambda: session)
+    # Keep the actual validator: mocking it hid Premium being rejected by
+    # the composed-only resolver with invalid_composed_tier on every save.
+    patch = {"default_tier": "premium"}
+    if voice_patch is not None:
+        patch["voice_settings"] = voice_patch
+    await AgentService().patch_agent(str(row.agent_id), patch, tenant_id=str(row.tenant_id), expected_voice_revision=2)
+    assert row.default_tier == "premium"
+    assert row.voice_settings["_voice_revision"] == 3
+    assert not {"voiceId", "engineId", "modelId", "profileRevision"} & row.voice_settings.keys()
+    if voice_patch:
+        assert row.voice_settings["realtimeVoice"] == "te-in-csagent-5"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("voice_id,language,error_code", [
+    ("shubh", "te-IN", "voice_selection_invalid"),
+    ("unlisted-voice", "te-IN", "voice_selection_invalid"),
+    ("te-in-csagent-5", "hi-IN", "unsupported_language"),
+])
+async def test_premium_rejects_wrong_live_voice_without_misclassifying_revision(monkeypatch, voice_id, language, error_code):
+    row = _agent()
+    session = _Session(row)
+    monkeypatch.setattr("server.brain.agent_service.get_session_factory", lambda: lambda: session)
+    with pytest.raises(AgentVoiceRevisionConflict) as invalid:
+        await AgentService().patch_agent(
+            str(row.agent_id), {"default_tier": "premium", "languages": [language],
+                                "voice_settings": {"stackSelectionVersion": 1, "realtimeVoice": voice_id}},
+            tenant_id=str(row.tenant_id), expected_voice_revision=2,
+        )
+    assert invalid.value.code == error_code
+    assert session.commits == 0

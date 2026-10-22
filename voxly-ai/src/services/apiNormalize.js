@@ -11,8 +11,9 @@ export function normalizeAgent(row) {
       ? row.voice
       : rawVoiceSettings &&
           typeof rawVoiceSettings === 'object' &&
-          rawVoiceSettings.stackSelectionVersion == null &&
-          rawVoiceSettings.stack_selection_version == null
+          ((rawVoiceSettings.stackSelectionVersion == null &&
+            rawVoiceSettings.stack_selection_version == null) ||
+            (row.defaultTier ?? row.default_tier) === 'premium')
         ? rawVoiceSettings
         : null;
   const voice = rawLegacyVoice
@@ -36,6 +37,9 @@ export function normalizeAgent(row) {
             : {}),
           ...(typeof (rawVoiceSettings.voiceId ?? rawVoiceSettings.voice_id) === 'string'
             ? { voiceId: rawVoiceSettings.voiceId ?? rawVoiceSettings.voice_id }
+            : {}),
+          ...(typeof (rawVoiceSettings.realtimeVoice ?? rawVoiceSettings.realtime_voice) === 'string'
+            ? { realtimeVoice: rawVoiceSettings.realtimeVoice ?? rawVoiceSettings.realtime_voice }
             : {}),
           ...(Number.isSafeInteger(Number(rawVoiceSettings.profileRevision ?? rawVoiceSettings.profile_revision))
             ? { profileRevision: Number(rawVoiceSettings.profileRevision ?? rawVoiceSettings.profile_revision) }
@@ -233,6 +237,7 @@ export function normalizeCall(row, agentsById = {}) {
     billedCurrency: row.tenant_charge?.currency ?? null,
     endReason: row.end_reason || row.endReason,
     pipeline: row.pipeline,
+    tier: row.tier || null,
     hasRecording: row.has_recording ?? row.hasRecording ?? false,
     hasTranscript: Boolean(row.has_transcript ?? row.hasTranscript),
     durationSec: durationSec || null,

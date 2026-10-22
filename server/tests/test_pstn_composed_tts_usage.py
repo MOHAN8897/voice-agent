@@ -116,13 +116,15 @@ async def test_multiple_unary_tts_chunks_accumulate_native_usage(monkeypatch):
 async def test_prepared_composed_tts_usage_is_attached_to_real_call_internally(monkeypatch):
     from server.services.pstn_prewarm import PstnPrewarmBundle, record_bundle_greeting_usage
 
-    meta = {"call_id": "call-test", "usage": {"cost_usd": 0.12}}
+    meta = {"call_id": "call-test", "pipeline": "composed_voice", "usage": {"cost_usd": 0.12}}
     _patch_meta(monkeypatch, meta)
     bundle = PstnPrewarmBundle(
         provider="vobiz",
         external_id="prepared-id",
         realtime_key="prepared-id",
         greeting_text="Hello there.",
+        greeting_text_usage={"input_tokens": 50, "output_tokens": 20, "cached_tokens": 0,
+                             "total_tokens": 70, "cache_write_tokens": 0},
         greeting_tts_usage={
             "input_characters": 12,
             "output_audio_seconds": 0.5,
@@ -134,6 +136,7 @@ async def test_prepared_composed_tts_usage_is_attached_to_real_call_internally(m
     await record_bundle_greeting_usage("call-test", bundle)
 
     assert meta["usage"] == {"cost_usd": 0.12}
+    assert meta["stage_usage"]["llm"] == {"input_tokens": 50, "output_tokens": 20, "cached_tokens": 0}
     assert meta["stage_usage"]["tts"]["prewarm_input_characters"] == 12
     assert meta["stage_usage"]["tts"]["prewarm_output_audio_seconds"] == 0.5
     assert meta["stage_usage"]["tts"]["prewarm_native_usage"] == {"output_audio_tokens": 7}

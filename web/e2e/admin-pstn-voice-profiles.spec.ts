@@ -11,7 +11,7 @@ test("PSTN profile readiness and native rate gate activation independently", asy
     route.fulfill({ status: 200, json: { environment: "test", config_mode: "frontend", tiers: [] } })
   );
   await page.route("**/api/dev/stack/catalog", (route) =>
-    route.fulfill({ status: 200, json: { providers: [], telephony: { providers: [] } } })
+    route.fulfill({ status: 200, json: { providers: [{ id: "sarvam", label: "Sarvam", enabled: true, configured: true, models: { stt: [{ id: "saaras:v3-realtime", realtime: true }], llm: [{ id: "sarvam-30b" }], tts: [{ id: "bulbul:v3" }] } }], telephony: { providers: [] } } })
   );
   await page.route("**/api/dev/stack/voice-profiles", (route) =>
     route.fulfill({
@@ -96,7 +96,9 @@ test("PSTN profile readiness and native rate gate activation independently", asy
   await expect(page.getByRole("button", { name: "Enable for new PSTN calls" })).toBeDisabled();
   expect(activationRequests).toBe(0);
 
-  await page.getByRole("textbox", { name: "STT provider ID" }).fill("reviewed-stt");
+  await page.getByRole("combobox", { name: "STT provider", exact: true }).selectOption("sarvam");
+  await page.getByRole("combobox", { name: "STT model · realtime recognition" }).selectOption("saaras:v3-realtime");
+  await expect(page.getByRole("button", { name: "Load recommended mapping" })).toBeDisabled();
   await page.getByRole("button", { name: "Save disabled draft" }).click();
   await expect(page.getByRole("status")).toContainText("Profile draft saved. It remains disabled.");
   expect(savedProfileEnabled).toBe(false);
@@ -116,4 +118,48 @@ test("PSTN profile readiness and native rate gate activation independently", asy
   await expect(page.getByText(/existing Live stack and legacy billing rate/i)).toBeVisible();
   await expect(page.getByRole("button", { name: "Enable for new PSTN calls" })).toHaveCount(0);
   expect(activationRequests).toBe(0);
+});
+
+test("profile template keeps exact catalog transports and clears voices when speech models change", async ({ page }) => {
+  const evidence = { sarvamModelAccess: false, sttVerified: false, ttsCatalogVerified: false, toolsVerified: false, capacityVerified: false, mediaFormatsVerified: false, credentialRefConfigured: false };
+  const template = { schemaVersion: 1, enabled: false, supportedLanguages: ["te-IN"],
+    stt: { provider: "sarvam", model: "saaras:v3-realtime" },
+    llm: { provider: "sarvam", modelId: "verified-text-model", apiMode: "chat_completions_v1" },
+    engines: [{ id: "standard-speech", label: "Standard speech", models: [{ id: "standard-model", label: "Standard model", provider: "gemini", model: "verified-gemini-tts", apiMode: "streaming_rest",
+      voices: [{ id: "standard-voice", label: "Standard voice", providerVoiceId: "Kore", languages: ["te-IN"] }] }] }], evidence };
+  let templateLoads = 0;
+  let writes = 0;
+  await page.route("**/api/auth/dev-me", (route) => route.fulfill({ json: { authenticated: true, subject: "e2e-admin", csrf_token: "test-csrf" } }));
+  await page.route("**/api/dev/stack/tiers", (route) => route.fulfill({ json: { environment: "test", config_mode: "frontend", tiers: [] } }));
+  await page.route("**/api/dev/stack/catalog", (route) => route.fulfill({ json: { providers: [
+    { id: "sarvam", label: "Sarvam", enabled: true, configured: true, models: { stt: [{ id: "saaras:v3-realtime", realtime: true }], llm: [{ id: "verified-text-model", api_mode: "chat_completions_v1" }], tts: [{ id: "bulbul:v3" }] } },
+    { id: "gemini", label: "Gemini", enabled: true, configured: true, models: { tts: [{ id: "verified-gemini-tts", api_modes: ["unary_rest", "streaming_rest"] }] } },
+  ], telephony: { providers: [] } } }));
+  await page.route("**/api/dev/stack/voice-profiles", (route) => route.fulfill({ json: { environment: "test", profiles: [
+    { tier: "low", profileRevision: 0, composedProfile: null, readiness: { ready: false, enabled: false, blockers: [] }, retailRate: null },
+    { tier: "medium", profileRevision: 0, composedProfile: null, readiness: { ready: false, enabled: false, blockers: [] }, retailRate: { complete: true, usdMicrosPerMin: 90000, inrPaisePerMin: 859 } },
+    { tier: "premium", profileRevision: null, composedProfile: null, readiness: { ready: true, enabled: true, blockers: [] }, retailRate: null },
+  ] } }));
+  await page.route("**/api/dev/stack/voice-profiles/medium/template", (route) => { templateLoads += 1; return route.fulfill({ json: { tier: "medium", composedProfile: template } }); });
+  await page.route("**/api/dev/stack/voice-profiles/medium", (route) => { writes += 1; return route.fulfill({ json: {} }); });
+  await page.goto("/dev/stack");
+  await ensureDevPortalReady(page);
+  await page.getByRole("button", { name: "Standard (medium)" }).click();
+  await expect(page.getByTestId("pstn-profile-native-amounts")).toHaveText("$0.090000/min · ₹8.59/min");
+  await page.getByRole("button", { name: "Load recommended mapping" }).click();
+  await expect(page.getByRole("combobox", { name: "LLM transport" })).toHaveValue("chat_completions_v1");
+  await expect(page.getByRole("combobox", { name: "Speech transport" })).toHaveValue("streaming_rest");
+  await expect(page.getByRole("textbox", { name: "Provider voice ID", exact: true })).toHaveValue("Kore");
+  await expect(page.getByRole("heading", { name: "Readiness evidence" }).locator("..").locator('input[type="checkbox"]:checked')).toHaveCount(0);
+  await page.getByRole("combobox", { name: "Speech transport" }).selectOption("unary_rest");
+  await expect(page.getByRole("textbox", { name: "Provider voice ID", exact: true })).toHaveValue("Kore");
+  await page.getByRole("combobox", { name: "Speech provider" }).selectOption("sarvam");
+  await expect(page.getByRole("textbox", { name: "Provider voice ID", exact: true })).toHaveCount(0);
+  await page.getByRole("combobox", { name: "Speech model", exact: true }).selectOption("bulbul:v3");
+  await expect(page.getByRole("combobox", { name: "Speech transport" })).toHaveValue("websocket");
+  await expect(page.getByRole("combobox", { name: "Speech transport" }).locator('option[value="streaming_rest"]')).toHaveCount(0);
+  await page.getByRole("button", { name: "Premium · existing Live path" }).click();
+  await expect(page.getByRole("button", { name: "Load recommended mapping" })).toHaveCount(0);
+  expect(templateLoads).toBe(1);
+  expect(writes).toBe(0);
 });

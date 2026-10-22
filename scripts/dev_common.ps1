@@ -9,7 +9,7 @@ $script:WrapperProcessNames = @(
 $script:NeverKillNames = @(
     "idle", "system", "smss.exe", "csrss.exe", "wininit.exe", "winlogon.exe",
     "services.exe", "lsass.exe", "svchost.exe", "explorer.exe", "dwm.exe",
-    "cursor.exe", "code.exe"
+    "cursor.exe", "code.exe", "redis-server.exe", "memurai.exe"
 )
 
 function Get-VoiceAgentPython {
@@ -61,6 +61,54 @@ function Get-VoiceAgentPython {
         }
     }
     return (Get-Command python -ErrorAction Stop).Source
+}
+
+function Get-VoiceAgentRedisExecutable {
+    $candidates = @(
+        (Join-Path $env:LOCALAPPDATA "HustleLabs\memurai\Memurai\redis-server.exe"),
+        (Join-Path $env:ProgramFiles "Memurai\memurai.exe"),
+        (Join-Path $env:ProgramFiles "Redis\redis-server.exe"),
+        (Get-Command redis-server -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -ErrorAction SilentlyContinue),
+        (Get-Command memurai -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -ErrorAction SilentlyContinue)
+    )
+    foreach ($cand in $candidates) {
+        if ($cand -and (Test-Path $cand)) {
+            return $cand
+        }
+    }
+    return $null
+}
+
+function Ensure-RedisServer {
+    try {
+        $tcp = Test-NetConnection -ComputerName 127.0.0.1 -Port 6379 -InformationLevel Quiet -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+        if ($tcp) {
+            return $true
+        }
+    } catch { }
+
+    $redisExe = Get-VoiceAgentRedisExecutable
+    if (-not $redisExe) {
+        Write-Warning "Redis executable not found. Running with in-memory fallback. (Install Memurai or Redis to enable shared caching)."
+        return $false
+    }
+
+    Write-Host "Starting Redis server on port 6379 ($redisExe)..."
+    Start-Process -FilePath $redisExe -ArgumentList "--port 6379" -WindowStyle Hidden | Out-Null
+    $ready = $false
+    for ($i = 0; $i -lt 15; $i++) {
+        Start-Sleep -Milliseconds 300
+        try {
+            $ready = Test-NetConnection -ComputerName 127.0.0.1 -Port 6379 -InformationLevel Quiet -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+            if ($ready) { break }
+        } catch { }
+    }
+    if ($ready) {
+        Write-Host "Redis server is ready on 127.0.0.1:6379"
+        return $true
+    }
+    Write-Warning "Redis server started but port 6379 did not respond in time."
+    return $false
 }
 
 function Test-VoiceAgentPythonDeps {

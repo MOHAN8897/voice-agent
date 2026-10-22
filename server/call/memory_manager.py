@@ -84,10 +84,17 @@ class MemoryManager:
             pass
         return _copy_snapshot(snap)
 
-    def get_snapshot(self, call_id: str) -> dict[str, Any]:
+    def peek_snapshot(self, call_id: str) -> dict[str, Any] | None:
+        """Already hydrated active-call state; never perform disk or Redis I/O."""
         with self._lock:
             if call_id in self._state:
                 return _copy_snapshot(self._state[call_id])
+        return None
+
+    def get_snapshot(self, call_id: str) -> dict[str, Any]:
+        local = self.peek_snapshot(call_id)
+        if local is not None:
+            return local
         try:
             from server.call.redis_memory_cache import get_snapshot as redis_get_snapshot
 

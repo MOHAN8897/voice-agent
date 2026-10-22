@@ -236,3 +236,136 @@ async def test_synthesize_preview_supports_sarvam(monkeypatch):
     assert result["voice"] == "shubh"
     assert result["audio"] == audio
     assert result["model"] == "bulbul:v3"
+
+
+@pytest.mark.asyncio
+async def test_synthesize_preview_supports_low_gemini_tts(monkeypatch):
+    from server.services.saas import voice_preview
+
+    audio = voice_preview.pcm16_to_wav(b"\x03\x00" * 300, 24000)
+
+    async def mock_gemini_tts(line, voice, speed, language=None, model=None):
+        assert voice == "Zephyr"
+        assert speed == 1.0
+        assert language == "te-IN"
+        return audio
+
+    monkeypatch.setattr(voice_preview, "_synthesize_gemini_tts", mock_gemini_tts)
+    result = await voice_preview.synthesize_preview(
+        "నమస్కారం. మీకు ఎలా సహాయం చేయగలను?",
+        voice_id="Zephyr",
+        language="te-IN",
+        tier="low",
+    )
+    assert result["voice"] == "Zephyr"
+    assert result["audio"] == audio
+    assert result["model"] == "gemini-3.8-flash-lite-tts"
+
+
+@pytest.mark.asyncio
+async def test_synthesize_preview_supports_medium_sarvam_tts(monkeypatch):
+    from server.services.saas import voice_preview
+
+    audio = voice_preview.pcm16_to_wav(b"\x02\x00" * 200, 16000)
+
+    async def mock_sarvam(line, voice, speed, language=None):
+        assert voice == "shubh"
+        assert speed == 1.0
+        assert language == "te-IN"
+        return audio
+
+    monkeypatch.setattr(voice_preview, "_synthesize_sarvam", mock_sarvam)
+    result = await voice_preview.synthesize_preview(
+        "నమస్కారం. మీకు ఎలా సహాయం చేయగలను?",
+        voice_id="shubh",
+        language="te-IN",
+        tier="medium",
+    )
+    assert result["voice"] == "shubh"
+    assert result["audio"] == audio
+    assert result["model"] == "bulbul:v3"
+
+
+@pytest.mark.asyncio
+async def test_voice_preview_route_with_tier_and_alias(monkeypatch):
+    from server.routes import app_telephony
+    from server.services.saas import voice_preview, voice_stack_profiles
+
+    monkeypatch.setattr("server.auth.rbac.role_has_permission", lambda *_args: True)
+    voice_stack_profiles._REVERSE_ALIAS_CACHE["voc_test_low_alias"] = {
+        "tier": "low",
+        "provider": "gemini",
+        "model": "gemini-3.8-flash-lite-tts",
+        "providerVoiceId": "Zephyr",
+        "label": "Voice 1",
+        "languages": ["te-IN"],
+    }
+
+    dummy_audio = voice_preview.pcm16_to_wav(b"\x01\x00" * 200, 16000)
+    monkeypatch.setattr(
+        voice_preview,
+        "synthesize_preview",
+        AsyncMock(return_value={
+            "audio": dummy_audio,
+            "voice": "Zephyr",
+            "label": "Voice 1",
+            "model": "gemini-3.8-flash-lite-tts",
+            "stackModel": "",
+            "truncated": False,
+            "cacheable": False,
+            "cacheHit": False,
+        }),
+    )
+
+    resp = await app_telephony.voice_preview(
+        SimpleNamespace(
+            text="నమస్కారం",
+            voiceId="voc_test_low_alias",
+            language="te-IN",
+            speed=1.0,
+            tier="low",
+        ),
+        SimpleNamespace(role="subscriber"),
+    )
+    assert resp.status_code == 200
+    assert resp.headers["X-Voice-Name"] == "Voice 1"
+    assert resp.headers["X-Voice-Label"] == "Voice 1"
+    assert resp.body == dummy_audio
+
+
+def test_find_static_sample_locates_sarvam_and_gemini_wavs():
+    from server.services.saas.voice_preview import find_static_sample
+    from server.services.saas.voice_sample_cache import valid_wav
+
+    shubh_audio = find_static_sample("shubh", "te-IN")
+    assert shubh_audio is not None
+    assert valid_wav(shubh_audio)
+
+    zephyr_audio = find_static_sample("zephyr", "te-IN")
+    assert zephyr_audio is not None
+    assert valid_wav(zephyr_audio)
+
+    priya_audio = find_static_sample("priya", "hi-IN")
+    assert priya_audio is not None
+    assert valid_wav(priya_audio)
+
+
+@pytest.mark.asyncio
+async def test_synthesize_preview_serves_from_stored_sample_with_zero_api_calls(monkeypatch, tmp_path):
+    from server.services.saas import voice_preview
+    from server.config.env import get_settings
+    monkeypatch.setattr(get_settings(), "data_dir", str(tmp_path))
+
+    res = await voice_preview.synthesize_preview(
+        "నమస్కారం. మీకు ఎలా సహాయం చేయగలను?",
+        voice_id="shubh",
+        language="te-IN",
+        tier="medium",
+    )
+    assert res["voice"] == "shubh"
+    assert res["model"] == "bulbul:v3"
+    assert res["cacheable"] is True
+    assert res["cacheHit"] is True
+    assert len(res["audio"]) > 1000
+    assert res["audio"].startswith(b"RIFF")
+

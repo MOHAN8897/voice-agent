@@ -23,18 +23,20 @@ def realtime_voice_catalog() -> list[dict[str, str]]:
 
 def _agent_spoken_language(agent: dict[str, Any], voice_cfg: dict[str, Any]) -> str:
     """Settings languages[] win over stale voice-section language."""
+    from server.config.constants import normalize_supported_language
+
     langs = agent.get("languages") or []
     if isinstance(langs, list) and langs:
         code = str(langs[0] or "").strip()
         if code:
-            return code
+            return normalize_supported_language(code)
     single = str(agent.get("language") or "").strip()
     if single:
-        return single
+        return normalize_supported_language(single)
     voice_lang = str(voice_cfg.get("language") or "").strip()
     if voice_lang:
-        return voice_lang
-    return "en-US"
+        return normalize_supported_language(voice_lang)
+    return "te-IN"
 
 
 async def saas_stack_override_for_agent(agent: dict[str, Any]) -> dict[str, Any]:
@@ -43,24 +45,20 @@ async def saas_stack_override_for_agent(agent: dict[str, Any]) -> dict[str, Any]
     voice_cfg = await load_agent_voice_config(agent_id) if agent_id else {}
     saved_voice_settings = agent.get("voice_settings")
     if not isinstance(saved_voice_settings, dict):
+        saved_voice_settings = agent.get("voiceSettings")
+    if not isinstance(saved_voice_settings, dict):
         saved_voice_settings = voice_cfg
-    if saved_voice_settings.get("stackSelectionVersion") == 1:
-        from server.services.saas.voice_stack_profiles import (
-            VoiceProfileError,
-            canonical_voice_tier,
-            resolve_agent_selection,
-        )
+    raw_tier = agent.get("default_tier") or agent.get("defaultTier")
+    from server.services.saas.voice_stack_profiles import (
+        VoiceProfileError,
+        canonical_voice_tier,
+        resolve_agent_selection,
+    )
 
+    tier = canonical_voice_tier(raw_tier)
+    if tier in {"low", "medium"}:
         try:
-            tier = canonical_voice_tier(agent.get("default_tier"))
-            if tier not in {"low", "medium"}:
-                raise VoiceProfileError(
-                    "invalid_composed_tier",
-                    "Flagship Live does not support composed voice settings.",
-                    status_code=409,
-                )
-            raw_languages = agent.get("languages")
-            lang = str(raw_languages[0]).strip() if isinstance(raw_languages, list) and raw_languages else "te-IN"
+            lang = _agent_spoken_language(agent, voice_cfg)
             environment = str(agent.get("environment") or "").strip()
             if not environment:
                 from server.services.dev_runtime import effective_app_environment
@@ -69,8 +67,9 @@ async def saas_stack_override_for_agent(agent: dict[str, Any]) -> dict[str, Any]
             stack, _snapshot = await resolve_agent_selection(
                 environment=environment,
                 tier=tier,
-                voice_settings=saved_voice_settings,
+                voice_settings=saved_voice_settings if isinstance(saved_voice_settings, dict) else {},
                 language=lang,
+                allow_fallback=True,
             )
             from server.services.pstn_stack import (
                 normalize_pstn_stack_override as normalize_composed_stack_override,
@@ -90,7 +89,17 @@ async def saas_stack_override_for_agent(agent: dict[str, Any]) -> dict[str, Any]
     lang = _agent_spoken_language(agent, voice_cfg)
     stack = await resolve_platform_phone_stack(lang)
     rv = dict(stack.get("realtime_voice") or {})
-    realtime_voice = str(voice_cfg.get("realtimeVoice") or voice_cfg.get("voiceId") or rv.get("voice") or DEFAULT_REALTIME_VOICE)
+    agent_voice = agent.get("voice") if isinstance(agent.get("voice"), dict) else {}
+    realtime_voice = str(
+        (saved_voice_settings.get("realtimeVoice") if isinstance(saved_voice_settings, dict) else None)
+        or (saved_voice_settings.get("voiceId") if isinstance(saved_voice_settings, dict) else None)
+        or voice_cfg.get("realtimeVoice")
+        or voice_cfg.get("voiceId")
+        or agent_voice.get("realtimeVoice")
+        or agent_voice.get("voiceId")
+        or rv.get("voice")
+        or DEFAULT_REALTIME_VOICE
+    )
     llm = stack.get("llm") if isinstance(stack.get("llm"), dict) else {}
     if str(llm.get("provider") or "").lower() == "gemini":
         gemini_ids = {item.lower() for item in (*GEMINI_LIVE_VOICES, *GEMINI_LIVE_LIBRARY_VOICES)}
@@ -105,12 +114,20 @@ async def saas_stack_override_for_agent(agent: dict[str, Any]) -> dict[str, Any]
     }:
         realtime_voice = DEFAULT_REALTIME_VOICE
     rv["voice"] = realtime_voice
-    if voice_cfg.get("speed") is not None:
-        rv["speed"] = voice_cfg.get("speed")
+    speed_val = (
+        (saved_voice_settings.get("speed") if isinstance(saved_voice_settings, dict) else None)
+        or voice_cfg.get("speed")
+        or agent_voice.get("speed")
+    )
+    if speed_val is not None:
+        rv["speed"] = speed_val
     stack["language"] = lang
     stack["realtime_voice"] = rv
+    from server.services.saas.voice_stack_profiles import canonical_voice_tier
+    raw_tier = agent.get("default_tier") or agent.get("defaultTier")
+    effective_tier = canonical_voice_tier(raw_tier) if raw_tier else "medium"
     normalized, _ = normalize_pstn_stack_override(
-        stack, language=lang, tier="medium", default_provider="gemini"
+        stack, language=lang, tier=effective_tier, default_provider="gemini"
     )
     return normalized or stack
 

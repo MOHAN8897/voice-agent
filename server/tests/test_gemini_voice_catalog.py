@@ -7,34 +7,25 @@ from server.realtime.models import GEMINI_LIVE_LIBRARY_VOICES, GEMINI_LIVE_VOICE
 from server.services.saas.voice_preview import resolve_preview_voice
 
 
-def test_catalog_always_exposes_gemini_voices_and_seven_telugu_choices():
+def test_catalog_always_exposes_curated_conversational_and_promotional_voices():
     rows = voice_catalog.phone_voice_catalog()
     gemini_rows = [row for row in rows if row.get("provider") == "gemini"]
 
-    assert len(gemini_rows) == len(GEMINI_LIVE_VOICES) + len(GEMINI_LIVE_LIBRARY_VOICES)
-    assert {
-        row["geminiVoice"] for row in gemini_rows if not row.get("languageCode")
-    } == set(GEMINI_LIVE_VOICES)
-    assert {
-        row["id"] for row in gemini_rows if row.get("languageCode")
-    } == set(GEMINI_LIVE_LIBRARY_VOICES)
-    assert all(row.get("accent") and row.get("sampleText") for row in gemini_rows if row.get("languageCode"))
-    telugu_rows = [row for row in gemini_rows if row.get("languageCode") == "te-IN"]
-    assert len(telugu_rows) == 7
-    assert {row["gender"] for row in telugu_rows} == {"female", "male", "neutral"}
-    assert {row["category"] for row in telugu_rows} == {"support", "operations"}
-    assert all(row["accent"] == "Telugu (India)" for row in telugu_rows)
+    assert len(gemini_rows) == 9
+    assert all(row.get("category") in {"conversational", "promotional"} for row in gemini_rows)
+    assert all(row.get("accent") for row in gemini_rows)
+    assert any(row.get("id") == "zephyr" for row in gemini_rows)
 
 
 def test_direct_gemini_voice_id_resolves_to_the_selected_voice():
-    voice, label = resolve_preview_voice("alnilam", provider="gemini")
+    voice, label = resolve_preview_voice("zephyr", provider="gemini")
 
-    assert voice == "Alnilam"
-    assert label == "Alnilam"
+    assert voice == "Zephyr"
+    assert label == "Zephyr"
 
-    voice, label = resolve_preview_voice("te-in-csagent-5", provider="gemini")
-    assert voice == "te-in-csagent-5"
-    assert label == "Telugu Support · Female"
+    voice, label = resolve_preview_voice("kore", provider="gemini")
+    assert voice == "Kore"
+    assert label == "Kore"
 
 
 @pytest.mark.asyncio

@@ -28,6 +28,8 @@ def number(value: Decimal | None) -> float | None:
 
 
 def model_cost(usage: dict) -> tuple[Decimal | None, str]:
+    if usage.get("cost_accounting_version") == 3:
+        return (amount(usage.get("model_cost_usd")) if usage.get("supplier_cost_status") == "ready" else None), "measured_stages"
     if str(usage.get("llm_model") or "").lower() in {"", "unknown"}:
         return None, "missing_model_usage"
     if usage.get("cost_accounting_version") == 2:
@@ -97,11 +99,25 @@ def call_cost(row: dict, meta: dict, fallback_fx: float) -> dict | None:
     transcript_usd = sum((amount(usage.get(key)) or Decimal(0) for key in ("live_transcript_usd", "post_call_transcript_usd")), Decimal(0))
     api_inr = api_usd * fx
     transcript_inr = transcript_usd * fx
-    return {"callId": row["call_id"], "tenantId": row["tenant_id"], "channel": row["channel"],
-        "seconds": seconds, "modelUsd": api_usd, "modelInr": api_inr, "carrierUsd": carrier_usd, "carrierInr": carrier_inr,
-        "transcriptUsd": transcript_usd, "transcriptInr": transcript_inr,
-        "costUsd": api_usd + carrier_usd + transcript_usd, "costInr": api_inr + carrier_inr + transcript_inr,
-        "model": usage.get("llm_model") or "unknown", "modelSource": model_source, "carrierSource": carrier_source}
+    call_tier = str(row.get("tier") or "premium").lower()
+    return {
+        "callId": row["call_id"],
+        "tenantId": row["tenant_id"],
+        "channel": row["channel"],
+        "tier": call_tier,
+        "seconds": seconds,
+        "modelUsd": api_usd,
+        "modelInr": api_inr,
+        "carrierUsd": carrier_usd,
+        "carrierInr": carrier_inr,
+        "transcriptUsd": transcript_usd,
+        "transcriptInr": transcript_inr,
+        "costUsd": api_usd + carrier_usd + transcript_usd,
+        "costInr": api_inr + carrier_inr + transcript_inr,
+        "model": usage.get("llm_model") or "unknown",
+        "modelSource": model_source,
+        "carrierSource": carrier_source,
+    }
 
 
 def build_insights(rows: list[dict], rates: dict, *, since: datetime, now: datetime, capped: bool = False,
@@ -109,7 +125,7 @@ def build_insights(rows: list[dict], rates: dict, *, since: datetime, now: datet
     from server.call.call_ledger import call_ledger
     ledger = ledger or call_ledger
     fx = float(rates["fx_rate_inr"])
-    eligible, missing = [], {"pstn": 0, "browser": 0}
+    eligible = []
     for row in rows:
         try:
             meta = ledger.read_meta(row["call_id"])
@@ -117,26 +133,57 @@ def build_insights(rows: list[dict], rates: dict, *, since: datetime, now: datet
             item = call_cost(row, meta, fx) if isinstance(meta, dict) and str(meta.get("tenant_id") or "") == str(row["tenant_id"]) else None
         except (OSError, ValueError, TypeError, AttributeError, ArithmeticError):
             item = None  # Corrupt/incomplete records reduce coverage, never the divisor.
-        if item is None:
-            missing[row["channel"]] += 1
-        else:
+        if item is not None:
             eligible.append(item)
     # Full-window overhead would inflate a truncated call cohort's unit cost.
     overhead = [] if capped else (overhead_rows if overhead_rows is not None else read_unused_prewarm(since, now))
+    
+    tier_configs = (
+        ("pstn_premium", "Flagship Live PSTN", "premium", True),
+        ("pstn_medium", "Standard Regional PSTN", "medium", False),
+        ("pstn_low", "Economical PSTN", "low", False),
+        ("browser", "Web Agent Test Calls", None, False),
+    )
     channels = []
-    for channel, label in (("pstn", "PSTN calls"), ("browser", "Web agent test calls")):
-        records = [item for item in eligible if item["channel"] == channel]
+    for ch_key, label, tier_val, has_prewarm in tier_configs:
+        if tier_val is not None:
+            records = [item for item in eligible if item["channel"] == "pstn" and item.get("tier") == tier_val]
+            missing_count = sum(1 for r in rows if r.get("channel") == "pstn" and str(r.get("tier") or "premium").lower() == tier_val and r["call_id"] not in {it["callId"] for it in eligible})
+        else:
+            records = [item for item in eligible if item["channel"] == "browser"]
+            missing_count = sum(1 for r in rows if r.get("channel") == "browser" and r["call_id"] not in {it["callId"] for it in eligible})
+
         seconds = sum((item["seconds"] for item in records), Decimal(0))
         minutes = seconds / 60
-        setup_usd = sum((amount(item.get("cost_usd")) or Decimal(0) for item in overhead), Decimal(0)) if channel == "pstn" else Decimal(0)
-        setup_inr = sum((amount(item.get("cost_inr")) or Decimal(0) for item in overhead), Decimal(0)) if channel == "pstn" else Decimal(0)
+        setup_usd = sum((amount(item.get("cost_usd")) or Decimal(0) for item in overhead), Decimal(0)) if has_prewarm else Decimal(0)
+        setup_inr = sum((amount(item.get("cost_inr")) or Decimal(0) for item in overhead), Decimal(0)) if has_prewarm else Decimal(0)
         usd = sum((item["costUsd"] for item in records), setup_usd)
         inr = sum((item["costInr"] for item in records), setup_inr)
         call_count = len(records)
-        current_key = "pstn" if channel == "pstn" else "web_agent"
-        channels.append({"channel": channel, "label": label, "costUsd": number(usd), "costInr": number(inr),
-            "connectedMinutes": number(minutes), "calls": call_count, "tenants": len({r["tenantId"] for r in records}),
-            "missingCostCalls": missing[channel], "coveragePercent": round(call_count * 100 / (call_count + missing[channel]), 1) if call_count + missing[channel] else None,
+
+        if tier_val == "premium":
+            current_price_usd = float(rates.get("pstn_premium_rate_usd_micros_per_min") or rates.get("pstn_rate_usd_micros_per_min") or 150000) / 1_000_000
+            current_price_inr = float(rates.get("pstn_premium_rate_inr_paise_per_min") or rates.get("pstn_rate_inr_paise_per_min") or 1410) / 100
+        elif tier_val == "medium":
+            current_price_usd = float(rates.get("pstn_medium_rate_usd_micros_per_min") or 90000) / 1_000_000
+            current_price_inr = float(rates.get("pstn_medium_rate_inr_paise_per_min") or 846) / 100
+        elif tier_val == "low":
+            current_price_usd = float(rates.get("pstn_low_rate_usd_micros_per_min") or 50000) / 1_000_000
+            current_price_inr = float(rates.get("pstn_low_rate_inr_paise_per_min") or 470) / 100
+        else:
+            current_price_usd = float(rates.get("web_agent_rate_usd_micros_per_min") or 0) / 1_000_000
+            current_price_inr = float(rates.get("web_agent_rate_inr_paise_per_min") or 0) / 100
+
+        channels.append({
+            "channel": ch_key,
+            "label": label,
+            "costUsd": number(usd),
+            "costInr": number(inr),
+            "connectedMinutes": number(minutes),
+            "calls": call_count,
+            "tenants": len({r["tenantId"] for r in records}),
+            "missingCostCalls": missing_count,
+            "coveragePercent": round(call_count * 100 / (call_count + missing_count), 1) if call_count + missing_count else None,
             "averageUsdPerMin": number(usd / minutes) if minutes else None,
             "averageInrPerMin": number(inr / minutes) if minutes else None,
             "carrierPerMinUsd": number(sum((r["carrierUsd"] for r in records), Decimal(0)) / minutes) if minutes else 0.0,
@@ -151,26 +198,49 @@ def build_insights(rows: list[dict], rates: dict, *, since: datetime, now: datet
             "carrierInr": number(sum((r["carrierInr"] for r in records), Decimal(0))),
             "transcriptionUsd": number(sum((r["transcriptUsd"] for r in records), Decimal(0))),
             "transcriptionInr": number(sum((r["transcriptInr"] for r in records), Decimal(0))),
-            "unconnectedPrewarmUsd": number(setup_usd), "unconnectedPrewarmInr": number(setup_inr),
+            "unconnectedPrewarmUsd": number(setup_usd),
+            "unconnectedPrewarmInr": number(setup_inr),
             "prewarmPerMinUsd": number(setup_usd / minutes) if minutes else 0.0,
             "prewarmPerMinInr": number(setup_inr / minutes) if minutes else 0.0,
-            "unconnectedPrewarmRecords": len(overhead) if channel == "pstn" else 0,
+            "unconnectedPrewarmRecords": len(overhead) if has_prewarm else 0,
             "carrierCdrCalls": sum(r["carrierSource"] == "vobiz_cdr" for r in records),
             "carrierEstimatedCalls": sum(r["carrierSource"] == "tariff_estimate" for r in records),
             "reconstructedCalls": sum(r["modelSource"] == "reconstructed_responses" for r in records),
-            "currentPriceUsdPerMin": rates[f"{current_key}_rate_usd_micros_per_min"] / 1_000_000,
-            "currentPriceInrPerMin": rates[f"{current_key}_rate_inr_paise_per_min"] / 100,
-            "models": sorted({r["model"] for r in records})})
+            "currentPriceUsdPerMin": current_price_usd,
+            "currentPriceInrPerMin": current_price_inr,
+            "models": sorted({r["model"] for r in records}),
+        })
+
     sample = random.SystemRandom().sample(eligible, min(8, len(eligible)))
-    return {"asOf": now.isoformat(), "since": since.isoformat(), "method": "duration_weighted", "windowCapped": capped,
-        "callsReviewed": len(rows), "fxRateInr": fx, "channels": channels,
-        "samples": [{"callId": r["callId"], "tenant": "Tenant " + r["tenantId"][:8], "channel": r["channel"],
-            "durationSec": number(r["seconds"]), "costUsd": number(r["costUsd"]), "costInr": number(r["costInr"]),
-            "model": r["model"], "carrierSource": r["carrierSource"]} for r in sample],
-        "notes": ["Average = known supplier costs / connected minutes; each minute has equal weight.",
+    return {
+        "asOf": now.isoformat(),
+        "since": since.isoformat(),
+        "method": "duration_weighted",
+        "windowCapped": capped,
+        "callsReviewed": len(rows),
+        "fxRateInr": fx,
+        "channels": channels,
+        "samples": [
+            {
+                "callId": r["callId"],
+                "tenant": "Tenant " + r["tenantId"][:8],
+                "channel": r["channel"],
+                "tier": r.get("tier"),
+                "durationSec": number(r["seconds"]),
+                "costUsd": number(r["costUsd"]),
+                "costInr": number(r["costInr"]),
+                "model": r["model"],
+                "carrierSource": r["carrierSource"],
+            }
+            for r in sample
+        ],
+        "notes": [
+            "Average = known supplier costs / connected minutes; each minute has equal weight.",
             "API costs use reported tokens at published rates. Carrier CDR totals are used when available; tariffs are estimates.",
-            "Known unused prewarm spend is included in PSTN costs. Older unrecorded setup/summary spend, hosting, taxes and negotiated discounts are not included.",
-            "Records without usable cost attribution are excluded and shown in coverage. This is pricing guidance, not a supplier invoice."]}
+            "Known unused prewarm spend is included in Flagship PSTN costs. Older unrecorded setup/summary spend, hosting, taxes and negotiated discounts are not included.",
+            "Records without usable cost attribution are excluded and shown in coverage. This is pricing guidance, not a supplier invoice.",
+        ],
+    }
 
 
 def read_unused_prewarm(since: datetime, now: datetime) -> list[dict]:
@@ -206,10 +276,21 @@ async def load_cost_insights(days: int = 30) -> dict:
     now = datetime.now(timezone.utc)
     since = now - timedelta(days=days)
     async with get_session_factory()() as db:
-        result = await db.execute(select(Call.call_id, Call.tenant_id, Call.channel, Call.direction, Call.duration_sec, Call.session_id)
+        result = await db.execute(
+            select(Call.call_id, Call.tenant_id, Call.channel, Call.direction, Call.duration_sec, Call.session_id, Call.tier)
             .join(Tenant, Tenant.tenant_id == Call.tenant_id)
             .where(Tenant.deleted_at.is_(None), Call.ended_at.is_not(None), Call.ended_at >= since, Call.channel.in_(["pstn", "browser"]))
-            .order_by(desc(Call.ended_at)).limit(MAX_CALLS + 1))
-        rows = [{**dict(row._mapping), "call_id": str(row.call_id), "tenant_id": str(row.tenant_id)} for row in result]
+            .order_by(desc(Call.ended_at))
+            .limit(MAX_CALLS + 1)
+        )
+        rows = [
+            {
+                **dict(row._mapping),
+                "call_id": str(row.call_id),
+                "tenant_id": str(row.tenant_id),
+                "tier": str(getattr(row, "tier", None) or "premium").lower(),
+            }
+            for row in result
+        ]
     rates = await load_current_rates()
     return await asyncio.to_thread(build_insights, rows[:MAX_CALLS], rates, since=since, now=now, capped=len(rows) > MAX_CALLS)

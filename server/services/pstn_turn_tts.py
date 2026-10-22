@@ -5,6 +5,7 @@ import asyncio
 import base64
 import json
 import logging
+from contextlib import aclosing
 from typing import TYPE_CHECKING, Any
 
 from server.services.audio_transcode import (
@@ -81,6 +82,9 @@ class PstnTurnTtsSession:
         self._composed = False
         self._unary_adapter = None
         self._unary_config = None
+        self._stream_adapter = None
+        self._stream_config = None
+        self._stream_task: asyncio.Task | None = None
         self._use_mp3 = False
         self._use_mulaw_wire = False
         self._use_l16_wire = False
@@ -359,6 +363,15 @@ class PstnTurnTtsSession:
                 raise RuntimeError("The selected composed speech transport is unavailable")
             self._unary_adapter = adapter
             self._unary_config = tts_config
+        elif provider == "gemini" and api_mode == "streaming_rest":
+            from server.providers.gemini_tts import supports_gemini_tts_streaming
+
+            if not supports_gemini_tts_streaming(model) or not callable(
+                getattr(adapter, "stream_with_metadata", None)
+            ):
+                raise RuntimeError("The selected composed speech transport is unavailable")
+            self._stream_adapter = adapter
+            self._stream_config = tts_config
         elif provider == "sarvam" and api_mode == "websocket":
             self._merged.update(
                 {
@@ -411,7 +424,9 @@ class PstnTurnTtsSession:
             self._reader_task = asyncio.create_task(self._reader_loop())
 
     async def send_text(self, text: str) -> None:
-        if not text or self._closed or self._interrupted or (not self._tts and not self._unary_adapter):
+        if not text or self._closed or self._interrupted or (
+            not self._tts and not self._unary_adapter and not self._stream_adapter
+        ):
             return
         if not self._opened:
             await self.open()
@@ -447,6 +462,18 @@ class PstnTurnTtsSession:
                     status="processing",
                     detail=text[:200],
                 )
+        if self._stream_adapter is not None:
+            # Keep a separate task so interruption also aborts a blocked HTTP
+            # read; generation guards alone cannot release an idle SSE socket.
+            self._chars_sent += len(text)
+            task = asyncio.create_task(self._send_streaming_text(text))
+            self._stream_task = task
+            try:
+                await task
+            finally:
+                if self._stream_task is task:
+                    self._stream_task = None
+            return
         if self._unary_adapter is not None:
             from server.providers.audio_media import decode_pcm16_wav
 
@@ -477,6 +504,45 @@ class PstnTurnTtsSession:
             await self._tts.send(json.dumps({"type": "text", "data": {"text": text}}))
         self._chars_sent += len(text)
 
+    async def _send_streaming_text(self, text: str) -> None:
+        self._awaiting_audio = True
+        self._done.clear()
+        try:
+            async with aclosing(
+                self._stream_adapter.stream_with_metadata(text, self._stream_config)
+            ) as stream:
+                async for chunk in stream:
+                    if self._closed or self._stale_generation():
+                        self._audio_buf.clear()
+                        self._pcm_resampler = None
+                        return
+                    if chunk.sample_rate != self._tts_rate:
+                        raise RuntimeError("Composed TTS stream changed its PCM sample rate")
+                    pcm = chunk.audio_bytes
+                    self._tts_audio_bytes += len(pcm)
+                    samples, self._tts_pcm_byte_remainder = divmod(
+                        self._tts_pcm_byte_remainder + len(pcm), 2
+                    )
+                    self._tts_pcm_samples += samples
+                    self._tts_audio_seconds += samples / self._tts_rate
+                    for key, value in chunk.usage.items():
+                        if isinstance(key, str) and isinstance(value, int) and not isinstance(value, bool):
+                            self._tts_native_usage[key] = self._tts_native_usage.get(key, 0) + value
+                    if pcm:
+                        await self._emit_audio_chunk(pcm)
+        except asyncio.CancelledError:
+            self._audio_buf.clear()
+            self._pcm_resampler = None
+            raise
+        except Exception:
+            self._had_error = True
+            self._audio_buf.clear()
+            self._pcm_resampler = None
+            raise
+        finally:
+            self._awaiting_audio = False
+            self._done.set()
+
     async def prepare_for_turn(self) -> None:
         """Reset per-turn state while keeping the upstream WebSocket warm."""
         if self._closed or not self._opened:
@@ -485,6 +551,7 @@ class PstnTurnTtsSession:
 
     async def _prepare_for_chunk(self) -> None:
         """Reset per-chunk synthesis state; keep the upstream WebSocket warm."""
+        await self._cancel_stream()
         if self._reader_task and not self._reader_task.done():
             self._reader_task.cancel()
             try:
@@ -511,7 +578,10 @@ class PstnTurnTtsSession:
         self._collected_frames = []
         self._pcm_resampler = None
         self._bound_generation = self._voice.current_generation_id
-        self._reader_task = None if self._unary_adapter is not None else asyncio.create_task(self._reader_loop())
+        self._reader_task = (
+            None if self._unary_adapter is not None or self._stream_adapter is not None
+            else asyncio.create_task(self._reader_loop())
+        )
 
     async def synthesize_to_frames(self, text: str) -> list[bytes]:
         """One send_text + flush; collect wire frames without live Telnyx playout."""
@@ -532,12 +602,16 @@ class PstnTurnTtsSession:
             self._collecting_frames = False
 
     async def finish(self) -> None:
-        if self._closed or self._flushed or (not self._tts and not self._unary_adapter):
+        if self._closed or self._flushed or (
+            not self._tts and not self._unary_adapter and not self._stream_adapter
+        ):
             return
         self._flushed = True
-        if self._unary_adapter is not None:
+        if self._unary_adapter is not None or self._stream_adapter is not None:
+            if self._stream_task is not None:
+                await self._stream_task
             self._awaiting_audio = True
-            if not self._stale_generation():
+            if not self._stale_generation() and not self._had_error:
                 await self._flush_audio_tail()
             self._awaiting_audio = False
             self._done.set()
@@ -581,33 +655,16 @@ class PstnTurnTtsSession:
         if not (self._chars_sent or self._tts_pcm_samples or self._tts_native_usage):
             self._usage_recorded = True
             return
-        from server.call.call_ledger import call_ledger
+        from server.services.saas.composed_costing import merge_composed_tts_usage
 
         self._usage_recorded = True
         try:
-            meta = call_ledger.read_meta(self._voice.call_id)
-            stage_usage = meta.get("stage_usage") if isinstance(meta.get("stage_usage"), dict) else {}
-            current = stage_usage.get("tts") if isinstance(stage_usage.get("tts"), dict) else {}
-            native_usage = (
-                current.get("native_usage")
-                if isinstance(current.get("native_usage"), dict)
-                else {}
-            )
-            for key, value in self._tts_native_usage.items():
-                native_usage[key] = int(native_usage.get(key, 0) or 0) + value
-            current.update(
-                input_characters=int(current.get("input_characters", 0) or 0) + self._chars_sent,
-                output_audio_seconds=round(
-                    float(current.get("output_audio_seconds", 0) or 0) + self._tts_audio_seconds,
-                    6,
-                ),
-                output_audio_samples=int(current.get("output_audio_samples", 0) or 0)
-                + self._tts_pcm_samples,
-                native_usage=native_usage,
-            )
-            stage_usage["tts"] = current
-            meta["stage_usage"] = stage_usage
-            call_ledger.write_meta(self._voice.call_id, meta)
+            merge_composed_tts_usage(self._voice.call_id, {
+                "input_characters": self._chars_sent,
+                "output_audio_seconds": self._tts_audio_seconds,
+                "output_audio_samples": self._tts_pcm_samples,
+                "native_usage": self._tts_native_usage,
+            })
         except Exception as exc:
             log_error(
                 "Composed TTS usage could not be persisted",
@@ -620,6 +677,7 @@ class PstnTurnTtsSession:
             return
         self._closed = True
         self._done.set()
+        await self._cancel_stream()
         if self._ping_task:
             self._ping_task.cancel()
         if self._reader_task and self._reader_task is not asyncio.current_task():
@@ -640,6 +698,16 @@ class PstnTurnTtsSession:
                 pass
         self._record_composed_usage()
         await self.end_turn()
+
+    async def _cancel_stream(self) -> None:
+        task = self._stream_task
+        if task is not None and task is not asyncio.current_task() and not task.done():
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
+        self._stream_task = None
 
     async def interrupt(self) -> None:
         self._interrupted = True

@@ -1345,6 +1345,7 @@ class PstnRealtimeVoiceLoop:
         base = "" if is_gemini_live_voice_model(self._live_model) else _existing_adapter_instructions(self._adapter)
         instruction = (
             f"{base}\n\nCURRENT TURN TASK\n{instruction}\n\n"
+            f"Speak only {self._resolve_language()} as your primary language, with natural English mixing. "
             f"{LANGUAGE_LOCK[normalize_compile_language(self._resolve_language())]} "
             "Keep the business facts and required script steps."
         )

@@ -87,6 +87,12 @@ function Write-DevBanner {
         Write-Host "  API                   NOT RUNNING"
         Write-Host "  Check the 'Voice Agent API' window or: $LogDir\api.log"
     }
+    try {
+        $redisOk = Test-NetConnection -ComputerName 127.0.0.1 -Port 6379 -InformationLevel Quiet -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+        if ($redisOk) {
+            Write-Host "  Redis Cache           redis://127.0.0.1:6379/0 (ready)"
+        }
+    } catch { }
     Write-Host ""
     Write-Host "  Stop servers: npm run dev:down"
     Write-Host "============================================================"
@@ -112,6 +118,7 @@ $webOk = $false
 $voxlyOk = $false
 
 if (-not $WebOnly) {
+    Ensure-RedisServer | Out-Null
     if (-not (Test-VoiceAgentPythonDeps -PythonPath $python -RepoRoot $RepoRoot)) {
         throw "Install Python dependencies before starting the API (see commands above)."
     }

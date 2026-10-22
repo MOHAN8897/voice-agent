@@ -122,8 +122,14 @@ class Settings(BaseSettings):
         "gpt-realtime-2.1-mini,gpt-realtime-2.1,gpt-realtime-2,gpt-5.5,gpt-5.4,gpt-5,gpt-5.6-luna",
         alias="OPENAI_ALLOWED_MODELS",
     )
-    sarvam_llm_models_csv: str = Field("", alias="SARVAM_LLM_ALLOWED_MODELS")
-    gemini_tts_models_csv: str = Field("", alias="GEMINI_TTS_ALLOWED_MODELS")
+    sarvam_llm_models_csv: str = Field(
+        "sarvam-105b,sarvam-105b-conversations",
+        alias="SARVAM_LLM_ALLOWED_MODELS",
+    )
+    gemini_tts_models_csv: str = Field(
+        "gemini-3.8-flash-lite-tts,gemini-3.8-flash-tts,gemini-3.1-flash-tts-preview",
+        alias="GEMINI_TTS_ALLOWED_MODELS",
+    )
 
     # --- App ---
     debug: bool = Field(False, alias="DEBUG")
@@ -415,8 +421,8 @@ class Settings(BaseSettings):
     voice_low_stt_model: str = Field("saaras:v3", alias="VOICE_LOW_STT_MODEL")
     voice_low_llm_provider: str = Field("openai", alias="VOICE_LOW_LLM_PROVIDER")
     voice_low_llm_model: str = Field("gpt-realtime-2.1-mini", alias="VOICE_LOW_LLM_MODEL")
-    voice_low_tts_provider: str = Field("sarvam", alias="VOICE_LOW_TTS_PROVIDER")
-    voice_low_tts_model: str = Field("bulbul:v3", alias="VOICE_LOW_TTS_MODEL")
+    voice_low_tts_provider: str = Field("gemini", alias="VOICE_LOW_TTS_PROVIDER")
+    voice_low_tts_model: str = Field("gemini-3.8-flash-lite-tts", alias="VOICE_LOW_TTS_MODEL")
 
     # MEDIUM tier bundle
     voice_medium_stt_provider: str = Field("sarvam", alias="VOICE_MEDIUM_STT_PROVIDER")

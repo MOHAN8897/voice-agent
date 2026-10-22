@@ -245,8 +245,9 @@ async def subscriber_outbound(
 
     stack = await saas_stack_override_for_agent(agent)
     lang = str(stack.get("language") or (agent.get("languages") or ["te-IN"])[0])
-    saved_voice_settings = agent.get("voice_settings") if isinstance(agent.get("voice_settings"), dict) else {}
-    tier = str(agent.get("default_tier") or "medium") if saved_voice_settings.get("stackSelectionVersion") == 1 else "medium"
+    saved_voice_settings = agent.get("voice_settings") if isinstance(agent.get("voice_settings"), dict) else (agent.get("voiceSettings") if isinstance(agent.get("voiceSettings"), dict) else {})
+    raw_tier = agent.get("default_tier") or agent.get("defaultTier") or "medium"
+    tier = str(raw_tier) if saved_voice_settings.get("stackSelectionVersion") == 1 else "medium"
     body = OutboundTestBody(
         agentId=agent_id,
         fromE164=resolved_from,

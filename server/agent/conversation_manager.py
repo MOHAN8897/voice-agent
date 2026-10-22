@@ -147,4 +147,4 @@ class ConversationManager:
         return str(uuid.uuid4())
 
 
-conversation_manager = ConversationManager(max_messages=8)
+conversation_manager = ConversationManager(max_messages=24)

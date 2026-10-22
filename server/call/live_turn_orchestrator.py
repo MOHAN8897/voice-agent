@@ -140,7 +140,7 @@ class LiveTurnOrchestrator:
 
             completed = conversation_manager.get_completed_turns(ctx.session_id if ctx else "")
             try:
-                snapshot = memory_manager.get_snapshot(call_id)
+                snapshot = memory_manager.peek_snapshot(call_id)
             except Exception:
                 snapshot = None
         callback_state = advance_callback_close(
@@ -224,7 +224,7 @@ class LiveTurnOrchestrator:
         snapshot = None
         if call_id:
             try:
-                snapshot = memory_manager.get_snapshot(call_id)
+                snapshot = memory_manager.peek_snapshot(call_id)
             except Exception:
                 snapshot = None
         state = advance_callback_close(
@@ -272,7 +272,10 @@ class LiveTurnOrchestrator:
         projection: str | None,
         rolling: str | None,
     ) -> list[dict] | None:
-        if ctx is None or not ctx.compiled_brain_text:
+        if ctx is None:
+            return None
+        composed = getattr(ctx, "pipeline", None) == "composed_voice"
+        if not ctx.compiled_brain_text and not composed:
             return None
         from server.agent.brain_prompt_composer import estimate_tokens
         from server.agent.conversation_manager import conversation_manager
@@ -280,14 +283,24 @@ class LiveTurnOrchestrator:
         from server.services.prompt_cache_key import caching_enabled
 
         settings = get_settings()
+        context_turns = settings.brain_context_turns
+        if composed:
+            # Composed voice (Economical & Standard tiers) relies on server dynamic memory
+            # to preserve multi-turn context across stateless Sarvam API calls.
+            context_turns = max(context_turns, 10)
         history = conversation_manager.get_context_for_brain(
             session_id,
-            max_turns=settings.brain_context_turns,
+            max_turns=context_turns,
         )
         model = openai_model or ctx.resolved_stack.llm.model
-        enable_cache = caching_enabled(model, estimate_tokens(ctx.compiled_brain_text))
+        brain = ctx.compiled_brain_text
+        if composed:
+            from server.services.composed_voice_session import composed_system_prompt
+
+            brain = composed_system_prompt(ctx)
+        enable_cache = caching_enabled(model, estimate_tokens(brain))
         return build_live_input(
-            compiled_brain_text=ctx.compiled_brain_text,
+            compiled_brain_text=brain,
             history=history,
             transcript=transcript,
             enable_cache=enable_cache,
@@ -691,7 +704,7 @@ class LiveTurnOrchestrator:
             if (
                 not settings.use_provider_registry
                 or llm_sel.provider != "sarvam"
-                or api_mode != "chat_completions_v2"
+                or api_mode not in {"chat_completions_v1", "chat_completions_v2"}
                 or not llm_sel.model
             ):
                 raise RuntimeError("The selected composed text model is unavailable")
@@ -711,7 +724,25 @@ class LiveTurnOrchestrator:
                 raise RuntimeError("The selected composed text model is unavailable")
             stream_kwargs["model"] = llm_sel.model
             stream_kwargs["openai_model"] = llm_sel.model
+            stream_kwargs["api_mode"] = api_mode
+
+            def record_request_usage(event: dict[str, Any]) -> None:
+                usage = event.get("usage")
+                if not call_id or not event.get("done") or not isinstance(usage, dict):
+                    return
+                from server.services.saas.composed_costing import composed_llm_usage
+
+                measured = composed_llm_usage(usage)
+                if measured:
+                    from server.services.saas.composed_costing import record_composed_stage_usage
+
+                    record_composed_stage_usage(call_id, "llm", measured)
+
             messages = self._messages_for_model(input_messages, llm_sel.model)
+            if stream_kwargs.get("user_instructions") and messages:
+                messages = [messages[0], {
+                    "role": "system", "content": str(stream_kwargs["user_instructions"]),
+                }, *messages[1:]]
             tool_schemas = await self._load_composed_tenant_tools(ctx)
             if tool_schemas:
                 # Tool-capable turns always use the validated live-turn schema.
@@ -727,6 +758,7 @@ class LiveTurnOrchestrator:
                     schema=LIVE_TURN_JSON_SCHEMA,
                     **tool_kwargs,
                 ):
+                    record_request_usage(chunk)
                     if chunk.get("done"):
                         first_done = chunk
                     elif chunk.get("delta"):
@@ -749,11 +781,16 @@ class LiveTurnOrchestrator:
                     allowed_tools={str(tool.get("name") or "").upper() for tool in tool_schemas},
                 )
                 final_kwargs = dict(stream_kwargs)
+                # Sarvam requires declarations alongside tool-call history.
+                # Keep them present while forbidding a second execution round.
+                final_kwargs["tools"] = tool_schemas
+                final_kwargs["tool_choice"] = "none"
                 async for chunk in adapter.stream_structured_turn(
                     input_messages=tool_messages,
                     schema=LIVE_TURN_JSON_SCHEMA,
                     **final_kwargs,
                 ):
+                    record_request_usage(chunk)
                     if chunk.get("tool_calls"):
                         raise RuntimeError("The composed text model returned an unsupported second tool request")
                     yield chunk
@@ -764,6 +801,7 @@ class LiveTurnOrchestrator:
                 schema=schema,
                 **stream_kwargs,
             ):
+                record_request_usage(chunk)
                 yield chunk
             return
 

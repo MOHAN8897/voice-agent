@@ -92,7 +92,8 @@ def test_average_weights_minutes_and_shows_missing_usage_and_setup_overhead():
             "carrier_billing":{"source":"vobiz_cdr", "amount":0, "currency":"INR"}}
     result = build_insights(rows, rates(), since=now-timedelta(days=30), now=now,
         ledger=SimpleNamespace(read_meta=lambda cid:metadata[cid]), overhead_rows=[{"cost_usd":.3,"cost_inr":24}])
-    pstn, web = result["channels"]
+    pstn = next(c for c in result["channels"] if c["channel"] == "pstn_premium")
+    web = next(c for c in result["channels"] if c["channel"] == "browser")
     assert pstn["averageUsdPerMin"] == pytest.approx(2.575)  # (1 + 9 + .3) / 4 minutes.
     assert pstn["coveragePercent"] == 66.7
     assert pstn["missingCostCalls"] == 1 and pstn["carrierCdrCalls"] == 2
@@ -179,8 +180,9 @@ def test_malformed_cost_records_are_excluded_without_breaking_report(bad_meta):
     rows = [{"call_id":"one", "tenant_id":"tenant", "channel":"browser", "duration_sec":60}]
     report = build_insights(rows, rates(), since=now-timedelta(days=7), now=now,
         ledger=SimpleNamespace(read_meta=lambda _:bad_meta), overhead_rows=[])
-    assert report["channels"][1]["missingCostCalls"] == 1
-    assert report["channels"][1]["averageUsdPerMin"] is None
+    browser_ch = next(c for c in report["channels"] if c["channel"] == "browser")
+    assert browser_ch["missingCostCalls"] == 1
+    assert browser_ch["averageUsdPerMin"] is None
 
 
 def test_partial_call_cohort_does_not_absorb_full_window_setup_costs():
@@ -297,7 +299,8 @@ async def test_post_call_costs_are_isolated_idempotent_and_included_in_average(m
         now = datetime.now(timezone.utc)
         result = build_insights([{"call_id":"call-a","tenant_id":"tenant","channel":"browser","duration_sec":60}],
             rates(), since=now-timedelta(days=30), now=now, overhead_rows=[])
-        assert result["channels"][1]["averageUsdPerMin"] == pytest.approx(.1 + expected * 2)
+        browser_ch = next(c for c in result["channels"] if c["channel"] == "browser")
+        assert browser_ch["averageUsdPerMin"] == pytest.approx(.1 + expected * 2)
     finally:
         get_settings.cache_clear()
 

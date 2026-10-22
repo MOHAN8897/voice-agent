@@ -67,3 +67,24 @@ def test_init_singleton(base_settings):
 
     r2 = get_provider_registry()
     assert r1 is r2
+
+
+def test_composed_model_allowlists_honor_persisted_admin_configuration(base_settings, monkeypatch):
+    from server.services.dev_secrets_store import dev_secrets_store
+
+    overrides = {
+        "sarvam_llm_models_csv": "sarvam-105b-conversations,sarvam-105b-conversations",
+        "gemini_tts_models_csv": "gemini-3.8-flash-lite-tts",
+        "enable_gemini": True,
+    }
+    monkeypatch.setattr(dev_secrets_store, "effective", lambda field, default=None: overrides.get(field, default))
+    monkeypatch.setattr(dev_secrets_store, "effective_secret", lambda field: "unit-test-placeholder")
+    settings = Settings(_env_file=None)
+    premium_before = {key: value for key, value in settings.model_dump().items() if key.startswith("voice_premium_")}
+    registry = ProviderRegistry(settings)
+    providers = {row["id"]: row for row in registry.get_catalog()["providers"]}
+    assert [row["id"] for row in providers["sarvam"]["models"]["llm"]] == ["sarvam-105b-conversations"]
+    assert providers["gemini"]["models"]["tts"][0]["id"] == "gemini-3.8-flash-lite-tts"
+    assert registry.is_model_allowed("sarvam", "llm", "sarvam-105b-conversations")
+    assert registry.is_model_allowed("gemini", "tts", "gemini-3.8-flash-lite-tts")
+    assert {key: value for key, value in settings.model_dump().items() if key.startswith("voice_premium_")} == premium_before

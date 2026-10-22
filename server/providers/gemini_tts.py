@@ -1,10 +1,11 @@
-"""Unary Gemini text-to-speech adapter with explicit WAV validation."""
+"""Gemini text-to-speech with validated unary WAV and streaming PCM transports."""
 
 from __future__ import annotations
 
 import base64
 import binascii
 import json
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from typing import Any
 from urllib.parse import quote
@@ -19,6 +20,16 @@ from server.services.dev_secrets_store import dev_secrets_store
 
 GEMINI_GENERATE_CONTENT_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 GEMINI_TTS_REQUEST_SAMPLE_RATE = 24000
+GEMINI_STREAMING_TTS_MODELS = frozenset({
+    "gemini-3.1-flash-tts-preview",
+    "gemini-3.8-flash-tts",
+    "gemini-3.8-flash-lite-tts",
+})
+
+
+def supports_gemini_tts_streaming(model: str) -> bool:
+    """Only advertise models whose raw PCM streaming contract is documented."""
+    return str(model or "").strip().removeprefix("models/") in GEMINI_STREAMING_TTS_MODELS
 
 
 @dataclass(frozen=True)
@@ -29,6 +40,64 @@ class GeminiTTSResult:
     content_type: str
     media: PcmWavMetadata
     usage: dict[str, int]
+
+
+@dataclass(frozen=True)
+class GeminiTTSChunk:
+    """Headerless signed little-endian PCM16 and incremental native token usage."""
+
+    audio_bytes: bytes
+    sample_rate: int
+    usage: dict[str, int]
+
+
+async def _sse_payloads(response: httpx.Response) -> AsyncIterator[dict[str, Any]]:
+    data: list[str] = []
+    async for line in response.aiter_lines():
+        if line.startswith("data:"):
+            data.append(line[5:].lstrip(" "))
+        elif line != "":
+            continue
+        if line == "" and data:
+            raw = "\n".join(data)
+            data.clear()
+            if raw == "[DONE]":
+                return
+            yield _stream_payload(raw)
+    if data:
+        yield _stream_payload("\n".join(data))
+
+
+def _stream_payload(raw: str) -> dict[str, Any]:
+    try:
+        payload = json.loads(raw)
+    except (ValueError, TypeError) as exc:
+        raise RuntimeError("Gemini TTS returned malformed streaming JSON") from exc
+    if not isinstance(payload, dict):
+        raise TypeError("Gemini TTS returned malformed streaming JSON")
+    if payload.get("error"):
+        raise RuntimeError("Gemini TTS returned a streaming error")
+    return payload
+
+
+def _decode_pcm(inline_data: dict[str, Any]) -> bytes:
+    mime_type = str(inline_data.get("mimeType") or inline_data.get("mime_type") or "")
+    fields = [part.strip().lower() for part in mime_type.split(";")]
+    if fields[0] not in {"audio/l16", "audio/pcm"}:
+        raise RuntimeError("Gemini TTS streaming requires raw PCM16 audio")
+    parameters = dict(part.split("=", 1) for part in fields[1:] if "=" in part)
+    if parameters.get("rate", "24000") != "24000" or parameters.get("channels", "1") != "1":
+        raise RuntimeError("Gemini TTS streaming returned an unsupported PCM sample format")
+    encoded = inline_data.get("data")
+    if not isinstance(encoded, str) or not encoded:
+        raise RuntimeError("Gemini TTS returned an empty audio block")
+    try:
+        audio = base64.b64decode(encoded, validate=True)
+    except (binascii.Error, UnicodeEncodeError, ValueError) as exc:
+        raise RuntimeError("Gemini TTS returned malformed base64 audio") from exc
+    if not audio:
+        raise RuntimeError("Gemini TTS returned an empty audio block")
+    return audio
 
 
 def _audio_parts(payload: dict[str, Any]) -> list[dict[str, Any]]:
@@ -74,7 +143,7 @@ def _decode_wav(inline_data: dict[str, Any]) -> tuple[bytes, PcmWavMetadata, str
 
 
 class GeminiTTSAdapter:
-    """Gemini TTS is separate from Gemini Live and currently uses unary REST."""
+    """Gemini TTS is separate from Gemini Live; transport is pinned by the stack."""
 
     provider_id = "gemini"
 
@@ -103,7 +172,113 @@ class GeminiTTSAdapter:
 
     def connect_stream(self, config: TTSConfig):
         _ = config
-        raise NotImplementedError("Gemini TTS streaming is not exposed by this unary adapter")
+        raise NotImplementedError(
+            "Gemini TTS WebSocket is not exposed by this unary adapter interface; "
+            "use stream_with_metadata for SSE"
+        )
+
+    async def stream_with_metadata(
+        self, text: str, config: TTSConfig,
+    ) -> AsyncIterator[GeminiTTSChunk]:
+        """Yield audio as each SSE event arrives; closing the iterator closes HTTP."""
+        if config.provider != self.provider_id:
+            raise ValueError("Gemini TTS config provider does not match the resolved stack")
+        key = self._api_key()
+        if not key:
+            raise RuntimeError("GEMINI_API_KEY is not configured")
+        model = (config.model or "").strip().removeprefix("models/")
+        if not supports_gemini_tts_streaming(model):
+            raise ValueError("The selected Gemini TTS model does not support streaming")
+        speaker = (config.speaker or "").strip()
+        if not speaker:
+            raise ValueError("Gemini TTS requires the voice selected in the resolved stack")
+        if not isinstance(text, str) or not text.strip():
+            raise ValueError("Gemini TTS requires non-empty text")
+        url = f"{GEMINI_GENERATE_CONTENT_BASE}/{quote(model, safe='-_.')}:streamGenerateContent"
+        body = {
+            "contents": [{"role": "user", "parts": [{"text": text.strip()}]}],
+            "generationConfig": {
+                "responseModalities": ["AUDIO"],
+                "speechConfig": {
+                    "languageCode": config.language,
+                    "voiceConfig": {"prebuiltVoiceConfig": {"voiceName": speaker}},
+                },
+            },
+        }
+        # The streaming default is raw PCM24k. Do not request unary WAV or assume
+        # the requested sample rate is honored; resample at the media boundary.
+        pending = b""
+        received_audio = False
+        completed = False
+        native_usage: dict[str, int] = {}
+        try:
+            async with (
+                httpx.AsyncClient(timeout=self._timeout()) as client,
+                client.stream(
+                    "POST", url, params={"alt": "sse"},
+                    headers={
+                        "x-goog-api-key": key,
+                        "Content-Type": "application/json",
+                        "Accept": "text/event-stream",
+                    },
+                    json=body,
+                ) as response,
+            ):
+                if response.status_code >= 400:
+                    raise RuntimeError(f"Gemini TTS HTTP {response.status_code}")
+                async for payload in _sse_payloads(response):
+                    feedback = payload.get("promptFeedback") or {}
+                    if isinstance(feedback, dict) and feedback.get("blockReason"):
+                        raise RuntimeError("Gemini TTS streaming request was blocked")
+                    candidates = payload.get("candidates") or []
+                    if not isinstance(candidates, list):
+                        raise TypeError("Gemini TTS returned malformed streaming candidates")
+                    audio = bytearray()
+                    if candidates:
+                        candidate = candidates[0]
+                        if not isinstance(candidate, dict):
+                            raise RuntimeError("Gemini TTS returned malformed streaming candidate")
+                        finish = candidate.get("finishReason") or candidate.get("finish_reason")
+                        if finish and finish != "STOP":
+                            raise RuntimeError("Gemini TTS streaming ended without complete audio")
+                        completed = completed or finish == "STOP"
+                        content = candidate.get("content") or {}
+                        parts = content.get("parts") if isinstance(content, dict) else None
+                        if parts is not None and not isinstance(parts, list):
+                            raise RuntimeError("Gemini TTS returned malformed streaming parts")
+                        for part in parts or []:
+                            if not isinstance(part, dict):
+                                continue
+                            inline = part.get("inlineData") or part.get("inline_data")
+                            if isinstance(inline, dict):
+                                audio.extend(_decode_pcm(inline))
+                    received_audio = received_audio or bool(audio)
+                    pcm = pending + bytes(audio)
+                    aligned_size = len(pcm) - len(pcm) % 2
+                    pending = pcm[aligned_size:]
+                    meta = payload.get("usageMetadata") or payload.get("usage_metadata")
+                    usage_delta: dict[str, int] = {}
+                    for name, count in gemini_usage_from_metadata(meta, native_audio=True).items():
+                        previous = native_usage.get(name, 0)
+                        if count > previous:
+                            usage_delta[name] = count - previous
+                            native_usage[name] = count
+                    if aligned_size or usage_delta:
+                        yield GeminiTTSChunk(
+                            audio_bytes=pcm[:aligned_size],
+                            sample_rate=GEMINI_TTS_REQUEST_SAMPLE_RATE,
+                            usage=usage_delta,
+                        )
+        except httpx.TimeoutException as exc:
+            raise TimeoutError("Gemini TTS streaming request timed out") from exc
+        except httpx.HTTPError as exc:
+            raise RuntimeError("Gemini TTS streaming transport failed") from exc
+        if pending:
+            raise RuntimeError("Gemini TTS streaming returned an incomplete PCM16 sample")
+        if not received_audio:
+            raise RuntimeError("Gemini TTS streaming returned no audio")
+        if not completed:
+            raise RuntimeError("Gemini TTS streaming ended before completion")
 
     async def synthesize_rest(self, text: str, config: TTSConfig) -> bytes:
         result = await self.synthesize_with_metadata(text, config)

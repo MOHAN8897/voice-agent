@@ -153,73 +153,45 @@ _GEMINI_INDIC_VOICE_META: tuple[dict[str, Any], ...] = (
 )
 
 
+_CURATED_GEMINI_VOICES: dict[str, dict[str, str]] = {
+    "Zephyr": {"label": "Zephyr", "gender": "female", "accent": "General American", "tone": "Bright & clear", "category": "conversational", "useCase": "Conversational Assistant & Inquiries"},
+    "Puck": {"label": "Puck", "gender": "male", "accent": "General American", "tone": "Upbeat & conversational", "category": "conversational", "useCase": "Conversational Outreach & Bookings"},
+    "Aoede": {"label": "Aoede", "gender": "female", "accent": "General American", "tone": "Breezy & engaging", "category": "conversational", "useCase": "Conversational Host & Dialogues"},
+    "Leda": {"label": "Leda", "gender": "female", "accent": "General American", "tone": "Youthful & pleasant", "category": "conversational", "useCase": "Conversational Care & Hospitality"},
+    "Kore": {"label": "Kore", "gender": "female", "accent": "General American", "tone": "Firm & authoritative", "category": "promotional", "useCase": "Commercial Promotions & Direct Announcements"},
+    "Charon": {"label": "Charon", "gender": "male", "accent": "General American", "tone": "Informative & calm", "category": "promotional", "useCase": "Commercial Broadcasts & Operations"},
+    "Fenrir": {"label": "Fenrir", "gender": "male", "accent": "General American", "tone": "Confident & excitable", "category": "promotional", "useCase": "Commercial Outreach & Sales Inquiries"},
+    "Sulafat": {"label": "Sulafat", "gender": "female", "accent": "General American", "tone": "Warm & persuasive", "category": "promotional", "useCase": "Commercial Outreach & Customer Promotions"},
+    "Pulcherrima": {"label": "Pulcherrima", "gender": "female", "accent": "General American", "tone": "Forward & dynamic", "category": "promotional", "useCase": "Commercial Announcements & Brand Outreach"},
+}
+
 _SARVAM_VOICE_META: tuple[dict[str, Any], ...] = (
-    {"id": "shubh", "label": "Shubh · Male", "gender": "male", "languageCode": "te-IN", "accent": "Telugu (India)", "tone": "Conversational & crisp", "category": "support", "useCase": "Customer support & outreach", "sampleText": "నమస్కారం, నేను మీకు ఎలా సహాయం చేయగలను?"},
-    {"id": "priya", "label": "Priya · Female", "gender": "female", "languageCode": "te-IN", "accent": "Telugu (India)", "tone": "Warm & empathetic", "category": "support", "useCase": "Customer care & appointments", "sampleText": "నమస్కారం, నేను మీకు ఎలా సహాయం చేయగలను?", "defaultForLanguage": True},
-    {"id": "kavitha", "label": "Kavitha · Female", "gender": "female", "languageCode": "te-IN", "accent": "Telugu (India)", "tone": "Traditional & pleasant", "category": "support", "useCase": "Concierge & hospitality", "sampleText": "నమస్కారం, మీ ప్రశ్నలకు సమాధానాలు అందించడానికి నేను సిద్ధంగా ఉన్నాను."},
-    {"id": "neha", "label": "Neha · Female", "gender": "female", "languageCode": "te-IN", "accent": "Telugu (India)", "tone": "Friendly & bright", "category": "sales", "useCase": "Sales & direct outreach", "sampleText": "నమస్కారం, మా ఆఫర్ల గురించి మీకు వివరించడానికి సిద్ధంగా ఉన్నాను."},
-    {"id": "rahul", "label": "Rahul · Male", "gender": "male", "languageCode": "te-IN", "accent": "Telugu (India)", "tone": "Energetic & dynamic", "category": "sales", "useCase": "Commercial outreach & booking", "sampleText": "నమస్కారం, మీ అపాయింట్‌మెంట్ బుకింగ్ కోసం నేను సహాయం చేయగలను."},
-    {"id": "pooja", "label": "Pooja · Female", "gender": "female", "languageCode": "te-IN", "accent": "Telugu (India)", "tone": "Polite & gentle", "category": "support", "useCase": "Inbound intake & triage", "sampleText": "నమస్కారం, మీ వివరాలను సరిచూసేందుకు సహాయపడతాను."},
-    {"id": "sumit", "label": "Sumit · Male", "gender": "male", "languageCode": "te-IN", "accent": "Telugu (India)", "tone": "Professional & steady", "category": "operations", "useCase": "Technical support & IT helpdesk", "sampleText": "నమస్కారం, మీ సమస్యను పరిష్కరించడంలో సహాయం చేస్తాను."},
-    {"id": "ishita", "label": "Ishita · Female", "gender": "female", "languageCode": "te-IN", "accent": "Telugu (India)", "tone": "Expressive & articulate", "category": "operations", "useCase": "Advisory & diagnostics", "sampleText": "నమస్కారం, మీ విచారణను పరిశీలించి వెంటనే సమాధానం ఇస్తాను."},
-    {"id": "aditya", "label": "Aditya · Male", "gender": "male", "languageCode": "te-IN", "accent": "Telugu (India)", "tone": "Clear & assertive", "category": "sales", "useCase": "Lead qualification & finance", "sampleText": "నమస్కారం, మీ ఖాతా వివరాల గురించి మాట్లాడటానికి సిద్ధంగా ఉన్నాను."},
-    {"id": "simran", "label": "Simran · Female", "gender": "female", "languageCode": "te-IN", "accent": "Telugu (India)", "tone": "Cheerful & welcoming", "category": "support", "useCase": "Reception & guest intake", "sampleText": "నమస్కారం, స్వాగతం! మీకు ఎలా సహాయపడగలను?"},
+    {"id": "shubh", "label": "Shubh · Male", "gender": "male", "languageCode": "te-IN", "accent": "Telugu (India)", "tone": "Conversational & crisp", "category": "conversational", "useCase": "Conversational Support & Telugu Queries", "sampleText": "నమస్కారం, నేను మీకు ఎలా సహాయం చేయగలను?"},
+    {"id": "priya", "label": "Priya · Female", "gender": "female", "languageCode": "te-IN", "accent": "Telugu (India)", "tone": "Warm & conversational", "category": "conversational", "useCase": "Conversational Care & Appointments", "sampleText": "నమస్కారం, నేను మీకు ఎలా సహాయం చేయగలను?", "defaultForLanguage": True},
+    {"id": "pooja", "label": "Pooja · Female", "gender": "female", "languageCode": "te-IN", "accent": "Telugu (India)", "tone": "Gentle & conversational", "category": "conversational", "useCase": "Conversational Intake & Triage", "sampleText": "నమస్కారం, మీ వివరాలను సరిచూసేందుకు సహాయపడతాను."},
+    {"id": "simran", "label": "Simran · Female", "gender": "female", "languageCode": "te-IN", "accent": "Telugu (India)", "tone": "Cheerful & welcoming", "category": "conversational", "useCase": "Conversational Reception & Services", "sampleText": "నమస్కారం, స్వాగతం! మీకు ఎలా సహాయపడగలను?"},
+    {"id": "neha", "label": "Neha · Female", "gender": "female", "languageCode": "te-IN", "accent": "Telugu (India)", "tone": "Friendly & persuasive", "category": "promotional", "useCase": "Commercial / Promotional & Sales Outreach", "sampleText": "నమస్కారం, మా ఆఫర్ల గురించి మీకు వివరించడానికి సిద్ధంగా ఉన్నాను."},
+    {"id": "rahul", "label": "Rahul · Male", "gender": "male", "languageCode": "te-IN", "accent": "Telugu (India)", "tone": "Energetic & dynamic", "category": "promotional", "useCase": "Commercial / Promotional & Direct Booking", "sampleText": "నమస్కారం, మీ అపాయింట్‌మెంట్ బుకింగ్ కోసం నేను సహాయం చేయగలను."},
 )
 
 
 def phone_voice_catalog() -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
-    for vid in REALTIME_VOICES:
-        meta = _OPENAI_VOICE_META.get(vid, {})
-        gemini_name = _GEMINI_BY_OPENAI.get(vid, "Aoede")
-        gmeta = _GEMINI_VOICE_META.get(gemini_name, {})
-        rows.append(
-            {
-                "id": vid,
-                "label": meta.get("label") or vid.title(),
-                "gender": meta.get("gender") or "neutral",
-                "tone": meta.get("tone") or "",
-                "category": meta.get("category") or "support",
-                "useCase": meta.get("useCase") or "",
-                "provider": "openai",
-                "providerLabel": "OpenAI Realtime",
-                "geminiVoice": gemini_name,
-                "geminiLabel": gmeta.get("label") or gemini_name,
-                "geminiGender": gmeta.get("gender") or "",
-                "sampleUrl": f"/audio/voxly/samples/{vid.lower()}.wav",
-            }
-        )
-    for gid in GEMINI_LIVE_VOICES:
-        gmeta = _GEMINI_VOICE_META[gid]
+    for gid, gmeta in _CURATED_GEMINI_VOICES.items():
         rows.append(
             {
                 "id": gid.lower(),
                 "label": gmeta.get("label") or gid,
-                "gender": gmeta.get("gender") or "",
+                "gender": gmeta.get("gender") or "female",
                 "accent": gmeta.get("accent") or "General American",
                 "tone": gmeta.get("tone") or "",
-                "category": gmeta.get("category") or "support",
+                "category": gmeta.get("category") or "conversational",
                 "useCase": gmeta.get("useCase") or "",
                 "provider": "gemini",
                 "providerLabel": "Gemini Live",
                 "geminiVoice": gid,
                 "geminiLabel": gmeta.get("label") or gid,
-                "geminiGender": gmeta.get("gender") or "",
-                "sampleUrl": f"/audio/voxly/samples/{gid.lower()}.wav",
-            }
-        )
-    for meta in _GEMINI_INDIC_VOICE_META:
-        gid = str(meta["id"])
-        if gid not in GEMINI_LIVE_LIBRARY_VOICES:
-            continue
-        rows.append(
-            {
-                **meta,
-                "provider": "gemini",
-                "providerLabel": "Gemini Live · India",
-                "geminiVoice": gid,
-                "geminiLabel": meta["label"],
-                "geminiGender": meta["gender"],
+                "geminiGender": gmeta.get("gender") or "female",
                 "sampleUrl": f"/audio/voxly/samples/{gid.lower()}.wav",
             }
         )

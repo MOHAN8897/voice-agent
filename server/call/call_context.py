@@ -46,6 +46,7 @@ class CallContext:
     language_callback_summary: str = ""
     language_callback_language: str = ""
     pipeline: str = "realtime_text"
+    composed_prompt_snapshot: Any = field(default=None, repr=False)
     components: dict[str, str] = field(
         default_factory=lambda: {"ledger": "pending", "audio": "pending", "outcome": "pending"}
     )

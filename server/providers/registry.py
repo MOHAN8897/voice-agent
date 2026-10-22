@@ -48,14 +48,14 @@ class ProviderRegistry:
         if enable_sarvam:
             self._stt["sarvam"] = SarvamSTTAdapter()
             self._tts["sarvam"] = SarvamTTSAdapter()
-            if sarvam_key and s.allowed_sarvam_llm_models:
+            if sarvam_key and _allowed_models(s, "sarvam_llm_models_csv", "allowed_sarvam_llm_models"):
                 from server.providers.sarvam_llm import SarvamLLMAdapter
 
                 self._llm["sarvam"] = SarvamLLMAdapter()
             entry = self._sarvam_provider_entry(s)
             entry["enabled"] = enable_sarvam
             entry["configured"] = bool(sarvam_key)
-            entry["adapter_available"] = bool(sarvam_key and s.allowed_sarvam_llm_models)
+            entry["adapter_available"] = bool(sarvam_key and _allowed_models(s, "sarvam_llm_models_csv", "allowed_sarvam_llm_models"))
             providers.append(entry)
 
         if enable_openai:
@@ -71,7 +71,7 @@ class ProviderRegistry:
                 from server.providers.gemini_llm import GeminiLLMAdapter
 
                 self._llm["gemini"] = GeminiLLMAdapter()
-                if s.allowed_gemini_tts_models:
+                if _allowed_models(s, "gemini_tts_models_csv", "allowed_gemini_tts_models"):
                     from server.providers.gemini_tts import GeminiTTSAdapter
 
                     self._tts["gemini"] = GeminiTTSAdapter()
@@ -119,6 +119,8 @@ class ProviderRegistry:
         }
 
     def _sarvam_provider_entry(self, s: Settings) -> dict[str, Any]:
+        from server.providers.sarvam_llm import sarvam_chat_api_modes
+
         stt_models = [
             {
                 "id": m,
@@ -140,8 +142,14 @@ class ProviderRegistry:
             "models": {
                 "stt": stt_models,
                 "llm": [
-                    {"id": model, "label": model, "api_mode": "chat_completions_v2"}
-                    for model in s.allowed_sarvam_llm_models
+                    {
+                        "id": model,
+                        "label": model,
+                        "api_mode": sarvam_chat_api_modes(model)[0],
+                        "api_modes": sarvam_chat_api_modes(model),
+                        "streaming": True,
+                    }
+                    for model in _allowed_models(s, "sarvam_llm_models_csv", "allowed_sarvam_llm_models")
                 ],
                 "tts": [
                     {"id": m, "label": meta["label"], "pricing_key": f"sarvam:{m}"}
@@ -152,6 +160,8 @@ class ProviderRegistry:
         }
 
     def _gemini_provider_entry(self, s: Settings) -> dict[str, Any]:
+        from server.providers.gemini_tts import supports_gemini_tts_streaming
+
         models = llm_models_for_provider("gemini", s)
         return {
             "id": "gemini",
@@ -165,8 +175,15 @@ class ProviderRegistry:
             "models": {
                 "llm": models,
                 "tts": [
-                    {"id": model, "label": model, "api_mode": "unary_rest"}
-                    for model in s.allowed_gemini_tts_models
+                    {
+                        "id": model,
+                        "label": model,
+                        "api_mode": "unary_rest",
+                        "api_modes": ["unary_rest", "streaming_rest"]
+                        if supports_gemini_tts_streaming(model) else ["unary_rest"],
+                        "streaming": supports_gemini_tts_streaming(model),
+                    }
+                    for model in _allowed_models(s, "gemini_tts_models_csv", "allowed_gemini_tts_models")
                 ],
             },
             "capabilities": {
@@ -174,6 +191,9 @@ class ProviderRegistry:
                 "structured_output": True,
                 "prompt_caching": True,
                 "realtime_voice": True,
+                "streaming_tts": any(
+                    supports_gemini_tts_streaming(model) for model in _allowed_models(s, "gemini_tts_models_csv", "allowed_gemini_tts_models")
+                ),
             },
             "notes": "HTTP Gemini for classic stacks; gemini-3.8-live for Test Studio speech-to-speech PSTN.",
         }
@@ -303,6 +323,15 @@ class ProviderRegistry:
         if provider_id not in self._tts:
             raise KeyError(f"TTS provider not available: {provider_id}")
         return self._tts[provider_id]
+
+
+def _allowed_models(settings: Settings, field: str, property_name: str) -> list[str]:
+    """Honor persisted admin model access without changing the universal Live stack."""
+    from server.services.dev_secrets_store import dev_secrets_store
+
+    defaults = getattr(settings, property_name, [])
+    value = dev_secrets_store.effective(field, ",".join(defaults))
+    return list(dict.fromkeys(model.strip() for model in str(value or "").split(",") if model.strip()))
 
 
 def init_provider_registry(settings: Settings | None = None) -> ProviderRegistry:

@@ -111,6 +111,25 @@ async def test_start_call_overlaps_stt_and_greeting(monkeypatch):
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("buffered", [False, True])
+async def test_start_call_propagates_greeting_failure_when_warmup_succeeds(monkeypatch, buffered):
+    loop = PstnVoiceLoop(session_id="failed-opening", call_id=None, on_agent_wire=AsyncMock())
+    monkeypatch.setattr(loop, "open_stt", AsyncMock())
+    monkeypatch.setattr(loop, "_warm_tts_connection", AsyncMock())
+    monkeypatch.setattr(loop, "_wait_for_intro_playback", AsyncMock())
+    speak = AsyncMock(side_effect=RuntimeError("speech unavailable"))
+    monkeypatch.setattr(loop, "speak", speak)
+    play_buffered = AsyncMock(side_effect=RuntimeError("buffer unavailable"))
+    monkeypatch.setattr(loop, "_play_buffered_greeting", play_buffered)
+
+    with pytest.raises(RuntimeError, match="speech unavailable"):
+        await loop.start_call(greeting_text="Hello there.", greeting_wire_frames=[b"\xff" * 160] if buffered else None)
+
+    assert speak.await_count == (1 if buffered else 2)
+    assert play_buffered.await_count == int(buffered)
+
+
+@pytest.mark.asyncio
 async def test_run_turn_overlaps_tts_open_with_llm(monkeypatch):
     fake: FakeTtsSession | None = None
 

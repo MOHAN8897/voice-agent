@@ -92,3 +92,5 @@ scratch/
 /final_audit_results.json
 /scratch_audit_results.json
 /scratch_hima_prompt.txt
+dump.rdb
+/.gravitas/

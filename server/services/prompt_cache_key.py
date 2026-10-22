@@ -32,7 +32,11 @@ def caching_enabled(model: str, brain_tokens: int = 0) -> bool:
     settings = get_settings()
     if not settings.enable_prompt_caching:
         return False
-    if not supports_explicit_prompt_cache(model) and not _gemini_implicit_cache(model):
+    if (
+        not supports_explicit_prompt_cache(model)
+        and not _gemini_implicit_cache(model)
+        and not _sarvam_affinity_cache(model)
+    ):
         return False
     return brain_tokens >= int(settings.prompt_cache_min_tokens)
 
@@ -44,3 +48,8 @@ def supports_explicit_prompt_cache(model: str) -> bool:
 
 def _gemini_implicit_cache(model: str) -> bool:
     return str(model).strip().lower().startswith("gemini-")
+
+
+def _sarvam_affinity_cache(model: str) -> bool:
+    return str(model).strip().lower().startswith("sarvam-")
+

@@ -223,6 +223,18 @@ const EMPTY_FORM = {
   },
 };
 
+const VOICE_STACK_SAVE_ERRORS = {
+  profile_revision_conflict: 'Voice options changed. Choose a voice from the refreshed catalog and try again.',
+  voice_selection_invalid: 'That voice is no longer available for this language. Choose from the refreshed catalog.',
+  unsupported_language: 'This tier does not support the selected language. Choose a supported language or another tier.',
+  profile_unavailable: 'This voice tier is currently unavailable. Choose another ready tier or try again later.',
+  invalid_composed_tier: 'This voice tier could not be applied. Reload voice options and try again.',
+  premium_composed_settings_forbidden: 'This live voice setup is out of date. Reload this page and choose the voice again.',
+  voice_selection_incomplete: 'Choose a complete voice option from the current catalog before saving.',
+  voice_revision_required: 'Reload the saved voice settings before choosing another voice.',
+  durable_store_unavailable: 'Voice settings cannot be saved right now. Your saved choice is unchanged. Try again later.',
+};
+
 function formFromAgent(agent) {
   if (!agent) return { ...EMPTY_FORM };
   const rawVoice = agent.voice || agent.voice_settings || agent.voiceSettings || {};
@@ -273,6 +285,7 @@ export function AgentStudioModule({
     setSelectedAgentId,
     selectedAgent,
     updateAgent,
+    updateAgentInWorkspace,
   } = useWorkspace();
   const voiceLanguage =
     (Array.isArray(selectedAgent?.languages) ? selectedAgent.languages[0] : null) ||
@@ -282,6 +295,8 @@ export function AgentStudioModule({
   const [activeTab, setActiveTab] = useState(() => resolveEmployeeStep(flowStep).step);
   const [callPanel, setCallPanel] = useState(() => resolveEmployeeStep(flowStep).callPanel || 'history');
   const [testCallOpen, setTestCallOpen] = useState(() => Boolean(resolveEmployeeStep(flowStep).openTestCall));
+  const [voiceStackReady, setVoiceStackReady] = useState(true);
+  useEffect(() => { setVoiceStackReady(true); }, [selectedAgentId]);
   // The Test call modal is a header action, so closing it must return focus to the
   // button that opened it rather than dropping the user back at the top of the page.
   const testCallButtonRef = useRef(null);
@@ -373,8 +388,16 @@ export function AgentStudioModule({
   );
 
   const [formData, setFormData] = useState(() => formFromAgent(selectedAgent));
-  const voiceStackAgent = selectedAgent?.id
-    ? voiceStackSavedAgents[selectedAgent.id] || selectedAgent
+  const savedVoiceStackAgent = selectedAgent?.id ? voiceStackSavedAgents[selectedAgent.id] : null;
+  const voiceStackAgent = savedVoiceStackAgent &&
+    (savedVoiceStackAgent.voiceRevision ?? 0) >= (selectedAgent?.voiceRevision ?? 0)
+    ? {
+        ...selectedAgent,
+        defaultTier: savedVoiceStackAgent.defaultTier,
+        voiceSettings: savedVoiceStackAgent.voiceSettings,
+        voiceRevision: savedVoiceStackAgent.voiceRevision,
+        languages: savedVoiceStackAgent.languages || selectedAgent.languages,
+      }
     : selectedAgent;
 
   const voiceStackLanguage =
@@ -417,15 +440,16 @@ export function AgentStudioModule({
       (Array.isArray(voiceStackAgent.languages) ? voiceStackAgent.languages[0] : null) ||
       voiceStackAgent.language ||
       'en-IN';
-    if (voiceStackLanguage !== persistedLanguage) {
-      return { languageNeedsSave: true };
-    }
 
     const expectedVoiceRevision = Number.isSafeInteger(voiceStackAgent.voiceRevision)
       ? voiceStackAgent.voiceRevision
-      : 0;
+      : Number.isSafeInteger(voiceStackAgent.voice_revision)
+        ? voiceStackAgent.voice_revision
+        : 0;
     const voiceSettings = { stackSelectionVersion: 1 };
-    if (selection.tier !== 'premium') {
+    if (selection.tier === 'premium') {
+      if (selection.realtimeVoice) voiceSettings.realtimeVoice = selection.realtimeVoice;
+    } else {
       voiceSettings.profileRevision = selection.profileRevision;
       voiceSettings.engineId = selection.engineId;
       voiceSettings.modelId = selection.modelId;
@@ -433,20 +457,30 @@ export function AgentStudioModule({
     }
 
     try {
-      const response = await api.request('PATCH', `/api/agents/${voiceStackAgent.id}`, {
+      const patchPayload = {
         defaultTier: selection.tier,
         expectedVoiceRevision,
         voiceSettings,
-      });
+      };
+      if (voiceStackLanguage && voiceStackLanguage !== persistedLanguage) {
+        patchPayload.languages = [voiceStackLanguage];
+      }
+      const response = await api.request('PATCH', `/api/agents/${voiceStackAgent.id}`, patchPayload);
       const responseAgent = response?.agent || response;
       const normalizedResponse = normalizeAgent(responseAgent);
+      const isPremium = selection.tier === 'premium';
       const responseIsComplete =
         normalizedResponse?.defaultTier === selection.tier &&
         normalizedResponse?.voiceSettings?.stackSelectionVersion === 1 &&
-        normalizedResponse?.voiceSettings?.engineId === selection.engineId &&
-        normalizedResponse?.voiceSettings?.modelId === selection.modelId &&
-        normalizedResponse?.voiceSettings?.voiceId === selection.voiceId &&
-        normalizedResponse?.voiceSettings?.profileRevision === selection.profileRevision &&
+        normalizedResponse.languages?.[0] === voiceStackLanguage &&
+        (isPremium ? (
+          !selection.realtimeVoice || normalizedResponse.voiceSettings.realtimeVoice === selection.realtimeVoice
+        ) : (
+          normalizedResponse?.voiceSettings?.engineId === selection.engineId &&
+          normalizedResponse?.voiceSettings?.modelId === selection.modelId &&
+          normalizedResponse?.voiceSettings?.voiceId === selection.voiceId &&
+          normalizedResponse?.voiceSettings?.profileRevision === selection.profileRevision
+        )) &&
         Number.isSafeInteger(normalizedResponse?.voiceRevision) &&
         normalizedResponse.voiceRevision > expectedVoiceRevision;
       const savedAgent = responseIsComplete
@@ -464,41 +498,87 @@ export function AgentStudioModule({
         !savedAgent ||
         savedAgent.defaultTier !== selection.tier ||
         savedAgent.voiceSettings?.stackSelectionVersion !== 1 ||
-        savedAgent.voiceSettings?.engineId !== selection.engineId ||
-        savedAgent.voiceSettings?.modelId !== selection.modelId ||
-        savedAgent.voiceSettings?.voiceId !== selection.voiceId ||
-        savedAgent.voiceSettings?.profileRevision !== selection.profileRevision ||
+        savedAgent.languages?.[0] !== voiceStackLanguage ||
+        (isPremium ? (
+          selection.realtimeVoice && savedAgent.voiceSettings?.realtimeVoice !== selection.realtimeVoice
+        ) : (
+          savedAgent.voiceSettings?.engineId !== selection.engineId ||
+          savedAgent.voiceSettings?.modelId !== selection.modelId ||
+          savedAgent.voiceSettings?.voiceId !== selection.voiceId ||
+          savedAgent.voiceSettings?.profileRevision !== selection.profileRevision
+        )) ||
         !Number.isSafeInteger(savedAgent.voiceRevision) ||
         savedAgent.voiceRevision <= expectedVoiceRevision
       ) {
         return { savedButUnconfirmed: true };
       }
       setVoiceStackSavedAgents((current) => ({ ...current, [voiceStackAgent.id]: savedAgent }));
+      updateAgentInWorkspace?.(savedAgent);
       return { agent: savedAgent };
     } catch (error) {
-      if (error?.status === 409) {
+      if (error?.code === 'voice_revision_conflict') {
         try {
           const latest = await api.agents.get(voiceStackAgent.id);
           setVoiceStackSavedAgents((current) => ({ ...current, [voiceStackAgent.id]: latest }));
+          updateAgentInWorkspace?.(latest);
+
+          // If the server voice selection itself hasn't changed (counter bumped due to script/meta updates),
+          // auto-retry once with the latest revision so the user's choice applies cleanly.
+          const currentVoiceId = voiceStackAgent.defaultTier === 'premium'
+            ? voiceStackAgent.voiceSettings?.realtimeVoice
+            : voiceStackAgent.voiceSettings?.voiceId;
+          const serverVoiceId = latest.defaultTier === 'premium'
+            ? latest.voiceSettings?.realtimeVoice
+            : latest.voiceSettings?.voiceId;
+          const voiceUnchangedByOther =
+            latest.defaultTier === voiceStackAgent.defaultTier &&
+            currentVoiceId === serverVoiceId;
+
+          if (voiceUnchangedByOther && Number.isSafeInteger(latest.voiceRevision)) {
+            try {
+              const retryPayload = {
+                defaultTier: selection.tier,
+                expectedVoiceRevision: latest.voiceRevision,
+                voiceSettings,
+              };
+              if (voiceStackLanguage && voiceStackLanguage !== persistedLanguage) {
+                retryPayload.languages = [voiceStackLanguage];
+              }
+              const retryRes = await api.request('PATCH', `/api/agents/${voiceStackAgent.id}`, retryPayload);
+              const retryAgent = normalizeAgent(retryRes?.agent || retryRes);
+              setVoiceStackSavedAgents((current) => ({ ...current, [voiceStackAgent.id]: retryAgent }));
+              updateAgentInWorkspace?.(retryAgent);
+              return { agent: retryAgent };
+            } catch {
+              // Retry failed; fall through to conflict
+            }
+          }
           return { conflict: true, agent: latest };
         } catch {
           return { conflict: true };
         }
       }
-      return { error: true };
+      if (['profile_revision_conflict', 'voice_selection_invalid', 'unsupported_language', 'profile_unavailable'].includes(error?.code)) {
+        await refreshVoiceStackCatalog();
+      }
+      return {
+        error: VOICE_STACK_SAVE_ERRORS[error?.code] || 'Voice setup could not be saved. Your saved choice is unchanged. Try again.',
+        code: error?.code,
+      };
     }
-  }, [voiceStackAgent, voiceStackLanguage]);
+  }, [voiceStackAgent, voiceStackLanguage, refreshVoiceStackCatalog, updateAgentInWorkspace]);
 
   const reloadVoiceStackSettings = useCallback(async () => {
     if (!selectedAgent?.id) return null;
     try {
       const latest = await api.agents.get(selectedAgent.id);
       setVoiceStackSavedAgents((current) => ({ ...current, [selectedAgent.id]: latest }));
+      updateAgentInWorkspace?.(latest);
       return latest;
     } catch {
       return null;
     }
-  }, [selectedAgent?.id]);
+  }, [selectedAgent?.id, updateAgentInWorkspace]);
 
   // Settings panel dirty state & save/discard ref callbacks
   const [settingsDirty, setSettingsDirty] = useState(false);
@@ -722,7 +802,8 @@ export function AgentStudioModule({
         setPublishedVersion(data?.published?.version_id || null);
         const studio = parseStudioFieldsFromSections(data?.draft?.sections);
         const cfg = parseVoiceConfigFromSections(data?.draft?.sections);
-        const chosenVoice = cfg.realtimeVoice || base.voice?.realtimeVoice || 'Puck';
+        const chosenVoice = agent?.voiceSettings?.realtimeVoice || agent?.voice?.realtimeVoice ||
+          agent?.voice?.voiceId || cfg.realtimeVoice || base.voice?.realtimeVoice || 'Puck';
         const voiceMeta = (phoneVoices.length ? phoneVoices : []).find(
           (v) => v.id === chosenVoice
         );
@@ -745,7 +826,7 @@ export function AgentStudioModule({
           variableDefinitions: studio.variableDefinitions?.length
             ? studio.variableDefinitions
             : base.variableDefinitions,
-          language: cfg.language || base.language,
+          language: base.language || cfg.language,
           voice: {
             ...base.voice,
             realtimeVoice: chosenVoice,
@@ -923,6 +1004,7 @@ export function AgentStudioModule({
         voiceId: targetVoice,
         language: previewLanguage,
         speed: targetSpeed,
+        tier: voiceStackAgent?.defaultTier || null,
       });
       previewUrl = url || null;
       setVoiceSpoken({ voice: voice || targetVoice, model: model || null, language: previewLanguage });
@@ -1132,7 +1214,7 @@ export function AgentStudioModule({
             variant="secondary"
             size="sm"
             icon={Radio}
-            disabled={dirty || saving || brainLoading || !!brainLoadError}
+            disabled={!voiceStackReady || dirty || saving || brainLoading || !!brainLoadError}
             title={dirty ? 'Publish your changes before testing the agent.' : 'Test the published script'}
             onClick={(e) => {
               testCallButtonRef.current = e.currentTarget;
@@ -1496,7 +1578,7 @@ export function AgentStudioModule({
               <button
                 type="button"
                 onClick={() => setTestCallOpen(true)}
-                disabled={dirty || saving || brainLoading || !!brainLoadError}
+                disabled={!voiceStackReady || dirty || saving || brainLoading || !!brainLoadError}
                 title={dirty ? 'Publish your changes before testing the agent.' : 'Test the published script'}
                 className="font-semibold text-[#5034CE] hover:underline"
               >
@@ -1686,6 +1768,7 @@ export function AgentStudioModule({
               onRetryVoiceStackCatalog={refreshVoiceStackCatalog}
               onSaveVoiceStackSelection={saveVoiceStackSelection}
               onReloadVoiceStackSettings={reloadVoiceStackSettings}
+              onVoiceStackReadyChange={setVoiceStackReady}
               onOpenTestCall={() => setTestCallOpen(true)}
             />
           </ErrorBoundary>
@@ -1755,7 +1838,7 @@ export function AgentStudioModule({
           <div data-testid="agent-test-call-panel">
             <ErrorBoundary title="Unable to initialize test call">
                 <AgentTestCallPanel
-                  agent={selectedAgent}
+                  agent={voiceStackAgent}
                   language={formData.language || formData.languages?.[0] || selectedAgent?.languages?.[0] || selectedAgent?.language || 'en-IN'}
                 />
             </ErrorBoundary>

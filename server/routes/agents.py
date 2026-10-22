@@ -35,6 +35,7 @@ class PatchAgentBody(BaseModel):
     status: Optional[str] = None
     defaultTier: Optional[str] = None
     expectedVoiceRevision: Optional[int] = Field(default=None, ge=0)
+    expected_voice_revision: Optional[int] = Field(default=None, ge=0)
     languages: Optional[list[str]] = None
     memorySchema: Optional[str] = None
     voiceSettings: Optional[dict[str, Any]] = None
@@ -131,12 +132,13 @@ async def patch_agent(
         patch["recording_disclosure_enabled"] = body.recordingDisclosureEnabled
     if body.recordingDisclosureText is not None:
         patch["recording_disclosure_text"] = body.recordingDisclosureText
+    expected_rev = body.expectedVoiceRevision if body.expectedVoiceRevision is not None else body.expected_voice_revision
     try:
         agent = await agent_service.patch_agent(
             agent_id,
             patch,
             tenant_id=_tenant_id(request, principal),
-            expected_voice_revision=body.expectedVoiceRevision,
+            expected_voice_revision=expected_rev,
         )
     except KeyError:
         raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Agent not found"}})

@@ -560,6 +560,16 @@ export function WorkspaceProvider({ children }) {
     }
   };
 
+  const updateAgentInWorkspace = useCallback((agentOrUpdater) => {
+    if (typeof agentOrUpdater === 'function') {
+      setAgents(agentOrUpdater);
+    } else if (agentOrUpdater?.id) {
+      setAgents((prev) =>
+        prev.map((a) => (a.id === agentOrUpdater.id ? { ...a, ...agentOrUpdater } : a))
+      );
+    }
+  }, []);
+
   // ----------------------------------------------------------------
   // Virtual Number Operations
   // ----------------------------------------------------------------
@@ -948,6 +958,8 @@ export function WorkspaceProvider({ children }) {
     // Handlers
     createAgent,
     updateAgent,
+    updateAgentInWorkspace,
+    setAgents,
     duplicateAgent,
     toggleAgentStatus,
     deleteAgent,

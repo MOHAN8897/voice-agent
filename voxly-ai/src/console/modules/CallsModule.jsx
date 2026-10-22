@@ -847,6 +847,18 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                     </div>
                   )}
 
+                  {activeCall.tier && (
+                    <div className="p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] flex items-center justify-between text-xs">
+                      <span className="font-semibold text-[#524E5E]">Voice Stack Tier</span>
+                      <span
+                        data-testid={`call-tier-${activeCall.tier}`}
+                        className="font-semibold text-[#6344E7] capitalize"
+                      >
+                        {{ low: 'Economical Tier', medium: 'Standard Regional Tier', premium: 'Flagship Live Tier' }[activeCall.tier] || activeCall.tier}
+                      </span>
+                    </div>
+                  )}
+
                   {/* Callback: the server dials through the normal outbound path. */}
                   {canCallBack && (
                     <div

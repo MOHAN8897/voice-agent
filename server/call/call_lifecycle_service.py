@@ -166,6 +166,10 @@ class CallLifecycleService:
         if not stack_override:
             stack_override = saved.get("stack_override")
         tier = tier or saved.get("tier")
+        if not tier and isinstance(stack_override, dict):
+            snapshot_tier = (stack_override.get("_voice_stack_snapshot") or {}).get("tier") or stack_override.get("tier")
+            if snapshot_tier:
+                tier = str(snapshot_tier)
 
         agent = await self._resolve_agent(agent_id, tenant_id=tenant_id)
         env = environment or agent.get("environment") or effective_app_environment()
@@ -205,7 +209,7 @@ class CallLifecycleService:
             else None
         )
         if pipeline == "composed_voice" and (
-            channel != "pstn" or effective_tier not in {"low", "medium"} or composed_snapshot is None
+            effective_tier not in {"low", "medium"} or composed_snapshot is None
         ):
             raise AppError(
                 ErrorCode.VALIDATION_ERROR,
@@ -317,6 +321,7 @@ class CallLifecycleService:
             "environment": env,
             "resolved_stack": stack.to_safe_dict(),
             "pipeline": pipeline,
+            "tier": str(stack.tier or effective_tier),
             "voice_stack_snapshot": composed_snapshot,
             "billed_user_id": billed_user_id,
             "is_test": is_test,
@@ -418,6 +423,12 @@ class CallLifecycleService:
             "fxRateInr": snap_fx,
             "version": snap_ver,
         }
+        if pipeline == "composed_voice":
+            from server.services.saas.composed_costing import snapshot_provider_costs
+
+            meta["provider_cost_snapshot"] = await snapshot_provider_costs(
+                stack.to_safe_dict(), fx_rate_inr=snap_fx,
+            )
         await call_ledger.init(call_id, meta)
         audio_archive.init(call_id, record=not is_test)
         from server.call.memory_manager import memory_manager
@@ -469,6 +480,10 @@ class CallLifecycleService:
             call_end_policy=self._load_call_end_policy(lookup_session, language),
             pipeline=pipeline,
         )
+        if pipeline == "composed_voice" and compiled_text:
+            from server.services.composed_voice_session import composed_system_prompt
+
+            composed_system_prompt(ctx)
         call_context.put(ctx)
         self._schedule_max_duration_watchdog(call_id, max_dur)
         realtime_status: dict[str, Any] = {"status": "n/a"}

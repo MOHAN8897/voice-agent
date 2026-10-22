@@ -63,6 +63,7 @@ class PstnPrewarmBundle:
     greeting_sample_rate: int = 16000
     greeting_codec: str = "linear16"
     greeting_tts_usage: dict[str, Any] | None = None
+    greeting_text_usage: dict[str, Any] | None = None
 
 
 class _PrewarmVoiceStub:
@@ -403,38 +404,16 @@ async def record_bundle_greeting_usage(call_id: str | None, bundle: PstnPrewarmB
             log_pstn("prewarm.usage.unavailable", call_id=call_id, model=model)
 
     tts_usage = getattr(bundle, "greeting_tts_usage", None)
+    text_usage = getattr(bundle, "greeting_text_usage", None)
+    if isinstance(text_usage, dict) and text_usage:
+        from server.services.saas.composed_costing import composed_llm_usage, record_composed_stage_usage
+
+        record_composed_stage_usage(call_id, "llm", composed_llm_usage(text_usage))
     if isinstance(tts_usage, dict) and tts_usage:
-        from server.call.call_ledger import call_ledger
+        from server.services.saas.composed_costing import merge_composed_tts_usage
 
         try:
-            meta = call_ledger.read_meta(call_id) or {"call_id": call_id}
-            stage_usage = meta.get("stage_usage") if isinstance(meta.get("stage_usage"), dict) else {}
-            current = stage_usage.get("tts") if isinstance(stage_usage.get("tts"), dict) else {}
-            native_usage = (
-                current.get("prewarm_native_usage")
-                if isinstance(current.get("prewarm_native_usage"), dict)
-                else {}
-            )
-            incoming_native = tts_usage.get("native_usage")
-            if isinstance(incoming_native, dict):
-                for key, value in incoming_native.items():
-                    if isinstance(key, str) and isinstance(value, int) and not isinstance(value, bool):
-                        native_usage[key] = int(native_usage.get(key, 0) or 0) + value
-            current.update(
-                prewarm_input_characters=int(current.get("prewarm_input_characters", 0) or 0)
-                + int(tts_usage.get("input_characters", 0) or 0),
-                prewarm_output_audio_seconds=round(
-                    float(current.get("prewarm_output_audio_seconds", 0) or 0)
-                    + float(tts_usage.get("output_audio_seconds", 0) or 0),
-                    6,
-                ),
-                prewarm_output_audio_samples=int(current.get("prewarm_output_audio_samples", 0) or 0)
-                + int(tts_usage.get("output_audio_samples", 0) or 0),
-                prewarm_native_usage=native_usage,
-            )
-            stage_usage["tts"] = current
-            meta["stage_usage"] = stage_usage
-            call_ledger.write_meta(call_id, meta)
+            merge_composed_tts_usage(call_id, tts_usage, prewarm=True)
         except Exception as exc:
             log_pstn(
                 "prewarm.tts_usage.persist_failed",
@@ -524,6 +503,13 @@ async def _build_prewarm_bundle(
     from server.realtime.models import pipeline_mode
 
     mode = pipeline_mode(settings=settings, stack_override=pstn_opts.get("stack_override"))
+    greeting_text_usage = None
+    if greeting and mode == "composed_voice":
+        from server.services.composed_voice_session import localize_composed_opening
+
+        greeting, greeting_text_usage = await localize_composed_opening(
+            greeting, language=language, llm=stack.llm,
+        )
     if mode == "realtime_text":
         await realtime_text_manager.create(
             rt_key,
@@ -722,6 +708,7 @@ async def _build_prewarm_bundle(
         greeting_sample_rate=sample_rate,
         greeting_codec=tts_codec,
         greeting_tts_usage=greeting_tts_usage if greeting_source == "tts" else None,
+        greeting_text_usage=greeting_text_usage,
     )
 
 

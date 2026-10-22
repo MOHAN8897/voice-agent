@@ -9,6 +9,7 @@ from server.services.saas.tenant_guard import SubscriberPrincipal
 from server.services.saas.voice_stack_profiles import (
     COMPOSED_TIERS,
     _load_rates_without_fallback,
+    _native_tier_retail_rate,
     load_profile_records,
     public_catalog_profile,
 )
@@ -51,4 +52,31 @@ async def voice_stack_catalog(
         if not profile["engines"] and profile["ready"]:
             profile["ready"] = False
             profile["blockers"].append({"code": "language_voice_unavailable", "message": "No approved voice is available for this language."})
+
+    premium_rate = _native_tier_retail_rate(rates, "premium")
+    if not premium_rate and rates:
+        pstn_usd = rates.get("pstn_rate_usd_micros_per_min")
+        pstn_inr = rates.get("pstn_rate_inr_paise_per_min")
+        ver = rates.get("version") or 1
+        if isinstance(pstn_usd, int) and pstn_usd > 0 and isinstance(pstn_inr, int) and pstn_inr > 0:
+            premium_rate = {
+                "usdMicrosPerMin": pstn_usd,
+                "inrPaisePerMin": pstn_inr,
+                "version": int(ver),
+                "fxRateInr": float(rates.get("fx_rate_inr") or 95.64),
+                "complete": True,
+            }
+
+    premium_profile = {
+        "tier": "premium",
+        "label": "Flagship Live",
+        "ready": bool(premium_rate and premium_rate.get("complete")),
+        "profileRevision": 1,
+        "retailRate": premium_rate,
+        "engines": [],
+        "blockers": [] if (premium_rate and premium_rate.get("complete")) else [
+            {"code": "tier_native_rate_missing", "message": "An approved native retail rate for Flagship Live has not been configured."}
+        ],
+    }
+    profiles.append(premium_profile)
     return {"language": normalized_language, "profiles": profiles}

@@ -127,6 +127,18 @@ async def dev_composed_voice_profiles(session: SessionData = Depends(require_dev
     return {"environment": app_env, "profiles": profiles}
 
 
+@router.get("/api/dev/stack/voice-profiles/{tier}/template")
+async def dev_composed_voice_template(tier: str, session: SessionData = Depends(require_dev_session)):
+    require_permission(session, "dev.stack.read")
+    from server.services.saas.voice_stack_defaults import recommended_composed_profile
+    from server.services.saas.voice_stack_profiles import VoiceProfileError
+
+    try:
+        return {"tier": tier, "composedProfile": recommended_composed_profile(tier)}
+    except VoiceProfileError as exc:
+        raise _voice_profile_http_error(exc) from exc
+
+
 @router.put("/api/dev/stack/voice-profiles/{tier}")
 async def dev_composed_voice_profile_update(
     tier: str,

@@ -233,18 +233,23 @@ class AgentService:
             if opted_in and voice_selection_changed:
                 effective_tier = str(patch.get("default_tier") or row.default_tier or "medium")
                 if effective_tier == "premium":
-                    raise AgentVoiceRevisionConflict(
-                        "Flagship Live uses the existing voice configuration and does not accept composed voice settings.",
-                        code="premium_composed_settings_forbidden",
-                        status_code=409,
-                    )
-                required = ("profileRevision", "engineId", "modelId", "voiceId")
-                if any(not str(effective_voice.get(key) or "").strip() for key in required):
-                    raise AgentVoiceRevisionConflict(
-                        "Select a current profile, engine, model, and voice before saving.",
-                        code="voice_selection_incomplete",
-                        status_code=422,
-                    )
+                    composed_keys = ("engineId", "modelId", "voiceId", "profileRevision")
+                    if isinstance(incoming_voice, dict) and any(key in incoming_voice for key in composed_keys):
+                        raise AgentVoiceRevisionConflict(
+                            "Flagship Live uses the existing voice configuration and does not accept composed voice settings.",
+                            code="premium_composed_settings_forbidden",
+                            status_code=409,
+                        )
+                    for key in composed_keys:
+                        effective_voice.pop(key, None)
+                else:
+                    required = ("profileRevision", "engineId", "modelId", "voiceId")
+                    if any(not str(effective_voice.get(key) or "").strip() for key in required):
+                        raise AgentVoiceRevisionConflict(
+                            "Select a current profile, engine, model, and voice before saving.",
+                            code="voice_selection_incomplete",
+                            status_code=422,
+                        )
                 language_values = patch.get("languages") if patch.get("languages") is not None else row.languages
                 language = str((language_values or ["en-US"])[0])
                 from server.services.saas.voice_stack_profiles import (
@@ -278,16 +283,14 @@ class AgentService:
                 row.languages = list(patch["languages"])
                 flag_modified(row, "languages")
             if "voice_settings" in patch and patch["voice_settings"] is not None:
-                updated_voice = dict(current_voice)
-                if isinstance(patch["voice_settings"], dict):
-                    updated_voice.update(patch["voice_settings"])
+                updated_voice = dict(effective_voice)
                 if expected_voice_revision is not None:
                     updated_voice["_voice_revision"] = current_revision + 1
                 row.voice_settings = updated_voice
                 flag_modified(row, "voice_settings")
             elif expected_voice_revision is not None and "default_tier" in patch:
-                current_voice["_voice_revision"] = current_revision + 1
-                row.voice_settings = current_voice
+                effective_voice["_voice_revision"] = current_revision + 1
+                row.voice_settings = effective_voice
                 flag_modified(row, "voice_settings")
             await session.commit()
             await session.refresh(row)
@@ -417,6 +420,7 @@ class AgentService:
             "recording_disclosure_text": getattr(row, "recording_disclosure_text", None),
             "voice_settings": voice_settings,
             "voice_revision": int(raw_voice_settings.get("_voice_revision") or 0),
+            "voiceRevision": int(raw_voice_settings.get("_voice_revision") or 0),
         }
 
 

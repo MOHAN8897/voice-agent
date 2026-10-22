@@ -81,6 +81,26 @@ async def wallet_summary(tenant_id: uuid.UUID, user_id: uuid.UUID | None = None)
         "minBalanceInr": round(getattr(settings, "pstn_min_balance_inr_paise", 5000) / 100.0, 2),
         "rateUsdPerMin": round(rates["pstn_rate_usd_micros_per_min"] / 1_000_000.0, 6),
         "rateInrPerMin": round(rates["pstn_rate_inr_paise_per_min"] / 100.0, 2),
+        "pstnLowRateUsdPerMin": round(rates["pstn_low_rate_usd_micros_per_min"] / 1_000_000.0, 6) if rates.get("pstn_low_rate_usd_micros_per_min") else None,
+        "pstnLowRateInrPerMin": round(rates["pstn_low_rate_inr_paise_per_min"] / 100.0, 2) if rates.get("pstn_low_rate_inr_paise_per_min") else None,
+        "pstnMediumRateUsdPerMin": round(rates["pstn_medium_rate_usd_micros_per_min"] / 1_000_000.0, 6) if rates.get("pstn_medium_rate_usd_micros_per_min") else None,
+        "pstnMediumRateInrPerMin": round(rates["pstn_medium_rate_inr_paise_per_min"] / 100.0, 2) if rates.get("pstn_medium_rate_inr_paise_per_min") else None,
+        "pstnPremiumRateUsdPerMin": round(rates["pstn_premium_rate_usd_micros_per_min"] / 1_000_000.0, 6) if rates.get("pstn_premium_rate_usd_micros_per_min") else round(rates["pstn_rate_usd_micros_per_min"] / 1_000_000.0, 6),
+        "pstnPremiumRateInrPerMin": round(rates["pstn_premium_rate_inr_paise_per_min"] / 100.0, 2) if rates.get("pstn_premium_rate_inr_paise_per_min") else round(rates["pstn_rate_inr_paise_per_min"] / 100.0, 2),
+        "tierRates": {
+            "low": {
+                "usdPerMin": round(rates["pstn_low_rate_usd_micros_per_min"] / 1_000_000.0, 6) if rates.get("pstn_low_rate_usd_micros_per_min") else None,
+                "inrPerMin": round(rates["pstn_low_rate_inr_paise_per_min"] / 100.0, 2) if rates.get("pstn_low_rate_inr_paise_per_min") else None,
+            },
+            "medium": {
+                "usdPerMin": round(rates["pstn_medium_rate_usd_micros_per_min"] / 1_000_000.0, 6) if rates.get("pstn_medium_rate_usd_micros_per_min") else None,
+                "inrPerMin": round(rates["pstn_medium_rate_inr_paise_per_min"] / 100.0, 2) if rates.get("pstn_medium_rate_inr_paise_per_min") else None,
+            },
+            "premium": {
+                "usdPerMin": round(rates["pstn_premium_rate_usd_micros_per_min"] / 1_000_000.0, 6) if rates.get("pstn_premium_rate_usd_micros_per_min") else round(rates["pstn_rate_usd_micros_per_min"] / 1_000_000.0, 6),
+                "inrPerMin": round(rates["pstn_premium_rate_inr_paise_per_min"] / 100.0, 2) if rates.get("pstn_premium_rate_inr_paise_per_min") else round(rates["pstn_rate_inr_paise_per_min"] / 100.0, 2),
+            },
+        },
         "webRateUsdPerMin": round(rates["web_agent_rate_usd_micros_per_min"] / 1_000_000.0, 6),
         "webRateInrPerMin": round(rates["web_agent_rate_inr_paise_per_min"] / 100.0, 2),
         "didMonthlyUsd": round(rates["did_monthly_usd_micros"] / 1_000_000.0, 6),
@@ -284,6 +304,31 @@ async def list_wallet_transactions(tenant_id: uuid.UUID, limit: int = 50, user_i
                     desc = tx.kind.replace("_", " ").title()
 
             call_fx = getattr(call_obj, "applied_fx_rate_inr", None) if call_obj else None
+            tier = getattr(call_obj, "tier", None) if call_obj else None
+            if not tier and tx.reference_id and tx.reference_id.startswith("call:"):
+                raw_cid = tx.reference_id.split(":", 1)[1].strip()
+                try:
+                    from server.call.call_ledger import call_ledger
+                    meta = call_ledger.read_meta(raw_cid)
+                    if meta and meta.get("tier"):
+                        tier = str(meta.get("tier"))
+                except Exception:
+                    pass
+                if not tier:
+                    try:
+                        from server.call.call_store import call_store
+                        stored_c = await call_store.get(raw_cid)
+                        if stored_c and stored_c.get("tier"):
+                            tier = str(stored_c.get("tier"))
+                    except Exception:
+                        pass
+
+            tier_label = {
+                "low": "Economical Tier",
+                "medium": "Standard Regional Tier",
+                "premium": "Flagship Live Tier",
+            }.get(tier, tier.title() if tier else None)
+
             display_charge = wallet_debit_display(
                 amount_cents=tx.amount_cents,
                 amount_inr_paise=tx.amount_inr_paise,
@@ -307,6 +352,8 @@ async def list_wallet_transactions(tenant_id: uuid.UUID, limit: int = 50, user_i
                     "isCampaign": is_campaign,
                     "campaignName": campaign_name,
                     "agentName": agent_name,
+                    "tier": tier,
+                    "tierLabel": tier_label,
                 }
             )
         return rows

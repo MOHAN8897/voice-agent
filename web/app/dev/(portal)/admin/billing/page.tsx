@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { DevCard } from "@/components/dev/DevCard";
+import { ProviderCostWorkbench } from "@/components/dev/ProviderCostWorkbench";
 import { CostInsightsPanel } from "@/components/admin/CostInsightsPanel";
 import {
   AdminError,
@@ -62,9 +63,15 @@ type Rates = {
   pstnInrPerMin: number;
   webInrPerMin: number;
   numberMonthlyInr: number;
+  pstnLowUsdPerMin?: number | null;
+  pstnLowInrPerMin?: number | null;
+  pstnMediumUsdPerMin?: number | null;
+  pstnMediumInrPerMin?: number | null;
+  pstnPremiumUsdPerMin?: number | null;
+  pstnPremiumInrPerMin?: number | null;
 };
 
-type RateField = "pstn" | "web" | "number";
+type RateField = "pstn" | "web" | "number" | "pstnLow" | "pstnMedium" | "pstnPremium";
 type RateCurrency = "USD" | "INR";
 
 /** Market rate, shown for reference only — charging uses rates.fxRateInr. */
@@ -140,6 +147,12 @@ export default function AdminBillingPage() {
   const [pstnInr, setPstnInr] = useState("0");
   const [webInr, setWebInr] = useState("0");
   const [numberInr, setNumberInr] = useState("0");
+  const [pstnLowUsd, setPstnLowUsd] = useState("0.05");
+  const [pstnMediumUsd, setPstnMediumUsd] = useState("0.09");
+  const [pstnPremiumUsd, setPstnPremiumUsd] = useState("0.15");
+  const [pstnLowInr, setPstnLowInr] = useState("0");
+  const [pstnMediumInr, setPstnMediumInr] = useState("0");
+  const [pstnPremiumInr, setPstnPremiumInr] = useState("0");
   const [rateDrafts, setRateDrafts] = useState<
     Partial<Record<RateField, Partial<Record<RateCurrency, string>>>>
   >({});
@@ -174,6 +187,12 @@ export default function AdminBillingPage() {
     setPstnInr(String(r.pstnInrPerMin ?? 0));
     setWebInr(String(r.webInrPerMin ?? 0));
     setNumberInr(String(r.numberMonthlyInr ?? 0));
+    setPstnLowUsd(String(r.pstnLowUsdPerMin ?? 0.05));
+    setPstnMediumUsd(String(r.pstnMediumUsdPerMin ?? 0.09));
+    setPstnPremiumUsd(String(r.pstnPremiumUsdPerMin ?? 0.15));
+    setPstnLowInr(String(r.pstnLowInrPerMin ?? 0));
+    setPstnMediumInr(String(r.pstnMediumInrPerMin ?? 0));
+    setPstnPremiumInr(String(r.pstnPremiumInrPerMin ?? 0));
     setFxRate(String(r.fxRateInr ?? 95.64));
   }, [ratesRes.data]);
 
@@ -208,8 +227,8 @@ export default function AdminBillingPage() {
 
     const currentValues =
       currency === "INR"
-        ? { pstn: pstnInr, web: webInr, number: numberInr }
-        : { pstn: pstnUsd, web: webUsd, number: numberUsd };
+        ? { pstn: pstnInr, web: webInr, number: numberInr, pstnLow: pstnLowInr, pstnMedium: pstnMediumInr, pstnPremium: pstnPremiumInr }
+        : { pstn: pstnUsd, web: webUsd, number: numberUsd, pstnLow: pstnLowUsd, pstnMedium: pstnMediumUsd, pstnPremium: pstnPremiumUsd };
     return currentValues[field];
   }
 
@@ -427,7 +446,17 @@ export default function AdminBillingPage() {
     const pstnRate = rateForSave("pstn");
     const webRate = rateForSave("web");
     const numberRate = rateForSave("number");
-    const enteredRates = [Number(pstnRate), Number(webRate), Number(numberRate)];
+    const pstnLowRate = rateForSave("pstnLow");
+    const pstnMediumRate = rateForSave("pstnMedium");
+    const pstnPremiumRate = rateForSave("pstnPremium");
+    const enteredRates = [
+      Number(pstnRate),
+      Number(webRate),
+      Number(numberRate),
+      Number(pstnLowRate),
+      Number(pstnMediumRate),
+      Number(pstnPremiumRate),
+    ];
     const nextRates = {
       rateCurrency: priceInputCurrency,
       pstnUsdPerMin: priceInputCurrency === "USD" && rateDrafts.pstn ? pstnRate : undefined,
@@ -436,11 +465,17 @@ export default function AdminBillingPage() {
       pstnInrPerMin: priceInputCurrency === "INR" && rateDrafts.pstn ? pstnRate : undefined,
       webInrPerMin: priceInputCurrency === "INR" && rateDrafts.web ? webRate : undefined,
       didMonthlyInr: priceInputCurrency === "INR" && rateDrafts.number ? numberRate : undefined,
+      pstnLowUsdPerMin: priceInputCurrency === "USD" && rateDrafts.pstnLow ? pstnLowRate : undefined,
+      pstnMediumUsdPerMin: priceInputCurrency === "USD" && rateDrafts.pstnMedium ? pstnMediumRate : undefined,
+      pstnPremiumUsdPerMin: priceInputCurrency === "USD" && rateDrafts.pstnPremium ? pstnPremiumRate : undefined,
+      pstnLowInrPerMin: priceInputCurrency === "INR" && rateDrafts.pstnLow ? pstnLowRate : undefined,
+      pstnMediumInrPerMin: priceInputCurrency === "INR" && rateDrafts.pstnMedium ? pstnMediumRate : undefined,
+      pstnPremiumInrPerMin: priceInputCurrency === "INR" && rateDrafts.pstnPremium ? pstnPremiumRate : undefined,
       fxRateInr: Number(fxRate),
     };
     if (
-      [pstnRate, webRate, numberRate].some((value) => value.trim() === "") ||
-      enteredRates.some((value, index) => !Number.isFinite(value) || (index < 2 ? value <= 0 : value < 0)) ||
+      [pstnRate, webRate, numberRate, pstnLowRate, pstnMediumRate, pstnPremiumRate].some((value) => value.trim() === "") ||
+      enteredRates.some((value, index) => !Number.isFinite(value) || (index !== 2 ? value <= 0 : value < 0)) ||
       !Number.isFinite(nextRates.fxRateInr) || nextRates.fxRateInr <= 0
     ) {
       setError("Enter valid positive prices and a positive INR per USD charge rate.");
@@ -537,6 +572,8 @@ export default function AdminBillingPage() {
         updateRateInput(field, priceInputCurrency === "INR" ? inr.toFixed(2) : usd.toFixed(6));
       }} />
 
+      <ProviderCostWorkbench />
+
       <DevCard title="USD → INR reference">
         <div className="flex flex-wrap items-end gap-4">
           <div className="text-xs">
@@ -570,7 +607,7 @@ export default function AdminBillingPage() {
         </div>
       </DevCard>
 
-      <DevCard title={`Prices (${walletCurrencyDisplay === "both" ? "USD + INR" : walletCurrencyDisplay})`}>
+      <DevCard title={`Platform & Channel Prices (${walletCurrencyDisplay === "both" ? "USD + INR" : walletCurrencyDisplay})`}>
         <p className="mb-3 text-xs text-text-muted">
           {walletCurrencyDisplay === "both"
             ? "Enter rates in USD. Both configured USD and INR prices are shown."
@@ -578,7 +615,7 @@ export default function AdminBillingPage() {
         </p>
         <div className="flex flex-wrap items-end gap-3">
           <label className="block text-xs">
-            <span className="mb-1 block text-text-muted">Phone (PSTN) {priceInputCurrency === "INR" ? "₹" : "$"}/min</span>
+            <span className="mb-1 block text-text-muted">Phone (PSTN Default) {priceInputCurrency === "INR" ? "₹" : "$"}/min</span>
             <SkeuoInput
               value={rateInputValue("pstn")}
               onChange={(e) => updateRateInput("pstn", e.target.value)}
@@ -611,19 +648,119 @@ export default function AdminBillingPage() {
             />
           </label>
           <SkeuoButton type="button" disabled={!!busy} onClick={() => void saveRates()}>
-            {busy === "rates" ? "Saving…" : "Save rates"}
+            {busy === "rates" ? "Saving…" : "Save platform rates"}
           </SkeuoButton>
         </div>
-        {walletCurrencyDisplay === "both" && (
+      </DevCard>
+
+      <DevCard title={`Voice Stacks Tenant Tier Pricing (${priceInputCurrency === "INR" ? "INR ₹/min" : "USD $/min"})`}>
+        <p className="mb-4 text-xs text-text-muted">
+          Configure per-minute retail rates charged to tenants for each PSTN Voice Stack tier.
+          Rates preserve exact integer minor units (USD micros and INR paise) upon save.
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Economical (Low) */}
+          <div className="rounded-xl border border-surface-border bg-surface-raised/40 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-text">Economical Tier (Low)</span>
+              <span className="rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 px-2 py-0.5 text-[10px] font-semibold">
+                Gemini TTS
+              </span>
+            </div>
+            <p className="text-[11px] text-text-muted">
+              High-throughput economical stack using Gemini TTS + Fast STT pipeline.
+            </p>
+            <label className="block text-xs">
+              <span className="mb-1 block text-text-muted">Calling Rate ({priceInputCurrency === "INR" ? "₹" : "$"}/min)</span>
+              <SkeuoInput
+                value={rateInputValue("pstnLow")}
+                onChange={(e) => updateRateInput("pstnLow", e.target.value)}
+                inputMode="decimal"
+                className="w-full"
+                aria-label={`Economical PSTN ${priceInputCurrency} per minute`}
+                data-testid="admin-rate-pstn-low-usd"
+              />
+            </label>
+            <div className="font-mono text-[11px] text-text-muted flex justify-between pt-1 border-t border-surface-border-subtle">
+              <span>{priceInputCurrency === "INR" ? `$${(Number(rateInputValue("pstnLow", "USD") || 0)).toFixed(4)}/min` : `₹${(Number(rateInputValue("pstnLow", "INR") || 0)).toFixed(2)}/min`}</span>
+              <span className="text-text-subtle">Target: ~$0.05 / ₹4.70</span>
+            </div>
+          </div>
+
+          {/* Standard Regional (Medium) */}
+          <div className="rounded-xl border border-surface-border bg-surface-raised/40 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-text">Standard Regional (Medium)</span>
+              <span className="rounded-full bg-blue-500/10 text-blue-600 border border-blue-500/20 px-2 py-0.5 text-[10px] font-semibold">
+                Sarvam Bulbul v3
+              </span>
+            </div>
+            <p className="text-[11px] text-text-muted">
+              Regional expressive voices using Sarvam Bulbul v3 + Saaras STT for Indian languages.
+            </p>
+            <label className="block text-xs">
+              <span className="mb-1 block text-text-muted">Calling Rate ({priceInputCurrency === "INR" ? "₹" : "$"}/min)</span>
+              <SkeuoInput
+                value={rateInputValue("pstnMedium")}
+                onChange={(e) => updateRateInput("pstnMedium", e.target.value)}
+                inputMode="decimal"
+                className="w-full"
+                aria-label={`Standard Regional PSTN ${priceInputCurrency} per minute`}
+                data-testid="admin-rate-pstn-medium-usd"
+              />
+            </label>
+            <div className="font-mono text-[11px] text-text-muted flex justify-between pt-1 border-t border-surface-border-subtle">
+              <span>{priceInputCurrency === "INR" ? `$${(Number(rateInputValue("pstnMedium", "USD") || 0)).toFixed(4)}/min` : `₹${(Number(rateInputValue("pstnMedium", "INR") || 0)).toFixed(2)}/min`}</span>
+              <span className="text-text-subtle">Target: ~$0.09 / ₹8.46</span>
+            </div>
+          </div>
+
+          {/* Flagship Live (Premium) */}
+          <div className="rounded-xl border border-surface-border bg-surface-raised/40 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-text">Flagship Live (Premium)</span>
+              <span className="rounded-full bg-purple-500/10 text-purple-600 border border-purple-500/20 px-2 py-0.5 text-[10px] font-semibold">
+                Gemini Live E2E
+              </span>
+            </div>
+            <p className="text-[11px] text-text-muted">
+              Ultra-low-latency bidirectional speech-to-speech opening flow over Vobiz carrier trunk.
+            </p>
+            <label className="block text-xs">
+              <span className="mb-1 block text-text-muted">Calling Rate ({priceInputCurrency === "INR" ? "₹" : "$"}/min)</span>
+              <SkeuoInput
+                value={rateInputValue("pstnPremium")}
+                onChange={(e) => updateRateInput("pstnPremium", e.target.value)}
+                inputMode="decimal"
+                className="w-full"
+                aria-label={`Flagship Live PSTN ${priceInputCurrency} per minute`}
+                data-testid="admin-rate-pstn-premium-usd"
+              />
+            </label>
+            <div className="font-mono text-[11px] text-text-muted flex justify-between pt-1 border-t border-surface-border-subtle">
+              <span>{priceInputCurrency === "INR" ? `$${(Number(rateInputValue("pstnPremium", "USD") || 0)).toFixed(4)}/min` : `₹${(Number(rateInputValue("pstnPremium", "INR") || 0)).toFixed(2)}/min`}</span>
+              <span className="text-text-subtle">Target: ~$0.15 / ₹14.10</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 pt-3 border-t border-border flex flex-wrap items-center justify-between gap-3">
           <div
-            className="mt-3 flex flex-wrap gap-4 font-mono text-[11px] text-text-muted"
+            className="flex flex-wrap gap-4 font-mono text-[11px] text-text-muted"
             data-testid="admin-rate-inr-mirror"
           >
             <span>PSTN ₹{Number(rateInputValue("pstn", "INR") || 0).toFixed(2)}/min</span>
             <span>Browser ₹{Number(rateInputValue("web", "INR") || 0).toFixed(2)}/min</span>
-            <span>Number ₹{Number(rateInputValue("number", "INR") || 0).toFixed(2)}/mo</span>
+            <span>Low ₹{Number(rateInputValue("pstnLow", "INR") || 0).toFixed(2)}/min</span>
+            <span>Medium ₹{Number(rateInputValue("pstnMedium", "INR") || 0).toFixed(2)}/min</span>
+            <span>Premium ₹{Number(rateInputValue("pstnPremium", "INR") || 0).toFixed(2)}/min</span>
           </div>
-        )}
+
+          <SkeuoButton type="button" disabled={!!busy} onClick={() => void saveRates()}>
+            {busy === "rates" ? "Saving tier rates…" : "Save tier pricing"}
+          </SkeuoButton>
+        </div>
       </DevCard>
 
       <DevCard title={`Manual wallet top-up / debit (${walletCurrencyDisplay === "both" ? "USD" : walletCurrencyDisplay})`}>

@@ -222,6 +222,7 @@ class VoicePreviewBody(BaseModel):
     voiceId: str | None = Field(None, max_length=64)
     language: str | None = Field(None, max_length=32)
     speed: float | None = Field(None, ge=0.5, le=2.0)
+    tier: str | None = Field(None, max_length=32)
 
 
 @router.post("/api/telephony/voice-preview")
@@ -246,17 +247,43 @@ async def voice_preview(
 
     try:
         from server.services.saas.platform_phone_stack import resolve_platform_phone_stack
+        from server.services.saas.voice_stack_profiles import lookup_cached_voice_alias, resolve_voice_alias
 
-        phone_stack = await resolve_platform_phone_stack(body.language or "te-IN")
-        llm = phone_stack.get("llm") if isinstance(phone_stack.get("llm"), dict) else {}
-        realtime_voice = phone_stack.get("realtime_voice") if isinstance(phone_stack.get("realtime_voice"), dict) else {}
+        raw_voice_id = getattr(body, "voiceId", None)
+        raw_tier = getattr(body, "tier", None)
+        raw_lang = getattr(body, "language", None)
+        raw_speed = getattr(body, "speed", None)
+
+        alias_match = lookup_cached_voice_alias(raw_voice_id or "")
+        if not alias_match and raw_voice_id and raw_voice_id.startswith("voc_"):
+            alias_match = await resolve_voice_alias(raw_voice_id)
+
+        requested_tier = (raw_tier or (alias_match.get("tier") if alias_match else None) or "").strip().lower()
+        effective_voice_id = (alias_match.get("providerVoiceId") if alias_match else None) or raw_voice_id
+
+        if requested_tier == "medium" or (alias_match and alias_match.get("provider") == "sarvam"):
+            provider = "sarvam"
+            model = alias_match.get("model") if alias_match else "bulbul:v3"
+        elif requested_tier == "low" or (alias_match and alias_match.get("provider") == "gemini" and "tts" in str(alias_match.get("model"))):
+            provider = "gemini"
+            model = alias_match.get("model") if alias_match else "gemini-3.8-flash-lite-tts"
+        else:
+            phone_stack = await resolve_platform_phone_stack(raw_lang or "te-IN")
+            llm = phone_stack.get("llm") if isinstance(phone_stack.get("llm"), dict) else {}
+            realtime_voice = phone_stack.get("realtime_voice") if isinstance(phone_stack.get("realtime_voice"), dict) else {}
+            provider = str(llm.get("provider") or "gemini")
+            model = str(llm.get("model") or "")
+            if not effective_voice_id:
+                effective_voice_id = realtime_voice.get("voice")
+
         result = await synthesize_preview(
             body.text,
-            voice_id=body.voiceId or realtime_voice.get("voice"),
-            language=body.language,
-            speed=body.speed,
-            provider=str(llm.get("provider") or "gemini"),
-            model=str(llm.get("model") or ""),
+            voice_id=effective_voice_id,
+            language=raw_lang,
+            speed=raw_speed,
+            provider=provider,
+            model=model,
+            tier=requested_tier or None,
         )
     except VoicePreviewRateLimited as exc:
         raise HTTPException(status_code=429, headers={"Retry-After": str(exc.retry_after)}, detail={
@@ -289,14 +316,15 @@ async def voice_preview(
                 }
             },
         ) from None
+    public_label = (alias_match.get("label") if alias_match else None) or result.get("label") or "Voice 1"
     return Response(
         content=result["audio"],
         media_type="audio/wav",
         headers={
-            "X-Voice-Name": result["voice"],
-            "X-Voice-Label": result["label"],
-            "X-Voice-Model": result["model"],
-            "X-Voice-Stack-Model": result.get("stackModel", ""),
+            "X-Voice-Name": public_label,
+            "X-Voice-Label": public_label,
+            "X-Voice-Model": "Enterprise Voice Engine",
+            "X-Voice-Stack-Model": "",
             "X-Voice-Cache": "hit" if result.get("cacheHit") else "miss",
             "Cache-Control": "private, max-age=86400" if result.get("cacheable") else "no-store",
         },

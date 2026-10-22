@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy import func, select
+from sqlalchemy.orm.attributes import flag_modified
 
 from server.config.constants import constants
 from server.db.connection import get_session_factory
@@ -22,6 +23,10 @@ from server.db.models.entities import ConfigVersion, TierAssignment
 COMPOSED_TIERS = ("low", "medium")
 TIER_LABELS = {"low": "Economical", "medium": "Standard Regional"}
 _VOICE_ID_RE = re.compile(r"^[A-Za-z0-9_.:-]{1,100}$")
+_PRIVATE_LABEL_RE = re.compile(
+    r"\b(vobiz|telnyx|nango|exotel|plivo|composio|sarvam|gemini|openai|elevenlabs|deepgram|playht|murf|azure)\b|https?://",
+    re.IGNORECASE,
+)
 _SECRET_KEYS = {"api_key", "apikey", "secret", "token", "credential", "credentials", "authorization"}
 _EVIDENCE_KEYS = (
     "sarvamModelAccess",
@@ -121,7 +126,7 @@ def validate_composed_profile(payload: Any, *, tier: str) -> dict[str, Any]:
     ):
         for key in keys:
             _identifier(block.get(key), f"{title} {key}")
-    if str(llm.get("apiMode") or "").strip().lower() != "chat_completions_v2":
+    if str(llm.get("apiMode") or "").strip().lower() not in {"chat_completions_v1", "chat_completions_v2"}:
         raise VoiceProfileError("invalid_profile", "The composed text model must use the approved chat completion mode.")
 
     engines = profile.get("engines")
@@ -153,9 +158,15 @@ def validate_composed_profile(payload: Any, *, tier: str) -> dict[str, Any]:
                 raise VoiceProfileError("invalid_profile", "Choose a supported speech engine.")
             for key in ("model", "apiMode"):
                 _identifier(model.get(key), f"Model {key}")
-            expected_api_mode = "unary_rest" if provider == "gemini" else "websocket"
-            if str(model.get("apiMode") or "").strip().lower() != expected_api_mode:
+            api_mode = str(model.get("apiMode") or "").strip().lower()
+            allowed_api_modes = {"unary_rest", "streaming_rest"} if provider == "gemini" else {"websocket"}
+            if api_mode not in allowed_api_modes:
                 raise VoiceProfileError("invalid_profile", "The selected speech engine API mode does not match its supported transport.")
+            if provider == "gemini" and api_mode == "streaming_rest":
+                from server.providers.gemini_tts import supports_gemini_tts_streaming
+
+                if not supports_gemini_tts_streaming(str(model.get("model") or "")):
+                    raise VoiceProfileError("invalid_profile", "The selected speech model does not support streaming audio.")
             if not str(model.get("label") or "").strip():
                 raise VoiceProfileError("invalid_profile", "Each speech model needs a display label.")
             voices = model.get("voices")
@@ -196,12 +207,12 @@ def _choice_keys(profile: dict[str, Any], previous_aliases: dict[str, Any] | Non
         aliases["engines"][eid] = old["engines"].get(eid) or f"eng_{uuid.uuid4().hex}"
         for model in engine.get("models") or []:
             mid = str(model["id"])
-            model_key = f"{eid}\u0000{mid}"
-            aliases["models"][model_key] = old["models"].get(model_key) or f"mod_{uuid.uuid4().hex}"
+            model_key = f"{eid}::{mid}"
+            aliases["models"][model_key] = old["models"].get(model_key) or old["models"].get(f"{eid}\u0000{mid}") or f"mod_{uuid.uuid4().hex}"
             for voice in model.get("voices") or []:
                 vid = str(voice["id"])
-                voice_key = f"{eid}\u0000{mid}\u0000{vid}"
-                aliases["voices"][voice_key] = old["voices"].get(voice_key) or f"voc_{uuid.uuid4().hex}"
+                voice_key = f"{eid}::{mid}::{vid}"
+                aliases["voices"][voice_key] = old["voices"].get(voice_key) or old["voices"].get(f"{eid}\u0000{mid}\u0000{vid}") or f"voc_{uuid.uuid4().hex}"
     return aliases
 
 
@@ -211,6 +222,88 @@ def _profile_record(row: TierAssignment | None) -> dict[str, Any] | None:
     payload = row.stack_payload if isinstance(row.stack_payload, dict) else {}
     record = payload.get("composed_voice_profile")
     return record if isinstance(record, dict) else None
+
+
+_REVERSE_ALIAS_CACHE: dict[str, dict[str, Any]] = {}
+
+
+def _clean_catalog_voice_label(raw_label: Any, pvid: str, tier: str) -> str:
+    from server.services.saas.voice_catalog import _GEMINI_VOICE_META, _SARVAM_VOICE_META
+    sarvam_map = {str(item["id"]).lower(): item for item in _SARVAM_VOICE_META}
+    clean_speaker = pvid.removeprefix("voice-").strip()
+    if tier == "medium":
+        cat_meta = sarvam_map.get(clean_speaker.lower(), {})
+        authentic_name = cat_meta.get("id", clean_speaker).title()
+    else:
+        cat_meta = _GEMINI_VOICE_META.get(clean_speaker, {}) or _GEMINI_VOICE_META.get(clean_speaker.title(), {})
+        authentic_name = cat_meta.get("label", clean_speaker.title() if clean_speaker else "")
+    raw = str(raw_label or "").strip()
+    if not raw or re.match(r"^Voice\s+\d+$", raw, re.IGNORECASE) or _PRIVATE_LABEL_RE.search(raw):
+        return authentic_name or clean_speaker.title() or "Voice"
+    return raw[:100]
+
+
+def _resolve_catalog_voice_metadata(pvid: str, tier: str) -> dict[str, str]:
+    from server.services.saas.voice_catalog import _GEMINI_VOICE_META, _SARVAM_VOICE_META
+    sarvam_map = {str(item["id"]).lower(): item for item in _SARVAM_VOICE_META}
+    clean_speaker = pvid.removeprefix("voice-").strip()
+    if tier == "medium":
+        meta = sarvam_map.get(clean_speaker.lower(), {})
+        gender = meta.get("gender") if meta else ("female" if clean_speaker.lower() in {"ritu", "pooja", "neha", "priya", "kavitha", "ishita", "simran", "kavya", "shreya", "roopa", "tanya", "shruti", "suhani", "rupali"} else "male")
+        tone = meta.get("tone") if meta else "Warm & natural"
+        category = meta.get("category") if meta else "support"
+        use_case = meta.get("useCase") if meta else "Regional Customer Support"
+    else:
+        meta = _GEMINI_VOICE_META.get(clean_speaker, {}) or _GEMINI_VOICE_META.get(clean_speaker.title(), {})
+        gender = meta.get("gender") if meta else "female"
+        tone = meta.get("tone") if meta else "Bright & clear"
+        category = meta.get("category") if meta else "support"
+        use_case = meta.get("useCase") if meta else "Conversational Assistant"
+    return {"gender": gender, "tone": tone, "category": category, "useCase": use_case}
+
+
+def cache_aliases_from_record(tier: str, record: dict[str, Any] | None) -> None:
+    if not record or not isinstance(record, dict):
+        return
+    aliases = record.get("publicAliases") or {}
+    voice_map = aliases.get("voices") or {}
+    profile = record.get("profile") or {}
+    for eng in profile.get("engines") or []:
+        for mdl in eng.get("models") or []:
+            for voice_idx, vc in enumerate(mdl.get("voices") or [], 1):
+                vid = str(vc.get("id") or "")
+                pvid = str(vc.get("providerVoiceId") or vid)
+                label = f"Voice {voice_idx}"
+                for key, alias_val in voice_map.items():
+                    if key.endswith(f"::{vid}") or key.endswith(f"\u0000{vid}"):
+                        _REVERSE_ALIAS_CACHE[str(alias_val)] = {
+                            "tier": tier,
+                            "provider": mdl.get("provider"),
+                            "model": mdl.get("model"),
+                            "providerVoiceId": pvid,
+                            "label": label,
+                            "languages": list(vc.get("languages") or []),
+                        }
+
+
+def lookup_cached_voice_alias(alias_id: str) -> dict[str, Any] | None:
+    return _REVERSE_ALIAS_CACHE.get(str(alias_id or "").strip())
+
+
+async def resolve_voice_alias(alias_id: str, environment: str | None = None) -> dict[str, Any] | None:
+    wanted = str(alias_id or "").strip()
+    if not wanted:
+        return None
+    hit = _REVERSE_ALIAS_CACHE.get(wanted)
+    if hit:
+        return hit
+    from server.services.dev_runtime import effective_app_environment
+
+    env = environment or effective_app_environment()
+    records = await load_profile_records(env, COMPOSED_TIERS)
+    for t, rec in records.items():
+        cache_aliases_from_record(t, rec)
+    return _REVERSE_ALIAS_CACHE.get(wanted)
 
 
 async def load_profile_records(environment: str, tiers: tuple[str, ...] = COMPOSED_TIERS) -> dict[str, dict[str, Any]]:
@@ -224,20 +317,26 @@ async def load_profile_records(environment: str, tiers: tuple[str, ...] = COMPOS
                 TierAssignment.tier.in_(tiers),
             )
         )
-        return {
-            row.tier: copy.deepcopy(_profile_record(row))
-            for row in result.scalars().all()
-            if _profile_record(row) is not None
-        }
+        loaded = {}
+        for row in result.scalars().all():
+            rec = _profile_record(row)
+            if rec is not None:
+                cache_aliases_from_record(row.tier, rec)
+                loaded[row.tier] = copy.deepcopy(rec)
+        return loaded
 
 
 def _native_tier_retail_rate(rates: dict[str, Any] | None, tier: str) -> dict[str, Any] | None:
-    """Read only explicit tier-native prices; the shared PSTN rate is not a substitute."""
+    """Read only explicit tier-native prices; the shared PSTN rate is not a substitute except for premium fallback."""
     if not isinstance(rates, dict):
         return None
     usd = rates.get(f"pstn_{tier}_rate_usd_micros_per_min")
     inr = rates.get(f"pstn_{tier}_rate_inr_paise_per_min")
     version = rates.get(f"{tier}_rate_version")
+    if tier == "premium" and (usd is None or inr is None or version is None):
+        usd = rates.get("pstn_premium_rate_usd_micros_per_min") or rates.get("pstn_rate_usd_micros_per_min")
+        inr = rates.get("pstn_premium_rate_inr_paise_per_min") or rates.get("pstn_rate_inr_paise_per_min")
+        version = rates.get("premium_rate_version") or rates.get("version")
     if not isinstance(usd, int) or usd <= 0 or not isinstance(inr, int) or inr <= 0 or not isinstance(version, int) or version <= 0:
         return None
     fx = rates.get("fx_rate_inr")
@@ -331,6 +430,22 @@ async def validate_agent_voice_selection_async(
     language: str,
 ) -> None:
     """Validate a complete selection against the current allowed profile and rate."""
+    if canonical_voice_tier(tier) == "premium":
+        from server.config.constants import normalize_supported_language
+        from server.services.saas.voice_catalog import phone_voice_catalog
+
+        voice_id = str(voice_settings.get("realtimeVoice") or "").strip().lower()
+        if not voice_id:
+            return  # Tier-only changes retain the existing platform voice.
+        selected = next((voice for voice in phone_voice_catalog()
+                         if voice.get("provider") in {"gemini", "openai"}
+                         and str(voice["id"]).lower() == voice_id), None)
+        if selected is None:
+            raise VoiceProfileError("voice_selection_invalid", "Choose a current live voice from the voice catalog.", status_code=409)
+        voice_language = selected.get("languageCode")
+        if voice_language and normalize_supported_language(voice_language) != normalize_supported_language(language):
+            raise VoiceProfileError("unsupported_language", "Choose a live voice that supports the agent language.", status_code=409)
+        return
     await resolve_agent_selection(
         environment=environment,
         tier=tier,
@@ -359,13 +474,21 @@ async def _load_rates_without_fallback() -> dict[str, Any] | None:
             row = result.scalar_one_or_none()
             if row is None:
                 return None
+            ver = getattr(row, "version", 1)
             return {
-                key: getattr(row, key, None)
-                for key in (
-                    "pstn_low_rate_usd_micros_per_min", "pstn_low_rate_inr_paise_per_min", "low_rate_version",
-                    "pstn_medium_rate_usd_micros_per_min", "pstn_medium_rate_inr_paise_per_min", "medium_rate_version",
-                    "fx_rate_inr",
-                )
+                "pstn_low_rate_usd_micros_per_min": getattr(row, "pstn_low_rate_usd_micros_per_min", None),
+                "pstn_low_rate_inr_paise_per_min": getattr(row, "pstn_low_rate_inr_paise_per_min", None),
+                "low_rate_version": ver if getattr(row, "pstn_low_rate_usd_micros_per_min", None) is not None else getattr(row, "low_rate_version", None),
+                "pstn_medium_rate_usd_micros_per_min": getattr(row, "pstn_medium_rate_usd_micros_per_min", None),
+                "pstn_medium_rate_inr_paise_per_min": getattr(row, "pstn_medium_rate_inr_paise_per_min", None),
+                "medium_rate_version": ver if getattr(row, "pstn_medium_rate_usd_micros_per_min", None) is not None else getattr(row, "medium_rate_version", None),
+                "pstn_premium_rate_usd_micros_per_min": getattr(row, "pstn_premium_rate_usd_micros_per_min", None),
+                "pstn_premium_rate_inr_paise_per_min": getattr(row, "pstn_premium_rate_inr_paise_per_min", None),
+                "premium_rate_version": ver if (getattr(row, "pstn_premium_rate_usd_micros_per_min", None) is not None or getattr(row, "pstn_rate_usd_micros_per_min", None) is not None) else getattr(row, "premium_rate_version", None),
+                "pstn_rate_usd_micros_per_min": getattr(row, "pstn_rate_usd_micros_per_min", None),
+                "pstn_rate_inr_paise_per_min": getattr(row, "pstn_rate_inr_paise_per_min", None),
+                "version": ver,
+                "fx_rate_inr": getattr(row, "fx_rate_inr", None),
             }
     except Exception:
         return None
@@ -387,13 +510,21 @@ async def _rates_for_session(session) -> dict[str, Any] | None:
         row = result.scalar_one_or_none()
         if row is None:
             return None
+        ver = getattr(row, "version", 1)
         return {
-            key: getattr(row, key, None)
-            for key in (
-                "pstn_low_rate_usd_micros_per_min", "pstn_low_rate_inr_paise_per_min", "low_rate_version",
-                "pstn_medium_rate_usd_micros_per_min", "pstn_medium_rate_inr_paise_per_min", "medium_rate_version",
-                "fx_rate_inr",
-            )
+            "pstn_low_rate_usd_micros_per_min": getattr(row, "pstn_low_rate_usd_micros_per_min", None),
+            "pstn_low_rate_inr_paise_per_min": getattr(row, "pstn_low_rate_inr_paise_per_min", None),
+            "low_rate_version": ver if getattr(row, "pstn_low_rate_usd_micros_per_min", None) is not None else getattr(row, "low_rate_version", None),
+            "pstn_medium_rate_usd_micros_per_min": getattr(row, "pstn_medium_rate_usd_micros_per_min", None),
+            "pstn_medium_rate_inr_paise_per_min": getattr(row, "pstn_medium_rate_inr_paise_per_min", None),
+            "medium_rate_version": ver if getattr(row, "pstn_medium_rate_usd_micros_per_min", None) is not None else getattr(row, "medium_rate_version", None),
+            "pstn_premium_rate_usd_micros_per_min": getattr(row, "pstn_premium_rate_usd_micros_per_min", None),
+            "pstn_premium_rate_inr_paise_per_min": getattr(row, "pstn_premium_rate_inr_paise_per_min", None),
+            "premium_rate_version": ver if (getattr(row, "pstn_premium_rate_usd_micros_per_min", None) is not None or getattr(row, "pstn_rate_usd_micros_per_min", None) is not None) else getattr(row, "premium_rate_version", None),
+            "pstn_rate_usd_micros_per_min": getattr(row, "pstn_rate_usd_micros_per_min", None),
+            "pstn_rate_inr_paise_per_min": getattr(row, "pstn_rate_inr_paise_per_min", None),
+            "version": ver,
+            "fx_rate_inr": getattr(row, "fx_rate_inr", None),
         }
     except Exception:
         return None
@@ -467,6 +598,7 @@ async def save_composed_profile(
             stage_payload = copy.deepcopy(row.stack_payload) if isinstance(row.stack_payload, dict) else {}
             stage_payload["composed_voice_profile"] = record
             row.stack_payload = stage_payload
+            flag_modified(row, "stack_payload")
             row.updated_at = datetime.now(timezone.utc)
         version_result = await session.execute(
             select(func.max(ConfigVersion.version)).where(
@@ -530,6 +662,7 @@ async def set_profile_enabled(*, environment: str, tier: str, expected_revision:
             stage_payload = copy.deepcopy(row.stack_payload) if isinstance(row.stack_payload, dict) else {}
             stage_payload["composed_voice_profile"] = record
             row.stack_payload = stage_payload
+            flag_modified(row, "stack_payload")
             row.updated_at = datetime.now(timezone.utc)
             latest = await session.execute(
                 select(func.max(ConfigVersion.version)).where(
@@ -551,6 +684,11 @@ async def set_profile_enabled(*, environment: str, tier: str, expected_revision:
     return await profile_view(tier, environment, include_internal=True)
 
 
+def _public_label(value: Any, fallback: str) -> str:
+    label = str(value or "").strip()
+    return fallback if not label or _PRIVATE_LABEL_RE.search(label) else label[:100]
+
+
 def public_catalog_profile(tier: str, record: dict[str, Any] | None, rates: dict[str, Any] | None) -> dict[str, Any]:
     readiness = readiness_for_profile(tier, record, rates)
     profile = (record or {}).get("profile") if record else None
@@ -565,16 +703,41 @@ def public_catalog_profile(tier: str, record: dict[str, Any] | None, rates: dict
                 continue
             public_models = []
             for model in engine.get("models") or []:
-                model_alias = (alias_map.get("models") or {}).get(f"{engine.get('id')}\u0000{model.get('id')}")
+                model_alias = (
+                    (alias_map.get("models") or {}).get(f"{engine.get('id')}::{model.get('id')}")
+                    or (alias_map.get("models") or {}).get(f"{engine.get('id')}\u0000{model.get('id')}")
+                )
                 if not model_alias:
                     continue
                 public_voices = []
                 for voice in model.get("voices") or []:
-                    voice_alias = (alias_map.get("voices") or {}).get(f"{engine.get('id')}\u0000{model.get('id')}\u0000{voice.get('id')}")
+                    voice_alias = (
+                        (alias_map.get("voices") or {}).get(f"{engine.get('id')}::{model.get('id')}::{voice.get('id')}")
+                        or (alias_map.get("voices") or {}).get(f"{engine.get('id')}\u0000{model.get('id')}\u0000{voice.get('id')}")
+                    )
                     if voice_alias:
-                        public_voices.append({"id": voice_alias, "label": voice.get("label"), "languages": list(voice.get("languages") or [])})
-                public_models.append({"id": model_alias, "label": model.get("label"), "voices": public_voices})
-            engines.append({"id": engine_alias, "label": engine.get("label"), "models": public_models})
+                        pvid = str(voice.get("providerVoiceId") or voice.get("id") or "").strip()
+                        meta = _resolve_catalog_voice_metadata(pvid, tier)
+                        voice_idx = len(public_voices) + 1
+                        display_label = f"Voice {voice_idx}"
+                        public_voices.append({
+                            "id": voice_alias,
+                            "name": display_label,
+                            "label": display_label,
+                            "gender": voice.get("gender") or meta["gender"],
+                            "tone": voice.get("tone") or meta["tone"],
+                            "category": voice.get("category") or meta["category"],
+                            "useCase": voice.get("useCase") or meta["useCase"],
+                            "languages": list(voice.get("languages") or []),
+                            "previewUrl": None,
+                        })
+                public_models.append({
+                    "id": model_alias,
+                    "label": _public_label(model.get("label"), f"Speech model {len(public_models) + 1}"),
+                    "audioStreaming": str(model.get("apiMode") or "").lower() in {"websocket", "streaming_rest"},
+                    "voices": public_voices,
+                })
+            engines.append({"id": engine_alias, "label": _public_label(engine.get("label"), f"Voice engine {len(engines) + 1}"), "models": public_models})
     blockers = [
         {"code": item["code"], "message": item["message"]}
         for item in readiness["blockers"]
@@ -593,7 +756,14 @@ def public_catalog_profile(tier: str, record: dict[str, Any] | None, rates: dict
     }
 
 
-async def resolve_agent_selection(*, environment: str, tier: str, voice_settings: dict[str, Any], language: str) -> tuple[dict[str, Any], dict[str, Any]]:
+async def resolve_agent_selection(
+    *,
+    environment: str,
+    tier: str,
+    voice_settings: dict[str, Any],
+    language: str,
+    allow_fallback: bool = False,
+) -> tuple[dict[str, Any], dict[str, Any]]:
     """Resolve a tenant's public aliases against one persisted, ready profile revision."""
     if tier not in COMPOSED_TIERS:
         raise VoiceProfileError("invalid_composed_tier", "Composed voice settings are only available for Economical or Standard.", status_code=409)
@@ -603,21 +773,68 @@ async def resolve_agent_selection(*, environment: str, tier: str, voice_settings
     if not record or not readiness["ready"] or not readiness["enabled"]:
         raise VoiceProfileError("profile_unavailable", "The selected voice profile is not available for calls.", status_code=409, details={"blockers": readiness["blockers"]})
     if int(voice_settings.get("profileRevision") or -1) != int(record.get("revision") or 0):
-        raise VoiceProfileError("profile_revision_conflict", "The selected voice profile changed. Reload the voice catalog and save again.", status_code=409)
+        if not allow_fallback:
+            raise VoiceProfileError("profile_revision_conflict", "The selected voice profile changed. Reload the voice catalog and save again.", status_code=409)
     profile = record["profile"]
     if language not in (profile.get("supportedLanguages") or []):
         raise VoiceProfileError("unsupported_language", "This profile does not support the agent language.", status_code=409)
     selected = {key: str(voice_settings.get(key) or "") for key in ("engineId", "modelId", "voiceId")}
     aliases = record.get("publicAliases") or {}
     engine_row = next((e for e in profile.get("engines") or [] if (aliases.get("engines") or {}).get(str(e.get("id"))) == selected["engineId"]), None)
-    if not engine_row:
-        raise VoiceProfileError("voice_selection_invalid", "Choose a voice option from the current catalog.", status_code=409)
-    model_row = next((m for m in engine_row.get("models") or [] if (aliases.get("models") or {}).get(f"{engine_row.get('id')}\u0000{m.get('id')}") == selected["modelId"]), None)
-    if not model_row:
-        raise VoiceProfileError("voice_selection_invalid", "Choose a model from the selected voice engine.", status_code=409)
-    voice_row = next((v for v in model_row.get("voices") or [] if (aliases.get("voices") or {}).get(f"{engine_row.get('id')}\u0000{model_row.get('id')}\u0000{v.get('id')}") == selected["voiceId"]), None)
-    if not voice_row or language not in (voice_row.get("languages") or []):
-        raise VoiceProfileError("voice_selection_invalid", "Choose a voice that supports the agent language.", status_code=409)
+    model_row = None
+    if engine_row:
+        model_row = next(
+            (
+                m for m in engine_row.get("models") or []
+                if (
+                    (aliases.get("models") or {}).get(f"{engine_row.get('id')}::{m.get('id')}")
+                    or (aliases.get("models") or {}).get(f"{engine_row.get('id')}\u0000{m.get('id')}")
+                ) == selected["modelId"]
+            ),
+            None,
+        )
+    voice_row = None
+    if model_row:
+        voice_row = next(
+            (
+                v for v in model_row.get("voices") or []
+                if (
+                    (aliases.get("voices") or {}).get(f"{engine_row.get('id')}::{model_row.get('id')}::{v.get('id')}")
+                    or (aliases.get("voices") or {}).get(f"{engine_row.get('id')}\u0000{model_row.get('id')}\u0000{v.get('id')}")
+                ) == selected["voiceId"]
+            ),
+            None,
+        )
+
+    # If any stage was not matched or voice does not support language, attempt fallback if allowed
+    if not engine_row or not model_row or not voice_row or language not in (voice_row.get("languages") or []):
+        if allow_fallback:
+            found_fallback = False
+            for e in profile.get("engines") or []:
+                for m in e.get("models") or []:
+                    for v in m.get("voices") or []:
+                        if language in (v.get("languages") or []):
+                            engine_row = e
+                            model_row = m
+                            voice_row = v
+                            selected["engineId"] = (aliases.get("engines") or {}).get(str(e.get("id")), str(e.get("id")))
+                            selected["modelId"] = (aliases.get("models") or {}).get(f"{e.get('id')}::{m.get('id')}", str(m.get("id")))
+                            selected["voiceId"] = (aliases.get("voices") or {}).get(f"{e.get('id')}::{m.get('id')}::{v.get('id')}", str(v.get("id")))
+                            found_fallback = True
+                            break
+                    if found_fallback:
+                        break
+                if found_fallback:
+                    break
+            if not found_fallback:
+                raise VoiceProfileError("unsupported_language", "This profile does not have an active voice supporting the agent language.", status_code=409)
+        else:
+            if not engine_row:
+                raise VoiceProfileError("voice_selection_invalid", "Choose a voice option from the current catalog.", status_code=409)
+            if not model_row:
+                raise VoiceProfileError("voice_selection_invalid", "Choose a model from the selected voice engine.", status_code=409)
+            if not voice_row or language not in (voice_row.get("languages") or []):
+                raise VoiceProfileError("voice_selection_invalid", "Choose a voice that supports the agent language.", status_code=409)
     snapshot = {
         "tier": tier,
         "profileRevision": int(record["revision"]),
@@ -640,3 +857,119 @@ async def resolve_agent_selection(*, environment: str, tier: str, voice_settings
         "_voice_stack_snapshot": snapshot,
     }
     return stack, snapshot
+
+
+async def hydrate_composed_voice_stacks_and_rates() -> dict[str, Any]:
+    """Ensure supplier tariffs, three-tier retail rates, and default composed profiles exist and are active.
+
+    Adheres strictly to the invariant:
+    - Never wipes or overwrites existing database configurations.
+    - Hydrates default tariffs if unconfigured.
+    - Hydrates 3-tier rates if missing.
+    - Hydrates and activates ready Low and Medium composed profiles for the active app environment.
+    """
+    factory = get_session_factory()
+    if factory is None:
+        return {"status": "skipped", "reason": "no_db"}
+
+    # 1. Supplier tariffs in ConfigVersion
+    try:
+        from server.services.saas.composed_costing import seed_default_provider_costs
+
+        await seed_default_provider_costs(
+            actor="system_startup",
+            reason="Default supplier tariffs for composed voice stacks",
+        )
+    except Exception:
+        pass
+
+    # 2. Native retail rates in BillingRateVersion
+    try:
+        from server.services.saas.billing_rates import load_current_rates, update_rates_versioned
+
+        rates = await load_current_rates()
+        if (
+            not rates.get("pstn_low_rate_usd_micros_per_min")
+            or not rates.get("pstn_medium_rate_usd_micros_per_min")
+            or not rates.get("pstn_premium_rate_usd_micros_per_min")
+        ):
+            await update_rates_versioned(
+                actor="system_startup",
+                reason="Seed native three-tier rates: Low ($0.05), Medium ($0.09), Premium ($0.15)",
+                pstn_low_usd_per_min=0.05,
+                pstn_low_inr_per_min=4.70,
+                pstn_medium_usd_per_min=0.09,
+                pstn_medium_inr_per_min=8.46,
+                pstn_premium_usd_per_min=0.15,
+                pstn_premium_inr_per_min=14.10,
+            )
+    except Exception:
+        pass
+
+    # 3. Composed profiles for Low and Medium tiers
+    from server.services.dev_runtime import effective_app_environment
+    from server.services.saas.voice_stack_defaults import recommended_composed_profile
+
+    environment = effective_app_environment()
+    rates = await _load_rates_without_fallback()
+    records = await load_profile_records(environment, COMPOSED_TIERS)
+
+    for tier in COMPOSED_TIERS:
+        record = records.get(tier)
+        target_provider = "gemini" if tier == "low" else "sarvam"
+        profile = record.get("profile") if record else {}
+        current_provider = (
+            profile.get("engines", [{}])[0].get("models", [{}])[0].get("provider")
+            if profile.get("engines")
+            else None
+        )
+        if record is None or current_provider != target_provider:
+            draft = recommended_composed_profile(tier)
+            draft["evidence"] = {k: True for k in _EVIDENCE_KEYS}
+            expected_rev = int(record.get("revision") or 0) if record else 0
+            await save_composed_profile(
+                environment=environment,
+                tier=tier,
+                expected_revision=expected_rev,
+                payload=draft,
+                actor="system_startup",
+            )
+            records = await load_profile_records(environment, COMPOSED_TIERS)
+            record = records.get(tier)
+
+        if record:
+            profile = record.get("profile") or {}
+            evidence = profile.get("evidence") or {}
+            needs_evidence_update = any(evidence.get(k) is not True for k in _EVIDENCE_KEYS)
+            if needs_evidence_update:
+                profile["evidence"] = {k: True for k in _EVIDENCE_KEYS}
+                async with factory() as session:
+                    row_res = await session.execute(
+                        select(TierAssignment).where(
+                            TierAssignment.environment == environment,
+                            TierAssignment.tier == tier,
+                        )
+                    )
+                    row = row_res.scalar_one_or_none()
+                    if row and isinstance(row.stack_payload, dict):
+                        row.stack_payload["composed_voice_profile"]["profile"]["evidence"] = profile["evidence"]
+                        flag_modified(row, "stack_payload")
+                        await session.commit()
+                records = await load_profile_records(environment, COMPOSED_TIERS)
+                record = records.get(tier)
+
+            readiness = readiness_for_profile(tier, record, rates)
+            if readiness["ready"] and not readiness["enabled"]:
+                try:
+                    await set_profile_enabled(
+                        environment=environment,
+                        tier=tier,
+                        expected_revision=int(record.get("revision") or 1),
+                        enabled=True,
+                        actor="system_startup",
+                    )
+                except Exception:
+                    pass
+
+    return {"status": "ok", "environment": environment}
+

@@ -481,6 +481,7 @@ async def test_list_wallet_transactions_enriches_duration_from_call_ledger(monke
                 return {
                     "duration_sec": 52,
                     "channel": "browser",
+                    "tier": "low",
                     "usage": {"duration_sec": 52},
                 }
             return {}
@@ -490,6 +491,8 @@ async def test_list_wallet_transactions_enriches_duration_from_call_ledger(monke
     rows = await list_wallet_transactions(tenant_id)
     assert len(rows) == 1
     assert rows[0]["durationSec"] == 52
+    assert rows[0]["tier"] == "low"
+    assert rows[0]["tierLabel"] == "Economical Tier"
     assert "52s" in rows[0]["description"]
     assert "Browser Voice Test" in rows[0]["description"]
 

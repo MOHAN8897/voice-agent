@@ -27,5 +27,7 @@ class SarvamSTTAdapter:
             sample_rate=config.sample_rate,
             silence_duration_ms=vad.get("silence_duration_ms"),
             threshold=vad.get("threshold"),
+            min_speech_duration_ms=vad.get("min_speech_duration_ms"),
+            prefix_padding_ms=vad.get("prefix_padding_ms"),
             model=config.model,
         )

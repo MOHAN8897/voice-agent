@@ -288,19 +288,46 @@ export function BillingModule() {
               </div>
             )}
 
-            <p className="text-xs text-[#524E5E]">
-              Phone calls billed at{' '}
-              <strong className="text-[#0F0E17] font-semibold">
-                ₹{Number(serverWallet?.rateInrPerMin ?? wallet.rateInrPerMin ?? 5.00).toFixed(2)}/min ($
-                {Number(serverWallet?.rateUsdPerMin ?? wallet.rateUsdPerMin ?? 0.053).toFixed(3)}/min)
-              </strong>
-              . Web tests billed at ₹
-              {Number(serverWallet?.webRateInrPerMin ?? wallet.webRateInrPerMin ?? 4.50).toFixed(2)}/min ($
-              {Number(serverWallet?.webRateUsdPerMin ?? wallet.webRateUsdPerMin ?? 0.048).toFixed(3)}/min).
-              Your usage this workspace: $
-              {Number(serverWallet?.myUsageUsd ?? wallet.myUsageUsd ?? 0).toFixed(2)}.
-              Unanswered carrier legs are not billed.
-            </p>
+            <div className="space-y-1.5 text-xs text-[#524E5E]">
+              <p>
+                Voice stacks meter by the second based on the agent's selected voice tier:
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 pb-1">
+                <div className="p-2 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB]">
+                  <span className="block text-[11px] font-semibold text-[#0F0E17]">Economical (Low)</span>
+                  <span className="text-xs font-mono font-bold text-[#6344E7]">
+                    ₹{Number(serverWallet?.pstnLowRateInrPerMin ?? 4.70).toFixed(2)}/min
+                  </span>{' '}
+                  <span className="text-[10px] text-[#8C879A] font-mono">
+                    (${Number(serverWallet?.pstnLowRateUsdPerMin ?? 0.05).toFixed(3)}/min)
+                  </span>
+                </div>
+                <div className="p-2 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB]">
+                  <span className="block text-[11px] font-semibold text-[#0F0E17]">Standard Regional</span>
+                  <span className="text-xs font-mono font-bold text-[#6344E7]">
+                    ₹{Number(serverWallet?.pstnMediumRateInrPerMin ?? 8.46).toFixed(2)}/min
+                  </span>{' '}
+                  <span className="text-[10px] text-[#8C879A] font-mono">
+                    (${Number(serverWallet?.pstnMediumRateUsdPerMin ?? 0.09).toFixed(3)}/min)
+                  </span>
+                </div>
+                <div className="p-2 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB]">
+                  <span className="block text-[11px] font-semibold text-[#0F0E17]">Flagship Live (Premium)</span>
+                  <span className="text-xs font-mono font-bold text-[#6344E7]">
+                    ₹{Number(serverWallet?.pstnPremiumRateInrPerMin ?? 14.10).toFixed(2)}/min
+                  </span>{' '}
+                  <span className="text-[10px] text-[#8C879A] font-mono">
+                    (${Number(serverWallet?.pstnPremiumRateUsdPerMin ?? 0.15).toFixed(3)}/min)
+                  </span>
+                </div>
+              </div>
+              <p className="text-[11px] text-[#8C879A]">
+                Web test calls billed at ₹
+                {Number(serverWallet?.webRateInrPerMin ?? wallet.webRateInrPerMin ?? 4.50).toFixed(2)}/min ($
+                {Number(serverWallet?.webRateUsdPerMin ?? wallet.webRateUsdPerMin ?? 0.048).toFixed(3)}/min).
+                Your usage this workspace: ${Number(serverWallet?.myUsageUsd ?? wallet.myUsageUsd ?? 0).toFixed(2)}. Unanswered carrier legs are not billed.
+              </p>
+            </div>
           </div>
 
           {/* Quick Top-Up Strip — USD display */}
@@ -599,6 +626,14 @@ export function BillingModule() {
                       <td className="py-2.5 px-3 text-[#0F0E17]">
                         <div className="font-semibold text-xs text-[#0F0E17] flex items-center gap-1.5 flex-wrap">
                           <span>{row.description || activityLabel}</span>
+                          {row.tier && (
+                            <span
+                              data-testid={`tx-tier-badge-${row.tier}`}
+                              className="text-[10px] text-[#6344E7] bg-[#6344E7]/10 border border-[#6344E7]/25 px-1.5 py-0.5 rounded font-semibold"
+                            >
+                              {row.tierLabel || row.tier}
+                            </span>
+                          )}
                           {row.durationSec != null && row.durationSec > 0 && !row.description?.includes(`${row.durationSec}s`) && (
                             <span className="text-[10px] text-[#524E5E] bg-[#FAF9FD] border border-[#E4E2EB] px-1.5 py-0.5 rounded font-mono">
                               {row.durationSec}s

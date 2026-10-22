@@ -388,6 +388,28 @@ async def vobiz_answer(request: Request):
 </Response>"""
             return Response(content=xml, media_type="application/xml")
 
+    # Versioned composed selections use the same snapshot across channels.
+    # Answer retries keep their admitted revision; legacy and Premium calls
+    # retain their existing stack resolution path.
+    if direction == "inbound" and not stack_override:
+        try:
+            from server.brain.agent_service import agent_service
+            from server.services.saas.pstn_saas_stack import saas_stack_override_for_agent
+            from server.services.saas.voice_stack_profiles import canonical_voice_tier
+
+            if not tenant_id:
+                raise ValueError("Missing inbound voice profile owner")
+            agent = await agent_service.get_agent(str(agent_id), tenant_id=str(tenant_id))
+            voice_settings = agent.get("voice_settings") or {}
+            selected_tier = canonical_voice_tier(agent.get("default_tier") or "medium")
+            if selected_tier in {"low", "medium"} and voice_settings.get("stackSelectionVersion") == 1:
+                tier = selected_tier
+                stack_override = await saas_stack_override_for_agent(agent)
+                language = str(stack_override.get("language") or (agent.get("languages") or ["te-IN"])[0])
+        except Exception as exc:
+            logger.warning("Inbound voice profile unavailable error_type=%s", type(exc).__name__)
+            return Response(content='<Response><Hangup /></Response>', media_type="application/xml")
+
     # 7. Create or update single-use stream token
     from server.call.billing_timing import utc_timestamp
     answered_at = utc_timestamp(payload.get("AnswerTime") or payload.get("answer_time"))

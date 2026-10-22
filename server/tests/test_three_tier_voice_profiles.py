@@ -115,6 +115,7 @@ def test_public_catalog_uses_opaque_ids_and_safe_labels(monkeypatch):
     assert public["ready"] is True
     assert public["engines"][0]["id"] == "engine-a"
     assert public["engines"][0]["models"][0]["id"] == "model-a"
+    assert public["engines"][0]["models"][0]["audioStreaming"] is False
     assert public["engines"][0]["models"][0]["voices"][0]["id"] == "voice-a"
     for internal in (
         "internal-engine-id",
@@ -127,6 +128,45 @@ def test_public_catalog_uses_opaque_ids_and_safe_labels(monkeypatch):
         "gemini",
     ):
         assert internal not in serialized
+
+
+@pytest.mark.parametrize("tier", ["low", "medium"])
+def test_profile_accepts_documented_streaming_transport_and_reports_it(monkeypatch, tier):
+    monkeypatch.setattr(profiles, "_runtime_profile_blockers", lambda _profile: [])
+    payload = _profile()
+    payload["engines"][0]["models"][0]["apiMode"] = "streaming_rest"
+    validated = profiles.validate_composed_profile(payload, tier=tier)
+    assert validated["engines"][0]["models"][0]["apiMode"] == "streaming_rest"
+    record = _record()
+    record["profile"] = {**validated, "enabled": True}
+    public = profiles.public_catalog_profile(tier, record, _rates(tier))
+    assert public["engines"][0]["models"][0]["audioStreaming"] is True
+
+
+def test_profile_refuses_streaming_transport_for_unary_only_model():
+    payload = _profile()
+    payload["engines"][0]["models"][0].update(
+        model="gemini-2.5-flash-preview-tts", apiMode="streaming_rest"
+    )
+    with pytest.raises(profiles.VoiceProfileError, match="does not support streaming"):
+        profiles.validate_composed_profile(payload, tier="low")
+
+
+def test_public_catalog_scrubs_internal_labels_and_does_not_invent_voice_samples(monkeypatch):
+    monkeypatch.setattr(profiles, "_runtime_profile_blockers", lambda _profile: [])
+    record = _record()
+    engine = record["profile"]["engines"][0]
+    engine["label"] = "Sarvam voice engine"
+    engine["models"][0]["label"] = "Gemini TTS"
+    engine["models"][0]["voices"][0]["label"] = "https://internal.example/voice"
+    public = profiles.public_catalog_profile("low", record, _rates())
+    serialized = json.dumps(public).lower()
+    assert "sarvam" not in serialized
+    assert "gemini" not in serialized
+    assert "https://" not in serialized
+    voice = public["engines"][0]["models"][0]["voices"][0]
+    assert voice["label"] == "Voice 1"
+    assert voice["previewUrl"] is None
 
 
 @pytest.mark.asyncio
@@ -172,8 +212,55 @@ async def test_resolved_selection_pins_exact_stages_revision_and_native_rate(mon
     assert conflict.value.code == "profile_revision_conflict"
 
 
+def test_choice_keys_uses_colons_without_nul_bytes():
+    profile = _profile()
+    aliases = profiles._choice_keys(profile)
+    for model_key in aliases["models"]:
+        assert "\u0000" not in model_key
+        assert "::" in model_key
+    for voice_key in aliases["voices"]:
+        assert "\u0000" not in voice_key
+        assert "::" in voice_key
+
+
+def test_public_catalog_supports_both_colon_and_legacy_nul_delimiters(monkeypatch):
+    monkeypatch.setattr(profiles, "_runtime_profile_blockers", lambda _profile: [])
+    # Colon delimited
+    record_colon = {
+        "revision": 1,
+        "profile": _profile(enabled=True),
+        "publicAliases": {
+            "engines": {"internal-engine-id": "engine-colon"},
+            "models": {"internal-engine-id::internal-model-id": "model-colon"},
+            "voices": {"internal-engine-id::internal-model-id::internal-voice-id": "voice-colon"},
+        },
+    }
+    public_colon = profiles.public_catalog_profile("low", record_colon, _rates())
+    assert public_colon["ready"] is True
+    assert public_colon["engines"][0]["id"] == "engine-colon"
+    assert public_colon["engines"][0]["models"][0]["id"] == "model-colon"
+    assert public_colon["engines"][0]["models"][0]["voices"][0]["id"] == "voice-colon"
+
+    # Legacy NUL delimited fallback
+    record_nul = {
+        "revision": 2,
+        "profile": _profile(enabled=True),
+        "publicAliases": {
+            "engines": {"internal-engine-id": "engine-nul"},
+            "models": {"internal-engine-id\u0000internal-model-id": "model-nul"},
+            "voices": {"internal-engine-id\u0000internal-model-id\u0000internal-voice-id": "voice-nul"},
+        },
+    }
+    public_nul = profiles.public_catalog_profile("low", record_nul, _rates())
+    assert public_nul["ready"] is True
+    assert public_nul["engines"][0]["id"] == "engine-nul"
+    assert public_nul["engines"][0]["models"][0]["id"] == "model-nul"
+    assert public_nul["engines"][0]["models"][0]["voices"][0]["id"] == "voice-nul"
+
+
 def _async_return(value):
     async def _return(*_args, **_kwargs):
         return value
 
     return _return
+

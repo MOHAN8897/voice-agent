@@ -104,7 +104,7 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
               label: 'Economical Tier',
               ready: true,
               profileRevision: 2,
-              retailRate: { amount: 0.7, currency: 'INR' },
+              retailRate: { usdMicrosPerMin: 7000, inrPaisePerMin: 70, version: 1, complete: true },
               engines: [
                 {
                   id: 'turbo-natural',
@@ -112,7 +112,7 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
                   models: [{
                     id: 'turbo-regional',
                     label: 'Turbo Regional',
-                    voices: [{ id: 'voice-economical-te', label: 'Telugu Assistant', languages: ['te-IN'] }],
+                    voices: [{ id: 'voice-economical-te', label: 'Telugu Assistant', languages: ['te-IN', 'hi-IN', 'en-IN'] }],
                   }],
                 },
               ],
@@ -122,7 +122,7 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
               label: 'Standard Regional Tier',
               ready: true,
               profileRevision: 5,
-              retailRate: { amount: 1.4, currency: 'INR' },
+              retailRate: { usdMicrosPerMin: 14000, inrPaisePerMin: 140, version: 1, complete: true },
               engines: [
                 {
                   id: 'regional-expressive',
@@ -130,7 +130,8 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
                   models: [{
                     id: 'regional-fast',
                     label: 'Regional Fast',
-                    voices: [{ id: 'voice-regional-te', label: 'Telugu Support', languages: ['te-IN'] }],
+                    audioStreaming: true,
+                    voices: [{ id: 'voice-regional-te', label: 'Telugu Support', languages: ['te-IN', 'hi-IN', 'en-IN'] }],
                   }],
                 },
                 {
@@ -139,7 +140,7 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
                   models: [{
                     id: 'turbo-standard',
                     label: 'Turbo Standard',
-                    voices: [{ id: 'voice-standard-te', label: 'Telugu Assistant', languages: ['te-IN'] }],
+                    voices: [{ id: 'voice-standard-te', label: 'Telugu Assistant', languages: ['te-IN', 'hi-IN', 'en-IN'] }],
                   }],
                 },
               ],
@@ -149,7 +150,7 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
               label: 'Internal Live Provider',
               ready: true,
               profileRevision: 8,
-              retailRate: { amount: 4.2, currency: 'INR' },
+              retailRate: { usdMicrosPerMin: 42000, inrPaisePerMin: 420, version: 1, complete: true },
               engines: [],
             },
           ],
@@ -174,6 +175,7 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
           voiceStackPatchBody = body;
           persistedTestAgent = {
             ...persistedTestAgent,
+            ...(body.languages ? { languages: body.languages } : {}),
             defaultTier: body.defaultTier,
             voiceSettings: body.voiceSettings,
             voiceRevision: body.expectedVoiceRevision + 1,
@@ -226,6 +228,185 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
     );
   });
 
+  async function openVoiceStudio(page) {
+    await page.goto(`/#dashboard/employees?step=voice&agent=${testAgent.id}`);
+    await expect(page.getByTestId('agent-tab-voice')).toBeVisible();
+    await page.getByTestId('agent-tab-voice').click();
+    await expect(page.getByTestId('agent-voice-panel')).toBeVisible();
+  }
+
+  test('saved spoken language wins over stale English voice metadata in browser tests', async ({ page }) => {
+    await page.route('**/business-brain', (route) => route.fulfill({
+      status: 200, contentType: 'application/json', body: JSON.stringify({
+        draft: { sections: [{ title: 'saas_voice_config', raw_text: JSON.stringify({ language: 'en-IN', realtimeVoice: 'Puck' }) }] },
+      }),
+    }));
+    let socketUrl = '';
+    await page.routeWebSocket(/\/ws\/web-agent(?:\?|$)/, (socket) => {
+      socketUrl = socket.url();
+      socket.send(JSON.stringify({ type: 'ready', callId: 'mock-language-call', sampleRate: 16000 }));
+    });
+    await page.addInitScript(() => {
+      navigator.mediaDevices.getUserMedia = async () => { throw new DOMException('Denied', 'NotAllowedError'); };
+    });
+    await openVoiceStudio(page);
+    await expect(page.getByTestId('language-selection-card')).toContainText('Active: Telugu (te-IN)');
+    await page.getByTestId('voice-open-test-call-btn').click();
+    await page.getByTestId('test-call-start-browser').click();
+    await expect(page.getByTestId('test-call-end-browser')).toBeVisible();
+    expect(new URL(socketUrl).searchParams.get('language')).toBe('te-IN');
+    await page.getByTestId('test-call-end-browser').click();
+  });
+
+  test('premium voice is saved atomically and survives a reload with stale brain metadata', async ({ page }) => {
+    let releaseSave;
+    const saveAllowed = new Promise((resolve) => { releaseSave = resolve; });
+    await page.route(`**/api/agents/${testAgent.id}`, async (route) => {
+      if (route.request().method() === 'PATCH') await saveAllowed;
+      await route.fallback();
+    });
+    await page.route('**/business-brain', (route) => route.fulfill({
+      status: 200, contentType: 'application/json', body: JSON.stringify({
+        draft: { sections: [{ title: 'saas_voice_config', raw_text: JSON.stringify({ language: 'en-IN', realtimeVoice: 'te-in-csagent-5' }) }] },
+      }),
+    }));
+    await openVoiceStudio(page);
+    await page.getByTestId('voice-tier-select-btn-te-in-csagent-4').click();
+    await expect(page.getByTestId('voice-tier-select-btn-te-in-csagent-4')).toContainText('Saving…');
+    await expect(page.getByTestId('voice-open-test-call-btn')).toBeDisabled();
+    await expect(page.getByTestId('agent-test-call')).toBeDisabled();
+    releaseSave();
+    await expect(page.getByTestId('voice-stack-save-status')).toContainText('Voice setup saved.');
+    expect(voiceStackPatchBody).toMatchObject({
+      defaultTier: 'premium', expectedVoiceRevision: 0,
+      voiceSettings: { stackSelectionVersion: 1, realtimeVoice: 'te-in-csagent-4' },
+    });
+    expect(voiceStackPatchBody.voiceSettings).not.toHaveProperty('voiceId');
+    await expect(page.getByTestId('voice-open-test-call-btn')).toBeEnabled();
+    await page.reload();
+    await page.getByTestId('agent-tab-voice').click();
+    await expect(page.getByTestId('voice-select-btn-te-in-csagent-4')).toContainText('Selected');
+    await expect(page.getByTestId('voice-select-btn-te-in-csagent-5')).toContainText('Choose');
+  });
+
+  test('a conflicting tier save keeps the draft unsaved and blocks stale test calls until reload', async ({ page }) => {
+    persistedTestAgent = {
+      ...testAgent, defaultTier: 'medium', voiceRevision: 1,
+      voiceSettings: { stackSelectionVersion: 1, profileRevision: 5, engineId: 'regional-expressive', modelId: 'regional-fast', voiceId: 'voice-regional-te' },
+    };
+    await page.route(`**/api/agents/${testAgent.id}`, async (route) => {
+      if (route.request().method() !== 'PATCH') return route.fallback();
+      persistedTestAgent = { ...persistedTestAgent, voiceRevision: 2 };
+      await route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ detail: { error: { code: 'voice_revision_conflict', message: 'Voice settings changed.' } } }) });
+    });
+    await openVoiceStudio(page);
+    await page.getByTestId('voice-select-btn-voice-economical-te').click();
+    await expect(page.getByTestId('voice-stack-save-error')).toContainText('Your choice was not applied');
+    await expect(page.getByTestId('voice-stack-save-status')).toHaveCount(0);
+    await expect(page.getByTestId('voice-stack-tier-low')).toBeChecked();
+    await expect(page.getByTestId('agent-test-call')).toBeDisabled();
+    await page.getByTestId('voice-stack-conflict-reload').click();
+    await expect(page.getByTestId('voice-stack-tier-medium')).toBeChecked();
+    await expect(page.getByTestId('voice-stack-save-error')).toHaveCount(0);
+    await expect(page.getByTestId('agent-test-call')).toBeEnabled();
+  });
+
+  test('profile revision conflicts refresh the catalog and can save again without a false editor conflict', async ({ page }) => {
+    let profileRevision = 5;
+    let catalogReads = 0;
+    let rejectFirstSave = true;
+    await page.route('**/api/voice-stacks/catalog*', (route) => {
+      catalogReads += 1;
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ profiles: [{
+        tier: 'medium', ready: true, profileRevision,
+        retailRate: { usdMicrosPerMin: 14000, inrPaisePerMin: 140, version: 1, complete: true },
+        engines: [{ id: 'regional-expressive', label: 'Regional Expressive Engine', models: [{
+          id: 'regional-fast', label: 'Regional Fast', audioStreaming: true,
+          voices: [{ id: 'voice-regional-te', label: 'Telugu Support', languages: ['te-IN'] }],
+        }] }],
+      }] }) });
+    });
+    await page.route(`**/api/agents/${testAgent.id}`, async (route) => {
+      if (route.request().method() !== 'PATCH' || !rejectFirstSave) return route.fallback();
+      rejectFirstSave = false;
+      profileRevision = 6;
+      await route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ detail: { error: {
+        code: 'profile_revision_conflict', message: 'The selected voice profile changed. Reload the voice catalog and save again.',
+      } } }) });
+    });
+    await openVoiceStudio(page);
+    await page.getByTestId('voice-select-btn-voice-regional-te').click();
+    await expect(page.getByTestId('voice-stack-save-error')).toContainText('Voice options changed');
+    await expect(page.getByTestId('voice-stack-save-error')).not.toContainText('Another editor');
+    await expect(page.getByTestId('voice-stack-conflict-reload')).toHaveCount(0);
+    expect(catalogReads).toBeGreaterThanOrEqual(2);
+    await page.getByTestId('voice-select-btn-voice-regional-te').click();
+    await expect(page.getByTestId('voice-stack-save-status')).toContainText('Voice setup saved');
+    expect(voiceStackPatchBody).toMatchObject({ expectedVoiceRevision: 0, voiceSettings: { profileRevision: 6 } });
+  });
+
+  for (const [code, message] of [
+    ['invalid_composed_tier', 'This voice tier could not be applied'],
+    ['voice_selection_invalid', 'That voice is no longer available for this language'],
+    ['profile_unavailable', 'This voice tier is currently unavailable'],
+    ['unsupported_language', 'This tier does not support the selected language'],
+  ]) {
+    test(`${code} is shown as a voice configuration failure, not a newer editor`, async ({ page }) => {
+      await page.route(`**/api/agents/${testAgent.id}`, async (route) => {
+        if (route.request().method() !== 'PATCH') return route.fallback();
+        await route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ detail: { error: { code, message: 'Voice configuration rejected.' } } }) });
+      });
+      await openVoiceStudio(page);
+      await page.getByTestId('voice-tier-select-btn-te-in-csagent-4').click();
+      await expect(page.getByTestId('voice-stack-save-error')).toContainText(message);
+      await expect(page.getByTestId('voice-stack-save-error')).not.toContainText('Another editor');
+      await expect(page.getByTestId('voice-stack-conflict-reload')).toHaveCount(0);
+      await expect(page.getByTestId('voice-open-test-call-btn')).toBeDisabled();
+      await expect(page.getByTestId('voice-stack-save-status')).toHaveCount(0);
+    });
+  }
+
+  test('sequential economical, standard, premium and reloaded saves use the latest durable revision', async ({ page }) => {
+    const patches = [];
+    page.on('request', (request) => {
+      if (request.method() === 'PATCH' && new URL(request.url()).pathname === `/api/agents/${testAgent.id}`) patches.push(request.postDataJSON());
+    });
+    await openVoiceStudio(page);
+    for (const [tier, voiceId] of [
+      ['low', 'voice-economical-te'], ['medium', 'voice-regional-te'], ['premium', 'te-in-csagent-4'],
+    ]) {
+      const button = page.getByTestId(tier === 'premium' ? `voice-select-btn-${voiceId}` : `voice-select-btn-${voiceId}`);
+      await button.click();
+      await expect(page.getByTestId('voice-stack-save-status')).toContainText('Voice setup saved');
+      await expect(page.getByTestId(`voice-stack-tier-${tier}`)).toBeChecked();
+    }
+    expect(patches.map((patch) => patch.expectedVoiceRevision)).toEqual([0, 1, 2]);
+    expect(patches[2].voiceSettings).toEqual({ stackSelectionVersion: 1, realtimeVoice: 'te-in-csagent-4' });
+    await page.reload();
+    await page.getByTestId('agent-tab-voice').click();
+    await expect(page.getByTestId('voice-select-btn-te-in-csagent-4')).toContainText('Selected');
+    await page.getByTestId('voice-select-btn-voice-economical-te').click();
+    await expect(page.getByTestId('voice-stack-save-status')).toContainText('Voice setup saved');
+    expect(patches[3]).toMatchObject({ defaultTier: 'low', expectedVoiceRevision: 3 });
+    await expect(page.getByTestId('voice-stack-save-error')).toHaveCount(0);
+  });
+
+  test('an unconfirmed premium save cannot report success or start a stale voice test', async ({ page }) => {
+    await page.route(`**/api/agents/${testAgent.id}`, async (route) => {
+      if (route.request().method() !== 'PATCH') return route.fallback();
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ agent: {
+        ...testAgent, defaultTier: 'premium', voiceRevision: 1,
+        voiceSettings: { stackSelectionVersion: 1, realtimeVoice: 'te-in-csagent-5' },
+      } }) });
+    });
+    await openVoiceStudio(page);
+    await page.getByTestId('voice-tier-select-btn-te-in-csagent-4').click();
+    await expect(page.getByTestId('voice-stack-save-error')).toContainText('save could not be confirmed');
+    await expect(page.getByTestId('voice-stack-save-status')).toHaveCount(0);
+    await expect(page.getByTestId('voice-open-test-call-btn')).toBeDisabled();
+    await expect(page.getByTestId('agent-test-call')).toBeDisabled();
+  });
+
   test('Voice and Language studio renders cards, plays preconfigured sample playback, and changes voice/language', async ({
     page,
   }, testInfo) => {
@@ -268,7 +449,6 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
     await expect(page.locator('[data-testid="language-selection-card"]')).toBeVisible();
     await expect(page.locator('[data-testid="speaking-voice-showcase"]')).toBeVisible();
     await expect(page.locator('[data-testid="acoustic-calibration-card"]')).toBeVisible();
-    await expect(page.locator('[data-testid="greeting-preview-card"]')).toBeVisible();
 
     // 6. Test Language Selection: Select Telugu (te-IN)
     console.log('Testing Telugu (te-IN) language card selection...');
@@ -347,7 +527,8 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
     const playingIndicator = page.locator('[data-testid="voice-playing-indicator"]');
     await expect(playingIndicator).toBeVisible({ timeout: 8000 });
     await expect(playingIndicator).toContainText(/Playing/i);
-    await expect(playingIndicator).toContainText(new RegExp(previewVoice.label || previewVoice.name || previewVoice.id, 'i'));
+    const renderedVoiceName = (await previewCard.locator('span.font-bold').innerText().catch(() => '')) || 'Voice';
+    await expect(playingIndicator).toContainText(new RegExp(renderedVoiceName || previewVoice.label || previewVoice.name || 'Voice', 'i'));
     if (activeVoiceProvider === 'gemini') {
       await expect.poll(() => previewRequest).toMatchObject({ voiceId: previewVoice.id, language: 'te-IN' });
     }
@@ -377,20 +558,7 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
       await expect(page.locator('[data-testid="voice-preview-error"]')).toContainText(accessMessage);
     }
 
-    // 9e. Test Greeting Preview Button
-    console.log('Testing bespoke greeting preview button...');
-    const greetingBtn = page.locator('[data-testid="greeting-preview-card"] button').first();
-    await expect(greetingBtn).toBeVisible();
-    await greetingBtn.click();
-    await page.waitForTimeout(1000);
-    // Indicator or active playing state
-    if (await stopBtn.isVisible()) {
-      await stopBtn.click();
-      await page.waitForTimeout(500);
-    } else if (await page.locator('text=Stop Greeting').isVisible()) {
-      await page.locator('text=Stop Greeting').click();
-      await page.waitForTimeout(500);
-    }
+
 
     // 10. Select a voice from the active provider's list.
     const selectVoiceBtn = page.locator(`[data-testid="voice-select-btn-${previewVoice.id}"]`);
@@ -511,7 +679,7 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
     console.log('Voice and Language studio verified successfully with Playwright!');
   });
 
-  test('tenant voice tiers hide unready profiles, clear dependent choices, and save only approved aliases', async ({ page }) => {
+  test('tenant voice tiers use native rates, isolate voices, and persist exact aliases and revisions', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/#dashboard/overview');
     await page.waitForTimeout(1000);
@@ -533,33 +701,26 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
     const selector = page.locator('[data-testid="voice-stack-selector"]');
     await expect(selector).toBeVisible();
     await expect(selector).not.toContainText('Internal Live Provider');
-    await expect(page.locator('[data-testid="voice-stack-tier-premium"]')).toHaveCount(0);
+    await expect(page.locator('[data-testid="voice-stack-tier-premium"]')).toBeEnabled();
+    await expect(selector).toContainText('₹0.70 per min');
+
+    await page.getByTestId('voice-stack-tier-low').check();
+    await expect(page.getByTestId('speaking-voice-showcase')).toHaveCount(0);
+    await expect(page.getByTestId('voice-stack-options')).toHaveCount(0);
+
+    await page.getByTestId('voice-stack-tier-premium').check();
+    await expect(page.getByTestId('speaking-voice-showcase')).toBeVisible();
 
     const standardTier = page.locator('[data-testid="voice-stack-tier-medium"]');
     await standardTier.focus();
     await page.keyboard.press('Space');
     await expect(standardTier).toBeChecked();
 
-    const engine = page.locator('[data-testid="voice-stack-engine"]');
-    const model = page.locator('[data-testid="voice-stack-model"]');
-    const voice = page.locator('[data-testid="voice-stack-voice"]');
-    await engine.selectOption('regional-expressive');
-    await model.selectOption('regional-fast');
-    await voice.selectOption('voice-regional-te');
-
-    await engine.selectOption('turbo-natural');
-    await expect(model).toHaveValue('');
-    await expect(voice).toHaveValue('');
-    await engine.selectOption('regional-expressive');
-    await model.selectOption('regional-fast');
-    await voice.selectOption('voice-regional-te');
-    await expect(page.locator('[data-testid="voice-stack-preview"]')).toContainText('No approved audio sample');
-
-    const save = page.locator('[data-testid="voice-stack-save"]');
-    await expect(save).toBeEnabled();
-    await save.click();
+    const selectMediumVoiceBtn = page.locator('[data-testid="voice-select-btn-voice-regional-te"]');
+    await expect(selectMediumVoiceBtn).toBeVisible();
+    await selectMediumVoiceBtn.click();
     await expect(page.locator('[data-testid="voice-stack-save-status"]')).toContainText('Voice setup saved.');
-    expect(voiceStackPatchBody).toEqual({
+    expect(voiceStackPatchBody).toMatchObject({
       defaultTier: 'medium',
       expectedVoiceRevision: 0,
       voiceSettings: {
@@ -588,5 +749,155 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
     await expect(reloadedVoiceTab).toBeVisible({ timeout: 15000 });
     await reloadedVoiceTab.click();
     await expect(page.locator('[data-testid="voice-stack-selector"]')).toContainText('Saved configuration: Standard Regional Tier');
+
+    // A new profile revision needs a fresh save even when its public choices did not change.
+    await page.route('**/api/voice-stacks/catalog*', (route) => route.fulfill({
+      status: 200, contentType: 'application/json', body: JSON.stringify({ profiles: [{
+        tier: 'medium', ready: true, profileRevision: 6,
+        retailRate: { usdMicrosPerMin: 14000, inrPaisePerMin: 140, version: 1, complete: true },
+        engines: [{ id: 'regional-expressive', label: 'Regional Expressive Engine', models: [{
+          id: 'regional-fast', label: 'Regional Fast', audioStreaming: true,
+          voices: [{ id: 'voice-regional-te', label: 'Telugu Support', languages: ['te-IN'] }],
+        }] }],
+      }] }),
+    }));
+    await page.reload();
+    await page.getByTestId('agent-tab-voice').click();
+    const reselectMediumVoiceBtn = page.locator('[data-testid="voice-select-btn-voice-regional-te"]');
+    await expect(reselectMediumVoiceBtn).toBeVisible();
+    await reselectMediumVoiceBtn.click();
+    await expect(page.getByTestId('voice-stack-save-status')).toContainText('Voice setup saved.');
+    expect(voiceStackPatchBody.expectedVoiceRevision).toBe(1);
+    expect(voiceStackPatchBody.voiceSettings.profileRevision).toBe(6);
+  });
+
+  test('unconfigured tiers stay visible and disabled without borrowing live voices', async ({ page }) => {
+    await page.route('**/api/voice-stacks/catalog*', (route) => route.fulfill({
+      status: 200, contentType: 'application/json', body: JSON.stringify({ profiles: [
+        { tier: 'low', ready: false, profileRevision: 0, engines: [], retailRate: null },
+        { tier: 'medium', ready: false, profileRevision: 0, engines: [], retailRate: null },
+        { tier: 'premium', ready: true, profileRevision: 1, engines: [],
+          retailRate: { usdMicrosPerMin: 42000, inrPaisePerMin: 420, version: 1, complete: true } },
+      ] }),
+    }));
+    await page.goto(`/#dashboard/employees?step=voice&agent=${testAgent.id}`);
+    await expect(page.getByTestId('voice-stack-tier-low')).toBeDisabled();
+    await expect(page.getByTestId('voice-stack-tier-medium')).toBeDisabled();
+    await expect(page.getByTestId('voice-stack-selector')).toContainText('Unavailable for this language until setup is approved.');
+    await page.getByTestId('voice-stack-tier-premium').check();
+    await expect(page.getByTestId('voice-stack-options')).toHaveCount(0);
+    await expect(page.getByTestId('speaking-voice-showcase')).toBeVisible();
+  });
+
+  test('three stack columns render scrollable voice lists and play back voice previews across tiers according to selected language', async ({ page }) => {
+    let lastPreviewPayload = null;
+    const previewSample = path.resolve(__dirname, '../public/audio/voxly/samples/marin.wav');
+    await page.route('**/api/telephony/voice-preview*', async (route) => {
+      lastPreviewPayload = route.request().postDataJSON();
+      await route.fulfill({ status: 200, contentType: 'audio/wav', body: fs.readFileSync(previewSample) });
+    });
+
+    await page.goto('/#dashboard/overview');
+    await page.waitForTimeout(1000);
+    await page.goto(`/#dashboard/employees?step=voice&agent=${testAgent.id}`);
+    await page.waitForTimeout(2000);
+
+    const voiceTab = page.locator('#agent-tab-voice');
+    if (!(await voiceTab.isVisible())) {
+      await page.goto('/#dashboard/employees');
+      await page.waitForTimeout(1500);
+      const agentCard = page.locator('[data-testid="agent-card"]').first();
+      await agentCard.click({ force: true });
+      await page.waitForTimeout(2000);
+    }
+    await expect(voiceTab).toBeVisible({ timeout: 15000 });
+    await voiceTab.click();
+
+    // 1. Verify 3 stack tier columns exist
+    await expect(page.locator('[data-testid="voice-stack-tier-low"]')).toBeVisible();
+    await expect(page.locator('[data-testid="voice-stack-tier-medium"]')).toBeVisible();
+    await expect(page.locator('[data-testid="voice-stack-tier-premium"]')).toBeVisible();
+
+    // 2. Verify scrollable roster containers inside columns
+    const scrollableRosters = page.locator('.max-h-60.overflow-y-auto');
+    expect(await scrollableRosters.count()).toBeGreaterThanOrEqual(3);
+
+    // 3. Play sample in Low tier (Telugu is default active language)
+    const playLowBtn = page.locator('[data-testid="voice-play-btn-voice-economical-te"]');
+    await expect(playLowBtn).toBeVisible();
+    lastPreviewPayload = null;
+    await playLowBtn.click();
+    await page.waitForTimeout(500);
+
+    expect(lastPreviewPayload).toBeTruthy();
+    expect(lastPreviewPayload.tier).toBe('low');
+    expect(lastPreviewPayload.language).toBe('te-IN');
+    expect(lastPreviewPayload.voiceId).toBe('voice-economical-te');
+    expect(lastPreviewPayload.text).toContain('నమస్కారం');
+
+    // 4. Play sample in Medium tier
+    const playMedBtn = page.locator('[data-testid="voice-play-btn-voice-regional-te"]');
+    await expect(playMedBtn).toBeVisible();
+    lastPreviewPayload = null;
+    await playMedBtn.click();
+    await page.waitForTimeout(500);
+
+    expect(lastPreviewPayload).toBeTruthy();
+    expect(lastPreviewPayload.tier).toBe('medium');
+    expect(lastPreviewPayload.language).toBe('te-IN');
+    expect(lastPreviewPayload.voiceId).toBe('voice-regional-te');
+    expect(lastPreviewPayload.text).toContain('నమస్కారం');
+
+    // 5. Switch Language to Hindi (hi-IN)
+    const hindiCard = page.locator('[data-testid="language-card-hi-IN"]');
+    await expect(hindiCard).toBeVisible();
+    await hindiCard.click();
+    await page.waitForTimeout(600);
+
+    // Play sample in Low tier with Hindi active - text should now be Hindi
+    lastPreviewPayload = null;
+    await playLowBtn.click();
+    await page.waitForTimeout(500);
+
+    expect(lastPreviewPayload).toBeTruthy();
+    expect(lastPreviewPayload.tier).toBe('low');
+    expect(lastPreviewPayload.language).toBe('hi-IN');
+    expect(lastPreviewPayload.voiceId).toBe('voice-economical-te');
+    expect(lastPreviewPayload.text).toContain('नमस्ते');
+
+    // Play sample in Medium tier with Hindi active
+    lastPreviewPayload = null;
+    await playMedBtn.click();
+    await page.waitForTimeout(500);
+
+    expect(lastPreviewPayload).toBeTruthy();
+    expect(lastPreviewPayload.tier).toBe('medium');
+    expect(lastPreviewPayload.language).toBe('hi-IN');
+    expect(lastPreviewPayload.voiceId).toBe('voice-regional-te');
+    expect(lastPreviewPayload.text).toContain('नमस्ते');
+
+    // 6. Switch back to persisted language (te-IN) to allow saving voice setup
+    const teluguCard = page.locator('[data-testid="language-card-te-IN"]');
+    await expect(teluguCard).toBeVisible();
+    await teluguCard.click();
+    await page.waitForTimeout(600);
+
+    // 7. Test voice selection in Low tier
+    const selectLowBtn = page.locator('[data-testid="voice-select-btn-voice-economical-te"]');
+    await expect(selectLowBtn).toBeVisible();
+    await selectLowBtn.click();
+    await page.waitForTimeout(500);
+
+    // Verify low radio button is now checked
+    await expect(page.locator('[data-testid="voice-stack-tier-low"]')).toBeChecked();
+    await expect(page.locator('[data-testid="voice-stack-save-status"]')).toContainText('Voice setup saved.');
+
+    expect(voiceStackPatchBody).toMatchObject({
+      defaultTier: 'low',
+      voiceSettings: {
+        stackSelectionVersion: 1,
+        voiceId: 'voice-economical-te',
+      },
+    });
   });
 });

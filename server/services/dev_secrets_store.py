@@ -46,6 +46,8 @@ _STRING_FIELDS = frozenset(
         "vobiz_app_id",
         "vobiz_phone_number",
         "vobiz_webhook_base_url",
+        "sarvam_llm_models_csv",
+        "gemini_tts_models_csv",
     }
 )
 
@@ -267,6 +269,8 @@ class DevSecretsStore:
                 self._toggle_row("ENABLE_GEMINI", "enable_gemini", settings, overlay),
             ],
             "llm_defaults": [
+                self._string_row("SARVAM_LLM_ALLOWED_MODELS", "sarvam_llm_models_csv", settings, overlay),
+                self._string_row("GEMINI_TTS_ALLOWED_MODELS", "gemini_tts_models_csv", settings, overlay),
                 {
                     "env_name": "GEMINI_MODEL",
                     "field": "gemini_model",
