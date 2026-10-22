@@ -357,7 +357,7 @@ class PstnTurnTtsSession:
                 raise RuntimeError("The selected composed speech transport is unavailable")
             self._stream_adapter = adapter
             self._stream_config = tts_config
-        elif provider in {"sarvam", "cartesia", "gemini"} and api_mode == "websocket":
+        elif provider in {"sarvam", "cartesia", "gemini", "gnani"} and api_mode == "websocket":
             if provider == "sarvam":
                 self._merged.update(
                     {
@@ -367,7 +367,7 @@ class PstnTurnTtsSession:
                     }
                 )
                 self._tts_rate = 8000 if wire_mode == "rtp_mulaw" else 16000
-            elif provider == "cartesia":
+            elif provider in {"cartesia", "gnani"}:
                 self._tts_rate = 8000 if wire_mode == "rtp_mulaw" else 16000
             elif provider == "gemini":
                 from server.providers.gemini_tts import supports_gemini_tts_streaming

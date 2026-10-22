@@ -83,6 +83,17 @@ class ComposedVoiceActivationBody(BaseModel):
     model_config = {"populate_by_name": True}
 
 
+class DevVoicePreviewBody(BaseModel):
+    provider: str
+    model: str | None = None
+    voice_id: str = Field(..., alias="voiceId")
+    text: str | None = None
+    language: str | None = "te-IN"
+    speed: float | None = 1.0
+
+    model_config = {"populate_by_name": True}
+
+
 def _voice_profile_http_error(exc) -> HTTPException:
     detail = {"error": {"code": exc.code, "message": str(exc), **(exc.details or {})}}
     return HTTPException(status_code=exc.status_code, detail=detail)
@@ -170,6 +181,39 @@ async def dev_composed_voice_profile_activation(
         )
     except VoiceProfileError as exc:
         raise _voice_profile_http_error(exc) from exc
+
+
+@router.post("/api/dev/stack/voice-preview")
+async def dev_composed_voice_preview(
+    body: DevVoicePreviewBody,
+    session: SessionData = Depends(require_dev_session),
+):
+    require_permission(session, "dev.stack.read")
+    import base64
+    from server.services.saas.voice_preview import synthesize_preview
+
+    sample_text = (body.text or "").strip()
+    if not sample_text:
+        sample_text = "నమస్కారం! నేను మీకు ఎలా సహాయం చేయగలను?" if (body.language or "").startswith("te") else "Hello! How can I help you today?"
+
+    try:
+        result = await synthesize_preview(
+            sample_text,
+            voice_id=body.voice_id,
+            language=body.language or "te-IN",
+            speed=body.speed or 1.0,
+            provider=body.provider,
+            model=body.model,
+        )
+        audio = result.get("audio") or b""
+        return {
+            "voice": result.get("voice"),
+            "label": result.get("label"),
+            "audio_base64": base64.b64encode(audio).decode("ascii") if isinstance(audio, bytes) else str(audio),
+            "content_type": "audio/wav",
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
 
 
 @router.get("/api/dev/stack/tiers")

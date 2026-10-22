@@ -35,10 +35,27 @@ def composed_system_prompt(ctx: Any) -> str:
     brain = str(ctx.compiled_brain_text or "").strip()
     if not brain:
         raise RuntimeError("The selected voice session has no published instructions")
-    stack = ctx.resolved_stack
-    language = normalize_compile_language(stack.language)
-    key = (str(ctx.compiled_brain_version), brain, language, stack.llm.provider,
-           stack.llm.model, str((stack.llm.config or {}).get("api_mode")))
+    stack = getattr(ctx, "resolved_stack", None)
+    language = normalize_compile_language(
+        getattr(stack, "language", None)
+        or getattr(ctx, "selected_language", None)
+        or getattr(ctx, "language", "te-IN")
+    )
+    llm_prov = getattr(getattr(stack, "llm", None), "provider", "gemini")
+    llm_model = getattr(getattr(stack, "llm", None), "model", "gemini-2.0-flash")
+    llm_api = str((getattr(getattr(stack, "llm", None), "config", None) or {}).get("api_mode", "chat_completions_v1"))
+    tts_prov = str(getattr(getattr(stack, "tts", None), "provider", "") or "").lower()
+    tts_model = str(getattr(getattr(stack, "tts", None), "model", "") or "").lower()
+    key = (
+        str(ctx.compiled_brain_version),
+        brain,
+        language,
+        llm_prov,
+        llm_model,
+        llm_api,
+        tts_prov,
+        tts_model,
+    )
     cached = getattr(ctx, "composed_prompt_snapshot", None)
     if cached is None or cached.key != key:
         text = refresh_platform_sections(brain, language)
@@ -47,6 +64,20 @@ def composed_system_prompt(ctx: Any) -> str:
             "Render script examples in this language even when authored in English. "
             "The opening has already been delivered; answer the caller without reintroducing yourself."
         )
+        if tts_prov == "gnani":
+            text += (
+                "\n\n[Gnani Audio Tags Expressive Guidelines]\n"
+                "Your speech is synthesized by Gnani Timbre, which supports inline non-verbal emotional and prosody audio tags. "
+                "Use the following tags contextually to make spoken responses feel warm, lively, and conversational:\n"
+                "- Emotional & Non-Verbal Markers: <laugh>, <giggle>, <sigh>, <whispers>, <excited>, <exhales>, <yawns>, <coughs>, <sniffles>, <clears throat>\n"
+                "- Pacing & Delivery: <pauses>, <slow>, <shouting>\n"
+                "Tag Generation Rules:\n"
+                "1. Place tags naturally at the start of clauses or between phrases (e.g., 'నమస్కారం అండి! <excited> మీకు ఒక శుభవార్త ఉంది.').\n"
+                "2. Place <pauses> before important numbers, account balances, or confirmation prompts so the caller has time to comprehend.\n"
+                "3. Use <laugh> or <giggle> for polite, cheerful customer service interactions.\n"
+                "4. Never combine conflicting tags (e.g. do not combine <whispers> and <shouting> together).\n"
+                "5. Use tags purposefully and contextually; do not clutter every single sentence with tags."
+            )
         cached = ComposedPromptSnapshot(key, text)
         ctx.composed_prompt_snapshot = cached
     return cached.text

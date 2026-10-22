@@ -29,8 +29,9 @@ class Constants:
     STT_MODES = ["transcribe", "translate", "verbatim", "translit", "codemix"]
     STT_STREAM_TYPES = ["fast", "balanced", "simulated"]  # realtime WS only
 
-    # TTS models — bulbul:v3 supports temperature (0.01-1.0), pace 0.5-2.0, NO pitch/loudness
+    # TTS models — bulbul:v4-flash (latest low-latency), bulbul:v3 supports temperature (0.01-1.0), pace 0.5-2.0
     TTS_MODELS: dict[str, dict] = {
+        "bulbul:v4-flash": {"label": "Bulbul v4 Flash (latest, ultra low latency)", "pace": [0.5, 2.0], "temperature": [0.01, 1.0], "pitch": [-0.75, 0.75], "loudness": [0.3, 3.0]},
         "bulbul:v3": {"label": "Bulbul v3 (recommended, temperature)", "pace": [0.5, 2.0], "temperature": [0.01, 1.0], "pitch": None, "loudness": None},
         "bulbul:v2": {"label": "Bulbul v2 (legacy, pitch/loudness)", "pace": [0.3, 3.0], "temperature": None, "pitch": [-0.75, 0.75], "loudness": [0.3, 3.0]},
     }
@@ -137,6 +138,17 @@ class Constants:
     CARTESIA_API_VERSION = "2026-08-14"
     # Fallback when CARTESIA_TTS_VOICE_ID unset (Cartesia "Skylar")
     CARTESIA_DEFAULT_VOICE_ID = "db6b0ed5-d5d3-463d-ae85-518a07d3c2b4"
+
+    # Gnani.ai (Vachana) TTS models & endpoints
+    GNANI_TTS_MODELS: dict[str, dict] = {
+        "timbre-v3.0": {"label": "Timbre v3.0 (Expressive, Audio Tags, Recommended)"},
+        "timbre-v2.5": {"label": "Timbre v2.5 (Standard Telephony)"},
+    }
+    GNANI_TTS_WS = "wss://api.vachana.ai/api/v1/tts"
+    GNANI_TTS_REST = "https://api.vachana.ai/api/v1/tts/inference"
+    GNANI_DEFAULT_MODEL = "timbre-v3.0"
+    GNANI_DEFAULT_VOICE_1 = "Nalini"
+    GNANI_DEFAULT_VOICE_2 = "Pranav"
 
     # LLM catalogs (verified from provider docs — Aug 2026)
     # OpenAI voice models: see server/prompts/voice_defaults.OPENAI_MODEL_CATALOG
@@ -288,4 +300,6 @@ def provider_language_code(
         return str(entry.get(field) or lang)
     if provider == "cartesia" and lang.startswith("en"):
         return "en"
+    if provider == "gnani" and lang.startswith("en"):
+        return "en-IN"
     return lang

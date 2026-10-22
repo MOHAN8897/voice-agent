@@ -63,6 +63,20 @@ def resolve_preview_voice(
         label = str(alias_match.get("label") or pvid)
         return pvid, label
 
+    # Gnani Voices (Voice 1, Voice 2)
+    if active_provider == "gnani" or "gnani" in wanted.lower():
+        clean_g = wanted.removeprefix("voice-").strip().lower()
+        if "2" in clean_g or clean_g in {"pranav", "avinash", "gnani-2"}:
+            return "Pranav", "Voice 2"
+        return "Nalini", "Voice 1"
+
+    # Cartesia Voices (Voice 1, Voice 2)
+    if active_provider == "cartesia" or "cartesia" in wanted.lower() or "sonic" in wanted.lower() or len(wanted) > 20:
+        clean_c = wanted.removeprefix("voice-").strip().lower()
+        if "2" in clean_c or clean_c in {"caleb", "male", "cartesia-2"}:
+            return "a0e99841-438c-4a64-b679-ae501e7d6091", "Voice 2"
+        return "db6b0ed5-d5d3-463d-ae85-518a07d3c2b4", "Voice 1"
+
     # 2. Defaults if empty
     if not wanted:
         if active_provider == "sarvam" or tier == "medium":
@@ -271,6 +285,34 @@ async def _synthesize_gemini_tts(line: str, voice: str, speed: float, language: 
     return audio
 
 
+async def _synthesize_gnani(line: str, voice: str, speed: float, language: str | None = None, model: str | None = None) -> bytes:
+    from server.providers.gnani_tts import GnaniTTSAdapter, TTSConfig
+
+    adapter = GnaniTTSAdapter()
+    cfg = TTSConfig(
+        provider="gnani",
+        model=model or "timbre-v3.0",
+        speaker=voice,
+        language=language or "te-IN",
+        pace=speed,
+    )
+    return await adapter.synthesize_rest(line, cfg)
+
+
+async def _synthesize_cartesia(line: str, voice: str, speed: float, language: str | None = None, model: str | None = None) -> bytes:
+    from server.providers.cartesia_tts import CartesiaTTSAdapter, TTSConfig
+
+    adapter = CartesiaTTSAdapter()
+    cfg = TTSConfig(
+        provider="cartesia",
+        model=model or "sonic-3.5",
+        speaker=voice,
+        language=language or "te-IN",
+        speed=speed,
+    )
+    return await adapter.synthesize_rest(line, cfg)
+
+
 def find_static_sample(voice: str, language: str | None = None) -> bytes | None:
     """Find pre-recorded or pre-stored static sample audio for catalog voices."""
     from pathlib import Path
@@ -360,17 +402,24 @@ async def synthesize_preview(
 ) -> dict[str, Any]:
     """Synthesize a WAV with the currently selected provider; never cross-fallback."""
     line = normalize_preview_text(text)
-    active_provider = str(provider or "gemini").strip().lower()
-    if tier == "medium":
-        active_provider = "sarvam"
-    elif tier == "low":
-        active_provider = "gemini"
-    if active_provider not in {"gemini", "openai", "sarvam"}:
+    active_provider = str(provider or "").strip().lower()
+    if not active_provider:
+        if tier == "medium":
+            active_provider = "sarvam"
+        elif tier == "low":
+            active_provider = "gemini"
+        else:
+            active_provider = "gemini"
+    if active_provider not in {"gemini", "openai", "sarvam", "cartesia", "gnani"}:
         raise ValueError("unsupported_voice_provider")
     voice, label = resolve_preview_voice(voice_id, provider=active_provider, language=language, tier=tier)
     pace = max(0.5, min(2.0, float(speed) if speed is not None else 1.0))
-    if tier == "medium" or active_provider == "sarvam":
-        preview_model = "bulbul:v3"
+    if active_provider == "gnani":
+        preview_model = model or "timbre-v3.0"
+    elif active_provider == "cartesia":
+        preview_model = model or "sonic-3.5"
+    elif tier == "medium" or active_provider == "sarvam":
+        preview_model = model or "bulbul:v3"
     elif tier == "low" or (model and "tts" in model):
         preview_model = model if (model and "tts" in model) else "gemini-3.8-flash-lite-tts"
     elif active_provider == "gemini":
@@ -404,7 +453,11 @@ async def synthesize_preview(
     cacheable = is_catalog_voice and is_standard_sample
 
     async def generate():
-        if tier == "medium" or active_provider == "sarvam":
+        if active_provider == "gnani":
+            return await _synthesize_gnani(line, voice, pace, language=language, model=preview_model)
+        elif active_provider == "cartesia":
+            return await _synthesize_cartesia(line, voice, pace, language=language, model=preview_model)
+        elif tier == "medium" or active_provider == "sarvam":
             return await _synthesize_sarvam(line, voice, pace, language)
         elif tier == "low" or (model and "tts" in model):
             return await _synthesize_gemini_tts(line, voice, pace, language=language, model=preview_model)

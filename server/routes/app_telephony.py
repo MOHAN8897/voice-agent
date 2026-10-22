@@ -261,12 +261,21 @@ async def voice_preview(
         requested_tier = (raw_tier or (alias_match.get("tier") if alias_match else None) or "").strip().lower()
         effective_voice_id = (alias_match.get("providerVoiceId") if alias_match else None) or raw_voice_id
 
-        if requested_tier == "medium" or (alias_match and alias_match.get("provider") == "sarvam"):
+        if alias_match and alias_match.get("provider"):
+            provider = str(alias_match.get("provider"))
+            model = alias_match.get("model")
+        elif "gnani" in (raw_voice_id or "").lower():
+            provider = "gnani"
+            model = "timbre-v3.0"
+        elif "cartesia" in (raw_voice_id or "").lower() or (raw_voice_id and len(raw_voice_id) > 25):
+            provider = "cartesia"
+            model = "sonic-3.5"
+        elif requested_tier == "medium":
             provider = "sarvam"
-            model = alias_match.get("model") if alias_match else "bulbul:v3"
-        elif requested_tier == "low" or (alias_match and alias_match.get("provider") == "gemini" and "tts" in str(alias_match.get("model"))):
+            model = "bulbul:v3"
+        elif requested_tier == "low":
             provider = "gemini"
-            model = alias_match.get("model") if alias_match else "gemini-3.8-flash-tts"
+            model = "gemini-3.8-flash-tts"
         else:
             phone_stack = await resolve_platform_phone_stack(raw_lang or "te-IN")
             llm = phone_stack.get("llm") if isinstance(phone_stack.get("llm"), dict) else {}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
 import { DevCard } from "@/components/dev/DevCard";
@@ -128,6 +128,7 @@ const TTS_PROVIDERS = [
   { id: "gemini", label: "Google Gemini (Gemini TTS Low-Latency WebSocket)" },
   { id: "sarvam", label: "Sarvam AI (Bulbul Regional Natural WebSocket)" },
   { id: "cartesia", label: "Cartesia (Sonic Sub-100ms WebSocket)" },
+  { id: "gnani", label: "Gnani.ai (Timbre Expressive Audio Tags WebSocket)" },
 ];
 
 const TTS_MODELS_BY_PROVIDER: Record<string, { id: string; label: string; apiMode: string }[]> = {
@@ -137,12 +138,17 @@ const TTS_MODELS_BY_PROVIDER: Record<string, { id: string; label: string; apiMod
     { id: "gemini-3.1-flash-tts-preview", label: "gemini-3.1-flash-tts-preview · Preview Model WebSocket", apiMode: "websocket" },
   ],
   sarvam: [
-    { id: "bulbul:v3", label: "bulbul:v3 · Expressive Indian Regional WebSocket (Recommended)", apiMode: "websocket" },
+    { id: "bulbul:v4-flash", label: "bulbul:v4-flash · Ultra Low Latency Flash (Recommended)", apiMode: "websocket" },
+    { id: "bulbul:v3", label: "bulbul:v3 · Expressive Indian Regional WebSocket", apiMode: "websocket" },
     { id: "bulbul:v2", label: "bulbul:v2 · Standard Regional WebSocket", apiMode: "websocket" },
   ],
   cartesia: [
     { id: "sonic-3.5", label: "sonic-3.5 · Sub-100ms Ultra Fast WebSocket (Recommended)", apiMode: "websocket" },
     { id: "sonic-3.5-2026-05-04", label: "sonic-3.5-2026-05-04 · Snapshot Model WebSocket", apiMode: "websocket" },
+  ],
+  gnani: [
+    { id: "timbre-v3.0", label: "timbre-v3.0 · Audio Tags Expressive WebSocket (Recommended)", apiMode: "websocket" },
+    { id: "timbre-v2.5", label: "timbre-v2.5 · Standard Telephony WebSocket", apiMode: "websocket" },
   ],
 };
 
@@ -160,8 +166,14 @@ function getVoicesForTtsProvider(provider: string, languages: string[]): VoicePr
   }
   if (provider === "cartesia") {
     return [
-      { id: "voice-sonic-female", label: "Sonic Natural (Female - Skylar)", providerVoiceId: "db6b0ed5-d5d3-463d-ae85-518a07d3c2b4", languages: langs },
-      { id: "voice-sonic-male", label: "Sonic Natural (Male - Caleb)", providerVoiceId: "a0e99841-438c-4a64-b679-ae501e7d6091", languages: langs },
+      { id: "voice-cartesia-1", label: "Voice 1 (Female · Conversational)", providerVoiceId: "db6b0ed5-d5d3-463d-ae85-518a07d3c2b4", languages: langs },
+      { id: "voice-cartesia-2", label: "Voice 2 (Male · Conversational)", providerVoiceId: "a0e99841-438c-4a64-b679-ae501e7d6091", languages: langs },
+    ];
+  }
+  if (provider === "gnani") {
+    return [
+      { id: "voice-gnani-1", label: "Voice 1 (Female · Conversational)", providerVoiceId: "Nalini", languages: langs },
+      { id: "voice-gnani-2", label: "Voice 2 (Male · Conversational)", providerVoiceId: "Pranav", languages: langs },
     ];
   }
   // gemini
@@ -286,6 +298,16 @@ export function PstnVoiceProfileWorkbench() {
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
   const [providers, setProviders] = useState<CatalogProvider[]>([]);
+
+  // Audio preview playback state
+  const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
+  const [previewLoadingId, setPreviewLoadingId] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Stack duplication state
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [duplicateTargetTier, setDuplicateTargetTier] = useState<ProfileTier>("medium");
+  const [duplicateLabel, setDuplicateLabel] = useState("");
 
   const selectedRow = rows.find((r) => r.tier === selected);
   const isEnabled = selectedRow?.readiness.enabled === true;
@@ -439,7 +461,7 @@ export function PstnVoiceProfileWorkbench() {
       engines: [
         {
           id: provider,
-          label: provider === "sarvam" ? "Sarvam Bulbul" : provider === "gemini" ? "Gemini TTS" : "Cartesia Sonic",
+          label: provider === "sarvam" ? "Sarvam Bulbul" : provider === "gemini" ? "Gemini TTS" : provider === "gnani" ? "Gnani.ai Timbre" : "Cartesia Sonic",
           models: [
             {
               id: first.id,
@@ -586,6 +608,103 @@ export function PstnVoiceProfileWorkbench() {
     }
   }
 
+  const currentVoices = useMemo(() => {
+    const languages = draft.supportedLanguages.length > 0 ? draft.supportedLanguages : ["te-IN", "hi-IN", "en-IN"];
+    return getVoicesForTtsProvider(currentTtsProvider, languages);
+  }, [currentTtsProvider, draft.supportedLanguages]);
+
+  const handlePlayVoicePreview = useCallback(async (voiceId: string) => {
+    if (playingVoiceId === voiceId && audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+      setPlayingVoiceId(null);
+      return;
+    }
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    setPreviewLoadingId(voiceId);
+    setError("");
+    try {
+      const response = await portalFetch("dev", "/api/dev/stack/voice-preview", {
+        method: "POST",
+        body: JSON.stringify({
+          provider: currentTtsProvider,
+          model: currentTtsModel,
+          voiceId,
+          language: draft.supportedLanguages[0] || "te-IN",
+        }),
+      });
+      if (!response.ok) {
+        throw new Error(await responseError(response));
+      }
+      const data = await response.json();
+      const b64 = data.audio_base64;
+      if (!b64) throw new Error("No preview audio returned from server.");
+      const audio = new Audio(`data:audio/wav;base64,${b64}`);
+      audioRef.current = audio;
+      audio.onended = () => {
+        setPlayingVoiceId(null);
+        audioRef.current = null;
+      };
+      audio.onerror = () => {
+        setPlayingVoiceId(null);
+        audioRef.current = null;
+      };
+      await audio.play();
+      setPlayingVoiceId(voiceId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to play voice preview.");
+    } finally {
+      setPreviewLoadingId(null);
+    }
+  }, [currentTtsProvider, currentTtsModel, draft.supportedLanguages, playingVoiceId]);
+
+  function handleOpenDuplicateModal() {
+    const nextTarget = selected === "low" ? "medium" : "low";
+    setDuplicateTargetTier(nextTarget);
+    setDuplicateLabel(`${tierLabelInput || DEFAULT_TIER_LABELS[selected]} (Duplicated Stack)`);
+    setShowDuplicateModal(true);
+  }
+
+  async function handleConfirmDuplicate() {
+    if (busy) return;
+    setBusy(true);
+    setError("");
+    setStatus("");
+    try {
+      const targetRow = rows.find((r) => r.tier === duplicateTargetTier);
+      const expectedRev = targetRow?.profileRevision !== null && targetRow?.profileRevision !== undefined
+        ? targetRow.profileRevision
+        : 0;
+
+      const duplicatedPayload = {
+        ...JSON.parse(JSON.stringify(draft)),
+        label: duplicateLabel.trim() || `${tierLabelInput} (Duplicated Stack)`,
+      };
+
+      const response = await portalFetch("dev", `/api/dev/stack/voice-profiles/${duplicateTargetTier}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          expectedRevision: expectedRev,
+          composedProfile: duplicatedPayload,
+        }),
+      });
+
+      if (!response.ok) throw new Error(await responseError(response));
+      await response.json().catch(() => null);
+      await loadProfiles(false);
+      setSelected(duplicateTargetTier);
+      setShowDuplicateModal(false);
+      setStatus(`Successfully duplicated stack to ${duplicateLabel}! Switched to ${DEFAULT_TIER_LABELS[duplicateTargetTier]}.`);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not duplicate tier stack.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (loading) {
     return <p className="text-sm text-text-muted">Loading voice stack configurations…</p>;
   }
@@ -714,16 +833,17 @@ export function PstnVoiceProfileWorkbench() {
               </div>
             </div>
 
-            {/* Retail Rate Info */}
+            {/* Duplicate Stack Button & Action */}
             <div className="flex flex-col gap-1.5 md:items-end">
-              <span className="text-xs font-medium text-text-muted">Retail Tenant Price</span>
-              <div className="font-mono text-sm font-semibold text-text">
-                {selectedRow?.retailRate?.inrPaisePerMin
-                  ? `₹${(selectedRow.retailRate.inrPaisePerMin / 100).toFixed(2)}/min · $${(
-                      (selectedRow.retailRate.usdMicrosPerMin || 0) / 1_000_000
-                    ).toFixed(4)}`
-                  : "Rate unconfigured"}
-              </div>
+              <span className="text-xs font-medium text-text-muted">Stack Replication</span>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={handleOpenDuplicateModal}
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-surface-border bg-surface-card px-3 py-1.5 text-xs font-semibold text-text hover:border-surface-border-subtle hover:bg-surface-raised transition-colors shadow-sm"
+              >
+                <span>📋 Duplicate Stack</span>
+              </button>
             </div>
           </div>
         </div>
@@ -916,9 +1036,9 @@ export function PstnVoiceProfileWorkbench() {
           </div>
         </div>
 
-        {/* Curated Voice Catalog Auto-Binding Notification */}
+        {/* Curated Voice Catalog Auto-Binding Notification & Audio Playback Preview */}
         <div className="mt-6 rounded-xl border border-surface-border-subtle bg-surface-raised/40 p-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <div>
               <p className="text-xs font-semibold text-text">
                 Active Speech Engine: {currentTtsProvider.toUpperCase()} ({currentTtsModel})
@@ -927,13 +1047,58 @@ export function PstnVoiceProfileWorkbench() {
                 {currentTtsProvider === "sarvam"
                   ? "Curated Indian Regional personas enabled: Shubh, Priya, Pooja, Simran, Neha, Rahul."
                   : currentTtsProvider === "cartesia"
-                  ? "Sonic ultra-low-latency multilingual voices enabled: Sonic Natural (Female & Male)."
+                  ? "Sonic ultra-low-latency multilingual voices: Voice 1 (Female), Voice 2 (Male)."
+                  : currentTtsProvider === "gnani"
+                  ? "Timbre expressive audio tag voices: Voice 1 (Female), Voice 2 (Male)."
                   : "Gemini conversational voices enabled: Zephyr, Puck, Aoede, Leda, Kore, Fenrir, Charon."}
               </p>
             </div>
             <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-300">
               Curated Voices Linked
             </span>
+          </div>
+
+          {/* Voice Preview Playback Grid */}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {currentVoices.map((v) => {
+              const isPlaying = playingVoiceId === v.id;
+              const isLoading = previewLoadingId === v.id;
+              return (
+                <div
+                  key={v.id}
+                  className={`flex items-center justify-between rounded-xl border p-3 transition-colors ${
+                    isPlaying
+                      ? "border-emerald-500/40 bg-emerald-500/10"
+                      : "border-surface-border bg-surface-panel hover:bg-surface-raised/60"
+                  }`}
+                >
+                  <div className="space-y-0.5 min-w-0 pr-2">
+                    <p className="text-xs font-medium text-text truncate">{v.label}</p>
+                    <p className="text-[10px] font-mono text-text-subtle truncate">
+                      ID: {v.providerVoiceId}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={isLoading}
+                    onClick={() => void handlePlayVoicePreview(v.id)}
+                    className={`shrink-0 flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
+                      isPlaying
+                        ? "bg-emerald-500 text-white shadow-sm"
+                        : "bg-surface-raised text-text hover:bg-accent-primary hover:text-white"
+                    }`}
+                  >
+                    {isLoading ? (
+                      <span>Loading…</span>
+                    ) : isPlaying ? (
+                      <span>⏸ Stop</span>
+                    ) : (
+                      <span>▶ Play</span>
+                    )}
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -1002,6 +1167,65 @@ export function PstnVoiceProfileWorkbench() {
           </div>
         </div>
       </DevCard>
+
+      {/* Duplicate Stack Modal */}
+      {showDuplicateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-2xl border border-surface-border bg-surface-card p-6 shadow-2xl space-y-4">
+            <h3 className="text-base font-semibold text-text">Duplicate Voice Stack</h3>
+            <p className="text-xs text-text-muted">
+              Duplicate all STT, LLM, and TTS models, WebSocket options, and voice configurations from{" "}
+              <strong>{tierLabelInput || DEFAULT_TIER_LABELS[selected]}</strong> into a target tier.
+            </p>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-text-muted mb-1">Target Tier</label>
+                <select
+                  value={duplicateTargetTier}
+                  onChange={(e) => setDuplicateTargetTier(e.target.value as ProfileTier)}
+                  className="w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
+                >
+                  {PROFILE_TIERS.map((t) => (
+                    <option key={t} value={t}>
+                      {DEFAULT_TIER_LABELS[t]} ({t.toUpperCase()})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-text-muted mb-1">Duplicated Stack Label</label>
+                <input
+                  type="text"
+                  value={duplicateLabel}
+                  onChange={(e) => setDuplicateLabel(e.target.value)}
+                  placeholder="Custom Stack Name"
+                  className="w-full rounded-xl border border-surface-border bg-surface-panel px-3 py-2 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2.5 pt-2 border-t border-surface-border-subtle">
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={busy}
+                onClick={() => setShowDuplicateModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                disabled={busy}
+                onClick={() => void handleConfirmDuplicate()}
+              >
+                {busy ? "Duplicating…" : "Confirm Duplicate"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

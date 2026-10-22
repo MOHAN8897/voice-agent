@@ -415,6 +415,10 @@ class Settings(BaseSettings):
     cartesia_tts_emotion: str = Field("calm", alias="CARTESIA_TTS_EMOTION")
     cartesia_tts_speed: float = Field(1.0, alias="CARTESIA_TTS_SPEED")
     cartesia_tts_volume: float = Field(1.0, alias="CARTESIA_TTS_VOLUME")
+    gnani_api_key: str | None = Field(None, alias="GNANI_API_KEY")
+    gnani_tts_model: str = Field("timbre-v3.0", alias="GNANI_TTS_MODEL")
+    gnani_tts_voice_id: str | None = Field(None, alias="GNANI_TTS_VOICE_ID")
+    enable_gnani: bool = Field(True, alias="ENABLE_GNANI")
 
     # LOW tier bundle
     voice_low_stt_provider: str = Field("sarvam", alias="VOICE_LOW_STT_PROVIDER")

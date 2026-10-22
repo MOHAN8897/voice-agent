@@ -100,6 +100,14 @@ class ProviderRegistry:
         self._tts["cartesia"] = CartesiaTTSAdapter()
         providers.append(self._cartesia_provider_entry(s, bool(cartesia_key), bool(enable_cartesia or cartesia_key)))
 
+        # Gnani AI (Vachana) TTS option
+        gnani_key = dev_secrets_store.effective_secret("gnani_api_key") or s.gnani_api_key
+        enable_gnani = dev_secrets_store.effective("enable_gnani", s.enable_gnani)
+        from server.providers.gnani_tts import GnaniTTSAdapter
+
+        self._tts["gnani"] = GnaniTTSAdapter()
+        providers.append(self._gnani_provider_entry(s, bool(gnani_key), bool(enable_gnani or gnani_key)))
+
 
         config_mode = dev_secrets_store.effective("voice_agent_config_mode", s.voice_agent_config_mode)
         active_tier = dev_secrets_store.effective("voice_agent_tier", s.voice_agent_tier)
@@ -275,6 +283,34 @@ class ProviderRegistry:
             },
             "capabilities": {"streaming": True, "realtime_stt": True, "experimental": True},
             "notes": "Cartesia provides STT and TTS only — no LLM. Enable in Environment after saving API key.",
+        }
+
+    def _gnani_provider_entry(self, s: Settings, configured: bool, enabled: bool) -> dict[str, Any]:
+        return {
+            "id": "gnani",
+            "label": "Gnani.ai (Vachana)",
+            "stages": ["tts"],
+            "enabled": enabled,
+            "configured": configured,
+            "healthy": enabled and configured,
+            "adapter_available": enabled and configured,
+            "languages": list(constants.SUPPORTED_LANGUAGES.keys()),
+            "models": {
+                "stt": [],
+                "tts": [
+                    {
+                        "id": m,
+                        "label": meta["label"],
+                        "pricing_key": f"gnani:{m}",
+                        "api_mode": "websocket",
+                        "api_modes": ["websocket"],
+                    }
+                    for m, meta in constants.GNANI_TTS_MODELS.items()
+                ],
+                "llm": [],
+            },
+            "capabilities": {"streaming": True, "realtime_tts": True},
+            "notes": "Gnani.ai provides Vachana low-latency TTS supporting inline audio tags.",
         }
 
     @staticmethod

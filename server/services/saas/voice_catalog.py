@@ -242,4 +242,64 @@ def phone_voice_catalog() -> list[dict[str, Any]]:
                 "sampleUrl": f"/audio/voxly/samples/{sid.lower()}.wav",
             }
         )
+
+    _GNANI_VOICES = [
+        {
+            "id": "voice-gnani-1",
+            "label": "Voice 1",
+            "gender": "female",
+            "accent": "Indian English & Regional",
+            "tone": "Warm & expressive",
+            "category": "conversational",
+            "useCase": "Conversational & Support",
+            "provider": "gnani",
+            "providerLabel": "Gnani.ai Timbre",
+            "sampleUrl": "/audio/voxly/samples/voice-gnani-1.wav",
+        },
+        {
+            "id": "voice-gnani-2",
+            "label": "Voice 2",
+            "gender": "male",
+            "accent": "Indian English & Regional",
+            "tone": "Clear & confident",
+            "category": "conversational",
+            "useCase": "Inquiries & Business",
+            "provider": "gnani",
+            "providerLabel": "Gnani.ai Timbre",
+            "sampleUrl": "/audio/voxly/samples/voice-gnani-2.wav",
+        },
+    ]
+    for meta in _GNANI_VOICES:
+        rows.append(meta)
+
+    _CARTESIA_VOICES = [
+        {
+            "id": "voice-cartesia-1",
+            "label": "Voice 1",
+            "gender": "female",
+            "accent": "Multilingual Natural",
+            "tone": "Ultra-fast & natural",
+            "category": "conversational",
+            "useCase": "Sub-100ms Ultra Fast Outreach",
+            "provider": "cartesia",
+            "providerLabel": "Cartesia Sonic",
+            "sampleUrl": "/audio/voxly/samples/voice-cartesia-1.wav",
+        },
+        {
+            "id": "voice-cartesia-2",
+            "label": "Voice 2",
+            "gender": "male",
+            "accent": "Multilingual Natural",
+            "tone": "Deep & confident",
+            "category": "conversational",
+            "useCase": "Real-time Interactive Dialogue",
+            "provider": "cartesia",
+            "providerLabel": "Cartesia Sonic",
+            "sampleUrl": "/audio/voxly/samples/voice-cartesia-2.wav",
+        },
+    ]
+    for meta in _CARTESIA_VOICES:
+        rows.append(meta)
+
     return rows
+

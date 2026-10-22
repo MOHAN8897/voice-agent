@@ -161,10 +161,10 @@ def validate_composed_profile(payload: Any, *, tier: str, allow_premium: bool = 
                 raise VoiceProfileError("invalid_profile", "Model ids must be unique within an engine.")
             seen_models.add(model_id)
             provider = str(model.get("provider") or "").lower()
-            if provider not in {"sarvam", "gemini", "cartesia", "elevenlabs"}:
+            if provider not in {"sarvam", "gemini", "cartesia", "gnani", "elevenlabs"}:
                 raise VoiceProfileError("invalid_profile", "Choose a supported speech engine.")
             if not model.get("apiMode"):
-                model["apiMode"] = "websocket" if provider in {"sarvam", "cartesia", "gemini"} else "streaming_rest"
+                model["apiMode"] = "websocket" if provider in {"sarvam", "cartesia", "gemini", "gnani"} else "streaming_rest"
             for key in ("model", "apiMode"):
                 _identifier(model.get(key), f"Model {key}")
             api_mode = str(model.get("apiMode") or "").strip().lower()
@@ -246,6 +246,10 @@ def _clean_catalog_voice_label(raw_label: Any, pvid: str, tier: str) -> str:
     else:
         cat_meta = _GEMINI_VOICE_META.get(clean_speaker, {}) or _GEMINI_VOICE_META.get(clean_speaker.title(), {})
         authentic_name = cat_meta.get("label", clean_speaker.title() if clean_speaker else "")
+    if "gnani" in pvid.lower():
+        return "Voice 1" if "1" in pvid else "Voice 2"
+    if "cartesia" in pvid.lower():
+        return "Voice 1" if "1" in pvid else "Voice 2"
     raw = str(raw_label or "").strip()
     if not raw or re.match(r"^Voice\s+\d+$", raw, re.IGNORECASE) or _PRIVATE_LABEL_RE.search(raw):
         return authentic_name or clean_speaker.title() or "Voice"
@@ -256,17 +260,22 @@ def _resolve_catalog_voice_metadata(pvid: str, tier: str) -> dict[str, str]:
     from server.services.saas.voice_catalog import _GEMINI_VOICE_META, _SARVAM_VOICE_META
     sarvam_map = {str(item["id"]).lower(): item for item in _SARVAM_VOICE_META}
     clean_speaker = pvid.removeprefix("voice-").strip()
-    if clean_speaker.lower() in sarvam_map or (tier == "medium" and clean_speaker.lower() in {"shubh", "priya", "pooja", "simran", "neha", "rahul"}):
+    if "gnani" in clean_speaker.lower():
+        gender = "female" if "1" in clean_speaker else "male"
+        tone = "Warm & expressive"
+        category = "conversational"
+        use_case = "Conversational Customer Support"
+    elif "cartesia" in clean_speaker.lower() or "sonic" in clean_speaker.lower() or len(clean_speaker) > 20:
+        gender = "female" if "1" in clean_speaker or "female" in clean_speaker.lower() or "skylar" in clean_speaker.lower() else "male"
+        tone = "Ultra-low-latency & clear"
+        category = "conversational"
+        use_case = "Sub-100ms Multilingual Outreach"
+    elif clean_speaker.lower() in sarvam_map or (tier == "medium" and clean_speaker.lower() in {"shubh", "priya", "pooja", "simran", "neha", "rahul"}):
         meta = sarvam_map.get(clean_speaker.lower(), {})
         gender = meta.get("gender") if meta else ("female" if clean_speaker.lower() in {"ritu", "pooja", "neha", "priya", "kavitha", "ishita", "simran", "kavya", "shreya", "roopa", "tanya", "shruti", "suhani", "rupali"} else "male")
         tone = meta.get("tone") if meta else "Warm & natural"
         category = meta.get("category") if meta else "support"
         use_case = meta.get("useCase") if meta else "Regional Customer Support"
-    elif "sonic" in clean_speaker.lower() or len(clean_speaker) > 20:
-        gender = "female" if "female" in clean_speaker.lower() or "skylar" in clean_speaker.lower() else "male"
-        tone = "Ultra-low-latency & clear"
-        category = "conversational"
-        use_case = "Sub-100ms Multilingual Outreach"
     else:
         meta = _GEMINI_VOICE_META.get(clean_speaker, {}) or _GEMINI_VOICE_META.get(clean_speaker.title(), {})
         gender = meta.get("gender") if meta else "female"
@@ -603,7 +612,7 @@ async def save_composed_profile(
         primary_mdl = (primary_eng.get("models") or [{}])[0]
         first_voice = (primary_mdl.get("voices") or [{}])[0]
         tts_speaker = first_voice.get("providerVoiceId") or first_voice.get("id") or "Zephyr"
-        tts_api = primary_mdl.get("apiMode") or ("websocket" if primary_mdl.get("provider") in {"sarvam", "cartesia", "gemini"} else "streaming_rest")
+        tts_api = primary_mdl.get("apiMode") or ("websocket" if primary_mdl.get("provider") in {"sarvam", "cartesia", "gemini", "gnani"} else "streaming_rest")
         tts_payload = {
             "provider": primary_mdl.get("provider", "sarvam"),
             "model": primary_mdl.get("model", "bulbul:v3"),

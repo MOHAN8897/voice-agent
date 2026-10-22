@@ -14,6 +14,7 @@ _SECRET_FIELDS = frozenset(
         "sarvam_api_key",
         "deepseek_api_key",
         "cartesia_api_key",
+        "gnani_api_key",
         "gemini_api_key",
         "telnyx_api_key",
         "vobiz_auth_token",
@@ -27,6 +28,7 @@ _TOGGLE_FIELDS = frozenset(
         "enable_deepseek",
         "enable_gemini",
         "enable_cartesia",
+        "enable_gnani",
         "enable_telnyx",
         "enable_vobiz",
         "enable_benchmarks",
@@ -115,6 +117,7 @@ class DevSecretsStore:
         """Auto-enable provider toggles when a dev overlay API key is present."""
         pairs = [
             ("cartesia_api_key", "enable_cartesia"),
+            ("gnani_api_key", "enable_gnani"),
             ("deepseek_api_key", "enable_deepseek"),
             ("gemini_api_key", "enable_gemini"),
             ("telnyx_api_key", "enable_telnyx"),
@@ -259,6 +262,7 @@ class DevSecretsStore:
                 self._secret_row("SARVAM_API_KEY", "sarvam_api_key", settings, overlay),
                 self._secret_row("DEEPSEEK_API_KEY", "deepseek_api_key", settings, overlay),
                 self._secret_row("CARTESIA_API_KEY", "cartesia_api_key", settings, overlay),
+                self._secret_row("GNANI_API_KEY", "gnani_api_key", settings, overlay),
                 self._secret_row("GEMINI_API_KEY", "gemini_api_key", settings, overlay),
             ],
             "provider_toggles": [
@@ -266,6 +270,7 @@ class DevSecretsStore:
                 self._toggle_row("ENABLE_OPENAI", "enable_openai", settings, overlay),
                 self._toggle_row("ENABLE_DEEPSEEK", "enable_deepseek", settings, overlay),
                 self._toggle_row("ENABLE_CARTESIA", "enable_cartesia", settings, overlay),
+                self._toggle_row("ENABLE_GNANI", "enable_gnani", settings, overlay),
                 self._toggle_row("ENABLE_GEMINI", "enable_gemini", settings, overlay),
             ],
             "llm_defaults": [
