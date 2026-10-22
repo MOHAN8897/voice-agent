@@ -266,7 +266,7 @@ async def voice_preview(
             model = alias_match.get("model") if alias_match else "bulbul:v3"
         elif requested_tier == "low" or (alias_match and alias_match.get("provider") == "gemini" and "tts" in str(alias_match.get("model"))):
             provider = "gemini"
-            model = alias_match.get("model") if alias_match else "gemini-3.8-flash-lite-tts"
+            model = alias_match.get("model") if alias_match else "gemini-3.8-flash-tts"
         else:
             phone_stack = await resolve_platform_phone_stack(raw_lang or "te-IN")
             llm = phone_stack.get("llm") if isinstance(phone_stack.get("llm"), dict) else {}

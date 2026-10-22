@@ -9,7 +9,7 @@ export default function DevAgentVoicePage({ params }: { params: { id: string } }
         <h2 className="text-base font-semibold text-text">Phone voice stack is universal</h2>
         <p className="mt-2 text-sm text-text-muted">
           Live PSTN and web practice calls use the platform phone AI configured in the dev portal — not per-agent STT/LLM/TTS
-          tiers. Subscribers pick speaking voice and language in the Voxly console; you tune the engine once for everyone.
+          tiers. Subscribers pick speaking voice and language in the Dialtact console; you tune the engine once for everyone.
         </p>
         <Link
           href="/dev/saas-phone-stack"

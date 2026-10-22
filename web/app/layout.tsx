@@ -26,11 +26,11 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Vāṇi — Voice agents for Telugu-speaking businesses",
-    template: "%s · Vāṇi",
+    default: "Dialtact — AI Voice Agents for Customer Calls",
+    template: "%s · Dialtact",
   },
   description:
-    "Configure business brains, test live voice, archive every call with memory and disposition — built for teams serving Telugu-speaking customers.",
+    "Configure business brains, test live voice, archive every call with memory and disposition — built for teams serving customers with autonomous voice AI.",
   keywords: [
     "Telugu voice agent",
     "AI telecaller",
@@ -38,11 +38,12 @@ export const metadata: Metadata = {
     "AI receptionist",
     "voice bot",
     "autonomous telephony",
-    "Vāṇi AI",
+    "Dialtact",
+    "Dialtact AI",
   ],
-  authors: [{ name: "Voxly AI" }],
-  creator: "Voxly AI",
-  publisher: "Voxly AI",
+  authors: [{ name: "Dialtact" }],
+  creator: "Dialtact",
+  publisher: "Dialtact",
   alternates: {
     canonical: "/",
   },
@@ -58,18 +59,18 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "Vāṇi — Voice agents for Telugu-speaking businesses",
+    title: "Dialtact — AI Voice Agents for Customer Calls",
     description: "Configure, test, and deploy production voice agents with memory.",
     type: "website",
     url: siteUrl,
-    siteName: "Vāṇi",
+    siteName: "Dialtact",
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Vāṇi — Voice agents for Telugu-speaking businesses",
+    title: "Dialtact — AI Voice Agents for Customer Calls",
     description: "Configure, test, and deploy production voice agents with memory.",
-    creator: "@voxlyai",
+    creator: "@dialtact",
   },
 };
 

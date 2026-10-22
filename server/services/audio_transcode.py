@@ -7,6 +7,7 @@ boundary discontinuities. One-shot pcm_resample() is for cold-path only.
 from __future__ import annotations
 
 import math
+import struct
 import warnings
 from typing import Any
 
@@ -164,6 +165,28 @@ def pcm16_rms(pcm16: bytes) -> int:
     if len(pcm16) < 2:
         return 0
     return int(audioop.rms(pcm16, 2))
+
+
+def scale_wire_volume(
+    wire: bytes, codec: str, factor: float, *, start_factor: float | None = None,
+) -> bytes:
+    """Scale PCM16 LE or G.711 mu-law, ramping within a frame to avoid clicks."""
+    if not wire or codec not in ("linear16", "mulaw"):
+        return wire
+    start = factor if start_factor is None else start_factor
+    if start == factor == 1.0:
+        return wire
+    pcm = audioop.ulaw2lin(wire, 2) if codec == "mulaw" else wire
+    if start == factor:
+        scaled = audioop.mul(pcm, 2, factor)
+    else:
+        samples = len(pcm) // 2
+        scaled = bytearray(len(pcm))
+        for index, (sample,) in enumerate(struct.iter_unpack("<h", pcm)):
+            gain = start + (factor - start) * (index + 1) / samples
+            struct.pack_into("<h", scaled, index * 2, max(-32768, min(32767, int(sample * gain))))
+        scaled = bytes(scaled)
+    return audioop.lin2ulaw(scaled, 2) if codec == "mulaw" else scaled
 
 
 def pcm16_crest_factor(pcm16: bytes, rms: float | None = None) -> float:

@@ -274,9 +274,11 @@ async def test_pstn_stale_generation_closes_stream_without_late_frames(monkeypat
     await session.close()
 
 
-def test_registry_advertises_streaming_per_supported_model():
+def test_registry_advertises_streaming_per_supported_model(monkeypatch):
     from server.providers.registry import ProviderRegistry
+    from server.services.dev_secrets_store import dev_secrets_store
 
+    monkeypatch.setattr(dev_secrets_store, "effective", lambda field, default=None: default)
     settings = SimpleNamespace(
         enable_gemini=True, gemini_api_key="unit-key",
         allowed_gemini_llm_models=[], gemini_model="gemini-3.5-flash-lite",

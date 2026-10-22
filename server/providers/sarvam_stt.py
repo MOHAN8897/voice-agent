@@ -2,9 +2,10 @@
 from __future__ import annotations
 
 from server.config.constants import constants, provider_language_code
-from server.providers.base import STTAdapter, STTConfig, TranscriptResult
+from server.providers.base import STTConfig, TranscriptResult
 from server.services import sarvam_stt_service
 from server.services.sarvam_ws import connect_stt_realtime
+from server.services.voice_stt_runtime import sarvam_vad_config
 
 
 class SarvamSTTAdapter:
@@ -18,7 +19,7 @@ class SarvamSTTAdapter:
         return TranscriptResult(text=text or "", language=config.language, is_final=True)
 
     def connect_realtime(self, config: STTConfig):
-        vad = config.vad_config or {}
+        vad = sarvam_vad_config(config.vad_config)
         return connect_stt_realtime(
             language_code=provider_language_code(config.language, provider="sarvam", stage="stt"),
             stream_type=config.stream_type,
@@ -29,5 +30,6 @@ class SarvamSTTAdapter:
             threshold=vad.get("threshold"),
             min_speech_duration_ms=vad.get("min_speech_duration_ms"),
             prefix_padding_ms=vad.get("prefix_padding_ms"),
+            high_vad_sensitivity=False,
             model=config.model,
         )

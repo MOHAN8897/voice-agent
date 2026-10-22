@@ -12,7 +12,7 @@ param(
     [string]$ApiHost = "api-dev.dialtact.com",
     [string]$AppHost = "app-dev.dialtact.com",
     [int]$ApiPort = 8000,
-    # 5173 is Voxly, the product UI. It proxies /api and /ws to 8000 and /dev to the
+    # 5173 is Dialtact, the product UI. It proxies /api and /ws to 8000 and /dev to the
     # admin panel on 3000, so one public hostname covers product + back office.
     [int]$AppPort = 5173
 )
@@ -140,7 +140,7 @@ Write-Host ""
 Write-Host "=== Cloudflare tunnel ready ==="
 Write-Host "Stable API:  https://$ApiHost"
 Write-Host "Stable App:  https://$AppHost"
-Write-Host "  product (Voxly)      https://$AppHost"
+Write-Host "  product (Dialtact)   https://$AppHost"
 Write-Host "  admin panel          https://$AppHost/dev/login"
 Write-Host "Vobiz answer:  https://$ApiHost/api/vobiz/answer"
 Write-Host "Vobiz hangup: https://$ApiHost/api/vobiz/hangup"

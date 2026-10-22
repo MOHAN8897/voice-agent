@@ -148,7 +148,7 @@ export const PHONE_CHANNELS = [
     title: 'Inbound',
     icon: 'PhoneIncoming',
     headline: 'Your AI answers incoming calls.',
-    desc: 'Calls that ring out to voicemail are revenue you already paid for. Voxly picks up, works out what the caller needs, answers from your knowledge and books the next step.',
+    desc: 'Calls that ring out to voicemail are revenue you already paid for. Dialtact picks up, works out what the caller needs, answers from your knowledge and books the next step.',
     badge: 'First ring',
     features: [
       'Picks up on the first ring, no hold music',
@@ -365,7 +365,7 @@ export const PRICING_TIERS = [
 
 export const FAQS = [
   {
-    q: 'How does Voxly sound so natural?',
+    q: 'How does Dialtact sound so natural?',
     a: 'The same neural voice model that answers your customers calls renders every word, with natural turn-taking, so a caller can interrupt mid-sentence and be heard. You can hear it on this page — pick an industry above and press play.',
   },
   {

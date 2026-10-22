@@ -68,6 +68,8 @@ def _stack_for_ws(call_id: str | None, session_id: str, language: str = "te-IN")
 
 def _connect_stt_upstream(session_id: str = "default", call_id: str | None = None, **kwargs):
     """Resolve STT upstream via locked call stack or provider registry."""
+    from server.services.voice_stt_runtime import sarvam_vad_config
+
     settings = get_settings()
     expected_pipeline = str(kwargs.pop("expected_pipeline", "") or "").strip().lower()
     pinned_stack = kwargs.pop("pinned_stack", None)
@@ -118,13 +120,7 @@ def _connect_stt_upstream(session_id: str = "default", call_id: str | None = Non
             mode=mode,
             stream_type=stage_config.get("stream_type", "fast"),
             sample_rate=kwargs.get("sample_rate", 16000),
-            vad_config={
-                # Explicit endpointing/onset padding for composed voice.
-                "silence_duration_ms": kwargs.get("silence_duration_ms") or 500,
-                "threshold": kwargs.get("threshold") if kwargs.get("threshold") is not None else 0.3,
-                "min_speech_duration_ms": 250,
-                "prefix_padding_ms": 300,
-            },
+            vad_config=sarvam_vad_config(kwargs),
         )
         return stt.connect_realtime(config)
     if settings.use_provider_registry:
@@ -138,10 +134,7 @@ def _connect_stt_upstream(session_id: str = "default", call_id: str | None = Non
             mode="realtime",
             stream_type=kwargs.get("stream_type", stack.stt.config.get("stream_type", "fast")),
             sample_rate=kwargs.get("sample_rate", 16000),
-            vad_config={
-                "silence_duration_ms": kwargs.get("silence_duration_ms"),
-                "threshold": kwargs.get("threshold"),
-            },
+            vad_config=sarvam_vad_config(kwargs),
         )
         return stt.connect_realtime(config)
     from server.services.sarvam_ws import connect_stt_realtime

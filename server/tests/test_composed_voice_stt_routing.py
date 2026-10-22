@@ -85,6 +85,10 @@ def test_composed_stt_uses_the_admitted_provider_model_and_mode(monkeypatch):
     assert config.model == "saaras:v3-realtime"
     assert config.mode == "realtime"
     assert config.sample_rate == 8000
+    assert config.vad_config == {
+        "silence_duration_ms": 600, "threshold": 0.55,
+        "min_speech_duration_ms": 300, "prefix_padding_ms": 300,
+    }
 
 
 @pytest.mark.parametrize(

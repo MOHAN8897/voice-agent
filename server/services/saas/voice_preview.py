@@ -259,7 +259,7 @@ async def _synthesize_gemini_tts(line: str, voice: str, speed: float, language: 
     adapter = GeminiTTSAdapter()
     cfg = TTSConfig(
         provider="gemini",
-        model=model or "gemini-3.8-flash-lite-tts",
+        model=model or "gemini-3.8-flash-tts",
         speaker=voice,
         language=language or "te-IN",
         pace=speed,
@@ -371,8 +371,8 @@ async def synthesize_preview(
     pace = max(0.5, min(2.0, float(speed) if speed is not None else 1.0))
     if tier == "medium" or active_provider == "sarvam":
         preview_model = "bulbul:v3"
-    elif tier == "low" or model == "gemini-3.8-flash-lite-tts":
-        preview_model = "gemini-3.8-flash-lite-tts"
+    elif tier == "low" or (model and "tts" in model):
+        preview_model = model if (model and "tts" in model) else "gemini-3.8-flash-lite-tts"
     elif active_provider == "gemini":
         preview_model = GEMINI_TTS_MODEL
     else:
@@ -406,7 +406,7 @@ async def synthesize_preview(
     async def generate():
         if tier == "medium" or active_provider == "sarvam":
             return await _synthesize_sarvam(line, voice, pace, language)
-        elif tier == "low" or preview_model == "gemini-3.8-flash-lite-tts":
+        elif tier == "low" or (model and "tts" in model):
             return await _synthesize_gemini_tts(line, voice, pace, language=language, model=preview_model)
         elif active_provider == "gemini":
             return await _synthesize_gemini(line, voice, pace)

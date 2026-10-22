@@ -1098,3 +1098,86 @@ Before deploying these changes to staging and production PSTN trunks, the engine
 | **Lexicon Maintenance** | Giant hard-coded regex literals | Giant hard-coded regex literals | Giant hard-coded regex literals | **Structured Python Dicts (`pstn_lexicon.py`)** with length-descending compilation |
 | **Telephony Physical Metrics** | Arbitrary numbers | Arbitrary numbers | Unverified claims | **Empirical Operational Baselines** for call telemetry |
 | **Sarvam STT VAD Calibration** | Threshold 0.3 / Min 250ms | Inaccurate universal None | Calibrated (ws.py only) | **Unified Calibration Across All Files** (ws.py, sarvam_ws.py, sarvam_stt.py) |
+
+## 11. Implementation Notes (2026-10-22)
+
+The eight pillars are implemented in `server/services/pstn_voice_core.py`,
+`pstn_lexicon.py`, `pstn_backchannel.py`, `audio_transcode.py`,
+`voice_stt_runtime.py`, `sarvam_ws.py`, `server/providers/sarvam_stt.py`, and
+`server/routes/ws.py`. The executable preflight coverage is in
+`server/tests/test_pstn_vad_barge_audit.py`; surrounding call-path tests retain
+their existing assertions and use the new voice/timing prerequisites.
+
+Several illustrative snippets above require these corrections to meet their
+stated outcomes:
+
+- Explicit short interrogatives and turn claims are recognized even below six
+  characters (`ఎంత?`, `कब?`, `ಹೇಳಿ`). Repeated nods are consumed as lexical
+  tokens, avoiding nested-regex backtracking on long transcripts.
+- Roman `na` is excluded from the combined negation matcher. Native Bengali,
+  Gujarati, and Punjabi negations remain recognized. Harmless phrases such as
+  `no problem`, `actually that's fine`, and `hai na` are nods rather than halts.
+- Both partial and final thinking cancellations require the same semantic,
+  voice, and hold checks. Strong halts bypass acoustic/onset/hold gates, while
+  the platform switch, debounce, and terminal call states still apply.
+- Voice evidence is collected during listening and thinking as well as speech.
+  The 800ms latch accepted at transcript arrival survives that candidate's
+  local hold; it cannot stay valid indefinitely. PCM is forwarded unchanged,
+  including quiet and impulsive frames. Impulsive frames do not arm the latch.
+- Accepted thinking finals survive a generation that finishes before the hold.
+  Rejected background finals cannot become deferred turns. Statement nods are
+  purged at both generation completion and carrier playback drain; question
+  answers survive both paths. Explicit `expects_answer` metadata takes priority
+  over the last-sentence heuristic.
+  Finals arriving after the drain callback during the echo-only tail are
+  released through the same filter/coalescer, preventing a stranded answer.
+- Echo filtering protects short answers, numeric/spelled-out digit replies,
+  halts, and negations. Final transcripts still reach final-turn processing.
+  A longer echo refinement cancels its previously armed short prefix, and
+  strong final halts wake an existing general-speech confirmation immediately.
+  The onset shield is anchored to the first heard frame, including deferred
+  carrier sends, rather than the earlier TTS synthesis request.
+- Ducking uses provider VAD or non-echo, non-nod partials, extends with partials,
+  restores after 850ms, and resets at playback start, interruption, turn end,
+  and close. Gains change by at most 0.2 per 20ms frame, with a sample-level
+  ramp inside each PCM/mu-law frame. Compressed MP3 bytes pass through unchanged.
+  Audio already queued at the carrier cannot be attenuated retroactively.
+- Calibrated defaults are shared across direct/registry/composed connectors and
+  reconnects. Missing or `None` values use 600ms / 0.55 / 300ms / 300ms; explicit
+  runtime overrides, including zero values accepted at the connector boundary,
+  remain intact. No persisted configuration is overwritten. The legacy
+  high-sensitivity shortcut is disabled; explicit VAD controls go on the wire.
+
+Sarvam parameter/event names were checked using Context7 MCP against the
+[official realtime WebSocket reference](https://docs.sarvam.ai/api-reference/speech-to-text/transcribe/realtime/ws)
+and [turn-detection guide](https://docs.sarvam.ai/api/api-guides-tutorials/speech-to-text/realtime-streaming).
+No provider model or premium Gemini Live opening behavior was changed.
+
+Section 9 remains a release sign-off checklist. Deterministic tests cover its
+code invariants; physical handset/background-speaker/speakerphone tests,
+carrier queue latency measurements, regional native-speaker review, and staging
+DAST/pentesting require their real environments. No live calls or deployment
+were performed. Acoustic thresholds and latency targets remain empirical
+starting points, not a claim that background speakers can always be separated
+from quiet callers. New diagnostic events record classification/timing/counts
+rather than raw caller text or phone numbers.
+
+### Automated Verification (2026-10-23)
+
+- Audit regressions: **132 cases**; focused audit and surrounding call paths:
+  **254 passed**. All tests in files changed by this implementation passed in
+  the full run as well.
+- Unified Semgrep SAST: **290 rules, 1,321 files, zero findings**. The eight
+  changed production modules were present in the report with no parse errors.
+  Ruff introduced **zero new diagnostics** against HEAD for this implementation.
+- Full server suite: **2,937 passed, 116 failed, 21 skipped**. The initial
+  baseline had 135 failures. Of the final failures, 115 match that baseline or
+  two shared-Redis failures reproduced in an untouched HEAD snapshot with the
+  same configuration. The remaining failure is outside this implementation:
+  concurrent changes to `server/services/saas/voice_catalog.py` expose 22 Gemini
+  voices while `test_gemini_voice_catalog.py` still expects nine. That test also
+  fails in isolation. No assertions were skipped or weakened to hide it, and
+  the concurrent catalog changes were preserved.
+- Graft's deterministic wiring graph was rebuilt. Context7 MCP resolved and
+  queried Sarvam's official realtime documentation. The full suite remains red;
+  these results are not production release sign-off.

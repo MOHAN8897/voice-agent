@@ -413,7 +413,7 @@ async def evaluate_concurrency_level(
 # ---------------------------------------------------------------------------
 async def run_full_load_benchmark():
     print("=" * 80)
-    print("      VOXLY AI — PSTN VOICE AGENT CONCURRENCY & RTF LOAD AUDIT      ")
+    print("      DIALTACT AI — PSTN VOICE AGENT CONCURRENCY & RTF LOAD AUDIT      ")
     print("=" * 80)
 
     # Configure mock toolset on Nango to verify router dispatch without network calls

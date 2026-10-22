@@ -388,7 +388,7 @@ export function OnboardingSurveyModal({ user, onComplete, onStartTour }) {
               </select>
             </div>
 
-            {/* How did you hear about Voxly */}
+            {/* How did you hear about Dialtact */}
             <div>
               <label className="block text-xs font-semibold text-[#0F0E17] mb-1">
                 How did you hear about us?

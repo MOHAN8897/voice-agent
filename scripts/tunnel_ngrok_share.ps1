@@ -1,4 +1,4 @@
-# Share the full website via ngrok (single tunnel on port 5173 = Voxly).
+# Share the full website via ngrok (single tunnel on port 5173 = Dialtact).
 # Next.js proxies /api and /ws to the local API - friend only needs one link.
 #
 # Usage: powershell -ExecutionPolicy Bypass -File scripts/tunnel_ngrok_share.ps1
@@ -105,7 +105,7 @@ tunnels:
     proto: http
 "@ | Set-Content -Path $NgrokConfig -Encoding ASCII
 
-    Write-Host "Starting ngrok tunnel on port 5173 (Voxly)..."
+    Write-Host "Starting ngrok tunnel on port 5173 (Dialtact)..."
     $logFile = Join-Path $RepoRoot "data\dev-logs\ngrok.log"
     New-Item -ItemType Directory -Force -Path (Split-Path $logFile) | Out-Null
     Start-Process -FilePath $NgrokExe `
@@ -177,7 +177,7 @@ try {
     }
     if (-not $ok) { throw "not ready" }
 } catch {
-    Write-Error "Voxly must be running on port 5173 before ngrok starts. Run: npm run share"
+    Write-Error "Dialtact must be running on port 5173 before ngrok starts. Run: npm run share"
 }
 
 $webUrl = Start-NgrokTunnel -Token $token -NgrokExe $ngrokExe
@@ -193,7 +193,7 @@ Write-Host "============================================================"
 Write-Host ""
 Write-Host "  $shareLink"
 Write-Host ""
-Write-Host "  Product (Voxly)   $webUrl"
+Write-Host "  Product (Dialtact)   $webUrl"
 Write-Host "  Admin panel       localhost only - http://localhost:3000/dev/login"
 Write-Host "  ngrok dashboard: http://127.0.0.1:4040"
 Write-Host "============================================================"

@@ -397,13 +397,18 @@ async def test_remote_clear_failure_still_cancels_tts_and_llm(monkeypatch):
 
 @pytest.mark.parametrize("text", ["Wait", "No", "కాదు", "లేదు"])
 @pytest.mark.parametrize("phase", [PHASE_SPEAKING, PHASE_INTRO])
-def test_early_short_barge(text, phase):
+def test_early_short_barge(text, phase, monkeypatch):
     from server.services.transcript_gate import is_substantive_transcript
     voice = PstnVoiceLoop(session_id="early", call_id=None, on_agent_wire=AsyncMock())
     voice._set_phase(phase)
     voice._tts_active = True
-    voice._tts_started_at = time.monotonic() - 0.20
-    voice._partial_started_at = time.monotonic() - 0.13
+    monkeypatch.setattr(time, "monotonic", lambda: 100.0)
+    voice._tts_started_at = 99.8
+    voice._last_vad_voice_at = 100.0
+    if text != "Wait":
+        # Negations need both 150ms voice hold and the 350ms onset shield.
+        assert voice._should_commit_barge(text) is False
+        monkeypatch.setattr(time, "monotonic", lambda: 100.16)
     assert voice._should_commit_barge(text)
     assert is_substantive_transcript(text, after_barge=True)
 

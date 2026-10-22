@@ -5,7 +5,20 @@ from typing import Any
 
 from server.config.constants import constants
 
-DEFAULT_STT_SILENCE_MS = 400
+DEFAULT_STT_SILENCE_MS = 600
+SARVAM_VAD_DEFAULTS = {
+    "silence_duration_ms": DEFAULT_STT_SILENCE_MS,
+    "threshold": 0.55,
+    "min_speech_duration_ms": 300,
+    "prefix_padding_ms": 300,
+}
+
+
+def sarvam_vad_config(overrides: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Resolve absent/None values consistently; preserve explicit zero values."""
+    supplied = overrides or {}
+    return {key: default if supplied.get(key) is None else supplied[key]
+            for key, default in SARVAM_VAD_DEFAULTS.items()}
 
 
 def effective_stt_silence_ms(runtime: dict[str, Any] | None, *, explicit: int | None = None) -> int:

@@ -30,6 +30,7 @@ import websockets  # provided by uvicorn[standard]
 from server.config.constants import constants, provider_language_code
 from server.config.env import get_settings
 from server.services.dev_secrets_store import dev_secrets_store
+from server.services.voice_stt_runtime import sarvam_vad_config
 
 
 def _connect(url: str, headers: dict[str, str], **kw: Any):
@@ -61,7 +62,7 @@ def connect_stt_realtime(
     threshold: float | None = None,
     min_speech_duration_ms: int | None = None,
     prefix_padding_ms: int | None = None,
-    high_vad_sensitivity: bool = True,
+    high_vad_sensitivity: bool = False,
     model: str | None = None,
 ):
     settings = get_settings()
@@ -74,16 +75,12 @@ def connect_stt_realtime(
         "encoding": "linear16",
         "sample_rate": str(sample_rate),
     }
-    if silence_duration_ms is not None:
-        params["silence_duration_ms"] = str(silence_duration_ms)
-    if threshold is not None:
-        params["threshold"] = str(threshold)
-    if min_speech_duration_ms is not None:
-        params["min_speech_duration_ms"] = str(min_speech_duration_ms)
-    if prefix_padding_ms is not None:
-        params["prefix_padding_ms"] = str(prefix_padding_ms)
-    if high_vad_sensitivity and min_speech_duration_ms is None and prefix_padding_ms is None:
-        params["high_vad_sensitivity"] = "true"
+    vad = sarvam_vad_config({
+        "silence_duration_ms": silence_duration_ms, "threshold": threshold,
+        "min_speech_duration_ms": min_speech_duration_ms, "prefix_padding_ms": prefix_padding_ms,
+    })
+    params.update({key: str(value) for key, value in vad.items()})
+    # Explicit VAD controls supersede the legacy high-sensitivity shortcut.
     qs = "&".join(f"{k}={v}" for k, v in params.items())
     url = f"{constants.SARVAM_STT_REALTIME_WS}?{qs}"
     sarvam_key = dev_secrets_store.effective_secret("sarvam_api_key") or settings.sarvam_api_key or ""

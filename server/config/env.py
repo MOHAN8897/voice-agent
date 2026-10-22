@@ -422,7 +422,7 @@ class Settings(BaseSettings):
     voice_low_llm_provider: str = Field("openai", alias="VOICE_LOW_LLM_PROVIDER")
     voice_low_llm_model: str = Field("gpt-realtime-2.1-mini", alias="VOICE_LOW_LLM_MODEL")
     voice_low_tts_provider: str = Field("gemini", alias="VOICE_LOW_TTS_PROVIDER")
-    voice_low_tts_model: str = Field("gemini-3.8-flash-lite-tts", alias="VOICE_LOW_TTS_MODEL")
+    voice_low_tts_model: str = Field("gemini-3.8-flash-tts", alias="VOICE_LOW_TTS_MODEL")
 
     # MEDIUM tier bundle
     voice_medium_stt_provider: str = Field("sarvam", alias="VOICE_MEDIUM_STT_PROVIDER")

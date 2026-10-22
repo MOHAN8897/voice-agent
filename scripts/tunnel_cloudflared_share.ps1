@@ -1,4 +1,4 @@
-# Share website via Cloudflare quick tunnel (port 5173 = Voxly, which also proxies
+# Share website via Cloudflare quick tunnel (port 5173 = Dialtact, which also proxies
 # /api, /ws and the admin panel at /dev). No account needed.
 # Usage: powershell -ExecutionPolicy Bypass -File scripts/tunnel_cloudflared_share.ps1
 
@@ -29,7 +29,7 @@ try {
     }
     if (-not $ok) { throw "not ready" }
 } catch {
-    Write-Error "Voxly must be running on port 5173. Run: npm run share"
+    Write-Error "Dialtact must be running on port 5173. Run: npm run share"
 }
 
 $cf = Find-CloudflaredExe
@@ -41,7 +41,7 @@ Get-CimInstance Win32_Process -Filter "Name='cloudflared.exe'" -ErrorAction Sile
     Where-Object { $_.CommandLine -match "tunnel --url" } |
     ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
 
-Write-Host "Starting Cloudflare tunnel on port 5173 (Voxly)..."
+Write-Host "Starting Cloudflare tunnel on port 5173 (Dialtact)..."
 Start-Process -FilePath $cf -ArgumentList @("tunnel", "--url", "http://127.0.0.1:5173") `
     -RedirectStandardError $LogFile -WindowStyle Hidden | Out-Null
 
@@ -70,7 +70,7 @@ Write-Host "============================================================"
 Write-Host ""
 Write-Host "  $shareLink"
 Write-Host ""
-Write-Host "  Product (Voxly)   $publicUrl"
+Write-Host "  Product (Dialtact)   $publicUrl"
 Write-Host "  Admin panel       localhost only - http://localhost:3000/dev/login"
 Write-Host "============================================================"
 

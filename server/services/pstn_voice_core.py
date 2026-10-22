@@ -3,15 +3,22 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import inspect
 import json
 import logging
-import re
 import time
 import uuid
 from collections.abc import Awaitable, Callable
 from typing import Any
 
 from server.services.pstn_debug import log_pstn
+from server.services.pstn_lexicon import (
+    _STRONG_HALT_RE,
+    _WEAK_NEGATION_RE,
+    agent_asked_question,
+    is_backchannel,
+    is_single_word_claim,
+)
 from server.services.pstn_media_flow import pstn_media_flow
 from server.services.pstn_text_chunker import (
     drain_complete_sentences,
@@ -27,39 +34,28 @@ OnAgentWire = Callable[[bytes], Awaitable[None]]
 
 # Barge is ON. Comment kept historically — do not flip without measuring.
 ENABLE_PSTN_BARGE_IN = True
-# Prefer substantive/short natural interruptions over a rigid 3-word rule.
-PSTN_BARGE_MIN_WORDS = 1
-PSTN_BARGE_HOLD_S = 0.12
+# Empirical PSTN starting points; tune against real carrier/handset telemetry.
+PSTN_BARGE_MIN_WORDS = 2
+PSTN_BARGE_HOLD_S = 0.30
+PSTN_NEGATION_HOLD_S = 0.15
 # Soft AEC energy is a barge confidence signal only — never a hard STT drop gate.
 PSTN_TTS_STT_ENERGY_MIN = 320
+PSTN_AEC_VOICE_LATCH_S = 0.8
+PSTN_AEC_MAX_CREST_FACTOR = 4.5
 # Soft AEC barge hysteresis: open after 2 loud frames; close after 8 quiet frames.
 PSTN_AEC_LOUD_OPEN_FRAMES = 2
 PSTN_AEC_QUIET_CLOSE_FRAMES = 8
 PSTN_BARGE_FINAL_TIMEOUT_S = 0.8
-# Two 20ms frames protect the onset; transcript confirmation still holds 120ms.
-PSTN_BARGE_MIN_AFTER_SPEAK_S = 0.04
+# Shield initial carrier/speakerphone echo; explicit strong halts still win.
+PSTN_BARGE_MIN_AFTER_SPEAK_S = 0.35
 # Conversational corrections often land <800ms apart; 450ms still blocks echo double-fires.
 PSTN_BARGE_DEBOUNCE_S = 0.45
 PSTN_BARGE_FINAL_WINDOW_S = 1.5
 PSTN_BARGE_FINAL_DEBOUNCE_S = 0.3
 PSTN_ECHO_TAIL_S = 0.35
-PSTN_THINK_CANCEL_MIN_WORDS = 1
+PSTN_THINK_CANCEL_MIN_WORDS = 2
 PSTN_THINK_CANCEL_HOLD_S = 0.25
-# Pure backchannels must never kill an in-flight LLM turn.
-_THINK_CANCEL_ACK_ONLY = re.compile(
-    r"^(?:yeah|yes|yep|yup|ok|okay|sure|hmm|mm|mhm|uh huh|haan|ha|han|sare|"
-    r"right|correct|got it|i see|alright|all right)"
-    r"(?:\s+(?:yeah|yes|yep|yup|ok|okay|sure|hmm|haan|ha))*[.!,]*$",
-    re.I,
-)
-# Short natural barge / think-cancel phrases (EN + common TE/HI).
-_SHORT_INTERRUPT = re.compile(
-    r"^(?:yes|no|yeah|yep|nope|wait|stop|actually|hold on|one second|sorry|"
-    r"కాదు|లేదు|లేదండి|అవును|వద్దు|అది కాదు|"
-    r"नहीं|हाँ|रुको|ठीक)"
-    r"(?:\s+\w+){0,3}[.!,]*$",
-    re.I,
-)
+PSTN_DUCK_TIMEOUT_S = 0.85
 # After idle STT final: allow slower PSTN / Telugu pauses without feeling dead.
 PSTN_LISTEN_COALESCE_S = 0.15
 # If user still producing partials near fire time, extend once more.
@@ -180,6 +176,7 @@ class PstnVoiceLoop:
         self._remote_clear_task: asyncio.Task | None = None
         self._llm_cancel_task: asyncio.Task | None = None
         self._latest_interrupt_text = ""
+        self._latest_interrupt_is_final = False
         self._call_started = False
         self._orphan_turn_task: asyncio.Task | None = None
         self._stt_frames_in = 0
@@ -225,7 +222,11 @@ class PstnVoiceLoop:
         self._backchannel_lock = asyncio.Lock()
         self._tts_started_at = 0.0
         self._partial_started_at = 0.0
+        self._partial_kind = ""
         self._think_partial_started_at = 0.0
+        self._think_partial_kind = ""
+        self._expects_answer: bool | None = None
+        self._reset_ducking()
         self._tts_tail_until = 0.0
         self._coalesce_task: asyncio.Task | None = None
         self._coalesce_epoch = 0
@@ -281,6 +282,10 @@ class PstnVoiceLoop:
         queued = (self._tts_queued_text or "").strip()
         if not queued:
             return
+        if not self._tts_heard_text:
+            # Anchor the onset shield to heard audio, including deferred RTP
+            # sends; synthesis/queue time can precede playback by hundreds of ms.
+            self._tts_started_at = time.monotonic()
         self._tts_queued_text = ""
         self._tts_heard_text = (self._tts_heard_text + " " + queued).strip()[-800:]
         self._last_tts_text = self._tts_heard_text
@@ -301,6 +306,7 @@ class PstnVoiceLoop:
         self._last_tts_text = ""
         self._heard_sentences = []
         self._turn_tts_accum = ""
+        self._expects_answer = None
 
     def _set_phase(self, phase: str) -> None:
         # ENDED is terminal — never reopen the FSM after hangup (8.3).
@@ -361,6 +367,8 @@ class PstnVoiceLoop:
         self._tts_active = active
         self._agent_speaking = active
         if active:
+            if not was_active:
+                self._reset_ducking()
             if self._tts_started_at <= 0:
                 self._tts_started_at = time.monotonic()
             self._tts_tail_until = 0.0
@@ -375,6 +383,21 @@ class PstnVoiceLoop:
                     asyncio.get_running_loop().create_task(self._on_turn_audio_done())
                 except RuntimeError:
                     pass
+
+    def _reset_ducking(self) -> None:
+        self._tts_ducked = False
+        self._tts_duck_at = 0.0
+        self._tts_current_factor = 1.0
+        self._tts_target_factor = 1.0
+
+    def _on_vad_speech_onset(self) -> None:
+        if self._agent_audio_playing() and self.tts_output_codec != "mp3":
+            if not self._tts_ducked:
+                log_pstn("TTS_DUCK_TRIGGERED", call_id=self.call_id,
+                         provider_queued_ms=round(self._provider_queued_ms(), 1))
+            self._tts_ducked = True
+            self._tts_duck_at = time.monotonic()
+            self._tts_target_factor = 0.2
 
     def set_barge_handler(self, fn: Callable[[], Awaitable[None]]) -> None:
         self._on_barge = fn
@@ -437,9 +460,10 @@ class PstnVoiceLoop:
     def on_playback_drained(self) -> None:
         """Release speech received after generation finished but before RTP drained."""
         if (self._closed or self._turn_busy or self._intro_phase or self._awaiting_barge_final
-                or self._phase in (PHASE_ENDED, PHASE_INTERRUPTING) or self._agent_audio_playing()):
+                or self._phase in (PHASE_ENDED, PHASE_INTERRUPTING)
+                or (self._agent_audio_playing() and not self._in_echo_tail_only())):
             return
-        pending = self._pending_transcript
+        pending = self._filter_pending_backchannel(self._pending_transcript)
         self._pending_transcript = None
         if pending:
             self._arm_listen_coalesce(pending)
@@ -454,12 +478,10 @@ class PstnVoiceLoop:
 
     def _arm_listen_coalesce(self, text: str, *, after_barge: bool = False) -> None:
         """Delay idle turn start so mid-utterance pauses can continue speaking."""
-        from server.services.transcript_gate import is_substantive_transcript
-
         cleaned = (text or "").strip()
         if not cleaned:
             return
-        if not is_substantive_transcript(cleaned, after_barge=after_barge):
+        if not self._accepts_user_turn(cleaned, after_barge=after_barge):
             log_pstn(
                 "stt.thin_drop",
                 call_id=self.call_id,
@@ -513,13 +535,69 @@ class PstnVoiceLoop:
             ):
                 self._queue_user_transcript(text)
                 return
-            if self._agent_audio_playing():
+            if self._agent_audio_playing() and not self._in_echo_tail_only():
                 self._queue_user_transcript(text)
                 return
             log_pstn("LISTEN_COALESCE_FIRE", call_id=self.call_id, text=text[:80])
             self._launch_turn(text)
         except asyncio.CancelledError:
             return
+
+    def _agent_expects_answer(self) -> bool:
+        return agent_asked_question(
+            self._tts_heard_text or self._last_tts_text, expects_answer=self._expects_answer,
+        )
+
+    def _accepts_user_turn(self, text: str, *, after_barge: bool = False) -> bool:
+        from server.services.transcript_gate import is_substantive_transcript
+
+        return bool(
+            _STRONG_HALT_RE.fullmatch(text) or _WEAK_NEGATION_RE.fullmatch(text)
+            or is_single_word_claim(text)
+            or (is_backchannel(text) and self._agent_expects_answer())
+            or is_substantive_transcript(text, after_barge=after_barge)
+        )
+
+    def _filter_pending_backchannel(self, pending: str | None) -> str | None:
+        if not pending or not is_backchannel(pending):
+            return pending
+        keep = self._agent_expects_answer()
+        log_pstn(
+            "PENDING_KEPT_ANSWER_TO_QUESTION" if keep else "PENDING_PURGED_BACKCHANNEL",
+            call_id=self.call_id, chars=len(pending),
+        )
+        return pending if keep else None
+
+    def _has_barge_voice(self, now: float, *, started_at: float = 0.0, hold: float = 0.0) -> bool:
+        if self._last_vad_voice_at <= 0:
+            return False
+        if 0 <= now - self._last_vad_voice_at <= PSTN_AEC_VOICE_LATCH_S:
+            return True
+        # Preserve voice evidence accepted when a delayed transcript armed its
+        # local hold. Otherwise an 800ms STT delay + 300ms hold races the latch.
+        return bool(
+            started_at > 0 and 0 <= now - started_at <= hold + 0.05
+            and 0 <= started_at - self._last_vad_voice_at <= PSTN_AEC_VOICE_LATCH_S
+        )
+
+    @staticmethod
+    def _echo_protected_reply(text: str) -> bool:
+        words = text.lower().strip(".!?,। ").split()
+        number_words = {"zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "oh"}
+        return bool(
+            len(words) < 3
+            or (words and all(word.isdigit() or word in number_words | {"am", "pm"} for word in words))
+            or _STRONG_HALT_RE.fullmatch(text) or _WEAK_NEGATION_RE.fullmatch(text)
+            or is_backchannel(text)
+        )
+
+    def _is_partial_self_echo(self, text: str) -> bool:
+        from server.services.echo_guard import echo_overlap_ratio, window_assistant_text
+
+        if self._echo_protected_reply(text):
+            return False
+        heard = window_assistant_text(self._tts_heard_text or self._last_tts_text)
+        return bool(heard and echo_overlap_ratio(text, heard) >= 0.5)
 
     def _should_commit_barge(self, text: str) -> bool:
         from server.services.echo_guard import (
@@ -542,36 +620,56 @@ class PstnVoiceLoop:
         overlap = echo_overlap_ratio(text, ref)
         provider_queued_ms = self._provider_queued_ms()
         intro = self._phase == PHASE_INTRO or self._intro_phase
-        short_ok = bool(_SHORT_INTERRUPT.match((text or "").strip()))
-        substantive = is_substantive_transcript(text or "", after_barge=True) or short_ok
+        cleaned = (text or "").strip()
+        strong = bool(_STRONG_HALT_RE.fullmatch(cleaned))
+        negation = bool(_WEAK_NEGATION_RE.fullmatch(cleaned))
+        nod = is_backchannel(cleaned)
+        single_claim = is_single_word_claim(cleaned)
+        substantive = is_substantive_transcript(cleaned, after_barge=True) or single_claim
+        kind = "negation" if negation else "speech"
+        if kind != self._partial_kind:
+            self._partial_started_at = 0.0
+            self._partial_kind = kind
+        hold = PSTN_NEGATION_HOLD_S if negation else PSTN_BARGE_HOLD_S
 
         result = True
         reason = "ok"
         if not ENABLE_PSTN_BARGE_IN:
             result, reason = False, "disabled"
+        elif self._closed or self._phase in (PHASE_CLOSING, PHASE_ENDED):
+            result, reason = False, "closing"
         elif not speaking:
             # Do not reset the hold timer on brief not-speaking gaps (chunk boundaries /
             # end-of-TTS edge). Resetting here caused barge attempts to never commit (4.3).
             result, reason = False, "not_speaking"
         elif now - self._last_barge_at < PSTN_BARGE_DEBOUNCE_S:
             result, reason = False, "debounce"
-        elif words < int(self._barge_runtime.get("bargeMinWords") or PSTN_BARGE_MIN_WORDS) and not short_ok:
+        elif nod:
+            self._partial_started_at = 0.0
+            result, reason = False, "backchannel_ignored"
+        elif strong:
+            result, reason = True, "strong_halt"
+        elif not self._has_barge_voice(now, started_at=self._partial_started_at, hold=hold):
+            self._partial_started_at = 0.0
+            result, reason = False, "energy_below_floor"
+        elif words < int(self._barge_runtime.get("bargeMinWords") or PSTN_BARGE_MIN_WORDS) and not (negation or single_claim):
             self._partial_started_at = 0.0
             result, reason = False, "min_words"
-        elif not substantive:
+        elif not (substantive or negation):
             self._partial_started_at = 0.0
             result, reason = False, "not_substantive"
-        elif self._barge_runtime.get("bargeRequireVad") and now - self._last_vad_voice_at > 0.8:
-            result, reason = False, "vad_required"
+        elif not self._echo_protected_reply(cleaned) and is_barge_echo(cleaned, heard_ref):
+            self._partial_started_at = 0.0
+            result, reason = False, "echo"
         elif self._partial_started_at <= 0:
             self._partial_started_at = now
             result, reason = False, "hold_start"
-        elif now - self._partial_started_at < PSTN_BARGE_HOLD_S:
+        elif now - self._partial_started_at < hold:
             result, reason = False, "hold"
         elif self._tts_started_at and now - self._tts_started_at < PSTN_BARGE_MIN_AFTER_SPEAK_S:
-            result, reason = False, "min_after_speak"
-        elif is_barge_echo(text, heard_ref):
-            result, reason = False, "echo"
+            result, reason = False, "min_after_speak_echo_shield"
+        elif negation:
+            result, reason = True, "weak_negation_committed"
 
         log_pstn(
             "BARGE_CHECK",
@@ -590,7 +688,7 @@ class PstnVoiceLoop:
             reason=reason,
             result=result,
         )
-        return result
+        return bool(result)
 
     def _should_think_cancel(self, text: str) -> bool:
         """Cancel LLM while THINKING (no audio yet) when caller keeps talking."""
@@ -603,40 +701,40 @@ class PstnVoiceLoop:
         if not cleaned:
             self._think_partial_started_at = 0.0
             return False
-        # "yeah yeah" / "ok ok" backchannels must not abort the reply.
-        if _THINK_CANCEL_ACK_ONLY.match(cleaned):
+        if is_backchannel(cleaned):
             self._think_partial_started_at = 0.0
             return False
-        short_ok = bool(_SHORT_INTERRUPT.match(cleaned))
-        words = effective_word_count(cleaned)
-        if words < PSTN_THINK_CANCEL_MIN_WORDS and not short_ok:
-            self._think_partial_started_at = 0.0
-            return False
-        if not short_ok and not is_substantive_transcript(cleaned, after_barge=True):
-            self._think_partial_started_at = 0.0
-            return False
+        if _STRONG_HALT_RE.fullmatch(cleaned):
+            return True
         now = time.monotonic()
+        negation = bool(_WEAK_NEGATION_RE.fullmatch(cleaned))
+        hold = PSTN_NEGATION_HOLD_S if negation else PSTN_THINK_CANCEL_HOLD_S
+        kind = "negation" if negation else "speech"
+        if kind != self._think_partial_kind:
+            self._think_partial_started_at = 0.0
+            self._think_partial_kind = kind
+        if not self._has_barge_voice(now, started_at=self._think_partial_started_at, hold=hold):
+            self._think_partial_started_at = 0.0
+            return False
+        words = effective_word_count(cleaned)
+        single_claim = is_single_word_claim(cleaned)
+        if words < PSTN_THINK_CANCEL_MIN_WORDS and not (negation or single_claim):
+            self._think_partial_started_at = 0.0
+            return False
+        if not (negation or single_claim or is_substantive_transcript(cleaned, after_barge=True)):
+            self._think_partial_started_at = 0.0
+            return False
         if self._think_partial_started_at <= 0:
             self._think_partial_started_at = now
             return False
-        return (now - self._think_partial_started_at) >= PSTN_THINK_CANCEL_HOLD_S
+        return (now - self._think_partial_started_at) >= hold
 
     def _should_think_continue_final(self, text: str) -> bool:
         """STT final while THINKING: merge continuation into the in-flight turn."""
-        from server.services.transcript_gate import effective_word_count, is_substantive_transcript
-
         if self._phase != PHASE_THINKING or not self._turn_busy or self._agent_audio_playing():
             return False
         cleaned = (text or "").strip()
         if not cleaned:
-            return False
-        if _THINK_CANCEL_ACK_ONLY.match(cleaned):
-            return False
-        short_ok = bool(_SHORT_INTERRUPT.match(cleaned))
-        words = effective_word_count(cleaned)
-        if words < PSTN_THINK_CANCEL_MIN_WORDS and not short_ok:
-            return False
-        if not short_ok and not is_substantive_transcript(cleaned, after_barge=True):
             return False
         prior = (self._current_turn_transcript or "").strip().lower()
         current = cleaned.lower()
@@ -644,7 +742,7 @@ class PstnVoiceLoop:
             return False
         if prior and current in prior:
             return False
-        return True
+        return self._should_think_cancel(cleaned)
 
     def _merge_pending_transcript(self, *parts: str) -> str:
         """Merge STT fragments without dropping corrections (5.4).
@@ -734,15 +832,16 @@ class PstnVoiceLoop:
             return
         from server.services.echo_guard import is_barge_final_echo, is_final_echo
 
-        if barge_final:
+        protected = self._echo_protected_reply(cleaned)
+        if barge_final and not protected:
             if is_barge_final_echo(cleaned, self._tts_heard_text or self._last_tts_text):
                 log_pstn("stt.echo_drop", call_id=self.call_id, text=cleaned[:80], rail="barge_final")
                 return
-        elif intro or self._intro_phase:
+        elif (intro or self._intro_phase) and not protected:
             if is_final_echo(cleaned, self._tts_heard_text or self._last_tts_text, in_echo_tail=True):
                 log_pstn("stt.echo_drop", call_id=self.call_id, text=cleaned[:80], rail="intro")
                 return
-        elif is_final_echo(
+        elif not protected and is_final_echo(
             cleaned, self._tts_heard_text or self._last_tts_text, in_echo_tail=self._in_echo_tail_only()
         ):
             log_pstn("stt.echo_drop", call_id=self.call_id, text=cleaned[:80], rail="final")
@@ -780,6 +879,10 @@ class PstnVoiceLoop:
                     ]
         else:
             self._pending_transcript = cleaned
+        if not self._turn_busy and self._in_echo_tail_only():
+            # The drain callback may precede this delayed STT final. An echo
+            # shield alone must not strand a real answer with no future wakeup.
+            self.on_playback_drained()
 
     def _end_intro_phase(self) -> None:
         if not self._intro_phase and self._phase != PHASE_INTRO:
@@ -1109,6 +1212,7 @@ class PstnVoiceLoop:
                     break
                 await self._emit_agent_wire(wire)
         finally:
+            self._reset_ducking()
             self._set_tts_active(False)
 
     async def _note_opening_spoken(self, greeting: str) -> None:
@@ -1319,10 +1423,8 @@ class PstnVoiceLoop:
                     and (time.monotonic() - self._last_user_partial_at) > PSTN_BARGE_FINAL_TIMEOUT_S
                 ):
                     fallback = (self._last_barge_partial or "").strip()
-                    from server.services.transcript_gate import is_substantive_transcript
-
                     used = False
-                    if fallback and is_substantive_transcript(fallback, after_barge=True):
+                    if fallback and self._accepts_user_turn(fallback, after_barge=True):
                         used = True
                         self._cancel_listen_coalesce()
                         self._queue_user_transcript(fallback, barge_final=True)
@@ -1358,9 +1460,28 @@ class PstnVoiceLoop:
                     # Provider-confirmed speech also satisfies the optional VAD
                     # barge gate for quiet callers; energy alone is insufficient.
                     self._last_vad_voice_at = time.monotonic()
+                    self._on_vad_speech_onset()
                 elif ev == "transcript.partial":
                     text = (msg.get("text") or (msg.get("data") or {}).get("text") or "").strip()
+                    if text and self._agent_audio_playing() and self._is_partial_self_echo(text):
+                        # A longer STT refinement can reveal that its short prefix
+                        # was echo. Do not let that earlier candidate fire later.
+                        self._latest_interrupt_text = ""
+                        self._partial_started_at = 0.0
+                        if self._barge_confirm_task and not self._barge_confirm_task.done():
+                            self._barge_confirm_task.cancel()
+                        self._tts_ducked = False
+                        self._tts_target_factor = 1.0
+                        log_pstn("PARTIAL_SELF_ECHO_DROPPED", call_id=self.call_id,
+                                 partial_words=len(text.split()))
+                        continue
                     if text:
+                        if is_backchannel(text):
+                            # A semantic nod releases provisional VAD ducking smoothly.
+                            self._tts_ducked = False
+                            self._tts_target_factor = 1.0
+                        else:
+                            self._on_vad_speech_onset()
                         self._last_user_partial_at = time.monotonic()
                         self._backchannel.note_partial(text)
                         if self._awaiting_barge_final:
@@ -1413,7 +1534,7 @@ class PstnVoiceLoop:
                     if not text:
                         continue
                     # Some providers emit a short final without any repeated partial.
-                    self._schedule_interrupt_confirmation(text)
+                    self._schedule_interrupt_confirmation(text, final=True)
                     now = time.monotonic()
                     barge_final = bool(
                         self._awaiting_barge_final
@@ -1422,9 +1543,7 @@ class PstnVoiceLoop:
                     if self._intro_phase or self._phase == PHASE_INTRO:
                         self._queue_user_transcript(text, intro=True)
                     elif barge_final:
-                        from server.services.transcript_gate import is_substantive_transcript
-
-                        if not is_substantive_transcript(text, after_barge=True):
+                        if not self._accepts_user_turn(text, after_barge=True):
                             log_pstn("stt.thin_drop", call_id=self.call_id, text=text[:80], after_barge=True)
                             continue
                         self._cancel_listen_coalesce()
@@ -1446,18 +1565,27 @@ class PstnVoiceLoop:
                             self._pending_transcript = None
                             if pending:
                                 self._launch_turn(pending)
-                    elif (
-                        self._phase == PHASE_THINKING
-                        and self._turn_busy
-                        and not self._agent_audio_playing()
-                        and self._should_think_continue_final(text)
-                    ):
-                        await self._think_cancel(text, immediate=True)
+                    elif self._phase == PHASE_THINKING and self._turn_busy and not self._agent_audio_playing():
+                        if self._should_think_continue_final(text):
+                            await self._think_cancel(text, immediate=True)
+                        elif (self._think_partial_started_at > 0
+                              and text.lower() not in self._current_turn_transcript.lower()):
+                            # If this generation finishes before the hold, retain the
+                            # accepted continuation for completion instead of losing it.
+                            self._pending_transcript = self._merge_pending_transcript(
+                                self._pending_transcript or "", text,
+                            )
                     elif self._turn_busy or self._phase in (PHASE_THINKING, PHASE_SPEAKING, PHASE_INTERRUPTING):
-                        self._queue_user_transcript(text)
+                        if (is_backchannel(text) or _STRONG_HALT_RE.fullmatch(text)
+                                or self._has_barge_voice(now, started_at=self._partial_started_at,
+                                                         hold=PSTN_BARGE_HOLD_S)):
+                            self._queue_user_transcript(text)
                     elif self._agent_audio_playing():
                         # Provider still playing but turn not busy — hold as pending.
-                        self._queue_user_transcript(text)
+                        if (is_backchannel(text) or _STRONG_HALT_RE.fullmatch(text)
+                                or self._has_barge_voice(now, started_at=self._partial_started_at,
+                                                         hold=PSTN_BARGE_HOLD_S)):
+                            self._queue_user_transcript(text)
                     else:
                         if (
                             self._barge_epoch
@@ -1473,36 +1601,53 @@ class PstnVoiceLoop:
             logger.warning("[PSTN] stt reader: %s", str(e)[:200])
             raise
 
-    def _schedule_interrupt_confirmation(self, text: str) -> None:
+    def _schedule_interrupt_confirmation(self, text: str, *, final: bool = False) -> None:
         """Confirm once after the hold, even if STT emits only one short result."""
         if not text or self._closed or self._awaiting_barge_final:
             return
         if self._phase not in (PHASE_INTRO, PHASE_SPEAKING, PHASE_THINKING) and not self._agent_audio_playing():
             return
         self._latest_interrupt_text = text
+        self._latest_interrupt_is_final = final
         if self._barge_confirm_task and not self._barge_confirm_task.done():
-            return
+            # Wake a sleeping general hold when a halt/negation/refinement arrives.
+            # Candidate timestamps survive, so repeated partials do not extend it.
+            self._barge_confirm_task.cancel()
         generation = self.current_generation_id or (self.playback.current_generation() if self.playback else None)
-        thinking = self._phase == PHASE_THINKING
-        if thinking:
+        if self._phase == PHASE_THINKING:
             self._should_think_cancel(text)
         else:
             self._should_commit_barge(text)
 
         async def confirm() -> None:
-            hold = PSTN_THINK_CANCEL_HOLD_S if thinking else PSTN_BARGE_HOLD_S
-            deadline = time.monotonic() + hold
-            # Windows event-loop timers may wake before monotonic hold expires.
-            while time.monotonic() < deadline:
-                await asyncio.sleep(max(0.01, deadline - time.monotonic()))
-            active_generation = self.current_generation_id or (self.playback.current_generation() if self.playback else None)
-            if self._closed or generation != active_generation or self._awaiting_barge_final:
-                return
-            latest = self._latest_interrupt_text
-            if thinking and self._should_think_cancel(latest):
-                await self._think_cancel(latest)
-            elif self._should_commit_barge(latest):
-                await self._commit_barge(latest)
+            while True:
+                active_generation = self.current_generation_id or (self.playback.current_generation() if self.playback else None)
+                if self._closed or generation != active_generation or self._awaiting_barge_final:
+                    return
+                latest = self._latest_interrupt_text
+                thinking = self._phase == PHASE_THINKING and not self._agent_audio_playing()
+                ready = self._should_think_cancel(latest) if thinking else self._should_commit_barge(latest)
+                if ready:
+                    if thinking:
+                        if not self._latest_interrupt_is_final or self._should_think_continue_final(latest):
+                            await self._think_cancel(latest, immediate=self._latest_interrupt_is_final)
+                    else:
+                        await self._commit_barge(latest)
+                    return
+                started = self._think_partial_started_at if thinking else self._partial_started_at
+                if started <= 0:
+                    return
+                hold = PSTN_NEGATION_HOLD_S if _WEAK_NEGATION_RE.fullmatch(latest) else (
+                    PSTN_THINK_CANCEL_HOLD_S if thinking else PSTN_BARGE_HOLD_S
+                )
+                now = time.monotonic()
+                delay = hold - (now - started)
+                if not thinking and self._tts_started_at:
+                    delay = max(delay, PSTN_BARGE_MIN_AFTER_SPEAK_S - (now - self._tts_started_at))
+                if delay <= 0:
+                    return
+                # Recheck after a newer partial changes the candidate or hold kind.
+                await asyncio.sleep(max(0.01, delay))
 
         self._barge_confirm_task = asyncio.create_task(confirm())
 
@@ -1534,6 +1679,7 @@ class PstnVoiceLoop:
         6 preserve caller partial for final timeout fallback
         """
         now = time.monotonic()
+        self._reset_ducking()
         self._last_barge_at = now
         self._barge_epoch = now
         self._awaiting_barge_final = True
@@ -1624,17 +1770,17 @@ class PstnVoiceLoop:
         rms = 0
         dropped = False
         drop_reason = ""
-        if agent_playing:
+        if agent_playing or self._phase in (PHASE_THINKING, PHASE_LISTENING):
             try:
-                from server.services.audio_transcode import pcm16_rms
+                from server.services.audio_transcode import pcm16_crest_factor, pcm16_rms
 
                 rms = pcm16_rms(pcm16)
-                if rms >= PSTN_TTS_STT_ENERGY_MIN:
-                    self._last_vad_voice_at = time.monotonic()
+                if rms >= PSTN_TTS_STT_ENERGY_MIN and pcm16_crest_factor(pcm16, rms) <= PSTN_AEC_MAX_CREST_FACTOR:
                     self._aec_loud_streak += 1
                     self._aec_quiet_streak = 0
                     if self._aec_loud_streak >= PSTN_AEC_LOUD_OPEN_FRAMES:
                         self._aec_barge_open = True
+                        self._last_vad_voice_at = time.monotonic()
                 else:
                     self._aec_quiet_streak += 1
                     self._aec_loud_streak = 0
@@ -1832,6 +1978,8 @@ class PstnVoiceLoop:
                         if self.emission_blocked():
                             turn_cancelled = True
                             break
+                        if isinstance(chunk.get("expects_answer"), bool):
+                            self._expects_answer = chunk["expects_answer"]
                         if chunk.get("cancelled"):
                             turn_cancelled = True
                         if chunk.get("delta"):
@@ -1956,6 +2104,7 @@ class PstnVoiceLoop:
             if self.call_id:
                 pstn_media_flow.emit(self.call_id, "turn_error", "outbound", status="failed", detail=str(e)[:200])
         finally:
+            self._reset_ducking()
             self._set_tts_active(False)
             self._turn_busy = False
             if self._phase not in (PHASE_ENDED, PHASE_INTERRUPTING):
@@ -1965,7 +2114,7 @@ class PstnVoiceLoop:
             log_pstn("TURN_END", timer_key=self.call_id, call_id=self.call_id, turn_id=self.current_turn_id)
             self.current_turn_id = None
             # Keep generation id briefly for drop guards; clear interrupt marker after pending launch.
-            pending = self._pending_transcript
+            pending = self._filter_pending_backchannel(self._pending_transcript)
             self._pending_transcript = None
             self.current_generation_id = None
             self._interrupted_generation = None
@@ -1990,6 +2139,28 @@ class PstnVoiceLoop:
     async def _emit_agent_wire(self, wire: bytes) -> None:
         if not wire or self.emission_blocked():
             return
+        if self.tts_output_codec != "mp3":
+            from server.services.audio_transcode import scale_wire_volume
+
+            if (self._tts_ducked and not self._awaiting_barge_final
+                    and time.monotonic() - self._tts_duck_at > PSTN_DUCK_TIMEOUT_S):
+                self._tts_ducked = False
+                self._tts_target_factor = 1.0
+                log_pstn("TTS_UNDUCK_RESTORED", call_id=self.call_id)
+            frame_bytes = pstn_frame_bytes(pstn_wire_mode(self.tts_output_codec, self.sample_rate), self.sample_rate)
+            frames = []
+            for offset in range(0, len(wire), frame_bytes):
+                frame = wire[offset:offset + frame_bytes]
+                start = self._tts_current_factor
+                step = 0.2 * len(frame) / frame_bytes
+                if start < self._tts_target_factor:
+                    self._tts_current_factor = min(self._tts_target_factor, start + step)
+                else:
+                    self._tts_current_factor = max(self._tts_target_factor, start - step)
+                frames.append(scale_wire_volume(
+                    frame, self.tts_output_codec, self._tts_current_factor, start_factor=start,
+                ))
+            wire = b"".join(frames)
         # First successfully emitted frames promote queued TTS → heard (echo truth).
         if not getattr(self.playback, "defer_heard_until_sent", False):
             self._promote_queued_tts_to_heard()
@@ -2005,7 +2176,9 @@ class PstnVoiceLoop:
                 self.playback.note_sent_frames(n)
             except Exception:
                 pass
-        await self.on_agent_wire(wire)
+        res = self.on_agent_wire(wire)
+        if inspect.isawaitable(res):
+            await res
 
     async def speak(
         self,
@@ -2028,16 +2201,17 @@ class PstnVoiceLoop:
             if speaker or language_code:
                 await session.open(speaker=speaker, language_code=language_code)
             self._active_tts_session = session
-            self._set_tts_active(True)
             try:
                 self._clear_tts_text_layers()
                 self._tts_started_at = 0.0
+                self._set_tts_active(True)
                 await self._send_tts_text(session, text)
                 if not self.emission_blocked():
                     await session.finish()
                     if getattr(session, "had_error", False) or not getattr(session, "audio_emitted", True):
                         raise RuntimeError("TTS produced no usable audio or reported an upstream failure")
             finally:
+                self._reset_ducking()
                 self._set_tts_active(False)
                 await self._release_tts_turn(session)
                 self._active_tts_session = None
@@ -2050,6 +2224,7 @@ class PstnVoiceLoop:
         skip_playback_clear: bool = False,
         already_invalidated: bool = False,
     ) -> None:
+        self._reset_ducking()
         old_gen = self.current_generation_id
         if not already_invalidated:
             self._interrupted_generation = old_gen
@@ -2096,6 +2271,7 @@ class PstnVoiceLoop:
         if self._closed:
             return
         self._closed = True
+        self._reset_ducking()
         await self._set_phase_async(PHASE_ENDED)
         self._cancel_listen_coalesce()
         log_pstn(

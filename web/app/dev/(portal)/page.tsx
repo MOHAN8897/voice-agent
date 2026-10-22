@@ -72,7 +72,7 @@ export default function DevOverviewPage() {
       <PageHeader
         eyebrow="Platform"
         title="Developer portal"
-        description="Agent brain, Test Studio, and SaaS operations. The subscriber UI runs in Voxly."
+        description="Agent brain, Test Studio, and SaaS operations. The subscriber UI runs in Dialtact."
       />
 
       <div className="mt-8 space-y-8">
@@ -101,7 +101,7 @@ export default function DevOverviewPage() {
           rel="noreferrer"
           className="text-sm font-semibold text-accent hover:underline"
         >
-          Open the subscriber product (Voxly) →
+          Open the subscriber product (Dialtact) →
         </a>
       </div>
     </div>

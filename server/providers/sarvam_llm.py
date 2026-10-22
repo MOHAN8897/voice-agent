@@ -173,12 +173,24 @@ class SarvamLLMAdapter:
             raise ValueError("Sarvam LLM requires the model selected in the resolved stack")
         return model.strip()
 
-    @staticmethod
-    def _api_mode(kwargs: dict[str, Any]) -> str:
-        mode = str(kwargs.get("api_mode") or "chat_completions_v2").strip().lower()
-        if mode not in {"chat_completions_v1", "chat_completions_v2"}:
+    @classmethod
+    def _api_mode(cls, kwargs: dict[str, Any]) -> str:
+        mode = kwargs.get("api_mode")
+        if not mode:
+            config = kwargs.get("config")
+            if config:
+                mode = getattr(config, "api_mode", None) or (config.get("api_mode") if isinstance(config, dict) else None)
+        if not mode:
+            try:
+                model = cls._model(kwargs)
+                valid_modes = sarvam_chat_api_modes(model)
+                mode = valid_modes[0] if valid_modes else "chat_completions_v2"
+            except Exception:
+                mode = "chat_completions_v2"
+        mode_str = str(mode).strip().lower()
+        if mode_str not in {"chat_completions_v1", "chat_completions_v2"}:
             raise ValueError("Sarvam LLM requires an approved chat completion API mode")
-        return mode
+        return mode_str
 
     @classmethod
     def _url(cls, model: str, kwargs: dict[str, Any]) -> str:
@@ -204,7 +216,11 @@ class SarvamLLMAdapter:
         key = self._api_key()
         if not key:
             raise RuntimeError("SARVAM_API_KEY is not configured")
-        headers = {"api-subscription-key": key, "Content-Type": "application/json"}
+        headers = {
+            "api-subscription-key": key,
+            "Authorization": f"Bearer {key}",
+            "Content-Type": "application/json",
+        }
         if kwargs:
             affinity = str(kwargs.get("session_id") or kwargs.get("call_id") or "").strip()
             if affinity:
@@ -340,7 +356,13 @@ class SarvamLLMAdapter:
                     json=body,
                 ) as response:
                     if response.status_code >= 400:
-                        raise RuntimeError(f"Sarvam Chat Completions HTTP {response.status_code}")
+                        err_text = ""
+                        try:
+                            err_bytes = await response.aread()
+                            err_text = err_bytes.decode(errors="replace")
+                        except Exception:
+                            pass
+                        raise RuntimeError(f"Sarvam Chat Completions HTTP {response.status_code}: {err_text}")
                     async for line in response.aiter_lines():
                         if not line or line.startswith(":"):
                             continue

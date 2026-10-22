@@ -1,19 +1,19 @@
 /**
- * Voxly AI — OpenAPI 3.0 API Specification & Data Contracts
+ * Dialtact AI — OpenAPI 3.0 API Specification & Data Contracts
  * 
  * Provides strict schema definitions, DTO types, and request/response
- * contracts for every endpoint across the Voxly User Console.
+ * contracts for every endpoint across the Dialtact User Console.
  */
 
 export const openApiSpec = {
   openapi: '3.0.3',
   info: {
-    title: 'Voxly AI Voice Platform API',
+    title: 'Dialtact AI Voice Platform API',
     version: '1.0.0',
     description: 'Enterprise REST API for autonomous AI Voice Employees, PSTN Telephony DIDs, Live SIP Routing, Call Transcripts, and CRM Pipeline Sync.'
   },
   servers: [
-    { url: 'https://api.voxly.ai/v1', description: 'Production Gateway' },
+    { url: 'https://api.dialtact.com/v1', description: 'Production Gateway' },
     { url: 'http://localhost:8000/api', description: 'Local Backend Server' }
   ],
   paths: {

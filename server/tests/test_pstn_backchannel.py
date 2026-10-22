@@ -12,7 +12,7 @@ def test_pick_backchannel_phrase_by_language():
     en = pick_backchannel_phrase("en-IN")
     te = pick_backchannel_phrase("te-IN")
     assert en in {"Hmm.", "Mhm.", "Right.", "I see.", "Okay."}
-    assert te in {"Hmm.", "Mhm.", "Aha.", "Sare.", "Avunu."}
+    assert te in {"సరే.", "అవును.", "అలాగే."}
 
 
 def test_min_words_threshold():

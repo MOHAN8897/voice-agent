@@ -146,7 +146,7 @@ async def test_versioned_voice_patch_refuses_premium_and_requires_durable_store(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("voice_patch", [{"stackSelectionVersion": 1, "realtimeVoice": "te-in-csagent-5"}, None])
+@pytest.mark.parametrize("voice_patch", [{"stackSelectionVersion": 1, "realtimeVoice": "puck"}, None])
 async def test_switch_to_premium_persists_validated_voice_without_old_composed_aliases(monkeypatch, voice_patch):
     row = _agent()
     row.voice_settings.update(_selection())
@@ -162,14 +162,13 @@ async def test_switch_to_premium_persists_validated_voice_without_old_composed_a
     assert row.voice_settings["_voice_revision"] == 3
     assert not {"voiceId", "engineId", "modelId", "profileRevision"} & row.voice_settings.keys()
     if voice_patch:
-        assert row.voice_settings["realtimeVoice"] == "te-in-csagent-5"
+        assert row.voice_settings["realtimeVoice"] == "puck"
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("voice_id,language,error_code", [
     ("shubh", "te-IN", "voice_selection_invalid"),
     ("unlisted-voice", "te-IN", "voice_selection_invalid"),
-    ("te-in-csagent-5", "hi-IN", "unsupported_language"),
 ])
 async def test_premium_rejects_wrong_live_voice_without_misclassifying_revision(monkeypatch, voice_id, language, error_code):
     row = _agent()
@@ -182,4 +181,24 @@ async def test_premium_rejects_wrong_live_voice_without_misclassifying_revision(
             tenant_id=str(row.tenant_id), expected_voice_revision=2,
         )
     assert invalid.value.code == error_code
+    assert session.commits == 0
+
+
+@pytest.mark.asyncio
+async def test_premium_rejects_unsupported_language_live_voice(monkeypatch):
+    row = _agent()
+    session = _Session(row)
+    monkeypatch.setattr("server.brain.agent_service.get_session_factory", lambda: lambda: session)
+    monkeypatch.setattr(
+        "server.services.saas.voice_catalog.phone_voice_catalog",
+        lambda: [{"id": "live-en", "provider": "gemini", "languageCode": "en-US"}],
+    )
+    with pytest.raises(AgentVoiceRevisionConflict) as invalid:
+        await AgentService().patch_agent(
+            str(row.agent_id),
+            {"default_tier": "premium", "languages": ["hi-IN"],
+             "voice_settings": {"stackSelectionVersion": 1, "realtimeVoice": "live-en"}},
+            tenant_id=str(row.tenant_id), expected_voice_revision=2,
+        )
+    assert invalid.value.code == "unsupported_language"
     assert session.commits == 0

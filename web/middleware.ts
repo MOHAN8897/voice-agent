@@ -70,7 +70,7 @@ async function requireSession(
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Product UI lives in Voxly (Vite). Keep Next.js for dev portal + Test Studio only.
+  // Product UI lives in Dialtact (Vite). Keep Next.js for dev portal + Test Studio only.
   if (
     pathname === "/" ||
     pathname.startsWith("/pricing") ||

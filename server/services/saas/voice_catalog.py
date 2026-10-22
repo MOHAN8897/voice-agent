@@ -177,6 +177,25 @@ _SARVAM_VOICE_META: tuple[dict[str, Any], ...] = (
 
 def phone_voice_catalog() -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
+    for vid in REALTIME_VOICES:
+        meta = _OPENAI_VOICE_META.get(vid, {})
+        gemini_name = _GEMINI_BY_OPENAI.get(vid, "Aoede")
+        gmeta = _GEMINI_VOICE_META.get(gemini_name, {})
+        rows.append(
+            {
+                "id": vid,
+                "label": meta.get("label") or vid.title(),
+                "gender": meta.get("gender") or "",
+                "tone": meta.get("tone") or "",
+                "category": meta.get("category") or "support",
+                "useCase": meta.get("useCase") or "",
+                "provider": "openai",
+                "providerLabel": "OpenAI Realtime",
+                "geminiVoice": gemini_name,
+                "geminiLabel": gmeta.get("label") or gemini_name,
+                "geminiGender": gmeta.get("gender") or "",
+            }
+        )
     for gid, gmeta in _CURATED_GEMINI_VOICES.items():
         rows.append(
             {
@@ -192,6 +211,21 @@ def phone_voice_catalog() -> list[dict[str, Any]]:
                 "geminiVoice": gid,
                 "geminiLabel": gmeta.get("label") or gid,
                 "geminiGender": gmeta.get("gender") or "female",
+                "sampleUrl": f"/audio/voxly/samples/{gid.lower()}.wav",
+            }
+        )
+    for meta in _GEMINI_INDIC_VOICE_META:
+        gid = str(meta["id"])
+        if gid not in GEMINI_LIVE_LIBRARY_VOICES:
+            continue
+        rows.append(
+            {
+                **meta,
+                "provider": "gemini",
+                "providerLabel": "Gemini Live · Indic",
+                "geminiVoice": gid,
+                "geminiLabel": meta["label"],
+                "geminiGender": meta["gender"],
                 "sampleUrl": f"/audio/voxly/samples/{gid.lower()}.wav",
             }
         )

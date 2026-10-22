@@ -14,7 +14,7 @@ export function ConsoleSignInRequired({ onSignIn, onBackToMarketing }) {
             onClick={onBackToMarketing}
             className="text-xs font-semibold text-[#524E5E] hover:text-[#0F0E17]"
           >
-            ← Back to voxly.ai
+            ← Back to dialtact.com
           </button>
           <span className="text-xs font-mono text-[#524E5E]">Subscriber console</span>
         </div>

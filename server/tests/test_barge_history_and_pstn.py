@@ -60,10 +60,13 @@ def test_pstn_barge_commit_short_phrase_and_hold(monkeypatch):
     loop._partial_started_at = 0.0
     loop._tts_started_at = 1.0
     monkeypatch.setattr(time, "monotonic", lambda: 10.0)
+    loop._last_vad_voice_at = 10.0
     # First partial only starts the hold clock.
     assert loop._should_commit_barge("actually no") is False
     assert loop._partial_started_at == 10.0
     monkeypatch.setattr(time, "monotonic", lambda: 10.20)
+    assert loop._should_commit_barge("actually no") is False
+    monkeypatch.setattr(time, "monotonic", lambda: 10.31)
     assert loop._should_commit_barge("actually no") is True
     # Too soon after speak start
     loop._partial_started_at = 0.0
@@ -81,6 +84,7 @@ def test_pstn_intro_phase_queues_not_barge(monkeypatch):
     import time
 
     monkeypatch.setattr(time, "monotonic", lambda: 20.0)
+    loop._last_vad_voice_at = 20.0
     assert loop._should_commit_barge("I want two plants please") is False
     loop._queue_user_transcript("My name is Ravi", intro=True)
     assert loop._intro_queue == ["My name is Ravi"]
@@ -91,6 +95,8 @@ def test_pstn_intro_phase_queues_not_barge(monkeypatch):
     monkeypatch.setattr(time, "monotonic", lambda: 20.0)
     assert loop._should_commit_barge("I want two plants please") is False
     monkeypatch.setattr(time, "monotonic", lambda: 20.20)
+    assert loop._should_commit_barge("I want two plants please") is False
+    monkeypatch.setattr(time, "monotonic", lambda: 20.31)
     assert loop._should_commit_barge("I want two plants please") is True
 
 
@@ -161,6 +167,7 @@ def test_think_cancel_during_thinking_phase(monkeypatch):
     import time
 
     monkeypatch.setattr(time, "monotonic", lambda: 5.0)
+    loop._last_vad_voice_at = 5.0
     # Short backchannel must never think-cancel.
     assert loop._should_think_cancel("Yeah yeah") is False
     assert loop._should_think_cancel("ok ok sure") is False
@@ -209,7 +216,7 @@ async def test_listen_coalesce_delays_then_launches(monkeypatch):
     assert loop._coalesce_transcript is None
 
 
-def test_think_continue_final_during_thinking_phase():
+def test_think_continue_final_during_thinking_phase(monkeypatch):
     loop = PstnVoiceLoop(session_id="s", call_id=None, on_agent_wire=lambda _: None)
     from server.services.pstn_voice_core import PHASE_THINKING
 
@@ -217,6 +224,10 @@ def test_think_continue_final_during_thinking_phase():
     loop._turn_busy = True
     loop._tts_active = False
     loop._current_turn_transcript = "What is the price"
+    monkeypatch.setattr("server.services.pstn_voice_core.time.monotonic", lambda: 100.0)
+    loop._last_vad_voice_at = 100.0
+    assert loop._should_think_continue_final("and is parking included") is False
+    monkeypatch.setattr("server.services.pstn_voice_core.time.monotonic", lambda: 100.26)
     assert loop._should_think_continue_final("and is parking included") is True
     assert loop._should_think_continue_final("What is the price") is False
     assert loop._should_think_continue_final("ok") is False

@@ -19,6 +19,10 @@ from server.services.telnyx_client import TelnyxCallRegistry, TelnyxStreamTokens
 @pytest.fixture(autouse=True)
 def _isolate_registry(monkeypatch):
     reg = TelnyxCallRegistry()
+    # These are process-local unit cases; shared Redis keeps terminal test IDs
+    # from earlier runs and bypasses the retry path this fixture must exercise.
+    monkeypatch.setattr(reg, "_redis", lambda: None)
+    monkeypatch.setattr(reg, "_redis", lambda: None)
     monkeypatch.setattr(telnyx_routes, "telnyx_call_registry", reg)
     monkeypatch.setattr("server.services.telnyx_client.telnyx_call_registry", reg)
     # Fresh stream locks per test
@@ -123,6 +127,8 @@ async def test_barge_actually_no_stops_tts():
     loop._phase = PHASE_SPEAKING
     loop._tts_started_at = __import__("time").monotonic() - 1.0
     loop._partial_started_at = __import__("time").monotonic() - 1.0
+    loop._partial_kind = "speech"
+    loop._last_vad_voice_at = __import__("time").monotonic()
     loop._tts_heard_text = "Your villa is available"
     loop._last_tts_text = loop._tts_heard_text
 
@@ -282,6 +288,7 @@ def test_short_telugu_think_cancel():
     loop = PstnVoiceLoop(session_id="s", call_id="c1", on_agent_wire=AsyncMock())
     loop._phase = PHASE_THINKING
     loop._tts_active = False
+    loop._last_vad_voice_at = __import__("time").monotonic()
     # First call arms hold timer
     assert loop._should_think_cancel("కాదు") is False
     assert loop._think_partial_started_at > 0

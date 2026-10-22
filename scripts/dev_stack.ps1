@@ -130,11 +130,11 @@ if (Should-StartTunnel) {
                 }
             }
             if ($publicApp) {
-                if (-not (Wait-ForService -Label "Public Voxly" -Url $publicApp -MaxAttempts 45 -TimeoutSec 6)) {
-                    throw "Public Voxly tunnel is not healthy. See data/dev-logs/cloudflared-named.log."
+                if (-not (Wait-ForService -Label "Public Dialtact" -Url $publicApp -MaxAttempts 45 -TimeoutSec 6)) {
+                    throw "Public Dialtact tunnel is not healthy. See data/dev-logs/cloudflared-named.log."
                 }
-                if (-not (Wait-ForService -Label "Public Voxly API proxy" -Url "$publicApp/api/health" -MaxAttempts 45 -TimeoutSec 6)) {
-                    throw "Public Voxly API proxy is not healthy."
+                if (-not (Wait-ForService -Label "Public Dialtact API proxy" -Url "$publicApp/api/health" -MaxAttempts 45 -TimeoutSec 6)) {
+                    throw "Public Dialtact API proxy is not healthy."
                 }
                 # Admin is localhost-only: public /dev must 404 (not 200).
                 $publicDevCode = Get-HttpStatusCode "$publicApp/dev/login" 8
@@ -151,7 +151,7 @@ if (Should-StartTunnel) {
                 Write-Host "Local admin panel is ready (http://localhost:3000/dev/login)."
             }
             if ($Mode -eq "share" -and (-not $publicApi -or -not $publicApp)) {
-                throw "Named tunnel config must include API (8000) and Voxly (5173) ingress hosts."
+                throw "Named tunnel config must include API (8000) and Dialtact (5173) ingress hosts."
             }
             $tunnelStarted = $true
         }
@@ -172,14 +172,14 @@ Write-Host "  Voice agent stack"
 Write-Host "============================================================"
 Write-Host ""
 Write-Host "  LOCAL"
-Write-Host "    Voxly (product)  http://127.0.0.1:5173"
-Write-Host "    Admin panel      http://localhost:3000/dev/login  (DEV_PORTAL_* in .env)"
-Write-Host "    Test Studio      http://localhost:3000/dev/test-studio"
-Write-Host "    API health       http://127.0.0.1:8000/api/health"
+Write-Host "    Dialtact (product)  http://127.0.0.1:5173"
+Write-Host "    Admin panel        http://localhost:3000/dev/login  (DEV_PORTAL_* in .env)"
+Write-Host "    Test Studio        http://localhost:3000/dev/test-studio"
+Write-Host "    API health         http://127.0.0.1:8000/api/health"
 Write-Host ""
 if ($tunnelStarted -and $publicApp -and $publicApp -notmatch "localhost") {
     Write-Host "  PUBLIC (Cloudflare tunnel)"
-    Write-Host "    Voxly (product)  $publicApp"
+    Write-Host "    Dialtact (product)  $publicApp"
     Write-Host "    Admin panel      localhost only - http://localhost:3000/dev/login"
     Write-Host "                     (public $publicApp/dev is blocked)"
     Write-Host ""

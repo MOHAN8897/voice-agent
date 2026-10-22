@@ -55,9 +55,9 @@ function Write-DevBanner {
     Write-Host "============================================================"
     if ($ApiOk -and $WebOk) {
         if ($VoxlyFocus) {
-            Write-Host "  Voxly + dev panel (light local stack)"
+            Write-Host "  Dialtact + dev panel (light local stack)"
         } else {
-            Write-Host "  Voice agent - local dev is running (API + dev portal + Voxly)"
+            Write-Host "  Voice agent - local dev is running (API + dev portal + Dialtact)"
         }
     } else {
         Write-Host "  Voice agent - dev start incomplete"
@@ -66,15 +66,15 @@ function Write-DevBanner {
     Write-Host ""
     if ($WebOk) {
         if ($VoxlyOk) {
-            Write-Host "  Voxly (subscriber UI) $VoxlyUrl"
+            Write-Host "  Dialtact (subscriber UI) $VoxlyUrl"
         } else {
-            Write-Host "  Voxly                 NOT RUNNING (see voxly.log)"
+            Write-Host "  Dialtact                 NOT RUNNING (see voxly.log)"
         }
         Write-Host "  Dev portal            $DevLoginUrl  (dev / devpass)"
         Write-Host "  Test Studio           $TestStudioUrl"
         if (-not $VoxlyFocus) {
-            Write-Host "  Legacy marketing      $MarketingUrl  (redirects to Voxly)"
-            Write-Host "  Legacy /app console   $AppLoginUrl  (redirects to Voxly)"
+            Write-Host "  Legacy marketing      $MarketingUrl  (redirects to Dialtact)"
+            Write-Host "  Legacy /app console   $AppLoginUrl  (redirects to Dialtact)"
         }
     } else {
         Write-Host "  Website               NOT RUNNING"
@@ -187,10 +187,35 @@ if (-not $ApiOnly) {
         }
         $webOk = Wait-ForService -Label "Website" -Url $DevLoginUrl
         if ($webOk) {
-            $proxyOk = Wait-ForService -Label "Website API proxy" -Url "$WebUrl/api/health" -MaxAttempts 30
-            if (-not $proxyOk) {
-                Write-Warning "Website is up but /api/health proxy failed. API may still be starting."
-                $webOk = $false
+            # The uvicorn reloader may bounce the API right after first boot (stale
+            # file-system timestamps trigger WatchFiles). When that happens the port
+            # goes down entirely for the reload cycle (~15-20 s).
+            # Strategy: use fast TCP check to detect if the API *process* is alive,
+            # then wait for the HTTP health endpoint. This avoids false-triggering on
+            # slow health responses (cold DB pool, warmup) vs. actual reloads.
+            $apiPortUp = Test-PortInUse -Port 8000
+            if (-not $apiPortUp) {
+                Write-Host "API port 8000 is down (uvicorn --reload bounce). Waiting for API to come back..."
+                $apiBackOk = Wait-ForService -Label "API (post-reload)" -Url "$ApiUrl/api/health" -MaxAttempts 90 -TimeoutSec 8
+                if (-not $apiBackOk) {
+                    Write-Warning "API did not recover after reload. Check $LogDir\api.log"
+                    $apiOk = $false
+                } else {
+                    $apiOk = $true
+                }
+            }
+            if ($apiOk) {
+                $proxyOk = Wait-ForService -Label "Website API proxy" -Url "$WebUrl/api/health" -MaxAttempts 60 -TimeoutSec 5
+                if (-not $proxyOk) {
+                    # Distinguish real proxy failure from API being down again
+                    if (Test-HttpOk "$ApiUrl/api/health" 8) {
+                        Write-Warning "Website is up and API is healthy, but the /api proxy is not forwarding. Check Next.js rewrites."
+                        $webOk = $false
+                    } else {
+                        Write-Warning "Website API proxy failed because the API itself is not responding. Check $LogDir\api.log"
+                        $apiOk = $false
+                    }
+                }
             }
         }
     }
@@ -200,18 +225,18 @@ if (-not $ApiOnly) {
 
 if (-not $ApiOnly -and (Test-Path $VoxlyRoot) -and $apiOk) {
     if (-not (Test-Path (Join-Path $VoxlyRoot "node_modules"))) {
-        Write-Host "Installing Voxly dependencies (first run)..."
+        Write-Host "Installing Dialtact dependencies (first run)..."
         Push-Location $VoxlyRoot
         try {
             & $npm install
-            if ($LASTEXITCODE -ne 0) { throw "Voxly dependency installation failed." }
+            if ($LASTEXITCODE -ne 0) { throw "Dialtact dependency installation failed." }
         } finally { Pop-Location }
     }
-    Write-Host "Starting Voxly on $VoxlyUrl"
-    Start-DevWindow -Title "Voxly AI" -WorkingDir $VoxlyRoot `
+    Write-Host "Starting Dialtact on $VoxlyUrl"
+    Start-DevWindow -Title "Dialtact AI" -WorkingDir $VoxlyRoot `
         -Command "& '$npm' run dev" `
         -LogFile (Join-Path $LogDir "voxly.log")
-    $voxlyOk = Wait-ForService -Label "Voxly" -Url $VoxlyUrl -MaxAttempts 60
+    $voxlyOk = Wait-ForService -Label "Dialtact" -Url $VoxlyUrl -MaxAttempts 60
 }
 
 if (-not $QuietBanner) {
@@ -224,7 +249,22 @@ if ($Open -and $webOk) {
     Start-Process $openUrl
 }
 
-if (-not $apiOk -or -not $webOk) {
-    exit 1
+if ($VoxlyFocus) {
+    # Voxly mode: API + Voxly are the critical pair. Website proxy is nice-to-have.
+    if (-not $apiOk) {
+        Write-Warning "API is not healthy. Exiting with error."
+        exit 1
+    }
+    if (-not $voxlyOk) {
+        Write-Warning "Voxly is not running. Exiting with error."
+        exit 1
+    }
+    if (-not $webOk) {
+        Write-Warning "Website proxy is degraded but API + Voxly are healthy. Continuing."
+    }
+} else {
+    if (-not $apiOk -or -not $webOk) {
+        exit 1
+    }
 }
 exit 0

@@ -68,7 +68,7 @@ def recommended_composed_profile(tier: str) -> dict[str, Any]:
                 "id": "regional-v3" if regional else "expressive-lite",
                 "label": "Regional Voice" if regional else "Expressive Voice",
                 "provider": "sarvam" if regional else "gemini",
-                "model": "bulbul:v3" if regional else "gemini-3.8-flash-lite-tts",
+                "model": "bulbul:v3" if regional else "gemini-3.8-flash-tts",
                 "apiMode": "websocket" if regional else "streaming_rest",
                 "voices": voices,
             }],
