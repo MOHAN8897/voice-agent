@@ -277,12 +277,21 @@ export const api = {
     store?.removeItem(AUTH_TOKEN_KEY);
   },
 
-  /** Default true. Workspace sync sets false so one failed resource cannot wipe the session. */
-  _logoutOn401: true,
+  /**
+   * Resilient session policy: Default false.
+   * Arbitrary 401s from sub-services or network hiccups must NEVER wipe the user's workspace session.
+   * Only explicit user sign-out or confirmed auth token revocation (401 from /auth/refresh) may evict.
+   */
+  _logoutOn401: false,
   _logoutTimer: null,
+  _lastRefreshOutcome: null,
 
   _scheduleSessionLogout(force = false) {
     if (!force && this._logoutOn401 === false) return;
+    // Guard against kicking the tenant out during server 5xx or network drops
+    if (force && !this._lastRefreshOutcome?.isAuthDead) {
+      return;
+    }
     if (this._logoutTimer) return;
     this._logoutTimer = setTimeout(() => {
       this._logoutTimer = null;
@@ -310,18 +319,8 @@ export const api = {
   /**
    * Exchange the httpOnly refresh cookie for a new access token.
    *
-   * Refresh tokens are single-use: the server revokes the presented one and issues a
-   * replacement. The console fires many requests in parallel (workspace sync is 8 at
-   * once), so without deduplication those simultaneous 401s each presented the same
-   * cookie and rotated it past each other — the browser was left holding a revoked
-   * cookie and every later request failed with "Invalid or expired token".
-   *
-   * Sharing one in-flight promise only covers callers that overlap exactly. A request
-   * that lands a moment *after* the rotation finished would start a second one, and
-   * the browser may not have applied the new cookie yet — so it would present the
-   * token that was just consumed. That is what produced a single resource failing
-   * with "Your session expired" while its siblings succeeded. Holding the result
-   * briefly collapses that whole burst into one rotation.
+   * Differentiates between authentic auth expiration (HTTP 401/403) and server/network degradation (5xx, fetch error).
+   * A server 5xx or network glitch preserves the session and informs the UI gracefully without logging the tenant out.
    */
   async refreshAccessToken() {
     initAuthSessionSync();
@@ -342,27 +341,76 @@ export const api = {
             body: JSON.stringify({}),
           });
           if (!res.ok) {
-            logApiEvent(res.status === 401 ? 'debug' : 'warn', 'refresh_failed', {
+            const isAuthDead = res.status === 401 || res.status === 403;
+            const isServerFault = res.status >= 500;
+            api._lastRefreshOutcome = {
+              attemptedAt: Date.now(),
+              ok: false,
+              status: res.status,
+              isAuthDead,
+              isServerFault,
+            };
+            logApiEvent(isAuthDead ? 'debug' : 'warn', 'refresh_failed', {
               status: res.status,
               hint:
-                res.status === 401
+                isAuthDead
                   ? 'No valid refresh cookie (signed out or cookie on wrong host)'
-                  : 'Refresh endpoint error',
+                  : 'Refresh endpoint error (server degraded; session preserved)',
             });
+            if (isServerFault) {
+              window.dispatchEvent(
+                new CustomEvent('voxly:service-degraded', {
+                  detail: {
+                    status: res.status,
+                    message: 'Authentication service is momentarily busy. Workspace session preserved.',
+                  },
+                })
+              );
+            }
             return false;
           }
           const data = await res.json();
           applyAuthResponse(data);
+          api._lastRefreshOutcome = {
+            attemptedAt: Date.now(),
+            ok: true,
+            status: 200,
+            isAuthDead: false,
+            isServerFault: false,
+          };
           logApiEvent('debug', 'refresh_ok', {});
+          window.dispatchEvent(new CustomEvent('voxly:service-restored'));
           return true;
         } catch (err) {
+          api._lastRefreshOutcome = {
+            attemptedAt: Date.now(),
+            ok: false,
+            status: 0,
+            isAuthDead: false,
+            isServerFault: true,
+            isNetworkError: true,
+          };
           logApiEvent('warn', 'refresh_network_error', { message: String(err?.message || err) });
+          window.dispatchEvent(
+            new CustomEvent('voxly:service-degraded', {
+              detail: {
+                message: 'Network connection error. Workspace session preserved.',
+              },
+            })
+          );
           return false;
         }
       });
 
       if (locked.fromPeer && locked.accessToken) {
         this.adoptPeerAccessToken(locked.accessToken);
+        api._lastRefreshOutcome = {
+          attemptedAt: Date.now(),
+          ok: true,
+          status: 200,
+          isAuthDead: false,
+          isServerFault: false,
+        };
         return true;
       }
       return Boolean(locked.ok);
@@ -515,19 +563,24 @@ export const api = {
         }
       }
       const fail = () => {
-        // Logout only when refresh itself failed (cookie dead). A 401 after a
-        // successful rotation is authorization/resource-level — do not wipe the session.
-        const refreshDead =
-          response.status === 401 && !isAuthRoute && (!triedRefresh || !refreshOk);
+        // Only trigger session termination if token refresh was actually attempted against
+        // /auth/refresh AND /auth/refresh explicitly rejected the session with 401/403.
+        // Server faults (5xx) or individual endpoint 401s must NEVER wipe the session.
+        const isConfirmedAuthDead =
+          Boolean(api._lastRefreshOutcome?.isAuthDead) && triedRefresh && !refreshOk;
+        const isServerDegraded =
+          response.status >= 500 || Boolean(api._lastRefreshOutcome?.isServerFault);
+
         const e = new Error(
-          refreshDead
+          isConfirmedAuthDead
             ? 'Your session expired. Sign in again to continue.'
-            : parsed.message || `HTTP ${response.status}`
+            : parsed.message || (isServerDegraded ? 'Service temporarily degraded. Please try again.' : `HTTP ${response.status}`)
         );
-        e.code = parsed.code || (refreshDead ? 'session_expired' : undefined);
+        e.code = parsed.code || (isConfirmedAuthDead ? 'session_expired' : isServerDegraded ? 'service_degraded' : undefined);
         e.status = response.status;
+        e.isServerDegraded = isServerDegraded;
         e.retryAfter = Number(response.headers.get('Retry-After') || parsed.retryAfter || 0);
-        logApiEvent(refreshDead ? 'warn' : 'error', 'request_failed', {
+        logApiEvent(isConfirmedAuthDead ? 'warn' : 'error', 'request_failed', {
           method,
           path,
           status: response.status,
@@ -535,9 +588,25 @@ export const api = {
           message: e.message,
           triedRefresh,
           refreshOk,
-          quietLogout: this._logoutOn401 === false,
+          isConfirmedAuthDead,
+          isServerDegraded,
         });
-        if (refreshDead) this._scheduleSessionLogout(triedRefresh && !refreshOk);
+
+        if (isServerDegraded) {
+          window.dispatchEvent(
+            new CustomEvent('voxly:service-degraded', {
+              detail: {
+                status: response.status,
+                path,
+                message: 'A backend service is momentarily busy. Workspace session is active.',
+              },
+            })
+          );
+        }
+
+        if (isConfirmedAuthDead) {
+          this._scheduleSessionLogout(true);
+        }
         throw e;
       };
       if (backendUrl && !allowMock && !isAuthRoute) fail();

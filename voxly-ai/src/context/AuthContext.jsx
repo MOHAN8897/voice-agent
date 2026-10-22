@@ -125,7 +125,18 @@ export function AuthProvider({ children }) {
       }
       const refreshed = await api.refreshAccessToken();
       if (!refreshed) {
-        setUser(null);
+        // If the refresh failed because the session was actually revoked/expired (401/403)
+        if (api._lastRefreshOutcome?.isAuthDead) {
+          authService.clearSession();
+          setUser(null);
+          return null;
+        }
+        // If it was a temporary network glitch or server 5xx, preserve the cached session!
+        const cached = authService.getSession();
+        if (cached) {
+          setUser(cached);
+          return cached;
+        }
         return null;
       }
     }
@@ -140,9 +151,33 @@ export function AuthProvider({ children }) {
       if (import.meta.env.DEV) {
         console.warn('[voxly:auth] Session restore failed:', err?.message || err);
       }
-      api.clearToken();
-      authService.clearSession();
-      setUser(null);
+      // ONLY wipe session if getMe explicitly returned 401 Unauthorized
+      if (err?.status === 401) {
+        const refreshed = await api.refreshAccessToken();
+        if (refreshed) {
+          try {
+            const me2 = await api.auth.getMe();
+            const norm2 = normalizeUser(me2);
+            authService.saveSession(norm2);
+            setUser(norm2);
+            return norm2;
+          } catch {
+            // fall through
+          }
+        }
+        if (api._lastRefreshOutcome?.isAuthDead) {
+          api.clearToken();
+          authService.clearSession();
+          setUser(null);
+          return null;
+        }
+      }
+      // Server 5xx, gateway error, or offline: preserve the tenant's workspace session!
+      const cached = authService.getSession();
+      if (cached) {
+        setUser(cached);
+        return cached;
+      }
       return null;
     }
   }, []);

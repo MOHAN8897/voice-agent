@@ -29,6 +29,7 @@ import { PurchaseProvisioningBanner } from './ui/PurchaseProvisioningBanner';
 import { ToastHost } from './ui/ToastHost';
 import { AddFundsModal } from './ui/AddFundsModal';
 import { ErrorBoundary } from './ui/ErrorBoundary';
+import { ServiceDegradedBanner } from './ui/ServiceDegradedBanner';
 
 export function AppShell({ onBackToLanding, onSignOut }) {
   const { user } = useAuth();
@@ -144,43 +145,50 @@ export function AppShell({ onBackToLanding, onSignOut }) {
   return (
     <div className="flex h-screen bg-[#FAF9FD] text-[#0F0E17] overflow-hidden select-none font-sans antialiased">
       {/* Primary Vertical Navigation (Responsive Desktop & Mobile Drawer) */}
-      <Sidebar
-        activeTab={activeTab}
-        onSelectTab={handleSelectTab}
-        onOpenCreateAgent={() => setIsCreateAgentOpen(true)}
-        onOpenBuyNumber={() => {
-          handleSelectTab('phone-numbers');
-          setIsBuyNumberOpen(true);
-        }}
-        onOpenAddFunds={() => openAddFunds(null)}
-        onBackToLanding={onBackToLanding}
-        isMobileOpen={isMobileSidebarOpen}
-        onCloseMobile={() => setIsMobileSidebarOpen(false)}
-      />
-
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#FAF9FD]">
-        <ImpersonationBanner />
-        <GracePeriodBanner />
-        <Topbar
+      <ErrorBoundary title="Sidebar Navigation Unavailable">
+        <Sidebar
           activeTab={activeTab}
-          employeeFlowStep={employeeFlowStep}
-          onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+          onSelectTab={handleSelectTab}
           onOpenCreateAgent={() => setIsCreateAgentOpen(true)}
           onOpenBuyNumber={() => {
             handleSelectTab('phone-numbers');
             setIsBuyNumberOpen(true);
           }}
-          onNavigate={handleSelectTab}
-          user={user}
+          onOpenAddFunds={() => openAddFunds(null)}
           onBackToLanding={onBackToLanding}
-          onSignOut={onSignOut}
-          onToggleMobileSidebar={() => setIsMobileSidebarOpen((prev) => !prev)}
+          isMobileOpen={isMobileSidebarOpen}
+          onCloseMobile={() => setIsMobileSidebarOpen(false)}
         />
+      </ErrorBoundary>
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#FAF9FD]">
+        <ErrorBoundary title="Banners Unavailable">
+          <ImpersonationBanner />
+          <GracePeriodBanner />
+        </ErrorBoundary>
+        <ErrorBoundary title="Header Unavailable">
+          <Topbar
+            activeTab={activeTab}
+            employeeFlowStep={employeeFlowStep}
+            onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+            onOpenCreateAgent={() => setIsCreateAgentOpen(true)}
+            onOpenBuyNumber={() => {
+              handleSelectTab('phone-numbers');
+              setIsBuyNumberOpen(true);
+            }}
+            onNavigate={handleSelectTab}
+            user={user}
+            onBackToLanding={onBackToLanding}
+            onSignOut={onSignOut}
+            onToggleMobileSidebar={() => setIsMobileSidebarOpen((prev) => !prev)}
+          />
+        </ErrorBoundary>
 
         {/* Dynamic Viewport */}
         <main className="flex-1 overflow-y-auto p-3 sm:p-6 lg:p-8 bg-[#FAF9FD]">
           <div className="max-w-7xl mx-auto pb-12">
+            <ServiceDegradedBanner />
             <ConsoleSyncBanner />
             <PurchaseProvisioningBanner />
             <ErrorBoundary
