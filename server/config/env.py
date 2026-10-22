@@ -432,13 +432,13 @@ class Settings(BaseSettings):
     voice_medium_tts_provider: str = Field("sarvam", alias="VOICE_MEDIUM_TTS_PROVIDER")
     voice_medium_tts_model: str = Field("bulbul:v3", alias="VOICE_MEDIUM_TTS_MODEL")
 
-    # PREMIUM tier bundle
+    # PREMIUM tier bundle (Gemini 3.8 Live Speech-to-Speech)
     voice_premium_stt_provider: str = Field("sarvam", alias="VOICE_PREMIUM_STT_PROVIDER")
     voice_premium_stt_model: str = Field("saaras:v3-realtime", alias="VOICE_PREMIUM_STT_MODEL")
-    voice_premium_llm_provider: str = Field("openai", alias="VOICE_PREMIUM_LLM_PROVIDER")
-    voice_premium_llm_model: str = Field("gpt-realtime-2.1-mini", alias="VOICE_PREMIUM_LLM_MODEL")
-    voice_premium_tts_provider: str = Field("sarvam", alias="VOICE_PREMIUM_TTS_PROVIDER")
-    voice_premium_tts_model: str = Field("bulbul:v3", alias="VOICE_PREMIUM_TTS_MODEL")
+    voice_premium_llm_provider: str = Field("gemini", alias="VOICE_PREMIUM_LLM_PROVIDER")
+    voice_premium_llm_model: str = Field("gemini-3.8-live", alias="VOICE_PREMIUM_LLM_MODEL")
+    voice_premium_tts_provider: str = Field("gemini", alias="VOICE_PREMIUM_TTS_PROVIDER")
+    voice_premium_tts_model: str = Field("gemini-3.8-flash-tts", alias="VOICE_PREMIUM_TTS_MODEL")
 
     @field_validator("openai_api_key", "sarvam_api_key")
     @classmethod

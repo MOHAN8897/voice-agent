@@ -200,8 +200,8 @@ def validate_composed_profile(payload: Any, *, tier: str, allow_premium: bool = 
                 voice["languages"] = list(dict.fromkeys(str(lang) for lang in voice_languages))
 
     evidence = profile.get("evidence")
-    if not isinstance(evidence, dict) or not any(evidence.values()):
-        evidence = {key: True for key in _EVIDENCE_KEYS}
+    if not isinstance(evidence, dict):
+        evidence = {key: False for key in _EVIDENCE_KEYS}
     profile["evidence"] = {key: evidence.get(key) is True for key in _EVIDENCE_KEYS}
     return profile
 
