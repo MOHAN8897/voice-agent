@@ -1992,6 +1992,319 @@ async def billing_cost_insights(days: int = Query(30, ge=1, le=90), session: Ses
     return await load_cost_insights(days)
 
 
+@router.get("/api/dev/admin/calls")
+async def list_admin_calls(
+    q: Optional[str] = Query(None, description="Search short ID, full UUID, agent, or tenant"),
+    tier: Optional[str] = Query(None, description="Filter tier: low, medium, premium"),
+    channel: Optional[str] = Query(None, description="Filter channel: pstn, browser"),
+    tenant_id: Optional[str] = Query(None),
+    limit: int = Query(30, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    session: SessionData = Depends(require_dev_session),
+):
+    require_permission(session, "dev.admin.billing")
+    _require_db()
+    from server.call.call_ledger import call_ledger
+    from server.db.models.entities import Agent, Call, Tenant
+    from server.services.saas.billing_rates import load_current_rates
+    from sqlalchemy import cast, or_, String
+
+    rates = await load_current_rates()
+    fx = float(rates.get("fx_rate_inr") or 95.64) or 95.64
+
+    factory = get_session_factory()
+    async with factory() as db:
+        stmt = (
+            select(
+                Call.call_id,
+                Call.tenant_id,
+                Call.agent_id,
+                Call.session_id,
+                Call.channel,
+                Call.tier,
+                Call.direction,
+                Call.status,
+                Call.duration_sec,
+                Call.applied_rate_usd_micros_per_min,
+                Call.applied_rate_inr_paise_per_min,
+                Call.created_at,
+                Call.ended_at,
+                Call.end_reason,
+                Tenant.name.label("tenant_name"),
+                Agent.name.label("agent_name"),
+            )
+            .join(Tenant, Tenant.tenant_id == Call.tenant_id, isouter=True)
+            .join(Agent, Agent.agent_id == Call.agent_id, isouter=True)
+        )
+
+        q_str = str(q).strip() if isinstance(q, str) and q.strip() else None
+        tier_str = str(tier).strip().lower() if isinstance(tier, str) and tier.strip() else None
+        channel_str = str(channel).strip().lower() if isinstance(channel, str) and channel.strip() else None
+        tenant_str = str(tenant_id).strip() if isinstance(tenant_id, str) and tenant_id.strip() else None
+
+        if q_str:
+            search = f"%{q_str.lower()}%"
+            stmt = stmt.where(
+                or_(
+                    cast(Call.call_id, String).ilike(search),
+                    Call.session_id.ilike(search),
+                    Tenant.name.ilike(search),
+                    Agent.name.ilike(search),
+                )
+            )
+        if tier_str and tier_str != "all":
+            stmt = stmt.where(Call.tier == tier_str)
+        if channel_str and channel_str != "all":
+            stmt = stmt.where(Call.channel == channel_str)
+        if tenant_str:
+            try:
+                t_uuid = uuid.UUID(tenant_str)
+                stmt = stmt.where(Call.tenant_id == t_uuid)
+            except ValueError:
+                pass
+
+        limit_val = int(limit) if isinstance(limit, (int, str)) and str(limit).isdigit() else 30
+        offset_val = int(offset) if isinstance(offset, (int, str)) and str(offset).isdigit() else 0
+        limit_val = max(1, min(100, limit_val))
+        offset_val = max(0, offset_val)
+
+        count_stmt = select(func.count()).select_from(stmt.subquery())
+        total_res = await db.execute(count_stmt)
+        total = total_res.scalar_one() or 0
+
+        items_stmt = stmt.order_by(Call.created_at.desc()).offset(offset_val).limit(limit_val)
+        res = await db.execute(items_stmt)
+        rows = res.all()
+
+        calls_data = []
+        for r in rows:
+            cid_str = str(r.call_id)
+            meta = call_ledger.read_meta(cid_str) or {}
+
+            pcr = meta.get("provider_cost_result") or {}
+            cb = meta.get("carrier_billing") or {}
+            usage = meta.get("usage") or {}
+
+            stt_cost_inr = float(pcr.get("stages", {}).get("stt", {}).get("costInr") or 0.0)
+            stt_cost_usd = float(pcr.get("stages", {}).get("stt", {}).get("costUsd") or 0.0)
+            llm_cost_inr = float(pcr.get("stages", {}).get("llm", {}).get("costInr") or 0.0)
+            llm_cost_usd = float(pcr.get("stages", {}).get("llm", {}).get("costUsd") or 0.0)
+            tts_cost_inr = float(pcr.get("stages", {}).get("tts", {}).get("costInr") or 0.0)
+            tts_cost_usd = float(pcr.get("stages", {}).get("tts", {}).get("costUsd") or 0.0)
+
+            carrier_cost_inr = float(cb.get("amount") or 0.0) if cb.get("currency") == "INR" else float(cb.get("amount") or 0.0) * fx
+            carrier_cost_usd = carrier_cost_inr / fx if fx else 0.0
+
+            if not pcr and usage:
+                model_usd = float(usage.get("model_cost_usd") or usage.get("cost_usd") or 0.0)
+                llm_cost_usd = model_usd
+                llm_cost_inr = model_usd * fx
+                c_usd = float(usage.get("telephony_usd") or usage.get("vobiz_usd") or 0.0)
+                if c_usd > 0 and carrier_cost_usd == 0:
+                    carrier_cost_usd = c_usd
+                    carrier_cost_inr = c_usd * fx
+
+            supplier_cost_inr = round(stt_cost_inr + llm_cost_inr + tts_cost_inr + carrier_cost_inr, 4)
+            supplier_cost_usd = round(stt_cost_usd + llm_cost_usd + tts_cost_usd + carrier_cost_usd, 6)
+
+            duration_sec = float(r.duration_sec or 0.0)
+            billable_minutes = duration_sec / 60.0
+
+            rate_inr_paise = float(r.applied_rate_inr_paise_per_min or 0.0)
+            rate_usd_micros = float(r.applied_rate_usd_micros_per_min or 0.0)
+
+            if not rate_inr_paise:
+                tier_key = str(r.tier or "premium").lower()
+                rate_inr_paise = float(rates.get(f"pstn_{tier_key}_rate_inr_paise_per_min") or rates.get("pstn_rate_inr_paise_per_min") or 1410)
+            if not rate_usd_micros:
+                tier_key = str(r.tier or "premium").lower()
+                rate_usd_micros = float(rates.get(f"pstn_{tier_key}_rate_usd_micros_per_min") or rates.get("pstn_rate_usd_micros_per_min") or 150000)
+
+            retail_inr = round((rate_inr_paise / 100.0) * billable_minutes, 2)
+            retail_usd = round((rate_usd_micros / 1_000_000.0) * billable_minutes, 4)
+
+            margin_inr = round(retail_inr - supplier_cost_inr, 2)
+            margin_usd = round(retail_usd - supplier_cost_usd, 4)
+            margin_pct = round((margin_inr / retail_inr) * 100, 1) if retail_inr > 0 else 0.0
+
+            calls_data.append({
+                "callId": cid_str,
+                "shortId": cid_str[:8].upper(),
+                "sessionId": r.session_id,
+                "tenantId": str(r.tenant_id) if r.tenant_id else None,
+                "tenantName": r.tenant_name or (f"Tenant {str(r.tenant_id)[:8]}" if r.tenant_id else "Unknown Tenant"),
+                "agentId": str(r.agent_id) if r.agent_id else None,
+                "agentName": r.agent_name or "Agent",
+                "channel": r.channel or "pstn",
+                "tier": r.tier or "premium",
+                "direction": r.direction or "inbound",
+                "status": r.status or "completed",
+                "durationSec": int(duration_sec),
+                "durationFormatted": f"{int(duration_sec // 60)}m {int(duration_sec % 60)}s" if duration_sec >= 60 else f"{int(duration_sec)}s",
+                "createdAt": r.created_at.isoformat() if r.created_at else None,
+                "endedAt": r.ended_at.isoformat() if r.ended_at else None,
+                "retailInr": retail_inr,
+                "retailUsd": retail_usd,
+                "supplierCostInr": supplier_cost_inr,
+                "supplierCostUsd": supplier_cost_usd,
+                "marginInr": margin_inr,
+                "marginUsd": margin_usd,
+                "marginPercent": margin_pct,
+                "breakdown": {
+                    "carrierInr": round(carrier_cost_inr, 4),
+                    "sttInr": round(stt_cost_inr, 4),
+                    "llmInr": round(llm_cost_inr, 4),
+                    "ttsInr": round(tts_cost_inr, 4),
+                },
+            })
+
+        return {
+            "ok": True,
+            "total": total,
+            "limit": limit_val,
+            "offset": offset_val,
+            "fxRateInr": fx,
+            "calls": calls_data,
+        }
+
+
+@router.get("/api/dev/admin/calls/{call_id}/detail")
+async def get_admin_call_detail(
+    call_id: str,
+    session: SessionData = Depends(require_dev_session),
+):
+    require_permission(session, "dev.admin.billing")
+    _require_db()
+    from server.call.call_ledger import call_ledger
+    from server.db.models.entities import Agent, Call, Tenant
+    from server.services.saas.billing_rates import load_current_rates
+    from sqlalchemy import cast, or_, String
+
+    cid_str = call_id.strip()
+    rates = await load_current_rates()
+    fx = float(rates.get("fx_rate_inr") or 95.64) or 95.64
+
+    factory = get_session_factory()
+    async with factory() as db:
+        stmt = (
+            select(
+                Call,
+                Tenant.name.label("tenant_name"),
+                Agent.name.label("agent_name"),
+            )
+            .join(Tenant, Tenant.tenant_id == Call.tenant_id, isouter=True)
+            .join(Agent, Agent.agent_id == Call.agent_id, isouter=True)
+            .where(
+                or_(
+                    cast(Call.call_id, String) == cid_str,
+                    cast(Call.call_id, String).ilike(f"{cid_str}%"),
+                    Call.session_id == cid_str,
+                )
+            )
+            .limit(1)
+        )
+        res = await db.execute(stmt)
+        row = res.first()
+        if not row:
+            raise HTTPException(status_code=404, detail="Call record not found")
+
+        call, tenant_name, agent_name = row
+        exact_cid = str(call.call_id)
+        meta = call_ledger.read_meta(exact_cid) or {}
+        review = call_ledger.review_fields(exact_cid)
+
+        pcr = meta.get("provider_cost_result") or {}
+        cb = meta.get("carrier_billing") or {}
+        stage_usage = meta.get("stage_usage") or {}
+
+        duration_sec = float(call.duration_sec or 0.0)
+        billable_minutes = duration_sec / 60.0
+        rate_inr_paise = float(call.applied_rate_inr_paise_per_min or 0.0)
+        rate_usd_micros = float(call.applied_rate_usd_micros_per_min or 0.0)
+        if not rate_inr_paise:
+            tier_key = str(call.tier or "premium").lower()
+            rate_inr_paise = float(rates.get(f"pstn_{tier_key}_rate_inr_paise_per_min") or rates.get("pstn_rate_inr_paise_per_min") or 1410)
+        if not rate_usd_micros:
+            tier_key = str(call.tier or "premium").lower()
+            rate_usd_micros = float(rates.get(f"pstn_{tier_key}_rate_usd_micros_per_min") or rates.get("pstn_rate_usd_micros_per_min") or 150000)
+
+        retail_inr = round((rate_inr_paise / 100.0) * billable_minutes, 2)
+        retail_usd = round((rate_usd_micros / 1_000_000.0) * billable_minutes, 4)
+
+        carrier_amount_inr = float(cb.get("amount") or 0.0) if cb.get("currency") == "INR" else float(cb.get("amount") or 0.0) * fx
+        stt_inr = float(pcr.get("stages", {}).get("stt", {}).get("costInr") or 0.0)
+        llm_inr = float(pcr.get("stages", {}).get("llm", {}).get("costInr") or 0.0)
+        tts_inr = float(pcr.get("stages", {}).get("tts", {}).get("costInr") or 0.0)
+
+        total_supplier_inr = round(carrier_amount_inr + stt_inr + llm_inr + tts_inr, 4)
+        margin_inr = round(retail_inr - total_supplier_inr, 2)
+        margin_pct = round((margin_inr / retail_inr) * 100, 1) if retail_inr > 0 else 0.0
+
+        return {
+            "ok": True,
+            "callId": exact_cid,
+            "shortId": exact_cid[:8].upper(),
+            "sessionId": call.session_id,
+            "tenant": {
+                "id": str(call.tenant_id) if call.tenant_id else None,
+                "name": tenant_name or (f"Tenant {str(call.tenant_id)[:8]}" if call.tenant_id else "Unknown Tenant"),
+            },
+            "agent": {
+                "id": str(call.agent_id) if call.agent_id else None,
+                "name": agent_name or "Agent",
+            },
+            "tier": call.tier or "premium",
+            "channel": call.channel or "pstn",
+            "direction": call.direction or "inbound",
+            "status": call.status or "completed",
+            "endReason": call.end_reason or meta.get("end_reason"),
+            "durationSec": int(duration_sec),
+            "durationFormatted": f"{int(duration_sec // 60)}m {int(duration_sec % 60)}s" if duration_sec >= 60 else f"{int(duration_sec)}s",
+            "createdAt": call.created_at.isoformat() if call.created_at else None,
+            "endedAt": call.ended_at.isoformat() if call.ended_at else None,
+            "retail": {
+                "rateInrPerMin": round(rate_inr_paise / 100.0, 2),
+                "rateUsdPerMin": round(rate_usd_micros / 1_000_000.0, 4),
+                "totalBilledInr": retail_inr,
+                "totalBilledUsd": retail_usd,
+            },
+            "supplier": {
+                "totalInr": total_supplier_inr,
+                "totalUsd": round(total_supplier_inr / fx, 4) if fx else 0.0,
+                "marginInr": margin_inr,
+                "marginPercent": margin_pct,
+                "carrier": {
+                    "source": cb.get("source") or "carrier_cdr",
+                    "billableSeconds": cb.get("billable_seconds") or int(duration_sec),
+                    "amountInr": carrier_amount_inr,
+                    "currency": cb.get("currency") or "INR",
+                    "raw": cb,
+                },
+                "stt": {
+                    "model": pcr.get("stages", {}).get("stt", {}).get("components", [{}])[0].get("rateId", "saaras:v3-realtime"),
+                    "audioSeconds": stage_usage.get("stt", {}).get("audio_seconds") or 0.0,
+                    "costInr": stt_inr,
+                    "components": pcr.get("stages", {}).get("stt", {}).get("components") or [],
+                },
+                "llm": {
+                    "model": pcr.get("stages", {}).get("llm", {}).get("components", [{}])[0].get("rateId", "sarvam-105b-conversations"),
+                    "inputTokens": stage_usage.get("llm", {}).get("input_tokens") or 0,
+                    "outputTokens": stage_usage.get("llm", {}).get("output_tokens") or 0,
+                    "costInr": llm_inr,
+                    "components": pcr.get("stages", {}).get("llm", {}).get("components") or [],
+                },
+                "tts": {
+                    "model": pcr.get("stages", {}).get("tts", {}).get("components", [{}])[0].get("rateId", "bulbul:v3"),
+                    "characters": stage_usage.get("tts", {}).get("input_characters", 0) + stage_usage.get("tts", {}).get("prewarm_input_characters", 0),
+                    "outputAudioSeconds": stage_usage.get("tts", {}).get("output_audio_seconds") or 0.0,
+                    "costInr": tts_inr,
+                    "components": pcr.get("stages", {}).get("tts", {}).get("components") or [],
+                },
+            },
+            "transcriptSummary": review.get("transcript_preview") or meta.get("post_call_summary"),
+        }
+
+
 @router.post("/api/dev/admin/wallets/adjust")
 async def adjust_wallet(body: WalletAdjustBody, session: SessionData = Depends(require_dev_session)):
     require_permission(session, "dev.admin.billing")

@@ -23,6 +23,7 @@ import {
  */
 const ADMIN_WORKSPACE_ROUTES = new Set([
   "/dev/admin",
+  "/dev/admin/calls",
   "/dev/admin/analytics",
   "/dev/admin/users",
   "/dev/admin/verification",
@@ -64,6 +65,11 @@ const ADMIN_GROUPS: Array<{
         href: "/dev/admin",
         label: "Overview",
         icon: <IconOverview className="h-4 w-4" />,
+      },
+      {
+        href: "/dev/admin/calls",
+        label: "Global calls & costs",
+        icon: <IconPhone className="h-4 w-4" />,
       },
       {
         href: "/dev/admin/numbers",
