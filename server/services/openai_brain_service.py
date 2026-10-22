@@ -4,9 +4,13 @@ OpenAI Brain service — single brain prompt, prompt caching, token logging.
 from __future__ import annotations
 
 import asyncio
+import json
 import time
+from typing import Any
+
 from openai import APIConnectionError, APIStatusError, APITimeoutError, RateLimitError
 
+from server.agent.brain_prompt_composer import compose_brain_prompt, estimate_tokens
 from server.agent.conversation_manager import conversation_manager
 from server.agent.instruction_builder import build_brain_request_input, build_live_input
 from server.agent.instruction_store import instruction_store
@@ -22,13 +26,12 @@ from server.services.memory_summarizer import (
 from server.services.openai_model_params import apply_generation_params
 from server.services.prompt_cache_key import caching_enabled, compute_cache_key, compute_cache_key_versioned
 from server.services.prompt_cache_tracker import prompt_cache_tracker
-from server.agent.brain_prompt_composer import compose_brain_prompt, estimate_tokens
+from server.prompts.agent_voice_rules import unclear_fallback_for
 from server.utils.errors import AppError, ErrorCode
 from server.utils.http_clients import get_openai_client
 from server.utils.logger import log_brain, log_error, log_perf
 from server.utils.metrics import metrics
 from server.utils.token_usage import normalize_usage
-import json
 
 
 def _get_client():
@@ -225,6 +228,17 @@ def _resolve_brain_text(
             return ctx.compiled_brain_text, ctx.compiled_brain_version
 
     settings = get_settings()
+    if use_stored_brain:
+        meta = instruction_store.get_with_meta(session_id)
+        if meta.get("present") or meta.get("compiledVersion"):
+            return (
+                instruction_store.get_brain_prompt(
+                    session_id,
+                    language=language,
+                    budget_tokens=budget,
+                ),
+                None,
+            )
     if settings.use_versioned_brains:
         from server.brain.compiled_brain_service import get_cached_compiled_brain
 
@@ -322,6 +336,10 @@ def _prepare_brain_context(
             call_id=call_id,
         )
     brain_est = estimate_tokens(brain_text)
+    # Live budget must cover the actual locked brain (script + static pack), not a stale 3.5k slider.
+    from server.agent.brain_prompt_composer import BUDGET_MAX_TOKENS, BUDGET_MIN_TOKENS
+
+    budget = max(BUDGET_MIN_TOKENS, min(BUDGET_MAX_TOKENS, max(int(budget), int(brain_est))))
 
     projection, rolling, legacy_summary = _resolve_memory_blocks(
         session_id=session_id,
@@ -369,6 +387,113 @@ def _prepare_brain_context(
     )
 
 
+def _light_stream_brain_metadata(
+    *,
+    session_id: str,
+    transcript: str,
+    language_code: str,
+    openai_model: str | None,
+    brain_override: str | None,
+    call_id: str | None,
+    input_messages: list,
+) -> tuple[dict, list, str, int, int, str, bool, int, str, int, int, int, str | None]:
+    """Metadata for streaming when orchestrator already built input_messages."""
+    settings = get_settings()
+    use_model = openai_model or settings.openai_model
+    budget = resolve_brain_budget(session_id)
+    language_context = resolve_language(language_code, transcript)
+
+    if brain_override:
+        brain_text = brain_override
+        compiled_version = None
+    else:
+        from server.call import call_context
+
+        ctx = call_context.get(call_id) if call_id else None
+        if ctx and ctx.compiled_brain_text:
+            brain_text = ctx.compiled_brain_text
+            compiled_version = ctx.compiled_brain_version
+        else:
+            brain_text = ""
+            for msg in input_messages:
+                content = msg.get("content")
+                if isinstance(content, list):
+                    for block in content:
+                        if isinstance(block, dict) and block.get("type") in ("input_text", "text"):
+                            text = block.get("text")
+                            if text:
+                                brain_text = str(text)
+                                break
+                if brain_text:
+                    break
+            compiled_version = None
+
+    brain_est = estimate_tokens(brain_text) if brain_text else 0
+    from server.agent.brain_prompt_composer import BUDGET_MAX_TOKENS, BUDGET_MIN_TOKENS
+
+    budget = max(BUDGET_MIN_TOKENS, min(BUDGET_MAX_TOKENS, max(int(budget), int(brain_est or 0))))
+    enable_cache = caching_enabled(use_model, brain_est) if brain_est else False
+    history_len = max(0, len(input_messages) - 2)
+
+    return (
+        language_context,
+        input_messages,
+        use_model,
+        brain_est,
+        budget,
+        brain_text,
+        enable_cache,
+        history_len,
+        "",
+        0,
+        0,
+        estimate_tokens(transcript),
+        compiled_version,
+    )
+
+
+def _resolve_stream_brain_prep(
+    *,
+    session_id: str,
+    transcript: str,
+    language_code: str,
+    user_instructions: str,
+    business_instructions: str | None,
+    response_style: str | None,
+    openai_model: str | None,
+    use_stored_brain: bool,
+    brain_override: str | None = None,
+    call_id: str | None = None,
+    memory_projection: str | None = None,
+    rolling_summary: str | None = None,
+    input_messages: list | None = None,
+) -> tuple[dict, list, str, int, int, str, bool, int, str, int, int, int, str | None]:
+    if input_messages is not None:
+        return _light_stream_brain_metadata(
+            session_id=session_id,
+            transcript=transcript,
+            language_code=language_code,
+            openai_model=openai_model,
+            brain_override=brain_override,
+            call_id=call_id,
+            input_messages=input_messages,
+        )
+    return _prepare_brain_context(
+        session_id=session_id,
+        transcript=transcript,
+        language_code=language_code,
+        user_instructions=user_instructions,
+        business_instructions=business_instructions,
+        response_style=response_style,
+        openai_model=openai_model,
+        use_stored_brain=use_stored_brain,
+        brain_override=brain_override,
+        call_id=call_id,
+        memory_projection=memory_projection,
+        rolling_summary=rolling_summary,
+    )
+
+
 def _apply_cache_kwargs(
     create_kwargs: dict,
     *,
@@ -411,13 +536,65 @@ def _structured_live_turn_enabled(*, call_id: str | None, explicit: bool | None)
     return bool(call_id) and get_settings().working_memory_enabled
 
 
-def _spoken_and_memory(raw_text: str) -> tuple[str, dict, bool]:
+def _spoken_and_memory(raw_text: str) -> tuple[str, dict, bool, dict]:
     from server.call.live_turn_schema import SpokenResponseExtractor
 
     extractor = SpokenResponseExtractor()
     extractor.feed(raw_text)
     spoken = (extractor.spoken_text or raw_text).strip()
-    return spoken, extractor.parse_memory_update(), extractor.structured_parse_failed()
+    return spoken, extractor.parse_memory_update(), extractor.structured_parse_failed(), extractor.parse_end_call()
+
+
+def _gate_end_call_for_brain(
+    raw: Any,
+    *,
+    transcript: str,
+    language_code: str,
+    session_id: str,
+    spoken_text: str,
+    call_id: str | None = None,
+) -> dict[str, Any]:
+    """Apply server hangup repair so goodbye / that's-all never leave end_call false."""
+    from server.call.callback_close import advance_callback_close
+    from server.call.end_call_validate import validate_end_call
+    from server.call import call_context
+
+    snapshot = None
+    ctx = call_context.get(call_id) if call_id else None
+    if call_id:
+        try:
+            from server.call.memory_manager import memory_manager
+
+            snapshot = memory_manager.get_snapshot(call_id)
+        except Exception:
+            snapshot = None
+    state = advance_callback_close(
+        ctx,
+        transcript,
+        snapshot,
+        request_text=ctx.callback_request_text if ctx else "",
+    )
+    decision = validate_end_call(
+        raw,
+        user_text=transcript,
+        language=language_code,
+        call_status=ctx.status if ctx else "active",
+        already_armed=bool(ctx and ctx.agent_hangup_armed),
+        barge_in_flight=bool(ctx and ctx.barge_in_flight),
+        last_stt_partial_at=ctx.last_stt_partial_at if ctx else None,
+        completed_turns=conversation_manager.get_completed_turns(session_id),
+        memory_snapshot=snapshot,
+        call_end_policy=ctx.call_end_policy if ctx else None,
+        spoken_text=spoken_text or "",
+        callback_close_phase=state.phase,
+    )
+    if not decision.accepted:
+        return {"should_end": False, "reason": "none", "farewell": ""}
+    return {
+        "should_end": True,
+        "reason": decision.reason,
+        "farewell": (decision.farewell or spoken_text or "")[:240],
+    }
 
 
 async def generate_response(
@@ -469,7 +646,7 @@ async def generate_response(
         summary_est,
         transcript_est,
         compiled_version,
-    ) = _prepare_brain_context(
+    ) = _resolve_stream_brain_prep(
         session_id=session_id,
         transcript=transcript,
         language_code=language_code,
@@ -482,8 +659,9 @@ async def generate_response(
         call_id=call_id,
         memory_projection=memory_projection,
         rolling_summary=rolling_summary,
+        input_messages=input_messages,
     )
-    if not input_messages:
+    if input_messages is None:
         input_messages = built_input
     prep_ms = int((time.perf_counter() - t0) * 1000)
     prep_ms = max(prep_ms, 0)
@@ -579,14 +757,23 @@ async def generate_response(
 
             text = text.strip()
             if not text:
-                text = "క్షమించండి, నాకు అర్థం కాలేదు. మళ్లీ ప్రయత్నించండి."
+                text = unclear_fallback_for(language_code)
 
             memory_update = {"operations": []}
             memory_parse_failed = False
+            end_call = {"should_end": False, "reason": "none", "farewell": ""}
             if use_structured:
-                text, memory_update, memory_parse_failed = _spoken_and_memory(text)
+                text, memory_update, memory_parse_failed, end_call = _spoken_and_memory(text)
                 if not text:
-                    text = "క్షమించండి, నాకు అర్థం కాలేదు. మళ్లీ ప్రయత్నించండి."
+                    text = unclear_fallback_for(language_code)
+            end_call = _gate_end_call_for_brain(
+                end_call,
+                transcript=transcript,
+                language_code=language_code,
+                session_id=session_id,
+                spoken_text=text,
+                call_id=call_id,
+            )
 
             conversation_manager.add_turn(session_id, transcript, text)
             _after_turn_memory(session_id, call_id=call_id)
@@ -618,6 +805,7 @@ async def generate_response(
                 "request_id": request_id,
                 "memory_update": memory_update,
                 "memory_parse_failed": memory_parse_failed,
+                "end_call": end_call,
             }
 
         except asyncio.TimeoutError as e:
@@ -733,7 +921,7 @@ async def generate_response_stream(
         summary_est,
         transcript_est,
         compiled_version,
-    ) = _prepare_brain_context(
+    ) = _resolve_stream_brain_prep(
         session_id=session_id,
         transcript=transcript,
         language_code=language_code,
@@ -746,8 +934,9 @@ async def generate_response_stream(
         call_id=call_id,
         memory_projection=memory_projection,
         rolling_summary=rolling_summary,
+        input_messages=input_messages,
     )
-    if not input_messages:
+    if input_messages is None:
         input_messages = built_input
     prep_ms = int((time.perf_counter() - t0) * 1000)
     prep_ms = max(prep_ms, 0)
@@ -860,12 +1049,22 @@ async def generate_response_stream(
         raw_text = "".join(full_text_parts).strip()
         memory_update = {"operations": []}
         memory_parse_failed = False
+        end_call = {"should_end": False, "reason": "none", "farewell": ""}
         if extractor is not None:
-            full_text = extractor.spoken_text.strip() or "క్షమించండి, నాకు అర్థం కాలేదు."
+            full_text = extractor.spoken_text.strip() or unclear_fallback_for(language_code)
             memory_update = extractor.parse_memory_update()
             memory_parse_failed = extractor.structured_parse_failed()
+            end_call = extractor.parse_end_call()
         else:
-            full_text = raw_text or "క్షమించండి, నాకు అర్థం కాలేదు."
+            full_text = raw_text or unclear_fallback_for(language_code)
+        end_call = _gate_end_call_for_brain(
+            end_call,
+            transcript=transcript,
+            language_code=language_code,
+            session_id=session_id,
+            spoken_text=full_text,
+            call_id=call_id,
+        )
         conversation_manager.add_turn(session_id, transcript, full_text)
         _after_turn_memory(session_id, call_id=call_id)
         total_ms = round((time.perf_counter() - t_stream) * 1000)
@@ -906,6 +1105,7 @@ async def generate_response_stream(
             "usage": stream_usage,
             "memory_update": memory_update,
             "memory_parse_failed": memory_parse_failed,
+            "end_call": end_call,
         }
         log_brain("Stream completed", chars=len(full_text), usage=stream_usage)
     except AppError:

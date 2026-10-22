@@ -1,0 +1,68 @@
+{
+  "intents": {
+    "inline:visitors-can-read-a-main-heading-on-the-public-s-c83ab695": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "route",
+            "pathname": "/support"
+          },
+          {
+            "kind": "element",
+            "query": {
+              "by": "role",
+              "name": "How can we help?",
+              "value": "heading"
+            },
+            "state": "visible"
+          }
+        ]
+      },
+      "declaredAt": 1792505665552,
+      "id": "inline:visitors-can-read-a-main-heading-on-the-public-s-c83ab695",
+      "state": "bound",
+      "statement": "Visitors can read a main heading on the public support URL.",
+      "status": "proposed",
+      "subject": "support",
+      "updatedAt": 1792505665620
+    },
+    "inline:visitors-can-read-the-main-support-heading-at-th-a7155303": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "route",
+            "pathname": "/support"
+          },
+          {
+            "kind": "element",
+            "query": {
+              "name": "Customer support",
+              "role": "heading"
+            },
+            "state": "visible"
+          }
+        ]
+      },
+      "declaredAt": 1792505680989,
+      "id": "inline:visitors-can-read-the-main-support-heading-at-th-a7155303",
+      "provenBy": {
+        "at": 1792505681057,
+        "grade": "presence",
+        "runId": "drive-sccc68f9d-b50d-4aa5-9897-05472d6cc3f6",
+        "verdictId": "reticle_assert:1792505681057"
+      },
+      "state": "proved",
+      "statement": "Visitors can read the main support heading at the public support URL.",
+      "status": "proved",
+      "subject": "support",
+      "surface": {
+        "route": "/support"
+      },
+      "updatedAt": 1792505681092
+    }
+  },
+  "subject": "support",
+  "version": 1
+}

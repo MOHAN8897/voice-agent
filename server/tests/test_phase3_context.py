@@ -65,6 +65,8 @@ def test_caching_requires_min_tokens():
     assert caching_enabled("gpt-5.6-luna", 1024) is True
     assert caching_enabled("gpt-5.6-luna", 1023) is False
     assert caching_enabled("gpt-5.5", 2000) is False
+    assert caching_enabled("gemini-3.5-flash-lite", 1024) is True
+    assert caching_enabled("gemini-2.5-flash", 1023) is False
 
 
 def test_session_memory_clear():

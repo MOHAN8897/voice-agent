@@ -42,6 +42,33 @@ async def health():
             redis_status = await check_redis_health()
         except Exception as e:
             redis_status = {"ok": False, "configured": False, "message": str(e)[:200]}
+    # Email delivery is invisible until someone needs a reset link, which is exactly
+    # when it matters. Surface the deliverability verdict (booleans only) on health so
+    # a broken sender domain shows up on a monitor instead of in a support ticket.
+    try:
+        from server.services.saas.email_service import email_provider_status
+
+        # Probed, not just cached-read: the 5-minute TTL in email_service keeps this to
+        # one Resend call per window no matter how often health is polled.
+        email_status = await email_provider_status()
+    except Exception as e:
+        email_status = {
+            "provider": "resend",
+            "configured": False,
+            "deliverable": False,
+            "reason": "probe_error",
+            "detail": str(e)[:200],
+        }
+    try:
+        from server.services.r2_storage import r2_storage
+
+        r2_configured = r2_storage.is_configured()
+        r2_status = {
+            "configured": r2_configured,
+            "bucket": settings.r2_bucket_name if r2_configured else None,
+        }
+    except Exception as e:
+        r2_status = {"configured": False, "error": str(e)[:120]}
     return {
         "ok": env_valid and (not db_status.get("configured") or db_status.get("ok")),
         "envValid": env_valid,
@@ -49,6 +76,8 @@ async def health():
         "presence": presence,  # booleans only
         "database": db_status,
         "redis": redis_status,
+        "r2": r2_status,
+        "email": email_status,
         "error": error,
         "supportedLanguages": list(constants.SUPPORTED_LANGUAGES.keys()),
     }

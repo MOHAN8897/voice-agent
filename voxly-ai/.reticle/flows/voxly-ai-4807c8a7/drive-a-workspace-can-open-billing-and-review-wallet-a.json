@@ -1,0 +1,47 @@
+{
+  "version": 2,
+  "name": "drive-a-workspace-can-open-billing-and-review-wallet-a",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1791994793390,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "nav-billing",
+        "source": {
+          "file": "src/console/Sidebar.jsx",
+          "line": 296,
+          "column": 19
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "route",
+        "contains": "#dashboard/billing"
+      },
+      "timeoutMs": 12000,
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "intent": "A workspace can open billing and review wallet and payment activity.",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "codex-mcp-client",
+    "person": "mohansaiteja.99@gmail.com"
+  },
+  "intentId": "flow:drive-a-workspace-can-open-billing-and-review-wallet-a"
+}

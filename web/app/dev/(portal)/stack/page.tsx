@@ -1,15 +1,17 @@
-import { StackTierWorkbench } from "@/components/dev/StackTierWorkbench";
+import { PstnVoiceProfileWorkbench } from "@/components/dev/PstnVoiceProfileWorkbench";
 import { PageHeader } from "@/components/console/PageHeader";
 
 export default function DevStackPage() {
   return (
     <div>
       <PageHeader
-        eyebrow="Resolution"
-        title="Stack & tiers"
-        description="Assign STT, LLM, and TTS per LOW / MEDIUM / PREMIUM. Test combinations before promotion."
+        eyebrow="Platform voice configuration"
+        title="Voice stacks & PSTN tiers"
+        description="Configure composed PSTN profiles, pipeline stage models, readiness evidence, retail rates, and platform activation."
       />
-      <StackTierWorkbench />
+      <div className="mt-6">
+        <PstnVoiceProfileWorkbench />
+      </div>
     </div>
   );
 }

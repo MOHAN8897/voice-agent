@@ -50,7 +50,8 @@ async def ensure_default_tenant() -> str | None:
         await session.commit()
 
     try:
-        await sync_tier_assignments_from_env(settings.app_environment)
+        await load_tier_cache()
+        await sync_tier_assignments_from_env(settings.app_environment, force=False)
         await load_tier_cache()
     except Exception:
         pass

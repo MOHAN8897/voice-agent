@@ -1,0 +1,18 @@
+{
+  "intents": {
+    "flow:drive-opening-talk-to-ai-shows-live-mic-modal-without": {
+      "declaredAt": 1790928118199,
+      "id": "flow:drive-opening-talk-to-ai-shows-live-mic-modal-without",
+      "state": "declared",
+      "statement": "Opening Talk to AI shows Live Mic modal without requesting microphone until the user confirms.",
+      "status": "proposed",
+      "subject": "drive-opening-talk-to-ai-shows-live-mic",
+      "surface": {
+        "flow": "drive-opening-talk-to-ai-shows-live-mic-modal-without"
+      },
+      "updatedAt": 1790928118259
+    }
+  },
+  "subject": "drive-opening-talk-to-ai-shows-live-mic",
+  "version": 1
+}

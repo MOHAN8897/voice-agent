@@ -3,7 +3,6 @@ Compiled brain service — sole L2 writer (Phase 2).
 """
 from __future__ import annotations
 
-import hashlib
 import uuid
 from datetime import datetime, timezone
 from typing import Any
@@ -14,7 +13,14 @@ from server.agent.brain_prompt_composer import estimate_tokens
 from server.brain.business_brain_store import assemble_raw_business_prompt, business_brain_store
 from server.brain.business_prompt_optimizer import optimize_business_prompt
 from server.brain.platform_brain_store import platform_brain_store
-from server.brain.sections import STATIC_OUTPUT_RULES, STATIC_OUTPUT_RULES_VERSION
+from server.brain.compiled_brain_artifact import (
+    assemble_unified_brain,
+    checksum_instructions,
+    platform_body_for_agent_language,
+    is_unified_compiled_brain,
+)
+from server.brain.sections import STATIC_OUTPUT_RULES_VERSION
+from server.prompts.agent_voice_rules import normalize_compile_language
 from server.brain.semantic_validation import validate_sections
 from server.config.env import get_settings
 from server.db.connection import get_session_factory
@@ -27,8 +33,32 @@ _DEFAULT_AGENT_ID: str | None = None
 
 
 class CompiledBrainService:
+    async def _agent_info(self, agent_id: str) -> tuple[str, bool, str | None]:
+        factory = get_session_factory()
+        if factory is None:
+            from server.brain.agent_service import agent_service
+            row = await agent_service.get_agent(agent_id)
+            languages = row.get("languages") or ["te-IN"]
+            return normalize_compile_language(languages[0]), bool(row.get("recording_disclosure_enabled")), row.get("recording_disclosure_text")
+        async with factory() as session:
+            try:
+                row = await session.get(Agent, uuid.UUID(agent_id))
+            except (ValueError, TypeError):
+                return "te-IN", False, None
+            if row:
+                lang = normalize_compile_language(row.languages[0]) if row.languages else "te-IN"
+                disclosure_enabled = bool(getattr(row, "recording_disclosure_enabled", False))
+                disclosure_text = getattr(row, "recording_disclosure_text", None)
+                return lang, disclosure_enabled, disclosure_text
+        return "te-IN", False, None
+
+    async def _primary_language(self, agent_id: str) -> str:
+        lang, _, _ = await self._agent_info(agent_id)
+        return lang
+
     async def compile_for_agent(self, agent_id: str, *, business_version_id: str | None = None) -> dict[str, Any]:
         platform = await platform_brain_store.get_active()
+        lang, disclosure_enabled, disclosure_text = await self._agent_info(agent_id)
         sections = await business_brain_store.ensure_default_sections(agent_id)
         raw_prompt, source_checksum = assemble_raw_business_prompt(sections)
 
@@ -36,12 +66,11 @@ class CompiledBrainService:
         if (
             latest
             and business_version_id is None
-            and latest.get("source_checksum") == source_checksum
         ):
             optimized_text = latest["optimized_prompt"]
             business_version = latest["version_id"]
         else:
-            opt = await optimize_business_prompt(raw_prompt, source_checksum=source_checksum)
+            opt = await optimize_business_prompt(raw_prompt, source_checksum=source_checksum, preserve_source=True)
             published = await business_brain_store.save_published_version(
                 agent_id,
                 optimized_prompt=opt.optimized_business_prompt,
@@ -51,8 +80,36 @@ class CompiledBrainService:
             optimized_text = published["optimized_prompt"]
             business_version = published["version_id"]
 
-        compiled_text = f"{platform['body']}\n\n{optimized_text}\n\n{STATIC_OUTPUT_RULES}"
-        checksum = hashlib.sha256(compiled_text.encode("utf-8")).hexdigest()
+        # The create flow historically stored a full platform assembly as the
+        # published business text. Rewrapping it duplicates packs and policies.
+        if is_unified_compiled_brain(optimized_text):
+            if latest and latest.get("source_checksum") == source_checksum:
+                optimized_text = raw_prompt
+            else:
+                # A restart/recompile must not publish newer, unapproved draft
+                # edits. Legacy versions saved their approved script in the report.
+                report = (latest or {}).get("optimizer_report") or {}
+                approved_script = report.get("agent_script")
+                if approved_script:
+                    optimized_text = approved_script
+                else:
+                    from server.brain.compiled_brain_artifact import business_from_unified_brain
+                    optimized_text = business_from_unified_brain(optimized_text)
+
+        platform_rules = platform_body_for_agent_language(platform["body"], lang)
+        if disclosure_enabled:
+            from server.prompts.agent_voice_rules import build_recording_disclosure_instruction
+
+            platform_rules = (platform_rules or "").rstrip() + build_recording_disclosure_instruction(
+                disclosure_text=disclosure_text,
+                language=lang,
+            )
+        compiled_text = assemble_unified_brain(
+            language=lang,
+            script=optimized_text,
+            platform_call_rules=platform_rules,
+        )
+        checksum = checksum_instructions(compiled_text)
         compiled_version = f"cb_v{datetime.now(timezone.utc).strftime('%Y%m%d')}_{uuid.uuid4().hex[:6]}"
         token_estimate = estimate_tokens(compiled_text)
 
@@ -123,6 +180,7 @@ class CompiledBrainService:
             raw_prompt,
             source_checksum=source_checksum,
             previous_optimized=previous["optimized_prompt"] if previous else None,
+            preserve_source=True,
         )
         blocking = [c for c in opt.conflicts if c.get("severity") == "blocking"]
         if blocking:
@@ -143,19 +201,29 @@ class CompiledBrainService:
         return await self.compile_for_agent(agent_id)
 
     async def get_active_for_agent(self, agent_id: str) -> dict[str, Any]:
-        version_id = _AGENT_ACTIVE.get(agent_id)
-        if version_id and version_id in _COMPILED_CACHE:
-            return _COMPILED_CACHE[version_id]
-
         factory = get_session_factory()
+        db_active: str | None = None
         if factory is not None:
             async with factory() as session:
                 result = await session.execute(select(Agent).where(Agent.agent_id == uuid.UUID(agent_id)))
                 agent = result.scalar_one_or_none()
                 if agent and agent.active_compiled_brain_version:
-                    snap = await self.get_snapshot(agent.active_compiled_brain_version)
-                    _AGENT_ACTIVE[agent_id] = snap["compiled_version"]
-                    return snap
+                    db_active = agent.active_compiled_brain_version
+
+        cached_active = _AGENT_ACTIVE.get(agent_id)
+        if db_active and cached_active and cached_active != db_active:
+            _AGENT_ACTIVE.pop(agent_id, None)
+
+        version_id = db_active or cached_active
+        if version_id and version_id in _COMPILED_CACHE:
+            if db_active:
+                _AGENT_ACTIVE[agent_id] = db_active
+            return _COMPILED_CACHE[version_id]
+
+        if factory is not None and db_active:
+            snap = await self.get_snapshot(db_active)
+            _AGENT_ACTIVE[agent_id] = snap["compiled_version"]
+            return snap
 
         # Bootstrap compile on first access
         await platform_brain_store.ensure_seed()

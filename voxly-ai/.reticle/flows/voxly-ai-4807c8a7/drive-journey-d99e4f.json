@@ -1,0 +1,105 @@
+{
+  "version": 2,
+  "name": "drive-journey-d99e4f",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1790869980489,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-toggle-2caff74f-09bf-4629-896e-e57f4eb40ed4",
+        "source": {
+          "file": "src/console/modules/EmployeesModule.jsx",
+          "line": 256,
+          "column": 17
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "role": "button",
+          "name": "Pause mohan"
+        }
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-toggle-2caff74f-09bf-4629-896e-e57f4eb40ed4",
+        "source": {
+          "file": "src/console/modules/EmployeesModule.jsx",
+          "line": 256,
+          "column": 17
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "role": "button",
+          "name": "Activate mohan"
+        }
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Create AI Employee"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "employee-language-select",
+        "source": {
+          "file": "src/console/modules/CreateAgentWizard.jsx",
+          "line": 258,
+          "column": 13
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Create AI Employee"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "desktop"
+  }
+}

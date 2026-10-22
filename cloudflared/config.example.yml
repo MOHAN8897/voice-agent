@@ -1,12 +1,12 @@
-# Named Cloudflare Tunnel for hustlelabs.in (stable URLs, not trycloudflare.com)
+# Named Cloudflare Tunnel for dialtact.com (stable URLs, not trycloudflare.com)
 #
-# ONE-TIME SETUP (you do this once in browser):
-#   1. Move DNS for hustlelabs.in to Cloudflare (or add site in Cloudflare dashboard)
+# ONE-TIME SETUP:
+#   1. Move DNS for dialtact.com to Cloudflare (or add site in Cloudflare dashboard)
 #   2. cloudflared tunnel login
 #   3. cloudflared tunnel create voice-agent-dev
 #   4. Copy tunnel UUID into tunnel: line below
-#   5. cloudflared tunnel route dns voice-agent-dev api-dev.hustlelabs.in
-#   6. cloudflared tunnel route dns voice-agent-dev app-dev.hustlelabs.in
+#   5. cloudflared tunnel route dns voice-agent-dev api-dev.dialtact.com
+#   6. cloudflared tunnel route dns voice-agent-dev app-dev.dialtact.com
 #
 # Then run: cloudflared tunnel --config cloudflared/config.yml run voice-agent-dev
 
@@ -14,8 +14,16 @@ tunnel: REPLACE_WITH_TUNNEL_UUID
 credentials-file: C:\Users\subha\.cloudflared\REPLACE_WITH_TUNNEL_UUID.json
 
 ingress:
-  - hostname: api-dev.hustlelabs.in
+  # Carrier webhooks (Vobiz / Telnyx) must reach the API directly.
+  - hostname: api-dev.dialtact.com
     service: http://127.0.0.1:8000
-  - hostname: app-dev.hustlelabs.in
-    service: http://127.0.0.1:3000
+  - hostname: api.dialtact.com
+    service: http://127.0.0.1:8000
+  # Public product UI. Voxly proxies /api and /ws to 8000.
+  - hostname: app-dev.dialtact.com
+    service: http://127.0.0.1:5173
+  - hostname: app.dialtact.com
+    service: http://127.0.0.1:5173
+  - hostname: dialtact.com
+    service: http://127.0.0.1:5173
   - service: http_status:404

@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "origin": "failed-assert",
+  "expected": "text \"Too expensive / We do not have the budget right now\"",
+  "observed": "no element matched {\"text\":\"Too expensive / We do not have the budget right now\"} (the present-testid list shows the first 12 of 39 in document order — absence from it proves nothing)",
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "preset-objection-price",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 1246,
+          "column": 15
+        }
+      },
+      "action": "click"
+    }
+  ],
+  "id": "1791900906475-preset-objection-price-72449cc2",
+  "createdAt": 1791900906476,
+  "seen": 1,
+  "lastSeenAt": 1791900906476
+}

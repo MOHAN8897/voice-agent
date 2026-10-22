@@ -1,0 +1,96 @@
+{
+  "version": 2,
+  "name": "drive-business-hours-and-timezone-saved-from-the-agent",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1790835602229,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "studio-day-mon",
+        "source": {
+          "file": "src/console/modules/TelephonySettingsCard.jsx",
+          "line": 285,
+          "column": 17
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "studio-hours-mon-open"
+        }
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "studio-timezone",
+        "source": {
+          "file": "src/console/modules/TelephonySettingsCard.jsx",
+          "line": 260,
+          "column": 11
+        }
+      },
+      "args": {
+        "value": "America/New_York"
+      },
+      "action": "fill",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "studio-timezone",
+        "source": {
+          "file": "src/console/modules/TelephonySettingsCard.jsx",
+          "line": 260,
+          "column": 11
+        }
+      },
+      "args": {
+        "value": "America/New_York"
+      },
+      "action": "fill",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "studio-telephony-save",
+        "source": {
+          "file": "src/console/ui/TactileButton.jsx",
+          "line": 69,
+          "column": 5
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "intent": "Business hours and timezone saved from the agent workspace reach the same telephony profile endpoint with the same field names.",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "reticle-cli"
+  },
+  "intentId": "flow:drive-business-hours-and-timezone-saved-from-the-agent"
+}

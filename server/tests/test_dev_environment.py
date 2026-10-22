@@ -4,15 +4,21 @@ from __future__ import annotations
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from server.services.dev_secrets_store import dev_secrets_store
+from server.routes.dev_environment import EnvironmentPatch
+from server.services.dev_secrets_store import ALLOWED_PATCH_KEYS, dev_secrets_store
 
 
 @pytest.mark.asyncio
-async def test_dev_environment_patch_toggle():
+async def test_dev_environment_patch_toggle(monkeypatch):
+    monkeypatch.setenv("DEV_PORTAL_USERNAME", "dev")
+    monkeypatch.setenv("DEV_PORTAL_PASSWORD", "devpass")
+    from server.config.env import get_settings
+
+    get_settings.cache_clear()
     import server.app as app_mod
 
     transport = ASGITransport(app=app_mod.app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(transport=transport, base_url="http://localhost") as client:
         login = await client.post(
             "/api/dev/login",
             json={"username": "dev", "password": "devpass"},
@@ -23,21 +29,102 @@ async def test_dev_environment_patch_toggle():
 
         r = await client.patch(
             "/api/dev/environment",
-            json={"enable_exotel": True, "exotel_webhook_base_url": "https://example.ngrok.app"},
+            json={"enable_vobiz": True, "vobiz_webhook_base_url": "https://example.ngrok.app"},
             headers=headers,
         )
         assert r.status_code == 200
         body = r.json()
         assert body["ok"] is True
-        assert "enable_exotel" in body["applied_keys"]
-        assert "exotel_webhook_base_url" in body["applied_keys"]
+        assert "enable_vobiz" in body["applied_keys"]
+        assert "vobiz_webhook_base_url" in body["applied_keys"]
 
         snap = dev_secrets_store.snapshot()
         telephony = snap["groups"]["telephony"]
-        webhook = next(x for x in telephony if x["field"] == "exotel_webhook_base_url")
+        webhook = next(x for x in telephony if x["field"] == "vobiz_webhook_base_url")
         assert webhook["value"] == "https://example.ngrok.app"
         assert webhook["source"] == "overlay"
 
-        delete_r = await client.delete("/api/dev/environment/exotel_webhook_base_url", headers=headers)
+        delete_r = await client.delete("/api/dev/environment/vobiz_webhook_base_url", headers=headers)
         assert delete_r.status_code == 200
-        assert delete_r.json()["removed"] == "exotel_webhook_base_url"
+        assert delete_r.json()["removed"] == "vobiz_webhook_base_url"
+    get_settings.cache_clear()
+
+
+@pytest.mark.asyncio
+async def test_dev_environment_patch_cartesia_with_telnyx_fields(monkeypatch):
+    monkeypatch.setenv("DEV_PORTAL_USERNAME", "dev")
+    monkeypatch.setenv("DEV_PORTAL_PASSWORD", "devpass")
+    from server.config.env import get_settings
+
+    get_settings.cache_clear()
+    import server.app as app_mod
+
+    transport = ASGITransport(app=app_mod.app)
+    async with AsyncClient(transport=transport, base_url="http://localhost") as client:
+        login = await client.post(
+            "/api/dev/login",
+            json={"username": "dev", "password": "devpass"},
+        )
+        assert login.status_code == 200
+        csrf = login.json()["csrf_token"]
+        r = await client.patch(
+            "/api/dev/environment",
+            json={
+                "enable_cartesia": True,
+                "enable_sarvam": True,
+                "enable_telnyx": True,
+                "enable_vobiz": True,
+                "telephony_provider": "telnyx",
+            },
+            headers={"X-CSRF-Token": csrf},
+        )
+        assert r.status_code == 200, r.text
+        applied = r.json()["applied_keys"]
+        assert "enable_cartesia" in applied
+        assert "enable_sarvam" in applied
+        assert "enable_telnyx" in applied
+
+
+def test_clear_secret_via_empty_patch():
+    dev_secrets_store.update({"openai_api_key": "sk-test-overlay-key"})
+    assert dev_secrets_store.effective_secret("openai_api_key") == "sk-test-overlay-key"
+    dev_secrets_store.update({"openai_api_key": ""})
+    assert dev_secrets_store.effective_secret("openai_api_key") is None
+    snap = dev_secrets_store.snapshot()
+    row = next(x for x in snap["groups"]["provider_keys"] if x["field"] == "openai_api_key")
+    assert row["configured"] is False
+    assert row.get("cleared") is True
+    dev_secrets_store.remove_overlay_key("openai_api_key")
+
+
+def test_benchmarks_respect_overlay_toggle():
+    from server.services.dev_runtime import benchmarks_enabled
+
+    dev_secrets_store.update({"enable_benchmarks": True})
+    assert benchmarks_enabled() is True
+    dev_secrets_store.update({"enable_benchmarks": False})
+    assert benchmarks_enabled() is False
+    dev_secrets_store.remove_overlay_key("enable_benchmarks")
+
+
+def test_environment_patch_schema_covers_allowed_keys():
+    assert set(EnvironmentPatch.model_fields) == ALLOWED_PATCH_KEYS
+
+
+def test_environment_patch_accepts_telnyx_and_cartesia_toggles():
+    body = EnvironmentPatch.model_validate(
+        {
+            "enable_telnyx": True,
+            "enable_vobiz": True,
+            "enable_cartesia": True,
+            "enable_sarvam": True,
+            "telephony_provider": "telnyx",
+            "telnyx_connection_id": "123",
+            "telnyx_phone_number": "+15555550100",
+            "telnyx_outbound_voice_profile_id": "456",
+        }
+    )
+    dumped = body.model_dump(exclude_none=True)
+    assert dumped["enable_cartesia"] is True
+    assert dumped["enable_sarvam"] is True
+    assert dumped["enable_telnyx"] is True

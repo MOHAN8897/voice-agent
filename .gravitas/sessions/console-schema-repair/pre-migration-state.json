@@ -1,0 +1,10 @@
+{
+  "revision": [
+    "039_native_billing_rates"
+  ],
+  "row_counts": {
+    "phone_numbers": 9,
+    "campaigns": 0
+  },
+  "backup": ".gravitas/security-reports/console-schema-repair/before-040-041-20261020T181108Z.dump"
+}

@@ -5,18 +5,39 @@ Industry standard: pydantic-settings + dotenv.
 """
 from __future__ import annotations
 
+import io
 import os
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
 from dotenv import load_dotenv
-from pydantic import Field, field_validator
+from pydantic import AliasChoices, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Load .env from project root (D:\Telugu Agent\.env)
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-load_dotenv(PROJECT_ROOT / ".env", override=False)
+
+
+def _load_project_dotenv() -> None:
+    """Load .env even if a Windows editor saved it as cp1252 instead of UTF-8."""
+    path = PROJECT_ROOT / ".env"
+    if not path.exists():
+        return
+    raw = path.read_bytes()
+    text: str | None = None
+    for encoding in ("utf-8", "utf-8-sig", "cp1252"):
+        try:
+            text = raw.decode(encoding)
+            break
+        except UnicodeDecodeError:
+            continue
+    if text is None:
+        text = raw.decode("utf-8", errors="replace")
+    load_dotenv(stream=io.StringIO(text), override=False)
+
+
+_load_project_dotenv()
 
 
 class ConfigError(Exception):
@@ -36,13 +57,13 @@ class Settings(BaseSettings):
     sarvam_api_key: str = Field(..., alias="SARVAM_API_KEY")
 
     # --- Models & voices (configurable, verified against docs at build time) ---
-    openai_model: str = Field("gpt-5.6-luna", alias="OPENAI_MODEL")
-    openai_temperature: float = Field(0.5, alias="OPENAI_TEMPERATURE")
+    openai_model: str = Field("gpt-realtime-2.1-mini", alias="OPENAI_MODEL")
+    openai_temperature: float = Field(0.625, alias="OPENAI_TEMPERATURE")
     sarvam_stt_model: str = Field("saaras:v3", alias="SARVAM_STT_MODEL")
     sarvam_tts_model: str = Field("bulbul:v3", alias="SARVAM_TTS_MODEL")
     sarvam_tts_speaker_te: str = Field("shubh", alias="SARVAM_TTS_SPEAKER_TE")
     sarvam_tts_pace: float = Field(1.0, alias="SARVAM_TTS_PACE")
-    sarvam_tts_temperature: float = Field(0.80, alias="SARVAM_TTS_TEMPERATURE")
+    sarvam_tts_temperature: float = Field(0.70, alias="SARVAM_TTS_TEMPERATURE")
 
     # --- Logging (toggle per category; LOG_ENABLED=false silences all) ---
     log_enabled: bool = Field(True, alias="LOG_ENABLED")
@@ -54,6 +75,7 @@ class Settings(BaseSettings):
     log_ws: bool = Field(True, alias="LOG_WS")
     log_perf: bool = Field(True, alias="LOG_PERF")
     log_client: bool = Field(True, alias="LOG_CLIENT")
+    log_pstn: bool = Field(True, alias="LOG_PSTN")
 
     # --- Voice pipeline ---
     voice_http_tts_fallback: bool = Field(False, alias="VOICE_HTTP_TTS_FALLBACK")
@@ -65,9 +87,9 @@ class Settings(BaseSettings):
     max_retries: int = Field(2, alias="MAX_RETRIES")
 
     # --- Brain prompt budget (single composed prompt) ---
-    brain_prompt_budget_tokens: int = Field(2500, alias="BRAIN_PROMPT_BUDGET_TOKENS")
+    brain_prompt_budget_tokens: int = Field(6000, alias="BRAIN_PROMPT_BUDGET_TOKENS")
     brain_prompt_budget_min: int = Field(1500, alias="BRAIN_PROMPT_BUDGET_MIN")
-    brain_prompt_budget_max: int = Field(2500, alias="BRAIN_PROMPT_BUDGET_MAX")
+    brain_prompt_budget_max: int = Field(10000, alias="BRAIN_PROMPT_BUDGET_MAX")
 
     # --- Prompt caching (GPT-5.6+) ---
     enable_prompt_caching: bool = Field(True, alias="ENABLE_PROMPT_CACHING")
@@ -90,17 +112,30 @@ class Settings(BaseSettings):
     memory_extraction_max_output_tokens: int = Field(400, alias="MEMORY_EXTRACTION_MAX_OUTPUT_TOKENS")
     post_call_llm_model: str = Field("gpt-5.6-luna", alias="POST_CALL_LLM_MODEL")
     post_call_max_retries: int = Field(3, alias="POST_CALL_MAX_RETRIES")
+    post_call_transcript_enabled: bool = Field(True, alias="POST_CALL_TRANSCRIPT_ENABLED")
+    post_call_transcript_model: str = Field("gemini-3.5-transcribe", alias="POST_CALL_TRANSCRIPT_MODEL")
+    post_call_transcript_max_retries: int = Field(6, alias="POST_CALL_TRANSCRIPT_MAX_RETRIES")
+    post_call_transcript_retry_base_sec: float = Field(3.0, alias="POST_CALL_TRANSCRIPT_RETRY_BASE_SEC")
 
     # --- Fine-tune allowlist (industry: restrict client-selectable models) ---
     allowed_openai_models_csv: str = Field(
-        "gpt-5.5,gpt-5.4,gpt-5,gpt-5.6-luna",
+        "gpt-realtime-2.1-mini,gpt-realtime-2.1,gpt-realtime-2,gpt-5.5,gpt-5.4,gpt-5,gpt-5.6-luna",
         alias="OPENAI_ALLOWED_MODELS",
+    )
+    sarvam_llm_models_csv: str = Field(
+        "sarvam-105b,sarvam-105b-conversations",
+        alias="SARVAM_LLM_ALLOWED_MODELS",
+    )
+    gemini_tts_models_csv: str = Field(
+        "gemini-3.8-flash-lite-tts,gemini-3.8-flash-tts,gemini-3.1-flash-tts-preview",
+        alias="GEMINI_TTS_ALLOWED_MODELS",
     )
 
     # --- App ---
     debug: bool = Field(False, alias="DEBUG")
     port: int = Field(8000, alias="PORT")
     client_url: str = Field("http://localhost:3000", alias="CLIENT_URL")
+    cors_origins: str = Field("", alias="CORS_ORIGINS")
     public_tunnel_url: str | None = Field(None, alias="PUBLIC_TUNNEL_URL")
     public_app_url: str | None = Field(None, alias="PUBLIC_APP_URL")
 
@@ -115,13 +150,43 @@ class Settings(BaseSettings):
     enable_gemini: bool = Field(False, alias="ENABLE_GEMINI")
     enable_cartesia: bool = Field(False, alias="ENABLE_CARTESIA")
 
+    voice_pipeline_mode: Literal["classic", "realtime_text"] = Field(
+        "realtime_text", alias="VOICE_PIPELINE_MODE"
+    )
+
     use_provider_registry: bool = Field(True, alias="USE_PROVIDER_REGISTRY")
     use_versioned_brains: bool = Field(False, alias="USE_VERSIONED_BRAINS")
+    use_spec_compiler: bool = Field(True, alias="USE_SPEC_COMPILER")
+    spec_compiler_shadow_mode: bool = Field(False, alias="SPEC_COMPILER_SHADOW_MODE")
     allow_publish_during_calls: bool = Field(False, alias="ALLOW_PUBLISH_DURING_CALLS")
     enable_benchmarks: bool = Field(False, alias="ENABLE_BENCHMARKS")
     fx_rate_inr: float = Field(95.64, alias="FX_RATE_INR")
+    fx_rate_live: bool = Field(True, alias="FX_RATE_LIVE")
+    fx_rate_live_ttl_sec: int = Field(21600, alias="FX_RATE_LIVE_TTL_SEC")
 
     database_url: str | None = Field(None, alias="DATABASE_URL")
+    db_pool_size: int = Field(20, alias="DB_POOL_SIZE")
+    db_max_overflow: int = Field(20, alias="DB_MAX_OVERFLOW")
+    db_pool_timeout: float = Field(20.0, alias="DB_POOL_TIMEOUT")
+    db_pool_recycle: int = Field(1800, alias="DB_POOL_RECYCLE")
+
+    # --- Identity verification (Didit KYC) ---
+    #: Server-side only. Never returned to the browser, never logged.
+    didit_api_key: str | None = Field(None, alias="DIDIT_API_KEY")
+    #: Signing key for the X-Signature-V2 HMAC on inbound webhooks.
+    didit_webhook_secret: str | None = Field(None, alias="DIDIT_WEBHOOK_SECRET")
+    #: Public origin Didit redirects the user back to.
+    didit_callback_url: str | None = Field(None, alias="DIDIT_CALLBACK_URL")
+    #: Compliance workflow. Per-session config, not a secret.
+    didit_workflow_id: str = Field("", alias="DIDIT_WORKFLOW_ID")
+    #: Country the verification flow is collected for (ISO-3166 alpha-2).
+    #: Defaults to US: the product is sold to English-speaking buyers, and Didit
+    #: otherwise falls back to the workflow's own region, which was India.
+    didit_country: str = Field("US", alias="DIDIT_COUNTRY")
+    #: Flow language. Didit renders the hosted flow in this locale.
+    didit_language: str = Field("en", alias="DIDIT_LANGUAGE")
+    #: Require an Approved decision before buying a number / placing a PSTN call.
+    kyc_gate_purchases: bool = Field(True, alias="KYC_GATE_PURCHASES")
 
     # --- Phase 3: Call lifecycle ---
     call_auto_end_on_start: bool = Field(True, alias="CALL_AUTO_END_ON_START")
@@ -135,45 +200,235 @@ class Settings(BaseSettings):
     session_secret: str = Field("dev-session-secret-change-in-production", alias="SESSION_SECRET")
     dev_portal_username: str | None = Field(None, alias="DEV_PORTAL_USERNAME")
     dev_portal_password: str | None = Field(None, alias="DEV_PORTAL_PASSWORD")
+    # Dev/admin UI + /api/dev/* are localhost-only by default so the public tunnel
+    # (app-dev / share link) never exposes the ops console to customers.
+    # Set DEV_PORTAL_ALLOW_REMOTE=1 only for a deliberate remote ops session.
+    dev_portal_allow_remote: bool = Field(False, alias="DEV_PORTAL_ALLOW_REMOTE")
     app_console_username: str | None = Field(None, alias="APP_CONSOLE_USERNAME")
     app_console_password: str | None = Field(None, alias="APP_CONSOLE_PASSWORD")
     default_tenant_id: str = Field("00000000-0000-4000-8000-000000000001", alias="DEFAULT_TENANT_ID")
-    serve_client_static: bool = Field(True, alias="SERVE_CLIENT_STATIC")
+    # The legacy client/ app is superseded by voxly-ai. Opt in explicitly if needed.
+    serve_client_static: bool = Field(False, alias="SERVE_CLIENT_STATIC")
     redis_url: str | None = Field(None, alias="REDIS_URL")
 
-    enable_exotel: bool = Field(False, alias="ENABLE_EXOTEL")
-    exotel_api_key: str | None = Field(None, alias="EXOTEL_API_KEY")
-    exotel_api_token: str | None = Field(None, alias="EXOTEL_API_TOKEN")
-    exotel_account_sid: str | None = Field(None, alias="EXOTEL_ACCOUNT_SID")
-    exotel_subdomain: str = Field("api.exotel.com", alias="EXOTEL_SUBDOMAIN")
-    exotel_exophone: str | None = Field(None, alias="EXOTEL_EXOPHONE")
-    exotel_webhook_base_url: str | None = Field(None, alias="EXOTEL_WEBHOOK_BASE_URL")
-    campaign_max_concurrency: int = Field(5, alias="CAMPAIGN_MAX_CONCURRENCY")
+    # --- Cloudflare R2 object storage ---
+    r2_account_id: str | None = Field(None, alias="R2_ACCOUNT_ID")
+    r2_access_key_id: str | None = Field(None, alias="R2_ACCESS_KEY_ID")
+    r2_secret_access_key: str | None = Field(None, alias="R2_SECRET_ACCESS_KEY")
+    r2_bucket_name: str = Field("voxly-call-archives", alias="R2_BUCKET_NAME")
+
+    telephony_provider: str = Field("vobiz", alias="TELEPHONY_PROVIDER")
+    enable_telnyx: bool = Field(False, alias="ENABLE_TELNYX")
+    telnyx_api_key: str | None = Field(None, alias="TELNYX_API_KEY")
+    telnyx_public_key: str | None = Field(None, alias="TELNYX_PUBLIC_KEY")
+    telnyx_connection_id: str | None = Field(None, alias="TELNYX_CONNECTION_ID")
+    telnyx_phone_number: str | None = Field(None, alias="TELNYX_PHONE_NUMBER")
+    telnyx_outbound_voice_profile_id: str | None = Field(None, alias="TELNYX_OUTBOUND_VOICE_PROFILE_ID")
+    telnyx_webhook_tolerance_sec: int = Field(300, alias="TELNYX_WEBHOOK_TOLERANCE_SEC")
+    # How long an answered PSTN call may produce no agent audio before it is ended.
+    # A missing opening greeting once left calls connected and silent until the
+    # customer gave up, billing the tenant for a mute line. Generous enough for a
+    # cold provider session; lower it if your first-token latency is faster.
+    telnyx_first_audio_grace_sec: float = Field(12.0, alias="TELNYX_FIRST_AUDIO_GRACE_SEC")
+    telnyx_max_concurrent_calls: int = Field(50, alias="TELNYX_MAX_CONCURRENT_CALLS")
+    enable_vobiz: bool = Field(False, alias="ENABLE_VOBIZ")
+    vobiz_auth_id: str | None = Field(
+        None,
+        validation_alias=AliasChoices("VOBIZ_AUTH_ID", "VOBIZ_ACCOUNT_ID", "Vobiz_Account ID", "Vobiz_Account_ID"),
+    )
+    vobiz_auth_token: str | None = Field(
+        None,
+        validation_alias=AliasChoices("VOBIZ_AUTH_TOKEN", "VOBIZ_AUTH_SECRET", "vobiz_Auth Secret", "VOBIZ_SECRET"),
+    )
+    vobiz_app_id: str | None = Field(
+        None,
+        validation_alias=AliasChoices("VOBIZ_APP_ID", "VOBIZ_APPLICATION_ID"),
+    )
+    vobiz_phone_number: str | None = Field(None, alias="VOBIZ_PHONE_NUMBER")
+    vobiz_webhook_base_url: str | None = Field(None, alias="VOBIZ_WEBHOOK_BASE_URL")
+    vobiz_webhook_secret: str | None = Field(None, alias="VOBIZ_WEBHOOK_SECRET")
+    # Fernet URL-safe base64 key used only to encrypt tenant subaccount tokens at rest.
+    # Configure a dedicated production key; never derive it from a Vobiz credential.
+    vobiz_subaccount_encryption_key: str | None = Field(
+        None, alias="VOBIZ_SUBACCOUNT_ENCRYPTION_KEY"
+    )
+    vobiz_max_concurrent_calls: int = Field(50, alias="VOBIZ_MAX_CONCURRENT_CALLS")
+    campaign_max_concurrency: int = Field(20, alias="CAMPAIGN_MAX_CONCURRENCY")
     campaign_default_retry_attempts: int = Field(3, alias="CAMPAIGN_DEFAULT_RETRY_ATTEMPTS")
+    saas_max_concurrent_pstn: int = Field(20, alias="SAAS_MAX_CONCURRENT_PSTN")
+    saas_max_outbound_cps: int = Field(1, ge=1, le=100, alias="SAAS_MAX_OUTBOUND_CPS")
     recording_consent_required: bool = Field(False, alias="RECORDING_CONSENT_REQUIRED")
+
+    # --- Nango multi-tenant voice tools & integrations ---
+    nango_api_key: str | None = Field(
+        None,
+        validation_alias=AliasChoices("NANGO_API_KEY", "nango_api_key"),
+    )
+    nango_secret_key: str | None = Field(
+        None,
+        validation_alias=AliasChoices("NANGO_SECRET_KEY", "nango_secret_key"),
+    )
+    nango_environment_uuid: str | None = Field(
+        None,
+        validation_alias=AliasChoices("NANGO_ENVIRONMENT_UUID", "nango_environment_uuid"),
+    )
+    nango_webhook_signing_key: str | None = Field(
+        None,
+        validation_alias=AliasChoices("NANGO_WEBHOOK_SIGNING_KEY", "nango_webhook_signing_key"),
+    )
+    nango_base_url: str = Field(
+        "https://api.nango.dev",
+        validation_alias=AliasChoices("NANGO_BASE_URL", "nango_base_url"),
+    )
+
+    # --- SaaS subscriber auth & billing ---
+    saas_auth_enabled: bool = Field(False, alias="SAAS_AUTH_ENABLED")
+    jwt_secret: str = Field("dev-jwt-secret-change-in-production", alias="JWT_SECRET")
+    jwt_access_ttl_minutes: int = Field(15, alias="JWT_ACCESS_TTL_MINUTES")
+    jwt_refresh_ttl_days: int = Field(30, alias="JWT_REFRESH_TTL_DAYS")
+    # Server-side session policy. `0` disables the check (legacy behaviour: a refresh
+    # token is good for its whole 30-day lifetime no matter how idle the account was).
+    session_idle_timeout_minutes: int = Field(30, alias="SESSION_IDLE_TIMEOUT_MINUTES")
+    session_absolute_max_hours: int = Field(24, alias="SESSION_ABSOLUTE_MAX_HOURS")
+    # Development escape hatch: return the password-reset link from /forgot-password
+    # so the flow can be driven without a working mail provider. Never enable in prod.
+    auth_debug_expose_reset_token: bool = Field(False, alias="AUTH_DEBUG_EXPOSE_RESET_TOKEN")
+    saas_require_email_verification_for_buy: bool = Field(
+        True, alias="SAAS_REQUIRE_EMAIL_VERIFICATION_FOR_BUY"
+    )
+    saas_require_email_verification_for_login: bool = Field(
+        True, alias="SAAS_REQUIRE_EMAIL_VERIFICATION_FOR_LOGIN"
+    )
+    resend_api_key: str | None = Field(
+        None,
+        validation_alias=AliasChoices("RESEND_API_KEY", "resend_api_key"),
+    )
+    resend_from_email: str | None = Field(None, alias="RESEND_FROM_EMAIL")
+    stripe_secret_key: str | None = Field(None, alias="STRIPE_SECRET_KEY")
+    stripe_webhook_secret: str | None = Field(None, alias="STRIPE_WEBHOOK_SECRET")
+    stripe_checkout_success_url: str = Field(
+        "http://localhost:5173/console/numbers?success=1", alias="STRIPE_CHECKOUT_SUCCESS_URL"
+    )
+    stripe_checkout_cancel_url: str = Field(
+        "http://localhost:5173/console/numbers?cancel=1", alias="STRIPE_CHECKOUT_CANCEL_URL"
+    )
+    number_reservation_ttl_minutes: int = Field(15, alias="NUMBER_RESERVATION_TTL_MINUTES")
+    saas_telephony_enabled: bool = Field(True, alias="SAAS_TELEPHONY_ENABLED")
+    pstn_min_balance_usd_cents: int = Field(50, alias="PSTN_MIN_BALANCE_USD_CENTS")
+    pstn_min_balance_inr_paise: int = Field(5000, alias="PSTN_MIN_BALANCE_INR_PAISE")
+    pstn_rate_usd_cents_per_min: int = Field(9, alias="PSTN_RATE_USD_CENTS_PER_MIN")
+    pstn_rate_inr_paise_per_min: int = Field(900, alias="PSTN_RATE_INR_PAISE_PER_MIN")
+    web_agent_rate_usd_cents_per_min: int = Field(7, alias="WEB_AGENT_RATE_USD_CENTS_PER_MIN")
+    web_agent_rate_inr_paise_per_min: int = Field(700, alias="WEB_AGENT_RATE_INR_PAISE_PER_MIN")
+    did_monthly_usd_cents: int = Field(400, alias="DID_MONTHLY_USD_CENTS")
+    did_monthly_inr_paise: int = Field(50000, alias="DID_MONTHLY_INR_PAISE")
+    #: Smallest wallet top-up a workspace may buy, in USD. Kept low so a new
+    #: workspace can fund itself without a large first payment.
+    topup_min_usd: float = Field(3.0, alias="TOPUP_MIN_USD")
+    topup_max_usd: float = Field(500.0, alias="TOPUP_MAX_USD")
+    #: Refuse to answer inbound calls when the wallet is below the minimum.
+    #: Fail-open by design: any lookup problem still answers the call.
+    pstn_enforce_wallet_on_inbound: bool = Field(
+        True, alias="PSTN_ENFORCE_WALLET_ON_INBOUND"
+    )
+    saas_platform_admin_emails: str = Field("", alias="SAAS_PLATFORM_ADMIN_EMAILS")
+    saas_dev_tester_emails: str = Field("", alias="SAAS_DEV_TESTER_EMAILS")
+    saas_admin_seed_inr_paise: int = Field(500000, alias="SAAS_ADMIN_SEED_INR_PAISE")
+    pstn_close_listen_sec: float = Field(3.5, alias="PSTN_CLOSE_LISTEN_SEC")
+    pstn_silence_nudge_sec: float = Field(
+        8.0,
+        validation_alias=AliasChoices("PSTN_SILENCE_NUDGE_SEC", "SILENCE_NUDGE_SEC"),
+    )
+    pstn_silence_hangup_sec: float = Field(
+        20.0,
+        validation_alias=AliasChoices("PSTN_SILENCE_HANGUP_SEC", "SILENCE_HANGUP_SEC"),
+    )
+    voxly_frontend_url: str = Field(
+        "http://localhost:5173",
+        validation_alias=AliasChoices("DIALTACT_FRONTEND_URL", "VOXLY_FRONTEND_URL"),
+    )
+
+    @property
+    def dialtact_frontend_url(self) -> str:
+        return self.voxly_frontend_url
+
+    # --- Tenant account deletion (Danger Zone) ---
+    #: Grace period in days between quarantine and irreversible purge.
+    #: TODO(legal): Confirm this period satisfies jurisdiction right-to-cancel requirements.
+    tenant_deletion_grace_days: int = Field(14, alias="TENANT_DELETION_GRACE_DAYS")
+    #: Secret salt for keyed HMAC-SHA256 anonymization of CDR phone numbers.
+    #: Must be set in production; dev defaults to a deterministic local value.
+    hmac_phone_salt: str = Field("dev-hmac-salt-change-in-production", alias="HMAC_PHONE_SALT")
+    #: Statutory retention window for CDR metadata (telecom regulations).
+    #: TODO(legal): Confirm statutory retention window with jurisdiction counsel (TRAI/FCC/Ofcom).
+    cdr_retention_days: int = Field(730, alias="CDR_RETENTION_DAYS")  # default 2 years
+    #: Statutory retention window for billing invoices (tax compliance).
+    #: TODO(legal): Confirm statutory retention window with jurisdiction counsel (IRS/GST/VAT).
+    invoice_retention_days: int = Field(2555, alias="INVOICE_RETENTION_DAYS")  # default 7 years
+
+    razorpay_api_key: str | None = Field(
+        None,
+        validation_alias=AliasChoices("RAZORPAY_API_KEY", "razorpay_api_key"),
+    )
+    razorpay_api_secret: str | None = Field(
+        None,
+        validation_alias=AliasChoices("RAZORPAY_API_SECRET", "razorpay_api_secret"),
+    )
+    #: Razorpay International Payments must be enabled on the account in
+    #: Account & Settings -> Payment methods, otherwise foreign-issued cards are
+    #: declined. This flag records that the operator has done so; it does not
+    #: enable it at Razorpay.
+    razorpay_international_enabled: bool = Field(
+        False, alias="RAZORPAY_INTERNATIONAL_ENABLED"
+    )
+    #: Currency the customer is charged in. INR settles domestically; any other
+    #: value is an international payment that Razorpay converts to INR.
+    razorpay_currency: str = Field("USD", alias="RAZORPAY_CURRENCY")
+    google_oauth_client_id: str | None = Field(
+        None,
+        validation_alias=AliasChoices("GOOGLE_OAUTH_CLIENT_ID", "google_oauth_client_id"),
+    )
+    google_oauth_client_secret: str | None = Field(
+        None,
+        validation_alias=AliasChoices("GOOGLE_OAUTH_CLIENT_SECRET", "google_oauth_client_secret"),
+    )
+    google_oauth_redirect_uri: str | None = Field(
+        None,
+        validation_alias=AliasChoices("GOOGLE_OAUTH_REDIRECT_URI", "google_oauth_redirect_uri"),
+    )
+
+    # --- Production canary (TEST 9) ---
+    canary_enabled: bool = Field(False, alias="CANARY_ENABLED")
+    canary_max_calls_per_day: int = Field(20, alias="CANARY_MAX_CALLS_PER_DAY")
+    canary_allowed_destinations_csv: str = Field("", alias="CANARY_ALLOWED_DESTINATIONS")
     deepseek_api_key: str | None = Field(None, alias="DEEPSEEK_API_KEY")
     deepseek_base_url: str = Field("https://api.deepseek.com", alias="DEEPSEEK_BASE_URL")
     deepseek_model: str = Field("deepseek-chat", alias="DEEPSEEK_MODEL")
     gemini_api_key: str | None = Field(None, alias="GEMINI_API_KEY")
+    gemini_model: str = Field("gemini-3.5-flash-lite", alias="GEMINI_MODEL")
     cartesia_api_key: str | None = Field(None, alias="CARTESIA_API_KEY")
     cartesia_stt_model: str = Field("ink-whisper", alias="CARTESIA_STT_MODEL")
     cartesia_tts_model: str = Field("sonic-3.5", alias="CARTESIA_TTS_MODEL")
     cartesia_tts_voice_id: str | None = Field(None, alias="CARTESIA_TTS_VOICE_ID")
     cartesia_api_version: str = Field("2026-08-14", alias="CARTESIA_API_VERSION")
+    # Director-style delivery (not an LLM text prompt) — sonic-3 / sonic-3.5 generation_config.
+    cartesia_tts_emotion: str = Field("calm", alias="CARTESIA_TTS_EMOTION")
+    cartesia_tts_speed: float = Field(1.0, alias="CARTESIA_TTS_SPEED")
+    cartesia_tts_volume: float = Field(1.0, alias="CARTESIA_TTS_VOLUME")
 
     # LOW tier bundle
     voice_low_stt_provider: str = Field("sarvam", alias="VOICE_LOW_STT_PROVIDER")
     voice_low_stt_model: str = Field("saaras:v3", alias="VOICE_LOW_STT_MODEL")
     voice_low_llm_provider: str = Field("openai", alias="VOICE_LOW_LLM_PROVIDER")
-    voice_low_llm_model: str = Field("gpt-5.6-luna", alias="VOICE_LOW_LLM_MODEL")
-    voice_low_tts_provider: str = Field("sarvam", alias="VOICE_LOW_TTS_PROVIDER")
-    voice_low_tts_model: str = Field("bulbul:v3", alias="VOICE_LOW_TTS_MODEL")
+    voice_low_llm_model: str = Field("gpt-realtime-2.1-mini", alias="VOICE_LOW_LLM_MODEL")
+    voice_low_tts_provider: str = Field("gemini", alias="VOICE_LOW_TTS_PROVIDER")
+    voice_low_tts_model: str = Field("gemini-3.8-flash-lite-tts", alias="VOICE_LOW_TTS_MODEL")
 
     # MEDIUM tier bundle
     voice_medium_stt_provider: str = Field("sarvam", alias="VOICE_MEDIUM_STT_PROVIDER")
     voice_medium_stt_model: str = Field("saaras:v3-realtime", alias="VOICE_MEDIUM_STT_MODEL")
     voice_medium_llm_provider: str = Field("openai", alias="VOICE_MEDIUM_LLM_PROVIDER")
-    voice_medium_llm_model: str = Field("gpt-5.6-luna", alias="VOICE_MEDIUM_LLM_MODEL")
+    voice_medium_llm_model: str = Field("gpt-realtime-2.1-mini", alias="VOICE_MEDIUM_LLM_MODEL")
     voice_medium_tts_provider: str = Field("sarvam", alias="VOICE_MEDIUM_TTS_PROVIDER")
     voice_medium_tts_model: str = Field("bulbul:v3", alias="VOICE_MEDIUM_TTS_MODEL")
 
@@ -181,7 +436,7 @@ class Settings(BaseSettings):
     voice_premium_stt_provider: str = Field("sarvam", alias="VOICE_PREMIUM_STT_PROVIDER")
     voice_premium_stt_model: str = Field("saaras:v3-realtime", alias="VOICE_PREMIUM_STT_MODEL")
     voice_premium_llm_provider: str = Field("openai", alias="VOICE_PREMIUM_LLM_PROVIDER")
-    voice_premium_llm_model: str = Field("gpt-5.6-luna", alias="VOICE_PREMIUM_LLM_MODEL")
+    voice_premium_llm_model: str = Field("gpt-realtime-2.1-mini", alias="VOICE_PREMIUM_LLM_MODEL")
     voice_premium_tts_provider: str = Field("sarvam", alias="VOICE_PREMIUM_TTS_PROVIDER")
     voice_premium_tts_model: str = Field("bulbul:v3", alias="VOICE_PREMIUM_TTS_MODEL")
 
@@ -197,6 +452,20 @@ class Settings(BaseSettings):
     def _pace_range(cls, v: float) -> float:
         if not 0.5 <= v <= 2.0:
             raise ValueError("SARVAM_TTS_PACE must be 0.5–2.0")
+        return v
+
+    @field_validator("cartesia_tts_speed")
+    @classmethod
+    def _cartesia_speed_range(cls, v: float) -> float:
+        if not 0.6 <= v <= 1.5:
+            raise ValueError("CARTESIA_TTS_SPEED must be 0.6–1.5")
+        return v
+
+    @field_validator("cartesia_tts_volume")
+    @classmethod
+    def _cartesia_volume_range(cls, v: float) -> float:
+        if not 0.5 <= v <= 2.0:
+            raise ValueError("CARTESIA_TTS_VOLUME must be 0.5–2.0")
         return v
 
     @field_validator("sarvam_tts_temperature")
@@ -215,7 +484,21 @@ class Settings(BaseSettings):
 
     @property
     def allowed_openai_models(self) -> list[str]:
-        return [m.strip() for m in self.allowed_openai_models_csv.split(",") if m.strip()]
+        models = [m.strip() for m in self.allowed_openai_models_csv.split(",") if m.strip()]
+        from server.realtime.models import DEFAULT_HTTP_LLM_MODEL, DEFAULT_REALTIME_MODEL
+
+        for extra in (DEFAULT_REALTIME_MODEL, self.post_call_llm_model or DEFAULT_HTTP_LLM_MODEL):
+            if extra and extra not in models:
+                models.append(extra)
+        return models
+
+    @property
+    def allowed_sarvam_llm_models(self) -> list[str]:
+        return list(dict.fromkeys(model.strip() for model in self.sarvam_llm_models_csv.split(",") if model.strip()))
+
+    @property
+    def allowed_gemini_tts_models(self) -> list[str]:
+        return list(dict.fromkeys(model.strip() for model in self.gemini_tts_models_csv.split(",") if model.strip()))
 
     @property
     def working_memory_enabled(self) -> bool:

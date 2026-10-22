@@ -1,0 +1,38 @@
+{
+  "status": "local_schema_repaired_and_verified_with_browser_limit",
+  "approval": "User explicitly selected: Apply both migrations and verify",
+  "confirmed_evidence": {
+    "configured_database": "PostgreSQL through asyncpg on loopback; no connection secrets recorded",
+    "original_revision": "039_native_billing_rates",
+    "current_revision": "041_campaign_execution_safety",
+    "required_revision": "041_campaign_execution_safety",
+    "phone_numbers_missing_columns": ["vobiz_account_scope", "vobiz_account_tenant_id"],
+    "campaigns_missing_columns": ["client_request_id", "request_fingerprint"],
+    "sql_dry_run": "Pending upgrades 040 and 041 generate additive DDL; existing customer records are not updated or deleted. Alembic updates its revision row."
+  },
+  "changes": [
+    "Database diagnostic checks exact Alembic release heads and fails on a mismatch.",
+    "Database diagnostic uses a read-only transaction and no longer seeds tenant records or prints the database URL.",
+    "Deployment notes describe the required schema check."
+  ],
+  "verification": {
+    "regression_tests": "6 passed through Gravitas validator",
+    "diagnostic_before_repair": "Expected exit 1: revision 039 does not match required revision 041",
+    "migration": "Normal Alembic upgrade 039 -> 040 -> 041, subprocess exit 0 with 60-second process bound; configured loopback target and exact release head checked first",
+    "backup": "pg_dump custom-format backup completed before migration; archive is stored in ignored .gravitas/security-reports/console-schema-repair/ and its path is recorded in pre-migration-state.json",
+    "diagnostic_after_repair": "Gravitas validator PASS: read-only database diagnostic exits 0 and reports matching revision 041",
+    "model_queries": "PhoneNumber, Campaign, CampaignRun and PstnDialRequest have every model column and zero-row ORM reads pass under a read-only transaction",
+    "row_counts": "Existing phone_numbers and campaigns row counts match the pre-migration snapshot",
+    "api_handlers": "GET /api/telephony/numbers and GET /api/campaigns both returned HTTP 200 with expected list payloads through in-process ASGI against the real read-only PostgreSQL connection, using an overridden synthetic test identity; no real authentication/session was tested",
+    "ruff": "Selected syntax and undefined-name checks passed; cache-write warning only",
+    "whitespace_check": "Passed"
+  },
+  "pending": [
+    "Start the normal local API and retry console sync to verify the authenticated browser flow; automatic approval review blocked the attempted service/browser launch."
+  ],
+  "limits": [
+    "Only the approved local additive migrations were applied; no real carrier calls, production changes, deployments, or pushes performed.",
+    "Local API port 8000 was not listening. The combined command to start the API and open the Reticle browser was rejected by automatic approval review with only 'blocked by policy'; neither launch occurred.",
+    "No logged-in browser verification verdict was obtained; HTTP 200 results are controlled in-process API checks, not a live authentication/browser check."
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-21",
+  "scope": "Campaign variable contract and primary Gemini/Vobiz script handoff; tenant phone selection and hosted KYC",
+  "results": {
+    "backend": {"passed": 204, "skipped": 1, "deselected": 1, "exit_code": 0, "log": "backend-tests.txt"},
+    "browser": {"passed": 12, "exit_code": 0, "log": "browser-tests.txt", "api_mode": "synthetic intercepted APIs", "viewports": ["mobile", "tablet", "desktop"]},
+    "editor": {"passed": 4, "exit_code": 0, "log": "editor-tests.txt"},
+    "frontend_build": {"exit_code": 0, "prerendered_public_pages": 6, "log": "frontend-build.txt"},
+    "sast": {"exit_code": 0, "rules_run": 290, "targets": 1291, "findings": 0, "blocking_findings": 0, "log": "security-tests.txt"},
+    "reticle": {
+      "verdict": "yes",
+      "session_id": "s2403848c-1aca-4abd-8762-13932f565c03",
+      "proved": ["Campaign contact validation and personalized preview", "Inventory and admin retail price before KYC", "Selected number retained through the verification gate", "Transient hosted-session failure allows immediate retry"],
+      "coverage": "DOM and network; component state coverage is partial",
+      "screenshots": ["verified-1440.png", "verified-390.png"],
+      "tool_issue": "Reticle screenshot import failed after Vite dependency optimization; feedback submitted; screenshots captured independently with Playwright"
+    },
+    "live_read_only_inventory": {"success": true, "available_entries": 100},
+    "local_configuration": "Dedicated encryption key configured in ignored development .env only; no existing tenant subaccounts or encrypted credentials were present",
+    "diff_check": "passed",
+    "graft_refresh": "passed"
+  },
+  "limits": [
+    "No live provider subaccount, hosted KYC submission, paid purchase or phone call was created",
+    "A deployed backend needs a persistent encryption key shared across processes and restarts",
+    "No production configuration, billing rate or schema change performed",
+    "Secondary calling flows were excluded from the functional audit",
+    "Existing unrelated working-tree changes were preserved"
+  ]
+}

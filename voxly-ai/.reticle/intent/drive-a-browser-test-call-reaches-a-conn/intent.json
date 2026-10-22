@@ -1,0 +1,19 @@
+{
+  "intents": {
+    "flow:drive-a-browser-test-call-reaches-a-connected-listen-o": {
+      "declaredAt": 1792416402972,
+      "id": "flow:drive-a-browser-test-call-reaches-a-connected-listen-o",
+      "source": "decided on the dashboard",
+      "state": "declared",
+      "statement": "A browser test call reaches a connected listen-only state when microphone access is denied, and explains how to enable speaking.",
+      "status": "proved",
+      "subject": "drive-a-browser-test-call-reaches-a-conn",
+      "surface": {
+        "flow": "drive-a-browser-test-call-reaches-a-connected-listen-o"
+      },
+      "updatedAt": 1792416405392
+    }
+  },
+  "subject": "drive-a-browser-test-call-reaches-a-conn",
+  "version": 1
+}

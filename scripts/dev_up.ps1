@@ -14,86 +14,68 @@ param(
     [switch]$Wait,
     [switch]$Open,
     [switch]$ApiOnly,
-    [switch]$WebOnly
+    [switch]$WebOnly,
+    [switch]$ProductionWeb,
+    [switch]$VoxlyFocus,
+    # dev_stack.ps1 prints the canonical banner (it knows about the tunnel), so it
+    # suppresses this one. Without it the two blocks stack up and look duplicated.
+    [switch]$QuietBanner,
+    # Retained for compatibility; production mode always builds current sources.
+    [switch]$ForceWebBuild
 )
 
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "dev_common.ps1")
+
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 $WebRoot = Join-Path $RepoRoot "web"
 $LogDir = Join-Path $RepoRoot "data\dev-logs"
 New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
 
-$env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" +
+$env:Path = $env:Path + ";" + [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" +
     [System.Environment]::GetEnvironmentVariable("Path", "User")
 
-$WebUrl = "http://localhost:3000"
+$WebUrl = "http://127.0.0.1:3000"
+$VoxlyUrl = "http://127.0.0.1:5173"
 $ApiUrl = "http://127.0.0.1:8000"
+$VoxlyRoot = Join-Path $RepoRoot "voxly-ai"
 $DevLoginUrl = "$WebUrl/dev/login"
 $TestStudioUrl = "$WebUrl/dev/test-studio"
 $AppLoginUrl = "$WebUrl/app/login"
 $MarketingUrl = "$WebUrl/"
 
-function Stop-Port {
-    param([int]$Port)
-    $conns = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue
-    foreach ($c in $conns) {
-        $procId = $c.OwningProcess
-        if ($procId -and $procId -ne 0) {
-            Write-Host "Stopping PID $procId on port $Port"
-            Stop-Process -Id $procId -Force -ErrorAction SilentlyContinue
-        }
-    }
-}
-
-function Test-HttpOk {
-    param([string]$Url, [int]$TimeoutSec = 3)
-    try {
-        $r = Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec $TimeoutSec
-        return $r.StatusCode -ge 200 -and $r.StatusCode -lt 500
-    } catch {
-        return $false
-    }
-}
-
-function Wait-ForService {
-    param(
-        [string]$Label,
-        [string]$Url,
-        [int]$MaxAttempts = 90
-    )
-    Write-Host "Waiting for $Label..."
-    for ($i = 0; $i -lt $MaxAttempts; $i++) {
-        if (Test-HttpOk $Url) {
-            Write-Host "$Label is ready."
-            return $true
-        }
-        Start-Sleep -Seconds 1
-    }
-    Write-Warning "$Label did not respond at $Url."
-    return $false
-}
-
 function Write-DevBanner {
     param(
         [bool]$ApiOk,
-        [bool]$WebOk
+        [bool]$WebOk,
+        [bool]$VoxlyOk = $false,
+        [bool]$VoxlyFocus = $false
     )
     Write-Host ""
     Write-Host "============================================================"
     if ($ApiOk -and $WebOk) {
-        Write-Host "  Voice agent - local dev is running"
+        if ($VoxlyFocus) {
+            Write-Host "  Voxly + dev panel (light local stack)"
+        } else {
+            Write-Host "  Voice agent - local dev is running (API + dev portal + Voxly)"
+        }
     } else {
         Write-Host "  Voice agent - dev start incomplete"
     }
     Write-Host "============================================================"
     Write-Host ""
     if ($WebOk) {
-        Write-Host "  Website (marketing)   $MarketingUrl"
-        Write-Host "  Dev portal (login)    $DevLoginUrl"
-        Write-Host "    credentials: dev / devpass"
+        if ($VoxlyOk) {
+            Write-Host "  Voxly (subscriber UI) $VoxlyUrl"
+        } else {
+            Write-Host "  Voxly                 NOT RUNNING (see voxly.log)"
+        }
+        Write-Host "  Dev portal            $DevLoginUrl  (dev / devpass)"
         Write-Host "  Test Studio           $TestStudioUrl"
-        Write-Host "  Business app login    $AppLoginUrl"
-        Write-Host "    credentials: e2e / e2e-test"
+        if (-not $VoxlyFocus) {
+            Write-Host "  Legacy marketing      $MarketingUrl  (redirects to Voxly)"
+            Write-Host "  Legacy /app console   $AppLoginUrl  (redirects to Voxly)"
+        }
     } else {
         Write-Host "  Website               NOT RUNNING"
         Write-Host "  Check the 'Voice Agent Web' window or: $LogDir\web.log"
@@ -105,29 +87,19 @@ function Write-DevBanner {
         Write-Host "  API                   NOT RUNNING"
         Write-Host "  Check the 'Voice Agent API' window or: $LogDir\api.log"
     }
+    try {
+        $redisOk = Test-NetConnection -ComputerName 127.0.0.1 -Port 6379 -InformationLevel Quiet -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+        if ($redisOk) {
+            Write-Host "  Redis Cache           redis://127.0.0.1:6379/0 (ready)"
+        }
+    } catch { }
     Write-Host ""
     Write-Host "  Stop servers: npm run dev:down"
     Write-Host "============================================================"
     Write-Host ""
 }
 
-function Start-DevWindow {
-    param(
-        [string]$Title,
-        [string]$WorkingDir,
-        [string]$Command,
-        [string]$LogFile
-    )
-    $inner = @"
-Set-Location '$WorkingDir'
-`$Host.UI.RawUI.WindowTitle = '$Title'
-`$log = '$LogFile'
-& { $Command } *>&1 | Tee-Object -FilePath `$log
-"@
-    Start-Process powershell -ArgumentList @("-NoExit", "-Command", $inner) | Out-Null
-}
-
-$python = (Get-Command python -ErrorAction Stop).Source
+$python = Get-VoiceAgentPython -RepoRoot $RepoRoot
 $npm = (Get-Command npm.cmd -ErrorAction SilentlyContinue).Source
 if (-not $npm) {
     $npm = (Get-Command npm -ErrorAction Stop).Source
@@ -135,56 +107,121 @@ if (-not $npm) {
 
 if ($KillStale) {
     Write-Host "Clearing ports 8000 and 3000-3003..."
-    & (Join-Path $PSScriptRoot "dev_down.ps1")
+    $downOk = Stop-VoiceAgentDevStack
+    if (-not $downOk) {
+        Write-Error "Could not free dev ports. Close leftover Voice Agent windows and retry."
+    }
 }
 
+$apiOk = $false
+$webOk = $false
+$voxlyOk = $false
+
 if (-not $WebOnly) {
+    Ensure-RedisServer | Out-Null
+    if (-not (Test-VoiceAgentPythonDeps -PythonPath $python -RepoRoot $RepoRoot)) {
+        throw "Install Python dependencies before starting the API (see commands above)."
+    }
     Write-Host "Starting API on $ApiUrl"
+    # Share/telephony need a stable single worker (PSTN + reliable health waits).
+    $apiNoReload = [bool]$ProductionWeb
+    if ($apiNoReload) {
+        Write-Host "  (stable mode: uvicorn without --reload)"
+    }
     Start-DevWindow -Title "Voice Agent API" -WorkingDir $RepoRoot `
-        -Command "& '$python' -m uvicorn server.app:app --host 127.0.0.1 --port 8000 --reload" `
+        -Command (Get-UvicornDevCommand -PythonPath $python -NoReload:$apiNoReload) `
         -LogFile (Join-Path $LogDir "api.log")
+    $apiOk = Wait-ForService -Label "API" -Url "$ApiUrl/api/health"
+    if (-not $apiOk) {
+        Write-Warning "API did not become healthy. Check $LogDir\api.log"
+        if (-not $ApiOnly) {
+            Write-Warning "Not starting the website until the API is up (avoids Next.js ECONNRESET)."
+        }
+    }
+} else {
+    $apiOk = $true
 }
 
 if (-not $ApiOnly) {
     if (-not (Test-Path $WebRoot)) {
         Write-Error "Web folder not found: $WebRoot"
     }
-    if (-not (Test-Path (Join-Path $WebRoot "node_modules"))) {
-        Write-Host "Installing web dependencies (first run)..."
-        Push-Location $WebRoot
-        & $npm install
-        Pop-Location
-    }
-    Write-Host "Starting Next.js on $WebUrl"
-    Start-DevWindow -Title "Voice Agent Web" -WorkingDir $WebRoot `
-        -Command "& '$npm' run dev -- -p 3000" `
-        -LogFile (Join-Path $LogDir "web.log")
-}
-
-$apiOk = $false
-$webOk = $false
-
-if ($Wait -or $Open) {
-    if (-not $WebOnly) {
-        $apiOk = Wait-ForService -Label "API" -Url "$ApiUrl/api/health"
-    } else {
-        $apiOk = $true
-    }
-    if (-not $ApiOnly) {
+    if ($apiOk -or $WebOnly) {
+        if (-not (Test-Path (Join-Path $WebRoot "node_modules"))) {
+            Write-Host "Installing web dependencies (first run)..."
+            Push-Location $WebRoot
+            try {
+                & $npm install
+                if ($LASTEXITCODE -ne 0) { throw "Web dependency installation failed." }
+            } finally { Pop-Location }
+        }
+        if ($ProductionWeb) {
+            # Always build after env sync: NEXT_PUBLIC_* values are compiled into JS.
+            $env:NEXT_DIST_DIR = '.next-share'
+            $env:NEXT_TELEMETRY_DISABLED = '1'
+            $buildDir = [IO.Path]::GetFullPath((Join-Path $WebRoot $env:NEXT_DIST_DIR))
+            if ($buildDir -ne [IO.Path]::GetFullPath((Join-Path $RepoRoot 'web\.next-share'))) {
+                throw 'Refusing to clean an unexpected build directory.'
+            }
+            if (Test-Path -LiteralPath $buildDir) {
+                # Fail promptly on locked files; Next 14's own cleanup can retry forever.
+                Remove-Item -LiteralPath $buildDir -Recurse -Force -ErrorAction Stop
+            }
+            Write-Host 'Building the current website for sharing...'
+            Push-Location $WebRoot
+            try {
+                & $npm run build
+                if ($LASTEXITCODE -ne 0) { throw 'Production web build failed. Fix the build error above and retry.' }
+            } finally { Pop-Location }
+            if (-not (Test-Path (Join-Path $buildDir 'BUILD_ID'))) {
+                throw 'Production build did not produce BUILD_ID.'
+            }
+            Start-DevWindow -Title 'Voice Agent Web' -WorkingDir $WebRoot `
+                -Command "`$env:NEXT_DIST_DIR = '.next-share'; & '$npm' run start -- -p 3000" `
+                -LogFile (Join-Path $LogDir 'web.log')
+        } else {
+            Write-Host "Starting Next.js on $WebUrl"
+            Start-DevWindow -Title 'Voice Agent Web' -WorkingDir $WebRoot `
+                -Command "`$env:NEXT_DIST_DIR = '.next-dev'; & '$npm' run dev -- -p 3000" `
+                -LogFile (Join-Path $LogDir 'web.log')
+        }
         $webOk = Wait-ForService -Label "Website" -Url $DevLoginUrl
-    } else {
-        $webOk = $true
+        if ($webOk) {
+            $proxyOk = Wait-ForService -Label "Website API proxy" -Url "$WebUrl/api/health" -MaxAttempts 30
+            if (-not $proxyOk) {
+                Write-Warning "Website is up but /api/health proxy failed. API may still be starting."
+                $webOk = $false
+            }
+        }
     }
 } else {
-    $apiOk = -not $WebOnly
-    $webOk = -not $ApiOnly
+    $webOk = $true
 }
 
-Write-DevBanner -ApiOk $apiOk -WebOk $webOk
+if (-not $ApiOnly -and (Test-Path $VoxlyRoot) -and $apiOk) {
+    if (-not (Test-Path (Join-Path $VoxlyRoot "node_modules"))) {
+        Write-Host "Installing Voxly dependencies (first run)..."
+        Push-Location $VoxlyRoot
+        try {
+            & $npm install
+            if ($LASTEXITCODE -ne 0) { throw "Voxly dependency installation failed." }
+        } finally { Pop-Location }
+    }
+    Write-Host "Starting Voxly on $VoxlyUrl"
+    Start-DevWindow -Title "Voxly AI" -WorkingDir $VoxlyRoot `
+        -Command "& '$npm' run dev" `
+        -LogFile (Join-Path $LogDir "voxly.log")
+    $voxlyOk = Wait-ForService -Label "Voxly" -Url $VoxlyUrl -MaxAttempts 60
+}
+
+if (-not $QuietBanner) {
+    Write-DevBanner -ApiOk $apiOk -WebOk $webOk -VoxlyOk $voxlyOk -VoxlyFocus:$VoxlyFocus
+}
 
 if ($Open -and $webOk) {
-    Write-Host "Opening dev portal in browser..."
-    Start-Process $DevLoginUrl
+    $openUrl = if ($VoxlyFocus -and $voxlyOk) { $VoxlyUrl } else { $DevLoginUrl }
+    Write-Host "Opening $openUrl in browser..."
+    Start-Process $openUrl
 }
 
 if (-not $apiOk -or -not $webOk) {

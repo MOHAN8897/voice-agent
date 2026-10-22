@@ -1,0 +1,47 @@
+{
+  "version": 2,
+  "name": "drive-a-browser-test-call-reaches-a-connected-listen-o",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1792416402748,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "test-call-start-browser",
+        "source": {
+          "file": "src/console/ui/TactileButton.jsx",
+          "line": 69,
+          "column": 5
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "text",
+        "contains": "Connected in listen-only mode"
+      },
+      "timeoutMs": 10000,
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "intent": "A browser test call reaches a connected listen-only state when microphone access is denied, and explains how to enable speaking.",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "voice-audit",
+    "person": "mohansaiteja.99@gmail.com"
+  },
+  "intentId": "flow:drive-a-browser-test-call-reaches-a-connected-listen-o"
+}

@@ -882,6 +882,7 @@ const live = {
   bargeHandledTurn: 0,
   turnN: 0,
   sawVadStart: false,
+  vadStartedAt: 0,
   // Echo-gate tuning (RMS of Int16 ≈ amplitude/32768)
   rmsGate: true,
   RMS_SPEAKING: 0.012,
@@ -1155,6 +1156,7 @@ function ensureLiveGuards() {
       const min = s.minWords ?? 3;
       if (s.words < min) return false;
       if (s.requireVad !== false && !s.sawVadStart) return false;
+      if (s.vadStartedAt > 0 && now - s.vadStartedAt < 200) return false;
       return now > (s.bargeCooldownUntil || 0);
     },
   };
@@ -1169,10 +1171,7 @@ function routeLiveEvent(m) {
       break;
     case "vad.speech_start":
       live.sawVadStart = true;
-      // Industry pattern: stop agent audio on speech onset, don't wait for STT partials.
-      if (live.agentSpeaking || live.brainStreaming) {
-        doBargeIn("vad-start");
-      }
+      live.vadStartedAt = performance.now();
       break;
     case "transcript.partial": {
       const t = m.text || "";
@@ -1185,6 +1184,7 @@ function routeLiveEvent(m) {
         agentSpeaking: live.agentSpeaking,
         words: w,
         sawVadStart: live.sawVadStart,
+        vadStartedAt: live.vadStartedAt,
         bargeCooldownUntil: live.bargeCooldownUntil,
         minWords: bargeCfg.minWords,
         requireVad: bargeCfg.requireVad,
@@ -1203,6 +1203,7 @@ function routeLiveEvent(m) {
     }
     case "transcript.final": {
       live.sawVadStart = false;
+      live.vadStartedAt = 0;
       console.log("[VOICE][STT] FINAL");
       handleSttFinal((m.text || "").trim(), m.sttFinalMs);
       break;

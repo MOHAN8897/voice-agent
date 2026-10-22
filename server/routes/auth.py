@@ -1,6 +1,8 @@
 """Auth routes — Dev Portal and Business Console login."""
 from __future__ import annotations
 
+import asyncio
+
 from fastapi import APIRouter, HTTPException, Request, Response
 from pydantic import BaseModel, Field
 
@@ -15,8 +17,16 @@ _login_limiter = RateLimiter(max_requests=10, window_s=300)
 
 
 class LoginBody(BaseModel):
-    username: str = Field(..., min_length=1)
-    password: str = Field(..., min_length=1)
+    username: str = Field(..., min_length=1, max_length=320)
+    password: str = Field(..., min_length=1, max_length=200)
+
+
+def _portal_username_matches(expected: str | None, provided: str) -> bool:
+    exp = (expected or "").strip()
+    got = (provided or "").strip()
+    if not exp or not got:
+        return False
+    return exp.casefold() == got.casefold()
 
 
 def _cookie_opts() -> dict:
@@ -55,18 +65,19 @@ def _clear_session_cookies(response: Response, kind: str) -> None:
 
 
 @router.post("/api/dev/login")
-async def dev_login(body: LoginBody, response: Response):
+async def dev_login(body: LoginBody, request: Request, response: Response):
     settings = get_settings()
     if not settings.dev_portal_username or not settings.dev_portal_password:
         return {"ok": False, "error": {"code": "auth_error", "message": "Dev portal not configured"}}
-    allowed, retry = _login_limiter.allow(f"dev:{body.username}")
+    ip = request.client.host if request.client else "unknown"
+    allowed, retry = _login_limiter.allow(f"dev:{ip}:{body.username}")
     if not allowed:
         return {
             "ok": False,
             "error": {"code": "rate_limit", "message": "Too many login attempts", "retry_after": retry},
         }
-    if body.username != settings.dev_portal_username or not verify_portal_password(
-        settings.dev_portal_password, body.password
+    if not _portal_username_matches(settings.dev_portal_username, body.username) or not await asyncio.to_thread(
+        verify_portal_password, settings.dev_portal_password, body.password
     ):
         return {"ok": False, "error": {"code": "auth_error", "message": "Invalid credentials"}}
     csrf = create_csrf_token()
@@ -90,6 +101,16 @@ async def dev_logout_get(response: Response):
 @router.post("/api/app/login")
 async def app_login(body: LoginBody, response: Response):
     settings = get_settings()
+    if settings.saas_auth_enabled:
+        raise HTTPException(
+            status_code=410,
+            detail={
+                "error": {
+                    "code": "deprecated",
+                    "message": "Use POST /api/auth/login with email and password",
+                }
+            },
+        )
     if not settings.app_console_username or not settings.app_console_password:
         return {"ok": False, "error": {"code": "auth_error", "message": "App login not configured"}}
     allowed, retry = _login_limiter.allow(f"app:{body.username}")
@@ -98,8 +119,8 @@ async def app_login(body: LoginBody, response: Response):
             "ok": False,
             "error": {"code": "rate_limit", "message": "Too many login attempts", "retry_after": retry},
         }
-    if body.username != settings.app_console_username or not verify_portal_password(
-        settings.app_console_password, body.password
+    if not _portal_username_matches(settings.app_console_username, body.username) or not await asyncio.to_thread(
+        verify_portal_password, settings.app_console_password, body.password
     ):
         return {"ok": False, "error": {"code": "auth_error", "message": "Invalid credentials"}}
     csrf = create_csrf_token()
@@ -126,6 +147,7 @@ async def auth_session():
     return {
         "dev_configured": bool(settings.dev_portal_username and settings.dev_portal_password),
         "app_configured": bool(settings.app_console_username and settings.app_console_password),
+        "saas_auth_enabled": settings.saas_auth_enabled,
         "environment": settings.app_environment,
         "default_tenant_id": settings.default_tenant_id,
     }
@@ -134,6 +156,28 @@ async def auth_session():
 @router.get("/api/auth/me")
 async def auth_me(request: Request):
     settings = get_settings()
+    if settings.saas_auth_enabled:
+        from server.auth.jwt_tokens import decode_access_token
+        from server.services.saas import auth_service as saas_auth
+
+        auth_header = request.headers.get("authorization") or ""
+        if auth_header.lower().startswith("bearer "):
+            claims = decode_access_token(auth_header.split(" ", 1)[1].strip())
+            if claims is None:
+                raise HTTPException(
+                    status_code=401,
+                    detail={"error": {"code": "auth_error", "message": "Invalid or expired token"}},
+                )
+            import uuid
+
+            try:
+                return await saas_auth.get_me(
+                    uuid.UUID(claims.user_id),
+                    uuid.UUID(claims.tenant_id),
+                    impersonator=claims.impersonator,
+                )
+            except ValueError:
+                raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Not found"}})
     names = cookie_names()
     session = parse_session_token(request.cookies.get(names["app"]) or "", "app")
     if session:

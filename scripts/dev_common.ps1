@@ -1,0 +1,620 @@
+# Shared helpers for local API / Next / tunnel windows.
+# Dot-source from other scripts. Do not run this file directly.
+
+$script:DevListenPorts = @(8000, 3000, 3001, 3002, 3003, 5173)
+$script:WrapperProcessNames = @(
+    "powershell.exe", "pwsh.exe", "cmd.exe", "conhost.exe",
+    "npm.cmd", "node.exe", "python.exe", "pythonw.exe"
+)
+$script:NeverKillNames = @(
+    "idle", "system", "smss.exe", "csrss.exe", "wininit.exe", "winlogon.exe",
+    "services.exe", "lsass.exe", "svchost.exe", "explorer.exe", "dwm.exe",
+    "cursor.exe", "code.exe", "redis-server.exe", "memurai.exe"
+)
+
+function Get-VoiceAgentPython {
+    param(
+        [Parameter(Mandatory = $true)][string]$RepoRoot
+    )
+    $candidates = [System.Collections.Generic.List[string]]::new()
+    if ($env:PYTHON_EXECUTABLE -and (Test-Path $env:PYTHON_EXECUTABLE)) {
+        $candidates.Add($env:PYTHON_EXECUTABLE)
+    }
+    $venvPython = Join-Path $RepoRoot ".venv\Scripts\python.exe"
+    if (Test-Path $venvPython) {
+        $candidates.Add($venvPython)
+    }
+    try {
+        $found = (Get-Command python -All -ErrorAction SilentlyContinue)
+        if ($found) {
+            foreach ($cmd in $found) {
+                if ($cmd.Source) { $candidates.Add($cmd.Source) }
+            }
+        }
+    } catch {}
+
+    $localApp = [System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::LocalApplicationData)
+    if ($localApp) {
+        $candidates.Add((Join-Path $localApp "Programs\Python\Python312\python.exe"))
+        $candidates.Add((Join-Path $localApp "Programs\Python\Python311\python.exe"))
+        $candidates.Add((Join-Path $localApp "Programs\Python\Python310\python.exe"))
+    }
+
+    foreach ($cand in $candidates) {
+        if (-not $cand -or -not (Test-Path $cand)) { continue }
+        if ($cand -like "*WindowsApps*") { continue }
+        $prevEa = $ErrorActionPreference
+        $ErrorActionPreference = "Continue"
+        $works = $false
+        try {
+            $testOut = & $cand -c "import sys; print(sys.version_info[0])" 2>&1 | Out-String
+            if ($null -ne $LASTEXITCODE -and $LASTEXITCODE -eq 0 -and $testOut.Trim() -eq "3") {
+                $works = $true
+            }
+        } catch {
+            $works = $false
+        } finally {
+            $ErrorActionPreference = $prevEa
+        }
+        if ($works) {
+            return $cand
+        }
+    }
+    return (Get-Command python -ErrorAction Stop).Source
+}
+
+function Get-VoiceAgentRedisExecutable {
+    $candidates = @(
+        (Join-Path $env:LOCALAPPDATA "HustleLabs\memurai\Memurai\redis-server.exe"),
+        (Join-Path $env:ProgramFiles "Memurai\memurai.exe"),
+        (Join-Path $env:ProgramFiles "Redis\redis-server.exe"),
+        (Get-Command redis-server -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -ErrorAction SilentlyContinue),
+        (Get-Command memurai -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -ErrorAction SilentlyContinue)
+    )
+    foreach ($cand in $candidates) {
+        if ($cand -and (Test-Path $cand)) {
+            return $cand
+        }
+    }
+    return $null
+}
+
+function Ensure-RedisServer {
+    try {
+        $tcp = Test-NetConnection -ComputerName 127.0.0.1 -Port 6379 -InformationLevel Quiet -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+        if ($tcp) {
+            return $true
+        }
+    } catch { }
+
+    $redisExe = Get-VoiceAgentRedisExecutable
+    if (-not $redisExe) {
+        Write-Warning "Redis executable not found. Running with in-memory fallback. (Install Memurai or Redis to enable shared caching)."
+        return $false
+    }
+
+    Write-Host "Starting Redis server on port 6379 ($redisExe)..."
+    Start-Process -FilePath $redisExe -ArgumentList "--port 6379" -WindowStyle Hidden | Out-Null
+    $ready = $false
+    for ($i = 0; $i -lt 15; $i++) {
+        Start-Sleep -Milliseconds 300
+        try {
+            $ready = Test-NetConnection -ComputerName 127.0.0.1 -Port 6379 -InformationLevel Quiet -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+            if ($ready) { break }
+        } catch { }
+    }
+    if ($ready) {
+        Write-Host "Redis server is ready on 127.0.0.1:6379"
+        return $true
+    }
+    Write-Warning "Redis server started but port 6379 did not respond in time."
+    return $false
+}
+
+function Test-VoiceAgentPythonDeps {
+    param(
+        [Parameter(Mandatory = $true)][string]$PythonPath,
+        [Parameter(Mandatory = $true)][string]$RepoRoot
+    )
+    $check = @"
+import importlib.util
+missing = []
+for mod in ('uvicorn', 'fastapi', 'pydantic_settings'):
+    if importlib.util.find_spec(mod) is None:
+        missing.append(mod)
+if missing:
+    raise SystemExit('missing:' + ','.join(missing))
+import server.app
+"@
+    # dev_stack.ps1 uses Stop; Python tracebacks on stderr must not abort before we print them.
+    $prevEa = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    $out = ""
+    $code = 0
+    try {
+        Push-Location $RepoRoot
+        $out = & $PythonPath -c $check 2>&1 | Out-String
+        if ($null -ne $LASTEXITCODE) { $code = [int]$LASTEXITCODE }
+    } catch {
+        $code = 1
+        $out = $_.Exception.Message
+    } finally {
+        Pop-Location
+        $ErrorActionPreference = $prevEa
+    }
+    if ($code -ne 0 -and $out -match "Application Control policy" -and $out -match "sqlalchemy") {
+        Write-Host "Windows Application Control blocked SQLAlchemy C-extensions; falling back to pure Python..." -ForegroundColor Yellow
+        Get-ChildItem -Path (Join-Path $RepoRoot ".venv\Lib\site-packages\sqlalchemy") -Recurse -Filter "*.pyd" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+        try {
+            Push-Location $RepoRoot
+            $out = & $PythonPath -c $check 2>&1 | Out-String
+            if ($null -ne $LASTEXITCODE) { $code = [int]$LASTEXITCODE } else { $code = 0 }
+        } catch {
+            $code = 1
+            $out = $_.Exception.Message
+        } finally {
+            Pop-Location
+        }
+    }
+    if ($code -ne 0) {
+        Write-Host ""
+        Write-Host "Python API dependencies are not installed in this environment." -ForegroundColor Red
+        if ($out -match 'missing:([^\r\n]+)') {
+            Write-Host "  Missing modules: $($Matches[1])" -ForegroundColor Yellow
+        } elseif ($out.Trim()) {
+            foreach ($line in ($out.Trim() -split "`r?`n")) {
+                Write-Host "  $line" -ForegroundColor Yellow
+            }
+        }
+        Write-Host ""
+        Write-Host "Fix (from repo root):" -ForegroundColor Cyan
+        Write-Host "  .\.venv\Scripts\python.exe -m ensurepip --upgrade"
+        Write-Host "  .\.venv\Scripts\python.exe -m pip install -e `".[dev]`""
+        Write-Host ""
+        return $false
+    }
+    return $true
+}
+
+function Get-UvicornDevCommand {
+    param(
+        [Parameter(Mandatory = $true)][string]$PythonPath,
+        # Share/telephony: no reload — reloader accepts TCP before the app is ready,
+        # which makes health probes hang and breaks PSTN mid-call on file saves.
+        [switch]$NoReload
+    )
+    if ($NoReload) {
+        return "& '$PythonPath' -m uvicorn server.app:app --host 127.0.0.1 --port 8000"
+    }
+    # Reload only server/ so writes under data/, web/.next, and logs do not
+    # bounce uvicorn and reset in-flight Next.js proxy connections (ECONNRESET).
+    # Exclude tests, logs, pycache, and sqlite databases from watchfiles so that test runs
+    # and background log writes do not kill/bounce uvicorn and reset Next.js proxy connections.
+    return "& '$PythonPath' -m uvicorn server.app:app --host 127.0.0.1 --port 8000 --reload --reload-dir server --reload-exclude server/tests"
+}
+
+function Test-HttpOk {
+    param([string]$Url, [int]$TimeoutSec = 0)
+    if ($TimeoutSec -le 0) {
+        if ($Url -like "https://*") { $TimeoutSec = 6 } else { $TimeoutSec = 3 }
+    }
+    # Prefer curl.exe: Windows Invoke-WebRequest often does not honor TimeoutSec when
+    # TCP connects (uvicorn reloader) but the worker has not finished startup yet.
+    # Force IPv4 (-4) so Windows curl never hangs waiting for dual-stack IPv6 connect timeout.
+    $curl = Get-Command curl.exe -ErrorAction SilentlyContinue
+    if ($curl) {
+        try {
+            $curlArgs = @("-s", "-S", "-4", "-o", "NUL", "-m", "$TimeoutSec", "-w", "%{http_code}")
+            if ($Url -match "https?://([^/:]+dialtact\.com)") {
+                $hostName = $Matches[1]
+                $curlArgs += @("--resolve", "${hostName}:443:104.21.10.76")
+            }
+            $curlArgs += $Url
+            $code = & curl.exe @curlArgs 2>$null
+            if ($LASTEXITCODE -ne 0) {
+                # Fallback probe without --resolve if custom resolver was rejected
+                $code = & curl.exe -s -S -4 -o NUL -m $TimeoutSec -w "%{http_code}" $Url 2>$null
+                if ($LASTEXITCODE -ne 0) { return $false }
+            }
+            $n = 0
+            if ([int]::TryParse([string]$code, [ref]$n)) {
+                return ($n -ge 200 -and $n -lt 400)
+            }
+            return $false
+        } catch {
+            return $false
+        }
+    }
+    try {
+        $r = Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec $TimeoutSec
+        return $r.StatusCode -ge 200 -and $r.StatusCode -lt 400
+    } catch {
+        return $false
+    }
+}
+
+# Raw status code (0 on transport failure). Used for intentional 404 checks.
+function Get-HttpStatusCode {
+    param([string]$Url, [int]$TimeoutSec = 6)
+    $curl = Get-Command curl.exe -ErrorAction SilentlyContinue
+    if ($curl) {
+        try {
+            $curlArgs = @("-s", "-S", "-4", "-o", "NUL", "-m", "$TimeoutSec", "-w", "%{http_code}")
+            if ($Url -match "https?://([^/:]+dialtact\.com)") {
+                $hostName = $Matches[1]
+                $curlArgs += @("--resolve", "${hostName}:443:104.21.10.76")
+            }
+            $curlArgs += $Url
+            $code = & curl.exe @curlArgs 2>$null
+            if ($LASTEXITCODE -ne 0) {
+                $code = & curl.exe -s -S -4 -o NUL -m $TimeoutSec -w "%{http_code}" $Url 2>$null
+                if ($LASTEXITCODE -ne 0) { return 0 }
+            }
+            $n = 0
+            if ([int]::TryParse([string]$code, [ref]$n)) { return $n }
+            return 0
+        } catch {
+            return 0
+        }
+    }
+    try {
+        $r = Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec $TimeoutSec
+        return [int]$r.StatusCode
+    } catch {
+        if ($_.Exception.Response -and $_.Exception.Response.StatusCode) {
+            return [int]$_.Exception.Response.StatusCode
+        }
+        return 0
+    }
+}
+
+function Wait-ForService {
+    param(
+        [string]$Label,
+        [string]$Url,
+        [int]$MaxAttempts = 90,
+        [int]$TimeoutSec = 0
+    )
+    if ($TimeoutSec -le 0) {
+        if ($Url -like "https://*") { $TimeoutSec = 6 } else { $TimeoutSec = 3 }
+    }
+    Write-Host "Waiting for $Label ($Url)..."
+    for ($i = 0; $i -lt $MaxAttempts; $i++) {
+        if (Test-HttpOk $Url $TimeoutSec) {
+            Write-Host "$Label is ready."
+            return $true
+        }
+        if ($i -gt 0 -and ($i % 5) -eq 0) {
+            Write-Host "  still waiting... ($i/$MaxAttempts)"
+        }
+        Start-Sleep -Seconds 1
+    }
+    Write-Warning "$Label did not respond at $Url"
+    return $false
+}
+
+function Write-Utf8NoBom {
+    param(
+        [Parameter(Mandatory = $true)][string]$Path,
+        [Parameter(Mandatory = $true)][string]$Value
+    )
+    $utf8 = New-Object System.Text.UTF8Encoding $false
+    [System.IO.File]::WriteAllText($Path, $Value, $utf8)
+}
+
+function Test-ProcessAlive {
+    param([int]$ProcessId)
+    if ($ProcessId -le 4) { return $false }
+    return $null -ne (Get-Process -Id $ProcessId -ErrorAction SilentlyContinue)
+}
+
+function Test-PortInUse {
+    param([int]$Port, [string]$HostName = "127.0.0.1")
+    $client = $null
+    try {
+        $client = New-Object System.Net.Sockets.TcpClient
+        $iar = $client.BeginConnect($HostName, $Port, $null, $null)
+        $connected = $iar.AsyncWaitHandle.WaitOne(250, $false)
+        if (-not $connected) { return $false }
+        $client.EndConnect($iar)
+        return $true
+    } catch {
+        return $false
+    } finally {
+        if ($client) { $client.Close() }
+    }
+}
+
+function Get-ListeningPids {
+    param([int]$Port)
+    $ids = New-Object System.Collections.Generic.List[int]
+    # netstat is the source of truth on Windows; Get-NetTCPConnection can keep a
+    # dead PID in Listen state after uvicorn exits (ghost 8000 / ECONNRESET).
+    foreach ($line in @(netstat -ano 2>$null | Select-String ":$Port\s")) {
+        if ($line.Line -match "LISTENING\s+(\d+)\s*$") {
+            $owning = [int]$Matches[1]
+            if ($owning -gt 0 -and -not $ids.Contains($owning)) {
+                [void]$ids.Add($owning)
+            }
+        }
+    }
+    if ($LASTEXITCODE -ne 0) {
+        try {
+            $conns = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction Stop
+            foreach ($c in @($conns)) {
+                $owning = [int]$c.OwningProcess
+                if ($owning -gt 0 -and -not $ids.Contains($owning)) {
+                    [void]$ids.Add($owning)
+                }
+            }
+        } catch { }
+    }
+    return @($ids)
+}
+
+function Get-BusyDevPorts {
+    $busy = @()
+    foreach ($port in $script:DevListenPorts) {
+        $live = @(Get-ListeningPids $port)
+        if ($live.Count -gt 0) {
+            $busy += $port
+            continue
+        }
+        if ((Test-PortInUse $port) -or (Test-PortInUse -Port $port -HostName "localhost")) {
+            $busy += $port
+        }
+    }
+    return $busy
+}
+
+function Get-Win32Processes {
+    # Without process visibility we cannot safely claim shutdown succeeded.
+    return @(Get-CimInstance Win32_Process -ErrorAction Stop)
+}
+
+function Get-ProcessNameById {
+    param([int]$ProcessId, $ProcessMap)
+    if ($ProcessId -le 0) { return "" }
+    $row = $ProcessMap[$ProcessId]
+    if ($row) { return [string]$row.Name }
+    try {
+        return [string](Get-Process -Id $ProcessId -ErrorAction Stop).Name
+    } catch {
+        return ""
+    }
+}
+
+function Test-NeverKill {
+    param([int]$ProcessId, [string]$Name)
+    if ($ProcessId -le 4) { return $true }
+    $n = $Name.ToLowerInvariant()
+    if (-not $n.EndsWith(".exe")) { $n = "$n.exe" }
+    return $script:NeverKillNames -contains $n
+}
+
+function Get-ProtectedPids {
+    $keep = New-Object System.Collections.Generic.HashSet[int]
+    [void]$keep.Add(0)
+    [void]$keep.Add(4)
+    [void]$keep.Add($PID)
+    $procs = Get-Win32Processes
+    $map = @{}
+    foreach ($p in $procs) { $map[[int]$p.ProcessId] = $p }
+    $cursor = $PID
+    $guard = 0
+    while ($cursor -gt 4 -and $guard -lt 24) {
+        $guard++
+        [void]$keep.Add($cursor)
+        $row = $map[$cursor]
+        if (-not $row) { break }
+        $cursor = [int]$row.ParentProcessId
+        $nm = ([string]$row.Name).ToLowerInvariant()
+        if ($script:NeverKillNames -contains $nm -or $script:NeverKillNames -contains "$nm.exe") { break }
+    }
+    return $keep
+}
+
+function Get-AncestorRootPid {
+    param(
+        [int]$ProcessId,
+        $ProcessMap,
+        $Protected
+    )
+    $cursor = $ProcessId
+    $root = $ProcessId
+    $guard = 0
+    while ($cursor -gt 4 -and $guard -lt 24) {
+        $guard++
+        if ($Protected.Contains($cursor)) { break }
+        $row = $ProcessMap[$cursor]
+        if (-not $row) { break }
+        $name = [string]$row.Name
+        if (Test-NeverKill -ProcessId $cursor -Name $name) { break }
+        $root = $cursor
+        $parentId = [int]$row.ParentProcessId
+        if ($parentId -le 4 -or $Protected.Contains($parentId)) { break }
+        $parent = $ProcessMap[$parentId]
+        if (-not $parent) { break }
+        $parentName = ([string]$parent.Name).ToLowerInvariant()
+        if (-not $parentName.EndsWith(".exe")) { $parentName = "$parentName.exe" }
+        if ($script:WrapperProcessNames -notcontains $parentName) { break }
+        if (Test-NeverKill -ProcessId $parentId -Name $parent.Name) { break }
+        $cursor = $parentId
+    }
+    return $root
+}
+
+function Stop-ProcessTreeForce {
+    param(
+        [int]$ProcessId,
+        $Protected
+    )
+    if ($ProcessId -le 4) { return }
+    if ($Protected -and $Protected.Contains($ProcessId)) { return }
+    $name = ""
+    try {
+        $row = Get-CimInstance Win32_Process -Filter "ProcessId=$ProcessId" -ErrorAction SilentlyContinue
+        if ($row) { $name = [string]$row.Name }
+    } catch { }
+    if (Test-NeverKill -ProcessId $ProcessId -Name $name) { return }
+    $kids = @(Get-CimInstance Win32_Process -Filter "ParentProcessId=$ProcessId" -ErrorAction SilentlyContinue)
+    foreach ($k in $kids) {
+        Stop-ProcessTreeForce -ProcessId ([int]$k.ProcessId) -Protected $Protected
+    }
+    try {
+        & cmd.exe /c "taskkill /PID $ProcessId /T /F >nul 2>&1"
+    } catch { }
+    try {
+        Stop-Process -Id $ProcessId -Force -ErrorAction SilentlyContinue
+    } catch { }
+}
+
+function Test-DevCommandLine {
+    param([string]$CommandLine)
+    if ([string]::IsNullOrWhiteSpace($CommandLine)) { return $false }
+    if ($CommandLine -match '(?i)uvicorn\s+server\.app') { return $true }
+    $repoPath = [regex]::Escape((Split-Path -Parent $PSScriptRoot))
+    if ($CommandLine -match '(?i)(cloudflared|ngrok)' -and
+        ($CommandLine -match $repoPath -or $CommandLine -match '(?i)https?://(localhost|127\.0\.0\.1):(8000|3000|4173|5173)\b')) { return $true }
+    if ($CommandLine -match '(?i)dev_window\.ps1') { return $true }
+    if ($CommandLine -match '(?i)voice-agent-dev-(runners|jobs)') { return $true }
+    if ($CommandLine -match '(?i)(Voice Agent (API|Web|Tunnel)|Voxly AI)') { return $true }
+    if ($CommandLine -match '(?i)voice agent[\\/]+scripts[\\/]+dev_(stack|up|down)\.ps1') { return $true }
+    # Next / Vite / npm started from this repo's web or voxly-ai folder
+    if ($CommandLine -match '(?i)voice agent[\\/]+(web|voxly-ai)' -and $CommandLine -match '(?i)(next|npm|vite|node)') { return $true }
+    return $false
+}
+
+function Stop-VoiceAgentDevStack {
+    Write-Host "Stopping voice-agent API, website, and tunnels..."
+    $protected = Get-ProtectedPids
+
+    for ($round = 1; $round -le 8; $round++) {
+        $procs = Get-Win32Processes
+        $map = @{}
+        foreach ($p in $procs) { $map[[int]$p.ProcessId] = $p }
+
+        $seeds = New-Object System.Collections.Generic.HashSet[int]
+        foreach ($port in $script:DevListenPorts) {
+            foreach ($owning in @(Get-ListeningPids $port)) {
+                [void]$seeds.Add($owning)
+                # Uvicorn --reload / multiprocessing can leave children holding the
+                # socket after the parent PID is already gone (netstat still shows
+                # the dead parent as LISTENING).
+                foreach ($orphan in @(Get-CimInstance Win32_Process -Filter "ParentProcessId=$owning" -ErrorAction SilentlyContinue)) {
+                    [void]$seeds.Add([int]$orphan.ProcessId)
+                }
+            }
+        }
+        foreach ($p in $procs) {
+            $id = [int]$p.ProcessId
+            $name = ([string]$p.Name).ToLowerInvariant()
+            if (Test-DevCommandLine -CommandLine ([string]$p.CommandLine)) {
+                [void]$seeds.Add($id)
+            }
+        }
+        foreach ($proc in @(Get-Process -Name powershell, pwsh, cmd -ErrorAction SilentlyContinue)) {
+            $title = [string]$proc.MainWindowTitle
+            if ($title -match '(?i)Voice Agent|Cloudflare Tunnel') {
+                [void]$seeds.Add([int]$proc.Id)
+            }
+        }
+
+        $roots = New-Object System.Collections.Generic.HashSet[int]
+        foreach ($id in @($seeds)) {
+            if ($protected.Contains($id)) { continue }
+            $name = Get-ProcessNameById -ProcessId $id -ProcessMap $map
+            if (Test-NeverKill -ProcessId $id -Name $name) { continue }
+            $root = Get-AncestorRootPid -ProcessId $id -ProcessMap $map -Protected $protected
+            if (-not $protected.Contains($root)) {
+                [void]$roots.Add($root)
+            }
+        }
+
+        if ($roots.Count -eq 0) {
+            $busyNow = @(Get-BusyDevPorts)
+            if ($busyNow.Count -eq 0) { break }
+        }
+
+        foreach ($id in @($roots)) {
+            Write-Host "Stopping process tree PID $id (round $round)"
+            Stop-ProcessTreeForce -ProcessId $id -Protected $protected
+        }
+        Start-Sleep -Milliseconds 450
+    }
+
+    $deadline = (Get-Date).AddSeconds(8)
+    do {
+        $busy = @(Get-BusyDevPorts)
+        if ($busy.Count -eq 0) { break }
+        Start-Sleep -Milliseconds 400
+    } while ((Get-Date) -lt $deadline)
+
+    if ($busy.Count -gt 0) {
+        Write-Warning "Ports still listening: $($busy -join ', '). Close those windows and retry npm run dev:down."
+        return $false
+    }
+
+    $remaining = @(Get-Win32Processes | Where-Object {
+        -not $protected.Contains([int]$_.ProcessId) -and
+        (Test-DevCommandLine -CommandLine ([string]$_.CommandLine))
+    })
+    if ($remaining.Count -gt 0) {
+        Write-Warning "Dev processes are still running: $($remaining.ProcessId -join ', ')."
+        return $false
+    }
+
+    Write-Host "All dev ports are free (8000, 3000-3003)."
+    return $true
+}
+
+function Start-DevWindow {
+    param(
+        [Parameter(Mandatory = $true)][string]$Title,
+        [Parameter(Mandatory = $true)][string]$WorkingDir,
+        [Parameter(Mandatory = $true)][string]$Command,
+        [Parameter(Mandatory = $true)][string]$LogFile
+    )
+    $runnerDir = Join-Path $env:TEMP "voice-agent-dev-runners"
+    New-Item -ItemType Directory -Force -Path $runnerDir | Out-Null
+    $runnerFile = Join-Path $runnerDir ("run-" + [guid]::NewGuid().ToString() + ".ps1")
+    $logDir = Split-Path -Parent $LogFile
+    if ($logDir) {
+        New-Item -ItemType Directory -Force -Path $logDir | Out-Null
+    }
+
+    # Runner lives under %TEMP% (no spaces). Do not route through scripts under
+    # "D:\voice agent\..." via Start-Process -File — that path breaks startup.
+    $runner = @"
+`$ErrorActionPreference = 'Continue'
+if (Get-Variable -Name PSNativeCommandUseErrorActionPreference -ErrorAction SilentlyContinue) {
+    `$PSNativeCommandUseErrorActionPreference = `$false
+}
+`$env:PYTHONUNBUFFERED = '1'
+`$env:PYTHONIOENCODING = 'utf-8'
+`$env:NEXT_TELEMETRY_DISABLED = '1'
+Set-Location -LiteralPath '$($WorkingDir.Replace("'", "''"))'
+try { `$Host.UI.RawUI.WindowTitle = '$($Title.Replace("'", "''"))' } catch { }
+`$log = '$($LogFile.Replace("'", "''"))'
+`$utf8 = New-Object System.Text.UTF8Encoding `$false
+[System.IO.File]::WriteAllText(`$log, "==== $Title start $(Get-Date -Format o) ====`n", `$utf8)
+Write-Host "Logging to `$log"
+Write-Host "==== $Title ====`n"
+& {
+$Command
+} 2>&1 | ForEach-Object {
+    if (`$_ -is [System.Management.Automation.ErrorRecord]) { `$_.ToString() } else { "`$_" }
+} | ForEach-Object {
+    [System.IO.File]::AppendAllText(`$log, "`$_`n", `$utf8)
+    [Console]::Out.WriteLine(`$_)
+}
+"@
+    Write-Utf8NoBom -Path $runnerFile -Value $runner
+
+    Start-Process -FilePath "powershell.exe" -WindowStyle Hidden -ArgumentList @(
+        "-NoProfile",
+        "-ExecutionPolicy", "Bypass",
+        "-File", ('"' + $runnerFile + '"')
+    ) | Out-Null
+    Write-Host "Started '$Title' in background. Log: $LogFile"
+}

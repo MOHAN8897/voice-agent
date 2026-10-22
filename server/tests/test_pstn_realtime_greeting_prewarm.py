@@ -1,0 +1,208 @@
+"""Realtime prewarm greeting — PCM capture and wire framing."""
+from __future__ import annotations
+
+import asyncio
+from unittest.mock import AsyncMock
+
+import pytest
+
+from server.realtime.models import REALTIME_PCM_RATE
+from server.services.audio_transcode import StreamingPcmResampler
+from server.services.pstn_realtime_greeting_prewarm import (
+    realtime_pcm24_to_wire_frames,
+    synthesize_realtime_greeting_frames,
+    wire_frame_bytes,
+)
+
+
+def _make_pcm24(duration_ms: int = 40) -> bytes:
+    samples = int(REALTIME_PCM_RATE * duration_ms / 1000)
+    return b"\x00\x01" * samples
+
+
+def test_wire_frame_bytes_telnyx():
+    assert wire_frame_bytes(16000, linear16=True) == 640
+    assert wire_frame_bytes(8000, linear16=False) == 160
+
+
+def test_realtime_pcm24_to_wire_frames_telnyx_l16():
+    pcm = _make_pcm24(40)
+    frames = realtime_pcm24_to_wire_frames(pcm, sample_rate=16000, tts_output_codec="linear16")
+    assert frames
+    assert all(len(f) == 640 for f in frames)
+
+
+def test_realtime_pcm24_to_wire_frames_8k_mulaw():
+    pcm = _make_pcm24(40)
+    frames = realtime_pcm24_to_wire_frames(pcm, sample_rate=8000, tts_output_codec="mulaw")
+    assert frames
+    assert all(len(f) == 160 for f in frames)
+
+
+@pytest.mark.asyncio
+async def test_synthesize_collects_audio_and_deletes_items():
+    pcm = _make_pcm24(60)
+
+    class StubAdapter:
+        def __init__(self) -> None:
+            self.started = False
+            self.deleted = False
+            self.discarded = False
+            self._events = [
+                {"type": "audio_delta", "pcm": pcm},
+                {
+                    "type": "assistant_transcript",
+                    "text": "Hi, this is Tis from Bindusara. Do you have a moment?",
+                },
+                {"type": "response_done", "status": "completed", "failed": False},
+            ]
+            self._idx = 0
+
+        async def start_response(self, *, instructions: str | None = None) -> None:
+            self.started = True
+            self.instructions = instructions
+
+        async def poll_event(self, timeout: float = 0.5):
+            _ = timeout
+            if self._idx >= len(self._events):
+                return None
+            ev = self._events[self._idx]
+            self._idx += 1
+            return ev
+
+        async def cancel_response(self) -> None:
+            return None
+
+        async def delete_synthetic_response_items(self) -> None:
+            self.deleted = True
+
+        def discard_queued(self) -> None:
+            self.discarded = True
+
+    adapter = StubAdapter()
+    frames, transcript, usage = await synthesize_realtime_greeting_frames(
+        adapter,
+        greeting_text="Hi, this is Tis from Bindusara. Do you have a moment?",
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        control_id="ctrl-1",
+    )
+    assert adapter.started
+    assert adapter.deleted
+    assert adapter.discarded
+    assert frames
+    assert "Tis" in transcript
+    assert usage is None or isinstance(usage, dict)
+
+
+@pytest.mark.asyncio
+async def test_synthesize_empty_on_timeout():
+    class SlowAdapter:
+        async def start_response(self, *, instructions: str | None = None) -> None:
+            return None
+
+        async def poll_event(self, timeout: float = 0.5):
+            await asyncio.sleep(0)
+            return None
+
+        async def cancel_response(self) -> None:
+            return None
+
+    frames, transcript, usage = await synthesize_realtime_greeting_frames(
+        SlowAdapter(),
+        greeting_text="Hello",
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        timeout_sec=0.05,
+        control_id="ctrl-2",
+    )
+    assert frames == []
+    assert transcript == ""
+    assert usage is None
+
+
+@pytest.mark.asyncio
+async def test_synthesize_empty_greeting():
+    frames, transcript, usage = await synthesize_realtime_greeting_frames(
+        AsyncMock(),
+        greeting_text="   ",
+        sample_rate=16000,
+        tts_output_codec="linear16",
+    )
+    assert frames == []
+    assert transcript == ""
+    assert usage is None
+
+
+@pytest.mark.asyncio
+async def test_gemini_side_session_greeting_closes_throwaway_adapter():
+    pcm = _make_pcm24(60)
+    from server.services.pstn_realtime_greeting_prewarm import (
+        GEMINI_GREETING_SIDE_SESSION_INSTRUCTIONS,
+        synthesize_gemini_greeting_on_side_session,
+    )
+
+    class SideAdapter:
+        def __init__(self) -> None:
+            self.connected = False
+            self.closed = False
+            self.include_tools = True
+            self.instructions = ""
+            self._events = [
+                {"type": "audio_delta", "pcm": pcm},
+                {"type": "assistant_transcript", "text": "time unda?"},
+                {"type": "response_done", "status": "completed", "failed": False},
+            ]
+            self._idx = 0
+
+        async def connect(self, **kwargs):
+            self.connected = True
+            self.include_tools = kwargs.get("include_tools", True)
+            self.instructions = str(kwargs.get("instructions") or "")
+            self.model = kwargs.get("model")
+
+        async def wait_ready(self, timeout: float = 12.0):
+            _ = timeout
+
+        async def start_response(self, *, instructions: str | None = None) -> None:
+            self.started = instructions
+
+        async def poll_event(self, timeout: float = 0.5):
+            _ = timeout
+            if self._idx >= len(self._events):
+                return None
+            event = self._events[self._idx]
+            self._idx += 1
+            return event
+
+        async def cancel_response(self) -> None:
+            return None
+
+        async def delete_synthetic_response_items(self) -> None:
+            return None
+
+        def discard_queued(self) -> None:
+            return None
+
+        async def close(self) -> None:
+            self.closed = True
+
+    side = SideAdapter()
+    frames, transcript, usage = await synthesize_gemini_greeting_on_side_session(
+        greeting_text="time unda?",
+        sample_rate=16000,
+        tts_output_codec="linear16",
+        model="gemini-3.8-live",
+        language="hi-IN",
+        adapter_factory=lambda: side,
+    )
+    assert frames
+    assert "time unda" in transcript
+    assert side.connected
+    assert side.closed
+    assert side.include_tools is False
+    assert GEMINI_GREETING_SIDE_SESSION_INSTRUCTIONS in side.instructions
+    assert "Hindi" in side.instructions
+    assert "hi-IN" in side.started
+    assert "translate it faithfully into the configured language" in side.started
+    assert usage is None or isinstance(usage, dict)

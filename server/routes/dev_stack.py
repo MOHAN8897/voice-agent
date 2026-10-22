@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from server.auth.dependencies import require_dev_session, require_permission
@@ -15,6 +15,7 @@ from server.config.env import get_settings
 from server.db.connection import get_session_factory
 from server.db.models.entities import ConfigVersion
 from server.db.tier_store import (
+    get_cached_tier_stack,
     get_tier_combination_id,
     load_tier_cache,
     promote_tier_assignments,
@@ -24,6 +25,8 @@ from server.db.tier_store import (
 from server.providers import get_provider_registry, resolve_stack
 from server.providers.base import StackSelection, StageSelection
 from server.services.dev_fallback_store import dev_fallback_store
+from server.services.dev_runtime import effective_app_environment, effective_config_mode
+from server.services.telephony import telephony_summary_async
 from server.utils.errors import AppError
 
 router = APIRouter()
@@ -66,34 +69,134 @@ class ValidateSelectionBody(BaseModel):
     language: str = "te-IN"
 
 
+class ComposedVoiceProfileBody(BaseModel):
+    expected_revision: int = Field(..., alias="expectedRevision", ge=0)
+    composed_profile: dict[str, Any] = Field(..., alias="composedProfile")
+
+    model_config = {"populate_by_name": True}
+
+
+class ComposedVoiceActivationBody(BaseModel):
+    expected_revision: int = Field(..., alias="expectedRevision", ge=0)
+    enabled: bool
+
+    model_config = {"populate_by_name": True}
+
+
+def _voice_profile_http_error(exc) -> HTTPException:
+    detail = {"error": {"code": exc.code, "message": str(exc), **(exc.details or {})}}
+    return HTTPException(status_code=exc.status_code, detail=detail)
+
+
 @router.get("/api/dev/stack/catalog")
 async def dev_stack_catalog(session: SessionData = Depends(require_dev_session)):
     require_permission(session, "dev.stack.read")
     from server.providers.catalog_refresh import get_fresh_catalog
 
-    return get_fresh_catalog()
+    catalog = get_fresh_catalog()
+    telephony = await telephony_summary_async()
+    catalog["telephony"] = {
+        "active_provider": telephony.get("active_provider"),
+        "active_enabled": telephony.get("active_enabled"),
+        "active_ready": telephony.get("active_ready"),
+        "providers": telephony.get("providers") or [],
+        "enabled_providers": telephony.get("enabled_providers") or [],
+    }
+    return catalog
+
+
+@router.get("/api/dev/stack/voice-profiles")
+async def dev_composed_voice_profiles(session: SessionData = Depends(require_dev_session)):
+    """Admin-only view of durable composed profile revisions and release blockers."""
+    require_permission(session, "dev.stack.read")
+    from server.services.saas.voice_stack_profiles import profile_view
+
+    app_env = effective_app_environment()
+    profiles = [await profile_view(tier, app_env, include_internal=True) for tier in ("low", "medium", "premium")]
+    return {"environment": app_env, "profiles": profiles}
+
+
+@router.get("/api/dev/stack/voice-profiles/{tier}/template")
+async def dev_composed_voice_template(tier: str, session: SessionData = Depends(require_dev_session)):
+    require_permission(session, "dev.stack.read")
+    from server.services.saas.voice_stack_defaults import recommended_composed_profile
+    from server.services.saas.voice_stack_profiles import VoiceProfileError
+
+    try:
+        return {"tier": tier, "composedProfile": recommended_composed_profile(tier)}
+    except VoiceProfileError as exc:
+        raise _voice_profile_http_error(exc) from exc
+
+
+@router.put("/api/dev/stack/voice-profiles/{tier}")
+async def dev_composed_voice_profile_update(
+    tier: str,
+    body: ComposedVoiceProfileBody,
+    session: SessionData = Depends(require_dev_session),
+):
+    require_permission(session, "dev.stack.write")
+    from server.services.saas.voice_stack_profiles import VoiceProfileError, save_composed_profile
+
+    try:
+        return await save_composed_profile(
+            environment=effective_app_environment(),
+            tier=tier,
+            expected_revision=body.expected_revision,
+            payload=body.composed_profile,
+            actor=session.subject,
+            allow_premium=True,
+        )
+    except VoiceProfileError as exc:
+        raise _voice_profile_http_error(exc) from exc
+
+
+@router.put("/api/dev/stack/voice-profiles/{tier}/activation")
+async def dev_composed_voice_profile_activation(
+    tier: str,
+    body: ComposedVoiceActivationBody,
+    session: SessionData = Depends(require_dev_session),
+):
+    require_permission(session, "dev.stack.write")
+    from server.services.saas.voice_stack_profiles import VoiceProfileError, set_profile_enabled
+
+    try:
+        return await set_profile_enabled(
+            environment=effective_app_environment(),
+            tier=tier,
+            expected_revision=body.expected_revision,
+            enabled=body.enabled,
+            actor=session.subject,
+            allow_premium=True,
+        )
+    except VoiceProfileError as exc:
+        raise _voice_profile_http_error(exc) from exc
 
 
 @router.get("/api/dev/stack/tiers")
 async def dev_stack_tiers(session: SessionData = Depends(require_dev_session)):
     require_permission(session, "dev.stack.read")
     settings = get_settings()
+    app_env = effective_app_environment()
     tiers: list[dict[str, Any]] = []
     for tier in constants.TIER_NAMES:
         try:
-            resolved = resolve_stack(mode="env", tier=tier, environment=settings.app_environment)
-            db_combo = await get_tier_combination_id(settings.app_environment, tier)
+            cached = get_cached_tier_stack(app_env, tier)
+            db_combo = await get_tier_combination_id(app_env, tier)
+            if cached is not None:
+                resolved = resolve_stack(mode="frontend", user_selection=cached, tier=tier, environment=app_env)
+            else:
+                resolved = resolve_stack(mode="env", tier=tier, environment=app_env)
             tiers.append(
                 {
                     "tier": tier,
                     "combination_id": db_combo or resolved.combination_id,
                     "resolved": resolved.to_safe_dict(),
-                    "environment": settings.app_environment,
+                    "environment": app_env,
                 }
             )
         except AppError as e:
             tiers.append({"tier": tier, "error": e.user_message})
-    return {"environment": settings.app_environment, "config_mode": settings.voice_agent_config_mode, "tiers": tiers}
+    return {"environment": app_env, "config_mode": effective_config_mode(), "tiers": tiers}
 
 
 @router.put("/api/dev/stack/tiers/{tier}")
@@ -102,6 +205,7 @@ async def dev_stack_tier_update(tier: str, body: TierStackBody, session: Session
     if tier not in constants.TIER_NAMES:
         return {"ok": False, "error": {"code": "validation_error", "message": f"Unknown tier: {tier}"}}
     settings = get_settings()
+    app_env = effective_app_environment()
     stack = StackSelection(
         stt=StageSelection(body.stt_provider, body.stt_model, {}),
         llm=StageSelection(body.llm_provider, body.llm_model, {}),
@@ -112,11 +216,11 @@ async def dev_stack_tier_update(tier: str, body: TierStackBody, session: Session
         mode="frontend",
         user_selection=stack,
         tier=tier,
-        environment=settings.app_environment,
+        environment=app_env,
     )
     if get_session_factory():
         await upsert_tier_assignment(
-            settings.app_environment,
+            app_env,
             tier,
             resolved.combination_id,
             resolved.to_safe_dict(),
@@ -129,6 +233,7 @@ async def dev_stack_tier_update(tier: str, body: TierStackBody, session: Session
 async def dev_stack_test(body: TestStackBody, session: SessionData = Depends(require_dev_session)):
     require_permission(session, "dev.stack.read")
     settings = get_settings()
+    app_env = effective_app_environment()
     tier = body.tier if body.tier in constants.TIER_NAMES else "medium"
     if body.stack:
         stack = StackSelection(
@@ -137,9 +242,9 @@ async def dev_stack_test(body: TestStackBody, session: SessionData = Depends(req
             tts=StageSelection(body.stack.tts_provider, body.stack.tts_model, {}),
             language=body.stack.language,
         )
-        resolved = resolve_stack(mode="frontend", user_selection=stack, tier=tier, environment=settings.app_environment)
+        resolved = resolve_stack(mode="frontend", user_selection=stack, tier=tier, environment=app_env)
     else:
-        resolved = resolve_stack(mode="env", tier=tier, environment=settings.app_environment)
+        resolved = resolve_stack(mode="env", tier=tier, environment=app_env)
     return {"ok": True, "resolved": resolved.to_safe_dict()}
 
 
@@ -179,6 +284,7 @@ async def dev_validate_selection(
 ):
     require_permission(session, "dev.stack.read")
     settings = get_settings()
+    app_env = effective_app_environment()
     registry = get_provider_registry()
 
     def _stage(name: str, data: dict[str, Any], default_provider: str) -> StageSelection:
@@ -190,7 +296,7 @@ async def dev_validate_selection(
 
     stack = StackSelection(
         stt=_stage("stt", body.stt, provider_id if provider_id in ("sarvam", "cartesia") else "sarvam"),
-        llm=_stage("llm", body.llm, provider_id if provider_id in ("openai", "deepseek", "gemini") else "openai"),
+        llm=_stage("llm", body.llm, provider_id if provider_id in ("openai", "deepseek") else "openai"),
         tts=_stage("tts", body.tts, provider_id if provider_id in ("sarvam", "cartesia") else "sarvam"),
         language=body.language,
     )
@@ -199,7 +305,7 @@ async def dev_validate_selection(
             mode="frontend",
             user_selection=stack,
             language=body.language,
-            environment=settings.app_environment,
+            environment=app_env,
         )
         return {"ok": True, "resolved": resolved.to_safe_dict()}
     except AppError as e:
@@ -250,7 +356,7 @@ async def dev_promote(body: PromoteBody, session: SessionData = Depends(require_
     if target not in ("staging", "production"):
         return {"ok": False, "error": {"code": "validation_error", "message": "target must be staging or production"}}
     settings = get_settings()
-    source = settings.app_environment
+    source = effective_app_environment()
     count = await promote_tier_assignments(source, target, actor=session.subject)
     promotion_id = str(uuid.uuid4())
     factory = get_session_factory()
@@ -279,7 +385,8 @@ async def dev_promote(body: PromoteBody, session: SessionData = Depends(require_
 async def promotion_rollback(promotion_id: str, session: SessionData = Depends(require_dev_session)):
     require_permission(session, "dev.promote")
     settings = get_settings()
-    count = await sync_tier_assignments_from_env(environment=settings.app_environment)
+    app_env = effective_app_environment()
+    count = await sync_tier_assignments_from_env(environment=app_env)
     await load_tier_cache()
     factory = get_session_factory()
     if factory:
@@ -296,3 +403,163 @@ async def promotion_rollback(promotion_id: str, session: SessionData = Depends(r
             )
             await db.commit()
     return {"ok": True, "promotion_id": promotion_id, "tier_rows_synced": count}
+
+
+class SaasPhoneStackBody(BaseModel):
+    stack_override: dict[str, Any] = Field(default_factory=dict, alias="stackOverride")
+    language: str = "te-IN"
+
+    model_config = {"populate_by_name": True}
+
+
+def _gemini_api_key_configured() -> bool:
+    from server.services.dev_secrets_store import dev_secrets_store
+
+    settings = get_settings()
+    key = (dev_secrets_store.effective_secret("gemini_api_key") or settings.gemini_api_key or "").strip()
+    return bool(key)
+
+
+def _saas_phone_stack_credentials() -> dict[str, Any]:
+    settings = get_settings()
+    gemini_key = _gemini_api_key_configured()
+    from server.services.live_caller_transcription import live_api_key
+    return {
+        "openai": {"configured": bool(live_api_key("gpt-transcribe"))},
+        "sarvam": {"configured": bool(live_api_key("saaras:v3-realtime"))},
+        "gemini": {
+            "enabled": bool(settings.enable_gemini),
+            "configured": gemini_key,
+            "ready": bool(settings.enable_gemini and gemini_key),
+        },
+    }
+
+
+def _saas_phone_stack_warnings(resolved: dict[str, Any] | None) -> list[str]:
+    if not resolved:
+        return []
+    llm = resolved.get("llm") if isinstance(resolved.get("llm"), dict) else {}
+    provider = str(llm.get("provider") or "").strip().lower()
+    creds = _saas_phone_stack_credentials()
+    warnings: list[str] = []
+    from server.services.live_caller_transcription import validate_live_transcription
+    try:
+        validate_live_transcription(resolved)
+    except ValueError:
+        warnings.append("Selected live transcription credentials are missing. Configure them before placing calls.")
+    if provider == "gemini":
+        if not creds["gemini"]["enabled"]:
+            warnings.append("ENABLE_GEMINI is false — Gemini Live PSTN will not connect.")
+        if not creds["gemini"]["configured"]:
+            warnings.append("GEMINI_API_KEY is missing — set it in Environment or .env.")
+    elif provider == "openai" and not creds["openai"]["configured"]:
+        warnings.append("OPENAI_API_KEY is missing — OpenAI Realtime PSTN will not connect.")
+    pipeline = str(resolved.get("pipeline") or "").strip().lower()
+    if pipeline not in ("realtime_voice", "realtime_e2e"):
+        warnings.append(
+            f"Pipeline is '{pipeline or 'unset'}' — SaaS phone uses realtime_voice (speech-to-speech). "
+            "STT/TTS tiers are ignored on subscriber PSTN."
+        )
+    return warnings
+
+
+def _saas_phone_stack_alignment(resolved: dict[str, Any] | None) -> dict[str, Any]:
+    if not resolved:
+        return {"ok": False, "notes": ["No stack configured"]}
+    from server.realtime.models import realtime_voice_llm_provider
+
+    llm = resolved.get("llm") if isinstance(resolved.get("llm"), dict) else {}
+    provider, model = realtime_voice_llm_provider(resolved, str(llm.get("model") or ""))
+    rv = resolved.get("realtime_voice") if isinstance(resolved.get("realtime_voice"), dict) else {}
+    voice_slug = str(rv.get("voice") or "marin")
+    notes = [
+        "Subscriber PSTN uses this stack; agents only override voice slug, speed, and language.",
+        "Sarvam/Cartesia STT/TTS blocks are stripped for realtime_voice dials.",
+    ]
+    if provider == "gemini":
+        from server.realtime.providers.gemini_voice import normalize_gemini_live_voice
+
+        notes.append(
+            f"Gemini Live maps console voice '{voice_slug}' → "
+            f"'{normalize_gemini_live_voice(voice_slug)}' at connect."
+        )
+        notes.append("PCM: 16 kHz in / 24 kHz out on the Gemini Live wire.")
+    else:
+        notes.append("OpenAI Realtime: 24 kHz PCM on the speech-to-speech wire.")
+    return {
+        "ok": True,
+        "pipeline": resolved.get("pipeline"),
+        "liveProvider": provider,
+        "liveModel": model,
+        "realtimeVoice": voice_slug,
+        "language": resolved.get("language"),
+        "notes": notes,
+    }
+
+
+@router.get("/api/dev/stack/saas-phone")
+async def dev_stack_saas_phone_get(session: SessionData = Depends(require_dev_session)):
+    """Universal live-phone stack applied to all SaaS PSTN + web practice calls."""
+    require_permission(session, "dev.stack.read")
+    from server.services.saas.platform_phone_stack import (
+        load_universal_phone_stack_raw,
+        resolve_platform_phone_stack,
+    )
+    from server.services.saas.voice_catalog import phone_voice_catalog
+
+    saved = load_universal_phone_stack_raw()
+    lang = str((saved or {}).get("language") or "te-IN")
+    resolved = await resolve_platform_phone_stack(lang)
+    return {
+        "ok": True,
+        "saved": saved,
+        "resolved": resolved,
+        "credentials": _saas_phone_stack_credentials(),
+        "warnings": _saas_phone_stack_warnings(resolved),
+        "alignment": _saas_phone_stack_alignment(resolved),
+        "adjustments": (saved or {}).get("adjustments") or [],
+        "voices": phone_voice_catalog(),
+    }
+
+
+@router.put("/api/dev/stack/saas-phone")
+async def dev_stack_saas_phone_put(body: SaasPhoneStackBody, session: SessionData = Depends(require_dev_session)):
+    require_permission(session, "dev.stack.write")
+    from server.services.pstn_stack import normalize_pstn_stack_override
+    from server.services.saas.platform_phone_stack import (
+        mirror_universal_phone_stack_to_db,
+        save_universal_phone_stack_raw,
+    )
+
+    lang = (body.language or "te-IN").strip() or "te-IN"
+    raw = body.stack_override or {"pipeline": "realtime_voice", "language": lang}
+    raw.setdefault("pipeline", "realtime_voice")
+    raw.setdefault("language", lang)
+    try:
+        normalized, adjustments = normalize_pstn_stack_override(
+            raw, language=lang, tier="medium", default_provider="gemini"
+        )
+    except ValueError as exc:
+        raise HTTPException(422, detail={"error": {"code": "invalid_phone_stack", "message": str(exc)}}) from exc
+    resolved = normalized or raw
+    payload = {
+        "stack_override": resolved,
+        "language": lang,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "updated_by": session.subject,
+    }
+    if adjustments:
+        payload["adjustments"] = adjustments
+    database_persisted = await mirror_universal_phone_stack_to_db(payload)
+    save_universal_phone_stack_raw(payload)
+    warnings = _saas_phone_stack_warnings(resolved)
+    return {
+        "ok": True,
+        "saved": payload,
+        "resolved": resolved,
+        "adjustments": adjustments,
+        "warnings": warnings,
+        "alignment": _saas_phone_stack_alignment(resolved),
+        "credentials": _saas_phone_stack_credentials(),
+        "databasePersisted": database_persisted,
+    }

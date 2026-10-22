@@ -1,0 +1,18 @@
+{
+  "intents": {
+    "flow:drive-tenants-should-see-only-approved-voice-stack-cho": {
+      "declaredAt": 1792610137240,
+      "id": "flow:drive-tenants-should-see-only-approved-voice-stack-cho",
+      "state": "declared",
+      "statement": "Tenants should see only approved voice stack choices for the language they select, and keep their existing voice active when no stack is ready.",
+      "status": "proposed",
+      "subject": "drive-tenants-should-see-only-approved-v",
+      "surface": {
+        "flow": "drive-tenants-should-see-only-approved-voice-stack-cho"
+      },
+      "updatedAt": 1792610137264
+    }
+  },
+  "subject": "drive-tenants-should-see-only-approved-v",
+  "version": 1
+}

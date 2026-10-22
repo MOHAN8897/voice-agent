@@ -14,6 +14,7 @@ from server.db.connection import _to_async_url
 from server.db.models.entities import Base
 from server.db.models import brain_models as _brain_models  # noqa: F401 — register on Base.metadata
 from server.db.models import phase5_models as _phase5_models  # noqa: F401 — register on Base.metadata
+from server.db.models import saas_models as _saas_models  # noqa: F401 — register on Base.metadata
 
 config = context.config
 if config.config_file_name is not None:

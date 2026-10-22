@@ -17,12 +17,29 @@ from server.agent.brain_prompt_composer import (  # noqa: F401
 MAX_BEHAVIOUR_INSTRUCTIONS = MAX_BEHAVIOUR_CHARS
 MAX_BUSINESS_INSTRUCTIONS = MAX_BUSINESS_CHARS
 
+# Placed next to the live utterance (not in the cached brain) so the LLM
+# re-reads listen/answer-first discipline on every turn.
+LIVE_TURN_DISCIPLINE = (
+    "[This turn — listen]\n"
+    "Answer first if they asked a question. Use known facts — never re-ask. "
+    "At most ONE new question, and only if it changes the recommendation or next step. "
+    "If they dumped several facts or asked to send details / check later, acknowledge and progress — no checklist.\n"
+    "Caller: "
+)
+
 
 def _message_content_block(role: str, text: str) -> dict:
     """Responses API: user/developer use input_text; assistant history uses output_text."""
     if role == "assistant":
         return {"type": "output_text", "text": str(text)}
     return {"type": "input_text", "text": str(text)}
+
+
+def wrap_live_transcript(transcript: str) -> str:
+    raw = str(transcript or "").strip()
+    if not raw:
+        return raw
+    return f"{LIVE_TURN_DISCIPLINE}{raw}"
 
 
 def build_brain_request_input(
@@ -96,7 +113,7 @@ def build_brain_request_input(
         {
             "type": "message",
             "role": "user",
-            "content": [{"type": "input_text", "text": transcript}],
+            "content": [{"type": "input_text", "text": wrap_live_transcript(transcript)}],
         }
     )
     return messages

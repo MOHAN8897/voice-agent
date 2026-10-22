@@ -54,6 +54,12 @@ async def require_app_session(
                 status_code=401,
                 detail={"error": {"code": "auth_error", "message": "App session required"}},
             )
+        is_prod = str(getattr(settings, "app_environment", "") or "").lower() in ("production", "staging")
+        if settings.saas_auth_enabled or is_prod:
+            raise HTTPException(
+                status_code=401,
+                detail={"error": {"code": "auth_error", "message": "Authentication required"}},
+            )
         return SessionData(
             kind="app",
             subject="dev-stub",

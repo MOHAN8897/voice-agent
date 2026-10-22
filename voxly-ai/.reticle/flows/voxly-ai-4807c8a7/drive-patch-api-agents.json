@@ -1,0 +1,240 @@
+{
+  "version": 2,
+  "name": "drive-patch-api-agents",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1790872351415,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-toggle-icon-play",
+        "source": {
+          "file": "src/console/modules/EmployeesModule.jsx",
+          "line": 274,
+          "column": 17
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "PATCH",
+            "urlContains": "/api/agents/",
+            "status": 200
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "agent-toggle-icon-pause"
+            }
+          }
+        ]
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Open builder"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "component",
+        "component": "AgentStudioModule",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 585,
+          "column": 15
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "component",
+        "component": "SolidCard",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 650,
+          "column": 13
+        }
+      },
+      "args": {
+        "value": "Hello, thanks for calling. This is an EDITED script."
+      },
+      "action": "fill",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-studio-back",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 494,
+          "column": 11
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-studio-back",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 494,
+          "column": 11
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-studio-switcher",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 511,
+          "column": 15
+        }
+      },
+      "args": {
+        "value": "832dd86c-bbd5-4bcc-8466-469b3411c99f"
+      },
+      "action": "select",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-studio-back",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 494,
+          "column": 11
+        }
+      },
+      "args": {
+        "native": true
+      },
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "component",
+        "component": "SolidCard",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 650,
+          "column": 13
+        }
+      },
+      "args": {
+        "value": "DRIVE-EDIT-XYZ"
+      },
+      "action": "fill",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-studio-back",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 494,
+          "column": 11
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-studio-back",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 494,
+          "column": 11
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-studio-back",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 494,
+          "column": 11
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-studio-discard",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 425,
+          "column": 13
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "desktop"
+  }
+}

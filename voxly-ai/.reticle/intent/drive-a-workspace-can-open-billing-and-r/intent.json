@@ -1,0 +1,19 @@
+{
+  "intents": {
+    "flow:drive-a-workspace-can-open-billing-and-review-wallet-a": {
+      "declaredAt": 1791994793751,
+      "id": "flow:drive-a-workspace-can-open-billing-and-review-wallet-a",
+      "source": "decided on the dashboard",
+      "state": "declared",
+      "statement": "A workspace can open billing and review wallet and payment activity.",
+      "status": "proved",
+      "subject": "drive-a-workspace-can-open-billing-and-r",
+      "surface": {
+        "flow": "drive-a-workspace-can-open-billing-and-review-wallet-a"
+      },
+      "updatedAt": 1791994796884
+    }
+  },
+  "subject": "drive-a-workspace-can-open-billing-and-r",
+  "version": 1
+}

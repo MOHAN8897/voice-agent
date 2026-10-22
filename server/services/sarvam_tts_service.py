@@ -13,6 +13,7 @@ import httpx
 
 from server.config.constants import constants
 from server.config.env import get_settings
+from server.services.dev_secrets_store import dev_secrets_store
 from server.services.tts_config import TtsConfigError, resolve_tts_config
 from server.utils.errors import AppError, ErrorCode, classify_http_status
 from server.utils.http_clients import get_sarvam_client
@@ -37,7 +38,12 @@ async def synthesize(
     temperature: bulbul:v3 only (0.01-1.0). Raises AppError on failure.
     """
     settings = get_settings()
-    text = text.strip()
+    text = (text or "").strip()
+    if not text:
+        raise AppError(ErrorCode.VALIDATION_ERROR, "Text is required for TTS", status_code=400)
+    from server.services.spoken_numbers import prepare_spoken_reply
+
+    text = prepare_spoken_reply(text, provider="sarvam")
     if not text:
         raise AppError(ErrorCode.VALIDATION_ERROR, "Text is required for TTS", status_code=400)
     if len(text) > constants.TTS_MAX_CHARS_REST:
@@ -78,7 +84,7 @@ async def synthesize(
     log_tts("Synthesis started", chars=len(text), speaker=speaker, language_code=language_code, model=model, pace=pace, session=session_id)
 
     headers = {
-        "api-subscription-key": settings.sarvam_api_key,
+        "api-subscription-key": dev_secrets_store.effective_secret("sarvam_api_key") or settings.sarvam_api_key or "",
         "Content-Type": "application/json",
     }
 
@@ -196,7 +202,10 @@ async def synthesize_stream(
     }
     if "temperature" in cfg:
         payload["temperature"] = cfg["temperature"]
-    headers = {"api-subscription-key": settings.sarvam_api_key, "Content-Type": "application/json"}
+    headers = {
+        "api-subscription-key": dev_secrets_store.effective_secret("sarvam_api_key") or settings.sarvam_api_key or "",
+        "Content-Type": "application/json",
+    }
 
     log_tts("Stream synthesis started", chars=len(text), speaker=speaker, codec=output_audio_codec)
 

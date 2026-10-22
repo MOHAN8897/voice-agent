@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "origin": "failed-assert",
+  "expected": "element ?",
+  "observed": "no element matched {\"testid\":\"agent-panel-overview\"} — testids present here: sidebar-wallet-pill, agent-test-call, agent-save, agent-tab-overview, agent-tab-script, agent-tab-calls, agent-tab-voice, agent-tab-settings, agent-overview-range-Today, agent-overview-range-7days, agent-overview-range-30days",
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "e417",
+        "source": {
+          "file": "src/console/ui/TactileButton.jsx",
+          "line": 69,
+          "column": 5
+        }
+      },
+      "action": "click"
+    }
+  ],
+  "id": "1790836554935-click-10b3cd8f",
+  "createdAt": 1790836554936,
+  "seen": 1,
+  "lastSeenAt": 1790836554936
+}

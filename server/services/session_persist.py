@@ -97,5 +97,10 @@ class SessionPersist:
             self._cache["ui"][session_id] = dict(entry)
             self._save()
 
+    def delete_ui(self, session_id: str) -> None:
+        with self._lock:
+            self._cache.get("ui", {}).pop(session_id, None)
+            self._save()
+
 
 session_persist = SessionPersist()

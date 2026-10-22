@@ -39,7 +39,22 @@ function testOrdering() {
   assert(chunks.every((ch, i) => ch.sequenceNumber === i), "sequence order");
 }
 
+function testFirstSentenceBeforeDone() {
+  const c = new StreamingTextChunker("t4");
+  const mid = c.append("Hi Sai, thanks for calling HustleLabs. ");
+  assert(mid.length >= 1, "first sentence should flush before the 140-char hold");
+  assert(mid[0].text.includes("HustleLabs"), "first spoken sentence present");
+}
+
+function testCommaDoesNotFlushMidThought() {
+  const c = new StreamingTextChunker("t5");
+  const mid = c.append("This is a longer clause without period, and more text here");
+  assert(mid.length === 0, "commas are not TTS boundaries");
+}
+
 testShortResponse();
 testLongResponse();
 testOrdering();
+testFirstSentenceBeforeDone();
+testCommaDoesNotFlushMidThought();
 console.log("text-chunker.verify: ok");

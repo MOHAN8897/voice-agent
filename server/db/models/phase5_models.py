@@ -4,7 +4,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, String, Text, UniqueConstraint, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -16,6 +16,14 @@ def _utcnow() -> datetime:
 
 
 class AuditLog(Base):
+    """One row per notable action, from admins, subscribers and background jobs.
+
+    The activity log is the answer to "what just happened, and did any of it
+    fail", so a row carries its origin (`source`), its result (`outcome`), how bad
+    it is (`severity`), and enough request context to trace one user action
+    across the request that produced it.
+    """
+
     __tablename__ = "audit_log"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -25,18 +33,88 @@ class AuditLog(Base):
     resource_type: Mapped[str] = mapped_column(String(50), nullable=False)
     resource_id: Mapped[str] = mapped_column(String(255), nullable=False)
     payload: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    #: Who produced this row — `admin`, `subscriber`, `webhook` or `system`.
+    source: Mapped[str] = mapped_column(String(20), nullable=False, default="admin")
+    #: `ok` or `error`. A refused purchase and a completed one are both here.
+    outcome: Mapped[str] = mapped_column(String(20), nullable=False, default="ok")
+    #: `info`, `warning` or `error`. Lets the log open on what needs attention.
+    severity: Mapped[str] = mapped_column(String(20), nullable=False, default="info")
+    #: Correlates every row written while handling one HTTP request.
+    request_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    ip: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    user_agent: Mapped[str | None] = mapped_column(String(400), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
 
 class PhoneNumber(Base):
     __tablename__ = "phone_numbers"
+    __table_args__ = (
+        Index(
+            "uq_phone_numbers_e164_active",
+            "e164",
+            unique=True,
+            postgresql_where=text("released_at IS NULL"),
+            sqlite_where=text("released_at IS NULL"),
+        ),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.tenant_id"), nullable=False)
     e164: Mapped[str] = mapped_column(String(20), nullable=False)
-    plivo_number_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    carrier_number_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    # "tenant" only for DIDs assigned to a tenant carrier subaccount. NULL is
+    # the legacy platform account and is deliberately not backfilled.
+    vobiz_account_scope: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    vobiz_account_tenant_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+
     status: Mapped[str] = mapped_column(String(30), default="pending")
+    #: Set NULL on agent deletion: a number must return to the pool rather than
+    #: keep pointing at an agent row that no longer exists.
+    agent_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("agents.agent_id", ondelete="SET NULL"), nullable=True
+    )
+    purchase_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    telnyx_number_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    billing_source: Mapped[str] = mapped_column(String(30), default="manual")
+    inbound_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    outbound_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    stripe_subscription_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    released_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+
+class AgentTelephonyProfile(Base):
+    """Operational phone configuration for one agent.
+
+    Deliberately separate from the Business Brain: this is how the *telephone*
+    behaves (does it ring, when, what does the caller hear, what happens at night),
+    not how the *agent* thinks. A row is created lazily on first read so every
+    existing agent keeps working with no profile and no migration backfill.
+    """
+
+    __tablename__ = "agent_telephony_profiles"
+    __table_args__ = (UniqueConstraint("agent_id", name="uq_agent_telephony_profile_agent"),)
+
+    profile_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    agent_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("agents.agent_id"), nullable=False)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.tenant_id"), nullable=False)
+    #: Spoken by the agent as the opening line on inbound calls. Empty = derive
+    #: from the compiled brain exactly as today.
+    greeting_phrase: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    #: {"mon": [{"open": "09:00", "close": "18:00"}], ...}. Empty = always open.
+    business_hours: Mapped[dict] = mapped_column(JSONB, default=dict)
+    #: IANA zone the business hours are expressed in.
+    timezone: Mapped[str] = mapped_column(String(64), default="Asia/Kolkata")
+    #: voicemail | hangup | transfer | always — what to do outside business hours.
+    after_hours_action: Mapped[str] = mapped_column(String(30), default="voicemail")
+    #: Required when after_hours_action == "transfer".
+    transfer_number: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    #: When false the live inbound path does not answer this agent at all.
+    inbound_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    #: When false outbound calls for this agent are refused before dialling.
+    outbound_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
 
 class DncEntry(Base):
@@ -48,36 +126,116 @@ class DncEntry(Base):
     phone_e164: Mapped[str] = mapped_column(String(20), nullable=False)
     reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
     added_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    active: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
+    source: Mapped[str] = mapped_column(String(64), default="manual")
+    added_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.user_id", ondelete="SET NULL"), nullable=True
+    )
+    removed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    removed_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.user_id", ondelete="SET NULL"), nullable=True
+    )
+    removal_reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    reconsent_confirmed: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class ContactList(Base):
+    __tablename__ = "contact_lists"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.tenant_id"), nullable=False, index=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    total_contacts: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+
+class Contact(Base):
+    __tablename__ = "contacts"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.tenant_id"), nullable=False, index=True)
+    contact_list_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("contact_lists.id"), nullable=True, index=True)
+    phone: Mapped[str] = mapped_column(String(30), nullable=False, index=True)
+    first_name: Mapped[str | None] = mapped_column(String(150), nullable=True)
+    last_name: Mapped[str | None] = mapped_column(String(150), nullable=True)
+    full_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    company: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    job_title: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    country: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    city: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    state: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    timezone: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    custom_fields: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    raw_data: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    source: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+
+class ContactImportTemplate(Base):
+    __tablename__ = "contact_import_templates"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.tenant_id"), nullable=False, index=True)
+    template_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    source_headers: Mapped[list] = mapped_column(JSONB, nullable=False)
+    mapping: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    default_country: Mapped[str] = mapped_column(String(10), default="US")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
 
 class Campaign(Base):
     __tablename__ = "campaigns"
+    __table_args__ = (UniqueConstraint("tenant_id", "client_request_id", name="uq_campaign_creation_request"),)
+    client_request_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    request_fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
     campaign_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.tenant_id"), nullable=False)
     agent_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("agents.agent_id"), nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    default_country: Mapped[str] = mapped_column(String(10), default="US")
     status: Mapped[str] = mapped_column(String(30), default="draft")
     schedule: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     retry_rules: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     concurrency: Mapped[int] = mapped_column(Integer, default=5)
+    consent_confirmed: Mapped[bool] = mapped_column(Boolean, default=False)
+    consent_attestation_version: Mapped[str] = mapped_column(String(32), default="2026-10-v1")
+    attested_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.user_id", ondelete="SET NULL"), nullable=True
+    )
+    attested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    attested_ip: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    attested_user_agent: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
 
 class CampaignContact(Base):
     __tablename__ = "campaign_contacts"
+    __table_args__ = (Index("ix_campaign_contacts_ready", "campaign_id", "status", "next_attempt_at"),)
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     campaign_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("campaigns.campaign_id"), nullable=False)
-    phone_e164: Mapped[str] = mapped_column(String(20), nullable=False)
+    contact_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("contacts.id"), nullable=True)
+    phone_e164: Mapped[str] = mapped_column(String(30), nullable=False)
+    phone_snapshot: Mapped[str | None] = mapped_column(String(30), nullable=True)
     status: Mapped[str] = mapped_column(String(30), default="pending")
     metadata_: Mapped[dict] = mapped_column("metadata", JSONB, nullable=False, default=dict)
+    resolved_variables: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     attempts: Mapped[int] = mapped_column(Integer, default=0)
     last_attempt_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    next_attempt_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class CampaignRun(Base):
     __tablename__ = "campaign_runs"
+    __table_args__ = (Index("ix_campaign_runs_recovery", "status", "lease_expires_at"),)
 
     run_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     campaign_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("campaigns.campaign_id"), nullable=False)
@@ -85,6 +243,8 @@ class CampaignRun(Base):
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     stats: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    lease_owner: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    lease_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class DialAttempt(Base):
@@ -95,6 +255,28 @@ class DialAttempt(Base):
     contact_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("campaign_contacts.id"), nullable=False)
     call_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     status: Mapped[str] = mapped_column(String(30), default="queued")
-    plivo_call_uuid: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    carrier_call_uuid: Mapped[str | None] = mapped_column(String(100), nullable=True)
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+
+class PstnDialRequest(Base):
+    """Shared admission/idempotency ledger; no phone numbers or access tokens."""
+    __tablename__ = "pstn_dial_requests"
+    __table_args__ = (
+        Index("ix_pstn_dial_requests_active", "tenant_id", "status"),
+        Index("ix_pstn_dial_requests_carrier", "provider", "carrier_id"),
+    )
+    request_key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.tenant_id"), nullable=False)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    destination_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    provider: Mapped[str] = mapped_column(String(24), nullable=False)
+    status: Mapped[str] = mapped_column(String(24), nullable=False, default="reserved")
+    carrier_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    call_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    response: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    answered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    media_claimed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, nullable=False)

@@ -1,0 +1,227 @@
+{
+  "version": 2,
+  "name": "drive-settings-page-shows-identity-verification-card-f",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1790933320428,
+  "steps": [
+    {
+      "tool": "reticle_act_sequence",
+      "anchor": {
+        "kind": "role",
+        "role": "textbox",
+        "name": "Work Email"
+      },
+      "steps": [
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "role",
+            "role": "textbox",
+            "name": "Work Email"
+          },
+          "args": {
+            "value": "mohansaiteja.99@gmail.com"
+          },
+          "action": "fill"
+        },
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "role",
+            "role": "textbox",
+            "name": "Password"
+          },
+          "args": {
+            "value": "<redacted: supply at replay>"
+          },
+          "action": "fill"
+        },
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "role",
+            "role": "button",
+            "name": "Sign In"
+          },
+          "args": {},
+          "action": "click",
+          "expect": {
+            "kind": "anyOf",
+            "predicates": [
+              {
+                "kind": "net",
+                "method": "POST",
+                "urlContains": "/api/auth/login"
+              },
+              {
+                "kind": "net",
+                "method": "POST",
+                "urlContains": "/login"
+              },
+              {
+                "kind": "element",
+                "query": {
+                  "by": "testid",
+                  "value": "kyc-verify-card"
+                }
+              },
+              {
+                "kind": "text",
+                "contains": "Phone numbers"
+              },
+              {
+                "kind": "text",
+                "contains": "Identity"
+              }
+            ]
+          }
+        }
+      ],
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act_sequence",
+      "anchor": {
+        "kind": "role",
+        "role": "textbox",
+        "name": "Password"
+      },
+      "steps": [
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "role",
+            "role": "textbox",
+            "name": "Password"
+          },
+          "args": {
+            "value": "<redacted: supply at replay>"
+          },
+          "action": "fill"
+        },
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "role",
+            "role": "button",
+            "name": "Sign In"
+          },
+          "args": {},
+          "action": "click",
+          "expect": {
+            "kind": "anyOf",
+            "predicates": [
+              {
+                "kind": "net",
+                "method": "POST",
+                "urlContains": "/api/auth/login",
+                "status": 200
+              },
+              {
+                "kind": "element",
+                "query": {
+                  "by": "testid",
+                  "value": "kyc-verify-card"
+                }
+              },
+              {
+                "kind": "element",
+                "query": {
+                  "by": "testid",
+                  "value": "kyc-start-verification"
+                }
+              },
+              {
+                "kind": "text",
+                "contains": "Buy a number"
+              },
+              {
+                "kind": "text",
+                "contains": "Phone numbers"
+              }
+            ]
+          }
+        }
+      ],
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Settings"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "anyOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "by": "testid",
+              "value": "kyc-verify-card"
+            }
+          },
+          {
+            "kind": "element",
+            "query": {
+              "by": "testid",
+              "value": "kyc-start-verification"
+            }
+          },
+          {
+            "kind": "net",
+            "urlContains": "/api/kyc/status"
+          },
+          {
+            "kind": "text",
+            "contains": "Identity"
+          },
+          {
+            "kind": "route",
+            "contains": "settings"
+          }
+        ]
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "kyc-start-verification",
+        "source": {
+          "file": "src/console/ui/TactileButton.jsx",
+          "line": 69,
+          "column": 5
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "text",
+        "contains": "Identity verified"
+      },
+      "page": "/"
+    }
+  ],
+  "intent": "Settings page shows identity verification card for Didit KYC",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "desktop"
+  },
+  "intentId": "flow:drive-settings-page-shows-identity-verification-card-f"
+}

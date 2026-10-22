@@ -87,3 +87,20 @@ export function IconSettings(props: IconProps) {
     </svg>
   );
 }
+export function IconPhone(props: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden {...props}>
+      <path d="M3.5 4.5a2 2 0 0 1 2-2h1.8a1.5 1.5 0 0 1 1.5 1.2l.5 2.5a1.5 1.5 0 0 1-.4 1.3L7.7 8.7a11.5 11.5 0 0 0 3.6 3.6l1.2-1.2a1.5 1.5 0 0 1 1.3-.4l2.5.5a1.5 1.5 0 0 1 1.2 1.5V14.5a2 2 0 0 1-2 2A13.5 13.5 0 0 1 3.5 4.5z" />
+    </svg>
+  );
+}
+
+/** Activity log: a list of recorded events, newest first. */
+export function IconActivity(props: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden {...props}>
+      <path d="M3 5h14M3 10h14M3 15h9" />
+      <circle cx="17" cy="15" r="2" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}

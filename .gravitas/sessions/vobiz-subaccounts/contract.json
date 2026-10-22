@@ -1,0 +1,34 @@
+{
+  "mode": "implement",
+  "objective": "Complete tenant Vobiz customer_use subaccounts and hosted KYC; retain appropriate optional Didit policy",
+  "planning": "deep",
+  "context_depth": "dependency",
+  "verification_depth": "impact",
+  "delegation": "none",
+  "risk": "high",
+  "budget": "balanced",
+  "allowed_write_scope": [
+    "server/config",
+    "server/db",
+    "server/routes",
+    "server/services",
+    "server/tests",
+    "voxly-ai/src",
+    "voxly-ai/e2e",
+    "voxly-ai/.reticle",
+    ".env.example",
+    "pyproject.toml",
+    "docs",
+    ".gravitas/sessions/vobiz-subaccounts",
+    "graft"
+  ],
+  "acceptance_criteria": [
+    "One customer_use account per tenant; encrypted credentials; ambiguous create responses never recreate accounts",
+    "Hosted KYC sessions resume; signed callbacks and live status checks authorize phone service",
+    "Tenant numbers and runtime operations retain their owning account; no master credential fallback",
+    "Provision jobs retain provider and recover after interruption without repurchasing confirmed numbers",
+    "Tenant UI exposes onboarding, errors, locked identity and approval; verify against isolated provider doubles",
+    "Didit remains a distinct platform identity policy and is not duplicate Vobiz telecom KYC",
+    "Regression checks and offline PostgreSQL migration SQL reviewed; no production schema or KYC mutations"
+  ]
+}

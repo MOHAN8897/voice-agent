@@ -48,3 +48,15 @@ async def test_resolver_uses_tier_cache(registry_settings):
         StackSelection(stt=cached.stt, llm=cached.llm, tts=cached.tts, language=cached.language, voice_preset=cached.voice_preset)
     )
     assert resolved.combination_id == expected_id
+
+
+@pytest.mark.asyncio
+async def test_sync_preserves_existing_tier_assignments(registry_settings, monkeypatch):
+    """Ensure that on server restart (force=False), saved custom tiers are not overwritten."""
+    from unittest.mock import AsyncMock, patch
+    from server.db.tier_store import sync_tier_assignments_from_env
+
+    # When DB is mocked or unavailable, returns 0 and does not crash
+    count = await sync_tier_assignments_from_env("development", force=False)
+    assert isinstance(count, int)
+

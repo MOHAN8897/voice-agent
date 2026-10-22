@@ -19,8 +19,8 @@ def test_sanitize_strips_wrapper():
 
 
 def test_caps():
-    assert MAX_BEHAVIOUR_CHARS == 8_000
-    assert len(sanitize_behaviour("b" * 12_000)) == 8_000
+    assert MAX_BEHAVIOUR_CHARS == 2_000
+    assert len(sanitize_behaviour("b" * 12_000)) == 2_000
 
 
 def test_compose_single_plain_text():
@@ -31,7 +31,7 @@ def test_compose_single_plain_text():
         style="friendly",
     )
     assert "--- SAFETY ---" in out
-    assert "--- TELUGU VOICE ---" in out
+    assert "--- SPOKEN LANGUAGE (te-IN) ---" in out
     assert "--- BEHAVIOUR ---" in out
     assert "Answer briefly" in out
     assert "--- BUSINESS ---" in out
@@ -39,6 +39,8 @@ def test_compose_single_plain_text():
     assert "<agent_behaviour_instructions>" not in out
     assert "Language: te-IN" in out
     assert "friendly" in out
+    assert "--- CALL END POLICY ---" in out
+    assert "Sare, time ichinanduku thanks. Good day." in out
 
 
 def test_validate_word_limit_raises():
@@ -73,7 +75,8 @@ def test_build_brain_request_input_structure():
     assert block["text"] == "static brain"
     assert block["prompt_cache_breakpoint"] == {"mode": "explicit"}
     assert msgs[-1]["role"] == "user"
-    assert msgs[-1]["content"][0]["text"] == "current"
+    assert msgs[-1]["content"][0]["text"].endswith("current")
+    assert "Answer first" in msgs[-1]["content"][0]["text"]
     assert msgs[1]["role"] == "user"
     assert msgs[1]["content"][0]["type"] == "input_text"
     assert msgs[2]["role"] == "assistant"

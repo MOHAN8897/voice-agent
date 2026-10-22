@@ -1,0 +1,45 @@
+{
+  "version": 2,
+  "name": "drive-the-loaded-mascot-remains-interactive-after-init",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1791875844133,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "component",
+        "component": "FiberProvider",
+        "source": {
+          "file": "src/three/VoxlyScene.jsx",
+          "line": 130,
+          "column": 9
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "text",
+        "contains": "Hello! Hiii! 👋 I'm Dialtact! Nice to meet you!"
+      },
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "intent": "The loaded mascot remains interactive after initial loading and opens its greeting when tapped.",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "local-verification"
+  },
+  "intentId": "flow:drive-the-loaded-mascot-remains-interactive-after-init"
+}

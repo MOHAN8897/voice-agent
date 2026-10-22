@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "origin": "failed-assert",
+  "expected": "text \"?\" AND not element \"Sign in to your console\"",
+  "observed": "no element matched {\"text\":\"Voice Test Agent\",\"matchCase\":true}",
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": ""
+      },
+      "action": "click"
+    }
+  ],
+  "id": "1792612404514-click-cb51f752",
+  "createdAt": 1792612404515,
+  "seen": 1,
+  "lastSeenAt": 1792612404515
+}

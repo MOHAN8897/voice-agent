@@ -1,17 +1,17 @@
-from server.agent.language_resolver import is_code_mixed, resolve_language
+from server.agent.language_resolver import infer_spoken_language_from_text
+from server.services.pstn_realtime_greeting_prewarm import prewarm_greeting_response_instructions
 
 
-def test_code_mixed_detection():
-    assert is_code_mixed("నా laptop slow గా ఉంది") is True
-    assert is_code_mixed("హైదరాబాద్ గురించి చెప్పు") is False
-    assert is_code_mixed("hello world") is False
+def test_infer_telugu_and_english():
+    assert infer_spoken_language_from_text("నమస్తే మీరు ఎవరు?", agent_language="en-IN") == "te-IN"
+    assert (
+        infer_spoken_language_from_text("I only speak English please tell me more", agent_language="te-IN")
+        == "en-IN"
+    )
 
-def test_resolve_always_te_in_phase1():
-    ctx = resolve_language("te-IN", "నా phone లో notifications రావడం లేదు")
-    assert ctx["responseLanguage"] == "te-IN"
-    assert ctx["isCodeMixed"] is True
 
-def test_resolve_pure_telugu():
-    ctx = resolve_language("te-IN", "హైదరాబాద్ గురించి చెప్పు")
-    assert ctx["responseLanguage"] == "te-IN"
-    assert ctx["isCodeMixed"] is False
+def test_prewarm_greeting_instructions_include_language():
+    text = prewarm_greeting_response_instructions("te-IN", "నమస్తే, మీకు సహాయం కావాలా?")
+    assert "te-IN" in text
+    assert "Telugu" in text
+    assert "నమస్తే" in text

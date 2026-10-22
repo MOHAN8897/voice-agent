@@ -1,24 +1,27 @@
-# Stop local dev servers (API 8000, Next 3000-3003) and Cloudflare tunnels
-$ports = 8000, 3000, 3001, 3002, 3003
+# Stop local dev servers (API 8000, Next 3000-3003, Voxly 5173) and Cloudflare/ngrok tunnels.
+# Kills process trees (uvicorn reloader + worker, npm/node, wrapper PowerShell windows)
+# and waits until the ports are actually free.
 
-foreach ($round in 1..3) {
-    foreach ($port in $ports) {
-        $conns = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue
-        foreach ($c in $conns) {
-            $owning = $c.OwningProcess
-            if ($owning -and $owning -ne 0) {
-                Write-Host "Stopping PID $owning on port $port"
-                Stop-Process -Id $owning -Force -ErrorAction SilentlyContinue
-            }
-        }
+$ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "dev_common.ps1")
+
+Write-Host "dev:down starting..."
+$ok = Stop-VoiceAgentDevStack
+
+if (-not $ok) { exit 1 }
+# Only remove generated state once shutdown has actually succeeded.
+foreach ($folder in @('voice-agent-dev-runners', 'voice-agent-dev-jobs')) {
+    $tempRoot = [IO.Path]::GetFullPath($env:TEMP).TrimEnd('\')
+    $cleanupPath = [IO.Path]::GetFullPath((Join-Path $tempRoot $folder))
+    if ((Split-Path -Parent $cleanupPath) -ne $tempRoot) { throw 'Invalid cleanup path.' }
+    if (Test-Path -LiteralPath $cleanupPath) {
+        Remove-Item -LiteralPath $cleanupPath -Recurse -Force
     }
-    Start-Sleep -Milliseconds 700
 }
-
-Get-CimInstance Win32_Process -Filter "Name='cloudflared.exe'" -ErrorAction SilentlyContinue |
-    ForEach-Object {
-        Write-Host "Stopping cloudflared PID $($_.ProcessId)"
-        Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
-    }
-
+$repoRoot = Split-Path -Parent $PSScriptRoot
+foreach ($file in @('.tunnel-url', '.tunnel-share-urls.json')) {
+    $path = Join-Path $repoRoot $file
+    if (Test-Path -LiteralPath $path) { Remove-Item -LiteralPath $path -Force }
+}
 Write-Host "Done."
+exit 0

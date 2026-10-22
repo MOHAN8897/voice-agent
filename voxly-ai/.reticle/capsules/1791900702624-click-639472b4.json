@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "origin": "failed-assert",
+  "expected": "text \"AI Employees\"",
+  "observed": "no element matched {\"text\":\"AI Employees\"}",
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "e19",
+        "source": {
+          "file": "src/components/AuthModal.jsx",
+          "line": 572,
+          "column": 15
+        }
+      },
+      "action": "click"
+    }
+  ],
+  "id": "1791900702624-click-639472b4",
+  "createdAt": 1791900702625,
+  "seen": 1,
+  "lastSeenAt": 1791900702625
+}

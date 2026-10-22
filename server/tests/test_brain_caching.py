@@ -19,6 +19,9 @@ def test_caching_enabled_gpt56():
     assert caching_enabled("gpt-5.6-luna", 1500) is True
     assert caching_enabled("gpt-5.6-luna", 1023) is False
     assert caching_enabled("gpt-5.5", 1500) is False
+    assert caching_enabled("gemini-3.5-flash-lite", 1500) is True
+    assert caching_enabled("gemini-3.5-flash-lite", 1023) is False
+    assert caching_enabled("deepseek-chat", 1500) is False
 
 
 def test_versioned_cache_key_in_brain_caching():

@@ -30,7 +30,7 @@ switch ($Tunnel) {
     "cloudflared"       { & (Join-Path $PSScriptRoot "tunnel_cloudflared.ps1") }
     "cloudflare-named"  { & (Join-Path $PSScriptRoot "run_cloudflare_tunnel.ps1") }
     "ngrok"             { & (Join-Path $PSScriptRoot "tunnel_ngrok.ps1") }
-    default             { Write-Host "Skipping tunnel (use -Tunnel cloudflare-named for stable hustlelabs.in URLs)." }
+    default             { Write-Host "Skipping tunnel (use -Tunnel cloudflare-named for stable dialtact.com URLs)." }
 }
 
 Write-Host ""

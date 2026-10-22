@@ -1,11 +1,12 @@
 import { DevAgentWorkspaceShell } from "@/components/dev/DevAgentWorkspaceShell";
 
-export default function DevAgentLayout({
+export default async function DevAgentLayout({
   children,
   params,
 }: {
   children: React.ReactNode;
-  params: { id: string };
+  params: Promise<{ id: string }> | { id: string };
 }) {
-  return <DevAgentWorkspaceShell agentId={params.id}>{children}</DevAgentWorkspaceShell>;
+  const resolvedParams = await Promise.resolve(params);
+  return <DevAgentWorkspaceShell agentId={resolvedParams.id}>{children}</DevAgentWorkspaceShell>;
 }

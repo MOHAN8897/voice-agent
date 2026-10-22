@@ -7,11 +7,15 @@ setup("authenticate", async ({ request }) => {
 
   if (app_configured) {
     const login = await request.post("/api/app/login", { data: E2E_USER });
-    if (!login.ok()) {
+    const body = await login.json().catch(() => ({}));
+    if (!login.ok() && body?.detail?.error?.code === "deprecated") {
+      // The subscriber login moved to /api/auth/login. The web admin E2E suite
+      // only needs the dev-portal session established below.
+    } else if (!login.ok()) {
       throw new Error(`E2E setup login failed: ${await login.text()}`);
+    } else {
+      expect(body.ok, JSON.stringify(body)).toBe(true);
     }
-    const body = await login.json();
-    expect(body.ok, JSON.stringify(body)).toBe(true);
   }
 
   const devLogin = await request.post("/api/dev/login", { data: DEV_USER });

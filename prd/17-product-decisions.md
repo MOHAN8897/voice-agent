@@ -159,7 +159,7 @@ Normative detail: [18-campaign-outbound.md](./18-campaign-outbound.md).
 
 | Surface | Auth priority | Purpose |
 |---------|---------------|---------|
-| **Dev Portal** | **P0** — login required | Configure global stack, tiers, Platform Brain, provider keys validation, fallback rules, promotion to staging/production. |
+| **Dev Portal** | **P0** — login required | Configure global stack, tiers, Platform Brain, provider keys validation, fallback rules, promotion to staging/production. **Implemented** as Next.js `/dev/*` (`web/app/dev`). Look/palette: [20-visual-design-and-ui-style.md](./20-visual-design-and-ui-style.md). |
 | **Business Console** | **P2** — login second priority | Business owners manage agents, business brain, numbers, campaigns, calls. |
 
 ### Dev Portal authentication (MVP)

@@ -1,0 +1,49 @@
+export type CallEndPolicyState = {
+  allowedReasons: string[];
+  farewell: string;
+};
+
+export const CALL_END_REASONS: { id: string; label: string }[] = [
+  { id: "goodbye", label: "Goodbye / hang up / don't call" },
+  { id: "firm_refusal", label: "Firm refusal after you stopped pushing" },
+  { id: "goal_complete", label: "Goal complete, nothing else" },
+  { id: "abuse", label: "Abuse" },
+  { id: "out_of_scope", label: "Still off-scope after one redirect" },
+];
+
+export const DEFAULT_CALL_END_FAREWELL: Record<string, string> = {
+  "te-IN": "Sare, time ichinanduku thanks. Good day.",
+  "en-IN": "Thank you for your time. Goodbye.",
+  "en-US": "Thank you for your time. Goodbye.",
+  "en-GB": "Thank you for your time. Goodbye.",
+  "hi-IN": "Time dene ke liye dhanyavaad. Alvida.",
+  "ta-IN": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+  "kn-IN": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+  "ml-IN": "നിങ്ങളുടെ സമയത്തിന് നന്ദി. നമസ്കാരം.",
+  "mr-IN": "तुमच्या वेळेबद्दल धन्यवाद. नमस्कार.",
+  "bn-IN": "আপনার সময়ের জন্য ধন্যবাদ। নমস্কার।",
+  "gu-IN": "તમારા સમય માટે આભાર. આવજો.",
+  "pa-IN": "ਤੁਹਾਡੇ ਸਮੇਂ ਲਈ ਧੰਨਵਾਦ। ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ।",
+};
+
+export function defaultCallEndPolicy(language: string): CallEndPolicyState {
+  return {
+    allowedReasons: CALL_END_REASONS.map((reason) => reason.id),
+    farewell: DEFAULT_CALL_END_FAREWELL[language] || DEFAULT_CALL_END_FAREWELL["en-IN"],
+  };
+}
+
+export function normalizeCallEndPolicyState(raw: unknown, language: string): CallEndPolicyState {
+  const fallback = defaultCallEndPolicy(language);
+  if (!raw || typeof raw !== "object") return fallback;
+  const value = raw as Record<string, unknown>;
+  const reasons = Array.isArray(value.allowedReasons)
+    ? (value.allowedReasons as unknown[]).map((reason) => String(reason)).filter(Boolean)
+    : fallback.allowedReasons;
+  const farewell = String(value.farewell || "").trim();
+  const isStock = !farewell || Object.values(DEFAULT_CALL_END_FAREWELL).includes(farewell);
+  return {
+    allowedReasons: reasons.length ? reasons : fallback.allowedReasons,
+    farewell: isStock ? fallback.farewell : farewell,
+  };
+}

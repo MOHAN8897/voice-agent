@@ -31,6 +31,22 @@ class CallContext:
     last_heartbeat: datetime = field(default_factory=_utcnow)
     ws_clients: int = 0
     end_reason: str | None = None
+    agent_hangup_armed: bool = False
+    language_mismatch_handled: bool = False
+    barge_in_flight: bool = False
+    slow_down_nudged: bool = False
+    last_stt_partial_at: float = 0.0
+    max_duration_sec: int = 900
+    call_end_policy: dict[str, Any] | None = None
+    callback_request_text: str = ""
+    callback_close_phase: str = "idle"
+    callback_name: str = ""
+    callback_phone: str = ""
+    callback_when: str = ""
+    language_callback_summary: str = ""
+    language_callback_language: str = ""
+    pipeline: str = "realtime_text"
+    composed_prompt_snapshot: Any = field(default=None, repr=False)
     components: dict[str, str] = field(
         default_factory=lambda: {"ledger": "pending", "audio": "pending", "outcome": "pending"}
     )
@@ -55,6 +71,7 @@ class CallContext:
             "status": self.status,
             "storage_path": self.storage_path,
             "resolved_stack": self.resolved_stack.to_safe_dict(),
+            "pipeline": self.pipeline,
         }
 
 

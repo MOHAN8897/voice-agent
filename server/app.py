@@ -28,21 +28,40 @@ from server.routes.voice import router as voice_router
 from server.routes.instructions import router as instructions_router
 from server.routes.providers import router as providers_router
 from server.routes.agents import router as agents_router
+from server.routes.voice_stacks import router as voice_stacks_router
 from server.routes.platform_brain import router as platform_brain_router
 from server.routes.agents_business_brain import router as agents_business_brain_router
 from server.routes.benchmarks import router as benchmarks_router
 from server.routes.ws import router as ws_router
 from server.routes.calls import router as calls_router
 from server.routes.auth import router as auth_router
+from server.routes.app_auth import router as app_auth_router
+from server.routes.app_telephony import router as app_telephony_router
+from server.routes.app_agents import router as app_agents_router
+from server.routes.app_kyc import router as app_kyc_router
+from server.routes.app_agent_telephony import router as app_agent_telephony_router
+from server.routes.stripe_webhook import router as stripe_webhook_router
+from server.routes.dev_admin import router as dev_admin_router
+from server.routes.app_billing import router as app_billing_router
+from server.routes.app_leads import router as app_leads_router
 from server.routes.dev_stack import router as dev_stack_router
 from server.routes.dev_environment import router as dev_environment_router
 from server.routes.dev_audit import router as dev_audit_router
+from server.routes.dev_activity import router as dev_activity_router
 from server.routes.dev_compiled import router as dev_compiled_router
-from server.routes.dev_exotel import router as dev_exotel_router
-from server.routes.exotel import router as exotel_router
-from server.routes.exotel_ws import router as exotel_ws_router
+from server.routes.dev_telephony import router as dev_telephony_router
+from server.routes.telnyx import router as telnyx_router
+from server.routes.telnyx_ws import router as telnyx_ws_router
+from server.routes.vobiz import router as vobiz_router
+from server.routes.vobiz_ws import router as vobiz_ws_router
 from server.routes.campaigns import router as campaigns_router
+from server.routes.contacts import router as contacts_router
 from server.routes.test_studio import router as test_studio_router
+from server.routes.web_agent_ws import router as web_agent_ws_router
+from server.routes.app_admin import router as app_admin_router
+from server.routes.integrations import router as integrations_router
+from server.routes.app_tenant_deletion import router as app_tenant_deletion_router
+from server.routes.app_support import router as app_support_router
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from server.utils.errors import AppError
@@ -55,6 +74,9 @@ from server.utils.rate_limiter import rate_limiter, tts_limiter
 async def lifespan(app: FastAPI):
     # Startup: validate env (fail-safe — keep server up so /api/health explains)
     try:
+        from server.config.env import get_settings
+
+        get_settings.cache_clear()
         settings = validate_env()
         set_level(settings.log_level)
         from server.agent.conversation_manager import conversation_manager
@@ -62,7 +84,7 @@ async def lifespan(app: FastAPI):
         conversation_manager.max_assistant_chars = settings.max_history_assistant_chars
         conversation_manager.max_user_chars = settings.max_history_user_chars
         logger.info(
-            f"[VOICE] Server starting — version {constants.APP_VERSION}, "
+            f"[VOICE] DialTact Server starting — version {constants.APP_VERSION}, "
             f"model {settings.openai_model}, stt {settings.sarvam_stt_model}"
         )
         from server.providers import init_provider_registry
@@ -71,12 +93,33 @@ async def lifespan(app: FastAPI):
         dev_secrets_store.reload()
         init_provider_registry(settings)
         logger.info("[VOICE] Provider registry initialized")
+        if not (settings.redis_url or "").strip():
+            logger.warning(
+                "[VOICE] REDIS_URL is unset — Telnyx stream tokens and call registry are "
+                "process-local only. Multi-worker deploys need Redis or media WS may close with 1008."
+            )
         try:
             from server.db import init_db
             from server.db.seed import ensure_default_tenant
 
             if await init_db():
                 await ensure_default_tenant()
+                try:
+                    from server.agent.instruction_store import instruction_store
+
+                    n = await instruction_store.hydrate_from_db()
+                    if n:
+                        logger.info(f"[VOICE] Restored {n} saved agent scripts from Postgres")
+                except Exception as e:
+                    logger.warning(f"[VOICE] Saved-instruction hydrate skipped: {e}")
+                try:
+                    from server.services.runtime_settings import runtime_settings
+
+                    n = await runtime_settings.hydrate_from_db()
+                    if n:
+                        logger.info(f"[VOICE] Restored {n} Fine-tune runtime overrides from Postgres")
+                except Exception as e:
+                    logger.warning(f"[VOICE] Saved-runtime hydrate skipped: {e}")
                 try:
                     from server.db.tier_store import load_tier_cache
 
@@ -85,6 +128,27 @@ async def lifespan(app: FastAPI):
                         logger.info(f"[VOICE] Tier cache loaded ({n} rows)")
                 except Exception as e:
                     logger.warning(f"[VOICE] Tier cache load skipped: {e}")
+                try:
+                    from server.services.saas.platform_phone_stack import hydrate_universal_phone_stack_from_db
+
+                    await hydrate_universal_phone_stack_from_db()
+                except Exception as e:
+                    logger.warning(f"[VOICE] Universal phone stack hydrate skipped: {e}")
+                try:
+                    from server.routes.dev_telephony import _ensure_dev_telephony_hydrated
+
+                    await _ensure_dev_telephony_hydrated()
+                except Exception as e:
+                    logger.warning(f"[VOICE] Telephony store hydrate skipped: {e}")
+                try:
+                    from server.services.saas.voice_stack_profiles import (
+                        hydrate_composed_voice_stacks_and_rates,
+                    )
+
+                    res = await hydrate_composed_voice_stacks_and_rates()
+                    logger.info(f"[VOICE] Composed voice stacks and rates hydrated: {res}")
+                except Exception as e:
+                    logger.warning(f"[VOICE] Composed voice stacks hydrate skipped: {e}")
                 logger.info("[VOICE] PostgreSQL connected")
             else:
                 logger.info("[VOICE] PostgreSQL not configured (DATABASE_URL unset)")
@@ -109,6 +173,27 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.warning(f"[VOICE] Call recovery skipped: {e}")
         try:
+            from server.call.post_call_pipeline import recover_pending_post_calls
+
+            pending_recovered = await recover_pending_post_calls()
+            if pending_recovered:
+                logger.info(f"[VOICE] Recovered and re-queued {pending_recovered} pending post-call jobs")
+        except Exception as e:
+            logger.warning(f"[VOICE] Pending post-call recovery skipped: {e}")
+        try:
+            # Re-affirm the demo/platform-admin account on boot. Idempotent, and a
+            # failure here must never block startup.
+            from server.services.saas.demo_admin import ensure_all_demo_admins
+
+            seeded = await ensure_all_demo_admins()
+            if seeded:
+                logger.info(
+                    "[VOICE] Demo admin accounts ready: %s",
+                    ", ".join(str(row.get("email")) for row in seeded),
+                )
+        except Exception as e:
+            logger.warning(f"[VOICE] Demo admin provisioning skipped: {e}")
+        try:
             from server.utils.http_clients import warm_openai_client
             warm_result = await warm_openai_client()
             logger.info(f"[VOICE] OpenAI connection warm-up: {warm_result}")
@@ -121,9 +206,60 @@ async def lifespan(app: FastAPI):
             logger.info("[VOICE] Cartesia voice catalog warmed")
         except Exception as e:
             logger.warning(f"[VOICE] Cartesia voice warm skipped: {e}")
+        provision_task = None
+        try:
+            import asyncio
+
+            from server.config.env import get_settings as _gs_prov
+
+            if _gs_prov().database_url:
+
+                async def _provision_worker_loop() -> None:
+                    while True:
+                        try:
+                            from server.services.saas.provision_worker import process_one_job
+
+                            from server.services.saas.reservation_cleanup import purge_expired_reservations
+                            from server.services.saas.teardown_worker import process_one_teardown
+
+                            did_prov = await process_one_job()
+                            did_teardown = await process_one_teardown()
+                            await purge_expired_reservations()
+                            if not did_prov and not did_teardown:
+                                await asyncio.sleep(5)
+                            else:
+                                await asyncio.sleep(0.5)
+                        except asyncio.CancelledError:
+                            break
+                        except Exception as loop_err:
+                            logger.warning(f"[VOICE] Provision worker: {loop_err}")
+                            await asyncio.sleep(5)
+
+                provision_task = asyncio.create_task(_provision_worker_loop())
+                app.state.saas_provision_task = provision_task
+        except Exception as e:
+            logger.warning(f"[VOICE] SaaS provision worker not started: {e}")
     except ConfigError as e:
         logger.warning(f"[VOICE] Config invalid at startup: {e}. /api/health will report. Set .env and restart.")
+    from server.db.connection import get_session_factory as get_campaign_factory
+    if get_campaign_factory():
+        import asyncio
+        from server.services.saas.campaign_runner import recovery_loop
+        app.state.campaign_recovery_task = asyncio.create_task(recovery_loop())
     yield
+    import asyncio
+    from server.services.saas.campaign_runner import stop_campaign_runners
+    campaign_task = getattr(app.state, "campaign_recovery_task", None)
+    if campaign_task:
+        campaign_task.cancel()
+        await asyncio.gather(campaign_task, return_exceptions=True)
+    await stop_campaign_runners()
+    try:
+        task = getattr(app.state, "saas_provision_task", None)
+        if task:
+            task.cancel()
+    except Exception:
+        pass
     # Shutdown: close pooled HTTP clients
     try:
         from server.db import close_db
@@ -141,20 +277,135 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 CLIENT_DIR = PROJECT_ROOT / "client"
 
 app = FastAPI(
-    title="Telugu Voice Agent",
+    title="DialTact Voice Agent",
     version=constants.APP_VERSION,
-    description="Telugu-first Voice AI — Phase 1–5: STT (saaras:v3) + Brain (Responses API) + TTS (bulbul:v3) + Custom Instructions + Hardening",
+    description="DialTact Voice AI — Phase 1–5: STT (saaras:v3) + Brain (Responses API) + TTS (bulbul:v3) + Custom Instructions + Hardening",
     lifespan=lifespan,
 )
 
-# CORS — allow local dev
+def _cors_origins_and_credentials() -> tuple[list[str], bool]:
+    settings = get_settings()
+    raw = (settings.cors_origins or "").strip()
+    base_origins = [
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://localhost:8000",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:8000",
+        "https://app-dev.dialtact.com",
+        "https://app.dialtact.com",
+        "https://dialtact.com",
+        "https://www.dialtact.com",
+        "https://api-dev.dialtact.com",
+        "https://api.dialtact.com",
+    ]
+    for url in (settings.client_url, settings.public_app_url, settings.public_tunnel_url):
+        u = (url or "").strip().rstrip("/")
+        if u and u not in base_origins:
+            base_origins.append(u)
+    if raw:
+        origins = [o.strip() for o in raw.split(",") if o.strip()]
+        if "*" in origins:
+            return ["*"], False
+        for o in base_origins:
+            if o not in origins:
+                origins.append(o)
+        return origins, True
+    return base_origins, True
+
+
+_cors_origins, _cors_allow_creds = _cors_origins_and_credentials()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=_cors_origins,
+    allow_credentials=_cors_allow_creds,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+class AuthNoStoreMiddleware(BaseHTTPMiddleware):
+    """Auth responses must never be cached (shared proxies / bfcache / CDN)."""
+
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        path = request.url.path or ""
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("X-Frame-Options", "DENY")
+        response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+        response.headers.setdefault("Content-Security-Policy", "frame-ancestors 'none'; object-src 'none'; base-uri 'self'")
+        if path.startswith("/api"):
+            response.headers.setdefault("X-Robots-Tag", "noindex, nofollow")
+        if "json" in response.headers.get("content-type", "") or response.status_code >= 400:
+            response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, private"
+            response.headers["Pragma"] = "no-cache"
+            response.headers.setdefault("Cross-Origin-Resource-Policy", "same-origin")
+        return response
+
+
+from server.middleware.request_limits import JsonBodyLimitMiddleware
+app.add_middleware(JsonBodyLimitMiddleware)
+app.add_middleware(AuthNoStoreMiddleware)
+
+
+_LOCAL_DEV_HOSTS = frozenset({"localhost", "127.0.0.1", "::1", "[::1]"})
+
+
+def _hostname_is_local(hostname: str) -> bool:
+    h = (hostname or "").strip().lower().split("%")[0]
+    if h.startswith("[") and h.endswith("]"):
+        h = h[1:-1]
+    return h in _LOCAL_DEV_HOSTS or h.endswith(".localhost")
+
+
+def _dev_portal_hosts_allowed(request: Request) -> bool:
+    """True only when every Host / X-Forwarded-Host hop is loopback.
+
+    Cloudflare + Vite set X-Forwarded-Host to the public name while changeOrigin
+    rewrites Host to localhost — checking only Host would wrongly allow tunnel traffic.
+    """
+    candidates: list[str] = []
+    for header in ("x-forwarded-host", "host"):
+        raw = request.headers.get(header) or ""
+        for part in raw.split(","):
+            host = part.strip().split(":")[0].strip()
+            if host:
+                candidates.append(host)
+    if not candidates:
+        return False
+    return all(_hostname_is_local(h) for h in candidates)
+
+
+class DevPortalLocalOnlyMiddleware(BaseHTTPMiddleware):
+    """Block /api/dev* from public tunnel hostnames unless explicitly allowed."""
+
+    async def dispatch(self, request: Request, call_next):
+        path = request.url.path or ""
+        if not path.startswith("/api/dev"):
+            return await call_next(request)
+        try:
+            from server.config.env import get_settings
+
+            if get_settings().dev_portal_allow_remote:
+                return await call_next(request)
+        except Exception:
+            pass
+        if _dev_portal_hosts_allowed(request):
+            return await call_next(request)
+        return JSONResponse(
+            status_code=404,
+            content={
+                "error": {
+                    "code": "dev_portal_local_only",
+                    "message": "Dev admin is available on localhost only (http://localhost:3000/dev).",
+                }
+            },
+            headers={"Cache-Control": "no-store"},
+        )
+
+
+app.add_middleware(DevPortalLocalOnlyMiddleware)
 
 
 # Rate limiting middleware (Phase 5 hardening)
@@ -170,6 +421,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if request.method in ("POST", "PUT") and path.startswith("/api/"):
             # Call start/end must not 429 — beacon + auto-end are lifecycle, not abuse.
             if path.startswith("/api/call/"):
+                return await call_next(request)
+            # Dev Test Studio UI polls — exempt from general limiter (prevents PSTN panel 429 storms).
+            if path.startswith("/api/dev/telephony/pstn-stack/") or path.startswith("/api/test-studio/prefs"):
                 return await call_next(request)
             client_ip = request.client.host if request.client else "unknown"
             # TTS/Voice stricter
@@ -195,6 +449,23 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
 
 app.add_middleware(RateLimitMiddleware)
+
+
+@app.middleware("http")
+async def expose_request_for_activity_log(request: Request, call_next):
+    """Make the in-flight request readable to the activity log.
+
+    Lets every log row carry the caller's IP, user agent and request id without
+    each call site threading a `Request` through. The token is always reset, so a
+    finished request cannot leak its context into the next one on this task.
+    """
+    from server.services.saas.request_context import reset_current_request, set_current_request
+
+    token = set_current_request(request)
+    try:
+        return await call_next(request)
+    finally:
+        reset_current_request(token)
 
 
 @app.exception_handler(RequestValidationError)
@@ -257,21 +528,40 @@ app.include_router(session_router)
 app.include_router(settings_router)
 app.include_router(providers_router)
 app.include_router(agents_router)
+app.include_router(voice_stacks_router)
 app.include_router(platform_brain_router)
 app.include_router(agents_business_brain_router)
 app.include_router(benchmarks_router)
 app.include_router(calls_router)
 app.include_router(auth_router)
+app.include_router(app_auth_router)
+app.include_router(app_telephony_router)
+app.include_router(app_agents_router)
+app.include_router(app_kyc_router)
+app.include_router(app_agent_telephony_router)
+app.include_router(stripe_webhook_router)
+app.include_router(dev_admin_router)
+app.include_router(app_billing_router)
+app.include_router(app_leads_router)
 app.include_router(dev_stack_router)
 app.include_router(dev_environment_router)
 app.include_router(dev_audit_router)
+app.include_router(dev_activity_router)
 app.include_router(dev_compiled_router)
-app.include_router(dev_exotel_router)
-app.include_router(exotel_router)
-app.include_router(exotel_ws_router)
+app.include_router(dev_telephony_router)
+app.include_router(telnyx_router)
+app.include_router(telnyx_ws_router)
+app.include_router(vobiz_router)
+app.include_router(vobiz_ws_router)
 app.include_router(campaigns_router)
+app.include_router(contacts_router)
 app.include_router(test_studio_router)
 app.include_router(ws_router)
+app.include_router(web_agent_ws_router)
+app.include_router(app_admin_router)
+app.include_router(integrations_router)
+app.include_router(app_tenant_deletion_router)
+app.include_router(app_support_router)
 
 
 @app.get("/api/meta")
@@ -293,46 +583,63 @@ async def meta():
             "stt_ws": "/ws/stt-realtime (browser PCM16 → saaras:v3-realtime, partials + VAD)",
             "tts_ws": "/ws/tts?model=bulbul:v3 (config/text/flush → base64 audio chunks)",
         },
-        "finetune": {"catalog": "GET /api/settings/catalog", "runtime": "GET/POST/DELETE /api/settings/runtime", "console": "/settings.html"},
+        "finetune": {"catalog": "GET /api/settings/catalog", "runtime": "GET/POST/DELETE /api/settings/runtime"},
     }
 
 
 def _should_serve_client() -> bool:
+    """Opt-in only.
+
+    The legacy `client/` app used to be served at `/`, which meant the public API
+    hostname showed an obsolete "Telugu Agent" page instead of the product. Voxly is
+    the frontend, so this is off unless it is explicitly re-enabled.
+    """
     try:
         return get_settings().serve_client_static
     except Exception:
-        return os.getenv("SERVE_CLIENT_STATIC", "true").lower() in ("true", "1", "yes")
+        return os.getenv("SERVE_CLIENT_STATIC", "false").lower() in ("true", "1", "yes")
 
 
-# Serve client static (if exists) — gated when Next.js web service is primary
+@app.get("/")
+async def root():
+    """Send visitors to the product rather than serving a dead page.
+
+    The API host is public because carrier webhooks use it, so opening it in a browser
+    should land on the real UI rather than JSON or a legacy page.
+    """
+    from fastapi.responses import RedirectResponse
+
+    try:
+        settings = get_settings()
+        product = (
+            getattr(settings, "dialtact_frontend_url", None)
+            or getattr(settings, "voxly_frontend_url", None)
+            or ""
+        ).strip().rstrip("/")
+    except Exception:
+        product = ""
+    if product:
+        return RedirectResponse(url=f"{product}/", status_code=307)
+    return JSONResponse(
+        {
+            "service": "dialtact-api",
+            "message": "This host serves the API. The product UI is on a separate URL.",
+            "health": "/api/health",
+        }
+    )
+
+
+# Serve the legacy client only when explicitly enabled, and never at `/`, so it can
+# no longer shadow a real API route. It is superseded by voxly-ai.
 if CLIENT_DIR.exists() and _should_serve_client():
-    # Serve index.html at /
-    @app.get("/")
-    async def serve_index():
+    @app.get("/legacy")
+    async def serve_legacy_index():
         index = CLIENT_DIR / "index.html"
         if index.exists():
             return FileResponse(str(index))
-        return {"message": "Client not built — API is running. See /api/health"}
+        return {"message": "Legacy client not built."}
 
-    # Mount client dir for css/js
     try:
-        app.mount("/client", StaticFiles(directory=str(CLIENT_DIR)), name="client")
+        app.mount("/legacy/static", StaticFiles(directory=str(CLIENT_DIR)), name="client")
     except Exception:
         pass
-
-    # Also serve assets at root for relative paths (catch-all prevents future 404s)
-    _CLIENT_MEDIA = {
-        ".js": "application/javascript",
-        ".css": "text/css",
-        ".html": "text/html",
-    }
-
-    @app.get("/{asset_name}")
-    async def serve_client_asset(asset_name: str):
-        if ".." in asset_name or "/" in asset_name or "\\" in asset_name:
-            return JSONResponse(status_code=404, content={"error": "not found"})
-        p = CLIENT_DIR / asset_name
-        media = _CLIENT_MEDIA.get(p.suffix.lower())
-        if not media or not p.is_file():
-            return JSONResponse(status_code=404, content={"error": "not found"})
-        return FileResponse(str(p), media_type=media)

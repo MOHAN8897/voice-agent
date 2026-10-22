@@ -1,5 +1,6 @@
 # Environment & secrets — never commit
 .env
+.env.bak-encoding
 .env.local
 .tunnel-url
 .tunnel-share-urls.json
@@ -32,7 +33,7 @@ client/node_modules/
 dist/
 
 # Call archives & local dev overlays (API keys, fallback chains)
-data/
+/data/
 
 # Benchmark / probe artifacts (local run output — do not commit)
 benchmark_results.json
@@ -57,3 +58,39 @@ Thumbs.db
 .cursor/skills/cinematic-scroll/templates/
 .cursor/skills/cinematic-scroll/examples/
 .cursor/skills/cinematic-scroll/tools/
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+/graft/
+
+# Local isolated regression-test runtime and downloads
+/.python/
+/.test-deps/
+/.uv-cache/
+/.pytest-tmp-*/
+.gemini/
+scratch/
+
+# Enigma Memory Vault secrets & ephemeral state
+.enigma/passphrase
+.enigma/*.tmp
+.enigma/*.head
+
+.playwright-mcp/
+
+# Local scanner snapshots and generated verification outputs
+/.gravitas/security-reports/
+/.gravitas/sessions/runtime-hardening/*-result.json
+
+/.gravitas/sessions/*/*.png
+/.gravitas/sessions/*/*.txt
+
+# Local Next.js work directories and browser verification output
+/web/.next-*/
+/web/test-results-*/
+
+# Local provider audit output and scratch prompts
+/final_audit_results.json
+/scratch_audit_results.json
+/scratch_hima_prompt.txt
+dump.rdb
+/.gravitas/

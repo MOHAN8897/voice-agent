@@ -1,0 +1,22 @@
+"""Public URL resolution tests."""
+from unittest.mock import patch
+
+from server.config.urls import public_api_base
+
+
+def test_public_api_base_prefers_public_tunnel_over_stale_vobiz_secret(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    monkeypatch.setenv("SARVAM_API_KEY", "sarvam-test")
+    monkeypatch.setenv("PUBLIC_TUNNEL_URL", "https://api-dev.dialtact.com")
+    monkeypatch.setenv("VOBIZ_WEBHOOK_BASE_URL", "https://api-dev.dialtact.com")
+
+    from server.config.env import get_settings
+
+    get_settings.cache_clear()
+
+    overlay = {"vobiz_webhook_base_url": "https://dead-quick-tunnel.trycloudflare.com"}
+
+    with patch("server.config.urls.dev_secrets_store.effective", side_effect=lambda field, default=None: overlay.get(field, default)):
+        assert public_api_base() == "https://api-dev.dialtact.com"
+
+    get_settings.cache_clear()

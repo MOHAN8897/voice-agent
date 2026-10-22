@@ -1,0 +1,79 @@
+{
+  "version": 2,
+  "name": "drive-admin-saves-the-selected-live-recognizer-while-t",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1792591918823,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "live-transcription-model"
+      },
+      "args": {
+        "value": "gpt-transcribe"
+      },
+      "action": "select",
+      "page": "/dev/saas-phone-stack"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Save universal stack"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "PUT",
+            "urlContains": "/api/dev/stack/saas-phone",
+            "status": 200
+          },
+          {
+            "kind": "element",
+            "query": {
+              "value": "gpt-transcribe",
+              "role": "combobox",
+              "name": "Live transcription model"
+            },
+            "state": "present"
+          },
+          {
+            "kind": "element",
+            "query": {
+              "value": "gemini-3.8-live",
+              "role": "combobox"
+            },
+            "state": "present"
+          }
+        ]
+      },
+      "timeoutMs": 8000,
+      "page": "/dev/saas-phone-stack"
+    }
+  ],
+  "startPath": "/dev/saas-phone-stack",
+  "intent": "Admin saves the selected live recognizer while the Gemini conversation model remains selected.",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/dev/saas-phone-stack"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/dev/saas-phone-stack"
+    }
+  ],
+  "author": {
+    "agent": "antigravity-client",
+    "person": "mohansaiteja.99@gmail.com"
+  },
+  "intentId": "flow:drive-admin-saves-the-selected-live-recognizer-while-t"
+}

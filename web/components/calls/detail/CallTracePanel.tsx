@@ -75,6 +75,19 @@ export function CallTracePanel({ trace }: { trace: TracePayload }) {
               tts {t.tts_first_audio_ms ?? "—"}ms
               {" · "}
               mem {t.memory_ops_applied ?? 0} ops
+              {t.pipeline === "realtime_voice" && (
+                <>
+                  {" · "}
+                  audio {(t.input_audio_tokens ?? 0) + (t.output_audio_tokens ?? 0)} tok
+                  {/* cost_usd is recorded per turn; only fall back to the settled rupee
+                    figure, and never guess a rate. */}
+                  {t.cost_usd != null
+                    ? ` · $${Number(t.cost_usd).toFixed(4)}`
+                    : t.cost_inr != null
+                      ? ` · settled ₹${Number(t.cost_inr).toFixed(2)}`
+                      : ""}
+                </>
+              )}
               {(t.errors || []).length > 0 && (
                 <span className="text-status-error"> · errors {(t.errors || []).length}</span>
               )}

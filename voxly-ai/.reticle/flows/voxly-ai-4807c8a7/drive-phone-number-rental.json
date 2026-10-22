@@ -1,0 +1,89 @@
+{
+  "version": 2,
+  "name": "drive-phone-number-rental",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1791980878190,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "nav-billing",
+        "source": {
+          "file": "src/console/Sidebar.jsx",
+          "line": 296,
+          "column": 19
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "route",
+            "contains": "billing"
+          },
+          {
+            "kind": "text",
+            "contains": "Phone number rental"
+          }
+        ]
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "nav-phone-numbers",
+        "source": {
+          "file": "src/console/Sidebar.jsx",
+          "line": 296,
+          "column": 19
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "route",
+        "contains": "phone-numbers"
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "component",
+        "component": "SolidCard",
+        "source": {
+          "file": "src/console/modules/PhoneNumbersModule.jsx",
+          "line": 472,
+          "column": 21
+        }
+      },
+      "args": {
+        "value": "832dd86c-bbd5-4bcc-8466-469b3411c99f"
+      },
+      "action": "select",
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "codex-mcp-client",
+    "person": "mohansaiteja.99@gmail.com"
+  }
+}

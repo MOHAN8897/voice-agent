@@ -1,0 +1,397 @@
+{
+  "intents": {
+    "inline:a-browser-test-call-reaches-a-connected-listen-o-2133b570": {
+      "binding": {
+        "contains": "Connected in listen-only mode",
+        "kind": "text"
+      },
+      "declaredAt": 1792416371645,
+      "id": "inline:a-browser-test-call-reaches-a-connected-listen-o-2133b570",
+      "provenBy": {
+        "at": 1792416372243,
+        "grade": "presence",
+        "runId": "drive-s816a6710-3fcc-4272-8138-4f576f89c455",
+        "verdictId": "reticle_act_and_wait:1792416372243"
+      },
+      "state": "proved",
+      "statement": "A browser test call reaches a connected listen-only state when microphone access is denied, and explains how to enable speaking.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/ui/TactileButton.jsx"
+        ]
+      },
+      "updatedAt": 1792416372314
+    },
+    "inline:a-tenant-must-complete-a-new-objection-concern-a-d840d1e5": {
+      "binding": {
+        "contains": "Complete the concern and response in objection rule 1",
+        "kind": "text",
+        "visible": true
+      },
+      "declaredAt": 1792472361149,
+      "id": "inline:a-tenant-must-complete-a-new-objection-concern-a-d840d1e5",
+      "provenBy": {
+        "at": 1792472361437,
+        "grade": "presence",
+        "runId": "drive-lease-dae744a3-4846-422e-8846-9d9a1f77d5d0",
+        "verdictId": "reticle_act_and_wait:1792472361437"
+      },
+      "state": "proved",
+      "statement": "A tenant must complete a new objection concern and reply before the draft can be published.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/modules/AgentStudioModule.jsx"
+        ]
+      },
+      "updatedAt": 1792472361463
+    },
+    "inline:a-workspace-can-open-billing-and-review-wallet-a-03c2ac0b": {
+      "binding": {
+        "contains": "#dashboard/billing",
+        "kind": "route"
+      },
+      "declaredAt": 1791984828649,
+      "id": "inline:a-workspace-can-open-billing-and-review-wallet-a-03c2ac0b",
+      "provenBy": {
+        "at": 1791984829806,
+        "grade": "presence",
+        "runId": "drive-s411bee4b-e536-4dc1-b595-73cfebd7ab5f",
+        "verdictId": "reticle_act_and_wait:1791984829806"
+      },
+      "state": "proved",
+      "statement": "A workspace can open billing and review wallet and payment activity.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/Sidebar.jsx"
+        ]
+      },
+      "updatedAt": 1791984829861
+    },
+    "inline:an-integration-requires-the-secure-connection-fo-11a61bb9": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "confirm-connect-btn"
+        }
+      },
+      "declaredAt": 1792469810194,
+      "id": "inline:an-integration-requires-the-secure-connection-fo-11a61bb9",
+      "provenBy": {
+        "at": 1792469810373,
+        "grade": "presence",
+        "runId": "drive-lease-e80a22b4-32b2-4ca0-b28d-22f449b7f800",
+        "verdictId": "reticle_act_and_wait:1792469810373"
+      },
+      "state": "proved",
+      "statement": "An integration requires the secure connection form before it can become connected.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/modules/IntegrationsModule.jsx"
+        ]
+      },
+      "updatedAt": 1792469810408
+    },
+    "inline:campaign-setup-validates-the-complete-contact-im-7e146ff7": {
+      "binding": {
+        "contains": "1 ready · 0 invalid · 0 duplicates",
+        "kind": "text"
+      },
+      "declaredAt": 1792502265269,
+      "id": "inline:campaign-setup-validates-the-complete-contact-im-7e146ff7",
+      "provenBy": {
+        "at": 1792502265544,
+        "grade": "presence",
+        "runId": "drive-sc0aa5f4d-7be4-456f-bf84-bb214c67b29b",
+        "verdictId": "reticle_act_and_wait:1792502265544"
+      },
+      "state": "proved",
+      "statement": "Campaign setup validates the complete contact import before launch. This run uses isolated synthetic API responses.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/ui/TactileButton.jsx"
+        ]
+      },
+      "updatedAt": 1792502265585
+    },
+    "inline:choosing-a-number-opens-hosted-kyc-preparation-w-1035a4be": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "testid": "voice-service-kyc-card"
+            }
+          },
+          {
+            "contains": "Selected number:",
+            "kind": "text",
+            "visible": true
+          },
+          {
+            "absent": true,
+            "contains": "PAN and Aadhaar",
+            "kind": "text"
+          },
+          {
+            "absent": true,
+            "kind": "element",
+            "query": {
+              "testid": "confirm-selected-number"
+            }
+          }
+        ]
+      },
+      "declaredAt": 1792523782116,
+      "id": "inline:choosing-a-number-opens-hosted-kyc-preparation-w-1035a4be",
+      "provenBy": {
+        "at": 1792523784115,
+        "grade": "presence",
+        "runId": "drive-s2403848c-1aca-4abd-8762-13932f565c03",
+        "verdictId": "reticle_act_and_wait:1792523784115"
+      },
+      "state": "proved",
+      "statement": "Choosing a number opens hosted KYC preparation with the selection and price retained, and no purchase before approval.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/ui/TactileButton.jsx"
+        ]
+      },
+      "updatedAt": 1792523784158
+    },
+    "inline:operators-can-open-call-history-and-choose-a-sta-f4acfc37": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "calls-status-filter"
+        }
+      },
+      "declaredAt": 1792578207321,
+      "id": "inline:operators-can-open-call-history-and-choose-a-sta-f4acfc37",
+      "provenBy": {
+        "at": 1792578207518,
+        "grade": "presence",
+        "runId": "drive-lease-da1ed5cc-6f7e-4d55-b30b-8911c12d5073",
+        "verdictId": "reticle_act_and_wait:1792578207518"
+      },
+      "state": "proved",
+      "statement": "Operators can open call history and choose a status from a compact dropdown.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/Sidebar.jsx"
+        ]
+      },
+      "updatedAt": 1792578207579
+    },
+    "inline:selecting-a-call-status-filters-call-history-thr-20932975": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "GET",
+            "status": 200,
+            "urlContains": "status=missed"
+          },
+          {
+            "absent": true,
+            "kind": "console",
+            "level": "error"
+          }
+        ]
+      },
+      "declaredAt": 1792578207691,
+      "id": "inline:selecting-a-call-status-filters-call-history-thr-20932975",
+      "provenBy": {
+        "at": 1792578208839,
+        "grade": "net",
+        "runId": "drive-lease-da1ed5cc-6f7e-4d55-b30b-8911c12d5073",
+        "verdictId": "reticle_act_and_wait:1792578208839"
+      },
+      "state": "proved",
+      "statement": "Selecting a call status filters call history through the API without displaying misleading call-count badges.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/modules/CallsModule.jsx"
+        ]
+      },
+      "updatedAt": 1792578208894
+    },
+    "inline:tenant-settings-exposes-phone-service-kyc-with-p-a3a16e03": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "voice-service-kyc-card"
+        }
+      },
+      "declaredAt": 1792433459490,
+      "id": "inline:tenant-settings-exposes-phone-service-kyc-with-p-a3a16e03",
+      "provenBy": {
+        "at": 1792433459691,
+        "grade": "presence",
+        "runId": "drive-lease-a7c5705c-2e5b-423c-8f26-7d791b169930",
+        "verdictId": "reticle_act_and_wait:1792433459691"
+      },
+      "state": "proved",
+      "statement": "Tenant settings exposes phone-service KYC with persisted business identity and current document verification status.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/Sidebar.jsx"
+        ]
+      },
+      "updatedAt": 1792433459726
+    },
+    "inline:tenants-prepare-recipients-and-review-a-campaign-f3bd2f6f": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "campaign-setup"
+        }
+      },
+      "declaredAt": 1792523495947,
+      "id": "inline:tenants-prepare-recipients-and-review-a-campaign-f3bd2f6f",
+      "provenBy": {
+        "at": 1792523496120,
+        "grade": "presence",
+        "runId": "drive-s2403848c-1aca-4abd-8762-13932f565c03",
+        "verdictId": "reticle_act_and_wait:1792523496120"
+      },
+      "state": "proved",
+      "statement": "Tenants prepare recipients and review a campaign on one setup page.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/ui/TactileButton.jsx"
+        ]
+      },
+      "updatedAt": 1792523496171
+    },
+    "inline:tenants-preview-the-personalized-script-for-an-a-b7deabdc": {
+      "binding": {
+        "contains": "Hello Example Contact. Is this a convenient time to speak?",
+        "kind": "text",
+        "visible": true
+      },
+      "declaredAt": 1792523556917,
+      "id": "inline:tenants-preview-the-personalized-script-for-an-a-b7deabdc",
+      "provenBy": {
+        "at": 1792523557122,
+        "grade": "presence",
+        "runId": "drive-s2403848c-1aca-4abd-8762-13932f565c03",
+        "verdictId": "reticle_act_and_wait:1792523557122"
+      },
+      "state": "proved",
+      "statement": "Tenants preview the personalized script for an actual selected campaign contact before launching.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/modules/CampaignSetup.jsx"
+        ]
+      },
+      "updatedAt": 1792523557166
+    },
+    "inline:tenants-see-available-number-inventory-and-the-a-b7143605": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "testid": "buy-number-submit"
+            }
+          },
+          {
+            "contains": "$4.00 / month",
+            "kind": "text",
+            "visible": true
+          },
+          {
+            "absent": true,
+            "kind": "element",
+            "query": {
+              "testid": "voice-service-kyc-card"
+            }
+          }
+        ]
+      },
+      "declaredAt": 1792523780561,
+      "id": "inline:tenants-see-available-number-inventory-and-the-a-b7143605",
+      "provenBy": {
+        "at": 1792523781930,
+        "grade": "presence",
+        "runId": "drive-s2403848c-1aca-4abd-8762-13932f565c03",
+        "verdictId": "reticle_act_and_wait:1792523781930"
+      },
+      "state": "proved",
+      "statement": "Tenants see available number inventory and the admin monthly price before starting phone verification.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/ui/TactileButton.jsx"
+        ]
+      },
+      "updatedAt": 1792523781980
+    },
+    "inline:the-launched-synthetic-campaign-is-visible-in-th-9fa77178": {
+      "binding": {
+        "contains": "Isolated UI audit",
+        "kind": "text"
+      },
+      "declaredAt": 1792502330616,
+      "id": "inline:the-launched-synthetic-campaign-is-visible-in-th-9fa77178",
+      "provenBy": {
+        "at": 1792502330696,
+        "grade": "presence",
+        "runId": "drive-sc0aa5f4d-7be4-456f-bf84-bb214c67b29b",
+        "verdictId": "reticle_assert:1792502330696"
+      },
+      "state": "proved",
+      "statement": "The launched synthetic campaign is visible in the campaign list after the setup closes.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/ui/TactileButton.jsx"
+        ]
+      },
+      "updatedAt": 1792502330737
+    },
+    "primary-script-review": {
+      "declaredAt": 1792471243539,
+      "id": "primary-script-review",
+      "state": "declared",
+      "statement": "Tenants can review an unsaved calling script without saving it; publish failures retain their draft and show an error.",
+      "status": "proposed",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/modules/AgentStudioModule.jsx"
+        ]
+      },
+      "updatedAt": 1792471362441
+    }
+  },
+  "subject": "console",
+  "version": 1
+}

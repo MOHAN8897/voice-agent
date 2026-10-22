@@ -78,6 +78,44 @@ def test_connect_tts_upstream_uses_registry(registry_settings, monkeypatch):
     get_settings.cache_clear()
 
 
+def test_connect_tts_upstream_uses_frozen_resolved_profile(registry_settings, monkeypatch):
+    monkeypatch.setenv("USE_PROVIDER_REGISTRY", "true")
+    from server.config.env import get_settings
+
+    get_settings.cache_clear()
+    sarvam = MagicMock()
+    sarvam.connect_stream.return_value = "sarvam-locked"
+    cartesia = MagicMock()
+    cartesia.connect_stream.return_value = "cartesia-wrong"
+    registry = ProviderRegistry(registry_settings)
+    registry._tts["sarvam"] = sarvam
+    registry._tts["cartesia"] = cartesia
+
+    with patch.object(ws_mod, "get_provider_registry", return_value=registry), patch(
+        "server.services.tts_config.resolve_tts_config",
+        return_value={"provider": "cartesia", "model": "sonic-3.5", "speaker": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"},
+    ) as mock_resolve:
+        result = ws_mod._connect_tts_upstream(
+            "sonic-3.5",
+            session_id="sess-1",
+            call_id="call-1",
+            resolved={
+                "provider": "sarvam",
+                "model": "bulbul:v3",
+                "speaker": "shubh",
+                "language_code": "te-IN",
+            },
+        )
+        assert result == "sarvam-locked"
+        mock_resolve.assert_not_called()
+        cartesia.connect_stream.assert_not_called()
+        config = sarvam.connect_stream.call_args.args[0]
+        assert config.provider == "sarvam"
+        assert config.model == "bulbul:v3"
+        assert config.speaker == "shubh"
+    get_settings.cache_clear()
+
+
 def test_connect_stt_uses_locked_call_stack(registry_settings, monkeypatch):
     monkeypatch.setenv("USE_PROVIDER_REGISTRY", "true")
     from datetime import datetime, timezone

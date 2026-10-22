@@ -1,0 +1,320 @@
+{
+  "version": 2,
+  "name": "drive-journey",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1790843344404,
+  "steps": [
+    {
+      "tool": "reticle_act_sequence",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-tab-calls",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 407,
+          "column": 13
+        }
+      },
+      "steps": [
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "testid",
+            "value": "agent-tab-calls",
+            "source": {
+              "file": "src/console/modules/AgentStudioModule.jsx",
+              "line": 407,
+              "column": 13
+            }
+          },
+          "args": {},
+          "action": "click",
+          "expect": {
+            "kind": "element",
+            "query": {
+              "testid": "agent-calls-panel-tab-outbound"
+            }
+          }
+        },
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "testid",
+            "value": "agent-calls-panel-tab-outbound",
+            "source": {
+              "file": "src/console/modules/agent-workspace/AgentCallsPanel.jsx",
+              "line": 54,
+              "column": 9
+            }
+          },
+          "args": {},
+          "action": "click",
+          "expect": {
+            "kind": "element",
+            "query": {
+              "testid": "agent-dial-bulk"
+            }
+          }
+        },
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "testid",
+            "value": "agent-calls-panel-tab-settings",
+            "source": {
+              "file": "src/console/modules/agent-workspace/AgentCallsPanel.jsx",
+              "line": 54,
+              "column": 9
+            }
+          },
+          "args": {},
+          "action": "click",
+          "expect": {
+            "kind": "element",
+            "query": {
+              "testid": "studio-closed-dates"
+            }
+          }
+        },
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "testid",
+            "value": "agent-test-call",
+            "source": {
+              "file": "src/console/ui/TactileButton.jsx",
+              "line": 69,
+              "column": 5
+            }
+          },
+          "args": {},
+          "action": "click",
+          "expect": {
+            "kind": "element",
+            "query": {
+              "testid": "agent-test-call-start"
+            }
+          }
+        }
+      ],
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-test-call-start",
+        "source": {
+          "file": "src/console/ui/TactileButton.jsx",
+          "line": 69,
+          "column": 5
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-test-call-end",
+        "source": {
+          "file": "src/console/ui/TactileButton.jsx",
+          "line": 69,
+          "column": 5
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "agent-test-call-start"
+        }
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act_sequence",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Close dialog"
+      },
+      "steps": [
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "role",
+            "role": "button",
+            "name": "Close dialog"
+          },
+          "args": {},
+          "action": "click",
+          "expect": {
+            "kind": "settled"
+          }
+        },
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "role",
+            "role": "button",
+            "name": "Back to fleet"
+          },
+          "args": {},
+          "action": "click"
+        },
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "role",
+            "role": "unresolved"
+          },
+          "args": {},
+          "action": "click",
+          "degraded": true
+        },
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "role",
+            "role": "unresolved"
+          },
+          "args": {
+            "value": "Reticle UI smoke agent for a clinic in Austin. Book appointments and confirm caller name."
+          },
+          "action": "fill",
+          "degraded": true
+        },
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "role",
+            "role": "unresolved"
+          },
+          "args": {},
+          "action": "click",
+          "degraded": true
+        }
+      ],
+      "degraded": true,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Create AI Employee"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "create-employee-modal"
+        }
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act_sequence",
+      "anchor": {
+        "kind": "testid",
+        "value": "employee-brief-input",
+        "source": {
+          "file": "src/console/modules/CreateAgentWizard.jsx",
+          "line": 183,
+          "column": 11
+        }
+      },
+      "steps": [
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "testid",
+            "value": "employee-brief-input",
+            "source": {
+              "file": "src/console/modules/CreateAgentWizard.jsx",
+              "line": 183,
+              "column": 11
+            }
+          },
+          "args": {
+            "value": "Reticle UI smoke agent for a clinic in Austin. Book appointments and confirm caller name."
+          },
+          "action": "fill",
+          "expect": {
+            "kind": "settled"
+          }
+        },
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "testid",
+            "value": "create-next",
+            "source": {
+              "file": "src/console/modules/CreateAgentWizard.jsx",
+              "line": 315,
+              "column": 7
+            }
+          },
+          "args": {},
+          "action": "click",
+          "expect": {
+            "kind": "anyOf",
+            "predicates": [
+              {
+                "kind": "element",
+                "query": {
+                  "text": "Calling script"
+                }
+              },
+              {
+                "kind": "element",
+                "query": {
+                  "text": "Overview"
+                }
+              },
+              {
+                "kind": "element",
+                "query": {
+                  "name": "Test call"
+                }
+              },
+              {
+                "kind": "element",
+                "query": {
+                  "testid": "agent-tab-overview"
+                }
+              },
+              {
+                "kind": "net",
+                "urlContains": "/api/app/agents/build-employee",
+                "status": 200
+              }
+            ]
+          }
+        }
+      ],
+      "page": "/"
+    }
+  ],
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "cursor-vscode"
+  }
+}

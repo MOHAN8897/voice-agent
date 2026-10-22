@@ -1,0 +1,89 @@
+{
+  "version": 2,
+  "name": "drive-buy-modal-quotes-the-same-4-00-month-platform-di",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1790936358431,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Buy number"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Buy number"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Buy number"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "text",
+            "contains": "$4.00 / month"
+          },
+          {
+            "kind": "text",
+            "contains": "Add credit to buy a number"
+          },
+          {
+            "kind": "text",
+            "contains": "Wallet: $2.16"
+          },
+          {
+            "kind": "allOf",
+            "predicates": [
+              {
+                "kind": "text",
+                "contains": "+13526146416"
+              },
+              {
+                "kind": "text",
+                "contains": "US • Local DID"
+              }
+            ]
+          }
+        ]
+      },
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "intent": "Buy modal quotes the same $4.00/month platform DID rate as list rows and blocks purchase when the wallet cannot cover it.",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "desktop"
+  },
+  "intentId": "flow:drive-buy-modal-quotes-the-same-4-00-month-platform-di"
+}

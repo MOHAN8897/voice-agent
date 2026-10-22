@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "origin": "failed-assert",
+  "expected": "text \"?\" OR text \"?\" OR text \"?\" OR text \"?\" OR element ?",
+  "observed": "no sub-predicate of anyOf matched",
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-tab-calls",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 407,
+          "column": 13
+        }
+      },
+      "action": "click"
+    }
+  ],
+  "id": "1790846450845-agent-tab-calls-19152eaf",
+  "createdAt": 1790846450854,
+  "seen": 1,
+  "lastSeenAt": 1790846450854
+}

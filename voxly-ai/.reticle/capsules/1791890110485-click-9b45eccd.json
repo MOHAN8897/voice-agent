@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "origin": "failed-assert",
+  "expected": "a /api/tenant/delete",
+  "observed": "no request to /api/tenant/delete",
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "e425",
+        "source": {
+          "file": "src/console/ui/DeleteWorkspaceModal.jsx",
+          "line": 504,
+          "column": 19
+        }
+      },
+      "action": "click"
+    }
+  ],
+  "id": "1791890110485-click-9b45eccd",
+  "createdAt": 1791890110485,
+  "seen": 1,
+  "lastSeenAt": 1791890110485
+}

@@ -73,7 +73,13 @@ async def catalog():
             "useProviderRegistry": use_registry,
         },
         "stt": {
-            "models": [{"id": k, "label": v["label"], "modes": v["modes"]} for k, v in constants.STT_MODELS.items()],
+            "models": (
+                [{"id": k, "label": v["label"], "modes": v["modes"]} for k, v in constants.STT_MODELS.items()]
+                + [
+                    {"id": k, "label": v["label"], "modes": v.get("modes", ["transcribe"])}
+                    for k, v in constants.CARTESIA_STT_MODELS.items()
+                ]
+            ),
             "modes": constants.STT_MODES,
             "streamTypes": constants.STT_STREAM_TYPES,
             "languages": list(constants.SUPPORTED_LANGUAGES.keys()) + ["unknown"],
@@ -107,7 +113,7 @@ async def catalog():
             "reasoningEfforts": list(OPENAI_REASONING_EFFORTS),
             "modelPresets": OPENAI_MODEL_PRESETS,
             "maxTokens": [50, 800],
-            "brainPromptBudget": [1500, 2500],
+            "brainPromptBudget": [1500, 10000],
             "modelGroups": [
                 {"label": "GPT-5 family (voice-tuned)", "models": allowed_models},
             ],
@@ -231,10 +237,17 @@ async def post_runtime(body: RuntimePatch):
     except Exception as e:
         # e.g., get_settings() ConfigError inside openaiModel validation
         raise HTTPException(status_code=500, detail={"error": {"code": "config_error", "message": str(e)[:300]}}) from e
-    return {"ok": True, "sessionId": body.sessionId, "values": values}
+    persisted = await runtime_settings.persist_to_db(body.sessionId)
+    return {"ok": True, "sessionId": body.sessionId, "values": values, "persistedToDb": persisted}
 
 
 @router.delete("/api/settings/runtime")
 async def delete_runtime(sessionId: str = Query("default")):
     runtime_settings.clear(sessionId)
+    try:
+        from server.services.saved_runtime_store import delete as delete_saved
+
+        await delete_saved(sessionId)
+    except Exception:
+        pass
     return {"ok": True, "sessionId": sessionId, "cleared": True}

@@ -1,0 +1,618 @@
+import React, { useState, useEffect } from 'react';
+import { X, Lock, Mail, ArrowRight, CheckCircle2, Eye, EyeOff, Sparkles } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { analytics } from '../services/analytics';
+import { api } from '../services/api';
+
+export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSuccess, notice = '' }) {
+  const { loginWithGoogle, loginWithEmail, signupWithEmail, refreshSession } = useAuth();
+
+  const [mode, setMode] = useState(initialMode);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loadingMethod, setLoadingMethod] = useState(null);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [googleSignInEnabled, setGoogleSignInEnabled] = useState(true);
+  const [googleConfigHint, setGoogleConfigHint] = useState('');
+  const [showResendVerification, setShowResendVerification] = useState(false);
+  const [resendStatus, setResendStatus] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  const [pendingVerifyEmail, setPendingVerifyEmail] = useState('');
+  const [resetDebugUrl, setResetDebugUrl] = useState('');
+  const [debugOtp, setDebugOtp] = useState('');
+
+  /**
+   * The single-use reset token lives in the URL fragment.
+   *
+   * Read it when the form is submitted rather than once at mount: the modal is mounted
+   * for the life of the app, so a value captured on mount is the hash the visitor
+   * arrived with — empty if they opened the reset link later in the same tab, which
+   * then failed with "invalid or expired" for a perfectly good link.
+   */
+  const readResetToken = () =>
+    new URLSearchParams((window.location.hash.split('?')[1]) || '').get('token') || '';
+
+  useEffect(() => {
+    const onAuthErr = (e) => {
+      setErrorMessage(e.detail?.message || 'Sign-in failed.');
+      setMode('signin');
+    };
+    window.addEventListener('voxly:auth-error', onAuthErr);
+    return () => window.removeEventListener('voxly:auth-error', onAuthErr);
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const cfg = await api.auth.googleConfig();
+        if (cancelled) return;
+        setGoogleSignInEnabled(Boolean(cfg?.enabled));
+        if (!cfg?.enabled) {
+          setGoogleConfigHint('Google sign-in is not configured for this environment.');
+        } else {
+          setGoogleConfigHint('');
+        }
+      } catch {
+        if (!cancelled) {
+          setGoogleSignInEnabled(true);
+          setGoogleConfigHint('');
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    setMode(initialMode);
+    setErrorMessage('');
+    setSuccessMessage('');
+    setConfirmPassword('');
+  }, [initialMode, isOpen]);
+
+  useEffect(() => {
+    if (notice) setErrorMessage(notice);
+  }, [notice]);
+
+  useEffect(() => {
+    if (!isOpen && window.location.hash?.includes('reset-password')) {
+      setMode('reset');
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setErrorMessage('');
+      setLoadingMethod('google');
+      const user = await loginWithGoogle();
+      if (!user) return;
+      analytics.track('auth_google_success', { userId: user.id });
+      setSuccessMessage(`Welcome back, ${user.name}!`);
+      setTimeout(() => {
+        onClose();
+        if (onAuthSuccess) onAuthSuccess(user);
+      }, 600);
+    } catch (err) {
+      setErrorMessage(err.message || 'Failed to sign in with Google.');
+    } finally {
+      setLoadingMethod(null);
+    }
+  };
+
+  const handleEmailSubmit = async (e) => {
+    e.preventDefault();
+    // Duplicate-submit guard (double-click / Enter while in-flight).
+    if (loadingMethod !== null) return;
+    setErrorMessage('');
+
+    try {
+      let authedUser = null;
+      if (mode === 'signup') {
+        setLoadingMethod('email');
+        const signupRes = await signupWithEmail(name, email, password);
+        if (signupRes?.requiresEmailVerification) {
+          setPendingVerifyEmail(signupRes.email || email.trim());
+          setOtpCode('');
+          // Dev deployment with no mail provider: the code comes back in the response,
+          // otherwise this step is a dead end with no way forward.
+          if (signupRes.debugOtp) {
+            setDebugOtp(String(signupRes.debugOtp));
+            setOtpCode(String(signupRes.debugOtp));
+          }
+          setSuccessMessage(signupRes.message || 'Enter the 6-digit code we sent to your email.');
+          setMode('verify-otp');
+          return;
+        }
+        authedUser = signupRes;
+        analytics.track('auth_signup_success', { userId: authedUser.id });
+        setSuccessMessage(`Account created! Welcome to Dialtact, ${authedUser.name}.`);
+      } else if (mode === 'forgot') {
+        setLoadingMethod('email');
+        const res = await api.auth.forgotPassword(email);
+        setSuccessMessage(res?.message || 'If an account exists, reset instructions were sent to your email.');
+        if (res?.debugResetUrl) {
+          // Dev deployment (AUTH_DEBUG_EXPOSE_RESET_TOKEN): no working mail provider,
+          // so surface the link instead of leaving the flow unfinishable.
+          setResetDebugUrl(res.debugResetUrl);
+        }
+        setMode('signin');
+        return;
+      } else if (mode === 'reset') {
+        setLoadingMethod('email');
+        const token = readResetToken();
+        if (!token) throw new Error('Reset link is invalid or expired.');
+        if (password !== confirmPassword) {
+          throw new Error('The two passwords do not match.');
+        }
+        // The server signs the user in here — a valid single-use reset token is proof
+        // that the mailbox owner asked for this. Retyping the new password on the
+        // sign-in form right afterwards was pure friction.
+        const data = await api.auth.resetPassword(token, password);
+        window.location.hash = '';
+        authedUser = await refreshSession();
+        analytics.track('auth_password_reset', { userId: authedUser?.id });
+        setSuccessMessage(`Password updated. Welcome back, ${authedUser?.name || 'there'}!`);
+      } else if (mode === 'signin') {
+        setLoadingMethod('email');
+        authedUser = await loginWithEmail(email, password);
+        analytics.track('auth_signin_success', { userId: authedUser.id });
+        setSuccessMessage(`Welcome back, ${authedUser.name}!`);
+      }
+      setTimeout(() => {
+        onClose();
+        if (onAuthSuccess) onAuthSuccess(authedUser);
+      }, 700);
+    } catch (err) {
+      setErrorMessage(err.message || 'Authentication error.');
+      setShowResendVerification(err.code === 'email_unverified');
+    } finally {
+      setLoadingMethod(null);
+    }
+  };
+
+  const handleOtpSubmit = async (e) => {
+    e.preventDefault();
+    if (loadingMethod !== null) return;
+    setErrorMessage('');
+    const targetEmail = pendingVerifyEmail || email.trim();
+    if (!targetEmail || otpCode.length !== 6) {
+      setErrorMessage('Enter the 6-digit code from your email.');
+      return;
+    }
+    try {
+      setLoadingMethod('otp');
+      await api.auth.verifyEmailOtp(targetEmail, otpCode);
+      const authedUser = await refreshSession();
+      analytics.track('auth_signup_verified', { userId: authedUser?.id });
+      setSuccessMessage(`Welcome to Dialtact, ${authedUser?.name || 'there'}!`);
+      setTimeout(() => {
+        onClose();
+        if (onAuthSuccess) onAuthSuccess(authedUser);
+      }, 500);
+    } catch (err) {
+      setErrorMessage(err.message || 'Invalid or expired code.');
+    } finally {
+      setLoadingMethod(null);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-[#0F0E17]/60 backdrop-blur-sm transition-opacity"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      {/* Modal Dialog */}
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="auth-modal-title"
+        className="relative bg-white rounded-2xl border border-[#E4E2EB] shadow-2xl w-full max-w-md max-h-[calc(100dvh-2rem)] flex flex-col overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-200 text-left my-auto"
+      >
+        
+        {/* Modal Header */}
+        <div className="flex items-center justify-between px-6 pt-5 pb-2 shrink-0">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-[#0F0E17] flex items-center justify-center text-white shadow-xs">
+              <Lock className="w-4 h-4" />
+            </div>
+            <span className="text-xs font-mono font-semibold text-[#524E5E] uppercase tracking-wider">
+              Dialtact account
+            </span>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-9 h-9 sm:w-8 sm:h-8 rounded-lg bg-[#FAF9FD] hover:bg-[#F0EEF6] border border-[#E4E2EB] flex items-center justify-center text-[#524E5E] hover:text-[#0F0E17] transition-colors"
+            aria-label="Close dialog"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Title */}
+        <div className="px-6 pt-2 pb-4 border-b border-[#E4E2EB] shrink-0">
+          <h3 id="auth-modal-title" className="text-xl font-extrabold text-[#0F0E17] tracking-tight">
+            {mode === 'signup'
+              ? 'Create your account'
+              : mode === 'verify-otp'
+                ? 'Verify your email'
+                : mode === 'reset'
+                  ? 'Choose a new password'
+                  : 'Sign in to your console'}
+          </h3>
+          <p className="text-xs text-[#524E5E] mt-1">
+            {mode === 'verify-otp'
+              ? 'Use the same email for password sign-in and Google — one account per email.'
+              : mode === 'signup'
+                ? 'Email, Google, and your console share one Dialtact account.'
+                : mode === 'reset'
+                  ? 'This link signed you in once it is used. Pick a password you have not used before.'
+                  : 'Sign in with email or Google to open your agent console.'}
+          </p>
+        </div>
+
+        {/* Content Body */}
+        <div className="p-6 space-y-4 overflow-y-auto">
+          
+          {/* Alerts: Error & Success */}
+          {errorMessage && (
+            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium flex items-start gap-2">
+              <span className="font-bold">Error:</span>
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>{successMessage}</span>
+            </div>
+          )}
+
+          {resetDebugUrl && (
+            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs space-y-2">
+              <p className="font-semibold">Development mode: email delivery is not configured.</p>
+              <p className="text-[11px] text-amber-800">
+                The server returned the reset link directly instead of mailing it.
+              </p>
+              <a
+                href={resetDebugUrl}
+                data-testid="auth-debug-reset-link"
+                className="block font-mono text-[11px] underline break-all"
+              >
+                {resetDebugUrl}
+              </a>
+            </div>
+          )}
+
+          {showResendVerification && email && (
+            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs space-y-2">
+              <p>Your account is not verified yet.</p>
+              <button
+                type="button"
+                disabled={loadingMethod !== null}
+                onClick={async () => {
+                  setResendStatus('');
+                  try {
+                    await api.auth.resendVerification(email.trim());
+                    setResendStatus('If this email is registered, we sent a new verification code.');
+                  } catch (e) {
+                    setResendStatus(e.message || 'Could not resend.');
+                  }
+                }}
+                className="font-semibold text-[#6344E7] hover:underline"
+              >
+                Resend verification email
+              </button>
+              {resendStatus && <p className="text-[#524E5E]">{resendStatus}</p>}
+            </div>
+          )}
+
+          {/* Social Sign-in Buttons (shown in standard signin/signup modes) */}
+          {mode === 'verify-otp' && (
+            <form onSubmit={handleOtpSubmit} className="space-y-4">
+              <p className="text-xs text-[#524E5E]">
+                Code sent to <strong className="text-[#0F0E17]">{pendingVerifyEmail || email}</strong>
+              </p>
+              <div>
+                <label className="block text-xs font-semibold text-[#0F0E17] mb-1">6-digit code</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  pattern="[0-9]{6}"
+                  required
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  className="w-full text-center tracking-[0.4em] text-lg font-mono px-3 py-3 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] focus:outline-none focus:border-[#6344E7]"
+                />
+              </div>
+              {debugOtp && (
+                <div
+                  data-testid="auth-debug-otp"
+                  className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs space-y-1"
+                >
+                  <p className="font-semibold">Development mode: email delivery is not configured.</p>
+                  <p className="text-[11px] text-amber-800">
+                    The server returned the code directly instead of mailing it.
+                  </p>
+                  <p className="font-mono text-sm tracking-[0.3em]">{debugOtp}</p>
+                </div>
+              )}
+              <button
+                type="submit"
+                disabled={loadingMethod !== null || otpCode.length !== 6}
+                className="w-full py-3 min-h-[44px] rounded-xl text-xs font-semibold text-white bg-[#0F0E17] disabled:opacity-50"
+              >
+                {loadingMethod === 'otp' ? 'Verifying…' : 'Verify & continue'}
+              </button>
+              <button
+                type="button"
+                className="w-full text-xs font-semibold text-[#6344E7]"
+                onClick={async () => {
+                  try {
+                    const res = await api.auth.resendVerification(pendingVerifyEmail || email);
+                    if (res?.debugOtp) {
+                      setDebugOtp(String(res.debugOtp));
+                      setOtpCode(String(res.debugOtp));
+                    }
+                    setResendStatus('New code sent if the account exists.');
+                  } catch (err) {
+                    setResendStatus(err.message);
+                  }
+                }}
+              >
+                Resend code
+              </button>
+              {resendStatus && <p className="text-[11px] text-[#524E5E]">{resendStatus}</p>}
+              <button
+                type="button"
+                onClick={() => setMode('signin')}
+                className="w-full text-xs text-[#524E5E] hover:text-[#0F0E17]"
+              >
+                Back to sign in
+              </button>
+            </form>
+          )}
+
+          {(mode === 'signin' || mode === 'signup') && (
+            <div className="space-y-2.5">
+              {/* Google OAuth Button */}
+              {googleConfigHint && (
+                <p className="text-[10px] text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-1.5">
+                  {googleConfigHint}
+                </p>
+              )}
+              <button
+                type="button"
+                onClick={handleGoogleSignIn}
+                disabled={loadingMethod !== null || !googleSignInEnabled}
+                title={!googleSignInEnabled ? googleConfigHint : undefined}
+                className="w-full min-h-[44px] flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl bg-white hover:bg-[#FAF9FD] text-[#0F0E17] font-semibold text-xs border border-[#E4E2EB] shadow-xs active:scale-[0.98] transition-all disabled:opacity-60"
+              >
+                {loadingMethod === 'google' ? (
+                  <div className="w-4 h-4 border-2 border-[#E4E2EB] border-t-[#0F0E17] rounded-full animate-spin" />
+                ) : (
+                  <svg className="w-4 h-4" viewBox="0 0 24 24">
+                    <path
+                      fill="#4285F4"
+                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                    />
+                    <path
+                      fill="#EA4335"
+                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                    />
+                  </svg>
+                )}
+                <span>Continue with Google</span>
+              </button>
+
+              {/* Hairline Divider */}
+              <div className="relative py-2">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-[#E4E2EB]" />
+                </div>
+                <div className="relative flex justify-center text-[10px] uppercase font-mono font-bold tracking-wider text-[#524E5E]">
+                  <span className="bg-white px-3">or continue with work email</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Email / Password Form */}
+          {(mode === 'signin' || mode === 'signup' || mode === 'forgot' || mode === 'reset') && (
+            <form onSubmit={handleEmailSubmit} className="space-y-3">
+              {mode === 'signup' && (
+                <div>
+                  <label className="block text-xs font-semibold text-[#0F0E17] mb-1">
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Sarah Connor"
+                    className="w-full text-base sm:text-xs px-3.5 py-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] focus:outline-none focus:border-[#0F0E17] text-[#0F0E17] placeholder:text-[#635F70]"
+                  />
+                </div>
+              )}
+
+              {mode !== 'reset' && (
+              <div>
+                <label htmlFor="voxly-auth-email" className="block text-xs font-semibold text-[#0F0E17] mb-1">
+                  Work Email
+                </label>
+                <input
+                  id="voxly-auth-email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="alex@company.com"
+                  autoComplete="username"
+                  className="w-full text-base sm:text-xs px-3.5 py-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] focus:outline-none focus:border-[#0F0E17] text-[#0F0E17] placeholder:text-[#635F70]"
+                />
+              </div>
+              )}
+
+              {mode !== 'forgot' && (
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label htmlFor="voxly-auth-password" className="block text-xs font-semibold text-[#0F0E17]">
+                    {mode === 'reset' ? 'New password' : 'Password'}
+                  </label>
+                  {mode === 'signin' && (
+                    <button
+                      type="button"
+                      onClick={() => setMode('forgot')}
+                      className="text-[11px] text-[#6344E7] hover:underline font-medium"
+                    >
+                      Forgot password?
+                    </button>
+                  )}
+                </div>
+                <div className="relative">
+                  <input
+                    id="voxly-auth-password"
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    minLength={mode === 'reset' ? 8 : undefined}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••••••"
+                    autoComplete={mode === 'reset' ? 'new-password' : 'current-password'}
+                    className="w-full text-base sm:text-xs px-3.5 py-2.5 pr-10 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] focus:outline-none focus:border-[#0F0E17] text-[#0F0E17] placeholder:text-[#635F70]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#524E5E] hover:text-[#0F0E17] p-1"
+                    tabIndex="-1"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {mode === 'reset' && (
+                  <p className="mt-1 text-[11px] text-[#524E5E]">At least 8 characters.</p>
+                )}
+              </div>
+              )}
+
+              {mode === 'reset' && (
+                <div>
+                  <label htmlFor="voxly-auth-confirm" className="block text-xs font-semibold text-[#0F0E17] mb-1">
+                    Confirm new password
+                  </label>
+                  <input
+                    id="voxly-auth-confirm"
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    minLength={8}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••••••"
+                    autoComplete="new-password"
+                    data-testid="auth-reset-confirm"
+                    className="w-full text-base sm:text-xs px-3.5 py-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] focus:outline-none focus:border-[#0F0E17] text-[#0F0E17] placeholder:text-[#635F70]"
+                  />
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loadingMethod !== null}
+                className="w-full mt-2 inline-flex items-center justify-center gap-2 py-3 px-4 min-h-[44px] rounded-xl text-xs font-semibold text-white bg-[#0F0E17] hover:bg-[#232130] active:scale-[0.98] transition-all shadow-xs disabled:opacity-60"
+              >
+                {loadingMethod === 'email' ? (
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <span>
+                      {mode === 'signup'
+                        ? 'Create Account'
+                        : mode === 'forgot'
+                        ? 'Send reset email'
+                        : mode === 'reset'
+                        ? 'Update password'
+                        : 'Sign In'}
+                    </span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </>
+                )}
+              </button>
+            </form>
+          )}
+
+          {/* Bottom Switchers */}
+          <div className="pt-3 border-t border-[#E4E2EB] flex flex-col gap-2 text-center text-xs text-[#524E5E]">
+            {mode === 'signin' && (
+              <p>
+                Don&apos;t have an account?{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode('signup');
+                    setErrorMessage('');
+                  }}
+                  className="font-bold text-[#6344E7] hover:underline"
+                >
+                  Create an account
+                </button>
+              </p>
+            )}
+
+            {mode === 'signup' && (
+              <p>
+                Already have an account?{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode('signin');
+                    setErrorMessage('');
+                  }}
+                  className="font-bold text-[#6344E7] hover:underline"
+                >
+                  Sign in
+                </button>
+              </p>
+            )}
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  );
+}

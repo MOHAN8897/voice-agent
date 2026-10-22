@@ -29,6 +29,7 @@ def _client(monkeypatch, tmp_path):
     monkeypatch.setenv("SARVAM_API_KEY", "sarvam-test")
     monkeypatch.setenv("DATA_DIR", str(tmp_path))
     monkeypatch.setenv("CALL_AUTO_END_ON_START", "true")
+    monkeypatch.setenv("SAAS_AUTH_ENABLED", "false")
     _reset()
     return TestClient(app_mod.app)
 
@@ -40,6 +41,7 @@ def test_call_start_and_end_idempotent_202(monkeypatch, tmp_path):
     call_id = started.json()["call_id"]
     assert started.json()["locked_versions"]["combination_id"]
     assert "ws_urls" in started.json()
+    assert started.json().get("pipeline") == "realtime_text"
 
     ended = c.post("/api/call/end", json={"callId": call_id, "reason": "user_stop"})
     assert ended.status_code == 202
@@ -49,6 +51,31 @@ def test_call_start_and_end_idempotent_202(monkeypatch, tmp_path):
     again = c.post("/api/call/end", json={"callId": call_id, "reason": "user_stop"})
     assert again.status_code == 202
     assert again.json()["status_url"] == url
+    get_settings.cache_clear()
+
+
+def test_call_start_passes_authenticated_tenant_to_lifecycle(monkeypatch, tmp_path):
+    from server.auth.subscriber_dependencies import require_subscriber_jwt_if_enabled
+    from server.call import call_lifecycle_service as lifecycle_module
+    from server.routes import calls as calls_module
+
+    c = _client(monkeypatch, tmp_path)
+    monkeypatch.setenv("SAAS_AUTH_ENABLED", "true")
+    get_settings.cache_clear()
+    start = AsyncMock(return_value={"call_id": "tenant-scoped-call"})
+    monkeypatch.setattr(lifecycle_module.call_lifecycle_service, "start", start)
+    monkeypatch.setattr(calls_module, "tenant_id_from_request", lambda _request: "tenant-a")
+    monkeypatch.setitem(app_mod.app.dependency_overrides, require_subscriber_jwt_if_enabled, lambda: None)
+
+    response = c.post(
+        "/api/call/start",
+        json={"agentId": "agent-a", "sessionId": "tenant-test", "channel": "browser"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["call_id"] == "tenant-scoped-call"
+    assert start.await_args.kwargs["tenant_id"] == "tenant-a"
+    assert start.await_args.kwargs["agent_id"] == "agent-a"
     get_settings.cache_clear()
 
 
@@ -204,5 +231,156 @@ def test_outcome_retry_enqueues_and_returns_202(monkeypatch, tmp_path):
     assert body["status_url"] == f"/api/call/{call_id}/finalization"
     assert "outcome" not in body
     enq.assert_awaited()
+    get_settings.cache_clear()
+
+
+def test_call_start_clears_session_conversation_history(monkeypatch, tmp_path):
+    from server.agent.conversation_manager import conversation_manager
+    from server.agent.session_memory import session_memory
+
+    c = _client(monkeypatch, tmp_path)
+    conversation_manager.add_turn("leak-sess", "Don't call me again.", "Okay, goodbye.")
+    session_memory.set_summary("leak-sess", "Caller asked not to be called.")
+    assert conversation_manager.get_history("leak-sess")
+    c.post("/api/call/start", json={"sessionId": "leak-sess", "channel": "browser"})
+    assert conversation_manager.get_history("leak-sess") == []
+    assert session_memory.get_summary("leak-sess") == ""
+    get_settings.cache_clear()
+
+
+def test_get_call_merges_usage_cost_and_pipeline(monkeypatch, tmp_path):
+    c = _client(monkeypatch, tmp_path)
+    call_id = c.post("/api/call/start", json={"sessionId": "cost-sess", "channel": "pstn"}).json()["call_id"]
+    meta = call_ledger.read_meta(call_id)
+    assert meta.get("pipeline")
+    meta["pipeline"] = "realtime_voice"
+    meta["usage"] = {
+        "pipeline": "realtime_voice",
+        "llm_model": "gpt-realtime-2.1-mini",
+        "cost_usd": 0.1,
+        "cost_inr": 9.56,
+        "model_cost_usd": 0.1,
+        "model_cost_inr": 9.56,
+        "turns": 1,
+        "input_audio_tokens": 600,
+        "output_audio_tokens": 1200,
+        "fx_rate_inr": 95.64,
+    }
+    call_ledger.write_meta(call_id, meta)
+    c.post("/api/call/end", json={"callId": call_id})
+    body = c.get(f"/api/call/{call_id}").json()
+    assert body["pipeline"] == "realtime_voice"
+    usage = body["usage"]
+    assert usage["model_cost_usd"] == pytest.approx(0.1)
+    assert usage["telnyx_usd"] is not None
+    assert usage["cost_usd"] == pytest.approx(0.1 + float(usage["telnyx_usd"]))
+    assert usage["duration_sec"] is not None
+    assert "cost_inr_per_min" in usage
+    listed = c.get("/api/calls").json()["calls"]
+    row = next(x for x in listed if x["call_id"] == call_id)
+    assert row["cost_usd"] == pytest.approx(usage["cost_usd"])
+    assert row["pipeline"] == "realtime_voice"
+    get_settings.cache_clear()
+
+
+@pytest.mark.asyncio
+async def test_stamp_ended_usage_adds_telnyx_minutes(monkeypatch, tmp_path):
+    monkeypatch.setenv("DATA_DIR", str(tmp_path))
+    get_settings.cache_clear()
+    call_ledger.reset_for_tests()
+    from server.services.usage_pricing import cost_telnyx_call_usd, telnyx_estimate_call_recording
+
+    cid = "stamp-telnyx"
+    await call_ledger.init(
+        cid,
+        {
+            "call_id": cid,
+            "channel": "pstn",
+            "pipeline": "realtime_voice",
+            "direction": "outbound",
+            "usage": {
+                "cost_usd": 0.03,
+                "cost_inr": 2.8692,
+                "model_cost_usd": 0.03,
+                "model_cost_inr": 2.8692,
+                "fx_rate_inr": 95.64,
+            },
+        },
+    )
+    call_ledger.stamp_ended_usage(cid, reason="user_stop", duration_sec=90)
+    meta = call_ledger.read_meta(cid)
+    telnyx_90 = cost_telnyx_call_usd(
+        duration_sec=90,
+        direction="outbound",
+        media_streaming=True,
+        call_recording=telnyx_estimate_call_recording(),
+    )
+    assert meta["usage"]["telnyx_usd"] == pytest.approx(telnyx_90)
+    assert meta["usage"]["telnyx_media_stream_usd"] > 0
+    assert meta["usage"]["cost_usd"] == pytest.approx(0.03 + telnyx_90)
+    assert meta["usage"]["duration_sec"] == 90
+    assert meta["usage"]["gst_inr"] == 0.0
+    assert meta["usage"]["model_cost_inr_per_min"] == pytest.approx(0.03 * 95.64 / 1.5)
+    assert meta["usage"]["telnyx_inr_per_min"] == pytest.approx(telnyx_90 * 95.64 / 1.5)
+    assert meta["usage"]["cost_inr_per_min"] == pytest.approx((0.03 + telnyx_90) * 95.64 / 1.5)
+    get_settings.cache_clear()
+
+
+@pytest.mark.asyncio
+async def test_stamp_ended_usage_stamps_gemini_list_audio_rate(monkeypatch, tmp_path):
+    monkeypatch.setenv("DATA_DIR", str(tmp_path))
+    get_settings.cache_clear()
+    call_ledger.reset_for_tests()
+    from server.services.usage_pricing import GEMINI_LIVE_AUDIO_INPUT_USD_PER_MIN, GEMINI_LIVE_AUDIO_OUTPUT_USD_PER_MIN
+
+    cid = "stamp-gemini"
+    await call_ledger.init(
+        cid,
+        {
+            "call_id": cid,
+            "channel": "pstn",
+            "pipeline": "realtime_voice",
+            "direction": "outbound",
+            "usage": {
+                "llm_model": "gemini-3.8-live",
+                "cost_usd": 0.01,
+                "model_cost_usd": 0.01,
+                "fx_rate_inr": 95.64,
+            },
+        },
+    )
+    call_ledger.stamp_ended_usage(cid, reason="user_stop", duration_sec=18)
+    meta = call_ledger.read_meta(cid)
+    listed = GEMINI_LIVE_AUDIO_INPUT_USD_PER_MIN + GEMINI_LIVE_AUDIO_OUTPUT_USD_PER_MIN
+    assert meta["usage"]["gemini_list_audio_inr_per_min"] == pytest.approx(listed * 95.64)
+    assert meta["usage"]["cost_inr_per_min"] != pytest.approx(listed * 95.64)
+    get_settings.cache_clear()
+
+
+def test_billable_duration_uses_connected_at(monkeypatch, tmp_path):
+    monkeypatch.setenv("DATA_DIR", str(tmp_path))
+    get_settings.cache_clear()
+    call_ledger.reset_for_tests()
+    from datetime import datetime, timedelta, timezone
+
+    from server.call.call_lifecycle_service import _billable_duration_sec
+
+    cid = "billable-connected"
+    started = datetime.now(timezone.utc) - timedelta(seconds=120)
+    connected = datetime.now(timezone.utc) - timedelta(seconds=45)
+    ended = datetime.now(timezone.utc)
+    call_ledger.write_meta(
+        cid,
+        {
+            "call_id": cid,
+            "channel": "pstn",
+            "pipeline": "realtime_voice",
+            "started_at": started.isoformat().replace("+00:00", "Z"),
+            "connected_at": connected.isoformat().replace("+00:00", "Z"),
+        },
+    )
+    fallback = int((ended - started).total_seconds())
+    billable = _billable_duration_sec(cid, ended, fallback)
+    assert billable == pytest.approx(45, abs=2)
     get_settings.cache_clear()
 

@@ -15,27 +15,28 @@ STT realtime: wss://api.sarvam.ai/speech-to-text-realtime/ws
 
 TTS WS: wss://api.sarvam.ai/text-to-speech/ws?model=bulbul:v3&send_completion_event=true
   client→srv: {"type":"config","data":{speaker,language_code,pace,min_buffer_size,max_chunk_length,
-               output_audio_codec,output_audio_bitrate,temperature(v3),sample_rate?}}
+               output_audio_codec,speech_sample_rate,temperature(v3)}}
               {"type":"text","data":{"text":"..."}} (≤2500, <500 rec) | {"type":"flush"} | {"type":"ping"}
   srv→client: audio chunks (base64 in data.audio) | event notification | error
   NOTE: no server-side cancel — barge-in is client-side.
 """
 from __future__ import annotations
 
+import inspect
 from typing import Any
 
 import websockets  # provided by uvicorn[standard]
 
-from server.config.constants import constants
+from server.config.constants import constants, provider_language_code
 from server.config.env import get_settings
+from server.services.dev_secrets_store import dev_secrets_store
 
 
 def _connect(url: str, headers: dict[str, str], **kw: Any):
-    """websockets v13+: additional_headers; older: extra_headers."""
-    try:
-        return websockets.connect(url, additional_headers=headers, max_size=None, **kw)
-    except TypeError:  # pragma: no cover - older lib
-        return websockets.connect(url, extra_headers=headers, max_size=None, **kw)
+    """Select the installed client API before connect defers work until await."""
+    parameters = inspect.signature(websockets.connect).parameters
+    header_name = "additional_headers" if "additional_headers" in parameters else "extra_headers"
+    return websockets.connect(url, **{header_name: headers}, max_size=None, **kw)
 
 
 def _resolve_realtime_stt_model(model: str | None = None) -> str:
@@ -59,12 +60,13 @@ def connect_stt_realtime(
     silence_duration_ms: int | None = None,
     threshold: float | None = None,
     min_speech_duration_ms: int | None = None,
+    prefix_padding_ms: int | None = None,
     high_vad_sensitivity: bool = True,
     model: str | None = None,
 ):
     settings = get_settings()
     params = {
-        "language_code": language_code,
+        "language_code": provider_language_code(language_code, provider="sarvam", stage="stt"),
         "model": _resolve_realtime_stt_model(model),
         "stream_type": stream_type,
         "mode": mode,
@@ -78,16 +80,20 @@ def connect_stt_realtime(
         params["threshold"] = str(threshold)
     if min_speech_duration_ms is not None:
         params["min_speech_duration_ms"] = str(min_speech_duration_ms)
-    if high_vad_sensitivity:
+    if prefix_padding_ms is not None:
+        params["prefix_padding_ms"] = str(prefix_padding_ms)
+    if high_vad_sensitivity and min_speech_duration_ms is None and prefix_padding_ms is None:
         params["high_vad_sensitivity"] = "true"
     qs = "&".join(f"{k}={v}" for k, v in params.items())
     url = f"{constants.SARVAM_STT_REALTIME_WS}?{qs}"
-    headers = {"api-subscription-key": settings.sarvam_api_key}
+    sarvam_key = dev_secrets_store.effective_secret("sarvam_api_key") or settings.sarvam_api_key or ""
+    headers = {"api-subscription-key": sarvam_key}
     return _connect(url, headers, ping_interval=20, ping_timeout=20)
 
 
 def connect_tts_ws(model: str = "bulbul:v3"):
     settings = get_settings()
     url = f"{constants.SARVAM_TTS_WS}?model={model}&send_completion_event=true"
-    headers = {"api-subscription-key": settings.sarvam_api_key}
+    sarvam_key = dev_secrets_store.effective_secret("sarvam_api_key") or settings.sarvam_api_key or ""
+    headers = {"api-subscription-key": sarvam_key}
     return _connect(url, headers, ping_interval=None)  # we send app-level pings per protocol

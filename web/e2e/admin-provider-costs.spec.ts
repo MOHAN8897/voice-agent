@@ -1,0 +1,50 @@
+import { expect, test } from "@playwright/test";
+import { ensureDevPortalReady } from "./helpers";
+
+test("supplier costs keep provider units and version conflicts separate from customer prices", async ({ page }) => {
+  const row = { id: "sarvam-stt", stage: "stt", provider: "sarvam", model: "saaras:v3-realtime", currency: "INR", unit: "audio_minute", price: "0.49", effectiveFrom: "2026-10-01", effectiveUntil: null, sourceUrl: "https://www.sarvam.ai/api-pricing" };
+  let snapshot = { schemaVersion: 1, version: 2, configured: true, rates: [row], stacks: [{ tier: "low", label: "Low", stages: { stt: { provider: "sarvam", model: "saaras:v3-realtime" } }, rateIds: [row.id], costStatus: "missing_rates", missingRates: ["Missing selected LLM input tariff"] }] };
+  let supplierWrites = 0;
+  let retailWrites = 0;
+  await page.route("**/api/auth/dev-me", (route) => route.fulfill({ json: { authenticated: true, subject: "e2e-admin", csrf_token: "test-csrf" } }));
+  await page.route("**/api/dev/admin/wallets", (route) => route.fulfill({ json: { wallets: [], currency: "USD" } }));
+  await page.route("**/api/dev/admin/purchases**", (route) => route.fulfill({ json: { purchases: [] } }));
+  await page.route("**/api/dev/admin/payments/orders**", (route) => route.fulfill({ json: { orders: [] } }));
+  await page.route("**/api/dev/admin/payments", (route) => route.fulfill({ json: { internationalEnabled: false, currency: "USD" } }));
+  await page.route("**/api/dev/admin/billing/cost-insights**", (route) => route.fulfill({ json: { asOf: "2026-10-22", channels: [], samples: [], notes: [] } }));
+  await page.route("**/api/dev/admin/billing-rates", (route) => {
+    if (route.request().method() === "PUT") retailWrites += 1;
+    return route.fulfill({ json: { currency: "USD", rates: { pstnUsdPerMin: 0.09, webUsdPerMin: 0.07, numberMonthlyUsd: 4, fxRateInr: 95, pstnInrPerMin: 8.55, webInrPerMin: 6.65, numberMonthlyInr: 380 }, fx: { liveRateInr: null } } });
+  });
+  await page.route("**/api/dev/admin/billing/provider-costs", async (route) => {
+    if (route.request().method() !== "PUT") return route.fulfill({ json: snapshot });
+    supplierWrites += 1;
+    const body = route.request().postDataJSON();
+    expect(body.expectedVersion).toBe(2);
+    expect(body.reason).toBe("Verified supplier contract");
+    expect(body.rates[0].price).toBe("0.50");
+    expect(body.rates[0].unit).toBe("audio_minute");
+    expect(body.pstnUsdPerMin).toBeUndefined();
+    if (supplierWrites === 1) return route.fulfill({ status: 409, json: { detail: { error: { code: "version_conflict", message: "Supplier rates changed in another session." } } } });
+    snapshot = { ...snapshot, version: 3, rates: [{ ...row, price: "0.50" }] };
+    return route.fulfill({ json: snapshot });
+  });
+  await page.goto("/dev/admin/billing");
+  await ensureDevPortalReady(page);
+  const panel = page.getByTestId("provider-cost-workbench");
+  await expect(panel.getByText("Saved version 2", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("supplier-stack-low")).toContainText("₹0.49 / Audio minute");
+  await expect(page.getByTestId("supplier-stack-low")).toContainText("Missing selected LLM input tariff");
+  await panel.getByLabel("Price for rate 1", { exact: true }).fill("0.50");
+  await panel.getByRole("button", { name: "Save supplier costs" }).click();
+  await expect(panel.getByRole("alert")).toContainText("at least 8 characters");
+  expect(supplierWrites).toBe(0);
+  await panel.getByRole("textbox", { name: "Audit reason" }).fill("Verified supplier contract");
+  await panel.getByRole("button", { name: "Save supplier costs" }).click();
+  await expect(panel.getByRole("alert")).toContainText("Supplier rates changed in another session.");
+  await expect(panel.getByLabel("Price for rate 1", { exact: true })).toHaveValue("0.50");
+  await panel.getByRole("button", { name: "Save supplier costs" }).click();
+  await expect(panel.getByRole("status")).toHaveText("Supplier cost version saved.");
+  await expect(panel.getByText("Saved version 3", { exact: true })).toBeVisible();
+  expect(retailWrites).toBe(0);
+});

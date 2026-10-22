@@ -1,0 +1,22 @@
+{
+  "intents": {
+    "flow:drive-admin-saves-the-selected-live-recognizer-while-t": {
+      "binding": {
+        "flow": "drive-admin-saves-the-selected-live-recognizer-while-t"
+      },
+      "declaredAt": 1792591919551,
+      "id": "flow:drive-admin-saves-the-selected-live-recognizer-while-t",
+      "source": "decided on the dashboard",
+      "state": "bound",
+      "statement": "Admin saves the selected live recognizer while the Gemini conversation model remains selected.",
+      "status": "proved",
+      "subject": "drive-admin-saves-the-selected-live-reco",
+      "surface": {
+        "flow": "drive-admin-saves-the-selected-live-recognizer-while-t"
+      },
+      "updatedAt": 1792591985053
+    }
+  },
+  "subject": "drive-admin-saves-the-selected-live-reco",
+  "version": 1
+}

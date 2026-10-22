@@ -1,0 +1,47 @@
+{
+  "status": "implemented_and_locally_verified",
+  "deployed": false,
+  "pushed": false,
+  "real_pstn_call_placed": false,
+  "admission_recovery": {
+    "active_before": 2,
+    "released_after_exact_terminal_carrier_cdr": 2,
+    "active_after": 0,
+    "ambiguous_calls_remain_protected": true
+  },
+  "live_provider_audio_probes": {
+    "source": "generic synthetic speech, no customer audio",
+    "gpt-transcribe": "passed_streaming_and_final_transcripts",
+    "saaras:v3-realtime": "passed_streaming_and_final_transcripts",
+    "evidence": "provider-probe.json",
+    "language_quality_benchmark": false
+  },
+  "checks": {
+    "expanded_backend_regressions": "134 passed, 1 skipped",
+    "after_final_backend_changes": "98 passed, 1 skipped",
+    "tenant_browser_cases": "4 passed",
+    "admin_browser_case": "passed selection, exact saved payload, reload persistence, save failure",
+    "reticle_admin_save": "verified yes",
+    "reticle_reload": "unknown: injected SDK did not reconnect; persistence separately passed Playwright",
+    "voxly_production_build": "passed",
+    "web_typescript": "passed",
+    "new_python_and_admission_ruff": "passed",
+    "repository_sast": "passed: 0 findings across 1295 targets",
+    "final_targeted_semgrep": "passed: 0 findings across 7 files",
+    "scoped_diff_whitespace": "passed",
+    "graft_refresh": "passed"
+  },
+  "configuration": {
+    "saved_admin_selection_changed": false,
+    "schema_changed": false,
+    "tenant_pricing_changed": false,
+    "shared_servers_restarted": false,
+    "conversation_model": "preserved Gemini; selected external service transcribes caller audio only"
+  },
+  "limits": [
+    "Changes require normal application deployment/restart before the updated code is live.",
+    "No real carrier call was placed; carrier audio routing remains to be verified after deployment.",
+    "Configured Redis was unavailable during admission inspection; infrastructure configuration was not changed.",
+    "Host policy rejected deletion of the isolated generated Next.js test build cache; it remains local."
+  ]
+}

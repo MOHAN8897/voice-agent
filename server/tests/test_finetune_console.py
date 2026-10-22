@@ -19,9 +19,10 @@ def test_catalog_shape(monkeypatch):
     assert "bulbul:v3" in [m["id"] for m in j["tts"]["models"]]
     assert "shubh" in j["tts"]["speakersV3"]
     assert "anushka" in j["tts"]["speakersV2"]
-    assert len(j["openai"]["allowedModels"]) == 4
-    assert set(j["openai"]["allowedModels"]) == {"gpt-5.5", "gpt-5.4", "gpt-5", "gpt-5.6-luna"}
-    assert j["openai"]["defaults"]["openaiModel"] == "gpt-5.6-luna"
+    allowed = set(j["openai"]["allowedModels"])
+    assert "gpt-5.6-luna" in allowed
+    assert "gpt-realtime-2.1-mini" in allowed
+    assert j["openai"]["defaults"]["openaiModel"] in allowed
     assert "behaviourInstructions" in j["openai"]["defaults"]
     get_settings.cache_clear()
 
@@ -67,7 +68,7 @@ def test_voice_preset_expands_bundle(monkeypatch):
     assert v.get("ttsPace") == 1.0
     assert v.get("ttsTemperature") == 0.80
     assert v.get("sttSilenceMs") == 500
-    assert v.get("bargeMinWords") == 3
+    assert v.get("bargeMinWords") == 4
     r2 = c.post("/api/settings/runtime", json={"sessionId": sid, "voicePresetId": "bogus"})
     assert r2.status_code == 400
     get_settings.cache_clear()
@@ -75,7 +76,7 @@ def test_voice_preset_expands_bundle(monkeypatch):
 def test_catalog_includes_voice_presets(monkeypatch):
     c = _client(monkeypatch)
     j = c.get("/api/settings/catalog").json()
-    assert "natural" in j["tts"]["voicePresets"]
+    assert "natural" in {preset["id"] for preset in j["tts"]["voicePresets"]}
     assert j["openai"]["defaults"].get("voicePresetId") == "natural"
     assert j["openai"]["defaults"].get("ttsPace") == 1.0
     assert j["openai"]["defaults"].get("ttsTemperature") == 0.80

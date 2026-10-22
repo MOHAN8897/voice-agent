@@ -1,0 +1,1042 @@
+{
+  "intents": {
+    "inline:admin-approved-kyc-shows-identity-verified-in-th-b62fafbc": {
+      "binding": {
+        "contains": "Identity verified",
+        "kind": "text"
+      },
+      "declaredAt": 1790930693191,
+      "id": "inline:admin-approved-kyc-shows-identity-verified-in-th-b62fafbc",
+      "provenBy": {
+        "at": 1790930693290,
+        "grade": "presence",
+        "verdictId": "reticle_assert:1790930693289"
+      },
+      "state": "proved",
+      "statement": "Admin-approved KYC shows Identity verified in the console Settings card",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/console/ui/TactileButton.jsx"
+        ]
+      },
+      "updatedAt": 1790930693312
+    },
+    "inline:approved-kyc-status-appears-in-settings-after-ad-d8b2105d": {
+      "binding": {
+        "kind": "anyOf",
+        "predicates": [
+          {
+            "contains": "Verified",
+            "kind": "text"
+          },
+          {
+            "contains": "Approved",
+            "kind": "text"
+          },
+          {
+            "kind": "net",
+            "method": "GET",
+            "status": 200,
+            "urlContains": "/api/kyc/status"
+          },
+          {
+            "kind": "element",
+            "query": {
+              "by": "testid",
+              "value": "kyc-approved"
+            }
+          }
+        ]
+      },
+      "declaredAt": 1790930678539,
+      "id": "inline:approved-kyc-status-appears-in-settings-after-ad-d8b2105d",
+      "state": "bound",
+      "statement": "Approved KYC status appears in Settings after admin override",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790930678588
+    },
+    "inline:approved-users-see-buy-catalog-without-start-ver-60e2dbbc": {
+      "binding": {
+        "kind": "anyOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "urlContains": "/api/kyc/status"
+          },
+          {
+            "contains": "Country",
+            "kind": "text"
+          },
+          {
+            "contains": "Start verification",
+            "kind": "text"
+          },
+          {
+            "contains": "Identity verified",
+            "kind": "text"
+          },
+          {
+            "kind": "element",
+            "query": {
+              "by": "testid",
+              "value": "buy-number-country"
+            }
+          }
+        ]
+      },
+      "declaredAt": 1790934033155,
+      "id": "inline:approved-users-see-buy-catalog-without-start-ver-60e2dbbc",
+      "provenBy": {
+        "at": 1790934034949,
+        "grade": "net",
+        "verdictId": "reticle_act_and_wait:1790934034949"
+      },
+      "state": "proved",
+      "statement": "Approved users see buy catalog without Start verification KYC card",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/console/ui/TactileButton.jsx"
+        ]
+      },
+      "updatedAt": 1790934034969
+    },
+    "inline:before-any-browser-mic-prompt-live-mic-shows-an-9b005f71": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "contains": "Microphone permission next",
+            "kind": "text"
+          },
+          {
+            "contains": "do not use camera",
+            "kind": "text"
+          }
+        ]
+      },
+      "declaredAt": 1790928153600,
+      "id": "inline:before-any-browser-mic-prompt-live-mic-shows-an-9b005f71",
+      "state": "bound",
+      "statement": "Before any browser mic prompt, Live Mic shows an explicit microphone-only consent explanation.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790928153720
+    },
+    "inline:billing-page-shows-card-payment-methods-without-c795753c": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "contains": "Wallet",
+            "kind": "text"
+          },
+          {
+            "absent": true,
+            "contains": "RAZORPAY_API",
+            "kind": "text"
+          },
+          {
+            "absent": true,
+            "contains": "Stripe",
+            "kind": "text"
+          },
+          {
+            "absent": true,
+            "contains": "API_SECRET",
+            "kind": "text"
+          }
+        ]
+      },
+      "declaredAt": 1790958366567,
+      "id": "inline:billing-page-shows-card-payment-methods-without-c795753c",
+      "provenBy": {
+        "at": 1790958368531,
+        "grade": "presence",
+        "verdictId": "reticle_act_and_wait:1790958368531"
+      },
+      "state": "proved",
+      "statement": "Billing page shows card payment methods without Razorpay env or admin secrets.",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/console/Sidebar.jsx"
+        ]
+      },
+      "updatedAt": 1790958368555
+    },
+    "inline:buy-modal-does-not-show-kyc-start-card-after-ide-08e299d4": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "by": "testid",
+              "value": "buy-number-country"
+            }
+          },
+          {
+            "absent": true,
+            "kind": "element",
+            "query": {
+              "by": "testid",
+              "value": "kyc-start-verification"
+            }
+          },
+          {
+            "absent": true,
+            "contains": "Start verification",
+            "kind": "text"
+          }
+        ]
+      },
+      "declaredAt": 1790934040187,
+      "id": "inline:buy-modal-does-not-show-kyc-start-card-after-ide-08e299d4",
+      "provenBy": {
+        "at": 1790934040379,
+        "grade": "presence",
+        "verdictId": "reticle_assert:1790934040379"
+      },
+      "state": "proved",
+      "statement": "Buy modal does not show KYC start card after identity already Approved",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/console/ui/TactileButton.jsx"
+        ]
+      },
+      "updatedAt": 1790934040423
+    },
+    "inline:buy-modal-quotes-the-same-4-00-month-platform-di-d302ef42": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "contains": "$4.00",
+            "kind": "text"
+          },
+          {
+            "contains": "Add credit to buy a number",
+            "kind": "text"
+          }
+        ]
+      },
+      "declaredAt": 1790935869735,
+      "id": "inline:buy-modal-quotes-the-same-4-00-month-platform-di-d302ef42",
+      "state": "bound",
+      "statement": "Buy modal quotes the same $4.00/month platform DID rate as list rows and blocks purchase when the wallet cannot cover it.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790935943598
+    },
+    "inline:buy-modal-shows-aligned-4-monthly-did-rate-and-b-f4df3c25": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "contains": "$4.00 / month",
+            "kind": "text"
+          },
+          {
+            "contains": "Add credit to buy a number",
+            "kind": "text"
+          },
+          {
+            "contains": "Wallet: $2.16",
+            "kind": "text"
+          }
+        ]
+      },
+      "declaredAt": 1790936077239,
+      "id": "inline:buy-modal-shows-aligned-4-monthly-did-rate-and-b-f4df3c25",
+      "provenBy": {
+        "at": 1790936077542,
+        "grade": "presence",
+        "verdictId": "reticle_assert:1790936077541"
+      },
+      "state": "proved",
+      "statement": "Buy modal shows aligned $4 monthly DID rate and blocks purchase when wallet balance is below that rate.",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/console/Topbar.jsx"
+        ]
+      },
+      "updatedAt": 1790936077698
+    },
+    "inline:buy-number-modal-shows-a-verification-first-gate-43fe78a3": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "testid": "kyc-verify-card"
+            }
+          },
+          {
+            "contains": "Verify your identity first",
+            "kind": "text"
+          },
+          {
+            "absent": true,
+            "contains": "Didit",
+            "kind": "text"
+          },
+          {
+            "absent": true,
+            "contains": "platform monthly rental",
+            "kind": "text"
+          }
+        ]
+      },
+      "declaredAt": 1790958372840,
+      "id": "inline:buy-number-modal-shows-a-verification-first-gate-43fe78a3",
+      "state": "bound",
+      "statement": "Buy number modal shows a verification-first gate before the number catalog when KYC is incomplete.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790958378482
+    },
+    "inline:buy-number-modal-skips-kyc-card-when-user-is-alr-26960625": {
+      "binding": {
+        "kind": "anyOf",
+        "predicates": [
+          {
+            "contains": "Buy Phone Number",
+            "kind": "text"
+          },
+          {
+            "contains": "Phone lines",
+            "kind": "text"
+          },
+          {
+            "contains": "phone-numbers",
+            "kind": "route"
+          }
+        ]
+      },
+      "declaredAt": 1790934022189,
+      "id": "inline:buy-number-modal-skips-kyc-card-when-user-is-alr-26960625",
+      "state": "bound",
+      "statement": "Buy-number modal skips KYC card when user is already Approved",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790934022212
+    },
+    "inline:console-entry-is-reachable-from-landing-so-kyc-s-6897be55": {
+      "binding": {
+        "kind": "anyOf",
+        "predicates": [
+          {
+            "contains": "Identity verification",
+            "kind": "text"
+          },
+          {
+            "contains": "Sign in",
+            "kind": "text"
+          },
+          {
+            "contains": "Workspace Settings",
+            "kind": "text"
+          },
+          {
+            "contains": "Open console",
+            "kind": "text"
+          }
+        ]
+      },
+      "declaredAt": 1790929548065,
+      "id": "inline:console-entry-is-reachable-from-landing-so-kyc-s-6897be55",
+      "state": "bound",
+      "statement": "Console entry is reachable from landing so KYC settings can be opened after sign-in.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790929548106
+    },
+    "inline:console-entry-is-reachable-so-billing-and-wallet-744fbfec": {
+      "binding": {
+        "kind": "anyOf",
+        "predicates": [
+          {
+            "contains": "console",
+            "kind": "route"
+          },
+          {
+            "contains": "Sign",
+            "kind": "text"
+          },
+          {
+            "contains": "Wallet",
+            "kind": "text"
+          },
+          {
+            "contains": "Overview",
+            "kind": "text"
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "topbar-wallet"
+            }
+          }
+        ]
+      },
+      "declaredAt": 1790958065365,
+      "id": "inline:console-entry-is-reachable-so-billing-and-wallet-744fbfec",
+      "state": "bound",
+      "statement": "Console entry is reachable so billing and wallet UI can be verified without admin/env leaks.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790958065463
+    },
+    "inline:customer-add-funds-ui-never-shows-razorpay-env-v-7266a9bf": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "absent": true,
+            "contains": "RAZORPAY_API",
+            "kind": "text"
+          },
+          {
+            "absent": true,
+            "contains": "API_SECRET",
+            "kind": "text"
+          },
+          {
+            "absent": true,
+            "contains": "topbar",
+            "kind": "text"
+          }
+        ]
+      },
+      "declaredAt": 1790958344223,
+      "id": "inline:customer-add-funds-ui-never-shows-razorpay-env-v-7266a9bf",
+      "state": "bound",
+      "statement": "Customer Add Funds UI never shows Razorpay env var or secret names.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790958344694
+    },
+    "inline:customer-can-open-console-auth-to-reach-phone-nu-cfff6ec5": {
+      "binding": {
+        "kind": "anyOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "by": "testid",
+              "value": "kyc-verify-card"
+            }
+          },
+          {
+            "kind": "element",
+            "query": {
+              "by": "testid",
+              "value": "kyc-start-verification"
+            }
+          },
+          {
+            "contains": "Sign in",
+            "kind": "text"
+          },
+          {
+            "contains": "Email",
+            "kind": "text"
+          },
+          {
+            "kind": "element",
+            "query": {
+              "by": "placeholder",
+              "value": "Email"
+            }
+          }
+        ]
+      },
+      "declaredAt": 1790930539051,
+      "id": "inline:customer-can-open-console-auth-to-reach-phone-nu-cfff6ec5",
+      "state": "bound",
+      "statement": "Customer can open console auth to reach phone-numbers KYC gate",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790930539138
+    },
+    "inline:customer-can-start-didit-hosted-kyc-session-from-938be527": {
+      "binding": {
+        "kind": "anyOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "POST",
+            "status": 200,
+            "urlContains": "/api/kyc/session"
+          },
+          {
+            "kind": "element",
+            "query": {
+              "by": "testid",
+              "value": "kyc-error"
+            }
+          },
+          {
+            "kind": "element",
+            "query": {
+              "by": "testid",
+              "value": "kyc-not-configured"
+            }
+          },
+          {
+            "contains": "Opening identity",
+            "kind": "text"
+          },
+          {
+            "contains": "could not start",
+            "kind": "text"
+          }
+        ]
+      },
+      "declaredAt": 1790930653140,
+      "id": "inline:customer-can-start-didit-hosted-kyc-session-from-938be527",
+      "state": "bound",
+      "statement": "Customer can start Didit hosted KYC session from Settings",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790930653201
+    },
+    "inline:declining-mic-consent-returns-to-idle-without-re-34da05a9": {
+      "binding": {
+        "contains": "Click to speak via microphone",
+        "kind": "text"
+      },
+      "declaredAt": 1790928186223,
+      "id": "inline:declining-mic-consent-returns-to-idle-without-re-34da05a9",
+      "provenBy": {
+        "at": 1790928187523,
+        "grade": "presence",
+        "verdictId": "reticle_act_and_wait:1790928187523"
+      },
+      "state": "proved",
+      "statement": "Declining mic consent returns to idle without requesting microphone.",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/components/TalkToMeModal.jsx"
+        ]
+      },
+      "updatedAt": 1790928187631
+    },
+    "inline:didit-session-create-returns-success-so-verifica-993134a6": {
+      "binding": {
+        "kind": "net",
+        "method": "POST",
+        "status": 200,
+        "urlContains": "/api/kyc/session"
+      },
+      "declaredAt": 1790930661914,
+      "id": "inline:didit-session-create-returns-success-so-verifica-993134a6",
+      "state": "bound",
+      "statement": "Didit session create returns success so verification can proceed",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790930661940
+    },
+    "inline:inventory-did-13526146416-is-owned-by-the-buyer-8b9ede61": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "contains": "+13526146416",
+            "kind": "text"
+          },
+          {
+            "contains": "US • Local DID",
+            "kind": "text"
+          }
+        ]
+      },
+      "declaredAt": 1790936077339,
+      "id": "inline:inventory-did-13526146416-is-owned-by-the-buyer-8b9ede61",
+      "provenBy": {
+        "at": 1790936077615,
+        "grade": "presence",
+        "verdictId": "reticle_assert:1790936077615"
+      },
+      "state": "proved",
+      "statement": "Inventory DID +13526146416 is owned by the buyer tenant after wallet purchase and shows as US Local DID.",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/console/Topbar.jsx"
+        ]
+      },
+      "updatedAt": 1790936077765
+    },
+    "inline:landing-hero-invites-interaction-with-the-3d-cha-1a9e9216": {
+      "binding": {
+        "contains": "Tap Voxly for a surprise",
+        "kind": "text"
+      },
+      "declaredAt": 1790928170745,
+      "id": "inline:landing-hero-invites-interaction-with-the-3d-cha-1a9e9216",
+      "provenBy": {
+        "at": 1790928170966,
+        "grade": "presence",
+        "verdictId": "reticle_assert:1790928170966"
+      },
+      "state": "proved",
+      "statement": "Landing hero invites interaction with the 3D character.",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/components/TalkToMeModal.jsx"
+        ]
+      },
+      "updatedAt": 1790928171034
+    },
+    "inline:live-mic-consent-explains-microphone-only-access-bef9f894": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "contains": "Microphone permission next",
+            "kind": "text"
+          },
+          {
+            "contains": "Allow microphone & start",
+            "kind": "text"
+          },
+          {
+            "contains": "Confirm above, then allow microphone",
+            "kind": "text"
+          }
+        ]
+      },
+      "declaredAt": 1790928170747,
+      "id": "inline:live-mic-consent-explains-microphone-only-access-bef9f894",
+      "provenBy": {
+        "at": 1790928171214,
+        "grade": "presence",
+        "verdictId": "reticle_assert:1790928171214"
+      },
+      "state": "proved",
+      "statement": "Live Mic consent explains microphone-only access before the browser permission prompt.",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/components/TalkToMeModal.jsx"
+        ]
+      },
+      "updatedAt": 1790928171293
+    },
+    "inline:live-mic-shows-an-in-app-microphone-consent-expl-eabe4d66": {
+      "binding": {
+        "contains": "Microphone permission next",
+        "kind": "text"
+      },
+      "declaredAt": 1790928067700,
+      "id": "inline:live-mic-shows-an-in-app-microphone-consent-expl-eabe4d66",
+      "state": "bound",
+      "statement": "Live Mic shows an in-app microphone consent explanation before any browser permission prompt.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790928068464
+    },
+    "inline:no-react-hooks-crash-on-employees-after-the-earl-373a2153": {
+      "binding": {
+        "absent": true,
+        "contains": "Rendered more hooks",
+        "kind": "console",
+        "level": "error"
+      },
+      "declaredAt": 1790934017044,
+      "id": "inline:no-react-hooks-crash-on-employees-after-the-earl-373a2153",
+      "state": "bound",
+      "statement": "No React hooks crash on Employees after the early-return fix",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790934017090
+    },
+    "inline:opening-add-funds-from-the-wallet-chip-does-not-f31e8d74": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "testid": "add-funds-modal"
+            }
+          },
+          {
+            "absent": true,
+            "contains": "topbar",
+            "kind": "text"
+          },
+          {
+            "absent": true,
+            "contains": "RAZORPAY_API",
+            "kind": "text"
+          }
+        ]
+      },
+      "declaredAt": 1790958317151,
+      "id": "inline:opening-add-funds-from-the-wallet-chip-does-not-f31e8d74",
+      "provenBy": {
+        "at": 1790958319370,
+        "grade": "presence",
+        "verdictId": "reticle_act_and_wait:1790958319369"
+      },
+      "state": "proved",
+      "statement": "Opening Add Funds from the wallet chip does not show an internal topbar reason banner.",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/console/Topbar.jsx"
+        ]
+      },
+      "updatedAt": 1790958319430
+    },
+    "inline:opening-talk-to-ai-shows-live-mic-modal-without-65ccea73": {
+      "binding": {
+        "contains": "Live Mic Experience",
+        "kind": "text"
+      },
+      "declaredAt": 1790928049342,
+      "id": "inline:opening-talk-to-ai-shows-live-mic-modal-without-65ccea73",
+      "provenBy": {
+        "at": 1790928050786,
+        "grade": "presence",
+        "verdictId": "reticle_act_and_wait:1790928050785"
+      },
+      "state": "proved",
+      "statement": "Opening Talk to AI shows Live Mic modal without requesting microphone until the user confirms.",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/components/Hero.jsx"
+        ]
+      },
+      "updatedAt": 1790928050823
+    },
+    "inline:pay-from-add-funds-creates-a-razorpay-order-with-10498fee": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "POST",
+            "status": 200,
+            "urlContains": "/api/billing/razorpay/create-order"
+          },
+          {
+            "absent": true,
+            "contains": "RAZORPAY_API",
+            "kind": "text"
+          }
+        ]
+      },
+      "declaredAt": 1790958326693,
+      "id": "inline:pay-from-add-funds-creates-a-razorpay-order-with-10498fee",
+      "state": "bound",
+      "statement": "Pay from Add Funds creates a Razorpay order without exposing API secret names.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790958333677
+    },
+    "inline:phone-numbers-buy-flow-surfaces-kyc-verify-card-db4437cf": {
+      "binding": {
+        "kind": "anyOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "by": "testid",
+              "value": "kyc-verify-card"
+            }
+          },
+          {
+            "kind": "element",
+            "query": {
+              "by": "testid",
+              "value": "kyc-start-verification"
+            }
+          },
+          {
+            "kind": "element",
+            "query": {
+              "by": "testid",
+              "value": "kyc-required-prompt"
+            }
+          },
+          {
+            "contains": "Verify",
+            "kind": "text"
+          },
+          {
+            "contains": "Identity",
+            "kind": "text"
+          },
+          {
+            "kind": "net",
+            "urlContains": "/api/kyc/status"
+          }
+        ]
+      },
+      "declaredAt": 1790930632214,
+      "id": "inline:phone-numbers-buy-flow-surfaces-kyc-verify-card-db4437cf",
+      "state": "bound",
+      "statement": "Phone numbers buy flow surfaces KYC verify card when identity gate applies",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790930632241
+    },
+    "inline:settings-identity-card-never-mentions-didit-keys-3c93496c": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "testid": "kyc-verify-card"
+            }
+          },
+          {
+            "absent": true,
+            "contains": "Didit",
+            "kind": "text"
+          },
+          {
+            "absent": true,
+            "contains": "RAZORPAY",
+            "kind": "text"
+          }
+        ]
+      },
+      "declaredAt": 1790958408499,
+      "id": "inline:settings-identity-card-never-mentions-didit-keys-3c93496c",
+      "provenBy": {
+        "at": 1790958410511,
+        "grade": "presence",
+        "verdictId": "reticle_act_and_wait:1790958410511"
+      },
+      "state": "proved",
+      "statement": "Settings identity card never mentions Didit keys to customers.",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/console/Sidebar.jsx"
+        ]
+      },
+      "updatedAt": 1790958410547
+    },
+    "inline:settings-page-shows-identity-verification-card-f-3a36ca43": {
+      "binding": {
+        "kind": "anyOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "by": "testid",
+              "value": "kyc-verify-card"
+            }
+          },
+          {
+            "kind": "element",
+            "query": {
+              "by": "testid",
+              "value": "kyc-start-verification"
+            }
+          },
+          {
+            "kind": "net",
+            "urlContains": "/api/kyc/status"
+          },
+          {
+            "contains": "Identity",
+            "kind": "text"
+          },
+          {
+            "contains": "settings",
+            "kind": "route"
+          }
+        ]
+      },
+      "declaredAt": 1790930639489,
+      "id": "inline:settings-page-shows-identity-verification-card-f-3a36ca43",
+      "provenBy": {
+        "at": 1790930640342,
+        "grade": "net",
+        "verdictId": "reticle_act_and_wait:1790930640342"
+      },
+      "state": "proved",
+      "statement": "Settings page shows identity verification card for Didit KYC",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/console/Sidebar.jsx"
+        ]
+      },
+      "updatedAt": 1790930640367
+    },
+    "inline:signed-in-user-reaches-the-agent-console-after-e-af7224a9": {
+      "binding": {
+        "kind": "anyOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/auth/login"
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "topbar-wallet"
+            }
+          },
+          {
+            "contains": "Overview",
+            "kind": "text"
+          },
+          {
+            "contains": "AI Employees",
+            "kind": "text"
+          }
+        ]
+      },
+      "declaredAt": 1790958302118,
+      "id": "inline:signed-in-user-reaches-the-agent-console-after-e-af7224a9",
+      "state": "bound",
+      "statement": "Signed-in user reaches the agent console after email login.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790958302165
+    },
+    "inline:talk-to-ai-opens-live-mic-without-requesting-mic-6c1e73ef": {
+      "binding": {
+        "contains": "Browser microphone only",
+        "kind": "text"
+      },
+      "declaredAt": 1790928132843,
+      "id": "inline:talk-to-ai-opens-live-mic-without-requesting-mic-6c1e73ef",
+      "provenBy": {
+        "at": 1790928146375,
+        "grade": "presence",
+        "verdictId": "reticle_act_and_wait:1790928146375"
+      },
+      "state": "proved",
+      "statement": "Talk to AI opens Live Mic without requesting microphone on open.",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/components/Hero.jsx"
+        ]
+      },
+      "updatedAt": 1790928146406
+    },
+    "inline:unauthenticated-users-see-a-clear-sign-in-gate-b-0c99c860": {
+      "binding": {
+        "contains": "Sign in to build your agent",
+        "kind": "text"
+      },
+      "declaredAt": 1790929554116,
+      "id": "inline:unauthenticated-users-see-a-clear-sign-in-gate-b-0c99c860",
+      "provenBy": {
+        "at": 1790929554170,
+        "grade": "presence",
+        "verdictId": "reticle_assert:1790929554170"
+      },
+      "state": "proved",
+      "statement": "Unauthenticated users see a clear sign-in gate before console KYC and number purchase.",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/components/Footer.jsx"
+        ]
+      },
+      "updatedAt": 1790929554189
+    },
+    "inline:user-can-open-the-sign-in-form-from-the-console-1e2b2152": {
+      "binding": {
+        "contains": "email",
+        "kind": "text"
+      },
+      "declaredAt": 1790958074006,
+      "id": "inline:user-can-open-the-sign-in-form-from-the-console-1e2b2152",
+      "state": "bound",
+      "statement": "User can open the sign-in form from the console gate.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790958074281
+    },
+    "inline:when-identity-is-not-approved-buy-number-shows-o-b014b8a3": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "testid": "kyc-verify-card"
+            }
+          },
+          {
+            "contains": "Verify your identity first",
+            "kind": "text"
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "kyc-start-verification"
+            }
+          },
+          {
+            "absent": true,
+            "contains": "Didit",
+            "kind": "text"
+          },
+          {
+            "absent": true,
+            "contains": "buy-number-country",
+            "kind": "text"
+          }
+        ]
+      },
+      "declaredAt": 1790958468373,
+      "id": "inline:when-identity-is-not-approved-buy-number-shows-o-b014b8a3",
+      "provenBy": {
+        "at": 1790958475779,
+        "grade": "presence",
+        "verdictId": "reticle_act_and_wait:1790958475779"
+      },
+      "state": "proved",
+      "statement": "When identity is not approved, Buy Number shows only the modern verification gate — no number catalog yet.",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/console/Topbar.jsx"
+        ]
+      },
+      "updatedAt": 1790958475823
+    }
+  },
+  "subject": "unsorted",
+  "version": 1
+}

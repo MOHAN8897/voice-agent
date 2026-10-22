@@ -1,4 +1,5 @@
 import { apiGet } from "@/lib/api";
+import { formatAgentLanguage } from "@/lib/agent-language";
 import { StatCard } from "@/components/console/StatCard";
 import { Panel } from "@/components/console/Panel";
 import Link from "next/link";
@@ -12,14 +13,14 @@ export default async function AgentSummaryPage({ params }: { params: { id: strin
     agent = {};
   }
 
-  const langs = Array.isArray(agent.languages) ? (agent.languages as string[]).join(", ") : "te-IN";
+  const langLabel = formatAgentLanguage(agent);
 
   return (
     <div>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Status" value={String(agent.status ?? "—")} tone="ok" />
         <StatCard label="Default tier" value={String(agent.default_tier ?? "medium")} />
-        <StatCard label="Languages" value={langs} />
+        <StatCard label="Language" value={langLabel} />
         <StatCard label="Agent ID" value={params.id.slice(0, 10) + "…"} hint="Locked at call start" />
       </div>
       <div className="mt-6 grid gap-4 lg:grid-cols-2">

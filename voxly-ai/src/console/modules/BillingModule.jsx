@@ -1,0 +1,666 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { api } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
+import { openRazorpayWalletCheckout } from '../../utils/razorpayCheckout';
+import {
+  CreditCard,
+  Zap,
+  Clock,
+  ShieldCheck,
+  CheckCircle2,
+  Download,
+  AlertCircle,
+  Plus,
+  ArrowUpRight,
+} from 'lucide-react';
+import { SolidCard } from '../ui/SolidCard';
+import { TactileButton } from '../ui/TactileButton';
+import {
+  BillingBalanceSkeleton,
+  InvoiceRowsSkeleton,
+  TransactionRowsSkeleton,
+} from '../ui/Skeleton';
+import { useWorkspace } from '../context/WorkspaceContext';
+
+/** Plain-language labels for wallet ledger kinds. */
+const TRANSACTION_LABEL = {
+  usage_pstn: 'Phone call usage',
+  usage_web: 'Browser test call',
+  usage_web_test: 'Browser test call',
+  usage_campaign: 'Outbound campaign',
+  did_purchase: 'Phone number rental',
+  did_refund: 'Phone number refund',
+  admin_seed: 'Welcome balance',
+  admin_grant: 'Balance added',
+  admin_debit: 'Balance removed',
+  topup: 'Wallet top-up',
+  razorpay_topup_inr: 'Wallet top-up',
+  razorpay_topup: 'Wallet top-up',
+  forfeiture: 'Account forfeiture',
+};
+
+function describeTransactionKind(row) {
+  if (typeof row === 'string') {
+    return TRANSACTION_LABEL[row] || row || 'Adjustment';
+  }
+  if (!row) return 'Adjustment';
+  if (row.kind === 'usage_web_test' || row.kind === 'usage_web') return 'Browser test call';
+  if (row.isCampaign) return 'Outbound campaign';
+  if (row.direction === 'outbound') return 'Outbound call';
+  if (row.direction === 'inbound') return 'Inbound call';
+  return TRANSACTION_LABEL[row.kind] || row.kind || 'Adjustment';
+}
+
+function formatRowAmount(row, serverWallet) {
+  const inrPaise = Number(row.amountInrPaise || 0);
+  const cents = Number(row.amountCents || 0);
+  const fx = Number(serverWallet?.fxRateInr) || 95.64;
+  const isCredit = inrPaise > 0 || cents > 0;
+  const isDebit = inrPaise < 0 || cents < 0;
+
+  if (!isCredit && !isDebit) {
+    return { primary: '$0.00', secondary: null, isCredit: false };
+  }
+
+  const sign = isCredit ? '+' : '-';
+  if (row.displayAmount != null && row.displayCurrency) {
+    const symbol = String(row.displayCurrency).toUpperCase() === 'INR' ? '₹' : '$';
+    return { primary: `${sign}${symbol}${Number(row.displayAmount).toFixed(2)}`, isCredit };
+  }
+  const isTenantInr =
+    (serverWallet?.walletCurrency || serverWallet?.primaryCurrency || '').toUpperCase() === 'INR' ||
+    (inrPaise !== 0 && cents === 0);
+
+  if (isTenantInr) {
+    const totalPaise = Math.abs(inrPaise) + Math.round(Math.abs(cents) * fx);
+    const amount = totalPaise / 100;
+    const inrStr = amount < 0.01 && amount > 0 ? amount.toFixed(3) : amount.toFixed(2);
+    return { primary: `${sign}₹${inrStr}`, isCredit };
+  }
+
+  const totalCents = Math.abs(cents) + Math.round(Math.abs(inrPaise) / fx);
+  const effectiveUsd = totalCents / 100;
+  const usdStr = effectiveUsd < 0.01 && effectiveUsd > 0 ? effectiveUsd.toFixed(3) : effectiveUsd.toFixed(2);
+  return { primary: `${sign}$${usdStr}`, isCredit };
+}
+
+function toCsv(rows, serverWallet) {
+  const header = ['when', 'activity_type', 'description', 'reference', 'duration_sec', 'inr', 'usd'];
+  const fx = Number(serverWallet?.fxRateInr) || 95.64;
+  const body = rows.map((r) => {
+    const inrPaise = Number(r.amountInrPaise) || 0;
+    const cents = Number(r.amountCents) || 0;
+    const inrVal = ((inrPaise + cents * fx) / 100).toFixed(2);
+    const usdVal = ((cents + inrPaise / fx) / 100).toFixed(2);
+    return [
+      r.createdAt || '',
+      describeTransactionKind(r),
+      r.description || '',
+      r.referenceId || '',
+      r.durationSec ?? '',
+      inrVal,
+      usdVal,
+    ];
+  });
+  const escape = (cell) => `"${String(cell).replace(/"/g, '""')}"`;
+  return [header, ...body].map((line) => line.map(escape).join(',')).join('\n');
+}
+
+export function BillingModule() {
+  const { user } = useAuth();
+  const {
+    wallet,
+    toggleAutoRecharge,
+    updateAutoRechargeSettings,
+  } = useWorkspace();
+
+  const [topupSuccess, setTopupSuccess] = useState(null);
+  const [topupError, setTopupError] = useState(null);
+  const [threshold, setThreshold] = useState(wallet.autoRechargeThresholdUsd);
+  const [amount, setAmount] = useState(wallet.autoRechargeAmountUsd);
+  const [serverWallet, setServerWallet] = useState(null);
+  const [invoices, setInvoices] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+  const [lastSession, setLastSession] = useState(null);
+  const [razorpayEnabled, setRazorpayEnabled] = useState(false);
+  const [razorpayCurrency, setRazorpayCurrency] = useState('USD');
+  const [payBusy, setPayBusy] = useState(false);
+  const [billingLoading, setBillingLoading] = useState(true);
+
+  const customerPayError = (raw) => {
+    const msg = String(raw || '');
+    if (/payment_cancelled|payment cancelled/i.test(msg)) {
+      return null;
+    }
+    if (/RAZORPAY|API_KEY|API_SECRET|\.env|not configured|not enabled/i.test(msg)) {
+      return 'Card payments are temporarily unavailable. Please try again later or contact support.';
+    }
+    return msg || 'Could not start payment';
+  };
+
+  const refreshBilling = useCallback(async () => {
+    try {
+      const [w, inv, cfg, tx, lastSess] = await Promise.all([
+        api.billing.getWallet(),
+        api.billing.listInvoices(),
+        api.billing.razorpayConfig(),
+        api.billing.listTransactions(40),
+        api.billing.getLastSession().catch(() => null),
+      ]);
+      setServerWallet(w);
+      setInvoices(inv || []);
+      setRazorpayEnabled(!!cfg?.enabled);
+      setRazorpayCurrency(cfg?.currency || 'USD');
+      setTransactions(tx || []);
+      setLastSession(lastSess || null);
+    } catch {
+      /* demo wallet fallback */
+    } finally {
+      setBillingLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshBilling();
+  }, [refreshBilling]);
+
+  const handleTopupUsd = async (amountUsd) => {
+    setTopupError(null);
+    setPayBusy(true);
+    try {
+      const cfg = await api.billing.razorpayConfig();
+      if (!cfg?.enabled) {
+        throw new Error('Card payments are temporarily unavailable. Please try again later or contact support.');
+      }
+      const currency = cfg.currency || razorpayCurrency || 'USD';
+      const fx = Number(serverWallet?.fxRateInr) || 95.64;
+      const isInternational = currency !== 'INR';
+      const chargeAmount = isInternational
+        ? Number(amountUsd)
+        : Math.max(100, Math.round(Number(amountUsd) * fx));
+      const order = await api.billing.createRazorpayOrder(chargeAmount, currency);
+      await openRazorpayWalletCheckout({
+        order,
+        keyId: cfg.keyId,
+        user,
+        hideUpi: isInternational,
+        onSuccess: async (response) => {
+          const result = await api.billing.verifyRazorpayPayment({
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+          });
+          await refreshBilling();
+          setTopupSuccess(
+            `Payment successful. Invoice ${result.invoiceNumber || result.invoiceId || ''} — wallet updated.`
+          );
+          setTimeout(() => setTopupSuccess(null), 5000);
+        },
+        onError: (err) => {
+          const msg = customerPayError(err.message);
+          if (msg) setTopupError(msg);
+        },
+      });
+    } catch (err) {
+      const msg = customerPayError(err.message);
+      if (msg) setTopupError(msg);
+    } finally {
+      setPayBusy(false);
+    }
+  };
+
+  const exportTransactionsCsv = useCallback(() => {
+    if (typeof window === 'undefined' || !transactions.length) return;
+    const blob = new Blob([toCsv(transactions, serverWallet)], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `voxly-billing-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, [transactions, serverWallet]);
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-bold text-[#0F0E17] tracking-tight">
+          Wallet &amp; per-second billing
+        </h2>
+        <p className="text-xs text-[#524E5E] mt-0.5">
+          Pay-as-you-go wallet. Phone and browser calls meter by the second; unanswered carrier legs are free.
+        </p>
+      </div>
+
+      {topupSuccess && (
+        <div className="p-3.5 rounded-xl bg-[#22C55E]/10 border border-[#22C55E]/20 text-xs font-semibold text-[#15803D] flex items-center gap-2 animate-in fade-in duration-150">
+          <CheckCircle2 className="w-4 h-4 shrink-0 text-[#15803D]" />
+          <span>{topupSuccess}</span>
+        </div>
+      )}
+
+      {topupError && (
+        <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-xs font-semibold text-red-700 flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{topupError}</span>
+        </div>
+      )}
+
+      {/* Primary Balance Ribbon */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        {/* Left 2 Cols: Balance & Top-Up Buttons */}
+        <SolidCard className="md:col-span-2 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <span className="text-xs font-semibold text-[#524E5E] uppercase tracking-wider flex items-center gap-1.5">
+                <Zap className="w-3.5 h-3.5 text-amber-500" />
+                <span>Available Talk Time Balance</span>
+              </span>
+              <span className="text-[11px] font-mono font-medium text-[#15803D] bg-[#22C55E]/10 border border-[#22C55E]/20 px-2 py-0.5 rounded-md">
+                Wallet funded
+              </span>
+            </div>
+
+            {billingLoading && !serverWallet ? (
+              <div className="py-2">
+                <BillingBalanceSkeleton />
+              </div>
+            ) : (
+              <div className="flex items-baseline gap-3 my-2 flex-wrap">
+                <span className="text-3xl sm:text-4xl font-mono font-bold text-[#0F0E17] tracking-tight">
+                {Number(wallet?.remainingMinutes || 0).toLocaleString()} min
+                </span>
+                <span className="text-sm font-mono text-[#524E5E]">
+                  {Number(serverWallet?.balanceInr ?? wallet?.balanceInr ?? 0) > 0 ? (
+                    <>
+                      <strong className="font-semibold text-[#0F0E17]">
+                        ₹{Number(serverWallet?.balanceInr ?? wallet?.balanceInr ?? 0).toFixed(2)}
+                      </strong>{' '}
+                      <span className="text-xs text-[#8C879A]">
+                        (${Number(serverWallet?.balanceUsd ?? wallet.usdEquivalent ?? 0).toFixed(2)} USD)
+                      </span>
+                    </>
+                  ) : (
+                    `($${Number(serverWallet?.balanceUsd ?? wallet.usdEquivalent ?? 0).toFixed(2)} USD)`
+                  )}
+                </span>
+              </div>
+            )}
+
+            <div className="space-y-1.5 text-xs text-[#524E5E]">
+              <p>
+                Voice stacks meter by the second based on the agent's selected voice tier:
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 pb-1">
+                <div className="p-2 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB]">
+                  <span className="block text-[11px] font-semibold text-[#0F0E17]">Economical (Low)</span>
+                  <span className="text-xs font-mono font-bold text-[#6344E7]">
+                    ₹{Number(serverWallet?.pstnLowRateInrPerMin ?? 4.70).toFixed(2)}/min
+                  </span>{' '}
+                  <span className="text-[10px] text-[#8C879A] font-mono">
+                    (${Number(serverWallet?.pstnLowRateUsdPerMin ?? 0.05).toFixed(3)}/min)
+                  </span>
+                </div>
+                <div className="p-2 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB]">
+                  <span className="block text-[11px] font-semibold text-[#0F0E17]">Standard Regional</span>
+                  <span className="text-xs font-mono font-bold text-[#6344E7]">
+                    ₹{Number(serverWallet?.pstnMediumRateInrPerMin ?? 8.46).toFixed(2)}/min
+                  </span>{' '}
+                  <span className="text-[10px] text-[#8C879A] font-mono">
+                    (${Number(serverWallet?.pstnMediumRateUsdPerMin ?? 0.09).toFixed(3)}/min)
+                  </span>
+                </div>
+                <div className="p-2 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB]">
+                  <span className="block text-[11px] font-semibold text-[#0F0E17]">Flagship Live (Premium)</span>
+                  <span className="text-xs font-mono font-bold text-[#6344E7]">
+                    ₹{Number(serverWallet?.pstnPremiumRateInrPerMin ?? 14.10).toFixed(2)}/min
+                  </span>{' '}
+                  <span className="text-[10px] text-[#8C879A] font-mono">
+                    (${Number(serverWallet?.pstnPremiumRateUsdPerMin ?? 0.15).toFixed(3)}/min)
+                  </span>
+                </div>
+              </div>
+              <p className="text-[11px] text-[#8C879A]">
+                Web test calls billed at ₹
+                {Number(serverWallet?.webRateInrPerMin ?? wallet.webRateInrPerMin ?? 4.50).toFixed(2)}/min ($
+                {Number(serverWallet?.webRateUsdPerMin ?? wallet.webRateUsdPerMin ?? 0.048).toFixed(3)}/min).
+                Your usage this workspace: ${Number(serverWallet?.myUsageUsd ?? wallet.myUsageUsd ?? 0).toFixed(2)}. Unanswered carrier legs are not billed.
+              </p>
+            </div>
+          </div>
+
+          {/* Quick Top-Up Strip — USD display */}
+          <div className="pt-5 mt-4 border-t border-[#E4E2EB] space-y-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-semibold text-[#524E5E] mr-1">Top up (USD):</span>
+              {[5, 10, 25, 50, 100].map((usd) => (
+                <button
+                  key={usd}
+                  type="button"
+                  disabled={payBusy || !razorpayEnabled}
+                  onClick={() => handleTopupUsd(usd)}
+                  data-testid={`billing-topup-usd-${usd}`}
+                  className="px-3.5 py-2 min-h-[38px] rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] hover:border-[#6344E7] text-xs font-mono font-bold text-[#0F0E17] hover:text-[#6344E7] active:scale-[0.98] transition-all shadow-craft-xs disabled:opacity-50"
+                >
+                  +${usd}
+                </button>
+              ))}
+            </div>
+            {!razorpayEnabled && (
+              <p className="text-[11px] text-[#B45309]" data-testid="billing-payments-unavailable">
+                Card payments are temporarily unavailable. Please try again later or contact support.
+              </p>
+            )}
+          </div>
+        </SolidCard>
+
+        <SolidCard className="space-y-3">
+          <div className="flex items-center justify-between text-xs">
+            <span className="font-bold text-[#0F0E17]">Payment methods</span>
+            <span
+              className={`text-[10px] font-medium px-2 py-0.5 rounded-md border ${
+                razorpayEnabled
+                  ? 'text-[#15803D] bg-[#22C55E]/10 border-[#22C55E]/20'
+                  : 'text-[#92400E] bg-[#FFFBEB] border-[#FDE68A]'
+              }`}
+            >
+              {razorpayEnabled ? 'Available' : 'Unavailable'}
+            </span>
+          </div>
+
+          <ul className="space-y-2 text-xs text-[#524E5E]">
+            <li className="flex items-center justify-between p-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
+              <span className="font-semibold text-[#0F0E17]">Card</span>
+              <span>{razorpayEnabled ? 'Visa, Mastercard & more' : 'Temporarily unavailable'}</span>
+            </li>
+          </ul>
+
+          <p className="text-[11px] text-[#524E5E] leading-relaxed">
+            Card details stay with our payment partner. Wallet balance is shown in USD.
+          </p>
+        </SolidCard>
+      </div>
+
+      {/* Auto-Recharge Automation & Per-Second Cost Decomposition Split */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Auto-Recharge Controller */}
+        <SolidCard className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-xs font-bold text-[#0F0E17]">Auto-Recharge Protection</h3>
+              <p className="text-[11px] text-[#524E5E]">Prevents active telephone calls from dropping due to depleted credits.</p>
+              <p className="text-[10px] text-[#8C879A] mt-1">Coming soon — for now, top up manually above when your balance runs low.</p>
+            </div>
+            <button
+              type="button"
+              onClick={toggleAutoRecharge}
+              aria-label="Toggle auto recharge"
+              className={`w-10 h-6 flex items-center rounded-full p-1 transition-colors ${
+                wallet.autoRechargeEnabled ? 'bg-[#22C55E]' : 'bg-[#E4E2EB]'
+              }`}
+            >
+              <div
+                className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                  wallet.autoRechargeEnabled ? 'translate-x-4' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] space-y-3 text-xs">
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-[#524E5E]">When balance falls below:</span>
+              <div className="flex items-center gap-1 font-mono font-bold text-[#0F0E17]">
+                <span>$</span>
+                <input
+                  type="number"
+                  value={threshold}
+                  onChange={(e) => {
+                    const v = parseFloat(e.target.value) || 0;
+                    setThreshold(v);
+                    updateAutoRechargeSettings(v, amount);
+                  }}
+                  className="w-20 bg-white border border-[#E4E2EB] rounded-lg px-2 py-1.5 text-right text-base sm:text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] shadow-craft-xs"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-[#524E5E]">Automatically charge card:</span>
+              <div className="flex items-center gap-1 font-mono font-bold text-[#0F0E17]">
+                <span>$</span>
+                <input
+                  type="number"
+                  value={amount}
+                  onChange={(e) => {
+                    const v = parseFloat(e.target.value) || 0;
+                    setAmount(v);
+                    updateAutoRechargeSettings(threshold, v);
+                  }}
+                  className="w-20 bg-white border border-[#E4E2EB] rounded-lg px-2 py-1.5 text-right text-base sm:text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] shadow-craft-xs"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 text-[11px] text-[#524E5E]">
+            <ShieldCheck className="w-4 h-4 text-[#15803D] shrink-0" />
+            <span>
+              Calls stop at the minimum balance of{' '}
+              <strong className="text-[#0F0E17] font-semibold">
+                ${Number(serverWallet?.minBalanceUsd ?? 0).toFixed(2)}
+              </strong>
+              . Top up to keep your agents taking calls.
+            </span>
+          </div>
+        </SolidCard>
+
+        {/* What a call costs, taken from the live rates the server bills by. */}
+        <SolidCard className="space-y-3">
+          <h3 className="text-xs font-bold text-[#0F0E17]">What a call costs</h3>
+          <p className="text-[11px] text-[#524E5E]">
+            These are the rates your workspace is charged. Each call's actual cost is itemised in the
+            usage ledger below.
+          </p>
+
+          <div className="space-y-2 text-xs font-mono">
+            <div className="p-2.5 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB] flex justify-between items-center">
+              <span className="text-[#524E5E]">Phone call (PSTN voice)</span>
+              <span className="text-[#0F0E17] font-semibold">
+                ₹{Number(serverWallet?.rateInrPerMin ?? 5.00).toFixed(2)}/min
+                <span className="text-[10px] text-[#8C879A] ml-1 font-normal">
+                  (${Number(serverWallet?.rateUsdPerMin ?? 0.053).toFixed(3)})
+                </span>
+              </span>
+            </div>
+            <div className="p-2.5 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB] flex justify-between items-center">
+              <span className="text-[#524E5E]">Browser test call</span>
+              <span className="text-[#0F0E17] font-semibold">
+                ₹{Number(serverWallet?.webRateInrPerMin ?? 4.50).toFixed(2)}/min
+                <span className="text-[10px] text-[#8C879A] ml-1 font-normal">
+                  (${Number(serverWallet?.webRateUsdPerMin ?? 0.048).toFixed(3)})
+                </span>
+              </span>
+            </div>
+            <div className="p-2.5 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB] flex justify-between items-center">
+              <span className="text-[#524E5E]">Phone number rental</span>
+              <span className="text-[#0F0E17] font-semibold">
+                ₹{Number(serverWallet?.didMonthlyInr ?? 564.00).toFixed(2)}/mo
+                <span className="text-[10px] text-[#8C879A] ml-1 font-normal">
+                  (${Number(serverWallet?.didMonthlyUsd ?? 6.00).toFixed(2)})
+                </span>
+              </span>
+            </div>
+          </div>
+
+          {lastSession?.has_call && (
+            <div className="pt-3 border-t border-[#E4E2EB] space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-[#0F0E17] flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  Last Call Session ({lastSession.duration_formatted})
+                </span>
+                <span className="font-mono font-bold text-[#0F0E17]">
+                  {lastSession.tenant_wallet_deduction?.amount != null
+                    ? `${lastSession.tenant_wallet_deduction.currency === 'INR' ? '₹' : '$'}${Number(lastSession.tenant_wallet_deduction.amount).toFixed(2)} billed`
+                    : 'Charge pending'}
+                </span>
+              </div>
+            </div>
+          )}
+        </SolidCard>
+      </div>
+
+      {(billingLoading || invoices.length > 0) && (
+        <SolidCard padding="p-0" className="overflow-hidden">
+          <div className="p-4 border-b border-[#E4E2EB]">
+            <h3 className="text-xs font-bold text-[#0F0E17]">Wallet invoices</h3>
+            <p className="text-[11px] text-[#524E5E] mt-0.5">Paid top-ups with Razorpay reference IDs.</p>
+          </div>
+          <div className="overflow-x-auto">
+            {billingLoading && invoices.length === 0 ? (
+              <InvoiceRowsSkeleton rows={3} />
+            ) : (
+              <table className="w-full text-left text-xs font-mono">
+                <thead>
+                  <tr className="border-b border-[#E4E2EB] bg-[#FAF9FD] text-[10px] text-[#524E5E] uppercase tracking-wider font-semibold">
+                    <th className="py-2.5 px-4">Invoice #</th>
+                    <th className="py-2.5 px-3">Date</th>
+                    <th className="py-2.5 px-3">Amount</th>
+                    <th className="py-2.5 px-3">Status</th>
+                    <th className="py-2.5 px-4">Payment ID</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#E4E2EB]">
+                  {invoices.map((inv) => (
+                    <tr key={inv.invoiceId} className="hover:bg-[#FAF9FD]/80">
+                      <td className="py-2.5 px-4 font-semibold text-[#0F0E17]">{inv.invoiceNumber}</td>
+                      <td className="py-2.5 px-3 text-[#524E5E]">
+                        {inv.createdAt ? new Date(inv.createdAt).toLocaleString() : '—'}
+                      </td>
+                      <td className="py-2.5 px-3 text-[#0F0E17]">
+                        {inv.amountUsd != null
+                          ? `$${Number(inv.amountUsd).toFixed(2)}`
+                          : inv.amountInr != null
+                            ? `$${(Number(inv.amountInr) / (Number(serverWallet?.fxRateInr) || 95.64)).toFixed(2)}`
+                            : '—'}
+                      </td>
+                      <td className="py-2.5 px-3 text-[#15803D] capitalize">{inv.status}</td>
+                      <td className="py-2.5 px-4 text-[#524E5E] truncate max-w-[140px]">{inv.paymentId || '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </SolidCard>
+      )}
+
+      {/* Every wallet movement, straight from the billing ledger. */}
+      <SolidCard padding="p-0" className="overflow-hidden">
+        <div className="p-4 border-b border-[#E4E2EB] flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-xs font-bold text-[#0F0E17]">Billing activity</h3>
+            <p className="text-[11px] text-[#524E5E] mt-0.5">
+              Top-ups, call usage and number rentals as they were charged.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={exportTransactionsCsv}
+            disabled={!transactions.length}
+            data-testid="billing-export-csv"
+            className="flex items-center gap-1.5 text-xs text-[#6344E7] font-semibold hover:underline disabled:opacity-40 disabled:hover:no-underline"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Export CSV</span>
+          </button>
+        </div>
+
+        {billingLoading && transactions.length === 0 ? (
+          <TransactionRowsSkeleton rows={6} />
+        ) : transactions.length === 0 ? (
+          <p className="px-4 py-6 text-center text-xs text-[#8C879A]">
+            No charges yet. Add funds to place calls or buy a number.
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs font-mono">
+              <thead>
+                <tr className="border-b border-[#E4E2EB] bg-[#FAF9FD] text-[10px] text-[#524E5E] uppercase tracking-wider font-semibold">
+                  <th className="py-2.5 px-4">When</th>
+                  <th className="py-2.5 px-3">Activity</th>
+                  <th className="py-2.5 px-3">Description</th>
+                  <th className="py-2.5 px-4 text-right">Amount</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#E4E2EB]">
+                {transactions.map((row) => {
+                  const amt = formatRowAmount(row, serverWallet);
+                  const isCredit = amt.isCredit;
+                  const displayAmount = amt.primary;
+                  const activityLabel = describeTransactionKind(row);
+                  const isWebTest = row.kind === 'usage_web_test' || row.kind === 'usage_web';
+
+                  return (
+                    <tr key={row.id} className="hover:bg-[#FAF9FD]/80 transition-colors">
+                      <td className="py-2.5 px-4 text-[#524E5E] whitespace-nowrap">
+                        {row.createdAt ? new Date(row.createdAt).toLocaleString() : '—'}
+                      </td>
+                      <td className="py-2.5 px-3 whitespace-nowrap">
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold ${
+                            isCredit
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : row.isCampaign
+                              ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                              : isWebTest
+                              ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                              : 'bg-slate-50 text-slate-700 border border-slate-200'
+                          }`}
+                        >
+                          {activityLabel}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3 text-[#0F0E17]">
+                        <div className="font-semibold text-xs text-[#0F0E17] flex items-center gap-1.5 flex-wrap">
+                          <span>{row.description || activityLabel}</span>
+                          {row.tier && (
+                            <span
+                              data-testid={`tx-tier-badge-${row.tier}`}
+                              className="text-[10px] text-[#6344E7] bg-[#6344E7]/10 border border-[#6344E7]/25 px-1.5 py-0.5 rounded font-semibold"
+                            >
+                              {row.tierLabel || row.tier}
+                            </span>
+                          )}
+                          {row.durationSec != null && row.durationSec > 0 && !row.description?.includes(`${row.durationSec}s`) && (
+                            <span className="text-[10px] text-[#524E5E] bg-[#FAF9FD] border border-[#E4E2EB] px-1.5 py-0.5 rounded font-mono">
+                              {row.durationSec}s
+                            </span>
+                          )}
+                        </div>
+                        {row.referenceId && (
+                          <div className="text-[10px] text-[#8C879A] truncate max-w-[260px]">
+                            {row.referenceId}
+                          </div>
+                        )}
+                      </td>
+                      <td
+                        className={`py-2.5 px-4 text-right font-bold whitespace-nowrap ${
+                          isCredit ? 'text-[#15803D]' : 'text-[#0F0E17]'
+                        }`}
+                      >
+                        <div>{displayAmount}</div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </SolidCard>
+    </div>
+  );
+}

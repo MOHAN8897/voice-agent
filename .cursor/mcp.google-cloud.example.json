@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "graft": {
+      "command": "graft",
+      "args": ["mcp"]
+    },
+    "google-cloud-cli": {
+      "url": "https://cloudcli.googleapis.com/mcp",
+      "oauth": {
+        "clientId": "YOUR_DESKTOP_OR_WEB_OAUTH_CLIENT_ID",
+        "clientSecret": "YOUR_OAUTH_CLIENT_SECRET",
+        "scopes": ["https://www.googleapis.com/auth/cloud-platform"],
+        "callbackPort": 8787
+      }
+    }
+  }
+}

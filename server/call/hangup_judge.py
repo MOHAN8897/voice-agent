@@ -1,0 +1,310 @@
+"""Hangup judgment helpers — when the model should close the call.
+
+The Realtime model normally decides via the end_call tool. These helpers:
+1) give the model a clear decision tree in prompts, and
+2) repair missed tool calls, including explicit terminal agent farewells on
+   primary Gemini PSTN calls.
+"""
+from __future__ import annotations
+
+import re
+from typing import Any
+
+_AGENT_CLOSING = re.compile(
+    r"\b("
+    r"goodbye|good day|alvida|"
+    r"time ichinanduku|ichinanduku thanks|dhanyavaadalu|"
+    r"team will (?:contact|reach|call|get back)|"
+    r"our team will|"
+    r"we(?:'ll| will) (?:have )?(?:the )?team (?:contact|call|reach)|"
+    r"someone from (?:our |the )?team (?:will )?(?:contact|call|reach)|"
+    r"call you back|"
+    r"reach out (?:to you|shortly)|"
+    r"take it from here|"
+    r"all set|"
+    r"(?:details|appointment|information) (?:is |are |have been )?(?:noted|saved|booked|confirmed)|"
+    r"booked (?:your |the )?appointment|"
+    r"thank(?:s| you) for your time|thanks for your time|"
+    r"have a (?:great|good|nice) day|you'?re welcome"
+    r")\b",
+    re.I,
+)
+_AGENT_DISQUALIFY = re.compile(
+    r"\b("
+    r"since you don'?t have|"
+    r"you don'?t (?:have|own) (?:a |any )?(?:car|vehicle|bike|motorbike)|"
+    r"not (?:able|eligible) to (?:help|assist)|"
+    r"unable to (?:help|assist) you(?: today)?|"
+    r"won'?t be able to (?:help|service)|"
+    r"doesn'?t (?:apply|qualify)"
+    r")\b",
+    re.I,
+)
+_USER_SHORT_ACK = re.compile(
+    r"^\s*(?:ok|okay|yes|yeah|yep|sure|fine|alright|great|perfect|"
+    r"thanks|thank you|thankyou|thanks a lot|thank you so much|thank you very much|"
+    r"ja[,.]?\s*danke|danke(?:\s*sch[oö]n)?|"
+    r"sare|సరే|ठीक|हाँ|अच्छा|சரி|ஆமாம்|ஆம்|நன்றி)[.!]?\s*$",
+    re.I,
+)
+_INTERESTED_CONTINUE = re.compile(
+    r"\b("
+    r"i(?:'m| am) interested|interested in|tell me more|go on|"
+    r"yes (?:please )?(?:tell|explain|share|continue)|"
+    r"sounds interesting|i want (?:to )?(?:know|see|visit|buy|book)|"
+    r"please (?:explain|continue|tell)|what (?:else|next)|"
+    r"how (?:much|does|do|can)|can you (?:tell|explain|help)|"
+    r"दिलचस्पी\s*है|और\s*जानना|और\s*बताइए|आगे\s*बताइए|"
+    r"ఆసక్తి\s*ఉంది|ఇంకా\s*చెప్పండి|మరింత\s*వివరించండి|"
+    r"ஆர்வமாக\s*இருக்கிறது|ஆர்வம்\s*இருக்கு|மேலும்\s*சொல்லுங்கள்|இன்னும்\s*விவரமாக"
+    r")\b",
+    re.I,
+)
+_LEAD_CONTEXT = re.compile(
+    r"contact details for the team|callback|team (?:will |to )?follow",
+    re.I,
+)
+
+
+_AGENT_STILL_COLLECTING = re.compile(
+    r"\b("
+    r"need your (?:name|phone|number)|"
+    r"may i have your (?:name|phone|number)|"
+    r"what(?:'s| is) your (?:name|phone|number)|"
+    r"once i have that|"
+    r"best (?:phone |callback )?number|"
+    r"good phone number|"
+    r"before i let you go|"
+    r"(?:உங்கள்|உங்க).{0,20}(?:பெயர்|நம்பர்|எண்|போன்)|"
+    r"(?:பெயர்|நம்பர்|எண்).{0,20}(?:சொல்லுங்கள்|சொல்லுங்க|தர முடியுமா)|"
+    r"(?:आपका|अपना).{0,12}(?:नाम|फोन|नंबर)|"
+    r"(?:మీ|మీరు).{0,16}(?:పేరు|నంబర్|ఫోన్)"
+    r")\b",
+    re.I,
+)
+
+
+_INDIC_CLOSING = re.compile(
+    r"ధన్యవాదాలు|సమయం\s*ఇచ్చినందుకు|ఇచ్చినందుకు\s*ధన్యవాదాలు|धन्यवाद|समय\s*देने\s*के\s*लिए|"
+    r"நேரம்\s*ஒதுக்கியதற்கு\s*நன்றி|விடைபெறுகிறேன்|போய்\s*வருகிறேன்",
+    re.I,
+)
+
+
+_TERMINAL_FAREWELL = re.compile(
+    r"(?<!\w)(?:"
+    r"good[ -]?bye|bye(?:[ -]bye| for now)?|good (?:day|night)|take care|have a good one|"
+    r"have a (?:very )?(?:nice|good|great|wonderful|lovely) (?:day|evening|night|weekend)|"
+    r"(?:talk|speak) to you (?:later|soon)|see you (?:later|soon)|"
+    r"alvida|అల్విదా|ఉంటానండి|మళ్లీ మాట్లాడుకుందాం|మళ్ళీ మాట్లాడుకుందాం|"
+    r"(?:మీకు )?శుభ\s*దినం|మీ రోజు శుభంగా ఉండాలి|"
+    r"अलविदा|आपका दिन शुभ हो|फिर मिलेंगे|"
+    r"விடைபெறுகிறேன்|போய்\s*வருகிறேன்|உங்கள் நாள் இனிதாக அமையட்டும்|"
+    r"நல்ல நாளாக அமையட்டும்|"
+    r"ವಿದಾಯ|ನಿಮ್ಮ ದಿನ ಶುಭವಾಗಲಿ|ಶುಭ ದಿನವಾಗಲಿ|ಮತ್ತೆ ಮಾತನಾಡೋಣ"
+    r")(?:[,!.।\s]*(?:sir|ma'am|madam|సార్|మేడమ్|అండి|जी|सर|मैडम|சார்|மேடம்|ಸರ್|ಮೇಡಂ|"
+    r"thank you|thanks|take care|bye|goodbye)){0,2}"
+    r"[.!।…\s]*$",
+    re.IGNORECASE,
+)
+_FAREWELL_MENTION = re.compile(
+    r"\b(?:say|saying|said|says|word|phrase|means|called|translate(?:d)?(?: as| to)?|"
+    r"(?:do not|don't|never|won't|will not|not)(?: say)?)\s*$", re.IGNORECASE,
+)
+
+
+def agent_spoke_terminal_farewell(spoken_text: str) -> bool:
+    """An explicit final goodbye, excluding thanks, questions and quoted examples."""
+    spoken = (spoken_text or "").strip()
+    if "?" in spoken or agent_still_collecting_lead(spoken):
+        return False
+    match = _TERMINAL_FAREWELL.search(spoken)
+    if match:
+        return not bool(_FAREWELL_MENTION.search(spoken[:match.start()]))
+    # Some language packs end with a greeting word (e.g. namaskar). Require
+    # their entire authored farewell, so an ordinary opening cannot end a call.
+    from server.prompts.agent_voice_rules import CALL_END_FAREWELLS
+
+    normalized = re.sub(r"\s+", " ", spoken).casefold().rstrip(" .!।…")
+    for farewell in CALL_END_FAREWELLS.values():
+        ending = re.sub(r"\s+", " ", farewell).casefold().rstrip(" .!।…")
+        if normalized.endswith(ending) and not _FAREWELL_MENTION.search(normalized[:-len(ending)]):
+            return True
+    return False
+
+
+def agent_spoke_closing(spoken_text: str) -> bool:
+    """True when the agent already delivered a closing / handoff line."""
+    spoken = spoken_text or ""
+    if agent_still_collecting_lead(spoken):
+        return False
+    return bool(_AGENT_CLOSING.search(spoken) or _INDIC_CLOSING.search(spoken))
+
+
+def agent_spoke_disqualification_close(spoken_text: str) -> bool:
+    """True when the agent closed because the caller is not a service lead (e.g. no vehicle)."""
+    return bool(_AGENT_DISQUALIFY.search(spoken_text or ""))
+
+
+def agent_still_collecting_lead(spoken_text: str) -> bool:
+    """True when the agent is still asking for name/phone in this utterance."""
+    return bool(_AGENT_STILL_COLLECTING.search(spoken_text or ""))
+
+
+def user_short_close_ack(user_text: str) -> bool:
+    """True for a short affirmative close ("ok", "thanks") — not a new question."""
+    return bool(_USER_SHORT_ACK.match((user_text or "").strip()))
+
+
+_POLITE_THANKS_ONLY = re.compile(
+    r"^\s*(?:"
+    r"(?:yeah|yes|yep|ok|okay|sure|fine|alright|mhm|mm[- ]?hm|uh[- ]?huh)"
+    r"(?:[,.]?\s+then)?[,.]?\s+)?"
+    r"(?:thanks?|thank you)(?:\s+so much)?[.!]?\s*$",
+    re.I,
+)
+
+
+def caller_polite_thanks_only(user_text: str) -> bool:
+    """Thanks / yeah thank you after the agent closed — not a new request."""
+    text = (user_text or "").strip()
+    if not text or "?" in text:
+        return False
+    if caller_wants_to_continue(text):
+        return False
+    return bool(_USER_SHORT_ACK.match(text) or _POLITE_THANKS_ONLY.match(text))
+
+
+def caller_wants_to_continue(user_text: str) -> bool:
+    """True when the caller is engaged — do not hang up yet."""
+    text = (user_text or "").strip()
+    if not text:
+        return False
+    return bool(_INTERESTED_CONTINUE.search(text))
+
+
+_CALLBACK_WITHDRAWAL = re.compile(
+    r"\b("
+    r"don'?t (?:have to |need to )?call|"
+    r"do not call|don'?t call(?: me)?|"
+    r"no callback|cancel (?:the )?callback|"
+    r"stop calling|"
+    r"இனி.{0,16}(?:அழைக்க|தொடர்பு).{0,16}வேண்டாம்|அழைக்காதீர்கள்|தொடர்பு\s*கொள்ளாதீர்கள்"
+    r")\b",
+    re.I,
+)
+_DECLINE_MORE_HELP = re.compile(
+    r"^(?:no(?:pe)?|nah)(?:[,.]?\s*(?:ma'?am|sir|thanks?|thank you))?[.!?]*\s*$"
+    r"|^(?:nothing else|no thanks|that'?s (?:all|it)|not really)[.!?]*\s*$"
+    r"|^(?:வேண்டாம்|வேண்டாம்[,.]?\s*நன்றி|அவ்வளவுதான்)[.!?]*\s*$",
+    re.I,
+)
+_GENERIC_INBOUND_GREETING = re.compile(
+    r"^(?:hello[!,.]?\s*)?how can i help you(?: today)?[.!?]*\s*$",
+    re.I,
+)
+
+
+def caller_withdrew_callback(user_text: str) -> bool:
+    """Explicit callback cancellation — not a bare 'no' to 'anything else?'."""
+    return bool(_CALLBACK_WITHDRAWAL.search((user_text or "").strip()))
+
+
+def caller_declines_more_help(user_text: str) -> bool:
+    """Short negative after the agent asked if there is anything else."""
+    text = (user_text or "").strip()
+    if not text or caller_withdrew_callback(text) or caller_wants_to_continue(text):
+        return False
+    return bool(_DECLINE_MORE_HELP.match(text))
+
+
+def is_generic_inbound_greeting(spoken_text: str) -> bool:
+    return bool(_GENERIC_INBOUND_GREETING.match((spoken_text or "").strip()))
+
+
+def memory_has_lead_handoff(snapshot: dict[str, Any] | None) -> bool:
+    """Lead details captured for team follow-up (not bare telephony CLI phone)."""
+    if not snapshot:
+        return False
+    facts = snapshot.get("facts") or {}
+    if isinstance(facts, dict):
+        for key in ("callback_phone", "caller_email", "caller_name"):
+            if str(facts.get(key) or "").strip():
+                return True
+    ctx = str(snapshot.get("important_context") or "")
+    return bool(_LEAD_CONTEXT.search(ctx))
+
+
+def default_farewell_for(language: str | None) -> str:
+    from server.prompts.agent_voice_rules import CALL_END_FAREWELLS, normalize_compile_language
+
+    lang = normalize_compile_language(language)
+    return CALL_END_FAREWELLS.get(lang) or CALL_END_FAREWELLS["en-IN"]
+
+
+def callback_farewell_for(language: str | None) -> str:
+    from server.prompts.agent_voice_rules import normalize_compile_language
+
+    lang = normalize_compile_language(language)
+    pack = {
+        "en-IN": "Your callback request is noted. Thank you for your time. Goodbye.",
+        "en-US": "Your callback request is noted. Thank you for your time. Goodbye.",
+        "te-IN": "మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నోట్ చేసుకున్నాను. ధన్యవాదాలు.",
+        "hi-IN": "दोबारा कॉल करने का आपका अनुरोध नोट कर लिया है। धन्यवाद।",
+        "ta-IN": "உங்கள் callback கோரிக்கையை பதிவு செய்துவிட்டேன். நன்றி.",
+    }
+    return pack.get(lang) or default_farewell_for(lang)
+
+
+def silence_close_instruction(language: str | None) -> str:
+    farewell = default_farewell_for(language)
+    return (
+        "The caller has been silent. Speak a brief goodbye in the configured language "
+        f"(example: {farewell}), then stop. No question, no pitch."
+    )
+
+
+def map_call_action_end_reason(reason: str | None) -> str:
+    raw = str(reason or "").strip().lower()
+    return {
+        "goodbye": "goodbye",
+        "goal_complete": "goal_complete",
+        "firm_refusal": "firm_refusal",
+        "opt_out": "goodbye",
+        "callback_cancelled": "goodbye",
+        "abuse": "abuse",
+        "out_of_scope": "out_of_scope",
+    }.get(raw, "goodbye")
+
+
+HANGUP_JUDGMENT_RULES = """HANGUP JUDGMENT (one story — the platform owns disconnect timing)
+Call request_end_call (or end_call) in the SAME turn as a short farewell when the caller confirms they are done or the script objective and agreed next step are complete.
+
+HANG UP (farewell + request_end_call / end_call.should_end true):
+1) firm_refusal — not interested / no thanks / don't want / don't call / no need for a call.
+2) goodbye — bye, hang up, cut the call, that's all / that's it, stop calling,
+   I'm sleeping, I have to go. 'Can you cut the call, please?' and ASR 'can you call this call'
+   are end requests, not information questions. Do not ask 'are you still there?' after that.
+3) goal_complete — the script's required outcome is met, required details are captured, and
+   the caller confirmed the next step (callback/visit/handoff where applicable). Confirm it
+   in one line, say goodbye (or have a great day), and invoke the tool in that SAME turn.
+Understand refusal, stop, callback, and continue intent from the caller's supported language.
+For Tamil: `விருப்பமில்லை` / `எனக்கு ஆர்வம் இல்லை` means firm refusal; `அழைப்பை முடிக்கவும்`
+means end this call; `நாளை மீண்டும் அழைக்கவும்` requests a callback; `இன்னும் சொல்லுங்கள்`
+or a question means stay on the line. Keep the farewell in the configured agent language.
+   After callback is agreed and they thank you, do not start a new topic — farewell + tool.
+   An offer alone, unclear audio or an unanswered question is not completion.
+
+KEEP TALKING (never goodbye, never end_call):
+- Interested callers, questions, tell me more, price, objections you can still handle.
+- Bare okay / thanks / alright — that is not permission to hang up.
+- Busy / not now / maybe / I'll decide: offer ONE callback time, no pitch, stay on the line
+  until they pick a time, decline the callback, or ask to end.
+- I'm here / wait / hold on: continue the topic. A bare hello during farewell is not re-engage.
+- A fact they already said on this call (name, phone, area, budget): never ask it again.
+
+HOW A CLOSE WORKS:
+- Thank them, say goodbye once, then stop. The platform disconnects immediately when farewell playback finishes.
+- Before committing to a farewell, answer a caller who clearly wants to continue. After the farewell finishes, do not start another turn.
+- Use request_end_call or end_call only — do not also require call_action to hang up.
+- Never say goodbye unless end_call.should_end is true."""

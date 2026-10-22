@@ -1,0 +1,19 @@
+{
+  "intents": {
+    "flow:drive-the-tenant-voice-editor-only-offers-administrato": {
+      "declaredAt": 1792611277551,
+      "id": "flow:drive-the-tenant-voice-editor-only-offers-administrato",
+      "source": "decided on the dashboard",
+      "state": "declared",
+      "statement": "The tenant voice editor only offers administrator-approved, ready low or standard profiles, and keeps the existing voice setup unchanged when none are ready.",
+      "status": "proved",
+      "subject": "drive-the-tenant-voice-editor-only-offer",
+      "surface": {
+        "flow": "drive-the-tenant-voice-editor-only-offers-administrato"
+      },
+      "updatedAt": 1792611280147
+    }
+  },
+  "subject": "drive-the-tenant-voice-editor-only-offer",
+  "version": 1
+}

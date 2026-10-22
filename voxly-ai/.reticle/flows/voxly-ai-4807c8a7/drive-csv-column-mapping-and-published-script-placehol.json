@@ -1,0 +1,332 @@
+{
+  "version": 2,
+  "name": "drive-csv-column-mapping-and-published-script-placehol",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1792524173919,
+  "steps": [
+    {
+      "tool": "reticle_act_sequence",
+      "anchor": {
+        "kind": "role",
+        "role": "textbox",
+        "name": "Campaign name"
+      },
+      "steps": [
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "role",
+            "role": "textbox",
+            "name": "Campaign name"
+          },
+          "args": {
+            "value": "Personalized follow-up"
+          },
+          "action": "fill"
+        },
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "role",
+            "role": "button",
+            "name": "Paste CSV"
+          },
+          "args": {},
+          "action": "click"
+        },
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "role",
+            "role": "textbox",
+            "name": "CSV contacts"
+          },
+          "args": {
+            "value": "phone,full_name\n+12025550101,Example Contact"
+          },
+          "action": "fill"
+        }
+      ],
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Validate contacts"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "POST",
+            "urlContains": "/api/contacts/normalize-preview",
+            "status": 200
+          },
+          {
+            "kind": "net",
+            "method": "POST",
+            "urlContains": "/api/campaigns/validate-variables",
+            "status": 200
+          },
+          {
+            "kind": "text",
+            "contains": "Example Contact"
+          },
+          {
+            "kind": "element",
+            "query": {
+              "label": "Preview contact"
+            }
+          }
+        ]
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Preview personalized script"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "text",
+        "contains": "Hello Example Contact. Is this a convenient time to speak?",
+        "visible": true
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "unresolved"
+      },
+      "args": {
+        "text": "Escape"
+      },
+      "action": "press",
+      "degraded": true,
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "campaign-setup"
+        },
+        "absent": true
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "nav-phone-numbers",
+        "source": {
+          "file": "src/console/Sidebar.jsx",
+          "line": 296,
+          "column": 19
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "route",
+        "contains": "phone-numbers"
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Buy Phone Number"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "testid": "buy-number-submit"
+            }
+          },
+          {
+            "kind": "text",
+            "contains": "$4.00 / month",
+            "visible": true
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "voice-service-kyc-card"
+            },
+            "absent": true
+          }
+        ]
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "buy-number-submit",
+        "source": {
+          "file": "src/console/ui/TactileButton.jsx",
+          "line": 69,
+          "column": 5
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "testid": "voice-service-kyc-card"
+            }
+          },
+          {
+            "kind": "text",
+            "contains": "Selected number:",
+            "visible": true
+          },
+          {
+            "kind": "text",
+            "contains": "PAN and Aadhaar",
+            "absent": true
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "confirm-selected-number"
+            },
+            "absent": true
+          }
+        ]
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act_sequence",
+      "anchor": {
+        "kind": "testid",
+        "value": "voice-service-business-type",
+        "source": {
+          "file": "src/console/ui/VoiceServiceKycCard.jsx",
+          "line": 165,
+          "column": 11
+        }
+      },
+      "steps": [
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "testid",
+            "value": "voice-service-business-type",
+            "source": {
+              "file": "src/console/ui/VoiceServiceKycCard.jsx",
+              "line": 165,
+              "column": 11
+            }
+          },
+          "args": {
+            "value": "individual"
+          },
+          "action": "select"
+        },
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "testid",
+            "value": "voice-service-legal-name",
+            "source": {
+              "file": "src/console/ui/VoiceServiceKycCard.jsx",
+              "line": 178,
+              "column": 11
+            }
+          },
+          "args": {
+            "value": "Example Contact"
+          },
+          "action": "fill"
+        }
+      ],
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "voice-service-kyc-start",
+        "source": {
+          "file": "src/console/ui/TactileButton.jsx",
+          "line": 69,
+          "column": 5
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "POST",
+            "urlContains": "/api/kyc/voice/session",
+            "status": 503
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "voice-service-kyc-error"
+            }
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "voice-service-kyc-start"
+            },
+            "state": "enabled"
+          },
+          {
+            "kind": "text",
+            "contains": "PAN and Aadhaar",
+            "visible": true
+          }
+        ]
+      },
+      "page": "/"
+    }
+  ],
+  "intent": "CSV column mapping and published script placeholders resolve to the selected recipient before campaign launch.",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "codex-mcp-client",
+    "person": "mohansaiteja.99@gmail.com"
+  },
+  "intentId": "flow:drive-csv-column-mapping-and-published-script-placehol"
+}

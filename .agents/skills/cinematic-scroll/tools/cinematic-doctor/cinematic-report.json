@@ -1,0 +1,122 @@
+{
+  "tool": "cinematic-doctor",
+  "version": 1,
+  "generatedAt": "2026-07-21T14:19:11.876Z",
+  "file": "bench/index.html",
+  "threshold": 90,
+  "total": 94,
+  "pass": true,
+  "naCategories": [
+    "threed"
+  ],
+  "categories": [
+    {
+      "category": "taste",
+      "score": 100,
+      "weight": 30,
+      "normalizedWeight": 29.4,
+      "contribution": 29.41,
+      "findings": [
+        {
+          "level": "pass",
+          "msg": "3 custom cubic-bezier curve(s); no \"transition: all\""
+        }
+      ]
+    },
+    {
+      "category": "performance",
+      "score": 100,
+      "weight": 25,
+      "normalizedWeight": 24.5,
+      "contribution": 24.51,
+      "findings": [
+        {
+          "level": "pass",
+          "msg": "no layout-property animation found (transform/opacity only)"
+        },
+        {
+          "level": "pass",
+          "msg": "no render-blocking scripts in <head>"
+        }
+      ]
+    },
+    {
+      "category": "a11y",
+      "score": 95,
+      "weight": 20,
+      "normalizedWeight": 19.6,
+      "contribution": 18.63,
+      "findings": [
+        {
+          "level": "pass",
+          "msg": "prefers-reduced-motion handled (CSS)",
+          "line": 7
+        },
+        {
+          "level": "info",
+          "msg": "reduced-motion handled in CSS only — budget §3 also wants JS detection to disable ScrollTrigger pinning/parallax"
+        },
+        {
+          "level": "info",
+          "msg": "no <img> elements (procedural/SVG imagery) — alt check N/A"
+        },
+        {
+          "level": "pass",
+          "msg": ":focus-visible style present",
+          "line": 15
+        },
+        {
+          "level": "warn",
+          "msg": "landmarks present (nav, header, footer) but no <main> — add one to mark primary content",
+          "line": 36
+        }
+      ]
+    },
+    {
+      "category": "mobile",
+      "score": 78,
+      "weight": 15,
+      "normalizedWeight": 14.7,
+      "contribution": 11.47,
+      "findings": [
+        {
+          "level": "pass",
+          "msg": "viewport meta present",
+          "line": 2
+        },
+        {
+          "level": "error",
+          "msg": "1 :hover interaction(s) with no touch/pointer fallback — wrap in @media(hover:hover) or add pointer/touch handlers (mobile-motion.md)",
+          "line": 16
+        },
+        {
+          "level": "pass",
+          "msg": "mobile path present: breakpoint(s)",
+          "line": 28
+        }
+      ]
+    },
+    {
+      "category": "tokens",
+      "score": 84,
+      "weight": 12,
+      "normalizedWeight": 11.8,
+      "contribution": 9.88,
+      "findings": [
+        {
+          "level": "error",
+          "msg": "2 literal cubic-bezier() in declarations — use var(--ease-reveal|exit|playful|cut); see tokens/motion.tokens.json",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "category": "hygiene",
+      "score": 100,
+      "weight": 0,
+      "normalizedWeight": 0,
+      "contribution": 0,
+      "findings": []
+    }
+  ]
+}

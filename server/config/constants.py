@@ -46,11 +46,65 @@ class Constants:
     TTS_BITRATES = ["32k", "64k", "96k", "128k", "192k"]
     TTS_SAMPLE_RATES = [8000, 16000, 22050, 24000]
 
-    # Supported languages — extensible by config
+    # Canonical BCP-47 codes the live stack accepts. Sarvam still uses IN English
+    # codes (sttCode/ttsCode); OpenAI Realtime / brain packs keep en-US.
+    LANGUAGE_ALIASES: dict[str, str] = {
+        "te": "te-IN",
+        "te-in": "te-IN",
+        "telugu": "te-IN",
+        "en": "en-IN",
+        "eng": "en-IN",
+        "en-in": "en-IN",
+        "english": "en-IN",
+        "en-us": "en-US",
+        "en-gb": "en-GB",
+        "en-au": "en-GB",
+        "en-ca": "en-GB",
+        "en-uk": "en-GB",
+        "english-us": "en-US",
+        "english-uk": "en-GB",
+        "us-english": "en-US",
+        "uk-english": "en-GB",
+        "american": "en-US",
+        "british": "en-GB",
+        "hi": "hi-IN",
+        "hi-in": "hi-IN",
+        "hindi": "hi-IN",
+        "ta": "ta-IN",
+        "ta-in": "ta-IN",
+        "tamil": "ta-IN",
+        "kn": "kn-IN",
+        "kn-in": "kn-IN",
+        "kannada": "kn-IN",
+        "ml": "ml-IN",
+        "ml-in": "ml-IN",
+        "malayalam": "ml-IN",
+        "mr": "mr-IN",
+        "mr-in": "mr-IN",
+        "marathi": "mr-IN",
+        "bn": "bn-IN",
+        "bn-in": "bn-IN",
+        "bengali": "bn-IN",
+        "gu": "gu-IN",
+        "gu-in": "gu-IN",
+        "gujarati": "gu-IN",
+        "pa": "pa-IN",
+        "pa-in": "pa-IN",
+        "punjabi": "pa-IN",
+    }
     SUPPORTED_LANGUAGES: dict[str, dict[str, str]] = {
         "te-IN": {"sttCode": "te-IN", "ttsCode": "te-IN", "speaker": "shubh", "name": "Telugu"},
         "hi-IN": {"sttCode": "hi-IN", "ttsCode": "hi-IN", "speaker": "shubh", "name": "Hindi"},
-        "en-IN": {"sttCode": "en-IN", "ttsCode": "en-IN", "speaker": "shubh", "name": "English"},
+        "ta-IN": {"sttCode": "ta-IN", "ttsCode": "ta-IN", "speaker": "shubh", "name": "Tamil"},
+        "kn-IN": {"sttCode": "kn-IN", "ttsCode": "kn-IN", "speaker": "shubh", "name": "Kannada"},
+        "ml-IN": {"sttCode": "ml-IN", "ttsCode": "ml-IN", "speaker": "shubh", "name": "Malayalam"},
+        "mr-IN": {"sttCode": "mr-IN", "ttsCode": "mr-IN", "speaker": "shubh", "name": "Marathi"},
+        "bn-IN": {"sttCode": "bn-IN", "ttsCode": "bn-IN", "speaker": "shubh", "name": "Bengali"},
+        "gu-IN": {"sttCode": "gu-IN", "ttsCode": "gu-IN", "speaker": "shubh", "name": "Gujarati"},
+        "pa-IN": {"sttCode": "pa-IN", "ttsCode": "pa-IN", "speaker": "shubh", "name": "Punjabi"},
+        "en-IN": {"sttCode": "en-IN", "ttsCode": "en-IN", "speaker": "shubh", "name": "English (India)"},
+        "en-GB": {"sttCode": "en-IN", "ttsCode": "en-IN", "speaker": "shubh", "name": "English (UK)"},
+        "en-US": {"sttCode": "en-IN", "ttsCode": "en-IN", "speaker": "shubh", "name": "English (US)"},
     }
 
     # Tiers (L1 stack bundles — assignments configured via env / Dev Portal)
@@ -63,7 +117,7 @@ class Constants:
     CARTESIA_STT_MODELS: dict[str, dict] = {
         "ink-2": {
             "label": "Ink 2 (English, streaming)",
-            "languages": ["en", "en-IN"],
+            "languages": ["en", "en-IN", "en-US"],
             "modes": ["transcribe"],
             "realtime": True,
         },
@@ -84,9 +138,154 @@ class Constants:
     # Fallback when CARTESIA_TTS_VOICE_ID unset (Cartesia "Skylar")
     CARTESIA_DEFAULT_VOICE_ID = "db6b0ed5-d5d3-463d-ae85-518a07d3c2b4"
 
+    # LLM catalogs (verified from provider docs — Aug 2026)
+    # OpenAI voice models: see server/prompts/voice_defaults.OPENAI_MODEL_CATALOG
+    DEEPSEEK_LLM_MODELS: dict[str, dict] = {
+        "deepseek-chat": {
+            "label": "DeepSeek Chat (V3) — fast dialogue",
+            "structured_output": True,
+            "prompt_caching": False,
+        },
+        "deepseek-reasoner": {
+            "label": "DeepSeek Reasoner — chain-of-thought",
+            "structured_output": True,
+            "prompt_caching": False,
+        },
+    }
+    GEMINI_LLM_MODELS: dict[str, dict] = {
+        # Latest 3.x — preferred for new stacks (see ai.google.dev/gemini-api/docs/deprecations)
+        "gemini-3.8-flash": {
+            "label": "Gemini 3.8 Flash — latest (Sep 2026); use thinking LOW for voice",
+            "structured_output": True,
+            "prompt_caching": True,
+            "tier": "flagship",
+        },
+        "gemini-3.8-live": {
+            "label": "Gemini 3.8 Live — speech-to-speech (Test Studio PSTN E2E)",
+            "structured_output": False,
+            "prompt_caching": False,
+            "realtime": True,
+            "tier": "realtime",
+        },
+        "gemini-3.7-flash": {
+            "label": "Gemini 3.7 Flash — strong Telugu/agentic ($0.75 in / $3.75 out per 1M)",
+            "structured_output": True,
+            "prompt_caching": True,
+            "tier": "flagship",
+        },
+        "gemini-3.6-flash": {
+            "label": "Gemini 3.6 Flash — successor to 2.5 Flash (strong reasoning)",
+            "structured_output": True,
+            "prompt_caching": True,
+            "tier": "balanced",
+        },
+        "gemini-3.5-flash": {
+            "label": "Gemini 3.5 Flash — balanced latency & quality",
+            "structured_output": True,
+            "prompt_caching": True,
+            "tier": "balanced",
+        },
+        "gemini-3.5-flash-lite": {
+            "label": "Gemini 3.5 Flash-Lite — lowest cost & fastest (~350 tok/s, $0.30/$2.50 per 1M)",
+            "structured_output": True,
+            "prompt_caching": True,
+            "tier": "fast",
+        },
+        "gemini-3.1-flash-lite": {
+            "label": "Gemini 3.1 Flash-Lite — ultra-low cost flash",
+            "structured_output": True,
+            "prompt_caching": True,
+            "tier": "fast",
+        },
+        "gemini-3.1-pro-preview": {
+            "label": "Gemini 3.1 Pro (preview) — highest quality",
+            "structured_output": True,
+            "prompt_caching": True,
+            "tier": "quality",
+        },
+        # Legacy 2.5 — retiring Oct 2026; keep for existing env tiers
+        "gemini-2.5-flash": {
+            "label": "Gemini 2.5 Flash (legacy — migrate to 3.5/3.6+)",
+            "structured_output": True,
+            "prompt_caching": True,
+            "tier": "legacy",
+        },
+        "gemini-2.5-flash-lite": {
+            "label": "Gemini 2.5 Flash-Lite (legacy — use 3.5 Flash-Lite)",
+            "structured_output": True,
+            "prompt_caching": True,
+            "tier": "legacy",
+        },
+        "gemini-2.5-pro": {
+            "label": "Gemini 2.5 Pro (legacy — migrate to 3.1 Pro)",
+            "structured_output": True,
+            "prompt_caching": True,
+            "tier": "legacy",
+        },
+    }
+
     # Sarvam endpoints
     SARVAM_STT_REALTIME_WS = "wss://api.sarvam.ai/speech-to-text-realtime/ws"
     SARVAM_TTS_WS = "wss://api.sarvam.ai/text-to-speech/ws"
 
 
 constants = Constants()
+
+_COMPACT_LANGUAGE_ALIASES = {
+    "enus": "en-US",
+    "enin": "en-IN",
+    "engb": "en-US",
+    "enuk": "en-US",
+    "enau": "en-US",
+    "enca": "en-US",
+    "tein": "te-IN",
+    "hiin": "hi-IN",
+    "eng": "en-IN",
+}
+
+
+def normalize_supported_language(code: str | None) -> str:
+    """Map Test Studio / locale aliases to a canonical live-stack language."""
+    raw = (code or "").strip()
+    if not raw:
+        return "te-IN"
+    if raw == "unknown":
+        return "unknown"
+    if raw in constants.SUPPORTED_LANGUAGES:
+        return raw
+    collapsed = raw.lower().replace("_", "-").replace(" ", "")
+    mapped = constants.LANGUAGE_ALIASES.get(raw.lower()) or constants.LANGUAGE_ALIASES.get(collapsed)
+    if mapped:
+        return mapped
+    return _COMPACT_LANGUAGE_ALIASES.get(collapsed.replace("-", ""), raw)
+
+
+def language_in_supported(code: str | None, *, allow_unknown: bool = False) -> bool:
+    lang = normalize_supported_language(code)
+    if allow_unknown and lang == "unknown":
+        return True
+    return lang in constants.SUPPORTED_LANGUAGES
+
+
+def coerce_supported_language(code: str | None, *, fallback: str = "te-IN") -> str:
+    lang = normalize_supported_language(code)
+    if lang in constants.SUPPORTED_LANGUAGES:
+        return lang
+    return fallback
+
+
+def provider_language_code(
+    code: str | None,
+    *,
+    provider: str = "sarvam",
+    stage: str = "tts",
+) -> str:
+    """BCP-47 the vendor API actually accepts (Sarvam has no en-US)."""
+    lang = coerce_supported_language(code)
+    entry = constants.SUPPORTED_LANGUAGES[lang]
+    if provider == "sarvam":
+        field = "sttCode" if stage == "stt" else "ttsCode"
+        return str(entry.get(field) or lang)
+    if provider == "cartesia" and lang.startswith("en"):
+        return "en"
+    return lang

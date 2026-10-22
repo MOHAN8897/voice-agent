@@ -1,0 +1,47 @@
+{
+  "intents": {
+    "inline:a-failed-script-publication-must-show-an-error-a-93b77cb5": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "POST",
+            "status": 503,
+            "urlContains": "/business-brain/publish"
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "agent-save-error"
+            },
+            "state": "visible"
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "agent-studio-unsaved"
+            },
+            "state": "visible"
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "script-textarea"
+            },
+            "state": "enabled"
+          }
+        ]
+      },
+      "declaredAt": 1792471426388,
+      "id": "inline:a-failed-script-publication-must-show-an-error-a-93b77cb5",
+      "state": "bound",
+      "statement": "A failed script publication must show an error and leave the tenant's edited draft available.",
+      "status": "proposed",
+      "subject": "business-brain",
+      "updatedAt": 1792471426446
+    }
+  },
+  "subject": "business-brain",
+  "version": 1
+}

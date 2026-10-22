@@ -1,0 +1,21 @@
+{
+  "intents": {
+    "flow:drive-refreshing-call-history-keeps-tenant-data-loaded": {
+      "binding": {
+        "flow": "drive-refreshing-call-history-keeps-tenant-data-loaded"
+      },
+      "declaredAt": 1790859693666,
+      "id": "flow:drive-refreshing-call-history-keeps-tenant-data-loaded",
+      "state": "bound",
+      "statement": "Refreshing call history keeps tenant data loaded without session-expired sync errors.",
+      "status": "proposed",
+      "subject": "drive-refreshing-call-history-keeps-tena",
+      "surface": {
+        "flow": "drive-refreshing-call-history-keeps-tenant-data-loaded"
+      },
+      "updatedAt": 1790859693725
+    }
+  },
+  "subject": "drive-refreshing-call-history-keeps-tena",
+  "version": 1
+}

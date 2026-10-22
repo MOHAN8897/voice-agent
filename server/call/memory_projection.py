@@ -31,7 +31,7 @@ def build(
     if facts:
         fact_line = " | ".join(f"{k}: {v}" for k, v in facts.items() if v)
         if fact_line:
-            sections.append(("facts", f"[Facts]\n{fact_line}"))
+            sections.append(("facts", f"[Facts — do not re-ask]\n{fact_line}"))
     if prefs:
         pref_line = " | ".join(f"{k}: {v}" for k, v in prefs.items() if v)
         if pref_line:

@@ -1,0 +1,39 @@
+# SaaS / Stripe / Voxly — add to project root .env (see PRD-11, PRD-03)
+
+DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5432/voice_agent
+
+# Subscriber SaaS auth (PRD-03) — required before Voxly
+SAAS_AUTH_ENABLED=true
+JWT_SECRET=change-me-long-random-string
+JWT_ACCESS_TTL_MINUTES=15
+JWT_REFRESH_TTL_DAYS=30
+
+# Voxly local (PRD-07) — landing + console at voxly-ai/
+VOXLY_FRONTEND_URL=http://localhost:5173
+CORS_ORIGINS=http://localhost:5173,http://localhost:3000
+
+# Stripe (test mode for local dev)
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...   # from: stripe listen --forward-to localhost:8000/api/stripe/webhook
+STRIPE_PUBLISHABLE_KEY=pk_test_... # optional, for Voxly Embedded Checkout
+
+# Email (Resend) — verification + password reset
+RESEND_API_KEY=
+RESEND_FROM_EMAIL=Voxly <onboarding@yourdomain.com>
+
+# Razorpay wallet (INR) — keys also accepted as razorpay_api_key / razorpay_api_secret
+RAZORPAY_API_KEY=
+RAZORPAY_API_SECRET=
+
+# Google OAuth (console sign-in) — create OAuth client in Google Cloud Console
+GOOGLE_OAUTH_CLIENT_ID=
+GOOGLE_OAUTH_CLIENT_SECRET=
+# Use Vite origin so HttpOnly refresh cookies work (proxied to API :8000)
+GOOGLE_OAUTH_REDIRECT_URI=http://localhost:5173/api/auth/google/callback
+
+# Feature flags
+SAAS_TELEPHONY_ENABLED=true
+SAAS_SIGNUP_ENABLED=true
+
+# Voxly frontend (separate repo) — not read by FastAPI
+# VITE_API_URL=http://localhost:8000/api

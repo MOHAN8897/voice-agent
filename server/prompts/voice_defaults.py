@@ -1,35 +1,156 @@
 """
-Default prompting for Telugu voice agent — applied when session has no saved prompts.
-Tuned for spoken Telugu, low latency (short replies), and natural phone-call register.
+Default prompting when a session has no saved prompts.
+Language-specific spoken style is selected by default_style_for().
 """
 
-DEFAULT_RESPONSE_STYLE = "very brief, 1-2 sentences, spoken Telugu"
+DEFAULT_RESPONSE_STYLES: dict[str, str] = {
+    "te-IN": "very brief, 1-2 sentences, spoken Telugu",
+    "en-IN": "warm, brief, 1-2 sentences, spoken Indian English like a person on a phone",
+    "en-GB": "warm, brief, 1-2 sentences, spoken British English like a person on a phone",
+    "en-US": "warm, brief, 1-2 sentences, natural spoken English like a person on a phone",
+    "hi-IN": "very brief, 1-2 sentences, spoken Hinglish",
+    "ta-IN": "very brief, 1-2 sentences, spoken Tamil like a person on a phone",
+    "kn-IN": "very brief, 1-2 sentences, spoken Kannada like a person on a phone",
+    "ml-IN": "warm, brief, 1-2 sentences, spoken Malayalam",
+    "mr-IN": "warm, brief, 1-2 sentences, spoken Marathi",
+    "bn-IN": "warm, brief, 1-2 sentences, spoken Bengali",
+    "gu-IN": "warm, brief, 1-2 sentences, spoken Gujarati",
+    "pa-IN": "warm, brief, 1-2 sentences, spoken Punjabi",
+}
 
-DEFAULT_BEHAVIOUR_INSTRUCTIONS = """VOICE CALL MODE — Telugu-first assistant
-- Reply in natural SPOKEN Telugu (మాట్లాడే టోన్). Mix English words the user uses (plot, flat, budget, loan, Python).
-- STRICT: 1–2 short sentences only. Max 25 words unless the user explicitly asks for detail.
-- One idea per turn. One question maximum — only when you truly need clarification.
-- Start with a tiny backchannel when natural: "అవునా…", "సరే…", "ఓ కదా…"
-- Never use bullet lists, markdown, or numbered steps in voice replies.
-- Never say you are an AI unless asked. Sound like a helpful Telugu-speaking human on a call.
-- If transcript is unclear, ask them to repeat once — do not guess."""
+# Back-compat: factory sessions with no language still Telugu.
+DEFAULT_RESPONSE_STYLE = DEFAULT_RESPONSE_STYLES["te-IN"]
 
-DEFAULT_BUSINESS_INSTRUCTIONS = """You are a helpful Telugu voice assistant for general conversation, learning, and everyday questions.
-- Prefer practical, accurate answers grounded in what the user said.
-- For property/business topics: ask one clarifying question before long explanations.
-- Keep domain facts conservative — if unsure, say so briefly in Telugu."""
+_STYLE_ALIASES = {
+    "te": "te-IN",
+    "te-in": "te-IN",
+    "en": "en-IN",
+    "en-in": "en-IN",
+    "en-gb": "en-GB",
+    "en-uk": "en-GB",
+    "british": "en-GB",
+    "uk-english": "en-GB",
+    "en-us": "en-US",
+    "en-au": "en-GB",
+    "en-ca": "en-GB",
+    "english": "en-IN",
+    "hi": "hi-IN",
+    "hi-in": "hi-IN",
+    "hindi": "hi-IN",
+    "ta": "ta-IN",
+    "ta-in": "ta-IN",
+    "tamil": "ta-IN",
+    "kn": "kn-IN",
+    "kn-in": "kn-IN",
+    "kannada": "kn-IN",
+}
+
+
+def canonical_language(language: str | None) -> str:
+    from server.config.constants import normalize_supported_language
+
+    raw = (language or "te-IN").strip()
+    normalized = normalize_supported_language(raw)
+    if normalized in DEFAULT_RESPONSE_STYLES:
+        return normalized
+    if raw in DEFAULT_RESPONSE_STYLES:
+        return raw
+    mapped = _STYLE_ALIASES.get(raw.lower())
+    if mapped:
+        return mapped
+    if raw.lower().startswith("en-gb") or raw.lower() in {"en-uk", "british", "uk-english"}:
+        return "en-GB"
+    if raw.lower().startswith("en-us"):
+        return "en-US"
+    if raw.lower().startswith("en"):
+        return "en-IN"
+    if raw.lower().startswith("hi"):
+        return "hi-IN"
+    if raw.lower().startswith("ta"):
+        return "ta-IN"
+    if raw.lower().startswith("kn"):
+        return "kn-IN"
+    return "te-IN"
+
+
+def default_style_for(language: str | None) -> str:
+    return DEFAULT_RESPONSE_STYLES[canonical_language(language)]
+
+
+_LANG_STYLE_MARKERS = {
+    "te-IN": ("spoken telugu", "tanglish"),
+    "en-IN": ("spoken indian english",),
+    "en-GB": ("spoken british english", "uk english", "british"),
+    "en-US": ("natural spoken english", "us/uk"),
+    "hi-IN": ("spoken hinglish",),
+    "ta-IN": ("spoken tamil",),
+    "kn-IN": ("spoken kannada",),
+    "ml-IN": ("spoken malayalam",),
+    "mr-IN": ("spoken marathi",),
+    "bn-IN": ("spoken bengali",),
+    "gu-IN": ("spoken gujarati",),
+    "pa-IN": ("spoken punjabi",),
+}
+
+
+def style_for_language(style: str | None, language: str | None) -> str:
+    """Use an explicit style only when it matches the compile language.
+
+    Fine-tune can resend a previously stored 'spoken Telugu' tag after the
+    user switches the picker to English. That must not leak into the brain.
+    """
+    wanted = default_style_for(language)
+    raw = (style or "").strip()
+    if not raw:
+        return wanted
+    lowered = raw.lower()
+    target = canonical_language(language)
+    for code, markers in _LANG_STYLE_MARKERS.items():
+        if code != target and any(m in lowered for m in markers):
+            return wanted
+    return raw[:100]
+
+
+# Seeds only what the platform rules do not already say. The live-call
+# behaviour rules (length, grammar, greeting, hangup, honesty about actions,
+# objection and busy handling) are owned by STATIC OUTPUT RULES and CALL END
+# POLICY, which every compiled brain already carries. Repeating them here cost
+# ~400 tokens per brain and added nothing the model did not already have.
+DEFAULT_BEHAVIOUR_INSTRUCTIONS = """VOICE CALL MODE — spoken assistant
+- You represent this business on a live phone call. For sales/lead work, act as its sales representative — warm, clear, on-brand.
+- Reply in the call language with everyday words the caller uses. Sound like a helpful colleague, not a policy page.
+- Sarcasm is not a buying signal. Missing facts: I'll check and get back to you.
+- Busy: one callback offer, stay on the line. Never hang up on okay or thanks alone."""
+
+DEFAULT_BUSINESS_INSTRUCTIONS = """You are a helpful voice assistant for this business.
+- Answer from the brief and what the user said. If unsure, say so briefly in the call language."""
+
+CACHE_FLOOR_PAD = """--- PLATFORM CACHE FLOOR ---
+You are a live-call sales representative of this business. Stay inside the brief.
+Answer the last customer utterance first. A question must earn its place.
+Greet once (name + company + brief purpose). Later hello = availability — continue, do not re-greet.
+Never repeat the same pitch or facts every turn. Never invent prices, policies, salaries, availability, or prior conversations.
+Honor busy: one callback offer, no pitch, stay on the line. Send-details: honor briefly.
+Hang up only when they confirm they are done (bye / hang up / that's all / don't call / firm no) or they confirmed a callback and details are in.
+Never hang up on okay/thanks, maybe, frustration, objections, silence, or unspoken "enough is known".
+Firm no or don't-call: one farewell and end_call.should_end true.
+Hesitation is not a request to pitch. This call has no history from earlier calls.
+"""
 
 # OpenAI model catalog shown in Fine-tune Console (slug → UI label)
 OPENAI_MODEL_CATALOG: list[dict[str, str]] = [
+    {"id": "gpt-realtime-2.1-mini", "label": "GPT Realtime 2.1 Mini — Live voice (text) ⭐", "tier": "realtime"},
+    {"id": "gpt-realtime-2.1", "label": "GPT Realtime 2.1 — Live voice (text)", "tier": "realtime"},
+    {"id": "gpt-realtime-2", "label": "GPT Realtime 2 — Live voice (text)", "tier": "realtime"},
     {"id": "gpt-5.5", "label": "GPT-5.5 — Frontier intelligence ⭐⭐⭐⭐⭐", "tier": "flagship"},
     {"id": "gpt-5.4", "label": "GPT-5.4 — Professional workhorse ⭐⭐⭐⭐⭐", "tier": "balanced"},
     {"id": "gpt-5", "label": "GPT-5 — Earlier flagship ⭐⭐⭐⭐", "tier": "legacy"},
-    {"id": "gpt-5.6-luna", "label": "GPT-5.6 Luna — Fast & low-cost (voice) 🥉", "tier": "fast"},
+    {"id": "gpt-5.6-luna", "label": "GPT-5.6 Luna — HTTP compile & post-call 🥉", "tier": "fast"},
 ]
 
 OPENAI_MODEL_IDS: list[str] = [m["id"] for m in OPENAI_MODEL_CATALOG]
 
-DEFAULT_OPENAI_MODEL = "gpt-5.6-luna"  # lowest latency for live voice; user can switch to gpt-5.5 for max quality
+DEFAULT_OPENAI_MODEL = "gpt-realtime-2.1-mini"
 
 # Per-model recommended brain settings (OpenAI voice-agent guidance, Feb 2026).
 # GPT-5 family uses reasoning.effort instead of temperature on the Responses API.
@@ -49,7 +170,7 @@ VOICE_PIPELINE_PRESETS: dict[str, dict] = {
             "sttSilenceMs": 500,
             "sttThreshold": 0.30,
             "sttStreamType": "fast",
-            "bargeMinWords": 3,
+            "bargeMinWords": 4,
             "bargeRequireVad": True,
             "ttsMinBuffer": 30,
             "ttsMaxChunk": 80,
@@ -85,6 +206,36 @@ VOICE_PIPELINE_PRESETS: dict[str, dict] = {
             "ttsMaxChunk": 80,
         },
     },
+    "speakerphone": {
+        "name": "Mobile speakerphone",
+        "hint": "Phone on loudspeaker — long echo tail, strict barge-in, slower endpointing.",
+        "values": {
+            "ttsPace": 1.0,
+            "ttsTemperature": 0.75,
+            "sttSilenceMs": 650,
+            "sttThreshold": 0.34,
+            "sttStreamType": "fast",
+            "bargeMinWords": 5,
+            "bargeRequireVad": False,
+            "ttsMinBuffer": 30,
+            "ttsMaxChunk": 80,
+        },
+    },
+    "mobile_handset": {
+        "name": "Mobile handset (direct mic)",
+        "hint": "Hold phone to ear — balanced VAD and barge-in; default for mobile browser.",
+        "values": {
+            "ttsPace": 1.0,
+            "ttsTemperature": 0.80,
+            "sttSilenceMs": 550,
+            "sttThreshold": 0.31,
+            "sttStreamType": "fast",
+            "bargeMinWords": 4,
+            "bargeRequireVad": True,
+            "ttsMinBuffer": 30,
+            "ttsMaxChunk": 80,
+        },
+    },
     "expressive": {
         "name": "Expressive",
         "hint": "More vocal variety at pace 1.0× — still safe barge-in defaults.",
@@ -111,32 +262,53 @@ def voice_preset_values(preset_id: str | None) -> dict:
 
 
 OPENAI_MODEL_PRESETS: dict[str, dict] = {
+    "gpt-realtime-2.1-mini": {
+        "name": "Realtime Voice",
+        "openaiReasoningEffort": "none",
+        "openaiMaxTokens": 96,
+            "brainPromptBudgetTokens": 6000,
+        "hint": "Default live path — persistent OpenAI Realtime text session. STT/TTS stay independently selected.",
+    },
+    "gpt-realtime-2.1": {
+        "name": "Realtime Quality",
+        "openaiReasoningEffort": "none",
+        "openaiMaxTokens": 96,
+            "brainPromptBudgetTokens": 6000,
+        "hint": "Full Realtime 2.1 text session. Use mini unless you need the larger live model.",
+    },
+    "gpt-realtime-2": {
+        "name": "Realtime 2",
+        "openaiReasoningEffort": "none",
+        "openaiMaxTokens": 96,
+            "brainPromptBudgetTokens": 6000,
+        "hint": "Previous Realtime generation. Prefer gpt-realtime-2.1-mini for live voice.",
+    },
     "gpt-5.6-luna": {
         "name": "Voice Fast",
         "openaiReasoningEffort": "none",
-        "openaiMaxTokens": 280,
-        "brainPromptBudgetTokens": 2500,
+        "openaiMaxTokens": 96,
+            "brainPromptBudgetTokens": 6000,
         "hint": "Best for live Telugu voice — lowest latency. OpenAI recommends reasoning effort 'none' for voice.",
     },
     "gpt-5.5": {
         "name": "Quality",
         "openaiReasoningEffort": "low",
         "openaiMaxTokens": 360,
-        "brainPromptBudgetTokens": 2500,
+            "brainPromptBudgetTokens": 6000,
         "hint": "Highest answer quality with modest latency. Reasoning 'low' balances speed and depth.",
     },
     "gpt-5.4": {
         "name": "Balanced",
         "openaiReasoningEffort": "low",
         "openaiMaxTokens": 320,
-        "brainPromptBudgetTokens": 2500,
+            "brainPromptBudgetTokens": 6000,
         "hint": "Professional workhorse — good for longer explanations when latency is less critical.",
     },
     "gpt-5": {
         "name": "Legacy",
         "openaiReasoningEffort": "low",
         "openaiMaxTokens": 300,
-        "brainPromptBudgetTokens": 2500,
+            "brainPromptBudgetTokens": 6000,
         "hint": "Earlier GPT-5 flagship. Use gpt-5.6-luna for voice or gpt-5.5 for max quality.",
     },
 }

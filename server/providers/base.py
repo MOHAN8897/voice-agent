@@ -90,6 +90,10 @@ class TTSConfig:
     speaker: str = "shubh"
     pace: float | None = None
     temperature: float | None = None
+    # Cartesia Sonic generation_config (director knobs — not an LLM text prompt)
+    emotion: str | None = None
+    speed: float | None = None
+    volume: float | None = None
 
 
 @runtime_checkable

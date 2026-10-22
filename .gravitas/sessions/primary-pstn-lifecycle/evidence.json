@@ -1,0 +1,26 @@
+{
+  "date": "2026-10-21",
+  "scope": "Primary Vobiz/Gemini PSTN greeting, hangup, transcription, recordings, tenant call UI",
+  "verification": {
+    "focused_backend_tests": {"passed": 88, "warnings": 1, "exit_code": 0},
+    "playwright_primary_call_lifecycle": {"passed": 3, "exit_code": 0, "isolated_api_mocks": true},
+    "frontend_production_build": "passed",
+    "reticle_status_dropdown": {"verified": "yes", "isolated_api_mocks": true, "expected": "Selecting missed issues HTTP 200 status=missed request without console errors"},
+    "targeted_semgrep_repository_rules": {"findings": 0, "blocking": 0},
+    "full_semgrep_runner": {"findings": 0, "coverage_limit": "Partial parsing warning in existing web/components/admin/CostInsightsPanel.tsx:133"},
+    "live_gemini_probe": {"greeting_audio_frames": 198, "second_reply_audio_frames": 156, "same_session": true},
+    "previous_call_provider_recording_lookup": "No provider recording found; retained local recording",
+    "real_pstn_call_after_changes": "not run",
+    "deployed": false,
+    "graft_refreshed": true,
+    "scoped_diff_check": "passed"
+  },
+  "existing_broad_suite_failures": [
+    "test_audio_instructions_reuse_compiled_brain",
+    "test_resolve_realtime_voice_model_prefers_stack_over_runtime",
+    "test_gemini_usage_events_are_session_snapshots_not_summed"
+  ],
+  "baseline_comparison": "The three listed assertions also failed on an isolated unmodified HEAD checkout. They were not weakened or changed.",
+  "user_work_preserved": "Concurrent billing edits were left intact.",
+  "screenshots": ["artifacts/pstn-call-history-desktop.png", "artifacts/pstn-phone-test-mobile.png"]
+}

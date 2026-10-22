@@ -25,7 +25,7 @@ export function AgentPreview() {
             </div>
             <div className="rounded-xl border border-accent/25 bg-accent-dim/50 px-3 py-2.5">
               <p className="font-mono text-[10px] uppercase tracking-wider text-accent">Agent · 0:12</p>
-              <p className="mt-1 text-sm text-text">Our project pricing starts from ₹45 lakh. I can share layout options.</p>
+              <p className="mt-1 text-sm text-text">Our project pricing starts from $55,000. I can share layout options.</p>
             </div>
           </div>
         </div>

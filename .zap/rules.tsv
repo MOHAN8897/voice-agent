@@ -1,0 +1,4 @@
+# OWASP ZAP rule configuration
+# format: <rule_id>\t<threshold>\t<optional_new_level>
+10015	IGNORE	(Incomplete or No Cache-control Header on Static Assets)
+10096	WARN	(Timestamp Disclosure)

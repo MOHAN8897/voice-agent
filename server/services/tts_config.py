@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 from server.agent.language_resolver import get_speaker_for_language
-from server.config.constants import constants
+from server.config.constants import coerce_supported_language, constants, provider_language_code
 from server.config.env import get_settings
 from server.services.runtime_settings import runtime_settings
 from server.utils.logger import log_tts
@@ -50,6 +50,16 @@ def _is_cartesia_model(model: str) -> bool:
     return model in constants.CARTESIA_TTS_MODELS or str(model).startswith("sonic")
 
 
+def _cartesia_available() -> bool:
+    """True when Cartesia is enabled (env or dev_secrets) and an API key is present."""
+    from server.services.dev_secrets_store import dev_secrets_store
+
+    settings = get_settings()
+    enabled = bool(dev_secrets_store.effective("enable_cartesia", settings.enable_cartesia))
+    key = dev_secrets_store.effective_secret("cartesia_api_key") or (settings.cartesia_api_key or "")
+    return enabled and bool(str(key).strip())
+
+
 def _is_cartesia_stack(
     stack,
     rt: dict[str, Any],
@@ -58,6 +68,9 @@ def _is_cartesia_stack(
     model: str | None,
 ) -> bool:
     from server.services.cartesia_voices import is_cartesia_voice_id
+
+    if not _cartesia_available():
+        return False
 
     if stack and stack.tts.provider == "cartesia":
         return True
@@ -70,6 +83,8 @@ def _is_cartesia_stack(
     if is_cartesia_voice_id(rt_speaker):
         return True
     if speaker and is_cartesia_voice_id(str(speaker)):
+        return True
+    if model and _is_cartesia_model(str(model)):
         return True
     return False
 
@@ -107,9 +122,10 @@ def _resolve_cartesia_tts_config(
     pace: float | None,
     sample_rate: int | None,
     stack,
+    allow_runtime: bool = True,
 ) -> dict[str, Any]:
     settings = get_settings()
-    rt = runtime_settings.get(session_id)
+    rt = runtime_settings.get(session_id) if allow_runtime else {}
     resolved_model = model or (stack.tts.model if stack else None) or rt.get("ttsModel") or settings.cartesia_tts_model
     if not _is_cartesia_model(str(resolved_model)):
         resolved_model = settings.cartesia_tts_model or "sonic-3.5"
@@ -120,20 +136,34 @@ def _resolve_cartesia_tts_config(
     from server.services.cartesia_voices import is_cartesia_voice_id
 
     if not is_cartesia_voice_id(str(resolved_speaker)):
-        raise TtsConfigError(
-            f"Cartesia voice id required for {resolved_model}",
-            speaker=str(resolved_speaker),
-        )
+        resolved_speaker = settings.cartesia_tts_voice_id or constants.CARTESIA_DEFAULT_VOICE_ID
 
-    resolved_pace = float(pace if pace is not None else rt.get("ttsPace", settings.sarvam_tts_pace))
-    resolved_sample_rate = int(sample_rate or rt.get("ttsSampleRate") or 24000)
+    from server.services.tts_voice_direction import cartesia_generation_config
+
+    resolved_sample_rate = int(sample_rate) if sample_rate is not None else int(rt.get("ttsSampleRate") or 24000)
+    emotion = rt.get("ttsEmotion") or settings.cartesia_tts_emotion
+    # Prefer Cartesia speed; fall back to explicit pace arg / runtime only when set.
+    speed_raw = rt.get("ttsSpeed")
+    if speed_raw is None and pace is not None:
+        speed_raw = pace
+    elif speed_raw is None and rt.get("ttsPace") is not None:
+        speed_raw = rt.get("ttsPace")
+    gen = cartesia_generation_config(
+        emotion=str(emotion) if emotion else None,
+        speed=float(speed_raw) if speed_raw is not None else None,
+        volume=float(rt["ttsVolume"]) if rt.get("ttsVolume") is not None else None,
+    )
 
     cfg: dict[str, Any] = {
         "provider": "cartesia",
         "model": resolved_model,
         "speaker": str(resolved_speaker),
-        "pace": max(0.5, min(2.0, resolved_pace)),
-        "language_code": language_code if language_code in constants.SUPPORTED_LANGUAGES else "te-IN",
+        "pace": gen["speed"],
+        "speed": gen["speed"],
+        "volume": gen["volume"],
+        "emotion": gen["emotion"],
+        "generation_config": gen,
+        "language_code": coerce_supported_language(language_code),
         "output_audio_codec": "linear16",
         "output_audio_bitrate": "128k",
         "sample_rate": resolved_sample_rate,
@@ -145,6 +175,8 @@ def _resolve_cartesia_tts_config(
         provider="cartesia",
         model=cfg["model"],
         speaker=cfg["speaker"],
+        emotion=cfg["emotion"],
+        speed=cfg["speed"],
         sample_rate=cfg["sample_rate"],
         session=session_id,
     )
@@ -165,16 +197,38 @@ def resolve_tts_config(
     max_chunk_length: int | None = None,
     output_audio_bitrate: str | None = None,
     call_id: str | None = None,
+    provider_override: str | None = None,
+    resolved_stack: Any | None = None,
 ) -> dict[str, Any]:
     """
     Resolve the effective TTS configuration for a session.
-    Priority: explicit call arg → runtime override → env default → language map.
+    Active calls use their immutable resolved stack. Outside a call, priority is
+    explicit argument → runtime override → provider stack → environment default.
     """
     settings = get_settings()
     rt = runtime_settings.get(session_id)
-    stack = _stack_for_session(session_id, call_id, language_code)
+    stack = (
+        resolved_stack or _stack_for_session(session_id, call_id, language_code)
+        if provider_override is None
+        else None
+    )
+    stack_is_locked = bool(stack is not None and (call_id or resolved_stack is not None))
+    if stack_is_locked:
+        # Session controls can change while a call is active (and can retain stale
+        # values from a previous stack). Never let those values change the provider,
+        # model, or voice recorded in this call's resolved-stack metadata.
+        rt = {}
+        model = None
+        speaker = None
+    if provider_override is not None:
+        if provider_override != "sarvam":
+            raise TtsConfigError(f"Unsupported TTS fallback provider: {provider_override}")
+        # A fallback must not inherit the failed provider's model or voice ID.
+        rt = {}
+        model = settings.sarvam_tts_model
+        speaker = None
 
-    if _is_cartesia_stack(stack, rt, speaker=speaker, model=model):
+    if provider_override is None and _is_cartesia_stack(stack, rt, speaker=speaker, model=model):
         resolved_model = _effective_tts_model(
             stack=stack,
             rt=rt,
@@ -189,6 +243,7 @@ def resolve_tts_config(
             pace=pace,
             sample_rate=sample_rate,
             stack=stack,
+            allow_runtime=not stack_is_locked,
         )
 
     resolved_model = _effective_tts_model(
@@ -201,7 +256,21 @@ def resolve_tts_config(
     if resolved_model not in constants.TTS_MODELS:
         resolved_model = settings.sarvam_tts_model
 
+    from server.services.cartesia_voices import is_cartesia_voice_id
+
     resolved_speaker = speaker or rt.get("ttsSpeaker")
+    if resolved_speaker and is_cartesia_voice_id(str(resolved_speaker)):
+        log_tts(
+            "CARTESIA_SPEAKER_IGNORED",
+            speaker=str(resolved_speaker)[:8],
+            reason="cartesia unavailable or stack is sarvam",
+            session=session_id,
+        )
+        resolved_speaker = None
+    if not resolved_speaker:
+        stack_speaker = stack.tts.config.get("speaker") if stack and stack.tts.config else None
+        if stack_speaker and not is_cartesia_voice_id(str(stack_speaker)):
+            resolved_speaker = stack_speaker
     if not resolved_speaker:
         if language_code == "te-IN":
             resolved_speaker = settings.sarvam_tts_speaker_te
@@ -236,7 +305,7 @@ def resolve_tts_config(
         "model": resolved_model,
         "speaker": resolved_speaker,
         "pace": resolved_pace,
-        "language_code": language_code if language_code in constants.SUPPORTED_LANGUAGES else "te-IN",
+        "language_code": provider_language_code(language_code, provider="sarvam", stage="tts"),
         "output_audio_codec": resolved_codec,
         "output_audio_bitrate": resolved_bitrate,
         "sample_rate": resolved_sample_rate,
@@ -269,10 +338,10 @@ def merge_ws_tts_config(
 ) -> dict[str, Any]:
     """Merge browser WS config payload with server-resolved runtime settings."""
     data = dict(client_data or {})
-    return resolve_tts_config(
+    cfg = resolve_tts_config(
         session_id,
         language_code=data.get("language_code") or language_code,
-        speaker=data.get("speaker"),
+        speaker=None,
         model=ws_model,
         call_id=call_id,
         pace=data.get("pace"),
@@ -283,3 +352,172 @@ def merge_ws_tts_config(
         max_chunk_length=data.get("max_chunk_length"),
         output_audio_bitrate=data.get("output_audio_bitrate"),
     )
+    # Browser PCM player cannot decode mp3/aac — streaming WS is always linear16.
+    cfg["output_audio_codec"] = "linear16"
+    return cfg
+
+
+def merge_pstn_tts_config(
+    session_id: str,
+    client_data: dict | None = None,
+    *,
+    language_code: str = "te-IN",
+    call_id: str | None = None,
+    ws_model: str | None = None,
+    wire_mode: str = "rtp_l16",
+    resolved_stack: Any | None = None,
+) -> dict[str, Any]:
+    """Telephony TTS — L16 RTP @ 16 kHz (Telnyx) or μ-law RTP @ 8 kHz (Vobiz)."""
+    data = dict(client_data or {})
+    if wire_mode == "mp3":
+        cfg = resolve_tts_config(
+            session_id,
+            language_code=data.get("language_code") or language_code,
+            speaker=None,
+            model=ws_model,
+            call_id=call_id,
+            resolved_stack=resolved_stack,
+            pace=data.get("pace"),
+            temperature=data.get("temperature"),
+            codec="mp3",
+            sample_rate=24000,
+            min_buffer_size=data.get("min_buffer_size"),
+            max_chunk_length=data.get("max_chunk_length"),
+            output_audio_bitrate=data.get("output_audio_bitrate"),
+        )
+        cfg["output_audio_codec"] = "mp3"
+        cfg["sample_rate"] = 24000
+        log_tts(
+            "CONFIG PSTN",
+            provider=cfg.get("provider"),
+            model=cfg.get("model"),
+            speaker=cfg.get("speaker"),
+            codec=cfg["output_audio_codec"],
+            sample_rate=cfg["sample_rate"],
+            session=session_id,
+            call_id=call_id,
+            wire_mode=wire_mode,
+        )
+        return cfg
+    if wire_mode == "rtp_l16":
+        speaker = data.get("speaker")
+        from server.services.cartesia_voices import is_cartesia_voice_id
+
+        locked_stack = resolved_stack or (
+            _stack_for_session(session_id, call_id, language_code) if call_id else None
+        )
+        locked_cartesia = bool(
+            locked_stack
+            and (
+                locked_stack.tts.provider == "cartesia"
+                or _is_cartesia_model(str(locked_stack.tts.model or ""))
+            )
+        )
+        if (
+            speaker
+            and is_cartesia_voice_id(str(speaker))
+            and _cartesia_available()
+            and (not locked_stack or locked_cartesia)
+        ):
+            cfg = _resolve_cartesia_tts_config(
+                session_id,
+                language_code=data.get("language_code") or language_code,
+                speaker=str(speaker),
+                model=ws_model or "sonic-3.5",
+                pace=data.get("pace"),
+                sample_rate=16000,
+                stack=locked_stack,
+                allow_runtime=not bool(locked_stack),
+            )
+            cfg["output_audio_codec"] = "linear16"
+            cfg["speech_sample_rate"] = "16000"
+            cfg["sample_rate"] = 16000
+            cfg.pop("output_audio_bitrate", None)
+            log_tts(
+                "CONFIG PSTN",
+                provider=cfg.get("provider"),
+                model=cfg.get("model"),
+                speaker=cfg.get("speaker"),
+                codec=cfg["output_audio_codec"],
+                speech_sample_rate=cfg["speech_sample_rate"],
+                session=session_id,
+                call_id=call_id,
+                wire_mode=wire_mode,
+            )
+            return cfg
+        cfg = resolve_tts_config(
+            session_id,
+            language_code=data.get("language_code") or language_code,
+            speaker=data.get("speaker"),
+            model=ws_model,
+            call_id=call_id,
+            resolved_stack=resolved_stack,
+            pace=data.get("pace"),
+            temperature=data.get("temperature"),
+            codec="linear16",
+            sample_rate=16000,
+            min_buffer_size=data.get("min_buffer_size"),
+            max_chunk_length=data.get("max_chunk_length"),
+            output_audio_bitrate=data.get("output_audio_bitrate"),
+        )
+        cfg["output_audio_codec"] = "linear16"
+        cfg["speech_sample_rate"] = "16000"
+        cfg.pop("output_audio_bitrate", None)
+        if cfg.get("provider") == "cartesia":
+            cfg["sample_rate"] = 16000
+        else:
+            cfg.pop("sample_rate", None)
+        log_tts(
+            "CONFIG PSTN",
+            provider=cfg.get("provider"),
+            model=cfg.get("model"),
+            speaker=cfg.get("speaker"),
+            codec=cfg["output_audio_codec"],
+            speech_sample_rate=cfg["speech_sample_rate"],
+            session=session_id,
+            call_id=call_id,
+            wire_mode=wire_mode,
+        )
+        return cfg
+    cfg = resolve_tts_config(
+        session_id,
+        language_code=data.get("language_code") or language_code,
+        speaker=None,
+        model=ws_model,
+        call_id=call_id,
+        resolved_stack=resolved_stack,
+        pace=data.get("pace"),
+        temperature=data.get("temperature"),
+        codec="mulaw",
+        sample_rate=8000,
+        min_buffer_size=data.get("min_buffer_size"),
+        max_chunk_length=data.get("max_chunk_length"),
+        output_audio_bitrate=data.get("output_audio_bitrate"),
+    )
+    if cfg.get("provider") == "cartesia":
+        cfg["output_audio_codec"] = "linear16"
+        # Cartesia telephony path: generate 16 kHz PCM, then μ-law encode locally @ 8 kHz.
+        cfg["speech_sample_rate"] = "16000"
+        cfg["sample_rate"] = 16000
+    else:
+        # Request linear16 @ 8 kHz — we μ-law encode locally for Telnyx PCMU RTP.
+        # Sarvam mulaw chunks are unreliable; local G.711 encode is deterministic.
+        cfg["output_audio_codec"] = "linear16"
+        cfg["speech_sample_rate"] = "8000"
+        cfg.pop("sample_rate", None)
+    # Sarvam WS expects speech_sample_rate (not sample_rate).
+    cfg.pop("output_audio_bitrate", None)
+    if cfg.get("provider") != "cartesia":
+        cfg.pop("sample_rate", None)
+    log_tts(
+        "CONFIG PSTN",
+        provider=cfg.get("provider"),
+        model=cfg.get("model"),
+        speaker=cfg.get("speaker"),
+        codec=cfg["output_audio_codec"],
+        speech_sample_rate=cfg["speech_sample_rate"],
+        session=session_id,
+        call_id=call_id,
+        wire_mode=wire_mode,
+    )
+    return cfg

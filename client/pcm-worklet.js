@@ -1,28 +1,48 @@
 /**
- * pcm-worklet.js — AudioWorklet processor
- * Captures mic Float32 → converts to Int16 linear16 PCM, posts ~128ms chunks.
+ * pcm-worklet.js — mix all mic channels to mono, downsample to 16 kHz linear16 PCM.
  * Used by /ws/stt-realtime (browser → server → Sarvam saaras:v3-realtime).
  */
 class PCMProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
-    this._buffer = new Int16Array(2048); // ~128ms @16kHz mono
+    this._outRate = 16000;
+    this._acc = 0;
+    this._accN = 0;
+    this._need = Math.max(1, sampleRate / this._outRate);
+    this._buffer = new Int16Array(2048);
     this._offset = 0;
   }
+
+  _emit(sample) {
+    let s = sample;
+    if (s < -1) s = -1;
+    else if (s > 1) s = 1;
+    this._buffer[this._offset++] = s < 0 ? s * 0x8000 : s * 0x7fff;
+    if (this._offset >= this._buffer.length) {
+      const copy = this._buffer.slice();
+      this.port.postMessage(copy.buffer, [copy.buffer]);
+      this._offset = 0;
+    }
+  }
+
   process(inputs) {
-    const input = inputs[0];
-    if (!input || !input[0]) return true;
-    const ch = input[0];
-    for (let i = 0; i < ch.length; i++) {
-      // clamp + convert float [-1,1] → int16
-      let s = ch[i];
-      s = s < -1 ? -1 : s > 1 ? 1 : s;
-      this._buffer[this._offset++] = s < 0 ? s * 0x8000 : s * 0x7fff;
-      if (this._offset >= this._buffer.length) {
-        this.port.postMessage(this._buffer.buffer.slice(0), [this._buffer.buffer.slice(0)]);
-        // postMessage with transfer — recreate buffer
-        this._buffer = new Int16Array(2048);
-        this._offset = 0;
+    const chans = inputs[0];
+    if (!chans || !chans[0] || chans[0].length === 0) return true;
+    const frames = chans[0].length;
+    const nch = chans.length;
+    for (let i = 0; i < frames; i++) {
+      let mixed = 0;
+      for (let c = 0; c < nch; c++) {
+        const ch = chans[c];
+        if (ch) mixed += ch[i] || 0;
+      }
+      mixed /= nch;
+      this._acc += mixed;
+      this._accN += 1;
+      if (this._accN >= this._need) {
+        this._emit(this._acc / this._accN);
+        this._acc = 0;
+        this._accN = 0;
       }
     }
     return true;

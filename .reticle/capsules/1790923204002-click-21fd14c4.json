@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "origin": "failed-assert",
+  "expected": "POST voice-preview → 200",
+  "observed": "no request to voice-preview",
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "e278",
+        "source": {
+          "file": "src/console/ui/TactileButton.jsx",
+          "line": 69,
+          "column": 5
+        }
+      },
+      "action": "click"
+    }
+  ],
+  "id": "1790923204002-click-21fd14c4",
+  "createdAt": 1790923204002,
+  "seen": 1,
+  "lastSeenAt": 1790923204002
+}

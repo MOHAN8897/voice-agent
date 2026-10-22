@@ -1,0 +1,153 @@
+{
+  "schema": "enigma.context_pack.v1",
+  "context_pack_ref": "enigma://context-pack/ctx_5118ffa2-fa17-4396-9997-83cf58bd6ee5",
+  "context_pack_id": "ctx_5118ffa2-fa17-4396-9997-83cf58bd6ee5",
+  "context_pack_digest": "sha256:55e33d18452bf9d45f6659329d1765ed94d6c7c3d8683e4d9b381bad5d14c984",
+  "provider": "local",
+  "model": "local",
+  "purpose": "local_context",
+  "memory_addresses": [
+    "mem:5a5bb850d4ecb90f37a8b69a8fea244a2d9c8e5f90097f550c0816d35e1c1531",
+    "mem:3d124fd4abf02822d67c3447a62b3f781b6f59f7cc9b9b72cfa1060c80dc958e",
+    "mem:29d6366763188072335366b2eeaecb7751f9c579c5e509f84695fab0ad34da9e",
+    "mem:79dd60ce4b02ef805be1426f09e53a6175d7e34acc14748293e2fbd0eef9421a",
+    "mem:da35978a3e4b17396221a258f50d49706632e0ca95f341957bb60e691ef8b38c",
+    "mem:11fb2f1daf4342653b578cc3eee5f0a2b4c09693f25c785c5f2b9a9ffbbcb518",
+    "mem:13c61f6edba2c75a6c4a4a7ad2f78e8d39359d71b7d50df4a6c0f40a79381242"
+  ],
+  "memory_count": 7,
+  "receipt_count": 14,
+  "receipt_hashes": [
+    "sha256:61bfe1f0e63c1842cb060b4950e9938138912fa443741d80d6b33606db5326aa",
+    "sha256:9af4a221001d348ed9dd1601ef2c423b41f2574d598a1cffef889cf0b510f0c5",
+    "sha256:34c089997577904be6dd7caab3deba8b10c8925afd1ab12a7f22501ba4578582",
+    "sha256:c3a5709fdba46e49210451e451a901b28d15413f28593fb07f65668ff425a2aa",
+    "sha256:cfcbd58dfe1c16fff7f735faf93e1f6557f8c253de5e8967193c502ff7107780",
+    "sha256:284c758a03cd62bb64a0cb09fe94670e3ef776d2f51ed18012659b62a1b23180",
+    "sha256:16b8f97c6b327f8e39eb4dd38571a204d00e1b7212fa371ddd55d3f23da79140",
+    "sha256:4760c9ecbd13e9f180589492ebd0be9407f72da7a362aa57ceba6d382a4d315d",
+    "sha256:2874700d41b43dc95ff784d8ff177fb28624d2a6c32488bd7ab57b48e1fdddfc",
+    "sha256:e5630aa248e30a83afe2c784f92dcd4540cb97685b6c15b4fcd2a63a98011c0a",
+    "sha256:75e9f123eff5ab9acf00cb0f3bcf403bdaa0d06774d4900bbc11c9a68400f5d1",
+    "sha256:3438b4d1979e115c7f9f291b334e384848e8f4b17aec3e255ecd515ff66cdb9b",
+    "sha256:ed670f168a6783a4cd3471ba448df197cd3df806679cdb6bd2a159f2f59e9ecd",
+    "sha256:462e004f725025b80a9357209e846765d725107040b222270e66527e448290f4"
+  ],
+  "receipts": [
+    {
+      "receipt_id": "rcpt_ebf7c7362ac56bf9c9d3da9a5bd70a87",
+      "operation": "retrieve",
+      "memory_addr": "mem:5a5bb850d4ecb90f37a8b69a8fea244a2d9c8e5f90097f550c0816d35e1c1531",
+      "event_hash": "sha256:935631a8351c3ae92dffb6012022b6c7f8aa15b6dbcdf90b6f94aaf87013feba",
+      "receipt_log_root": "sha256:e3c7e9c7829139136902e5a81a17d91e5e3c7e3991726cdd3b46819a7944086d",
+      "timestamp": "2026-10-22T16:20:39.804Z"
+    },
+    {
+      "receipt_id": "rcpt_8b1575566c8a1bde51d4c2ef2a6e9a03",
+      "operation": "retrieve",
+      "memory_addr": "mem:3d124fd4abf02822d67c3447a62b3f781b6f59f7cc9b9b72cfa1060c80dc958e",
+      "event_hash": "sha256:c4673d72821a8bcec46daf255a2c5f2c3a256befa5c949ef73c8f1d4631e7775",
+      "receipt_log_root": "sha256:e0d9b48bca0b4859fcba85ae5d5e91679a46fbbb2b57cb025a1474e19792d24a",
+      "timestamp": "2026-10-22T16:20:39.808Z"
+    },
+    {
+      "receipt_id": "rcpt_fb4d4d372556816a9ce0106dbcea85cd",
+      "operation": "retrieve",
+      "memory_addr": "mem:29d6366763188072335366b2eeaecb7751f9c579c5e509f84695fab0ad34da9e",
+      "event_hash": "sha256:839929ba9a9e8993667381f917fabfc81b6c31586265778585b3998467bc81af",
+      "receipt_log_root": "sha256:1eec9c21525ba21fab6362bf18b742b6d2e405953924bbfab025bf7b0f800bba",
+      "timestamp": "2026-10-22T16:20:39.811Z"
+    },
+    {
+      "receipt_id": "rcpt_69c3e9ca91438a9571760b6e91e6fabd",
+      "operation": "retrieve",
+      "memory_addr": "mem:79dd60ce4b02ef805be1426f09e53a6175d7e34acc14748293e2fbd0eef9421a",
+      "event_hash": "sha256:31ec02b9ddcb293cb98aa18325843e8d920593c4ec740bf8539a4942ef959be3",
+      "receipt_log_root": "sha256:b348285fc058454540133081b659baa02c6b12d7c386913047ba622558ee4efb",
+      "timestamp": "2026-10-22T16:20:39.814Z"
+    },
+    {
+      "receipt_id": "rcpt_b4403bbe6bbcf304a1fe91619bfd24a4",
+      "operation": "retrieve",
+      "memory_addr": "mem:da35978a3e4b17396221a258f50d49706632e0ca95f341957bb60e691ef8b38c",
+      "event_hash": "sha256:23a1628f9ff32299553032bafb3c968368da5524d9339bab01d2ccb9db672560",
+      "receipt_log_root": "sha256:48f2604fad99791ce8e7ae33b9553b63d5d7df0709db46675d61c17a8c993388",
+      "timestamp": "2026-10-22T16:20:39.817Z"
+    },
+    {
+      "receipt_id": "rcpt_a1932a0f8a8fbff6103ed53ee10f556c",
+      "operation": "retrieve",
+      "memory_addr": "mem:11fb2f1daf4342653b578cc3eee5f0a2b4c09693f25c785c5f2b9a9ffbbcb518",
+      "event_hash": "sha256:34f82b90ef53829c88ba39bf9f6885b534c2902f3fb0fd3b4eba64beb29190cd",
+      "receipt_log_root": "sha256:88c2427c6e1b39f11288c06a87693312ac29df069de9cd14eebd076b7cca6c16",
+      "timestamp": "2026-10-22T16:20:39.823Z"
+    },
+    {
+      "receipt_id": "rcpt_cdd219096ba89f05a30d27d04bdcb976",
+      "operation": "retrieve",
+      "memory_addr": "mem:13c61f6edba2c75a6c4a4a7ad2f78e8d39359d71b7d50df4a6c0f40a79381242",
+      "event_hash": "sha256:148ab86103959c89efb1103b217bfeebac0963b7035114f5fc289729edec3d53",
+      "receipt_log_root": "sha256:1003fece0915dc9c7b907195809b10463d430f8d362bb66583edf22d4fb3a9bc",
+      "timestamp": "2026-10-22T16:20:39.826Z"
+    },
+    {
+      "receipt_id": "rcpt_30e423fb650c61821e5d07b0076035bf",
+      "operation": "inject",
+      "memory_addr": "mem:5a5bb850d4ecb90f37a8b69a8fea244a2d9c8e5f90097f550c0816d35e1c1531",
+      "event_hash": "sha256:eab04646e6f40ca37efe1d3345c9612815e4d5a22ca5247ad124dffb566de03e",
+      "receipt_log_root": "sha256:aa72d31ce87b5921471ed5928b3577d11839db6fa37d44bc6bb662f51c645ca5",
+      "timestamp": "2026-10-22T16:20:39.807Z"
+    },
+    {
+      "receipt_id": "rcpt_c0aace635510ce889faafea84252e8a5",
+      "operation": "inject",
+      "memory_addr": "mem:3d124fd4abf02822d67c3447a62b3f781b6f59f7cc9b9b72cfa1060c80dc958e",
+      "event_hash": "sha256:cb19741045f2269b8b568f1ea7bc935e70ca76b7cf91073f0d9581589eaa5f6c",
+      "receipt_log_root": "sha256:54942986e1084f0752874761c99ae21628a9ff8500d6fea16cc1476d7fb55a71",
+      "timestamp": "2026-10-22T16:20:39.810Z"
+    },
+    {
+      "receipt_id": "rcpt_c1d39b0a5b94fafb3cd1585659484ddf",
+      "operation": "inject",
+      "memory_addr": "mem:29d6366763188072335366b2eeaecb7751f9c579c5e509f84695fab0ad34da9e",
+      "event_hash": "sha256:0634c106ef2abb7c2d0fd8b5f4b5ee5bcc82e93e4f071455bffa023c9de87439",
+      "receipt_log_root": "sha256:6465d704864cff0b630c5b69a4f6f7305160c261ff99beed9a165f911dfa07b0",
+      "timestamp": "2026-10-22T16:20:39.813Z"
+    },
+    {
+      "receipt_id": "rcpt_f4b5b833b79687c255c31de6df145c25",
+      "operation": "inject",
+      "memory_addr": "mem:79dd60ce4b02ef805be1426f09e53a6175d7e34acc14748293e2fbd0eef9421a",
+      "event_hash": "sha256:8390c926cb46edc4c9501a96bea45c76110c41c28daa84ba0f87b14fceebe0ca",
+      "receipt_log_root": "sha256:bf4949bb022043a6afd8b7145c4bb5a3f6f71a1a646f4751f4649f6adb8899b8",
+      "timestamp": "2026-10-22T16:20:39.815Z"
+    },
+    {
+      "receipt_id": "rcpt_67c61830ff55588bc7b5b02ce084c319",
+      "operation": "inject",
+      "memory_addr": "mem:da35978a3e4b17396221a258f50d49706632e0ca95f341957bb60e691ef8b38c",
+      "event_hash": "sha256:84c73e6586b20d90fd2f89c880080762a11bfbfcdd6b50d800d8b3630e5e0de4",
+      "receipt_log_root": "sha256:1bfa6759c12b0e45317016d3e313ee871ea790af647aedcc821e705389231c01",
+      "timestamp": "2026-10-22T16:20:39.819Z"
+    },
+    {
+      "receipt_id": "rcpt_b8ebb81efd666bcb35c56b114e4c555b",
+      "operation": "inject",
+      "memory_addr": "mem:11fb2f1daf4342653b578cc3eee5f0a2b4c09693f25c785c5f2b9a9ffbbcb518",
+      "event_hash": "sha256:970e5d7e604568387799bc1e7b490ebdd0f6a8bf8ce1b11a7ec9411a55c87f8c",
+      "receipt_log_root": "sha256:b932255294a18b65550ac589998cf096894d71bfb2d01354dab909582e7a687b",
+      "timestamp": "2026-10-22T16:20:39.824Z"
+    },
+    {
+      "receipt_id": "rcpt_00e07ad075c3f5809f28b5b7c5e4126e",
+      "operation": "inject",
+      "memory_addr": "mem:13c61f6edba2c75a6c4a4a7ad2f78e8d39359d71b7d50df4a6c0f40a79381242",
+      "event_hash": "sha256:2dee87e26b642b362c476b02c6c00fd28af6bd45ef6efba91e66c2088c7a1d9b",
+      "receipt_log_root": "sha256:e0f813bd825dc940eab30e59c2720278b527461b0975b5aa91c7fdebfeda147d",
+      "timestamp": "2026-10-22T16:20:39.827Z"
+    }
+  ],
+  "active_set_root": "sha256:0a5292bb3df233cae0db5b5c20d2b7eb82c6b5a14275e56fb98cbbc5647649a7",
+  "receipt_log_root": "sha256:f8fd40d1637d4b1e2abe6fe1b7a3f7501606afa6affdfdfc410abb83f80eaa2a",
+  "content_redacted": true
+}

@@ -1,0 +1,190 @@
+"""Single speak-then-disconnect executor for every live hangup path.
+
+Sequence: flush audio, finish playback, disconnect the provider, then persist
+archive and lifecycle in a retained background task.
+"""
+from __future__ import annotations
+
+import asyncio
+import inspect
+import time
+from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
+
+from server.call.call_end_policy import HANGUP_REASONS
+from server.call.natural_hangup import pause_before_disconnect, wait_for_farewell_playback
+
+MaybeAsync = Callable[[], Awaitable[None] | None]
+_BACKGROUND_CLOSE_TASKS: set[asyncio.Task] = set()
+
+JUDGMENT_END_REASONS = frozenset(HANGUP_REASONS)
+LIFECYCLE_PASSTHROUGH = frozenset({
+    "opt_out", "callback_cancelled", "silence_timeout", "max_duration",
+    "provider_failure", "runtime_failure", "farewell_timeout", "response_timeout", "response_failure",
+    "user_stop",
+    "timeout",
+    "error",
+    "transfer",
+    "browser_unload",
+    "pstn_hangup",
+    "agent_hangup",
+    "superseded",
+    "stale_recovery",
+    "ws_disconnect",
+    *JUDGMENT_END_REASONS,
+})
+
+
+def canonical_lifecycle_reason(reason: str | None) -> str:
+    raw = str(reason or "").strip().lower()
+    if raw in LIFECYCLE_PASSTHROUGH:
+        return raw
+    if raw in {"user_hangup"}:
+        return "user_stop"
+    if raw in {"idle_timeout"}:
+        return "timeout"
+    if raw in {"hangup", "normal_clearing"}:
+        return "pstn_hangup" if raw == "normal_clearing" else "user_stop"
+    return "agent_hangup"
+
+
+@dataclass
+class CloseCallResult:
+    heard_playback: bool
+    playback_wait_ms: int
+    trail_ms: int
+    reason: str
+    background_task: asyncio.Task | None = None
+
+
+async def _maybe_await(fn: MaybeAsync | None) -> None:
+    if fn is None:
+        return
+    result = fn()
+    if inspect.isawaitable(result):
+        await result
+
+
+async def execute_agent_close(
+    *,
+    call_id: str | None,
+    reason: str,
+    spoke_farewell: bool = True,
+    flush_audio: MaybeAsync | None = None,
+    is_playing: Callable[[], bool] | None = None,
+    on_closing: MaybeAsync | None = None,
+    drain_archive: MaybeAsync | None = None,
+    on_provider_hangup: MaybeAsync | None = None,
+    on_ended: MaybeAsync | None = None,
+    end_lifecycle: bool = True,
+    trail_sec: float | None = None,
+    playback_timeout_sec: float | None = None,
+    can_disconnect: Callable[[], bool] | None = None,
+) -> CloseCallResult:
+    from server.call.natural_hangup import HANGUP_PLAYBACK_TIMEOUT_SEC, HANGUP_TRAIL_SILENCE_SEC
+    from server.services.pstn_media_flow import pstn_media_flow
+    from server.utils.logger import log_pstn
+
+    canonical = canonical_lifecycle_reason(reason)
+    t0 = time.monotonic()
+    await _maybe_await(on_closing)
+    if call_id:
+        pstn_media_flow.emit(
+            call_id,
+            "hangup_closing",
+            "internal",
+            detail=canonical,
+            status="processing",
+        )
+
+    await _maybe_await(flush_audio)
+
+    heard = False
+    if is_playing is not None:
+        timeout = HANGUP_PLAYBACK_TIMEOUT_SEC if playback_timeout_sec is None else playback_timeout_sec
+        heard = await wait_for_farewell_playback(is_playing, timeout_sec=timeout)
+        if not heard:
+            log_pstn("hangup.playback_idle", call_id=call_id, heard=False)
+    wait_ms = int((time.monotonic() - t0) * 1000)
+
+    should_pause = heard or spoke_farewell
+    trail = HANGUP_TRAIL_SILENCE_SEC if trail_sec is None else trail_sec
+    await pause_before_disconnect(should_pause=should_pause, trail_sec=trail)
+    trail_ms = int((trail if should_pause else 0) * 1000)
+
+    # A caller can resume while waiting for playback, after
+    # playback already finished. Recheck immediately before touching the PSTN.
+    if can_disconnect is not None and not can_disconnect():
+        log_pstn("hangup.cancelled_before_disconnect", call_id=call_id)
+        return CloseCallResult(heard, wait_ms, trail_ms, canonical)
+    # Provider errors propagate so the caller can retry; never mark failure ended.
+    await _maybe_await(on_provider_hangup)
+
+    await _maybe_await(on_ended)
+
+    result = CloseCallResult(
+        heard_playback=heard,
+        playback_wait_ms=wait_ms,
+        trail_ms=trail_ms,
+        reason=canonical,
+    )
+    async def complete_in_background():
+        try:
+            await _maybe_await(drain_archive)
+            _stamp_hangup_telemetry(call_id, result)
+            if end_lifecycle and call_id:
+                from server.call.call_lifecycle_service import call_lifecycle_service
+
+                await call_lifecycle_service.end(call_id, reason=canonical)
+            if canonical == "opt_out" and call_id:
+                try:
+                    from server.services.saas.dnc_service import handle_call_opt_out
+
+                    await handle_call_opt_out(call_id, reason="opt_out")
+                except Exception as exc:
+                    log_pstn("hangup.opt_out_dnc_failed", call_id=call_id, error=str(exc)[:200])
+            if call_id:
+                pstn_media_flow.emit(
+                    call_id,
+                    "hangup_complete",
+                    "internal",
+                    detail=canonical,
+                    extra={
+                        "playback_wait_ms": wait_ms,
+                        "trail_ms": trail_ms,
+                        "heard_playback": heard,
+                    },
+                )
+            from server.call.callback_close import mark_hangup_executed
+
+            mark_hangup_executed(call_id)
+        except Exception as exc:
+            log_pstn("hangup.background.failed", call_id=call_id, error=str(exc)[:200])
+
+    task = asyncio.create_task(complete_in_background(), name=f"close-background-{call_id}")
+    _BACKGROUND_CLOSE_TASKS.add(task)
+    task.add_done_callback(_BACKGROUND_CLOSE_TASKS.discard)
+    result.background_task = task
+    return result
+
+
+def _stamp_hangup_telemetry(call_id: str | None, result: CloseCallResult) -> None:
+    if not call_id:
+        return
+    try:
+        from server.call.call_ledger import call_ledger
+        from server.call import call_context
+
+        meta = call_ledger.read_meta(call_id)
+        if not meta:
+            return
+        meta["hangup_reason"] = result.reason
+        meta["hangup_playback_wait_ms"] = result.playback_wait_ms
+        meta["hangup_trail_ms"] = result.trail_ms
+        meta["hangup_heard_playback"] = result.heard_playback
+        ctx = call_context.get(call_id)
+        if ctx is not None:
+            meta["callback_close_phase"] = ctx.callback_close_phase
+        call_ledger.write_meta(call_id, meta)
+    except Exception:
+        pass

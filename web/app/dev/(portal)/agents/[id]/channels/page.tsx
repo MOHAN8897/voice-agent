@@ -16,9 +16,9 @@ export default function DevAgentChannelsPage({ params }: { params: { id: string 
             Open Test Studio →
           </Link>
         </Panel>
-        <Panel title="PSTN · Exotel">
+        <Panel title="PSTN (Telnyx / Vobiz)">
           <p className="text-sm text-text-muted">
-            Configure credentials in Environment. Register ExoPhone, assign inbound routing, and place outbound test calls
+            Configure credentials in Environment. Configure phone numbers, assign inbound routing, and place outbound test calls
             from Test Studio.
           </p>
           <Link

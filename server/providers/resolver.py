@@ -8,7 +8,7 @@ import hashlib
 import json
 from typing import Any
 
-from server.config.constants import constants
+from server.config.constants import constants, normalize_supported_language
 from server.config.env import Settings, get_settings
 from server.providers.base import ConfigMode, ResolvedStack, StackSelection, StageSelection, TierName
 from server.providers.registry import ProviderRegistry, get_provider_registry
@@ -30,6 +30,7 @@ class StackResolver:
         language: str = "te-IN",
         stack_override: dict[str, Any] | None = None,
         environment: str = "development",
+        allow_composed_override: bool = False,
     ) -> ResolvedStack:
         effective_mode: ConfigMode = mode or dev_secrets_store.effective(
             "voice_agent_config_mode", self._settings.voice_agent_config_mode
@@ -38,7 +39,15 @@ class StackResolver:
             "voice_agent_tier", self._settings.voice_agent_tier
         )  # type: ignore[assignment]
 
-        if stack_override and environment == "production":
+        language = normalize_supported_language(language)
+
+        is_composed_override = bool(
+            allow_composed_override
+            and isinstance(stack_override, dict)
+            and stack_override.get("pipeline") == "composed_voice"
+            and isinstance(stack_override.get("_voice_stack_snapshot"), dict)
+        )
+        if stack_override and environment == "production" and not is_composed_override:
             raise AppError(
                 ErrorCode.VALIDATION_ERROR,
                 message="stack_override is not allowed in production",
@@ -56,7 +65,8 @@ class StackResolver:
         if stack_override:
             stack = self._apply_override(stack, stack_override)
 
-        stack = self._apply_stage_fallbacks(stack)
+        if not is_composed_override:
+            stack = self._apply_stage_fallbacks(stack)
         self._validate_stack(stack, language)
         combination_id = self._combination_id(stack)
         return ResolvedStack(
@@ -157,8 +167,10 @@ class StackResolver:
             if p.get("id") != provider_id:
                 continue
             models = (p.get("models") or {}).get(stage) or []
-            if models:
-                return str(models[0].get("id") or "")
+            marked = next((m for m in models if m.get("default")), None)
+            row = marked or (models[0] if models else None)
+            if row and row.get("id"):
+                return str(row["id"])
         return None
 
     def _validate_stack(self, stack: StackSelection, language: str) -> None:

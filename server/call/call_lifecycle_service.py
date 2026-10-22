@@ -2,7 +2,11 @@
 from __future__ import annotations
 
 import asyncio
+import copy
+import hashlib
+import json
 import uuid
+from dataclasses import replace
 from datetime import datetime, timezone
 from typing import Any
 
@@ -15,19 +19,35 @@ from server.call.call_store import call_store
 from server.call.paths import relative_storage_path
 from server.call.post_call_pipeline import enqueue as enqueue_post_call
 from server.config.env import get_settings
-from server.providers.base import ResolvedStack, StackSelection
+from server.providers.base import ResolvedStack, StackSelection, StageSelection
 from server.providers.resolver import resolve_stack
 from server.providers.session_stack import resolve_stack_for_session
+from server.realtime.manager import realtime_text_manager
+from server.realtime.models import coerce_live_llm_selection, pipeline_mode
+from server.realtime.text_session import build_session_instructions
+from server.services.dev_runtime import (
+    effective_app_environment,
+    effective_config_mode,
+    effective_voice_tier,
+)
 from server.utils.errors import AppError, ErrorCode
-from server.utils.logger import logger
+from server.utils.logger import log_pstn, logger
 
 END_REASONS = {
+    "opt_out", "callback_cancelled", "silence_timeout", "max_duration",
+    "provider_failure", "runtime_failure", "farewell_timeout", "response_timeout", "response_failure",
     "user_stop",
     "timeout",
     "error",
     "transfer",
     "browser_unload",
     "pstn_hangup",
+    "agent_hangup",
+    "goodbye",
+    "firm_refusal",
+    "goal_complete",
+    "abuse",
+    "out_of_scope",
     "superseded",
     "stale_recovery",
     "ws_disconnect",
@@ -46,14 +66,65 @@ def _normalize_end_reason(reason: str) -> str:
     return mapped if mapped in END_REASONS else "user_stop"
 
 _idle_tasks: dict[str, asyncio.Task] = {}
+_max_duration_tasks: dict[str, asyncio.Task] = {}
 
 
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _billable_duration_sec(call_id: str, ended: datetime, fallback: int | None) -> int | None:
+    """PSTN/realtime_voice: bill from media connect (answer), not dial/ring."""
+    meta = call_ledger.read_meta(call_id) or {}
+    # A verified CDR reports talk time; its total duration includes ringing.
+    if meta.get("carrier_billable_duration_sec") is not None:
+        return max(0, int(meta["carrier_billable_duration_sec"]))
+    conn = meta.get("connected_at")
+    channel = str(meta.get("channel") or "")
+    pipeline = str(meta.get("pipeline") or "")
+    if not conn and meta.get("billing_timing_version") == 2:
+        return 0
+    if not conn or not (channel in {"pstn", "browser"} or pipeline == "realtime_voice"):
+        return fallback
+    try:
+        st = datetime.fromisoformat(str(conn).replace("Z", "+00:00"))
+        if st.tzinfo is None:
+            st = st.replace(tzinfo=timezone.utc)
+        end = ended if ended.tzinfo else ended.replace(tzinfo=timezone.utc)
+        if meta.get("disconnected_at"):
+            stop = datetime.fromisoformat(str(meta["disconnected_at"]).replace("Z", "+00:00"))
+            end = min(end, stop if stop.tzinfo else stop.replace(tzinfo=timezone.utc))
+        return max(0, int((end - st).total_seconds()))
+    except (ValueError, TypeError):
+        return fallback
+
+
 def status_url(call_id: str) -> str:
     return f"/api/call/{call_id}/finalization"
+
+
+def apply_recording_disclosure(compiled_text: str, agent: dict[str, Any], language: str) -> str:
+    """Use the same disclosure in the dial-time and connected-call snapshots."""
+    import re
+
+    from server.prompts.agent_voice_rules import build_recording_disclosure_instruction
+
+    compiled_text = re.sub(
+        r"\n*### RECORDING DISCLOSURE POLICY[^\n]*\n.*?(?=\n---|\n###|\Z)",
+        "",
+        compiled_text,
+        flags=re.DOTALL,
+    ).strip()
+    if agent.get("recording_disclosure_enabled"):
+        block = build_recording_disclosure_instruction(
+            disclosure_text=agent.get("recording_disclosure_text"), language=language,
+        )
+        safety_idx = compiled_text.find("\n--- SAFETY ---")
+        if safety_idx >= 0:
+            compiled_text = compiled_text[:safety_idx] + block + "\n" + compiled_text[safety_idx:]
+        else:
+            compiled_text += block
+    return compiled_text
 
 
 class CallLifecycleService:
@@ -61,6 +132,7 @@ class CallLifecycleService:
         self,
         *,
         agent_id: str | None = None,
+        tenant_id: str | None = None,
         session_id: str | None = None,
         channel: str = "browser",
         direction: str = "inbound",
@@ -68,17 +140,45 @@ class CallLifecycleService:
         environment: str | None = None,
         tier: str | None = None,
         stack_override: dict[str, Any] | None = None,
+        config_session_id: str | None = None,
         caller_id: str | None = None,
-        language: str = "te-IN",
+        language: str | None = None,
+        realtime_prewarm_key: str | None = None,
+        prepared_brain: tuple[str | None, str] | None = None,
+        billed_user_id: str | None = None,
+        is_test: bool | None = None,
+        contact: dict[str, Any] | None = None,
+        voicemail_mode: bool = False,
     ) -> dict[str, Any]:
         settings = get_settings()
         session_id = session_id or "default"
         channel = channel if channel in ("browser", "pstn") else "browser"
+        # A browser session is a practice run unless the caller says otherwise;
+        # PSTN is always a real call regardless of the flag.
+        is_test = (channel == "browser") if is_test is None else bool(is_test)
         direction = direction if direction in ("inbound", "outbound") else "inbound"
+        lookup_session = (config_session_id or session_id).strip() or session_id
+        from server.services.test_studio_config import saved_call_config
 
-        agent = await self._resolve_agent(agent_id)
-        env = environment or agent.get("environment") or settings.app_environment
-        effective_tier = tier or agent.get("default_tier") or settings.voice_agent_tier
+        saved = saved_call_config(lookup_session)
+        # Explicit dial/web stack wins. Merging saved Test Studio prefs here
+        # overwrote the SaaS Gemini platform stack with leftover OpenAI settings.
+        if not stack_override:
+            stack_override = saved.get("stack_override")
+        tier = tier or saved.get("tier")
+        if not tier and isinstance(stack_override, dict):
+            snapshot_tier = (stack_override.get("_voice_stack_snapshot") or {}).get("tier") or stack_override.get("tier")
+            if snapshot_tier:
+                tier = str(snapshot_tier)
+
+        agent = await self._resolve_agent(agent_id, tenant_id=tenant_id)
+        env = environment or agent.get("environment") or effective_app_environment()
+        effective_tier = tier or agent.get("default_tier") or effective_voice_tier()
+        from server.config.constants import normalize_supported_language
+
+        language = normalize_supported_language(
+            language or (agent.get("languages") or ["te-IN"])[0]
+        )
 
         previous = call_context.get_active_for_session(session_id)
         if previous:
@@ -91,14 +191,112 @@ class CallLifecycleService:
                     status_code=409,
                 )
 
-        stack = self._resolve_locked_stack(
-            session_id=session_id,
-            tier=effective_tier,  # type: ignore[arg-type]
-            environment=env,
+        stack = self._coerce_pipeline_stack(
+            self._resolve_locked_stack(
+                session_id=lookup_session,
+                tier=effective_tier,  # type: ignore[arg-type]
+                environment=env,
+                stack_override=stack_override,
+                language=language,
+            ),
             stack_override=stack_override,
-            language=language or (agent.get("languages") or ["te-IN"])[0],
         )
-        compiled_version, compiled_text = await self._lock_compiled_brain(agent["agent_id"])
+        pipeline = pipeline_mode(settings=settings, stack_override=stack_override)
+        composed_snapshot = (
+            copy.deepcopy(stack_override.get("_voice_stack_snapshot"))
+            if pipeline == "composed_voice" and isinstance(stack_override, dict)
+            and isinstance(stack_override.get("_voice_stack_snapshot"), dict)
+            else None
+        )
+        if pipeline == "composed_voice" and (
+            effective_tier not in {"low", "medium"} or composed_snapshot is None
+        ):
+            raise AppError(
+                ErrorCode.VALIDATION_ERROR,
+                message="The composed voice profile is not valid for this call.",
+                status_code=409,
+            )
+        if pipeline == "composed_voice":
+            locked_rate = composed_snapshot.get("retailRate") if composed_snapshot else None
+            if (
+                not isinstance(locked_rate, dict)
+                or locked_rate.get("complete") is not True
+                or not locked_rate.get("fxRateInr")
+            ):
+                raise AppError(
+                    ErrorCode.VALIDATION_ERROR,
+                    message="The selected voice tier has no complete approved retail rate snapshot.",
+                    status_code=409,
+                )
+        from server.services.saas.campaign_script import campaign_call_script
+        # The outbound greeting already belongs to this exact script/session.
+        # Recompiling at answer can replace personalized text or recording rules
+        # and force Gemini to discard the socket that generated the greeting.
+        using_prepared_brain = bool(
+            prepared_brain and realtime_prewarm_key and channel == "pstn"
+            and direction == "outbound" and pipeline in {"realtime_voice", "composed_voice"}
+        )
+        campaign_script = None if using_prepared_brain else await campaign_call_script(agent, contact)
+        if using_prepared_brain:
+            compiled_version, compiled_text = prepared_brain
+            brain_source = "dial_snapshot"
+        elif campaign_script:
+            compiled_version, compiled_text = campaign_script
+            brain_source = "campaign_snapshot"
+        else:
+            compiled_version, compiled_text, brain_source = await self._lock_compiled_brain(
+                agent["agent_id"], session_id=lookup_session,
+            )
+        if compiled_text and not using_prepared_brain:
+            from server.brain.script_entities import realign_compiled_brain_for_session
+
+            compiled_text = realign_compiled_brain_for_session(
+                compiled_text,
+                language,
+                direction=direction,
+            )
+
+            compiled_text = apply_recording_disclosure(compiled_text, agent, language)
+
+            if voicemail_mode:
+                voicemail_block = (
+                    "\n\n### AFTER-HOURS VOICEMAIL MODE:\n"
+                    "The business is currently closed. You are operating in voicemail capture mode:\n"
+                    "1. If not already stated in your opening greeting, politely let the caller know the office is closed.\n"
+                    "2. Ask the caller for their name, best contact phone number, and a brief message or reason for calling.\n"
+                    "3. Acknowledge what they share concisely. Confirm that you have noted their details.\n"
+                    "4. Assure them that a team member will follow up promptly during regular business hours.\n"
+                    "5. Thank them politely and conclude the call.\n"
+                )
+                safety_idx = compiled_text.find("\n--- SAFETY ---")
+                if safety_idx >= 0:
+                    compiled_text = compiled_text[:safety_idx] + voicemail_block + "\n" + compiled_text[safety_idx:]
+                else:
+                    compiled_text = compiled_text + voicemail_block
+
+            from server.brain.brain_prompt_validate import assert_rendered_brain_valid
+
+            try:
+                assert_rendered_brain_valid(compiled_text, language)
+            except Exception as val_err:
+                logger.warning(
+                    "[CALL] Prompt language validation warning for agent %s (lang=%s): %s",
+                    agent.get("agent_id"),
+                    language,
+                    val_err,
+                )
+
+        if compiled_text and not using_prepared_brain:
+            from server.services.saas.contact_import_service import render_agent_prompt_for_contact
+            # Web tests have no imported lead. Resolve fallbacks and system tags
+            # there too, so neither prewarm nor Gemini reads raw template braces.
+            compiled_text = render_agent_prompt_for_contact(compiled_text, contact or {})
+
+        if config_session_id and lookup_session != session_id and not compiled_text:
+            logger.warning(
+                "[CALL] config session %s has no saved script; using agent published brain",
+                lookup_session,
+            )
 
         call_id = str(uuid.uuid4())
         started = _utcnow()
@@ -115,23 +313,45 @@ class CallLifecycleService:
             "tier": stack.tier,
             "combination_id": stack.combination_id,
             "compiled_brain_version": compiled_version,
+            "compiled_brain_text": compiled_text,
+            "brain_source": brain_source,
+            "config_session_id": lookup_session,
+            "language": language,
             "started_at": started.isoformat(),
             "environment": env,
             "resolved_stack": stack.to_safe_dict(),
+            "pipeline": pipeline,
+            "tier": str(stack.tier or effective_tier),
+            "voice_stack_snapshot": composed_snapshot,
+            "billed_user_id": billed_user_id,
+            "is_test": is_test,
+            "contact": contact or {},
+            "voicemail_mode": voicemail_mode,
+            "billing_timing_version": 2,
         }
-        await call_ledger.init(call_id, meta)
-        audio_archive.init(call_id)
-        from server.call.memory_manager import memory_manager
+        from server.services.transcription_policy import attach_normalized_stack_override
 
-        memory_manager.init(call_id)
-        if caller_id:
-            memory_manager.apply_proposals(
-                call_id,
-                [{"op": "set_fact", "key": "phone", "value": str(caller_id)[:200]}],
-                turn_seq=0,
-                source="telephony",
+        attach_normalized_stack_override(
+            meta,
+            stack_override,
+            language=language,
+            tier=str(effective_tier or "medium"),
+        )
+        if stack_override:
+            from server.realtime.models import is_gemini_live_voice_model
+            from server.services.transcription_policy import (
+                pstn_stack_from_meta,
+                transcription_billing_tag,
+                transcription_policy_from_meta,
             )
 
+            pstn = pstn_stack_from_meta(meta)
+            llm = pstn.get("llm") if isinstance(pstn.get("llm"), dict) else {}
+            gemini = is_gemini_live_voice_model(str(llm.get("model") or ""))
+            policy = transcription_policy_from_meta(meta)
+            tag = transcription_billing_tag(policy, gemini_live=gemini)
+            usage_seed = {"transcription_billing": tag, "transcription_model": policy.live_model if policy.live_enabled else policy.post_call_model}
+            meta["usage"] = usage_seed
         record = {
             "call_id": call_id,
             "tenant_id": agent["tenant_id"],
@@ -148,8 +368,99 @@ class CallLifecycleService:
             "finalization_status": "pending",
             "storage_path": storage_path,
             "last_heartbeat_at": started,
+            "billed_user_id": billed_user_id,
+            "is_test": is_test,
         }
+
+        # Snapshot authoritative billing rate at call start (immutable lock against future rate changes)
+        if composed_snapshot is not None:
+            native_rate = composed_snapshot["retailRate"]
+            snap_rate_micros = int(native_rate["usdMicrosPerMin"])
+            snap_rate_cents = (snap_rate_micros + 5_000) // 10_000
+            snap_rate_inr_paise = int(native_rate["inrPaisePerMin"])
+            snap_fx = float(native_rate["fxRateInr"])
+            snap_ver = int(native_rate["version"])
+        else:
+            try:
+                from server.services.saas.billing_rates import load_current_rates
+
+                cur_rates = await load_current_rates()
+                snap_rate_cents = int(
+                    cur_rates["pstn_rate_usd_cents_per_min"]
+                    if channel == "pstn"
+                    else cur_rates["web_agent_rate_usd_cents_per_min"]
+                )
+                snap_rate_micros = int(
+                    cur_rates["pstn_rate_usd_micros_per_min"]
+                    if channel == "pstn"
+                    else cur_rates["web_agent_rate_usd_micros_per_min"]
+                )
+                snap_rate_inr_paise = int(
+                    cur_rates["pstn_rate_inr_paise_per_min"]
+                    if channel == "pstn"
+                    else cur_rates["web_agent_rate_inr_paise_per_min"]
+                )
+                snap_fx = float(cur_rates.get("fx_rate_inr") or 95.64)
+                snap_ver = int(cur_rates.get("version") or 1)
+            except Exception as e:
+                logger.debug(f"[CALL] rate snapshot resolution skipped: {e}")
+                snap_rate_cents = 9 if channel == "pstn" else 7
+                snap_rate_micros = snap_rate_cents * 10_000
+                snap_rate_inr_paise = int(round(snap_rate_cents * 95.64))
+                snap_fx = 95.64
+                snap_ver = 1
+
+        record["applied_rate_usd_cents_per_min"] = snap_rate_cents
+        record["applied_rate_usd_micros_per_min"] = snap_rate_micros
+        record["applied_rate_inr_paise_per_min"] = snap_rate_inr_paise
+        record["applied_fx_rate_inr"] = snap_fx
+        record["rate_version"] = snap_ver
+
+        meta["rate_snapshot"] = {
+            "usdCentsPerMin": snap_rate_cents,
+            "usdMicrosPerMin": snap_rate_micros,
+            "inrPaisePerMin": snap_rate_inr_paise,
+            "fxRateInr": snap_fx,
+            "version": snap_ver,
+        }
+        if pipeline == "composed_voice":
+            from server.services.saas.composed_costing import snapshot_provider_costs
+
+            meta["provider_cost_snapshot"] = await snapshot_provider_costs(
+                stack.to_safe_dict(), fx_rate_inr=snap_fx,
+            )
+        await call_ledger.init(call_id, meta)
+        audio_archive.init(call_id, record=not is_test)
+        from server.call.memory_manager import memory_manager
+
+        memory_manager.init(call_id)
+        from server.agent.conversation_manager import conversation_manager
+        from server.agent.session_memory import session_memory
+
+        # New call = new dialogue. Compiled brain stays on the config session.
+        conversation_manager.clear(session_id)
+        session_memory.clear(session_id)
+        if caller_id and str(direction or "").strip().lower() not in ("outbound", "outgoing", "outbound-api"):
+            memory_manager.apply_proposals(
+                call_id,
+                [{"op": "set_fact", "key": "phone", "value": str(caller_id)[:200]}],
+                turn_seq=0,
+                source="telephony",
+            )
+
         await call_store.insert(record)
+
+        max_dur = 900
+        if agent.get("tenant_id"):
+            try:
+                from server.services.saas.billing_wallet_service import (
+                    max_allowed_call_duration_sec,
+                )
+                tid = uuid.UUID(str(agent["tenant_id"]))
+                max_dur = await max_allowed_call_duration_sec(tid, channel=channel, global_cap_sec=900)
+            except Exception as e:
+                logger.debug(f"[CALL] max duration calc skipped: {e}")
+                max_dur = 900
 
         ctx = CallContext(
             call_id=call_id,
@@ -165,9 +476,87 @@ class CallLifecycleService:
             compiled_brain_text=compiled_text,
             started_at=started,
             storage_path=storage_path,
+            max_duration_sec=max_dur,
+            call_end_policy=self._load_call_end_policy(lookup_session, language),
+            pipeline=pipeline,
         )
+        if pipeline == "composed_voice" and compiled_text:
+            from server.services.composed_voice_session import composed_system_prompt
+
+            composed_system_prompt(ctx)
         call_context.put(ctx)
-        logger.info(f"[CALL] started {call_id} agent={agent['agent_id']} combo={stack.combination_id}")
+        self._schedule_max_duration_watchdog(call_id, max_dur)
+        realtime_status: dict[str, Any] = {"status": "n/a"}
+        if pipeline == "realtime_voice":
+            realtime_status = {"status": "voice_loop"}
+            try:
+                from server.realtime.voice_manager import realtime_voice_manager
+
+                adopted = (
+                    realtime_voice_manager.adopt_session(realtime_prewarm_key, call_id)
+                    if realtime_prewarm_key
+                    else None
+                )
+                if adopted is not None:
+                    log_pstn(
+                        "prewarm.realtime_voice.adopted",
+                        call_id=call_id,
+                        from_key=realtime_prewarm_key,
+                    )
+                    realtime_status = {"status": "ready"}
+            except Exception as e:
+                logger.warning("[CALL] realtime voice adopt failed %s: %s", call_id, str(e)[:200])
+        elif pipeline == "realtime_text":
+            try:
+                from server.realtime.manager import realtime_text_manager
+
+                adopted = (
+                    realtime_text_manager.adopt_session(realtime_prewarm_key, call_id)
+                    if realtime_prewarm_key
+                    else None
+                )
+                boot_ready = channel == "browser"
+                if adopted is None:
+                    await realtime_text_manager.create(
+                        call_id,
+                        compiled_brain=compiled_text,
+                        model=stack.llm.model,
+                        language=language or "te-IN",
+                        caller_id=caller_id,
+                        instructions=build_session_instructions(
+                            compiled_text,
+                            caller_id=caller_id,
+                            language=language or "te-IN",
+                        ),
+                        wait_ready=boot_ready,
+                    )
+                    realtime_status = {"status": "ready" if boot_ready else "booting"}
+                else:
+                    log_pstn(
+                        "prewarm.realtime.adopted",
+                        call_id=call_id,
+                        from_key=realtime_prewarm_key,
+                    )
+                    session = realtime_text_manager.get(call_id)
+                    realtime_status = {
+                        "status": "ready" if session and session.is_ready else "booting",
+                    }
+            except Exception as e:
+                err = str(e)[:200]
+                logger.warning("[CALL] realtime session failed %s: %s", call_id, err)
+                realtime_status = {"status": "failed", "error": err}
+        logger.info(f"[CALL] started {call_id} agent={agent['agent_id']} combo={stack.combination_id} pipeline={pipeline}")
+        if channel == "pstn":
+            log_pstn(
+                "lifecycle.started",
+                timer_key=call_id,
+                call_id=call_id,
+                agent_id=agent["agent_id"],
+                combo=stack.combination_id,
+                direction=direction,
+                config_session=lookup_session if lookup_session != session_id else None,
+                brain=compiled_version,
+            )
 
         return {
             "call_id": call_id,
@@ -179,6 +568,8 @@ class CallLifecycleService:
                 "channel": channel,
             },
             "resolved_stack": stack.to_safe_dict(),
+            "pipeline": pipeline,
+            "realtime": realtime_status,
             "ws_urls": {
                 "stt": f"/ws/stt-realtime?call_id={call_id}&sessionId={session_id}",
                 "tts": f"/ws/tts?call_id={call_id}&sessionId={session_id}",
@@ -187,6 +578,7 @@ class CallLifecycleService:
         }
 
     async def end(self, call_id: str, *, reason: str = "user_stop") -> dict[str, Any]:
+        ended = _utcnow()
         reason = _normalize_end_reason(reason)
         ctx = call_context.get(call_id)
         stored = await call_store.get(call_id)
@@ -202,25 +594,31 @@ class CallLifecycleService:
         ):
             return self._accepted_payload(call_id, stored.get("finalization_status") or "processing")
 
+        from server.call.billing_timing import mark_call_disconnected
+        mark_call_disconnected(call_id, ended.isoformat())
+
         if ctx:
             ctx.status = "finalizing"
             ctx.end_reason = reason
             call_context.drop_session_pointer(ctx.session_id, call_id)
         self._cancel_idle(call_id)
+        self._cancel_max_duration_watchdog(call_id)
 
         from server.call.turn_coordinator import drain
 
         await drain(call_id)
+        await realtime_text_manager.destroy(call_id)
+        try:
+            from server.realtime.voice_manager import realtime_voice_manager
+
+            await realtime_voice_manager.destroy(call_id)
+        except Exception:
+            pass
 
         await call_ledger.seal(call_id)
         if ctx:
             ctx.components["ledger"] = "complete"
-            meta = call_ledger.read_meta(call_id)
-            meta["ended_at"] = _utcnow().isoformat()
-            meta["end_reason"] = reason
-            call_ledger.write_meta(call_id, meta)
 
-        ended = _utcnow()
         started = ctx.started_at if ctx else None
         duration = None
         if started:
@@ -229,6 +627,13 @@ class CallLifecycleService:
             raw = stored["started_at"]
             st = datetime.fromisoformat(raw.replace("Z", "+00:00")) if isinstance(raw, str) else raw
             duration = max(0, int((ended - st).total_seconds()))
+
+        duration = _billable_duration_sec(call_id, ended, duration)
+
+        try:
+            call_ledger.stamp_ended_usage(call_id, reason=reason, duration_sec=duration)
+        except Exception:
+            pass
 
         await call_store.update(
             call_id,
@@ -263,7 +668,77 @@ class CallLifecycleService:
             logger.warning(f"[CALL] audio flush failed {call_id}: {str(e)[:200]}")
             if ctx:
                 ctx.components["audio"] = "failed"
-        await enqueue_post_call(call_id)
+        try:
+            from server.services.r2_storage import r2_storage
+
+            if r2_storage.is_configured():
+                mix_file = audio_archive.file_for(call_id, "mix")
+                if mix_file:
+                    ext = mix_file.suffix.lstrip(".").lower() or "wav"
+                    await r2_storage.upload_audio_file(call_id, mix_file, fmt=ext)
+        except Exception as e:
+            logger.warning(f"[CALL] R2 audio upload failed {call_id}: {str(e)[:160]}")
+        try:
+            from server.call.post_call_transcription import schedule_post_call_transcription
+
+            schedule_post_call_transcription(call_id)
+        except Exception as e:
+            logger.warning(f"[CALL] post_call_transcript schedule failed {call_id}: {str(e)[:120]}")
+        try:
+            from server.call.post_call_pipeline import process_now
+
+            await process_now(call_id)
+        except Exception as e:
+            logger.warning(f"[CALL] post-call outcome failed {call_id}: {str(e)[:200]}")
+            await enqueue_post_call(call_id)
+        try:
+            from server.call.post_call_pipeline import read_outcome
+            from server.services.r2_storage import r2_storage
+
+            if r2_storage.is_configured():
+                outcome_data = read_outcome(call_id)
+                if outcome_data:
+                    await r2_storage.upload_outcome(call_id, outcome_data)
+        except Exception as e:
+            logger.warning(f"[CALL] R2 outcome upload failed {call_id}: {str(e)[:160]}")
+        try:
+            from server.services.dev_telephony_store import dev_telephony_store
+
+            dev_telephony_store.sync_internal_call(call_id)
+        except Exception:
+            pass
+        try:
+            from server.services.vobiz_billing import reconcile_vobiz_call
+
+            await reconcile_vobiz_call(call_id)
+            if call_ledger.read_meta(call_id).get("vobiz_call_uuid"):
+                from server.services.vobiz_recordings import schedule_recording_retrieval
+                schedule_recording_retrieval(call_id)
+            meta = call_ledger.read_meta(call_id)
+            stored_row = await call_store.get(call_id)
+            duration = _billable_duration_sec(call_id, _utcnow(), (stored_row or {}).get("duration_sec"))
+            call_ledger.stamp_ended_usage(call_id, reason=meta.get("end_reason") or "ended", duration_sec=duration)
+            if duration is not None:
+                await call_store.update(call_id, {"duration_sec": duration})
+        except Exception as exc:
+            logger.warning("[BILLING] supplier cost finalization failed call=%s kind=%s", call_id, type(exc).__name__)
+        try:
+            from server.config.env import get_settings
+            from server.services.saas.billing_wallet_service import bill_pstn_call_if_applicable
+
+            if get_settings().saas_auth_enabled:
+                asyncio.create_task(bill_pstn_call_if_applicable(call_id))
+        except Exception as e:
+            logger.warning(f"[CALL] wallet bill skipped {call_id}: {str(e)[:120]}")
+        try:
+            from server.services.saas.dnc_service import handle_call_opt_out
+
+            stored_row = await call_store.get(call_id)
+            disposition = (stored_row or {}).get("disposition")
+            end_reason = (stored_row or {}).get("end_reason")
+            await handle_call_opt_out(call_id, reason=end_reason, disposition=disposition)
+        except Exception as e:
+            logger.warning(f"[CALL] opt-out DND auto-enroll check failed {call_id}: {str(e)[:120]}")
 
     def _accepted_payload(self, call_id: str, status: str) -> dict[str, Any]:
         return {
@@ -283,6 +758,18 @@ class CallLifecycleService:
         if ctx:
             body["resolved_stack"] = ctx.resolved_stack.to_safe_dict()
             body["status"] = ctx.status
+            body["pipeline"] = ctx.pipeline
+        review = call_ledger.review_fields(call_id)
+        if review.get("resolved_stack") and body.get("resolved_stack"):
+            review = {k: v for k, v in review.items() if k != "resolved_stack"}
+        body.update(review)
+        if not body.get("pipeline") and stored:
+            body["pipeline"] = stored.get("pipeline")
+        body["audio"] = {
+            "mix": audio_archive.file_for(call_id, "mix") is not None,
+            "user": audio_archive.file_for(call_id, "user") is not None,
+            "agent": audio_archive.file_for(call_id, "agent") is not None,
+        }
         return body
 
     async def finalization(self, call_id: str) -> dict[str, Any]:
@@ -310,10 +797,16 @@ class CallLifecycleService:
 
         ended = bool(stored and stored.get("ended_at"))
         ledger = "complete" if ended else "pending"
-        audio = "complete" if ended else "pending"
         call_id = (stored or {}).get("call_id")
-        outcome_file = read_outcome(call_id) if call_id else None
+        mix_ok = bool(call_id and audio_archive.file_for(str(call_id), "mix"))
         row_status = (stored or {}).get("finalization_status")
+        if mix_ok:
+            audio = "complete"
+        elif ended:
+            audio = "processing" if row_status == "processing" else "empty"
+        else:
+            audio = "pending"
+        outcome_file = read_outcome(call_id) if call_id else None
         if outcome_file is not None:
             if outcome_file.get("generation_ok") is False:
                 outcome = "failed"
@@ -369,6 +862,28 @@ class CallLifecycleService:
         if task:
             task.cancel()
 
+    def _schedule_max_duration_watchdog(self, call_id: str, max_sec: int) -> None:
+        self._cancel_max_duration_watchdog(call_id)
+        if max_sec <= 0:
+            return
+
+        async def _fire() -> None:
+            await asyncio.sleep(max_sec)
+            ctx = call_context.get(call_id)
+            if ctx and ctx.status == "active":
+                logger.info("[CALL] max allowed duration reached (%ds) for %s; terminating", max_sec, call_id)
+                await self.end(call_id, reason="max_duration")
+
+        try:
+            _max_duration_tasks[call_id] = asyncio.create_task(_fire())
+        except RuntimeError:
+            pass
+
+    def _cancel_max_duration_watchdog(self, call_id: str) -> None:
+        task = _max_duration_tasks.pop(call_id, None)
+        if task:
+            task.cancel()
+
     async def recover_stale_calls(self) -> int:
         """On process start RAM is empty, so every open call is dead and must finalize."""
         stale = await call_store.list_open()
@@ -387,12 +902,16 @@ class CallLifecycleService:
             logger.info(f"[CALL] recovered {count} stale calls")
         return count
 
-    async def _resolve_agent(self, agent_id: str | None) -> dict[str, Any]:
+    async def _resolve_agent(self, agent_id: str | None, *, tenant_id: str | None = None) -> dict[str, Any]:
         if agent_id:
             try:
-                return await agent_service.get_agent(agent_id)
-            except KeyError:
+                if tenant_id is None:
+                    return await agent_service.get_agent(agent_id)
+                return await agent_service.get_agent(agent_id, tenant_id=tenant_id)
+            except (KeyError, ValueError):
                 raise AppError(ErrorCode.NOT_FOUND, message="Agent not found", status_code=404) from None
+        if tenant_id:
+            raise AppError(ErrorCode.NOT_FOUND, message="Agent not found", status_code=404)
         return await agent_service.ensure_default_agent()
 
     def _resolve_locked_stack(
@@ -404,8 +923,7 @@ class CallLifecycleService:
         stack_override: dict[str, Any] | None,
         language: str,
     ) -> ResolvedStack:
-        settings = get_settings()
-        if settings.voice_agent_config_mode == "frontend":
+        if effective_config_mode() == "frontend":
             base = resolve_stack_for_session(session_id, language=language)
             return resolve_stack(
                 mode="frontend",
@@ -420,6 +938,7 @@ class CallLifecycleService:
                 language=language,
                 environment=environment,
                 stack_override=stack_override,
+                allow_composed_override=self._is_server_composed_override(stack_override, tier),
             )
         return resolve_stack(
             mode="env",
@@ -427,20 +946,69 @@ class CallLifecycleService:
             language=language,
             environment=environment,
             stack_override=stack_override,
+            allow_composed_override=self._is_server_composed_override(stack_override, tier),
         )
 
-    async def _lock_compiled_brain(self, agent_id: str) -> tuple[str | None, str | None]:
-        settings = get_settings()
-        if not settings.use_versioned_brains:
-            return None, None
-        from server.brain.compiled_brain_service import compiled_brain_service
+    @staticmethod
+    def _is_server_composed_override(stack_override: dict[str, Any] | None, tier: str) -> bool:
+        snapshot = stack_override.get("_voice_stack_snapshot") if isinstance(stack_override, dict) else None
+        return bool(
+            isinstance(stack_override, dict)
+            and stack_override.get("pipeline") == "composed_voice"
+            and stack_override.get("voice_flow") == "composed_stages"
+            and isinstance(snapshot, dict)
+            and snapshot.get("tier") == tier
+        )
 
-        try:
-            snap = await compiled_brain_service.get_active_for_agent(agent_id)
-            return snap.get("compiled_version"), snap.get("compiled_text")
-        except Exception as e:
-            logger.warning(f"[CALL] compiled brain lock skipped: {str(e)[:160]}")
-            return None, None
+    def _coerce_pipeline_stack(
+        self,
+        stack: ResolvedStack,
+        *,
+        stack_override: dict[str, Any] | None = None,
+    ) -> ResolvedStack:
+        provider, model = coerce_live_llm_selection(
+            stack.llm.provider,
+            stack.llm.model,
+            stack_override=stack_override,
+        )
+        if provider == stack.llm.provider and model == stack.llm.model:
+            return stack
+        llm = StageSelection(provider, model, dict(stack.llm.config))
+        payload = {
+            "stt": {"provider": stack.stt.provider, "model": stack.stt.model},
+            "llm": {"provider": llm.provider, "model": llm.model},
+            "tts": {"provider": stack.tts.provider, "model": stack.tts.model},
+        }
+        combination_id = hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]
+        return replace(stack, llm=llm, combination_id=combination_id)
+
+    def _load_call_end_policy(self, session_id: str | None, language: str | None) -> dict | None:
+        if not session_id:
+            return None
+        from server.agent.instruction_store import instruction_store
+        from server.call.call_end_policy import default_call_end_policy, normalize_call_end_policy
+
+        lang = language
+        if not session_id:
+            return default_call_end_policy(lang)
+        raw = instruction_store.get_call_end_policy(session_id)
+        lang = language or instruction_store.get_language(session_id)
+        return normalize_call_end_policy(raw, language=lang)
+
+    async def _lock_compiled_brain(
+        self,
+        agent_id: str,
+        *,
+        session_id: str | None = None,
+    ) -> tuple[str | None, str | None, str]:
+        """Lock brain for call duration. Session fine-tune overrides take priority."""
+        from server.call.call_brain_lock import resolve_locked_compiled_brain
+
+        version, text, source = await resolve_locked_compiled_brain(
+            agent_id,
+            session_id=session_id,
+        )
+        return version, text, source
 
 
 call_lifecycle_service = CallLifecycleService()
