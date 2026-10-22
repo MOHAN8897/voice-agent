@@ -5,11 +5,11 @@ from typing import Any
 
 from server.config.constants import constants
 
-DEFAULT_STT_SILENCE_MS = 600
+DEFAULT_STT_SILENCE_MS = 300
 SARVAM_VAD_DEFAULTS = {
     "silence_duration_ms": DEFAULT_STT_SILENCE_MS,
     "threshold": 0.55,
-    "min_speech_duration_ms": 300,
+    "min_speech_duration_ms": 200,
     "prefix_padding_ms": 300,
 }
 

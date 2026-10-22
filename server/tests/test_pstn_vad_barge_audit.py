@@ -405,12 +405,12 @@ def test_adapter_sends_calibrated_defaults(monkeypatch, overrides):
     ))
     kwargs = connect.call_args.kwargs
     assert {key: kwargs[key] for key in ("threshold", "min_speech_duration_ms", "silence_duration_ms", "prefix_padding_ms")} == {
-        "threshold": 0.55, "min_speech_duration_ms": 300, "silence_duration_ms": 600, "prefix_padding_ms": 300,
+        "threshold": 0.55, "min_speech_duration_ms": 200, "silence_duration_ms": 300, "prefix_padding_ms": 300,
     }
     assert kwargs["high_vad_sensitivity"] is False
 
 
-@pytest.mark.parametrize("overrides,expected", [({}, {"threshold": ["0.55"], "silence_duration_ms": ["600"]}),
+@pytest.mark.parametrize("overrides,expected", [({}, {"threshold": ["0.55"], "silence_duration_ms": ["300"]}),
     ({"threshold": 0.0, "silence_duration_ms": 0}, {"threshold": ["0.0"], "silence_duration_ms": ["0"]})])
 def test_direct_ws_defaults_and_zero_overrides(monkeypatch, overrides, expected):
     from urllib.parse import parse_qs, urlsplit
@@ -422,7 +422,8 @@ def test_direct_ws_defaults_and_zero_overrides(monkeypatch, overrides, expected)
     sarvam_ws.connect_stt_realtime(**overrides)
     params = parse_qs(urlsplit(connect.call_args.args[0]).query)
     assert all(params[key] == value for key, value in expected.items())
-    assert params["min_speech_duration_ms"] == params["prefix_padding_ms"] == ["300"]
+    assert params["min_speech_duration_ms"] == ["200"]
+    assert params["prefix_padding_ms"] == ["300"]
     assert "high_vad_sensitivity" not in params
 
 
@@ -480,7 +481,7 @@ async def test_short_native_barge_final_is_not_lost(voice, text):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("runtime,silence,threshold", [({}, 600, None),
+@pytest.mark.parametrize("runtime,silence,threshold", [({}, 300, None),
     ({"sttSilenceMs": 250, "sttThreshold": 0.0}, 250, 0.0)])
 async def test_initial_and_reconnect_keep_the_same_stt_tuning(monkeypatch, runtime, silence, threshold):
     loop = core.PstnVoiceLoop(session_id="reconnect", call_id=None, on_agent_wire=AsyncMock())

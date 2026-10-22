@@ -56,8 +56,8 @@ PSTN_ECHO_TAIL_S = 0.35
 PSTN_THINK_CANCEL_MIN_WORDS = 2
 PSTN_THINK_CANCEL_HOLD_S = 0.25
 PSTN_DUCK_TIMEOUT_S = 0.85
-# After idle STT final: allow slower PSTN / Telugu pauses without feeling dead.
-PSTN_LISTEN_COALESCE_S = 0.15
+# After idle STT final: low-latency 30ms coalesce window before launch.
+PSTN_LISTEN_COALESCE_S = 0.03
 # If user still producing partials near fire time, extend once more.
 PSTN_LISTEN_COALESCE_PARTIAL_GRACE_S = 0.2
 # Keep enough of a long utterance for the LLM (was 500 — truncated mid-thought).
@@ -1993,21 +1993,20 @@ class PstnVoiceLoop:
                                     status="healthy",
                                 )
                             pending += chunk.get("delta") or ""
-                            if not spoke_from_stream:
-                                sentences, pending = drain_complete_sentences(
-                                    pending,
-                                    allow_first_fast=not spoke_from_stream,
-                                )
-                                if sentences:
-                                    await tts_prepare
-                                    self._set_tts_active(True)
-                                    combined = join_speakable_chunks(sentences)
-                                    if combined:
-                                        if self.emission_blocked():
-                                            turn_cancelled = True
-                                            break
-                                        await self._send_tts_text(tts_session, combined)
-                                        spoke_from_stream = True
+                            sentences, pending = drain_complete_sentences(
+                                pending,
+                                allow_first_fast=not spoke_from_stream,
+                            )
+                            if sentences:
+                                await tts_prepare
+                                self._set_tts_active(True)
+                                combined = join_speakable_chunks(sentences)
+                                if combined:
+                                    if self.emission_blocked():
+                                        turn_cancelled = True
+                                        break
+                                    await self._send_tts_text(tts_session, combined)
+                                    spoke_from_stream = True
                         elif chunk.get("done"):
                             if chunk.get("cancelled"):
                                 turn_cancelled = True
@@ -2089,11 +2088,14 @@ class PstnVoiceLoop:
                     call_id=self.call_id, detail=type(e).__name__,
                 )
                 self._pending_transcript = None
-                self._set_phase(PHASE_ENDED)
-                if self._on_session_error:
-                    await self._on_session_error("The voice service could not complete the reply. Please start a new test.")
-                if self._on_remote_hangup:
-                    await self._on_remote_hangup()
+                # Do NOT hang up the call on the user! Recover gracefully in-call.
+                if not spoke_from_stream and self._phase != PHASE_ENDED and not self._closed:
+                    try:
+                        from server.prompts.agent_voice_rules import unclear_fallback_for
+
+                        await self.speak(unclear_fallback_for(self._resolve_language()))
+                    except Exception as fallback_error:
+                        log_pstn("tts.fallback.failed", call_id=self.call_id, error=str(fallback_error)[:200])
             elif not needs_tts_fallback and not spoke_from_stream and self._phase != PHASE_ENDED and not self._closed:
                 try:
                     from server.prompts.agent_voice_rules import unclear_fallback_for
