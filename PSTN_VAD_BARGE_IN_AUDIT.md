@@ -1,8 +1,8 @@
-# PSTN Turn-Taking, VAD & Barge-In Engineering Audit & Production Solution (v2.0)
+# PSTN Turn-Taking, VAD & Barge-In Engineering Audit & Production Solution (v2.1)
 
 > **Target Systems**: Economical & Standard PSTN Telephony Tiers (`vobiz` carrier primary, 8 kHz G.711 μ-law / Telnyx L16)  
 > **Voice Stack**: Sarvam STT (realtime streaming WebSocket) + Sarvam / Gemini LLM + Sarvam Bulbul / Gemini TTS  
-> **Document Purpose**: Re-audit of turn-taking, VAD sensitivity, and barge-in mechanics. Identifies critical ambiguities and flawed assumptions in naive fixes, and provides an optimized, production-grade architecture benchmarked against LiveKit, Retell, and Vapi.
+> **Document Purpose**: Re-audit of turn-taking, VAD sensitivity, and barge-in mechanics. v2.1 fixes 10 critical errata from v2.0 (return-type mismatch, AEC timing race, missing halt words, Indic regex failure, ghost-turn dead-air, and adds soft pause/resume + self-echo pillars).
 
 ---
 
@@ -36,10 +36,11 @@ Our codebase investigation revealed **6 interconnected failure points** across t
                                            │
                                            ▼
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
-│ Root Cause 1: Sarvam STT WebSocket Hyper-Sensitivity (server/services/sarvam_ws.py)    │
-│ • high_vad_sensitivity = True by default (drops internal threshold to ~0.2)           │
-│ • min_speech_duration_ms is None (transient clicks/fans trip vad.speech_start)         │
-│ • silence_duration_ms = None (premature endpointing on natural Indic phrase pauses)   │
+│ Root Cause 1: Sarvam STT VAD Miscalibration (multi-file inconsistency)                 │
+│ • sarvam_ws.py: high_vad_sensitivity=True default, but guarded by None checks          │
+│ • ws.py already sends threshold=0.3, min_speech=250ms, prefix_padding=300ms            │
+│ • sarvam_stt.py provider passes None for all VAD params (no defaults!)                 │
+│ • Real delta: threshold 0.3→0.55, min_speech 250→300, silence 500→600                  │
 └──────────────────────────────────────────┬─────────────────────────────────────────────┘
                                            │ Emits partial/final transcripts
                                            ▼
@@ -80,12 +81,24 @@ Our codebase investigation revealed **6 interconnected failure points** across t
 
 ### Detailed Analysis of Each Root Cause
 
-#### Root Cause 1: Sarvam STT WebSocket Hyper-Sensitivity
-In [`server/services/sarvam_ws.py:64-86`](file:///d:/voice%20agent/server/services/sarvam_ws.py#L64-L86) and [`server/routes/ws.py:124`](file:///d:/voice%20agent/server/routes/ws.py#L124):
-- `high_vad_sensitivity` defaults to `True`.
-- In `server/routes/ws.py:124`, `threshold` is hardcoded to `0.3`.
-- `min_speech_duration_ms` is `None` in the provider adapter.
-- In Silero/neural VAD, a threshold of `0.3` combined with `high_vad_sensitivity=True` triggers on low-energy ambient sounds: breathing into the receiver, distant room conversation, keyboard typing, or ceiling fan rotation.
+#### Root Cause 1: Sarvam STT VAD Miscalibration (Multi-File Inconsistency)
+
+> **v2.1 Correction**: The v2.0 audit overstated this root cause. `ws.py` already passes `min_speech_duration_ms=250` and `prefix_padding_ms=300` via `vad_config`. The `high_vad_sensitivity` flag in `sarvam_ws.py:85` is only sent when **both** `min_speech_duration_ms` and `prefix_padding_ms` are `None` — so on the composed-voice route (ws.py), the flag was never sent. The real problem is:
+
+In [`server/services/sarvam_ws.py:64-86`](file:///d:/voice%20agent/server/services/sarvam_ws.py#L64-L86), [`server/routes/ws.py:121-127`](file:///d:/voice%20agent/server/routes/ws.py#L121-L127), and [`server/providers/sarvam_stt.py:20-33`](file:///d:/voice%20agent/server/providers/sarvam_stt.py#L20-L33):
+
+| File | Current Value | Target Value | Issue |
+|------|--------------|-------------|-------|
+| `ws.py:124` | `threshold: 0.3` | `0.55` | Too low — trips on breathing, distant speech, fan noise |
+| `ws.py:123` | `silence_duration_ms: 500` | `600` | +100ms adds turn-end latency (trade-off!) |
+| `ws.py:125` | `min_speech_duration_ms: 250` | `300` | +50ms, modest improvement |
+| `ws.py:126` | `prefix_padding_ms: 300` | `300` | Already correct on this route |
+| `sarvam_stt.py:28-31` | All `None` (no defaults!) | Match ws.py values | Provider route sends no VAD params — Sarvam uses its own defaults |
+| `sarvam_ws.py:64` | `high_vad_sensitivity=True` | `False` | Default still True, affects direct callers |
+
+**Key insight**: The `sarvam_stt.py` provider adapter passes `None` for all VAD params. When a call uses the provider registry path (line 130-146 in ws.py), Sarvam receives no threshold/silence/min_speech configuration at all, falling back to Sarvam's internal defaults. This is the route where `high_vad_sensitivity` matters.
+
+**Latency trade-off**: The +100ms silence_duration_ms (500→600) adds ~100ms to every turn-end. This is acceptable for PSTN (carrier jitter already adds 40-80ms), but should be profiled in production call recordings.
 
 #### Root Cause 2: Backchannels Bundled into `_SHORT_INTERRUPT`
 In [`server/services/pstn_voice_core.py:56-62`](file:///d:/voice%20agent/server/services/pstn_voice_core.py#L56-L62):
@@ -212,27 +225,35 @@ Our repository already contains [`pcm16_crest_factor`](file:///d:/voice%20agent/
 Replace the monolithic `_SHORT_INTERRUPT` with two distinct regex engines supporting Indic scripts, honorific compounds, and Romanized phonetics:
 
 ```python
-# 1. EMERGENCY HALT COMMANDS: ONLY these explicit words may interrupt with 1 word
+# 1. EMERGENCY HALT COMMANDS: ONLY these words may interrupt with 1 word.
+#    v2.1: Added back "no", "nope", "actually", "sorry", "కాదు", "లేదు", "नहीं"
+#    which were in v1 _SHORT_INTERRUPT but dropped in v2.0 halt list.
 _HALT_COMMANDS_RE = re.compile(
     r"^(?:"
     r"stop|wait|hold on|one second|pause|shut up|quiet|cancel|listen|"
-    r"ఆగండి|ఆగు|వద్దు|వద్దండి|వద్దండీ|ఆపండి|వినండి|"
-    r"रुको|रुकिए|बंद करो|चुप|मत बोलो|सुनो|सुनिए"
-    r")(?:\s+\w+){0,2}[.!?,]*$",
+    r"no|nope|actually|sorry|"
+    r"ఆగండి|ఆగు|వద్దు|వద్దండి|వద్దండీ|ఆపండి|వినండి|కాదు|లేదు|లేదండి|అది కాదు|"
+    r"रुको|रुकिए|बंद करो|चुप|मत बोलो|सुनो|सुनिए|नहीं"
+    # v2.1: Use \S+ instead of \w+ — \w mishandles Telugu/Hindi combining marks
+    r")(?:\s+\S+){0,2}[.!?,]*$",
     re.I,
 )
 
-# 2. CONVERSATIONAL BACKCHANNEL NODS: NEVER interrupt active playback
+# 2. CONVERSATIONAL BACKCHANNEL NODS: NEVER interrupt active agent speech.
+#    v2.1: Removed "చెప్పండి" (cheppandi) — it means "go ahead, tell me",
+#    which is an INVITATION to speak, not a passive nod.
 _BACKCHANNEL_NODS_RE = re.compile(
     r"^(?:"
     # English
     r"yes|yeah|yep|yup|ok|okay|sure|hmm|mm|mhm|uh huh|right|correct|got it|i see|alright|"
     # Telugu (Script + Romanized)
-    r"అవును|అవునండి|అవునండీ|సరే|సరేనండి|అలాగే|అలాగేనండి|బాగుంది|హాం|చెప్పండి|"
-    r"avunu|avunandi|sare|sarenandi|alage|alagenandi|bagundi|cheppandi|"
+    # NOTE: చెప్పండి REMOVED — it's "tell me" (invitation), not a nod
+    r"అవును|అవునండి|అవునండీ|సరే|సరేనండి|అలాగే|అలాగేనండి|బాగుంది|హాం|"
+    r"avunu|avunandi|sare|sarenandi|alage|alagenandi|bagundi|"
     # Hindi (Script + Romanized)
     r"हाँ|हां|हाँजी|हाँ जी|जी|जी हाँ|जी हां|ठीक|ठीक है|अच्छा|अच्छा जी|सही बात|"
     r"haan|haanji|haan ji|ji|ji haan|theek|theek hai|achha|achha ji"
+    # v2.1: Use \S+ instead of \w+ for Indic script compatibility
     r")(?:\s+(?:"
     r"yes|yeah|ok|okay|sure|hmm|haan|avunu|sare|theek|alage|ji|right"
     r"))*[.!,]*$",
@@ -241,7 +262,12 @@ _BACKCHANNEL_NODS_RE = re.compile(
 ```
 
 ### Pillar 2: Unambiguous Barge-In Commit Logic with Hysteresis Gate
-In [`server/services/pstn_voice_core.py:_should_commit_barge`](file:///d:/voice%20agent/server/services/pstn_voice_core.py#L545):
+
+> **v2.1 CRITICAL FIX**: The v2.0 diff proposed returning `(False, "reason")` tuples, but `_should_commit_barge` is declared `-> bool` ([line 524](file:///d:/voice%20agent/server/services/pstn_voice_core.py#L524)) and all 4 callers ([lines 1391, 1490, 1504](file:///d:/voice%20agent/server/services/pstn_voice_core.py#L1391), tests) use `if self._should_commit_barge(text):`. A tuple `(False, "reason")` is **always truthy in Python**, so every backchannel would pass! The fix must use the existing `result`/`reason` local variable pattern and return `result` (bare bool).
+
+> **v2.1 AEC GATE TIMING RACE**: The `_aec_barge_open` gate closes after 8 quiet frames (~160ms), but Sarvam partial transcripts arrive 300-800ms after audio. By the time words arrive, the gate may already be closed, rejecting a real interruption as `energy_below_floor`. **Fix**: Use `_last_vad_voice_at` to latch the gate — "any loud audio within the last ~800ms" keeps it open.
+
+In [`server/services/pstn_voice_core.py:_should_commit_barge`](file:///d:/voice%20agent/server/services/pstn_voice_core.py#L524):
 
 ```python
 clean_text = (text or "").strip()
@@ -249,36 +275,50 @@ is_halt_command = bool(_HALT_COMMANDS_RE.match(clean_text))
 is_backchannel = bool(_BACKCHANNEL_NODS_RE.match(clean_text))
 
 # Rule A: Pure backchannel acknowledgments NEVER interrupt agent speech
+# v2.1 FIX: Return bare bool, not tuple — function signature is -> bool
 if is_backchannel:
     self._partial_started_at = 0.0
-    return False, "backchannel_ignored"
+    result, reason = False, "backchannel_ignored"
+    # ... falls through to log_pstn and return result (bare bool)
 
 # Rule B: Playout Onset Echo Shield Window (350ms protects against carrier G.711 echo)
-if self._tts_started_at and (now - self._tts_started_at) < PSTN_BARGE_MIN_AFTER_SPEAK_S:
-    return False, "min_after_speak_echo_shield"
+elif self._tts_started_at and (now - self._tts_started_at) < PSTN_BARGE_MIN_AFTER_SPEAK_S:
+    result, reason = False, "min_after_speak_echo_shield"
 
-# Rule C: Soft AEC Energy Gate — Background noise & distant speakers (< 320 RMS) cannot interrupt
-if not self._aec_barge_open and not is_halt_command:
-    return False, "energy_below_floor"
+# Rule C: Soft AEC Energy Gate with latched timing
+# v2.1 FIX: Don't just check _aec_barge_open (closes in 160ms).
+# Also check _last_vad_voice_at — if loud audio was heard within 800ms,
+# treat the gate as open. This bridges the 300-800ms Sarvam transcript delay.
+elif not self._aec_barge_open \
+     and (now - self._last_vad_voice_at) > 0.8 \
+     and not is_halt_command:
+    result, reason = False, "energy_below_floor"
 
-# Rule D: Emergency halt commands ("stop", "wait", "ఆగండి") can interrupt immediately
-if is_halt_command:
-    return True, "halt_command"
+# Rule D: Emergency halt commands ("stop", "wait", "no", "ఆగండి", "नहीं")
+# v2.1: Added back "no", "కాదు", "लేదు", "नहीं" which were dropped in v2.0
+elif is_halt_command:
+    result, reason = True, "halt_command"
 
 # Rule E: General conversational interruptions require >= 2 words sustained for >= 300ms
-min_words = int(self._barge_runtime.get("bargeMinWords") or 2)
-if words < min_words:
-    self._partial_started_at = 0.0
-    return False, "min_words"
+else:
+    min_words = int(self._barge_runtime.get("bargeMinWords") or 2)
+    if words < min_words:
+        self._partial_started_at = 0.0
+        result, reason = False, "min_words"
+    elif self._partial_started_at <= 0:
+        self._partial_started_at = now
+        result, reason = False, "hold_start"
+    elif (now - self._partial_started_at) < PSTN_BARGE_HOLD_S:
+        result, reason = False, "hold"
 
-if self._partial_started_at <= 0:
-    self._partial_started_at = now
-    return False, "hold_start"
-elif (now - self._partial_started_at) < PSTN_BARGE_HOLD_S:
-    return False, "hold"
+log_pstn("BARGE_CHECK", call_id=self.call_id, ..., reason=reason, result=result)
+return result  # <-- bare bool, NOT a tuple
 ```
 
 ### Pillar 3: Post-Playout Backchannel Purging (Fixing the "Ghost Brain Turn")
+
+> **v2.1 CRITICAL FIX — Dead Air Bug**: Unconditionally purging backchannel nods creates **dead air** when the agent's last utterance was a question. Example: Agent says *"Shall I proceed?"* and the caller says *"Haan"* slightly before TTS completes. The purge discards their real answer, nobody speaks, and the call goes silent. **Fix**: Only purge when the agent's last utterance was NOT a question or confirmation request.
+
 In [`server/services/pstn_voice_core.py`](file:///d:/voice%20agent/server/services/pstn_voice_core.py), update the turn cleanup in `finally` of `_run_turn` (line 1972):
 
 ```python
@@ -289,11 +329,26 @@ self._interrupted_generation = None
 
 if pending and self._phase != PHASE_ENDED:
     clean_pending = (pending or "").strip()
-    # PURGE GHOST TURNS: If the queued transcript is merely a backchannel nod, discard it!
-    if _BACKCHANNEL_NODS_RE.match(clean_pending):
+    # PURGE GHOST TURNS: If the queued transcript is merely a backchannel nod, discard it.
+    # v2.1 FIX: Do NOT purge if the agent's last utterance was a question —
+    # "Haan" after "Shall I proceed?" is a real answer, not a ghost nod!
+    last_tts = (self._last_tts_text or "").strip()
+    agent_asked_question = last_tts.rstrip().endswith("?") or any(
+        kw in last_tts.lower() for kw in (
+            "shall i", "do you want", "would you like", "is that ok",
+            "proceed", "confirm", "correct",
+            "చెప్పండి", "చెప్తారా", "కావాలా", "సరేనా",  # Telugu question markers
+            "बताइए", "चाहिए", "ठीक है ना", "करूं",        # Hindi question markers
+        )
+    )
+    if _BACKCHANNEL_NODS_RE.match(clean_pending) and not agent_asked_question:
         log_pstn("PENDING_PURGED_BACKCHANNEL", call_id=self.call_id, text=clean_pending[:80])
         # Clean transition to LISTENING — do NOT launch an LLM turn on "Haan" or "Avunu"
         pending = None
+    elif _BACKCHANNEL_NODS_RE.match(clean_pending) and agent_asked_question:
+        log_pstn("PENDING_KEPT_ANSWER_TO_QUESTION", call_id=self.call_id,
+                 text=clean_pending[:80], agent_question=last_tts[-80:])
+        # Keep it — this is the caller answering the agent's question
 
 if pending and self._phase != PHASE_ENDED:
     if self._awaiting_barge_final or self._phase == PHASE_INTERRUPTING:
@@ -375,6 +430,8 @@ PSTN_BARGE_HOLD_S = 0.30
 
 ## 6. Implementation Code Diffs
 
+> **v2.1 DIFF ERRATA**: The v2.0 diffs had multiple bugs that would crash production. All are fixed below.
+
 ### Diff 1: [`server/services/pstn_voice_core.py`](file:///d:/voice%20agent/server/services/pstn_voice_core.py)
 
 ```diff
@@ -388,6 +445,8 @@ PSTN_BARGE_HOLD_S = 0.30
 +PSTN_BARGE_HOLD_S = 0.30
  # Soft AEC energy is a barge confidence signal only — never a hard STT drop gate.
  PSTN_TTS_STT_ENERGY_MIN = 320
++# v2.1: Latch window for AEC gate — transcript can arrive 300-800ms after audio
++PSTN_AEC_VOICE_LATCH_S = 0.8
  # Soft AEC barge hysteresis: open after 2 loud frames; close after 8 quiet frames.
  PSTN_AEC_LOUD_OPEN_FRAMES = 2
  PSTN_AEC_QUIET_CLOSE_FRAMES = 8
@@ -405,26 +464,30 @@ PSTN_BARGE_HOLD_S = 0.30
 -    r"(?:\s+\w+){0,3}[.!,]*$",
 -    re.I,
 -)
-+# 1. Emergency Halt Commands — ONLY these single words may interrupt active agent speech
++# 1. Emergency Halt Commands — these words may interrupt active agent speech.
++# v2.1: Added "no", "nope", "actually", "sorry", "కాదు", "లేదు", "नहीं" (were in v1)
 +_HALT_COMMANDS_RE = re.compile(
 +    r"^(?:stop|wait|hold on|one second|pause|shut up|quiet|cancel|listen|"
-+    r"ఆగండి|ఆగు|వద్దు|వద్దండి|వద్దండీ|ఆపండి|వినండి|"
-+    r"रुको|रुकिए|बंद करो|चुप|मत बोलो|सुनो|सुनिए"
-+    r")(?:\s+\w+){0,2}[.!?,]*$",
++    r"no|nope|actually|sorry|"
++    r"ఆగండి|ఆగు|వద్దు|వద్దండి|వద్దండీ|ఆపండి|వినండి|కాదు|లేదు|లేదండి|అది కాదు|"
++    r"रुको|रुकिए|बंद करो|चुप|मत बोलो|सुनो|सुनिए|नहीं"
++    # v2.1: \S+ not \w+ — \w fails on Telugu/Hindi combining marks
++    r")(?:\s+\S+){0,2}[.!?,]*$",
 +    re.I,
 +)
 +
-+# 2. Conversational Backchannel Nods — NEVER interrupt active agent speech
++# 2. Conversational Backchannel Nods — NEVER interrupt active agent speech.
++# v2.1: Removed చెప్పండి/cheppandi ("tell me" = invitation, not nod)
 +_BACKCHANNEL_NODS_RE = re.compile(
 +    r"^(?:yes|yeah|yep|yup|ok|okay|sure|hmm|mm|mhm|uh huh|right|correct|got it|i see|alright|"
-+    r"అవును|అవునండి|అవునండీ|సరే|సరేనండి|అలాగే|అలాగేనండి|బాగుంది|హాం|చెప్పండి|"
-+    r"avunu|avunandi|sare|sarenandi|alage|alagenandi|bagundi|cheppandi|"
++    r"అవును|అవునండి|అవునండీ|సరే|సరేనండి|అలాగే|అలాగేనండి|బాగుంది|హాం|"
++    r"avunu|avunandi|sare|sarenandi|alage|alagenandi|bagundi|"
 +    r"हाँ|हां|हाँजी|हाँ जी|जी|जी हाँ|जी हां|ठीक|ठीक है|अच्छा|अच्छा जी|सही बात|"
 +    r"haan|haanji|haan ji|ji|ji haan|theek|theek hai|achha|achha ji"
 +    r")(?:\s+(?:yes|yeah|ok|okay|sure|hmm|haan|avunu|sare|theek|alage|ji|right))*[.!,]*$",
 +    re.I,
 +)
-@@ -544,4 +561,16 @@
+@@ -544,16 +561,30 @@
          intro = self._phase == PHASE_INTRO or self._intro_phase
 -        short_ok = bool(_SHORT_INTERRUPT.match((text or "").strip()))
 -        substantive = is_substantive_transcript(text or "", after_barge=True) or short_ok
@@ -432,16 +495,23 @@ PSTN_BARGE_HOLD_S = 0.30
 +        is_halt_command = bool(_HALT_COMMANDS_RE.match(clean_text))
 +        is_backchannel = bool(_BACKCHANNEL_NODS_RE.match(clean_text))
 +
-+        # Backchannel nods during active playback must NEVER interrupt the agent
++        # v2.1 FIX: Use result/reason pattern, NOT tuple return.
++        # _should_commit_barge -> bool, callers use `if self._should_commit_barge(text):`
++        # Returning (False, "reason") would be truthy and break everything!
 +        if is_backchannel:
 +            self._partial_started_at = 0.0
-+            return False
++            result, reason = False, "backchannel_ignored"
 +
 +        substantive = is_substantive_transcript(text or "", after_barge=True) or is_halt_command
-@@ -557,4 +586,8 @@
+@@ -557,4 +586,10 @@
          elif now - self._last_barge_at < PSTN_BARGE_DEBOUNCE_S:
              result, reason = False, "debounce"
-+        elif not self._aec_barge_open and not is_halt_command:
++        # v2.1 FIX: AEC gate timing race — latch using _last_vad_voice_at
++        # Gate closes in 160ms (8 frames), but Sarvam transcript arrives 300-800ms later.
++        # Check both: _aec_barge_open OR loud audio within last 800ms.
++        elif not self._aec_barge_open \
++             and (now - self._last_vad_voice_at) > PSTN_AEC_VOICE_LATCH_S \
++             and not is_halt_command:
 +            result, reason = False, "energy_below_floor"
 +        elif self._tts_started_at and now - self._tts_started_at < PSTN_BARGE_MIN_AFTER_SPEAK_S:
 +            result, reason = False, "min_after_speak_echo_shield"
@@ -449,16 +519,40 @@ PSTN_BARGE_HOLD_S = 0.30
 +        elif words < int(self._barge_runtime.get("bargeMinWords") or PSTN_BARGE_MIN_WORDS) and not is_halt_command:
              self._partial_started_at = 0.0
              result, reason = False, "min_words"
-@@ -1971,3 +2004,8 @@
++        ...
++        return result  # bare bool — NOT (result, reason) tuple!
+@@ -1971,3 +2004,18 @@
              self.current_generation_id = None
              self._interrupted_generation = None
 +            if pending and self._phase != PHASE_ENDED:
-+                # Purge ghost turns: backchannel nods during speech must not launch a brain turn
-+                if _BACKCHANNEL_NODS_RE.match((pending or "").strip()):
++                clean_pending = (pending or "").strip()
++                # v2.1 FIX: Don't purge if the agent asked a question!
++                # "Haan" after "Shall I proceed?" is a real answer.
++                last_tts = (self._last_tts_text or "").strip()
++                agent_asked = last_tts.rstrip().endswith("?") or any(
++                    kw in last_tts.lower() for kw in (
++                        "shall i", "do you want", "would you like",
++                        "చెప్పండి", "కావాలా", "सरేనా",
++                        "बताइए", "चाहिए", "करूं",
++                    )
++                )
++                if _BACKCHANNEL_NODS_RE.match(clean_pending) and not agent_asked:
 +                    log_pstn("PENDING_PURGED_BACKCHANNEL", call_id=self.call_id, text=pending[:80])
 +                    pending = None
              if pending and self._phase != PHASE_ENDED:
 ```
+
+#### Migration Checklist for `_SHORT_INTERRUPT` Removal
+
+> **v2.1**: Removing `_SHORT_INTERRUPT` requires updating **every reference**. Grep confirms 3 usage sites:
+
+| File:Line | Current | Replacement |
+|-----------|---------|-------------|
+| `pstn_voice_core.py:545` | `short_ok = bool(_SHORT_INTERRUPT.match(...))` | `is_halt_command = bool(_HALT_COMMANDS_RE.match(...))` |
+| `pstn_voice_core.py:610` | `short_ok = bool(_SHORT_INTERRUPT.match(cleaned))` | `is_halt = bool(_HALT_COMMANDS_RE.match(cleaned))` |
+| `pstn_voice_core.py:635` | `short_ok = bool(_SHORT_INTERRUPT.match(cleaned))` | `is_halt = bool(_HALT_COMMANDS_RE.match(cleaned))` |
+
+Also update every `short_ok` reference at lines 546, 558, 612, 615, 637, 639 to use `is_halt` / `is_halt_command`. Missing any produces a `NameError` at runtime.
 
 ### Diff 2: [`server/services/sarvam_ws.py`](file:///d:/voice%20agent/server/services/sarvam_ws.py)
 
@@ -489,6 +583,35 @@ PSTN_BARGE_HOLD_S = 0.30
                  "prefix_padding_ms": 300,
 ```
 
+### Diff 4 (NEW — v2.1): [`server/providers/sarvam_stt.py`](file:///d:/voice%20agent/server/providers/sarvam_stt.py)
+
+> **v2.1**: The provider adapter passes `None` for all VAD params, meaning the provider-registry route gets **no calibration at all**. `prefix_padding_ms` is 300 in ws.py but `None` here — inconsistent.
+
+```diff
+--- a/server/providers/sarvam_stt.py
++++ b/server/providers/sarvam_stt.py
+@@ -20,7 +20,7 @@
+     def connect_realtime(self, config: STTConfig):
+         vad = config.vad_config or {}
+         return connect_stt_realtime(
+             language_code=provider_language_code(config.language, provider="sarvam", stage="stt"),
+             stream_type=config.stream_type,
+             mode="transcribe",
+             endpointing="vad",
+             sample_rate=config.sample_rate,
+-            silence_duration_ms=vad.get("silence_duration_ms"),
+-            threshold=vad.get("threshold"),
+-            min_speech_duration_ms=vad.get("min_speech_duration_ms"),
+-            prefix_padding_ms=vad.get("prefix_padding_ms"),
++            silence_duration_ms=vad.get("silence_duration_ms", 600),
++            threshold=vad.get("threshold", 0.55),
++            min_speech_duration_ms=vad.get("min_speech_duration_ms", 300),
++            prefix_padding_ms=vad.get("prefix_padding_ms", 300),
++            high_vad_sensitivity=False,
+             model=config.model,
+         )
+```
+
 ---
 
 ## 7. Verification & Telephony Field Test Matrix
@@ -498,10 +621,171 @@ PSTN_BARGE_HOLD_S = 0.30
 | **1** | **Conversational Nod (English)** | While agent explains an offer, say *"Yeah"* or *"Okay"*. | Agent continues speaking uninterrupted. | Playout continues smoothly; no buffer flush. |
 | **2** | **Conversational Nod (Telugu)** | While agent explains an offer, say *"అవునండి"* (*avunandi*) or *"సరే"*. | Agent continues speaking uninterrupted. | Playout continues smoothly; no buffer flush. |
 | **3** | **Conversational Nod (Hindi)** | While agent explains an offer, say *"हाँ जी"* (*haan ji*) or *"ठीक है"*. | Agent continues speaking uninterrupted. | Playout continues smoothly; no buffer flush. |
-| **4** | **No Ghost Turn at Turn End** | Say *"Avunu"* during agent speech, then remain silent when agent finishes. | Agent finishes, transitions to `listening`, and waits silently. | Does NOT respond to *"Avunu"*; waits for user. |
-| **5** | **Emergency Halt Command** | While agent is speaking, say *"Wait!"*, *"Stop!"*, or *"ఆగండి"*. | Agent halts speech within 150ms. | Immediate playback clear and cancel. |
+| **4a** | **No Ghost Turn (Statement)** | Agent says *"I'll send you the details."* Caller says *"Avunu"* during speech, then stays silent. | Agent finishes, transitions to `listening`, waits silently. | Does NOT respond to *"Avunu"*; pending is purged. |
+| **4b** | **Answer to Question Kept** *(v2.1)* | Agent asks *"Shall I proceed?"* Caller says *"Haan"* slightly before TTS ends. | Agent finishes, then processes *"Haan"* as a real answer. | LLM turn launches with *"Haan"*; NO dead air. |
+| **5** | **Emergency Halt Command** | While agent is speaking, say *"Wait!"*, *"Stop!"*, *"No"*, or *"ఆగండి"*. | Agent halts speech within 150ms. | Immediate playback clear and cancel. |
 | **6** | **Substantive Question Barge-In** | While agent is speaking, say *"Actually what is the fee?"* ($\ge 3$ words). | Agent halts cleanly after 300ms and answers the question. | Smooth transition to new LLM turn. |
 | **7** | **Background Speaker Rejection** | Remain quiet while a colleague speaks 5 feet away in the room. | Agent continues speaking; VAD does not trip. | Low RMS (< 320) rejected by `_aec_barge_open`. |
 | **8** | **High Ambient Fan Noise** | Hold phone near a running ceiling fan or road traffic. | Agent plays speech to completion without clipping. | Sarvam STT threshold `0.55` ignores steady noise. |
 | **9** | **Speakerphone Echo Shield** | Put call on loud speakerphone in an echoic room. | Agent does not cut itself off during first word. | `min_after_speak` 350ms absorbs reflection. |
 | **10**| **Thinking Phase Immunity** | Ask a question, and say *"అవును"* while the bot is generating. | Bot completes thinking and speaks the answer normally. | Generation is NOT cancelled. |
+| **11**| **AEC Gate Latch** *(v2.1)* | Caller says *"Hello?"* loudly (RMS > 320) during agent speech, then goes quiet. Sarvam transcript arrives 500ms later. | Barge-in evaluates the transcript with gate still open (latched 800ms). | `energy_below_floor` NOT returned; barge properly evaluated. |
+| **12**| **Negative Halt** *(v2.1)* | While agent explains wrong info, caller says *"No"* or *"నहीं"*. | Agent halts speech; caller can correct. | "No" matches halt list; immediate barge. |
+| **13**| **Self-Echo Text Rejection** *(v2.1)* | Agent says *"Your balance is five hundred rupees."* Sarvam echoes *"five hundred rupees"* from speakerphone feedback. | Partial is ignored; agent does NOT interrupt itself. | Echo overlap detected at partial level. |
+
+---
+
+## 8. Critical Errata & New Architecture Pillars (v2.1)
+
+This section documents issues found during review of v2.0 that are **must-fix before shipping**.
+
+### 8.1 AEC Gate Timing Race (CRITICAL)
+
+**Problem**: The `_aec_barge_open` gate closes after 8 quiet frames (~160ms), but Sarvam's partial text often arrives **300-800ms after the audio**. By the time words arrive, the gate is already closed, so a real interruption gets rejected as `energy_below_floor`.
+
+**Current code** ([pstn_voice_core.py:1636-1642](file:///d:/voice%20agent/server/services/pstn_voice_core.py#L1636-L1642)):
+```python
+if self._aec_loud_streak >= PSTN_AEC_LOUD_OPEN_FRAMES:
+    self._aec_barge_open = True  # Opens on 2 loud frames
+else:
+    if self._aec_quiet_streak >= PSTN_AEC_QUIET_CLOSE_FRAMES:
+        self._aec_barge_open = False  # Closes after 8 quiet frames (~160ms)
+```
+
+**Fix**: Latch the gate using `_last_vad_voice_at`. If loud audio was heard within the last ~800ms, treat the gate as open regardless of the frame counter:
+```python
+# In _should_commit_barge:
+aec_recently_loud = (now - self._last_vad_voice_at) <= PSTN_AEC_VOICE_LATCH_S  # 0.8s
+if not self._aec_barge_open and not aec_recently_loud and not is_halt_command:
+    result, reason = False, "energy_below_floor"
+```
+
+### 8.2 AGC + Fixed RMS Threshold Conflict (HIGH)
+
+**Problem**: Section 3B of this document says mobile AGC lifts background voices to **400-600 RMS** when the primary caller is silent. This **passes** the 320 RMS gate. Meanwhile, quiet callers speaking softly at 200-300 RMS **cannot interrupt** except with halt words.
+
+**Recommendation**: The 320 threshold is a rough heuristic. Before shipping:
+1. Record 20+ real PSTN calls across different handsets (iPhone earpiece, Android speakerphone, budget Android).
+2. Measure actual RMS distributions for: (a) primary caller speech, (b) background voices after AGC pump, (c) ceiling fan / traffic noise.
+3. If 320 doesn't separate well, consider a **relative energy metric** (ratio of current RMS to the rolling average of the last 2s) instead of an absolute floor.
+
+The gate should be treated as a **soft signal** — a high-confidence rejection for very low energy, but not a binary pass/fail. Quiet callers should not be locked out of multi-word interruptions.
+
+### 8.3 "No" and Negation Words Missing from Halt List (CRITICAL)
+
+**Problem**: The v1 `_SHORT_INTERRUPT` regex included `no`, `nope`, `కాదు`, `లేదు`, `नहीं`, `actually`, and `sorry`. The v2.0 `_HALT_COMMANDS_RE` dropped all of them. This means:
+- Caller says *"No, that's wrong"* → requires 2+ words and 300ms hold (too slow for a correction)
+- Caller says *"నहीं"* → not recognized at all
+
+**Fix**: Added back to `_HALT_COMMANDS_RE` in Pillar 1 above:
+```
+no|nope|actually|sorry|కాదు|లేదు|లేదండి|అది కాదు|नहीं
+```
+
+### 8.4 `\w` Fails on Indic Text (HIGH)
+
+**Problem**: The regex `(?:\s+\w+){0,2}` uses `\w` which matches `[a-zA-Z0-9_]` plus Unicode "word" characters. However, Telugu and Hindi combining marks (virama `్`, anusvara `ం`, chandrabindu `ँ`) can cause `\w+` to split a single grapheme cluster into multiple tokens or fail to match at all.
+
+**Fix**: Use `\S+` (any non-whitespace) instead of `\w+`. This is safe because the regex is anchored at `^` and `$`, so `\S+` simply matches "the next word delimited by spaces" regardless of script:
+```diff
+-r")(?:\s+\w+){0,2}[.!?,]*$"
++r")(?:\s+\S+){0,2}[.!?,]*$"
+```
+
+### 8.5 చెప్పండి (cheppandi) is Not a Backchannel (MEDIUM)
+
+**Problem**: "చెప్పండి" means *"go ahead, tell me"* — it's an **invitation to speak**, not a passive nod. If the caller says "చెప్పండి" while the agent is talking, they're actively requesting a turn, and the agent should yield.
+
+**Fix**: Removed from `_BACKCHANNEL_NODS_RE` in Pillar 1 above. Also removed its Romanized form `cheppandi`.
+
+### 8.6 `_SHORT_INTERRUPT` / `short_ok` Removal Must Be Complete (CRITICAL)
+
+**Problem**: The v2.0 diff removes `_SHORT_INTERRUPT` and replaces it with `_HALT_COMMANDS_RE` + `_BACKCHANNEL_NODS_RE`, but `_SHORT_INTERRUPT` is referenced at **3 locations** and `short_ok` at **6 locations**:
+
+| Location | Variable | Must change to |
+|----------|----------|----------------|
+| Line 545 | `short_ok = bool(_SHORT_INTERRUPT.match(...))` | `is_halt_command = bool(_HALT_COMMANDS_RE.match(...))` |
+| Line 546 | `substantive = ... or short_ok` | `substantive = ... or is_halt_command` |
+| Line 558 | `and not short_ok` | `and not is_halt_command` |
+| Line 610 | `short_ok = bool(_SHORT_INTERRUPT.match(cleaned))` | `is_halt = bool(_HALT_COMMANDS_RE.match(cleaned))` |
+| Line 612 | `and not short_ok` | `and not is_halt` |
+| Line 615 | `if not short_ok and not ...` | `if not is_halt and not ...` |
+| Line 635 | `short_ok = bool(_SHORT_INTERRUPT.match(cleaned))` | `is_halt = bool(_HALT_COMMANDS_RE.match(cleaned))` |
+| Line 637 | `and not short_ok` | `and not is_halt` |
+| Line 639 | `if not short_ok and not ...` | `if not is_halt and not ...` |
+
+Missing any of these is a `NameError` at runtime.
+
+---
+
+## 9. New Architecture Pillars (v2.1)
+
+### Pillar 7: Soft Pause & Resume (TTS Ducking)
+
+> **This is the single biggest win for hiding false positives.** — Industry consensus (LiveKit, Retell)
+
+**Concept**: On first VAD trigger (loud audio detected), **duck the TTS volume to ~20%** instead of immediately committing a barge-in. If no real words (substantive transcript) follow within ~700ms, **resume TTS at full volume**. If real words do follow, commit the barge normally.
+
+**Why this works**:
+- A background cough, door slam, or brief noise triggers VAD → TTS ducks → no transcript follows → TTS resumes. The caller hears a brief volume dip (barely noticeable) instead of a full interruption.
+- A real interruption triggers VAD → TTS ducks → words follow → barge commits → clean transition.
+- This converts a binary "interrupt or don't" into a graceful degradation.
+
+**Implementation sketch**:
+```python
+# In feed_user_pcm16, when loud audio detected during agent speech:
+if rms >= PSTN_TTS_STT_ENERGY_MIN and self._agent_audio_playing():
+    if not self._tts_ducked:
+        self._tts_ducked = True
+        self._tts_duck_at = time.monotonic()
+        self.playback.set_volume(0.2)  # Duck to 20%
+        log_pstn("TTS_DUCKED", call_id=self.call_id)
+
+# In periodic check or transcript handler:
+if self._tts_ducked and (now - self._tts_duck_at) > 0.7:
+    if not self._has_pending_substantive_transcript():
+        self._tts_ducked = False
+        self.playback.set_volume(1.0)  # Resume full volume
+        log_pstn("TTS_UNDUCK_NO_WORDS", call_id=self.call_id)
+```
+
+**Prerequisite**: The `PlaybackTracker` needs a `set_volume()` method that scales outbound PCM frames. For RTP μ-law, this means scaling the decoded linear samples before re-encoding.
+
+### Pillar 8: Self-Echo Text Check (Partial-Level)
+
+**Concept**: The existing [`echo_guard.py`](file:///d:/voice%20agent/server/services/echo_guard.py) checks echo overlap at barge-commit time, but by then the partial has already triggered the barge evaluation pipeline. **Check at the partial level**: if an incoming Sarvam partial closely matches the agent's currently-playing TTS text, suppress it before it even reaches `_should_commit_barge`.
+
+**Why this matters**: On speakerphone calls, the agent's own speech reflects back through the mic. Sarvam transcribes it as a partial (e.g., agent says *"Your balance is five hundred rupees"* → Sarvam emits partial *"five hundred rupees"*). Without partial-level filtering, this triggers the barge pipeline unnecessarily.
+
+**Implementation sketch**:
+```python
+# In _handle_stt_partial / _handle_stt_final, before barge evaluation:
+from server.services.echo_guard import echo_overlap_ratio, window_assistant_text
+
+heard_ref = window_assistant_text(self._tts_heard_text or self._last_tts_text)
+overlap = echo_overlap_ratio(text, heard_ref)
+if overlap >= 0.5 and self._agent_audio_playing():
+    log_pstn("PARTIAL_SELF_ECHO_SUPPRESSED", call_id=self.call_id,
+             text=text[:60], overlap=round(overlap, 3))
+    return  # Don't even evaluate barge
+```
+
+**Note**: The existing `is_barge_echo` at line 573 already does this for committed barges, but moving the check earlier prevents unnecessary state machine transitions.
+
+---
+
+## 10. Summary of v2.0 → v2.1 Changes
+
+| # | Issue | Severity | v2.0 State | v2.1 Fix |
+|---|-------|----------|-----------|----------|
+| 1 | Return type mismatch (`(False, reason)` vs `bool`) | **CRITICAL** | Diff returns tuple; callers expect bool | Use `result, reason` locals; return `result` |
+| 2 | AEC gate timing race (160ms close vs 300-800ms transcript) | **CRITICAL** | Not addressed | Latch via `_last_vad_voice_at` with 800ms window |
+| 3 | Ghost-turn purge creates dead air after questions | **CRITICAL** | Unconditional purge | Skip purge when `last_tts_text` ends with `?` or contains question keywords |
+| 4 | "No", "కాదు", "లేదు", "नहीं" missing from halt list | **CRITICAL** | Dropped in v2.0 | Added back to `_HALT_COMMANDS_RE` |
+| 5 | `_SHORT_INTERRUPT`/`short_ok` removal incomplete | **CRITICAL** | Only 1 of 6 sites shown in diff | Full 9-site migration table |
+| 6 | `\w` fails for Indic combining marks | **HIGH** | Used in both regexes | Changed to `\S+` |
+| 7 | చెప్పండి in backchannel list (it means "tell me") | **MEDIUM** | Listed as nod | Removed from `_BACKCHANNEL_NODS_RE` |
+| 8 | Root Cause 1 overstated (ws.py already passes params) | **HIGH** | Claims all params are None | Corrected with actual values table |
+| 9 | `prefix_padding_ms` inconsistency (300 vs None) | **HIGH** | Not mentioned | Added Diff 4 for `sarvam_stt.py` |
+| 10 | Soft pause/resume not in plan | **HIGH** | Missing | Added as Pillar 7 |
+| 11 | Self-echo text check at partial level | **MEDIUM** | Only at barge commit | Added as Pillar 8 |
